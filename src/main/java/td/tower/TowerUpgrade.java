@@ -39,15 +39,14 @@ public class TowerUpgrade extends AbstractTower implements TowerListener {
     		t = i.next();
     		if (!this.clients.contains(t)) {
     			switch (t.getType()) {
-    				case upgrade:
-    					break;
-    				default:
+    				case upgrade -> {}
+    				default -> {
     					dx = this.centerX - t.getX();
     					dy = this.centerY - t.getY();
     					if ((dx*dx+dy*dy) < this.rangeReal2) {
     						t.registerTower(this);
     					}
-    					break;
+    				}
     			}
     		}
     	}
@@ -64,16 +63,14 @@ public class TowerUpgrade extends AbstractTower implements TowerListener {
     public void towerBuild(Tower t) {
     	if (t != this && !this.clients.contains(t)) {
     		switch (t.getType()) {
-    			case upgrade:
-    				break;
-    			default:
-    				int dx,dy;
-    				dx = this.centerX - t.getX();
-					dy = this.centerY - t.getY();
-					if ((dx*dx+dy*dy) < this.rangeReal2) {
-						t.registerTower(this);
-					}
-					break;
+    			case upgrade -> {}
+    			default -> {
+    				int dx = this.centerX - t.getX();
+    				int dy = this.centerY - t.getY();
+    				if ((dx*dx+dy*dy) < this.rangeReal2) {
+    					t.registerTower(this);
+    				}
+    			}
     		}
     	}
     }
