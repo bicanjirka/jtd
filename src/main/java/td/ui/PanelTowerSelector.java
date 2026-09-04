@@ -13,12 +13,6 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Panel s tlacitky na stavbu vsech vezi
- *
- * @author Juras
- *
- */
 @SuppressWarnings("serial")
 public class PanelTowerSelector extends JPanel implements ContextListener {
 
@@ -31,11 +25,6 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
     private final List<TowerFactory.type> towerTypes;
     private boolean placing = false;
 
-    /**
-     * Vytvori panel s vyberem vezi, ktere zinicializuje
-     * a vytvori schranku pro vnejsi ulozeni jejich potrebnych
-     * informaci
-     */
     public PanelTowerSelector() {
         initComponents();
         this.towerTypes = new ArrayList<TowerFactory.type>();
@@ -44,21 +33,13 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
         for (int i = 0; i < types.length; i++) {
             this.towerTypes.add(TowerFactory.type.valueOf(types[i].toString()));
         }
-        /*this.towerTypes.add(TowerFactory.type.first);
-        this.towerTypes.add(TowerFactory.type.second);
-        this.towerTypes.add(TowerFactory.type.third);
-        this.towerTypes.add(TowerFactory.type.fourth);
-        this.towerTypes.add(TowerFactory.type.upgrade);*/
 
-        this.images = new BufferedImage[this.towerTypes.size()];//TowerFactory.type.values().length;
+        this.images = new BufferedImage[this.towerTypes.size()];
         this.buttons = new JToggleButton[this.towerTypes.size()];
         this.infoText = new String[this.towerTypes.size()];
         this.towerRanges = new float[this.towerTypes.size()];
     }
 
-    /**
-     * Vytvori tlacitka a prida jim listenery
-     */
     private void makeButtons() {
         GridBagConstraints gridBagConstraints;
         JToggleButton tempToggle;
@@ -81,14 +62,6 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
         }
     }
 
-    /**
-     * Vytvori vsechny veze a vytahne z nich veskere potrebne informace<b>
-     * Ulozi ukazatel na hlavni aplikaci a herni kontext, do ktereho
-     * se prida jako listener
-     *
-     * @param c       - kontext
-     * @param mainApp - hlavni aplikace
-     */
     public void doInit(Context c, TowerDefence mainApp) {
         this.context = c;
         this.mainApp = mainApp;
@@ -112,20 +85,11 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
         this.context.addContextListener(this);
     }
 
-    /**
-     * Zaznamena ze pokladame vez a preposle pozadavek na hlavni aplikaci
-     *
-     * @param t - vez
-     * @param r - dostrel
-     */
     public void startPlacing(TowerFactory.type t, float r) {
         this.placing = true;
         this.mainApp.startPlacing(t, r);
     }
 
-    /**
-     * Prestavame pokladat vez
-     */
     public void stopPlacing() {
         this.untoggleAll();
         this.placing = false;
@@ -140,44 +104,25 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
     public void livesChanged() {
     }
 
-    /**
-     * Vsem tlacitkum s vezemi nastavi, ze nejsou zmacknuta
-     */
     private void untoggleAll() {
         for (int i = 0; i < this.buttons.length; i++) {
             this.buttons[i].setSelected(false);
         }
     }
 
-    /**
-     * Zacne pokladat vez urcenou cislem<br>
-     * Zvyrazni tlacitko s vezi a nastavi info panelu text veze
-     *
-     * @param i - cislo veze
-     */
     public void doPlace(int i) {
-        //this.mouseOver(i);
         this.untoggleAll();
         this.buttons[i].setSelected(true);
         this.mainApp.setInfoText(this.infoText[i]);
         this.startPlacing(this.towerTypes.get(i), this.towerRanges[i]);
     }
 
-    /**
-     * Nastavi info panelu text veze urcene cislem
-     *
-     * @param i - cislo veze
-     */
     private void mouseOver(int i) {
         if (!this.placing) {
             this.mainApp.setInfoText(this.infoText[i]);
         }
     }
 
-    /**
-     * Inicializace vsech komponent interface<br>
-     * Volano z konstruktoru
-     */
     private void initComponents() {
 
         setLayout(new java.awt.GridBagLayout());

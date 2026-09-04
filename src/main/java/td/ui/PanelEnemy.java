@@ -58,13 +58,10 @@ public class PanelEnemy extends JPanel {
 
     public void recalculateSize() {
         this.pWidth = this.getWidth();
-        //this.contextLocal.getCache().clearCache();
         if (this.enemies.size() > 0) {
             this.pHeight = Math.min(this.pWidth / this.enemies.size(), this.getHeight());
             this.scale = this.pHeight;
             this.contextLocal.scale = this.scale;
-//            Path path = this.contextLocal.getPath();
-//            path.addStep(this.scale/2, this.pHeight/2);
         } else {
             this.pHeight = this.getHeight();
             this.scale = this.pHeight;
@@ -75,10 +72,6 @@ public class PanelEnemy extends JPanel {
 
     public void doTick(int gameTime) {
         this.gameTime = gameTime;
-        /*for (Iterator<EnemyMob> i = this.enemies.iterator(); i.hasNext();) {
-            EnemyMob e = i.next();
-            e.doTick(gameTime);
-        }*/
         this.repaint();
     }
 
@@ -102,7 +95,6 @@ public class PanelEnemy extends JPanel {
 
     private void mouseOver(int x) {
         int nr = x / this.scale;
-        //System.out.println("PanelEnemy:: mouse: "+nr);
         if (nr < this.enemies.size()) {
             EnemyMob e = this.enemies.get(nr);
             this.contextFull.setInfoText(e.getInfoString());

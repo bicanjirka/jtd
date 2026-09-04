@@ -9,13 +9,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Abstraktni trida pro vsechny veze
- *
- * @author Jirka
- *
- */
-public abstract class AbstractTower implements Tower {    //TODO rotovaci obrazky??? :)
+public abstract class AbstractTower implements Tower {
 
     protected Context context;
     protected String name;
@@ -41,7 +35,6 @@ public abstract class AbstractTower implements Tower {    //TODO rotovaci obrazk
 
 
     public AbstractTower(TowerFactory.type t, int price, int damage, float range) {
-        //System.out.println("Creating "+this.name);
         this.price = price;
         this.type = t;
         this.damageBase = this.damageCurrent = damage;
@@ -49,13 +42,6 @@ public abstract class AbstractTower implements Tower {    //TODO rotovaci obrazk
         this.upgTowers = new ArrayList<TowerUpgrade>();
     }
 
-    /**
-     * Inicializuje vez
-     *
-     * @param context - herni kontext
-     * @param x       - souradnice X
-     * @param y       - souradnice Y
-     */
     protected void doInit(Context context, int x, int y) {
         this.context = context;
         Cache cache = this.context.getCache();
@@ -84,7 +70,6 @@ public abstract class AbstractTower implements Tower {    //TODO rotovaci obrazk
     }
 
     protected void calcDamageRange() {
-        //System.out.println("AbstractTower::calcDmgRng: calling");
         float upg = (1f + TowerUpgrade.power * this.upgTowers.size());
         this.damageCurrent = (int) (this.damageBase * upg);
         this.rangeCurrent = this.rangeBase * upg;
@@ -107,12 +92,10 @@ public abstract class AbstractTower implements Tower {    //TODO rotovaci obrazk
     }
 
     public int getX() {
-        //return boardX;
         return centerX;
     }
 
     public int getY() {
-        //return boardY;
         return centerY;
     }
 

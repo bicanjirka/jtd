@@ -6,12 +6,6 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 
-/**
- * Silny nepritel znazornen kostickou, dostava polovicni zraneni
- *
- * @author Jirka
- *
- */
 public class EnemyMobSquare extends AbstractEnemyMobRotor {
 
     private int deadTime;
@@ -30,7 +24,6 @@ public class EnemyMobSquare extends AbstractEnemyMobRotor {
         this.bodyScale = this.context.scale / ((this.level < 6) ? (7 - level) : (2));
         this.bodyShape = new Rectangle2D.Float(-this.bodyScale, -this.bodyScale, this.bodyScale * 2, this.bodyScale * 2);
         K = 0.8f - this.level * 0.05f;
-        //System.out.println(""+K);
     }
 
     public void doDamage(int damage) {

@@ -6,13 +6,6 @@ import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Trida obsahujici nactene obrazky<br>
- * Je to singleton
- *
- * @author Juras
- *
- */
 public class Cache {
 
     private static final Cache INSTANCE = new Cache();
@@ -64,49 +57,22 @@ public class Cache {
         }
     }
 
-    /**
-     * Vraci statickou instanci tridy
-     *
-     * @return - instance stridy
-     */
     public static Cache getInstance() {
         return INSTANCE;
     }
 
-    /**
-     * Vymaze veskery obsah tridy
-     */
     public void clearCache() {
         this.cImage.clear();
     }
 
-    /**
-     * Zjisti, jestli se ve tride nachazi obrazek
-     * k prislusnemu jmenu
-     *
-     * @param name - jmeno
-     * @return - nalez jmena
-     */
     public boolean hasBufImg(String name) {
         return this.cImage.containsKey(name);
     }
 
-    /**
-     * Umisti obrazek do tridy k prislusnemu jmenu
-     *
-     * @param name - jmeno
-     * @param img  - obrazek
-     */
     public void putBufImg(String name, BufferedImage img) {
         this.cImage.put(name, img);
     }
 
-    /**
-     * Vytahne ze tridy obrazek podle prislusneho jmena
-     *
-     * @param name - jmeno
-     * @return - obrazek
-     */
     public BufferedImage getBufImg(String name) {
         return this.cImage.get(name);
     }

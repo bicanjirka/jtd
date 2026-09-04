@@ -9,12 +9,6 @@ import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Vez, targetuje nahodneho nepritele kolem sebe a zrani i vsechny v jeho blizkosti, cim bliz tim silneji
- *
- * @author Jirka
- *
- */
 public class TowerTwo extends AbstractTower {
 
     public static int price = 15;
@@ -99,10 +93,6 @@ public class TowerTwo extends AbstractTower {
         if (this.coolDown > 0) {
             this.coolDown--;
             this.lineStroke = this.lineStrokes[this.coolDown];
-            /*if (this.coolDown > this.coolDownMax-1) {
-                float radius = this.spreadRadius*(this.coolDown-(this.coolDownMax-1))/2;
-                this.spread = new Ellipse2D.Float(this.enemy.getX()-radius, this.enemy.getY()-radius, radius*2, radius*2);
-            }*/
         } else {
             EnemyMob[] enemies = this.findEnemiesInRangeVisible(this.centerX, this.centerY, this.rangeReal);
 

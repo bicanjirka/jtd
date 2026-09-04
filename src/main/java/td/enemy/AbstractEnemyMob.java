@@ -7,26 +7,18 @@ import td.wave.Point;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 
-/**
- * Abstraktni trida nepratel
- *
- * @author Jirka
- *
- */
 public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
 
     protected type type;
     protected boolean inactive = true;
     protected boolean validTarget = false;
     protected boolean dead = false;
-    //    protected boolean visible = true;
     protected int price;
     protected int level;
     protected Color colorTrans = Color.WHITE;
     protected Color color = Color.WHITE;
     protected int x, y;
     protected AffineTransform atTranslate;
-    //protected int acceleration = 1;
     protected int speed = 40;
     protected int speedMax = 40;
     protected int speedBase = 40;
@@ -36,9 +28,8 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
     protected Context context;
     private int delay;
     private Path path;
-    //protected int speedRepairTime = 0;
     private int segment = 0;
-    private int segmentProgression = 0;//TODO float 0..1, automaticke pocitani vzdalenosti, aby se dalo chodit i sikmo - napadl me problem ze by se pak nedalo po takovym segmentProgression moc speedovat
+    private int segmentProgression = 0;
     private Point segmentStartPoint;
     private Point segmentEndPoint;
 
@@ -47,14 +38,6 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         this.type = EnemyMob.type.Normal;
     }
 
-    /**
-     * Inicializuje nepritele
-     *
-     * @param context - herni kontext
-     * @param delay   - zpozdeni
-     * @param health  - zivoty
-     * @param price   - cena
-     */
     protected void doInit(Context context, int delay, int health, int price, int level) {
         this.context = context;
         this.price = price;
@@ -64,7 +47,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         this.path = this.context.getPath();
         this.x = 0;
         this.y = 0;
-        this.delay = Math.round(700f * delay / this.speed);    //TODO 700f nahradit ukazatelem context.delay ktery by se menil pri zadani zmeny pred zadavani mobu, treba 700 w
+        this.delay = Math.round(700f * delay / this.speed);
         if (delay == 0) {
             this.inactive = false;
             this.validTarget = true;
@@ -78,8 +61,6 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
     }
 
     public void doDamage(int damage) {
-        //System.out.println("EnemyMobBase::doDamage: "+this.getInfoString()+" getting "+damage/100f+" damage...");
-        //this.context.dmg += damage;		//TEST damage
         if (this.validTarget()) {
             this.health -= damage;
         }
@@ -126,9 +107,6 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         return (this.validTarget(type1) || this.validTarget(type2));
     }
 
-    /**
-     * Resetne pozici nepritele na pocatek cesty
-     */
     private void resetPosition() {
         this.segmentStartPoint = this.path.getStep(this.segment);
         this.segmentEndPoint = this.path.getStep(this.segment + 1);
@@ -137,9 +115,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
     }
 
     public void doTick(int gameTime) {
-        //if (this.path.equals(new PathEmpty())) return;//kvuli nepohybujicim se mobum
         if (this.inactive) {
-            // not started yet.
             if (this.delay > 0) {
                 this.delay--;
                 if (this.delay == 0) {
@@ -156,7 +132,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
                 this.segment++;
                 if (this.segment >= this.path.length()) {
                     this.segment = 0;
-                    if (this.price == 0) this.context.deductScore(10);    //TODO odecitani score pokud ma vlna value 0
+                    if (this.price == 0) this.context.deductScore(10);
                     else this.context.deductScore(this.price);
                     this.context.removeLife();
                 }
@@ -167,7 +143,6 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
             this.y = this.segmentStartPoint.y() + (this.segmentEndPoint.y() - this.segmentStartPoint.y()) * this.segmentProgression / 1000;
             atTranslate.setToIdentity();
             atTranslate.translate(this.x, this.y);
-            //System.out.println("EnemyMobBase::doTick: "+this.x+"."+this.y);
             this.validTarget = this.x >= 0 && this.x <= this.context.maxX && this.y >= 0 && this.y <= this.context.maxY;
         }
     }

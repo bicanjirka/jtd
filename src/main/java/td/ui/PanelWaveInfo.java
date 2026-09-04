@@ -6,12 +6,6 @@ import td.wave.Wave;
 
 import javax.swing.*;
 
-/**
- * Panel obsahujici informace o soucasne a nasledujici vlne
- *
- * @author Juras
- *
- */
 @SuppressWarnings("serial")
 public class PanelWaveInfo extends JPanel {
     private javax.swing.JLabel jLabel_cur_health;
@@ -24,9 +18,7 @@ public class PanelWaveInfo extends JPanel {
     private javax.swing.JLabel jLabel_next_reward;
     private PanelEnemy panelEnemy_cur;
     private PanelEnemy panelEnemy_next;
-    /**
-     * Konstruktor, vyvola inicializaci komponent
-     */
+
     public PanelWaveInfo() {
         initComponents();
     }
@@ -36,9 +28,6 @@ public class PanelWaveInfo extends JPanel {
         this.panelEnemy_next.setContext(c);
     }
 
-    /**
-     * Vynuluje informace o vlnach
-     */
     public void clearWaves() {
         this.panelEnemy_cur.clearEnemies();
         this.panelEnemy_next.clearEnemies();
@@ -52,11 +41,6 @@ public class PanelWaveInfo extends JPanel {
         this.jLabel_next_level.setText("lvl-");
     }
 
-    /**
-     * Nastavi informace o soucasne vlne
-     *
-     * @param w - soucasna vlna
-     */
     public void setWaveCur(int round, Wave w) {
         this.panelEnemy_cur.clearEnemies();
         this.jLabel_cur_round.setText("" + round);
@@ -72,11 +56,6 @@ public class PanelWaveInfo extends JPanel {
         this.validate();
     }
 
-    /**
-     * Nastavi informace o pristi vlne
-     *
-     * @param w - pristi vlna
-     */
     public void setWaveNext(int round, Wave w) {
         this.panelEnemy_next.clearEnemies();
         this.jLabel_next_round.setText("" + round);
@@ -97,10 +76,6 @@ public class PanelWaveInfo extends JPanel {
         this.panelEnemy_next.doTick(gameTime);
     }
 
-    /**
-     * Inicializuje veskere komponenty interface<br>
-     * Volano z konstruktoru
-     */
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 

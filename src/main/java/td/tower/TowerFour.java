@@ -8,12 +8,6 @@ import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Vez, zranuje vsechnz nepratele na blizku a dava jim konstantni damage
- *
- * @author Jirka
- *
- */
 public class TowerFour extends AbstractTower {
 
     public static int price = 25;

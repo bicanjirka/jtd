@@ -2,22 +2,7 @@ package td.tower;
 
 import td.util.Context;
 
-/**
- * Trida na vyrobu vezi
- *
- * @author Jirka
- *
- */
 public class TowerFactory {
-    /**
-     * Vytvori vez podle zadaneho typu
-     *
-     * @param t - typ
-     * @param c - herni kontext
-     * @param x - souradnice X
-     * @param y - souradnice Y
-     * @return - vytvorena vez
-     */
     public static Tower createTower(type t, Context c, int x, int y) {
         return switch (t) {
             case first -> new TowerOne(c, x, y);
@@ -28,12 +13,6 @@ public class TowerFactory {
         };
     }
 
-    /**
-     * enum obsahujici typy vezi a jejich cenu
-     *
-     * @author Jirka
-     *
-     */
     public enum type {
         first(TowerOne.price),
         second(TowerTwo.price),

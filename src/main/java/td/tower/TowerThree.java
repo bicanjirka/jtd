@@ -7,12 +7,6 @@ import td.util.WaveStartListener;
 import java.awt.*;
 import java.awt.geom.Line2D;
 
-/**
- * Vez, targetuje vsechny nepratele na dostrel, ale postupne
- *
- * @author Jirka
- *
- */
 public class TowerThree extends AbstractTower implements WaveStartListener {
 
     public static int price = 20;
@@ -51,7 +45,7 @@ public class TowerThree extends AbstractTower implements WaveStartListener {
         if (this.context.enemies != null) {
             for (int i = preferedEnemyNr + 1; i < this.context.enemies.length; i++) {
                 e = this.context.enemies[i];
-                if (e.validTarget(EnemyMob.type.Normal/*, EnemyMob.type.Invisible*/)) {
+                if (e.validTarget(EnemyMob.type.Normal)) {
                     dx = e.getX() - this.centerX;
                     dy = e.getY() - this.centerY;
                     distance2 = dx * dx + dy * dy;
@@ -126,7 +120,6 @@ public class TowerThree extends AbstractTower implements WaveStartListener {
             this.lineSteps = new int[length];
             this.enemyX = new int[length];
             this.enemyY = new int[length];
-            //System.out.println("TowerThree::waveStarted: "+length);
         } else {
             this.lineSteps = new int[0];
             this.enemyX = new int[0];
