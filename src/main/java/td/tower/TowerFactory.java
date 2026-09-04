@@ -14,7 +14,7 @@ public class TowerFactory {
 	 * @author Jirka
 	 *
 	 */
-	public static enum type {
+	public enum type {
         first(TowerOne.price),
         second(TowerTwo.price),
         third(TowerThree.price),
@@ -35,14 +35,13 @@ public class TowerFactory {
 	 * @return - vytvorena vez
 	 */
 	public static Tower createTower(type t, Context c, int x, int y) {
-		switch (t) {
-			case first: return new TowerOne(c, x, y);
-			case second: return new TowerTwo(c, x, y);
-			case third: return new TowerThree(c, x, y);
-			case fourth: return new TowerFour(c, x, y);
-			case upgrade: return new TowerUpgrade(c, x, y);
-		}
-		return null;
+		return switch (t) {
+			case first -> new TowerOne(c, x, y);
+			case second -> new TowerTwo(c, x, y);
+			case third -> new TowerThree(c, x, y);
+			case fourth -> new TowerFour(c, x, y);
+			case upgrade -> new TowerUpgrade(c, x, y);
+		};
 	}
 	
 }

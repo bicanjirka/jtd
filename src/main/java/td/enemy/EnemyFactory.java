@@ -17,7 +17,7 @@ public class EnemyFactory {
 	 * @author Jirka
 	 *
 	 */
-	public static enum Enemy {
+	public enum Enemy {
 		Circle		("c", new EnemyMobCircle()),
 		Square		("s", new EnemyMobSquare()),
 		Triangle	("t", new EnemyMobTriangle()),

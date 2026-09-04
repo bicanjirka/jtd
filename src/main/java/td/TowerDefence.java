@@ -551,39 +551,22 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
      */
     private void keyTyped(char key) {
     	switch (key) {
-    	case 'q':
-    		this.panelTowerSelector.doPlace(0);
-    		break;
-	    case 'w':
-			this.panelTowerSelector.doPlace(1);
-			break;
-	    case 'e':
-    		this.panelTowerSelector.doPlace(2);
-    		break;
-	    case 'r':
-    		this.panelTowerSelector.doPlace(3);
-    		break;
-	    case 't':
-    		this.panelTowerSelector.doPlace(4);
-    		break;
-	    case 'p':
-            this.playPause(this.paused);
-            //System.out.println("TD::keyTyped: total damage "+this.context.dmg/100f);
-            //this.context.dmg = 0;	//TEST damage
-            break;
-	    case 'f':
-            this.toggleGameSpeed(this.tickTime += 10);			//TODO
-            break;
-	    case 's':
-            this.nextWave();
-            break;
-	    case KeyEvent.VK_ESCAPE:
+    	case 'q' -> this.panelTowerSelector.doPlace(0);
+	    case 'w' -> this.panelTowerSelector.doPlace(1);
+	    case 'e' -> this.panelTowerSelector.doPlace(2);
+	    case 'r' -> this.panelTowerSelector.doPlace(3);
+	    case 't' -> this.panelTowerSelector.doPlace(4);
+	    case 'p' -> this.playPause(this.paused);
+	    case 'f' -> this.toggleGameSpeed(this.tickTime += 10);			//TODO
+	    case 's' -> this.nextWave();
+	    case KeyEvent.VK_ESCAPE -> {
 	    	if (this.placingTower) {
 	            this.placingTower = false;
 	            this.panelTowerSelector.stopPlacing();
 	            this.unHighlightCell();
 	    	}
-	    	break;
+	    }
+	    default -> {}
 		}
     }
     

@@ -23,7 +23,7 @@ public interface Cell {
 	 * @author Juras
 	 *
 	 */
-	public static enum highlightType {
+	public enum highlightType {
 		none,
 		select,
 		place;

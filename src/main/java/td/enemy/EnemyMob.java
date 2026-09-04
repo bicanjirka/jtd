@@ -10,7 +10,7 @@ import td.util.Context;
  *
  */
 public interface EnemyMob {
-	public static enum type {
+	public enum type {
 		Normal,
 		Flying,
 		Invisible;

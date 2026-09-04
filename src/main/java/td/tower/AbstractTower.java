@@ -159,28 +159,28 @@ public abstract class AbstractTower implements Tower {	//TODO rotovaci obrazky??
 	public void registerTower(Tower t) {
 		if (t != this) {
 			switch (t.getType()) {
-				case upgrade:
-					if (this.type != TowerFactory.type.upgrade) {
-                        if (!this.upgTowers.contains(t)) {
-                            TowerUpgrade tupg = (TowerUpgrade) t;
-                            this.upgTowers.add(tupg);
-                            tupg.addClient(this);
-                            this.calcDamageRange();
-                        }
-                    }
-                    break;
+				case upgrade -> {
+					if (this.type != TowerFactory.type.upgrade && !this.upgTowers.contains(t)) {
+						TowerUpgrade tupg = (TowerUpgrade) t;
+						this.upgTowers.add(tupg);
+						tupg.addClient(this);
+						this.calcDamageRange();
+					}
+				}
+				default -> {}
 			}
 		}
 	}
-	
+
 	public void unregisterTower(Tower t) {
 		switch (t.getType()) {
-			case upgrade:
-	            TowerUpgrade tupg = (TowerUpgrade) t;
-	            this.upgTowers.remove(t);
-	            tupg.removeClient(this);
-	            this.calcDamageRange();
-	            break;
+			case upgrade -> {
+				TowerUpgrade tupg = (TowerUpgrade) t;
+				this.upgTowers.remove(t);
+				tupg.removeClient(this);
+				this.calcDamageRange();
+			}
+			default -> {}
 		}
 	}
 	

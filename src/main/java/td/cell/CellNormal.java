@@ -96,7 +96,7 @@ public class CellNormal implements Cell {
     
     public void paintEffect(Graphics2D g2) {
     	switch (this.highlight) {
-    	case place:
+    	case place -> {
 			this.paintRangeCircle(g2);
 			Color tempColor;
 			tempColor = new Color(this.highlightColor.getRed(), this.highlightColor.getGreen(), this.highlightColor.getBlue(), 80);
@@ -108,17 +108,17 @@ public class CellNormal implements Cell {
 			g2.drawLine(0, this.y+this.scale, this.context.maxX, y+this.scale);
 			//vyplneni herniho policka
 			g2.fillRect(this.x, this.y, this.scale, this.scale);
-			
+
 			tempColor = new Color(this.highlightColor.getRed(), this.highlightColor.getGreen(), this.highlightColor.getBlue(), 140);
 			g2.setColor(tempColor);
 			//zaobleny ctverec
 			g2.drawRoundRect(this.x-this.scale, this.y-this.scale, this.scale*3, this.scale*3, 40, 40);
-    	
+
 			g2.setColor(this.highlightColor);
 			//obtazeni policka
 			g2.drawRect(this.x, this.y, this.scale, this.scale);
-			break;
-    	case select:
+    	}
+    	case select -> {
 			Color tempColor2;
 			tempColor2 = new Color(this.highlightOK.getRed(), this.highlightOK.getGreen(), this.highlightOK.getBlue(), 80);
 			g2.setColor(tempColor2);
@@ -127,7 +127,8 @@ public class CellNormal implements Cell {
 			g2.setColor(this.highlightOK);
 			//obtazeni policka
 			g2.drawRect(this.x-1, this.y-1, this.scale+1, this.scale+1);
-			break;
+    	}
+    	default -> {}
     	}
     }
     
