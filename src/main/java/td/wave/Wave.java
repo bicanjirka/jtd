@@ -35,14 +35,9 @@ public class Wave {
     }
     
     private void countEnemy(EnemyFactory.Enemy e, int count) {
-        Integer i = enemyCounts.get(e);
-        if (i==null) {
-            i = new Integer(0);
-        }
-        i += count;
-        enemyCounts.put(e, i);
+        enemyCounts.merge(e, count, Integer::sum);
     }
-    
+
     public Set<EnemyFactory.Enemy> enemySet() {
         if (!this.finalised) {
             this.finalise();
@@ -90,7 +85,7 @@ public class Wave {
                     nr = 1;
                 } else {
                     try {
-                        nr = new Integer(names[i]);
+                        nr = Integer.parseInt(names[i]);
                     } catch (NumberFormatException ex) {
                         ex.printStackTrace();
                         nr = 1;
