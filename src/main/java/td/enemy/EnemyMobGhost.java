@@ -20,7 +20,7 @@ public class EnemyMobGhost extends AbstractEnemyMob {
     }
 
     protected void doInit(Context context, int delay, int health, int price, int level) {
-        super.doInit(context, delay, (health / 5), price, level);//TODO redukci zivotu podle lvlu
+        super.doInit(context, delay, (health / 5), price, level);
         this.bodyScale = this.context.scale / ((this.level < 6) ? (7 - level) : (2));
         this.bodyShape = new Ellipse2D.Float(-this.bodyScale, -this.bodyScale, this.bodyScale * 2, this.bodyScale * 2);
     }

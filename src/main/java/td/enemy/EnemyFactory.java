@@ -5,12 +5,6 @@ import td.util.Context;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Trida na vyrobu a identifikaci nepratel
- *
- * @author Jirka
- *
- */
 public class EnemyFactory {
 
     private static final Map<String, Enemy> table = new HashMap<String, Enemy>();
@@ -21,46 +15,18 @@ public class EnemyFactory {
         }
     }
 
-    /**
-     * Jestli je zadane heslo na seznamu nepratel
-     *
-     * @param name - zkratka nepritele
-     * @return - je na seznamu
-     */
     public static boolean isEnemy(String name) {
         return table.containsKey(name);
     }
 
-    /**
-     * Identifikuje nepritele podle jmena
-     *
-     * @param name - zkratka nepritele
-     * @return - trida nepritele
-     */
     public static Enemy identifyEnemy(String name) {
         return table.get(name);
     }
 
-    /**
-     * Zkopiruje nepritele ze seznamu a vrati onu kopii
-     *
-     * @param name    - zkratka
-     * @param context - herni kontext
-     * @param delay   - zpozdeni ve hre
-     * @param health  - zivoty
-     * @param price   - hodnota
-     * @return - kopie
-     */
     public static EnemyMob getEnemy(String name, Context context, int delay, int health, int price, int level) {
         return table.get(name).getCopy(context, delay, health, price, level);
     }
 
-    /**
-     * Staticky seznam typu nepratel
-     *
-     * @author Jirka
-     *
-     */
     public enum Enemy {
         Circle("c", new EnemyMobCircle()),
         Square("s", new EnemyMobSquare()),
@@ -76,24 +42,10 @@ public class EnemyFactory {
             this.instance = instance;
         }
 
-        /**
-         * Zkratka jmena nepritele
-         *
-         * @return - zkratku
-         */
         public String getName() {
             return this.name;
         }
 
-        /**
-         * Udela kopii nepritele se vsemi jeho parametry
-         *
-         * @param context - herni kontext
-         * @param delay   - zpozdeni (kdy ma ozit)
-         * @param health  - zivoty
-         * @param price   - hodnota, kolik dostanu za jeho smrt
-         * @return - kopie nepritele
-         */
         public EnemyMob getCopy(Context context, int delay, int health, int price, int level) {
             return instance.create(context, delay, health, price, level);
         }

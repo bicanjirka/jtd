@@ -18,9 +18,6 @@ public class Wave {
 
     private final Map<EnemyFactory.Enemy, Integer> enemyCounts = new HashMap<EnemyFactory.Enemy, Integer>();
 
-    /**
-     * Creates a new instance of Wave
-     */
     public Wave(Context context, int baseHealth, int basePrice, int level) {
         this.baseHealth = baseHealth;
         this.basePrice = basePrice;
@@ -67,14 +64,10 @@ public class Wave {
             int nr = 1;
             int count = 0;
             for (int i = 0; i < names.length; i++) {
-                //System.out.println("Wave::finalise: "+names[i]);
                 if (EnemyFactory.isEnemy(names[i])) {
-                    //System.out.println("Wave::finalise: isEnemy "+names[i]);
                     this.countEnemy(EnemyFactory.identifyEnemy(names[i]), nr);
-                    //System.out.println("Wave::finalise: "+names[i]);
                     if (names[i].equals(EnemyFactory.Enemy.Empty.getName())) {
                         this.emptyMobs += nr;
-                        //System.out.println("Wave::finalise: emptyMobs "+this.emptyMobs);
                     }
                     for (int e = 0; e < nr; e++) {
                         enemies.add(EnemyFactory.getEnemy(names[i], this.context, count, this.baseHealth, this.basePrice, this.level));

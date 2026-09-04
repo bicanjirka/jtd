@@ -4,12 +4,7 @@ import td.util.Context;
 
 import java.awt.*;
 
-/**
- * Zadny nepritel, vytvoren kvuli mezeram mezi neprateli v jedne vlne
- *
- * @author Jirka
- *
- */
+// Placeholder enemy used to create timing gaps between real enemies within a wave.
 public class EnemyMobEmpty extends AbstractEnemyMob {
 
     public EnemyMobEmpty() {

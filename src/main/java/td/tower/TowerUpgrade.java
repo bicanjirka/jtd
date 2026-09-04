@@ -79,7 +79,6 @@ public class TowerUpgrade extends AbstractTower implements TowerListener {
 
     public void addClient(Tower t) {
         if (!this.clients.contains(t)) {
-            //System.out.println("TowerUpgrade::addClient: adding");
             this.clients.add(t);
         }
     }

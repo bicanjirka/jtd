@@ -6,12 +6,6 @@ import td.util.Context;
 import java.awt.*;
 import java.awt.geom.Line2D;
 
-/**
- * Vez co strili jen do jednoho nepritele, targetuje vzdy prvniho
- *
- * @author Jirka
- *
- */
 public class TowerOne extends AbstractTower {
 
     public static int price = 10;
@@ -59,7 +53,6 @@ public class TowerOne extends AbstractTower {
                     }
                 }
             }
-            //if (progression != 0) return e2;
         }
         return e2;
     }

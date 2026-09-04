@@ -6,15 +6,6 @@ import td.util.ContextListener;
 
 import javax.swing.*;
 
-/**
- * Informacni panel obsahujici libovolny text,
- * slouzi jako zobrazovani informaci o nepratelich,
- * vezich a jako umisteni tlacitek pro jejich prodej
- * nebo vylepseni
- *
- * @author Juras
- *
- */
 @SuppressWarnings("serial")
 public class PanelTowerInfo extends JPanel implements ContextListener {
 
@@ -22,54 +13,27 @@ public class PanelTowerInfo extends JPanel implements ContextListener {
     private Tower selectedTower;
     private javax.swing.JButton jButton_sell;
     private JPanel jPanel_buttons;
-    //private javax.swing.JPanel jPanel_towerSettings;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextPane jTextPane1;
 
-    /**
-     * Konstruktor, inicializuje komplonenty
-     */
     public PanelTowerInfo() {
         initComponents();
     }
 
-    /**
-     * Nastavi vezi, ze je oznacena
-     *
-     * @param t - oznacena vez
-     */
     public void setTower(Tower t) {
         if (this.selectedTower != null) {
             this.selectedTower.setSelected(false);
         }
         this.selectedTower = t;
         this.selectedTower.setSelected(true);
-        //this.jPanel_towerSettings.removeAll();
-        //JPanel p = t.getButtons();
-        //if (p!=null) {
-        //    this.jPanel_towerSettings.add(p);
-        //}
-        //this.setVisible(true);
         this.updateInterface();
     }
 
-    /**
-     * Nastavi text
-     *
-     * @param s - text
-     */
     public void setExternalText(String s) {
         this.jPanel_buttons.setVisible(false);
-        //this.jPanel_towerSettings.removeAll();
         this.setText(s);
-        //this.setVisible(true);
     }
 
-    /**
-     * V pripade oznacene veze zviditelni vsechna tlacitka ji prislusejici,
-     * jako napriklad tlacitko o prodeji, a nastavi mu text s cenou<br>
-     * Dale nastavi text v zavislosti na oznacene vezi
-     */
     private void updateInterface() {
         this.jPanel_buttons.setVisible(false);
         this.jButton_sell.setVisible(true);
@@ -81,11 +45,6 @@ public class PanelTowerInfo extends JPanel implements ContextListener {
         }
     }
 
-    /**
-     * Nastavi text, obsahuje kontrolu prazdneho ukazatele
-     *
-     * @param s - text
-     */
     private void setText(String s) {
         try {
             this.jTextPane1.setText(s);
@@ -94,31 +53,18 @@ public class PanelTowerInfo extends JPanel implements ContextListener {
         }
     }
 
-    /**
-     * Zrusi oznaceni veze
-     */
     public void unselectTower() {
-        //this.setVisible(false);
         if (this.selectedTower != null) {
             this.selectedTower.setSelected(false);
         }
         this.selectedTower = null;
-        //this.jPanel_towerSettings.removeAll();
     }
 
-    /**
-     * Nastavi herni kontext a prida se do ContextListeneru
-     *
-     * @param context - kontext
-     */
     public void setContext(Context context) {
         this.context = context;
         this.context.addContextListener(this);
     }
 
-    /**
-     * Proda prave oznacenou vez
-     */
     private void sellCurrentTower() {
         if (this.selectedTower != null) {
             this.context.sellTower(this.selectedTower);
@@ -127,7 +73,6 @@ public class PanelTowerInfo extends JPanel implements ContextListener {
         }
     }
 
-    //zatim nevyuzito, je zde do budoucna aby kontroloval moznost upgradu veze
     public void moneyChanged() {
         this.updateInterface();
     }
@@ -135,15 +80,11 @@ public class PanelTowerInfo extends JPanel implements ContextListener {
     public void livesChanged() {
     }
 
-    /**
-     * Inicializace komponenty, volano z konstruktoru
-     */
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
         jScrollPane1 = new javax.swing.JScrollPane();
         jTextPane1 = new javax.swing.JTextPane();
-        //jPanel_towerSettings = new javax.swing.JPanel();
         jPanel_buttons = new JPanel();
         jButton_sell = new javax.swing.JButton();
 
@@ -170,16 +111,6 @@ public class PanelTowerInfo extends JPanel implements ContextListener {
         gridBagConstraints.weightx = 0.01;
         gridBagConstraints.weighty = 0.01;
         add(jScrollPane1, gridBagConstraints);
-
-        /*jPanel_towerSettings.setLayout(new java.awt.BorderLayout());
-
-        jPanel_towerSettings.setBackground(new java.awt.Color(0, 0, 0));
-        jPanel_towerSettings.setForeground(new java.awt.Color(220, 255, 220));
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        add(jPanel_towerSettings, gridBagConstraints);*/
 
         jPanel_buttons.setLayout(new java.awt.GridBagLayout());
 

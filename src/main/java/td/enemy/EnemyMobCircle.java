@@ -6,12 +6,6 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 
-/**
- * Zakladni nepritel, znazornen koleckem
- *
- * @author Jirka
- *
- */
 public class EnemyMobCircle extends AbstractEnemyMob {
 
     private int deadTime;
