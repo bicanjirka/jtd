@@ -1,6 +1,5 @@
 package td.util;
 
-import td.TowerDefence;
 import td.enemy.EnemyMob;
 import td.tower.Tower;
 import td.wave.Path;
@@ -16,7 +15,7 @@ public class Context {
     public int maxX, maxY;
     public EnemyMob[] enemies;
     public final List<Tower> towers;
-    private final TowerDefence mainApp;
+    private final GameHost mainApp;
     private int enemyCount = 0;
     private Path path;
 
@@ -31,7 +30,7 @@ public class Context {
 
     private final Cache cache;
 
-    public Context(TowerDefence mainApp) {
+    public Context(GameHost mainApp) {
         this.mainApp = mainApp;
         this.contextListeners = new CopyOnWriteArrayList<>();
         this.towerListeners = new CopyOnWriteArrayList<>();
