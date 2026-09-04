@@ -13,7 +13,7 @@ public class Cache {
 
     private Cache() {
 
-        this.cImage = new HashMap<String, BufferedImage>();
+        this.cImage = new HashMap<>();
 
         try {
             BufferedImage img;
@@ -52,7 +52,7 @@ public class Cache {
             this.putBufImg("bg", img);
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Could not load images", "Error", 0);
+            JOptionPane.showMessageDialog(null, "Could not load images", "Error", JOptionPane.ERROR_MESSAGE);
             System.exit(0);
         }
     }

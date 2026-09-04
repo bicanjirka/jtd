@@ -11,10 +11,10 @@ import java.util.List;
 
 public class TowerTwo extends AbstractTower {
 
-    public static int price = 15;
-    public static int damage = 1600;
-    public static float range = 3.2f;
-    public static float spreadRadiusBase = 1.75f;
+    public static final int price = 15;
+    public static final int damage = 1600;
+    public static final float range = 3.2f;
+    public static final float spreadRadiusBase = 1.75f;
 
     private final float spreadRadius;
     private int coolDown = 0;
@@ -46,7 +46,7 @@ public class TowerTwo extends AbstractTower {
     }
 
     private EnemyMob[] findEnemiesInRangeVisible(int x, int y, float r) {
-        List<EnemyMob> tempEnemies = new ArrayList<EnemyMob>();
+        List<EnemyMob> tempEnemies = new ArrayList<>();
         float r2 = r * r;
         int dx, dy, d2;
         if (this.context.enemies != null) {
@@ -68,7 +68,7 @@ public class TowerTwo extends AbstractTower {
     }
 
     private EnemyMob[] findEnemiesInRange(int x, int y, float r) {
-        List<EnemyMob> tempEnemies = new ArrayList<EnemyMob>();
+        List<EnemyMob> tempEnemies = new ArrayList<>();
         float r2 = r * r;
         int dx, dy, d2;
         if (this.context.enemies != null) {
@@ -103,16 +103,14 @@ public class TowerTwo extends AbstractTower {
                 int dx, dy, r2;
                 int damage;
 
-                EnemyMob enemy2;
                 this.currentTargets = this.findEnemiesInRange(ex, ey, this.spreadRadius);
 
-                for (int i = 0; i < this.currentTargets.length; i++) {
-                    enemy2 = this.currentTargets[i];
-                    dx = ex - enemy2.getX();
-                    dy = ey - enemy2.getY();
+                for (EnemyMob currentTarget : this.currentTargets) {
+                    dx = ex - currentTarget.getX();
+                    dy = ey - currentTarget.getY();
                     r2 = dx * dx + dy * dy;
                     damage = Math.round(this.damageCurrent * (1 - r2 / (this.spreadRadius * this.spreadRadius)));
-                    enemy2.doDamage(damage);
+                    currentTarget.doDamage(damage);
                 }
 
                 this.coolDown = this.coolDownMax;
@@ -133,8 +131,8 @@ public class TowerTwo extends AbstractTower {
             int ey = this.enemy.getY();
             g2.draw(new Line2D.Float(this.centerX, this.centerY, ex, ey));
             g2.setColor(this.transLineColor);
-            for (int i = 0; i < this.currentTargets.length; i++) {
-                g2.draw(new Line2D.Float(ex, ey, currentTargets[i].getX(), currentTargets[i].getY()));
+            for (EnemyMob currentTarget : this.currentTargets) {
+                g2.draw(new Line2D.Float(ex, ey, currentTarget.getX(), currentTarget.getY()));
             }
             g2.setStroke(defaultStroke);
         }

@@ -9,9 +9,9 @@ import java.awt.geom.Line2D;
 
 public class TowerThree extends AbstractTower implements WaveStartListener {
 
-    public static int price = 20;
-    public static int damage = 1600;
-    public static float range = 5.2f;
+    public static final int price = 20;
+    public static final int damage = 1600;
+    public static final float range = 5.2f;
 
     private int fireAt = -1;
     private int[] enemyX;

@@ -6,8 +6,8 @@ import td.util.Context;
 import javax.swing.*;
 import java.awt.*;
 
-@SuppressWarnings("serial")
 public class GameBoard extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     private final TowerDefence game;
     private final Context context;

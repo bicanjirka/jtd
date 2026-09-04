@@ -5,9 +5,10 @@ import td.util.Context;
 import td.wave.Wave;
 
 import javax.swing.*;
+import java.awt.*;
 
-@SuppressWarnings("serial")
 public class PanelWaveInfo extends JPanel {
+    private static final long serialVersionUID = 1L;
     private javax.swing.JLabel jLabel_cur_health;
     private javax.swing.JLabel jLabel_cur_level;
     private javax.swing.JLabel jLabel_cur_round;
@@ -93,7 +94,7 @@ public class PanelWaveInfo extends JPanel {
         setLayout(new java.awt.GridBagLayout());
 
         setBackground(new java.awt.Color(0, 0, 0));
-        setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Current & Next Wave", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 0, 11), new java.awt.Color(220, 255, 220)));
+        setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Current & Next Wave", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", Font.PLAIN, 11), new java.awt.Color(220, 255, 220)));
         setForeground(new java.awt.Color(220, 255, 220));
         setMaximumSize(new java.awt.Dimension(200, 32767));
         setMinimumSize(new java.awt.Dimension(200, 60));

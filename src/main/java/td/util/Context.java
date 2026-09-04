@@ -15,7 +15,7 @@ public class Context {
     public int scale = 32;
     public int maxX, maxY;
     public EnemyMob[] enemies;
-    public List<Tower> towers;
+    public final List<Tower> towers;
     private final TowerDefence mainApp;
     private int enemyCount = 0;
     private Path path;
@@ -33,10 +33,10 @@ public class Context {
 
     public Context(TowerDefence mainApp) {
         this.mainApp = mainApp;
-        this.contextListeners = new CopyOnWriteArrayList<ContextListener>();
-        this.towerListeners = new CopyOnWriteArrayList<TowerListener>();
-        this.waveListeners = new CopyOnWriteArrayList<WaveStartListener>();
-        this.towers = new CopyOnWriteArrayList<Tower>();
+        this.contextListeners = new CopyOnWriteArrayList<>();
+        this.towerListeners = new CopyOnWriteArrayList<>();
+        this.waveListeners = new CopyOnWriteArrayList<>();
+        this.towers = new CopyOnWriteArrayList<>();
         this.path = new PathNormal(this.scale);
         this.cache = Cache.getInstance();
     }

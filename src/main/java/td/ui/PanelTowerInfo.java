@@ -5,9 +5,10 @@ import td.util.Context;
 import td.util.ContextListener;
 
 import javax.swing.*;
+import java.awt.*;
 
-@SuppressWarnings("serial")
 public class PanelTowerInfo extends JPanel implements ContextListener {
+    private static final long serialVersionUID = 1L;
 
     private Context context;
     private Tower selectedTower;
@@ -91,7 +92,7 @@ public class PanelTowerInfo extends JPanel implements ContextListener {
         setLayout(new java.awt.GridBagLayout());
 
         setBackground(new java.awt.Color(0, 0, 0));
-        setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Info", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 0, 11), new java.awt.Color(220, 255, 220)));
+        setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Info", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", Font.PLAIN, 11), new java.awt.Color(220, 255, 220)));
         setForeground(new java.awt.Color(220, 255, 220));
         setMaximumSize(new java.awt.Dimension(200, 2147483647));
         setMinimumSize(new java.awt.Dimension(200, 150));

@@ -13,8 +13,8 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("serial")
 public class PanelTowerSelector extends JPanel implements ContextListener {
+    private static final long serialVersionUID = 1L;
 
     private final BufferedImage[] images;
     private final JToggleButton[] buttons;
@@ -27,11 +27,11 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
 
     public PanelTowerSelector() {
         initComponents();
-        this.towerTypes = new ArrayList<TowerFactory.type>();
+        this.towerTypes = new ArrayList<>();
 
         TowerFactory.type[] types = TowerFactory.type.values();
-        for (int i = 0; i < types.length; i++) {
-            this.towerTypes.add(TowerFactory.type.valueOf(types[i].toString()));
+        for (TowerFactory.type type : types) {
+            this.towerTypes.add(TowerFactory.type.valueOf(type.toString()));
         }
 
         this.images = new BufferedImage[this.towerTypes.size()];
@@ -105,8 +105,8 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
     }
 
     private void untoggleAll() {
-        for (int i = 0; i < this.buttons.length; i++) {
-            this.buttons[i].setSelected(false);
+        for (JToggleButton button : this.buttons) {
+            button.setSelected(false);
         }
     }
 
@@ -128,7 +128,7 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
         setLayout(new java.awt.GridBagLayout());
 
         setBackground(new java.awt.Color(0, 0, 0));
-        setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Towers", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 0, 11), new java.awt.Color(220, 255, 220)));
+        setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Towers", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", Font.PLAIN, 11), new java.awt.Color(220, 255, 220)));
         setForeground(new java.awt.Color(220, 255, 220));
     }
 

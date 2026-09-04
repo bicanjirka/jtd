@@ -8,9 +8,9 @@ import java.awt.geom.Line2D;
 
 public class TowerOne extends AbstractTower {
 
-    public static int price = 10;
-    public static int damage = 4000;
-    public static float range = 3.8f;
+    public static final int price = 10;
+    public static final int damage = 4000;
+    public static final float range = 3.8f;
 
     private int coolDown = 0;
 

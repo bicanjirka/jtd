@@ -6,6 +6,7 @@ import td.wave.Point;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.util.Objects;
 
 public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
 
@@ -21,7 +22,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
     protected AffineTransform atTranslate;
     protected int speed = 40;
     protected int speedMax = 40;
-    protected int speedBase = 40;
+    protected final int speedBase = 40;
     protected int health;
     protected int healthMax;
     protected int alpha = 255;
@@ -91,8 +92,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
     }
 
     public int getProgression() {
-        int i = 1000 * this.segment + this.segmentProgression;
-        return i;
+        return 1000 * this.segment + this.segmentProgression;
     }
 
     public boolean validTarget() {
@@ -154,7 +154,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         } catch (CloneNotSupportedException ex) {
             ex.printStackTrace();
         }
-        newEnemy.doInit(context, delay, health, price, level);
+        Objects.requireNonNull(newEnemy).doInit(context, delay, health, price, level);
 
         return newEnemy;
     }

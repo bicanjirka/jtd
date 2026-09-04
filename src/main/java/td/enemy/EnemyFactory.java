@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class EnemyFactory {
 
-    private static final Map<String, Enemy> table = new HashMap<String, Enemy>();
+    private static final Map<String, Enemy> table = new HashMap<>();
 
     static {
         for (Enemy enemy : Enemy.values()) {

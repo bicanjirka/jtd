@@ -7,8 +7,8 @@ import td.util.Context;
 import java.util.*;
 
 public class Wave {
-    private final List<EnemyMob> enemies = new ArrayList<EnemyMob>();
-    private final List<String[]> nameStrings = new ArrayList<String[]>();
+    private final List<EnemyMob> enemies = new ArrayList<>();
+    private final List<String[]> nameStrings = new ArrayList<>();
     private final int baseHealth;
     private final int basePrice;
     private boolean finalised = false;
@@ -16,7 +16,7 @@ public class Wave {
     private final int level;
     private int emptyMobs;
 
-    private final Map<EnemyFactory.Enemy, Integer> enemyCounts = new HashMap<EnemyFactory.Enemy, Integer>();
+    private final Map<EnemyFactory.Enemy, Integer> enemyCounts = new HashMap<>();
 
     public Wave(Context context, int baseHealth, int basePrice, int level) {
         this.baseHealth = baseHealth;
@@ -48,7 +48,7 @@ public class Wave {
         if (i == null) {
             return 0;
         }
-        return i.intValue();
+        return i;
     }
 
     public int enemyCount() {
@@ -59,24 +59,23 @@ public class Wave {
     }
 
     private void finalise() {
-        for (int j = 0; j < this.nameStrings.size(); j++) {
-            String[] names = this.nameStrings.get(j);
+        for (String[] names : this.nameStrings) {
             int nr = 1;
             int count = 0;
-            for (int i = 0; i < names.length; i++) {
-                if (EnemyFactory.isEnemy(names[i])) {
-                    this.countEnemy(EnemyFactory.identifyEnemy(names[i]), nr);
-                    if (names[i].equals(EnemyFactory.Enemy.Empty.getName())) {
+            for (String name : names) {
+                if (EnemyFactory.isEnemy(name)) {
+                    this.countEnemy(EnemyFactory.identifyEnemy(name), nr);
+                    if (name.equals(EnemyFactory.Enemy.Empty.getName())) {
                         this.emptyMobs += nr;
                     }
                     for (int e = 0; e < nr; e++) {
-                        enemies.add(EnemyFactory.getEnemy(names[i], this.context, count, this.baseHealth, this.basePrice, this.level));
+                        enemies.add(EnemyFactory.getEnemy(name, this.context, count, this.baseHealth, this.basePrice, this.level));
                         count++;
                     }
                     nr = 1;
                 } else {
                     try {
-                        nr = Integer.parseInt(names[i]);
+                        nr = Integer.parseInt(name);
                     } catch (NumberFormatException ex) {
                         ex.printStackTrace();
                         nr = 1;
@@ -91,7 +90,7 @@ public class Wave {
         if (!this.finalised) {
             this.finalise();
         }
-        return enemies.toArray(new EnemyMob[enemies.size()]);
+        return enemies.toArray(new EnemyMob[0]);
     }
 
     public int getBaseHealth() {

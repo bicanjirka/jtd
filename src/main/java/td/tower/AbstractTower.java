@@ -13,14 +13,14 @@ public abstract class AbstractTower implements Tower {
 
     protected Context context;
     protected String name;
-    protected List<TowerUpgrade> upgTowers;
+    protected final List<TowerUpgrade> upgTowers;
     protected int boardX;
     protected int boardY;
     protected int centerX;
     protected int centerY;
-    protected float rangeBase = 0;
-    protected int damageBase = 0;
-    protected int damageCurrent = 0;
+    protected float rangeBase;
+    protected int damageBase;
+    protected int damageCurrent;
     protected int coolDownMax;
     protected float rangeReal = 0;
     protected float rangeReal2 = 0;
@@ -30,8 +30,8 @@ public abstract class AbstractTower implements Tower {
     protected boolean passive = false;
     protected boolean selected = false;
     private final TowerFactory.type type;
-    private float rangeCurrent = 0;
-    private int price = 0;
+    private float rangeCurrent;
+    private final int price;
 
 
     public AbstractTower(TowerFactory.type t, int price, int damage, float range) {
@@ -39,7 +39,7 @@ public abstract class AbstractTower implements Tower {
         this.type = t;
         this.damageBase = this.damageCurrent = damage;
         this.rangeBase = this.rangeCurrent = range;
-        this.upgTowers = new ArrayList<TowerUpgrade>();
+        this.upgTowers = new ArrayList<>();
     }
 
     protected void doInit(Context context, int x, int y) {
@@ -141,8 +141,7 @@ public abstract class AbstractTower implements Tower {
                         this.calcDamageRange();
                     }
                 }
-                default -> {
-                }
+                default -> {}
             }
         }
     }
@@ -155,8 +154,7 @@ public abstract class AbstractTower implements Tower {
                 tupg.removeClient(this);
                 this.calcDamageRange();
             }
-            default -> {
-            }
+            default -> {}
         }
     }
 

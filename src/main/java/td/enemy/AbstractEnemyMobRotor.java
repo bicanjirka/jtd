@@ -18,11 +18,9 @@ public abstract class AbstractEnemyMobRotor extends AbstractEnemyMob {
 
     @Override
     public void paint(Graphics2D g2, int gameTime) {
-        if (this.inactive || this.dead) {
-            this.prevPaintTime = gameTime;
-        } else {
+        if (!this.inactive && !this.dead) {
             this.atRotate.rotate(this.rotPerTime * (gameTime - this.prevPaintTime));
-            this.prevPaintTime = gameTime;
         }
+        this.prevPaintTime = gameTime;
     }
 }
