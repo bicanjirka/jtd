@@ -9,16 +9,18 @@ import java.awt.*;
  * Minimal test double for {@link Cell} that just records whether/how
  * {@link #enable(boolean)} was called, so tests can assert on it without
  * needing a real {@code CellNormal} (which requires a {@code Context}).
+ * Public so other test packages (e.g. building a {@code Cell[][]} grid to
+ * finalise a path for enemy-movement tests) can reuse it too.
  */
-class RecordingCell implements Cell {
+public class RecordingCell implements Cell {
 
     private Boolean lastEnableArg;
 
-    boolean wasDisabled() {
+    public boolean wasDisabled() {
         return Boolean.FALSE.equals(lastEnableArg);
     }
 
-    boolean enableWasCalled() {
+    public boolean enableWasCalled() {
         return lastEnableArg != null;
     }
 
