@@ -12,8 +12,8 @@ import td.cell.Cell;
  */
 public class PathNormal implements Path {
     
-	private int[] stepsX;
-    private int[] stepsY;
+	private int[] stepsX = new int[0];
+    private int[] stepsY = new int[0];
     private List<Integer> stepXv;
     private List<Integer> stepYv;
     private int scale;
@@ -23,7 +23,6 @@ public class PathNormal implements Path {
      */
     public PathNormal(int scale) {
     	this.scale = scale;
-    	this.stepsX = null;
     	this.stepXv = new ArrayList<Integer>();
         this.stepYv = new ArrayList<Integer>();
     }
@@ -50,28 +49,19 @@ public class PathNormal implements Path {
      * @param step - krok
      * @return - souradnice {x,y}
      */
-    public int[] getStep(int step) {
-        if (this.stepsX.equals(null)) {
-        	int[] retval = {0,0};
-            return retval;
-        } else {
-            if (step < 0) {
-            	int[] retVal = new int[2];
-            	retVal = this.getStep(0);
-            	return retVal;
-            }
-            if (step >= this.stepsX.length) {
-            	int[] retVal = new int[2];
-            	retVal = this.getStep(this.stepsX.length-1);
-            	return retVal;
-            }
-            int[] returnVals = new int[2];
-            int x = stepsX[step];
-            int y = stepsY[step];
-            returnVals[0] = x * scale + (scale/2);
-            returnVals[1] = y * scale + (scale/2);
-            return returnVals;
+    public Point getStep(int step) {
+        if (this.stepsX.length == 0) {
+            return new Point(0, 0);
         }
+        if (step < 0) {
+            return this.getStep(0);
+        }
+        if (step >= this.stepsX.length) {
+            return this.getStep(this.stepsX.length-1);
+        }
+        int x = stepsX[step];
+        int y = stepsY[step];
+        return new Point(x * scale + (scale/2), y * scale + (scale/2));
     }
     /**
      * Ukonci nacitani cesty a prevede nasbirane souradnice
