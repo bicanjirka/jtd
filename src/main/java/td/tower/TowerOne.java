@@ -93,19 +93,15 @@ public class TowerOne extends AbstractTower {
 	}
 	
 	public String getInfoString() {
-		String s = "";
-		s +=	"Triangle tower\n\n" +
+		return "Triangle tower\n\n" +
 				super.getInfoString() +
 				"Targets first one";
-		return s;
 	}
-	
+
 	public String getStatusString() {
-		String s = "";
-		s +=	"Triangle tower\n\n" +
+		return "Triangle tower\n\n" +
 				super.getStatusString() +
 				"Targets first one";
-		return s;
 	}
 	
 }

@@ -104,21 +104,15 @@ public class TowerUpgrade extends AbstractTower implements TowerListener {
     }
     
     public String getInfoString() {
-		String s = "";
-		s +=	"Power tower\n\n" +
+		return "Power tower\n\n" +
 				super.getInfoString() +
 				"Increases damage and range of nearby towers by " + (TowerUpgrade.power*100) + "%";
-				
-		return s;
 	}
-    
+
     public String getStatusString() {
-		String s = "";
-		s +=	"Power tower\n\n" +
+		return "Power tower\n\n" +
 				super.getStatusString() +
 				"Increases damage and range of nearby towers by " + (TowerUpgrade.power*100) + "%\n\n" +
 				"Affects towers: " + this.clients.size();
-				
-		return s;
 	}
 }

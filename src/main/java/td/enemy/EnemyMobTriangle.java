@@ -77,10 +77,10 @@ public class EnemyMobTriangle extends AbstractEnemyMobRotor {
 
 	@Override
 	public String getInfoString() {
-		String retString = "";
-        retString += 	"Triangle mob\n\n" +
-						"Increases speed as it takes damage.";
-        return retString;
+		return """
+				Triangle mob
+
+				Increases speed as it takes damage.""";
 	}
 
 }

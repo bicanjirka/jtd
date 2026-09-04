@@ -130,29 +130,25 @@ public abstract class AbstractTower implements Tower {	//TODO rotovaci obrazky??
 	}
 	
 	public String getInfoString() {
-		String s = "";
-		s += 	"Price: " + this.price + "\n" +
+		String s = "Price: " + this.price + "\n" +
 				"Range: " + this.rangeBase + "\n";
-				if (this.passive) {
-					s += 	"\n";
-				} else {
-					s += 	"Damage: " + this.damageBase/100f + "\n" +
-							"Fire rate: " + 20f/(this.coolDownMax+1) + "/s\n\n";
-				}
-				
+		if (this.passive) {
+			s += "\n";
+		} else {
+			s += "Damage: " + this.damageBase/100f + "\n" +
+					"Fire rate: " + 20f/(this.coolDownMax+1) + "/s\n\n";
+		}
 		return s;
 	}
-	
+
 	public String getStatusString() {
-		String s = "";
-		s += 	"Range: " + this.rangeCurrent + "\n";
-				if (this.passive) {
-					s += 	"\n";
-				} else {
-					s += 	"Damage: " + this.damageCurrent/100f + "\n" +
-							"Fire rate: " + 20f/(this.coolDownMax+1) + "/s\n\n";
-				}
-				
+		String s = "Range: " + this.rangeCurrent + "\n";
+		if (this.passive) {
+			s += "\n";
+		} else {
+			s += "Damage: " + this.damageCurrent/100f + "\n" +
+					"Fire rate: " + 20f/(this.coolDownMax+1) + "/s\n\n";
+		}
 		return s;
 	}
 	

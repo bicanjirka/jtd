@@ -32,10 +32,10 @@ public class EnemyMobCircle extends AbstractEnemyMob{
 	}
 	
     public String getInfoString() {
-        String retString = "";
-        retString += 	"Simple mob\n\n" +
-        				"No special abilities.";
-        return retString;
+        return """
+                Simple mob
+
+                No special abilities.""";
     }
     
     public void paint(Graphics2D g2, int gameTime) {

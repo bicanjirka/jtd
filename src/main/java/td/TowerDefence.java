@@ -46,16 +46,18 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
 	private GameBoard 		gameBoard;
 	private BufferedImage	backGround;
 	private Cell[][]		cellGrid;
-	private String			statusMessage = "Welcome to TowerDefence\n" + 
-											"Shortcuts:\n\n" +
-											"q - build triangle\n" +
-											"w - build circle\n" +
-											"e - build spiral\n" +
-											"r - build star\n" +
-											"t - build jing-jang\n" +
-											"p - pause\n" +
-											"f - slow speed\n" +
-											"s - star wave";
+	private String			statusMessage = """
+											Welcome to TowerDefence
+											Shortcuts:
+
+											q - build triangle
+											w - build circle
+											e - build spiral
+											r - build star
+											t - build jing-jang
+											p - pause
+											f - slow speed
+											s - star wave""";
 	
     private boolean             startWave = false;
     private boolean             waveReady = true;
