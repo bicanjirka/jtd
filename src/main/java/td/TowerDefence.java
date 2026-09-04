@@ -8,6 +8,7 @@ import td.ui.GameBoard;
 import td.util.Cache;
 import td.util.Context;
 import td.util.ContextListener;
+import td.util.GameHost;
 import td.wave.Path;
 import td.wave.Wave;
 
@@ -19,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // Inspired by HexTD
-public class TowerDefence extends JFrame implements Runnable, ContextListener {
+public class TowerDefence extends JFrame implements Runnable, ContextListener, GameHost {
     private static final long serialVersionUID = 1L;
     private static final String NAME = "Tower Defence";
     private static final String VERSION = "1.3";
