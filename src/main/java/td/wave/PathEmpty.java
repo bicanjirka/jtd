@@ -19,9 +19,8 @@ public class PathEmpty implements Path {
 	}
 
 	@Override
-	public int[] getStep(int step) {
-		int[] retVal = {x, y};
-        return retVal;
+	public Point getStep(int step) {
+		return new Point(x, y);
 	}
 
 	@Override

@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import td.util.Context;
 import td.wave.Path;
+import td.wave.Point;
 
 /**
  * Abstraktni trida nepratel
@@ -28,8 +29,8 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
     private Path path;
     private int segment = 0;
     private int segmentProgression = 0;//TODO float 0..1, automaticke pocitani vzdalenosti, aby se dalo chodit i sikmo - napadl me problem ze by se pak nedalo po takovym segmentProgression moc speedovat
-    private int[] segmentStartPoint;
-    private int[] segmentEndPoint;
+    private Point segmentStartPoint;
+    private Point segmentEndPoint;
     
     //protected int acceleration = 1;
     protected int speed = 40;
@@ -130,8 +131,8 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
     private void resetPosition() {
         this.segmentStartPoint = this.path.getStep(this.segment);
         this.segmentEndPoint = this.path.getStep(this.segment+1);
-        this.x = this.segmentStartPoint[0] + (this.segmentEndPoint[0]-this.segmentStartPoint[0])*this.segmentProgression/1000;
-        this.y = this.segmentStartPoint[1] + (this.segmentEndPoint[1]-this.segmentStartPoint[1])*this.segmentProgression/1000;
+        this.x = this.segmentStartPoint.x() + (this.segmentEndPoint.x()-this.segmentStartPoint.x())*this.segmentProgression/1000;
+        this.y = this.segmentStartPoint.y() + (this.segmentEndPoint.y()-this.segmentStartPoint.y())*this.segmentProgression/1000;
     }
     
     public void doTick(int gameTime) {
@@ -161,8 +162,8 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
                 this.segmentStartPoint = this.path.getStep(this.segment);
                 this.segmentEndPoint = this.path.getStep(this.segment+1);
             }
-            this.x = this.segmentStartPoint[0] + (this.segmentEndPoint[0]-this.segmentStartPoint[0])*this.segmentProgression/1000;
-            this.y = this.segmentStartPoint[1] + (this.segmentEndPoint[1]-this.segmentStartPoint[1])*this.segmentProgression/1000;
+            this.x = this.segmentStartPoint.x() + (this.segmentEndPoint.x()-this.segmentStartPoint.x())*this.segmentProgression/1000;
+            this.y = this.segmentStartPoint.y() + (this.segmentEndPoint.y()-this.segmentStartPoint.y())*this.segmentProgression/1000;
             atTranslate.setToIdentity();
             atTranslate.translate(this.x,this.y);
             //System.out.println("EnemyMobBase::doTick: "+this.x+"."+this.y);
