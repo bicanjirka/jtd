@@ -56,7 +56,6 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
 											"f - slow speed\n" +
 											"s - star wave";
 	
-//	private boolean             autoLaunch = false;
     private boolean             startWave = false;
     private boolean             waveReady = true;
     private boolean             placingTower = false;
@@ -67,7 +66,6 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
     private int             gameTime;
     private Object          paintLock = new Object();
     private boolean         painting = false;
-//    private boolean         noSleep = false;
     private int             tickTime = TICKTIME;
     private boolean         paused = false;
     private boolean         gameStopped = false;
@@ -247,11 +245,6 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
             this.waveReady = true;
             this.jButton_play.setVisible(true);
     	    this.jButton_pause.setVisible(false);
-            /*if (this.autoLaunch) {
-                this.startWave = true;
-            } else {
-                this.jButton_nextWave.setEnabled(true);
-            }*/
         } else if (enemiesLeft == 0 && this.wave >= this.waves.size()) {
             this.gameWon();
         }
@@ -364,8 +357,6 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
      */
     private void toggleGameSpeed(int speed) {
         synchronized(this.gameTimeLock) {
-//            this.noSleep = !this.noSleep;
-//            this.jCheckBox_fastMode.setSelected(this.noSleep);
             this.tickTime = speed;
         }
     }
@@ -612,9 +603,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
   	    });
   	    
   	    java.awt.GridBagConstraints gridBagConstraints;
-  	    
-//  	    jScrollPane1 = new javax.swing.JScrollPane();
-  	    
+
   	    jPanel_board = new javax.swing.JPanel();
   	    	jPanel_gameLost = new javax.swing.JPanel();
   	    		jLabel_gameLostText = new javax.swing.JLabel();		
@@ -632,9 +621,6 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
   	    		jLabel_creditsText = new javax.swing.JLabel();
   	    		jLabel_credits = new javax.swing.JLabel();
     		jPanel_gameButtons = new javax.swing.JPanel();
-    			/*jButton_nextWave = new javax.swing.JButton();
-    			jCheckBox_autoLaunch = new javax.swing.JCheckBox();
-    			jCheckBox_fastMode = new javax.swing.JCheckBox();*/
     			jButton_play = new javax.swing.JButton();
     			jButton_pause = new javax.swing.JButton();
     			jButton_fast = new javax.swing.JButton();
@@ -661,23 +647,6 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
     			jPanel_boardMouseMoved(evt);
     		}
     	});
-//    	////////////////////////////////
-//    	javax.swing.JScrollPane jScrollPane1;
-//    	jScrollPane1 = new javax.swing.JScrollPane();
-//    	jScrollPane1.setBackground(new java.awt.Color(0, 0, 0));
-//        jScrollPane1.setBorder(null);
-//        jScrollPane1.setForeground(new java.awt.Color(220, 255, 220));
-//        jScrollPane1.setViewportView(this.gameBoard);
-//
-//        gridBagConstraints = new java.awt.GridBagConstraints();
-//        gridBagConstraints.gridx = 0;
-//        gridBagConstraints.gridy = 0;
-//        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-//        gridBagConstraints.weightx = 0.01;
-//        gridBagConstraints.weighty = 0.01;
-//        jPanel_board.add(jScrollPane1, gridBagConstraints);
-//    	
-//    	////////////////////////////////
 
     	jPanel_gameLost.setLayout(new java.awt.GridBagLayout());
 
@@ -932,44 +901,6 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
         gridBagConstraints.insets = new java.awt.Insets(5, 2, 0, 0);
         jPanel_gameButtons.add(jButton_superFast, gridBagConstraints);
 
-//        jCheckBox_autoLaunch.setBackground(new java.awt.Color(0, 0, 0));
-//        jCheckBox_autoLaunch.setForeground(new java.awt.Color(220, 255, 220));
-//        jCheckBox_autoLaunch.setText("Auto Launch");
-//        jCheckBox_autoLaunch.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-//        jCheckBox_autoLaunch.setFocusable(false);
-//        jCheckBox_autoLaunch.setMargin(new java.awt.Insets(0, 0, 0, 0));
-//        jCheckBox_autoLaunch.addChangeListener(new javax.swing.event.ChangeListener() {
-//            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-//                jCheckBox_autoLaunchStateChanged(evt);
-//            }
-//        });
-//
-//        gridBagConstraints = new java.awt.GridBagConstraints();
-//        gridBagConstraints.gridx = 0;
-//        gridBagConstraints.gridy = 1;
-//        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
-//        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-//        gridBagConstraints.insets = new java.awt.Insets(5, 5, 0, 0);
-//        jPanel_gameButtons.add(jCheckBox_autoLaunch, gridBagConstraints);
-//
-//        jCheckBox_fastMode.setBackground(new java.awt.Color(0, 0, 0));
-//        jCheckBox_fastMode.setForeground(new java.awt.Color(220, 255, 220));
-//        jCheckBox_fastMode.setText("Fast Mode");
-//        jCheckBox_fastMode.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-//        jCheckBox_fastMode.setMargin(new java.awt.Insets(0, 0, 0, 0));
-//        jCheckBox_fastMode.addChangeListener(new javax.swing.event.ChangeListener() {
-//            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-//                jCheckBox1StateChanged(evt);
-//            }
-//        });
-//
-//        gridBagConstraints = new java.awt.GridBagConstraints();
-//        gridBagConstraints.gridx = 1;
-//        gridBagConstraints.gridy = 1;
-//        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-//        gridBagConstraints.insets = new java.awt.Insets(5, 5, 0, 0);
-//        jPanel_gameButtons.add(jCheckBox_fastMode, gridBagConstraints);
-
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
@@ -1018,18 +949,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
         getContentPane().add(panelTowerSelector, gridBagConstraints);
     	
     }
-	  
-	  /*private void jCheckBox1StateChanged(javax.swing.event.ChangeEvent evt) {
-	      this.noSleep = this.jCheckBox_fastMode.isSelected();
-	      synchronized(this.gameTimeLock) {
-	          if (this.noSleep) {
-	              this.tickTime = 15;
-	          } else {
-	              this.tickTime = 50;
-	          }
-	      }
-	  }*/
-	  
+
 	  private void jButton_playActionPerformed(java.awt.event.ActionEvent evt) {
 		  this.toggleGameSpeed(TICKTIME);
 	      if (this.waveReady && !this.paused) this.startWave = true;
@@ -1043,8 +963,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
 	  private void jButton_fastActionPerformed(java.awt.event.ActionEvent evt) {
 		  this.jButton_play.setVisible(true);
   	      this.jButton_pause.setVisible(false);
-		  /*if (this.paused) this.doTick(this.tickTime);
-		  else */this.toggleGameSpeed(FASTTICKTIME);			//TODO kdyz je pauza, tak po stisknuti hra jednou tikne
+		  this.toggleGameSpeed(FASTTICKTIME);			//TODO kdyz je pauza, tak po stisknuti hra jednou tikne
 	  }
 	  
 	  private void jButton_superFastActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1067,12 +986,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
 	  private void formKeyTyped(KeyEvent evt) {
 	      this.keyTyped(evt.getKeyChar());
 	  }
-	  
-//	  private javax.swing.JScrollPane jScrollPane1;
-	  
-//	  private javax.swing.JButton jButton_nextWave;
-//	  private javax.swing.JCheckBox jCheckBox_fastMode;
-//	  private javax.swing.JCheckBox jCheckBox_autoLaunch;
+
 	  private javax.swing.JButton jButton_play;
 	  private javax.swing.JButton jButton_pause;
 	  private javax.swing.JButton jButton_fast;

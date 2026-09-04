@@ -102,61 +102,6 @@ public abstract class AbstractTower implements Tower {	//TODO rotovaci obrazky??
 		this.selected = selected;
 	}
 	
-	/*protected EnemyMob[] findEnemiesInRange(float x, float y, float r) {
-        Vector<EnemyMob> tempEnemies = new Vector<EnemyMob>();
-        float r2 = r*r;
-        float dx, dy, d2;
-        if (this.context.enemies != null) {
-            for (int i=0; i<this.context.enemies.length; i++) {
-                if (this.context.enemies[i].validTarget()) {
-                    dx = this.context.enemies[i].getX() - x;
-                    dy = this.context.enemies[i].getY() - y;
-                    d2 = dx*dx + dy*dy;
-                    if (d2 < r2) {
-                        tempEnemies.add(this.context.enemies[i]);
-                    }
-                }
-            }
-        }
-        EnemyMob[] retVal = new EnemyMob[tempEnemies.size()];
-        retVal = tempEnemies.toArray(retVal);
-        return retVal;
-    }*/
-	
-	/*protected int findEnemy(int preferedEnemyNr) {	//nearest one
-        int foundEnemy = -1;
-        float distance2Min = 1E10f;
-        float distance2;
-        float dx,dy;
-        EnemyMob e;
-        if (this.context.enemies != null) {
-            if (preferedEnemyNr >= 0 && preferedEnemyNr < this.context.enemies.length) {
-                e = this.context.enemies[preferedEnemyNr];
-                if (e.validTarget()) {
-                    dx = this.context.enemies[preferedEnemyNr].getX()-this.centerX;
-                    dy = this.context.enemies[preferedEnemyNr].getY()-this.centerY;
-                    distance2 = dx*dx + dy*dy;
-                    if (distance2 < this.rangeReal2) {
-                        return preferedEnemyNr;
-                    }
-                }
-            }
-            for (int i=0; i<this.context.enemies.length; i++) {
-                e = this.context.enemies[i];
-                if ( e.validTarget()) {
-                    dx = this.context.enemies[i].getX()-this.centerX;
-                    dy = this.context.enemies[i].getY()-this.centerY;
-                    distance2 = dx*dx + dy*dy;
-                    if (distance2 < this.rangeReal2 && distance2 < distance2Min) {
-                        distance2Min = distance2;
-                        foundEnemy = i;
-                    }
-                }
-            }
-        }
-        return foundEnemy;
-    }*/
-	
 	public void paint(Graphics2D g2, int gameTime) {
 		if (this.selected) {
 			g2.setColor(Color.PINK);
