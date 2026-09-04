@@ -9,10 +9,10 @@ import java.util.List;
 
 public class TowerUpgrade extends AbstractTower implements TowerListener {
 
-    public static int price = 20;
-    public static int damage = 0;
-    public static float range = 1.5f;
-    public static float power = 0.2f;
+    public static final int price = 20;
+    public static final int damage = 0;
+    public static final float range = 1.5f;
+    public static final float power = 0.2f;
 
     private final List<Tower> clients;
 
@@ -21,7 +21,7 @@ public class TowerUpgrade extends AbstractTower implements TowerListener {
         this.name = "upg";
         this.lineColor = Color.WHITE;
         this.passive = true;
-        this.clients = new ArrayList<Tower>();
+        this.clients = new ArrayList<>();
         this.doInit(context, x, y);
 
         this.context.addTowerListener(this);
@@ -33,8 +33,7 @@ public class TowerUpgrade extends AbstractTower implements TowerListener {
         for (Tower t : this.context.towers) {
             if (!this.clients.contains(t)) {
                 switch (t.getType()) {
-                    case upgrade -> {
-                    }
+                    case upgrade -> {}
                     default -> {
                         dx = this.centerX - t.getX();
                         dy = this.centerY - t.getY();
@@ -58,8 +57,7 @@ public class TowerUpgrade extends AbstractTower implements TowerListener {
     public void towerBuild(Tower t) {
         if (t != this && !this.clients.contains(t)) {
             switch (t.getType()) {
-                case upgrade -> {
-                }
+                case upgrade -> {}
                 default -> {
                     int dx = this.centerX - t.getX();
                     int dy = this.centerY - t.getY();

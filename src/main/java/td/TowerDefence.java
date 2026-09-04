@@ -20,7 +20,6 @@ import java.util.List;
 
 // Inspired by HexTD
 public class TowerDefence extends JFrame implements Runnable, ContextListener {
-
     private static final long serialVersionUID = 1L;
     private static final String NAME = "Tower Defence";
     private static final String VERSION = "1.3";
@@ -98,8 +97,6 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
     }
 
     public TowerDefence() {
-
-        System.out.println("Starting TowerDefence.");
         this.context = new Context(this);
         this.towers = this.context.towers;
         this.context.addContextListener(this);
@@ -173,7 +170,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
         this.gameBoard.recalculateBoard(width, height);
         this.context.maxX = (this.cellGrid.length) * this.context.scale - 1;
         this.context.maxY = (this.cellGrid[0].length) * this.context.scale - 1;
-        this.waves = new ArrayList<Wave>();
+        this.waves = new ArrayList<>();
         Path path = this.context.getPath();
         int[] pathx = {-1, 0, 1, 2, 3, 4, 5, 5, 6, 7, 7, 7, 7, 7, 7, 7, 6, 5, 4, 4, 3, 3, 3, 3, 4, 5, 6, 6, 7, 8, 9, 10, 11, 11, 11, 12, 13, 14, 14, 14, 15, 16, 17, 17, 17, 17, 16, 15, 15, 15, 15, 14, 13, 12, 12, 12, 12, 13, 14, 15, 16, 17, 18, 19, 20};
         int[] pathy = {11, 11, 11, 11, 11, 11, 11, 12, 12, 12, 11, 10, 9, 8, 7, 6, 6, 6, 6, 5, 5, 4, 3, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 5, 5, 5, 5, 4, 3, 3, 3, 3, 4, 5, 6, 6, 6, 7, 8, 9, 9, 9, 9, 10, 11, 12, 12, 12, 12, 12, 12, 12, 12, 12};
@@ -223,7 +220,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
             this.waveReady = true;
             this.jButton_play.setVisible(true);
             this.jButton_pause.setVisible(false);
-        } else if (enemiesLeft == 0 && this.wave >= this.waves.size()) {
+        } else if (enemiesLeft == 0) {
             this.gameWon();
         }
     }
@@ -293,8 +290,8 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
                 this.context.enemies[i].doTick(time);
             }
         }
-        for (int i = 0; i < this.towers.size(); i++) {
-            this.towers.get(i).doTick(time);
+        for (Tower tower : this.towers) {
+            tower.doTick(time);
         }
         this.panelWaveInfo.doTick(time);
     }
@@ -323,9 +320,9 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
         g2.drawImage(this.backGround, 0, 0, null);
 
         if (this.cellGrid != null) {
-            for (int i = 0; i < this.cellGrid.length; i++) {
+            for (Cell[] cells : this.cellGrid) {
                 for (int j = 0; j < this.cellGrid[0].length; j++) {
-                    this.cellGrid[i][j].paintEffect(g2);
+                    cells[j].paintEffect(g2);
                 }
             }
         }
@@ -336,12 +333,12 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
             }
         }
 
-        for (int i = 0; i < this.towers.size(); i++) {
-            this.towers.get(i).paint(g2, time);
+        for (Tower tower : this.towers) {
+            tower.paint(g2, time);
         }
 
-        for (int i = 0; i < this.towers.size(); i++) {
-            this.towers.get(i).paintEffect(g2, time);
+        for (Tower tower : this.towers) {
+            tower.paintEffect(g2, time);
         }
 
         synchronized (this.paintLock) {
@@ -520,7 +517,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
 
         jPanel_gameLost.setBackground(new java.awt.Color(0, 0, 0, 80));
         jLabel_gameLostText.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_gameLostText.setFont(new java.awt.Font("SansSerif", 1, 18));
+        jLabel_gameLostText.setFont(new java.awt.Font("SansSerif", Font.BOLD, 18));
         jLabel_gameLostText.setForeground(new java.awt.Color(220, 255, 220));
         jLabel_gameLostText.setText("Game Over!");
         jPanel_gameLost.add(jLabel_gameLostText, new java.awt.GridBagConstraints());
@@ -537,7 +534,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
 
         jPanel_gameWon.setBackground(new java.awt.Color(0, 0, 0, 80));
         jLabel_gameWonText.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_gameWonText.setFont(new java.awt.Font("SansSerif", 1, 18));
+        jLabel_gameWonText.setFont(new java.awt.Font("SansSerif", Font.BOLD, 18));
         jLabel_gameWonText.setForeground(new java.awt.Color(220, 255, 220));
         jLabel_gameWonText.setText("Congratulations!");
         jPanel_gameWon.add(jLabel_gameWonText, new java.awt.GridBagConstraints());
@@ -568,7 +565,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
         jPanel_console.setPreferredSize(new java.awt.Dimension(200, 402));
 
         jLabel_name.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_name.setFont(new java.awt.Font("Dialog", 1, 16));
+        jLabel_name.setFont(new java.awt.Font("Dialog", Font.BOLD, 16));
         jLabel_name.setForeground(new java.awt.Color(220, 255, 220));
         jLabel_name.setText(NAME + " v" + VERSION);
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -581,7 +578,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
         jPanel_gameInfo.setLayout(new java.awt.GridBagLayout());
 
         jPanel_gameInfo.setBackground(new java.awt.Color(0, 0, 0));
-        jPanel_gameInfo.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Status", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 0, 11), new java.awt.Color(220, 255, 220)));
+        jPanel_gameInfo.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Status", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", Font.PLAIN, 11), new java.awt.Color(220, 255, 220)));
         jPanel_gameInfo.setForeground(new java.awt.Color(220, 255, 220));
         jPanel_gameInfo.setFocusable(false);
         jLabel_waveText.setBackground(new java.awt.Color(0, 0, 0));

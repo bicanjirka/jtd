@@ -10,9 +10,9 @@ import java.util.List;
 
 public class TowerFour extends AbstractTower {
 
-    public static int price = 25;
-    public static int damage = 200;
-    public static float range = 1.5f;
+    public static final int price = 25;
+    public static final int damage = 200;
+    public static final float range = 1.5f;
 
     private final Color transColor;
     private boolean fire = false;
@@ -29,7 +29,7 @@ public class TowerFour extends AbstractTower {
     }
 
     private EnemyMob[] findEnemiesInRange(int x, int y, float r) {
-        List<EnemyMob> tempEnemies = new ArrayList<EnemyMob>();
+        List<EnemyMob> tempEnemies = new ArrayList<>();
         EnemyMob e;
         float r2 = r * r;
         int dx, dy, d2;
@@ -59,8 +59,8 @@ public class TowerFour extends AbstractTower {
         EnemyMob[] enemies = this.findEnemiesInRange(this.centerX, this.centerY, this.rangeReal);
         if (enemies.length > this.ghosts) {
             this.fire = true;
-            for (int i = 0; i < enemies.length; i++) {
-                enemies[i].doDamage(this.damageCurrent);
+            for (EnemyMob enemy : enemies) {
+                enemy.doDamage(this.damageCurrent);
             }
         } else {
             this.fire = false;

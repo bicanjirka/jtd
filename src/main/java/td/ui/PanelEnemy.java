@@ -8,14 +8,13 @@ import td.wave.PathEmpty;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@SuppressWarnings("serial")
 public class PanelEnemy extends JPanel {
+    private static final long serialVersionUID = 1L;
 
-    private final List<EnemyMob> enemies = new CopyOnWriteArrayList<EnemyMob>();
+    private final List<EnemyMob> enemies = new CopyOnWriteArrayList<>();
     private int[] enemiesCount;
     private Font font;
     private final Context contextLocal;
@@ -58,15 +57,13 @@ public class PanelEnemy extends JPanel {
 
     public void recalculateSize() {
         this.pWidth = this.getWidth();
-        if (this.enemies.size() > 0) {
+        if (!this.enemies.isEmpty()) {
             this.pHeight = Math.min(this.pWidth / this.enemies.size(), this.getHeight());
-            this.scale = this.pHeight;
-            this.contextLocal.scale = this.scale;
         } else {
             this.pHeight = this.getHeight();
-            this.scale = this.pHeight;
-            this.contextLocal.scale = this.scale;
         }
+        this.scale = this.pHeight;
+        this.contextLocal.scale = this.scale;
         this.font = new Font(Font.DIALOG, Font.PLAIN, (int) (0.30 * this.scale));
     }
 
@@ -82,8 +79,7 @@ public class PanelEnemy extends JPanel {
         g2.fillRect(0, 0, this.pWidth, this.pHeight);
         int nr = 0;
 
-        for (Iterator<EnemyMob> i = this.enemies.iterator(); i.hasNext(); ) {
-            EnemyMob e = i.next();
+        for (EnemyMob e : this.enemies) {
             e.paint(g2, this.gameTime);
             g2.setColor(Color.PINK);
             g2.setFont(this.font);

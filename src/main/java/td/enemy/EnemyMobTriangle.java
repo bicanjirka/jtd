@@ -21,7 +21,7 @@ public class EnemyMobTriangle extends AbstractEnemyMobRotor {
 
     protected void doInit(Context context, int delay, int health, int price, int level) {
         super.doInit(context, delay, health, price, level);
-        this.bodyScale = this.context.scale / ((this.level < 6) ? (7 - level) : (2));
+        this.bodyScale = (float) this.context.scale / ((this.level < 6) ? (7 - level) : (2));
         this.bodyShape = this.createTriangle(this.bodyScale, true);
         this.speedMax = (int) (this.speedBase * (1.4 + 0.1 * this.level));
     }
@@ -57,7 +57,7 @@ public class EnemyMobTriangle extends AbstractEnemyMobRotor {
                     int i = gameTime - this.deadTime;
                     if (i > (3 * this.level + 6)) this.gone = true;
                     int alpha = (255 - (i * (255 / ((3 * this.level + 6) + 1))));
-                    g2.setColor(new Color(tempColor.getRed(), tempColor.getGreen(), tempColor.getBlue(), ((alpha < 0) ? 0 : alpha)));
+                    g2.setColor(new Color(tempColor.getRed(), tempColor.getGreen(), tempColor.getBlue(), (Math.max(alpha, 0))));
                     i = i * 2;
                     g2.draw(this.createTriangle(this.bodyScale + i, false));
                     g2.draw(this.createTriangle(this.bodyScale + i, true));

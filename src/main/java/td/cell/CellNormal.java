@@ -67,7 +67,7 @@ public class CellNormal implements Cell {
     public void setHighlightRange(float range) {
         this.highlightRange = range;
         float realRange = this.highlightRange * this.context.scale;
-        float halfScale = this.context.scale / 2;
+        float halfScale = (float) this.context.scale / 2;
         this.rangeCircle = new Ellipse2D.Float(this.x - realRange + halfScale, this.y - realRange + halfScale, realRange * 2, realRange * 2);
     }
 

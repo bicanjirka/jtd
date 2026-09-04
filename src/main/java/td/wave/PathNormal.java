@@ -15,8 +15,8 @@ public class PathNormal implements Path {
 
     public PathNormal(int scale) {
         this.scale = scale;
-        this.stepXv = new ArrayList<Integer>();
-        this.stepYv = new ArrayList<Integer>();
+        this.stepXv = new ArrayList<>();
+        this.stepYv = new ArrayList<>();
     }
 
     public void addStep(int x, int y) {
