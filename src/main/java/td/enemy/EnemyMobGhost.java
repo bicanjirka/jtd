@@ -28,10 +28,10 @@ public class EnemyMobGhost extends AbstractEnemyMob{
 	}
 	
     public String getInfoString() {
-        String retString = "";
-        retString += 	"Ghost mob\n\n" +
-						"Invisible to all towers. Area damage hurts them.";
-        return retString;
+        return """
+                Ghost mob
+
+                Invisible to all towers. Area damage hurts them.""";
     }
     
     public void paint(Graphics2D g2, int gameTime) {

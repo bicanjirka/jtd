@@ -158,21 +158,17 @@ public class TowerTwo extends AbstractTower {
 	}
 	
 	public String getInfoString() {
-		String s = "";
-		s +=	"Circle tower\n\n" +
+		return "Circle tower\n\n" +
 				super.getInfoString() +
 				"Splash radius " + spreadRadiusBase + "\n" +
 				"Targets random";
-		return s;
 	}
-	
+
 	public String getStatusString() {
-		String s = "";
-		s +=	"Circle tower\n\n" +
+		return "Circle tower\n\n" +
 				super.getStatusString() +
 				"Splash radius " + spreadRadiusBase + "\n" +
 				"Targets random";
-		return s;
 	}
 	
 }

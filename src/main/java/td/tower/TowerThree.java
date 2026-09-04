@@ -103,21 +103,17 @@ public class TowerThree extends AbstractTower implements WaveStartListener{
 	}
 	
 	public String getInfoString() {
-		String s = "";
-		s +=	"Sunshine tower\n\n" +
+		return "Sunshine tower\n\n" +
 				super.getInfoString() +
 				"Recharge: " + (this.coolDownRecharge+1)/20f + "s\n" +
 				"Shoots all enemies in range, one by one. Once everyone damaged, needs time to recharge";
-		return s;
 	}
-	
+
 	public String getStatusString() {
-		String s = "";
-		s +=	"Sunshine tower\n\n" +
+		return "Sunshine tower\n\n" +
 				super.getStatusString() +
 				"Recharge: " + (this.coolDownRecharge+1)/20f + "s\n" +
 				"Shoots all enemies in range, one by one. Once everyone damaged, needs time to recharge";
-		return s;
 	}
 
 	public void doCleanup() {

@@ -87,11 +87,9 @@ public class TowerFour extends AbstractTower {
 	}
 	
 	public String getStatusString() {
-		String s = "";
-		s +=	"Stardust tower\n\n" +
+		return "Stardust tower\n\n" +
 				super.getStatusString() +
 				"Hurts everyone in range";
-		return s;
 	}
 	
 }

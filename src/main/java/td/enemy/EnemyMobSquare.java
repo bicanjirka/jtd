@@ -39,10 +39,10 @@ public class EnemyMobSquare extends AbstractEnemyMobRotor{
 	}
 	
     public String getInfoString() {
-        String retString = "";
-        retString += 	"Square mob\n\n" +
-						"Takes less damage.";
-        return retString;
+        return """
+                Square mob
+
+                Takes less damage.""";
     }
     
     public void paint(Graphics2D g2, int gameTime) {
