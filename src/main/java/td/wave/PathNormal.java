@@ -1,6 +1,7 @@
 package td.wave;
 
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import td.cell.Cell;
 
@@ -13,8 +14,8 @@ public class PathNormal implements Path {
     
 	private int[] stepsX;
     private int[] stepsY;
-    private Vector<Integer> stepXv;
-    private Vector<Integer> stepYv;
+    private List<Integer> stepXv;
+    private List<Integer> stepYv;
     private int scale;
     /**
      * Konstruktor
@@ -23,8 +24,8 @@ public class PathNormal implements Path {
     public PathNormal(int scale) {
     	this.scale = scale;
     	this.stepsX = null;
-    	this.stepXv = new Vector<Integer>();
-        this.stepYv = new Vector<Integer>();
+    	this.stepXv = new ArrayList<Integer>();
+        this.stepYv = new ArrayList<Integer>();
     }
     /**
      * Prida dalsi krok do cesty

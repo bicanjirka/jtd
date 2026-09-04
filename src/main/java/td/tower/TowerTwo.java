@@ -7,7 +7,8 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import td.enemy.EnemyMob;
 import td.util.Context;
@@ -54,7 +55,7 @@ public class TowerTwo extends AbstractTower {
 	}
 	
 	private EnemyMob[] findEnemiesInRangeVisible(int x, int y, float r) {
-        Vector<EnemyMob> tempEnemies = new Vector<EnemyMob>();
+        List<EnemyMob> tempEnemies = new ArrayList<EnemyMob>();
         float r2 = r*r;
         int dx, dy, d2;
         if (this.context.enemies != null) {
@@ -76,7 +77,7 @@ public class TowerTwo extends AbstractTower {
     }
 	
 	private EnemyMob[] findEnemiesInRange(int x, int y, float r) {
-        Vector<EnemyMob> tempEnemies = new Vector<EnemyMob>();
+        List<EnemyMob> tempEnemies = new ArrayList<EnemyMob>();
         float r2 = r*r;
         int dx, dy, d2;
         if (this.context.enemies != null) {

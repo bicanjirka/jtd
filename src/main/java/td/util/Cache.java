@@ -1,7 +1,8 @@
 package td.util;
 
 import java.awt.image.BufferedImage;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
@@ -15,11 +16,11 @@ import javax.swing.JOptionPane;
 public class Cache {
 	
 	private static final Cache INSTANCE = new Cache();
-	private Hashtable<String, BufferedImage> cImage;
+	private Map<String, BufferedImage> cImage;
 	
 	private Cache() {
 		
-		this.cImage = new Hashtable<String, BufferedImage>();
+		this.cImage = new HashMap<String, BufferedImage>();
 		
 		try {
 			BufferedImage img;
