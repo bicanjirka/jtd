@@ -814,11 +814,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
         jButton_play.setForeground(new java.awt.Color(0, 0, 0));
         jButton_play.setText(">");
         jButton_play.setFocusable(false);
-        jButton_play.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton_playActionPerformed(evt);
-            }
-        });
+        jButton_play.addActionListener(this::jButton_playActionPerformed);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -834,11 +830,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
         jButton_pause.setText("||");
         jButton_pause.setFocusable(false);
         jButton_pause.setVisible(false);
-        jButton_pause.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton_pauseActionPerformed(evt);
-            }
-        });
+        jButton_pause.addActionListener(this::jButton_pauseActionPerformed);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -853,11 +845,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
         jButton_fast.setForeground(new java.awt.Color(0, 0, 0));
         jButton_fast.setText(">>");
         jButton_fast.setFocusable(false);
-        jButton_fast.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton_fastActionPerformed(evt);
-            }
-        });
+        jButton_fast.addActionListener(this::jButton_fastActionPerformed);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
@@ -872,11 +860,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
         jButton_superFast.setForeground(new java.awt.Color(0, 0, 0));
         jButton_superFast.setText(">>>");
         jButton_superFast.setFocusable(false);
-        jButton_superFast.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton_superFastActionPerformed(evt);
-            }
-        });
+        jButton_superFast.addActionListener(this::jButton_superFastActionPerformed);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
