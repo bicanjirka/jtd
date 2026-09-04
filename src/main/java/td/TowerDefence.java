@@ -6,7 +6,6 @@ import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.swing.JFrame;
@@ -113,10 +112,10 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
 	@Override
 	public void run() {
 		long oldTime, newTime, sleepTime;
-		oldTime = new Date().getTime();
+		oldTime = System.nanoTime();
 		int time;
 		boolean stillPainting;
-		
+
 		//herni cas, zacina na 0 a s kazdym tiknutim roste o 1
 		this.gameTime = 0;
 		//nekonecna smycka
@@ -136,18 +135,18 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener {
 					this.gameBoard.repaint();
 				}
 			}
-			newTime = new Date().getTime();
-            sleepTime = oldTime+this.tickTime-newTime;
-            //System.out.println("Sleeping for "+sleepTime+"ms");
+			newTime = System.nanoTime();
+            sleepTime = oldTime+this.tickTime*1_000_000L-newTime;
+            //System.out.println("Sleeping for "+(sleepTime/1_000_000)+"ms");
             if (sleepTime < 0) {
                 oldTime = newTime;
-                sleepTime = 2;
+                sleepTime = 2_000_000L;
             }
-            oldTime = oldTime+this.tickTime;
+            oldTime = oldTime+this.tickTime*1_000_000L;
             try {
-                //uspi vlakno na ~20ms
-                Thread.sleep(sleepTime);
-                
+                //uspi vlakno na ~tickTime ms
+                Thread.sleep(sleepTime/1_000_000L, (int)(sleepTime%1_000_000L));
+
             } catch (InterruptedException ex) {
                 // do nothing
             }
