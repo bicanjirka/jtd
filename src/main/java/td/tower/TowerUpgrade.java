@@ -5,7 +5,6 @@ import td.tower.Tower;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import td.util.Context;
@@ -33,10 +32,8 @@ public class TowerUpgrade extends AbstractTower implements TowerListener {
     }
     
     private void scanTowers() {
-    	Tower t;
     	int dx,dy;
-    	for (Iterator<Tower> i=this.context.towers.iterator(); i.hasNext();) {
-    		t = i.next();
+    	for (Tower t : this.context.towers) {
     		if (!this.clients.contains(t)) {
     			switch (t.getType()) {
     				case upgrade -> {}

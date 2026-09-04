@@ -85,8 +85,8 @@ public class Context {
     }
     
     private void fireWaveStartedEvent() {
-        for (int i=0; i<this.waveListeners.size(); i++) {
-            this.waveListeners.get(i).waveStarted();
+        for (WaveStartListener l : this.waveListeners) {
+            l.waveStarted();
         }
     }
     /**
@@ -226,9 +226,7 @@ public class Context {
      * Vycisti seznam vsech vezi
      */
     public void clearTowers() {
-        Tower t;
-        for (int i=this.towers.size()-1; i>=0; i--) {
-            t = this.towers.get(i);
+        for (Tower t : this.towers) {
             int cellX = t.getX()/this.scale;
             int cellY = t.getY()/this.scale;
             this.mainApp.clearCell(cellX, cellY);
@@ -245,13 +243,13 @@ public class Context {
         this.towerListeners.remove(l);
     }
     private void fireTowerAddedEvent(Tower t) {
-        for (int i=0; i<this.towerListeners.size(); i++) {
-            this.towerListeners.get(i).towerBuild(t);
+        for (TowerListener l : this.towerListeners) {
+            l.towerBuild(t);
         }
     }
     private void fireTowerRemovedEvent(Tower t) {
-        for (int i=0; i<this.towerListeners.size(); i++) {
-            this.towerListeners.get(i).towerRemoved(t);
+        for (TowerListener l : this.towerListeners) {
+            l.towerRemoved(t);
         }
     }
     
@@ -276,8 +274,8 @@ public class Context {
      * @see ContextListener
      */
     private void fireMoneyChangedEvent() {
-        for (int i=0; i<this.contextListeners.size(); i++) {
-            this.contextListeners.get(i).moneyChanged();
+        for (ContextListener l : this.contextListeners) {
+            l.moneyChanged();
         }
     }
     /**
@@ -285,8 +283,8 @@ public class Context {
      * @see ContextListener
      */
     private void fireLivesChangedEvent() {
-        for (int i=0; i<this.contextListeners.size(); i++) {
-            this.contextListeners.get(i).livesChanged();
+        for (ContextListener l : this.contextListeners) {
+            l.livesChanged();
         }
     }
     /**
