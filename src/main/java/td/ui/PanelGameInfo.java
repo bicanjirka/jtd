@@ -1,6 +1,6 @@
 package td.ui;
 
-import javax.swing.JPanel;
+import javax.swing.*;
 
 public class PanelGameInfo extends JPanel {
 

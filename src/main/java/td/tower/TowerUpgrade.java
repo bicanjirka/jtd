@@ -1,115 +1,115 @@
 package td.tower;
 
-import td.tower.Tower;
-
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.util.ArrayList;
-import java.util.List;
-
 import td.util.Context;
 import td.util.TowerListener;
 
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+
 public class TowerUpgrade extends AbstractTower implements TowerListener {
 
-	public static int price = 20;
+    public static int price = 20;
     public static int damage = 0;
     public static float range = 1.5f;
     public static float power = 0.2f;
-    
-    private List<Tower> clients;
-	
+
+    private final List<Tower> clients;
+
     public TowerUpgrade(Context context, int x, int y) {
-    	super(TowerFactory.type.upgrade, price, damage, range);
-    	this.name = "upg";
-    	this.lineColor = Color.WHITE;
-    	this.passive = true;
-    	this.clients = new ArrayList<Tower>();
-    	this.doInit(context, x, y);
-    	
-    	this.context.addTowerListener(this);
-    	this.scanTowers();
+        super(TowerFactory.type.upgrade, price, damage, range);
+        this.name = "upg";
+        this.lineColor = Color.WHITE;
+        this.passive = true;
+        this.clients = new ArrayList<Tower>();
+        this.doInit(context, x, y);
+
+        this.context.addTowerListener(this);
+        this.scanTowers();
     }
-    
+
     private void scanTowers() {
-    	int dx,dy;
-    	for (Tower t : this.context.towers) {
-    		if (!this.clients.contains(t)) {
-    			switch (t.getType()) {
-    				case upgrade -> {}
-    				default -> {
-    					dx = this.centerX - t.getX();
-    					dy = this.centerY - t.getY();
-    					if ((dx*dx+dy*dy) < this.rangeReal2) {
-    						t.registerTower(this);
-    					}
-    				}
-    			}
-    		}
-    	}
+        int dx, dy;
+        for (Tower t : this.context.towers) {
+            if (!this.clients.contains(t)) {
+                switch (t.getType()) {
+                    case upgrade -> {
+                    }
+                    default -> {
+                        dx = this.centerX - t.getX();
+                        dy = this.centerY - t.getY();
+                        if ((dx * dx + dy * dy) < this.rangeReal2) {
+                            t.registerTower(this);
+                        }
+                    }
+                }
+            }
+        }
     }
-    
+
     protected void calcDamageRange() {
-    	this.scanTowers();
+        this.scanTowers();
         super.calcDamageRange();
     }
-    
+
     public void doTick(int gameTime) {
     }
-    
+
     public void towerBuild(Tower t) {
-    	if (t != this && !this.clients.contains(t)) {
-    		switch (t.getType()) {
-    			case upgrade -> {}
-    			default -> {
-    				int dx = this.centerX - t.getX();
-    				int dy = this.centerY - t.getY();
-    				if ((dx*dx+dy*dy) < this.rangeReal2) {
-    					t.registerTower(this);
-    				}
-    			}
-    		}
-    	}
+        if (t != this && !this.clients.contains(t)) {
+            switch (t.getType()) {
+                case upgrade -> {
+                }
+                default -> {
+                    int dx = this.centerX - t.getX();
+                    int dy = this.centerY - t.getY();
+                    if ((dx * dx + dy * dy) < this.rangeReal2) {
+                        t.registerTower(this);
+                    }
+                }
+            }
+        }
     }
-    
+
     public void towerRemoved(Tower t) {
-    	if (this.clients.contains(t)) {
+        if (this.clients.contains(t)) {
             t.unregisterTower(this);
         }
     }
-    
+
     public void addClient(Tower t) {
         if (!this.clients.contains(t)) {
-        	//System.out.println("TowerUpgrade::addClient: adding");
+            //System.out.println("TowerUpgrade::addClient: adding");
             this.clients.add(t);
         }
     }
+
     public void removeClient(Tower t) {
         this.clients.remove(t);
     }
-    
+
     public void doCleanup() {
         super.doCleanup();
-        for (int i=this.clients.size()-1; i>=0; i--) {
+        for (int i = this.clients.size() - 1; i >= 0; i--) {
             Tower t = this.clients.get(i);
             t.unregisterTower(this);
         }
         this.context.removeTowerListener(this);
     }
-    
+
     public void paintEffect(Graphics2D g2, int gameTime) {
     }
-    
+
     public String getInfoString() {
-		return "Power tower\n\n" +
-				super.getInfoString() +
-				"Increases damage and range of nearby towers by " + (TowerUpgrade.power*100) + "%";
-	}
+        return "Power tower\n\n" +
+                super.getInfoString() +
+                "Increases damage and range of nearby towers by " + (TowerUpgrade.power * 100) + "%";
+    }
 
     public String getStatusString() {
-		return "Power tower\n\n" +
-				super.getStatusString() +
-				"Increases damage and range of nearby towers by " + (TowerUpgrade.power*100) + "%\n\n" +
-				"Affects towers: " + this.clients.size();
-	}
+        return "Power tower\n\n" +
+                super.getStatusString() +
+                "Increases damage and range of nearby towers by " + (TowerUpgrade.power * 100) + "%\n\n" +
+                "Affects towers: " + this.clients.size();
+    }
 }
