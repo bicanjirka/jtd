@@ -1,39 +1,37 @@
 package td.wave;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.util.Context;
 
+import java.util.*;
+
 public class Wave {
-    private List<EnemyMob> enemies = new ArrayList<EnemyMob>();
-    private List<String[]> nameStrings = new ArrayList<String[]>();
-    private int baseHealth;
-    private int basePrice;
+    private final List<EnemyMob> enemies = new ArrayList<EnemyMob>();
+    private final List<String[]> nameStrings = new ArrayList<String[]>();
+    private final int baseHealth;
+    private final int basePrice;
     private boolean finalised = false;
-    private Context context;
-    private int level;
+    private final Context context;
+    private final int level;
     private int emptyMobs;
 
-    private Map<EnemyFactory.Enemy, Integer> enemyCounts = new HashMap<EnemyFactory.Enemy, Integer>();
-    
-    /** Creates a new instance of Wave */
+    private final Map<EnemyFactory.Enemy, Integer> enemyCounts = new HashMap<EnemyFactory.Enemy, Integer>();
+
+    /**
+     * Creates a new instance of Wave
+     */
     public Wave(Context context, int baseHealth, int basePrice, int level) {
         this.baseHealth = baseHealth;
         this.basePrice = basePrice;
         this.context = context;
         this.level = level;
     }
-    
+
     public void addEnemiesFromNames(String[] names) {
         this.nameStrings.add(names);
     }
-    
+
     private void countEnemy(EnemyFactory.Enemy e, int count) {
         enemyCounts.merge(e, count, Integer::sum);
     }
@@ -44,7 +42,7 @@ public class Wave {
         }
         return enemyCounts.keySet();
     }
-    
+
     public int enemyCount(EnemyFactory.Enemy e) {
         if (!this.finalised) {
             this.finalise();
@@ -55,30 +53,30 @@ public class Wave {
         }
         return i.intValue();
     }
-    
+
     public int enemyCount() {
         if (!this.finalised) {
             this.finalise();
         }
-        return this.enemies.size()-this.emptyMobs;
+        return this.enemies.size() - this.emptyMobs;
     }
-    
+
     private void finalise() {
-        for (int j=0; j<this.nameStrings.size(); j++) {
+        for (int j = 0; j < this.nameStrings.size(); j++) {
             String[] names = this.nameStrings.get(j);
             int nr = 1;
             int count = 0;
-            for (int i=0; i<names.length; i++) {
-            	//System.out.println("Wave::finalise: "+names[i]);
+            for (int i = 0; i < names.length; i++) {
+                //System.out.println("Wave::finalise: "+names[i]);
                 if (EnemyFactory.isEnemy(names[i])) {
-                	//System.out.println("Wave::finalise: isEnemy "+names[i]);
+                    //System.out.println("Wave::finalise: isEnemy "+names[i]);
                     this.countEnemy(EnemyFactory.identifyEnemy(names[i]), nr);
                     //System.out.println("Wave::finalise: "+names[i]);
                     if (names[i].equals(EnemyFactory.Enemy.Empty.getName())) {
-                    	this.emptyMobs += nr;
-                    	//System.out.println("Wave::finalise: emptyMobs "+this.emptyMobs);
+                        this.emptyMobs += nr;
+                        //System.out.println("Wave::finalise: emptyMobs "+this.emptyMobs);
                     }
-                    for (int e=0; e<nr; e++) {
+                    for (int e = 0; e < nr; e++) {
                         enemies.add(EnemyFactory.getEnemy(names[i], this.context, count, this.baseHealth, this.basePrice, this.level));
                         count++;
                     }
@@ -95,26 +93,28 @@ public class Wave {
         }
         this.finalised = true;
     }
-    
+
     public EnemyMob[] getEnemies() {
         if (!this.finalised) {
             this.finalise();
         }
         return enemies.toArray(new EnemyMob[enemies.size()]);
     }
-    
+
     public int getBaseHealth() {
         return baseHealth;
     }
-    
+
     public int getBasePrice() {
         return basePrice;
     }
+
     public int getLevel() {
         return level;
     }
+
     public List<String[]> getNameStrings() {
         return this.nameStrings;
     }
-    
+
 }
