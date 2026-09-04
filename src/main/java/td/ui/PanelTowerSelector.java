@@ -67,11 +67,7 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
             this.buttons[i] = tempToggle;
             tempToggle.setMargin(new Insets(1, 1, 1, 1));
             final int n = i;
-            tempToggle.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    doPlace(n);
-                }
-            });
+            tempToggle.addActionListener(evt -> doPlace(n));
             tempToggle.addMouseListener(new java.awt.event.MouseAdapter() {
                 public void mouseEntered(java.awt.event.MouseEvent evt) {
                     mouseOver(n);

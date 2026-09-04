@@ -169,11 +169,7 @@ public class PanelTowerInfo extends JPanel implements ContextListener {
         jButton_sell.setBackground(new java.awt.Color(0, 0, 0));
         jButton_sell.setText("Sell");
         jButton_sell.setMargin(new java.awt.Insets(2, 2, 2, 2));
-        jButton_sell.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton_sellActionPerformed(evt);
-            }
-        });
+        jButton_sell.addActionListener(this::jButton_sellActionPerformed);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
