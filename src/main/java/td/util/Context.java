@@ -2,7 +2,8 @@ package td.util;
 
 import td.util.TowerListener;
 
-import java.util.Vector;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import td.enemy.EnemyMob;
 import td.tower.Tower;
@@ -34,7 +35,7 @@ public class Context {
     /**
      * Vsechny postavene veze na herni plose
      */
-    public Vector<Tower> towers;
+    public List<Tower> towers;
     private int enemyCount = 0;
     private Path path;
     
@@ -47,9 +48,9 @@ public class Context {
      */
     //public long dmg = 0; //TEST damage
     
-    private Vector<ContextListener> contextListeners;
-    private Vector<TowerListener> towerListeners;
-    private Vector<WaveStartListener> waveListeners;
+    private List<ContextListener> contextListeners;
+    private List<TowerListener> towerListeners;
+    private List<WaveStartListener> waveListeners;
     
     private Cache cache;
     
@@ -59,10 +60,10 @@ public class Context {
      */
     public Context(TowerDefence mainApp) {
     	this.mainApp = mainApp;
-        this.contextListeners = new Vector<ContextListener>();
-        this.towerListeners = new Vector<TowerListener>();
-        this.waveListeners = new Vector<WaveStartListener>();
-        this.towers = new Vector<Tower>();
+        this.contextListeners = new CopyOnWriteArrayList<ContextListener>();
+        this.towerListeners = new CopyOnWriteArrayList<TowerListener>();
+        this.waveListeners = new CopyOnWriteArrayList<WaveStartListener>();
+        this.towers = new CopyOnWriteArrayList<Tower>();
         this.path = new PathNormal(this.scale);
         this.cache = Cache.getInstance();
     }

@@ -4,8 +4,9 @@ import td.tower.Tower;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Vector;
+import java.util.List;
 
 import td.util.Context;
 import td.util.TowerListener;
@@ -17,14 +18,14 @@ public class TowerUpgrade extends AbstractTower implements TowerListener {
     public static float range = 1.5f;
     public static float power = 0.2f;
     
-    private Vector<Tower> clients;
+    private List<Tower> clients;
 	
     public TowerUpgrade(Context context, int x, int y) {
     	super(TowerFactory.type.upgrade, price, damage, range);
     	this.name = "upg";
     	this.lineColor = Color.WHITE;
     	this.passive = true;
-    	this.clients = new Vector<Tower>();
+    	this.clients = new ArrayList<Tower>();
     	this.doInit(context, x, y);
     	
     	this.context.addTowerListener(this);

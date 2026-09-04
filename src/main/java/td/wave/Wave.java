@@ -1,24 +1,26 @@
 package td.wave;
 
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
 
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.util.Context;
 
 public class Wave {
-    private Vector<EnemyMob> enemies = new Vector<EnemyMob>();
-    private Vector<String[]> nameStrings = new Vector<String[]>();
+    private List<EnemyMob> enemies = new ArrayList<EnemyMob>();
+    private List<String[]> nameStrings = new ArrayList<String[]>();
     private int baseHealth;
     private int basePrice;
     private boolean finalised = false;
     private Context context;
     private int level;
     private int emptyMobs;
-    
-    private Hashtable<EnemyFactory.Enemy, Integer> enemyCounts = new Hashtable<EnemyFactory.Enemy, Integer>();
+
+    private Map<EnemyFactory.Enemy, Integer> enemyCounts = new HashMap<EnemyFactory.Enemy, Integer>();
     
     /** Creates a new instance of Wave */
     public Wave(Context context, int baseHealth, int basePrice, int level) {
@@ -116,7 +118,7 @@ public class Wave {
     public int getLevel() {
         return level;
     }
-    public Vector<String[]> getNameStrings() {
+    public List<String[]> getNameStrings() {
         return this.nameStrings;
     }
     

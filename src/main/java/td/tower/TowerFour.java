@@ -4,7 +4,8 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import td.enemy.EnemyMob;
 import td.util.Context;
@@ -35,7 +36,7 @@ public class TowerFour extends AbstractTower {
 	}
 	
 	private EnemyMob[] findEnemiesInRange(int x, int y, float r) {
-        Vector<EnemyMob> tempEnemies = new Vector<EnemyMob>();
+        List<EnemyMob> tempEnemies = new ArrayList<EnemyMob>();
         EnemyMob e;
         float r2 = r*r;
         int dx, dy, d2;

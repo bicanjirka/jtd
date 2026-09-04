@@ -6,7 +6,8 @@ import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import td.util.Cache;
 import td.util.Context;
@@ -21,7 +22,7 @@ public abstract class AbstractTower implements Tower {	//TODO rotovaci obrazky??
 	protected Context context;	
 	private TowerFactory.type type;
 	protected String name;
-	protected Vector<TowerUpgrade> upgTowers;
+	protected List<TowerUpgrade> upgTowers;
 	
 	protected int boardX;
     protected int boardY;
@@ -52,7 +53,7 @@ public abstract class AbstractTower implements Tower {	//TODO rotovaci obrazky??
         this.type = t;
         this.damageBase = this.damageCurrent = damage;
         this.rangeBase = this.rangeCurrent = range;
-        this.upgTowers = new Vector<TowerUpgrade>();
+        this.upgTowers = new ArrayList<TowerUpgrade>();
 	}
 	/**
 	 * Inicializuje vez

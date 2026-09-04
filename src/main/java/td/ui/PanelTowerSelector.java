@@ -3,7 +3,8 @@ package td.ui;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.image.BufferedImage;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
@@ -29,7 +30,7 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
     private float[] towerRanges;
     private Context context;
     private TowerDefence mainApp;
-    private Vector<TowerFactory.type> towerTypes;
+    private List<TowerFactory.type> towerTypes;
     private boolean placing = false;
     
     /**Vytvori panel s vyberem vezi, ktere zinicializuje
@@ -38,7 +39,7 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
      */
     public PanelTowerSelector() {
         initComponents();
-        this.towerTypes = new Vector<TowerFactory.type>();
+        this.towerTypes = new ArrayList<TowerFactory.type>();
         
         TowerFactory.type[] types = TowerFactory.type.values();
         for (int i = 0; i < types.length; i++) {

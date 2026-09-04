@@ -7,7 +7,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.util.Iterator;
-import java.util.Vector;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.swing.JPanel;
 
@@ -21,7 +22,7 @@ import td.wave.PathEmpty;
 @SuppressWarnings("serial")
 public class PanelEnemy extends JPanel {
 	
-	private Vector<EnemyMob> enemies = new Vector<EnemyMob>();
+	private List<EnemyMob> enemies = new CopyOnWriteArrayList<EnemyMob>();
 	private int[] enemiesCount;
 	private Font font;
 	private Context contextLocal, contextFull;
