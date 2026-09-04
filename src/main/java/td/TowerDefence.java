@@ -1,7 +1,6 @@
 package td;
 
 import td.cell.Cell;
-import td.cell.CellNormal;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.ui.GameBoard;
@@ -9,14 +8,11 @@ import td.util.Cache;
 import td.util.Context;
 import td.util.ContextListener;
 import td.util.GameHost;
-import td.wave.Path;
-import td.wave.Wave;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.List;
 
 // Inspired by HexTD
@@ -29,11 +25,32 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
     private static final int FASTTICKTIME = 15;
     private static final int SUPERFASTTICKTIME = 3;
 
+    private static final int[] PATH_X = {-1, 0, 1, 2, 3, 4, 5, 5, 6, 7, 7, 7, 7, 7, 7, 7, 6, 5, 4, 4, 3, 3, 3, 3, 4, 5, 6, 6, 7, 8, 9, 10, 11, 11, 11, 12, 13, 14, 14, 14, 15, 16, 17, 17, 17, 17, 16, 15, 15, 15, 15, 14, 13, 12, 12, 12, 12, 13, 14, 15, 16, 17, 18, 19, 20};
+    private static final int[] PATH_Y = {11, 11, 11, 11, 11, 11, 11, 12, 12, 12, 11, 10, 9, 8, 7, 6, 6, 6, 6, 5, 5, 4, 3, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 5, 5, 5, 5, 4, 3, 3, 3, 3, 4, 5, 6, 6, 6, 7, 8, 9, 9, 9, 9, 10, 11, 12, 12, 12, 12, 12, 12, 12, 12, 12};
+    private static final List<GameEngine.WaveDefinition> DEFAULT_WAVES = List.of(
+            new GameEngine.WaveDefinition("c e c e c e c e c", 251, 2, 1),
+            new GameEngine.WaveDefinition("c e 2 c e 3 c e 4 c", 377, 3, 1),
+            new GameEngine.WaveDefinition("c e c", 812, 10, 2),
+            new GameEngine.WaveDefinition("4 c 2 e 2 s", 747, 5, 1),
+            new GameEngine.WaveDefinition("c c e s", 1109, 15, 3),
+            new GameEngine.WaveDefinition("10 c", 953, 2, 1),
+            new GameEngine.WaveDefinition("3 s e 4 c t e s t", 1117, 4, 2),
+            new GameEngine.WaveDefinition("2 c e e t", 2193, 15, 4),
+            new GameEngine.WaveDefinition("g 2 e 2 s", 1493, 10, 2),
+            new GameEngine.WaveDefinition("s t s c g c t c s g t c s g c t s g t c", 1476, 2, 2),
+            new GameEngine.WaveDefinition("g c g", 3789, 15, 4),
+            new GameEngine.WaveDefinition("6 g 2 e 4 t", 3088, 7, 3),
+            new GameEngine.WaveDefinition("c e c e c e c e c", 2912, 1, 2),
+            new GameEngine.WaveDefinition("2 s 3 t 2 g 4 e c", 3242, 10, 3),
+            new GameEngine.WaveDefinition("s 4 e t", 4014, 50, 6),
+            new GameEngine.WaveDefinition("c 5 e 3 g 3 e 3 s 3 t", 4016, 4, 4),
+            new GameEngine.WaveDefinition("s", 4751, 0, 8)
+    );
+
+    private final GameEngine engine;
     private final Context context;
-    private final List<Tower> towers;
     private final GameBoard gameBoard;
     private BufferedImage backGround;
-    private Cell[][] cellGrid;
     private final String statusMessage = """
             Welcome to TowerDefence
             Shortcuts:
@@ -47,12 +64,6 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
             f - slow speed
             s - star wave""";
 
-    private boolean startWave = false;
-    private boolean waveReady = true;
-    private boolean placingTower = false;
-    private TowerFactory.type placingTowerType;
-    private float placingTowerRange = 0;
-
     private final Object gameTimeLock = new Object();
     private int gameTime;
     private final Object paintLock = new Object();
@@ -60,9 +71,6 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
     private int tickTime = TICKTIME;
     private boolean paused = false;
     private boolean gameStopped = false;
-    private int[] highlitedCell;
-    private int wave = 0;
-    private List<Wave> waves;
 
     private javax.swing.JButton jButton_play;
     private javax.swing.JButton jButton_pause;
@@ -98,8 +106,8 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
     }
 
     public TowerDefence() {
-        this.context = new Context(this);
-        this.towers = this.context.towers;
+        this.engine = new GameEngine(this);
+        this.context = this.engine.getContext();
         this.context.addContextListener(this);
         Cache cache = this.context.getCache();
         if (cache.hasBufImg("bg")) {
@@ -159,56 +167,13 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
 
     // Levels are hardcoded here for now, but built the same way a file-based level loader would build them.
     private void loadTestLevel() {
-
         int width = 20;
         int height = 15;
-        this.cellGrid = new Cell[width][height];
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
-                this.cellGrid[i][j] = new CellNormal(i * this.context.scale, j * this.context.scale, this.context);
-            }
-        }
+        this.engine.loadLevel(width, height, PATH_X, PATH_Y, DEFAULT_WAVES, 50);
         this.gameBoard.recalculateBoard(width, height);
-        this.context.maxX = (this.cellGrid.length) * this.context.scale - 1;
-        this.context.maxY = (this.cellGrid[0].length) * this.context.scale - 1;
-        this.waves = new ArrayList<>();
-        Path path = this.context.getPath();
-        int[] pathx = {-1, 0, 1, 2, 3, 4, 5, 5, 6, 7, 7, 7, 7, 7, 7, 7, 6, 5, 4, 4, 3, 3, 3, 3, 4, 5, 6, 6, 7, 8, 9, 10, 11, 11, 11, 12, 13, 14, 14, 14, 15, 16, 17, 17, 17, 17, 16, 15, 15, 15, 15, 14, 13, 12, 12, 12, 12, 13, 14, 15, 16, 17, 18, 19, 20};
-        int[] pathy = {11, 11, 11, 11, 11, 11, 11, 12, 12, 12, 11, 10, 9, 8, 7, 6, 6, 6, 6, 5, 5, 4, 3, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 5, 5, 5, 5, 4, 3, 3, 3, 3, 4, 5, 6, 6, 6, 7, 8, 9, 9, 9, 9, 10, 11, 12, 12, 12, 12, 12, 12, 12, 12, 12};
-        for (int i = 0; i < pathx.length; i++) {
-            path.addStep(pathx[i], pathy[i]);
-        }
-        path.finalise(this.cellGrid);
-        this.wave = 0;
-
-        this.makeWave("c e c e c e c e c", 251, 2, 1);
-        this.makeWave("c e 2 c e 3 c e 4 c", 377, 3, 1);
-        this.makeWave("c e c", 812, 10, 2);
-        this.makeWave("4 c 2 e 2 s", 747, 5, 1);
-        this.makeWave("c c e s", 1109, 15, 3);
-        this.makeWave("10 c", 953, 2, 1);
-        this.makeWave("3 s e 4 c t e s t", 1117, 4, 2);
-        this.makeWave("2 c e e t", 2193, 15, 4);
-        this.makeWave("g 2 e 2 s", 1493, 10, 2);
-        this.makeWave("s t s c g c t c s g t c s g c t s g t c", 1476, 2, 2);
-        this.makeWave("g c g", 3789, 15, 4);
-        this.makeWave("6 g 2 e 4 t", 3088, 7, 3);
-        this.makeWave("c e c e c e c e c", 2912, 1, 2);
-        this.makeWave("2 s 3 t 2 g 4 e c", 3242, 10, 3);
-        this.makeWave("s 4 e t", 4014, 50, 6);
-        this.makeWave("c 5 e 3 g 3 e 3 s 3 t", 4016, 4, 4);
-        this.makeWave("s", 4751, 0, 8);
-
-        this.context.setCredits(50);
         this.jPanel_gameLost.setVisible(false);
         this.jPanel_gameWon.setVisible(false);
         this.startLevel();
-    }
-
-    private void makeWave(String s, int hp, int price, int lvl) {
-        Wave wave = new Wave(this.context, hp, price, lvl);
-        wave.addEnemiesFromNames(s.split(" "));
-        this.waves.add(wave);
     }
 
     public void setInfoText(String s) {
@@ -217,8 +182,8 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
     }
 
     public void enemyDied(int enemiesLeft) {
-        if (enemiesLeft == 0 && this.wave < this.waves.size()) {
-            this.waveReady = true;
+        if (enemiesLeft == 0 && this.engine.getCurrentWaveIndex() < this.engine.getWaveCount()) {
+            this.engine.setWaveReady(true);
             this.jButton_play.setVisible(true);
             this.jButton_pause.setVisible(false);
         } else if (enemiesLeft == 0) {
@@ -228,29 +193,24 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
 
     private void setWavePreview() {
         this.panelWaveInfo.clearWaves();
-        if (this.wave - 1 >= 0) {
-            this.panelWaveInfo.setWaveCur(this.wave, this.waves.get(this.wave - 1));
+        int wave = this.engine.getCurrentWaveIndex();
+        if (wave - 1 >= 0) {
+            this.panelWaveInfo.setWaveCur(wave, this.engine.getWaveAt(wave - 1));
         }
-        if (this.wave < this.waves.size()) {
-            this.panelWaveInfo.setWaveNext(this.wave + 1, this.waves.get(this.wave));
+        if (wave < this.engine.getWaveCount()) {
+            this.panelWaveInfo.setWaveNext(wave + 1, this.engine.getWaveAt(wave));
         }
     }
 
     private void nextWave() {
-        if (this.waveReady && this.wave < this.waves.size()) {
-            this.startWave = false;
-            this.waveReady = false;
-            Wave tempWave = this.waves.get(this.wave);
-            this.context.enemies = tempWave.getEnemies();
-            this.context.startWave(tempWave);
-            this.wave++;
+        if (this.engine.nextWave()) {
             this.setWavePreview();
             this.updateInfo();
         }
     }
 
     private void updateInfo() {
-        this.jLabel_wave.setText("  " + this.wave + "/" + this.waves.size());
+        this.jLabel_wave.setText("  " + this.engine.getCurrentWaveIndex() + "/" + this.engine.getWaveCount());
         this.jLabel_credits.setText("$" + this.context.getCredits());
         this.jLabel_lives.setText("" + this.context.getLives());
         this.jLabel_score.setText("" + this.context.getScore());
@@ -278,21 +238,15 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
     }
 
     public void startLevel() {
+        this.engine.startLevel();
         this.setWavePreview();
-        this.waveReady = true;
     }
 
     public void doTick(int time) {
-        if (this.startWave) {
-            this.nextWave();
-        }
-        if (this.context.enemies != null) {
-            for (int i = 0; i < this.context.enemies.length; i++) {
-                this.context.enemies[i].doTick(time);
-            }
-        }
-        for (Tower tower : this.towers) {
-            tower.doTick(time);
+        boolean waveStarted = this.engine.doTick(time);
+        if (waveStarted) {
+            this.setWavePreview();
+            this.updateInfo();
         }
         this.panelWaveInfo.doTick(time);
     }
@@ -320,9 +274,10 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
 
         g2.drawImage(this.backGround, 0, 0, null);
 
-        if (this.cellGrid != null) {
-            for (Cell[] cells : this.cellGrid) {
-                for (int j = 0; j < this.cellGrid[0].length; j++) {
+        Cell[][] cellGrid = this.engine.getCellGrid();
+        if (cellGrid != null) {
+            for (Cell[] cells : cellGrid) {
+                for (int j = 0; j < cellGrid[0].length; j++) {
                     cells[j].paintEffect(g2);
                 }
             }
@@ -334,11 +289,11 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
             }
         }
 
-        for (Tower tower : this.towers) {
+        for (Tower tower : this.engine.getTowers()) {
             tower.paint(g2, time);
         }
 
-        for (Tower tower : this.towers) {
+        for (Tower tower : this.engine.getTowers()) {
             tower.paintEffect(g2, time);
         }
 
@@ -348,82 +303,37 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
     }
 
     public void startPlacing(TowerFactory.type t, float r) {
-        this.placingTower = true;
-        this.placingTowerType = t;
-        this.placingTowerRange = r;
+        this.engine.startPlacing(t, r);
     }
 
     public void unSelectTower() {
-        this.unHighlightCell();
+        this.engine.unSelectTower();
         this.panelTowerInfo.unselectTower();
         this.panelTowerInfo.setExternalText(this.statusMessage);
     }
 
     public void clearCell(int x, int y) {
-        Cell cell = this.cellGrid[x][y];
-        cell.unSetTower();
-        cell.enable(true);
+        this.engine.clearCell(x, y);
     }
 
-    private void unHighlightCell() {
-        if (this.highlitedCell != null) {
-            this.cellGrid[this.highlitedCell[0]][this.highlitedCell[1]].setHighlight(Cell.highlightType.none);
-            this.highlitedCell = null;
-        }
-    }
-
-    private void highlightCell(int screenx, int screeny) {
-        this.unHighlightCell();
-        int x = screenx - this.gameBoard.getX();
-        int y = screeny - this.gameBoard.getY();
-        Cell cell;
-        if (x >= 0 && x < this.gameBoard.getWidth()) {
-            if (y >= 0 && y < this.gameBoard.getHeight()) {
-                int[] tempInt = new int[2];
-                tempInt[0] = x / this.context.scale;
-                tempInt[1] = y / this.context.scale;
-                this.highlitedCell = tempInt;
-                cell = this.cellGrid[x / this.context.scale][y / this.context.scale];
-                cell.setHighlight(Cell.highlightType.place);
-                cell.setHighlightRange(this.placingTowerRange);
-            }
-        }
-    }
-
-    private void mouseClicked(int screenx, int screeny) {
-
-        int x = screenx - this.gameBoard.getX();
-        int y = screeny - this.gameBoard.getY();
-        Cell cell;
+    private void jPanel_boardMouseClicked(java.awt.event.MouseEvent evt) {
         this.unSelectTower();
-        if (x >= 0 && x < this.gameBoard.getWidth()) {
-            if (y >= 0 && y < this.gameBoard.getHeight()) {
-                cell = this.cellGrid[x / this.context.scale][y / this.context.scale];
-                if (cell.hasTower()) {
-                    this.panelTowerInfo.setTower(cell.getTower());
-                    int[] tempInt = new int[2];
-                    tempInt[0] = x / this.context.scale;
-                    tempInt[1] = y / this.context.scale;
-                    this.highlitedCell = tempInt;
-                    cell.setHighlight(Cell.highlightType.select);
-                } else
-                    if (this.placingTower) {
-                        if (cell.buildable()) {
-                            if (this.context.doPay(this.placingTowerType.price)) {
-                                Tower tempTower = TowerFactory.createTower(this.placingTowerType, this.context, x / this.context.scale, y / this.context.scale);
-                                this.context.addTower(tempTower);
-                                cell.setTower(tempTower);
-                                cell.enable(false);
-                            }
-                            this.placingTower = false;
-                            this.panelTowerSelector.stopPlacing();
-                        }
-                    }
-            }
+        boolean wasPlacing = this.engine.isPlacingTower();
+        int boardX = evt.getX() - this.gameBoard.getX();
+        int boardY = evt.getY() - this.gameBoard.getY();
+        Tower selected = this.engine.mouseClicked(boardX, boardY);
+        if (selected != null) {
+            this.panelTowerInfo.setTower(selected);
         }
-        if (this.placingTower) {
-            this.placingTower = false;
+        if (wasPlacing && !this.engine.isPlacingTower()) {
             this.panelTowerSelector.stopPlacing();
+        }
+    }
+
+    private void jPanel_boardMouseMoved(java.awt.event.MouseEvent evt) {
+        this.requestFocusInWindow();
+        if (this.engine.isPlacingTower()) {
+            this.engine.highlightCell(evt.getX() - this.gameBoard.getX(), evt.getY() - this.gameBoard.getY());
         }
     }
 
@@ -444,10 +354,9 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
             case 'f' -> this.toggleGameSpeed(this.tickTime += 10);
             case 's' -> this.nextWave();
             case KeyEvent.VK_ESCAPE -> {
-                if (this.placingTower) {
-                    this.placingTower = false;
+                if (this.engine.isPlacingTower()) {
+                    this.engine.cancelPlacing();
                     this.panelTowerSelector.stopPlacing();
-                    this.unHighlightCell();
                 }
             }
             default -> {
@@ -800,7 +709,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
 
     private void jButton_playActionPerformed(java.awt.event.ActionEvent evt) {
         this.toggleGameSpeed(TICKTIME);
-        if (this.waveReady && !this.paused) this.startWave = true;
+        if (this.engine.isWaveReady() && !this.paused) this.engine.requestNextWave();
         this.playPause(true);
     }
 
@@ -818,17 +727,6 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
         this.jButton_play.setVisible(true);
         this.jButton_pause.setVisible(false);
         this.toggleGameSpeed(SUPERFASTTICKTIME);
-    }
-
-    private void jPanel_boardMouseClicked(java.awt.event.MouseEvent evt) {
-        this.mouseClicked(evt.getX(), evt.getY());
-    }
-
-    private void jPanel_boardMouseMoved(java.awt.event.MouseEvent evt) {
-        this.requestFocusInWindow();
-        if (this.placingTower) {
-            this.highlightCell(evt.getX(), evt.getY());
-        }
     }
 
     private void formKeyTyped(KeyEvent evt) {

@@ -1,0 +1,240 @@
+package td;
+
+import td.cell.Cell;
+import td.cell.CellNormal;
+import td.tower.Tower;
+import td.tower.TowerFactory;
+import td.util.Context;
+import td.util.GameHost;
+import td.wave.Path;
+import td.wave.Wave;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Owns the game state and input handling that {@link TowerDefence} used to
+ * hold directly, minus anything Swing-specific. Nothing here constructs a
+ * window, touches a Graphics2D, or requires a display - it can be built,
+ * driven, and asserted on entirely from a test.
+ * <p>
+ * {@code mouseClicked}/{@code highlightCell} take board-relative pixel
+ * coordinates (0,0 = top-left of the game board), not screen coordinates -
+ * translating a real MouseEvent's screen position into that is a UI concern
+ * TowerDefence still owns.
+ */
+public class GameEngine {
+
+    private final Context context;
+    private final List<Tower> towers;
+
+    private Cell[][] cellGrid;
+    private List<Wave> waves = new ArrayList<>();
+    private int wave = 0;
+    private boolean waveReady = true;
+    private boolean startWave = false;
+
+    private boolean placingTower = false;
+    private TowerFactory.type placingTowerType;
+    private float placingTowerRange = 0;
+    private int[] highlitedCell;
+
+    public GameEngine(GameHost host) {
+        this.context = new Context(host);
+        this.towers = this.context.towers;
+    }
+
+    public record WaveDefinition(String enemies, int hp, int price, int level) {
+    }
+
+    public Context getContext() {
+        return this.context;
+    }
+
+    public List<Tower> getTowers() {
+        return this.towers;
+    }
+
+    public Cell[][] getCellGrid() {
+        return this.cellGrid;
+    }
+
+    public int getCurrentWaveIndex() {
+        return this.wave;
+    }
+
+    public int getWaveCount() {
+        return this.waves.size();
+    }
+
+    public Wave getWaveAt(int index) {
+        return this.waves.get(index);
+    }
+
+    public boolean isWaveReady() {
+        return this.waveReady;
+    }
+
+    public void setWaveReady(boolean ready) {
+        this.waveReady = ready;
+    }
+
+    public boolean isPlacingTower() {
+        return this.placingTower;
+    }
+
+    public void loadLevel(int width, int height, int[] pathX, int[] pathY, List<WaveDefinition> waveDefinitions, int startingCredits) {
+        this.cellGrid = new Cell[width][height];
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                this.cellGrid[i][j] = new CellNormal(i * this.context.scale, j * this.context.scale, this.context);
+            }
+        }
+        this.context.maxX = width * this.context.scale - 1;
+        this.context.maxY = height * this.context.scale - 1;
+
+        this.waves = new ArrayList<>();
+        Path path = this.context.getPath();
+        for (int i = 0; i < pathX.length; i++) {
+            path.addStep(pathX[i], pathY[i]);
+        }
+        path.finalise(this.cellGrid);
+        this.wave = 0;
+
+        for (WaveDefinition wd : waveDefinitions) {
+            Wave w = new Wave(this.context, wd.hp(), wd.price(), wd.level());
+            w.addEnemiesFromNames(wd.enemies().split(" "));
+            this.waves.add(w);
+        }
+
+        this.context.setCredits(startingCredits);
+    }
+
+    public void startLevel() {
+        this.waveReady = true;
+    }
+
+    public void requestNextWave() {
+        this.startWave = true;
+    }
+
+    /**
+     * @return true if a new wave actually started (i.e. one was ready and available)
+     */
+    public boolean nextWave() {
+        if (this.waveReady && this.wave < this.waves.size()) {
+            this.startWave = false;
+            this.waveReady = false;
+            Wave tempWave = this.waves.get(this.wave);
+            this.context.enemies = tempWave.getEnemies();
+            this.context.startWave(tempWave);
+            this.wave++;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @return true if this tick started a new wave (caller may want to refresh UI accordingly)
+     */
+    public boolean doTick(int time) {
+        boolean waveStarted = false;
+        if (this.startWave) {
+            waveStarted = this.nextWave();
+        }
+        if (this.context.enemies != null) {
+            for (int i = 0; i < this.context.enemies.length; i++) {
+                this.context.enemies[i].doTick(time);
+            }
+        }
+        for (Tower tower : this.towers) {
+            tower.doTick(time);
+        }
+        return waveStarted;
+    }
+
+    public void startPlacing(TowerFactory.type t, float r) {
+        this.placingTower = true;
+        this.placingTowerType = t;
+        this.placingTowerRange = r;
+    }
+
+    public void cancelPlacing() {
+        this.placingTower = false;
+        this.unHighlightCell();
+    }
+
+    public void unSelectTower() {
+        this.unHighlightCell();
+    }
+
+    public void clearCell(int x, int y) {
+        Cell cell = this.cellGrid[x][y];
+        cell.unSetTower();
+        cell.enable(true);
+    }
+
+    private void unHighlightCell() {
+        if (this.highlitedCell != null) {
+            this.cellGrid[this.highlitedCell[0]][this.highlitedCell[1]].setHighlight(Cell.highlightType.none);
+            this.highlitedCell = null;
+        }
+    }
+
+    public void highlightCell(int boardX, int boardY) {
+        this.unHighlightCell();
+        if (boardX >= 0 && boardX < boardPixelWidth()) {
+            if (boardY >= 0 && boardY < boardPixelHeight()) {
+                int[] tempInt = new int[2];
+                tempInt[0] = boardX / this.context.scale;
+                tempInt[1] = boardY / this.context.scale;
+                this.highlitedCell = tempInt;
+                Cell cell = this.cellGrid[boardX / this.context.scale][boardY / this.context.scale];
+                cell.setHighlight(Cell.highlightType.place);
+                cell.setHighlightRange(this.placingTowerRange);
+            }
+        }
+    }
+
+    /**
+     * @return the tower now selected by clicking its occupied cell, or null if nothing was selected
+     */
+    public Tower mouseClicked(int boardX, int boardY) {
+        Tower selected = null;
+        if (boardX >= 0 && boardX < boardPixelWidth()) {
+            if (boardY >= 0 && boardY < boardPixelHeight()) {
+                Cell cell = this.cellGrid[boardX / this.context.scale][boardY / this.context.scale];
+                if (cell.hasTower()) {
+                    selected = cell.getTower();
+                    int[] tempInt = new int[2];
+                    tempInt[0] = boardX / this.context.scale;
+                    tempInt[1] = boardY / this.context.scale;
+                    this.highlitedCell = tempInt;
+                    cell.setHighlight(Cell.highlightType.select);
+                } else if (this.placingTower) {
+                    if (cell.buildable()) {
+                        if (this.context.doPay(this.placingTowerType.price)) {
+                            Tower tempTower = TowerFactory.createTower(this.placingTowerType, this.context, boardX / this.context.scale, boardY / this.context.scale);
+                            this.context.addTower(tempTower);
+                            cell.setTower(tempTower);
+                            cell.enable(false);
+                        }
+                        this.placingTower = false;
+                    }
+                }
+            }
+        }
+        if (this.placingTower) {
+            this.placingTower = false;
+        }
+        return selected;
+    }
+
+    private int boardPixelWidth() {
+        return this.cellGrid.length * this.context.scale;
+    }
+
+    private int boardPixelHeight() {
+        return this.cellGrid[0].length * this.context.scale;
+    }
+}
