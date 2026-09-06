@@ -16,12 +16,10 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 
 // Inspired by HexTD
-public class TowerDefence extends JFrame implements Runnable, ContextListener, GameHost {
+public class TowerDefence extends JFrame implements ContextListener, GameHost {
     private static final long serialVersionUID = 1L;
     private static final String NAME = "Tower Defence";
     private static final String VERSION = "1.3";
-
-    private static final double BASE_TICK_MS = 50.0;
 
     private static final int[] PATH_X = {-1, 0, 1, 2, 3, 4, 5, 5, 6, 7, 7, 7, 7, 7, 7, 7, 6, 5, 4, 4, 3, 3, 3, 3, 4, 5, 6, 6, 7, 8, 9, 10, 11, 11, 11, 12, 13, 14, 14, 14, 15, 16, 17, 17, 17, 17, 16, 15, 15, 15, 15, 14, 13, 12, 12, 12, 12, 13, 14, 15, 16, 17, 18, 19, 20};
     private static final int[] PATH_Y = {11, 11, 11, 11, 11, 11, 11, 12, 12, 12, 11, 10, 9, 8, 7, 6, 6, 6, 6, 5, 5, 4, 3, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 5, 5, 5, 5, 4, 3, 3, 3, 3, 4, 5, 6, 6, 6, 7, 8, 9, 9, 9, 9, 10, 11, 12, 12, 12, 12, 12, 12, 12, 12, 12};
@@ -62,12 +60,12 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
             f - cycle speed
             s - star wave""";
 
+    private final GameLoop gameLoop = new GameLoop(this::doGameTick, this::requestRender);
     private final Object gameTimeLock = new Object();
     private int gameTime;
     private final Object paintLock = new Object();
     private boolean painting = false;
-    private TickSpeed currentSpeed = TickSpeed.NORMAL;
-    private double speedMultiplier = TickSpeed.NORMAL.multiplier();
+    private TickSpeed currentSpeed = TickSpeed.NORMAL; // EDT-only bookkeeping for the 'f' key cycle
     private boolean paused = false;
     private boolean gameStopped = false;
 
@@ -121,49 +119,41 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
         this.jPanel_board.add(this.gameBoard);
 
         loadTestLevel();
-        Thread th = new Thread(this);
-        th.start();
+        this.gameTime = 0;
+        this.gameLoop.start();
     }
 
-    @Override
-    public void run() {
-        long oldTime, newTime, sleepTime, tickNanos;
-        oldTime = System.nanoTime();
+    /**
+     * Runs one logic tick, called from the game loop thread. A no-op while
+     * paused or after the game has ended.
+     */
+    private void doGameTick() {
+        if (this.gameStopped || this.paused) {
+            return;
+        }
         int time;
+        synchronized (this.gameTimeLock) {
+            time = ++this.gameTime;
+        }
+        this.doTick(time);
+    }
+
+    /**
+     * Requests a repaint, called from the game loop thread via
+     * SwingUtilities.invokeLater once per batch of ticks. Skips requesting
+     * one while a previous paint is still in flight, or once the game has
+     * ended.
+     */
+    private void requestRender() {
+        if (this.gameStopped) {
+            return;
+        }
         boolean stillPainting;
-
-        this.gameTime = 0;
-        while (true) {
-            if (!this.gameStopped) {
-                if (!this.paused) {
-                    synchronized (this.gameTimeLock) {
-                        time = ++this.gameTime;
-                    }
-                    this.doTick(time);
-                }
-                synchronized (this.paintLock) {
-                    stillPainting = this.painting;
-                }
-                if (!stillPainting) {
-                    this.gameBoard.repaint();
-                }
-            }
-            synchronized (this.gameTimeLock) {
-                tickNanos = (long) (BASE_TICK_MS * 1_000_000.0 / this.speedMultiplier);
-            }
-            newTime = System.nanoTime();
-            sleepTime = oldTime + tickNanos - newTime;
-            if (sleepTime < 0) {
-                oldTime = newTime;
-                sleepTime = 2_000_000L;
-            }
-            oldTime = oldTime + tickNanos;
-            try {
-                Thread.sleep(sleepTime / 1_000_000L, (int) (sleepTime % 1_000_000L));
-
-            } catch (InterruptedException ex) {
-                // do nothing
-            }
+        synchronized (this.paintLock) {
+            stillPainting = this.painting;
+        }
+        if (!stillPainting) {
+            this.gameBoard.repaint();
         }
     }
 
@@ -254,18 +244,12 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
     }
 
     private void setSpeed(TickSpeed speed) {
-        synchronized (this.gameTimeLock) {
-            this.currentSpeed = speed;
-            this.speedMultiplier = speed.multiplier();
-        }
+        this.currentSpeed = speed;
+        this.gameLoop.setSpeed(speed);
     }
 
     private void cycleSpeed() {
-        TickSpeed next;
-        synchronized (this.gameTimeLock) {
-            next = this.currentSpeed.next();
-        }
-        this.setSpeed(next);
+        this.setSpeed(this.currentSpeed.next());
     }
 
     public void paintBoard(Graphics2D g2) {
