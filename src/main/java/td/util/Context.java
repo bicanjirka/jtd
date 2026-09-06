@@ -64,6 +64,10 @@ public class Context {
         this.enemyCount = c;
     }
 
+    public EnemyMob[] getEnemies() {
+        return this.enemies;
+    }
+
     public void removeEnemy() {
         this.enemyCount--;
         this.mainApp.enemyDied(this.enemyCount);
