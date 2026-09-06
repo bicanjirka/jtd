@@ -6,6 +6,7 @@ import td.wave.Path;
 import td.wave.PathNormal;
 import td.wave.Wave;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -144,7 +145,7 @@ public class Context {
     }
 
     public void clearTowers() {
-        for (Tower t : this.towers) {
+        for (Tower t : new ArrayList<>(this.towers)) {
             int cellX = t.getX() / this.scale;
             int cellY = t.getY() / this.scale;
             this.mainApp.clearCell(cellX, cellY);
