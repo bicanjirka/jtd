@@ -1,6 +1,8 @@
 package td.tower;
 
 import td.enemy.EnemyMob;
+import td.tower.targeting.FurthestAlongPathSelector;
+import td.tower.targeting.InRangeTargetQuery;
 import td.util.Context;
 
 import java.awt.BasicStroke;
@@ -8,8 +10,9 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Stroke;
 import java.awt.geom.Line2D;
+import java.util.List;
 
-public class TowerOne extends AbstractTower {
+public final class TowerOne extends AbstractTower {
 
     public static final int price = 10;
     public static final int damage = 4000;
@@ -36,28 +39,9 @@ public class TowerOne extends AbstractTower {
     }
 
     private EnemyMob findEnemy() {
-        int distance2;
-        int dx, dy;
-        EnemyMob e, e2 = null;
-        int progression = 0;
-
-        if (this.context.enemies != null) {
-            for (int i = 0; i < this.context.enemies.length; i++) {
-                e = this.context.enemies[i];
-                if (e.validTarget(EnemyMob.type.Normal)) {
-                    dx = e.getX() - this.centerX;
-                    dy = e.getY() - this.centerY;
-                    distance2 = dx * dx + dy * dy;
-                    if (distance2 < this.rangeReal2) {
-                        if (e.getProgression() > progression) {
-                            e2 = e;
-                            progression = e2.getProgression();
-                        }
-                    }
-                }
-            }
-        }
-        return e2;
+        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal, EnemyMob.type.Normal)
+                .matching(this.context);
+        return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
     }
 
     public void doTick(int gameTime) {

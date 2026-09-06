@@ -8,7 +8,7 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 
-public class EnemyMobSquare extends AbstractEnemyMobRotor {
+public final class EnemyMobSquare extends AbstractEnemyMobRotor {
 
     private int deadTime;
     private boolean gone;

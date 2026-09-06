@@ -8,7 +8,7 @@ import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TowerUpgrade extends AbstractTower implements TowerListener {
+public final class TowerUpgrade extends AbstractTower implements TowerListener {
 
     public static final int price = 20;
     public static final int damage = 0;

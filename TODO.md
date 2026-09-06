@@ -108,18 +108,6 @@ so if the background image ever fails to load, nothing is drawn there instead of
 - **Approach:** draw a plain filled rectangle (matching the board's background color) as a fallback in `paintBoard()`
   when `this.backGround` is `null`, rather than leaving the constructor's `else` branch empty.
 
-### Enemy targeting duplicated across tower classes
-
-Every tower (`TowerOne`, `TowerTwo`, `TowerThree`, `TowerFour`) hand-rolls its own linear scan over `context.enemies[]`
-with slightly different filtering/sorting logic (nearest, random-in-range, furthest-along-path, all-in-range). There's
-no shared, reusable way to ask "give me enemies in range, sorted by X."
-
-- **Where:** `context.enemies` (public array field on `Context`), and the `find*` methods in each `Tower*` class
-- **Approach:** wrap `context.enemies` access behind a method on `Context` (making the field private) that returns an
-  iterator/stream over valid targets, parameterized by a sort key (distance, path progression, speed, health, ...) and
-  an optional range/type filter — then have each tower's targeting method call into that instead of re-implementing the
-  scan.
-
 ### Enemy death/fade-out paint logic is duplicated
 
 `EnemyMobCircle`, `EnemyMobSquare`, `EnemyMobTriangle`, and `EnemyMobGhost` each reimplement the same "fade out over

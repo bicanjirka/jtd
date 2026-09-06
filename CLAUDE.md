@@ -23,7 +23,7 @@ This is the one structural rule that matters, and it is the result of a delibera
 
 **When adding gameplay logic, put it in `GameEngine`/`Context`/the domain packages, not in `TowerDefense`.** `TowerDefense` is a shrinking legacy shell — every new rule placed there is a rule that cannot be tested. If a change needs something from the UI, add a method to `GameHost` rather than reaching for a Swing type from engine code.
 
-Domain packages under `td.*`: `cell` (board squares, buildability), `enemy` (mob hierarchy + `EnemyFactory`), `tower` (tower hierarchy + `TowerFactory`), `wave` (path geometry, wave composition), `util` (`Context`, `Cache`, listener interfaces).
+Domain packages under `td.*`: `cell` (board squares, buildability), `enemy` (mob hierarchy + `EnemyFactory`), `tower` (tower hierarchy + `TowerFactory`; `tower.targeting` holds the shared target-scanning abstractions every tower composes instead of hand-rolling), `wave` (path geometry, wave composition), `util` (`Context`, `Cache`, listener interfaces).
 
 `Context` is the shared mutable world — credits, score, lives, the tower list, the enemy array — and the listener hub (`ContextListener`, `TowerListener`, `WaveStartListener`).
 
@@ -90,27 +90,25 @@ the two documents avoid contradicting each other:**
 - This project's test conventions (see Tests below) already are the style's test rules:
   full-sentence method names, hand-built fakes over mocks, AssertJ throughout. Nothing to
   change; don't introduce Mockito or `@DisplayName` to "improve" this.
+- All five leaf `Tower*` classes and all five leaf `EnemyMob*` classes are `final`. This
+  still isn't the style's literal rule-4 exception (nothing dispatches over them with a
+  visitor — they're plain virtual `paint()`/`doTick()` calls, a reasonable choice for a
+  game loop), but the variant set is at least genuinely closed now, which is the part that
+  was previously just asserted without being true.
+- Tower targeting is centralized in `td.tower.targeting` (`TargetQuery`/
+  `InRangeTargetQuery`, `TargetSelector`/`FurthestAlongPathSelector`/`RandomSelector`,
+  `NextTargetQuery`/`InRangeAfterIndexQuery` for `TowerThree`'s index-stable round robin).
+  This is pattern D done for real: filtering and selection are separate, swappable, unit-
+  tested pieces instead of four hand-rolled scans with an `if` buried in each one. Add a
+  new tower by composing these, not by writing a fifth scan.
 
-**Partially aligned — the gap is real, close it incrementally, don't paper over it:**
+**Partially aligned:**
 
-- `AbstractTower` → `TowerOne`..`TowerFour`/`TowerUpgrade` and `AbstractEnemyMob` (via
-  `AbstractEnemyMobDirectional`/`Rotor`) → `EnemyMobCircle`/`Square`/`Triangle`/`Ghost`/
-  `Empty` are closed-in-practice hierarchies, but they are **not** the style's rule-4
-  exception as written: nothing dispatches over them with a visitor, they're plain virtual
-  method calls, and none of the leaf classes are `final`. Don't cite this as "the visitor
-  exception" — it's ordinary OOP inheritance, which is a reasonable choice for
-  per-instance `paint()`/`doTick()` behavior in a game loop, not a violation to rush and
-  fix. The one free, low-risk improvement: **mark new leaf subclasses `final`** (none
-  currently are) so the set is at least closed the way the style requires, without
-  touching the two-level abstract hierarchy that's already there.
-- Every tower's `find*` targeting method re-implements its own linear scan over
-  `context.enemies` (already flagged in Gotchas/TODO.md as duplicated). This is the
-  concrete instance of rule D ("branching lives in a composition class, never as an `if`
-  inside the operation") that's actually actionable: the next time this is touched, wrap
-  `context.enemies` behind a query object (e.g. sorted-by-distance/path-progression,
-  filtered by range) that each tower calls into, instead of another hand-rolled scan. This
-  is independent of `Context`'s mutability above — it's about deduplicating targeting
-  logic, not about making `Context` immutable.
+- `Context` is still the shared mutable god object described above — `enemies` is now
+  encapsulated behind `getEnemies()`/`setEnemies()` (never `null`), but `credits`/`score`/
+  `lives` remain plain mutable fields with ad hoc setters, no algebra. That's a much larger
+  change than this file asks anyone to take on speculatively; leave it as known shape,
+  not a gap to opportunistically "fix" mid-way through an unrelated change.
 
 ## Tests
 
@@ -140,7 +138,6 @@ Wave contents are a space-separated token string parsed in `Wave.finalise()`. To
 
 - **A green test run still prints a `NumberFormatException` stack trace.** `WaveTest` feeds an unparseable token (`"?"`) through the wave language, and `Wave.finalise()` handles it by calling `printStackTrace()` and defaulting the count to 1. Expected output on a passing run — check `Tests run: … Failures: 0`, not the presence of a trace.
 - **`Cache` is an eagerly-initialized singleton that calls `System.exit(0)` if any image fails to load** (after showing a `JOptionPane`). `Context`'s constructor calls `Cache.getInstance()`, so *every* test that builds a `Context` loads the real image resources. Renaming or removing anything under `src/main/resources/td/images/` will take down the test suite, not just the game.
-- **`Context.enemies` is a public mutable `EnemyMob[]`**, and every tower re-implements its own linear scan over it. This is a known wart with a documented fix in `TODO.md`; don't add a sixth hand-rolled scan without reading that entry first.
 - **Version is duplicated** between `pom.xml` and `TowerDefense.VERSION` (currently `1.4` in both). There's no single source of truth — update both when cutting a release.
 
 ## Known gaps

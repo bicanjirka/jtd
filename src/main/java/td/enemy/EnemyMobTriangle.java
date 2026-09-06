@@ -8,7 +8,7 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 
-public class EnemyMobTriangle extends AbstractEnemyMobRotor {
+public final class EnemyMobTriangle extends AbstractEnemyMobRotor {
 
     private int deadTime;
     private boolean gone;

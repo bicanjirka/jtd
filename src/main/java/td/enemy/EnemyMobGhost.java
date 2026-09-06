@@ -8,7 +8,7 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 
-public class EnemyMobGhost extends AbstractEnemyMob {
+public final class EnemyMobGhost extends AbstractEnemyMob {
 
     private int deadTime;
     private boolean gone;

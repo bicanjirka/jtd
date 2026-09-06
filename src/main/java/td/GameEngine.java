@@ -2,6 +2,7 @@ package td;
 
 import td.cell.Cell;
 import td.cell.CellNormal;
+import td.enemy.EnemyMob;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.Context;
@@ -126,7 +127,7 @@ public class GameEngine {
             this.startWave = false;
             this.waveReady = false;
             Wave tempWave = this.waves.get(this.wave);
-            this.context.enemies = tempWave.getEnemies();
+            this.context.setEnemies(tempWave.getEnemies());
             this.context.startWave(tempWave);
             this.wave++;
             return true;
@@ -142,10 +143,8 @@ public class GameEngine {
         if (this.startWave) {
             waveStarted = this.nextWave();
         }
-        if (this.context.enemies != null) {
-            for (int i = 0; i < this.context.enemies.length; i++) {
-                this.context.enemies[i].doTick(time);
-            }
+        for (EnemyMob enemy : this.context.getEnemies()) {
+            enemy.doTick(time);
         }
         for (Tower tower : this.towers) {
             tower.doTick(time);
