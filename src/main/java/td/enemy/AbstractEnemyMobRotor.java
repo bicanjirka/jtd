@@ -2,7 +2,7 @@ package td.enemy;
 
 import td.util.Context;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 
 public abstract class AbstractEnemyMobRotor extends AbstractEnemyMob {

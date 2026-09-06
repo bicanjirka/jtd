@@ -2,7 +2,7 @@ package td.cell;
 
 import td.tower.Tower;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 
 public interface Cell {
 

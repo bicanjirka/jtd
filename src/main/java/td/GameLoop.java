@@ -1,6 +1,6 @@
 package td;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 
 /**
  * Drives the simulation on its own dedicated thread using two independent

@@ -4,7 +4,7 @@ import td.util.Context;
 import td.wave.Path;
 import td.wave.Point;
 
-import java.awt.*;
+import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.util.Objects;
 

@@ -1,0 +1,12 @@
+<component name="ProjectCodeStyleConfiguration">
+  <code_scheme name="Project">
+    <JavaCodeStyleSettings>
+      <!-- Never collapse imports to a wildcard: this project has already hit a real
+           java.util.List / java.awt.List collision that only compiled correctly because
+           of an explicit import shadowing a wildcard. Setting these to a very high number
+           effectively disables import-on-demand collapsing altogether. -->
+      <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="999" />
+      <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="999" />
+    </JavaCodeStyleSettings>
+  </code_scheme>
+</component>

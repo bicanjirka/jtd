@@ -4,7 +4,10 @@ import td.enemy.EnemyMob;
 import td.util.Context;
 import td.util.WaveStartListener;
 
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Stroke;
 import java.awt.geom.Line2D;
 
 public class TowerThree extends AbstractTower implements WaveStartListener {

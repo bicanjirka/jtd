@@ -3,8 +3,10 @@ package td.ui;
 import td.TowerDefence;
 import td.util.Context;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.GroupLayout;
+import javax.swing.JPanel;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 public class GameBoard extends JPanel {
     private static final long serialVersionUID = 1L;
