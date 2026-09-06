@@ -1,5 +1,7 @@
 package td;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import td.cell.Cell;
 import td.cell.CellNormal;
 import td.enemy.EnemyMob;
@@ -25,6 +27,8 @@ import java.util.List;
  * TowerDefence still owns.
  */
 public class GameEngine {
+
+    private static final Logger LOG = LoggerFactory.getLogger(GameEngine.class);
 
     private final Context context;
     private final List<Tower> towers;
@@ -109,6 +113,7 @@ public class GameEngine {
         }
 
         this.context.setCredits(startingCredits);
+        LOG.info("Level loaded: {}x{} board, {} waves, {} starting credits", width, height, this.waves.size(), startingCredits);
     }
 
     public void startLevel() {
@@ -130,6 +135,7 @@ public class GameEngine {
             this.context.setEnemies(tempWave.getEnemies());
             this.context.startWave(tempWave);
             this.wave++;
+            LOG.info("Wave {}/{} started, {} enemies", this.wave, this.waves.size(), tempWave.enemyCount());
             return true;
         }
         return false;
@@ -139,6 +145,7 @@ public class GameEngine {
      * @return true if this tick started a new wave (caller may want to refresh UI accordingly)
      */
     public boolean doTick(int time) {
+        LOG.debug("doTick t={}", time);
         boolean waveStarted = false;
         if (this.startWave) {
             waveStarted = this.nextWave();
@@ -212,13 +219,21 @@ public class GameEngine {
                     cell.setHighlight(Cell.highlightType.select);
                 } else if (this.placingTower) {
                     if (cell.buildable()) {
+                        int cellX = boardX / this.context.scale;
+                        int cellY = boardY / this.context.scale;
                         if (this.context.doPay(this.placingTowerType.price)) {
-                            Tower tempTower = TowerFactory.createTower(this.placingTowerType, this.context, boardX / this.context.scale, boardY / this.context.scale);
+                            Tower tempTower = TowerFactory.createTower(this.placingTowerType, this.context, cellX, cellY);
                             this.context.addTower(tempTower);
                             cell.setTower(tempTower);
                             cell.enable(false);
+                            LOG.info("Tower placed: {} at ({},{}), credits left={}", this.placingTowerType, cellX, cellY, this.context.getCredits());
+                        } else {
+                            LOG.info("Tower placement rejected: not enough credits for {} (need {}, have {})",
+                                    this.placingTowerType, this.placingTowerType.price, this.context.getCredits());
                         }
                         this.placingTower = false;
+                    } else {
+                        LOG.info("Tower placement rejected: cell ({},{}) is not buildable", boardX / this.context.scale, boardY / this.context.scale);
                     }
                 }
             }

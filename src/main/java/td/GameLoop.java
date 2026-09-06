@@ -1,5 +1,9 @@
 package td;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
 import javax.swing.SwingUtilities;
 
 /**
@@ -19,9 +23,12 @@ import javax.swing.SwingUtilities;
  */
 public class GameLoop implements Runnable {
 
+    private static final Logger LOG = LoggerFactory.getLogger(GameLoop.class);
+
     private static final long BASE_TICK_NANOS = 50_000_000L;
     private static final long RENDER_INTERVAL_NANOS = 16_666_667L; // ~60fps
     private static final long POLL_NANOS = 1_000_000L;
+    private static final int MAX_CONSECUTIVE_TICK_FAILURES = 10;
 
     private final TickAccumulator tickAccumulator = new TickAccumulator(BASE_TICK_NANOS);
     private final TickAccumulator renderAccumulator = new TickAccumulator(RENDER_INTERVAL_NANOS);
@@ -30,6 +37,8 @@ public class GameLoop implements Runnable {
 
     private volatile double speedMultiplier = TickSpeed.NORMAL.multiplier();
     private volatile boolean running = true;
+    private long tickNumber = 0;
+    private int consecutiveTickFailures = 0;
 
     public GameLoop(Runnable onTick, Runnable onRender) {
         this.onTick = onTick;
@@ -37,6 +46,7 @@ public class GameLoop implements Runnable {
     }
 
     public void setSpeed(TickSpeed speed) {
+        LOG.info("Tick speed changed: {} -> {}x", speed, speed.multiplier());
         this.speedMultiplier = speed.multiplier();
     }
 
@@ -44,12 +54,14 @@ public class GameLoop implements Runnable {
      * Starts the loop on a new daemon thread.
      */
     public void start() {
+        LOG.info("GameLoop starting");
         Thread thread = new Thread(this, "game-loop");
         thread.setDaemon(true);
         thread.start();
     }
 
     public void stop() {
+        LOG.info("GameLoop stopping");
         this.running = false;
     }
 
@@ -71,16 +83,43 @@ public class GameLoop implements Runnable {
                     ticks = 1;
                     this.tickAccumulator.reset();
                 }
-                for (int i = 0; i < ticks; i++) {
-                    this.onTick.run();
+                for (int i = 0; i < ticks && this.running; i++) {
+                    this.runTick();
                 }
             }
 
             if (this.renderAccumulator.accumulate(elapsedNanos) > 0) {
-                SwingUtilities.invokeLater(this.onRender);
+                SwingUtilities.invokeLater(this::runRender);
             }
 
             sleepQuietly(POLL_NANOS);
+        }
+    }
+
+    private void runTick() {
+        this.tickNumber++;
+        MDC.put("tick", String.valueOf(this.tickNumber));
+        try {
+            this.onTick.run();
+            this.consecutiveTickFailures = 0;
+        } catch (RuntimeException e) {
+            this.consecutiveTickFailures++;
+            LOG.error("Tick failed, skipping this tick ({}/{} consecutive failures)",
+                    this.consecutiveTickFailures, MAX_CONSECUTIVE_TICK_FAILURES, e);
+            if (this.consecutiveTickFailures >= MAX_CONSECUTIVE_TICK_FAILURES) {
+                LOG.error("GameLoop stopping after {} consecutive tick failures", this.consecutiveTickFailures);
+                this.running = false;
+            }
+        } finally {
+            MDC.remove("tick");
+        }
+    }
+
+    private void runRender() {
+        try {
+            this.onRender.run();
+        } catch (RuntimeException e) {
+            LOG.error("Render failed", e);
         }
     }
 

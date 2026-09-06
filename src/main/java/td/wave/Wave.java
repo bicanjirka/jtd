@@ -1,5 +1,7 @@
 package td.wave;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.util.Context;
@@ -11,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class Wave {
+
+    private static final Logger LOG = LoggerFactory.getLogger(Wave.class);
     private final List<EnemyMob> enemies = new ArrayList<>();
     private final List<String[]> nameStrings = new ArrayList<>();
     private final int baseHealth;
@@ -81,7 +85,7 @@ public class Wave {
                     try {
                         nr = Integer.parseInt(name);
                     } catch (NumberFormatException ex) {
-                        ex.printStackTrace();
+                        LOG.warn("Unrecognized wave token '{}' in level {}, treating as x1", name, this.level, ex);
                         nr = 1;
                     }
                 }

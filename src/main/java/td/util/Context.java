@@ -1,5 +1,7 @@
 package td.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import td.enemy.EnemyMob;
 import td.tower.Tower;
 import td.wave.Path;
@@ -11,6 +13,8 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Context {
+
+    private static final Logger LOG = LoggerFactory.getLogger(Context.class);
 
     public int scale = 32;
     public int maxX, maxY;
@@ -89,16 +93,18 @@ public class Context {
 
     public void addScore(int s) {
         if (s < 0) {
-            System.out.println("Context::addScore: Adding negative score? " + s);
+            LOG.warn("Adding negative score? {}", s);
         }
         this.score += s;
+        LOG.debug("Score +{} -> {}", s, this.score);
     }
 
     public void deductScore(int s) {
         if (s < 0) {
-            System.out.println("Context::deductScore: Deducting negative score? " + s);
+            LOG.warn("Deducting negative score? {}", s);
         }
         this.score -= s;
+        LOG.debug("Score -{} -> {}", s, this.score);
     }
 
     public int getScore() {
@@ -125,6 +131,7 @@ public class Context {
     public boolean doPay(int amount) {
         if (this.canPay(amount)) {
             this.credits -= amount;
+            LOG.debug("Credits -{} -> {}", amount, this.credits);
             this.fireMoneyChangedEvent();
             return true;
         } else {
@@ -134,6 +141,7 @@ public class Context {
 
     public void doReceive(int amount) {
         this.credits += amount;
+        LOG.debug("Credits +{} -> {}", amount, this.credits);
         this.fireMoneyChangedEvent();
     }
 
@@ -150,6 +158,7 @@ public class Context {
         this.towers.remove(t);
         this.doReceive(t.getSellPrice());
         this.fireTowerRemovedEvent(t);
+        LOG.info("Tower sold: {} at ({},{}), refund={}", t.getType(), cellX, cellY, t.getSellPrice());
     }
 
     public void clearTowers() {
@@ -217,6 +226,11 @@ public class Context {
 
     public void removeLife() {
         this.lives--;
+        if (this.lives <= 0) {
+            LOG.info("Life lost, none remaining - game over");
+        } else {
+            LOG.info("Life lost, {} remaining", this.lives);
+        }
         this.fireLivesChangedEvent();
     }
 

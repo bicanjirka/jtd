@@ -1,14 +1,17 @@
 package td.enemy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import td.util.Context;
 import td.wave.Path;
 import td.wave.Point;
 
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
-import java.util.Objects;
 
 public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractEnemyMob.class);
 
     protected type type;
     protected boolean inactive = true;
@@ -148,13 +151,14 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
     }
 
     public EnemyMob create(Context context, int delay, int health, int price, int level) {
-        AbstractEnemyMob newEnemy = null;
+        AbstractEnemyMob newEnemy;
         try {
             newEnemy = (AbstractEnemyMob) this.clone();
         } catch (CloneNotSupportedException ex) {
-            ex.printStackTrace();
+            LOG.error("Failed to clone enemy prototype {}", this.getClass().getSimpleName(), ex);
+            throw new IllegalStateException("Failed to clone enemy prototype " + this.getClass().getSimpleName(), ex);
         }
-        Objects.requireNonNull(newEnemy).doInit(context, delay, health, price, level);
+        newEnemy.doInit(context, delay, health, price, level);
 
         return newEnemy;
     }
