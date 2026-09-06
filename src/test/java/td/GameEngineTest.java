@@ -35,6 +35,20 @@ class GameEngineTest {
     }
 
     @Test
+    void placingATowerWithoutEnoughCreditsCancelsPlacementWithoutBuildingOrCharging() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(5, 5, new int[]{0, 4}, new int[]{2, 2}, List.of(), TowerOne.price - 1);
+
+        engine.startPlacing(TowerFactory.type.first, TowerOne.range);
+        Tower selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
+
+        assertThat(selected).isNull();
+        assertThat(engine.getContext().getCredits()).isEqualTo(TowerOne.price - 1);
+        assertThat(engine.getCellGrid()[0][0].hasTower()).isFalse();
+        assertThat(engine.isPlacingTower()).isFalse(); // failed payment still cancels placement mode
+    }
+
+    @Test
     void clickingAnOccupiedCellSelectsItsTower() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(5, 5, new int[]{0, 4}, new int[]{2, 2}, List.of(), 100);
