@@ -5,18 +5,19 @@ import td.util.Context;
 import td.wave.Wave;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 
 public class PanelWaveInfo extends JPanel {
     private static final long serialVersionUID = 1L;
-    private javax.swing.JLabel jLabel_cur_health;
-    private javax.swing.JLabel jLabel_cur_level;
-    private javax.swing.JLabel jLabel_cur_round;
-    private javax.swing.JLabel jLabel_cur_reward;
-    private javax.swing.JLabel jLabel_next_health;
-    private javax.swing.JLabel jLabel_next_level;
-    private javax.swing.JLabel jLabel_next_round;
-    private javax.swing.JLabel jLabel_next_reward;
+    private JLabel jLabel_cur_health;
+    private JLabel jLabel_cur_level;
+    private JLabel jLabel_cur_round;
+    private JLabel jLabel_cur_reward;
+    private JLabel jLabel_next_health;
+    private JLabel jLabel_next_level;
+    private JLabel jLabel_next_round;
+    private JLabel jLabel_next_reward;
     private PanelEnemy panelEnemy_cur;
     private PanelEnemy panelEnemy_next;
 
@@ -78,123 +79,123 @@ public class PanelWaveInfo extends JPanel {
     }
 
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
+        GridBagConstraints gridBagConstraints;
 
-        jLabel_cur_health = new javax.swing.JLabel();
-        jLabel_cur_reward = new javax.swing.JLabel();
-        jLabel_next_health = new javax.swing.JLabel();
-        jLabel_next_reward = new javax.swing.JLabel();
-        jLabel_next_level = new javax.swing.JLabel();
-        jLabel_cur_level = new javax.swing.JLabel();
-        jLabel_next_round = new javax.swing.JLabel();
-        jLabel_cur_round = new javax.swing.JLabel();
+        jLabel_cur_health = new JLabel();
+        jLabel_cur_reward = new JLabel();
+        jLabel_next_health = new JLabel();
+        jLabel_next_reward = new JLabel();
+        jLabel_next_level = new JLabel();
+        jLabel_cur_level = new JLabel();
+        jLabel_next_round = new JLabel();
+        jLabel_cur_round = new JLabel();
         panelEnemy_cur = new PanelEnemy();
         panelEnemy_next = new PanelEnemy();
 
-        setLayout(new java.awt.GridBagLayout());
+        setLayout(new GridBagLayout());
 
-        setBackground(new java.awt.Color(0, 0, 0));
-        setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Current & Next Wave", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", Font.PLAIN, 11), new java.awt.Color(220, 255, 220)));
-        setForeground(new java.awt.Color(220, 255, 220));
-        setMaximumSize(new java.awt.Dimension(200, 32767));
-        setMinimumSize(new java.awt.Dimension(200, 60));
-        setPreferredSize(new java.awt.Dimension(200, 60));
-        jLabel_cur_health.setForeground(new java.awt.Color(220, 255, 220));
+        setBackground(new Color(0, 0, 0));
+        setBorder(BorderFactory.createTitledBorder(null, "Current & Next Wave", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Dialog", Font.PLAIN, 11), new Color(220, 255, 220)));
+        setForeground(new Color(220, 255, 220));
+        setMaximumSize(new Dimension(200, 32767));
+        setMinimumSize(new Dimension(200, 60));
+        setPreferredSize(new Dimension(200, 60));
+        jLabel_cur_health.setForeground(new Color(220, 255, 220));
         jLabel_cur_health.setText("0hp");
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 5);
+        gridBagConstraints.anchor = GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new Insets(0, 5, 0, 5);
         add(jLabel_cur_health, gridBagConstraints);
 
-        jLabel_cur_reward.setForeground(new java.awt.Color(220, 255, 220));
+        jLabel_cur_reward.setForeground(new Color(220, 255, 220));
         jLabel_cur_reward.setText("$0");
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.anchor = GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 0.01;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 0);
+        gridBagConstraints.insets = new Insets(0, 5, 0, 0);
         add(jLabel_cur_reward, gridBagConstraints);
 
-        panelEnemy_cur.setMinimumSize(new java.awt.Dimension(30, 30));
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        panelEnemy_cur.setMinimumSize(new Dimension(30, 30));
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
         gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagConstraints.weightx = 0.01;
-        gridBagConstraints.insets = new java.awt.Insets(2, 0, 2, 0);
+        gridBagConstraints.insets = new Insets(2, 0, 2, 0);
         add(panelEnemy_cur, gridBagConstraints);
 
-        jLabel_next_health.setForeground(new java.awt.Color(220, 255, 220));
+        jLabel_next_health.setForeground(new Color(220, 255, 220));
         jLabel_next_health.setText("0hp");
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 5);
+        gridBagConstraints.anchor = GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new Insets(0, 5, 0, 5);
         add(jLabel_next_health, gridBagConstraints);
 
-        jLabel_next_reward.setForeground(new java.awt.Color(220, 255, 220));
+        jLabel_next_reward.setForeground(new Color(220, 255, 220));
         jLabel_next_reward.setText("$0");
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.anchor = GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 0.01;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 0);
+        gridBagConstraints.insets = new Insets(0, 5, 0, 0);
         add(jLabel_next_reward, gridBagConstraints);
 
-        panelEnemy_next.setMinimumSize(new java.awt.Dimension(30, 30));
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        panelEnemy_next.setMinimumSize(new Dimension(30, 30));
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
         gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagConstraints.weightx = 0.01;
-        gridBagConstraints.insets = new java.awt.Insets(2, 0, 2, 0);
+        gridBagConstraints.insets = new Insets(2, 0, 2, 0);
         add(panelEnemy_next, gridBagConstraints);
 
-        jLabel_next_round.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_next_round.setForeground(new java.awt.Color(220, 255, 220));
+        jLabel_next_round.setBackground(new Color(0, 0, 0));
+        jLabel_next_round.setForeground(new Color(220, 255, 220));
         jLabel_next_round.setText("0");
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 5);
+        gridBagConstraints.anchor = GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new Insets(0, 0, 0, 5);
         add(jLabel_next_round, gridBagConstraints);
 
-        jLabel_cur_round.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_cur_round.setForeground(new java.awt.Color(220, 255, 220));
+        jLabel_cur_round.setBackground(new Color(0, 0, 0));
+        jLabel_cur_round.setForeground(new Color(220, 255, 220));
         jLabel_cur_round.setText("0");
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 5);
+        gridBagConstraints.anchor = GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new Insets(0, 0, 0, 5);
         add(jLabel_cur_round, gridBagConstraints);
 
-        jLabel_next_level.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_next_level.setForeground(new java.awt.Color(220, 255, 220));
+        jLabel_next_level.setBackground(new Color(0, 0, 0));
+        jLabel_next_level.setForeground(new Color(220, 255, 220));
         jLabel_next_level.setText("0");
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 3;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 5);
+        gridBagConstraints.anchor = GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new Insets(0, 0, 0, 5);
         add(jLabel_next_level, gridBagConstraints);
 
-        jLabel_cur_level.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_cur_level.setForeground(new java.awt.Color(220, 255, 220));
+        jLabel_cur_level.setBackground(new Color(0, 0, 0));
+        jLabel_cur_level.setForeground(new Color(220, 255, 220));
         jLabel_cur_level.setText("0");
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 3;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 5);
+        gridBagConstraints.anchor = GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new Insets(0, 0, 0, 5);
         add(jLabel_cur_level, gridBagConstraints);
 
     }

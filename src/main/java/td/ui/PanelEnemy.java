@@ -8,6 +8,10 @@ import td.wave.PathEmpty;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -103,24 +107,24 @@ public class PanelEnemy extends JPanel {
 
         setBackground(new Color(0, 0, 0));
         setForeground(new Color(255, 255, 255));
-        addComponentListener(new java.awt.event.ComponentAdapter() {
-            public void componentResized(java.awt.event.ComponentEvent evt) {
+        addComponentListener(new ComponentAdapter() {
+            public void componentResized(ComponentEvent evt) {
                 formComponentResized(evt);
             }
         });
-        addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
-            public void mouseMoved(java.awt.event.MouseEvent evt) {
+        addMouseMotionListener(new MouseMotionAdapter() {
+            public void mouseMoved(MouseEvent evt) {
                 formMouseMoved(evt);
             }
         });
 
     }
 
-    private void formMouseMoved(java.awt.event.MouseEvent evt) {
+    private void formMouseMoved(MouseEvent evt) {
         this.mouseOver(evt.getX());
     }
 
-    private void formComponentResized(java.awt.event.ComponentEvent evt) {
+    private void formComponentResized(ComponentEvent evt) {
         this.recalculateSize();
     }
 
