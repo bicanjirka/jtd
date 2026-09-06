@@ -44,16 +44,11 @@ Towers don't rotate their sprite image to visually face their current target (en
 - **Approach:** if pursued, reuse the `AffineTransform`-based rotation approach already implemented for directional/rotor enemies; needs per-tower "facing" state updated whenever a tower picks a new target (`TowerOne.findEnemy()`, `TowerTwo`'s find methods, etc.), and rotated sprite art for each tower.
 
 ### Fast-forward doesn't single-step while paused
-`jButton_fastActionPerformed()` (the ">>" button) just calls `this.setSpeed(TickSpeed.FAST)` and un-hides the play button — it doesn't tick the simulation forward even once if the game is currently paused. The underlying feature request (single-step the game one tick while paused) was never finished.
+`jButton_fastActionPerformed()` (the ">>" button) just calls `this.setSpeed(TickSpeed.FAST)` — it doesn't tick the simulation forward even once if the game is currently paused. The underlying feature request (single-step the game one tick while paused) was never finished.
 - **Where:** `TowerDefence.jButton_fastActionPerformed()`, `TowerDefence.doGameTick()`
-- **Approach:** `doGameTick()` currently returns early whenever `this.paused` is true, so it can't be reused as-is for a manual step. Extract its tick body (the `gameTime` increment + `doTick(time)` call) into a small private method with no pause check, have `doGameTick()` call that only when not paused, and have the >> handler call it directly (once) when `this.paused` is true, so the button acts as a manual single-step control while paused.
+- **Approach:** `doGameTick()` no longer has a pause check of its own (pause is now `TickSpeed.PAUSED`, which `GameLoop` already skips calling `onTick` for), so the >> handler can just call `this.doGameTick()` directly, once, when `this.currentSpeed == TickSpeed.PAUSED`, to act as a manual single-step control.
 
 ## Rendering / engine
-
-### Pause and tick-speed multiplier are two independently-tracked states
-The Tick Loop refactor introduced `TickSpeed`/`GameLoop`'s `speedMultiplier` as the single source of truth for how fast ticks run, including a `TickSpeed.PAUSED` (0x) preset — but `TowerDefence.paused` remains a separate boolean gating `doGameTick()`, kept deliberately unwired from the multiplier to avoid touching the pre-existing (and already slightly inconsistent) play/pause/fast-forward button state machine while that refactor was in flight. `TickSpeed.PAUSED` is currently only exercised by tests (`TickAccumulatorTest`, `GameLoopTest`), not the UI.
-- **Where:** `TowerDefence.paused`, `TowerDefence.setSpeed()`/`cycleSpeed()`, `TickSpeed.PAUSED`
-- **Approach:** decide whether to fold pause into the multiplier (`multiplier <= 0` means paused, removing the boolean entirely) or keep them permanently separate. If folding, fix the existing button-state inconsistency first: `jButton_fastActionPerformed()`/`jButton_superFastActionPerformed()` change speed without touching `paused` at all, and `jButton_playActionPerformed()`'s `!this.paused` check guarding `requestNextWave()` assumes the button is only ever pressed from a genuinely-paused state, which isn't always true today.
 
 ### Missing background image has no fallback
 `TowerDefence`'s constructor only sets `this.backGround` if `Cache.hasBufImg("bg")` is true; the `else` branch is empty, so if the background image ever fails to load, nothing is drawn there instead of a visible placeholder.
