@@ -17,8 +17,10 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.io.Serial;
 
 public class PanelTowerInfo extends JPanel implements ContextListener {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Context context;

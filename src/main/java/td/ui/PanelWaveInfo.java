@@ -14,8 +14,10 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.io.Serial;
 
 public class PanelWaveInfo extends JPanel {
+    @Serial
     private static final long serialVersionUID = 1L;
     private JLabel jLabel_cur_health;
     private JLabel jLabel_cur_level;

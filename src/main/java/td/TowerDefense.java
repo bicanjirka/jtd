@@ -36,10 +36,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
+import java.io.Serial;
 import java.util.List;
 
 // Inspired by HexTD
 public class TowerDefense extends JFrame implements ContextListener, GameHost {
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final String NAME = "Tower Defense";
     private static final String VERSION = "1.4";
