@@ -14,7 +14,7 @@ public class Context {
 
     public int scale = 32;
     public int maxX, maxY;
-    public EnemyMob[] enemies;
+    private EnemyMob[] enemies = new EnemyMob[0];
     public final List<Tower> towers;
     private final GameHost mainApp;
     private int enemyCount = 0;
@@ -66,6 +66,10 @@ public class Context {
 
     public EnemyMob[] getEnemies() {
         return this.enemies;
+    }
+
+    public void setEnemies(EnemyMob[] enemies) {
+        this.enemies = enemies;
     }
 
     public void removeEnemy() {

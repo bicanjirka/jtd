@@ -1,6 +1,7 @@
 package td.tower;
 
 import td.enemy.EnemyMob;
+import td.tower.targeting.InRangeTargetQuery;
 import td.util.Context;
 
 import java.awt.BasicStroke;
@@ -10,10 +11,9 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
-import java.util.ArrayList;
 import java.util.List;
 
-public class TowerTwo extends AbstractTower {
+public final class TowerTwo extends AbstractTower {
 
     public static final int price = 15;
     public static final int damage = 1600;
@@ -30,7 +30,7 @@ public class TowerTwo extends AbstractTower {
     private Shape spread;
 
     private EnemyMob enemy;
-    private EnemyMob[] currentTargets;
+    private List<EnemyMob> currentTargets = List.of();
 
 
     public TowerTwo(Context context, int x, int y) {
@@ -49,48 +49,12 @@ public class TowerTwo extends AbstractTower {
         this.doInit(context, x, y);
     }
 
-    private EnemyMob[] findEnemiesInRangeVisible(int x, int y, float r) {
-        List<EnemyMob> tempEnemies = new ArrayList<>();
-        float r2 = r * r;
-        int dx, dy, d2;
-        if (this.context.enemies != null) {
-            for (int i = 0; i < this.context.enemies.length; i++) {
-                EnemyMob e = this.context.enemies[i];
-                if (e.validTarget(EnemyMob.type.Normal)) {
-                    dx = e.getX() - x;
-                    dy = e.getY() - y;
-                    d2 = dx * dx + dy * dy;
-                    if (d2 < r2) {
-                        tempEnemies.add(e);
-                    }
-                }
-            }
-        }
-        EnemyMob[] retVal = new EnemyMob[tempEnemies.size()];
-        retVal = tempEnemies.toArray(retVal);
-        return retVal;
+    private List<EnemyMob> findEnemiesInRangeVisible(int x, int y, float r) {
+        return InRangeTargetQuery.ofType(x, y, r, EnemyMob.type.Normal).matching(this.context);
     }
 
-    private EnemyMob[] findEnemiesInRange(int x, int y, float r) {
-        List<EnemyMob> tempEnemies = new ArrayList<>();
-        float r2 = r * r;
-        int dx, dy, d2;
-        if (this.context.enemies != null) {
-            for (int i = 0; i < this.context.enemies.length; i++) {
-                EnemyMob e = this.context.enemies[i];
-                if (e.validTarget()) {
-                    dx = e.getX() - x;
-                    dy = e.getY() - y;
-                    d2 = dx * dx + dy * dy;
-                    if (d2 < r2) {
-                        tempEnemies.add(e);
-                    }
-                }
-            }
-        }
-        EnemyMob[] retVal = new EnemyMob[tempEnemies.size()];
-        retVal = tempEnemies.toArray(retVal);
-        return retVal;
+    private List<EnemyMob> findEnemiesInRange(int x, int y, float r) {
+        return InRangeTargetQuery.anyType(x, y, r).matching(this.context);
     }
 
     public void doTick(int gameTime) {
@@ -98,10 +62,10 @@ public class TowerTwo extends AbstractTower {
             this.coolDown--;
             this.lineStroke = this.lineStrokes[this.coolDown];
         } else {
-            EnemyMob[] enemies = this.findEnemiesInRangeVisible(this.centerX, this.centerY, this.rangeReal);
+            List<EnemyMob> enemies = this.findEnemiesInRangeVisible(this.centerX, this.centerY, this.rangeReal);
 
-            if (enemies.length > 0) {
-                this.enemy = enemies[(int) (Math.random() * enemies.length)];
+            if (!enemies.isEmpty()) {
+                this.enemy = enemies.get((int) (Math.random() * enemies.size()));
                 int ex = this.enemy.getX();
                 int ey = this.enemy.getY();
                 int dx, dy, r2;

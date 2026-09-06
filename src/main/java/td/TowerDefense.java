@@ -1,6 +1,7 @@
 package td;
 
 import td.cell.Cell;
+import td.enemy.EnemyMob;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.ui.GameBoard;
@@ -314,10 +315,8 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
             }
         }
 
-        if (this.context.enemies != null) {
-            for (int i = 0; i < this.context.enemies.length; i++) {
-                this.context.enemies[i].paint(g2, time);
-            }
+        for (EnemyMob enemy : this.context.getEnemies()) {
+            enemy.paint(g2, time);
         }
 
         for (Tower tower : this.engine.getTowers()) {

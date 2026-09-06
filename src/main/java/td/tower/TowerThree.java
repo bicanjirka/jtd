@@ -1,6 +1,7 @@
 package td.tower;
 
 import td.enemy.EnemyMob;
+import td.tower.targeting.InRangeAfterIndexQuery;
 import td.util.Context;
 import td.util.WaveStartListener;
 
@@ -9,8 +10,9 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Stroke;
 import java.awt.geom.Line2D;
+import java.util.OptionalInt;
 
-public class TowerThree extends AbstractTower implements WaveStartListener {
+public final class TowerThree extends AbstractTower implements WaveStartListener {
 
     public static final int price = 20;
     public static final int damage = 1600;
@@ -42,26 +44,12 @@ public class TowerThree extends AbstractTower implements WaveStartListener {
     }
 
     private int findEnemy(int preferedEnemyNr) {
-        int distance2;
-        int dx, dy;
-        EnemyMob e;
-        if (this.context.enemies != null) {
-            for (int i = preferedEnemyNr + 1; i < this.context.enemies.length; i++) {
-                e = this.context.enemies[i];
-                if (e.validTarget(EnemyMob.type.Normal)) {
-                    dx = e.getX() - this.centerX;
-                    dy = e.getY() - this.centerY;
-                    distance2 = dx * dx + dy * dy;
-                    if (distance2 < this.rangeReal2) {
-                        return i;
-                    }
-                }
-            }
-            if (preferedEnemyNr != -1) {
-                this.coolDown = this.coolDownRecharge;
-            }
+        OptionalInt found = new InRangeAfterIndexQuery(this.centerX, this.centerY, this.rangeReal, EnemyMob.type.Normal)
+                .nextIndexAfter(this.context, preferedEnemyNr);
+        if (found.isEmpty() && preferedEnemyNr != -1) {
+            this.coolDown = this.coolDownRecharge;
         }
-        return -1;
+        return found.orElse(-1);
     }
 
     public void doTick(int gameTime) {
@@ -72,7 +60,7 @@ public class TowerThree extends AbstractTower implements WaveStartListener {
             int enemyNr = this.findEnemy(this.fireAt);
             this.fireAt = enemyNr;
             if (enemyNr >= 0) {
-                EnemyMob enemy = this.context.enemies[enemyNr];
+                EnemyMob enemy = this.context.getEnemies()[enemyNr];
                 this.enemyX[enemyNr] = enemy.getX();
                 this.enemyY[enemyNr] = enemy.getY();
                 enemy.doDamage(this.damageCurrent);
@@ -118,16 +106,10 @@ public class TowerThree extends AbstractTower implements WaveStartListener {
 
     @Override
     public void waveStarted() {
-        if (this.context.enemies != null) {
-            int length = this.context.enemies.length;
-            this.lineSteps = new int[length];
-            this.enemyX = new int[length];
-            this.enemyY = new int[length];
-        } else {
-            this.lineSteps = new int[0];
-            this.enemyX = new int[0];
-            this.enemyY = new int[0];
-        }
+        int length = this.context.getEnemies().length;
+        this.lineSteps = new int[length];
+        this.enemyX = new int[length];
+        this.enemyY = new int[length];
     }
 
 }

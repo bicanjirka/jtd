@@ -1,16 +1,16 @@
 package td.tower;
 
 import td.enemy.EnemyMob;
+import td.tower.targeting.InRangeTargetQuery;
 import td.util.Context;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
-import java.util.ArrayList;
 import java.util.List;
 
-public class TowerFour extends AbstractTower {
+public final class TowerFour extends AbstractTower {
 
     public static final int price = 25;
     public static final int damage = 200;
@@ -30,36 +30,15 @@ public class TowerFour extends AbstractTower {
         this.spread = new Ellipse2D.Float(this.centerX - this.rangeReal, this.centerY - this.rangeReal, this.rangeReal * 2, this.rangeReal * 2);
     }
 
-    private EnemyMob[] findEnemiesInRange(int x, int y, float r) {
-        List<EnemyMob> tempEnemies = new ArrayList<>();
-        EnemyMob e;
-        float r2 = r * r;
-        int dx, dy, d2;
-        if (this.context.enemies != null) {
-            for (int i = 0; i < this.context.enemies.length; i++) {
-                e = this.context.enemies[i];
-                if (e.validTarget()) {
-                    dx = e.getX() - x;
-                    dy = e.getY() - y;
-                    d2 = dx * dx + dy * dy;
-                    if (d2 < r2) {
-                        tempEnemies.add(e);
-                        if (e.validTarget(EnemyMob.type.Invisible)) {
-                            this.ghosts++;
-                        }
-                    }
-                }
-            }
-        }
-        EnemyMob[] retVal = new EnemyMob[tempEnemies.size()];
-        retVal = tempEnemies.toArray(retVal);
-        return retVal;
+    private List<EnemyMob> findEnemiesInRange(int x, int y, float r) {
+        List<EnemyMob> matches = InRangeTargetQuery.anyType(x, y, r).matching(this.context);
+        this.ghosts = (int) matches.stream().filter(e -> e.validTarget(EnemyMob.type.Invisible)).count();
+        return matches;
     }
 
     public void doTick(int gameTime) {
-        this.ghosts = 0;
-        EnemyMob[] enemies = this.findEnemiesInRange(this.centerX, this.centerY, this.rangeReal);
-        if (enemies.length > this.ghosts) {
+        List<EnemyMob> enemies = this.findEnemiesInRange(this.centerX, this.centerY, this.rangeReal);
+        if (enemies.size() > this.ghosts) {
             this.fire = true;
             for (EnemyMob enemy : enemies) {
                 enemy.doDamage(this.damageCurrent);

@@ -24,7 +24,7 @@ final class TestContexts {
             public void clearCell(int x, int y) {
             }
         });
-        context.enemies = enemies;
+        context.setEnemies(enemies);
         return context;
     }
 }
