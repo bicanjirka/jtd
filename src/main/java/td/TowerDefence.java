@@ -63,7 +63,9 @@ public class TowerDefence extends JFrame implements ContextListener, GameHost {
     private final GameLoop gameLoop = new GameLoop(this::doGameTick, this::requestRender);
     private final Object gameTimeLock = new Object();
     private int gameTime;
-    private final Object paintLock = new Object();
+    // requestRender() and paintBoard() are both always invoked on the EDT (the former via
+    // SwingUtilities.invokeLater, the latter via Swing's own paint dispatch), so this needs
+    // no synchronization of its own - it's just in-flight bookkeeping on a single thread.
     private boolean painting = false;
     private TickSpeed currentSpeed = TickSpeed.NORMAL; // EDT-only bookkeeping for the 'f' key cycle
     private boolean paused = false;
@@ -148,11 +150,7 @@ public class TowerDefence extends JFrame implements ContextListener, GameHost {
         if (this.gameStopped) {
             return;
         }
-        boolean stillPainting;
-        synchronized (this.paintLock) {
-            stillPainting = this.painting;
-        }
-        if (!stillPainting) {
+        if (!this.painting) {
             this.gameBoard.repaint();
         }
     }
@@ -253,9 +251,7 @@ public class TowerDefence extends JFrame implements ContextListener, GameHost {
     }
 
     public void paintBoard(Graphics2D g2) {
-        synchronized (this.paintLock) {
-            this.painting = true;
-        }
+        this.painting = true;
         int time;
 
         synchronized (this.gameTimeLock) {
@@ -292,9 +288,7 @@ public class TowerDefence extends JFrame implements ContextListener, GameHost {
             tower.paintEffect(g2, time);
         }
 
-        synchronized (this.paintLock) {
-            this.painting = false;
-        }
+        this.painting = false;
     }
 
     public void startPlacing(TowerFactory.type t, float r) {
