@@ -49,6 +49,25 @@ class GameLoopTest {
     }
 
     @Test
+    void rendersEvenWhilePaused() throws InterruptedException {
+        // Rendering runs on its own real-time cadence so the board (tower placement
+        // highlights, hover effects, ...) keeps redrawing while the simulation is paused.
+        CountDownLatch sawARender = new CountDownLatch(1);
+        GameLoop loop = new GameLoop(() -> {
+        }, sawARender::countDown);
+        loop.setSpeed(TickSpeed.PAUSED);
+
+        loop.start();
+        try {
+            assertThat(sawARender.await(2, TimeUnit.SECONDS))
+                    .as("expected a render request within 2s even while paused")
+                    .isTrue();
+        } finally {
+            loop.stop();
+        }
+    }
+
+    @Test
     void stopHaltsFutureTicks() throws InterruptedException {
         AtomicInteger tickCount = new AtomicInteger();
         GameLoop loop = new GameLoop(tickCount::incrementAndGet, () -> {
