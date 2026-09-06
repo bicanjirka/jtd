@@ -1,6 +1,6 @@
 package td.ui;
 
-import td.TowerDefence;
+import td.TowerDefense;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.Cache;
@@ -31,7 +31,7 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
     private final String[] infoText;
     private final float[] towerRanges;
     private Context context;
-    private TowerDefence mainApp;
+    private TowerDefense mainApp;
     private final List<TowerFactory.type> towerTypes;
     private boolean placing = false;
 
@@ -72,7 +72,7 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
         }
     }
 
-    public void doInit(Context c, TowerDefence mainApp) {
+    public void doInit(Context c, TowerDefense mainApp) {
         this.context = c;
         this.mainApp = mainApp;
 

@@ -101,10 +101,10 @@ tick while paused) was never finished.
 
 ### Missing background image has no fallback
 
-`TowerDefence`'s constructor only sets `this.backGround` if `Cache.hasBufImg("bg")` is true; the `else` branch is empty,
+`TowerDefense`'s constructor only sets `this.backGround` if `Cache.hasBufImg("bg")` is true; the `else` branch is empty,
 so if the background image ever fails to load, nothing is drawn there instead of a visible placeholder.
 
-- **Where:** `TowerDefence` constructor
+- **Where:** `TowerDefense` constructor
 - **Approach:** draw a plain filled rectangle (matching the board's background color) as a fallback in `paintBoard()`
   when `this.backGround` is `null`, rather than leaving the constructor's `else` branch empty.
 

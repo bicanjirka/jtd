@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Owns the game state and input handling that {@link TowerDefence} used to
+ * Owns the game state and input handling that {@link TowerDefense} used to
  * hold directly, minus anything Swing-specific. Nothing here constructs a
  * window, touches a Graphics2D, or requires a display - it can be built,
  * driven, and asserted on entirely from a test.
