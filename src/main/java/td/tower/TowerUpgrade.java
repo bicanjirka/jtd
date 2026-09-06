@@ -33,7 +33,8 @@ public class TowerUpgrade extends AbstractTower implements TowerListener {
         for (Tower t : this.context.towers) {
             if (!this.clients.contains(t)) {
                 switch (t.getType()) {
-                    case upgrade -> {}
+                    case upgrade -> {
+                    }
                     default -> {
                         dx = this.centerX - t.getX();
                         dy = this.centerY - t.getY();
@@ -57,7 +58,8 @@ public class TowerUpgrade extends AbstractTower implements TowerListener {
     public void towerBuild(Tower t) {
         if (t != this && !this.clients.contains(t)) {
             switch (t.getType()) {
-                case upgrade -> {}
+                case upgrade -> {
+                }
                 default -> {
                     int dx = this.centerX - t.getX();
                     int dy = this.centerY - t.getY();

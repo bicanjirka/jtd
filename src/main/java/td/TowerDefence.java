@@ -4,14 +4,18 @@ import td.cell.Cell;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.ui.GameBoard;
+import td.ui.PanelTowerInfo;
+import td.ui.PanelTowerSelector;
+import td.ui.PanelWaveInfo;
 import td.util.Cache;
 import td.util.Context;
 import td.util.ContextListener;
 import td.util.GameHost;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.List;
 
@@ -50,7 +54,7 @@ public class TowerDefence extends JFrame implements ContextListener, GameHost {
     private final String statusMessage = """
             Welcome to TowerDefence
             Shortcuts:
-
+            
             q - build triangle
             w - build circle
             e - build spiral
@@ -72,30 +76,30 @@ public class TowerDefence extends JFrame implements ContextListener, GameHost {
     private TickSpeed currentSpeed = TickSpeed.NORMAL;
     private boolean gameStopped = false;
 
-    private javax.swing.JButton jButton_play;
-    private javax.swing.JButton jButton_pause;
-    private javax.swing.JButton jButton_fast;
-    private javax.swing.JButton jButton_superFast;
-    private javax.swing.JLabel jLabel_waveText;
-    private javax.swing.JLabel jLabel_gameLostText;
-    private javax.swing.JLabel jLabel_gameWonText;
-    private javax.swing.JLabel jLabel_creditsText;
-    private javax.swing.JLabel jLabel_livesText;
-    private javax.swing.JLabel jLabel_name;
-    private javax.swing.JLabel jLabel_scoreText;
-    private javax.swing.JLabel jLabel_credits;
-    private javax.swing.JLabel jLabel_lives;
-    private javax.swing.JLabel jLabel_score;
-    private javax.swing.JLabel jLabel_wave;
-    private td.ui.PanelTowerSelector panelTowerSelector;
-    private javax.swing.JPanel jPanel_gameLost;
-    private javax.swing.JPanel jPanel_gameWon;
-    private javax.swing.JPanel jPanel_board;
-    private javax.swing.JPanel jPanel_console;
-    private javax.swing.JPanel jPanel_gameButtons;
-    private javax.swing.JPanel jPanel_gameInfo;
-    private td.ui.PanelTowerInfo panelTowerInfo;
-    private td.ui.PanelWaveInfo panelWaveInfo;
+    private JButton jButton_play;
+    private JButton jButton_pause;
+    private JButton jButton_fast;
+    private JButton jButton_superFast;
+    private JLabel jLabel_waveText;
+    private JLabel jLabel_gameLostText;
+    private JLabel jLabel_gameWonText;
+    private JLabel jLabel_creditsText;
+    private JLabel jLabel_livesText;
+    private JLabel jLabel_name;
+    private JLabel jLabel_scoreText;
+    private JLabel jLabel_credits;
+    private JLabel jLabel_lives;
+    private JLabel jLabel_score;
+    private JLabel jLabel_wave;
+    private PanelTowerSelector panelTowerSelector;
+    private JPanel jPanel_gameLost;
+    private JPanel jPanel_gameWon;
+    private JPanel jPanel_board;
+    private JPanel jPanel_console;
+    private JPanel jPanel_gameButtons;
+    private JPanel jPanel_gameInfo;
+    private PanelTowerInfo panelTowerInfo;
+    private PanelWaveInfo panelWaveInfo;
 
     {
         this.setLayout(null);
@@ -320,7 +324,7 @@ public class TowerDefence extends JFrame implements ContextListener, GameHost {
         this.engine.clearCell(x, y);
     }
 
-    private void jPanel_boardMouseClicked(java.awt.event.MouseEvent evt) {
+    private void jPanel_boardMouseClicked(MouseEvent evt) {
         this.unSelectTower();
         boolean wasPlacing = this.engine.isPlacingTower();
         int boardX = evt.getX() - this.gameBoard.getX();
@@ -334,7 +338,7 @@ public class TowerDefence extends JFrame implements ContextListener, GameHost {
         }
     }
 
-    private void jPanel_boardMouseMoved(java.awt.event.MouseEvent evt) {
+    private void jPanel_boardMouseMoved(MouseEvent evt) {
         this.requestFocusInWindow();
         if (this.engine.isPlacingTower()) {
             this.engine.highlightCell(evt.getX() - this.gameBoard.getX(), evt.getY() - this.gameBoard.getY());
@@ -369,357 +373,357 @@ public class TowerDefence extends JFrame implements ContextListener, GameHost {
             System.out.println("Error setting native LAF: " + e);
         }
 
-        addKeyListener(new java.awt.event.KeyAdapter() {
+        addKeyListener(new KeyAdapter() {
             public void keyTyped(KeyEvent evt) {
                 formKeyTyped(evt);
             }
         });
 
-        java.awt.GridBagConstraints gridBagConstraints;
+        GridBagConstraints gridBagConstraints;
 
-        jPanel_board = new javax.swing.JPanel();
-        jPanel_gameLost = new javax.swing.JPanel();
-        jLabel_gameLostText = new javax.swing.JLabel();
-        jPanel_gameWon = new javax.swing.JPanel();
-        jLabel_gameWonText = new javax.swing.JLabel();
-        jPanel_console = new javax.swing.JPanel();
-        jLabel_name = new javax.swing.JLabel();
-        jPanel_gameInfo = new javax.swing.JPanel();
-        jLabel_waveText = new javax.swing.JLabel();
-        jLabel_wave = new javax.swing.JLabel();
-        jLabel_livesText = new javax.swing.JLabel();
-        jLabel_lives = new javax.swing.JLabel();
-        jLabel_scoreText = new javax.swing.JLabel();
-        jLabel_score = new javax.swing.JLabel();
-        jLabel_creditsText = new javax.swing.JLabel();
-        jLabel_credits = new javax.swing.JLabel();
-        jPanel_gameButtons = new javax.swing.JPanel();
-        jButton_play = new javax.swing.JButton();
-        jButton_pause = new javax.swing.JButton();
-        jButton_fast = new javax.swing.JButton();
-        jButton_superFast = new javax.swing.JButton();
-        panelTowerInfo = new td.ui.PanelTowerInfo();
-        panelWaveInfo = new td.ui.PanelWaveInfo();
-        panelTowerSelector = new td.ui.PanelTowerSelector();
-
-
-        getContentPane().setLayout(new java.awt.GridBagLayout());
+        jPanel_board = new JPanel();
+        jPanel_gameLost = new JPanel();
+        jLabel_gameLostText = new JLabel();
+        jPanel_gameWon = new JPanel();
+        jLabel_gameWonText = new JLabel();
+        jPanel_console = new JPanel();
+        jLabel_name = new JLabel();
+        jPanel_gameInfo = new JPanel();
+        jLabel_waveText = new JLabel();
+        jLabel_wave = new JLabel();
+        jLabel_livesText = new JLabel();
+        jLabel_lives = new JLabel();
+        jLabel_scoreText = new JLabel();
+        jLabel_score = new JLabel();
+        jLabel_creditsText = new JLabel();
+        jLabel_credits = new JLabel();
+        jPanel_gameButtons = new JPanel();
+        jButton_play = new JButton();
+        jButton_pause = new JButton();
+        jButton_fast = new JButton();
+        jButton_superFast = new JButton();
+        panelTowerInfo = new PanelTowerInfo();
+        panelWaveInfo = new PanelWaveInfo();
+        panelTowerSelector = new PanelTowerSelector();
 
 
-        jPanel_board.setLayout(new java.awt.GridBagLayout());
+        getContentPane().setLayout(new GridBagLayout());
 
-        jPanel_board.setBackground(new java.awt.Color(0, 0, 0));
-        jPanel_board.setForeground(new java.awt.Color(220, 255, 220));
-        jPanel_board.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
+
+        jPanel_board.setLayout(new GridBagLayout());
+
+        jPanel_board.setBackground(new Color(0, 0, 0));
+        jPanel_board.setForeground(new Color(220, 255, 220));
+        jPanel_board.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent evt) {
                 jPanel_boardMouseClicked(evt);
             }
         });
-        jPanel_board.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
-            public void mouseMoved(java.awt.event.MouseEvent evt) {
+        jPanel_board.addMouseMotionListener(new MouseMotionAdapter() {
+            public void mouseMoved(MouseEvent evt) {
                 jPanel_boardMouseMoved(evt);
             }
         });
 
-        jPanel_gameLost.setLayout(new java.awt.GridBagLayout());
+        jPanel_gameLost.setLayout(new GridBagLayout());
 
-        jPanel_gameLost.setBackground(new java.awt.Color(0, 0, 0, 80));
-        jLabel_gameLostText.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_gameLostText.setFont(new java.awt.Font("SansSerif", Font.BOLD, 18));
-        jLabel_gameLostText.setForeground(new java.awt.Color(220, 255, 220));
+        jPanel_gameLost.setBackground(new Color(0, 0, 0, 80));
+        jLabel_gameLostText.setBackground(new Color(0, 0, 0));
+        jLabel_gameLostText.setFont(new Font("SansSerif", Font.BOLD, 18));
+        jLabel_gameLostText.setForeground(new Color(220, 255, 220));
         jLabel_gameLostText.setText("Game Over!");
-        jPanel_gameLost.add(jLabel_gameLostText, new java.awt.GridBagConstraints());
+        jPanel_gameLost.add(jLabel_gameLostText, new GridBagConstraints());
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 0.1;
         gridBagConstraints.weighty = 0.1;
         jPanel_board.add(jPanel_gameLost, gridBagConstraints);
 
-        jPanel_gameWon.setLayout(new java.awt.GridBagLayout());
+        jPanel_gameWon.setLayout(new GridBagLayout());
 
-        jPanel_gameWon.setBackground(new java.awt.Color(0, 0, 0, 80));
-        jLabel_gameWonText.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_gameWonText.setFont(new java.awt.Font("SansSerif", Font.BOLD, 18));
-        jLabel_gameWonText.setForeground(new java.awt.Color(220, 255, 220));
+        jPanel_gameWon.setBackground(new Color(0, 0, 0, 80));
+        jLabel_gameWonText.setBackground(new Color(0, 0, 0));
+        jLabel_gameWonText.setFont(new Font("SansSerif", Font.BOLD, 18));
+        jLabel_gameWonText.setForeground(new Color(220, 255, 220));
         jLabel_gameWonText.setText("Congratulations!");
-        jPanel_gameWon.add(jLabel_gameWonText, new java.awt.GridBagConstraints());
+        jPanel_gameWon.add(jLabel_gameWonText, new GridBagConstraints());
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 0.1;
         gridBagConstraints.weighty = 0.1;
         jPanel_board.add(jPanel_gameWon, gridBagConstraints);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 0.1;
         gridBagConstraints.weighty = 0.1;
         getContentPane().add(jPanel_board, gridBagConstraints);
 
 
-        jPanel_console.setLayout(new java.awt.GridBagLayout());
+        jPanel_console.setLayout(new GridBagLayout());
 
-        jPanel_console.setBackground(new java.awt.Color(0, 0, 0));
+        jPanel_console.setBackground(new Color(0, 0, 0));
         jPanel_console.setFocusable(false);
-        jPanel_console.setMaximumSize(new java.awt.Dimension(200, 2147483647));
-        jPanel_console.setMinimumSize(new java.awt.Dimension(200, 263));
-        jPanel_console.setPreferredSize(new java.awt.Dimension(200, 402));
+        jPanel_console.setMaximumSize(new Dimension(200, 2147483647));
+        jPanel_console.setMinimumSize(new Dimension(200, 263));
+        jPanel_console.setPreferredSize(new Dimension(200, 402));
 
-        jLabel_name.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_name.setFont(new java.awt.Font("Dialog", Font.BOLD, 16));
-        jLabel_name.setForeground(new java.awt.Color(220, 255, 220));
+        jLabel_name.setBackground(new Color(0, 0, 0));
+        jLabel_name.setFont(new Font("Dialog", Font.BOLD, 16));
+        jLabel_name.setForeground(new Color(220, 255, 220));
         jLabel_name.setText(NAME + " v" + VERSION);
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_START;
-        gridBagConstraints.insets = new java.awt.Insets(4, 10, 4, 10);
+        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
+        gridBagConstraints.insets = new Insets(4, 10, 4, 10);
         jPanel_console.add(jLabel_name, gridBagConstraints);
 
-        jPanel_gameInfo.setLayout(new java.awt.GridBagLayout());
+        jPanel_gameInfo.setLayout(new GridBagLayout());
 
-        jPanel_gameInfo.setBackground(new java.awt.Color(0, 0, 0));
-        jPanel_gameInfo.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Status", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", Font.PLAIN, 11), new java.awt.Color(220, 255, 220)));
-        jPanel_gameInfo.setForeground(new java.awt.Color(220, 255, 220));
+        jPanel_gameInfo.setBackground(new Color(0, 0, 0));
+        jPanel_gameInfo.setBorder(BorderFactory.createTitledBorder(null, "Status", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Dialog", Font.PLAIN, 11), new Color(220, 255, 220)));
+        jPanel_gameInfo.setForeground(new Color(220, 255, 220));
         jPanel_gameInfo.setFocusable(false);
-        jLabel_waveText.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_waveText.setForeground(new java.awt.Color(220, 255, 220));
+        jLabel_waveText.setBackground(new Color(0, 0, 0));
+        jLabel_waveText.setForeground(new Color(220, 255, 220));
         jLabel_waveText.setText("Wave:");
         jLabel_waveText.setFocusable(false);
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
+        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
         jPanel_gameInfo.add(jLabel_waveText, gridBagConstraints);
 
-        jLabel_wave.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_wave.setForeground(new java.awt.Color(220, 255, 220));
-        jLabel_wave.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel_wave.setBackground(new Color(0, 0, 0));
+        jLabel_wave.setForeground(new Color(220, 255, 220));
+        jLabel_wave.setHorizontalAlignment(SwingConstants.RIGHT);
         jLabel_wave.setText("xx/xx");
         jLabel_wave.setFocusable(false);
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
         jPanel_gameInfo.add(jLabel_wave, gridBagConstraints);
 
-        jLabel_livesText.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_livesText.setForeground(new java.awt.Color(220, 255, 220));
+        jLabel_livesText.setBackground(new Color(0, 0, 0));
+        jLabel_livesText.setForeground(new Color(220, 255, 220));
         jLabel_livesText.setText("Lives:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        gridBagConstraints.insets = new java.awt.Insets(0, 2, 0, 2);
+        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
+        gridBagConstraints.insets = new Insets(0, 2, 0, 2);
         jPanel_gameInfo.add(jLabel_livesText, gridBagConstraints);
 
-        jLabel_lives.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_lives.setForeground(new java.awt.Color(220, 255, 220));
-        jLabel_lives.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel_lives.setBackground(new Color(0, 0, 0));
+        jLabel_lives.setForeground(new Color(220, 255, 220));
+        jLabel_lives.setHorizontalAlignment(SwingConstants.RIGHT);
         jLabel_lives.setText("xx");
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        gridBagConstraints.insets = new java.awt.Insets(0, 2, 0, 2);
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
+        gridBagConstraints.insets = new Insets(0, 2, 0, 2);
         jPanel_gameInfo.add(jLabel_lives, gridBagConstraints);
 
-        jLabel_scoreText.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_scoreText.setForeground(new java.awt.Color(220, 255, 220));
+        jLabel_scoreText.setBackground(new Color(0, 0, 0));
+        jLabel_scoreText.setForeground(new Color(220, 255, 220));
         jLabel_scoreText.setText("Score:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        gridBagConstraints.insets = new java.awt.Insets(0, 2, 0, 2);
+        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
+        gridBagConstraints.insets = new Insets(0, 2, 0, 2);
         jPanel_gameInfo.add(jLabel_scoreText, gridBagConstraints);
 
-        jLabel_score.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_score.setForeground(new java.awt.Color(220, 255, 220));
-        jLabel_score.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel_score.setBackground(new Color(0, 0, 0));
+        jLabel_score.setForeground(new Color(220, 255, 220));
+        jLabel_score.setHorizontalAlignment(SwingConstants.RIGHT);
         jLabel_score.setText("0000000");
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 2;
         gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        gridBagConstraints.insets = new java.awt.Insets(0, 2, 0, 0);
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
+        gridBagConstraints.insets = new Insets(0, 2, 0, 0);
         jPanel_gameInfo.add(jLabel_score, gridBagConstraints);
 
-        jLabel_creditsText.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_creditsText.setForeground(new java.awt.Color(220, 255, 220));
+        jLabel_creditsText.setBackground(new Color(0, 0, 0));
+        jLabel_creditsText.setForeground(new Color(220, 255, 220));
         jLabel_creditsText.setText("Cash:");
         jLabel_creditsText.setFocusable(false);
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        gridBagConstraints.insets = new java.awt.Insets(0, 2, 0, 2);
+        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
+        gridBagConstraints.insets = new Insets(0, 2, 0, 2);
         jPanel_gameInfo.add(jLabel_creditsText, gridBagConstraints);
 
-        jLabel_credits.setBackground(new java.awt.Color(0, 0, 0));
-        jLabel_credits.setForeground(new java.awt.Color(220, 255, 220));
-        jLabel_credits.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel_credits.setBackground(new Color(0, 0, 0));
+        jLabel_credits.setForeground(new Color(220, 255, 220));
+        jLabel_credits.setHorizontalAlignment(SwingConstants.RIGHT);
         jLabel_credits.setText("000000");
         jLabel_credits.setFocusable(false);
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 3;
         gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        gridBagConstraints.insets = new java.awt.Insets(0, 2, 0, 0);
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
+        gridBagConstraints.insets = new Insets(0, 2, 0, 0);
         jPanel_gameInfo.add(jLabel_credits, gridBagConstraints);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_START;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
         gridBagConstraints.weightx = 0.01;
-        gridBagConstraints.insets = new java.awt.Insets(0, 2, 0, 0);
+        gridBagConstraints.insets = new Insets(0, 2, 0, 0);
         jPanel_console.add(jPanel_gameInfo, gridBagConstraints);
 
-        jPanel_gameButtons.setLayout(new java.awt.GridBagLayout());
+        jPanel_gameButtons.setLayout(new GridBagLayout());
 
-        jPanel_gameButtons.setBackground(new java.awt.Color(0, 0, 0));
-        jPanel_gameButtons.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        jPanel_gameButtons.setBackground(new Color(0, 0, 0));
+        jPanel_gameButtons.setBorder(BorderFactory.createEtchedBorder());
         jPanel_gameButtons.setFocusable(false);
-        jButton_play.setBackground(new java.awt.Color(0, 0, 0));
-        jButton_play.setForeground(new java.awt.Color(0, 0, 0));
+        jButton_play.setBackground(new Color(0, 0, 0));
+        jButton_play.setForeground(new Color(0, 0, 0));
         jButton_play.setText(">");
         jButton_play.setFocusable(false);
         jButton_play.addActionListener(this::jButton_playActionPerformed);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_START;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
         gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(5, 0, 0, 0);
+        gridBagConstraints.insets = new Insets(5, 0, 0, 0);
         jPanel_gameButtons.add(jButton_play, gridBagConstraints);
 
-        jButton_pause.setBackground(new java.awt.Color(0, 0, 0));
-        jButton_pause.setForeground(new java.awt.Color(0, 0, 0));
+        jButton_pause.setBackground(new Color(0, 0, 0));
+        jButton_pause.setForeground(new Color(0, 0, 0));
         jButton_pause.setText("||");
         jButton_pause.setFocusable(false);
         jButton_pause.setVisible(false);
         jButton_pause.addActionListener(this::jButton_pauseActionPerformed);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_START;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
         gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(5, 0, 0, 0);
+        gridBagConstraints.insets = new Insets(5, 0, 0, 0);
         jPanel_gameButtons.add(jButton_pause, gridBagConstraints);
 
-        jButton_fast.setBackground(new java.awt.Color(0, 0, 0));
-        jButton_fast.setForeground(new java.awt.Color(0, 0, 0));
+        jButton_fast.setBackground(new Color(0, 0, 0));
+        jButton_fast.setForeground(new Color(0, 0, 0));
         jButton_fast.setText(">>");
         jButton_fast.setFocusable(false);
         jButton_fast.addActionListener(this::jButton_fastActionPerformed);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_START;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
         gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(5, 2, 0, 0);
+        gridBagConstraints.insets = new Insets(5, 2, 0, 0);
         jPanel_gameButtons.add(jButton_fast, gridBagConstraints);
 
-        jButton_superFast.setBackground(new java.awt.Color(0, 0, 0));
-        jButton_superFast.setForeground(new java.awt.Color(0, 0, 0));
+        jButton_superFast.setBackground(new Color(0, 0, 0));
+        jButton_superFast.setForeground(new Color(0, 0, 0));
         jButton_superFast.setText(">>>");
         jButton_superFast.setFocusable(false);
         jButton_superFast.addActionListener(this::jButton_superFastActionPerformed);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_START;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
         gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(5, 2, 0, 0);
+        gridBagConstraints.insets = new Insets(5, 2, 0, 0);
         jPanel_gameButtons.add(jButton_superFast, gridBagConstraints);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_START;
+        gridBagConstraints.fill = GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
         gridBagConstraints.weightx = 0.01;
         jPanel_console.add(jPanel_gameButtons, gridBagConstraints);
 
         panelTowerInfo.setFocusable(false);
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 4;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_START;
+        gridBagConstraints.fill = GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
         gridBagConstraints.weightx = 0.01;
         gridBagConstraints.weighty = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(0, 2, 0, 0);
+        gridBagConstraints.insets = new Insets(0, 2, 0, 0);
         jPanel_console.add(panelTowerInfo, gridBagConstraints);
 
         panelWaveInfo.setMinimumSize(null);
         panelWaveInfo.setName("Waving :)");
         panelWaveInfo.setPreferredSize(null);
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 5;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_END;
-        gridBagConstraints.insets = new java.awt.Insets(0, 2, 0, 0);
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.PAGE_END;
+        gridBagConstraints.insets = new Insets(0, 2, 0, 0);
         jPanel_console.add(panelWaveInfo, gridBagConstraints);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridheight = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_END;
+        gridBagConstraints.fill = GridBagConstraints.VERTICAL;
+        gridBagConstraints.anchor = GridBagConstraints.PAGE_END;
         gridBagConstraints.weighty = 1.0;
         getContentPane().add(jPanel_console, gridBagConstraints);
 
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_END;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.PAGE_END;
         getContentPane().add(panelTowerSelector, gridBagConstraints);
 
     }
 
-    private void jButton_playActionPerformed(java.awt.event.ActionEvent evt) {
+    private void jButton_playActionPerformed(ActionEvent evt) {
         boolean wasPaused = this.currentSpeed == TickSpeed.PAUSED;
         this.setSpeed(TickSpeed.NORMAL);
         if (this.engine.isWaveReady() && wasPaused) this.engine.requestNextWave();
     }
 
-    private void jButton_pauseActionPerformed(java.awt.event.ActionEvent evt) {
+    private void jButton_pauseActionPerformed(ActionEvent evt) {
         this.setSpeed(TickSpeed.PAUSED);
     }
 
-    private void jButton_fastActionPerformed(java.awt.event.ActionEvent evt) {
+    private void jButton_fastActionPerformed(ActionEvent evt) {
         this.setSpeed(TickSpeed.FAST);
     }
 
-    private void jButton_superFastActionPerformed(java.awt.event.ActionEvent evt) {
+    private void jButton_superFastActionPerformed(ActionEvent evt) {
         this.setSpeed(TickSpeed.SUPER_FAST);
     }
 

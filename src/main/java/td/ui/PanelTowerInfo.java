@@ -5,17 +5,19 @@ import td.util.Context;
 import td.util.ContextListener;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 
 public class PanelTowerInfo extends JPanel implements ContextListener {
     private static final long serialVersionUID = 1L;
 
     private Context context;
     private Tower selectedTower;
-    private javax.swing.JButton jButton_sell;
+    private JButton jButton_sell;
     private JPanel jPanel_buttons;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTextPane jTextPane1;
+    private JScrollPane jScrollPane1;
+    private JTextPane jTextPane1;
 
     public PanelTowerInfo() {
         initComponents();
@@ -82,64 +84,64 @@ public class PanelTowerInfo extends JPanel implements ContextListener {
     }
 
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
+        GridBagConstraints gridBagConstraints;
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTextPane1 = new javax.swing.JTextPane();
+        jScrollPane1 = new JScrollPane();
+        jTextPane1 = new JTextPane();
         jPanel_buttons = new JPanel();
-        jButton_sell = new javax.swing.JButton();
+        jButton_sell = new JButton();
 
-        setLayout(new java.awt.GridBagLayout());
+        setLayout(new GridBagLayout());
 
-        setBackground(new java.awt.Color(0, 0, 0));
-        setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Info", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", Font.PLAIN, 11), new java.awt.Color(220, 255, 220)));
-        setForeground(new java.awt.Color(220, 255, 220));
-        setMaximumSize(new java.awt.Dimension(200, 2147483647));
-        setMinimumSize(new java.awt.Dimension(200, 150));
-        setPreferredSize(new java.awt.Dimension(200, 300));
-        jScrollPane1.setBackground(new java.awt.Color(0, 0, 0));
+        setBackground(new Color(0, 0, 0));
+        setBorder(BorderFactory.createTitledBorder(null, "Info", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Dialog", Font.PLAIN, 11), new Color(220, 255, 220)));
+        setForeground(new Color(220, 255, 220));
+        setMaximumSize(new Dimension(200, 2147483647));
+        setMinimumSize(new Dimension(200, 150));
+        setPreferredSize(new Dimension(200, 300));
+        jScrollPane1.setBackground(new Color(0, 0, 0));
         jScrollPane1.setBorder(null);
-        jScrollPane1.setForeground(new java.awt.Color(220, 255, 220));
-        jTextPane1.setBackground(new java.awt.Color(0, 0, 0));
+        jScrollPane1.setForeground(new Color(220, 255, 220));
+        jTextPane1.setBackground(new Color(0, 0, 0));
         jTextPane1.setBorder(null);
-        jTextPane1.setForeground(new java.awt.Color(220, 255, 220));
+        jTextPane1.setForeground(new Color(220, 255, 220));
         jScrollPane1.setViewportView(jTextPane1);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 0.01;
         gridBagConstraints.weighty = 0.01;
         add(jScrollPane1, gridBagConstraints);
 
-        jPanel_buttons.setLayout(new java.awt.GridBagLayout());
+        jPanel_buttons.setLayout(new GridBagLayout());
 
-        jPanel_buttons.setBackground(new java.awt.Color(0, 0, 0));
-        jPanel_buttons.setForeground(new java.awt.Color(220, 255, 220));
+        jPanel_buttons.setBackground(new Color(0, 0, 0));
+        jPanel_buttons.setForeground(new Color(220, 255, 220));
 
-        jButton_sell.setBackground(new java.awt.Color(0, 0, 0));
+        jButton_sell.setBackground(new Color(0, 0, 0));
         jButton_sell.setText("Sell");
-        jButton_sell.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        jButton_sell.setMargin(new Insets(2, 2, 2, 2));
         jButton_sell.addActionListener(this::jButton_sellActionPerformed);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.WEST;
         gridBagConstraints.weightx = 0.01;
         jPanel_buttons.add(jButton_sell, gridBagConstraints);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         add(jPanel_buttons, gridBagConstraints);
 
     }
 
-    private void jButton_sellActionPerformed(java.awt.event.ActionEvent evt) {
+    private void jButton_sellActionPerformed(ActionEvent evt) {
         this.sellCurrentTower();
     }
 

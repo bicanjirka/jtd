@@ -8,7 +8,10 @@ import td.util.Context;
 import td.util.ContextListener;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,8 +52,8 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
             tempToggle.setMargin(new Insets(1, 1, 1, 1));
             final int n = i;
             tempToggle.addActionListener(evt -> doPlace(n));
-            tempToggle.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseEntered(java.awt.event.MouseEvent evt) {
+            tempToggle.addMouseListener(new MouseAdapter() {
+                public void mouseEntered(MouseEvent evt) {
                     mouseOver(n);
                 }
             });
@@ -125,11 +128,11 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
 
     private void initComponents() {
 
-        setLayout(new java.awt.GridBagLayout());
+        setLayout(new GridBagLayout());
 
-        setBackground(new java.awt.Color(0, 0, 0));
-        setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Towers", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", Font.PLAIN, 11), new java.awt.Color(220, 255, 220)));
-        setForeground(new java.awt.Color(220, 255, 220));
+        setBackground(new Color(0, 0, 0));
+        setBorder(BorderFactory.createTitledBorder(null, "Towers", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Dialog", Font.PLAIN, 11), new Color(220, 255, 220)));
+        setForeground(new Color(220, 255, 220));
     }
 
 

@@ -141,7 +141,8 @@ public abstract class AbstractTower implements Tower {
                         this.calcDamageRange();
                     }
                 }
-                default -> {}
+                default -> {
+                }
             }
         }
     }
@@ -154,7 +155,8 @@ public abstract class AbstractTower implements Tower {
                 tupg.removeClient(this);
                 this.calcDamageRange();
             }
-            default -> {}
+            default -> {
+            }
         }
     }
 
