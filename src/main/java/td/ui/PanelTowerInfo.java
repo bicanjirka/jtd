@@ -1,5 +1,7 @@
 package td.ui;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import td.tower.Tower;
 import td.util.Context;
 import td.util.ContextListener;
@@ -20,6 +22,9 @@ import java.awt.event.ActionEvent;
 import java.io.Serial;
 
 public class PanelTowerInfo extends JPanel implements ContextListener {
+
+    private static final Logger LOG = LoggerFactory.getLogger(PanelTowerInfo.class);
+
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -63,7 +68,7 @@ public class PanelTowerInfo extends JPanel implements ContextListener {
         try {
             this.jTextPane1.setText(s);
         } catch (NullPointerException e) {
-            e.printStackTrace();
+            LOG.warn("Could not set tower info text", e);
         }
     }
 

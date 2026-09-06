@@ -1,5 +1,7 @@
 package td;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import td.cell.Cell;
 import td.enemy.EnemyMob;
 import td.tower.Tower;
@@ -42,10 +44,13 @@ import java.util.List;
 
 // Inspired by HexTD
 public class TowerDefense extends JFrame implements ContextListener, GameHost {
+
+    private static final Logger LOG = LoggerFactory.getLogger(TowerDefense.class);
+
     @Serial
     private static final long serialVersionUID = 1L;
     private static final String NAME = "Tower Defense";
-    private static final String VERSION = "1.4";
+    static final String VERSION = "1.4";
 
     private static final int[] PATH_X = {-1, 0, 1, 2, 3, 4, 5, 5, 6, 7, 7, 7, 7, 7, 7, 7, 6, 5, 4, 4, 3, 3, 3, 3, 4, 5, 6, 6, 7, 8, 9, 10, 11, 11, 11, 12, 13, 14, 14, 14, 15, 16, 17, 17, 17, 17, 16, 15, 15, 15, 15, 14, 13, 12, 12, 12, 12, 13, 14, 15, 16, 17, 18, 19, 20};
     private static final int[] PATH_Y = {11, 11, 11, 11, 11, 11, 11, 12, 12, 12, 11, 10, 9, 8, 7, 6, 6, 6, 6, 5, 5, 4, 3, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 5, 5, 5, 5, 4, 3, 3, 3, 3, 4, 5, 6, 6, 6, 7, 8, 9, 9, 9, 9, 10, 11, 12, 12, 12, 12, 12, 12, 12, 12, 12};
@@ -202,6 +207,7 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
 
     public void enemyDied(int enemiesLeft) {
         if (enemiesLeft == 0 && this.engine.getCurrentWaveIndex() < this.engine.getWaveCount()) {
+            LOG.info("Wave {} cleared, ready for the next one", this.engine.getCurrentWaveIndex());
             this.engine.setWaveReady(true);
             this.jButton_play.setVisible(true);
             this.jButton_pause.setVisible(false);
@@ -247,11 +253,13 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
     }
 
     private void gameLost() {
+        LOG.info("Game over - lost, score={}", this.context.getScore());
         this.gameStopped = true;
         this.jPanel_gameLost.setVisible(true);
     }
 
     private void gameWon() {
+        LOG.info("Game won, score={}", this.context.getScore());
         this.gameStopped = true;
         this.jPanel_gameWon.setVisible(true);
     }
@@ -390,7 +398,7 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
-            System.out.println("Error setting native LAF: " + e);
+            LOG.warn("Could not set native look-and-feel, falling back to default", e);
         }
 
         addKeyListener(new KeyAdapter() {

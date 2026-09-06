@@ -1,6 +1,7 @@
 # jTD — Tower Defense
 
-A Swing tower-defense game. Java 26, Maven, no runtime dependencies (JUnit 5 + AssertJ are test-scope only).
+A Swing tower-defense game. Java 26, Maven. Runtime dependencies: SLF4J + Logback
+for logging (see Logging below). JUnit 5 + AssertJ are test-scope only.
 
 ## Commands
 
@@ -134,10 +135,38 @@ Wave contents are a space-separated token string parsed in `Wave.finalise()`. To
 
 `"3 s e 4 c"` = three Squares, one spacer, four Circles. A count applies only to the token immediately following it and resets to 1 afterward. Levels are defined as `WaveDefinition(enemies, hp, price, level)` — see `TowerDefense.DEFAULT_WAVES`.
 
+## Logging
+
+SLF4J + Logback. Every logging class gets `private static final Logger LOG =
+LoggerFactory.getLogger(ClassName.class);` as its first field, and logs with
+SLF4J's parameterized style (`LOG.info("...{}...", value)`), never string
+concatenation.
+
+- **Runtime config**: `src/main/resources/logback.xml`. `Main.main` sets the
+  `jtd.logTimestamp` system property (as its very first statement, before any
+  other class touches SLF4J) so each run writes its own file:
+  `logs/jTD-<yyyyMMdd_HHmmss>.log`, alongside a console appender. Default
+  level is `INFO`; tick-by-tick/render/fire-by-fire detail is logged at
+  `DEBUG` and is off by default — raise `logback.xml`'s root level (or point
+  `-Dlogback.configurationFile` at an alternate config) for a deep-dive
+  session. `Main` also prunes old run-logs beyond a retention cap on startup.
+- **Test config**: `src/test/resources/logback-test.xml` — Logback prefers
+  this file over `logback.xml` when both are on the classpath, so `mvn test`
+  stays quiet (root level `WARN`) and never touches `logs/`.
+- **`GameLoop` has a safety net**: `onTick`/`onRender` exceptions are caught,
+  logged at `ERROR`, and skipped rather than killing the dedicated
+  `game-loop` thread outright; a circuit breaker stops the loop after 10
+  consecutive tick failures. The current tick number is tagged into every log
+  line via MDC (`%X{tick}` in the pattern).
+- **Fatal startup failures** (e.g. `Cache` failing to load an image) throw
+  `td.util.GameStartupException`, caught exactly once in `Main`, which logs
+  at `ERROR` and exits non-zero — the one fatal boundary, rather than a
+  singleton constructor showing a dialog and exiting itself.
+
 ## Gotchas
 
-- **A green test run still prints a `NumberFormatException` stack trace.** `WaveTest` feeds an unparseable token (`"?"`) through the wave language, and `Wave.finalise()` handles it by calling `printStackTrace()` and defaulting the count to 1. Expected output on a passing run — check `Tests run: … Failures: 0`, not the presence of a trace.
-- **`Cache` is an eagerly-initialized singleton that calls `System.exit(0)` if any image fails to load** (after showing a `JOptionPane`). `Context`'s constructor calls `Cache.getInstance()`, so *every* test that builds a `Context` loads the real image resources. Renaming or removing anything under `src/main/resources/td/images/` will take down the test suite, not just the game.
+- **A green test run still prints a `WARN` line and stack trace.** `WaveTest` feeds an unparseable token (`"?"`) through the wave language, and `Wave.finalise()` handles it with `LOG.warn(...)` (via `logback-test.xml`, `WARN` is the one level still visible during tests, and Logback prints the passed exception's trace below the message) and defaults the count to 1. Expected output on a passing run — check `Tests run: … Failures: 0`, not the presence of that output.
+- **`Cache` is an eagerly-initialized singleton that throws `GameStartupException` if any image fails to load** — caught in `Main`, which logs it and exits non-zero. `Context`'s constructor calls `Cache.getInstance()`, so *every* test that builds a `Context` loads the real image resources. Renaming or removing anything under `src/main/resources/td/images/` will take down the test suite, not just the game.
 - **Version is duplicated** between `pom.xml` and `TowerDefense.VERSION` (currently `1.4` in both). There's no single source of truth — update both when cutting a release.
 
 ## Known gaps

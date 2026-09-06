@@ -1,6 +1,9 @@
 ### Maven ###
 target/
 
+### jTD ###
+logs/
+
 ### IntelliJ IDEA ###
 out/
 !**/src/main/**/out/

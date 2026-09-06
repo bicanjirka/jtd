@@ -68,6 +68,29 @@ class GameLoopTest {
     }
 
     @Test
+    void aFailingTickIsLoggedAndDoesNotStopSubsequentTicks() throws InterruptedException {
+        AtomicInteger attempts = new AtomicInteger();
+        CountDownLatch sawTicksAfterAFailure = new CountDownLatch(3);
+        GameLoop loop = new GameLoop(() -> {
+            if (attempts.getAndIncrement() == 0) {
+                throw new RuntimeException("boom");
+            }
+            sawTicksAfterAFailure.countDown();
+        }, () -> {
+        });
+        loop.setSpeed(TickSpeed.SUPER_FAST);
+
+        loop.start();
+        try {
+            assertThat(sawTicksAfterAFailure.await(2, TimeUnit.SECONDS))
+                    .as("expected ticks to keep running after the first one threw")
+                    .isTrue();
+        } finally {
+            loop.stop();
+        }
+    }
+
+    @Test
     void stopHaltsFutureTicks() throws InterruptedException {
         AtomicInteger tickCount = new AtomicInteger();
         GameLoop loop = new GameLoop(tickCount::incrementAndGet, () -> {

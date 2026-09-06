@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Runtime logging config. logs/jTD-<run-timestamp>.log is one file per play
+  session - Main sets the jtd.logTimestamp system property as its very first
+  statement, before this config is ever read. See CLAUDE.md "Logging".
+
+  Raise the root level to DEBUG below for tick-by-tick / tower-fire detail,
+  or override via -Dlogback.configurationFile=path/to/alt-logback.xml.
+-->
+<configuration>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [tick=%X{tick:-}] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/jTD-${jtd.logTimestamp}.log</file>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [tick=%X{tick:-}] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE" />
+        <!-- never drop events by blocking the game-loop thread on a full queue -->
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>2048</queueSize>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="ASYNC_FILE" />
+    </root>
+
+</configuration>
