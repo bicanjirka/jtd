@@ -21,9 +21,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
     private static final String NAME = "Tower Defence";
     private static final String VERSION = "1.3";
 
-    private static final int TICKTIME = 50;
-    private static final int FASTTICKTIME = 15;
-    private static final int SUPERFASTTICKTIME = 3;
+    private static final double BASE_TICK_MS = 50.0;
 
     private static final int[] PATH_X = {-1, 0, 1, 2, 3, 4, 5, 5, 6, 7, 7, 7, 7, 7, 7, 7, 6, 5, 4, 4, 3, 3, 3, 3, 4, 5, 6, 6, 7, 8, 9, 10, 11, 11, 11, 12, 13, 14, 14, 14, 15, 16, 17, 17, 17, 17, 16, 15, 15, 15, 15, 14, 13, 12, 12, 12, 12, 13, 14, 15, 16, 17, 18, 19, 20};
     private static final int[] PATH_Y = {11, 11, 11, 11, 11, 11, 11, 12, 12, 12, 11, 10, 9, 8, 7, 6, 6, 6, 6, 5, 5, 4, 3, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 5, 5, 5, 5, 4, 3, 3, 3, 3, 4, 5, 6, 6, 6, 7, 8, 9, 9, 9, 9, 10, 11, 12, 12, 12, 12, 12, 12, 12, 12, 12};
@@ -61,14 +59,15 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
             r - build star
             t - build jing-jang
             p - pause
-            f - slow speed
+            f - cycle speed
             s - star wave""";
 
     private final Object gameTimeLock = new Object();
     private int gameTime;
     private final Object paintLock = new Object();
     private boolean painting = false;
-    private int tickTime = TICKTIME;
+    private TickSpeed currentSpeed = TickSpeed.NORMAL;
+    private double speedMultiplier = TickSpeed.NORMAL.multiplier();
     private boolean paused = false;
     private boolean gameStopped = false;
 
@@ -128,7 +127,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
 
     @Override
     public void run() {
-        long oldTime, newTime, sleepTime;
+        long oldTime, newTime, sleepTime, tickNanos;
         oldTime = System.nanoTime();
         int time;
         boolean stillPainting;
@@ -149,13 +148,16 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
                     this.gameBoard.repaint();
                 }
             }
+            synchronized (this.gameTimeLock) {
+                tickNanos = (long) (BASE_TICK_MS * 1_000_000.0 / this.speedMultiplier);
+            }
             newTime = System.nanoTime();
-            sleepTime = oldTime + this.tickTime * 1_000_000L - newTime;
+            sleepTime = oldTime + tickNanos - newTime;
             if (sleepTime < 0) {
                 oldTime = newTime;
                 sleepTime = 2_000_000L;
             }
-            oldTime = oldTime + this.tickTime * 1_000_000L;
+            oldTime = oldTime + tickNanos;
             try {
                 Thread.sleep(sleepTime / 1_000_000L, (int) (sleepTime % 1_000_000L));
 
@@ -251,10 +253,19 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
         this.panelWaveInfo.doTick(time);
     }
 
-    private void toggleGameSpeed(int speed) {
+    private void setSpeed(TickSpeed speed) {
         synchronized (this.gameTimeLock) {
-            this.tickTime = speed;
+            this.currentSpeed = speed;
+            this.speedMultiplier = speed.multiplier();
         }
+    }
+
+    private void cycleSpeed() {
+        TickSpeed next;
+        synchronized (this.gameTimeLock) {
+            next = this.currentSpeed.next();
+        }
+        this.setSpeed(next);
     }
 
     public void paintBoard(Graphics2D g2) {
@@ -351,7 +362,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
             case 'r' -> this.panelTowerSelector.doPlace(3);
             case 't' -> this.panelTowerSelector.doPlace(4);
             case 'p' -> this.playPause(this.paused);
-            case 'f' -> this.toggleGameSpeed(this.tickTime += 10);
+            case 'f' -> this.cycleSpeed();
             case 's' -> this.nextWave();
             case KeyEvent.VK_ESCAPE -> {
                 if (this.engine.isPlacingTower()) {
@@ -708,7 +719,7 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
     }
 
     private void jButton_playActionPerformed(java.awt.event.ActionEvent evt) {
-        this.toggleGameSpeed(TICKTIME);
+        this.setSpeed(TickSpeed.NORMAL);
         if (this.engine.isWaveReady() && !this.paused) this.engine.requestNextWave();
         this.playPause(true);
     }
@@ -720,13 +731,13 @@ public class TowerDefence extends JFrame implements Runnable, ContextListener, G
     private void jButton_fastActionPerformed(java.awt.event.ActionEvent evt) {
         this.jButton_play.setVisible(true);
         this.jButton_pause.setVisible(false);
-        this.toggleGameSpeed(FASTTICKTIME);
+        this.setSpeed(TickSpeed.FAST);
     }
 
     private void jButton_superFastActionPerformed(java.awt.event.ActionEvent evt) {
         this.jButton_play.setVisible(true);
         this.jButton_pause.setVisible(false);
-        this.toggleGameSpeed(SUPERFASTTICKTIME);
+        this.setSpeed(TickSpeed.SUPER_FAST);
     }
 
     private void formKeyTyped(KeyEvent evt) {
