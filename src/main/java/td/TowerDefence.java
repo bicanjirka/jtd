@@ -67,8 +67,9 @@ public class TowerDefence extends JFrame implements ContextListener, GameHost {
     // SwingUtilities.invokeLater, the latter via Swing's own paint dispatch), so this needs
     // no synchronization of its own - it's just in-flight bookkeeping on a single thread.
     private boolean painting = false;
-    private TickSpeed currentSpeed = TickSpeed.NORMAL; // EDT-only bookkeeping for the 'f' key cycle
-    private boolean paused = false;
+    // Single source of truth for both the tick speed and pause state (TickSpeed.PAUSED);
+    // EDT-only, since it's only ever touched from button/key listeners.
+    private TickSpeed currentSpeed = TickSpeed.NORMAL;
     private boolean gameStopped = false;
 
     private javax.swing.JButton jButton_play;
@@ -122,15 +123,17 @@ public class TowerDefence extends JFrame implements ContextListener, GameHost {
 
         loadTestLevel();
         this.gameTime = 0;
+        this.setSpeed(TickSpeed.NORMAL);
         this.gameLoop.start();
     }
 
     /**
-     * Runs one logic tick, called from the game loop thread. A no-op while
-     * paused or after the game has ended.
+     * Runs one logic tick, called from the game loop thread. GameLoop itself
+     * already skips calling this while TickSpeed.PAUSED is selected, so the
+     * only remaining guard here is for after the game has ended.
      */
     private void doGameTick() {
-        if (this.gameStopped || this.paused) {
+        if (this.gameStopped) {
             return;
         }
         int time;
@@ -241,9 +244,21 @@ public class TowerDefence extends JFrame implements ContextListener, GameHost {
         this.panelWaveInfo.doTick(time);
     }
 
+    /**
+     * The single place that changes tick speed - this owns keeping the
+     * play/pause button visibility consistent with it, so no caller has to
+     * remember to do that separately.
+     */
     private void setSpeed(TickSpeed speed) {
         this.currentSpeed = speed;
         this.gameLoop.setSpeed(speed);
+        boolean playing = speed != TickSpeed.PAUSED;
+        this.jButton_play.setVisible(!playing);
+        this.jButton_pause.setVisible(playing);
+    }
+
+    private void togglePause() {
+        this.setSpeed(this.currentSpeed == TickSpeed.PAUSED ? TickSpeed.NORMAL : TickSpeed.PAUSED);
     }
 
     private void cycleSpeed() {
@@ -326,12 +341,6 @@ public class TowerDefence extends JFrame implements ContextListener, GameHost {
         }
     }
 
-    private void playPause(boolean play) {
-        this.paused = !play;
-        this.jButton_play.setVisible(!play);
-        this.jButton_pause.setVisible(play);
-    }
-
     private void keyTyped(char key) {
         switch (key) {
             case 'q' -> this.panelTowerSelector.doPlace(0);
@@ -339,7 +348,7 @@ public class TowerDefence extends JFrame implements ContextListener, GameHost {
             case 'e' -> this.panelTowerSelector.doPlace(2);
             case 'r' -> this.panelTowerSelector.doPlace(3);
             case 't' -> this.panelTowerSelector.doPlace(4);
-            case 'p' -> this.playPause(this.paused);
+            case 'p' -> this.togglePause();
             case 'f' -> this.cycleSpeed();
             case 's' -> this.nextWave();
             case KeyEvent.VK_ESCAPE -> {
@@ -697,24 +706,20 @@ public class TowerDefence extends JFrame implements ContextListener, GameHost {
     }
 
     private void jButton_playActionPerformed(java.awt.event.ActionEvent evt) {
+        boolean wasPaused = this.currentSpeed == TickSpeed.PAUSED;
         this.setSpeed(TickSpeed.NORMAL);
-        if (this.engine.isWaveReady() && !this.paused) this.engine.requestNextWave();
-        this.playPause(true);
+        if (this.engine.isWaveReady() && wasPaused) this.engine.requestNextWave();
     }
 
     private void jButton_pauseActionPerformed(java.awt.event.ActionEvent evt) {
-        this.playPause(false);
+        this.setSpeed(TickSpeed.PAUSED);
     }
 
     private void jButton_fastActionPerformed(java.awt.event.ActionEvent evt) {
-        this.jButton_play.setVisible(true);
-        this.jButton_pause.setVisible(false);
         this.setSpeed(TickSpeed.FAST);
     }
 
     private void jButton_superFastActionPerformed(java.awt.event.ActionEvent evt) {
-        this.jButton_play.setVisible(true);
-        this.jButton_pause.setVisible(false);
         this.setSpeed(TickSpeed.SUPER_FAST);
     }
 
