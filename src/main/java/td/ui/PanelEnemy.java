@@ -17,10 +17,12 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.io.Serial;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PanelEnemy extends JPanel {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final List<EnemyMob> enemies = new CopyOnWriteArrayList<>();
