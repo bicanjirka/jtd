@@ -46,9 +46,71 @@ Tick speed is a plain multiplier — `TickSpeed` presets are a convenience, and 
 
 - **No wildcard imports.** Enforced via `.idea/codeStyles/Project.xml`. This is not stylistic: the project already hit a real `java.util.List` / `java.awt.List` collision that only compiled because an explicit import shadowed a wildcard.
 - **`this.` prefix on instance field access.** Used consistently across the codebase; match it.
-- **Fields ordered** roughly: constants, injected/final collaborators, mutable state.
+- **Fields ordered** roughly: constants, injected/final collaborators, mutable state — for
+  stateful engine/service classes. A new value type (see Code style below) has no third
+  bucket: every field is `private final`.
 - Prefer `record` for value carriers (see `GameEngine.WaveDefinition`).
 - `@Serial` on `serialVersionUID` in Swing classes.
+
+## Code style: staff-level Java, per policy-management
+
+New and modified gameplay code follows the style codified in the sibling
+`../policy-management` repo — `README.md` (ten rules + five composition patterns + SOLID
+map) and `TESTING.md` (test-writing rules). Read those before writing non-trivial code;
+this section states only how the rules land on jTD's existing shape, not what they say.
+
+**The rules split by what kind of class you're writing — this is not optional, it's how
+the two documents avoid contradicting each other:**
+
+- **Value types** (data passed around and compared: `WaveDefinition`, `Point`, any new
+  DTO-shaped class) get the full treatment — rule 5 (immutable, `private final`), rule 7
+  (named static factory over a public constructor), rule 8 (no `null`, model absence
+  explicitly). No exceptions here; a new mutable value class is a regression.
+- **Stateful engine/service classes** (`Context`, `GameEngine`, `GameLoop`, `Cache`) are
+  exempt from rule 5 by nature — they exist to hold and mutate live simulation state, and
+  the Threading model above is a hard requirement that overrides the style guide where the
+  two would otherwise conflict (e.g. `Context.towers` stays a mutable
+  `CopyOnWriteArrayList` — that is a concurrency requirement, not legacy debt to "fix"
+  toward immutability). What the style guide *does* still apply to these classes:
+  constructor injection (already the norm — `Context(GameHost)`,
+  `AbstractTower(type, price, damage, range)`), narrow interfaces, and — see below —
+  keeping duplicated branching logic out of them.
+
+**Already aligned — keep doing this:**
+
+- **No `instanceof` type-switching anywhere in `src/main/java`** (verified by grep) —
+  matches rule 9 already. If a future feature needs to branch on concrete enemy/tower
+  type, reach for a visitor over `EnemyMob`/`Tower` rather than writing the first
+  `instanceof` chain in this codebase.
+- `Point` and `WaveDefinition` are already `record`s — rule 5/7 with zero gap.
+- `GameHost` and the listener interfaces (`ContextListener`, `TowerListener`,
+  `WaveStartListener`) are already narrow, role-named interfaces. Widen `GameHost` only
+  when the UI genuinely needs a new callback (see Architecture above) — don't add
+  speculative methods.
+- This project's test conventions (see Tests below) already are the style's test rules:
+  full-sentence method names, hand-built fakes over mocks, AssertJ throughout. Nothing to
+  change; don't introduce Mockito or `@DisplayName` to "improve" this.
+
+**Partially aligned — the gap is real, close it incrementally, don't paper over it:**
+
+- `AbstractTower` → `TowerOne`..`TowerFour`/`TowerUpgrade` and `AbstractEnemyMob` (via
+  `AbstractEnemyMobDirectional`/`Rotor`) → `EnemyMobCircle`/`Square`/`Triangle`/`Ghost`/
+  `Empty` are closed-in-practice hierarchies, but they are **not** the style's rule-4
+  exception as written: nothing dispatches over them with a visitor, they're plain virtual
+  method calls, and none of the leaf classes are `final`. Don't cite this as "the visitor
+  exception" — it's ordinary OOP inheritance, which is a reasonable choice for
+  per-instance `paint()`/`doTick()` behavior in a game loop, not a violation to rush and
+  fix. The one free, low-risk improvement: **mark new leaf subclasses `final`** (none
+  currently are) so the set is at least closed the way the style requires, without
+  touching the two-level abstract hierarchy that's already there.
+- Every tower's `find*` targeting method re-implements its own linear scan over
+  `context.enemies` (already flagged in Gotchas/TODO.md as duplicated). This is the
+  concrete instance of rule D ("branching lives in a composition class, never as an `if`
+  inside the operation") that's actually actionable: the next time this is touched, wrap
+  `context.enemies` behind a query object (e.g. sorted-by-distance/path-progression,
+  filtered by range) that each tower calls into, instead of another hand-rolled scan. This
+  is independent of `Context`'s mutability above — it's about deduplicating targeting
+  logic, not about making `Context` immutable.
 
 ## Tests
 
