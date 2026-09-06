@@ -3,7 +3,8 @@ package td.tower;
 import td.util.Context;
 import td.util.TowerListener;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.List;
 

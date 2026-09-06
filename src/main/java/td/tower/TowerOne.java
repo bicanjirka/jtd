@@ -3,7 +3,10 @@ package td.tower;
 import td.enemy.EnemyMob;
 import td.util.Context;
 
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Stroke;
 import java.awt.geom.Line2D;
 
 public class TowerOne extends AbstractTower {

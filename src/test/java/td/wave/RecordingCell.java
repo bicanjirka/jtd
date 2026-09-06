@@ -3,7 +3,7 @@ package td.wave;
 import td.cell.Cell;
 import td.tower.Tower;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 
 /**
  * Minimal test double for {@link Cell} that just records whether/how

@@ -1,7 +1,7 @@
 package td.util;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
+import javax.swing.JOptionPane;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;

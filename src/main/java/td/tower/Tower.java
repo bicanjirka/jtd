@@ -1,6 +1,6 @@
 package td.tower;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 
 public interface Tower {
     TowerFactory.type getType();

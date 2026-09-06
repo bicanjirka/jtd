@@ -3,7 +3,9 @@ package td.cell;
 import td.tower.Tower;
 import td.util.Context;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 
 public class CellNormal implements Cell {

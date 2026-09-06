@@ -4,9 +4,16 @@ import td.enemy.EnemyFactory;
 import td.util.Context;
 import td.wave.Wave;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
 public class PanelWaveInfo extends JPanel {
     private static final long serialVersionUID = 1L;
