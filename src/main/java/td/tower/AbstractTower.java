@@ -1,5 +1,6 @@
 package td.tower;
 
+import td.tower.buff.TowerBuff;
 import td.util.Context;
 
 import java.util.ArrayList;
@@ -59,9 +60,11 @@ public abstract class AbstractTower implements Tower {
     }
 
     protected void calcDamageRange() {
-        float upg = (1f + TowerUpgrade.power * this.upgTowers.size());
-        this.damageCurrent = (int) (this.damageBase * upg);
-        this.rangeCurrent = this.rangeBase * upg;
+        TowerBuff buff = this.upgTowers.stream()
+                .map(TowerUpgrade::buff)
+                .reduce(TowerBuff.none(), TowerBuff::combine);
+        this.damageCurrent = buff.damageFor(this.damageBase);
+        this.rangeCurrent = buff.rangeFor(this.rangeBase);
 
         this.rangeReal = this.rangeCurrent * this.context.scale;
         this.rangeReal2 = rangeReal * rangeReal;

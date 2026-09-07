@@ -32,9 +32,33 @@ class AbstractTowerTest {
         // registers itself with anything nearby, buffing it immediately
         new TowerUpgrade(context, 0, 0);
 
-        float expectedMultiplier = 1f + TowerUpgrade.power; // one upgrade tower registered
+        float expectedMultiplier = 1f + TowerUpgrade.DEFAULT_POWER; // one upgrade tower registered
         assertThat(tower.damageCurrent).isEqualTo((int) (tower.damageBase * expectedMultiplier));
         assertThat(tower.damageCurrent).isNotEqualTo(tower.damageBase);
+    }
+
+    @Test
+    void twoUpgradeTowersStackAdditively() {
+        TowerOne tower = new TowerOne(context, 0, 0);
+        context.addTower(tower);
+
+        new TowerUpgrade(context, 0, 0);
+        new TowerUpgrade(context, 0, 0);
+
+        float expectedMultiplier = 1f + 2 * TowerUpgrade.DEFAULT_POWER;
+        assertThat(tower.damageCurrent).isEqualTo((int) (tower.damageBase * expectedMultiplier));
+    }
+
+    @Test
+    void unequalUpgradeTowersStackTheirDifferentStrengths() {
+        TowerOne tower = new TowerOne(context, 0, 0);
+        context.addTower(tower);
+
+        new TowerUpgrade(context, 0, 0, 0.1f);
+        new TowerUpgrade(context, 0, 0, 0.3f);
+
+        float expectedMultiplier = 1f + 0.1f + 0.3f;
+        assertThat(tower.damageCurrent).isEqualTo((int) (tower.damageBase * expectedMultiplier));
     }
 
     @Test
