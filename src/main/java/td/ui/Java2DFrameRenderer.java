@@ -6,6 +6,8 @@ import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.Palette;
+import td.ui.render.PathMarkerDraw;
+import td.ui.render.PathMarkerShape;
 import td.ui.render.PulseDraw;
 import td.ui.render.RenderFrame;
 import td.ui.render.SplashDraw;
@@ -56,6 +58,9 @@ public final class Java2DFrameRenderer {
         g2.setColor(BOARD_BACKGROUND);
         g2.fillRect(0, 0, frame.maxX(), frame.maxY());
 
+        for (PathMarkerDraw marker : frame.pathMarkers()) {
+            this.paintPathMarker(g2, marker);
+        }
         for (CellDraw cell : frame.cells()) {
             this.paintCell(g2, cell, frame);
         }
@@ -119,6 +124,32 @@ public final class Java2DFrameRenderer {
         g2.fillRect(x, y, scale, scale);
         g2.setColor(CELL_OK);
         g2.drawRect(x - 1, y - 1, scale + 1, scale + 1);
+    }
+
+    // --- path markers ---------------------------------------------------------
+
+    private void paintPathMarker(Graphics2D g2, PathMarkerDraw marker) {
+        AffineTransform save = g2.getTransform();
+        g2.translate(marker.x(), marker.y());
+        g2.rotate(marker.facingRadians());
+        g2.setColor(colorFor(marker.palette()));
+        g2.fill(markerShape(marker.shape(), marker.size()));
+        g2.setTransform(save);
+    }
+
+    private static Shape markerShape(PathMarkerShape shape, float size) {
+        return switch (shape) {
+            case DOT -> circleShape(size);
+            case CHEVRON -> {
+                GeneralPath p = new GeneralPath();
+                p.moveTo(-size, -size);
+                p.lineTo(size, 0);
+                p.lineTo(-size, size);
+                p.lineTo(-size * 0.4f, 0);
+                p.closePath();
+                yield p;
+            }
+        };
     }
 
     // --- enemies ---------------------------------------------------------
@@ -242,6 +273,8 @@ public final class Java2DFrameRenderer {
             case TOWER_TWO_SPLASH_LINE, TOWER_TWO_SPLASH_FILL -> withAlpha(Color.RED, 80);
             case TOWER_THREE_BEAM -> Color.YELLOW;
             case TOWER_FOUR_PULSE -> withAlpha(Color.ORANGE, 80);
+            case PATH_MARKER_MOVING -> withAlpha(Color.WHITE, 200);
+            case PATH_MARKER_STATIC -> withAlpha(Color.WHITE, 70);
         };
     }
 
