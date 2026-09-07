@@ -108,11 +108,3 @@ so if the background image ever fails to load, nothing is drawn there instead of
 - **Approach:** draw a plain filled rectangle (matching the board's background color) as a fallback in `paintBoard()`
   when `this.backGround` is `null`, rather than leaving the constructor's `else` branch empty.
 
-### Enemy death/fade-out paint logic is duplicated
-
-`EnemyMobCircle`, `EnemyMobSquare`, `EnemyMobTriangle`, and `EnemyMobGhost` each reimplement the same "fade out over
-`3*level+6` ticks after death" alpha-blend logic in their `paint()` methods, differing only in the shape drawn.
-
-- **Where:** `EnemyMobCircle.paint()`, `EnemyMobSquare.paint()`, `EnemyMobTriangle.paint()`, `EnemyMobGhost.paint()`
-- **Approach:** hoist the shared death/alpha/timing bookkeeping (`deadTime`, `gone`, the `i`/`alpha` computation) into
-  `AbstractEnemyMob`, leaving each subclass to supply only the shape (s) to draw at a given fade radius.

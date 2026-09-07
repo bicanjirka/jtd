@@ -10,8 +10,6 @@ import java.awt.geom.Ellipse2D;
 
 public final class EnemyMobGhost extends AbstractEnemyMob {
 
-    private int deadTime;
-    private boolean gone;
     private Shape bodyShape;
     private float bodyScale;
 
@@ -39,18 +37,10 @@ public final class EnemyMobGhost extends AbstractEnemyMob {
         AffineTransform saveXform = g2.getTransform();
         g2.transform(this.atTranslate);
         if (this.dead) {
-            if (!this.gone) {
-                if (this.deadTime != 0) {
-                    Color tempColor = g2.getColor();
-                    int i = gameTime - this.deadTime;
-                    if (i > (3 * this.level + 6)) this.gone = true;
-                    int alpha = (255 - (i * (255 / ((3 * this.level + 6) + 1))));
-                    g2.setColor(new Color(tempColor.getRed(), tempColor.getGreen(), tempColor.getBlue(), (Math.max(alpha, 0))));
-                    g2.draw(new Ellipse2D.Float(-(this.bodyScale + i), -(this.bodyScale + i), (this.bodyScale + i) * 2, (this.bodyScale + i) * 2));
-                } else {
-                    this.deadTime = gameTime;
-                    this.paint(g2, gameTime);
-                }
+            int age = this.ticksSinceDeath(gameTime);
+            if (!this.isFadeComplete(gameTime)) {
+                g2.setColor(new Color(this.color.getRed(), this.color.getGreen(), this.color.getBlue(), this.fadeAlpha(age)));
+                g2.draw(new Ellipse2D.Float(-(this.bodyScale + age), -(this.bodyScale + age), (this.bodyScale + age) * 2, (this.bodyScale + age) * 2));
             }
         } else if (!this.inactive) {
             g2.draw(this.bodyShape);

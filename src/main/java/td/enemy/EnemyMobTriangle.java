@@ -10,8 +10,6 @@ import java.awt.geom.GeneralPath;
 
 public final class EnemyMobTriangle extends AbstractEnemyMobRotor {
 
-    private int deadTime;
-    private boolean gone;
     private Shape bodyShape;
     private float bodyScale;
 
@@ -48,25 +46,16 @@ public final class EnemyMobTriangle extends AbstractEnemyMobRotor {
     public void paint(Graphics2D g2, int gameTime) {
         g2.setColor(this.color);
         AffineTransform saveXform = g2.getTransform();
-        super.paint(g2, gameTime);
         g2.transform(this.atTranslate);
         g2.transform(this.atRotate);
 
         if (this.dead) {
-            if (!this.gone) {
-                if (this.deadTime != 0) {
-                    Color tempColor = g2.getColor();
-                    int i = gameTime - this.deadTime;
-                    if (i > (3 * this.level + 6)) this.gone = true;
-                    int alpha = (255 - (i * (255 / ((3 * this.level + 6) + 1))));
-                    g2.setColor(new Color(tempColor.getRed(), tempColor.getGreen(), tempColor.getBlue(), (Math.max(alpha, 0))));
-                    i = i * 2;
-                    g2.draw(this.createTriangle(this.bodyScale + i, false));
-                    g2.draw(this.createTriangle(this.bodyScale + i, true));
-                } else {
-                    this.deadTime = gameTime;
-                    this.paint(g2, gameTime);
-                }
+            int age = this.ticksSinceDeath(gameTime);
+            if (!this.isFadeComplete(gameTime)) {
+                g2.setColor(new Color(this.color.getRed(), this.color.getGreen(), this.color.getBlue(), this.fadeAlpha(age)));
+                int growth = age * 2;
+                g2.draw(this.createTriangle(this.bodyScale + growth, false));
+                g2.draw(this.createTriangle(this.bodyScale + growth, true));
             }
         } else if (!this.inactive) {
             g2.draw(this.bodyShape);
