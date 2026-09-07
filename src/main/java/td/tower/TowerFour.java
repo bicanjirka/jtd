@@ -31,7 +31,7 @@ public final class TowerFour extends AbstractTower {
         if (enemies.size() > ghosts.size()) {
             this.fire = true;
             for (EnemyMob enemy : enemies) {
-                enemy.doDamage(Damage.of(this.damageCurrent));
+                this.dealDamage(enemy, Damage.of(this.damageCurrent));
             }
         } else {
             this.fire = false;

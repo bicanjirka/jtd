@@ -1,5 +1,7 @@
 package td.tower;
 
+import td.damage.Damage;
+import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.util.Context;
 
@@ -23,6 +25,8 @@ public abstract class AbstractTower implements Tower {
     protected float rangeReal2 = 0;
     protected boolean passive = false;
     protected boolean selected = false;
+    protected long damageDealt = 0;
+    protected int killCount = 0;
     private final TowerFactory.type type;
     private float rangeCurrent;
     private final int price;
@@ -68,6 +72,30 @@ public abstract class AbstractTower implements Tower {
 
         this.rangeReal = this.rangeCurrent * this.context.scale;
         this.rangeReal2 = rangeReal * rangeReal;
+    }
+
+    /**
+     * Routes every hit a tower lands through one place so damageDealt/killCount stay accurate
+     * regardless of which subclass fires: a shot into an enemy another tower already killed
+     * this tick is a no-op in EnemyMob.doDamage() and must not be counted as a kill twice.
+     */
+    protected void dealDamage(EnemyMob enemy, Damage damage) {
+        boolean wasAlive = !enemy.isDead();
+        enemy.doDamage(damage);
+        if (wasAlive) {
+            this.damageDealt += damage.amount();
+            if (enemy.isDead()) {
+                this.killCount++;
+            }
+        }
+    }
+
+    public long getDamageDealt() {
+        return this.damageDealt;
+    }
+
+    public int getKillCount() {
+        return this.killCount;
     }
 
     public void setSelected(boolean selected) {
@@ -120,7 +148,9 @@ public abstract class AbstractTower implements Tower {
             s += "\n";
         } else {
             s += "Damage: " + this.damageCurrent / 100f + "\n" +
-                    "Fire rate: " + 20f / (this.coolDownMax + 1) + "/s\n\n";
+                    "Fire rate: " + 20f / (this.coolDownMax + 1) + "/s\n" +
+                    "Kills: " + this.killCount + "\n" +
+                    "Damage dealt: " + this.damageDealt / 100f + "\n\n";
         }
         return s;
     }

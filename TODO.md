@@ -54,16 +54,6 @@ range and enemy speed balance interact.
 
 ## Tower features
 
-### No per-tower kill/damage stats
-
-Towers have no memory of how much damage they've dealt or how many kills they've gotten — there's no way to show "this
-tower has killed 40 enemies" in the UI.
-
-- **Where:** `AbstractTower` and subclasses (`TowerOne`..`TowerFour`, `TowerUpgrade`)
-- **Approach:** add `damageDealt`/`killCount` fields to `AbstractTower`, increment them at each `EnemyMob.doDamage()`
-  call site inside the tower subclasses (each subclass already knows when it lands a hit), and surface the totals via
-  `getStatusString()`.
-
 ### Tower upgrade doesn't gate on affordability
 
 `PanelTowerInfo.moneyChanged()` currently just refreshes the displayed tower status text/price when money changes;

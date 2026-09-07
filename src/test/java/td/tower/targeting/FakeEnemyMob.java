@@ -83,6 +83,11 @@ final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
+    public boolean isDead() {
+        return false;
+    }
+
+    @Override
     public void doDamage(Damage damage) {
     }
 

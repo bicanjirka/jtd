@@ -58,7 +58,7 @@ public final class TowerTwo extends AbstractTower {
                     dy = ey - splashTarget.getY();
                     r2 = dx * dx + dy * dy;
                     damage = Math.round(this.damageCurrent * (1 - r2 / (this.spreadRadius * this.spreadRadius)));
-                    splashTarget.doDamage(Damage.of(damage));
+                    this.dealDamage(splashTarget, Damage.of(damage));
                 }
 
                 this.coolDown = this.coolDownMax;

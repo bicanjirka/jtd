@@ -37,7 +37,7 @@ public final class TowerOne extends AbstractTower {
         } else {
             this.currentTarget = this.findEnemy();
             if (this.currentTarget != null) {
-                this.currentTarget.doDamage(Damage.of(this.damageCurrent));
+                this.dealDamage(this.currentTarget, Damage.of(this.damageCurrent));
                 this.coolDown = this.coolDownMax;
             }
         }
