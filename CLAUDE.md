@@ -166,8 +166,14 @@ concatenation.
 - **`GameLoop` has a safety net**: `onTick`/`onRender` exceptions are caught,
   logged at `ERROR`, and skipped rather than killing the dedicated
   `game-loop` thread outright; a circuit breaker stops the loop after 10
-  consecutive tick failures. The current tick number is tagged into every log
-  line via MDC (`%X{tick}` in the pattern).
+  consecutive tick failures. There is no blanket tick number tagged into
+  every log line: `GameLoop` used to do this via MDC, but MDC is thread-local
+  and the loop only sets it on the dedicated `game-loop` thread, so the vast
+  majority of log lines — anything from Swing event handling on the EDT, or
+  from startup/shutdown on the main thread — showed a permanently empty
+  `tick=` field. Call sites that actually run on the `game-loop` thread and
+  care about which tick they're in (e.g. `GameLoop`'s own tick-failure logs)
+  log the tick number as an explicit parameter instead.
 - **Fatal startup failures** (e.g. `Cache` failing to load an image) throw
   `td.util.GameStartupException`, caught exactly once in `Main`, which logs
   at `ERROR` and exits non-zero — the one fatal boundary, rather than a
