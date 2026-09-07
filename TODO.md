@@ -81,12 +81,13 @@ check was never implemented, and there's no "upgrade" action to gate in the firs
 Towers don't rotate their sprite image to visually face their current target (enemy mobs already do this via
 `AbstractEnemyMobDirectional`/`AbstractEnemyMobRotor`). This was a speculative "nice to have," not a committed design.
 
-- **Where:** `td.ui.TowerSpritePainter`
+- **Where:** `td.ui.TowerSpriteFrameBuilder`, `td.ui.render.TowerSpriteDraw`
 - **Approach:** if pursued, reuse the facing-angle approach already implemented for directional/rotor enemies
   (`AbstractEnemyMobRotor.getFacingRadians()`/`AbstractEnemyMobDirectional.getFacingRadians()`); needs per-tower
   "facing" state updated whenever a tower picks a new target (`TowerOne.findEnemy()`, `TowerTwo`'s find methods,
-  etc.) and exposed as a getter, then applied as a rotation in `TowerSpritePainter` alongside rotated sprite art for
-  each tower.
+  etc.) and exposed as a getter, then threaded through as a new `facingRadians` field on `TowerSpriteDraw` (currently
+  unused by towers - `EnemyBodyDraw`/`EnemyFadeDraw` already carry one) and applied as a rotation in
+  `Java2DFrameRenderer.paintTowerSprite()` alongside rotated sprite art for each tower.
 
 ### Fast-forward doesn't single-step while paused
 
@@ -106,8 +107,8 @@ tick while paused) was never finished.
 `TowerDefense`'s constructor only sets `this.backGround` if `Cache.hasBufImg("bg")` is true; the `else` branch is empty,
 so if the background image ever fails to load, nothing is drawn there instead of a visible placeholder.
 
-- **Where:** `TowerDefense` constructor, `BoardRenderer.paint()`
+- **Where:** `TowerDefense` constructor, `Java2DFrameRenderer.paint()`
 - **Approach:** draw a plain filled rectangle (matching the board's background color) as a fallback in
-  `BoardRenderer.paint()` when the background image passed in is `null`, rather than leaving the constructor's `else`
-  branch empty.
+  `Java2DFrameRenderer.paint()` when the background image passed in is `null`, rather than leaving the constructor's
+  `else` branch empty.
 
