@@ -81,10 +81,12 @@ check was never implemented, and there's no "upgrade" action to gate in the firs
 Towers don't rotate their sprite image to visually face their current target (enemy mobs already do this via
 `AbstractEnemyMobDirectional`/`AbstractEnemyMobRotor`). This was a speculative "nice to have," not a committed design.
 
-- **Where:** `AbstractTower.paint()`, `AbstractTower.img`
-- **Approach:** if pursued, reuse the `AffineTransform`-based rotation approach already implemented for
-  directional/rotor enemies; needs per-tower "facing" state updated whenever a tower picks a new target
-  (`TowerOne.findEnemy()`, `TowerTwo`'s find methods, etc.), and rotated sprite art for each tower.
+- **Where:** `td.ui.TowerSpritePainter`
+- **Approach:** if pursued, reuse the facing-angle approach already implemented for directional/rotor enemies
+  (`AbstractEnemyMobRotor.getFacingRadians()`/`AbstractEnemyMobDirectional.getFacingRadians()`); needs per-tower
+  "facing" state updated whenever a tower picks a new target (`TowerOne.findEnemy()`, `TowerTwo`'s find methods,
+  etc.) and exposed as a getter, then applied as a rotation in `TowerSpritePainter` alongside rotated sprite art for
+  each tower.
 
 ### Fast-forward doesn't single-step while paused
 
@@ -104,7 +106,8 @@ tick while paused) was never finished.
 `TowerDefense`'s constructor only sets `this.backGround` if `Cache.hasBufImg("bg")` is true; the `else` branch is empty,
 so if the background image ever fails to load, nothing is drawn there instead of a visible placeholder.
 
-- **Where:** `TowerDefense` constructor
-- **Approach:** draw a plain filled rectangle (matching the board's background color) as a fallback in `paintBoard()`
-  when `this.backGround` is `null`, rather than leaving the constructor's `else` branch empty.
+- **Where:** `TowerDefense` constructor, `BoardRenderer.paint()`
+- **Approach:** draw a plain filled rectangle (matching the board's background color) as a fallback in
+  `BoardRenderer.paint()` when the background image passed in is `null`, rather than leaving the constructor's `else`
+  branch empty.
 
