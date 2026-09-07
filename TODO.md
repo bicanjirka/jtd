@@ -38,9 +38,13 @@ interpreted as a real per-tick distance rather than "1/1000th of whatever segmen
 range and enemy speed balance interact.
 
 - **Where:** `AbstractEnemyMob` (`segment`, `segmentProgression`, `resetPosition()`, `doTick()`), `PathNormal`/`Path`
-- **Approach:** this is a small architectural change, not a one-line fix. Suggest prototyping it against a single
-  diagonal test path first, and re-tuning enemy `speed` constants (`speedBase`/`speedMax` in each `EnemyMob*` subclass)
-  afterward since their current values are tuned for the fixed-point/axis-aligned model.
+- **Approach:** this is a small architectural change, not a one-line fix. `td.ui.PathMarkerFrameBuilder`'s
+  `Polyline` (arc-length traversal of `Path`'s points: cumulative Euclidean segment lengths, then resolving a
+  distance to a position/facing by linear interpolation within the containing segment) is a working, tested example
+  of exactly this kind of distance-based, non-axis-aligned progression — it drives the path's animated markers, not
+  enemy movement, but the same approach is what this entry needs. Re-tune enemy `speed` constants
+  (`speedBase`/`speedMax` in each `EnemyMob*` subclass) afterward since their current values are tuned for the
+  fixed-point/axis-aligned model.
 
 ### Wave-entry spawn delay is a hardcoded constant
 
@@ -89,16 +93,3 @@ tick while paused) was never finished.
 - **Approach:** `doGameTick()` no longer has a pause check of its own (pause is now `TickSpeed.PAUSED`, which `GameLoop`
   already skips calling `onTick` for), so the >> handler can just call `this.doGameTick()` directly, once, when
   `this.currentSpeed == TickSpeed.PAUSED`, to act as a manual single-step control.
-
-## Rendering / engine
-
-### Missing background image has no fallback
-
-`TowerDefense`'s constructor only sets `this.backGround` if `Cache.hasBufImg("bg")` is true; the `else` branch is empty,
-so if the background image ever fails to load, nothing is drawn there instead of a visible placeholder.
-
-- **Where:** `TowerDefense` constructor, `Java2DFrameRenderer.paint()`
-- **Approach:** draw a plain filled rectangle (matching the board's background color) as a fallback in
-  `Java2DFrameRenderer.paint()` when the background image passed in is `null`, rather than leaving the constructor's
-  `else` branch empty.
-
