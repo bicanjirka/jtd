@@ -2,18 +2,13 @@ package td;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import td.cell.Cell;
-import td.enemy.EnemyMob;
 import td.tower.Tower;
 import td.tower.TowerFactory;
-import td.ui.CellRenderer;
-import td.ui.EnemyPainter;
+import td.ui.BoardRenderer;
 import td.ui.GameBoard;
 import td.ui.PanelTowerInfo;
 import td.ui.PanelTowerSelector;
 import td.ui.PanelWaveInfo;
-import td.ui.TowerEffectPainter;
-import td.ui.TowerSpritePainter;
 import td.util.Cache;
 import td.util.Context;
 import td.util.ContextListener;
@@ -27,7 +22,6 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
-import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -35,7 +29,6 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -81,6 +74,7 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
     private final GameEngine engine;
     private final Context context;
     private final GameBoard gameBoard;
+    private final BoardRenderer boardRenderer;
     private BufferedImage backGround;
     private final String statusMessage = """
             Welcome to TowerDefence
@@ -143,6 +137,7 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
     public TowerDefense() {
         this.engine = new GameEngine(this);
         this.context = this.engine.getContext();
+        this.boardRenderer = new BoardRenderer(this.engine, this.context);
         this.context.addContextListener(this);
         Cache cache = this.context.getCache();
         if (cache.hasBufImg("bg")) {
@@ -311,37 +306,7 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
             time = this.gameTime;
         }
 
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0.0f));
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
-
-        g2.drawImage(this.backGround, 0, 0, null);
-
-        Cell[][] cellGrid = this.engine.getCellGrid();
-        if (cellGrid != null) {
-            CellRenderer cellRenderer = new CellRenderer(g2, this.context);
-            for (Cell[] cells : cellGrid) {
-                for (int j = 0; j < cellGrid[0].length; j++) {
-                    cellRenderer.paint(cells[j]);
-                }
-            }
-        }
-
-        EnemyPainter enemyPainter = new EnemyPainter(g2, time);
-        for (EnemyMob enemy : this.context.getEnemies()) {
-            enemy.accept(enemyPainter);
-        }
-
-        TowerSpritePainter spritePainter = new TowerSpritePainter(g2);
-        for (Tower tower : this.engine.getTowers()) {
-            tower.accept(spritePainter);
-        }
-
-        TowerEffectPainter effectPainter = new TowerEffectPainter(g2);
-        for (Tower tower : this.engine.getTowers()) {
-            tower.accept(effectPainter);
-        }
+        this.boardRenderer.paint(g2, this.backGround, time);
 
         this.painting = false;
     }
