@@ -1,9 +1,8 @@
 package td.tower.targeting;
 
 import td.enemy.EnemyMob;
+import td.enemy.EnemyMobVisitor;
 import td.util.Context;
-
-import java.awt.Graphics2D;
 
 /** A minimal, immutable {@link EnemyMob} double - only the geometry/targeting-relevant state is real. */
 final class FakeEnemyMob implements EnemyMob {
@@ -43,7 +42,8 @@ final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
-    public void paint(Graphics2D g2, int gameTime) {
+    public <R> R accept(EnemyMobVisitor<R> visitor) {
+        throw new UnsupportedOperationException("FakeEnemyMob is not a real enemy kind");
     }
 
     @Override

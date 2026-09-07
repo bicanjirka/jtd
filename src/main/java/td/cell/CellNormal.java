@@ -1,38 +1,21 @@
 package td.cell;
 
 import td.tower.Tower;
-import td.util.Context;
-
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Shape;
-import java.awt.geom.Ellipse2D;
 
 public class CellNormal implements Cell {
 
-    private final Context context;
     private highlightType highlight = highlightType.none;
     private float highlightRange = 0;
-    private Shape rangeCircle;
 
-    private final int scale;
     private final int x;
     private final int y;
 
     private boolean buildable = true;
     private Tower tower = null;
 
-    private final Color highlightOK = Color.GRAY;
-    private final Color highlightNOK = Color.RED;
-    private Color highlightColor;
-    private final Color rangeColor = new Color(250, 250, 210, 150);
-
-    public CellNormal(int x, int y, Context context) {
+    public CellNormal(int x, int y) {
         this.x = x;
         this.y = y;
-        this.context = context;
-        this.scale = this.context.scale;
-        this.highlightColor = this.highlightOK;
     }
 
     public boolean hasTower() {
@@ -66,54 +49,28 @@ public class CellNormal implements Cell {
         this.highlight = highlight;
     }
 
+    public highlightType getHighlight() {
+        return this.highlight;
+    }
+
     public void setHighlightRange(float range) {
         this.highlightRange = range;
-        float realRange = this.highlightRange * this.context.scale;
-        float halfScale = (float) this.context.scale / 2;
-        this.rangeCircle = new Ellipse2D.Float(this.x - realRange + halfScale, this.y - realRange + halfScale, realRange * 2, realRange * 2);
     }
 
-    private void paintRangeCircle(Graphics2D g2) {
-        g2.setColor(this.rangeColor);
-        g2.draw(this.rangeCircle);
+    public float getHighlightRange() {
+        return this.highlightRange;
     }
 
-    public void paintEffect(Graphics2D g2) {
-        switch (this.highlight) {
-            case place -> {
-                this.paintRangeCircle(g2);
-                Color tempColor;
-                tempColor = new Color(this.highlightColor.getRed(), this.highlightColor.getGreen(), this.highlightColor.getBlue(), 80);
-                g2.setColor(tempColor);
-                g2.drawLine(this.x, 0, this.x, this.context.maxY);
-                g2.drawLine(this.x + this.scale, 0, this.x + this.scale, this.context.maxY);
-                g2.drawLine(0, this.y, this.context.maxX, this.y);
-                g2.drawLine(0, this.y + this.scale, this.context.maxX, y + this.scale);
-                g2.fillRect(this.x, this.y, this.scale, this.scale);
+    public int getX() {
+        return this.x;
+    }
 
-                tempColor = new Color(this.highlightColor.getRed(), this.highlightColor.getGreen(), this.highlightColor.getBlue(), 140);
-                g2.setColor(tempColor);
-                g2.drawRoundRect(this.x - this.scale, this.y - this.scale, this.scale * 3, this.scale * 3, 40, 40);
-
-                g2.setColor(this.highlightColor);
-                g2.drawRect(this.x, this.y, this.scale, this.scale);
-            }
-            case select -> {
-                Color tempColor2;
-                tempColor2 = new Color(this.highlightOK.getRed(), this.highlightOK.getGreen(), this.highlightOK.getBlue(), 80);
-                g2.setColor(tempColor2);
-                g2.fillRect(this.x, this.y, this.scale, this.scale);
-                g2.setColor(this.highlightOK);
-                g2.drawRect(this.x - 1, this.y - 1, this.scale + 1, this.scale + 1);
-            }
-            default -> {
-            }
-        }
+    public int getY() {
+        return this.y;
     }
 
     public void enable(boolean b) {
         this.buildable = b;
-        this.highlightColor = b ? this.highlightOK : this.highlightNOK;
     }
 
 }

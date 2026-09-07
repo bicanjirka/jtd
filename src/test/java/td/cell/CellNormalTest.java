@@ -14,7 +14,7 @@ class CellNormalTest {
 
     @Test
     void startsBuildableAndEmpty() {
-        CellNormal cell = new CellNormal(0, 0, context);
+        CellNormal cell = new CellNormal(0, 0);
 
         assertThat(cell.buildable()).isTrue();
         assertThat(cell.hasTower()).isFalse();
@@ -23,7 +23,7 @@ class CellNormalTest {
 
     @Test
     void setTowerOccupiesTheCellAndMakesItUnbuildable() {
-        CellNormal cell = new CellNormal(0, 0, context);
+        CellNormal cell = new CellNormal(0, 0);
         Tower tower = TowerFactory.createTower(TowerFactory.type.first, context, 0, 0);
 
         cell.setTower(tower);
@@ -35,7 +35,7 @@ class CellNormalTest {
 
     @Test
     void setTowerOnAnAlreadyOccupiedCellIsIgnored() {
-        CellNormal cell = new CellNormal(0, 0, context);
+        CellNormal cell = new CellNormal(0, 0);
         Tower first = TowerFactory.createTower(TowerFactory.type.first, context, 0, 0);
         Tower second = TowerFactory.createTower(TowerFactory.type.second, context, 0, 0);
 
@@ -47,7 +47,7 @@ class CellNormalTest {
 
     @Test
     void unSetTowerClearsTheCellAndMakesItBuildableAgain() {
-        CellNormal cell = new CellNormal(0, 0, context);
+        CellNormal cell = new CellNormal(0, 0);
         cell.setTower(TowerFactory.createTower(TowerFactory.type.first, context, 0, 0));
 
         cell.unSetTower();
@@ -59,7 +59,7 @@ class CellNormalTest {
 
     @Test
     void enableTogglesBuildability() {
-        CellNormal cell = new CellNormal(0, 0, context);
+        CellNormal cell = new CellNormal(0, 0);
 
         cell.enable(false);
         assertThat(cell.buildable()).isFalse();

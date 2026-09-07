@@ -6,6 +6,7 @@ import td.cell.Cell;
 import td.enemy.EnemyMob;
 import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.ui.CellRenderer;
 import td.ui.EnemyPainter;
 import td.ui.GameBoard;
 import td.ui.PanelTowerInfo;
@@ -319,9 +320,10 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
 
         Cell[][] cellGrid = this.engine.getCellGrid();
         if (cellGrid != null) {
+            CellRenderer cellRenderer = new CellRenderer(g2, this.context);
             for (Cell[] cells : cellGrid) {
                 for (int j = 0; j < cellGrid[0].length; j++) {
-                    cells[j].paintEffect(g2);
+                    cellRenderer.paint(cells[j]);
                 }
             }
         }

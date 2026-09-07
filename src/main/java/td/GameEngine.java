@@ -92,7 +92,7 @@ public class GameEngine {
         this.cellGrid = new Cell[width][height];
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-                this.cellGrid[i][j] = new CellNormal(i * this.context.scale, j * this.context.scale, this.context);
+                this.cellGrid[i][j] = new CellNormal(i * this.context.scale, j * this.context.scale);
             }
         }
         this.context.maxX = width * this.context.scale - 1;
