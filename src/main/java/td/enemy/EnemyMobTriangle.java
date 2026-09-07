@@ -2,39 +2,23 @@ package td.enemy;
 
 import td.util.Context;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Shape;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.GeneralPath;
-
 public final class EnemyMobTriangle extends AbstractEnemyMobRotor {
 
-    private Shape bodyShape;
     private float bodyScale;
 
     public EnemyMobTriangle() {
         super();
-        this.color = this.colorTrans = Color.YELLOW;
         this.rotPerTime = (float) Math.toRadians(-5.0);
     }
 
     protected void doInit(Context context, int delay, int health, int price, int level) {
         super.doInit(context, delay, health, price, level);
         this.bodyScale = (float) this.context.scale / ((this.level < 6) ? (7 - level) : (2));
-        this.bodyShape = this.createTriangle(this.bodyScale, true);
         this.speedMax = (int) (this.speedBase * (1.4 + 0.1 * this.level));
     }
 
-    private Shape createTriangle(float scale, boolean up) {
-        int u = up ? 1 : -1;
-        double point = (Math.sqrt(3) * scale) / 2;
-        GeneralPath p = new GeneralPath();
-        p.moveTo(0.0f, -scale * u);
-        p.lineTo(-point * u, scale / 2 * u);
-        p.lineTo(point * u, scale / 2 * u);
-        p.closePath();
-        return p;
+    public float getBodyScale() {
+        return this.bodyScale;
     }
 
     public void doDamage(int damage) {
@@ -42,34 +26,15 @@ public final class EnemyMobTriangle extends AbstractEnemyMobRotor {
         this.speed = (this.speedBase + (int) ((this.speedMax - this.speedBase) * (1 - (this.health / (float) this.healthMax))));
     }
 
-    @Override
-    public void paint(Graphics2D g2, int gameTime) {
-        g2.setColor(this.color);
-        AffineTransform saveXform = g2.getTransform();
-        g2.transform(this.atTranslate);
-        g2.transform(this.atRotate);
-
-        if (this.dead) {
-            int age = this.ticksSinceDeath(gameTime);
-            if (!this.isFadeComplete(gameTime)) {
-                g2.setColor(new Color(this.color.getRed(), this.color.getGreen(), this.color.getBlue(), this.fadeAlpha(age)));
-                int growth = age * 2;
-                g2.draw(this.createTriangle(this.bodyScale + growth, false));
-                g2.draw(this.createTriangle(this.bodyScale + growth, true));
-            }
-        } else if (!this.inactive) {
-            g2.draw(this.bodyShape);
-            g2.setColor(this.colorTrans);
-            g2.fill(this.bodyShape);
-        }
-        g2.setTransform(saveXform);
+    public <R> R accept(EnemyMobVisitor<R> visitor) {
+        return visitor.visitTriangle(this);
     }
 
     @Override
     public String getInfoString() {
         return """
                 Triangle mob
-                
+
                 Increases speed as it takes damage.""";
     }
 

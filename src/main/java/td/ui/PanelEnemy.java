@@ -89,9 +89,10 @@ public class PanelEnemy extends JPanel {
         g2.setColor(Color.BLACK);
         g2.fillRect(0, 0, this.pWidth, this.pHeight);
         int nr = 0;
+        EnemyPainter enemyPainter = new EnemyPainter(g2, this.gameTime);
 
         for (EnemyMob e : this.enemies) {
-            e.paint(g2, this.gameTime);
+            e.accept(enemyPainter);
             g2.setColor(Color.PINK);
             g2.setFont(this.font);
             g2.drawString("" + this.enemiesCount[nr], this.scale * nr, this.pHeight);

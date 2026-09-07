@@ -1,7 +1,5 @@
 package td.enemy;
 
-import java.awt.Graphics2D;
-
 // Placeholder enemy used to create timing gaps between real enemies within a wave.
 public final class EnemyMobEmpty extends AbstractEnemyMob {
 
@@ -11,7 +9,8 @@ public final class EnemyMobEmpty extends AbstractEnemyMob {
     public void doTick(int gameTime) {
     }
 
-    public void paint(Graphics2D g2, int gameTime) {
+    public <R> R accept(EnemyMobVisitor<R> visitor) {
+        return visitor.visitEmpty(this);
     }
 
     public String getInfoString() {
