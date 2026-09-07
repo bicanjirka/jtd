@@ -112,7 +112,7 @@ public class GameEngine {
             this.waves.add(w);
         }
 
-        this.context.setCredits(startingCredits);
+        this.context.startEconomy(startingCredits);
         LOG.info("Level loaded: {}x{} board, {} waves, {} starting credits", width, height, this.waves.size(), startingCredits);
     }
 

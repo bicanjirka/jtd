@@ -1,6 +1,7 @@
 package td.ui;
 
 import td.TowerDefense;
+import td.economy.EconomyState;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.Cache;
@@ -107,13 +108,10 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
         this.placing = false;
     }
 
-    public void moneyChanged() {
+    public void economyChanged(EconomyState state) {
         for (int i = 0; i < this.buttons.length; i++) {
-            this.buttons[i].setEnabled(this.context.canPay(this.towerTypes.get(i).price));
+            this.buttons[i].setEnabled(state.canAfford(this.towerTypes.get(i).price));
         }
-    }
-
-    public void livesChanged() {
     }
 
     private void untoggleAll() {

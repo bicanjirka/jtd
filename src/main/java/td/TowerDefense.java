@@ -2,6 +2,7 @@ package td;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import td.economy.EconomyState;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.ui.BoardRenderer;
@@ -262,14 +263,9 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
     }
 
     /** Also reachable from the game-loop thread - see enemyDied(). */
-    public void moneyChanged() {
+    public void economyChanged(EconomyState state) {
         SwingUtilities.invokeLater(this::updateInfo);
-    }
-
-    /** Also reachable from the game-loop thread - see enemyDied(). */
-    public void livesChanged() {
-        SwingUtilities.invokeLater(this::updateInfo);
-        if (this.context.getLives() <= 0) {
+        if (state.isGameOver()) {
             this.gameLost();
         }
     }

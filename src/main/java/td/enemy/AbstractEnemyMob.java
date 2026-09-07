@@ -2,6 +2,7 @@ package td.enemy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import td.economy.EconomyDelta;
 import td.util.Context;
 import td.wave.Path;
 import td.wave.Point;
@@ -70,14 +71,16 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
     }
 
     public void doDamage(int damage) {
+        if (this.dead) {
+            return;
+        }
         if (this.validTarget()) {
             this.health -= damage;
         }
         if (this.health <= 0) {
             this.validTarget = false;
             this.dead = true;
-            this.context.addScore(this.price);
-            this.context.doReceive(this.price);
+            this.context.apply(EconomyDelta.kill(this.price));
             this.context.removeEnemy();
         }
     }
@@ -188,9 +191,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
                 if (this.segment >= this.path.length()) {
                     this.segment = 0;
                     wrappedToPathStart = true;
-                    if (this.price == 0) this.context.deductScore(10);
-                    else this.context.deductScore(this.price);
-                    this.context.removeLife();
+                    this.context.apply(EconomyDelta.leak(this.price == 0 ? 10 : this.price));
                 }
                 this.segmentStartPoint = this.path.getStep(this.segment);
                 this.segmentEndPoint = this.path.getStep(this.segment + 1);

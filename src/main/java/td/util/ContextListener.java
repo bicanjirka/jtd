@@ -1,7 +1,7 @@
 package td.util;
 
-public interface ContextListener {
-    void moneyChanged();
+import td.economy.EconomyState;
 
-    void livesChanged();
+public interface ContextListener {
+    void economyChanged(EconomyState state);
 }

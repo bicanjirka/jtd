@@ -2,6 +2,7 @@ package td.ui;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import td.economy.EconomyState;
 import td.tower.Tower;
 import td.util.Context;
 import td.util.ContextListener;
@@ -92,11 +93,8 @@ public class PanelTowerInfo extends JPanel implements ContextListener {
         }
     }
 
-    public void moneyChanged() {
+    public void economyChanged(EconomyState state) {
         this.updateInterface();
-    }
-
-    public void livesChanged() {
     }
 
     private void initComponents() {
