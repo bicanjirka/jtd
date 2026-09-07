@@ -2,15 +2,19 @@ package td.cell;
 
 import td.tower.Tower;
 
-import java.awt.Graphics2D;
-
 public interface Cell {
-
-    void paintEffect(Graphics2D g2);
 
     void setHighlight(highlightType highlight);
 
+    highlightType getHighlight();
+
     void setHighlightRange(float range);
+
+    float getHighlightRange();
+
+    int getX();
+
+    int getY();
 
     void enable(boolean b);
 

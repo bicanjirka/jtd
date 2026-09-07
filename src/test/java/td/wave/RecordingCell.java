@@ -3,8 +3,6 @@ package td.wave;
 import td.cell.Cell;
 import td.tower.Tower;
 
-import java.awt.Graphics2D;
-
 /**
  * Minimal test double for {@link Cell} that just records whether/how
  * {@link #enable(boolean)} was called, so tests can assert on it without
@@ -15,6 +13,8 @@ import java.awt.Graphics2D;
 public class RecordingCell implements Cell {
 
     private Boolean lastEnableArg;
+    private highlightType highlight = highlightType.none;
+    private float highlightRange = 0;
 
     public boolean wasDisabled() {
         return Boolean.FALSE.equals(lastEnableArg);
@@ -25,15 +25,33 @@ public class RecordingCell implements Cell {
     }
 
     @Override
-    public void paintEffect(Graphics2D g2) {
+    public void setHighlight(highlightType highlight) {
+        this.highlight = highlight;
     }
 
     @Override
-    public void setHighlight(highlightType highlight) {
+    public highlightType getHighlight() {
+        return this.highlight;
     }
 
     @Override
     public void setHighlightRange(float range) {
+        this.highlightRange = range;
+    }
+
+    @Override
+    public float getHighlightRange() {
+        return this.highlightRange;
+    }
+
+    @Override
+    public int getX() {
+        return 0;
+    }
+
+    @Override
+    public int getY() {
+        return 0;
     }
 
     @Override
