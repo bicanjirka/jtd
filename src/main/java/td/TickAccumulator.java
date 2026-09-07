@@ -38,4 +38,14 @@ public final class TickAccumulator {
     public void reset() {
         this.accumulatedNanos = 0;
     }
+
+    /**
+     * The leftover sub-step remainder, as a fraction of one step (always in
+     * {@code [0, 1)}). This is how far past the last whole tick the
+     * accumulator currently sits - the basis for interpolating a render
+     * frame between the previous and current tick's state.
+     */
+    public double fractionElapsed() {
+        return this.accumulatedNanos / (double) this.stepNanos;
+    }
 }
