@@ -2,12 +2,10 @@ package td.enemy;
 
 import td.util.Context;
 
-import java.awt.Graphics2D;
-
 public interface EnemyMob {
     void doTick(int gameTime);
 
-    void paint(Graphics2D g2, int gameTime);
+    <R> R accept(EnemyMobVisitor<R> visitor);
 
     int getX();
 

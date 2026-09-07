@@ -6,9 +6,6 @@ import td.util.Context;
 import td.wave.Path;
 import td.wave.Point;
 
-import java.awt.Color;
-import java.awt.geom.AffineTransform;
-
 public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractEnemyMob.class);
@@ -19,16 +16,12 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
     protected boolean dead = false;
     protected int price;
     protected int level;
-    protected Color colorTrans = Color.WHITE;
-    protected Color color = Color.WHITE;
     protected int x, y;
-    protected AffineTransform atTranslate;
     protected int speed = 40;
     protected int speedMax = 40;
     protected final int speedBase = 40;
     protected int health;
     protected int healthMax;
-    protected int alpha = 255;
     protected Context context;
     private int delay;
     private int deathTick = -1;
@@ -57,12 +50,19 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
             this.inactive = false;
             this.validTarget = true;
         }
-        this.atTranslate = new AffineTransform();
         this.resetPosition();
     }
 
     public long getHealth() {
         return this.health;
+    }
+
+    public float getHealthFraction() {
+        return (float) this.health / this.healthMax;
+    }
+
+    public boolean isInactive() {
+        return this.inactive;
     }
 
     public void doDamage(int damage) {
@@ -72,14 +72,9 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         if (this.health <= 0) {
             this.validTarget = false;
             this.dead = true;
-            this.alpha = 0;
-            this.colorTrans = new Color(this.color.getRed(), this.color.getGreen(), this.color.getBlue(), alpha);
             this.context.addScore(this.price);
             this.context.doReceive(this.price);
             this.context.removeEnemy();
-        } else {
-            this.alpha = (int) (((float) this.health / this.healthMax) * 255);
-            this.colorTrans = new Color(this.color.getRed(), this.color.getGreen(), this.color.getBlue(), alpha);
         }
     }
 
@@ -121,11 +116,11 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
      * than lazily inside paint(), so the death-fade animation advances with the
      * simulation clock instead of with however often the board happens to repaint.
      */
-    protected int ticksSinceDeath(int gameTime) {
+    public int ticksSinceDeath(int gameTime) {
         return this.deathTick < 0 ? -1 : gameTime - this.deathTick;
     }
 
-    protected int fadeDurationTicks() {
+    public int fadeDurationTicks() {
         return 3 * this.level + 6;
     }
 
@@ -134,7 +129,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         return age > this.fadeDurationTicks();
     }
 
-    protected int fadeAlpha(int ticksSinceDeath) {
+    public int fadeAlpha(int ticksSinceDeath) {
         return Math.max(255 - (ticksSinceDeath * (255 / (this.fadeDurationTicks() + 1))), 0);
     }
 
@@ -175,8 +170,6 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
             }
             this.x = this.segmentStartPoint.x() + (this.segmentEndPoint.x() - this.segmentStartPoint.x()) * this.segmentProgression / 1000;
             this.y = this.segmentStartPoint.y() + (this.segmentEndPoint.y() - this.segmentStartPoint.y()) * this.segmentProgression / 1000;
-            atTranslate.setToIdentity();
-            atTranslate.translate(this.x, this.y);
             this.validTarget = this.x >= 0 && this.x <= this.context.maxX && this.y >= 0 && this.y <= this.context.maxY;
         }
     }

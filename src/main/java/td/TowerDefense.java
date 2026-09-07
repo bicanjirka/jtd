@@ -6,6 +6,7 @@ import td.cell.Cell;
 import td.enemy.EnemyMob;
 import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.ui.EnemyPainter;
 import td.ui.GameBoard;
 import td.ui.PanelTowerInfo;
 import td.ui.PanelTowerSelector;
@@ -325,8 +326,9 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
             }
         }
 
+        EnemyPainter enemyPainter = new EnemyPainter(g2, time);
         for (EnemyMob enemy : this.context.getEnemies()) {
-            enemy.paint(g2, time);
+            enemy.accept(enemyPainter);
         }
 
         TowerSpritePainter spritePainter = new TowerSpritePainter(g2);
