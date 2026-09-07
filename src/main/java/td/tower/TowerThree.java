@@ -1,5 +1,6 @@
 package td.tower;
 
+import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.tower.targeting.InRangeAfterIndexQuery;
 import td.util.Context;
@@ -51,7 +52,7 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
                 EnemyMob enemy = this.context.getEnemies()[enemyNr];
                 this.enemyX[enemyNr] = enemy.getX();
                 this.enemyY[enemyNr] = enemy.getY();
-                enemy.doDamage(this.damageCurrent);
+                enemy.doDamage(Damage.of(this.damageCurrent));
                 this.lineSteps[enemyNr] = this.coolDownRecharge / 2;
                 this.coolDown = this.coolDownMax;
             }

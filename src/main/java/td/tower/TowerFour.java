@@ -1,5 +1,6 @@
 package td.tower;
 
+import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.OfTypeTargetQuery;
@@ -30,7 +31,7 @@ public final class TowerFour extends AbstractTower {
         if (enemies.size() > ghosts.size()) {
             this.fire = true;
             for (EnemyMob enemy : enemies) {
-                enemy.doDamage(this.damageCurrent);
+                enemy.doDamage(Damage.of(this.damageCurrent));
             }
         } else {
             this.fire = false;

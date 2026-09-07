@@ -1,5 +1,6 @@
 package td.tower;
 
+import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.tower.targeting.InRangeTargetQuery;
 import td.util.Context;
@@ -57,7 +58,7 @@ public final class TowerTwo extends AbstractTower {
                     dy = ey - splashTarget.getY();
                     r2 = dx * dx + dy * dy;
                     damage = Math.round(this.damageCurrent * (1 - r2 / (this.spreadRadius * this.spreadRadius)));
-                    splashTarget.doDamage(damage);
+                    splashTarget.doDamage(Damage.of(damage));
                 }
 
                 this.coolDown = this.coolDownMax;

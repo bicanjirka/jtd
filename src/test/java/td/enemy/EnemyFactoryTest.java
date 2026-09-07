@@ -1,6 +1,7 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
 import td.util.Context;
 import td.util.RecordingGameHost;
 
@@ -41,7 +42,7 @@ class EnemyFactoryTest {
 
         assertThat(first).isNotSameAs(second);
 
-        first.doDamage(100_00);
+        first.doDamage(Damage.of(100_00));
         assertThat(first.validTarget()).isFalse();
         assertThat(second.validTarget()).isTrue();
     }

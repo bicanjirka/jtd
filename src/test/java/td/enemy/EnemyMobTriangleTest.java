@@ -1,6 +1,7 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
 import td.util.Context;
 import td.util.RecordingGameHost;
 
@@ -16,7 +17,7 @@ class EnemyMobTriangleTest {
         EnemyMob triangle = EnemyFactory.getEnemy("t", context, 0, 100, 5, 1);
         // healthMax = 100*100 = 10000; speedMax at level 1 is 40*(1.4+0.1) = 60
         // losing half its health -> speed = 40 + (60-40)*(1-0.5) = 50
-        triangle.doDamage(5000);
+        triangle.doDamage(Damage.of(5000));
 
         assertThat(triangle.getSpeed()).isEqualTo(50);
     }

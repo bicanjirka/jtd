@@ -1,5 +1,6 @@
 package td.enemy;
 
+import td.damage.Damage;
 import td.util.Context;
 
 public final class EnemyMobSquare extends AbstractEnemyMobRotor {
@@ -21,8 +22,9 @@ public final class EnemyMobSquare extends AbstractEnemyMobRotor {
         return this.bodyScale;
     }
 
-    public void doDamage(int damage) {
-        super.doDamage((int) (damage * K));
+    @Override
+    protected Damage absorb(Damage incoming) {
+        return incoming.scaledBy(this.K);
     }
 
     public <R> R accept(EnemyMobVisitor<R> visitor) {
