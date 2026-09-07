@@ -2,7 +2,6 @@ package td;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import javax.swing.SwingUtilities;
 
@@ -113,20 +112,17 @@ public class GameLoop implements Runnable {
 
     private void runTick() {
         this.tickNumber++;
-        MDC.put("tick", String.valueOf(this.tickNumber));
         try {
             this.onTick.run();
             this.consecutiveTickFailures = 0;
         } catch (RuntimeException e) {
             this.consecutiveTickFailures++;
-            LOG.error("Tick failed, skipping this tick ({}/{} consecutive failures)",
-                    this.consecutiveTickFailures, MAX_CONSECUTIVE_TICK_FAILURES, e);
+            LOG.error("Tick {} failed, skipping this tick ({}/{} consecutive failures)",
+                    this.tickNumber, this.consecutiveTickFailures, MAX_CONSECUTIVE_TICK_FAILURES, e);
             if (this.consecutiveTickFailures >= MAX_CONSECUTIVE_TICK_FAILURES) {
                 LOG.error("GameLoop stopping after {} consecutive tick failures", this.consecutiveTickFailures);
                 this.running = false;
             }
-        } finally {
-            MDC.remove("tick");
         }
     }
 
