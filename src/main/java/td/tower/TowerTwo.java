@@ -4,13 +4,6 @@ import td.enemy.EnemyMob;
 import td.tower.targeting.InRangeTargetQuery;
 import td.util.Context;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Shape;
-import java.awt.Stroke;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
 import java.util.List;
 
 public final class TowerTwo extends AbstractTower {
@@ -23,28 +16,15 @@ public final class TowerTwo extends AbstractTower {
     private final float spreadRadius;
     private int coolDown = 0;
 
-    private Color transLineColor;
-    private Color transShapeColor;
-    private final Stroke[] lineStrokes;
-    private Stroke lineStroke;
-    private Shape spread;
-
-    private EnemyMob enemy;
-    private List<EnemyMob> currentTargets = List.of();
-
+    private EnemyMob primaryTarget;
+    private List<EnemyMob> splashTargets = List.of();
+    private int splashCenterX;
+    private int splashCenterY;
 
     public TowerTwo(Context context, int x, int y) {
         super(TowerFactory.type.second, price, damage, range);
         this.name = "tower2";
         this.coolDownMax = 19;
-        this.lineColor = Color.RED;
-        this.transLineColor = new Color(this.lineColor.getRed(), this.lineColor.getGreen(), this.lineColor.getBlue(), 160);
-        this.transLineColor = new Color(this.lineColor.getRed(), this.lineColor.getGreen(), this.lineColor.getBlue(), 80);
-        this.lineStrokes = new Stroke[this.coolDownMax];
-        for (int i = 0; i < this.coolDownMax; i++) {
-            this.lineStrokes[i] = new BasicStroke(3.0f * (float) i / this.coolDownMax, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
-        }
-        this.lineStroke = this.lineStrokes[this.coolDownMax - 1];
         this.spreadRadius = spreadRadiusBase * context.scale;
         this.doInit(context, x, y);
     }
@@ -60,54 +40,65 @@ public final class TowerTwo extends AbstractTower {
     public void doTick(int gameTime) {
         if (this.coolDown > 0) {
             this.coolDown--;
-            this.lineStroke = this.lineStrokes[this.coolDown];
         } else {
             List<EnemyMob> enemies = this.findEnemiesInRangeVisible(this.centerX, this.centerY, this.rangeReal);
 
             if (!enemies.isEmpty()) {
-                this.enemy = enemies.get((int) (Math.random() * enemies.size()));
-                int ex = this.enemy.getX();
-                int ey = this.enemy.getY();
+                this.primaryTarget = enemies.get((int) (Math.random() * enemies.size()));
+                int ex = this.primaryTarget.getX();
+                int ey = this.primaryTarget.getY();
                 int dx, dy, r2;
                 int damage;
 
-                this.currentTargets = this.findEnemiesInRange(ex, ey, this.spreadRadius);
+                this.splashTargets = this.findEnemiesInRange(ex, ey, this.spreadRadius);
 
-                for (EnemyMob currentTarget : this.currentTargets) {
-                    dx = ex - currentTarget.getX();
-                    dy = ey - currentTarget.getY();
+                for (EnemyMob splashTarget : this.splashTargets) {
+                    dx = ex - splashTarget.getX();
+                    dy = ey - splashTarget.getY();
                     r2 = dx * dx + dy * dy;
                     damage = Math.round(this.damageCurrent * (1 - r2 / (this.spreadRadius * this.spreadRadius)));
-                    currentTarget.doDamage(damage);
+                    splashTarget.doDamage(damage);
                 }
 
                 this.coolDown = this.coolDownMax;
-                this.spread = new Ellipse2D.Float(ex - this.spreadRadius, ey - this.spreadRadius, spreadRadius * 2, spreadRadius * 2);
+                this.splashCenterX = ex;
+                this.splashCenterY = ey;
             } else {
-                this.enemy = null;
+                this.primaryTarget = null;
             }
         }
     }
 
-    public void paintEffect(Graphics2D g2, int gameTime) {
-        Stroke defaultStroke = g2.getStroke();
+    public EnemyMob getPrimaryTarget() {
+        return this.primaryTarget;
+    }
 
-        if (this.enemy != null) {
-            g2.setColor(this.lineColor);
-            g2.setStroke(this.lineStroke);
-            int ex = this.enemy.getX();
-            int ey = this.enemy.getY();
-            g2.draw(new Line2D.Float(this.centerX, this.centerY, ex, ey));
-            g2.setColor(this.transLineColor);
-            for (EnemyMob currentTarget : this.currentTargets) {
-                g2.draw(new Line2D.Float(ex, ey, currentTarget.getX(), currentTarget.getY()));
-            }
-            g2.setStroke(defaultStroke);
-        }
-        if (this.coolDown > this.coolDownMax - 1) {
-            g2.setColor(this.transShapeColor);
-            g2.fill(this.spread);
-        }
+    public List<EnemyMob> getSplashTargets() {
+        return this.splashTargets;
+    }
+
+    public float getSpreadRadius() {
+        return this.spreadRadius;
+    }
+
+    public int getSplashCenterX() {
+        return this.splashCenterX;
+    }
+
+    public int getSplashCenterY() {
+        return this.splashCenterY;
+    }
+
+    public float getCoolDownFraction() {
+        return (float) this.coolDown / this.coolDownMax;
+    }
+
+    public boolean isSplashVisible() {
+        return this.coolDown >= this.coolDownMax;
+    }
+
+    public <R> R accept(TowerVisitor<R> visitor) {
+        return visitor.visitTowerTwo(this);
     }
 
     public String getInfoString() {

@@ -3,8 +3,6 @@ package td.tower;
 import td.util.Context;
 import td.util.TowerListener;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +18,6 @@ public final class TowerUpgrade extends AbstractTower implements TowerListener {
     public TowerUpgrade(Context context, int x, int y) {
         super(TowerFactory.type.upgrade, price, damage, range);
         this.name = "upg";
-        this.lineColor = Color.WHITE;
         this.passive = true;
         this.clients = new ArrayList<>();
         this.doInit(context, x, y);
@@ -97,7 +94,8 @@ public final class TowerUpgrade extends AbstractTower implements TowerListener {
         this.context.removeTowerListener(this);
     }
 
-    public void paintEffect(Graphics2D g2, int gameTime) {
+    public <R> R accept(TowerVisitor<R> visitor) {
+        return visitor.visitTowerUpgrade(this);
     }
 
     public String getInfoString() {

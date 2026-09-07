@@ -5,11 +5,6 @@ import td.tower.targeting.InRangeAfterIndexQuery;
 import td.util.Context;
 import td.util.WaveStartListener;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Stroke;
-import java.awt.geom.Line2D;
 import java.util.OptionalInt;
 
 public final class TowerThree extends AbstractTower implements WaveStartListener {
@@ -24,19 +19,12 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
     private int coolDown = 0;
     private final int coolDownRecharge = 39;
 
-    private final Stroke[] lineStrokes;
     private int[] lineSteps;
 
     public TowerThree(Context context, int x, int y) {
         super(TowerFactory.type.third, price, damage, range);
         this.name = "tower3";
         this.coolDownMax = 1;
-        this.lineColor = Color.YELLOW;
-        int coolDownHalf = this.coolDownRecharge / 2;
-        this.lineStrokes = new Stroke[coolDownHalf];
-        for (int i = 0; i < this.lineStrokes.length; i++) {
-            this.lineStrokes[i] = new BasicStroke(3.0f * (float) i / this.coolDownRecharge, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
-        }
         this.doInit(context, x, y);
 
         this.context.addWaveStartListener(this);
@@ -75,14 +63,24 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
         }
     }
 
-    public void paintEffect(Graphics2D g2, int gameTime) {
-        g2.setColor(this.lineColor);
-        for (int i = 0; i < this.lineSteps.length; i++) {
-            if (this.lineSteps[i] > 0) {
-                g2.setStroke(this.lineStrokes[this.lineSteps[i]]);
-                g2.draw(new Line2D.Float(this.centerX, this.centerY, this.enemyX[i], this.enemyY[i]));
-            }
-        }
+    public int[] getEnemyX() {
+        return this.enemyX;
+    }
+
+    public int[] getEnemyY() {
+        return this.enemyY;
+    }
+
+    public int[] getLineSteps() {
+        return this.lineSteps;
+    }
+
+    public int getCoolDownRecharge() {
+        return this.coolDownRecharge;
+    }
+
+    public <R> R accept(TowerVisitor<R> visitor) {
+        return visitor.visitTowerThree(this);
     }
 
     public String getInfoString() {

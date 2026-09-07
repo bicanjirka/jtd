@@ -1,13 +1,7 @@
 package td.tower;
 
-import td.util.Cache;
 import td.util.Context;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Shape;
-import java.awt.geom.Ellipse2D;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,9 +20,6 @@ public abstract class AbstractTower implements Tower {
     protected int coolDownMax;
     protected float rangeReal = 0;
     protected float rangeReal2 = 0;
-    protected Color lineColor;
-    protected Shape rangeCircle;
-    protected BufferedImage img;
     protected boolean passive = false;
     protected boolean selected = false;
     private final TowerFactory.type type;
@@ -46,9 +37,6 @@ public abstract class AbstractTower implements Tower {
 
     protected void doInit(Context context, int x, int y) {
         this.context = context;
-        Cache cache = this.context.getCache();
-        if (cache.hasBufImg(this.name))
-            this.img = cache.getBufImg(this.name);
         int scale = this.context.scale;
         this.boardX = x * scale;
         this.boardY = y * scale;
@@ -56,7 +44,6 @@ public abstract class AbstractTower implements Tower {
         this.centerY = this.boardY + scale / 2;
         this.rangeReal = this.rangeBase * scale;
         this.rangeReal2 = rangeReal * rangeReal;
-        this.rangeCircle = new Ellipse2D.Float(this.centerX - this.rangeReal, this.centerY - this.rangeReal, rangeReal * 2, rangeReal * 2);
     }
 
     public float getRange() {
@@ -78,19 +65,14 @@ public abstract class AbstractTower implements Tower {
 
         this.rangeReal = this.rangeCurrent * this.context.scale;
         this.rangeReal2 = rangeReal * rangeReal;
-        this.rangeCircle = new Ellipse2D.Float(this.centerX - this.rangeReal, this.centerY - this.rangeReal, rangeReal * 2, rangeReal * 2);
     }
 
     public void setSelected(boolean selected) {
         this.selected = selected;
     }
 
-    public void paint(Graphics2D g2, int gameTime) {
-        if (this.selected) {
-            g2.setColor(Color.PINK);
-            g2.draw(this.rangeCircle);
-        }
-        g2.drawImage(img, null, boardX, boardY);
+    public boolean isSelected() {
+        return this.selected;
     }
 
     public int getX() {
@@ -99,6 +81,14 @@ public abstract class AbstractTower implements Tower {
 
     public int getY() {
         return centerY;
+    }
+
+    public int getBoardX() {
+        return this.boardX;
+    }
+
+    public int getBoardY() {
+        return this.boardY;
     }
 
     public TowerFactory.type getType() {
