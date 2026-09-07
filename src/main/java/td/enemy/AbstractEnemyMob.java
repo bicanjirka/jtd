@@ -129,8 +129,14 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         return age > this.fadeDurationTicks();
     }
 
+    /**
+     * ticksSinceDeath can be -1 (death recorded by doDamage() mid-tick, but this
+     * mob's own doTick() hasn't run yet to capture deathTick) - clamp to a valid
+     * Color alpha range rather than let that produce a value above 255.
+     */
     public int fadeAlpha(int ticksSinceDeath) {
-        return Math.max(255 - (ticksSinceDeath * (255 / (this.fadeDurationTicks() + 1))), 0);
+        int alpha = 255 - (ticksSinceDeath * (255 / (this.fadeDurationTicks() + 1)));
+        return Math.min(255, Math.max(alpha, 0));
     }
 
     private void resetPosition() {
