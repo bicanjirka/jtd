@@ -85,6 +85,23 @@ class AbstractEnemyMobTest {
     }
 
     @Test
+    void anAlreadyDeadEnemyDamagedAgainDoesNotPayTheBountyTwice() {
+        RecordingGameHost host = new RecordingGameHost();
+        Context context = new Context(host);
+        context.maxX = 1000;
+        context.maxY = 1000;
+        context.setEnemyCount(1);
+
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 7, 2);
+        enemy.doDamage(5000);
+        enemy.doDamage(5000);
+
+        assertThat(context.getScore()).isEqualTo(7);
+        assertThat(context.getCredits()).isEqualTo(7);
+        assertThat(host.enemyDiedCalls).containsExactly(0);
+    }
+
+    @Test
     void nonLethalDamageReducesHealthWithoutKilling() {
         Context context = newContext();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);

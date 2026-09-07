@@ -2,6 +2,8 @@ package td.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import td.economy.EconomyDelta;
+import td.economy.EconomyState;
 import td.enemy.EnemyMob;
 import td.tower.Tower;
 import td.wave.Path;
@@ -24,10 +26,7 @@ public class Context {
     private int enemyCount = 0;
     private Path path;
 
-    private final int livesMax = 5;
-    private int lives = 5;
-    private int credits = 0;
-    private int score = 0;
+    private volatile EconomyState economy = EconomyState.startingWith(0, 5);
 
     private final List<ContextListener> contextListeners;
     private final List<TowerListener> towerListeners;
@@ -91,58 +90,55 @@ public class Context {
         this.mainApp.setInfoText(s);
     }
 
-    public void addScore(int s) {
-        if (s < 0) {
-            LOG.warn("Adding negative score? {}", s);
-        }
-        this.score += s;
-        LOG.debug("Score +{} -> {}", s, this.score);
+    /**
+     * Seeds the economy at the start of a level. Fires like any other economy change since
+     * listeners are already registered by the time a level loads.
+     */
+    public void startEconomy(int startingCredits) {
+        this.economy = EconomyState.startingWith(startingCredits, this.economy.lives());
+        LOG.debug("Economy seeded: {}", this.economy);
+        this.fireEconomyChangedEvent(this.economy);
     }
 
-    public void deductScore(int s) {
-        if (s < 0) {
-            LOG.warn("Deducting negative score? {}", s);
+    /**
+     * Applies a game event's effect on credits/score/lives as one atomic move, firing exactly
+     * one notification for it - replacing what used to be up to three separate mutations
+     * (see EconomyDelta.kill/leak).
+     */
+    public void apply(EconomyDelta delta) {
+        EconomyState updated;
+        synchronized (this) {
+            updated = this.economy.after(delta);
+            this.economy = updated;
         }
-        this.score -= s;
-        LOG.debug("Score -{} -> {}", s, this.score);
+        LOG.debug("Economy {} -> {}", delta, updated);
+        this.fireEconomyChangedEvent(updated);
     }
 
     public int getScore() {
-        return this.score;
-    }
-
-    public void resetScore() {
-        this.score = 0;
+        return this.economy.score();
     }
 
     public int getCredits() {
-        return this.credits;
-    }
-
-    public void setCredits(int credits) {
-        this.credits = credits;
-        this.fireMoneyChangedEvent();
+        return this.economy.credits();
     }
 
     public boolean canPay(int amount) {
-        return (this.credits >= amount);
+        return this.economy.canAfford(amount);
     }
 
     public boolean doPay(int amount) {
-        if (this.canPay(amount)) {
-            this.credits -= amount;
-            LOG.debug("Credits -{} -> {}", amount, this.credits);
-            this.fireMoneyChangedEvent();
-            return true;
-        } else {
-            return false;
+        EconomyState updated;
+        synchronized (this) {
+            if (!this.economy.canAfford(amount)) {
+                return false;
+            }
+            updated = this.economy.after(EconomyDelta.credits(-amount));
+            this.economy = updated;
         }
-    }
-
-    public void doReceive(int amount) {
-        this.credits += amount;
-        LOG.debug("Credits +{} -> {}", amount, this.credits);
-        this.fireMoneyChangedEvent();
+        LOG.debug("Credits -{} -> {}", amount, updated.credits());
+        this.fireEconomyChangedEvent(updated);
+        return true;
     }
 
     public void addTower(Tower t) {
@@ -156,7 +152,7 @@ public class Context {
         this.mainApp.clearCell(cellX, cellY);
         t.doCleanup();
         this.towers.remove(t);
-        this.doReceive(t.getSellPrice());
+        this.apply(EconomyDelta.credits(t.getSellPrice()));
         this.fireTowerRemovedEvent(t);
         LOG.info("Tower sold: {} at ({},{}), refund={}", t.getType(), cellX, cellY, t.getSellPrice());
     }
@@ -200,15 +196,9 @@ public class Context {
         this.contextListeners.remove(l);
     }
 
-    private void fireMoneyChangedEvent() {
+    private void fireEconomyChangedEvent(EconomyState state) {
         for (ContextListener l : this.contextListeners) {
-            l.moneyChanged();
-        }
-    }
-
-    private void fireLivesChangedEvent() {
-        for (ContextListener l : this.contextListeners) {
-            l.livesChanged();
+            l.economyChanged(state);
         }
     }
 
@@ -221,22 +211,7 @@ public class Context {
     }
 
     public int getLives() {
-        return lives;
-    }
-
-    public void removeLife() {
-        this.lives--;
-        if (this.lives <= 0) {
-            LOG.info("Life lost, none remaining - game over");
-        } else {
-            LOG.info("Life lost, {} remaining", this.lives);
-        }
-        this.fireLivesChangedEvent();
-    }
-
-    public void resetLives() {
-        this.lives = this.livesMax;
-        this.fireLivesChangedEvent();
+        return this.economy.lives();
     }
 
     public Cache getCache() {

@@ -1,6 +1,8 @@
 package td.util;
 
 import org.junit.jupiter.api.Test;
+import td.economy.EconomyDelta;
+import td.economy.EconomyState;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.wave.Wave;
@@ -24,7 +26,7 @@ class ContextTest {
 
     @Test
     void doPayChargesCreditsWhenAffordable() {
-        context.setCredits(100);
+        context.startEconomy(100);
 
         boolean paid = context.doPay(40);
 
@@ -34,7 +36,7 @@ class ContextTest {
 
     @Test
     void doPaySucceedsWhenAmountExactlyMatchesAvailableCredits() {
-        context.setCredits(40);
+        context.startEconomy(40);
 
         assertThat(context.doPay(40)).isTrue();
         assertThat(context.getCredits()).isZero();
@@ -42,7 +44,7 @@ class ContextTest {
 
     @Test
     void doPayFailsAndLeavesCreditsUnchangedWhenTooExpensive() {
-        context.setCredits(10);
+        context.startEconomy(10);
 
         boolean paid = context.doPay(40);
 
@@ -94,24 +96,38 @@ class ContextTest {
     }
 
     @Test
-    void removingALifeNotifiesContextListeners() {
-        AtomicInteger livesChangedCalls = new AtomicInteger();
-        context.addContextListener(new ContextListener() {
-            @Override
-            public void moneyChanged() {
-            }
-
-            @Override
-            public void livesChanged() {
-                livesChangedCalls.incrementAndGet();
-            }
-        });
+    void applyingALeakNotifiesContextListenersExactlyOnce() {
+        AtomicInteger economyChangedCalls = new AtomicInteger();
+        context.addContextListener(state -> economyChangedCalls.incrementAndGet());
         int livesBefore = context.getLives();
 
-        context.removeLife();
+        context.apply(EconomyDelta.leak(10));
 
         assertThat(context.getLives()).isEqualTo(livesBefore - 1);
-        assertThat(livesChangedCalls).hasValue(1);
+        assertThat(economyChangedCalls).hasValue(1);
+    }
+
+    @Test
+    void aKillAppliesCreditsAndScoreInASingleNotification() {
+        List<EconomyState> notifications = new ArrayList<>();
+        context.addContextListener(notifications::add);
+
+        context.apply(EconomyDelta.kill(7));
+
+        assertThat(notifications).hasSize(1);
+        assertThat(notifications.get(0).credits()).isEqualTo(7);
+        assertThat(notifications.get(0).score()).isEqualTo(7);
+    }
+
+    @Test
+    void scoreChangeNotifiesListeners() {
+        AtomicInteger economyChangedCalls = new AtomicInteger();
+        context.addContextListener(state -> economyChangedCalls.incrementAndGet());
+
+        context.apply(EconomyDelta.score(5));
+
+        assertThat(context.getScore()).isEqualTo(5);
+        assertThat(economyChangedCalls).hasValue(1);
     }
 
     @Test
