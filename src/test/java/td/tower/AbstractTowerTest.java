@@ -1,6 +1,9 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
+import td.enemy.EnemyFactory;
+import td.enemy.EnemyMob;
 import td.util.Context;
 import td.util.RecordingGameHost;
 
@@ -84,5 +87,53 @@ class AbstractTowerTest {
 
         assertThat(near.damageCurrent).isNotEqualTo(near.damageBase);
         assertThat(far.damageCurrent).isEqualTo(far.damageBase);
+    }
+
+    @Test
+    void dealDamageTracksDamageDealtWithoutKillingTheTarget() {
+        TowerOne tower = new TowerOne(context, 0, 0);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1000, 3, 1);
+
+        tower.dealDamage(enemy, Damage.of(4000));
+
+        assertThat(tower.getDamageDealt()).isEqualTo(4000);
+        assertThat(tower.getKillCount()).isZero();
+    }
+
+    @Test
+    void dealDamageCountsAKillWhenTheHitIsLethal() {
+        TowerOne tower = new TowerOne(context, 0, 0);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+
+        tower.dealDamage(enemy, Damage.of(4000));
+
+        assertThat(enemy.isDead()).isTrue();
+        assertThat(tower.getKillCount()).isEqualTo(1);
+        assertThat(tower.getDamageDealt()).isEqualTo(4000);
+    }
+
+    @Test
+    void dealDamageIntoAnAlreadyDeadEnemyIsNotCountedAgain() {
+        TowerOne tower = new TowerOne(context, 0, 0);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+        tower.dealDamage(enemy, Damage.of(4000));
+
+        // simulates a second tower's shot landing on the same tick, after this one already killed it
+        tower.dealDamage(enemy, Damage.of(4000));
+
+        assertThat(tower.getKillCount()).isEqualTo(1);
+        assertThat(tower.getDamageDealt()).isEqualTo(4000);
+    }
+
+    @Test
+    void multipleHitsAccumulateDamageDealt() {
+        TowerOne tower = new TowerOne(context, 0, 0);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1000, 3, 1);
+
+        tower.dealDamage(enemy, Damage.of(1000));
+        tower.dealDamage(enemy, Damage.of(500));
+
+        assertThat(tower.getDamageDealt()).isEqualTo(1500);
+        assertThat(tower.getKillCount()).isZero();
     }
 }

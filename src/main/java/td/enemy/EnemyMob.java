@@ -22,6 +22,8 @@ public interface EnemyMob {
 
     long getHealth();
 
+    boolean isDead();
+
     void doDamage(Damage damage);
 
     int getSpeed();
