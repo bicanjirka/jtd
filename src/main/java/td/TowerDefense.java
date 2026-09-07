@@ -20,6 +20,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 import java.awt.Color;
@@ -204,12 +205,20 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
         this.panelTowerInfo.setExternalText(s);
     }
 
+    /**
+     * A GameHost callback fired synchronously from Context, which is reached
+     * from enemy/tower doTick() during a tick - i.e. this can run on the
+     * game-loop thread, not the EDT. Any Swing mutation here is deferred via
+     * invokeLater; engine-state changes are not, since they aren't Swing calls.
+     */
     public void enemyDied(int enemiesLeft) {
         if (enemiesLeft == 0 && this.engine.getCurrentWaveIndex() < this.engine.getWaveCount()) {
             LOG.info("Wave {} cleared, ready for the next one", this.engine.getCurrentWaveIndex());
             this.engine.setWaveReady(true);
-            this.jButton_play.setVisible(true);
-            this.jButton_pause.setVisible(false);
+            SwingUtilities.invokeLater(() -> {
+                this.jButton_play.setVisible(true);
+                this.jButton_pause.setVisible(false);
+            });
         } else if (enemiesLeft == 0) {
             this.gameWon();
         }
@@ -240,12 +249,14 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
         this.jLabel_score.setText("" + this.context.getScore());
     }
 
+    /** Also reachable from the game-loop thread - see enemyDied(). */
     public void moneyChanged() {
-        this.updateInfo();
+        SwingUtilities.invokeLater(this::updateInfo);
     }
 
+    /** Also reachable from the game-loop thread - see enemyDied(). */
     public void livesChanged() {
-        this.updateInfo();
+        SwingUtilities.invokeLater(this::updateInfo);
         if (this.context.getLives() <= 0) {
             this.gameLost();
         }
@@ -254,13 +265,13 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
     private void gameLost() {
         LOG.info("Game over - lost, score={}", this.context.getScore());
         this.gameStopped = true;
-        this.jPanel_gameLost.setVisible(true);
+        SwingUtilities.invokeLater(() -> this.jPanel_gameLost.setVisible(true));
     }
 
     private void gameWon() {
         LOG.info("Game won, score={}", this.context.getScore());
         this.gameStopped = true;
-        this.jPanel_gameWon.setVisible(true);
+        SwingUtilities.invokeLater(() -> this.jPanel_gameWon.setVisible(true));
     }
 
     public void startLevel() {
@@ -268,11 +279,14 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
         this.setWavePreview();
     }
 
+    /** Called from doGameTick() on the game-loop thread, not the EDT. */
     public void doTick(int time) {
         boolean waveStarted = this.engine.doTick(time);
         if (waveStarted) {
-            this.setWavePreview();
-            this.updateInfo();
+            SwingUtilities.invokeLater(() -> {
+                this.setWavePreview();
+                this.updateInfo();
+            });
         }
         this.panelWaveInfo.doTick(time);
     }
