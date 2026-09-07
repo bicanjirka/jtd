@@ -1,5 +1,6 @@
 package td.enemy;
 
+import td.damage.Damage;
 import td.util.Context;
 
 public final class EnemyMobTriangle extends AbstractEnemyMobRotor {
@@ -21,7 +22,7 @@ public final class EnemyMobTriangle extends AbstractEnemyMobRotor {
         return this.bodyScale;
     }
 
-    public void doDamage(int damage) {
+    public void doDamage(Damage damage) {
         super.doDamage(damage);
         this.speed = (this.speedBase + (int) ((this.speedMax - this.speedBase) * (1 - (this.health / (float) this.healthMax))));
     }

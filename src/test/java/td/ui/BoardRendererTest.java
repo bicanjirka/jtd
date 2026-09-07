@@ -3,6 +3,7 @@ package td.ui;
 import org.junit.jupiter.api.Test;
 import td.GameEngine;
 import td.cell.Cell;
+import td.damage.Damage;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.tower.TowerOne;
@@ -61,7 +62,7 @@ class BoardRendererTest {
         GameEngine engine = newEngine();
         Context context = engine.getContext();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
-        enemy.doDamage(5000);
+        enemy.doDamage(Damage.of(5000));
         enemy.doTick(1); // captures deathTick, matching how AbstractEnemyMob really ticks
 
         context.setEnemies(new EnemyMob[]{enemy});

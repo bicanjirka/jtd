@@ -1,5 +1,6 @@
 package td.tower.targeting;
 
+import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyMobVisitor;
 import td.util.Context;
@@ -82,7 +83,7 @@ final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
-    public void doDamage(int damage) {
+    public void doDamage(Damage damage) {
     }
 
     @Override

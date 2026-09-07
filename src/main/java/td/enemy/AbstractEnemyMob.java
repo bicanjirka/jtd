@@ -2,6 +2,7 @@ package td.enemy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import td.damage.Damage;
 import td.economy.EconomyDelta;
 import td.util.Context;
 import td.wave.Path;
@@ -70,12 +71,12 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         return this.inactive;
     }
 
-    public void doDamage(int damage) {
+    public void doDamage(Damage damage) {
         if (this.dead) {
             return;
         }
         if (this.validTarget()) {
-            this.health -= damage;
+            this.health -= this.absorb(damage).amount();
         }
         if (this.health <= 0) {
             this.validTarget = false;
@@ -83,6 +84,14 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
             this.context.apply(EconomyDelta.kill(this.price));
             this.context.removeEnemy();
         }
+    }
+
+    /**
+     * Hook for a mob that resists part of an incoming hit (see EnemyMobSquare). The default
+     * is no resistance - the damage lands unchanged.
+     */
+    protected Damage absorb(Damage incoming) {
+        return incoming;
     }
 
     public int getX() {

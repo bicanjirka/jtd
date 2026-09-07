@@ -1,6 +1,7 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
 import td.util.Context;
 import td.util.RecordingGameHost;
 import td.wave.PathNormal;
@@ -76,7 +77,7 @@ class AbstractEnemyMobTest {
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 7, 2);
         assertThat(enemy.getHealth()).isEqualTo(5000);
 
-        enemy.doDamage(5000);
+        enemy.doDamage(Damage.of(5000));
 
         assertThat(enemy.validTarget()).isFalse();
         assertThat(context.getScore()).isEqualTo(7);
@@ -93,8 +94,8 @@ class AbstractEnemyMobTest {
         context.setEnemyCount(1);
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 7, 2);
-        enemy.doDamage(5000);
-        enemy.doDamage(5000);
+        enemy.doDamage(Damage.of(5000));
+        enemy.doDamage(Damage.of(5000));
 
         assertThat(context.getScore()).isEqualTo(7);
         assertThat(context.getCredits()).isEqualTo(7);
@@ -106,7 +107,7 @@ class AbstractEnemyMobTest {
         Context context = newContext();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
 
-        enemy.doDamage(2000);
+        enemy.doDamage(Damage.of(2000));
 
         assertThat(enemy.getHealth()).isEqualTo(3000);
         assertThat(enemy.validTarget()).isTrue();
@@ -136,7 +137,7 @@ class AbstractEnemyMobTest {
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
         int fadeDuration = 3 * level + 6;
 
-        enemy.doDamage(5000);
+        enemy.doDamage(Damage.of(5000));
         enemy.doTick(1); // first doTick after death: captures deathTick = 1
 
         assertThat(mob.isFadeComplete(1)).isFalse();
@@ -153,7 +154,7 @@ class AbstractEnemyMobTest {
         // doDamage() (called by a tower) can kill an enemy mid-tick, before this
         // mob's own doTick() next runs to capture deathTick - ticksSinceDeath()
         // is -1 in that window, and a render can land here too.
-        enemy.doDamage(5000);
+        enemy.doDamage(Damage.of(5000));
 
         assertThat(mob.ticksSinceDeath(0)).isEqualTo(-1);
         assertThat(mob.fadeAlpha(-1)).isBetween(0, 255);

@@ -1,5 +1,6 @@
 package td.enemy;
 
+import td.damage.Damage;
 import td.util.Context;
 
 public interface EnemyMob {
@@ -21,7 +22,7 @@ public interface EnemyMob {
 
     long getHealth();
 
-    void doDamage(int damage);
+    void doDamage(Damage damage);
 
     int getSpeed();
 

@@ -1,5 +1,6 @@
 package td.tower;
 
+import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
@@ -36,7 +37,7 @@ public final class TowerOne extends AbstractTower {
         } else {
             this.currentTarget = this.findEnemy();
             if (this.currentTarget != null) {
-                this.currentTarget.doDamage(this.damageCurrent);
+                this.currentTarget.doDamage(Damage.of(this.damageCurrent));
                 this.coolDown = this.coolDownMax;
             }
         }
