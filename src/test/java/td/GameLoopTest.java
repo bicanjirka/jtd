@@ -109,6 +109,41 @@ class GameLoopTest {
     }
 
     @Test
+    void animationSecondsAdvancesEvenWhilePaused() throws InterruptedException {
+        GameLoop loop = new GameLoop(() -> {
+        }, () -> {
+        });
+        loop.setSpeed(TickSpeed.PAUSED);
+
+        loop.start();
+        try {
+            Thread.sleep(150);
+            assertThat(loop.animationSeconds()).isGreaterThan(0.0);
+        } finally {
+            loop.stop();
+        }
+    }
+
+    @Test
+    void animationSecondsDoesNotRaceAheadAtSuperFastSpeed() throws InterruptedException {
+        // Wall-clock animation is deliberately decoupled from tick speed - see
+        // GameLoop.animationTimeScale(). At 250ms real time, animationSeconds should read
+        // close to 0.25s regardless of the tick multiplier, not a multiple of it.
+        GameLoop loop = new GameLoop(() -> {
+        }, () -> {
+        });
+        loop.setSpeed(TickSpeed.SUPER_FAST);
+
+        loop.start();
+        try {
+            Thread.sleep(250);
+            assertThat(loop.animationSeconds()).isLessThan(1.0);
+        } finally {
+            loop.stop();
+        }
+    }
+
+    @Test
     void stopHaltsFutureTicks() throws InterruptedException {
         AtomicInteger tickCount = new AtomicInteger();
         GameLoop loop = new GameLoop(tickCount::incrementAndGet, () -> {
