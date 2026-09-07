@@ -26,6 +26,7 @@ public class PanelEnemy extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private final List<EnemyMob> enemies = new CopyOnWriteArrayList<>();
+    private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
     private int[] enemiesCount;
     private Font font;
     private final Context contextLocal;
@@ -88,17 +89,20 @@ public class PanelEnemy extends JPanel {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setColor(Color.BLACK);
         g2.fillRect(0, 0, this.pWidth, this.pHeight);
-        int nr = 0;
-        EnemyPainter enemyPainter = new EnemyPainter(g2, this.gameTime);
 
+        EnemyFrameBuilder frameBuilder = new EnemyFrameBuilder(this.gameTime, 1.0);
         for (EnemyMob e : this.enemies) {
-            e.accept(enemyPainter);
-            g2.setColor(Color.PINK);
-            g2.setFont(this.font);
+            e.accept(frameBuilder);
+        }
+        this.frameRenderer.paintEnemies(g2, frameBuilder.build());
+
+        g2.setColor(Color.PINK);
+        g2.setFont(this.font);
+        int nr = 0;
+        for (EnemyMob ignored : this.enemies) {
             g2.drawString("" + this.enemiesCount[nr], this.scale * nr, this.pHeight);
             nr++;
         }
-
     }
 
     private void mouseOver(int x) {

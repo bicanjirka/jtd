@@ -6,9 +6,11 @@ import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.ui.BoardRenderer;
 import td.ui.GameBoard;
+import td.ui.Java2DFrameRenderer;
 import td.ui.PanelTowerInfo;
 import td.ui.PanelTowerSelector;
 import td.ui.PanelWaveInfo;
+import td.ui.render.RenderFrame;
 import td.util.Cache;
 import td.util.Context;
 import td.util.ContextListener;
@@ -76,6 +78,7 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
     private final Context context;
     private final GameBoard gameBoard;
     private final BoardRenderer boardRenderer;
+    private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
     private BufferedImage backGround;
     private final String statusMessage = """
             Welcome to TowerDefence
@@ -320,7 +323,8 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
             time = this.gameTime;
         }
 
-        this.boardRenderer.paint(g2, this.backGround, time);
+        RenderFrame frame = this.boardRenderer.buildFrame(time, this.gameLoop.tickInterpolationAlpha());
+        this.frameRenderer.paint(g2, this.backGround, frame);
 
         this.painting = false;
     }

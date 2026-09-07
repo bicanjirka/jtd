@@ -4,18 +4,20 @@ import td.GameEngine;
 import td.cell.Cell;
 import td.enemy.EnemyMob;
 import td.tower.Tower;
+import td.ui.render.CellDraw;
+import td.ui.render.RenderFrame;
 import td.util.Context;
 
-import java.awt.AlphaComposite;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Draws one frame of the game board: background, cell highlights, enemies,
- * and towers. The one place that owns the per-object painter dispatch, so
- * TowerDefense/GameBoard no longer need to know how any domain type is
- * drawn.
+ * Describes one frame of the game board: cell highlights, enemies, and towers,
+ * as an AWT-free {@link RenderFrame}. The one place that owns the per-object
+ * builder dispatch, so a backend never needs to know how any domain type is
+ * described. Background image blitting and the actual pixel drawing are the
+ * backend's job (e.g. {@link Java2DFrameRenderer}), not this class's - this
+ * class has no {@code java.awt} import at all.
  */
 public final class BoardRenderer {
 
@@ -27,37 +29,33 @@ public final class BoardRenderer {
         this.context = context;
     }
 
-    public void paint(Graphics2D g2, BufferedImage background, int gameTime) {
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0.0f));
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
-
-        g2.drawImage(background, 0, 0, null);
-
+    public RenderFrame buildFrame(int gameTime, double interpolationAlpha) {
+        List<CellDraw> cells = new ArrayList<>();
         Cell[][] cellGrid = this.engine.getCellGrid();
         if (cellGrid != null) {
-            CellRenderer cellRenderer = new CellRenderer(g2, this.context);
-            for (Cell[] cells : cellGrid) {
-                for (int j = 0; j < cellGrid[0].length; j++) {
-                    cellRenderer.paint(cells[j]);
+            for (Cell[] column : cellGrid) {
+                for (Cell cell : column) {
+                    CellDraw draw = CellFrameBuilder.build(cell);
+                    if (draw != null) {
+                        cells.add(draw);
+                    }
                 }
             }
         }
 
-        EnemyPainter enemyPainter = new EnemyPainter(g2, gameTime);
+        EnemyFrameBuilder enemyFrameBuilder = new EnemyFrameBuilder(gameTime, interpolationAlpha);
         for (EnemyMob enemy : this.context.getEnemies()) {
-            enemy.accept(enemyPainter);
+            enemy.accept(enemyFrameBuilder);
         }
 
-        TowerSpritePainter spritePainter = new TowerSpritePainter(g2);
+        TowerSpriteFrameBuilder spriteFrameBuilder = new TowerSpriteFrameBuilder();
+        TowerEffectFrameBuilder effectFrameBuilder = new TowerEffectFrameBuilder();
         for (Tower tower : this.engine.getTowers()) {
-            tower.accept(spritePainter);
+            tower.accept(spriteFrameBuilder);
+            tower.accept(effectFrameBuilder);
         }
 
-        TowerEffectPainter effectPainter = new TowerEffectPainter(g2);
-        for (Tower tower : this.engine.getTowers()) {
-            tower.accept(effectPainter);
-        }
+        return new RenderFrame(this.context.scale, this.context.maxX, this.context.maxY,
+                cells, enemyFrameBuilder.build(), spriteFrameBuilder.build(), effectFrameBuilder.build());
     }
 }
