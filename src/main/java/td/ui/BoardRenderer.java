@@ -5,6 +5,7 @@ import td.cell.Cell;
 import td.enemy.EnemyMob;
 import td.tower.Tower;
 import td.ui.render.CellDraw;
+import td.ui.render.PathMarkerDraw;
 import td.ui.render.RenderFrame;
 import td.util.Context;
 
@@ -29,7 +30,7 @@ public final class BoardRenderer {
         this.context = context;
     }
 
-    public RenderFrame buildFrame(int gameTime, double interpolationAlpha) {
+    public RenderFrame buildFrame(int gameTime, double interpolationAlpha, double animationSeconds) {
         List<CellDraw> cells = new ArrayList<>();
         Cell[][] cellGrid = this.engine.getCellGrid();
         if (cellGrid != null) {
@@ -55,7 +56,9 @@ public final class BoardRenderer {
             tower.accept(effectFrameBuilder);
         }
 
+        List<PathMarkerDraw> pathMarkers = PathMarkerFrameBuilder.build(this.context.getPath(), this.context.scale, animationSeconds);
+
         return new RenderFrame(this.context.scale, this.context.maxX, this.context.maxY,
-                cells, enemyFrameBuilder.build(), spriteFrameBuilder.build(), effectFrameBuilder.build());
+                cells, enemyFrameBuilder.build(), spriteFrameBuilder.build(), effectFrameBuilder.build(), pathMarkers);
     }
 }

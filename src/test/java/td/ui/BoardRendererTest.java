@@ -38,7 +38,7 @@ class BoardRendererTest {
         tower.setSelected(true);
         context.addTower(tower);
 
-        RenderFrame frame = new BoardRenderer(engine, context).buildFrame(0, 0.0);
+        RenderFrame frame = new BoardRenderer(engine, context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.towerSprites()).hasSize(1);
         TowerSpriteDraw sprite = frame.towerSprites().get(0);
@@ -52,7 +52,7 @@ class BoardRendererTest {
         Context context = engine.getContext();
         context.addTower(new TowerOne(context, 1, 1));
 
-        RenderFrame frame = new BoardRenderer(engine, context).buildFrame(0, 0.0);
+        RenderFrame frame = new BoardRenderer(engine, context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.towerSprites().get(0).selected()).isFalse();
     }
@@ -67,7 +67,7 @@ class BoardRendererTest {
 
         context.setEnemies(new EnemyMob[]{enemy});
 
-        RenderFrame frame = new BoardRenderer(engine, context).buildFrame(1, 0.0);
+        RenderFrame frame = new BoardRenderer(engine, context).buildFrame(1, 0.0, 0.0);
 
         assertThat(frame.enemies()).hasSize(1).first().isInstanceOf(EnemyFadeDraw.class);
     }
@@ -78,7 +78,7 @@ class BoardRendererTest {
         Context context = engine.getContext();
         context.setEnemies(new EnemyMob[]{EnemyFactory.getEnemy("e", context, 0, 50, 3, 1)});
 
-        RenderFrame frame = new BoardRenderer(engine, context).buildFrame(0, 0.0);
+        RenderFrame frame = new BoardRenderer(engine, context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.enemies()).isEmpty();
     }
@@ -89,7 +89,7 @@ class BoardRendererTest {
         Context context = engine.getContext();
         // a freshly loaded level has highlightType.none everywhere
 
-        RenderFrame frame = new BoardRenderer(engine, context).buildFrame(0, 0.0);
+        RenderFrame frame = new BoardRenderer(engine, context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.cells()).isEmpty();
     }
@@ -100,7 +100,7 @@ class BoardRendererTest {
         Context context = engine.getContext();
         engine.getCellGrid()[0][0].setHighlight(Cell.highlightType.select);
 
-        RenderFrame frame = new BoardRenderer(engine, context).buildFrame(0, 0.0);
+        RenderFrame frame = new BoardRenderer(engine, context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.cells()).hasSize(1);
         assertThat(frame.cells().get(0).highlight()).isEqualTo(Cell.highlightType.select);

@@ -176,7 +176,7 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
         // dump wants this tick's resulting state, not a partial interpolation of it.
         if (LOG.isDebugEnabled()) {
             LOG.debug("Board state after tick {}:\n{}", time,
-                    this.asciiBoardRenderer.render(this.boardRenderer.buildFrame(time, 0.0)));
+                    this.asciiBoardRenderer.render(this.boardRenderer.buildFrame(time, 0.0, 0.0)));
         }
     }
 
@@ -321,7 +321,7 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
             time = this.gameTime;
         }
 
-        RenderFrame frame = this.boardRenderer.buildFrame(time, this.gameLoop.tickInterpolationAlpha());
+        RenderFrame frame = this.boardRenderer.buildFrame(time, this.gameLoop.tickInterpolationAlpha(), this.gameLoop.animationSeconds());
         this.frameRenderer.paint(g2, frame);
 
         this.painting = false;
