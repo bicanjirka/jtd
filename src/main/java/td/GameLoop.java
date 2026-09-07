@@ -39,10 +39,24 @@ public class GameLoop implements Runnable {
     private volatile boolean running = true;
     private long tickNumber = 0;
     private int consecutiveTickFailures = 0;
+    // Written on the game-loop thread immediately before each render request, read on the
+    // EDT inside the onRender callback - a plain volatile snapshot is the safe-publication
+    // idiom here, matching how render requests themselves cross threads (see class javadoc).
+    private volatile double tickInterpolationAlpha = 0.0;
 
     public GameLoop(Runnable onTick, Runnable onRender) {
         this.onTick = onTick;
         this.onRender = onRender;
+    }
+
+    /**
+     * How far past the last completed simulation tick the loop currently is, as a fraction
+     * of one tick step ({@code [0, 1)}). Intended for interpolating a render frame between
+     * the previous and current tick's state; safe to call from the EDT inside an onRender
+     * callback, where it reflects the value snapshotted just before that render was requested.
+     */
+    public double tickInterpolationAlpha() {
+        return this.tickInterpolationAlpha;
     }
 
     public void setSpeed(TickSpeed speed) {
@@ -89,6 +103,7 @@ public class GameLoop implements Runnable {
             }
 
             if (this.renderAccumulator.accumulate(elapsedNanos) > 0) {
+                this.tickInterpolationAlpha = this.tickAccumulator.fractionElapsed();
                 SwingUtilities.invokeLater(this::runRender);
             }
 

@@ -17,6 +17,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
     protected int price;
     protected int level;
     protected int x, y;
+    private int prevX, prevY;
     protected int speed = 40;
     protected int speedMax = 40;
     protected final int speedBase = 40;
@@ -51,6 +52,9 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
             this.validTarget = true;
         }
         this.resetPosition();
+        // No prior tick to interpolate from at spawn - start with prev == current.
+        this.prevX = this.x;
+        this.prevY = this.y;
     }
 
     public long getHealth() {
@@ -84,6 +88,19 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
 
     public int getY() {
         return this.y;
+    }
+
+    /**
+     * This mob's x/y as of the tick before last, i.e. the interpolation source for a render
+     * landing between two ticks. Equal to getX()/getY() at spawn and immediately after a
+     * path-end wrap, where there is nothing meaningful to interpolate from.
+     */
+    public int getPrevX() {
+        return this.prevX;
+    }
+
+    public int getPrevY() {
+        return this.prevY;
     }
 
     public int getSpeed() {
@@ -161,12 +178,16 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
                 this.deathTick = gameTime;
             }
         } else {
+            this.prevX = this.x;
+            this.prevY = this.y;
+            boolean wrappedToPathStart = false;
             this.segmentProgression += this.speed;
             if (this.segmentProgression >= 1000) {
                 this.segmentProgression -= 1000;
                 this.segment++;
                 if (this.segment >= this.path.length()) {
                     this.segment = 0;
+                    wrappedToPathStart = true;
                     if (this.price == 0) this.context.deductScore(10);
                     else this.context.deductScore(this.price);
                     this.context.removeLife();
@@ -177,6 +198,13 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
             this.x = this.segmentStartPoint.x() + (this.segmentEndPoint.x() - this.segmentStartPoint.x()) * this.segmentProgression / 1000;
             this.y = this.segmentStartPoint.y() + (this.segmentEndPoint.y() - this.segmentStartPoint.y()) * this.segmentProgression / 1000;
             this.validTarget = this.x >= 0 && this.x <= this.context.maxX && this.y >= 0 && this.y <= this.context.maxY;
+            if (wrappedToPathStart) {
+                // Reappearing at the path's start is a genuine teleport, not motion along
+                // it - interpolating from the old (near path-end) position would draw a
+                // streak clear across the board for one frame.
+                this.prevX = this.x;
+                this.prevY = this.y;
+            }
         }
     }
 

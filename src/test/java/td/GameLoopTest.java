@@ -91,6 +91,24 @@ class GameLoopTest {
     }
 
     @Test
+    void tickInterpolationAlphaStaysWithinOneTickStep() throws InterruptedException {
+        CountDownLatch sawARender = new CountDownLatch(3);
+        GameLoop loop = new GameLoop(() -> {
+        }, sawARender::countDown);
+        loop.setSpeed(TickSpeed.NORMAL);
+
+        loop.start();
+        try {
+            assertThat(sawARender.await(2, TimeUnit.SECONDS))
+                    .as("expected several renders within 2s")
+                    .isTrue();
+            assertThat(loop.tickInterpolationAlpha()).isGreaterThanOrEqualTo(0.0).isLessThan(1.0);
+        } finally {
+            loop.stop();
+        }
+    }
+
+    @Test
     void stopHaltsFutureTicks() throws InterruptedException {
         AtomicInteger tickCount = new AtomicInteger();
         GameLoop loop = new GameLoop(tickCount::incrementAndGet, () -> {

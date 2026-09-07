@@ -75,4 +75,30 @@ class TickAccumulatorTest {
 
         assertThat(accumulator.accumulate(STEP / 2)).isZero();
     }
+
+    @Test
+    void fractionElapsedReflectsTheCarriedSubStepRemainder() {
+        TickAccumulator accumulator = new TickAccumulator(STEP);
+
+        assertThat(accumulator.fractionElapsed()).isZero();
+
+        accumulator.accumulate(STEP / 4);
+        assertThat(accumulator.fractionElapsed()).isEqualTo(0.25);
+
+        accumulator.accumulate(STEP / 2); // now 3/4 of a step carried
+        assertThat(accumulator.fractionElapsed()).isEqualTo(0.75);
+
+        accumulator.accumulate(STEP / 2); // crosses a whole tick, only the remainder carries
+        assertThat(accumulator.fractionElapsed()).isEqualTo(0.25);
+    }
+
+    @Test
+    void fractionElapsedIsZeroAfterReset() {
+        TickAccumulator accumulator = new TickAccumulator(STEP);
+        accumulator.accumulate(STEP / 2);
+
+        accumulator.reset();
+
+        assertThat(accumulator.fractionElapsed()).isZero();
+    }
 }

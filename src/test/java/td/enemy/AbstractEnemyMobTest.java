@@ -143,6 +143,46 @@ class AbstractEnemyMobTest {
     }
 
     @Test
+    void previousPositionTracksOneTickBehindCurrentPosition() {
+        Context context = newContext();
+        context.setPath(straightPath(10, 0, 10));
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+
+        // nothing to interpolate from at spawn
+        assertThat(mob.getPrevX()).isEqualTo(mob.getX());
+        assertThat(mob.getPrevY()).isEqualTo(mob.getY());
+        int spawnX = mob.getX();
+        int spawnY = mob.getY();
+
+        enemy.doTick(1);
+
+        assertThat(mob.getPrevX()).isEqualTo(spawnX);
+        assertThat(mob.getPrevY()).isEqualTo(spawnY);
+        assertThat(mob.getX()).isNotEqualTo(spawnX);
+    }
+
+    @Test
+    void reachingTheEndOfThePathSnapsRatherThanInterpolatingAcrossTheBoard() {
+        Context context = newContext();
+        context.setPath(straightPath(10, 0, 1));
+        int initialLives = context.getLives();
+
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+        int tick = 0;
+        while (context.getLives() == initialLives) {
+            tick++;
+            enemy.doTick(tick);
+        }
+
+        // the enemy just reappeared at the path's start - a genuine teleport, not motion
+        // along the path - so prev/current must coincide rather than spanning the board
+        assertThat(mob.getPrevX()).isEqualTo(mob.getX());
+        assertThat(mob.getPrevY()).isEqualTo(mob.getY());
+    }
+
+    @Test
     void enemyReachingEndOfPathCostsALife() {
         Context context = newContext();
         context.setPath(straightPath(10, 0, 1));
