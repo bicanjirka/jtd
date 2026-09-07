@@ -128,6 +128,21 @@ class AbstractEnemyMobTest {
     }
 
     @Test
+    void fadeAlphaStaysWithinValidColorRangeBeforeDeathTickIsCaptured() {
+        Context context = newContext();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+
+        // doDamage() (called by a tower) can kill an enemy mid-tick, before this
+        // mob's own doTick() next runs to capture deathTick - ticksSinceDeath()
+        // is -1 in that window, and a render can land here too.
+        enemy.doDamage(5000);
+
+        assertThat(mob.ticksSinceDeath(0)).isEqualTo(-1);
+        assertThat(mob.fadeAlpha(-1)).isBetween(0, 255);
+    }
+
+    @Test
     void enemyReachingEndOfPathCostsALife() {
         Context context = newContext();
         context.setPath(straightPath(10, 0, 1));
