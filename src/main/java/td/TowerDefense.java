@@ -10,6 +10,7 @@ import td.ui.Java2DFrameRenderer;
 import td.ui.PanelTowerInfo;
 import td.ui.PanelTowerSelector;
 import td.ui.PanelWaveInfo;
+import td.ui.render.AsciiBoardRenderer;
 import td.ui.render.RenderFrame;
 import td.util.Cache;
 import td.util.Context;
@@ -79,6 +80,7 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
     private final GameBoard gameBoard;
     private final BoardRenderer boardRenderer;
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
+    private final AsciiBoardRenderer asciiBoardRenderer = new AsciiBoardRenderer();
     private BufferedImage backGround;
     private final String statusMessage = """
             Welcome to TowerDefence
@@ -175,6 +177,13 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
             time = ++this.gameTime;
         }
         this.doTick(time);
+        // Off by default (see Logging in CLAUDE.md); the isDebugEnabled() guard skips
+        // building a frame for this every tick when it is. Alpha 0 - a tick-boundary
+        // dump wants this tick's resulting state, not a partial interpolation of it.
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Board state after tick {}:\n{}", time,
+                    this.asciiBoardRenderer.render(this.boardRenderer.buildFrame(time, 0.0)));
+        }
     }
 
     /**
