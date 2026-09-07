@@ -29,7 +29,6 @@ public class Cache {
         this.putBufImg("tower4_ico", this.loadImage("/td/images/tower4a_ico.png"));
         this.putBufImg("upg", this.loadImage("/td/images/jingjang.png"));
         this.putBufImg("upg_ico", this.loadImage("/td/images/jingjang_ico.png"));
-        this.putBufImg("bg", this.loadImage("/td/images/playground_fractal.png"));
 
         LOG.info("Cache loaded {} images", this.cImage.size());
     }

@@ -13,7 +13,6 @@ import td.ui.PanelTowerSelector;
 import td.ui.PanelWaveInfo;
 import td.ui.render.AsciiBoardRenderer;
 import td.ui.render.RenderFrame;
-import td.util.Cache;
 import td.util.Context;
 import td.util.ContextListener;
 import td.util.GameHost;
@@ -40,7 +39,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.image.BufferedImage;
 import java.io.Serial;
 import java.util.List;
 
@@ -82,7 +80,6 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
     private final BoardRenderer boardRenderer;
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
     private final AsciiBoardRenderer asciiBoardRenderer = new AsciiBoardRenderer();
-    private BufferedImage backGround;
     private final String statusMessage = """
             Welcome to TowerDefence
             Shortcuts:
@@ -146,10 +143,6 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
         this.context = this.engine.getContext();
         this.boardRenderer = new BoardRenderer(this.engine, this.context);
         this.context.addContextListener(this);
-        Cache cache = this.context.getCache();
-        if (cache.hasBufImg("bg")) {
-            this.backGround = cache.getBufImg("bg");
-        }
         this.gameBoard = new GameBoard(this, this.context);
         initComponents();
         this.panelWaveInfo.setContext(this.context);
@@ -329,7 +322,7 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
         }
 
         RenderFrame frame = this.boardRenderer.buildFrame(time, this.gameLoop.tickInterpolationAlpha());
-        this.frameRenderer.paint(g2, this.backGround, frame);
+        this.frameRenderer.paint(g2, frame);
 
         this.painting = false;
     }
@@ -438,6 +431,7 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
 
         jPanel_board.setBackground(new Color(0, 0, 0));
         jPanel_board.setForeground(new Color(220, 255, 220));
+        jPanel_board.setBorder(BorderFactory.createEtchedBorder());
         jPanel_board.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
                 jPanel_boardMouseClicked(evt);
