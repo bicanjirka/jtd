@@ -25,9 +25,17 @@ This is the one structural rule that matters, and it is the result of a delibera
 
 **When adding gameplay logic, put it in `GameEngine`/`Context`/the domain packages, not in `TowerDefense`.** `TowerDefense` is a shrinking legacy shell — every new rule placed there is a rule that cannot be tested. If a change needs something from the UI, add a method to `GameHost` rather than reaching for a Swing type from engine code.
 
-Domain packages under `td.*`: `cell` (board squares, buildability), `enemy` (mob hierarchy + `EnemyFactory`), `tower` (tower hierarchy + `TowerFactory`; `tower.targeting` holds the shared target-scanning abstractions every tower composes instead of hand-rolling), `wave` (path geometry, wave composition), `util` (`Context`, `Cache`, listener interfaces).
+Domain packages under `td.*`: `cell` (board squares, buildability), `damage` (the `Damage`
+value type towers deal to enemies), `economy` (`EconomyDelta`/`EconomyState`, the
+credits/score/lives algebra `Context` is built on), `enemy` (mob hierarchy + `EnemyFactory`),
+`tower` (tower hierarchy + `TowerFactory`; `tower.targeting` holds the shared target-scanning
+abstractions every tower composes instead of hand-rolling; `tower.buff` holds `TowerBuff`, the
+upgrade-stacking algebra), `wave` (path geometry, wave composition), `util` (`Context`,
+`Cache`, listener interfaces).
 
-`Context` is the shared mutable world — credits, score, lives, the tower list, the enemy array — and the listener hub (`ContextListener`, `TowerListener`, `WaveStartListener`).
+`Context` is the shared mutable world — an `EconomyState` (credits/score/lives), the tower
+list, the enemy array — and the listener hub (`ContextListener`, `TowerListener`,
+`WaveStartListener`).
 
 ## Threading model
 
@@ -39,6 +47,7 @@ Domain packages under `td.*`: `cell` (board squares, buildability), `enemy` (mob
 **Tick code does not run on the Event Dispatch Thread.** Rendering is handed to the EDT via `SwingUtilities.invokeLater` — that is the deliberate safe-publication idiom here, not `repaint()`'s internal synchronization. Consequences:
 
 - `Context`'s listener lists and `towers` are `CopyOnWriteArrayList` on purpose. Keep them that way; don't "optimize" to `ArrayList`.
+- `Context.economy` (an `EconomyState`) is written from both the EDT (buying/selling a tower) and the `game-loop` thread (a kill or a leak), so `Context.apply`/`doPay` compute the new state inside a `synchronized (this)` block and fire the resulting `ContextListener.economyChanged` *outside* it — never hold the lock while calling out into listeners, which re-enter `Context` and touch Swing.
 - Never touch Swing components from tick code. Route through a listener that the UI observes.
 - When the loop falls behind (debugger pause, long GC) it runs **one** tick and resyncs rather than bursting the backlog. Preserve that.
 
@@ -64,8 +73,9 @@ this section states only how the rules land on jTD's existing shape, not what th
 **The rules split by what kind of class you're writing — this is not optional, it's how
 the two documents avoid contradicting each other:**
 
-- **Value types** (data passed around and compared: `WaveDefinition`, `Point`, any new
-  DTO-shaped class) get the full treatment — rule 5 (immutable, `private final`), rule 7
+- **Value types** (data passed around and compared: `WaveDefinition`, `Point`,
+  `EconomyDelta`/`EconomyState`, `TowerBuff`, `Damage`, any new DTO-shaped class) get the
+  full treatment — rule 5 (immutable, `private final`), rule 7
   (named static factory over a public constructor), rule 8 (no `null`, model absence
   explicitly). No exceptions here; a new mutable value class is a regression.
 - **Stateful engine/service classes** (`Context`, `GameEngine`, `GameLoop`, `Cache`) are
@@ -109,14 +119,27 @@ the two documents avoid contradicting each other:**
   This is pattern D done for real: filtering and selection are separate, swappable, unit-
   tested pieces instead of four hand-rolled scans with an `if` buried in each one. Add a
   new tower by composing these, not by writing a fifth scan.
-
-**Partially aligned:**
-
-- `Context` is still the shared mutable god object described above — `enemies` is now
-  encapsulated behind `getEnemies()`/`setEnemies()` (never `null`), but `credits`/`score`/
-  `lives` remain plain mutable fields with ad hoc setters, no algebra. That's a much larger
-  change than this file asks anyone to take on speculatively; leave it as known shape,
-  not a gap to opportunistically "fix" mid-way through an unrelated change.
+- **Pattern A (algebra: operation + combinator + identity + absorber) is applied at every
+  place two values of the same kind get combined**, replacing what used to be hand-rolled
+  arithmetic spread across several mutations:
+  - `td.economy.EconomyDelta`/`EconomyState` model a kill or a leak as one value with
+    `plus`/`after` and an identity `none()` — `Context.apply(EconomyDelta)` fires exactly one
+    `economyChanged` notification per event, where the old `addScore`/`doReceive`/`removeLife`
+    trio fired up to two and left score with no notification at all.
+  - `td.tower.buff.TowerBuff` replaces `AbstractTower.calcDamageRange()`'s
+    `1f + power * upgTowers.size()` with
+    `upgTowers.stream().map(TowerUpgrade::buff).reduce(TowerBuff.none(), TowerBuff::combine)`,
+    so upgrade towers of different strengths can finally stack — `power` used to be a single
+    `static final` shared by every `TowerUpgrade`.
+  - `td.tower.targeting.TargetQuery` gained a default `and` combinator plus `all()` (the
+    identity — `all().and(x)` matches exactly what `x` matches) and `none()` (the absorber —
+    it overrides `and` to return itself without ever evaluating the other side).
+  - `td.damage.Damage` gives every hit dealt to an enemy an identity (`none()`) and a
+    combinator (`plus`); its compact constructor clamps every construction path at zero, so
+    a falloff or resistance calculation (see `EnemyMobSquare`'s `absorb` override) can never
+    produce a negative, healing hit.
+  - `Context`'s `credits`/`score`/`lives` are gone in favor of a single `EconomyState` field —
+    see the Threading model note above about `Context.apply`'s synchronized block.
 
 ## Tests
 
