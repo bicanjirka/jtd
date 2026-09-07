@@ -39,18 +39,22 @@ public final class Java2DFrameRenderer {
     private static final Color CELL_OK = Color.GRAY;
     private static final Color CELL_NOK = Color.RED;
     private static final Color CELL_RANGE = new Color(250, 250, 210, 150);
+    private static final Color BOARD_BACKGROUND = Color.BLACK;
 
-    public void paint(Graphics2D g2, BufferedImage background, RenderFrame frame) {
+    public void paint(Graphics2D g2, RenderFrame frame) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
         // Without this, drawImage falls back to nearest-neighbor whenever the Graphics2D
         // carries a non-1:1 transform (e.g. Swing's per-monitor HiDPI scale on Windows),
-        // which is what made every PNG - background and tower sprites alike - look blocky
-        // even though the vector-drawn enemy shapes stayed smooth from antialiasing alone.
+        // which is what made tower/enemy PNGs look blocky even though the vector-drawn
+        // enemy shapes stayed smooth from antialiasing alone.
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0.0f));
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
-        g2.drawImage(background, 0, 0, null);
+        // GameBoard.paint() overrides Swing's own painting wholesale (no super.paint() call),
+        // so this fill is also the only thing clearing the previous frame - not just cosmetic.
+        g2.setColor(BOARD_BACKGROUND);
+        g2.fillRect(0, 0, frame.maxX(), frame.maxY());
 
         for (CellDraw cell : frame.cells()) {
             this.paintCell(g2, cell, frame);
