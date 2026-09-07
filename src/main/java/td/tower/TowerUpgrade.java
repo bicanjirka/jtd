@@ -1,5 +1,6 @@
 package td.tower;
 
+import td.tower.buff.TowerBuff;
 import td.util.Context;
 import td.util.TowerListener;
 
@@ -11,19 +12,33 @@ public final class TowerUpgrade extends AbstractTower implements TowerListener {
     public static final int price = 20;
     public static final int damage = 0;
     public static final float range = 1.5f;
-    public static final float power = 0.2f;
+    public static final float DEFAULT_POWER = 0.2f;
 
     private final List<Tower> clients;
+    private final float power;
 
     public TowerUpgrade(Context context, int x, int y) {
+        this(context, x, y, DEFAULT_POWER);
+    }
+
+    /**
+     * Lets an upgrade tower contribute a buff stronger or weaker than the default, so two
+     * upgrade towers can stack unequal amounts via TowerBuff's additive combine.
+     */
+    public TowerUpgrade(Context context, int x, int y, float power) {
         super(TowerFactory.type.upgrade, price, damage, range);
         this.name = "upg";
         this.passive = true;
+        this.power = power;
         this.clients = new ArrayList<>();
         this.doInit(context, x, y);
 
         this.context.addTowerListener(this);
         this.scanTowers();
+    }
+
+    public TowerBuff buff() {
+        return TowerBuff.amplifying(this.power);
     }
 
     private void scanTowers() {
@@ -101,13 +116,13 @@ public final class TowerUpgrade extends AbstractTower implements TowerListener {
     public String getInfoString() {
         return "Power tower\n\n" +
                 super.getInfoString() +
-                "Increases damage and range of nearby towers by " + (TowerUpgrade.power * 100) + "%";
+                "Increases damage and range of nearby towers by " + (this.power * 100) + "%";
     }
 
     public String getStatusString() {
         return "Power tower\n\n" +
                 super.getStatusString() +
-                "Increases damage and range of nearby towers by " + (TowerUpgrade.power * 100) + "%\n\n" +
+                "Increases damage and range of nearby towers by " + (this.power * 100) + "%\n\n" +
                 "Affects towers: " + this.clients.size();
     }
 }
