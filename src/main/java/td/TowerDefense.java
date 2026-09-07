@@ -10,6 +10,8 @@ import td.ui.GameBoard;
 import td.ui.PanelTowerInfo;
 import td.ui.PanelTowerSelector;
 import td.ui.PanelWaveInfo;
+import td.ui.TowerEffectPainter;
+import td.ui.TowerSpritePainter;
 import td.util.Cache;
 import td.util.Context;
 import td.util.ContextListener;
@@ -327,12 +329,14 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
             enemy.paint(g2, time);
         }
 
+        TowerSpritePainter spritePainter = new TowerSpritePainter(g2);
         for (Tower tower : this.engine.getTowers()) {
-            tower.paint(g2, time);
+            tower.accept(spritePainter);
         }
 
+        TowerEffectPainter effectPainter = new TowerEffectPainter(g2);
         for (Tower tower : this.engine.getTowers()) {
-            tower.paintEffect(g2, time);
+            tower.accept(effectPainter);
         }
 
         this.painting = false;

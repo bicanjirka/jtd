@@ -1,17 +1,15 @@
 package td.tower;
 
-import java.awt.Graphics2D;
-
 public interface Tower {
     TowerFactory.type getType();
 
     void doTick(int gameTime);
 
-    void paint(Graphics2D g2, int gameTime);
-
-    void paintEffect(Graphics2D g2, int gameTime);
+    <R> R accept(TowerVisitor<R> visitor);
 
     void setSelected(boolean selected);
+
+    boolean isSelected();
 
     String getInfoString();
 
@@ -26,6 +24,10 @@ public interface Tower {
     int getX();
 
     int getY();
+
+    int getBoardX();
+
+    int getBoardY();
 
     String getName();
 
