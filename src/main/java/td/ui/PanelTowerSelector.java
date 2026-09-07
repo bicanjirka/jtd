@@ -9,7 +9,6 @@ import td.util.Context;
 import td.util.ContextListener;
 
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.border.TitledBorder;
@@ -91,7 +90,7 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
             }
             this.infoText[i] = tempTower.getInfoString();
             if (this.images[i] != null)
-                this.buttons[i].setIcon(new ImageIcon(this.images[i]));
+                this.buttons[i].setIcon(new SharpImageIcon(this.images[i]));
             this.towerRanges[i] = tempTower.getRange();
         }
 
