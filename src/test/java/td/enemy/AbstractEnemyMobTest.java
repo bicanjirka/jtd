@@ -112,6 +112,22 @@ class AbstractEnemyMobTest {
     }
 
     @Test
+    void deathFadeCompletesExactlyFadeDurationTicksAfterTheTickThatNoticedDeath() {
+        Context context = newContext();
+        int level = 2;
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, level);
+        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+        int fadeDuration = 3 * level + 6;
+
+        enemy.doDamage(5000);
+        enemy.doTick(1); // first doTick after death: captures deathTick = 1
+
+        assertThat(mob.isFadeComplete(1)).isFalse();
+        assertThat(mob.isFadeComplete(1 + fadeDuration)).isFalse();
+        assertThat(mob.isFadeComplete(1 + fadeDuration + 1)).isTrue();
+    }
+
+    @Test
     void enemyReachingEndOfPathCostsALife() {
         Context context = newContext();
         context.setPath(straightPath(10, 0, 1));

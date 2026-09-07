@@ -31,6 +31,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
     protected int alpha = 255;
     protected Context context;
     private int delay;
+    private int deathTick = -1;
     private Path path;
     private int segment = 0;
     private int segmentProgression = 0;
@@ -110,6 +111,33 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         return (this.validTarget(type1) || this.validTarget(type2));
     }
 
+    public boolean isDead() {
+        return this.dead;
+    }
+
+    /**
+     * Ticks elapsed since this mob died, or -1 while still alive. Death timing is
+     * captured here (the first doTick call after doDamage() sets dead=true) rather
+     * than lazily inside paint(), so the death-fade animation advances with the
+     * simulation clock instead of with however often the board happens to repaint.
+     */
+    protected int ticksSinceDeath(int gameTime) {
+        return this.deathTick < 0 ? -1 : gameTime - this.deathTick;
+    }
+
+    protected int fadeDurationTicks() {
+        return 3 * this.level + 6;
+    }
+
+    public boolean isFadeComplete(int gameTime) {
+        int age = this.ticksSinceDeath(gameTime);
+        return age > this.fadeDurationTicks();
+    }
+
+    protected int fadeAlpha(int ticksSinceDeath) {
+        return Math.max(255 - (ticksSinceDeath * (255 / (this.fadeDurationTicks() + 1))), 0);
+    }
+
     private void resetPosition() {
         this.segmentStartPoint = this.path.getStep(this.segment);
         this.segmentEndPoint = this.path.getStep(this.segment + 1);
@@ -128,6 +156,9 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
                 }
             }
         } else if (this.dead) {
+            if (this.deathTick < 0) {
+                this.deathTick = gameTime;
+            }
         } else {
             this.segmentProgression += this.speed;
             if (this.segmentProgression >= 1000) {
