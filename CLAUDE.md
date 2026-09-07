@@ -21,6 +21,7 @@ This is the one structural rule that matters, and it is the result of a delibera
 - **`GameEngine` owns game state and input semantics.** It never constructs a window, never touches `Graphics2D`, and never requires a display. It can be built, driven, and asserted on entirely from a test.
 - **`TowerDefense` (a `JFrame`) and `td.ui` own presentation.** Layout, painting, `MouseEvent`/`KeyEvent` handling, and translating screen coordinates into the board-relative pixel coordinates `GameEngine.mouseClicked`/`highlightCell` expect.
 - **`GameHost` is the engine's only channel back to the UI** (`enemyDied`, `setInfoText`, `clearCell`). `Context` calls through it; it does not know about Swing.
+- **`td.ui` itself splits describing a frame from drawing one.** `BoardRenderer.buildFrame(gameTime, interpolationAlpha)` walks the engine/context and returns an immutable `td.ui.render.RenderFrame` — cell/enemy/tower draw-command records with zero `java.awt` import anywhere in that package. A backend turns that into output: `Java2DFrameRenderer` is the real one (the only class in `td.ui` that imports `java.awt`); `AsciiBoardRenderer` is a second, deliberately minimal one used for headless `DEBUG` logging (see Logging), which exists specifically to prove the split is a real seam rather than an aspirational one. `Tower`/`EnemyMob` still dispatch into the frame builders via `TowerVisitor`/`EnemyMobVisitor` (see the no-`instanceof` rule below) — only the last step, turning a `RenderFrame` into pixels, changed shape.
 
 **When adding gameplay logic, put it in `GameEngine`/`Context`/the domain packages, not in `TowerDefense`.** `TowerDefense` is a shrinking legacy shell — every new rule placed there is a rule that cannot be tested. If a change needs something from the UI, add a method to `GameHost` rather than reaching for a Swing type from engine code.
 
@@ -82,7 +83,13 @@ the two documents avoid contradicting each other:**
 - **No `instanceof` type-switching anywhere in `src/main/java`** (verified by grep) —
   matches rule 9 already. If a future feature needs to branch on concrete enemy/tower
   type, reach for a visitor over `EnemyMob`/`Tower` rather than writing the first
-  `instanceof` chain in this codebase.
+  `instanceof` chain in this codebase. The one deliberate, narrow exception: `Java2DFrameRenderer`
+  pattern-matches over the *sealed* `EnemyDraw`/`TowerEffectDraw` render-command hierarchies
+  in `td.ui.render`. That's a compiler-checked switch over a closed set of DTOs the renderer
+  itself defines (a new command type is a compile error, not a silently-skipped `default`),
+  not a branch on `EnemyMob`/`Tower`'s concrete type — the domain dispatch still goes through
+  `EnemyMobVisitor`/`TowerVisitor` untouched. Don't read this as license to `instanceof`/switch
+  on `EnemyMob`, `Tower`, or `Cell` themselves; it applies only to sealed types under `td.ui.render`.
 - `Point` and `WaveDefinition` are already `record`s — rule 5/7 with zero gap.
 - `GameHost` and the listener interfaces (`ContextListener`, `TowerListener`,
   `WaveStartListener`) are already narrow, role-named interfaces. Widen `GameHost` only
@@ -149,7 +156,10 @@ concatenation.
   level is `INFO`; tick-by-tick/render/fire-by-fire detail is logged at
   `DEBUG` and is off by default — raise `logback.xml`'s root level (or point
   `-Dlogback.configurationFile` at an alternate config) for a deep-dive
-  session. `Main` also prunes old run-logs beyond a retention cap on startup.
+  session. At `DEBUG`, `TowerDefense.doGameTick()` also logs an
+  `AsciiBoardRenderer` dump of board state after every tick — a display-free
+  way to see enemy/tower positions in the log instead of the window. `Main`
+  also prunes old run-logs beyond a retention cap on startup.
 - **Test config**: `src/test/resources/logback-test.xml` — Logback prefers
   this file over `logback.xml` when both are on the classpath, so `mvn test`
   stays quiet (root level `WARN`) and never touches `logs/`.
