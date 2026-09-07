@@ -11,6 +11,7 @@ import td.util.ContextListener;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 import java.awt.Color;
 import java.awt.Font;
@@ -107,10 +108,13 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
         this.placing = false;
     }
 
+    /** Also reachable from the game-loop thread - see Context.apply()'s callers. */
     public void economyChanged(EconomyState state) {
-        for (int i = 0; i < this.buttons.length; i++) {
-            this.buttons[i].setEnabled(state.canAfford(this.towerTypes.get(i).price));
-        }
+        SwingUtilities.invokeLater(() -> {
+            for (int i = 0; i < this.buttons.length; i++) {
+                this.buttons[i].setEnabled(state.canAfford(this.towerTypes.get(i).price));
+            }
+        });
     }
 
     private void untoggleAll() {

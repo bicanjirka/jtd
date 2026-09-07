@@ -12,6 +12,7 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -93,8 +94,9 @@ public class PanelTowerInfo extends JPanel implements ContextListener {
         }
     }
 
+    /** Also reachable from the game-loop thread - see Context.apply()'s callers. */
     public void economyChanged(EconomyState state) {
-        this.updateInterface();
+        SwingUtilities.invokeLater(this::updateInterface);
     }
 
     private void initComponents() {

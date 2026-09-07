@@ -100,22 +100,6 @@ tick while paused) was never finished.
   already skips calling `onTick` for), so the >> handler can just call `this.doGameTick()` directly, once, when
   `this.currentSpeed == TickSpeed.PAUSED`, to act as a manual single-step control.
 
-## Threading
-
-### Two economy listeners mutate Swing components off the EDT
-
-`Context.economyChanged` can fire on the `game-loop` thread (a kill or a leak reaching the end
-of the path both apply an `EconomyDelta` from tick code). `TowerDefense.economyChanged()`
-correctly defers its UI work with `SwingUtilities.invokeLater`, but `PanelTowerSelector`'s and
-`PanelTowerInfo`'s `economyChanged()` implementations call `JToggleButton.setEnabled(...)` and
-`updateInterface()` (which touches `JTextPane`/`JButton`) directly, with no `invokeLater`. This
-predates the `EconomyState` algebra work (it was true of the old `moneyChanged()` methods too)
-and is a pre-existing gap this pass surfaced rather than caused.
-
-- **Where:** `PanelTowerSelector.economyChanged()`, `PanelTowerInfo.economyChanged()`
-- **Approach:** wrap each method's body in `SwingUtilities.invokeLater(...)`, matching
-  `TowerDefense.economyChanged()`'s pattern.
-
 ## Rendering / engine
 
 ### Missing background image has no fallback
