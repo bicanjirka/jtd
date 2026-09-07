@@ -42,6 +42,11 @@ public class GameLoop implements Runnable {
     // EDT inside the onRender callback - a plain volatile snapshot is the safe-publication
     // idiom here, matching how render requests themselves cross threads (see class javadoc).
     private volatile double tickInterpolationAlpha = 0.0;
+    // A clock for cosmetic, non-gameplay animation (e.g. the path's moving markers - see
+    // td.ui.PathMarkerFrameBuilder) that by design keeps advancing at its own pace while
+    // TickSpeed.PAUSED or fast-forwarding, unlike tickInterpolationAlpha above. Same
+    // safe-publication idiom: written here, read on the EDT during rendering.
+    private volatile double animationSeconds = 0.0;
 
     public GameLoop(Runnable onTick, Runnable onRender) {
         this.onTick = onTick;
@@ -56,6 +61,27 @@ public class GameLoop implements Runnable {
      */
     public double tickInterpolationAlpha() {
         return this.tickInterpolationAlpha;
+    }
+
+    /**
+     * Elapsed time, in seconds, for driving cosmetic animation that should not freeze while
+     * paused or race ahead while fast-forwarding. Advances by wall-clock time scaled through
+     * {@link #animationTimeScale(double)}, which today ignores tick speed entirely - see that
+     * method to change how (or whether) game speed influences the rate.
+     */
+    public double animationSeconds() {
+        return this.animationSeconds;
+    }
+
+    /**
+     * How fast {@link #animationSeconds} advances relative to wall-clock time, given the
+     * current tick-speed multiplier. {@code 1.0} means ignore game speed entirely, which is
+     * today's behaviour: markers keep the same pace while paused and while fast-forwarding.
+     * Swap the body for {@code multiplier} to make animation track game speed exactly, or
+     * something like {@code Math.sqrt(multiplier)} for a damped middle ground.
+     */
+    private static double animationTimeScale(double multiplier) {
+        return 1.0;
     }
 
     public void setSpeed(TickSpeed speed) {
@@ -87,6 +113,8 @@ public class GameLoop implements Runnable {
             lastNanos = now;
 
             double multiplier = this.speedMultiplier;
+            this.animationSeconds += (elapsedNanos / 1_000_000_000.0) * animationTimeScale(multiplier);
+
             if (multiplier > 0.0) {
                 int ticks = this.tickAccumulator.accumulate((long) (elapsedNanos * multiplier));
                 if (ticks > 1) {
