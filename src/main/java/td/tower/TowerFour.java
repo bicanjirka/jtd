@@ -2,6 +2,8 @@ package td.tower;
 
 import td.enemy.EnemyMob;
 import td.tower.targeting.InRangeTargetQuery;
+import td.tower.targeting.OfTypeTargetQuery;
+import td.tower.targeting.TargetQuery;
 import td.util.Context;
 
 import java.util.List;
@@ -13,7 +15,6 @@ public final class TowerFour extends AbstractTower {
     public static final float range = 1.5f;
 
     private boolean fire = false;
-    private int ghosts = 0;
 
     public TowerFour(Context context, int x, int y) {
         super(TowerFactory.type.fourth, price, damage, range);
@@ -21,15 +22,12 @@ public final class TowerFour extends AbstractTower {
         this.doInit(context, x, y);
     }
 
-    private List<EnemyMob> findEnemiesInRange(int x, int y, float r) {
-        List<EnemyMob> matches = InRangeTargetQuery.anyType(x, y, r).matching(this.context);
-        this.ghosts = (int) matches.stream().filter(e -> e.validTarget(EnemyMob.type.Invisible)).count();
-        return matches;
-    }
-
     public void doTick(int gameTime) {
-        List<EnemyMob> enemies = this.findEnemiesInRange(this.centerX, this.centerY, this.rangeReal);
-        if (enemies.size() > this.ghosts) {
+        TargetQuery inRange = InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal);
+        List<EnemyMob> enemies = inRange.matching(this.context);
+        List<EnemyMob> ghosts = inRange.and(OfTypeTargetQuery.of(EnemyMob.type.Invisible)).matching(this.context);
+
+        if (enemies.size() > ghosts.size()) {
             this.fire = true;
             for (EnemyMob enemy : enemies) {
                 enemy.doDamage(this.damageCurrent);
