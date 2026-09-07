@@ -43,6 +43,11 @@ public final class Java2DFrameRenderer {
     public void paint(Graphics2D g2, BufferedImage background, RenderFrame frame) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+        // Without this, drawImage falls back to nearest-neighbor whenever the Graphics2D
+        // carries a non-1:1 transform (e.g. Swing's per-monitor HiDPI scale on Windows),
+        // which is what made every PNG - background and tower sprites alike - look blocky
+        // even though the vector-drawn enemy shapes stayed smooth from antialiasing alone.
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0.0f));
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
         g2.drawImage(background, 0, 0, null);
