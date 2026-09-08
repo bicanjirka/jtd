@@ -4,11 +4,11 @@ import td.cell.Cell;
 
 public class PathEmpty implements Path {
 
-    int x = 0;
-    int y = 0;
+    double x = 0;
+    double y = 0;
 
     @Override
-    public void addStep(int x, int y) {
+    public void addStep(double x, double y) {
         this.x = x;
         this.y = y;
     }
@@ -19,8 +19,8 @@ public class PathEmpty implements Path {
     }
 
     @Override
-    public Point getStep(int step) {
-        return new Point(x, y);
+    public Vec2 getStep(int step) {
+        return new Vec2(x, y);
     }
 
     @Override

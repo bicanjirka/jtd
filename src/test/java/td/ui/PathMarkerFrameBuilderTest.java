@@ -31,7 +31,11 @@ class PathMarkerFrameBuilderTest {
         for (int i = 0; i < xyPairs.length; i += 2) {
             int x = xyPairs[i];
             int y = xyPairs[i + 1];
-            path.addStep(x, y);
+            // PathNormal now stores pixel-space points directly; the cell-to-pixel-center
+            // conversion (x*scale + scale/2) that PathNormal.getStep used to do internally
+            // now happens explicitly wherever a cell path is turned into a Path - here, and
+            // in production, in PathBuilder.
+            path.addStep(x * SCALE + (SCALE / 2), y * SCALE + (SCALE / 2));
             width = Math.max(width, x + 1);
             height = Math.max(height, y + 1);
         }

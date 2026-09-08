@@ -11,7 +11,7 @@ import td.tower.TowerFactory;
 import td.util.Context;
 import td.util.GameHost;
 import td.wave.Path;
-import td.wave.Point;
+import td.wave.PathBuilder;
 import td.wave.Wave;
 import td.wave.WaveDefinition;
 
@@ -101,10 +101,8 @@ public class GameEngine {
         this.context.maxY = height * this.context.scale - 1;
 
         this.waves = new ArrayList<>();
-        Path path = this.context.getPath();
-        for (Point step : level.path()) {
-            path.addStep(step.x(), step.y());
-        }
+        Path path = PathBuilder.build(level.path(), this.context.scale);
+        this.context.setPath(path);
         path.finalise(this.cellGrid);
         this.wave = 0;
 

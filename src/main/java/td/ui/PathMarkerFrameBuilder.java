@@ -13,10 +13,11 @@ import java.util.Optional;
 
 /**
  * Describes the path as two layers of {@link PathMarkerDraw}s: a static trail and a moving
- * indicator, both computed from {@link Path}'s real pixel-space points rather than baked into
- * any art asset - so the visual always matches whatever path a level actually defines,
- * diagonal segments included (nothing here assumes axis-aligned steps, unlike
- * {@code AbstractEnemyMob}'s per-segment fixed-point counter).
+ * indicator, both computed from {@link Path}'s real pixel-space points via the shared
+ * {@link ArcLengthPath} rather than baked into any art asset - so the visual always matches
+ * whatever path a level actually defines, diagonal or curved segments included. Enemy movement
+ * (see {@code AbstractEnemyMob}) is built on the same {@link ArcLengthPath}, so both move at a
+ * consistent real-world pace along the same geometry.
  * <p>
  * Both layers run through the same arc-length placement code, driven only by {@link MarkerStyle}
  * below - swapping either layer's symbol, spacing, size, or brightness role is a one-line change

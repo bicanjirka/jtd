@@ -21,16 +21,16 @@ class PathEmptyTest {
         PathEmpty path = new PathEmpty();
         path.addStep(7, 9);
 
-        assertThat(path.getStep(0)).isEqualTo(new Point(7, 9));
-        assertThat(path.getStep(-3)).isEqualTo(new Point(7, 9));
-        assertThat(path.getStep(1000)).isEqualTo(new Point(7, 9));
+        assertThat(path.getStep(0)).isEqualTo(new Vec2(7, 9));
+        assertThat(path.getStep(-3)).isEqualTo(new Vec2(7, 9));
+        assertThat(path.getStep(1000)).isEqualTo(new Vec2(7, 9));
     }
 
     @Test
     void defaultsToOriginBeforeAnyStepIsAdded() {
         PathEmpty path = new PathEmpty();
 
-        assertThat(path.getStep(0)).isEqualTo(new Point(0, 0));
+        assertThat(path.getStep(0)).isEqualTo(new Vec2(0, 0));
     }
 
     @Test
@@ -41,6 +41,6 @@ class PathEmptyTest {
         // must not throw even with a null grid, since PathEmpty ignores it
         path.finalise(null);
 
-        assertThat(path.getStep(0)).isEqualTo(new Point(1, 2));
+        assertThat(path.getStep(0)).isEqualTo(new Vec2(1, 2));
     }
 }

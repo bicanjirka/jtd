@@ -4,54 +4,58 @@ import td.cell.Cell;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class PathNormal implements Path {
 
-    private int[] stepsX = new int[0];
-    private int[] stepsY = new int[0];
-    private final List<Integer> stepXv;
-    private final List<Integer> stepYv;
+    private double[] xs = new double[0];
+    private double[] ys = new double[0];
+    private final List<Double> xv;
+    private final List<Double> yv;
     private final int scale;
 
     public PathNormal(int scale) {
         this.scale = scale;
-        this.stepXv = new ArrayList<>();
-        this.stepYv = new ArrayList<>();
+        this.xv = new ArrayList<>();
+        this.yv = new ArrayList<>();
     }
 
-    public void addStep(int x, int y) {
-        this.stepXv.add(x);
-        this.stepYv.add(y);
+    public void addStep(double x, double y) {
+        this.xv.add(x);
+        this.yv.add(y);
     }
 
     public int length() {
-        return this.stepsX.length;
+        return this.xs.length;
     }
 
-    public Point getStep(int step) {
-        if (this.stepsX.length == 0) {
-            return new Point(0, 0);
+    public Vec2 getStep(int step) {
+        if (this.xs.length == 0) {
+            return new Vec2(0, 0);
         }
         if (step < 0) {
             return this.getStep(0);
         }
-        if (step >= this.stepsX.length) {
-            return this.getStep(this.stepsX.length - 1);
+        if (step >= this.xs.length) {
+            return this.getStep(this.xs.length - 1);
         }
-        int x = stepsX[step];
-        int y = stepsY[step];
-        return new Point(x * scale + (scale / 2), y * scale + (scale / 2));
+        return new Vec2(this.xs[step], this.ys[step]);
     }
 
     public void finalise(Cell[][] grid) {
-        this.stepsX = new int[this.stepXv.size()];
-        this.stepsY = new int[this.stepYv.size()];
-        for (int i = 0; i < this.stepsX.length; i++) {
-            this.stepsX[i] = this.stepXv.get(i);
-            this.stepsY[i] = this.stepYv.get(i);
-            if (this.stepsX[i] >= 0 && this.stepsX[i] < grid.length)
-                if (this.stepsY[i] >= 0 && this.stepsY[i] < grid[0].length)
-                    grid[this.stepsX[i]][this.stepsY[i]].enable(false);
+        this.xs = new double[this.xv.size()];
+        this.ys = new double[this.yv.size()];
+        List<Vec2> polyline = new ArrayList<>(this.xs.length);
+        for (int i = 0; i < this.xs.length; i++) {
+            this.xs[i] = this.xv.get(i);
+            this.ys[i] = this.yv.get(i);
+            polyline.add(new Vec2(this.xs[i], this.ys[i]));
+        }
+        int width = grid.length;
+        int height = width == 0 ? 0 : grid[0].length;
+        Set<Point> covered = PathCoverage.unbuildableCells(polyline, this.scale, width, height);
+        for (Point cell : covered) {
+            grid[cell.x()][cell.y()].enable(false);
         }
     }
 }

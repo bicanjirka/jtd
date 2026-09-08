@@ -7,7 +7,6 @@ import td.economy.EconomyDelta;
 import td.util.Context;
 import td.wave.ArcLengthPath;
 import td.wave.PathPose;
-import td.wave.Point;
 import td.wave.Vec2;
 
 import java.util.Optional;
@@ -56,9 +55,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         this.arcLengthPath = arcLength.orElse(null);
         // A degenerate path (PathEmpty, or a not-yet-finalised path in a test) has nothing to
         // measure distance along - hold at its one available point rather than move at all.
-        // Path.getStep still returns the int-pixel Point at this point in the refactor.
-        Point firstStep = this.context.getPath().getStep(0);
-        this.stationaryPosition = new Vec2(firstStep.x(), firstStep.y());
+        this.stationaryPosition = this.context.getPath().getStep(0);
         this.distanceIntoLap = 0;
         this.x = 0;
         this.y = 0;

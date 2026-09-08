@@ -33,9 +33,7 @@ public final class ArcLengthPath {
         double[] xs = new double[n];
         double[] ys = new double[n];
         for (int i = 0; i < n; i++) {
-            // Path.getStep still returns the int-pixel Point at this point in the refactor;
-            // it becomes Vec2 directly once Path itself switches to continuous coordinates.
-            Point p = path.getStep(i);
+            Vec2 p = path.getStep(i);
             xs[i] = p.x();
             ys[i] = p.y();
         }
