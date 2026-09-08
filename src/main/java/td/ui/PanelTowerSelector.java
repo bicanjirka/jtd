@@ -6,6 +6,7 @@ import td.economy.EconomyState;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.Context;
+import td.util.GameHost;
 
 import javax.swing.BorderFactory;
 import javax.swing.GrayFilter;
@@ -83,7 +84,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
 
         this.makeButtons();
 
-        Context tempContext = new Context(null);
+        Context tempContext = new Context(GameHost.noOp());
         Java2DFrameRenderer iconRenderer = new Java2DFrameRenderer();
 
         for (int i = 0; i < this.towerTypes.size(); i++) {

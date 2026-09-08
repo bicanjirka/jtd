@@ -224,8 +224,8 @@ public class Driver {
     }
 
     // Clicks a board cell (not a Swing component, so not reachable via click(int)) by
-    // reflecting into TowerDefense's private gameBoard field and using Context.scale to turn
-    // a cell coordinate into a screen point.
+    // reflecting into TowerDefense's private gameBoard field and using Context.getBoard()'s
+    // scale to turn a cell coordinate into a screen point.
     private static void boardClick(String args) throws Exception {
         String[] p = args.split("\\s+");
         int cellX = Integer.parseInt(p[0]);
@@ -234,7 +234,7 @@ public class Driver {
         Field gameBoardField = TowerDefense.class.getDeclaredField("gameBoard");
         gameBoardField.setAccessible(true);
         Component gameBoard = (Component) gameBoardField.get(game);
-        int scale = getContext().scale;
+        int scale = getContext().getBoard().scale();
 
         Point loc = gameBoard.getLocationOnScreen();
         int cx = loc.x + cellX * scale + scale / 2;

@@ -4,6 +4,7 @@ import td.board.BoardGeometry;
 import td.enemy.EnemyFactory.Enemy;
 import td.enemy.EnemyMob;
 import td.util.Context;
+import td.util.GameHost;
 import td.wave.PathNormal;
 import td.wave.Vec2;
 
@@ -39,7 +40,7 @@ public class PanelEnemy extends JPanel {
 
     public PanelEnemy() {
         initComponents();
-        this.contextLocal = new Context(null);
+        this.contextLocal = new Context(GameHost.noOp());
         this.contextLocal.setPath(new PathNormal(List.of()));
     }
 

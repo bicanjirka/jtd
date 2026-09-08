@@ -1,7 +1,7 @@
 package td.tower.targeting;
 
 import td.enemy.EnemyMob;
-import td.util.Context;
+import td.enemy.EnemyRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,9 +24,9 @@ public final class OfTypeTargetQuery implements TargetQuery {
     }
 
     @Override
-    public List<EnemyMob> matching(Context context) {
+    public List<EnemyMob> matching(EnemyRegistry enemyRegistry) {
         List<EnemyMob> matches = new ArrayList<>();
-        for (EnemyMob e : context.getEnemies()) {
+        for (EnemyMob e : enemyRegistry.getEnemies()) {
             if (e.validTarget(this.type)) {
                 matches.add(e);
             }

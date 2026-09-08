@@ -1,7 +1,7 @@
 package td.tower.targeting;
 
 import td.enemy.EnemyMob;
-import td.util.Context;
+import td.enemy.EnemyRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +21,9 @@ final class IntersectingTargetQuery implements TargetQuery {
     }
 
     @Override
-    public List<EnemyMob> matching(Context context) {
-        List<EnemyMob> matches = new ArrayList<>(this.first.matching(context));
-        matches.retainAll(this.second.matching(context));
+    public List<EnemyMob> matching(EnemyRegistry enemies) {
+        List<EnemyMob> matches = new ArrayList<>(this.first.matching(enemies));
+        matches.retainAll(this.second.matching(enemies));
         return matches;
     }
 }

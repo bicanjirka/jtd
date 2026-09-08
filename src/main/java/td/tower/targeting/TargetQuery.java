@@ -1,14 +1,14 @@
 package td.tower.targeting;
 
 import td.enemy.EnemyMob;
-import td.util.Context;
+import td.enemy.EnemyRegistry;
 
 import java.util.List;
 
 /**
  * Answers "which enemies are legal targets right now", as a fresh immutable snapshot - never
- * {@code Context}'s live enemy array itself. Replaces each tower hand-rolling its own scan
- * over {@code context.getEnemies()}.
+ * the registry's live enemy array itself. Replaces each tower hand-rolling its own scan
+ * over {@code enemies.getEnemies()}.
  *
  * <p>{@link #and} composes two queries into their intersection. {@link #all()} is the
  * identity element - {@code all().and(x)} matches exactly what {@code x} matches - and
@@ -17,7 +17,7 @@ import java.util.List;
  */
 public interface TargetQuery {
 
-    List<EnemyMob> matching(Context context);
+    List<EnemyMob> matching(EnemyRegistry enemies);
 
     default TargetQuery and(TargetQuery other) {
         return new IntersectingTargetQuery(this, other);

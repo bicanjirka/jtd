@@ -15,7 +15,7 @@ class InRangeTargetQueryTest {
         FakeEnemyMob far = FakeEnemyMob.at(1000, 1000);
 
         List<EnemyMob> matches = InRangeTargetQuery.anyType(0, 0, 50)
-                .matching(TestContexts.withEnemies(near, far));
+                .matching(() -> new EnemyMob[]{near, far});
 
         assertThat(matches).containsExactly(near);
     }
@@ -26,7 +26,7 @@ class InRangeTargetQueryTest {
         FakeEnemyMob flying = FakeEnemyMob.at(0, 0).withType(EnemyMob.type.Flying);
 
         List<EnemyMob> matches = InRangeTargetQuery.ofType(0, 0, 50, EnemyMob.type.Normal)
-                .matching(TestContexts.withEnemies(normal, flying));
+                .matching(() -> new EnemyMob[]{normal, flying});
 
         assertThat(matches).containsExactly(normal);
     }
@@ -37,7 +37,7 @@ class InRangeTargetQueryTest {
         FakeEnemyMob flying = FakeEnemyMob.at(0, 0).withType(EnemyMob.type.Flying);
 
         List<EnemyMob> matches = InRangeTargetQuery.anyType(0, 0, 50)
-                .matching(TestContexts.withEnemies(normal, flying));
+                .matching(() -> new EnemyMob[]{normal, flying});
 
         assertThat(matches).containsExactlyInAnyOrder(normal, flying);
     }
@@ -47,7 +47,7 @@ class InRangeTargetQueryTest {
         FakeEnemyMob dead = FakeEnemyMob.at(0, 0).invalid();
 
         List<EnemyMob> matches = InRangeTargetQuery.anyType(0, 0, 50)
-                .matching(TestContexts.withEnemies(dead));
+                .matching(() -> new EnemyMob[]{dead});
 
         assertThat(matches).isEmpty();
     }
