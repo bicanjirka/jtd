@@ -109,9 +109,7 @@ public class GameEngine {
         this.wave = 0;
 
         for (WaveDefinition wd : level.waves()) {
-            Wave w = new Wave(this.context, wd.hp(), wd.price(), wd.level());
-            w.addEnemiesFromNames(wd.enemies().split(" "));
-            this.waves.add(w);
+            this.waves.add(new Wave(this.context, wd.hp(), wd.price(), wd.level(), wd.enemies().split(" ")));
         }
 
         this.context.startEconomy(level.startingCredits(), level.startingLives());
