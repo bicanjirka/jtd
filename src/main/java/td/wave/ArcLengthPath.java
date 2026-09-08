@@ -1,5 +1,6 @@
 package td.wave;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -26,14 +27,15 @@ public final class ArcLengthPath {
 
     /** Empty for a path with fewer than two points, or zero total length. */
     public static Optional<ArcLengthPath> of(Path path) {
-        int n = path.length();
+        List<Vec2> points = path.points();
+        int n = points.size();
         if (n < 2) {
             return Optional.empty();
         }
         double[] xs = new double[n];
         double[] ys = new double[n];
         for (int i = 0; i < n; i++) {
-            Vec2 p = path.getStep(i);
+            Vec2 p = points.get(i);
             xs[i] = p.x();
             ys[i] = p.y();
         }
@@ -56,8 +58,7 @@ public final class ArcLengthPath {
         // Clamp rather than extrapolate: the original code this was ported from only ever
         // called poseAt with a distance already wrapped into [0, totalLength) - but as a
         // shared, more widely-used type, an out-of-range distance should clamp to the
-        // nearest endpoint, matching the clamp-to-nearest-step convention Path.getStep
-        // already establishes for out-of-range indices, rather than extrapolate past it.
+        // nearest endpoint rather than extrapolate past it.
         distance = Math.max(0.0, Math.min(distance, this.totalLength));
         int segment = this.cumulative.length - 2;
         for (int i = 0; i < this.cumulative.length - 1; i++) {

@@ -40,7 +40,7 @@ public class Context {
         this.towerListeners = new CopyOnWriteArrayList<>();
         this.waveListeners = new CopyOnWriteArrayList<>();
         this.towers = new CopyOnWriteArrayList<>();
-        this.path = new PathNormal(this.scale);
+        this.path = new PathNormal(List.of());
         this.cache = Cache.getInstance();
     }
 

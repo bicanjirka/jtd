@@ -5,7 +5,10 @@ import td.damage.Damage;
 import td.util.Context;
 import td.util.RecordingGameHost;
 import td.wave.PathNormal;
-import td.wave.RecordingCell;
+import td.wave.Vec2;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -25,20 +28,13 @@ class AbstractEnemyMobTest {
     }
 
     // xCoords are cell coordinates, converted to pixel-space cell centers the same way
-    // production code (PathBuilder) does, since PathNormal now stores pixel points directly.
+    // production code (PathBuilder) does, since PathNormal stores pixel points directly.
     private static PathNormal straightPath(int scale, int... xCoords) {
-        PathNormal path = new PathNormal(scale);
+        List<Vec2> points = new ArrayList<>();
         for (int x : xCoords) {
-            path.addStep(x * scale + (scale / 2), 0 * scale + (scale / 2));
+            points.add(new Vec2(x * scale + (scale / 2), scale / 2));
         }
-        int width = 0;
-        for (int x : xCoords) width = Math.max(width, x + 1);
-        RecordingCell[][] grid = new RecordingCell[width][1];
-        for (int x = 0; x < width; x++) {
-            grid[x][0] = new RecordingCell();
-        }
-        path.finalise(grid);
-        return path;
+        return new PathNormal(points);
     }
 
     @Test

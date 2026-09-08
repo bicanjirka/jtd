@@ -2,40 +2,30 @@ package td.wave;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 class ArcLengthPathTest {
 
-    // Steps are deliberately chosen outside the 1x1 grid below, so finalise() never
-    // dereferences a (deliberately unpopulated) grid cell - see PathNormalTest for the
-    // same convention.
-
     @Test
     void aPathWithFewerThanTwoPointsHasNoArcLength() {
-        PathNormal path = new PathNormal(1);
-        path.addStep(5, 5);
-        path.finalise(new RecordingCell[1][1]);
+        PathNormal path = new PathNormal(List.of(new Vec2(5, 5)));
 
         assertThat(ArcLengthPath.of(path)).isEmpty();
     }
 
     @Test
     void aPathWithZeroTotalLengthHasNoArcLength() {
-        PathNormal path = new PathNormal(1);
-        path.addStep(5, 5);
-        path.addStep(5, 5);
-        path.finalise(new RecordingCell[1][1]);
+        PathNormal path = new PathNormal(List.of(new Vec2(5, 5), new Vec2(5, 5)));
 
         assertThat(ArcLengthPath.of(path)).isEmpty();
     }
 
     @Test
     void totalLengthIsTheSumOfEuclideanSegmentLengths() {
-        PathNormal path = new PathNormal(1);
-        path.addStep(5, 5);
-        path.addStep(8, 9);
-        path.finalise(new RecordingCell[1][1]);
+        PathNormal path = new PathNormal(List.of(new Vec2(5, 5), new Vec2(8, 9)));
 
         ArcLengthPath arcLengthPath = ArcLengthPath.of(path).orElseThrow();
 
@@ -44,10 +34,7 @@ class ArcLengthPathTest {
 
     @Test
     void poseAtZeroIsTheFirstPointFacingTheFirstSegment() {
-        PathNormal path = new PathNormal(1);
-        path.addStep(5, 5);
-        path.addStep(15, 5);
-        path.finalise(new RecordingCell[1][1]);
+        PathNormal path = new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5)));
 
         PathPose pose = ArcLengthPath.of(path).orElseThrow().poseAt(0);
 
@@ -57,11 +44,7 @@ class ArcLengthPathTest {
 
     @Test
     void poseAtInterpolatesWithinTheContainingSegment() {
-        PathNormal path = new PathNormal(1);
-        path.addStep(5, 5);
-        path.addStep(15, 5);
-        path.addStep(15, 15);
-        path.finalise(new RecordingCell[1][1]);
+        PathNormal path = new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5), new Vec2(15, 15)));
 
         ArcLengthPath arcLengthPath = ArcLengthPath.of(path).orElseThrow();
 
@@ -72,10 +55,7 @@ class ArcLengthPathTest {
 
     @Test
     void poseAtClampsPastTheEndToTheFinalSegment() {
-        PathNormal path = new PathNormal(1);
-        path.addStep(5, 5);
-        path.addStep(15, 5);
-        path.finalise(new RecordingCell[1][1]);
+        PathNormal path = new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5)));
 
         PathPose pose = ArcLengthPath.of(path).orElseThrow().poseAt(1000);
 

@@ -8,7 +8,9 @@ import td.ui.render.EnemyBodyDraw;
 import td.util.Context;
 import td.util.RecordingGameHost;
 import td.wave.PathNormal;
-import td.wave.RecordingCell;
+import td.wave.Vec2;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -24,12 +26,7 @@ class EnemyFrameBuilderTest {
         Context context = new Context(new RecordingGameHost());
         context.maxX = 1000;
         context.maxY = 1000;
-        PathNormal path = new PathNormal(10);
-        path.addStep(0 * 10 + 5, 0 * 10 + 5);
-        path.addStep(10 * 10 + 5, 0 * 10 + 5);
-        RecordingCell[][] grid = {{new RecordingCell()}, {new RecordingCell()}};
-        path.finalise(grid);
-        context.setPath(path);
+        context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(105, 5))));
         return context;
     }
 
@@ -85,12 +82,7 @@ class EnemyFrameBuilderTest {
         Context context = new Context(new RecordingGameHost());
         context.maxX = 1000;
         context.maxY = 1000;
-        PathNormal path = new PathNormal(10);
-        path.addStep(0 * 10 + 5, 0 * 10 + 5);
-        path.addStep(1 * 10 + 5, 0 * 10 + 5);
-        RecordingCell[][] grid = {{new RecordingCell()}, {new RecordingCell()}};
-        path.finalise(grid);
-        context.setPath(path);
+        context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5))));
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
         int initialLives = context.getLives();
