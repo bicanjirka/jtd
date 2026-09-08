@@ -34,14 +34,14 @@ This is the one structural rule that matters, and it is the result of a delibera
 Domain packages under `td.*`: `cell` (board squares, buildability), `damage` (the `Damage`
 value type towers deal to enemies), `economy` (`EconomyDelta`/`EconomyState`, the
 credits/score/lives algebra `Context` is built on), `enemy` (mob hierarchy + `EnemyFactory`),
-`level` (`LevelDefinition` — a level's board size, path, waves and starting economy as one
-immutable value; `LevelPath.throughCorners` expands a hand-authored corner list into the
-cell-by-cell path the engine needs; `LevelCatalog`/`BuiltInLevelCatalog` is where levels are
-sourced from — see Levels below), `tower` (tower hierarchy + `TowerFactory`; `tower.targeting`
-holds the shared target-scanning abstractions every tower composes instead of hand-rolling;
-`tower.buff` holds `TowerBuff`, the upgrade-stacking algebra), `wave` (path geometry — `Path`/
-`PathNormal`/`Point` — and wave composition — `Wave`/`WaveDefinition`), `util` (`Context`,
-`Cache`, listener interfaces).
+`level` (`LevelDefinition` — a level's board size, path, waves, starting economy and
+`PathSmoothing` strategy as one immutable value; `LevelPath.throughCorners` expands a
+hand-authored corner list into the cell-by-cell path `PathBuilder` needs; `LevelCatalog`/
+`BuiltInLevelCatalog` is where levels are sourced from — see Levels below), `tower` (tower
+hierarchy + `TowerFactory`; `tower.targeting` holds the shared target-scanning abstractions
+every tower composes instead of hand-rolling; `tower.buff` holds `TowerBuff`, the
+upgrade-stacking algebra), `wave` (path geometry and wave composition — see Path geometry
+below), `util` (`Context`, `Cache`, listener interfaces).
 
 `Context` is the shared mutable world — an `EconomyState` (credits/score/lives), the tower
 list, the enemy array — and the listener hub (`ContextListener`, `TowerListener`,
@@ -64,6 +64,39 @@ its own starting credits *and* lives, so levels don't inherit each other's econo
 
 Returning to the level-select screen once a level has started is a known, deliberate gap — see
 `TODO.md`.
+
+## Path geometry and smoothing
+
+`td.wave.Path`/`PathNormal` store a path as continuous pixel-space points (`Vec2`, not the
+integer, cell-coordinate `Point` — that split is deliberate: `Point` is only ever used for
+level authoring, `Vec2` only for the pixel geometry a `Path` actually walks). `PathBuilder`
+is the one place a level's raw cell-coordinate `List<Point>` becomes a `Path`: convert each
+cell to its pixel center, run the result through the level's `PathSmoothing` strategy, then
+populate a `PathNormal`.
+
+`PathSmoothing` (in `td.wave.smoothing`) is a pluggable per-level strategy —
+`PathSmoothing.none()` is the identity, matching this codebase's `none()`-as-identity-element
+idiom elsewhere. `AbstractCornerSmoothing` is the shared template both real strategies
+(`ArcCornerSmoothing`, a circular-arc fillet; `QuadraticBezierSmoothing`, a Bezier curve using
+the corner as its control point) build on: it walks each interior corner, pulls back a
+fraction (`cornerPull`, capped at 0.5 so two nearby corners' pullbacks can never cross) of the
+shorter adjacent leg, and delegates only the curve itself to the subclass.
+
+Cell buildability is computed from this same final (possibly curved) geometry, not from a
+fixed list of authored cells: `PathCoverage.unbuildableCells` supersamples each grid cell in
+the path's bounding box and marks it unbuildable if enough of its area falls within the
+path's corridor width. `PathNormal.finalise` is a thin wrapper around it. For an unsmoothed,
+axis-aligned grid path this reproduces exactly the same cells a naive "mark the listed cells"
+approach would — `PathCoverageTest` proves this for both built-in levels — but a smoothed
+path's buildable set correctly reflects its actual curved shape instead.
+
+`ArcLengthPath` (also `td.wave`) wraps a `Path`'s points with cumulative distance, resolving
+any distance travelled to an exact position and facing by interpolation within the segment it
+falls in. It is the single shared implementation behind both enemy movement
+(`AbstractEnemyMob`, which advances a `speed`-in-pixels-per-tick `distanceIntoLap` accumulator
+each tick — real arc-length distance, not a fixed tick-count per segment regardless of its
+length) and the animated path-marker overlay (`PathMarkerFrameBuilder`) — both move at a
+consistent real-world pace along whatever geometry the path actually has, curved or not.
 
 ## Threading model
 
@@ -168,6 +201,8 @@ the two documents avoid contradicting each other:**
     produce a negative, healing hit.
   - `Context`'s `credits`/`score`/`lives` are gone in favor of a single `EconomyState` field —
     see the Threading model note above about `Context.apply`'s synchronized block.
+  - `td.wave.smoothing.PathSmoothing.none()` is the identity for path smoothing — a level with
+    no smoothing configured just gets this rather than a null/special-cased strategy field.
 
 ## Tests
 
