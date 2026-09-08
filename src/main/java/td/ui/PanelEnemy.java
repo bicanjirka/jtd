@@ -3,8 +3,8 @@ package td.ui;
 import td.enemy.EnemyFactory.Enemy;
 import td.enemy.EnemyMob;
 import td.util.Context;
-import td.wave.Path;
-import td.wave.PathEmpty;
+import td.wave.PathNormal;
+import td.wave.Vec2;
 
 import javax.swing.JPanel;
 import java.awt.Color;
@@ -39,7 +39,7 @@ public class PanelEnemy extends JPanel {
     public PanelEnemy() {
         initComponents();
         this.contextLocal = new Context(null);
-        this.contextLocal.setPath(new PathEmpty());
+        this.contextLocal.setPath(new PathNormal(List.of()));
     }
 
     public void setContext(Context c) {
@@ -49,14 +49,13 @@ public class PanelEnemy extends JPanel {
     public void clearEnemies() {
         this.enemies.clear();
         this.enemiesCount = new int[Enemy.values().length];
-        this.contextLocal.setPath(new PathEmpty());
+        this.contextLocal.setPath(new PathNormal(List.of()));
     }
 
     public void addEnemy(Enemy e, int count, int level) {
         if (e.equals(Enemy.Empty)) return;
         int nr = this.enemies.size();
-        Path path = this.contextLocal.getPath();
-        path.addStep(this.scale / 2 + this.scale * nr, this.pHeight / 2);
+        this.contextLocal.setPath(new PathNormal(List.of(new Vec2(this.scale / 2 + this.scale * nr, this.pHeight / 2))));
         EnemyMob enemy = e.getCopy(this.contextLocal, 0, 0, 0, level);
         enemy.doTick(0);
         this.enemies.add(enemy);

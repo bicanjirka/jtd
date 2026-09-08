@@ -12,6 +12,8 @@ import td.util.Context;
 import td.util.GameHost;
 import td.wave.Path;
 import td.wave.PathBuilder;
+import td.wave.PathCoverage;
+import td.wave.Point;
 import td.wave.Wave;
 import td.wave.WaveDefinition;
 
@@ -103,7 +105,7 @@ public class GameEngine {
         this.waves = new ArrayList<>();
         Path path = PathBuilder.build(level.path(), level.smoothing(), this.context.scale);
         this.context.setPath(path);
-        path.finalise(this.cellGrid);
+        markUnbuildableCells(path, this.context.scale);
         this.wave = 0;
 
         for (WaveDefinition wd : level.waves()) {
@@ -115,6 +117,19 @@ public class GameEngine {
         this.context.startEconomy(level.startingCredits(), level.startingLives());
         LOG.info("Level loaded: {} ({}x{} board, {} waves, {} starting credits, {} starting lives)",
                 level.name(), width, height, this.waves.size(), level.startingCredits(), level.startingLives());
+    }
+
+    /**
+     * Marks unbuildable every cell the path's actual geometry covers - not just the cells it
+     * was authored through, so a smoothed/curved path's buildable set correctly reflects its
+     * real shape. See {@link PathCoverage} for the geometry itself.
+     */
+    private void markUnbuildableCells(Path path, int scale) {
+        int width = this.cellGrid.length;
+        int height = width == 0 ? 0 : this.cellGrid[0].length;
+        for (Point cell : PathCoverage.unbuildableCells(path.points(), scale, width, height)) {
+            this.cellGrid[cell.x()][cell.y()].enable(false);
+        }
     }
 
     public void startLevel() {

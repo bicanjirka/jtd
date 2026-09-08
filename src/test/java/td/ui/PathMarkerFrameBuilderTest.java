@@ -1,12 +1,12 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
-import td.cell.Cell;
-import td.cell.CellNormal;
 import td.ui.render.PathMarkerDraw;
 import td.ui.render.PathMarkerShape;
 import td.wave.PathNormal;
+import td.wave.Vec2;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -16,37 +16,22 @@ import static org.assertj.core.api.Assertions.offset;
 /**
  * Headless and clock-free: animationSeconds is passed in explicitly, the same way other
  * tests pass explicit tick numbers rather than relying on real timing (see CLAUDE.md's
- * "Tests are headless and clock-free"). Path fixtures mirror AbstractEnemyMobTest's
- * straightPath() helper: PathNormal needs finalise(grid) before getStep()/length() report
- * anything.
+ * "Tests are headless and clock-free").
  */
 class PathMarkerFrameBuilderTest {
 
     private static final int SCALE = 32;
 
+    // Cell coordinates in, converted to pixel-space cell centers the same way production
+    // code (PathBuilder) does, since PathNormal stores pixel points directly.
     private static PathNormal pathOf(int... xyPairs) {
-        PathNormal path = new PathNormal(SCALE);
-        int width = 0;
-        int height = 0;
+        List<Vec2> points = new ArrayList<>();
         for (int i = 0; i < xyPairs.length; i += 2) {
             int x = xyPairs[i];
             int y = xyPairs[i + 1];
-            // PathNormal now stores pixel-space points directly; the cell-to-pixel-center
-            // conversion (x*scale + scale/2) that PathNormal.getStep used to do internally
-            // now happens explicitly wherever a cell path is turned into a Path - here, and
-            // in production, in PathBuilder.
-            path.addStep(x * SCALE + (SCALE / 2), y * SCALE + (SCALE / 2));
-            width = Math.max(width, x + 1);
-            height = Math.max(height, y + 1);
+            points.add(new Vec2(x * SCALE + (SCALE / 2), y * SCALE + (SCALE / 2)));
         }
-        Cell[][] grid = new Cell[width][height];
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                grid[x][y] = new CellNormal(x * SCALE, y * SCALE);
-            }
-        }
-        path.finalise(grid);
-        return path;
+        return new PathNormal(points);
     }
 
     private static PathNormal straightPath(int fromX, int toX) {

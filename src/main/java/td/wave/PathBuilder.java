@@ -20,12 +20,6 @@ public final class PathBuilder {
         for (Point cell : cellPath) {
             pixelCenters.add(new Vec2(cell.x() * scale + (scale / 2), cell.y() * scale + (scale / 2)));
         }
-        List<Vec2> smoothed = smoothing.smooth(pixelCenters);
-
-        PathNormal path = new PathNormal(scale);
-        for (Vec2 point : smoothed) {
-            path.addStep(point.x(), point.y());
-        }
-        return path;
+        return new PathNormal(smoothing.smooth(pixelCenters));
     }
 }

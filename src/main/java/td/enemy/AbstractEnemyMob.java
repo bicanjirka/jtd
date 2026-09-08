@@ -9,6 +9,7 @@ import td.wave.ArcLengthPath;
 import td.wave.PathPose;
 import td.wave.Vec2;
 
+import java.util.List;
 import java.util.Optional;
 
 public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
@@ -53,9 +54,11 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         this.healthMax = health * 100;
         Optional<ArcLengthPath> arcLength = ArcLengthPath.of(this.context.getPath());
         this.arcLengthPath = arcLength.orElse(null);
-        // A degenerate path (PathEmpty, or a not-yet-finalised path in a test) has nothing to
-        // measure distance along - hold at its one available point rather than move at all.
-        this.stationaryPosition = this.context.getPath().getStep(0);
+        // A degenerate path (fewer than two points - e.g. an empty placeholder Context has
+        // before any level loads) has nothing to measure distance along - hold at its one
+        // available point (or the origin, if it has none at all) rather than move at all.
+        List<Vec2> pathPoints = this.context.getPath().points();
+        this.stationaryPosition = pathPoints.isEmpty() ? new Vec2(0, 0) : pathPoints.get(0);
         this.distanceIntoLap = 0;
         this.x = 0;
         this.y = 0;
