@@ -1,4 +1,4 @@
-package td.util;
+package td.wave;
 
 @FunctionalInterface
 public interface WaveStartListener {
