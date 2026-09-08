@@ -17,8 +17,8 @@ import td.ui.PanelTowerSelector;
 import td.ui.PanelWaveInfo;
 import td.ui.render.AsciiBoardRenderer;
 import td.ui.render.RenderFrame;
+import td.economy.EconomyListener;
 import td.util.Context;
-import td.util.ContextListener;
 import td.util.GameHost;
 
 import javax.swing.BorderFactory;
@@ -47,7 +47,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.io.Serial;
 
 // Inspired by HexTD
-public class TowerDefense extends JFrame implements ContextListener, GameHost {
+public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     private static final Logger LOG = LoggerFactory.getLogger(TowerDefense.class);
 
@@ -137,7 +137,7 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
         this.engine = new GameEngine(this);
         this.context = this.engine.getContext();
         this.boardRenderer = new BoardRenderer(this.engine, this.context);
-        this.context.addContextListener(this);
+        this.context.addEconomyListener(this);
         this.gameBoard = new GameBoard(this, this.context);
         initComponents();
         this.panelWaveInfo.setContext(this.context);

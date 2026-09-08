@@ -4,7 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import td.board.BoardGeometry;
 import td.economy.EconomyDelta;
-import td.economy.EconomyState;
+import td.economy.EconomyLedger;
+import td.economy.EconomyListener;
 import td.enemy.EnemyMob;
 import td.tower.Tower;
 import td.wave.Path;
@@ -26,15 +27,13 @@ public class Context {
     private int enemyCount = 0;
     private Path path;
 
-    private volatile EconomyState economy = EconomyState.startingWith(0, 5);
+    private final EconomyLedger economy = new EconomyLedger();
 
-    private final List<ContextListener> contextListeners;
     private final List<TowerListener> towerListeners;
     private final List<WaveStartListener> waveListeners;
 
     public Context(GameHost mainApp) {
         this.mainApp = mainApp;
-        this.contextListeners = new CopyOnWriteArrayList<>();
         this.towerListeners = new CopyOnWriteArrayList<>();
         this.waveListeners = new CopyOnWriteArrayList<>();
         this.towers = new CopyOnWriteArrayList<>();
@@ -95,56 +94,32 @@ public class Context {
         this.mainApp.setInfoText(s);
     }
 
-    /**
-     * Seeds the economy at the start of a level - credits and lives are both the level's own,
-     * not carried over from whatever ran before. Fires like any other economy change since
-     * listeners are already registered by the time a level loads.
-     */
-    public void startEconomy(int startingCredits, int startingLives) {
-        this.economy = EconomyState.startingWith(startingCredits, startingLives);
-        LOG.debug("Economy seeded: {}", this.economy);
-        this.fireEconomyChangedEvent(this.economy);
+    public EconomyLedger getEconomy() {
+        return this.economy;
     }
 
-    /**
-     * Applies a game event's effect on credits/score/lives as one atomic move, firing exactly
-     * one notification for it - replacing what used to be up to three separate mutations
-     * (see EconomyDelta.kill/leak).
-     */
+    public void startEconomy(int startingCredits, int startingLives) {
+        this.economy.startEconomy(startingCredits, startingLives);
+    }
+
     public void apply(EconomyDelta delta) {
-        EconomyState updated;
-        synchronized (this) {
-            updated = this.economy.after(delta);
-            this.economy = updated;
-        }
-        LOG.debug("Economy {} -> {}", delta, updated);
-        this.fireEconomyChangedEvent(updated);
+        this.economy.apply(delta);
     }
 
     public int getScore() {
-        return this.economy.score();
+        return this.economy.getScore();
     }
 
     public int getCredits() {
-        return this.economy.credits();
+        return this.economy.getCredits();
     }
 
     public boolean canPay(int amount) {
-        return this.economy.canAfford(amount);
+        return this.economy.canPay(amount);
     }
 
     public boolean doPay(int amount) {
-        EconomyState updated;
-        synchronized (this) {
-            if (!this.economy.canAfford(amount)) {
-                return false;
-            }
-            updated = this.economy.after(EconomyDelta.credits(-amount));
-            this.economy = updated;
-        }
-        LOG.debug("Credits -{} -> {}", amount, updated.credits());
-        this.fireEconomyChangedEvent(updated);
-        return true;
+        return this.economy.doPay(amount);
     }
 
     public void addTower(Tower t) {
@@ -194,18 +169,12 @@ public class Context {
         }
     }
 
-    public void addContextListener(ContextListener l) {
-        this.contextListeners.add(l);
+    public void addEconomyListener(EconomyListener l) {
+        this.economy.addEconomyListener(l);
     }
 
-    public void removeContextListener(ContextListener l) {
-        this.contextListeners.remove(l);
-    }
-
-    private void fireEconomyChangedEvent(EconomyState state) {
-        for (ContextListener l : this.contextListeners) {
-            l.economyChanged(state);
-        }
+    public void removeEconomyListener(EconomyListener l) {
+        this.economy.removeEconomyListener(l);
     }
 
     public Path getPath() {
@@ -217,7 +186,7 @@ public class Context {
     }
 
     public int getLives() {
-        return this.economy.lives();
+        return this.economy.getLives();
     }
 
 }
