@@ -56,6 +56,21 @@ range and enemy speed balance interact.
   mini-language (see `Wave.finalise()`'s `c`/`e`/`t`/... token grammar) with a token — e.g. a `w<number>` prefix — that
   lets a wave definition override the spacing between spawns before listing enemies.
 
+## Levels
+
+### Only a Java-code level catalog exists
+
+`LevelCatalog` is the abstraction levels are meant to be sourced through, but `BuiltInLevelCatalog` (levels defined as
+Java code, e.g. `LevelDefinition` constants built with `LevelPath.throughCorners(...)`) is the only implementation.
+There is no way to add or edit a level without a code change and a rebuild.
+
+- **Where:** `td.level.LevelCatalog`, `td.level.BuiltInLevelCatalog`
+- **Approach:** add a `FileLevelCatalog implements LevelCatalog` that parses level files (format TBD — JSON is the
+  obvious choice given `LevelDefinition`'s shape) from a resources or config directory into `LevelDefinition`s. A
+  malformed level file should be reported the same way `Cache` reports a bad image: throw
+  `td.util.GameStartupException`, which `Main` already catches as the one fatal-startup boundary, rather than adding a
+  second error-handling path.
+
 ## Tower features
 
 ### Tower upgrade doesn't gate on affordability
