@@ -43,8 +43,8 @@ scales with `level`. Health reduction should probably scale the same way so ghos
 ### Only a Java-code level catalog exists
 
 `LevelCatalog` is the abstraction levels are meant to be sourced through, but `BuiltInLevelCatalog` (levels defined as
-Java code, e.g. `LevelDefinition` constants built with `LevelPath.throughCorners(...)`) is the only implementation.
-There is no way to add or edit a level without a code change and a rebuild.
+Java code, e.g. `LevelDefinition` constants built from a hand-authored `List<Point>` of corners) is the only
+implementation. There is no way to add or edit a level without a code change and a rebuild.
 
 - **Where:** `td.level.LevelCatalog`, `td.level.BuiltInLevelCatalog`
 - **Approach:** add a `FileLevelCatalog implements LevelCatalog` that parses level files (format TBD — JSON is the
