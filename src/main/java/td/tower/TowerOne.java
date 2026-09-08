@@ -29,7 +29,7 @@ public final class TowerOne extends AbstractTower {
 
     private EnemyMob findEnemy() {
         List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal, EnemyMob.type.Normal)
-                .matching(this.context);
+                .matching(this.context.getEnemyRegistry());
         return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
     }
 

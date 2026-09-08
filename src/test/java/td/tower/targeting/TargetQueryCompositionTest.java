@@ -2,7 +2,7 @@ package td.tower.targeting;
 
 import org.junit.jupiter.api.Test;
 import td.enemy.EnemyMob;
-import td.util.Context;
+import td.enemy.EnemyRegistry;
 
 import java.util.List;
 
@@ -14,23 +14,23 @@ class TargetQueryCompositionTest {
     void allMatchesEveryEnemyAndActsAsTheIdentityForAnd() {
         FakeEnemyMob a = FakeEnemyMob.at(0, 0);
         FakeEnemyMob b = FakeEnemyMob.at(100, 100);
-        Context context = TestContexts.withEnemies(a, b);
+        EnemyRegistry enemies = () -> new EnemyMob[]{a, b};
         TargetQuery inRangeOfA = InRangeTargetQuery.anyType(0, 0, 5);
 
-        List<EnemyMob> combined = TargetQuery.all().and(inRangeOfA).matching(context);
+        List<EnemyMob> combined = TargetQuery.all().and(inRangeOfA).matching(enemies);
 
         assertThat(combined).containsExactly(a);
-        assertThat(combined).isEqualTo(inRangeOfA.matching(context));
+        assertThat(combined).isEqualTo(inRangeOfA.matching(enemies));
     }
 
     @Test
     void noneMatchesNothingAndShortCircuitsWithoutEvaluatingTheOtherSide() {
-        Context context = TestContexts.withEnemies(FakeEnemyMob.at(0, 0));
-        TargetQuery throwsIfEvaluated = ctx -> {
+        EnemyRegistry enemies = () -> new EnemyMob[]{FakeEnemyMob.at(0, 0)};
+        TargetQuery throwsIfEvaluated = registry -> {
             throw new AssertionError("none().and(...) must not evaluate the other side");
         };
 
-        List<EnemyMob> combined = TargetQuery.none().and(throwsIfEvaluated).matching(context);
+        List<EnemyMob> combined = TargetQuery.none().and(throwsIfEvaluated).matching(enemies);
 
         assertThat(combined).isEmpty();
     }
@@ -40,11 +40,11 @@ class TargetQueryCompositionTest {
         FakeEnemyMob inRangeGhost = FakeEnemyMob.at(0, 0).withType(EnemyMob.type.Invisible);
         FakeEnemyMob inRangeNormal = FakeEnemyMob.at(1, 1);
         FakeEnemyMob outOfRangeGhost = FakeEnemyMob.at(100, 100).withType(EnemyMob.type.Invisible);
-        Context context = TestContexts.withEnemies(inRangeGhost, inRangeNormal, outOfRangeGhost);
+        EnemyRegistry enemies = () -> new EnemyMob[]{inRangeGhost, inRangeNormal, outOfRangeGhost};
 
         TargetQuery inRange = InRangeTargetQuery.anyType(0, 0, 5);
         TargetQuery ghosts = OfTypeTargetQuery.of(EnemyMob.type.Invisible);
 
-        assertThat(inRange.and(ghosts).matching(context)).containsExactly(inRangeGhost);
+        assertThat(inRange.and(ghosts).matching(enemies)).containsExactly(inRangeGhost);
     }
 }

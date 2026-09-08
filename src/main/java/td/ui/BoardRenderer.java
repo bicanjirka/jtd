@@ -4,14 +4,16 @@ import td.GameEngine;
 import td.board.BoardGeometry;
 import td.cell.Cell;
 import td.enemy.EnemyMob;
+import td.enemy.EnemyRegistry;
 import td.tower.Tower;
 import td.ui.render.CellDraw;
 import td.ui.render.PathMarkerDraw;
 import td.ui.render.RenderFrame;
-import td.util.Context;
+import td.wave.Path;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Describes one frame of the game board: cell highlights, enemies, and towers,
@@ -20,15 +22,23 @@ import java.util.List;
  * described. Background image blitting and the actual pixel drawing are the
  * backend's job (e.g. {@link Java2DFrameRenderer}), not this class's - this
  * class has no {@code java.awt} import at all.
+ * <p>
+ * {@code board}/{@code path} are suppliers rather than fixed values because both are
+ * replaced wholesale when a level loads, after this renderer is constructed - a fixed
+ * field captured at construction would render a stale board forever.
  */
 public final class BoardRenderer {
 
     private final GameEngine engine;
-    private final Context context;
+    private final EnemyRegistry enemies;
+    private final Supplier<BoardGeometry> board;
+    private final Supplier<Path> path;
 
-    public BoardRenderer(GameEngine engine, Context context) {
+    public BoardRenderer(GameEngine engine, EnemyRegistry enemies, Supplier<BoardGeometry> board, Supplier<Path> path) {
         this.engine = engine;
-        this.context = context;
+        this.enemies = enemies;
+        this.board = board;
+        this.path = path;
     }
 
     public RenderFrame buildFrame(int gameTime, double interpolationAlpha, double animationSeconds) {
@@ -46,7 +56,7 @@ public final class BoardRenderer {
         }
 
         EnemyFrameBuilder enemyFrameBuilder = new EnemyFrameBuilder(gameTime, interpolationAlpha);
-        for (EnemyMob enemy : this.context.getEnemies()) {
+        for (EnemyMob enemy : this.enemies.getEnemies()) {
             enemy.accept(enemyFrameBuilder);
         }
 
@@ -57,8 +67,8 @@ public final class BoardRenderer {
             tower.accept(effectFrameBuilder);
         }
 
-        BoardGeometry board = this.context.getBoard();
-        List<PathMarkerDraw> pathMarkers = PathMarkerFrameBuilder.build(this.context.getPath(), board.scale(), animationSeconds);
+        BoardGeometry board = this.board.get();
+        List<PathMarkerDraw> pathMarkers = PathMarkerFrameBuilder.build(this.path.get(), board.scale(), animationSeconds);
 
         return new RenderFrame(board.scale(), board.maxX(), board.maxY(),
                 cells, enemyFrameBuilder.build(), spriteFrameBuilder.build(), spriteFrameBuilder.buildHeads(),

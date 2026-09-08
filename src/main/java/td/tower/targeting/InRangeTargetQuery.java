@@ -1,7 +1,7 @@
 package td.tower.targeting;
 
 import td.enemy.EnemyMob;
-import td.util.Context;
+import td.enemy.EnemyRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,10 +35,10 @@ public final class InRangeTargetQuery implements TargetQuery {
     }
 
     @Override
-    public List<EnemyMob> matching(Context context) {
+    public List<EnemyMob> matching(EnemyRegistry enemyRegistry) {
         float range2 = this.range * this.range;
         List<EnemyMob> matches = new ArrayList<>();
-        for (EnemyMob e : context.getEnemies()) {
+        for (EnemyMob e : enemyRegistry.getEnemies()) {
             if (this.isLegalType.test(e) && WithinRange.of(e, this.x, this.y, range2)) {
                 matches.add(e);
             }

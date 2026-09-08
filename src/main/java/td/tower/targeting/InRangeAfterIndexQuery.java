@@ -1,7 +1,7 @@
 package td.tower.targeting;
 
 import td.enemy.EnemyMob;
-import td.util.Context;
+import td.enemy.EnemyRegistry;
 
 import java.util.OptionalInt;
 
@@ -20,8 +20,8 @@ public final class InRangeAfterIndexQuery implements NextTargetQuery {
     }
 
     @Override
-    public OptionalInt nextIndexAfter(Context context, int index) {
-        EnemyMob[] enemies = context.getEnemies();
+    public OptionalInt nextIndexAfter(EnemyRegistry enemyRegistry, int index) {
+        EnemyMob[] enemies = enemyRegistry.getEnemies();
         float range2 = this.range * this.range;
         for (int i = index + 1; i < enemies.length; i++) {
             EnemyMob e = enemies[i];

@@ -33,7 +33,7 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
 
     private int findEnemy(int preferedEnemyNr) {
         OptionalInt found = new InRangeAfterIndexQuery(this.centerX, this.centerY, this.rangeReal, EnemyMob.type.Normal)
-                .nextIndexAfter(this.context, preferedEnemyNr);
+                .nextIndexAfter(this.context.getEnemyRegistry(), preferedEnemyNr);
         if (found.isEmpty() && preferedEnemyNr != -1) {
             this.coolDown = this.coolDownRecharge;
         }
