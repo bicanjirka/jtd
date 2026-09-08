@@ -1,6 +1,4 @@
-package td.util;
-
-import td.tower.Tower;
+package td.tower;
 
 public interface TowerListener {
     void towerRemoved(Tower t);

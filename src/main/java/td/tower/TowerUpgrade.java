@@ -2,7 +2,6 @@ package td.tower;
 
 import td.tower.buff.TowerBuff;
 import td.util.Context;
-import td.util.TowerListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +41,7 @@ public final class TowerUpgrade extends AbstractTower implements TowerListener {
 
     private void scanTowers() {
         int dx, dy;
-        for (Tower t : this.context.towers) {
+        for (Tower t : this.context.getTowers()) {
             if (!this.clients.contains(t)) {
                 switch (t.getType()) {
                     case upgrade -> {
