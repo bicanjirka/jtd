@@ -2,43 +2,35 @@ package td;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelCatalog;
 import td.level.LevelDefinition;
 import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.ui.BoardOverlays;
 import td.ui.BoardRenderer;
 import td.ui.GameBoard;
 import td.ui.Java2DFrameRenderer;
+import td.ui.PanelGameConsole;
 import td.ui.PanelLevelSelect;
-import td.ui.PanelTowerInfo;
 import td.ui.PanelTowerSelector;
-import td.ui.PanelWaveInfo;
 import td.ui.render.AsciiBoardRenderer;
 import td.ui.render.RenderFrame;
-import td.economy.EconomyListener;
 import td.util.GameHost;
 import td.util.GameWorld;
 
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.border.TitledBorder;
 import java.awt.CardLayout;
 import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -68,10 +60,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private final BoardRenderer boardRenderer;
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
     private final AsciiBoardRenderer asciiBoardRenderer = new AsciiBoardRenderer();
+    private final PanelGameConsole gameConsole = new PanelGameConsole(NAME + " v" + VERSION);
+    private final BoardOverlays boardOverlays = new BoardOverlays();
     private final String statusMessage = """
             Welcome to TowerDefence
             Shortcuts:
-            
+
             q - build triangle
             w - build circle
             e - build spiral
@@ -100,30 +94,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private CardLayout contentCardLayout;
     private JPanel jPanel_game;
     private PanelLevelSelect panelLevelSelect;
-    private JButton jButton_play;
-    private JButton jButton_pause;
-    private JButton jButton_fast;
-    private JButton jButton_superFast;
-    private JLabel jLabel_waveText;
-    private JLabel jLabel_gameLostText;
-    private JLabel jLabel_gameWonText;
-    private JLabel jLabel_creditsText;
-    private JLabel jLabel_livesText;
-    private JLabel jLabel_name;
-    private JLabel jLabel_scoreText;
-    private JLabel jLabel_credits;
-    private JLabel jLabel_lives;
-    private JLabel jLabel_score;
-    private JLabel jLabel_wave;
     private PanelTowerSelector panelTowerSelector;
-    private JPanel jPanel_gameLost;
-    private JPanel jPanel_gameWon;
     private JPanel jPanel_board;
-    private JPanel jPanel_console;
-    private JPanel jPanel_gameButtons;
-    private JPanel jPanel_gameInfo;
-    private PanelTowerInfo panelTowerInfo;
-    private PanelWaveInfo panelWaveInfo;
 
     {
         this.setLayout(null);
@@ -141,9 +113,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.context.addEconomyListener(this);
         this.gameBoard = new GameBoard(this, this.context);
         initComponents();
-        this.panelWaveInfo.setGameWorld(this.context);
+        this.gameConsole.setGameWorld(this.context);
+        this.gameConsole.onPlay(this::playPressed);
+        this.gameConsole.onPause(this::pausePressed);
+        this.gameConsole.onFast(this::fastPressed);
+        this.gameConsole.onSuperFast(this::superFastPressed);
         this.panelTowerSelector.doInit(this.context, this);
-        this.panelTowerInfo.setGameWorld(this.context);
 
         this.jPanel_board.add(this.gameBoard);
 
@@ -204,8 +179,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.contentCardLayout.show(getContentPane(), CARD_GAME);
         this.engine.loadLevel(level);
         this.gameBoard.recalculateBoard(level.width(), level.height());
-        this.jPanel_gameLost.setVisible(false);
-        this.jPanel_gameWon.setVisible(false);
+        this.boardOverlays.reset();
         this.startLevel();
         this.gameTime = 0;
         this.setSpeed(TickSpeed.NORMAL);
@@ -215,7 +189,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     public void setInfoText(String s) {
         this.unSelectTower();
-        this.panelTowerInfo.setExternalText(s);
+        this.gameConsole.getTowerInfo().setExternalText(s);
     }
 
     /**
@@ -228,23 +202,20 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (enemiesLeft == 0 && this.engine.getCurrentWaveIndex() < this.engine.getWaveCount()) {
             LOG.info("Wave {} cleared, ready for the next one", this.engine.getCurrentWaveIndex());
             this.engine.setWaveReady(true);
-            SwingUtilities.invokeLater(() -> {
-                this.jButton_play.setVisible(true);
-                this.jButton_pause.setVisible(false);
-            });
+            SwingUtilities.invokeLater(() -> this.gameConsole.setPlaying(false));
         } else if (enemiesLeft == 0) {
             this.gameWon();
         }
     }
 
     private void setWavePreview() {
-        this.panelWaveInfo.clearWaves();
+        this.gameConsole.getWaveInfo().clearWaves();
         int wave = this.engine.getCurrentWaveIndex();
         if (wave - 1 >= 0) {
-            this.panelWaveInfo.setWaveCur(wave, this.engine.getWaveAt(wave - 1));
+            this.gameConsole.getWaveInfo().setWaveCur(wave, this.engine.getWaveAt(wave - 1));
         }
         if (wave < this.engine.getWaveCount()) {
-            this.panelWaveInfo.setWaveNext(wave + 1, this.engine.getWaveAt(wave));
+            this.gameConsole.getWaveInfo().setWaveNext(wave + 1, this.engine.getWaveAt(wave));
         }
     }
 
@@ -256,10 +227,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     private void updateInfo() {
-        this.jLabel_wave.setText("  " + this.engine.getCurrentWaveIndex() + "/" + this.engine.getWaveCount());
-        this.jLabel_credits.setText("$" + this.context.getCredits());
-        this.jLabel_lives.setText("" + this.context.getLives());
-        this.jLabel_score.setText("" + this.context.getScore());
+        this.gameConsole.setWaveProgress(this.engine.getCurrentWaveIndex(), this.engine.getWaveCount());
     }
 
     /** Also reachable from the game-loop thread - see enemyDied(). */
@@ -273,13 +241,13 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private void gameLost() {
         LOG.info("Game over - lost, score={}", this.context.getScore());
         this.gameStopped = true;
-        SwingUtilities.invokeLater(() -> this.jPanel_gameLost.setVisible(true));
+        SwingUtilities.invokeLater(this.boardOverlays::showLost);
     }
 
     private void gameWon() {
         LOG.info("Game won, score={}", this.context.getScore());
         this.gameStopped = true;
-        SwingUtilities.invokeLater(() -> this.jPanel_gameWon.setVisible(true));
+        SwingUtilities.invokeLater(this.boardOverlays::showWon);
     }
 
     public void startLevel() {
@@ -296,7 +264,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
                 this.updateInfo();
             });
         }
-        this.panelWaveInfo.doTick(time);
+        this.gameConsole.getWaveInfo().doTick(time);
     }
 
     /**
@@ -307,9 +275,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private void setSpeed(TickSpeed speed) {
         this.currentSpeed = speed;
         this.gameLoop.setSpeed(speed);
-        boolean playing = speed != TickSpeed.PAUSED;
-        this.jButton_play.setVisible(!playing);
-        this.jButton_pause.setVisible(playing);
+        this.gameConsole.setPlaying(speed != TickSpeed.PAUSED);
     }
 
     private void togglePause() {
@@ -340,8 +306,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     public void unSelectTower() {
         this.engine.unSelectTower();
-        this.panelTowerInfo.unselectTower();
-        this.panelTowerInfo.setExternalText(this.statusMessage);
+        this.gameConsole.getTowerInfo().unselectTower();
+        this.gameConsole.getTowerInfo().setExternalText(this.statusMessage);
     }
 
     public void clearCell(int x, int y) {
@@ -358,7 +324,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         int boardY = evt.getY() - this.gameBoard.getY();
         Tower selected = this.engine.mouseClicked(boardX, boardY);
         if (selected != null) {
-            this.panelTowerInfo.setTower(selected);
+            this.gameConsole.getTowerInfo().setTower(selected);
         }
         if (wasPlacing && !this.engine.isPlacingTower()) {
             this.panelTowerSelector.stopPlacing();
@@ -415,37 +381,13 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         GridBagConstraints gridBagConstraints;
 
         jPanel_board = new JPanel();
-        jPanel_gameLost = new JPanel();
-        jLabel_gameLostText = new JLabel();
-        jPanel_gameWon = new JPanel();
-        jLabel_gameWonText = new JLabel();
-        jPanel_console = new JPanel();
-        jLabel_name = new JLabel();
-        jPanel_gameInfo = new JPanel();
-        jLabel_waveText = new JLabel();
-        jLabel_wave = new JLabel();
-        jLabel_livesText = new JLabel();
-        jLabel_lives = new JLabel();
-        jLabel_scoreText = new JLabel();
-        jLabel_score = new JLabel();
-        jLabel_creditsText = new JLabel();
-        jLabel_credits = new JLabel();
-        jPanel_gameButtons = new JPanel();
-        jButton_play = new JButton();
-        jButton_pause = new JButton();
-        jButton_fast = new JButton();
-        jButton_superFast = new JButton();
-        panelTowerInfo = new PanelTowerInfo();
-        panelWaveInfo = new PanelWaveInfo();
-        panelTowerSelector = new PanelTowerSelector();
         jPanel_game = new JPanel();
+        panelTowerSelector = new PanelTowerSelector();
         panelLevelSelect = new PanelLevelSelect(this.levelCatalog.levels(), this::startSelectedLevel);
-
 
         contentCardLayout = new CardLayout();
         getContentPane().setLayout(contentCardLayout);
         jPanel_game.setLayout(new GridBagLayout());
-
 
         jPanel_board.setLayout(new GridBagLayout());
 
@@ -463,39 +405,13 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             }
         });
 
-        jPanel_gameLost.setLayout(new GridBagLayout());
-
-        jPanel_gameLost.setBackground(new Color(0, 0, 0, 80));
-        jLabel_gameLostText.setBackground(new Color(0, 0, 0));
-        jLabel_gameLostText.setFont(new Font("SansSerif", Font.BOLD, 18));
-        jLabel_gameLostText.setForeground(new Color(220, 255, 220));
-        jLabel_gameLostText.setText("Game Over!");
-        jPanel_gameLost.add(jLabel_gameLostText, new GridBagConstraints());
-
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 0.1;
         gridBagConstraints.weighty = 0.1;
-        jPanel_board.add(jPanel_gameLost, gridBagConstraints);
-
-        jPanel_gameWon.setLayout(new GridBagLayout());
-
-        jPanel_gameWon.setBackground(new Color(0, 0, 0, 80));
-        jLabel_gameWonText.setBackground(new Color(0, 0, 0));
-        jLabel_gameWonText.setFont(new Font("SansSerif", Font.BOLD, 18));
-        jLabel_gameWonText.setForeground(new Color(220, 255, 220));
-        jLabel_gameWonText.setText("Congratulations!");
-        jPanel_gameWon.add(jLabel_gameWonText, new GridBagConstraints());
-
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = GridBagConstraints.BOTH;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.weighty = 0.1;
-        jPanel_board.add(jPanel_gameWon, gridBagConstraints);
+        this.boardOverlays.addTo(jPanel_board, gridBagConstraints);
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -505,229 +421,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         gridBagConstraints.weighty = 0.1;
         jPanel_game.add(jPanel_board, gridBagConstraints);
 
-
-        jPanel_console.setLayout(new GridBagLayout());
-
-        jPanel_console.setBackground(new Color(0, 0, 0));
-        jPanel_console.setFocusable(false);
-        jPanel_console.setMaximumSize(new Dimension(200, 2147483647));
-        jPanel_console.setMinimumSize(new Dimension(200, 263));
-        jPanel_console.setPreferredSize(new Dimension(200, 402));
-
-        jLabel_name.setBackground(new Color(0, 0, 0));
-        jLabel_name.setFont(new Font("Dialog", Font.BOLD, 16));
-        jLabel_name.setForeground(new Color(220, 255, 220));
-        jLabel_name.setText(NAME + " v" + VERSION);
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
-        gridBagConstraints.insets = new Insets(4, 10, 4, 10);
-        jPanel_console.add(jLabel_name, gridBagConstraints);
-
-        jPanel_gameInfo.setLayout(new GridBagLayout());
-
-        jPanel_gameInfo.setBackground(new Color(0, 0, 0));
-        jPanel_gameInfo.setBorder(BorderFactory.createTitledBorder(null, "Status", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Dialog", Font.PLAIN, 11), new Color(220, 255, 220)));
-        jPanel_gameInfo.setForeground(new Color(220, 255, 220));
-        jPanel_gameInfo.setFocusable(false);
-        jLabel_waveText.setBackground(new Color(0, 0, 0));
-        jLabel_waveText.setForeground(new Color(220, 255, 220));
-        jLabel_waveText.setText("Wave:");
-        jLabel_waveText.setFocusable(false);
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
-        jPanel_gameInfo.add(jLabel_waveText, gridBagConstraints);
-
-        jLabel_wave.setBackground(new Color(0, 0, 0));
-        jLabel_wave.setForeground(new Color(220, 255, 220));
-        jLabel_wave.setHorizontalAlignment(SwingConstants.RIGHT);
-        jLabel_wave.setText("xx/xx");
-        jLabel_wave.setFocusable(false);
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
-        jPanel_gameInfo.add(jLabel_wave, gridBagConstraints);
-
-        jLabel_livesText.setBackground(new Color(0, 0, 0));
-        jLabel_livesText.setForeground(new Color(220, 255, 220));
-        jLabel_livesText.setText("Lives:");
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
-        gridBagConstraints.insets = new Insets(0, 2, 0, 2);
-        jPanel_gameInfo.add(jLabel_livesText, gridBagConstraints);
-
-        jLabel_lives.setBackground(new Color(0, 0, 0));
-        jLabel_lives.setForeground(new Color(220, 255, 220));
-        jLabel_lives.setHorizontalAlignment(SwingConstants.RIGHT);
-        jLabel_lives.setText("xx");
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
-        gridBagConstraints.insets = new Insets(0, 2, 0, 2);
-        jPanel_gameInfo.add(jLabel_lives, gridBagConstraints);
-
-        jLabel_scoreText.setBackground(new Color(0, 0, 0));
-        jLabel_scoreText.setForeground(new Color(220, 255, 220));
-        jLabel_scoreText.setText("Score:");
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
-        gridBagConstraints.insets = new Insets(0, 2, 0, 2);
-        jPanel_gameInfo.add(jLabel_scoreText, gridBagConstraints);
-
-        jLabel_score.setBackground(new Color(0, 0, 0));
-        jLabel_score.setForeground(new Color(220, 255, 220));
-        jLabel_score.setHorizontalAlignment(SwingConstants.RIGHT);
-        jLabel_score.setText("0000000");
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
-        gridBagConstraints.insets = new Insets(0, 2, 0, 0);
-        jPanel_gameInfo.add(jLabel_score, gridBagConstraints);
-
-        jLabel_creditsText.setBackground(new Color(0, 0, 0));
-        jLabel_creditsText.setForeground(new Color(220, 255, 220));
-        jLabel_creditsText.setText("Cash:");
-        jLabel_creditsText.setFocusable(false);
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
-        gridBagConstraints.insets = new Insets(0, 2, 0, 2);
-        jPanel_gameInfo.add(jLabel_creditsText, gridBagConstraints);
-
-        jLabel_credits.setBackground(new Color(0, 0, 0));
-        jLabel_credits.setForeground(new Color(220, 255, 220));
-        jLabel_credits.setHorizontalAlignment(SwingConstants.RIGHT);
-        jLabel_credits.setText("000000");
-        jLabel_credits.setFocusable(false);
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
-        gridBagConstraints.insets = new Insets(0, 2, 0, 0);
-        jPanel_gameInfo.add(jLabel_credits, gridBagConstraints);
-
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
-        gridBagConstraints.weightx = 0.01;
-        gridBagConstraints.insets = new Insets(0, 2, 0, 0);
-        jPanel_console.add(jPanel_gameInfo, gridBagConstraints);
-
-        jPanel_gameButtons.setLayout(new GridBagLayout());
-
-        jPanel_gameButtons.setBackground(new Color(0, 0, 0));
-        jPanel_gameButtons.setBorder(BorderFactory.createEtchedBorder());
-        jPanel_gameButtons.setFocusable(false);
-        jButton_play.setBackground(new Color(0, 0, 0));
-        jButton_play.setForeground(new Color(0, 0, 0));
-        jButton_play.setText(">");
-        jButton_play.setFocusable(false);
-        jButton_play.addActionListener(this::jButton_playActionPerformed);
-
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new Insets(5, 0, 0, 0);
-        jPanel_gameButtons.add(jButton_play, gridBagConstraints);
-
-        jButton_pause.setBackground(new Color(0, 0, 0));
-        jButton_pause.setForeground(new Color(0, 0, 0));
-        jButton_pause.setText("||");
-        jButton_pause.setFocusable(false);
-        jButton_pause.setVisible(false);
-        jButton_pause.addActionListener(this::jButton_pauseActionPerformed);
-
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new Insets(5, 0, 0, 0);
-        jPanel_gameButtons.add(jButton_pause, gridBagConstraints);
-
-        jButton_fast.setBackground(new Color(0, 0, 0));
-        jButton_fast.setForeground(new Color(0, 0, 0));
-        jButton_fast.setText(">>");
-        jButton_fast.setFocusable(false);
-        jButton_fast.addActionListener(this::jButton_fastActionPerformed);
-
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new Insets(5, 2, 0, 0);
-        jPanel_gameButtons.add(jButton_fast, gridBagConstraints);
-
-        jButton_superFast.setBackground(new Color(0, 0, 0));
-        jButton_superFast.setForeground(new Color(0, 0, 0));
-        jButton_superFast.setText(">>>");
-        jButton_superFast.setFocusable(false);
-        jButton_superFast.addActionListener(this::jButton_superFastActionPerformed);
-
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new Insets(5, 2, 0, 0);
-        jPanel_gameButtons.add(jButton_superFast, gridBagConstraints);
-
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.fill = GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
-        gridBagConstraints.weightx = 0.01;
-        jPanel_console.add(jPanel_gameButtons, gridBagConstraints);
-
-        panelTowerInfo.setFocusable(false);
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.fill = GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = GridBagConstraints.PAGE_START;
-        gridBagConstraints.weightx = 0.01;
-        gridBagConstraints.weighty = 0.1;
-        gridBagConstraints.insets = new Insets(0, 2, 0, 0);
-        jPanel_console.add(panelTowerInfo, gridBagConstraints);
-
-        panelWaveInfo.setMinimumSize(null);
-        panelWaveInfo.setName("Waving :)");
-        panelWaveInfo.setPreferredSize(null);
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 5;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.PAGE_END;
-        gridBagConstraints.insets = new Insets(0, 2, 0, 0);
-        jPanel_console.add(panelWaveInfo, gridBagConstraints);
-
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
@@ -735,8 +428,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         gridBagConstraints.fill = GridBagConstraints.VERTICAL;
         gridBagConstraints.anchor = GridBagConstraints.PAGE_END;
         gridBagConstraints.weighty = 1.0;
-        jPanel_game.add(jPanel_console, gridBagConstraints);
-
+        jPanel_game.add(this.gameConsole, gridBagConstraints);
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -750,21 +442,21 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         contentCardLayout.show(getContentPane(), CARD_MENU);
     }
 
-    private void jButton_playActionPerformed(ActionEvent evt) {
+    private void playPressed() {
         boolean wasPaused = this.currentSpeed == TickSpeed.PAUSED;
         this.setSpeed(TickSpeed.NORMAL);
         if (this.engine.isWaveReady() && wasPaused) this.engine.requestNextWave();
     }
 
-    private void jButton_pauseActionPerformed(ActionEvent evt) {
+    private void pausePressed() {
         this.setSpeed(TickSpeed.PAUSED);
     }
 
-    private void jButton_fastActionPerformed(ActionEvent evt) {
+    private void fastPressed() {
         this.setSpeed(TickSpeed.FAST);
     }
 
-    private void jButton_superFastActionPerformed(ActionEvent evt) {
+    private void superFastPressed() {
         this.setSpeed(TickSpeed.SUPER_FAST);
     }
 
