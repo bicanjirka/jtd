@@ -49,7 +49,7 @@ public final class BoardRenderer {
             enemy.accept(enemyFrameBuilder);
         }
 
-        TowerSpriteFrameBuilder spriteFrameBuilder = new TowerSpriteFrameBuilder();
+        TowerSpriteFrameBuilder spriteFrameBuilder = new TowerSpriteFrameBuilder(interpolationAlpha);
         TowerEffectFrameBuilder effectFrameBuilder = new TowerEffectFrameBuilder();
         for (Tower tower : this.engine.getTowers()) {
             tower.accept(spriteFrameBuilder);
@@ -59,6 +59,7 @@ public final class BoardRenderer {
         List<PathMarkerDraw> pathMarkers = PathMarkerFrameBuilder.build(this.context.getPath(), this.context.scale, animationSeconds);
 
         return new RenderFrame(this.context.scale, this.context.maxX, this.context.maxY,
-                cells, enemyFrameBuilder.build(), spriteFrameBuilder.build(), effectFrameBuilder.build(), pathMarkers);
+                cells, enemyFrameBuilder.build(), spriteFrameBuilder.build(), spriteFrameBuilder.buildHeads(),
+                effectFrameBuilder.build(), pathMarkers);
     }
 }

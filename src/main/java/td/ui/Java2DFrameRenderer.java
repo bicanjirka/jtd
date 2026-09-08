@@ -13,6 +13,7 @@ import td.ui.render.RenderFrame;
 import td.ui.render.SplashDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerSpriteDraw;
+import td.ui.render.TurretHeadDraw;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
@@ -69,6 +70,9 @@ public final class Java2DFrameRenderer {
         }
         for (TowerSpriteDraw sprite : frame.towerSprites()) {
             this.paintTowerSprite(g2, sprite, frame.scale());
+        }
+        for (TurretHeadDraw head : frame.towerHeads()) {
+            this.paintTurretHead(g2, head, frame.scale());
         }
         for (TowerEffectDraw effect : frame.towerEffects()) {
             this.paintTowerEffect(g2, effect);
@@ -333,6 +337,37 @@ public final class Java2DFrameRenderer {
         }
         p.closePath();
         return p;
+    }
+
+    /** How big a turret head is drawn relative to a cell - smaller than the base it sits on. */
+    private static final float TOWER_HEAD_SIZE_FRACTION = 0.24f;
+
+    private void paintTurretHead(Graphics2D g2, TurretHeadDraw head, int scale) {
+        AffineTransform save = g2.getTransform();
+        g2.translate(head.centerX(), head.centerY());
+        g2.rotate(head.headingRadians());
+        Shape shape = turretHeadShape(head.palette(), scale * TOWER_HEAD_SIZE_FRACTION * head.scale());
+        Color color = colorFor(head.palette());
+        g2.setColor(withAlpha(color, 200));
+        g2.fill(shape);
+        g2.setColor(color);
+        g2.draw(shape);
+        g2.setTransform(save);
+    }
+
+    /**
+     * Authored pointing along {@code +X} (heading {@code 0}) so {@link Graphics2D#rotate(double)}
+     * alone aims an aiming tower's head correctly - see {@link TurretHeadDraw}'s doc comment.
+     * The two spinning towers (three/four) have no such concern (any starting phase looks
+     * equally valid while continuously spinning) and are added in a later phase, along with the
+     * upgrade tower's pulsing (rotation-independent) head.
+     */
+    private static Shape turretHeadShape(Palette palette, float size) {
+        return switch (palette) {
+            case TOWER_ONE_BODY -> new Rectangle2D.Float(0, -size * 0.22f, size * 1.3f, size * 0.44f);
+            case TOWER_TWO_BODY -> new Rectangle2D.Float(0, -size * 0.42f, size * 0.95f, size * 0.84f);
+            default -> throw new IllegalStateException("No turret head art yet for: " + palette);
+        };
     }
 
     private void paintUpgradeBody(Graphics2D g2, float size) {
