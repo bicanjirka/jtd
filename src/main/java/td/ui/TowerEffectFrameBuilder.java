@@ -7,6 +7,7 @@ import td.tower.TowerThree;
 import td.tower.TowerTwo;
 import td.tower.TowerUpgrade;
 import td.tower.TowerVisitor;
+import td.ui.render.AuraDraw;
 import td.ui.render.BeamDraw;
 import td.ui.render.Palette;
 import td.ui.render.PulseDraw;
@@ -17,13 +18,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Describes each tower's transient targeting effect (beam, splash, pulse) as
- * {@link TowerEffectDraw} commands. One visit method per concrete tower type,
- * since - unlike the sprite - these genuinely differ by tower.
+ * Describes each tower's transient targeting effect (beam, splash, pulse, or - for the upgrade
+ * tower, which never attacks - an aura) as {@link TowerEffectDraw} commands. One visit method
+ * per concrete tower type, since - unlike the sprite - these genuinely differ by tower.
  */
 public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
+    // Two rings half a period apart read as a continuous "breathing" aura rather than one ring
+    // blinking in and out; purely cosmetic, so this is a function of elapsed time like the
+    // spinning turret heads, not tick-based domain state.
+    private static final double AURA_PERIOD_SECONDS = 1.8;
+    private static final double[] AURA_PHASE_OFFSETS = {0.0, 0.5};
+
     private final List<TowerEffectDraw> draws = new ArrayList<>();
+    private final double animationSeconds;
+
+    public TowerEffectFrameBuilder(double animationSeconds) {
+        this.animationSeconds = animationSeconds;
+    }
 
     public List<TowerEffectDraw> build() {
         return this.draws;
@@ -81,6 +93,18 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     public Void visitTowerUpgrade(TowerUpgrade tower) {
+        float maxRadius = tower.getRangeReal();
+        for (double phaseOffset : AURA_PHASE_OFFSETS) {
+            double phase = phaseFraction(this.animationSeconds, phaseOffset);
+            this.draws.add(new AuraDraw(Palette.TOWER_UPGRADE_AURA, tower.getX(), tower.getY(),
+                    (float) (phase * maxRadius), (float) (1.0 - phase)));
+        }
         return null;
+    }
+
+    /** Where in a looping {@code [0, 1)} cycle {@code seconds} sits, offset by {@code phaseOffset}. */
+    private static double phaseFraction(double seconds, double phaseOffset) {
+        double t = (seconds / AURA_PERIOD_SECONDS + phaseOffset) % 1.0;
+        return t < 0 ? t + 1.0 : t;
     }
 }

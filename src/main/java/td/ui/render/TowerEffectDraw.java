@@ -1,5 +1,5 @@
 package td.ui.render;
 
-/** A tower's transient targeting effect: a beam, a splash fill, or a firing pulse. */
-public sealed interface TowerEffectDraw permits BeamDraw, SplashDraw, PulseDraw {
+/** A tower's transient effect: a beam, a splash fill, a firing pulse, or an upgrade aura. */
+public sealed interface TowerEffectDraw permits BeamDraw, SplashDraw, PulseDraw, AuraDraw {
 }
