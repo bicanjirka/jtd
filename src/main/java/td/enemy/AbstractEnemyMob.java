@@ -5,34 +5,41 @@ import org.slf4j.LoggerFactory;
 import td.damage.Damage;
 import td.economy.EconomyDelta;
 import td.util.Context;
-import td.wave.Path;
+import td.wave.ArcLengthPath;
+import td.wave.PathPose;
 import td.wave.Point;
+import td.wave.Vec2;
+
+import java.util.Optional;
 
 public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractEnemyMob.class);
 
+    // Rescaled from the old fixed-point model (speed=40 meant "40/1000 of the current
+    // segment per tick", which - since every segment was exactly one 32px cell - worked out
+    // to 40/1000*32 = 1.28 px/tick). speed is now pixels per tick directly, so every existing
+    // enemy's actual speed is unchanged; only the unit it's expressed in is.
     protected type type;
     protected boolean inactive = true;
     protected boolean validTarget = false;
     protected boolean dead = false;
     protected int price;
     protected int level;
-    protected int x, y;
-    private int prevX, prevY;
-    protected int speed = 40;
-    protected int speedMax = 40;
-    protected final int speedBase = 40;
+    protected double x, y;
+    private double prevX, prevY;
+    protected float speed = 1.28f;
+    protected float speedMax = 1.28f;
+    protected final float speedBase = 1.28f;
     protected int health;
     protected int healthMax;
     protected Context context;
     private int delay;
     private int deathTick = -1;
-    private Path path;
-    private int segment = 0;
-    private int segmentProgression = 0;
-    private Point segmentStartPoint;
-    private Point segmentEndPoint;
+    private ArcLengthPath arcLengthPath;
+    private Vec2 stationaryPosition;
+    private double distanceIntoLap = 0;
+    private double lastFacingRadians = 0;
 
 
     public AbstractEnemyMob() {
@@ -45,15 +52,25 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         this.level = level;
         this.health = health * 100;
         this.healthMax = health * 100;
-        this.path = this.context.getPath();
+        Optional<ArcLengthPath> arcLength = ArcLengthPath.of(this.context.getPath());
+        this.arcLengthPath = arcLength.orElse(null);
+        // A degenerate path (PathEmpty, or a not-yet-finalised path in a test) has nothing to
+        // measure distance along - hold at its one available point rather than move at all.
+        // Path.getStep still returns the int-pixel Point at this point in the refactor.
+        Point firstStep = this.context.getPath().getStep(0);
+        this.stationaryPosition = new Vec2(firstStep.x(), firstStep.y());
+        this.distanceIntoLap = 0;
         this.x = 0;
         this.y = 0;
-        this.delay = Math.round(700f * delay / this.speed);
+        // Rescaled the same way speed was (700f -> 700f*0.032 = 22.4f) so spawn timing is
+        // unchanged now that speed is a direct px/tick value rather than a 0-999-per-segment
+        // fixed-point unit.
+        this.delay = Math.round(22.4f * delay / this.speed);
         if (delay == 0) {
             this.inactive = false;
             this.validTarget = true;
         }
-        this.resetPosition();
+        this.updatePosition();
         // No prior tick to interpolate from at spawn - start with prev == current.
         this.prevX = this.x;
         this.prevY = this.y;
@@ -94,11 +111,11 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         return incoming;
     }
 
-    public int getX() {
+    public double getX() {
         return this.x;
     }
 
-    public int getY() {
+    public double getY() {
         return this.y;
     }
 
@@ -107,20 +124,26 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
      * landing between two ticks. Equal to getX()/getY() at spawn and immediately after a
      * path-end wrap, where there is nothing meaningful to interpolate from.
      */
-    public int getPrevX() {
+    public double getPrevX() {
         return this.prevX;
     }
 
-    public int getPrevY() {
+    public double getPrevY() {
         return this.prevY;
     }
 
-    public int getSpeed() {
+    public float getSpeed() {
         return this.speed;
     }
 
+    /**
+     * A coarse "how far into this lap of the path" ranking value, used only to compare two
+     * enemies on the same path (see FurthestAlongPathSelector) - sub-pixel precision has no
+     * practical effect on that ranking, so this stays an int rather than widening to match
+     * the double-precision position/distance it's derived from.
+     */
     public int getProgression() {
-        return 1000 * this.segment + this.segmentProgression;
+        return (int) this.distanceIntoLap;
     }
 
     public boolean validTarget() {
@@ -168,11 +191,29 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         return Math.min(255, Math.max(alpha, 0));
     }
 
-    private void resetPosition() {
-        this.segmentStartPoint = this.path.getStep(this.segment);
-        this.segmentEndPoint = this.path.getStep(this.segment + 1);
-        this.x = this.segmentStartPoint.x() + (this.segmentEndPoint.x() - this.segmentStartPoint.x()) * this.segmentProgression / 1000;
-        this.y = this.segmentStartPoint.y() + (this.segmentEndPoint.y() - this.segmentStartPoint.y()) * this.segmentProgression / 1000;
+    /**
+     * Recomputes x/y (and, while moving, the precise path-facing angle) from the current
+     * arcLengthPath/distanceIntoLap state. A degenerate path (see doInit) has nothing to
+     * measure distance along, so it just holds at its one available point.
+     */
+    private void updatePosition() {
+        if (this.arcLengthPath != null) {
+            PathPose pose = this.arcLengthPath.poseAt(this.distanceIntoLap);
+            this.x = pose.position().x();
+            this.y = pose.position().y();
+            this.lastFacingRadians = pose.facingRadians();
+        } else {
+            this.x = this.stationaryPosition.x();
+            this.y = this.stationaryPosition.y();
+        }
+    }
+
+    /**
+     * The path's own facing direction at this mob's current position - exact, geometry-based,
+     * not derived from a pixel delta over one tick (see {@link AbstractEnemyMobDirectional}).
+     */
+    protected double getPathFacingRadians() {
+        return this.lastFacingRadians;
     }
 
     public void doTick(int gameTime) {
@@ -193,20 +234,16 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
             this.prevX = this.x;
             this.prevY = this.y;
             boolean wrappedToPathStart = false;
-            this.segmentProgression += this.speed;
-            if (this.segmentProgression >= 1000) {
-                this.segmentProgression -= 1000;
-                this.segment++;
-                if (this.segment >= this.path.length()) {
-                    this.segment = 0;
+            if (this.arcLengthPath != null) {
+                this.distanceIntoLap += this.speed;
+                double totalLength = this.arcLengthPath.totalLength();
+                if (this.distanceIntoLap >= totalLength) {
+                    this.distanceIntoLap -= totalLength;
                     wrappedToPathStart = true;
                     this.context.apply(EconomyDelta.leak(this.price == 0 ? 10 : this.price));
                 }
-                this.segmentStartPoint = this.path.getStep(this.segment);
-                this.segmentEndPoint = this.path.getStep(this.segment + 1);
             }
-            this.x = this.segmentStartPoint.x() + (this.segmentEndPoint.x() - this.segmentStartPoint.x()) * this.segmentProgression / 1000;
-            this.y = this.segmentStartPoint.y() + (this.segmentEndPoint.y() - this.segmentStartPoint.y()) * this.segmentProgression / 1000;
+            this.updatePosition();
             this.validTarget = this.x >= 0 && this.x <= this.context.maxX && this.y >= 0 && this.y <= this.context.maxY;
             if (wrappedToPathStart) {
                 // Reappearing at the path's start is a genuine teleport, not motion along

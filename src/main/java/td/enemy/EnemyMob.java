@@ -8,9 +8,9 @@ public interface EnemyMob {
 
     <R> R accept(EnemyMobVisitor<R> visitor);
 
-    int getX();
+    double getX();
 
-    int getY();
+    double getY();
 
     int getProgression();
 
@@ -26,7 +26,7 @@ public interface EnemyMob {
 
     void doDamage(Damage damage);
 
-    int getSpeed();
+    float getSpeed();
 
     String getInfoString();
 

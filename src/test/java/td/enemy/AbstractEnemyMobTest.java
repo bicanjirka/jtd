@@ -8,6 +8,7 @@ import td.wave.PathNormal;
 import td.wave.RecordingCell;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /**
  * Exercises AbstractEnemyMob's damage/death and doTick movement, through
@@ -51,8 +52,8 @@ class AbstractEnemyMobTest {
     void enemyStaysInactiveUntilItsDelayElapses() {
         Context context = newContext();
         int delayArg = 1;
-        int speed = 40; // AbstractEnemyMob's default speed field
-        int expectedActivationTick = Math.round(700f * delayArg / speed);
+        float speed = 1.28f; // AbstractEnemyMob's default speed field, in pixels/tick
+        int expectedActivationTick = Math.round(22.4f * delayArg / speed);
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, delayArg, 50, 3, 1);
         assertThat(enemy.validTarget()).isFalse();
@@ -114,19 +115,51 @@ class AbstractEnemyMobTest {
     }
 
     @Test
-    void doTickMovesEnemyAlongPathProportionally() {
+    void oneTickAdvancesTheEnemyBySpeedPixelsAlongTheCurrentSegment() {
         Context context = newContext();
-        context.setPath(straightPath(10, 0, 10));
+        context.setPath(straightPath(1, 0, 100)); // one straight segment, 100px long at scale 1
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
-        // pixel centers: step0=(5,5), step1=(105,5); speed=40 => 40/1000 of the way after 1 tick
-        assertThat(enemy.getX()).isEqualTo(5);
-        assertThat(enemy.getY()).isEqualTo(5);
+        assertThat(enemy.getX()).isEqualTo(0.0);
+        assertThat(enemy.getY()).isEqualTo(0.0);
 
         enemy.doTick(1);
 
-        assertThat(enemy.getX()).isEqualTo(9); // 5 + (105-5)*40/1000
-        assertThat(enemy.getY()).isEqualTo(5);
+        assertThat(enemy.getX()).isCloseTo(enemy.getSpeed(), within(1e-9));
+        assertThat(enemy.getY()).isEqualTo(0.0);
+    }
+
+    /**
+     * This is the behavior the old fixed-point model got wrong: every segment used to take
+     * the same number of ticks to cross regardless of its physical length (segmentProgression
+     * always ran 0-999 once per segment). Real arc-length movement crosses a segment twice as
+     * long in (roughly) twice as many ticks - this is what "distance-based progression" means,
+     * and what makes a smoothed, curved path move at a consistent real-world pace.
+     */
+    @Test
+    void crossingASegmentTwiceAsLongTakesRoughlyTwiceAsManyTicks() {
+        Context context = newContext();
+        // segment lengths 10, then 20, then a trailing 1 so reaching x=30 happens strictly
+        // before the path wraps (which would otherwise snap x back near 0 exactly at x=30,
+        // and the loop below would never observe x >= 30).
+        context.setPath(straightPath(1, 0, 10, 30, 31));
+
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+
+        int tick = 0;
+        while (enemy.getX() < 10.0) {
+            tick++;
+            enemy.doTick(tick);
+        }
+        int ticksForFirstSegment = tick;
+
+        while (enemy.getX() < 30.0) {
+            tick++;
+            enemy.doTick(tick);
+        }
+        int ticksForSecondSegment = tick - ticksForFirstSegment;
+
+        assertThat(Math.abs(ticksForSecondSegment - 2 * ticksForFirstSegment)).isLessThanOrEqualTo(1);
     }
 
     @Test
@@ -170,8 +203,8 @@ class AbstractEnemyMobTest {
         // nothing to interpolate from at spawn
         assertThat(mob.getPrevX()).isEqualTo(mob.getX());
         assertThat(mob.getPrevY()).isEqualTo(mob.getY());
-        int spawnX = mob.getX();
-        int spawnY = mob.getY();
+        double spawnX = mob.getX();
+        double spawnY = mob.getY();
 
         enemy.doTick(1);
 

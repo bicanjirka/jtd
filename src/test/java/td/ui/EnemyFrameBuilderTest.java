@@ -71,8 +71,8 @@ class EnemyFrameBuilderTest {
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
         enemy.doTick(1);
-        float expectedX = (mob.getPrevX() + mob.getX()) / 2f;
-        float expectedY = (mob.getPrevY() + mob.getY()) / 2f;
+        float expectedX = (float) ((mob.getPrevX() + mob.getX()) / 2.0);
+        float expectedY = (float) ((mob.getPrevY() + mob.getY()) / 2.0);
 
         EnemyBodyDraw draw = bodyDrawAt(enemy, 1, 0.5);
 

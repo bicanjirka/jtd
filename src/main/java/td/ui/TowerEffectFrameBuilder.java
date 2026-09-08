@@ -37,7 +37,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         EnemyMob target = tower.getCurrentTarget();
         if (target != null) {
             this.draws.add(new BeamDraw(Palette.TOWER_ONE_BEAM, tower.getX(), tower.getY(),
-                    target.getX(), target.getY(), beamWidth(tower.getCoolDownFraction())));
+                    (float) target.getX(), (float) target.getY(), beamWidth(tower.getCoolDownFraction())));
         }
         return null;
     }
@@ -46,10 +46,10 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         EnemyMob target = tower.getPrimaryTarget();
         if (target != null) {
             this.draws.add(new BeamDraw(Palette.TOWER_TWO_BEAM, tower.getX(), tower.getY(),
-                    target.getX(), target.getY(), beamWidth(tower.getCoolDownFraction())));
+                    (float) target.getX(), (float) target.getY(), beamWidth(tower.getCoolDownFraction())));
             for (EnemyMob splashTarget : tower.getSplashTargets()) {
-                this.draws.add(new BeamDraw(Palette.TOWER_TWO_SPLASH_LINE, target.getX(), target.getY(),
-                        splashTarget.getX(), splashTarget.getY(), 1.0f));
+                this.draws.add(new BeamDraw(Palette.TOWER_TWO_SPLASH_LINE, (float) target.getX(), (float) target.getY(),
+                        (float) splashTarget.getX(), (float) splashTarget.getY(), 1.0f));
             }
         }
         if (tower.isSplashVisible()) {

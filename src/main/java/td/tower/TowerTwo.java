@@ -46,16 +46,16 @@ public final class TowerTwo extends AbstractTower {
 
             if (!enemies.isEmpty()) {
                 this.primaryTarget = enemies.get((int) (Math.random() * enemies.size()));
-                int ex = this.primaryTarget.getX();
-                int ey = this.primaryTarget.getY();
+                int ex = (int) this.primaryTarget.getX();
+                int ey = (int) this.primaryTarget.getY();
                 int dx, dy, r2;
                 int damage;
 
                 this.splashTargets = this.findEnemiesInRange(ex, ey, this.spreadRadius);
 
                 for (EnemyMob splashTarget : this.splashTargets) {
-                    dx = ex - splashTarget.getX();
-                    dy = ey - splashTarget.getY();
+                    dx = ex - (int) splashTarget.getX();
+                    dy = ey - (int) splashTarget.getY();
                     r2 = dx * dx + dy * dy;
                     damage = Math.round(this.damageCurrent * (1 - r2 / (this.spreadRadius * this.spreadRadius)));
                     this.dealDamage(splashTarget, Damage.of(damage));
