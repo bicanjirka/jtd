@@ -237,11 +237,16 @@ public final class Java2DFrameRenderer {
     /** How much of a cell a tower body fills - leaves a small margin, same spirit as enemy bodies. */
     private static final float TOWER_BODY_SIZE_FRACTION = 0.42f;
 
+    /** A representative static pose for a toolbar icon's head - pointing up on screen. */
+    private static final double ICON_HEAD_HEADING_RADIANS = -Math.PI / 2;
+
     /**
-     * Rasterizes one tower body into a standalone icon - used for the toolbar's
+     * Rasterizes one tower's base+head into a standalone icon - used for the toolbar's
      * {@code JToggleButton} icons, which need a Swing {@code Icon} rather than a live paint.
-     * The board and the toolbar are the same {@link #paintTowerBody} call at two different
-     * sizes, so a tower never needs separate board/icon art.
+     * The board and the toolbar share the same {@link #paintTowerBody}/head-shape calls at two
+     * different sizes, so a tower never needs separate board/icon art. The head is drawn at a
+     * fixed representative heading and neutral (non-pulsing) scale, since a static icon has no
+     * target to aim at and no animation clock.
      */
     public BufferedImage renderTowerIcon(Palette palette, int size) {
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
@@ -249,6 +254,8 @@ public final class Java2DFrameRenderer {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.translate(size / 2.0, size / 2.0);
         this.paintTowerBody(g2, palette, size * TOWER_BODY_SIZE_FRACTION);
+        g2.rotate(ICON_HEAD_HEADING_RADIANS);
+        this.paintHeadShape(g2, palette, size * TOWER_HEAD_SIZE_FRACTION);
         g2.dispose();
         return image;
     }
@@ -347,13 +354,18 @@ public final class Java2DFrameRenderer {
         AffineTransform save = g2.getTransform();
         g2.translate(head.centerX(), head.centerY());
         g2.rotate(head.headingRadians());
-        Shape shape = turretHeadShape(head.palette(), scale * TOWER_HEAD_SIZE_FRACTION * head.scale());
-        Color color = colorFor(head.palette());
+        this.paintHeadShape(g2, head.palette(), scale * TOWER_HEAD_SIZE_FRACTION * head.scale());
+        g2.setTransform(save);
+    }
+
+    /** Draws a turret head shape centred on the origin - the caller has already translated/rotated {@code g2}. */
+    private void paintHeadShape(Graphics2D g2, Palette palette, float size) {
+        Shape shape = turretHeadShape(palette, size);
+        Color color = colorFor(palette);
         g2.setColor(withAlpha(color, 200));
         g2.fill(shape);
         g2.setColor(color);
         g2.draw(shape);
-        g2.setTransform(save);
     }
 
     /**
