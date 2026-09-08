@@ -31,6 +31,12 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     private static final double TOWER_THREE_SPIN_RADIANS_PER_SECOND = 3.5;
     private static final double TOWER_FOUR_SPIN_RADIANS_PER_SECOND = -2.0;
 
+    // The upgrade tower's head pulses (scale, not heading) via a sine wave instead of spinning -
+    // same "function of elapsed time" reasoning as the two constants above.
+    private static final double TOWER_UPGRADE_PULSE_RADIANS_PER_SECOND = 2.4;
+    private static final float TOWER_UPGRADE_PULSE_MIN_SCALE = 0.8f;
+    private static final float TOWER_UPGRADE_PULSE_MAX_SCALE = 1.25f;
+
     private final List<TowerSpriteDraw> draws = new ArrayList<>();
     private final List<TurretHeadDraw> headDraws = new ArrayList<>();
     private final double interpolationAlpha;
@@ -69,10 +75,14 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
                 tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal()));
     }
 
-    /** A head with no pulsing - every tower but the upgrade tower uses a constant nominal size. */
+    /** A head with a constant nominal size - every tower but the (pulsing) upgrade tower. */
     private void head(Tower tower, double headingRadians) {
+        this.headWithScale(tower, headingRadians, 1.0f);
+    }
+
+    private void headWithScale(Tower tower, double headingRadians, float scale) {
         this.headDraws.add(new TurretHeadDraw(bodyPaletteFor(tower.getType()), tower.getX(), tower.getY(),
-                (float) headingRadians, 1.0f));
+                (float) headingRadians, scale));
     }
 
     public Void visitTowerOne(TowerOne tower) {
@@ -99,10 +109,11 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
-    // TowerUpgrade (pulsing) renders base-only for now, same as every tower before turret heads
-    // existed - no head() call yet.
     public Void visitTowerUpgrade(TowerUpgrade tower) {
         this.sprite(tower);
+        double phase = 0.5 + 0.5 * Math.sin(this.animationSeconds * TOWER_UPGRADE_PULSE_RADIANS_PER_SECOND);
+        float scale = (float) (TOWER_UPGRADE_PULSE_MIN_SCALE + (TOWER_UPGRADE_PULSE_MAX_SCALE - TOWER_UPGRADE_PULSE_MIN_SCALE) * phase);
+        this.headWithScale(tower, 0.0, scale);
         return null;
     }
 }

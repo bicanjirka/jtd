@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.ui.render.AuraDraw;
 import td.ui.render.BeamDraw;
 import td.ui.render.CellDraw;
 import td.ui.render.EnemyBodyDraw;
@@ -365,8 +366,9 @@ public final class Java2DFrameRenderer {
      * out to be visually indistinguishable from standing still, since both are the same hue.
      * TOWER_THREE gets a thin sweep arm through the centre (a "radar hand"); TOWER_FOUR gets a
      * small star orbiting off-centre (a "moon") - both echo their base's own shape family
-     * (rectangle/star) while clearing the base's edge. The upgrade tower's pulsing head is
-     * added in a later phase.
+     * (rectangle/star) while clearing the base's edge. TOWER_UPGRADE's head ignores rotation
+     * entirely (it pulses via {@link TurretHeadDraw#scale()} instead) so a plain circle needs
+     * no special orientation.
      */
     private static Shape turretHeadShape(Palette palette, float size) {
         return switch (palette) {
@@ -377,7 +379,8 @@ public final class Java2DFrameRenderer {
                 Shape moon = starShape(5, size * 0.9f, size * 0.9f * 0.45f);
                 yield AffineTransform.getTranslateInstance(size * 2.0, 0).createTransformedShape(moon);
             }
-            default -> throw new IllegalStateException("No turret head art yet for: " + palette);
+            case TOWER_UPGRADE_BODY -> circleShape(size);
+            default -> throw new IllegalStateException("Not a tower head palette: " + palette);
         };
     }
 
@@ -398,7 +401,19 @@ public final class Java2DFrameRenderer {
             case BeamDraw beam -> this.paintBeam(g2, beam);
             case SplashDraw splash -> this.paintFilledCircle(g2, splash.palette(), splash.centerX(), splash.centerY(), splash.radius());
             case PulseDraw pulse -> this.paintFilledCircle(g2, pulse.palette(), pulse.centerX(), pulse.centerY(), pulse.radius());
+            case AuraDraw aura -> this.paintAura(g2, aura);
         }
+    }
+
+    private void paintAura(Graphics2D g2, AuraDraw aura) {
+        if (aura.radius() <= 0) {
+            return;
+        }
+        Stroke defaultStroke = g2.getStroke();
+        g2.setColor(withAlpha(colorFor(aura.palette()), Math.round(aura.alpha() * 255)));
+        g2.setStroke(new BasicStroke(2.0f));
+        g2.draw(new Ellipse2D.Float(aura.centerX() - aura.radius(), aura.centerY() - aura.radius(), aura.radius() * 2, aura.radius() * 2));
+        g2.setStroke(defaultStroke);
     }
 
     private void paintBeam(Graphics2D g2, BeamDraw beam) {
@@ -427,6 +442,7 @@ public final class Java2DFrameRenderer {
             case TOWER_THREE_BODY -> Color.YELLOW;
             case TOWER_FOUR_BODY -> Color.ORANGE;
             case TOWER_UPGRADE_BODY -> Color.WHITE;
+            case TOWER_UPGRADE_AURA -> Color.WHITE;
             case TOWER_ONE_BEAM -> Color.GREEN;
             case TOWER_TWO_BEAM -> Color.RED;
             case TOWER_TWO_SPLASH_LINE, TOWER_TWO_SPLASH_FILL -> withAlpha(Color.RED, 80);
