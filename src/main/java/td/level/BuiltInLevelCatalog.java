@@ -52,7 +52,7 @@ public class BuiltInLevelCatalog implements LevelCatalog {
             12, 10,
             List.of(
                     new Point(-1, 5), new Point(3, 5), new Point(3, 8), new Point(7, 8),
-                    new Point(7, 2), new Point(10, 2), new Point(10, 9), new Point(12, 9)),
+                    new Point(10, 2), new Point(10, 9), new Point(12, 9)),
             List.of(
                     new WaveDefinition("c e c e c e c", 200, 2, 1),
                     new WaveDefinition("5 c", 280, 2, 1),
