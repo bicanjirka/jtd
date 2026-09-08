@@ -25,6 +25,22 @@ class QuadraticBezierSmoothingTest {
     }
 
     @Test
+    void theMidpointSampleMatchesTheQuadraticBezierFormulaForANonRightAngleCorner() {
+        // same 6-8-10 triangle corner as ArcCornerSmoothingTest's non-right-angle case (about
+        // 53 degrees, neither 90 nor 45) - the bezier formula is angle-agnostic by construction,
+        // but this proves it directly rather than only for a 90 degree corner.
+        Vec2 before = new Vec2(5, 0);
+        Vec2 corner = new Vec2(10, 0);
+        Vec2 after = new Vec2(13, 4);
+
+        List<Vec2> samples = new QuadraticBezierSmoothing(0.5, 1).sampleCorner(before, corner, after, 1);
+
+        assertThat(samples).hasSize(1);
+        assertThat(samples.get(0).x()).isCloseTo(9.5, within(1e-9));
+        assertThat(samples.get(0).y()).isCloseTo(1.0, within(1e-9));
+    }
+
+    @Test
     void endToEndSmoothingPullsBackTheCornerBeforeCurving() {
         List<Vec2> path = List.of(new Vec2(0, 0), new Vec2(10, 0), new Vec2(10, 10));
 

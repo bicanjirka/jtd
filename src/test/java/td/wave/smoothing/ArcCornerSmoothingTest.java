@@ -29,6 +29,25 @@ class ArcCornerSmoothingTest {
     }
 
     @Test
+    void aNonRightAngleCornersArcIsStillCenteredOnTheTangentCircleIntersection() {
+        // pulledBackBefore=(5,0), corner=(10,0), pulledBackAfter=(13,4) - a 6-8-10 triangle
+        // corner turning about 53 degrees, neither 90 nor 45, proving the tangent-circle
+        // construction was never angle-specific. Solving the two tangent-line perpendiculars
+        // independently of the production code gives center (5,10), radius 10.
+        Vec2 before = new Vec2(5, 0);
+        Vec2 corner = new Vec2(10, 0);
+        Vec2 after = new Vec2(13, 4);
+
+        List<Vec2> samples = new ArcCornerSmoothing(0.5, 8).sampleCorner(before, corner, after, 8);
+
+        assertThat(samples).hasSize(8);
+        for (Vec2 p : samples) {
+            double distanceFromCenter = Math.hypot(p.x() - 5, p.y() - 10);
+            assertThat(distanceFromCenter).isCloseTo(10.0, within(1e-9));
+        }
+    }
+
+    @Test
     void theArcBulgesTowardTheCornerRatherThanAwayFromIt() {
         Vec2 before = new Vec2(5, 0);
         Vec2 corner = new Vec2(10, 0);

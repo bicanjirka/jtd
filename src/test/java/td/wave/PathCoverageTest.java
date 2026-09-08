@@ -51,6 +51,19 @@ class PathCoverageTest {
     }
 
     @Test
+    void aDiagonalSegmentCoversTheCellsAlongItsActualLineNotJustAxisAlignedNeighbors() {
+        // (16,16) -> (144,144) is cell-center to cell-center, a full 45 degree diagonal across
+        // a 4x4 grid - not axis-aligned, proving buildability follows the raw path's real
+        // geometry even when the unsmoothed path itself is diagonal, not just a smoothed curve.
+        List<Vec2> polyline = List.of(new Vec2(16, 16), new Vec2(144, 144));
+
+        Set<Point> covered = PathCoverage.unbuildableCells(polyline, SCALE, 4, 4);
+
+        assertThat(covered).contains(new Point(0, 0), new Point(1, 1), new Point(2, 2), new Point(3, 3));
+        assertThat(covered).doesNotContain(new Point(0, 3), new Point(3, 0));
+    }
+
+    @Test
     void nothingIsCoveredWhenThePathsBoundingBoxDoesNotReachTheGrid() {
         List<Vec2> polyline = List.of(new Vec2(5000, 5000), new Vec2(6000, 6000));
 
