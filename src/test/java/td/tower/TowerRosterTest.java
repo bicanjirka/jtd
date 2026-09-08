@@ -3,7 +3,7 @@ package td.tower;
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.economy.EconomyLedger;
-import td.util.Context;
+import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ class TowerRosterTest {
     private final RecordingGameHost host = new RecordingGameHost();
     private final EconomyLedger economy = new EconomyLedger();
     private final TowerRoster roster = new TowerRoster(host, economy, () -> BoardGeometry.of(32, 10, 10));
-    private final Context context = new Context(host);
+    private final GameWorld context = new GameWorld(host);
 
     private Tower aTower() {
         return TowerFactory.createTower(TowerFactory.type.first, context, 2, 3);

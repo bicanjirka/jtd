@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.tower.Tower;
-import td.util.Context;
+import td.util.GameWorld;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -30,7 +30,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private Context context;
+    private GameWorld context;
     private Tower selectedTower;
     private JButton jButton_sell;
     private JPanel jPanel_buttons;
@@ -81,7 +81,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         this.selectedTower = null;
     }
 
-    public void setContext(Context context) {
+    public void setGameWorld(GameWorld context) {
         this.context = context;
         this.context.addEconomyListener(this);
     }
@@ -94,7 +94,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         }
     }
 
-    /** Also reachable from the game-loop thread - see Context.apply()'s callers. */
+    /** Also reachable from the game-loop thread - see GameWorld.apply()'s callers. */
     public void economyChanged(EconomyState state) {
         SwingUtilities.invokeLater(this::updateInterface);
     }

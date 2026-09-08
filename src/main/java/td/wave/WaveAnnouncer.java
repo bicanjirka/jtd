@@ -5,7 +5,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * The "a wave just started" broadcast - orthogonal to the economy, enemy roster, and tower
- * roster, despite having lived bundled alongside them in Context. TowerThree is the only
+ * roster, despite having lived bundled alongside them in GameWorld. TowerThree is the only
  * subscriber today, resetting its round-robin target index for the new wave.
  */
 public class WaveAnnouncer {

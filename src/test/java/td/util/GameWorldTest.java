@@ -13,16 +13,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Context is the shared mutable world (the tower list, the enemy roster, the
+ * GameWorld is the shared mutable world (the tower list, the enemy roster, the
  * wave-start hub) that GameEngineTest exercises only incidentally through
  * gameplay flows. These tests pin down its own wiring directly: that each
  * listener family actually fires. Economy-specific behavior is covered by
- * EconomyLedgerTest, which Context's doPay/apply/etc. delegate to.
+ * EconomyLedgerTest, which GameWorld's doPay/apply/etc. delegate to.
  */
-class ContextTest {
+class GameWorldTest {
 
     private final RecordingGameHost host = new RecordingGameHost();
-    private final Context context = new Context(host);
+    private final GameWorld context = new GameWorld(host);
 
     @Test
     void addingATowerNotifiesTowerListeners() {

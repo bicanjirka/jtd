@@ -2,7 +2,7 @@ package td.enemy;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
-import td.util.Context;
+import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.within;
 /** EnemyMobTriangle's distinguishing rule: it speeds up as it takes damage. */
 class EnemyMobTriangleTest {
 
-    private final Context context = new Context(new RecordingGameHost());
+    private final GameWorld context = new GameWorld(new RecordingGameHost());
 
     @Test
     void speedIncreasesProportionallyAsTheTriangleLosesHealth() {

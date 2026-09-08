@@ -18,7 +18,14 @@ import td.wave.WaveStartListener;
 
 import java.util.List;
 
-public class Context {
+/**
+ * The composition root wiring a level's board geometry, economy, enemy roster, tower
+ * roster and wave-start hub into the one object {@code Tower}/{@code EnemyMob}/{@code Wave}
+ * are constructed against. Owns none of that state itself - every method here delegates to
+ * {@link BoardGeometry}, {@link EconomyLedger}, {@link EnemyRoster}, {@link TowerRoster} or
+ * {@link WaveAnnouncer}, each of which is independently constructible and testable.
+ */
+public class GameWorld {
 
     private BoardGeometry board = BoardGeometry.empty();
     private final GameHost mainApp;
@@ -29,7 +36,7 @@ public class Context {
     private final TowerRoster towers;
     private final WaveAnnouncer waves = new WaveAnnouncer();
 
-    public Context(GameHost mainApp) {
+    public GameWorld(GameHost mainApp) {
         this.mainApp = mainApp;
         this.enemies = new EnemyRoster(mainApp);
         this.towers = new TowerRoster(mainApp, this.economy, this::getBoard);

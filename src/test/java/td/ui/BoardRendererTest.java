@@ -12,7 +12,7 @@ import td.ui.render.EnemyFadeDraw;
 import td.ui.render.Palette;
 import td.ui.render.RenderFrame;
 import td.ui.render.TowerSpriteDraw;
-import td.util.Context;
+import td.util.GameWorld;
 import td.util.RecordingGameHost;
 import td.wave.Point;
 
@@ -34,14 +34,14 @@ class BoardRendererTest {
         return engine;
     }
 
-    private static BoardRenderer rendererFor(GameEngine engine, Context context) {
+    private static BoardRenderer rendererFor(GameEngine engine, GameWorld context) {
         return new BoardRenderer(engine, context.getEnemyRegistry(), context::getBoard, context::getPath);
     }
 
     @Test
     void aSelectedTowerYieldsASpriteDrawWithItsBodyPaletteAndSelectionFlag() {
         GameEngine engine = newEngine();
-        Context context = engine.getContext();
+        GameWorld context = engine.getGameWorld();
         TowerOne tower = new TowerOne(context, 1, 1);
         tower.setSelected(true);
         context.addTower(tower);
@@ -57,7 +57,7 @@ class BoardRendererTest {
     @Test
     void aPlacedTowerYieldsATurretHeadDrawWithItsBodyPalette() {
         GameEngine engine = newEngine();
-        Context context = engine.getContext();
+        GameWorld context = engine.getGameWorld();
         context.addTower(new TowerOne(context, 1, 1));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
@@ -69,7 +69,7 @@ class BoardRendererTest {
     @Test
     void anUnselectedTowerYieldsASpriteDrawWithSelectedFalse() {
         GameEngine engine = newEngine();
-        Context context = engine.getContext();
+        GameWorld context = engine.getGameWorld();
         context.addTower(new TowerOne(context, 1, 1));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
@@ -80,7 +80,7 @@ class BoardRendererTest {
     @Test
     void aDeadEnemyYieldsAFadeDrawAndNoBodyDraw() {
         GameEngine engine = newEngine();
-        Context context = engine.getContext();
+        GameWorld context = engine.getGameWorld();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
         enemy.doDamage(Damage.of(5000));
         enemy.doTick(1); // captures deathTick, matching how AbstractEnemyMob really ticks
@@ -95,7 +95,7 @@ class BoardRendererTest {
     @Test
     void anEmptyEnemyYieldsNoDraw() {
         GameEngine engine = newEngine();
-        Context context = engine.getContext();
+        GameWorld context = engine.getGameWorld();
         context.setEnemies(new EnemyMob[]{EnemyFactory.getEnemy("e", context, 0, 50, 3, 1)});
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
@@ -106,7 +106,7 @@ class BoardRendererTest {
     @Test
     void onlyHighlightedCellsProduceADraw() {
         GameEngine engine = newEngine();
-        Context context = engine.getContext();
+        GameWorld context = engine.getGameWorld();
         // a freshly loaded level has highlightType.none everywhere
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
@@ -117,7 +117,7 @@ class BoardRendererTest {
     @Test
     void aSelectedCellProducesExactlyOneCellDraw() {
         GameEngine engine = newEngine();
-        Context context = engine.getContext();
+        GameWorld context = engine.getGameWorld();
         engine.getCellGrid()[0][0].setHighlight(Cell.highlightType.select);
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);

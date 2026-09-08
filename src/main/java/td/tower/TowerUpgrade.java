@@ -1,7 +1,7 @@
 package td.tower;
 
 import td.tower.buff.TowerBuff;
-import td.util.Context;
+import td.util.GameWorld;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ public final class TowerUpgrade extends AbstractTower implements TowerListener {
     private final List<Tower> clients;
     private final float power;
 
-    public TowerUpgrade(Context context, int x, int y) {
+    public TowerUpgrade(GameWorld context, int x, int y) {
         this(context, x, y, DEFAULT_POWER);
     }
 
@@ -24,7 +24,7 @@ public final class TowerUpgrade extends AbstractTower implements TowerListener {
      * Lets an upgrade tower contribute a buff stronger or weaker than the default, so two
      * upgrade towers can stack unequal amounts via TowerBuff's additive combine.
      */
-    public TowerUpgrade(Context context, int x, int y, float power) {
+    public TowerUpgrade(GameWorld context, int x, int y, float power) {
         super(TowerFactory.type.upgrade, price, damage, range);
         this.passive = true;
         this.power = power;

@@ -3,7 +3,7 @@ package td.tower;
 import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.tower.targeting.InRangeTargetQuery;
-import td.util.Context;
+import td.util.GameWorld;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ public final class TowerTwo extends AbstractTower {
     private int splashCenterY;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
-    public TowerTwo(Context context, int x, int y) {
+    public TowerTwo(GameWorld context, int x, int y) {
         super(TowerFactory.type.second, price, damage, range);
         this.coolDownMax = 19;
         this.spreadRadius = spreadRadiusBase * context.getBoard().scale();

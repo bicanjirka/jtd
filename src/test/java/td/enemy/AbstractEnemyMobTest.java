@@ -3,7 +3,7 @@ package td.enemy;
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.damage.Damage;
-import td.util.Context;
+import td.util.GameWorld;
 import td.util.RecordingGameHost;
 import td.wave.PathNormal;
 import td.wave.Vec2;
@@ -21,8 +21,8 @@ import static org.assertj.core.api.Assertions.within;
  */
 class AbstractEnemyMobTest {
 
-    private static Context newContext() {
-        Context context = new Context(new RecordingGameHost());
+    private static GameWorld newContext() {
+        GameWorld context = new GameWorld(new RecordingGameHost());
         context.setBoard(BoardGeometry.of(1, 1001, 1001));
         return context;
     }
@@ -39,7 +39,7 @@ class AbstractEnemyMobTest {
 
     @Test
     void enemyWithZeroDelayIsActiveImmediately() {
-        Context context = newContext();
+        GameWorld context = newContext();
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
 
@@ -48,7 +48,7 @@ class AbstractEnemyMobTest {
 
     @Test
     void enemyStaysInactiveUntilItsDelayElapses() {
-        Context context = newContext();
+        GameWorld context = newContext();
         int delayArg = 1;
         float speed = 1.28f; // AbstractEnemyMob's default speed field, in pixels/tick
         int expectedActivationTick = Math.round(22.4f * delayArg / speed);
@@ -68,7 +68,7 @@ class AbstractEnemyMobTest {
     @Test
     void lethalDamageKillsTheEnemyAndCreditsThePlayer() {
         RecordingGameHost host = new RecordingGameHost();
-        Context context = new Context(host);
+        GameWorld context = new GameWorld(host);
         context.setBoard(BoardGeometry.of(1, 1001, 1001));
         context.setEnemyCount(1);
 
@@ -86,7 +86,7 @@ class AbstractEnemyMobTest {
     @Test
     void anAlreadyDeadEnemyDamagedAgainDoesNotPayTheBountyTwice() {
         RecordingGameHost host = new RecordingGameHost();
-        Context context = new Context(host);
+        GameWorld context = new GameWorld(host);
         context.setBoard(BoardGeometry.of(1, 1001, 1001));
         context.setEnemyCount(1);
 
@@ -101,7 +101,7 @@ class AbstractEnemyMobTest {
 
     @Test
     void nonLethalDamageReducesHealthWithoutKilling() {
-        Context context = newContext();
+        GameWorld context = newContext();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
 
         enemy.doDamage(Damage.of(2000));
@@ -112,7 +112,7 @@ class AbstractEnemyMobTest {
 
     @Test
     void oneTickAdvancesTheEnemyBySpeedPixelsAlongTheCurrentSegment() {
-        Context context = newContext();
+        GameWorld context = newContext();
         context.setPath(straightPath(1, 0, 100)); // one straight segment, 100px long at scale 1
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
@@ -134,7 +134,7 @@ class AbstractEnemyMobTest {
      */
     @Test
     void crossingASegmentTwiceAsLongTakesRoughlyTwiceAsManyTicks() {
-        Context context = newContext();
+        GameWorld context = newContext();
         // segment lengths 10, then 20, then a trailing 1 so reaching x=30 happens strictly
         // before the path wraps (which would otherwise snap x back near 0 exactly at x=30,
         // and the loop below would never observe x >= 30).
@@ -160,7 +160,7 @@ class AbstractEnemyMobTest {
 
     @Test
     void deathFadeCompletesExactlyFadeDurationTicksAfterTheTickThatNoticedDeath() {
-        Context context = newContext();
+        GameWorld context = newContext();
         int level = 2;
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, level);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
@@ -176,7 +176,7 @@ class AbstractEnemyMobTest {
 
     @Test
     void fadeAlphaStaysWithinValidColorRangeBeforeDeathTickIsCaptured() {
-        Context context = newContext();
+        GameWorld context = newContext();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
 
@@ -191,7 +191,7 @@ class AbstractEnemyMobTest {
 
     @Test
     void previousPositionTracksOneTickBehindCurrentPosition() {
-        Context context = newContext();
+        GameWorld context = newContext();
         context.setPath(straightPath(10, 0, 10));
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
@@ -211,7 +211,7 @@ class AbstractEnemyMobTest {
 
     @Test
     void reachingTheEndOfThePathSnapsRatherThanInterpolatingAcrossTheBoard() {
-        Context context = newContext();
+        GameWorld context = newContext();
         context.setPath(straightPath(10, 0, 1));
         int initialLives = context.getLives();
 
@@ -231,7 +231,7 @@ class AbstractEnemyMobTest {
 
     @Test
     void enemyReachingEndOfPathCostsALife() {
-        Context context = newContext();
+        GameWorld context = newContext();
         context.setPath(straightPath(10, 0, 1));
         int initialLives = context.getLives();
 

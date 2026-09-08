@@ -1,6 +1,6 @@
 package td.enemy;
 
-import td.util.Context;
+import td.util.GameWorld;
 
 public final class EnemyMobGhost extends AbstractEnemyMob {
 
@@ -11,7 +11,7 @@ public final class EnemyMobGhost extends AbstractEnemyMob {
         this.type = EnemyMob.type.Invisible;
     }
 
-    protected void doInit(Context context, int delay, int health, int price, int level) {
+    protected void doInit(GameWorld context, int delay, int health, int price, int level) {
         super.doInit(context, delay, (health / 5), price, level);
         this.bodyScale = (float) this.context.getBoard().scale() / ((this.level < 6) ? (7 - level) : (2));
     }

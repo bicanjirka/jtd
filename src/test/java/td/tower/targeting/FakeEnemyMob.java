@@ -3,7 +3,7 @@ package td.tower.targeting;
 import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyMobVisitor;
-import td.util.Context;
+import td.util.GameWorld;
 
 /** A minimal, immutable {@link EnemyMob} double - only the geometry/targeting-relevant state is real. */
 final class FakeEnemyMob implements EnemyMob {
@@ -102,7 +102,7 @@ final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
-    public EnemyMob create(Context context, int delay, int health, int price, int level) {
+    public EnemyMob create(GameWorld context, int delay, int health, int price, int level) {
         throw new UnsupportedOperationException("FakeEnemyMob is not a prototype");
     }
 }

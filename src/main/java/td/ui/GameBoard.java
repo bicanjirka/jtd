@@ -1,7 +1,7 @@
 package td.ui;
 
 import td.TowerDefense;
-import td.util.Context;
+import td.util.GameWorld;
 
 import javax.swing.GroupLayout;
 import javax.swing.JPanel;
@@ -14,9 +14,9 @@ public class GameBoard extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private final TowerDefense game;
-    private final Context context;
+    private final GameWorld context;
 
-    public GameBoard(TowerDefense game, Context context) {
+    public GameBoard(TowerDefense game, GameWorld context) {
         this.game = game;
         this.context = context;
         initComponents();

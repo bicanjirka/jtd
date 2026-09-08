@@ -3,14 +3,14 @@ package td.cell;
 import org.junit.jupiter.api.Test;
 import td.tower.Tower;
 import td.tower.TowerFactory;
-import td.util.Context;
+import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CellNormalTest {
 
-    private final Context context = new Context(new RecordingGameHost());
+    private final GameWorld context = new GameWorld(new RecordingGameHost());
 
     @Test
     void startsBuildableAndEmpty() {

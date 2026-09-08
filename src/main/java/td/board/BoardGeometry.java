@@ -2,8 +2,8 @@ package td.board;
 
 /**
  * A level's pixel scale and cell dimensions as one immutable value, and the cell-to-pixel
- * math every consumer used to repeat by hand against {@code Context.scale}. {@link #empty()}
- * is the identity a world has before any level is loaded.
+ * math every consumer used to repeat by hand against a bare {@code scale} field.
+ * {@link #empty()} is the identity a world has before any level is loaded.
  */
 public record BoardGeometry(int scale, int widthCells, int heightCells) {
 

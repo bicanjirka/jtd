@@ -4,7 +4,7 @@ import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
-import td.util.Context;
+import td.util.GameWorld;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public final class TowerOne extends AbstractTower {
     private EnemyMob currentTarget;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
-    public TowerOne(Context context, int x, int y) {
+    public TowerOne(GameWorld context, int x, int y) {
         super(TowerFactory.type.first, price, damage, range);
         this.coolDownMax = 39;
         this.doInit(context, x, y);

@@ -5,8 +5,8 @@ import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.tower.Tower;
 import td.tower.TowerFactory;
-import td.util.Context;
 import td.util.GameHost;
+import td.util.GameWorld;
 
 import javax.swing.BorderFactory;
 import javax.swing.GrayFilter;
@@ -37,7 +37,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
     private final JToggleButton[] buttons;
     private final String[] infoText;
     private final float[] towerRanges;
-    private Context context;
+    private GameWorld context;
     private TowerDefense mainApp;
     private final List<TowerFactory.type> towerTypes;
     private boolean placing = false;
@@ -78,13 +78,13 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         }
     }
 
-    public void doInit(Context c, TowerDefense mainApp) {
+    public void doInit(GameWorld c, TowerDefense mainApp) {
         this.context = c;
         this.mainApp = mainApp;
 
         this.makeButtons();
 
-        Context tempContext = new Context(GameHost.noOp());
+        GameWorld tempContext = new GameWorld(GameHost.noOp());
         Java2DFrameRenderer iconRenderer = new Java2DFrameRenderer();
 
         for (int i = 0; i < this.towerTypes.size(); i++) {
@@ -111,7 +111,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         this.placing = false;
     }
 
-    /** Also reachable from the game-loop thread - see Context.apply()'s callers. */
+    /** Also reachable from the game-loop thread - see GameWorld.apply()'s callers. */
     public void economyChanged(EconomyState state) {
         SwingUtilities.invokeLater(() -> {
             for (int i = 0; i < this.buttons.length; i++) {
