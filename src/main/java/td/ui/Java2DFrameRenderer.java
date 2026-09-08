@@ -27,6 +27,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 /**
@@ -230,6 +231,22 @@ public final class Java2DFrameRenderer {
 
     /** How much of a cell a tower body fills - leaves a small margin, same spirit as enemy bodies. */
     private static final float TOWER_BODY_SIZE_FRACTION = 0.42f;
+
+    /**
+     * Rasterizes one tower body into a standalone icon - used for the toolbar's
+     * {@code JToggleButton} icons, which need a Swing {@code Icon} rather than a live paint.
+     * The board and the toolbar are the same {@link #paintTowerBody} call at two different
+     * sizes, so a tower never needs separate board/icon art.
+     */
+    public BufferedImage renderTowerIcon(Palette palette, int size) {
+        BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = image.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.translate(size / 2.0, size / 2.0);
+        this.paintTowerBody(g2, palette, size * TOWER_BODY_SIZE_FRACTION);
+        g2.dispose();
+        return image;
+    }
 
     private void paintTowerSprite(Graphics2D g2, TowerSpriteDraw sprite, int scale) {
         if (sprite.selected()) {
