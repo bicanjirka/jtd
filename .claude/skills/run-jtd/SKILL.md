@@ -7,8 +7,8 @@ jTD is a native Java Swing desktop app (`td.Main` -> `new TowerDefense()`), not 
 Electron app - there is no DOM and no `chromium-cli`. Drive it in-process instead: launch
 `Driver.java` (in this directory), which constructs the real `TowerDefense` JFrame inside its
 own `main()` and then reads one command per line from stdin (`list`, `click <n>`, `key <c>`,
-`ss <path>`, `state`, `sleep <ms>`, `quit`). All paths below are relative to the repo root
-(`C:\Users\juras\dev\jTD`).
+`boardclick <x> <y>`, `setcredits <n>`, `setlives <n>`, `ss <path>`, `state`, `sleep <ms>`,
+`quit`). All paths below are relative to the repo root (`C:\Users\juras\dev\jTD`).
 
 ## Prerequisites
 
@@ -72,6 +72,9 @@ convenient scratch location, already gitignored-worthy (don't commit captured PN
 | `list` | Prints every clickable component (buttons, and plain panels with their own mouse listener like the level-select cards) as `<index>: <ClassName> "<label>" visible=<bool>`, in a stable DFS order. |
 | `click <n>` | Clicks the component at that `list` index - `doClick()` for a real button, a `Robot` click at its on-screen center for anything else (e.g. a level card). |
 | `key <char>` | Types one character via `Robot`, for jTD's frame-level keyboard shortcuts (`q`/`w`/`e`/`r`/`t` build, `p` pause, `f` speed, `s` next wave) - these have no button, only a `KeyListener` on the JFrame. |
+| `boardclick <x> <y>` | Clicks board cell `(x, y)` - the board itself isn't a Swing button/mouse-listener component `click(int)` can reach, so this reflects into the private `gameBoard` field and `Context.scale` to compute the on-screen point instead. Use it after `key` selects a tower type, to actually place it. |
+| `setcredits <n>` | Cheat: sets credits to exactly `n` via `Context.apply(EconomyDelta.credits(...))`, instead of buying/selling towers to reach a target value indirectly. Goes through the same `Context.apply` path a real kill or purchase uses, so affordability/UI reactions (e.g. toolbar buttons graying out) still fire normally. |
+| `setlives <n>` | Cheat: sets lives to exactly `n` the same way, for testing near-game-over/game-over states without playing a level down to it. |
 | `ss <path>` | Screenshots just the app window (via `Robot`, using the live `JFrame`'s own `getLocationOnScreen()`/`getSize()`) and writes a PNG. |
 | `state` | Reflects into the private `engine`/`context` fields and prints cell-grid size, wave progress, credits/lives/score - for asserting on outcomes without eyeballing a screenshot. |
 | `sleep <ms>` | Pause between commands - Swing needs a beat to repaint/relayout after a click before the next screenshot is meaningful. |
@@ -92,7 +95,7 @@ only useful for a human actually looking at the screen.
 mvn test
 ```
 
-160 tests, all pass. A green run still prints one `WARN` + stack trace from `WaveTest`
+180 tests, all pass. A green run still prints one `WARN` + stack trace from `WaveTest`
 (deliberately feeds the wave parser a bad token) - expected, not a failure; check
 `Tests run: … Failures: 0`, not the console output.
 
