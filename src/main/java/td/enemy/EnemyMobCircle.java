@@ -12,7 +12,7 @@ public final class EnemyMobCircle extends AbstractEnemyMob {
 
     protected void doInit(Context context, int delay, int health, int price, int level) {
         super.doInit(context, delay, health, price, level);
-        this.bodyScale = this.context.scale / 6f;
+        this.bodyScale = this.context.getBoard().scale() / 6f;
     }
 
     public float getBodyScale() {

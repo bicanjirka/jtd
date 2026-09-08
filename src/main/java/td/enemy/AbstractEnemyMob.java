@@ -244,7 +244,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
                 }
             }
             this.updatePosition();
-            this.validTarget = this.x >= 0 && this.x <= this.context.maxX && this.y >= 0 && this.y <= this.context.maxY;
+            this.validTarget = this.x >= 0 && this.x <= this.context.getBoard().maxX() && this.y >= 0 && this.y <= this.context.getBoard().maxY();
             if (wrappedToPathStart) {
                 // Reappearing at the path's start is a genuine teleport, not motion along
                 // it - interpolating from the old (near path-end) position would draw a

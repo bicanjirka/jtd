@@ -28,7 +28,7 @@ public final class TowerTwo extends AbstractTower {
     public TowerTwo(Context context, int x, int y) {
         super(TowerFactory.type.second, price, damage, range);
         this.coolDownMax = 19;
-        this.spreadRadius = spreadRadiusBase * context.scale;
+        this.spreadRadius = spreadRadiusBase * context.getBoard().scale();
         this.doInit(context, x, y);
     }
 

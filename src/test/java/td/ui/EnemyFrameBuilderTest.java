@@ -1,6 +1,7 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import td.board.BoardGeometry;
 import td.enemy.AbstractEnemyMob;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
@@ -24,8 +25,7 @@ class EnemyFrameBuilderTest {
 
     private static Context contextWithStraightPath() {
         Context context = new Context(new RecordingGameHost());
-        context.maxX = 1000;
-        context.maxY = 1000;
+        context.setBoard(BoardGeometry.of(1, 1001, 1001));
         context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(105, 5))));
         return context;
     }
@@ -80,8 +80,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEnemyThatJustWrappedBackToThePathStartIsNotInterpolatedAcrossTheBoard() {
         Context context = new Context(new RecordingGameHost());
-        context.maxX = 1000;
-        context.maxY = 1000;
+        context.setBoard(BoardGeometry.of(1, 1001, 1001));
         context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5))));
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);

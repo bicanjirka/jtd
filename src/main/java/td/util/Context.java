@@ -2,6 +2,7 @@ package td.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import td.board.BoardGeometry;
 import td.economy.EconomyDelta;
 import td.economy.EconomyState;
 import td.enemy.EnemyMob;
@@ -18,8 +19,7 @@ public class Context {
 
     private static final Logger LOG = LoggerFactory.getLogger(Context.class);
 
-    public int scale = 32;
-    public int maxX, maxY;
+    private BoardGeometry board = BoardGeometry.empty();
     private EnemyMob[] enemies = new EnemyMob[0];
     public final List<Tower> towers;
     private final GameHost mainApp;
@@ -81,6 +81,14 @@ public class Context {
         this.enemyCount = 0;
         this.enemies = new EnemyMob[0];
         this.mainApp.enemyDied(this.enemyCount);
+    }
+
+    public BoardGeometry getBoard() {
+        return this.board;
+    }
+
+    public void setBoard(BoardGeometry board) {
+        this.board = board;
     }
 
     public void setInfoText(String s) {
@@ -145,8 +153,8 @@ public class Context {
     }
 
     public void sellTower(Tower t) {
-        int cellX = t.getX() / this.scale;
-        int cellY = t.getY() / this.scale;
+        int cellX = this.board.cellX(t.getX());
+        int cellY = this.board.cellY(t.getY());
         this.mainApp.clearCell(cellX, cellY);
         t.doCleanup();
         this.towers.remove(t);
@@ -157,8 +165,8 @@ public class Context {
 
     public void clearTowers() {
         for (Tower t : new ArrayList<>(this.towers)) {
-            int cellX = t.getX() / this.scale;
-            int cellY = t.getY() / this.scale;
+            int cellX = this.board.cellX(t.getX());
+            int cellY = this.board.cellY(t.getY());
             this.mainApp.clearCell(cellX, cellY);
             t.doCleanup();
             this.towers.remove(t);

@@ -27,7 +27,7 @@ public class GameBoard extends JPanel {
     }
 
     public void recalculateBoard(int width, int height) {
-        int scale = this.context.scale;
+        int scale = this.context.getBoard().scale();
         int realW = width * scale;
         int realH = height * scale;
         // 210 = the info column's natural width, 93 = the tower-buttons panel's natural height
