@@ -14,6 +14,8 @@ public final class TowerTwo extends AbstractTower {
     public static final float range = 3.2f;
     public static final float spreadRadiusBase = 1.75f;
 
+    private static final double MAX_TURN_RADIANS_PER_TICK = 0.25;
+
     private final float spreadRadius;
     private int coolDown = 0;
 
@@ -21,6 +23,7 @@ public final class TowerTwo extends AbstractTower {
     private List<EnemyMob> splashTargets = List.of();
     private int splashCenterX;
     private int splashCenterY;
+    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
     public TowerTwo(Context context, int x, int y) {
         super(TowerFactory.type.second, price, damage, range);
@@ -67,10 +70,19 @@ public final class TowerTwo extends AbstractTower {
                 this.primaryTarget = null;
             }
         }
+        // No target: hold the last heading rather than snapping back to a neutral angle - see
+        // TurretAim's class doc on skipping tick() while idle.
+        if (this.primaryTarget != null) {
+            this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.primaryTarget.getX(), this.primaryTarget.getY()));
+        }
     }
 
     public EnemyMob getPrimaryTarget() {
         return this.primaryTarget;
+    }
+
+    public TurretAim getTurretAim() {
+        return this.turretAim;
     }
 
     public List<EnemyMob> getSplashTargets() {

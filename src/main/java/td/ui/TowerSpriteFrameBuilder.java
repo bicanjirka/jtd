@@ -10,22 +10,35 @@ import td.tower.TowerUpgrade;
 import td.tower.TowerVisitor;
 import td.ui.render.Palette;
 import td.ui.render.TowerSpriteDraw;
+import td.ui.render.TurretHeadDraw;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Describes a tower's sprite draw. The same regardless of tower type, so every
- * visit method delegates to the one shared builder routine - the
- * {@link TowerVisitor} dispatch exists so this class never needs an
- * instanceof/cast to reach tower-specific state.
+ * Describes each tower's static base ({@link TowerSpriteDraw}, unchanged regardless of type -
+ * every visit method delegates to the one shared {@link #sprite(Tower)}) and its animated
+ * turret head ({@link TurretHeadDraw}, genuinely different per type: an aiming tower reads its
+ * own {@link td.tower.TurretAim}, a spinning tower is a function of elapsed time, a pulsing
+ * tower varies size instead of heading). The {@link TowerVisitor} dispatch exists so this class
+ * never needs an instanceof/cast to reach tower-specific state.
  */
 public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     private final List<TowerSpriteDraw> draws = new ArrayList<>();
+    private final List<TurretHeadDraw> headDraws = new ArrayList<>();
+    private final double interpolationAlpha;
+
+    public TowerSpriteFrameBuilder(double interpolationAlpha) {
+        this.interpolationAlpha = interpolationAlpha;
+    }
 
     public List<TowerSpriteDraw> build() {
         return this.draws;
+    }
+
+    public List<TurretHeadDraw> buildHeads() {
+        return this.headDraws;
     }
 
     /**
@@ -43,29 +56,43 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         };
     }
 
-    private Void sprite(Tower tower) {
+    private void sprite(Tower tower) {
         this.draws.add(new TowerSpriteDraw(bodyPaletteFor(tower.getType()), tower.getBoardX(), tower.getBoardY(),
                 tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal()));
-        return null;
+    }
+
+    /** A head with no pulsing - every tower but the upgrade tower uses a constant nominal size. */
+    private void head(Tower tower, double headingRadians) {
+        this.headDraws.add(new TurretHeadDraw(bodyPaletteFor(tower.getType()), tower.getX(), tower.getY(),
+                (float) headingRadians, 1.0f));
     }
 
     public Void visitTowerOne(TowerOne tower) {
-        return this.sprite(tower);
+        this.sprite(tower);
+        this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
+        return null;
     }
 
     public Void visitTowerTwo(TowerTwo tower) {
-        return this.sprite(tower);
+        this.sprite(tower);
+        this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
+        return null;
     }
 
+    // TowerThree/TowerFour (spinning) and TowerUpgrade (pulsing) render base-only for now,
+    // same as every tower before turret heads existed - no head() call yet.
     public Void visitTowerThree(TowerThree tower) {
-        return this.sprite(tower);
+        this.sprite(tower);
+        return null;
     }
 
     public Void visitTowerFour(TowerFour tower) {
-        return this.sprite(tower);
+        this.sprite(tower);
+        return null;
     }
 
     public Void visitTowerUpgrade(TowerUpgrade tower) {
-        return this.sprite(tower);
+        this.sprite(tower);
+        return null;
     }
 }
