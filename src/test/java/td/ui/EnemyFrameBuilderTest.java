@@ -6,7 +6,7 @@ import td.enemy.AbstractEnemyMob;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.ui.render.EnemyBodyDraw;
-import td.util.Context;
+import td.util.GameWorld;
 import td.util.RecordingGameHost;
 import td.wave.PathNormal;
 import td.wave.Vec2;
@@ -23,8 +23,8 @@ import static org.assertj.core.api.Assertions.within;
  */
 class EnemyFrameBuilderTest {
 
-    private static Context contextWithStraightPath() {
-        Context context = new Context(new RecordingGameHost());
+    private static GameWorld contextWithStraightPath() {
+        GameWorld context = new GameWorld(new RecordingGameHost());
         context.setBoard(BoardGeometry.of(1, 1001, 1001));
         context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(105, 5))));
         return context;
@@ -38,7 +38,7 @@ class EnemyFrameBuilderTest {
 
     @Test
     void alphaZeroReproducesThePreviousTickPosition() {
-        Context context = contextWithStraightPath();
+        GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
         enemy.doTick(1);
@@ -51,7 +51,7 @@ class EnemyFrameBuilderTest {
 
     @Test
     void alphaOneReproducesTheCurrentTickPosition() {
-        Context context = contextWithStraightPath();
+        GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
         enemy.doTick(1);
@@ -64,7 +64,7 @@ class EnemyFrameBuilderTest {
 
     @Test
     void alphaOneHalfIsTheMidpointBetweenPreviousAndCurrentPosition() {
-        Context context = contextWithStraightPath();
+        GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
         enemy.doTick(1);
@@ -79,7 +79,7 @@ class EnemyFrameBuilderTest {
 
     @Test
     void anEnemyThatJustWrappedBackToThePathStartIsNotInterpolatedAcrossTheBoard() {
-        Context context = new Context(new RecordingGameHost());
+        GameWorld context = new GameWorld(new RecordingGameHost());
         context.setBoard(BoardGeometry.of(1, 1001, 1001));
         context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5))));
 

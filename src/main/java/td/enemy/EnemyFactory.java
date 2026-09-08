@@ -1,6 +1,6 @@
 package td.enemy;
 
-import td.util.Context;
+import td.util.GameWorld;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +23,7 @@ public class EnemyFactory {
         return table.get(name);
     }
 
-    public static EnemyMob getEnemy(String name, Context context, int delay, int health, int price, int level) {
+    public static EnemyMob getEnemy(String name, GameWorld context, int delay, int health, int price, int level) {
         return table.get(name).getCopy(context, delay, health, price, level);
     }
 
@@ -46,7 +46,7 @@ public class EnemyFactory {
             return this.name;
         }
 
-        public EnemyMob getCopy(Context context, int delay, int health, int price, int level) {
+        public EnemyMob getCopy(GameWorld context, int delay, int health, int price, int level) {
             return instance.create(context, delay, health, price, level);
         }
     }

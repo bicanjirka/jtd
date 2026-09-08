@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import td.damage.Damage;
 import td.economy.EconomyDelta;
-import td.util.Context;
+import td.util.GameWorld;
 import td.wave.ArcLengthPath;
 import td.wave.PathPose;
 import td.wave.Vec2;
@@ -33,7 +33,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
     protected final float speedBase = 1.28f;
     protected int health;
     protected int healthMax;
-    protected Context context;
+    protected GameWorld context;
     private int delay;
     private int deathTick = -1;
     private ArcLengthPath arcLengthPath;
@@ -46,7 +46,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         this.type = EnemyMob.type.Normal;
     }
 
-    protected void doInit(Context context, int delay, int health, int price, int level) {
+    protected void doInit(GameWorld context, int delay, int health, int price, int level) {
         this.context = context;
         this.price = price;
         this.level = level;
@@ -54,7 +54,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         this.healthMax = health * 100;
         Optional<ArcLengthPath> arcLength = ArcLengthPath.of(this.context.getPath());
         this.arcLengthPath = arcLength.orElse(null);
-        // A degenerate path (fewer than two points - e.g. an empty placeholder Context has
+        // A degenerate path (fewer than two points - e.g. an empty placeholder GameWorld has
         // before any level loads) has nothing to measure distance along - hold at its one
         // available point (or the origin, if it has none at all) rather than move at all.
         List<Vec2> pathPoints = this.context.getPath().points();
@@ -255,7 +255,7 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
         }
     }
 
-    public EnemyMob create(Context context, int delay, int health, int price, int level) {
+    public EnemyMob create(GameWorld context, int delay, int health, int price, int level) {
         AbstractEnemyMob newEnemy;
         try {
             newEnemy = (AbstractEnemyMob) this.clone();

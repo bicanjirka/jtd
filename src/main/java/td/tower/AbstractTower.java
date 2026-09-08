@@ -3,14 +3,14 @@ package td.tower;
 import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
-import td.util.Context;
+import td.util.GameWorld;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractTower implements Tower {
 
-    protected Context context;
+    protected GameWorld context;
     protected final List<TowerUpgrade> upgTowers;
     protected int boardX;
     protected int boardY;
@@ -39,7 +39,7 @@ public abstract class AbstractTower implements Tower {
         this.upgTowers = new ArrayList<>();
     }
 
-    protected void doInit(Context context, int x, int y) {
+    protected void doInit(GameWorld context, int x, int y) {
         this.context = context;
         int scale = this.context.getBoard().scale();
         this.boardX = x * scale;

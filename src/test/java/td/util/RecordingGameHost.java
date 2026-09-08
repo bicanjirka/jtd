@@ -5,7 +5,7 @@ import java.util.List;
 
 /**
  * Test double for {@link GameHost} that just records what was called,
- * so tests can build a real {@link Context} without a live TowerDefence.
+ * so tests can build a real {@link GameWorld} without a live TowerDefence.
  */
 public class RecordingGameHost implements GameHost {
 

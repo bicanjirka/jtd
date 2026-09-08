@@ -18,8 +18,8 @@ import td.ui.PanelWaveInfo;
 import td.ui.render.AsciiBoardRenderer;
 import td.ui.render.RenderFrame;
 import td.economy.EconomyListener;
-import td.util.Context;
 import td.util.GameHost;
+import td.util.GameWorld;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -63,7 +63,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private final LevelCatalog levelCatalog = new BuiltInLevelCatalog();
 
     private final GameEngine engine;
-    private final Context context;
+    private final GameWorld context;
     private final GameBoard gameBoard;
     private final BoardRenderer boardRenderer;
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
@@ -135,15 +135,15 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     public TowerDefense() {
         this.engine = new GameEngine(this);
-        this.context = this.engine.getContext();
+        this.context = this.engine.getGameWorld();
         this.boardRenderer = new BoardRenderer(this.engine, this.context.getEnemyRegistry(),
                 this.context::getBoard, this.context::getPath);
         this.context.addEconomyListener(this);
         this.gameBoard = new GameBoard(this, this.context);
         initComponents();
-        this.panelWaveInfo.setContext(this.context);
+        this.panelWaveInfo.setGameWorld(this.context);
         this.panelTowerSelector.doInit(this.context, this);
-        this.panelTowerInfo.setContext(this.context);
+        this.panelTowerInfo.setGameWorld(this.context);
 
         this.jPanel_board.add(this.gameBoard);
 
@@ -219,7 +219,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /**
-     * A GameHost callback fired synchronously from Context, which is reached
+     * A GameHost callback fired synchronously from GameWorld, which is reached
      * from enemy/tower doTick() during a tick - i.e. this can run on the
      * game-loop thread, not the EDT. Any Swing mutation here is deferred via
      * invokeLater; engine-state changes are not, since they aren't Swing calls.

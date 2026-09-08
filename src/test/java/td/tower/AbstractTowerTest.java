@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
-import td.util.Context;
+import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class AbstractTowerTest {
 
-    private final Context context = new Context(new RecordingGameHost());
+    private final GameWorld context = new GameWorld(new RecordingGameHost());
 
     @Test
     void sellPriceIsSeventyFivePercentOfPriceRoundedHalfUp() {

@@ -9,8 +9,8 @@ import td.enemy.EnemyMob;
 import td.level.LevelDefinition;
 import td.tower.Tower;
 import td.tower.TowerFactory;
-import td.util.Context;
 import td.util.GameHost;
+import td.util.GameWorld;
 import td.wave.Path;
 import td.wave.PathBuilder;
 import td.wave.PathCoverage;
@@ -36,7 +36,7 @@ public class GameEngine {
 
     private static final Logger LOG = LoggerFactory.getLogger(GameEngine.class);
 
-    private final Context context;
+    private final GameWorld context;
 
     private Cell[][] cellGrid;
     private List<Wave> waves = new ArrayList<>();
@@ -50,10 +50,10 @@ public class GameEngine {
     private int[] highlitedCell;
 
     public GameEngine(GameHost host) {
-        this.context = new Context(host);
+        this.context = new GameWorld(host);
     }
 
-    public Context getContext() {
+    public GameWorld getGameWorld() {
         return this.context;
     }
 

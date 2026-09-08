@@ -2,14 +2,14 @@ package td.wave;
 
 import org.junit.jupiter.api.Test;
 import td.enemy.EnemyFactory;
-import td.util.Context;
+import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class WaveTest {
 
-    private final Context context = new Context(new RecordingGameHost());
+    private final GameWorld context = new GameWorld(new RecordingGameHost());
 
     @Test
     void plainTokensCountAsOneEnemyEach() {

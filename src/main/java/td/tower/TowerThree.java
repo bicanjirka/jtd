@@ -3,7 +3,7 @@ package td.tower;
 import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.tower.targeting.InRangeAfterIndexQuery;
-import td.util.Context;
+import td.util.GameWorld;
 import td.wave.WaveStartListener;
 
 import java.util.OptionalInt;
@@ -22,7 +22,7 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
 
     private int[] lineSteps;
 
-    public TowerThree(Context context, int x, int y) {
+    public TowerThree(GameWorld context, int x, int y) {
         super(TowerFactory.type.third, price, damage, range);
         this.coolDownMax = 1;
         this.doInit(context, x, y);

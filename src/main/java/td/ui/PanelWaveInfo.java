@@ -1,7 +1,7 @@
 package td.ui;
 
 import td.enemy.EnemyFactory;
-import td.util.Context;
+import td.util.GameWorld;
 import td.wave.Wave;
 
 import javax.swing.BorderFactory;
@@ -34,9 +34,9 @@ public class PanelWaveInfo extends JPanel {
         initComponents();
     }
 
-    public void setContext(Context c) {
-        this.panelEnemy_cur.setContext(c);
-        this.panelEnemy_next.setContext(c);
+    public void setGameWorld(GameWorld c) {
+        this.panelEnemy_cur.setGameWorld(c);
+        this.panelEnemy_next.setGameWorld(c);
     }
 
     public void clearWaves() {

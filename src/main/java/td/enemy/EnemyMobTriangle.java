@@ -1,7 +1,7 @@
 package td.enemy;
 
 import td.damage.Damage;
-import td.util.Context;
+import td.util.GameWorld;
 
 public final class EnemyMobTriangle extends AbstractEnemyMobRotor {
 
@@ -12,7 +12,7 @@ public final class EnemyMobTriangle extends AbstractEnemyMobRotor {
         this.rotPerTime = (float) Math.toRadians(-5.0);
     }
 
-    protected void doInit(Context context, int delay, int health, int price, int level) {
+    protected void doInit(GameWorld context, int delay, int health, int price, int level) {
         super.doInit(context, delay, health, price, level);
         this.bodyScale = (float) this.context.getBoard().scale() / ((this.level < 6) ? (7 - level) : (2));
         this.speedMax = (float) (this.speedBase * (1.4 + 0.1 * this.level));

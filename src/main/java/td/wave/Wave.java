@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
-import td.util.Context;
+import td.util.GameWorld;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,7 +23,7 @@ public class Wave {
     private final Map<EnemyFactory.Enemy, Integer> enemyCounts;
     private final int emptyMobCount;
 
-    public Wave(Context context, int baseHealth, int basePrice, int level, String[] names) {
+    public Wave(GameWorld context, int baseHealth, int basePrice, int level, String[] names) {
         this.baseHealth = baseHealth;
         this.basePrice = basePrice;
         this.level = level;
@@ -37,7 +37,7 @@ public class Wave {
     private record ParsedNames(List<EnemyMob> enemies, Map<EnemyFactory.Enemy, Integer> enemyCounts, int emptyMobCount) {
     }
 
-    private static ParsedNames parseNames(String[] names, Context context, int baseHealth, int basePrice, int level) {
+    private static ParsedNames parseNames(String[] names, GameWorld context, int baseHealth, int basePrice, int level) {
         List<EnemyMob> enemies = new ArrayList<>();
         Map<EnemyFactory.Enemy, Integer> enemyCounts = new HashMap<>();
         int emptyMobCount = 0;

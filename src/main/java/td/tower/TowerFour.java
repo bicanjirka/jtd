@@ -5,7 +5,7 @@ import td.enemy.EnemyMob;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.OfTypeTargetQuery;
 import td.tower.targeting.TargetQuery;
-import td.util.Context;
+import td.util.GameWorld;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public final class TowerFour extends AbstractTower {
 
     private boolean fire = false;
 
-    public TowerFour(Context context, int x, int y) {
+    public TowerFour(GameWorld context, int x, int y) {
         super(TowerFactory.type.fourth, price, damage, range);
         this.doInit(context, x, y);
     }

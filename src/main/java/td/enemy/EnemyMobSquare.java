@@ -1,7 +1,7 @@
 package td.enemy;
 
 import td.damage.Damage;
-import td.util.Context;
+import td.util.GameWorld;
 
 public final class EnemyMobSquare extends AbstractEnemyMobRotor {
 
@@ -12,7 +12,7 @@ public final class EnemyMobSquare extends AbstractEnemyMobRotor {
         super();
     }
 
-    protected void doInit(Context context, int delay, int health, int price, int level) {
+    protected void doInit(GameWorld context, int delay, int health, int price, int level) {
         super.doInit(context, delay, health, price, level);
         this.bodyScale = (float) this.context.getBoard().scale() / ((this.level < 6) ? (7 - level) : (2));
         K = 0.8f - this.level * 0.05f;

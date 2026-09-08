@@ -1,9 +1,9 @@
 package td.tower;
 
-import td.util.Context;
+import td.util.GameWorld;
 
 public class TowerFactory {
-    public static Tower createTower(type t, Context c, int x, int y) {
+    public static Tower createTower(type t, GameWorld c, int x, int y) {
         return switch (t) {
             case first -> new TowerOne(c, x, y);
             case second -> new TowerTwo(c, x, y);

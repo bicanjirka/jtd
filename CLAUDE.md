@@ -26,28 +26,48 @@ This is the one structural rule that matters, and it is the result of a delibera
 
 - **`GameEngine` owns game state and input semantics.** It never constructs a window, never touches `Graphics2D`, and never requires a display. It can be built, driven, and asserted on entirely from a test.
 - **`TowerDefense` (a `JFrame`) and `td.ui` own presentation.** Layout, painting, `MouseEvent`/`KeyEvent` handling, and translating screen coordinates into the board-relative pixel coordinates `GameEngine.mouseClicked`/`highlightCell` expect.
-- **`GameHost` is the engine's only channel back to the UI** (`enemyDied`, `setInfoText`, `clearCell`). `Context` calls through it; it does not know about Swing.
+- **`GameHost` is the engine's only channel back to the UI** (`enemyDied`, `setInfoText`, `clearCell`). `GameWorld` calls through it; it does not know about Swing.
 - **`td.ui` itself splits describing a frame from drawing one.** `BoardRenderer.buildFrame(gameTime, interpolationAlpha)` walks the engine/context and returns an immutable `td.ui.render.RenderFrame` — cell/enemy/tower draw-command records with zero `java.awt` import anywhere in that package. A backend turns that into output: `Java2DFrameRenderer` is the real one (the only class in `td.ui` that imports `java.awt`); `AsciiBoardRenderer` is a second, deliberately minimal one used for headless `DEBUG` logging (see Logging), which exists specifically to prove the split is a real seam rather than an aspirational one. `Tower`/`EnemyMob` still dispatch into the frame builders via `TowerVisitor`/`EnemyMobVisitor` (see the no-`instanceof` rule below) — only the last step, turning a `RenderFrame` into pixels, changed shape.
 - **All game art is vector, drawn by code — there are no image assets.** Enemies, path markers, tower effects (beams/splash/pulse/aura) and tower sprites are all `java.awt.Shape`s built and painted in `Java2DFrameRenderer`, keyed off `td.ui.render.Palette`. A tower's sprite is itself two layered pieces: a static base (`TowerSpriteDraw`, `paintTowerBody`/`towerBodyShape`) and an animated turret head on top (`TurretHeadDraw`, `paintTurretHead`/`turretHeadShape`) — an aiming tower's head reads its own `td.tower.TurretAim` (advanced in `doTick`, interpolated at render time the same way `EnemyFrameBuilder` interpolates enemy position); a spinning or pulsing tower's head is a pure function of `GameLoop.animationSeconds`, needing no domain state at all (see `TowerSpriteFrameBuilder`'s per-visit-method constants). Adding a new tower or enemy's art is: (1) add a `Palette` constant naming its colour role; (2) add its `Shape`/colour case to `Java2DFrameRenderer` — `enemyShape`/`colorFor` for an enemy; `towerBodyShape`/`turretHeadShape`/`colorFor` (and `TowerSpriteFrameBuilder.bodyPaletteFor`, an exhaustive switch with no `default`) for a tower's base/head; a new `TowerEffectDraw` record (see `AuraDraw`) for a tower's transient effect; (3) wire the new domain class into the existing `TowerVisitor`/`EnemyMobVisitor` dispatch the same way every other type already is. The compiler catches a missing step at every one of those switches. Tower toolbar icons (`PanelTowerSelector`) reuse the exact same base+head paint code via `Java2DFrameRenderer.renderTowerIcon` (at a fixed representative heading/scale, since a static icon has no target or animation clock), so a tower's board look and its icon can never drift apart.
 
-**When adding gameplay logic, put it in `GameEngine`/`Context`/the domain packages, not in `TowerDefense`.** `TowerDefense` is a shrinking legacy shell — every new rule placed there is a rule that cannot be tested. If a change needs something from the UI, add a method to `GameHost` rather than reaching for a Swing type from engine code.
+**When adding gameplay logic, put it in `GameEngine`/`GameWorld`/the domain packages, not in `TowerDefense`.** `TowerDefense` is a shrinking legacy shell — every new rule placed there is a rule that cannot be tested. If a change needs something from the UI, add a method to `GameHost` rather than reaching for a Swing type from engine code.
 
-Domain packages under `td.*`: `cell` (board squares, buildability), `damage` (the `Damage`
+Domain packages under `td.*`: `board` (`BoardGeometry` — a level's pixel scale and cell
+dimensions as one immutable value, with the cell↔pixel math every consumer used to hand-roll),
+`cell` (board squares, buildability), `damage` (the `Damage`
 value type towers deal to enemies), `economy` (`EconomyDelta`/`EconomyState`, the
-credits/score/lives algebra `Context` is built on), `enemy` (mob hierarchy + `EnemyFactory`),
+credits/score/lives algebra, and `EconomyLedger` — see below — that's built on it),
+`enemy` (mob hierarchy + `EnemyFactory` + `EnemyRegistry`/`EnemyRoster` — see below),
 `level` (`LevelDefinition` — a level's board size, path, waves, starting economy and
 `PathSmoothing` strategy as one immutable value; `path` is just the level's corners, in
 authored order, at any angle — `PathBuilder` turns them into pixel-space directly, no
 per-cell expansion step; `LevelCatalog`/`BuiltInLevelCatalog` is where levels are sourced
 from — see Levels below), `tower` (tower
-hierarchy + `TowerFactory`; `tower.targeting` holds the shared target-scanning abstractions
-every tower composes instead of hand-rolling; `tower.buff` holds `TowerBuff`, the
-upgrade-stacking algebra), `wave` (path geometry and wave composition — see Path geometry
-below), `util` (`Context`, listener interfaces).
+hierarchy + `TowerFactory` + `TowerRoster`/`TowerListener` — see below; `tower.targeting` holds
+the shared target-scanning abstractions every tower composes instead of hand-rolling; `tower.buff`
+holds `TowerBuff`, the
+upgrade-stacking algebra), `wave` (path geometry and wave composition, plus `WaveAnnouncer`/
+`WaveStartListener` — see Path geometry
+below), `util` (`GameWorld`, `GameHost`).
 
-`Context` is the shared mutable world — an `EconomyState` (credits/score/lives), the tower
-list, the enemy array — and the listener hub (`ContextListener`, `TowerListener`,
-`WaveStartListener`).
+**`GameWorld` (in `util`) is a composition root, not a state holder.** It used to be a single
+god object (`Context`) owning five unrelated jobs directly; each is now its own independently
+testable class, and every one of `GameWorld`'s methods just delegates to one of them:
+
+| Collaborator | Package | Owns |
+|---|---|---|
+| `BoardGeometry` | `td.board` | scale, board size, cell↔pixel conversion (an immutable value, replaced wholesale on `setBoard`) |
+| `EconomyLedger` | `td.economy` | the `EconomyState` (credits/score/lives) and `EconomyListener` notification — see Threading model |
+| `EnemyRoster` (implements `EnemyRegistry`) | `td.enemy` | the live per-wave `EnemyMob[]` and death reporting to `GameHost` |
+| `TowerRoster` | `td.tower` | the tower list, buy/sell/clear, and `TowerListener` notification |
+| `WaveAnnouncer` | `td.wave` | the `WaveStartListener` hub (`TowerThree` is the only subscriber, resetting its round-robin index) |
+
+A consumer that only needs one of these should depend on it directly rather than on the whole
+`GameWorld` — e.g. `td.tower.targeting`'s query classes and `BoardRenderer` take an
+`EnemyRegistry`, not a `GameWorld`, since `getEnemies()` is all they ever used. `Tower`/
+`EnemyMob`/`Wave` still take the full `GameWorld` in their constructors since they genuinely
+need several of these together (board geometry, economy, path, enemy registry, death
+reporting) — that's a legitimate use of the composition root, not a shortcut around ISP.
 
 ## Levels
 
@@ -61,7 +81,7 @@ file-based catalog implements the same interface (see `TODO.md`). Selecting a ca
 sizing and `GameLoop.start()` that used to happen unconditionally in the constructor — nothing
 ticks and no board is shown until a level is actually chosen. `GameEngine.loadLevel(LevelDefinition)`
 is the one entry point that turns a level into live engine state (grid, path, waves,
-`Context.startEconomy(credits, lives)`); each level owns its board size, path and waves and now
+`GameWorld.startEconomy(credits, lives)`); each level owns its board size, path and waves and now
 its own starting credits *and* lives, so levels don't inherit each other's economy.
 
 Returning to the level-select screen once a level has started is a known, deliberate gap — see
@@ -109,8 +129,8 @@ consistent real-world pace along whatever geometry the path actually has, curved
 
 **Tick code does not run on the Event Dispatch Thread.** Rendering is handed to the EDT via `SwingUtilities.invokeLater` — that is the deliberate safe-publication idiom here, not `repaint()`'s internal synchronization. Consequences:
 
-- `Context`'s listener lists and `towers` are `CopyOnWriteArrayList` on purpose. Keep them that way; don't "optimize" to `ArrayList`.
-- `Context.economy` (an `EconomyState`) is written from both the EDT (buying/selling a tower) and the `game-loop` thread (a kill or a leak), so `Context.apply`/`doPay` compute the new state inside a `synchronized (this)` block and fire the resulting `ContextListener.economyChanged` *outside* it — never hold the lock while calling out into listeners, which re-enter `Context` and touch Swing.
+- `EconomyLedger`'s, `TowerRoster`'s and `WaveAnnouncer`'s listener lists, and `TowerRoster`'s tower list, are `CopyOnWriteArrayList` on purpose. Keep them that way; don't "optimize" to `ArrayList`.
+- `EconomyLedger`'s `EconomyState` is written from both the EDT (buying/selling a tower) and the `game-loop` thread (a kill or a leak), so `EconomyLedger.apply`/`doPay` compute the new state inside a `synchronized (this)` block and fire the resulting `EconomyListener.economyChanged` *outside* it — never hold the lock while calling out into listeners, which re-enter `EconomyLedger` and touch Swing.
 - Never touch Swing components from tick code. Route through a listener that the UI observes.
 - When the loop falls behind (debugger pause, long GC) it runs **one** tick and resyncs rather than bursting the backlog. Preserve that.
 
@@ -141,13 +161,14 @@ the two documents avoid contradicting each other:**
   full treatment — rule 5 (immutable, `private final`), rule 7
   (named static factory over a public constructor), rule 8 (no `null`, model absence
   explicitly). No exceptions here; a new mutable value class is a regression.
-- **Stateful engine/service classes** (`Context`, `GameEngine`, `GameLoop`) are
+- **Stateful engine/service classes** (`GameWorld`, `EconomyLedger`, `EnemyRoster`,
+  `TowerRoster`, `WaveAnnouncer`, `GameEngine`, `GameLoop`) are
   exempt from rule 5 by nature — they exist to hold and mutate live simulation state, and
   the Threading model above is a hard requirement that overrides the style guide where the
-  two would otherwise conflict (e.g. `Context.towers` stays a mutable
+  two would otherwise conflict (e.g. `TowerRoster`'s internal tower list stays a mutable
   `CopyOnWriteArrayList` — that is a concurrency requirement, not legacy debt to "fix"
   toward immutability). What the style guide *does* still apply to these classes:
-  constructor injection (already the norm — `Context(GameHost)`,
+  constructor injection (already the norm — `GameWorld(GameHost)`,
   `AbstractTower(type, price, damage, range)`), narrow interfaces, and — see below —
   keeping duplicated branching logic out of them.
 
@@ -164,8 +185,9 @@ the two documents avoid contradicting each other:**
   `EnemyMobVisitor`/`TowerVisitor` untouched. Don't read this as license to `instanceof`/switch
   on `EnemyMob`, `Tower`, or `Cell` themselves; it applies only to sealed types under `td.ui.render`.
 - `Point` and `WaveDefinition` are already `record`s — rule 5/7 with zero gap.
-- `GameHost` and the listener interfaces (`ContextListener`, `TowerListener`,
-  `WaveStartListener`) are already narrow, role-named interfaces. Widen `GameHost` only
+- `GameHost` and the listener interfaces (`td.economy.EconomyListener`, `td.tower.TowerListener`,
+  `td.wave.WaveStartListener`) are already narrow, role-named interfaces, each living next to
+  the class that fires it. Widen `GameHost` only
   when the UI genuinely needs a new callback (see Architecture above) — don't add
   speculative methods.
 - This project's test conventions (see Tests below) already are the style's test rules:
@@ -186,7 +208,7 @@ the two documents avoid contradicting each other:**
   place two values of the same kind get combined**, replacing what used to be hand-rolled
   arithmetic spread across several mutations:
   - `td.economy.EconomyDelta`/`EconomyState` model a kill or a leak as one value with
-    `plus`/`after` and an identity `none()` — `Context.apply(EconomyDelta)` fires exactly one
+    `plus`/`after` and an identity `none()` — `EconomyLedger.apply(EconomyDelta)` fires exactly one
     `economyChanged` notification per event, where the old `addScore`/`doReceive`/`removeLife`
     trio fired up to two and left score with no notification at all.
   - `td.tower.buff.TowerBuff` replaces `AbstractTower.calcDamageRange()`'s
@@ -201,8 +223,8 @@ the two documents avoid contradicting each other:**
     combinator (`plus`); its compact constructor clamps every construction path at zero, so
     a falloff or resistance calculation (see `EnemyMobSquare`'s `absorb` override) can never
     produce a negative, healing hit.
-  - `Context`'s `credits`/`score`/`lives` are gone in favor of a single `EconomyState` field —
-    see the Threading model note above about `Context.apply`'s synchronized block.
+  - `EconomyLedger`'s `credits`/`score`/`lives` are one single `EconomyState` field —
+    see the Threading model note above about `EconomyLedger.apply`'s synchronized block.
   - `td.wave.smoothing.PathSmoothing.none()` is the identity for path smoothing — a level with
     no smoothing configured just gets this rather than a null/special-cased strategy field.
 

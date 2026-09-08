@@ -15,13 +15,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * End-to-end tests driven entirely through GameEngine's public API - the
  * same methods TowerDefence's mouse/keyboard listeners call - asserting on
- * resulting Context state. No window, no AWT event, no real clock: doTick()
+ * resulting GameWorld state. No window, no AWT event, no real clock: doTick()
  * is called with explicit tick numbers instead of relying on the real game
  * loop's timing.
  */
 class GameEngineTest {
 
-    private static final int SCALE = 32; // Context's default scale, unless a test changes it
+    private static final int SCALE = 32; // GameWorld's default scale, unless a test changes it
     // straight path along row y=2; also the path waypoint PathNormal.finalise() marks unbuildable
     private static final List<Point> STRAIGHT_PATH = List.of(new Point(0, 2), new Point(4, 2));
 
@@ -38,7 +38,7 @@ class GameEngineTest {
         Tower selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
 
         assertThat(selected).isNull(); // placing doesn't "select" the newly-built tower
-        assertThat(engine.getContext().getCredits()).isEqualTo(100 - TowerOne.price);
+        assertThat(engine.getGameWorld().getCredits()).isEqualTo(100 - TowerOne.price);
         assertThat(engine.getCellGrid()[0][0].hasTower()).isTrue();
         assertThat(engine.isPlacingTower()).isFalse();
     }
@@ -52,7 +52,7 @@ class GameEngineTest {
         Tower selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
 
         assertThat(selected).isNull();
-        assertThat(engine.getContext().getCredits()).isEqualTo(TowerOne.price - 1);
+        assertThat(engine.getGameWorld().getCredits()).isEqualTo(TowerOne.price - 1);
         assertThat(engine.getCellGrid()[0][0].hasTower()).isFalse();
         assertThat(engine.isPlacingTower()).isFalse(); // failed payment still cancels placement mode
     }
@@ -78,7 +78,7 @@ class GameEngineTest {
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
         engine.mouseClicked(cellCenter(0), cellCenter(2));
 
-        assertThat(engine.getContext().getCredits()).isEqualTo(100);
+        assertThat(engine.getGameWorld().getCredits()).isEqualTo(100);
         assertThat(engine.getCellGrid()[0][2].hasTower()).isFalse();
     }
 
@@ -97,18 +97,18 @@ class GameEngineTest {
 
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
         engine.mouseClicked(cellCenter(2), cellCenter(1));
-        int creditsAfterBuild = engine.getContext().getCredits();
-        int scoreBefore = engine.getContext().getScore();
+        int creditsAfterBuild = engine.getGameWorld().getCredits();
+        int scoreBefore = engine.getGameWorld().getScore();
 
         assertThat(engine.nextWave()).isTrue();
         assertThat(engine.isWaveReady()).isFalse();
 
-        for (int t = 1; t <= 10 && engine.getContext().getScore() == scoreBefore; t++) {
+        for (int t = 1; t <= 10 && engine.getGameWorld().getScore() == scoreBefore; t++) {
             engine.doTick(t);
         }
 
-        assertThat(engine.getContext().getScore()).isEqualTo(scoreBefore + 7);
-        assertThat(engine.getContext().getCredits()).isEqualTo(creditsAfterBuild + 7);
+        assertThat(engine.getGameWorld().getScore()).isEqualTo(scoreBefore + 7);
+        assertThat(engine.getGameWorld().getCredits()).isEqualTo(creditsAfterBuild + 7);
         assertThat(engine.isWaveReady()).isTrue(); // 2nd wave exists -> ready to start it
     }
 
@@ -116,14 +116,14 @@ class GameEngineTest {
     void enemyReachingTheEndOfThePathCostsALife() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
-        int initialLives = engine.getContext().getLives();
+        int initialLives = engine.getGameWorld().getLives();
 
         engine.nextWave();
         for (int t = 1; t <= 200; t++) {
             engine.doTick(t);
         }
 
-        assertThat(engine.getContext().getLives()).isLessThan(initialLives);
+        assertThat(engine.getGameWorld().getLives()).isLessThan(initialLives);
     }
 
     @Test
@@ -132,12 +132,12 @@ class GameEngineTest {
         engine.loadLevel(levelWith(List.of(), 100));
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
         engine.mouseClicked(cellCenter(0), cellCenter(0));
-        int creditsAfterBuild = engine.getContext().getCredits();
+        int creditsAfterBuild = engine.getGameWorld().getCredits();
         Tower placed = engine.getCellGrid()[0][0].getTower();
 
-        engine.getContext().sellTower(placed);
+        engine.getGameWorld().sellTower(placed);
 
-        assertThat(engine.getContext().getCredits()).isEqualTo(creditsAfterBuild + placed.getSellPrice());
+        assertThat(engine.getGameWorld().getCredits()).isEqualTo(creditsAfterBuild + placed.getSellPrice());
         assertThat(engine.getCellGrid()[0][0].hasTower()).isFalse();
         assertThat(engine.getCellGrid()[0][0].buildable()).isTrue();
     }

@@ -3,8 +3,8 @@ package td.ui;
 import td.board.BoardGeometry;
 import td.enemy.EnemyFactory.Enemy;
 import td.enemy.EnemyMob;
-import td.util.Context;
 import td.util.GameHost;
+import td.util.GameWorld;
 import td.wave.PathNormal;
 import td.wave.Vec2;
 
@@ -31,8 +31,8 @@ public class PanelEnemy extends JPanel {
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
     private int[] enemiesCount;
     private Font font;
-    private final Context contextLocal;
-    private Context contextFull;
+    private final GameWorld contextLocal;
+    private GameWorld contextFull;
     private int pHeight = 0;
     private int pWidth = 0;
     private int scale = 32;
@@ -40,11 +40,11 @@ public class PanelEnemy extends JPanel {
 
     public PanelEnemy() {
         initComponents();
-        this.contextLocal = new Context(GameHost.noOp());
+        this.contextLocal = new GameWorld(GameHost.noOp());
         this.contextLocal.setPath(new PathNormal(List.of()));
     }
 
-    public void setContext(Context c) {
+    public void setGameWorld(GameWorld c) {
         this.contextFull = c;
     }
 
