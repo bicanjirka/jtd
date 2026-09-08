@@ -34,14 +34,36 @@ This is the one structural rule that matters, and it is the result of a delibera
 Domain packages under `td.*`: `cell` (board squares, buildability), `damage` (the `Damage`
 value type towers deal to enemies), `economy` (`EconomyDelta`/`EconomyState`, the
 credits/score/lives algebra `Context` is built on), `enemy` (mob hierarchy + `EnemyFactory`),
-`tower` (tower hierarchy + `TowerFactory`; `tower.targeting` holds the shared target-scanning
-abstractions every tower composes instead of hand-rolling; `tower.buff` holds `TowerBuff`, the
-upgrade-stacking algebra), `wave` (path geometry, wave composition), `util` (`Context`,
+`level` (`LevelDefinition` — a level's board size, path, waves and starting economy as one
+immutable value; `LevelPath.throughCorners` expands a hand-authored corner list into the
+cell-by-cell path the engine needs; `LevelCatalog`/`BuiltInLevelCatalog` is where levels are
+sourced from — see Levels below), `tower` (tower hierarchy + `TowerFactory`; `tower.targeting`
+holds the shared target-scanning abstractions every tower composes instead of hand-rolling;
+`tower.buff` holds `TowerBuff`, the upgrade-stacking algebra), `wave` (path geometry — `Path`/
+`PathNormal`/`Point` — and wave composition — `Wave`/`WaveDefinition`), `util` (`Context`,
 `Cache`, listener interfaces).
 
 `Context` is the shared mutable world — an `EconomyState` (credits/score/lives), the tower
 list, the enemy array — and the listener hub (`ContextListener`, `TowerListener`,
 `WaveStartListener`).
+
+## Levels
+
+`TowerDefense` boots into a level-select landing screen, not straight into gameplay: the
+content pane is a `CardLayout` with a "menu" card (`td.ui.PanelLevelSelect`, one clickable
+stacked card per level showing its name and description) and a "game" card holding the board
+and side panels. Levels come from a `LevelCatalog` — `BuiltInLevelCatalog` is the only
+implementation today, sourcing levels as Java-code `LevelDefinition` constants; a future
+file-based catalog implements the same interface (see `TODO.md`). Selecting a card calls
+`TowerDefense.startSelectedLevel(LevelDefinition)`, which is what now does the level load, board
+sizing and `GameLoop.start()` that used to happen unconditionally in the constructor — nothing
+ticks and no board is shown until a level is actually chosen. `GameEngine.loadLevel(LevelDefinition)`
+is the one entry point that turns a level into live engine state (grid, path, waves,
+`Context.startEconomy(credits, lives)`); each level owns its board size, path and waves and now
+its own starting credits *and* lives, so levels don't inherit each other's economy.
+
+Returning to the level-select screen once a level has started is a known, deliberate gap — see
+`TODO.md`.
 
 ## Threading model
 
@@ -66,7 +88,7 @@ Tick speed is a plain multiplier — `TickSpeed` presets are a convenience, and 
 - **Fields ordered** roughly: constants, injected/final collaborators, mutable state — for
   stateful engine/service classes. A new value type (see Code style below) has no third
   bucket: every field is `private final`.
-- Prefer `record` for value carriers (see `GameEngine.WaveDefinition`).
+- Prefer `record` for value carriers (see `td.level.LevelDefinition`, `td.wave.WaveDefinition`).
 - `@Serial` on `serialVersionUID` in Swing classes.
 
 ## Code style: staff-level Java, per policy-management
@@ -169,7 +191,7 @@ Wave contents are a space-separated token string parsed in `Wave.finalise()`. To
 | `g` | Ghost |
 | `e` | Empty (spacer — counts toward spawn timing, not toward the enemy count) |
 
-`"3 s e 4 c"` = three Squares, one spacer, four Circles. A count applies only to the token immediately following it and resets to 1 afterward. Levels are defined as `WaveDefinition(enemies, hp, price, level)` — see `TowerDefense.DEFAULT_WAVES`.
+`"3 s e 4 c"` = three Squares, one spacer, four Circles. A count applies only to the token immediately following it and resets to 1 afterward. Each wave is a `WaveDefinition(enemies, hp, price, level)`, and a level's full wave list is part of its `LevelDefinition` — see `BuiltInLevelCatalog`.
 
 ## Logging
 
