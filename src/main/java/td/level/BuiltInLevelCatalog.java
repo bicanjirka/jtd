@@ -2,6 +2,7 @@ package td.level;
 
 import td.wave.Point;
 import td.wave.WaveDefinition;
+import td.wave.smoothing.QuadraticBezierSmoothing;
 
 import java.util.List;
 
@@ -42,9 +43,12 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     new WaveDefinition("s", 4751, 0, 8)),
             50, 5);
 
-    private static final LevelDefinition ZIGZAG_GAUNTLET = LevelDefinition.unsmoothed(
+    // cornerPull=0.3 keeps a comfortable margin under the tightest corner's leg (the shortest
+    // is 2 cells = 64px, so pullback there is ~19px); 8 samples per corner is plenty smooth at
+    // this board's scale without generating an excessive number of extra path points.
+    private static final LevelDefinition ZIGZAG_GAUNTLET = new LevelDefinition(
             "Zigzag Gauntlet",
-            "A tighter, sharply turning path on a smaller board. 8 waves, starting with $75 and only 3 lives.",
+            "A tighter, smoothly curving path on a smaller board. 8 waves, starting with $75 and only 3 lives.",
             12, 10,
             LevelPath.throughCorners(
                     new Point(-1, 5), new Point(3, 5), new Point(3, 8), new Point(7, 8),
@@ -58,7 +62,8 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     new WaveDefinition("g e g e g", 1200, 8, 3),
                     new WaveDefinition("2 g 2 t 2 s 2 c", 1800, 5, 3),
                     new WaveDefinition("10 c e 5 s e 3 t e g", 2600, 4, 4)),
-            75, 3);
+            75, 3,
+            new QuadraticBezierSmoothing(0.3, 8));
 
     @Override
     public List<LevelDefinition> levels() {
