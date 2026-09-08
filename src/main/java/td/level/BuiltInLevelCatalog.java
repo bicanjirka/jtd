@@ -42,8 +42,26 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     new WaveDefinition("s", 4751, 0, 8)),
             50, 5);
 
+    private static final LevelDefinition ZIGZAG_GAUNTLET = new LevelDefinition(
+            "Zigzag Gauntlet",
+            "A tighter, sharply turning path on a smaller board. 8 waves, starting with $75 and only 3 lives.",
+            12, 10,
+            LevelPath.throughCorners(
+                    new Point(-1, 5), new Point(3, 5), new Point(3, 8), new Point(7, 8),
+                    new Point(7, 2), new Point(10, 2), new Point(10, 9), new Point(12, 9)),
+            List.of(
+                    new WaveDefinition("c e c e c e c", 200, 2, 1),
+                    new WaveDefinition("5 c", 280, 2, 1),
+                    new WaveDefinition("s e s e s", 450, 4, 2),
+                    new WaveDefinition("t e t e t e t", 600, 3, 2),
+                    new WaveDefinition("3 s 2 e 3 c", 900, 3, 2),
+                    new WaveDefinition("g e g e g", 1200, 8, 3),
+                    new WaveDefinition("2 g 2 t 2 s 2 c", 1800, 5, 3),
+                    new WaveDefinition("10 c e 5 s e 3 t e g", 2600, 4, 4)),
+            75, 3);
+
     @Override
     public List<LevelDefinition> levels() {
-        return List.of(CLASSIC_LOOP);
+        return List.of(CLASSIC_LOOP, ZIGZAG_GAUNTLET);
     }
 }
