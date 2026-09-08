@@ -11,7 +11,6 @@ import java.util.List;
 public abstract class AbstractTower implements Tower {
 
     protected Context context;
-    protected String name;
     protected final List<TowerUpgrade> upgTowers;
     protected int boardX;
     protected int boardY;
@@ -124,10 +123,6 @@ public abstract class AbstractTower implements Tower {
 
     public TowerFactory.type getType() {
         return this.type;
-    }
-
-    public String getName() {
-        return this.name;
     }
 
     public String getInfoString() {

@@ -28,6 +28,7 @@ This is the one structural rule that matters, and it is the result of a delibera
 - **`TowerDefense` (a `JFrame`) and `td.ui` own presentation.** Layout, painting, `MouseEvent`/`KeyEvent` handling, and translating screen coordinates into the board-relative pixel coordinates `GameEngine.mouseClicked`/`highlightCell` expect.
 - **`GameHost` is the engine's only channel back to the UI** (`enemyDied`, `setInfoText`, `clearCell`). `Context` calls through it; it does not know about Swing.
 - **`td.ui` itself splits describing a frame from drawing one.** `BoardRenderer.buildFrame(gameTime, interpolationAlpha)` walks the engine/context and returns an immutable `td.ui.render.RenderFrame` — cell/enemy/tower draw-command records with zero `java.awt` import anywhere in that package. A backend turns that into output: `Java2DFrameRenderer` is the real one (the only class in `td.ui` that imports `java.awt`); `AsciiBoardRenderer` is a second, deliberately minimal one used for headless `DEBUG` logging (see Logging), which exists specifically to prove the split is a real seam rather than an aspirational one. `Tower`/`EnemyMob` still dispatch into the frame builders via `TowerVisitor`/`EnemyMobVisitor` (see the no-`instanceof` rule below) — only the last step, turning a `RenderFrame` into pixels, changed shape.
+- **All game art is vector, drawn by code — there are no image assets.** Enemies, path markers, tower effects (beams/splash/pulse) and tower bodies are all `java.awt.Shape`s built and painted in `Java2DFrameRenderer`, keyed off `td.ui.render.Palette`. Adding a new tower or enemy's art is: (1) add a `Palette` constant naming its colour role; (2) add its `Shape`/colour case to `Java2DFrameRenderer` — `enemyShape`/`colorFor` for an enemy, `towerBodyShape`/`colorFor` (and `TowerSpriteFrameBuilder.bodyPaletteFor`, an exhaustive switch with no `default`) for a tower; (3) wire the new domain class into the existing `TowerVisitor`/`EnemyMobVisitor` dispatch the same way every other type already is. The compiler catches a missing step at every one of those switches. Tower toolbar icons (`PanelTowerSelector`) reuse the exact same body-paint code via `Java2DFrameRenderer.renderTowerIcon`, so a tower's board look and its icon can never drift apart.
 
 **When adding gameplay logic, put it in `GameEngine`/`Context`/the domain packages, not in `TowerDefense`.** `TowerDefense` is a shrinking legacy shell — every new rule placed there is a rule that cannot be tested. If a change needs something from the UI, add a method to `GameHost` rather than reaching for a Swing type from engine code.
 
@@ -42,7 +43,7 @@ from — see Levels below), `tower` (tower
 hierarchy + `TowerFactory`; `tower.targeting` holds the shared target-scanning abstractions
 every tower composes instead of hand-rolling; `tower.buff` holds `TowerBuff`, the
 upgrade-stacking algebra), `wave` (path geometry and wave composition — see Path geometry
-below), `util` (`Context`, `Cache`, listener interfaces).
+below), `util` (`Context`, listener interfaces).
 
 `Context` is the shared mutable world — an `EconomyState` (credits/score/lives), the tower
 list, the enemy array — and the listener hub (`ContextListener`, `TowerListener`,
@@ -140,7 +141,7 @@ the two documents avoid contradicting each other:**
   full treatment — rule 5 (immutable, `private final`), rule 7
   (named static factory over a public constructor), rule 8 (no `null`, model absence
   explicitly). No exceptions here; a new mutable value class is a regression.
-- **Stateful engine/service classes** (`Context`, `GameEngine`, `GameLoop`, `Cache`) are
+- **Stateful engine/service classes** (`Context`, `GameEngine`, `GameLoop`) are
   exempt from rule 5 by nature — they exist to hold and mutate live simulation state, and
   the Threading model above is a hard requirement that overrides the style guide where the
   two would otherwise conflict (e.g. `Context.towers` stays a mutable
@@ -262,15 +263,14 @@ concatenation.
   `tick=` field. Call sites that actually run on the `game-loop` thread and
   care about which tick they're in (e.g. `GameLoop`'s own tick-failure logs)
   log the tick number as an explicit parameter instead.
-- **Fatal startup failures** (e.g. `Cache` failing to load an image) throw
-  `td.util.GameStartupException`, caught exactly once in `Main`, which logs
-  at `ERROR` and exits non-zero — the one fatal boundary, rather than a
-  singleton constructor showing a dialog and exiting itself.
+- **Fatal startup failures** (e.g. a future file-based `LevelCatalog` failing to load a level
+  file — see `LevelCatalog`'s own doc comment) throw `td.util.GameStartupException`, caught
+  exactly once in `Main`, which logs at `ERROR` and exits non-zero — the one fatal boundary,
+  rather than a singleton constructor showing a dialog and exiting itself.
 
 ## Gotchas
 
 - **A green test run still prints a `WARN` line and stack trace.** `WaveTest` feeds an unparseable token (`"?"`) through the wave language, and `Wave`'s constructor handles it with `LOG.warn(...)` (via `logback-test.xml`, `WARN` is the one level still visible during tests, and Logback prints the passed exception's trace below the message) and defaults the count to 1. Expected output on a passing run — check `Tests run: … Failures: 0`, not the presence of that output.
-- **`Cache` is an eagerly-initialized singleton that throws `GameStartupException` if any image fails to load** — caught in `Main`, which logs it and exits non-zero. `Context`'s constructor calls `Cache.getInstance()`, so *every* test that builds a `Context` loads the real image resources. Renaming or removing anything under `src/main/resources/td/images/` will take down the test suite, not just the game.
 - **Version is duplicated** between `pom.xml` and `TowerDefense.VERSION` (currently `1.4` in both). There's no single source of truth — update both when cutting a release.
 
 ## Known gaps

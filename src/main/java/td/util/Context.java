@@ -32,8 +32,6 @@ public class Context {
     private final List<TowerListener> towerListeners;
     private final List<WaveStartListener> waveListeners;
 
-    private final Cache cache;
-
     public Context(GameHost mainApp) {
         this.mainApp = mainApp;
         this.contextListeners = new CopyOnWriteArrayList<>();
@@ -41,7 +39,6 @@ public class Context {
         this.waveListeners = new CopyOnWriteArrayList<>();
         this.towers = new CopyOnWriteArrayList<>();
         this.path = new PathNormal(List.of());
-        this.cache = Cache.getInstance();
     }
 
     public void startWave(Wave w) {
@@ -213,10 +210,6 @@ public class Context {
 
     public int getLives() {
         return this.economy.lives();
-    }
-
-    public Cache getCache() {
-        return this.cache;
     }
 
 }

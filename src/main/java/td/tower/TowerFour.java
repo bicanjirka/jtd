@@ -19,7 +19,6 @@ public final class TowerFour extends AbstractTower {
 
     public TowerFour(Context context, int x, int y) {
         super(TowerFactory.type.fourth, price, damage, range);
-        this.name = "tower4";
         this.doInit(context, x, y);
     }
 
