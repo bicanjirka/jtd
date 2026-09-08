@@ -51,6 +51,18 @@ class BoardRendererTest {
     }
 
     @Test
+    void aPlacedTowerYieldsATurretHeadDrawWithItsBodyPalette() {
+        GameEngine engine = newEngine();
+        Context context = engine.getContext();
+        context.addTower(new TowerOne(context, 1, 1));
+
+        RenderFrame frame = new BoardRenderer(engine, context).buildFrame(0, 0.0, 0.0);
+
+        assertThat(frame.towerHeads()).hasSize(1);
+        assertThat(frame.towerHeads().get(0).palette()).isEqualTo(Palette.TOWER_ONE_BODY);
+    }
+
+    @Test
     void anUnselectedTowerYieldsASpriteDrawWithSelectedFalse() {
         GameEngine engine = newEngine();
         Context context = engine.getContext();
