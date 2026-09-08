@@ -1,6 +1,7 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
+import td.board.BoardGeometry;
 import td.damage.Damage;
 import td.util.Context;
 import td.util.RecordingGameHost;
@@ -22,8 +23,7 @@ class AbstractEnemyMobTest {
 
     private static Context newContext() {
         Context context = new Context(new RecordingGameHost());
-        context.maxX = 1000;
-        context.maxY = 1000;
+        context.setBoard(BoardGeometry.of(1, 1001, 1001));
         return context;
     }
 
@@ -69,8 +69,7 @@ class AbstractEnemyMobTest {
     void lethalDamageKillsTheEnemyAndCreditsThePlayer() {
         RecordingGameHost host = new RecordingGameHost();
         Context context = new Context(host);
-        context.maxX = 1000;
-        context.maxY = 1000;
+        context.setBoard(BoardGeometry.of(1, 1001, 1001));
         context.setEnemyCount(1);
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 7, 2);
@@ -88,8 +87,7 @@ class AbstractEnemyMobTest {
     void anAlreadyDeadEnemyDamagedAgainDoesNotPayTheBountyTwice() {
         RecordingGameHost host = new RecordingGameHost();
         Context context = new Context(host);
-        context.maxX = 1000;
-        context.maxY = 1000;
+        context.setBoard(BoardGeometry.of(1, 1001, 1001));
         context.setEnemyCount(1);
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 7, 2);

@@ -1,6 +1,7 @@
 package td.ui;
 
 import td.GameEngine;
+import td.board.BoardGeometry;
 import td.cell.Cell;
 import td.enemy.EnemyMob;
 import td.tower.Tower;
@@ -56,9 +57,10 @@ public final class BoardRenderer {
             tower.accept(effectFrameBuilder);
         }
 
-        List<PathMarkerDraw> pathMarkers = PathMarkerFrameBuilder.build(this.context.getPath(), this.context.scale, animationSeconds);
+        BoardGeometry board = this.context.getBoard();
+        List<PathMarkerDraw> pathMarkers = PathMarkerFrameBuilder.build(this.context.getPath(), board.scale(), animationSeconds);
 
-        return new RenderFrame(this.context.scale, this.context.maxX, this.context.maxY,
+        return new RenderFrame(board.scale(), board.maxX(), board.maxY(),
                 cells, enemyFrameBuilder.build(), spriteFrameBuilder.build(), spriteFrameBuilder.buildHeads(),
                 effectFrameBuilder.build(), pathMarkers);
     }

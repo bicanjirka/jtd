@@ -41,7 +41,7 @@ public abstract class AbstractTower implements Tower {
 
     protected void doInit(Context context, int x, int y) {
         this.context = context;
-        int scale = this.context.scale;
+        int scale = this.context.getBoard().scale();
         this.boardX = x * scale;
         this.boardY = y * scale;
         this.centerX = this.boardX + scale / 2;
@@ -69,7 +69,7 @@ public abstract class AbstractTower implements Tower {
         this.damageCurrent = buff.damageFor(this.damageBase);
         this.rangeCurrent = buff.rangeFor(this.rangeBase);
 
-        this.rangeReal = this.rangeCurrent * this.context.scale;
+        this.rangeReal = this.rangeCurrent * this.context.getBoard().scale();
         this.rangeReal2 = rangeReal * rangeReal;
     }
 

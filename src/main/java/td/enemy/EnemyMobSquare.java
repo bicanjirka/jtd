@@ -14,7 +14,7 @@ public final class EnemyMobSquare extends AbstractEnemyMobRotor {
 
     protected void doInit(Context context, int delay, int health, int price, int level) {
         super.doInit(context, delay, health, price, level);
-        this.bodyScale = (float) this.context.scale / ((this.level < 6) ? (7 - level) : (2));
+        this.bodyScale = (float) this.context.getBoard().scale() / ((this.level < 6) ? (7 - level) : (2));
         K = 0.8f - this.level * 0.05f;
     }
 

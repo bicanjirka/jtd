@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.board.BoardGeometry;
 import td.enemy.EnemyFactory.Enemy;
 import td.enemy.EnemyMob;
 import td.util.Context;
@@ -74,7 +75,7 @@ public class PanelEnemy extends JPanel {
             this.pHeight = this.getHeight();
         }
         this.scale = this.pHeight;
-        this.contextLocal.scale = this.scale;
+        this.contextLocal.setBoard(BoardGeometry.of(this.scale, 0, 0));
         this.font = new Font(Font.DIALOG, Font.PLAIN, (int) (0.30 * this.scale));
     }
 

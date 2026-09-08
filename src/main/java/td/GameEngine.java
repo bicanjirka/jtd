@@ -2,6 +2,7 @@ package td;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import td.board.BoardGeometry;
 import td.cell.Cell;
 import td.cell.CellNormal;
 import td.enemy.EnemyMob;
@@ -93,19 +94,19 @@ public class GameEngine {
     public void loadLevel(LevelDefinition level) {
         int width = level.width();
         int height = level.height();
+        int scale = this.context.getBoard().scale();
         this.cellGrid = new Cell[width][height];
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-                this.cellGrid[i][j] = new CellNormal(i * this.context.scale, j * this.context.scale);
+                this.cellGrid[i][j] = new CellNormal(i * scale, j * scale);
             }
         }
-        this.context.maxX = width * this.context.scale - 1;
-        this.context.maxY = height * this.context.scale - 1;
+        this.context.setBoard(BoardGeometry.of(scale, width, height));
 
         this.waves = new ArrayList<>();
-        Path path = PathBuilder.build(level.path(), level.smoothing(), this.context.scale);
+        Path path = PathBuilder.build(level.path(), level.smoothing(), scale);
         this.context.setPath(path);
-        markUnbuildableCells(path, this.context.scale);
+        markUnbuildableCells(path, scale);
         this.wave = 0;
 
         for (WaveDefinition wd : level.waves()) {
@@ -203,16 +204,15 @@ public class GameEngine {
 
     public void highlightCell(int boardX, int boardY) {
         this.unHighlightCell();
-        if (boardX >= 0 && boardX < boardPixelWidth()) {
-            if (boardY >= 0 && boardY < boardPixelHeight()) {
-                int[] tempInt = new int[2];
-                tempInt[0] = boardX / this.context.scale;
-                tempInt[1] = boardY / this.context.scale;
-                this.highlitedCell = tempInt;
-                Cell cell = this.cellGrid[boardX / this.context.scale][boardY / this.context.scale];
-                cell.setHighlight(Cell.highlightType.place);
-                cell.setHighlightRange(this.placingTowerRange);
-            }
+        BoardGeometry board = this.context.getBoard();
+        if (board.containsPixel(boardX, boardY)) {
+            int[] tempInt = new int[2];
+            tempInt[0] = board.cellX(boardX);
+            tempInt[1] = board.cellY(boardY);
+            this.highlitedCell = tempInt;
+            Cell cell = this.cellGrid[board.cellX(boardX)][board.cellY(boardY)];
+            cell.setHighlight(Cell.highlightType.place);
+            cell.setHighlightRange(this.placingTowerRange);
         }
     }
 
@@ -221,34 +221,33 @@ public class GameEngine {
      */
     public Tower mouseClicked(int boardX, int boardY) {
         Tower selected = null;
-        if (boardX >= 0 && boardX < boardPixelWidth()) {
-            if (boardY >= 0 && boardY < boardPixelHeight()) {
-                Cell cell = this.cellGrid[boardX / this.context.scale][boardY / this.context.scale];
-                if (cell.hasTower()) {
-                    selected = cell.getTower();
-                    int[] tempInt = new int[2];
-                    tempInt[0] = boardX / this.context.scale;
-                    tempInt[1] = boardY / this.context.scale;
-                    this.highlitedCell = tempInt;
-                    cell.setHighlight(Cell.highlightType.select);
-                } else if (this.placingTower) {
-                    if (cell.buildable()) {
-                        int cellX = boardX / this.context.scale;
-                        int cellY = boardY / this.context.scale;
-                        if (this.context.doPay(this.placingTowerType.price)) {
-                            Tower tempTower = TowerFactory.createTower(this.placingTowerType, this.context, cellX, cellY);
-                            this.context.addTower(tempTower);
-                            cell.setTower(tempTower);
-                            cell.enable(false);
-                            LOG.info("Tower placed: {} at ({},{}), credits left={}", this.placingTowerType, cellX, cellY, this.context.getCredits());
-                        } else {
-                            LOG.info("Tower placement rejected: not enough credits for {} (need {}, have {})",
-                                    this.placingTowerType, this.placingTowerType.price, this.context.getCredits());
-                        }
-                        this.placingTower = false;
+        BoardGeometry board = this.context.getBoard();
+        if (board.containsPixel(boardX, boardY)) {
+            Cell cell = this.cellGrid[board.cellX(boardX)][board.cellY(boardY)];
+            if (cell.hasTower()) {
+                selected = cell.getTower();
+                int[] tempInt = new int[2];
+                tempInt[0] = board.cellX(boardX);
+                tempInt[1] = board.cellY(boardY);
+                this.highlitedCell = tempInt;
+                cell.setHighlight(Cell.highlightType.select);
+            } else if (this.placingTower) {
+                if (cell.buildable()) {
+                    int cellX = board.cellX(boardX);
+                    int cellY = board.cellY(boardY);
+                    if (this.context.doPay(this.placingTowerType.price)) {
+                        Tower tempTower = TowerFactory.createTower(this.placingTowerType, this.context, cellX, cellY);
+                        this.context.addTower(tempTower);
+                        cell.setTower(tempTower);
+                        cell.enable(false);
+                        LOG.info("Tower placed: {} at ({},{}), credits left={}", this.placingTowerType, cellX, cellY, this.context.getCredits());
                     } else {
-                        LOG.info("Tower placement rejected: cell ({},{}) is not buildable", boardX / this.context.scale, boardY / this.context.scale);
+                        LOG.info("Tower placement rejected: not enough credits for {} (need {}, have {})",
+                                this.placingTowerType, this.placingTowerType.price, this.context.getCredits());
                     }
+                    this.placingTower = false;
+                } else {
+                    LOG.info("Tower placement rejected: cell ({},{}) is not buildable", board.cellX(boardX), board.cellY(boardY));
                 }
             }
         }
@@ -256,13 +255,5 @@ public class GameEngine {
             this.placingTower = false;
         }
         return selected;
-    }
-
-    private int boardPixelWidth() {
-        return this.cellGrid.length * this.context.scale;
-    }
-
-    private int boardPixelHeight() {
-        return this.cellGrid[0].length * this.context.scale;
     }
 }
