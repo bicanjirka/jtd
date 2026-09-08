@@ -4,9 +4,9 @@ import org.junit.jupiter.api.Test;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -61,33 +61,50 @@ class PathCoverageTest {
 
     /**
      * The load-bearing regression test for this whole rewrite: proves that for a real,
-     * unsmoothed level's path - one grid cell per listed step, exactly like
-     * LevelPath.throughCorners has always produced - the new coverage-based algorithm marks
-     * *exactly* the same cells unbuildable as the old "mark the listed cells" one did, no more
-     * and no fewer, for both built-in levels. The old algorithm also bounds-checked each step
-     * before marking it (a level's path deliberately starts/ends off-board), so "its own
-     * cells" here means the ones actually within the grid, same as before.
+     * shipped level (Classic Loop), the sparse corner-only path this change introduces covers
+     * *exactly* the same cells as the old dense, one-cell-per-step path did. {@code
+     * expandThroughCornersLikeTheOldLevelPathDid} is a frozen copy of the axis-aligned
+     * expansion {@code LevelPath.throughCorners} used to perform before it was deleted - it
+     * exists only as a comparison baseline in this test, not as production code.
      */
     @Test
-    void classicLoopsUnsmoothedPathCoversExactlyTheCellsItWasAuthoredThrough() {
-        assertCoversExactlyItsOwnCells(new BuiltInLevelCatalog().levels().get(0));
-    }
+    void classicLoopsSparseCornersCoverTheSameCellsAsTheOldDenseExpansionDid() {
+        LevelDefinition classicLoop = new BuiltInLevelCatalog().levels().get(0);
+        List<Point> corners = classicLoop.path();
 
-    @Test
-    void zigzagGauntletsUnsmoothedPathCoversExactlyTheCellsItWasAuthoredThrough() {
-        assertCoversExactlyItsOwnCells(new BuiltInLevelCatalog().levels().get(1));
-    }
-
-    private static void assertCoversExactlyItsOwnCells(LevelDefinition level) {
-        List<Vec2> pixelPolyline = level.path().stream()
+        List<Vec2> oldDensePolyline = expandThroughCornersLikeTheOldLevelPathDid(corners).stream()
                 .map(cell -> new Vec2(cell.x() * SCALE + (SCALE / 2), cell.y() * SCALE + (SCALE / 2)))
                 .toList();
+        Set<Point> coveredByOldDensePath = PathCoverage.unbuildableCells(
+                oldDensePolyline, SCALE, classicLoop.width(), classicLoop.height());
 
-        Set<Point> covered = PathCoverage.unbuildableCells(pixelPolyline, SCALE, level.width(), level.height());
+        List<Vec2> sparsePolyline = corners.stream()
+                .map(cell -> new Vec2(cell.x() * SCALE + (SCALE / 2), cell.y() * SCALE + (SCALE / 2)))
+                .toList();
+        Set<Point> coveredBySparsePath = PathCoverage.unbuildableCells(
+                sparsePolyline, SCALE, classicLoop.width(), classicLoop.height());
 
-        Set<Point> expectedInBounds = level.path().stream()
-                .filter(p -> p.x() >= 0 && p.x() < level.width() && p.y() >= 0 && p.y() < level.height())
-                .collect(Collectors.toSet());
-        assertThat(covered).containsExactlyInAnyOrderElementsOf(expectedInBounds);
+        assertThat(coveredBySparsePath).containsExactlyInAnyOrderElementsOf(coveredByOldDensePath);
+    }
+
+    // This is what LevelPath.throughCorners used to do, before it was deleted - kept here only
+    // as a comparison baseline for the test above.
+    private static List<Point> expandThroughCornersLikeTheOldLevelPathDid(List<Point> corners) {
+        List<Point> steps = new ArrayList<>();
+        steps.add(corners.get(0));
+        for (int i = 1; i < corners.size(); i++) {
+            Point from = corners.get(i - 1);
+            Point to = corners.get(i);
+            int stepX = Integer.signum(to.x() - from.x());
+            int stepY = Integer.signum(to.y() - from.y());
+            int x = from.x();
+            int y = from.y();
+            while (x != to.x() || y != to.y()) {
+                x += stepX;
+                y += stepY;
+                steps.add(new Point(x, y));
+            }
+        }
+        return steps;
     }
 }

@@ -15,10 +15,8 @@ import java.util.List;
 public abstract class AbstractCornerSmoothing implements PathSmoothing {
 
     private static final double COLLINEAR_ANGLE_RADIANS = 1e-6;
-    // A turn sharper than this (nearly a dead-end U-turn) is left unrounded. Not a case any
-    // level produces today - LevelPath.throughCorners only ever emits 90 degree turns - so
-    // this is future-proofing a construction that would otherwise degenerate, not a fix for
-    // anything reachable today.
+    // A turn sharper than this (nearly a dead-end U-turn) is left unrounded, since a
+    // tangent-circle/curve construction can't handle a near-total reversal cleanly.
     private static final double MIN_TURN_ANGLE_RADIANS = Math.toRadians(10);
 
     private final double cornerPull;

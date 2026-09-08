@@ -35,9 +35,10 @@ Domain packages under `td.*`: `cell` (board squares, buildability), `damage` (th
 value type towers deal to enemies), `economy` (`EconomyDelta`/`EconomyState`, the
 credits/score/lives algebra `Context` is built on), `enemy` (mob hierarchy + `EnemyFactory`),
 `level` (`LevelDefinition` — a level's board size, path, waves, starting economy and
-`PathSmoothing` strategy as one immutable value; `LevelPath.throughCorners` expands a
-hand-authored corner list into the cell-by-cell path `PathBuilder` needs; `LevelCatalog`/
-`BuiltInLevelCatalog` is where levels are sourced from — see Levels below), `tower` (tower
+`PathSmoothing` strategy as one immutable value; `path` is just the level's corners, in
+authored order, at any angle — `PathBuilder` turns them into pixel-space directly, no
+per-cell expansion step; `LevelCatalog`/`BuiltInLevelCatalog` is where levels are sourced
+from — see Levels below), `tower` (tower
 hierarchy + `TowerFactory`; `tower.targeting` holds the shared target-scanning abstractions
 every tower composes instead of hand-rolling; `tower.buff` holds `TowerBuff`, the
 upgrade-stacking algebra), `wave` (path geometry and wave composition — see Path geometry

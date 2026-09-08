@@ -25,7 +25,8 @@ class LevelDefinitionTest {
     @Test
     void mutatingTheListPassedInDoesNotChangeTheStoredWaves() {
         List<WaveDefinition> waves = new ArrayList<>(List.of(new WaveDefinition("c", 1, 1, 1)));
-        LevelDefinition level = LevelDefinition.unsmoothed("Test", "", 5, 5, List.of(), waves, 100, 5);
+        LevelDefinition level = LevelDefinition.unsmoothed("Test", "", 5, 5,
+                List.of(new Point(0, 0), new Point(1, 0)), waves, 100, 5);
 
         waves.add(new WaveDefinition("s", 1, 1, 1));
 
@@ -35,11 +36,22 @@ class LevelDefinitionTest {
     @Test
     void theStoredPathAndWavesCannotBeMutatedThroughTheirAccessors() {
         LevelDefinition level = LevelDefinition.unsmoothed("Test", "", 5, 5,
-                List.of(new Point(0, 0)), List.of(new WaveDefinition("c", 1, 1, 1)), 100, 5);
+                List.of(new Point(0, 0), new Point(1, 0)), List.of(new WaveDefinition("c", 1, 1, 1)), 100, 5);
 
-        assertThatThrownBy(() -> level.path().add(new Point(1, 0)))
+        assertThatThrownBy(() -> level.path().add(new Point(2, 0)))
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> level.waves().add(new WaveDefinition("s", 1, 1, 1)))
                 .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void aLevelNeedsAtLeastTwoPathCorners() {
+        assertThatThrownBy(() -> LevelDefinition.unsmoothed("Test", "", 5, 5,
+                List.of(), List.of(), 100, 5))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThatThrownBy(() -> LevelDefinition.unsmoothed("Test", "", 5, 5,
+                List.of(new Point(0, 0)), List.of(), 100, 5))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

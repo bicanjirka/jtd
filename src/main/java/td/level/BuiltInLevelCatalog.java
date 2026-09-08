@@ -16,7 +16,7 @@ public class BuiltInLevelCatalog implements LevelCatalog {
             "Classic Loop",
             "The original winding path. 17 waves, starting with $50.",
             20, 15,
-            LevelPath.throughCorners(
+            List.of(
                     new Point(-1, 11), new Point(5, 11), new Point(5, 12), new Point(7, 12),
                     new Point(7, 6), new Point(4, 6), new Point(4, 5), new Point(3, 5),
                     new Point(3, 2), new Point(6, 2), new Point(6, 3), new Point(11, 3),
@@ -50,7 +50,7 @@ public class BuiltInLevelCatalog implements LevelCatalog {
             "Zigzag Gauntlet",
             "A tighter, smoothly curving path on a smaller board. 8 waves, starting with $75 and only 3 lives.",
             12, 10,
-            LevelPath.throughCorners(
+            List.of(
                     new Point(-1, 5), new Point(3, 5), new Point(3, 8), new Point(7, 8),
                     new Point(7, 2), new Point(10, 2), new Point(10, 9), new Point(12, 9)),
             List.of(

@@ -8,11 +8,12 @@ import java.util.List;
 
 /**
  * A named, playable level: board size, the enemy path across it, its waves,
- * and its own starting economy. {@code path} holds cell coordinates (one
- * entry per cell the path crosses, in order) - not the pixel coordinates
- * {@link td.wave.Path#getStep} deals in, despite sharing the {@link Point}
- * type with it. {@code smoothing} is applied to that path's pixel-space
- * form (see {@link td.wave.PathBuilder}) before enemies ever move along it.
+ * and its own starting economy. {@code path} holds the level's corners, in
+ * authored order - as few as two, connected by straight legs of any length
+ * and any angle. {@link td.wave.PathBuilder} converts each corner to its
+ * pixel-space center and runs the result through {@code smoothing} before
+ * enemies ever move along it - there is no separate per-cell expansion step,
+ * and no requirement that consecutive corners be axis-aligned.
  */
 public record LevelDefinition(
         String name,
@@ -28,6 +29,9 @@ public record LevelDefinition(
     public LevelDefinition {
         path = List.copyOf(path);
         waves = List.copyOf(waves);
+        if (path.size() < 2) {
+            throw new IllegalArgumentException("A level's path needs at least 2 corners, had " + path.size());
+        }
     }
 
     /** A level with no path smoothing - the common case for a level that doesn't care. */
