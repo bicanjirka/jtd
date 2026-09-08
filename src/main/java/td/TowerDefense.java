@@ -11,6 +11,7 @@ import td.tower.TowerFactory;
 import td.ui.BoardRenderer;
 import td.ui.GameBoard;
 import td.ui.Java2DFrameRenderer;
+import td.ui.PanelLevelSelect;
 import td.ui.PanelTowerInfo;
 import td.ui.PanelTowerSelector;
 import td.ui.PanelWaveInfo;
@@ -29,6 +30,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
+import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -43,7 +45,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.io.Serial;
-import java.util.List;
 
 // Inspired by HexTD
 public class TowerDefense extends JFrame implements ContextListener, GameHost {
@@ -54,6 +55,10 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
     private static final long serialVersionUID = 1L;
     private static final String NAME = "Tower Defense";
     static final String VERSION = "1.4";
+    private static final String CARD_MENU = "menu";
+    private static final String CARD_GAME = "game";
+    private static final int MENU_WIDTH = 480;
+    private static final int MENU_HEIGHT = 420;
 
     private final LevelCatalog levelCatalog = new BuiltInLevelCatalog();
 
@@ -87,7 +92,14 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
     // EDT-only, since it's only ever touched from button/key listeners.
     private TickSpeed currentSpeed = TickSpeed.NORMAL;
     private boolean gameStopped = false;
+    // Guards input and the game loop against firing before startSelectedLevel() has run -
+    // the JFrame-level KeyListener is live the instant the frame is shown, well before any
+    // level (and its cellGrid) exists.
+    private boolean levelLoaded = false;
 
+    private CardLayout contentCardLayout;
+    private JPanel jPanel_game;
+    private PanelLevelSelect panelLevelSelect;
     private JButton jButton_play;
     private JButton jButton_pause;
     private JButton jButton_fast;
@@ -134,10 +146,10 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
 
         this.jPanel_board.add(this.gameBoard);
 
-        loadTestLevel();
-        this.gameTime = 0;
-        this.setSpeed(TickSpeed.NORMAL);
-        this.gameLoop.start();
+        // CardLayout starts on the menu card; give the frame a size that fits it. The game
+        // card gets its own size from recalculateBoard() once a level is actually loaded.
+        this.setSize(MENU_WIDTH, MENU_HEIGHT);
+        this.setLocationRelativeTo(null);
     }
 
     /**
@@ -178,15 +190,26 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
         }
     }
 
-    // Loads the catalog's first level directly for now; the level-select screen that picks
-    // among levelCatalog.levels() lands in a later phase.
-    private void loadTestLevel() {
-        LevelDefinition level = this.levelCatalog.levels().get(0);
+    /**
+     * The level-select screen's callback. Ignores a second call (e.g. a fast double-click on a
+     * level card) since {@link GameLoop#start()} spawns a new thread every time it's called,
+     * with no guard of its own - two calls would leave two loops ticking the same engine.
+     */
+    private void startSelectedLevel(LevelDefinition level) {
+        if (this.levelLoaded) {
+            return;
+        }
+        this.levelLoaded = true;
+        this.contentCardLayout.show(getContentPane(), CARD_GAME);
         this.engine.loadLevel(level);
         this.gameBoard.recalculateBoard(level.width(), level.height());
         this.jPanel_gameLost.setVisible(false);
         this.jPanel_gameWon.setVisible(false);
         this.startLevel();
+        this.gameTime = 0;
+        this.setSpeed(TickSpeed.NORMAL);
+        this.gameLoop.start();
+        this.requestFocusInWindow();
     }
 
     public void setInfoText(String s) {
@@ -325,6 +348,9 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
     }
 
     private void jPanel_boardMouseClicked(MouseEvent evt) {
+        if (!this.levelLoaded) {
+            return;
+        }
         this.unSelectTower();
         boolean wasPlacing = this.engine.isPlacingTower();
         int boardX = evt.getX() - this.gameBoard.getX();
@@ -339,6 +365,9 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
     }
 
     private void jPanel_boardMouseMoved(MouseEvent evt) {
+        if (!this.levelLoaded) {
+            return;
+        }
         this.requestFocusInWindow();
         if (this.engine.isPlacingTower()) {
             this.engine.highlightCell(evt.getX() - this.gameBoard.getX(), evt.getY() - this.gameBoard.getY());
@@ -346,6 +375,9 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
     }
 
     private void keyTyped(char key) {
+        if (!this.levelLoaded) {
+            return;
+        }
         switch (key) {
             case 'q' -> this.panelTowerSelector.doPlace(0);
             case 'w' -> this.panelTowerSelector.doPlace(1);
@@ -405,9 +437,13 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
         panelTowerInfo = new PanelTowerInfo();
         panelWaveInfo = new PanelWaveInfo();
         panelTowerSelector = new PanelTowerSelector();
+        jPanel_game = new JPanel();
+        panelLevelSelect = new PanelLevelSelect(this.levelCatalog.levels(), this::startSelectedLevel);
 
 
-        getContentPane().setLayout(new GridBagLayout());
+        contentCardLayout = new CardLayout();
+        getContentPane().setLayout(contentCardLayout);
+        jPanel_game.setLayout(new GridBagLayout());
 
 
         jPanel_board.setLayout(new GridBagLayout());
@@ -466,7 +502,7 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 0.1;
         gridBagConstraints.weighty = 0.1;
-        getContentPane().add(jPanel_board, gridBagConstraints);
+        jPanel_game.add(jPanel_board, gridBagConstraints);
 
 
         jPanel_console.setLayout(new GridBagLayout());
@@ -698,7 +734,7 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
         gridBagConstraints.fill = GridBagConstraints.VERTICAL;
         gridBagConstraints.anchor = GridBagConstraints.PAGE_END;
         gridBagConstraints.weighty = 1.0;
-        getContentPane().add(jPanel_console, gridBagConstraints);
+        jPanel_game.add(jPanel_console, gridBagConstraints);
 
 
         gridBagConstraints = new GridBagConstraints();
@@ -706,8 +742,11 @@ public class TowerDefense extends JFrame implements ContextListener, GameHost {
         gridBagConstraints.gridy = 1;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = GridBagConstraints.PAGE_END;
-        getContentPane().add(panelTowerSelector, gridBagConstraints);
+        jPanel_game.add(panelTowerSelector, gridBagConstraints);
 
+        getContentPane().add(panelLevelSelect, CARD_MENU);
+        getContentPane().add(jPanel_game, CARD_GAME);
+        contentCardLayout.show(getContentPane(), CARD_MENU);
     }
 
     private void jButton_playActionPerformed(ActionEvent evt) {
