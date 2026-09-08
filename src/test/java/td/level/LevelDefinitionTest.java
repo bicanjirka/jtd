@@ -15,7 +15,7 @@ class LevelDefinitionTest {
     @Test
     void mutatingTheListPassedInDoesNotChangeTheStoredPath() {
         List<Point> path = new ArrayList<>(List.of(new Point(0, 0), new Point(1, 0)));
-        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, path, List.of(), 100, 5);
+        LevelDefinition level = LevelDefinition.unsmoothed("Test", "", 5, 5, path, List.of(), 100, 5);
 
         path.add(new Point(2, 0));
 
@@ -25,7 +25,7 @@ class LevelDefinitionTest {
     @Test
     void mutatingTheListPassedInDoesNotChangeTheStoredWaves() {
         List<WaveDefinition> waves = new ArrayList<>(List.of(new WaveDefinition("c", 1, 1, 1)));
-        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, List.of(), waves, 100, 5);
+        LevelDefinition level = LevelDefinition.unsmoothed("Test", "", 5, 5, List.of(), waves, 100, 5);
 
         waves.add(new WaveDefinition("s", 1, 1, 1));
 
@@ -34,7 +34,7 @@ class LevelDefinitionTest {
 
     @Test
     void theStoredPathAndWavesCannotBeMutatedThroughTheirAccessors() {
-        LevelDefinition level = new LevelDefinition("Test", "", 5, 5,
+        LevelDefinition level = LevelDefinition.unsmoothed("Test", "", 5, 5,
                 List.of(new Point(0, 0)), List.of(new WaveDefinition("c", 1, 1, 1)), 100, 5);
 
         assertThatThrownBy(() -> level.path().add(new Point(1, 0)))

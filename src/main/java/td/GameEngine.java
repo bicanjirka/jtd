@@ -101,7 +101,7 @@ public class GameEngine {
         this.context.maxY = height * this.context.scale - 1;
 
         this.waves = new ArrayList<>();
-        Path path = PathBuilder.build(level.path(), this.context.scale);
+        Path path = PathBuilder.build(level.path(), level.smoothing(), this.context.scale);
         this.context.setPath(path);
         path.finalise(this.cellGrid);
         this.wave = 0;

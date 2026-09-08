@@ -28,7 +28,7 @@ class BoardRendererTest {
 
     private static GameEngine newEngine() {
         GameEngine engine = new GameEngine(new RecordingGameHost());
-        engine.loadLevel(new LevelDefinition("Test Level", "", 5, 5,
+        engine.loadLevel(LevelDefinition.unsmoothed("Test Level", "", 5, 5,
                 List.of(new Point(0, 2), new Point(4, 2)), List.of(), 100, 5));
         return engine;
     }
