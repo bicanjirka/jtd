@@ -49,7 +49,7 @@ public final class BoardRenderer {
             enemy.accept(enemyFrameBuilder);
         }
 
-        TowerSpriteFrameBuilder spriteFrameBuilder = new TowerSpriteFrameBuilder(interpolationAlpha);
+        TowerSpriteFrameBuilder spriteFrameBuilder = new TowerSpriteFrameBuilder(interpolationAlpha, animationSeconds);
         TowerEffectFrameBuilder effectFrameBuilder = new TowerEffectFrameBuilder();
         for (Tower tower : this.engine.getTowers()) {
             tower.accept(spriteFrameBuilder);
