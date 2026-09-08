@@ -3,6 +3,7 @@ package td.util;
 import org.junit.jupiter.api.Test;
 import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.tower.TowerListener;
 import td.wave.Wave;
 
 import java.util.ArrayList;
@@ -62,7 +63,7 @@ class ContextTest {
         context.sellTower(tower);
 
         assertThat(removed).containsExactly(tower);
-        assertThat(context.towers).doesNotContain(tower);
+        assertThat(context.getTowers()).doesNotContain(tower);
         assertThat(host.lastClearedCell).containsExactly(2, 3);
     }
 

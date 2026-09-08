@@ -1,7 +1,5 @@
 package td.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import td.board.BoardGeometry;
 import td.economy.EconomyDelta;
 import td.economy.EconomyLedger;
@@ -10,35 +8,32 @@ import td.enemy.EnemyMob;
 import td.enemy.EnemyRegistry;
 import td.enemy.EnemyRoster;
 import td.tower.Tower;
+import td.tower.TowerListener;
+import td.tower.TowerRoster;
 import td.wave.Path;
 import td.wave.PathNormal;
 import td.wave.Wave;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Context {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Context.class);
-
     private BoardGeometry board = BoardGeometry.empty();
-    public final List<Tower> towers;
     private final GameHost mainApp;
     private Path path;
 
     private final EconomyLedger economy = new EconomyLedger();
     private final EnemyRoster enemies;
+    private final TowerRoster towers;
 
-    private final List<TowerListener> towerListeners;
     private final List<WaveStartListener> waveListeners;
 
     public Context(GameHost mainApp) {
         this.mainApp = mainApp;
         this.enemies = new EnemyRoster(mainApp);
-        this.towerListeners = new CopyOnWriteArrayList<>();
+        this.towers = new TowerRoster(mainApp, this.economy, this::getBoard);
         this.waveListeners = new CopyOnWriteArrayList<>();
-        this.towers = new CopyOnWriteArrayList<>();
         this.path = new PathNormal(List.of());
     }
 
@@ -125,51 +120,28 @@ public class Context {
         return this.economy.doPay(amount);
     }
 
+    public List<Tower> getTowers() {
+        return this.towers.all();
+    }
+
     public void addTower(Tower t) {
         this.towers.add(t);
-        this.fireTowerAddedEvent(t);
     }
 
     public void sellTower(Tower t) {
-        int cellX = this.board.cellX(t.getX());
-        int cellY = this.board.cellY(t.getY());
-        this.mainApp.clearCell(cellX, cellY);
-        t.doCleanup();
-        this.towers.remove(t);
-        this.apply(EconomyDelta.credits(t.getSellPrice()));
-        this.fireTowerRemovedEvent(t);
-        LOG.info("Tower sold: {} at ({},{}), refund={}", t.getType(), cellX, cellY, t.getSellPrice());
+        this.towers.sell(t);
     }
 
     public void clearTowers() {
-        for (Tower t : new ArrayList<>(this.towers)) {
-            int cellX = this.board.cellX(t.getX());
-            int cellY = this.board.cellY(t.getY());
-            this.mainApp.clearCell(cellX, cellY);
-            t.doCleanup();
-            this.towers.remove(t);
-            this.fireTowerRemovedEvent(t);
-        }
+        this.towers.clear();
     }
 
     public void addTowerListener(TowerListener l) {
-        this.towerListeners.add(l);
+        this.towers.addListener(l);
     }
 
     public void removeTowerListener(TowerListener l) {
-        this.towerListeners.remove(l);
-    }
-
-    private void fireTowerAddedEvent(Tower t) {
-        for (TowerListener l : this.towerListeners) {
-            l.towerBuild(t);
-        }
-    }
-
-    private void fireTowerRemovedEvent(Tower t) {
-        for (TowerListener l : this.towerListeners) {
-            l.towerRemoved(t);
-        }
+        this.towers.removeListener(l);
     }
 
     public void addEconomyListener(EconomyListener l) {

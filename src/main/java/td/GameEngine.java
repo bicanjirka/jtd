@@ -37,7 +37,6 @@ public class GameEngine {
     private static final Logger LOG = LoggerFactory.getLogger(GameEngine.class);
 
     private final Context context;
-    private final List<Tower> towers;
 
     private Cell[][] cellGrid;
     private List<Wave> waves = new ArrayList<>();
@@ -52,7 +51,6 @@ public class GameEngine {
 
     public GameEngine(GameHost host) {
         this.context = new Context(host);
-        this.towers = this.context.towers;
     }
 
     public Context getContext() {
@@ -60,7 +58,7 @@ public class GameEngine {
     }
 
     public List<Tower> getTowers() {
-        return this.towers;
+        return this.context.getTowers();
     }
 
     public Cell[][] getCellGrid() {
@@ -168,7 +166,7 @@ public class GameEngine {
         for (EnemyMob enemy : this.context.getEnemies()) {
             enemy.doTick(time);
         }
-        for (Tower tower : this.towers) {
+        for (Tower tower : this.context.getTowers()) {
             tower.doTick(time);
         }
         return waveStarted;
