@@ -1,9 +1,11 @@
 package td;
 
 import org.junit.jupiter.api.Test;
+import td.level.LevelDefinition;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerOne;
+import td.wave.Point;
 import td.wave.WaveDefinition;
 
 import java.util.List;
@@ -20,11 +22,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GameEngineTest {
 
     private static final int SCALE = 32; // Context's default scale, unless a test changes it
+    // straight path along row y=2; also the path waypoint PathNormal.finalise() marks unbuildable
+    private static final List<Point> STRAIGHT_PATH = List.of(new Point(0, 2), new Point(4, 2));
+
+    private static LevelDefinition levelWith(List<WaveDefinition> waves, int startingCredits) {
+        return new LevelDefinition("Test Level", "", 5, 5, STRAIGHT_PATH, waves, startingCredits, 5);
+    }
 
     @Test
     void placingATowerOnABuildableCellChargesCreditsAndOccupiesTheCell() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(5, 5, new int[]{0, 4}, new int[]{2, 2}, List.of(), 100);
+        engine.loadLevel(levelWith(List.of(), 100));
 
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
         Tower selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
@@ -38,7 +46,7 @@ class GameEngineTest {
     @Test
     void placingATowerWithoutEnoughCreditsCancelsPlacementWithoutBuildingOrCharging() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(5, 5, new int[]{0, 4}, new int[]{2, 2}, List.of(), TowerOne.price - 1);
+        engine.loadLevel(levelWith(List.of(), TowerOne.price - 1));
 
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
         Tower selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
@@ -52,7 +60,7 @@ class GameEngineTest {
     @Test
     void clickingAnOccupiedCellSelectsItsTower() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(5, 5, new int[]{0, 4}, new int[]{2, 2}, List.of(), 100);
+        engine.loadLevel(levelWith(List.of(), 100));
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
         engine.mouseClicked(cellCenter(0), cellCenter(0));
 
@@ -65,8 +73,7 @@ class GameEngineTest {
     @Test
     void placingOnAPathCellIsRejectedAndCostsNothing() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        // path waypoint (0,2) - PathNormal.finalise() marks it unbuildable
-        engine.loadLevel(5, 5, new int[]{0, 4}, new int[]{2, 2}, List.of(), 100);
+        engine.loadLevel(levelWith(List.of(), 100));
 
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
         engine.mouseClicked(cellCenter(0), cellCenter(2));
@@ -78,13 +85,12 @@ class GameEngineTest {
     @Test
     void towerKillsInRangeEnemyCreditsThePlayerAndReArmsTheWave() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        // straight path along row y=2; enemy starts at (0,2) already within a
-        // tower placed at (2,2)'s range (TowerOne.range = 3.8 cells)
+        // enemy starts at (0,2) already within a tower placed at (2,2)'s range (TowerOne.range = 3.8 cells)
         // a 2nd wave must exist for "wave cleared" to mean "next wave ready"
         // rather than "no more waves" (game won) - see GameEngine.doTick/nextWave
-        engine.loadLevel(5, 5, new int[]{0, 4}, new int[]{2, 2},
+        engine.loadLevel(levelWith(
                 List.of(new WaveDefinition("c", 1, 7, 1),
-                        new WaveDefinition("c", 1, 7, 1)), 100);
+                        new WaveDefinition("c", 1, 7, 1)), 100));
 
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
         engine.mouseClicked(cellCenter(2), cellCenter(2));
@@ -106,8 +112,7 @@ class GameEngineTest {
     @Test
     void enemyReachingTheEndOfThePathCostsALife() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(5, 5, new int[]{0, 4}, new int[]{2, 2},
-                List.of(new WaveDefinition("c", 100, 3, 1)), 100);
+        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
         int initialLives = engine.getContext().getLives();
 
         engine.nextWave();
@@ -121,7 +126,7 @@ class GameEngineTest {
     @Test
     void sellingATowerRefundsSeventyFivePercentAndClearsTheCell() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(5, 5, new int[]{0, 4}, new int[]{2, 2}, List.of(), 100);
+        engine.loadLevel(levelWith(List.of(), 100));
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
         engine.mouseClicked(cellCenter(0), cellCenter(0));
         int creditsAfterBuild = engine.getContext().getCredits();

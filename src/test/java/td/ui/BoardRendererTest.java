@@ -6,12 +6,14 @@ import td.cell.Cell;
 import td.damage.Damage;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.level.LevelDefinition;
 import td.tower.TowerOne;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.RenderFrame;
 import td.ui.render.TowerSpriteDraw;
 import td.util.Context;
 import td.util.RecordingGameHost;
+import td.wave.Point;
 
 import java.util.List;
 
@@ -26,7 +28,8 @@ class BoardRendererTest {
 
     private static GameEngine newEngine() {
         GameEngine engine = new GameEngine(new RecordingGameHost());
-        engine.loadLevel(5, 5, new int[]{0, 4}, new int[]{2, 2}, List.of(), 100);
+        engine.loadLevel(new LevelDefinition("Test Level", "", 5, 5,
+                List.of(new Point(0, 2), new Point(4, 2)), List.of(), 100, 5));
         return engine;
     }
 

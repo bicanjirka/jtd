@@ -26,7 +26,7 @@ class ContextTest {
 
     @Test
     void doPayChargesCreditsWhenAffordable() {
-        context.startEconomy(100);
+        context.startEconomy(100, 5);
 
         boolean paid = context.doPay(40);
 
@@ -36,7 +36,7 @@ class ContextTest {
 
     @Test
     void doPaySucceedsWhenAmountExactlyMatchesAvailableCredits() {
-        context.startEconomy(40);
+        context.startEconomy(40, 5);
 
         assertThat(context.doPay(40)).isTrue();
         assertThat(context.getCredits()).isZero();
@@ -44,7 +44,7 @@ class ContextTest {
 
     @Test
     void doPayFailsAndLeavesCreditsUnchangedWhenTooExpensive() {
-        context.startEconomy(10);
+        context.startEconomy(10, 5);
 
         boolean paid = context.doPay(40);
 

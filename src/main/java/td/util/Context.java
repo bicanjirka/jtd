@@ -91,11 +91,12 @@ public class Context {
     }
 
     /**
-     * Seeds the economy at the start of a level. Fires like any other economy change since
+     * Seeds the economy at the start of a level - credits and lives are both the level's own,
+     * not carried over from whatever ran before. Fires like any other economy change since
      * listeners are already registered by the time a level loads.
      */
-    public void startEconomy(int startingCredits) {
-        this.economy = EconomyState.startingWith(startingCredits, this.economy.lives());
+    public void startEconomy(int startingCredits, int startingLives) {
+        this.economy = EconomyState.startingWith(startingCredits, startingLives);
         LOG.debug("Economy seeded: {}", this.economy);
         this.fireEconomyChangedEvent(this.economy);
     }

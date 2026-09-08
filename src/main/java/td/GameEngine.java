@@ -5,11 +5,13 @@ import org.slf4j.LoggerFactory;
 import td.cell.Cell;
 import td.cell.CellNormal;
 import td.enemy.EnemyMob;
+import td.level.LevelDefinition;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.Context;
 import td.util.GameHost;
 import td.wave.Path;
+import td.wave.Point;
 import td.wave.Wave;
 import td.wave.WaveDefinition;
 
@@ -86,7 +88,9 @@ public class GameEngine {
         return this.placingTower;
     }
 
-    public void loadLevel(int width, int height, int[] pathX, int[] pathY, List<WaveDefinition> waveDefinitions, int startingCredits) {
+    public void loadLevel(LevelDefinition level) {
+        int width = level.width();
+        int height = level.height();
         this.cellGrid = new Cell[width][height];
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
@@ -98,20 +102,21 @@ public class GameEngine {
 
         this.waves = new ArrayList<>();
         Path path = this.context.getPath();
-        for (int i = 0; i < pathX.length; i++) {
-            path.addStep(pathX[i], pathY[i]);
+        for (Point step : level.path()) {
+            path.addStep(step.x(), step.y());
         }
         path.finalise(this.cellGrid);
         this.wave = 0;
 
-        for (WaveDefinition wd : waveDefinitions) {
+        for (WaveDefinition wd : level.waves()) {
             Wave w = new Wave(this.context, wd.hp(), wd.price(), wd.level());
             w.addEnemiesFromNames(wd.enemies().split(" "));
             this.waves.add(w);
         }
 
-        this.context.startEconomy(startingCredits);
-        LOG.info("Level loaded: {}x{} board, {} waves, {} starting credits", width, height, this.waves.size(), startingCredits);
+        this.context.startEconomy(level.startingCredits(), level.startingLives());
+        LOG.info("Level loaded: {} ({}x{} board, {} waves, {} starting credits, {} starting lives)",
+                level.name(), width, height, this.waves.size(), level.startingCredits(), level.startingLives());
     }
 
     public void startLevel() {
