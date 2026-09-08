@@ -356,16 +356,27 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * Authored pointing along {@code +X} (heading {@code 0}) so {@link Graphics2D#rotate(double)}
-     * alone aims an aiming tower's head correctly - see {@link TurretHeadDraw}'s doc comment.
-     * The two spinning towers (three/four) have no such concern (any starting phase looks
-     * equally valid while continuously spinning) and are added in a later phase, along with the
-     * upgrade tower's pulsing (rotation-independent) head.
+     * The two aiming towers' heads (one/two) are authored pointing along {@code +X} (heading
+     * {@code 0}) so {@link Graphics2D#rotate(double)} alone aims them correctly - see
+     * {@link TurretHeadDraw}'s doc comment. The two spinning towers (three/four) have no such
+     * concern - any starting phase looks equally valid while continuously spinning - but their
+     * heads still need to reach *past* their own (larger) base's silhouette to actually read as
+     * moving: a same-shape-family head entirely contained within the base's footprint turned
+     * out to be visually indistinguishable from standing still, since both are the same hue.
+     * TOWER_THREE gets a thin sweep arm through the centre (a "radar hand"); TOWER_FOUR gets a
+     * small star orbiting off-centre (a "moon") - both echo their base's own shape family
+     * (rectangle/star) while clearing the base's edge. The upgrade tower's pulsing head is
+     * added in a later phase.
      */
     private static Shape turretHeadShape(Palette palette, float size) {
         return switch (palette) {
             case TOWER_ONE_BODY -> new Rectangle2D.Float(0, -size * 0.22f, size * 1.3f, size * 0.44f);
             case TOWER_TWO_BODY -> new Rectangle2D.Float(0, -size * 0.42f, size * 0.95f, size * 0.84f);
+            case TOWER_THREE_BODY -> new Rectangle2D.Float(-size * 2.4f, -size * 0.16f, size * 4.8f, size * 0.32f);
+            case TOWER_FOUR_BODY -> {
+                Shape moon = starShape(5, size * 0.9f, size * 0.9f * 0.45f);
+                yield AffineTransform.getTranslateInstance(size * 2.0, 0).createTransformedShape(moon);
+            }
             default -> throw new IllegalStateException("No turret head art yet for: " + palette);
         };
     }

@@ -25,12 +25,20 @@ import java.util.List;
  */
 public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
+    // Radians/second for a continuously-spinning head - opposite signs (clockwise/
+    // counterclockwise) and different magnitudes, purely cosmetic so these live here rather
+    // than as domain state (see the class doc comment's "function of elapsed time").
+    private static final double TOWER_THREE_SPIN_RADIANS_PER_SECOND = 3.5;
+    private static final double TOWER_FOUR_SPIN_RADIANS_PER_SECOND = -2.0;
+
     private final List<TowerSpriteDraw> draws = new ArrayList<>();
     private final List<TurretHeadDraw> headDraws = new ArrayList<>();
     private final double interpolationAlpha;
+    private final double animationSeconds;
 
-    public TowerSpriteFrameBuilder(double interpolationAlpha) {
+    public TowerSpriteFrameBuilder(double interpolationAlpha, double animationSeconds) {
         this.interpolationAlpha = interpolationAlpha;
+        this.animationSeconds = animationSeconds;
     }
 
     public List<TowerSpriteDraw> build() {
@@ -79,18 +87,20 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
-    // TowerThree/TowerFour (spinning) and TowerUpgrade (pulsing) render base-only for now,
-    // same as every tower before turret heads existed - no head() call yet.
     public Void visitTowerThree(TowerThree tower) {
         this.sprite(tower);
+        this.head(tower, this.animationSeconds * TOWER_THREE_SPIN_RADIANS_PER_SECOND);
         return null;
     }
 
     public Void visitTowerFour(TowerFour tower) {
         this.sprite(tower);
+        this.head(tower, this.animationSeconds * TOWER_FOUR_SPIN_RADIANS_PER_SECOND);
         return null;
     }
 
+    // TowerUpgrade (pulsing) renders base-only for now, same as every tower before turret heads
+    // existed - no head() call yet.
     public Void visitTowerUpgrade(TowerUpgrade tower) {
         this.sprite(tower);
         return null;
