@@ -216,7 +216,8 @@ JUnit 5 + AssertJ. `assertThat(...)`, never JUnit's bare assertions.
 
 ## Wave mini-language
 
-Wave contents are a space-separated token string parsed in `Wave.finalise()`. Tokens are enemy letters, each optionally preceded by a repeat count:
+Wave contents are a space-separated token string, parsed eagerly in `Wave`'s constructor (via
+the private `parseNames`). Tokens are enemy letters, each optionally preceded by a repeat count:
 
 | Token | Enemy |
 |-------|-------|
@@ -267,7 +268,7 @@ concatenation.
 
 ## Gotchas
 
-- **A green test run still prints a `WARN` line and stack trace.** `WaveTest` feeds an unparseable token (`"?"`) through the wave language, and `Wave.finalise()` handles it with `LOG.warn(...)` (via `logback-test.xml`, `WARN` is the one level still visible during tests, and Logback prints the passed exception's trace below the message) and defaults the count to 1. Expected output on a passing run — check `Tests run: … Failures: 0`, not the presence of that output.
+- **A green test run still prints a `WARN` line and stack trace.** `WaveTest` feeds an unparseable token (`"?"`) through the wave language, and `Wave`'s constructor handles it with `LOG.warn(...)` (via `logback-test.xml`, `WARN` is the one level still visible during tests, and Logback prints the passed exception's trace below the message) and defaults the count to 1. Expected output on a passing run — check `Tests run: … Failures: 0`, not the presence of that output.
 - **`Cache` is an eagerly-initialized singleton that throws `GameStartupException` if any image fails to load** — caught in `Main`, which logs it and exits non-zero. `Context`'s constructor calls `Cache.getInstance()`, so *every* test that builds a `Context` loads the real image resources. Renaming or removing anything under `src/main/resources/td/images/` will take down the test suite, not just the game.
 - **Version is duplicated** between `pom.xml` and `TowerDefense.VERSION` (currently `1.4` in both). There's no single source of truth — update both when cutting a release.
 
