@@ -26,7 +26,7 @@ class GameEngineTest {
     private static final List<Point> STRAIGHT_PATH = List.of(new Point(0, 2), new Point(4, 2));
 
     private static LevelDefinition levelWith(List<WaveDefinition> waves, int startingCredits) {
-        return new LevelDefinition("Test Level", "", 5, 5, STRAIGHT_PATH, waves, startingCredits, 5);
+        return LevelDefinition.unsmoothed("Test Level", "", 5, 5, STRAIGHT_PATH, waves, startingCredits, 5);
     }
 
     @Test

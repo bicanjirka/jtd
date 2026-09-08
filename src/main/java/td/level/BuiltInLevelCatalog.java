@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class BuiltInLevelCatalog implements LevelCatalog {
 
-    private static final LevelDefinition CLASSIC_LOOP = new LevelDefinition(
+    private static final LevelDefinition CLASSIC_LOOP = LevelDefinition.unsmoothed(
             "Classic Loop",
             "The original winding path. 17 waves, starting with $50.",
             20, 15,
@@ -42,7 +42,7 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     new WaveDefinition("s", 4751, 0, 8)),
             50, 5);
 
-    private static final LevelDefinition ZIGZAG_GAUNTLET = new LevelDefinition(
+    private static final LevelDefinition ZIGZAG_GAUNTLET = LevelDefinition.unsmoothed(
             "Zigzag Gauntlet",
             "A tighter, sharply turning path on a smaller board. 8 waves, starting with $75 and only 3 lives.",
             12, 10,
