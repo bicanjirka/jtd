@@ -7,6 +7,8 @@ import td.economy.EconomyDelta;
 import td.economy.EconomyLedger;
 import td.economy.EconomyListener;
 import td.enemy.EnemyMob;
+import td.enemy.EnemyRegistry;
+import td.enemy.EnemyRoster;
 import td.tower.Tower;
 import td.wave.Path;
 import td.wave.PathNormal;
@@ -21,19 +23,19 @@ public class Context {
     private static final Logger LOG = LoggerFactory.getLogger(Context.class);
 
     private BoardGeometry board = BoardGeometry.empty();
-    private EnemyMob[] enemies = new EnemyMob[0];
     public final List<Tower> towers;
     private final GameHost mainApp;
-    private int enemyCount = 0;
     private Path path;
 
     private final EconomyLedger economy = new EconomyLedger();
+    private final EnemyRoster enemies;
 
     private final List<TowerListener> towerListeners;
     private final List<WaveStartListener> waveListeners;
 
     public Context(GameHost mainApp) {
         this.mainApp = mainApp;
+        this.enemies = new EnemyRoster(mainApp);
         this.towerListeners = new CopyOnWriteArrayList<>();
         this.waveListeners = new CopyOnWriteArrayList<>();
         this.towers = new CopyOnWriteArrayList<>();
@@ -59,27 +61,28 @@ public class Context {
         }
     }
 
-    public void setEnemyCount(int c) {
-        this.enemyCount = c;
-    }
-
-    public EnemyMob[] getEnemies() {
+    public EnemyRegistry getEnemyRegistry() {
         return this.enemies;
     }
 
+    public void setEnemyCount(int c) {
+        this.enemies.setCount(c);
+    }
+
+    public EnemyMob[] getEnemies() {
+        return this.enemies.getEnemies();
+    }
+
     public void setEnemies(EnemyMob[] enemies) {
-        this.enemies = enemies;
+        this.enemies.setEnemies(enemies);
     }
 
     public void removeEnemy() {
-        this.enemyCount--;
-        this.mainApp.enemyDied(this.enemyCount);
+        this.enemies.remove();
     }
 
     public void removeAllEnemies() {
-        this.enemyCount = 0;
-        this.enemies = new EnemyMob[0];
-        this.mainApp.enemyDied(this.enemyCount);
+        this.enemies.removeAll();
     }
 
     public BoardGeometry getBoard() {
