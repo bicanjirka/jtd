@@ -9,14 +9,18 @@ import td.util.Context;
 import td.util.ContextListener;
 
 import javax.swing.BorderFactory;
+import javax.swing.GrayFilter;
+import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -90,8 +94,10 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
                 this.images[i] = cache.getBufImg(tempTower.getName() + "_ico");
             }
             this.infoText[i] = tempTower.getInfoString();
-            if (this.images[i] != null)
+            if (this.images[i] != null) {
                 this.buttons[i].setIcon(new SharpImageIcon(this.images[i]));
+                this.buttons[i].setDisabledIcon(new SharpImageIcon(grayedOut(this.images[i])));
+            }
             this.towerRanges[i] = tempTower.getRange();
         }
 
@@ -128,6 +134,22 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
         this.buttons[i].setSelected(true);
         this.mainApp.setInfoText(this.infoText[i]);
         this.startPlacing(this.towerTypes.get(i), this.towerRanges[i]);
+    }
+
+    /**
+     * Swing's built-in "gray out the icon when disabled" behaviour only fires for a plain
+     * {@link ImageIcon}; {@link SharpImageIcon} implements {@code Icon} directly (for its
+     * bilinear repaint), so an unaffordable button was correctly disabled but still painted
+     * as if enabled without this explicit disabled icon.
+     */
+    private static BufferedImage grayedOut(BufferedImage image) {
+        Image filtered = GrayFilter.createDisabledImage(image);
+        ImageIcon loader = new ImageIcon(filtered);
+        BufferedImage result = new BufferedImage(loader.getIconWidth(), loader.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = result.createGraphics();
+        loader.paintIcon(null, g2, 0, 0);
+        g2.dispose();
+        return result;
     }
 
     private void mouseOver(int i) {
