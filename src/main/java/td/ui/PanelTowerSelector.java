@@ -4,7 +4,6 @@ import td.TowerDefense;
 import td.economy.EconomyState;
 import td.tower.Tower;
 import td.tower.TowerFactory;
-import td.util.Cache;
 import td.util.Context;
 import td.util.ContextListener;
 
@@ -32,8 +31,8 @@ import java.util.List;
 public class PanelTowerSelector extends JPanel implements ContextListener {
     @Serial
     private static final long serialVersionUID = 1L;
+    private static final int ICON_SIZE = 32;
 
-    private final BufferedImage[] images;
     private final JToggleButton[] buttons;
     private final String[] infoText;
     private final float[] towerRanges;
@@ -51,7 +50,6 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
             this.towerTypes.add(TowerFactory.type.valueOf(type.toString()));
         }
 
-        this.images = new BufferedImage[this.towerTypes.size()];
         this.buttons = new JToggleButton[this.towerTypes.size()];
         this.infoText = new String[this.towerTypes.size()];
         this.towerRanges = new float[this.towerTypes.size()];
@@ -86,19 +84,17 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
         this.makeButtons();
 
         Context tempContext = new Context(null);
-        Cache cache = this.context.getCache();
+        Java2DFrameRenderer iconRenderer = new Java2DFrameRenderer();
 
         for (int i = 0; i < this.towerTypes.size(); i++) {
-            Tower tempTower = TowerFactory.createTower(this.towerTypes.get(i), tempContext, 0, 0);
-            if (cache.hasBufImg(tempTower.getName() + "_ico")) {
-                this.images[i] = cache.getBufImg(tempTower.getName() + "_ico");
-            }
+            TowerFactory.type type = this.towerTypes.get(i);
+            Tower tempTower = TowerFactory.createTower(type, tempContext, 0, 0);
             this.infoText[i] = tempTower.getInfoString();
-            if (this.images[i] != null) {
-                this.buttons[i].setIcon(new SharpImageIcon(this.images[i]));
-                this.buttons[i].setDisabledIcon(new SharpImageIcon(grayedOut(this.images[i])));
-            }
             this.towerRanges[i] = tempTower.getRange();
+
+            BufferedImage icon = iconRenderer.renderTowerIcon(TowerSpriteFrameBuilder.bodyPaletteFor(type), ICON_SIZE);
+            this.buttons[i].setIcon(new SharpImageIcon(icon));
+            this.buttons[i].setDisabledIcon(new SharpImageIcon(grayedOut(icon)));
         }
 
         this.context.addContextListener(this);
