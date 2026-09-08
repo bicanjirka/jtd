@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerOne;
+import td.wave.WaveDefinition;
 
 import java.util.List;
 
@@ -82,8 +83,8 @@ class GameEngineTest {
         // a 2nd wave must exist for "wave cleared" to mean "next wave ready"
         // rather than "no more waves" (game won) - see GameEngine.doTick/nextWave
         engine.loadLevel(5, 5, new int[]{0, 4}, new int[]{2, 2},
-                List.of(new GameEngine.WaveDefinition("c", 1, 7, 1),
-                        new GameEngine.WaveDefinition("c", 1, 7, 1)), 100);
+                List.of(new WaveDefinition("c", 1, 7, 1),
+                        new WaveDefinition("c", 1, 7, 1)), 100);
 
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
         engine.mouseClicked(cellCenter(2), cellCenter(2));
@@ -106,7 +107,7 @@ class GameEngineTest {
     void enemyReachingTheEndOfThePathCostsALife() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(5, 5, new int[]{0, 4}, new int[]{2, 2},
-                List.of(new GameEngine.WaveDefinition("c", 100, 3, 1)), 100);
+                List.of(new WaveDefinition("c", 100, 3, 1)), 100);
         int initialLives = engine.getContext().getLives();
 
         engine.nextWave();

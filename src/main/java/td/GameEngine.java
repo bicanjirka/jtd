@@ -11,6 +11,7 @@ import td.util.Context;
 import td.util.GameHost;
 import td.wave.Path;
 import td.wave.Wave;
+import td.wave.WaveDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,9 +48,6 @@ public class GameEngine {
     public GameEngine(GameHost host) {
         this.context = new Context(host);
         this.towers = this.context.towers;
-    }
-
-    public record WaveDefinition(String enemies, int hp, int price, int level) {
     }
 
     public Context getContext() {
