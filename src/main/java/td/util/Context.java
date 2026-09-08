@@ -13,9 +13,10 @@ import td.tower.TowerRoster;
 import td.wave.Path;
 import td.wave.PathNormal;
 import td.wave.Wave;
+import td.wave.WaveAnnouncer;
+import td.wave.WaveStartListener;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Context {
 
@@ -26,34 +27,26 @@ public class Context {
     private final EconomyLedger economy = new EconomyLedger();
     private final EnemyRoster enemies;
     private final TowerRoster towers;
-
-    private final List<WaveStartListener> waveListeners;
+    private final WaveAnnouncer waves = new WaveAnnouncer();
 
     public Context(GameHost mainApp) {
         this.mainApp = mainApp;
         this.enemies = new EnemyRoster(mainApp);
         this.towers = new TowerRoster(mainApp, this.economy, this::getBoard);
-        this.waveListeners = new CopyOnWriteArrayList<>();
         this.path = new PathNormal(List.of());
     }
 
     public void startWave(Wave w) {
         this.setEnemyCount(w.enemyCount());
-        this.fireWaveStartedEvent();
+        this.waves.announce();
     }
 
     public void addWaveStartListener(WaveStartListener l) {
-        this.waveListeners.add(l);
+        this.waves.addListener(l);
     }
 
     public void removeWaveStartListener(WaveStartListener l) {
-        this.waveListeners.remove(l);
-    }
-
-    private void fireWaveStartedEvent() {
-        for (WaveStartListener l : this.waveListeners) {
-            l.waveStarted();
-        }
+        this.waves.removeListener(l);
     }
 
     public EnemyRegistry getEnemyRegistry() {

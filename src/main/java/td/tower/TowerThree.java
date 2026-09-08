@@ -4,7 +4,7 @@ import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.tower.targeting.InRangeAfterIndexQuery;
 import td.util.Context;
-import td.util.WaveStartListener;
+import td.wave.WaveStartListener;
 
 import java.util.OptionalInt;
 
