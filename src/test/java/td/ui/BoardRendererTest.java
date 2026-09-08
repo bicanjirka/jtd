@@ -9,6 +9,7 @@ import td.enemy.EnemyMob;
 import td.level.LevelDefinition;
 import td.tower.TowerOne;
 import td.ui.render.EnemyFadeDraw;
+import td.ui.render.Palette;
 import td.ui.render.RenderFrame;
 import td.ui.render.TowerSpriteDraw;
 import td.util.Context;
@@ -34,7 +35,7 @@ class BoardRendererTest {
     }
 
     @Test
-    void aSelectedTowerYieldsASpriteDrawWithItsImageKeyAndSelectionFlag() {
+    void aSelectedTowerYieldsASpriteDrawWithItsBodyPaletteAndSelectionFlag() {
         GameEngine engine = newEngine();
         Context context = engine.getContext();
         TowerOne tower = new TowerOne(context, 1, 1);
@@ -45,7 +46,7 @@ class BoardRendererTest {
 
         assertThat(frame.towerSprites()).hasSize(1);
         TowerSpriteDraw sprite = frame.towerSprites().get(0);
-        assertThat(sprite.imageKey()).isEqualTo("tower1");
+        assertThat(sprite.palette()).isEqualTo(Palette.TOWER_ONE_BODY);
         assertThat(sprite.selected()).isTrue();
     }
 

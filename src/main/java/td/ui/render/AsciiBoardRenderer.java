@@ -26,7 +26,7 @@ public final class AsciiBoardRenderer {
         }
 
         for (TowerSpriteDraw sprite : frame.towerSprites()) {
-            place(grid, sprite.boardX() / scale, sprite.boardY() / scale, towerChar(sprite.imageKey()));
+            place(grid, sprite.boardX() / scale, sprite.boardY() / scale, towerChar(sprite.palette()));
         }
         for (EnemyDraw enemy : frame.enemies()) {
             switch (enemy) {
@@ -54,13 +54,13 @@ public final class AsciiBoardRenderer {
         }
     }
 
-    private static char towerChar(String imageKey) {
-        return switch (imageKey) {
-            case "tower1" -> '1';
-            case "tower2" -> '2';
-            case "tower3" -> '3';
-            case "tower4" -> '4';
-            case "upg" -> 'U';
+    private static char towerChar(Palette palette) {
+        return switch (palette) {
+            case TOWER_ONE_BODY -> '1';
+            case TOWER_TWO_BODY -> '2';
+            case TOWER_THREE_BODY -> '3';
+            case TOWER_FOUR_BODY -> '4';
+            case TOWER_UPGRADE_BODY -> 'U';
             default -> UNKNOWN;
         };
     }

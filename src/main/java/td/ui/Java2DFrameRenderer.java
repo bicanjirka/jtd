@@ -13,7 +13,6 @@ import td.ui.render.RenderFrame;
 import td.ui.render.SplashDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerSpriteDraw;
-import td.util.Cache;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
@@ -23,11 +22,11 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
 import java.util.List;
 
 /**
@@ -68,7 +67,7 @@ public final class Java2DFrameRenderer {
             this.paintEnemy(g2, enemy);
         }
         for (TowerSpriteDraw sprite : frame.towerSprites()) {
-            this.paintTowerSprite(g2, sprite);
+            this.paintTowerSprite(g2, sprite, frame.scale());
         }
         for (TowerEffectDraw effect : frame.towerEffects()) {
             this.paintTowerEffect(g2, effect);
@@ -229,14 +228,106 @@ public final class Java2DFrameRenderer {
 
     // --- towers ---------------------------------------------------------
 
-    private void paintTowerSprite(Graphics2D g2, TowerSpriteDraw sprite) {
+    /** How much of a cell a tower body fills - leaves a small margin, same spirit as enemy bodies. */
+    private static final float TOWER_BODY_SIZE_FRACTION = 0.42f;
+
+    private void paintTowerSprite(Graphics2D g2, TowerSpriteDraw sprite, int scale) {
         if (sprite.selected()) {
             float r = sprite.rangeReal();
             g2.setColor(Color.PINK);
             g2.draw(new Ellipse2D.Float(sprite.centerX() - r, sprite.centerY() - r, r * 2, r * 2));
         }
-        BufferedImage img = Cache.getInstance().getBufImg(sprite.imageKey());
-        g2.drawImage(img, null, sprite.boardX(), sprite.boardY());
+        AffineTransform save = g2.getTransform();
+        g2.translate(sprite.centerX(), sprite.centerY());
+        this.paintTowerBody(g2, sprite.palette(), scale * TOWER_BODY_SIZE_FRACTION);
+        g2.setTransform(save);
+    }
+
+    /**
+     * Draws a tower's body centred on the origin - the caller has already translated {@code g2}
+     * to the tower's centre, matching {@link #paintEnemyBody}'s contract. {@code TOWER_UPGRADE_BODY}
+     * is genuinely two-tone (it buffs neighbouring towers rather than attacking) so it paints
+     * itself rather than going through the shared single-{@link Shape} outline+fill path.
+     */
+    private void paintTowerBody(Graphics2D g2, Palette palette, float size) {
+        if (palette == Palette.TOWER_UPGRADE_BODY) {
+            this.paintUpgradeBody(g2, size);
+            return;
+        }
+        Shape shape = towerBodyShape(palette, size);
+        Color color = colorFor(palette);
+        g2.setColor(withAlpha(color, 130));
+        g2.fill(shape);
+        g2.setColor(color);
+        g2.draw(shape);
+    }
+
+    private static Shape towerBodyShape(Palette palette, float size) {
+        return switch (palette) {
+            case TOWER_ONE_BODY -> diamondShape(size);
+            case TOWER_TWO_BODY -> ringShape(size);
+            case TOWER_THREE_BODY -> pinwheelShape(3, size);
+            case TOWER_FOUR_BODY -> starShape(5, size, size * 0.45f);
+            default -> throw new IllegalStateException("Not an attacking tower body palette: " + palette);
+        };
+    }
+
+    private static Shape diamondShape(float size) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(0, -size);
+        p.lineTo(size * 0.55f, 0);
+        p.lineTo(0, size);
+        p.lineTo(-size * 0.55f, 0);
+        p.closePath();
+        return p;
+    }
+
+    private static Shape ringShape(float size) {
+        Area ring = new Area(circleShape(size));
+        float inner = size * 0.55f;
+        ring.subtract(new Area(circleShape(inner)));
+        return ring;
+    }
+
+    /** A rotationally-symmetric blade pinwheel - {@code blades} lets a future tower reuse this at a different count. */
+    private static Shape pinwheelShape(int blades, float size) {
+        Area pin = new Area();
+        Shape blade = new Ellipse2D.Float(0, -size * 0.18f, size, size * 0.36f);
+        for (int i = 0; i < blades; i++) {
+            AffineTransform rotate = AffineTransform.getRotateInstance(2 * Math.PI * i / blades);
+            pin.add(new Area(rotate.createTransformedShape(blade)));
+        }
+        return pin;
+    }
+
+    /** A classic N-pointed star polygon - {@code points}/radii let a future tower reuse this at a different count. */
+    private static Shape starShape(int points, float outerRadius, float innerRadius) {
+        GeneralPath p = new GeneralPath();
+        for (int i = 0; i < points * 2; i++) {
+            double angle = Math.PI * i / points - Math.PI / 2;
+            float r = (i % 2 == 0) ? outerRadius : innerRadius;
+            float x = (float) (Math.cos(angle) * r);
+            float y = (float) (Math.sin(angle) * r);
+            if (i == 0) {
+                p.moveTo(x, y);
+            } else {
+                p.lineTo(x, y);
+            }
+        }
+        p.closePath();
+        return p;
+    }
+
+    private void paintUpgradeBody(Graphics2D g2, float size) {
+        Color base = colorFor(Palette.TOWER_UPGRADE_BODY);
+        Shape circle = circleShape(size);
+        g2.setColor(withAlpha(base, 130));
+        g2.fill(circle);
+        g2.setColor(base);
+        g2.draw(circle);
+        float dot = size * 0.34f;
+        g2.setColor(Color.DARK_GRAY);
+        g2.fill(new Ellipse2D.Float(-dot * 0.4f, -size * 0.4f, dot * 2, dot * 2));
     }
 
     private void paintTowerEffect(Graphics2D g2, TowerEffectDraw effect) {
@@ -268,6 +359,11 @@ public final class Java2DFrameRenderer {
             case ENEMY_GHOST -> Color.LIGHT_GRAY;
             case ENEMY_SQUARE -> Color.PINK;
             case ENEMY_TRIANGLE -> Color.YELLOW;
+            case TOWER_ONE_BODY -> Color.GREEN;
+            case TOWER_TWO_BODY -> Color.RED;
+            case TOWER_THREE_BODY -> Color.YELLOW;
+            case TOWER_FOUR_BODY -> Color.ORANGE;
+            case TOWER_UPGRADE_BODY -> Color.WHITE;
             case TOWER_ONE_BEAM -> Color.GREEN;
             case TOWER_TWO_BEAM -> Color.RED;
             case TOWER_TWO_SPLASH_LINE, TOWER_TWO_SPLASH_FILL -> withAlpha(Color.RED, 80);

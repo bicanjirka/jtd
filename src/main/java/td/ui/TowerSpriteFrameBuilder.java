@@ -1,12 +1,14 @@
 package td.ui;
 
 import td.tower.Tower;
+import td.tower.TowerFactory;
 import td.tower.TowerFour;
 import td.tower.TowerOne;
 import td.tower.TowerThree;
 import td.tower.TowerTwo;
 import td.tower.TowerUpgrade;
 import td.tower.TowerVisitor;
+import td.ui.render.Palette;
 import td.ui.render.TowerSpriteDraw;
 
 import java.util.ArrayList;
@@ -26,8 +28,23 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return this.draws;
     }
 
+    /**
+     * The one place a tower type names its body's {@link Palette} role - deliberately no
+     * {@code default}, so a new {@link TowerFactory.type} is a compile error here until its
+     * art is wired up, the same way {@link Java2DFrameRenderer}'s draw-command switches are.
+     */
+    public static Palette bodyPaletteFor(TowerFactory.type type) {
+        return switch (type) {
+            case first -> Palette.TOWER_ONE_BODY;
+            case second -> Palette.TOWER_TWO_BODY;
+            case third -> Palette.TOWER_THREE_BODY;
+            case fourth -> Palette.TOWER_FOUR_BODY;
+            case upgrade -> Palette.TOWER_UPGRADE_BODY;
+        };
+    }
+
     private Void sprite(Tower tower) {
-        this.draws.add(new TowerSpriteDraw(tower.getName(), tower.getBoardX(), tower.getBoardY(),
+        this.draws.add(new TowerSpriteDraw(bodyPaletteFor(tower.getType()), tower.getBoardX(), tower.getBoardY(),
                 tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal()));
         return null;
     }
