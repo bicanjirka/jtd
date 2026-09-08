@@ -24,7 +24,6 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
 
     public TowerThree(Context context, int x, int y) {
         super(TowerFactory.type.third, price, damage, range);
-        this.name = "tower3";
         this.coolDownMax = 1;
         this.doInit(context, x, y);
 

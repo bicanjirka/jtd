@@ -27,7 +27,6 @@ public final class TowerUpgrade extends AbstractTower implements TowerListener {
      */
     public TowerUpgrade(Context context, int x, int y, float power) {
         super(TowerFactory.type.upgrade, price, damage, range);
-        this.name = "upg";
         this.passive = true;
         this.power = power;
         this.clients = new ArrayList<>();

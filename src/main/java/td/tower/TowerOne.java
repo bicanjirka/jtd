@@ -21,7 +21,6 @@ public final class TowerOne extends AbstractTower {
     public TowerOne(Context context, int x, int y) {
         super(TowerFactory.type.first, price, damage, range);
         this.coolDownMax = 39;
-        this.name = "tower1";
         this.doInit(context, x, y);
     }
 

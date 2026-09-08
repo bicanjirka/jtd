@@ -29,8 +29,6 @@ public interface Tower {
 
     int getBoardY();
 
-    String getName();
-
     void registerTower(Tower t);
 
     void unregisterTower(Tower t);

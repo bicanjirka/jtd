@@ -27,11 +27,7 @@ public class Main {
             @SuppressWarnings("unused")
             TowerDefense game = new TowerDefense();
         } catch (Throwable e) {
-            // Cache's image loading fails inside a static field initializer (it's an
-            // eager singleton), so the JVM wraps a GameStartupException thrown there
-            // in an ExceptionInInitializerError - unwrap it to log the real cause.
-            Throwable cause = (e instanceof ExceptionInInitializerError && e.getCause() != null) ? e.getCause() : e;
-            log.error("jTD failed to start", cause);
+            log.error("jTD failed to start", e);
             System.exit(1);
         }
     }
