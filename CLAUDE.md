@@ -14,6 +14,12 @@ mvn -q compile            # fast syntax/type check
 
 Run a single test: `mvn test -Dtest=GameEngineTest#placingATowerOnABuildableCellChargesCreditsAndOccupiesTheCell`
 
+## Working in phases
+
+When a task is planned as multiple phases, commit after each phase completes rather than
+waiting until the whole task is done. This applies to every multi-phase plan, not just the
+one it was first requested for.
+
 ## Architecture: the headless/Swing boundary
 
 This is the one structural rule that matters, and it is the result of a deliberate refactor still in progress. Respect it.
