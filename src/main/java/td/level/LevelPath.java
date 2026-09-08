@@ -7,10 +7,12 @@ import java.util.List;
 
 /**
  * Expands a hand-authored list of path corners into the cell-by-cell list a
- * {@link LevelDefinition} needs: {@link td.wave.PathNormal#finalise} marks
- * every listed cell unbuildable, and enemy movement advances one path step
- * per tick, so corners alone (a much smaller, easier to author list) are not
- * enough - every cell in between has to be listed too.
+ * {@link LevelDefinition} needs. Corners alone (a much smaller, easier to author list) are not
+ * enough - every cell in between has to be listed too, since this is the list
+ * {@link td.wave.PathBuilder} turns into real pixel geometry: {@link td.wave.PathCoverage}
+ * determines buildability from that geometry (not from a sparser corner list), and a
+ * smoothing strategy (see {@code td.wave.smoothing}) reshapes this same per-cell polyline into
+ * a curve.
  */
 public final class LevelPath {
 

@@ -4,11 +4,11 @@ import td.cell.Cell;
 
 public interface Path {
 
-    void addStep(int x, int y);
+    void addStep(double x, double y);
 
     int length();
 
-    Point getStep(int step);
+    Vec2 getStep(int step);
 
     void finalise(Cell[][] grid);
 

@@ -85,7 +85,10 @@ class GameEngineTest {
     @Test
     void towerKillsInRangeEnemyCreditsThePlayerAndReArmsTheWave() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        // enemy starts at (0,2) already within a tower placed at (2,2)'s range (TowerOne.range = 3.8 cells)
+        // enemy starts at (0,2) already within a tower placed at (2,1)'s range (TowerOne.range = 3.8
+        // cells) - one row off the path itself, since (2,2) is now unbuildable: the straight-line path
+        // from (0,2) to (4,2) geometrically covers every cell it passes through, (2,2) included, not
+        // just its two listed endpoints.
         // a 2nd wave must exist for "wave cleared" to mean "next wave ready"
         // rather than "no more waves" (game won) - see GameEngine.doTick/nextWave
         engine.loadLevel(levelWith(
@@ -93,7 +96,7 @@ class GameEngineTest {
                         new WaveDefinition("c", 1, 7, 1)), 100));
 
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
-        engine.mouseClicked(cellCenter(2), cellCenter(2));
+        engine.mouseClicked(cellCenter(2), cellCenter(1));
         int creditsAfterBuild = engine.getContext().getCredits();
         int scoreBefore = engine.getContext().getScore();
 

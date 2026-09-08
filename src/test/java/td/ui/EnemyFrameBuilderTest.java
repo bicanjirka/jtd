@@ -25,8 +25,8 @@ class EnemyFrameBuilderTest {
         context.maxX = 1000;
         context.maxY = 1000;
         PathNormal path = new PathNormal(10);
-        path.addStep(0, 0);
-        path.addStep(10, 0);
+        path.addStep(0 * 10 + 5, 0 * 10 + 5);
+        path.addStep(10 * 10 + 5, 0 * 10 + 5);
         RecordingCell[][] grid = {{new RecordingCell()}, {new RecordingCell()}};
         path.finalise(grid);
         context.setPath(path);
@@ -86,8 +86,8 @@ class EnemyFrameBuilderTest {
         context.maxX = 1000;
         context.maxY = 1000;
         PathNormal path = new PathNormal(10);
-        path.addStep(0, 0);
-        path.addStep(1, 0);
+        path.addStep(0 * 10 + 5, 0 * 10 + 5);
+        path.addStep(1 * 10 + 5, 0 * 10 + 5);
         RecordingCell[][] grid = {{new RecordingCell()}, {new RecordingCell()}};
         path.finalise(grid);
         context.setPath(path);
