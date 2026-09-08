@@ -6,6 +6,7 @@ import td.util.Context;
 import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /** EnemyMobTriangle's distinguishing rule: it speeds up as it takes damage. */
 class EnemyMobTriangleTest {
@@ -15,17 +16,17 @@ class EnemyMobTriangleTest {
     @Test
     void speedIncreasesProportionallyAsTheTriangleLosesHealth() {
         EnemyMob triangle = EnemyFactory.getEnemy("t", context, 0, 100, 5, 1);
-        // healthMax = 100*100 = 10000; speedMax at level 1 is 40*(1.4+0.1) = 60
-        // losing half its health -> speed = 40 + (60-40)*(1-0.5) = 50
+        // healthMax = 100*100 = 10000; speedBase = 1.28, speedMax at level 1 is 1.28*(1.4+0.1) = 1.92
+        // losing half its health -> speed = 1.28 + (1.92-1.28)*(1-0.5) = 1.6
         triangle.doDamage(Damage.of(5000));
 
-        assertThat(triangle.getSpeed()).isEqualTo(50);
+        assertThat(triangle.getSpeed()).isCloseTo(1.6f, within(0.001f));
     }
 
     @Test
     void speedIsUnchangedBeforeAnyDamageIsTaken() {
         EnemyMob triangle = EnemyFactory.getEnemy("t", context, 0, 100, 5, 1);
 
-        assertThat(triangle.getSpeed()).isEqualTo(40);
+        assertThat(triangle.getSpeed()).isCloseTo(1.28f, within(0.001f));
     }
 }

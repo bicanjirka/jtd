@@ -28,31 +28,13 @@ scales with `level`. Health reduction should probably scale the same way so ghos
 
 ## Movement / pathing
 
-### Diagonal movement needs distance-based progression
-
-Enemy movement (`AbstractEnemyMob.segmentProgression`) is a fixed-point counter from 0–999 representing "how far along
-the current path segment," incremented by `speed` each tick. This only works cleanly for axis-aligned segments; the
-original author's own note flagged that switching to a real float-based, distance-normalized progression (to support
-diagonal path segments) raises a speed-scaling problem: segments of different lengths would need `speed` to be
-interpreted as a real per-tick distance rather than "1/1000th of whatever segment we're on," which changes how tower
-range and enemy speed balance interact.
-
-- **Where:** `AbstractEnemyMob` (`segment`, `segmentProgression`, `resetPosition()`, `doTick()`), `PathNormal`/`Path`
-- **Approach:** this is a small architectural change, not a one-line fix. `td.ui.PathMarkerFrameBuilder`'s
-  `Polyline` (arc-length traversal of `Path`'s points: cumulative Euclidean segment lengths, then resolving a
-  distance to a position/facing by linear interpolation within the containing segment) is a working, tested example
-  of exactly this kind of distance-based, non-axis-aligned progression — it drives the path's animated markers, not
-  enemy movement, but the same approach is what this entry needs. Re-tune enemy `speed` constants
-  (`speedBase`/`speedMax` in each `EnemyMob*` subclass) afterward since their current values are tuned for the
-  fixed-point/axis-aligned model.
-
 ### Wave-entry spawn delay is a hardcoded constant
 
 `AbstractEnemyMob.doInit()` converts an enemy's `delay` (its position within a wave) to tick-count via
-`Math.round(700f * delay / this.speed)`. The `700f` is a magic constant with no way to override it per-wave.
+`Math.round(22.4f * delay / this.speed)`. The `22.4f` is a magic constant with no way to override it per-wave.
 
 - **Where:** `AbstractEnemyMob.doInit()`
-- **Approach:** add a `delay`-scaling field to `Context` (or `Wave`) that defaults to `700f`, and extend the wave
+- **Approach:** add a `delay`-scaling field to `Context` (or `Wave`) that defaults to `22.4f`, and extend the wave
   mini-language (see `Wave.finalise()`'s `c`/`e`/`t`/... token grammar) with a token — e.g. a `w<number>` prefix — that
   lets a wave definition override the spacing between spawns before listing enemies.
 

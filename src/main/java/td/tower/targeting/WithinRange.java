@@ -9,8 +9,8 @@ final class WithinRange {
     }
 
     static boolean of(EnemyMob e, int x, int y, float range2) {
-        int dx = e.getX() - x;
-        int dy = e.getY() - y;
+        double dx = e.getX() - x;
+        double dy = e.getY() - y;
         return dx * dx + dy * dy < range2;
     }
 }

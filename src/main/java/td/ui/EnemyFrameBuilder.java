@@ -39,7 +39,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return this.draws;
     }
 
-    private static float lerp(int from, int to, double alpha) {
+    private static float lerp(double from, double to, double alpha) {
         return (float) (from + (to - from) * alpha);
     }
 
@@ -48,7 +48,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             if (!mob.isFadeComplete(this.gameTime)) {
                 int age = mob.ticksSinceDeath(this.gameTime);
                 float fadeProgress = 1f - (mob.fadeAlpha(age) / 255f);
-                this.draws.add(new EnemyFadeDraw(palette, mob.getX(), mob.getY(), facingRadians, scale, age, fadeProgress));
+                this.draws.add(new EnemyFadeDraw(palette, (float) mob.getX(), (float) mob.getY(), facingRadians, scale, age, fadeProgress));
             }
         } else if (!mob.isInactive()) {
             float x = lerp(mob.getPrevX(), mob.getX(), this.interpolationAlpha);

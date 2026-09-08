@@ -15,7 +15,7 @@ public final class EnemyMobTriangle extends AbstractEnemyMobRotor {
     protected void doInit(Context context, int delay, int health, int price, int level) {
         super.doInit(context, delay, health, price, level);
         this.bodyScale = (float) this.context.scale / ((this.level < 6) ? (7 - level) : (2));
-        this.speedMax = (int) (this.speedBase * (1.4 + 0.1 * this.level));
+        this.speedMax = (float) (this.speedBase * (1.4 + 0.1 * this.level));
     }
 
     public float getBodyScale() {
@@ -24,7 +24,7 @@ public final class EnemyMobTriangle extends AbstractEnemyMobRotor {
 
     public void doDamage(Damage damage) {
         super.doDamage(damage);
-        this.speed = (this.speedBase + (int) ((this.speedMax - this.speedBase) * (1 - (this.health / (float) this.healthMax))));
+        this.speed = this.speedBase + (this.speedMax - this.speedBase) * (1 - (this.health / (float) this.healthMax));
     }
 
     public <R> R accept(EnemyMobVisitor<R> visitor) {

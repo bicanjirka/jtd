@@ -48,12 +48,12 @@ final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
-    public int getX() {
+    public double getX() {
         return this.x;
     }
 
     @Override
-    public int getY() {
+    public double getY() {
         return this.y;
     }
 
@@ -92,7 +92,7 @@ final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
-    public int getSpeed() {
+    public float getSpeed() {
         return 0;
     }
 

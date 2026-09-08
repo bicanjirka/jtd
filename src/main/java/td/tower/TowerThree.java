@@ -50,8 +50,8 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
             this.fireAt = enemyNr;
             if (enemyNr >= 0) {
                 EnemyMob enemy = this.context.getEnemies()[enemyNr];
-                this.enemyX[enemyNr] = enemy.getX();
-                this.enemyY[enemyNr] = enemy.getY();
+                this.enemyX[enemyNr] = (int) enemy.getX();
+                this.enemyY[enemyNr] = (int) enemy.getY();
                 this.dealDamage(enemy, Damage.of(this.damageCurrent));
                 this.lineSteps[enemyNr] = this.coolDownRecharge / 2;
                 this.coolDown = this.coolDownMax;
