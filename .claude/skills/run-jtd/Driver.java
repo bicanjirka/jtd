@@ -1,4 +1,6 @@
 import td.TowerDefense;
+import td.economy.EconomyDelta;
+import td.util.Context;
 
 import javax.imageio.ImageIO;
 import java.awt.AWTException;
@@ -71,6 +73,9 @@ public class Driver {
             case "click" -> click(Integer.parseInt(rest.trim()));
             case "key" -> typeKey(rest.trim());
             case "state" -> state();
+            case "boardclick" -> boardClick(rest.trim());
+            case "setcredits" -> setCredits(rest.trim());
+            case "setlives" -> setLives(rest.trim());
             case "sleep" -> Thread.sleep(Long.parseLong(rest.trim()));
             case "quit" -> quit();
             default -> System.out.println("ERROR: unknown command '" + cmd + "'");
@@ -207,6 +212,57 @@ public class Driver {
     private static Object call(Object target, Class<?> type, String method) throws Exception {
         Method m = type.getMethod(method);
         return m.invoke(target);
+    }
+
+    // Reflects into TowerDefense's private context field once - shared by boardClick and the
+    // state-cheat commands below, all of which need the real (public) Context to call typed
+    // methods on rather than going through the generic zero-arg call() helper.
+    private static Context getContext() throws Exception {
+        Field contextField = TowerDefense.class.getDeclaredField("context");
+        contextField.setAccessible(true);
+        return (Context) contextField.get(game);
+    }
+
+    // Clicks a board cell (not a Swing component, so not reachable via click(int)) by
+    // reflecting into TowerDefense's private gameBoard field and using Context.scale to turn
+    // a cell coordinate into a screen point.
+    private static void boardClick(String args) throws Exception {
+        String[] p = args.split("\\s+");
+        int cellX = Integer.parseInt(p[0]);
+        int cellY = Integer.parseInt(p[1]);
+
+        Field gameBoardField = TowerDefense.class.getDeclaredField("gameBoard");
+        gameBoardField.setAccessible(true);
+        Component gameBoard = (Component) gameBoardField.get(game);
+        int scale = getContext().scale;
+
+        Point loc = gameBoard.getLocationOnScreen();
+        int cx = loc.x + cellX * scale + scale / 2;
+        int cy = loc.y + cellY * scale + scale / 2;
+        robot.mouseMove(cx, cy);
+        Thread.sleep(80);
+        robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+        Thread.sleep(60);
+        robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+        System.out.println("OK boardclick " + cellX + "," + cellY + " (robot at " + cx + "," + cy + ")");
+    }
+
+    // Playtesting cheats: jump straight to an economy value instead of buying/selling towers
+    // or surviving/leaking waves to get there. Context.apply is safe to call from this thread -
+    // it's already designed to be reachable from both the EDT and the game-loop thread (see
+    // economyChanged's Javadoc on PanelTowerSelector), so a third caller is nothing new.
+    private static void setCredits(String arg) throws Exception {
+        Context context = getContext();
+        int target = Integer.parseInt(arg.trim());
+        context.apply(EconomyDelta.credits(target - context.getCredits()));
+        System.out.println("OK setcredits " + target + " (credits=" + context.getCredits() + ")");
+    }
+
+    private static void setLives(String arg) throws Exception {
+        Context context = getContext();
+        int target = Integer.parseInt(arg.trim());
+        context.apply(EconomyDelta.lives(target - context.getLives()));
+        System.out.println("OK setlives " + target + " (lives=" + context.getLives() + ")");
     }
 
     private static void quit() {
