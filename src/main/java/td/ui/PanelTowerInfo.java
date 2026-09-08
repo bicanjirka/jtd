@@ -2,10 +2,10 @@ package td.ui;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.tower.Tower;
 import td.util.Context;
-import td.util.ContextListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -23,7 +23,7 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.Serial;
 
-public class PanelTowerInfo extends JPanel implements ContextListener {
+public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(PanelTowerInfo.class);
 
@@ -83,7 +83,7 @@ public class PanelTowerInfo extends JPanel implements ContextListener {
 
     public void setContext(Context context) {
         this.context = context;
-        this.context.addContextListener(this);
+        this.context.addEconomyListener(this);
     }
 
     private void sellCurrentTower() {

@@ -1,11 +1,11 @@
 package td.ui;
 
 import td.TowerDefense;
+import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.Context;
-import td.util.ContextListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.GrayFilter;
@@ -28,7 +28,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PanelTowerSelector extends JPanel implements ContextListener {
+public class PanelTowerSelector extends JPanel implements EconomyListener {
     @Serial
     private static final long serialVersionUID = 1L;
     private static final int ICON_SIZE = 32;
@@ -97,7 +97,7 @@ public class PanelTowerSelector extends JPanel implements ContextListener {
             this.buttons[i].setDisabledIcon(new SharpImageIcon(grayedOut(icon)));
         }
 
-        this.context.addContextListener(this);
+        this.context.addEconomyListener(this);
     }
 
     public void startPlacing(TowerFactory.type t, float r) {
