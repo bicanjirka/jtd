@@ -11,6 +11,7 @@ import td.wave.WaveDefinition;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * End-to-end tests driven entirely through GameEngine's public API - the
@@ -27,6 +28,10 @@ class GameEngineTest {
 
     private static LevelDefinition levelWith(List<WaveDefinition> waves, int startingCredits) {
         return LevelDefinition.unsmoothed("Test Level", "", 5, 5, STRAIGHT_PATH, waves, startingCredits, 5);
+    }
+
+    private static LevelDefinition biggerLevelWith(List<WaveDefinition> waves, int startingCredits) {
+        return LevelDefinition.unsmoothed("Bigger Level", "", 20, 15, STRAIGHT_PATH, waves, startingCredits, 5);
     }
 
     @Test
@@ -140,6 +145,95 @@ class GameEngineTest {
         assertThat(engine.getGameWorld().getCredits()).isEqualTo(creditsAfterBuild + placed.getSellPrice());
         assertThat(engine.getCellGrid()[0][0].hasTower()).isFalse();
         assertThat(engine.getCellGrid()[0][0].buildable()).isTrue();
+    }
+
+    @Test
+    void reloadingALevelRemovesTowersLeftFromThePreviousLevel() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(), 100));
+        engine.startPlacing(TowerFactory.type.first, TowerOne.range);
+        engine.mouseClicked(cellCenter(0), cellCenter(0));
+        assertThat(engine.getCellGrid()[0][0].hasTower()).isTrue();
+
+        engine.loadLevel(levelWith(List.of(), 100));
+
+        assertThat(engine.getGameWorld().getTowers()).isEmpty();
+        assertThat(engine.getCellGrid()[0][0].hasTower()).isFalse();
+    }
+
+    @Test
+    void reloadingALevelClearsEnemiesStillAliveFromThePreviousLevel() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 1000, 3, 1)), 100));
+        engine.nextWave();
+        assertThat(engine.getGameWorld().getEnemies()).isNotEmpty();
+
+        engine.loadLevel(levelWith(List.of(), 100));
+
+        assertThat(engine.getGameWorld().getEnemies()).isEmpty();
+    }
+
+    @Test
+    void reloadingALevelReseedsCreditsAndLivesFromTheNewLevel() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(), 100));
+        engine.startPlacing(TowerFactory.type.first, TowerOne.range);
+        engine.mouseClicked(cellCenter(0), cellCenter(0));
+
+        LevelDefinition next = LevelDefinition.unsmoothed("Next", "", 5, 5, STRAIGHT_PATH, List.of(), 75, 3);
+        engine.loadLevel(next);
+
+        assertThat(engine.getGameWorld().getCredits()).isEqualTo(75);
+        assertThat(engine.getGameWorld().getLives()).isEqualTo(3);
+    }
+
+    @Test
+    void reloadingALevelRewindsTheWaveCounterAndReArmsTheFirstWave() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
+        engine.nextWave();
+        assertThat(engine.getCurrentWaveIndex()).isEqualTo(1);
+
+        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
+
+        assertThat(engine.getCurrentWaveIndex()).isEqualTo(0);
+        assertThat(engine.isWaveReady()).isTrue();
+    }
+
+    @Test
+    void aWaveRequestedButNotYetStartedDoesNotCarryIntoTheNextLevel() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
+        engine.requestNextWave();
+
+        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
+
+        assertThat(engine.doTick(1)).isFalse();
+        assertThat(engine.getCurrentWaveIndex()).isZero();
+    }
+
+    @Test
+    void loadingASmallerLevelWithACellHighlightedFromTheBiggerOneDoesNotCrash() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(biggerLevelWith(List.of(), 100));
+        engine.startPlacing(TowerFactory.type.first, TowerOne.range);
+        engine.highlightCell(cellCenter(18), cellCenter(14));
+
+        assertThatCode(() -> engine.loadLevel(levelWith(List.of(), 100)))
+                .doesNotThrowAnyException();
+        assertThatCode(() -> engine.doTick(1)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void loadingASmallerLevelClearsTowersAgainstTheOldBoardRatherThanTheNewOne() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(biggerLevelWith(List.of(), 100));
+        engine.startPlacing(TowerFactory.type.first, TowerOne.range);
+        engine.mouseClicked(cellCenter(18), cellCenter(14));
+        assertThat(engine.getCellGrid()[18][14].hasTower()).isTrue();
+
+        assertThatCode(() -> engine.loadLevel(levelWith(List.of(), 100)))
+                .doesNotThrowAnyException();
     }
 
     private static int cellCenter(int cellIndex) {

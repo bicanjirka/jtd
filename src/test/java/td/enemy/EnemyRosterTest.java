@@ -34,13 +34,13 @@ class EnemyRosterTest {
     }
 
     @Test
-    void removingAllEnemiesClearsTheArrayAndZeroesTheCount() {
+    void clearingEveryEnemyZeroesTheCountWithoutReportingAClearedWave() {
         roster.setEnemies(new EnemyMob[]{anEnemy()});
         roster.setCount(5);
 
-        roster.removeAll();
+        roster.clear();
 
         assertThat(roster.getEnemies()).isEmpty();
-        assertThat(host.enemyDiedCalls).containsExactly(0);
+        assertThat(host.enemyDiedCalls).isEmpty();
     }
 }
