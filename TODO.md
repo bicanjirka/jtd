@@ -97,14 +97,3 @@ Towers don't rotate their sprite image to visually face their current target (en
   etc.) and exposed as a getter, then threaded through as a new `facingRadians` field on `TowerSpriteDraw` (currently
   unused by towers - `EnemyBodyDraw`/`EnemyFadeDraw` already carry one) and applied as a rotation in
   `Java2DFrameRenderer.paintTowerSprite()` alongside rotated sprite art for each tower.
-
-### Fast-forward doesn't single-step while paused
-
-`jButton_fastActionPerformed()` (the ">>" button) just calls `this.setSpeed(TickSpeed.FAST)` — it doesn't tick the
-simulation forward even once if the game is currently paused. The underlying feature request (single-step the game one
-tick while paused) was never finished.
-
-- **Where:** `TowerDefence.jButton_fastActionPerformed()`, `TowerDefence.doGameTick()`
-- **Approach:** `doGameTick()` no longer has a pause check of its own (pause is now `TickSpeed.PAUSED`, which `GameLoop`
-  already skips calling `onTick` for), so the >> handler can just call `this.doGameTick()` directly, once, when
-  `this.currentSpeed == TickSpeed.PAUSED`, to act as a manual single-step control.

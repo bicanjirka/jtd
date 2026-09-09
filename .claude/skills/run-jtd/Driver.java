@@ -199,6 +199,10 @@ public class Driver {
         Object context = call(engine, engineClass, "getGameWorld");
         Class<?> contextClass = context.getClass();
 
+        Field gameTimeField = TowerDefense.class.getDeclaredField("gameTime");
+        gameTimeField.setAccessible(true);
+
+        System.out.println("gameTime=" + gameTimeField.get(game));
         System.out.println("cellGrid=" + gridDims);
         System.out.println("wave=" + call(engine, engineClass, "getCurrentWaveIndex")
                 + "/" + call(engine, engineClass, "getWaveCount"));
