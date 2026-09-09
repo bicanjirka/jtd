@@ -150,7 +150,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     /**
      * Runs one logic tick, called from the game loop thread. GameLoop itself
      * already skips calling this while TickSpeed.PAUSED is selected, so the
-     * only remaining guard here is for after the game has ended.
+     * only remaining guard here is for after the game has ended. Also called
+     * directly from the EDT by fastPressed() to single-step while paused -
+     * safe because GameLoop guarantees it never calls this concurrently in
+     * that state.
      */
     private void doGameTick() {
         if (this.gameStopped) {
@@ -471,7 +474,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setSpeed(TickSpeed.PAUSED);
     }
 
+    /** While paused, ">>" single-steps one tick instead of changing tick speed. */
     private void fastPressed() {
+        if (this.currentSpeed == TickSpeed.PAUSED) {
+            this.doGameTick();
+            return;
+        }
         this.setSpeed(TickSpeed.FAST);
     }
 
