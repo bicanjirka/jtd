@@ -6,8 +6,9 @@ public final class EnemyMobCircle extends AbstractEnemyMob {
 
     private float bodyScale;
 
-    public EnemyMobCircle() {
+    public EnemyMobCircle(GameWorld context, int delay, int health, int price, int level) {
         super();
+        this.doInit(context, delay, health, price, level);
     }
 
     protected void doInit(GameWorld context, int delay, int health, int price, int level) {
