@@ -35,7 +35,10 @@ public class GameLoop implements Runnable {
     private final Runnable onRender;
 
     private volatile double speedMultiplier = TickSpeed.NORMAL.multiplier();
-    private volatile boolean running = true;
+    private volatile boolean running = false;
+    // Identifies which thread run() is allowed to keep looping on - see start()'s javadoc for
+    // why this, not just `running`, is what a restart needs to be race-free.
+    private volatile Thread thread;
     private long tickNumber = 0;
     private int consecutiveTickFailures = 0;
     // Written on the game-loop thread immediately before each render request, read on the
@@ -90,13 +93,31 @@ public class GameLoop implements Runnable {
     }
 
     /**
-     * Starts the loop on a new daemon thread.
+     * Starts the loop on a new daemon thread. Idempotent (a second call while already running
+     * is a no-op, logged and ignored, rather than spawning a second thread ticking the same
+     * engine) and restartable after {@link #stop()} - returning to the level-select menu and
+     * then starting another level calls this a second time on the same instance, so a fresh
+     * start must not carry over the previous run's stale progress: the tick/render
+     * accumulators, interpolation alpha, tick counter and consecutive-failure circuit breaker
+     * are all reset here. {@code animationSeconds} is deliberately left alone - it is
+     * wall-clock cosmetic animation with no level semantics, not simulation state.
      */
-    public void start() {
+    public synchronized void start() {
+        if (this.running) {
+            LOG.warn("GameLoop already running, ignoring start()");
+            return;
+        }
         LOG.info("GameLoop starting");
-        Thread thread = new Thread(this, "game-loop");
-        thread.setDaemon(true);
-        thread.start();
+        this.tickAccumulator.reset();
+        this.renderAccumulator.reset();
+        this.tickInterpolationAlpha = 0.0;
+        this.tickNumber = 0;
+        this.consecutiveTickFailures = 0;
+        this.running = true;
+        Thread newThread = new Thread(this, "game-loop");
+        newThread.setDaemon(true);
+        this.thread = newThread;
+        newThread.start();
     }
 
     public void stop() {
@@ -106,8 +127,12 @@ public class GameLoop implements Runnable {
 
     @Override
     public void run() {
+        // Pins this run() to the thread start() launched it on, so a thread still finishing
+        // its last iteration when a fast stop()+start() replaces it cannot mistake the new
+        // run's `running = true` for its own and keep looping as an unwanted second loop.
+        Thread self = Thread.currentThread();
         long lastNanos = System.nanoTime();
-        while (this.running) {
+        while (this.running && this.thread == self) {
             long now = System.nanoTime();
             long elapsedNanos = now - lastNanos;
             lastNanos = now;
