@@ -159,4 +159,51 @@ class GameLoopTest {
 
         assertThat(tickCount.get()).isEqualTo(countAfterStop);
     }
+
+    @Test
+    void aStoppedLoopCanBeStartedAgainAndResumesTicking() throws InterruptedException {
+        // same scenario as returning to the menu and starting another level: a fresh start()
+        // on an instance that already ran and stopped once
+        AtomicInteger tickCount = new AtomicInteger();
+        GameLoop loop = new GameLoop(tickCount::incrementAndGet, () -> {
+        });
+        loop.setSpeed(TickSpeed.SUPER_FAST);
+        loop.start();
+        Thread.sleep(50);
+        loop.stop();
+        Thread.sleep(50);
+        int countAfterStop = tickCount.get();
+
+        loop.start();
+        try {
+            Thread.sleep(200);
+            assertThat(tickCount.get())
+                    .as("expected the restarted loop to tick again")
+                    .isGreaterThan(countAfterStop);
+        } finally {
+            loop.stop();
+        }
+    }
+
+    @Test
+    void startingAnAlreadyRunningLoopDoesNotSpawnASecondLoopThread() throws InterruptedException {
+        GameLoop loop = new GameLoop(() -> {
+        }, () -> {
+        });
+        loop.setSpeed(TickSpeed.PAUSED);
+
+        loop.start();
+        try {
+            Thread.sleep(50);
+            loop.start();
+            Thread.sleep(50);
+
+            long gameLoopThreads = Thread.getAllStackTraces().keySet().stream()
+                    .filter(t -> "game-loop".equals(t.getName()))
+                    .count();
+            assertThat(gameLoopThreads).isEqualTo(1);
+        } finally {
+            loop.stop();
+        }
+    }
 }
