@@ -65,8 +65,36 @@ public class BuiltInLevelCatalog implements LevelCatalog {
             75, 3,
             new QuadraticBezierSmoothing(0.3, 8));
 
+    // cornerPull is maxed out at 0.5 (the largest AbstractCornerSmoothing allows) and the three
+    // interior corners each sit between two long (11-15 cell) legs, so each one pulls back
+    // 5.5-6 cells before the Bezier fillet even starts - far more than Zigzag Gauntlet's 0.3
+    // pull over 2-4 cell legs. The resulting curve cuts deep inside each raw right-angle corner,
+    // sweeping the actual path through cells the straight two-leg corners never touch at all
+    // (BuiltInLevelCatalogTest measures this directly against Zigzag Gauntlet's own path).
+    private static final LevelDefinition WILD_BEZIER_SWEEP = new LevelDefinition(
+            "Wild Bezier Sweep",
+            "Long bezier curves that swing far wide of the path's straight corners. "
+                    + "10 waves, starting with $100 and 4 lives.",
+            30, 18,
+            List.of(
+                    new Point(-1, 3), new Point(14, 3), new Point(14, 15), new Point(28, 15),
+                    new Point(28, 4), new Point(30, 4)),
+            List.of(
+                    new WaveDefinition("c e c e c e c e c", 220, 2, 1),
+                    new WaveDefinition("6 c", 300, 2, 1),
+                    new WaveDefinition("s e s e s", 480, 3, 1),
+                    new WaveDefinition("t e t e t", 620, 3, 2),
+                    new WaveDefinition("4 s 2 e 4 c", 850, 4, 2),
+                    new WaveDefinition("g e g e g", 1100, 6, 2),
+                    new WaveDefinition("2 g 3 t 3 s", 1450, 5, 3),
+                    new WaveDefinition("8 c e 6 s e 4 t", 1800, 4, 3),
+                    new WaveDefinition("3 g 2 t 2 g 2 t", 2400, 8, 4),
+                    new WaveDefinition("s", 4200, 0, 6)),
+            100, 4,
+            new QuadraticBezierSmoothing(0.5, 14));
+
     @Override
     public List<LevelDefinition> levels() {
-        return List.of(CLASSIC_LOOP, ZIGZAG_GAUNTLET);
+        return List.of(CLASSIC_LOOP, ZIGZAG_GAUNTLET, WILD_BEZIER_SWEEP);
     }
 }
