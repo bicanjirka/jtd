@@ -1,5 +1,6 @@
 import td.TowerDefense;
 import td.economy.EconomyDelta;
+import td.level.LevelDefinition;
 import td.util.GameWorld;
 
 import javax.imageio.ImageIO;
@@ -74,6 +75,8 @@ public class Driver {
             case "key" -> typeKey(rest.trim());
             case "state" -> state();
             case "boardclick" -> boardClick(rest.trim());
+            case "level" -> selectLevel(Integer.parseInt(rest.trim()));
+            case "menu" -> returnToMenu();
             case "setcredits" -> setCredits(rest.trim());
             case "setlives" -> setLives(rest.trim());
             case "sleep" -> Thread.sleep(Long.parseLong(rest.trim()));
@@ -249,6 +252,35 @@ public class Driver {
         Thread.sleep(60);
         robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
         System.out.println("OK boardclick " + cellX + "," + cellY + " (robot at " + cx + "," + cy + ")");
+    }
+
+    // Reflects into TowerDefense's private startSelectedLevel(LevelDefinition) rather than
+    // clicking a PanelLevelSelect card via Robot - a card is a plain JPanel with its own
+    // MouseListener, not a button, and a Robot click at its on-screen center did not reliably
+    // register in this environment (see SKILL.md Gotchas; button doClick() is unaffected).
+    private static void selectLevel(int index) throws Exception {
+        Field catalogField = TowerDefense.class.getDeclaredField("levelCatalog");
+        catalogField.setAccessible(true);
+        Object catalog = catalogField.get(game);
+        @SuppressWarnings("unchecked")
+        List<LevelDefinition> levels = (List<LevelDefinition>) catalog.getClass().getMethod("levels").invoke(catalog);
+        LevelDefinition level = levels.get(index);
+
+        Method startSelectedLevel = TowerDefense.class.getDeclaredMethod("startSelectedLevel", LevelDefinition.class);
+        startSelectedLevel.setAccessible(true);
+        startSelectedLevel.invoke(game, level);
+        System.out.println("OK level " + index + " (" + level.name() + ")");
+    }
+
+    // Reflects into TowerDefense's private returnToMenu() directly rather than
+    // requestReturnToMenu() - the latter can pop a real JOptionPane confirm dialog mid-level,
+    // which would block this call forever with no way to answer it non-interactively. Testing
+    // the confirm dialog itself needs a human (or Robot clicking the dialog), not this driver.
+    private static void returnToMenu() throws Exception {
+        Method method = TowerDefense.class.getDeclaredMethod("returnToMenu");
+        method.setAccessible(true);
+        method.invoke(game);
+        System.out.println("OK menu");
     }
 
     // Playtesting cheats: jump straight to an economy value instead of buying/selling towers
