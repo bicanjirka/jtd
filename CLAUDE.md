@@ -84,8 +84,20 @@ is the one entry point that turns a level into live engine state (grid, path, wa
 `GameWorld.startEconomy(credits, lives)`); each level owns its board size, path and waves and now
 its own starting credits *and* lives, so levels don't inherit each other's economy.
 
-Returning to the level-select screen once a level has started is a known, deliberate gap — see
-`TODO.md`.
+`startSelectedLevel` is re-enterable, not one-shot: each game-over/game-won overlay has a "Back
+to menu" button, and `m` returns to the menu mid-level (behind a confirm dialog, skipped once the
+level has already ended), both routed through `TowerDefense.requestReturnToMenu()`. The player
+can then pick any level, including a different one, with no state left over from the previous
+run. This works because `GameEngine.loadLevel()` is itself idempotent — it is always safe to
+call, from any prior state, not just once per process. It unloads the outgoing level as its
+first step, *before* installing the new board geometry and grid: `TowerRoster.clear()` maps
+each tower's pixel position back to a cell through the *current* `BoardGeometry` and calls back
+into the *current* `cellGrid`, so it must run while those are still the outgoing level's, not
+the new one's. `EnemyRoster.clear()` (renamed from `removeAll()`) deliberately does not notify
+`GameHost.enemyDied` — tearing a level down is not a death, and the old name's notification
+could spuriously trigger the "won" overlay via `TowerDefense.enemyDied`. `TowerDefense.returnToMenu()`
+itself clears no engine state at all; that is the payoff of `loadLevel()`'s contract. See
+`GameLoop`'s own restart contract in Threading model below, which the same round trip relies on.
 
 ## Path geometry and smoothing
 
@@ -133,6 +145,8 @@ consistent real-world pace along whatever geometry the path actually has, curved
 - `EconomyLedger`'s `EconomyState` is written from both the EDT (buying/selling a tower) and the `game-loop` thread (a kill or a leak), so `EconomyLedger.apply`/`doPay` compute the new state inside a `synchronized (this)` block and fire the resulting `EconomyListener.economyChanged` *outside* it — never hold the lock while calling out into listeners, which re-enter `EconomyLedger` and touch Swing.
 - Never touch Swing components from tick code. Route through a listener that the UI observes.
 - When the loop falls behind (debugger pause, long GC) it runs **one** tick and resyncs rather than bursting the backlog. Preserve that.
+
+`GameLoop.start()` is idempotent and restartable, not one-shot: a second call while already running is a no-op (logged, not a second thread), and a call after `stop()` resets the tick/render accumulators, interpolation alpha, tick counter and consecutive-failure circuit breaker before starting a fresh thread — needed because returning to the level-select menu (see Levels above) stops the loop and the next level's `startSelectedLevel()` starts the same instance again. `animationSeconds` is the one exception, left monotonic on purpose since it is wall-clock cosmetic animation, not simulation state tied to any one level.
 
 Tick speed is a plain multiplier — `TickSpeed` presets are a convenience, and any non-negative double is valid, so an arbitrary-speed control needs no engine change.
 

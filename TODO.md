@@ -53,24 +53,6 @@ implementation. There is no way to add or edit a level without a code change and
   `td.util.GameStartupException`, which `Main` already catches as the one fatal-startup boundary, rather than adding a
   second error-handling path.
 
-### No way back to the level select screen once a level has started
-
-`TowerDefense.startSelectedLevel()` is written to run exactly once per process: the "menu" CardLayout card is only
-ever shown at startup, and there is no button, shortcut, or menu item that switches back to it. Losing or winning a
-level shows the game-over/game-won overlay on top of the board, not a route back to `PanelLevelSelect`. This was a
-deliberate scope cut when the level-select screen was added, not an oversight.
-
-- **Where:** `TowerDefense.startSelectedLevel()`, `TowerDefense.gameLost()`/`gameWon()`, `PanelLevelSelect`
-- **Approach:** `loadLevel()` is written for a single load per run, so a real "back to menu" needs a matching
-  "unload" that resets everything a second `loadLevel()` call would otherwise corrupt or leave stale:
-  `Context.path` (`loadLevel` currently appends onto the *same* `PathNormal` via `context.getPath().addStep(...)`,
-  so a second load would concatenate two paths onto one - `Context.setPath()` already exists, the fix is handing it
-  a fresh `PathNormal` before the next load), `Context.towers`/`enemies`/`enemyCount` (`clearTowers()` and
-  `removeAllEnemies()` already exist for this), `TowerDefense.gameStopped` and `gameTime` (never reset today, so
-  after a loss no further level could be started even with a working "back" button), and `GameEngine`'s
-  `waveReady`/`startWave`/`placingTower`/`placingTowerType`/`placingTowerRange`/`highlitedCell`. Score doesn't need
-  special handling - `EconomyState.startingWith` already zeroes it on every `startEconomy` call.
-
 ## Tower features
 
 ### Tower upgrade doesn't gate on affordability
