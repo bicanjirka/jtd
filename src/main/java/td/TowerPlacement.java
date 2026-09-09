@@ -52,6 +52,19 @@ public class TowerPlacement {
         this.unHighlightCell();
     }
 
+    /**
+     * Drops placement mode and any highlighted cell without touching the grid - unlike
+     * {@link #cancel()}, which un-highlights a cell in the still-current grid, this is for
+     * tearing down before a new (possibly smaller) grid replaces the one {@code highlitedCell}
+     * was indexing, where dereferencing it would be unsafe.
+     */
+    public void reset() {
+        this.placingTower = false;
+        this.placingTowerType = null;
+        this.placingTowerRange = 0;
+        this.highlitedCell = null;
+    }
+
     private void unHighlightCell() {
         if (this.highlitedCell != null) {
             this.cellGrid.get()[this.highlitedCell[0]][this.highlitedCell[1]].setHighlight(Cell.highlightType.none);

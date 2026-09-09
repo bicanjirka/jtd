@@ -11,6 +11,7 @@ import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * Exercises TowerPlacement directly rather than through GameEngine, so it can assert on the
@@ -101,6 +102,42 @@ class TowerPlacementTest {
         placement.unSelectTower();
 
         assertThat(grid[0][0].getHighlight()).isEqualTo(Cell.highlightType.none);
+    }
+
+    @Test
+    void resetClearsPlacementModeAndTheStaleHighlightWithoutTouchingTheGrid() {
+        Cell[][] bigGrid = grid(3, 3);
+        TowerPlacement placement = newPlacement(bigGrid, 100);
+        placement.start(TowerFactory.type.first, TowerOne.range);
+        placement.highlightCell(cellCenter(2), cellCenter(2));
+
+        placement.reset();
+
+        assertThat(placement.isPlacing()).isFalse();
+        // the highlighted cell belonged to the grid being discarded - reset() must not
+        // dereference it, since a real reload can replace it with a smaller one
+        assertThat(bigGrid[2][2].getHighlight()).isEqualTo(Cell.highlightType.place);
+    }
+
+    @Test
+    void resetPreventsAStaleHighlightFromCrashingWhenTheGridLaterShrinks() {
+        // mirrors how GameEngine really wires this: one TowerPlacement, a Supplier whose
+        // answer changes when a new (possibly smaller) level replaces the grid
+        Cell[][] bigGrid = grid(3, 3);
+        Cell[][][] currentGrid = {bigGrid};
+        GameWorld context = new GameWorld(new RecordingGameHost());
+        context.setBoard(BoardGeometry.of(SCALE, bigGrid.length, bigGrid[0].length));
+        context.startEconomy(100, 5);
+        TowerPlacement placement = new TowerPlacement(context, () -> currentGrid[0]);
+        placement.start(TowerFactory.type.first, TowerOne.range);
+        placement.highlightCell(cellCenter(2), cellCenter(2));
+
+        placement.reset();
+        currentGrid[0] = grid(1, 1);
+        context.setBoard(BoardGeometry.of(SCALE, 1, 1));
+
+        assertThatCode(() -> placement.highlightCell(cellCenter(0), cellCenter(0)))
+                .doesNotThrowAnyException();
     }
 
     @Test

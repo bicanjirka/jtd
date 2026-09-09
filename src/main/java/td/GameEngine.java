@@ -87,6 +87,7 @@ public class GameEngine {
     }
 
     public void loadLevel(LevelDefinition level) {
+        unloadCurrentLevel();
         int width = level.width();
         int height = level.height();
         int scale = this.context.getBoard().scale();
@@ -111,6 +112,22 @@ public class GameEngine {
         this.context.startEconomy(level.startingCredits(), level.startingLives());
         LOG.info("Level loaded: {} ({}x{} board, {} waves, {} starting credits, {} starting lives)",
                 level.name(), width, height, this.waves.size(), level.startingCredits(), level.startingLives());
+    }
+
+    /**
+     * Makes {@link #loadLevel} safe to call from a dirty state - a level already in play, or
+     * another level's leftovers - by discarding everything the outgoing level owned before any
+     * new geometry or grid is installed. The ordering matters: {@link GameWorld#clearTowers()}
+     * maps each tower's pixel position back to a cell through the CURRENT {@code BoardGeometry}
+     * and calls back into the CURRENT {@code cellGrid} via {@link #clearCell}, so it must run
+     * against the outgoing board, before {@code loadLevel} replaces it below.
+     */
+    private void unloadCurrentLevel() {
+        this.placement.reset();
+        this.context.clearTowers();
+        this.context.clearEnemies();
+        this.startWave = false;
+        this.waveReady = true;
     }
 
     /**

@@ -76,8 +76,8 @@ public class GameWorld {
         this.enemies.remove();
     }
 
-    public void removeAllEnemies() {
-        this.enemies.removeAll();
+    public void clearEnemies() {
+        this.enemies.clear();
     }
 
     public BoardGeometry getBoard() {

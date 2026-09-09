@@ -35,9 +35,9 @@ public class EnemyRoster implements EnemyRegistry {
         this.host.enemyDied(this.count);
     }
 
-    public void removeAll() {
+    /** Tearing a level down is not a death: unlike {@link #remove()}, this does not notify the host. */
+    public void clear() {
         this.count = 0;
         this.enemies = new EnemyMob[0];
-        this.host.enemyDied(this.count);
     }
 }
