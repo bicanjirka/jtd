@@ -17,6 +17,7 @@ import td.wave.PathCoverage;
 import td.wave.Point;
 import td.wave.Wave;
 import td.wave.WaveDefinition;
+import td.wave.WaveScript;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -106,7 +107,7 @@ public class GameEngine {
         this.wave = 0;
 
         for (WaveDefinition wd : level.waves()) {
-            this.waves.add(new Wave(this.context, wd.hp(), wd.price(), wd.level(), wd.enemies().split(" ")));
+            this.waves.add(new Wave(this.context, wd.hp(), wd.price(), wd.level(), WaveScript.parse(wd.enemies())));
         }
 
         this.context.startEconomy(level.startingCredits(), level.startingLives());
