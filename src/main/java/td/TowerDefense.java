@@ -23,6 +23,7 @@ import td.util.GameWorld;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -76,7 +77,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             t - build jing-jang
             p - pause
             f - cycle speed
-            s - star wave""";
+            s - star wave
+            m - back to menu""";
 
     private final GameLoop gameLoop = new GameLoop(this::doGameTick, this::requestRender);
     private final Object gameTimeLock = new Object();
@@ -89,9 +91,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     // EDT-only, since it's only ever touched from button/key listeners.
     private TickSpeed currentSpeed = TickSpeed.NORMAL;
     private boolean gameStopped = false;
-    // Guards input and the game loop against firing before startSelectedLevel() has run -
-    // the JFrame-level KeyListener is live the instant the frame is shown, well before any
-    // level (and its cellGrid) exists.
+    // Guards input and the game loop against firing before a level has finished loading (the
+    // JFrame-level KeyListener is live the instant the frame is shown, well before any level
+    // and its cellGrid exists) or after returnToMenu() has torn one down. Cleared at the start
+    // of startSelectedLevel()/returnToMenu() and set again once startSelectedLevel() finishes.
     private boolean levelLoaded = false;
 
     private CardLayout contentCardLayout;
@@ -137,6 +140,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.gameConsole.onPause(this::pausePressed);
         this.gameConsole.onFast(this::fastPressed);
         this.gameConsole.onSuperFast(this::superFastPressed);
+        this.boardOverlays.onBackToMenu(this::requestReturnToMenu);
         this.panelTowerSelector.doInit(this.context, this);
 
         this.jPanel_board.add(this.gameBoard);
@@ -189,24 +193,83 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /**
-     * The level-select screen's callback. Ignores a second call (e.g. a fast double-click on a
-     * level card) since {@link GameLoop#start()} spawns a new thread every time it's called,
-     * with no guard of its own - two calls would leave two loops ticking the same engine.
+     * The level-select screen's callback - also the target of returning from a level in
+     * progress and picking a (possibly different) one, so it is written to run any number of
+     * times, not just once. Safe to call from a dirty state: {@link GameEngine#loadLevel} is
+     * itself idempotent, and {@link GameLoop#start}/{@code stop} now tolerate being called
+     * more than once, so a fast double-click on a level card just tears the same level down
+     * and rebuilds it rather than leaving two loops ticking one engine.
      */
     private void startSelectedLevel(LevelDefinition level) {
-        if (this.levelLoaded) {
-            return;
+        this.gameLoop.stop();
+        this.levelLoaded = false;
+        this.gameStopped = false;
+        this.boardOverlays.reset();
+        this.unSelectTower();
+        this.panelTowerSelector.stopPlacing();
+        this.engine.loadLevel(level);
+        this.contentCardLayout.show(getContentPane(), CARD_GAME);
+        this.gameBoard.recalculateBoard(level.width(), level.height());
+        this.setLocationRelativeTo(null);
+        this.startLevel();
+        synchronized (this.gameTimeLock) {
+            this.gameTime = 0;
         }
         this.levelLoaded = true;
-        this.contentCardLayout.show(getContentPane(), CARD_GAME);
-        this.engine.loadLevel(level);
-        this.gameBoard.recalculateBoard(level.width(), level.height());
-        this.boardOverlays.reset();
-        this.startLevel();
-        this.gameTime = 0;
         this.setSpeed(TickSpeed.NORMAL);
         this.gameLoop.start();
         this.requestFocusInWindow();
+    }
+
+    /**
+     * The single route back to the level-select menu, shared by each overlay's "Back to menu"
+     * button and the 'm' shortcut. Confirms first if the level is still in progress, so a
+     * misclick or stray keypress can't destroy a long run; skips the dialog once the level has
+     * already ended (the overlay button case), where there is nothing left to abandon.
+     */
+    private void requestReturnToMenu() {
+        if (!this.levelLoaded) {
+            return;
+        }
+        if (!this.gameStopped && !this.confirmAbandonLevel()) {
+            return;
+        }
+        this.returnToMenu();
+    }
+
+    /**
+     * Tears down no engine state - {@link GameEngine#loadLevel} already makes a fresh
+     * {@link #startSelectedLevel} safe from any prior state, so this only needs to undo what
+     * it, specifically, set up: the running loop, the UI showing the board, and the overlays/
+     * selections a level in progress leaves behind.
+     */
+    private void returnToMenu() {
+        this.gameLoop.stop();
+        this.levelLoaded = false;
+        this.setSpeed(TickSpeed.PAUSED);
+        this.boardOverlays.reset();
+        this.unSelectTower();
+        this.gameConsole.getWaveInfo().clearWaves();
+        this.panelTowerSelector.stopPlacing();
+        this.contentCardLayout.show(getContentPane(), CARD_MENU);
+        this.setSize(MENU_WIDTH, MENU_HEIGHT);
+        this.setLocationRelativeTo(null);
+    }
+
+    /**
+     * Pauses for the duration of the modal (the EDT is blocked by it anyway, but the
+     * game-loop thread is not) and restores whatever speed was active if the answer is "no".
+     */
+    private boolean confirmAbandonLevel() {
+        TickSpeed previousSpeed = this.currentSpeed;
+        this.setSpeed(TickSpeed.PAUSED);
+        boolean confirmed = JOptionPane.showConfirmDialog(this,
+                "Abandon this level and return to the menu?", "Back to menu",
+                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+        if (!confirmed) {
+            this.setSpeed(previousSpeed);
+        }
+        return confirmed;
     }
 
     public void setInfoText(String s) {
@@ -376,6 +439,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             case 'p' -> this.togglePause();
             case 'f' -> this.cycleSpeed();
             case 's' -> this.nextWave();
+            case 'm' -> this.requestReturnToMenu();
             case KeyEvent.VK_ESCAPE -> {
                 if (this.engine.isPlacingTower()) {
                     this.engine.cancelPlacing();
