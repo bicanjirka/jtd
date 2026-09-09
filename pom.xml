@@ -47,6 +47,25 @@
 
     <build>
         <finalName>${project.artifactId}</finalName>
+        <resources>
+            <!-- version.properties is filtered so ${project.version} resolves at build time,
+                 keeping the jar's reported version in sync with this pom without a second
+                 hardcoded copy. Every other resource is copied verbatim. -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>version.properties</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>version.properties</exclude>
+                </excludes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

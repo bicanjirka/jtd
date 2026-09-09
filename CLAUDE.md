@@ -293,7 +293,7 @@ concatenation.
 ## Gotchas
 
 - **A green test run still prints a `WARN` line and stack trace.** `WaveTest` feeds an unparseable token (`"?"`) through the wave language, and `Wave`'s constructor handles it with `LOG.warn(...)` (via `logback-test.xml`, `WARN` is the one level still visible during tests, and Logback prints the passed exception's trace below the message) and defaults the count to 1. Expected output on a passing run — check `Tests run: … Failures: 0`, not the presence of that output.
-- **Version is duplicated** between `pom.xml` and `TowerDefense.VERSION` (currently `1.4` in both). There's no single source of truth — update both when cutting a release.
+- **Version has a single source of truth**: `pom.xml`'s `<version>` is filtered into `src/main/resources/version.properties` at build time (see `pom.xml`'s `<resources>` block) and `TowerDefense.VERSION` reads it at startup via `TowerDefense.loadVersion()`. Only `pom.xml` needs updating when cutting a release.
 
 ## Known gaps
 
