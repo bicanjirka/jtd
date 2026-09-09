@@ -1,7 +1,5 @@
 package td.enemy;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import td.damage.Damage;
 import td.economy.EconomyDelta;
 import td.util.GameWorld;
@@ -12,9 +10,7 @@ import td.wave.Vec2;
 import java.util.List;
 import java.util.Optional;
 
-public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractEnemyMob.class);
+public abstract class AbstractEnemyMob implements EnemyMob {
 
     // Rescaled from the old fixed-point model (speed=40 meant "40/1000 of the current
     // segment per tick", which - since every segment was exactly one 32px cell - worked out
@@ -253,18 +249,5 @@ public abstract class AbstractEnemyMob implements EnemyMob, Cloneable {
                 this.prevY = this.y;
             }
         }
-    }
-
-    public EnemyMob create(GameWorld context, int delay, int health, int price, int level) {
-        AbstractEnemyMob newEnemy;
-        try {
-            newEnemy = (AbstractEnemyMob) this.clone();
-        } catch (CloneNotSupportedException ex) {
-            LOG.error("Failed to clone enemy prototype {}", this.getClass().getSimpleName(), ex);
-            throw new IllegalStateException("Failed to clone enemy prototype " + this.getClass().getSimpleName(), ex);
-        }
-        newEnemy.doInit(context, delay, health, price, level);
-
-        return newEnemy;
     }
 }

@@ -58,7 +58,7 @@ public class PanelEnemy extends JPanel {
         if (e.equals(Enemy.Empty)) return;
         int nr = this.enemies.size();
         this.contextLocal.setPath(new PathNormal(List.of(new Vec2(this.scale / 2 + this.scale * nr, this.pHeight / 2))));
-        EnemyMob enemy = e.getCopy(this.contextLocal, 0, 0, 0, level);
+        EnemyMob enemy = e.create(this.contextLocal, 0, 0, 0, level);
         enemy.doTick(0);
         this.enemies.add(enemy);
         this.enemiesCount[nr] = count;

@@ -8,8 +8,9 @@ public final class EnemyMobSquare extends AbstractEnemyMobRotor {
     private float bodyScale;
     private float K;
 
-    public EnemyMobSquare() {
+    public EnemyMobSquare(GameWorld context, int delay, int health, int price, int level) {
         super();
+        this.doInit(context, delay, health, price, level);
     }
 
     protected void doInit(GameWorld context, int delay, int health, int price, int level) {

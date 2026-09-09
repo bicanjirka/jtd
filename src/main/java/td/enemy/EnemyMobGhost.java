@@ -6,9 +6,10 @@ public final class EnemyMobGhost extends AbstractEnemyMob {
 
     private float bodyScale;
 
-    public EnemyMobGhost() {
+    public EnemyMobGhost(GameWorld context, int delay, int health, int price, int level) {
         super();
         this.type = EnemyMob.type.Invisible;
+        this.doInit(context, delay, health, price, level);
     }
 
     protected void doInit(GameWorld context, int delay, int health, int price, int level) {

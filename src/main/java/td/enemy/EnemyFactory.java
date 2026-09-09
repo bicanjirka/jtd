@@ -24,30 +24,34 @@ public class EnemyFactory {
     }
 
     public static EnemyMob getEnemy(String name, GameWorld context, int delay, int health, int price, int level) {
-        return table.get(name).getCopy(context, delay, health, price, level);
+        return table.get(name).create(context, delay, health, price, level);
     }
 
     public enum Enemy {
-        Circle("c", new EnemyMobCircle()),
-        Square("s", new EnemyMobSquare()),
-        Triangle("t", new EnemyMobTriangle()),
-        Ghost("g", new EnemyMobGhost()),
-        Empty("e", new EnemyMobEmpty());
+        Circle("c"),
+        Square("s"),
+        Triangle("t"),
+        Ghost("g"),
+        Empty("e");
 
         private final String name;
-        private final EnemyMob instance;
 
-        Enemy(String name, EnemyMob instance) {
+        Enemy(String name) {
             this.name = name;
-            this.instance = instance;
         }
 
         public String getName() {
             return this.name;
         }
 
-        public EnemyMob getCopy(GameWorld context, int delay, int health, int price, int level) {
-            return instance.create(context, delay, health, price, level);
+        public EnemyMob create(GameWorld context, int delay, int health, int price, int level) {
+            return switch (this) {
+                case Circle -> new EnemyMobCircle(context, delay, health, price, level);
+                case Square -> new EnemyMobSquare(context, delay, health, price, level);
+                case Triangle -> new EnemyMobTriangle(context, delay, health, price, level);
+                case Ghost -> new EnemyMobGhost(context, delay, health, price, level);
+                case Empty -> new EnemyMobEmpty(context, delay, health, price, level);
+            };
         }
     }
 }

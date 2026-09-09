@@ -1,7 +1,6 @@
 package td.enemy;
 
 import td.damage.Damage;
-import td.util.GameWorld;
 
 public interface EnemyMob {
     void doTick(int gameTime);
@@ -29,8 +28,6 @@ public interface EnemyMob {
     float getSpeed();
 
     String getInfoString();
-
-    EnemyMob create(GameWorld context, int delay, int health, int price, int level);
 
     enum type {
         Normal,
