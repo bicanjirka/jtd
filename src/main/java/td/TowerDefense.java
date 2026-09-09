@@ -36,7 +36,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serial;
+import java.util.Properties;
 
 // Inspired by HexTD
 public class TowerDefense extends JFrame implements EconomyListener, GameHost {
@@ -46,7 +49,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     @Serial
     private static final long serialVersionUID = 1L;
     private static final String NAME = "Tower Defense";
-    static final String VERSION = "1.4";
+    static final String VERSION = loadVersion();
     private static final String CARD_MENU = "menu";
     private static final String CARD_GAME = "game";
     private static final int MENU_WIDTH = 480;
@@ -103,6 +106,22 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setTitle(NAME);
         this.setFocusable(true);
         this.setVisible(true);
+    }
+
+    /**
+     * Reads the version baked into {@code version.properties} by Maven resource filtering
+     * (see {@code pom.xml}), so the displayed/logged version always matches the pom's
+     * {@code <version>} rather than a second hand-maintained copy.
+     */
+    private static String loadVersion() {
+        try (InputStream in = TowerDefense.class.getResourceAsStream("/version.properties")) {
+            Properties props = new Properties();
+            props.load(in);
+            return props.getProperty("version");
+        } catch (IOException e) {
+            LOG.error("Failed to load version.properties", e);
+            return "unknown";
+        }
     }
 
     public TowerDefense() {
