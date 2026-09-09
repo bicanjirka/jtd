@@ -254,8 +254,11 @@ JUnit 5 + AssertJ. `assertThat(...)`, never JUnit's bare assertions.
 
 ## Wave mini-language
 
-Wave contents are a space-separated token string, parsed eagerly in `Wave`'s constructor (via
-the private `parseNames`). Tokens are enemy letters, each optionally preceded by a repeat count:
+Wave contents are a space-separated token string. `WaveScript.parse` turns it into a
+`WaveContent` (an ordered, GameWorld-free list of `EnemyFactory.Enemy` spawn slots, repeat
+counts already flattened out) — `Wave`'s constructor then takes that parsed content and does
+only the world-bound instantiation, one `EnemyMob` per slot. Tokens are enemy letters, each
+optionally preceded by a repeat count:
 
 | Token | Enemy |
 |-------|-------|
@@ -306,7 +309,7 @@ concatenation.
 
 ## Gotchas
 
-- **A green test run still prints a `WARN` line and stack trace.** `WaveTest` feeds an unparseable token (`"?"`) through the wave language, and `Wave`'s constructor handles it with `LOG.warn(...)` (via `logback-test.xml`, `WARN` is the one level still visible during tests, and Logback prints the passed exception's trace below the message) and defaults the count to 1. Expected output on a passing run — check `Tests run: … Failures: 0`, not the presence of that output.
+- **A green test run still prints a `WARN` line and stack trace.** `WaveScriptTest` feeds an unparseable token (`"?"`) through the wave language, and `WaveScript.parse` handles it with `LOG.warn(...)` (via `logback-test.xml`, `WARN` is the one level still visible during tests, and Logback prints the passed exception's trace below the message) and defaults the count to 1. Expected output on a passing run — check `Tests run: … Failures: 0`, not the presence of that output.
 - **Version has a single source of truth**: `pom.xml`'s `<version>` is filtered into `src/main/resources/version.properties` at build time (see `pom.xml`'s `<resources>` block) and `TowerDefense.VERSION` reads it at startup via `TowerDefense.loadVersion()`. Only `pom.xml` needs updating when cutting a release.
 
 ## Known gaps

@@ -5,6 +5,7 @@ import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerListener;
 import td.wave.Wave;
+import td.wave.WaveScript;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +72,7 @@ class GameWorldTest {
     void startingAWaveNotifiesWaveStartListeners() {
         AtomicInteger waveStartedCalls = new AtomicInteger();
         context.addWaveStartListener(waveStartedCalls::incrementAndGet);
-        Wave wave = new Wave(context, 100, 5, 1, new String[]{"c", "c"});
+        Wave wave = new Wave(context, 100, 5, 1, WaveScript.parse("c c"));
 
         context.startWave(wave);
 
