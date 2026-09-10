@@ -85,6 +85,12 @@ Every tower body is a single closed `Shape` (triangle, circle, spiral, star, pul
 that way: the moment one needs two colours it needs its own paint method, and the shared
 fill-then-outline path stops being shared.
 
+Turret heads mostly work the same way, through `turretHeadShape`. The sonar head is the one
+exception — a radar sweep is read from its fading trail, which needs several wedges at
+different alphas, so it has its own `paintSonarSweep` and `turretHeadShape` throws for it.
+It is also sized to stay inside its own tile: a head reaching across neighbouring cells reads
+as a weapon with reach rather than as an instrument.
+
 ## Swing panels
 
 `GameBoard`, `PanelGameConsole`, `PanelTowerSelector`, `PanelTowerInfo`, `PanelWaveInfo`,

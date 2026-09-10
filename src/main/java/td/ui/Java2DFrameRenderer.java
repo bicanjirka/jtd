@@ -24,6 +24,7 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Arc2D;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
@@ -386,8 +387,40 @@ public final class Java2DFrameRenderer {
         AffineTransform save = g2.getTransform();
         g2.translate(head.centerX(), head.centerY());
         g2.rotate(head.headingRadians());
-        this.paintHeadShape(g2, head.palette(), scale * TOWER_HEAD_SIZE_FRACTION * head.scale());
+        float size = scale * TOWER_HEAD_SIZE_FRACTION * head.scale();
+        if (head.palette() == Palette.TOWER_THREE_BODY) {
+            this.paintSonarSweep(g2, size);
+        } else {
+            this.paintHeadShape(g2, head.palette(), size);
+        }
         g2.setTransform(save);
+    }
+
+    /**
+     * The sonar head, which unlike every other head is not one solid shape. A radar sweep is
+     * read almost entirely from its fading trail, so this paints the wedge as a few sub-wedges
+     * of decreasing alpha behind a bright leading edge - the cheap approximation of an angular
+     * gradient, which Java2D has no paint for. Keeping it translucent also lets the tower's own
+     * body read through as the scope being swept, rather than being covered by a blob of the
+     * same colour.
+     */
+    private void paintSonarSweep(Graphics2D g2, float size) {
+        Color color = colorFor(Palette.TOWER_THREE_BODY);
+        float radius = size * SONAR_RADIUS_FACTOR;
+        float stepDegrees = SONAR_ARC_DEGREES / SONAR_TRAIL_STEPS;
+
+        for (int step = 0; step < SONAR_TRAIL_STEPS; step++) {
+            int alpha = Math.round(SONAR_TRAIL_ALPHA * (SONAR_TRAIL_STEPS - step) / (float) SONAR_TRAIL_STEPS);
+            g2.setColor(withAlpha(color, alpha));
+            g2.fill(sonarWedge(radius, -(step + 1) * stepDegrees, stepDegrees));
+        }
+
+        Stroke previous = g2.getStroke();
+        g2.setColor(color);
+        g2.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        // the leading edge, lying on the beam's exact heading - the part the eye tracks
+        g2.draw(new Line2D.Float(0, 0, radius, 0));
+        g2.setStroke(previous);
     }
 
     /** Draws a turret head shape centred on the origin - the caller has already translated/rotated {@code g2}. */
@@ -408,17 +441,19 @@ public final class Java2DFrameRenderer {
      * heads still need to reach *past* their own (larger) base's silhouette to actually read as
      * moving: a same-shape-family head entirely contained within the base's footprint turned
      * out to be visually indistinguishable from standing still, since both are the same hue.
-     * TOWER_THREE gets a thin sweep arm through the centre (a "radar hand"); TOWER_FOUR gets a
-     * small star orbiting off-centre (a "moon") - both echo their base's own shape family
-     * (rectangle/star) while clearing the base's edge. TOWER_UPGRADE's head ignores rotation
-     * entirely (it pulses via {@link TurretHeadDraw#scale()} instead) so a plain circle needs
-     * no special orientation.
+     * TOWER_FOUR gets a small star orbiting off-centre (a "moon"), echoing its base's own shape
+     * family while clearing the base's edge. TOWER_UPGRADE's head ignores rotation entirely (it
+     * pulses via {@link TurretHeadDraw#scale()} instead) so a plain circle needs no special
+     * orientation.
+     * <p>
+     * TOWER_THREE is deliberately absent: its head is the sonar scan that decides what the tower
+     * shoots, and it needs more than one shape to read as a sweep, so it has its own
+     * {@link #paintSonarSweep} and reaching this method for it is a bug.
      */
     private static Shape turretHeadShape(Palette palette, float size) {
         return switch (palette) {
             case TOWER_ONE_BODY -> new Rectangle2D.Float(0, -size * 0.22f, size * 1.3f, size * 0.44f);
             case TOWER_TWO_BODY -> new Rectangle2D.Float(0, -size * 0.42f, size * 0.95f, size * 0.84f);
-            case TOWER_THREE_BODY -> new Rectangle2D.Float(-size * 2.4f, -size * 0.16f, size * 4.8f, size * 0.32f);
             case TOWER_FOUR_BODY -> {
                 Shape moon = starShape(5, size * 0.9f, size * 0.9f * 0.45f);
                 yield AffineTransform.getTranslateInstance(size * 2.0, 0).createTransformedShape(moon);
@@ -426,6 +461,30 @@ public final class Java2DFrameRenderer {
             case TOWER_UPGRADE_BODY -> circleShape(size);
             default -> throw new IllegalStateException("Not a tower head palette: " + palette);
         };
+    }
+
+    /** How wide the sonar wedge opens, in degrees. */
+    private static final float SONAR_ARC_DEGREES = 62f;
+
+    /**
+     * The wedge's radius as a multiple of the nominal head size. Not a free choice: with
+     * {@link #TOWER_HEAD_SIZE_FRACTION} at 0.24 of a cell this works out at 0.44 of a cell,
+     * which keeps the wedge just inside the tile's half-width at any board scale.
+     */
+    private static final float SONAR_RADIUS_FACTOR = 1.85f;
+
+    /** How many bands the trail fades through, and how bright the band at the leading edge is. */
+    private static final int SONAR_TRAIL_STEPS = 4;
+    private static final int SONAR_TRAIL_ALPHA = 150;
+
+    /**
+     * One band of the sweep's trail. Angles run counterclockwise in {@link Arc2D}'s y-up
+     * convention, so the trail - which lies clockwise of the beam, the way it has just come -
+     * is at negative angles.
+     */
+    private static Shape sonarWedge(float radius, float fromDegrees, float extentDegrees) {
+        return new Arc2D.Float(-radius, -radius, radius * 2, radius * 2,
+                fromDegrees, extentDegrees, Arc2D.PIE);
     }
 
     private void paintTowerEffect(Graphics2D g2, TowerEffectDraw effect) {
