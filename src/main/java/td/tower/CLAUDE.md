@@ -49,6 +49,13 @@ query returning a fresh `List` snapshot cannot offer index stability.
 **`rangeReal2` is the squared range** and every range check compares squared distances.
 Don't introduce a `Math.sqrt` into a per-tick scan.
 
+**`TowerTwo`'s splash falls off as `1 - (d/radius)²`**, where `d` is measured from the mob
+that was hit, not from the tower. That curve is flat near the centre and steep at the rim —
+half-way out still takes 75% — so it is much more forgiving than a linear falloff would be.
+The same `spreadRadius` bounds the splash query and divides the falloff, which is what keeps
+the result positive for everything the query returns. `spreadRadius` is fixed at construction
+and, unlike damage and range, is deliberately not touched by upgrade buffs.
+
 ## Targeting (`td.tower.targeting`)
 
 Filtering and selection are deliberately separate, composable pieces. A tower composes
