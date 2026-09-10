@@ -104,25 +104,39 @@ class AbstractTowerTest {
     void dealDamageCountsAKillWhenTheHitIsLethal() {
         TowerOne tower = new TowerOne(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+        long healthBefore = enemy.getHealth();
 
         tower.dealDamage(enemy, Damage.of(4000));
 
         assertThat(enemy.isDead()).isTrue();
         assertThat(tower.getKillCount()).isEqualTo(1);
-        assertThat(tower.getDamageDealt()).isEqualTo(4000);
+        // the hit was far bigger than what was left, and only what was left counts
+        assertThat(healthBefore).isLessThan(4000);
+        assertThat(tower.getDamageDealt()).isEqualTo(healthBefore);
     }
 
     @Test
     void dealDamageIntoAnAlreadyDeadEnemyIsNotCountedAgain() {
         TowerOne tower = new TowerOne(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+        long healthBefore = enemy.getHealth();
         tower.dealDamage(enemy, Damage.of(4000));
 
         // simulates a second tower's shot landing on the same tick, after this one already killed it
         tower.dealDamage(enemy, Damage.of(4000));
 
         assertThat(tower.getKillCount()).isEqualTo(1);
-        assertThat(tower.getDamageDealt()).isEqualTo(4000);
+        assertThat(tower.getDamageDealt()).isEqualTo(healthBefore);
+    }
+
+    @Test
+    void aKilledEnemyIsLeftAtZeroHealthRatherThanNegative() {
+        TowerOne tower = new TowerOne(context, 0, 0);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+
+        tower.dealDamage(enemy, Damage.of(4000));
+
+        assertThat(enemy.getHealth()).isZero();
     }
 
     @Test

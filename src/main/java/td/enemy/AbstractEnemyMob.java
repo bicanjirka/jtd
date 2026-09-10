@@ -109,10 +109,10 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * fire into the same mob within one tick, and only the first may count as the kill (see
      * {@code AbstractTower.dealDamage}, which relies on that).
      *
-     * @return the damage that actually landed: {@link #absorb}'s result for a live, valid
-     * target, and {@link Damage#none()} for a mob that is already dead or not currently
-     * targetable. Not capped at the mob's remaining health - a killing blow reports its whole
-     * landed amount, overkill included.
+     * @return the damage that actually landed: {@link #absorb}'s result capped at the health
+     * this mob had left, and {@link Damage#none()} for a mob that is already dead or not
+     * currently targetable. The cap means a killing blow reports only the health it actually
+     * removed, so overkill is not credited to whoever fired it.
      */
     public Damage doDamage(Damage damage) {
         if (this.dead) {
@@ -120,7 +120,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         }
         Damage landed = Damage.none();
         if (this.validTarget()) {
-            landed = this.absorb(damage);
+            landed = Damage.of(Math.min(this.absorb(damage).amount(), this.health));
             this.health -= landed.amount();
         }
         if (this.health <= 0) {

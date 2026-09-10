@@ -41,9 +41,12 @@ position — without that resync the renderer interpolates across the whole boar
 frame and draws a streak.
 
 **`doDamage` returns the damage that actually landed, not what was passed in.** `absorb`
-lets a mob resist part of a hit, and a mob that is not a valid target takes none of it at
-all. Anything reporting damage figures — `AbstractTower.dealDamage` is the only such caller
-today — must use the return value. An override must propagate it (see `EnemyMobTriangle`).
+lets a mob resist part of a hit; a mob that is not a valid target takes none of it at all;
+and the result is capped at the health the mob had left, so a killing blow reports only what
+it actually removed rather than its overkill. That cap is also why a dead mob sits at exactly
+zero health instead of going negative. Anything reporting damage figures —
+`AbstractTower.dealDamage` is the only such caller today — must use the return value. An
+override must propagate it (see `EnemyMobTriangle`).
 
 **Death timing is captured in `doTick`, not lazily at paint time.** `doDamage` sets
 `dead`; the next `doTick` records `deathTick`. The fade therefore advances with the
