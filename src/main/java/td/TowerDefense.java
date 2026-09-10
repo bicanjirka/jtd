@@ -163,7 +163,17 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.boardOverlays.onBackToMenu(this::requestReturnToMenu);
         this.panelTowerSelector.doInit(this.context, this);
 
-        this.jPanel_board.add(this.gameBoard);
+        // Explicitly the same cell the win/lose overlays occupy, so the two stack rather than
+        // sitting side by side. Added with no constraints, the board landed in a RELATIVE cell
+        // of its own and got shoved out of view the moment an overlay claimed cell (0,0) -
+        // which is what made the board go black on a win or a loss.
+        GridBagConstraints boardConstraints = new GridBagConstraints();
+        boardConstraints.gridx = 0;
+        boardConstraints.gridy = 0;
+        boardConstraints.fill = GridBagConstraints.BOTH;
+        boardConstraints.weightx = 0.1;
+        boardConstraints.weighty = 0.1;
+        this.jPanel_board.add(this.gameBoard, boardConstraints);
 
         // CardLayout starts on the menu card; give the frame a size that fits it. The game
         // card gets its own size from recalculateBoard() once a level is actually loaded.
@@ -201,16 +211,20 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      * The UI refresh pulse, reached from the game loop via SwingUtilities.invokeLater and so
      * always running on the EDT. Repaints the board, and refreshes the side panel's live
      * per-tower stats - both at a flat ~60fps regardless of tick speed, rather than once per
-     * tick. Skips the repaint while a previous paint is still in flight, and does nothing at
-     * all once the game has ended.
+     * tick. Skips the repaint while a previous paint is still in flight.
+     * <p>
+     * Deliberately keeps running after the game has ended, unlike {@link #doGameTick}: the
+     * simulation is frozen at that point, but the player can still look around the final
+     * board and click towers to read their stats, and both need the board to keep painting.
      */
     private void requestRender() {
-        if (this.gameStopped) {
-            return;
-        }
         this.gameConsole.getTowerInfo().refreshSelected();
         if (!this.painting) {
-            this.gameBoard.repaint();
+            // The container, not the board component: the win/lose overlay is a sibling
+            // stacked on top of the board, and a JPanel claims its children never overlap.
+            // Repainting the board alone therefore paints over the overlay without painting
+            // the overlay back, and the message disappears on the next frame.
+            this.jPanel_board.repaint();
         }
     }
 
@@ -440,6 +454,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             return;
         }
         this.unSelectTower();
+        // See keyTyped: once the level has ended a board click may still select a tower to
+        // inspect, but must not place one.
+        if (this.gameStopped && this.engine.isPlacingTower()) {
+            this.engine.cancelPlacing();
+            this.panelTowerSelector.stopPlacing();
+        }
         boolean wasPlacing = this.engine.isPlacingTower();
         int boardX = evt.getX() - this.gameBoard.getX();
         int boardY = evt.getY() - this.gameBoard.getY();
@@ -466,6 +486,16 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (!this.levelLoaded) {
             return;
         }
+        if (key == 'm') {
+            this.requestReturnToMenu();
+            return;
+        }
+        // The board stays visible and selectable after a win or a loss, but the level is over:
+        // nothing that would change its outcome - building, selling, sending a wave, changing
+        // speed - still applies. Leaving the menu is the only way on from here.
+        if (this.gameStopped) {
+            return;
+        }
         switch (key) {
             case 'q' -> this.panelTowerSelector.doPlace(0);
             case 'w' -> this.panelTowerSelector.doPlace(1);
@@ -475,7 +505,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             case 'p' -> this.togglePause();
             case 'f' -> this.cycleSpeed();
             case 's' -> this.nextWave();
-            case 'm' -> this.requestReturnToMenu();
             case KeyEvent.VK_ESCAPE -> {
                 if (this.engine.isPlacingTower()) {
                     this.engine.cancelPlacing();

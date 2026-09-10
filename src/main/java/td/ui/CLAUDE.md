@@ -101,5 +101,20 @@ conventions run through them:
 is why `Java2DFrameRenderer`'s background fill is also the only thing clearing the previous
 frame.
 
+`BoardOverlays`' win/lose layers and `GameBoard` are **stacked in the same `GridBagLayout`
+cell**, and two things about that are easy to break:
+
+- Both need the same cell and the same `fill`/`weight`. Give either one different
+  constraints and they stop overlapping — they end up side by side, and whichever gets cell
+  (0,0) pushes the other out of view.
+- `TowerDefense.requestRender` repaints the *container*, not `GameBoard`. A `JPanel` reports
+  that its children never overlap, so repainting the board alone paints over the overlay
+  without painting it back and the message vanishes on the next frame.
+
+The overlay layer is transparent and only its inner plate paints anything, so the final
+board stays readable underneath. Translucency there has to be painted in `paintComponent` —
+an alpha-channel *background colour* on an opaque component does not blend, which is what
+made the original overlay solid black.
+
 **Nothing here may be touched from tick code.** Rendering reaches the EDT via
 `SwingUtilities.invokeLater` — see the root `CLAUDE.md`'s Threading model.
