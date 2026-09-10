@@ -258,8 +258,8 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         jPanel_gameButtons.setBorder(BorderFactory.createEtchedBorder());
         jPanel_gameButtons.setFocusable(false);
         this.jButton_play.setBackground(new Color(0, 0, 0));
-        this.jButton_play.setForeground(new Color(0, 0, 0));
-        this.jButton_play.setText(">");
+        this.jButton_play.setIcon(ControlIcons.play());
+        this.jButton_play.setToolTipText("Play / start the next wave");
         this.jButton_play.setFocusable(false);
         this.jButton_play.addActionListener(this::jButton_playActionPerformed);
 
@@ -273,8 +273,8 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         jPanel_gameButtons.add(this.jButton_play, gridBagConstraints);
 
         this.jButton_pause.setBackground(new Color(0, 0, 0));
-        this.jButton_pause.setForeground(new Color(0, 0, 0));
-        this.jButton_pause.setText("||");
+        this.jButton_pause.setIcon(ControlIcons.pause());
+        this.jButton_pause.setToolTipText("Pause");
         this.jButton_pause.setFocusable(false);
         this.jButton_pause.setVisible(false);
         this.jButton_pause.addActionListener(this::jButton_pauseActionPerformed);
@@ -289,8 +289,8 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         jPanel_gameButtons.add(this.jButton_pause, gridBagConstraints);
 
         this.jButton_fast.setBackground(new Color(0, 0, 0));
-        this.jButton_fast.setForeground(new Color(0, 0, 0));
-        this.jButton_fast.setText(">>");
+        this.jButton_fast.setIcon(ControlIcons.fast());
+        this.jButton_fast.setToolTipText("Fast (single-steps one tick while paused)");
         this.jButton_fast.setFocusable(false);
         this.jButton_fast.addActionListener(this::jButton_fastActionPerformed);
 
@@ -304,8 +304,8 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         jPanel_gameButtons.add(this.jButton_fast, gridBagConstraints);
 
         this.jButton_superFast.setBackground(new Color(0, 0, 0));
-        this.jButton_superFast.setForeground(new Color(0, 0, 0));
-        this.jButton_superFast.setText(">>>");
+        this.jButton_superFast.setIcon(ControlIcons.superFast());
+        this.jButton_superFast.setToolTipText("Super fast");
         this.jButton_superFast.setFocusable(false);
         this.jButton_superFast.addActionListener(this::jButton_superFastActionPerformed);
 
