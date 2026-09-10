@@ -5,6 +5,12 @@ import td.enemy.EnemyRegistry;
 
 import java.util.OptionalInt;
 
+/**
+ * The round-robin scan behind {@code TowerThree}: the first enemy of the given type in range
+ * at an index strictly greater than the one passed in. Scans forward only and does not wrap -
+ * running out is the signal that every enemy in range has been hit once, which is what the
+ * caller turns into a recharge.
+ */
 public final class InRangeAfterIndexQuery implements NextTargetQuery {
 
     private final int x;

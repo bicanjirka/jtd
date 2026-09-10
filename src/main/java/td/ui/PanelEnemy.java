@@ -23,6 +23,14 @@ import java.io.Serial;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * The wave-preview strip: the enemy types in one wave, each with a count, drawn as the real
+ * mobs rather than as separate preview art. It builds them against its own throwaway
+ * {@link GameWorld} - a {@link GameHost#noOp()} host and a one-point path per slot - so a
+ * preview mob is positioned where the strip wants it and can never report a death or a leak
+ * into the real game. Painting reuses {@link Java2DFrameRenderer#paintEnemies}, which is what
+ * keeps a preview and the board in step automatically.
+ */
 public class PanelEnemy extends JPanel {
     @Serial
     private static final long serialVersionUID = 1L;

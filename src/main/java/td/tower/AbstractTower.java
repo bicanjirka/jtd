@@ -8,6 +8,14 @@ import td.util.GameWorld;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Everything every tower shares: board position, price, base and buffed damage/range, the
+ * list of upgrade towers buffing it, and the damage/kill accounting. Subclasses supply only
+ * a targeting strategy and a {@code doTick}.
+ * <p>
+ * {@code rangeReal2} is the squared range, and every range check compares squared distances -
+ * a per-tick scan has no business calling {@code Math.sqrt}.
+ */
 public abstract class AbstractTower implements Tower {
 
     protected GameWorld context;
@@ -39,6 +47,13 @@ public abstract class AbstractTower implements Tower {
         this.upgTowers = new ArrayList<>();
     }
 
+    /**
+     * Binds this tower to a world and converts its cell coordinates {@code (x, y)} into the
+     * pixel centre and pixel range everything else works in. Must be the last thing a leaf
+     * constructor does: anything derived from the board scale has to be set before it, and
+     * anything reading {@code centerX}/{@code centerY} (a proximity scan, a listener
+     * registration) has to run after it.
+     */
     protected void doInit(GameWorld context, int x, int y) {
         this.context = context;
         int scale = this.context.getBoard().scale();
@@ -58,10 +73,17 @@ public abstract class AbstractTower implements Tower {
         return this.rangeReal;
     }
 
+    /** Three quarters of what was paid - selling is always a loss, buffs bought since don't raise it. */
     public int getSellPrice() {
         return (int) Math.round(0.75 * this.price);
     }
 
+    /**
+     * Recomputes damage and range from the current set of upgrade towers, folded through
+     * {@link TowerBuff}'s additive algebra so upgrades of unequal strength stack correctly.
+     * Must be called on every change to that set - {@link #registerTower}/
+     * {@link #unregisterTower} already do.
+     */
     protected void calcDamageRange() {
         TowerBuff buff = this.upgTowers.stream()
                 .map(TowerUpgrade::buff)

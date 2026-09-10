@@ -5,6 +5,11 @@ import td.util.GameWorld;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Maps a wave-script letter to a concrete enemy type and constructs it. {@link Enemy} is the
+ * closed set of spawnable types - its {@code create} switch has no {@code default}, so adding
+ * a constant without wiring up its class is a compile error rather than a silent gap.
+ */
 public class EnemyFactory {
 
     private static final Map<String, Enemy> table = new HashMap<>();
@@ -27,6 +32,7 @@ public class EnemyFactory {
         return table.get(name).create(context, delay, health, price, level);
     }
 
+    /** The spawnable enemy types and their wave-script letters - see the mini-language table in CLAUDE.md. */
     public enum Enemy {
         Circle("c"),
         Square("s"),

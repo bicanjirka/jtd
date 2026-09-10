@@ -3,9 +3,15 @@ package td.enemy;
 import td.damage.Damage;
 import td.util.GameWorld;
 
+/**
+ * Absorbs a fraction of every incoming hit, and absorbs more of it at higher wave levels.
+ * The surviving fraction reaches zero at wave level 16 and goes negative past it, which
+ * {@link Damage}'s zero-clamp turns into "immune" rather than into a healing hit.
+ */
 public final class EnemyMobSquare extends AbstractEnemyMobRotor {
 
     private float bodyScale;
+    // Fraction of an incoming hit that actually lands, shrinking as wave level rises.
     private float K;
 
     public EnemyMobSquare(GameWorld context, int delay, int health, int price, int level) {

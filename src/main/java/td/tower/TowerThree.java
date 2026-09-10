@@ -8,6 +8,13 @@ import td.wave.WaveStartListener;
 
 import java.util.OptionalInt;
 
+/**
+ * "Sunshine tower" - long range, hits everything in range one at a time, then must recharge
+ * before starting over. The round robin walks the enemy roster by <em>index</em> rather than
+ * by reference, which is what makes "everyone gets hit once" well-defined; that is also why
+ * it listens for wave starts, resizing and resetting its per-enemy arrays for the new wave's
+ * roster.
+ */
 public final class TowerThree extends AbstractTower implements WaveStartListener {
 
     public static final int price = 20;

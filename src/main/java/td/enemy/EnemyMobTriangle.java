@@ -3,6 +3,11 @@ package td.enemy;
 import td.damage.Damage;
 import td.util.GameWorld;
 
+/**
+ * Accelerates as it is damaged, from {@code speedBase} at full health up to a level-scaled
+ * {@code speedMax} as it nears death - so chipping at one without finishing it is worse than
+ * leaving it alone. Also the one mob that spins the opposite way to {@code EnemyMobSquare}.
+ */
 public final class EnemyMobTriangle extends AbstractEnemyMobRotor {
 
     private float bodyScale;

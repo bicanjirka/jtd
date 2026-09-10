@@ -6,6 +6,12 @@ import td.util.GameWorld;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * "Power tower" - passive. Never attacks; instead it contributes a {@link TowerBuff} to every
+ * non-upgrade tower whose centre falls within its range, and several stack additively. It
+ * listens for towers being built and removed so a tower placed after it still picks the buff
+ * up, and it unregisters its clients in {@link #doCleanup()} so selling it takes the buff away.
+ */
 public final class TowerUpgrade extends AbstractTower implements TowerListener {
 
     public static final int price = 20;

@@ -43,6 +43,25 @@ import java.io.Serial;
 import java.util.Properties;
 
 // Inspired by HexTD
+/**
+ * The application window, and the wiring between the headless {@link GameEngine} and Swing.
+ * It owns the {@link GameLoop}, translates mouse and key events into engine calls, and is
+ * itself the {@link GameHost} the engine calls back through - so this is the only class that
+ * sits on both sides of the headless/Swing boundary described in CLAUDE.md.
+ * <p>
+ * The content pane is a {@link CardLayout} with two cards: the level-select menu and the
+ * game. Nothing ticks and no board exists until a level is chosen, and
+ * {@link #startSelectedLevel} is re-enterable - returning to the menu and picking another
+ * level runs it again on the same engine and the same loop, both of which are documented as
+ * safe to restart.
+ * <p>
+ * Two of the callbacks implemented here ({@link #enemyDied}, {@link #economyChanged}) are
+ * reached from the {@code game-loop} thread, not the EDT. Swing mutations in those must be
+ * deferred through {@code SwingUtilities.invokeLater}; see CLAUDE.md's Threading model.
+ * <p>
+ * This class is a shrinking legacy shell: new gameplay rules belong in {@code GameEngine} or
+ * the domain packages, where they can be tested without a display.
+ */
 public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     private static final Logger LOG = LoggerFactory.getLogger(TowerDefense.class);
@@ -67,17 +86,18 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private final PanelGameConsole gameConsole = new PanelGameConsole(NAME + " v" + VERSION);
     private final BoardOverlays boardOverlays = new BoardOverlays();
     private final String statusMessage = """
-            Welcome to TowerDefence
+            Welcome to Tower Defense
             Shortcuts:
 
             q - build triangle
             w - build circle
-            e - build spiral
-            r - build star
-            t - build jing-jang
+            e - build sunshine
+            r - build stardust
+            t - build power
+            esc - cancel placing
             p - pause
             f - cycle speed
-            s - star wave
+            s - start wave
             m - back to menu""";
 
     private final GameLoop gameLoop = new GameLoop(this::doGameTick, this::requestRender);

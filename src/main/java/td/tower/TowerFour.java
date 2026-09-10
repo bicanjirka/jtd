@@ -9,6 +9,12 @@ import td.util.GameWorld;
 
 import java.util.List;
 
+/**
+ * "Stardust tower" - short range, no cooldown, damages everything in range every tick,
+ * ghosts included. It only fires when at least one non-ghost is in range, so its visible
+ * pulse never gives away a ghost that is alone in range - but once something else triggers
+ * it, that ghost takes the damage too.
+ */
 public final class TowerFour extends AbstractTower {
 
     public static final int price = 25;

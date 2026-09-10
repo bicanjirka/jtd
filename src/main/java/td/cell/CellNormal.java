@@ -2,6 +2,10 @@ package td.cell;
 
 import td.tower.Tower;
 
+/**
+ * The only {@link Cell} implementation. Position is fixed at construction; everything else is
+ * mutable board state.
+ */
 public class CellNormal implements Cell {
 
     private highlightType highlight = highlightType.none;
@@ -34,6 +38,7 @@ public class CellNormal implements Cell {
         return this.tower;
     }
 
+    /** Silently does nothing on an unbuildable cell - placement is gated before it gets here. */
     public void setTower(Tower tower) {
         if (this.buildable) {
             this.tower = tower;
@@ -69,6 +74,10 @@ public class CellNormal implements Cell {
         return this.y;
     }
 
+    /**
+     * Sets buildability directly, bypassing the tower check - used at level load to mark the
+     * cells the path covers, and again when a sold tower frees its cell.
+     */
     public void enable(boolean b) {
         this.buildable = b;
     }

@@ -2,6 +2,11 @@ package td.enemy;
 
 import td.util.GameWorld;
 
+/**
+ * Invisible to every single-target tower ({@link EnemyMob.type#Invisible}), so only area
+ * damage reaches it. Paid for with a fifth of the wave's health - note that divisor is flat
+ * rather than level-scaled the way its body size is; see {@code TODO.md}.
+ */
 public final class EnemyMobGhost extends AbstractEnemyMob {
 
     private float bodyScale;

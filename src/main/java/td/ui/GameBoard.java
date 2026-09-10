@@ -9,6 +9,12 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.io.Serial;
 
+/**
+ * The board component. {@link #paint} overrides Swing's painting wholesale - it does not call
+ * {@code super.paint()} - and hands the {@code Graphics2D} straight to
+ * {@link td.TowerDefense#paintBoard}, which is why the frame renderer's background fill is
+ * also what clears the previous frame.
+ */
 public class GameBoard extends JPanel {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -26,6 +32,10 @@ public class GameBoard extends JPanel {
         this.game.paintBoard((Graphics2D) g);
     }
 
+    /**
+     * Resizes the board (and the window around it) for a level of {@code width} x
+     * {@code height} cells. Called on every level load, since levels differ in board size.
+     */
     public void recalculateBoard(int width, int height) {
         int scale = this.context.getBoard().scale();
         int realW = width * scale;

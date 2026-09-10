@@ -23,6 +23,12 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.Serial;
 
+/**
+ * The text pane under the tower toolbar, showing either the selected tower's live status and
+ * a sell button, or - via {@link #setExternalText} - whatever the engine last pushed through
+ * {@code GameHost.setInfoText} (a hovered tower's pre-purchase stats, a rejected placement).
+ * The two are mutually exclusive: selecting a tower replaces external text and vice versa.
+ */
 public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(PanelTowerInfo.class);
