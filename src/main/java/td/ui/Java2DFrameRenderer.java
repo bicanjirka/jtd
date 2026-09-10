@@ -29,6 +29,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.List;
 
@@ -241,25 +242,33 @@ public final class Java2DFrameRenderer {
     /** How much of a cell a tower body fills - leaves a small margin, same spirit as enemy bodies. */
     private static final float TOWER_BODY_SIZE_FRACTION = 0.42f;
 
-    /** A representative static pose for a toolbar icon's head - pointing up on screen. */
-    private static final double ICON_HEAD_HEADING_RADIANS = -Math.PI / 2;
+    /** A toolbar icon has no board around it, so the body can fill more of the tile than on the board. */
+    private static final float ICON_BODY_SIZE_FRACTION = 0.40f;
 
     /**
-     * Rasterizes one tower's base+head into a standalone icon - used for the toolbar's
+     * Rasterizes one tower's body into a standalone icon - used for the toolbar's
      * {@code JToggleButton} icons, which need a Swing {@code Icon} rather than a live paint.
-     * The board and the toolbar share the same {@link #paintTowerBody}/head-shape calls at two
-     * different sizes, so a tower never needs separate board/icon art. The head is drawn at a
-     * fixed representative heading and neutral (non-pulsing) scale, since a static icon has no
-     * target to aim at and no animation clock.
+     * It goes through the same {@link #paintTowerBody} call the board does, so a tower's icon
+     * cannot drift from the symbol it shows once placed.
+     * <p>
+     * The turret head is deliberately left off. On the board it carries information - where an
+     * aiming tower is pointing - but an icon has no target and no animation clock, so all it
+     * contributes there is clutter over what should read as one flat symbol.
+     * <p>
+     * The symbol is drawn on a dark tile rather than straight onto the button, because these
+     * are the same bright colours the board uses and the upgrade tower's is white - invisible
+     * on the platform look-and-feel's light button face. Carrying a scrap of board background
+     * with the icon keeps every tower legible without fighting the look-and-feel for control
+     * of the button itself, which would also cost the toggled and disabled states.
      */
     public BufferedImage renderTowerIcon(Palette palette, int size) {
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = image.createGraphics();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(BOARD_BACKGROUND);
+        g2.fill(new RoundRectangle2D.Float(0, 0, size, size, size * 0.25f, size * 0.25f));
         g2.translate(size / 2.0, size / 2.0);
-        this.paintTowerBody(g2, palette, size * TOWER_BODY_SIZE_FRACTION);
-        g2.rotate(ICON_HEAD_HEADING_RADIANS);
-        this.paintHeadShape(g2, palette, size * TOWER_HEAD_SIZE_FRACTION);
+        this.paintTowerBody(g2, palette, size * ICON_BODY_SIZE_FRACTION);
         g2.dispose();
         return image;
     }
@@ -278,15 +287,10 @@ public final class Java2DFrameRenderer {
 
     /**
      * Draws a tower's body centred on the origin - the caller has already translated {@code g2}
-     * to the tower's centre, matching {@link #paintEnemyBody}'s contract. {@code TOWER_UPGRADE_BODY}
-     * is genuinely two-tone (it buffs neighbouring towers rather than attacking) so it paints
-     * itself rather than going through the shared single-{@link Shape} outline+fill path.
+     * to the tower's centre, matching {@link #paintEnemyBody}'s contract. Every tower, the
+     * passive upgrade one included, is a single {@link Shape} painted the same way.
      */
     private void paintTowerBody(Graphics2D g2, Palette palette, float size) {
-        if (palette == Palette.TOWER_UPGRADE_BODY) {
-            this.paintUpgradeBody(g2, size);
-            return;
-        }
         Shape shape = towerBodyShape(palette, size);
         Color color = colorFor(palette);
         g2.setColor(withAlpha(color, 130));
@@ -295,42 +299,66 @@ public final class Java2DFrameRenderer {
         g2.draw(shape);
     }
 
+    /**
+     * One flat symbol per tower, each naming what the tower does rather than decorating it:
+     * a triangle, a circle, a spiral, a star and a pulsar. Every one is a single closed
+     * {@link Shape} so they all go through the same fill-then-outline paint, at any size.
+     */
     private static Shape towerBodyShape(Palette palette, float size) {
         return switch (palette) {
-            case TOWER_ONE_BODY -> diamondShape(size);
-            case TOWER_TWO_BODY -> ringShape(size);
-            case TOWER_THREE_BODY -> pinwheelShape(3, size);
+            case TOWER_ONE_BODY -> triangleShape(size, true);
+            case TOWER_TWO_BODY -> ringShape(size, 0.55f);
+            case TOWER_THREE_BODY -> spiralShape(size);
             case TOWER_FOUR_BODY -> starShape(5, size, size * 0.45f);
-            default -> throw new IllegalStateException("Not an attacking tower body palette: " + palette);
+            case TOWER_UPGRADE_BODY -> pulsarShape(size);
+            default -> throw new IllegalStateException("Not a tower body palette: " + palette);
         };
     }
 
-    private static Shape diamondShape(float size) {
-        GeneralPath p = new GeneralPath();
-        p.moveTo(0, -size);
-        p.lineTo(size * 0.55f, 0);
-        p.lineTo(0, size);
-        p.lineTo(-size * 0.55f, 0);
-        p.closePath();
-        return p;
-    }
-
-    private static Shape ringShape(float size) {
+    /** An annulus - {@code innerFraction} of {@code size} is cut out of the middle. */
+    private static Shape ringShape(float size, float innerFraction) {
         Area ring = new Area(circleShape(size));
-        float inner = size * 0.55f;
-        ring.subtract(new Area(circleShape(inner)));
+        ring.subtract(new Area(circleShape(size * innerFraction)));
         return ring;
     }
 
-    /** A rotationally-symmetric blade pinwheel - {@code blades} lets a future tower reuse this at a different count. */
-    private static Shape pinwheelShape(int blades, float size) {
-        Area pin = new Area();
-        Shape blade = new Ellipse2D.Float(0, -size * 0.18f, size, size * 0.36f);
-        for (int i = 0; i < blades; i++) {
-            AffineTransform rotate = AffineTransform.getRotateInstance(2 * Math.PI * i / blades);
-            pin.add(new Area(rotate.createTransformedShape(blade)));
+    /**
+     * An Archimedean spiral, stroked into a closed ribbon so it can be filled like every other
+     * body shape - an open path would fill as a blob rather than as a line.
+     */
+    private static Shape spiralShape(float size) {
+        int turns = 2;
+        int steps = 64 * turns;
+        // Thin relative to the gap between consecutive turns (which is maxRadius/turns): at a
+        // toolbar icon's size a thicker ribbon closes those gaps and the spiral reads as a disc.
+        float strokeWidth = size * 0.16f;
+        // Stop short of `size` so the stroke's own width stays inside the tower's footprint.
+        float maxRadius = size - strokeWidth / 2;
+        GeneralPath p = new GeneralPath();
+        for (int i = 0; i <= steps; i++) {
+            double t = (double) i / steps;
+            double angle = t * turns * 2 * Math.PI;
+            double radius = maxRadius * t;
+            float x = (float) (Math.cos(angle) * radius);
+            float y = (float) (Math.sin(angle) * radius);
+            if (i == 0) {
+                p.moveTo(x, y);
+            } else {
+                p.lineTo(x, y);
+            }
         }
-        return pin;
+        Shape ribbon = new BasicStroke(strokeWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND).createStrokedShape(p);
+        // Area, not the stroked outline directly: filling that outline under the default
+        // non-zero winding rule floods the region the spiral encloses and the symbol comes out
+        // as a plain disc. Area resolves it to the ribbon actually swept.
+        return new Area(ribbon);
+    }
+
+    /** A bright core inside a detached ring - the passive buff tower's "pulsar". */
+    private static Shape pulsarShape(float size) {
+        Area pulsar = new Area(ringShape(size, 0.72f));
+        pulsar.add(new Area(circleShape(size * 0.36f)));
+        return pulsar;
     }
 
     /** A classic N-pointed star polygon - {@code points}/radii let a future tower reuse this at a different count. */
@@ -398,18 +426,6 @@ public final class Java2DFrameRenderer {
             case TOWER_UPGRADE_BODY -> circleShape(size);
             default -> throw new IllegalStateException("Not a tower head palette: " + palette);
         };
-    }
-
-    private void paintUpgradeBody(Graphics2D g2, float size) {
-        Color base = colorFor(Palette.TOWER_UPGRADE_BODY);
-        Shape circle = circleShape(size);
-        g2.setColor(withAlpha(base, 130));
-        g2.fill(circle);
-        g2.setColor(base);
-        g2.draw(circle);
-        float dot = size * 0.34f;
-        g2.setColor(Color.DARK_GRAY);
-        g2.fill(new Ellipse2D.Float(-dot * 0.4f, -size * 0.4f, dot * 2, dot * 2));
     }
 
     private void paintTowerEffect(Graphics2D g2, TowerEffectDraw effect) {
