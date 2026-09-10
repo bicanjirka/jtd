@@ -307,7 +307,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (enemiesLeft == 0 && this.engine.getCurrentWaveIndex() < this.engine.getWaveCount()) {
             LOG.info("Wave {} cleared, ready for the next one", this.engine.getCurrentWaveIndex());
             this.engine.setWaveReady(true);
-            SwingUtilities.invokeLater(() -> this.gameConsole.setPlaying(false));
+            SwingUtilities.invokeLater(this::syncTransportButtons);
         } else if (enemiesLeft == 0) {
             this.gameWon();
         }
@@ -328,6 +328,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (this.engine.nextWave()) {
             this.setWavePreview();
             this.updateInfo();
+            this.syncTransportButtons();
         }
     }
 
@@ -367,6 +368,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             SwingUtilities.invokeLater(() -> {
                 this.setWavePreview();
                 this.updateInfo();
+                this.syncTransportButtons();
             });
         }
         this.gameConsole.getWaveInfo().doTick(time);
@@ -380,7 +382,19 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private void setSpeed(TickSpeed speed) {
         this.currentSpeed = speed;
         this.gameLoop.setSpeed(speed);
-        this.gameConsole.setPlaying(speed != TickSpeed.PAUSED);
+        this.syncTransportButtons();
+    }
+
+    /**
+     * Shows play whenever pressing it would do something the player is waiting for - the game
+     * is paused, or a wave is sitting ready to be sent - and pause only while a wave is
+     * actually running. Speed alone is not enough to decide this: between waves the loop is
+     * still ticking at normal speed with nothing on the board, and offering "pause" there is
+     * what made starting the first wave take two clicks.
+     */
+    private void syncTransportButtons() {
+        boolean waveRunning = this.currentSpeed != TickSpeed.PAUSED && !this.engine.isWaveReady();
+        this.gameConsole.setPlaying(waveRunning);
     }
 
     private void togglePause() {
@@ -548,10 +562,17 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         contentCardLayout.show(getContentPane(), CARD_MENU);
     }
 
+    /**
+     * Resumes, and sends the next wave if one is ready - the same thing the 's' shortcut does.
+     * Deliberately not conditioned on having been paused first: at level start, and again after
+     * each wave is cleared, the loop is already running at normal speed and the only thing the
+     * player is waiting to do is send the next wave.
+     */
     private void playPressed() {
-        boolean wasPaused = this.currentSpeed == TickSpeed.PAUSED;
         this.setSpeed(TickSpeed.NORMAL);
-        if (this.engine.isWaveReady() && wasPaused) this.engine.requestNextWave();
+        if (this.engine.isWaveReady()) {
+            this.engine.requestNextWave();
+        }
     }
 
     private void pausePressed() {
