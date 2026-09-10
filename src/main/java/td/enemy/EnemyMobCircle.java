@@ -11,14 +11,14 @@ public final class EnemyMobCircle extends AbstractEnemyMob {
 
     private float bodyScale;
 
-    public EnemyMobCircle(GameWorld context, int delay, int health, int price, int level) {
+    public EnemyMobCircle(GameWorld gameWorld, int delay, int health, int price, int level) {
         super();
-        this.doInit(context, delay, health, price, level);
+        this.doInit(gameWorld, delay, health, price, level);
     }
 
-    protected void doInit(GameWorld context, int delay, int health, int price, int level) {
-        super.doInit(context, delay, health, price, level);
-        this.bodyScale = this.context.getBoard().scale() / 6f;
+    protected void doInit(GameWorld gameWorld, int delay, int health, int price, int level) {
+        super.doInit(gameWorld, delay, health, price, level);
+        this.bodyScale = this.gameWorld.getBoard().scale() / 6f;
     }
 
     public float getBodyScale() {

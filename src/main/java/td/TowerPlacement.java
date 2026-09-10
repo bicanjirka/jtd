@@ -20,7 +20,7 @@ public class TowerPlacement {
 
     private static final Logger LOG = LoggerFactory.getLogger(TowerPlacement.class);
 
-    private final GameWorld context;
+    private final GameWorld gameWorld;
     private final Supplier<Cell[][]> cellGrid;
 
     private boolean placingTower = false;
@@ -28,8 +28,8 @@ public class TowerPlacement {
     private float placingTowerRange = 0;
     private int[] highlitedCell;
 
-    public TowerPlacement(GameWorld context, Supplier<Cell[][]> cellGrid) {
-        this.context = context;
+    public TowerPlacement(GameWorld gameWorld, Supplier<Cell[][]> cellGrid) {
+        this.gameWorld = gameWorld;
         this.cellGrid = cellGrid;
     }
 
@@ -74,7 +74,7 @@ public class TowerPlacement {
 
     public void highlightCell(int boardX, int boardY) {
         this.unHighlightCell();
-        BoardGeometry board = this.context.getBoard();
+        BoardGeometry board = this.gameWorld.getBoard();
         if (board.containsPixel(boardX, boardY)) {
             int[] tempInt = new int[2];
             tempInt[0] = board.cellX(boardX);
@@ -91,7 +91,7 @@ public class TowerPlacement {
      */
     public Tower mouseClicked(int boardX, int boardY) {
         Tower selected = null;
-        BoardGeometry board = this.context.getBoard();
+        BoardGeometry board = this.gameWorld.getBoard();
         if (board.containsPixel(boardX, boardY)) {
             Cell cell = this.cellGrid.get()[board.cellX(boardX)][board.cellY(boardY)];
             if (cell.hasTower()) {
@@ -105,15 +105,15 @@ public class TowerPlacement {
                 if (cell.buildable()) {
                     int cellX = board.cellX(boardX);
                     int cellY = board.cellY(boardY);
-                    if (this.context.doPay(this.placingTowerType.price)) {
-                        Tower tempTower = TowerFactory.createTower(this.placingTowerType, this.context, cellX, cellY);
-                        this.context.addTower(tempTower);
+                    if (this.gameWorld.doPay(this.placingTowerType.price)) {
+                        Tower tempTower = TowerFactory.createTower(this.placingTowerType, this.gameWorld, cellX, cellY);
+                        this.gameWorld.addTower(tempTower);
                         cell.setTower(tempTower);
                         cell.enable(false);
-                        LOG.info("Tower placed: {} at ({},{}), credits left={}", this.placingTowerType, cellX, cellY, this.context.getCredits());
+                        LOG.info("Tower placed: {} at ({},{}), credits left={}", this.placingTowerType, cellX, cellY, this.gameWorld.getCredits());
                     } else {
                         LOG.info("Tower placement rejected: not enough credits for {} (need {}, have {})",
-                                this.placingTowerType, this.placingTowerType.price, this.context.getCredits());
+                                this.placingTowerType, this.placingTowerType.price, this.gameWorld.getCredits());
                     }
                     this.placingTower = false;
                 } else {

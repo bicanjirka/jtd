@@ -11,15 +11,15 @@ public final class EnemyMobGhost extends AbstractEnemyMob {
 
     private float bodyScale;
 
-    public EnemyMobGhost(GameWorld context, int delay, int health, int price, int level) {
+    public EnemyMobGhost(GameWorld gameWorld, int delay, int health, int price, int level) {
         super();
         this.type = EnemyMob.type.Invisible;
-        this.doInit(context, delay, health, price, level);
+        this.doInit(gameWorld, delay, health, price, level);
     }
 
-    protected void doInit(GameWorld context, int delay, int health, int price, int level) {
-        super.doInit(context, delay, (health / 5), price, level);
-        this.bodyScale = (float) this.context.getBoard().scale() / ((this.level < 6) ? (7 - level) : (2));
+    protected void doInit(GameWorld gameWorld, int delay, int health, int price, int level) {
+        super.doInit(gameWorld, delay, (health / 5), price, level);
+        this.bodyScale = (float) this.gameWorld.getBoard().scale() / ((this.level < 6) ? (7 - level) : (2));
     }
 
     public float getBodyScale() {

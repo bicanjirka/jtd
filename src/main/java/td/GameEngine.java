@@ -37,7 +37,7 @@ public class GameEngine {
 
     private static final Logger LOG = LoggerFactory.getLogger(GameEngine.class);
 
-    private final GameWorld context;
+    private final GameWorld gameWorld;
     private final TowerPlacement placement;
 
     private Cell[][] cellGrid;
@@ -47,16 +47,16 @@ public class GameEngine {
     private boolean startWave = false;
 
     public GameEngine(GameHost host) {
-        this.context = new GameWorld(host);
-        this.placement = new TowerPlacement(this.context, () -> this.cellGrid);
+        this.gameWorld = new GameWorld(host);
+        this.placement = new TowerPlacement(this.gameWorld, () -> this.cellGrid);
     }
 
     public GameWorld getGameWorld() {
-        return this.context;
+        return this.gameWorld;
     }
 
     public List<Tower> getTowers() {
-        return this.context.getTowers();
+        return this.gameWorld.getTowers();
     }
 
     public Cell[][] getCellGrid() {
@@ -99,26 +99,26 @@ public class GameEngine {
         unloadCurrentLevel();
         int width = level.width();
         int height = level.height();
-        int scale = this.context.getBoard().scale();
+        int scale = this.gameWorld.getBoard().scale();
         this.cellGrid = new Cell[width][height];
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 this.cellGrid[i][j] = new CellNormal(i * scale, j * scale);
             }
         }
-        this.context.setBoard(BoardGeometry.of(scale, width, height));
+        this.gameWorld.setBoard(BoardGeometry.of(scale, width, height));
 
         this.waves = new ArrayList<>();
         Path path = PathBuilder.build(level.path(), level.smoothing(), scale);
-        this.context.setPath(path);
+        this.gameWorld.setPath(path);
         markUnbuildableCells(path, scale);
         this.wave = 0;
 
         for (WaveDefinition wd : level.waves()) {
-            this.waves.add(new Wave(this.context, wd.hp(), wd.price(), wd.level(), WaveScript.parse(wd.enemies())));
+            this.waves.add(new Wave(this.gameWorld, wd.hp(), wd.price(), wd.level(), WaveScript.parse(wd.enemies())));
         }
 
-        this.context.startEconomy(level.startingCredits(), level.startingLives());
+        this.gameWorld.startEconomy(level.startingCredits(), level.startingLives());
         LOG.info("Level loaded: {} ({}x{} board, {} waves, {} starting credits, {} starting lives)",
                 level.name(), width, height, this.waves.size(), level.startingCredits(), level.startingLives());
     }
@@ -133,8 +133,8 @@ public class GameEngine {
      */
     private void unloadCurrentLevel() {
         this.placement.reset();
-        this.context.clearTowers();
-        this.context.clearEnemies();
+        this.gameWorld.clearTowers();
+        this.gameWorld.clearEnemies();
         this.startWave = false;
         this.waveReady = true;
     }
@@ -174,8 +174,8 @@ public class GameEngine {
             this.startWave = false;
             this.waveReady = false;
             Wave tempWave = this.waves.get(this.wave);
-            this.context.setEnemies(tempWave.getEnemies());
-            this.context.startWave(tempWave);
+            this.gameWorld.setEnemies(tempWave.getEnemies());
+            this.gameWorld.startWave(tempWave);
             this.wave++;
             LOG.info("Wave {}/{} started, {} enemies", this.wave, this.waves.size(), tempWave.enemyCount());
             return true;
@@ -192,10 +192,10 @@ public class GameEngine {
         if (this.startWave) {
             waveStarted = this.nextWave();
         }
-        for (EnemyMob enemy : this.context.getEnemies()) {
+        for (EnemyMob enemy : this.gameWorld.getEnemies()) {
             enemy.doTick(time);
         }
-        for (Tower tower : this.context.getTowers()) {
+        for (Tower tower : this.gameWorld.getTowers()) {
             tower.doTick(time);
         }
         return waveStarted;

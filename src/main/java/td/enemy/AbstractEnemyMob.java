@@ -41,7 +41,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     protected final float speedBase = 1.28f;
     protected int health;
     protected int healthMax;
-    protected GameWorld context;
+    protected GameWorld gameWorld;
     private int delay;
     private int deathTick = -1;
     private ArcLengthPath arcLengthPath;
@@ -61,19 +61,19 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * is the mob's slot index within its wave, converted here into a tick countdown before it
      * becomes active and targetable.
      */
-    protected void doInit(GameWorld context, int delay, int health, int price, int level) {
-        this.context = context;
+    protected void doInit(GameWorld gameWorld, int delay, int health, int price, int level) {
+        this.gameWorld = gameWorld;
         this.price = price;
         this.level = level;
         this.health = health * 100;
         this.healthMax = health * 100;
-        Optional<ArcLengthPath> arcLength = ArcLengthPath.of(this.context.getPath());
+        Optional<ArcLengthPath> arcLength = ArcLengthPath.of(this.gameWorld.getPath());
         this.arcLengthPath = arcLength.orElse(null);
         // A degenerate path (fewer than two points - e.g. an empty placeholder GameWorld has
         // before any level loads) has nothing to measure distance along - hold at its one
         // available point (or the origin, if it has none at all) rather than move at all.
-        List<Vec2> pathPoints = this.context.getPath().points();
-        this.stationaryPosition = pathPoints.isEmpty() ? new Vec2(0, 0) : pathPoints.get(0);
+        List<Vec2> pathPoints = this.gameWorld.getPath().points();
+        this.stationaryPosition = pathPoints.isEmpty() ? new Vec2(0, 0) : pathPoints.getFirst();
         this.distanceIntoLap = 0;
         this.x = 0;
         this.y = 0;
@@ -126,8 +126,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         if (this.health <= 0) {
             this.validTarget = false;
             this.dead = true;
-            this.context.apply(EconomyDelta.kill(this.price));
-            this.context.removeEnemy();
+            this.gameWorld.apply(EconomyDelta.kill(this.price));
+            this.gameWorld.removeEnemy();
         }
         return landed;
     }
@@ -275,11 +275,11 @@ public abstract class AbstractEnemyMob implements EnemyMob {
                 if (this.distanceIntoLap >= totalLength) {
                     this.distanceIntoLap -= totalLength;
                     wrappedToPathStart = true;
-                    this.context.apply(EconomyDelta.leak(this.price == 0 ? 10 : this.price));
+                    this.gameWorld.apply(EconomyDelta.leak(this.price == 0 ? 10 : this.price));
                 }
             }
             this.updatePosition();
-            this.validTarget = this.x >= 0 && this.x <= this.context.getBoard().maxX() && this.y >= 0 && this.y <= this.context.getBoard().maxY();
+            this.validTarget = this.x >= 0 && this.x <= this.gameWorld.getBoard().maxX() && this.y >= 0 && this.y <= this.gameWorld.getBoard().maxY();
             if (wrappedToPathStart) {
                 // Reappearing at the path's start is a genuine teleport, not motion along
                 // it - interpolating from the old (near path-end) position would draw a

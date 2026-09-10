@@ -12,15 +12,15 @@ public final class EnemyMobTriangle extends AbstractEnemyMobRotor {
 
     private float bodyScale;
 
-    public EnemyMobTriangle(GameWorld context, int delay, int health, int price, int level) {
+    public EnemyMobTriangle(GameWorld gameWorld, int delay, int health, int price, int level) {
         super();
         this.rotPerTime = (float) Math.toRadians(-5.0);
-        this.doInit(context, delay, health, price, level);
+        this.doInit(gameWorld, delay, health, price, level);
     }
 
-    protected void doInit(GameWorld context, int delay, int health, int price, int level) {
-        super.doInit(context, delay, health, price, level);
-        this.bodyScale = (float) this.context.getBoard().scale() / ((this.level < 6) ? (7 - level) : (2));
+    protected void doInit(GameWorld gameWorld, int delay, int health, int price, int level) {
+        super.doInit(gameWorld, delay, health, price, level);
+        this.bodyScale = (float) this.gameWorld.getBoard().scale() / ((this.level < 6) ? (7 - level) : (2));
         this.speedMax = (float) (this.speedBase * (1.4 + 0.1 * this.level));
     }
 

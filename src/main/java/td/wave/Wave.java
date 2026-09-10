@@ -22,19 +22,19 @@ public class Wave {
     private final WaveContent content;
     private final List<EnemyMob> enemies;
 
-    public Wave(GameWorld context, int baseHealth, int basePrice, int level, WaveContent content) {
+    public Wave(GameWorld gameWorld, int baseHealth, int basePrice, int level, WaveContent content) {
         this.baseHealth = baseHealth;
         this.basePrice = basePrice;
         this.level = level;
         this.content = content;
-        this.enemies = spawnEnemies(context, content, baseHealth, basePrice, level);
+        this.enemies = spawnEnemies(gameWorld, content, baseHealth, basePrice, level);
     }
 
-    private static List<EnemyMob> spawnEnemies(GameWorld context, WaveContent content, int baseHealth, int basePrice, int level) {
+    private static List<EnemyMob> spawnEnemies(GameWorld gameWorld, WaveContent content, int baseHealth, int basePrice, int level) {
         List<EnemyMob> enemies = new ArrayList<>();
         int delay = 0;
         for (EnemyFactory.Enemy enemy : content.spawnSequence()) {
-            enemies.add(enemy.create(context, delay, baseHealth, basePrice, level));
+            enemies.add(enemy.create(gameWorld, delay, baseHealth, basePrice, level));
             delay++;
         }
         return List.copyOf(enemies);

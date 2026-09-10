@@ -14,14 +14,14 @@ public final class EnemyMobSquare extends AbstractEnemyMobRotor {
     // Fraction of an incoming hit that actually lands, shrinking as wave level rises.
     private float K;
 
-    public EnemyMobSquare(GameWorld context, int delay, int health, int price, int level) {
+    public EnemyMobSquare(GameWorld gameWorld, int delay, int health, int price, int level) {
         super();
-        this.doInit(context, delay, health, price, level);
+        this.doInit(gameWorld, delay, health, price, level);
     }
 
-    protected void doInit(GameWorld context, int delay, int health, int price, int level) {
-        super.doInit(context, delay, health, price, level);
-        this.bodyScale = (float) this.context.getBoard().scale() / ((this.level < 6) ? (7 - level) : (2));
+    protected void doInit(GameWorld gameWorld, int delay, int health, int price, int level) {
+        super.doInit(gameWorld, delay, health, price, level);
+        this.bodyScale = (float) this.gameWorld.getBoard().scale() / ((this.level < 6) ? (7 - level) : (2));
         K = 0.8f - this.level * 0.05f;
     }
 

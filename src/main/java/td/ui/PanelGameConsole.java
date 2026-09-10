@@ -121,12 +121,10 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         JLabel jLabel_scoreText = new JLabel();
         JLabel jLabel_creditsText = new JLabel();
         JPanel jPanel_gameButtons = new JPanel();
-        // Glyphs rather than drawn icons: one character each, so they scale with the font and
-        // look the same everywhere, and there is no artwork to keep in step with anything.
-        this.jButton_play = glyphButton("►");        // BLACK RIGHT-POINTING POINTER
-        this.jButton_pause = glyphButton("▮▮"); // two BLACK VERTICAL RECTANGLEs
-        this.jButton_fast = glyphButton("►►");
-        this.jButton_superFast = glyphButton("►►►");
+        this.jButton_play = glyphButton("▶");
+        this.jButton_pause = glyphButton("❚❚");
+        this.jButton_fast = glyphButton("▶▶");
+        this.jButton_superFast = glyphButton("▶▶▶");
         this.jLabel_wave = new JLabel();
         this.jLabel_lives = new JLabel();
         this.jLabel_score = new JLabel();
