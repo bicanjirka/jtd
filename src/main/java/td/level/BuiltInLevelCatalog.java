@@ -2,6 +2,7 @@ package td.level;
 
 import td.wave.Point;
 import td.wave.WaveDefinition;
+import td.wave.smoothing.ArcCornerSmoothing;
 import td.wave.smoothing.QuadraticBezierSmoothing;
 
 import java.util.List;
@@ -63,7 +64,7 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     new WaveDefinition("2 g 2 t 2 s 2 c", 1800, 5, 3),
                     new WaveDefinition("10 c e 5 s e 3 t e g", 2600, 4, 4)),
             75, 3,
-            new QuadraticBezierSmoothing(0.3, 8));
+            new ArcCornerSmoothing(0.3, 8));
 
     // cornerPull is maxed out at 0.5 (the largest AbstractCornerSmoothing allows) and the three
     // interior corners each sit between two long (11-15 cell) legs, so each one pulls back

@@ -35,9 +35,9 @@ final class PathMarkerFrameBuilder {
     private static final float MOVING_CELLS_PER_SECOND = 0.4f;
 
     private static final MarkerStyle STATIC =
-            MarkerStyle.of(PathMarkerShape.DOT, Palette.PATH_MARKER_STATIC, 0.5f, 0.08f);
+            MarkerStyle.of(PathMarkerShape.DOT, Palette.PATH_MARKER_STATIC, 0.5f, 0.06f);
     private static final MarkerStyle MOVING =
-            MarkerStyle.of(PathMarkerShape.CHEVRON, Palette.PATH_MARKER_MOVING, 1.5f, 0.22f);
+            MarkerStyle.of(PathMarkerShape.CHEVRON, Palette.PATH_MARKER_MOVING, 1.5f, 0.12f);
 
     private PathMarkerFrameBuilder() {
     }

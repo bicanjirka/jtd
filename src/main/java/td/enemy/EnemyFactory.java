@@ -50,13 +50,13 @@ public class EnemyFactory {
             return this.name;
         }
 
-        public EnemyMob create(GameWorld context, int delay, int health, int price, int level) {
+        public EnemyMob create(GameWorld gameWorld, int delay, int health, int price, int level) {
             return switch (this) {
-                case Circle -> new EnemyMobCircle(context, delay, health, price, level);
-                case Square -> new EnemyMobSquare(context, delay, health, price, level);
-                case Triangle -> new EnemyMobTriangle(context, delay, health, price, level);
-                case Ghost -> new EnemyMobGhost(context, delay, health, price, level);
-                case Empty -> new EnemyMobEmpty(context, delay, health, price, level);
+                case Circle -> new EnemyMobCircle(gameWorld, delay, health, price, level);
+                case Square -> new EnemyMobSquare(gameWorld, delay, health, price, level);
+                case Triangle -> new EnemyMobTriangle(gameWorld, delay, health, price, level);
+                case Ghost -> new EnemyMobGhost(gameWorld, delay, health, price, level);
+                case Empty -> new EnemyMobEmpty(gameWorld, delay, health, price, level);
             };
         }
     }

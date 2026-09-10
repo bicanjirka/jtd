@@ -78,7 +78,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private final LevelCatalog levelCatalog = new BuiltInLevelCatalog();
 
     private final GameEngine engine;
-    private final GameWorld context;
+    private final GameWorld gameWorld;
     private final GameBoard gameBoard;
     private final BoardRenderer boardRenderer;
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
@@ -149,19 +149,19 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     public TowerDefense() {
         this.engine = new GameEngine(this);
-        this.context = this.engine.getGameWorld();
-        this.boardRenderer = new BoardRenderer(this.engine, this.context.getEnemyRegistry(),
-                this.context::getBoard, this.context::getPath);
-        this.context.addEconomyListener(this);
-        this.gameBoard = new GameBoard(this, this.context);
+        this.gameWorld = this.engine.getGameWorld();
+        this.boardRenderer = new BoardRenderer(this.engine, this.gameWorld.getEnemyRegistry(),
+                this.gameWorld::getBoard, this.gameWorld::getPath);
+        this.gameWorld.addEconomyListener(this);
+        this.gameBoard = new GameBoard(this, this.gameWorld);
         initComponents();
-        this.gameConsole.setGameWorld(this.context);
+        this.gameConsole.setGameWorld(this.gameWorld);
         this.gameConsole.onPlay(this::playPressed);
         this.gameConsole.onPause(this::pausePressed);
         this.gameConsole.onFast(this::fastPressed);
         this.gameConsole.onSuperFast(this::superFastPressed);
         this.boardOverlays.onBackToMenu(this::requestReturnToMenu);
-        this.panelTowerSelector.doInit(this.context, this);
+        this.panelTowerSelector.doInit(this.gameWorld, this);
 
         // Explicitly the same cell the win/lose overlays occupy, so the two stack rather than
         // sitting side by side. Added with no constraints, the board landed in a RELATIVE cell
@@ -361,13 +361,13 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     private void gameLost() {
-        LOG.info("Game over - lost, score={}", this.context.getScore());
+        LOG.info("Game over - lost, score={}", this.gameWorld.getScore());
         this.setGameStopped(true);
         SwingUtilities.invokeLater(this.boardOverlays::showLost);
     }
 
     private void gameWon() {
-        LOG.info("Game won, score={}", this.context.getScore());
+        LOG.info("Game won, score={}", this.gameWorld.getScore());
         this.setGameStopped(true);
         SwingUtilities.invokeLater(this.boardOverlays::showWon);
     }

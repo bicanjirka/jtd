@@ -9,9 +9,9 @@ import td.util.GameWorld;
  */
 public final class EnemyMobEmpty extends AbstractEnemyMob {
 
-    public EnemyMobEmpty(GameWorld context, int delay, int health, int price, int level) {
+    public EnemyMobEmpty(GameWorld gameWorld, int delay, int health, int price, int level) {
         super();
-        this.doInit(context, delay, health, price, level);
+        this.doInit(gameWorld, delay, health, price, level);
     }
 
     public void doTick(int gameTime) {

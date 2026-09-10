@@ -538,8 +538,8 @@ public final class Java2DFrameRenderer {
             case TOWER_TWO_SPLASH_LINE, TOWER_TWO_SPLASH_FILL -> withAlpha(Color.RED, 80);
             case TOWER_THREE_BEAM -> Color.YELLOW;
             case TOWER_FOUR_PULSE -> withAlpha(Color.ORANGE, 80);
-            case PATH_MARKER_MOVING -> withAlpha(Color.WHITE, 200);
-            case PATH_MARKER_STATIC -> withAlpha(Color.WHITE, 70);
+            case PATH_MARKER_MOVING -> withAlpha(Color.WHITE, 100);
+            case PATH_MARKER_STATIC -> withAlpha(Color.WHITE, 40);
         };
     }
 
