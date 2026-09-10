@@ -92,6 +92,27 @@ different alphas, so it has its own `paintSonarSweep` and `turretHeadShape` thro
 It is also sized to stay inside its own tile: a head reaching across neighbouring cells reads
 as a weapon with reach rather than as an instrument.
 
+## The HUD look is ours, not the platform's
+
+**Every clickable control is a `HudButton` or a `HudToggleButton`, and every panel border
+comes from `Hud`.** Do not add a bare `JButton`, and do not style one by hand.
+
+`Hud` owns the palette, the fonts, the one-pixel outline and the painting of every control.
+The controls override `paintComponent` and never call `super`, so the look-and-feel paints
+none of them — that is deliberate, and there are two reasons it has to stay that way:
+
+- The same build must look identical on Windows, macOS and Metal. Default Swing button chrome
+  does not.
+- The L&F picks disabled-text and disabled-icon colours for a *light* button face. Against
+  this game's black panels those have come out invisible more than once, which is a bug you
+  cannot see in the code — only in a screenshot.
+
+The L&F's *listeners* stay installed, so pressed/rollover/selected still track the mouse
+normally. Only painting is taken over.
+
+Prefer a glyph character (`►`, `▮▮`) over drawn artwork for a simple control. **Verify any
+UI change from an actual screenshot of the running game** — see the `run-jtd` skill.
+
 ## Swing panels
 
 `GameBoard`, `PanelGameConsole`, `PanelTowerSelector`, `PanelTowerInfo`, `PanelWaveInfo`,

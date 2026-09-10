@@ -4,13 +4,10 @@ import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.util.GameWorld;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.border.TitledBorder;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -37,10 +34,10 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
     private final PanelTowerInfo panelTowerInfo = new PanelTowerInfo();
     private final PanelWaveInfo panelWaveInfo = new PanelWaveInfo();
 
-    private JButton jButton_play;
-    private JButton jButton_pause;
-    private JButton jButton_fast;
-    private JButton jButton_superFast;
+    private HudButton jButton_play;
+    private HudButton jButton_pause;
+    private HudButton jButton_fast;
+    private HudButton jButton_superFast;
     private JLabel jLabel_wave;
     private JLabel jLabel_lives;
     private JLabel jLabel_score;
@@ -108,6 +105,12 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         });
     }
 
+    private static HudButton glyphButton(String glyph) {
+        HudButton button = new HudButton(glyph);
+        button.setFont(Hud.GLYPH_FONT);
+        return button;
+    }
+
     private void initComponents(String titleText) {
         GridBagConstraints gridBagConstraints;
 
@@ -118,10 +121,12 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         JLabel jLabel_scoreText = new JLabel();
         JLabel jLabel_creditsText = new JLabel();
         JPanel jPanel_gameButtons = new JPanel();
-        this.jButton_play = new JButton();
-        this.jButton_pause = new JButton();
-        this.jButton_fast = new JButton();
-        this.jButton_superFast = new JButton();
+        // Glyphs rather than drawn icons: one character each, so they scale with the font and
+        // look the same everywhere, and there is no artwork to keep in step with anything.
+        this.jButton_play = glyphButton("►");        // BLACK RIGHT-POINTING POINTER
+        this.jButton_pause = glyphButton("▮▮"); // two BLACK VERTICAL RECTANGLEs
+        this.jButton_fast = glyphButton("►►");
+        this.jButton_superFast = glyphButton("►►►");
         this.jLabel_wave = new JLabel();
         this.jLabel_lives = new JLabel();
         this.jLabel_score = new JLabel();
@@ -148,7 +153,7 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         jPanel_gameInfo.setLayout(new GridBagLayout());
 
         jPanel_gameInfo.setBackground(new Color(0, 0, 0));
-        jPanel_gameInfo.setBorder(BorderFactory.createTitledBorder(null, "Status", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Dialog", Font.PLAIN, 11), new Color(220, 255, 220)));
+        jPanel_gameInfo.setBorder(Hud.panelBorder("Status"));
         jPanel_gameInfo.setForeground(new Color(220, 255, 220));
         jPanel_gameInfo.setFocusable(false);
         jLabel_waveText.setBackground(new Color(0, 0, 0));
@@ -255,12 +260,9 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         jPanel_gameButtons.setLayout(new GridBagLayout());
 
         jPanel_gameButtons.setBackground(new Color(0, 0, 0));
-        jPanel_gameButtons.setBorder(BorderFactory.createEtchedBorder());
+        jPanel_gameButtons.setBorder(Hud.panelBorder("Speed"));
         jPanel_gameButtons.setFocusable(false);
-        this.jButton_play.setBackground(new Color(0, 0, 0));
-        this.jButton_play.setIcon(ControlIcons.play());
         this.jButton_play.setToolTipText("Play / start the next wave");
-        this.jButton_play.setFocusable(false);
         this.jButton_play.addActionListener(this::jButton_playActionPerformed);
 
         gridBagConstraints = new GridBagConstraints();
@@ -272,10 +274,7 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         gridBagConstraints.insets = new Insets(5, 0, 0, 0);
         jPanel_gameButtons.add(this.jButton_play, gridBagConstraints);
 
-        this.jButton_pause.setBackground(new Color(0, 0, 0));
-        this.jButton_pause.setIcon(ControlIcons.pause());
         this.jButton_pause.setToolTipText("Pause");
-        this.jButton_pause.setFocusable(false);
         this.jButton_pause.setVisible(false);
         this.jButton_pause.addActionListener(this::jButton_pauseActionPerformed);
 
@@ -288,10 +287,7 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         gridBagConstraints.insets = new Insets(5, 0, 0, 0);
         jPanel_gameButtons.add(this.jButton_pause, gridBagConstraints);
 
-        this.jButton_fast.setBackground(new Color(0, 0, 0));
-        this.jButton_fast.setIcon(ControlIcons.fast());
         this.jButton_fast.setToolTipText("Fast (single-steps one tick while paused)");
-        this.jButton_fast.setFocusable(false);
         this.jButton_fast.addActionListener(this::jButton_fastActionPerformed);
 
         gridBagConstraints = new GridBagConstraints();
@@ -303,10 +299,7 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         gridBagConstraints.insets = new Insets(5, 2, 0, 0);
         jPanel_gameButtons.add(this.jButton_fast, gridBagConstraints);
 
-        this.jButton_superFast.setBackground(new Color(0, 0, 0));
-        this.jButton_superFast.setIcon(ControlIcons.superFast());
         this.jButton_superFast.setToolTipText("Super fast");
-        this.jButton_superFast.setFocusable(false);
         this.jButton_superFast.addActionListener(this::jButton_superFastActionPerformed);
 
         gridBagConstraints = new GridBagConstraints();

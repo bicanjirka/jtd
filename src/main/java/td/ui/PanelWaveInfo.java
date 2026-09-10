@@ -4,13 +4,10 @@ import td.enemy.EnemyFactory;
 import td.util.GameWorld;
 import td.wave.Wave;
 
-import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.border.TitledBorder;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -110,7 +107,7 @@ public class PanelWaveInfo extends JPanel {
         setLayout(new GridBagLayout());
 
         setBackground(new Color(0, 0, 0));
-        setBorder(BorderFactory.createTitledBorder(null, "Current & Next Wave", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Dialog", Font.PLAIN, 11), new Color(220, 255, 220)));
+        setBorder(Hud.panelBorder("Current & Next Wave"));
         setForeground(new Color(220, 255, 220));
         setMaximumSize(new Dimension(200, 32767));
         setMinimumSize(new Dimension(200, 60));

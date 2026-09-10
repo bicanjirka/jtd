@@ -12,6 +12,7 @@ import td.tower.TowerFactory;
 import td.ui.BoardOverlays;
 import td.ui.BoardRenderer;
 import td.ui.GameBoard;
+import td.ui.Hud;
 import td.ui.Java2DFrameRenderer;
 import td.ui.PanelGameConsole;
 import td.ui.PanelLevelSelect;
@@ -21,7 +22,6 @@ import td.ui.render.RenderFrame;
 import td.util.GameHost;
 import td.util.GameWorld;
 
-import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -554,7 +554,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
         jPanel_board.setBackground(new Color(0, 0, 0));
         jPanel_board.setForeground(new Color(220, 255, 220));
-        jPanel_board.setBorder(BorderFactory.createEtchedBorder());
+        jPanel_board.setBorder(Hud.outlineBorder());
         jPanel_board.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
                 jPanel_boardMouseClicked(evt);

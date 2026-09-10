@@ -7,19 +7,14 @@ import td.economy.EconomyState;
 import td.tower.Tower;
 import td.util.GameWorld;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
-import javax.swing.border.TitledBorder;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.Serial;
 import java.util.Objects;
@@ -34,8 +29,6 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(PanelTowerInfo.class);
 
-    private static final String SELL_TEXT_ENABLED = "#DCFFDC";
-    private static final String SELL_TEXT_DISABLED = "#6E7A6E";
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -44,7 +37,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private Tower selectedTower;
     private String lastText;
     private boolean levelEnded = false;
-    private JButton jButton_sell;
+    private HudButton jButton_sell;
     private JPanel jPanel_buttons;
     private JScrollPane jScrollPane1;
     private JTextPane jTextPane1;
@@ -71,7 +64,8 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
      * Whether the level is over. A finished level still shows a selected tower's stats - that
      * is the point of leaving the board visible behind the win/lose banner - but selling is a
      * move in a game that has already been decided, so the button is greyed out, matching how
-     * {@code TowerDefense.keyTyped} refuses the keyboard equivalents.
+     * {@code TowerDefense.keyTyped} refuses the keyboard equivalents. {@link Hud} paints the
+     * disabled state, so it stays legible on this panel's dark face.
      */
     public void setLevelEnded(boolean ended) {
         this.levelEnded = ended;
@@ -84,22 +78,9 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
         if (this.selectedTower != null) {
             this.jButton_sell.setEnabled(!this.levelEnded);
-            this.jButton_sell.setText(sellLabel(this.selectedTower.getSellPrice(), this.levelEnded));
+            this.jButton_sell.setText("Sell ( $" + this.selectedTower.getSellPrice() + " )");
             this.setText(this.selectedTower.getStatusString());
         }
-    }
-
-    /**
-     * The sell label as HTML, carrying its own colour. A button's disabled text colour is
-     * normally the look-and-feel's to pick, and against this panel's black button face it
-     * comes out invisible - the button read as an empty box rather than as a greyed-out one.
-     * Swing paints HTML button text through its own view, colours included, regardless of the
-     * button's enabled state, which is the one way to set that colour per-component rather
-     * than by mutating a shared {@code UIManager} key.
-     */
-    private static String sellLabel(int price, boolean disabled) {
-        String color = disabled ? SELL_TEXT_DISABLED : SELL_TEXT_ENABLED;
-        return "<html><font color='" + color + "'>Sell ( $" + price + " )</font></html>";
     }
 
     /**
@@ -163,12 +144,12 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         jScrollPane1 = new JScrollPane();
         jTextPane1 = new JTextPane();
         jPanel_buttons = new JPanel();
-        jButton_sell = new JButton();
+        jButton_sell = new HudButton("Sell");
 
         setLayout(new GridBagLayout());
 
         setBackground(new Color(0, 0, 0));
-        setBorder(BorderFactory.createTitledBorder(null, "Info", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Dialog", Font.PLAIN, 11), new Color(220, 255, 220)));
+        setBorder(Hud.panelBorder("Info"));
         setForeground(new Color(220, 255, 220));
         setMaximumSize(new Dimension(200, 2147483647));
         setMinimumSize(new Dimension(200, 150));
@@ -194,9 +175,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         jPanel_buttons.setBackground(new Color(0, 0, 0));
         jPanel_buttons.setForeground(new Color(220, 255, 220));
 
-        jButton_sell.setBackground(new Color(0, 0, 0));
         jButton_sell.setText("Sell");
-        jButton_sell.setMargin(new Insets(2, 2, 2, 2));
         jButton_sell.addActionListener(this::jButton_sellActionPerformed);
 
         gridBagConstraints = new GridBagConstraints();

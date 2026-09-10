@@ -1,6 +1,5 @@
 package td.ui;
 
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.Color;
@@ -97,8 +96,7 @@ public class BoardOverlays {
         labelConstraints.insets = new Insets(12, 24, 0, 24);
         plate.add(label, labelConstraints);
 
-        JButton backToMenu = new JButton("Back to menu");
-        backToMenu.setFocusable(false);
+        HudButton backToMenu = new HudButton("Back to menu");
         backToMenu.addActionListener(this::backToMenuActionPerformed);
         GridBagConstraints buttonConstraints = new GridBagConstraints();
         buttonConstraints.gridy = 1;

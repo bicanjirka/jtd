@@ -8,15 +8,10 @@ import td.tower.TowerFactory;
 import td.util.GameHost;
 import td.util.GameWorld;
 
-import javax.swing.BorderFactory;
 import javax.swing.GrayFilter;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
-import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
-import javax.swing.border.TitledBorder;
-import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -30,20 +25,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The tower toolbar: one {@link JToggleButton} per {@link TowerFactory.type}, in enum order,
+ * The tower toolbar: one {@link HudToggleButton} per {@link TowerFactory.type}, in enum order,
  * so the buttons and the {@code q}-{@code t} shortcut keys follow whatever that enum declares
  * rather than a hand-maintained list. Buttons the player cannot currently afford are greyed
  * out, which is why this panel is an {@link EconomyListener}.
  * <p>
- * Icons come from {@link Java2DFrameRenderer#renderTowerIcon}, i.e. the same paint code the
- * board uses, so a tower's icon cannot drift from how it actually looks once placed.
+ * Icons come from {@link Java2DFrameRenderer#renderTowerIcon}, i.e. the same shapes the board
+ * uses, so a tower's icon cannot drift from how it actually looks once placed. They are a
+ * toggle rather than a push control because picking a tower is a mode, but they look exactly
+ * like every other control - see {@link Hud}.
  */
 public class PanelTowerSelector extends JPanel implements EconomyListener {
     @Serial
     private static final long serialVersionUID = 1L;
     private static final int ICON_SIZE = 32;
 
-    private final JToggleButton[] buttons;
+    private final HudToggleButton[] buttons;
     private final String[] infoText;
     private final float[] towerRanges;
     private GameWorld context;
@@ -60,18 +57,17 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
             this.towerTypes.add(TowerFactory.type.valueOf(type.toString()));
         }
 
-        this.buttons = new JToggleButton[this.towerTypes.size()];
+        this.buttons = new HudToggleButton[this.towerTypes.size()];
         this.infoText = new String[this.towerTypes.size()];
         this.towerRanges = new float[this.towerTypes.size()];
     }
 
     private void makeButtons() {
         GridBagConstraints gridBagConstraints;
-        JToggleButton tempToggle;
+        HudToggleButton tempToggle;
         for (int i = 0; i < this.towerTypes.size(); i++) {
-            tempToggle = new JToggleButton();
+            tempToggle = new HudToggleButton();
             this.buttons[i] = tempToggle;
-            tempToggle.setMargin(new Insets(1, 1, 1, 1));
             final int n = i;
             tempToggle.addActionListener(evt -> doPlace(n));
             tempToggle.addMouseListener(new MouseAdapter() {
@@ -82,7 +78,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
             gridBagConstraints = new GridBagConstraints();
             gridBagConstraints.gridx = n;
             gridBagConstraints.gridy = 0;
-            gridBagConstraints.insets = new Insets(-9, 0, -2, 3);
+            gridBagConstraints.insets = new Insets(0, 0, 0, 4);
             add(tempToggle, gridBagConstraints);
         }
     }
@@ -130,7 +126,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
     }
 
     private void untoggleAll() {
-        for (JToggleButton button : this.buttons) {
+        for (HudToggleButton button : this.buttons) {
             button.setSelected(false);
         }
     }
@@ -168,9 +164,9 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
 
         setLayout(new GridBagLayout());
 
-        setBackground(new Color(0, 0, 0));
-        setBorder(BorderFactory.createTitledBorder(null, "Towers", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Dialog", Font.PLAIN, 11), new Color(220, 255, 220)));
-        setForeground(new Color(220, 255, 220));
+        setBackground(Hud.BACKGROUND);
+        setBorder(Hud.panelBorder("Towers"));
+        setForeground(Hud.FOREGROUND);
     }
 
 
