@@ -28,9 +28,10 @@ public final class EnemyMobTriangle extends AbstractEnemyMobRotor {
         return this.bodyScale;
     }
 
-    public void doDamage(Damage damage) {
-        super.doDamage(damage);
+    public Damage doDamage(Damage damage) {
+        Damage landed = super.doDamage(damage);
         this.speed = this.speedBase + (this.speedMax - this.speedBase) * (1 - (this.health / (float) this.healthMax));
+        return landed;
     }
 
     public <R> R accept(EnemyMobVisitor<R> visitor) {

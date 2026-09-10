@@ -26,8 +26,14 @@ it, and anything that reads `centerX`/`centerY` (e.g. `TowerUpgrade.scanTowers`,
 `TowerThree.waveStarted`) has to run after it.
 
 **Every hit goes through `AbstractTower.dealDamage`, never `enemy.doDamage` directly.** It
-is what keeps `damageDealt`/`killCount` honest: a shot into an enemy another tower already
-killed this tick is a no-op in the mob, and must not be counted as a second kill.
+is what keeps `damageDealt`/`killCount` honest, in two ways that are easy to get wrong:
+
+- A shot into an enemy another tower already killed this tick is a no-op in the mob, and
+  must not be counted as a second kill.
+- `doDamage` **returns the damage that actually landed**, which is not the amount passed in
+  — a square resists part of every hit, and a mob that is not currently a valid target takes
+  none of it. `damageDealt` accumulates the return value. Adding the argument instead makes
+  a tower over-report against exactly the enemies it performs worst on.
 
 **A tower that subscribes to anything must unsubscribe in `doCleanup`.** `TowerThree`
 registers as a `WaveStartListener`, `TowerUpgrade` as a `TowerListener`; both remove

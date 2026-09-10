@@ -99,12 +99,17 @@ public abstract class AbstractTower implements Tower {
      * Routes every hit a tower lands through one place so damageDealt/killCount stay accurate
      * regardless of which subclass fires: a shot into an enemy another tower already killed
      * this tick is a no-op in EnemyMob.doDamage() and must not be counted as a kill twice.
+     * <p>
+     * {@code damageDealt} accumulates what {@code doDamage} reports actually landed, not the
+     * {@code damage} argument: a mob that resists part of a hit (see {@code EnemyMobSquare})
+     * takes less than was fired at it, and a tower claiming the full amount would over-report
+     * against exactly the enemies it performs worst on.
      */
     protected void dealDamage(EnemyMob enemy, Damage damage) {
         boolean wasAlive = !enemy.isDead();
-        enemy.doDamage(damage);
+        Damage landed = enemy.doDamage(damage);
         if (wasAlive) {
-            this.damageDealt += damage.amount();
+            this.damageDealt += landed.amount();
             if (enemy.isDead()) {
                 this.killCount++;
             }

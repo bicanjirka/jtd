@@ -108,13 +108,20 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * count if this kills it. A hit on an already-dead mob is a no-op - several towers can
      * fire into the same mob within one tick, and only the first may count as the kill (see
      * {@code AbstractTower.dealDamage}, which relies on that).
+     *
+     * @return the damage that actually landed: {@link #absorb}'s result for a live, valid
+     * target, and {@link Damage#none()} for a mob that is already dead or not currently
+     * targetable. Not capped at the mob's remaining health - a killing blow reports its whole
+     * landed amount, overkill included.
      */
-    public void doDamage(Damage damage) {
+    public Damage doDamage(Damage damage) {
         if (this.dead) {
-            return;
+            return Damage.none();
         }
+        Damage landed = Damage.none();
         if (this.validTarget()) {
-            this.health -= this.absorb(damage).amount();
+            landed = this.absorb(damage);
+            this.health -= landed.amount();
         }
         if (this.health <= 0) {
             this.validTarget = false;
@@ -122,6 +129,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
             this.context.apply(EconomyDelta.kill(this.price));
             this.context.removeEnemy();
         }
+        return landed;
     }
 
     /**
