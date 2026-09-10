@@ -42,6 +42,25 @@ change. This is the same discipline `TODO.md` already gets ("close a gap, delete
 in the same commit"), and it applies without being asked: a stale package doc is worse than
 no package doc, precisely because it is loaded and believed.
 
+## UI requirement: one look, and it is ours
+
+The interface must be **clean, uniform and operating-system independent**. This is a standing
+requirement, not a preference to re-litigate per change:
+
+- Every clickable control shares one visual style — same outline, face, font and states. A
+  control must not look different because it happens to be a `JToggleButton` rather than a
+  `JButton`. In practice that means `td.ui.HudButton` / `HudToggleButton`, never a bare Swing
+  button styled by hand.
+- Panel borders come from `td.ui.Hud` too, so panels and controls read as one surface. No
+  `createEtchedBorder`: its shading is the look-and-feel's to choose.
+- **Nothing inherits its appearance from the platform look-and-feel.** Controls paint
+  themselves. Swing's default chrome differs across Windows, macOS and Metal, and its
+  disabled-text colour — chosen for a light button face — has repeatedly rendered invisible
+  against this game's black panels.
+- Prefer a glyph character (`►`) over drawn artwork for a simple control.
+- **Verify UI changes from a screenshot of the running game** (the `run-jtd` skill drives it
+  and captures one). Look-and-feel defects are invisible in the code and in the tests.
+
 ## Architecture: the headless/Swing boundary
 
 This is the one structural rule that matters, and it is the result of a deliberate refactor still in progress. Respect it.

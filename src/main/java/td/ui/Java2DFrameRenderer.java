@@ -258,18 +258,14 @@ public final class Java2DFrameRenderer {
      * reason - on the board it carries information, where an aiming tower is pointing, but an
      * icon has no target and no animation clock.
      * <p>
-     * The glyph sits on a dark tile rather than straight on the button, because these are the
-     * same bright colours the board uses and the upgrade tower's is white - invisible on the
-     * platform look-and-feel's light button face. Carrying a scrap of board background with
-     * the icon keeps every tower legible without fighting the look-and-feel for control of the
-     * button itself, which would also cost the toggled and disabled states.
+     * The glyph is drawn on a transparent background: the control it sits on paints its own
+     * dark face (see {@link Hud}), so the icon does not have to carry a scrap of board with it
+     * to stay legible.
      */
     public BufferedImage renderTowerIcon(Palette palette, int size) {
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = image.createGraphics();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(BOARD_BACKGROUND);
-        g2.fill(new RoundRectangle2D.Float(0, 0, size, size, size * 0.25f, size * 0.25f));
         g2.translate(size / 2.0, size / 2.0);
         g2.setColor(colorFor(palette));
         g2.fill(towerBodyShape(palette, size * ICON_BODY_SIZE_FRACTION));
