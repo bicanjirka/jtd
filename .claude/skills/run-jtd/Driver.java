@@ -72,6 +72,7 @@ public class Driver {
             case "ss" -> screenshot(rest);
             case "list" -> list();
             case "click" -> click(Integer.parseInt(rest.trim()));
+            case "hover" -> hover(Integer.parseInt(rest.trim()));
             case "key" -> typeKey(rest.trim());
             case "state" -> state();
             case "boardclick" -> boardClick(rest.trim());
@@ -172,6 +173,30 @@ public class Driver {
         Thread.sleep(60);
         robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
         System.out.println("OK click " + index + " (robot at " + cx + "," + cy + ")");
+    }
+
+    // Moves the pointer onto a component without clicking, so its mouseEntered fires. jTD shows
+    // a tower's pre-purchase stats on toolbar hover (PanelTowerSelector.mouseOver), which
+    // click() cannot reach: a JToggleButton is an AbstractButton, so click() takes the
+    // doClick() path and never generates a mouse-entered event at all.
+    private static void hover(int index) throws AWTException, InterruptedException {
+        List<Component> clickables = findClickables();
+        if (index < 0 || index >= clickables.size()) {
+            System.out.println("ERROR: index " + index + " out of range (0.." + (clickables.size() - 1) + ")");
+            return;
+        }
+        Component target = clickables.get(index);
+        Point loc = target.getLocationOnScreen();
+        int cx = loc.x + target.getWidth() / 2;
+        int cy = loc.y + target.getHeight() / 2;
+        // Away first: moving from wherever the pointer already sits onto the target is what
+        // generates mouseEntered. If it happens to be resting on the target already, a move to
+        // the same point produces no event and the hover silently does nothing.
+        robot.mouseMove(loc.x - 5, loc.y - 5);
+        Thread.sleep(60);
+        robot.mouseMove(cx, cy);
+        Thread.sleep(120);
+        System.out.println("OK hover " + index + " (robot at " + cx + "," + cy + ")");
     }
 
     // Simulates a real keypress for jTD's JFrame-level keyboard shortcuts (q/w/e/r/t build,

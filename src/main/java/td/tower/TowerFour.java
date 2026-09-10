@@ -51,6 +51,12 @@ public final class TowerFour extends AbstractTower {
         return visitor.visitTowerFour(this);
     }
 
+    public String getInfoString() {
+        return "Stardust tower\n\n" +
+                super.getInfoString() +
+                "Hurts everyone in range";
+    }
+
     public String getStatusString() {
         return "Stardust tower\n\n" +
                 super.getStatusString() +
