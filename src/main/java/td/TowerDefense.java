@@ -239,7 +239,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private void startSelectedLevel(LevelDefinition level) {
         this.gameLoop.stop();
         this.levelLoaded = false;
-        this.gameStopped = false;
+        this.setGameStopped(false);
         this.boardOverlays.reset();
         this.unSelectTower();
         this.panelTowerSelector.stopPlacing();
@@ -362,14 +362,24 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     private void gameLost() {
         LOG.info("Game over - lost, score={}", this.context.getScore());
-        this.gameStopped = true;
+        this.setGameStopped(true);
         SwingUtilities.invokeLater(this.boardOverlays::showLost);
     }
 
     private void gameWon() {
         LOG.info("Game won, score={}", this.context.getScore());
-        this.gameStopped = true;
+        this.setGameStopped(true);
         SwingUtilities.invokeLater(this.boardOverlays::showWon);
+    }
+
+    /**
+     * The single place the level-over flag moves, so every part of the UI that has to refuse
+     * moves in a decided game stays in step with it. Reachable from the game-loop thread (both
+     * endings are), hence the Swing work is deferred to the EDT.
+     */
+    private void setGameStopped(boolean stopped) {
+        this.gameStopped = stopped;
+        SwingUtilities.invokeLater(() -> this.gameConsole.getTowerInfo().setLevelEnded(stopped));
     }
 
     public void startLevel() {

@@ -40,6 +40,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private GameWorld context;
     private Tower selectedTower;
     private String lastText;
+    private boolean levelEnded = false;
     private JButton jButton_sell;
     private JPanel jPanel_buttons;
     private JScrollPane jScrollPane1;
@@ -63,12 +64,27 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         this.setText(s);
     }
 
+    /**
+     * Whether the level is over. A finished level still shows a selected tower's stats - that
+     * is the point of leaving the board visible behind the win/lose banner - but selling is a
+     * move in a game that has already been decided, so the action is withdrawn, matching how
+     * {@code TowerDefense.keyTyped} refuses the keyboard equivalents.
+     * <p>
+     * Withdrawn by hiding rather than by {@code setEnabled(false)}: the platform
+     * look-and-feel draws disabled button text in a colour that is invisible against this
+     * panel, so a disabled sell button reads as an empty box rather than as a refused action.
+     */
+    public void setLevelEnded(boolean ended) {
+        this.levelEnded = ended;
+        this.updateInterface();
+    }
+
     private void updateInterface() {
-        this.jPanel_buttons.setVisible(false);
-        this.jButton_sell.setVisible(true);
+        boolean canSell = this.selectedTower != null && !this.levelEnded;
+        this.jPanel_buttons.setVisible(canSell);
+        this.jButton_sell.setVisible(canSell);
 
         if (this.selectedTower != null) {
-            this.jPanel_buttons.setVisible(true);
             this.jButton_sell.setText("Sell ( $" + this.selectedTower.getSellPrice() + " )");
             this.setText(this.selectedTower.getStatusString());
         }
