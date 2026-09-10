@@ -29,7 +29,13 @@ public interface EnemyMob {
 
     boolean isDead();
 
-    void doDamage(Damage damage);
+    /**
+     * Applies a hit and returns how much of it actually landed, which is not necessarily what
+     * was passed in - a mob may resist part of it, or none of it may apply at all if the mob
+     * is not currently a valid target. Callers reporting damage figures must use the return
+     * value, not the argument.
+     */
+    Damage doDamage(Damage damage);
 
     float getSpeed();
 

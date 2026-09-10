@@ -126,6 +126,20 @@ class AbstractTowerTest {
     }
 
     @Test
+    void damageDealtAgainstAResistantEnemyMatchesTheHealthItActuallyLost() {
+        TowerOne tower = new TowerOne(context, 0, 0);
+        // a square absorbs part of every hit, unlike the circle every other case here uses
+        EnemyMob square = EnemyFactory.getEnemy("s", context, 0, 1000, 3, 1);
+        long healthBefore = square.getHealth();
+
+        tower.dealDamage(square, Damage.of(4000));
+
+        long healthLost = healthBefore - square.getHealth();
+        assertThat(healthLost).isLessThan(4000);
+        assertThat(tower.getDamageDealt()).isEqualTo(healthLost);
+    }
+
+    @Test
     void multipleHitsAccumulateDamageDealt() {
         TowerOne tower = new TowerOne(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1000, 3, 1);

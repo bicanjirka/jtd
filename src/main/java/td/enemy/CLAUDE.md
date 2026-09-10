@@ -40,6 +40,11 @@ the player is charged an `EconomyDelta.leak`, and `prevX`/`prevY` are resynced t
 position — without that resync the renderer interpolates across the whole board for one
 frame and draws a streak.
 
+**`doDamage` returns the damage that actually landed, not what was passed in.** `absorb`
+lets a mob resist part of a hit, and a mob that is not a valid target takes none of it at
+all. Anything reporting damage figures — `AbstractTower.dealDamage` is the only such caller
+today — must use the return value. An override must propagate it (see `EnemyMobTriangle`).
+
 **Death timing is captured in `doTick`, not lazily at paint time.** `doDamage` sets
 `dead`; the next `doTick` records `deathTick`. The fade therefore advances with the
 simulation clock, so it runs at the same rate while fast-forwarding as the rest of the game.
