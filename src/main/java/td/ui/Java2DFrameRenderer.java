@@ -58,7 +58,6 @@ public final class Java2DFrameRenderer {
         // without it, drawImage falls back to nearest-neighbor under a non-1:1 transform
         // (e.g. Swing's per-monitor HiDPI scale on Windows) and looks blocky.
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0.0f));
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
         // GameBoard.paint() overrides Swing's own painting wholesale (no super.paint() call),
         // so this fill is also the only thing clearing the previous frame - not just cosmetic.

@@ -95,8 +95,5 @@ conventions run through them:
 is why `Java2DFrameRenderer`'s background fill is also the only thing clearing the previous
 frame.
 
-`PanelBoard`, `PanelGameInfo` and `PanelGameButtons` are empty `JPanel` subclasses that
-nothing references — leftovers, not extension points. Don't build on them.
-
 **Nothing here may be touched from tick code.** Rendering reaches the EDT via
 `SwingUtilities.invokeLater` — see the root `CLAUDE.md`'s Threading model.
