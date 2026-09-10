@@ -28,10 +28,10 @@ import java.util.List;
  * window, touches a Graphics2D, or requires a display - it can be built,
  * driven, and asserted on entirely from a test.
  * <p>
- * {@code mouseClicked}/{@code highlightCell} take board-relative pixel
+ * {@link #mouseClicked}/{@link #highlightCell} take board-relative pixel
  * coordinates (0,0 = top-left of the game board), not screen coordinates -
  * translating a real MouseEvent's screen position into that is a UI concern
- * TowerDefence still owns.
+ * {@link TowerDefense} still owns.
  */
 public class GameEngine {
 
@@ -75,6 +75,7 @@ public class GameEngine {
         return this.waves.get(index);
     }
 
+    /** Whether the previous wave is cleared, so the next one is allowed to start. */
     public boolean isWaveReady() {
         return this.waveReady;
     }
@@ -87,6 +88,13 @@ public class GameEngine {
         return this.placement.isPlacing();
     }
 
+    /**
+     * Turns a level into live engine state: cell grid, path, buildability, waves and starting
+     * economy. This is the single entry point for doing so, and it is idempotent - always safe
+     * to call from any prior state, not just once per process, since returning to the
+     * level-select menu and picking another level calls it again on the same engine. See
+     * {@link #unloadCurrentLevel()} for the ordering that makes that safe.
+     */
     public void loadLevel(LevelDefinition level) {
         unloadCurrentLevel();
         int width = level.width();
@@ -144,10 +152,16 @@ public class GameEngine {
         }
     }
 
+    /** Opens the gate on the first wave, once a level is loaded and the player is ready to play it. */
     public void startLevel() {
         this.waveReady = true;
     }
 
+    /**
+     * Asks for the next wave without starting it here. The request is a flag {@link #doTick}
+     * consumes on the game-loop thread, so spawning always happens in tick order - the UI
+     * (which calls this from the EDT) never mutates the enemy roster itself.
+     */
     public void requestNextWave() {
         this.startWave = true;
     }
@@ -199,6 +213,11 @@ public class GameEngine {
         this.placement.unSelectTower();
     }
 
+    /**
+     * Frees the cell a sold (or torn-down) tower occupied, making it buildable again. Reached
+     * from {@code TowerRoster} through {@link GameHost#clearCell}, which is how the tower
+     * roster stays ignorant of the cell grid.
+     */
     public void clearCell(int x, int y) {
         Cell cell = this.cellGrid[x][y];
         cell.unSetTower();

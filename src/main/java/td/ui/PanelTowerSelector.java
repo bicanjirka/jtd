@@ -29,6 +29,15 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The tower toolbar: one {@link JToggleButton} per {@link TowerFactory.type}, in enum order,
+ * so the buttons and the {@code q}-{@code t} shortcut keys follow whatever that enum declares
+ * rather than a hand-maintained list. Buttons the player cannot currently afford are greyed
+ * out, which is why this panel is an {@link EconomyListener}.
+ * <p>
+ * Icons come from {@link Java2DFrameRenderer#renderTowerIcon}, i.e. the same paint code the
+ * board uses, so a tower's icon cannot drift from how it actually looks once placed.
+ */
 public class PanelTowerSelector extends JPanel implements EconomyListener {
     @Serial
     private static final long serialVersionUID = 1L;

@@ -8,6 +8,12 @@ import td.util.GameWorld;
 
 import java.util.List;
 
+/**
+ * "Triangle tower" - the cheap single-target one. Fires at whichever visible enemy in range
+ * is furthest along the path, which is the usual right answer since that enemy is closest to
+ * costing a life. Its turret head sweeps toward the target at a capped rate rather than
+ * snapping, and holds its last heading when it has no target (see {@link TurretAim}).
+ */
 public final class TowerOne extends AbstractTower {
 
     public static final int price = 10;

@@ -7,6 +7,12 @@ import td.util.GameWorld;
 
 import java.util.List;
 
+/**
+ * "Circle tower" - splash damage. Picks a random visible enemy in range, then damages
+ * everything within {@code spreadRadius} of it, falling off with the square of the distance
+ * from the blast centre. The splash deliberately uses an any-type query, so it is one of the
+ * two towers that can hurt ghosts even though it cannot target them directly.
+ */
 public final class TowerTwo extends AbstractTower {
 
     public static final int price = 15;

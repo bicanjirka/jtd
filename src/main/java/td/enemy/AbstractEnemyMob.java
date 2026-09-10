@@ -10,12 +10,20 @@ import td.wave.Vec2;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Everything every enemy shares: spawn delay, movement along the level's path, health and
+ * damage, and the death-fade animation's timing. Subclasses add a body scale, a facing angle,
+ * and at most a small behavioural twist (see {@link #absorb} and {@code EnemyMobTriangle}'s
+ * speed-up on damage).
+ * <p>
+ * Movement is real arc-length distance: {@link #doTick} advances {@code distanceIntoLap} by
+ * {@code speed} pixels and resolves it through the shared {@link ArcLengthPath}, so a curved
+ * or diagonal path moves a mob at the same real-world pace a straight one does. Reaching the
+ * end wraps back to the start and charges the player a {@link EconomyDelta#leak} - a mob is
+ * never removed from the roster by walking, only by dying.
+ */
 public abstract class AbstractEnemyMob implements EnemyMob {
 
-    // Rescaled from the old fixed-point model (speed=40 meant "40/1000 of the current
-    // segment per tick", which - since every segment was exactly one 32px cell - worked out
-    // to 40/1000*32 = 1.28 px/tick). speed is now pixels per tick directly, so every existing
-    // enemy's actual speed is unchanged; only the unit it's expressed in is.
     protected type type;
     protected boolean inactive = true;
     protected boolean validTarget = false;
@@ -24,6 +32,10 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     protected int level;
     protected double x, y;
     private double prevX, prevY;
+    // Pixels per tick. Rescaled from the old fixed-point model (speed=40 meant "40/1000 of the
+    // current segment per tick", which - since every segment was exactly one 32px cell - worked
+    // out to 40/1000*32 = 1.28 px/tick), so every enemy's actual speed is unchanged; only the
+    // unit it is expressed in is.
     protected float speed = 1.28f;
     protected float speedMax = 1.28f;
     protected final float speedBase = 1.28f;
@@ -42,6 +54,13 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         this.type = EnemyMob.type.Normal;
     }
 
+    /**
+     * Binds this mob to a world and a starting position on its path. A subclass overriding
+     * this must call {@code super.doInit} first - anything derived from the board scale or
+     * from {@code level} (a body scale, a speed curve) reads fields this sets. {@code delay}
+     * is the mob's slot index within its wave, converted here into a tick countdown before it
+     * becomes active and targetable.
+     */
     protected void doInit(GameWorld context, int delay, int health, int price, int level) {
         this.context = context;
         this.price = price;
@@ -84,6 +103,12 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         return this.inactive;
     }
 
+    /**
+     * Applies a hit, paying the player its bounty and removing it from the roster's alive
+     * count if this kills it. A hit on an already-dead mob is a no-op - several towers can
+     * fire into the same mob within one tick, and only the first may count as the kill (see
+     * {@code AbstractTower.dealDamage}, which relies on that).
+     */
     public void doDamage(Damage damage) {
         if (this.dead) {
             return;
@@ -142,6 +167,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         return (int) this.distanceIntoLap;
     }
 
+    /** Spawned, on the board, and still alive - the precondition every targeting query applies. */
     public boolean validTarget() {
         return ((!this.inactive) && this.validTarget && (!this.dead));
     }
@@ -212,6 +238,11 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         return this.lastFacingRadians;
     }
 
+    /**
+     * Counts down the spawn delay, or advances a live mob along the path, or - once dead -
+     * records the tick death happened on so the fade can be timed against the simulation
+     * clock rather than the repaint rate.
+     */
     public void doTick(int gameTime) {
         if (this.inactive) {
             if (this.delay > 0) {

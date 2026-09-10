@@ -33,10 +33,14 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 
 /**
- * Turns an AWT-free {@link RenderFrame} into {@code Graphics2D} calls. The only
- * class in {@code td.ui} that imports {@code java.awt} - every colour, shape, and
- * stroke choice lives here, keyed off {@link Palette} rather than off any domain
- * type, so a new draw command is the only thing a future backend would need.
+ * Turns an AWT-free {@link RenderFrame} into {@code Graphics2D} calls - the only class that
+ * does, and the only owner of a colour, shape or stroke choice for board content. Every one
+ * of those is keyed off {@link Palette} rather than off any domain type, so a future backend
+ * needs to understand the draw commands and nothing else.
+ * <p>
+ * The {@code Panel*} Swing components in this package import {@code java.awt} too, for layout
+ * and for their own small previews; what they must not do is paint board content themselves.
+ * {@link #paintEnemies} and {@link #renderTowerIcon} exist so they don't have to.
  */
 public final class Java2DFrameRenderer {
 
@@ -48,10 +52,11 @@ public final class Java2DFrameRenderer {
     public void paint(Graphics2D g2, RenderFrame frame) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-        // Without this, drawImage falls back to nearest-neighbor whenever the Graphics2D
-        // carries a non-1:1 transform (e.g. Swing's per-monitor HiDPI scale on Windows),
-        // which is what made tower/enemy PNGs look blocky even though the vector-drawn
-        // enemy shapes stayed smooth from antialiasing alone.
+        // Board art is all vector now, so nothing here goes through drawImage and this hint
+        // changes no pixel on the board today. It is kept so a Graphics2D handed to this
+        // renderer is configured consistently with SharpImageIcon, which still needs it:
+        // without it, drawImage falls back to nearest-neighbor under a non-1:1 transform
+        // (e.g. Swing's per-monitor HiDPI scale on Windows) and looks blocky.
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0.0f));
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));

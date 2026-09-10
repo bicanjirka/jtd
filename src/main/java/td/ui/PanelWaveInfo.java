@@ -16,6 +16,12 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.Serial;
 
+/**
+ * Side-by-side summaries of the wave in play and the one queued next - round number, health,
+ * reward and level, each over a {@link PanelEnemy} strip showing what that wave contains.
+ * Both halves are permanent components refreshed in place; {@link #clearWaves()} blanks them
+ * rather than removing them.
+ */
 public class PanelWaveInfo extends JPanel {
     @Serial
     private static final long serialVersionUID = 1L;

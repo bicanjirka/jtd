@@ -9,6 +9,17 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Comparator;
 
+/**
+ * The application entry point, and the one fatal-startup boundary: anything thrown while
+ * building the game - notably {@link td.util.GameStartupException} - is logged here and
+ * exits non-zero, rather than each failing component showing its own dialog and calling
+ * {@code System.exit} itself.
+ * <p>
+ * Also owns per-run log file naming, which is why {@code jtd.logTimestamp} is set as the
+ * very first statement in {@link #main}: {@code logback.xml} resolves it while configuring
+ * itself, so any class touching SLF4J before that point would fix the property's absence
+ * into the whole run's log filename.
+ */
 public class Main {
 
     private static final DateTimeFormatter LOG_TIMESTAMP = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
@@ -32,6 +43,7 @@ public class Main {
         }
     }
 
+    /** Keeps the most recent {@value #LOG_FILES_TO_KEEP} run logs, so a long-lived checkout's {@code logs/} does not grow without bound. */
     private static void pruneOldLogs() {
         File logDir = new File("logs");
         File[] logFiles = logDir.listFiles((dir, name) -> name.startsWith("jTD-") && name.endsWith(".log"));

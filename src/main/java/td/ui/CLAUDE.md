@@ -8,8 +8,12 @@ Two rules govern everything here, and both are checkable by grep:
 1. **No gameplay logic in this package.** Rules go in `GameEngine`/`GameWorld`/the domain
    packages. If the UI needs something from the engine, it observes a listener; if the
    engine needs something from the UI, it goes through `GameHost`.
-2. **`Java2DFrameRenderer` is the only class in `td.ui` that imports `java.awt.Graphics2D`
-   or any drawing type**, and `td.ui.render` imports no `java.awt` at all.
+2. **`td.ui.render` imports no `java.awt` at all**, and `Java2DFrameRenderer` is the only
+   class that turns a `RenderFrame` into pixels — every colour, shape and stroke choice for
+   board content lives there. The `Panel*` Swing components do import `java.awt` for layout
+   and colours, and two of them (`PanelEnemy`, `PanelLevelSelect`) paint small previews of
+   their own; that is fine, as long as board content itself keeps going through the frame
+   pipeline. `PanelEnemy` already does — it reuses `Java2DFrameRenderer.paintEnemies`.
 
 ## The render pipeline
 
@@ -77,9 +81,9 @@ calls at a fixed pose and size — so a tower's board look and its icon can neve
 
 ## Swing panels
 
-`PanelBoard`/`GameBoard`, `PanelGameConsole`, `PanelTowerSelector`, `PanelTowerInfo`,
-`PanelWaveInfo`, `PanelEnemy`, `PanelGameInfo`, `PanelGameButtons`, `PanelLevelSelect` and
-`BoardOverlays` are ordinary Swing components. Two conventions run through them:
+`GameBoard`, `PanelGameConsole`, `PanelTowerSelector`, `PanelTowerInfo`, `PanelWaveInfo`,
+`PanelEnemy`, `PanelLevelSelect` and `BoardOverlays` are ordinary Swing components. Two
+conventions run through them:
 
 - Components are **built once and shown/hidden or refreshed**, not rebuilt per level. The
   level-select screen and the board are two cards of one `CardLayout`; the win/lose overlays
@@ -90,6 +94,9 @@ calls at a fixed pose and size — so a tower's board look and its icon can neve
 `GameBoard.paint` overrides Swing's painting wholesale with no `super.paint()` call, which
 is why `Java2DFrameRenderer`'s background fill is also the only thing clearing the previous
 frame.
+
+`PanelBoard`, `PanelGameInfo` and `PanelGameButtons` are empty `JPanel` subclasses that
+nothing references — leftovers, not extension points. Don't build on them.
 
 **Nothing here may be touched from tick code.** Rendering reaches the EDT via
 `SwingUtilities.invokeLater` — see the root `CLAUDE.md`'s Threading model.
