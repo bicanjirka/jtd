@@ -6,9 +6,9 @@ description: Build, run, and visually drive jTD (the Swing tower-defense desktop
 jTD is a native Java Swing desktop app (`td.Main` -> `new TowerDefense()`), not a browser or
 Electron app - there is no DOM and no `chromium-cli`. Drive it in-process instead: launch
 `Driver.java` (in this directory), which constructs the real `TowerDefense` JFrame inside its
-own `main()` and then reads one command per line from stdin (`list`, `click <n>`, `key <c>`,
-`boardclick <x> <y>`, `level <n>`, `menu`, `setcredits <n>`, `setlives <n>`, `ss <path>`,
-`state`, `sleep <ms>`, `quit`). All paths below are relative to the repo root
+own `main()` and then reads one command per line from stdin (`list`, `click <n>`,
+`hover <n>`, `key <c>`, `boardclick <x> <y>`, `level <n>`, `menu`, `setcredits <n>`,
+`setlives <n>`, `ss <path>`, `state`, `sleep <ms>`, `quit`). All paths below are relative to the repo root
 (`C:\Users\juras\dev\jTD`).
 
 ## Prerequisites
@@ -72,9 +72,10 @@ convenient scratch location, already gitignored-worthy (don't commit captured PN
 |---|---|
 | `list` | Prints every clickable component (buttons, and plain panels with their own mouse listener like the level-select cards) as `<index>: <ClassName> "<label>" visible=<bool>`, in a stable DFS order. |
 | `click <n>` | Clicks the component at that `list` index - `doClick()` for a real button, a `Robot` click at its on-screen center for anything else (e.g. a level card). |
+| `hover <n>` | Moves the pointer onto the component at that `list` index without clicking, so its `mouseEntered` fires - jTD shows a tower's pre-purchase stats on toolbar hover, and `click` can't reach that (a `JToggleButton` takes `click`'s `doClick()` path, which generates no mouse-entered event). Moves away from the target first, since a move to where the pointer already rests fires nothing. |
 | `key <char>` | Types one character via `Robot`, for jTD's frame-level keyboard shortcuts (`q`/`w`/`e`/`r`/`t` build, `p` pause, `f` speed, `s` next wave) - these have no button, only a `KeyListener` on the JFrame. |
 | `boardclick <x> <y>` | Clicks board cell `(x, y)` - the board itself isn't a Swing button/mouse-listener component `click(int)` can reach, so this reflects into the private `gameBoard` field and `GameWorld.getBoard().scale()` to compute the on-screen point instead. Use it after `key` selects a tower type, to actually place it. |
-| `level <n>` | Selects level `n` from the built-in catalog (0 = Classic Loop, 1 = Zigzag Gauntlet) by reflecting into the private `levelCatalog` field and `startSelectedLevel(LevelDefinition)`, instead of clicking a `PanelLevelSelect` card - see Gotchas for why `click` on a card is unreliable here. Works whether or not a level is already loaded (`startSelectedLevel` is safe to call repeatedly - it tears down and rebuilds). |
+| `level <n>` | Selects level `n` from the built-in catalog (0 = Classic Loop, 1 = Zigzag Gauntlet, 2 = Wild Bezier Sweep) by reflecting into the private `levelCatalog` field and `startSelectedLevel(LevelDefinition)`, instead of clicking a `PanelLevelSelect` card - see Gotchas for why `click` on a card is unreliable here. Works whether or not a level is already loaded (`startSelectedLevel` is safe to call repeatedly - it tears down and rebuilds). |
 | `menu` | Returns to the level-select menu by reflecting into the private `returnToMenu()` - deliberately *not* `requestReturnToMenu()`, which can pop a real confirm `JOptionPane` mid-level that this driver has no way to answer and would hang on. Testing that dialog needs a human or a `Robot` click on it, not this driver. |
 | `setcredits <n>` | Cheat: sets credits to exactly `n` via `GameWorld.apply(EconomyDelta.credits(...))`, instead of buying/selling towers to reach a target value indirectly. Goes through the same `GameWorld.apply` path a real kill or purchase uses, so affordability/UI reactions (e.g. toolbar buttons graying out) still fire normally. |
 | `setlives <n>` | Cheat: sets lives to exactly `n` the same way, for testing near-game-over/game-over states without playing a level down to it. |
@@ -98,7 +99,7 @@ only useful for a human actually looking at the screen.
 mvn test
 ```
 
-221 tests, all pass. A green run still prints one `WARN` + stack trace from `WaveTest`
+231 tests, all pass. A green run still prints one `WARN` + stack trace from `WaveScriptTest`
 (deliberately feeds the wave parser a bad token) - expected, not a failure; check
 `Tests run: … Failures: 0`, not the console output.
 
