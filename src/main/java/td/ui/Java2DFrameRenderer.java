@@ -243,24 +243,26 @@ public final class Java2DFrameRenderer {
     /** How much of a cell a tower body fills - leaves a small margin, same spirit as enemy bodies. */
     private static final float TOWER_BODY_SIZE_FRACTION = 0.42f;
 
-    /** A toolbar icon has no board around it, so the body can fill more of the tile than on the board. */
-    private static final float ICON_BODY_SIZE_FRACTION = 0.40f;
+    /** Half the icon, so the toolbar reads as a row of small glyphs rather than filled chips. */
+    private static final float ICON_BODY_SIZE_FRACTION = 0.25f;
 
     /**
-     * Rasterizes one tower's body into a standalone icon - used for the toolbar's
+     * Rasterizes one tower's symbol into a standalone icon - used for the toolbar's
      * {@code JToggleButton} icons, which need a Swing {@code Icon} rather than a live paint.
-     * It goes through the same {@link #paintTowerBody} call the board does, so a tower's icon
-     * cannot drift from the symbol it shows once placed.
+     * It uses the same {@link #towerBodyShape} the board does, so a tower's icon cannot drift
+     * from the symbol it shows once placed.
      * <p>
-     * The turret head is deliberately left off. On the board it carries information - where an
-     * aiming tower is pointing - but an icon has no target and no animation clock, so all it
-     * contributes there is clutter over what should read as one flat symbol.
+     * Unlike the board, the symbol is painted as one flat colour rather than a translucent
+     * fill under a brighter outline: at this size a two-tone shape muddies into a smudge, and
+     * a single solid glyph is what actually reads. The turret head is left off for the same
+     * reason - on the board it carries information, where an aiming tower is pointing, but an
+     * icon has no target and no animation clock.
      * <p>
-     * The symbol is drawn on a dark tile rather than straight onto the button, because these
-     * are the same bright colours the board uses and the upgrade tower's is white - invisible
-     * on the platform look-and-feel's light button face. Carrying a scrap of board background
-     * with the icon keeps every tower legible without fighting the look-and-feel for control
-     * of the button itself, which would also cost the toggled and disabled states.
+     * The glyph sits on a dark tile rather than straight on the button, because these are the
+     * same bright colours the board uses and the upgrade tower's is white - invisible on the
+     * platform look-and-feel's light button face. Carrying a scrap of board background with
+     * the icon keeps every tower legible without fighting the look-and-feel for control of the
+     * button itself, which would also cost the toggled and disabled states.
      */
     public BufferedImage renderTowerIcon(Palette palette, int size) {
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
@@ -269,7 +271,8 @@ public final class Java2DFrameRenderer {
         g2.setColor(BOARD_BACKGROUND);
         g2.fill(new RoundRectangle2D.Float(0, 0, size, size, size * 0.25f, size * 0.25f));
         g2.translate(size / 2.0, size / 2.0);
-        this.paintTowerBody(g2, palette, size * ICON_BODY_SIZE_FRACTION);
+        g2.setColor(colorFor(palette));
+        g2.fill(towerBodyShape(palette, size * ICON_BODY_SIZE_FRACTION));
         g2.dispose();
         return image;
     }
