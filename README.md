@@ -59,7 +59,7 @@ Mouse: move to preview placement, click to place or to select a placed tower.
 |-------|-------|-----------|
 | Triangle | 10 | Single target, hits whichever enemy in range is furthest along the path |
 | Circle | 15 | Picks a random target in range and deals splash damage falling off with distance |
-| Sunshine | 20 | Long range; shoots every enemy in range one at a time, then recharges |
+| Sunshine | 20 | Long range; a beam sweeps around it once every 2s, hitting everything it passes |
 | Stardust | 25 | Short range; damages everything in range at once, ghosts included |
 | Power | 20 | Passive — boosts the damage and range of nearby towers; several stack |
 

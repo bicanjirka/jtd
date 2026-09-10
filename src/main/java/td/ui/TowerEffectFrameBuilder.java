@@ -30,10 +30,17 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final double AURA_PERIOD_SECONDS = 1.8;
     private static final double[] AURA_PHASE_OFFSETS = {0.0, 0.5};
 
+    /** Thin enough to read as a scanning line rather than as a shot. */
+    private static final float SWEEP_LINE_WIDTH = 1.5f;
+
     private final List<TowerEffectDraw> draws = new ArrayList<>();
+    private final int gameTime;
+    private final double interpolationAlpha;
     private final double animationSeconds;
 
-    public TowerEffectFrameBuilder(double animationSeconds) {
+    public TowerEffectFrameBuilder(int gameTime, double interpolationAlpha, double animationSeconds) {
+        this.gameTime = gameTime;
+        this.interpolationAlpha = interpolationAlpha;
         this.animationSeconds = animationSeconds;
     }
 
@@ -71,16 +78,22 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
+    /**
+     * The scanning beam itself, drawn out to the edge of the tower's range, plus a fading
+     * beam to each enemy the scan has recently caught. The sweep line uses the tower's own
+     * interpolated scan angle, the same value its turret head is drawn at, so the beam and
+     * the head cannot point in different directions.
+     */
     public Void visitTowerThree(TowerThree tower) {
-        int[] lineSteps = tower.getLineSteps();
-        int[] enemyX = tower.getEnemyX();
-        int[] enemyY = tower.getEnemyY();
-        float maxSteps = tower.getCoolDownRecharge() / 2f;
-        for (int i = 0; i < lineSteps.length; i++) {
-            if (lineSteps[i] > 0) {
-                this.draws.add(new BeamDraw(Palette.TOWER_THREE_BEAM, tower.getX(), tower.getY(),
-                        enemyX[i], enemyY[i], beamWidth(lineSteps[i] / maxSteps)));
-            }
+        double radians = tower.sweepRadiansAt(this.interpolationAlpha);
+        this.draws.add(new BeamDraw(Palette.TOWER_THREE_BEAM, tower.getX(), tower.getY(),
+                (float) (tower.getX() + Math.cos(radians) * tower.getRangeReal()),
+                (float) (tower.getY() + Math.sin(radians) * tower.getRangeReal()),
+                SWEEP_LINE_WIDTH));
+
+        for (TowerThree.SonarHit hit : tower.getRecentHits()) {
+            this.draws.add(new BeamDraw(Palette.TOWER_THREE_BEAM, tower.getX(), tower.getY(),
+                    hit.x(), hit.y(), beamWidth(tower.hitFade(hit, this.gameTime))));
         }
         return null;
     }

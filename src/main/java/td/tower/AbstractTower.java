@@ -18,6 +18,13 @@ import java.util.List;
  */
 public abstract class AbstractTower implements Tower {
 
+    /**
+     * Simulation ticks per second at {@code TickSpeed.NORMAL}, i.e. the reciprocal of
+     * {@code GameLoop.BASE_TICK_NANOS}. Towers express their cadence in seconds for the
+     * player's benefit, and this is what converts it.
+     */
+    protected static final float TICKS_PER_SECOND = 20f;
+
     protected GameWorld context;
     protected final List<TowerUpgrade> upgTowers;
     protected int boardX;
@@ -152,6 +159,15 @@ public abstract class AbstractTower implements Tower {
         return this.type;
     }
 
+    /**
+     * The line describing how often this tower attacks. Overridden by a tower whose cadence
+     * is not a cooldown at all - see {@link TowerThree}, which sweeps continuously and has a
+     * rotation speed rather than a fire rate.
+     */
+    protected String rateLine() {
+        return "Fire rate: " + TICKS_PER_SECOND / (this.coolDownMax + 1) + "/s\n";
+    }
+
     public String getInfoString() {
         String s = "Price: " + this.price + "\n" +
                 "Range: " + this.rangeBase + "\n";
@@ -159,7 +175,7 @@ public abstract class AbstractTower implements Tower {
             s += "\n";
         } else {
             s += "Damage: " + this.damageBase / 100f + "\n" +
-                    "Fire rate: " + 20f / (this.coolDownMax + 1) + "/s\n\n";
+                    this.rateLine() + "\n";
         }
         return s;
     }
@@ -170,7 +186,7 @@ public abstract class AbstractTower implements Tower {
             s += "\n";
         } else {
             s += "Damage: " + this.damageCurrent / 100f + "\n" +
-                    "Fire rate: " + 20f / (this.coolDownMax + 1) + "/s\n" +
+                    this.rateLine() +
                     "Kills: " + this.killCount + "\n" +
                     "Damage dealt: " + this.damageDealt / 100f + "\n\n";
         }

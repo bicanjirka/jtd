@@ -82,7 +82,7 @@ testable class, and every one of `GameWorld`'s methods just delegates to one of 
 | `EconomyLedger` | `td.economy` | the `EconomyState` (credits/score/lives) and `EconomyListener` notification — see Threading model |
 | `EnemyRoster` (implements `EnemyRegistry`) | `td.enemy` | the live per-wave `EnemyMob[]` and death reporting to `GameHost` |
 | `TowerRoster` | `td.tower` | the tower list, buy/sell/clear, and `TowerListener` notification |
-| `WaveAnnouncer` | `td.wave` | the `WaveStartListener` hub (`TowerThree` is the only subscriber, resetting its round-robin index) |
+| `WaveAnnouncer` | `td.wave` | the `WaveStartListener` hub (`TowerThree` is the only subscriber, clearing the hit markers its scan left on the previous wave) |
 
 A consumer that only needs one of these should depend on it directly rather than on the whole
 `GameWorld` — e.g. `td.tower.targeting`'s query classes and `BoardRenderer` take an
@@ -235,11 +235,12 @@ the two documents avoid contradicting each other:**
   game loop), but the variant set is at least genuinely closed now, which is the part that
   was previously just asserted without being true.
 - Tower targeting is centralized in `td.tower.targeting` (`TargetQuery`/
-  `InRangeTargetQuery`, `TargetSelector`/`FurthestAlongPathSelector`/`RandomSelector`,
-  `NextTargetQuery`/`InRangeAfterIndexQuery` for `TowerThree`'s index-stable round robin).
-  This is pattern D done for real: filtering and selection are separate, swappable, unit-
-  tested pieces instead of four hand-rolled scans with an `if` buried in each one. Add a
-  new tower by composing these, not by writing a fifth scan.
+  `InRangeTargetQuery`/`OfTypeTargetQuery`, `TargetSelector`/`FurthestAlongPathSelector`/
+  `RandomSelector`). This is pattern D done for real: filtering and selection are separate,
+  swappable, unit-tested pieces instead of four hand-rolled scans with an `if` buried in
+  each one. Add a new tower by composing these, not by writing a fifth scan — and where a
+  tower's cadence is geometric rather than a cooldown, compose a query with something like
+  `td.tower.SonarSweep` (see `TowerThree`) instead of a selector.
 - **Pattern A (algebra: operation + combinator + identity + absorber) is applied at every
   place two values of the same kind get combined**, replacing what used to be hand-rolled
   arithmetic spread across several mutations:
