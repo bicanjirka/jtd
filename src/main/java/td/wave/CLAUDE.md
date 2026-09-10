@@ -79,5 +79,6 @@ to `EnemyFactory.Enemy`, not to anything here.
 
 `WaveAnnouncer`/`WaveStartListener` are just the "a wave started" hub, kept separate from
 the economy and the rosters despite once living bundled with them in `GameWorld`.
-`TowerThree` is the only subscriber. Its listener list is `CopyOnWriteArrayList` because it
+`TowerThree` is the only subscriber, dropping the hit markers its scan left on the previous
+wave's enemies. Its listener list is `CopyOnWriteArrayList` because it
 is fired from the `game-loop` thread — see the root `CLAUDE.md`'s Threading model.

@@ -25,10 +25,10 @@ import java.util.List;
  */
 public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
-    // Radians/second for a continuously-spinning head - opposite signs (clockwise/
-    // counterclockwise) and different magnitudes, purely cosmetic so these live here rather
-    // than as domain state (see the class doc comment's "function of elapsed time").
-    private static final double TOWER_THREE_SPIN_RADIANS_PER_SECOND = 3.5;
+    // Radians/second for a continuously-spinning head - purely cosmetic, so this lives here
+    // rather than as domain state (see the class doc comment's "function of elapsed time").
+    // TowerThree is deliberately not in this group: its head tracks the scan that decides what
+    // it shoots, so it reads that instead.
     private static final double TOWER_FOUR_SPIN_RADIANS_PER_SECOND = -2.0;
 
     // The upgrade tower's head pulses (scale, not heading) via a sine wave instead of spinning -
@@ -99,7 +99,9 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     public Void visitTowerThree(TowerThree tower) {
         this.sprite(tower);
-        this.head(tower, this.animationSeconds * TOWER_THREE_SPIN_RADIANS_PER_SECOND);
+        // The head is the scan: it must point exactly where the beam is, or the tower appears
+        // to shoot enemies it is not facing.
+        this.head(tower, tower.sweepRadiansAt(this.interpolationAlpha));
         return null;
     }
 

@@ -13,7 +13,7 @@ are `final` and are constructed only through `TowerFactory`:
 |---|---|---|
 | `TowerOne` | Triangle | one enemy, furthest along the path |
 | `TowerTwo` | Circle | one random enemy, plus distance-falloff splash |
-| `TowerThree` | Sunshine | index-stable round robin over everything in range, then recharges |
+| `TowerThree` | Sunshine | sonar scan: a beam sweeps the circle, hitting whatever it passes |
 | `TowerFour` | Stardust | everything in range at once, ghosts included |
 | `TowerUpgrade` | Power | passive; buffs neighbouring towers, never attacks |
 
@@ -22,8 +22,8 @@ are `final` and are constructed only through `TowerFactory`:
 **`doInit(context, x, y)` must be the last thing a leaf constructor does.** It converts
 cell coordinates to pixels and derives `rangeReal`/`rangeReal2` from the board scale, so any
 field a subclass computes from the board (e.g. `TowerTwo.spreadRadius`) has to be set before
-it, and anything that reads `centerX`/`centerY` (e.g. `TowerUpgrade.scanTowers`,
-`TowerThree.waveStarted`) has to run after it.
+it, and anything that reads `centerX`/`centerY` (e.g. `TowerUpgrade.scanTowers`) or
+registers a listener (e.g. `TowerThree`'s wave subscription) has to run after it.
 
 **Every hit goes through `AbstractTower.dealDamage`, never `enemy.doDamage` directly.** It
 is what keeps `damageDealt`/`killCount` honest, in two ways that are easy to get wrong:
@@ -41,10 +41,17 @@ registers as a `WaveStartListener`, `TowerUpgrade` as a `TowerListener`; both re
 themselves in `doCleanup`, which `TowerRoster` calls on sell *and* on level teardown. A
 missed unsubscribe leaks the tower into the next level.
 
-**`TowerThree` holds enemy *indices*, not enemy references.** Its round robin is stable
-against the roster's per-wave array, which is why it resets those arrays on `waveStarted`.
-That is also why `NextTargetQuery` exists as a separate interface from `TargetQuery` — a
-query returning a fresh `List` snapshot cannot offer index stability.
+**`TowerThree` decides hits against a swept *arc*, never the beam's instantaneous angle.**
+The scan moves about a fifth of a radian per tick, so it is essentially never exactly on an
+enemy when a tick is sampled — "is this enemy at the beam's angle" would miss nearly
+everything. `SonarSweep.sweptThisTick` asks whether a bearing lies in the arc covered since
+the previous tick, and the arc is half-open so a stationary enemy is hit once per revolution
+rather than twice at the boundary. It targets by absolute bearing, so where an enemy sits
+decides when it is hit, not where it happens to be in the wave's array.
+
+**`TowerThree`'s turret head must be drawn from the same scan angle that decides its hits**
+(`sweepRadiansAt`), not from `animationSeconds` like the other spinning heads. A cosmetic
+spin would drift out of step and the tower would appear to shoot enemies it is not facing.
 
 **`rangeReal2` is the squared range** and every range check compares squared distances.
 Don't introduce a `Math.sqrt` into a per-tick scan.
@@ -66,7 +73,10 @@ them; it does not hand-roll a scan over `EnemyRegistry.getEnemies()`.
   short-circuits without evaluating the other side).
 - `TargetSelector` — picks at most one out of a candidate list
   (`FurthestAlongPathSelector`, `RandomSelector`).
-- `NextTargetQuery` — the index-stable round-robin shape, for `TowerThree` only.
+
+A tower whose cadence is geometric rather than a cooldown composes a query with its own
+sweep instead of a selector — see `TowerThree` filtering by range and type through
+`InRangeTargetQuery`, then deciding hits with `SonarSweep`.
 
 Implementations take an `EnemyRegistry`, never a `GameWorld` — the read-only slice is all
 they need.
