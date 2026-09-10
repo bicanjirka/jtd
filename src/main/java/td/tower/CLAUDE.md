@@ -31,9 +31,10 @@ is what keeps `damageDealt`/`killCount` honest, in two ways that are easy to get
 - A shot into an enemy another tower already killed this tick is a no-op in the mob, and
   must not be counted as a second kill.
 - `doDamage` **returns the damage that actually landed**, which is not the amount passed in
-  — a square resists part of every hit, and a mob that is not currently a valid target takes
-  none of it. `damageDealt` accumulates the return value. Adding the argument instead makes
-  a tower over-report against exactly the enemies it performs worst on.
+  — a square resists part of every hit, a mob that is not currently a valid target takes
+  none of it, and a killing blow is capped at the health that was left. `damageDealt`
+  accumulates the return value. Adding the argument instead makes a tower over-report
+  against exactly the enemies it performs worst on, and credits it for overkill.
 
 **A tower that subscribes to anything must unsubscribe in `doCleanup`.** `TowerThree`
 registers as a `WaveStartListener`, `TowerUpgrade` as a `TowerListener`; both remove
