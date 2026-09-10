@@ -198,15 +198,17 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /**
-     * Requests a repaint, called from the game loop thread via
-     * SwingUtilities.invokeLater once per batch of ticks. Skips requesting
-     * one while a previous paint is still in flight, or once the game has
-     * ended.
+     * The UI refresh pulse, reached from the game loop via SwingUtilities.invokeLater and so
+     * always running on the EDT. Repaints the board, and refreshes the side panel's live
+     * per-tower stats - both at a flat ~60fps regardless of tick speed, rather than once per
+     * tick. Skips the repaint while a previous paint is still in flight, and does nothing at
+     * all once the game has ended.
      */
     private void requestRender() {
         if (this.gameStopped) {
             return;
         }
+        this.gameConsole.getTowerInfo().refreshSelected();
         if (!this.painting) {
             this.gameBoard.repaint();
         }

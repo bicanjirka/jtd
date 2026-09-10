@@ -22,6 +22,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.Serial;
+import java.util.Objects;
 
 /**
  * The text pane under the tower toolbar, showing either the selected tower's live status and
@@ -38,6 +39,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     private GameWorld context;
     private Tower selectedTower;
+    private String lastText;
     private JButton jButton_sell;
     private JPanel jPanel_buttons;
     private JScrollPane jScrollPane1;
@@ -72,7 +74,29 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         }
     }
 
+    /**
+     * Rebuilds the selected tower's status text, if there is one. Damage dealt and kill count
+     * change on any tick the tower fires, and nothing reports that - {@link #economyChanged} only
+     * fires on a kill or a purchase, so between kills the panel used to sit stale until the
+     * tower was clicked again. Called from the render pulse rather than from tick code: it runs
+     * on the EDT at a flat ~60fps, so the text tracks the simulation without being rewritten
+     * once per tick while fast-forwarding.
+     */
+    public void refreshSelected() {
+        if (this.selectedTower != null) {
+            this.setText(this.selectedTower.getStatusString());
+        }
+    }
+
+    /**
+     * Skips identical text, which matters because this is now called every frame: handing a
+     * {@code JTextPane} the same string again still resets its caret and scroll position.
+     */
     private void setText(String s) {
+        if (Objects.equals(s, this.lastText)) {
+            return;
+        }
+        this.lastText = s;
         try {
             this.jTextPane1.setText(s);
         } catch (NullPointerException e) {
