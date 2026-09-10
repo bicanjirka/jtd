@@ -34,8 +34,8 @@ scales with `level`. Health reduction should probably scale the same way so ghos
 `Math.round(22.4f * delay / this.speed)`. The `22.4f` is a magic constant with no way to override it per-wave.
 
 - **Where:** `AbstractEnemyMob.doInit()`
-- **Approach:** add a `delay`-scaling field to `Context` (or `Wave`) that defaults to `22.4f`, and extend the wave
-  mini-language (see `Wave.finalise()`'s `c`/`e`/`t`/... token grammar) with a token — e.g. a `w<number>` prefix — that
+- **Approach:** add a `delay`-scaling field to `WaveDefinition` (or `Wave`) that defaults to `22.4f`, and extend the wave
+  mini-language (see `WaveScript.parse`'s `c`/`e`/`t`/... token grammar) with a token — e.g. a `w<number>` prefix — that
   lets a wave definition override the spacing between spawns before listing enemies.
 
 ## Levels
@@ -49,9 +49,8 @@ implementation. There is no way to add or edit a level without a code change and
 - **Where:** `td.level.LevelCatalog`, `td.level.BuiltInLevelCatalog`
 - **Approach:** add a `FileLevelCatalog implements LevelCatalog` that parses level files (format TBD — JSON is the
   obvious choice given `LevelDefinition`'s shape) from a resources or config directory into `LevelDefinition`s. A
-  malformed level file should be reported the same way `Cache` reports a bad image: throw
-  `td.util.GameStartupException`, which `Main` already catches as the one fatal-startup boundary, rather than adding a
-  second error-handling path.
+  malformed level file should throw `td.util.GameStartupException`, which `Main` already catches as the one
+  fatal-startup boundary, rather than adding a second error-handling path.
 
 ## Tower features
 

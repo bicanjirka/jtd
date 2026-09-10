@@ -20,6 +20,28 @@ When a task is planned as multiple phases, commit after each phase completes rat
 waiting until the whole task is done. This applies to every multi-phase plan, not just the
 one it was first requested for.
 
+## Documentation map, and keeping it true
+
+- **This file** is the always-loaded architecture guide. It stays the place for anything
+  cross-cutting: the headless/Swing boundary, the threading model, code style, test
+  conventions, the wave mini-language.
+- **`src/main/java/td/<package>/CLAUDE.md`** exists for the packages whose internals carry
+  invariants worth stating up front — `enemy`, `tower`, `wave`, `ui` and `economy`. These
+  load automatically when working inside that directory, so they are trusted; each one
+  covers construction/lifecycle ordering, what must not be "simplified", and the checklist
+  for adding a new type to that package. Don't create one for a package that has nothing to
+  say beyond this file.
+- **`README.md`** is the human-facing entry point: what the game is, how to build and run
+  it, controls, and the tower/enemy/level tables.
+- **`TODO.md`** is the single source of truth for known gaps.
+
+**Keep these current in the same commit as the code change, not afterwards.** If a refactor
+moves a class, changes a construction order, renames a collaborator, or invalidates a
+"never do X" note, update the affected `CLAUDE.md` — root or per-package — as part of that
+change. This is the same discipline `TODO.md` already gets ("close a gap, delete its entry
+in the same commit"), and it applies without being asked: a stale package doc is worse than
+no package doc, precisely because it is loaded and believed.
+
 ## Architecture: the headless/Swing boundary
 
 This is the one structural rule that matters, and it is the result of a deliberate refactor still in progress. Respect it.
@@ -27,7 +49,7 @@ This is the one structural rule that matters, and it is the result of a delibera
 - **`GameEngine` owns game state and input semantics.** It never constructs a window, never touches `Graphics2D`, and never requires a display. It can be built, driven, and asserted on entirely from a test.
 - **`TowerDefense` (a `JFrame`) and `td.ui` own presentation.** Layout, painting, `MouseEvent`/`KeyEvent` handling, and translating screen coordinates into the board-relative pixel coordinates `GameEngine.mouseClicked`/`highlightCell` expect.
 - **`GameHost` is the engine's only channel back to the UI** (`enemyDied`, `setInfoText`, `clearCell`). `GameWorld` calls through it; it does not know about Swing.
-- **`td.ui` itself splits describing a frame from drawing one.** `BoardRenderer.buildFrame(gameTime, interpolationAlpha)` walks the engine/context and returns an immutable `td.ui.render.RenderFrame` — cell/enemy/tower draw-command records with zero `java.awt` import anywhere in that package. A backend turns that into output: `Java2DFrameRenderer` is the real one (the only class in `td.ui` that imports `java.awt`); `AsciiBoardRenderer` is a second, deliberately minimal one used for headless `DEBUG` logging (see Logging), which exists specifically to prove the split is a real seam rather than an aspirational one. `Tower`/`EnemyMob` still dispatch into the frame builders via `TowerVisitor`/`EnemyMobVisitor` (see the no-`instanceof` rule below) — only the last step, turning a `RenderFrame` into pixels, changed shape.
+- **`td.ui` itself splits describing a frame from drawing one.** `BoardRenderer.buildFrame(gameTime, interpolationAlpha, animationSeconds)` walks the engine/context and returns an immutable `td.ui.render.RenderFrame` — cell/enemy/tower draw-command records with zero `java.awt` import anywhere in that package. A backend turns that into output: `Java2DFrameRenderer` is the real one (the only class in `td.ui` that imports `java.awt`); `AsciiBoardRenderer` is a second, deliberately minimal one used for headless `DEBUG` logging (see Logging), which exists specifically to prove the split is a real seam rather than an aspirational one. `Tower`/`EnemyMob` still dispatch into the frame builders via `TowerVisitor`/`EnemyMobVisitor` (see the no-`instanceof` rule below) — only the last step, turning a `RenderFrame` into pixels, changed shape.
 - **All game art is vector, drawn by code — there are no image assets.** Enemies, path markers, tower effects (beams/splash/pulse/aura) and tower sprites are all `java.awt.Shape`s built and painted in `Java2DFrameRenderer`, keyed off `td.ui.render.Palette`. A tower's sprite is itself two layered pieces: a static base (`TowerSpriteDraw`, `paintTowerBody`/`towerBodyShape`) and an animated turret head on top (`TurretHeadDraw`, `paintTurretHead`/`turretHeadShape`) — an aiming tower's head reads its own `td.tower.TurretAim` (advanced in `doTick`, interpolated at render time the same way `EnemyFrameBuilder` interpolates enemy position); a spinning or pulsing tower's head is a pure function of `GameLoop.animationSeconds`, needing no domain state at all (see `TowerSpriteFrameBuilder`'s per-visit-method constants). Adding a new tower or enemy's art is: (1) add a `Palette` constant naming its colour role; (2) add its `Shape`/colour case to `Java2DFrameRenderer` — `enemyShape`/`colorFor` for an enemy; `towerBodyShape`/`turretHeadShape`/`colorFor` (and `TowerSpriteFrameBuilder.bodyPaletteFor`, an exhaustive switch with no `default`) for a tower's base/head; a new `TowerEffectDraw` record (see `AuraDraw`) for a tower's transient effect; (3) wire the new domain class into the existing `TowerVisitor`/`EnemyMobVisitor` dispatch the same way every other type already is. The compiler catches a missing step at every one of those switches. Tower toolbar icons (`PanelTowerSelector`) reuse the exact same base+head paint code via `Java2DFrameRenderer.renderTowerIcon` (at a fixed representative heading/scale, since a static icon has no target or animation clock), so a tower's board look and its icon can never drift apart.
 
 **When adding gameplay logic, put it in `GameEngine`/`GameWorld`/the domain packages, not in `TowerDefense`.** `TowerDefense` is a shrinking legacy shell — every new rule placed there is a rule that cannot be tested. If a change needs something from the UI, add a method to `GameHost` rather than reaching for a Swing type from engine code.
@@ -119,7 +141,7 @@ shorter adjacent leg, and delegates only the curve itself to the subclass.
 Cell buildability is computed from this same final (possibly curved) geometry, not from a
 fixed list of authored cells: `PathCoverage.unbuildableCells` supersamples each grid cell in
 the path's bounding box and marks it unbuildable if enough of its area falls within the
-path's corridor width. `PathNormal.finalise` is a thin wrapper around it. For an unsmoothed,
+path's corridor width. `GameEngine.markUnbuildableCells` is the single caller. For an unsmoothed,
 axis-aligned grid path this reproduces exactly the same cells a naive "mark the listed cells"
 approach would — `PathCoverageTest` proves this for both built-in levels — but a smoothed
 path's buildable set correctly reflects its actual curved shape instead.
