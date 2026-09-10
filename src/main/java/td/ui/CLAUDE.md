@@ -76,10 +76,11 @@ hierarchies. That is a compiler-checked switch over a closed set of DTOs the ren
 itself defines, and is the one narrow exception to the project's no-`instanceof` rule. It
 is not license to switch on `EnemyMob`, `Tower` or `Cell`.
 
-Toolbar icons go through `renderTowerIcon`, which reuses the same `paintTowerBody` call the
-board does — so a tower's board look and its icon can never diverge. It draws the body only
-and puts it on a dark rounded tile; both choices are about a 32px icon rather than about the
-board, and `renderTowerIcon`'s own doc comment explains why.
+Toolbar icons go through `renderTowerIcon`, which reuses the same `towerBodyShape` the board
+does — so a tower's board look and its icon can never diverge in *shape*. How it is painted
+does differ, deliberately: the icon is one flat colour at half the tile, with no turret head,
+on a dark rounded backing. Those are all decisions about a 32px glyph rather than about the
+board, and `renderTowerIcon`'s own doc comment explains each.
 
 Every tower body is a single closed `Shape` (triangle, circle, spiral, star, pulsar). Keep it
 that way: the moment one needs two colours it needs its own paint method, and the shared
