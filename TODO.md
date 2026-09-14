@@ -67,6 +67,32 @@ reasonable mid-level of investment looks like.
   a strictly-better-or-worse one. No code or architecture change needed — every number here is already a named
   constant, not embedded in logic.
 
+### Cinder's flame cone has no visual effect yet
+
+`TowerCinder`'s wedge of damage has no on-board visual at all - `TowerEffectFrameBuilder.visitTowerCinder` returns
+`null` rather than drawing anything. This is a sequencing gap, not a design decision: a cone needs a new
+`TowerEffectDraw` record (a `ConeDraw`, alongside `BeamDraw`/`SplashDraw`/`PulseDraw`/`AuraDraw`) that doesn't exist
+yet, and lands in the same rendering pass as the new `ProjectileDraw` hierarchy for `TowerMortar`'s shells and
+`TowerSeeker`'s missiles - none of the three new towers' attacks are visible on the board until that pass.
+
+- **Where:** `td.ui.TowerEffectFrameBuilder.visitTowerCinder`
+- **Approach:** add `ConeDraw(Palette, float originX, float originY, float headingRadians, float radius, float
+  arcRadians, float alpha)` to `td.ui.render.TowerEffectDraw`'s `permits` clause, add its case to
+  `Java2DFrameRenderer.paintTowerEffect`, and emit it here using `tower.getTurretAim().currentRadians()` (the same
+  heading `InWedgeTargetQuery` already decides hits against) and the tower's own half-width/range constants.
+
+### New tower numbers are unbalanced placeholders
+
+`TowerMortar`, `TowerSeeker` and `TowerCinder`'s price, damage, range, cooldown, splash radius, and slow/freeze/burn
+magnitudes and durations were chosen to be plausible, not tuned - the same situation the upgrade-path numbers above
+were in before their own balance pass.
+
+- **Where:** the `public static final` constants and effect-duration constants in `TowerMortar`, `TowerSeeker`,
+  `TowerCinder`.
+- **Approach:** play each of the built-in levels with all three new towers, and adjust values until each feels like a
+  meaningful, roughly-comparable-in-power choice next to the existing four attack towers. No code or architecture
+  change needed - every number here is already a named constant.
+
 ### Rotating tower sprites
 
 Towers don't rotate their sprite image to visually face their current target (enemy mobs already do this via

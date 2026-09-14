@@ -26,9 +26,10 @@ import java.util.List;
 
 /**
  * The tower toolbar: one {@link HudToggleButton} per {@link TowerFactory.type}, in enum order,
- * so the buttons and the {@code q}-{@code t} shortcut keys follow whatever that enum declares
- * rather than a hand-maintained list. Buttons the player cannot currently afford are greyed
- * out, which is why this panel is an {@link EconomyListener}.
+ * so the buttons follow whatever that enum declares rather than a hand-maintained list -
+ * {@code TowerDefense.TOWER_PLACEMENT_KEYS} likewise assigns one keyboard shortcut per ordinal.
+ * Buttons the player cannot currently afford are greyed out, which is why this panel is an
+ * {@link EconomyListener}.
  * <p>
  * Icons come from {@link Java2DFrameRenderer#renderTowerIcon}, i.e. the same shapes the board
  * uses, so a tower's icon cannot drift from how it actually looks once placed. They are a

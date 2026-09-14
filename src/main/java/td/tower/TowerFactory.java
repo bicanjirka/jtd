@@ -17,6 +17,9 @@ public class TowerFactory {
             case third -> new TowerThree(c, x, y);
             case fourth -> new TowerFour(c, x, y);
             case aura -> new TowerAura(c, x, y);
+            case mortar -> new TowerMortar(c, x, y);
+            case seeker -> new TowerSeeker(c, x, y);
+            case cinder -> new TowerCinder(c, x, y);
         };
     }
 
@@ -25,7 +28,10 @@ public class TowerFactory {
         second(TowerTwo.price),
         third(TowerThree.price),
         fourth(TowerFour.price),
-        aura(TowerAura.price);
+        aura(TowerAura.price),
+        mortar(TowerMortar.price),
+        seeker(TowerSeeker.price),
+        cinder(TowerCinder.price);
 
         public final int price;
 

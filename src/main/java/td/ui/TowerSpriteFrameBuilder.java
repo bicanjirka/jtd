@@ -2,9 +2,12 @@ package td.ui;
 
 import td.tower.Tower;
 import td.tower.TowerAura;
+import td.tower.TowerCinder;
 import td.tower.TowerFactory;
 import td.tower.TowerFour;
+import td.tower.TowerMortar;
 import td.tower.TowerOne;
+import td.tower.TowerSeeker;
 import td.tower.TowerThree;
 import td.tower.TowerTwo;
 import td.tower.TowerVisitor;
@@ -69,6 +72,9 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
             case third -> Palette.TOWER_THREE_BODY;
             case fourth -> Palette.TOWER_FOUR_BODY;
             case aura -> Palette.TOWER_AURA_BODY;
+            case mortar -> Palette.TOWER_MORTAR_BODY;
+            case seeker -> Palette.TOWER_SEEKER_BODY;
+            case cinder -> Palette.TOWER_CINDER_BODY;
         };
     }
 
@@ -134,6 +140,26 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         double phase = 0.5 + 0.5 * Math.sin(this.animationSeconds * TOWER_AURA_PULSE_RADIANS_PER_SECOND);
         float scale = (float) (TOWER_AURA_PULSE_MIN_SCALE + (TOWER_AURA_PULSE_MAX_SCALE - TOWER_AURA_PULSE_MIN_SCALE) * phase);
         this.headWithScale(tower, 0.0, scale);
+        return null;
+    }
+
+    public Void visitTowerMortar(TowerMortar tower) {
+        this.sprite(tower);
+        this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
+        return null;
+    }
+
+    public Void visitTowerSeeker(TowerSeeker tower) {
+        this.sprite(tower);
+        this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
+        return null;
+    }
+
+    public Void visitTowerCinder(TowerCinder tower) {
+        this.sprite(tower);
+        // The head is a facing indicator only - the wide flame cone itself is a transient
+        // TowerEffectDraw (ConeDraw), not part of the turret head's own shape.
+        this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
         return null;
     }
 }

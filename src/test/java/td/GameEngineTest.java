@@ -5,6 +5,7 @@ import td.level.LevelDefinition;
 import td.projectile.CannonballProjectile;
 import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.tower.TowerMortar;
 import td.tower.TowerOne;
 import td.wave.Point;
 import td.wave.WaveDefinition;
@@ -116,6 +117,30 @@ class GameEngineTest {
         assertThat(engine.getGameWorld().getScore()).isEqualTo(scoreBefore + 7);
         assertThat(engine.getGameWorld().getCredits()).isEqualTo(creditsAfterBuild + 7);
         assertThat(engine.isWaveReady()).isTrue(); // 2nd wave exists -> ready to start it
+    }
+
+    @Test
+    void aMortarShellTravelsThenSplashesAnInRangeEnemyCreditingThePlayer() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        // same placement as the TowerOne case above - well within Mortar's own (larger) range too.
+        engine.loadLevel(levelWith(
+                List.of(new WaveDefinition("c", 1, 7, 1),
+                        new WaveDefinition("c", 1, 7, 1)), 100));
+
+        engine.startPlacing(TowerFactory.type.mortar, TowerMortar.range);
+        engine.mouseClicked(cellCenter(2), cellCenter(1));
+        int creditsAfterBuild = engine.getGameWorld().getCredits();
+        int scoreBefore = engine.getGameWorld().getScore();
+
+        assertThat(engine.nextWave()).isTrue();
+
+        for (int t = 1; t <= 20 && engine.getGameWorld().getScore() == scoreBefore; t++) {
+            engine.doTick(t);
+        }
+
+        assertThat(engine.getGameWorld().getScore()).isEqualTo(scoreBefore + 7);
+        assertThat(engine.getGameWorld().getCredits()).isEqualTo(creditsAfterBuild + 7);
+        assertThat(engine.getGameWorld().getProjectileRegistry().getProjectiles()).isEmpty();
     }
 
     @Test

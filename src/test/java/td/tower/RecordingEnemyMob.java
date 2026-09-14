@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * An {@link EnemyMob} double that sits at a fixed point and records every hit aimed at it.
- * A real mob's position comes from how far it has walked the level's path, which is no way to
- * place one at a chosen distance from a blast centre.
+ * An {@link EnemyMob} double that sits at a fixed point and records every hit and effect
+ * aimed at it. A real mob's position comes from how far it has walked the level's path, which
+ * is no way to place one at a chosen distance from a blast centre.
  * <p>
  * It never dies and absorbs nothing, so a recorded hit is exactly what the tower decided to
  * deal - which is the thing under test here, separate from what a real mob would do with it.
@@ -22,6 +22,7 @@ final class RecordingEnemyMob implements EnemyMob {
     private final double y;
     private final type mobType;
     private final List<Damage> hits = new ArrayList<>();
+    private final List<Effect> appliedEffects = new ArrayList<>();
 
     private RecordingEnemyMob(double x, double y, type mobType) {
         this.x = x;
@@ -57,6 +58,11 @@ final class RecordingEnemyMob implements EnemyMob {
 
     @Override
     public void applyEffect(Effect effect) {
+        this.appliedEffects.add(effect);
+    }
+
+    List<Effect> appliedEffects() {
+        return this.appliedEffects;
     }
 
     @Override
