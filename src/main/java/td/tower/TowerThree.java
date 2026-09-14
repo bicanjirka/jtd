@@ -83,7 +83,7 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
     }
 
     @Override
-    protected String rateLine() {
+    protected String rateLine(int coolDown) {
         return "Rotation: " + secondsPerRevolution + "s/turn\n";
     }
 

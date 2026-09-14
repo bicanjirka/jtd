@@ -1,13 +1,14 @@
-# `td.tower` — towers, targeting and upgrade buffs
+# `td.tower` — towers, targeting, aura buffs and upgrade paths
 
 Read the root `CLAUDE.md` first; this file only covers what is specific to this package and
-its two subpackages (`targeting`, `buff`).
+its three subpackages (`targeting`, `buff`, `upgrade`).
 
 ## Shape
 
-`Tower` is the interface; `AbstractTower` holds position, price, base/current damage and
-range, the upgrade-tower list, and the shared `dealDamage` accounting. The five leaf classes
-are `final` and are constructed only through `TowerFactory`:
+`Tower` is the interface; `AbstractTower` holds position, price, base/current damage/range/
+fire-rate, the list of nearby Aura towers buffing it, this tower's own permanently-chosen
+upgrade path (if any), and the shared `dealDamage` accounting. The five leaf classes are
+`final` and are constructed only through `TowerFactory`:
 
 | Class | Name in the UI | Targeting |
 |---|---|---|
@@ -85,16 +86,60 @@ they need.
 `null` type to mean "any" is exactly the modelled-absence problem the style guide's rule 8
 forbids.
 
-## Upgrade stacking (`td.tower.buff`)
+## Aura buff stacking (`td.tower.buff`)
 
 `TowerBuff` is the algebra: `none()` is the identity, `combine` is additive, and a tower's
-total buff is a `reduce` over its `TowerAura`s. Buff strength is per-aura-tower
-(`TowerAura`'s `power` constructor argument), not a shared static — that is what lets
-two aura towers of different strengths stack correctly.
+total buff is a `reduce` over its nearby `TowerAura`s **combined with its own chosen
+upgrade path's bonus** (see below) — `AbstractTower.calcDamageRange()` does both in one
+fold, which is what lets a specialization and an Aura tower's buff stack for free. Buff
+strength is per-aura-tower (`TowerAura`'s `power` constructor argument), not a shared
+static — that is what lets two aura towers of different strengths stack correctly.
 
-`AbstractTower.calcDamageRange()` recomputes `damageCurrent`/`rangeReal` from that reduce.
-It must be called on every change to the upgrade list; `registerTower`/`unregisterTower`
-already do.
+`TowerBuff` carries four independent bonus axes — `damageBonus`, `rangeBonus`,
+`fireRateBonus`, `bountyBonus` — each defaulting to 0 at `none()`. An Aura tower's own
+`buff()` only ever sets the first two; the latter two exist for upgrade paths (below) to use.
+
+`AbstractTower.calcDamageRange()` recomputes `damageCurrent`/`rangeCurrent`/
+`coolDownCurrent` from that reduce. It must be called on every change to either input;
+`registerTower`/`unregisterTower` (the Aura-tower side) and `chooseUpgradePath` (the
+path side) already do.
+
+**A tower's fire rate has a base/current split just like damage and range.**
+`coolDownMax` is the base cooldown a leaf sets at construction; `coolDownCurrent` is what
+tick code actually resets `coolDown` to after firing, and is `coolDownMax` shortened by
+`TowerBuff.fireRateFor`. `rateLine(int)` takes whichever one the caller means to describe
+(`getInfoString` passes `coolDownMax`, `getStatusString` passes `coolDownCurrent`) rather
+than assuming which is wanted the way the old zero-argument version did.
+
+## In-place upgrade paths (`td.tower.upgrade`)
+
+A tower can permanently specialize into one of its own `availablePaths()` — at most once,
+ever, for that tower instance. This is a different mechanic from the Aura tower's buff
+above: an Aura tower buffs *other* towers continuously from outside; a chosen upgrade path
+changes what *this* tower itself is, once, and stays changed for its lifetime.
+
+- `UpgradePath` — a tower's specialization: a display name, a price (paid the same way
+  buying a tower is), a `TowerBuff` stat bonus, and the `UpgradeCondition` gating it.
+- `UpgradeCondition` — "is this path currently available", independent of affordability.
+  `always()` is the identity (the "money only" gate — the path is limited by price alone).
+  `ClusterCondition`, `DamageDealtCondition`, `KillCountCondition` read a tower's own
+  position/stats and, for `ClusterCondition`, the roster via `GameWorld`.
+- `AbstractTower.chooseUpgradePath(path)` is the one entry point: it validates `path` is
+  actually one of this tower's own `availablePaths()` and that none has been chosen yet,
+  pays its price via `context.doPay`, sets `chosenPath`, calls the `onUpgradePathChosen`
+  hook (a no-op unless a leaf overrides it - see below), and recomputes
+  `calcDamageRange()`. It returns `false` without effect on any failure, mirroring
+  `GameWorld.doPay`'s check-and-charge-in-one-call contract - never gate a call to it on a
+  separate affordability check first.
+- **A path's bonus that isn't expressible through `TowerBuff` is applied via
+  `onUpgradePathChosen`, not through the shared algebra.** `TowerTwo`'s `spreadRadius` and
+  `TowerThree`'s sweep rate are each touched by only one tower's one path, so they are the
+  exception, not the rule - a leaf overriding this hook mutates its own field directly,
+  matched by reference against its own private `UpgradePath` constants rather than by a
+  string/id (keeps the match type-safe and avoids a stringly-typed switch).
+- `AbstractTower.availablePaths()` defaults to `List.of()` - only a tower with real content
+  (added per-leaf, not part of this shared mechanism) overrides it. The Aura tower does not
+  override it and offers no paths of its own for v1.
 
 ## Adding a new tower
 
@@ -108,6 +153,9 @@ already do.
    (an exhaustive switch with no `default`) and in `td.ui.Java2DFrameRenderer`'s
    `towerBodyShape` / `turretHeadShape` / `colorFor`.
 5. Add it to `README.md`'s tower table.
+6. If it offers upgrade paths, override `availablePaths()` with its (currently: exactly
+   two) `UpgradePath`s, and `onUpgradePathChosen` only if one of them bumps a stat outside
+   `TowerBuff`'s four axes.
 
 The toolbar icon needs no separate art — `PanelTowerSelector` renders it through the same
 paint code at a fixed pose, so a tower's board look and its icon cannot drift apart.

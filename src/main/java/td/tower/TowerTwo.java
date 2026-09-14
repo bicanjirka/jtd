@@ -34,6 +34,7 @@ public final class TowerTwo extends AbstractTower {
     public TowerTwo(GameWorld context, int x, int y) {
         super(TowerFactory.type.second, price, damage, range);
         this.coolDownMax = 19;
+        this.coolDownCurrent = this.coolDownMax;
         this.spreadRadius = spreadRadiusBase * context.getBoard().scale();
         this.doInit(context, x, y);
     }
@@ -69,7 +70,7 @@ public final class TowerTwo extends AbstractTower {
                     this.dealDamage(splashTarget, Damage.of(damage));
                 }
 
-                this.coolDown = this.coolDownMax;
+                this.coolDown = this.coolDownCurrent;
                 this.splashCenterX = ex;
                 this.splashCenterY = ey;
             } else {
@@ -108,11 +109,11 @@ public final class TowerTwo extends AbstractTower {
     }
 
     public float getCoolDownFraction() {
-        return (float) this.coolDown / this.coolDownMax;
+        return (float) this.coolDown / this.coolDownCurrent;
     }
 
     public boolean isSplashVisible() {
-        return this.coolDown >= this.coolDownMax;
+        return this.coolDown >= this.coolDownCurrent;
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {

@@ -30,6 +30,7 @@ public final class TowerOne extends AbstractTower {
     public TowerOne(GameWorld context, int x, int y) {
         super(TowerFactory.type.first, price, damage, range);
         this.coolDownMax = 39;
+        this.coolDownCurrent = this.coolDownMax;
         this.doInit(context, x, y);
     }
 
@@ -46,7 +47,7 @@ public final class TowerOne extends AbstractTower {
             this.currentTarget = this.findEnemy();
             if (this.currentTarget != null) {
                 this.dealDamage(this.currentTarget, Damage.of(this.damageCurrent));
-                this.coolDown = this.coolDownMax;
+                this.coolDown = this.coolDownCurrent;
             }
         }
         // No target: hold the last heading rather than snapping back to a neutral angle - see
@@ -65,7 +66,7 @@ public final class TowerOne extends AbstractTower {
     }
 
     public float getCoolDownFraction() {
-        return (float) this.coolDown / this.coolDownMax;
+        return (float) this.coolDown / this.coolDownCurrent;
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {

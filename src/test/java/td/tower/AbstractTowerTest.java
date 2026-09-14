@@ -4,16 +4,22 @@ import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.tower.buff.TowerBuff;
+import td.tower.upgrade.UpgradeCondition;
+import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Exercises AbstractTower's damage/range math and the TowerAura buff
- * mechanism through a concrete subclass (TowerOne). Lives in the same
- * package as AbstractTower so it can read the protected damageBase/
- * damageCurrent fields directly instead of parsing getStatusString().
+ * Exercises AbstractTower's damage/range math, the TowerAura buff mechanism, and the
+ * upgrade-path mechanism (through the test-only {@link FakeUpgradeableTower}, since no real
+ * tower has real path content yet - see td/tower/upgrade). Lives in the same package as
+ * AbstractTower so it can read the protected damageBase/damageCurrent fields directly
+ * instead of parsing getStatusString().
  */
 class AbstractTowerTest {
 
@@ -163,5 +169,84 @@ class AbstractTowerTest {
 
         assertThat(tower.getDamageDealt()).isEqualTo(1500);
         assertThat(tower.getKillCount()).isZero();
+    }
+
+    @Test
+    void choosingAnOfferedPathSpendsItsPriceAndAppliesItsStatBonus() {
+        context.startEconomy(100, 5);
+        UpgradePath path = new UpgradePath("Veteran", 40, new TowerBuff(0.5f, 0.25f, 0f, 0f), UpgradeCondition.always());
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(path));
+
+        boolean chosen = tower.chooseUpgradePath(path);
+
+        assertThat(chosen).isTrue();
+        assertThat(context.getCredits()).isEqualTo(60);
+        assertThat(tower.damageCurrent).isEqualTo((int) (tower.damageBase * 1.5f));
+        assertThat(tower.getChosenPath()).isEqualTo(path);
+    }
+
+    @Test
+    void choosingAPathTwiceIsRejected() {
+        context.startEconomy(100, 5);
+        UpgradePath first = new UpgradePath("Veteran", 10, TowerBuff.amplifying(0.2f), UpgradeCondition.always());
+        UpgradePath second = new UpgradePath("Overclock", 10, TowerBuff.amplifying(0.1f), UpgradeCondition.always());
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(first, second));
+        tower.chooseUpgradePath(first);
+
+        boolean chosenAgain = tower.chooseUpgradePath(second);
+
+        assertThat(chosenAgain).isFalse();
+        assertThat(tower.getChosenPath()).isEqualTo(first);
+    }
+
+    @Test
+    void choosingAPathNotInAvailablePathsIsRejected() {
+        context.startEconomy(100, 5);
+        UpgradePath offered = new UpgradePath("Veteran", 10, TowerBuff.amplifying(0.2f), UpgradeCondition.always());
+        UpgradePath foreign = new UpgradePath("Not mine", 10, TowerBuff.amplifying(0.2f), UpgradeCondition.always());
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(offered));
+
+        boolean chosen = tower.chooseUpgradePath(foreign);
+
+        assertThat(chosen).isFalse();
+        assertThat(tower.getChosenPath()).isNull();
+    }
+
+    @Test
+    void choosingAnUnaffordablePathIsRejectedAndSpendsNothing() {
+        context.startEconomy(5, 5);
+        UpgradePath path = new UpgradePath("Veteran", 40, TowerBuff.amplifying(0.2f), UpgradeCondition.always());
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(path));
+
+        boolean chosen = tower.chooseUpgradePath(path);
+
+        assertThat(chosen).isFalse();
+        assertThat(context.getCredits()).isEqualTo(5);
+        assertThat(tower.getChosenPath()).isNull();
+    }
+
+    @Test
+    void aChosenPathComposesWithANearbyAuraTowersBuff() {
+        context.startEconomy(100, 5);
+        UpgradePath path = new UpgradePath("Veteran", 10, TowerBuff.amplifying(0.2f), UpgradeCondition.always());
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(path));
+        context.addTower(tower);
+        new TowerAura(context, 0, 0);
+
+        tower.chooseUpgradePath(path);
+
+        float expectedMultiplier = 1f + 0.2f + TowerAura.DEFAULT_POWER;
+        assertThat(tower.damageCurrent).isEqualTo((int) (tower.damageBase * expectedMultiplier));
+    }
+
+    @Test
+    void aChosenPathsFireRateBonusReducesCoolDownCurrent() {
+        context.startEconomy(100, 5);
+        UpgradePath path = new UpgradePath("Overclock", 10, new TowerBuff(0f, 0f, 0.5f, 0f), UpgradeCondition.always());
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(path));
+
+        tower.chooseUpgradePath(path);
+
+        assertThat(tower.coolDownCurrent).isEqualTo(Math.round(tower.coolDownMax * 0.5f));
     }
 }

@@ -3,6 +3,7 @@ package td.tower;
 import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
+import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 
 import java.util.ArrayList;
@@ -35,12 +36,14 @@ public abstract class AbstractTower implements Tower {
     protected int damageBase;
     protected int damageCurrent;
     protected int coolDownMax;
+    protected int coolDownCurrent;
     protected float rangeReal = 0;
     protected float rangeReal2 = 0;
     protected boolean passive = false;
     protected boolean selected = false;
     protected long damageDealt = 0;
     protected int killCount = 0;
+    protected UpgradePath chosenPath;
     private final TowerFactory.type type;
     private float rangeCurrent;
     private final int price;
@@ -86,17 +89,22 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * Recomputes damage and range from the current set of upgrade towers, folded through
-     * {@link TowerBuff}'s additive algebra so upgrades of unequal strength stack correctly.
-     * Must be called on every change to that set - {@link #registerTower}/
-     * {@link #unregisterTower} already do.
+     * Recomputes damage, range and fire rate from the current set of nearby Aura towers
+     * <em>and</em> this tower's own chosen upgrade path (if any), folded through
+     * {@link TowerBuff}'s additive algebra so bonuses of unequal strength stack correctly -
+     * a specialization composes with an Aura tower's buff for free. Must be called on every
+     * change to either: {@link #registerTower}/{@link #unregisterTower} already do for the
+     * former, {@link #chooseUpgradePath} for the latter.
      */
     protected void calcDamageRange() {
-        TowerBuff buff = this.upgTowers.stream()
+        TowerBuff externalBuff = this.upgTowers.stream()
                 .map(TowerAura::buff)
                 .reduce(TowerBuff.none(), TowerBuff::combine);
-        this.damageCurrent = buff.damageFor(this.damageBase);
-        this.rangeCurrent = buff.rangeFor(this.rangeBase);
+        TowerBuff pathBuff = this.chosenPath == null ? TowerBuff.none() : this.chosenPath.statBonus();
+        TowerBuff totalBuff = externalBuff.combine(pathBuff);
+        this.damageCurrent = totalBuff.damageFor(this.damageBase);
+        this.rangeCurrent = totalBuff.rangeFor(this.rangeBase);
+        this.coolDownCurrent = totalBuff.fireRateFor(this.coolDownMax);
 
         this.rangeReal = this.rangeCurrent * this.context.getBoard().scale();
         this.rangeReal2 = rangeReal * rangeReal;
@@ -131,6 +139,36 @@ public abstract class AbstractTower implements Tower {
         return this.killCount;
     }
 
+    /** No paths by default - only the four attack towers override this with real content. */
+    public List<UpgradePath> availablePaths() {
+        return List.of();
+    }
+
+    public UpgradePath getChosenPath() {
+        return this.chosenPath;
+    }
+
+    public boolean chooseUpgradePath(UpgradePath path) {
+        if (this.chosenPath != null || !this.availablePaths().contains(path)) {
+            return false;
+        }
+        if (!this.context.doPay(path.price())) {
+            return false;
+        }
+        this.chosenPath = path;
+        this.onUpgradePathChosen(path);
+        this.calcDamageRange();
+        return true;
+    }
+
+    /**
+     * Hook for a leaf tower whose chosen path bumps a stat {@link TowerBuff} can't express
+     * (e.g. {@code TowerTwo}'s splash radius, {@code TowerThree}'s sweep speed) - a no-op by
+     * default. Called once, right when {@link #chooseUpgradePath} commits the choice.
+     */
+    protected void onUpgradePathChosen(UpgradePath path) {
+    }
+
     public void setSelected(boolean selected) {
         this.selected = selected;
     }
@@ -160,12 +198,14 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * The line describing how often this tower attacks. Overridden by a tower whose cadence
-     * is not a cooldown at all - see {@link TowerThree}, which sweeps continuously and has a
-     * rotation speed rather than a fire rate.
+     * The line describing how often this tower attacks at the given cooldown - callers pass
+     * {@code coolDownMax} for the pre-purchase base rate and {@code coolDownCurrent} for the
+     * live, possibly-buffed one. Overridden by a tower whose cadence is not a cooldown at all
+     * - see {@link TowerThree}, which sweeps continuously and has a rotation speed rather
+     * than a fire rate, and so ignores the argument.
      */
-    protected String rateLine() {
-        return "Fire rate: " + TICKS_PER_SECOND / (this.coolDownMax + 1) + "/s\n";
+    protected String rateLine(int coolDown) {
+        return "Fire rate: " + TICKS_PER_SECOND / (coolDown + 1) + "/s\n";
     }
 
     public String getInfoString() {
@@ -175,7 +215,7 @@ public abstract class AbstractTower implements Tower {
             s += "\n";
         } else {
             s += "Damage: " + this.damageBase / 100f + "\n" +
-                    this.rateLine() + "\n";
+                    this.rateLine(this.coolDownMax) + "\n";
         }
         return s;
     }
@@ -186,9 +226,12 @@ public abstract class AbstractTower implements Tower {
             s += "\n";
         } else {
             s += "Damage: " + this.damageCurrent / 100f + "\n" +
-                    this.rateLine() +
+                    this.rateLine(this.coolDownCurrent) +
                     "Kills: " + this.killCount + "\n" +
                     "Damage dealt: " + this.damageDealt / 100f + "\n\n";
+        }
+        if (this.chosenPath != null) {
+            s += "Specialized: " + this.chosenPath.displayName() + "\n";
         }
         return s;
     }

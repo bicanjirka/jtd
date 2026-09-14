@@ -1,5 +1,9 @@
 package td.tower;
 
+import td.tower.upgrade.UpgradePath;
+
+import java.util.List;
+
 /**
  * One tower on the board, as seen by the roster, the cell it occupies and the renderer.
  * Concrete types are reached only through {@link TowerVisitor}, never by casting.
@@ -52,5 +56,29 @@ public interface Tower {
      * anything must unsubscribe here or it leaks into the next level.
      */
     void doCleanup();
+
+    /** Total damage this tower has actually landed - see AbstractTower.dealDamage's accounting rules. */
+    long getDamageDealt();
+
+    /** How many kills this tower has landed - see AbstractTower.dealDamage's accounting rules. */
+    int getKillCount();
+
+    /**
+     * This tower's specialization paths (exactly two, for v1) - empty for a tower that offers
+     * none, like the Aura tower.
+     */
+    List<UpgradePath> availablePaths();
+
+    /** The path this tower has permanently specialized into, or {@code null} if it hasn't chosen one yet. */
+    UpgradePath getChosenPath();
+
+    /**
+     * Spends {@code path}'s price and permanently specializes this tower along it. Returns
+     * {@code false} without effect if a path is already chosen, {@code path} isn't one of
+     * this tower's own {@link #availablePaths()}, or the player can't afford it - mirrors
+     * {@code GameWorld.doPay}'s check-and-charge-in-one-call contract, so a caller must not
+     * gate this on a separate affordability check first.
+     */
+    boolean chooseUpgradePath(UpgradePath path);
 
 }
