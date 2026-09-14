@@ -48,7 +48,7 @@ package:
   (`[0, 1)`). Use it for anything reading domain state that advances per tick: an alive
   enemy's position, an aiming turret's heading. It respects pause and fast-forward.
 - **`animationSeconds`** — monotonic wall-clock seconds. Use it for cosmetic animation with
-  no domain state behind it: spinning turret heads, the upgrade tower's pulse and aura, the
+  no domain state behind it: spinning turret heads, the Aura tower's pulse and ring, the
   moving path markers. It deliberately keeps running while the game is paused, and does not
   speed up when the game does.
 

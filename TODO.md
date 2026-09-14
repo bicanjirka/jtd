@@ -54,17 +54,18 @@ implementation. There is no way to add or edit a level without a code change and
 
 ## Tower features
 
-### Tower upgrade doesn't gate on affordability
+### Upgrade-path numbers are unbalanced placeholders
 
-`PanelTowerInfo.moneyChanged()` currently just refreshes the displayed tower status text/price when money changes;
-there's no logic checking or indicating whether the player can afford to upgrade the currently-selected tower (the
-original comment on this method said it was "not used yet — here for future upgrade-affordability checks", but that
-check was never implemented, and there's no "upgrade" action to gate in the first place).
+The 8 upgrade paths (`TowerOne`/`TowerTwo`/`TowerThree`/`TowerFour`, two each) all have real prices and stat bonuses,
+but none of them have been played against actual waves — the numbers were chosen to be plausible, not tuned. The
+`ClusterCondition`/`DamageDealtCondition`/`KillCountCondition` thresholds are similarly unverified guesses at what a
+reasonable mid-level of investment looks like.
 
-- **Where:** `PanelTowerInfo.moneyChanged()`
-- **Approach:** this depends on a real upgrade-purchase flow existing first (currently the only "upgrade" mechanic is
-  placing a separate `TowerAura` tower nearby, not upgrading an existing tower in place) — worth deciding whether
-  in-place tower upgrades are even a wanted feature before building the affordability check.
+- **Where:** the `private static final UpgradePath` constants in `TowerOne`, `TowerTwo`, `TowerThree`, `TowerFour`.
+- **Approach:** play each of the built-in levels with every path chosen at least once, and adjust price/stat-bonus/
+  condition-threshold values until each path feels like a meaningful, roughly-comparable-in-power choice rather than
+  a strictly-better-or-worse one. No code or architecture change needed — every number here is already a named
+  constant, not embedded in logic.
 
 ### Rotating tower sprites
 
