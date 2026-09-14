@@ -11,4 +11,8 @@ public class GameStartupException extends RuntimeException {
     public GameStartupException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    public GameStartupException(String message) {
+        this(message, null);
+    }
 }

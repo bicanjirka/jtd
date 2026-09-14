@@ -1,5 +1,7 @@
 package td.effect;
 
+import td.damage.Damage;
+
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -42,6 +44,21 @@ public final class ActiveEffects {
         return multiplier;
     }
 
+    /** Not a valid target while an {@link EffectKind#INVISIBLE} effect is active. */
+    public boolean isInvisible() {
+        return this.active.containsKey(EffectKind.INVISIBLE);
+    }
+
+    /**
+     * Reduces {@code incoming} by the active {@link EffectKind#SHIELD} effect's percentage,
+     * unreduced if none is active - the effect-side counterpart to a {@code Trait}'s own,
+     * permanent {@code onHit} resistance, which this composes with rather than replaces.
+     */
+    public Damage applyShield(Damage incoming) {
+        Effect shield = this.active.get(EffectKind.SHIELD);
+        return shield == null ? incoming : incoming.scaledBy(1f - shield.shieldPercent());
+    }
+
     /**
      * Applies one tick of every active damage-over-time effect through its own sink, then
      * decrements every active effect's remaining duration, removing any that just expired.
@@ -76,6 +93,9 @@ public final class ActiveEffects {
         return switch (effect.kind()) {
             case SLOW, FREEZE -> 1f - effect.speedMultiplier();
             case BURN -> effect.damagePerTick().amount();
+            case SHIELD -> effect.shieldPercent();
+            // On/off, not gradated - any reapplication is at least as strong as what's already active.
+            case INVISIBLE -> 1f;
         };
     }
 }
