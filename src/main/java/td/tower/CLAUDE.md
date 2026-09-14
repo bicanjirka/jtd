@@ -98,6 +98,18 @@ depend on any concrete tower.
 missile retargets around *its own current location*, which is the one case in this codebase
 where "nearest" means nearest to something other than the object doing the asking.
 
+`InWedgeTargetQuery` is a cone: enemies within a facing direction and a half-width, meant to
+be `and`-ed with an `InRangeTargetQuery` bounding its reach the same way `TowerFour` already
+composes `anyType` with `OfTypeTargetQuery`. It is deliberately **not** built on `SonarSweep`:
+`SonarSweep.sweptThisTick` exists because a continuously rotating beam is essentially never
+exactly on a target when a tick samples it, so it has to test the arc swept *since the last
+tick*, not the beam's instantaneous angle. A wedge is static or only slowly reorients, so
+there is no "missed it between ticks" case to guard against — it is simply tested against its
+*current* heading, every tick. That heading comes from `TurretAim.currentRadians()` (added
+alongside this query, for exactly this use), so a cone's hit test and its rendered turret head
+are guaranteed to agree, the same guarantee `TowerThree`'s `sweepRadiansAt` already gives its
+beam.
+
 `InRangeTargetQuery` has no public constructor: use `anyType` or `ofType`. Passing a
 `null` type to mean "any" is exactly the modelled-absence problem the style guide's rule 8
 forbids.
