@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.tower.Tower;
+import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 
 import javax.swing.JPanel;
@@ -17,6 +18,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.io.Serial;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -29,6 +31,14 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(PanelTowerInfo.class);
 
+    /**
+     * A single-property, narrow exception to every control otherwise sharing one look (see
+     * {@link Hud}): selling is destructive and irreversible, so its text alone reads
+     * differently. Border, fill, hover/press states and font all still come from {@link Hud}
+     * untouched - {@code paintCentredText} already reads a button's own foreground colour,
+     * so no change to {@code Hud}/{@code HudButton} is needed to support this.
+     */
+    private static final Color SELL_TEXT_COLOR = new Color(255, 120, 120);
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -38,6 +48,8 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private String lastText;
     private boolean levelEnded = false;
     private HudButton jButton_sell;
+    private HudButton jButton_path1;
+    private HudButton jButton_path2;
     private JPanel jPanel_buttons;
     private JScrollPane jScrollPane1;
     private JTextPane jTextPane1;
@@ -80,6 +92,48 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
             this.jButton_sell.setEnabled(!this.levelEnded);
             this.jButton_sell.setText("Sell ( $" + this.selectedTower.getSellPrice() + " )");
             this.setText(this.selectedTower.getStatusString());
+            this.updatePathButtons();
+        }
+    }
+
+    /**
+     * Shows up to two upgrade-path buttons for the selected tower, one per
+     * {@code availablePaths()} entry - or none, once a path has already been chosen (its name
+     * then reads from {@code getStatusString()}'s own "Specialized: ..." line instead).
+     * Called from both {@link #updateInterface} and the render-pulse {@link #refreshSelected},
+     * the same way sell's affordability and the live kill/damage figures already are - a
+     * path's enablement (cluster size, damage dealt, kill count) can change without any
+     * economy event, so it needs the same per-frame re-derivation.
+     */
+    private void updatePathButtons() {
+        List<UpgradePath> paths = this.selectedTower.getChosenPath() != null
+                ? List.of()
+                : this.selectedTower.availablePaths();
+        this.updatePathButton(this.jButton_path1, paths, 0);
+        this.updatePathButton(this.jButton_path2, paths, 1);
+    }
+
+    private void updatePathButton(HudButton button, List<UpgradePath> paths, int index) {
+        if (index >= paths.size()) {
+            button.setVisible(false);
+            return;
+        }
+        UpgradePath path = paths.get(index);
+        button.setVisible(true);
+        button.setText(path.displayName() + " ( $" + path.price() + " )");
+        boolean available = !this.levelEnded
+                && path.condition().isSatisfied(this.selectedTower, this.context)
+                && this.context.canPay(path.price());
+        button.setEnabled(available);
+    }
+
+    private void choosePathAt(int index) {
+        if (this.selectedTower == null) {
+            return;
+        }
+        List<UpgradePath> paths = this.selectedTower.availablePaths();
+        if (index < paths.size() && this.selectedTower.chooseUpgradePath(paths.get(index))) {
+            this.updateInterface();
         }
     }
 
@@ -94,6 +148,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     public void refreshSelected() {
         if (this.selectedTower != null) {
             this.setText(this.selectedTower.getStatusString());
+            this.updatePathButtons();
         }
     }
 
@@ -145,6 +200,8 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         jTextPane1 = new JTextPane();
         jPanel_buttons = new JPanel();
         jButton_sell = new HudButton("Sell");
+        jButton_path1 = new HudButton("");
+        jButton_path2 = new HudButton("");
 
         setLayout(new GridBagLayout());
 
@@ -176,6 +233,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         jPanel_buttons.setForeground(new Color(220, 255, 220));
 
         jButton_sell.setText("Sell");
+        jButton_sell.setForeground(SELL_TEXT_COLOR);
         jButton_sell.addActionListener(this::jButton_sellActionPerformed);
 
         gridBagConstraints = new GridBagConstraints();
@@ -185,6 +243,26 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         gridBagConstraints.anchor = GridBagConstraints.WEST;
         gridBagConstraints.weightx = 0.01;
         jPanel_buttons.add(jButton_sell, gridBagConstraints);
+
+        jButton_path1.addActionListener(evt -> this.choosePathAt(0));
+
+        gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.WEST;
+        gridBagConstraints.weightx = 0.01;
+        jPanel_buttons.add(jButton_path1, gridBagConstraints);
+
+        jButton_path2.addActionListener(evt -> this.choosePathAt(1));
+
+        gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.WEST;
+        gridBagConstraints.weightx = 0.01;
+        jPanel_buttons.add(jButton_path2, gridBagConstraints);
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
