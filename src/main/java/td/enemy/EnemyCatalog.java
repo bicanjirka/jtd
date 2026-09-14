@@ -59,8 +59,9 @@ public final class EnemyCatalog {
     }
 
     private static EnemyDefinition withId(EnemyDefinition source, String newId) {
-        return new EnemyDefinition(newId, source.displayName(), source.baseHealth(), source.baseSpeed(),
-                source.price(), source.archetype(), source.movement(), source.traits(), source.abilities());
+        return new EnemyDefinition(newId, source.displayName(), source.description(), source.baseSpeed(),
+                source.healthDivisor(), source.mobType(), source.archetype(), source.movement(),
+                source.traits(), source.abilities());
     }
 
     /**

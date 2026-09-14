@@ -12,13 +12,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class EnemyCatalogTest {
 
     private static EnemyDefinition simpleDefinition(String id) {
-        return new EnemyDefinition(id, id, 100, 1.28f, 5, BodyArchetype.CIRCLE, MovementBehavior.FIXED, List.of(), List.of());
+        return new EnemyDefinition(id, id, "", 1.28f, 1f, EnemyMob.type.Normal,
+                BodyArchetype.CIRCLE, new FixedMovement(), List.of(), List.of());
     }
 
     /** A minimal definition whose only ability spawns {@code spawnedId} on death. */
     private static EnemyDefinition definitionThatSpawns(String id, String spawnedId) {
         Ability spawnOnDeath = new Ability(new OnDeathTrigger(), new SpawnEnemiesAction(spawnedId, 1, false));
-        return new EnemyDefinition(id, id, 100, 1.28f, 5, BodyArchetype.CIRCLE, MovementBehavior.FIXED, List.of(), List.of(spawnOnDeath));
+        return new EnemyDefinition(id, id, "", 1.28f, 1f, EnemyMob.type.Normal,
+                BodyArchetype.CIRCLE, new FixedMovement(), List.of(), List.of(spawnOnDeath));
     }
 
     @Test
@@ -51,18 +53,19 @@ class EnemyCatalogTest {
     @Test
     void cloneAndAdjustRegistersAnIndependentDefinitionUnderTheNewIdWithoutMutatingTheOriginal() {
         EnemyCatalog catalog = new EnemyCatalog();
-        EnemyDefinition square = new EnemyDefinition("s", "Square", 100, 1.28f, 5,
-                BodyArchetype.SQUARE, MovementBehavior.ROTOR, List.of(), List.of());
+        EnemyDefinition square = new EnemyDefinition("s", "Square", "", 1.28f, 1f, EnemyMob.type.Normal,
+                BodyArchetype.SQUARE, new RotorMovement(0.1f), List.of(), List.of());
         catalog.register(square);
 
+        // "a Square with double the usual resistance for this one level" - the feature request's own example
         EnemyDefinition tankySquare = catalog.cloneAndAdjust("s", "tankySquare",
-                d -> new EnemyDefinition(d.id(), d.displayName(), d.baseHealth() * 2, d.baseSpeed(),
-                        d.price(), d.archetype(), d.movement(), d.traits(), d.abilities()));
+                d -> new EnemyDefinition(d.id(), d.displayName(), d.description(), d.baseSpeed(), d.healthDivisor() / 2f,
+                        d.mobType(), d.archetype(), d.movement(), d.traits(), d.abilities()));
 
-        assertThat(catalog.get("s").baseHealth()).isEqualTo(100);
+        assertThat(catalog.get("s").healthDivisor()).isEqualTo(1f);
         assertThat(catalog.get("tankySquare")).isEqualTo(tankySquare);
         assertThat(tankySquare.id()).isEqualTo("tankySquare");
-        assertThat(tankySquare.baseHealth()).isEqualTo(200);
+        assertThat(tankySquare.healthDivisor()).isEqualTo(0.5f);
     }
 
     @Test

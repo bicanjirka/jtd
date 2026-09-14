@@ -16,9 +16,9 @@ import java.util.Set;
 
 /**
  * Everything every enemy shares: spawn delay, movement along the level's path, health and
- * damage, and the death-fade animation's timing. Subclasses add a body scale, a facing angle,
- * and at most a small behavioural twist (see {@link #absorb} and {@code EnemyMobTriangle}'s
- * speed-up on damage).
+ * damage, and the death-fade animation's timing. {@link DefinedEnemyMob} adds a body scale,
+ * a facing angle, and whatever behavioural twist its {@link Trait}s give it (see
+ * {@link #absorb} and {@link HurtSpeedTrait}'s speed-up on damage).
  * <p>
  * Movement is real arc-length distance: {@link #doTick} advances {@code distanceIntoLap} by
  * {@code speed} pixels and resolves it through the shared {@link ArcLengthPath}, so a curved
@@ -142,8 +142,9 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     /**
-     * Hook for a mob that resists part of an incoming hit (see EnemyMobSquare). The default
-     * is no resistance - the damage lands unchanged.
+     * Hook for a mob that resists part of an incoming hit (see {@link DefinedEnemyMob#absorb},
+     * which folds every {@link Trait#onHit}). The default is no resistance - the damage lands
+     * unchanged.
      */
     protected Damage absorb(Damage incoming) {
         return incoming;
@@ -173,9 +174,9 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     /**
      * This mob's speed, folding in every currently active speed-affecting {@link Effect}
      * (see {@link #getSpeed()}). {@code speed} itself stays the intrinsic value - the one
-     * {@code EnemyMobTriangle}'s hurt curve writes and {@link #doInit} reads for the spawn
-     * delay - so a slow or freeze never gets permanently baked into it, and never gets wiped
-     * out the next time that curve recomputes it.
+     * {@link DefinedEnemyMob#doDamage} recomputes from its traits' {@code speedFactor} and
+     * {@link #doInit} reads for the spawn delay - so a slow or freeze never gets permanently
+     * baked into it, and never gets wiped out the next time a trait recomputes it.
      */
     private float effectiveSpeed() {
         return this.speed * this.activeEffects.speedMultiplier();
@@ -268,7 +269,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
 
     /**
      * The path's own facing direction at this mob's current position - exact, geometry-based,
-     * not derived from a pixel delta over one tick (see {@link AbstractEnemyMobDirectional}).
+     * not derived from a pixel delta over one tick (see {@link PathDirectionalMovement}).
      */
     protected double getPathFacingRadians() {
         return this.lastFacingRadians;

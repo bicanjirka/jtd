@@ -52,10 +52,10 @@ public class EnemyFactory {
 
         public EnemyMob create(GameWorld gameWorld, int delay, int health, int price, int level) {
             return switch (this) {
-                case Circle -> new EnemyMobCircle(gameWorld, delay, health, price, level);
-                case Square -> new EnemyMobSquare(gameWorld, delay, health, price, level);
-                case Triangle -> new EnemyMobTriangle(gameWorld, delay, health, price, level);
-                case Ghost -> new EnemyMobGhost(gameWorld, delay, health, price, level);
+                case Circle -> new DefinedEnemyMob(BuiltInEnemies.CIRCLE, gameWorld, delay, health, price, level);
+                case Square -> new DefinedEnemyMob(BuiltInEnemies.SQUARE, gameWorld, delay, health, price, level);
+                case Triangle -> new DefinedEnemyMob(BuiltInEnemies.TRIANGLE, gameWorld, delay, health, price, level);
+                case Ghost -> new DefinedEnemyMob(BuiltInEnemies.GHOST, gameWorld, delay, health, price, level);
                 case Empty -> new EnemyMobEmpty(gameWorld, delay, health, price, level);
             };
         }
