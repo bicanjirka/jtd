@@ -3,6 +3,7 @@ package td.ui.render;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,7 +28,7 @@ class AsciiBoardRendererTest {
 
     @Test
     void placesTowersAndEnemiesAtTheirCellWithFadingEnemiesUppercased() {
-        TowerSpriteDraw tower1 = new TowerSpriteDraw(Palette.TOWER_ONE_BODY, SCALE, 0, false, 15f, 5f, 50f);
+        TowerSpriteDraw tower1 = new TowerSpriteDraw(Palette.TOWER_ONE_BODY, SCALE, 0, false, 15f, 5f, 50f, Optional.empty());
         EnemyBodyDraw circle = new EnemyBodyDraw(Palette.ENEMY_CIRCLE, 25f, 15f, 0.0, 5f, 1f);
         EnemyFadeDraw fadingSquare = new EnemyFadeDraw(Palette.ENEMY_SQUARE, 5f, 5f, 0.0, 5f, 2f, 0.5f);
 

@@ -8,12 +8,14 @@ import td.tower.TowerOne;
 import td.tower.TowerThree;
 import td.tower.TowerTwo;
 import td.tower.TowerVisitor;
+import td.tower.upgrade.UpgradePath;
 import td.ui.render.Palette;
 import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TurretHeadDraw;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Describes each tower's static base ({@link TowerSpriteDraw}, unchanged regardless of type -
@@ -72,7 +74,23 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     private void sprite(Tower tower) {
         this.draws.add(new TowerSpriteDraw(bodyPaletteFor(tower.getType()), tower.getBoardX(), tower.getBoardY(),
-                tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal()));
+                tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(), accentPaletteFor(tower)));
+    }
+
+    /**
+     * The specialization-ring role for a tower's chosen upgrade path, if any - path A gets
+     * {@code TOWER_UPGRADE_PATH_A}, path B gets {@code TOWER_UPGRADE_PATH_B}, regardless of
+     * tower type, so the accent is one consistent two-colour language rather than a role per
+     * tower per path. {@code indexOf} works because {@code chooseUpgradePath} always stores
+     * back one of the exact instances {@code availablePaths()} itself returned.
+     */
+    private static Optional<Palette> accentPaletteFor(Tower tower) {
+        UpgradePath chosen = tower.getChosenPath();
+        if (chosen == null) {
+            return Optional.empty();
+        }
+        int index = tower.availablePaths().indexOf(chosen);
+        return Optional.of(index == 0 ? Palette.TOWER_UPGRADE_PATH_A : Palette.TOWER_UPGRADE_PATH_B);
     }
 
     /** A head with a constant nominal size - every tower but the (pulsing) upgrade tower. */

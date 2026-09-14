@@ -281,8 +281,29 @@ public final class Java2DFrameRenderer {
         }
         AffineTransform save = g2.getTransform();
         g2.translate(sprite.centerX(), sprite.centerY());
-        this.paintTowerBody(g2, sprite.palette(), scale * TOWER_BODY_SIZE_FRACTION);
+        float bodySize = scale * TOWER_BODY_SIZE_FRACTION;
+        this.paintTowerBody(g2, sprite.palette(), bodySize);
+        sprite.accent().ifPresent(accent -> this.paintUpgradeAccent(g2, accent, bodySize));
         g2.setTransform(save);
+    }
+
+    /** How far outside the body the specialization ring sits - every body shape's own extent stays within {@code bodySize}. */
+    private static final float UPGRADE_ACCENT_RADIUS_FRACTION = 1.3f;
+    private static final float UPGRADE_ACCENT_STROKE_WIDTH = 2.0f;
+
+    /**
+     * A thin ring just outside a tower's body, marking a permanently-chosen upgrade path (see
+     * {@code td.tower.upgrade}). Deliberately shape-agnostic - always a circle, regardless of
+     * the body's own triangle/ring/spiral/star/pulsar - so it reads the same way on every
+     * tower and never needs updating when a body shape changes.
+     */
+    private void paintUpgradeAccent(Graphics2D g2, Palette accent, float bodySize) {
+        float radius = bodySize * UPGRADE_ACCENT_RADIUS_FRACTION;
+        Stroke previousStroke = g2.getStroke();
+        g2.setStroke(new BasicStroke(UPGRADE_ACCENT_STROKE_WIDTH));
+        g2.setColor(colorFor(accent));
+        g2.draw(new Ellipse2D.Float(-radius, -radius, radius * 2, radius * 2));
+        g2.setStroke(previousStroke);
     }
 
     /**
@@ -533,6 +554,8 @@ public final class Java2DFrameRenderer {
             case TOWER_FOUR_BODY -> Color.ORANGE;
             case TOWER_AURA_BODY -> Color.WHITE;
             case TOWER_AURA_RING -> Color.WHITE;
+            case TOWER_UPGRADE_PATH_A -> new Color(255, 200, 60);
+            case TOWER_UPGRADE_PATH_B -> new Color(100, 180, 255);
             case TOWER_ONE_BEAM -> Color.GREEN;
             case TOWER_TWO_BEAM -> Color.RED;
             case TOWER_TWO_SPLASH_LINE, TOWER_TWO_SPLASH_FILL -> withAlpha(Color.RED, 80);

@@ -17,6 +17,9 @@ public enum Palette {
     TOWER_FOUR_BODY,
     TOWER_AURA_BODY,
     TOWER_AURA_RING,
+    /** The specialization-ring accent for a tower's first vs. second upgrade path - one shared pair of roles, not one per tower type. */
+    TOWER_UPGRADE_PATH_A,
+    TOWER_UPGRADE_PATH_B,
     TOWER_ONE_BEAM,
     TOWER_TWO_BEAM,
     TOWER_TWO_SPLASH_LINE,

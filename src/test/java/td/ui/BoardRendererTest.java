@@ -78,6 +78,33 @@ class BoardRendererTest {
     }
 
     @Test
+    void aTowerWithNoChosenUpgradePathYieldsNoAccent() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        context.addTower(new TowerOne(context, 1, 1));
+
+        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+
+        assertThat(frame.towerSprites().get(0).accent()).isEmpty();
+    }
+
+    @Test
+    void aTowersSecondUpgradePathYieldsTheAccentPathBRole() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        context.startEconomy(1000, 5);
+        TowerOne tower = new TowerOne(context, 1, 1);
+        context.addTower(tower);
+        // TowerOne.availablePaths() = [Veteran, Overclock] - Overclock (index 1) is money-gated,
+        // so it's choosable immediately without grinding out Veteran's kill-count condition.
+        tower.chooseUpgradePath(tower.availablePaths().get(1));
+
+        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+
+        assertThat(frame.towerSprites().get(0).accent()).contains(Palette.TOWER_UPGRADE_PATH_B);
+    }
+
+    @Test
     void aDeadEnemyYieldsAFadeDrawAndNoBodyDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
