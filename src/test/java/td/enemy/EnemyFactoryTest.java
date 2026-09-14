@@ -22,9 +22,11 @@ class EnemyFactoryTest {
     }
 
     @Test
-    void identifyEnemyMapsCodeToEnumConstant() {
-        assertThat(EnemyFactory.identifyEnemy("c")).isEqualTo(EnemyFactory.Enemy.Circle);
-        assertThat(EnemyFactory.identifyEnemy("g")).isEqualTo(EnemyFactory.Enemy.Ghost);
+    void getEnemyBuildsARealEmptyMobForTheSpacerToken() {
+        EnemyMob enemy = EnemyFactory.getEnemy("e", context, 0, 50, 3, 1);
+
+        assertThat(enemy).isInstanceOf(EnemyMobEmpty.class);
+        assertThat(enemy.validTarget()).isFalse();
     }
 
     @Test

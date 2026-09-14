@@ -13,23 +13,39 @@ There are only two concrete `EnemyMob` implementations, deliberately unequal in 
 - **`DefinedEnemyMob`** is the one real, data-driven enemy. Its behavior comes entirely from
   the `EnemyDefinition` it was built from — a name/id, base stats, a `BodyArchetype`/
   `MovementBehavior` pair for rendering, and composable `Trait`s/`Ability`s — never from a
-  per-type Java override. `EnemyFactory.Enemy.create()` builds one of these for every
-  wave-script letter except `e`; `BuiltInEnemies` holds the four built-in `EnemyDefinition`s
-  (`CIRCLE`/`SQUARE`/`TRIANGLE`/`GHOST`) it uses.
+  per-type Java override. `EnemyCatalog.spawn(id, ...)` builds one of these from whichever
+  definition is registered under `id`; `BuiltInEnemies` holds the four built-in
+  `EnemyDefinition`s (`CIRCLE`/`SQUARE`/`TRIANGLE`/`GHOST`), which `EnemyCatalog.builtIn()`
+  pre-registers under their wave-script letters.
 - **`EnemyMobEmpty`** stays its own tiny, hand-written class — a wave-timing spacer that never
   ticks, is never a valid target, and is never drawn. It doesn't fit the trait/ability model
   because it isn't really an enemy at all; forcing it through would need a "never do anything,
-  ever" trait for a use case of exactly one. See its own doc comment.
+  ever" trait for a use case of exactly one. It's deliberately **not** a registered
+  `EnemyCatalog` definition either — `e` is a reserved token `td.wave.WaveScript` recognizes
+  directly, before ever consulting a catalog (see `td/wave/CLAUDE.md`). See its own doc
+  comment.
 
 `EnemyMobVisitor` reflects this: it has exactly two methods, `visitDefined`/`visitEmpty`, not
 one per enemy *type* — see its own doc comment for why that's still a real, compiler-enforced
 safety net despite there being only one real concrete class to visit.
 
-**The wave-script/level-authoring side of this is not built yet.** `EnemyCatalog`/
-`EnemyDefinition`'s `id`-based lookup exists and is fully tested, but `WaveScript`/`Wave`/
-`GameEngine.loadLevel` still go through `EnemyFactory.Enemy` exactly as before — a level
-cannot yet register a custom or cloned enemy. That's `FEATURE-enemy-traits-and-effects.md`'s
-next phase, not this one.
+**`EnemyFactory` still exists, but only as a global-catalog test convenience.** Its
+`getEnemy(String, ...)`/`isEnemy(String)` are stable, unchanged signatures that delegate to a
+freshly built `EnemyCatalog.builtIn()` (plus the same `e`-is-a-spacer special case
+`WaveScript` has) - that's what keeps every enemy-behavior test that predates this feature
+(`EnemyMobSquareTest`, `AbstractEnemyMobTest`, and others) working unchanged. Real gameplay
+spawning (`WaveScript`/`Wave`/`GameEngine.loadLevel`) goes through `EnemyCatalog` directly,
+not this class, since it needs per-level catalog scoping `EnemyFactory` doesn't offer. The
+old `EnemyFactory.Enemy` enum and `identifyEnemy` are gone - nothing needs a closed
+enumeration of ids anymore.
+
+**A level cannot yet register its own custom or cloned enemy.** `EnemyCatalog.builtIn()` is
+the only catalog any level gets - `GameEngine.loadLevel` builds one fresh per level load and
+every wave resolves its tokens against it, but `LevelDefinition` has no field yet for a
+level's own registrations. That's a later phase of `FEATURE-enemy-traits-and-effects.md`, not
+this one - the wave mini-language and `EnemyCatalog` are already fully able to resolve a
+custom id the moment something registers one (see `WaveScriptTest`'s
+`aPerLevelCustomIdResolvesTheSameWayABuiltInDoes`); nothing does yet.
 
 ## Traits, abilities, and level-scaling
 
@@ -136,9 +152,9 @@ Two different things can mean "a new enemy," with very different cost:
 
 **Reusing an existing `BodyArchetype`/`MovementBehavior`/`Trait` combination** (the common
 case, and the entire point of this model) needs no new Java class at all: add a new
-`EnemyDefinition` (today, to `BuiltInEnemies`; once the catalog phase lands, to a level's own
-registration) composing what already exists, and a branch in `EnemyFactory.Enemy` to reach it
-by a wave-script letter.
+`EnemyDefinition` and register it under its wave-script id - today that means adding it to
+`BuiltInEnemies` and `EnemyCatalog.builtIn()`, since no level can register its own yet (see
+above); once that lands, a level-scoped registration is exactly as valid.
 
 **Adding a genuinely new `BodyArchetype`** (a shape nothing existing uses) is still a fixed,
 compiler-enforced checklist, same spirit as before:

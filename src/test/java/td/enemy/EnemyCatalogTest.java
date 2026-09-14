@@ -2,6 +2,8 @@ package td.enemy;
 
 import org.junit.jupiter.api.Test;
 import td.util.GameStartupException;
+import td.util.GameWorld;
+import td.util.RecordingGameHost;
 
 import java.util.List;
 
@@ -95,5 +97,37 @@ class EnemyCatalogTest {
 
         assertThatThrownBy(() -> catalog.register(definitionThatSpawns("b", "a")))
                 .isInstanceOf(GameStartupException.class);
+    }
+
+    @Test
+    void spawnBuildsALiveMobFromTheRegisteredDefinition() {
+        EnemyCatalog catalog = new EnemyCatalog();
+        catalog.register(simpleDefinition("c"));
+        GameWorld gameWorld = new GameWorld(new RecordingGameHost());
+
+        EnemyMob enemy = catalog.spawn("c", gameWorld, 0, 50, 3, 1);
+
+        assertThat(enemy).isInstanceOf(DefinedEnemyMob.class);
+        assertThat(enemy.getHealth()).isEqualTo(5000);
+    }
+
+    @Test
+    void builtInPreRegistersTheFourBuiltInDefinitionsUnderTheirWaveScriptLetters() {
+        EnemyCatalog catalog = EnemyCatalog.builtIn();
+
+        assertThat(catalog.contains("c")).isTrue();
+        assertThat(catalog.contains("s")).isTrue();
+        assertThat(catalog.contains("t")).isTrue();
+        assertThat(catalog.contains("g")).isTrue();
+    }
+
+    @Test
+    void builtInReturnsAFreshCatalogEachCallNotASharedSingleton() {
+        EnemyCatalog first = EnemyCatalog.builtIn();
+        first.register(simpleDefinition("custom"));
+
+        EnemyCatalog second = EnemyCatalog.builtIn();
+
+        assertThat(second.contains("custom")).isFalse();
     }
 }

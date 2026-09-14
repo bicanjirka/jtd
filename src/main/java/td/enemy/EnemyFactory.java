@@ -2,62 +2,33 @@ package td.enemy;
 
 import td.util.GameWorld;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
- * Maps a wave-script letter to a concrete enemy type and constructs it. {@link Enemy} is the
- * closed set of spawnable types - its {@code create} switch has no {@code default}, so adding
- * a constant without wiring up its class is a compile error rather than a silent gap.
+ * A stable, global-catalog convenience for test code and simple call sites that just want "the
+ * built-in enemy named X" without needing per-level catalog scoping. {@link EnemyCatalog} is the
+ * general mechanism (register/clone per level, spawn from an arbitrary definition); this is a
+ * thin wrapper over a freshly built {@link EnemyCatalog#builtIn()} for the common case, plus
+ * {@code "e"} (the wave mini-language's spacer), which is deliberately not a registered
+ * {@link EnemyCatalog} definition (see {@code WaveScript}) but still needs to be reachable here
+ * since {@link EnemyMobEmpty} is real, spawnable, and useful in isolation for tests. Real
+ * gameplay spawning ({@code WaveScript}/{@code Wave}/{@code GameEngine}) goes through
+ * {@link EnemyCatalog} directly, not this class, since it needs per-level scoping this doesn't
+ * offer.
  */
-public class EnemyFactory {
+public final class EnemyFactory {
 
-    private static final Map<String, Enemy> table = new HashMap<>();
+    private static final String EMPTY_TOKEN = "e";
 
-    static {
-        for (Enemy enemy : Enemy.values()) {
-            table.put(enemy.getName(), enemy);
-        }
+    private EnemyFactory() {
     }
 
     public static boolean isEnemy(String name) {
-        return table.containsKey(name);
+        return name.equals(EMPTY_TOKEN) || EnemyCatalog.builtIn().contains(name);
     }
 
-    public static Enemy identifyEnemy(String name) {
-        return table.get(name);
-    }
-
-    public static EnemyMob getEnemy(String name, GameWorld context, int delay, int health, int price, int level) {
-        return table.get(name).create(context, delay, health, price, level);
-    }
-
-    /** The spawnable enemy types and their wave-script letters - see the mini-language table in CLAUDE.md. */
-    public enum Enemy {
-        Circle("c"),
-        Square("s"),
-        Triangle("t"),
-        Ghost("g"),
-        Empty("e");
-
-        private final String name;
-
-        Enemy(String name) {
-            this.name = name;
+    public static EnemyMob getEnemy(String name, GameWorld gameWorld, int delay, int health, int price, int level) {
+        if (name.equals(EMPTY_TOKEN)) {
+            return new EnemyMobEmpty(gameWorld, delay, health, price, level);
         }
-
-        public String getName() {
-            return this.name;
-        }
-
-        public EnemyMob create(GameWorld gameWorld, int delay, int health, int price, int level) {
-            return switch (this) {
-                case Circle -> new DefinedEnemyMob(BuiltInEnemies.CIRCLE, gameWorld, delay, health, price, level);
-                case Square -> new DefinedEnemyMob(BuiltInEnemies.SQUARE, gameWorld, delay, health, price, level);
-                case Triangle -> new DefinedEnemyMob(BuiltInEnemies.TRIANGLE, gameWorld, delay, health, price, level);
-                case Ghost -> new DefinedEnemyMob(BuiltInEnemies.GHOST, gameWorld, delay, health, price, level);
-                case Empty -> new EnemyMobEmpty(gameWorld, delay, health, price, level);
-            };
-        }
+        return EnemyCatalog.builtIn().spawn(name, gameWorld, delay, health, price, level);
     }
 }

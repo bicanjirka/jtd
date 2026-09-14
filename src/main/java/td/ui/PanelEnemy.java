@@ -1,7 +1,8 @@
 package td.ui;
 
 import td.board.BoardGeometry;
-import td.enemy.EnemyFactory.Enemy;
+import td.enemy.DefinedEnemyMob;
+import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
 import td.util.GameHost;
 import td.util.GameWorld;
@@ -20,6 +21,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.io.Serial;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -37,7 +39,7 @@ public class PanelEnemy extends JPanel {
 
     private final List<EnemyMob> enemies = new CopyOnWriteArrayList<>();
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
-    private int[] enemiesCount;
+    private List<Integer> enemiesCount = new ArrayList<>();
     private Font font;
     private final GameWorld contextLocal;
     private GameWorld contextFull;
@@ -58,18 +60,17 @@ public class PanelEnemy extends JPanel {
 
     public void clearEnemies() {
         this.enemies.clear();
-        this.enemiesCount = new int[Enemy.values().length];
+        this.enemiesCount = new ArrayList<>();
         this.contextLocal.setPath(new PathNormal(List.of()));
     }
 
-    public void addEnemy(Enemy e, int count, int level) {
-        if (e.equals(Enemy.Empty)) return;
+    public void addEnemy(EnemyDefinition definition, int count, int level) {
         int nr = this.enemies.size();
         this.contextLocal.setPath(new PathNormal(List.of(new Vec2(this.scale / 2 + this.scale * nr, this.pHeight / 2))));
-        EnemyMob enemy = e.create(this.contextLocal, 0, 0, 0, level);
+        EnemyMob enemy = new DefinedEnemyMob(definition, this.contextLocal, 0, 0, 0, level);
         enemy.doTick(0);
         this.enemies.add(enemy);
-        this.enemiesCount[nr] = count;
+        this.enemiesCount.add(count);
     }
 
     public Dimension getPreferredSize() {
@@ -109,7 +110,7 @@ public class PanelEnemy extends JPanel {
         g2.setFont(this.font);
         int nr = 0;
         for (EnemyMob ignored : this.enemies) {
-            g2.drawString("" + this.enemiesCount[nr], this.scale * nr, this.pHeight);
+            g2.drawString("" + this.enemiesCount.get(nr), this.scale * nr, this.pHeight);
             nr++;
         }
     }

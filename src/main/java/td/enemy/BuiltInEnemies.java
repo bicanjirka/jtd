@@ -4,9 +4,10 @@ import java.util.List;
 
 /**
  * The four built-in {@link EnemyDefinition}s migrated from the old {@code EnemyMobCircle}/
- * {@code Square}/{@code Triangle}/{@code Ghost} leaf classes - {@code EnemyFactory.Enemy.create()}
- * builds every mob other than Empty (which stays a standalone class - see {@link EnemyMobEmpty})
- * from one of these via {@link DefinedEnemyMob}, reproducing their exact prior behavior.
+ * {@code Square}/{@code Triangle}/{@code Ghost} leaf classes - {@link EnemyCatalog#builtIn()}
+ * pre-registers these under their wave-script letters, reproducing their exact prior behavior
+ * via {@link DefinedEnemyMob}. Empty stays a standalone class, never one of these - see
+ * {@link EnemyMobEmpty}.
  */
 final class BuiltInEnemies {
 
