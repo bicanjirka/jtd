@@ -8,15 +8,14 @@ package td.enemy;
  * Adding a method here is deliberately a breaking change: it forces every
  * implementor - the frame builders in {@code td.ui} - to describe the new
  * enemy rather than silently skipping it.
+ * <p>
+ * Only two methods, not one per enemy *type*: every data-driven enemy is a {@link DefinedEnemyMob}
+ * regardless of its {@link EnemyDefinition}, so there is only one real concrete class left to
+ * visit for rendering - {@link EnemyMobEmpty} is the one deliberate exception, a wave-timing
+ * spacer that is never drawn at all (see its own doc comment).
  */
 public interface EnemyMobVisitor<R> {
-    R visitCircle(EnemyMobCircle mob);
-
-    R visitSquare(EnemyMobSquare mob);
-
-    R visitTriangle(EnemyMobTriangle mob);
-
-    R visitGhost(EnemyMobGhost mob);
+    R visitDefined(DefinedEnemyMob mob);
 
     R visitEmpty(EnemyMobEmpty mob);
 }

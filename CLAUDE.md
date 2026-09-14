@@ -302,7 +302,7 @@ the two documents avoid contradicting each other:**
     it overrides `and` to return itself without ever evaluating the other side).
   - `td.damage.Damage` gives every hit dealt to an enemy an identity (`none()`) and a
     combinator (`plus`); its compact constructor clamps every construction path at zero, so
-    a falloff or resistance calculation (see `EnemyMobSquare`'s `absorb` override) can never
+    a falloff or resistance calculation (see `td.enemy.PercentResistTrait`) can never
     produce a negative, healing hit. `Damage` also carries a `DamageType` (`PHYSICAL`/`MAGIC`,
     built only via the named factories `Damage.physical(int)`/`Damage.magic(int)`) — a
     zero-amount `Damage` is `plus`'s identity regardless of either side's type, but combining

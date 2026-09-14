@@ -2,11 +2,9 @@ package td.ui;
 
 import td.effect.EffectKind;
 import td.enemy.AbstractEnemyMob;
-import td.enemy.EnemyMobCircle;
+import td.enemy.BodyArchetype;
+import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMobEmpty;
-import td.enemy.EnemyMobGhost;
-import td.enemy.EnemyMobSquare;
-import td.enemy.EnemyMobTriangle;
 import td.enemy.EnemyMobVisitor;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
@@ -19,8 +17,9 @@ import java.util.List;
 
 /**
  * Describes each enemy's body and death-fade animation as {@link EnemyDraw}
- * commands - one visit method per concrete type, since body shape/palette
- * genuinely differ by kind. An alive body's position is interpolated between
+ * commands - {@link #visitDefined} switches on {@link BodyArchetype}, not on any Java type,
+ * since body shape/palette come from a {@code DefinedEnemyMob}'s {@link td.enemy.EnemyDefinition}
+ * rather than from which concrete class it is. An alive body's position is interpolated between
  * the mob's previous and current tick position (see {@code interpolationAlpha});
  * a fading (dead) mob is frozen at its death position and drawn as-is, since it
  * has stopped moving - interpolating it against alpha would make it slide back
@@ -92,23 +91,20 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         }
     }
 
-    public Void visitCircle(EnemyMobCircle mob) {
-        return this.body(Palette.ENEMY_CIRCLE, mob, mob.getBodyScale(), 0.0);
-    }
-
-    public Void visitGhost(EnemyMobGhost mob) {
-        return this.body(Palette.ENEMY_GHOST, mob, mob.getBodyScale(), 0.0);
-    }
-
-    public Void visitSquare(EnemyMobSquare mob) {
-        return this.body(Palette.ENEMY_SQUARE, mob, mob.getBodyScale(), mob.getFacingRadians());
-    }
-
-    public Void visitTriangle(EnemyMobTriangle mob) {
-        return this.body(Palette.ENEMY_TRIANGLE, mob, mob.getBodyScale(), mob.getFacingRadians());
+    public Void visitDefined(DefinedEnemyMob mob) {
+        return this.body(paletteFor(mob.archetype()), mob, mob.getBodyScale(), mob.getFacingRadians());
     }
 
     public Void visitEmpty(EnemyMobEmpty mob) {
         return null;
+    }
+
+    private static Palette paletteFor(BodyArchetype archetype) {
+        return switch (archetype) {
+            case CIRCLE -> Palette.ENEMY_CIRCLE;
+            case GHOST -> Palette.ENEMY_GHOST;
+            case SQUARE -> Palette.ENEMY_SQUARE;
+            case TRIANGLE -> Palette.ENEMY_TRIANGLE;
+        };
     }
 }

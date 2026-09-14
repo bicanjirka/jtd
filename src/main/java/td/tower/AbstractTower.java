@@ -119,9 +119,10 @@ public abstract class AbstractTower implements Tower {
      * this tick is a no-op in EnemyMob.doDamage() and must not be counted as a kill twice.
      * <p>
      * {@code damageDealt} accumulates what {@code doDamage} reports actually landed, not the
-     * {@code damage} argument: a mob that resists part of a hit (see {@code EnemyMobSquare})
-     * takes less than was fired at it, and a tower claiming the full amount would over-report
-     * against exactly the enemies it performs worst on.
+     * {@code damage} argument: a mob that resists part of a hit (see
+     * {@code td.enemy.PercentResistTrait}) takes less than was fired at it, and a tower
+     * claiming the full amount would over-report against exactly the enemies it performs
+     * worst on.
      * <p>
      * A kill that lands here tops up credits by {@code chosenPath}'s {@code bountyBonus}
      * (if any) on top of the flat {@code EconomyDelta.kill} bounty {@code enemy.doDamage}

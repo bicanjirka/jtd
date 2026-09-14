@@ -16,8 +16,8 @@ import static org.assertj.core.api.Assertions.within;
 
 /**
  * Exercises AbstractEnemyMob's damage/death and doTick movement, through
- * EnemyFactory.getEnemy("c", ...) (which builds a real EnemyMobCircle via
- * the same constructor production uses).
+ * EnemyFactory.getEnemy("c", ...) (which builds a real DefinedEnemyMob via
+ * the same construction path production uses).
  */
 class AbstractEnemyMobTest {
 

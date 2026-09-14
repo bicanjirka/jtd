@@ -31,7 +31,7 @@ class EnemyFactoryTest {
     void getEnemyBuildsARealEnemyWithHealthScaledByOneHundred() {
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
 
-        assertThat(enemy).isInstanceOf(EnemyMobCircle.class);
+        assertThat(enemy).isInstanceOf(DefinedEnemyMob.class);
         assertThat(enemy.getHealth()).isEqualTo(5000);
     }
 
