@@ -120,20 +120,111 @@ committed to a timeline, per that review's outcome — see Decisions made.
 
 ## Decisions made
 
-None yet — this is an unscoped request, written up for future prioritization, at the same
-stage the other three documents started at before their own scoping passes.
+- **The debug capability is an always-available keybinding, not gated behind a build flag or
+  a hidden mode.** This project has no feature-flag or debug/release-build machinery today
+  (root `CLAUDE.md`: "don't use feature flags or backwards-compatibility shims"), and jTD has
+  no distribution boundary a hidden cheat would be protecting against — it's a hobby project,
+  not something shipped to end users who shouldn't see developer tools. Adding build-variant
+  infrastructure to hide three keybindings would be new complexity in service of a concern
+  that doesn't exist here.
+- **"Jump to wave" skips state directly; it does not fast-forward the simulation for real.**
+  Real fast-forwarding still requires the developer to build/manage towers to actually clear
+  every skipped wave — exactly the replay cost this feature exists to remove. Skipping needs
+  its own correctness case (see Shape of the solution), but that's the entire point: a second,
+  deliberately simple path, not a variant of real play.
+- **The batch harness is a standalone class with its own `main()`**, in `src/main/java`
+  alongside `Main`/`GameEngine` rather than under a test source root — it's a tool a developer
+  runs on demand and reads output from, not an assertion `mvn test` should gate on. This
+  mirrors the `run-jtd` skill's own `Driver.java`, which already established the same shape
+  for driving `TowerDefense` headlessly from outside the normal window.
+- **The debug spawn action requires a level to already be loaded.** Spawning needs a path and
+  a board to place the enemy on; neither exists at the menu. No separate "spawn in isolation"
+  mode is in scope.
+- **"Toggle infinite credits" becomes "grant a large lump sum of credits," not a persistent
+  toggle.** A true toggle needs a hook into every future spend to keep re-topping-up credits —
+  real complexity for a purely developer-facing convenience. A repeatable one-shot grant (the
+  same `EconomyDelta`-based mechanism `run-jtd`'s own `setcredits` cheat already uses) gives
+  the same practical outcome: press the key again whenever more money is wanted.
+- **A debug-spawned enemy is allowed to count toward the current wave's alive total**, rather
+  than needing a second, non-counting roster-add path. The doc's original architectural-
+  implications note worried this would force a developer to kill whatever they spawned just
+  to keep playing — but "skip to next wave" (this same feature) already unconditionally
+  clears the roster with no penalty, so it's already the escape hatch this would have needed
+  to build separately. One fewer new code path for the same outcome.
+
+## V1 Scope
+
+With the decisions above settled, this section pins down what a first version actually
+contains: concrete content, the shape of the solution, and a phased implementation order.
+
+### Boundary
+
+- **Three debug keybindings**, reachable the moment a level is loaded (mid-level, paused or
+  not): skip the current wave and immediately start the next one; spawn one instance of an
+  enemy id, cycling through every id the level's current `EnemyCatalog` has registered, one
+  per press; grant a large lump sum of credits. No numeric/text entry UI — cycling and
+  repeatable presses cover the need without building input widgets a dev tool doesn't
+  otherwise need.
+- **The batch harness takes a `LevelDefinition` and a list of tower placements** (type + cell
+  only — no upgrade-path selection in v1, deferred as a real but separable follow-up once
+  placement-driven simulation is proven) **and a tick budget**, runs to completion or the
+  budget, and prints lives lost, ticks-to-clear per wave, and each tower's damage dealt/kill
+  count to the console.
+- **Not in scope**: any UI for the harness (console output only); upgrade-path selection in a
+  loadout; a "spawn in isolation, no level loaded" mode; any change to `EnemyRoster`'s
+  counting semantics; a persistent infinite-credits toggle.
+
+### Shape of the solution
+
+- **The debug capability drives `GameEngine` through new, narrow entry points**, the same
+  spirit as its existing `mouseClicked`/`startPlacing`/`nextWave` surface — not a side channel
+  that reaches into `GameWorld` from outside the engine's own API.
+  - `debugSkipToCurrentWaveEnd()`: clears the live roster the same no-penalty way level
+    teardown already does (`GameWorld.clearEnemies()` — no `GameHost.enemyDied` call, no
+    economy effect), then forces `waveReady` true and calls the existing `nextWave()`. Correct
+    by construction from primitives the engine already has, rather than a second interpretation
+    of "what does clearing a wave mean" — directly answers the risk this doc's own Risks and
+    costs section raised about a skip path silently drifting from real play.
+  - `debugSpawnNextCatalogEnemy()`: reads the level's `EnemyCatalog`, advances a stored
+    cursor through its registered ids in a stable order, and spawns that id via the same
+    `EnemyCatalog.spawn`/`GameWorld.addEnemy` path an ability-driven spawn already uses (see
+    `FEATURE-enemy-traits-and-effects.md`) — at the path's start (`delay = 0`), using the
+    definition's own `baseHealth`/`price` fields (the same ones the Warden chain already
+    relies on for exactly this "spawned outside a wave" case) rather than needing a
+    wave-in-progress's numbers.
+  - `debugGrantCredits(int amount)`: `gameWorld.apply(EconomyDelta.credits(amount))` — the
+    exact mechanism `run-jtd`'s `setcredits` cheat already proves out via reflection; this
+    makes the same capability reachable from inside the real game, not just the test driver.
+  - `TowerDefense`'s existing `KeyListener` gains three more cases alongside its current
+    `q`/`w`/.../`s`/`m`/`p`/`f` set — exact keys chosen during implementation to avoid any
+    collision with that live list.
+- **The batch harness (`td.BalanceHarness`, a new class next to `Main`) drives `GameEngine`
+  through its real input surface**, not by constructing `Tower`/`EnemyMob` objects by hand:
+  `startPlacing(type, range)` + `mouseClicked(pixelX, pixelY)` per placement (converting a
+  loadout's cell coordinates via the level's `BoardGeometry`, the same conversion
+  `TowerPlacement` already does), then a plain `doTick(t)` loop up to the tick budget,
+  reading final state from `GameWorld`'s existing getters (`getLives()`, `getScore()`, each
+  tower's own damage/kill accounting) rather than needing new instrumentation. Uses
+  `GameHost.noOp()` — the harness reads outcome from `GameWorld`'s state after the run, not
+  from host callbacks during it, so the already-existing no-op host is enough.
+- **Both pieces are provable headlessly**, consistent with this project's test conventions —
+  the debug `GameEngine` methods get `GameEngineTest`-style coverage (skip clears with no
+  penalty; spawn works before any wave has started; spawn cycles deterministically) before
+  the keybindings wiring them up needs a `run-jtd` visual check at all.
+
+### Phased implementation order
+
+Per this project's standing "commit after each phase" convention:
+
+1. **Debug capability**: the three `GameEngine` methods, headless-tested, then the three
+   `TowerDefense` keybindings wiring them up — verified visually via `run-jtd` since keyboard
+   input is UI-layer, per this project's UI requirement.
+2. **Batch balance-simulation harness**: `td.BalanceHarness`, its loadout value type, and a
+   first real run against Classic Loop reported in this feature's own commit message as
+   proof it produces sane numbers — not a tuning pass on the other three features' content
+   yet (that's its own follow-up work once the tool exists, tracked in `TODO.md` alongside
+   the placeholder-number entries it exists to help close).
 
 ## Open questions
 
-1. Reachable how — a keybinding, a hidden dev-mode toggle, or a build-time-only capability
-   that doesn't exist in the shipped jar at all? This affects whether the result is "debug
-   tooling for the developer" or "a sandbox mode for players," which are different products.
-2. Does "jump to wave" fast-forward the simulation for real (slower, but guaranteed correct
-   by construction) or skip state directly (fast, but needs its own correctness case built
-   and tested)?
-3. Should the batch harness live as a standalone `main`-having tool, a Maven exec-plugin
-   target, or a set of JUnit tests that print a report — given `mvn test` is already this
-   project's one build gate, folding it in there may be the path of least new tooling?
-4. Is the debug spawn action expected to work mid-level only, or also from a stopped/menu
-   state (spawn-and-immediately-tick to look at one enemy in isolation, without a full level
-   loaded at all)?
+None blocking — see V1 Scope, above.
