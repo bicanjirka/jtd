@@ -33,7 +33,8 @@ public final class TowerCinder extends AbstractTower {
     public static final float range = 2.2f;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.15;
-    private static final double HALF_WIDTH_RADIANS = 0.35;
+    /** Public so the renderer's cone effect matches exactly what {@link InWedgeTargetQuery} decides hits against. */
+    public static final double HALF_WIDTH_RADIANS = 0.35;
     private static final int BURN_DURATION_TICKS = 15;
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);

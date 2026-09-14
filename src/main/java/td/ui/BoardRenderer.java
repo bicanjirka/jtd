@@ -5,6 +5,8 @@ import td.board.BoardGeometry;
 import td.cell.Cell;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyRegistry;
+import td.projectile.Projectile;
+import td.projectile.ProjectileRegistry;
 import td.tower.Tower;
 import td.ui.render.CellDraw;
 import td.ui.render.PathMarkerDraw;
@@ -31,12 +33,15 @@ public final class BoardRenderer {
 
     private final GameEngine engine;
     private final EnemyRegistry enemies;
+    private final ProjectileRegistry projectiles;
     private final Supplier<BoardGeometry> board;
     private final Supplier<Path> path;
 
-    public BoardRenderer(GameEngine engine, EnemyRegistry enemies, Supplier<BoardGeometry> board, Supplier<Path> path) {
+    public BoardRenderer(GameEngine engine, EnemyRegistry enemies, ProjectileRegistry projectiles,
+                          Supplier<BoardGeometry> board, Supplier<Path> path) {
         this.engine = engine;
         this.enemies = enemies;
+        this.projectiles = projectiles;
         this.board = board;
         this.path = path;
     }
@@ -61,17 +66,23 @@ public final class BoardRenderer {
         }
 
         TowerSpriteFrameBuilder spriteFrameBuilder = new TowerSpriteFrameBuilder(interpolationAlpha, animationSeconds);
-        TowerEffectFrameBuilder effectFrameBuilder = new TowerEffectFrameBuilder(gameTime, animationSeconds);
+        TowerEffectFrameBuilder effectFrameBuilder = new TowerEffectFrameBuilder(gameTime, interpolationAlpha, animationSeconds);
         for (Tower tower : this.engine.getTowers()) {
             tower.accept(spriteFrameBuilder);
             tower.accept(effectFrameBuilder);
+        }
+
+        ProjectileFrameBuilder projectileFrameBuilder = new ProjectileFrameBuilder(interpolationAlpha);
+        for (Projectile projectile : this.projectiles.getProjectiles()) {
+            projectile.accept(projectileFrameBuilder);
         }
 
         BoardGeometry board = this.board.get();
         List<PathMarkerDraw> pathMarkers = PathMarkerFrameBuilder.build(this.path.get(), board.scale(), animationSeconds);
 
         return new RenderFrame(board.scale(), board.maxX(), board.maxY(),
-                cells, enemyFrameBuilder.build(), spriteFrameBuilder.build(), spriteFrameBuilder.buildHeads(),
-                effectFrameBuilder.build(), pathMarkers);
+                cells, enemyFrameBuilder.build(), enemyFrameBuilder.buildMarkers(),
+                spriteFrameBuilder.build(), spriteFrameBuilder.buildHeads(),
+                effectFrameBuilder.build(), projectileFrameBuilder.build(), pathMarkers);
     }
 }

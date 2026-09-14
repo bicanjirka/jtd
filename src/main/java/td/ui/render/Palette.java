@@ -29,6 +29,13 @@ public enum Palette {
     TOWER_TWO_SPLASH_FILL,
     TOWER_THREE_BEAM,
     TOWER_FOUR_PULSE,
+    TOWER_CINDER_CONE,
+    PROJECTILE_CANNONBALL,
+    PROJECTILE_MISSILE,
+    /** A small on-board marker naming which status effect is currently active on a mob. */
+    STATUS_MARKER_SLOW,
+    STATUS_MARKER_BURN,
+    STATUS_MARKER_FREEZE,
     PATH_MARKER_STATIC,
     PATH_MARKER_MOVING
 }

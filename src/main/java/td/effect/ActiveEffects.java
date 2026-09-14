@@ -2,8 +2,10 @@ package td.effect;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The effects currently active on one enemy, keyed by {@link EffectKind} so at most one of
@@ -20,6 +22,15 @@ public final class ActiveEffects {
     public void apply(Effect effect) {
         Effect existing = this.active.get(effect.kind());
         this.active.put(effect.kind(), existing == null ? effect : strongerOf(existing, effect));
+    }
+
+    /**
+     * Which kinds are currently active, in a stable (enum-declaration) order - for a UI marker
+     * to key off, not for resolving anything. A snapshot: later changes to this holder don't
+     * retroactively affect a set already handed out.
+     */
+    public Set<EffectKind> activeKinds() {
+        return this.active.isEmpty() ? EnumSet.noneOf(EffectKind.class) : EnumSet.copyOf(this.active.keySet());
     }
 
     /** The product of every active effect's speed multiplier - {@code 1f} (unaffected) with none active. */

@@ -67,20 +67,6 @@ reasonable mid-level of investment looks like.
   a strictly-better-or-worse one. No code or architecture change needed — every number here is already a named
   constant, not embedded in logic.
 
-### Cinder's flame cone has no visual effect yet
-
-`TowerCinder`'s wedge of damage has no on-board visual at all - `TowerEffectFrameBuilder.visitTowerCinder` returns
-`null` rather than drawing anything. This is a sequencing gap, not a design decision: a cone needs a new
-`TowerEffectDraw` record (a `ConeDraw`, alongside `BeamDraw`/`SplashDraw`/`PulseDraw`/`AuraDraw`) that doesn't exist
-yet, and lands in the same rendering pass as the new `ProjectileDraw` hierarchy for `TowerMortar`'s shells and
-`TowerSeeker`'s missiles - none of the three new towers' attacks are visible on the board until that pass.
-
-- **Where:** `td.ui.TowerEffectFrameBuilder.visitTowerCinder`
-- **Approach:** add `ConeDraw(Palette, float originX, float originY, float headingRadians, float radius, float
-  arcRadians, float alpha)` to `td.ui.render.TowerEffectDraw`'s `permits` clause, add its case to
-  `Java2DFrameRenderer.paintTowerEffect`, and emit it here using `tower.getTurretAim().currentRadians()` (the same
-  heading `InWedgeTargetQuery` already decides hits against) and the tower's own half-width/range constants.
-
 ### New tower numbers are unbalanced placeholders
 
 `TowerMortar`, `TowerSeeker` and `TowerCinder`'s price, damage, range, cooldown, splash radius, and slow/freeze/burn

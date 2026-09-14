@@ -7,9 +7,13 @@ import td.damage.Damage;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.level.LevelDefinition;
+import td.projectile.CannonballProjectile;
+import td.tower.TowerCinder;
 import td.tower.TowerOne;
+import td.ui.render.ConeDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.Palette;
+import td.ui.render.ProjectileDraw;
 import td.ui.render.RenderFrame;
 import td.ui.render.TowerSpriteDraw;
 import td.util.GameWorld;
@@ -35,7 +39,8 @@ class BoardRendererTest {
     }
 
     private static BoardRenderer rendererFor(GameEngine engine, GameWorld context) {
-        return new BoardRenderer(engine, context.getEnemyRegistry(), context::getBoard, context::getPath);
+        return new BoardRenderer(engine, context.getEnemyRegistry(), context.getProjectileRegistry(),
+                context::getBoard, context::getPath);
     }
 
     @Test
@@ -151,5 +156,30 @@ class BoardRendererTest {
 
         assertThat(frame.cells()).hasSize(1);
         assertThat(frame.cells().get(0).highlight()).isEqualTo(Cell.highlightType.select);
+    }
+
+    @Test
+    void aCinderTowerYieldsAConeDrawEveryTick() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        context.addTower(new TowerCinder(context, 1, 1));
+
+        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+
+        assertThat(frame.towerEffects()).hasSize(1);
+        assertThat(frame.towerEffects().get(0)).isInstanceOf(ConeDraw.class);
+    }
+
+    @Test
+    void anInFlightProjectileYieldsAProjectileDraw() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        context.addProjectile(new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
+        }));
+
+        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+
+        assertThat(frame.projectiles()).hasSize(1);
+        assertThat(frame.projectiles().get(0)).isInstanceOf(ProjectileDraw.class);
     }
 }
