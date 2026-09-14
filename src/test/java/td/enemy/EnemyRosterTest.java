@@ -21,7 +21,34 @@ class EnemyRosterTest {
 
         roster.setEnemies(enemies);
 
-        assertThat(roster.getEnemies()).isSameAs(enemies);
+        // content, not reference identity: getEnemies() snapshots a CopyOnWriteArrayList
+        // fresh each call (see EnemyRoster's own doc comment on why), unlike the old bare
+        // array it used to hand back directly.
+        assertThat(roster.getEnemies()).containsExactly(enemies);
+    }
+
+    @Test
+    void addAppendsAnEnemyAndGrowsTheCount() {
+        roster.setEnemies(new EnemyMob[]{anEnemy()});
+        roster.setCount(1);
+        EnemyMob reinforcement = anEnemy();
+
+        roster.add(reinforcement);
+
+        assertThat(roster.getEnemies()).hasSize(2).contains(reinforcement);
+    }
+
+    @Test
+    void replaceSwapsOneEnemyForAnotherWithoutReportingAKill() {
+        EnemyMob outgoing = anEnemy();
+        roster.setEnemies(new EnemyMob[]{outgoing});
+        roster.setCount(1);
+        EnemyMob incoming = anEnemy();
+
+        roster.replace(outgoing, incoming);
+
+        assertThat(roster.getEnemies()).containsExactly(incoming);
+        assertThat(host.enemyDiedCalls).isEmpty();
     }
 
     @Test

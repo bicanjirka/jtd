@@ -14,9 +14,10 @@ There are only two concrete `EnemyMob` implementations, deliberately unequal in 
   the `EnemyDefinition` it was built from — a name/id, base stats, a `BodyArchetype`/
   `MovementBehavior` pair for rendering, and composable `Trait`s/`Ability`s — never from a
   per-type Java override. `EnemyCatalog.spawn(id, ...)` builds one of these from whichever
-  definition is registered under `id`; `BuiltInEnemies` holds the four built-in
-  `EnemyDefinition`s (`CIRCLE`/`SQUARE`/`TRIANGLE`/`GHOST`), which `EnemyCatalog.builtIn()`
-  pre-registers under their wave-script letters.
+  definition is registered under `id`; `BuiltInEnemies` holds the four basic built-in
+  `EnemyDefinition`s (`CIRCLE`/`SQUARE`/`TRIANGLE`/`GHOST`) plus the Warden boss's six-stage
+  chain (`WARDEN_1`/`WARDEN_EGG_1`/`WARDEN_2`/`WARDEN_EGG_2`/`WARDEN_3`/`WARDEN_EGG_3`), which
+  `EnemyCatalog.builtIn()` pre-registers under their wave-script ids.
 - **`EnemyMobEmpty`** stays its own tiny, hand-written class — a wave-timing spacer that never
   ticks, is never a valid target, and is never drawn. It doesn't fit the trait/ability model
   because it isn't really an enemy at all; forcing it through would need a "never do anything,
@@ -42,18 +43,22 @@ enumeration of ids anymore.
 **A level cannot yet register its own custom or cloned enemy.** `EnemyCatalog.builtIn()` is
 the only catalog any level gets - `GameEngine.loadLevel` builds one fresh per level load and
 every wave resolves its tokens against it, but `LevelDefinition` has no field yet for a
-level's own registrations. That's a later phase of `FEATURE-enemy-traits-and-effects.md`, not
-this one - the wave mini-language and `EnemyCatalog` are already fully able to resolve a
-custom id the moment something registers one (see `WaveScriptTest`'s
-`aPerLevelCustomIdResolvesTheSameWayABuiltInDoes`); nothing does yet.
+level's own registrations. The Warden's six-definition chain ships as *global* built-in
+content specifically to avoid needing that field yet (see `FEATURE-enemy-traits-and-effects.md`) -
+the wave mini-language and `EnemyCatalog` are already fully able to resolve a custom id the
+moment something registers one (see `WaveScriptTest`'s
+`aPerLevelCustomIdResolvesTheSameWayABuiltInDoes`); no *level* does yet.
 
 ## Traits, abilities, and level-scaling
 
 A `Trait` is a passive, always-on modifier: `onHit` (resistance, generalizing what used to be
 `EnemyMobSquare`'s hardcoded `absorb` override), `speedFactor` (a hurt-speed curve,
 generalizing what used to be `EnemyMobTriangle`'s), `isValidTarget` (see the gotcha below —
-**not** what makes Ghost invisible). `PercentResistTrait`/`HurtSpeedTrait` are the two built-in
-implementations, reused (not subclassed) by `BuiltInEnemies.SQUARE`/`TRIANGLE`.
+**not** what makes Ghost invisible). `PercentResistTrait`/`HurtSpeedTrait`/`FlatResistTrait`
+are the three built-in implementations, reused (not subclassed) by `BuiltInEnemies.SQUARE`/
+`TRIANGLE`/the Warden stages - `FlatResistTrait` is deliberately a *flat per-hit* reduction,
+not a depleting shield pool, since a pool that's "used up" over one mob's lifetime needs
+per-mob mutable trait state nothing else here has (see its own doc comment).
 
 **A `Trait` instance is shared across every mob built from the same `EnemyDefinition`,
 regardless of which wave's `level` spawned it** — `TraitContext(level, healthFraction)` is
@@ -65,8 +70,49 @@ An `Ability` pairs a closed `AbilityTrigger` (periodic, once-after-a-delay, heal
 crossed, on-death, time-since-last-hit) with a closed `AbilityAction` (apply an effect, or
 spawn more enemies) — see `AbilityEvaluator`'s own doc comment for how firing is decided, and
 `EnemyCatalog.register`'s doc comment for the spawn-graph cycle check a `SpawnEnemiesAction`
-chain has to pass. No built-in enemy has an ability yet — the Warden boss (a later phase) is
-what actually exercises this.
+chain has to pass. The Warden boss is what actually exercises this - see "Ability execution",
+below, for how a live `DefinedEnemyMob` drives it.
+
+## Ability execution
+
+`DefinedEnemyMob` evaluates its own `definition.abilities()` once per `doTick`, each against a
+private `MobAbilityContext` (an inner class - it needs this mob's own `GameWorld`, position and
+`level`, which `AbilityEvaluator` itself never sees). Three things are easy to get wrong here:
+
+**A mob's own `AbilityState` list is built once, in its constructor, parallel to
+`definition.abilities()`** - a `PeriodicTrigger`'s countdown, a `TimeSinceLastHitTrigger`'s
+"waiting for a hit to re-arm" flag, and so on are all per-*mob* state, unlike the shared,
+stateless `Trait`s above.
+
+**`ticksSinceLastHit` starts at `0`, not "a very long time."** A fresh spawn hasn't been hit
+yet, but that must not trivially satisfy a `TimeSinceLastHitTrigger`'s window on its very first
+tick - the idle timer counts from spawn exactly like it counts from an actual hit. Getting this
+wrong (an earlier pass through this feature did) makes every such ability fire immediately on
+spawn instead of after real idle time - `WardenChainTest` exists specifically to catch this
+class of bug end-to-end, not just each trigger kind in isolation.
+
+**Ability evaluation must fire at most once on a mob's death tick, never during its fade.**
+`doTick` checks `ticksSinceDeath(gameTime) == 0` - *not* a "was this mob already dead" flag -
+to decide whether this is the exact tick `deathTick` was captured, because a tower can kill a
+mob during the tower phase of a game tick, *after* that mob's own `doTick` already ran for that
+tick (see the root `CLAUDE.md`'s Threading model on tick ordering) - so "`dead` just became
+true" and "`deathTick` was just captured" are not necessarily the same tick, and only the
+latter must gate an `OnDeathTrigger` firing exactly once. Getting this wrong lets a dead mob's
+*other* abilities (a `OnceTrigger`, say) keep evaluating throughout its fade window and
+possibly fire late - which is exactly how the boss egg could wrongly hatch after being
+legitimately killed, if evaluation ran on every fade tick instead of stopping after the one
+death-transition tick.
+
+**An ability-driven spawn appears where the spawning mob was, not at the path's start.**
+`AbstractEnemyMob.doInit` always sets a fresh mob's `distanceIntoLap` to `0`; a
+`SpawnEnemiesAction`'s execution calls the new mob's own `spawnAtSamePositionAs`/
+`jumpToDistance` afterward to relocate it - without that, the Warden's egg would visibly
+teleport to the path's start instead of appearing where the Warden died.
+
+**`SpawnEnemiesAction`'s `count`/`consumesSelf` combination is only proven for
+`count == 1`.** Every v1 use is `count == 1` (a single reinforcement, or the one egg/next-stage
+Warden); `consumesSelf == true` with `count > 1` has no defined meaning (this mob can only be
+replaced by one thing) and isn't validated against.
 
 ## Invariants worth knowing before you change anything here
 
@@ -154,7 +200,9 @@ Two different things can mean "a new enemy," with very different cost:
 case, and the entire point of this model) needs no new Java class at all: add a new
 `EnemyDefinition` and register it under its wave-script id - today that means adding it to
 `BuiltInEnemies` and `EnemyCatalog.builtIn()`, since no level can register its own yet (see
-above); once that lands, a level-scoped registration is exactly as valid.
+above); once that lands, a level-scoped registration is exactly as valid. The Warden's six
+stages are exactly this: no new Java class, just six `EnemyDefinition`s composing
+`FlatResistTrait` and the `Ability`s in `BuiltInEnemies.wardenAbilities`.
 
 **Adding a genuinely new `BodyArchetype`** (a shape nothing existing uses) is still a fixed,
 compiler-enforced checklist, same spirit as before:
@@ -188,8 +236,13 @@ interface, not the roster, unless you actually need to mutate.
 `remove()` (an actual kill) does. Renaming or merging those two would make returning to the
 menu spuriously trigger the "you won" overlay.
 
-**`EnemyRoster` cannot spawn yet.** It's still a bare array with no `add`. `EnemySpawner` is
-the narrow interface `AbilityEvaluator` already depends on for this, tested against a fake —
-`EnemyRoster` becomes its production implementation (and likely moves to a
-`CopyOnWriteArrayList` backing store, matching `TowerRoster`/`ProjectileRoster`'s precedent for
-the same game-loop-writes/EDT-reads shape) once something real needs to spawn, not before.
+**`EnemyRoster` implements `EnemySpawner`** (`add`/`replace`), backed by a
+`CopyOnWriteArrayList` rather than the bare array it used to be - `add`/`replace` are called
+from an ability's execution on the `game-loop` thread (a reinforcement, an egg hatch) while
+`getEnemies()` is read from the EDT for rendering, the same shape `TowerRoster`/
+`ProjectileRoster` already have. `getEnemies()` therefore returns a fresh array snapshot every
+call, not the same reference `setEnemies` was handed - don't rely on reference identity.
+`replace(outgoing, incoming)` does **not** call `GameHost.enemyDied` for `outgoing`, matching
+`clear()`'s precedent: a hatch is a transformation, not a kill, so it earns no bounty/score/
+kill-count credit. `GameWorld.addEnemy`/`replaceEnemy` are the seam a live mob's own ability
+execution actually calls - see "Ability execution", above.

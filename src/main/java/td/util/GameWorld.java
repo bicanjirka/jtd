@@ -4,6 +4,7 @@ import td.board.BoardGeometry;
 import td.economy.EconomyDelta;
 import td.economy.EconomyLedger;
 import td.economy.EconomyListener;
+import td.enemy.EnemyCatalog;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyRegistry;
 import td.enemy.EnemyRoster;
@@ -34,6 +35,7 @@ public class GameWorld {
     private BoardGeometry board = BoardGeometry.empty();
     private final GameHost mainApp;
     private Path path;
+    private EnemyCatalog enemyCatalog = EnemyCatalog.builtIn();
 
     private final EconomyLedger economy = new EconomyLedger();
     private final EnemyRoster enemies;
@@ -83,6 +85,24 @@ public class GameWorld {
 
     public void clearEnemies() {
         this.enemies.clear();
+    }
+
+    public EnemyCatalog getEnemyCatalog() {
+        return this.enemyCatalog;
+    }
+
+    public void setEnemyCatalog(EnemyCatalog enemyCatalog) {
+        this.enemyCatalog = enemyCatalog;
+    }
+
+    /** Adds an enemy outside a wave's own spawn sequence - an ability's reinforcement or egg spawn. */
+    public void addEnemy(EnemyMob mob) {
+        this.enemies.add(mob);
+    }
+
+    /** Replaces one live enemy with another as one step - an ability's egg hatch, not a kill. See {@code EnemyRoster.replace}. */
+    public void replaceEnemy(EnemyMob outgoing, EnemyMob incoming) {
+        this.enemies.replace(outgoing, incoming);
     }
 
     public BoardGeometry getBoard() {

@@ -10,11 +10,14 @@ import java.util.List;
  * and {@link Ability}s are shared across every mob spawned from this definition regardless of
  * level (see {@link TraitContext}).
  * <p>
- * Deliberately carries no health or price of its own: a v1 wave-spawned enemy's health and
- * price are supplied per-wave, uniformly across whatever mix of types that wave spawns
- * (matching today's {@code WaveDefinition.hp()}/{@code price()}), not fixed per definition. A
- * future ability-spawned enemy with its own fixed stats (the Warden's boss egg) is expected to
- * need this differently and will extend this shape once that's built, not before.
+ * Carries its own {@code baseHealth}/{@code price}, but a v1 wave-spawned enemy ignores
+ * them: its health and price are supplied per-wave, uniformly across whatever mix of types
+ * that wave spawns (matching today's {@code WaveDefinition.hp()}/{@code price()} - see
+ * {@code EnemyCatalog.spawn}'s explicit parameters, which override these). Only an
+ * *ability*-spawned enemy (a {@code SpawnEnemiesAction}, resolved through
+ * {@code DefinedEnemyMob}'s own ability execution) reads {@link #baseHealth()}/{@link #price()}
+ * directly, since it has no wave slot of its own to inherit stats from - the Warden's boss egg
+ * chain is what actually needs this.
  *
  * @param id             the wave-script token this definition spawns under - built-ins use a
  *                       single letter (matching today's {@code c}/{@code s}/{@code t}/
@@ -24,6 +27,10 @@ import java.util.List;
  *                       {@link EnemyCatalog} is in scope.
  * @param displayName    shown as the first line of the in-game info text.
  * @param description    shown as the second line of the in-game info text.
+ * @param baseHealth     only consulted for an ability-spawned instance of this definition -
+ *                       ignored for a wave-spawned one (see above).
+ * @param price          only consulted for an ability-spawned instance of this definition -
+ *                       ignored for a wave-spawned one (see above).
  * @param baseSpeed      pixels per tick before any level scaling or active effect - {@code 0}
  *                       means the mob never advances along the path at all (the boss egg),
  *                       which needs no separate "stationary" flag: {@code distanceIntoLap}
@@ -41,6 +48,8 @@ public record EnemyDefinition(
         String id,
         String displayName,
         String description,
+        int baseHealth,
+        int price,
         float baseSpeed,
         float healthDivisor,
         EnemyMob.type mobType,

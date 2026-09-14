@@ -66,9 +66,9 @@ public final class EnemyCatalog {
     }
 
     /**
-     * A fresh catalog with the four built-in definitions pre-registered under their existing
-     * single-letter wave-script ids. Fresh, not shared/cached: {@code GameEngine.loadLevel} is
-     * idempotent and re-enterable (see the root {@code CLAUDE.md}'s Levels section), so each
+     * A fresh catalog with the four basic built-ins and the Warden boss chain pre-registered
+     * under their existing wave-script ids. Fresh, not shared/cached: {@code GameEngine.loadLevel}
+     * is idempotent and re-enterable (see the root {@code CLAUDE.md}'s Levels section), so each
      * level load gets its own catalog rather than accumulating a previous level's registrations.
      */
     public static EnemyCatalog builtIn() {
@@ -77,11 +77,18 @@ public final class EnemyCatalog {
         catalog.register(BuiltInEnemies.SQUARE);
         catalog.register(BuiltInEnemies.TRIANGLE);
         catalog.register(BuiltInEnemies.GHOST);
+        catalog.register(BuiltInEnemies.WARDEN_EGG_3);
+        catalog.register(BuiltInEnemies.WARDEN_3);
+        catalog.register(BuiltInEnemies.WARDEN_EGG_2);
+        catalog.register(BuiltInEnemies.WARDEN_2);
+        catalog.register(BuiltInEnemies.WARDEN_EGG_1);
+        catalog.register(BuiltInEnemies.WARDEN_1);
         return catalog;
     }
 
     private static EnemyDefinition withId(EnemyDefinition source, String newId) {
-        return new EnemyDefinition(newId, source.displayName(), source.description(), source.baseSpeed(),
+        return new EnemyDefinition(newId, source.displayName(), source.description(),
+                source.baseHealth(), source.price(), source.baseSpeed(),
                 source.healthDivisor(), source.mobType(), source.archetype(), source.movement(),
                 source.traits(), source.abilities());
     }

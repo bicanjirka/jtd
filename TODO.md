@@ -132,3 +132,38 @@ Towers don't rotate their sprite image to visually face their current target (en
   etc.) and exposed as a getter, then threaded through as a new `facingRadians` field on `TowerSpriteDraw` (currently
   unused by towers - `EnemyBodyDraw`/`EnemyFadeDraw` already carry one) and applied as a rotation in
   `Java2DFrameRenderer.paintTowerSprite()` alongside rotated sprite art for each tower.
+
+## Enemy features
+
+### The Warden boss shares Square's exact art
+
+`BuiltInEnemies.WARDEN_1`/`WARDEN_2`/`WARDEN_3` reuse `BodyArchetype.SQUARE`, so a Warden is
+the same pink flat square every regular Square enemy is - only a deliberately high `level`
+parameter on its wave slot (`BuiltInLevelCatalog`'s `warden1` entry) makes it render larger,
+via the existing level-scaled body-size formula every Square already has. That's a size-only
+substitute for a real boss look, not actual distinct art, and risks the exact legibility
+problem this feature's own product-review notes warned against (a player should be able to
+tell at a glance that this is the boss, not just "a big Square").
+
+- **Where:** `BuiltInEnemies.WARDEN_1`/`WARDEN_2`/`WARDEN_3`/`WARDEN_EGG_1`/`WARDEN_EGG_2`/
+  `WARDEN_EGG_3`, `BuiltInLevelCatalog`'s `warden1` wave entry.
+- **Approach:** give the Warden its own `BodyArchetype` (and the egg, if `EGG`'s shared
+  circle-tint isn't distinct enough once seen next to Circle/Ghost in practice), following
+  `td/enemy/CLAUDE.md`'s "Adding a genuinely new `BodyArchetype`" checklist - a new `Palette`
+  role plus its shape/colour cases in `Java2DFrameRenderer`. Drop the `level=10` workaround
+  once real size/shape comes from the archetype itself rather than a borrowed formula.
+
+### Enemy traits/abilities numbers are unbalanced placeholders
+
+Every number introduced by the data-driven enemy model - `PercentResistTrait`/
+`HurtSpeedTrait`'s migrated Square/Triangle factors, `FlatResistTrait`'s flat reduction, and
+the entire Warden/egg chain's health, price, ability intervals, shield percentages/radii and
+`EGG_HATCH_DELAY_TICKS` - was chosen to be plausible, not tuned, the same situation the
+tower-upgrade and new-tower-numbers entries above were in before their own balance passes.
+
+- **Where:** `BuiltInEnemies` (all trait/ability constants), `PercentResistTrait`,
+  `HurtSpeedTrait`, `FlatResistTrait`.
+- **Approach:** play Classic Loop through to the Warden encounter (and the other two levels,
+  once they get their own late-game content) repeatedly, adjusting values until the chain and
+  the migrated traits feel meaningfully tuned rather than placeholder guesses - no code or
+  architecture change needed, every number here is already a named constant.

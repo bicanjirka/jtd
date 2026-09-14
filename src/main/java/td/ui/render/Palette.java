@@ -11,6 +11,7 @@ public enum Palette {
     ENEMY_GHOST,
     ENEMY_SQUARE,
     ENEMY_TRIANGLE,
+    ENEMY_EGG,
     TOWER_ONE_BODY,
     TOWER_TWO_BODY,
     TOWER_THREE_BODY,

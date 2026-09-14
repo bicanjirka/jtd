@@ -204,6 +204,24 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         return (int) this.distanceIntoLap;
     }
 
+    /** The exact, sub-pixel distance into the path's current lap - see {@link #jumpToDistance}. */
+    protected double getDistanceIntoLap() {
+        return this.distanceIntoLap;
+    }
+
+    /**
+     * Places this mob at an arbitrary point along the path instead of the start every mob
+     * otherwise spawns at - what an ability-driven spawn (the Warden's egg, a reinforcement)
+     * uses to appear where the spawning mob actually was, via
+     * {@code DefinedEnemyMob.spawnAtSamePositionAs}. Must be called after {@link #doInit}.
+     */
+    protected void jumpToDistance(double distanceIntoLap) {
+        this.distanceIntoLap = distanceIntoLap;
+        this.updatePosition();
+        this.prevX = this.x;
+        this.prevY = this.y;
+    }
+
     /** Spawned, on the board, and still alive - the precondition every targeting query applies. */
     public boolean validTarget() {
         return ((!this.inactive) && this.validTarget && (!this.dead));

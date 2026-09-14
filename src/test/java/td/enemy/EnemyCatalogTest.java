@@ -14,14 +14,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class EnemyCatalogTest {
 
     private static EnemyDefinition simpleDefinition(String id) {
-        return new EnemyDefinition(id, id, "", 1.28f, 1f, EnemyMob.type.Normal,
+        return new EnemyDefinition(id, id, "", 100, 5, 1.28f, 1f, EnemyMob.type.Normal,
                 BodyArchetype.CIRCLE, new FixedMovement(), List.of(), List.of());
     }
 
     /** A minimal definition whose only ability spawns {@code spawnedId} on death. */
     private static EnemyDefinition definitionThatSpawns(String id, String spawnedId) {
         Ability spawnOnDeath = new Ability(new OnDeathTrigger(), new SpawnEnemiesAction(spawnedId, 1, false));
-        return new EnemyDefinition(id, id, "", 1.28f, 1f, EnemyMob.type.Normal,
+        return new EnemyDefinition(id, id, "", 100, 5, 1.28f, 1f, EnemyMob.type.Normal,
                 BodyArchetype.CIRCLE, new FixedMovement(), List.of(), List.of(spawnOnDeath));
     }
 
@@ -55,13 +55,14 @@ class EnemyCatalogTest {
     @Test
     void cloneAndAdjustRegistersAnIndependentDefinitionUnderTheNewIdWithoutMutatingTheOriginal() {
         EnemyCatalog catalog = new EnemyCatalog();
-        EnemyDefinition square = new EnemyDefinition("s", "Square", "", 1.28f, 1f, EnemyMob.type.Normal,
+        EnemyDefinition square = new EnemyDefinition("s", "Square", "", 100, 5, 1.28f, 1f, EnemyMob.type.Normal,
                 BodyArchetype.SQUARE, new RotorMovement(0.1f), List.of(), List.of());
         catalog.register(square);
 
         // "a Square with double the usual resistance for this one level" - the feature request's own example
         EnemyDefinition tankySquare = catalog.cloneAndAdjust("s", "tankySquare",
-                d -> new EnemyDefinition(d.id(), d.displayName(), d.description(), d.baseSpeed(), d.healthDivisor() / 2f,
+                d -> new EnemyDefinition(d.id(), d.displayName(), d.description(), d.baseHealth(), d.price(),
+                        d.baseSpeed(), d.healthDivisor() / 2f,
                         d.mobType(), d.archetype(), d.movement(), d.traits(), d.abilities()));
 
         assertThat(catalog.get("s").healthDivisor()).isEqualTo(1f);
@@ -112,13 +113,25 @@ class EnemyCatalogTest {
     }
 
     @Test
-    void builtInPreRegistersTheFourBuiltInDefinitionsUnderTheirWaveScriptLetters() {
+    void builtInPreRegistersTheFourBasicBuiltInsUnderTheirWaveScriptLetters() {
         EnemyCatalog catalog = EnemyCatalog.builtIn();
 
         assertThat(catalog.contains("c")).isTrue();
         assertThat(catalog.contains("s")).isTrue();
         assertThat(catalog.contains("t")).isTrue();
         assertThat(catalog.contains("g")).isTrue();
+    }
+
+    @Test
+    void builtInPreRegistersTheFullWardenBossChain() {
+        EnemyCatalog catalog = EnemyCatalog.builtIn();
+
+        assertThat(catalog.contains("warden1")).isTrue();
+        assertThat(catalog.contains("wardenEgg1")).isTrue();
+        assertThat(catalog.contains("warden2")).isTrue();
+        assertThat(catalog.contains("wardenEgg2")).isTrue();
+        assertThat(catalog.contains("warden3")).isTrue();
+        assertThat(catalog.contains("wardenEgg3")).isTrue();
     }
 
     @Test

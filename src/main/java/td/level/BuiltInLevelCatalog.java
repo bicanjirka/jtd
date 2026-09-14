@@ -41,7 +41,16 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     new WaveDefinition("2 s 3 t 2 g 4 e c", 3242, 10, 3),
                     new WaveDefinition("s 4 e t", 4014, 50, 6),
                     new WaveDefinition("c 5 e 3 g 3 e 3 s 3 t", 4016, 4, 4),
-                    new WaveDefinition("s", 4751, 0, 8)),
+                    new WaveDefinition("s", 4751, 0, 8),
+                    // The Warden boss - hp/price here deliberately match BuiltInEnemies.WARDEN_1's
+                    // own baseHealth/price, since this wave slot is what constructs its first
+                    // appearance (every later stage, reached only via its egg hatching, is
+                    // ability-spawned and reads those same fields directly instead - see
+                    // EnemyDefinition's own doc comment). level=10 (well above the level-6 cap
+                    // DefinedEnemyMob's SQUARE-archetype body-scale formula already has) is what
+                    // gives it a visibly larger body than an ordinary Square - see TODO.md for
+                    // why that's a placeholder, not a real boss-specific look.
+                    new WaveDefinition("warden1", 8000, 100, 10)),
             50, 5);
 
     // cornerPull=0.3 keeps a comfortable margin under the tightest corner's leg (the shortest
