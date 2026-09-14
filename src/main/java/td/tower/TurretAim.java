@@ -39,7 +39,7 @@ public final class TurretAim {
      */
     public void tick(double desiredRadians) {
         this.previousRadians = this.currentRadians;
-        double step = clamp(normalize(desiredRadians - this.currentRadians), this.maxTurnRadiansPerTick);
+        double step = clamp(normalizeRadians(desiredRadians - this.currentRadians), this.maxTurnRadiansPerTick);
         this.currentRadians = this.currentRadians + step;
     }
 
@@ -49,8 +49,19 @@ public final class TurretAim {
      * position lerp, just for an angle (shortest way around, not a plain linear blend).
      */
     public double radiansAt(double interpolationAlpha) {
-        double diff = normalize(this.currentRadians - this.previousRadians);
+        double diff = normalizeRadians(this.currentRadians - this.previousRadians);
         return this.previousRadians + diff * interpolationAlpha;
+    }
+
+    /**
+     * This turret's current heading, as of the last {@link #tick(double)} call - not wrapped
+     * to any particular range, since it accumulates every turn ever taken rather than resetting
+     * each revolution. A cone tower tests wedge membership against this (via
+     * {@link #normalizeRadians(double)}), the same heading {@link #radiansAt} renders at
+     * {@code interpolationAlpha == 1.0}.
+     */
+    public double currentRadians() {
+        return this.currentRadians;
     }
 
     private static double clamp(double value, double bound) {
@@ -58,7 +69,7 @@ public final class TurretAim {
     }
 
     /** Wraps to {@code [-PI, PI)} - the shortest-path representation of an angular difference. */
-    private static double normalize(double radians) {
+    public static double normalizeRadians(double radians) {
         double wrapped = radians % TWO_PI;
         if (wrapped < -Math.PI) {
             wrapped += TWO_PI;
