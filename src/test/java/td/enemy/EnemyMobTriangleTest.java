@@ -18,7 +18,7 @@ class EnemyMobTriangleTest {
         EnemyMob triangle = EnemyFactory.getEnemy("t", context, 0, 100, 5, 1);
         // healthMax = 100*100 = 10000; speedBase = 1.28, speedMax at level 1 is 1.28*(1.4+0.1) = 1.92
         // losing half its health -> speed = 1.28 + (1.92-1.28)*(1-0.5) = 1.6
-        triangle.doDamage(Damage.of(5000));
+        triangle.doDamage(Damage.physical(5000));
 
         assertThat(triangle.getSpeed()).isCloseTo(1.6f, within(0.001f));
     }

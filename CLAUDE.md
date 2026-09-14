@@ -279,7 +279,13 @@ the two documents avoid contradicting each other:**
   - `td.damage.Damage` gives every hit dealt to an enemy an identity (`none()`) and a
     combinator (`plus`); its compact constructor clamps every construction path at zero, so
     a falloff or resistance calculation (see `EnemyMobSquare`'s `absorb` override) can never
-    produce a negative, healing hit.
+    produce a negative, healing hit. `Damage` also carries a `DamageType` (`PHYSICAL`/`MAGIC`,
+    built only via the named factories `Damage.physical(int)`/`Damage.magic(int)`) — a
+    zero-amount `Damage` is `plus`'s identity regardless of either side's type, but combining
+    two non-zero damages of different types throws, since there is no sensible way to merge
+    them into one value. `cappedAt(int max)` caps the amount while preserving type, and is
+    what `AbstractEnemyMob.doDamage` applies to `absorb`'s result rather than re-wrapping from
+    the incoming hit, which would silently discard whatever type `absorb` chose.
   - `EconomyLedger`'s `credits`/`score`/`lives` are one single `EconomyState` field —
     see the Threading model note above about `EconomyLedger.apply`'s synchronized block.
   - `td.wave.smoothing.PathSmoothing.none()` is the identity for path smoothing — a level with

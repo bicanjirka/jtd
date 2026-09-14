@@ -124,7 +124,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         }
         Damage landed = Damage.none();
         if (this.validTarget()) {
-            landed = Damage.of(Math.min(this.absorb(damage).amount(), this.health));
+            landed = this.absorb(damage).cappedAt(this.health);
             this.health -= landed.amount();
         }
         if (this.health <= 0) {
