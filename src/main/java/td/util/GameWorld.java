@@ -7,6 +7,9 @@ import td.economy.EconomyListener;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyRegistry;
 import td.enemy.EnemyRoster;
+import td.projectile.Projectile;
+import td.projectile.ProjectileRegistry;
+import td.projectile.ProjectileRoster;
 import td.tower.Tower;
 import td.tower.TowerListener;
 import td.tower.TowerRoster;
@@ -20,10 +23,11 @@ import java.util.List;
 
 /**
  * The composition root wiring a level's board geometry, economy, enemy roster, tower
- * roster and wave-start hub into the one object {@code Tower}/{@code EnemyMob}/{@code Wave}
- * are constructed against. Owns none of that state itself - every method here delegates to
- * {@link BoardGeometry}, {@link EconomyLedger}, {@link EnemyRoster}, {@link TowerRoster} or
- * {@link WaveAnnouncer}, each of which is independently constructible and testable.
+ * roster, projectile roster and wave-start hub into the one object
+ * {@code Tower}/{@code EnemyMob}/{@code Wave} are constructed against. Owns none of that
+ * state itself - every method here delegates to {@link BoardGeometry}, {@link EconomyLedger},
+ * {@link EnemyRoster}, {@link TowerRoster}, {@link ProjectileRoster} or {@link WaveAnnouncer},
+ * each of which is independently constructible and testable.
  */
 public class GameWorld {
 
@@ -34,6 +38,7 @@ public class GameWorld {
     private final EconomyLedger economy = new EconomyLedger();
     private final EnemyRoster enemies;
     private final TowerRoster towers;
+    private final ProjectileRoster projectiles = new ProjectileRoster();
     private final WaveAnnouncer waves = new WaveAnnouncer();
 
     public GameWorld(GameHost mainApp) {
@@ -162,6 +167,22 @@ public class GameWorld {
 
     public int getLives() {
         return this.economy.getLives();
+    }
+
+    public ProjectileRegistry getProjectileRegistry() {
+        return this.projectiles;
+    }
+
+    public void addProjectile(Projectile projectile) {
+        this.projectiles.add(projectile);
+    }
+
+    public void tickProjectiles(int gameTime) {
+        this.projectiles.doTick(gameTime);
+    }
+
+    public void clearProjectiles() {
+        this.projectiles.clear();
     }
 
 }

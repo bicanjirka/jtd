@@ -2,6 +2,7 @@ package td;
 
 import org.junit.jupiter.api.Test;
 import td.level.LevelDefinition;
+import td.projectile.CannonballProjectile;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerOne;
@@ -171,6 +172,31 @@ class GameEngineTest {
         engine.loadLevel(levelWith(List.of(), 100));
 
         assertThat(engine.getGameWorld().getEnemies()).isEmpty();
+    }
+
+    @Test
+    void reloadingALevelClearsProjectilesStillInFlightFromThePreviousLevel() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(), 100));
+        engine.getGameWorld().addProjectile(new CannonballProjectile(0, 0, 1000, 0, 1f, (x, y) -> {
+        }));
+        assertThat(engine.getGameWorld().getProjectileRegistry().getProjectiles()).isNotEmpty();
+
+        engine.loadLevel(levelWith(List.of(), 100));
+
+        assertThat(engine.getGameWorld().getProjectileRegistry().getProjectiles()).isEmpty();
+    }
+
+    @Test
+    void aProjectileAdvancesOnATickBetweenEnemiesAndTowersMoving() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(), 100));
+        engine.getGameWorld().addProjectile(new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
+        }));
+
+        engine.doTick(1);
+
+        assertThat(engine.getGameWorld().getProjectileRegistry().getProjectiles().get(0).getX()).isEqualTo(10.0);
     }
 
     @Test
