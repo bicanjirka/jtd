@@ -2,7 +2,11 @@ package td.tower;
 
 import td.damage.Damage;
 import td.enemy.EnemyMob;
+import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
+import td.tower.upgrade.ClusterCondition;
+import td.tower.upgrade.DamageDealtCondition;
+import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 
 import java.util.List;
@@ -22,7 +26,17 @@ public final class TowerTwo extends AbstractTower {
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.25;
 
-    private final float spreadRadius;
+    /** How much bigger a splash "Siege" gives this tower's blast radius. */
+    private static final float SIEGE_SPREAD_MULTIPLIER = 1.3f;
+    /** More damage and a bigger blast - earned by this tower having proven itself already. */
+    private static final UpgradePath SIEGE = new UpgradePath(
+            "Siege", 35, new TowerBuff(0.35f, 0f, 0f, 0f), new DamageDealtCondition(20000));
+    /** More damage and range - rewards a deliberately grouped placement rather than a solo one. */
+    private static final UpgradePath CLUSTER_CHARGE = new UpgradePath(
+            "Cluster Charge", 30, new TowerBuff(0.2f, 0.2f, 0f, 0f), new ClusterCondition(2));
+    private static final List<UpgradePath> PATHS = List.of(SIEGE, CLUSTER_CHARGE);
+
+    private float spreadRadius;
     private int coolDown = 0;
 
     private EnemyMob primaryTarget;
@@ -37,6 +51,19 @@ public final class TowerTwo extends AbstractTower {
         this.coolDownCurrent = this.coolDownMax;
         this.spreadRadius = spreadRadiusBase * context.getBoard().scale();
         this.doInit(context, x, y);
+    }
+
+    @Override
+    public List<UpgradePath> availablePaths() {
+        return PATHS;
+    }
+
+    /** Siege's blast-radius bump isn't a {@link TowerBuff} axis, so it's applied here instead. */
+    @Override
+    protected void onUpgradePathChosen(UpgradePath path) {
+        if (path == SIEGE) {
+            this.spreadRadius *= SIEGE_SPREAD_MULTIPLIER;
+        }
     }
 
     private List<EnemyMob> findEnemiesInRangeVisible(int x, int y, float r) {
@@ -130,7 +157,7 @@ public final class TowerTwo extends AbstractTower {
     public String getStatusString() {
         return "Circle tower\n\n" +
                 super.getStatusString() +
-                "Splash radius " + spreadRadiusBase + "\n" +
+                "Splash radius " + (this.spreadRadius / this.context.getBoard().scale()) + "\n" +
                 "Targets random";
     }
 

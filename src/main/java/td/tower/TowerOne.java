@@ -2,8 +2,12 @@ package td.tower;
 
 import td.damage.Damage;
 import td.enemy.EnemyMob;
+import td.tower.buff.TowerBuff;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
+import td.tower.upgrade.KillCountCondition;
+import td.tower.upgrade.UpgradeCondition;
+import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 
 import java.util.List;
@@ -22,6 +26,14 @@ public final class TowerOne extends AbstractTower {
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.4;
 
+    /** More damage and range, plus a bounty top-up on this tower's own kills - a veteran's payoff for proven kills. */
+    private static final UpgradePath VETERAN = new UpgradePath(
+            "Veteran", 30, new TowerBuff(0.3f, 0.1f, 0f, 0.25f), new KillCountCondition(10));
+    /** Faster, weaker shots - a straightforward money-gated specialization needing no track record. */
+    private static final UpgradePath OVERCLOCK = new UpgradePath(
+            "Overclock", 25, new TowerBuff(-0.2f, 0f, 0.4f, 0f), UpgradeCondition.always());
+    private static final List<UpgradePath> PATHS = List.of(VETERAN, OVERCLOCK);
+
     private int coolDown = 0;
 
     private EnemyMob currentTarget;
@@ -32,6 +44,11 @@ public final class TowerOne extends AbstractTower {
         this.coolDownMax = 39;
         this.coolDownCurrent = this.coolDownMax;
         this.doInit(context, x, y);
+    }
+
+    @Override
+    public List<UpgradePath> availablePaths() {
+        return PATHS;
     }
 
     private EnemyMob findEnemy() {

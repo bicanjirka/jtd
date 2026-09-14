@@ -90,6 +90,11 @@ final class RecordingEnemyMob implements EnemyMob {
     }
 
     @Override
+    public int getBounty() {
+        return 0;
+    }
+
+    @Override
     public int getProgression() {
         return 0;
     }
