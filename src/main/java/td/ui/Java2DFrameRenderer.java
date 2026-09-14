@@ -2,16 +2,21 @@ package td.ui;
 
 import td.ui.render.AuraDraw;
 import td.ui.render.BeamDraw;
+import td.ui.render.CannonballDraw;
 import td.ui.render.CellDraw;
+import td.ui.render.ConeDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
+import td.ui.render.MissileDraw;
 import td.ui.render.Palette;
 import td.ui.render.PathMarkerDraw;
 import td.ui.render.PathMarkerShape;
+import td.ui.render.ProjectileDraw;
 import td.ui.render.PulseDraw;
 import td.ui.render.RenderFrame;
 import td.ui.render.SplashDraw;
+import td.ui.render.StatusMarkerDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TurretHeadDraw;
@@ -75,6 +80,9 @@ public final class Java2DFrameRenderer {
         for (EnemyDraw enemy : frame.enemies()) {
             this.paintEnemy(g2, enemy);
         }
+        for (StatusMarkerDraw marker : frame.statusMarkers()) {
+            this.paintStatusMarker(g2, marker);
+        }
         for (TowerSpriteDraw sprite : frame.towerSprites()) {
             this.paintTowerSprite(g2, sprite, frame.scale());
         }
@@ -83,6 +91,9 @@ public final class Java2DFrameRenderer {
         }
         for (TowerEffectDraw effect : frame.towerEffects()) {
             this.paintTowerEffect(g2, effect);
+        }
+        for (ProjectileDraw projectile : frame.projectiles()) {
+            this.paintProjectile(g2, projectile);
         }
     }
 
@@ -236,6 +247,17 @@ public final class Java2DFrameRenderer {
         p.lineTo(point * u, scale / 2 * u);
         p.closePath();
         return p;
+    }
+
+    // --- status markers ---------------------------------------------------------
+
+    /** A small filled diamond naming an active status effect - deliberately not a shape rotated or fill-then-outline like a body, since it's already a small glyph at a fixed pose. */
+    private void paintStatusMarker(Graphics2D g2, StatusMarkerDraw marker) {
+        AffineTransform save = g2.getTransform();
+        g2.translate(marker.x(), marker.y());
+        g2.setColor(colorFor(marker.palette()));
+        g2.fill(diamondShape(marker.scale()));
+        g2.setTransform(save);
     }
 
     // --- towers ---------------------------------------------------------
@@ -564,7 +586,20 @@ public final class Java2DFrameRenderer {
             case SplashDraw splash -> this.paintFilledCircle(g2, splash.palette(), splash.centerX(), splash.centerY(), splash.radius());
             case PulseDraw pulse -> this.paintFilledCircle(g2, pulse.palette(), pulse.centerX(), pulse.centerY(), pulse.radius());
             case AuraDraw aura -> this.paintAura(g2, aura);
+            case ConeDraw cone -> this.paintCone(g2, cone);
         }
+    }
+
+    /** A symmetric pie wedge centred on {@code cone}'s heading - the same shape {@code InWedgeTargetQuery} tests against. */
+    private void paintCone(Graphics2D g2, ConeDraw cone) {
+        AffineTransform save = g2.getTransform();
+        g2.translate(cone.originX(), cone.originY());
+        g2.rotate(cone.headingRadians());
+        float halfWidthDegrees = (float) Math.toDegrees(cone.halfWidthRadians());
+        g2.setColor(withAlpha(colorFor(cone.palette()), Math.round(cone.alpha() * 255)));
+        g2.fill(new Arc2D.Float(-cone.radius(), -cone.radius(), cone.radius() * 2, cone.radius() * 2,
+                -halfWidthDegrees, halfWidthDegrees * 2, Arc2D.PIE));
+        g2.setTransform(save);
     }
 
     private void paintAura(Graphics2D g2, AuraDraw aura) {
@@ -591,6 +626,27 @@ public final class Java2DFrameRenderer {
         g2.fill(new Ellipse2D.Float(centerX - radius, centerY - radius, radius * 2, radius * 2));
     }
 
+    // --- projectiles ---------------------------------------------------------
+
+    /** How big a projectile is drawn - smaller than a tower's own head, since it's the shot, not the gun. */
+    private static final float PROJECTILE_SIZE = 5f;
+
+    private void paintProjectile(Graphics2D g2, ProjectileDraw projectile) {
+        switch (projectile) {
+            case CannonballDraw shell -> this.paintFilledCircle(g2, shell.palette(), shell.x(), shell.y(), PROJECTILE_SIZE);
+            case MissileDraw missile -> this.paintMissile(g2, missile);
+        }
+    }
+
+    private void paintMissile(Graphics2D g2, MissileDraw missile) {
+        AffineTransform save = g2.getTransform();
+        g2.translate(missile.x(), missile.y());
+        g2.rotate(missile.facingRadians());
+        g2.setColor(colorFor(missile.palette()));
+        g2.fill(headArrowShape(PROJECTILE_SIZE));
+        g2.setTransform(save);
+    }
+
     // --- shared ---------------------------------------------------------
 
     private static Color colorFor(Palette palette) {
@@ -615,6 +671,12 @@ public final class Java2DFrameRenderer {
             case TOWER_TWO_SPLASH_LINE, TOWER_TWO_SPLASH_FILL -> withAlpha(Color.RED, 80);
             case TOWER_THREE_BEAM -> Color.YELLOW;
             case TOWER_FOUR_PULSE -> withAlpha(Color.ORANGE, 80);
+            case TOWER_CINDER_CONE -> new Color(255, 90, 30);
+            case PROJECTILE_CANNONBALL -> new Color(139, 90, 43);
+            case PROJECTILE_MISSILE -> new Color(80, 180, 255);
+            case STATUS_MARKER_SLOW -> new Color(120, 120, 255);
+            case STATUS_MARKER_BURN -> new Color(255, 120, 40);
+            case STATUS_MARKER_FREEZE -> new Color(150, 220, 255);
             case PATH_MARKER_MOVING -> withAlpha(Color.WHITE, 100);
             case PATH_MARKER_STATIC -> withAlpha(Color.WHITE, 40);
         };

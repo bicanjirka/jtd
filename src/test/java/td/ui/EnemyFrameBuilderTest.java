@@ -2,10 +2,13 @@ package td.ui;
 
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
+import td.effect.Effect;
 import td.enemy.AbstractEnemyMob;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.ui.render.EnemyBodyDraw;
+import td.ui.render.Palette;
+import td.ui.render.StatusMarkerDraw;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 import td.wave.PathNormal;
@@ -96,5 +99,48 @@ class EnemyFrameBuilderTest {
 
         assertThat(drawAtZero.x()).isEqualTo(drawAtOne.x());
         assertThat(drawAtZero.y()).isEqualTo(drawAtOne.y());
+    }
+
+    @Test
+    void anEnemyWithNoActiveEffectsYieldsNoStatusMarkers() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
+        enemy.accept(builder);
+
+        assertThat(builder.buildMarkers()).isEmpty();
+    }
+
+    @Test
+    void anActiveSlowYieldsExactlyOneStatusMarkerWithTheSlowRole() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        enemy.applyEffect(Effect.slow(0.5f, 5, d -> {
+        }));
+
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
+        enemy.accept(builder);
+        List<StatusMarkerDraw> markers = builder.buildMarkers();
+
+        assertThat(markers).hasSize(1);
+        assertThat(markers.get(0).palette()).isEqualTo(Palette.STATUS_MARKER_SLOW);
+    }
+
+    @Test
+    void twoActiveEffectsYieldTwoDistinctlyPositionedMarkers() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        enemy.applyEffect(Effect.slow(0.5f, 5, d -> {
+        }));
+        enemy.applyEffect(Effect.burn(td.damage.Damage.magic(10), 5, d -> {
+        }));
+
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
+        enemy.accept(builder);
+        List<StatusMarkerDraw> markers = builder.buildMarkers();
+
+        assertThat(markers).hasSize(2);
+        assertThat(markers.get(0).x()).isNotEqualTo(markers.get(1).x());
     }
 }

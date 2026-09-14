@@ -2,11 +2,13 @@ package td.tower;
 
 import td.damage.Damage;
 import td.effect.Effect;
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyMobVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * An {@link EnemyMob} double that sits at a fixed point and records every hit and effect
@@ -63,6 +65,11 @@ final class RecordingEnemyMob implements EnemyMob {
 
     List<Effect> appliedEffects() {
         return this.appliedEffects;
+    }
+
+    @Override
+    public Set<EffectKind> activeEffectKinds() {
+        return Set.of();
     }
 
     @Override

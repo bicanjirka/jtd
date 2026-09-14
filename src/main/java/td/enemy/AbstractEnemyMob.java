@@ -4,6 +4,7 @@ import td.damage.Damage;
 import td.economy.EconomyDelta;
 import td.effect.ActiveEffects;
 import td.effect.Effect;
+import td.effect.EffectKind;
 import td.util.GameWorld;
 import td.wave.ArcLengthPath;
 import td.wave.PathPose;
@@ -11,6 +12,7 @@ import td.wave.Vec2;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Everything every enemy shares: spawn delay, movement along the level's path, health and
@@ -185,6 +187,10 @@ public abstract class AbstractEnemyMob implements EnemyMob {
 
     public void applyEffect(Effect effect) {
         this.activeEffects.apply(effect);
+    }
+
+    public Set<EffectKind> activeEffectKinds() {
+        return this.activeEffects.activeKinds();
     }
 
     /**

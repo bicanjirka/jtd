@@ -10,8 +10,10 @@ import java.util.List;
 public record RenderFrame(int scale, int maxX, int maxY,
                            List<CellDraw> cells,
                            List<EnemyDraw> enemies,
+                           List<StatusMarkerDraw> statusMarkers,
                            List<TowerSpriteDraw> towerSprites,
                            List<TurretHeadDraw> towerHeads,
                            List<TowerEffectDraw> towerEffects,
+                           List<ProjectileDraw> projectiles,
                            List<PathMarkerDraw> pathMarkers) {
 }

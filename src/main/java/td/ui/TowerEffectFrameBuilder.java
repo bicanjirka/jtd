@@ -12,6 +12,7 @@ import td.tower.TowerTwo;
 import td.tower.TowerVisitor;
 import td.ui.render.AuraDraw;
 import td.ui.render.BeamDraw;
+import td.ui.render.ConeDraw;
 import td.ui.render.Palette;
 import td.ui.render.PulseDraw;
 import td.ui.render.SplashDraw;
@@ -21,9 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Describes each tower's transient targeting effect (beam, splash, pulse, or - for the aura
- * tower, which never attacks - a pulsing ring) as {@link TowerEffectDraw} commands. One visit method
- * per concrete tower type, since - unlike the sprite - these genuinely differ by tower.
+ * Describes each tower's transient targeting effect (beam, splash, pulse, cone, or - for the
+ * aura tower, which never attacks - a pulsing ring) as {@link TowerEffectDraw} commands. One
+ * visit method per concrete tower type, since - unlike the sprite - these genuinely differ by
+ * tower.
  */
 public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
@@ -32,13 +34,16 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     // spinning turret heads, not tick-based domain state.
     private static final double AURA_PERIOD_SECONDS = 1.8;
     private static final double[] AURA_PHASE_OFFSETS = {0.0, 0.5};
+    private static final float CINDER_CONE_ALPHA = 0.35f;
 
     private final List<TowerEffectDraw> draws = new ArrayList<>();
     private final int gameTime;
+    private final double interpolationAlpha;
     private final double animationSeconds;
 
-    public TowerEffectFrameBuilder(int gameTime, double animationSeconds) {
+    public TowerEffectFrameBuilder(int gameTime, double interpolationAlpha, double animationSeconds) {
         this.gameTime = gameTime;
+        this.interpolationAlpha = interpolationAlpha;
         this.animationSeconds = animationSeconds;
     }
 
@@ -116,10 +121,11 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
-    /**
-     * No cone drawn yet - see {@code TODO.md} ("Cinder's flame cone has no visual effect yet").
-     */
+    /** The wedge itself, in the same heading {@code InWedgeTargetQuery} decides hits against. */
     public Void visitTowerCinder(TowerCinder tower) {
+        float headingRadians = (float) tower.getTurretAim().radiansAt(this.interpolationAlpha);
+        this.draws.add(new ConeDraw(Palette.TOWER_CINDER_CONE, tower.getX(), tower.getY(),
+                headingRadians, tower.getRangeReal(), (float) TowerCinder.HALF_WIDTH_RADIANS, CINDER_CONE_ALPHA));
         return null;
     }
 

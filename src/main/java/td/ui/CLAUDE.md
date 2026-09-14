@@ -34,10 +34,18 @@ Each domain type has one *frame builder* that describes it and knows nothing abo
 | Builder | Describes | Dispatch |
 |---|---|---|
 | `CellFrameBuilder` | placement/selection highlights | plain getters — only one `Cell` impl exists |
-| `EnemyFrameBuilder` | enemy bodies and death fades | `EnemyMobVisitor` |
+| `EnemyFrameBuilder` | enemy bodies, death fades, and (via a second `buildMarkers()` output) status-effect markers | `EnemyMobVisitor` |
 | `TowerSpriteFrameBuilder` | tower base + animated turret head | `TowerVisitor` |
-| `TowerEffectFrameBuilder` | beams, splash, pulse, aura | `TowerVisitor` |
+| `TowerEffectFrameBuilder` | beams, splash, pulse, aura, cone | `TowerVisitor` |
+| `ProjectileFrameBuilder` | in-flight shells and missiles | `ProjectileVisitor` |
 | `PathMarkerFrameBuilder` | the path's static trail and moving chevrons | none — pure geometry |
+
+A status-effect marker is deliberately its own `RenderFrame` list (`statusMarkers`), not a
+third permitted `EnemyDraw` subtype — `EnemyDraw`'s contract is "an enemy is either an alive
+body or a fading corpse, never both, never neither," and a marker is neither of those on its
+own. That split is also why `EnemyFrameBuilder.buildMarkers()` is a second output method
+alongside `build()`, the same shape `TowerSpriteFrameBuilder` already uses for
+`build()`/`buildHeads()`.
 
 ## Two independent clocks, and which one to use
 
@@ -46,7 +54,12 @@ package:
 
 - **`interpolationAlpha`** — where this frame lands between the last two *simulation* ticks
   (`[0, 1)`). Use it for anything reading domain state that advances per tick: an alive
-  enemy's position, an aiming turret's heading. It respects pause and fast-forward.
+  enemy's position, an aiming turret's heading, a projectile's position (`ProjectileFrameBuilder`
+  lerps `getPrevX/Y()`/`getX/Y()` exactly like `EnemyFrameBuilder` does), or a cone tower's
+  wedge heading (`TowerEffectFrameBuilder.visitTowerCinder` reads `radiansAt(interpolationAlpha)`,
+  the same heading its turret head renders at — not `TurretAim.currentRadians()`, which is what
+  `InWedgeTargetQuery` uses to decide hits, a tick-boundary value rather than a rendering one).
+  It respects pause and fast-forward.
 - **`animationSeconds`** — monotonic wall-clock seconds. Use it for cosmetic animation with
   no domain state behind it: spinning turret heads, the Aura tower's pulse and ring, the
   moving path markers. It deliberately keeps running while the game is paused, and does not

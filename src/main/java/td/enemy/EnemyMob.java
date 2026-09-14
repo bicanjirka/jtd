@@ -2,6 +2,9 @@ package td.enemy;
 
 import td.damage.Damage;
 import td.effect.Effect;
+import td.effect.EffectKind;
+
+import java.util.Set;
 
 /**
  * One enemy walking the level's path, as seen by towers, targeting queries and the renderer.
@@ -46,6 +49,9 @@ public interface EnemyMob {
      * effect already active of the same kind is handled when another is applied on top.
      */
     void applyEffect(Effect effect);
+
+    /** Which status effect kinds are currently active - for the renderer's on-board marker, in a stable order. */
+    Set<EffectKind> activeEffectKinds();
 
     float getSpeed();
 

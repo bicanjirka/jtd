@@ -2,8 +2,11 @@ package td.projectile;
 
 import td.damage.Damage;
 import td.effect.Effect;
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyMobVisitor;
+
+import java.util.Set;
 
 /** A minimal, mutable {@link EnemyMob} double - lets a test move a target mid-flight or invalidate it. */
 final class FakeTargetMob implements EnemyMob {
@@ -87,6 +90,11 @@ final class FakeTargetMob implements EnemyMob {
 
     @Override
     public void applyEffect(Effect effect) {
+    }
+
+    @Override
+    public Set<EffectKind> activeEffectKinds() {
+        return Set.of();
     }
 
     @Override

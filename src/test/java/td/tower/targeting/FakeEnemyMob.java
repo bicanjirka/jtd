@@ -2,8 +2,11 @@ package td.tower.targeting;
 
 import td.damage.Damage;
 import td.effect.Effect;
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyMobVisitor;
+
+import java.util.Set;
 
 /** A minimal, immutable {@link EnemyMob} double - only the geometry/targeting-relevant state is real. */
 final class FakeEnemyMob implements EnemyMob {
@@ -99,6 +102,11 @@ final class FakeEnemyMob implements EnemyMob {
 
     @Override
     public void applyEffect(Effect effect) {
+    }
+
+    @Override
+    public Set<EffectKind> activeEffectKinds() {
+        return Set.of();
     }
 
     @Override
