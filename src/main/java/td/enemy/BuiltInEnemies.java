@@ -21,14 +21,23 @@ import java.util.List;
  * ability spawns its own stage's egg; each egg's {@code Once} ability hatches into the next
  * (weaker) Warden stage if left alive for its full delay, via {@code consumesSelf} - a
  * transformation, not a kill. The final egg carries no ability at all, so the encounter is
- * guaranteed to terminate. All numbers here (health, price, ability intervals, shield
- * percentages) are placeholders for a later balance pass, like every other number in this
- * feature.
+ * guaranteed to terminate. Most numbers here (health, price, ability intervals, shield
+ * percentages) are still placeholders for a later balance pass, like every other number in
+ * this feature - {@link #WARDEN_FLAT_RESIST} is the one exception, tuned against the actual
+ * per-hit damage scale every attack tower operates at (see its own comment).
  */
 final class BuiltInEnemies {
 
     // 20 ticks/second at 1.0x tick speed (GameLoop.BASE_TICK_NANOS = 50ms) - 8 seconds.
     private static final int EGG_HATCH_DELAY_TICKS = 160;
+    // Tuned, not a placeholder: raised from an original 15 (see git history), which was
+    // negligible against every attack tower's actual per-hit/per-tick damage (150-4000, see
+    // TowerOne.damage..TowerCinder.damage) - a reduction that small is a rounding error, not
+    // armor. 100 stays below every tower's smallest per-application damage (TowerFour's 200,
+    // TowerCinder's 150 burn) so no tower is fully negated by Damage's zero-clamp, while still
+    // meaningfully denting a big single hit (TowerOne's 4000) the way the Warden's own doc
+    // comment ("armor") implies it should.
+    private static final int WARDEN_FLAT_RESIST = 100;
 
     private static final List<Ability> WARDEN_STANDING_ABILITIES = List.of(
             // periodically calls for a reinforcement
@@ -74,7 +83,7 @@ final class BuiltInEnemies {
             "warden1", "The Warden", "A hulking armored sentinel. Calls for reinforcements and shields itself and its allies.",
             8000, 100, 1.28f, 1f, EnemyMob.type.Normal,
             BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(2.0)),
-            List.of(new FlatResistTrait(15)), wardenAbilities("wardenEgg1"));
+            List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)), wardenAbilities("wardenEgg1"));
 
     static final EnemyDefinition WARDEN_EGG_1 = new EnemyDefinition(
             "wardenEgg1", "Warden's Egg", "Hatches into a weaker Warden if not defeated in time.",
@@ -86,7 +95,7 @@ final class BuiltInEnemies {
             "warden2", "The Weakened Warden", "A hulking armored sentinel, worn down from its last hatching.",
             5000, 100, 1.28f, 1f, EnemyMob.type.Normal,
             BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(2.0)),
-            List.of(new FlatResistTrait(15)), wardenAbilities("wardenEgg2"));
+            List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)), wardenAbilities("wardenEgg2"));
 
     static final EnemyDefinition WARDEN_EGG_2 = new EnemyDefinition(
             "wardenEgg2", "Warden's Egg", "Hatches into a weaker Warden if not defeated in time.",
@@ -98,7 +107,7 @@ final class BuiltInEnemies {
             "warden3", "The Exhausted Warden", "A hulking armored sentinel, barely standing.",
             3000, 100, 1.28f, 1f, EnemyMob.type.Normal,
             BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(2.0)),
-            List.of(new FlatResistTrait(15)), wardenAbilities("wardenEgg3"));
+            List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)), wardenAbilities("wardenEgg3"));
 
     static final EnemyDefinition WARDEN_EGG_3 = new EnemyDefinition(
             "wardenEgg3", "Warden's Final Egg", "Must be defeated to end the encounter - it will not hatch again.",
