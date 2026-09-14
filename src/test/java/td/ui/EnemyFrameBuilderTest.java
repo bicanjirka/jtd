@@ -143,4 +143,47 @@ class EnemyFrameBuilderTest {
         assertThat(markers).hasSize(2);
         assertThat(markers.get(0).x()).isNotEqualTo(markers.get(1).x());
     }
+
+    @Test
+    void aFourthSimultaneousEffectCollapsesIntoOneOverflowMarkerInsteadOfGrowingTheRow() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        enemy.applyEffect(Effect.slow(0.5f, 5, d -> {
+        }));
+        enemy.applyEffect(Effect.burn(td.damage.Damage.magic(10), 5, d -> {
+        }));
+        enemy.applyEffect(Effect.freeze(5, d -> {
+        }));
+        enemy.applyEffect(Effect.shield(0.3f, 5, d -> {
+        }));
+
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
+        enemy.accept(builder);
+        List<StatusMarkerDraw> markers = builder.buildMarkers();
+
+        assertThat(markers).hasSize(EnemyFrameBuilder.MAX_VISIBLE_MARKERS + 1);
+        assertThat(markers.get(markers.size() - 1).palette()).isEqualTo(Palette.STATUS_MARKER_OVERFLOW);
+    }
+
+    @Test
+    void aFifthSimultaneousEffectDoesNotGrowTheRowFurther() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        enemy.applyEffect(Effect.slow(0.5f, 5, d -> {
+        }));
+        enemy.applyEffect(Effect.burn(td.damage.Damage.magic(10), 5, d -> {
+        }));
+        enemy.applyEffect(Effect.freeze(5, d -> {
+        }));
+        enemy.applyEffect(Effect.shield(0.3f, 5, d -> {
+        }));
+        enemy.applyEffect(Effect.invisible(5, d -> {
+        }));
+
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
+        enemy.accept(builder);
+        List<StatusMarkerDraw> markers = builder.buildMarkers();
+
+        assertThat(markers).hasSize(EnemyFrameBuilder.MAX_VISIBLE_MARKERS + 1);
+    }
 }

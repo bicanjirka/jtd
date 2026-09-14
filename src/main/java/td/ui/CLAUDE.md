@@ -47,6 +47,13 @@ own. That split is also why `EnemyFrameBuilder.buildMarkers()` is a second outpu
 alongside `build()`, the same shape `TowerSpriteFrameBuilder` already uses for
 `build()`/`buildHeads()`.
 
+**The marker row caps at `EnemyFrameBuilder.MAX_VISIBLE_MARKERS` (3).** A 4th+ simultaneous
+effect collapses into one `Palette.STATUS_MARKER_OVERFLOW` marker rather than growing the row
+further — a heavily-buffed enemy in a packed wave still reads at a glance instead of sprouting
+an unbounded strip of icons. This is a deliberately simpler stand-in for an exact "+N" count
+(which would need real text rendering, a new render primitive nothing else here has) — a
+future pass could add that without changing the cap itself.
+
 ## Two independent clocks, and which one to use
 
 `buildFrame` receives both, and picking the wrong one is the most likely mistake in this

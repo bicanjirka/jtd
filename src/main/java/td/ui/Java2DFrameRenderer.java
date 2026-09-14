@@ -680,6 +680,7 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_FREEZE -> new Color(150, 220, 255);
             case STATUS_MARKER_SHIELD -> new Color(220, 220, 100);
             case STATUS_MARKER_INVISIBLE -> new Color(180, 180, 180);
+            case STATUS_MARKER_OVERFLOW -> Color.WHITE;
             case PATH_MARKER_MOVING -> withAlpha(Color.WHITE, 100);
             case PATH_MARKER_STATIC -> withAlpha(Color.WHITE, 40);
         };

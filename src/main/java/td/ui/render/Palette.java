@@ -39,6 +39,8 @@ public enum Palette {
     STATUS_MARKER_FREEZE,
     STATUS_MARKER_SHIELD,
     STATUS_MARKER_INVISIBLE,
+    /** Stands in for every effect beyond the marker row's visible cap - see EnemyFrameBuilder.MAX_VISIBLE_MARKERS. */
+    STATUS_MARKER_OVERFLOW,
     PATH_MARKER_STATIC,
     PATH_MARKER_MOVING
 }
