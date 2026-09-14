@@ -95,6 +95,10 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         return this.health;
     }
 
+    public int getBounty() {
+        return this.price;
+    }
+
     public float getHealthFraction() {
         return (float) this.health / this.healthMax;
     }

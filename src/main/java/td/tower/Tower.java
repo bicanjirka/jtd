@@ -45,7 +45,7 @@ public interface Tower {
 
     int getBoardY();
 
-    /** Attaches a nearby upgrade tower's buff, recomputing this tower's damage and range. */
+    /** Attaches a nearby Aura tower's buff, recomputing this tower's damage and range. */
     void registerTower(Tower t);
 
     void unregisterTower(Tower t);
@@ -75,9 +75,10 @@ public interface Tower {
     /**
      * Spends {@code path}'s price and permanently specializes this tower along it. Returns
      * {@code false} without effect if a path is already chosen, {@code path} isn't one of
-     * this tower's own {@link #availablePaths()}, or the player can't afford it - mirrors
-     * {@code GameWorld.doPay}'s check-and-charge-in-one-call contract, so a caller must not
-     * gate this on a separate affordability check first.
+     * this tower's own {@link #availablePaths()}, {@code path}'s own
+     * {@code UpgradeCondition} isn't currently satisfied, or the player can't afford it -
+     * mirrors {@code GameWorld.doPay}'s check-and-charge-in-one-call contract, so a caller
+     * must not gate this on a separate affordability or condition check first.
      */
     boolean chooseUpgradePath(UpgradePath path);
 

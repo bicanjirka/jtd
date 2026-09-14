@@ -2,7 +2,11 @@ package td.tower;
 
 import td.damage.Damage;
 import td.enemy.EnemyMob;
+import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
+import td.tower.upgrade.ClusterCondition;
+import td.tower.upgrade.KillCountCondition;
+import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 import td.wave.WaveStartListener;
 
@@ -36,13 +40,38 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
     /** How long a hit stays drawn, so a sweep leaves a brief trail of what it just caught. */
     private static final int HIT_FLASH_TICKS = 8;
 
-    private final SonarSweep sweep = SonarSweep.perRevolution(secondsPerRevolution, TICKS_PER_SECOND);
+    /** How much faster "Overcharged Array" makes the scan turn. */
+    private static final float OVERCHARGED_SPEEDUP_FACTOR = 0.6f;
+    /** Faster sweep and more range - a payoff for a deliberately grouped placement. */
+    private static final UpgradePath OVERCHARGED_ARRAY = new UpgradePath(
+            "Overcharged Array", 35, new TowerBuff(0f, 0.2f, 0f, 0f), new ClusterCondition(2));
+    /** More damage per hit - earned by this tower's own proven kill record. */
+    private static final UpgradePath MARKSMAN_BEAM = new UpgradePath(
+            "Marksman Beam", 30, new TowerBuff(0.4f, 0f, 0f, 0f), new KillCountCondition(15));
+    private static final List<UpgradePath> PATHS = List.of(OVERCHARGED_ARRAY, MARKSMAN_BEAM);
+
+    private SonarSweep sweep = SonarSweep.perRevolution(secondsPerRevolution, TICKS_PER_SECOND);
+    private float secondsPerRevolutionCurrent = secondsPerRevolution;
     private final List<SonarHit> recentHits = new ArrayList<>();
 
     public TowerThree(GameWorld context, int x, int y) {
         super(TowerFactory.type.third, price, damage, range);
         this.doInit(context, x, y);
         this.context.addWaveStartListener(this);
+    }
+
+    @Override
+    public List<UpgradePath> availablePaths() {
+        return PATHS;
+    }
+
+    /** Overcharged Array's turn-speed bump isn't a {@link TowerBuff} axis, so it's applied here instead. */
+    @Override
+    protected void onUpgradePathChosen(UpgradePath path) {
+        if (path == OVERCHARGED_ARRAY) {
+            this.secondsPerRevolutionCurrent = secondsPerRevolution * OVERCHARGED_SPEEDUP_FACTOR;
+            this.sweep = SonarSweep.perRevolution(this.secondsPerRevolutionCurrent, TICKS_PER_SECOND);
+        }
     }
 
     public void doTick(int gameTime) {
@@ -84,7 +113,7 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
 
     @Override
     protected String rateLine(int coolDown) {
-        return "Rotation: " + secondsPerRevolution + "s/turn\n";
+        return "Rotation: " + this.secondsPerRevolutionCurrent + "s/turn\n";
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {

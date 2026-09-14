@@ -87,6 +87,11 @@ final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
+    public int getBounty() {
+        return 0;
+    }
+
+    @Override
     public Damage doDamage(Damage damage) {
         return damage;
     }

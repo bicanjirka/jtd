@@ -2,9 +2,13 @@ package td.tower;
 
 import td.damage.Damage;
 import td.enemy.EnemyMob;
+import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.OfTypeTargetQuery;
 import td.tower.targeting.TargetQuery;
+import td.tower.upgrade.DamageDealtCondition;
+import td.tower.upgrade.UpgradeCondition;
+import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 
 import java.util.List;
@@ -21,11 +25,24 @@ public final class TowerFour extends AbstractTower {
     public static final int damage = 200;
     public static final float range = 1.5f;
 
+    /** More damage - earned by this tower having already proven itself against real targets. */
+    private static final UpgradePath OVERLOAD_CORE = new UpgradePath(
+            "Overload Core", 30, new TowerBuff(0.5f, 0f, 0f, 0f), new DamageDealtCondition(15000));
+    /** More range - a straightforward money-gated specialization needing no track record. */
+    private static final UpgradePath EXPANDED_FIELD = new UpgradePath(
+            "Expanded Field", 25, new TowerBuff(0f, 0.3f, 0f, 0f), UpgradeCondition.always());
+    private static final List<UpgradePath> PATHS = List.of(OVERLOAD_CORE, EXPANDED_FIELD);
+
     private boolean fire = false;
 
     public TowerFour(GameWorld context, int x, int y) {
         super(TowerFactory.type.fourth, price, damage, range);
         this.doInit(context, x, y);
+    }
+
+    @Override
+    public List<UpgradePath> availablePaths() {
+        return PATHS;
     }
 
     public void doTick(int gameTime) {

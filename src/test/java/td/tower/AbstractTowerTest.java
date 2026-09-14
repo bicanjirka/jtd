@@ -5,6 +5,7 @@ import td.damage.Damage;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
+import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
@@ -248,5 +249,35 @@ class AbstractTowerTest {
         tower.chooseUpgradePath(path);
 
         assertThat(tower.coolDownCurrent).isEqualTo(Math.round(tower.coolDownMax * 0.5f));
+    }
+
+    @Test
+    void choosingAPathWhoseConditionIsntSatisfiedIsRejected() {
+        context.startEconomy(100, 5);
+        UpgradePath path = new UpgradePath("Veteran", 10, TowerBuff.amplifying(0.2f), new KillCountCondition(1000));
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(path));
+
+        boolean chosen = tower.chooseUpgradePath(path);
+
+        assertThat(chosen).isFalse();
+        assertThat(context.getCredits()).isEqualTo(100);
+        assertThat(tower.getChosenPath()).isNull();
+    }
+
+    @Test
+    void aBountyBonusPathToppedUpCreditsWithoutDoublingScoreOnAKill() {
+        context.startEconomy(100, 5);
+        UpgradePath path = new UpgradePath("Veteran", 10, new TowerBuff(0f, 0f, 0f, 0.5f), UpgradeCondition.always());
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(path));
+        tower.chooseUpgradePath(path);
+        int creditsAfterBuying = context.getCredits();
+        int scoreBefore = context.getScore();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1, 20, 1);
+
+        tower.dealDamage(enemy, Damage.of(4000));
+
+        // base kill bounty (20 credits, 20 score) plus 50% bonus credits (10) - no extra score
+        assertThat(context.getCredits()).isEqualTo(creditsAfterBuying + 20 + 10);
+        assertThat(context.getScore()).isEqualTo(scoreBefore + 20);
     }
 }

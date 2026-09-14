@@ -3,6 +3,7 @@ package td.tower;
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.enemy.EnemyMob;
+import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
@@ -91,5 +92,35 @@ class TowerTwoTest {
 
         assertThat(blastCentre.hits()).hasSize(1);
         assertThat(outside.hits()).isEmpty();
+    }
+
+    @Test
+    void siegeBumpsTheSpreadRadiusBeyondTheBase() {
+        TowerTwo tower = towerNear(3, 3);
+        UpgradePath siege = UpgradePaths.named(tower, "Siege");
+        float radiusBeforeChoosing = tower.getSpreadRadius();
+
+        // onUpgradePathChosen is exercised directly - Siege's own gate (a damage-dealt
+        // threshold) is covered generically by DamageDealtConditionTest and by
+        // AbstractTowerTest's condition-gating test; this proves the stat bump itself.
+        tower.onUpgradePathChosen(siege);
+
+        assertThat(tower.getSpreadRadius()).isGreaterThan(radiusBeforeChoosing);
+    }
+
+    @Test
+    void clusterChargeIsChoosableOnceTwoNeighboursExistAndAppliesItsDamageAndRangeBonus() {
+        this.context.startEconomy(1000, 5);
+        TowerTwo tower = towerNear(3, 3);
+        this.context.addTower(tower);
+        this.context.addTower(new TowerOne(this.context, 2, 2));
+        this.context.addTower(new TowerOne(this.context, 4, 4));
+        UpgradePath clusterCharge = UpgradePaths.named(tower, "Cluster Charge");
+
+        boolean chosen = tower.chooseUpgradePath(clusterCharge);
+
+        assertThat(chosen).isTrue();
+        assertThat(tower.damageCurrent).isGreaterThan(tower.damageBase);
+        assertThat(tower.getRangeReal()).isGreaterThan(TowerTwo.range * SCALE);
     }
 }

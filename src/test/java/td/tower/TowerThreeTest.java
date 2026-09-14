@@ -3,6 +3,7 @@ package td.tower;
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.enemy.EnemyMob;
+import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
@@ -157,5 +158,23 @@ class TowerThreeTest {
 
         assertThat(tower.getStatusString()).contains("Rotation");
         assertThat(tower.getStatusString()).doesNotContain("Fire rate");
+    }
+
+    @Test
+    void overchargedArraySpeedsUpTheSweepBeyondTheBaseRate() {
+        TowerThree tower = tower();
+        UpgradePath overchargedArray = UpgradePaths.named(tower, "Overcharged Array");
+        tower.doTick(1);
+        double radiansPerTickBeforeChoosing = tower.sweepRadiansAt(0) - tower.sweepRadiansAt(1);
+
+        // onUpgradePathChosen is exercised directly - Overcharged Array's own gate (a cluster
+        // of nearby towers) is covered generically by ClusterConditionTest and by
+        // AbstractTowerTest's condition-gating test; this proves the sweep-speed bump itself.
+        tower.onUpgradePathChosen(overchargedArray);
+        tower.doTick(2);
+        double radiansPerTickAfterChoosing = tower.sweepRadiansAt(0) - tower.sweepRadiansAt(1);
+
+        assertThat(radiansPerTickAfterChoosing).isGreaterThan(radiansPerTickBeforeChoosing);
+        assertThat(tower.getStatusString()).contains("Rotation");
     }
 }

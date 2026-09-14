@@ -1,6 +1,7 @@
 package td.tower;
 
 import td.damage.Damage;
+import td.economy.EconomyDelta;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradePath;
@@ -119,6 +120,11 @@ public abstract class AbstractTower implements Tower {
      * {@code damage} argument: a mob that resists part of a hit (see {@code EnemyMobSquare})
      * takes less than was fired at it, and a tower claiming the full amount would over-report
      * against exactly the enemies it performs worst on.
+     * <p>
+     * A kill that lands here tops up credits by {@code chosenPath}'s {@code bountyBonus}
+     * (if any) on top of the flat {@code EconomyDelta.kill} bounty {@code enemy.doDamage}
+     * already granted - extra <em>credits</em> only, no extra score, so a tower's bounty
+     * specialization is a cash bonus rather than a scoring one.
      */
     protected void dealDamage(EnemyMob enemy, Damage damage) {
         boolean wasAlive = !enemy.isDead();
@@ -127,6 +133,10 @@ public abstract class AbstractTower implements Tower {
             this.damageDealt += landed.amount();
             if (enemy.isDead()) {
                 this.killCount++;
+                if (this.chosenPath != null && this.chosenPath.statBonus().bountyBonus() != 0f) {
+                    int bonus = Math.round(enemy.getBounty() * this.chosenPath.statBonus().bountyBonus());
+                    this.context.apply(EconomyDelta.credits(bonus));
+                }
             }
         }
     }
@@ -150,6 +160,9 @@ public abstract class AbstractTower implements Tower {
 
     public boolean chooseUpgradePath(UpgradePath path) {
         if (this.chosenPath != null || !this.availablePaths().contains(path)) {
+            return false;
+        }
+        if (!path.condition().isSatisfied(this, this.context)) {
             return false;
         }
         if (!this.context.doPay(path.price())) {

@@ -61,8 +61,10 @@ Don't introduce a `Math.sqrt` into a per-tick scan.
 that was hit, not from the tower. That curve is flat near the centre and steep at the rim —
 half-way out still takes 75% — so it is much more forgiving than a linear falloff would be.
 The same `spreadRadius` bounds the splash query and divides the falloff, which is what keeps
-the result positive for everything the query returns. `spreadRadius` is fixed at construction
-and, unlike damage and range, is deliberately not touched by upgrade buffs.
+the result positive for everything the query returns. `spreadRadius` is set at construction
+and, unlike damage and range, is untouched by an Aura tower's buff — its only way to change
+is `TowerTwo`'s own "Siege" upgrade path bumping it once via `onUpgradePathChosen` (see
+below), not any live, continuously-recomputed algebra.
 
 ## Targeting (`td.tower.targeting`)
 

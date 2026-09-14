@@ -29,6 +29,9 @@ public interface EnemyMob {
 
     boolean isDead();
 
+    /** The bounty this mob pays on death (and the score penalty it costs if it leaks instead). */
+    int getBounty();
+
     /**
      * Applies a hit and returns how much of it actually landed, which is not necessarily what
      * was passed in - a mob may resist part of it, or none of it may apply at all if the mob
