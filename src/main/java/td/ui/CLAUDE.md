@@ -110,6 +110,15 @@ none of them — that is deliberate, and there are two reasons it has to stay th
 The L&F's *listeners* stay installed, so pressed/rollover/selected still track the mouse
 normally. Only painting is taken over.
 
+**The one sanctioned exception is a control's text colour**, used by `PanelTowerInfo` to
+set its sell button's text apart from its upgrade-path buttons (destructive vs. constructive
+action) via the ordinary `Component.setForeground` — `Hud.paintControl`'s
+`paintCentredText` already reads a button's own foreground colour rather than a hardcoded
+one, so this needs no change to `Hud`/`HudButton` and no bypass of their painting. This is
+narrow on purpose: border, fill, hover/press states and font all still come from `Hud`
+untouched. Don't read it as license to style a control by hand more broadly — the rule
+above still holds for anything else.
+
 Prefer a glyph character (`►`, `▮▮`) over drawn artwork for a simple control. **Verify any
 UI change from an actual screenshot of the running game** — see the `run-jtd` skill.
 
