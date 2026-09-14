@@ -5,7 +5,9 @@ import org.slf4j.LoggerFactory;
 import td.board.BoardGeometry;
 import td.cell.Cell;
 import td.cell.CellNormal;
+import td.economy.EconomyDelta;
 import td.enemy.EnemyCatalog;
+import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
 import td.level.LevelDefinition;
 import td.tower.Tower;
@@ -46,6 +48,7 @@ public class GameEngine {
     private int wave = 0;
     private boolean waveReady = true;
     private boolean startWave = false;
+    private int debugSpawnCursor = 0;
 
     public GameEngine(GameHost host) {
         this.gameWorld = new GameWorld(host);
@@ -240,5 +243,46 @@ public class GameEngine {
      */
     public Tower mouseClicked(int boardX, int boardY) {
         return this.placement.mouseClicked(boardX, boardY);
+    }
+
+    /**
+     * Debug tool: clears the current wave's enemies with no penalty (the same teardown path
+     * {@link #unloadCurrentLevel()} uses - no bounty, no score, no "you won" notification, since
+     * skipping is neither a kill nor a real clear) and starts the next one immediately.
+     *
+     * @return true if a next wave actually started (false on the last wave, where the board is
+     * still cleared but there is nothing left to advance to)
+     */
+    public boolean debugSkipCurrentWave() {
+        this.gameWorld.clearEnemies();
+        this.waveReady = true;
+        return this.nextWave();
+    }
+
+    /**
+     * Debug tool: spawns one instance of the next id in {@link EnemyCatalog#ids()}, cycling
+     * back to the first once every id has been used. Uses the definition's own
+     * {@code baseHealth}/{@code price} (there is no wave context to scale from) and appears
+     * immediately at the path's start.
+     *
+     * @return the id spawned, or null if no level is loaded
+     */
+    public String debugSpawnNextCatalogEnemy() {
+        if (this.cellGrid == null) {
+            return null;
+        }
+        EnemyCatalog catalog = this.gameWorld.getEnemyCatalog();
+        List<String> ids = catalog.ids();
+        String id = ids.get(this.debugSpawnCursor % ids.size());
+        this.debugSpawnCursor++;
+        EnemyDefinition definition = catalog.get(id);
+        EnemyMob mob = catalog.spawn(id, this.gameWorld, 0, definition.baseHealth(), definition.price(), 1);
+        this.gameWorld.addEnemy(mob);
+        return id;
+    }
+
+    /** Debug tool: grants a lump sum of credits, through the same path a kill or a sale uses. */
+    public void debugGrantCredits(int amount) {
+        this.gameWorld.apply(EconomyDelta.credits(amount));
     }
 }

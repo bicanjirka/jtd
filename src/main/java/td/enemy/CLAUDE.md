@@ -40,6 +40,11 @@ not this class, since it needs per-level catalog scoping `EnemyFactory` doesn't 
 old `EnemyFactory.Enemy` enum and `identifyEnemy` are gone - nothing needs a closed
 enumeration of ids anymore.
 
+**`EnemyCatalog.ids()` lists every registered id, in registration order** (it is backed by a
+`LinkedHashMap`, not a `HashMap`, specifically so this order is stable) —
+`GameEngine.debugSpawnNextCatalogEnemy()` is the one caller, cycling through it to let a
+debug keybinding spawn every enemy type a level's catalog knows about, one press at a time.
+
 **A level cannot yet register its own custom or cloned enemy.** `EnemyCatalog.builtIn()` is
 the only catalog any level gets - `GameEngine.loadLevel` builds one fresh per level load and
 every wave resolves its tokens against it, but `LevelDefinition` has no field yet for a

@@ -135,6 +135,25 @@ class EnemyCatalogTest {
     }
 
     @Test
+    void idsListsEveryRegisteredIdInRegistrationOrder() {
+        EnemyCatalog catalog = new EnemyCatalog();
+        catalog.register(simpleDefinition("first"));
+        catalog.register(simpleDefinition("second"));
+        catalog.register(simpleDefinition("third"));
+
+        assertThat(catalog.ids()).containsExactly("first", "second", "third");
+    }
+
+    @Test
+    void idsIncludesALaterRegistrationAddedAfterBuiltIn() {
+        EnemyCatalog catalog = EnemyCatalog.builtIn();
+
+        catalog.register(simpleDefinition("custom"));
+
+        assertThat(catalog.ids()).contains("c", "s", "t", "g", "warden1").endsWith("custom");
+    }
+
+    @Test
     void builtInReturnsAFreshCatalogEachCallNotASharedSingleton() {
         EnemyCatalog first = EnemyCatalog.builtIn();
         first.register(simpleDefinition("custom"));

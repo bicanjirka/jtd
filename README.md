@@ -50,8 +50,14 @@ yourself when you are ready — waves do not auto-advance.
 | `p` | Pause / unpause |
 | `f` | Cycle tick speed (normal → fast → super fast → normal) |
 | `m` | Back to the level-select menu (asks to confirm mid-level) |
+| `n` | Debug: clear the current wave with no penalty and start the next one |
+| `x` | Debug: spawn one instance of the next enemy type in the level's catalog, cycling through all of them |
+| `c` | Debug: grant a lump sum of credits |
 
 Mouse: move to preview placement, click to place or to select a placed tower.
+
+The `n`/`x`/`c` debug keys are always available, not gated behind a build flag — they exist to
+make manual playtesting cheap (see `FEATURE-playtesting-and-balance-tooling.md`).
 
 ### Towers
 

@@ -79,6 +79,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      * rather than hand-matched per tower, so a new tower type needs only a key appended here.
      */
     private static final char[] TOWER_PLACEMENT_KEYS = {'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o'};
+    /** Debug keybinding: how many credits `c` grants in one press - see FEATURE-playtesting-and-balance-tooling.md. */
+    private static final int DEBUG_CREDIT_GRANT = 1000;
 
     private final LevelCatalog levelCatalog = new BuiltInLevelCatalog();
 
@@ -356,6 +358,14 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
     }
 
+    /** Debug keybinding ('n'): clears the current wave with no penalty and starts the next. */
+    private void debugSkipWave() {
+        this.engine.debugSkipCurrentWave();
+        this.setWavePreview();
+        this.updateInfo();
+        this.syncTransportButtons();
+    }
+
     private void updateInfo() {
         this.gameConsole.setWaveProgress(this.engine.getCurrentWaveIndex(), this.engine.getWaveCount());
     }
@@ -523,6 +533,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             case 'p' -> this.togglePause();
             case 'f' -> this.cycleSpeed();
             case 's' -> this.nextWave();
+            case 'n' -> this.debugSkipWave();
+            case 'x' -> this.setInfoText("Debug spawned: " + this.engine.debugSpawnNextCatalogEnemy());
+            case 'c' -> this.engine.debugGrantCredits(DEBUG_CREDIT_GRANT);
             case KeyEvent.VK_ESCAPE -> {
                 if (this.engine.isPlacingTower()) {
                     this.engine.cancelPlacing();

@@ -3,8 +3,9 @@ package td.enemy;
 import td.util.GameStartupException;
 import td.util.GameWorld;
 
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.UnaryOperator;
@@ -21,7 +22,7 @@ import java.util.function.UnaryOperator;
  */
 public final class EnemyCatalog {
 
-    private final Map<String, EnemyDefinition> definitions = new HashMap<>();
+    private final Map<String, EnemyDefinition> definitions = new LinkedHashMap<>();
 
     /**
      * Registers {@code definition} under its own id. Throws {@link GameStartupException} for a
@@ -50,6 +51,16 @@ public final class EnemyCatalog {
 
     public boolean contains(String id) {
         return this.definitions.containsKey(id);
+    }
+
+    /**
+     * Every registered id, in registration order - what a debug/tooling caller cycles through
+     * (see {@code GameEngine.debugSpawnNextCatalogEnemy}). {@code builtIn()} registers the four
+     * basics first, then the Warden chain innermost-first (each egg before the Warden stage that
+     * spawns it, since a forward reference is only walked once its target is itself registered).
+     */
+    public List<String> ids() {
+        return List.copyOf(this.definitions.keySet());
     }
 
     public EnemyDefinition get(String id) {

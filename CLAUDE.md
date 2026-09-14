@@ -351,6 +351,24 @@ definition — there is no separate syntax for the two:
 
 `"3 s e 4 c"` = three Squares, one spacer, four Circles. A count applies only to the token immediately following it and resets to 1 afterward. Each wave is a `WaveDefinition(enemies, hp, price, level)`, and a level's full wave list is part of its `LevelDefinition` — see `BuiltInLevelCatalog`. `GameEngine.loadLevel` builds one `EnemyCatalog.builtIn()` per level load and passes it to every wave's `parse` call; no level registers its own ids yet (see `td/enemy/CLAUDE.md`).
 
+## Playtesting and balance tooling
+
+See `FEATURE-playtesting-and-balance-tooling.md` for the full design. `GameEngine` exposes
+three debug methods, always available (not gated behind a build flag), wired to keybindings
+`n`/`x`/`c` in `TowerDefense`'s `KeyListener`:
+
+- `debugSkipCurrentWave()` — clears the current wave with no penalty (the same no-`enemyDied`
+  path `unloadCurrentLevel` uses) and starts the next one immediately.
+- `debugSpawnNextCatalogEnemy()` — spawns one instance of the next id in
+  `EnemyCatalog.ids()`, cycling through every enemy type the loaded level's catalog has
+  registered. Requires a level to already be loaded.
+- `debugGrantCredits(int)` — grants a lump sum of credits through the same `EconomyDelta` path
+  a kill or a sale uses.
+
+These live on `GameEngine`, not `TowerDefense`, per the headless/Swing boundary above — they
+are ordinary engine rules and are unit-tested the same way every other `GameEngineTest` case
+is.
+
 ## Logging
 
 SLF4J + Logback. Every logging class gets `private static final Logger LOG =
