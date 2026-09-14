@@ -71,13 +71,54 @@ reasonable mid-level of investment looks like.
 
 `TowerMortar`, `TowerSeeker` and `TowerCinder`'s price, damage, range, cooldown, splash radius, and slow/freeze/burn
 magnitudes and durations were chosen to be plausible, not tuned - the same situation the upgrade-path numbers above
-were in before their own balance pass.
+were in before their own balance pass. The same is true of their own 6 upgrade paths (2 each): prices, stat bonuses
+and condition thresholds are equally unverified guesses.
 
-- **Where:** the `public static final` constants and effect-duration constants in `TowerMortar`, `TowerSeeker`,
-  `TowerCinder`.
-- **Approach:** play each of the built-in levels with all three new towers, and adjust values until each feels like a
-  meaningful, roughly-comparable-in-power choice next to the existing four attack towers. No code or architecture
-  change needed - every number here is already a named constant.
+- **Where:** the `public static final` constants and effect-duration fields in `TowerMortar`, `TowerSeeker`,
+  `TowerCinder`, and the `private static final UpgradePath` constants in each.
+- **Approach:** play each of the built-in levels with all three new towers (and each of their upgrade paths chosen at
+  least once), and adjust values until each feels like a meaningful, roughly-comparable-in-power choice next to the
+  existing four attack towers and their own paths. No code or architecture change needed - every number here is
+  already a named constant, not embedded in logic.
+
+## Damage types
+
+### Acid is not implemented as a second damage-over-time effect
+
+The original damage-types request named acid alongside burn as a second damage-over-time effect; v1 shipped only
+slow, burn and freeze (see `FEATURE-damage-types-and-projectiles.md`'s Decisions and V1 Scope), deferring acid rather
+than dropping it.
+
+- **Where:** `td.effect` (`EffectKind`, `Effect`) has no `ACID` case; nothing produces one.
+- **Approach:** first settle the feature doc's open question — is acid meant to be mechanically distinct from burn
+  (different scaling, a different interaction with a future armor/shield trait) or primarily a different visual on
+  the same damage-over-time mechanism? Only then add an `EffectKind.ACID` case and an `Effect.acid(...)` factory,
+  mirroring `Effect.burn(...)`.
+
+### Critical damage is not implemented
+
+The original request listed critical (chance-based bonus damage) as a post-hit effect alongside slow/burn/freeze; a
+product-review pass concluded it isn't mechanically one — slow/burn/freeze happen to the enemy after a hit lands, but
+a critical hit is a pre-hit, chance-based multiplier on the attacker's own roll — and recommended modeling it as a
+tower stat instead. That recommendation was accepted but never built.
+
+- **Where:** no code yet — `td.tower.AbstractTower` has no crit chance/multiplier of any kind.
+- **Approach:** add a chance/multiplier pair (base fields on `AbstractTower`, or per-leaf like `TowerTwo`'s
+  `spreadRadius`) rolled at the point `dealDamage` is called, scaling the `Damage` passed in before the enemy ever
+  sees it. Deliberately **not** a `td.effect.Effect` — a crit is resolved once, at the moment of the hit, not applied
+  to the enemy afterward the way a status effect is.
+
+### Damage-type resistance doesn't exist yet
+
+Every hit now carries a `DamageType` (`PHYSICAL`/`MAGIC`), but no enemy differentiates by it — `EnemyMobSquare
+.absorb()` and every other `absorb` override stay type-blind. This is deliberate infrastructure for the enemy-traits
+feature's shield traits (a magic shield, a physical shield), not an oversight — see
+`FEATURE-damage-types-and-projectiles.md`'s Decisions ("damage-type resistance is out of scope for v1").
+
+- **Where:** `td.enemy.AbstractEnemyMob.absorb()`, `EnemyMobSquare.absorb()`.
+- **Approach:** lands with the enemy-traits/effects feature (see `FEATURE-enemy-traits-and-effects.md`), which adds
+  the trait system a shield/resistance would be expressed through — not a standalone change to `Damage` or `absorb`
+  ahead of that.
 
 ### Rotating tower sprites
 
