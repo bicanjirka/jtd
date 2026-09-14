@@ -1,7 +1,9 @@
 package td.wave;
 
-import td.enemy.EnemyFactory;
+import td.enemy.DefinedEnemyMob;
+import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
+import td.enemy.EnemyMobEmpty;
 import td.util.GameWorld;
 
 import java.util.ArrayList;
@@ -33,19 +35,26 @@ public class Wave {
     private static List<EnemyMob> spawnEnemies(GameWorld gameWorld, WaveContent content, int baseHealth, int basePrice, int level) {
         List<EnemyMob> enemies = new ArrayList<>();
         int delay = 0;
-        for (EnemyFactory.Enemy enemy : content.spawnSequence()) {
-            enemies.add(enemy.create(gameWorld, delay, baseHealth, basePrice, level));
+        for (WaveSlot slot : content.spawnSequence()) {
+            enemies.add(spawnSlot(slot, gameWorld, delay, baseHealth, basePrice, level));
             delay++;
         }
         return List.copyOf(enemies);
     }
 
-    public Set<EnemyFactory.Enemy> enemySet() {
+    private static EnemyMob spawnSlot(WaveSlot slot, GameWorld gameWorld, int delay, int health, int price, int level) {
+        return switch (slot) {
+            case EnemySlot s -> new DefinedEnemyMob(s.definition(), gameWorld, delay, health, price, level);
+            case EmptySlot ignored -> new EnemyMobEmpty(gameWorld, delay, health, price, level);
+        };
+    }
+
+    public Set<EnemyDefinition> enemySet() {
         return this.content.enemySet();
     }
 
-    public int enemyCount(EnemyFactory.Enemy e) {
-        return this.content.enemyCount(e);
+    public int enemyCount(EnemyDefinition definition) {
+        return this.content.enemyCount(definition);
     }
 
     public int enemyCount() {

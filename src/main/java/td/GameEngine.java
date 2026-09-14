@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import td.board.BoardGeometry;
 import td.cell.Cell;
 import td.cell.CellNormal;
+import td.enemy.EnemyCatalog;
 import td.enemy.EnemyMob;
 import td.level.LevelDefinition;
 import td.tower.Tower;
@@ -114,8 +115,9 @@ public class GameEngine {
         markUnbuildableCells(path, scale);
         this.wave = 0;
 
+        EnemyCatalog enemyCatalog = EnemyCatalog.builtIn();
         for (WaveDefinition wd : level.waves()) {
-            this.waves.add(new Wave(this.gameWorld, wd.hp(), wd.price(), wd.level(), WaveScript.parse(wd.enemies())));
+            this.waves.add(new Wave(this.gameWorld, wd.hp(), wd.price(), wd.level(), WaveScript.parse(wd.enemies(), enemyCatalog)));
         }
 
         this.gameWorld.startEconomy(level.startingCredits(), level.startingLives());

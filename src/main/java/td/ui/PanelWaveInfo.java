@@ -1,6 +1,6 @@
 package td.ui;
 
-import td.enemy.EnemyFactory;
+import td.enemy.EnemyDefinition;
 import td.util.GameWorld;
 import td.wave.Wave;
 
@@ -61,7 +61,7 @@ public class PanelWaveInfo extends JPanel {
         this.jLabel_cur_health.setText(w.getBaseHealth() + "hp");
         this.jLabel_cur_reward.setText(w.getBasePrice() + "$");
         this.jLabel_cur_level.setText("lvl " + w.getLevel());
-        for (EnemyFactory.Enemy e : w.enemySet()) {
+        for (EnemyDefinition e : w.enemySet()) {
             this.panelEnemy_cur.addEnemy(e, w.enemyCount(e), w.getLevel());
         }
         this.panelEnemy_cur.recalculateSize();
@@ -76,7 +76,7 @@ public class PanelWaveInfo extends JPanel {
         this.jLabel_next_health.setText(w.getBaseHealth() + "hp");
         this.jLabel_next_reward.setText(w.getBasePrice() + "$");
         this.jLabel_next_level.setText("lvl " + w.getLevel());
-        for (EnemyFactory.Enemy e : w.enemySet()) {
+        for (EnemyDefinition e : w.enemySet()) {
             this.panelEnemy_next.addEnemy(e, w.enemyCount(e), w.getLevel());
         }
         this.panelEnemy_next.recalculateSize();

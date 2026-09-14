@@ -1,7 +1,8 @@
 package td.wave;
 
 import org.junit.jupiter.api.Test;
-import td.enemy.EnemyFactory;
+import td.enemy.EnemyCatalog;
+import td.enemy.EnemyDefinition;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
@@ -16,10 +17,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WaveTest {
 
     private final GameWorld context = new GameWorld(new RecordingGameHost());
+    private final EnemyCatalog catalog = EnemyCatalog.builtIn();
 
     @Test
     void oneEnemyMobIsSpawnedPerSpawnSlotIncludingEmpties() {
-        Wave wave = new Wave(context, 100, 5, 1, WaveScript.parse("c e c"));
+        Wave wave = new Wave(this.context, 100, 5, 1, WaveScript.parse("c e c", this.catalog));
 
         assertThat(wave.getEnemies()).hasSize(3);
         assertThat(wave.enemyCount()).isEqualTo(2);
@@ -27,16 +29,18 @@ class WaveTest {
 
     @Test
     void enemySetAndEnemyCountDelegateToTheParsedContent() {
-        Wave wave = new Wave(context, 100, 5, 1, WaveScript.parse("2 c s"));
+        EnemyDefinition circle = this.catalog.get("c");
+        EnemyDefinition square = this.catalog.get("s");
+        Wave wave = new Wave(this.context, 100, 5, 1, WaveScript.parse("2 c s", this.catalog));
 
-        assertThat(wave.enemySet()).containsExactlyInAnyOrder(EnemyFactory.Enemy.Circle, EnemyFactory.Enemy.Square);
-        assertThat(wave.enemyCount(EnemyFactory.Enemy.Circle)).isEqualTo(2);
-        assertThat(wave.enemyCount(EnemyFactory.Enemy.Square)).isEqualTo(1);
+        assertThat(wave.enemySet()).containsExactlyInAnyOrder(circle, square);
+        assertThat(wave.enemyCount(circle)).isEqualTo(2);
+        assertThat(wave.enemyCount(square)).isEqualTo(1);
     }
 
     @Test
     void gettersReturnConstructorArguments() {
-        Wave wave = new Wave(context, 251, 2, 3, new WaveContent(List.of()));
+        Wave wave = new Wave(this.context, 251, 2, 3, new WaveContent(List.of()));
 
         assertThat(wave.getBaseHealth()).isEqualTo(251);
         assertThat(wave.getBasePrice()).isEqualTo(2);

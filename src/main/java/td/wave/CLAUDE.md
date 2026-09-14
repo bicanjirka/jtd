@@ -62,18 +62,27 @@ what the two curved built-in levels use.
 
 Parsing and instantiation are deliberately separate:
 
-- `WaveScript.parse` turns a token string into a `WaveContent`. No `GameWorld` involved, so
-  it is trivially testable. An unrecognised token is logged at `WARN` and treated as a
-  repeat count of 1 rather than failing the parse — this is what makes a green test run
+- `WaveScript.parse(tokens, catalog)` turns a token string into a `WaveContent` against a
+  given `td.enemy.EnemyCatalog`. No `GameWorld` involved, so it is trivially testable. Every
+  non-reserved token is looked up the same way regardless of whether it names a built-in or
+  a per-level custom/cloned definition — there is no separate syntax for the two, only
+  whether the id happens to be registered in the catalog passed in. `e` is the one reserved
+  token (the spacer), recognized before any catalog lookup. A token this can't recognize as
+  the spacer, a registered id, or an integer repeat count is logged at `WARN` and treated as
+  a repeat count of 1 rather than failing the parse — this is what makes a green test run
   print one stack trace (see the root `CLAUDE.md`'s Gotchas).
-- `WaveContent` is the parsed result: one `EnemyFactory.Enemy` per spawn slot, in order,
-  repeat counts already flattened. An `Empty` token keeps its slot — it counts toward spawn
-  *timing* but not toward `enemyCount()`.
+- `WaveContent` is the parsed result: one `WaveSlot` per spawn slot, in order, repeat counts
+  already flattened. `WaveSlot` is a closed pair - `EnemySlot(EnemyDefinition)` for a real
+  enemy, `EmptySlot()` for the spacer, which keeps its slot (it counts toward spawn *timing*)
+  but is excluded from `enemyCount()`/`enemySet()`.
 - `Wave` takes that content and does only the world-bound instantiation, one `EnemyMob` per
-  slot, with delay equal to the slot's index.
+  slot (a `DefinedEnemyMob` for an `EnemySlot`, an `EnemyMobEmpty` for an `EmptySlot`), with
+  delay equal to the slot's index.
 
-The token grammar itself is documented in the root `CLAUDE.md`. Adding a letter is a change
-to `EnemyFactory.Enemy`, not to anything here.
+The token grammar itself is documented in the root `CLAUDE.md`. `GameEngine.loadLevel`
+builds one `EnemyCatalog.builtIn()` per level load and passes it to every wave's `parse`
+call - a level does not yet register its own custom/cloned definitions into it (that's a
+later phase); today `builtIn()` is the only catalog any level actually gets.
 
 ## Wave start broadcast
 

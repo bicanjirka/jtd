@@ -1,6 +1,7 @@
 package td.enemy;
 
 import td.util.GameStartupException;
+import td.util.GameWorld;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,12 +11,13 @@ import java.util.function.UnaryOperator;
 
 /**
  * The open, string-keyed source of buildable enemy types - replaces the closed
- * {@code EnemyFactory.Enemy} enum. Built-ins are pre-registered globally under their existing
- * single-letter wave-script ids; a level can register its own new {@link EnemyDefinition}s, or
- * clone-and-adjust an existing one under a new id, scoped to that catalog instance only. Named
- * after the existing {@code LevelCatalog}/{@code BuiltInLevelCatalog} precedent rather than
- * "Registry", since {@link EnemyRegistry} already names the live per-wave roster's read
- * interface and reusing the word would collide.
+ * {@code EnemyFactory.Enemy} enum. {@link #builtIn()} returns a fresh catalog with the four
+ * built-in definitions pre-registered under their existing single-letter wave-script ids; a
+ * level can additionally register its own new {@link EnemyDefinition}s, or clone-and-adjust an
+ * existing one under a new id, scoped to that catalog instance only - though no level does yet
+ * (see {@code td/enemy/CLAUDE.md}). Named after the existing {@code LevelCatalog}/
+ * {@code BuiltInLevelCatalog} precedent rather than "Registry", since {@link EnemyRegistry}
+ * already names the live per-wave roster's read interface and reusing the word would collide.
  */
 public final class EnemyCatalog {
 
@@ -56,6 +58,26 @@ public final class EnemyCatalog {
             throw new GameStartupException("No enemy definition registered for id '" + id + "'");
         }
         return definition;
+    }
+
+    /** Builds a live mob from the definition registered under {@code id} - what {@code Wave}/{@code WaveScript} spawn through. */
+    public EnemyMob spawn(String id, GameWorld gameWorld, int delay, int health, int price, int level) {
+        return new DefinedEnemyMob(this.get(id), gameWorld, delay, health, price, level);
+    }
+
+    /**
+     * A fresh catalog with the four built-in definitions pre-registered under their existing
+     * single-letter wave-script ids. Fresh, not shared/cached: {@code GameEngine.loadLevel} is
+     * idempotent and re-enterable (see the root {@code CLAUDE.md}'s Levels section), so each
+     * level load gets its own catalog rather than accumulating a previous level's registrations.
+     */
+    public static EnemyCatalog builtIn() {
+        EnemyCatalog catalog = new EnemyCatalog();
+        catalog.register(BuiltInEnemies.CIRCLE);
+        catalog.register(BuiltInEnemies.SQUARE);
+        catalog.register(BuiltInEnemies.TRIANGLE);
+        catalog.register(BuiltInEnemies.GHOST);
+        return catalog;
     }
 
     private static EnemyDefinition withId(EnemyDefinition source, String newId) {

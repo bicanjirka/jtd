@@ -1,59 +1,83 @@
 package td.wave;
 
 import org.junit.jupiter.api.Test;
-import td.enemy.EnemyFactory;
+import td.enemy.BodyArchetype;
+import td.enemy.EnemyCatalog;
+import td.enemy.EnemyDefinition;
+import td.enemy.EnemyMob;
+import td.enemy.FixedMovement;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** WaveScript.parse is the wave mini-language's parser (see CLAUDE.md) - no GameWorld needed. */
 class WaveScriptTest {
 
+    private final EnemyCatalog catalog = EnemyCatalog.builtIn();
+    private final EnemyDefinition circle = this.catalog.get("c");
+    private final EnemyDefinition square = this.catalog.get("s");
+    private final EnemyDefinition ghost = this.catalog.get("g");
+
     @Test
     void plainTokensCountAsOneEnemyEach() {
-        WaveContent content = WaveScript.parse("c e c");
+        WaveContent content = WaveScript.parse("c e c", this.catalog);
 
-        // "e" (Empty) is a filler mob and is excluded from enemyCount()
+        // "e" is the reserved spacer token and is excluded from enemyCount()
         assertThat(content.enemyCount()).isEqualTo(2);
         assertThat(content.spawnSequence()).hasSize(3);
     }
 
     @Test
     void numericPrefixMultipliesTheFollowingToken() {
-        WaveContent content = WaveScript.parse("2 c");
+        WaveContent content = WaveScript.parse("2 c", this.catalog);
 
         assertThat(content.enemyCount()).isEqualTo(2);
-        assertThat(content.enemyCount(EnemyFactory.Enemy.Circle)).isEqualTo(2);
+        assertThat(content.enemyCount(this.circle)).isEqualTo(2);
     }
 
     @Test
     void aCountAppliesOnlyToTheTokenImmediatelyFollowingItAndThenResets() {
-        WaveContent content = WaveScript.parse("2 c s");
+        WaveContent content = WaveScript.parse("2 c s", this.catalog);
 
-        assertThat(content.enemyCount(EnemyFactory.Enemy.Circle)).isEqualTo(2);
-        assertThat(content.enemyCount(EnemyFactory.Enemy.Square)).isEqualTo(1);
+        assertThat(content.enemyCount(this.circle)).isEqualTo(2);
+        assertThat(content.enemyCount(this.square)).isEqualTo(1);
     }
 
     @Test
     void enemySetAndPerEnemyCountReflectTheParsedTokens() {
-        WaveContent content = WaveScript.parse("c e c");
+        WaveContent content = WaveScript.parse("c e c", this.catalog);
 
-        assertThat(content.enemySet()).containsExactlyInAnyOrder(EnemyFactory.Enemy.Circle, EnemyFactory.Enemy.Empty);
-        assertThat(content.enemyCount(EnemyFactory.Enemy.Circle)).isEqualTo(2);
-        assertThat(content.enemyCount(EnemyFactory.Enemy.Empty)).isEqualTo(1);
-        assertThat(content.enemyCount(EnemyFactory.Enemy.Ghost)).isZero();
+        // the spacer never appears in enemySet(), unlike the old EnemyFactory.Enemy-keyed model
+        assertThat(content.enemySet()).containsExactly(this.circle);
+        assertThat(content.enemyCount(this.circle)).isEqualTo(2);
+        assertThat(content.enemyCount(this.ghost)).isZero();
     }
 
     @Test
     void unrecognizedTokenIsTreatedAsMultiplierOneAndDoesNotThrow() {
-        WaveContent content = WaveScript.parse("c ? c");
+        WaveContent content = WaveScript.parse("c ? c", this.catalog);
 
         assertThat(content.enemyCount()).isEqualTo(2);
     }
 
     @Test
     void emptyStringParsesToNoSpawns() {
-        WaveContent content = WaveScript.parse("");
+        WaveContent content = WaveScript.parse("", this.catalog);
 
         assertThat(content.spawnSequence()).isEmpty();
+    }
+
+    @Test
+    void aPerLevelCustomIdResolvesTheSameWayABuiltInDoes() {
+        EnemyDefinition tankySquare = new EnemyDefinition("tankySquare", "Tanky Square", "", 1.28f, 1f,
+                EnemyMob.type.Normal, BodyArchetype.SQUARE, new FixedMovement(), List.of(), List.of());
+        EnemyCatalog perLevelCatalog = EnemyCatalog.builtIn();
+        perLevelCatalog.register(tankySquare);
+
+        WaveContent content = WaveScript.parse("c tankySquare", perLevelCatalog);
+
+        assertThat(content.enemySet()).containsExactlyInAnyOrder(this.circle, tankySquare);
+        assertThat(content.enemyCount(tankySquare)).isEqualTo(1);
     }
 }
