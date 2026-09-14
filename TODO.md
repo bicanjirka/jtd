@@ -82,6 +82,14 @@ and condition thresholds are equally unverified guesses.
   existing four attack towers and their own paths. No code or architecture change needed - every number here is
   already a named constant, not embedded in logic. `td.BalanceHarness` and the `n`/`x`/`c` debug keybindings (see
   the root `CLAUDE.md`'s "Playtesting and balance tooling") now make this cheap to actually do.
+- **Evidence gathered, not yet acted on:** a one-tower-vs-one-captive-target comparison (all 7 attack towers, same
+  position/level/2000-tick budget, single very-tanky enemy so none of them run out of target) found raw damage-per-
+  credit-spent of `first` 16000, `second` 6827, `third` 4000, `cinder` 4270, `fourth` 3520, `mortar` 2393, `seeker`
+  1697 - `mortar`/`seeker` are the two weakest of all seven, including both pre-existing splash/AoE towers, even
+  though this single-target setup already under-counts `mortar`'s splash and `cinder`'s ghost-hitting value and
+  over-counts nothing in their favor. Some of that gap is `mortar`'s unguided shell missing a moving target rather
+  than raw output, which this comparison can't separate out - worth a real multi-enemy/formation test before
+  concluding `mortar`'s price or damage needs to move, not just this single-target number on its own.
 
 ## Damage types
 
@@ -178,10 +186,14 @@ showing an actual number would be new render infrastructure, not a tweak to this
 ### Enemy traits/abilities numbers are unbalanced placeholders
 
 Every number introduced by the data-driven enemy model - `PercentResistTrait`/
-`HurtSpeedTrait`'s migrated Square/Triangle factors, `FlatResistTrait`'s flat reduction, and
-the entire Warden/egg chain's health, price, ability intervals, shield percentages/radii and
-`EGG_HATCH_DELAY_TICKS` - was chosen to be plausible, not tuned, the same situation the
-tower-upgrade and new-tower-numbers entries above were in before their own balance passes.
+`HurtSpeedTrait`'s migrated Square/Triangle factors, and the Warden/egg chain's health, price,
+ability intervals, shield percentages/radii and `EGG_HATCH_DELAY_TICKS` - was chosen to be
+plausible, not tuned, the same situation the tower-upgrade and new-tower-numbers entries above
+were in before their own balance passes. **One exception:** the Warden's `FlatResistTrait`
+value has been tuned (15 -> `BuiltInEnemies.WARDEN_FLAT_RESIST` = 100) against the actual
+per-hit/per-tick damage scale every attack tower deals (150-4000, see the head-to-head data in
+the new-tower-numbers entry above) - 15 was negligible against any of them (0.375%-10% of a
+single hit), making the Warden's armor mechanically inert regardless of which tower fought it.
 
 - **Where:** `BuiltInEnemies` (all trait/ability constants), `PercentResistTrait`,
   `HurtSpeedTrait`, `FlatResistTrait`.
