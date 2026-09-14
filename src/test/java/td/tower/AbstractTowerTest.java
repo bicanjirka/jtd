@@ -101,7 +101,7 @@ class AbstractTowerTest {
         TowerOne tower = new TowerOne(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1000, 3, 1);
 
-        tower.dealDamage(enemy, Damage.of(4000));
+        tower.dealDamage(enemy, Damage.physical(4000));
 
         assertThat(tower.getDamageDealt()).isEqualTo(4000);
         assertThat(tower.getKillCount()).isZero();
@@ -113,7 +113,7 @@ class AbstractTowerTest {
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
         long healthBefore = enemy.getHealth();
 
-        tower.dealDamage(enemy, Damage.of(4000));
+        tower.dealDamage(enemy, Damage.physical(4000));
 
         assertThat(enemy.isDead()).isTrue();
         assertThat(tower.getKillCount()).isEqualTo(1);
@@ -127,10 +127,10 @@ class AbstractTowerTest {
         TowerOne tower = new TowerOne(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
         long healthBefore = enemy.getHealth();
-        tower.dealDamage(enemy, Damage.of(4000));
+        tower.dealDamage(enemy, Damage.physical(4000));
 
         // simulates a second tower's shot landing on the same tick, after this one already killed it
-        tower.dealDamage(enemy, Damage.of(4000));
+        tower.dealDamage(enemy, Damage.physical(4000));
 
         assertThat(tower.getKillCount()).isEqualTo(1);
         assertThat(tower.getDamageDealt()).isEqualTo(healthBefore);
@@ -141,7 +141,7 @@ class AbstractTowerTest {
         TowerOne tower = new TowerOne(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
 
-        tower.dealDamage(enemy, Damage.of(4000));
+        tower.dealDamage(enemy, Damage.physical(4000));
 
         assertThat(enemy.getHealth()).isZero();
     }
@@ -153,7 +153,7 @@ class AbstractTowerTest {
         EnemyMob square = EnemyFactory.getEnemy("s", context, 0, 1000, 3, 1);
         long healthBefore = square.getHealth();
 
-        tower.dealDamage(square, Damage.of(4000));
+        tower.dealDamage(square, Damage.physical(4000));
 
         long healthLost = healthBefore - square.getHealth();
         assertThat(healthLost).isLessThan(4000);
@@ -165,8 +165,8 @@ class AbstractTowerTest {
         TowerOne tower = new TowerOne(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1000, 3, 1);
 
-        tower.dealDamage(enemy, Damage.of(1000));
-        tower.dealDamage(enemy, Damage.of(500));
+        tower.dealDamage(enemy, Damage.physical(1000));
+        tower.dealDamage(enemy, Damage.physical(500));
 
         assertThat(tower.getDamageDealt()).isEqualTo(1500);
         assertThat(tower.getKillCount()).isZero();
@@ -274,7 +274,7 @@ class AbstractTowerTest {
         int scoreBefore = context.getScore();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1, 20, 1);
 
-        tower.dealDamage(enemy, Damage.of(4000));
+        tower.dealDamage(enemy, Damage.physical(4000));
 
         // base kill bounty (20 credits, 20 score) plus 50% bonus credits (10) - no extra score
         assertThat(context.getCredits()).isEqualTo(creditsAfterBuying + 20 + 10);

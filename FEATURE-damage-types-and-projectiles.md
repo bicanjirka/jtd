@@ -1,3 +1,4 @@
+
 # Feature Request: Damage Types, Projectile Types and On-Hit Effects
 
 **Priority: Phase 2 — after tower upgrades.** This feature exists in part to give phase 1
@@ -209,19 +210,143 @@ below:
   requests (see Interconnections, above).
 - Sequencing: this feature ships **second**, after tower upgrades and before enemy
   traits/effects (see Priority, above).
+- **`Damage` becomes a tagged record**: `Damage(int amount, DamageType type)`, not a sealed
+  hierarchy. This keeps `plus`/`scaledBy` meaningful for two same-typed damage values, at
+  the cost of needing an explicit rule for combining two *different*-typed `Damage` values
+  (see Shape of the solution, below) — a cost the product review judged smaller than losing
+  the existing combinator algebra would be.
+- **v1 on-hit effects are slow, burn, and freeze** — critical damage is dropped from this
+  feature entirely and, per the product review's recommendation, becomes a tower *stat*
+  (chance/multiplier on the attacker's roll) if and when it's built, not a post-hit effect;
+  acid is deferred past v1 (see V1 Scope, below, for why). Freeze ships as one hard
+  speed-to-zero effect; "stun" as a separate name/mechanic stays deferred until feature 1's
+  abilities exist for it to meaningfully suppress that freeze wouldn't already cover.
+- **Cannonball, missile and cone delivery are new tower types, not retrofits** onto
+  `TowerOne`–`TowerFour`. This keeps the four existing towers' identity intact rather than
+  risking them feeling samey once they share a delivery layer.
+- **A homing missile whose target dies or leaks mid-flight retargets to the nearest
+  remaining enemy** rather than fizzling or detonating in place.
+- **Damage-type resistance is out of scope for v1.** Every hit carries a `DamageType`, but
+  no enemy differentiates by it yet — `EnemyMobSquare.absorb()` and its siblings stay
+  type-blind. The tag exists purely as infrastructure for feature 3's shield/resistance
+  traits to consume later; wiring an actual resistance now would be scope feature 3 owns.
+- **The shared effect primitive lives in a neutral top-level `td.effect` package**, not
+  `td.enemy.effect` as an earlier draft of this document proposed. Towers *produce* effects
+  and enemies *hold* them, so neither package should own the type — the same reasoning that
+  keeps `td.damage` neutral rather than living under `td.tower` or `td.enemy`.
+- **The three new towers get two upgrade paths each**, the same as `TowerOne`–`TowerFour`,
+  rather than shipping unupgradeable like the Aura tower. Folded into this feature's own
+  phased implementation rather than deferred as a separate follow-up.
+- **Burn damage is credited to the tower that applied it.** A burn tick routes back through
+  `AbstractTower.dealDamage` via a callback the effect carries, so a tower's `damageDealt`/
+  `killCount` readouts and its damage-dealt/kill-count upgrade gates stay reachable even
+  though the damage lands several ticks after the tower fired.
+
+## V1 Scope
+
+With the decisions above settled, this section pins down what a first version actually
+contains: concrete content, the shape of the solution, and a phased implementation order.
+
+### Boundary
+
+- `Damage` widens to `Damage(int amount, DamageType type)` with `DamageType { PHYSICAL,
+  MAGIC }`. Every existing tower's `dealDamage` call site is updated to pass a canonical
+  type for that tower (physical by default, since none of the four are thematically
+  magical today) — a mechanical migration, not a balance change.
+- **Three new towers**, one per delivery mechanism, each producing exactly one of the three
+  v1 effects so every effect is exercised by real content rather than left theoretical:
+  a cannonball tower (straight-line, fixed-destination projectile, splash on arrival), a
+  missile tower (homing projectile, single-target on arrival, retargets per the decision
+  above), and a cone tower (continuous flamethrower-style wedge, no cooldown — closer in
+  spirit to `TowerThree`'s `SonarSweep` than to a discrete shot).
+- The shared status-effect primitive (slow/burn/freeze) is built once, generic over
+  producer — this feature is its first consumer, but feature 1's abilities and feature 3's
+  aura-produced effects are expected to reuse the same type without modification.
+- No damage-type resistance, no acid, no critical damage, no retrofit of `TowerOne`–`Four`.
+  All four stay explicitly out of v1 per the decisions above.
+
+### Proposed content (illustrative — numbers, names and type/effect pairings are placeholders for a later balance/theme pass)
+
+| Tower | Delivery | Damage type | On-hit effect | Resolution |
+|---|---|---|---|---|
+| **Mortar** tower | Cannonball — straight line to target's position at fire time, doesn't re-aim | Physical | Slow (concussive blast) | Splash on arrival, reusing `TowerTwo`'s existing falloff shape |
+| **Seeker** tower | Missile — homing, re-aims each tick at the live target position | Magic | Freeze (cryo warhead) | Single-target on arrival, retargets to nearest enemy if the original target dies/leaks in flight |
+| **Cinder** tower | Cone — continuous wedge, no cooldown, slowly reorients toward its target | Magic | Burn (flame damage-over-time) | Every enemy currently inside the wedge is hit each tick, mirroring `TowerThree`'s "decide against the arc swept since last tick" approach but for a wedge instead of a full sweep |
+
+Pairing swapped from an earlier draft of this table (Seeker↔burn, Cinder↔freeze): a
+cooldown-free cone applying freeze to everything that enters its wedge is a permanent hard
+lock on anything caught in it, and putting the hard crowd-control on a single-target shot
+instead is both safer to balance and reads better thematically (a flamethrower burns, a cryo
+missile freezes).
+
+### Shape of the solution
+
+- **`Damage.plus` requires matching `DamageType`s.** Combining a physical and a magic hit
+  into one value has no sensible meaning, so `plus` should assert/throw on a type mismatch
+  rather than silently pick one side's type — the same "clamp at zero" discipline `Damage`'s
+  compact constructor already applies to amount extends naturally to type.
+- **A new shared status-effect primitive**, `td.effect.Effect` (kind — `SLOW`/`BURN`/
+  `FREEZE` — magnitude, remaining-ticks) held as a small list on
+  `AbstractEnemyMob` and resolved once per `doTick`: DoT effects deal damage and decrement,
+  speed-affecting effects fold into the same speed calculation `EnemyMobTriangle`'s
+  hurt-curve already touches. **Reapplying an effect that's already active refreshes its
+  duration rather than stacking its magnitude** — simplest rule that avoids runaway stacking
+  and needs no new algebra beyond what's already decided (effects are a shared primitive,
+  not yet another `combine`/`none()` pair, since duration-refresh isn't a commutative
+  combination the way `TowerBuff`/`EconomyDelta` are).
+- **A new `ProjectileRoster` `GameWorld` collaborator**, analogous to `EnemyRoster`/
+  `TowerRoster`: an `AbstractProjectile` base with `CannonballProjectile`/`MissileProjectile`
+  leaves, dispatched through a `ProjectileVisitor` the same way `EnemyMobVisitor`/
+  `TowerVisitor` already work (keeping the no-`instanceof` rule intact), a `doTick`-style
+  advance-then-resolve lifecycle, interpolated position for rendering (matching
+  `interpolationAlpha`, the same pattern `EnemyFrameBuilder` and turret-aim use), and a
+  `clear()` on level teardown following `TowerRoster.clear()`/`EnemyRoster.clear()`'s
+  precedent (see the root `CLAUDE.md`'s Levels section).
+- **The cone delivery needs no projectile entity at all** — it resolves directly each tick
+  like `TowerThree`, via a new point-in-wedge test alongside `td.tower.targeting`'s existing
+  `InRangeTargetQuery`/`OfTypeTargetQuery`, not a new roster.
+- **Rendering needs a new sealed `ProjectileDraw` hierarchy** in `td.ui.render`
+  (`CannonballDraw`/`MissileDraw`) with its own frame builder (a sibling of
+  `TowerEffectFrameBuilder`, closer in shape to `EnemyFrameBuilder` since a projectile is a
+  moving, interpolatable entity), a new `ConeDraw` added to the existing `TowerEffectDraw`
+  hierarchy alongside `BeamDraw`/`SplashDraw`/`PulseDraw`/`AuraDraw`, and a small vector
+  marker per active status effect on an affected enemy (per the root `CLAUDE.md`'s "all game
+  art is vector, drawn by code" rule — no image assets).
+- **The three new towers get sprite art following `td/tower/CLAUDE.md`'s existing
+  checklist** (a `Palette` role, a shape in `Java2DFrameRenderer`, wiring into
+  `TowerVisitor`) — the same fixed process as any new tower, not new process.
+
+### Phased implementation order
+
+Per this project's standing "commit after each phase" convention:
+
+1. **`Damage` foundation**: widen to the tagged record, add `DamageType`, update every
+   existing `dealDamage` call site and `absorb` override's signature (behavior unchanged —
+   see Boundary above). Provable headlessly; no new gameplay yet.
+2. **Shared status-effect primitive**: `td.effect.Effect`, the per-tick resolution hook on
+   `AbstractEnemyMob`, refresh-not-stack semantics. Provable headlessly with a test-only
+   applier — no producer wired yet.
+3. **Projectile entity and roster**: `AbstractProjectile`/`CannonballProjectile`/
+   `MissileProjectile`, `ProjectileRoster` as a new `GameWorld` collaborator, arrival
+   resolution (single-target and splash), the missile retarget-on-death rule. Provable
+   headlessly, no rendering yet.
+4. **Cone delivery**: the point-in-wedge test and continuous, no-cooldown resolution
+   modeled on `TowerThree`/`SonarSweep`.
+5. **Wire the three new towers end-to-end** (Mortar/Seeker/Cinder from the content table
+   above), each composing steps 1–4 and producing its designated effect.
+6. **Rendering**: the `ProjectileDraw` hierarchy and frame builder, `ConeDraw`, per-effect
+   status markers on enemies, and the three towers' sprite art. Verified visually via the
+   `run-jtd` skill, per this project's UI requirement.
+7. **Balance pass and doc cleanup**: tune the placeholder numbers/pairings above via actual
+   play, update `td/tower/CLAUDE.md`'s tower table and `README.md`, and fold this feature's
+   `TODO.md`-worthy leftovers (if any) into that file.
 
 ## Open questions
 
-1. Should `Damage` become a tagged record (`amount` + `type` enum/field) or a small sealed
-   hierarchy per type? This decision should probably be made once, shared with feature 1's
-   resistance/immunity traits, and made before implementation of any of the three features
-   starts.
-2. What happens to a homing missile whose target dies or leaks mid-flight — retarget,
-   fizzle, or detonate in place?
-3. Is "acid" meant to be a second, mechanically distinct DoT (different scaling, different
+1. Is "acid" meant to be a second, mechanically distinct DoT (different scaling, different
    interaction with armor/shields) or primarily a different visual/flavor on the same
-   burning-DoT mechanism?
-4. Does stun suppress enemy abilities (feature 1) as well as movement, or is it purely a
-   movement-speed effect distinct from "freeze" in name only?
-5. Which existing towers, if any, get retrofitted with a projectile/cone delivery instead of
-   their current instant-hit, versus this being additive (new towers only) for now?
+   burning-DoT mechanism? Deferred past v1, but worth settling before it's built so it
+   doesn't get built twice.
+2. Does the proposed content table above (which tower gets which delivery mechanism, damage
+   type and effect) match the intended feel, or should any pairing change before
+   implementation starts?

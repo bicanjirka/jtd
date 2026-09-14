@@ -48,6 +48,11 @@ zero health instead of going negative. Anything reporting damage figures —
 `AbstractTower.dealDamage` is the only such caller today — must use the return value. An
 override must propagate it (see `EnemyMobTriangle`).
 
+**The health cap is applied to `absorb`'s result, via `Damage.cappedAt`, never by re-wrapping
+the incoming hit.** `absorb` is free to change a hit's `DamageType` as well as its amount (a
+future magic-resistant trait would do exactly this); capping from the original `damage`
+argument instead would silently discard whatever type `absorb` chose.
+
 **Death timing is captured in `doTick`, not lazily at paint time.** `doDamage` sets
 `dead`; the next `doTick` records `deathTick`. The fade therefore advances with the
 simulation clock, so it runs at the same rate while fast-forwarding as the rest of the game.

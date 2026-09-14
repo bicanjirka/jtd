@@ -85,7 +85,7 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
         for (EnemyMob enemy : inRange) {
             double bearing = TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(), enemy.getY());
             if (this.sweep.sweptThisTick(bearing)) {
-                this.dealDamage(enemy, Damage.of(this.damageCurrent));
+                this.dealDamage(enemy, Damage.physical(this.damageCurrent));
                 this.recentHits.add(new SonarHit((float) enemy.getX(), (float) enemy.getY(), gameTime));
             }
         }

@@ -16,7 +16,7 @@ class EnemyMobSquareTest {
     void damageTakenIsReducedByTheSquaresDamageReductionFactor() {
         EnemyMob square = EnemyFactory.getEnemy("s", context, 0, 100, 5, 1);
         // healthMax = 100*100 = 10000; K at level 1 is 0.8-0.05 = 0.75, so 1000 raw damage becomes 750 applied
-        square.doDamage(Damage.of(1000));
+        square.doDamage(Damage.physical(1000));
 
         assertThat(square.getHealth()).isEqualTo(10000 - 750);
     }
@@ -26,8 +26,8 @@ class EnemyMobSquareTest {
         EnemyMob levelOne = EnemyFactory.getEnemy("s", context, 0, 1000, 5, 1);
         EnemyMob levelFive = EnemyFactory.getEnemy("s", context, 0, 1000, 5, 5);
 
-        levelOne.doDamage(Damage.of(1000));
-        levelFive.doDamage(Damage.of(1000));
+        levelOne.doDamage(Damage.physical(1000));
+        levelFive.doDamage(Damage.physical(1000));
 
         assertThat(levelFive.getHealth()).isGreaterThan(levelOne.getHealth());
     }

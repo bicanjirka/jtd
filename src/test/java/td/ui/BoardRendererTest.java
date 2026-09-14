@@ -109,7 +109,7 @@ class BoardRendererTest {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
-        enemy.doDamage(Damage.of(5000));
+        enemy.doDamage(Damage.physical(5000));
         enemy.doTick(1); // captures deathTick, matching how AbstractEnemyMob really ticks
 
         context.setEnemies(new EnemyMob[]{enemy});
