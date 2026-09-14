@@ -133,6 +133,7 @@ public class GameEngine {
      */
     private void unloadCurrentLevel() {
         this.placement.reset();
+        this.gameWorld.clearProjectiles();
         this.gameWorld.clearTowers();
         this.gameWorld.clearEnemies();
         this.startWave = false;
@@ -195,6 +196,10 @@ public class GameEngine {
         for (EnemyMob enemy : this.gameWorld.getEnemies()) {
             enemy.doTick(time);
         }
+        // Between enemies and towers: a projectile in flight aims at this tick's enemy
+        // positions, and one a tower spawns below first advances next tick rather than
+        // moving twice (once here, once after being added) in the tick it was fired.
+        this.gameWorld.tickProjectiles(time);
         for (Tower tower : this.gameWorld.getTowers()) {
             tower.doTick(time);
         }

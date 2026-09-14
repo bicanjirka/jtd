@@ -92,7 +92,11 @@ hierarchy + `TowerFactory` + `TowerRoster`/`TowerListener` — see below; `tower
 the shared target-scanning abstractions every tower composes instead of hand-rolling; `tower.buff`
 holds `TowerBuff`, the damage/range/fire-rate/bounty stacking algebra an Aura tower's buff and a
 tower's own chosen upgrade path both fold through; `tower.upgrade` holds `UpgradePath`/
-`UpgradeCondition`, a tower's permanent, gated in-place specializations), `wave` (path geometry and wave composition, plus `WaveAnnouncer`/
+`UpgradeCondition`, a tower's permanent, gated in-place specializations), `projectile`
+(travelling shells/missiles + `ProjectileRegistry`/`ProjectileRoster` — see below; a tower
+firing one supplies its own `PointImpact`/`TargetImpact` callback so a shell's or missile's
+damage is still credited through that tower's own `dealDamage`, keeping `td.projectile`
+dependent only on `td.enemy`/`td.damage`, never on `td.tower`), `wave` (path geometry and wave composition, plus `WaveAnnouncer`/
 `WaveStartListener` — see Path geometry
 below), `util` (`GameWorld`, `GameHost`).
 
@@ -106,6 +110,7 @@ testable class, and every one of `GameWorld`'s methods just delegates to one of 
 | `EconomyLedger` | `td.economy` | the `EconomyState` (credits/score/lives) and `EconomyListener` notification — see Threading model |
 | `EnemyRoster` (implements `EnemyRegistry`) | `td.enemy` | the live per-wave `EnemyMob[]` and death reporting to `GameHost` |
 | `TowerRoster` | `td.tower` | the tower list, buy/sell/clear, and `TowerListener` notification |
+| `ProjectileRoster` (implements `ProjectileRegistry`) | `td.projectile` | the live in-flight shells/missiles — see Threading model for why this list is copy-on-write like `TowerRoster`'s |
 | `WaveAnnouncer` | `td.wave` | the `WaveStartListener` hub (`TowerThree` is the only subscriber, clearing the hit markers its scan left on the previous wave) |
 
 A consumer that only needs one of these should depend on it directly rather than on the whole
@@ -139,7 +144,10 @@ call, from any prior state, not just once per process. It unloads the outgoing l
 first step, *before* installing the new board geometry and grid: `TowerRoster.clear()` maps
 each tower's pixel position back to a cell through the *current* `BoardGeometry` and calls back
 into the *current* `cellGrid`, so it must run while those are still the outgoing level's, not
-the new one's. `EnemyRoster.clear()` (renamed from `removeAll()`) deliberately does not notify
+the new one's. `GameWorld.clearProjectiles()` runs first, before either — a projectile in
+flight holds no reference to board geometry or the cell grid, so unlike towers and enemies it
+has no ordering constraint of its own, but it should still not survive into the next level's
+tick loop. `EnemyRoster.clear()` (renamed from `removeAll()`) deliberately does not notify
 `GameHost.enemyDied` — tearing a level down is not a death, and the old name's notification
 could spuriously trigger the "won" overlay via `TowerDefense.enemyDied`. `TowerDefense.returnToMenu()`
 itself clears no engine state at all; that is the payoff of `loadLevel()`'s contract. See
@@ -185,9 +193,21 @@ consistent real-world pace along whatever geometry the path actually has, curved
 - `onTick` runs a variable number of times per interval — zero while `TickSpeed.PAUSED`, several in a row when fast-forwarding.
 - `onRender` fires on a flat ~60fps real-time cadence regardless of tick speed, so the board keeps redrawing while paused.
 
+`GameEngine.doTick` ticks in a fixed order: enemies, then in-flight projectiles, then
+towers. Projectiles sit between the other two deliberately — a homing missile aims at this
+tick's enemy positions, not last tick's, and a projectile a tower spawns while its own loop
+runs below is left for the *next* tick to advance rather than moving twice (once from a
+stale iteration, once freshly added) in the tick it was fired.
+
 **Tick code does not run on the Event Dispatch Thread.** Rendering is handed to the EDT via `SwingUtilities.invokeLater` — that is the deliberate safe-publication idiom here, not `repaint()`'s internal synchronization. Consequences:
 
-- `EconomyLedger`'s, `TowerRoster`'s and `WaveAnnouncer`'s listener lists, and `TowerRoster`'s tower list, are `CopyOnWriteArrayList` on purpose. Keep them that way; don't "optimize" to `ArrayList`.
+- `EconomyLedger`'s, `TowerRoster`'s and `WaveAnnouncer`'s listener lists, `TowerRoster`'s
+  tower list, and `ProjectileRoster`'s projectile list are `CopyOnWriteArrayList` on purpose.
+  Keep them that way; don't "optimize" to `ArrayList`. `ProjectileRoster.doTick` collects
+  finished projectiles into a plain list while iterating and calls `removeAll` afterward
+  rather than removing through an iterator — `CopyOnWriteArrayList`'s iterator doesn't
+  support `remove()`, and that exception would otherwise be swallowed by `GameLoop`'s
+  per-tick failure handling (see below) instead of failing loudly at the call site.
 - `EconomyLedger`'s `EconomyState` is written from both the EDT (buying/selling a tower) and the `game-loop` thread (a kill or a leak), so `EconomyLedger.apply`/`doPay` compute the new state inside a `synchronized (this)` block and fire the resulting `EconomyListener.economyChanged` *outside* it — never hold the lock while calling out into listeners, which re-enter `EconomyLedger` and touch Swing.
 - Never touch Swing components from tick code. Route through a listener that the UI observes.
 - When the loop falls behind (debugger pause, long GC) it runs **one** tick and resyncs rather than bursting the backlog. Preserve that.

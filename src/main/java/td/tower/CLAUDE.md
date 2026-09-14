@@ -83,14 +83,20 @@ them; it does not hand-roll a scan over `EnemyRegistry.getEnemies()`.
   snapshot. `and` intersects; `all()` is the identity, `none()` the absorber (it
   short-circuits without evaluating the other side).
 - `TargetSelector` — picks at most one out of a candidate list
-  (`FurthestAlongPathSelector`, `RandomSelector`).
+  (`FurthestAlongPathSelector`, `RandomSelector`, `NearestSelector`).
 
 A tower whose cadence is geometric rather than a cooldown composes a query with its own
 sweep instead of a selector — see `TowerThree` filtering by range and type through
 `InRangeTargetQuery`, then deciding hits with `SonarSweep`.
 
 Implementations take an `EnemyRegistry`, never a `GameWorld` — the read-only slice is all
-they need.
+they need. This is also what lets `td.projectile.MissileProjectile` reuse
+`InRangeTargetQuery`/`NearestSelector` directly for its own retargeting, without needing to
+depend on any concrete tower.
+
+`NearestSelector` is centred on an arbitrary point, not a tower's own position — a homing
+missile retargets around *its own current location*, which is the one case in this codebase
+where "nearest" means nearest to something other than the object doing the asking.
 
 `InRangeTargetQuery` has no public constructor: use `anyType` or `ofType`. Passing a
 `null` type to mean "any" is exactly the modelled-absence problem the style guide's rule 8
