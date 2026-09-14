@@ -92,6 +92,17 @@ different alphas, so it has its own `paintSonarSweep` and `turretHeadShape` thro
 It is also sized to stay inside its own tile: a head reaching across neighbouring cells reads
 as a weapon with reach rather than as an instrument.
 
+A tower that has permanently chosen an upgrade path (see `td.tower.upgrade`) gets a thin
+ring drawn just outside its body — `Java2DFrameRenderer.paintUpgradeAccent`, fed by
+`TowerSpriteDraw.accent()`. This is deliberately **not** one more per-tower-per-path shape:
+there are only two accent roles, `Palette.TOWER_UPGRADE_PATH_A`/`_B`, shared across every
+tower type and keyed off *which slot* the tower specialized into
+(`TowerSpriteFrameBuilder.accentPaletteFor` does `tower.availablePaths().indexOf(tower
+.getChosenPath())`, not a per-path identity lookup) — so the accent is one consistent
+two-colour visual language the player learns once, not eight colours to memorize. It is
+also always a circle regardless of the body's own shape, for the same reason the selection
+ring is: legibility matters more than matching the body's silhouette here.
+
 ## The HUD look is ours, not the platform's
 
 **Every clickable control is a `HudButton` or a `HudToggleButton`, and every panel border

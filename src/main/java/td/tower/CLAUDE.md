@@ -142,6 +142,10 @@ changes what *this* tower itself is, once, and stays changed for its lifetime.
 - `AbstractTower.availablePaths()` defaults to `List.of()` - only a tower with real content
   (added per-leaf, not part of this shared mechanism) overrides it. The Aura tower does not
   override it and offers no paths of its own for v1.
+- The UI (`td.ui.PanelTowerInfo`) and the render accent ring
+  (`Java2DFrameRenderer.paintUpgradeAccent`, see `td/ui/CLAUDE.md`) both key off
+  `availablePaths()`/`getChosenPath()` alone - a tower's own domain state is the single
+  source of truth for what's choosable and what's already chosen, not any UI-side tracking.
 
 ## Adding a new tower
 
@@ -157,7 +161,8 @@ changes what *this* tower itself is, once, and stays changed for its lifetime.
 5. Add it to `README.md`'s tower table.
 6. If it offers upgrade paths, override `availablePaths()` with its (currently: exactly
    two) `UpgradePath`s, and `onUpgradePathChosen` only if one of them bumps a stat outside
-   `TowerBuff`'s four axes.
+   `TowerBuff`'s four axes. No new `Palette` role is needed for this: the specialization
+   ring's two roles are shared across every tower type (see `td/ui/CLAUDE.md`).
 
 The toolbar icon needs no separate art — `PanelTowerSelector` renders it through the same
 paint code at a fixed pose, so a tower's board look and its icon cannot drift apart.
