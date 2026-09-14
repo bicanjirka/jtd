@@ -1,24 +1,35 @@
 package td.enemy;
 
 import td.damage.Damage;
+import td.effect.EffectTemplate;
 import td.util.GameWorld;
+
+import java.util.List;
 
 /**
  * The single concrete {@link EnemyMob} implementation for every data-driven enemy - behavior
- * comes entirely from its {@link EnemyDefinition}'s {@link Trait}s, not from which Java class
- * was instantiated. {@link EnemyMobEmpty} is the one deliberate exception: a wave-timing spacer
- * that never ticks, is never a valid target, and is never drawn stays its own tiny class rather
- * than being forced through a trait/ability model it has no real use for.
+ * comes entirely from its {@link EnemyDefinition}'s {@link Trait}s and {@link Ability}s, not
+ * from which Java class was instantiated. {@link EnemyMobEmpty} is the one deliberate
+ * exception: a wave-timing spacer that never ticks, is never a valid target, and is never
+ * drawn stays its own tiny class rather than being forced through a trait/ability model it has
+ * no real use for.
  */
 public final class DefinedEnemyMob extends AbstractEnemyMob {
 
     private final EnemyDefinition definition;
+    private final List<AbilityState> abilityStates;
     private float bodyScale;
     private double facingRadians;
+    private int ticksSinceSpawn;
+    // Starts at 0, not "infinite" - a TimeSinceLastHitTrigger's idle window counts from spawn,
+    // the same as from an actual hit, so a fresh spawn doesn't trivially satisfy any threshold
+    // immediately.
+    private int ticksSinceLastHit;
 
     public DefinedEnemyMob(EnemyDefinition definition, GameWorld gameWorld, int delay, int health, int price, int level) {
         super();
         this.definition = definition;
+        this.abilityStates = definition.abilities().stream().map(a -> AbilityState.forTrigger(a.trigger())).toList();
         this.type = definition.mobType();
         this.speed = definition.baseSpeed();
         this.doInit(gameWorld, delay, health, price, level);
@@ -34,6 +45,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         return switch (archetype) {
             case CIRCLE -> scale / 6f;
             case SQUARE, TRIANGLE, GHOST -> scale / (float) ((level < 6) ? (7 - level) : 2);
+            case EGG -> scale / 3f;
         };
     }
 
@@ -54,11 +66,35 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         };
     }
 
+    /**
+     * Places this (freshly constructed) mob at the same point along the path another mob was
+     * at, rather than the path's start every mob otherwise spawns at - what lets an ability's
+     * spawn (the Warden's egg, a reinforcement) appear where the spawning mob actually was.
+     */
+    void spawnAtSamePositionAs(AbstractEnemyMob other) {
+        this.jumpToDistance(other.getDistanceIntoLap());
+    }
+
     @Override
     public void doTick(int gameTime) {
         super.doTick(gameTime);
-        if (this.isInactive() || this.isDead()) {
+        if (this.isInactive()) {
             return;
+        }
+        if (this.isDead()) {
+            // Evaluate abilities exactly once - the tick deathTick is captured (checked via
+            // ticksSinceDeath, not a "was already dead" flag: a tower can kill this mob during
+            // its own doTick phase, after this mob's own doTick already ran for that tick - see
+            // AbstractEnemyMob's death-timing invariant - so "dead" and "deathTick captured"
+            // are not necessarily the same tick, and only the latter must gate firing once.
+            if (this.ticksSinceDeath(gameTime) == 0) {
+                this.evaluateAbilities(gameTime);
+            }
+            return;
+        }
+        this.ticksSinceSpawn++;
+        if (this.ticksSinceLastHit < Integer.MAX_VALUE) {
+            this.ticksSinceLastHit++;
         }
         switch (this.definition.movement()) {
             case RotorMovement rotor -> this.facingRadians += rotor.radiansPerTick();
@@ -67,6 +103,19 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
             case PathDirectionalMovement ignored -> {
             }
             case PulseMovement ignored -> {
+            }
+        }
+        this.evaluateAbilities(gameTime);
+    }
+
+    private void evaluateAbilities(int gameTime) {
+        List<Ability> abilities = this.definition.abilities();
+        for (int i = 0; i < abilities.size(); i++) {
+            Ability ability = abilities.get(i);
+            AbilityState state = this.abilityStates.get(i);
+            AbilityContext context = new MobAbilityContext(gameTime);
+            if (AbilityEvaluator.shouldFire(ability.trigger(), state, context)) {
+                AbilityEvaluator.execute(ability.action(), context);
             }
         }
     }
@@ -83,6 +132,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
 
     @Override
     public Damage doDamage(Damage damage) {
+        this.ticksSinceLastHit = 0;
         Damage landed = super.doDamage(damage);
         TraitContext context = this.traitContext();
         float factor = 1f;
@@ -117,5 +167,84 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
 
     public String getInfoString() {
         return this.definition.displayName() + "\n\n" + this.definition.description();
+    }
+
+    /**
+     * The runtime {@link AbilityContext} a live mob's own abilities execute against - resolves
+     * {@link Ability}/{@link AbilityAction} data against this mob's actual {@link GameWorld},
+     * position and {@link EnemyDefinition}, which {@link AbilityEvaluator} itself never needs
+     * to see directly.
+     */
+    private final class MobAbilityContext implements AbilityContext {
+
+        private final int gameTime;
+
+        MobAbilityContext(int gameTime) {
+            this.gameTime = gameTime;
+        }
+
+        @Override
+        public float healthFraction() {
+            return DefinedEnemyMob.this.getHealthFraction();
+        }
+
+        @Override
+        public int ticksSinceSpawn() {
+            return DefinedEnemyMob.this.ticksSinceSpawn;
+        }
+
+        @Override
+        public int ticksSinceLastHit() {
+            return DefinedEnemyMob.this.ticksSinceLastHit;
+        }
+
+        @Override
+        public boolean justDied() {
+            return DefinedEnemyMob.this.isDead() && DefinedEnemyMob.this.ticksSinceDeath(this.gameTime) == 0;
+        }
+
+        @Override
+        public void applyEffect(EffectTemplate template, EffectTarget target) {
+            switch (target) {
+                case SelfTarget ignored -> DefinedEnemyMob.this.applyEffect(template.toEffect(this::creditNoOne));
+                case RadiusTarget radiusTarget -> this.applyToOthersInRadius(template, radiusTarget.radius());
+            }
+        }
+
+        private void applyToOthersInRadius(EffectTemplate template, float radius) {
+            float radius2 = radius * radius;
+            double selfX = DefinedEnemyMob.this.getX();
+            double selfY = DefinedEnemyMob.this.getY();
+            for (EnemyMob other : DefinedEnemyMob.this.gameWorld.getEnemies()) {
+                if (other == DefinedEnemyMob.this || !other.validTarget()) {
+                    continue;
+                }
+                double dx = other.getX() - selfX;
+                double dy = other.getY() - selfY;
+                if (dx * dx + dy * dy <= radius2) {
+                    other.applyEffect(template.toEffect(this::creditNoOne));
+                }
+            }
+        }
+
+        /** Ability-produced effects deal no direct damage in v1 (shield/invisibility only) - this sink is never actually invoked. */
+        private void creditNoOne(Damage damage) {
+        }
+
+        @Override
+        public void spawnEnemies(String definitionId, int count, boolean consumesSelf) {
+            GameWorld world = DefinedEnemyMob.this.gameWorld;
+            EnemyDefinition spawnedDefinition = world.getEnemyCatalog().get(definitionId);
+            for (int i = 0; i < count; i++) {
+                DefinedEnemyMob spawned = new DefinedEnemyMob(spawnedDefinition, world, 0,
+                        spawnedDefinition.baseHealth(), spawnedDefinition.price(), DefinedEnemyMob.this.level);
+                spawned.spawnAtSamePositionAs(DefinedEnemyMob.this);
+                if (consumesSelf) {
+                    world.replaceEnemy(DefinedEnemyMob.this, spawned);
+                } else {
+                    world.addEnemy(spawned);
+                }
+            }
+        }
     }
 }

@@ -115,9 +115,9 @@ public class GameEngine {
         markUnbuildableCells(path, scale);
         this.wave = 0;
 
-        EnemyCatalog enemyCatalog = EnemyCatalog.builtIn();
+        this.gameWorld.setEnemyCatalog(EnemyCatalog.builtIn());
         for (WaveDefinition wd : level.waves()) {
-            this.waves.add(new Wave(this.gameWorld, wd.hp(), wd.price(), wd.level(), WaveScript.parse(wd.enemies(), enemyCatalog)));
+            this.waves.add(new Wave(this.gameWorld, wd.hp(), wd.price(), wd.level(), WaveScript.parse(wd.enemies(), this.gameWorld.getEnemyCatalog())));
         }
 
         this.gameWorld.startEconomy(level.startingCredits(), level.startingLives());

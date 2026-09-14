@@ -7,15 +7,17 @@ package td.enemy;
  * codebase's "renderer owns every shape/colour choice" rule. A new case needs a
  * {@code td.ui.render.Palette} role and a shape/colour case in {@code Java2DFrameRenderer}
  * wired at the same time it's added here - see {@code td/enemy/CLAUDE.md}'s "Adding a new
- * enemy type" checklist. The Warden's boss egg (Phase 4) will add its own case then, not
- * before - {@code Java2DFrameRenderer.enemyShape}'s per-palette switch isn't compiler-enforced
- * exhaustive (it falls back to a runtime exception for an unhandled palette), so a case added
- * here without its render wiring landing in the same change would compile clean and only fail
- * the first time something actually renders it.
+ * enemy type" checklist - since {@code Java2DFrameRenderer.enemyShape}'s per-palette switch
+ * isn't compiler-enforced exhaustive (it falls back to a runtime exception for an unhandled
+ * palette): a case added here without its render wiring landing in the same change would
+ * compile clean and only fail the first time something actually renders it. {@code EGG}
+ * reuses {@code circleShape} with its own tint rather than a new geometry, matching
+ * {@code CIRCLE}/{@code GHOST}'s existing precedent.
  */
 public enum BodyArchetype {
     CIRCLE,
     SQUARE,
     TRIANGLE,
-    GHOST
+    GHOST,
+    EGG
 }

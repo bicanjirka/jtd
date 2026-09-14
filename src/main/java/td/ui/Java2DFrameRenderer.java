@@ -211,7 +211,7 @@ public final class Java2DFrameRenderer {
         g2.setColor(color);
         float grownScale = fade.scale() + fade.growth();
         switch (fade.palette()) {
-            case ENEMY_CIRCLE, ENEMY_GHOST -> g2.draw(circleShape(grownScale));
+            case ENEMY_CIRCLE, ENEMY_GHOST, ENEMY_EGG -> g2.draw(circleShape(grownScale));
             case ENEMY_SQUARE -> {
                 g2.draw(new Rectangle2D.Float(-grownScale, -fade.scale(), grownScale * 2, fade.scale() * 2));
                 g2.draw(new Rectangle2D.Float(-fade.scale(), -grownScale, fade.scale() * 2, grownScale * 2));
@@ -227,7 +227,7 @@ public final class Java2DFrameRenderer {
 
     private static Shape enemyShape(Palette palette, float scale) {
         return switch (palette) {
-            case ENEMY_CIRCLE, ENEMY_GHOST -> circleShape(scale);
+            case ENEMY_CIRCLE, ENEMY_GHOST, ENEMY_EGG -> circleShape(scale);
             case ENEMY_SQUARE -> new Rectangle2D.Float(-scale, -scale, scale * 2, scale * 2);
             case ENEMY_TRIANGLE -> triangleShape(scale, true);
             default -> throw new IllegalStateException("Not an enemy palette: " + palette);
@@ -655,6 +655,7 @@ public final class Java2DFrameRenderer {
             case ENEMY_GHOST -> Color.LIGHT_GRAY;
             case ENEMY_SQUARE -> Color.PINK;
             case ENEMY_TRIANGLE -> Color.YELLOW;
+            case ENEMY_EGG -> new Color(230, 220, 170);
             case TOWER_ONE_BODY -> Color.GREEN;
             case TOWER_TWO_BODY -> Color.RED;
             case TOWER_THREE_BODY -> Color.YELLOW;
