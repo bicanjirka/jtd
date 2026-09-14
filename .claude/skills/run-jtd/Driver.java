@@ -246,13 +246,13 @@ public class Driver {
         return m.invoke(target);
     }
 
-    // Reflects into TowerDefense's private context field once - shared by boardClick and the
+    // Reflects into TowerDefense's private gameWorld field once - shared by boardClick and the
     // state-cheat commands below, all of which need the real (public) GameWorld to call typed
     // methods on rather than going through the generic zero-arg call() helper.
     private static GameWorld getGameWorld() throws Exception {
-        Field contextField = TowerDefense.class.getDeclaredField("context");
-        contextField.setAccessible(true);
-        return (GameWorld) contextField.get(game);
+        Field gameWorldField = TowerDefense.class.getDeclaredField("gameWorld");
+        gameWorldField.setAccessible(true);
+        return (GameWorld) gameWorldField.get(game);
     }
 
     // Clicks a board cell (not a Swing component, so not reachable via click(int)) by
