@@ -12,6 +12,9 @@ java -jar target/jTD.jar  # run the game
 mvn -q compile            # fast syntax/type check
 ```
 
+See "Playtesting and balance tooling" below for `td.BalanceHarness`, the headless batch
+balance simulation, and its own run command.
+
 Run a single test: `mvn test -Dtest=GameEngineTest#placingATowerOnABuildableCellChargesCreditsAndOccupiesTheCell`
 
 ## Working in phases
@@ -368,6 +371,22 @@ three debug methods, always available (not gated behind a build flag), wired to 
 These live on `GameEngine`, not `TowerDefense`, per the headless/Swing boundary above — they
 are ordinary engine rules and are unit-tested the same way every other `GameEngineTest` case
 is.
+
+`td.BalanceHarness` (`src/main/java`, its own `main()`) is the batch half: it implements
+`GameHost` itself and drives `GameEngine` through a level with a fixed
+`List<TowerPlacementSpec>` loadout, no upgrade-path selection in v1, reporting lives lost,
+ticks-to-clear per wave, and each tower's cumulative kills/damage. It implements `GameHost`
+rather than using `GameHost.noOp()` specifically because the no-op host never re-arms
+`waveReady` — only the real `enemyDied(0)` callback does, and `GameWorld` has no alive-count
+accessor to poll instead — so the harness's own `enemyDied` mirrors `TowerDefense.enemyDied`'s
+`setWaveReady(true)` call. It also places towers through the same `startPlacing`/`mouseClicked`
+path the real mouse listener uses, verifying success via the cell grid afterward rather than
+trusting a return value, since `TowerPlacement.mouseClicked` always exits placement mode
+whether or not it actually built anything.
+
+```bash
+java -cp "target/classes;$(cat target/runtime-classpath.txt)" td.BalanceHarness  # after mvn package -DskipTests
+```
 
 ## Logging
 
