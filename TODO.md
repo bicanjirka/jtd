@@ -65,7 +65,8 @@ reasonable mid-level of investment looks like.
 - **Approach:** play each of the built-in levels with every path chosen at least once, and adjust price/stat-bonus/
   condition-threshold values until each path feels like a meaningful, roughly-comparable-in-power choice rather than
   a strictly-better-or-worse one. No code or architecture change needed — every number here is already a named
-  constant, not embedded in logic.
+  constant, not embedded in logic. `td.BalanceHarness` and the `n`/`x`/`c` debug keybindings (see the root
+  `CLAUDE.md`'s "Playtesting and balance tooling") now make this cheap to actually do.
 
 ### New tower numbers are unbalanced placeholders
 
@@ -79,7 +80,8 @@ and condition thresholds are equally unverified guesses.
 - **Approach:** play each of the built-in levels with all three new towers (and each of their upgrade paths chosen at
   least once), and adjust values until each feels like a meaningful, roughly-comparable-in-power choice next to the
   existing four attack towers and their own paths. No code or architecture change needed - every number here is
-  already a named constant, not embedded in logic.
+  already a named constant, not embedded in logic. `td.BalanceHarness` and the `n`/`x`/`c` debug keybindings (see
+  the root `CLAUDE.md`'s "Playtesting and balance tooling") now make this cheap to actually do.
 
 ## Damage types
 
@@ -186,4 +188,7 @@ tower-upgrade and new-tower-numbers entries above were in before their own balan
 - **Approach:** play Classic Loop through to the Warden encounter (and the other two levels,
   once they get their own late-game content) repeatedly, adjusting values until the chain and
   the migrated traits feel meaningfully tuned rather than placeholder guesses - no code or
-  architecture change needed, every number here is already a named constant.
+  architecture change needed, every number here is already a named constant. `td.BalanceHarness`
+  and the `n`/`x`/`c` debug keybindings (see the root `CLAUDE.md`'s "Playtesting and balance
+  tooling") now make this cheap to actually do - `x` specifically can spawn the Warden chain's
+  stages on demand without playing to wave 18 first.

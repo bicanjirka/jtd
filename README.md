@@ -57,7 +57,19 @@ yourself when you are ready — waves do not auto-advance.
 Mouse: move to preview placement, click to place or to select a placed tower.
 
 The `n`/`x`/`c` debug keys are always available, not gated behind a build flag — they exist to
-make manual playtesting cheap (see `FEATURE-playtesting-and-balance-tooling.md`).
+make manual playtesting cheap (see `FEATURE-playtesting-and-balance-tooling.md`). There's also
+`td.BalanceHarness`, a headless batch simulation: it drives a level to completion with a fixed
+tower loadout and no human input, then prints lives lost, ticks-to-clear per wave, and each
+tower's kills/damage dealt.
+
+```bash
+mvn -q package -DskipTests
+mvn -q dependency:build-classpath -Dmdep.outputFile=target/runtime-classpath.txt
+java -cp "target/classes;$(cat target/runtime-classpath.txt)" td.BalanceHarness
+```
+
+Run with no arguments it plays one built-in loadout against Classic Loop; edit `main()` to try
+a different loadout or level, since v1 has no config format for either.
 
 ### Towers
 
