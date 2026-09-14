@@ -60,7 +60,7 @@ public final class AsciiBoardRenderer {
             case TOWER_TWO_BODY -> '2';
             case TOWER_THREE_BODY -> '3';
             case TOWER_FOUR_BODY -> '4';
-            case TOWER_UPGRADE_BODY -> 'U';
+            case TOWER_AURA_BODY -> 'A';
             default -> UNKNOWN;
         };
     }

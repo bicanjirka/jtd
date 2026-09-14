@@ -26,7 +26,7 @@ public abstract class AbstractTower implements Tower {
     protected static final float TICKS_PER_SECOND = 20f;
 
     protected GameWorld context;
-    protected final List<TowerUpgrade> upgTowers;
+    protected final List<TowerAura> upgTowers;
     protected int boardX;
     protected int boardY;
     protected int centerX;
@@ -93,7 +93,7 @@ public abstract class AbstractTower implements Tower {
      */
     protected void calcDamageRange() {
         TowerBuff buff = this.upgTowers.stream()
-                .map(TowerUpgrade::buff)
+                .map(TowerAura::buff)
                 .reduce(TowerBuff.none(), TowerBuff::combine);
         this.damageCurrent = buff.damageFor(this.damageBase);
         this.rangeCurrent = buff.rangeFor(this.rangeBase);
@@ -196,9 +196,9 @@ public abstract class AbstractTower implements Tower {
     public void registerTower(Tower t) {
         if (t != this) {
             switch (t.getType()) {
-                case upgrade -> {
-                    if (this.type != TowerFactory.type.upgrade && !this.upgTowers.contains(t)) {
-                        TowerUpgrade tupg = (TowerUpgrade) t;
+                case aura -> {
+                    if (this.type != TowerFactory.type.aura && !this.upgTowers.contains(t)) {
+                        TowerAura tupg = (TowerAura) t;
                         this.upgTowers.add(tupg);
                         tupg.addClient(this);
                         this.calcDamageRange();
@@ -212,8 +212,8 @@ public abstract class AbstractTower implements Tower {
 
     public void unregisterTower(Tower t) {
         switch (t.getType()) {
-            case upgrade -> {
-                TowerUpgrade tupg = (TowerUpgrade) t;
+            case aura -> {
+                TowerAura tupg = (TowerAura) t;
                 this.upgTowers.remove(t);
                 tupg.removeClient(this);
                 this.calcDamageRange();
@@ -225,7 +225,7 @@ public abstract class AbstractTower implements Tower {
 
     public void doCleanup() {
         for (int i = this.upgTowers.size() - 1; i >= 0; i--) {
-            TowerUpgrade tupg = this.upgTowers.remove(i);
+            TowerAura tupg = this.upgTowers.remove(i);
             tupg.removeClient(this);
         }
     }

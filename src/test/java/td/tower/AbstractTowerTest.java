@@ -10,7 +10,7 @@ import td.util.RecordingGameHost;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Exercises AbstractTower's damage/range math and the TowerUpgrade buff
+ * Exercises AbstractTower's damage/range math and the TowerAura buff
  * mechanism through a concrete subclass (TowerOne). Lives in the same
  * package as AbstractTower so it can read the protected damageBase/
  * damageCurrent fields directly instead of parsing getStatusString().
@@ -27,38 +27,38 @@ class AbstractTowerTest {
     }
 
     @Test
-    void registerTowerAppliesUpgradeBuffToDamage() {
+    void registerTowerAppliesAuraBuffToDamage() {
         TowerOne tower = new TowerOne(context, 0, 0);
         context.addTower(tower);
 
-        // constructing a TowerUpgrade in range scans context.towers and
+        // constructing a TowerAura in range scans context.towers and
         // registers itself with anything nearby, buffing it immediately
-        new TowerUpgrade(context, 0, 0);
+        new TowerAura(context, 0, 0);
 
-        float expectedMultiplier = 1f + TowerUpgrade.DEFAULT_POWER; // one upgrade tower registered
+        float expectedMultiplier = 1f + TowerAura.DEFAULT_POWER; // one aura tower registered
         assertThat(tower.damageCurrent).isEqualTo((int) (tower.damageBase * expectedMultiplier));
         assertThat(tower.damageCurrent).isNotEqualTo(tower.damageBase);
     }
 
     @Test
-    void twoUpgradeTowersStackAdditively() {
+    void twoAuraTowersStackAdditively() {
         TowerOne tower = new TowerOne(context, 0, 0);
         context.addTower(tower);
 
-        new TowerUpgrade(context, 0, 0);
-        new TowerUpgrade(context, 0, 0);
+        new TowerAura(context, 0, 0);
+        new TowerAura(context, 0, 0);
 
-        float expectedMultiplier = 1f + 2 * TowerUpgrade.DEFAULT_POWER;
+        float expectedMultiplier = 1f + 2 * TowerAura.DEFAULT_POWER;
         assertThat(tower.damageCurrent).isEqualTo((int) (tower.damageBase * expectedMultiplier));
     }
 
     @Test
-    void unequalUpgradeTowersStackTheirDifferentStrengths() {
+    void unequalAuraTowersStackTheirDifferentStrengths() {
         TowerOne tower = new TowerOne(context, 0, 0);
         context.addTower(tower);
 
-        new TowerUpgrade(context, 0, 0, 0.1f);
-        new TowerUpgrade(context, 0, 0, 0.3f);
+        new TowerAura(context, 0, 0, 0.1f);
+        new TowerAura(context, 0, 0, 0.3f);
 
         float expectedMultiplier = 1f + 0.1f + 0.3f;
         assertThat(tower.damageCurrent).isEqualTo((int) (tower.damageBase * expectedMultiplier));
@@ -68,22 +68,22 @@ class AbstractTowerTest {
     void unregisterTowerRevertsTheBuff() {
         TowerOne tower = new TowerOne(context, 0, 0);
         context.addTower(tower);
-        TowerUpgrade upgrade = new TowerUpgrade(context, 0, 0);
+        TowerAura aura = new TowerAura(context, 0, 0);
 
-        tower.unregisterTower(upgrade);
+        tower.unregisterTower(aura);
 
         assertThat(tower.damageCurrent).isEqualTo(tower.damageBase);
     }
 
     @Test
-    void towerOutsideUpgradeRangeIsNotBuffed() {
+    void towerOutsideAuraRangeIsNotBuffed() {
         TowerOne near = new TowerOne(context, 0, 0);
         context.addTower(near);
-        // TowerUpgrade.range is 1.5 cells; placing far away puts this well outside it
+        // TowerAura.range is 1.5 cells; placing far away puts this well outside it
         TowerOne far = new TowerOne(context, 100, 100);
         context.addTower(far);
 
-        new TowerUpgrade(context, 0, 0);
+        new TowerAura(context, 0, 0);
 
         assertThat(near.damageCurrent).isNotEqualTo(near.damageBase);
         assertThat(far.damageCurrent).isEqualTo(far.damageBase);
