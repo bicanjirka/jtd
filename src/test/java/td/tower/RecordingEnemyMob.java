@@ -1,6 +1,7 @@
 package td.tower;
 
 import td.damage.Damage;
+import td.effect.Effect;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyMobVisitor;
 
@@ -52,6 +53,10 @@ final class RecordingEnemyMob implements EnemyMob {
     public Damage doDamage(Damage damage) {
         this.hits.add(damage);
         return damage;
+    }
+
+    @Override
+    public void applyEffect(Effect effect) {
     }
 
     @Override

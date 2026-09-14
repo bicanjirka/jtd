@@ -37,6 +37,14 @@ is what keeps `damageDealt`/`killCount` honest, in two ways that are easy to get
   accumulates the return value. Adding the argument instead makes a tower over-report
   against exactly the enemies it performs worst on, and credits it for overkill.
 
+**A sold or cleared tower must stop accounting for damage, including damage it applied
+before being removed.** `doCleanup` sets a `removed` flag, and `dealDamage` is a no-op once
+it's set. This matters because a damage-over-time `td.effect.Effect` (a burn) a tower applied
+is bound to that tower's own `dealDamage` and keeps ticking on the enemy for several ticks
+after the tower itself might be sold — without the guard, a sold tower would keep inflating
+`damageDealt`/`killCount` and paying its upgrade path's bounty bonus on an object the player
+has already been refunded for.
+
 **A tower that subscribes to anything must unsubscribe in `doCleanup`.** `TowerThree`
 registers as a `WaveStartListener`, `TowerAura` as a `TowerListener`; both remove
 themselves in `doCleanup`, which `TowerRoster` calls on sell *and* on level teardown. A

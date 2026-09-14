@@ -265,6 +265,19 @@ class AbstractTowerTest {
     }
 
     @Test
+    void dealDamageIsANoOpOnceTheTowerHasBeenCleanedUp() {
+        TowerOne tower = new TowerOne(context, 0, 0);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+
+        tower.doCleanup(); // what TowerRoster.sell()/clear() call before dropping the tower
+        tower.dealDamage(enemy, Damage.physical(4000));
+
+        assertThat(enemy.isDead()).isFalse();
+        assertThat(tower.getDamageDealt()).isZero();
+        assertThat(tower.getKillCount()).isZero();
+    }
+
+    @Test
     void aBountyBonusPathToppedUpCreditsWithoutDoublingScoreOnAKill() {
         context.startEconomy(100, 5);
         UpgradePath path = new UpgradePath("Veteran", 10, new TowerBuff(0f, 0f, 0f, 0.5f), UpgradeCondition.always());

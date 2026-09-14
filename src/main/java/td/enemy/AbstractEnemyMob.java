@@ -2,6 +2,8 @@ package td.enemy;
 
 import td.damage.Damage;
 import td.economy.EconomyDelta;
+import td.effect.ActiveEffects;
+import td.effect.Effect;
 import td.util.GameWorld;
 import td.wave.ArcLengthPath;
 import td.wave.PathPose;
@@ -39,6 +41,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     protected float speed = 1.28f;
     protected float speedMax = 1.28f;
     protected final float speedBase = 1.28f;
+    private final ActiveEffects activeEffects = new ActiveEffects();
     protected int health;
     protected int healthMax;
     protected GameWorld gameWorld;
@@ -165,8 +168,23 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         return this.prevY;
     }
 
+    /**
+     * This mob's speed, folding in every currently active speed-affecting {@link Effect}
+     * (see {@link #getSpeed()}). {@code speed} itself stays the intrinsic value - the one
+     * {@code EnemyMobTriangle}'s hurt curve writes and {@link #doInit} reads for the spawn
+     * delay - so a slow or freeze never gets permanently baked into it, and never gets wiped
+     * out the next time that curve recomputes it.
+     */
+    private float effectiveSpeed() {
+        return this.speed * this.activeEffects.speedMultiplier();
+    }
+
     public float getSpeed() {
-        return this.speed;
+        return this.effectiveSpeed();
+    }
+
+    public void applyEffect(Effect effect) {
+        this.activeEffects.apply(effect);
     }
 
     /**
@@ -251,9 +269,11 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     /**
-     * Counts down the spawn delay, or advances a live mob along the path, or - once dead -
-     * records the tick death happened on so the fade can be timed against the simulation
-     * clock rather than the repaint rate.
+     * Counts down the spawn delay, or - for a live mob - resolves this tick's active status
+     * effects and then advances it along the path, or - once dead - records the tick death
+     * happened on so the fade can be timed against the simulation clock rather than the
+     * repaint rate. A damage-over-time effect that kills the mob this tick skips movement
+     * entirely for the rest of this call - there is nothing left to move.
      */
     public void doTick(int gameTime) {
         if (this.inactive) {
@@ -270,11 +290,24 @@ public abstract class AbstractEnemyMob implements EnemyMob {
                 this.deathTick = gameTime;
             }
         } else {
+            // Read this tick's speed multiplier before ticking durations down, so an effect
+            // entering the last tick of its duration still suppresses this tick's movement -
+            // ActiveEffects.tick() removes it before returning, and querying afterward would
+            // silently shorten its effect on movement by one tick relative to its effect on
+            // damage-over-time (which it applies before removing itself either way).
+            float speedMultiplier = this.activeEffects.speedMultiplier();
+            this.activeEffects.tick();
+            if (this.dead) {
+                // A damage-over-time tick just killed this mob - doDamage() already set
+                // dead=true synchronously (its sink calls straight back into doDamage()).
+                // Movement must not run this tick: there is nothing left to move.
+                return;
+            }
             this.prevX = this.x;
             this.prevY = this.y;
             boolean wrappedToPathStart = false;
             if (this.arcLengthPath != null) {
-                this.distanceIntoLap += this.speed;
+                this.distanceIntoLap += this.speed * speedMultiplier;
                 double totalLength = this.arcLengthPath.totalLength();
                 if (this.distanceIntoLap >= totalLength) {
                     this.distanceIntoLap -= totalLength;

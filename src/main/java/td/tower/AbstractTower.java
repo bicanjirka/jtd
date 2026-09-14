@@ -49,6 +49,7 @@ public abstract class AbstractTower implements Tower {
     private final TowerFactory.type type;
     private float rangeCurrent;
     private final int price;
+    private boolean removed = false;
 
 
     public AbstractTower(TowerFactory.type t, int price, int damage, float range) {
@@ -126,8 +127,17 @@ public abstract class AbstractTower implements Tower {
      * (if any) on top of the flat {@code EconomyDelta.kill} bounty {@code enemy.doDamage}
      * already granted - extra <em>credits</em> only, no extra score, so a tower's bounty
      * specialization is a cash bonus rather than a scoring one.
+     * <p>
+     * A no-op once this tower has been sold or cleared (see {@link #doCleanup}). A
+     * damage-over-time effect this tower applied can still be ticking on an enemy several
+     * ticks after the tower itself is gone - without this guard, its lingering burn would
+     * keep inflating {@code damageDealt}/{@code killCount} and paying bounty bonuses on an
+     * object the player has already been refunded for.
      */
     protected void dealDamage(EnemyMob enemy, Damage damage) {
+        if (this.removed) {
+            return;
+        }
         boolean wasAlive = !enemy.isDead();
         Damage landed = enemy.doDamage(damage);
         if (wasAlive) {
@@ -281,6 +291,7 @@ public abstract class AbstractTower implements Tower {
     }
 
     public void doCleanup() {
+        this.removed = true;
         for (int i = this.upgTowers.size() - 1; i >= 0; i--) {
             TowerAura tupg = this.upgTowers.remove(i);
             tupg.removeClient(this);

@@ -63,6 +63,23 @@ not run yet — `fadeAlpha` clamps for exactly this reason.
 has a path with fewer than two points; `ArcLengthPath.of` returns empty and the mob holds
 still at the path's first point (or the origin). Keep that branch.
 
+**Speed has an intrinsic/effective split, like `AbstractTower`'s base/current damage.** The
+`speed` field stays the *intrinsic* value — `EnemyMobTriangle`'s hurt curve keeps writing it
+directly, and `doInit`'s spawn-delay calculation keeps reading it — while `getSpeed()` and
+movement both fold in every currently active `td.effect.Effect`'s speed multiplier via
+`ActiveEffects.speedMultiplier()`. A slow or freeze therefore never gets permanently baked
+into `speed`, and is never wiped out the next time the hurt curve recomputes it. `doTick`
+reads that multiplier *before* calling `ActiveEffects.tick()`, not after — the tick call both
+applies this tick's damage-over-time and decrements durations, and an effect entering the
+last tick of its duration must still suppress this tick's movement, not just its damage. A
+damage-over-time tick that kills the mob sets `dead` synchronously (its sink calls back into
+`doDamage`), so `doTick` checks `dead` and returns before movement runs — there is nothing
+left to move.
+
+**`EnemyMobEmpty` needs no special-casing for effects.** It overrides `doTick` with an empty
+body and never calls `super`, but it also reports `validTarget() == false` always, and every
+targeting query filters on that — nothing can ever apply an effect to it in the first place.
+
 ## Adding a new enemy type
 
 1. Add the leaf class (make it `final`), extending `AbstractEnemyMob` or one of the two
