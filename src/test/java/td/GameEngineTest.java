@@ -287,6 +287,88 @@ class GameEngineTest {
                 .doesNotThrowAnyException();
     }
 
+    @Test
+    void debugSkippingAWaveClearsItAndStartsTheNextOneImmediately() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(
+                List.of(new WaveDefinition("c", 100, 3, 1),
+                        new WaveDefinition("c", 100, 3, 1)), 100));
+        engine.nextWave();
+        assertThat(engine.getCurrentWaveIndex()).isEqualTo(1);
+
+        assertThat(engine.debugSkipCurrentWave()).isTrue();
+
+        assertThat(engine.getCurrentWaveIndex()).isEqualTo(2);
+        assertThat(engine.getGameWorld().getEnemies()).isNotEmpty(); // the 2nd wave's own enemies
+        assertThat(engine.isWaveReady()).isFalse();
+    }
+
+    @Test
+    void debugSkippingTheFinalWaveClearsTheBoardButStartsNothing() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
+        engine.nextWave();
+        assertThat(engine.getGameWorld().getEnemies()).isNotEmpty();
+
+        assertThat(engine.debugSkipCurrentWave()).isFalse();
+
+        assertThat(engine.getGameWorld().getEnemies()).isEmpty();
+        assertThat(engine.getCurrentWaveIndex()).isEqualTo(1);
+    }
+
+    @Test
+    void debugSkippingAWaveCostsNoLivesAndPaysNoCredits() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 100, 7, 1)), 100));
+        engine.nextWave();
+        int livesBefore = engine.getGameWorld().getLives();
+        int creditsBefore = engine.getGameWorld().getCredits();
+
+        engine.debugSkipCurrentWave();
+
+        assertThat(engine.getGameWorld().getLives()).isEqualTo(livesBefore);
+        assertThat(engine.getGameWorld().getCredits()).isEqualTo(creditsBefore);
+    }
+
+    @Test
+    void debugSpawnCyclesThroughEveryCatalogIdInOrderThenWraps() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(), 100));
+        List<String> ids = engine.getGameWorld().getEnemyCatalog().ids();
+
+        for (String expected : ids) {
+            assertThat(engine.debugSpawnNextCatalogEnemy()).isEqualTo(expected);
+        }
+        assertThat(engine.debugSpawnNextCatalogEnemy()).isEqualTo(ids.get(0)); // wraps around
+    }
+
+    @Test
+    void debugSpawnAddsALiveEnemyToTheRosterImmediately() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(), 100));
+
+        engine.debugSpawnNextCatalogEnemy();
+
+        assertThat(engine.getGameWorld().getEnemies()).hasSize(1);
+    }
+
+    @Test
+    void debugSpawnWithNoLevelLoadedReturnsNull() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+
+        assertThat(engine.debugSpawnNextCatalogEnemy()).isNull();
+    }
+
+    @Test
+    void debugGrantingCreditsRaisesTheBalanceByExactlyTheAmount() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(), 100));
+
+        engine.debugGrantCredits(250);
+
+        assertThat(engine.getGameWorld().getCredits()).isEqualTo(350);
+    }
+
     private static int cellCenter(int cellIndex) {
         return cellIndex * SCALE + SCALE / 2;
     }
