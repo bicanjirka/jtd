@@ -4,5 +4,7 @@ package td.effect;
 public enum EffectKind {
     SLOW,
     BURN,
-    FREEZE
+    FREEZE,
+    SHIELD,
+    INVISIBLE
 }

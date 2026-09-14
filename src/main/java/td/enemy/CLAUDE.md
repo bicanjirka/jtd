@@ -2,6 +2,16 @@
 
 Read the root `CLAUDE.md` first; this file only covers what is specific to this package.
 
+**A second, not-yet-wired model is under construction alongside the one this file
+documents.** `EnemyDefinition`/`EnemyCatalog`/`Trait`/`Ability`/`AbilityTrigger`/
+`AbilityAction`/`AbilityEvaluator` (plus `Effect`'s new `SHIELD`/`INVISIBLE` kinds in
+`td.effect`) are the data-driven replacement for the closed hierarchy below - see
+`FEATURE-enemy-traits-and-effects.md`'s V1 Scope for the full design and phased order. As of
+this commit only its headless "core data model" phase exists: nothing in this section is
+built from it yet, `EnemyFactory`/`EnemyMobVisitor`/the five leaf classes are still what's
+live, and every invariant below still holds unchanged. This note - and the rest of this file
+- gets rewritten once the migration phase actually replaces them, not before.
+
 ## Shape
 
 `EnemyMob` is the interface every consumer (towers, targeting queries, renderers) sees.

@@ -62,6 +62,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case SLOW -> Palette.STATUS_MARKER_SLOW;
             case BURN -> Palette.STATUS_MARKER_BURN;
             case FREEZE -> Palette.STATUS_MARKER_FREEZE;
+            case SHIELD -> Palette.STATUS_MARKER_SHIELD;
+            case INVISIBLE -> Palette.STATUS_MARKER_INVISIBLE;
         };
     }
 
