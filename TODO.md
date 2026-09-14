@@ -110,15 +110,21 @@ tower stat instead. That recommendation was accepted but never built.
 
 ### Damage-type resistance doesn't exist yet
 
-Every hit now carries a `DamageType` (`PHYSICAL`/`MAGIC`), but no enemy differentiates by it — `EnemyMobSquare
-.absorb()` and every other `absorb` override stay type-blind. This is deliberate infrastructure for the enemy-traits
-feature's shield traits (a magic shield, a physical shield), not an oversight — see
-`FEATURE-damage-types-and-projectiles.md`'s Decisions ("damage-type resistance is out of scope for v1").
+Every hit carries a `DamageType` (`PHYSICAL`/`MAGIC`), but no enemy differentiates by it. The
+enemy-traits feature has since landed the mechanism this was waiting on - `Trait.onHit(Damage,
+TraitContext)` already receives the incoming `Damage` (type included) and is free to branch on
+`incoming.type()` - but no concrete trait actually does: `PercentResistTrait`/`FlatResistTrait`
+(Square's and the Warden's) both reduce every hit uniformly regardless of type. A magic shield
+or a physical shield (the original request's examples) is now a small, self-contained addition
+- a new `Trait` implementation, not a `Damage`/`absorb` change - rather than infrastructure
+work, which is what this entry used to track.
 
-- **Where:** `td.enemy.AbstractEnemyMob.absorb()`, `EnemyMobSquare.absorb()`.
-- **Approach:** lands with the enemy-traits/effects feature (see `FEATURE-enemy-traits-and-effects.md`), which adds
-  the trait system a shield/resistance would be expressed through — not a standalone change to `Damage` or `absorb`
-  ahead of that.
+- **Where:** a new `td.enemy.Trait` implementation (no existing file needs to change).
+- **Approach:** e.g. `DamageTypeResistTrait(DamageType resisted, float fraction)` whose
+  `onHit` scales `incoming` only when `incoming.type() == resisted`, passing everything else
+  through unchanged - mirrors `PercentResistTrait`'s shape closely enough to copy its pattern
+  directly. Needs a concrete enemy to carry it (none of the four built-ins or the Warden chain
+  do) before it's provably exercised, not just compiled.
 
 ### Rotating tower sprites
 

@@ -82,7 +82,10 @@ freeze, an enemy's own ability, and an aura tower's continuous buff all produce 
 holds; deliberately neutral rather than living under `tower` or `enemy`, mirroring `damage`),
 `economy` (`EconomyDelta`/`EconomyState`, the
 credits/score/lives algebra, and `EconomyLedger` — see below — that's built on it),
-`enemy` (mob hierarchy + `EnemyFactory` + `EnemyRegistry`/`EnemyRoster` — see below),
+`enemy` (`DefinedEnemyMob` — the single data-driven mob, built from an `EnemyDefinition`'s
+composable `Trait`s/`Ability`s and resolved through the open, string-keyed `EnemyCatalog` —
+plus `EnemyRegistry`/`EnemyRoster`/`EnemySpawner` and the legacy-shaped `EnemyFactory`
+convenience; see `td/enemy/CLAUDE.md`),
 `level` (`LevelDefinition` — a level's board size, path, waves, starting economy and
 `PathSmoothing` strategy as one immutable value; `path` is just the level's corners, in
 authored order, at any angle — `PathBuilder` turns them into pixel-space directly, no
@@ -327,11 +330,15 @@ JUnit 5 + AssertJ. `assertThat(...)`, never JUnit's bare assertions.
 
 ## Wave mini-language
 
-Wave contents are a space-separated token string. `WaveScript.parse` turns it into a
-`WaveContent` (an ordered, GameWorld-free list of `EnemyFactory.Enemy` spawn slots, repeat
-counts already flattened out) — `Wave`'s constructor then takes that parsed content and does
-only the world-bound instantiation, one `EnemyMob` per slot. Tokens are enemy letters, each
-optionally preceded by a repeat count:
+Wave contents are a space-separated token string. `WaveScript.parse(tokens, catalog)` turns it
+into a `WaveContent` (an ordered, GameWorld-free list of `WaveSlot`s — `EnemySlot(EnemyDefinition)`
+or `EmptySlot()` — repeat counts already flattened out) against a given `td.enemy.EnemyCatalog`
+— `Wave`'s constructor then takes that parsed content and does only the world-bound
+instantiation, one `EnemyMob` per slot. Tokens are enemy ids, each optionally preceded by a
+repeat count. `e` is the one reserved token (the spacer, recognized before any catalog lookup —
+counts toward spawn timing, not toward the enemy count); every other token is looked up in
+`catalog` the same way regardless of whether it names a built-in or a per-level custom/cloned
+definition — there is no separate syntax for the two:
 
 | Token | Enemy |
 |-------|-------|
@@ -340,8 +347,9 @@ optionally preceded by a repeat count:
 | `t` | Triangle |
 | `g` | Ghost |
 | `e` | Empty (spacer — counts toward spawn timing, not toward the enemy count) |
+| `warden1` | The Warden boss (see `td/enemy/CLAUDE.md`) — one of six ids in its stage chain, the only one a wave ever spawns directly |
 
-`"3 s e 4 c"` = three Squares, one spacer, four Circles. A count applies only to the token immediately following it and resets to 1 afterward. Each wave is a `WaveDefinition(enemies, hp, price, level)`, and a level's full wave list is part of its `LevelDefinition` — see `BuiltInLevelCatalog`.
+`"3 s e 4 c"` = three Squares, one spacer, four Circles. A count applies only to the token immediately following it and resets to 1 afterward. Each wave is a `WaveDefinition(enemies, hp, price, level)`, and a level's full wave list is part of its `LevelDefinition` — see `BuiltInLevelCatalog`. `GameEngine.loadLevel` builds one `EnemyCatalog.builtIn()` per level load and passes it to every wave's `parse` call; no level registers its own ids yet (see `td/enemy/CLAUDE.md`).
 
 ## Logging
 
