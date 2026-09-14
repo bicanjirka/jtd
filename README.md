@@ -63,6 +63,12 @@ Mouse: move to preview placement, click to place or to select a placed tower.
 | Stardust | 25 | Short range; damages everything in range at once, ghosts included |
 | Aura | 20 | Passive — boosts the damage and range of nearby towers; several stack |
 
+Each of the four attack towers also offers two permanent, mutually-exclusive upgrade paths,
+shown as buttons in its info panel once selected. A path is gated by its own condition (an
+affordable price alone, a cluster of towers built nearby, the tower having dealt enough
+damage, or having racked up enough kills) — choosing one is a one-time, irreversible
+specialization for that specific tower, marked on the board by a coloured ring around it.
+
 ### Enemies
 
 | Enemy | Behaviour |
@@ -105,7 +111,7 @@ src/main/java/td/
   economy/  credits, score and lives
   enemy/    the enemy mob hierarchy
   level/    level definitions and the level catalog
-  tower/    the tower hierarchy, targeting and upgrade buffs
+  tower/    the tower hierarchy, targeting, aura buffs and upgrade paths
   ui/       Swing presentation, render commands and the Java2D backend
   util/     GameWorld (the composition root) and GameHost
   wave/     path geometry, smoothing and wave composition

@@ -93,7 +93,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return Optional.of(index == 0 ? Palette.TOWER_UPGRADE_PATH_A : Palette.TOWER_UPGRADE_PATH_B);
     }
 
-    /** A head with a constant nominal size - every tower but the (pulsing) upgrade tower. */
+    /** A head with a constant nominal size - every tower but the (pulsing) Aura tower. */
     private void head(Tower tower, double headingRadians) {
         this.headWithScale(tower, headingRadians, 1.0f);
     }

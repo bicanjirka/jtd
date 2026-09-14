@@ -11,9 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Everything every tower shares: board position, price, base and buffed damage/range, the
- * list of upgrade towers buffing it, and the damage/kill accounting. Subclasses supply only
- * a targeting strategy and a {@code doTick}.
+ * Everything every tower shares: board position, price, base and buffed damage/range/fire
+ * rate, the list of Aura towers buffing it, this tower's own chosen upgrade path (if any),
+ * and the damage/kill accounting. Subclasses supply only a targeting strategy and a
+ * {@code doTick}.
  * <p>
  * {@code rangeReal2} is the squared range, and every range check compares squared distances -
  * a per-tick scan has no business calling {@code Math.sqrt}.
