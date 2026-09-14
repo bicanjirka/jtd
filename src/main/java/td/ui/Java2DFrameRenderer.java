@@ -322,8 +322,9 @@ public final class Java2DFrameRenderer {
 
     /**
      * One flat symbol per tower, each naming what the tower does rather than decorating it:
-     * a triangle, a circle, a spiral, a star and a pulsar. Every one is a single closed
-     * {@link Shape} so they all go through the same fill-then-outline paint, at any size.
+     * a triangle, a circle, a spiral, a star, a pulsar, a diamond, a kite and a flame. Every
+     * one is a single closed {@link Shape} so they all go through the same fill-then-outline
+     * paint, at any size.
      */
     private static Shape towerBodyShape(Palette palette, float size) {
         return switch (palette) {
@@ -332,8 +333,43 @@ public final class Java2DFrameRenderer {
             case TOWER_THREE_BODY -> spiralShape(size);
             case TOWER_FOUR_BODY -> starShape(5, size, size * 0.45f);
             case TOWER_AURA_BODY -> pulsarShape(size);
+            case TOWER_MORTAR_BODY -> diamondShape(size);
+            case TOWER_SEEKER_BODY -> kiteShape(size);
+            case TOWER_CINDER_BODY -> flameShape(size);
             default -> throw new IllegalStateException("Not a tower body palette: " + palette);
         };
+    }
+
+    /** A rotated square - a heavy, armoured silhouette for the artillery-style tower. */
+    private static Shape diamondShape(float size) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(0, -size);
+        p.lineTo(size, 0);
+        p.lineTo(0, size);
+        p.lineTo(-size, 0);
+        p.closePath();
+        return p;
+    }
+
+    /** A concave arrowhead - a guided-munition silhouette for the homing-missile tower. */
+    private static Shape kiteShape(float size) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(size, 0);
+        p.lineTo(-size * 0.6f, -size * 0.7f);
+        p.lineTo(-size * 0.2f, 0);
+        p.lineTo(-size * 0.6f, size * 0.7f);
+        p.closePath();
+        return p;
+    }
+
+    /** A teardrop silhouette for the flame-cone tower. */
+    private static Shape flameShape(float size) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(0, -size);
+        p.curveTo(size * 0.9f, -size * 0.2f, size * 0.6f, size * 0.5f, 0, size);
+        p.curveTo(-size * 0.6f, size * 0.5f, -size * 0.9f, -size * 0.2f, 0, -size);
+        p.closePath();
+        return p;
     }
 
     /** An annulus - {@code innerFraction} of {@code size} is cut out of the middle. */
@@ -479,8 +515,23 @@ public final class Java2DFrameRenderer {
                 yield AffineTransform.getTranslateInstance(size * 2.0, 0).createTransformedShape(moon);
             }
             case TOWER_AURA_BODY -> circleShape(size);
+            case TOWER_MORTAR_BODY, TOWER_SEEKER_BODY, TOWER_CINDER_BODY -> headArrowShape(size);
             default -> throw new IllegalStateException("Not a tower head palette: " + palette);
         };
+    }
+
+    /**
+     * A plain forward-pointing arrowhead, authored along {@code +X} like every other aiming
+     * head - a simple facing indicator for the three new towers. {@code TowerCinder}'s actual
+     * cone is a separate {@code TowerEffectDraw}, not part of this shape (see `TODO.md`).
+     */
+    private static Shape headArrowShape(float size) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(size * 1.3f, 0);
+        p.lineTo(0, -size * 0.5f);
+        p.lineTo(0, size * 0.5f);
+        p.closePath();
+        return p;
     }
 
     /** How wide the sonar wedge opens, in degrees. */
@@ -553,6 +604,9 @@ public final class Java2DFrameRenderer {
             case TOWER_THREE_BODY -> Color.YELLOW;
             case TOWER_FOUR_BODY -> Color.ORANGE;
             case TOWER_AURA_BODY -> Color.WHITE;
+            case TOWER_MORTAR_BODY -> new Color(139, 90, 43);
+            case TOWER_SEEKER_BODY -> new Color(80, 180, 255);
+            case TOWER_CINDER_BODY -> new Color(255, 90, 30);
             case TOWER_AURA_RING -> Color.WHITE;
             case TOWER_UPGRADE_PATH_A -> new Color(255, 200, 60);
             case TOWER_UPGRADE_PATH_B -> new Color(100, 180, 255);

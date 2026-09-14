@@ -2,8 +2,11 @@ package td.ui;
 
 import td.enemy.EnemyMob;
 import td.tower.TowerAura;
+import td.tower.TowerCinder;
 import td.tower.TowerFour;
+import td.tower.TowerMortar;
 import td.tower.TowerOne;
+import td.tower.TowerSeeker;
 import td.tower.TowerThree;
 import td.tower.TowerTwo;
 import td.tower.TowerVisitor;
@@ -100,6 +103,23 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             this.draws.add(new AuraDraw(Palette.TOWER_AURA_RING, tower.getX(), tower.getY(),
                     (float) (phase * maxRadius), (float) (1.0 - phase)));
         }
+        return null;
+    }
+
+    /** No transient effect of its own - the shell in flight is what's visible, drawn as a {@code ProjectileDraw}. */
+    public Void visitTowerMortar(TowerMortar tower) {
+        return null;
+    }
+
+    /** No transient effect of its own - the missile in flight is what's visible, drawn as a {@code ProjectileDraw}. */
+    public Void visitTowerSeeker(TowerSeeker tower) {
+        return null;
+    }
+
+    /**
+     * No cone drawn yet - see {@code TODO.md} ("Cinder's flame cone has no visual effect yet").
+     */
+    public Void visitTowerCinder(TowerCinder tower) {
         return null;
     }
 

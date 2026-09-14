@@ -19,4 +19,10 @@ public interface TowerVisitor<R> {
     R visitTowerFour(TowerFour tower);
 
     R visitTowerAura(TowerAura tower);
+
+    R visitTowerMortar(TowerMortar tower);
+
+    R visitTowerSeeker(TowerSeeker tower);
+
+    R visitTowerCinder(TowerCinder tower);
 }

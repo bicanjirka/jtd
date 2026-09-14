@@ -61,6 +61,9 @@ public final class AsciiBoardRenderer {
             case TOWER_THREE_BODY -> '3';
             case TOWER_FOUR_BODY -> '4';
             case TOWER_AURA_BODY -> 'A';
+            case TOWER_MORTAR_BODY -> 'M';
+            case TOWER_SEEKER_BODY -> 'K';
+            case TOWER_CINDER_BODY -> 'N';
             default -> UNKNOWN;
         };
     }

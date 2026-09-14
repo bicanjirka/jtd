@@ -7,7 +7,7 @@ its three subpackages (`targeting`, `buff`, `upgrade`).
 
 `Tower` is the interface; `AbstractTower` holds position, price, base/current damage/range/
 fire-rate, the list of nearby Aura towers buffing it, this tower's own permanently-chosen
-upgrade path (if any), and the shared `dealDamage` accounting. The five leaf classes are
+upgrade path (if any), and the shared `dealDamage` accounting. The eight leaf classes are
 `final` and are constructed only through `TowerFactory`:
 
 | Class | Name in the UI | Targeting |
@@ -17,6 +17,14 @@ upgrade path (if any), and the shared `dealDamage` accounting. The five leaf cla
 | `TowerThree` | Sunshine | sonar scan: a beam sweeps the circle, hitting whatever it passes |
 | `TowerFour` | Stardust | everything in range at once, ghosts included |
 | `TowerAura` | Aura | passive; buffs neighbouring towers, never attacks |
+| `TowerMortar` | Mortar | one enemy, furthest along the path; fires an unguided `CannonballProjectile` that splashes and slows on arrival |
+| `TowerSeeker` | Seeker | one enemy, furthest along the path; fires a homing `MissileProjectile` that deals magic damage and freezes on arrival |
+| `TowerCinder` | Cinder | no cooldown; a wedge (`InWedgeTargetQuery`) that reorients toward the nearest enemy and applies/refreshes burn every tick |
+
+`TowerMortar`/`TowerSeeker`/`TowerCinder` are the three towers added by the damage-types-and-
+projectiles feature — see `td.projectile` and `td.effect` in the root `CLAUDE.md`'s domain-
+package list. They don't offer upgrade paths yet; that lands in a later phase of the same
+feature (see `FEATURE-damage-types-and-projectiles.md`), not a dropped gap.
 
 ## Invariants worth knowing before you change anything here
 

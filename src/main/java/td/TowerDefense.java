@@ -74,6 +74,11 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private static final String CARD_GAME = "game";
     private static final int MENU_WIDTH = 1040;
     private static final int MENU_HEIGHT = 700;
+    /**
+     * One placement shortcut per {@link TowerFactory.type}, in enum order - indexed by ordinal
+     * rather than hand-matched per tower, so a new tower type needs only a key appended here.
+     */
+    private static final char[] TOWER_PLACEMENT_KEYS = {'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o'};
 
     private final LevelCatalog levelCatalog = new BuiltInLevelCatalog();
 
@@ -93,7 +98,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             w - build circle
             e - build sunshine
             r - build stardust
-            t - build power
+            t - build aura
+            y - build mortar
+            u - build seeker
+            i - build cinder
             esc - cancel placing
             p - pause
             f - cycle speed
@@ -506,12 +514,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (this.gameStopped) {
             return;
         }
+        int placementIndex = indexOf(TOWER_PLACEMENT_KEYS, key);
+        if (placementIndex >= 0 && placementIndex < TowerFactory.type.values().length) {
+            this.panelTowerSelector.doPlace(placementIndex);
+            return;
+        }
         switch (key) {
-            case 'q' -> this.panelTowerSelector.doPlace(0);
-            case 'w' -> this.panelTowerSelector.doPlace(1);
-            case 'e' -> this.panelTowerSelector.doPlace(2);
-            case 'r' -> this.panelTowerSelector.doPlace(3);
-            case 't' -> this.panelTowerSelector.doPlace(4);
             case 'p' -> this.togglePause();
             case 'f' -> this.cycleSpeed();
             case 's' -> this.nextWave();
@@ -524,6 +532,15 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             default -> {
             }
         }
+    }
+
+    private static int indexOf(char[] keys, char key) {
+        for (int i = 0; i < keys.length; i++) {
+            if (keys[i] == key) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private void initComponents() {

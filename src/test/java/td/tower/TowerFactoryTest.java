@@ -52,11 +52,38 @@ class TowerFactoryTest {
     }
 
     @Test
+    void createsTowerMortarForTypeMortar() {
+        Tower t = TowerFactory.createTower(TowerFactory.type.mortar, context, 0, 0);
+
+        assertThat(t).isInstanceOf(TowerMortar.class);
+        assertThat(t.getType()).isEqualTo(TowerFactory.type.mortar);
+    }
+
+    @Test
+    void createsTowerSeekerForTypeSeeker() {
+        Tower t = TowerFactory.createTower(TowerFactory.type.seeker, context, 0, 0);
+
+        assertThat(t).isInstanceOf(TowerSeeker.class);
+        assertThat(t.getType()).isEqualTo(TowerFactory.type.seeker);
+    }
+
+    @Test
+    void createsTowerCinderForTypeCinder() {
+        Tower t = TowerFactory.createTower(TowerFactory.type.cinder, context, 0, 0);
+
+        assertThat(t).isInstanceOf(TowerCinder.class);
+        assertThat(t.getType()).isEqualTo(TowerFactory.type.cinder);
+    }
+
+    @Test
     void enumPriceMatchesEachTowersStaticPrice() {
         assertThat(TowerFactory.type.first.price).isEqualTo(TowerOne.price);
         assertThat(TowerFactory.type.second.price).isEqualTo(TowerTwo.price);
         assertThat(TowerFactory.type.third.price).isEqualTo(TowerThree.price);
         assertThat(TowerFactory.type.fourth.price).isEqualTo(TowerFour.price);
         assertThat(TowerFactory.type.aura.price).isEqualTo(TowerAura.price);
+        assertThat(TowerFactory.type.mortar.price).isEqualTo(TowerMortar.price);
+        assertThat(TowerFactory.type.seeker.price).isEqualTo(TowerSeeker.price);
+        assertThat(TowerFactory.type.cinder.price).isEqualTo(TowerCinder.price);
     }
 }
