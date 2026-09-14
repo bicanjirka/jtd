@@ -76,7 +76,11 @@ This is the one structural rule that matters, and it is the result of a delibera
 Domain packages under `td.*`: `board` (`BoardGeometry` — a level's pixel scale and cell
 dimensions as one immutable value, with the cell↔pixel math every consumer used to hand-roll),
 `cell` (board squares, buildability), `damage` (the `Damage`
-value type towers deal to enemies), `economy` (`EconomyDelta`/`EconomyState`, the
+value type towers deal to enemies), `effect` (`Effect`/`EffectKind`/`DamageSink`/
+`ActiveEffects` — the shared, timed status-effect primitive a tower's on-hit slow/burn/
+freeze, an enemy's own ability, and an aura tower's continuous buff all produce and an enemy
+holds; deliberately neutral rather than living under `tower` or `enemy`, mirroring `damage`),
+`economy` (`EconomyDelta`/`EconomyState`, the
 credits/score/lives algebra, and `EconomyLedger` — see below — that's built on it),
 `enemy` (mob hierarchy + `EnemyFactory` + `EnemyRegistry`/`EnemyRoster` — see below),
 `level` (`LevelDefinition` — a level's board size, path, waves, starting economy and

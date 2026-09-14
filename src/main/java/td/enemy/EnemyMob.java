@@ -1,6 +1,7 @@
 package td.enemy;
 
 import td.damage.Damage;
+import td.effect.Effect;
 
 /**
  * One enemy walking the level's path, as seen by towers, targeting queries and the renderer.
@@ -39,6 +40,12 @@ public interface EnemyMob {
      * value, not the argument.
      */
     Damage doDamage(Damage damage);
+
+    /**
+     * Applies a status effect (slow, burn, freeze) to this mob. See {@link Effect} for how an
+     * effect already active of the same kind is handled when another is applied on top.
+     */
+    void applyEffect(Effect effect);
 
     float getSpeed();
 
