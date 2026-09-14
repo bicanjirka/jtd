@@ -4,8 +4,12 @@ import td.damage.Damage;
 import td.effect.Effect;
 import td.enemy.EnemyMob;
 import td.projectile.CannonballProjectile;
+import td.tower.buff.TowerBuff;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
+import td.tower.upgrade.ClusterCondition;
+import td.tower.upgrade.DamageDealtCondition;
+import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 
 import java.util.List;
@@ -27,10 +31,23 @@ public final class TowerMortar extends AbstractTower {
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
     private static final float PROJECTILE_SPEED = 40f;
-    private static final float SLOW_MULTIPLIER = 0.5f;
-    private static final int SLOW_DURATION_TICKS = 40;
+    private static final float SLOW_MULTIPLIER_BASE = 0.5f;
+    private static final int SLOW_DURATION_TICKS_BASE = 40;
+    /** How much bigger a splash "Heavy Shell" gives this tower's blast radius - same shape as {@code TowerTwo}'s Siege. */
+    private static final float HEAVY_SHELL_SPLASH_MULTIPLIER = 1.3f;
+    private static final float CONCUSSIVE_CHARGE_SLOW_DURATION_MULTIPLIER = 1.5f;
 
-    private final float splashRadius;
+    /** Bigger blast radius, earned by this tower having proven itself already. */
+    private static final UpgradePath HEAVY_SHELL = new UpgradePath(
+            "Heavy Shell", 35, new TowerBuff(0.4f, 0f, 0f, 0f), new DamageDealtCondition(20000));
+    /** A longer-lasting slow, plus more range - rewards a deliberately grouped placement rather than a solo one. */
+    private static final UpgradePath CONCUSSIVE_CHARGE = new UpgradePath(
+            "Concussive Charge", 30, new TowerBuff(0f, 0.25f, 0f, 0f), new ClusterCondition(2));
+    private static final List<UpgradePath> PATHS = List.of(HEAVY_SHELL, CONCUSSIVE_CHARGE);
+
+    private float splashRadius;
+    private float slowMultiplier = SLOW_MULTIPLIER_BASE;
+    private int slowDurationTicks = SLOW_DURATION_TICKS_BASE;
     private int coolDown = 0;
     private EnemyMob currentTarget;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
@@ -41,6 +58,21 @@ public final class TowerMortar extends AbstractTower {
         this.coolDownCurrent = this.coolDownMax;
         this.splashRadius = splashRadiusBase * context.getBoard().scale();
         this.doInit(context, x, y);
+    }
+
+    @Override
+    public List<UpgradePath> availablePaths() {
+        return PATHS;
+    }
+
+    /** Neither bonus is a {@link TowerBuff} axis, so each is applied here instead - same shape as {@code TowerTwo}'s Siege. */
+    @Override
+    protected void onUpgradePathChosen(UpgradePath path) {
+        if (path == HEAVY_SHELL) {
+            this.splashRadius *= HEAVY_SHELL_SPLASH_MULTIPLIER;
+        } else if (path == CONCUSSIVE_CHARGE) {
+            this.slowDurationTicks = Math.round(this.slowDurationTicks * CONCUSSIVE_CHARGE_SLOW_DURATION_MULTIPLIER);
+        }
     }
 
     private EnemyMob findTarget() {
@@ -80,12 +112,16 @@ public final class TowerMortar extends AbstractTower {
             float r2 = (float) (dx * dx + dy * dy);
             int amount = Math.round(this.damageCurrent * (1 - r2 / (this.splashRadius * this.splashRadius)));
             this.dealDamage(enemy, Damage.physical(amount));
-            enemy.applyEffect(Effect.slow(SLOW_MULTIPLIER, SLOW_DURATION_TICKS, d -> this.dealDamage(enemy, d)));
+            enemy.applyEffect(Effect.slow(this.slowMultiplier, this.slowDurationTicks, d -> this.dealDamage(enemy, d)));
         }
     }
 
     public EnemyMob getCurrentTarget() {
         return this.currentTarget;
+    }
+
+    float getSplashRadius() {
+        return this.splashRadius;
     }
 
     public TurretAim getTurretAim() {

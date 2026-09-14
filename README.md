@@ -66,12 +66,12 @@ Mouse: move to preview placement, click to place or to select a placed tower.
 | Seeker | 35 | Fires a homing missile that re-aims each tick and retargets if its target dies; deals magic damage and freezes whichever mob it actually hits |
 | Cinder | 28 | No cooldown; a slowly-reorienting flame cone burns everything currently caught in it, ghosts included |
 
-Each of `TowerOne`–`TowerFour` also offers two permanent, mutually-exclusive upgrade paths,
-shown as buttons in its info panel once selected. A path is gated by its own condition (an
-affordable price alone, a cluster of towers built nearby, the tower having dealt enough
-damage, or having racked up enough kills) — choosing one is a one-time, irreversible
-specialization for that specific tower, marked on the board by a coloured ring around it.
-Mortar, Seeker and Cinder don't offer upgrade paths yet.
+Every attack tower — Triangle, Circle, Sunshine, Stardust, Mortar, Seeker and Cinder — also
+offers two permanent, mutually-exclusive upgrade paths, shown as buttons in its info panel
+once selected. A path is gated by its own condition (an affordable price alone, a cluster of
+towers built nearby, the tower having dealt enough damage, or having racked up enough kills)
+— choosing one is a one-time, irreversible specialization for that specific tower, marked on
+the board by a coloured ring around it. The Aura tower is passive and offers none.
 
 ### Enemies
 
