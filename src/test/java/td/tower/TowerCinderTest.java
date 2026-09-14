@@ -5,6 +5,7 @@ import td.board.BoardGeometry;
 import td.damage.DamageType;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
@@ -70,5 +71,42 @@ class TowerCinderTest {
         tower.doTick(1);
 
         assertThat(tower.getTurretAim().currentRadians()).isEqualTo(0.0);
+    }
+
+    @Test
+    void wideNozzleIsChoosableWithMoneyAloneAndAppliesItsRangeBonus() {
+        this.context.startEconomy(1000, 5);
+        TowerCinder tower = towerAt(3, 3);
+        UpgradePath wideNozzle = UpgradePaths.named(tower, "Wide Nozzle");
+
+        boolean chosen = tower.chooseUpgradePath(wideNozzle);
+
+        assertThat(chosen).isTrue();
+        assertThat(tower.getRangeReal()).isGreaterThan(TowerCinder.range * SCALE);
+    }
+
+    @Test
+    void whiteFlameIsNotYetChoosableBeforeEnoughDamageDealt() {
+        this.context.startEconomy(1000, 5);
+        TowerCinder tower = towerAt(3, 3);
+        UpgradePath whiteFlame = UpgradePaths.named(tower, "White Flame");
+
+        boolean chosen = tower.chooseUpgradePath(whiteFlame);
+
+        assertThat(chosen).isFalse();
+        assertThat(tower.getChosenPath()).isNull();
+    }
+
+    @Test
+    void wideNozzleBumpsTheHalfWidthRadiansBeyondTheBase() {
+        TowerCinder tower = towerAt(3, 3);
+        UpgradePath wideNozzle = UpgradePaths.named(tower, "Wide Nozzle");
+        double halfWidthBeforeChoosing = tower.getHalfWidthRadians();
+
+        // onUpgradePathChosen is exercised directly - Wide Nozzle's own gate (money alone) is
+        // trivially satisfied and covered by the choosability test above; this proves the bump itself.
+        tower.onUpgradePathChosen(wideNozzle);
+
+        assertThat(tower.getHalfWidthRadians()).isGreaterThan(halfWidthBeforeChoosing);
     }
 }

@@ -3,9 +3,13 @@ package td.tower;
 import td.damage.Damage;
 import td.effect.Effect;
 import td.enemy.EnemyMob;
+import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.InWedgeTargetQuery;
 import td.tower.targeting.NearestSelector;
+import td.tower.upgrade.DamageDealtCondition;
+import td.tower.upgrade.UpgradeCondition;
+import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 
 import java.util.List;
@@ -33,15 +37,37 @@ public final class TowerCinder extends AbstractTower {
     public static final float range = 2.2f;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.15;
-    /** Public so the renderer's cone effect matches exactly what {@link InWedgeTargetQuery} decides hits against. */
-    public static final double HALF_WIDTH_RADIANS = 0.35;
+    private static final double HALF_WIDTH_RADIANS_BASE = 0.35;
     private static final int BURN_DURATION_TICKS = 15;
+    private static final double WIDE_NOZZLE_HALF_WIDTH_MULTIPLIER = 1.4;
 
+    /** More damage (and so more burn per tick, since burn's magnitude is this tower's own damageCurrent) - earned by proven output. */
+    private static final UpgradePath WHITE_FLAME = new UpgradePath(
+            "White Flame", 30, new TowerBuff(0.4f, 0f, 0f, 0f), new DamageDealtCondition(15000));
+    /** A wider cone and more range - a straightforward money-gated specialization needing no track record. */
+    private static final UpgradePath WIDE_NOZZLE = new UpgradePath(
+            "Wide Nozzle", 25, new TowerBuff(0f, 0.3f, 0f, 0f), UpgradeCondition.always());
+    private static final List<UpgradePath> PATHS = List.of(WHITE_FLAME, WIDE_NOZZLE);
+
+    private double halfWidthRadians = HALF_WIDTH_RADIANS_BASE;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
     public TowerCinder(GameWorld context, int x, int y) {
         super(TowerFactory.type.cinder, price, damage, range);
         this.doInit(context, x, y);
+    }
+
+    @Override
+    public List<UpgradePath> availablePaths() {
+        return PATHS;
+    }
+
+    /** Wide Nozzle's wider cone isn't a {@link TowerBuff} axis, so it's applied here instead. */
+    @Override
+    protected void onUpgradePathChosen(UpgradePath path) {
+        if (path == WIDE_NOZZLE) {
+            this.halfWidthRadians *= WIDE_NOZZLE_HALF_WIDTH_MULTIPLIER;
+        }
     }
 
     public void doTick(int gameTime) {
@@ -52,7 +78,7 @@ public final class TowerCinder extends AbstractTower {
         new NearestSelector(this.centerX, this.centerY).selectFrom(inRange)
                 .ifPresent(nearest -> this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, nearest.getX(), nearest.getY())));
 
-        List<EnemyMob> caught = new InWedgeTargetQuery(this.centerX, this.centerY, this.turretAim.currentRadians(), HALF_WIDTH_RADIANS)
+        List<EnemyMob> caught = new InWedgeTargetQuery(this.centerX, this.centerY, this.turretAim.currentRadians(), this.halfWidthRadians)
                 .and(InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal))
                 .matching(this.context.getEnemyRegistry());
         for (EnemyMob enemy : caught) {
@@ -62,6 +88,10 @@ public final class TowerCinder extends AbstractTower {
 
     public TurretAim getTurretAim() {
         return this.turretAim;
+    }
+
+    public double getHalfWidthRadians() {
+        return this.halfWidthRadians;
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {

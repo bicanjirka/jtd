@@ -125,7 +125,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     public Void visitTowerCinder(TowerCinder tower) {
         float headingRadians = (float) tower.getTurretAim().radiansAt(this.interpolationAlpha);
         this.draws.add(new ConeDraw(Palette.TOWER_CINDER_CONE, tower.getX(), tower.getY(),
-                headingRadians, tower.getRangeReal(), (float) TowerCinder.HALF_WIDTH_RADIANS, CINDER_CONE_ALPHA));
+                headingRadians, tower.getRangeReal(), (float) tower.getHalfWidthRadians(), CINDER_CONE_ALPHA));
         return null;
     }
 

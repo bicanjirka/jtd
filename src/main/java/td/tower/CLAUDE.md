@@ -23,8 +23,8 @@ upgrade path (if any), and the shared `dealDamage` accounting. The eight leaf cl
 
 `TowerMortar`/`TowerSeeker`/`TowerCinder` are the three towers added by the damage-types-and-
 projectiles feature — see `td.projectile` and `td.effect` in the root `CLAUDE.md`'s domain-
-package list. They don't offer upgrade paths yet; that lands in a later phase of the same
-feature (see `FEATURE-damage-types-and-projectiles.md`), not a dropped gap.
+package list. Like the original four, each offers two upgrade paths (see below); only
+`TowerAura` stays passive and pathless.
 
 ## Invariants worth knowing before you change anything here
 
@@ -168,11 +168,13 @@ changes what *this* tower itself is, once, and stays changed for its lifetime.
   `GameWorld.doPay`'s check-and-charge-in-one-call contract - never gate a call to it on a
   separate affordability check first.
 - **A path's bonus that isn't expressible through `TowerBuff` is applied via
-  `onUpgradePathChosen`, not through the shared algebra.** `TowerTwo`'s `spreadRadius` and
-  `TowerThree`'s sweep rate are each touched by only one tower's one path, so they are the
-  exception, not the rule - a leaf overriding this hook mutates its own field directly,
-  matched by reference against its own private `UpgradePath` constants rather than by a
-  string/id (keeps the match type-safe and avoids a stringly-typed switch).
+  `onUpgradePathChosen`, not through the shared algebra.** `TowerTwo`'s `spreadRadius`,
+  `TowerThree`'s sweep rate, `TowerMortar`'s slow duration, `TowerSeeker`'s freeze duration
+  and `TowerCinder`'s wedge half-width are each touched by only one tower's one path - a leaf
+  overriding this hook mutates its own field directly, matched by reference against its own
+  private `UpgradePath` constants rather than by a string/id (keeps the match type-safe and
+  avoids a stringly-typed switch). This is now the common case, not a rare exception - most
+  attack towers have at least one path that needs it.
 - `AbstractTower.availablePaths()` defaults to `List.of()` - only a tower with real content
   (added per-leaf, not part of this shared mechanism) overrides it. The Aura tower does not
   override it and offers no paths of its own for v1.

@@ -4,8 +4,12 @@ import td.damage.Damage;
 import td.effect.Effect;
 import td.enemy.EnemyMob;
 import td.projectile.MissileProjectile;
+import td.tower.buff.TowerBuff;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
+import td.tower.upgrade.KillCountCondition;
+import td.tower.upgrade.UpgradeCondition;
+import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 
 import java.util.List;
@@ -26,8 +30,18 @@ public final class TowerSeeker extends AbstractTower {
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
     private static final float PROJECTILE_SPEED = 35f;
-    private static final int FREEZE_DURATION_TICKS = 30;
+    private static final int FREEZE_DURATION_TICKS_BASE = 30;
+    private static final float DEEP_FREEZE_DURATION_MULTIPLIER = 1.5f;
 
+    /** Faster reloading - a straightforward money-gated specialization needing no track record. */
+    private static final UpgradePath TWIN_WARHEAD = new UpgradePath(
+            "Twin Warhead", 30, new TowerBuff(0f, 0f, 0.35f, 0f), UpgradeCondition.always());
+    /** More damage and a longer freeze - earned by this tower having racked up proven kills. */
+    private static final UpgradePath DEEP_FREEZE = new UpgradePath(
+            "Deep Freeze", 35, new TowerBuff(0.3f, 0f, 0f, 0f), new KillCountCondition(10));
+    private static final List<UpgradePath> PATHS = List.of(TWIN_WARHEAD, DEEP_FREEZE);
+
+    private int freezeDurationTicks = FREEZE_DURATION_TICKS_BASE;
     private int coolDown = 0;
     private EnemyMob currentTarget;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
@@ -37,6 +51,19 @@ public final class TowerSeeker extends AbstractTower {
         this.coolDownMax = 60;
         this.coolDownCurrent = this.coolDownMax;
         this.doInit(context, x, y);
+    }
+
+    @Override
+    public List<UpgradePath> availablePaths() {
+        return PATHS;
+    }
+
+    /** Deep Freeze's longer duration isn't a {@link TowerBuff} axis, so it's applied here instead. */
+    @Override
+    protected void onUpgradePathChosen(UpgradePath path) {
+        if (path == DEEP_FREEZE) {
+            this.freezeDurationTicks = Math.round(this.freezeDurationTicks * DEEP_FREEZE_DURATION_MULTIPLIER);
+        }
     }
 
     private EnemyMob findTarget() {
@@ -69,11 +96,15 @@ public final class TowerSeeker extends AbstractTower {
 
     private void onImpact(EnemyMob target) {
         this.dealDamage(target, Damage.magic(this.damageCurrent));
-        target.applyEffect(Effect.freeze(FREEZE_DURATION_TICKS, d -> this.dealDamage(target, d)));
+        target.applyEffect(Effect.freeze(this.freezeDurationTicks, d -> this.dealDamage(target, d)));
     }
 
     public EnemyMob getCurrentTarget() {
         return this.currentTarget;
+    }
+
+    int getFreezeDurationTicks() {
+        return this.freezeDurationTicks;
     }
 
     public TurretAim getTurretAim() {

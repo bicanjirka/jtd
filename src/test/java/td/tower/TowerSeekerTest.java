@@ -5,6 +5,7 @@ import td.board.BoardGeometry;
 import td.damage.DamageType;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
@@ -76,5 +77,42 @@ class TowerSeekerTest {
         tower.doTick(1);
 
         assertThat(this.context.getProjectileRegistry().getProjectiles()).isEmpty();
+    }
+
+    @Test
+    void twinWarheadIsChoosableWithMoneyAloneAndAppliesItsFireRateBonus() {
+        this.context.startEconomy(1000, 5);
+        TowerSeeker tower = towerAt(3, 3);
+        UpgradePath twinWarhead = UpgradePaths.named(tower, "Twin Warhead");
+
+        boolean chosen = tower.chooseUpgradePath(twinWarhead);
+
+        assertThat(chosen).isTrue();
+        assertThat(tower.coolDownCurrent).isLessThan(tower.coolDownMax);
+    }
+
+    @Test
+    void deepFreezeIsNotYetChoosableBeforeTenKills() {
+        this.context.startEconomy(1000, 5);
+        TowerSeeker tower = towerAt(3, 3);
+        UpgradePath deepFreeze = UpgradePaths.named(tower, "Deep Freeze");
+
+        boolean chosen = tower.chooseUpgradePath(deepFreeze);
+
+        assertThat(chosen).isFalse();
+        assertThat(tower.getChosenPath()).isNull();
+    }
+
+    @Test
+    void deepFreezeBumpsTheFreezeDurationBeyondTheBase() {
+        TowerSeeker tower = towerAt(3, 3);
+        UpgradePath deepFreeze = UpgradePaths.named(tower, "Deep Freeze");
+        int durationBeforeChoosing = tower.getFreezeDurationTicks();
+
+        // onUpgradePathChosen is exercised directly - Deep Freeze's own gate (a kill-count
+        // threshold) is covered generically by KillCountConditionTest; this proves the bump itself.
+        tower.onUpgradePathChosen(deepFreeze);
+
+        assertThat(tower.getFreezeDurationTicks()).isGreaterThan(durationBeforeChoosing);
     }
 }

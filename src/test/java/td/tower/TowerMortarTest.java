@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
@@ -77,5 +78,45 @@ class TowerMortarTest {
         tower.doTick(1);
 
         assertThat(this.context.getProjectileRegistry().getProjectiles()).isEmpty();
+    }
+
+    @Test
+    void concussiveChargeIsChoosableOnceTwoNeighboursExistAndAppliesItsRangeBonus() {
+        this.context.startEconomy(1000, 5);
+        TowerMortar tower = towerAt(3, 3);
+        this.context.addTower(tower);
+        this.context.addTower(new TowerOne(this.context, 2, 2));
+        this.context.addTower(new TowerOne(this.context, 4, 4));
+        UpgradePath concussiveCharge = UpgradePaths.named(tower, "Concussive Charge");
+
+        boolean chosen = tower.chooseUpgradePath(concussiveCharge);
+
+        assertThat(chosen).isTrue();
+        assertThat(tower.getRangeReal()).isGreaterThan(TowerMortar.range * SCALE);
+    }
+
+    @Test
+    void heavyShellIsNotYetChoosableBeforeEnoughDamageDealt() {
+        this.context.startEconomy(1000, 5);
+        TowerMortar tower = towerAt(3, 3);
+        UpgradePath heavyShell = UpgradePaths.named(tower, "Heavy Shell");
+
+        boolean chosen = tower.chooseUpgradePath(heavyShell);
+
+        assertThat(chosen).isFalse();
+        assertThat(tower.getChosenPath()).isNull();
+    }
+
+    @Test
+    void heavyShellBumpsTheSplashRadiusBeyondTheBase() {
+        TowerMortar tower = towerAt(3, 3);
+        UpgradePath heavyShell = UpgradePaths.named(tower, "Heavy Shell");
+        float radiusBeforeChoosing = tower.getSplashRadius();
+
+        // onUpgradePathChosen is exercised directly - Heavy Shell's own gate (a damage-dealt
+        // threshold) is covered generically by DamageDealtConditionTest; this proves the bump itself.
+        tower.onUpgradePathChosen(heavyShell);
+
+        assertThat(tower.getSplashRadius()).isGreaterThan(radiusBeforeChoosing);
     }
 }
