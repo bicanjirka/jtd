@@ -33,6 +33,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private static final float MARKER_ROW_OFFSET_FRACTION = 1.6f;
     private static final float MARKER_SPACING_FRACTION = 1.1f;
     private static final float MARKER_SCALE_FRACTION = 0.35f;
+    /** How many real effect markers show before the rest collapse into one overflow marker. */
+    static final int MAX_VISIBLE_MARKERS = 3;
 
     private final List<EnemyDraw> draws = new ArrayList<>();
     private final List<StatusMarkerDraw> markerDraws = new ArrayList<>();
@@ -85,9 +87,18 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private void markers(AbstractEnemyMob mob, float x, float y, float scale) {
         float markerY = y - scale * MARKER_ROW_OFFSET_FRACTION;
         float markerX = x - scale;
+        int shown = 0;
         for (EffectKind kind : mob.activeEffectKinds()) {
+            if (shown == MAX_VISIBLE_MARKERS) {
+                // A 4th+ simultaneous effect collapses into one overflow marker rather than
+                // growing the row further - legible even on a heavily-buffed enemy in a packed
+                // wave (see FEATURE-enemy-traits-and-effects.md's V1 Scope).
+                this.markerDraws.add(new StatusMarkerDraw(Palette.STATUS_MARKER_OVERFLOW, markerX, markerY, scale * MARKER_SCALE_FRACTION));
+                return;
+            }
             this.markerDraws.add(new StatusMarkerDraw(markerPaletteFor(kind), markerX, markerY, scale * MARKER_SCALE_FRACTION));
             markerX += scale * MARKER_SPACING_FRACTION;
+            shown++;
         }
     }
 

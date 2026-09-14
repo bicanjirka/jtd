@@ -153,6 +153,20 @@ tell at a glance that this is the boss, not just "a big Square").
   role plus its shape/colour cases in `Java2DFrameRenderer`. Drop the `level=10` workaround
   once real size/shape comes from the archetype itself rather than a borrowed formula.
 
+### The effect-marker overflow indicator has no count
+
+`EnemyFrameBuilder`'s marker row caps at 3 visible status-effect icons; a 4th+ simultaneous
+effect collapses into one generic `Palette.STATUS_MARKER_OVERFLOW` marker rather than the "+N"
+badge `FEATURE-enemy-traits-and-effects.md`'s V1 Scope originally called for. The render frame
+model has no text-drawing primitive today (every draw command is a coloured `Shape`), so
+showing an actual number would be new render infrastructure, not a tweak to this one marker.
+
+- **Where:** `td.ui.EnemyFrameBuilder.markers()`, `td.ui.render.Palette.STATUS_MARKER_OVERFLOW`.
+- **Approach:** add a small text-drawing `RenderFrame` primitive (a `Palette` role isn't enough
+  on its own - it needs the string/number itself, so a new sealed draw record carrying the
+  count) and a `Java2DFrameRenderer.drawString` case for it, then have the overflow marker
+  carry `activeCount - MAX_VISIBLE_MARKERS` instead of being a fixed, countless glyph.
+
 ### Enemy traits/abilities numbers are unbalanced placeholders
 
 Every number introduced by the data-driven enemy model - `PercentResistTrait`/
