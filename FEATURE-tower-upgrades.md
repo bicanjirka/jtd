@@ -83,16 +83,15 @@ future, and an aura that boosts bounty for *any* kill in its area, not just this
   picks one, and that choice is permanent for that tower instance. This is a real design
   decision, distinct from and orthogonal to the enablement conditions below — a path can be
   gated by any one of them.
-- **Several independent enablement conditions**, each presumably tied to a different
-  concrete upgrade path:
+- **Four independent enablement conditions for v1** (see V1 Scope, below, for why a fifth —
+  "a minimum count of towers on the field" — was cut):
   1. Money only — enabled once the player can afford it.
-  2. A minimum count of towers present on the field.
-  3. A cluster of some number of towers built adjacent to one another.
-  4. The specific tower having dealt at least some amount of damage.
-  5. The specific tower having killed at least some number of enemies.
-  6. A **global** upgrade: bought once, and retroactively applied to every tower of that
+  2. A cluster of some number of towers built adjacent to one another.
+  3. The specific tower having dealt at least some amount of damage.
+  4. The specific tower having killed at least some number of enemies.
+  5. A **global** upgrade: bought once, and retroactively applied to every tower of that
      type already on the field, and to every tower of that type built afterward — distinct
-     in kind from the first five, which all upgrade one already-placed tower instance.
+     in kind from the first four, which all upgrade one already-placed tower instance.
      **Deferred to a later phase** (see Decisions made, below) — documented here so the
      design isn't lost, not scoped for a first version.
 - **New effects an upgrade can grant**: a different sprite/visual for the upgraded tower;
@@ -211,47 +210,148 @@ worth recording alongside the decisions below:
   baseline expectation than resistances, projectile physics, or damage types are. That's
   why it's sequenced first — see Priority, above — ahead of the request's original
   ordering.
-- **The "N towers exist on the field" enablement condition is the weakest of the five.** It
-  gates a specific tower's upgrade on unrelated actions taken elsewhere on the board, which
-  reads more like an idle-game checklist than a tactical decision about *this* tower.
-  Recommendation: either drop it, or reframe it as something spatially tied to the tower
-  itself (e.g. towers of the same type within its own range) so the condition is still
-  legible from the tower's own info panel without the player having to reconstruct board
-  state from memory. Not yet a final decision — flagged for the same conversation that
-  settles the branching-vs-linear question.
-- **`AbstractTower.getSellPrice()` doesn't currently know about upgrade spend.** It's a flat
-  75% of the original build price. Once money can be sunk into an upgrade path, does
-  selling refund any of that, or is upgrade spend a permanent sunk cost? This needs an
-  explicit answer before implementation; it isn't addressed elsewhere in this document.
+- **The "N towers exist on the field" enablement condition was the weakest of the five.** It
+  gated a specific tower's upgrade on unrelated actions taken elsewhere on the board, which
+  read more like an idle-game checklist than a tactical decision about *this* tower —
+  dropped for v1 (see Decisions made and V1 Scope, below).
+- **`AbstractTower.getSellPrice()` didn't know about upgrade spend.** Resolved: no refund —
+  see Decisions made.
 
 ## Decisions made
 
 - The naming collision is resolved by renaming the existing Power tower
-  (`td.tower.TowerUpgrade`), not this feature's concept — "upgrade" stays the name of this
-  feature's in-place mechanic, in code and in the UI.
-- Upgrades are **branching specializations**: each tower offers several upgrade paths, and
-  choosing one is a permanent choice for that tower instance, not a step on a shared linear
-  tier ladder. See Open questions for how many concurrent paths a tower has and whether a
-  path choice forecloses the others entirely.
-- The global, buy-once-for-all-present-and-future upgrade (enablement condition 6) and the
-  any-kill-in-aura bounty effect are both **deferred to a later phase**. Both stay
-  documented above as future-feature requests rather than dropped, since they're real
-  ideas worth building eventually — just not part of a first version, given the new
-  persistent-state and cross-package coupling each would require. A first version targets
-  the five per-instance enablement conditions and the per-tower-only bounty multiplier.
+  (`td.tower.TowerUpgrade`) to the **Aura tower** (`td.tower.TowerAura`) — "upgrade" stays
+  the name of this feature's in-place mechanic, in code and in the UI.
+- Upgrades are **branching specializations**: each tower offers exactly **two** upgrade
+  paths, and choosing one is a **permanent, mutually exclusive** choice for that tower
+  instance — picking one path forecloses the other for that tower forever.
+- The "N towers exist on the field" enablement condition is **dropped for v1**. Its
+  replacement four-condition set is: money, cluster-of-adjacent-towers, damage-dealt, and
+  kill-count.
+- Selling an upgraded tower **does not refund any upgrade spend** — `getSellPrice()` stays
+  75% of the original build price only, unchanged from today. Upgrade cost is a permanent
+  sunk cost, consistent with sell already being framed as "always a loss."
+- The global, buy-once-for-all-present-and-future upgrade and the any-kill-in-aura bounty
+  effect are both **deferred to a later phase**. Both stay documented above as
+  future-feature requests rather than dropped, since they're real ideas worth building
+  eventually — just not part of a first version, given the new persistent-state and
+  cross-package coupling each would require. A first version targets the four per-instance
+  enablement conditions and the per-tower-only bounty multiplier.
 - Sequencing: this feature ships **first**, ahead of damage types/projectiles and enemy
   traits/effects (see Priority, above) — the highest-value, lowest-dependency of the three.
 
+## V1 Scope
+
+With the decisions above settled, this section pins down what a first version actually
+contains: concrete content, the shape of the solution, and a phased implementation order.
+
+### Boundary
+
+- 4 attack towers (`TowerOne`/`TowerTwo`/`TowerThree`/`TowerFour`), each with exactly 2
+  upgrade paths — 8 concrete upgrade paths total for v1.
+- 4 enablement conditions in play across those 8 paths: money, cluster, damage-dealt,
+  kill-count.
+- No new targeting, delivery, or enemy-facing mechanic. **Because this feature ships before
+  damage types/on-hit effects (phase 2), no v1 path can apply slow, burn, or any other
+  enemy-affecting status effect** — those become natural additions to a tower's path set
+  once phase 2 lands (see Priority, above), not something v1 blocks on. Every v1 path is
+  built from primitives the engine already has: damage, range, fire-rate (cooldown), one
+  tower-specific stat (`TowerTwo`'s splash radius, `TowerThree`'s sweep speed), a sprite/
+  visual change, and a bounty multiplier on the tower's own kills (self-contained — no
+  phase-2 dependency, since it only touches the firing tower's own kill accounting).
+- The Aura tower (renamed from Power tower/`TowerUpgrade`) is **not** in scope for its own
+  specialization paths in v1 — it stays passive and unupgradeable for now, to keep the
+  content list to the four attack towers.
+
+### Proposed content (illustrative — numbers are placeholders for a later balance pass)
+
+| Tower | Path A | Gate | Path B | Gate |
+|---|---|---|---|---|
+| `TowerOne` (Triangle) | **Veteran** — modest damage/range bump, plus a bounty multiplier on this tower's own kills | kill-count | **Overclock** — shorter cooldown (faster fire), lower per-shot damage | money |
+| `TowerTwo` (Circle) | **Siege** — bigger damage and splash radius | damage-dealt | **Cluster Charge** — bigger damage and range | cluster |
+| `TowerThree` (Sunshine) | **Overcharged Array** — faster sweep (shorter `secondsPerRevolution`) and more range | cluster | **Marksman Beam** — bigger per-hit damage | kill-count |
+| `TowerFour` (Stardust) | **Overload Core** — bigger damage | damage-dealt | **Expanded Field** — bigger range | money |
+
+Each condition is used exactly twice across the 8 paths, so the feature exercises all four
+gates in actual content rather than leaving one theoretical. `TowerTwo`'s "Cluster Charge"
+and `TowerThree`'s "Overcharged Array" deliberately lean into the cluster gate's flavor —
+towers built as a group empowering each other reads naturally for a splash tower and a
+sensor-sweep tower specifically.
+
+### Shape of the solution
+
+- **A path's stat bonus reuses the existing `TowerBuff` algebra rather than inventing a
+  parallel one.** `TowerBuff` (`td.tower.buff.TowerBuff`) already models "damage/range bonus,
+  identity `none()`, additive `combine`" — exactly what a chosen path's damage/range
+  contribution is. `AbstractTower.calcDamageRange()`'s existing reduce over `upgTowers`
+  should be widened to also fold in the tower's own chosen path (if any), so a
+  specialization composes correctly with a nearby Aura tower's buff rather than needing
+  separate code. Fire-rate and bounty-multiplier bonuses don't fit `TowerBuff`'s current two
+  fields; widening the record with additional optional-bonus fields (each defaulting to 0,
+  preserving `none()` as the identity) is more consistent with this codebase's existing
+  "algebra" pattern than introducing a second, differently-shaped modifier type.
+- **Tower-specific stats (`TowerTwo.spreadRadius`, `TowerThree`'s sweep-speed constant)
+  stay outside `TowerBuff`.** Only one path per tower touches one, so this is the exception,
+  not the rule — a per-leaf-class delta applied directly at path-selection time, the same
+  way `spreadRadius` is already computed once at construction.
+- **A tower's chosen path is permanent, one-time state**, unlike `TowerBuff`'s live,
+  continuously-recomputed contribution from nearby Aura towers. It only needs to be applied
+  once, when the path is chosen, and then folded into every future `calcDamageRange()` call
+  the same way an `upgTowers` entry already is.
+- **Enablement conditions need a small, closed set of evaluators** — one per condition kind
+  (money, cluster, damage-dealt, kill-count) — each answering "is this specific tower's path
+  currently available" given the tower itself, the current `EconomyState`, and (for cluster)
+  the current `TowerRoster`. Cluster adjacency needs a new helper using
+  `BoardGeometry.cellX/cellY` (precedent: `TowerRoster.sell`/`clear` already convert a
+  tower's pixel position to a cell this way) to count same-type or any-type neighbors in the
+  8 surrounding cells.
+- **`PanelTowerInfo` needs real layout and observation changes**: two new buttons per
+  selected tower (styled as `HudButton`s, one per path, each independently enabled/disabled
+  by its own condition), replaced by a single "Specialized: `<path name>`" status line once
+  a path is chosen (since the choice is permanent, the other button simply disappears
+  rather than staying visible-but-disabled forever). This needs `PanelTowerInfo` to observe
+  `TowerListener.towerBuild`/`towerRemoved` in addition to its existing
+  `EconomyListener.economyChanged`, since the cluster condition can flip as neighbors are
+  built or sold.
+- **Rename mechanics for the Power tower → Aura tower**: class rename
+  (`td.tower.TowerUpgrade` → `td.tower.TowerAura`), its display string ("Power tower" →
+  "Aura tower"), every reference in `TowerFactory.type`, tests, `td/tower/CLAUDE.md`'s tower
+  table, and `README.md`'s tower table — done as its own early phase (see below) so no code
+  is ever written against the old name meaning two different things.
+- **New tower art**: each of the 8 paths implies a distinct upgraded sprite, which is the
+  same fixed checklist `td/tower/CLAUDE.md` already documents for a new tower (a `Palette`
+  role, a shape in `Java2DFrameRenderer`, wiring through `TowerVisitor`) — except now one
+  `TowerFactory.type` can render two different ways depending on its chosen path, which the
+  current one-shape-per-type model doesn't yet express. This is likely the single largest
+  piece of new-art work in the whole feature (8 new visuals, not 4).
+
+### Phased implementation order
+
+Per this project's standing "commit after each phase" convention:
+
+1. **Rename the Power tower to the Aura tower** — mechanical, low-risk, unblocks everything
+   else naming-wise. Closes no functional gap on its own but must land first.
+2. **Core upgrade data model and permanent-selection state**: `TowerBuff` widened with the
+   new optional bonus fields; a small value type describing one upgrade path (name, stat
+   bonuses, gate); each attack tower's two path definitions; a chosen-path field on
+   `AbstractTower` and its folding into `calcDamageRange()`. Provable headlessly — no UI yet.
+3. **Enablement condition evaluators** (money, cluster, damage-dealt, kill-count), including
+   the new cluster-adjacency helper. Also provable headlessly against constructed board
+   states.
+4. **`PanelTowerInfo` UI**: the two-button layout, `TowerListener` observation, the
+   post-selection "Specialized: …" status line, and the sell-button red-text accent (see
+   Open questions — still needs the styling-scope answer). Verified visually via the
+   `run-jtd` skill, per this project's UI requirement.
+5. **Per-path art**: the 8 upgraded visuals, following `td/tower/CLAUDE.md`'s checklist.
+6. **Balance pass and `TODO.md` cleanup**: tune the placeholder numbers above via actual
+   play, then delete the "Tower upgrade doesn't gate on affordability" `TODO.md` entry this
+   feature closes.
+
 ## Open questions
 
-1. What should the existing Power tower (`td.tower.TowerUpgrade`) be renamed to?
-2. How many upgrade paths does one tower offer, and does choosing one permanently foreclose
-   the others, or can a tower eventually qualify for more than one specialization if the
-   player meets every path's conditions?
-3. Is the "N towers exist on the field" enablement condition kept, dropped, or reframed to
-   tie back to the specific tower being upgraded (see Product review notes)?
-4. Does selling an upgraded tower refund any of what was spent on its upgrade path, or is
-   that spend permanently sunk?
-5. For the red-sell-text detail: is a colour accent on text alone the intended scope, or is
+1. For the red-sell-text detail: is a colour accent on text alone the intended scope, or is
    a further visual distinction (e.g. an icon) also wanted for destructive vs. constructive
    actions?
+2. Does the proposed content table above (which tower gets which two specializations, and
+   which gate each uses) match the intended feel, or should any pairing change before
+   implementation starts?
