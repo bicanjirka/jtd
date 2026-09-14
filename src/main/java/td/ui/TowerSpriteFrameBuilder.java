@@ -1,12 +1,12 @@
 package td.ui;
 
 import td.tower.Tower;
+import td.tower.TowerAura;
 import td.tower.TowerFactory;
 import td.tower.TowerFour;
 import td.tower.TowerOne;
 import td.tower.TowerThree;
 import td.tower.TowerTwo;
-import td.tower.TowerUpgrade;
 import td.tower.TowerVisitor;
 import td.ui.render.Palette;
 import td.ui.render.TowerSpriteDraw;
@@ -31,11 +31,11 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     // it shoots, so it reads that instead.
     private static final double TOWER_FOUR_SPIN_RADIANS_PER_SECOND = -2.0;
 
-    // The upgrade tower's head pulses (scale, not heading) via a sine wave instead of spinning -
+    // The aura tower's head pulses (scale, not heading) via a sine wave instead of spinning -
     // same "function of elapsed time" reasoning as the two constants above.
-    private static final double TOWER_UPGRADE_PULSE_RADIANS_PER_SECOND = 2.4;
-    private static final float TOWER_UPGRADE_PULSE_MIN_SCALE = 0.8f;
-    private static final float TOWER_UPGRADE_PULSE_MAX_SCALE = 1.25f;
+    private static final double TOWER_AURA_PULSE_RADIANS_PER_SECOND = 2.4;
+    private static final float TOWER_AURA_PULSE_MIN_SCALE = 0.8f;
+    private static final float TOWER_AURA_PULSE_MAX_SCALE = 1.25f;
 
     private final List<TowerSpriteDraw> draws = new ArrayList<>();
     private final List<TurretHeadDraw> headDraws = new ArrayList<>();
@@ -66,7 +66,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
             case second -> Palette.TOWER_TWO_BODY;
             case third -> Palette.TOWER_THREE_BODY;
             case fourth -> Palette.TOWER_FOUR_BODY;
-            case upgrade -> Palette.TOWER_UPGRADE_BODY;
+            case aura -> Palette.TOWER_AURA_BODY;
         };
     }
 
@@ -111,10 +111,10 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
-    public Void visitTowerUpgrade(TowerUpgrade tower) {
+    public Void visitTowerAura(TowerAura tower) {
         this.sprite(tower);
-        double phase = 0.5 + 0.5 * Math.sin(this.animationSeconds * TOWER_UPGRADE_PULSE_RADIANS_PER_SECOND);
-        float scale = (float) (TOWER_UPGRADE_PULSE_MIN_SCALE + (TOWER_UPGRADE_PULSE_MAX_SCALE - TOWER_UPGRADE_PULSE_MIN_SCALE) * phase);
+        double phase = 0.5 + 0.5 * Math.sin(this.animationSeconds * TOWER_AURA_PULSE_RADIANS_PER_SECOND);
+        float scale = (float) (TOWER_AURA_PULSE_MIN_SCALE + (TOWER_AURA_PULSE_MAX_SCALE - TOWER_AURA_PULSE_MIN_SCALE) * phase);
         this.headWithScale(tower, 0.0, scale);
         return null;
     }

@@ -1,11 +1,11 @@
 package td.ui;
 
 import td.enemy.EnemyMob;
+import td.tower.TowerAura;
 import td.tower.TowerFour;
 import td.tower.TowerOne;
 import td.tower.TowerThree;
 import td.tower.TowerTwo;
-import td.tower.TowerUpgrade;
 import td.tower.TowerVisitor;
 import td.ui.render.AuraDraw;
 import td.ui.render.BeamDraw;
@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Describes each tower's transient targeting effect (beam, splash, pulse, or - for the upgrade
- * tower, which never attacks - an aura) as {@link TowerEffectDraw} commands. One visit method
+ * Describes each tower's transient targeting effect (beam, splash, pulse, or - for the aura
+ * tower, which never attacks - a pulsing ring) as {@link TowerEffectDraw} commands. One visit method
  * per concrete tower type, since - unlike the sprite - these genuinely differ by tower.
  */
 public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
@@ -93,11 +93,11 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
-    public Void visitTowerUpgrade(TowerUpgrade tower) {
+    public Void visitTowerAura(TowerAura tower) {
         float maxRadius = tower.getRangeReal();
         for (double phaseOffset : AURA_PHASE_OFFSETS) {
             double phase = phaseFraction(this.animationSeconds, phaseOffset);
-            this.draws.add(new AuraDraw(Palette.TOWER_UPGRADE_AURA, tower.getX(), tower.getY(),
+            this.draws.add(new AuraDraw(Palette.TOWER_AURA_RING, tower.getX(), tower.getY(),
                     (float) (phase * maxRadius), (float) (1.0 - phase)));
         }
         return null;

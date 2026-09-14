@@ -269,9 +269,9 @@ the two documents avoid contradicting each other:**
     trio fired up to two and left score with no notification at all.
   - `td.tower.buff.TowerBuff` replaces `AbstractTower.calcDamageRange()`'s
     `1f + power * upgTowers.size()` with
-    `upgTowers.stream().map(TowerUpgrade::buff).reduce(TowerBuff.none(), TowerBuff::combine)`,
-    so upgrade towers of different strengths can finally stack — `power` used to be a single
-    `static final` shared by every `TowerUpgrade`.
+    `upgTowers.stream().map(TowerAura::buff).reduce(TowerBuff.none(), TowerBuff::combine)`,
+    so aura towers of different strengths can finally stack — `power` used to be a single
+    `static final` shared by every `TowerAura`.
   - `td.tower.targeting.TargetQuery` gained a default `and` combinator plus `all()` (the
     identity — `all().and(x)` matches exactly what `x` matches) and `none()` (the absorber —
     it overrides `and` to return itself without ever evaluating the other side).

@@ -7,12 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * "Power tower" - passive. Never attacks; instead it contributes a {@link TowerBuff} to every
- * non-upgrade tower whose centre falls within its range, and several stack additively. It
+ * "Aura tower" - passive. Never attacks; instead it contributes a {@link TowerBuff} to every
+ * non-aura tower whose centre falls within its range, and several stack additively. It
  * listens for towers being built and removed so a tower placed after it still picks the buff
  * up, and it unregisters its clients in {@link #doCleanup()} so selling it takes the buff away.
  */
-public final class TowerUpgrade extends AbstractTower implements TowerListener {
+public final class TowerAura extends AbstractTower implements TowerListener {
 
     public static final int price = 20;
     public static final int damage = 0;
@@ -22,16 +22,16 @@ public final class TowerUpgrade extends AbstractTower implements TowerListener {
     private final List<Tower> clients;
     private final float power;
 
-    public TowerUpgrade(GameWorld context, int x, int y) {
+    public TowerAura(GameWorld context, int x, int y) {
         this(context, x, y, DEFAULT_POWER);
     }
 
     /**
-     * Lets an upgrade tower contribute a buff stronger or weaker than the default, so two
-     * upgrade towers can stack unequal amounts via TowerBuff's additive combine.
+     * Lets an aura tower contribute a buff stronger or weaker than the default, so two
+     * aura towers can stack unequal amounts via TowerBuff's additive combine.
      */
-    public TowerUpgrade(GameWorld context, int x, int y, float power) {
-        super(TowerFactory.type.upgrade, price, damage, range);
+    public TowerAura(GameWorld context, int x, int y, float power) {
+        super(TowerFactory.type.aura, price, damage, range);
         this.passive = true;
         this.power = power;
         this.clients = new ArrayList<>();
@@ -50,7 +50,7 @@ public final class TowerUpgrade extends AbstractTower implements TowerListener {
         for (Tower t : this.context.getTowers()) {
             if (!this.clients.contains(t)) {
                 switch (t.getType()) {
-                    case upgrade -> {
+                    case aura -> {
                     }
                     default -> {
                         dx = this.centerX - t.getX();
@@ -75,7 +75,7 @@ public final class TowerUpgrade extends AbstractTower implements TowerListener {
     public void towerBuild(Tower t) {
         if (t != this && !this.clients.contains(t)) {
             switch (t.getType()) {
-                case upgrade -> {
+                case aura -> {
                 }
                 default -> {
                     int dx = this.centerX - t.getX();
@@ -114,17 +114,17 @@ public final class TowerUpgrade extends AbstractTower implements TowerListener {
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
-        return visitor.visitTowerUpgrade(this);
+        return visitor.visitTowerAura(this);
     }
 
     public String getInfoString() {
-        return "Power tower\n\n" +
+        return "Aura tower\n\n" +
                 super.getInfoString() +
                 "Increases damage and range of nearby towers by " + (this.power * 100) + "%";
     }
 
     public String getStatusString() {
-        return "Power tower\n\n" +
+        return "Aura tower\n\n" +
                 super.getStatusString() +
                 "Increases damage and range of nearby towers by " + (this.power * 100) + "%\n\n" +
                 "Affects towers: " + this.clients.size();

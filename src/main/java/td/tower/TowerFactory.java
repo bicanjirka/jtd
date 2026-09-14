@@ -16,7 +16,7 @@ public class TowerFactory {
             case second -> new TowerTwo(c, x, y);
             case third -> new TowerThree(c, x, y);
             case fourth -> new TowerFour(c, x, y);
-            case upgrade -> new TowerUpgrade(c, x, y);
+            case aura -> new TowerAura(c, x, y);
         };
     }
 
@@ -25,7 +25,7 @@ public class TowerFactory {
         second(TowerTwo.price),
         third(TowerThree.price),
         fourth(TowerFour.price),
-        upgrade(TowerUpgrade.price);
+        aura(TowerAura.price);
 
         public final int price;
 

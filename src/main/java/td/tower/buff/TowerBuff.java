@@ -1,10 +1,10 @@
 package td.tower.buff;
 
 /**
- * A damage/range bonus a {@code TowerUpgrade} contributes to a nearby tower, expressed as
+ * A damage/range bonus a {@code TowerAura} contributes to a nearby tower, expressed as
  * a fraction (0 = no buff). {@link #none()} is the identity element - combining it with any
  * buff returns that buff unchanged - so a tower's total buff is
- * {@code upgTowers.stream().map(TowerUpgrade::buff).reduce(TowerBuff.none(), TowerBuff::combine)}
+ * {@code upgTowers.stream().map(TowerAura::buff).reduce(TowerBuff.none(), TowerBuff::combine)}
  * with no size-0/size-1 special case. Combining is additive rather than multiplicative so
  * that upgrades of equal strength stack the same way {@code 1 + power * count} used to.
  */

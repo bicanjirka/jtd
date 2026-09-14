@@ -44,11 +44,11 @@ class TowerFactoryTest {
     }
 
     @Test
-    void createsTowerUpgradeForTypeUpgrade() {
-        Tower t = TowerFactory.createTower(TowerFactory.type.upgrade, context, 0, 0);
+    void createsTowerAuraForTypeAura() {
+        Tower t = TowerFactory.createTower(TowerFactory.type.aura, context, 0, 0);
 
-        assertThat(t).isInstanceOf(TowerUpgrade.class);
-        assertThat(t.getType()).isEqualTo(TowerFactory.type.upgrade);
+        assertThat(t).isInstanceOf(TowerAura.class);
+        assertThat(t.getType()).isEqualTo(TowerFactory.type.aura);
     }
 
     @Test
@@ -57,6 +57,6 @@ class TowerFactoryTest {
         assertThat(TowerFactory.type.second.price).isEqualTo(TowerTwo.price);
         assertThat(TowerFactory.type.third.price).isEqualTo(TowerThree.price);
         assertThat(TowerFactory.type.fourth.price).isEqualTo(TowerFour.price);
-        assertThat(TowerFactory.type.upgrade.price).isEqualTo(TowerUpgrade.price);
+        assertThat(TowerFactory.type.aura.price).isEqualTo(TowerAura.price);
     }
 }

@@ -288,7 +288,7 @@ public final class Java2DFrameRenderer {
     /**
      * Draws a tower's body centred on the origin - the caller has already translated {@code g2}
      * to the tower's centre, matching {@link #paintEnemyBody}'s contract. Every tower, the
-     * passive upgrade one included, is a single {@link Shape} painted the same way.
+     * passive aura one included, is a single {@link Shape} painted the same way.
      */
     private void paintTowerBody(Graphics2D g2, Palette palette, float size) {
         Shape shape = towerBodyShape(palette, size);
@@ -310,7 +310,7 @@ public final class Java2DFrameRenderer {
             case TOWER_TWO_BODY -> ringShape(size, 0.55f);
             case TOWER_THREE_BODY -> spiralShape(size);
             case TOWER_FOUR_BODY -> starShape(5, size, size * 0.45f);
-            case TOWER_UPGRADE_BODY -> pulsarShape(size);
+            case TOWER_AURA_BODY -> pulsarShape(size);
             default -> throw new IllegalStateException("Not a tower body palette: " + palette);
         };
     }
@@ -441,7 +441,7 @@ public final class Java2DFrameRenderer {
      * moving: a same-shape-family head entirely contained within the base's footprint turned
      * out to be visually indistinguishable from standing still, since both are the same hue.
      * TOWER_FOUR gets a small star orbiting off-centre (a "moon"), echoing its base's own shape
-     * family while clearing the base's edge. TOWER_UPGRADE's head ignores rotation entirely (it
+     * family while clearing the base's edge. TOWER_AURA's head ignores rotation entirely (it
      * pulses via {@link TurretHeadDraw#scale()} instead) so a plain circle needs no special
      * orientation.
      * <p>
@@ -457,7 +457,7 @@ public final class Java2DFrameRenderer {
                 Shape moon = starShape(5, size * 0.9f, size * 0.9f * 0.45f);
                 yield AffineTransform.getTranslateInstance(size * 2.0, 0).createTransformedShape(moon);
             }
-            case TOWER_UPGRADE_BODY -> circleShape(size);
+            case TOWER_AURA_BODY -> circleShape(size);
             default -> throw new IllegalStateException("Not a tower head palette: " + palette);
         };
     }
@@ -531,8 +531,8 @@ public final class Java2DFrameRenderer {
             case TOWER_TWO_BODY -> Color.RED;
             case TOWER_THREE_BODY -> Color.YELLOW;
             case TOWER_FOUR_BODY -> Color.ORANGE;
-            case TOWER_UPGRADE_BODY -> Color.WHITE;
-            case TOWER_UPGRADE_AURA -> Color.WHITE;
+            case TOWER_AURA_BODY -> Color.WHITE;
+            case TOWER_AURA_RING -> Color.WHITE;
             case TOWER_ONE_BEAM -> Color.GREEN;
             case TOWER_TWO_BEAM -> Color.RED;
             case TOWER_TWO_SPLASH_LINE, TOWER_TWO_SPLASH_FILL -> withAlpha(Color.RED, 80);

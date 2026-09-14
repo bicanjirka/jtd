@@ -63,7 +63,7 @@ check was never implemented, and there's no "upgrade" action to gate in the firs
 
 - **Where:** `PanelTowerInfo.moneyChanged()`
 - **Approach:** this depends on a real upgrade-purchase flow existing first (currently the only "upgrade" mechanic is
-  placing a separate `TowerUpgrade` tower nearby, not upgrading an existing tower in place) — worth deciding whether
+  placing a separate `TowerAura` tower nearby, not upgrading an existing tower in place) — worth deciding whether
   in-place tower upgrades are even a wanted feature before building the affordability check.
 
 ### Rotating tower sprites

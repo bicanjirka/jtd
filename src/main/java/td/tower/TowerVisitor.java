@@ -18,5 +18,5 @@ public interface TowerVisitor<R> {
 
     R visitTowerFour(TowerFour tower);
 
-    R visitTowerUpgrade(TowerUpgrade tower);
+    R visitTowerAura(TowerAura tower);
 }
