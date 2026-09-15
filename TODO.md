@@ -119,8 +119,21 @@ and condition thresholds are equally unverified guesses.
   already earns its keep; `seeker` looks like the tower that actually needs attention, either a straightforward
   damage/cooldown buff or - possibly a better fit given it's explicitly the guaranteed-hit, never-misses tower - a
   narrower intended role (e.g. a single tough priority target, boss-adjacent) rather than a general crowd-clear
-  price point. Still not acted on: this needs a call on which of those two directions to take before any constant
-  changes, not just more measurement.
+  price point.
+- **`seeker`'s damage/cooldown buffed, its role deliberately left alone:** decided to take the straightforward-buff
+  direction above, not the reroll - `TowerSeeker.damage` 1800 -> 2600 and its `coolDownMax` 60 -> 45 (dmg/tick
+  30 -> ~58), keeping guaranteed-hit reliability and freeze CC as its reason to exist rather than adding any
+  splash/multi-target mechanic. Re-ran the same formation test against the buffed numbers: dmg-per-credit in the
+  moderate-hp (800) 40-Circle scenario roughly doubled (2931 -> 5720), and it went from killing nothing at all
+  against a 10-Circle column to landing one confirmed kill - a real improvement, but it's still the clear last place
+  of all seven (`cinder`, the next-lowest, is still ~5x ahead, versus ~17x before the buff), because a pure
+  single-target tower's dmg-per-credit in a *packed-formation* stress test specifically will never match one with
+  any splash/sweep/continuous-AoE mechanic no matter how far its own numbers move - that gap is structural to the
+  scenario, not a sign the buff was sized wrong. The formation test also confirmed the freeze-reordering mechanic
+  flagged above as "plausible, unconfirmed": doubling `seeker`'s output didn't proportionally raise its kill count,
+  because each hit still knocks its target out of the "furthest along path" lead it needs to be re-selected and
+  finished off - only a targeting-behavior change (out of scope here; the ask was numbers only) would fix that, so
+  a future pass could reconsider it if `seeker` still feels weak after this buff lands in real play.
 
 ## Damage types
 
