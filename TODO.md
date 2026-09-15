@@ -90,6 +90,37 @@ and condition thresholds are equally unverified guesses.
   over-counts nothing in their favor. Some of that gap is `mortar`'s unguided shell missing a moving target rather
   than raw output, which this comparison can't separate out - worth a real multi-enemy/formation test before
   concluding `mortar`'s price or damage needs to move, not just this single-target number on its own.
+- **Formation follow-up, also gathered, also not yet acted on:** ran the multi-enemy test the entry above called
+  for - all 7 attack towers, same solo position/board, but this time a single wave of many ordinary (not tanky)
+  Circles spaced by the wave mini-language's default (no-spacer) spawn delay, which packs them into a dense moving
+  column rather than a lone captive target. Two tick-scale runs at the same density (40 Circles, one straight
+  corridor, one tower defending alone, no other help - a deliberately harsh solo-defense scenario, harsher than any
+  real level's multi-tower setup): at moderate hp (800, comparable to `BuiltInLevelCatalog`'s own mid-game waves)
+  nobody could solo-clear the column in 5000 ticks, but raw damage dealt reordered the field completely - `third`
+  81680, `fourth` 70400, `second` 57290, `first` 35200, `mortar` 30094, `cinder` 29641, `seeker` 2931 (dmg-per-
+  credit, not comparable in magnitude to the captive-target numbers above since the scenario differs, only in
+  relative order). `mortar` climbed from tied-worst to solidly mid-pack once splash actually had neighbors to hit,
+  confirming the captive-target test under-sold it as suspected. `seeker` got dramatically *worse*, not better -
+  roughly 10-30x behind every other tower, including `first`, its closest single-target-only relative. At a lower
+  hp (150) where a solo tower can plausibly clear the whole column, `second`/`third`/`fourth`/`mortar`/`cinder` all
+  fully cleared 40 Circles (`third`/`fourth` fastest at ~2400 ticks, needing the fewest leaks along the way);
+  `first` only managed 7/40 kills and never cleared; `seeker` killed *zero* and never cleared, even when the same
+  test was re-run against a much smaller column of just 10 - ruling out "the group was too big" as the explanation.
+  The likely cause isn't `seeker`'s reliability (it never misses) but its raw throughput: at damage/cooldown =
+  1800/60 = 30 per tick, it is the lowest-DPS attack tower in the game, well below even `first`'s 4000/39 ≈ 103 per
+  tick, and unlike `mortar`, `second`, `third`, `fourth` or `cinder` it has no splash/sweep/continuous-AoE
+  multiplier to make up the gap once more than one target needs killing per unit time - every one of the other six
+  towers has *some* way to hit more than one enemy per action; `seeker` alone does not. (`seeker`'s own freeze
+  effect reordering the "furthest along path" ranking after every hit - each just-hit target instantly falls out of
+  the lead once frozen, so the tower never gets to land a second shot on an already-damaged target - is a plausible
+  compounding factor worth a follow-up ablation, but the plain DPS gap above is already sufficient to explain the
+  result on its own.) Net read: `mortar`'s numbers may not need to move much, since real gameplay routinely bunches
+  same-type enemies (`"10 c"`, dense runs inside `"s t s c g c t c s g t c s g c t s g t c"`, etc.) where its splash
+  already earns its keep; `seeker` looks like the tower that actually needs attention, either a straightforward
+  damage/cooldown buff or - possibly a better fit given it's explicitly the guaranteed-hit, never-misses tower - a
+  narrower intended role (e.g. a single tough priority target, boss-adjacent) rather than a general crowd-clear
+  price point. Still not acted on: this needs a call on which of those two directions to take before any constant
+  changes, not just more measurement.
 
 ## Damage types
 
