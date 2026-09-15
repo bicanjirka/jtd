@@ -25,7 +25,14 @@ import java.util.List;
 public final class TowerSeeker extends AbstractTower {
 
     public static final int price = 35;
-    public static final int damage = 1800;
+    // Buffed from 1800/60 (30 dmg/tick) - see TODO.md's "New tower numbers are unbalanced
+    // placeholders" formation-test entry: at the old numbers this was the lowest-DPS attack
+    // tower in the game by a wide margin (first's 4000/39 is ~103/tick) with no splash/sweep/
+    // continuous-AoE multiplier to make up the gap, and it registered zero kills against even
+    // a small enemy column in that test. 2600/45 (~58 dmg/tick) roughly doubles its throughput
+    // without matching or exceeding first's, keeping guaranteed-hit reliability and freeze CC
+    // as the reason to pick this over a cheaper single-target tower rather than raw DPS alone.
+    public static final int damage = 2600;
     public static final float range = 4.5f;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
@@ -48,7 +55,7 @@ public final class TowerSeeker extends AbstractTower {
 
     public TowerSeeker(GameWorld context, int x, int y) {
         super(TowerFactory.type.seeker, price, damage, range);
-        this.coolDownMax = 60;
+        this.coolDownMax = 45; // paired with the damage bump above - see its comment
         this.coolDownCurrent = this.coolDownMax;
         this.doInit(context, x, y);
     }
