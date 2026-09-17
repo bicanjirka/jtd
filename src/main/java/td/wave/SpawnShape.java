@@ -5,14 +5,14 @@ import td.util.GameStartupException;
 /**
  * How one wave slot spawns - a value composed from three independent mechanisms rather than one
  * implementation per shape: a per-mob multiplier set (size/speed/health/bounty), a
- * {@link LateralSpread} pattern, and inter-member delay spacing (in slot-widths, added to a
+ * {@link SpawnSpread} pattern, and inter-member delay spacing (in slot-widths, added to a
  * member's index before it is converted to ticks). {@link #normal()} is the identity: one
  * member, every multiplier 1, no spread, no extra delay - today's spawn behaviour exactly. See
  * docs/features/FEATURE-enemy-spawn-types.md's "Three mechanisms" section for why eight shapes
  * are built this way instead of as eight variants.
  */
 public record SpawnShape(int members, float sizeMultiplier, float speedMultiplier, float healthMultiplier,
-                          float bountyMultiplier, LateralSpread spread, double delaySpacingSlots) {
+                          float bountyMultiplier, SpawnSpread spread, double delaySpacingSlots) {
 
     /**
      * One slot's member count is bounded so a typo like {@code swarm 300 c} fails to parse
@@ -23,9 +23,9 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
     private static final double COLUMN_SPACING_SLOTS = 0.3;
     private static final double DRIP_SPACING_SLOTS = 2.0;
 
-    private static final SpawnShape NORMAL = new SpawnShape(1, 1f, 1f, 1f, 1f, LateralSpread.NONE, 0.0);
-    private static final SpawnShape BOSS = new SpawnShape(1, 2.0f, 0.5f, 1f, 2.0f, LateralSpread.NONE, 0.0);
-    private static final SpawnShape ELITE = new SpawnShape(1, 1.5f, 1f, 2.0f, 1.5f, LateralSpread.NONE, 0.0);
+    private static final SpawnShape NORMAL = new SpawnShape(1, 1f, 1f, 1f, 1f, SpawnSpread.NONE, 0.0);
+    private static final SpawnShape BOSS = new SpawnShape(1, 2.0f, 0.5f, 1f, 2.0f, SpawnSpread.NONE, 0.0);
+    private static final SpawnShape ELITE = new SpawnShape(1, 1.5f, 1f, 2.0f, 1.5f, SpawnSpread.NONE, 0.0);
 
     public SpawnShape {
         if (members < 1 || members > MAX_MEMBERS) {
@@ -47,23 +47,23 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
     }
 
     public static SpawnShape swarm(int members) {
-        return new SpawnShape(members, 0.5f, 1f, 1f / members, 1f, LateralSpread.SCATTERED, 0.0);
+        return new SpawnShape(members, 0.5f, 1f, 1f / members, 1f, SpawnSpread.SCATTERED, 0.0);
     }
 
     public static SpawnShape line(int members) {
-        return new SpawnShape(members, 1f, 1f, 1f, 1f, LateralSpread.EVEN, 0.0);
+        return new SpawnShape(members, 1f, 1f, 1f, 1f, SpawnSpread.EVEN, 0.0);
     }
 
     public static SpawnShape flank() {
-        return new SpawnShape(2, 1f, 1f, 1f, 1f, LateralSpread.EDGES, 0.0);
+        return new SpawnShape(2, 1f, 1f, 1f, 1f, SpawnSpread.EDGES, 0.0);
     }
 
     public static SpawnShape column(int members) {
-        return new SpawnShape(members, 1f, 1f, 1f, 1f, LateralSpread.NONE, COLUMN_SPACING_SLOTS);
+        return new SpawnShape(members, 1f, 1f, 1f, 1f, SpawnSpread.NONE, COLUMN_SPACING_SLOTS);
     }
 
     public static SpawnShape drip(int members) {
-        return new SpawnShape(members, 1f, 1f, 1f, 1f, LateralSpread.NONE, DRIP_SPACING_SLOTS);
+        return new SpawnShape(members, 1f, 1f, 1f, 1f, SpawnSpread.NONE, DRIP_SPACING_SLOTS);
     }
 
     /**

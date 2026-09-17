@@ -22,7 +22,7 @@ class SpawnShapeTest {
         assertThat(shape.speedMultiplier()).isEqualTo(1f);
         assertThat(shape.healthMultiplier()).isEqualTo(1f);
         assertThat(shape.bountyMultiplier()).isEqualTo(1f);
-        assertThat(shape.spread()).isEqualTo(LateralSpread.NONE);
+        assertThat(shape.spread()).isEqualTo(SpawnSpread.NONE);
         assertThat(shape.delaySpacingSlots()).isZero();
     }
 
@@ -54,7 +54,7 @@ class SpawnShapeTest {
         assertThat(shape.sizeMultiplier()).isEqualTo(0.5f);
         assertThat(shape.healthMultiplier()).isEqualTo(0.25f);
         assertThat(shape.bountyMultiplier()).isEqualTo(1f);
-        assertThat(shape.spread()).isEqualTo(LateralSpread.SCATTERED);
+        assertThat(shape.spread()).isEqualTo(SpawnSpread.SCATTERED);
     }
 
     @Test
@@ -62,7 +62,7 @@ class SpawnShapeTest {
         SpawnShape shape = SpawnShape.line(3);
 
         assertThat(shape.members()).isEqualTo(3);
-        assertThat(shape.spread()).isEqualTo(LateralSpread.EVEN);
+        assertThat(shape.spread()).isEqualTo(SpawnSpread.EVEN);
     }
 
     @Test
@@ -70,7 +70,7 @@ class SpawnShapeTest {
         SpawnShape shape = SpawnShape.flank();
 
         assertThat(shape.members()).isEqualTo(2);
-        assertThat(shape.spread()).isEqualTo(LateralSpread.EDGES);
+        assertThat(shape.spread()).isEqualTo(SpawnSpread.EDGES);
     }
 
     @Test
@@ -79,7 +79,7 @@ class SpawnShapeTest {
 
         assertThat(shape.members()).isEqualTo(3);
         assertThat(shape.delaySpacingSlots()).isLessThan(1.0);
-        assertThat(shape.spread()).isEqualTo(LateralSpread.NONE);
+        assertThat(shape.spread()).isEqualTo(SpawnSpread.NONE);
     }
 
     @Test

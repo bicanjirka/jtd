@@ -183,9 +183,11 @@ Unchanged, and it stays the default with no token: a bare `c` is a normal spawn.
 One slot, *N* members of the same definition, each:
 
 - drawn at **50%** of its normal body scale;
-- placed at a fixed **lateral (perpendicular) offset** from the path centre, scattered evenly
-  within the slot's footprint, and holding that offset for its entire run so the formation
-  follows the path around corners rather than smearing;
+- placed in a **circular scatter** around the slot's spawn point, filling the footprint
+  semi-evenly with no pairwise overlap check of any kind (Vogel's sunflower-disc placement plus
+  a small bounded jitter - see `SpawnSpread.SCATTERED`'s own doc comment), and holding that
+  offset - fixed relative to the mob's own spawn-facing direction, never the path's *current*
+  tangent - for its entire run;
 - worth an **exact share** of the definition's bounty — `price / N`, with the remainder handed
   to the first `price % N` members, so the swarm always sums to exactly one normal spawn's
   bounty and no credit is lost to rounding. See Decisions made.
@@ -418,11 +420,18 @@ wave is declared cleared when that reaches zero. If a swarm slot counts as 1 whi
 the wave clears two kills early — or never clears, if the counting errs the other way. This is
 the single highest-risk line in the feature.
 
-**4. Formation on tight corners.**
-A constant lateral offset means the inner and outer members of a line traverse different real
-distances around a curve while sharing one `distanceIntoLap`. On the built-in levels' tighter
-corners the inner member can cross the path centre. Acceptable visually at swarm scale, but it
-should be a deliberate decision, not a discovery.
+**4. Formation on tight corners — fixed, not just accepted.** *(Originally recorded here as
+accepted-not-fixed: a lateral offset measured from the path's current tangent made the inner and
+outer members of a line traverse different real distances around a curve, distorting their
+speed, and jump outright at an unrounded corner. Superseded after the mechanism was rebuilt.)*
+The offset is now a fixed world-space vector, computed once at the mob's spawn point and never
+recomputed from the path's tangent afterward — translating a curve by a constant vector doesn't
+change its arc-length speed, so every member moves at exactly the centreline's pace regardless
+of how many corners it crosses, rounded or not. The trade-off this buys: a formation no longer
+re-orients to keep "hugging" the path's local perpendicular after a turn — a flank member that
+started to the path's left rides along at that same fixed offset from the (now-turned)
+centreline rather than swinging around to stay beside it. That is the deliberate reading of
+"the offset should not rotate based on the path," not a residual bug.
 
 **5. A column cannot be built from a negative path distance.**
 `ArcLengthPath.poseAt` clamps its argument into `[0, totalLength]`. A trailing column member
@@ -542,8 +551,11 @@ writing and should be re-checked, but the *claims* are the durable part.
   it into ticks via `DELAY_TICKS_PER_SLOT * delay / speed`. Keeping the increment per *slot* is
   what preserves existing wave timing.
 - `AbstractEnemyMob.updatePosition()` is the *only* place x/y are written, and it reads
-  `arcLengthPath.poseAt(distanceIntoLap)`. `PathPose` carries `facingRadians`, so a perpendicular
-  offset is `facingRadians + PI/2` — no separate tangent calculation needed.
+  `arcLengthPath.poseAt(distanceIntoLap)`. **Superseded**: this originally proposed computing a
+  perpendicular offset from the *current* tick's `facingRadians`; that made a shaped member's
+  speed and position depend on the path's tangent every tick, which turned out to be wrong (see
+  Risk 4). The offset actually ships as a world-space vector fixed once at spawn — rotated from
+  `poseAt(0).facingRadians()` in the constructor, never touched again.
 - `EnemyBodyDraw(palette, x, y, facingRadians, scale, healthFraction)` already has per-mob
   `scale`. **Do not add a size field to the render pipeline**; it is already there.
 - `RandomSource` is a `@FunctionalInterface` with `nextDouble()`, plus `seeded(long)` and

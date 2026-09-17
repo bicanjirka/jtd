@@ -198,6 +198,7 @@ class WaveTest {
         EnemyMob[] second = new Wave(this.context, 100, 10, 1, content, 42L).spawn();
 
         for (int i = 0; i < first.length; i++) {
+            assertThat(first[i].getX()).isEqualTo(second[i].getX());
             assertThat(first[i].getY()).isEqualTo(second[i].getY());
         }
     }
@@ -212,11 +213,57 @@ class WaveTest {
 
         boolean anyDifferent = false;
         for (int i = 0; i < first.length; i++) {
-            if (first[i].getY() != second[i].getY()) {
+            if (first[i].getX() != second[i].getX() || first[i].getY() != second[i].getY()) {
                 anyDifferent = true;
             }
         }
         assertThat(anyDifferent).isTrue();
+    }
+
+    @Test
+    void swarmMembersFillADiscAroundTheSpawnPointForEveryMemberCount() {
+        setStraightHorizontalPath();
+        double maxRadius = this.context.getBoard().scale() * PathCoverage.PATH_WIDTH_CELLS / 2.0 * 0.7;
+        double spawnX = 0.0;
+        double spawnY = 50.0;
+
+        for (int n = 1; n <= SpawnShape.MAX_MEMBERS; n++) {
+            EnemyMob[] swarm = wave(100, 10, 1, "swarm " + n + " c").spawn();
+
+            assertThat(swarm).hasSize(n);
+            for (EnemyMob member : swarm) {
+                double dx = member.getX() - spawnX;
+                double dy = member.getY() - spawnY;
+                assertThat(Math.sqrt(dx * dx + dy * dy)).isLessThanOrEqualTo(maxRadius + 1e-9);
+            }
+        }
+    }
+
+    @Test
+    void aShapedMembersOffsetFromTheCentrelineStaysConstantThroughAnUnroundedCorner() {
+        // A hard, unsmoothed right-angle turn - PathBuilder joins consecutive corners with one
+        // straight leg each, so this path's facing is genuinely discontinuous at (300, 100),
+        // exactly the case that used to make an offset member's position jump sideways there.
+        this.context.setBoard(BoardGeometry.of(32, 500, 500));
+        this.context.setPath(new PathNormal(List.of(new Vec2(0, 100), new Vec2(300, 100), new Vec2(300, 400))));
+
+        EnemyMob member = wave(100, 10, 1, "flank c").spawn()[0];
+        EnemyMob centerline = wave(100, 10, 1, "c").spawn()[0];
+
+        member.doTick(1);
+        centerline.doTick(1);
+        double expectedOffsetX = member.getX() - centerline.getX();
+        double expectedOffsetY = member.getY() - centerline.getY();
+
+        // 400 ticks at ~1.28px/tick covers well past the corner (at distance 300) while staying
+        // short of the path's full 600px length, so this never crosses the wrap-to-start seam.
+        for (int t = 2; t <= 400; t++) {
+            member.doTick(t);
+            centerline.doTick(t);
+
+            assertThat(member.getX() - centerline.getX()).isCloseTo(expectedOffsetX, within(1e-6));
+            assertThat(member.getY() - centerline.getY()).isCloseTo(expectedOffsetY, within(1e-6));
+        }
     }
 
     @Test

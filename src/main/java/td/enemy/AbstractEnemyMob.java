@@ -72,12 +72,19 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     private final Optional<ArcLengthPath> arcLengthPath;
     private final Vec2 stationaryPosition;
     /**
-     * A fixed perpendicular displacement from the path centre, held for this mob's whole run -
-     * zero for a normal spawn. Applied in {@link #updatePosition()}, clamped to the board, so a
-     * shaped formation (Swarm/Line/Flank) follows the path around corners instead of smearing,
-     * and never silently drifts off the board into permanent untargetability.
+     * This mob's formation offset, fixed in <em>world</em> space and computed once, in the
+     * constructor, from {@code spawnParameters.localOffset()} rotated by the path's facing at
+     * the spawn point - zero for a normal spawn. Deliberately not recomputed from the path's
+     * *current* tangent on every tick: that would make a shaped member's own position pivot
+     * around the centerline as the path curves (distorting its effective speed) and jump
+     * outright at an unrounded corner, where the tangent itself is discontinuous. Translating
+     * the centerline by a constant vector has neither problem - same arc-length speed as the
+     * centerline, always, and nothing to be discontinuous at. Applied in {@link #updatePosition()},
+     * clamped to the board so a shaped formation never silently drifts into permanent
+     * untargetability.
      */
-    private final double lateralOffset;
+    private final double offsetX;
+    private final double offsetY;
 
     // Per-tick simulation state, owned by the game-loop thread. Private: a leaf that needs one
     // of these goes through an accessor, so this class can hold an invariant over them.
@@ -120,7 +127,15 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         this.arcLengthPath = ArcLengthPath.of(gameWorld.getPath());
         List<Vec2> pathPoints = gameWorld.getPath().points();
         this.stationaryPosition = pathPoints.isEmpty() ? new Vec2(0, 0) : pathPoints.getFirst();
-        this.lateralOffset = spawnParameters.lateralOffset();
+        // Every mob's distanceIntoLap starts at 0 regardless of delay or shape, so poseAt(0) is
+        // always the true spawn point - this is the one and only place the offset's rotation is
+        // computed, ever.
+        double spawnFacing = this.arcLengthPath.map(path -> path.poseAt(0).facingRadians()).orElse(0.0);
+        double cos = Math.cos(spawnFacing);
+        double sin = Math.sin(spawnFacing);
+        Vec2 localOffset = spawnParameters.localOffset();
+        this.offsetX = localOffset.x() * cos - localOffset.y() * sin;
+        this.offsetY = localOffset.x() * sin + localOffset.y() * cos;
         this.delay = spawnParameters.delayTicks();
         // Keyed off the converted tick count, not the raw slot position that produced it: a
         // fractional per-member delay (see SpawnShape's column/drip spacing) can round down to
@@ -325,25 +340,23 @@ public abstract class AbstractEnemyMob implements EnemyMob {
 
     /**
      * Recomputes x/y (and, while moving, the precise path-facing angle) from the current
-     * arcLengthPath/distanceIntoLap state, offset {@link #lateralOffset} pixels perpendicular to
-     * the path's own tangent and clamped to the board - a lateral offset near the board edge
-     * would otherwise push a mob outside {@link #doTick}'s validTarget bounds check and leave it
-     * silently untargetable while still walking to the exit. A degenerate path has nothing to
-     * measure distance along, so it just holds at its one available point, unaffected by any
-     * offset - there is no tangent to be perpendicular to.
+     * arcLengthPath/distanceIntoLap state, plus this mob's fixed {@link #offsetX}/{@link
+     * #offsetY}, clamped to the board - an offset near the board edge would otherwise push a
+     * mob outside {@link #doTick}'s validTarget bounds check and leave it silently untargetable
+     * while still walking to the exit. A degenerate path has nothing to measure distance along,
+     * so it just holds at its one available point, offset the same fixed amount as anywhere
+     * else - the offset needs no tangent to be relative to any more, so the degenerate case
+     * needs no special-casing either.
      */
     private void updatePosition() {
         if (this.arcLengthPath.isPresent()) {
             PathPose pose = this.arcLengthPath.get().poseAt(this.distanceIntoLap);
-            double normal = pose.facingRadians() + Math.PI / 2;
-            double offsetX = pose.position().x() + Math.cos(normal) * this.lateralOffset;
-            double offsetY = pose.position().y() + Math.sin(normal) * this.lateralOffset;
-            this.x = clamp(offsetX, 0, this.gameWorld.getBoard().maxX());
-            this.y = clamp(offsetY, 0, this.gameWorld.getBoard().maxY());
+            this.x = clamp(pose.position().x() + this.offsetX, 0, this.gameWorld.getBoard().maxX());
+            this.y = clamp(pose.position().y() + this.offsetY, 0, this.gameWorld.getBoard().maxY());
             this.lastFacingRadians = pose.facingRadians();
         } else {
-            this.x = this.stationaryPosition.x();
-            this.y = this.stationaryPosition.y();
+            this.x = this.stationaryPosition.x() + this.offsetX;
+            this.y = this.stationaryPosition.y() + this.offsetY;
         }
     }
 

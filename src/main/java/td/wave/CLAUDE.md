@@ -82,7 +82,7 @@ already gets.
 |----------|-----------------------|---------------|--------------------------------------------------|
 | `boss`   | `boss()`               | 1 (fixed)     | 200% size, 50% speed, 2× bounty                   |
 | `elite`  | `elite()`              | 1 (fixed)     | 150% size, +health, 1.5× bounty                   |
-| `swarm`  | `swarm(n)`             | *n* (required) | 50% size, health/bounty split, scattered offset  |
+| `swarm`  | `swarm(n)`             | *n* (required) | 50% size, health/bounty split, circular scatter  |
 | `line`   | `line(n)`              | *n* (required) | evenly spread offset, no multipliers             |
 | `flank`  | `flank()`              | 2 (fixed)     | offset at opposite maximums, no multipliers       |
 | `column` | `column(n)`            | *n* (required) | delay spacing tighter than one slot apart         |
@@ -122,8 +122,11 @@ Parsing and instantiation are deliberately separate:
   constructor** — `shape.members()` `DefinedEnemyMob`s for an `EnemySlot` (zero for a plain
   `EnemySlot` is impossible; `SpawnShape.normal()`'s one member is the floor), nothing at all
   for an `EmptySlot`. A member's slot position is this slot's index plus its member index scaled
-  by `shape.delaySpacingSlots()` (zero except for Column/Drip), and its lateral offset comes from
-  `shape.spread()`. `spawn()` is a factory: each call builds a fresh set bound to the path
+  by `shape.delaySpacingSlots()` (zero except for Column/Drip), and its formation offset comes
+  from `shape.spread()` (a `SpawnSpread`) as a `Vec2` relative to the mob's own spawn-facing
+  direction (`x` forward, `y` lateral) - `td.enemy.AbstractEnemyMob` is what turns that into a
+  fixed world-space vector, once, at construction; `Wave`/`SpawnSpread` never touch the path's
+  facing at all. `spawn()` is a factory: each call builds a fresh set bound to the path
   installed at that moment, so calling it twice puts two copies of the wave on the board.
   `enemyCount()`/`enemySet()` come from the content and need no spawn, which is what lets the
   preview panel describe a wave before it runs.
