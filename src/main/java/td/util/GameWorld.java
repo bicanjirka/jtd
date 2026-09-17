@@ -23,12 +23,20 @@ import td.wave.WaveStartListener;
 import java.util.List;
 
 /**
- * The composition root wiring a level's board geometry, economy, enemy roster, tower
- * roster, projectile roster and wave-start hub into the one object
- * {@code Tower}/{@code EnemyMob}/{@code Wave} are constructed against. Owns none of that
- * state itself - every method here delegates to {@link BoardGeometry}, {@link EconomyLedger},
- * {@link EnemyRoster}, {@link TowerRoster}, {@link ProjectileRoster} or {@link WaveAnnouncer},
- * each of which is independently constructible and testable.
+ * The composition root wiring a level's economy, enemy roster, tower roster, projectile
+ * roster and wave-start hub into the one object {@code Tower}/{@code EnemyMob}/{@code Wave}
+ * are constructed against. Each of those collaborators is independently constructible and
+ * testable, and this class hands them out rather than wrapping them: ask for
+ * {@link #economy()} or {@link #towers()} and call that, so a call site says which capability
+ * it actually uses.
+ * <p>
+ * It is <em>not</em> a pure composition root. Four things are its own state rather than a
+ * collaborator's: the {@link BoardGeometry}, the {@link Path}, the {@link EnemyCatalog} and
+ * the {@link RandomSource}. The first three are level-scoped values replaced wholesale on
+ * load; see the field comments for why they are {@code volatile}.
+ * <p>
+ * An earlier version of this doc claimed it owned no state at all, which was false for as
+ * long as those fields existed. If you add state here, say so here.
  */
 public class GameWorld {
 

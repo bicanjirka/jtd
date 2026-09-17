@@ -60,6 +60,20 @@ what the two curved built-in levels use.
 
 ## Wave composition
 
+**The token table.** These are the ids `EnemyCatalog.builtIn()` registers, and this is the
+canonical list - the root `CLAUDE.md` documents the grammar but deliberately not the content,
+so adding an enemy does not touch the always-loaded file. Add a row here and to `README.md`'s
+enemy table when you register a new id.
+
+| Token | Enemy |
+|-------|-------|
+| `c` | Circle |
+| `s` | Square |
+| `t` | Triangle |
+| `g` | Ghost |
+| `e` | Empty - the reserved spacer; counts toward spawn timing, not toward the enemy count |
+| `warden1` | The Warden boss - the only id in its six-stage chain a wave spawns directly |
+
 Parsing and instantiation are deliberately separate:
 
 - `WaveScript.parse(tokens, catalog)` turns a token string into a `WaveContent` against a

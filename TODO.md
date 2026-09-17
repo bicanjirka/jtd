@@ -9,6 +9,21 @@ this file is the single place to look for outstanding design/feature gaps.
 Findings from the architecture audit of 2026-09-17, highest-severity first. The threading
 group has landed; what remains is listed below.
 
+### No performance budget, because nothing has been measured
+
+`CLAUDE.md` states no allocation or frame-time budget, and deliberately does not invent one: a
+number picked without measuring is worse than none. What is known is only shape, not size - the
+render pulse builds a whole `RenderFrame` (every cell, enemy, tower, projectile and path marker
+as records) sixty times a second on the `game-loop` thread, and `EnemyRegistry.getEnemies()`
+copies its array on every call, several times per frame plus once per tower per tick.
+
+- **Where:** `td.TowerDefense.buildAndPublishFrame`, `td.ui.BoardRenderer.buildFrame`,
+  `td.enemy.EnemyRoster.getEnemies`.
+- **Approach:** measure first - p99 frame-build time and allocation per frame on the largest
+  built-in level with a full board of towers, which `td.BalanceHarness` is already the right
+  harness for. Set a budget from the measurement, then state it in `CLAUDE.md` with the command
+  that checks it. Do not state a budget before there is a number behind it.
+
 ### A command queue would make the simulation a true single writer
 
 Not a defect - an option, recorded with the condition that would make it worth taking.
@@ -48,14 +63,6 @@ capabilities. `GameWorld` also owns three mutable fields of its own (`board`, `p
 - **Approach:** give the domain constructors the narrow interfaces they actually use, the way
   `td.tower.targeting` and `BoardRenderer` already take `EnemyRegistry` rather than the whole
   world. Deliberately deferred — it touches every domain constructor and most tests.
-
-### `TowerAura.scanTowers` is quadratic
-
-`clients.contains(t)` inside the roster loop, re-run on every `towerBuild` notification.
-Irrelevant at twenty towers; worth knowing before a level ships with two hundred.
-
-- **Where:** `td.tower.TowerAura.scanTowers`.
-- **Approach:** back `clients` with a `Set`, or check membership on the tower's side.
 
 ### Per-package `CLAUDE.md` files predate the constraints-only standard
 

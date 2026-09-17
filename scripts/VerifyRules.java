@@ -75,6 +75,21 @@ public final class VerifyRules {
                 "\\bstatic final +[A-Za-z_][\\w.<>\\[\\], ]*? +(?!serialVersionUID\\b)[a-z]\\w*\\s*=",
                 List.of(MAIN, TEST)).skippingComments());
 
+        rules.add(Rule.of("no-broad-catch", "CLAUDE.md 6",
+                "catch Exception, never Throwable or Error - an Error means the JVM is in trouble",
+                "catch\\s*\\(\\s*(Throwable|Error)\\b", List.of(MAIN, TEST)).skippingComments());
+
+        rules.add(Rule.of("no-unchecked-catch", "CLAUDE.md 6",
+                "test the condition instead of catching an unchecked exception as control flow "
+                        + "(NumberFormatException around a parse is the one legitimate shape)",
+                "catch\\s*\\(\\s*(NullPointerException|ClassCastException"
+                        + "|(Array)?IndexOutOfBoundsException)\\b", List.of(MAIN, TEST))
+                .skippingComments());
+
+        rules.add(Rule.of("no-static-random", "CLAUDE.md 5",
+                "randomness is injected through td.util.RandomSource, so a run can be reproduced",
+                "Math\\.random\\s*\\(", List.of(MAIN, TEST)).skippingComments());
+
         rules.add(Rule.of("no-inline-todo", "CLAUDE.md 6",
                 "gaps belong in TODO.md, which carries a Where and an Approach for each",
                 "(?i)//\\s*TODO", List.of(MAIN, TEST)));

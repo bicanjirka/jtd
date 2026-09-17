@@ -47,10 +47,9 @@ only when the UI genuinely needs a new callback, never speculatively.
 
 **2.4 `td.ui.render` imports no `java.awt`, and `Java2DFrameRenderer` is the only class that
 turns a `RenderFrame` into pixels.** `BoardRenderer.buildFrame` describes a frame as immutable,
-AWT-free draw commands; a backend turns that into output. `AsciiBoardRenderer` is the second
-backend and keeps the seam honest — if a change makes a frame impossible to describe without
-AWT, the change is in the wrong place. `Panel*` components may import `java.awt` for layout and
-their own previews; board content always goes through the pipeline.
+AWT-free draw commands; a backend turns that into output. If a change makes a frame impossible
+to describe without AWT, the change is in the wrong place. `Panel*` components may import
+`java.awt` for layout and their own previews; board content always goes through the pipeline.
 
 > `grep -rn "import java\.awt" src/main/java/td/ui/render`
 
@@ -59,41 +58,32 @@ their own previews; board content always goes through the pipeline.
 `GameLoop` runs the simulation on a daemon thread named `game-loop`. Rendering happens on the
 Event Dispatch Thread. **Tick code never runs on the EDT.**
 
-**The rule: the `game-loop` thread owns all mutable simulation state; the EDT reads immutable
-snapshots, never live domain objects.** A concurrent collection makes the *collection* safe, not
-its contents — `CopyOnWriteArrayList` publishes which enemies exist, not where they are.
+**The rule: the thread that owns mutable state publishes it; the other thread reads only what
+was published.** A concurrent collection makes the *collection* safe, not its contents.
 
-State crosses the two threads by one of exactly two mechanisms, and which one applies depends
-on whether its fields are correlated:
+State crosses by one of exactly two mechanisms, chosen on whether its fields are correlated:
 
-1. **Correlated state crosses as an immutable snapshot**, built on the thread that owns it.
-   A moving enemy's position, health and death state only mean anything together, so the
-   board crosses as one `RenderFrame` — built by `TowerDefense.buildAndPublishFrame` on the
-   `game-loop` thread and published through a single `volatile` reference that `paintBoard`
-   reads. `paintBoard` builds nothing and touches no domain object. `TowerStats` is the same
-   shape in the other direction: a tower's buffed damage, range and cooldown are recomputed
-   on the EDT and swapped whole, so a tick never fires on a half-applied recalculation.
-2. **Independent scalars may cross as `volatile` fields** — a tower's kill count, a cell's
-   highlight. `volatile` is not a cheaper substitute for a snapshot: it fixes tearing and
-   visibility, not a half-updated object (this tick's `x` with last tick's `y`). Use it only
-   where a one-pulse-stale read of one value is correct on its own.
+1. **Correlated fields cross as one immutable snapshot**, built on the owning thread and
+   published through a single `volatile`. The board is a `RenderFrame`
+   (`TowerDefense.buildAndPublishFrame`); a tower's buffed damage/range/cooldown are a
+   `TowerStats`.
+2. **Independent scalars may be `volatile` fields** — a kill count, a cell highlight. Not a
+   cheaper substitute: `volatile` fixes tearing, not a half-updated object (this tick's `x`
+   with last tick's `y`). Use it only where a one-pulse-stale read of one value is correct
+   alone. Why, and how to tell them apart: `docs/ARCHITECTURE.md`.
 
-This applies in both directions. Cells are EDT-owned and read by the loop's frame build, so
-their mutable fields are `volatile` for the same reason.
+Both directions. Cells are EDT-owned and read by the loop's frame build.
 
 - Never touch Swing from tick code. Route through a listener the UI observes.
-- A plain mutable field read from the other thread is a bug — including a `double` or `long`,
-  whose non-volatile reads may tear (JLS 17.7).
-- A field that publishes an object is assigned only once that object is fully built. Fill a
-  local, then publish it — never publish an empty array and populate it afterwards.
-- `GameLoop.stop()` joins the loop thread before returning, which is what makes it safe to
-  tear the level down immediately after. Idempotency is not thread-safety.
-- `EconomyLedger` computes new state inside `synchronized (this)` and fires `economyChanged`
-  **outside** it. Never hold the lock while calling out — listeners re-enter it and touch Swing.
-- `canPay` is advisory. `doPay` is the atomic check-and-charge and returns `false` if unaffordable.
-  Never write `if (canPay(n)) { doPay(n); }`.
-- Listener lists and the live tower/enemy/projectile lists are `CopyOnWriteArrayList` on purpose.
-- When the loop falls behind it runs **one** tick and resyncs rather than bursting the backlog.
+- A plain mutable field read from the other thread is a bug, `double` and `long` especially
+  (non-volatile 64-bit reads may tear, JLS 17.7).
+- Publish only finished objects: fill a local, then assign the field.
+- `GameLoop.stop()` joins before returning. Idempotency is not thread-safety.
+- `EconomyLedger` computes inside `synchronized (this)` and fires listeners **outside** it.
+- `canPay` is advisory; `doPay` is the atomic check-and-charge. Never
+  `if (canPay(n)) { doPay(n); }`.
+- Listener and live-entity lists are `CopyOnWriteArrayList` on purpose.
+- Falling behind runs **one** tick and resyncs, never a burst.
 - `GameEngine.doTick` order is fixed: **enemies, then projectiles, then towers.**
 
 ## 4. Domain packages
@@ -121,10 +111,11 @@ wave composition).
 4. Where two values of a kind combine, give the type an algebra: operation, combinator, identity,
    and an absorber if one exists. See `Damage`, `TowerBuff`, `TargetQuery`.
 
-**Randomness is injected, never static.** Anything in the simulation that needs a random value
-takes a `td.util.RandomSource` — `GameWorld.random()` is where a tower gets one. `Math.random()`
-is a single unseeded global, which makes a run impossible to reproduce; `td.BalanceHarness`
-seeds its own source so two runs of the same loadout are comparable.
+**Randomness is injected, never static.** Take a `td.util.RandomSource`; `GameWorld.random()`
+is where a tower gets one. `Math.random()` is unseeded and global, so a run cannot be
+reproduced — which is what `td.BalanceHarness` needs.
+
+> `grep -rn "Math\.random(" src/main/java` matches nothing.
 
 **Stateful engine/service classes** (`GameEngine`, `GameLoop`, `GameWorld`, `EconomyLedger`, the
 rosters) are exempt from rule 1 by nature, and §3 overrides this section wherever they conflict.
@@ -143,9 +134,8 @@ Still applies:
 
 > `grep -rn "instanceof" src/main/java --include=*.java` returns only comments.
 
-**One scoped exception to rule 3:** `td.ui` frame builders return `null` for "no draw command",
-18 sites in a per-frame hot path where `Optional` buys nothing. That is the only place `null`
-models absence; engine and domain code returns `Optional`.
+**One scoped exception to rule 3:** `td.ui` frame builders return `null` for "no draw command".
+That is the only place `null` models absence; engine and domain code returns `Optional`.
 
 > `grep -rn "return null" src/main/java --include=*.java` matches nothing outside `td/ui`.
 
@@ -160,6 +150,19 @@ models absence; engine and domain code returns `Optional`.
   > `grep -rnE "(class|interface|enum|record) +[a-z]" src/main/java src/test/java`
 - **Fields ordered:** constants, injected/final collaborators, mutable state. A value type has no
   third bucket.
+- **Never expose an internal mutable structure.** Return the queries callers actually make —
+  `cellAt(x, y)`, `width()`, `forEach` — not the array or collection behind them. An array is
+  the worst case: unlike a collection it cannot even be wrapped in an unmodifiable view, so
+  every caller gets write access and the owner can hold no invariant. Returning a *fresh
+  snapshot* (`EnemyRegistry.getEnemies()`) is fine and is not this. Judgement, not a grep.
+- **Error-handling bounds.** Catch `Exception`, never `Throwable` or `Error` — an `Error`
+  means the JVM is in trouble and a tidy log line hides it. Never catch an unchecked exception
+  as control flow (`NullPointerException`, `ClassCastException`, `IndexOutOfBoundsException`):
+  test the condition instead. Catching `NumberFormatException` around a parse is fine — that is
+  converting a failure into a domain error, which is the one legitimate shape. A caught
+  exception is logged or rethrown, never silently dropped. Content that cannot be loaded throws
+  `td.util.GameStartupException`, which `Main` handles once.
+  > `grep -rnE "catch \(\s*(Throwable|Error)\b" src`
 - `@Serial` on `serialVersionUID` in Swing classes.
 - **No inline `TODO` comments** — add a `TODO.md` entry instead; close a gap, delete its entry in
   the same commit.
@@ -205,23 +208,18 @@ not a per-change preference.
 
 `WaveScript.parse(tokens, catalog)` turns a space-separated token string into a `WaveContent` —
 an ordered, `GameWorld`-free slot list with repeat counts flattened. `Wave`'s constructor then
-does only the world-bound instantiation. A count applies to the token immediately following it
-and resets to 1 afterward: `"3 s e 4 c"` = three Squares, one spacer, four Circles.
+does only the world-bound instantiation.
 
-| Token | Enemy |
-|-------|-------|
-| `c` | Circle |
-| `s` | Square |
-| `t` | Triangle |
-| `g` | Ghost |
-| `e` | Empty — a spacer; counts toward spawn timing, not toward the enemy count |
-| `warden1` | The Warden boss — the only id in its six-stage chain a wave spawns directly |
+- A count applies to the token immediately following it and resets to 1 afterward:
+  `"3 s e 4 c"` = three Squares, one spacer, four Circles.
+- `e` is the one reserved token — the spacer — recognized before any catalog lookup. Every
+  other token resolves against the `EnemyCatalog` identically whether it names a built-in or a
+  per-level definition; there is no separate syntax for the two.
+- An unrecognized token is an authoring error and **fails the parse** with a
+  `GameStartupException`. Whitespace is not a token: blank entries are skipped.
 
-`e` is the one reserved token, recognized before any catalog lookup. Every other token resolves
-against the `EnemyCatalog` identically whether it names a built-in or a per-level definition.
-An unrecognized token is an authoring error and fails the parse with a
-`GameStartupException`. Whitespace is not a token: blank entries are skipped, so a run of
-spaces between two ids parses the same as one.
+**The list of ids lives in `td/wave/CLAUDE.md`, not here** — it grows with content rather than
+with the grammar, and this file changes only when an invariant does.
 
 ## 10. Documentation map
 
@@ -229,21 +227,23 @@ spaces between two ids parses the same as one.
 |---|---|
 | **`CLAUDE.md`** | Always loaded. Constraints only. |
 | **`docs/ARCHITECTURE.md`** | The why: rationale, history, rejected alternatives. Not auto-loaded. |
-| **`docs/features/`** | Design docs for shipped features. Historical record. |
-| **`src/main/java/td/<pkg>/CLAUDE.md`** | Per-package invariants, loaded when working there: lifecycle ordering, what must not be "simplified", the checklist for adding a type. Exists for `economy`, `enemy`, `tower`, `ui`, `wave`. |
-| **`README.md`** | Human-facing: what the game is, build and run, controls, content tables. |
-| **`TODO.md`** | Single source of truth for known gaps; each entry carries a **Where** and an **Approach**. |
+| **`docs/features/`** | Design docs for shipped features. |
+| **`src/main/java/td/<pkg>/CLAUDE.md`** | Per-package invariants and per-type checklists, loaded when working there. `economy`, `enemy`, `tower`, `ui`, `wave`. |
+| **`README.md`** | Human-facing: build, run, controls, content tables. |
+| **`TODO.md`** | Known gaps; each entry carries a **Where** and an **Approach**. |
 
 **The rule governing this file.** Before adding a line, ask:
 
-1. *Could a reviewer mechanically detect a violation?* If yes, make it a check in
-   `scripts/VerifyRules.java` and state the check beside the rule, as above.
-2. *Is it a constraint on future change, or something that used to be true?* History — what a
-   refactor replaced, why a colour was chosen — belongs in `docs/ARCHITECTURE.md` or the commit
-   message. Never here.
+1. *Could a reviewer detect a violation mechanically?* If yes, make it a check in
+   `scripts/VerifyRules.java` and state the check beside the rule. If it needs judgement, say
+   so, and don't fake a check.
+2. *Is it a constraint, or something that used to be true?* History and rationale belong in
+   `docs/ARCHITECTURE.md` or the commit message.
+3. *Does it name content rather than structure?* A list of enemies, towers or levels grows
+   with the game and belongs in the owning package's doc or `README.md`.
 
-**Adding a feature should normally change no line of this file.** If it does, the feature
-introduced a genuinely new invariant — exactly when this file should change. When a refactor
-moves a class, changes a construction order, renames a collaborator or invalidates a "never do X"
-note, update the affected `CLAUDE.md` — root or per-package — in the *same commit*. A stale
-package doc is worse than none, precisely because it is loaded and believed.
+**Adding a feature should normally change no line of this file** — if it does, the feature
+introduced a genuinely new invariant, which is exactly when it should. A refactor that moves a
+class, changes a construction order or invalidates a "never do X" note updates the affected
+`CLAUDE.md`, root or per-package, in the *same commit*. A stale package doc is worse than none,
+precisely because it is loaded and believed.
