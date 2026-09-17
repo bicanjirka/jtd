@@ -70,7 +70,7 @@ class WardenChainTest {
         List<EnemyMob> enemies = List.of(world.enemies().getEnemies());
         assertThat(enemies).hasSize(1); // replaced, not added alongside - consumesSelf
         assertThat(enemies).doesNotContain(egg);
-        assertThat(((DefinedEnemyMob) enemies.get(0)).archetype()).isEqualTo(BodyArchetype.SQUARE);
+        assertThat(((DefinedEnemyMob) enemies.getFirst()).archetype()).isEqualTo(BodyArchetype.SQUARE);
     }
 
     @Test
@@ -94,7 +94,7 @@ class WardenChainTest {
 
         List<EnemyMob> enemies = List.of(world.enemies().getEnemies());
         assertThat(enemies).hasSize(1);
-        assertThat(enemies.get(0)).isSameAs(egg);
+        assertThat(enemies.getFirst()).isSameAs(egg);
         assertThat(egg.isDead()).isTrue();
     }
 

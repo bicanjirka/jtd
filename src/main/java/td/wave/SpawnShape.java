@@ -3,16 +3,25 @@ package td.wave;
 import td.util.GameStartupException;
 
 /**
- * How one wave slot spawns - a value composed from three independent mechanisms rather than one
- * implementation per shape: a per-mob multiplier set (size/speed/health/bounty), a
+ * How one wave slot spawns - a value composed from independent mechanisms rather than one
+ * implementation per shape: a per-mob multiplier set (size/speed/health/bounty/damage-taken), a
  * {@link SpawnSpread} pattern, and inter-member delay spacing (in slot-widths, added to a
  * member's index before it is converted to ticks). {@link #normal()} is the identity: one
  * member, every multiplier 1, no spread, no extra delay - today's spawn behaviour exactly. See
  * docs/features/FEATURE-enemy-spawn-types.md's "Three mechanisms" section for why eight shapes
  * are built this way instead of as eight variants.
+ * <p>
+ * {@code damageTakenMultiplier} is a permanent per-hit reduction, not the timed
+ * {@code ShieldTemplate}/{@code EffectKind.SHIELD} effect - deliberately: an effect expires and
+ * only an {@link td.enemy.EnemyDefinition}'s own abilities can apply one, but a spawn shape
+ * needs to modify *any* definition, permanently, for as long as the mob lives. {@code Trait} is
+ * this codebase's existing home for "permanent, always-on" (see {@code PercentResistTrait}); this
+ * is that same idea attached to the shape instead of the definition, folded into
+ * {@code DefinedEnemyMob.absorb} alongside whatever traits the definition already has.
  */
 public record SpawnShape(int members, float sizeMultiplier, float speedMultiplier, float healthMultiplier,
-                          float bountyMultiplier, SpawnSpread spread, double delaySpacingSlots) {
+                          float bountyMultiplier, float damageTakenMultiplier, SpawnSpread spread,
+                          double delaySpacingSlots) {
 
     /**
      * One slot's member count is bounded so a typo like {@code swarm 300 c} fails to parse
@@ -23,9 +32,9 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
     private static final double COLUMN_SPACING_SLOTS = 0.3;
     private static final double DRIP_SPACING_SLOTS = 2.0;
 
-    private static final SpawnShape NORMAL = new SpawnShape(1, 1f, 1f, 1f, 1f, SpawnSpread.NONE, 0.0);
-    private static final SpawnShape BOSS = new SpawnShape(1, 2.0f, 0.5f, 1f, 2.0f, SpawnSpread.NONE, 0.0);
-    private static final SpawnShape ELITE = new SpawnShape(1, 1.5f, 1f, 2.0f, 1.5f, SpawnSpread.NONE, 0.0);
+    private static final SpawnShape NORMAL = new SpawnShape(1, 1f, 1f, 1f, 1f, 1f, SpawnSpread.NONE, 0.0);
+    private static final SpawnShape BOSS = new SpawnShape(1, 2.0f, 0.5f, 1f, 2.0f, 1f, SpawnSpread.NONE, 0.0);
+    private static final SpawnShape ELITE = new SpawnShape(1, 1.5f, 1f, 2.0f, 1.5f, 0.5f, SpawnSpread.NONE, 0.0);
 
     public SpawnShape {
         if (members < 1 || members > MAX_MEMBERS) {
@@ -47,23 +56,23 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
     }
 
     public static SpawnShape swarm(int members) {
-        return new SpawnShape(members, 0.5f, 1f, 1f / members, 1f, SpawnSpread.SCATTERED, 0.0);
+        return new SpawnShape(members, 0.5f, 1f, 1f / members, 1f, 1f, SpawnSpread.SCATTERED, 0.0);
     }
 
     public static SpawnShape line(int members) {
-        return new SpawnShape(members, 1f, 1f, 1f, 1f, SpawnSpread.EVEN, 0.0);
+        return new SpawnShape(members, 1f, 1f, 1f, 1f, 1f, SpawnSpread.EVEN, 0.0);
     }
 
     public static SpawnShape flank() {
-        return new SpawnShape(2, 1f, 1f, 1f, 1f, SpawnSpread.EDGES, 0.0);
+        return new SpawnShape(2, 1f, 1f, 1f, 1f, 1f, SpawnSpread.EDGES, 0.0);
     }
 
     public static SpawnShape column(int members) {
-        return new SpawnShape(members, 1f, 1f, 1f, 1f, SpawnSpread.NONE, COLUMN_SPACING_SLOTS);
+        return new SpawnShape(members, 1f, 1f, 1f, 1f, 1f, SpawnSpread.NONE, COLUMN_SPACING_SLOTS);
     }
 
     public static SpawnShape drip(int members) {
-        return new SpawnShape(members, 1f, 1f, 1f, 1f, SpawnSpread.NONE, DRIP_SPACING_SLOTS);
+        return new SpawnShape(members, 1f, 1f, 1f, 1f, 1f, SpawnSpread.NONE, DRIP_SPACING_SLOTS);
     }
 
     /**

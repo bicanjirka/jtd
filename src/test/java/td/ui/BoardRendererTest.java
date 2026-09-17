@@ -53,7 +53,7 @@ class BoardRendererTest {
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.towerSprites()).hasSize(1);
-        TowerSpriteDraw sprite = frame.towerSprites().get(0);
+        TowerSpriteDraw sprite = frame.towerSprites().getFirst();
         assertThat(sprite.palette()).isEqualTo(Palette.TOWER_SNIPER_BODY);
         assertThat(sprite.selected()).isTrue();
     }
@@ -67,7 +67,7 @@ class BoardRendererTest {
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.towerHeads()).hasSize(1);
-        assertThat(frame.towerHeads().get(0).palette()).isEqualTo(Palette.TOWER_SNIPER_BODY);
+        assertThat(frame.towerHeads().getFirst().palette()).isEqualTo(Palette.TOWER_SNIPER_BODY);
     }
 
     @Test
@@ -78,7 +78,7 @@ class BoardRendererTest {
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
-        assertThat(frame.towerSprites().get(0).selected()).isFalse();
+        assertThat(frame.towerSprites().getFirst().selected()).isFalse();
     }
 
     @Test
@@ -89,7 +89,7 @@ class BoardRendererTest {
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
-        assertThat(frame.towerSprites().get(0).accent()).isEmpty();
+        assertThat(frame.towerSprites().getFirst().accent()).isEmpty();
     }
 
     @Test
@@ -105,7 +105,7 @@ class BoardRendererTest {
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
-        assertThat(frame.towerSprites().get(0).accent()).contains(Palette.TOWER_UPGRADE_PATH_B);
+        assertThat(frame.towerSprites().getFirst().accent()).contains(Palette.TOWER_UPGRADE_PATH_B);
     }
 
     @Test
@@ -143,7 +143,7 @@ class BoardRendererTest {
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.cells()).hasSize(1);
-        assertThat(frame.cells().get(0).highlight()).isEqualTo(Cell.HighlightType.SELECT);
+        assertThat(frame.cells().getFirst().highlight()).isEqualTo(Cell.HighlightType.SELECT);
     }
 
     @Test
@@ -155,7 +155,7 @@ class BoardRendererTest {
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.towerEffects()).hasSize(1);
-        assertThat(frame.towerEffects().get(0)).isInstanceOf(ConeDraw.class);
+        assertThat(frame.towerEffects().getFirst()).isInstanceOf(ConeDraw.class);
     }
 
     @Test
@@ -168,6 +168,6 @@ class BoardRendererTest {
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.projectiles()).hasSize(1);
-        assertThat(frame.projectiles().get(0)).isInstanceOf(ProjectileDraw.class);
+        assertThat(frame.projectiles().getFirst()).isInstanceOf(ProjectileDraw.class);
     }
 }

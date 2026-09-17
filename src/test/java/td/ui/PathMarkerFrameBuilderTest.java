@@ -78,13 +78,13 @@ class PathMarkerFrameBuilderTest {
         PathNormal path = straightPath(0, 2);
         List<PathMarkerDraw> atZero = moving(PathMarkerFrameBuilder.build(path, SCALE, 0.0));
         assertThat(atZero).hasSize(1);
-        float startX = atZero.get(0).x();
+        float startX = atZero.getFirst().x();
 
         float paceCellsPerSecond = 0.4f; // MOVING_CELLS_PER_SECOND in PathMarkerFrameBuilder
         float pacePxPerSecond = paceCellsPerSecond * SCALE;
         double smallElapsed = 1.0; // small enough not to have wrapped yet
         List<PathMarkerDraw> shortlyAfter = moving(PathMarkerFrameBuilder.build(path, SCALE, smallElapsed));
-        assertThat(shortlyAfter.get(0).x())
+        assertThat(shortlyAfter.getFirst().x())
                 .isCloseTo(startX + pacePxPerSecond * (float) smallElapsed, offset(0.01f));
 
         double totalLength = 2 * SCALE;
@@ -94,7 +94,7 @@ class PathMarkerFrameBuilderTest {
         // to the last cell's center
         float pathStartPixelX = 0.5f * SCALE;
         float pathEndPixelX = 2 * SCALE + 0.5f * SCALE;
-        assertThat(afterWrap.get(0).x()).isBetween(pathStartPixelX, pathEndPixelX);
+        assertThat(afterWrap.getFirst().x()).isBetween(pathStartPixelX, pathEndPixelX);
     }
 
     @Test

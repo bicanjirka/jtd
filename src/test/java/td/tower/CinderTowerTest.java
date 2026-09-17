@@ -37,8 +37,8 @@ class CinderTowerTest {
         tower.doTick(1);
 
         assertThat(ahead.appliedEffects()).hasSize(1);
-        assertThat(ahead.appliedEffects().get(0).kind()).isEqualTo(EffectKind.BURN);
-        assertThat(ahead.appliedEffects().get(0).damagePerTick().type()).isEqualTo(DamageType.MAGIC);
+        assertThat(ahead.appliedEffects().getFirst().kind()).isEqualTo(EffectKind.BURN);
+        assertThat(ahead.appliedEffects().getFirst().damagePerTick().type()).isEqualTo(DamageType.MAGIC);
     }
 
     @Test

@@ -34,7 +34,7 @@ class CannonballProjectileTest {
         assertThat(shell.isFinished()).isTrue();
         assertThat(shell.getX()).isCloseTo(30.0, within(1e-9));
         assertThat(impacts).hasSize(1);
-        assertThat(impacts.get(0)).containsExactly(30.0, 0.0);
+        assertThat(impacts.getFirst()).containsExactly(30.0, 0.0);
     }
 
     @Test

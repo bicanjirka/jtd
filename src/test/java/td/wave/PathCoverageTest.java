@@ -18,7 +18,7 @@ class PathCoverageTest {
     // as a comparison baseline for the test above.
     private static List<Point> expandThroughCornersLikeTheOldLevelPathDid(List<Point> corners) {
         List<Point> steps = new ArrayList<>();
-        steps.add(corners.get(0));
+        steps.add(corners.getFirst());
         for (int i = 1; i < corners.size(); i++) {
             Point from = corners.get(i - 1);
             Point to = corners.get(i);
@@ -103,7 +103,7 @@ class PathCoverageTest {
      */
     @Test
     void classicLoopsSparseCornersCoverTheSameCellsAsTheOldDenseExpansionDid() {
-        LevelDefinition classicLoop = new BuiltInLevelCatalog().levels().get(0);
+        LevelDefinition classicLoop = new BuiltInLevelCatalog().levels().getFirst();
         List<Point> corners = classicLoop.path();
 
         List<Vec2> oldDensePolyline = expandThroughCornersLikeTheOldLevelPathDid(corners).stream()

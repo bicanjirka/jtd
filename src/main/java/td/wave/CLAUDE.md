@@ -81,7 +81,7 @@ already gets.
 | Keyword  | `SpawnShape` factory | Members       | Mechanism(s)                                    |
 |----------|-----------------------|---------------|--------------------------------------------------|
 | `boss`   | `boss()`               | 1 (fixed)     | 200% size, 50% speed, 2× bounty                   |
-| `elite`  | `elite()`              | 1 (fixed)     | 150% size, +health, 1.5× bounty                   |
+| `elite`  | `elite()`              | 1 (fixed)     | 150% size, +health, 1.5× bounty, permanent 50% shield |
 | `swarm`  | `swarm(n)`             | *n* (required) | 50% size, health/bounty split, circular scatter  |
 | `line`   | `line(n)`              | *n* (required) | evenly spread offset, no multipliers             |
 | `flank`  | `flank()`              | 2 (fixed)     | offset at opposite maximums, no multipliers       |

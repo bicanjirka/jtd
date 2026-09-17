@@ -170,6 +170,17 @@ the incoming hit.** A `Trait.onHit` is free to change a hit's `DamageType` as we
 amount; capping from the original `damage` argument instead would silently discard whatever
 type it chose.
 
+**A spawn shape's permanent damage-taken reduction (Elite's 50%) is folded into `absorb`
+*after* every `Trait.onHit`, via `Damage.scaledBy`, so it composes with a definition's own
+resistance rather than overriding it.** It is a `SpawnParameters` field
+(`damageTakenMultiplier`), not a `Trait` and not a `td.effect.Effect` — see `SpawnShape`'s own
+doc comment for why a spawn-shape-wide, permanent reduction needs a mechanism neither of those
+two is shaped for. `DefinedEnemyMob.activeEffectKinds()` still adds `EffectKind.SHIELD` to the
+mob's status markers whenever this multiplier is active, purely so the player sees the same
+shield glyph a real timed shield effect would show — the one place this package deliberately
+blurs a cosmetic marker and a real `Effect`, and only for that marker; `absorb` above is the
+actual mechanism.
+
 **Death timing is captured in `doTick`, not lazily at paint time.** `doDamage` sets `dead`; the
 next `doTick` records `deathTick`. The fade therefore advances with the simulation clock, so it
 runs at the same rate while fast-forwarding as the rest of the game. `ticksSinceDeath` can

@@ -20,8 +20,8 @@ class QuadraticBezierSmoothingTest {
         List<Vec2> samples = new QuadraticBezierSmoothing(0.5, 1).sampleCorner(before, corner, after, 1);
 
         assertThat(samples).hasSize(1);
-        assertThat(samples.get(0).x()).isCloseTo(7.5, within(1e-9));
-        assertThat(samples.get(0).y()).isCloseTo(2.5, within(1e-9));
+        assertThat(samples.getFirst().x()).isCloseTo(7.5, within(1e-9));
+        assertThat(samples.getFirst().y()).isCloseTo(2.5, within(1e-9));
     }
 
     @Test
@@ -36,8 +36,8 @@ class QuadraticBezierSmoothingTest {
         List<Vec2> samples = new QuadraticBezierSmoothing(0.5, 1).sampleCorner(before, corner, after, 1);
 
         assertThat(samples).hasSize(1);
-        assertThat(samples.get(0).x()).isCloseTo(9.5, within(1e-9));
-        assertThat(samples.get(0).y()).isCloseTo(1.0, within(1e-9));
+        assertThat(samples.getFirst().x()).isCloseTo(9.5, within(1e-9));
+        assertThat(samples.getFirst().y()).isCloseTo(1.0, within(1e-9));
     }
 
     @Test
@@ -49,7 +49,7 @@ class QuadraticBezierSmoothingTest {
         assertThat(smoothed.get(0)).isEqualTo(new Vec2(0, 0));
         assertThat(smoothed.get(1)).isEqualTo(new Vec2(7, 0)); // pulledBackBefore: 10 - 0.3*10
         assertThat(smoothed.get(smoothed.size() - 2)).isEqualTo(new Vec2(10, 3)); // pulledBackAfter: 0 + 0.3*10
-        assertThat(smoothed.get(smoothed.size() - 1)).isEqualTo(new Vec2(10, 10));
+        assertThat(smoothed.getLast()).isEqualTo(new Vec2(10, 10));
         assertThat(smoothed).hasSize(1 + 1 + 4 + 1 + 1); // start, pullback-before, 4 samples, pullback-after, end
     }
 }

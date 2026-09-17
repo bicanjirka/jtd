@@ -92,7 +92,8 @@ public class Wave {
             double slotPosition = delay + i * shape.delaySpacingSlots();
             Vec2 localOffset = shape.spread().offsetFor(i, shape.members(), maxRadius, scatter);
             SpawnParameters spawnParameters = SpawnParameters.of(slotPosition, definition.baseSpeed(), health,
-                    bountyShares[i], shape.sizeMultiplier(), shape.speedMultiplier(), localOffset);
+                    bountyShares[i], shape.sizeMultiplier(), shape.speedMultiplier(), shape.damageTakenMultiplier(),
+                    localOffset);
             members.add(new DefinedEnemyMob(definition, gameWorld, spawnParameters, level));
         }
         return List.copyOf(members);

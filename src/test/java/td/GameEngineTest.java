@@ -331,7 +331,7 @@ class GameEngineTest {
 
         engine.doTick(1);
 
-        assertThat(engine.getGameWorld().projectiles().getProjectiles().get(0).getX()).isEqualTo(10.0);
+        assertThat(engine.getGameWorld().projectiles().getProjectiles().getFirst().getX()).isEqualTo(10.0);
     }
 
     @Test
@@ -449,7 +449,7 @@ class GameEngineTest {
         for (String expected : ids) {
             assertThat(engine.debugSpawnNextCatalogEnemy()).contains(expected);
         }
-        assertThat(engine.debugSpawnNextCatalogEnemy()).contains(ids.get(0)); // wraps around
+        assertThat(engine.debugSpawnNextCatalogEnemy()).contains(ids.getFirst()); // wraps around
     }
 
     @Test

@@ -77,7 +77,7 @@ public abstract class AbstractCornerSmoothing implements PathSmoothing {
             return List.copyOf(pixelPolyline);
         }
         List<Vec2> result = new ArrayList<>();
-        result.add(pixelPolyline.get(0));
+        result.add(pixelPolyline.getFirst());
 
         for (int i = 1; i < pixelPolyline.size() - 1; i++) {
             Vec2 prev = pixelPolyline.get(i - 1);
@@ -98,7 +98,7 @@ public abstract class AbstractCornerSmoothing implements PathSmoothing {
             result.add(pulledBackAfter);
         }
 
-        result.add(pixelPolyline.get(pixelPolyline.size() - 1));
+        result.add(pixelPolyline.getLast());
         return result;
     }
 }
