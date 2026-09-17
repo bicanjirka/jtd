@@ -3,6 +3,7 @@ package td.wave;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
+import td.enemy.SpawnParameters;
 import td.util.GameWorld;
 
 import java.util.ArrayList;
@@ -52,9 +53,31 @@ public class Wave {
 
     private static List<EnemyMob> spawnSlot(WaveSlot slot, GameWorld gameWorld, int delay, int health, int price, int level) {
         return switch (slot) {
-            case EnemySlot s -> List.of(new DefinedEnemyMob(s.definition(), gameWorld, delay, health, price, level));
+            case EnemySlot s -> spawnShaped(s, gameWorld, delay, health, price, level);
             case EmptySlot ignored -> List.of();
         };
+    }
+
+    /**
+     * Builds every member of one shaped slot: the shape's health and bounty multipliers are
+     * arithmetic here, against the wave's own base health/price (bounty split exactly, via
+     * {@link SpawnShape#bountyShares}); the size and speed multipliers pass straight through to
+     * {@link SpawnParameters}, which folds them into the mob itself. Every member spawns at this
+     * slot's own delay for now - per-member delay spacing (Column/Drip) and lateral offset
+     * (Swarm/Line/Flank) are later mechanisms layered on top of this one.
+     */
+    private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int delay, int baseHealth, int basePrice, int level) {
+        EnemyDefinition definition = enemySlot.definition();
+        SpawnShape shape = enemySlot.shape();
+        int health = Math.max(1, Math.round(baseHealth * shape.healthMultiplier()));
+        int[] bountyShares = shape.bountyShares(basePrice);
+        List<EnemyMob> members = new ArrayList<>(shape.members());
+        for (int i = 0; i < shape.members(); i++) {
+            SpawnParameters spawnParameters = SpawnParameters.of(delay, definition.baseSpeed(), health, bountyShares[i],
+                    shape.sizeMultiplier(), shape.speedMultiplier());
+            members.add(new DefinedEnemyMob(definition, gameWorld, spawnParameters, level));
+        }
+        return List.copyOf(members);
     }
 
     public Set<EnemyDefinition> enemySet() {

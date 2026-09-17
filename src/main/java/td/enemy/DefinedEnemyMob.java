@@ -18,6 +18,10 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
 
     private final EnemyDefinition definition;
     private final List<AbilityState> abilityStates;
+    // The spawn shape's speed multiplier (1 for a normal spawn, 0.5 for a boss) - folded into
+    // every doDamage() speed recomputation alongside the traits' own speedFactor, rather than
+    // applied once at construction, which the first hit would silently wipe.
+    private final float shapeSpeedMultiplier;
     private float bodyScale;
     private double facingRadians;
     private int ticksSinceSpawn;
@@ -26,15 +30,27 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
     // immediately.
     private int ticksSinceLastHit;
 
-    public DefinedEnemyMob(EnemyDefinition definition, GameWorld gameWorld, int delay, int health, int price, int level) {
+    public DefinedEnemyMob(EnemyDefinition definition, GameWorld gameWorld, SpawnParameters spawnParameters, int level) {
         // The wave's base health is this definition's to scale: a tougher archetype divides it
         // down. Done in the super call rather than a second init step, so bodyScale below is
         // the only thing left to compute and nothing observes a half-built mob.
-        super(gameWorld, definition.mobType(), definition.baseSpeed(), delay,
-                Math.round(health / definition.healthDivisor()), price, level);
+        super(gameWorld, definition.mobType(), definition.baseSpeed() * spawnParameters.speedMultiplier(),
+                withDividedHealth(spawnParameters, definition.healthDivisor()), level);
         this.definition = definition;
+        this.shapeSpeedMultiplier = spawnParameters.speedMultiplier();
         this.abilityStates = definition.abilities().stream().map(a -> AbilityState.forTrigger(a.trigger())).toList();
-        this.bodyScale = bodyScaleFor(definition.archetype(), gameWorld.getBoard().scale(), level);
+        this.bodyScale = bodyScaleFor(definition.archetype(), gameWorld.getBoard().scale(), level) * spawnParameters.sizeMultiplier();
+    }
+
+    /**
+     * A shape's health multiplier composes before {@code healthDivisor}, not after: the caller
+     * (a {@code SpawnShape}, via {@link td.wave.Wave}) has already scaled the wave's base health
+     * by the time it builds {@code spawnParameters}, and this only applies the definition's own
+     * toughness division on top - exactly what happened here before shapes existed.
+     */
+    private static SpawnParameters withDividedHealth(SpawnParameters spawnParameters, float healthDivisor) {
+        return new SpawnParameters(spawnParameters.delayTicks(), Math.round(spawnParameters.health() / healthDivisor),
+                spawnParameters.price(), spawnParameters.sizeMultiplier(), spawnParameters.speedMultiplier());
     }
 
     private static float bodyScaleFor(BodyArchetype archetype, int scale, int level) {
@@ -135,7 +151,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         for (Trait trait : this.definition.traits()) {
             factor *= trait.speedFactor(context);
         }
-        this.setSpeed(this.definition.baseSpeed() * factor);
+        this.setSpeed(this.definition.baseSpeed() * this.shapeSpeedMultiplier * factor);
         return landed;
     }
 
@@ -234,8 +250,9 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
             GameWorld world = DefinedEnemyMob.this.gameWorld;
             EnemyDefinition spawnedDefinition = world.getEnemyCatalog().get(definitionId);
             for (int i = 0; i < count; i++) {
-                DefinedEnemyMob spawned = new DefinedEnemyMob(spawnedDefinition, world, 0,
-                        spawnedDefinition.baseHealth(), spawnedDefinition.price(), DefinedEnemyMob.this.level);
+                SpawnParameters spawnParameters = SpawnParameters.atSlot(0, spawnedDefinition.baseSpeed(),
+                        spawnedDefinition.baseHealth(), spawnedDefinition.price());
+                DefinedEnemyMob spawned = new DefinedEnemyMob(spawnedDefinition, world, spawnParameters, DefinedEnemyMob.this.level);
                 spawned.spawnAtSamePositionAs(DefinedEnemyMob.this);
                 if (consumesSelf) {
                     world.enemies().replace(DefinedEnemyMob.this, spawned);

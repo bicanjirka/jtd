@@ -193,6 +193,43 @@ class GameEngineTest {
     }
 
     @Test
+    void aSwarmSlotIsNotClearedUntilEveryMemberDies() {
+        // The highest-risk line docs/features/FEATURE-enemy-spawn-types.md calls out: a shaped
+        // slot's member count, not its slot count, is what WaveContent.enemyCount() reports and
+        // GameWorld.startWave seeds the roster's alive count from - a swarm of 3 must cost 3
+        // kills to clear, not 1, or the wave clears early (or never).
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(
+                List.of(new WaveDefinition("swarm 3 c", 1, 7, 1),
+                        new WaveDefinition("c", 1, 7, 1)), 100));
+
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.mouseClicked(cellCenter(2), cellCenter(1));
+        int scoreBefore = engine.getGameWorld().economy().getScore();
+
+        assertThat(engine.nextWave()).isTrue();
+        assertThat(engine.isWaveReady()).isFalse();
+
+        int t = 0;
+        for (; t <= 60 && engine.getGameWorld().economy().getScore() == scoreBefore; t++) {
+            engine.doTick(t);
+        }
+
+        // one of the swarm's three members is dead - the slot is not cleared yet
+        assertThat(engine.getGameWorld().economy().getScore()).isGreaterThan(scoreBefore);
+        assertThat(engine.isWaveReady()).isFalse();
+
+        for (; t <= 300 && !engine.isWaveReady(); t++) {
+            engine.doTick(t);
+        }
+
+        // every member's bounty share sums to exactly one normal spawn's bounty (7) - a swarm
+        // neither pays out more nor less than the definition it was built from
+        assertThat(engine.getGameWorld().economy().getScore()).isEqualTo(scoreBefore + 7);
+        assertThat(engine.isWaveReady()).isTrue();
+    }
+
+    @Test
     void aMortarShellTravelsThenSplashesAnInRangeEnemyCreditingThePlayer() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         // same placement as the SniperTower case above - well within Mortar's own (larger) range too.

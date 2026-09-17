@@ -56,10 +56,6 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * of a point without rounding to nothing.
      */
     private static final int HEALTH_UNITS_PER_POINT = 100;
-    /**
-     * How many ticks of spawn delay one slot of wave ordering is worth, at DEFAULT_SPEED.
-     */
-    private static final float DELAY_TICKS_PER_SLOT = 22.4f;
 
     // Injected collaborators and the constants a mob is born with. All final, all set below.
     protected final GameWorld gameWorld;
@@ -79,8 +75,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     // Per-tick simulation state, owned by the game-loop thread. Private: a leaf that needs one
     // of these goes through an accessor, so this class can hold an invariant over them.
     private int health;
-    private boolean inactive = true;
-    private boolean validTarget = false;
+    private boolean inactive;
+    private boolean validTarget;
     private boolean dead = false;
     private float speed;
     private double x;
@@ -100,30 +96,31 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * derives from the board scale or from {@code level} (a body scale, a speed curve) it
      * computes after this returns, by which point every field here is set.
      *
-     * @param delay  this mob's slot index within its wave, converted here into a tick countdown
-     *               before it becomes active and targetable
-     * @param health in whole points; stored internally in hundredths
+     * @param speed           this mob's own px/tick speed - already folded in with any
+     *                        {@code SpawnShape} speed multiplier, since {@code spawnParameters}
+     *                        only carries the tick countdown that multiplier implied
+     * @param spawnParameters this mob's spawn delay (already converted to a tick countdown),
+     *                        health (in whole points; stored internally in hundredths) and bounty
      */
-    protected AbstractEnemyMob(GameWorld gameWorld, Type type, float speed,
-                               int delay, int health, int price, int level) {
+    protected AbstractEnemyMob(GameWorld gameWorld, Type type, float speed, SpawnParameters spawnParameters, int level) {
         this.gameWorld = gameWorld;
         this.type = type;
         this.speed = speed;
-        this.price = price;
+        this.price = spawnParameters.price();
         this.level = level;
-        this.health = health * HEALTH_UNITS_PER_POINT;
-        this.healthMax = health * HEALTH_UNITS_PER_POINT;
+        this.health = spawnParameters.health() * HEALTH_UNITS_PER_POINT;
+        this.healthMax = spawnParameters.health() * HEALTH_UNITS_PER_POINT;
         this.arcLengthPath = ArcLengthPath.of(gameWorld.getPath());
         List<Vec2> pathPoints = gameWorld.getPath().points();
         this.stationaryPosition = pathPoints.isEmpty() ? new Vec2(0, 0) : pathPoints.getFirst();
-        // Rescaled the same way speed was (700f -> 700f*0.032 = 22.4f) so spawn timing is
-        // unchanged now that speed is a direct px/tick value rather than a 0-999-per-segment
-        // fixed-point unit.
-        this.delay = Math.round(DELAY_TICKS_PER_SLOT * delay / speed);
-        if (delay == 0) {
-            this.inactive = false;
-            this.validTarget = true;
-        }
+        this.delay = spawnParameters.delayTicks();
+        // Keyed off the converted tick count, not the raw slot position that produced it: a
+        // fractional per-member delay (see SpawnShape's column/drip spacing) can round down to
+        // zero ticks from a nonzero position, and doTick's inactive branch only ever counts
+        // down from delay > 0 - basing this on the raw position instead could leave such a mob
+        // inactive forever.
+        this.inactive = this.delay > 0;
+        this.validTarget = !this.inactive;
         this.updatePosition();
         // No prior tick to interpolate from at spawn - start with prev == current.
         this.prevX = this.x;
@@ -208,9 +205,10 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     /**
      * This mob's speed, folding in every currently active speed-affecting {@link Effect}
      * (see {@link #getSpeed()}). {@code speed} itself stays the intrinsic value - the one
-     * {@link DefinedEnemyMob#doDamage} recomputes from its traits' {@code speedFactor} and the
-     * constructor reads for the spawn delay - so a slow or freeze never gets permanently baked
-     * into it, and never gets wiped out the next time a trait recomputes it.
+     * {@link DefinedEnemyMob#doDamage} recomputes from its traits' {@code speedFactor} (and,
+     * for a shaped spawn, its {@code SpawnShape}'s own speed multiplier) - so a slow or freeze
+     * never gets permanently baked into it, and never gets wiped out the next time a trait
+     * recomputes it.
      */
     private float effectiveSpeed() {
         return this.speed * this.activeEffects.speedMultiplier();

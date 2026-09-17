@@ -4,6 +4,7 @@ import td.board.BoardGeometry;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
+import td.enemy.SpawnParameters;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -71,7 +72,8 @@ public class PanelEnemy extends JPanel {
     public void addEnemy(EnemyDefinition definition, int count, int level) {
         int nr = this.enemies.size();
         this.contextLocal.setPath(new PathNormal(List.of(new Vec2(this.scale / 2 + this.scale * nr, this.pHeight / 2))));
-        EnemyMob enemy = new DefinedEnemyMob(definition, this.contextLocal, 0, 0, 0, level);
+        SpawnParameters spawnParameters = SpawnParameters.atSlot(0, definition.baseSpeed(), 0, 0);
+        EnemyMob enemy = new DefinedEnemyMob(definition, this.contextLocal, spawnParameters, level);
         enemy.doTick(0);
         this.enemies.add(enemy);
         this.enemiesCount.add(count);

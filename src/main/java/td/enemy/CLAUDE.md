@@ -182,17 +182,27 @@ the path's first point (or the origin). Keep that branch.
 
 **Speed has an intrinsic/effective split, like `AbstractTower`'s base/current damage.** The
 `speed` field stays the *intrinsic* value — `DefinedEnemyMob.doDamage` recomputes it fresh from
-`definition.baseSpeed() * (product of every Trait.speedFactor)` on every hit through
-`setSpeed`, and the constructor's spawn-delay calculation reads it before any damage lands — while `getSpeed()` and
-movement both
-additionally fold in every currently active `td.effect.Effect`'s speed multiplier via
-`ActiveEffects.speedMultiplier()`. A slow or freeze therefore never gets permanently baked into
-`speed`, and is never wiped out the next time a trait recomputes it. `doTick` reads that
-multiplier *before* calling `ActiveEffects.tick()`, not after — the tick call both applies this
-tick's damage-over-time and decrements durations, and an effect entering the last tick of its
-duration must still suppress this tick's movement, not just its damage. A damage-over-time tick
-that kills the mob sets `dead` synchronously (its sink calls back into `doDamage`), so `doTick`
-checks `dead` and returns before movement runs — there is nothing left to move.
+`definition.baseSpeed() * shapeSpeedMultiplier * (product of every Trait.speedFactor)` on every
+hit through `setSpeed`, folding in the spawning `SpawnShape`'s own speed multiplier (a boss's
+50%) alongside the traits' — a one-time `setSpeed` at construction would be silently wiped by
+the first hit, the same trap a trait's own multiplier would fall into if it weren't folded into
+this recomputation — while `getSpeed()` and movement both additionally fold in every currently
+active `td.effect.Effect`'s speed multiplier via `ActiveEffects.speedMultiplier()`. A slow or
+freeze therefore never gets permanently baked into `speed`, and is never wiped out the next time
+a trait recomputes it. `doTick` reads that multiplier *before* calling `ActiveEffects.tick()`,
+not after — the tick call both applies this tick's damage-over-time and decrements durations,
+and an effect entering the last tick of its duration must still suppress this tick's movement,
+not just its damage. A damage-over-time tick that kills the mob sets `dead` synchronously (its
+sink calls back into `doDamage`), so `doTick` checks `dead` and returns before movement runs —
+there is nothing left to move.
+
+**Spawn delay is computed before a mob exists, not inside its constructor.** `SpawnParameters`
+(built by `td.wave.Wave`, or `SpawnParameters.atSlot` for the identity case) converts a slot
+position into a tick countdown; `AbstractEnemyMob`'s constructor just takes that countdown and
+starts inactive whenever it is greater than zero — keyed off the *converted* ticks, not the raw
+slot position that produced them, since a fractional per-member delay (`SpawnShape`'s column/drip
+spacing) can round down to zero ticks from a nonzero position, and `doTick`'s inactive branch
+only ever counts down from a positive `delay`.
 
 ## Adding a new enemy
 

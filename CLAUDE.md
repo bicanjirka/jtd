@@ -264,10 +264,15 @@ and does the world-bound instantiation in `spawn()`, called when the wave starts
 constructor, which is what lets a level install in one write (§3, `LoadedLevel`).
 
 - A count applies to the token immediately following it and resets to 1 afterward:
-  `"3 s e 4 c"` = three Squares, one spacer, four Circles.
-- `e` is the one reserved token — the spacer — recognized before any catalog lookup. Every
-  other token resolves against the `EnemyCatalog` identically whether it names a built-in or a
-  per-level definition; there is no separate syntax for the two.
+  `"3 s e 4 c"` = three Squares, one spacer, four Circles. Before a spawn-type keyword (below)
+  it repeats the whole shaped slot; immediately after one it sets that slot's member count
+  instead — the same rule, applied to whichever kind of token follows.
+- A small, closed set of tokens — the `e` spacer plus seven spawn-type keywords naming a
+  `SpawnShape` (`WaveSlot`'s companion value describing how many members a slot spawns, and how)
+  — is recognized before any catalog lookup. Every other token resolves against the
+  `EnemyCatalog` identically whether it names a built-in or a per-level definition; there is no
+  separate syntax for the two. `EnemyCatalog.register` rejects an id colliding with a reserved
+  token, so a level can never silently shadow the grammar.
 - An unrecognized token is an authoring error and **fails the parse** with a
   `GameStartupException`. Whitespace is not a token: blank entries are skipped.
 
