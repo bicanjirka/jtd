@@ -9,13 +9,12 @@ package td.enemy;
  * implementor - the frame builders in {@code td.ui} - to describe the new
  * enemy rather than silently skipping it.
  * <p>
- * Only two methods, not one per enemy *type*: every data-driven enemy is a {@link DefinedEnemyMob}
- * regardless of its {@link EnemyDefinition}, so there is only one real concrete class left to
- * visit for rendering - {@link EnemyMobEmpty} is the one deliberate exception, a wave-timing
- * spacer that is never drawn at all (see its own doc comment).
+ * One method, not one per enemy *type*: every data-driven enemy is a {@link DefinedEnemyMob}
+ * regardless of its {@link EnemyDefinition}, so there is only one concrete class to visit.
+ * Kept as a visitor rather than collapsed into a plain method call so a second non-data-driven
+ * mob (a wave-timing spacer, a scripted event) can be added later without reopening every call
+ * site that already double-dispatches through it.
  */
 public interface EnemyMobVisitor<R> {
     R visitDefined(DefinedEnemyMob mob);
-
-    R visitEmpty(EnemyMobEmpty mob);
 }

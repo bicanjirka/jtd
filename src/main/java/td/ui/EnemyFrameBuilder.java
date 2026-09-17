@@ -4,7 +4,6 @@ import td.effect.EffectKind;
 import td.enemy.AbstractEnemyMob;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
-import td.enemy.EnemyMobEmpty;
 import td.enemy.EnemyMobVisitor;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
@@ -115,9 +114,5 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
 
     public Void visitDefined(DefinedEnemyMob mob) {
         return this.body(paletteFor(mob.archetype()), mob, mob.getBodyScale(), mob.getFacingRadians());
-    }
-
-    public Void visitEmpty(EnemyMobEmpty mob) {
-        return null;
     }
 }
