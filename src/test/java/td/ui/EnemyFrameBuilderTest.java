@@ -87,9 +87,9 @@ class EnemyFrameBuilderTest {
         context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5))));
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
-        int initialLives = context.getLives();
+        int initialLives = context.economy().getLives();
         int tick = 0;
-        while (context.getLives() == initialLives) {
+        while (context.economy().getLives() == initialLives) {
             tick++;
             enemy.doTick(tick);
         }

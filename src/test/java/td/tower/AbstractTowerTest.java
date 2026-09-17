@@ -36,7 +36,7 @@ class AbstractTowerTest {
     @Test
     void registerTowerAppliesAuraBuffToDamage() {
         TowerOne tower = new TowerOne(context, 0, 0);
-        context.addTower(tower);
+        context.towers().add(tower);
 
         // constructing a TowerAura in range scans context.towers and
         // registers itself with anything nearby, buffing it immediately
@@ -50,7 +50,7 @@ class AbstractTowerTest {
     @Test
     void twoAuraTowersStackAdditively() {
         TowerOne tower = new TowerOne(context, 0, 0);
-        context.addTower(tower);
+        context.towers().add(tower);
 
         new TowerAura(context, 0, 0);
         new TowerAura(context, 0, 0);
@@ -62,7 +62,7 @@ class AbstractTowerTest {
     @Test
     void unequalAuraTowersStackTheirDifferentStrengths() {
         TowerOne tower = new TowerOne(context, 0, 0);
-        context.addTower(tower);
+        context.towers().add(tower);
 
         new TowerAura(context, 0, 0, 0.1f);
         new TowerAura(context, 0, 0, 0.3f);
@@ -74,7 +74,7 @@ class AbstractTowerTest {
     @Test
     void unregisterTowerRevertsTheBuff() {
         TowerOne tower = new TowerOne(context, 0, 0);
-        context.addTower(tower);
+        context.towers().add(tower);
         TowerAura aura = new TowerAura(context, 0, 0);
 
         tower.unregisterTower(aura);
@@ -85,10 +85,10 @@ class AbstractTowerTest {
     @Test
     void towerOutsideAuraRangeIsNotBuffed() {
         TowerOne near = new TowerOne(context, 0, 0);
-        context.addTower(near);
+        context.towers().add(near);
         // TowerAura.RANGE is 1.5 cells; placing far away puts this well outside it
         TowerOne far = new TowerOne(context, 100, 100);
-        context.addTower(far);
+        context.towers().add(far);
 
         new TowerAura(context, 0, 0);
 
@@ -174,21 +174,21 @@ class AbstractTowerTest {
 
     @Test
     void choosingAnOfferedPathSpendsItsPriceAndAppliesItsStatBonus() {
-        context.startEconomy(100, 5);
+        context.economy().startEconomy(100, 5);
         UpgradePath path = new UpgradePath("Veteran", 40, new TowerBuff(0.5f, 0.25f, 0f, 0f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(path));
 
         boolean chosen = tower.chooseUpgradePath(path);
 
         assertThat(chosen).isTrue();
-        assertThat(context.getCredits()).isEqualTo(60);
+        assertThat(context.economy().getCredits()).isEqualTo(60);
         assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * 1.5f));
         assertThat(tower.getChosenPath()).isEqualTo(path);
     }
 
     @Test
     void choosingAPathTwiceIsRejected() {
-        context.startEconomy(100, 5);
+        context.economy().startEconomy(100, 5);
         UpgradePath first = new UpgradePath("Veteran", 10, TowerBuff.amplifying(0.2f), UpgradeCondition.always());
         UpgradePath second = new UpgradePath("Overclock", 10, TowerBuff.amplifying(0.1f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(first, second));
@@ -202,7 +202,7 @@ class AbstractTowerTest {
 
     @Test
     void choosingAPathNotInAvailablePathsIsRejected() {
-        context.startEconomy(100, 5);
+        context.economy().startEconomy(100, 5);
         UpgradePath offered = new UpgradePath("Veteran", 10, TowerBuff.amplifying(0.2f), UpgradeCondition.always());
         UpgradePath foreign = new UpgradePath("Not mine", 10, TowerBuff.amplifying(0.2f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(offered));
@@ -215,23 +215,23 @@ class AbstractTowerTest {
 
     @Test
     void choosingAnUnaffordablePathIsRejectedAndSpendsNothing() {
-        context.startEconomy(5, 5);
+        context.economy().startEconomy(5, 5);
         UpgradePath path = new UpgradePath("Veteran", 40, TowerBuff.amplifying(0.2f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(path));
 
         boolean chosen = tower.chooseUpgradePath(path);
 
         assertThat(chosen).isFalse();
-        assertThat(context.getCredits()).isEqualTo(5);
+        assertThat(context.economy().getCredits()).isEqualTo(5);
         assertThat(tower.getChosenPath()).isNull();
     }
 
     @Test
     void aChosenPathComposesWithANearbyAuraTowersBuff() {
-        context.startEconomy(100, 5);
+        context.economy().startEconomy(100, 5);
         UpgradePath path = new UpgradePath("Veteran", 10, TowerBuff.amplifying(0.2f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(path));
-        context.addTower(tower);
+        context.towers().add(tower);
         new TowerAura(context, 0, 0);
 
         tower.chooseUpgradePath(path);
@@ -242,7 +242,7 @@ class AbstractTowerTest {
 
     @Test
     void aChosenPathsFireRateBonusReducesCoolDownCurrent() {
-        context.startEconomy(100, 5);
+        context.economy().startEconomy(100, 5);
         UpgradePath path = new UpgradePath("Overclock", 10, new TowerBuff(0f, 0f, 0.5f, 0f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(path));
 
@@ -253,14 +253,14 @@ class AbstractTowerTest {
 
     @Test
     void choosingAPathWhoseConditionIsntSatisfiedIsRejected() {
-        context.startEconomy(100, 5);
+        context.economy().startEconomy(100, 5);
         UpgradePath path = new UpgradePath("Veteran", 10, TowerBuff.amplifying(0.2f), new KillCountCondition(1000));
         FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(path));
 
         boolean chosen = tower.chooseUpgradePath(path);
 
         assertThat(chosen).isFalse();
-        assertThat(context.getCredits()).isEqualTo(100);
+        assertThat(context.economy().getCredits()).isEqualTo(100);
         assertThat(tower.getChosenPath()).isNull();
     }
 
@@ -279,18 +279,18 @@ class AbstractTowerTest {
 
     @Test
     void aBountyBonusPathToppedUpCreditsWithoutDoublingScoreOnAKill() {
-        context.startEconomy(100, 5);
+        context.economy().startEconomy(100, 5);
         UpgradePath path = new UpgradePath("Veteran", 10, new TowerBuff(0f, 0f, 0f, 0.5f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(path));
         tower.chooseUpgradePath(path);
-        int creditsAfterBuying = context.getCredits();
-        int scoreBefore = context.getScore();
+        int creditsAfterBuying = context.economy().getCredits();
+        int scoreBefore = context.economy().getScore();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1, 20, 1);
 
         tower.dealDamage(enemy, Damage.physical(4000));
 
         // base kill bounty (20 credits, 20 score) plus 50% bonus credits (10) - no extra score
-        assertThat(context.getCredits()).isEqualTo(creditsAfterBuying + 20 + 10);
-        assertThat(context.getScore()).isEqualTo(scoreBefore + 20);
+        assertThat(context.economy().getCredits()).isEqualTo(creditsAfterBuying + 20 + 10);
+        assertThat(context.economy().getScore()).isEqualTo(scoreBefore + 20);
     }
 }

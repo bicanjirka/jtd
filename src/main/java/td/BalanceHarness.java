@@ -77,11 +77,11 @@ public final class BalanceHarness implements GameHost {
                 this.ticksToClearPerWave.add(t - this.waveStartTick);
                 this.waveJustCleared = false;
             }
-            if (this.engine.getGameWorld().getLives() <= 0) {
+            if (this.engine.getGameWorld().economy().getLives() <= 0) {
                 break;
             }
             if (this.engine.getCurrentWaveIndex() >= this.engine.getWaveCount()
-                    && this.engine.getGameWorld().getEnemies().length == 0) {
+                    && this.engine.getGameWorld().enemies().getEnemies().length == 0) {
                 break;
             }
         }
@@ -111,7 +111,7 @@ public final class BalanceHarness implements GameHost {
 
     private void printReport(LevelDefinition level, int ticksRun) {
         GameWorld gameWorld = this.engine.getGameWorld();
-        int livesLost = level.startingLives() - gameWorld.getLives();
+        int livesLost = level.startingLives() - gameWorld.economy().getLives();
         System.out.println("=== Balance report: " + level.name() + " (" + ticksRun + " ticks) ===");
         System.out.println("Lives lost: " + livesLost + " / " + level.startingLives());
         System.out.println("Waves cleared: " + this.ticksToClearPerWave.size() + " / " + this.engine.getWaveCount());

@@ -72,11 +72,11 @@ public final class TowerTwo extends AbstractTower {
     }
 
     private List<EnemyMob> findEnemiesInRangeVisible(int x, int y, float r) {
-        return InRangeTargetQuery.ofType(x, y, r, EnemyMob.Type.Normal).matching(this.context.getEnemyRegistry());
+        return InRangeTargetQuery.ofType(x, y, r, EnemyMob.Type.Normal).matching(this.context.enemies());
     }
 
     private List<EnemyMob> findEnemiesInRange(int x, int y, float r) {
-        return InRangeTargetQuery.anyType(x, y, r).matching(this.context.getEnemyRegistry());
+        return InRangeTargetQuery.anyType(x, y, r).matching(this.context.enemies());
     }
 
     public void doTick(int gameTime) {

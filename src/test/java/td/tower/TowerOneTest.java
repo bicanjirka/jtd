@@ -17,7 +17,7 @@ class TowerOneTest {
 
     @Test
     void overclockIsChoosableWithMoneyAloneAndAppliesItsFireRateAndDamagePenalty() {
-        this.context.startEconomy(1000, 5);
+        this.context.economy().startEconomy(1000, 5);
         TowerOne tower = new TowerOne(this.context, 0, 0);
         UpgradePath overclock = UpgradePaths.named(tower, "Overclock");
 
@@ -30,7 +30,7 @@ class TowerOneTest {
 
     @Test
     void veteranIsNotYetChoosableBeforeTenKills() {
-        this.context.startEconomy(1000, 5);
+        this.context.economy().startEconomy(1000, 5);
         TowerOne tower = new TowerOne(this.context, 0, 0);
         UpgradePath veteran = UpgradePaths.named(tower, "Veteran");
 

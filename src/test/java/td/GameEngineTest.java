@@ -46,7 +46,7 @@ class GameEngineTest {
         Optional<Tower> selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
 
         assertThat(selected).isEmpty(); // placing doesn't "select" the newly-built tower
-        assertThat(engine.getGameWorld().getCredits()).isEqualTo(100 - TowerOne.PRICE);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100 - TowerOne.PRICE);
         assertThat(engine.cells().at(0, 0).hasTower()).isTrue();
         assertThat(engine.isPlacingTower()).isFalse();
     }
@@ -60,7 +60,7 @@ class GameEngineTest {
         Optional<Tower> selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
 
         assertThat(selected).isEmpty();
-        assertThat(engine.getGameWorld().getCredits()).isEqualTo(TowerOne.PRICE - 1);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(TowerOne.PRICE - 1);
         assertThat(engine.cells().at(0, 0).hasTower()).isFalse();
         assertThat(engine.isPlacingTower()).isFalse(); // failed payment still cancels placement mode
     }
@@ -85,7 +85,7 @@ class GameEngineTest {
         engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
         engine.mouseClicked(cellCenter(0), cellCenter(2));
 
-        assertThat(engine.getGameWorld().getCredits()).isEqualTo(100);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100);
         assertThat(engine.cells().at(0, 2).hasTower()).isFalse();
     }
 
@@ -104,18 +104,18 @@ class GameEngineTest {
 
         engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
         engine.mouseClicked(cellCenter(2), cellCenter(1));
-        int creditsAfterBuild = engine.getGameWorld().getCredits();
-        int scoreBefore = engine.getGameWorld().getScore();
+        int creditsAfterBuild = engine.getGameWorld().economy().getCredits();
+        int scoreBefore = engine.getGameWorld().economy().getScore();
 
         assertThat(engine.nextWave()).isTrue();
         assertThat(engine.isWaveReady()).isFalse();
 
-        for (int t = 1; t <= 10 && engine.getGameWorld().getScore() == scoreBefore; t++) {
+        for (int t = 1; t <= 10 && engine.getGameWorld().economy().getScore() == scoreBefore; t++) {
             engine.doTick(t);
         }
 
-        assertThat(engine.getGameWorld().getScore()).isEqualTo(scoreBefore + 7);
-        assertThat(engine.getGameWorld().getCredits()).isEqualTo(creditsAfterBuild + 7);
+        assertThat(engine.getGameWorld().economy().getScore()).isEqualTo(scoreBefore + 7);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterBuild + 7);
         assertThat(engine.isWaveReady()).isTrue(); // 2nd wave exists -> ready to start it
     }
 
@@ -129,32 +129,32 @@ class GameEngineTest {
 
         engine.startPlacing(TowerFactory.Type.mortar, TowerMortar.RANGE);
         engine.mouseClicked(cellCenter(2), cellCenter(1));
-        int creditsAfterBuild = engine.getGameWorld().getCredits();
-        int scoreBefore = engine.getGameWorld().getScore();
+        int creditsAfterBuild = engine.getGameWorld().economy().getCredits();
+        int scoreBefore = engine.getGameWorld().economy().getScore();
 
         assertThat(engine.nextWave()).isTrue();
 
-        for (int t = 1; t <= 20 && engine.getGameWorld().getScore() == scoreBefore; t++) {
+        for (int t = 1; t <= 20 && engine.getGameWorld().economy().getScore() == scoreBefore; t++) {
             engine.doTick(t);
         }
 
-        assertThat(engine.getGameWorld().getScore()).isEqualTo(scoreBefore + 7);
-        assertThat(engine.getGameWorld().getCredits()).isEqualTo(creditsAfterBuild + 7);
-        assertThat(engine.getGameWorld().getProjectileRegistry().getProjectiles()).isEmpty();
+        assertThat(engine.getGameWorld().economy().getScore()).isEqualTo(scoreBefore + 7);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterBuild + 7);
+        assertThat(engine.getGameWorld().projectiles().getProjectiles()).isEmpty();
     }
 
     @Test
     void enemyReachingTheEndOfThePathCostsALife() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
-        int initialLives = engine.getGameWorld().getLives();
+        int initialLives = engine.getGameWorld().economy().getLives();
 
         engine.nextWave();
         for (int t = 1; t <= 200; t++) {
             engine.doTick(t);
         }
 
-        assertThat(engine.getGameWorld().getLives()).isLessThan(initialLives);
+        assertThat(engine.getGameWorld().economy().getLives()).isLessThan(initialLives);
     }
 
     @Test
@@ -163,12 +163,12 @@ class GameEngineTest {
         engine.loadLevel(levelWith(List.of(), 100));
         engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
         engine.mouseClicked(cellCenter(0), cellCenter(0));
-        int creditsAfterBuild = engine.getGameWorld().getCredits();
+        int creditsAfterBuild = engine.getGameWorld().economy().getCredits();
         Tower placed = engine.cells().at(0, 0).getTower();
 
-        engine.getGameWorld().sellTower(placed);
+        engine.getGameWorld().towers().sell(placed);
 
-        assertThat(engine.getGameWorld().getCredits()).isEqualTo(creditsAfterBuild + placed.getSellPrice());
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterBuild + placed.getSellPrice());
         assertThat(engine.cells().at(0, 0).hasTower()).isFalse();
         assertThat(engine.cells().at(0, 0).buildable()).isTrue();
     }
@@ -183,7 +183,7 @@ class GameEngineTest {
 
         engine.loadLevel(levelWith(List.of(), 100));
 
-        assertThat(engine.getGameWorld().getTowers()).isEmpty();
+        assertThat(engine.getGameWorld().towers().all()).isEmpty();
         assertThat(engine.cells().at(0, 0).hasTower()).isFalse();
     }
 
@@ -192,36 +192,36 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 1000, 3, 1)), 100));
         engine.nextWave();
-        assertThat(engine.getGameWorld().getEnemies()).isNotEmpty();
+        assertThat(engine.getGameWorld().enemies().getEnemies()).isNotEmpty();
 
         engine.loadLevel(levelWith(List.of(), 100));
 
-        assertThat(engine.getGameWorld().getEnemies()).isEmpty();
+        assertThat(engine.getGameWorld().enemies().getEnemies()).isEmpty();
     }
 
     @Test
     void reloadingALevelClearsProjectilesStillInFlightFromThePreviousLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(levelWith(List.of(), 100));
-        engine.getGameWorld().addProjectile(new CannonballProjectile(0, 0, 1000, 0, 1f, (x, y) -> {
+        engine.getGameWorld().projectiles().add(new CannonballProjectile(0, 0, 1000, 0, 1f, (x, y) -> {
         }));
-        assertThat(engine.getGameWorld().getProjectileRegistry().getProjectiles()).isNotEmpty();
+        assertThat(engine.getGameWorld().projectiles().getProjectiles()).isNotEmpty();
 
         engine.loadLevel(levelWith(List.of(), 100));
 
-        assertThat(engine.getGameWorld().getProjectileRegistry().getProjectiles()).isEmpty();
+        assertThat(engine.getGameWorld().projectiles().getProjectiles()).isEmpty();
     }
 
     @Test
     void aProjectileAdvancesOnATickBetweenEnemiesAndTowersMoving() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(levelWith(List.of(), 100));
-        engine.getGameWorld().addProjectile(new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
+        engine.getGameWorld().projectiles().add(new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
         }));
 
         engine.doTick(1);
 
-        assertThat(engine.getGameWorld().getProjectileRegistry().getProjectiles().get(0).getX()).isEqualTo(10.0);
+        assertThat(engine.getGameWorld().projectiles().getProjectiles().get(0).getX()).isEqualTo(10.0);
     }
 
     @Test
@@ -234,8 +234,8 @@ class GameEngineTest {
         LevelDefinition next = LevelDefinition.unsmoothed("Next", "", 5, 5, STRAIGHT_PATH, List.of(), 75, 3);
         engine.loadLevel(next);
 
-        assertThat(engine.getGameWorld().getCredits()).isEqualTo(75);
-        assertThat(engine.getGameWorld().getLives()).isEqualTo(3);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(75);
+        assertThat(engine.getGameWorld().economy().getLives()).isEqualTo(3);
     }
 
     @Test
@@ -299,7 +299,7 @@ class GameEngineTest {
         assertThat(engine.debugSkipCurrentWave()).isTrue();
 
         assertThat(engine.getCurrentWaveIndex()).isEqualTo(2);
-        assertThat(engine.getGameWorld().getEnemies()).isNotEmpty(); // the 2nd wave's own enemies
+        assertThat(engine.getGameWorld().enemies().getEnemies()).isNotEmpty(); // the 2nd wave's own enemies
         assertThat(engine.isWaveReady()).isFalse();
     }
 
@@ -308,11 +308,11 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
         engine.nextWave();
-        assertThat(engine.getGameWorld().getEnemies()).isNotEmpty();
+        assertThat(engine.getGameWorld().enemies().getEnemies()).isNotEmpty();
 
         assertThat(engine.debugSkipCurrentWave()).isFalse();
 
-        assertThat(engine.getGameWorld().getEnemies()).isEmpty();
+        assertThat(engine.getGameWorld().enemies().getEnemies()).isEmpty();
         assertThat(engine.getCurrentWaveIndex()).isEqualTo(1);
     }
 
@@ -321,13 +321,13 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 100, 7, 1)), 100));
         engine.nextWave();
-        int livesBefore = engine.getGameWorld().getLives();
-        int creditsBefore = engine.getGameWorld().getCredits();
+        int livesBefore = engine.getGameWorld().economy().getLives();
+        int creditsBefore = engine.getGameWorld().economy().getCredits();
 
         engine.debugSkipCurrentWave();
 
-        assertThat(engine.getGameWorld().getLives()).isEqualTo(livesBefore);
-        assertThat(engine.getGameWorld().getCredits()).isEqualTo(creditsBefore);
+        assertThat(engine.getGameWorld().economy().getLives()).isEqualTo(livesBefore);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsBefore);
     }
 
     @Test
@@ -349,7 +349,7 @@ class GameEngineTest {
 
         engine.debugSpawnNextCatalogEnemy();
 
-        assertThat(engine.getGameWorld().getEnemies()).hasSize(1);
+        assertThat(engine.getGameWorld().enemies().getEnemies()).hasSize(1);
     }
 
     @Test
@@ -366,7 +366,7 @@ class GameEngineTest {
 
         engine.debugGrantCredits(250);
 
-        assertThat(engine.getGameWorld().getCredits()).isEqualTo(350);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(350);
     }
 
     private static int cellCenter(int cellIndex) {

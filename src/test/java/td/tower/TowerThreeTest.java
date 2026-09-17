@@ -47,7 +47,7 @@ class TowerThreeTest {
         RecordingEnemyMob west = RecordingEnemyMob.normalAt(TOWER_X - NEAR, TOWER_Y);
         RecordingEnemyMob south = RecordingEnemyMob.normalAt(TOWER_X, TOWER_Y + NEAR);
         // deliberately not in sweep order: where they sit decides, not where they are in the array
-        this.context.setEnemies(new EnemyMob[]{south, west, north, east});
+        this.context.enemies().setEnemies(new EnemyMob[]{south, west, north, east});
 
         Map<RecordingEnemyMob, Integer> firstHit = new LinkedHashMap<>();
         for (int tick = 1; tick <= TICKS_PER_REVOLUTION; tick++) {
@@ -70,7 +70,7 @@ class TowerThreeTest {
     void aStationaryEnemyIsHitExactlyOncePerRevolution() {
         TowerThree tower = tower();
         RecordingEnemyMob enemy = RecordingEnemyMob.normalAt(TOWER_X, TOWER_Y - NEAR);
-        this.context.setEnemies(new EnemyMob[]{enemy});
+        this.context.enemies().setEnemies(new EnemyMob[]{enemy});
 
         for (int tick = 1; tick <= TICKS_PER_REVOLUTION * 3; tick++) {
             tower.doTick(tick);
@@ -85,7 +85,7 @@ class TowerThreeTest {
         // same direction from the tower, different distances - the beam is a ray, not one target
         RecordingEnemyMob close = RecordingEnemyMob.normalAt(TOWER_X, TOWER_Y - 40);
         RecordingEnemyMob far = RecordingEnemyMob.normalAt(TOWER_X, TOWER_Y - 80);
-        this.context.setEnemies(new EnemyMob[]{close, far});
+        this.context.enemies().setEnemies(new EnemyMob[]{close, far});
 
         for (int tick = 1; tick <= TICKS_PER_REVOLUTION; tick++) {
             tower.doTick(tick);
@@ -100,7 +100,7 @@ class TowerThreeTest {
         TowerThree tower = tower();
         // range is 5.2 cells = 166.4px at this scale
         RecordingEnemyMob outOfRange = RecordingEnemyMob.normalAt(TOWER_X + 200, TOWER_Y);
-        this.context.setEnemies(new EnemyMob[]{outOfRange});
+        this.context.enemies().setEnemies(new EnemyMob[]{outOfRange});
 
         for (int tick = 1; tick <= TICKS_PER_REVOLUTION; tick++) {
             tower.doTick(tick);
@@ -113,7 +113,7 @@ class TowerThreeTest {
     void aGhostIsNeverHitBecauseTheScanOnlySeesVisibleEnemies() {
         TowerThree tower = tower();
         RecordingEnemyMob ghost = RecordingEnemyMob.ghostAt(TOWER_X + NEAR, TOWER_Y);
-        this.context.setEnemies(new EnemyMob[]{ghost});
+        this.context.enemies().setEnemies(new EnemyMob[]{ghost});
 
         for (int tick = 1; tick <= TICKS_PER_REVOLUTION; tick++) {
             tower.doTick(tick);
@@ -130,7 +130,7 @@ class TowerThreeTest {
         double awkward = -(Math.PI * 2 / TICKS_PER_REVOLUTION) * 4.37;
         RecordingEnemyMob enemy = RecordingEnemyMob.normalAt(
                 TOWER_X + Math.cos(awkward) * NEAR, TOWER_Y + Math.sin(awkward) * NEAR);
-        this.context.setEnemies(new EnemyMob[]{enemy});
+        this.context.enemies().setEnemies(new EnemyMob[]{enemy});
 
         for (int tick = 1; tick <= TICKS_PER_REVOLUTION; tick++) {
             tower.doTick(tick);
@@ -142,7 +142,7 @@ class TowerThreeTest {
     @Test
     void theTurretHeadPointsWhereTheBeamIs() {
         TowerThree tower = tower();
-        this.context.setEnemies(new EnemyMob[]{});
+        this.context.enemies().setEnemies(new EnemyMob[]{});
 
         tower.doTick(1);
 

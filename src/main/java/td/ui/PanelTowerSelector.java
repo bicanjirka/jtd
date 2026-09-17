@@ -104,7 +104,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
             this.buttons[i].setDisabledIcon(new SharpImageIcon(grayedOut(icon)));
         }
 
-        this.context.addEconomyListener(this);
+        this.context.economy().addEconomyListener(this);
     }
 
     public void startPlacing(TowerFactory.Type t, float r) {

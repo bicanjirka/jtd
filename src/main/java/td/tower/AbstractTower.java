@@ -184,7 +184,7 @@ public abstract class AbstractTower implements Tower {
                 this.killCount++;
                 if (this.chosenPath != null && this.chosenPath.statBonus().bountyBonus() != 0f) {
                     int bonus = Math.round(enemy.getBounty() * this.chosenPath.statBonus().bountyBonus());
-                    this.context.apply(EconomyDelta.credits(bonus));
+                    this.context.economy().apply(EconomyDelta.credits(bonus));
                 }
             }
         }
@@ -214,7 +214,7 @@ public abstract class AbstractTower implements Tower {
         if (!path.condition().isSatisfied(this, this.context)) {
             return false;
         }
-        if (!this.context.doPay(path.price())) {
+        if (!this.context.economy().doPay(path.price())) {
             return false;
         }
         this.chosenPath = path;

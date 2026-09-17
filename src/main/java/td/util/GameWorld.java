@@ -1,42 +1,35 @@
 package td.util;
 
 import td.board.BoardGeometry;
-import td.economy.EconomyDelta;
 import td.economy.EconomyLedger;
-import td.economy.EconomyListener;
 import td.enemy.EnemyCatalog;
-import td.enemy.EnemyMob;
-import td.enemy.EnemyRegistry;
 import td.enemy.EnemyRoster;
-import td.projectile.Projectile;
-import td.projectile.ProjectileRegistry;
 import td.projectile.ProjectileRoster;
-import td.tower.Tower;
-import td.tower.TowerListener;
 import td.tower.TowerRoster;
 import td.wave.Path;
 import td.wave.PathNormal;
 import td.wave.Wave;
 import td.wave.WaveAnnouncer;
-import td.wave.WaveStartListener;
 
 import java.util.List;
 
 /**
  * The composition root wiring a level's economy, enemy roster, tower roster, projectile
  * roster and wave-start hub into the one object {@code Tower}/{@code EnemyMob}/{@code Wave}
- * are constructed against. Each of those collaborators is independently constructible and
- * testable, and this class hands them out rather than wrapping them: ask for
- * {@link #economy()} or {@link #towers()} and call that, so a call site says which capability
- * it actually uses.
+ * are constructed against.
+ * <p>
+ * <strong>It hands its collaborators out; it does not wrap them.</strong> Ask for
+ * {@link #economy()} or {@link #towers()} and call that. This used to be forty-one
+ * delegating pass-throughs, which hid how much of the world any one class actually touched -
+ * a tower looked like it used "the world" when it used seven specific capabilities. Naming
+ * the collaborator at the call site makes that visible, and each collaborator is
+ * independently constructible and testable on its own.
  * <p>
  * It is <em>not</em> a pure composition root. Four things are its own state rather than a
  * collaborator's: the {@link BoardGeometry}, the {@link Path}, the {@link EnemyCatalog} and
  * the {@link RandomSource}. The first three are level-scoped values replaced wholesale on
- * load; see the field comments for why they are {@code volatile}.
- * <p>
- * An earlier version of this doc claimed it owned no state at all, which was false for as
- * long as those fields existed. If you add state here, say so here.
+ * load; see the field comments for why they are {@code volatile}. If you add state here, say
+ * so here.
  */
 public class GameWorld {
 
@@ -46,8 +39,8 @@ public class GameWorld {
     private volatile BoardGeometry board = BoardGeometry.empty();
     private volatile Path path;
     private volatile EnemyCatalog enemyCatalog = EnemyCatalog.builtIn();
-    private final GameHost mainApp;
 
+    private final GameHost mainApp;
     private final RandomSource random;
     private final EconomyLedger economy = new EconomyLedger();
     private final EnemyRoster enemies;
@@ -68,64 +61,44 @@ public class GameWorld {
         this.path = new PathNormal(List.of());
     }
 
-    public void startWave(Wave w) {
-        this.setEnemyCount(w.enemyCount());
-        this.waves.announce();
+    /** The player's credits, score and lives. */
+    public EconomyLedger economy() {
+        return this.economy;
     }
 
-    public void addWaveStartListener(WaveStartListener l) {
-        this.waves.addListener(l);
-    }
-
-    public void removeWaveStartListener(WaveStartListener l) {
-        this.waves.removeListener(l);
-    }
-
-    public EnemyRegistry getEnemyRegistry() {
+    /** The live enemies of the wave in play. Also the {@code EnemyRegistry} readers depend on. */
+    public EnemyRoster enemies() {
         return this.enemies;
     }
 
-    public void setEnemyCount(int c) {
-        this.enemies.setCount(c);
+    /** The towers on the board, and their buy/sell lifecycle. */
+    public TowerRoster towers() {
+        return this.towers;
     }
 
-    public EnemyMob[] getEnemies() {
-        return this.enemies.getEnemies();
+    /** The shells and missiles currently in flight. */
+    public ProjectileRoster projectiles() {
+        return this.projectiles;
     }
 
-    public void setEnemies(EnemyMob[] enemies) {
-        this.enemies.setEnemies(enemies);
-    }
-
-    public void removeEnemy() {
-        this.enemies.remove();
-    }
-
-    public void clearEnemies() {
-        this.enemies.clear();
-    }
-
-    public EnemyCatalog getEnemyCatalog() {
-        return this.enemyCatalog;
-    }
-
-    public void setEnemyCatalog(EnemyCatalog enemyCatalog) {
-        this.enemyCatalog = enemyCatalog;
-    }
-
-    /** Adds an enemy outside a wave's own spawn sequence - an ability's reinforcement or egg spawn. */
-    public void addEnemy(EnemyMob mob) {
-        this.enemies.add(mob);
-    }
-
-    /** Replaces one live enemy with another as one step - an ability's egg hatch, not a kill. See {@code EnemyRoster.replace}. */
-    public void replaceEnemy(EnemyMob outgoing, EnemyMob incoming) {
-        this.enemies.replace(outgoing, incoming);
+    /** The "a wave started" broadcast hub. */
+    public WaveAnnouncer waves() {
+        return this.waves;
     }
 
     /** Where anything in the simulation that needs randomness gets it - never {@code Math.random()}. */
     public RandomSource random() {
         return this.random;
+    }
+
+    /**
+     * Seeds the roster's alive count from the wave about to run and announces the start, in
+     * that order - a listener reacting to the announcement must not see a stale count. The one
+     * method here that coordinates two collaborators rather than handing one out.
+     */
+    public void startWave(Wave w) {
+        this.enemies.setCount(w.enemyCount());
+        this.waves.announce();
     }
 
     public BoardGeometry getBoard() {
@@ -136,70 +109,6 @@ public class GameWorld {
         this.board = board;
     }
 
-    public void setInfoText(String s) {
-        this.mainApp.setInfoText(s);
-    }
-
-    public EconomyLedger getEconomy() {
-        return this.economy;
-    }
-
-    public void startEconomy(int startingCredits, int startingLives) {
-        this.economy.startEconomy(startingCredits, startingLives);
-    }
-
-    public void apply(EconomyDelta delta) {
-        this.economy.apply(delta);
-    }
-
-    public int getScore() {
-        return this.economy.getScore();
-    }
-
-    public int getCredits() {
-        return this.economy.getCredits();
-    }
-
-    public boolean canPay(int amount) {
-        return this.economy.canPay(amount);
-    }
-
-    public boolean doPay(int amount) {
-        return this.economy.doPay(amount);
-    }
-
-    public List<Tower> getTowers() {
-        return this.towers.all();
-    }
-
-    public void addTower(Tower t) {
-        this.towers.add(t);
-    }
-
-    public void sellTower(Tower t) {
-        this.towers.sell(t);
-    }
-
-    public void clearTowers() {
-        this.towers.clear();
-    }
-
-    public void addTowerListener(TowerListener l) {
-        this.towers.addListener(l);
-    }
-
-    public void removeTowerListener(TowerListener l) {
-        this.towers.removeListener(l);
-    }
-
-    public void addEconomyListener(EconomyListener l) {
-        this.economy.addEconomyListener(l);
-    }
-
-    public void removeEconomyListener(EconomyListener l) {
-        this.economy.removeEconomyListener(l);
-    }
-
     public Path getPath() {
         return this.path;
     }
@@ -208,24 +117,16 @@ public class GameWorld {
         this.path = path;
     }
 
-    public int getLives() {
-        return this.economy.getLives();
+    public EnemyCatalog getEnemyCatalog() {
+        return this.enemyCatalog;
     }
 
-    public ProjectileRegistry getProjectileRegistry() {
-        return this.projectiles;
+    public void setEnemyCatalog(EnemyCatalog enemyCatalog) {
+        this.enemyCatalog = enemyCatalog;
     }
 
-    public void addProjectile(Projectile projectile) {
-        this.projectiles.add(projectile);
-    }
-
-    public void tickProjectiles(int gameTime) {
-        this.projectiles.doTick(gameTime);
-    }
-
-    public void clearProjectiles() {
-        this.projectiles.clear();
+    public void setInfoText(String s) {
+        this.mainApp.setInfoText(s);
     }
 
 }

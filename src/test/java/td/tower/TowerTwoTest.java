@@ -35,7 +35,7 @@ class TowerTwoTest {
         RecordingEnemyMob quarterOut = RecordingEnemyMob.ghostAt(100, 128);
         RecordingEnemyMob threeQuartersOut = RecordingEnemyMob.ghostAt(100, 142);
         RecordingEnemyMob atTheEdge = RecordingEnemyMob.ghostAt(100, 155);
-        this.context.setEnemies(new EnemyMob[]{blastCentre, quarterOut, threeQuartersOut, atTheEdge});
+        this.context.enemies().setEnemies(new EnemyMob[]{blastCentre, quarterOut, threeQuartersOut, atTheEdge});
 
         tower.doTick(0);
 
@@ -58,7 +58,7 @@ class TowerTwoTest {
         EnemyMob[] all = new EnemyMob[ring.length + 1];
         all[0] = blastCentre;
         System.arraycopy(ring, 0, all, 1, ring.length);
-        this.context.setEnemies(all);
+        this.context.enemies().setEnemies(all);
 
         tower.doTick(0);
 
@@ -73,7 +73,7 @@ class TowerTwoTest {
     void theBlastCentreItselfTakesFullDamage() {
         TowerTwo tower = towerNear(3, 3);
         RecordingEnemyMob blastCentre = RecordingEnemyMob.normalAt(100, 100);
-        this.context.setEnemies(new EnemyMob[]{blastCentre});
+        this.context.enemies().setEnemies(new EnemyMob[]{blastCentre});
 
         tower.doTick(0);
 
@@ -86,7 +86,7 @@ class TowerTwoTest {
         RecordingEnemyMob blastCentre = RecordingEnemyMob.normalAt(100, 100);
         // one pixel past the radius, but still well inside the tower's own range
         RecordingEnemyMob outside = RecordingEnemyMob.ghostAt(100, 100 + SPREAD_RADIUS + 1);
-        this.context.setEnemies(new EnemyMob[]{blastCentre, outside});
+        this.context.enemies().setEnemies(new EnemyMob[]{blastCentre, outside});
 
         tower.doTick(0);
 
@@ -110,11 +110,11 @@ class TowerTwoTest {
 
     @Test
     void clusterChargeIsChoosableOnceTwoNeighboursExistAndAppliesItsDamageAndRangeBonus() {
-        this.context.startEconomy(1000, 5);
+        this.context.economy().startEconomy(1000, 5);
         TowerTwo tower = towerNear(3, 3);
-        this.context.addTower(tower);
-        this.context.addTower(new TowerOne(this.context, 2, 2));
-        this.context.addTower(new TowerOne(this.context, 4, 4));
+        this.context.towers().add(tower);
+        this.context.towers().add(new TowerOne(this.context, 2, 2));
+        this.context.towers().add(new TowerOne(this.context, 4, 4));
         UpgradePath clusterCharge = UpgradePaths.named(tower, "Cluster Charge");
 
         boolean chosen = tower.chooseUpgradePath(clusterCharge);

@@ -40,7 +40,7 @@ public final class TowerAura extends AbstractTower implements TowerListener {
         this.power = power;
         this.clients = new LinkedHashSet<>();
 
-        this.context.addTowerListener(this);
+        this.context.towers().addListener(this);
         this.scanTowers();
     }
 
@@ -55,7 +55,7 @@ public final class TowerAura extends AbstractTower implements TowerListener {
 
     private void scanTowers() {
         int dx, dy;
-        for (Tower t : this.context.getTowers()) {
+        for (Tower t : this.context.towers().all()) {
             if (!this.clients.contains(t)) {
                 switch (t.getType()) {
                     case aura -> {
@@ -118,7 +118,7 @@ public final class TowerAura extends AbstractTower implements TowerListener {
         for (Tower t : new ArrayList<>(this.clients)) {
             t.unregisterTower(this);
         }
-        this.context.removeTowerListener(this);
+        this.context.towers().removeListener(this);
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {

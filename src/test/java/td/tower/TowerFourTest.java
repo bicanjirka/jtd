@@ -14,7 +14,7 @@ class TowerFourTest {
 
     @Test
     void expandedFieldIsChoosableWithMoneyAloneAndAppliesItsRangeBonus() {
-        this.context.startEconomy(1000, 5);
+        this.context.economy().startEconomy(1000, 5);
         TowerFour tower = new TowerFour(this.context, 0, 0);
         UpgradePath expandedField = UpgradePaths.named(tower, "Expanded Field");
 
@@ -26,7 +26,7 @@ class TowerFourTest {
 
     @Test
     void overloadCoreIsNotYetChoosableBeforeEnoughDamageDealt() {
-        this.context.startEconomy(1000, 5);
+        this.context.economy().startEconomy(1000, 5);
         TowerFour tower = new TowerFour(this.context, 0, 0);
         UpgradePath overloadCore = UpgradePaths.named(tower, "Overload Core");
 

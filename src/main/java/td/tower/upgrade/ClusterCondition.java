@@ -19,7 +19,7 @@ public record ClusterCondition(int requiredAdjacent) implements UpgradeCondition
         int cellX = board.cellX(tower.getX());
         int cellY = board.cellY(tower.getY());
         int adjacent = 0;
-        for (Tower other : context.getTowers()) {
+        for (Tower other : context.towers().all()) {
             if (other == tower) {
                 continue;
             }

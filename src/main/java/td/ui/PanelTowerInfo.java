@@ -123,7 +123,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         button.setText(path.displayName() + " ( $" + path.price() + " )");
         boolean available = !this.levelEnded
                 && path.condition().isSatisfied(this.selectedTower, this.context)
-                && this.context.canPay(path.price());
+                && this.context.economy().canPay(path.price());
         button.setEnabled(available);
     }
 
@@ -173,12 +173,12 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     public void setGameWorld(GameWorld context) {
         this.context = context;
-        this.context.addEconomyListener(this);
+        this.context.economy().addEconomyListener(this);
     }
 
     private void sellCurrentTower() {
         if (this.selectedTower != null) {
-            this.context.sellTower(this.selectedTower);
+            this.context.towers().sell(this.selectedTower);
             this.unselectTower();
             this.updateInterface();
         }

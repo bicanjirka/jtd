@@ -36,7 +36,7 @@ class TowerPlacementTest {
     private static TowerPlacement newPlacement(CellGrid grid, int credits) {
         GameWorld context = new GameWorld(new RecordingGameHost());
         context.setBoard(BoardGeometry.of(SCALE, grid.width(), grid.height()));
-        context.startEconomy(credits, 5);
+        context.economy().startEconomy(credits, 5);
         return new TowerPlacement(context, () -> grid);
     }
 
@@ -124,7 +124,7 @@ class TowerPlacementTest {
         CellGrid[] currentGrid = {bigGrid};
         GameWorld context = new GameWorld(new RecordingGameHost());
         context.setBoard(BoardGeometry.of(SCALE, bigGrid.width(), bigGrid.height()));
-        context.startEconomy(100, 5);
+        context.economy().startEconomy(100, 5);
         TowerPlacement placement = new TowerPlacement(context, () -> currentGrid[0]);
         placement.start(TowerFactory.Type.first, TowerOne.RANGE);
         placement.highlightCell(cellCenter(2), cellCenter(2));

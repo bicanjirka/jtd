@@ -29,7 +29,7 @@ class GameWorldTest {
     @Test
     void addingATowerNotifiesTowerListeners() {
         List<Tower> built = new ArrayList<>();
-        context.addTowerListener(new TowerListener() {
+        context.towers().addListener(new TowerListener() {
             @Override
             public void towerRemoved(Tower t) {
             }
@@ -41,7 +41,7 @@ class GameWorldTest {
         });
         Tower tower = TowerFactory.createTower(TowerFactory.Type.first, context, 0, 0);
 
-        context.addTower(tower);
+        context.towers().add(tower);
 
         assertThat(built).containsExactly(tower);
     }
@@ -49,7 +49,7 @@ class GameWorldTest {
     @Test
     void sellingATowerNotifiesTowerListenersAndClearsItsCell() {
         List<Tower> removed = new ArrayList<>();
-        context.addTowerListener(new TowerListener() {
+        context.towers().addListener(new TowerListener() {
             @Override
             public void towerRemoved(Tower t) {
                 removed.add(t);
@@ -60,19 +60,19 @@ class GameWorldTest {
             }
         });
         Tower tower = TowerFactory.createTower(TowerFactory.Type.first, context, 2, 3);
-        context.addTower(tower);
+        context.towers().add(tower);
 
-        context.sellTower(tower);
+        context.towers().sell(tower);
 
         assertThat(removed).containsExactly(tower);
-        assertThat(context.getTowers()).doesNotContain(tower);
+        assertThat(context.towers().all()).doesNotContain(tower);
         assertThat(host.lastClearedCell).containsExactly(2, 3);
     }
 
     @Test
     void startingAWaveNotifiesWaveStartListeners() {
         AtomicInteger waveStartedCalls = new AtomicInteger();
-        context.addWaveStartListener(waveStartedCalls::incrementAndGet);
+        context.waves().addListener(waveStartedCalls::incrementAndGet);
         Wave wave = new Wave(context, 100, 5, 1, WaveScript.parse("c c", EnemyCatalog.builtIn()));
 
         context.startWave(wave);
@@ -93,10 +93,10 @@ class GameWorldTest {
                 built.add(t);
             }
         };
-        context.addTowerListener(listener);
-        context.removeTowerListener(listener);
+        context.towers().addListener(listener);
+        context.towers().removeListener(listener);
 
-        context.addTower(TowerFactory.createTower(TowerFactory.Type.first, context, 0, 0));
+        context.towers().add(TowerFactory.createTower(TowerFactory.Type.first, context, 0, 0));
 
         assertThat(built).isEmpty();
     }

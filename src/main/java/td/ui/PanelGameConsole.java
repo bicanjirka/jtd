@@ -65,7 +65,7 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
     }
 
     public void setGameWorld(GameWorld world) {
-        world.addEconomyListener(this);
+        world.economy().addEconomyListener(this);
         this.panelTowerInfo.setGameWorld(world);
         this.panelWaveInfo.setGameWorld(world);
     }

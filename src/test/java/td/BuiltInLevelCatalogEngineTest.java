@@ -55,14 +55,14 @@ class BuiltInLevelCatalogEngineTest {
 
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(level);
-        int creditsBefore = engine.getGameWorld().getCredits();
+        int creditsBefore = engine.getGameWorld().economy().getCredits();
 
         engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
         Optional<Tower> selected = engine.mouseClicked(cellCenter(curveOnlyCell.x()), cellCenter(curveOnlyCell.y()));
 
         assertThat(selected).isEmpty();
         assertThat(engine.cells().at(curveOnlyCell.x(), curveOnlyCell.y()).hasTower()).isFalse();
-        assertThat(engine.getGameWorld().getCredits()).isEqualTo(creditsBefore);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsBefore);
     }
 
     @Test

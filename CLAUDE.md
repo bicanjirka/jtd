@@ -95,8 +95,12 @@ primitive — deliberately neutral, not under `tower` or `enemy`) · `enemy` · 
 `ui` (+ `render`, AWT-free) · `util` (`GameWorld`, `GameHost`) · `wave` (path geometry, smoothing,
 wave composition).
 
-**Depend on the narrowest thing that works.** A consumer needing only the enemy list takes
-`EnemyRegistry`, not `GameWorld`.
+**Depend on the narrowest thing that works.** `GameWorld` hands out its collaborators rather
+than wrapping them — `world.economy().doPay(n)`, `world.towers().all()` — so a call site names
+the capability it uses instead of looking like it uses "the world". A consumer that needs only
+one of them takes that type directly (`BoardRenderer` and `td.tower.targeting` take
+`EnemyRegistry`), and a class constructed against `GameWorld` should be reaching for two or
+three accessors, not ten.
 
 ## 5. Code style
 

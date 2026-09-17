@@ -75,7 +75,7 @@ public final class TowerSeeker extends AbstractTower {
 
     private EnemyMob findTarget() {
         List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.Normal)
-                .matching(this.context.getEnemyRegistry());
+                .matching(this.context.enemies());
         return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
     }
 
@@ -97,8 +97,8 @@ public final class TowerSeeker extends AbstractTower {
     }
 
     private void fireAt(EnemyMob target) {
-        this.context.addProjectile(new MissileProjectile(this.centerX, this.centerY, target,
-                this.context.getEnemyRegistry(), PROJECTILE_SPEED, this::onImpact));
+        this.context.projectiles().add(new MissileProjectile(this.centerX, this.centerY, target,
+                this.context.enemies(), PROJECTILE_SPEED, this::onImpact));
     }
 
     private void onImpact(EnemyMob target) {
