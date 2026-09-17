@@ -1,9 +1,11 @@
 # Feature Request: Enemy Spawn Types
 
-**Status: proposed, not implemented.** Written after the architecture audit of 2026-09-17,
-against the tree at that point. Every code fact cited below was verified against the source at
-the time of writing; check the "Notes for a future session" section at the bottom before
-trusting any line number.
+**Status: implemented.** Landed as six phased commits following this doc's plan, each ending
+green (CLAUDE.md §1); see `td/wave/CLAUDE.md`'s spawn-shape keyword table and
+`td/enemy/CLAUDE.md`'s offset/multiplier invariants for the durable rules that came out of it.
+This document is kept as the record of the research and the decisions - the "Open questions"
+section below is answered in **Decisions made**, and the rest of the doc describes what shipped
+except where a phase note says otherwise.
 
 ## Summary
 
@@ -451,19 +453,27 @@ death — otherwise kill order changes the payout. This keeps `EnemyDefinition.p
 `AbstractEnemyMob.price`, `EconomyDelta.kill(int)`, `EconomyState` and the HUD entirely
 untouched; the whole change is arithmetic inside the swarm slot's spawn.
 
-## Open questions
+**Swarm health divides, the same as bounty.** A swarm of 3 has the same total durability *and*
+total bounty as one normal spawn — balance-neutral, so an author can swap a shape into an
+existing wave string without retuning it. `SpawnShape.swarm(n)`'s `healthMultiplier` is `1/n`,
+composed by the caller (`Wave`) before `DefinedEnemyMob` applies `healthDivisor`, exactly where
+`health / definition.healthDivisor()` already ran inside its `super(...)` call — a shape
+multiplier is arithmetic on top of that existing division, not a new precedence rule for it.
 
-1. **Swarm health.** Does each member keep the wave's `hp`, making a swarm of 3 three times the
-   total health for the same bounty? Or is health divided like bounty? Dividing is the more
-   defensible default; the request did not say.
-2. **Swarm member cap.** Is `swarm 20 c` legal? A cap keeps one slot from dwarfing a whole wave
-   and bounds the per-tick cost the spacer removal just recovered.
-3. **Does a boss scale with `healthDivisor`?** `EnemyDefinition.healthDivisor` already exists for
-   per-definition toughness; a boss multiplier interacts with it and the precedence must be
-   stated.
-4. **Preview panel.** `PanelEnemy` shows one sprite per distinct definition with a count. Should
-   a swarm show 3 small sprites, or one with a "×3" badge? Purely presentational, but it is the
-   only place the player learns what is coming.
+**A shaped slot's member count is capped at 12** (`SpawnShape.MAX_MEMBERS`), enforced in the
+value type's own compact constructor with a `GameStartupException` — `swarm 20 c` fails the
+parse the same way an unrecognized token does, rather than becoming a frame-rate bug discovered
+at runtime.
+
+**The preview panel shows counts only, no shape badge.** Once `WaveContent.enemyCount()` counts
+members, `PanelWaveInfo` already renders `swarm 4 c` as `c ×4` with no UI change at all - the
+player sees the right number of enemies coming. Which slots are shaped stays invisible for now;
+a shape badge is future UI work, not required for the mechanic to be honestly represented.
+
+A leaked swarm member still costs exactly one life, like any other mob reaching the path's end —
+a swarm of 3 leaking all three costs 3 lives for one spawn's worth of bounty and health. Scaling
+the leak penalty by the shape would have made a leak worth something other than one life for the
+first time; not doing that is the simpler, and default, choice.
 
 ## V1 Scope
 
@@ -484,29 +494,41 @@ third of it.
 
 ## Phased implementation order
 
-Each phase ends green and is committed on its own (CLAUDE.md §1).
+Each phase ended green and was committed on its own (CLAUDE.md §1). What actually shipped, in
+order - one deviation from the plan below is called out where it happened:
 
 1. **Slot model + spacer removal.** `spawnSlot` returns `List<EnemyMob>`; `EmptySlot` returns
-   empty; delete `EnemyMobEmpty` and its visitor method and factory case. No new spawn types, no
-   grammar change. Existing waves must be provably unchanged: spawn timing is identical because
+   empty; deleted `EnemyMobEmpty` and its visitor method and factory case. No new spawn types, no
+   grammar change. Existing waves are provably unchanged: spawn timing is identical because
    `delay` still increments per slot.
-2. **Member counting.** `WaveContent`'s three counting methods count members. Still a no-op for
-   existing content, since every slot has one member — but it is the line that makes phase 4
-   safe, and it wants its own test.
-3. **`SpawnShape` + mechanism 1 (multipliers): Boss and Elite.** The value type with its
-   `normal()` identity, the size/speed/health/bounty multipliers folded into
-   `DefinedEnemyMob`'s existing recomputations, and the `boss`/`elite` tokens. No offsets and no
-   delay work, so this proves the grammar, the shape value and the multipliers in isolation.
-4. **Mechanism 3 (per-member delay): Column and Drip.** Move the slot-index-to-ticks conversion
-   out of `AbstractEnemyMob` and into the spawn, then add the two spacing presets. Done before
-   the offsets because it touches a constructor signature and is better landed on its own.
+2. **Member counting.** `WaveContent`'s three counting methods count members. A no-op for
+   existing content, since every slot has one member — but it is the line that makes the later
+   phases safe, and it got its own test (`WaveContentTest`) ahead of anything that could produce
+   a multi-member slot.
+3. **`SpawnShape`, `SpawnParameters`, and the *entire* grammar: Boss and Elite land observably.**
+   Deviated from the plan above, which staged the seven spawn-type tokens across phases 3 and 5.
+   In practice `WaveScript`'s parser, the two count positions, and `EnemyCatalog.register`'s
+   collision guard are one connected change - splitting the grammar itself across phases would
+   have meant parsing `swarm`/`line`/`column`/`drip`/`flank` before their mechanisms existed to
+   act on them. Landed as one commit instead: all eight tokens parse from here on, but only
+   `boss`/`elite` do anything observable yet — `swarm`/`line`/`flank`/`column`/`drip` already
+   spawn the right *member count*, with every member stacked at the slot's own position until
+   phases 4-5 give them spacing and offset. This phase also moved the slot-position-to-ticks
+   conversion out of `AbstractEnemyMob` and into `SpawnParameters`, closing two latent traps
+   found while doing it (see Risks 5-6, made concrete rather than hypothetical).
+4. **Mechanism 3 (per-member delay): Column and Drip.** `Wave` computes each member's own slot
+   position as the slot's index plus its member index scaled by `SpawnShape.delaySpacingSlots()`.
 5. **Mechanism 2 (lateral offset): Swarm, Line and Flank.** The offset in `updatePosition` with
-   board clamping, the level-stable seeded scatter for Swarm, the even spread for Line, the
-   two-member maximum for Flank, and exact bounty splitting.
-6. **Docs.** `td/wave/CLAUDE.md` gets the grammar table and the count-overloading rule;
-   `td/enemy/CLAUDE.md` gets the offset and multiplier invariants; `README.md` gets a spawn-type
-   table. Per CLAUDE.md, a genuinely new invariant is exactly when the root file may change —
-   the reserved-token rule in §9 is one.
+   board clamping, the wave-stable seeded scatter for Swarm, the even spread for Line, the
+   two-member maximum for Flank. (Exact bounty splitting had already shipped in phase 3, as part
+   of `SpawnShape.bountyShares` — not deferred to this phase as the plan above anticipated.)
+   Verified visually via the `run-jtd` skill against a temporarily edited built-in wave string,
+   reverted before committing.
+6. **Docs.** `td/wave/CLAUDE.md` got the spawn-shape keyword table and the count-overloading
+   rule; `td/enemy/CLAUDE.md` got the offset and multiplier invariants; `README.md` got a
+   spawn-type table; this document's own status and open questions were closed out. Root
+   `CLAUDE.md` §9 changed in phase 3, not here, the moment the reserved-token count actually grew
+   past one — the genuinely-new-invariant case the doc's own rules call for.
 
 ## Notes for a future session
 

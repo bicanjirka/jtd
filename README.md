@@ -103,6 +103,23 @@ the board by a coloured ring around it. The Aura tower is passive and offers non
 | Empty      | —             | Not a real enemy — a spacer that opens a timing gap inside a wave                                                                                                                                                                                                                                                 |
 | The Warden | square        | A boss: armored, periodically summons reinforcements and shields itself and nearby allies. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. Appears as the final wave of Classic Loop. |
 
+### Spawn shapes
+
+A wave's script can shape how a slot spawns, not just what it spawns — write the shape's
+keyword before the enemy id (`boss warden1`), or before a member count and the enemy id for the
+shapes that take one (`swarm 4 c`):
+
+| Shape  | Keyword  | What one slot produces                                                |
+|--------|----------|-------------------------------------------------------------------------|
+| Normal | (none)   | One enemy on the path centre                                            |
+| Boss   | `boss`   | One enemy at 200% size, 50% speed, double bounty                        |
+| Elite  | `elite`  | One enemy at 150% size, more health, 1.5× bounty                        |
+| Swarm  | `swarm`  | *N* enemies at 50% size, scattered off-path, sharing one spawn's bounty and health |
+| Line   | `line`   | *N* enemies spread evenly across the path's width, abreast              |
+| Flank  | `flank`  | Two enemies hugging opposite edges of the path                          |
+| Column | `column` | *N* enemies in a tight single file, closer together than *N* separate spawns |
+| Drip   | `drip`   | *N* enemies stretched over more time than *N* separate spawns           |
+
 ### Levels
 
 Three levels ship with the game: **Classic Loop** (the original 20×15 winding path, 17

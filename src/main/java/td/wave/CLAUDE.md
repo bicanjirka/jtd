@@ -74,6 +74,28 @@ enemy table when you register a new id.
 | `e`       | Empty - the reserved spacer; counts toward spawn timing, not toward the enemy count |
 | `warden1` | The Warden boss - the only id in its six-stage chain a wave spawns directly         |
 
+**The spawn-shape keyword table.** A keyword goes *before* the token it shapes - `boss
+warden1`, `swarm 4 c`. `SpawnShape.normal()` (no keyword) is the identity every plain token
+already gets.
+
+| Keyword  | `SpawnShape` factory | Members       | Mechanism(s)                                    |
+|----------|-----------------------|---------------|--------------------------------------------------|
+| `boss`   | `boss()`               | 1 (fixed)     | 200% size, 50% speed, 2× bounty                   |
+| `elite`  | `elite()`              | 1 (fixed)     | 150% size, +health, 1.5× bounty                   |
+| `swarm`  | `swarm(n)`             | *n* (required) | 50% size, health/bounty split, scattered offset  |
+| `line`   | `line(n)`              | *n* (required) | evenly spread offset, no multipliers             |
+| `flank`  | `flank()`              | 2 (fixed)     | offset at opposite maximums, no multipliers       |
+| `column` | `column(n)`            | *n* (required) | delay spacing tighter than one slot apart         |
+| `drip`   | `drip(n)`              | *n* (required) | delay spacing looser than one slot apart          |
+
+A count immediately **before** a spawn-type keyword repeats the whole shaped slot (`3 boss
+warden1` is three boss slots); a count immediately **after** one sets that slot's member count
+instead (`swarm 4 c` is one slot of four) - the same "a count applies to the token immediately
+following it" rule as any other token, just read against whichever kind of token follows. A
+count is required after `swarm`/`line`/`column`/`drip` and rejected after `boss`/`elite`/
+`flank`, whose member count the shape itself fixes; both are parse errors, like any other
+malformed token.
+
 Parsing and instantiation are deliberately separate:
 
 - `WaveScript.parse(tokens, catalog)` turns a token string into a `WaveContent` against a
