@@ -7,6 +7,7 @@ import td.enemy.AbstractEnemyMob;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.ui.render.EnemyBodyDraw;
+import td.ui.render.EnemyFadeDraw;
 import td.ui.render.Palette;
 import td.ui.render.StatusMarkerDraw;
 import td.util.GameWorld;
@@ -81,7 +82,7 @@ class EnemyFrameBuilderTest {
     }
 
     @Test
-    void anEnemyThatJustWrappedBackToThePathStartIsNotInterpolatedAcrossTheBoard() {
+    void anEnemyThatReachesThePathsEndFadesInPlaceInsteadOfWrappingToTheStart() {
         GameWorld context = new GameWorld(new RecordingGameHost());
         context.setBoard(BoardGeometry.of(1, 1001, 1001));
         context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5))));
@@ -94,11 +95,10 @@ class EnemyFrameBuilderTest {
             enemy.doTick(tick);
         }
 
-        EnemyBodyDraw drawAtZero = bodyDrawAt(enemy, tick, 0.0);
-        EnemyBodyDraw drawAtOne = bodyDrawAt(enemy, tick, 1.0);
-
-        assertThat(drawAtZero.x()).isEqualTo(drawAtOne.x());
-        assertThat(drawAtZero.y()).isEqualTo(drawAtOne.y());
+        assertThat(enemy.isDead()).isTrue();
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(tick, 0.0);
+        enemy.accept(builder);
+        assertThat(builder.build().getFirst()).isInstanceOf(EnemyFadeDraw.class);
     }
 
     @Test

@@ -151,10 +151,12 @@ real-world pace as a straight one.
 `0` already means `distanceIntoLap` never accumulates. No v1 built-in uses this yet — it's the
 boss egg's mechanism (a later phase).
 
-**Reaching the path's end is a wrap, not a despawn.** `distanceIntoLap` wraps back to zero, the
-player is charged an `EconomyDelta.leak`, and `prevX`/`prevY` are resynced to the new position
-— without that resync the renderer interpolates across the whole board for one frame and draws
-a streak.
+**Reaching the path's end is a despawn, not a wrap.** `AbstractEnemyMob.leak()` charges the
+player an `EconomyDelta.leak`, then kills the mob through the exact same `dead`/fade/
+`EnemyRoster.remove()` path a combat kill uses, just with a leak penalty instead of
+`EconomyDelta.kill` — no bounty, and no second lap where a tower could still kill it for one.
+A leaked mob's `x`/`y` are left exactly where they were the tick before, so the fade has
+something real to draw from instead of a teleport to the path's start.
 
 **`doDamage` returns the damage that actually landed, not what was passed in.** `absorb` (which
 `DefinedEnemyMob` implements by folding every `Trait.onHit` in sequence) lets a mob resist part
