@@ -3,6 +3,7 @@ package td.wave;
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.damage.Damage;
+import td.effect.EffectKind;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
@@ -100,6 +101,47 @@ class WaveTest {
         assertThat(elite.getBodyScale()).isEqualTo(normal.getBodyScale() * 1.5f);
         assertThat(elite.getHealth()).isEqualTo(normal.getHealth() * 2);
         assertThat(elite.getBounty()).isEqualTo(Math.round(normal.getBounty() * 1.5f));
+    }
+
+    @Test
+    void anEliteSlotTakesHalfDamagePerHit() {
+        DefinedEnemyMob normal = (DefinedEnemyMob) wave(500, 10, 1, "c").spawn()[0];
+        DefinedEnemyMob elite = (DefinedEnemyMob) wave(500, 10, 1, "elite c").spawn()[0];
+        int normalHealthBefore = normal.getHealth();
+        int eliteHealthBefore = elite.getHealth();
+
+        normal.doDamage(Damage.physical(1000));
+        elite.doDamage(Damage.physical(1000));
+
+        int normalLoss = normalHealthBefore - normal.getHealth();
+        int eliteLoss = eliteHealthBefore - elite.getHealth();
+        assertThat(eliteLoss).isEqualTo(normalLoss / 2);
+    }
+
+    @Test
+    void anEliteSlotsDamageReductionComposesWithTheDefinitionsOwnResistance() {
+        // Armored ("s") alone survives 75% of a hit at level 1 (PercentResistTrait(0.8, 0.05));
+        // Elite alone survives 50%. Stacked, a definition's own resistance and the shape's
+        // permanent reduction multiply rather than one overriding the other.
+        DefinedEnemyMob armoredOnly = (DefinedEnemyMob) wave(500, 10, 1, "s").spawn()[0];
+        DefinedEnemyMob eliteArmored = (DefinedEnemyMob) wave(500, 10, 1, "elite s").spawn()[0];
+        int armoredHealthBefore = armoredOnly.getHealth();
+        int eliteArmoredHealthBefore = eliteArmored.getHealth();
+
+        armoredOnly.doDamage(Damage.physical(1000));
+        eliteArmored.doDamage(Damage.physical(1000));
+
+        assertThat(armoredHealthBefore - armoredOnly.getHealth()).isEqualTo(750);
+        assertThat(eliteArmoredHealthBefore - eliteArmored.getHealth()).isEqualTo(375);
+    }
+
+    @Test
+    void anEliteSlotShowsAPermanentShieldMarkerButANormalSlotDoesNot() {
+        DefinedEnemyMob normal = (DefinedEnemyMob) wave(100, 10, 1, "c").spawn()[0];
+        DefinedEnemyMob elite = (DefinedEnemyMob) wave(100, 10, 1, "elite c").spawn()[0];
+
+        assertThat(elite.activeEffectKinds()).contains(EffectKind.SHIELD);
+        assertThat(normal.activeEffectKinds()).doesNotContain(EffectKind.SHIELD);
     }
 
     @Test

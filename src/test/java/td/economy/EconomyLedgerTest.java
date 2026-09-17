@@ -79,8 +79,8 @@ class EconomyLedgerTest {
         ledger.apply(EconomyDelta.kill(7));
 
         assertThat(notifications).hasSize(1);
-        assertThat(notifications.get(0).credits()).isEqualTo(7);
-        assertThat(notifications.get(0).score()).isEqualTo(7);
+        assertThat(notifications.getFirst().credits()).isEqualTo(7);
+        assertThat(notifications.getFirst().score()).isEqualTo(7);
     }
 
     @Test

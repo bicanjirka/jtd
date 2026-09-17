@@ -57,7 +57,7 @@ class ArcCornerSmoothingTest {
 
         // the single midpoint sample should land close to the corner's own quadrant (large x,
         // small y), not swing to the opposite side of the circle (small x, large y)
-        Vec2 midpoint = samples.get(0);
+        Vec2 midpoint = samples.getFirst();
         assertThat(midpoint.x()).isGreaterThan(5.0);
         assertThat(midpoint.y()).isLessThan(5.0);
     }
@@ -71,6 +71,6 @@ class ArcCornerSmoothingTest {
         assertThat(smoothed.get(0)).isEqualTo(new Vec2(0, 0));
         assertThat(smoothed.get(1)).isEqualTo(new Vec2(5, 0)); // pulledBackBefore
         assertThat(smoothed.get(smoothed.size() - 2)).isEqualTo(new Vec2(10, 5)); // pulledBackAfter
-        assertThat(smoothed.get(smoothed.size() - 1)).isEqualTo(new Vec2(10, 10));
+        assertThat(smoothed.getLast()).isEqualTo(new Vec2(10, 10));
     }
 }

@@ -27,7 +27,7 @@ class ProjectileFrameBuilderTest {
         List<ProjectileDraw> draws = builder.build();
 
         assertThat(draws).hasSize(1);
-        CannonballDraw draw = (CannonballDraw) draws.get(0);
+        CannonballDraw draw = (CannonballDraw) draws.getFirst();
         assertThat(draw.x()).isCloseTo(5f, within(0.01f));
         assertThat(draw.y()).isEqualTo(0f);
     }
@@ -43,7 +43,7 @@ class ProjectileFrameBuilderTest {
 
         ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0);
         missile.accept(builder);
-        MissileDraw draw = (MissileDraw) builder.build().get(0);
+        MissileDraw draw = (MissileDraw) builder.build().getFirst();
 
         assertThat(draw.facingRadians()).isCloseTo(Math.PI / 2, within(0.01));
     }

@@ -360,7 +360,7 @@ public class PanelLevelSelect extends JPanel {
             List<Point2D.Float> mapped = mapToBounds(points, width, height, 14);
             if (mapped.size() >= 2) {
                 GeneralPath outline = new GeneralPath();
-                outline.moveTo(mapped.get(0).x, mapped.get(0).y);
+                outline.moveTo(mapped.getFirst().x, mapped.getFirst().y);
                 for (int i = 1; i < mapped.size(); i++) {
                     outline.lineTo(mapped.get(i).x, mapped.get(i).y);
                 }
@@ -368,11 +368,11 @@ public class PanelLevelSelect extends JPanel {
                 g2.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                 g2.draw(outline);
 
-                Point2D.Float start = mapped.get(0);
+                Point2D.Float start = mapped.getFirst();
                 g2.setColor(FOREGROUND);
                 g2.fillRect(Math.round(start.x - 4), Math.round(start.y - 4), 8, 8);
 
-                Point2D.Float end = mapped.get(mapped.size() - 1);
+                Point2D.Float end = mapped.getLast();
                 Point2D.Float beforeEnd = mapped.get(Math.max(0, mapped.size() - 2));
                 double angle = Math.atan2(end.y - beforeEnd.y, end.x - beforeEnd.x);
                 g2.setColor(this.accent);

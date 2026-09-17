@@ -36,7 +36,7 @@ class EnemyFrameBuilderTest {
     private static EnemyBodyDraw bodyDrawAt(EnemyMob enemy, int gameTime, double alpha) {
         EnemyFrameBuilder builder = new EnemyFrameBuilder(gameTime, alpha);
         enemy.accept(builder);
-        return (EnemyBodyDraw) builder.build().get(0);
+        return (EnemyBodyDraw) builder.build().getFirst();
     }
 
     @Test
@@ -124,7 +124,7 @@ class EnemyFrameBuilderTest {
         List<StatusMarkerDraw> markers = builder.buildMarkers();
 
         assertThat(markers).hasSize(1);
-        assertThat(markers.get(0).palette()).isEqualTo(Palette.STATUS_MARKER_SLOW);
+        assertThat(markers.getFirst().palette()).isEqualTo(Palette.STATUS_MARKER_SLOW);
     }
 
     @Test
@@ -162,7 +162,7 @@ class EnemyFrameBuilderTest {
         List<StatusMarkerDraw> markers = builder.buildMarkers();
 
         assertThat(markers).hasSize(EnemyFrameBuilder.MAX_VISIBLE_MARKERS + 1);
-        assertThat(markers.get(markers.size() - 1).palette()).isEqualTo(Palette.STATUS_MARKER_OVERFLOW);
+        assertThat(markers.getLast().palette()).isEqualTo(Palette.STATUS_MARKER_OVERFLOW);
     }
 
     @Test

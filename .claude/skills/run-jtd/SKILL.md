@@ -1,6 +1,8 @@
 ---
 name: run-jtd
 description: Build, run, and visually drive jTD (the Swing tower-defense desktop app). Use when asked to start jTD, take a screenshot of its UI, click something in the game, run its tests, or verify a gameplay/UI change actually works end to end.
+model: haiku
+context: fork
 ---
 
 jTD is a native Java Swing desktop app (`td.Main` -> `new TowerDefense()`), not a browser or

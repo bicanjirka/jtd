@@ -108,7 +108,7 @@ class WaveScriptTest {
         WaveContent content = WaveScript.parse("boss warden1", this.catalog);
 
         assertThat(content.spawnSequence()).hasSize(1);
-        EnemySlot slot = (EnemySlot) content.spawnSequence().get(0);
+        EnemySlot slot = (EnemySlot) content.spawnSequence().getFirst();
         assertThat(slot.shape()).isEqualTo(SpawnShape.boss());
         assertThat(content.enemyCount()).isEqualTo(1);
     }
@@ -126,7 +126,7 @@ class WaveScriptTest {
         WaveContent content = WaveScript.parse("swarm 4 c", this.catalog);
 
         assertThat(content.spawnSequence()).hasSize(1);
-        EnemySlot slot = (EnemySlot) content.spawnSequence().get(0);
+        EnemySlot slot = (EnemySlot) content.spawnSequence().getFirst();
         assertThat(slot.shape()).isEqualTo(SpawnShape.swarm(4));
         assertThat(content.enemyCount()).isEqualTo(4);
     }

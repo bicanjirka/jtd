@@ -51,7 +51,7 @@ final class RecordingEnemyMob implements EnemyMob {
         if (this.hits.size() != 1) {
             throw new IllegalStateException("expected exactly one hit, got " + this.hits.size());
         }
-        return this.hits.get(0).amount();
+        return this.hits.getFirst().amount();
     }
 
     @Override

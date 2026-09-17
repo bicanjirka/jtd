@@ -17,7 +17,7 @@ composable choice alongside **what it spawns**:
 |------------|----------------------------------------------------------------------------|
 | **Normal** | one enemy on the path centre — today's behaviour, unchanged                |
 | **Boss**   | one enemy at 200% size, 50% speed, double bounty                           |
-| **Elite**  | one enemy at 150% size, more health, 1.5× bounty                           |
+| **Elite**  | one enemy at 150% size, more health, 1.5× bounty, permanent 50% shield     |
 | **Swarm**  | *N* enemies at 50% size, randomly scattered off-path, bounty split exactly |
 | **Line**   | *N* enemies spread evenly across the path's width, abreast                 |
 | **Flank**  | two enemies hugging opposite edges of the path                             |
@@ -28,9 +28,10 @@ The unifying idea is that a `WaveSlot` stops meaning "one mob" and starts meanin
 a shape". That single change is also what removes `EnemyMobEmpty`, so the spacer cleanup is not
 a bundled chore — it is a prerequisite this feature pays for anyway. See **Part two**.
 
-Those eight are not eight implementations. They are **presets over three independent
-mechanisms** — per-mob multipliers, lateral offsets, and per-member spawn delay — which is what
-makes adding the last five nearly free once the first three exist. See **Three mechanisms**.
+Those eight are not eight implementations. They are **presets over four independent
+mechanisms** — per-mob multipliers, a permanent damage-taken reduction, lateral offsets, and
+per-member spawn delay — which is what makes adding the last five nearly free once the first
+three exist. See **Three mechanisms**.
 
 This is deliberately *not* a second way to express what enemies already do. Traits and abilities (`td.enemy.Trait`,
 `td.enemy.Ability`) own behaviour — resistance, hurt-speed, invisibility,
@@ -127,19 +128,30 @@ three of them and the delay logic across two. Seven *values* over three mechanis
 
 ### Three mechanisms
 
-Every spawn type is some combination of exactly three things. Nothing else is needed.
+Every spawn type is some combination of exactly four things. Nothing else is needed. (Three of
+them were enough for the first six shapes; Elite is the shape that needed the fourth — see
+below.)
 
 **1. Per-mob multipliers** — size, speed, health, bounty share.
-Boss and Elite are only this. Swarm uses the size and bounty knobs. The multipliers must be **per-mob fields folded into
+Boss is only this. Swarm uses the size and bounty knobs. The multipliers must be **per-mob fields folded into
 the existing recomputations**, not one-time writes — see Risk 2.
 
-**2. Lateral offset** — a fixed perpendicular displacement from the path centre, held for the
+**2. Permanent damage-taken multiplier** — a per-hit reduction folded into
+`DefinedEnemyMob.absorb` alongside the definition's own traits, composing with them rather than
+overriding them. Elite is the only shape that uses this: it needs a fixed 50% reduction for as
+long as the mob lives, which is what a `Trait` models (see `td.enemy.CLAUDE.md`) — not the
+timed, ability-applied `EffectKind.SHIELD` effect, which only an `EnemyDefinition`'s own
+abilities can apply and which expires. `DefinedEnemyMob.activeEffectKinds()` adds
+`EffectKind.SHIELD` to the mob's status markers purely so the player sees the same shield glyph
+this reduction implies, without the mechanism itself being a real, timed `Effect`.
+
+**3. Lateral offset** — a fixed perpendicular displacement from the path centre, held for the
 mob's whole run so the formation follows the path around corners.
 Swarm scatters randomly within the slot footprint; Line spaces evenly across it; Flank is two
 members at opposite maximum offsets. Computed from `PathPose.facingRadians() + PI/2`, so no new
 tangent maths is needed. Must be clamped to the board — see Risk 1.
 
-**3. Per-member spawn delay** — a fractional slot-delay added to each member's countdown.
+**4. Per-member spawn delay** — a fractional slot-delay added to each member's countdown.
 This is the mechanism Column and Drip share, differing only in magnitude:
 
 ```
@@ -161,18 +173,18 @@ mob and into the spawn, which is where the slot's shape is known anyway.
 
 ### The eight shapes, by mechanism
 
-| Shape      | Members | Multipliers                     | Lateral           | Delay              |
-|------------|---------|---------------------------------|-------------------|--------------------|
-| **Normal** | 1       | —                               | —                 | —                  |
-| **Boss**   | 1       | 200% size, 50% speed, 2× bounty | —                 | —                  |
-| **Elite**  | 1       | 150% size, +health, 1.5× bounty | —                 | —                  |
-| **Swarm**  | *N*     | 50% size, bounty split          | random, seeded    | —                  |
-| **Line**   | *N*     | —                               | even across width | —                  |
-| **Flank**  | 2       | —                               | ± maximum         | —                  |
-| **Column** | *N*     | —                               | —                 | tight (sub-slot)   |
-| **Drip**   | *N*     | —                               | —                 | loose (super-slot) |
+| Shape      | Members | Multipliers                     | Shield | Lateral           | Delay              |
+|------------|---------|----------------------------------|--------|--------------------|--------------------|
+| **Normal** | 1       | —                                | —      | —                  | —                  |
+| **Boss**   | 1       | 200% size, 50% speed, 2× bounty | —      | —                  | —                  |
+| **Elite**  | 1       | 150% size, +health, 1.5× bounty | 50%    | —                  | —                  |
+| **Swarm**  | *N*     | 50% size, bounty split          | —      | random, seeded     | —                  |
+| **Line**   | *N*     | —                                | —      | even across width  | —                  |
+| **Flank**  | 2       | —                                | —      | ± maximum          | —                  |
+| **Column** | *N*     | —                                | —      | —                  | tight (sub-slot)   |
+| **Drip**   | *N*     | —                                | —      | —                  | loose (super-slot) |
 
-Every cell that is not "—" is one of the three mechanisms above. There is no eighth thing.
+Every cell that is not "—" is one of the four mechanisms above. There is no eighth thing.
 
 ### Normal spawn
 
@@ -216,7 +228,10 @@ shows up mid-wave and has to be focused down. It exists so a wave author can rai
 without the ceremony of a boss, and without registering a parallel `xyzBig` definition on every
 level that wants one. It asks the player: *do you own any single-target damage at all?* A
 defence built entirely on `SplashTower` and `PulseTower` handles crowds beautifully and stalls
-completely on one fat unit.
+completely on one fat unit. It also always carries a permanent 50% damage-taken reduction — the
+same shield glyph a timed `EffectKind.SHIELD` effect shows, so the player reads it the same way,
+even though the mechanism behind it is a permanent per-shape multiplier, not an expiring effect
+(see mechanism 2, above).
 
 **Column.** A conga line — the same *N* enemies as `N c`, but packed far tighter than
 one slot-delay apart. This is the splash lever. A tight column is the best thing that ever

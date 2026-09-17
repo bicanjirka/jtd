@@ -38,8 +38,8 @@ class SpawnParametersTest {
 
     @Test
     void aFasterSpeedMultiplierShortensTheDelayForTheSameSlotPosition() {
-        SpawnParameters fullSpeed = SpawnParameters.of(2, 1.28f, 50, 3, 1f, 1f, new Vec2(0, 0));
-        SpawnParameters halfSpeed = SpawnParameters.of(2, 1.28f, 50, 3, 1f, 0.5f, new Vec2(0, 0));
+        SpawnParameters fullSpeed = SpawnParameters.of(2, 1.28f, 50, 3, 1f, 1f, 1f, new Vec2(0, 0));
+        SpawnParameters halfSpeed = SpawnParameters.of(2, 1.28f, 50, 3, 1f, 0.5f, 1f, new Vec2(0, 0));
 
         assertThat(halfSpeed.delayTicks()).isGreaterThan(fullSpeed.delayTicks());
     }
@@ -47,13 +47,21 @@ class SpawnParametersTest {
     @Test
     void healthPriceMultipliersAndOffsetPassThroughUnchanged() {
         Vec2 offset = new Vec2(1.0, 4.0);
-        SpawnParameters parameters = SpawnParameters.of(0, 1.28f, 50, 3, 1.5f, 0.5f, offset);
+        SpawnParameters parameters = SpawnParameters.of(0, 1.28f, 50, 3, 1.5f, 0.5f, 0.5f, offset);
 
         assertThat(parameters.health()).isEqualTo(50);
         assertThat(parameters.price()).isEqualTo(3);
         assertThat(parameters.sizeMultiplier()).isEqualTo(1.5f);
         assertThat(parameters.speedMultiplier()).isEqualTo(0.5f);
+        assertThat(parameters.damageTakenMultiplier()).isEqualTo(0.5f);
         assertThat(parameters.localOffset()).isEqualTo(offset);
+    }
+
+    @Test
+    void atSlotIsTheIdentityWithNoDamageReduction() {
+        SpawnParameters parameters = SpawnParameters.atSlot(0, 1.28f, 50, 3);
+
+        assertThat(parameters.damageTakenMultiplier()).isEqualTo(1f);
     }
 
     @Test

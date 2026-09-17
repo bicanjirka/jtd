@@ -53,7 +53,7 @@ class MortarTowerTest {
 
         assertThat(target.onlyHitAmount()).isEqualTo(MortarTower.DAMAGE);
         assertThat(target.appliedEffects()).hasSize(1);
-        assertThat(target.appliedEffects().get(0).kind()).isEqualTo(EffectKind.SLOW);
+        assertThat(target.appliedEffects().getFirst().kind()).isEqualTo(EffectKind.SLOW);
     }
 
     @Test

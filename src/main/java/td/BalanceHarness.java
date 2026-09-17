@@ -46,7 +46,7 @@ public final class BalanceHarness implements GameHost {
      * Runs one built-in loadout against Classic Loop, so this class is executable with no arguments.
      */
     public static void main(String[] args) {
-        LevelDefinition classicLoop = new BuiltInLevelCatalog().levels().get(0);
+        LevelDefinition classicLoop = new BuiltInLevelCatalog().levels().getFirst();
         List<TowerPlacementSpec> loadout = List.of(
                 TowerPlacementSpec.of(TowerFactory.Type.SNIPER, 6, 11),
                 TowerPlacementSpec.of(TowerFactory.Type.SNIPER, 8, 9),

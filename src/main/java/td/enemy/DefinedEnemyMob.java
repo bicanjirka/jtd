@@ -1,11 +1,13 @@
 package td.enemy;
 
 import td.damage.Damage;
+import td.effect.EffectKind;
 import td.effect.EffectTemplate;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * The single concrete {@link EnemyMob} implementation for every data-driven enemy - behavior
@@ -22,6 +24,11 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
     // every doDamage() speed recomputation alongside the traits' own speedFactor, rather than
     // applied once at construction, which the first hit would silently wipe.
     private final float shapeSpeedMultiplier;
+    // The spawn shape's permanent damage-taken multiplier (1 for a normal spawn, 0.5 for an
+    // elite) - folded into absorb() alongside the definition's own traits. Permanent, unlike
+    // ShieldTemplate's timed EffectKind.SHIELD: see SpawnShape's own doc comment for why a
+    // spawn-shape-wide, always-on reduction belongs with Trait's mechanism, not Effect's.
+    private final float shapeDamageTakenMultiplier;
     private float bodyScale;
     private double facingRadians;
     private int ticksSinceSpawn;
@@ -38,6 +45,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
                 withDividedHealth(spawnParameters, definition.healthDivisor()), level);
         this.definition = definition;
         this.shapeSpeedMultiplier = spawnParameters.speedMultiplier();
+        this.shapeDamageTakenMultiplier = spawnParameters.damageTakenMultiplier();
         this.abilityStates = definition.abilities().stream().map(a -> AbilityState.forTrigger(a.trigger())).toList();
         this.bodyScale = bodyScaleFor(definition.archetype(), gameWorld.getBoard().scale(), level) * spawnParameters.sizeMultiplier();
     }
@@ -51,7 +59,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
     private static SpawnParameters withDividedHealth(SpawnParameters spawnParameters, float healthDivisor) {
         return new SpawnParameters(spawnParameters.delayTicks(), Math.round(spawnParameters.health() / healthDivisor),
                 spawnParameters.price(), spawnParameters.sizeMultiplier(), spawnParameters.speedMultiplier(),
-                spawnParameters.localOffset());
+                spawnParameters.damageTakenMultiplier(), spawnParameters.localOffset());
     }
 
     private static float bodyScaleFor(BodyArchetype archetype, int scale, int level) {
@@ -140,7 +148,24 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         for (Trait trait : this.definition.traits()) {
             result = trait.onHit(result, context);
         }
-        return result;
+        return result.scaledBy(this.shapeDamageTakenMultiplier);
+    }
+
+    /**
+     * Every effect kind this mob's status markers should show, plus {@link EffectKind#SHIELD}
+     * whenever the spawn shape gave it a permanent damage-taken reduction - a purely cosmetic
+     * union, not a real {@code Effect}: nothing here is timed, ticked, or removable, so it never
+     * touches {@code ActiveEffects}. This is the one place that distinction is allowed to blur,
+     * and only for the marker the player sees, never for how damage is actually computed - see
+     * {@link #absorb}, which is the real mechanism.
+     */
+    @Override
+    public Set<EffectKind> activeEffectKinds() {
+        Set<EffectKind> kinds = super.activeEffectKinds();
+        if (this.shapeDamageTakenMultiplier < 1f) {
+            kinds.add(EffectKind.SHIELD);
+        }
+        return kinds;
     }
 
     @Override

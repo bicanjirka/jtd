@@ -53,9 +53,9 @@ class SeekerTowerTest {
         this.flyProjectilesToCompletion();
 
         assertThat(target.onlyHitAmount()).isEqualTo(SeekerTower.DAMAGE);
-        assertThat(target.hits().get(0).type()).isEqualTo(DamageType.MAGIC);
+        assertThat(target.hits().getFirst().type()).isEqualTo(DamageType.MAGIC);
         assertThat(target.appliedEffects()).hasSize(1);
-        assertThat(target.appliedEffects().get(0).kind()).isEqualTo(EffectKind.FREEZE);
+        assertThat(target.appliedEffects().getFirst().kind()).isEqualTo(EffectKind.FREEZE);
     }
 
     @Test
