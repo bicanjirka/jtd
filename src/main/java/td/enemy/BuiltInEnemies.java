@@ -9,11 +9,14 @@ import java.util.List;
  * The built-in {@link EnemyDefinition}s. {@link EnemyCatalog#builtIn()} pre-registers all of
  * these under their wave-script ids. Two groups:
  * <p>
- * {@code CIRCLE}/{@code SQUARE}/{@code TRIANGLE}/{@code GHOST} are migrated from the old
- * {@code EnemyMobCircle}/{@code Square}/{@code Triangle}/{@code Ghost} leaf classes, reproducing
- * their exact prior wave-spawned behavior via {@link DefinedEnemyMob} - their own
+ * {@code SIMPLE}/{@code ARMORED}/{@code FRENZIED}/{@code GHOST} are the four basic mobs,
+ * reproducing via {@link DefinedEnemyMob} the exact wave-spawned behavior of the per-type leaf
+ * classes that used to exist. <strong>A definition is named for what it does; its
+ * {@link BodyArchetype} is what names the shape it is drawn as</strong> - so {@code ARMORED} is
+ * a square and {@code FRENZIED} a triangle, the same way {@code SniperTower} is drawn as a
+ * triangle. Their own
  * {@code baseHealth}/{@code price} are placeholders only ever consulted if something
- * ability-spawns one directly (the Warden's reinforcement ability does, for {@code CIRCLE}).
+ * ability-spawns one directly (the Warden's reinforcement ability does, for {@code SIMPLE}).
  * <p>
  * {@code WARDEN_1}/{@code WARDEN_EGG_1}/{@code WARDEN_2}/{@code WARDEN_EGG_2}/{@code WARDEN_3}/
  * {@code WARDEN_EGG_3} are the boss encounter's finite, six-definition, strictly linear spawn
@@ -55,20 +58,20 @@ final class BuiltInEnemies {
         return List.copyOf(abilities);
     }
 
-    static final EnemyDefinition CIRCLE = new EnemyDefinition(
+    static final EnemyDefinition SIMPLE = new EnemyDefinition(
             "c", "Simple mob", "No special abilities.",
             50, 2, 1.28f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.CIRCLE, new FixedMovement(),
             List.of(), List.of());
 
-    static final EnemyDefinition SQUARE = new EnemyDefinition(
-            "s", "Square mob", "Takes less damage.",
+    static final EnemyDefinition ARMORED = new EnemyDefinition(
+            "s", "Armored mob", "Takes less damage.",
             80, 3, 1.28f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(5.0)),
             List.of(new PercentResistTrait(0.8f, 0.05f)), List.of());
 
-    static final EnemyDefinition TRIANGLE = new EnemyDefinition(
-            "t", "Triangle mob", "Increases speed as it takes damage.",
+    static final EnemyDefinition FRENZIED = new EnemyDefinition(
+            "t", "Frenzied mob", "Increases speed as it takes damage.",
             60, 3, 1.28f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.TRIANGLE, new RotorMovement((float) Math.toRadians(-5.0)),
             List.of(new HurtSpeedTrait(1.4f, 0.1f)), List.of());

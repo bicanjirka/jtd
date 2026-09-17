@@ -94,14 +94,14 @@ the board by a coloured ring around it. The Aura tower is passive and offers non
 
 ### Enemies
 
-| Enemy | Behaviour |
-|-------|-----------|
-| Circle | Plain mob, no special ability |
-| Square | Absorbs part of every hit |
-| Triangle | Speeds up as it loses health |
-| Ghost | Invisible to single-target towers; only area damage reaches it |
-| Empty | Not a real enemy — a spacer that opens a timing gap inside a wave |
-| The Warden | A boss: armored, periodically summons reinforcements and shields itself and nearby allies. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. Appears as the final wave of Classic Loop. |
+| Enemy | Looks like | Behaviour |
+|-------|------------|-----------|
+| Simple | circle | Plain mob, no special ability |
+| Armored | square | Absorbs part of every hit |
+| Frenzied | triangle | Speeds up as it loses health |
+| Ghost | tinted circle | Invisible to single-target towers; only area damage reaches it |
+| Empty | — | Not a real enemy — a spacer that opens a timing gap inside a wave |
+| The Warden | square | A boss: armored, periodically summons reinforcements and shields itself and nearby allies. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. Appears as the final wave of Classic Loop. |
 
 ### Levels
 

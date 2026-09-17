@@ -28,12 +28,12 @@ class EnemyCatalogTest {
     @Test
     void aRegisteredDefinitionIsRetrievableByItsId() {
         EnemyCatalog catalog = new EnemyCatalog();
-        EnemyDefinition circle = simpleDefinition("c");
+        EnemyDefinition definition = simpleDefinition("c");
 
-        catalog.register(circle);
+        catalog.register(definition);
 
         assertThat(catalog.contains("c")).isTrue();
-        assertThat(catalog.get("c")).isEqualTo(circle);
+        assertThat(catalog.get("c")).isEqualTo(definition);
     }
 
     @Test

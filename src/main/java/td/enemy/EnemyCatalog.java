@@ -84,9 +84,9 @@ public final class EnemyCatalog {
      */
     public static EnemyCatalog builtIn() {
         EnemyCatalog catalog = new EnemyCatalog();
-        catalog.register(BuiltInEnemies.CIRCLE);
-        catalog.register(BuiltInEnemies.SQUARE);
-        catalog.register(BuiltInEnemies.TRIANGLE);
+        catalog.register(BuiltInEnemies.SIMPLE);
+        catalog.register(BuiltInEnemies.ARMORED);
+        catalog.register(BuiltInEnemies.FRENZIED);
         catalog.register(BuiltInEnemies.GHOST);
         catalog.register(BuiltInEnemies.WARDEN_EGG_3);
         catalog.register(BuiltInEnemies.WARDEN_3);

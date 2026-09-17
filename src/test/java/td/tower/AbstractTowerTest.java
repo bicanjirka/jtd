@@ -189,13 +189,13 @@ class AbstractTowerTest {
     @Test
     void damageDealtAgainstAResistantEnemyMatchesTheHealthItActuallyLost() {
         SniperTower tower = new SniperTower(context, 0, 0);
-        // a square absorbs part of every hit, unlike the circle every other case here uses
-        EnemyMob square = EnemyFactory.getEnemy("s", context, 0, 1000, 3, 1);
-        long healthBefore = square.getHealth();
+        // an armored mob absorbs part of every hit, unlike the simple mob every other case uses
+        EnemyMob armored = EnemyFactory.getEnemy("s", context, 0, 1000, 3, 1);
+        long healthBefore = armored.getHealth();
 
-        tower.dealDamage(square, Damage.physical(4000));
+        tower.dealDamage(armored, Damage.physical(4000));
 
-        long healthLost = healthBefore - square.getHealth();
+        long healthLost = healthBefore - armored.getHealth();
         assertThat(healthLost).isLessThan(4000);
         assertThat(tower.getDamageDealt()).isEqualTo(healthLost);
     }

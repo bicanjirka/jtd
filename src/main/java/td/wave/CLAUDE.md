@@ -67,10 +67,10 @@ enemy table when you register a new id.
 
 | Token | Enemy |
 |-------|-------|
-| `c` | Circle |
-| `s` | Square |
-| `t` | Triangle |
-| `g` | Ghost |
+| `c` | Simple — no special behaviour (drawn as a circle) |
+| `s` | Armored — takes reduced damage (drawn as a square) |
+| `t` | Frenzied — speeds up as it is hurt (drawn as a triangle) |
+| `g` | Ghost — invisible to single-target towers (drawn as a tinted circle) |
 | `e` | Empty - the reserved spacer; counts toward spawn timing, not toward the enemy count |
 | `warden1` | The Warden boss - the only id in its six-stage chain a wave spawns directly |
 
