@@ -341,23 +341,34 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     /**
      * Recomputes x/y (and, while moving, the precise path-facing angle) from the current
      * arcLengthPath/distanceIntoLap state, plus this mob's fixed {@link #offsetX}/{@link
-     * #offsetY}, clamped to the board - an offset near the board edge would otherwise push a
+     * #offsetY}. The offset is clamped onto the board only while the path's own position is
+     * already on the board - an offset near an interior edge or corner would otherwise push a
      * mob outside {@link #doTick}'s validTarget bounds check and leave it silently untargetable
-     * while still walking to the exit. A degenerate path has nothing to measure distance along,
-     * so it just holds at its one available point, offset the same fixed amount as anywhere
-     * else - the offset needs no tangent to be relative to any more, so the degenerate case
-     * needs no special-casing either.
+     * while still walking to the exit. Where the path's own position is authored off-board (a
+     * level's spawn/despawn buffer - see {@link td.wave.Point}'s doc comment), it is left
+     * unclamped instead, so an enemy visibly walks in from, and out to, off-screen rather than
+     * popping into view already sitting at the edge. A degenerate path has nothing to measure
+     * distance along, so it just holds at its one available point, offset the same fixed amount
+     * as anywhere else - the offset needs no tangent to be relative to any more, so the
+     * degenerate case needs no special-casing either.
      */
     private void updatePosition() {
         if (this.arcLengthPath.isPresent()) {
             PathPose pose = this.arcLengthPath.get().poseAt(this.distanceIntoLap);
-            this.x = clamp(pose.position().x() + this.offsetX, 0, this.gameWorld.getBoard().maxX());
-            this.y = clamp(pose.position().y() + this.offsetY, 0, this.gameWorld.getBoard().maxY());
+            this.x = clampOntoBoard(pose.position().x(), this.offsetX, this.gameWorld.getBoard().maxX());
+            this.y = clampOntoBoard(pose.position().y(), this.offsetY, this.gameWorld.getBoard().maxY());
             this.lastFacingRadians = pose.facingRadians();
         } else {
             this.x = this.stationaryPosition.x() + this.offsetX;
             this.y = this.stationaryPosition.y() + this.offsetY;
         }
+    }
+
+    private static double clampOntoBoard(double pathPosition, double offset, int max) {
+        if (pathPosition < 0 || pathPosition > max) {
+            return pathPosition + offset;
+        }
+        return clamp(pathPosition + offset, 0, max);
     }
 
     private static double clamp(double value, double min, double max) {

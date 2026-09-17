@@ -264,4 +264,30 @@ class AbstractEnemyMobTest {
         enemy.doDamage(Damage.physical(1000));
         assertThat(context.economy().getCredits()).isEqualTo(creditsBeforeLeak);
     }
+
+    @Test
+    void anEnemySpawnedAtAnOffBoardPathPointStartsOffscreenAndWalksOntoTheBoard() {
+        GameWorld context = newContext();
+        context.setBoard(BoardGeometry.of(10, 5, 5));
+        context.setPath(straightPath(10, -1, 4));
+
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+
+        assertThat(enemy.getX()).isNegative();
+    }
+
+    @Test
+    void anEnemyDespawnsWhileStillVisiblyPastTheBoardsFarEdge() {
+        GameWorld context = newContext();
+        context.setBoard(BoardGeometry.of(10, 5, 5));
+        context.setPath(straightPath(10, 0, 6));
+
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+        for (int i = 1; i <= 100; i++) {
+            enemy.doTick(i);
+        }
+
+        assertThat(enemy.isDead()).isTrue();
+        assertThat(enemy.getX()).isGreaterThan(context.getBoard().maxX());
+    }
 }
