@@ -16,14 +16,14 @@ class DamageDealtConditionTest {
 
     @Test
     void notSatisfiedBeforeTheThresholdIsReached() {
-        Tower tower = TowerFactory.createTower(TowerFactory.Type.first, this.context, 0, 0);
+        Tower tower = TowerFactory.createTower(TowerFactory.Type.SNIPER, this.context, 0, 0);
 
         assertThat(new DamageDealtCondition(1).isSatisfied(tower, this.context)).isFalse();
     }
 
     @Test
     void satisfiedOnceEnoughDamageHasLanded() {
-        Tower tower = TowerFactory.createTower(TowerFactory.Type.first, this.context, 0, 0);
+        Tower tower = TowerFactory.createTower(TowerFactory.Type.SNIPER, this.context, 0, 0);
         // high health so the hit doesn't kill it - only damageDealt is under test here
         EnemyMob enemy = EnemyFactory.getEnemy("c", this.context, 0, 100000, 3, 1);
         this.context.enemies().setEnemies(new EnemyMob[]{enemy});

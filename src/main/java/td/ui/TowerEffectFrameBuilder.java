@@ -1,14 +1,14 @@
 package td.ui;
 
 import td.enemy.EnemyMob;
-import td.tower.TowerAura;
-import td.tower.TowerCinder;
-import td.tower.TowerFour;
-import td.tower.TowerMortar;
-import td.tower.TowerOne;
-import td.tower.TowerSeeker;
-import td.tower.TowerThree;
-import td.tower.TowerTwo;
+import td.tower.AuraTower;
+import td.tower.CinderTower;
+import td.tower.PulseTower;
+import td.tower.MortarTower;
+import td.tower.SniperTower;
+import td.tower.SeekerTower;
+import td.tower.SonarTower;
+import td.tower.SplashTower;
 import td.tower.TowerVisitor;
 import td.ui.render.AuraDraw;
 import td.ui.render.BeamDraw;
@@ -55,27 +55,27 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return 3.0f * coolDownFraction;
     }
 
-    public Void visitTowerOne(TowerOne tower) {
+    public Void visitSniperTower(SniperTower tower) {
         EnemyMob target = tower.getCurrentTarget();
         if (target != null) {
-            this.draws.add(new BeamDraw(Palette.TOWER_ONE_BEAM, tower.getX(), tower.getY(),
+            this.draws.add(new BeamDraw(Palette.TOWER_SNIPER_BEAM, tower.getX(), tower.getY(),
                     (float) target.getX(), (float) target.getY(), beamWidth(tower.getCoolDownFraction())));
         }
         return null;
     }
 
-    public Void visitTowerTwo(TowerTwo tower) {
+    public Void visitSplashTower(SplashTower tower) {
         EnemyMob target = tower.getPrimaryTarget();
         if (target != null) {
-            this.draws.add(new BeamDraw(Palette.TOWER_TWO_BEAM, tower.getX(), tower.getY(),
+            this.draws.add(new BeamDraw(Palette.TOWER_SPLASH_BEAM, tower.getX(), tower.getY(),
                     (float) target.getX(), (float) target.getY(), beamWidth(tower.getCoolDownFraction())));
             for (EnemyMob splashTarget : tower.getSplashTargets()) {
-                this.draws.add(new BeamDraw(Palette.TOWER_TWO_SPLASH_LINE, (float) target.getX(), (float) target.getY(),
+                this.draws.add(new BeamDraw(Palette.TOWER_SPLASH_LINE, (float) target.getX(), (float) target.getY(),
                         (float) splashTarget.getX(), (float) splashTarget.getY(), 1.0f));
             }
         }
         if (tower.isSplashVisible()) {
-            this.draws.add(new SplashDraw(Palette.TOWER_TWO_SPLASH_FILL,
+            this.draws.add(new SplashDraw(Palette.TOWER_SPLASH_FILL,
                     tower.getSplashCenterX(), tower.getSplashCenterY(), tower.getSpreadRadius()));
         }
         return null;
@@ -86,22 +86,22 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
      * drawn out across the board - the tower's own turret head shows where it is pointing,
      * and a full range-length beam swinging around read as an attack rather than as a scan.
      */
-    public Void visitTowerThree(TowerThree tower) {
-        for (TowerThree.SonarHit hit : tower.getRecentHits()) {
-            this.draws.add(new BeamDraw(Palette.TOWER_THREE_BEAM, tower.getX(), tower.getY(),
+    public Void visitSonarTower(SonarTower tower) {
+        for (SonarTower.SonarHit hit : tower.getRecentHits()) {
+            this.draws.add(new BeamDraw(Palette.TOWER_SONAR_BEAM, tower.getX(), tower.getY(),
                     hit.x(), hit.y(), beamWidth(tower.hitFade(hit, this.gameTime))));
         }
         return null;
     }
 
-    public Void visitTowerFour(TowerFour tower) {
+    public Void visitPulseTower(PulseTower tower) {
         if (tower.isFiring()) {
-            this.draws.add(new PulseDraw(Palette.TOWER_FOUR_PULSE, tower.getX(), tower.getY(), tower.getRangeReal()));
+            this.draws.add(new PulseDraw(Palette.TOWER_PULSE_RING, tower.getX(), tower.getY(), tower.getRangeReal()));
         }
         return null;
     }
 
-    public Void visitTowerAura(TowerAura tower) {
+    public Void visitAuraTower(AuraTower tower) {
         float maxRadius = tower.getRangeReal();
         for (double phaseOffset : AURA_PHASE_OFFSETS) {
             double phase = phaseFraction(this.animationSeconds, phaseOffset);
@@ -112,17 +112,17 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /** No transient effect of its own - the shell in flight is what's visible, drawn as a {@code ProjectileDraw}. */
-    public Void visitTowerMortar(TowerMortar tower) {
+    public Void visitMortarTower(MortarTower tower) {
         return null;
     }
 
     /** No transient effect of its own - the missile in flight is what's visible, drawn as a {@code ProjectileDraw}. */
-    public Void visitTowerSeeker(TowerSeeker tower) {
+    public Void visitSeekerTower(SeekerTower tower) {
         return null;
     }
 
     /** The wedge itself, in the same heading {@code InWedgeTargetQuery} decides hits against. */
-    public Void visitTowerCinder(TowerCinder tower) {
+    public Void visitCinderTower(CinderTower tower) {
         float headingRadians = (float) tower.getTurretAim().radiansAt(this.interpolationAlpha);
         this.draws.add(new ConeDraw(Palette.TOWER_CINDER_CONE, tower.getX(), tower.getY(),
                 headingRadians, tower.getRangeReal(), (float) tower.getHalfWidthRadians(), CINDER_CONE_ALPHA));

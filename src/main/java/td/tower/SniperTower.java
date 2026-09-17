@@ -18,7 +18,7 @@ import java.util.List;
  * costing a life. Its turret head sweeps toward the target at a capped rate rather than
  * snapping, and holds its last heading when it has no target (see {@link TurretAim}).
  */
-public final class TowerOne extends AbstractTower {
+public final class SniperTower extends AbstractTower {
 
     public static final int PRICE = 10;
     public static final int DAMAGE = 4000;
@@ -42,8 +42,8 @@ public final class TowerOne extends AbstractTower {
     private EnemyMob currentTarget;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
-    public TowerOne(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.first, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
+    public SniperTower(GameWorld context, int x, int y) {
+        super(TowerFactory.Type.SNIPER, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
     }
 
     @Override
@@ -87,7 +87,7 @@ public final class TowerOne extends AbstractTower {
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
-        return visitor.visitTowerOne(this);
+        return visitor.visitSniperTower(this);
     }
 
     public String getInfoString() {

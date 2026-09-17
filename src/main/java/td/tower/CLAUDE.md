@@ -12,19 +12,19 @@ fire-rate, this tower's own permanently-chosen upgrade path (if any), and the sh
 
 | Class | Name in the UI | Targeting |
 |---|---|---|
-| `TowerOne` | Triangle | one enemy, furthest along the path |
-| `TowerTwo` | Circle | one random enemy, plus distance-falloff splash |
-| `TowerThree` | Sunshine | sonar scan: a beam sweeps the circle, hitting whatever it passes |
-| `TowerFour` | Stardust | everything in range at once, ghosts included |
-| `TowerAura` | Aura | passive; buffs neighbouring towers, never attacks |
-| `TowerMortar` | Mortar | one enemy, furthest along the path; fires an unguided `CannonballProjectile` that splashes and slows on arrival |
-| `TowerSeeker` | Seeker | one enemy, furthest along the path; fires a homing `MissileProjectile` that deals magic damage and freezes on arrival |
-| `TowerCinder` | Cinder | no cooldown; a wedge (`InWedgeTargetQuery`) that reorients toward the nearest enemy and applies/refreshes burn every tick |
+| `SniperTower` | Triangle | one enemy, furthest along the path |
+| `SplashTower` | Circle | one random enemy, plus distance-falloff splash |
+| `SonarTower` | Sunshine | sonar scan: a beam sweeps the circle, hitting whatever it passes |
+| `PulseTower` | Stardust | everything in range at once, ghosts included |
+| `AuraTower` | Aura | passive; buffs neighbouring towers, never attacks |
+| `MortarTower` | Mortar | one enemy, furthest along the path; fires an unguided `CannonballProjectile` that splashes and slows on arrival |
+| `SeekerTower` | Seeker | one enemy, furthest along the path; fires a homing `MissileProjectile` that deals magic damage and freezes on arrival |
+| `CinderTower` | Cinder | no cooldown; a wedge (`InWedgeTargetQuery`) that reorients toward the nearest enemy and applies/refreshes burn every tick |
 
-`TowerMortar`/`TowerSeeker`/`TowerCinder` are the three towers added by the damage-types-and-
+`MortarTower`/`SeekerTower`/`CinderTower` are the three towers added by the damage-types-and-
 projectiles feature — see `td.projectile` and `td.effect` in the root `CLAUDE.md` §4's domain-
 package list. Like the original four, each offers two upgrade paths (see below); only
-`TowerAura` stays passive and pathless.
+`AuraTower` stays passive and pathless.
 
 ## Invariants worth knowing before you change anything here
 
@@ -35,7 +35,7 @@ coordinates and computes everything derived from the board - `centerX`/`centerY`
 read a half-built tower, and cannot reorder itself into doing so: the constraint is a compile
 error, not a convention.
 
-A leaf with no reload cadence (`TowerThree`'s sweep, `TowerCinder`'s continuous cone) passes
+A leaf with no reload cadence (`SonarTower`'s sweep, `CinderTower`'s continuous cone) passes
 `0` for `coolDownMax` and overrides `rateLine(int)` to describe its cadence some other way.
 
 **Every hit goes through `AbstractTower.dealDamage`, never `enemy.doDamage` directly.** It
@@ -57,13 +57,13 @@ after the tower itself might be sold — without the guard, a sold tower would k
 `damageDealt`/`killCount` and paying its upgrade path's bounty bonus on an object the player
 has already been refunded for.
 
-**A tower that subscribes to anything must unsubscribe in `doCleanup`.** `TowerThree`
+**A tower that subscribes to anything must unsubscribe in `doCleanup`.** `SonarTower`
 registers as a `WaveStartListener` and removes itself in `doCleanup`, which `TowerRoster`
 calls on sell *and* on level teardown. A missed unsubscribe leaks the tower into the next
-level. `TowerAura` deliberately subscribes to nothing — that is the point of the buff design
+level. `AuraTower` deliberately subscribes to nothing — that is the point of the buff design
 below.
 
-**`TowerThree` decides hits against a swept *arc*, never the beam's instantaneous angle.**
+**`SonarTower` decides hits against a swept *arc*, never the beam's instantaneous angle.**
 The scan moves about a fifth of a radian per tick, so it is essentially never exactly on an
 enemy when a tick is sampled — "is this enemy at the beam's angle" would miss nearly
 everything. `SonarSweep.sweptThisTick` asks whether a bearing lies in the arc covered since
@@ -71,20 +71,20 @@ the previous tick, and the arc is half-open so a stationary enemy is hit once pe
 rather than twice at the boundary. It targets by absolute bearing, so where an enemy sits
 decides when it is hit, not where it happens to be in the wave's array.
 
-**`TowerThree`'s turret head must be drawn from the same scan angle that decides its hits**
+**`SonarTower`'s turret head must be drawn from the same scan angle that decides its hits**
 (`sweepRadiansAt`), not from `animationSeconds` like the other spinning heads. A cosmetic
 spin would drift out of step and the tower would appear to shoot enemies it is not facing.
 
 **`rangeReal2()` is the squared range** and every range check compares squared distances.
 Don't introduce a `Math.sqrt` into a per-tick scan.
 
-**`TowerTwo`'s splash falls off as `1 - (d/radius)²`**, where `d` is measured from the mob
+**`SplashTower`'s splash falls off as `1 - (d/radius)²`**, where `d` is measured from the mob
 that was hit, not from the tower. That curve is flat near the centre and steep at the rim —
 half-way out still takes 75% — so it is much more forgiving than a linear falloff would be.
 The same `spreadRadius` bounds the splash query and divides the falloff, which is what keeps
 the result positive for everything the query returns. `spreadRadius` is set at construction
 and, unlike damage and range, is untouched by an Aura tower's buff — its only way to change
-is `TowerTwo`'s own "Siege" upgrade path bumping it once via `onUpgradePathChosen` (see
+is `SplashTower`'s own "Siege" upgrade path bumping it once via `onUpgradePathChosen` (see
 below), not any live, continuously-recomputed algebra.
 
 ## Targeting (`td.tower.targeting`)
@@ -98,10 +98,10 @@ them; it does not hand-roll a scan over `EnemyRegistry.getEnemies()`.
 - `TargetSelector` — picks at most one out of a candidate list
   (`FurthestAlongPathSelector`, `RandomSelector`, `NearestSelector`). `RandomSelector` takes a
   `td.util.RandomSource` rather than calling `Math.random()`, so a seeded run replays the same
-  picks; `TowerTwo` composes it instead of inlining a random index.
+  picks; `SplashTower` composes it instead of inlining a random index.
 
 A tower whose cadence is geometric rather than a cooldown composes a query with its own
-sweep instead of a selector — see `TowerThree` filtering by range and type through
+sweep instead of a selector — see `SonarTower` filtering by range and type through
 `InRangeTargetQuery`, then deciding hits with `SonarSweep`.
 
 Implementations take an `EnemyRegistry`, never a `GameWorld` — the read-only slice is all
@@ -114,7 +114,7 @@ missile retargets around *its own current location*, which is the one case in th
 where "nearest" means nearest to something other than the object doing the asking.
 
 `InWedgeTargetQuery` is a cone: enemies within a facing direction and a half-width, meant to
-be `and`-ed with an `InRangeTargetQuery` bounding its reach the same way `TowerFour` already
+be `and`-ed with an `InRangeTargetQuery` bounding its reach the same way `PulseTower` already
 composes `anyType` with `OfTypeTargetQuery`. It is deliberately **not** built on `SonarSweep`:
 `SonarSweep.sweptThisTick` exists because a continuously rotating beam is essentially never
 exactly on a target when a tick samples it, so it has to test the arc swept *since the last
@@ -122,7 +122,7 @@ tick*, not the beam's instantaneous angle. A wedge is static or only slowly reor
 there is no "missed it between ticks" case to guard against — it is simply tested against its
 *current* heading, every tick. That heading comes from `TurretAim.currentRadians()` (added
 alongside this query, for exactly this use), so a cone's hit test and its rendered turret head
-are guaranteed to agree, the same guarantee `TowerThree`'s `sweepRadiansAt` already gives its
+are guaranteed to agree, the same guarantee `SonarTower`'s `sweepRadiansAt` already gives its
 beam.
 
 `InRangeTargetQuery` has no public constructor: use `anyType` or `ofType`. Passing a
@@ -135,7 +135,7 @@ forbids.
 total buff is a `reduce` over what every tower on the board contributes to it **combined with
 its own chosen upgrade path's bonus** (see below) — `AbstractTower.recalculateStats()` does
 both in one fold, which is what lets a specialization and an Aura tower's buff stack for free. Buff
-strength is per-aura-tower (`TowerAura`'s `power` constructor argument), not a shared
+strength is per-aura-tower (`AuraTower`'s `power` constructor argument), not a shared
 static — that is what lets two aura towers of different strengths stack correctly.
 
 `TowerBuff` carries four independent bonus axes — `damageBonus`, `rangeBonus`,
@@ -157,8 +157,8 @@ the whole set once with `stats()`.
 and `AbstractTower.buffFor` returns `TowerBuff.none()` for everything that is not an Aura tower
 in range. There is no index on either side.
 
-That replaced a bidirectional graph — `TowerAura` held a `Set<Tower> clients`, every
-`AbstractTower` held a `List<TowerAura> upgTowers`, and `registerTower`/`unregisterTower`/
+That replaced a bidirectional graph — `AuraTower` held a `Set<Tower> clients`, every
+`AbstractTower` held a `List<AuraTower> upgTowers`, and `registerTower`/`unregisterTower`/
 `addClient`/`removeClient` plus a `TowerListener` subscription plus a `scanTowers()` rescan kept
 the two halves in agreement. Two structures that must agree is a bug factory, and the rescan
 lived inside a `recalculateStats()` override, so recomputing one tower's stats mutated other
@@ -197,9 +197,9 @@ changes what *this* tower itself is, once, and stays changed for its lifetime.
   `EconomyLedger.doPay`'s check-and-charge-in-one-call contract - never gate a call to it on a
   separate affordability check first.
 - **A path's bonus that isn't expressible through `TowerBuff` is applied via
-  `onUpgradePathChosen`, not through the shared algebra.** `TowerTwo`'s `spreadRadius`,
-  `TowerThree`'s sweep rate, `TowerMortar`'s slow duration, `TowerSeeker`'s freeze duration
-  and `TowerCinder`'s wedge half-width are each touched by only one tower's one path - a leaf
+  `onUpgradePathChosen`, not through the shared algebra.** `SplashTower`'s `spreadRadius`,
+  `SonarTower`'s sweep rate, `MortarTower`'s slow duration, `SeekerTower`'s freeze duration
+  and `CinderTower`'s wedge half-width are each touched by only one tower's one path - a leaf
   overriding this hook mutates its own field directly, matched by reference against its own
   private `UpgradePath` constants rather than by a string/id (keeps the match type-safe and
   avoids a stringly-typed switch). This is now the common case, not a rare exception - most
@@ -237,7 +237,7 @@ paint code at a fixed pose, so a tower's board look and its icon cannot drift ap
 **Never branch on a tower's concrete type with `instanceof`, and don't cast one either.**
 Use `TowerVisitor`, or — where the question is "what does this tower contribute" rather than
 "what kind is it" — let the tower answer it: `Tower.buffFor` is a polymorphic call that
-replaced a `switch (t.getType())` plus a `(TowerAura) t` cast in two places. The one remaining
-type check, in `TowerAura.buffs`, asks the role question "is this an aura" so an aura does not
+replaced a `switch (t.getType())` plus a `(AuraTower) t` cast in two places. The one remaining
+type check, in `AuraTower.buffs`, asks the role question "is this an aura" so an aura does not
 buff another aura; adding a ninth tower needs no new branch in it. Keep it that way rather
 than growing it into a per-type dispatch.

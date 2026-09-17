@@ -56,7 +56,7 @@ public interface Tower {
      * that {@code other} is out of range of or that is itself.
      * <p>
      * Asking each tower what it gives is what removed the bidirectional index the buff system
-     * used to keep: a {@code TowerAura} held its clients, every tower held its auras, and four
+     * used to keep: a {@code AuraTower} held its clients, every tower held its auras, and four
      * methods plus a listener plus a rescan kept the two sides in agreement. The buff a tower
      * receives is a pure function of where the towers are, so it is computed, not stored.
      */

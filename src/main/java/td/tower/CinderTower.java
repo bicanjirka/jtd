@@ -17,10 +17,10 @@ import java.util.List;
 /**
  * "Cinder tower" - a continuous flame cone with no cooldown, slowly reorienting toward the
  * nearest enemy in range and burning everything currently caught in its wedge, ghosts
- * included - the same "hits everyone in the shape" spirit as {@link TowerFour}, just confined
+ * included - the same "hits everyone in the shape" spirit as {@link PulseTower}, just confined
  * to a cone instead of the whole range circle.
  * <p>
- * Unlike {@link TowerThree}'s continuously rotating beam, this cone only slowly reorients and
+ * Unlike {@link SonarTower}'s continuously rotating beam, this cone only slowly reorients and
  * is never "between" two headings in a way that would let it miss something, so it decides
  * hits against its <em>current</em> heading every tick rather than an arc swept since the
  * last one (see {@code InWedgeTargetQuery}).
@@ -30,7 +30,7 @@ import java.util.List;
  * this tower's own {@code dealDamage} once the burn ticks (see {@code Effect}'s sink), so its
  * damage/kill accounting stays accurate without a second, parallel damage path.
  */
-public final class TowerCinder extends AbstractTower {
+public final class CinderTower extends AbstractTower {
 
     public static final int PRICE = 28;
     public static final int DAMAGE = 150;
@@ -57,9 +57,9 @@ public final class TowerCinder extends AbstractTower {
     private volatile double halfWidthRadians = HALF_WIDTH_RADIANS_BASE;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
-    public TowerCinder(GameWorld context, int x, int y) {
+    public CinderTower(GameWorld context, int x, int y) {
         // No cooldown: it burns whatever is in its cone every tick - see rateLine.
-        super(TowerFactory.Type.cinder, PRICE, DAMAGE, RANGE, 0, context, x, y);
+        super(TowerFactory.Type.CINDER, PRICE, DAMAGE, RANGE, 0, context, x, y);
     }
 
     @Override
@@ -100,7 +100,7 @@ public final class TowerCinder extends AbstractTower {
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
-        return visitor.visitTowerCinder(this);
+        return visitor.visitCinderTower(this);
     }
 
     public String getInfoString() {

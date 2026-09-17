@@ -1,7 +1,7 @@
 package td.wave;
 
 /**
- * Notified when a wave starts and its enemy roster has been installed. {@code TowerThree} is
+ * Notified when a wave starts and its enemy roster has been installed. {@code SonarTower} is
  * the only subscriber, discarding the hit markers its scan left on the previous wave's
  * enemies.
  * <p>

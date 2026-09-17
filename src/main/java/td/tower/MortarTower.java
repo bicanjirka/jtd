@@ -16,13 +16,13 @@ import java.util.List;
 
 /**
  * "Mortar tower" - lobs a slow, unguided shell at whichever visible enemy is furthest along
- * the path, the same target choice as {@link TowerOne}. The shell travels in a straight line
+ * the path, the same target choice as {@link SniperTower}. The shell travels in a straight line
  * to that enemy's position at the moment of firing and never re-aims, so a fast-moving enemy
  * can dodge it by the time it lands (see {@code CannonballProjectile}); on arrival it splashes
- * physical damage with the same distance-falloff shape {@link TowerTwo} uses, and slows every
+ * physical damage with the same distance-falloff shape {@link SplashTower} uses, and slows every
  * enemy the blast reaches.
  */
-public final class TowerMortar extends AbstractTower {
+public final class MortarTower extends AbstractTower {
 
     public static final int PRICE = 30;
     public static final int DAMAGE = 2000;
@@ -33,7 +33,7 @@ public final class TowerMortar extends AbstractTower {
     private static final float PROJECTILE_SPEED = 40f;
     private static final float SLOW_MULTIPLIER_BASE = 0.5f;
     private static final int SLOW_DURATION_TICKS_BASE = 40;
-    /** How much bigger a splash "Heavy Shell" gives this tower's blast radius - same shape as {@code TowerTwo}'s Siege. */
+    /** How much bigger a splash "Heavy Shell" gives this tower's blast radius - same shape as {@code SplashTower}'s Siege. */
     private static final float HEAVY_SHELL_SPLASH_MULTIPLIER = 1.3f;
     private static final float CONCUSSIVE_CHARGE_SLOW_DURATION_MULTIPLIER = 1.5f;
 
@@ -60,8 +60,8 @@ public final class TowerMortar extends AbstractTower {
     private EnemyMob currentTarget;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
-    public TowerMortar(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.mortar, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
+    public MortarTower(GameWorld context, int x, int y) {
+        super(TowerFactory.Type.MORTAR, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
         this.splashRadius = SPLASH_RADIUS_BASE * context.getBoard().scale();
     }
 
@@ -70,7 +70,7 @@ public final class TowerMortar extends AbstractTower {
         return PATHS;
     }
 
-    /** Neither bonus is a {@link TowerBuff} axis, so each is applied here instead - same shape as {@code TowerTwo}'s Siege. */
+    /** Neither bonus is a {@link TowerBuff} axis, so each is applied here instead - same shape as {@code SplashTower}'s Siege. */
     @Override
     protected void onUpgradePathChosen(UpgradePath path) {
         if (path == HEAVY_SHELL) {
@@ -134,7 +134,7 @@ public final class TowerMortar extends AbstractTower {
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
-        return visitor.visitTowerMortar(this);
+        return visitor.visitMortarTower(this);
     }
 
     public String getInfoString() {

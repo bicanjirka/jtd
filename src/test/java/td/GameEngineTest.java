@@ -5,8 +5,8 @@ import td.level.LevelDefinition;
 import td.projectile.CannonballProjectile;
 import td.tower.Tower;
 import td.tower.TowerFactory;
-import td.tower.TowerMortar;
-import td.tower.TowerOne;
+import td.tower.MortarTower;
+import td.tower.SniperTower;
 import td.util.LoadedLevel;
 import td.wave.Point;
 import td.wave.WaveDefinition;
@@ -111,11 +111,11 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(levelWith(List.of(), 100));
 
-        engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         Optional<Tower> selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
 
         assertThat(selected).isEmpty(); // placing doesn't "select" the newly-built tower
-        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100 - TowerOne.PRICE);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100 - SniperTower.PRICE);
         assertThat(engine.cells().at(0, 0).hasTower()).isTrue();
         assertThat(engine.isPlacingTower()).isFalse();
     }
@@ -123,13 +123,13 @@ class GameEngineTest {
     @Test
     void placingATowerWithoutEnoughCreditsCancelsPlacementWithoutBuildingOrCharging() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(), TowerOne.PRICE - 1));
+        engine.loadLevel(levelWith(List.of(), SniperTower.PRICE - 1));
 
-        engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         Optional<Tower> selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
 
         assertThat(selected).isEmpty();
-        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(TowerOne.PRICE - 1);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(SniperTower.PRICE - 1);
         assertThat(engine.cells().at(0, 0).hasTower()).isFalse();
         assertThat(engine.isPlacingTower()).isFalse(); // failed payment still cancels placement mode
     }
@@ -138,12 +138,12 @@ class GameEngineTest {
     void clickingAnOccupiedCellSelectsItsTower() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(levelWith(List.of(), 100));
-        engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(cellCenter(0), cellCenter(0));
 
         Optional<Tower> selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
 
-        assertThat(selected).get().extracting(Tower::getType).isEqualTo(TowerFactory.Type.first);
+        assertThat(selected).get().extracting(Tower::getType).isEqualTo(TowerFactory.Type.SNIPER);
     }
 
     @Test
@@ -151,7 +151,7 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(levelWith(List.of(), 100));
 
-        engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(cellCenter(0), cellCenter(2));
 
         assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100);
@@ -161,7 +161,7 @@ class GameEngineTest {
     @Test
     void towerKillsInRangeEnemyCreditsThePlayerAndReArmsTheWave() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        // enemy starts at (0,2) already within a tower placed at (2,1)'s range (TowerOne.RANGE = 3.8
+        // enemy starts at (0,2) already within a tower placed at (2,1)'s range (SniperTower.RANGE = 3.8
         // cells) - one row off the path itself, since (2,2) is now unbuildable: the straight-line path
         // from (0,2) to (4,2) geometrically covers every cell it passes through, (2,2) included, not
         // just its two listed endpoints.
@@ -171,7 +171,7 @@ class GameEngineTest {
                 List.of(new WaveDefinition("c", 1, 7, 1),
                         new WaveDefinition("c", 1, 7, 1)), 100));
 
-        engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(cellCenter(2), cellCenter(1));
         int creditsAfterBuild = engine.getGameWorld().economy().getCredits();
         int scoreBefore = engine.getGameWorld().economy().getScore();
@@ -191,12 +191,12 @@ class GameEngineTest {
     @Test
     void aMortarShellTravelsThenSplashesAnInRangeEnemyCreditingThePlayer() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        // same placement as the TowerOne case above - well within Mortar's own (larger) range too.
+        // same placement as the SniperTower case above - well within Mortar's own (larger) range too.
         engine.loadLevel(levelWith(
                 List.of(new WaveDefinition("c", 1, 7, 1),
                         new WaveDefinition("c", 1, 7, 1)), 100));
 
-        engine.startPlacing(TowerFactory.Type.mortar, TowerMortar.RANGE);
+        engine.startPlacing(TowerFactory.Type.MORTAR, MortarTower.RANGE);
         engine.mouseClicked(cellCenter(2), cellCenter(1));
         int creditsAfterBuild = engine.getGameWorld().economy().getCredits();
         int scoreBefore = engine.getGameWorld().economy().getScore();
@@ -230,7 +230,7 @@ class GameEngineTest {
     void sellingATowerRefundsSeventyFivePercentAndClearsTheCell() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(levelWith(List.of(), 100));
-        engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(cellCenter(0), cellCenter(0));
         int creditsAfterBuild = engine.getGameWorld().economy().getCredits();
         Tower placed = engine.cells().at(0, 0).getTower();
@@ -246,7 +246,7 @@ class GameEngineTest {
     void reloadingALevelRemovesTowersLeftFromThePreviousLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(levelWith(List.of(), 100));
-        engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(cellCenter(0), cellCenter(0));
         assertThat(engine.cells().at(0, 0).hasTower()).isTrue();
 
@@ -297,7 +297,7 @@ class GameEngineTest {
     void reloadingALevelReseedsCreditsAndLivesFromTheNewLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(levelWith(List.of(), 100));
-        engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(cellCenter(0), cellCenter(0));
 
         LevelDefinition next = LevelDefinition.unsmoothed("Next", "", 5, 5, STRAIGHT_PATH, List.of(), 75, 3);
@@ -336,7 +336,7 @@ class GameEngineTest {
     void loadingASmallerLevelWithACellHighlightedFromTheBiggerOneDoesNotCrash() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(biggerLevelWith(List.of(), 100));
-        engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.highlightCell(cellCenter(18), cellCenter(14));
 
         assertThatCode(() -> engine.loadLevel(levelWith(List.of(), 100)))
@@ -348,7 +348,7 @@ class GameEngineTest {
     void loadingASmallerLevelClearsTowersAgainstTheOldBoardRatherThanTheNewOne() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(biggerLevelWith(List.of(), 100));
-        engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(cellCenter(18), cellCenter(14));
         assertThat(engine.cells().at(18, 14).hasTower()).isTrue();
 

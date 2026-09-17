@@ -15,11 +15,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /**
- * Covers TowerThree's sonar scan. The board scale is 32 and the scan takes 2 seconds at 20
+ * Covers SonarTower's sonar scan. The board scale is 32 and the scan takes 2 seconds at 20
  * ticks a second, so a revolution is 40 ticks and each quarter turn is 10 - which is where
  * the tick numbers asserted below come from. The scan starts pointing along +X (east).
  */
-class TowerThreeTest {
+class SonarTowerTest {
 
     private static final int SCALE = 32;
     private static final int TICKS_PER_REVOLUTION = 40;
@@ -30,9 +30,9 @@ class TowerThreeTest {
 
     private final GameWorld context = new GameWorld(new RecordingGameHost());
 
-    private TowerThree tower() {
+    private SonarTower tower() {
         this.context.setBoard(BoardGeometry.of(SCALE, 20, 20));
-        return new TowerThree(this.context, 3, 3);
+        return new SonarTower(this.context, 3, 3);
     }
 
     private static int hitCount(RecordingEnemyMob mob) {
@@ -41,7 +41,7 @@ class TowerThreeTest {
 
     @Test
     void enemiesAreSweptInCounterclockwiseOrderOfTheirBearingNotOfTheirWaveOrder() {
-        TowerThree tower = tower();
+        SonarTower tower = tower();
         RecordingEnemyMob east = RecordingEnemyMob.normalAt(TOWER_X + NEAR, TOWER_Y);
         RecordingEnemyMob north = RecordingEnemyMob.normalAt(TOWER_X, TOWER_Y - NEAR);
         RecordingEnemyMob west = RecordingEnemyMob.normalAt(TOWER_X - NEAR, TOWER_Y);
@@ -68,7 +68,7 @@ class TowerThreeTest {
 
     @Test
     void aStationaryEnemyIsHitExactlyOncePerRevolution() {
-        TowerThree tower = tower();
+        SonarTower tower = tower();
         RecordingEnemyMob enemy = RecordingEnemyMob.normalAt(TOWER_X, TOWER_Y - NEAR);
         this.context.enemies().setEnemies(new EnemyMob[]{enemy});
 
@@ -81,7 +81,7 @@ class TowerThreeTest {
 
     @Test
     void everyEnemyOnTheSameBearingIsHitOnTheSameTick() {
-        TowerThree tower = tower();
+        SonarTower tower = tower();
         // same direction from the tower, different distances - the beam is a ray, not one target
         RecordingEnemyMob close = RecordingEnemyMob.normalAt(TOWER_X, TOWER_Y - 40);
         RecordingEnemyMob far = RecordingEnemyMob.normalAt(TOWER_X, TOWER_Y - 80);
@@ -97,7 +97,7 @@ class TowerThreeTest {
 
     @Test
     void anEnemyBeyondTheTowersRangeIsNeverHit() {
-        TowerThree tower = tower();
+        SonarTower tower = tower();
         // range is 5.2 cells = 166.4px at this scale
         RecordingEnemyMob outOfRange = RecordingEnemyMob.normalAt(TOWER_X + 200, TOWER_Y);
         this.context.enemies().setEnemies(new EnemyMob[]{outOfRange});
@@ -111,7 +111,7 @@ class TowerThreeTest {
 
     @Test
     void aGhostIsNeverHitBecauseTheScanOnlySeesVisibleEnemies() {
-        TowerThree tower = tower();
+        SonarTower tower = tower();
         RecordingEnemyMob ghost = RecordingEnemyMob.ghostAt(TOWER_X + NEAR, TOWER_Y);
         this.context.enemies().setEnemies(new EnemyMob[]{ghost});
 
@@ -124,7 +124,7 @@ class TowerThreeTest {
 
     @Test
     void anEnemyThatTheBeamWouldHaveJumpedOverBetweenTicksIsStillHit() {
-        TowerThree tower = tower();
+        SonarTower tower = tower();
         // a bearing deliberately off any exact tick boundary, so a naive "is the beam pointing
         // at it right now" test would step straight past it
         double awkward = -(Math.PI * 2 / TICKS_PER_REVOLUTION) * 4.37;
@@ -141,7 +141,7 @@ class TowerThreeTest {
 
     @Test
     void theTurretHeadPointsWhereTheBeamIs() {
-        TowerThree tower = tower();
+        SonarTower tower = tower();
         this.context.enemies().setEnemies(new EnemyMob[]{});
 
         tower.doTick(1);
@@ -154,7 +154,7 @@ class TowerThreeTest {
 
     @Test
     void theStatusReportsARotationSpeedRatherThanAFireRate() {
-        TowerThree tower = tower();
+        SonarTower tower = tower();
 
         assertThat(tower.getStatusString()).contains("Rotation");
         assertThat(tower.getStatusString()).doesNotContain("Fire rate");
@@ -162,7 +162,7 @@ class TowerThreeTest {
 
     @Test
     void overchargedArraySpeedsUpTheSweepBeyondTheBaseRate() {
-        TowerThree tower = tower();
+        SonarTower tower = tower();
         UpgradePath overchargedArray = UpgradePaths.named(tower, "Overcharged Array");
         tower.doTick(1);
         double radiansPerTickBeforeChoosing = tower.sweepRadiansAt(0) - tower.sweepRadiansAt(1);

@@ -90,14 +90,14 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
 
         this.makeButtons();
 
-        GameWorld tempContext = new GameWorld(GameHost.noOp());
+        GameWorld previewWorld = new GameWorld(GameHost.noOp());
         Java2DFrameRenderer iconRenderer = new Java2DFrameRenderer();
 
         for (int i = 0; i < this.towerTypes.size(); i++) {
             TowerFactory.Type type = this.towerTypes.get(i);
-            Tower tempTower = TowerFactory.createTower(type, tempContext, 0, 0);
-            this.infoText[i] = tempTower.getInfoString();
-            this.towerRanges[i] = tempTower.getRange();
+            Tower tower = TowerFactory.createTower(type, previewWorld, 0, 0);
+            this.infoText[i] = tower.getInfoString();
+            this.towerRanges[i] = tower.getRange();
 
             BufferedImage icon = iconRenderer.renderTowerIcon(TowerSpriteFrameBuilder.bodyPaletteFor(type), ICON_SIZE);
             this.buttons[i].setIcon(new SharpImageIcon(icon));

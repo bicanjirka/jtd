@@ -20,7 +20,7 @@ import java.util.Optional;
  * from the blast centre. The splash deliberately uses an any-type query, so it is one of the
  * two towers that can hurt ghosts even though it cannot target them directly.
  */
-public final class TowerTwo extends AbstractTower {
+public final class SplashTower extends AbstractTower {
 
     public static final int PRICE = 15;
     public static final int DAMAGE = 1600;
@@ -57,8 +57,8 @@ public final class TowerTwo extends AbstractTower {
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final TargetSelector targetSelector;
 
-    public TowerTwo(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.second, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
+    public SplashTower(GameWorld context, int x, int y) {
+        super(TowerFactory.Type.SPLASH, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
         this.spreadRadius = SPREAD_RADIUS_BASE * context.getBoard().scale();
         this.targetSelector = new RandomSelector(context.random());
     }
@@ -155,7 +155,7 @@ public final class TowerTwo extends AbstractTower {
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
-        return visitor.visitTowerTwo(this);
+        return visitor.visitSplashTower(this);
     }
 
     public String getInfoString() {

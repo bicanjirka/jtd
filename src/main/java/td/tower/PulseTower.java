@@ -19,7 +19,7 @@ import java.util.List;
  * pulse never gives away a ghost that is alone in range - but once something else triggers
  * it, that ghost takes the damage too.
  */
-public final class TowerFour extends AbstractTower {
+public final class PulseTower extends AbstractTower {
 
     public static final int PRICE = 25;
     public static final int DAMAGE = 200;
@@ -35,8 +35,8 @@ public final class TowerFour extends AbstractTower {
 
     private boolean fire = false;
 
-    public TowerFour(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.fourth, PRICE, DAMAGE, RANGE, 0, context, x, y);
+    public PulseTower(GameWorld context, int x, int y) {
+        super(TowerFactory.Type.PULSE, PRICE, DAMAGE, RANGE, 0, context, x, y);
     }
 
     @Override
@@ -64,7 +64,7 @@ public final class TowerFour extends AbstractTower {
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
-        return visitor.visitTowerFour(this);
+        return visitor.visitPulseTower(this);
     }
 
     public String getInfoString() {

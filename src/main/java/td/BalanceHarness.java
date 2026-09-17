@@ -28,7 +28,7 @@ public final class BalanceHarness implements GameHost {
 
     /**
      * Fixed so two runs of the same loadout are comparable. Randomness in the simulation
-     * (TowerTwo picking its primary target) would otherwise come from the unseeded global
+     * (SplashTower picking its primary target) would otherwise come from the unseeded global
      * {@code Math.random()} and make every run a different experiment - see
      * {@link RandomSource}. Change it deliberately to sample a different sequence.
      */
@@ -129,9 +129,9 @@ public final class BalanceHarness implements GameHost {
     public static void main(String[] args) {
         LevelDefinition classicLoop = new BuiltInLevelCatalog().levels().get(0);
         List<TowerPlacementSpec> loadout = List.of(
-                TowerPlacementSpec.of(TowerFactory.Type.first, 6, 11),
-                TowerPlacementSpec.of(TowerFactory.Type.first, 8, 9),
-                TowerPlacementSpec.of(TowerFactory.Type.second, 5, 3));
+                TowerPlacementSpec.of(TowerFactory.Type.SNIPER, 6, 11),
+                TowerPlacementSpec.of(TowerFactory.Type.SNIPER, 8, 9),
+                TowerPlacementSpec.of(TowerFactory.Type.SPLASH, 5, 3));
         new BalanceHarness().run(classicLoop, loadout, 5000);
     }
 }

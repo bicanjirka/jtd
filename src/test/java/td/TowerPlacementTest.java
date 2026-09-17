@@ -7,7 +7,7 @@ import td.cell.CellGrid;
 import td.cell.CellNormal;
 import td.tower.Tower;
 import td.tower.TowerFactory;
-import td.tower.TowerOne;
+import td.tower.SniperTower;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
@@ -44,7 +44,7 @@ class TowerPlacementTest {
     void startingPlacementMakesIsPlacingTrue() {
         TowerPlacement placement = newPlacement(grid(3, 3), 100);
 
-        placement.start(TowerFactory.Type.first, TowerOne.RANGE);
+        placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
 
         assertThat(placement.isPlacing()).isTrue();
     }
@@ -53,59 +53,59 @@ class TowerPlacementTest {
     void cancellingPlacementClearsItAndTheHighlightedCell() {
         CellGrid grid = grid(3, 3);
         TowerPlacement placement = newPlacement(grid, 100);
-        placement.start(TowerFactory.Type.first, TowerOne.RANGE);
+        placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         placement.highlightCell(cellCenter(1), cellCenter(1));
 
         placement.cancel();
 
         assertThat(placement.isPlacing()).isFalse();
-        assertThat(grid.at(1, 1).getHighlight()).isEqualTo(Cell.HighlightType.none);
+        assertThat(grid.at(1, 1).getHighlight()).isEqualTo(Cell.HighlightType.NONE);
     }
 
     @Test
     void highlightingACellMovesTheHighlightRatherThanStackingIt() {
         CellGrid grid = grid(3, 3);
         TowerPlacement placement = newPlacement(grid, 100);
-        placement.start(TowerFactory.Type.first, TowerOne.RANGE);
+        placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
 
         placement.highlightCell(cellCenter(0), cellCenter(0));
         placement.highlightCell(cellCenter(1), cellCenter(1));
 
-        assertThat(grid.at(0, 0).getHighlight()).isEqualTo(Cell.HighlightType.none);
-        assertThat(grid.at(1, 1).getHighlight()).isEqualTo(Cell.HighlightType.place);
+        assertThat(grid.at(0, 0).getHighlight()).isEqualTo(Cell.HighlightType.NONE);
+        assertThat(grid.at(1, 1).getHighlight()).isEqualTo(Cell.HighlightType.PLACE);
     }
 
     @Test
     void clickingAnOccupiedCellSelectsItsTowerAndHighlightsTheCell() {
         CellGrid grid = grid(3, 3);
         TowerPlacement placement = newPlacement(grid, 100);
-        placement.start(TowerFactory.Type.first, TowerOne.RANGE);
+        placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         placement.mouseClicked(cellCenter(0), cellCenter(0));
 
         Optional<Tower> selected = placement.mouseClicked(cellCenter(0), cellCenter(0));
 
         assertThat(selected).isPresent();
-        assertThat(grid.at(0, 0).getHighlight()).isEqualTo(Cell.HighlightType.select);
+        assertThat(grid.at(0, 0).getHighlight()).isEqualTo(Cell.HighlightType.SELECT);
     }
 
     @Test
     void selectingATowerThenUnselectingClearsTheHighlight() {
         CellGrid grid = grid(3, 3);
         TowerPlacement placement = newPlacement(grid, 100);
-        placement.start(TowerFactory.Type.first, TowerOne.RANGE);
+        placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         placement.mouseClicked(cellCenter(0), cellCenter(0));
         placement.mouseClicked(cellCenter(0), cellCenter(0));
 
         placement.unSelectTower();
 
-        assertThat(grid.at(0, 0).getHighlight()).isEqualTo(Cell.HighlightType.none);
+        assertThat(grid.at(0, 0).getHighlight()).isEqualTo(Cell.HighlightType.NONE);
     }
 
     @Test
     void resetClearsPlacementModeAndTheStaleHighlightWithoutTouchingTheGrid() {
         CellGrid bigGrid = grid(3, 3);
         TowerPlacement placement = newPlacement(bigGrid, 100);
-        placement.start(TowerFactory.Type.first, TowerOne.RANGE);
+        placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         placement.highlightCell(cellCenter(2), cellCenter(2));
 
         placement.reset();
@@ -113,7 +113,7 @@ class TowerPlacementTest {
         assertThat(placement.isPlacing()).isFalse();
         // the highlighted cell belonged to the grid being discarded - reset() must not
         // dereference it, since a real reload can replace it with a smaller one
-        assertThat(bigGrid.at(2, 2).getHighlight()).isEqualTo(Cell.HighlightType.place);
+        assertThat(bigGrid.at(2, 2).getHighlight()).isEqualTo(Cell.HighlightType.PLACE);
     }
 
     @Test
@@ -126,7 +126,7 @@ class TowerPlacementTest {
         context.setBoard(BoardGeometry.of(SCALE, bigGrid.width(), bigGrid.height()));
         context.economy().startEconomy(100, 5);
         TowerPlacement placement = new TowerPlacement(context, () -> currentGrid[0]);
-        placement.start(TowerFactory.Type.first, TowerOne.RANGE);
+        placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         placement.highlightCell(cellCenter(2), cellCenter(2));
 
         placement.reset();
@@ -140,8 +140,8 @@ class TowerPlacementTest {
     @Test
     void placingWithoutEnoughCreditsLeavesTheCellEmptyAndExitsPlacingMode() {
         CellGrid grid = grid(3, 3);
-        TowerPlacement placement = newPlacement(grid, TowerOne.PRICE - 1);
-        placement.start(TowerFactory.Type.first, TowerOne.RANGE);
+        TowerPlacement placement = newPlacement(grid, SniperTower.PRICE - 1);
+        placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
 
         Optional<Tower> selected = placement.mouseClicked(cellCenter(0), cellCenter(0));
 

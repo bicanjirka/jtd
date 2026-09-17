@@ -2,7 +2,7 @@ package td.tower;
 
 /**
  * A beam sweeping the full circle at a constant rate, and the test for whether a given bearing
- * was crossed during the last step - the "sonar scan" behind {@code TowerThree}.
+ * was crossed during the last step - the "sonar scan" behind {@code SonarTower}.
  * <p>
  * The crossing test is an arc, not a point comparison, and that is the whole point of this
  * class: a beam advancing a fifth of a radian per tick is never <em>exactly</em> on an enemy

@@ -32,10 +32,10 @@ final class BuiltInEnemies {
     private static final int EGG_HATCH_DELAY_TICKS = 160;
     // Tuned, not a placeholder: raised from an original 15 (see git history), which was
     // negligible against every attack tower's actual per-hit/per-tick damage (150-4000, see
-    // TowerOne.DAMAGE..TowerCinder.DAMAGE) - a reduction that small is a rounding error, not
-    // armor. 100 stays below every tower's smallest per-application damage (TowerFour's 200,
-    // TowerCinder's 150 burn) so no tower is fully negated by Damage's zero-clamp, while still
-    // meaningfully denting a big single hit (TowerOne's 4000) the way the Warden's own doc
+    // SniperTower.DAMAGE..CinderTower.DAMAGE) - a reduction that small is a rounding error, not
+    // armor. 100 stays below every tower's smallest per-application damage (PulseTower's 200,
+    // CinderTower's 150 burn) so no tower is fully negated by Damage's zero-clamp, while still
+    // meaningfully denting a big single hit (SniperTower's 4000) the way the Warden's own doc
     // comment ("armor") implies it should.
     private static final int WARDEN_FLAT_RESIST = 100;
 

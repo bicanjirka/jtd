@@ -11,7 +11,7 @@ import java.util.List;
  * listens for towers being built and removed so a tower placed after it still picks the buff
  * up, and it unregisters its clients in {@link #doCleanup()} so selling it takes the buff away.
  */
-public final class TowerAura extends AbstractTower {
+public final class AuraTower extends AbstractTower {
 
     public static final int PRICE = 20;
     public static final int DAMAGE = 0;
@@ -20,7 +20,7 @@ public final class TowerAura extends AbstractTower {
 
     private final float power;
 
-    public TowerAura(GameWorld context, int x, int y) {
+    public AuraTower(GameWorld context, int x, int y) {
         this(context, x, y, DEFAULT_POWER);
     }
 
@@ -28,8 +28,8 @@ public final class TowerAura extends AbstractTower {
      * Lets an aura tower contribute a buff stronger or weaker than the default, so two
      * aura towers can stack unequal amounts via TowerBuff's additive combine.
      */
-    public TowerAura(GameWorld context, int x, int y, float power) {
-        super(TowerFactory.Type.aura, PRICE, DAMAGE, RANGE, 0, context, x, y);
+    public AuraTower(GameWorld context, int x, int y, float power) {
+        super(TowerFactory.Type.AURA, PRICE, DAMAGE, RANGE, 0, context, x, y);
         this.power = power;
     }
 
@@ -47,7 +47,7 @@ public final class TowerAura extends AbstractTower {
      * falls inside this aura's range. An aura never buffs another aura, and never itself.
      */
     private boolean buffs(Tower other) {
-        if (other == this || other.getType() == TowerFactory.Type.aura) {
+        if (other == this || other.getType() == TowerFactory.Type.AURA) {
             return false;
         }
         int dx = this.centerX - other.getX();
@@ -69,7 +69,7 @@ public final class TowerAura extends AbstractTower {
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
-        return visitor.visitTowerAura(this);
+        return visitor.visitAuraTower(this);
     }
 
     public String getInfoString() {

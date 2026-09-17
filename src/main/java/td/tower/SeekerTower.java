@@ -16,13 +16,13 @@ import java.util.List;
 
 /**
  * "Seeker tower" - fires a homing missile at whichever visible enemy is furthest along the
- * path, the same target choice as {@link TowerOne}. Unlike {@link TowerMortar}'s shell, the
+ * path, the same target choice as {@link SniperTower}. Unlike {@link MortarTower}'s shell, the
  * missile re-aims each tick at its target's live position and retargets to the nearest
  * remaining enemy if that target dies or leaks before it arrives (see
  * {@code MissileProjectile}). On impact it deals magic damage and freezes whichever mob it
  * actually reached - which may not be the one it was originally fired at.
  */
-public final class TowerSeeker extends AbstractTower {
+public final class SeekerTower extends AbstractTower {
 
     public static final int PRICE = 35;
     // Buffed from 1800/60 (30 dmg/tick) - see TODO.md's "New tower numbers are unbalanced
@@ -61,8 +61,8 @@ public final class TowerSeeker extends AbstractTower {
     private EnemyMob currentTarget;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
-    public TowerSeeker(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.seeker, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
+    public SeekerTower(GameWorld context, int x, int y) {
+        super(TowerFactory.Type.SEEKER, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
     }
 
     @Override
@@ -124,7 +124,7 @@ public final class TowerSeeker extends AbstractTower {
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
-        return visitor.visitTowerSeeker(this);
+        return visitor.visitSeekerTower(this);
     }
 
     public String getInfoString() {

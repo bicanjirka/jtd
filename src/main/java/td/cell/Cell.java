@@ -39,14 +39,14 @@ public interface Cell {
     void setTower(Tower tower);
 
     /**
-     * {@code place} is the hover highlight shown while placing a tower (with a range circle),
-     * {@code select} the outline on an already-placed tower's cell, {@code none} the resting
+     * {@code PLACE} is the hover highlight shown while placing a tower (with a range circle),
+     * {@code SELECT} the outline on an already-placed tower's cell, {@code NONE} the resting
      * state - which is also the only one the renderer skips entirely.
      */
     enum HighlightType {
-        none,
-        select,
-        place
+        NONE,
+        SELECT,
+        PLACE
     }
 
 }

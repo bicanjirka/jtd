@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Exercises AbstractTower's damage/range math, the TowerAura buff mechanism, and the
+ * Exercises AbstractTower's damage/range math, the AuraTower buff mechanism, and the
  * upgrade-path mechanism (through the test-only {@link FakeUpgradeableTower}, since no real
  * tower has real path content yet - see td/tower/upgrade). Lives in the same package as
  * AbstractTower so it can read the protected damageBase/damageCurrent fields directly
@@ -28,42 +28,42 @@ class AbstractTowerTest {
 
     @Test
     void sellPriceIsSeventyFivePercentOfPriceRoundedHalfUp() {
-        TowerOne tower = new TowerOne(context, 0, 0);
+        SniperTower tower = new SniperTower(context, 0, 0);
 
-        assertThat(tower.getSellPrice()).isEqualTo((int) Math.round(0.75 * TowerOne.PRICE));
+        assertThat(tower.getSellPrice()).isEqualTo((int) Math.round(0.75 * SniperTower.PRICE));
     }
 
     @Test
     void anAuraTowerAddedToTheBoardBuffsTheTowersInRangeOfIt() {
-        TowerOne tower = new TowerOne(context, 0, 0);
+        SniperTower tower = new SniperTower(context, 0, 0);
         context.towers().add(tower);
 
         // Putting the aura on the board is what applies the buff - its constructor has no
         // side effects on other towers. TowerRoster recomputes every tower's stats, and each
         // one asks the towers around it what they contribute (Tower.buffFor).
-        context.towers().add(new TowerAura(context, 0, 0));
+        context.towers().add(new AuraTower(context, 0, 0));
 
-        float expectedMultiplier = 1f + TowerAura.DEFAULT_POWER;
+        float expectedMultiplier = 1f + AuraTower.DEFAULT_POWER;
         assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
         assertThat(tower.damageCurrent()).isNotEqualTo(tower.damageBase);
     }
 
     @Test
     void anAuraTowerBuffsATowerBuiltAfterItJustTheSame() {
-        context.towers().add(new TowerAura(context, 0, 0));
+        context.towers().add(new AuraTower(context, 0, 0));
 
-        TowerOne tower = new TowerOne(context, 0, 0);
+        SniperTower tower = new SniperTower(context, 0, 0);
         context.towers().add(tower);
 
-        float expectedMultiplier = 1f + TowerAura.DEFAULT_POWER;
+        float expectedMultiplier = 1f + AuraTower.DEFAULT_POWER;
         assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
     }
 
     @Test
     void anAuraTowerDoesNotBuffAnotherAuraTowerOrItself() {
-        TowerAura first = new TowerAura(context, 0, 0);
+        AuraTower first = new AuraTower(context, 0, 0);
         context.towers().add(first);
-        TowerAura second = new TowerAura(context, 0, 0);
+        AuraTower second = new AuraTower(context, 0, 0);
         context.towers().add(second);
 
         assertThat(first.buffFor(second)).isEqualTo(TowerBuff.none());
@@ -72,23 +72,23 @@ class AbstractTowerTest {
 
     @Test
     void twoAuraTowersStackAdditively() {
-        TowerOne tower = new TowerOne(context, 0, 0);
+        SniperTower tower = new SniperTower(context, 0, 0);
         context.towers().add(tower);
 
-        context.towers().add(new TowerAura(context, 0, 0));
-        context.towers().add(new TowerAura(context, 0, 0));
+        context.towers().add(new AuraTower(context, 0, 0));
+        context.towers().add(new AuraTower(context, 0, 0));
 
-        float expectedMultiplier = 1f + 2 * TowerAura.DEFAULT_POWER;
+        float expectedMultiplier = 1f + 2 * AuraTower.DEFAULT_POWER;
         assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
     }
 
     @Test
     void unequalAuraTowersStackTheirDifferentStrengths() {
-        TowerOne tower = new TowerOne(context, 0, 0);
+        SniperTower tower = new SniperTower(context, 0, 0);
         context.towers().add(tower);
 
-        context.towers().add(new TowerAura(context, 0, 0, 0.1f));
-        context.towers().add(new TowerAura(context, 0, 0, 0.3f));
+        context.towers().add(new AuraTower(context, 0, 0, 0.1f));
+        context.towers().add(new AuraTower(context, 0, 0, 0.3f));
 
         float expectedMultiplier = 1f + 0.1f + 0.3f;
         assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
@@ -97,9 +97,9 @@ class AbstractTowerTest {
     @Test
     void sellingTheAuraTowerRevertsTheBuffItWasGiving() {
         context.economy().startEconomy(100, 5);
-        TowerOne tower = new TowerOne(context, 0, 0);
+        SniperTower tower = new SniperTower(context, 0, 0);
         context.towers().add(tower);
-        TowerAura aura = new TowerAura(context, 0, 0);
+        AuraTower aura = new AuraTower(context, 0, 0);
         context.towers().add(aura);
 
         context.towers().sell(aura);
@@ -110,27 +110,27 @@ class AbstractTowerTest {
     @Test
     void sellingOneOfTwoAuraTowersLeavesTheOthersBuffInPlace() {
         context.economy().startEconomy(100, 5);
-        TowerOne tower = new TowerOne(context, 0, 0);
+        SniperTower tower = new SniperTower(context, 0, 0);
         context.towers().add(tower);
-        TowerAura sold = new TowerAura(context, 0, 0);
+        AuraTower sold = new AuraTower(context, 0, 0);
         context.towers().add(sold);
-        context.towers().add(new TowerAura(context, 0, 0));
+        context.towers().add(new AuraTower(context, 0, 0));
 
         context.towers().sell(sold);
 
-        float expectedMultiplier = 1f + TowerAura.DEFAULT_POWER;
+        float expectedMultiplier = 1f + AuraTower.DEFAULT_POWER;
         assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
     }
 
     @Test
     void towerOutsideAuraRangeIsNotBuffed() {
-        TowerOne near = new TowerOne(context, 0, 0);
+        SniperTower near = new SniperTower(context, 0, 0);
         context.towers().add(near);
-        // TowerAura.RANGE is 1.5 cells; placing far away puts this well outside it
-        TowerOne far = new TowerOne(context, 100, 100);
+        // AuraTower.RANGE is 1.5 cells; placing far away puts this well outside it
+        SniperTower far = new SniperTower(context, 100, 100);
         context.towers().add(far);
 
-        context.towers().add(new TowerAura(context, 0, 0));
+        context.towers().add(new AuraTower(context, 0, 0));
 
         assertThat(near.damageCurrent()).isNotEqualTo(near.damageBase);
         assertThat(far.damageCurrent()).isEqualTo(far.damageBase);
@@ -138,7 +138,7 @@ class AbstractTowerTest {
 
     @Test
     void dealDamageTracksDamageDealtWithoutKillingTheTarget() {
-        TowerOne tower = new TowerOne(context, 0, 0);
+        SniperTower tower = new SniperTower(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1000, 3, 1);
 
         tower.dealDamage(enemy, Damage.physical(4000));
@@ -149,7 +149,7 @@ class AbstractTowerTest {
 
     @Test
     void dealDamageCountsAKillWhenTheHitIsLethal() {
-        TowerOne tower = new TowerOne(context, 0, 0);
+        SniperTower tower = new SniperTower(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
         int healthBefore = enemy.getHealth();
 
@@ -164,7 +164,7 @@ class AbstractTowerTest {
 
     @Test
     void dealDamageIntoAnAlreadyDeadEnemyIsNotCountedAgain() {
-        TowerOne tower = new TowerOne(context, 0, 0);
+        SniperTower tower = new SniperTower(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
         int healthBefore = enemy.getHealth();
         tower.dealDamage(enemy, Damage.physical(4000));
@@ -178,7 +178,7 @@ class AbstractTowerTest {
 
     @Test
     void aKilledEnemyIsLeftAtZeroHealthRatherThanNegative() {
-        TowerOne tower = new TowerOne(context, 0, 0);
+        SniperTower tower = new SniperTower(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
 
         tower.dealDamage(enemy, Damage.physical(4000));
@@ -188,7 +188,7 @@ class AbstractTowerTest {
 
     @Test
     void damageDealtAgainstAResistantEnemyMatchesTheHealthItActuallyLost() {
-        TowerOne tower = new TowerOne(context, 0, 0);
+        SniperTower tower = new SniperTower(context, 0, 0);
         // a square absorbs part of every hit, unlike the circle every other case here uses
         EnemyMob square = EnemyFactory.getEnemy("s", context, 0, 1000, 3, 1);
         long healthBefore = square.getHealth();
@@ -202,7 +202,7 @@ class AbstractTowerTest {
 
     @Test
     void multipleHitsAccumulateDamageDealt() {
-        TowerOne tower = new TowerOne(context, 0, 0);
+        SniperTower tower = new SniperTower(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1000, 3, 1);
 
         tower.dealDamage(enemy, Damage.physical(1000));
@@ -272,11 +272,11 @@ class AbstractTowerTest {
         UpgradePath path = new UpgradePath("Veteran", 10, TowerBuff.amplifying(0.2f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(path));
         context.towers().add(tower);
-        context.towers().add(new TowerAura(context, 0, 0));
+        context.towers().add(new AuraTower(context, 0, 0));
 
         tower.chooseUpgradePath(path);
 
-        float expectedMultiplier = 1f + 0.2f + TowerAura.DEFAULT_POWER;
+        float expectedMultiplier = 1f + 0.2f + AuraTower.DEFAULT_POWER;
         assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
     }
 
@@ -306,7 +306,7 @@ class AbstractTowerTest {
 
     @Test
     void dealDamageIsANoOpOnceTheTowerHasBeenCleanedUp() {
-        TowerOne tower = new TowerOne(context, 0, 0);
+        SniperTower tower = new SniperTower(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
 
         tower.doCleanup(); // what TowerRoster.sell()/clear() call before dropping the tower

@@ -12,14 +12,14 @@ import td.util.GameWorld;
 public class TowerFactory {
     public static Tower createTower(Type t, GameWorld c, int x, int y) {
         return switch (t) {
-            case first -> new TowerOne(c, x, y);
-            case second -> new TowerTwo(c, x, y);
-            case third -> new TowerThree(c, x, y);
-            case fourth -> new TowerFour(c, x, y);
-            case aura -> new TowerAura(c, x, y);
-            case mortar -> new TowerMortar(c, x, y);
-            case seeker -> new TowerSeeker(c, x, y);
-            case cinder -> new TowerCinder(c, x, y);
+            case SNIPER -> new SniperTower(c, x, y);
+            case SPLASH -> new SplashTower(c, x, y);
+            case SONAR -> new SonarTower(c, x, y);
+            case PULSE -> new PulseTower(c, x, y);
+            case AURA -> new AuraTower(c, x, y);
+            case MORTAR -> new MortarTower(c, x, y);
+            case SEEKER -> new SeekerTower(c, x, y);
+            case CINDER -> new CinderTower(c, x, y);
         };
     }
 
@@ -29,14 +29,14 @@ public class TowerFactory {
      * reordering this enum would silently rebind the keyboard.
      */
     public enum Type {
-        first(TowerOne.PRICE, 'q'),
-        second(TowerTwo.PRICE, 'w'),
-        third(TowerThree.PRICE, 'e'),
-        fourth(TowerFour.PRICE, 'r'),
-        aura(TowerAura.PRICE, 't'),
-        mortar(TowerMortar.PRICE, 'y'),
-        seeker(TowerSeeker.PRICE, 'u'),
-        cinder(TowerCinder.PRICE, 'i');
+        SNIPER(SniperTower.PRICE, 'q'),
+        SPLASH(SplashTower.PRICE, 'w'),
+        SONAR(SonarTower.PRICE, 'e'),
+        PULSE(PulseTower.PRICE, 'r'),
+        AURA(AuraTower.PRICE, 't'),
+        MORTAR(MortarTower.PRICE, 'y'),
+        SEEKER(SeekerTower.PRICE, 'u'),
+        CINDER(CinderTower.PRICE, 'i');
 
         public final int price;
         /** The keyboard shortcut that starts placing this tower. */
