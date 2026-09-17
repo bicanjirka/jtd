@@ -34,16 +34,16 @@ public final class TowerOne extends AbstractTower {
             "Overclock", 25, new TowerBuff(-0.2f, 0f, 0.4f, 0f), UpgradeCondition.always());
     private static final List<UpgradePath> PATHS = List.of(VETERAN, OVERCLOCK);
 
+    /** Ticks between shots before any fire-rate buff. */
+    private static final int COOLDOWN_MAX = 39;
+
     private int coolDown = 0;
 
     private EnemyMob currentTarget;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
     public TowerOne(GameWorld context, int x, int y) {
-        super(TowerFactory.type.first, price, damage, range);
-        this.coolDownMax = 39;
-        this.coolDownCurrent = this.coolDownMax;
-        this.doInit(context, x, y);
+        super(TowerFactory.type.first, price, damage, range, COOLDOWN_MAX, context, x, y);
     }
 
     @Override
@@ -52,7 +52,7 @@ public final class TowerOne extends AbstractTower {
     }
 
     private EnemyMob findEnemy() {
-        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal, EnemyMob.type.Normal)
+        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.type.Normal)
                 .matching(this.context.getEnemyRegistry());
         return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
     }
@@ -63,8 +63,8 @@ public final class TowerOne extends AbstractTower {
         } else {
             this.currentTarget = this.findEnemy();
             if (this.currentTarget != null) {
-                this.dealDamage(this.currentTarget, Damage.physical(this.damageCurrent));
-                this.coolDown = this.coolDownCurrent;
+                this.dealDamage(this.currentTarget, Damage.physical(this.damageCurrent()));
+                this.coolDown = this.coolDownCurrent();
             }
         }
         // No target: hold the last heading rather than snapping back to a neutral angle - see
@@ -83,7 +83,7 @@ public final class TowerOne extends AbstractTower {
     }
 
     public float getCoolDownFraction() {
-        return (float) this.coolDown / this.coolDownCurrent;
+        return (float) this.coolDown / this.coolDownCurrent();
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {

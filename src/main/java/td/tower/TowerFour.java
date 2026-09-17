@@ -36,8 +36,7 @@ public final class TowerFour extends AbstractTower {
     private boolean fire = false;
 
     public TowerFour(GameWorld context, int x, int y) {
-        super(TowerFactory.type.fourth, price, damage, range);
-        this.doInit(context, x, y);
+        super(TowerFactory.type.fourth, price, damage, range, 0, context, x, y);
     }
 
     @Override
@@ -46,14 +45,14 @@ public final class TowerFour extends AbstractTower {
     }
 
     public void doTick(int gameTime) {
-        TargetQuery inRange = InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal);
+        TargetQuery inRange = InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal());
         List<EnemyMob> enemies = inRange.matching(this.context.getEnemyRegistry());
         List<EnemyMob> ghosts = inRange.and(OfTypeTargetQuery.of(EnemyMob.type.Invisible)).matching(this.context.getEnemyRegistry());
 
         if (enemies.size() > ghosts.size()) {
             this.fire = true;
             for (EnemyMob enemy : enemies) {
-                this.dealDamage(enemy, Damage.physical(this.damageCurrent));
+                this.dealDamage(enemy, Damage.physical(this.damageCurrent()));
             }
         } else {
             this.fire = false;

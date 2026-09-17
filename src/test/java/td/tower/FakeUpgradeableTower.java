@@ -15,11 +15,8 @@ final class FakeUpgradeableTower extends AbstractTower {
     private final List<UpgradePath> paths;
 
     FakeUpgradeableTower(GameWorld context, int x, int y, List<UpgradePath> paths) {
-        super(TowerFactory.type.first, 10, 1000, 3f);
-        this.coolDownMax = 20;
-        this.coolDownCurrent = this.coolDownMax;
+        super(TowerFactory.type.first, 10, 1000, 3f, 20, context, x, y);
         this.paths = paths;
-        this.doInit(context, x, y);
     }
 
     @Override

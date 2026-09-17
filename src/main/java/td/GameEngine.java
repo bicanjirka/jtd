@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import td.board.BoardGeometry;
 import td.cell.Cell;
-import td.cell.CellNormal;
+import td.cell.CellGrid;
 import td.economy.EconomyDelta;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
@@ -48,7 +48,7 @@ public class GameEngine {
     // in doTick and advances the wave counter. Each is an independent scalar or an immutable
     // reference swapped wholesale, so volatile publication is the whole requirement - there
     // is no multi-field invariant here to guard. See CLAUDE.md 3.
-    private volatile Cell[][] cellGrid;
+    private volatile CellGrid cellGrid = CellGrid.empty();
     private volatile List<Wave> waves = new ArrayList<>();
     private volatile int wave = 0;
     private volatile boolean waveReady = true;
@@ -69,7 +69,11 @@ public class GameEngine {
         return this.gameWorld.getTowers();
     }
 
-    public Cell[][] getCellGrid() {
+    /**
+  * The board, as a queryable grid rather than the backing array - see {@link CellGrid}.
+  * Never null: a level that has not been loaded yields {@link CellGrid#empty()}.
+  */
+    public CellGrid cells() {
         return this.cellGrid;
     }
 
@@ -110,15 +114,9 @@ public class GameEngine {
         int width = level.width();
         int height = level.height();
         int scale = this.gameWorld.getBoard().scale();
-        // Built locally and assigned to the volatile field only once fully populated: a
-        // publishing write must hand over a finished object, never an empty one another
-        // thread could see mid-fill.
-        Cell[][] grid = new Cell[width][height];
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
-                grid[i][j] = new CellNormal(i * scale, j * scale);
-            }
-        }
+        // Built fully, then published: a publishing write must hand over a finished object,
+        // never one another thread could see mid-fill.
+        CellGrid grid = CellGrid.of(width, height, scale);
         Path path = PathBuilder.build(level.path(), level.smoothing(), scale);
         markUnbuildableCells(grid, path, scale);
         this.cellGrid = grid;
@@ -160,11 +158,9 @@ public class GameEngine {
      * was authored through, so a smoothed/curved path's buildable set correctly reflects its
      * real shape. See {@link PathCoverage} for the geometry itself.
      */
-    private void markUnbuildableCells(Cell[][] grid, Path path, int scale) {
-        int width = grid.length;
-        int height = width == 0 ? 0 : grid[0].length;
-        for (Point cell : PathCoverage.unbuildableCells(path.points(), scale, width, height)) {
-            grid[cell.x()][cell.y()].enable(false);
+    private void markUnbuildableCells(CellGrid grid, Path path, int scale) {
+        for (Point cell : PathCoverage.unbuildableCells(path.points(), scale, grid.width(), grid.height())) {
+            grid.at(cell.x(), cell.y()).enable(false);
         }
     }
 
@@ -239,7 +235,7 @@ public class GameEngine {
      * roster stays ignorant of the cell grid.
      */
     public void clearCell(int x, int y) {
-        Cell cell = this.cellGrid[x][y];
+        Cell cell = this.cellGrid.at(x, y);
         cell.unSetTower();
         cell.enable(true);
     }
@@ -278,7 +274,7 @@ public class GameEngine {
      * @return the id spawned, or null if no level is loaded
      */
     public String debugSpawnNextCatalogEnemy() {
-        if (this.cellGrid == null) {
+        if (!this.cellGrid.isLoaded()) {
             return null;
         }
         EnemyCatalog catalog = this.gameWorld.getEnemyCatalog();

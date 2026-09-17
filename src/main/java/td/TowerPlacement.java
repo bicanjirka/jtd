@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import td.board.BoardGeometry;
 import td.cell.Cell;
+import td.cell.CellGrid;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.GameWorld;
@@ -13,7 +14,7 @@ import java.util.function.Supplier;
 /**
  * Tower-placement mode and the shared click-highlight state a board click needs whether it's
  * placing a new tower or selecting an already-placed one. {@code cellGrid} is a supplier
- * rather than a fixed array since {@link GameEngine} replaces it wholesale on every
+ * rather than a fixed grid since {@link GameEngine} replaces it wholesale on every
  * {@code loadLevel}, after this is constructed.
  */
 public class TowerPlacement {
@@ -21,14 +22,14 @@ public class TowerPlacement {
     private static final Logger LOG = LoggerFactory.getLogger(TowerPlacement.class);
 
     private final GameWorld gameWorld;
-    private final Supplier<Cell[][]> cellGrid;
+    private final Supplier<CellGrid> cellGrid;
 
     private boolean placingTower = false;
     private TowerFactory.type placingTowerType;
     private float placingTowerRange = 0;
     private int[] highlitedCell;
 
-    public TowerPlacement(GameWorld gameWorld, Supplier<Cell[][]> cellGrid) {
+    public TowerPlacement(GameWorld gameWorld, Supplier<CellGrid> cellGrid) {
         this.gameWorld = gameWorld;
         this.cellGrid = cellGrid;
     }
@@ -67,7 +68,7 @@ public class TowerPlacement {
 
     private void unHighlightCell() {
         if (this.highlitedCell != null) {
-            this.cellGrid.get()[this.highlitedCell[0]][this.highlitedCell[1]].setHighlight(Cell.highlightType.none);
+            this.cellGrid.get().at(this.highlitedCell[0], this.highlitedCell[1]).setHighlight(Cell.highlightType.none);
             this.highlitedCell = null;
         }
     }
@@ -80,7 +81,7 @@ public class TowerPlacement {
             tempInt[0] = board.cellX(boardX);
             tempInt[1] = board.cellY(boardY);
             this.highlitedCell = tempInt;
-            Cell cell = this.cellGrid.get()[board.cellX(boardX)][board.cellY(boardY)];
+            Cell cell = this.cellGrid.get().at(board.cellX(boardX), board.cellY(boardY));
             cell.setHighlight(Cell.highlightType.place);
             cell.setHighlightRange(this.placingTowerRange);
         }
@@ -93,7 +94,7 @@ public class TowerPlacement {
         Tower selected = null;
         BoardGeometry board = this.gameWorld.getBoard();
         if (board.containsPixel(boardX, boardY)) {
-            Cell cell = this.cellGrid.get()[board.cellX(boardX)][board.cellY(boardY)];
+            Cell cell = this.cellGrid.get().at(board.cellX(boardX), board.cellY(boardY));
             if (cell.hasTower()) {
                 selected = cell.getTower();
                 int[] tempInt = new int[2];

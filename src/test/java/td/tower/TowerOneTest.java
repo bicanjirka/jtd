@@ -24,8 +24,8 @@ class TowerOneTest {
         boolean chosen = tower.chooseUpgradePath(overclock);
 
         assertThat(chosen).isTrue();
-        assertThat(tower.damageCurrent).isLessThan(tower.damageBase);
-        assertThat(tower.coolDownCurrent).isLessThan(tower.coolDownMax);
+        assertThat(tower.damageCurrent()).isLessThan(tower.damageBase);
+        assertThat(tower.coolDownCurrent()).isLessThan(tower.coolDownMax);
     }
 
     @Test

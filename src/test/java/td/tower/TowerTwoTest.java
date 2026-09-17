@@ -120,7 +120,7 @@ class TowerTwoTest {
         boolean chosen = tower.chooseUpgradePath(clusterCharge);
 
         assertThat(chosen).isTrue();
-        assertThat(tower.damageCurrent).isGreaterThan(tower.damageBase);
+        assertThat(tower.damageCurrent()).isGreaterThan(tower.damageBase);
         assertThat(tower.getRangeReal()).isGreaterThan(TowerTwo.range * SCALE);
     }
 }

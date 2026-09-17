@@ -46,7 +46,7 @@ class GameEngineTest {
 
         assertThat(selected).isNull(); // placing doesn't "select" the newly-built tower
         assertThat(engine.getGameWorld().getCredits()).isEqualTo(100 - TowerOne.price);
-        assertThat(engine.getCellGrid()[0][0].hasTower()).isTrue();
+        assertThat(engine.cells().at(0, 0).hasTower()).isTrue();
         assertThat(engine.isPlacingTower()).isFalse();
     }
 
@@ -60,7 +60,7 @@ class GameEngineTest {
 
         assertThat(selected).isNull();
         assertThat(engine.getGameWorld().getCredits()).isEqualTo(TowerOne.price - 1);
-        assertThat(engine.getCellGrid()[0][0].hasTower()).isFalse();
+        assertThat(engine.cells().at(0, 0).hasTower()).isFalse();
         assertThat(engine.isPlacingTower()).isFalse(); // failed payment still cancels placement mode
     }
 
@@ -86,7 +86,7 @@ class GameEngineTest {
         engine.mouseClicked(cellCenter(0), cellCenter(2));
 
         assertThat(engine.getGameWorld().getCredits()).isEqualTo(100);
-        assertThat(engine.getCellGrid()[0][2].hasTower()).isFalse();
+        assertThat(engine.cells().at(0, 2).hasTower()).isFalse();
     }
 
     @Test
@@ -164,13 +164,13 @@ class GameEngineTest {
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
         engine.mouseClicked(cellCenter(0), cellCenter(0));
         int creditsAfterBuild = engine.getGameWorld().getCredits();
-        Tower placed = engine.getCellGrid()[0][0].getTower();
+        Tower placed = engine.cells().at(0, 0).getTower();
 
         engine.getGameWorld().sellTower(placed);
 
         assertThat(engine.getGameWorld().getCredits()).isEqualTo(creditsAfterBuild + placed.getSellPrice());
-        assertThat(engine.getCellGrid()[0][0].hasTower()).isFalse();
-        assertThat(engine.getCellGrid()[0][0].buildable()).isTrue();
+        assertThat(engine.cells().at(0, 0).hasTower()).isFalse();
+        assertThat(engine.cells().at(0, 0).buildable()).isTrue();
     }
 
     @Test
@@ -179,12 +179,12 @@ class GameEngineTest {
         engine.loadLevel(levelWith(List.of(), 100));
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
         engine.mouseClicked(cellCenter(0), cellCenter(0));
-        assertThat(engine.getCellGrid()[0][0].hasTower()).isTrue();
+        assertThat(engine.cells().at(0, 0).hasTower()).isTrue();
 
         engine.loadLevel(levelWith(List.of(), 100));
 
         assertThat(engine.getGameWorld().getTowers()).isEmpty();
-        assertThat(engine.getCellGrid()[0][0].hasTower()).isFalse();
+        assertThat(engine.cells().at(0, 0).hasTower()).isFalse();
     }
 
     @Test
@@ -281,7 +281,7 @@ class GameEngineTest {
         engine.loadLevel(biggerLevelWith(List.of(), 100));
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
         engine.mouseClicked(cellCenter(18), cellCenter(14));
-        assertThat(engine.getCellGrid()[18][14].hasTower()).isTrue();
+        assertThat(engine.cells().at(18, 14).hasTower()).isTrue();
 
         assertThatCode(() -> engine.loadLevel(levelWith(List.of(), 100)))
                 .doesNotThrowAnyException();

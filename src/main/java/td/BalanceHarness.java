@@ -1,6 +1,6 @@
 package td;
 
-import td.cell.Cell;
+import td.cell.CellGrid;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
 import td.tower.Tower;
@@ -88,13 +88,13 @@ public final class BalanceHarness implements GameHost {
      * verified afterward via the cell grid rather than trusted from a return value.
      */
     private void placeLoadout(List<TowerPlacementSpec> loadout, int scale) {
-        Cell[][] grid = this.engine.getCellGrid();
+        CellGrid grid = this.engine.cells();
         for (TowerPlacementSpec spec : loadout) {
             this.engine.startPlacing(spec.type(), 0f);
             int pixelX = spec.cellX() * scale + scale / 2;
             int pixelY = spec.cellY() * scale + scale / 2;
             this.engine.mouseClicked(pixelX, pixelY);
-            if (!grid[spec.cellX()][spec.cellY()].hasTower()) {
+            if (!grid.at(spec.cellX(), spec.cellY()).hasTower()) {
                 System.err.println("Placement rejected, cell not buildable or unaffordable: " + spec);
             }
         }

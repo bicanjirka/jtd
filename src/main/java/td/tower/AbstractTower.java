@@ -16,8 +16,13 @@ import java.util.List;
  * and the damage/kill accounting. Subclasses supply only a targeting strategy and a
  * {@code doTick}.
  * <p>
- * {@code rangeReal2} is the squared range, and every range check compares squared distances -
- * a per-tick scan has no business calling {@code Math.sqrt}.
+ * Everything derived from the board - the pixel centre, the pixel range - is computed in this
+ * constructor and is {@code final}. A leaf therefore cannot read a half-built tower, and the
+ * ordering rule that used to be documented prose ("{@code doInit} must be the last thing a
+ * leaf constructor does") is now enforced by the compiler instead.
+ * <p>
+ * {@link #rangeReal2()} is the squared range, and every range check compares squared
+ * distances - a per-tick scan has no business calling {@code Math.sqrt}.
  */
 public abstract class AbstractTower implements Tower {
 
@@ -28,60 +33,87 @@ public abstract class AbstractTower implements Tower {
      */
     protected static final float TICKS_PER_SECOND = 20f;
 
-    protected GameWorld context;
+    protected final GameWorld context;
     protected final List<TowerAura> upgTowers;
-    protected int boardX;
-    protected int boardY;
-    protected int centerX;
-    protected int centerY;
-    protected float rangeBase;
-    protected int damageBase;
-    // damageCurrent/coolDownCurrent/rangeCurrent are recalculated on the EDT (an aura tower
-    // registering, an upgrade path chosen) and read by tick code; damageDealt/killCount are
-    // written by tick code and read by the info panel on the EDT. Both directions cross
-    // threads, and damageDealt is a long, whose non-volatile reads may tear. They are
-    // independent readouts, not a correlated set, so volatile publication is the whole
-    // requirement here - unlike the board, which is snapshotted. See CLAUDE.md 3.
-    protected volatile int damageCurrent;
-    protected int coolDownMax;
-    protected volatile int coolDownCurrent;
-    protected float rangeReal = 0;
-    protected float rangeReal2 = 0;
-    protected boolean passive = false;
+    protected final int boardX;
+    protected final int boardY;
+    protected final int centerX;
+    protected final int centerY;
+    protected final float rangeBase;
+    protected final int damageBase;
+    protected final int coolDownMax;
+    private final TowerFactory.type type;
+    private final int price;
+
+    // The buffed combat stats, as one coherent value swapped whole - recalculated on the EDT
+    // when an aura tower registers or a path is bought, read by tick code on the game-loop
+    // thread. Five separate volatile fields would each read fresh but would still let a tick
+    // observe a half-applied recalculation. See TowerStats and CLAUDE.md 3.
+    private volatile TowerStats stats;
+    // Independent readouts rather than a correlated set: damageDealt/killCount are written by
+    // tick code and read by the info panel on the EDT (damageDealt is a long, whose
+    // non-volatile reads may tear), and the rest are single flags.
     protected volatile boolean selected = false;
     protected volatile long damageDealt = 0;
     protected volatile int killCount = 0;
     protected volatile UpgradePath chosenPath;
-    private final TowerFactory.type type;
-    private volatile float rangeCurrent;
-    private final int price;
     private volatile boolean removed = false;
 
-
-    public AbstractTower(TowerFactory.type t, int price, int damage, float range) {
+    /**
+     * Binds this tower to a world and converts its cell coordinates into the pixel centre and
+     * pixel range everything else works in. A leaf passes its own constants straight through;
+     * a leaf with no cooldown (a continuous or swept weapon) passes {@code 0} and overrides
+     * {@link #rateLine(int)} to describe its cadence some other way.
+     */
+    protected AbstractTower(TowerFactory.type t, int price, int damage, float range, int coolDownMax,
+                            GameWorld context, int cellX, int cellY) {
         this.price = price;
         this.type = t;
-        this.damageBase = this.damageCurrent = damage;
-        this.rangeBase = this.rangeCurrent = range;
+        this.damageBase = damage;
+        this.rangeBase = range;
+        this.coolDownMax = coolDownMax;
         this.upgTowers = new ArrayList<>();
+        this.context = context;
+        int scale = context.getBoard().scale();
+        this.boardX = cellX * scale;
+        this.boardY = cellY * scale;
+        this.centerX = this.boardX + scale / 2;
+        this.centerY = this.boardY + scale / 2;
+        this.stats = TowerStats.of(damage, range, coolDownMax, TowerBuff.none(), scale);
+    }
+
+    /** This tower's current buffed stats, as one coherent snapshot. Never null. */
+    protected TowerStats stats() {
+        return this.stats;
+    }
+
+    /** Current damage per hit, in hundredths - shorthand for {@code stats().damage()}. */
+    protected int damageCurrent() {
+        return this.stats.damage();
+    }
+
+    /** Current ticks between shots - shorthand for {@code stats().coolDown()}. */
+    protected int coolDownCurrent() {
+        return this.stats.coolDown();
+    }
+
+    /** Current range in pixels - shorthand for {@code stats().rangeReal()}. */
+    protected float rangeReal() {
+        return this.stats.rangeReal();
+    }
+
+    /** Current range in pixels, squared - shorthand for {@code stats().rangeReal2()}. */
+    protected float rangeReal2() {
+        return this.stats.rangeReal2();
     }
 
     /**
-     * Binds this tower to a world and converts its cell coordinates {@code (x, y)} into the
-     * pixel centre and pixel range everything else works in. Must be the last thing a leaf
-     * constructor does: anything derived from the board scale has to be set before it, and
-     * anything reading {@code centerX}/{@code centerY} (a proximity scan, a listener
-     * registration) has to run after it.
+     * Whether this tower never attacks and exists only to buff its neighbours. A fixed
+     * property of the tower type rather than mutable state, so only {@code TowerAura}
+     * overrides it.
      */
-    protected void doInit(GameWorld context, int x, int y) {
-        this.context = context;
-        int scale = this.context.getBoard().scale();
-        this.boardX = x * scale;
-        this.boardY = y * scale;
-        this.centerX = this.boardX + scale / 2;
-        this.centerY = this.boardY + scale / 2;
-        this.rangeReal = this.rangeBase * scale;
-        this.rangeReal2 = rangeReal * rangeReal;
+    protected boolean isPassive() {
+        return false;
     }
 
     public float getRange() {
@@ -89,7 +121,7 @@ public abstract class AbstractTower implements Tower {
     }
 
     public float getRangeReal() {
-        return this.rangeReal;
+        return this.stats.rangeReal();
     }
 
     /** Three quarters of what was paid - selling is always a loss, buffs bought since don't raise it. */
@@ -104,19 +136,18 @@ public abstract class AbstractTower implements Tower {
      * a specialization composes with an Aura tower's buff for free. Must be called on every
      * change to either: {@link #registerTower}/{@link #unregisterTower} already do for the
      * former, {@link #chooseUpgradePath} for the latter.
+     * <p>
+     * Publishes the result as one new {@link TowerStats}, so tick code reading concurrently
+     * sees either the whole old set or the whole new one.
      */
-    protected void calcDamageRange() {
+    protected void recalculateStats() {
         TowerBuff externalBuff = this.upgTowers.stream()
                 .map(TowerAura::buff)
                 .reduce(TowerBuff.none(), TowerBuff::combine);
         TowerBuff pathBuff = this.chosenPath == null ? TowerBuff.none() : this.chosenPath.statBonus();
         TowerBuff totalBuff = externalBuff.combine(pathBuff);
-        this.damageCurrent = totalBuff.damageFor(this.damageBase);
-        this.rangeCurrent = totalBuff.rangeFor(this.rangeBase);
-        this.coolDownCurrent = totalBuff.fireRateFor(this.coolDownMax);
-
-        this.rangeReal = this.rangeCurrent * this.context.getBoard().scale();
-        this.rangeReal2 = rangeReal * rangeReal;
+        this.stats = TowerStats.of(this.damageBase, this.rangeBase, this.coolDownMax,
+                totalBuff, this.context.getBoard().scale());
     }
 
     /**
@@ -188,7 +219,7 @@ public abstract class AbstractTower implements Tower {
         }
         this.chosenPath = path;
         this.onUpgradePathChosen(path);
-        this.calcDamageRange();
+        this.recalculateStats();
         return true;
     }
 
@@ -242,7 +273,7 @@ public abstract class AbstractTower implements Tower {
     public String getInfoString() {
         String s = "Price: " + this.price + "\n" +
                 "Range: " + this.rangeBase + "\n";
-        if (this.passive) {
+        if (this.isPassive()) {
             s += "\n";
         } else {
             s += "Damage: " + this.damageBase / 100f + "\n" +
@@ -252,12 +283,12 @@ public abstract class AbstractTower implements Tower {
     }
 
     public String getStatusString() {
-        String s = "Range: " + this.rangeCurrent + "\n";
-        if (this.passive) {
+        String s = "Range: " + this.stats.range() + "\n";
+        if (this.isPassive()) {
             s += "\n";
         } else {
-            s += "Damage: " + this.damageCurrent / 100f + "\n" +
-                    this.rateLine(this.coolDownCurrent) +
+            s += "Damage: " + this.stats.damage() / 100f + "\n" +
+                    this.rateLine(this.stats.coolDown()) +
                     "Kills: " + this.killCount + "\n" +
                     "Damage dealt: " + this.damageDealt / 100f + "\n\n";
         }
@@ -275,7 +306,7 @@ public abstract class AbstractTower implements Tower {
                         TowerAura tupg = (TowerAura) t;
                         this.upgTowers.add(tupg);
                         tupg.addClient(this);
-                        this.calcDamageRange();
+                        this.recalculateStats();
                     }
                 }
                 default -> {
@@ -290,7 +321,7 @@ public abstract class AbstractTower implements Tower {
                 TowerAura tupg = (TowerAura) t;
                 this.upgTowers.remove(t);
                 tupg.removeClient(this);
-                this.calcDamageRange();
+                this.recalculateStats();
             }
             default -> {
             }

@@ -28,11 +28,15 @@ package list. Like the original four, each offers two upgrade paths (see below);
 
 ## Invariants worth knowing before you change anything here
 
-**`doInit(context, x, y)` must be the last thing a leaf constructor does.** It converts
-cell coordinates to pixels and derives `rangeReal`/`rangeReal2` from the board scale, so any
-field a subclass computes from the board (e.g. `TowerTwo.spreadRadius`) has to be set before
-it, and anything that reads `centerX`/`centerY` (e.g. `TowerAura.scanTowers`) or
-registers a listener (e.g. `TowerThree`'s wave subscription) has to run after it.
+**A leaf's constructor calls `super(...)` and nothing else has to happen in any
+particular order.** `AbstractTower`'s constructor takes the world and the tower's cell
+coordinates and computes everything derived from the board - `centerX`/`centerY`,
+`boardX`/`boardY` - into `final` fields before the leaf body runs. A leaf therefore cannot
+read a half-built tower, and cannot reorder itself into doing so: the constraint is a compile
+error, not a convention.
+
+A leaf with no reload cadence (`TowerThree`'s sweep, `TowerCinder`'s continuous cone) passes
+`0` for `coolDownMax` and overrides `rateLine(int)` to describe its cadence some other way.
 
 **Every hit goes through `AbstractTower.dealDamage`, never `enemy.doDamage` directly.** It
 is what keeps `damageDealt`/`killCount` honest, in two ways that are easy to get wrong:
@@ -70,7 +74,7 @@ decides when it is hit, not where it happens to be in the wave's array.
 (`sweepRadiansAt`), not from `animationSeconds` like the other spinning heads. A cosmetic
 spin would drift out of step and the tower would appear to shoot enemies it is not facing.
 
-**`rangeReal2` is the squared range** and every range check compares squared distances.
+**`rangeReal2()` is the squared range** and every range check compares squared distances.
 Don't introduce a `Math.sqrt` into a per-tick scan.
 
 **`TowerTwo`'s splash falls off as `1 - (d/radius)²`**, where `d` is measured from the mob
@@ -126,7 +130,7 @@ forbids.
 
 `TowerBuff` is the algebra: `none()` is the identity, `combine` is additive, and a tower's
 total buff is a `reduce` over its nearby `TowerAura`s **combined with its own chosen
-upgrade path's bonus** (see below) — `AbstractTower.calcDamageRange()` does both in one
+upgrade path's bonus** (see below) — `AbstractTower.recalculateStats()` does both in one
 fold, which is what lets a specialization and an Aura tower's buff stack for free. Buff
 strength is per-aura-tower (`TowerAura`'s `power` constructor argument), not a shared
 static — that is what lets two aura towers of different strengths stack correctly.
@@ -135,16 +139,25 @@ static — that is what lets two aura towers of different strengths stack correc
 `fireRateBonus`, `bountyBonus` — each defaulting to 0 at `none()`. An Aura tower's own
 `buff()` only ever sets the first two; the latter two exist for upgrade paths (below) to use.
 
-`AbstractTower.calcDamageRange()` recomputes `damageCurrent`/`rangeCurrent`/
-`coolDownCurrent` from that reduce. It must be called on every change to either input;
-`registerTower`/`unregisterTower` (the Aura-tower side) and `chooseUpgradePath` (the
-path side) already do.
+**`AbstractTower.recalculateStats()` publishes one new `TowerStats`, never five separate
+fields.** Damage, range, cooldown and the two pixel-range forms are correlated: they are
+recomputed on the EDT (an aura tower registering, a path being bought) and read by tick code
+on the `game-loop` thread, and a tick must never observe a half-applied recalculation - firing
+with this recalculation's damage and the previous one's cooldown. Marking five fields
+`volatile` would make each read fresh without making the set coherent, which is why they live
+in one immutable value swapped through a single volatile reference (root `CLAUDE.md` 3).
+Read them through `damageCurrent()`/`coolDownCurrent()`/`rangeReal()`/`rangeReal2()`, or take
+the whole set once with `stats()`.
+
+`recalculateStats()` must be called on every change to either input; `registerTower`/
+`unregisterTower` (the Aura-tower side) and `chooseUpgradePath` (the path side) already do.
+`TowerAura` overrides it to rescan its neighbours first.
 
 **A tower's fire rate has a base/current split just like damage and range.**
-`coolDownMax` is the base cooldown a leaf sets at construction; `coolDownCurrent` is what
+`coolDownMax` is the base cooldown a leaf passes to `super(...)`; `coolDownCurrent()` is what
 tick code actually resets `coolDown` to after firing, and is `coolDownMax` shortened by
 `TowerBuff.fireRateFor`. `rateLine(int)` takes whichever one the caller means to describe
-(`getInfoString` passes `coolDownMax`, `getStatusString` passes `coolDownCurrent`) rather
+(`getInfoString` passes `coolDownMax`, `getStatusString` passes the current one) rather
 than assuming which is wanted the way the old zero-argument version did.
 
 ## In-place upgrade paths (`td.tower.upgrade`)
@@ -164,7 +177,7 @@ changes what *this* tower itself is, once, and stays changed for its lifetime.
   actually one of this tower's own `availablePaths()` and that none has been chosen yet,
   pays its price via `context.doPay`, sets `chosenPath`, calls the `onUpgradePathChosen`
   hook (a no-op unless a leaf overrides it - see below), and recomputes
-  `calcDamageRange()`. It returns `false` without effect on any failure, mirroring
+  `recalculateStats()`. It returns `false` without effect on any failure, mirroring
   `GameWorld.doPay`'s check-and-charge-in-one-call contract - never gate a call to it on a
   separate affordability check first.
 - **A path's bonus that isn't expressible through `TowerBuff` is applied via
@@ -186,7 +199,9 @@ changes what *this* tower itself is, once, and stays changed for its lifetime.
 ## Adding a new tower
 
 1. Add the leaf class (make it `final`), extending `AbstractTower`, composing
-   `td.tower.targeting` pieces rather than writing a new scan.
+   `td.tower.targeting` pieces rather than writing a new scan. Its constructor passes its
+   type, price, damage, range and base cooldown plus the world and its cell coordinates
+   straight to `super(...)`; a passive tower also overrides `isPassive()`.
 2. Add a constant to `TowerFactory.type` with its price, and its `createTower` branch.
 3. Add a `visit…` method to `TowerVisitor`. The compiler then points you at every place
    that needs the new tower's art: `td.ui.TowerSpriteFrameBuilder` (base and turret head)

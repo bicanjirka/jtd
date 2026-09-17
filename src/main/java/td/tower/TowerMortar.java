@@ -45,6 +45,9 @@ public final class TowerMortar extends AbstractTower {
             "Concussive Charge", 30, new TowerBuff(0f, 0.25f, 0f, 0f), new ClusterCondition(2));
     private static final List<UpgradePath> PATHS = List.of(HEAVY_SHELL, CONCUSSIVE_CHARGE);
 
+    /** Ticks between shots before any fire-rate buff. */
+    private static final int COOLDOWN_MAX = 50;
+
     private float splashRadius;
     private float slowMultiplier = SLOW_MULTIPLIER_BASE;
     private int slowDurationTicks = SLOW_DURATION_TICKS_BASE;
@@ -53,11 +56,8 @@ public final class TowerMortar extends AbstractTower {
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
     public TowerMortar(GameWorld context, int x, int y) {
-        super(TowerFactory.type.mortar, price, damage, range);
-        this.coolDownMax = 50;
-        this.coolDownCurrent = this.coolDownMax;
+        super(TowerFactory.type.mortar, price, damage, range, COOLDOWN_MAX, context, x, y);
         this.splashRadius = splashRadiusBase * context.getBoard().scale();
-        this.doInit(context, x, y);
     }
 
     @Override
@@ -76,7 +76,7 @@ public final class TowerMortar extends AbstractTower {
     }
 
     private EnemyMob findTarget() {
-        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal, EnemyMob.type.Normal)
+        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.type.Normal)
                 .matching(this.context.getEnemyRegistry());
         return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
     }
@@ -88,7 +88,7 @@ public final class TowerMortar extends AbstractTower {
             this.currentTarget = this.findTarget();
             if (this.currentTarget != null) {
                 this.fireAt(this.currentTarget);
-                this.coolDown = this.coolDownCurrent;
+                this.coolDown = this.coolDownCurrent();
             }
         }
         // No target: hold the last heading rather than snapping back to a neutral angle - see
@@ -110,7 +110,7 @@ public final class TowerMortar extends AbstractTower {
             double dx = x - enemy.getX();
             double dy = y - enemy.getY();
             float r2 = (float) (dx * dx + dy * dy);
-            int amount = Math.round(this.damageCurrent * (1 - r2 / (this.splashRadius * this.splashRadius)));
+            int amount = Math.round(this.damageCurrent() * (1 - r2 / (this.splashRadius * this.splashRadius)));
             this.dealDamage(enemy, Damage.physical(amount));
             enemy.applyEffect(Effect.slow(this.slowMultiplier, this.slowDurationTicks, d -> this.dealDamage(enemy, d)));
         }
