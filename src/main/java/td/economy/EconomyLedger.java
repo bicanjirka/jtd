@@ -57,6 +57,20 @@ public class EconomyLedger {
         this.fireEconomyChangedEvent(updated);
     }
 
+    /**
+     * Credits, score and lives as one consistent snapshot.
+     * <p>
+     * <strong>A caller that needs more than one of them must use this</strong>, not two of the
+     * scalar accessors below. {@link EconomyState} exists precisely because those three are
+     * correlated, and reading them one at a time is two or three separate reads of the volatile
+     * - which can straddle a kill or a purchase and report a state that never existed. The
+     * listener path was always given the whole value; this is the same guarantee for a caller
+     * that polls.
+     */
+    public EconomyState state() {
+        return this.economy;
+    }
+
     public int getScore() {
         return this.economy.score();
     }

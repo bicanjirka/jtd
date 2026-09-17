@@ -100,7 +100,7 @@ class TowerSeekerTest {
         boolean chosen = tower.chooseUpgradePath(deepFreeze);
 
         assertThat(chosen).isFalse();
-        assertThat(tower.getChosenPath()).isNull();
+        assertThat(tower.getChosenPath()).isEmpty();
     }
 
     @Test

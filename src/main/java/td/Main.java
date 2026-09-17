@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -31,9 +32,12 @@ public class Main {
     static void main(String[] args) throws Exception {
         // must run before any class touches SLF4J/Logback, so logback.xml sees it
         System.setProperty("jtd.logTimestamp", LocalDateTime.now().format(LOG_TIMESTAMP));
-        pruneOldLogs();
+        // Returns rather than logs: this runs before any class touches SLF4J, which is the
+        // whole reason it is here, so the report has to wait for the logger below.
+        List<File> undeleted = pruneOldLogs();
 
         Logger log = LoggerFactory.getLogger(Main.class);
+        undeleted.forEach(f -> log.warn("Could not delete old log file {}", f));
         log.info("jTD {} starting, logging to logs/jTD-{}.log", TowerDefense.VERSION, System.getProperty("jtd.logTimestamp"));
         Runtime.getRuntime().addShutdownHook(new Thread(() -> log.info("jTD shutting down")));
 
@@ -66,17 +70,24 @@ public class Main {
         }
     }
 
-    /** Keeps the most recent {@value #LOG_FILES_TO_KEEP} run logs, so a long-lived checkout's {@code logs/} does not grow without bound. */
-    private static void pruneOldLogs() {
+    /**
+     * Keeps the most recent {@value #LOG_FILES_TO_KEEP} run logs, so a long-lived checkout's
+     * {@code logs/} does not grow without bound.
+     *
+     * @return the files it tried and failed to delete, for the caller to report once it has a
+     * logger - never null, and empty in the ordinary case
+     */
+    private static List<File> pruneOldLogs() {
         File logDir = new File("logs");
         File[] logFiles = logDir.listFiles((dir, name) -> name.startsWith("jTD-") && name.endsWith(".log"));
         if (logFiles == null || logFiles.length <= LOG_FILES_TO_KEEP) {
-            return;
+            return List.of();
         }
-        Arrays.stream(logFiles)
+        return Arrays.stream(logFiles)
                 .sorted(Comparator.comparingLong(File::lastModified).reversed())
                 .skip(LOG_FILES_TO_KEEP)
-                .forEach(File::delete);
+                .filter(f -> !f.delete())
+                .toList();
     }
 
 }

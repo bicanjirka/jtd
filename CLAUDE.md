@@ -99,9 +99,11 @@ wave composition).
 **Depend on the narrowest thing that works.** `GameWorld` hands out its collaborators rather
 than wrapping them — `world.economy().doPay(n)`, `world.towers().all()` — so a call site names
 the capability it uses instead of looking like it uses "the world". A consumer that needs only
-one of them takes that type directly (`BoardRenderer` and `td.tower.targeting` take
+one of them takes that type directly (`td.tower.targeting` and `td.projectile` take
 `EnemyRegistry`), and a class constructed against `GameWorld` should be reaching for two or
-three accessors, not ten.
+three accessors, not ten. The converse is also a rule: a consumer that genuinely uses most of
+the world takes `GameWorld` itself rather than a list of six slices — `BoardRenderer` draws
+every part of the board, so naming six collaborators would say less than naming one.
 
 ## 5. Code style
 

@@ -3,6 +3,7 @@ package td;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import td.util.Threads;
+import td.util.TickRate;
 
 /**
  * Drives the simulation on its own dedicated thread using two independent
@@ -25,12 +26,11 @@ public class GameLoop implements Runnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(GameLoop.class);
 
-    private static final long BASE_TICK_NANOS = 50_000_000L;
     private static final long RENDER_INTERVAL_NANOS = 16_666_667L; // ~60fps
     private static final long POLL_NANOS = 1_000_000L;
     private static final int MAX_CONSECUTIVE_TICK_FAILURES = 10;
 
-    private final TickAccumulator tickAccumulator = new TickAccumulator(BASE_TICK_NANOS);
+    private final TickAccumulator tickAccumulator = new TickAccumulator(TickRate.TICK_NANOS);
     private final TickAccumulator renderAccumulator = new TickAccumulator(RENDER_INTERVAL_NANOS);
     private final Runnable onTick;
     private final Runnable onRender;

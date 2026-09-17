@@ -33,6 +33,6 @@ class TowerFourTest {
         boolean chosen = tower.chooseUpgradePath(overloadCore);
 
         assertThat(chosen).isFalse();
-        assertThat(tower.getChosenPath()).isNull();
+        assertThat(tower.getChosenPath()).isEmpty();
     }
 }

@@ -2,6 +2,8 @@ package td.tower;
 
 import td.tower.buff.TowerBuff;
 
+import java.util.Optional;
+
 import td.tower.upgrade.UpgradePath;
 
 import java.util.List;
@@ -87,7 +89,7 @@ public interface Tower {
     List<UpgradePath> availablePaths();
 
     /** The path this tower has permanently specialized into, or {@code null} if it hasn't chosen one yet. */
-    UpgradePath getChosenPath();
+    Optional<UpgradePath> getChosenPath();
 
     /**
      * Spends {@code path}'s price and permanently specializes this tower along it. Returns

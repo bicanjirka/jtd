@@ -23,20 +23,28 @@ public class TowerFactory {
         };
     }
 
+    /**
+     * The closed set of buildable towers, each carrying its own price and placement shortcut.
+     * The key lives here rather than in a parallel array indexed by {@code ordinal()}, where
+     * reordering this enum would silently rebind the keyboard.
+     */
     public enum Type {
-        first(TowerOne.PRICE),
-        second(TowerTwo.PRICE),
-        third(TowerThree.PRICE),
-        fourth(TowerFour.PRICE),
-        aura(TowerAura.PRICE),
-        mortar(TowerMortar.PRICE),
-        seeker(TowerSeeker.PRICE),
-        cinder(TowerCinder.PRICE);
+        first(TowerOne.PRICE, 'q'),
+        second(TowerTwo.PRICE, 'w'),
+        third(TowerThree.PRICE, 'e'),
+        fourth(TowerFour.PRICE, 'r'),
+        aura(TowerAura.PRICE, 't'),
+        mortar(TowerMortar.PRICE, 'y'),
+        seeker(TowerSeeker.PRICE, 'u'),
+        cinder(TowerCinder.PRICE, 'i');
 
         public final int price;
+        /** The keyboard shortcut that starts placing this tower. */
+        public final char placementKey;
 
-        Type(int price) {
+        Type(int price, char placementKey) {
             this.price = price;
+            this.placementKey = placementKey;
         }
     }
 

@@ -106,7 +106,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
      * economy event, so it needs the same per-frame re-derivation.
      */
     private void updatePathButtons() {
-        List<UpgradePath> paths = this.selectedTower.getChosenPath() != null
+        List<UpgradePath> paths = this.selectedTower.getChosenPath().isPresent()
                 ? List.of()
                 : this.selectedTower.availablePaths();
         this.updatePathButton(this.jButton_path1, paths, 0);
