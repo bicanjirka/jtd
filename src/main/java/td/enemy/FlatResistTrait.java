@@ -15,6 +15,6 @@ public record FlatResistTrait(int flatReduction) implements Trait {
 
     @Override
     public Damage onHit(Damage incoming, TraitContext context) {
-        return new Damage(incoming.amount() - this.flatReduction, incoming.type());
+        return new Damage(incoming.amount() - this.flatReduction, incoming.type(), incoming.critical());
     }
 }
