@@ -333,4 +333,43 @@ class AbstractTowerTest {
         assertThat(context.economy().getCredits()).isEqualTo(creditsAfterBuying + 20 + 10);
         assertThat(context.economy().getScore()).isEqualTo(scoreBefore + 20);
     }
+
+    @Test
+    void dealDamageRollsACriticalHitWhenTheRandomRollIsBelowCritChance() {
+        GameWorld alwaysCrits = new GameWorld(new RecordingGameHost(), () -> 0.0);
+        alwaysCrits.economy().startEconomy(100, 5);
+        UpgradePath path = new UpgradePath("Precision", 10, new TowerBuff(0f, 0f, 0f, 0f, 0.5f), UpgradeCondition.always());
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(alwaysCrits, 0, 0, List.of(path));
+        tower.chooseUpgradePath(path);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, 1);
+
+        tower.dealDamage(enemy, Damage.physical(1000));
+
+        assertThat(tower.getDamageDealt()).isEqualTo(Math.round(1000 * Damage.CRITICAL_MULTIPLIER));
+    }
+
+    @Test
+    void dealDamageDoesNotRollACriticalHitWhenTheRandomRollIsAboveCritChance() {
+        GameWorld neverCrits = new GameWorld(new RecordingGameHost(), () -> 0.99);
+        neverCrits.economy().startEconomy(100, 5);
+        UpgradePath path = new UpgradePath("Precision", 10, new TowerBuff(0f, 0f, 0f, 0f, 0.5f), UpgradeCondition.always());
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(neverCrits, 0, 0, List.of(path));
+        tower.chooseUpgradePath(path);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", neverCrits, 0, 100000, 3, 1);
+
+        tower.dealDamage(enemy, Damage.physical(1000));
+
+        assertThat(tower.getDamageDealt()).isEqualTo(1000);
+    }
+
+    @Test
+    void aTowerWithNoCritChanceNeverRollsACriticalHitEvenWithAnAlwaysSucceedingRandomSource() {
+        GameWorld alwaysCrits = new GameWorld(new RecordingGameHost(), () -> 0.0);
+        SniperTower tower = new SniperTower(alwaysCrits, 0, 0);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, 1);
+
+        tower.dealDamage(enemy, Damage.physical(1000));
+
+        assertThat(tower.getDamageDealt()).isEqualTo(1000);
+    }
 }

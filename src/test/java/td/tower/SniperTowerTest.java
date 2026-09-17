@@ -1,6 +1,9 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
+import td.enemy.EnemyFactory;
+import td.enemy.EnemyMob;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
@@ -38,5 +41,22 @@ class SniperTowerTest {
 
         assertThat(chosen).isFalse();
         assertThat(tower.getChosenPath()).isEmpty();
+    }
+
+    @Test
+    void veteranGrantsACritChanceOnceKillCountIsMet() {
+        this.context.economy().startEconomy(1000, 5);
+        SniperTower tower = new SniperTower(this.context, 0, 0);
+        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, 1);
+        for (int i = 0; i < 10; i++) {
+            tower.dealDamage(fodder, Damage.physical(1_000_000));
+            fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, 1);
+        }
+        UpgradePath veteran = UpgradePaths.named(tower, "Veteran");
+
+        boolean chosen = tower.chooseUpgradePath(veteran);
+
+        assertThat(chosen).isTrue();
+        assertThat(tower.critChance()).isGreaterThan(0f);
     }
 }

@@ -29,10 +29,11 @@ public final class SniperTower extends AbstractTower {
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.4;
 
     /**
-     * More damage and range, plus a bounty top-up on this tower's own kills - a veteran's payoff for proven kills.
+     * More damage and range, a bounty top-up on this tower's own kills, and a chance to land a
+     * critical hit - a veteran marksman's proven aim starts placing shots that count extra.
      */
     private static final UpgradePath VETERAN = new UpgradePath(
-            "Veteran", 30, new TowerBuff(0.3f, 0.1f, 0f, 0.25f), new KillCountCondition(10));
+            "Veteran", 30, new TowerBuff(0.3f, 0.1f, 0f, 0.25f, 0.15f), new KillCountCondition(10));
     /**
      * Faster, weaker shots - a straightforward money-gated specialization needing no track record.
      */

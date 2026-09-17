@@ -144,9 +144,15 @@ both in one fold, which is what lets a specialization and an Aura tower's buff s
 strength is per-aura-tower (`AuraTower`'s `power` constructor argument), not a shared
 static — that is what lets two aura towers of different strengths stack correctly.
 
-`TowerBuff` carries four independent bonus axes — `damageBonus`, `rangeBonus`,
-`fireRateBonus`, `bountyBonus` — each defaulting to 0 at `none()`. An Aura tower's own
-`buff()` only ever sets the first two; the latter two exist for upgrade paths (below) to use.
+`TowerBuff` carries five independent bonus axes — `damageBonus`, `rangeBonus`,
+`fireRateBonus`, `bountyBonus`, `critChanceBonus` — each defaulting to 0 at `none()`. An Aura
+tower's own `buff()` only ever sets the first two; the latter three exist for upgrade paths
+(below) to use. A tower's crit chance itself is `TowerStats.critChance`, computed as
+`critChanceBonus` alone (via `TowerBuff.critChanceFor(0f)`) — no tower has any innate crit
+chance of its own, so today the axis is purely upgrade-path-granted (see `SniperTower.VETERAN`).
+`AbstractTower.dealDamage` rolls it via `context.random()` before the enemy ever sees the hit,
+scaling the `Damage` through `Damage.asCritical()` on success — see that record's own doc
+comment for the fixed, project-wide multiplier this always applies.
 
 **`AbstractTower.recalculateStats()` publishes one new `TowerStats`, never five separate
 fields.** Damage, range, cooldown and the two pixel-range forms are correlated: they are
