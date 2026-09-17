@@ -5,7 +5,7 @@ package td.enemy;
  * {@link EnemyRegistry} (the read-only view targeting/rendering depend on), since evaluating an
  * ability only ever needs to add to or replace within the live roster, never read every enemy
  * on the board. No production implementation exists yet; {@code EnemyRoster} gains one once
- * real spawning is wired up (see {@code FEATURE-enemy-traits-and-effects.md}).
+ * real spawning is wired up (see {@code docs/features/FEATURE-enemy-traits-and-effects.md}).
  */
 public interface EnemySpawner {
 

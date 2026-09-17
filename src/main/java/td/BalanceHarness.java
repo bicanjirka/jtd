@@ -16,7 +16,7 @@ import java.util.List;
  * tower loadout and no human input, then reports the numbers a balance decision needs - lives
  * lost, ticks-to-clear per wave, and per-tower damage/kills. Lives in {@code src/main/java}
  * (not test scope), since it is a tool run on demand rather than a regression test - see
- * {@code FEATURE-playtesting-and-balance-tooling.md}'s V1 Scope.
+ * {@code docs/features/FEATURE-playtesting-and-balance-tooling.md}'s V1 Scope.
  * <p>
  * Implements {@link GameHost} itself rather than using {@link GameHost#noOp()}: the no-op
  * host never re-arms {@code waveReady} (only {@code TowerDefense.enemyDied} does that, and

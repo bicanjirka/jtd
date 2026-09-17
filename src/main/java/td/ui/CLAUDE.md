@@ -185,4 +185,4 @@ an alpha-channel *background colour* on an opaque component does not blend, whic
 made the original overlay solid black.
 
 **Nothing here may be touched from tick code.** Rendering reaches the EDT via
-`SwingUtilities.invokeLater` — see the root `CLAUDE.md`'s Threading model.
+`SwingUtilities.invokeLater` — see the root `CLAUDE.md` §3 (Threading).

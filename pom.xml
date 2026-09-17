@@ -85,6 +85,31 @@
                 <version>3.5.6</version>
             </plugin>
             <plugin>
+                <!-- Fails `mvn verify` on any violation of a greppable rule from CLAUDE.md.
+                     Run through the single-file source launcher rather than a shell script so
+                     the check behaves identically on every platform without needing a POSIX
+                     shell on PATH. -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>verify-rules</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${java.home}/bin/java</executable>
+                            <arguments>
+                                <argument>${project.basedir}/scripts/VerifyRules.java</argument>
+                            </arguments>
+                            <workingDirectory>${project.basedir}</workingDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <!-- Bundles slf4j-api/logback-classic into target/jTD.jar so
                      `java -jar target/jTD.jar` keeps working without a manual classpath. -->
                 <groupId>org.apache.maven.plugins</groupId>

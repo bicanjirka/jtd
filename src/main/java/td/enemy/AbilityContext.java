@@ -6,7 +6,7 @@ import td.effect.EffectTemplate;
  * What {@link AbilityEvaluator} needs to evaluate and fire one {@link Ability} for one mob on
  * one tick - a narrow seam, not a reference to the mob itself, so evaluation logic is testable
  * against a fake without any real {@code EnemyMob} implementation existing yet (see
- * {@code FEATURE-enemy-traits-and-effects.md}'s Phase 1). A real implementation (added when the
+ * {@code docs/features/FEATURE-enemy-traits-and-effects.md}'s Phase 1). A real implementation (added when the
  * unified enemy model lands) resolves {@link #applyEffect}/{@link #spawnEnemies} against its
  * own {@code EnemyCatalog}/{@link EnemySpawner}/position - {@link AbilityEvaluator} itself never
  * needs to see those directly.

@@ -92,7 +92,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             if (shown == MAX_VISIBLE_MARKERS) {
                 // A 4th+ simultaneous effect collapses into one overflow marker rather than
                 // growing the row further - legible even on a heavily-buffed enemy in a packed
-                // wave (see FEATURE-enemy-traits-and-effects.md's V1 Scope).
+                // wave (see docs/features/FEATURE-enemy-traits-and-effects.md's V1 Scope).
                 this.markerDraws.add(new StatusMarkerDraw(Palette.STATUS_MARKER_OVERFLOW, markerX, markerY, scale * MARKER_SCALE_FRACTION));
                 return;
             }
