@@ -73,4 +73,54 @@ class DamageTest {
     void cappedAtAboveTheCurrentAmountLeavesItUnchanged() {
         assertThat(Damage.physical(30).cappedAt(100)).isEqualTo(Damage.physical(30));
     }
+
+    @Test
+    void freshDamageIsNotCriticalByDefault() {
+        assertThat(Damage.physical(100).critical()).isFalse();
+        assertThat(new Damage(100, DamageType.PHYSICAL).critical()).isFalse();
+    }
+
+    @Test
+    void asCriticalMarksTheHitAndAppliesTheCriticalMultiplier() {
+        Damage crit = Damage.physical(1000).asCritical();
+
+        assertThat(crit.critical()).isTrue();
+        assertThat(crit.amount()).isEqualTo(Math.round(1000 * Damage.CRITICAL_MULTIPLIER));
+    }
+
+    @Test
+    void stripCriticalUndoesTheBonusAndClearsTheFlag() {
+        Damage crit = Damage.physical(1000).asCritical();
+
+        Damage stripped = crit.stripCritical();
+
+        assertThat(stripped.critical()).isFalse();
+        assertThat(stripped.amount()).isEqualTo(1000);
+    }
+
+    @Test
+    void stripCriticalOnANonCriticalHitIsANoOp() {
+        Damage hit = Damage.physical(1000);
+
+        assertThat(hit.stripCritical()).isEqualTo(hit);
+    }
+
+    @Test
+    void scaledByPreservesTheCriticalFlag() {
+        assertThat(Damage.physical(1000).asCritical().scaledBy(0.5f).critical()).isTrue();
+    }
+
+    @Test
+    void cappedAtPreservesTheCriticalFlag() {
+        assertThat(Damage.physical(1000).asCritical().cappedAt(500).critical()).isTrue();
+    }
+
+    @Test
+    void combiningTwoNonZeroDamagesIsCriticalIfEitherSideWas() {
+        Damage crit = Damage.physical(10).asCritical();
+        Damage normal = Damage.physical(10);
+
+        assertThat(crit.plus(normal).critical()).isTrue();
+        assertThat(normal.plus(crit).critical()).isTrue();
+    }
 }
