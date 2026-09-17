@@ -1,6 +1,7 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
+import td.wave.Vec2;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,27 +38,28 @@ class SpawnParametersTest {
 
     @Test
     void aFasterSpeedMultiplierShortensTheDelayForTheSameSlotPosition() {
-        SpawnParameters fullSpeed = SpawnParameters.of(2, 1.28f, 50, 3, 1f, 1f, 0.0);
-        SpawnParameters halfSpeed = SpawnParameters.of(2, 1.28f, 50, 3, 1f, 0.5f, 0.0);
+        SpawnParameters fullSpeed = SpawnParameters.of(2, 1.28f, 50, 3, 1f, 1f, new Vec2(0, 0));
+        SpawnParameters halfSpeed = SpawnParameters.of(2, 1.28f, 50, 3, 1f, 0.5f, new Vec2(0, 0));
 
         assertThat(halfSpeed.delayTicks()).isGreaterThan(fullSpeed.delayTicks());
     }
 
     @Test
     void healthPriceMultipliersAndOffsetPassThroughUnchanged() {
-        SpawnParameters parameters = SpawnParameters.of(0, 1.28f, 50, 3, 1.5f, 0.5f, 4.0);
+        Vec2 offset = new Vec2(1.0, 4.0);
+        SpawnParameters parameters = SpawnParameters.of(0, 1.28f, 50, 3, 1.5f, 0.5f, offset);
 
         assertThat(parameters.health()).isEqualTo(50);
         assertThat(parameters.price()).isEqualTo(3);
         assertThat(parameters.sizeMultiplier()).isEqualTo(1.5f);
         assertThat(parameters.speedMultiplier()).isEqualTo(0.5f);
-        assertThat(parameters.lateralOffset()).isEqualTo(4.0);
+        assertThat(parameters.localOffset()).isEqualTo(offset);
     }
 
     @Test
     void atSlotIsTheIdentityWithNoOffset() {
         SpawnParameters parameters = SpawnParameters.atSlot(0, 1.28f, 50, 3);
 
-        assertThat(parameters.lateralOffset()).isZero();
+        assertThat(parameters.localOffset()).isEqualTo(new Vec2(0, 0));
     }
 }

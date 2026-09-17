@@ -28,8 +28,8 @@ import java.util.Set;
  */
 public class Wave {
 
-    // The footprint a shaped slot's lateral offset scatters within is the path's own corridor
-    // width, pulled in by this fraction so a member's body doesn't itself hang over the edge.
+    // The footprint a shaped slot's formation fills is the path's own corridor width, pulled in
+    // by this fraction so a member's body doesn't itself hang over the edge.
     private static final double PATH_WIDTH_MARGIN_FRACTION = 0.7;
 
     private final GameWorld gameWorld;
@@ -72,25 +72,27 @@ public class Wave {
      * {@link SpawnParameters}, which folds them into the mob itself. A member's own slot
      * position is this slot's index plus its member index scaled by
      * {@link SpawnShape#delaySpacingSlots()} - zero for every shape but Column and Drip, so
-     * every other shape's members still share the slot's own position. A member's lateral
+     * every other shape's members still share the slot's own position. A member's formation
      * offset comes from {@link SpawnShape#spread()}, drawn from a {@link RandomSource} seeded
      * from this wave's own {@code scatterSeed} and the slot's index - deliberately not
      * {@code gameWorld.random()}, which tower targeting also draws from, so a formation's shape
-     * would otherwise depend on how many towers happened to fire first.
+     * would otherwise depend on how many towers happened to fire first. The offset itself is
+     * relative to the mob's own spawn-facing direction, not world space -
+     * {@link td.enemy.AbstractEnemyMob} is what fixes it into a world vector, once, at spawn.
      */
     private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int delay, int baseHealth, int basePrice, int level, long scatterSeed) {
         EnemyDefinition definition = enemySlot.definition();
         SpawnShape shape = enemySlot.shape();
         int health = Math.max(1, Math.round(baseHealth * shape.healthMultiplier()));
         int[] bountyShares = shape.bountyShares(basePrice);
-        double maxOffset = gameWorld.getBoard().scale() * PathCoverage.PATH_WIDTH_CELLS / 2.0 * PATH_WIDTH_MARGIN_FRACTION;
+        double maxRadius = gameWorld.getBoard().scale() * PathCoverage.PATH_WIDTH_CELLS / 2.0 * PATH_WIDTH_MARGIN_FRACTION;
         RandomSource scatter = RandomSource.seeded(scatterSeed * 31 + delay);
         List<EnemyMob> members = new ArrayList<>(shape.members());
         for (int i = 0; i < shape.members(); i++) {
             double slotPosition = delay + i * shape.delaySpacingSlots();
-            double lateralOffset = shape.spread().offsetFor(i, shape.members(), maxOffset, scatter);
+            Vec2 localOffset = shape.spread().offsetFor(i, shape.members(), maxRadius, scatter);
             SpawnParameters spawnParameters = SpawnParameters.of(slotPosition, definition.baseSpeed(), health,
-                    bountyShares[i], shape.sizeMultiplier(), shape.speedMultiplier(), lateralOffset);
+                    bountyShares[i], shape.sizeMultiplier(), shape.speedMultiplier(), localOffset);
             members.add(new DefinedEnemyMob(definition, gameWorld, spawnParameters, level));
         }
         return List.copyOf(members);

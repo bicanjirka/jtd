@@ -204,16 +204,26 @@ slot position that produced them, since a fractional per-member delay (`SpawnSha
 spacing) can round down to zero ticks from a nonzero position, and `doTick`'s inactive branch
 only ever counts down from a positive `delay`.
 
-**A lateral offset is a fixed perpendicular displacement, applied and clamped in one place.**
-`AbstractEnemyMob.updatePosition()` is still the only writer of x/y - a shaped spawn
-(`SpawnShape`'s Swarm/Line/Flank) does not move differently, it just adds
-`spawnParameters.lateralOffset()` pixels along `pathPose.facingRadians() + PI/2` to the
-centreline position `poseAt` already reports, then clamps both axes to the board. The clamp is
-what stops a formation near the board edge from silently walking off the `validTarget` bounds
-check while still visibly on its way to the exit - without it, an off-path member would leak a
-life without ever being targetable. A degenerate (empty) path has no tangent to be perpendicular
-to, so the offset does not apply there; a stationary mob just holds at its one available point,
-exactly as before.
+**A formation offset is a fixed world-space vector, computed once, never recomputed from the
+path's current tangent.** `spawnParameters.localOffset()` is relative to the mob's own
+spawn-facing direction (`x` forward, `y` lateral); the constructor rotates it by
+`arcLengthPath.poseAt(0).facingRadians()` - the spawn point's own facing, since every mob's
+`distanceIntoLap` starts at `0` regardless of delay or shape - exactly once, and stores the
+result as the final `offsetX`/`offsetY` fields. `AbstractEnemyMob.updatePosition()` is still the
+only writer of x/y, and a shaped spawn (`SpawnShape`'s Swarm/Line/Flank) does not move
+differently from a normal one - it just adds those two fixed numbers to whatever centreline
+position `poseAt` reports this tick, then clamps both axes to the board. **This was not always
+true and the bug it replaced is worth knowing about**: an earlier version measured the offset
+from the path's *current* facing on every tick, which made a shaped member's position pivot
+around the centreline as the path curved (distorting its own effective speed through a turn) and
+jump outright at an unrounded corner, where the facing itself is discontinuous. A fixed vector
+has neither problem - translating a curve by a constant doesn't change its arc-length speed, and
+there is no discontinuity in a constant to inherit. The board clamp is still what stops a
+formation near the edge from silently walking off the `validTarget` bounds check while still
+visibly on its way to the exit - without it, an off-path member would leak a life without ever
+being targetable. A degenerate (empty) path has no tangent to rotate the offset by in the first
+place, so it defaults to `0` there and the offset applies unrotated - not a special case, just
+what the same formula gives you.
 
 ## Adding a new enemy
 
