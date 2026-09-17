@@ -153,7 +153,7 @@ boss egg's mechanism (a later phase).
 
 **Reaching the path's end is a despawn, not a wrap.** `AbstractEnemyMob.leak()` charges the
 player an `EconomyDelta.leak`, then kills the mob through the exact same `dead`/fade/
-`EnemyRoster.remove()` path a combat kill uses, just with a leak penalty instead of
+`EnemyRoster.reportDeath()` path a combat kill uses, just with a leak penalty instead of
 `EconomyDelta.kill` — no bounty, and no second lap where a tower could still kill it for one.
 A leaked mob's `x`/`y` are left exactly where they were the tick before, so the fade has
 something real to draw from instead of a teleport to the path's start.
@@ -284,8 +284,15 @@ read-only slice of it that targeting queries and renderers depend on — depend 
 interface, not the roster, unless you actually need to mutate.
 
 `clear()` (level teardown) deliberately does **not** call `GameHost.enemyDied`, while
-`remove()` (an actual kill) does. Renaming or merging those two would make returning to the
-menu spuriously trigger the "you won" overlay.
+`reportDeath()` (an actual kill, or a leak - see "Reaching the path's end", above) does. Merging
+the two would make returning to the menu spuriously trigger the "you won" overlay.
+
+**`reportDeath()` does not remove anything from the live list** - a dead mob stays in it for its
+death fade, so `getEnemies().length` is the wave's *slot* count, not how many are still alive.
+`aliveCount()` is the real "is anything left" query, backed by the same count `reportDeath()`
+decrements; `BalanceHarness`'s run loop is what actually needed this distinction; use it instead
+of reaching for the list's length whenever the question is "has the wave finished," not
+"what's currently drawable."
 
 **`EnemyRoster` implements `EnemySpawner`** (`add`/`replace`), backed by a
 `CopyOnWriteArrayList` rather than the bare array it used to be - `add`/`replace` are called

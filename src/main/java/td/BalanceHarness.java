@@ -96,7 +96,7 @@ public final class BalanceHarness implements GameHost {
                 break;
             }
             if (this.engine.getCurrentWaveIndex() >= this.engine.getWaveCount()
-                    && this.engine.getGameWorld().enemies().getEnemies().length == 0) {
+                    && this.engine.getGameWorld().enemies().aliveCount() == 0) {
                 break;
             }
         }

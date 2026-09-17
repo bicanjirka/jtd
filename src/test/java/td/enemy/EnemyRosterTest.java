@@ -52,12 +52,13 @@ class EnemyRosterTest {
     }
 
     @Test
-    void removingAnEnemyDecrementsTheCountAndReportsItToTheHost() {
+    void reportingADeathDecrementsTheAliveCountAndReportsItToTheHost() {
         roster.setCount(3);
 
-        roster.remove();
+        roster.reportDeath();
 
         assertThat(host.enemyDiedCalls).containsExactly(2);
+        assertThat(roster.aliveCount()).isEqualTo(2);
     }
 
     @Test

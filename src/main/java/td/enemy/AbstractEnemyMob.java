@@ -190,7 +190,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
             this.validTarget = false;
             this.dead = true;
             this.gameWorld.economy().apply(EconomyDelta.kill(this.price));
-            this.gameWorld.enemies().remove();
+            this.gameWorld.enemies().reportDeath();
         }
         return landed;
     }
@@ -435,14 +435,14 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     /**
      * Reaching the path's end costs the same life/score penalty {@link EconomyDelta#leak}
      * always has, but the mob does not loop back to the path's start to try again - it goes
-     * through the exact {@code dead}/fade/{@code remove()} path a combat kill does, just with
-     * a leak penalty instead of {@link EconomyDelta#kill}. That is the actual punishment: gone
-     * for good means no tower ever gets a second chance to kill it for its bounty.
+     * through the exact {@code dead}/fade/{@code reportDeath()} path a combat kill does, just
+     * with a leak penalty instead of {@link EconomyDelta#kill}. That is the actual punishment:
+     * gone for good means no tower ever gets a second chance to kill it for its bounty.
      */
     private void leak() {
         this.validTarget = false;
         this.dead = true;
         this.gameWorld.economy().apply(EconomyDelta.leak(this.price == 0 ? 10 : this.price));
-        this.gameWorld.enemies().remove();
+        this.gameWorld.enemies().reportDeath();
     }
 }
