@@ -39,7 +39,7 @@ public record WaveContent(List<WaveSlot> spawnSequence) {
             switch (slot) {
                 case EnemySlot s -> {
                     if (s.definition().equals(definition)) {
-                        count++;
+                        count += s.shape().members();
                     }
                 }
                 case EmptySlot ignored -> {
@@ -50,13 +50,16 @@ public record WaveContent(List<WaveSlot> spawnSequence) {
     }
 
     /**
-     * The real enemy count - every spawn slot except the {@code e} spacer.
+     * The real enemy count - every shaped slot's member count summed, excluding the {@code e}
+     * spacer. A shaped slot (e.g. a swarm of 4) counts as its member count, not as one, since
+     * this is what {@code GameWorld.startWave} seeds the roster's alive count from and a wave is
+     * cleared only once every member is dead.
      */
     public int enemyCount() {
         int count = 0;
         for (WaveSlot slot : this.spawnSequence) {
             switch (slot) {
-                case EnemySlot ignored -> count++;
+                case EnemySlot s -> count += s.shape().members();
                 case EmptySlot ignored -> {
                 }
             }
