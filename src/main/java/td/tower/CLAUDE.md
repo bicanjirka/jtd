@@ -6,8 +6,8 @@ its three subpackages (`targeting`, `buff`, `upgrade`).
 ## Shape
 
 `Tower` is the interface; `AbstractTower` holds position, price, base/current damage/range/
-fire-rate, the list of nearby Aura towers buffing it, this tower's own permanently-chosen
-upgrade path (if any), and the shared `dealDamage` accounting. The eight leaf classes are
+fire-rate, this tower's own permanently-chosen upgrade path (if any), and the shared
+`dealDamage` accounting. It holds **no** list of the Aura towers buffing it — see below. The eight leaf classes are
 `final` and are constructed only through `TowerFactory`:
 
 | Class | Name in the UI | Targeting |
@@ -58,9 +58,10 @@ after the tower itself might be sold — without the guard, a sold tower would k
 has already been refunded for.
 
 **A tower that subscribes to anything must unsubscribe in `doCleanup`.** `TowerThree`
-registers as a `WaveStartListener`, `TowerAura` as a `TowerListener`; both remove
-themselves in `doCleanup`, which `TowerRoster` calls on sell *and* on level teardown. A
-missed unsubscribe leaks the tower into the next level.
+registers as a `WaveStartListener` and removes itself in `doCleanup`, which `TowerRoster`
+calls on sell *and* on level teardown. A missed unsubscribe leaks the tower into the next
+level. `TowerAura` deliberately subscribes to nothing — that is the point of the buff design
+below.
 
 **`TowerThree` decides hits against a swept *arc*, never the beam's instantaneous angle.**
 The scan moves about a fifth of a radian per tick, so it is essentially never exactly on an
@@ -131,9 +132,9 @@ forbids.
 ## Aura buff stacking (`td.tower.buff`)
 
 `TowerBuff` is the algebra: `none()` is the identity, `combine` is additive, and a tower's
-total buff is a `reduce` over its nearby `TowerAura`s **combined with its own chosen
-upgrade path's bonus** (see below) — `AbstractTower.recalculateStats()` does both in one
-fold, which is what lets a specialization and an Aura tower's buff stack for free. Buff
+total buff is a `reduce` over what every tower on the board contributes to it **combined with
+its own chosen upgrade path's bonus** (see below) — `AbstractTower.recalculateStats()` does
+both in one fold, which is what lets a specialization and an Aura tower's buff stack for free. Buff
 strength is per-aura-tower (`TowerAura`'s `power` constructor argument), not a shared
 static — that is what lets two aura towers of different strengths stack correctly.
 
@@ -143,7 +144,7 @@ static — that is what lets two aura towers of different strengths stack correc
 
 **`AbstractTower.recalculateStats()` publishes one new `TowerStats`, never five separate
 fields.** Damage, range, cooldown and the two pixel-range forms are correlated: they are
-recomputed on the EDT (an aura tower registering, a path being bought) and read by tick code
+recomputed on the EDT (a tower being built or sold, a path being bought) and read by tick code
 on the `game-loop` thread, and a tick must never observe a half-applied recalculation - firing
 with this recalculation's damage and the previous one's cooldown. Marking five fields
 `volatile` would make each read fresh without making the set coherent, which is why they live
@@ -151,9 +152,22 @@ in one immutable value swapped through a single volatile reference (root `CLAUDE
 Read them through `damageCurrent()`/`coolDownCurrent()`/`rangeReal()`/`rangeReal2()`, or take
 the whole set once with `stats()`.
 
-`recalculateStats()` must be called on every change to either input; `registerTower`/
-`unregisterTower` (the Aura-tower side) and `chooseUpgradePath` (the path side) already do.
-`TowerAura` overrides it to rescan its neighbours first.
+**The buff a tower receives is computed, never stored.** `recalculateStats()` folds
+`towers().all().stream().map(t -> t.buffFor(this))`: every tower is asked what it contributes,
+and `AbstractTower.buffFor` returns `TowerBuff.none()` for everything that is not an Aura tower
+in range. There is no index on either side.
+
+That replaced a bidirectional graph — `TowerAura` held a `Set<Tower> clients`, every
+`AbstractTower` held a `List<TowerAura> upgTowers`, and `registerTower`/`unregisterTower`/
+`addClient`/`removeClient` plus a `TowerListener` subscription plus a `scanTowers()` rescan kept
+the two halves in agreement. Two structures that must agree is a bug factory, and the rescan
+lived inside a `recalculateStats()` override, so recomputing one tower's stats mutated other
+towers' state. Deriving the buff costs one pass over the roster per recompute and cannot drift.
+
+`recalculateStats()` must be called on every change to either input. `TowerRoster` calls it on
+every tower whenever the set changes (`add`/`sell`), and `chooseUpgradePath` calls it for the
+path side. `TowerRoster.clear()` deliberately does not — every tower is gone, so there is
+nothing to recompute and nothing left to read a stale value.
 
 **A tower's fire rate has a base/current split just like damage and range.**
 `coolDownMax` is the base cooldown a leaf passes to `super(...)`; `coolDownCurrent()` is what
@@ -220,8 +234,10 @@ changes what *this* tower itself is, once, and stays changed for its lifetime.
 The toolbar icon needs no separate art — `PanelTowerSelector` renders it through the same
 paint code at a fixed pose, so a tower's board look and its icon cannot drift apart.
 
-**Never branch on a tower's concrete type with `instanceof`.** Use `TowerVisitor`. The
-existing `switch (t.getType())` blocks in `AbstractTower.registerTower` and
-`TowerAura.scanTowers` are not per-type behaviour — they only ask the role question "is
-this an aura tower or not", and adding a sixth tower needs no new branch in either. Keep
-them that way rather than growing them into a per-type dispatch.
+**Never branch on a tower's concrete type with `instanceof`, and don't cast one either.**
+Use `TowerVisitor`, or — where the question is "what does this tower contribute" rather than
+"what kind is it" — let the tower answer it: `Tower.buffFor` is a polymorphic call that
+replaced a `switch (t.getType())` plus a `(TowerAura) t` cast in two places. The one remaining
+type check, in `TowerAura.buffs`, asks the role question "is this an aura" so an aura does not
+buff another aura; adding a ninth tower needs no new branch in it. Keep it that way rather
+than growing it into a per-type dispatch.

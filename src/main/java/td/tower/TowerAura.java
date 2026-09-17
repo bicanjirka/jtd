@@ -3,10 +3,7 @@ package td.tower;
 import td.tower.buff.TowerBuff;
 import td.util.GameWorld;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * "Aura tower" - passive. Never attacks; instead it contributes a {@link TowerBuff} to every
@@ -14,17 +11,13 @@ import java.util.Set;
  * listens for towers being built and removed so a tower placed after it still picks the buff
  * up, and it unregisters its clients in {@link #doCleanup()} so selling it takes the buff away.
  */
-public final class TowerAura extends AbstractTower implements TowerListener {
+public final class TowerAura extends AbstractTower {
 
     public static final int PRICE = 20;
     public static final int DAMAGE = 0;
     public static final float RANGE = 1.5f;
     public static final float DEFAULT_POWER = 0.2f;
 
-    // A LinkedHashSet, not a List: every path here asks "is this tower already a client",
-    // and scanTowers asks it once per tower on the board on every towerBuild notification -
-    // quadratic with a List. Insertion-ordered so doCleanup and the info string stay stable.
-    private final Set<Tower> clients;
     private final float power;
 
     public TowerAura(GameWorld context, int x, int y) {
@@ -38,10 +31,6 @@ public final class TowerAura extends AbstractTower implements TowerListener {
     public TowerAura(GameWorld context, int x, int y, float power) {
         super(TowerFactory.Type.aura, PRICE, DAMAGE, RANGE, 0, context, x, y);
         this.power = power;
-        this.clients = new LinkedHashSet<>();
-
-        this.context.towers().addListener(this);
-        this.scanTowers();
     }
 
     @Override
@@ -53,72 +42,30 @@ public final class TowerAura extends AbstractTower implements TowerListener {
         return TowerBuff.amplifying(this.power);
     }
 
-    private void scanTowers() {
-        int dx, dy;
-        for (Tower t : this.context.towers().all()) {
-            if (!this.clients.contains(t)) {
-                switch (t.getType()) {
-                    case aura -> {
-                    }
-                    default -> {
-                        dx = this.centerX - t.getX();
-                        dy = this.centerY - t.getY();
-                        if ((dx * dx + dy * dy) < this.rangeReal2()) {
-                            t.registerTower(this);
-                        }
-                    }
-                }
-            }
+    /**
+     * Whether {@code other} is a tower this one amplifies: any non-Aura tower whose centre
+     * falls inside this aura's range. An aura never buffs another aura, and never itself.
+     */
+    private boolean buffs(Tower other) {
+        if (other == this || other.getType() == TowerFactory.Type.aura) {
+            return false;
         }
+        int dx = this.centerX - other.getX();
+        int dy = this.centerY - other.getY();
+        return (dx * dx + dy * dy) < this.rangeReal2();
     }
 
     @Override
-    protected void recalculateStats() {
-        this.scanTowers();
-        super.recalculateStats();
+    public TowerBuff buffFor(Tower other) {
+        return this.buffs(other) ? this.buff() : TowerBuff.none();
+    }
+
+    /** How many towers this aura is currently amplifying - counted, not tracked. */
+    private long buffedTowerCount() {
+        return this.context.towers().all().stream().filter(this::buffs).count();
     }
 
     public void doTick(int gameTime) {
-    }
-
-    public void towerBuild(Tower t) {
-        if (t != this && !this.clients.contains(t)) {
-            switch (t.getType()) {
-                case aura -> {
-                }
-                default -> {
-                    int dx = this.centerX - t.getX();
-                    int dy = this.centerY - t.getY();
-                    if ((dx * dx + dy * dy) < this.rangeReal2()) {
-                        t.registerTower(this);
-                    }
-                }
-            }
-        }
-    }
-
-    public void towerRemoved(Tower t) {
-        if (this.clients.contains(t)) {
-            t.unregisterTower(this);
-        }
-    }
-
-    public void addClient(Tower t) {
-        this.clients.add(t);
-    }
-
-    public void removeClient(Tower t) {
-        this.clients.remove(t);
-    }
-
-    public void doCleanup() {
-        super.doCleanup();
-        // Over a copy: unregisterTower calls back into removeClient, so iterating the live
-        // set would be a concurrent modification.
-        for (Tower t : new ArrayList<>(this.clients)) {
-            t.unregisterTower(this);
-        }
-        this.context.towers().removeListener(this);
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
@@ -135,6 +82,6 @@ public final class TowerAura extends AbstractTower implements TowerListener {
         return "Aura tower\n\n" +
                 super.getStatusString() +
                 "Increases damage and range of nearby towers by " + (this.power * 100) + "%\n\n" +
-                "Affects towers: " + this.clients.size();
+                "Affects towers: " + this.buffedTowerCount();
     }
 }

@@ -45,7 +45,25 @@ public class TowerRoster {
 
     public void add(Tower t) {
         this.towers.add(t);
+        this.recalculateAllStats();
         this.fireAdded(t);
+    }
+
+    /**
+     * Recomputes every tower's buffed stats, because a tower arriving or leaving can change
+     * what any other tower receives - an Aura tower most obviously, but the rule is simply
+     * that the buff set is a function of which towers are on the board (see
+     * {@link Tower#buffFor}).
+     * <p>
+     * This is O(n^2) in the number of towers, on a user action, over a board that holds tens
+     * of them. It replaces a bidirectional index that was O(1) to read and had four methods,
+     * a listener subscription and a rescan keeping it correct. If a board ever grows large
+     * enough for this to matter, measure it before adding the index back.
+     */
+    private void recalculateAllStats() {
+        for (Tower t : this.towers) {
+            t.recalculateStats();
+        }
     }
 
     public void sell(Tower t) {
@@ -55,6 +73,7 @@ public class TowerRoster {
         this.host.clearCell(cellX, cellY);
         t.doCleanup();
         this.towers.remove(t);
+        this.recalculateAllStats();
         this.economy.apply(EconomyDelta.credits(t.getSellPrice()));
         this.fireRemoved(t);
         LOG.info("Tower sold: {} at ({},{}), refund={}", t.getType(), cellX, cellY, t.getSellPrice());
@@ -70,6 +89,8 @@ public class TowerRoster {
             this.towers.remove(t);
             this.fireRemoved(t);
         }
+        // No recalculateAllStats: every tower is gone, so there is nothing left to recompute
+        // and nothing left to read a stale value. sell() is the case that needs it.
     }
 
     public void addListener(TowerListener l) {

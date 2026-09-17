@@ -34,17 +34,40 @@ class AbstractTowerTest {
     }
 
     @Test
-    void registerTowerAppliesAuraBuffToDamage() {
+    void anAuraTowerAddedToTheBoardBuffsTheTowersInRangeOfIt() {
         TowerOne tower = new TowerOne(context, 0, 0);
         context.towers().add(tower);
 
-        // constructing a TowerAura in range scans context.towers and
-        // registers itself with anything nearby, buffing it immediately
-        new TowerAura(context, 0, 0);
+        // Putting the aura on the board is what applies the buff - its constructor has no
+        // side effects on other towers. TowerRoster recomputes every tower's stats, and each
+        // one asks the towers around it what they contribute (Tower.buffFor).
+        context.towers().add(new TowerAura(context, 0, 0));
 
-        float expectedMultiplier = 1f + TowerAura.DEFAULT_POWER; // one aura tower registered
+        float expectedMultiplier = 1f + TowerAura.DEFAULT_POWER;
         assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
         assertThat(tower.damageCurrent()).isNotEqualTo(tower.damageBase);
+    }
+
+    @Test
+    void anAuraTowerBuffsATowerBuiltAfterItJustTheSame() {
+        context.towers().add(new TowerAura(context, 0, 0));
+
+        TowerOne tower = new TowerOne(context, 0, 0);
+        context.towers().add(tower);
+
+        float expectedMultiplier = 1f + TowerAura.DEFAULT_POWER;
+        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
+    }
+
+    @Test
+    void anAuraTowerDoesNotBuffAnotherAuraTowerOrItself() {
+        TowerAura first = new TowerAura(context, 0, 0);
+        context.towers().add(first);
+        TowerAura second = new TowerAura(context, 0, 0);
+        context.towers().add(second);
+
+        assertThat(first.buffFor(second)).isEqualTo(TowerBuff.none());
+        assertThat(first.buffFor(first)).isEqualTo(TowerBuff.none());
     }
 
     @Test
@@ -52,8 +75,8 @@ class AbstractTowerTest {
         TowerOne tower = new TowerOne(context, 0, 0);
         context.towers().add(tower);
 
-        new TowerAura(context, 0, 0);
-        new TowerAura(context, 0, 0);
+        context.towers().add(new TowerAura(context, 0, 0));
+        context.towers().add(new TowerAura(context, 0, 0));
 
         float expectedMultiplier = 1f + 2 * TowerAura.DEFAULT_POWER;
         assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
@@ -64,22 +87,39 @@ class AbstractTowerTest {
         TowerOne tower = new TowerOne(context, 0, 0);
         context.towers().add(tower);
 
-        new TowerAura(context, 0, 0, 0.1f);
-        new TowerAura(context, 0, 0, 0.3f);
+        context.towers().add(new TowerAura(context, 0, 0, 0.1f));
+        context.towers().add(new TowerAura(context, 0, 0, 0.3f));
 
         float expectedMultiplier = 1f + 0.1f + 0.3f;
         assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
     }
 
     @Test
-    void unregisterTowerRevertsTheBuff() {
+    void sellingTheAuraTowerRevertsTheBuffItWasGiving() {
+        context.economy().startEconomy(100, 5);
         TowerOne tower = new TowerOne(context, 0, 0);
         context.towers().add(tower);
         TowerAura aura = new TowerAura(context, 0, 0);
+        context.towers().add(aura);
 
-        tower.unregisterTower(aura);
+        context.towers().sell(aura);
 
         assertThat(tower.damageCurrent()).isEqualTo(tower.damageBase);
+    }
+
+    @Test
+    void sellingOneOfTwoAuraTowersLeavesTheOthersBuffInPlace() {
+        context.economy().startEconomy(100, 5);
+        TowerOne tower = new TowerOne(context, 0, 0);
+        context.towers().add(tower);
+        TowerAura sold = new TowerAura(context, 0, 0);
+        context.towers().add(sold);
+        context.towers().add(new TowerAura(context, 0, 0));
+
+        context.towers().sell(sold);
+
+        float expectedMultiplier = 1f + TowerAura.DEFAULT_POWER;
+        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
     }
 
     @Test
@@ -90,7 +130,7 @@ class AbstractTowerTest {
         TowerOne far = new TowerOne(context, 100, 100);
         context.towers().add(far);
 
-        new TowerAura(context, 0, 0);
+        context.towers().add(new TowerAura(context, 0, 0));
 
         assertThat(near.damageCurrent()).isNotEqualTo(near.damageBase);
         assertThat(far.damageCurrent()).isEqualTo(far.damageBase);
@@ -232,7 +272,7 @@ class AbstractTowerTest {
         UpgradePath path = new UpgradePath("Veteran", 10, TowerBuff.amplifying(0.2f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of(path));
         context.towers().add(tower);
-        new TowerAura(context, 0, 0);
+        context.towers().add(new TowerAura(context, 0, 0));
 
         tower.chooseUpgradePath(path);
 
