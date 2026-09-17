@@ -70,20 +70,6 @@ position and the visitor, `AuraTower` wants position and type.
   actually hurt by the width, not as a tidying exercise: a wide interface with one
   implementation hierarchy costs far less than a wrong split.
 
-### A tower's class name and its in-game name describe different things
-
-The classes are named for behaviour (`SniperTower`, `SplashTower`, `SonarTower`, `PulseTower`)
-and the UI still calls them Triangle, Circle, Sunshine and Stardust — the shapes the player
-sees on the board. `td/tower/CLAUDE.md`'s table maps the two, so nothing is ambiguous, but a
-reader of `SniperTower.getInfoString` does meet the string `"Triangle tower"`.
-
-- **Where:** each leaf's `getInfoString`/`getStatusString`, `TowerDefense.statusMessage`,
-  `README.md`'s tower table.
-- **Approach:** a product decision, not a refactor. Either rename the player-facing strings to
-  match the behaviour (which arguably tells a player more than the shape they can already see),
-  or keep the shape names deliberately and leave the table as the bridge. Do not change them
-  halfway.
-
 ## Gameplay / balance
 
 ### Zero-price wave penalty is a placeholder

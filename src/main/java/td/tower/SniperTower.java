@@ -14,7 +14,7 @@ import td.util.ThreadConfined;
 import java.util.List;
 
 /**
- * "Triangle tower" - the cheap single-target one. Fires at whichever visible enemy in range
+ * "Sniper tower" - the cheap single-target one. Fires at whichever visible enemy in range
  * is furthest along the path, which is the usual right answer since that enemy is closest to
  * costing a life. Its turret head sweeps toward the target at a capped rate rather than
  * snapping, and holds its last heading when it has no target (see {@link TurretAim}).
@@ -93,13 +93,13 @@ public final class SniperTower extends AbstractTower {
     }
 
     public String getInfoString() {
-        return "Triangle tower\n\n" +
+        return "Sniper tower\n\n" +
                 super.getInfoString() +
                 "Targets first one";
     }
 
     public String getStatusString() {
-        return "Triangle tower\n\n" +
+        return "Sniper tower\n\n" +
                 super.getStatusString() +
                 "Targets first one";
     }

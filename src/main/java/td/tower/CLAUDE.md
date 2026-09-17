@@ -10,16 +10,22 @@ fire-rate, this tower's own permanently-chosen upgrade path (if any), and the sh
 `dealDamage` accounting. It holds **no** list of the Aura towers buffing it — see below. The eight leaf classes are
 `final` and are constructed only through `TowerFactory`:
 
-| Class | Name in the UI | Targeting |
-|---|---|---|
-| `SniperTower` | Triangle | one enemy, furthest along the path |
-| `SplashTower` | Circle | one random enemy, plus distance-falloff splash |
-| `SonarTower` | Sunshine | sonar scan: a beam sweeps the circle, hitting whatever it passes |
-| `PulseTower` | Stardust | everything in range at once, ghosts included |
-| `AuraTower` | Aura | passive; buffs neighbouring towers, never attacks |
-| `MortarTower` | Mortar | one enemy, furthest along the path; fires an unguided `CannonballProjectile` that splashes and slows on arrival |
-| `SeekerTower` | Seeker | one enemy, furthest along the path; fires a homing `MissileProjectile` that deals magic damage and freezes on arrival |
-| `CinderTower` | Cinder | no cooldown; a wedge (`InWedgeTargetQuery`) that reorients toward the nearest enemy and applies/refreshes burn every tick |
+| Class | Name in the UI | Body shape | Targeting |
+|---|---|---|---|
+| `SniperTower` | Sniper | triangle | one enemy, furthest along the path |
+| `SplashTower` | Splash | ring | one random enemy, plus distance-falloff splash |
+| `SonarTower` | Sonar | spiral | sonar scan: a beam sweeps the circle, hitting whatever it passes |
+| `PulseTower` | Pulse | star | everything in range at once, ghosts included |
+| `AuraTower` | Aura | circle | passive; buffs neighbouring towers, never attacks |
+| `MortarTower` | Mortar | diamond | one enemy, furthest along the path; fires an unguided `CannonballProjectile` that splashes and slows on arrival |
+| `SeekerTower` | Seeker | kite | one enemy, furthest along the path; fires a homing `MissileProjectile` that deals magic damage and freezes on arrival |
+| `CinderTower` | Cinder | flame | no cooldown; a wedge (`InWedgeTargetQuery`) that reorients toward the nearest enemy and applies/refreshes burn every tick |
+
+**A tower's class name and its in-game name say the same thing, and neither describes its
+shape.** Both name the behaviour; the body shape is `Java2DFrameRenderer.towerBodyShape`'s
+business and is listed above only so a reader can connect a row to what is on the board. Adding
+a tower whose UI string does not match its class name reintroduces a gap a reader has to hold
+in their head.
 
 `MortarTower`/`SeekerTower`/`CinderTower` are the three towers added by the damage-types-and-
 projectiles feature — see `td.projectile` and `td.effect` in the root `CLAUDE.md` §4's domain-

@@ -98,10 +98,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             Welcome to Tower Defense
             Shortcuts:
 
-            q - build triangle
-            w - build circle
-            e - build sunshine
-            r - build stardust
+            q - build sniper
+            w - build splash
+            e - build sonar
+            r - build pulse
             t - build aura
             y - build mortar
             u - build seeker

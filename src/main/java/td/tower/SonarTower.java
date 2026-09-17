@@ -15,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * "Sunshine tower" - a sonar scan. A beam sweeps the full circle counterclockwise at a
+ * "Sonar tower" - a sonar scan. A beam sweeps the full circle counterclockwise at a
  * constant rate, and every visible enemy in range is hit the moment the beam passes its
  * bearing. There is no cooldown and no fire rate: an enemy standing still is hit once per
  * revolution, and how fast the tower shoots is entirely a question of how fast it turns.
@@ -126,13 +126,13 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
     }
 
     public String getInfoString() {
-        return "Sunshine tower\n\n" +
+        return "Sonar tower\n\n" +
                 super.getInfoString() +
                 "Sweeps a beam around itself, hitting everything it passes over";
     }
 
     public String getStatusString() {
-        return "Sunshine tower\n\n" +
+        return "Sonar tower\n\n" +
                 super.getStatusString() +
                 "Sweeps a beam around itself, hitting everything it passes over";
     }

@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * "Circle tower" - splash damage. Picks a random visible enemy in range, then damages
+ * "Splash tower" - splash damage. Picks a random visible enemy in range, then damages
  * everything within {@code spreadRadius} of it, falling off with the square of the distance
  * from the blast centre. The splash deliberately uses an any-type query, so it is one of the
  * two towers that can hurt ghosts even though it cannot target them directly.
@@ -161,14 +161,14 @@ public final class SplashTower extends AbstractTower {
     }
 
     public String getInfoString() {
-        return "Circle tower\n\n" +
+        return "Splash tower\n\n" +
                 super.getInfoString() +
                 "Splash radius " + SPREAD_RADIUS_BASE + "\n" +
                 "Targets random";
     }
 
     public String getStatusString() {
-        return "Circle tower\n\n" +
+        return "Splash tower\n\n" +
                 super.getStatusString() +
                 "Splash radius " + (this.spreadRadius / this.context.getBoard().scale()) + "\n" +
                 "Targets random";
