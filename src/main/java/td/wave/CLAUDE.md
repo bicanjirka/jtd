@@ -99,11 +99,22 @@ Parsing and instantiation are deliberately separate:
 - `Wave` holds that content and does the world-bound instantiation in `spawn()`, **not in its
   constructor** — `shape.members()` `DefinedEnemyMob`s for an `EnemySlot` (zero for a plain
   `EnemySlot` is impossible; `SpawnShape.normal()`'s one member is the floor), nothing at all
-  for an `EmptySlot`, every member sharing this slot's own index as its base spawn delay
-  regardless of how many the slot produced. `spawn()` is a factory: each call builds a fresh
-  set bound to the path installed at that moment, so calling it twice puts two copies of the
-  wave on the board. `enemyCount()`/`enemySet()` come from the content and need no spawn, which
-  is what lets the preview panel describe a wave before it runs.
+  for an `EmptySlot`. A member's slot position is this slot's index plus its member index scaled
+  by `shape.delaySpacingSlots()` (zero except for Column/Drip), and its lateral offset comes from
+  `shape.spread()`. `spawn()` is a factory: each call builds a fresh set bound to the path
+  installed at that moment, so calling it twice puts two copies of the wave on the board.
+  `enemyCount()`/`enemySet()` come from the content and need no spawn, which is what lets the
+  preview panel describe a wave before it runs.
+- **A `Wave` carries its own `scatterSeed`**, one `long` fixed at construction and reused by
+  every `spawn()` call. `GameEngine.loadLevel` derives it from the level's name and the wave's
+  index, so the same level and wave scatter identically on every run and every machine.
+  Each slot draws from `RandomSource.seeded(scatterSeed * 31 + slotIndex)`, **not**
+  `GameWorld.random()` — that generator is shared with tower targeting, so a formation's shape
+  would otherwise depend on how many towers happened to fire first before the wave spawned.
+  A leaked swarm member still costs exactly one life, the same as any other mob reaching the
+  path's end — a swarm of 3 leaking all three costs 3 lives for one spawn's worth of bounty and
+  health, which is a deliberate consequence of keeping the leak penalty per-mob rather than
+  scaling it by the shape.
 - **Deferring the spawn is what makes a level load one atomic publication.** An `EnemyMob` binds
   to `GameWorld`'s installed path when it is built, so spawning in the constructor forced
   `GameEngine.loadLevel` to install the path before building the waves — two writes where

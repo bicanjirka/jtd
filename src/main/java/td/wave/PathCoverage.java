@@ -20,7 +20,8 @@ public final class PathCoverage {
 
     // One cell wide, matching the corridor width a raw (unsmoothed) grid path implicitly has
     // today: every step is exactly one cell, so the "corridor" was always just the cell itself.
-    private static final double PATH_WIDTH_CELLS = 1.0;
+    // Public: Wave reads it too, as the footprint a shaped slot's lateral offset scatters within.
+    public static final double PATH_WIDTH_CELLS = 1.0;
     // A straight run's cells get exactly 100% coverage under a one-cell-wide corridor, and a
     // corner cell (where two perpendicular corridors overlap) gets ~94.6% - the corridor's
     // rounded end-caps don't quite reach the cell's far diagonal corner. 0.5 comfortably marks
