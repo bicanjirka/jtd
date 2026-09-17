@@ -10,11 +10,12 @@ everything below.
 ## Commands
 
 ```bash
-mvn verify                # rules check + tests — the standing check before a commit
+mvn verify                # formatting + rules check + tests — the standing check before a commit
 mvn test                  # tests only
 mvn -q compile            # fast syntax/type check
 mvn package               # build target/jTD.jar (main class: td.Main)
 java -jar target/jTD.jar  # run the game
+mvn spotless:apply        # fix formatting/import-order violations `mvn verify` reports
 
 mvn test -Dtest=GameEngineTest#placingATowerOnABuildableCellChargesCreditsAndOccupiesTheCell
 ```

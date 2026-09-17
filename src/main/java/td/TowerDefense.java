@@ -29,6 +29,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -99,7 +100,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private final String statusMessage = """
             Welcome to Tower Defense
             Shortcuts:
-            
+
             q - build sniper
             w - build splash
             e - build sonar
