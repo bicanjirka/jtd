@@ -43,7 +43,7 @@ public final class WaveScript {
                 }
                 repeat = 1;
             } else if (catalog.contains(token)) {
-                WaveSlot slot = new EnemySlot(catalog.get(token));
+                WaveSlot slot = new EnemySlot(catalog.get(token), SpawnShape.normal());
                 for (int i = 0; i < repeat; i++) {
                     spawnSequence.add(slot);
                 }

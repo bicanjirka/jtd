@@ -88,9 +88,12 @@ Parsing and instantiation are deliberately separate:
   tokens are whitespace rather than content and are skipped, which is what lets `"".split(" ")`
   and any run of spaces parse cleanly.
 - `WaveContent` is the parsed result: one `WaveSlot` per spawn slot, in order, repeat counts
-  already flattened. `WaveSlot` is a closed pair - `EnemySlot(EnemyDefinition)` for a real
-  enemy, `EmptySlot()` for the spacer, which keeps its slot (it counts toward spawn *timing*)
-  but is excluded from `enemyCount()`/`enemySet()`.
+  already flattened. `WaveSlot` is a closed pair - `EnemySlot(EnemyDefinition, SpawnShape)` for
+  a real enemy, `EmptySlot()` for the spacer, which keeps its slot (it counts toward spawn
+  *timing*) but is excluded from `enemyCount()`/`enemySet()`. `enemyCount()`/
+  `enemyCount(definition)` count **members, not slots**: a slot whose `SpawnShape` holds 4
+  members counts as 4, not 1 - this is what `GameWorld.startWave` seeds a wave's alive count
+  from, so it gates when a wave is declared cleared.
 - `Wave` holds that content and does the world-bound instantiation in `spawn()`, **not in its
   constructor** — a `DefinedEnemyMob` for an `EnemySlot`, nothing at all for an `EmptySlot`,
   with delay equal to the slot's index regardless of how many mobs (zero or one, today) the
