@@ -242,18 +242,16 @@ tick's enemy positions, not last tick's, and a projectile a tower spawns while i
 runs below is left for the *next* tick to advance rather than moving twice in the tick it was
 fired.
 
-### Known defect: the render path reads live domain state
+### Why the snapshot rule exists
 
-**This section describes a defect that is present in the code as it stands.** It is recorded
-in [`TODO.md`](../TODO.md) and is the next structural change scheduled.
+Until the threading pass of September 2026, the Event Dispatch Thread walked live domain
+objects during painting: `BoardRenderer.buildFrame` ran on the EDT and read
+`AbstractEnemyMob.x`, `.y`, `.health`, `.dead` and `.prevX/prevY` — plain, non-volatile fields
+written on the `game-loop` thread. `PanelTowerInfo.refreshSelected` did the same for
+`AbstractTower.damageCurrent`, `.damageDealt` and `.killCount`.
 
-The Event Dispatch Thread walks live domain objects during painting: `BoardRenderer.buildFrame`
-runs on the EDT and reads `AbstractEnemyMob.x`, `.y`, `.health`, `.dead` and `.prevX/prevY` —
-plain, non-volatile fields written on the `game-loop` thread. `PanelTowerInfo.refreshSelected`
-does the same for `AbstractTower.damageCurrent`, `.damageDealt` and `.killCount`.
-
-This system's documentation has previously claimed thread-safety on the strength of three
-mitigations that are each individually correct and collectively insufficient:
+The documentation at the time claimed thread-safety on the strength of three mitigations that
+were each individually correct and collectively insufficient:
 
 - `CopyOnWriteArrayList` for the roster and listener lists. This publishes the *list
   structure* — which objects exist — and says nothing about the mutable fields inside those
@@ -262,24 +260,38 @@ mitigations that are each individually correct and collectively insufficient:
 - `SwingUtilities.invokeLater` for the render handoff. This publishes the *request to
   repaint*, not the state the repaint then goes and reads for itself.
 
-Under the Java Memory Model those field reads have no happens-before edge, and non-volatile
+Under the Java Memory Model those field reads had no happens-before edge, and non-volatile
 64-bit reads (`double x, y`) are explicitly permitted to tear per JLS 17.7. On x86 this is
 mostly benign; on a weakly-ordered CPU it is not — and this project's standing requirement is
 to behave identically on every platform.
 
-The planned fix is structural rather than a dusting of `volatile`: the simulation thread owns
-all mutable state and publishes an immutable snapshot; the EDT reads only snapshots.
-`RenderFrame` already exists as exactly that snapshot type, so the change is to build it on
-the `game-loop` thread and publish it through one `volatile` field. A small `TowerStats`
-snapshot is the same idea for the tower info panel, which has the same problem for a
-different set of fields.
+The fix was structural rather than a dusting of `volatile`: the simulation thread owns all
+mutable state and publishes an immutable snapshot; the EDT reads only snapshots. `RenderFrame`
+already existed as exactly that snapshot type, so the change was to build it on the
+`game-loop` thread — `GameLoop` now calls both of its callbacks there and has no Swing
+dependency at all — and publish it through one `volatile` field that `paintBoard` reads.
+
+The tower info panel was the same bug for a different set of fields, and deliberately got a
+*different* answer: its values (kill count, damage dealt, current damage and range) are
+independent scalars in a text readout with no invariant tying them together, so they are
+published `volatile` rather than snapshotted. That is not mere tidiness — `damageDealt` is a
+`long`, whose non-volatile read may tear. Snapshotting there would also have meant running
+each upgrade path's `UpgradeCondition.isSatisfied`, which walks the tower roster, on the
+simulation thread sixty times a second for no benefit.
 
 The general lesson, which is the part worth keeping: **a concurrent collection makes the
 collection safe, not its contents.** Reach for "who owns this state, and what do the other
-threads get instead of it" before reaching for a keyword.
+threads get instead of it" before reaching for a keyword — and when the answer looks like
+`volatile`, check first whether the fields are correlated. If they are, the answer is a
+snapshot.
 
 ### Other threading decisions
 
+- `GameLoop.stop()` joins the loop thread (bounded, and skipped when called from that thread
+  itself) before returning. Without it, `TowerDefense.startSelectedLevel` would clear the
+  rosters and swap the cell grid, board geometry and path out from under a tick still in
+  flight — and the resulting exception would land in the per-tick catch and read as a
+  mysterious one-off ERROR line rather than the race it was.
 - When the loop falls behind (debugger pause, long GC) it runs **one** tick and resyncs
   rather than bursting the backlog. Bursting produces a visible fast-forward after every
   hiccup.

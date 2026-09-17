@@ -5,17 +5,23 @@ import td.tower.Tower;
 /**
  * The only {@link Cell} implementation. Position is fixed at construction; everything else is
  * mutable board state.
+ * <p>
+ * A cell is owned by the Event Dispatch Thread - placement, hover and selling all arrive as
+ * input events - but it is read by the {@code game-loop} thread, which walks the grid when it
+ * builds a render frame. The mutable fields are therefore published volatile. Each is an
+ * independent value with no invariant tying it to the others, so a frame that catches a
+ * highlight one pulse late is correct, just momentarily stale. See CLAUDE.md 3.
  */
 public class CellNormal implements Cell {
 
-    private highlightType highlight = highlightType.none;
-    private float highlightRange = 0;
+    private volatile highlightType highlight = highlightType.none;
+    private volatile float highlightRange = 0;
 
     private final int x;
     private final int y;
 
-    private boolean buildable = true;
-    private Tower tower = null;
+    private volatile boolean buildable = true;
+    private volatile Tower tower = null;
 
     public CellNormal(int x, int y) {
         this.x = x;

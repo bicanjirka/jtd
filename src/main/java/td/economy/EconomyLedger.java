@@ -26,11 +26,20 @@ public class EconomyLedger {
      * Seeds the economy at the start of a level - credits and lives are both the level's own,
      * not carried over from whatever ran before. Fires like any other economy change since
      * listeners are already registered by the time a level loads.
+     * <p>
+     * Assigns inside the lock for the same reason {@link #apply} and {@link #doPay} compute
+     * inside it: a concurrent kill or leak on the {@code game-loop} thread is a
+     * read-modify-write, and an unsynchronized assignment here would let one of the two be
+     * silently lost.
      */
     public void startEconomy(int startingCredits, int startingLives) {
-        this.economy = EconomyState.startingWith(startingCredits, startingLives);
-        LOG.debug("Economy seeded: {}", this.economy);
-        this.fireEconomyChangedEvent(this.economy);
+        EconomyState seeded;
+        synchronized (this) {
+            seeded = EconomyState.startingWith(startingCredits, startingLives);
+            this.economy = seeded;
+        }
+        LOG.debug("Economy seeded: {}", seeded);
+        this.fireEconomyChangedEvent(seeded);
     }
 
     /**

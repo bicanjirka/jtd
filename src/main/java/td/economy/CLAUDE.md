@@ -17,9 +17,12 @@ its own note.
 **The ledger is written from two threads.** Buying and selling a tower happen on the Event
 Dispatch Thread; a kill or a leak happens on the `game-loop` thread. So:
 
-- `apply` and `doPay` compute the new state inside `synchronized (this)` and fire
+- `apply`, `doPay` **and `startEconomy`** all assign inside `synchronized (this)` and fire
   `economyChanged` **outside** the lock. Listeners re-enter the ledger and touch Swing —
-  notifying while holding the lock is how this deadlocks.
+  notifying while holding the lock is how this deadlocks. `startEconomy` is easy to overlook
+  because it reads like a plain assignment rather than a read-modify-write; it is not exempt,
+  since a concurrent `apply` on the `game-loop` thread would otherwise lose one of the two.
+  `EconomyLedgerTest.concurrentEconomyEventsDoNotLoseUpdates` is the regression net.
 - The listener list is a `CopyOnWriteArrayList` on purpose. Do not "optimize" it to
   `ArrayList`.
 - `economy` is `volatile` so the unsynchronized readers (`getCredits`, `getScore`,

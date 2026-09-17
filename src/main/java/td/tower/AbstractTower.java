@@ -36,20 +36,26 @@ public abstract class AbstractTower implements Tower {
     protected int centerY;
     protected float rangeBase;
     protected int damageBase;
-    protected int damageCurrent;
+    // damageCurrent/coolDownCurrent/rangeCurrent are recalculated on the EDT (an aura tower
+    // registering, an upgrade path chosen) and read by tick code; damageDealt/killCount are
+    // written by tick code and read by the info panel on the EDT. Both directions cross
+    // threads, and damageDealt is a long, whose non-volatile reads may tear. They are
+    // independent readouts, not a correlated set, so volatile publication is the whole
+    // requirement here - unlike the board, which is snapshotted. See CLAUDE.md 3.
+    protected volatile int damageCurrent;
     protected int coolDownMax;
-    protected int coolDownCurrent;
+    protected volatile int coolDownCurrent;
     protected float rangeReal = 0;
     protected float rangeReal2 = 0;
     protected boolean passive = false;
-    protected boolean selected = false;
-    protected long damageDealt = 0;
-    protected int killCount = 0;
-    protected UpgradePath chosenPath;
+    protected volatile boolean selected = false;
+    protected volatile long damageDealt = 0;
+    protected volatile int killCount = 0;
+    protected volatile UpgradePath chosenPath;
     private final TowerFactory.type type;
-    private float rangeCurrent;
+    private volatile float rangeCurrent;
     private final int price;
-    private boolean removed = false;
+    private volatile boolean removed = false;
 
 
     public AbstractTower(TowerFactory.type t, int price, int damage, float range) {

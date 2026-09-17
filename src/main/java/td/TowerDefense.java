@@ -110,9 +110,13 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             s - start wave
             m - back to menu""";
 
-    private final GameLoop gameLoop = new GameLoop(this::doGameTick, this::requestRender);
+    private final GameLoop gameLoop = new GameLoop(this::doGameTick, this::buildAndPublishFrame);
     private final Object gameTimeLock = new Object();
     private int gameTime;
+    // The one channel simulation state takes to the EDT: built on the game-loop thread, which
+    // owns that state, and read by paintBoard() on the EDT. Immutable, so publishing the
+    // reference through this volatile publishes everything reachable from it. See CLAUDE.md 3.
+    private volatile RenderFrame latestFrame;
     // requestRender() and paintBoard() are both always invoked on the EDT (the former via
     // SwingUtilities.invokeLater, the latter via Swing's own paint dispatch), so this needs
     // no synchronization of its own - it's just in-flight bookkeeping on a single thread.
@@ -218,16 +222,31 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /**
-     * The UI refresh pulse, reached from the game loop via SwingUtilities.invokeLater and so
-     * always running on the EDT. Repaints the board, and refreshes the side panel's live
-     * per-tower stats - both at a flat ~60fps regardless of tick speed, rather than once per
-     * tick. Skips the repaint while a previous paint is still in flight.
+     * The render pulse, called by {@link GameLoop} on the {@code game-loop} thread at a flat
+     * ~60fps regardless of tick speed. Describes the board as an immutable {@link RenderFrame}
+     * here, where the simulation state it walks is owned, then publishes it and asks the EDT
+     * to paint what was published - so the EDT never reads a live enemy, tower or projectile.
      * <p>
      * Deliberately keeps running after the game has ended, unlike {@link #doGameTick}: the
      * simulation is frozen at that point, but the player can still look around the final
      * board and click towers to read their stats, and both need the board to keep painting.
      */
-    private void requestRender() {
+    private void buildAndPublishFrame() {
+        int time;
+        synchronized (this.gameTimeLock) {
+            time = this.gameTime;
+        }
+        this.latestFrame = this.boardRenderer.buildFrame(time,
+                this.gameLoop.tickInterpolationAlpha(), this.gameLoop.animationSeconds());
+        SwingUtilities.invokeLater(this::repaintPublishedFrame);
+    }
+
+    /**
+     * The EDT half of the render pulse: repaints the board from whatever
+     * {@link #buildAndPublishFrame} last published, and refreshes the side panel's live
+     * per-tower stats. Skips the repaint while a previous paint is still in flight.
+     */
+    private void repaintPublishedFrame() {
         this.gameConsole.getTowerInfo().refreshSelected();
         if (!this.painting) {
             // The container, not the board component: the win/lose overlay is a sibling
@@ -253,6 +272,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.boardOverlays.reset();
         this.unSelectTower();
         this.panelTowerSelector.stopPlacing();
+        // The loop is stopped and joined above, so no frame can be published between here and
+        // the new level's first pulse - this just makes sure the outgoing level's last frame
+        // is not what gets painted in the meantime.
+        this.latestFrame = null;
         this.engine.loadLevel(level);
         this.contentCardLayout.show(getContentPane(), CARD_GAME);
         this.gameBoard.recalculateBoard(level.width(), level.height());
@@ -449,17 +472,20 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setSpeed(this.currentSpeed.next());
     }
 
+    /**
+     * Paints the frame {@link #buildAndPublishFrame} last published. This method builds
+     * nothing and reads no simulation state: everything it draws was described on the
+     * {@code game-loop} thread and handed over as one immutable value.
+     */
     public void paintBoard(Graphics2D g2) {
-        this.painting = true;
-        int time;
-
-        synchronized (this.gameTimeLock) {
-            time = this.gameTime;
+        RenderFrame frame = this.latestFrame;
+        if (frame == null) {
+            // Before the loop's first render pulse - a level was just selected, or none has
+            // been. Nothing to paint yet; the next pulse is at most ~16ms away.
+            return;
         }
-
-        RenderFrame frame = this.boardRenderer.buildFrame(time, this.gameLoop.tickInterpolationAlpha(), this.gameLoop.animationSeconds());
+        this.painting = true;
         this.frameRenderer.paint(g2, frame);
-
         this.painting = false;
     }
 
