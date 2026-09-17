@@ -8,16 +8,21 @@ import td.util.RecordingGameHost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-/** EnemyMobTriangle's distinguishing rule: it speeds up as it takes damage. */
-class EnemyMobTriangleTest {
+/**
+ * {@link HurtSpeedTrait}, exercised end to end through the built-in Triangle definition that
+ * carries it - {@code BuiltInEnemies.TRIANGLE}. There is no Triangle class to test: every real
+ * enemy is a {@link DefinedEnemyMob}, and what distinguishes one is its {@link EnemyDefinition}'s
+ * traits. This is the trait's test, spawned the way the game spawns it.
+ */
+class HurtSpeedTraitTest {
 
     private final GameWorld context = new GameWorld(new RecordingGameHost());
 
     @Test
     void speedIncreasesProportionallyAsTheTriangleLosesHealth() {
         EnemyMob triangle = EnemyFactory.getEnemy("t", context, 0, 100, 5, 1);
-        // healthMax = 100*100 = 10000; speedBase = 1.28, speedMax at level 1 is 1.28*(1.4+0.1) = 1.92
-        // losing half its health -> speed = 1.28 + (1.92-1.28)*(1-0.5) = 1.6
+        // healthMax = 100*100 = 10000; base speed 1.28, so the level-1 maximum is
+        // 1.28*(1.4+0.1) = 1.92. Losing half its health -> 1.28 + (1.92-1.28)*(1-0.5) = 1.6
         triangle.doDamage(Damage.physical(5000));
 
         assertThat(triangle.getSpeed()).isCloseTo(1.6f, within(0.001f));

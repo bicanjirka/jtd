@@ -7,8 +7,13 @@ import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** EnemyMobSquare's distinguishing rule: it takes reduced damage, more so at higher levels. */
-class EnemyMobSquareTest {
+/**
+ * {@link PercentResistTrait}, exercised end to end through the built-in Square definition that
+ * carries it - {@code BuiltInEnemies.SQUARE}. There is no Square class to test: every real
+ * enemy is a {@link DefinedEnemyMob}, and what distinguishes one is its {@link EnemyDefinition}'s
+ * traits. This is the trait's test, spawned the way the game spawns it.
+ */
+class PercentResistTraitTest {
 
     private final GameWorld context = new GameWorld(new RecordingGameHost());
 
