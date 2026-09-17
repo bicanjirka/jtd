@@ -215,7 +215,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
             float radius2 = radius * radius;
             double selfX = DefinedEnemyMob.this.getX();
             double selfY = DefinedEnemyMob.this.getY();
-            for (EnemyMob other : DefinedEnemyMob.this.gameWorld.getEnemies()) {
+            for (EnemyMob other : DefinedEnemyMob.this.gameWorld.enemies().getEnemies()) {
                 if (other == DefinedEnemyMob.this || !other.validTarget()) {
                     continue;
                 }
@@ -240,9 +240,9 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
                         spawnedDefinition.baseHealth(), spawnedDefinition.price(), DefinedEnemyMob.this.level);
                 spawned.spawnAtSamePositionAs(DefinedEnemyMob.this);
                 if (consumesSelf) {
-                    world.replaceEnemy(DefinedEnemyMob.this, spawned);
+                    world.enemies().replace(DefinedEnemyMob.this, spawned);
                 } else {
-                    world.addEnemy(spawned);
+                    world.enemies().add(spawned);
                 }
             }
         }

@@ -164,9 +164,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     public TowerDefense() {
         this.engine = new GameEngine(this);
         this.gameWorld = this.engine.getGameWorld();
-        this.boardRenderer = new BoardRenderer(this.engine, this.gameWorld.getEnemyRegistry(),
-                this.gameWorld.getProjectileRegistry(), this.gameWorld::getBoard, this.gameWorld::getPath);
-        this.gameWorld.addEconomyListener(this);
+        this.boardRenderer = new BoardRenderer(this.engine, this.gameWorld.enemies(),
+                this.gameWorld.projectiles(), this.gameWorld::getBoard, this.gameWorld::getPath);
+        this.gameWorld.economy().addEconomyListener(this);
         this.gameBoard = new GameBoard(this, this.gameWorld);
         initComponents();
         this.gameConsole.setGameWorld(this.gameWorld);
@@ -409,7 +409,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (this.gameStopped) {
             return;
         }
-        LOG.info("Game over - lost, score={}", this.gameWorld.getScore());
+        LOG.info("Game over - lost, score={}", this.gameWorld.economy().getScore());
         this.setGameStopped(true);
         SwingUtilities.invokeLater(this.boardOverlays::showLost);
     }
@@ -419,7 +419,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (this.gameStopped) {
             return;
         }
-        LOG.info("Game won, score={}", this.gameWorld.getScore());
+        LOG.info("Game won, score={}", this.gameWorld.economy().getScore());
         this.setGameStopped(true);
         SwingUtilities.invokeLater(this.boardOverlays::showWon);
     }

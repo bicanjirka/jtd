@@ -130,19 +130,42 @@ unrelated jobs directly. Each is now its own independently testable class:
 | `ProjectileRoster` (implements `ProjectileRegistry`) | `td.projectile` | the live in-flight shells/missiles |
 | `WaveAnnouncer` | `td.wave` | the `WaveStartListener` hub (`TowerThree` is the only subscriber, clearing the hit markers its scan left on the previous wave) |
 
-`GameWorld` delegates to all six, and additionally owns three mutable fields of its own:
-`board`, `path` and `enemyCatalog`. It is therefore not a pure composition root — it is a
-composition root *plus* a small amount of level-scoped state, and it exposes the result as a
-wide facade.
+`GameWorld` **hands these out rather than wrapping them**, and additionally owns four fields
+of its own: `board`, `path`, `enemyCatalog` and `random`. It is therefore not a pure
+composition root — it is a composition root plus a little level-scoped state.
 
-**This is a known, recorded smell, not a settled design.** Splitting `Context` into six
-collaborators made each piece testable, which was the point, but routing all of them back
-through one 42-method facade relocated the coupling rather than removing it. `Tower`,
-`EnemyMob` and `Wave` each take the whole `GameWorld` while genuinely needing three or four
-of its capabilities. The narrow interfaces already exist and are already used where a
-consumer needs only one — `td.tower.targeting`'s query classes and `BoardRenderer` take an
-`EnemyRegistry`, not a `GameWorld`. Finishing that job for the domain constructors is
-tracked in [`TODO.md`](../TODO.md).
+### Why it stopped being a facade
+
+The first decomposition split the old `Context` god object into those collaborators, which
+made each piece testable, and then routed every one of them back through **forty-one
+delegating pass-through methods** on `GameWorld`. That relocated the coupling rather than
+removing it: `world.doPay(n)` and `world.getTowers()` read as "this class uses the world",
+and there was no way to see from a call site, or to count, how much of it any class actually
+touched.
+
+Measuring settled it. `td.tower` used eleven distinct `GameWorld` methods and `td.enemy`
+eight — not the "three or four" an earlier note in this file assumed. So the fix was not to
+invent narrow interfaces for constructors that genuinely need several capabilities; it was to
+stop hiding which ones. `GameWorld` now exposes `economy()`, `enemies()`, `towers()`,
+`projectiles()` and `waves()`, and a call site says `context.economy().doPay(n)`. The surface
+went from 41 methods to 13, and the dependency is legible at every use.
+
+A consumer that needs exactly one collaborator takes it directly and never sees `GameWorld`
+at all — `td.tower.targeting`'s query classes and `BoardRenderer` take an `EnemyRegistry`.
+
+### Where narrowing deliberately stops
+
+`UpgradeCondition.isSatisfied(Tower, GameWorld)` keeps the whole world on purpose. It is a
+strategy interface whose implementations need different slices: `ClusterCondition` reads the
+board geometry *and* the tower roster, while `DamageDealtCondition` and `KillCountCondition`
+read neither. Widening the signature to two or three narrow parameters would make three
+implementations carry arguments they never use, to help one. That is ISP applied as ritual
+rather than as judgement, and the interface is better as it is.
+
+`startWave(Wave)` is the one remaining method that coordinates two collaborators instead of
+handing one out — it seeds the roster's alive count *before* announcing the start, so no
+listener can observe a stale count. Ordering like that is a real responsibility, not a
+pass-through.
 
 ## 4. Levels, and the round trip to the menu
 
@@ -166,7 +189,7 @@ This works because `GameEngine.loadLevel()` unloads the outgoing level as its fi
 *before* installing the new board geometry and grid. The ordering inside `unloadCurrentLevel`
 matters:
 
-1. `GameWorld.clearProjectiles()` first. A projectile in flight holds no reference to board
+1. `GameWorld.projectiles().clear()` first. A projectile in flight holds no reference to board
    geometry or the cell grid, so unlike towers and enemies it has no ordering constraint of
    its own — but it should still not survive into the next level's tick loop.
 2. `TowerRoster.clear()` next, **while the outgoing geometry is still installed**: it maps

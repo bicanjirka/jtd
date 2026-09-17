@@ -25,7 +25,7 @@ class KillCountConditionTest {
     void satisfiedOnceEnoughKillsHaveLanded() {
         Tower tower = TowerFactory.createTower(TowerFactory.Type.first, this.context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", this.context, 0, 1, 3, 1);
-        this.context.setEnemies(new EnemyMob[]{enemy});
+        this.context.enemies().setEnemies(new EnemyMob[]{enemy});
 
         tower.doTick(0);
 

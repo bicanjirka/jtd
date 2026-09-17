@@ -46,8 +46,8 @@ public final class TowerFour extends AbstractTower {
 
     public void doTick(int gameTime) {
         TargetQuery inRange = InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal());
-        List<EnemyMob> enemies = inRange.matching(this.context.getEnemyRegistry());
-        List<EnemyMob> ghosts = inRange.and(OfTypeTargetQuery.of(EnemyMob.Type.Invisible)).matching(this.context.getEnemyRegistry());
+        List<EnemyMob> enemies = inRange.matching(this.context.enemies());
+        List<EnemyMob> ghosts = inRange.and(OfTypeTargetQuery.of(EnemyMob.Type.Invisible)).matching(this.context.enemies());
 
         if (enemies.size() > ghosts.size()) {
             this.fire = true;

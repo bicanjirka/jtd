@@ -70,7 +70,7 @@ class AbstractEnemyMobTest {
         RecordingGameHost host = new RecordingGameHost();
         GameWorld context = new GameWorld(host);
         context.setBoard(BoardGeometry.of(1, 1001, 1001));
-        context.setEnemyCount(1);
+        context.enemies().setCount(1);
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 7, 2);
         assertThat(enemy.getHealth()).isEqualTo(5000);
@@ -78,8 +78,8 @@ class AbstractEnemyMobTest {
         enemy.doDamage(Damage.physical(5000));
 
         assertThat(enemy.validTarget()).isFalse();
-        assertThat(context.getScore()).isEqualTo(7);
-        assertThat(context.getCredits()).isEqualTo(7);
+        assertThat(context.economy().getScore()).isEqualTo(7);
+        assertThat(context.economy().getCredits()).isEqualTo(7);
         assertThat(host.enemyDiedCalls).containsExactly(0);
     }
 
@@ -88,14 +88,14 @@ class AbstractEnemyMobTest {
         RecordingGameHost host = new RecordingGameHost();
         GameWorld context = new GameWorld(host);
         context.setBoard(BoardGeometry.of(1, 1001, 1001));
-        context.setEnemyCount(1);
+        context.enemies().setCount(1);
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 7, 2);
         enemy.doDamage(Damage.physical(5000));
         enemy.doDamage(Damage.physical(5000));
 
-        assertThat(context.getScore()).isEqualTo(7);
-        assertThat(context.getCredits()).isEqualTo(7);
+        assertThat(context.economy().getScore()).isEqualTo(7);
+        assertThat(context.economy().getCredits()).isEqualTo(7);
         assertThat(host.enemyDiedCalls).containsExactly(0);
     }
 
@@ -213,12 +213,12 @@ class AbstractEnemyMobTest {
     void reachingTheEndOfThePathSnapsRatherThanInterpolatingAcrossTheBoard() {
         GameWorld context = newContext();
         context.setPath(straightPath(10, 0, 1));
-        int initialLives = context.getLives();
+        int initialLives = context.economy().getLives();
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
         int tick = 0;
-        while (context.getLives() == initialLives) {
+        while (context.economy().getLives() == initialLives) {
             tick++;
             enemy.doTick(tick);
         }
@@ -233,13 +233,13 @@ class AbstractEnemyMobTest {
     void enemyReachingEndOfPathCostsALife() {
         GameWorld context = newContext();
         context.setPath(straightPath(10, 0, 1));
-        int initialLives = context.getLives();
+        int initialLives = context.economy().getLives();
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
         for (int i = 1; i <= 100; i++) {
             enemy.doTick(i);
         }
 
-        assertThat(context.getLives()).isLessThan(initialLives);
+        assertThat(context.economy().getLives()).isLessThan(initialLives);
     }
 }

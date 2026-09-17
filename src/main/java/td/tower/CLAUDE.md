@@ -180,7 +180,7 @@ changes what *this* tower itself is, once, and stays changed for its lifetime.
   pays its price via `context.doPay`, sets `chosenPath`, calls the `onUpgradePathChosen`
   hook (a no-op unless a leaf overrides it - see below), and recomputes
   `recalculateStats()`. It returns `false` without effect on any failure, mirroring
-  `GameWorld.doPay`'s check-and-charge-in-one-call contract - never gate a call to it on a
+  `EconomyLedger.doPay`'s check-and-charge-in-one-call contract - never gate a call to it on a
   separate affordability check first.
 - **A path's bonus that isn't expressible through `TowerBuff` is applied via
   `onUpgradePathChosen`, not through the shared algebra.** `TowerTwo`'s `spreadRadius`,

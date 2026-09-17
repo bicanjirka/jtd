@@ -77,7 +77,7 @@ public final class TowerMortar extends AbstractTower {
 
     private EnemyMob findTarget() {
         List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.Normal)
-                .matching(this.context.getEnemyRegistry());
+                .matching(this.context.enemies());
         return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
     }
 
@@ -99,13 +99,13 @@ public final class TowerMortar extends AbstractTower {
     }
 
     private void fireAt(EnemyMob target) {
-        this.context.addProjectile(new CannonballProjectile(this.centerX, this.centerY, target.getX(), target.getY(),
+        this.context.projectiles().add(new CannonballProjectile(this.centerX, this.centerY, target.getX(), target.getY(),
                 PROJECTILE_SPEED, this::onImpact));
     }
 
     private void onImpact(double x, double y) {
         List<EnemyMob> hit = InRangeTargetQuery.anyType((int) Math.round(x), (int) Math.round(y), this.splashRadius)
-                .matching(this.context.getEnemyRegistry());
+                .matching(this.context.enemies());
         for (EnemyMob enemy : hit) {
             double dx = x - enemy.getX();
             double dy = y - enemy.getY();

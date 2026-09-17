@@ -249,5 +249,5 @@ from an ability's execution on the `game-loop` thread (a reinforcement, an egg h
 call, not the same reference `setEnemies` was handed - don't rely on reference identity.
 `replace(outgoing, incoming)` does **not** call `GameHost.enemyDied` for `outgoing`, matching
 `clear()`'s precedent: a hatch is a transformation, not a kill, so it earns no bounty/score/
-kill-count credit. `GameWorld.addEnemy`/`replaceEnemy` are the seam a live mob's own ability
+kill-count credit. `GameWorld.enemies().add`/`replace` are the seam a live mob's own ability
 execution actually calls - see "Ability execution", above.

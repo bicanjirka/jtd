@@ -235,9 +235,13 @@ public class Driver {
         System.out.println("wave=" + call(engine, engineClass, "getCurrentWaveIndex")
                 + "/" + call(engine, engineClass, "getWaveCount"));
         System.out.println("waveReady=" + call(engine, engineClass, "isWaveReady"));
-        System.out.println("credits=" + call(context, contextClass, "getCredits"));
-        System.out.println("lives=" + call(context, contextClass, "getLives"));
-        System.out.println("score=" + call(context, contextClass, "getScore"));
+        // GameWorld hands its collaborators out rather than wrapping them, so the economy
+        // getters live on EconomyLedger now - reflect through economy() to reach them.
+        Object ledger = call(context, contextClass, "economy");
+        Class<?> ledgerClass = ledger.getClass();
+        System.out.println("credits=" + call(ledger, ledgerClass, "getCredits"));
+        System.out.println("lives=" + call(ledger, ledgerClass, "getLives"));
+        System.out.println("score=" + call(ledger, ledgerClass, "getScore"));
         System.out.println("OK state");
     }
 
@@ -315,15 +319,15 @@ public class Driver {
     private static void setCredits(String arg) throws Exception {
         GameWorld context = getGameWorld();
         int target = Integer.parseInt(arg.trim());
-        context.apply(EconomyDelta.credits(target - context.getCredits()));
-        System.out.println("OK setcredits " + target + " (credits=" + context.getCredits() + ")");
+        context.economy().apply(EconomyDelta.credits(target - context.economy().getCredits()));
+        System.out.println("OK setcredits " + target + " (credits=" + context.economy().getCredits() + ")");
     }
 
     private static void setLives(String arg) throws Exception {
         GameWorld context = getGameWorld();
         int target = Integer.parseInt(arg.trim());
-        context.apply(EconomyDelta.lives(target - context.getLives()));
-        System.out.println("OK setlives " + target + " (lives=" + context.getLives() + ")");
+        context.economy().apply(EconomyDelta.lives(target - context.economy().getLives()));
+        System.out.println("OK setlives " + target + " (lives=" + context.economy().getLives() + ")");
     }
 
     private static void quit() {

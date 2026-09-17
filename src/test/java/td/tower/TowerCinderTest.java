@@ -32,7 +32,7 @@ class TowerCinderTest {
         TowerCinder tower = towerAt(3, 3); // centre at (112, 112)
         RecordingEnemyMob ahead = RecordingEnemyMob.normalAt(150, 112); // due +X of the tower
 
-        this.context.setEnemies(new EnemyMob[]{ahead});
+        this.context.enemies().setEnemies(new EnemyMob[]{ahead});
 
         tower.doTick(1);
 
@@ -45,7 +45,7 @@ class TowerCinderTest {
     void aGhostIsStillCaughtByTheCone() {
         TowerCinder tower = towerAt(3, 3);
         RecordingEnemyMob ghost = RecordingEnemyMob.ghostAt(150, 112);
-        this.context.setEnemies(new EnemyMob[]{ghost});
+        this.context.enemies().setEnemies(new EnemyMob[]{ghost});
 
         tower.doTick(1);
 
@@ -56,7 +56,7 @@ class TowerCinderTest {
     void anEnemyOutOfRangeIsNotBurned() {
         TowerCinder tower = towerAt(3, 3);
         RecordingEnemyMob farAway = RecordingEnemyMob.normalAt(10_000, 112);
-        this.context.setEnemies(new EnemyMob[]{farAway});
+        this.context.enemies().setEnemies(new EnemyMob[]{farAway});
 
         tower.doTick(1);
 
@@ -66,7 +66,7 @@ class TowerCinderTest {
     @Test
     void noEnemyInRangeAppliesNoBurnAndHoldsTheLastHeading() {
         TowerCinder tower = towerAt(3, 3);
-        this.context.setEnemies(new EnemyMob[]{});
+        this.context.enemies().setEnemies(new EnemyMob[]{});
 
         tower.doTick(1);
 
@@ -75,7 +75,7 @@ class TowerCinderTest {
 
     @Test
     void wideNozzleIsChoosableWithMoneyAloneAndAppliesItsRangeBonus() {
-        this.context.startEconomy(1000, 5);
+        this.context.economy().startEconomy(1000, 5);
         TowerCinder tower = towerAt(3, 3);
         UpgradePath wideNozzle = UpgradePaths.named(tower, "Wide Nozzle");
 
@@ -87,7 +87,7 @@ class TowerCinderTest {
 
     @Test
     void whiteFlameIsNotYetChoosableBeforeEnoughDamageDealt() {
-        this.context.startEconomy(1000, 5);
+        this.context.economy().startEconomy(1000, 5);
         TowerCinder tower = towerAt(3, 3);
         UpgradePath whiteFlame = UpgradePaths.named(tower, "White Flame");
 

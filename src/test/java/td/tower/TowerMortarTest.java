@@ -26,8 +26,8 @@ class TowerMortarTest {
     }
 
     private void flyProjectilesToCompletion() {
-        for (int t = 1; t <= 50 && !this.context.getProjectileRegistry().getProjectiles().isEmpty(); t++) {
-            this.context.tickProjectiles(t);
+        for (int t = 1; t <= 50 && !this.context.projectiles().getProjectiles().isEmpty(); t++) {
+            this.context.projectiles().doTick(t);
         }
     }
 
@@ -35,18 +35,18 @@ class TowerMortarTest {
     void firingLaunchesExactlyOneShellAtTheTarget() {
         TowerMortar tower = towerAt(3, 3);
         RecordingEnemyMob target = RecordingEnemyMob.normalAt(100, 100);
-        this.context.setEnemies(new EnemyMob[]{target});
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tower.doTick(1);
 
-        assertThat(this.context.getProjectileRegistry().getProjectiles()).hasSize(1);
+        assertThat(this.context.projectiles().getProjectiles()).hasSize(1);
     }
 
     @Test
     void theShellEventuallySplashesDamageAndSlowsTheTarget() {
         TowerMortar tower = towerAt(3, 3);
         RecordingEnemyMob target = RecordingEnemyMob.normalAt(100, 100);
-        this.context.setEnemies(new EnemyMob[]{target});
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tower.doTick(1);
         this.flyProjectilesToCompletion();
@@ -61,7 +61,7 @@ class TowerMortarTest {
         TowerMortar tower = towerAt(3, 3);
         RecordingEnemyMob normal = RecordingEnemyMob.normalAt(100, 100);
         RecordingEnemyMob ghost = RecordingEnemyMob.ghostAt(105, 100);
-        this.context.setEnemies(new EnemyMob[]{normal, ghost});
+        this.context.enemies().setEnemies(new EnemyMob[]{normal, ghost});
 
         tower.doTick(1);
         this.flyProjectilesToCompletion();
@@ -73,20 +73,20 @@ class TowerMortarTest {
     @Test
     void noTargetInRangeFiresNoShell() {
         TowerMortar tower = towerAt(3, 3);
-        this.context.setEnemies(new EnemyMob[]{});
+        this.context.enemies().setEnemies(new EnemyMob[]{});
 
         tower.doTick(1);
 
-        assertThat(this.context.getProjectileRegistry().getProjectiles()).isEmpty();
+        assertThat(this.context.projectiles().getProjectiles()).isEmpty();
     }
 
     @Test
     void concussiveChargeIsChoosableOnceTwoNeighboursExistAndAppliesItsRangeBonus() {
-        this.context.startEconomy(1000, 5);
+        this.context.economy().startEconomy(1000, 5);
         TowerMortar tower = towerAt(3, 3);
-        this.context.addTower(tower);
-        this.context.addTower(new TowerOne(this.context, 2, 2));
-        this.context.addTower(new TowerOne(this.context, 4, 4));
+        this.context.towers().add(tower);
+        this.context.towers().add(new TowerOne(this.context, 2, 2));
+        this.context.towers().add(new TowerOne(this.context, 4, 4));
         UpgradePath concussiveCharge = UpgradePaths.named(tower, "Concussive Charge");
 
         boolean chosen = tower.chooseUpgradePath(concussiveCharge);
@@ -97,7 +97,7 @@ class TowerMortarTest {
 
     @Test
     void heavyShellIsNotYetChoosableBeforeEnoughDamageDealt() {
-        this.context.startEconomy(1000, 5);
+        this.context.economy().startEconomy(1000, 5);
         TowerMortar tower = towerAt(3, 3);
         UpgradePath heavyShell = UpgradePaths.named(tower, "Heavy Shell");
 

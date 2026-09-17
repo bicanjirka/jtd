@@ -77,7 +77,7 @@ public class GameEngine {
     }
 
     public List<Tower> getTowers() {
-        return this.gameWorld.getTowers();
+        return this.gameWorld.towers().all();
     }
 
     /**
@@ -142,7 +142,7 @@ public class GameEngine {
         }
         this.waves = loaded;
 
-        this.gameWorld.startEconomy(level.startingCredits(), level.startingLives());
+        this.gameWorld.economy().startEconomy(level.startingCredits(), level.startingLives());
         LOG.info("Level loaded: {} ({}x{} board, {} waves, {} starting credits, {} starting lives)",
                 level.name(), width, height, this.waves.size(), level.startingCredits(), level.startingLives());
     }
@@ -157,9 +157,9 @@ public class GameEngine {
      */
     private void unloadCurrentLevel() {
         this.placement.reset();
-        this.gameWorld.clearProjectiles();
-        this.gameWorld.clearTowers();
-        this.gameWorld.clearEnemies();
+        this.gameWorld.projectiles().clear();
+        this.gameWorld.towers().clear();
+        this.gameWorld.enemies().clear();
         this.startWave = false;
         this.waveReady = true;
     }
@@ -197,7 +197,7 @@ public class GameEngine {
             this.startWave = false;
             this.waveReady = false;
             Wave tempWave = this.waves.get(this.wave);
-            this.gameWorld.setEnemies(tempWave.getEnemies());
+            this.gameWorld.enemies().setEnemies(tempWave.getEnemies());
             this.gameWorld.startWave(tempWave);
             this.wave++;
             LOG.info("Wave {}/{} started, {} enemies", this.wave, this.waves.size(), tempWave.enemyCount());
@@ -215,14 +215,14 @@ public class GameEngine {
         if (this.startWave) {
             waveStarted = this.nextWave();
         }
-        for (EnemyMob enemy : this.gameWorld.getEnemies()) {
+        for (EnemyMob enemy : this.gameWorld.enemies().getEnemies()) {
             enemy.doTick(time);
         }
         // Between enemies and towers: a projectile in flight aims at this tick's enemy
         // positions, and one a tower spawns below first advances next tick rather than
         // moving twice (once here, once after being added) in the tick it was fired.
-        this.gameWorld.tickProjectiles(time);
-        for (Tower tower : this.gameWorld.getTowers()) {
+        this.gameWorld.projectiles().doTick(time);
+        for (Tower tower : this.gameWorld.towers().all()) {
             tower.doTick(time);
         }
         return waveStarted;
@@ -272,7 +272,7 @@ public class GameEngine {
      * still cleared but there is nothing left to advance to)
      */
     public boolean debugSkipCurrentWave() {
-        this.gameWorld.clearEnemies();
+        this.gameWorld.enemies().clear();
         this.waveReady = true;
         return this.nextWave();
     }
@@ -295,12 +295,12 @@ public class GameEngine {
         this.debugSpawnCursor++;
         EnemyDefinition definition = catalog.get(id);
         EnemyMob mob = catalog.spawn(id, this.gameWorld, 0, definition.baseHealth(), definition.price(), 1);
-        this.gameWorld.addEnemy(mob);
+        this.gameWorld.enemies().add(mob);
         return Optional.of(id);
     }
 
     /** Debug tool: grants a lump sum of credits, through the same path a kill or a sale uses. */
     public void debugGrantCredits(int amount) {
-        this.gameWorld.apply(EconomyDelta.credits(amount));
+        this.gameWorld.economy().apply(EconomyDelta.credits(amount));
     }
 }

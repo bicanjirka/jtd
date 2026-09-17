@@ -26,7 +26,7 @@ class DamageDealtConditionTest {
         Tower tower = TowerFactory.createTower(TowerFactory.Type.first, this.context, 0, 0);
         // high health so the hit doesn't kill it - only damageDealt is under test here
         EnemyMob enemy = EnemyFactory.getEnemy("c", this.context, 0, 100000, 3, 1);
-        this.context.setEnemies(new EnemyMob[]{enemy});
+        this.context.enemies().setEnemies(new EnemyMob[]{enemy});
 
         tower.doTick(0);
 

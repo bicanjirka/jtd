@@ -35,7 +35,7 @@ class WardenChainTest {
     void killingTheWardenSpawnsItsEggAtTheSamePosition() {
         GameWorld world = worldWithStraightPath();
         DefinedEnemyMob warden = (DefinedEnemyMob) world.getEnemyCatalog().spawn("warden1", world, 0, 8000, 100, 1);
-        world.addEnemy(warden);
+        world.enemies().add(warden);
 
         for (int t = 1; t <= 10; t++) {
             warden.doTick(t);
@@ -46,7 +46,7 @@ class WardenChainTest {
         warden.doDamage(LETHAL);
         warden.doTick(11); // captures deathTick and fires the on-death ability in the same call
 
-        List<EnemyMob> enemies = List.of(world.getEnemies());
+        List<EnemyMob> enemies = List.of(world.enemies().getEnemies());
         assertThat(enemies).hasSize(2); // the fading Warden, plus its newly spawned egg
         EnemyMob egg = enemies.stream().filter(e -> e != warden).findFirst().orElseThrow();
         assertThat(egg).isInstanceOf(DefinedEnemyMob.class);
@@ -59,15 +59,15 @@ class WardenChainTest {
     void anEggLeftAliveForItsFullDelayHatchesIntoTheNextWardenStageInPlace() {
         GameWorld world = worldWithStraightPath();
         EnemyMob egg = world.getEnemyCatalog().spawn("wardenEgg1", world, 0, 1500, 20, 1);
-        world.addEnemy(egg);
+        world.enemies().add(egg);
 
         for (int t = 1; t <= 165; t++) { // past the 160-tick hatch delay
-            for (EnemyMob e : world.getEnemies()) {
+            for (EnemyMob e : world.enemies().getEnemies()) {
                 e.doTick(t);
             }
         }
 
-        List<EnemyMob> enemies = List.of(world.getEnemies());
+        List<EnemyMob> enemies = List.of(world.enemies().getEnemies());
         assertThat(enemies).hasSize(1); // replaced, not added alongside - consumesSelf
         assertThat(enemies).doesNotContain(egg);
         assertThat(((DefinedEnemyMob) enemies.get(0)).archetype()).isEqualTo(BodyArchetype.SQUARE);
@@ -77,7 +77,7 @@ class WardenChainTest {
     void anEggKilledBeforeItsDelayNeverHatches() {
         GameWorld world = worldWithStraightPath();
         DefinedEnemyMob egg = (DefinedEnemyMob) world.getEnemyCatalog().spawn("wardenEgg1", world, 0, 1500, 20, 1);
-        world.addEnemy(egg);
+        world.enemies().add(egg);
 
         for (int t = 1; t <= 50; t++) {
             egg.doTick(t);
@@ -87,12 +87,12 @@ class WardenChainTest {
 
         // well past the 160-tick hatch delay - nothing should fire once the egg is dead
         for (int t = 52; t <= 250; t++) {
-            for (EnemyMob e : world.getEnemies()) {
+            for (EnemyMob e : world.enemies().getEnemies()) {
                 e.doTick(t);
             }
         }
 
-        List<EnemyMob> enemies = List.of(world.getEnemies());
+        List<EnemyMob> enemies = List.of(world.enemies().getEnemies());
         assertThat(enemies).hasSize(1);
         assertThat(enemies.get(0)).isSameAs(egg);
         assertThat(egg.isDead()).isTrue();

@@ -143,8 +143,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         if (this.health <= 0) {
             this.validTarget = false;
             this.dead = true;
-            this.gameWorld.apply(EconomyDelta.kill(this.price));
-            this.gameWorld.removeEnemy();
+            this.gameWorld.economy().apply(EconomyDelta.kill(this.price));
+            this.gameWorld.enemies().remove();
         }
         return landed;
     }
@@ -345,7 +345,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
                 if (this.distanceIntoLap >= totalLength) {
                     this.distanceIntoLap -= totalLength;
                     wrappedToPathStart = true;
-                    this.gameWorld.apply(EconomyDelta.leak(this.price == 0 ? 10 : this.price));
+                    this.gameWorld.economy().apply(EconomyDelta.leak(this.price == 0 ? 10 : this.price));
                 }
             }
             this.updatePosition();

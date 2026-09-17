@@ -72,7 +72,7 @@ public final class TowerCinder extends AbstractTower {
 
     public void doTick(int gameTime) {
         List<EnemyMob> inRange = InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal())
-                .matching(this.context.getEnemyRegistry());
+                .matching(this.context.enemies());
         // No target: hold the last heading rather than snapping back to a neutral angle - see
         // TurretAim's class doc on skipping tick() while idle.
         new NearestSelector(this.centerX, this.centerY).selectFrom(inRange)
@@ -80,7 +80,7 @@ public final class TowerCinder extends AbstractTower {
 
         List<EnemyMob> caught = new InWedgeTargetQuery(this.centerX, this.centerY, this.turretAim.currentRadians(), this.halfWidthRadians)
                 .and(InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal()))
-                .matching(this.context.getEnemyRegistry());
+                .matching(this.context.enemies());
         for (EnemyMob enemy : caught) {
             enemy.applyEffect(Effect.burn(Damage.magic(this.damageCurrent()), BURN_DURATION_TICKS, d -> this.dealDamage(enemy, d)));
         }

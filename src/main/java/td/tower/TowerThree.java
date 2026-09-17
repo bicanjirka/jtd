@@ -57,7 +57,7 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
     public TowerThree(GameWorld context, int x, int y) {
         // No cooldown: this tower's cadence is its sweep rate, not a reload - see rateLine.
         super(TowerFactory.Type.third, PRICE, DAMAGE, RANGE, 0, context, x, y);
-        this.context.addWaveStartListener(this);
+        this.context.waves().addListener(this);
     }
 
     @Override
@@ -80,7 +80,7 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
 
         List<EnemyMob> inRange = InRangeTargetQuery
                 .ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.Normal)
-                .matching(this.context.getEnemyRegistry());
+                .matching(this.context.enemies());
 
         for (EnemyMob enemy : inRange) {
             double bearing = TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(), enemy.getY());
@@ -134,7 +134,7 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
 
     public void doCleanup() {
         super.doCleanup();
-        this.context.removeWaveStartListener(this);
+        this.context.waves().removeListener(this);
     }
 
     /**

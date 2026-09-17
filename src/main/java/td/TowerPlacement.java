@@ -108,15 +108,15 @@ public class TowerPlacement {
                 if (cell.buildable()) {
                     int cellX = board.cellX(boardX);
                     int cellY = board.cellY(boardY);
-                    if (this.gameWorld.doPay(this.placingTowerType.price)) {
+                    if (this.gameWorld.economy().doPay(this.placingTowerType.price)) {
                         Tower tempTower = TowerFactory.createTower(this.placingTowerType, this.gameWorld, cellX, cellY);
-                        this.gameWorld.addTower(tempTower);
+                        this.gameWorld.towers().add(tempTower);
                         cell.setTower(tempTower);
                         cell.enable(false);
-                        LOG.info("Tower placed: {} at ({},{}), credits left={}", this.placingTowerType, cellX, cellY, this.gameWorld.getCredits());
+                        LOG.info("Tower placed: {} at ({},{}), credits left={}", this.placingTowerType, cellX, cellY, this.gameWorld.economy().getCredits());
                     } else {
                         LOG.info("Tower placement rejected: not enough credits for {} (need {}, have {})",
-                                this.placingTowerType, this.placingTowerType.price, this.gameWorld.getCredits());
+                                this.placingTowerType, this.placingTowerType.price, this.gameWorld.economy().getCredits());
                     }
                     this.placingTower = false;
                 } else {

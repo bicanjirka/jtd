@@ -27,8 +27,8 @@ class TowerSeekerTest {
     }
 
     private void flyProjectilesToCompletion() {
-        for (int t = 1; t <= 50 && !this.context.getProjectileRegistry().getProjectiles().isEmpty(); t++) {
-            this.context.tickProjectiles(t);
+        for (int t = 1; t <= 50 && !this.context.projectiles().getProjectiles().isEmpty(); t++) {
+            this.context.projectiles().doTick(t);
         }
     }
 
@@ -36,18 +36,18 @@ class TowerSeekerTest {
     void firingLaunchesExactlyOneMissileAtTheTarget() {
         TowerSeeker tower = towerAt(3, 3);
         RecordingEnemyMob target = RecordingEnemyMob.normalAt(100, 100);
-        this.context.setEnemies(new EnemyMob[]{target});
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tower.doTick(1);
 
-        assertThat(this.context.getProjectileRegistry().getProjectiles()).hasSize(1);
+        assertThat(this.context.projectiles().getProjectiles()).hasSize(1);
     }
 
     @Test
     void theMissileEventuallyDealsMagicDamageAndFreezesTheTarget() {
         TowerSeeker tower = towerAt(3, 3);
         RecordingEnemyMob target = RecordingEnemyMob.normalAt(100, 100);
-        this.context.setEnemies(new EnemyMob[]{target});
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tower.doTick(1);
         this.flyProjectilesToCompletion();
@@ -62,26 +62,26 @@ class TowerSeekerTest {
     void aGhostIsNeverTargeted() {
         TowerSeeker tower = towerAt(3, 3);
         RecordingEnemyMob ghost = RecordingEnemyMob.ghostAt(100, 100);
-        this.context.setEnemies(new EnemyMob[]{ghost});
+        this.context.enemies().setEnemies(new EnemyMob[]{ghost});
 
         tower.doTick(1);
 
-        assertThat(this.context.getProjectileRegistry().getProjectiles()).isEmpty();
+        assertThat(this.context.projectiles().getProjectiles()).isEmpty();
     }
 
     @Test
     void noTargetInRangeFiresNoMissile() {
         TowerSeeker tower = towerAt(3, 3);
-        this.context.setEnemies(new EnemyMob[]{});
+        this.context.enemies().setEnemies(new EnemyMob[]{});
 
         tower.doTick(1);
 
-        assertThat(this.context.getProjectileRegistry().getProjectiles()).isEmpty();
+        assertThat(this.context.projectiles().getProjectiles()).isEmpty();
     }
 
     @Test
     void twinWarheadIsChoosableWithMoneyAloneAndAppliesItsFireRateBonus() {
-        this.context.startEconomy(1000, 5);
+        this.context.economy().startEconomy(1000, 5);
         TowerSeeker tower = towerAt(3, 3);
         UpgradePath twinWarhead = UpgradePaths.named(tower, "Twin Warhead");
 
@@ -93,7 +93,7 @@ class TowerSeekerTest {
 
     @Test
     void deepFreezeIsNotYetChoosableBeforeTenKills() {
-        this.context.startEconomy(1000, 5);
+        this.context.economy().startEconomy(1000, 5);
         TowerSeeker tower = towerAt(3, 3);
         UpgradePath deepFreeze = UpgradePaths.named(tower, "Deep Freeze");
 

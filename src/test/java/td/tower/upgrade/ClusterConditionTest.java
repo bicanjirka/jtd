@@ -14,7 +14,7 @@ class ClusterConditionTest {
 
     private Tower towerAt(int cellX, int cellY) {
         Tower t = TowerFactory.createTower(TowerFactory.Type.first, this.context, cellX, cellY);
-        this.context.addTower(t);
+        this.context.towers().add(t);
         return t;
     }
 

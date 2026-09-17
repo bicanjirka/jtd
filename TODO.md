@@ -50,20 +50,6 @@ unnecessary, and every mutation lands on a deterministic tick boundary.
   machines. If that becomes a goal, this stops being indirection and starts being the feature
   - do it then, and not before.
 
-### `GameWorld` is a 42-method facade over six collaborators
-
-Splitting the old `Context` god object into `BoardGeometry`, `EconomyLedger`, `EnemyRoster`,
-`TowerRoster`, `ProjectileRoster` and `WaveAnnouncer` made each piece testable, but routing
-all of them back through one wide facade relocated the coupling rather than removing it.
-`Tower`, `EnemyMob` and `Wave` each take the whole `GameWorld` while needing three or four
-capabilities. `GameWorld` also owns three mutable fields of its own (`board`, `path`,
-`enemyCatalog`), so it is not the pure composition root its javadoc once claimed.
-
-- **Where:** `td.util.GameWorld` and every domain constructor taking it.
-- **Approach:** give the domain constructors the narrow interfaces they actually use, the way
-  `td.tower.targeting` and `BoardRenderer` already take `EnemyRegistry` rather than the whole
-  world. Deliberately deferred — it touches every domain constructor and most tests.
-
 ### Per-package `CLAUDE.md` files predate the constraints-only standard
 
 The root `CLAUDE.md` was rewritten to hold constraints only, with rationale moved to

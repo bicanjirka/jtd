@@ -65,7 +65,7 @@ class AbstractEnemyMobEffectTest {
     @Test
     void aBurnThatKillsTheEnemyStopsItsMovementInTheSameTick() {
         GameWorld context = newContext();
-        context.setEnemyCount(1);
+        context.enemies().setCount(1);
         context.setPath(straightPath(1, 0, 100));
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1, 3, 1); // 100 health
 

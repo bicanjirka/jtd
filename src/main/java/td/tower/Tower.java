@@ -77,7 +77,7 @@ public interface Tower {
      * {@code false} without effect if a path is already chosen, {@code path} isn't one of
      * this tower's own {@link #availablePaths()}, {@code path}'s own
      * {@code UpgradeCondition} isn't currently satisfied, or the player can't afford it -
-     * mirrors {@code GameWorld.doPay}'s check-and-charge-in-one-call contract, so a caller
+     * mirrors {@code EconomyLedger.doPay}'s check-and-charge-in-one-call contract, so a caller
      * must not gate this on a separate affordability or condition check first.
      */
     boolean chooseUpgradePath(UpgradePath path);

@@ -39,7 +39,7 @@ class BoardRendererTest {
     }
 
     private static BoardRenderer rendererFor(GameEngine engine, GameWorld context) {
-        return new BoardRenderer(engine, context.getEnemyRegistry(), context.getProjectileRegistry(),
+        return new BoardRenderer(engine, context.enemies(), context.projectiles(),
                 context::getBoard, context::getPath);
     }
 
@@ -49,7 +49,7 @@ class BoardRendererTest {
         GameWorld context = engine.getGameWorld();
         TowerOne tower = new TowerOne(context, 1, 1);
         tower.setSelected(true);
-        context.addTower(tower);
+        context.towers().add(tower);
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
@@ -63,7 +63,7 @@ class BoardRendererTest {
     void aPlacedTowerYieldsATurretHeadDrawWithItsBodyPalette() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        context.addTower(new TowerOne(context, 1, 1));
+        context.towers().add(new TowerOne(context, 1, 1));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
@@ -75,7 +75,7 @@ class BoardRendererTest {
     void anUnselectedTowerYieldsASpriteDrawWithSelectedFalse() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        context.addTower(new TowerOne(context, 1, 1));
+        context.towers().add(new TowerOne(context, 1, 1));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
@@ -86,7 +86,7 @@ class BoardRendererTest {
     void aTowerWithNoChosenUpgradePathYieldsNoAccent() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        context.addTower(new TowerOne(context, 1, 1));
+        context.towers().add(new TowerOne(context, 1, 1));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
@@ -97,9 +97,9 @@ class BoardRendererTest {
     void aTowersSecondUpgradePathYieldsTheAccentPathBRole() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        context.startEconomy(1000, 5);
+        context.economy().startEconomy(1000, 5);
         TowerOne tower = new TowerOne(context, 1, 1);
-        context.addTower(tower);
+        context.towers().add(tower);
         // TowerOne.availablePaths() = [Veteran, Overclock] - Overclock (index 1) is money-gated,
         // so it's choosable immediately without grinding out Veteran's kill-count condition.
         tower.chooseUpgradePath(tower.availablePaths().get(1));
@@ -117,7 +117,7 @@ class BoardRendererTest {
         enemy.doDamage(Damage.physical(5000));
         enemy.doTick(1); // captures deathTick, matching how AbstractEnemyMob really ticks
 
-        context.setEnemies(new EnemyMob[]{enemy});
+        context.enemies().setEnemies(new EnemyMob[]{enemy});
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(1, 0.0, 0.0);
 
@@ -128,7 +128,7 @@ class BoardRendererTest {
     void anEmptyEnemyYieldsNoDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        context.setEnemies(new EnemyMob[]{EnemyFactory.getEnemy("e", context, 0, 50, 3, 1)});
+        context.enemies().setEnemies(new EnemyMob[]{EnemyFactory.getEnemy("e", context, 0, 50, 3, 1)});
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
@@ -162,7 +162,7 @@ class BoardRendererTest {
     void aCinderTowerYieldsAConeDrawEveryTick() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        context.addTower(new TowerCinder(context, 1, 1));
+        context.towers().add(new TowerCinder(context, 1, 1));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
@@ -174,7 +174,7 @@ class BoardRendererTest {
     void anInFlightProjectileYieldsAProjectileDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        context.addProjectile(new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
+        context.projectiles().add(new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
         }));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
