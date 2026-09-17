@@ -48,9 +48,14 @@ public final class TowerMortar extends AbstractTower {
     /** Ticks between shots before any fire-rate buff. */
     private static final int COOLDOWN_MAX = 50;
 
-    private float splashRadius;
-    private float slowMultiplier = SLOW_MULTIPLIER_BASE;
-    private int slowDurationTicks = SLOW_DURATION_TICKS_BASE;
+    // Bought on the EDT (onUpgradePathChosen) and read every tick on the game-loop thread, so
+    // it is published volatile - CLAUDE.md 3 rule 2. Each is an independent scalar with no
+    // invariant tying it to another, which is what makes a volatile scalar the right mechanism
+    // here rather than a TowerStats-style snapshot: reading last pulse's value for one tick
+    // after an upgrade is correct, just briefly stale.
+    private volatile float splashRadius;
+    private volatile int slowDurationTicks = SLOW_DURATION_TICKS_BASE;
+    private final float slowMultiplier = SLOW_MULTIPLIER_BASE;
     private int coolDown = 0;
     private EnemyMob currentTarget;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);

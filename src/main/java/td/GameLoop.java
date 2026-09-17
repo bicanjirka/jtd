@@ -2,6 +2,7 @@ package td;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import td.util.Threads;
 
 /**
  * Drives the simulation on its own dedicated thread using two independent
@@ -28,7 +29,6 @@ public class GameLoop implements Runnable {
     private static final long RENDER_INTERVAL_NANOS = 16_666_667L; // ~60fps
     private static final long POLL_NANOS = 1_000_000L;
     private static final int MAX_CONSECUTIVE_TICK_FAILURES = 10;
-    private static final long STOP_JOIN_TIMEOUT_MILLIS = 500L;
 
     private final TickAccumulator tickAccumulator = new TickAccumulator(BASE_TICK_NANOS);
     private final TickAccumulator renderAccumulator = new TickAccumulator(RENDER_INTERVAL_NANOS);
@@ -114,24 +114,36 @@ public class GameLoop implements Runnable {
         this.tickNumber = 0;
         this.consecutiveTickFailures = 0;
         this.running = true;
-        Thread newThread = new Thread(this, "game-loop");
+        Thread newThread = new Thread(this, Threads.GAME_LOOP);
         newThread.setDaemon(true);
         this.thread = newThread;
         newThread.start();
     }
 
     /**
-     * Stops the loop and <strong>waits for the in-flight tick to finish</strong> before
-     * returning. The join is the point: a caller that stops the loop in order to tear the
-     * current level down (see {@code TowerDefense.startSelectedLevel}) would otherwise clear
-     * the rosters and swap the cell grid, board geometry and path out from under a tick still
-     * running. {@code GameEngine.loadLevel} being idempotent does not cover that - idempotency
-     * is about calling twice, not about calling concurrently.
+     * Stops the loop and <strong>waits without bound for the in-flight tick to finish</strong>
+     * before returning. The join is the point: a caller that stops the loop in order to tear
+     * the current level down (see {@code TowerDefense.startSelectedLevel}) would otherwise
+     * clear the rosters and swap the cell grid, board geometry and path out from under a tick
+     * still running. {@code GameEngine.loadLevel} being idempotent does not cover that -
+     * idempotency is about calling twice, not about calling concurrently.
      * <p>
-     * Bounded rather than indefinite, and skipped when called from the loop thread itself (the
-     * circuit breaker's path), so a wedged tick cannot deadlock the EDT.
+     * The wait is unbounded on purpose. It was once capped at half a second, after which this
+     * method logged a warning and returned anyway - which handed the caller exactly the race
+     * the join exists to prevent, reported only as a log line. A guarantee a caller is written
+     * against either holds or is not stated.
+     * <p>
+     * Because it blocks, it <strong>must not be called from the Event Dispatch Thread</strong>
+     * - a wedged tick would freeze the UI. {@code Threads.assertNotEventDispatchThread} makes
+     * that a failure here rather than a hang somewhere else; {@code TowerDefense} runs its
+     * level teardown on a single-threaded lifecycle executor for this reason. Calling from the
+     * loop thread itself (the circuit breaker's path) is a no-op rather than a self-join.
+     * <p>
+     * {@code synchronized} with {@link #start()}, so a stop and a restart cannot interleave
+     * and leave {@link #thread} pointing at a thread the other call is still reasoning about.
      */
-    public void stop() {
+    public synchronized void stop() {
+        Threads.assertNotEventDispatchThread("GameLoop.stop()");
         LOG.info("GameLoop stopping");
         this.running = false;
         Thread loopThread = this.thread;
@@ -139,15 +151,12 @@ public class GameLoop implements Runnable {
             return;
         }
         try {
-            loopThread.join(STOP_JOIN_TIMEOUT_MILLIS);
-            if (loopThread.isAlive()) {
-                LOG.warn("game-loop thread still running {}ms after stop(); continuing without it",
-                        STOP_JOIN_TIMEOUT_MILLIS);
-            }
+            loopThread.join();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LOG.warn("Interrupted while waiting for the game-loop thread to stop");
         }
+        this.thread = null;
     }
 
     @Override

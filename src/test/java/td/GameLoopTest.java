@@ -6,6 +6,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -213,6 +214,57 @@ class GameLoopTest {
         assertThat(insideATick)
                 .as("stop() returned while a tick was still running")
                 .isFalse();
+    }
+
+    @Test
+    void stopWaitsOutATickLongerThanTheHalfSecondBoundItUsedToGiveUpAfter() throws InterruptedException {
+        // The join was once capped at 500ms, after which stop() logged a warning and returned
+        // anyway - handing the caller the exact race the join exists to prevent. A tick that
+        // outlasts that old bound must still be waited out in full.
+        AtomicBoolean insideATick = new AtomicBoolean();
+        CountDownLatch tickBegan = new CountDownLatch(1);
+        GameLoop loop = new GameLoop(() -> {
+            insideATick.set(true);
+            tickBegan.countDown();
+            try {
+                Thread.sleep(900);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            insideATick.set(false);
+        }, () -> {
+        });
+        loop.setSpeed(TickSpeed.SUPER_FAST);
+
+        loop.start();
+        assertThat(tickBegan.await(2, TimeUnit.SECONDS)).isTrue();
+        loop.stop();
+
+        assertThat(insideATick)
+                .as("stop() gave up on a tick that outlasted the old 500ms bound")
+                .isFalse();
+    }
+
+    @Test
+    void stopRefusesToRunOnTheEventDispatchThreadRatherThanFreezingIt() throws InterruptedException {
+        GameLoop loop = new GameLoop(() -> {
+        }, () -> {
+        });
+        AtomicReference<RuntimeException> thrown = new AtomicReference<>();
+
+        Thread pretendEdt = new Thread(() -> {
+            try {
+                loop.stop();
+            } catch (RuntimeException e) {
+                thrown.set(e);
+            }
+        }, "AWT-EventQueue-0");
+        pretendEdt.start();
+        pretendEdt.join();
+
+        assertThat(thrown.get())
+                .as("stop() joins without bound, so the EDT must be refused rather than blocked")
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
