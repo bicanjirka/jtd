@@ -10,10 +10,7 @@ import java.util.List;
 /**
  * The single concrete {@link EnemyMob} implementation for every data-driven enemy - behavior
  * comes entirely from its {@link EnemyDefinition}'s {@link Trait}s and {@link Ability}s, not
- * from which Java class was instantiated. {@link EnemyMobEmpty} is the one deliberate
- * exception: a wave-timing spacer that never ticks, is never a valid target, and is never
- * drawn stays its own tiny class rather than being forced through a trait/ability model it has
- * no real use for.
+ * from which Java class was instantiated.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 // body scale, facing and the two tick counters, all advanced by doTick

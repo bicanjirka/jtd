@@ -92,11 +92,12 @@ Parsing and instantiation are deliberately separate:
   enemy, `EmptySlot()` for the spacer, which keeps its slot (it counts toward spawn *timing*)
   but is excluded from `enemyCount()`/`enemySet()`.
 - `Wave` holds that content and does the world-bound instantiation in `spawn()`, **not in its
-  constructor** — one `EnemyMob` per slot (a `DefinedEnemyMob` for an `EnemySlot`, an
-  `EnemyMobEmpty` for an `EmptySlot`), with delay equal to the slot's index. `spawn()` is a
-  factory: each call builds a fresh set bound to the path installed at that moment, so calling
-  it twice puts two copies of the wave on the board. `enemyCount()`/`enemySet()` come from the
-  content and need no spawn, which is what lets the preview panel describe a wave before it runs.
+  constructor** — a `DefinedEnemyMob` for an `EnemySlot`, nothing at all for an `EmptySlot`,
+  with delay equal to the slot's index regardless of how many mobs (zero or one, today) the
+  slot produced. `spawn()` is a factory: each call builds a fresh set bound to the path
+  installed at that moment, so calling it twice puts two copies of the wave on the board.
+  `enemyCount()`/`enemySet()` come from the content and need no spawn, which is what lets the
+  preview panel describe a wave before it runs.
 - **Deferring the spawn is what makes a level load one atomic publication.** An `EnemyMob` binds
   to `GameWorld`'s installed path when it is built, so spawning in the constructor forced
   `GameEngine.loadLevel` to install the path before building the waves — two writes where

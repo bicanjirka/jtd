@@ -17,16 +17,8 @@ class EnemyFactoryTest {
         assertThat(EnemyFactory.isEnemy("s")).isTrue();
         assertThat(EnemyFactory.isEnemy("t")).isTrue();
         assertThat(EnemyFactory.isEnemy("g")).isTrue();
-        assertThat(EnemyFactory.isEnemy("e")).isTrue();
+        assertThat(EnemyFactory.isEnemy("e")).isFalse();
         assertThat(EnemyFactory.isEnemy("?")).isFalse();
-    }
-
-    @Test
-    void getEnemyBuildsARealEmptyMobForTheSpacerToken() {
-        EnemyMob enemy = EnemyFactory.getEnemy("e", context, 0, 50, 3, 1);
-
-        assertThat(enemy).isInstanceOf(EnemyMobEmpty.class);
-        assertThat(enemy.validTarget()).isFalse();
     }
 
     @Test

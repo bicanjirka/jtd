@@ -8,37 +8,30 @@ Read the root `CLAUDE.md` first; this file only covers what is specific to this 
 `AbstractEnemyMob` holds everything shared: position, movement along the path, health, death
 and the fade animation's timing.
 
-There are only two concrete `EnemyMob` implementations, deliberately unequal in kind:
+**`DefinedEnemyMob` is the only concrete `EnemyMob` implementation.** Its behavior comes
+entirely from the `EnemyDefinition` it was built from — a name/id, base stats, a
+`BodyArchetype`/`MovementBehavior` pair for rendering, and composable `Trait`s/`Ability`s —
+never from a per-type Java override. `EnemyCatalog.spawn(id, ...)` builds one of these from
+whichever definition is registered under `id`; `BuiltInEnemies` holds the four basic built-in
+`EnemyDefinition`s (`SIMPLE`/`ARMORED`/`FRENZIED`/`GHOST`) plus the Warden boss's six-stage
+chain (`WARDEN_1`/`WARDEN_EGG_1`/`WARDEN_2`/`WARDEN_EGG_2`/`WARDEN_3`/`WARDEN_EGG_3`), which
+`EnemyCatalog.builtIn()` pre-registers under their wave-script ids. `e`, the wave
+mini-language's spacer token, no longer spawns a mob of any kind — `td.wave.WaveScript`
+recognizes it before ever consulting a catalog and it produces zero enemies (see
+`td/wave/CLAUDE.md`).
 
-- **`DefinedEnemyMob`** is the one real, data-driven enemy. Its behavior comes entirely from
-  the `EnemyDefinition` it was built from — a name/id, base stats, a `BodyArchetype`/
-  `MovementBehavior` pair for rendering, and composable `Trait`s/`Ability`s — never from a
-  per-type Java override. `EnemyCatalog.spawn(id, ...)` builds one of these from whichever
-  definition is registered under `id`; `BuiltInEnemies` holds the four basic built-in
-  `EnemyDefinition`s (`SIMPLE`/`ARMORED`/`FRENZIED`/`GHOST`) plus the Warden boss's six-stage
-  chain (`WARDEN_1`/`WARDEN_EGG_1`/`WARDEN_2`/`WARDEN_EGG_2`/`WARDEN_3`/`WARDEN_EGG_3`), which
-  `EnemyCatalog.builtIn()` pre-registers under their wave-script ids.
-- **`EnemyMobEmpty`** stays its own tiny, hand-written class — a wave-timing spacer that never
-  ticks, is never a valid target, and is never drawn. It doesn't fit the trait/ability model
-  because it isn't really an enemy at all; forcing it through would need a "never do anything,
-  ever" trait for a use case of exactly one. It's deliberately **not** a registered
-  `EnemyCatalog` definition either — `e` is a reserved token `td.wave.WaveScript` recognizes
-  directly, before ever consulting a catalog (see `td/wave/CLAUDE.md`). See its own doc
-  comment.
-
-`EnemyMobVisitor` reflects this: it has exactly two methods, `visitDefined`/`visitEmpty`, not
-one per enemy *type* — see its own doc comment for why that's still a real, compiler-enforced
-safety net despite there being only one real concrete class to visit.
+`EnemyMobVisitor` reflects this: it has exactly one method, `visitDefined`, kept as a visitor
+rather than collapsed into a plain call so a second non-data-driven mob can be added later
+without reopening every call site — see its own doc comment.
 
 **`EnemyFactory` still exists, but only as a global-catalog test convenience.** Its
 `getEnemy(String, ...)`/`isEnemy(String)` are stable, unchanged signatures that delegate to a
-freshly built `EnemyCatalog.builtIn()` (plus the same `e`-is-a-spacer special case
-`WaveScript` has) - that's what keeps every enemy-behavior test that predates this feature (`PercentResistTraitTest`,
-`AbstractEnemyMobTest`, and others) working unchanged. Real gameplay
-spawning (`WaveScript`/`Wave`/`GameEngine.loadLevel`) goes through `EnemyCatalog` directly,
-not this class, since it needs per-level catalog scoping `EnemyFactory` doesn't offer. The
-old `EnemyFactory.Enemy` enum and `identifyEnemy` are gone - nothing needs a closed
-enumeration of ids anymore.
+freshly built `EnemyCatalog.builtIn()` - that's what keeps every enemy-behavior test that
+predates this feature (`PercentResistTraitTest`, `AbstractEnemyMobTest`, and others) working
+unchanged. Real gameplay spawning (`WaveScript`/`Wave`/`GameEngine.loadLevel`) goes through
+`EnemyCatalog` directly, not this class, since it needs per-level catalog scoping
+`EnemyFactory` doesn't offer. The old `EnemyFactory.Enemy` enum and `identifyEnemy` are gone -
+nothing needs a closed enumeration of ids anymore.
 
 **`EnemyCatalog.ids()` lists every registered id, in registration order** (it is backed by a
 `LinkedHashMap`, not a `HashMap`, specifically so this order is stable) —
@@ -200,10 +193,6 @@ tick's damage-over-time and decrements durations, and an effect entering the las
 duration must still suppress this tick's movement, not just its damage. A damage-over-time tick
 that kills the mob sets `dead` synchronously (its sink calls back into `doDamage`), so `doTick`
 checks `dead` and returns before movement runs — there is nothing left to move.
-
-**`EnemyMobEmpty` needs no special-casing for effects.** It overrides `doTick` with an empty
-body and never calls `super`, but it also reports `validTarget() == false` always, and every
-targeting query filters on that — nothing can ever apply an effect to it in the first place.
 
 ## Adding a new enemy
 

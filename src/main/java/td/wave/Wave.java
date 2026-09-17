@@ -3,7 +3,6 @@ package td.wave;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
-import td.enemy.EnemyMobEmpty;
 import td.util.GameWorld;
 
 import java.util.ArrayList;
@@ -13,9 +12,9 @@ import java.util.Set;
 /**
  * A wave's {@link WaveContent}, and the ability to turn it into live, world-bound enemies on
  * demand. Parsing the token string into content is {@link WaveScript}'s job - this class only
- * spawns it: each spawn slot becomes one {@code EnemyMob} whose delay is its position in the
- * flattened content, so a later slot spawns later regardless of whether it's a real enemy or
- * an Empty spacer.
+ * spawns it: each spawn slot becomes zero or more {@code EnemyMob}s (an {@link EmptySlot}
+ * spacer spawns none), with a delay derived from its position in the flattened content, so a
+ * later slot spawns later regardless of how many mobs the slots before it produced.
  * <p>
  * <strong>Spawning is deferred to {@link #spawn()}</strong>, which is what makes a level load
  * a single atomic publication. An {@code EnemyMob} binds to the world's installed path when it
@@ -45,16 +44,16 @@ public class Wave {
         List<EnemyMob> enemies = new ArrayList<>();
         int delay = 0;
         for (WaveSlot slot : content.spawnSequence()) {
-            enemies.add(spawnSlot(slot, gameWorld, delay, baseHealth, basePrice, level));
+            enemies.addAll(spawnSlot(slot, gameWorld, delay, baseHealth, basePrice, level));
             delay++;
         }
         return List.copyOf(enemies);
     }
 
-    private static EnemyMob spawnSlot(WaveSlot slot, GameWorld gameWorld, int delay, int health, int price, int level) {
+    private static List<EnemyMob> spawnSlot(WaveSlot slot, GameWorld gameWorld, int delay, int health, int price, int level) {
         return switch (slot) {
-            case EnemySlot s -> new DefinedEnemyMob(s.definition(), gameWorld, delay, health, price, level);
-            case EmptySlot ignored -> new EnemyMobEmpty(gameWorld, delay, health, price, level);
+            case EnemySlot s -> List.of(new DefinedEnemyMob(s.definition(), gameWorld, delay, health, price, level));
+            case EmptySlot ignored -> List.of();
         };
     }
 

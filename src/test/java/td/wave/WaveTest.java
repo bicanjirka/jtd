@@ -35,10 +35,10 @@ class WaveTest {
     }
 
     @Test
-    void oneEnemyMobIsSpawnedPerSpawnSlotIncludingEmpties() {
+    void aSpacerOccupiesATimingSlotButSpawnsNoMob() {
         Wave wave = new Wave(this.context, 100, 5, 1, WaveScript.parse("c e c", this.catalog));
 
-        assertThat(wave.spawn()).hasSize(3);
+        assertThat(wave.spawn()).hasSize(2);
         assertThat(wave.enemyCount()).isEqualTo(2);
     }
 

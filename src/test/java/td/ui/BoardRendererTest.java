@@ -124,17 +124,6 @@ class BoardRendererTest {
     }
 
     @Test
-    void anEmptyEnemyYieldsNoDraw() {
-        GameEngine engine = newEngine();
-        GameWorld context = engine.getGameWorld();
-        context.enemies().setEnemies(new EnemyMob[]{EnemyFactory.getEnemy("e", context, 0, 50, 3, 1)});
-
-        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
-
-        assertThat(frame.enemies()).isEmpty();
-    }
-
-    @Test
     void onlyHighlightedCellsProduceADraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
