@@ -43,11 +43,17 @@ public class GameEngine {
     private final GameWorld gameWorld;
     private final TowerPlacement placement;
 
-    private Cell[][] cellGrid;
-    private List<Wave> waves = new ArrayList<>();
-    private int wave = 0;
-    private boolean waveReady = true;
-    private boolean startWave = false;
+    // Every field below is written on one thread and read on the other: the EDT loads a
+    // level, requests a wave and sells towers; the game-loop thread consumes those requests
+    // in doTick and advances the wave counter. Each is an independent scalar or an immutable
+    // reference swapped wholesale, so volatile publication is the whole requirement - there
+    // is no multi-field invariant here to guard. See CLAUDE.md 3.
+    private volatile Cell[][] cellGrid;
+    private volatile List<Wave> waves = new ArrayList<>();
+    private volatile int wave = 0;
+    private volatile boolean waveReady = true;
+    private volatile boolean startWave = false;
+    // EDT-only: the debug keybinding that advances it is a key event.
     private int debugSpawnCursor = 0;
 
     public GameEngine(GameHost host) {
@@ -104,24 +110,28 @@ public class GameEngine {
         int width = level.width();
         int height = level.height();
         int scale = this.gameWorld.getBoard().scale();
-        this.cellGrid = new Cell[width][height];
+        // Built locally and assigned to the volatile field only once fully populated: a
+        // publishing write must hand over a finished object, never an empty one another
+        // thread could see mid-fill.
+        Cell[][] grid = new Cell[width][height];
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-                this.cellGrid[i][j] = new CellNormal(i * scale, j * scale);
+                grid[i][j] = new CellNormal(i * scale, j * scale);
             }
         }
-        this.gameWorld.setBoard(BoardGeometry.of(scale, width, height));
-
-        this.waves = new ArrayList<>();
         Path path = PathBuilder.build(level.path(), level.smoothing(), scale);
+        markUnbuildableCells(grid, path, scale);
+        this.cellGrid = grid;
+        this.gameWorld.setBoard(BoardGeometry.of(scale, width, height));
         this.gameWorld.setPath(path);
-        markUnbuildableCells(path, scale);
         this.wave = 0;
 
         this.gameWorld.setEnemyCatalog(EnemyCatalog.builtIn());
+        List<Wave> loaded = new ArrayList<>();
         for (WaveDefinition wd : level.waves()) {
-            this.waves.add(new Wave(this.gameWorld, wd.hp(), wd.price(), wd.level(), WaveScript.parse(wd.enemies(), this.gameWorld.getEnemyCatalog())));
+            loaded.add(new Wave(this.gameWorld, wd.hp(), wd.price(), wd.level(), WaveScript.parse(wd.enemies(), this.gameWorld.getEnemyCatalog())));
         }
+        this.waves = loaded;
 
         this.gameWorld.startEconomy(level.startingCredits(), level.startingLives());
         LOG.info("Level loaded: {} ({}x{} board, {} waves, {} starting credits, {} starting lives)",
@@ -150,11 +160,11 @@ public class GameEngine {
      * was authored through, so a smoothed/curved path's buildable set correctly reflects its
      * real shape. See {@link PathCoverage} for the geometry itself.
      */
-    private void markUnbuildableCells(Path path, int scale) {
-        int width = this.cellGrid.length;
-        int height = width == 0 ? 0 : this.cellGrid[0].length;
+    private void markUnbuildableCells(Cell[][] grid, Path path, int scale) {
+        int width = grid.length;
+        int height = width == 0 ? 0 : grid[0].length;
         for (Point cell : PathCoverage.unbuildableCells(path.points(), scale, width, height)) {
-            this.cellGrid[cell.x()][cell.y()].enable(false);
+            grid[cell.x()][cell.y()].enable(false);
         }
     }
 

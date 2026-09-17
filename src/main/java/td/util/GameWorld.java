@@ -32,10 +32,13 @@ import java.util.List;
  */
 public class GameWorld {
 
-    private BoardGeometry board = BoardGeometry.empty();
+    // Level-scoped state GameWorld owns directly rather than delegating. All three are
+    // immutable values replaced wholesale when a level loads (on the EDT) and read every tick
+    // (on the game-loop thread), so they are published volatile. See CLAUDE.md 3.
+    private volatile BoardGeometry board = BoardGeometry.empty();
+    private volatile Path path;
+    private volatile EnemyCatalog enemyCatalog = EnemyCatalog.builtIn();
     private final GameHost mainApp;
-    private Path path;
-    private EnemyCatalog enemyCatalog = EnemyCatalog.builtIn();
 
     private final EconomyLedger economy = new EconomyLedger();
     private final EnemyRoster enemies;

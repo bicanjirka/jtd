@@ -4,6 +4,7 @@ import td.util.GameHost;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The live enemy list for the wave currently in play, and how many of them are still
@@ -18,7 +19,10 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
 
     private final GameHost host;
     private final List<EnemyMob> enemies = new CopyOnWriteArrayList<>();
-    private int count = 0;
+    // Decremented on the game-loop thread as mobs die and reset from the EDT on level load, and
+    // the value a decrement produces is what decides "wave cleared" and "you won" - so the
+    // decrement and the value reported for it have to be one operation, not two.
+    private final AtomicInteger count = new AtomicInteger();
 
     public EnemyRoster(GameHost host) {
         this.host = host;
@@ -35,17 +39,16 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
     }
 
     public void setCount(int count) {
-        this.count = count;
+        this.count.set(count);
     }
 
     public void remove() {
-        this.count--;
-        this.host.enemyDied(this.count);
+        this.host.enemyDied(this.count.decrementAndGet());
     }
 
     /** Tearing a level down is not a death: unlike {@link #remove()}, this does not notify the host. */
     public void clear() {
-        this.count = 0;
+        this.count.set(0);
         this.enemies.clear();
     }
 
@@ -53,7 +56,7 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
     @Override
     public void add(EnemyMob mob) {
         this.enemies.add(mob);
-        this.count++;
+        this.count.incrementAndGet();
     }
 
     /**

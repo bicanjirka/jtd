@@ -17,6 +17,13 @@ Two rules govern everything here, and both are checkable by grep:
 
 ## The render pipeline
 
+**`buildFrame` runs on the `game-loop` thread, not the EDT.** It walks live simulation state,
+so it has to run on the thread that owns it; the `RenderFrame` it returns is the immutable
+snapshot that crosses over, published through one `volatile` field in `TowerDefense`.
+`TowerDefense.paintBoard` only paints what was published - it builds no frame and touches no
+domain object. Keep it that way: moving frame-building back onto the EDT reintroduces the
+data race this split exists to remove (root `CLAUDE.md` 3).
+
 ```
 BoardRenderer.buildFrame(gameTime, interpolationAlpha, animationSeconds)
     -> walks the engine, dispatching per object through visitors

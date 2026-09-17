@@ -63,10 +63,29 @@ Event Dispatch Thread. **Tick code never runs on the EDT.**
 snapshots, never live domain objects.** A concurrent collection makes the *collection* safe, not
 its contents — `CopyOnWriteArrayList` publishes which enemies exist, not where they are.
 
+State crosses the two threads by one of exactly two mechanisms, and which one applies depends
+on whether its fields are correlated:
+
+1. **Correlated state crosses as an immutable snapshot**, built on the thread that owns it.
+   A moving enemy's position, health and death state only mean anything together, so the
+   board crosses as one `RenderFrame` — built by `TowerDefense.buildAndPublishFrame` on the
+   `game-loop` thread and published through a single `volatile` reference that `paintBoard`
+   reads. `paintBoard` builds nothing and touches no domain object.
+2. **Independent scalars may cross as `volatile` fields** — a tower's kill count, a cell's
+   highlight. `volatile` is not a cheaper substitute for a snapshot: it fixes tearing and
+   visibility, not a half-updated object (this tick's `x` with last tick's `y`). Use it only
+   where a one-pulse-stale read of one value is correct on its own.
+
+This applies in both directions. Cells are EDT-owned and read by the loop's frame build, so
+their mutable fields are `volatile` for the same reason.
+
 - Never touch Swing from tick code. Route through a listener the UI observes.
-- State crossing the two threads is published as an immutable value through a `volatile` field,
-  or guarded. A plain mutable field read from the other thread is a bug — including a `double`
-  (non-volatile 64-bit reads may tear, JLS 17.7).
+- A plain mutable field read from the other thread is a bug — including a `double` or `long`,
+  whose non-volatile reads may tear (JLS 17.7).
+- A field that publishes an object is assigned only once that object is fully built. Fill a
+  local, then publish it — never publish an empty array and populate it afterwards.
+- `GameLoop.stop()` joins the loop thread before returning, which is what makes it safe to
+  tear the level down immediately after. Idempotency is not thread-safety.
 - `EconomyLedger` computes new state inside `synchronized (this)` and fires `economyChanged`
   **outside** it. Never hold the lock while calling out — listeners re-enter it and touch Swing.
 - `canPay` is advisory. `doPay` is the atomic check-and-charge and returns `false` if unaffordable.
@@ -74,10 +93,6 @@ its contents — `CopyOnWriteArrayList` publishes which enemies exist, not where
 - Listener lists and the live tower/enemy/projectile lists are `CopyOnWriteArrayList` on purpose.
 - When the loop falls behind it runs **one** tick and resyncs rather than bursting the backlog.
 - `GameEngine.doTick` order is fixed: **enemies, then projectiles, then towers.**
-
-> **Current gap:** the render path still reads live domain state from the EDT
-> (`BoardRenderer.buildFrame`, `PanelTowerInfo.refreshSelected`) and `GameLoop.stop()` does not
-> join its thread. Both are in `TODO.md`. Add no new cross-thread reads meanwhile.
 
 ## 4. Domain packages
 

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -78,6 +79,39 @@ class EconomyLedgerTest {
 
         assertThat(ledger.getScore()).isEqualTo(5);
         assertThat(economyChangedCalls).hasValue(1);
+    }
+
+    @Test
+    void concurrentEconomyEventsDoNotLoseUpdates() throws InterruptedException {
+        // apply() is a read-modify-write reached from both the EDT (a purchase) and the
+        // game-loop thread (a kill or a leak). Without the lock this loses updates, and the
+        // final total comes out short.
+        int threads = 4;
+        int eventsPerThread = 2000;
+        CountDownLatch go = new CountDownLatch(1);
+        List<Thread> workers = new ArrayList<>();
+        for (int i = 0; i < threads; i++) {
+            Thread worker = new Thread(() -> {
+                try {
+                    go.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+                for (int e = 0; e < eventsPerThread; e++) {
+                    ledger.apply(EconomyDelta.credits(1));
+                }
+            });
+            workers.add(worker);
+            worker.start();
+        }
+
+        go.countDown();
+        for (Thread worker : workers) {
+            worker.join(10_000);
+        }
+
+        assertThat(ledger.getCredits()).isEqualTo(threads * eventsPerThread);
     }
 
     @Test

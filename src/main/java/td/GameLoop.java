@@ -3,22 +3,22 @@ package td;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.SwingUtilities;
-
 /**
  * Drives the simulation on its own dedicated thread using two independent
  * fixed-timestep {@link TickAccumulator}s: {@code onTick} runs a variable
  * number of times per real-world interval - zero while paused
  * ({@link TickSpeed#PAUSED}), several in a row when running fast - while
- * {@code onRender} is requested on a flat ~60fps real-time cadence,
- * regardless of tick speed or pause, so the board (tower placement
- * highlights, hover effects, ...) keeps redrawing even while the simulation
- * itself is paused or running fast.
+ * {@code onRender} fires on a flat ~60fps real-time cadence, regardless of
+ * tick speed or pause, so the board (tower placement highlights, hover
+ * effects, ...) keeps redrawing even while the simulation itself is paused
+ * or running fast.
  * <p>
- * Both are requested via {@link SwingUtilities#invokeLater}, which is the
- * standard safe-publication idiom for handing background-thread state to
- * Swing, rather than relying on {@code JComponent.repaint()}'s internal
- * synchronization as an implementation-detail coincidence.
+ * <strong>Both callbacks run on the {@code game-loop} thread, never on the
+ * Event Dispatch Thread.</strong> That is deliberate: {@code onRender} is
+ * where the caller builds an immutable snapshot of simulation state it then
+ * hands to the EDT, so it has to run on the thread that owns that state. This
+ * class contains no Swing dependency at all; crossing to the EDT is the
+ * caller's job and happens after the snapshot exists. See CLAUDE.md 3.
  */
 public class GameLoop implements Runnable {
 
@@ -28,6 +28,7 @@ public class GameLoop implements Runnable {
     private static final long RENDER_INTERVAL_NANOS = 16_666_667L; // ~60fps
     private static final long POLL_NANOS = 1_000_000L;
     private static final int MAX_CONSECUTIVE_TICK_FAILURES = 10;
+    private static final long STOP_JOIN_TIMEOUT_MILLIS = 500L;
 
     private final TickAccumulator tickAccumulator = new TickAccumulator(BASE_TICK_NANOS);
     private final TickAccumulator renderAccumulator = new TickAccumulator(RENDER_INTERVAL_NANOS);
@@ -41,14 +42,13 @@ public class GameLoop implements Runnable {
     private volatile Thread thread;
     private long tickNumber = 0;
     private int consecutiveTickFailures = 0;
-    // Written on the game-loop thread immediately before each render request, read on the
-    // EDT inside the onRender callback - a plain volatile snapshot is the safe-publication
-    // idiom here, matching how render requests themselves cross threads (see class javadoc).
+    // Written and read on the game-loop thread, immediately before each onRender callback.
+    // Kept volatile because it is also readable from outside the loop (see the accessor).
     private volatile double tickInterpolationAlpha = 0.0;
     // A clock for cosmetic, non-gameplay animation (e.g. the path's moving markers - see
     // td.ui.PathMarkerFrameBuilder) that by design keeps advancing at its own pace while
-    // TickSpeed.PAUSED or fast-forwarding, unlike tickInterpolationAlpha above. Same
-    // safe-publication idiom: written here, read on the EDT during rendering.
+    // TickSpeed.PAUSED or fast-forwarding, unlike tickInterpolationAlpha above. Volatile for
+    // the same reason: written on the loop thread, readable from outside it.
     private volatile double animationSeconds = 0.0;
 
     public GameLoop(Runnable onTick, Runnable onRender) {
@@ -59,8 +59,8 @@ public class GameLoop implements Runnable {
     /**
      * How far past the last completed simulation tick the loop currently is, as a fraction
      * of one tick step ({@code [0, 1)}). Intended for interpolating a render frame between
-     * the previous and current tick's state; safe to call from the EDT inside an onRender
-     * callback, where it reflects the value snapshotted just before that render was requested.
+     * the previous and current tick's state, and refreshed immediately before each onRender
+     * callback so a frame built there reads the value belonging to that frame.
      */
     public double tickInterpolationAlpha() {
         return this.tickInterpolationAlpha;
@@ -120,9 +120,34 @@ public class GameLoop implements Runnable {
         newThread.start();
     }
 
+    /**
+     * Stops the loop and <strong>waits for the in-flight tick to finish</strong> before
+     * returning. The join is the point: a caller that stops the loop in order to tear the
+     * current level down (see {@code TowerDefense.startSelectedLevel}) would otherwise clear
+     * the rosters and swap the cell grid, board geometry and path out from under a tick still
+     * running. {@code GameEngine.loadLevel} being idempotent does not cover that - idempotency
+     * is about calling twice, not about calling concurrently.
+     * <p>
+     * Bounded rather than indefinite, and skipped when called from the loop thread itself (the
+     * circuit breaker's path), so a wedged tick cannot deadlock the EDT.
+     */
     public void stop() {
         LOG.info("GameLoop stopping");
         this.running = false;
+        Thread loopThread = this.thread;
+        if (loopThread == null || loopThread == Thread.currentThread()) {
+            return;
+        }
+        try {
+            loopThread.join(STOP_JOIN_TIMEOUT_MILLIS);
+            if (loopThread.isAlive()) {
+                LOG.warn("game-loop thread still running {}ms after stop(); continuing without it",
+                        STOP_JOIN_TIMEOUT_MILLIS);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOG.warn("Interrupted while waiting for the game-loop thread to stop");
+        }
     }
 
     @Override
@@ -156,7 +181,7 @@ public class GameLoop implements Runnable {
 
             if (this.renderAccumulator.accumulate(elapsedNanos) > 0) {
                 this.tickInterpolationAlpha = this.tickAccumulator.fractionElapsed();
-                SwingUtilities.invokeLater(this::runRender);
+                this.runRender();
             }
 
             sleepQuietly(POLL_NANOS);

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -183,6 +184,35 @@ class GameLoopTest {
         } finally {
             loop.stop();
         }
+    }
+
+    @Test
+    void stopWaitsForTheInFlightTickToFinishBeforeReturning() throws InterruptedException {
+        // The whole point of the join: a caller stops the loop in order to tear the current
+        // level down, and must not start clearing rosters and swapping the cell grid while a
+        // tick is still walking them.
+        AtomicBoolean insideATick = new AtomicBoolean();
+        CountDownLatch tickBegan = new CountDownLatch(1);
+        GameLoop loop = new GameLoop(() -> {
+            insideATick.set(true);
+            tickBegan.countDown();
+            try {
+                Thread.sleep(150);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            insideATick.set(false);
+        }, () -> {
+        });
+        loop.setSpeed(TickSpeed.SUPER_FAST);
+
+        loop.start();
+        assertThat(tickBegan.await(2, TimeUnit.SECONDS)).isTrue();
+        loop.stop();
+
+        assertThat(insideATick)
+                .as("stop() returned while a tick was still running")
+                .isFalse();
     }
 
     @Test

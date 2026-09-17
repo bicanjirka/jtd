@@ -7,67 +7,7 @@ this file is the single place to look for outstanding design/feature gaps.
 ## Architecture and correctness
 
 Findings from the architecture audit of 2026-09-17, highest-severity first. The threading
-group is the next scheduled change.
-
-### The render path reads live domain state across threads
-
-`BoardRenderer.buildFrame` runs on the Event Dispatch Thread and reads `AbstractEnemyMob`'s
-`x`, `y`, `prevX`, `prevY`, `health` and `dead` — plain, non-volatile fields written on the
-`game-loop` thread. `PanelTowerInfo.refreshSelected` does the same for `AbstractTower`'s
-`damageCurrent`, `damageDealt` and `killCount`. The `CopyOnWriteArrayList` rosters publish
-which objects exist, not the state inside them, so these reads have no happens-before edge,
-and non-volatile 64-bit reads (`double x, y`) may tear per JLS 17.7.
-
-- **Where:** `td.ui.BoardRenderer.buildFrame`, `td.TowerDefense.paintBoard`,
-  `td.ui.PanelTowerInfo.refreshSelected`, `td.enemy.AbstractEnemyMob`, `td.tower.AbstractTower`.
-- **Approach:** build the `RenderFrame` on the `game-loop` thread at the end of each render
-  interval, publish it through one `volatile` field, and have `paintBoard` only paint what it
-  reads there. `RenderFrame` is already the immutable snapshot type this needs. Add a small
-  immutable `TowerStats` published the same way for the info panel. Do not solve this by
-  marking fields `volatile` — that fixes tearing but leaves a half-updated mob (this tick's
-  `x` with last tick's `y`) legal.
-
-### `GameLoop.stop()` does not join its thread
-
-`stop()` sets `running = false` and returns immediately, while the loop thread may still be
-inside `onTick.run()`. `TowerDefense.startSelectedLevel` then calls `engine.loadLevel` on the
-EDT, which clears the rosters and replaces the cell grid, board geometry and path underneath
-that in-flight tick. The resulting exception lands in `GameLoop`'s per-tick catch and is
-logged as a one-off rather than surfacing as the race it is.
-
-- **Where:** `td.GameLoop.stop()`, `td.TowerDefense.startSelectedLevel`/`returnToMenu`.
-- **Approach:** have `stop()` take the `volatile Thread` reference it already keeps and
-  `join()` it with a bounded timeout, logging if the timeout expires. `loadLevel`'s
-  idempotency is a separate property and does not cover this.
-
-### `EconomyLedger.startEconomy` writes outside the lock
-
-`apply` and `doPay` correctly compute inside `synchronized (this)`, but `startEconomy` assigns
-`this.economy` with no lock held. A concurrent `apply` on the `game-loop` thread can lose
-either the level's starting economy or the delta.
-
-- **Where:** `td.economy.EconomyLedger.startEconomy`.
-- **Approach:** move the assignment inside the existing `synchronized (this)` pattern, keeping
-  the notification outside it as the other two mutators already do.
-
-### `GameEngine`'s cross-thread fields are unguarded
-
-`startWave` is written on the EDT by `requestNextWave()` and read on the `game-loop` thread by
-`doTick`; `waveReady`, `wave`, `waves` and `cellGrid` also cross the two threads. None is
-`volatile`, so none of the writes is guaranteed to be observed.
-
-- **Where:** `td.GameEngine` fields.
-- **Approach:** make the genuinely cross-thread fields `volatile`. Note that the threading
-  section of `CLAUDE.md` never mentioned `GameEngine` before this audit; it now covers it.
-
-### `EnemyRoster.count` is not atomic
-
-`remove()` does `count--` and then calls `host.enemyDied(count)`, which is what gates the
-"wave cleared" and "you won" transitions, while `clear()` and `setCount()` are called from the
-EDT. A lost decrement means a wave never reports itself clear.
-
-- **Where:** `td.enemy.EnemyRoster`.
-- **Approach:** `AtomicInteger`, notifying with the value the decrement returned.
+group has landed; what remains is listed below.
 
 ### `WaveScript` accepts an unrecognized token instead of failing
 
