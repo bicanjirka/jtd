@@ -15,7 +15,7 @@ There are only two concrete `EnemyMob` implementations, deliberately unequal in 
   `MovementBehavior` pair for rendering, and composable `Trait`s/`Ability`s — never from a
   per-type Java override. `EnemyCatalog.spawn(id, ...)` builds one of these from whichever
   definition is registered under `id`; `BuiltInEnemies` holds the four basic built-in
-  `EnemyDefinition`s (`CIRCLE`/`SQUARE`/`TRIANGLE`/`GHOST`) plus the Warden boss's six-stage
+  `EnemyDefinition`s (`SIMPLE`/`ARMORED`/`FRENZIED`/`GHOST`) plus the Warden boss's six-stage
   chain (`WARDEN_1`/`WARDEN_EGG_1`/`WARDEN_2`/`WARDEN_EGG_2`/`WARDEN_3`/`WARDEN_EGG_3`), which
   `EnemyCatalog.builtIn()` pre-registers under their wave-script ids.
 - **`EnemyMobEmpty`** stays its own tiny, hand-written class — a wave-timing spacer that never
@@ -59,8 +59,8 @@ moment something registers one (see `WaveScriptTest`'s
 A `Trait` is a passive, always-on modifier: `onHit` (resistance, folded in sequence by
 `DefinedEnemyMob.absorb`), `speedFactor` (a hurt-speed curve applied to `baseSpeed`),
 `isValidTarget` (see the gotcha below — **not** what makes Ghost invisible). `PercentResistTrait`/`HurtSpeedTrait`/`FlatResistTrait`
-are the three built-in implementations, reused (not subclassed) by `BuiltInEnemies.SQUARE`/
-`TRIANGLE`/the Warden stages - `FlatResistTrait` is deliberately a *flat per-hit* reduction,
+are the three built-in implementations, reused (not subclassed) by `BuiltInEnemies.ARMORED`/
+`FRENZIED`/the Warden stages - `FlatResistTrait` is deliberately a *flat per-hit* reduction,
 not a depleting shield pool, since a pool that's "used up" over one mob's lifetime needs
 per-mob mutable trait state nothing else here has (see its own doc comment).
 

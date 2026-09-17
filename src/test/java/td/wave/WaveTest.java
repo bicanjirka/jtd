@@ -44,13 +44,13 @@ class WaveTest {
 
     @Test
     void enemySetAndEnemyCountDelegateToTheParsedContent() {
-        EnemyDefinition circle = this.catalog.get("c");
-        EnemyDefinition square = this.catalog.get("s");
+        EnemyDefinition simple = this.catalog.get("c");
+        EnemyDefinition armored = this.catalog.get("s");
         Wave wave = new Wave(this.context, 100, 5, 1, WaveScript.parse("2 c s", this.catalog));
 
-        assertThat(wave.enemySet()).containsExactlyInAnyOrder(circle, square);
-        assertThat(wave.enemyCount(circle)).isEqualTo(2);
-        assertThat(wave.enemyCount(square)).isEqualTo(1);
+        assertThat(wave.enemySet()).containsExactlyInAnyOrder(simple, armored);
+        assertThat(wave.enemyCount(simple)).isEqualTo(2);
+        assertThat(wave.enemyCount(armored)).isEqualTo(1);
     }
 
     @Test

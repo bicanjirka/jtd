@@ -17,8 +17,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class WaveScriptTest {
 
     private final EnemyCatalog catalog = EnemyCatalog.builtIn();
-    private final EnemyDefinition circle = this.catalog.get("c");
-    private final EnemyDefinition square = this.catalog.get("s");
+    private final EnemyDefinition simple = this.catalog.get("c");
+    private final EnemyDefinition armored = this.catalog.get("s");
     private final EnemyDefinition ghost = this.catalog.get("g");
 
     @Test
@@ -35,15 +35,15 @@ class WaveScriptTest {
         WaveContent content = WaveScript.parse("2 c", this.catalog);
 
         assertThat(content.enemyCount()).isEqualTo(2);
-        assertThat(content.enemyCount(this.circle)).isEqualTo(2);
+        assertThat(content.enemyCount(this.simple)).isEqualTo(2);
     }
 
     @Test
     void aCountAppliesOnlyToTheTokenImmediatelyFollowingItAndThenResets() {
         WaveContent content = WaveScript.parse("2 c s", this.catalog);
 
-        assertThat(content.enemyCount(this.circle)).isEqualTo(2);
-        assertThat(content.enemyCount(this.square)).isEqualTo(1);
+        assertThat(content.enemyCount(this.simple)).isEqualTo(2);
+        assertThat(content.enemyCount(this.armored)).isEqualTo(1);
     }
 
     @Test
@@ -51,8 +51,8 @@ class WaveScriptTest {
         WaveContent content = WaveScript.parse("c e c", this.catalog);
 
         // the spacer never appears in enemySet(), unlike the old EnemyFactory.Enemy-keyed model
-        assertThat(content.enemySet()).containsExactly(this.circle);
-        assertThat(content.enemyCount(this.circle)).isEqualTo(2);
+        assertThat(content.enemySet()).containsExactly(this.simple);
+        assertThat(content.enemyCount(this.simple)).isEqualTo(2);
         assertThat(content.enemyCount(this.ghost)).isZero();
     }
 
@@ -87,7 +87,7 @@ class WaveScriptTest {
 
         WaveContent content = WaveScript.parse("c tankySquare", perLevelCatalog);
 
-        assertThat(content.enemySet()).containsExactlyInAnyOrder(this.circle, tankySquare);
+        assertThat(content.enemySet()).containsExactlyInAnyOrder(this.simple, tankySquare);
         assertThat(content.enemyCount(tankySquare)).isEqualTo(1);
     }
 }

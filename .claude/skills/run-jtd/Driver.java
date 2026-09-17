@@ -75,7 +75,7 @@ public class Driver {
             case "ss" -> screenshot(rest);
             case "list" -> list();
             case "click" -> click(Integer.parseInt(rest.trim()));
-            case "hover" -> hover(Integer.parseInt(rest.trim()));
+            case "hover" -> hover(rest);
             case "key" -> typeKey(rest.trim());
             case "state" -> state();
             case "boardclick" -> boardClick(rest.trim());
@@ -112,7 +112,13 @@ public class Driver {
 
     private static void collect(Container container, List<Component> out) {
         for (Component c : container.getComponents()) {
-            if (c instanceof AbstractButton || c.getMouseListeners().length > 0) {
+            // Motion listeners count too: a component can be hover-only, with no click
+            // behaviour at all. PanelEnemy (the wave preview, which shows an enemy's name and
+            // description on hover) registers only a MouseMotionListener and was invisible to
+            // this listing until it was included here.
+            if (c instanceof AbstractButton
+                    || c.getMouseListeners().length > 0
+                    || c.getMouseMotionListeners().length > 0) {
                 out.add(c);
             }
             if (c instanceof Container inner) {
@@ -182,7 +188,9 @@ public class Driver {
     // a tower's pre-purchase stats on toolbar hover (PanelTowerSelector.mouseOver), which
     // click() cannot reach: a JToggleButton is an AbstractButton, so click() takes the
     // doClick() path and never generates a mouse-entered event at all.
-    private static void hover(int index) throws AWTException, InterruptedException {
+    private static void hover(String args) throws AWTException, InterruptedException {
+        String[] parts = args.trim().split("\s+");
+        int index = Integer.parseInt(parts[0]);
         List<Component> clickables = findClickables();
         if (index < 0 || index >= clickables.size()) {
             System.out.println("ERROR: index " + index + " out of range (0.." + (clickables.size() - 1) + ")");
@@ -190,8 +198,12 @@ public class Driver {
         }
         Component target = clickables.get(index);
         Point loc = target.getLocationOnScreen();
-        int cx = loc.x + target.getWidth() / 2;
-        int cy = loc.y + target.getHeight() / 2;
+        // Default to the centre; an optional dx/dy targets a point inside the component instead.
+        // Some panels map the pointer's x to a specific item - PanelEnemy divides x by the mob
+        // scale to decide which preview enemy the pointer is over - so a centre-only hover can
+        // land past every item and fire nothing.
+        int cx = loc.x + (parts.length > 1 ? Integer.parseInt(parts[1]) : target.getWidth() / 2);
+        int cy = loc.y + (parts.length > 2 ? Integer.parseInt(parts[2]) : target.getHeight() / 2);
         // Away first: moving from wherever the pointer already sits onto the target is what
         // generates mouseEntered. If it happens to be resting on the target already, a move to
         // the same point produces no event and the hover silently does nothing.
