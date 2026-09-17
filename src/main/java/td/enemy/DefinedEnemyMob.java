@@ -50,7 +50,8 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
      */
     private static SpawnParameters withDividedHealth(SpawnParameters spawnParameters, float healthDivisor) {
         return new SpawnParameters(spawnParameters.delayTicks(), Math.round(spawnParameters.health() / healthDivisor),
-                spawnParameters.price(), spawnParameters.sizeMultiplier(), spawnParameters.speedMultiplier());
+                spawnParameters.price(), spawnParameters.sizeMultiplier(), spawnParameters.speedMultiplier(),
+                spawnParameters.lateralOffset());
     }
 
     private static float bodyScaleFor(BodyArchetype archetype, int scale, int level) {

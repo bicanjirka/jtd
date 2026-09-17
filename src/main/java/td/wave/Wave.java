@@ -5,6 +5,7 @@ import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
 import td.enemy.SpawnParameters;
 import td.util.GameWorld;
+import td.util.RandomSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,33 +28,39 @@ import java.util.Set;
  */
 public class Wave {
 
+    // The footprint a shaped slot's lateral offset scatters within is the path's own corridor
+    // width, pulled in by this fraction so a member's body doesn't itself hang over the edge.
+    private static final double PATH_WIDTH_MARGIN_FRACTION = 0.7;
+
     private final GameWorld gameWorld;
     private final int baseHealth;
     private final int basePrice;
     private final int level;
     private final WaveContent content;
+    private final long scatterSeed;
 
-    public Wave(GameWorld gameWorld, int baseHealth, int basePrice, int level, WaveContent content) {
+    public Wave(GameWorld gameWorld, int baseHealth, int basePrice, int level, WaveContent content, long scatterSeed) {
         this.gameWorld = gameWorld;
         this.baseHealth = baseHealth;
         this.basePrice = basePrice;
         this.level = level;
         this.content = content;
+        this.scatterSeed = scatterSeed;
     }
 
-    private static List<EnemyMob> spawnEnemies(GameWorld gameWorld, WaveContent content, int baseHealth, int basePrice, int level) {
+    private static List<EnemyMob> spawnEnemies(GameWorld gameWorld, WaveContent content, int baseHealth, int basePrice, int level, long scatterSeed) {
         List<EnemyMob> enemies = new ArrayList<>();
         int delay = 0;
         for (WaveSlot slot : content.spawnSequence()) {
-            enemies.addAll(spawnSlot(slot, gameWorld, delay, baseHealth, basePrice, level));
+            enemies.addAll(spawnSlot(slot, gameWorld, delay, baseHealth, basePrice, level, scatterSeed));
             delay++;
         }
         return List.copyOf(enemies);
     }
 
-    private static List<EnemyMob> spawnSlot(WaveSlot slot, GameWorld gameWorld, int delay, int health, int price, int level) {
+    private static List<EnemyMob> spawnSlot(WaveSlot slot, GameWorld gameWorld, int delay, int health, int price, int level, long scatterSeed) {
         return switch (slot) {
-            case EnemySlot s -> spawnShaped(s, gameWorld, delay, health, price, level);
+            case EnemySlot s -> spawnShaped(s, gameWorld, delay, health, price, level, scatterSeed);
             case EmptySlot ignored -> List.of();
         };
     }
@@ -65,19 +72,25 @@ public class Wave {
      * {@link SpawnParameters}, which folds them into the mob itself. A member's own slot
      * position is this slot's index plus its member index scaled by
      * {@link SpawnShape#delaySpacingSlots()} - zero for every shape but Column and Drip, so
-     * every other shape's members still share the slot's own position. Lateral offset (Swarm/
-     * Line/Flank) is a later mechanism layered on top of this one.
+     * every other shape's members still share the slot's own position. A member's lateral
+     * offset comes from {@link SpawnShape#spread()}, drawn from a {@link RandomSource} seeded
+     * from this wave's own {@code scatterSeed} and the slot's index - deliberately not
+     * {@code gameWorld.random()}, which tower targeting also draws from, so a formation's shape
+     * would otherwise depend on how many towers happened to fire first.
      */
-    private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int delay, int baseHealth, int basePrice, int level) {
+    private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int delay, int baseHealth, int basePrice, int level, long scatterSeed) {
         EnemyDefinition definition = enemySlot.definition();
         SpawnShape shape = enemySlot.shape();
         int health = Math.max(1, Math.round(baseHealth * shape.healthMultiplier()));
         int[] bountyShares = shape.bountyShares(basePrice);
+        double maxOffset = gameWorld.getBoard().scale() * PathCoverage.PATH_WIDTH_CELLS / 2.0 * PATH_WIDTH_MARGIN_FRACTION;
+        RandomSource scatter = RandomSource.seeded(scatterSeed * 31 + delay);
         List<EnemyMob> members = new ArrayList<>(shape.members());
         for (int i = 0; i < shape.members(); i++) {
             double slotPosition = delay + i * shape.delaySpacingSlots();
+            double lateralOffset = shape.spread().offsetFor(i, shape.members(), maxOffset, scatter);
             SpawnParameters spawnParameters = SpawnParameters.of(slotPosition, definition.baseSpeed(), health,
-                    bountyShares[i], shape.sizeMultiplier(), shape.speedMultiplier());
+                    bountyShares[i], shape.sizeMultiplier(), shape.speedMultiplier(), lateralOffset);
             members.add(new DefinedEnemyMob(definition, gameWorld, spawnParameters, level));
         }
         return List.copyOf(members);
@@ -104,7 +117,7 @@ public class Wave {
      * describe a wave that has not run yet.
      */
     public EnemyMob[] spawn() {
-        return spawnEnemies(this.gameWorld, this.content, this.baseHealth, this.basePrice, this.level)
+        return spawnEnemies(this.gameWorld, this.content, this.baseHealth, this.basePrice, this.level, this.scatterSeed)
                 .toArray(new EnemyMob[0]);
     }
 

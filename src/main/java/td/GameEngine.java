@@ -164,9 +164,15 @@ public class GameEngine {
         // through the world. A Wave holds only its content until it starts (see Wave.spawn),
         // so nothing here reads the level state this method is in the middle of replacing.
         List<Wave> loaded = new ArrayList<>();
-        for (WaveDefinition wd : level.waves()) {
+        List<WaveDefinition> waveDefinitions = level.waves();
+        for (int waveIndex = 0; waveIndex < waveDefinitions.size(); waveIndex++) {
+            WaveDefinition wd = waveDefinitions.get(waveIndex);
+            // Derived from the level's own name and this wave's index, not GameWorld.random() -
+            // the same level and wave must scatter the same way on every run and every machine,
+            // and String.hashCode() is specified by the JLS to be stable across JVMs for that.
+            long scatterSeed = (long) level.name().hashCode() * 31L + waveIndex;
             loaded.add(new Wave(this.gameWorld, wd.hp(), wd.price(), wd.level(),
-                    WaveScript.parse(wd.enemies(), catalog)));
+                    WaveScript.parse(wd.enemies(), catalog), scatterSeed));
         }
 
         // One write. Everything above filled a local; none of it is reachable by the game-loop

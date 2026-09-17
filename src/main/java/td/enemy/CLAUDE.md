@@ -204,6 +204,17 @@ slot position that produced them, since a fractional per-member delay (`SpawnSha
 spacing) can round down to zero ticks from a nonzero position, and `doTick`'s inactive branch
 only ever counts down from a positive `delay`.
 
+**A lateral offset is a fixed perpendicular displacement, applied and clamped in one place.**
+`AbstractEnemyMob.updatePosition()` is still the only writer of x/y - a shaped spawn
+(`SpawnShape`'s Swarm/Line/Flank) does not move differently, it just adds
+`spawnParameters.lateralOffset()` pixels along `pathPose.facingRadians() + PI/2` to the
+centreline position `poseAt` already reports, then clamps both axes to the board. The clamp is
+what stops a formation near the board edge from silently walking off the `validTarget` bounds
+check while still visibly on its way to the exit - without it, an off-path member would leak a
+life without ever being targetable. A degenerate (empty) path has no tangent to be perpendicular
+to, so the offset does not apply there; a stationary mob just holds at its one available point,
+exactly as before.
+
 ## Adding a new enemy
 
 Two different things can mean "a new enemy," with very different cost:
