@@ -76,16 +76,16 @@ a different loadout or level, since v1 has no config format for either.
 
 | Tower | Price | Behaviour |
 |-------|-------|-----------|
-| Triangle | 10 | Single target, hits whichever enemy in range is furthest along the path |
-| Circle | 15 | Picks a random target in range and deals splash damage falling off with distance |
-| Sunshine | 20 | Long range; a beam sweeps around it once every 2s, hitting everything it passes |
-| Stardust | 25 | Short range; damages everything in range at once, ghosts included |
+| Sniper | 10 | Single target, hits whichever enemy in range is furthest along the path |
+| Splash | 15 | Picks a random target in range and deals splash damage falling off with distance |
+| Sonar | 20 | Long range; a beam sweeps around it once every 2s, hitting everything it passes |
+| Pulse | 25 | Short range; damages everything in range at once, ghosts included |
 | Aura | 20 | Passive — boosts the damage and range of nearby towers; several stack |
 | Mortar | 30 | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path; splashes physical damage and slows everything the blast reaches |
 | Seeker | 35 | Fires a homing missile that re-aims each tick and retargets if its target dies; deals magic damage and freezes whichever mob it actually hits |
 | Cinder | 28 | No cooldown; a slowly-reorienting flame cone burns everything currently caught in it, ghosts included |
 
-Every attack tower — Triangle, Circle, Sunshine, Stardust, Mortar, Seeker and Cinder — also
+Every attack tower — Sniper, Splash, Sonar, Pulse, Mortar, Seeker and Cinder — also
 offers two permanent, mutually-exclusive upgrade paths, shown as buttons in its info panel
 once selected. A path is gated by its own condition (an affordable price alone, a cluster of
 towers built nearby, the tower having dealt enough damage, or having racked up enough kills)
