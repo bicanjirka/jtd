@@ -1,5 +1,7 @@
 package td.tower;
 
+import td.tower.buff.TowerBuff;
+
 import td.tower.upgrade.UpgradePath;
 
 import java.util.List;
@@ -46,9 +48,24 @@ public interface Tower {
     int getBoardY();
 
     /** Attaches a nearby Aura tower's buff, recomputing this tower's damage and range. */
-    void registerTower(Tower t);
+    /**
+     * The buff this tower contributes to {@code other}, or {@link TowerBuff#none()} if it
+     * contributes nothing - which is every tower that is not an Aura tower, and an Aura tower
+     * that {@code other} is out of range of or that is itself.
+     * <p>
+     * Asking each tower what it gives is what removed the bidirectional index the buff system
+     * used to keep: a {@code TowerAura} held its clients, every tower held its auras, and four
+     * methods plus a listener plus a rescan kept the two sides in agreement. The buff a tower
+     * receives is a pure function of where the towers are, so it is computed, not stored.
+     */
+    TowerBuff buffFor(Tower other);
 
-    void unregisterTower(Tower t);
+    /**
+     * Recomputes this tower's buffed damage/range/fire rate from the towers currently on the
+     * board and its own chosen upgrade path. Called by {@code TowerRoster} whenever the set of
+     * towers changes, and by {@code chooseUpgradePath}.
+     */
+    void recalculateStats();
 
     /**
      * Detaches this tower from everything it is wired into - buff partners, and any listener

@@ -7,7 +7,6 @@ import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,7 +33,6 @@ public abstract class AbstractTower implements Tower {
     protected static final float TICKS_PER_SECOND = 20f;
 
     protected final GameWorld context;
-    protected final List<TowerAura> upgTowers;
     protected final int boardX;
     protected final int boardY;
     protected final int centerX;
@@ -72,7 +70,6 @@ public abstract class AbstractTower implements Tower {
         this.damageBase = damage;
         this.rangeBase = range;
         this.coolDownMax = coolDownMax;
-        this.upgTowers = new ArrayList<>();
         this.context = context;
         int scale = context.getBoard().scale();
         this.boardX = cellX * scale;
@@ -130,19 +127,25 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * Recomputes damage, range and fire rate from the current set of nearby Aura towers
+     * Recomputes damage, range and fire rate from the Aura towers currently on the board
      * <em>and</em> this tower's own chosen upgrade path (if any), folded through
      * {@link TowerBuff}'s additive algebra so bonuses of unequal strength stack correctly -
-     * a specialization composes with an Aura tower's buff for free. Must be called on every
-     * change to either: {@link #registerTower}/{@link #unregisterTower} already do for the
-     * former, {@link #chooseUpgradePath} for the latter.
+     * a specialization composes with an Aura tower's buff for free.
+     * <p>
+     * The external buff is <em>computed</em> from the roster on each call rather than read
+     * from a list this tower maintains. Asking every tower what it contributes
+     * ({@link Tower#buffFor}) costs one pass over a board of tens of towers on a user action,
+     * and in exchange there is no index to keep in agreement with anything: no client set on
+     * the Aura side, no aura list on this side, and no way for the two to drift apart.
+     * {@code TowerRoster} calls this on every tower when the set changes;
+     * {@link #chooseUpgradePath} calls it when the path side changes.
      * <p>
      * Publishes the result as one new {@link TowerStats}, so tick code reading concurrently
      * sees either the whole old set or the whole new one.
      */
-    protected void recalculateStats() {
-        TowerBuff externalBuff = this.upgTowers.stream()
-                .map(TowerAura::buff)
+    public void recalculateStats() {
+        TowerBuff externalBuff = this.context.towers().all().stream()
+                .map(t -> t.buffFor(this))
                 .reduce(TowerBuff.none(), TowerBuff::combine);
         TowerBuff pathBuff = this.chosenPath == null ? TowerBuff.none() : this.chosenPath.statBonus();
         TowerBuff totalBuff = externalBuff.combine(pathBuff);
@@ -298,41 +301,18 @@ public abstract class AbstractTower implements Tower {
         return s;
     }
 
-    public void registerTower(Tower t) {
-        if (t != this) {
-            switch (t.getType()) {
-                case aura -> {
-                    if (this.type != TowerFactory.Type.aura && !this.upgTowers.contains(t)) {
-                        TowerAura tupg = (TowerAura) t;
-                        this.upgTowers.add(tupg);
-                        tupg.addClient(this);
-                        this.recalculateStats();
-                    }
-                }
-                default -> {
-                }
-            }
-        }
+    /** Contributes nothing - only {@code TowerAura} overrides this. */
+    public TowerBuff buffFor(Tower other) {
+        return TowerBuff.none();
     }
 
-    public void unregisterTower(Tower t) {
-        switch (t.getType()) {
-            case aura -> {
-                TowerAura tupg = (TowerAura) t;
-                this.upgTowers.remove(t);
-                tupg.removeClient(this);
-                this.recalculateStats();
-            }
-            default -> {
-            }
-        }
-    }
-
+    /**
+     * Marks this tower gone, so a damage-over-time effect it applied stops crediting it once
+     * the player has been refunded for it (see {@link #dealDamage}). There is no buff
+     * bookkeeping left to undo here: the towers this one was buffing recompute from the roster
+     * the moment {@code TowerRoster} removes it.
+     */
     public void doCleanup() {
         this.removed = true;
-        for (int i = this.upgTowers.size() - 1; i >= 0; i--) {
-            TowerAura tupg = this.upgTowers.remove(i);
-            tupg.removeClient(this);
-        }
     }
 }
