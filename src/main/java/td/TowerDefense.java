@@ -57,7 +57,7 @@ import java.util.Properties;
  * <p>
  * Two of the callbacks implemented here ({@link #enemyDied}, {@link #economyChanged}) are
  * reached from the {@code game-loop} thread, not the EDT. Swing mutations in those must be
- * deferred through {@code SwingUtilities.invokeLater}; see CLAUDE.md's Threading model.
+ * deferred through {@code SwingUtilities.invokeLater}; see CLAUDE.md §3 (Threading).
  * <p>
  * This class is a shrinking legacy shell: new gameplay rules belong in {@code GameEngine} or
  * the domain packages, where they can be tested without a display.
@@ -79,7 +79,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      * rather than hand-matched per tower, so a new tower type needs only a key appended here.
      */
     private static final char[] TOWER_PLACEMENT_KEYS = {'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o'};
-    /** Debug keybinding: how many credits `c` grants in one press - see FEATURE-playtesting-and-balance-tooling.md. */
+    /** Debug keybinding: how many credits `c` grants in one press - see docs/features/FEATURE-playtesting-and-balance-tooling.md. */
     private static final int DEBUG_CREDIT_GRANT = 1000;
 
     private final LevelCatalog levelCatalog = new BuiltInLevelCatalog();

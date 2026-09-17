@@ -17,7 +17,7 @@ import java.util.List;
  * <p>
  * {@code WARDEN_1}/{@code WARDEN_EGG_1}/{@code WARDEN_2}/{@code WARDEN_EGG_2}/{@code WARDEN_3}/
  * {@code WARDEN_EGG_3} are the boss encounter's finite, six-definition, strictly linear spawn
- * chain (see {@code FEATURE-enemy-traits-and-effects.md}'s V1 Scope): each Warden's on-death
+ * chain (see {@code docs/features/FEATURE-enemy-traits-and-effects.md}'s V1 Scope): each Warden's on-death
  * ability spawns its own stage's egg; each egg's {@code Once} ability hatches into the next
  * (weaker) Warden stage if left alive for its full delay, via {@code consumesSelf} - a
  * transformation, not a kill. The final egg carries no ability at all, so the encounter is

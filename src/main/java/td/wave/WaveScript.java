@@ -16,7 +16,7 @@ import java.util.List;
  * is looked up the same way. {@code e} is the one reserved token - the spacer - recognized
  * before any catalog lookup. A token this can't recognize as the spacer, a registered id, or an
  * integer repeat count is logged at {@code WARN} and treated as a multiplier of 1 rather than
- * failing the parse - see CLAUDE.md's Gotchas.
+ * failing the parse - see CLAUDE.md §9.
  */
 public final class WaveScript {
 

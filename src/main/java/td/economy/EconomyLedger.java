@@ -10,7 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Owns the player's credits/score/lives as one {@link EconomyState} and the
  * synchronized-compute/notify-outside-lock discipline required because it is written from
  * both the EDT (buying/selling a tower) and the {@code game-loop} thread (a kill or a leak) -
- * see CLAUDE.md's Threading model. Every mutation fires exactly one {@link EconomyListener}
+ * see CLAUDE.md §3 (Threading). Every mutation fires exactly one {@link EconomyListener}
  * notification, and never while holding the lock, since a listener re-enters and touches
  * Swing.
  */

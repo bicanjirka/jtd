@@ -49,7 +49,7 @@ debug keybinding spawn every enemy type a level's catalog knows about, one press
 the only catalog any level gets - `GameEngine.loadLevel` builds one fresh per level load and
 every wave resolves its tokens against it, but `LevelDefinition` has no field yet for a
 level's own registrations. The Warden's six-definition chain ships as *global* built-in
-content specifically to avoid needing that field yet (see `FEATURE-enemy-traits-and-effects.md`) -
+content specifically to avoid needing that field yet (see `docs/features/FEATURE-enemy-traits-and-effects.md`) -
 the wave mini-language and `EnemyCatalog` are already fully able to resolve a custom id the
 moment something registers one (see `WaveScriptTest`'s
 `aPerLevelCustomIdResolvesTheSameWayABuiltInDoes`); no *level* does yet.
@@ -100,7 +100,7 @@ class of bug end-to-end, not just each trigger kind in isolation.
 `doTick` checks `ticksSinceDeath(gameTime) == 0` - *not* a "was this mob already dead" flag -
 to decide whether this is the exact tick `deathTick` was captured, because a tower can kill a
 mob during the tower phase of a game tick, *after* that mob's own `doTick` already ran for that
-tick (see the root `CLAUDE.md`'s Threading model on tick ordering) - so "`dead` just became
+tick (see the root `CLAUDE.md` §3 (Threading) on tick ordering) - so "`dead` just became
 true" and "`deathTick` was just captured" are not necessarily the same tick, and only the
 latter must gate an `OnDeathTrigger` firing exactly once. Getting this wrong lets a dead mob's
 *other* abilities (a `OnceTrigger`, say) keep evaluating throughout its fade window and
@@ -219,7 +219,7 @@ compiler-enforced checklist, same spirit as before:
    (`colorFor`, and the fade switch in `paintEnemyFade`) — **not** compiler-enforced (those
    switches fall back to a runtime exception / silently skip rather than fail to compile), so
    do this in the same change as step 1-2, not "later."
-4. Document the new letter in the root `CLAUDE.md`'s wave mini-language table and in
+4. Document the new letter in the root `CLAUDE.md` §9 and in
    `README.md`'s enemy table.
 
 **Adding a genuinely new `Trait` or `Ability`** is ordinary Java: implement the interface (see

@@ -4,6 +4,198 @@ Extracted from inline `TODO` comments (and one unmarked-but-real gap) found thro
 documentation cleanup pass. Each item below replaces the original comment; the source no longer carries these notes, so
 this file is the single place to look for outstanding design/feature gaps.
 
+## Architecture and correctness
+
+Findings from the architecture audit of 2026-09-17, highest-severity first. The threading
+group is the next scheduled change.
+
+### The render path reads live domain state across threads
+
+`BoardRenderer.buildFrame` runs on the Event Dispatch Thread and reads `AbstractEnemyMob`'s
+`x`, `y`, `prevX`, `prevY`, `health` and `dead` — plain, non-volatile fields written on the
+`game-loop` thread. `PanelTowerInfo.refreshSelected` does the same for `AbstractTower`'s
+`damageCurrent`, `damageDealt` and `killCount`. The `CopyOnWriteArrayList` rosters publish
+which objects exist, not the state inside them, so these reads have no happens-before edge,
+and non-volatile 64-bit reads (`double x, y`) may tear per JLS 17.7.
+
+- **Where:** `td.ui.BoardRenderer.buildFrame`, `td.TowerDefense.paintBoard`,
+  `td.ui.PanelTowerInfo.refreshSelected`, `td.enemy.AbstractEnemyMob`, `td.tower.AbstractTower`.
+- **Approach:** build the `RenderFrame` on the `game-loop` thread at the end of each render
+  interval, publish it through one `volatile` field, and have `paintBoard` only paint what it
+  reads there. `RenderFrame` is already the immutable snapshot type this needs. Add a small
+  immutable `TowerStats` published the same way for the info panel. Do not solve this by
+  marking fields `volatile` — that fixes tearing but leaves a half-updated mob (this tick's
+  `x` with last tick's `y`) legal.
+
+### `GameLoop.stop()` does not join its thread
+
+`stop()` sets `running = false` and returns immediately, while the loop thread may still be
+inside `onTick.run()`. `TowerDefense.startSelectedLevel` then calls `engine.loadLevel` on the
+EDT, which clears the rosters and replaces the cell grid, board geometry and path underneath
+that in-flight tick. The resulting exception lands in `GameLoop`'s per-tick catch and is
+logged as a one-off rather than surfacing as the race it is.
+
+- **Where:** `td.GameLoop.stop()`, `td.TowerDefense.startSelectedLevel`/`returnToMenu`.
+- **Approach:** have `stop()` take the `volatile Thread` reference it already keeps and
+  `join()` it with a bounded timeout, logging if the timeout expires. `loadLevel`'s
+  idempotency is a separate property and does not cover this.
+
+### `EconomyLedger.startEconomy` writes outside the lock
+
+`apply` and `doPay` correctly compute inside `synchronized (this)`, but `startEconomy` assigns
+`this.economy` with no lock held. A concurrent `apply` on the `game-loop` thread can lose
+either the level's starting economy or the delta.
+
+- **Where:** `td.economy.EconomyLedger.startEconomy`.
+- **Approach:** move the assignment inside the existing `synchronized (this)` pattern, keeping
+  the notification outside it as the other two mutators already do.
+
+### `GameEngine`'s cross-thread fields are unguarded
+
+`startWave` is written on the EDT by `requestNextWave()` and read on the `game-loop` thread by
+`doTick`; `waveReady`, `wave`, `waves` and `cellGrid` also cross the two threads. None is
+`volatile`, so none of the writes is guaranteed to be observed.
+
+- **Where:** `td.GameEngine` fields.
+- **Approach:** make the genuinely cross-thread fields `volatile`. Note that the threading
+  section of `CLAUDE.md` never mentioned `GameEngine` before this audit; it now covers it.
+
+### `EnemyRoster.count` is not atomic
+
+`remove()` does `count--` and then calls `host.enemyDied(count)`, which is what gates the
+"wave cleared" and "you won" transitions, while `clear()` and `setCount()` are called from the
+EDT. A lost decrement means a wave never reports itself clear.
+
+- **Where:** `td.enemy.EnemyRoster`.
+- **Approach:** `AtomicInteger`, notifying with the value the decrement returned.
+
+### `WaveScript` accepts an unrecognized token instead of failing
+
+A token that is neither the `e` spacer, a registered enemy id, nor an integer is logged at
+`WARN` and defaulted to a repeat count of 1, silently producing a wave the author did not
+write. This is also why a passing test run prints a stack trace, which trains readers to
+ignore the one signal that would surface a real authoring error.
+
+- **Where:** `td.wave.WaveScript.parse`, `WaveScriptTest`, `README.md`'s logging note.
+- **Approach:** throw `td.util.GameStartupException`, which already exists for exactly this
+  class of content error and is already used by `EnemyCatalog`. Change the test to
+  `assertThatThrownBy` and delete the "a green run still prints a stack trace" notes.
+
+### `Math.random()` makes balance runs irreproducible, and `RandomSelector` is unused
+
+`td.BalanceHarness` exists to produce comparable balance numbers, but `TowerTwo.doTick` and
+`RandomSelector` both call `Math.random()` — a global, unseedable generator — so two runs of
+the same loadout are not comparable. Separately, `TowerTwo` picks its target with an inline
+`Math.random()` expression rather than composing `RandomSelector`, which therefore has no
+production caller at all despite being documented in `td/tower/CLAUDE.md` as one of the three
+selectors a tower composes.
+
+- **Where:** `td.tower.TowerTwo.doTick`, `td.tower.targeting.RandomSelector`, `td.BalanceHarness`.
+- **Approach:** introduce a one-method `RandomSource`, inject it, default it to `Math.random()`
+  in the game and seed it in the harness. Have `TowerTwo` compose `RandomSelector` instead of
+  inlining the pick.
+
+### Engine code returns `null` to model absence
+
+`GameEngine.mouseClicked` returns `null` when nothing was selected and
+`debugSpawnNextCatalogEnemy` returns `null` when no level is loaded, contradicting the
+model-absence-as-a-value rule. The `td.ui` frame builders' use of `null` for "no draw command"
+is a deliberate scoped exception, documented as such in `CLAUDE.md`.
+
+- **Where:** `td.GameEngine.mouseClicked`, `td.GameEngine.debugSpawnNextCatalogEnemy`.
+- **Approach:** return `Optional`, then add a `no-null-return-in-engine` check to
+  `scripts/VerifyRules.java`.
+
+### `GameEngine.getCellGrid()` hands out the live array
+
+The only piece of engine state exposed raw. `BoardRenderer` has to null-check it because "no
+level loaded" is itself modelled as `null`.
+
+- **Where:** `td.GameEngine.getCellGrid`, `td.ui.BoardRenderer.buildFrame`, `td.BalanceHarness`.
+- **Approach:** expose the read-only queries callers actually need (cell at x/y, board
+  dimensions) rather than the array, and model "no level loaded" explicitly.
+
+### `Main` catches `Throwable`; `PanelTowerInfo` catches `NullPointerException`
+
+`Main.main` turns an `OutOfMemoryError` or `StackOverflowError` into a log line and exit 1.
+`PanelTowerInfo.setText` wraps `JTextPane.setText` in a `catch (NullPointerException)` that
+either masks a real initialization-order defect or is dead code, and it runs at ~60fps.
+
+- **Where:** `td.Main.main`, `td.ui.PanelTowerInfo.setText`.
+- **Approach:** catch `Exception` (or `GameStartupException` specifically, which is what the
+  boundary was built for). Remove the NPE catch and fix, or confirm dead, whatever it masks.
+
+### `gameLost()` is not idempotent
+
+`TowerDefense.economyChanged` calls `gameLost()` whenever `state.isGameOver()`, so every
+economy change after lives reach zero re-logs the loss and re-posts the overlay.
+
+- **Where:** `td.TowerDefense.economyChanged`.
+- **Approach:** guard on `!this.gameStopped`.
+
+### Lowercase type and constant names
+
+`TowerFactory.type` and `EnemyMob.type` are lowercase nested enums; `TowerAura.price`,
+`damage` and `range` are lowercase `public static final` sitting beside a correctly-cased
+`DEFAULT_POWER` in the same class.
+
+- **Where:** `td.tower.TowerFactory`, `td.enemy.EnemyMob`, `td.tower.TowerAura`, and callers.
+- **Approach:** rename to `UpperCamelCase` types and `UPPER_SNAKE_CASE` constants, per the
+  naming rule now stated in `CLAUDE.md`.
+
+### `health * 100` is an undocumented scaling
+
+`AbstractEnemyMob.doInit` multiplies every incoming health value by 100 with no explanation,
+and `getHealth()` returns a `long` while the field it reads is an `int`.
+
+- **Where:** `td.enemy.AbstractEnemyMob.doInit`, `getHealth`.
+- **Approach:** name the factor as a constant with one line saying what unit it buys, and
+  reconcile the accessor's return type with the field's.
+
+### `AbstractTower` exposes fifteen `protected` mutable fields
+
+`context`, `boardX/Y`, `centerX/Y`, `rangeReal`, `rangeReal2`, `damageCurrent` and others are
+`protected` and mutable across eight `final` leaves. This is why `td/tower/CLAUDE.md` needs
+three paragraphs stating that `doInit` must be the last call in a leaf constructor: the
+ordering constraint cannot be expressed in code as the class is shaped.
+
+- **Where:** `td.tower.AbstractTower`, the eight `Tower*` leaves, `td.tower.TowerFactory`.
+- **Approach:** make construction-derived fields `private final`, set through the constructor
+  rather than a post-construction `doInit`. The ordering hazard then becomes a compile error
+  and its documentation can be deleted.
+
+### `GameWorld` is a 42-method facade over six collaborators
+
+Splitting the old `Context` god object into `BoardGeometry`, `EconomyLedger`, `EnemyRoster`,
+`TowerRoster`, `ProjectileRoster` and `WaveAnnouncer` made each piece testable, but routing
+all of them back through one wide facade relocated the coupling rather than removing it.
+`Tower`, `EnemyMob` and `Wave` each take the whole `GameWorld` while needing three or four
+capabilities. `GameWorld` also owns three mutable fields of its own (`board`, `path`,
+`enemyCatalog`), so it is not the pure composition root its javadoc once claimed.
+
+- **Where:** `td.util.GameWorld` and every domain constructor taking it.
+- **Approach:** give the domain constructors the narrow interfaces they actually use, the way
+  `td.tower.targeting` and `BoardRenderer` already take `EnemyRegistry` rather than the whole
+  world. Deliberately deferred — it touches every domain constructor and most tests.
+
+### `TowerAura.scanTowers` is quadratic
+
+`clients.contains(t)` inside the roster loop, re-run on every `towerBuild` notification.
+Irrelevant at twenty towers; worth knowing before a level ships with two hundred.
+
+- **Where:** `td.tower.TowerAura.scanTowers`.
+- **Approach:** back `clients` with a `Set`, or check membership on the tower's side.
+
+### Per-package `CLAUDE.md` files predate the constraints-only standard
+
+The root `CLAUDE.md` was rewritten to hold constraints only, with rationale moved to
+`docs/ARCHITECTURE.md`. The five per-package files (about 60KB total, of which `td/enemy` is
+17KB) still mix invariants with narrative and rationale the same way the root file did.
+
+- **Where:** `src/main/java/td/{economy,enemy,tower,ui,wave}/CLAUDE.md`.
+- **Approach:** same treatment — keep the invariants and the per-type checklists, move the
+  "why" and the history into `docs/ARCHITECTURE.md`.
+
 ## Gameplay / balance
 
 ### Zero-price wave penalty is a placeholder
@@ -140,7 +332,7 @@ and condition thresholds are equally unverified guesses.
 ### Acid is not implemented as a second damage-over-time effect
 
 The original damage-types request named acid alongside burn as a second damage-over-time effect; v1 shipped only
-slow, burn and freeze (see `FEATURE-damage-types-and-projectiles.md`'s Decisions and V1 Scope), deferring acid rather
+slow, burn and freeze (see `docs/features/FEATURE-damage-types-and-projectiles.md`'s Decisions and V1 Scope), deferring acid rather
 than dropping it.
 
 - **Where:** `td.effect` (`EffectKind`, `Effect`) has no `ACID` case; nothing produces one.
@@ -217,7 +409,7 @@ tell at a glance that this is the boss, not just "a big Square").
 
 `EnemyFrameBuilder`'s marker row caps at 3 visible status-effect icons; a 4th+ simultaneous
 effect collapses into one generic `Palette.STATUS_MARKER_OVERFLOW` marker rather than the "+N"
-badge `FEATURE-enemy-traits-and-effects.md`'s V1 Scope originally called for. The render frame
+badge `docs/features/FEATURE-enemy-traits-and-effects.md`'s V1 Scope originally called for. The render frame
 model has no text-drawing primitive today (every draw command is a coloured `Shape`), so
 showing an actual number would be new render infrastructure, not a tweak to this one marker.
 

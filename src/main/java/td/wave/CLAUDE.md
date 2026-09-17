@@ -70,7 +70,7 @@ Parsing and instantiation are deliberately separate:
   token (the spacer), recognized before any catalog lookup. A token this can't recognize as
   the spacer, a registered id, or an integer repeat count is logged at `WARN` and treated as
   a repeat count of 1 rather than failing the parse — this is what makes a green test run
-  print one stack trace (see the root `CLAUDE.md`'s Gotchas).
+  print one stack trace (see the root `CLAUDE.md` §9).
 - `WaveContent` is the parsed result: one `WaveSlot` per spawn slot, in order, repeat counts
   already flattened. `WaveSlot` is a closed pair - `EnemySlot(EnemyDefinition)` for a real
   enemy, `EmptySlot()` for the spacer, which keeps its slot (it counts toward spawn *timing*)
@@ -79,7 +79,7 @@ Parsing and instantiation are deliberately separate:
   slot (a `DefinedEnemyMob` for an `EnemySlot`, an `EnemyMobEmpty` for an `EmptySlot`), with
   delay equal to the slot's index.
 
-The token grammar itself is documented in the root `CLAUDE.md`. `GameEngine.loadLevel`
+The token grammar itself is documented in the root `CLAUDE.md` §9. `GameEngine.loadLevel`
 builds one `EnemyCatalog.builtIn()` per level load and passes it to every wave's `parse`
 call - a level does not yet register its own custom/cloned definitions into it (that's a
 later phase); today `builtIn()` is the only catalog any level actually gets.
@@ -90,4 +90,4 @@ later phase); today `builtIn()` is the only catalog any level actually gets.
 the economy and the rosters despite once living bundled with them in `GameWorld`.
 `TowerThree` is the only subscriber, dropping the hit markers its scan left on the previous
 wave's enemies. Its listener list is `CopyOnWriteArrayList` because it
-is fired from the `game-loop` thread — see the root `CLAUDE.md`'s Threading model.
+is fired from the `game-loop` thread — see the root `CLAUDE.md` §3 (Threading).

@@ -24,6 +24,7 @@ The jar is shaded, so it bundles its SLF4J/Logback dependencies and needs no ext
 Other useful commands:
 
 ```bash
+mvn verify        # rules check + test suite — the standing check before a commit
 mvn test          # run the test suite
 mvn -q compile    # fast syntax/type check
 
@@ -57,7 +58,7 @@ yourself when you are ready — waves do not auto-advance.
 Mouse: move to preview placement, click to place or to select a placed tower.
 
 The `n`/`x`/`c` debug keys are always available, not gated behind a build flag — they exist to
-make manual playtesting cheap (see `FEATURE-playtesting-and-balance-tooling.md`). There's also
+make manual playtesting cheap (see `docs/features/FEATURE-playtesting-and-balance-tooling.md`). There's also
 `td.BalanceHarness`, a headless batch simulation: it drives a level to completion with a fixed
 tower loadout and no human input, then prints lives lost, ticks-to-clear per wave, and each
 tower's kills/damage dealt.
@@ -147,9 +148,13 @@ driven and asserted from tests with no display.
 
 ## Documentation
 
-- **`CLAUDE.md`** — the full architecture guide: the headless/Swing boundary, the threading
-  model, code style, test conventions and the wave mini-language. Read this before making
-  non-trivial changes.
+- **`CLAUDE.md`** — the constraints: the headless/Swing boundary, the threading rule, code
+  style, conventions, test conventions and the wave mini-language. Read this before making
+  non-trivial changes. It deliberately holds rules only, no rationale.
+- **`docs/ARCHITECTURE.md`** — the *why* behind those constraints: how the render pipeline is
+  layered, why the art is vector, how levels load and unload, what the threading rule is
+  protecting against, and the design history.
+- **`docs/features/`** — design documents for features that have shipped, kept as a record.
 - **`src/main/java/td/<package>/CLAUDE.md`** — per-package notes for the packages whose
   internals have invariants worth stating up front.
 - **`TODO.md`** — the single source of truth for known gaps and future work. Inline `TODO`

@@ -22,7 +22,7 @@ upgrade path (if any), and the shared `dealDamage` accounting. The eight leaf cl
 | `TowerCinder` | Cinder | no cooldown; a wedge (`InWedgeTargetQuery`) that reorients toward the nearest enemy and applies/refreshes burn every tick |
 
 `TowerMortar`/`TowerSeeker`/`TowerCinder` are the three towers added by the damage-types-and-
-projectiles feature — see `td.projectile` and `td.effect` in the root `CLAUDE.md`'s domain-
+projectiles feature — see `td.projectile` and `td.effect` in the root `CLAUDE.md` §4's domain-
 package list. Like the original four, each offers two upgrade paths (see below); only
 `TowerAura` stays passive and pathless.
 
