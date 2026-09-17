@@ -5,6 +5,7 @@ import td.enemy.AbstractEnemyMob;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMobVisitor;
+import td.ui.render.CritSparkDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
@@ -36,8 +37,14 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private static final float MARKER_ROW_OFFSET_FRACTION = 1.6f;
     private static final float MARKER_SPACING_FRACTION = 1.1f;
     private static final float MARKER_SCALE_FRACTION = 0.35f;
+    /**
+     * How long a critical hit's spark stays visible - 8 ticks is 0.4s at the normal tick rate,
+     * a brief flash rather than a lingering marker.
+     */
+    static final int CRIT_SPARK_DURATION_TICKS = 8;
     private final List<EnemyDraw> draws = new ArrayList<>();
     private final List<StatusMarkerDraw> markerDraws = new ArrayList<>();
+    private final List<CritSparkDraw> critSparkDraws = new ArrayList<>();
     private final int gameTime;
     private final double interpolationAlpha;
 
@@ -78,6 +85,10 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return this.markerDraws;
     }
 
+    public List<CritSparkDraw> buildCritSparks() {
+        return this.critSparkDraws;
+    }
+
     private Void body(Palette palette, AbstractEnemyMob mob, float scale, double facingRadians) {
         if (mob.isDead()) {
             if (!mob.isFadeComplete(this.gameTime)) {
@@ -90,8 +101,17 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             float y = lerp(mob.getPrevY(), mob.getY(), this.interpolationAlpha);
             this.draws.add(new EnemyBodyDraw(palette, x, y, facingRadians, scale, mob.getHealthFraction()));
             this.markers(mob, x, y, scale);
+            this.critSpark(mob, x, y, scale);
         }
         return null;
+    }
+
+    private void critSpark(AbstractEnemyMob mob, float x, float y, float scale) {
+        int ticksSince = mob.ticksSinceCriticalHit(this.gameTime);
+        if (ticksSince >= 0 && ticksSince <= CRIT_SPARK_DURATION_TICKS) {
+            float fadeProgress = (float) ticksSince / CRIT_SPARK_DURATION_TICKS;
+            this.critSparkDraws.add(new CritSparkDraw(Palette.CRIT_SPARK, x, y, scale, fadeProgress));
+        }
     }
 
     private void markers(AbstractEnemyMob mob, float x, float y, float scale) {

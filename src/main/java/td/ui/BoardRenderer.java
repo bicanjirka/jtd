@@ -71,7 +71,7 @@ public final class BoardRenderer {
         List<PathMarkerDraw> pathMarkers = PathMarkerFrameBuilder.build(level.path(), board.scale(), animationSeconds);
 
         return new RenderFrame(board.scale(), board.maxX(), board.maxY(),
-                cells, enemyFrameBuilder.build(), enemyFrameBuilder.buildMarkers(),
+                cells, enemyFrameBuilder.build(), enemyFrameBuilder.buildMarkers(), enemyFrameBuilder.buildCritSparks(),
                 spriteFrameBuilder.build(), spriteFrameBuilder.buildHeads(),
                 effectFrameBuilder.build(), projectileFrameBuilder.build(), pathMarkers);
     }

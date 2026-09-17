@@ -47,6 +47,10 @@ public enum Palette {
      * Stands in for every effect beyond the marker row's visible cap - see EnemyFrameBuilder.MAX_VISIBLE_MARKERS.
      */
     STATUS_MARKER_OVERFLOW,
+    /**
+     * A brief, fading burst at the point a critical hit landed - see CritSparkDraw.
+     */
+    CRIT_SPARK,
     PATH_MARKER_STATIC,
     PATH_MARKER_MOVING
 }
