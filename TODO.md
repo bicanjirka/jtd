@@ -72,16 +72,6 @@ position and the visitor, `AuraTower` wants position and type.
 
 ## Gameplay / balance
 
-### Zero-price wave penalty is a placeholder
-
-When an enemy whose `price` is `0` reaches the end of the path, `AbstractEnemyMob.doTick()` docks a flat 10 points from
-the score instead of the enemy's price (since 0 would dock nothing). That `10` was never a designed value — just a
-stand-in.
-
-- **Where:** `AbstractEnemyMob.doTick()`
-- **Approach:** either give price-0 "filler" enemies (see `EnemyFactory.Enemy.Empty`) an explicit configurable penalty,
-  or decide that reaching the end with a price-0 enemy shouldn't penalize the player at all and drop the branch.
-
 ### Ghost health doesn't scale with level
 
 `EnemyMobGhost.doInit()` always divides incoming health by a flat `5`, unlike its body size (`bodyScale`), which already
