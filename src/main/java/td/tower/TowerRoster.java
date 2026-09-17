@@ -36,7 +36,7 @@ public class TowerRoster {
     }
 
     /**
-     * A live, read-only view - callers (BoardRenderer, TowerAura's proximity scan) must
+     * A live, read-only view - callers (BoardRenderer, AuraTower's proximity scan) must
      * see towers added after this was called, not a snapshot.
      */
     public List<Tower> all() {

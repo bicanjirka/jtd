@@ -115,6 +115,6 @@ later phase); today `builtIn()` is the only catalog any level actually gets.
 
 `WaveAnnouncer`/`WaveStartListener` are just the "a wave started" hub, kept separate from
 the economy and the rosters despite once living bundled with them in `GameWorld`.
-`TowerThree` is the only subscriber, dropping the hit markers its scan left on the previous
+`SonarTower` is the only subscriber, dropping the hit markers its scan left on the previous
 wave's enemies. Its listener list is `CopyOnWriteArrayList` because it
 is fired from the `game-loop` thread — see the root `CLAUDE.md` §3 (Threading).

@@ -10,27 +10,27 @@ import td.util.RecordingGameHost;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Covers TowerTwo's splash falloff. The blast centre is whichever visible enemy the tower
+ * Covers SplashTower's splash falloff. The blast centre is whichever visible enemy the tower
  * picks at random, so every case here puts exactly one Normal mob in range - making it
  * necessarily the primary - and uses ghosts as the splash targets, since a ghost cannot be
  * chosen as the primary but is still caught by the any-type splash query.
  */
-class TowerTwoTest {
+class SplashTowerTest {
 
     private static final int SCALE = 32;
-    // TowerTwo derives its blast radius from the board scale at construction.
-    private static final float SPREAD_RADIUS = TowerTwo.SPREAD_RADIUS_BASE * SCALE; // 56.0
+    // SplashTower derives its blast radius from the board scale at construction.
+    private static final float SPREAD_RADIUS = SplashTower.SPREAD_RADIUS_BASE * SCALE; // 56.0
 
     private final GameWorld context = new GameWorld(new RecordingGameHost());
 
-    private TowerTwo towerNear(int cellX, int cellY) {
+    private SplashTower towerNear(int cellX, int cellY) {
         this.context.setBoard(BoardGeometry.of(SCALE, 20, 20));
-        return new TowerTwo(this.context, cellX, cellY);
+        return new SplashTower(this.context, cellX, cellY);
     }
 
     @Test
     void splashDamageFallsOffWithDistanceFromTheBlastCentre() {
-        TowerTwo tower = towerNear(3, 3);
+        SplashTower tower = towerNear(3, 3);
         RecordingEnemyMob blastCentre = RecordingEnemyMob.normalAt(100, 100);
         RecordingEnemyMob quarterOut = RecordingEnemyMob.ghostAt(100, 128);
         RecordingEnemyMob threeQuartersOut = RecordingEnemyMob.ghostAt(100, 142);
@@ -49,7 +49,7 @@ class TowerTwoTest {
 
     @Test
     void everyStepAwayFromTheBlastCentreTakesStrictlyLessDamage() {
-        TowerTwo tower = towerNear(3, 3);
+        SplashTower tower = towerNear(3, 3);
         RecordingEnemyMob blastCentre = RecordingEnemyMob.normalAt(100, 100);
         RecordingEnemyMob[] ring = new RecordingEnemyMob[11];
         for (int i = 0; i < ring.length; i++) {
@@ -71,18 +71,18 @@ class TowerTwoTest {
 
     @Test
     void theBlastCentreItselfTakesFullDamage() {
-        TowerTwo tower = towerNear(3, 3);
+        SplashTower tower = towerNear(3, 3);
         RecordingEnemyMob blastCentre = RecordingEnemyMob.normalAt(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{blastCentre});
 
         tower.doTick(0);
 
-        assertThat(blastCentre.onlyHitAmount()).isEqualTo(TowerTwo.DAMAGE);
+        assertThat(blastCentre.onlyHitAmount()).isEqualTo(SplashTower.DAMAGE);
     }
 
     @Test
     void anEnemyBeyondTheBlastRadiusIsNotHitAtAll() {
-        TowerTwo tower = towerNear(3, 3);
+        SplashTower tower = towerNear(3, 3);
         RecordingEnemyMob blastCentre = RecordingEnemyMob.normalAt(100, 100);
         // one pixel past the radius, but still well inside the tower's own range
         RecordingEnemyMob outside = RecordingEnemyMob.ghostAt(100, 100 + SPREAD_RADIUS + 1);
@@ -96,7 +96,7 @@ class TowerTwoTest {
 
     @Test
     void siegeBumpsTheSpreadRadiusBeyondTheBase() {
-        TowerTwo tower = towerNear(3, 3);
+        SplashTower tower = towerNear(3, 3);
         UpgradePath siege = UpgradePaths.named(tower, "Siege");
         float radiusBeforeChoosing = tower.getSpreadRadius();
 
@@ -111,16 +111,16 @@ class TowerTwoTest {
     @Test
     void clusterChargeIsChoosableOnceTwoNeighboursExistAndAppliesItsDamageAndRangeBonus() {
         this.context.economy().startEconomy(1000, 5);
-        TowerTwo tower = towerNear(3, 3);
+        SplashTower tower = towerNear(3, 3);
         this.context.towers().add(tower);
-        this.context.towers().add(new TowerOne(this.context, 2, 2));
-        this.context.towers().add(new TowerOne(this.context, 4, 4));
+        this.context.towers().add(new SniperTower(this.context, 2, 2));
+        this.context.towers().add(new SniperTower(this.context, 4, 4));
         UpgradePath clusterCharge = UpgradePaths.named(tower, "Cluster Charge");
 
         boolean chosen = tower.chooseUpgradePath(clusterCharge);
 
         assertThat(chosen).isTrue();
         assertThat(tower.damageCurrent()).isGreaterThan(tower.damageBase);
-        assertThat(tower.getRangeReal()).isGreaterThan(TowerTwo.RANGE * SCALE);
+        assertThat(tower.getRangeReal()).isGreaterThan(SplashTower.RANGE * SCALE);
     }
 }

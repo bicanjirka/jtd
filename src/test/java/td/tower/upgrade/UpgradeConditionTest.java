@@ -13,7 +13,7 @@ class UpgradeConditionTest {
     @Test
     void alwaysIsSatisfiedRegardlessOfTowerOrContextState() {
         GameWorld context = new GameWorld(new RecordingGameHost());
-        Tower tower = TowerFactory.createTower(TowerFactory.Type.first, context, 0, 0);
+        Tower tower = TowerFactory.createTower(TowerFactory.Type.SNIPER, context, 0, 0);
 
         assertThat(UpgradeCondition.always().isSatisfied(tower, context)).isTrue();
     }

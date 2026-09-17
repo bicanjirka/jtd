@@ -110,7 +110,7 @@ public abstract class AbstractTower implements Tower {
 
     /**
      * Whether this tower never attacks and exists only to buff its neighbours. A fixed
-     * property of the tower type rather than mutable state, so only {@code TowerAura}
+     * property of the tower type rather than mutable state, so only {@code AuraTower}
      * overrides it.
      */
     protected boolean isPassive() {
@@ -247,7 +247,7 @@ public abstract class AbstractTower implements Tower {
 
     /**
      * Hook for a leaf tower whose chosen path bumps a stat {@link TowerBuff} can't express
-     * (e.g. {@code TowerTwo}'s splash radius, {@code TowerThree}'s sweep speed) - a no-op by
+     * (e.g. {@code SplashTower}'s splash radius, {@code SonarTower}'s sweep speed) - a no-op by
      * default. Called once, right when {@link #chooseUpgradePath} commits the choice.
      */
     protected void onUpgradePathChosen(UpgradePath path) {
@@ -285,7 +285,7 @@ public abstract class AbstractTower implements Tower {
      * The line describing how often this tower attacks at the given cooldown - callers pass
      * {@code coolDownMax} for the pre-purchase base rate and {@code coolDownCurrent} for the
      * live, possibly-buffed one. Overridden by a tower whose cadence is not a cooldown at all
-     * - see {@link TowerThree}, which sweeps continuously and has a rotation speed rather
+     * - see {@link SonarTower}, which sweeps continuously and has a rotation speed rather
      * than a fire rate, and so ignores the argument.
      */
     protected String rateLine(int coolDown) {
@@ -318,7 +318,7 @@ public abstract class AbstractTower implements Tower {
         return s;
     }
 
-    /** Contributes nothing - only {@code TowerAura} overrides this. */
+    /** Contributes nothing - only {@code AuraTower} overrides this. */
     public TowerBuff buffFor(Tower other) {
         return TowerBuff.none();
     }

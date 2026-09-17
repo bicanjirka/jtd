@@ -8,17 +8,17 @@ import td.util.RecordingGameHost;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Covers TowerOne's two upgrade paths. Its targeting and firing are already exercised via
+ * Covers SniperTower's two upgrade paths. Its targeting and firing are already exercised via
  * GameEngineTest/TowerPlacementTest.
  */
-class TowerOneTest {
+class SniperTowerTest {
 
     private final GameWorld context = new GameWorld(new RecordingGameHost());
 
     @Test
     void overclockIsChoosableWithMoneyAloneAndAppliesItsFireRateAndDamagePenalty() {
         this.context.economy().startEconomy(1000, 5);
-        TowerOne tower = new TowerOne(this.context, 0, 0);
+        SniperTower tower = new SniperTower(this.context, 0, 0);
         UpgradePath overclock = UpgradePaths.named(tower, "Overclock");
 
         boolean chosen = tower.chooseUpgradePath(overclock);
@@ -31,7 +31,7 @@ class TowerOneTest {
     @Test
     void veteranIsNotYetChoosableBeforeTenKills() {
         this.context.economy().startEconomy(1000, 5);
-        TowerOne tower = new TowerOne(this.context, 0, 0);
+        SniperTower tower = new SniperTower(this.context, 0, 0);
         UpgradePath veteran = UpgradePaths.named(tower, "Veteran");
 
         boolean chosen = tower.chooseUpgradePath(veteran);

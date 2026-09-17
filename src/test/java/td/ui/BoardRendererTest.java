@@ -8,8 +8,8 @@ import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.level.LevelDefinition;
 import td.projectile.CannonballProjectile;
-import td.tower.TowerCinder;
-import td.tower.TowerOne;
+import td.tower.CinderTower;
+import td.tower.SniperTower;
 import td.ui.render.ConeDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.Palette;
@@ -46,7 +46,7 @@ class BoardRendererTest {
     void aSelectedTowerYieldsASpriteDrawWithItsBodyPaletteAndSelectionFlag() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        TowerOne tower = new TowerOne(context, 1, 1);
+        SniperTower tower = new SniperTower(context, 1, 1);
         tower.setSelected(true);
         context.towers().add(tower);
 
@@ -54,7 +54,7 @@ class BoardRendererTest {
 
         assertThat(frame.towerSprites()).hasSize(1);
         TowerSpriteDraw sprite = frame.towerSprites().get(0);
-        assertThat(sprite.palette()).isEqualTo(Palette.TOWER_ONE_BODY);
+        assertThat(sprite.palette()).isEqualTo(Palette.TOWER_SNIPER_BODY);
         assertThat(sprite.selected()).isTrue();
     }
 
@@ -62,19 +62,19 @@ class BoardRendererTest {
     void aPlacedTowerYieldsATurretHeadDrawWithItsBodyPalette() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        context.towers().add(new TowerOne(context, 1, 1));
+        context.towers().add(new SniperTower(context, 1, 1));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.towerHeads()).hasSize(1);
-        assertThat(frame.towerHeads().get(0).palette()).isEqualTo(Palette.TOWER_ONE_BODY);
+        assertThat(frame.towerHeads().get(0).palette()).isEqualTo(Palette.TOWER_SNIPER_BODY);
     }
 
     @Test
     void anUnselectedTowerYieldsASpriteDrawWithSelectedFalse() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        context.towers().add(new TowerOne(context, 1, 1));
+        context.towers().add(new SniperTower(context, 1, 1));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
@@ -85,7 +85,7 @@ class BoardRendererTest {
     void aTowerWithNoChosenUpgradePathYieldsNoAccent() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        context.towers().add(new TowerOne(context, 1, 1));
+        context.towers().add(new SniperTower(context, 1, 1));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
@@ -97,9 +97,9 @@ class BoardRendererTest {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         context.economy().startEconomy(1000, 5);
-        TowerOne tower = new TowerOne(context, 1, 1);
+        SniperTower tower = new SniperTower(context, 1, 1);
         context.towers().add(tower);
-        // TowerOne.availablePaths() = [Veteran, Overclock] - Overclock (index 1) is money-gated,
+        // SniperTower.availablePaths() = [Veteran, Overclock] - Overclock (index 1) is money-gated,
         // so it's choosable immediately without grinding out Veteran's kill-count condition.
         tower.chooseUpgradePath(tower.availablePaths().get(1));
 
@@ -138,7 +138,7 @@ class BoardRendererTest {
     void onlyHighlightedCellsProduceADraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        // a freshly loaded level has HighlightType.none everywhere
+        // a freshly loaded level has HighlightType.NONE everywhere
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
@@ -149,19 +149,19 @@ class BoardRendererTest {
     void aSelectedCellProducesExactlyOneCellDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        engine.cells().at(0, 0).setHighlight(Cell.HighlightType.select);
+        engine.cells().at(0, 0).setHighlight(Cell.HighlightType.SELECT);
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.cells()).hasSize(1);
-        assertThat(frame.cells().get(0).highlight()).isEqualTo(Cell.HighlightType.select);
+        assertThat(frame.cells().get(0).highlight()).isEqualTo(Cell.HighlightType.SELECT);
     }
 
     @Test
     void aCinderTowerYieldsAConeDrawEveryTick() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        context.towers().add(new TowerCinder(context, 1, 1));
+        context.towers().add(new CinderTower(context, 1, 1));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 

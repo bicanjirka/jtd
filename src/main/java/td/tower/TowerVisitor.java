@@ -10,19 +10,19 @@ package td.tower;
  * describe the new tower rather than silently skipping it.
  */
 public interface TowerVisitor<R> {
-    R visitTowerOne(TowerOne tower);
+    R visitSniperTower(SniperTower tower);
 
-    R visitTowerTwo(TowerTwo tower);
+    R visitSplashTower(SplashTower tower);
 
-    R visitTowerThree(TowerThree tower);
+    R visitSonarTower(SonarTower tower);
 
-    R visitTowerFour(TowerFour tower);
+    R visitPulseTower(PulseTower tower);
 
-    R visitTowerAura(TowerAura tower);
+    R visitAuraTower(AuraTower tower);
 
-    R visitTowerMortar(TowerMortar tower);
+    R visitMortarTower(MortarTower tower);
 
-    R visitTowerSeeker(TowerSeeker tower);
+    R visitSeekerTower(SeekerTower tower);
 
-    R visitTowerCinder(TowerCinder tower);
+    R visitCinderTower(CinderTower tower);
 }

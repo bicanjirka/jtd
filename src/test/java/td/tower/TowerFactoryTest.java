@@ -11,79 +11,79 @@ class TowerFactoryTest {
     private final GameWorld context = new GameWorld(new RecordingGameHost());
 
     @Test
-    void createsTowerOneForTypeFirst() {
-        Tower t = TowerFactory.createTower(TowerFactory.Type.first, context, 0, 0);
+    void createsASniperTowerForTypeSniper() {
+        Tower t = TowerFactory.createTower(TowerFactory.Type.SNIPER, context, 0, 0);
 
-        assertThat(t).isInstanceOf(TowerOne.class);
-        assertThat(t.getType()).isEqualTo(TowerFactory.Type.first);
-        assertThat(t.getRange()).isEqualTo(TowerOne.RANGE);
+        assertThat(t).isInstanceOf(SniperTower.class);
+        assertThat(t.getType()).isEqualTo(TowerFactory.Type.SNIPER);
+        assertThat(t.getRange()).isEqualTo(SniperTower.RANGE);
     }
 
     @Test
-    void createsTowerTwoForTypeSecond() {
-        Tower t = TowerFactory.createTower(TowerFactory.Type.second, context, 0, 0);
+    void createsASplashTowerForTypeSplash() {
+        Tower t = TowerFactory.createTower(TowerFactory.Type.SPLASH, context, 0, 0);
 
-        assertThat(t).isInstanceOf(TowerTwo.class);
-        assertThat(t.getType()).isEqualTo(TowerFactory.Type.second);
+        assertThat(t).isInstanceOf(SplashTower.class);
+        assertThat(t.getType()).isEqualTo(TowerFactory.Type.SPLASH);
     }
 
     @Test
-    void createsTowerThreeForTypeThird() {
-        Tower t = TowerFactory.createTower(TowerFactory.Type.third, context, 0, 0);
+    void createsASonarTowerForTypeSonar() {
+        Tower t = TowerFactory.createTower(TowerFactory.Type.SONAR, context, 0, 0);
 
-        assertThat(t).isInstanceOf(TowerThree.class);
-        assertThat(t.getType()).isEqualTo(TowerFactory.Type.third);
+        assertThat(t).isInstanceOf(SonarTower.class);
+        assertThat(t.getType()).isEqualTo(TowerFactory.Type.SONAR);
     }
 
     @Test
-    void createsTowerFourForTypeFourth() {
-        Tower t = TowerFactory.createTower(TowerFactory.Type.fourth, context, 0, 0);
+    void createsAPulseTowerForTypePulse() {
+        Tower t = TowerFactory.createTower(TowerFactory.Type.PULSE, context, 0, 0);
 
-        assertThat(t).isInstanceOf(TowerFour.class);
-        assertThat(t.getType()).isEqualTo(TowerFactory.Type.fourth);
+        assertThat(t).isInstanceOf(PulseTower.class);
+        assertThat(t.getType()).isEqualTo(TowerFactory.Type.PULSE);
     }
 
     @Test
-    void createsTowerAuraForTypeAura() {
-        Tower t = TowerFactory.createTower(TowerFactory.Type.aura, context, 0, 0);
+    void createsAnAuraTowerForTypeAura() {
+        Tower t = TowerFactory.createTower(TowerFactory.Type.AURA, context, 0, 0);
 
-        assertThat(t).isInstanceOf(TowerAura.class);
-        assertThat(t.getType()).isEqualTo(TowerFactory.Type.aura);
+        assertThat(t).isInstanceOf(AuraTower.class);
+        assertThat(t.getType()).isEqualTo(TowerFactory.Type.AURA);
     }
 
     @Test
-    void createsTowerMortarForTypeMortar() {
-        Tower t = TowerFactory.createTower(TowerFactory.Type.mortar, context, 0, 0);
+    void createsAMortarTowerForTypeMortar() {
+        Tower t = TowerFactory.createTower(TowerFactory.Type.MORTAR, context, 0, 0);
 
-        assertThat(t).isInstanceOf(TowerMortar.class);
-        assertThat(t.getType()).isEqualTo(TowerFactory.Type.mortar);
+        assertThat(t).isInstanceOf(MortarTower.class);
+        assertThat(t.getType()).isEqualTo(TowerFactory.Type.MORTAR);
     }
 
     @Test
-    void createsTowerSeekerForTypeSeeker() {
-        Tower t = TowerFactory.createTower(TowerFactory.Type.seeker, context, 0, 0);
+    void createsASeekerTowerForTypeSeeker() {
+        Tower t = TowerFactory.createTower(TowerFactory.Type.SEEKER, context, 0, 0);
 
-        assertThat(t).isInstanceOf(TowerSeeker.class);
-        assertThat(t.getType()).isEqualTo(TowerFactory.Type.seeker);
+        assertThat(t).isInstanceOf(SeekerTower.class);
+        assertThat(t.getType()).isEqualTo(TowerFactory.Type.SEEKER);
     }
 
     @Test
-    void createsTowerCinderForTypeCinder() {
-        Tower t = TowerFactory.createTower(TowerFactory.Type.cinder, context, 0, 0);
+    void createsACinderTowerForTypeCinder() {
+        Tower t = TowerFactory.createTower(TowerFactory.Type.CINDER, context, 0, 0);
 
-        assertThat(t).isInstanceOf(TowerCinder.class);
-        assertThat(t.getType()).isEqualTo(TowerFactory.Type.cinder);
+        assertThat(t).isInstanceOf(CinderTower.class);
+        assertThat(t.getType()).isEqualTo(TowerFactory.Type.CINDER);
     }
 
     @Test
     void enumPriceMatchesEachTowersStaticPrice() {
-        assertThat(TowerFactory.Type.first.price).isEqualTo(TowerOne.PRICE);
-        assertThat(TowerFactory.Type.second.price).isEqualTo(TowerTwo.PRICE);
-        assertThat(TowerFactory.Type.third.price).isEqualTo(TowerThree.PRICE);
-        assertThat(TowerFactory.Type.fourth.price).isEqualTo(TowerFour.PRICE);
-        assertThat(TowerFactory.Type.aura.price).isEqualTo(TowerAura.PRICE);
-        assertThat(TowerFactory.Type.mortar.price).isEqualTo(TowerMortar.PRICE);
-        assertThat(TowerFactory.Type.seeker.price).isEqualTo(TowerSeeker.PRICE);
-        assertThat(TowerFactory.Type.cinder.price).isEqualTo(TowerCinder.PRICE);
+        assertThat(TowerFactory.Type.SNIPER.price).isEqualTo(SniperTower.PRICE);
+        assertThat(TowerFactory.Type.SPLASH.price).isEqualTo(SplashTower.PRICE);
+        assertThat(TowerFactory.Type.SONAR.price).isEqualTo(SonarTower.PRICE);
+        assertThat(TowerFactory.Type.PULSE.price).isEqualTo(PulseTower.PRICE);
+        assertThat(TowerFactory.Type.AURA.price).isEqualTo(AuraTower.PRICE);
+        assertThat(TowerFactory.Type.MORTAR.price).isEqualTo(MortarTower.PRICE);
+        assertThat(TowerFactory.Type.SEEKER.price).isEqualTo(SeekerTower.PRICE);
+        assertThat(TowerFactory.Type.CINDER.price).isEqualTo(CinderTower.PRICE);
     }
 }

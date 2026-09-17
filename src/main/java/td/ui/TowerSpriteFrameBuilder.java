@@ -1,15 +1,15 @@
 package td.ui;
 
 import td.tower.Tower;
-import td.tower.TowerAura;
-import td.tower.TowerCinder;
+import td.tower.AuraTower;
+import td.tower.CinderTower;
 import td.tower.TowerFactory;
-import td.tower.TowerFour;
-import td.tower.TowerMortar;
-import td.tower.TowerOne;
-import td.tower.TowerSeeker;
-import td.tower.TowerThree;
-import td.tower.TowerTwo;
+import td.tower.PulseTower;
+import td.tower.MortarTower;
+import td.tower.SniperTower;
+import td.tower.SeekerTower;
+import td.tower.SonarTower;
+import td.tower.SplashTower;
 import td.tower.TowerVisitor;
 import td.tower.upgrade.UpgradePath;
 import td.ui.render.Palette;
@@ -32,7 +32,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     // Radians/second for a continuously-spinning head - purely cosmetic, so this lives here
     // rather than as domain state (see the class doc comment's "function of elapsed time").
-    // TowerThree is deliberately not in this group: its head tracks the scan that decides what
+    // SonarTower is deliberately not in this group: its head tracks the scan that decides what
     // it shoots, so it reads that instead.
     private static final double TOWER_FOUR_SPIN_RADIANS_PER_SECOND = -2.0;
 
@@ -67,14 +67,14 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
      */
     public static Palette bodyPaletteFor(TowerFactory.Type type) {
         return switch (type) {
-            case first -> Palette.TOWER_ONE_BODY;
-            case second -> Palette.TOWER_TWO_BODY;
-            case third -> Palette.TOWER_THREE_BODY;
-            case fourth -> Palette.TOWER_FOUR_BODY;
-            case aura -> Palette.TOWER_AURA_BODY;
-            case mortar -> Palette.TOWER_MORTAR_BODY;
-            case seeker -> Palette.TOWER_SEEKER_BODY;
-            case cinder -> Palette.TOWER_CINDER_BODY;
+            case SNIPER -> Palette.TOWER_SNIPER_BODY;
+            case SPLASH -> Palette.TOWER_SPLASH_BODY;
+            case SONAR -> Palette.TOWER_SONAR_BODY;
+            case PULSE -> Palette.TOWER_PULSE_BODY;
+            case AURA -> Palette.TOWER_AURA_BODY;
+            case MORTAR -> Palette.TOWER_MORTAR_BODY;
+            case SEEKER -> Palette.TOWER_SEEKER_BODY;
+            case CINDER -> Palette.TOWER_CINDER_BODY;
         };
     }
 
@@ -109,19 +109,19 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
                 (float) headingRadians, scale));
     }
 
-    public Void visitTowerOne(TowerOne tower) {
+    public Void visitSniperTower(SniperTower tower) {
         this.sprite(tower);
         this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
         return null;
     }
 
-    public Void visitTowerTwo(TowerTwo tower) {
+    public Void visitSplashTower(SplashTower tower) {
         this.sprite(tower);
         this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
         return null;
     }
 
-    public Void visitTowerThree(TowerThree tower) {
+    public Void visitSonarTower(SonarTower tower) {
         this.sprite(tower);
         // The head is the scan: it must point exactly where the beam is, or the tower appears
         // to shoot enemies it is not facing.
@@ -129,13 +129,13 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
-    public Void visitTowerFour(TowerFour tower) {
+    public Void visitPulseTower(PulseTower tower) {
         this.sprite(tower);
         this.head(tower, this.animationSeconds * TOWER_FOUR_SPIN_RADIANS_PER_SECOND);
         return null;
     }
 
-    public Void visitTowerAura(TowerAura tower) {
+    public Void visitAuraTower(AuraTower tower) {
         this.sprite(tower);
         double phase = 0.5 + 0.5 * Math.sin(this.animationSeconds * TOWER_AURA_PULSE_RADIANS_PER_SECOND);
         float scale = (float) (TOWER_AURA_PULSE_MIN_SCALE + (TOWER_AURA_PULSE_MAX_SCALE - TOWER_AURA_PULSE_MIN_SCALE) * phase);
@@ -143,19 +143,19 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
-    public Void visitTowerMortar(TowerMortar tower) {
+    public Void visitMortarTower(MortarTower tower) {
         this.sprite(tower);
         this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
         return null;
     }
 
-    public Void visitTowerSeeker(TowerSeeker tower) {
+    public Void visitSeekerTower(SeekerTower tower) {
         this.sprite(tower);
         this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
         return null;
     }
 
-    public Void visitTowerCinder(TowerCinder tower) {
+    public Void visitCinderTower(CinderTower tower) {
         this.sprite(tower);
         // The head is a facing indicator only - the wide flame cone itself is a transient
         // TowerEffectDraw (ConeDraw), not part of the turret head's own shape.

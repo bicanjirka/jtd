@@ -5,7 +5,7 @@ import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
 import td.tower.Tower;
 import td.tower.TowerFactory;
-import td.tower.TowerOne;
+import td.tower.SniperTower;
 import td.wave.Path;
 import td.wave.PathBuilder;
 import td.wave.PathCoverage;
@@ -57,7 +57,7 @@ class BuiltInLevelCatalogEngineTest {
         engine.loadLevel(level);
         int creditsBefore = engine.getGameWorld().economy().getCredits();
 
-        engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         Optional<Tower> selected = engine.mouseClicked(cellCenter(curveOnlyCell.x()), cellCenter(curveOnlyCell.y()));
 
         assertThat(selected).isEmpty();
@@ -71,7 +71,7 @@ class BuiltInLevelCatalogEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(level);
 
-        engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(cellCenter(0), cellCenter(level.height() - 1));
 
         assertThat(engine.cells().at(0, level.height() - 1).hasTower()).isTrue();

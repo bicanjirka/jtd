@@ -223,11 +223,11 @@ public class GameEngine {
         if (this.waveReady && this.wave < installed.waveCount()) {
             this.startWave = false;
             this.waveReady = false;
-            Wave tempWave = installed.waveAt(this.wave);
-            this.gameWorld.enemies().setEnemies(tempWave.spawn());
-            this.gameWorld.startWave(tempWave);
+            Wave starting = installed.waveAt(this.wave);
+            this.gameWorld.enemies().setEnemies(starting.spawn());
+            this.gameWorld.startWave(starting);
             this.wave++;
-            LOG.info("Wave {}/{} started, {} enemies", this.wave, installed.waveCount(), tempWave.enemyCount());
+            LOG.info("Wave {}/{} started, {} enemies", this.wave, installed.waveCount(), starting.enemyCount());
             return true;
         }
         return false;

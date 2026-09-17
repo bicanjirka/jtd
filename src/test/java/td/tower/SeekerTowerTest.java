@@ -12,18 +12,18 @@ import td.util.RecordingGameHost;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Covers TowerSeeker's targeting and the magic damage + freeze it applies on impact - the
+ * Covers SeekerTower's targeting and the magic damage + freeze it applies on impact - the
  * missile's own homing/retargeting is exercised more thoroughly by MissileProjectileTest.
  */
-class TowerSeekerTest {
+class SeekerTowerTest {
 
     private static final int SCALE = 32;
 
     private final GameWorld context = new GameWorld(new RecordingGameHost());
 
-    private TowerSeeker towerAt(int cellX, int cellY) {
+    private SeekerTower towerAt(int cellX, int cellY) {
         this.context.setBoard(BoardGeometry.of(SCALE, 20, 20));
-        return new TowerSeeker(this.context, cellX, cellY);
+        return new SeekerTower(this.context, cellX, cellY);
     }
 
     private void flyProjectilesToCompletion() {
@@ -34,7 +34,7 @@ class TowerSeekerTest {
 
     @Test
     void firingLaunchesExactlyOneMissileAtTheTarget() {
-        TowerSeeker tower = towerAt(3, 3);
+        SeekerTower tower = towerAt(3, 3);
         RecordingEnemyMob target = RecordingEnemyMob.normalAt(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
@@ -45,14 +45,14 @@ class TowerSeekerTest {
 
     @Test
     void theMissileEventuallyDealsMagicDamageAndFreezesTheTarget() {
-        TowerSeeker tower = towerAt(3, 3);
+        SeekerTower tower = towerAt(3, 3);
         RecordingEnemyMob target = RecordingEnemyMob.normalAt(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tower.doTick(1);
         this.flyProjectilesToCompletion();
 
-        assertThat(target.onlyHitAmount()).isEqualTo(TowerSeeker.DAMAGE);
+        assertThat(target.onlyHitAmount()).isEqualTo(SeekerTower.DAMAGE);
         assertThat(target.hits().get(0).type()).isEqualTo(DamageType.MAGIC);
         assertThat(target.appliedEffects()).hasSize(1);
         assertThat(target.appliedEffects().get(0).kind()).isEqualTo(EffectKind.FREEZE);
@@ -60,7 +60,7 @@ class TowerSeekerTest {
 
     @Test
     void aGhostIsNeverTargeted() {
-        TowerSeeker tower = towerAt(3, 3);
+        SeekerTower tower = towerAt(3, 3);
         RecordingEnemyMob ghost = RecordingEnemyMob.ghostAt(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{ghost});
 
@@ -71,7 +71,7 @@ class TowerSeekerTest {
 
     @Test
     void noTargetInRangeFiresNoMissile() {
-        TowerSeeker tower = towerAt(3, 3);
+        SeekerTower tower = towerAt(3, 3);
         this.context.enemies().setEnemies(new EnemyMob[]{});
 
         tower.doTick(1);
@@ -82,7 +82,7 @@ class TowerSeekerTest {
     @Test
     void twinWarheadIsChoosableWithMoneyAloneAndAppliesItsFireRateBonus() {
         this.context.economy().startEconomy(1000, 5);
-        TowerSeeker tower = towerAt(3, 3);
+        SeekerTower tower = towerAt(3, 3);
         UpgradePath twinWarhead = UpgradePaths.named(tower, "Twin Warhead");
 
         boolean chosen = tower.chooseUpgradePath(twinWarhead);
@@ -94,7 +94,7 @@ class TowerSeekerTest {
     @Test
     void deepFreezeIsNotYetChoosableBeforeTenKills() {
         this.context.economy().startEconomy(1000, 5);
-        TowerSeeker tower = towerAt(3, 3);
+        SeekerTower tower = towerAt(3, 3);
         UpgradePath deepFreeze = UpgradePaths.named(tower, "Deep Freeze");
 
         boolean chosen = tower.chooseUpgradePath(deepFreeze);
@@ -105,7 +105,7 @@ class TowerSeekerTest {
 
     @Test
     void deepFreezeBumpsTheFreezeDurationBeyondTheBase() {
-        TowerSeeker tower = towerAt(3, 3);
+        SeekerTower tower = towerAt(3, 3);
         UpgradePath deepFreeze = UpgradePaths.named(tower, "Deep Freeze");
         int durationBeforeChoosing = tower.getFreezeDurationTicks();
 

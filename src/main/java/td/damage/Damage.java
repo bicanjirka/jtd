@@ -3,7 +3,7 @@ package td.damage;
 /**
  * An amount of damage, tagged with the {@link DamageType} it was dealt as, about to be dealt
  * to an enemy. The compact constructor clamps every construction path at zero, so a falloff
- * or resistance calculation that would otherwise go negative (see {@code TowerTwo}'s splash
+ * or resistance calculation that would otherwise go negative (see {@code SplashTower}'s splash
  * falloff) can never produce a healing hit. {@link #none()} is the identity element for
  * {@link #plus}.
  * <p>

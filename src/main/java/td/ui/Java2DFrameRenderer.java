@@ -101,9 +101,9 @@ public final class Java2DFrameRenderer {
 
     private void paintCell(Graphics2D g2, CellDraw cell, RenderFrame frame) {
         switch (cell.highlight()) {
-            case place -> this.paintPlaceHighlight(g2, cell, frame);
-            case select -> this.paintSelectHighlight(g2, cell, frame);
-            case none -> {
+            case PLACE -> this.paintPlaceHighlight(g2, cell, frame);
+            case SELECT -> this.paintSelectHighlight(g2, cell, frame);
+            case NONE -> {
             }
         }
     }
@@ -350,10 +350,10 @@ public final class Java2DFrameRenderer {
      */
     private static Shape towerBodyShape(Palette palette, float size) {
         return switch (palette) {
-            case TOWER_ONE_BODY -> triangleShape(size, true);
-            case TOWER_TWO_BODY -> ringShape(size, 0.55f);
-            case TOWER_THREE_BODY -> spiralShape(size);
-            case TOWER_FOUR_BODY -> starShape(5, size, size * 0.45f);
+            case TOWER_SNIPER_BODY -> triangleShape(size, true);
+            case TOWER_SPLASH_BODY -> ringShape(size, 0.55f);
+            case TOWER_SONAR_BODY -> spiralShape(size);
+            case TOWER_PULSE_BODY -> starShape(5, size, size * 0.45f);
             case TOWER_AURA_BODY -> pulsarShape(size);
             case TOWER_MORTAR_BODY -> diamondShape(size);
             case TOWER_SEEKER_BODY -> kiteShape(size);
@@ -466,7 +466,7 @@ public final class Java2DFrameRenderer {
         g2.translate(head.centerX(), head.centerY());
         g2.rotate(head.headingRadians());
         float size = scale * TOWER_HEAD_SIZE_FRACTION * head.scale();
-        if (head.palette() == Palette.TOWER_THREE_BODY) {
+        if (head.palette() == Palette.TOWER_SONAR_BODY) {
             this.paintSonarSweep(g2, size);
         } else {
             this.paintHeadShape(g2, head.palette(), size);
@@ -483,7 +483,7 @@ public final class Java2DFrameRenderer {
      * same colour.
      */
     private void paintSonarSweep(Graphics2D g2, float size) {
-        Color color = colorFor(Palette.TOWER_THREE_BODY);
+        Color color = colorFor(Palette.TOWER_SONAR_BODY);
         float radius = size * SONAR_RADIUS_FACTOR;
         float stepDegrees = SONAR_ARC_DEGREES / SONAR_TRAIL_STEPS;
 
@@ -530,9 +530,9 @@ public final class Java2DFrameRenderer {
      */
     private static Shape turretHeadShape(Palette palette, float size) {
         return switch (palette) {
-            case TOWER_ONE_BODY -> new Rectangle2D.Float(0, -size * 0.22f, size * 1.3f, size * 0.44f);
-            case TOWER_TWO_BODY -> new Rectangle2D.Float(0, -size * 0.42f, size * 0.95f, size * 0.84f);
-            case TOWER_FOUR_BODY -> {
+            case TOWER_SNIPER_BODY -> new Rectangle2D.Float(0, -size * 0.22f, size * 1.3f, size * 0.44f);
+            case TOWER_SPLASH_BODY -> new Rectangle2D.Float(0, -size * 0.42f, size * 0.95f, size * 0.84f);
+            case TOWER_PULSE_BODY -> {
                 Shape moon = starShape(5, size * 0.9f, size * 0.9f * 0.45f);
                 yield AffineTransform.getTranslateInstance(size * 2.0, 0).createTransformedShape(moon);
             }
@@ -544,7 +544,7 @@ public final class Java2DFrameRenderer {
 
     /**
      * A plain forward-pointing arrowhead, authored along {@code +X} like every other aiming
-     * head - a simple facing indicator for the three new towers. {@code TowerCinder}'s actual
+     * head - a simple facing indicator for the three new towers. {@code CinderTower}'s actual
      * cone is a separate {@code TowerEffectDraw}, not part of this shape (see `TODO.md`).
      */
     private static Shape headArrowShape(float size) {
@@ -656,10 +656,10 @@ public final class Java2DFrameRenderer {
             case ENEMY_SQUARE -> Color.PINK;
             case ENEMY_TRIANGLE -> Color.YELLOW;
             case ENEMY_EGG -> new Color(230, 220, 170);
-            case TOWER_ONE_BODY -> Color.GREEN;
-            case TOWER_TWO_BODY -> Color.RED;
-            case TOWER_THREE_BODY -> Color.YELLOW;
-            case TOWER_FOUR_BODY -> Color.ORANGE;
+            case TOWER_SNIPER_BODY -> Color.GREEN;
+            case TOWER_SPLASH_BODY -> Color.RED;
+            case TOWER_SONAR_BODY -> Color.YELLOW;
+            case TOWER_PULSE_BODY -> Color.ORANGE;
             case TOWER_AURA_BODY -> Color.WHITE;
             case TOWER_MORTAR_BODY -> new Color(139, 90, 43);
             case TOWER_SEEKER_BODY -> new Color(80, 180, 255);
@@ -667,11 +667,11 @@ public final class Java2DFrameRenderer {
             case TOWER_AURA_RING -> Color.WHITE;
             case TOWER_UPGRADE_PATH_A -> new Color(255, 200, 60);
             case TOWER_UPGRADE_PATH_B -> new Color(100, 180, 255);
-            case TOWER_ONE_BEAM -> Color.GREEN;
-            case TOWER_TWO_BEAM -> Color.RED;
-            case TOWER_TWO_SPLASH_LINE, TOWER_TWO_SPLASH_FILL -> withAlpha(Color.RED, 80);
-            case TOWER_THREE_BEAM -> Color.YELLOW;
-            case TOWER_FOUR_PULSE -> withAlpha(Color.ORANGE, 80);
+            case TOWER_SNIPER_BEAM -> Color.GREEN;
+            case TOWER_SPLASH_BEAM -> Color.RED;
+            case TOWER_SPLASH_LINE, TOWER_SPLASH_FILL -> withAlpha(Color.RED, 80);
+            case TOWER_SONAR_BEAM -> Color.YELLOW;
+            case TOWER_PULSE_RING -> withAlpha(Color.ORANGE, 80);
             case TOWER_CINDER_CONE -> new Color(255, 90, 30);
             case PROJECTILE_CANNONBALL -> new Color(139, 90, 43);
             case PROJECTILE_MISSILE -> new Color(80, 180, 255);

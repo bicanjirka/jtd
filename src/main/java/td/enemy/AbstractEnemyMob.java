@@ -41,7 +41,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
 
     /**
      * Health is stored in hundredths, matching the scale {@code td.tower} expresses damage in
-     * ({@code TowerOne.DAMAGE} of {@code 4000} is 40 points a shot). Storing the fine-grained
+     * ({@code SniperTower.DAMAGE} of {@code 4000} is 40 points a shot). Storing the fine-grained
      * unit is what lets a percentage resistance or a damage-over-time tick subtract a fraction
      * of a point without rounding to nothing.
      */

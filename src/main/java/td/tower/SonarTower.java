@@ -29,7 +29,7 @@ import java.util.List;
  * the beam's instantaneous angle - otherwise an enemy that the beam went past between two
  * ticks would never be shot at all.
  */
-public final class TowerThree extends AbstractTower implements WaveStartListener {
+public final class SonarTower extends AbstractTower implements WaveStartListener {
 
     public static final int PRICE = 20;
     public static final int DAMAGE = 1600;
@@ -59,9 +59,9 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
     private volatile float secondsPerRevolutionCurrent = SECONDS_PER_REVOLUTION;
     private final List<SonarHit> recentHits = new ArrayList<>();
 
-    public TowerThree(GameWorld context, int x, int y) {
+    public SonarTower(GameWorld context, int x, int y) {
         // No cooldown: this tower's cadence is its sweep rate, not a reload - see rateLine.
-        super(TowerFactory.Type.third, PRICE, DAMAGE, RANGE, 0, context, x, y);
+        super(TowerFactory.Type.SONAR, PRICE, DAMAGE, RANGE, 0, context, x, y);
         this.context.waves().addListener(this);
     }
 
@@ -122,7 +122,7 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
-        return visitor.visitTowerThree(this);
+        return visitor.visitSonarTower(this);
     }
 
     public String getInfoString() {
