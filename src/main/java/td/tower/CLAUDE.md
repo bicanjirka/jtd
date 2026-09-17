@@ -95,7 +95,9 @@ them; it does not hand-roll a scan over `EnemyRegistry.getEnemies()`.
   snapshot. `and` intersects; `all()` is the identity, `none()` the absorber (it
   short-circuits without evaluating the other side).
 - `TargetSelector` — picks at most one out of a candidate list
-  (`FurthestAlongPathSelector`, `RandomSelector`, `NearestSelector`).
+  (`FurthestAlongPathSelector`, `RandomSelector`, `NearestSelector`). `RandomSelector` takes a
+  `td.util.RandomSource` rather than calling `Math.random()`, so a seeded run replays the same
+  picks; `TowerTwo` composes it instead of inlining a random index.
 
 A tower whose cadence is geometric rather than a cooldown composes a query with its own
 sweep instead of a selector — see `TowerThree` filtering by range and type through

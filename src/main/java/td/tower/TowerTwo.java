@@ -4,12 +4,15 @@ import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
+import td.tower.targeting.RandomSelector;
+import td.tower.targeting.TargetSelector;
 import td.tower.upgrade.ClusterCondition;
 import td.tower.upgrade.DamageDealtCondition;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * "Circle tower" - splash damage. Picks a random visible enemy in range, then damages
@@ -47,10 +50,12 @@ public final class TowerTwo extends AbstractTower {
     private int splashCenterX;
     private int splashCenterY;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
+    private final TargetSelector targetSelector;
 
     public TowerTwo(GameWorld context, int x, int y) {
         super(TowerFactory.type.second, price, damage, range, COOLDOWN_MAX, context, x, y);
         this.spreadRadius = spreadRadiusBase * context.getBoard().scale();
+        this.targetSelector = new RandomSelector(context.random());
     }
 
     @Override
@@ -79,9 +84,10 @@ public final class TowerTwo extends AbstractTower {
             this.coolDown--;
         } else {
             List<EnemyMob> enemies = this.findEnemiesInRangeVisible(this.centerX, this.centerY, this.rangeReal());
+            Optional<EnemyMob> picked = this.targetSelector.selectFrom(enemies);
 
-            if (!enemies.isEmpty()) {
-                this.primaryTarget = enemies.get((int) (Math.random() * enemies.size()));
+            if (picked.isPresent()) {
+                this.primaryTarget = picked.get();
                 int ex = (int) this.primaryTarget.getX();
                 int ey = (int) this.primaryTarget.getY();
                 int dx, dy, r2;

@@ -13,6 +13,7 @@ import td.wave.Point;
 import td.wave.Vec2;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,9 +58,9 @@ class BuiltInLevelCatalogEngineTest {
         int creditsBefore = engine.getGameWorld().getCredits();
 
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
-        Tower selected = engine.mouseClicked(cellCenter(curveOnlyCell.x()), cellCenter(curveOnlyCell.y()));
+        Optional<Tower> selected = engine.mouseClicked(cellCenter(curveOnlyCell.x()), cellCenter(curveOnlyCell.y()));
 
-        assertThat(selected).isNull();
+        assertThat(selected).isEmpty();
         assertThat(engine.cells().at(curveOnlyCell.x(), curveOnlyCell.y()).hasTower()).isFalse();
         assertThat(engine.getGameWorld().getCredits()).isEqualTo(creditsBefore);
     }

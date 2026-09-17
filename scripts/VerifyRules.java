@@ -58,8 +58,7 @@ public final class VerifyRules {
                         + "(td.ui frame builders are the one scoped exception)",
                 "return null\\s*;", List.of(MAIN))
                 .skippingComments()
-                .excludingPath("td/ui/")
-                .pending("TODO.md: Engine code returns null to model absence"));
+                .excludingPath("td/ui/"));
 
         rules.add(Rule.of("no-wildcard-imports", "CLAUDE.md 6",
                 "an explicit import once shadowed a real java.util.List / java.awt.List collision",

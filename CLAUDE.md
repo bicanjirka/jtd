@@ -121,6 +121,11 @@ wave composition).
 4. Where two values of a kind combine, give the type an algebra: operation, combinator, identity,
    and an absorber if one exists. See `Damage`, `TowerBuff`, `TargetQuery`.
 
+**Randomness is injected, never static.** Anything in the simulation that needs a random value
+takes a `td.util.RandomSource` — `GameWorld.random()` is where a tower gets one. `Math.random()`
+is a single unseeded global, which makes a run impossible to reproduce; `td.BalanceHarness`
+seeds its own source so two runs of the same loadout are comparable.
+
 **Stateful engine/service classes** (`GameEngine`, `GameLoop`, `GameWorld`, `EconomyLedger`, the
 rosters) are exempt from rule 1 by nature, and §3 overrides this section wherever they conflict.
 Still applies:
@@ -143,7 +148,6 @@ Still applies:
 models absence; engine and domain code returns `Optional`.
 
 > `grep -rn "return null" src/main/java --include=*.java` matches nothing outside `td/ui`.
-> (PENDING: 2 engine sites remain, see `TODO.md`.)
 
 ## 6. Conventions
 
@@ -215,10 +219,9 @@ and resets to 1 afterward: `"3 s e 4 c"` = three Squares, one spacer, four Circl
 
 `e` is the one reserved token, recognized before any catalog lookup. Every other token resolves
 against the `EnemyCatalog` identically whether it names a built-in or a per-level definition.
-An unrecognized token is an authoring error and must fail the parse.
-
-> **Current gap:** `parse` currently logs an unrecognized token at `WARN` and defaults it to a
-> repeat count of 1, silently producing a wave the author did not write. In `TODO.md`.
+An unrecognized token is an authoring error and fails the parse with a
+`GameStartupException`. Whitespace is not a token: blank entries are skipped, so a run of
+spaces between two ids parses the same as one.
 
 ## 10. Documentation map
 

@@ -40,6 +40,7 @@ public class GameWorld {
     private volatile EnemyCatalog enemyCatalog = EnemyCatalog.builtIn();
     private final GameHost mainApp;
 
+    private final RandomSource random;
     private final EconomyLedger economy = new EconomyLedger();
     private final EnemyRoster enemies;
     private final TowerRoster towers;
@@ -47,6 +48,12 @@ public class GameWorld {
     private final WaveAnnouncer waves = new WaveAnnouncer();
 
     public GameWorld(GameHost mainApp) {
+        this(mainApp, RandomSource.shared());
+    }
+
+    /** For a run that has to be reproducible - see {@code td.BalanceHarness}. */
+    public GameWorld(GameHost mainApp, RandomSource random) {
+        this.random = random;
         this.mainApp = mainApp;
         this.enemies = new EnemyRoster(mainApp);
         this.towers = new TowerRoster(mainApp, this.economy, this::getBoard);
@@ -106,6 +113,11 @@ public class GameWorld {
     /** Replaces one live enemy with another as one step - an ability's egg hatch, not a kill. See {@code EnemyRoster.replace}. */
     public void replaceEnemy(EnemyMob outgoing, EnemyMob incoming) {
         this.enemies.replace(outgoing, incoming);
+    }
+
+    /** Where anything in the simulation that needs randomness gets it - never {@code Math.random()}. */
+    public RandomSource random() {
+        return this.random;
     }
 
     public BoardGeometry getBoard() {

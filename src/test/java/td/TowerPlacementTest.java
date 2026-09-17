@@ -11,6 +11,8 @@ import td.tower.TowerOne;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
@@ -80,9 +82,9 @@ class TowerPlacementTest {
         placement.start(TowerFactory.type.first, TowerOne.range);
         placement.mouseClicked(cellCenter(0), cellCenter(0));
 
-        Tower selected = placement.mouseClicked(cellCenter(0), cellCenter(0));
+        Optional<Tower> selected = placement.mouseClicked(cellCenter(0), cellCenter(0));
 
-        assertThat(selected).isNotNull();
+        assertThat(selected).isPresent();
         assertThat(grid.at(0, 0).getHighlight()).isEqualTo(Cell.highlightType.select);
     }
 
@@ -141,9 +143,9 @@ class TowerPlacementTest {
         TowerPlacement placement = newPlacement(grid, TowerOne.price - 1);
         placement.start(TowerFactory.type.first, TowerOne.range);
 
-        Tower selected = placement.mouseClicked(cellCenter(0), cellCenter(0));
+        Optional<Tower> selected = placement.mouseClicked(cellCenter(0), cellCenter(0));
 
-        assertThat(selected).isNull();
+        assertThat(selected).isEmpty();
         assertThat(grid.at(0, 0).hasTower()).isFalse();
         assertThat(placement.isPlacing()).isFalse();
     }

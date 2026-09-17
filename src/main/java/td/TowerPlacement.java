@@ -9,6 +9,7 @@ import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.GameWorld;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -88,9 +89,10 @@ public class TowerPlacement {
     }
 
     /**
-     * @return the tower now selected by clicking its occupied cell, or null if nothing was selected
+     * @return the tower now selected by clicking its occupied cell, or empty if the click
+     * selected nothing - a placement, a rejected placement, or a click on bare board
      */
-    public Tower mouseClicked(int boardX, int boardY) {
+    public Optional<Tower> mouseClicked(int boardX, int boardY) {
         Tower selected = null;
         BoardGeometry board = this.gameWorld.getBoard();
         if (board.containsPixel(boardX, boardY)) {
@@ -125,6 +127,6 @@ public class TowerPlacement {
         if (this.placingTower) {
             this.placingTower = false;
         }
-        return selected;
+        return Optional.ofNullable(selected);
     }
 }

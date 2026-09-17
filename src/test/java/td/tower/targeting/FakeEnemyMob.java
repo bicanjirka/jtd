@@ -81,7 +81,7 @@ final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
-    public long getHealth() {
+    public int getHealth() {
         return 1;
     }
 

@@ -161,11 +161,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
             return;
         }
         this.lastText = s;
-        try {
-            this.jTextPane1.setText(s);
-        } catch (NullPointerException e) {
-            LOG.warn("Could not set tower info text", e);
-        }
+        this.jTextPane1.setText(s);
     }
 
     public void unselectTower() {

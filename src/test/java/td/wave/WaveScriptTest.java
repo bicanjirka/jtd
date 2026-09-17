@@ -6,10 +6,12 @@ import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
 import td.enemy.FixedMovement;
+import td.util.GameStartupException;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** WaveScript.parse is the wave mini-language's parser (see CLAUDE.md) - no GameWorld needed. */
 class WaveScriptTest {
@@ -55,8 +57,16 @@ class WaveScriptTest {
     }
 
     @Test
-    void unrecognizedTokenIsTreatedAsMultiplierOneAndDoesNotThrow() {
-        WaveContent content = WaveScript.parse("c ? c", this.catalog);
+    void anUnrecognizedTokenFailsTheParseRatherThanSilentlyChangingTheWave() {
+        assertThatThrownBy(() -> WaveScript.parse("c ? c", this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("'?'")
+                .hasMessageContaining("enemy catalog");
+    }
+
+    @Test
+    void repeatedSpacesBetweenTokensAreNotThemselvesTokens() {
+        WaveContent content = WaveScript.parse("c   c", this.catalog);
 
         assertThat(content.enemyCount()).isEqualTo(2);
     }

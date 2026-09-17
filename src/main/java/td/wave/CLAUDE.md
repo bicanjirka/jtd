@@ -68,9 +68,11 @@ Parsing and instantiation are deliberately separate:
   a per-level custom/cloned definition — there is no separate syntax for the two, only
   whether the id happens to be registered in the catalog passed in. `e` is the one reserved
   token (the spacer), recognized before any catalog lookup. A token this can't recognize as
-  the spacer, a registered id, or an integer repeat count is logged at `WARN` and treated as
-  a repeat count of 1 rather than failing the parse — this is what makes a green test run
-  print one stack trace (see the root `CLAUDE.md` §9).
+  the spacer, a registered id, or an integer repeat count **fails the parse** with a
+  `GameStartupException` — a wave the author did not write is content corruption, and
+  recovering from it silently produced a level that was subtly not the authored one. Blank
+  tokens are whitespace rather than content and are skipped, which is what lets `"".split(" ")`
+  and any run of spaces parse cleanly.
 - `WaveContent` is the parsed result: one `WaveSlot` per spawn slot, in order, repeat counts
   already flattened. `WaveSlot` is a closed pair - `EnemySlot(EnemyDefinition)` for a real
   enemy, `EmptySlot()` for the spacer, which keeps its slot (it counts toward spawn *timing*)
