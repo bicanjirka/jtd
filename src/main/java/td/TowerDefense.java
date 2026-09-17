@@ -21,6 +21,7 @@ import td.ui.render.AsciiBoardRenderer;
 import td.ui.render.RenderFrame;
 import td.util.GameHost;
 import td.util.GameWorld;
+import td.util.Threads;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -41,6 +42,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serial;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 // Inspired by HexTD
 /**
@@ -111,6 +115,18 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             m - back to menu""";
 
     private final GameLoop gameLoop = new GameLoop(this::doGameTick, this::buildAndPublishFrame);
+    /**
+     * Where {@link GameLoop#stop()} is called from. It joins the simulation thread without
+     * bound, so it must not run on the EDT; single-threaded so two level changes in flight
+     * cannot interleave their teardowns. See {@link #stopLoopThen}.
+     */
+    private final ExecutorService lifecycleExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "game-lifecycle");
+        t.setDaemon(true);
+        return t;
+    });
+    /** Bumped on the EDT per level change, so a superseded install drops itself. */
+    private final AtomicInteger levelGeneration = new AtomicInteger();
     private final Object gameTimeLock = new Object();
     private int gameTime;
     // The one channel simulation state takes to the EDT: built on the game-loop thread, which
@@ -137,14 +153,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private PanelTowerSelector panelTowerSelector;
     private JPanel jPanel_board;
 
-    {
-        this.setLayout(null);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setTitle(NAME);
-        this.setFocusable(true);
-        this.setVisible(true);
-    }
-
     /**
      * Reads the version baked into {@code version.properties} by Maven resource filtering
      * (see {@code pom.xml}), so the displayed/logged version always matches the pom's
@@ -161,7 +169,18 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
     }
 
+    /**
+     * Builds the whole component tree. <strong>Must run on the Event Dispatch Thread</strong>
+     * - see {@code Main}, which is why it is invoked through {@code invokeAndWait} rather than
+     * called directly. The frame is shown on the last line rather than in an initializer
+     * block, so it is never realized before the components it contains exist.
+     */
     public TowerDefense() {
+        Threads.assertEventDispatchThread("TowerDefense construction");
+        this.setLayout(null);
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setTitle(NAME);
+        this.setFocusable(true);
         this.engine = new GameEngine(this);
         this.gameWorld = this.engine.getGameWorld();
         this.boardRenderer = new BoardRenderer(this.engine, this.gameWorld.enemies(),
@@ -193,6 +212,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         // card gets its own size from recalculateBoard() once a level is actually loaded.
         this.setSize(MENU_WIDTH, MENU_HEIGHT);
         this.setLocationRelativeTo(null);
+        this.setVisible(true);
     }
 
     /**
@@ -266,15 +286,45 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      * and rebuilds it rather than leaving two loops ticking one engine.
      */
     private void startSelectedLevel(LevelDefinition level) {
-        this.gameLoop.stop();
+        this.stopLoopThen(() -> this.installLevel(level));
+    }
+
+    /**
+     * The two-step every level lifecycle change goes through: stop the loop off the EDT, then
+     * do the EDT-side work once it has actually stopped.
+     * <p>
+     * {@link GameLoop#stop()} joins the simulation thread without bound, so calling it from
+     * the EDT would freeze the UI for as long as a wedged tick ran - it asserts against that.
+     * It therefore runs on {@link #lifecycleExecutor}, and {@code installOnEdt} is posted back
+     * afterwards. That hop is what makes a level change asynchronous, and asynchronous means a
+     * second request can arrive while the first is still in flight: {@link #levelGeneration}
+     * is bumped synchronously here, on the EDT, so an install posted for a superseded request
+     * finds a newer generation and drops itself rather than loading a level on top of a loop
+     * the newer request already restarted.
+     */
+    private void stopLoopThen(Runnable installOnEdt) {
+        Threads.assertEventDispatchThread("Level lifecycle change");
+        int generation = this.levelGeneration.incrementAndGet();
         this.levelLoaded = false;
+        this.lifecycleExecutor.execute(() -> {
+            this.gameLoop.stop();
+            SwingUtilities.invokeLater(() -> {
+                if (this.levelGeneration.get() == generation) {
+                    installOnEdt.run();
+                }
+            });
+        });
+    }
+
+    /** The EDT half of {@link #startSelectedLevel}, run once the loop has stopped. */
+    private void installLevel(LevelDefinition level) {
         this.setGameStopped(false);
         this.boardOverlays.reset();
         this.unSelectTower();
         this.panelTowerSelector.stopPlacing();
-        // The loop is stopped and joined above, so no frame can be published between here and
-        // the new level's first pulse - this just makes sure the outgoing level's last frame
-        // is not what gets painted in the meantime.
+        // stopLoopThen has already joined the loop, so no frame can be published between here
+        // and the new level's first pulse - this just makes sure the outgoing level's last
+        // frame is not what gets painted in the meantime.
         this.latestFrame = null;
         this.engine.loadLevel(level);
         this.contentCardLayout.show(getContentPane(), CARD_GAME);
@@ -313,8 +363,11 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      * selections a level in progress leaves behind.
      */
     private void returnToMenu() {
-        this.gameLoop.stop();
-        this.levelLoaded = false;
+        this.stopLoopThen(this::showMenu);
+    }
+
+    /** The EDT half of {@link #returnToMenu}, run once the loop has stopped. */
+    private void showMenu() {
         this.setSpeed(TickSpeed.PAUSED);
         this.boardOverlays.reset();
         this.unSelectTower();

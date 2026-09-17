@@ -37,7 +37,10 @@ public class Driver {
 
     public static void main(String[] args) throws Exception {
         robot = new Robot();
-        game = new TowerDefense();
+        // On the EDT, exactly as td.Main does it: TowerDefense builds its whole component tree
+        // in its constructor, and Swing requires that on the Event Dispatch Thread. It asserts
+        // as much, so constructing it on this thread fails outright.
+        onEventDispatchThread(() -> game = new TowerDefense());
         // In-process bring-to-front: the app raising its own window. Doing this from a
         // *separate* process via Win32 SetForegroundWindow silently no-ops (Windows
         // foreground-lock) and risks screenshotting whatever unrelated window is actually
@@ -297,8 +300,12 @@ public class Driver {
 
         Method startSelectedLevel = TowerDefense.class.getDeclaredMethod("startSelectedLevel", LevelDefinition.class);
         startSelectedLevel.setAccessible(true);
-        startSelectedLevel.invoke(game, level);
-        System.out.println("OK level " + index + " (" + level.name() + ")");
+        // On the EDT, because that is where a real level-card click would call it from, and
+        // TowerDefense now asserts it. The call only *starts* the change: the loop is stopped
+        // on a lifecycle thread and the level installed on a later EDT pulse, so follow this
+        // with `sleep` before screenshotting or asserting on `state`.
+        onEventDispatchThread(() -> startSelectedLevel.invoke(game, level));
+        System.out.println("OK level " + index + " (" + level.name() + ") - asynchronous, sleep before asserting");
     }
 
     // Reflects into TowerDefense's private returnToMenu() directly rather than
@@ -308,8 +315,35 @@ public class Driver {
     private static void returnToMenu() throws Exception {
         Method method = TowerDefense.class.getDeclaredMethod("returnToMenu");
         method.setAccessible(true);
-        method.invoke(game);
-        System.out.println("OK menu");
+        // EDT, and asynchronous, for the same reasons as selectLevel above.
+        onEventDispatchThread(() -> method.invoke(game));
+        System.out.println("OK menu - asynchronous, sleep before asserting");
+    }
+
+    /**
+     * Runs a reflective call on the Event Dispatch Thread and rethrows whatever it threw, so a
+     * TowerDefense method that asserts EDT ownership can be driven from this stdin loop. The
+     * driver's own thread is not the EDT, and calling these directly is what the assertion in
+     * TowerDefense.stopLoopThen exists to catch.
+     */
+    private static void onEventDispatchThread(ReflectiveCall call) throws Exception {
+        java.util.concurrent.atomic.AtomicReference<Exception> failure =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        javax.swing.SwingUtilities.invokeAndWait(() -> {
+            try {
+                call.run();
+            } catch (Exception e) {
+                failure.set(e);
+            }
+        });
+        if (failure.get() != null) {
+            throw failure.get();
+        }
+    }
+
+    /** A reflective invocation, which unlike Runnable is allowed to throw. */
+    private interface ReflectiveCall {
+        void run() throws Exception;
     }
 
     // Playtesting cheats: jump straight to an economy value instead of buying/selling towers
