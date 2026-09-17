@@ -212,8 +212,9 @@ not a per-change preference.
 ## 9. Wave mini-language
 
 `WaveScript.parse(tokens, catalog)` turns a space-separated token string into a `WaveContent` —
-an ordered, `GameWorld`-free slot list with repeat counts flattened. `Wave`'s constructor then
-does only the world-bound instantiation.
+an ordered, `GameWorld`-free slot list with repeat counts flattened. `Wave` holds that content
+and does the world-bound instantiation in `spawn()`, called when the wave starts — never in its
+constructor, which is what lets a level install in one write (§3, `LoadedLevel`).
 
 - A count applies to the token immediately following it and resets to 1 afterward:
   `"3 s e 4 c"` = three Squares, one spacer, four Circles.

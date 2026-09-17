@@ -91,9 +91,20 @@ Parsing and instantiation are deliberately separate:
   already flattened. `WaveSlot` is a closed pair - `EnemySlot(EnemyDefinition)` for a real
   enemy, `EmptySlot()` for the spacer, which keeps its slot (it counts toward spawn *timing*)
   but is excluded from `enemyCount()`/`enemySet()`.
-- `Wave` takes that content and does only the world-bound instantiation, one `EnemyMob` per
-  slot (a `DefinedEnemyMob` for an `EnemySlot`, an `EnemyMobEmpty` for an `EmptySlot`), with
-  delay equal to the slot's index.
+- `Wave` holds that content and does the world-bound instantiation in `spawn()`, **not in its
+  constructor** — one `EnemyMob` per slot (a `DefinedEnemyMob` for an `EnemySlot`, an
+  `EnemyMobEmpty` for an `EmptySlot`), with delay equal to the slot's index. `spawn()` is a
+  factory: each call builds a fresh set bound to the path installed at that moment, so calling
+  it twice puts two copies of the wave on the board. `enemyCount()`/`enemySet()` come from the
+  content and need no spawn, which is what lets the preview panel describe a wave before it runs.
+- **Deferring the spawn is what makes a level load one atomic publication.** An `EnemyMob` binds
+  to `GameWorld`'s installed path when it is built, so spawning in the constructor forced
+  `GameEngine.loadLevel` to install the path before building the waves — two writes where
+  `LoadedLevel` needs one. See `td.util.LoadedLevel`.
+- `WaveProgress` is how a caller reads the wave index and the wave count together. They are
+  correlated (the index counts into the list the count measures), so `GameEngine.waveProgress()`
+  builds one from a single `LoadedLevel` snapshot; combining `getCurrentWaveIndex()` with
+  `getWaveCount()` is two reads and can straddle a level change.
 
 The token grammar itself is documented in the root `CLAUDE.md` §9. `GameEngine.loadLevel`
 builds one `EnemyCatalog.builtIn()` per level load and passes it to every wave's `parse`

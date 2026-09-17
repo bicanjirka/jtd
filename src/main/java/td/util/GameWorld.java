@@ -1,17 +1,15 @@
 package td.util;
 
 import td.board.BoardGeometry;
+import td.cell.CellGrid;
 import td.economy.EconomyLedger;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyRoster;
 import td.projectile.ProjectileRoster;
 import td.tower.TowerRoster;
 import td.wave.Path;
-import td.wave.PathNormal;
 import td.wave.Wave;
 import td.wave.WaveAnnouncer;
-
-import java.util.List;
 
 /**
  * The composition root wiring a level's economy, enemy roster, tower roster, projectile
@@ -25,20 +23,19 @@ import java.util.List;
  * the collaborator at the call site makes that visible, and each collaborator is
  * independently constructible and testable on its own.
  * <p>
- * It is <em>not</em> a pure composition root. Four things are its own state rather than a
- * collaborator's: the {@link BoardGeometry}, the {@link Path}, the {@link EnemyCatalog} and
- * the {@link RandomSource}. The first three are level-scoped values replaced wholesale on
- * load; see the field comments for why they are {@code volatile}. If you add state here, say
- * so here.
+ * It is <em>not</em> a pure composition root. Two things are its own state rather than a
+ * collaborator's: the {@link LoadedLevel} currently installed and the {@link RandomSource}.
+ * The level is a correlated bundle - board, path, cell grid, enemy catalog, waves - published
+ * through a single {@code volatile}, never field by field. If you add state here, say so here.
  */
 public class GameWorld {
 
-    // Level-scoped state GameWorld owns directly rather than delegating. All three are
-    // immutable values replaced wholesale when a level loads (on the EDT) and read every tick
-    // (on the game-loop thread), so they are published volatile. See CLAUDE.md 3.
-    private volatile BoardGeometry board = BoardGeometry.empty();
-    private volatile Path path;
-    private volatile EnemyCatalog enemyCatalog = EnemyCatalog.builtIn();
+    // The level-scoped state GameWorld owns directly rather than delegating, as ONE immutable
+    // value behind ONE volatile: the board, path, cell grid, enemy catalog and wave list are
+    // correlated, and publishing them independently let the game-loop thread pair a board from
+    // the incoming level with a cell grid from the outgoing one. See LoadedLevel and
+    // CLAUDE.md 3 rule 1.
+    private volatile LoadedLevel level = LoadedLevel.none();
 
     private final GameHost mainApp;
     private final RandomSource random;
@@ -58,7 +55,6 @@ public class GameWorld {
         this.mainApp = mainApp;
         this.enemies = new EnemyRoster(mainApp);
         this.towers = new TowerRoster(mainApp, this.economy, this::getBoard);
-        this.path = new PathNormal(List.of());
     }
 
     /** The player's credits, score and lives. */
@@ -101,28 +97,63 @@ public class GameWorld {
         this.waves.announce();
     }
 
-    public BoardGeometry getBoard() {
-        return this.board;
+    /**
+     * The level currently installed, as one consistent snapshot. <strong>A caller that needs
+     * two of its parts together must read it once and use that value</strong> - calling
+     * {@link #getBoard()} and then {@link #getPath()} is two reads of the volatile and can
+     * straddle a level change.
+     */
+    public LoadedLevel level() {
+        return this.level;
     }
 
-    public void setBoard(BoardGeometry board) {
-        this.board = board;
+    /**
+     * Installs a level as one atomic publication. The production path -
+     * {@code GameEngine.loadLevel} builds the whole {@link LoadedLevel} and hands it over here
+     * in a single write, so no reader can see a half-installed level.
+     */
+    public void installLevel(LoadedLevel level) {
+        this.level = level;
+    }
+
+    /** The installed level's board of cells - {@link CellGrid#empty()} when none is. */
+    public CellGrid cells() {
+        return this.level.cells();
+    }
+
+    public BoardGeometry getBoard() {
+        return this.level.board();
     }
 
     public Path getPath() {
-        return this.path;
-    }
-
-    public void setPath(Path path) {
-        this.path = path;
+        return this.level.path();
     }
 
     public EnemyCatalog getEnemyCatalog() {
-        return this.enemyCatalog;
+        return this.level.catalog();
     }
 
+    /**
+     * Replaces one part of the installed level.
+     * <p>
+     * <strong>For single-threaded worlds only</strong> - a test building a world up piece by
+     * piece, or {@code td.ui.PanelEnemy}'s display-only world, which repositions its preview
+     * mobs by swapping a one-point path. Each is a read-modify-write of {@link #level}, which
+     * is safe precisely because nothing else is touching that world. The world the simulation
+     * runs in installs a level through {@link #installLevel} instead, in one write.
+     */
+    public void setBoard(BoardGeometry board) {
+        this.level = this.level.withBoard(board);
+    }
+
+    /** Replaces one part of the installed level - see {@link #setBoard}. */
+    public void setPath(Path path) {
+        this.level = this.level.withPath(path);
+    }
+
+    /** Replaces one part of the installed level - see {@link #setBoard}. */
     public void setEnemyCatalog(EnemyCatalog enemyCatalog) {
-        this.enemyCatalog = enemyCatalog;
+        this.level = this.level.withCatalog(enemyCatalog);
     }
 
     public void setInfoText(String s) {

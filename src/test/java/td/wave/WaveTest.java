@@ -3,6 +3,7 @@ package td.wave;
 import org.junit.jupiter.api.Test;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
+import td.enemy.EnemyMob;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
@@ -20,10 +21,24 @@ class WaveTest {
     private final EnemyCatalog catalog = EnemyCatalog.builtIn();
 
     @Test
+    void spawningTwiceProducesTwoIndependentSetsOfEnemies() {
+        // spawn() is a factory, not an accessor: it binds fresh mobs to the path installed at
+        // the moment it is called, which is what lets a level be published in one write.
+        Wave wave = new Wave(this.context, 100, 5, 1, WaveScript.parse("c c", this.catalog));
+
+        EnemyMob[] first = wave.spawn();
+        EnemyMob[] second = wave.spawn();
+
+        assertThat(first).hasSize(2);
+        assertThat(second).hasSize(2);
+        assertThat(first[0]).isNotSameAs(second[0]);
+    }
+
+    @Test
     void oneEnemyMobIsSpawnedPerSpawnSlotIncludingEmpties() {
         Wave wave = new Wave(this.context, 100, 5, 1, WaveScript.parse("c e c", this.catalog));
 
-        assertThat(wave.getEnemies()).hasSize(3);
+        assertThat(wave.spawn()).hasSize(3);
         assertThat(wave.enemyCount()).isEqualTo(2);
     }
 

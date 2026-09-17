@@ -22,6 +22,7 @@ import td.ui.render.RenderFrame;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.Threads;
+import td.wave.WaveProgress;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -127,8 +128,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     });
     /** Bumped on the EDT per level change, so a superseded install drops itself. */
     private final AtomicInteger levelGeneration = new AtomicInteger();
-    private final Object gameTimeLock = new Object();
-    private int gameTime;
+    // Incremented only by doGameTick on the game-loop thread, and read on the EDT by the
+    // render pulse. It is reset to 0 by installLevel on the EDT, which is safe because
+    // stopLoopThen has already joined the loop by then - there is never a second writer live
+    // at the same time, so an independent volatile scalar is the whole requirement and the
+    // lock this used to be guarded by is gone. See CLAUDE.md 3 rule 2.
+    private volatile int gameTime;
     // The one channel simulation state takes to the EDT: built on the game-loop thread, which
     // owns that state, and read by paintBoard() on the EDT. Immutable, so publishing the
     // reference through this volatile publishes everything reachable from it. See CLAUDE.md 3.
@@ -140,12 +145,16 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     // Single source of truth for both the tick speed and pause state (TickSpeed.PAUSED);
     // EDT-only, since it's only ever touched from button/key listeners.
     private TickSpeed currentSpeed = TickSpeed.NORMAL;
-    private boolean gameStopped = false;
+    // Set from the game-loop thread (gameLost/gameWon are reached from a tick) and from the
+    // EDT (starting a level), and read on both. Volatile, not plain: this decides whether input
+    // is refused and whether an ending has already been announced.
+    private volatile boolean gameStopped = false;
     // Guards input and the game loop against firing before a level has finished loading (the
     // JFrame-level KeyListener is live the instant the frame is shown, well before any level
-    // and its cellGrid exists) or after returnToMenu() has torn one down. Cleared at the start
-    // of startSelectedLevel()/returnToMenu() and set again once startSelectedLevel() finishes.
-    private boolean levelLoaded = false;
+    // and its cellGrid exists) or after returnToMenu() has torn one down. Cleared by
+    // stopLoopThen on the EDT and set again once installLevel finishes; volatile because
+    // doGameTick reads it from the game-loop thread.
+    private volatile boolean levelLoaded = false;
 
     private CardLayout contentCardLayout;
     private JPanel jPanel_game;
@@ -227,10 +236,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (this.gameStopped) {
             return;
         }
-        int time;
-        synchronized (this.gameTimeLock) {
-            time = ++this.gameTime;
-        }
+        int time = ++this.gameTime;
         this.doTick(time);
         // Off by default (see Logging in CLAUDE.md); the isDebugEnabled() guard skips
         // building a frame for this every tick when it is. Alpha 0 - a tick-boundary
@@ -252,10 +258,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      * board and click towers to read their stats, and both need the board to keep painting.
      */
     private void buildAndPublishFrame() {
-        int time;
-        synchronized (this.gameTimeLock) {
-            time = this.gameTime;
-        }
+        int time = this.gameTime;
         this.latestFrame = this.boardRenderer.buildFrame(time,
                 this.gameLoop.tickInterpolationAlpha(), this.gameLoop.animationSeconds());
         SwingUtilities.invokeLater(this::repaintPublishedFrame);
@@ -268,6 +271,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      */
     private void repaintPublishedFrame() {
         this.gameConsole.getTowerInfo().refreshSelected();
+        // The wave-preview panels animate their own display-only mobs. This used to be driven
+        // straight from doTick on the game-loop thread, which touched Swing from tick code and
+        // wrote PanelEnemy's clock across a thread boundary. Driving it from the render pulse
+        // instead keeps it on the EDT and, being cosmetic, it belongs on the render cadence
+        // rather than the simulation's anyway.
+        this.gameConsole.getWaveInfo().doTick(this.gameTime);
         if (!this.painting) {
             // The container, not the board component: the win/lose overlay is a sibling
             // stacked on top of the board, and a JPanel claims its children never overlap.
@@ -331,9 +340,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.gameBoard.recalculateBoard(level.width(), level.height());
         this.setLocationRelativeTo(null);
         this.startLevel();
-        synchronized (this.gameTimeLock) {
-            this.gameTime = 0;
-        }
+        this.gameTime = 0;
         this.levelLoaded = true;
         this.setSpeed(TickSpeed.NORMAL);
         this.gameLoop.start();
@@ -406,8 +413,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      * invokeLater; engine-state changes are not, since they aren't Swing calls.
      */
     public void enemyDied(int enemiesLeft) {
-        if (enemiesLeft == 0 && this.engine.getCurrentWaveIndex() < this.engine.getWaveCount()) {
-            LOG.info("Wave {} cleared, ready for the next one", this.engine.getCurrentWaveIndex());
+        WaveProgress progress = this.engine.waveProgress();
+        if (enemiesLeft == 0 && progress.hasNextWave()) {
+            LOG.info("Wave {} cleared, ready for the next one", progress.currentNumber());
             this.engine.setWaveReady(true);
             SwingUtilities.invokeLater(this::syncTransportButtons);
         } else if (enemiesLeft == 0) {
@@ -416,14 +424,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     private void setWavePreview() {
+        WaveProgress progress = this.engine.waveProgress();
         this.gameConsole.getWaveInfo().clearWaves();
-        int wave = this.engine.getCurrentWaveIndex();
-        if (wave - 1 >= 0) {
-            this.gameConsole.getWaveInfo().setWaveCur(wave, this.engine.getWaveAt(wave - 1));
-        }
-        if (wave < this.engine.getWaveCount()) {
-            this.gameConsole.getWaveInfo().setWaveNext(wave + 1, this.engine.getWaveAt(wave));
-        }
+        progress.current().ifPresent(w -> this.gameConsole.getWaveInfo().setWaveCur(progress.currentNumber(), w));
+        progress.next().ifPresent(w -> this.gameConsole.getWaveInfo().setWaveNext(progress.nextNumber(), w));
     }
 
     private void nextWave() {
@@ -443,7 +447,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     private void updateInfo() {
-        this.gameConsole.setWaveProgress(this.engine.getCurrentWaveIndex(), this.engine.getWaveCount());
+        WaveProgress progress = this.engine.waveProgress();
+        this.gameConsole.setWaveProgress(progress.index(), progress.count());
     }
 
     /** Also reachable from the game-loop thread - see enemyDied(). */
@@ -502,7 +507,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
                 this.syncTransportButtons();
             });
         }
-        this.gameConsole.getWaveInfo().doTick(time);
     }
 
     /**

@@ -7,8 +7,10 @@ import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerMortar;
 import td.tower.TowerOne;
+import td.util.LoadedLevel;
 import td.wave.Point;
 import td.wave.WaveDefinition;
+import td.wave.WaveProgress;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +37,73 @@ class GameEngineTest {
 
     private static LevelDefinition biggerLevelWith(List<WaveDefinition> waves, int startingCredits) {
         return LevelDefinition.unsmoothed("Bigger Level", "", 20, 15, STRAIGHT_PATH, waves, startingCredits, 5);
+    }
+
+    @Test
+    void loadingALevelReplacesEveryPartOfTheWorldInOneVisibleStep() {
+        // The five parts of a level are correlated: the wave counter indexes the wave list,
+        // the board describes the same grid the cells lay out, and the path is what marked
+        // those cells unbuildable. They cross to the game-loop thread as one LoadedLevel, so a
+        // reader can never pair the incoming board with the outgoing grid.
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
+        engine.nextWave();
+
+        engine.loadLevel(biggerLevelWith(List.of(), 50));
+
+        LoadedLevel installed = engine.getGameWorld().level();
+        assertThat(installed.cells().width()).isEqualTo(20);
+        assertThat(installed.board().maxX()).isEqualTo(20 * SCALE - 1);
+        assertThat(installed.waveCount()).isZero();
+        assertThat(installed.path().points()).isNotEmpty();
+        assertThat(engine.getCurrentWaveIndex()).isZero();
+    }
+
+    @Test
+    void waveProgressReportsAnIndexAndCountThatBelongToTheSameLevel() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(
+                new WaveDefinition("c", 100, 3, 1),
+                new WaveDefinition("s", 120, 4, 1)), 100));
+
+        engine.nextWave();
+
+        WaveProgress progress = engine.waveProgress();
+        assertThat(progress.index()).isEqualTo(1);
+        assertThat(progress.count()).isEqualTo(2);
+        assertThat(progress.hasNextWave()).isTrue();
+        assertThat(progress.current()).isPresent();
+        assertThat(progress.next()).isPresent();
+    }
+
+    @Test
+    void waveProgressOnTheLastWaveOffersNoNextWave() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
+
+        engine.nextWave();
+
+        WaveProgress progress = engine.waveProgress();
+        assertThat(progress.hasNextWave()).isFalse();
+        assertThat(progress.next()).isEmpty();
+        assertThat(progress.current()).isPresent();
+    }
+
+    @Test
+    void waveProgressSurvivesALevelWithFewerWavesThanTheOneBeforeIt() {
+        // The wave counter is per-run progress, not level state, so for a moment it can name a
+        // wave the newly installed level does not have. Reporting the incoming level beats
+        // indexing off the end of its shorter list.
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(levelWith(List.of(
+                new WaveDefinition("c", 100, 3, 1),
+                new WaveDefinition("s", 120, 4, 1)), 100));
+        engine.nextWave();
+
+        engine.getGameWorld().installLevel(engine.getGameWorld().level().withCatalog(
+                engine.getGameWorld().getEnemyCatalog()));
+
+        assertThatCode(engine::waveProgress).doesNotThrowAnyException();
     }
 
     @Test
