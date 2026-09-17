@@ -55,8 +55,9 @@ to describe without AWT, the change is in the wrong place. `Panel*` components m
 
 ## 3. Threading
 
-`GameLoop` runs the simulation on a daemon thread named `game-loop`. Rendering happens on the
-Event Dispatch Thread. **Tick code never runs on the EDT.**
+`GameLoop` runs the simulation *and* the frame build on a daemon thread named `game-loop`;
+only the painting of an already-built frame happens on the Event Dispatch Thread. **Tick code
+never runs on the EDT, and the EDT never walks domain objects.**
 
 **The rule: the thread that owns mutable state publishes it; the other thread reads only what
 was published.** A concurrent collection makes the *collection* safe, not its contents.
@@ -187,7 +188,7 @@ JUnit 5 + AssertJ. `assertThat(...)`, never JUnit's bare assertions.
   explicit tick numbers. Never rely on the real loop's timing or open a window.
 - Arrange / act / assert separated by blank lines — no `// given` comments, no `@Nested`.
 - Test doubles live beside the tests they serve, named for their role: `FakeGameHost`,
-  `RecordingGameHost`, `RecordingCell`.
+  `RecordingGameHost`, `FakeEnemyMob`, `RecordingEnemyMob`.
 - `GameEngineTest` is the integration surface, exercising the same entry points `TowerDefense`'s
   listeners call. New gameplay rules should be provable there.
 
@@ -245,6 +246,12 @@ with the grammar, and this file changes only when an invariant does.
    `docs/ARCHITECTURE.md` or the commit message.
 3. *Does it name content rather than structure?* A list of enemies, towers or levels grows
    with the game and belongs in the owning package's doc or `README.md`.
+
+Every backticked type name in a `CLAUDE.md` must be a real source file — the drift that
+survived three manual reviews was a doc citing classes deleted long before.
+
+> `docs-name-real-types` in `scripts/VerifyRules.java`. `docs/ARCHITECTURE.md` is exempt: its
+> job is history, so naming a class that no longer exists is correct there.
 
 **Adding a feature should normally change no line of this file** — if it does, the feature
 introduced a genuinely new invariant, which is exactly when it should. A refactor that moves a

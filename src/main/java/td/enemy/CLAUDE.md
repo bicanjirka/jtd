@@ -56,10 +56,9 @@ moment something registers one (see `WaveScriptTest`'s
 
 ## Traits, abilities, and level-scaling
 
-A `Trait` is a passive, always-on modifier: `onHit` (resistance, generalizing what used to be
-`EnemyMobSquare`'s hardcoded `absorb` override), `speedFactor` (a hurt-speed curve,
-generalizing what used to be `EnemyMobTriangle`'s), `isValidTarget` (see the gotcha below —
-**not** what makes Ghost invisible). `PercentResistTrait`/`HurtSpeedTrait`/`FlatResistTrait`
+A `Trait` is a passive, always-on modifier: `onHit` (resistance, folded in sequence by
+`DefinedEnemyMob.absorb`), `speedFactor` (a hurt-speed curve applied to `baseSpeed`),
+`isValidTarget` (see the gotcha below — **not** what makes Ghost invisible). `PercentResistTrait`/`HurtSpeedTrait`/`FlatResistTrait`
 are the three built-in implementations, reused (not subclassed) by `BuiltInEnemies.SQUARE`/
 `TRIANGLE`/the Warden stages - `FlatResistTrait` is deliberately a *flat per-hit* reduction,
 not a depleting shield pool, since a pool that's "used up" over one mob's lifetime needs
