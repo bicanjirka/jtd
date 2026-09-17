@@ -27,7 +27,7 @@ import java.util.Optional;
 final class PathMarkerFrameBuilder {
 
     // 50% of a baseline enemy's on-screen pace at TickSpeed.NORMAL: a mob advances
-    // speedBase / 1000 = 0.04 of one cell per tick (AbstractEnemyMob.speedBase), and NORMAL
+    // AbstractEnemyMob.DEFAULT_SPEED of 1.28px = 0.04 of one 32px cell per tick, and NORMAL
     // runs 1e9 / BASE_TICK_NANOS = 20 ticks/s (GameLoop), giving 0.8 cell/s; half of that is
     // 0.4. Kept as its own named constant rather than reaching into those classes - a
     // decorative overlay should not couple itself to simulation internals - and is a fixed

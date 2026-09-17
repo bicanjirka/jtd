@@ -3,7 +3,7 @@ package td.enemy;
 /**
  * Accelerates as the mob takes damage, from its intrinsic base speed at full health up to a
  * level-scaled maximum as it nears death - the migrated Triangle's hurt curve. The maximum is
- * {@code speedBase * (multiplierBase + multiplierPerLevel * level)}; {@link #speedFactor}
+ * {@code baseSpeed * (multiplierBase + multiplierPerLevel * level)}; {@link #speedFactor}
  * returns the multiplier on intrinsic speed for the current health fraction, recomputed fresh
  * on every hit rather than accumulated, so it can never drift.
  */

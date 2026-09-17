@@ -27,18 +27,14 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
     private int ticksSinceLastHit;
 
     public DefinedEnemyMob(EnemyDefinition definition, GameWorld gameWorld, int delay, int health, int price, int level) {
-        super();
+        // The wave's base health is this definition's to scale: a tougher archetype divides it
+        // down. Done in the super call rather than a second init step, so bodyScale below is
+        // the only thing left to compute and nothing observes a half-built mob.
+        super(gameWorld, definition.mobType(), definition.baseSpeed(), delay,
+                Math.round(health / definition.healthDivisor()), price, level);
         this.definition = definition;
         this.abilityStates = definition.abilities().stream().map(a -> AbilityState.forTrigger(a.trigger())).toList();
-        this.type = definition.mobType();
-        this.speed = definition.baseSpeed();
-        this.doInit(gameWorld, delay, health, price, level);
-    }
-
-    @Override
-    protected void doInit(GameWorld gameWorld, int delay, int health, int price, int level) {
-        super.doInit(gameWorld, delay, Math.round(health / this.definition.healthDivisor()), price, level);
-        this.bodyScale = bodyScaleFor(this.definition.archetype(), this.gameWorld.getBoard().scale(), this.level);
+        this.bodyScale = bodyScaleFor(definition.archetype(), gameWorld.getBoard().scale(), level);
     }
 
     private static float bodyScaleFor(BodyArchetype archetype, int scale, int level) {
@@ -139,7 +135,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         for (Trait trait : this.definition.traits()) {
             factor *= trait.speedFactor(context);
         }
-        this.speed = this.definition.baseSpeed() * factor;
+        this.setSpeed(this.definition.baseSpeed() * factor);
         return landed;
     }
 

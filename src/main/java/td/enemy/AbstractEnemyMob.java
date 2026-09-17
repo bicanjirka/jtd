@@ -25,6 +25,17 @@ import java.util.Set;
  * or diagonal path moves a mob at the same real-world pace a straight one does. Reaching the
  * end wraps back to the start and charges the player a {@link EconomyDelta#leak} - a mob is
  * never removed from the roster by walking, only by dying.
+ * <p>
+ * <strong>Everything a mob is born with is set by this constructor and is {@code final}.</strong>
+ * A mob used to be built in two phases - an empty constructor, then a {@code doInit} a leaf had
+ * to remember to call last - which left the whole object mutable and visible half-built. The
+ * compiler enforces the ordering now, the same way it does for {@code td.tower.AbstractTower}.
+ * <p>
+ * Everything that remains mutable is per-tick simulation state, and it is {@code private}: a
+ * mob is owned by the {@code game-loop} thread and published to that thread by the
+ * {@code CopyOnWriteArrayList} it is added to. Fourteen {@code protected} mutable fields meant
+ * no invariant here could survive a subclass; a leaf now reaches state through the accessors
+ * below. See CLAUDE.md 3 and 5.
  */
 public abstract class AbstractEnemyMob implements EnemyMob {
 
@@ -36,64 +47,76 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      */
     private static final int HEALTH_UNITS_PER_POINT = 100;
 
-    protected Type type;
-    protected boolean inactive = true;
-    protected boolean validTarget = false;
-    protected boolean dead = false;
-    protected int price;
-    protected int level;
-    protected double x, y;
-    private double prevX, prevY;
-    // Pixels per tick. Rescaled from the old fixed-point model (speed=40 meant "40/1000 of the
-    // current segment per tick", which - since every segment was exactly one 32px cell - worked
-    // out to 40/1000*32 = 1.28 px/tick), so every enemy's actual speed is unchanged; only the
-    // unit it is expressed in is.
-    protected float speed = 1.28f;
-    protected float speedMax = 1.28f;
-    protected final float speedBase = 1.28f;
+    /**
+     * Pixels per tick for a mob whose definition names no speed of its own. Rescaled from the
+     * old fixed-point model (speed=40 meant "40/1000 of the current segment per tick", which -
+     * since every segment was exactly one 32px cell - worked out to 40/1000*32 = 1.28 px/tick),
+     * so every enemy's actual speed is unchanged; only the unit it is expressed in is.
+     */
+    public static final float DEFAULT_SPEED = 1.28f;
+
+    /** How many ticks of spawn delay one slot of wave ordering is worth, at DEFAULT_SPEED. */
+    private static final float DELAY_TICKS_PER_SLOT = 22.4f;
+
+    // Injected collaborators and the constants a mob is born with. All final, all set below.
+    protected final GameWorld gameWorld;
+    protected final int level;
+    private final Type type;
+    private final int price;
+    private final int healthMax;
     private final ActiveEffects activeEffects = new ActiveEffects();
-    protected int health;
-    protected int healthMax;
-    protected GameWorld gameWorld;
+    /**
+     * The path this mob measures its progress along, empty for a degenerate path - fewer than
+     * two points, as a world has before any level is installed. An empty one has nothing to
+     * measure distance along, so the mob holds at {@link #stationaryPosition} instead of moving.
+     */
+    private final Optional<ArcLengthPath> arcLengthPath;
+    private final Vec2 stationaryPosition;
+
+    // Per-tick simulation state, owned by the game-loop thread. Private: a leaf that needs one
+    // of these goes through an accessor, so this class can hold an invariant over them.
+    private int health;
+    private boolean inactive = true;
+    private boolean validTarget = false;
+    private boolean dead = false;
+    private float speed;
+    private double x;
+    private double y;
+    private double prevX;
+    private double prevY;
     private int delay;
     private int deathTick = -1;
-    private ArcLengthPath arcLengthPath;
-    private Vec2 stationaryPosition;
     private double distanceIntoLap = 0;
     private double lastFacingRadians = 0;
 
-
-    public AbstractEnemyMob() {
-        this.type = EnemyMob.Type.Normal;
-    }
-
     /**
-     * Binds this mob to a world and a starting position on its path. A subclass overriding
-     * this must call {@code super.doInit} first - anything derived from the board scale or
-     * from {@code level} (a body scale, a speed curve) reads fields this sets. {@code delay}
-     * is the mob's slot index within its wave, converted here into a tick countdown before it
-     * becomes active and targetable.
+     * Binds this mob to a world, its type and speed, and a starting position on its path.
+     * <p>
+     * A leaf passes its own constants straight through - there is no second initialization
+     * step to remember, and no window in which a half-built mob is reachable. Anything a leaf
+     * derives from the board scale or from {@code level} (a body scale, a speed curve) it
+     * computes after this returns, by which point every field here is set.
+     *
+     * @param delay  this mob's slot index within its wave, converted here into a tick countdown
+     *               before it becomes active and targetable
+     * @param health in whole points; stored internally in hundredths
      */
-    protected void doInit(GameWorld gameWorld, int delay, int health, int price, int level) {
+    protected AbstractEnemyMob(GameWorld gameWorld, Type type, float speed,
+                               int delay, int health, int price, int level) {
         this.gameWorld = gameWorld;
+        this.type = type;
+        this.speed = speed;
         this.price = price;
         this.level = level;
         this.health = health * HEALTH_UNITS_PER_POINT;
         this.healthMax = health * HEALTH_UNITS_PER_POINT;
-        Optional<ArcLengthPath> arcLength = ArcLengthPath.of(this.gameWorld.getPath());
-        this.arcLengthPath = arcLength.orElse(null);
-        // A degenerate path (fewer than two points - e.g. an empty placeholder GameWorld has
-        // before any level loads) has nothing to measure distance along - hold at its one
-        // available point (or the origin, if it has none at all) rather than move at all.
-        List<Vec2> pathPoints = this.gameWorld.getPath().points();
+        this.arcLengthPath = ArcLengthPath.of(gameWorld.getPath());
+        List<Vec2> pathPoints = gameWorld.getPath().points();
         this.stationaryPosition = pathPoints.isEmpty() ? new Vec2(0, 0) : pathPoints.getFirst();
-        this.distanceIntoLap = 0;
-        this.x = 0;
-        this.y = 0;
         // Rescaled the same way speed was (700f -> 700f*0.032 = 22.4f) so spawn timing is
         // unchanged now that speed is a direct px/tick value rather than a 0-999-per-segment
         // fixed-point unit.
-        this.delay = Math.round(22.4f * delay / this.speed);
+        this.delay = Math.round(DELAY_TICKS_PER_SLOT * delay / speed);
         if (delay == 0) {
             this.inactive = false;
             this.validTarget = true;
@@ -182,9 +205,9 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     /**
      * This mob's speed, folding in every currently active speed-affecting {@link Effect}
      * (see {@link #getSpeed()}). {@code speed} itself stays the intrinsic value - the one
-     * {@link DefinedEnemyMob#doDamage} recomputes from its traits' {@code speedFactor} and
-     * {@link #doInit} reads for the spawn delay - so a slow or freeze never gets permanently
-     * baked into it, and never gets wiped out the next time a trait recomputes it.
+     * {@link DefinedEnemyMob#doDamage} recomputes from its traits' {@code speedFactor} and the
+     * constructor reads for the spawn delay - so a slow or freeze never gets permanently baked
+     * into it, and never gets wiped out the next time a trait recomputes it.
      */
     private float effectiveSpeed() {
         return this.speed * this.activeEffects.speedMultiplier();
@@ -192,6 +215,17 @@ public abstract class AbstractEnemyMob implements EnemyMob {
 
     public float getSpeed() {
         return this.effectiveSpeed();
+    }
+
+    /**
+     * Replaces this mob's intrinsic speed - what a {@link Trait}'s {@code speedFactor}
+     * recomputes when the mob is hurt (see {@link DefinedEnemyMob#doDamage}). Deliberately the
+     * intrinsic value and not the effective one: a slow or a freeze multiplies this at read
+     * time (see {@link #effectiveSpeed()}), so recomputing here never bakes a status effect in
+     * permanently and never wipes one out.
+     */
+    protected void setSpeed(float speed) {
+        this.speed = speed;
     }
 
     public void applyEffect(Effect effect) {
@@ -221,7 +255,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * Places this mob at an arbitrary point along the path instead of the start every mob
      * otherwise spawns at - what an ability-driven spawn (the Warden's egg, a reinforcement)
      * uses to appear where the spawning mob actually was, via
-     * {@code DefinedEnemyMob.spawnAtSamePositionAs}. Must be called after {@link #doInit}.
+     * {@code DefinedEnemyMob.spawnAtSamePositionAs}.
      */
     protected void jumpToDistance(double distanceIntoLap) {
         this.distanceIntoLap = distanceIntoLap;
@@ -278,12 +312,12 @@ public abstract class AbstractEnemyMob implements EnemyMob {
 
     /**
      * Recomputes x/y (and, while moving, the precise path-facing angle) from the current
-     * arcLengthPath/distanceIntoLap state. A degenerate path (see doInit) has nothing to
-     * measure distance along, so it just holds at its one available point.
+     * arcLengthPath/distanceIntoLap state. A degenerate path has nothing to measure distance
+     * along, so it just holds at its one available point.
      */
     private void updatePosition() {
-        if (this.arcLengthPath != null) {
-            PathPose pose = this.arcLengthPath.poseAt(this.distanceIntoLap);
+        if (this.arcLengthPath.isPresent()) {
+            PathPose pose = this.arcLengthPath.get().poseAt(this.distanceIntoLap);
             this.x = pose.position().x();
             this.y = pose.position().y();
             this.lastFacingRadians = pose.facingRadians();
@@ -339,9 +373,9 @@ public abstract class AbstractEnemyMob implements EnemyMob {
             this.prevX = this.x;
             this.prevY = this.y;
             boolean wrappedToPathStart = false;
-            if (this.arcLengthPath != null) {
+            if (this.arcLengthPath.isPresent()) {
                 this.distanceIntoLap += this.speed * speedMultiplier;
-                double totalLength = this.arcLengthPath.totalLength();
+                double totalLength = this.arcLengthPath.get().totalLength();
                 if (this.distanceIntoLap >= totalLength) {
                     this.distanceIntoLap -= totalLength;
                     wrappedToPathStart = true;
