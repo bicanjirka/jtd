@@ -164,4 +164,13 @@ class EnemyCatalogTest {
 
         assertThat(second.contains("custom")).isFalse();
     }
+
+    @Test
+    void registeringAnIdThatCollidesWithAReservedWaveScriptTokenFails() {
+        EnemyCatalog catalog = new EnemyCatalog();
+
+        assertThatThrownBy(() -> catalog.register(simpleDefinition("swarm")))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("swarm");
+    }
 }

@@ -1,6 +1,8 @@
 package td.wave;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
+import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
@@ -60,5 +62,58 @@ class WaveTest {
         assertThat(wave.getBaseHealth()).isEqualTo(251);
         assertThat(wave.getBasePrice()).isEqualTo(2);
         assertThat(wave.getLevel()).isEqualTo(3);
+    }
+
+    @Test
+    void aBossSlotDoublesSizeHalvesSpeedAndDoublesBounty() {
+        DefinedEnemyMob normal = (DefinedEnemyMob) new Wave(this.context, 100, 10, 1,
+                WaveScript.parse("c", this.catalog)).spawn()[0];
+        DefinedEnemyMob boss = (DefinedEnemyMob) new Wave(this.context, 100, 10, 1,
+                WaveScript.parse("boss c", this.catalog)).spawn()[0];
+
+        assertThat(boss.getBodyScale()).isEqualTo(normal.getBodyScale() * 2f);
+        assertThat(boss.getSpeed()).isEqualTo(normal.getSpeed() * 0.5f);
+        assertThat(boss.getBounty()).isEqualTo(normal.getBounty() * 2);
+        assertThat(boss.getHealth()).isEqualTo(normal.getHealth());
+    }
+
+    @Test
+    void anEliteSlotIncreasesSizeHealthAndBounty() {
+        DefinedEnemyMob normal = (DefinedEnemyMob) new Wave(this.context, 100, 10, 1,
+                WaveScript.parse("c", this.catalog)).spawn()[0];
+        DefinedEnemyMob elite = (DefinedEnemyMob) new Wave(this.context, 100, 10, 1,
+                WaveScript.parse("elite c", this.catalog)).spawn()[0];
+
+        assertThat(elite.getBodyScale()).isEqualTo(normal.getBodyScale() * 1.5f);
+        assertThat(elite.getHealth()).isEqualTo(normal.getHealth() * 2);
+        assertThat(elite.getBounty()).isEqualTo(Math.round(normal.getBounty() * 1.5f));
+    }
+
+    @Test
+    void aBosssSpeedMultiplierSurvivesTakingDamage() {
+        // The trap this closes: DefinedEnemyMob.doDamage recomputes intrinsic speed from
+        // definition.baseSpeed() on every hit, so a one-time setSpeed() at construction would be
+        // silently wiped by the first shot. The shape's speed multiplier must be folded into
+        // that recomputation instead.
+        DefinedEnemyMob boss = (DefinedEnemyMob) new Wave(this.context, 100, 10, 1,
+                WaveScript.parse("boss c", this.catalog)).spawn()[0];
+        float speedBeforeHit = boss.getSpeed();
+
+        boss.doDamage(Damage.physical(1));
+
+        assertThat(boss.getSpeed()).isEqualTo(speedBeforeHit);
+    }
+
+    @Test
+    void aSwarmSlotSplitsBountyExactlyAcrossItsMembersSummingToOneNormalSpawn() {
+        EnemyMob normal = new Wave(this.context, 90, 10, 1, WaveScript.parse("c", this.catalog)).spawn()[0];
+        EnemyMob[] swarm = new Wave(this.context, 90, 10, 1, WaveScript.parse("swarm 3 c", this.catalog)).spawn();
+
+        assertThat(swarm).hasSize(3);
+        int totalBounty = 0;
+        for (EnemyMob member : swarm) {
+            totalBounty += member.getBounty();
+        }
+        assertThat(totalBounty).isEqualTo(normal.getBounty());
     }
 }

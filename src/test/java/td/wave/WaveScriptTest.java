@@ -92,4 +92,90 @@ class WaveScriptTest {
         assertThat(content.enemySet()).containsExactlyInAnyOrder(this.simple, tankySquare);
         assertThat(content.enemyCount(tankySquare)).isEqualTo(1);
     }
+
+    @Test
+    void aSpawnTypeKeywordWithNoCountShapesExactlyOneSlot() {
+        WaveContent content = WaveScript.parse("boss warden1", this.catalog);
+
+        assertThat(content.spawnSequence()).hasSize(1);
+        EnemySlot slot = (EnemySlot) content.spawnSequence().get(0);
+        assertThat(slot.shape()).isEqualTo(SpawnShape.boss());
+        assertThat(content.enemyCount()).isEqualTo(1);
+    }
+
+    @Test
+    void aCountBeforeASpawnTypeKeywordRepeatsTheWholeShapedSlot() {
+        WaveContent content = WaveScript.parse("3 boss warden1", this.catalog);
+
+        assertThat(content.spawnSequence()).hasSize(3);
+        assertThat(content.enemyCount()).isEqualTo(3);
+    }
+
+    @Test
+    void aCountAfterASpawnTypeKeywordSetsThatSlotsMemberCount() {
+        WaveContent content = WaveScript.parse("swarm 4 c", this.catalog);
+
+        assertThat(content.spawnSequence()).hasSize(1);
+        EnemySlot slot = (EnemySlot) content.spawnSequence().get(0);
+        assertThat(slot.shape()).isEqualTo(SpawnShape.swarm(4));
+        assertThat(content.enemyCount()).isEqualTo(4);
+    }
+
+    @Test
+    void aLeadingCountAndAMemberCountComposeIndependently() {
+        WaveContent content = WaveScript.parse("3 swarm 4 c", this.catalog);
+
+        assertThat(content.spawnSequence()).hasSize(3);
+        assertThat(content.enemyCount()).isEqualTo(12);
+    }
+
+    @Test
+    void swarmLineColumnAndDripRequireAMemberCount() {
+        assertThatThrownBy(() -> WaveScript.parse("swarm c", this.catalog))
+                .isInstanceOf(GameStartupException.class);
+        assertThatThrownBy(() -> WaveScript.parse("line c", this.catalog))
+                .isInstanceOf(GameStartupException.class);
+        assertThatThrownBy(() -> WaveScript.parse("column c", this.catalog))
+                .isInstanceOf(GameStartupException.class);
+        assertThatThrownBy(() -> WaveScript.parse("drip c", this.catalog))
+                .isInstanceOf(GameStartupException.class);
+    }
+
+    @Test
+    void bossEliteAndFlankRejectAMemberCount() {
+        // A count before the spawn-type keyword ("3 boss c") legally repeats the whole shaped
+        // slot - it's a count immediately after the keyword, before the enemy id, that these
+        // three shapes reject, since their member count is fixed.
+        assertThatThrownBy(() -> WaveScript.parse("boss 3 c", this.catalog))
+                .isInstanceOf(GameStartupException.class);
+        assertThatThrownBy(() -> WaveScript.parse("elite 3 c", this.catalog))
+                .isInstanceOf(GameStartupException.class);
+        assertThatThrownBy(() -> WaveScript.parse("flank 3 c", this.catalog))
+                .isInstanceOf(GameStartupException.class);
+    }
+
+    @Test
+    void flankAlwaysProducesExactlyTwoMembersWithNoCount() {
+        WaveContent content = WaveScript.parse("flank c", this.catalog);
+
+        assertThat(content.enemyCount()).isEqualTo(2);
+    }
+
+    @Test
+    void twoSpawnTypeKeywordsInARowFailTheParse() {
+        assertThatThrownBy(() -> WaveScript.parse("swarm boss warden1", this.catalog))
+                .isInstanceOf(GameStartupException.class);
+    }
+
+    @Test
+    void aWaveEndingWithADanglingSpawnTypeKeywordFailsTheParse() {
+        assertThatThrownBy(() -> WaveScript.parse("c swarm 3", this.catalog))
+                .isInstanceOf(GameStartupException.class);
+    }
+
+    @Test
+    void theSpacerCannotFollowASpawnTypeKeyword() {
+        assertThatThrownBy(() -> WaveScript.parse("swarm e", this.catalog))
+                .isInstanceOf(GameStartupException.class);
+    }
 }

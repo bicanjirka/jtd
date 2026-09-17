@@ -2,6 +2,7 @@ package td.enemy;
 
 import td.util.GameStartupException;
 import td.util.GameWorld;
+import td.wave.WaveScript;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -54,10 +55,18 @@ public final class EnemyCatalog {
 
     /**
      * Registers {@code definition} under its own id. Throws {@link GameStartupException} for a
-     * duplicate id, or if this definition's own spawn chain - or any chain it completes by
-     * being registered - turns out to be cyclical (see {@link #checkAcyclic}).
+     * duplicate id, for an id colliding with one of {@link WaveScript#RESERVED_TOKENS} (the
+     * spacer or a spawn-type keyword - those are recognized before any catalog lookup, so a
+     * registered id under one of them could never be reached), or if this definition's own
+     * spawn chain - or any chain it completes by being registered - turns out to be cyclical
+     * (see {@link #checkAcyclic}).
      */
     public void register(EnemyDefinition definition) {
+        if (WaveScript.RESERVED_TOKENS.contains(definition.id())) {
+            throw new GameStartupException(
+                    "Enemy id '" + definition.id() + "' collides with a reserved wave-script token "
+                            + WaveScript.RESERVED_TOKENS);
+        }
         if (this.definitions.containsKey(definition.id())) {
             throw new GameStartupException("Duplicate enemy definition id '" + definition.id() + "'");
         }
@@ -103,7 +112,9 @@ public final class EnemyCatalog {
      * Builds a live mob from the definition registered under {@code id} - what {@code Wave}/{@code WaveScript} spawn through.
      */
     public EnemyMob spawn(String id, GameWorld gameWorld, int delay, int health, int price, int level) {
-        return new DefinedEnemyMob(this.get(id), gameWorld, delay, health, price, level);
+        EnemyDefinition definition = this.get(id);
+        SpawnParameters spawnParameters = SpawnParameters.atSlot(delay, definition.baseSpeed(), health, price);
+        return new DefinedEnemyMob(definition, gameWorld, spawnParameters, level);
     }
 
     /**

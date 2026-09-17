@@ -80,10 +80,12 @@ Parsing and instantiation are deliberately separate:
   given `td.enemy.EnemyCatalog`. No `GameWorld` involved, so it is trivially testable. Every
   non-reserved token is looked up the same way regardless of whether it names a built-in or
   a per-level custom/cloned definition — there is no separate syntax for the two, only
-  whether the id happens to be registered in the catalog passed in. `e` is the one reserved
-  token (the spacer), recognized before any catalog lookup. A token this can't recognize as
-  the spacer, a registered id, or an integer repeat count **fails the parse** with a
-  `GameStartupException` — a wave the author did not write is content corruption, and
+  whether the id happens to be registered in the catalog passed in. `WaveScript.RESERVED_TOKENS`
+  — `e` (the spacer) plus seven spawn-type keywords (`boss`/`elite`/`swarm`/`line`/`flank`/
+  `column`/`drip`, each naming a `SpawnShape` factory) — are recognized before any catalog
+  lookup; `EnemyCatalog.register` rejects an id that collides with one. A token this can't
+  recognize as one of those, a registered id, or an integer repeat count **fails the parse**
+  with a `GameStartupException` — a wave the author did not write is content corruption, and
   recovering from it silently produced a level that was subtly not the authored one. Blank
   tokens are whitespace rather than content and are skipped, which is what lets `"".split(" ")`
   and any run of spaces parse cleanly.
@@ -95,12 +97,13 @@ Parsing and instantiation are deliberately separate:
   members counts as 4, not 1 - this is what `GameWorld.startWave` seeds a wave's alive count
   from, so it gates when a wave is declared cleared.
 - `Wave` holds that content and does the world-bound instantiation in `spawn()`, **not in its
-  constructor** — a `DefinedEnemyMob` for an `EnemySlot`, nothing at all for an `EmptySlot`,
-  with delay equal to the slot's index regardless of how many mobs (zero or one, today) the
-  slot produced. `spawn()` is a factory: each call builds a fresh set bound to the path
-  installed at that moment, so calling it twice puts two copies of the wave on the board.
-  `enemyCount()`/`enemySet()` come from the content and need no spawn, which is what lets the
-  preview panel describe a wave before it runs.
+  constructor** — `shape.members()` `DefinedEnemyMob`s for an `EnemySlot` (zero for a plain
+  `EnemySlot` is impossible; `SpawnShape.normal()`'s one member is the floor), nothing at all
+  for an `EmptySlot`, every member sharing this slot's own index as its base spawn delay
+  regardless of how many the slot produced. `spawn()` is a factory: each call builds a fresh
+  set bound to the path installed at that moment, so calling it twice puts two copies of the
+  wave on the board. `enemyCount()`/`enemySet()` come from the content and need no spawn, which
+  is what lets the preview panel describe a wave before it runs.
 - **Deferring the spawn is what makes a level load one atomic publication.** An `EnemyMob` binds
   to `GameWorld`'s installed path when it is built, so spawning in the constructor forced
   `GameEngine.loadLevel` to install the path before building the waves — two writes where
