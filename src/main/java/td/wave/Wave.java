@@ -62,9 +62,11 @@ public class Wave {
      * Builds every member of one shaped slot: the shape's health and bounty multipliers are
      * arithmetic here, against the wave's own base health/price (bounty split exactly, via
      * {@link SpawnShape#bountyShares}); the size and speed multipliers pass straight through to
-     * {@link SpawnParameters}, which folds them into the mob itself. Every member spawns at this
-     * slot's own delay for now - per-member delay spacing (Column/Drip) and lateral offset
-     * (Swarm/Line/Flank) are later mechanisms layered on top of this one.
+     * {@link SpawnParameters}, which folds them into the mob itself. A member's own slot
+     * position is this slot's index plus its member index scaled by
+     * {@link SpawnShape#delaySpacingSlots()} - zero for every shape but Column and Drip, so
+     * every other shape's members still share the slot's own position. Lateral offset (Swarm/
+     * Line/Flank) is a later mechanism layered on top of this one.
      */
     private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int delay, int baseHealth, int basePrice, int level) {
         EnemyDefinition definition = enemySlot.definition();
@@ -73,8 +75,9 @@ public class Wave {
         int[] bountyShares = shape.bountyShares(basePrice);
         List<EnemyMob> members = new ArrayList<>(shape.members());
         for (int i = 0; i < shape.members(); i++) {
-            SpawnParameters spawnParameters = SpawnParameters.of(delay, definition.baseSpeed(), health, bountyShares[i],
-                    shape.sizeMultiplier(), shape.speedMultiplier());
+            double slotPosition = delay + i * shape.delaySpacingSlots();
+            SpawnParameters spawnParameters = SpawnParameters.of(slotPosition, definition.baseSpeed(), health,
+                    bountyShares[i], shape.sizeMultiplier(), shape.speedMultiplier());
             members.add(new DefinedEnemyMob(definition, gameWorld, spawnParameters, level));
         }
         return List.copyOf(members);

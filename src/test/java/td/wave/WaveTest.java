@@ -1,6 +1,7 @@
 package td.wave;
 
 import org.junit.jupiter.api.Test;
+import td.board.BoardGeometry;
 import td.damage.Damage;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyCatalog;
@@ -115,5 +116,63 @@ class WaveTest {
             totalBounty += member.getBounty();
         }
         assertThat(totalBounty).isEqualTo(normal.getBounty());
+    }
+
+    @Test
+    void columnPacksItsSecondAndThirdMembersTighterThanThreeSeparateSlots() {
+        this.context.setBoard(BoardGeometry.of(32, 100, 100)); // wide enough that validTarget()'s bounds check never fails
+        EnemyMob[] separateSlots = new Wave(this.context, 100, 5, 1, WaveScript.parse("3 c", this.catalog)).spawn();
+        EnemyMob[] column = new Wave(this.context, 100, 5, 1, WaveScript.parse("column 3 c", this.catalog)).spawn();
+
+        assertThat(column).hasSize(3);
+        int[] separateTicks = activationTicks(separateSlots);
+        int[] columnTicks = activationTicks(column);
+
+        // The leader shares the slot's own position either way; only the trailing members'
+        // spacing differs, and Column packs it tighter than one slot-delay apart.
+        assertThat(columnTicks[0]).isEqualTo(separateTicks[0]);
+        assertThat(columnTicks[1]).isLessThan(separateTicks[1]);
+        assertThat(columnTicks[2]).isLessThan(separateTicks[2]);
+    }
+
+    @Test
+    void dripSpacesItsSecondAndThirdMembersLooserThanThreeSeparateSlots() {
+        this.context.setBoard(BoardGeometry.of(32, 100, 100));
+        EnemyMob[] separateSlots = new Wave(this.context, 100, 5, 1, WaveScript.parse("3 c", this.catalog)).spawn();
+        EnemyMob[] drip = new Wave(this.context, 100, 5, 1, WaveScript.parse("drip 3 c", this.catalog)).spawn();
+
+        assertThat(drip).hasSize(3);
+        int[] separateTicks = activationTicks(separateSlots);
+        int[] dripTicks = activationTicks(drip);
+
+        assertThat(dripTicks[0]).isEqualTo(separateTicks[0]);
+        assertThat(dripTicks[1]).isGreaterThan(separateTicks[1]);
+        assertThat(dripTicks[2]).isGreaterThan(separateTicks[2]);
+    }
+
+    /**
+     * Ticks each mob from 1 until it becomes a valid target, returning the tick that happened
+     * on (0 if it was already active) - the spawn delay is otherwise a private tick countdown
+     * with no accessor, so this is the black-box way to pin it.
+     */
+    private static int[] activationTicks(EnemyMob[] mobs) {
+        int[] ticks = new int[mobs.length];
+        for (int i = 0; i < mobs.length; i++) {
+            ticks[i] = activationTick(mobs[i]);
+        }
+        return ticks;
+    }
+
+    private static int activationTick(EnemyMob mob) {
+        if (mob.validTarget()) {
+            return 0;
+        }
+        for (int t = 1; t <= 500; t++) {
+            mob.doTick(t);
+            if (mob.validTarget()) {
+                return t;
+            }
+        }
+        throw new AssertionError("Mob never activated within 500 ticks");
     }
 }
