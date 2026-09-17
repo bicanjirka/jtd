@@ -242,4 +242,26 @@ class AbstractEnemyMobTest {
 
         assertThat(context.economy().getLives()).isLessThan(initialLives);
     }
+
+    @Test
+    void enemyReachingEndOfPathDespawnsPermanentlyInsteadOfLoopingBackForABounty() {
+        RecordingGameHost host = new RecordingGameHost();
+        GameWorld context = new GameWorld(host);
+        context.setBoard(BoardGeometry.of(1, 1001, 1001));
+        context.setPath(straightPath(10, 0, 1));
+        int creditsBeforeLeak = context.economy().getCredits();
+
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+        for (int i = 1; i <= 100; i++) {
+            enemy.doTick(i);
+        }
+
+        assertThat(enemy.isDead()).isTrue();
+        assertThat(context.economy().getCredits()).isEqualTo(creditsBeforeLeak);
+        assertThat(host.enemyDiedCalls).isNotEmpty();
+
+        // Not looping back means no tower gets a second chance to kill it for its bounty.
+        enemy.doDamage(Damage.physical(1000));
+        assertThat(context.economy().getCredits()).isEqualTo(creditsBeforeLeak);
+    }
 }

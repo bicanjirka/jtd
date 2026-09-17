@@ -24,8 +24,8 @@ import java.util.Set;
  * Movement is real arc-length distance: {@link #doTick} advances {@code distanceIntoLap} by
  * {@code speed} pixels and resolves it through the shared {@link ArcLengthPath}, so a curved
  * or diagonal path moves a mob at the same real-world pace a straight one does. Reaching the
- * end wraps back to the start and charges the player a {@link EconomyDelta#leak} - a mob is
- * never removed from the roster by walking, only by dying.
+ * end charges the player a {@link EconomyDelta#leak} and kills the mob outright, the same
+ * {@code dead}/fade path a combat kill uses, just without the bounty - see {@link #leak()}.
  * <p>
  * <strong>Everything a mob is born with is set by this constructor and is {@code final}.</strong>
  * A mob used to be built in two phases - an empty constructor, then a {@code doInit} a leaf had
@@ -214,8 +214,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
 
     /**
      * This mob's x/y as of the tick before last, i.e. the interpolation source for a render
-     * landing between two ticks. Equal to getX()/getY() at spawn and immediately after a
-     * path-end wrap, where there is nothing meaningful to interpolate from.
+     * landing between two ticks. Equal to getX()/getY() at spawn, where there is nothing
+     * meaningful to interpolate from.
      */
     public double getPrevX() {
         return this.prevX;
@@ -409,25 +409,29 @@ public abstract class AbstractEnemyMob implements EnemyMob {
             }
             this.prevX = this.x;
             this.prevY = this.y;
-            boolean wrappedToPathStart = false;
             if (this.arcLengthPath.isPresent()) {
                 this.distanceIntoLap += this.speed * speedMultiplier;
-                double totalLength = this.arcLengthPath.get().totalLength();
-                if (this.distanceIntoLap >= totalLength) {
-                    this.distanceIntoLap -= totalLength;
-                    wrappedToPathStart = true;
-                    this.gameWorld.economy().apply(EconomyDelta.leak(this.price == 0 ? 10 : this.price));
+                if (this.distanceIntoLap >= this.arcLengthPath.get().totalLength()) {
+                    this.leak();
+                    return;
                 }
             }
             this.updatePosition();
             this.validTarget = this.x >= 0 && this.x <= this.gameWorld.getBoard().maxX() && this.y >= 0 && this.y <= this.gameWorld.getBoard().maxY();
-            if (wrappedToPathStart) {
-                // Reappearing at the path's start is a genuine teleport, not motion along
-                // it - interpolating from the old (near path-end) position would draw a
-                // streak clear across the board for one frame.
-                this.prevX = this.x;
-                this.prevY = this.y;
-            }
         }
+    }
+
+    /**
+     * Reaching the path's end costs the same life/score penalty {@link EconomyDelta#leak}
+     * always has, but the mob does not loop back to the path's start to try again - it goes
+     * through the exact {@code dead}/fade/{@code remove()} path a combat kill does, just with
+     * a leak penalty instead of {@link EconomyDelta#kill}. That is the actual punishment: gone
+     * for good means no tower ever gets a second chance to kill it for its bounty.
+     */
+    private void leak() {
+        this.validTarget = false;
+        this.dead = true;
+        this.gameWorld.economy().apply(EconomyDelta.leak(this.price == 0 ? 10 : this.price));
+        this.gameWorld.enemies().remove();
     }
 }
