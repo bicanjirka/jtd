@@ -10,8 +10,7 @@ import td.util.GameWorld;
 public final class EnemyMobEmpty extends AbstractEnemyMob {
 
     public EnemyMobEmpty(GameWorld gameWorld, int delay, int health, int price, int level) {
-        super();
-        this.doInit(gameWorld, delay, health, price, level);
+        super(gameWorld, Type.Normal, AbstractEnemyMob.DEFAULT_SPEED, delay, health, price, level);
     }
 
     public void doTick(int gameTime) {

@@ -108,7 +108,7 @@ legitimately killed, if evaluation ran on every fade tick instead of stopping af
 death-transition tick.
 
 **An ability-driven spawn appears where the spawning mob was, not at the path's start.**
-`AbstractEnemyMob.doInit` always sets a fresh mob's `distanceIntoLap` to `0`; a
+`AbstractEnemyMob`'s constructor always starts a fresh mob at `distanceIntoLap` `0`; a
 `SpawnEnemiesAction`'s execution calls the new mob's own `spawnAtSamePositionAs`/
 `jumpToDistance` afterward to relocate it - without that, the Warden's egg would visibly
 teleport to the path's start instead of appearing where the Warden died.
@@ -120,10 +120,17 @@ replaced by one thing) and isn't validated against.
 
 ## Invariants worth knowing before you change anything here
 
-**`doInit` must be called from the constructor, and `super.doInit` first.** `DefinedEnemyMob`'s
-own `doInit` override reads `this.definition` (set before the call) and applies
-`healthDivisor` (generalizing Ghost's old flat `/5`) on the way *down* into `super.doInit`, so
-the base class never sees the un-adjusted value.
+**A mob is built by one constructor, and every field it is born with is `final`.** There is no
+`doInit`: the two-phase form left a mob mutable and reachable half-built, and made the ordering
+a prose rule a leaf had to remember. `DefinedEnemyMob` applies `healthDivisor` (generalizing
+Ghost's old flat `/5`) inside its `super(...)` call, so the base class never sees the
+un-adjusted value, and computes `bodyScale` after it returns. The compiler enforces all of it —
+the same move `td.tower.AbstractTower` already made.
+
+**Mutable state here is `private`, and a leaf reaches it through an accessor.** `AbstractEnemyMob`
+once exposed fourteen `protected` mutable fields, which meant no invariant it declared could
+survive a subclass. `setSpeed` is the one mutator a leaf needs (`DefinedEnemyMob.doDamage`
+recomputes intrinsic speed from its traits); the rest is read through the existing getters.
 
 **Ghost's invisibility does not go through `Trait.isValidTarget`.** Single-target towers filter
 by `EnemyMob.Type` (see `td.tower.targeting.OfTypeTargetQuery`/`InRangeTargetQuery.ofType`), a
@@ -181,8 +188,8 @@ the path's first point (or the origin). Keep that branch.
 
 **Speed has an intrinsic/effective split, like `AbstractTower`'s base/current damage.** The
 `speed` field stays the *intrinsic* value — `DefinedEnemyMob.doDamage` recomputes it fresh from
-`definition.baseSpeed() * (product of every Trait.speedFactor)` on every hit, and `doInit`'s
-spawn-delay calculation reads it before any damage lands — while `getSpeed()` and movement both
+`definition.baseSpeed() * (product of every Trait.speedFactor)` on every hit through
+`setSpeed`, and the constructor's spawn-delay calculation reads it before any damage lands — while `getSpeed()` and movement both
 additionally fold in every currently active `td.effect.Effect`'s speed multiplier via
 `ActiveEffects.speedMultiplier()`. A slow or freeze therefore never gets permanently baked into
 `speed`, and is never wiped out the next time a trait recomputes it. `doTick` reads that
