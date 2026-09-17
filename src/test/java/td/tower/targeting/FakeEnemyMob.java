@@ -26,7 +26,7 @@ final class FakeEnemyMob implements EnemyMob {
     }
 
     static FakeEnemyMob at(int x, int y) {
-        return new FakeEnemyMob(x, y, 0, Type.Normal, true);
+        return new FakeEnemyMob(x, y, 0, Type.NORMAL, true);
     }
 
     FakeEnemyMob withProgression(int progression) {

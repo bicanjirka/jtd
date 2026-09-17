@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.util.ThreadConfined;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.Color;
@@ -28,6 +29,7 @@ import java.io.Serial;
  * read its stats, which still works because the board keeps rendering and the banner covers
  * almost none of it.
  */
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // Swing overlays and the callback the menu button fires
 public class BoardOverlays {
 
     private static final Color BANNER_FILL = new Color(0, 0, 0, 210);

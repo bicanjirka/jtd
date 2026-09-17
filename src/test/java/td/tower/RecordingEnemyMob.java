@@ -33,12 +33,12 @@ final class RecordingEnemyMob implements EnemyMob {
     }
 
     static RecordingEnemyMob normalAt(double x, double y) {
-        return new RecordingEnemyMob(x, y, Type.Normal);
+        return new RecordingEnemyMob(x, y, Type.NORMAL);
     }
 
     /** Invisible mobs are excluded from a tower's primary-target scan but not from its splash. */
     static RecordingEnemyMob ghostAt(double x, double y) {
-        return new RecordingEnemyMob(x, y, Type.Invisible);
+        return new RecordingEnemyMob(x, y, Type.INVISIBLE);
     }
 
     List<Damage> hits() {

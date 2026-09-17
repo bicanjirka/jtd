@@ -10,6 +10,7 @@ import td.tower.upgrade.DamageDealtCondition;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
+import td.util.ThreadConfined;
 
 import java.util.List;
 
@@ -19,6 +20,7 @@ import java.util.List;
  * pulse never gives away a ghost that is alone in range - but once something else triggers
  * it, that ghost takes the damage too.
  */
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // the fire flag, set and read within a tick
 public final class PulseTower extends AbstractTower {
 
     public static final int PRICE = 25;
@@ -47,7 +49,7 @@ public final class PulseTower extends AbstractTower {
     public void doTick(int gameTime) {
         TargetQuery inRange = InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal());
         List<EnemyMob> enemies = inRange.matching(this.context.enemies());
-        List<EnemyMob> ghosts = inRange.and(OfTypeTargetQuery.of(EnemyMob.Type.Invisible)).matching(this.context.enemies());
+        List<EnemyMob> ghosts = inRange.and(OfTypeTargetQuery.of(EnemyMob.Type.INVISIBLE)).matching(this.context.enemies());
 
         if (enemies.size() > ghosts.size()) {
             this.fire = true;

@@ -7,6 +7,7 @@ import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.GameHost;
 import td.util.GameWorld;
+import td.util.ThreadConfined;
 
 import javax.swing.GrayFilter;
 import javax.swing.ImageIcon;
@@ -36,6 +37,7 @@ import java.util.List;
  * toggle rather than a push control because picking a tower is a mode, but they look exactly
  * like every other control - see {@link Hud}.
  */
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // Swing components and the placing flag
 public class PanelTowerSelector extends JPanel implements EconomyListener {
     @Serial
     private static final long serialVersionUID = 1L;

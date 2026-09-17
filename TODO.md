@@ -6,8 +6,9 @@ this file is the single place to look for outstanding design/feature gaps.
 
 ## Architecture and correctness
 
-Findings from the architecture audit of 2026-09-17, highest-severity first. The threading
-group has landed; what remains is listed below.
+Findings from the architecture audits of 2026-09-17, highest-severity first. The threading
+group and the external audit's critical/high/moderate findings have landed; what remains is
+listed below.
 
 ### No performance budget, because nothing has been measured
 
@@ -33,7 +34,11 @@ loading a level, requesting a wave) currently reaches the simulation by one of t
 routes: a volatile flag `doTick` consumes (`requestNextWave`), direct mutation under a stopped
 loop (`loadLevel`), or direct mutation while the loop runs (tower placement). Each is
 individually safe, but there are three of them, and the third is why `AbstractTower`,
-`CellNormal` and `GameEngine` all carry publication rules of their own.
+`CellNormal` and `GameWorld` all carry publication rules of their own.
+
+The second route is now genuinely guaranteed rather than best-effort: `GameLoop.stop()` joins
+without bound and `TowerDefense.stopLoopThen` runs it off the EDT, so `loadLevel` provably has
+no tick in flight. The third is the one a queue would still replace.
 
 A single `ConcurrentLinkedQueue<Runnable>` drained at the top of `doTick` would replace all
 three: the simulation thread becomes the only writer, most of the volatile markers become
@@ -49,6 +54,35 @@ unnecessary, and every mutation lands on a deterministic tick boundary.
   `td.BalanceHarness` produce runs that are comparable to each other and reproducible across
   machines. If that becomes a goal, this stops being indirection and starts being the feature
   - do it then, and not before.
+
+### `Tower` is a twenty-three-method interface
+
+`CLAUDE.md` §5 rule 6 asks for interfaces of one to five methods. `Tower` has twenty-three:
+identity, position, rendering, selection, economy, damage accounting, upgrade paths and buff
+contribution, all on one type. It is what every consumer depends on, so every consumer depends
+on all of it — `PanelTowerInfo` wants the upgrade and accounting half, `BoardRenderer` wants
+position and the visitor, `AuraTower` wants position and type.
+
+- **Where:** `td.tower.Tower`, and its consumers in `td.ui` and `td.tower`.
+- **Approach:** split along the lines the consumers already use rather than inventing a
+  taxonomy — most likely a small `TowerView` (position, type, range, visitor) that rendering
+  and targeting take, leaving the mutating lifecycle on `Tower`. Do it when a consumer is
+  actually hurt by the width, not as a tidying exercise: a wide interface with one
+  implementation hierarchy costs far less than a wrong split.
+
+### A tower's class name and its in-game name describe different things
+
+The classes are named for behaviour (`SniperTower`, `SplashTower`, `SonarTower`, `PulseTower`)
+and the UI still calls them Triangle, Circle, Sunshine and Stardust — the shapes the player
+sees on the board. `td/tower/CLAUDE.md`'s table maps the two, so nothing is ambiguous, but a
+reader of `SniperTower.getInfoString` does meet the string `"Triangle tower"`.
+
+- **Where:** each leaf's `getInfoString`/`getStatusString`, `TowerDefense.statusMessage`,
+  `README.md`'s tower table.
+- **Approach:** a product decision, not a refactor. Either rename the player-facing strings to
+  match the behaviour (which arguably tells a player more than the shape they can already see),
+  or keep the shape names deliberately and leave the table as the bridge. Do not change them
+  halfway.
 
 ## Gameplay / balance
 

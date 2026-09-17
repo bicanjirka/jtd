@@ -9,6 +9,7 @@ import td.util.GameWorld;
 import td.wave.ArcLengthPath;
 import td.wave.PathPose;
 import td.wave.Vec2;
+import td.util.ThreadConfined;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +38,7 @@ import java.util.Set;
  * no invariant here could survive a subclass; a leaf now reaches state through the accessors
  * below. See CLAUDE.md 3 and 5.
  */
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // per-tick simulation state; the frame build that reads it runs on the loop thread too
 public abstract class AbstractEnemyMob implements EnemyMob {
 
     /**

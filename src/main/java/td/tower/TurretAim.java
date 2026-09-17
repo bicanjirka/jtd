@@ -1,5 +1,7 @@
 package td.tower;
 
+
+import td.util.ThreadConfined;
 /**
  * Chases a desired heading at a capped angular speed, always turning the shorter way around the
  * circle - lets an aiming tower's turret head visibly sweep toward a target instead of snapping
@@ -9,6 +11,7 @@ package td.tower;
  * dependency. {@code td.ui} interpolates between two ticks' headings for a smooth 60fps render
  * the same way {@code EnemyFrameBuilder} does for enemy position - see {@link #radiansAt(double)}.
  */
+@ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)  // owned by the tower that turns it, so game-loop in practice
 public final class TurretAim {
 
     private static final double TWO_PI = Math.PI * 2;

@@ -14,14 +14,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class EnemyCatalogTest {
 
     private static EnemyDefinition simpleDefinition(String id) {
-        return new EnemyDefinition(id, id, "", 100, 5, 1.28f, 1f, EnemyMob.Type.Normal,
+        return new EnemyDefinition(id, id, "", 100, 5, 1.28f, 1f, EnemyMob.Type.NORMAL,
                 BodyArchetype.CIRCLE, new FixedMovement(), List.of(), List.of());
     }
 
     /** A minimal definition whose only ability spawns {@code spawnedId} on death. */
     private static EnemyDefinition definitionThatSpawns(String id, String spawnedId) {
         Ability spawnOnDeath = new Ability(new OnDeathTrigger(), new SpawnEnemiesAction(spawnedId, 1, false));
-        return new EnemyDefinition(id, id, "", 100, 5, 1.28f, 1f, EnemyMob.Type.Normal,
+        return new EnemyDefinition(id, id, "", 100, 5, 1.28f, 1f, EnemyMob.Type.NORMAL,
                 BodyArchetype.CIRCLE, new FixedMovement(), List.of(), List.of(spawnOnDeath));
     }
 
@@ -55,7 +55,7 @@ class EnemyCatalogTest {
     @Test
     void cloneAndAdjustRegistersAnIndependentDefinitionUnderTheNewIdWithoutMutatingTheOriginal() {
         EnemyCatalog catalog = new EnemyCatalog();
-        EnemyDefinition square = new EnemyDefinition("s", "Square", "", 100, 5, 1.28f, 1f, EnemyMob.Type.Normal,
+        EnemyDefinition square = new EnemyDefinition("s", "Square", "", 100, 5, 1.28f, 1f, EnemyMob.Type.NORMAL,
                 BodyArchetype.SQUARE, new RotorMovement(0.1f), List.of(), List.of());
         catalog.register(square);
 

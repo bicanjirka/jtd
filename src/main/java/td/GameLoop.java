@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import td.util.Threads;
 import td.util.TickRate;
+import td.util.ThreadConfined;
 
 /**
  * Drives the simulation on its own dedicated thread using two independent
@@ -22,6 +23,7 @@ import td.util.TickRate;
  * class contains no Swing dependency at all; crossing to the EDT is the
  * caller's job and happens after the snapshot exists. See CLAUDE.md 3.
  */
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // the tick counter and the failure circuit breaker, both touched only inside run()
 public class GameLoop implements Runnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(GameLoop.class);

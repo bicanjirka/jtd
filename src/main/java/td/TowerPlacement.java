@@ -8,6 +8,7 @@ import td.cell.CellGrid;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.GameWorld;
+import td.util.ThreadConfined;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -18,6 +19,7 @@ import java.util.function.Supplier;
  * rather than a fixed grid since {@link GameEngine} replaces it wholesale on every
  * {@code loadLevel}, after this is constructed.
  */
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // placement is driven entirely by mouse and key events
 public class TowerPlacement {
 
     private static final Logger LOG = LoggerFactory.getLogger(TowerPlacement.class);

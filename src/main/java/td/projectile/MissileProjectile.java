@@ -4,6 +4,7 @@ import td.enemy.EnemyMob;
 import td.enemy.EnemyRegistry;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.NearestSelector;
+import td.util.ThreadConfined;
 
 import java.util.List;
 
@@ -18,6 +19,7 @@ import java.util.List;
  * lifetime is a second, independent safety net against a homing edge case (e.g. a target it
  * can never quite catch) doing the same.
  */
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // its target and age, both retargeted during a tick
 public final class MissileProjectile extends AbstractProjectile {
 
     private static final int MAX_LIFETIME_TICKS = 400;
@@ -63,7 +65,7 @@ public final class MissileProjectile extends AbstractProjectile {
 
     private EnemyMob retarget() {
         List<EnemyMob> candidates = InRangeTargetQuery
-                .ofType((int) Math.round(this.x), (int) Math.round(this.y), Float.MAX_VALUE, EnemyMob.Type.Normal)
+                .ofType((int) Math.round(this.x), (int) Math.round(this.y), Float.MAX_VALUE, EnemyMob.Type.NORMAL)
                 .matching(this.enemies);
         return new NearestSelector(this.x, this.y).selectFrom(candidates).orElse(null);
     }
