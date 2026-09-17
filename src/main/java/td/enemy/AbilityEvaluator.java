@@ -20,6 +20,7 @@ public final class AbilityEvaluator {
             case HealthThresholdTrigger t -> fireHealthThreshold(t, state, context);
             case OnDeathTrigger ignored -> fireOnDeath(state, context);
             case TimeSinceLastHitTrigger t -> fireTimeSinceLastHit(t, state, context);
+            case OnCriticalHitTakenTrigger ignored -> context.justTookCriticalHit();
         };
     }
 

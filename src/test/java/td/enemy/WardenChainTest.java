@@ -3,6 +3,7 @@ package td.enemy;
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.damage.Damage;
+import td.effect.EffectKind;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 import td.wave.PathNormal;
@@ -103,5 +104,17 @@ class WardenChainTest {
         EnemyDefinition finalEgg = EnemyCatalog.builtIn().get("wardenEgg3");
 
         assertThat(finalEgg.abilities()).isEmpty();
+    }
+
+    @Test
+    void theWardenGainsAShieldAfterSurvivingACriticalHit() {
+        GameWorld world = worldWithStraightPath();
+        DefinedEnemyMob warden = (DefinedEnemyMob) world.getEnemyCatalog().spawn("warden1", world, 0, 8000, 100, 1);
+        world.enemies().add(warden);
+
+        warden.doDamage(Damage.physical(5000).asCritical());
+        warden.doTick(1); // captures the critical hit and fires the new ability in the same call
+
+        assertThat(warden.activeEffectKinds()).contains(EffectKind.SHIELD);
     }
 }

@@ -35,6 +35,7 @@ public final class AbilityState {
             case HealthThresholdTrigger t -> 0;
             case OnDeathTrigger t -> 0;
             case TimeSinceLastHitTrigger t -> 0;
+            case OnCriticalHitTakenTrigger t -> 0;
         };
     }
 

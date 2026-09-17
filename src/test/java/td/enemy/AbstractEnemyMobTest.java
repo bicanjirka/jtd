@@ -190,6 +190,45 @@ class AbstractEnemyMobTest {
     }
 
     @Test
+    void ticksSinceCriticalHitIsMinusOneUntilOneLands() {
+        GameWorld context = newContext();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+
+        assertThat(mob.ticksSinceCriticalHit(5)).isEqualTo(-1);
+    }
+
+    @Test
+    void aCriticalHitIsCapturedOnTheMobsOwnNextDoTickNotSynchronouslyInDoDamage() {
+        GameWorld context = newContext();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+
+        // doDamage() (called by a tower) can land mid-tick, before this mob's own doTick()
+        // next runs to capture criticalHitTick - the same deferred-capture window deathTick has.
+        enemy.doDamage(Damage.physical(100).asCritical());
+
+        assertThat(mob.ticksSinceCriticalHit(0)).isEqualTo(-1);
+
+        enemy.doTick(1);
+
+        assertThat(mob.ticksSinceCriticalHit(1)).isZero();
+        assertThat(mob.ticksSinceCriticalHit(2)).isEqualTo(1);
+    }
+
+    @Test
+    void aNonCriticalHitLeavesTicksSinceCriticalHitAtMinusOne() {
+        GameWorld context = newContext();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+
+        enemy.doDamage(Damage.physical(100));
+        enemy.doTick(1);
+
+        assertThat(mob.ticksSinceCriticalHit(1)).isEqualTo(-1);
+    }
+
+    @Test
     void previousPositionTracksOneTickBehindCurrentPosition() {
         GameWorld context = newContext();
         context.setPath(straightPath(10, 0, 10));

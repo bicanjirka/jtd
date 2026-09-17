@@ -52,11 +52,14 @@ moment something registers one (see `WaveScriptTest`'s
 A `Trait` is a passive, always-on modifier: `onHit` (resistance, folded in sequence by
 `DefinedEnemyMob.absorb`), `speedFactor` (a hurt-speed curve applied to `baseSpeed`),
 `isValidTarget` (see the gotcha below — **not** what makes Ghost invisible). `PercentResistTrait`/`HurtSpeedTrait`/
-`FlatResistTrait`
-are the three built-in implementations, reused (not subclassed) by `BuiltInEnemies.ARMORED`/
+`FlatResistTrait`/`CriticalImmunityTrait`
+are the four built-in implementations, reused (not subclassed) by `BuiltInEnemies.ARMORED`/
 `FRENZIED`/the Warden stages - `FlatResistTrait` is deliberately a *flat per-hit* reduction,
 not a depleting shield pool, since a pool that's "used up" over one mob's lifetime needs
 per-mob mutable trait state nothing else here has (see its own doc comment).
+`CriticalImmunityTrait` strips a critical hit's bonus via `Damage.stripCritical()` rather than
+reducing the amount by some fraction of its own, so it stays exact regardless of which tower's
+roll produced the bonus - `ARMORED` carries it alongside its percent resistance.
 
 **A `Trait` instance is shared across every mob built from the same `EnemyDefinition`,
 regardless of which wave's `level` spawned it** — `TraitContext(level, healthFraction)` is
@@ -65,11 +68,16 @@ a `Trait` at construction time; `PercentResistTrait(0.8f, 0.05f)` means "the for
 formula at some fixed level."
 
 An `Ability` pairs a closed `AbilityTrigger` (periodic, once-after-a-delay, health-threshold-
-crossed, on-death, time-since-last-hit) with a closed `AbilityAction` (apply an effect, or
-spawn more enemies) — see `AbilityEvaluator`'s own doc comment for how firing is decided, and
-`EnemyCatalog.register`'s doc comment for the spawn-graph cycle check a `SpawnEnemiesAction`
-chain has to pass. The Warden boss is what actually exercises this - see "Ability execution",
-below, for how a live `DefinedEnemyMob` drives it.
+crossed, on-death, time-since-last-hit, on-critical-hit-taken) with a closed `AbilityAction`
+(apply an effect, or spawn more enemies) — see `AbilityEvaluator`'s own doc comment for how
+firing is decided, and `EnemyCatalog.register`'s doc comment for the spawn-graph cycle check a
+`SpawnEnemiesAction` chain has to pass. The Warden boss is what actually exercises this - see
+"Ability execution", below, for how a live `DefinedEnemyMob` drives it.
+`OnCriticalHitTakenTrigger` is the one trigger that fires repeatably rather than once ever -
+"survived another crit" is a recurring event, not a one-time transition the way death or a
+health threshold is, so it needs no `AbilityState` bookkeeping: `AbilityContext.justTookCriticalHit()`
+is itself already edge-triggered, captured the same deferred way `justDied()`/`deathTick` are -
+see the death-timing note below, which `AbstractEnemyMob.criticalHitTick` reuses verbatim.
 
 ## Ability execution
 
