@@ -4,8 +4,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -39,7 +42,7 @@ public final class VerifyRules {
     };
 
     public static void main(String[] args) throws IOException {
-        List<Rule> rules = new ArrayList<>();
+        List<Check> rules = new ArrayList<>();
 
         rules.add(Rule.of("engine-is-headless", "CLAUDE.md 2.1",
                 "domain packages must not import Swing or AWT",
@@ -104,24 +107,26 @@ public final class VerifyRules {
                 "borders come from td.ui.Hud; an etched border's shading is the L&F's to choose",
                 "createEtchedBorder", List.of(MAIN)).skippingComments());
 
+        rules.add(docsNameRealTypes());
+
         int failed = 0;
         int pending = 0;
-        for (Rule rule : rules) {
+        for (Check rule : rules) {
             List<String> violations = rule.violations();
             if (violations.isEmpty()) {
-                System.out.printf("rules: %-26s OK%s%n", rule.name,
-                        rule.pendingReason == null ? "" : "   (pending rule now clean - make it enforcing)");
-            } else if (rule.pendingReason != null) {
+                System.out.printf("rules: %-26s OK%s%n", rule.name(),
+                        rule.pendingReason() == null ? "" : "   (pending rule now clean - make it enforcing)");
+            } else if (rule.pendingReason() != null) {
                 pending++;
                 System.out.printf("rules: %-26s PENDING  %d left  (%s)%n",
-                        rule.name, violations.size(), rule.pendingReason);
+                        rule.name(), violations.size(), rule.pendingReason());
                 for (String v : violations) {
                     System.out.printf("       %s%n", v);
                 }
             } else {
                 failed++;
-                System.out.printf("rules: %-26s FAIL  (%s)%n", rule.name, rule.section);
-                System.out.printf("       %s%n", rule.why);
+                System.out.printf("rules: %-26s FAIL  (%s)%n", rule.name(), rule.section());
+                System.out.printf("       %s%n", rule.why());
                 for (String v : violations) {
                     System.out.printf("       %s%n", v);
                 }
@@ -136,6 +141,96 @@ public final class VerifyRules {
                 pending == 0 ? "" : "; " + pending + " pending (tracked in TODO.md)");
     }
 
+    /**
+     * Types a doc may name that are not files in this repository: JDK and Swing types, and the
+     * one inner class the enemy package's doc refers to. Anything else backticked in a
+     * {@code CLAUDE.md} must exist as a source file.
+     */
+    private static final Set<String> KNOWN_EXTERNAL_TYPES = Set.of(
+            "ArrayList", "CardLayout", "ClassCastException", "CopyOnWriteArrayList", "Error",
+            "Exception", "Graphics2D", "GridBagLayout", "HashMap", "IndexOutOfBoundsException",
+            "LinkedHashMap", "NullPointerException", "NumberFormatException", "Optional",
+            "Runnable", "Shape", "Throwable",
+            // an inner class of DefinedEnemyMob, so it has no file of its own
+            "MobAbilityContext",
+            // prose, not a type - the naming rule's own example
+            "UpperCamelCase");
+
+    /**
+     * Every backticked {@code UpperCamelCase} name in a {@code CLAUDE.md} must be a real source
+     * file. This is the drift that repeatedly survived manual review: a doc goes on citing a
+     * class long after it is renamed or deleted, and nothing compiles the prose.
+     * <p>
+     * The candidate pattern requires a lowercase second character, which keeps {@code ALL_CAPS}
+     * enum constants and single letters out of the match.
+     * <p>
+     * Deliberately scoped to {@code CLAUDE.md} files and not to {@code docs/ARCHITECTURE.md}.
+     * That document's job is history, so naming a class that no longer exists - {@code Context},
+     * the god object the composition root replaced - is correct there. Widening this check to it
+     * would mean allowlisting every deleted class forever, which fights what the document is for.
+     */
+    private static Check docsNameRealTypes() {
+        return new Check() {
+            @Override
+            public String name() {
+                return "docs-name-real-types";
+            }
+
+            @Override
+            public String section() {
+                return "CLAUDE.md 10";
+            }
+
+            @Override
+            public String why() {
+                return "a CLAUDE.md names a type that no longer exists - rename it or drop the sentence";
+            }
+
+            @Override
+            public List<String> violations() throws IOException {
+                Set<String> sourceNames = new HashSet<>();
+                for (Path root : List.of(MAIN, TEST)) {
+                    if (!Files.isDirectory(root)) {
+                        continue;
+                    }
+                    try (Stream<Path> files = Files.walk(root)) {
+                        files.filter(Files::isRegularFile)
+                                .map(f -> f.getFileName().toString())
+                                .filter(n -> n.endsWith(".java"))
+                                .forEach(n -> sourceNames.add(n.substring(0, n.length() - 5)));
+                    }
+                }
+                Pattern candidate = Pattern.compile("`([A-Z][a-z][A-Za-z0-9]*)`");
+                List<String> found = new ArrayList<>();
+                for (Path doc : docFiles()) {
+                    List<String> lines = Files.readAllLines(doc, StandardCharsets.UTF_8);
+                    for (int i = 0; i < lines.size(); i++) {
+                        Matcher m = candidate.matcher(lines.get(i));
+                        while (m.find()) {
+                            String type = m.group(1);
+                            if (!sourceNames.contains(type) && !KNOWN_EXTERNAL_TYPES.contains(type)) {
+                                found.add(doc + ":" + (i + 1) + "  names `" + type + "`, which has no source file");
+                            }
+                        }
+                    }
+                }
+                return found;
+            }
+        };
+    }
+
+    /** The root {@code CLAUDE.md} and every per-package one. */
+    private static List<Path> docFiles() throws IOException {
+        List<Path> docs = new ArrayList<>();
+        docs.add(Paths.get("CLAUDE.md"));
+        try (Stream<Path> files = Files.walk(MAIN)) {
+            files.filter(Files::isRegularFile)
+                    .filter(f -> "CLAUDE.md".equals(f.getFileName().toString()))
+                    .forEach(docs::add);
+        }
+        return docs;
+    }
+
     private static List<Path> headlessRoots() {
         List<Path> roots = new ArrayList<>();
         for (String pkg : HEADLESS_PACKAGES) {
@@ -144,7 +239,23 @@ public final class VerifyRules {
         return roots;
     }
 
-    private static final class Rule {
+    /** One verifiable rule. Most are greps ({@link Rule}); a few need real logic. */
+    private interface Check {
+        String name();
+
+        String section();
+
+        String why();
+
+        List<String> violations() throws IOException;
+
+        /** Non-null while a rule is adopted but not yet satisfied - see {@link Rule#pending}. */
+        default String pendingReason() {
+            return null;
+        }
+    }
+
+    private static final class Rule implements Check {
 
         private final String name;
         private final String section;
@@ -193,7 +304,28 @@ public final class VerifyRules {
             return this;
         }
 
-        List<String> violations() throws IOException {
+        @Override
+        public String name() {
+            return this.name;
+        }
+
+        @Override
+        public String section() {
+            return this.section;
+        }
+
+        @Override
+        public String why() {
+            return this.why;
+        }
+
+        @Override
+        public String pendingReason() {
+            return this.pendingReason;
+        }
+
+        @Override
+        public List<String> violations() throws IOException {
             List<String> found = new ArrayList<>();
             for (Path root : this.roots) {
                 if (!Files.isDirectory(root)) {

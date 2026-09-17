@@ -44,11 +44,15 @@ The split as it stands:
   `MouseEvent`/`KeyEvent` handling, and translating screen coordinates into the
   board-relative pixel coordinates `GameEngine.mouseClicked`/`highlightCell` expect.
 - **`GameHost`** is the engine's only channel back to the UI (`enemyDied`, `setInfoText`,
-  `clearCell`). `GameWorld` calls through it; it does not know about Swing.
+  `clearCell`). `GameWorld` calls `setInfoText`; `EnemyRoster` and `TowerRoster` are handed the
+  host directly and call the other two. None of them knows about Swing.
 
-`TowerDefense` is a shrinking legacy shell. Every new rule placed there is a rule that
-cannot be tested — that is the whole reason the boundary exists, and the reason
-`GameEngineTest` is the integration surface rather than some UI-driven harness.
+`TowerDefense` is the one class deliberately on both sides of the boundary. It is *not*
+shrinking, and calling it that would be wishful: it is around 700 lines and grew slightly
+during the threading work, since splitting frame-building from painting added code here. What
+holds is the rule, not the trend — a gameplay rule placed there is a rule that cannot be
+tested, which is the whole reason the boundary exists and why `GameEngineTest` is the
+integration surface rather than some UI-driven harness.
 
 `GameHost.noOp()` exists for genuinely display-less worlds — the toolbar's preview towers,
 the wave-preview panel's off-board enemies — so a caller never has to pass `null` and hope
@@ -148,7 +152,7 @@ eight — not the "three or four" an earlier note in this file assumed. So the f
 invent narrow interfaces for constructors that genuinely need several capabilities; it was to
 stop hiding which ones. `GameWorld` now exposes `economy()`, `enemies()`, `towers()`,
 `projectiles()` and `waves()`, and a call site says `context.economy().doPay(n)`. The surface
-went from 41 methods to 13, and the dependency is legible at every use.
+went from 41 methods to 14, and the dependency is legible at every use.
 
 A consumer that needs exactly one collaborator takes it directly and never sees `GameWorld`
 at all — `td.tower.targeting`'s query classes and `BoardRenderer` take an `EnemyRegistry`.
@@ -288,19 +292,24 @@ Under the Java Memory Model those field reads had no happens-before edge, and no
 mostly benign; on a weakly-ordered CPU it is not — and this project's standing requirement is
 to behave identically on every platform.
 
-The fix was structural rather than a dusting of `volatile`: the simulation thread owns all
-mutable state and publishes an immutable snapshot; the EDT reads only snapshots. `RenderFrame`
-already existed as exactly that snapshot type, so the change was to build it on the
-`game-loop` thread — `GameLoop` now calls both of its callbacks there and has no Swing
-dependency at all — and publish it through one `volatile` field that `paintBoard` reads.
+The fix was structural rather than a dusting of `volatile`: **whichever thread owns a piece
+of mutable state publishes it, and the other thread reads only what was published.** Note the
+phrasing — it is not "the simulation thread owns everything". A tower's buffed stats are
+recalculated on the EDT and read by tick code, so the ownership runs the other way there; see
+the tower-stats case below.
 
-The tower info panel was the same bug for a different set of fields, and deliberately got a
-*different* answer: its values (kill count, damage dealt, current damage and range) are
-independent scalars in a text readout with no invariant tying them together, so they are
-published `volatile` rather than snapshotted. That is not mere tidiness — `damageDealt` is a
-`long`, whose non-volatile read may tear. Snapshotting there would also have meant running
-each upgrade path's `UpgradeCondition.isSatisfied`, which walks the tower roster, on the
-simulation thread sixty times a second for no benefit.
+For the board, `RenderFrame` already existed as exactly the right snapshot type, so the change
+was to build it on the `game-loop` thread — `GameLoop` now calls both of its callbacks there
+and has no Swing dependency at all — and publish it through one `volatile` field that
+`paintBoard` reads.
+
+The tower info panel was the same bug for a different set of fields, and part of it got a
+*different* answer. Its kill count and damage dealt are independent readouts in a text panel
+with no invariant tying them together, so they are published `volatile`. That is not mere
+tidiness — `damageDealt` is a `long`, whose non-volatile read may tear. Its damage, range and
+cooldown are a different matter and are *not* volatile scalars: they have to agree with one
+another, so they became a snapshot. That distinction is the next section, and it was got wrong
+once already.
 
 The general lesson, which is the part worth keeping: **a concurrent collection makes the
 collection safe, not its contents.** Reach for "who owns this state, and what do the other
@@ -315,11 +324,12 @@ path being bought - and produces five numbers that are meaningless apart: curren
 current range, current cooldown, and the pixel and squared-pixel forms of that range. Tick
 code reads all five.
 
-This was originally five separate fields, and the Phase 3 threading pass marked three of them
+This was originally five separate fields, and the first threading pass marked three of them
 `volatile`, which made each read fresh without making the set coherent: a tick could fire with
 the new damage and the previous cooldown, or scan using `rangeReal` and `rangeReal2` from
 different generations. That is the "half-updated object" the snapshot rule exists to prevent,
-in a place where `volatile` looked like a sufficient answer.
+applied wrongly in the very pass that wrote the rule — `volatile` looked sufficient because the
+fields are individually simple.
 
 They now live in one immutable `TowerStats` swapped through a single volatile reference. The
 useful test, when deciding between the two mechanisms, is whether the fields have to agree
