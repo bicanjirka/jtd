@@ -30,13 +30,6 @@ import td.wave.WaveAnnouncer;
  */
 public class GameWorld {
 
-    // The level-scoped state GameWorld owns directly rather than delegating, as ONE immutable
-    // value behind ONE volatile: the board, path, cell grid, enemy catalog and wave list are
-    // correlated, and publishing them independently let the game-loop thread pair a board from
-    // the incoming level with a cell grid from the outgoing one. See LoadedLevel and
-    // CLAUDE.md 3 rule 1.
-    private volatile LoadedLevel level = LoadedLevel.none();
-
     private final GameHost mainApp;
     private final RandomSource random;
     private final EconomyLedger economy = new EconomyLedger();
@@ -44,12 +37,20 @@ public class GameWorld {
     private final TowerRoster towers;
     private final ProjectileRoster projectiles = new ProjectileRoster();
     private final WaveAnnouncer waves = new WaveAnnouncer();
+    // The level-scoped state GameWorld owns directly rather than delegating, as ONE immutable
+    // value behind ONE volatile: the board, path, cell grid, enemy catalog and wave list are
+    // correlated, and publishing them independently let the game-loop thread pair a board from
+    // the incoming level with a cell grid from the outgoing one. See LoadedLevel and
+    // CLAUDE.md 3 rule 1.
+    private volatile LoadedLevel level = LoadedLevel.none();
 
     public GameWorld(GameHost mainApp) {
         this(mainApp, RandomSource.shared());
     }
 
-    /** For a run that has to be reproducible - see {@code td.BalanceHarness}. */
+    /**
+     * For a run that has to be reproducible - see {@code td.BalanceHarness}.
+     */
     public GameWorld(GameHost mainApp, RandomSource random) {
         this.random = random;
         this.mainApp = mainApp;
@@ -57,32 +58,44 @@ public class GameWorld {
         this.towers = new TowerRoster(mainApp, this.economy, this::getBoard);
     }
 
-    /** The player's credits, score and lives. */
+    /**
+     * The player's credits, score and lives.
+     */
     public EconomyLedger economy() {
         return this.economy;
     }
 
-    /** The live enemies of the wave in play. Also the {@code EnemyRegistry} readers depend on. */
+    /**
+     * The live enemies of the wave in play. Also the {@code EnemyRegistry} readers depend on.
+     */
     public EnemyRoster enemies() {
         return this.enemies;
     }
 
-    /** The towers on the board, and their buy/sell lifecycle. */
+    /**
+     * The towers on the board, and their buy/sell lifecycle.
+     */
     public TowerRoster towers() {
         return this.towers;
     }
 
-    /** The shells and missiles currently in flight. */
+    /**
+     * The shells and missiles currently in flight.
+     */
     public ProjectileRoster projectiles() {
         return this.projectiles;
     }
 
-    /** The "a wave started" broadcast hub. */
+    /**
+     * The "a wave started" broadcast hub.
+     */
     public WaveAnnouncer waves() {
         return this.waves;
     }
 
-    /** Where anything in the simulation that needs randomness gets it - never {@code Math.random()}. */
+    /**
+     * Where anything in the simulation that needs randomness gets it - never {@code Math.random()}.
+     */
     public RandomSource random() {
         return this.random;
     }
@@ -116,21 +129,15 @@ public class GameWorld {
         this.level = level;
     }
 
-    /** The installed level's board of cells - {@link CellGrid#empty()} when none is. */
+    /**
+     * The installed level's board of cells - {@link CellGrid#empty()} when none is.
+     */
     public CellGrid cells() {
         return this.level.cells();
     }
 
     public BoardGeometry getBoard() {
         return this.level.board();
-    }
-
-    public Path getPath() {
-        return this.level.path();
-    }
-
-    public EnemyCatalog getEnemyCatalog() {
-        return this.level.catalog();
     }
 
     /**
@@ -146,12 +153,24 @@ public class GameWorld {
         this.level = this.level.withBoard(board);
     }
 
-    /** Replaces one part of the installed level - see {@link #setBoard}. */
+    public Path getPath() {
+        return this.level.path();
+    }
+
+    /**
+     * Replaces one part of the installed level - see {@link #setBoard}.
+     */
     public void setPath(Path path) {
         this.level = this.level.withPath(path);
     }
 
-    /** Replaces one part of the installed level - see {@link #setBoard}. */
+    public EnemyCatalog getEnemyCatalog() {
+        return this.level.catalog();
+    }
+
+    /**
+     * Replaces one part of the installed level - see {@link #setBoard}.
+     */
     public void setEnemyCatalog(EnemyCatalog enemyCatalog) {
         this.level = this.level.withCatalog(enemyCatalog);
     }

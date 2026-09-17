@@ -20,7 +20,9 @@ public interface EnemyMob {
 
     double getY();
 
-    /** How far along its current lap of the path this mob is - a ranking value only, not a distance to rely on. */
+    /**
+     * How far along its current lap of the path this mob is - a ranking value only, not a distance to rely on.
+     */
     int getProgression();
 
     boolean validTarget();
@@ -33,7 +35,9 @@ public interface EnemyMob {
 
     boolean isDead();
 
-    /** The bounty this mob pays on death (and the score penalty it costs if it leaks instead). */
+    /**
+     * The bounty this mob pays on death (and the score penalty it costs if it leaks instead).
+     */
     int getBounty();
 
     /**
@@ -50,7 +54,9 @@ public interface EnemyMob {
      */
     void applyEffect(Effect effect);
 
-    /** Which status effect kinds are currently active - for the renderer's on-board marker, in a stable order. */
+    /**
+     * Which status effect kinds are currently active - for the renderer's on-board marker, in a stable order.
+     */
     Set<EffectKind> activeEffectKinds();
 
     float getSpeed();

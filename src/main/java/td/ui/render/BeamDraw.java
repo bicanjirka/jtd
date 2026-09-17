@@ -6,5 +6,5 @@ package td.ui.render;
  * tower's cooldown, so a beam thins out as the tower recharges.
  */
 public record BeamDraw(Palette palette, float fromX, float fromY, float toX, float toY,
-                        float strokeWidth) implements TowerEffectDraw {
+                       float strokeWidth) implements TowerEffectDraw {
 }

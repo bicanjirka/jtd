@@ -17,6 +17,29 @@ class BuiltInLevelCatalogTest {
 
     private static final int SCALE = 32;
 
+    private static Set<Point> cellsOnlyTheSmoothedCurveCovers(LevelDefinition level) {
+        Set<Point> straightCornerCoverage = PathCoverage.unbuildableCells(
+                rawPixelPolyline(level), SCALE, level.width(), level.height());
+
+        Path smoothedPath = PathBuilder.build(level.path(), level.smoothing(), SCALE);
+        Set<Point> smoothedCoverage = PathCoverage.unbuildableCells(
+                smoothedPath.points(), SCALE, level.width(), level.height());
+
+        return smoothedCoverage.stream()
+                .filter(cell -> !straightCornerCoverage.contains(cell))
+                .collect(Collectors.toSet());
+    }
+
+    private static LevelDefinition thirdLevel() {
+        return new BuiltInLevelCatalog().levels().get(2);
+    }
+
+    private static List<Vec2> rawPixelPolyline(LevelDefinition level) {
+        return level.path().stream()
+                .map(cell -> new Vec2(cell.x() * SCALE + (SCALE / 2.0), cell.y() * SCALE + (SCALE / 2.0)))
+                .toList();
+    }
+
     @Test
     void theCatalogOffersAllThreeBuiltInLevelsInOrder() {
         List<LevelDefinition> levels = new BuiltInLevelCatalog().levels();
@@ -44,19 +67,6 @@ class BuiltInLevelCatalogTest {
         assertThat(wildNewCellCount).isGreaterThanOrEqualTo(10);
     }
 
-    private static Set<Point> cellsOnlyTheSmoothedCurveCovers(LevelDefinition level) {
-        Set<Point> straightCornerCoverage = PathCoverage.unbuildableCells(
-                rawPixelPolyline(level), SCALE, level.width(), level.height());
-
-        Path smoothedPath = PathBuilder.build(level.path(), level.smoothing(), SCALE);
-        Set<Point> smoothedCoverage = PathCoverage.unbuildableCells(
-                smoothedPath.points(), SCALE, level.width(), level.height());
-
-        return smoothedCoverage.stream()
-                .filter(cell -> !straightCornerCoverage.contains(cell))
-                .collect(Collectors.toSet());
-    }
-
     @Test
     void wildBezierSweepsPathStaysEntirelyWithinItsOwnBoard() {
         LevelDefinition level = thirdLevel();
@@ -74,15 +84,5 @@ class BuiltInLevelCatalogTest {
             assertThat(point.x()).isBetween((double) (minX * SCALE), (double) (maxX * SCALE + SCALE));
             assertThat(point.y()).isBetween((double) (minY * SCALE), (double) (maxY * SCALE + SCALE));
         }
-    }
-
-    private static LevelDefinition thirdLevel() {
-        return new BuiltInLevelCatalog().levels().get(2);
-    }
-
-    private static List<Vec2> rawPixelPolyline(LevelDefinition level) {
-        return level.path().stream()
-                .map(cell -> new Vec2(cell.x() * SCALE + (SCALE / 2.0), cell.y() * SCALE + (SCALE / 2.0)))
-                .toList();
     }
 }

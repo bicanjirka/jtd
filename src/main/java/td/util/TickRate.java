@@ -14,10 +14,14 @@ package td.util;
  */
 public final class TickRate {
 
-    /** Real-world nanoseconds one simulation tick represents at {@code TickSpeed.NORMAL}. */
+    /**
+     * Real-world nanoseconds one simulation tick represents at {@code TickSpeed.NORMAL}.
+     */
     public static final long TICK_NANOS = 50_000_000L;
 
-    /** Simulation ticks per real-world second at {@code TickSpeed.NORMAL}. */
+    /**
+     * Simulation ticks per real-world second at {@code TickSpeed.NORMAL}.
+     */
     public static final float TICKS_PER_SECOND = 1_000_000_000f / TICK_NANOS;
 
     private TickRate() {

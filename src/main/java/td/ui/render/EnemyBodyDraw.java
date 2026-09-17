@@ -5,5 +5,5 @@ package td.ui.render;
  * mob's previous and current tick position - the backend just draws them.
  */
 public record EnemyBodyDraw(Palette palette, float x, float y, double facingRadians, float scale,
-                             float healthFraction) implements EnemyDraw {
+                            float healthFraction) implements EnemyDraw {
 }

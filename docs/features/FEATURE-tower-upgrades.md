@@ -20,8 +20,8 @@ towers get a different visual and can apply new enemy-affecting effects (slow, b
 damage-taken-increase aura) or a bounty multiplier on their own kills. Two more far-reaching
 cases — a one-time purchase that retroactively upgrades every tower of a type, present and
 future, and an aura that boosts bounty for *any* kill in its area, not just this tower's own
-— are documented here as a deliberately **deferred, later-phase** extension of this feature
-(see Decisions made, below), not part of a first version.
+— are documented here as a deliberately **deferred, later-phase** extension of this feature (see Decisions made, below),
+not part of a first version.
 
 ## Current state (what exists today)
 
@@ -48,8 +48,7 @@ future, and an aura that boosts bounty for *any* kill in its area, not just this
   `none()`, additive) to get `damageCurrent`/`rangeCurrent`. This is a real, working
   precedent for "a tower's effective stats are its base stats plus a reduce over some set of
   modifiers" — but today the only modifiers are *external* upgrade towers in radius, the
-  only stats are damage and range, and there is no notion of a modifier a player
-  *purchases directly onto* one tower.
+  only stats are damage and range, and there is no notion of a modifier a player *purchases directly onto* one tower.
 - **`AbstractTower` already tracks the data most enablement conditions need**: `killCount`
   and `damageDealt` are accumulated on every hit via `dealDamage` (see `td/tower/CLAUDE.md`
   on why it must go through that one method). "Upgrade unlocks after N kills" or "after
@@ -63,13 +62,13 @@ future, and an aura that boosts bounty for *any* kill in its area, not just this
 - **The UI location this feature targets** is `td.ui.PanelTowerInfo`: today it shows the
   selected tower's live status text (`Tower.getStatusString()`) and exactly one button, a
   `HudButton` labelled `"Sell ( $N )"`, laid out in a small `jPanel_buttons` under the status
-  text, disabled once the level has ended. The request asks for upgrade button(s) in "the
+  text, disabled once the level has ended. The request asks for upgrade button (s) in "the
   same style and same position" as this sell button.
 - **On the "sell button has red font" detail**: this is worth flagging directly rather than
   assumed — nothing in `td.ui.Hud` (the single place that owns the HUD's palette, per the
   root `CLAUDE.md`'s pinned UI-uniformity requirement) gives the sell button, or any button,
-  a distinct text colour today. Every control currently renders identical foreground text
-  (`Hud.FOREGROUND`, a pale green) regardless of role. Red sell text does not exist yet — it
+  a distinct text colour today. Every control currently renders identical foreground text (`Hud.FOREGROUND`, a pale
+  green) regardless of role. Red sell text does not exist yet — it
   would itself be new scope introduced by this feature, not a color to merely "match."
 
 ## What this feature adds
@@ -85,15 +84,15 @@ future, and an aura that boosts bounty for *any* kill in its area, not just this
   gated by any one of them.
 - **Four independent enablement conditions for v1** (see V1 Scope, below, for why a fifth —
   "a minimum count of towers on the field" — was cut):
-  1. Money only — enabled once the player can afford it.
-  2. A cluster of some number of towers built adjacent to one another.
-  3. The specific tower having dealt at least some amount of damage.
-  4. The specific tower having killed at least some number of enemies.
-  5. A **global** upgrade: bought once, and retroactively applied to every tower of that
-     type already on the field, and to every tower of that type built afterward — distinct
-     in kind from the first four, which all upgrade one already-placed tower instance.
-     **Deferred to a later phase** (see Decisions made, below) — documented here so the
-     design isn't lost, not scoped for a first version.
+    1. Money only — enabled once the player can afford it.
+    2. A cluster of some number of towers built adjacent to one another.
+    3. The specific tower having dealt at least some amount of damage.
+    4. The specific tower having killed at least some number of enemies.
+    5. A **global** upgrade: bought once, and retroactively applied to every tower of that
+       type already on the field, and to every tower of that type built afterward — distinct
+       in kind from the first four, which all upgrade one already-placed tower instance. **Deferred to a later phase**
+       (see Decisions made, below) — documented here so the
+       design isn't lost, not scoped for a first version.
 - **New effects an upgrade can grant**: a different sprite/visual for the upgraded tower;
   enemy-affecting on-hit effects such as slow or burn (see the damage-types/projectiles
   feature); an aura that increases damage *enemies* take while standing in it (a debuff
@@ -105,22 +104,22 @@ future, and an aura that boosts bounty for *any* kill in its area, not just this
 
 ## Interconnections with the other two feature requests
 
-- **Depends on the damage-types/projectiles feature** for the on-hit effect vocabulary
-  (slow, burn) an upgrade is meant to grant — this feature can't apply "burn" to a target
+- **Depends on the damage-types/projectiles feature** for the on-hit effect vocabulary (slow, burn) an upgrade is meant
+  to grant — this feature can't apply "burn" to a target
   before that effect exists as a mechanism, however it ends up represented.
 - **Depends on (or should share) the effects primitive** discussed in the enemy-traits
   document: the "damage-taken-increase aura" is mechanically a debuff *effect* applied to
-  every enemy inside a radius, which is the same shape of thing an enemy's own ability
-  (feature 1) or a tower's on-hit effect (feature 2) applies — building it as a third,
+  every enemy inside a radius, which is the same shape of thing an enemy's own ability (feature 1) or a tower's on-hit
+  effect (feature 2) applies — building it as a third,
   independent implementation is avoidable if the shared primitive is settled first.
 - **Naming collision with `td.tower.TowerUpgrade`/"Power tower" is resolved by renaming the
-  existing tower**, not this feature's concept — see Current state, above. The rename
-  (class, every reference, test, and doc) is a small but real, easy-to-forget prerequisite
+  existing tower**, not this feature's concept — see Current state, above. The rename (class, every reference, test, and
+  doc) is a small but real, easy-to-forget prerequisite
   that should land before or alongside this feature's own implementation, so no code or
   documentation is ever written against a `TowerUpgrade` that means two different things.
 - **Closes an existing tracked gap.** `TODO.md`'s "Tower upgrade doesn't gate on
-  affordability" entry is written for exactly this feature; per the project's standing rule
-  ("close a gap, delete its entry in the same commit"), landing this feature should delete
+  affordability" entry is written for exactly this feature; per the project's standing rule ("close a gap, delete its
+  entry in the same commit"), landing this feature should delete
   that entry.
 
 ## Architectural implications
@@ -130,23 +129,23 @@ future, and an aura that boosts bounty for *any* kill in its area, not just this
   live tower list to scan) — these are additive, moderate-sized changes.
 - **The global, buy-once-applies-to-all-present-and-future upgrade does not fit that
   pattern at all**, and is architecturally the most significant piece of this request:
-  - It must retroactively modify every already-built tower of the target type — something
-    no existing mechanism does (today, a tower's stats are fixed at construction plus
-    whatever `TowerBuff`s currently register against it; nothing reaches back into already-
-    placed towers to change their base behavior).
-  - It must also affect every *future* tower of that type, meaning `TowerFactory` (or
-    whatever replaces the buy flow) needs to consult some new piece of persistent,
-    per-level (or per-game?) state keyed by tower type when constructing a tower — state
-    that doesn't exist anywhere in `GameWorld` today.
-  - It must interact correctly with level teardown and reload. The root `CLAUDE.md`'s
-    Levels section is explicit that `GameEngine.loadLevel` is idempotent and must not leak
-    state between plays (`TowerRoster.clear()`, `EnemyRoster.clear()` were both carefully
-    designed around exactly this). A global upgrade flag needs the same discipline, or a
-    researched upgrade would incorrectly persist into the next level or the next run.
-  - **Decided: deferred to a later phase.** The five per-instance conditions form a
-    coherent, materially smaller feature on their own and are what a first version targets;
-    this sub-case stays documented here as a future-feature request rather than being
-    dropped or built prematurely.
+    - It must retroactively modify every already-built tower of the target type — something
+      no existing mechanism does (today, a tower's stats are fixed at construction plus
+      whatever `TowerBuff`s currently register against it; nothing reaches back into already-
+      placed towers to change their base behavior).
+    - It must also affect every *future* tower of that type, meaning `TowerFactory` (or
+      whatever replaces the buy flow) needs to consult some new piece of persistent,
+      per-level (or per-game?) state keyed by tower type when constructing a tower — state
+      that doesn't exist anywhere in `GameWorld` today.
+    - It must interact correctly with level teardown and reload. The root `CLAUDE.md`'s
+      Levels section is explicit that `GameEngine.loadLevel` is idempotent and must not leak
+      state between plays (`TowerRoster.clear()`, `EnemyRoster.clear()` were both carefully
+      designed around exactly this). A global upgrade flag needs the same discipline, or a
+      researched upgrade would incorrectly persist into the next level or the next run.
+    - **Decided: deferred to a later phase.** The five per-instance conditions form a
+      coherent, materially smaller feature on their own and are what a first version targets;
+      this sub-case stays documented here as a future-feature request rather than being
+      dropped or built prematurely.
 - **The "bounty for any kill in this aura, not just my own" effect is a new cross-tower
   coupling that doesn't exist today.** `EconomyDelta.kill(bounty)` is currently computed
   once, inside `AbstractEnemyMob.doDamage`, purely from the dying enemy's own `price` — it
@@ -219,8 +218,8 @@ worth recording alongside the decisions below:
 
 ## Decisions made
 
-- The naming collision is resolved by renaming the existing Power tower
-  (`td.tower.TowerUpgrade`) to the **Aura tower** (`td.tower.TowerAura`) — "upgrade" stays
+- The naming collision is resolved by renaming the existing Power tower (`td.tower.TowerUpgrade`) to the **Aura tower**
+  (`td.tower.TowerAura`) — "upgrade" stays
   the name of this feature's in-place mechanic, in code and in the UI.
 - Upgrades are **branching specializations**: each tower offers exactly **two** upgrade
   paths, and choosing one is a **permanent, mutually exclusive** choice for that tower
@@ -265,12 +264,12 @@ contains: concrete content, the shape of the solution, and a phased implementati
 
 ### Proposed content (illustrative — numbers are placeholders for a later balance pass)
 
-| Tower | Path A | Gate | Path B | Gate |
-|---|---|---|---|---|
-| `TowerOne` (Triangle) | **Veteran** — modest damage/range bump, plus a bounty multiplier on this tower's own kills | kill-count | **Overclock** — shorter cooldown (faster fire), lower per-shot damage | money |
-| `TowerTwo` (Circle) | **Siege** — bigger damage and splash radius | damage-dealt | **Cluster Charge** — bigger damage and range | cluster |
-| `TowerThree` (Sunshine) | **Overcharged Array** — faster sweep (shorter `secondsPerRevolution`) and more range | cluster | **Marksman Beam** — bigger per-hit damage | kill-count |
-| `TowerFour` (Stardust) | **Overload Core** — bigger damage | damage-dealt | **Expanded Field** — bigger range | money |
+| Tower                   | Path A                                                                                     | Gate         | Path B                                                                | Gate       |
+|-------------------------|--------------------------------------------------------------------------------------------|--------------|-----------------------------------------------------------------------|------------|
+| `TowerOne` (Triangle)   | **Veteran** — modest damage/range bump, plus a bounty multiplier on this tower's own kills | kill-count   | **Overclock** — shorter cooldown (faster fire), lower per-shot damage | money      |
+| `TowerTwo` (Circle)     | **Siege** — bigger damage and splash radius                                                | damage-dealt | **Cluster Charge** — bigger damage and range                          | cluster    |
+| `TowerThree` (Sunshine) | **Overcharged Array** — faster sweep (shorter `secondsPerRevolution`) and more range       | cluster      | **Marksman Beam** — bigger per-hit damage                             | kill-count |
+| `TowerFour` (Stardust)  | **Overload Core** — bigger damage                                                          | damage-dealt | **Expanded Field** — bigger range                                     | money      |
 
 Each condition is used exactly twice across the 8 paths, so the feature exercises all four
 gates in actual content rather than leaving one theoretical. `TowerTwo`'s "Cluster Charge"
@@ -298,8 +297,8 @@ sensor-sweep tower specifically.
   continuously-recomputed contribution from nearby Aura towers. It only needs to be applied
   once, when the path is chosen, and then folded into every future `calcDamageRange()` call
   the same way an `upgTowers` entry already is.
-- **Enablement conditions need a small, closed set of evaluators** — one per condition kind
-  (money, cluster, damage-dealt, kill-count) — each answering "is this specific tower's path
+- **Enablement conditions need a small, closed set of evaluators** — one per condition kind (money, cluster,
+  damage-dealt, kill-count) — each answering "is this specific tower's path
   currently available" given the tower itself, the current `EconomyState`, and (for cluster)
   the current `TowerRoster`. Cluster adjacency needs a new helper using
   `BoardGeometry.cellX/cellY` (precedent: `TowerRoster.sell`/`clear` already convert a
@@ -313,8 +312,8 @@ sensor-sweep tower specifically.
   `TowerListener.towerBuild`/`towerRemoved` in addition to its existing
   `EconomyListener.economyChanged`, since the cluster condition can flip as neighbors are
   built or sold.
-- **Rename mechanics for the Power tower → Aura tower**: class rename
-  (`td.tower.TowerUpgrade` → `td.tower.TowerAura`), its display string ("Power tower" →
+- **Rename mechanics for the Power tower → Aura tower**: class rename (`td.tower.TowerUpgrade` → `td.tower.TowerAura`),
+  its display string ("Power tower" →
   "Aura tower"), every reference in `TowerFactory.type`, tests, `td/tower/CLAUDE.md`'s tower
   table, and `README.md`'s tower table — done as its own early phase (see below) so no code
   is ever written against the old name meaning two different things.

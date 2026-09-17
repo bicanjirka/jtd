@@ -52,7 +52,9 @@ public record Damage(int amount, DamageType type) {
         return new Damage(Math.round(this.amount * factor), this.type);
     }
 
-    /** This damage's amount, capped at {@code max} - the type is preserved either way. */
+    /**
+     * This damage's amount, capped at {@code max} - the type is preserved either way.
+     */
     public Damage cappedAt(int max) {
         return new Damage(Math.min(this.amount, max), this.type);
     }

@@ -1,12 +1,10 @@
 package td.tower;
 
 import td.tower.buff.TowerBuff;
-
-import java.util.Optional;
-
 import td.tower.upgrade.UpgradePath;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * One tower on the board, as seen by the roster, the cell it occupies and the renderer.
@@ -23,22 +21,30 @@ public interface Tower {
 
     <R> R accept(TowerVisitor<R> visitor);
 
-    void setSelected(boolean selected);
-
     boolean isSelected();
 
-    /** Pre-purchase blurb: base stats and price, as shown while hovering the toolbar. */
+    void setSelected(boolean selected);
+
+    /**
+     * Pre-purchase blurb: base stats and price, as shown while hovering the toolbar.
+     */
     String getInfoString();
 
-    /** Live blurb for an already-placed, selected tower: buffed stats plus kills and damage dealt. */
+    /**
+     * Live blurb for an already-placed, selected tower: buffed stats plus kills and damage dealt.
+     */
     String getStatusString();
 
     int getSellPrice();
 
-    /** Range in cells, as the tower's stats advertise it. */
+    /**
+     * Range in cells, as the tower's stats advertise it.
+     */
     float getRange();
 
-    /** Range in pixels, buffs already applied - what an actual targeting query uses. */
+    /**
+     * Range in pixels, buffs already applied - what an actual targeting query uses.
+     */
     float getRangeReal();
 
     int getX();
@@ -76,10 +82,14 @@ public interface Tower {
      */
     void doCleanup();
 
-    /** Total damage this tower has actually landed - see AbstractTower.dealDamage's accounting rules. */
+    /**
+     * Total damage this tower has actually landed - see AbstractTower.dealDamage's accounting rules.
+     */
     long getDamageDealt();
 
-    /** How many kills this tower has landed - see AbstractTower.dealDamage's accounting rules. */
+    /**
+     * How many kills this tower has landed - see AbstractTower.dealDamage's accounting rules.
+     */
     int getKillCount();
 
     /**
@@ -88,7 +98,9 @@ public interface Tower {
      */
     List<UpgradePath> availablePaths();
 
-    /** The path this tower has permanently specialized into, or {@code null} if it hasn't chosen one yet. */
+    /**
+     * The path this tower has permanently specialized into, or {@code null} if it hasn't chosen one yet.
+     */
     Optional<UpgradePath> getChosenPath();
 
     /**

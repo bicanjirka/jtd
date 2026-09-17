@@ -1,8 +1,7 @@
-
 # Feature Request: Damage Types, Projectile Types and On-Hit Effects
 
-**Priority: Phase 2 — after tower upgrades.** This feature exists in part to give phase 1
-(in-place tower upgrades) something real to grant — an upgrade path that applies slow or
+**Priority: Phase 2 — after tower upgrades.** This feature exists in part to give phase 1 (in-place tower upgrades)
+something real to grant — an upgrade path that applies slow or
 burn needs those effects to exist first. It precedes enemy traits/effects (phase 3), which
 in turn needs this feature's damage-type tag and burning effect for its magic-shield and
 burning-immunity traits. See Product review notes, below, for scope-cutting recommendations
@@ -11,8 +10,8 @@ within this feature that haven't yet been confirmed as decisions.
 ## Summary
 
 Widen how a tower delivers and types its damage. Today every tower's hit resolves
-instantly, in the same tick it fires, as a single untyped `int` amount. This feature adds
-(a) **projectiles as real, time-lived entities** — a cannonball that travels a straight line
+instantly, in the same tick it fires, as a single untyped `int` amount. This feature adds (a) **projectiles as real,
+time-lived entities** — a cannonball that travels a straight line
 to a fixed destination, and a missile that homes in on its target — alongside the existing
 instant-hit and continuous-sweep towers; (b) a **cone targeting shape** (a flamethrower-like
 wedge) as a new addition to the existing splash and area shapes; (c) a **damage type**
@@ -28,23 +27,23 @@ chance-based) damage.
   its only combinators. It carries no notion of damage *type* at all.
 - **No projectile ever exists as a simulation entity.** Every tower resolves its hit inside
   its own `doTick`, in the same tick it decides to fire:
-  - `TowerOne` — instant single-target hit on whichever visible enemy is furthest along the
-    path (`FurthestAlongPathSelector` over `InRangeTargetQuery`).
-  - `TowerTwo` — instant hit on one random visible enemy, then an instant, distance-
-    falloff splash (`1 - (d/spreadRadius)²`) around that point.
-  - `TowerThree` — no cooldown at all; a beam *bearing* sweeps continuously
-    (`SonarSweep`), and any enemy whose bearing the swept arc crosses that tick is hit —
-    see `td/tower/CLAUDE.md` for why hits are decided against the arc swept since the last
-    tick, not the beam's instantaneous angle.
-  - `TowerFour` — instant hit on everything in range, every tick, including invisible
-    enemies, as long as at least one non-ghost is present.
-  - The `Beam`/`Splash`/`Pulse`/`Aura` draws in `td.ui.render` (`TowerEffectFrameBuilder`)
-    are purely cosmetic depictions of an already-resolved hit — they have no simulation
-    lifecycle, no independent position over multiple ticks, and no ability to miss, travel,
-    or be dodged.
+    - `TowerOne` — instant single-target hit on whichever visible enemy is furthest along the
+      path (`FurthestAlongPathSelector` over `InRangeTargetQuery`).
+    - `TowerTwo` — instant hit on one random visible enemy, then an instant, distance-
+      falloff splash (`1 - (d/spreadRadius)²`) around that point.
+    - `TowerThree` — no cooldown at all; a beam *bearing* sweeps continuously (`SonarSweep`), and any enemy whose
+      bearing the swept arc crosses that tick is hit —
+      see `td/tower/CLAUDE.md` for why hits are decided against the arc swept since the last
+      tick, not the beam's instantaneous angle.
+    - `TowerFour` — instant hit on everything in range, every tick, including invisible
+      enemies, as long as at least one non-ghost is present.
+    - The `Beam`/`Splash`/`Pulse`/`Aura` draws in `td.ui.render` (`TowerEffectFrameBuilder`)
+      are purely cosmetic depictions of an already-resolved hit — they have no simulation
+      lifecycle, no independent position over multiple ticks, and no ability to miss, travel,
+      or be dodged.
 - **Targeting shapes that exist today**: a single furthest-along-path target (`TowerOne`), a
-  point splash with radius falloff (`TowerTwo`), a full-circle continuous sweep
-  (`TowerThree`), and a flat "everything in range" area (`TowerFour`). **There is no cone
+  point splash with radius falloff (`TowerTwo`), a full-circle continuous sweep (`TowerThree`), and a flat "everything
+  in range" area (`TowerFour`). **There is no cone
   shape today** — worth flagging explicitly, since a cone is one of the shapes this request
   asks for as new, alongside splash and full-range AoE, which already exist in a form.
 - **No damage-type resistance exists.** `EnemyMobSquare.absorb()` reduces *any* incoming
@@ -64,15 +63,15 @@ chance-based) damage.
 ## What this feature adds
 
 - **Projectile entities with travel time**:
-  - A **cannonball-style** projectile: spawned at the tower's position, aimed at the
-    target's position *at the moment of firing*, and travels in a straight line at a finite
-    speed to that fixed destination — it does not re-aim in flight, so a fast-moving enemy
-    can dodge it by the time it arrives.
-  - A **missile-style** projectile: spawned the same way, but re-aims each tick toward its
-    target's *current* live position (homing) until it reaches (or the target is no longer
-    valid).
-  - Both need a defined resolution: single-target hit on arrival, or an AoE/splash on
-    arrival (reusing the existing splash-falloff shape).
+    - A **cannonball-style** projectile: spawned at the tower's position, aimed at the
+      target's position *at the moment of firing*, and travels in a straight line at a finite
+      speed to that fixed destination — it does not re-aim in flight, so a fast-moving enemy
+      can dodge it by the time it arrives.
+    - A **missile-style** projectile: spawned the same way, but re-aims each tick toward its
+      target's *current* live position (homing) until it reaches (or the target is no longer
+      valid).
+    - Both need a defined resolution: single-target hit on arrival, or an AoE/splash on
+      arrival (reusing the existing splash-falloff shape).
 - **A cone-shaped targeting/damage area** (flamethrower-like): a wedge extending from the
   tower in the direction of a target, hitting everything the wedge currently covers —
   conceptually closer to `TowerThree`'s continuous, cooldown-free delivery than to a
@@ -127,8 +126,8 @@ chance-based) damage.
   obvious sense) than a tagged record with a `type` field would be.
 - **Projectiles need a new first-class simulation entity and roster**, analogous to
   `EnemyRoster`/`TowerRoster`: something is spawned when a tower fires, needs its own
-  `doTick`-style advance-then-resolve lifecycle, needs interpolated position for rendering
-  (matching the `interpolationAlpha` pattern `EnemyFrameBuilder` and turret-aim already
+  `doTick`-style advance-then-resolve lifecycle, needs interpolated position for rendering (matching the
+  `interpolationAlpha` pattern `EnemyFrameBuilder` and turret-aim already
   use), and needs to be cleaned up on level teardown the same careful way
   `TowerRoster.clear()`/`EnemyRoster.clear()` already are (see the root `CLAUDE.md`'s Levels
   section on `GameEngine.loadLevel`'s idempotency contract). This is a new `GameWorld`
@@ -139,8 +138,8 @@ chance-based) damage.
   detonate at the empty destination) — today's instant-hit model has no such case because
   nothing is ever "in flight."
 - **Rendering needs new draw-command types.** `td.ui.render`'s `TowerEffectDraw` sealed
-  hierarchy (`BeamDraw`/`SplashDraw`/`PulseDraw`/`AuraDraw`) currently models only
-  *cosmetic, already-resolved* effects. A projectile with its own multi-tick position needs
+  hierarchy (`BeamDraw`/`SplashDraw`/`PulseDraw`/`AuraDraw`) currently models only *cosmetic, already-resolved* effects.
+  A projectile with its own multi-tick position needs
   its own draw command (and its own frame-builder logic, likely a sibling of
   `TowerEffectFrameBuilder` rather than an addition to it, since a projectile is closer in
   shape to an enemy — a moving, interpolatable entity — than to a beam flash). A cone needs
@@ -183,20 +182,20 @@ below:
 - **"Critical damage" is miscategorized in the original request.** It's listed alongside
   slow/freeze/burn/acid as "an effect applied after the enemy is damaged," but mechanically
   it isn't one: slow/burn/acid are things that happen *to the enemy, after* a hit lands,
-  with duration; a critical hit is a *pre-hit*, chance-based damage multiplier on the
-  *attacker's* roll. Recommendation: model it as a tower stat (crit chance/multiplier),
+  with duration; a critical hit is a *pre-hit*, chance-based damage multiplier on the *attacker's* roll. Recommendation:
+  model it as a tower stat (crit chance/multiplier),
   not as a post-hit effect alongside the DoTs and control effects.
 - **Stun and freeze are mechanically identical today, and arguably should ship as one
   effect for now.** An enemy's only action in this game is moving along the path — there's
   no other action for a "stun" to interrupt that a "freeze" (speed = 0) doesn't already
   cover. The two names only earn separate mechanics once feature 1's abilities exist for
-  stun to suppress that freeze wouldn't. Recommendation: ship one speed-to-zero effect now
-  (call it either), and only split it into two once there's an ability for stun to
+  stun to suppress that freeze wouldn't. Recommendation: ship one speed-to-zero effect now (call it either), and only
+  split it into two once there's an ability for stun to
   meaningfully suppress.
 - **Six on-hit effects at once is a lot for a first version.** Recommendation: cut to slow
-  + burn only for the initial ship — the two most genre-standard, lowest-risk, and most
-  build-diversifying (a "control" playstyle distinct from raw DPS). Freeze/stun/acid/crit
-  can follow once the shared effect plumbing and UI have proven out on two effects.
+    + burn only for the initial ship — the two most genre-standard, lowest-risk, and most
+      build-diversifying (a "control" playstyle distinct from raw DPS). Freeze/stun/acid/crit
+      can follow once the shared effect plumbing and UI have proven out on two effects.
 - **Whether cannonball/missile/cone are new tower types or retrofits onto the existing four
   is an open, and consequential, product question** (already tracked as open question 5,
   below) — retrofitting risks making the four existing, visually distinct towers feel
@@ -212,8 +211,8 @@ below:
   traits/effects (see Priority, above).
 - **`Damage` becomes a tagged record**: `Damage(int amount, DamageType type)`, not a sealed
   hierarchy. This keeps `plus`/`scaledBy` meaningful for two same-typed damage values, at
-  the cost of needing an explicit rule for combining two *different*-typed `Damage` values
-  (see Shape of the solution, below) — a cost the product review judged smaller than losing
+  the cost of needing an explicit rule for combining two *different*-typed `Damage` values (see Shape of the solution,
+  below) — a cost the product review judged smaller than losing
   the existing combinator algebra would be.
 - **v1 on-hit effects are slow, burn, and freeze** — critical damage is dropped from this
   feature entirely and, per the product review's recommendation, becomes a tower *stat*
@@ -267,11 +266,11 @@ contains: concrete content, the shape of the solution, and a phased implementati
 
 ### Proposed content (illustrative — numbers, names and type/effect pairings are placeholders for a later balance/theme pass)
 
-| Tower | Delivery | Damage type | On-hit effect | Resolution |
-|---|---|---|---|---|
-| **Mortar** tower | Cannonball — straight line to target's position at fire time, doesn't re-aim | Physical | Slow (concussive blast) | Splash on arrival, reusing `TowerTwo`'s existing falloff shape |
-| **Seeker** tower | Missile — homing, re-aims each tick at the live target position | Magic | Freeze (cryo warhead) | Single-target on arrival, retargets to nearest enemy if the original target dies/leaks in flight |
-| **Cinder** tower | Cone — continuous wedge, no cooldown, slowly reorients toward its target | Magic | Burn (flame damage-over-time) | Every enemy currently inside the wedge is hit each tick, mirroring `TowerThree`'s "decide against the arc swept since last tick" approach but for a wedge instead of a full sweep |
+| Tower            | Delivery                                                                     | Damage type | On-hit effect                 | Resolution                                                                                                                                                                        |
+|------------------|------------------------------------------------------------------------------|-------------|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Mortar** tower | Cannonball — straight line to target's position at fire time, doesn't re-aim | Physical    | Slow (concussive blast)       | Splash on arrival, reusing `TowerTwo`'s existing falloff shape                                                                                                                    |
+| **Seeker** tower | Missile — homing, re-aims each tick at the live target position              | Magic       | Freeze (cryo warhead)         | Single-target on arrival, retargets to nearest enemy if the original target dies/leaks in flight                                                                                  |
+| **Cinder** tower | Cone — continuous wedge, no cooldown, slowly reorients toward its target     | Magic       | Burn (flame damage-over-time) | Every enemy currently inside the wedge is hit each tick, mirroring `TowerThree`'s "decide against the arc swept since last tick" approach but for a wedge instead of a full sweep |
 
 Pairing swapped from an earlier draft of this table (Seeker↔burn, Cinder↔freeze): a
 cooldown-free cone applying freeze to everything that enters its wedge is a permanent hard

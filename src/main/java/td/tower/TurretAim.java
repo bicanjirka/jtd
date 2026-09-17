@@ -2,6 +2,7 @@ package td.tower;
 
 
 import td.util.ThreadConfined;
+
 /**
  * Chases a desired heading at a capped angular speed, always turning the shorter way around the
  * circle - lets an aiming tower's turret head visibly sweep toward a target instead of snapping
@@ -36,6 +37,23 @@ public final class TurretAim {
         return Math.atan2(toY - fromY, toX - fromX);
     }
 
+    private static double clamp(double value, double bound) {
+        return Math.max(-bound, Math.min(bound, value));
+    }
+
+    /**
+     * Wraps to {@code [-PI, PI)} - the shortest-path representation of an angular difference.
+     */
+    public static double normalizeRadians(double radians) {
+        double wrapped = radians % TWO_PI;
+        if (wrapped < -Math.PI) {
+            wrapped += TWO_PI;
+        } else if (wrapped >= Math.PI) {
+            wrapped -= TWO_PI;
+        }
+        return wrapped;
+    }
+
     /**
      * Advances the heading one tick's worth toward {@code desiredRadians}, turning at most
      * {@code maxTurnRadiansPerTick}, the shorter way around the circle.
@@ -65,20 +83,5 @@ public final class TurretAim {
      */
     public double currentRadians() {
         return this.currentRadians;
-    }
-
-    private static double clamp(double value, double bound) {
-        return Math.max(-bound, Math.min(bound, value));
-    }
-
-    /** Wraps to {@code [-PI, PI)} - the shortest-path representation of an angular difference. */
-    public static double normalizeRadians(double radians) {
-        double wrapped = radians % TWO_PI;
-        if (wrapped < -Math.PI) {
-            wrapped += TWO_PI;
-        } else if (wrapped >= Math.PI) {
-            wrapped -= TWO_PI;
-        }
-        return wrapped;
     }
 }

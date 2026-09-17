@@ -14,12 +14,10 @@ import td.tower.Tower;
  */
 public class CellNormal implements Cell {
 
-    private volatile HighlightType highlight = HighlightType.NONE;
-    private volatile float highlightRange = 0;
-
     private final int x;
     private final int y;
-
+    private volatile HighlightType highlight = HighlightType.NONE;
+    private volatile float highlightRange = 0;
     private volatile boolean buildable = true;
     private volatile Tower tower = null;
 
@@ -44,7 +42,9 @@ public class CellNormal implements Cell {
         return this.tower;
     }
 
-    /** Silently does nothing on an unbuildable cell - placement is gated before it gets here. */
+    /**
+     * Silently does nothing on an unbuildable cell - placement is gated before it gets here.
+     */
     public void setTower(Tower tower) {
         if (this.buildable) {
             this.tower = tower;
@@ -56,20 +56,20 @@ public class CellNormal implements Cell {
         return this.buildable;
     }
 
-    public void setHighlight(HighlightType highlight) {
-        this.highlight = highlight;
-    }
-
     public HighlightType getHighlight() {
         return this.highlight;
     }
 
-    public void setHighlightRange(float range) {
-        this.highlightRange = range;
+    public void setHighlight(HighlightType highlight) {
+        this.highlight = highlight;
     }
 
     public float getHighlightRange() {
         return this.highlightRange;
+    }
+
+    public void setHighlightRange(float range) {
+        this.highlightRange = range;
     }
 
     public int getX() {

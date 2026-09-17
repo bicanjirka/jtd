@@ -17,17 +17,17 @@ import java.util.List;
  */
 public interface TargetQuery {
 
-    List<EnemyMob> matching(EnemyRegistry enemies);
-
-    default TargetQuery and(TargetQuery other) {
-        return new IntersectingTargetQuery(this, other);
-    }
-
     static TargetQuery all() {
         return AllTargetQuery.INSTANCE;
     }
 
     static TargetQuery none() {
         return NoneTargetQuery.INSTANCE;
+    }
+
+    List<EnemyMob> matching(EnemyRegistry enemies);
+
+    default TargetQuery and(TargetQuery other) {
+        return new IntersectingTargetQuery(this, other);
     }
 }

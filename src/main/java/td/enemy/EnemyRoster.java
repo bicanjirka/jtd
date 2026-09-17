@@ -18,14 +18,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class EnemyRoster implements EnemyRegistry, EnemySpawner {
 
     private final GameHost host;
-    // Volatile rather than final: setEnemies swaps the whole list in one write, so a reader
-    // sees the outgoing wave or the incoming one and never a half-filled roster. Still a
-    // CopyOnWriteArrayList, because add/replace mutate it in place from an enemy's own doTick.
-    private volatile List<EnemyMob> enemies = new CopyOnWriteArrayList<>();
     // Decremented on the game-loop thread as mobs die and reset from the EDT on level load, and
     // the value a decrement produces is what decides "wave cleared" and "you won" - so the
     // decrement and the value reported for it have to be one operation, not two.
     private final AtomicInteger count = new AtomicInteger();
+    // Volatile rather than final: setEnemies swaps the whole list in one write, so a reader
+    // sees the outgoing wave or the incoming one and never a half-filled roster. Still a
+    // CopyOnWriteArrayList, because add/replace mutate it in place from an enemy's own doTick.
+    private volatile List<EnemyMob> enemies = new CopyOnWriteArrayList<>();
 
     public EnemyRoster(GameHost host) {
         this.host = host;
@@ -55,13 +55,17 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
         this.host.enemyDied(this.count.decrementAndGet());
     }
 
-    /** Tearing a level down is not a death: unlike {@link #remove()}, this does not notify the host. */
+    /**
+     * Tearing a level down is not a death: unlike {@link #remove()}, this does not notify the host.
+     */
     public void clear() {
         this.count.set(0);
         this.enemies.clear();
     }
 
-    /** Adds a new, independent enemy - the count grows, since it's one more mob to account for. */
+    /**
+     * Adds a new, independent enemy - the count grows, since it's one more mob to account for.
+     */
     @Override
     public void add(EnemyMob mob) {
         this.enemies.add(mob);

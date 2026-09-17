@@ -2,7 +2,9 @@ package td.tower;
 
 import td.tower.upgrade.UpgradePath;
 
-/** Looks up one of a tower's own upgrade paths by display name, so tests don't depend on list order. */
+/**
+ * Looks up one of a tower's own upgrade paths by display name, so tests don't depend on list order.
+ */
 final class UpgradePaths {
 
     private UpgradePaths() {

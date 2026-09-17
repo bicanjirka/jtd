@@ -27,12 +27,12 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         this.interpolationAlpha = interpolationAlpha;
     }
 
-    public List<ProjectileDraw> build() {
-        return this.draws;
-    }
-
     private static float lerp(double from, double to, double alpha) {
         return (float) (from + (to - from) * alpha);
+    }
+
+    public List<ProjectileDraw> build() {
+        return this.draws;
     }
 
     @Override

@@ -24,17 +24,23 @@ import td.damage.Damage;
  */
 public interface Trait {
 
-    /** Resists (or otherwise modifies) an incoming hit - generalizes {@code absorb}. */
+    /**
+     * Resists (or otherwise modifies) an incoming hit - generalizes {@code absorb}.
+     */
     default Damage onHit(Damage incoming, TraitContext context) {
         return incoming;
     }
 
-    /** Whether this trait alone makes the mob permanently untargetable, independent of {@link EnemyMob.Type}. */
+    /**
+     * Whether this trait alone makes the mob permanently untargetable, independent of {@link EnemyMob.Type}.
+     */
     default boolean isValidTarget(TraitContext context) {
         return true;
     }
 
-    /** A multiplier on intrinsic speed - generalizes Triangle's hurt curve. */
+    /**
+     * A multiplier on intrinsic speed - generalizes Triangle's hurt curve.
+     */
     default float speedFactor(TraitContext context) {
         return 1f;
     }

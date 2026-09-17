@@ -3,10 +3,10 @@ package td.ui;
 import td.enemy.EnemyMob;
 import td.tower.AuraTower;
 import td.tower.CinderTower;
-import td.tower.PulseTower;
 import td.tower.MortarTower;
-import td.tower.SniperTower;
+import td.tower.PulseTower;
 import td.tower.SeekerTower;
+import td.tower.SniperTower;
 import td.tower.SonarTower;
 import td.tower.SplashTower;
 import td.tower.TowerVisitor;
@@ -47,12 +47,20 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         this.animationSeconds = animationSeconds;
     }
 
-    public List<TowerEffectDraw> build() {
-        return this.draws;
-    }
-
     private static float beamWidth(float coolDownFraction) {
         return 3.0f * coolDownFraction;
+    }
+
+    /**
+     * Where in a looping {@code [0, 1)} cycle {@code seconds} sits, offset by {@code phaseOffset}.
+     */
+    private static double phaseFraction(double seconds, double phaseOffset) {
+        double t = (seconds / AURA_PERIOD_SECONDS + phaseOffset) % 1.0;
+        return t < 0 ? t + 1.0 : t;
+    }
+
+    public List<TowerEffectDraw> build() {
+        return this.draws;
     }
 
     public Void visitSniperTower(SniperTower tower) {
@@ -111,27 +119,27 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
-    /** No transient effect of its own - the shell in flight is what's visible, drawn as a {@code ProjectileDraw}. */
+    /**
+     * No transient effect of its own - the shell in flight is what's visible, drawn as a {@code ProjectileDraw}.
+     */
     public Void visitMortarTower(MortarTower tower) {
         return null;
     }
 
-    /** No transient effect of its own - the missile in flight is what's visible, drawn as a {@code ProjectileDraw}. */
+    /**
+     * No transient effect of its own - the missile in flight is what's visible, drawn as a {@code ProjectileDraw}.
+     */
     public Void visitSeekerTower(SeekerTower tower) {
         return null;
     }
 
-    /** The wedge itself, in the same heading {@code InWedgeTargetQuery} decides hits against. */
+    /**
+     * The wedge itself, in the same heading {@code InWedgeTargetQuery} decides hits against.
+     */
     public Void visitCinderTower(CinderTower tower) {
         float headingRadians = (float) tower.getTurretAim().radiansAt(this.interpolationAlpha);
         this.draws.add(new ConeDraw(Palette.TOWER_CINDER_CONE, tower.getX(), tower.getY(),
                 headingRadians, tower.getRangeReal(), (float) tower.getHalfWidthRadians(), CINDER_CONE_ALPHA));
         return null;
-    }
-
-    /** Where in a looping {@code [0, 1)} cycle {@code seconds} sits, offset by {@code phaseOffset}. */
-    private static double phaseFraction(double seconds, double phaseOffset) {
-        double t = (seconds / AURA_PERIOD_SECONDS + phaseOffset) % 1.0;
-        return t < 0 ? t + 1.0 : t;
     }
 }

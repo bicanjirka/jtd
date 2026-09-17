@@ -3,8 +3,8 @@
 Read the root `CLAUDE.md` first; this file only covers what is specific to this package and
 its `smoothing` subpackage.
 
-The package holds two loosely related things that share a name only by history: the
-**geometry** enemies walk, and the **composition** of a wave.
+The package holds two loosely related things that share a name only by history: the **geometry** enemies walk, and the
+**composition** of a wave.
 
 ## Geometry
 
@@ -65,14 +65,14 @@ canonical list - the root `CLAUDE.md` documents the grammar but deliberately not
 so adding an enemy does not touch the always-loaded file. Add a row here and to `README.md`'s
 enemy table when you register a new id.
 
-| Token | Enemy |
-|-------|-------|
-| `c` | Simple — no special behaviour (drawn as a circle) |
-| `s` | Armored — takes reduced damage (drawn as a square) |
-| `t` | Frenzied — speeds up as it is hurt (drawn as a triangle) |
-| `g` | Ghost — invisible to single-target towers (drawn as a tinted circle) |
-| `e` | Empty - the reserved spacer; counts toward spawn timing, not toward the enemy count |
-| `warden1` | The Warden boss - the only id in its six-stage chain a wave spawns directly |
+| Token     | Enemy                                                                               |
+|-----------|-------------------------------------------------------------------------------------|
+| `c`       | Simple — no special behaviour (drawn as a circle)                                   |
+| `s`       | Armored — takes reduced damage (drawn as a square)                                  |
+| `t`       | Frenzied — speeds up as it is hurt (drawn as a triangle)                            |
+| `g`       | Ghost — invisible to single-target towers (drawn as a tinted circle)                |
+| `e`       | Empty - the reserved spacer; counts toward spawn timing, not toward the enemy count |
+| `warden1` | The Warden boss - the only id in its six-stage chain a wave spawns directly         |
 
 Parsing and instantiation are deliberately separate:
 

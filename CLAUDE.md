@@ -98,8 +98,8 @@ Both directions. Cells are EDT-owned and read by the loop's frame build.
   listener the UI observes, or drive it from the EDT render pulse.
 - `td.util.Threads` asserts the two that matter (`assertEventDispatchThread`,
   `assertNotEventDispatchThread`), so a violation fails where it happens.
-- A plain mutable field read from the other thread is a bug, `double` and `long` especially
-  (non-volatile 64-bit reads may tear, JLS 17.7).
+- A plain mutable field read from the other thread is a bug, `double` and `long` especially (non-volatile 64-bit reads
+  may tear, JLS 17.7).
 - Publish only finished objects: fill a local, then assign the field.
 - `GameLoop.stop()` joins **without bound**, so it must not run on the EDT — level teardown
   goes through `TowerDefense.stopLoopThen`, which stops the loop on a lifecycle thread and
@@ -159,12 +159,12 @@ Still applies:
 5. Constructor injection only; dependencies arrive as final fields.
 6. Small classes, one idea each. Small interfaces, one to five methods.
 7. Strategy in the class name, role as the noun: `FurthestAlongPathSelector`, `ArcCornerSmoothing`.
-8. Compose rather than branch. Filtering and selection are separate swappable pieces
-   (`td.tower.targeting`); a new tower composes them instead of hand-rolling a scan.
+8. Compose rather than branch. Filtering and selection are separate swappable pieces (`td.tower.targeting`); a new tower
+   composes them instead of hand-rolling a scan.
 9. Inherit only to model a closed set of variants, and make the leaves `final`.
-9b. **A base class's mutable state is `private`**, reached by a leaf through an accessor. A
+   9b. **A base class's mutable state is `private`**, reached by a leaf through an accessor. A
    `protected` mutable field means the base can hold no invariant a subclass cannot break.
-9c. **One constructor, no second init step.** Everything an object is born with is assigned by
+   9c. **One constructor, no second init step.** Everything an object is born with is assigned by
    its constructor and is `final`, so the ordering is a compile error rather than a convention a
    leaf has to remember. `AbstractTower` and `AbstractEnemyMob` are both built this way.
 10. Streams to transform, `reduce` to combine.
@@ -275,14 +275,14 @@ with the grammar, and this file changes only when an invariant does.
 
 ## 10. Documentation map
 
-| File | Role |
-|---|---|
-| **`CLAUDE.md`** | Always loaded. Constraints only. |
-| **`docs/ARCHITECTURE.md`** | The why: rationale, history, rejected alternatives. Not auto-loaded. |
-| **`docs/features/`** | One design doc per feature, written as a request before implementation and kept afterwards. A doc here may describe something not yet built; it says so at the top. |
-| **`src/main/java/td/<pkg>/CLAUDE.md`** | Per-package invariants and per-type checklists, loaded when working there. `economy`, `enemy`, `tower`, `ui`, `wave`. |
-| **`README.md`** | Human-facing: build, run, controls, content tables. |
-| **`TODO.md`** | Known gaps; each entry carries a **Where** and an **Approach**. |
+| File                                   | Role                                                                                                                                                                |
+|----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`CLAUDE.md`**                        | Always loaded. Constraints only.                                                                                                                                    |
+| **`docs/ARCHITECTURE.md`**             | The why: rationale, history, rejected alternatives. Not auto-loaded.                                                                                                |
+| **`docs/features/`**                   | One design doc per feature, written as a request before implementation and kept afterwards. A doc here may describe something not yet built; it says so at the top. |
+| **`src/main/java/td/<pkg>/CLAUDE.md`** | Per-package invariants and per-type checklists, loaded when working there. `economy`, `enemy`, `tower`, `ui`, `wave`.                                               |
+| **`README.md`**                        | Human-facing: build, run, controls, content tables.                                                                                                                 |
+| **`TODO.md`**                          | Known gaps; each entry carries a **Where** and an **Approach**.                                                                                                     |
 
 **The rule governing this file.** Before adding a line, ask:
 

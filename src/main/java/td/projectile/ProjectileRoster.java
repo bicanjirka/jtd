@@ -39,7 +39,9 @@ public class ProjectileRoster implements ProjectileRegistry {
         this.projectiles.removeAll(finished);
     }
 
-    /** Level teardown: no projectile in flight carries over to the next level. */
+    /**
+     * Level teardown: no projectile in flight carries over to the next level.
+     */
     public void clear() {
         this.projectiles.clear();
     }

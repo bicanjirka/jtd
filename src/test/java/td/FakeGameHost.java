@@ -16,6 +16,13 @@ class FakeGameHost implements GameHost {
 
     private GameEngine engine;
 
+    static GameEngine newBoundEngine() {
+        FakeGameHost host = new FakeGameHost();
+        GameEngine engine = new GameEngine(host);
+        host.bind(engine);
+        return engine;
+    }
+
     void bind(GameEngine engine) {
         this.engine = engine;
     }
@@ -35,12 +42,5 @@ class FakeGameHost implements GameHost {
     @Override
     public void clearCell(int x, int y) {
         engine.clearCell(x, y);
-    }
-
-    static GameEngine newBoundEngine() {
-        FakeGameHost host = new FakeGameHost();
-        GameEngine engine = new GameEngine(host);
-        host.bind(engine);
-        return engine;
     }
 }

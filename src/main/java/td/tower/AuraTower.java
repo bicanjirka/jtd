@@ -3,8 +3,6 @@ package td.tower;
 import td.tower.buff.TowerBuff;
 import td.util.GameWorld;
 
-import java.util.List;
-
 /**
  * "Aura tower" - passive. Never attacks; instead it contributes a {@link TowerBuff} to every
  * non-aura tower whose centre falls within its range, and several stack additively. It
@@ -60,7 +58,9 @@ public final class AuraTower extends AbstractTower {
         return this.buffs(other) ? this.buff() : TowerBuff.none();
     }
 
-    /** How many towers this aura is currently amplifying - counted, not tracked. */
+    /**
+     * How many towers this aura is currently amplifying - counted, not tracked.
+     */
     private long buffedTowerCount() {
         return this.context.towers().all().stream().filter(this::buffs).count();
     }

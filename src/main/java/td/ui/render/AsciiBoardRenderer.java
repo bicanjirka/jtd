@@ -16,34 +16,6 @@ public final class AsciiBoardRenderer {
     private static final char EMPTY = '.';
     private static final char UNKNOWN = '?';
 
-    public String render(RenderFrame frame) {
-        int scale = frame.scale();
-        int width = (frame.maxX() + 1) / scale;
-        int height = (frame.maxY() + 1) / scale;
-        char[][] grid = new char[height][width];
-        for (char[] row : grid) {
-            Arrays.fill(row, EMPTY);
-        }
-
-        for (TowerSpriteDraw sprite : frame.towerSprites()) {
-            place(grid, sprite.boardX() / scale, sprite.boardY() / scale, towerChar(sprite.palette()));
-        }
-        for (EnemyDraw enemy : frame.enemies()) {
-            switch (enemy) {
-                case EnemyBodyDraw body ->
-                        place(grid, cellOf(body.x(), scale), cellOf(body.y(), scale), enemyChar(body.palette(), false));
-                case EnemyFadeDraw fade ->
-                        place(grid, cellOf(fade.x(), scale), cellOf(fade.y(), scale), enemyChar(fade.palette(), true));
-            }
-        }
-
-        StringBuilder sb = new StringBuilder();
-        for (char[] row : grid) {
-            sb.append(row).append('\n');
-        }
-        return sb.toString();
-    }
-
     private static int cellOf(float pixel, int scale) {
         return (int) (pixel / scale);
     }
@@ -77,5 +49,33 @@ public final class AsciiBoardRenderer {
             default -> UNKNOWN;
         };
         return fading ? Character.toUpperCase(c) : c;
+    }
+
+    public String render(RenderFrame frame) {
+        int scale = frame.scale();
+        int width = (frame.maxX() + 1) / scale;
+        int height = (frame.maxY() + 1) / scale;
+        char[][] grid = new char[height][width];
+        for (char[] row : grid) {
+            Arrays.fill(row, EMPTY);
+        }
+
+        for (TowerSpriteDraw sprite : frame.towerSprites()) {
+            place(grid, sprite.boardX() / scale, sprite.boardY() / scale, towerChar(sprite.palette()));
+        }
+        for (EnemyDraw enemy : frame.enemies()) {
+            switch (enemy) {
+                case EnemyBodyDraw body ->
+                        place(grid, cellOf(body.x(), scale), cellOf(body.y(), scale), enemyChar(body.palette(), false));
+                case EnemyFadeDraw fade ->
+                        place(grid, cellOf(fade.x(), scale), cellOf(fade.y(), scale), enemyChar(fade.palette(), true));
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (char[] row : grid) {
+            sb.append(row).append('\n');
+        }
+        return sb.toString();
     }
 }

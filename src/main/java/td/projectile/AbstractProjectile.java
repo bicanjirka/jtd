@@ -2,6 +2,7 @@ package td.projectile;
 
 
 import td.util.ThreadConfined;
+
 /**
  * Everything every projectile shares: its current and previous-tick position (for the
  * renderer's interpolation, exactly like {@code AbstractEnemyMob}'s prevX/prevY pair), and
@@ -34,7 +35,9 @@ public abstract class AbstractProjectile implements Projectile {
         this.advance(gameTime);
     }
 
-    /** Moves this projectile one tick's worth of flight, calling {@link #finish()} once it resolves. */
+    /**
+     * Moves this projectile one tick's worth of flight, calling {@link #finish()} once it resolves.
+     */
     protected abstract void advance(int gameTime);
 
     protected void finish() {

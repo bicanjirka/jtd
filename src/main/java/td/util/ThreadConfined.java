@@ -33,11 +33,17 @@ public @interface ThreadConfined {
 
     Owner value();
 
-    /** Who owns the annotated class's mutable state. */
+    /**
+     * Who owns the annotated class's mutable state.
+     */
     enum Owner {
-        /** The {@code game-loop} thread: simulation state, mutated only from tick code. */
+        /**
+         * The {@code game-loop} thread: simulation state, mutated only from tick code.
+         */
         GAME_LOOP,
-        /** Swing's Event Dispatch Thread: components, input handling, the level lifecycle. */
+        /**
+         * Swing's Event Dispatch Thread: components, input handling, the level lifecycle.
+         */
         EVENT_DISPATCH_THREAD,
         /**
          * Whichever thread owns the object holding this one. A helper with no independent

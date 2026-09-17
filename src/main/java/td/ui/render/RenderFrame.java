@@ -8,12 +8,12 @@ import java.util.List;
  * frame; a backend (e.g. {@link td.ui.Java2DFrameRenderer}) turns it into pixels.
  */
 public record RenderFrame(int scale, int maxX, int maxY,
-                           List<CellDraw> cells,
-                           List<EnemyDraw> enemies,
-                           List<StatusMarkerDraw> statusMarkers,
-                           List<TowerSpriteDraw> towerSprites,
-                           List<TurretHeadDraw> towerHeads,
-                           List<TowerEffectDraw> towerEffects,
-                           List<ProjectileDraw> projectiles,
-                           List<PathMarkerDraw> pathMarkers) {
+                          List<CellDraw> cells,
+                          List<EnemyDraw> enemies,
+                          List<StatusMarkerDraw> statusMarkers,
+                          List<TowerSpriteDraw> towerSprites,
+                          List<TurretHeadDraw> towerHeads,
+                          List<TowerEffectDraw> towerEffects,
+                          List<ProjectileDraw> projectiles,
+                          List<PathMarkerDraw> pathMarkers) {
 }

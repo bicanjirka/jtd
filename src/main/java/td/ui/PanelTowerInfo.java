@@ -186,7 +186,9 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         }
     }
 
-    /** Also reachable from the game-loop thread - see GameWorld.apply()'s callers. */
+    /**
+     * Also reachable from the game-loop thread - see GameWorld.apply()'s callers.
+     */
     public void economyChanged(EconomyState state) {
         SwingUtilities.invokeLater(this::updateInterface);
     }

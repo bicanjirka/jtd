@@ -15,9 +15,9 @@ import td.util.GameWorld;
  */
 public interface UpgradeCondition {
 
-    boolean isSatisfied(Tower tower, GameWorld context);
-
     static UpgradeCondition always() {
         return AlwaysCondition.INSTANCE;
     }
+
+    boolean isSatisfied(Tower tower, GameWorld context);
 }

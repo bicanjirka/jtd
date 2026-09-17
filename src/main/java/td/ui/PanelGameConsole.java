@@ -28,7 +28,8 @@ import java.io.Serial;
  * TowerDefense's call) - this panel only owns the buttons existing and their play/pause
  * visibility.
  */
-@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // Swing components, assigned once by initComponents
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
+// Swing components, assigned once by initComponents
 public class PanelGameConsole extends JPanel implements EconomyListener {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -56,6 +57,12 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
 
     public PanelGameConsole(String titleText) {
         initComponents(titleText);
+    }
+
+    private static HudButton glyphButton(String glyph) {
+        HudButton button = new HudButton(glyph);
+        button.setFont(Hud.GLYPH_FONT);
+        return button;
     }
 
     public PanelTowerInfo getTowerInfo() {
@@ -97,7 +104,9 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         this.onSuperFast = r;
     }
 
-    /** Also reachable from the game-loop thread - see GameWorld.apply()'s callers. */
+    /**
+     * Also reachable from the game-loop thread - see GameWorld.apply()'s callers.
+     */
     @Override
     public void economyChanged(EconomyState state) {
         SwingUtilities.invokeLater(() -> {
@@ -105,12 +114,6 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
             this.jLabel_lives.setText("" + state.lives());
             this.jLabel_score.setText("" + state.score());
         });
-    }
-
-    private static HudButton glyphButton(String glyph) {
-        HudButton button = new HudButton(glyph);
-        button.setFont(Hud.GLYPH_FONT);
-        return button;
     }
 
     private void initComponents(String titleText) {

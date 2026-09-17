@@ -18,7 +18,9 @@ class EnemyCatalogTest {
                 BodyArchetype.CIRCLE, new FixedMovement(), List.of(), List.of());
     }
 
-    /** A minimal definition whose only ability spawns {@code spawnedId} on death. */
+    /**
+     * A minimal definition whose only ability spawns {@code spawnedId} on death.
+     */
     private static EnemyDefinition definitionThatSpawns(String id, String spawnedId) {
         Ability spawnOnDeath = new Ability(new OnDeathTrigger(), new SpawnEnemiesAction(spawnedId, 1, false));
         return new EnemyDefinition(id, id, "", 100, 5, 1.28f, 1f, EnemyMob.Type.NORMAL,

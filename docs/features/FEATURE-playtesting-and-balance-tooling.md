@@ -45,8 +45,8 @@ multi-minute manual playthrough into a few-second interactive check or an automa
   panel (see Open questions): jump to a specific wave of the current level; spawn a named
   `EnemyCatalog` id at the path's start (or at the cursor); toggle infinite credits. Scoped
   narrowly — three small, independent actions, not a general console or scripting layer.
-- **A headless batch balance-simulation harness**: given a `LevelDefinition`, a tower loadout
-  (type, placement, and chosen upgrade path per tower), and a tick budget, run the simulation
+- **A headless batch balance-simulation harness**: given a `LevelDefinition`, a tower loadout (type, placement, and
+  chosen upgrade path per tower), and a tick budget, run the simulation
   to completion (or timeout) and report lives lost, ticks-to-clear per wave, and damage dealt
   per tower. Runs as a small standalone tool or a test-scoped utility, not shipped in the
   player-facing jar.
@@ -121,8 +121,8 @@ committed to a timeline, per that review's outcome — see Decisions made.
 ## Decisions made
 
 - **The debug capability is an always-available keybinding, not gated behind a build flag or
-  a hidden mode.** This project has no feature-flag or debug/release-build machinery today
-  (root `CLAUDE.md`: "don't use feature flags or backwards-compatibility shims"), and jTD has
+  a hidden mode.** This project has no feature-flag or debug/release-build machinery today (root `CLAUDE.md`: "don't use
+  feature flags or backwards-compatibility shims"), and jTD has
   no distribution boundary a hidden cheat would be protecting against — it's a hobby project,
   not something shipped to end users who shouldn't see developer tools. Adding build-variant
   infrastructure to hide three keybindings would be new complexity in service of a concern
@@ -179,25 +179,25 @@ contains: concrete content, the shape of the solution, and a phased implementati
 - **The debug capability drives `GameEngine` through new, narrow entry points**, the same
   spirit as its existing `mouseClicked`/`startPlacing`/`nextWave` surface — not a side channel
   that reaches into `GameWorld` from outside the engine's own API.
-  - `debugSkipToCurrentWaveEnd()`: clears the live roster the same no-penalty way level
-    teardown already does (`GameWorld.clearEnemies()` — no `GameHost.enemyDied` call, no
-    economy effect), then forces `waveReady` true and calls the existing `nextWave()`. Correct
-    by construction from primitives the engine already has, rather than a second interpretation
-    of "what does clearing a wave mean" — directly answers the risk this doc's own Risks and
-    costs section raised about a skip path silently drifting from real play.
-  - `debugSpawnNextCatalogEnemy()`: reads the level's `EnemyCatalog`, advances a stored
-    cursor through its registered ids in a stable order, and spawns that id via the same
-    `EnemyCatalog.spawn`/`GameWorld.addEnemy` path an ability-driven spawn already uses (see
-    `FEATURE-enemy-traits-and-effects.md`) — at the path's start (`delay = 0`), using the
-    definition's own `baseHealth`/`price` fields (the same ones the Warden chain already
-    relies on for exactly this "spawned outside a wave" case) rather than needing a
-    wave-in-progress's numbers.
-  - `debugGrantCredits(int amount)`: `gameWorld.apply(EconomyDelta.credits(amount))` — the
-    exact mechanism `run-jtd`'s `setcredits` cheat already proves out via reflection; this
-    makes the same capability reachable from inside the real game, not just the test driver.
-  - `TowerDefense`'s existing `KeyListener` gains three more cases alongside its current
-    `q`/`w`/.../`s`/`m`/`p`/`f` set — exact keys chosen during implementation to avoid any
-    collision with that live list.
+    - `debugSkipToCurrentWaveEnd()`: clears the live roster the same no-penalty way level
+      teardown already does (`GameWorld.clearEnemies()` — no `GameHost.enemyDied` call, no
+      economy effect), then forces `waveReady` true and calls the existing `nextWave()`. Correct
+      by construction from primitives the engine already has, rather than a second interpretation
+      of "what does clearing a wave mean" — directly answers the risk this doc's own Risks and
+      costs section raised about a skip path silently drifting from real play.
+    - `debugSpawnNextCatalogEnemy()`: reads the level's `EnemyCatalog`, advances a stored
+      cursor through its registered ids in a stable order, and spawns that id via the same
+      `EnemyCatalog.spawn`/`GameWorld.addEnemy` path an ability-driven spawn already uses (see
+      `FEATURE-enemy-traits-and-effects.md`) — at the path's start (`delay = 0`), using the
+      definition's own `baseHealth`/`price` fields (the same ones the Warden chain already
+      relies on for exactly this "spawned outside a wave" case) rather than needing a
+      wave-in-progress's numbers.
+    - `debugGrantCredits(int amount)`: `gameWorld.apply(EconomyDelta.credits(amount))` — the
+      exact mechanism `run-jtd`'s `setcredits` cheat already proves out via reflection; this
+      makes the same capability reachable from inside the real game, not just the test driver.
+    - `TowerDefense`'s existing `KeyListener` gains three more cases alongside its current
+      `q`/`w`/.../`s`/`m`/`p`/`f` set — exact keys chosen during implementation to avoid any
+      collision with that live list.
 - **The batch harness (`td.BalanceHarness`, a new class next to `Main`) drives `GameEngine`
   through its real input surface**, not by constructing `Tower`/`EnemyMob` objects by hand:
   `startPlacing(type, range)` + `mouseClicked(pixelX, pixelY)` per placement (converting a

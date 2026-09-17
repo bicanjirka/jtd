@@ -11,7 +11,9 @@ class SonarSweepTest {
     private static final double TWO_PI = Math.PI * 2;
     private static final double TICKS_PER_SECOND = 20;
 
-    /** One revolution every two seconds at 20 ticks a second is 40 ticks a revolution. */
+    /**
+     * One revolution every two seconds at 20 ticks a second is 40 ticks a revolution.
+     */
     private static SonarSweep twoSecondSweep() {
         return SonarSweep.perRevolution(2, TICKS_PER_SECOND);
     }

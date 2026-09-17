@@ -16,18 +16,29 @@ package td.util;
  */
 public final class Threads {
 
-    /** The name {@code GameLoop.start} gives the simulation thread. */
+    /**
+     * The name {@code GameLoop.start} gives the simulation thread.
+     */
     public static final String GAME_LOOP = "game-loop";
 
-    /** The prefix the JDK gives every Event Dispatch Thread. */
+    /**
+     * The prefix the JDK gives every Event Dispatch Thread.
+     */
     private static final String EDT_PREFIX = "AWT-EventQueue";
 
-    /** Whether the calling thread is the one the simulation runs on. */
+    private Threads() {
+    }
+
+    /**
+     * Whether the calling thread is the one the simulation runs on.
+     */
     public static boolean onGameLoop() {
         return GAME_LOOP.equals(Thread.currentThread().getName());
     }
 
-    /** Whether the calling thread is Swing's Event Dispatch Thread. */
+    /**
+     * Whether the calling thread is Swing's Event Dispatch Thread.
+     */
     public static boolean onEventDispatchThread() {
         return Thread.currentThread().getName().startsWith(EDT_PREFIX);
     }
@@ -76,8 +87,5 @@ public final class Threads {
 
     private static String current() {
         return Thread.currentThread().getName();
-    }
-
-    private Threads() {
     }
 }

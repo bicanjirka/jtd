@@ -18,7 +18,9 @@ public record WaveContent(List<WaveSlot> spawnSequence) {
         spawnSequence = List.copyOf(spawnSequence);
     }
 
-    /** The distinct enemy definitions used in this wave, in first-seen order - never includes the {@code e} spacer. */
+    /**
+     * The distinct enemy definitions used in this wave, in first-seen order - never includes the {@code e} spacer.
+     */
     public Set<EnemyDefinition> enemySet() {
         Set<EnemyDefinition> set = new LinkedHashSet<>();
         for (WaveSlot slot : this.spawnSequence) {
@@ -47,7 +49,9 @@ public record WaveContent(List<WaveSlot> spawnSequence) {
         return count;
     }
 
-    /** The real enemy count - every spawn slot except the {@code e} spacer. */
+    /**
+     * The real enemy count - every spawn slot except the {@code e} spacer.
+     */
     public int enemyCount() {
         int count = 0;
         for (WaveSlot slot : this.spawnSequence) {

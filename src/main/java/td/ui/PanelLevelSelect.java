@@ -1,12 +1,10 @@
 package td.ui;
 
 import td.level.LevelDefinition;
-import td.wave.Path;
 import td.wave.PathBuilder;
 import td.wave.Vec2;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -26,15 +24,15 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +61,9 @@ public class PanelLevelSelect extends JPanel {
     private static final Color PREVIEW_BACKGROUND = new Color(6, 7, 6);
     private static final Color PREVIEW_GRID_DOT = new Color(22, 24, 22);
 
-    /** Cycled by card index so any number of catalog levels each get a distinct accent. */
+    /**
+     * Cycled by card index so any number of catalog levels each get a distinct accent.
+     */
     private static final Color[] ACCENTS = {Color.GREEN, Color.RED, Color.ORANGE};
 
     public PanelLevelSelect(List<LevelDefinition> levels, Consumer<LevelDefinition> onLevelSelected) {
@@ -281,7 +281,9 @@ public class PanelLevelSelect extends JPanel {
         return star;
     }
 
-    /** A small, purely decorative sketch of a level's real (possibly smoothed) path. */
+    /**
+     * A small, purely decorative sketch of a level's real (possibly smoothed) path.
+     */
     private static final class PathPreview extends JComponent {
 
         @Serial
@@ -295,6 +297,45 @@ public class PanelLevelSelect extends JPanel {
             this.accent = accent;
             this.setOpaque(true);
             this.setPreferredSize(new Dimension(200, 150));
+        }
+
+        private static List<Point2D.Float> mapToBounds(List<Vec2> points, int width, int height, int margin) {
+            if (points.isEmpty()) {
+                return List.of();
+            }
+            double minX = Double.MAX_VALUE;
+            double maxX = -Double.MAX_VALUE;
+            double minY = Double.MAX_VALUE;
+            double maxY = -Double.MAX_VALUE;
+            for (Vec2 p : points) {
+                minX = Math.min(minX, p.x());
+                maxX = Math.max(maxX, p.x());
+                minY = Math.min(minY, p.y());
+                maxY = Math.max(maxY, p.y());
+            }
+            double spanX = Math.max(1, maxX - minX);
+            double spanY = Math.max(1, maxY - minY);
+            float innerWidth = width - margin * 2f;
+            float innerHeight = height - margin * 2f;
+
+            ArrayList<Point2D.Float> mapped = new ArrayList<>(points.size());
+            for (Vec2 p : points) {
+                float x = margin + (float) ((p.x() - minX) / spanX) * innerWidth;
+                float y = margin + (float) ((p.y() - minY) / spanY) * innerHeight;
+                mapped.add(new Point2D.Float(x, y));
+            }
+            return mapped;
+        }
+
+        private static Shape arrowShape(float tipX, float tipY, double angle) {
+            AffineTransform transform = AffineTransform.getTranslateInstance(tipX, tipY);
+            transform.rotate(angle);
+            Path2D.Float arrow = new Path2D.Float();
+            arrow.moveTo(6, 0);
+            arrow.lineTo(-4, -5);
+            arrow.lineTo(-4, 5);
+            arrow.closePath();
+            return transform.createTransformedShape(arrow);
         }
 
         @Override
@@ -338,45 +379,6 @@ public class PanelLevelSelect extends JPanel {
             }
 
             g2.dispose();
-        }
-
-        private static List<Point2D.Float> mapToBounds(List<Vec2> points, int width, int height, int margin) {
-            if (points.isEmpty()) {
-                return List.of();
-            }
-            double minX = Double.MAX_VALUE;
-            double maxX = -Double.MAX_VALUE;
-            double minY = Double.MAX_VALUE;
-            double maxY = -Double.MAX_VALUE;
-            for (Vec2 p : points) {
-                minX = Math.min(minX, p.x());
-                maxX = Math.max(maxX, p.x());
-                minY = Math.min(minY, p.y());
-                maxY = Math.max(maxY, p.y());
-            }
-            double spanX = Math.max(1, maxX - minX);
-            double spanY = Math.max(1, maxY - minY);
-            float innerWidth = width - margin * 2f;
-            float innerHeight = height - margin * 2f;
-
-            ArrayList<Point2D.Float> mapped = new ArrayList<>(points.size());
-            for (Vec2 p : points) {
-                float x = margin + (float) ((p.x() - minX) / spanX) * innerWidth;
-                float y = margin + (float) ((p.y() - minY) / spanY) * innerHeight;
-                mapped.add(new Point2D.Float(x, y));
-            }
-            return mapped;
-        }
-
-        private static Shape arrowShape(float tipX, float tipY, double angle) {
-            AffineTransform transform = AffineTransform.getTranslateInstance(tipX, tipY);
-            transform.rotate(angle);
-            Path2D.Float arrow = new Path2D.Float();
-            arrow.moveTo(6, 0);
-            arrow.lineTo(-4, -5);
-            arrow.lineTo(-4, 5);
-            arrow.closePath();
-            return transform.createTransformedShape(arrow);
         }
     }
 }

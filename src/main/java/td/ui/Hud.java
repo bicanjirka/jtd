@@ -33,18 +33,17 @@ public final class Hud {
 
     static final Color BACKGROUND = Color.BLACK;
     static final Color FOREGROUND = new Color(220, 255, 220);
-
+    static final Font LABEL_FONT = new Font("Dialog", Font.PLAIN, 11);
+    static final Font GLYPH_FONT = new Font("Dialog", Font.PLAIN, 14);
     private static final Color BORDER_IDLE = new Color(78, 104, 78);
     private static final Color BORDER_DISABLED = new Color(48, 60, 48);
     private static final Color TEXT_DISABLED = new Color(96, 112, 96);
     private static final Color FILL_HOVER = new Color(26, 38, 26);
     private static final Color FILL_PRESSED = new Color(46, 66, 46);
     private static final Color FILL_SELECTED = new Color(38, 56, 38);
-
-    static final Font LABEL_FONT = new Font("Dialog", Font.PLAIN, 11);
-    static final Font GLYPH_FONT = new Font("Dialog", Font.PLAIN, 14);
-
-    /** Padding inside a control, since {@link #paintControl} draws the border itself. */
+    /**
+     * Padding inside a control, since {@link #paintControl} draws the border itself.
+     */
     private static final Border CONTROL_PADDING = new EmptyBorder(3, 8, 3, 8);
 
     private Hud() {
@@ -59,13 +58,17 @@ public final class Hud {
         return BorderFactory.createLineBorder(BORDER_IDLE);
     }
 
-    /** The titled border every HUD panel wears, drawn with the same outline the controls use. */
+    /**
+     * The titled border every HUD panel wears, drawn with the same outline the controls use.
+     */
     public static Border panelBorder(String title) {
         return BorderFactory.createTitledBorder(outlineBorder(), title, TitledBorder.DEFAULT_JUSTIFICATION,
                 TitledBorder.DEFAULT_POSITION, LABEL_FONT, FOREGROUND);
     }
 
-    /** Applies the shared control setup - colours, font, padding, and suppressing the look-and-feel's own chrome. */
+    /**
+     * Applies the shared control setup - colours, font, padding, and suppressing the look-and-feel's own chrome.
+     */
     static void styleControl(AbstractButton button) {
         button.setBackground(BACKGROUND);
         button.setForeground(FOREGROUND);

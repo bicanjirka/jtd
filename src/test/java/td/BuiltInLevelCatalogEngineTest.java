@@ -3,9 +3,9 @@ package td;
 import org.junit.jupiter.api.Test;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
+import td.tower.SniperTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
-import td.tower.SniperTower;
 import td.wave.Path;
 import td.wave.PathBuilder;
 import td.wave.PathCoverage;
@@ -28,6 +28,29 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 class BuiltInLevelCatalogEngineTest {
 
     private static final int SCALE = 32;
+
+    /**
+     * Finds a cell the smoothed (curved) path marks unbuildable that the same level's raw,
+     * unsmoothed corners would not - i.e. a cell only the wild Bezier sweep itself reaches.
+     */
+    private static Point aCellOnlyTheSmoothedCurveCovers(LevelDefinition level) {
+        List<Vec2> rawPolyline = level.path().stream()
+                .map(cell -> new Vec2(cell.x() * SCALE + (SCALE / 2.0), cell.y() * SCALE + (SCALE / 2.0)))
+                .toList();
+        Set<Point> straightCornerCoverage = PathCoverage.unbuildableCells(rawPolyline, SCALE, level.width(), level.height());
+
+        Path smoothedPath = PathBuilder.build(level.path(), level.smoothing(), SCALE);
+        Set<Point> smoothedCoverage = PathCoverage.unbuildableCells(smoothedPath.points(), SCALE, level.width(), level.height());
+
+        return smoothedCoverage.stream()
+                .filter(cell -> !straightCornerCoverage.contains(cell))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Expected the smoothed curve to cover at least one cell the raw corners don't"));
+    }
+
+    private static int cellCenter(int cellIndex) {
+        return cellIndex * SCALE + SCALE / 2;
+    }
 
     @Test
     void everyBuiltInLevelLoadsAndRunsThroughItsFirstWaveWithoutError() {
@@ -75,28 +98,5 @@ class BuiltInLevelCatalogEngineTest {
         engine.mouseClicked(cellCenter(0), cellCenter(level.height() - 1));
 
         assertThat(engine.cells().at(0, level.height() - 1).hasTower()).isTrue();
-    }
-
-    /**
-     * Finds a cell the smoothed (curved) path marks unbuildable that the same level's raw,
-     * unsmoothed corners would not - i.e. a cell only the wild Bezier sweep itself reaches.
-     */
-    private static Point aCellOnlyTheSmoothedCurveCovers(LevelDefinition level) {
-        List<Vec2> rawPolyline = level.path().stream()
-                .map(cell -> new Vec2(cell.x() * SCALE + (SCALE / 2.0), cell.y() * SCALE + (SCALE / 2.0)))
-                .toList();
-        Set<Point> straightCornerCoverage = PathCoverage.unbuildableCells(rawPolyline, SCALE, level.width(), level.height());
-
-        Path smoothedPath = PathBuilder.build(level.path(), level.smoothing(), SCALE);
-        Set<Point> smoothedCoverage = PathCoverage.unbuildableCells(smoothedPath.points(), SCALE, level.width(), level.height());
-
-        return smoothedCoverage.stream()
-                .filter(cell -> !straightCornerCoverage.contains(cell))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Expected the smoothed curve to cover at least one cell the raw corners don't"));
-    }
-
-    private static int cellCenter(int cellIndex) {
-        return cellIndex * SCALE + SCALE / 2;
     }
 }

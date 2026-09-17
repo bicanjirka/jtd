@@ -21,7 +21,9 @@ public enum Palette {
     TOWER_SEEKER_BODY,
     TOWER_CINDER_BODY,
     TOWER_AURA_RING,
-    /** The specialization-ring accent for a tower's first vs. second upgrade path - one shared pair of roles, not one per tower type. */
+    /**
+     * The specialization-ring accent for a tower's first vs. second upgrade path - one shared pair of roles, not one per tower type.
+     */
     TOWER_UPGRADE_PATH_A,
     TOWER_UPGRADE_PATH_B,
     TOWER_SNIPER_BEAM,
@@ -33,13 +35,17 @@ public enum Palette {
     TOWER_CINDER_CONE,
     PROJECTILE_CANNONBALL,
     PROJECTILE_MISSILE,
-    /** A small on-board marker naming which status effect is currently active on a mob. */
+    /**
+     * A small on-board marker naming which status effect is currently active on a mob.
+     */
     STATUS_MARKER_SLOW,
     STATUS_MARKER_BURN,
     STATUS_MARKER_FREEZE,
     STATUS_MARKER_SHIELD,
     STATUS_MARKER_INVISIBLE,
-    /** Stands in for every effect beyond the marker row's visible cap - see EnemyFrameBuilder.MAX_VISIBLE_MARKERS. */
+    /**
+     * Stands in for every effect beyond the marker row's visible cap - see EnemyFrameBuilder.MAX_VISIBLE_MARKERS.
+     */
     STATUS_MARKER_OVERFLOW,
     PATH_MARKER_STATIC,
     PATH_MARKER_MOVING

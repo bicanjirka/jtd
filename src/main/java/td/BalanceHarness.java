@@ -6,8 +6,8 @@ import td.level.LevelDefinition;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.GameHost;
-import td.util.RandomSource;
 import td.util.GameWorld;
+import td.util.RandomSource;
 import td.util.ThreadConfined;
 
 import java.util.ArrayList;
@@ -25,7 +25,8 @@ import java.util.List;
  * {@code GameWorld} exposes no alive-count accessor to poll instead), so this class exercises
  * the exact same callback the real game advances waves on.
  */
-@ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)  // a headless harness driven start to finish by whichever thread calls run()
+@ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
+// a headless harness driven start to finish by whichever thread calls run()
 public final class BalanceHarness implements GameHost {
 
     /**
@@ -40,6 +41,18 @@ public final class BalanceHarness implements GameHost {
     private final List<Integer> ticksToClearPerWave = new ArrayList<>();
     private int waveStartTick = 0;
     private boolean waveJustCleared = false;
+
+    /**
+     * Runs one built-in loadout against Classic Loop, so this class is executable with no arguments.
+     */
+    public static void main(String[] args) {
+        LevelDefinition classicLoop = new BuiltInLevelCatalog().levels().get(0);
+        List<TowerPlacementSpec> loadout = List.of(
+                TowerPlacementSpec.of(TowerFactory.Type.SNIPER, 6, 11),
+                TowerPlacementSpec.of(TowerFactory.Type.SNIPER, 8, 9),
+                TowerPlacementSpec.of(TowerFactory.Type.SPLASH, 5, 3));
+        new BalanceHarness().run(classicLoop, loadout, 5000);
+    }
 
     @Override
     public void enemyDied(int enemiesLeft) {
@@ -125,15 +138,5 @@ public final class BalanceHarness implements GameHost {
             System.out.println("  " + tower.getType() + " @ (" + tower.getBoardX() + "," + tower.getBoardY() + "): "
                     + tower.getKillCount() + " kills, " + tower.getDamageDealt() + " damage dealt");
         }
-    }
-
-    /** Runs one built-in loadout against Classic Loop, so this class is executable with no arguments. */
-    public static void main(String[] args) {
-        LevelDefinition classicLoop = new BuiltInLevelCatalog().levels().get(0);
-        List<TowerPlacementSpec> loadout = List.of(
-                TowerPlacementSpec.of(TowerFactory.Type.SNIPER, 6, 11),
-                TowerPlacementSpec.of(TowerFactory.Type.SNIPER, 8, 9),
-                TowerPlacementSpec.of(TowerFactory.Type.SPLASH, 5, 3));
-        new BalanceHarness().run(classicLoop, loadout, 5000);
     }
 }

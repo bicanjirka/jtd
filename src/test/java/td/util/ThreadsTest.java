@@ -15,6 +15,23 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class ThreadsTest {
 
+    /**
+     * Runs {@code body} on a thread with the given name and hands back whatever it threw.
+     */
+    private static RuntimeException runNamed(String name, Runnable body) throws InterruptedException {
+        AtomicReference<RuntimeException> thrown = new AtomicReference<>();
+        Thread t = new Thread(() -> {
+            try {
+                body.run();
+            } catch (RuntimeException e) {
+                thrown.set(e);
+            }
+        }, name);
+        t.start();
+        t.join();
+        return thrown.get();
+    }
+
     @Test
     void theGameLoopAssertionPassesOnTheLoopThreadAndFailsEverywhereElse() throws InterruptedException {
         assertThatThrownBy(() -> Threads.assertGameLoop("doTick"))
@@ -43,20 +60,5 @@ class ThreadsTest {
 
         assertThatCode(() -> Threads.assertNotEventDispatchThread("GameLoop.stop()"))
                 .doesNotThrowAnyException();
-    }
-
-    /** Runs {@code body} on a thread with the given name and hands back whatever it threw. */
-    private static RuntimeException runNamed(String name, Runnable body) throws InterruptedException {
-        AtomicReference<RuntimeException> thrown = new AtomicReference<>();
-        Thread t = new Thread(() -> {
-            try {
-                body.run();
-            } catch (RuntimeException e) {
-                thrown.set(e);
-            }
-        }, name);
-        t.start();
-        t.join();
-        return thrown.get();
     }
 }

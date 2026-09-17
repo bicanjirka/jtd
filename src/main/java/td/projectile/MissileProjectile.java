@@ -31,7 +31,7 @@ public final class MissileProjectile extends AbstractProjectile {
     private int ticksAlive = 0;
 
     public MissileProjectile(double startX, double startY, EnemyMob initialTarget, EnemyRegistry enemies,
-                              float speed, TargetImpact impact) {
+                             float speed, TargetImpact impact) {
         super(startX, startY);
         this.target = initialTarget;
         this.enemies = enemies;

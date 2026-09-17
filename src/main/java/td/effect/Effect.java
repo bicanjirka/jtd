@@ -20,7 +20,8 @@ import td.damage.Damage;
  * {@link #kind} exists only for the UI marker and for matching against an already-active
  * effect of the same kind when re-applying one - see {@code ActiveEffects}.
  */
-public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTick, float shieldPercent, int remainingTicks, DamageSink sink) {
+public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTick, float shieldPercent,
+                     int remainingTicks, DamageSink sink) {
 
     public static Effect slow(float speedMultiplier, int durationTicks, DamageSink sink) {
         return new Effect(EffectKind.SLOW, speedMultiplier, Damage.none(), 0f, durationTicks, sink);
@@ -34,12 +35,16 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
         return new Effect(EffectKind.BURN, 1f, damagePerTick, 0f, durationTicks, sink);
     }
 
-    /** Reduces a percentage of every incoming hit while active - see {@code ActiveEffects.applyShield}. */
+    /**
+     * Reduces a percentage of every incoming hit while active - see {@code ActiveEffects.applyShield}.
+     */
     public static Effect shield(float shieldPercent, int durationTicks, DamageSink sink) {
         return new Effect(EffectKind.SHIELD, 1f, Damage.none(), shieldPercent, durationTicks, sink);
     }
 
-    /** Not a valid target while active - see {@code ActiveEffects.isInvisible}. */
+    /**
+     * Not a valid target while active - see {@code ActiveEffects.isInvisible}.
+     */
     public static Effect invisible(int durationTicks, DamageSink sink) {
         return new Effect(EffectKind.INVISIBLE, 1f, Damage.none(), 0f, durationTicks, sink);
     }

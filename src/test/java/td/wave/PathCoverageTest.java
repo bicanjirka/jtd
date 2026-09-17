@@ -14,6 +14,27 @@ class PathCoverageTest {
 
     private static final int SCALE = 32;
 
+    // This is what LevelPath.throughCorners used to do, before it was deleted - kept here only
+    // as a comparison baseline for the test above.
+    private static List<Point> expandThroughCornersLikeTheOldLevelPathDid(List<Point> corners) {
+        List<Point> steps = new ArrayList<>();
+        steps.add(corners.get(0));
+        for (int i = 1; i < corners.size(); i++) {
+            Point from = corners.get(i - 1);
+            Point to = corners.get(i);
+            int stepX = Integer.signum(to.x() - from.x());
+            int stepY = Integer.signum(to.y() - from.y());
+            int x = from.x();
+            int y = from.y();
+            while (x != to.x() || y != to.y()) {
+                x += stepX;
+                y += stepY;
+                steps.add(new Point(x, y));
+            }
+        }
+        return steps;
+    }
+
     @Test
     void aPathWithFewerThanTwoPointsCoversNoCells() {
         Set<Point> covered = PathCoverage.unbuildableCells(List.of(new Vec2(16, 16)), SCALE, 5, 5);
@@ -98,26 +119,5 @@ class PathCoverageTest {
                 sparsePolyline, SCALE, classicLoop.width(), classicLoop.height());
 
         assertThat(coveredBySparsePath).containsExactlyInAnyOrderElementsOf(coveredByOldDensePath);
-    }
-
-    // This is what LevelPath.throughCorners used to do, before it was deleted - kept here only
-    // as a comparison baseline for the test above.
-    private static List<Point> expandThroughCornersLikeTheOldLevelPathDid(List<Point> corners) {
-        List<Point> steps = new ArrayList<>();
-        steps.add(corners.get(0));
-        for (int i = 1; i < corners.size(); i++) {
-            Point from = corners.get(i - 1);
-            Point to = corners.get(i);
-            int stepX = Integer.signum(to.x() - from.x());
-            int stepY = Integer.signum(to.y() - from.y());
-            int x = from.x();
-            int y = from.y();
-            while (x != to.x() || y != to.y()) {
-                x += stepX;
-                y += stepY;
-                steps.add(new Point(x, y));
-            }
-        }
-        return steps;
     }
 }

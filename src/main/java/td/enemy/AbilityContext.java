@@ -13,21 +13,33 @@ import td.effect.EffectTemplate;
  */
 public interface AbilityContext {
 
-    /** Current health / max health, in {@code [0, 1]}. */
+    /**
+     * Current health / max health, in {@code [0, 1]}.
+     */
     float healthFraction();
 
-    /** Ticks elapsed since this mob spawned. */
+    /**
+     * Ticks elapsed since this mob spawned.
+     */
     int ticksSinceSpawn();
 
-    /** Ticks elapsed since this mob last took a hit - {@code 0} on the tick a hit landed. */
+    /**
+     * Ticks elapsed since this mob last took a hit - {@code 0} on the tick a hit landed.
+     */
     int ticksSinceLastHit();
 
-    /** {@code true} only on the tick this mob's death is first observed. */
+    /**
+     * {@code true} only on the tick this mob's death is first observed.
+     */
     boolean justDied();
 
-    /** Applies {@code template} to {@code target}, relative to this mob. */
+    /**
+     * Applies {@code template} to {@code target}, relative to this mob.
+     */
     void applyEffect(EffectTemplate template, EffectTarget target);
 
-    /** Spawns {@code count} instances of {@code definitionId}, optionally consuming this mob - see {@link SpawnEnemiesAction}. */
+    /**
+     * Spawns {@code count} instances of {@code definitionId}, optionally consuming this mob - see {@link SpawnEnemiesAction}.
+     */
     void spawnEnemies(String definitionId, int count, boolean consumesSelf);
 }

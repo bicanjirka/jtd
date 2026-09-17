@@ -13,15 +13,17 @@ import td.tower.Tower;
  */
 public interface Cell {
 
-    void setHighlight(HighlightType highlight);
-
     HighlightType getHighlight();
 
-    void setHighlightRange(float range);
+    void setHighlight(HighlightType highlight);
 
     float getHighlightRange();
 
-    /** The cell's top-left corner in board pixels, not its grid index. */
+    void setHighlightRange(float range);
+
+    /**
+     * The cell's top-left corner in board pixels, not its grid index.
+     */
     int getX();
 
     int getY();

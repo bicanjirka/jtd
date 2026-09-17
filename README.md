@@ -43,17 +43,17 @@ yourself when you are ready — waves do not auto-advance.
 
 ### Controls
 
-| Key | Action |
-|-----|--------|
-| `q` `w` `e` `r` `t` `y` `u` `i` | Select tower 1–8 for placement |
-| `Esc` | Cancel tower placement |
-| `s` | Start the next wave |
-| `p` | Pause / unpause |
-| `f` | Cycle tick speed (normal → fast → super fast → normal) |
-| `m` | Back to the level-select menu (asks to confirm mid-level) |
-| `n` | Debug: clear the current wave with no penalty and start the next one |
-| `x` | Debug: spawn one instance of the next enemy type in the level's catalog, cycling through all of them |
-| `c` | Debug: grant a lump sum of credits |
+| Key                             | Action                                                                                               |
+|---------------------------------|------------------------------------------------------------------------------------------------------|
+| `q` `w` `e` `r` `t` `y` `u` `i` | Select tower 1–8 for placement                                                                       |
+| `Esc`                           | Cancel tower placement                                                                               |
+| `s`                             | Start the next wave                                                                                  |
+| `p`                             | Pause / unpause                                                                                      |
+| `f`                             | Cycle tick speed (normal → fast → super fast → normal)                                               |
+| `m`                             | Back to the level-select menu (asks to confirm mid-level)                                            |
+| `n`                             | Debug: clear the current wave with no penalty and start the next one                                 |
+| `x`                             | Debug: spawn one instance of the next enemy type in the level's catalog, cycling through all of them |
+| `c`                             | Debug: grant a lump sum of credits                                                                   |
 
 Mouse: move to preview placement, click to place or to select a placed tower.
 
@@ -74,16 +74,16 @@ a different loadout or level, since v1 has no config format for either.
 
 ### Towers
 
-| Tower | Price | Behaviour |
-|-------|-------|-----------|
-| Sniper | 10 | Single target, hits whichever enemy in range is furthest along the path |
-| Splash | 15 | Picks a random target in range and deals splash damage falling off with distance |
-| Sonar | 20 | Long range; a beam sweeps around it once every 2s, hitting everything it passes |
-| Pulse | 25 | Short range; damages everything in range at once, ghosts included |
-| Aura | 20 | Passive — boosts the damage and range of nearby towers; several stack |
-| Mortar | 30 | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path; splashes physical damage and slows everything the blast reaches |
-| Seeker | 35 | Fires a homing missile that re-aims each tick and retargets if its target dies; deals magic damage and freezes whichever mob it actually hits |
-| Cinder | 28 | No cooldown; a slowly-reorienting flame cone burns everything currently caught in it, ghosts included |
+| Tower  | Price | Behaviour                                                                                                                                           |
+|--------|-------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| Sniper | 10    | Single target, hits whichever enemy in range is furthest along the path                                                                             |
+| Splash | 15    | Picks a random target in range and deals splash damage falling off with distance                                                                    |
+| Sonar  | 20    | Long range; a beam sweeps around it once every 2s, hitting everything it passes                                                                     |
+| Pulse  | 25    | Short range; damages everything in range at once, ghosts included                                                                                   |
+| Aura   | 20    | Passive — boosts the damage and range of nearby towers; several stack                                                                               |
+| Mortar | 30    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path; splashes physical damage and slows everything the blast reaches |
+| Seeker | 35    | Fires a homing missile that re-aims each tick and retargets if its target dies; deals magic damage and freezes whichever mob it actually hits       |
+| Cinder | 28    | No cooldown; a slowly-reorienting flame cone burns everything currently caught in it, ghosts included                                               |
 
 Every attack tower — Sniper, Splash, Sonar, Pulse, Mortar, Seeker and Cinder — also
 offers two permanent, mutually-exclusive upgrade paths, shown as buttons in its info panel
@@ -94,14 +94,14 @@ the board by a coloured ring around it. The Aura tower is passive and offers non
 
 ### Enemies
 
-| Enemy | Looks like | Behaviour |
-|-------|------------|-----------|
-| Simple | circle | Plain mob, no special ability |
-| Armored | square | Absorbs part of every hit |
-| Frenzied | triangle | Speeds up as it loses health |
-| Ghost | tinted circle | Invisible to single-target towers; only area damage reaches it |
-| Empty | — | Not a real enemy — a spacer that opens a timing gap inside a wave |
-| The Warden | square | A boss: armored, periodically summons reinforcements and shields itself and nearby allies. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. Appears as the final wave of Classic Loop. |
+| Enemy      | Looks like    | Behaviour                                                                                                                                                                                                                                                                                                         |
+|------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Simple     | circle        | Plain mob, no special ability                                                                                                                                                                                                                                                                                     |
+| Armored    | square        | Absorbs part of every hit                                                                                                                                                                                                                                                                                         |
+| Frenzied   | triangle      | Speeds up as it loses health                                                                                                                                                                                                                                                                                      |
+| Ghost      | tinted circle | Invisible to single-target towers; only area damage reaches it                                                                                                                                                                                                                                                    |
+| Empty      | —             | Not a real enemy — a spacer that opens a timing gap inside a wave                                                                                                                                                                                                                                                 |
+| The Warden | square        | A boss: armored, periodically summons reinforcements and shields itself and nearby allies. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. Appears as the final wave of Classic Loop. |
 
 ### Levels
 

@@ -2,7 +2,9 @@ package td.tower.targeting;
 
 import td.enemy.EnemyMob;
 
-/** The one range check every {@link TargetQuery} implementation needs. */
+/**
+ * The one range check every {@link TargetQuery} implementation needs.
+ */
 final class WithinRange {
 
     private WithinRange() {

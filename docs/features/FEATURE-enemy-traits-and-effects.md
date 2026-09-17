@@ -28,12 +28,12 @@ small UI marker (e.g. a corner icon) so the player can see what's affecting an e
   deliberately: adding a constant without wiring up its class is a compile error, not a
   silent gap.
 - Each leaf class hand-implements its one behavioral twist directly in Java:
-  - `EnemyMobSquare.absorb()` scales incoming `Damage` by a flat, level-scaled fraction.
-  - `EnemyMobTriangle.doDamage()` recomputes `speed` from current health fraction every hit.
-  - `EnemyMobGhost` sets `type = EnemyMob.type.Invisible`, a two-value closed enum
-    (`Normal`/`Invisible`) that every targeting query filters on.
-  - `EnemyMobCircle` has no override at all — the "no traits" case today is simply the
-    absence of any override, not an explicit empty trait list.
+    - `EnemyMobSquare.absorb()` scales incoming `Damage` by a flat, level-scaled fraction.
+    - `EnemyMobTriangle.doDamage()` recomputes `speed` from current health fraction every hit.
+    - `EnemyMobGhost` sets `type = EnemyMob.type.Invisible`, a two-value closed enum (`Normal`/`Invisible`) that every
+      targeting query filters on.
+    - `EnemyMobCircle` has no override at all — the "no traits" case today is simply the
+      absence of any override, not an explicit empty trait list.
 - `AbstractEnemyMob.absorb(Damage)` is the *only* extension point a subclass has for
   reacting to an incoming hit. There is no hook for "on death", "on health threshold
   crossed", "on critical hit taken", nor any concept of a time-limited effect at all.
@@ -101,8 +101,8 @@ This is the foundational piece the other two lean on, not an isolated system:
   enemy-internal, one tower-inflicted) that both need their own UI marker, their own
   duration/stacking rules, and their own render support. **Decided: "effect" is one shared
   primitive**, designed up front before any of these three features is implemented — a
-  value/record describing what changed, for how long, and how it renders — that abilities
-  (this feature), on-hit effects (feature 2), and tower auras (feature 3) all produce, and
+  value/record describing what changed, for how long, and how it renders — that abilities (this feature), on-hit effects
+  (feature 2), and tower auras (feature 3) all produce, and
   that a mob's effect list simply accumulates regardless of source. This shared design pass
   is a prerequisite piece of work that should land before feature-specific work on any of
   the three requests starts.
@@ -118,8 +118,8 @@ This is the foundational piece the other two lean on, not an isolated system:
   throws `td.util.GameStartupException`, the project's existing one fatal-startup boundary)
   rather than a runtime silent skip.
 - **Rendering needs a new dispatch shape.** `td.ui.render` is deliberately AWT-free and
-  dispatches through visitors over a *closed* domain hierarchy
-  (`EnemyMobVisitor`/`TowerVisitor`) into a *sealed* `RenderFrame` draw-command hierarchy.
+  dispatches through visitors over a *closed* domain hierarchy (`EnemyMobVisitor`/`TowerVisitor`) into a *sealed*
+  `RenderFrame` draw-command hierarchy.
   A data-defined enemy can't be visited by a fixed 5-method interface; the render side needs
   either (a) a small, closed set of generic *body archetypes* (circle/square/triangle/
   spiral/star, matching the existing single-`Shape` tower convention) that a definition
@@ -132,8 +132,8 @@ This is the foundational piece the other two lean on, not an isolated system:
 - **The wave mini-language needs to grow.** `WaveScript` today maps exactly one character
   to one global `EnemyFactory.Enemy`. Per-level custom/cloned enemies need either
   multi-character ids in the token grammar or a different addressing scheme, and the
-  parser's "unrecognized token → warn and default to repeat-count 1" fallback
-  (`WaveScript.parse`, see `td/wave/CLAUDE.md`'s Gotchas) needs re-examining once tokens can
+  parser's "unrecognized token → warn and default to repeat-count 1" fallback (`WaveScript.parse`, see
+  `td/wave/CLAUDE.md`'s Gotchas) needs re-examining once tokens can
   legitimately be longer than one character.
 - **`LevelDefinition` needs a new field** for its enemy roster (built-ins used as-is,
   built-ins overridden, and net-new definitions), which is itself a modest but real change
@@ -150,8 +150,8 @@ This is the foundational piece the other two lean on, not an isolated system:
   stay allocation-light and avoid reflection/lookup-by-string in the hot path — the registry
   lookup belongs at enemy-construction time, not per-tick.
 - **Spawning is a new kind of ability action, not just a new trigger.** Every ability so far
-  in this document *modifies* an existing mob (itself or a neighbor); spawning instead
-  *adds* one to `EnemyRoster` mid-tick, from code running on the `game-loop` thread inside
+  in this document *modifies* an existing mob (itself or a neighbor); spawning instead *adds* one to `EnemyRoster`
+  mid-tick, from code running on the `game-loop` thread inside
   `doTick`/`doDamage` — the same thread and the same call stack a wave's own spawn logic
   already runs on, so no new synchronization is needed, but the roster's alive-count/
   win-condition bookkeeping has to treat a spawned mob exactly like a wave-declared one from
@@ -191,7 +191,7 @@ This is the foundational piece the other two lean on, not an isolated system:
   curated set of traits/abilities to launch with, or a deliberate testing strategy (e.g.
   property-style tests over trait combinations) rather than one integration test per enemy.
 - **UI crowding.** An enemy with several simultaneous effects needs a defined layout rule
-  for its corner icon(s) — what happens at 3+ active effects — or the sprite becomes
+  for its corner icon (s) — what happens at 3+ active effects — or the sprite becomes
   unreadable exactly when the player most needs to read it (a heavily-buffed enemy in a
   packed wave).
 - **Losing a compile-time safety net.** As above: today, forgetting to wire up a new
@@ -238,8 +238,8 @@ recording:
 
 - The shared "effect" primitive is to be designed once, up front, before feature-specific
   work on any of the three requests begins (see Interconnections, above). **Done**: it
-  shipped as `td.effect.Effect`/`EffectKind`/`ActiveEffects`/`DamageSink` during feature 2
-  (damage types), and is reused as-is rather than redesigned — see V1 Scope, below, for the
+  shipped as `td.effect.Effect`/`EffectKind`/`ActiveEffects`/`DamageSink` during feature 2 (damage types), and is reused
+  as-is rather than redesigned — see V1 Scope, below, for the
   additions it still needs (shield/invisibility kinds).
 - All five existing enemies will be migrated onto the new trait/ability model rather than
   kept as legacy classes alongside it (see Risks and costs, above).
@@ -331,21 +331,21 @@ contains: concrete content, the shape of the solution, and a phased implementati
 - One new boss encounter, the **Warden** (and its boss-egg chain), is added as this
   version's proof that the ability system supports more than a straight port of the
   existing five (see Proposed content).
-- Closed set of body archetypes for rendering — reusing the towers' shape vocabulary
-  (triangle, circle, spiral, star, diamond, kite, plus whatever subset of that list a given
+- Closed set of body archetypes for rendering — reusing the towers' shape vocabulary (triangle, circle, spiral, star,
+  diamond, kite, plus whatever subset of that list a given
   archetype needs) rather than inventing a parallel one, plus one new archetype for the
   egg's own rounded shape — and a closed, small set of movement behaviors governing *facing*
   only (fixed, path-directional, rotor-spin, pulse), mirroring
-  `AbstractEnemyMobDirectional`/`AbstractEnemyMobRotor`'s existing two. Whether a mob
-  *moves at all* is separate and needs no behavior of its own — a base speed of `0` is
+  `AbstractEnemyMobDirectional`/`AbstractEnemyMobRotor`'s existing two. Whether a mob *moves at all* is separate and
+  needs no behavior of its own — a base speed of `0` is
   already a legal value (see Architectural implications), which is how the egg stands
   still.
 - Traits and abilities operate only on effects already in `td.effect`'s vocabulary, plus
   two new `EffectKind`s this version adds: a damage-absorbing shield (flat or percent,
   depletes before health) and invisibility (a mob is not a valid target while it holds this
   kind of effect). **Not in scope**: any trait or ability keyed off a critical hit (the
-  doc's "gain a shield after surviving a critical hit" example) — critical damage
-  (`TODO.md`) doesn't exist yet, so that trigger has nothing to observe. It's deferred the
+  doc's "gain a shield after surviving a critical hit" example) — critical damage (`TODO.md`) doesn't exist yet, so that
+  trigger has nothing to observe. It's deferred the
   same way feature 3 (tower upgrades) deferred enemy-affecting status effects until feature
   2 shipped — see that doc's V1 Scope for the precedent.
 - **Not in scope**: a file-based `LevelCatalog` (a separate, already-tracked `TODO.md` gap);
@@ -368,15 +368,18 @@ contains: concrete content, the shape of the solution, and a phased implementati
 
 ### Proposed content (illustrative — magnitudes are placeholders for a later balance pass)
 
-| Enemy | Model |
-|---|---|
-| Circle | No traits, no abilities — the "nothing modifies this enemy" case is now an empty trait/ability list on its `EnemyDefinition`, not the absence of a Java override. |
-| Square | One trait: percent damage-absorb shield, replacing `EnemyMobSquare.absorb()`'s hand-rolled fraction. |
-| Triangle | One trait: speed scales with missing health, replacing `EnemyMobTriangle.doDamage()`'s hardcoded curve — expressed as a formula the trait evaluates on-tick against current health fraction, feeding `AbstractEnemyMob`'s existing intrinsic/effective speed split. |
-| Ghost | One trait: permanently not a valid target (today's `type = Invisible`), reusing the same "not a valid target" check `AbstractEnemyMob`/targeting already have, just sourced from a trait instead of a hardcoded field. |
+| Enemy            | Model                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Circle           | No traits, no abilities — the "nothing modifies this enemy" case is now an empty trait/ability list on its `EnemyDefinition`, not the absence of a Java override.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Square           | One trait: percent damage-absorb shield, replacing `EnemyMobSquare.absorb()`'s hand-rolled fraction.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Triangle         | One trait: speed scales with missing health, replacing `EnemyMobTriangle.doDamage()`'s hardcoded curve — expressed as a formula the trait evaluates on-tick against current health fraction, feeding `AbstractEnemyMob`'s existing intrinsic/effective speed split.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Ghost            | One trait: permanently not a valid target (today's `type = Invisible`), reusing the same "not a valid target" check `AbstractEnemyMob`/targeting already have, just sourced from a trait instead of a hardcoded field.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | **Warden** (new) | One trait, shared by every stage: **armor shield** — a flat amount absorbed per hit, depleting before health drops, distinct in kind from Square's percent shield so the feature demonstrates more than one shield flavor. Every stage's Warden carries the same five-ability kit: (1) **periodic** — spawns a reinforcement enemy (an existing basic type, e.g. a Circle) on a fixed interval while alive; (2) **periodic** — re-casts a shield effect on itself, layering a timed top-up on top of its permanent armor trait so the boss cycles through tougher "phase" windows rather than one flat difficulty; (3) **health-threshold-crossed** (50%, placeholder) — casts a shield effect on every *other* enemy within a radius, a one-time "call to arms" moment mid-fight; (4) **time-since-last-hit** — if untouched by damage for a fixed window (placeholder), immediately spawns one bonus reinforcement on top of ability (1)'s regular one, punishing a player who ignores it; (5) **on death** — spawns its stage's boss egg, replacing the earlier "swarm" idea — a stationary, non-moving enemy with one ability of its own, **once** (hatch on timeout): if not killed within a fixed window (8 seconds, placeholder), it spawns the *next* (weaker) stage's Warden and is itself removed via `consumesSelf`, not killed. The final stage's egg has no hatch ability — it must simply be killed. See the Warden/egg chain note below, and Shape of the solution for `consumesSelf`. Between the trait and its five abilities, the Warden exercises a trait, all five v1 `AbilityTrigger` kinds, both `AbilityAction` shapes (apply-effect on self, apply-effect on others-in-radius, and spawn — both consuming and non-consuming), and a multi-hop (but acyclic) spawn chain — no v1 model surface ships unexercised by real content. |
 
-**The Warden/egg chain** (illustrative, 3 stages — see Decisions made): `Warden` (full strength) → dies → `WardenEgg1` → hatches on timeout → `Warden2` (weaker) → dies → `WardenEgg2` → hatches on timeout → `Warden3` (weakest) → dies → `WardenEgg3` (terminal — no hatch ability, must be killed to end the encounter). Six distinct `EnemyDefinition`s in total; only the egg killed *before* its timer expires ends the fight without another Warden appearing.
+**The Warden/egg chain** (illustrative, 3 stages — see Decisions made): `Warden` (full strength) → dies → `WardenEgg1` →
+hatches on timeout → `Warden2` (weaker) → dies → `WardenEgg2` → hatches on timeout → `Warden3` (weakest) → dies →
+`WardenEgg3` (terminal — no hatch ability, must be killed to end the encounter). Six distinct `EnemyDefinition`s in
+total; only the egg killed *before* its timer expires ends the fight without another Warden appearing.
 
 ### Shape of the solution
 
@@ -386,10 +389,10 @@ contains: concrete content, the shape of the solution, and a phased implementati
   not per-spawn.
 - **`EnemyCatalog`** (new, `td.enemy`) replaces `EnemyFactory` as the source of buildable
   enemy types, naming it after the existing `LevelCatalog`/`BuiltInLevelCatalog` precedent
-  rather than reusing the word "Registry" — `td.enemy.EnemyRegistry` already names the
-  *live per-wave roster* read interface, and overloading the name would be exactly the kind
-  of collision the Power-tower/tower-upgrade rename avoided in feature 3. The five built-ins
-  (plus the Warden/egg chain's 6 definitions) are pre-registered globally; a level can register new `EnemyDefinition`s
+  rather than reusing the word "Registry" — `td.enemy.EnemyRegistry` already names the *live per-wave roster* read
+  interface, and overloading the name would be exactly the kind
+  of collision the Power-tower/tower-upgrade rename avoided in feature 3. The five built-ins (plus the Warden/egg
+  chain's 6 definitions) are pre-registered globally; a level can register new `EnemyDefinition`s
   or clone-and-adjust an existing one (e.g. `EnemyCatalog.clone(String baseId, String newId,
   UnaryOperator<EnemyDefinition> adjust)`), scoped to that level only.
 - **One concrete `EnemyMob` class replaces the five leaf classes.** Since behavior now comes
@@ -412,49 +415,49 @@ contains: concrete content, the shape of the solution, and a phased implementati
   for each folds every trait's contribution the same way `getSpeed()` already folds
   `ActiveEffects.speedMultiplier()` on top of the intrinsic value — traits and effects are
   two independent multiplier sources feeding the same read path, not a new branch.
-- **`Ability`** (new, `td.enemy`) pairs an `AbilityTrigger` with an `AbilityAction`, both
-  *closed* for v1 (not an open predicate/effect pair) to keep evaluation cheap on the
+- **`Ability`** (new, `td.enemy`) pairs an `AbilityTrigger` with an `AbilityAction`, both *closed* for v1 (not an open
+  predicate/effect pair) to keep evaluation cheap on the
   `game-loop` thread per the Performance note above:
-  - `AbilityTrigger`: health-threshold-crossed, on-death, time-since-last-hit, **periodic**
-    (a fixed-interval cooldown while the mob is alive), and **once**, which now carries a
-    delay-in-ticks parameter (fires exactly once, that many ticks after the mob spawned).
-    The last two are new, added to support spawning. `once` needs no explicit "cancel if the
-    mob dies first" case — `doTick` already never runs again for a dead mob (see
-    `td/enemy/CLAUDE.md`), so a delayed ability simply never fires if its mob is killed
-    before the delay elapses — this is exactly the boss egg's "if not defeated within 8
-    seconds" rule, for free. All five kinds are exercised by v1 content (the Warden) rather
-    than three of the five, as an earlier pass through this scoping had it: `health-
+    - `AbilityTrigger`: health-threshold-crossed, on-death, time-since-last-hit, **periodic**
+      (a fixed-interval cooldown while the mob is alive), and **once**, which now carries a
+      delay-in-ticks parameter (fires exactly once, that many ticks after the mob spawned).
+      The last two are new, added to support spawning. `once` needs no explicit "cancel if the
+      mob dies first" case — `doTick` already never runs again for a dead mob (see
+      `td/enemy/CLAUDE.md`), so a delayed ability simply never fires if its mob is killed
+      before the delay elapses — this is exactly the boss egg's "if not defeated within 8
+      seconds" rule, for free. All five kinds are exercised by v1 content (the Warden) rather
+      than three of the five, as an earlier pass through this scoping had it: `health-
     threshold-crossed` needs edge-triggered evaluation (fire once when health crosses the
-    boundary, not once per tick while below it, tracked via a small per-mob "already fired"
-    flag reset only if the mob's effective max health ever changes, which it doesn't in
-    v1), and `time-since-last-hit` needs a new per-mob tick counter reset in `doDamage` on
-    every hit landed and read on `doTick` — both small, cheap pieces of state, not
-    per-tick lookups.
-  - `AbilityAction`: a small sealed hierarchy with two implementations —
-    `ApplyEffectAction` (apply an `Effect` to itself, or to every enemy within a radius, via
-    the `EnemyRegistry` it's already constructed with) and `SpawnEnemiesAction` (an
-    `EnemyDefinition` id plus a count, constructed through the same `EnemyCatalog` the mob
-    itself came from and added to `EnemyRoster` at the mob's own position, plus a
-    `consumesSelf` flag). Pattern-matching over this sealed pair in the one place that
-    executes an ability is the same narrow, compiler-checked exception `Java2DFrameRenderer`
-    already has for `RenderFrame`'s sealed draw-command hierarchy (root `CLAUDE.md`'s
-    no-`instanceof` rule) — not a general license to branch on `EnemyMob`/`Trait` types,
-    which stays off-limits.
-  - **`consumesSelf`** (new field on `SpawnEnemiesAction`): when true, the ability removes
-    the triggering mob from `EnemyRoster` in the same step it spawns the replacement,
-    through a new third roster-removal path alongside `remove()`/`clear()` (see
-    Architectural implications) that, like `clear()`, does **not** call
-    `GameHost.enemyDied` — a hatch is a transformation, not a kill, so it awards no bounty,
-    no score, and no kill-count-gate credit. The boss egg's hatch-on-timeout ability is the
-    only v1 use of `consumesSelf`; the Warden's own on-death spawn doesn't need it, since a
-    death already removes the mob through the existing path.
-  - `EnemyCatalog` registration walks the directed graph formed by every `EnemyDefinition`'s
-    `SpawnEnemiesAction` references and rejects (via `GameStartupException`) any definition
-    that, directly or transitively, could spawn itself — a standard cycle check (depth-first,
-    tracking the definitions currently on the walk's stack), not a blanket "no chaining"
-    rule. A finite, strictly linear chain like the Warden's 6-stage sequence passes; a true
-    cycle (two definitions each naming the other) does not. This supersedes the first
-    scoping pass's stricter one-hop-only guard.
+      boundary, not once per tick while below it, tracked via a small per-mob "already fired"
+      flag reset only if the mob's effective max health ever changes, which it doesn't in
+      v1), and `time-since-last-hit` needs a new per-mob tick counter reset in `doDamage` on
+      every hit landed and read on `doTick` — both small, cheap pieces of state, not
+      per-tick lookups.
+    - `AbilityAction`: a small sealed hierarchy with two implementations —
+      `ApplyEffectAction` (apply an `Effect` to itself, or to every enemy within a radius, via
+      the `EnemyRegistry` it's already constructed with) and `SpawnEnemiesAction` (an
+      `EnemyDefinition` id plus a count, constructed through the same `EnemyCatalog` the mob
+      itself came from and added to `EnemyRoster` at the mob's own position, plus a
+      `consumesSelf` flag). Pattern-matching over this sealed pair in the one place that
+      executes an ability is the same narrow, compiler-checked exception `Java2DFrameRenderer`
+      already has for `RenderFrame`'s sealed draw-command hierarchy (root `CLAUDE.md`'s
+      no-`instanceof` rule) — not a general license to branch on `EnemyMob`/`Trait` types,
+      which stays off-limits.
+    - **`consumesSelf`** (new field on `SpawnEnemiesAction`): when true, the ability removes
+      the triggering mob from `EnemyRoster` in the same step it spawns the replacement,
+      through a new third roster-removal path alongside `remove()`/`clear()` (see
+      Architectural implications) that, like `clear()`, does **not** call
+      `GameHost.enemyDied` — a hatch is a transformation, not a kill, so it awards no bounty,
+      no score, and no kill-count-gate credit. The boss egg's hatch-on-timeout ability is the
+      only v1 use of `consumesSelf`; the Warden's own on-death spawn doesn't need it, since a
+      death already removes the mob through the existing path.
+    - `EnemyCatalog` registration walks the directed graph formed by every `EnemyDefinition`'s
+      `SpawnEnemiesAction` references and rejects (via `GameStartupException`) any definition
+      that, directly or transitively, could spawn itself — a standard cycle check (depth-first,
+      tracking the definitions currently on the walk's stack), not a blanket "no chaining"
+      rule. A finite, strictly linear chain like the Warden's 6-stage sequence passes; a true
+      cycle (two definitions each naming the other) does not. This supersedes the first
+      scoping pass's stricter one-hop-only guard.
 - **`EffectKind` grows two v1 cases**: a shield kind (flat or percent, carried as new fields
   on `Effect` alongside the existing `speedMultiplier`/`damagePerTick`, consumed by `onHit`
   before health drops) and an invisibility kind. `ActiveEffects.magnitude`'s exhaustive
