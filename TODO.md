@@ -50,16 +50,6 @@ unnecessary, and every mutation lands on a deterministic tick boundary.
   machines. If that becomes a goal, this stops being indirection and starts being the feature
   - do it then, and not before.
 
-### Per-package `CLAUDE.md` files predate the constraints-only standard
-
-The root `CLAUDE.md` was rewritten to hold constraints only, with rationale moved to
-`docs/ARCHITECTURE.md`. The five per-package files (about 60KB total, of which `td/enemy` is
-17KB) still mix invariants with narrative and rationale the same way the root file did.
-
-- **Where:** `src/main/java/td/{economy,enemy,tower,ui,wave}/CLAUDE.md`.
-- **Approach:** same treatment — keep the invariants and the per-type checklists, move the
-  "why" and the history into `docs/ARCHITECTURE.md`.
-
 ## Gameplay / balance
 
 ### Zero-price wave penalty is a placeholder

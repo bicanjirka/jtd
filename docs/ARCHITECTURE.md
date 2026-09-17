@@ -21,7 +21,8 @@ If a paragraph here ever contradicts `CLAUDE.md`, `CLAUDE.md` wins and this file
 7. [The algebras (operation + combinator + identity + absorber)](#7-the-algebras)
 8. [Logging setup](#8-logging-setup)
 9. [Playtesting and balance tooling](#9-playtesting-and-balance-tooling)
-10. [Style lineage](#10-style-lineage)
+10. [Why the per-package docs are not held to the root file's size discipline](#10-why-the-per-package-docs-are-not-held-to-the-root-files-size-discipline)
+11. [Style lineage](#11-style-lineage)
 
 ---
 
@@ -446,7 +447,46 @@ The three debug methods it shares with the `n`/`x`/`c` keybindings live on `Game
 `TowerDefense`, per the headless/Swing boundary — they are ordinary engine rules and are unit
 tested the same way every other `GameEngineTest` case is.
 
-## 10. Style lineage
+## 10. Why the per-package docs are not held to the root file's size discipline
+
+The root `CLAUDE.md` was cut from 36 KB to about 15 by moving history and rationale here. The
+obvious next step looks like doing the same to the five per-package `CLAUDE.md` files, which
+together are larger than the root one ever was. It was recorded as a gap, and then measured,
+and the measurement said not to.
+
+| File | Size | Commits touching it | Lines of history |
+|---|---|---|---|
+| root `CLAUDE.md`, before the rewrite | 36 KB | 43 | throughout |
+| `td/enemy` | 17 KB | 14 | 3, all marginal |
+| `td/tower` | 15 KB | 19 | 0 |
+| `td/ui` | 12 KB | 15 | 0 |
+| `td/wave` | 6 KB | 6 | 0 |
+| `td/economy` | 2 KB | 2 | 0 |
+
+Three reasons the root file's argument does not transfer:
+
+- **The context cost is scoped.** The root file's actual problem was being loaded on every
+  session whatever you were touching. A per-package file loads only when working in that
+  directory, so 12 KB while editing `td.ui` is proportionate in a way 36 KB while fixing a
+  wave parser was not.
+- **They do not churn.** Two to nineteen commits against the root's forty-three, and
+  `td/tower`'s nineteen tracks a package that genuinely gained three towers, upgrade paths and
+  `TowerStats`. That is an invariant file following real invariant changes, which is what it
+  is supposed to do.
+- **They are invariant-dense rather than narrative.** `td/ui/CLAUDE.md` is twelve kilobytes of
+  "the marker row caps at three", "both overlays need the same `GridBagLayout` cell", "use
+  `interpolationAlpha` for domain state and `animationSeconds` for cosmetics". The rationale
+  attached to those is *operative* - the last rule cannot be applied without knowing which
+  clock is which. That is a different thing from "this used to be a god object".
+
+The one failure mode they did share with the root file - citing classes that no longer exist -
+is now mechanically checked by `docs-name-real-types`, which is what found two dead enemy
+class names in `td/enemy/CLAUDE.md` after three manual reviews had missed them.
+
+So: leave them. Shrinking a document that is dense, scoped and stable would be churn performed
+for its own sake, which is the habit this whole exercise was against.
+
+## 11. Style lineage
 
 The code style here was originally described by reference to a sibling repository,
 `../policy-management`, which was treated as a normative dependency: "read those before
