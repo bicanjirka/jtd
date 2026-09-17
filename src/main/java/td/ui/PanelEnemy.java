@@ -8,6 +8,7 @@ import td.util.GameHost;
 import td.util.GameWorld;
 import td.wave.PathNormal;
 import td.wave.Vec2;
+import td.util.ThreadConfined;
 
 import javax.swing.JPanel;
 import java.awt.Color;
@@ -33,6 +34,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * into the real game. Painting reuses {@link Java2DFrameRenderer#paintEnemies}, which is what
  * keeps a preview and the board in step automatically.
  */
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // a Swing component; its preview mobs and clock are touched only from the render pulse
 public class PanelEnemy extends JPanel {
     @Serial
     private static final long serialVersionUID = 1L;

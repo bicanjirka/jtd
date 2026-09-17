@@ -1,5 +1,7 @@
 package td;
 
+
+import td.util.ThreadConfined;
 /**
  * Fixed-timestep accumulator: converts elapsed wall-clock nanoseconds into a
  * whole number of logic ticks, carrying any leftover fraction of a step
@@ -7,6 +9,7 @@ package td;
  * the tick-rate math is fully unit-testable with fabricated elapsed times,
  * independent of however the real loop drives it.
  */
+@ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)  // owned by the GameLoop that holds it, so mutated only on the loop thread
 public final class TickAccumulator {
 
     private final long stepNanos;

@@ -192,4 +192,13 @@ an alpha-channel *background colour* on an opaque component does not blend, whic
 made the original overlay solid black.
 
 **Nothing here may be touched from tick code.** Rendering reaches the EDT via
-`SwingUtilities.invokeLater` — see the root `CLAUDE.md` §3 (Threading).
+`SwingUtilities.invokeLater` — see the root `CLAUDE.md` §3 (Threading). This was broken once:
+`TowerDefense.doTick` called `PanelWaveInfo.doTick` straight through to two `JPanel`s on the
+`game-loop` thread. Anything cosmetic that wants to advance every frame belongs on the EDT
+render pulse (`TowerDefense.repaintPublishedFrame`), which runs at a flat ~60fps and is where
+the wave preview is driven from now — the simulation's cadence is not the right one for it
+anyway.
+
+**Every component here declares `@ThreadConfined(EVENT_DISPATCH_THREAD)`.** A Swing component
+holds mutable state by nature, and `scripts/VerifyRules.java` requires any class that does to
+name its owning thread. A new `Panel*` needs the annotation or the build fails.

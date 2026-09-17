@@ -3,6 +3,7 @@ package td.ui;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.util.GameWorld;
+import td.util.ThreadConfined;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -27,6 +28,7 @@ import java.io.Serial;
  * TowerDefense's call) - this panel only owns the buttons existing and their play/pause
  * visibility.
  */
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // Swing components, assigned once by initComponents
 public class PanelGameConsole extends JPanel implements EconomyListener {
     @Serial
     private static final long serialVersionUID = 1L;

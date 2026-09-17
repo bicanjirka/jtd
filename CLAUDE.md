@@ -19,10 +19,11 @@ java -jar target/jTD.jar  # run the game
 mvn test -Dtest=GameEngineTest#placingATowerOnABuildableCellChargesCreditsAndOccupiesTheCell
 ```
 
-`mvn verify` runs `scripts/VerifyRules.java`, which fails the build on any greppable rule
-below. Each such rule states its check. A rule the codebase has adopted but not yet finished
-complying with is reported as PENDING with its remaining count rather than failing the build;
-its outstanding work is a `TODO.md` entry.
+`mvn verify` runs `scripts/VerifyRules.java`, which fails the build on any mechanically
+checkable rule below. Each such rule states its check. **A rule that can be checked must be**
+— if a reviewer could detect a violation by reading, a program can, and a rule left as prose
+is a rule that drifts: the checks for enum constants and for field ownership were both added
+after the tree had been violating them for months with the build reporting OK.
 
 ## 1. Working in phases
 
@@ -42,8 +43,9 @@ display.
 `TowerDefense`** — a rule placed there is a rule that cannot be tested. If a change needs
 something from the UI, add a `GameHost` method rather than reaching for a Swing type.
 
-**2.3 `GameHost` is the engine's only channel back to the UI.** Three methods today. Widen it
-only when the UI genuinely needs a new callback, never speculatively.
+**2.3 `GameHost` is the engine's only channel back to the UI.** Widen it only when the UI
+genuinely needs a new callback, never speculatively. Its `noOp()` is the real substitute for a
+display-less world, so nothing passes `null` and hopes.
 
 **2.4 `td.ui.render` imports no `java.awt`, and `Java2DFrameRenderer` is the only class that
 turns a `RenderFrame` into pixels.** `BoardRenderer.buildFrame` describes a frame as immutable,
@@ -57,35 +59,55 @@ to describe without AWT, the change is in the wrong place. `Panel*` components m
 
 `GameLoop` runs the simulation *and* the frame build on a daemon thread named `game-loop`;
 only the painting of an already-built frame happens on the Event Dispatch Thread. **Tick code
-never runs on the EDT, and the EDT never walks domain objects.**
+never runs on the EDT.**
 
 **The rule: the thread that owns mutable state publishes it; the other thread reads only what
-was published.** A concurrent collection makes the *collection* safe, not its contents.
+was published.** A concurrent collection makes the *collection* safe, not its contents, and not
+the operation either — `clear()` then `addAll()` shows a reader an empty list in between.
+
+**Every class holding mutable state names its owner.** A non-final, non-volatile instance field
+obliges its class to carry `td.util.ThreadConfined`, so "which thread owns this?" is answered
+once per class instead of left to whoever reads the field next. A field with no honest answer
+is not confined and belongs behind one of the two mechanisms below.
+
+> `fields-declare-their-owner` in `scripts/VerifyRules.java`.
 
 State crosses by one of exactly two mechanisms, chosen on whether its fields are correlated:
 
 1. **Correlated fields cross as one immutable snapshot**, built on the owning thread and
    published through a single `volatile`. The board is a `RenderFrame`
-   (`TowerDefense.buildAndPublishFrame`); a tower's buffed damage/range/cooldown are a
-   `TowerStats`.
+   (`TowerDefense.buildAndPublishFrame`); a level is a `LoadedLevel` (`GameWorld.installLevel`);
+   a tower's buffed damage/range/cooldown are a `TowerStats`.
 2. **Independent scalars may be `volatile` fields** — a kill count, a cell highlight. Not a
    cheaper substitute: `volatile` fixes tearing, not a half-updated object (this tick's `x`
    with last tick's `y`). Use it only where a one-pulse-stale read of one value is correct
    alone. Why, and how to tell them apart: `docs/ARCHITECTURE.md`.
 
+**A correlated set also needs a correlated *read*.** Handing out its parts through separate
+accessors undoes the snapshot — that is two reads of the volatile, and a caller wanting both
+gets a pair that never coexisted. Give the set one accessor and use it: `GameWorld.level()`,
+`GameEngine.waveProgress()`, `EconomyLedger.state()`.
+
 Both directions. Cells are EDT-owned and read by the loop's frame build.
 
-- Never touch Swing from tick code. Route through a listener the UI observes.
+- **Swing is built, shown and mutated on the EDT**, `TowerDefense`'s constructor included —
+  `Main` goes through `invokeAndWait`. Never touch Swing from tick code; route through a
+  listener the UI observes, or drive it from the EDT render pulse.
+- `td.util.Threads` asserts the two that matter (`assertEventDispatchThread`,
+  `assertNotEventDispatchThread`), so a violation fails where it happens.
 - A plain mutable field read from the other thread is a bug, `double` and `long` especially
   (non-volatile 64-bit reads may tear, JLS 17.7).
 - Publish only finished objects: fill a local, then assign the field.
-- `GameLoop.stop()` joins before returning. Idempotency is not thread-safety.
+- `GameLoop.stop()` joins **without bound**, so it must not run on the EDT — level teardown
+  goes through `TowerDefense.stopLoopThen`, which stops the loop on a lifecycle thread and
+  posts the EDT work back. Idempotency is not thread-safety.
 - `EconomyLedger` computes inside `synchronized (this)` and fires listeners **outside** it.
 - `canPay` is advisory; `doPay` is the atomic check-and-charge. Never
   `if (canPay(n)) { doPay(n); }`.
 - Listener and live-entity lists are `CopyOnWriteArrayList` on purpose.
 - Falling behind runs **one** tick and resyncs, never a burst.
 - `GameEngine.doTick` order is fixed: **enemies, then projectiles, then towers.**
+- The tick rate lives once, in `TickRate`. Don't restate 50ms or 20/s anywhere else.
 
 ## 4. Domain packages
 
@@ -114,7 +136,10 @@ every part of the board, so naming six collaborators would say less than naming 
 2. Named static factories over public constructors, so the call site reads as a sentence:
    `Damage.physical(4)`, `EconomyDelta.kill(bounty)`.
 3. Model "nothing" as a value, never `null`. Every abstraction gets an identity — `none()`,
-   `all()`, `empty()`. Passing `null` to mean "any" is the bug this prevents.
+   `all()`, `empty()`. Passing `null` to mean "any" is the bug this prevents. **This binds the
+   whole API, not just the `return null` statement the grep can see**: a nullable field handed
+   out by a getter, and an `orElse(null)`, are the same rule broken less visibly. Absence in a
+   return type is `Optional`; absence in a value is that type's own identity.
 4. Where two values of a kind combine, give the type an algebra: operation, combinator, identity,
    and an absorber if one exists. See `Damage`, `TowerBuff`, `TargetQuery`.
 
@@ -134,6 +159,11 @@ Still applies:
 8. Compose rather than branch. Filtering and selection are separate swappable pieces
    (`td.tower.targeting`); a new tower composes them instead of hand-rolling a scan.
 9. Inherit only to model a closed set of variants, and make the leaves `final`.
+9b. **A base class's mutable state is `private`**, reached by a leaf through an accessor. A
+   `protected` mutable field means the base can hold no invariant a subclass cannot break.
+9c. **One constructor, no second init step.** Everything an object is born with is assigned by
+   its constructor and is `final`, so the ordering is a compile error rather than a convention a
+   leaf has to remember. `AbstractTower` and `AbstractEnemyMob` are both built this way.
 10. Streams to transform, `reduce` to combine.
 11. **No `instanceof` type-switching.** Branch on domain type through `EnemyMobVisitor`,
     `TowerVisitor`, `ProjectileVisitor`. A `switch` over a *sealed* type is fine — a new case is
@@ -153,8 +183,17 @@ That is the only place `null` models absence; engine and domain code returns `Op
   > `grep -rn "^import .*\.\*;" src/main/java src/test/java`
 - **`this.` prefix on instance field access**, consistently.
 - **Names:** types `UpperCamelCase`, constants `UPPER_SNAKE_CASE`, everything else
-  `lowerCamelCase`. `serialVersionUID` is the one exempt constant — the JVM fixes that name.
-  > `grep -rnE "(class|interface|enum|record) +[a-z]" src/main/java src/test/java`
+  `lowerCamelCase`. **An enum constant is a constant**, so `Type.SNIPER`, not `Type.first`.
+  `serialVersionUID` is the one exemption — the JVM fixes that name.
+  > `no-lowercase-type-names`, `no-lowercase-constants` and `enum-constants-upper-snake` in
+  > `scripts/VerifyRules.java`. The third exists because the second greps for `static final`,
+  > which an enum constant is written without — it reported OK for a long time over fourteen
+  > lowercase enum constants.
+- **A type's name puts the distinguishing part first and the category noun last**, and names
+  what a thing *does* rather than what it looks like: `SniperTower`, not TowerSniper and not
+  TowerOne. (Counter-examples go unbackticked on purpose — `docs-name-real-types` requires every
+  backticked type name to be a real file, which is what makes the rest of this file checkable.)
+  Judgement, not a grep.
 - **Fields ordered:** constants, injected/final collaborators, mutable state. A value type has no
   third bucket.
 - **Never expose an internal mutable structure.** Return the queries callers actually make —

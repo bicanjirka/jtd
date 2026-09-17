@@ -7,6 +7,7 @@ import td.economy.EconomyState;
 import td.tower.Tower;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
+import td.util.ThreadConfined;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -27,6 +28,7 @@ import java.util.Objects;
  * {@code GameHost.setInfoText} (a hovered tower's pre-purchase stats, a rejected placement).
  * The two are mutually exclusive: selecting a tower replaces external text and vice versa.
  */
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // Swing components and the current selection
 public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(PanelTowerInfo.class);

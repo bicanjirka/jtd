@@ -57,61 +57,61 @@ final class BuiltInEnemies {
 
     static final EnemyDefinition CIRCLE = new EnemyDefinition(
             "c", "Simple mob", "No special abilities.",
-            50, 2, 1.28f, 1f, EnemyMob.Type.Normal,
+            50, 2, 1.28f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.CIRCLE, new FixedMovement(),
             List.of(), List.of());
 
     static final EnemyDefinition SQUARE = new EnemyDefinition(
             "s", "Square mob", "Takes less damage.",
-            80, 3, 1.28f, 1f, EnemyMob.Type.Normal,
+            80, 3, 1.28f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(5.0)),
             List.of(new PercentResistTrait(0.8f, 0.05f)), List.of());
 
     static final EnemyDefinition TRIANGLE = new EnemyDefinition(
             "t", "Triangle mob", "Increases speed as it takes damage.",
-            60, 3, 1.28f, 1f, EnemyMob.Type.Normal,
+            60, 3, 1.28f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.TRIANGLE, new RotorMovement((float) Math.toRadians(-5.0)),
             List.of(new HurtSpeedTrait(1.4f, 0.1f)), List.of());
 
     static final EnemyDefinition GHOST = new EnemyDefinition(
             "g", "Ghost mob", "Invisible to all towers. Area damage hurts them.",
-            100, 4, 1.28f, 5f, EnemyMob.Type.Invisible,
+            100, 4, 1.28f, 5f, EnemyMob.Type.INVISIBLE,
             BodyArchetype.GHOST, new FixedMovement(),
             List.of(), List.of());
 
     static final EnemyDefinition WARDEN_1 = new EnemyDefinition(
             "warden1", "The Warden", "A hulking armored sentinel. Calls for reinforcements and shields itself and its allies.",
-            8000, 100, 1.28f, 1f, EnemyMob.Type.Normal,
+            8000, 100, 1.28f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(2.0)),
             List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)), wardenAbilities("wardenEgg1"));
 
     static final EnemyDefinition WARDEN_EGG_1 = new EnemyDefinition(
             "wardenEgg1", "Warden's Egg", "Hatches into a weaker Warden if not defeated in time.",
-            1500, 20, 0f, 1f, EnemyMob.Type.Normal,
+            1500, 20, 0f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.EGG, new FixedMovement(),
             List.of(), List.of(new Ability(new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden2", 1, true))));
 
     static final EnemyDefinition WARDEN_2 = new EnemyDefinition(
             "warden2", "The Weakened Warden", "A hulking armored sentinel, worn down from its last hatching.",
-            5000, 100, 1.28f, 1f, EnemyMob.Type.Normal,
+            5000, 100, 1.28f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(2.0)),
             List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)), wardenAbilities("wardenEgg2"));
 
     static final EnemyDefinition WARDEN_EGG_2 = new EnemyDefinition(
             "wardenEgg2", "Warden's Egg", "Hatches into a weaker Warden if not defeated in time.",
-            1500, 20, 0f, 1f, EnemyMob.Type.Normal,
+            1500, 20, 0f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.EGG, new FixedMovement(),
             List.of(), List.of(new Ability(new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden3", 1, true))));
 
     static final EnemyDefinition WARDEN_3 = new EnemyDefinition(
             "warden3", "The Exhausted Warden", "A hulking armored sentinel, barely standing.",
-            3000, 100, 1.28f, 1f, EnemyMob.Type.Normal,
+            3000, 100, 1.28f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(2.0)),
             List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)), wardenAbilities("wardenEgg3"));
 
     static final EnemyDefinition WARDEN_EGG_3 = new EnemyDefinition(
             "wardenEgg3", "Warden's Final Egg", "Must be defeated to end the encounter - it will not hatch again.",
-            1500, 20, 0f, 1f, EnemyMob.Type.Normal,
+            1500, 20, 0f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.EGG, new FixedMovement(),
             List.of(), List.of());
 

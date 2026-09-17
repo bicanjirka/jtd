@@ -107,22 +107,17 @@ public final class VerifyRules {
                 "borders come from td.ui.Hud; an etched border's shading is the L&F's to choose",
                 "createEtchedBorder", List.of(MAIN)).skippingComments());
 
+        rules.add(enumConstantsAreUpperSnakeCase());
+
+        rules.add(fieldsDeclareTheirOwner());
+
         rules.add(docsNameRealTypes());
 
         int failed = 0;
-        int pending = 0;
         for (Check rule : rules) {
             List<String> violations = rule.violations();
             if (violations.isEmpty()) {
-                System.out.printf("rules: %-26s OK%s%n", rule.name(),
-                        rule.pendingReason() == null ? "" : "   (pending rule now clean - make it enforcing)");
-            } else if (rule.pendingReason() != null) {
-                pending++;
-                System.out.printf("rules: %-26s PENDING  %d left  (%s)%n",
-                        rule.name(), violations.size(), rule.pendingReason());
-                for (String v : violations) {
-                    System.out.printf("       %s%n", v);
-                }
+                System.out.printf("rules: %-26s OK%n", rule.name());
             } else {
                 failed++;
                 System.out.printf("rules: %-26s FAIL  (%s)%n", rule.name(), rule.section());
@@ -137,8 +132,7 @@ public final class VerifyRules {
             System.out.printf("%n%d rule%s violated. See CLAUDE.md.%n", failed, failed == 1 ? "" : "s");
             System.exit(1);
         }
-        System.out.printf("%nAll enforcing rules pass%s.%n",
-                pending == 0 ? "" : "; " + pending + " pending (tracked in TODO.md)");
+        System.out.printf("%nAll %d rules pass.%n", rules.size());
     }
 
     /**
@@ -219,6 +213,157 @@ public final class VerifyRules {
         };
     }
 
+    /**
+     * Every constant of every {@code enum} must be {@code UPPER_SNAKE_CASE}, like any other
+     * constant (CLAUDE.md 6).
+     * <p>
+     * This is separate from {@code no-lowercase-constants} because that rule greps for
+     * {@code static final}, and an enum constant is written with neither keyword - so the build
+     * reported OK for a long time with eleven lowercase constants in the tree
+     * ({@code TowerFactory.Type.first} and friends, {@code Cell.HighlightType.none}). A rule
+     * whose check cannot see the largest enum in the codebase is not enforced, it is decorative.
+     * <p>
+     * The scan is bracket-depth based rather than regex-only: from an {@code enum X \{} line it
+     * reads constants until the first {@code ;} or the closing brace, which is exactly where an
+     * enum's constant list ends.
+     */
+    private static Check enumConstantsAreUpperSnakeCase() {
+        Pattern enumStart = Pattern.compile("\\benum\\s+[A-Z]\\w*\\s*(implements\\s+[\\w.,<> ]+)?\\{");
+        Pattern constant = Pattern.compile("^([A-Za-z_]\\w*)\\s*(\\(|,|;|$)");
+        return new SourceCheck("enum-constants-upper-snake", "CLAUDE.md 6",
+                "an enum constant is a constant: UPPER_SNAKE_CASE, like every other one",
+                List.of(MAIN, TEST)) {
+            @Override
+            void inspect(Path file, List<String> lines, List<String> found) {
+                for (int i = 0; i < lines.size(); i++) {
+                    if (!enumStart.matcher(lines.get(i)).find()) {
+                        continue;
+                    }
+                    for (int j = i + 1; j < lines.size(); j++) {
+                        String line = lines.get(j).trim();
+                        if (line.isEmpty() || line.startsWith("//") || line.startsWith("*")
+                                || line.startsWith("/*") || line.startsWith("@")) {
+                            continue;
+                        }
+                        if (line.startsWith("}")) {
+                            break;
+                        }
+                        Matcher m = constant.matcher(line);
+                        if (m.find()) {
+                            String name = m.group(1);
+                            if (!name.equals(name.toUpperCase())) {
+                                found.add(file + ":" + (j + 1) + "  enum constant `" + name
+                                        + "` is not UPPER_SNAKE_CASE");
+                            }
+                        }
+                        if (line.contains(";")) {
+                            break;
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    /**
+     * A class holding mutable state must say which thread owns it (CLAUDE.md 3).
+     * <p>
+     * Concretely: any non-final, non-volatile instance field obliges its class to carry
+     * {@code @ThreadConfined}. That turns §3's central rule - the thread that owns mutable state
+     * publishes it, the other reads only what was published - from prose into a question the
+     * author has to answer once per class. It is the check the codebase most needed: §3 names
+     * three bug shapes by hand, and all three were in the tree while every rule reported OK.
+     * <p>
+     * A field that genuinely crosses threads has no honest answer here, and that is the point -
+     * it belongs behind a {@code volatile}, an {@code Atomic*}, or an immutable snapshot, each of
+     * which satisfies this rule by not being a plain mutable field in the first place.
+     */
+    private static Check fieldsDeclareTheirOwner() {
+        // A field declaration, as opposed to a method, a compact record constructor or a nested
+        // type: it has a modifier, a type, a name, and then either "=" or ";" - never "(" first.
+        Pattern field = Pattern.compile(
+                "^\\s{1,8}(private|protected|public)\\s+(?!static)[\\w.<>,\\[\\]\\s]*?\\s"
+                        + "[a-z]\\w*\\s*(=[^=]|;)");
+        return new SourceCheck("fields-declare-their-owner", "CLAUDE.md 3",
+                "a class with mutable state must declare its owning thread with @ThreadConfined",
+                List.of(MAIN)) {
+            @Override
+            void inspect(Path file, List<String> lines, List<String> found) {
+                boolean declaresOwner = lines.stream().anyMatch(l -> l.contains("@ThreadConfined"));
+                if (declaresOwner) {
+                    return;
+                }
+                for (int i = 0; i < lines.size(); i++) {
+                    String line = lines.get(i);
+                    String trimmed = line.trim();
+                    if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*")) {
+                        continue;
+                    }
+                    if (line.contains(" final ") || line.contains(" volatile ")
+                            || line.contains("static")) {
+                        continue;
+                    }
+                    if (field.matcher(line).find()) {
+                        found.add(file + ":" + (i + 1) + "  " + trimmed
+                                + "   (mutable, so the class needs @ThreadConfined)");
+                    }
+                }
+            }
+        };
+    }
+
+    /** A rule needing real per-file logic rather than a single line-matching regex. */
+    private abstract static class SourceCheck implements Check {
+
+        private final String name;
+        private final String section;
+        private final String why;
+        private final List<Path> roots;
+
+        SourceCheck(String name, String section, String why, List<Path> roots) {
+            this.name = name;
+            this.section = section;
+            this.why = why;
+            this.roots = roots;
+        }
+
+        /** Adds one entry to {@code found} per violation in {@code file}. */
+        abstract void inspect(Path file, List<String> lines, List<String> found) throws IOException;
+
+        @Override
+        public String name() {
+            return this.name;
+        }
+
+        @Override
+        public String section() {
+            return this.section;
+        }
+
+        @Override
+        public String why() {
+            return this.why;
+        }
+
+        @Override
+        public List<String> violations() throws IOException {
+            List<String> found = new ArrayList<>();
+            for (Path root : this.roots) {
+                if (!Files.isDirectory(root)) {
+                    continue;
+                }
+                try (Stream<Path> files = Files.walk(root)) {
+                    for (Path file : files.filter(Files::isRegularFile)
+                            .filter(f -> f.toString().endsWith(".java"))
+                            .toList()) {
+                        this.inspect(file, Files.readAllLines(file, StandardCharsets.UTF_8), found);
+                    }
+                }
+            }
+            return found;
+        }
+    }
+
     /** The root {@code CLAUDE.md} and every per-package one. */
     private static List<Path> docFiles() throws IOException {
         List<Path> docs = new ArrayList<>();
@@ -248,11 +393,6 @@ public final class VerifyRules {
         String why();
 
         List<String> violations() throws IOException;
-
-        /** Non-null while a rule is adopted but not yet satisfied - see {@link Rule#pending}. */
-        default String pendingReason() {
-            return null;
-        }
     }
 
     private static final class Rule implements Check {
@@ -264,7 +404,6 @@ public final class VerifyRules {
         private final List<Path> roots;
         private Predicate<String> lineFilter = line -> true;
         private Predicate<Path> pathFilter = path -> true;
-        private String pendingReason;
 
         private Rule(String name, String section, String why, String regex, List<Path> roots) {
             this.name = name;
@@ -284,16 +423,6 @@ public final class VerifyRules {
                 String trimmed = line.trim();
                 return !trimmed.startsWith("//") && !trimmed.startsWith("*") && !trimmed.startsWith("/*");
             };
-            return this;
-        }
-
-        /**
-         * Reports remaining violations and their shrinking count without failing the build, for a
-         * rule the codebase has adopted but not yet finished complying with. The named TODO.md
-         * entry is the work that makes it enforcing; delete this call once the count reaches zero.
-         */
-        Rule pending(String todoEntry) {
-            this.pendingReason = todoEntry;
             return this;
         }
 
@@ -317,11 +446,6 @@ public final class VerifyRules {
         @Override
         public String why() {
             return this.why;
-        }
-
-        @Override
-        public String pendingReason() {
-            return this.pendingReason;
         }
 
         @Override

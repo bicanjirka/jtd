@@ -3,6 +3,7 @@ package td.enemy;
 import td.damage.Damage;
 import td.effect.EffectTemplate;
 import td.util.GameWorld;
+import td.util.ThreadConfined;
 
 import java.util.List;
 
@@ -14,6 +15,7 @@ import java.util.List;
  * drawn stays its own tiny class rather than being forced through a trait/ability model it has
  * no real use for.
  */
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // body scale, facing and the two tick counters, all advanced by doTick
 public final class DefinedEnemyMob extends AbstractEnemyMob {
 
     private final EnemyDefinition definition;

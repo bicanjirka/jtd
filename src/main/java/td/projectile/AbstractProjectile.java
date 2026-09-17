@@ -1,11 +1,14 @@
 package td.projectile;
 
+
+import td.util.ThreadConfined;
 /**
  * Everything every projectile shares: its current and previous-tick position (for the
  * renderer's interpolation, exactly like {@code AbstractEnemyMob}'s prevX/prevY pair), and
  * the finished/live lifecycle a {@code ProjectileRoster} drops it from once it resolves.
  * Subclasses supply only how one tick's worth of flight is resolved.
  */
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // position and lifetime, advanced by doTick
 public abstract class AbstractProjectile implements Projectile {
 
     protected double x;

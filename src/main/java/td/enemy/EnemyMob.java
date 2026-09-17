@@ -58,13 +58,13 @@ public interface EnemyMob {
     String getInfoString();
 
     /**
-     * What a tower is allowed to see. {@code Invisible} (the ghost) is skipped by
-     * single-target towers and reachable only by area damage; {@code Flying} is declared but
+     * What a tower is allowed to see. {@code INVISIBLE} (the ghost) is skipped by
+     * single-target towers and reachable only by area damage; {@code FLYING} is declared but
      * unused by any enemy today.
      */
     enum Type {
-        Normal,
-        Flying,
-        Invisible
+        NORMAL,
+        FLYING,
+        INVISIBLE
     }
 }

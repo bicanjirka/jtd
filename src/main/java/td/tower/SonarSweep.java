@@ -1,5 +1,7 @@
 package td.tower;
 
+
+import td.util.ThreadConfined;
 /**
  * A beam sweeping the full circle at a constant rate, and the test for whether a given bearing
  * was crossed during the last step - the "sonar scan" behind {@code SonarTower}.
@@ -19,6 +21,7 @@ package td.tower;
  * {@link #advance()} moves exactly one tick's worth per call, so the scan speeds up and slows
  * down with the simulation rather than with wall-clock time.
  */
+@ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)  // owned by the SonarTower that advances it, so game-loop in practice
 public final class SonarSweep {
 
     private static final double TWO_PI = Math.PI * 2;

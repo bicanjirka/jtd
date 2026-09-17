@@ -8,6 +8,7 @@ import td.tower.TowerFactory;
 import td.util.GameHost;
 import td.util.RandomSource;
 import td.util.GameWorld;
+import td.util.ThreadConfined;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.List;
  * {@code GameWorld} exposes no alive-count accessor to poll instead), so this class exercises
  * the exact same callback the real game advances waves on.
  */
+@ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)  // a headless harness driven start to finish by whichever thread calls run()
 public final class BalanceHarness implements GameHost {
 
     /**

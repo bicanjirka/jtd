@@ -1,5 +1,7 @@
 package td.enemy;
 
+
+import td.util.ThreadConfined;
 /**
  * Small, mutable, per-mob-per-{@link Ability} bookkeeping {@link AbilityEvaluator} needs
  * between ticks - a {@link PeriodicTrigger}'s countdown to its next fire, whether a one-shot
@@ -9,6 +11,7 @@ package td.enemy;
  * the same {@link EnemyDefinition}; this is the mutable half a live mob holds one of per
  * ability it carries.
  */
+@ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)  // owned by the DefinedEnemyMob holding it, so evaluated only during a tick
 public final class AbilityState {
 
     private int ticksRemaining;

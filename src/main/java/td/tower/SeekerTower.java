@@ -11,6 +11,7 @@ import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
+import td.util.ThreadConfined;
 
 import java.util.List;
 
@@ -22,6 +23,7 @@ import java.util.List;
  * {@code MissileProjectile}). On impact it deals magic damage and freezes whichever mob it
  * actually reached - which may not be the one it was originally fired at.
  */
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // cooldown and current target, advanced by doTick
 public final class SeekerTower extends AbstractTower {
 
     public static final int PRICE = 35;
@@ -79,7 +81,7 @@ public final class SeekerTower extends AbstractTower {
     }
 
     private EnemyMob findTarget() {
-        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.Normal)
+        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.NORMAL)
                 .matching(this.context.enemies());
         return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
     }

@@ -23,6 +23,7 @@ import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.Threads;
 import td.wave.WaveProgress;
+import td.util.ThreadConfined;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -67,6 +68,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This class is a shrinking legacy shell: new gameplay rules belong in {@code GameEngine} or
  * the domain packages, where they can be tested without a display.
  */
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // Swing components and input state; the fields that genuinely cross are volatile
 public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     private static final Logger LOG = LoggerFactory.getLogger(TowerDefense.class);

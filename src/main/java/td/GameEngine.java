@@ -24,6 +24,7 @@ import td.wave.Wave;
 import td.wave.WaveDefinition;
 import td.wave.WaveProgress;
 import td.wave.WaveScript;
+import td.util.ThreadConfined;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +41,7 @@ import java.util.Optional;
  * translating a real MouseEvent's screen position into that is a UI concern
  * {@link TowerDefense} still owns.
  */
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // debugSpawnCursor is advanced by a key event; everything else here is volatile or in LoadedLevel
 public class GameEngine {
 
     private static final Logger LOG = LoggerFactory.getLogger(GameEngine.class);

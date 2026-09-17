@@ -11,6 +11,7 @@ import td.tower.upgrade.ClusterCondition;
 import td.tower.upgrade.DamageDealtCondition;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
+import td.util.ThreadConfined;
 
 import java.util.List;
 
@@ -22,6 +23,7 @@ import java.util.List;
  * physical damage with the same distance-falloff shape {@link SplashTower} uses, and slows every
  * enemy the blast reaches.
  */
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // cooldown and current target, advanced by doTick
 public final class MortarTower extends AbstractTower {
 
     public static final int PRICE = 30;
@@ -81,7 +83,7 @@ public final class MortarTower extends AbstractTower {
     }
 
     private EnemyMob findTarget() {
-        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.Normal)
+        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.NORMAL)
                 .matching(this.context.enemies());
         return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
     }

@@ -10,6 +10,7 @@ import td.tower.upgrade.ClusterCondition;
 import td.tower.upgrade.DamageDealtCondition;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
+import td.util.ThreadConfined;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +21,7 @@ import java.util.Optional;
  * from the blast centre. The splash deliberately uses an any-type query, so it is one of the
  * two towers that can hurt ghosts even though it cannot target them directly.
  */
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // cooldown, the primary target and the splash centre, all set within a tick
 public final class SplashTower extends AbstractTower {
 
     public static final int PRICE = 15;
@@ -77,7 +79,7 @@ public final class SplashTower extends AbstractTower {
     }
 
     private List<EnemyMob> findEnemiesInRangeVisible(int x, int y, float r) {
-        return InRangeTargetQuery.ofType(x, y, r, EnemyMob.Type.Normal).matching(this.context.enemies());
+        return InRangeTargetQuery.ofType(x, y, r, EnemyMob.Type.NORMAL).matching(this.context.enemies());
     }
 
     private List<EnemyMob> findEnemiesInRange(int x, int y, float r) {
