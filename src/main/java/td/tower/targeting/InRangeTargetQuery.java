@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 
 /**
  * Enemies within a radius of a point, optionally restricted to one
- * {@link EnemyMob.type}. Use {@link #anyType} or {@link #ofType} - never
+ * {@link EnemyMob.Type}. Use {@link #anyType} or {@link #ofType} - never
  * {@code null} - to say which.
  */
 public final class InRangeTargetQuery implements TargetQuery {
@@ -30,7 +30,7 @@ public final class InRangeTargetQuery implements TargetQuery {
         return new InRangeTargetQuery(x, y, range, EnemyMob::validTarget);
     }
 
-    public static InRangeTargetQuery ofType(int x, int y, float range, EnemyMob.type type) {
+    public static InRangeTargetQuery ofType(int x, int y, float range, EnemyMob.Type type) {
         return new InRangeTargetQuery(x, y, range, e -> e.validTarget(type));
     }
 

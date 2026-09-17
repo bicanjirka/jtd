@@ -37,13 +37,13 @@ class TargetQueryCompositionTest {
 
     @Test
     void andComputesTheIntersectionOfTwoQueries() {
-        FakeEnemyMob inRangeGhost = FakeEnemyMob.at(0, 0).withType(EnemyMob.type.Invisible);
+        FakeEnemyMob inRangeGhost = FakeEnemyMob.at(0, 0).withType(EnemyMob.Type.Invisible);
         FakeEnemyMob inRangeNormal = FakeEnemyMob.at(1, 1);
-        FakeEnemyMob outOfRangeGhost = FakeEnemyMob.at(100, 100).withType(EnemyMob.type.Invisible);
+        FakeEnemyMob outOfRangeGhost = FakeEnemyMob.at(100, 100).withType(EnemyMob.Type.Invisible);
         EnemyRegistry enemies = () -> new EnemyMob[]{inRangeGhost, inRangeNormal, outOfRangeGhost};
 
         TargetQuery inRange = InRangeTargetQuery.anyType(0, 0, 5);
-        TargetQuery ghosts = OfTypeTargetQuery.of(EnemyMob.type.Invisible);
+        TargetQuery ghosts = OfTypeTargetQuery.of(EnemyMob.Type.Invisible);
 
         assertThat(inRange.and(ghosts).matching(enemies)).containsExactly(inRangeGhost);
     }

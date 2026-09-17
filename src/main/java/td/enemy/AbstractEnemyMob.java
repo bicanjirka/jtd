@@ -30,13 +30,13 @@ public abstract class AbstractEnemyMob implements EnemyMob {
 
     /**
      * Health is stored in hundredths, matching the scale {@code td.tower} expresses damage in
-     * ({@code TowerOne.damage} of {@code 4000} is 40 points a shot). Storing the fine-grained
+     * ({@code TowerOne.DAMAGE} of {@code 4000} is 40 points a shot). Storing the fine-grained
      * unit is what lets a percentage resistance or a damage-over-time tick subtract a fraction
      * of a point without rounding to nothing.
      */
     private static final int HEALTH_UNITS_PER_POINT = 100;
 
-    protected type type;
+    protected Type type;
     protected boolean inactive = true;
     protected boolean validTarget = false;
     protected boolean dead = false;
@@ -64,7 +64,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
 
 
     public AbstractEnemyMob() {
-        this.type = EnemyMob.type.Normal;
+        this.type = EnemyMob.Type.Normal;
     }
 
     /**
@@ -235,11 +235,11 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         return ((!this.inactive) && this.validTarget && (!this.dead));
     }
 
-    public boolean validTarget(type type) {
+    public boolean validTarget(Type type) {
         return (this.validTarget() && (type.equals(this.type)));
     }
 
-    public boolean validTarget(type type1, type type2) {
+    public boolean validTarget(Type type1, Type type2) {
         return (this.validTarget(type1) || this.validTarget(type2));
     }
 

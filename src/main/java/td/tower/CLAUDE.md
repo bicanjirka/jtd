@@ -204,7 +204,7 @@ changes what *this* tower itself is, once, and stays changed for its lifetime.
    `td.tower.targeting` pieces rather than writing a new scan. Its constructor passes its
    type, price, damage, range and base cooldown plus the world and its cell coordinates
    straight to `super(...)`; a passive tower also overrides `isPassive()`.
-2. Add a constant to `TowerFactory.type` with its price, and its `createTower` branch.
+2. Add a constant to `TowerFactory.Type` with its price, and its `createTower` branch.
 3. Add a `visit…` method to `TowerVisitor`. The compiler then points you at every place
    that needs the new tower's art: `td.ui.TowerSpriteFrameBuilder` (base and turret head)
    and `td.ui.TowerEffectFrameBuilder` (its transient effect).

@@ -14,9 +14,9 @@ import java.util.List;
  */
 public final class TowerAura extends AbstractTower implements TowerListener {
 
-    public static final int price = 20;
-    public static final int damage = 0;
-    public static final float range = 1.5f;
+    public static final int PRICE = 20;
+    public static final int DAMAGE = 0;
+    public static final float RANGE = 1.5f;
     public static final float DEFAULT_POWER = 0.2f;
 
     private final List<Tower> clients;
@@ -31,7 +31,7 @@ public final class TowerAura extends AbstractTower implements TowerListener {
      * aura towers can stack unequal amounts via TowerBuff's additive combine.
      */
     public TowerAura(GameWorld context, int x, int y, float power) {
-        super(TowerFactory.type.aura, price, damage, range, 0, context, x, y);
+        super(TowerFactory.Type.aura, PRICE, DAMAGE, RANGE, 0, context, x, y);
         this.power = power;
         this.clients = new ArrayList<>();
 

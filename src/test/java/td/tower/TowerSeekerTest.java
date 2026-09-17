@@ -52,7 +52,7 @@ class TowerSeekerTest {
         tower.doTick(1);
         this.flyProjectilesToCompletion();
 
-        assertThat(target.onlyHitAmount()).isEqualTo(TowerSeeker.damage);
+        assertThat(target.onlyHitAmount()).isEqualTo(TowerSeeker.DAMAGE);
         assertThat(target.hits().get(0).type()).isEqualTo(DamageType.MAGIC);
         assertThat(target.appliedEffects()).hasSize(1);
         assertThat(target.appliedEffects().get(0).kind()).isEqualTo(EffectKind.FREEZE);

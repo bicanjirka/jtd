@@ -38,7 +38,7 @@ import java.util.List;
  * @param healthDivisor  the wave-supplied base health is divided by this before any other
  *                       scaling - generalizes Ghost's flat {@code /5}. {@code 1} for every
  *                       definition that doesn't need one.
- * @param mobType        which {@link EnemyMob.type} this definition spawns as - what
+ * @param mobType        which {@link EnemyMob.Type} this definition spawns as - what
  *                       type-filtering targeting queries (see {@code td.tower.targeting}) see,
  *                       independent of anything a {@link Trait} does.
  * @param traits         always-on, no per-mob state of their own beyond what {@link TraitContext} supplies
@@ -52,7 +52,7 @@ public record EnemyDefinition(
         int price,
         float baseSpeed,
         float healthDivisor,
-        EnemyMob.type mobType,
+        EnemyMob.Type mobType,
         BodyArchetype archetype,
         MovementBehavior movement,
         List<Trait> traits,

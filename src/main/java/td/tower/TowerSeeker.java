@@ -24,7 +24,7 @@ import java.util.List;
  */
 public final class TowerSeeker extends AbstractTower {
 
-    public static final int price = 35;
+    public static final int PRICE = 35;
     // Buffed from 1800/60 (30 dmg/tick) - see TODO.md's "New tower numbers are unbalanced
     // placeholders" formation-test entry: at the old numbers this was the lowest-DPS attack
     // tower in the game by a wide margin (first's 4000/39 is ~103/tick) with no splash/sweep/
@@ -32,8 +32,8 @@ public final class TowerSeeker extends AbstractTower {
     // a small enemy column in that test. 2600/45 (~58 dmg/tick) roughly doubles its throughput
     // without matching or exceeding first's, keeping guaranteed-hit reliability and freeze CC
     // as the reason to pick this over a cheaper single-target tower rather than raw DPS alone.
-    public static final int damage = 2600;
-    public static final float range = 4.5f;
+    public static final int DAMAGE = 2600;
+    public static final float RANGE = 4.5f;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
     private static final float PROJECTILE_SPEED = 35f;
@@ -57,7 +57,7 @@ public final class TowerSeeker extends AbstractTower {
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
     public TowerSeeker(GameWorld context, int x, int y) {
-        super(TowerFactory.type.seeker, price, damage, range, COOLDOWN_MAX, context, x, y);
+        super(TowerFactory.Type.seeker, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
     }
 
     @Override
@@ -74,7 +74,7 @@ public final class TowerSeeker extends AbstractTower {
     }
 
     private EnemyMob findTarget() {
-        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.type.Normal)
+        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.Normal)
                 .matching(this.context.getEnemyRegistry());
         return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
     }

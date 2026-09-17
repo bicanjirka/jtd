@@ -127,7 +127,7 @@ own `doInit` override reads `this.definition` (set before the call) and applies
 the base class never sees the un-adjusted value.
 
 **Ghost's invisibility does not go through `Trait.isValidTarget`.** Single-target towers filter
-by `EnemyMob.type` (see `td.tower.targeting.OfTypeTargetQuery`/`InRangeTargetQuery.ofType`), a
+by `EnemyMob.Type` (see `td.tower.targeting.OfTypeTargetQuery`/`InRangeTargetQuery.ofType`), a
 separate, pre-existing mechanism `EnemyDefinition.mobType()` feeds directly —
 `DefinedEnemyMob`'s constructor sets `this.type = definition.mobType()`. `Trait.isValidTarget`
 is real API, just not what Ghost's migration needed; it stays available for a future trait that

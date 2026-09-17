@@ -7,19 +7,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Enemies of one {@link EnemyMob.type}, anywhere on the board. Meant to be combined via
+ * Enemies of one {@link EnemyMob.Type}, anywhere on the board. Meant to be combined via
  * {@link TargetQuery#and} with a range query, e.g. to count how many in-range enemies are
  * ghosts without a tower hand-rolling that filter itself.
  */
 public final class OfTypeTargetQuery implements TargetQuery {
 
-    private final EnemyMob.type type;
+    private final EnemyMob.Type type;
 
-    private OfTypeTargetQuery(EnemyMob.type type) {
+    private OfTypeTargetQuery(EnemyMob.Type type) {
         this.type = type;
     }
 
-    public static OfTypeTargetQuery of(EnemyMob.type type) {
+    public static OfTypeTargetQuery of(EnemyMob.Type type) {
         return new OfTypeTargetQuery(type);
     }
 

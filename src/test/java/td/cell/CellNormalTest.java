@@ -24,7 +24,7 @@ class CellNormalTest {
     @Test
     void setTowerOccupiesTheCellAndMakesItUnbuildable() {
         CellNormal cell = new CellNormal(0, 0);
-        Tower tower = TowerFactory.createTower(TowerFactory.type.first, context, 0, 0);
+        Tower tower = TowerFactory.createTower(TowerFactory.Type.first, context, 0, 0);
 
         cell.setTower(tower);
 
@@ -36,8 +36,8 @@ class CellNormalTest {
     @Test
     void setTowerOnAnAlreadyOccupiedCellIsIgnored() {
         CellNormal cell = new CellNormal(0, 0);
-        Tower first = TowerFactory.createTower(TowerFactory.type.first, context, 0, 0);
-        Tower second = TowerFactory.createTower(TowerFactory.type.second, context, 0, 0);
+        Tower first = TowerFactory.createTower(TowerFactory.Type.first, context, 0, 0);
+        Tower second = TowerFactory.createTower(TowerFactory.Type.second, context, 0, 0);
 
         cell.setTower(first);
         cell.setTower(second);
@@ -48,7 +48,7 @@ class CellNormalTest {
     @Test
     void unSetTowerClearsTheCellAndMakesItBuildableAgain() {
         CellNormal cell = new CellNormal(0, 0);
-        cell.setTower(TowerFactory.createTower(TowerFactory.type.first, context, 0, 0));
+        cell.setTower(TowerFactory.createTower(TowerFactory.Type.first, context, 0, 0));
 
         cell.unSetTower();
 

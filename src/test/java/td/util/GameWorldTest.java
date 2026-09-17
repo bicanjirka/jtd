@@ -39,7 +39,7 @@ class GameWorldTest {
                 built.add(t);
             }
         });
-        Tower tower = TowerFactory.createTower(TowerFactory.type.first, context, 0, 0);
+        Tower tower = TowerFactory.createTower(TowerFactory.Type.first, context, 0, 0);
 
         context.addTower(tower);
 
@@ -59,7 +59,7 @@ class GameWorldTest {
             public void towerBuild(Tower t) {
             }
         });
-        Tower tower = TowerFactory.createTower(TowerFactory.type.first, context, 2, 3);
+        Tower tower = TowerFactory.createTower(TowerFactory.Type.first, context, 2, 3);
         context.addTower(tower);
 
         context.sellTower(tower);
@@ -96,7 +96,7 @@ class GameWorldTest {
         context.addTowerListener(listener);
         context.removeTowerListener(listener);
 
-        context.addTower(TowerFactory.createTower(TowerFactory.type.first, context, 0, 0));
+        context.addTower(TowerFactory.createTower(TowerFactory.Type.first, context, 0, 0));
 
         assertThat(built).isEmpty();
     }

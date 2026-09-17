@@ -228,7 +228,7 @@ public class GameEngine {
         return waveStarted;
     }
 
-    public void startPlacing(TowerFactory.type t, float r) {
+    public void startPlacing(TowerFactory.Type t, float r) {
         this.placement.start(t, r);
     }
 

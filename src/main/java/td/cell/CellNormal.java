@@ -14,7 +14,7 @@ import td.tower.Tower;
  */
 public class CellNormal implements Cell {
 
-    private volatile highlightType highlight = highlightType.none;
+    private volatile HighlightType highlight = HighlightType.none;
     private volatile float highlightRange = 0;
 
     private final int x;
@@ -37,7 +37,7 @@ public class CellNormal implements Cell {
             this.tower = null;
             this.buildable = true;
         }
-        this.highlight = highlightType.none;
+        this.highlight = HighlightType.none;
     }
 
     public Tower getTower() {
@@ -56,11 +56,11 @@ public class CellNormal implements Cell {
         return this.buildable;
     }
 
-    public void setHighlight(highlightType highlight) {
+    public void setHighlight(HighlightType highlight) {
         this.highlight = highlight;
     }
 
-    public highlightType getHighlight() {
+    public HighlightType getHighlight() {
         return this.highlight;
     }
 

@@ -31,11 +31,11 @@ import java.util.List;
  */
 public final class TowerThree extends AbstractTower implements WaveStartListener {
 
-    public static final int price = 20;
-    public static final int damage = 1600;
-    public static final float range = 5.2f;
+    public static final int PRICE = 20;
+    public static final int DAMAGE = 1600;
+    public static final float RANGE = 5.2f;
     /** Seconds per full revolution of the scan - this tower's headline stat, in place of a fire rate. */
-    public static final float secondsPerRevolution = 2f;
+    public static final float SECONDS_PER_REVOLUTION = 2f;
 
     /** How long a hit stays drawn, so a sweep leaves a brief trail of what it just caught. */
     private static final int HIT_FLASH_TICKS = 8;
@@ -50,13 +50,13 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
             "Marksman Beam", 30, new TowerBuff(0.4f, 0f, 0f, 0f), new KillCountCondition(15));
     private static final List<UpgradePath> PATHS = List.of(OVERCHARGED_ARRAY, MARKSMAN_BEAM);
 
-    private SonarSweep sweep = SonarSweep.perRevolution(secondsPerRevolution, TICKS_PER_SECOND);
-    private float secondsPerRevolutionCurrent = secondsPerRevolution;
+    private SonarSweep sweep = SonarSweep.perRevolution(SECONDS_PER_REVOLUTION, TICKS_PER_SECOND);
+    private float secondsPerRevolutionCurrent = SECONDS_PER_REVOLUTION;
     private final List<SonarHit> recentHits = new ArrayList<>();
 
     public TowerThree(GameWorld context, int x, int y) {
         // No cooldown: this tower's cadence is its sweep rate, not a reload - see rateLine.
-        super(TowerFactory.type.third, price, damage, range, 0, context, x, y);
+        super(TowerFactory.Type.third, PRICE, DAMAGE, RANGE, 0, context, x, y);
         this.context.addWaveStartListener(this);
     }
 
@@ -69,7 +69,7 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
     @Override
     protected void onUpgradePathChosen(UpgradePath path) {
         if (path == OVERCHARGED_ARRAY) {
-            this.secondsPerRevolutionCurrent = secondsPerRevolution * OVERCHARGED_SPEEDUP_FACTOR;
+            this.secondsPerRevolutionCurrent = SECONDS_PER_REVOLUTION * OVERCHARGED_SPEEDUP_FACTOR;
             this.sweep = SonarSweep.perRevolution(this.secondsPerRevolutionCurrent, TICKS_PER_SECOND);
         }
     }
@@ -79,7 +79,7 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
         this.recentHits.removeIf(hit -> gameTime - hit.tick() >= HIT_FLASH_TICKS);
 
         List<EnemyMob> inRange = InRangeTargetQuery
-                .ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.type.Normal)
+                .ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.Normal)
                 .matching(this.context.getEnemyRegistry());
 
         for (EnemyMob enemy : inRange) {

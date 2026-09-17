@@ -21,7 +21,7 @@ class TowerFourTest {
         boolean chosen = tower.chooseUpgradePath(expandedField);
 
         assertThat(chosen).isTrue();
-        assertThat(tower.getRangeReal()).isGreaterThan(TowerFour.range * this.context.getBoard().scale());
+        assertThat(tower.getRangeReal()).isGreaterThan(TowerFour.RANGE * this.context.getBoard().scale());
     }
 
     @Test

@@ -19,7 +19,7 @@ class TowerTwoTest {
 
     private static final int SCALE = 32;
     // TowerTwo derives its blast radius from the board scale at construction.
-    private static final float SPREAD_RADIUS = TowerTwo.spreadRadiusBase * SCALE; // 56.0
+    private static final float SPREAD_RADIUS = TowerTwo.SPREAD_RADIUS_BASE * SCALE; // 56.0
 
     private final GameWorld context = new GameWorld(new RecordingGameHost());
 
@@ -77,7 +77,7 @@ class TowerTwoTest {
 
         tower.doTick(0);
 
-        assertThat(blastCentre.onlyHitAmount()).isEqualTo(TowerTwo.damage);
+        assertThat(blastCentre.onlyHitAmount()).isEqualTo(TowerTwo.DAMAGE);
     }
 
     @Test
@@ -121,6 +121,6 @@ class TowerTwoTest {
 
         assertThat(chosen).isTrue();
         assertThat(tower.damageCurrent()).isGreaterThan(tower.damageBase);
-        assertThat(tower.getRangeReal()).isGreaterThan(TowerTwo.range * SCALE);
+        assertThat(tower.getRangeReal()).isGreaterThan(TowerTwo.RANGE * SCALE);
     }
 }

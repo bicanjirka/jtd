@@ -19,7 +19,7 @@ class TowerRosterTest {
     private final GameWorld context = new GameWorld(host);
 
     private Tower aTower() {
-        return TowerFactory.createTower(TowerFactory.type.first, context, 2, 3);
+        return TowerFactory.createTower(TowerFactory.Type.first, context, 2, 3);
     }
 
     @Test
@@ -80,7 +80,7 @@ class TowerRosterTest {
     @Test
     void clearRemovesEveryTowerAndClearsEachCell() {
         roster.add(aTower());
-        roster.add(TowerFactory.createTower(TowerFactory.type.first, context, 5, 6));
+        roster.add(TowerFactory.createTower(TowerFactory.Type.first, context, 5, 6));
 
         roster.clear();
 

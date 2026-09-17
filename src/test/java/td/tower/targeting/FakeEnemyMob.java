@@ -14,10 +14,10 @@ final class FakeEnemyMob implements EnemyMob {
     private final int x;
     private final int y;
     private final int progression;
-    private final type mobType;
+    private final Type mobType;
     private final boolean validTarget;
 
-    private FakeEnemyMob(int x, int y, int progression, type mobType, boolean validTarget) {
+    private FakeEnemyMob(int x, int y, int progression, Type mobType, boolean validTarget) {
         this.x = x;
         this.y = y;
         this.progression = progression;
@@ -26,14 +26,14 @@ final class FakeEnemyMob implements EnemyMob {
     }
 
     static FakeEnemyMob at(int x, int y) {
-        return new FakeEnemyMob(x, y, 0, type.Normal, true);
+        return new FakeEnemyMob(x, y, 0, Type.Normal, true);
     }
 
     FakeEnemyMob withProgression(int progression) {
         return new FakeEnemyMob(this.x, this.y, progression, this.mobType, this.validTarget);
     }
 
-    FakeEnemyMob withType(type mobType) {
+    FakeEnemyMob withType(Type mobType) {
         return new FakeEnemyMob(this.x, this.y, this.progression, mobType, this.validTarget);
     }
 
@@ -71,12 +71,12 @@ final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
-    public boolean validTarget(type type) {
+    public boolean validTarget(Type type) {
         return this.validTarget && this.mobType == type;
     }
 
     @Override
-    public boolean validTarget(type type0, type type1) {
+    public boolean validTarget(Type type0, Type type1) {
         return validTarget(type0) || validTarget(type1);
     }
 

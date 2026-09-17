@@ -7,9 +7,9 @@ import td.tower.TowerFactory;
  * to build it on. No upgrade-path selection in v1 - see {@code docs/features/FEATURE-playtesting-and-balance-tooling.md}'s
  * V1 Scope.
  */
-public record TowerPlacementSpec(TowerFactory.type type, int cellX, int cellY) {
+public record TowerPlacementSpec(TowerFactory.Type type, int cellX, int cellY) {
 
-    public static TowerPlacementSpec of(TowerFactory.type type, int cellX, int cellY) {
+    public static TowerPlacementSpec of(TowerFactory.Type type, int cellX, int cellY) {
         return new TowerPlacementSpec(type, cellX, cellY);
     }
 }

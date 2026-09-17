@@ -17,7 +17,7 @@ import td.damage.Damage;
  * Triangle's hurt curve) stay level-scaled without needing a fresh instance per mob.
  * <p>
  * Note: Ghost's invisibility does <b>not</b> route through {@link #isValidTarget} - single-
- * target towers filter by {@link EnemyMob.type} (see {@code td.tower.targeting.OfTypeTargetQuery}/
+ * target towers filter by {@link EnemyMob.Type} (see {@code td.tower.targeting.OfTypeTargetQuery}/
  * {@code InRangeTargetQuery.ofType}), a separate, pre-existing mechanism {@link EnemyDefinition#mobType()}
  * feeds directly. {@link #isValidTarget} stays available for a future trait that makes a mob
  * untargetable through some other means.
@@ -29,7 +29,7 @@ public interface Trait {
         return incoming;
     }
 
-    /** Whether this trait alone makes the mob permanently untargetable, independent of {@link EnemyMob.type}. */
+    /** Whether this trait alone makes the mob permanently untargetable, independent of {@link EnemyMob.Type}. */
     default boolean isValidTarget(TraitContext context) {
         return true;
     }

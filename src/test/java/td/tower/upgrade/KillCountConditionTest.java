@@ -16,14 +16,14 @@ class KillCountConditionTest {
 
     @Test
     void notSatisfiedBeforeTheThresholdIsReached() {
-        Tower tower = TowerFactory.createTower(TowerFactory.type.first, this.context, 0, 0);
+        Tower tower = TowerFactory.createTower(TowerFactory.Type.first, this.context, 0, 0);
 
         assertThat(new KillCountCondition(1).isSatisfied(tower, this.context)).isFalse();
     }
 
     @Test
     void satisfiedOnceEnoughKillsHaveLanded() {
-        Tower tower = TowerFactory.createTower(TowerFactory.type.first, this.context, 0, 0);
+        Tower tower = TowerFactory.createTower(TowerFactory.Type.first, this.context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", this.context, 0, 1, 3, 1);
         this.context.setEnemies(new EnemyMob[]{enemy});
 

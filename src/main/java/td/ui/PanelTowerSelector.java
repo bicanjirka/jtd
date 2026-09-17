@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The tower toolbar: one {@link HudToggleButton} per {@link TowerFactory.type}, in enum order,
+ * The tower toolbar: one {@link HudToggleButton} per {@link TowerFactory.Type}, in enum order,
  * so the buttons follow whatever that enum declares rather than a hand-maintained list -
  * {@code TowerDefense.TOWER_PLACEMENT_KEYS} likewise assigns one keyboard shortcut per ordinal.
  * Buttons the player cannot currently afford are greyed out, which is why this panel is an
@@ -46,16 +46,16 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
     private final float[] towerRanges;
     private GameWorld context;
     private TowerDefense mainApp;
-    private final List<TowerFactory.type> towerTypes;
+    private final List<TowerFactory.Type> towerTypes;
     private boolean placing = false;
 
     public PanelTowerSelector() {
         initComponents();
         this.towerTypes = new ArrayList<>();
 
-        TowerFactory.type[] types = TowerFactory.type.values();
-        for (TowerFactory.type type : types) {
-            this.towerTypes.add(TowerFactory.type.valueOf(type.toString()));
+        TowerFactory.Type[] types = TowerFactory.Type.values();
+        for (TowerFactory.Type type : types) {
+            this.towerTypes.add(TowerFactory.Type.valueOf(type.toString()));
         }
 
         this.buttons = new HudToggleButton[this.towerTypes.size()];
@@ -94,7 +94,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         Java2DFrameRenderer iconRenderer = new Java2DFrameRenderer();
 
         for (int i = 0; i < this.towerTypes.size(); i++) {
-            TowerFactory.type type = this.towerTypes.get(i);
+            TowerFactory.Type type = this.towerTypes.get(i);
             Tower tempTower = TowerFactory.createTower(type, tempContext, 0, 0);
             this.infoText[i] = tempTower.getInfoString();
             this.towerRanges[i] = tempTower.getRange();
@@ -107,7 +107,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         this.context.addEconomyListener(this);
     }
 
-    public void startPlacing(TowerFactory.type t, float r) {
+    public void startPlacing(TowerFactory.Type t, float r) {
         this.placing = true;
         this.mainApp.startPlacing(t, r);
     }

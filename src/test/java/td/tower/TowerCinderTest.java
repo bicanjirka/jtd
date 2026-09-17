@@ -82,7 +82,7 @@ class TowerCinderTest {
         boolean chosen = tower.chooseUpgradePath(wideNozzle);
 
         assertThat(chosen).isTrue();
-        assertThat(tower.getRangeReal()).isGreaterThan(TowerCinder.range * SCALE);
+        assertThat(tower.getRangeReal()).isGreaterThan(TowerCinder.RANGE * SCALE);
     }
 
     @Test

@@ -42,7 +42,7 @@ public abstract class AbstractTower implements Tower {
     protected final float rangeBase;
     protected final int damageBase;
     protected final int coolDownMax;
-    private final TowerFactory.type type;
+    private final TowerFactory.Type type;
     private final int price;
 
     // The buffed combat stats, as one coherent value swapped whole - recalculated on the EDT
@@ -65,7 +65,7 @@ public abstract class AbstractTower implements Tower {
      * a leaf with no cooldown (a continuous or swept weapon) passes {@code 0} and overrides
      * {@link #rateLine(int)} to describe its cadence some other way.
      */
-    protected AbstractTower(TowerFactory.type t, int price, int damage, float range, int coolDownMax,
+    protected AbstractTower(TowerFactory.Type t, int price, int damage, float range, int coolDownMax,
                             GameWorld context, int cellX, int cellY) {
         this.price = price;
         this.type = t;
@@ -255,7 +255,7 @@ public abstract class AbstractTower implements Tower {
         return this.boardY;
     }
 
-    public TowerFactory.type getType() {
+    public TowerFactory.Type getType() {
         return this.type;
     }
 
@@ -302,7 +302,7 @@ public abstract class AbstractTower implements Tower {
         if (t != this) {
             switch (t.getType()) {
                 case aura -> {
-                    if (this.type != TowerFactory.type.aura && !this.upgTowers.contains(t)) {
+                    if (this.type != TowerFactory.Type.aura && !this.upgTowers.contains(t)) {
                         TowerAura tupg = (TowerAura) t;
                         this.upgTowers.add(tupg);
                         tupg.addClient(this);

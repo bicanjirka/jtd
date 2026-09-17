@@ -129,9 +129,9 @@ public final class BalanceHarness implements GameHost {
     public static void main(String[] args) {
         LevelDefinition classicLoop = new BuiltInLevelCatalog().levels().get(0);
         List<TowerPlacementSpec> loadout = List.of(
-                TowerPlacementSpec.of(TowerFactory.type.first, 6, 11),
-                TowerPlacementSpec.of(TowerFactory.type.first, 8, 9),
-                TowerPlacementSpec.of(TowerFactory.type.second, 5, 3));
+                TowerPlacementSpec.of(TowerFactory.Type.first, 6, 11),
+                TowerPlacementSpec.of(TowerFactory.Type.first, 8, 9),
+                TowerPlacementSpec.of(TowerFactory.Type.second, 5, 3));
         new BalanceHarness().run(classicLoop, loadout, 5000);
     }
 }

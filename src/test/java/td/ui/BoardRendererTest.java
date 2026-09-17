@@ -139,7 +139,7 @@ class BoardRendererTest {
     void onlyHighlightedCellsProduceADraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        // a freshly loaded level has highlightType.none everywhere
+        // a freshly loaded level has HighlightType.none everywhere
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
@@ -150,12 +150,12 @@ class BoardRendererTest {
     void aSelectedCellProducesExactlyOneCellDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        engine.cells().at(0, 0).setHighlight(Cell.highlightType.select);
+        engine.cells().at(0, 0).setHighlight(Cell.HighlightType.select);
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.cells()).hasSize(1);
-        assertThat(frame.cells().get(0).highlight()).isEqualTo(Cell.highlightType.select);
+        assertThat(frame.cells().get(0).highlight()).isEqualTo(Cell.HighlightType.select);
     }
 
     @Test

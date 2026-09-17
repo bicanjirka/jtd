@@ -20,9 +20,9 @@ import java.util.List;
  */
 public final class TowerOne extends AbstractTower {
 
-    public static final int price = 10;
-    public static final int damage = 4000;
-    public static final float range = 3.8f;
+    public static final int PRICE = 10;
+    public static final int DAMAGE = 4000;
+    public static final float RANGE = 3.8f;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.4;
 
@@ -43,7 +43,7 @@ public final class TowerOne extends AbstractTower {
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
     public TowerOne(GameWorld context, int x, int y) {
-        super(TowerFactory.type.first, price, damage, range, COOLDOWN_MAX, context, x, y);
+        super(TowerFactory.Type.first, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
     }
 
     @Override
@@ -52,7 +52,7 @@ public final class TowerOne extends AbstractTower {
     }
 
     private EnemyMob findEnemy() {
-        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.type.Normal)
+        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.Normal)
                 .matching(this.context.getEnemyRegistry());
         return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
     }
