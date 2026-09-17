@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -113,6 +114,10 @@ public final class VerifyRules {
 
         rules.add(docsNameRealTypes());
 
+        // Last, and built from the names above: it checks that this file and CLAUDE.md agree
+        // about which rules exist.
+        rules.add(checksAreDocumented(rules.stream().map(Check::name).toList()));
+
         int failed = 0;
         for (Check rule : rules) {
             List<String> violations = rule.violations();
@@ -133,6 +138,39 @@ public final class VerifyRules {
             System.exit(1);
         }
         System.out.printf("%nAll %d rules pass.%n", rules.size());
+        reportRuleInventory(rules.size());
+    }
+
+    /**
+     * Prints how much of CLAUDE.md is enforced here and how much is prose.
+     * <p>
+     * This is the number worth watching, and the reason it is printed rather than counted by
+     * hand: "commits touching CLAUDE.md" cannot tell a genuine rule change from a correction of
+     * something that was never true from a narrative paragraph, and it punishes paying down
+     * debt. Unverified rules are what actually generate churn - a rule that exists only as prose
+     * can be wrong, can drift, and invites an explanatory paragraph beside it.
+     * <p>
+     * The rule count is a heuristic and says so: it counts bolded lead-ins, which is how this
+     * file states a rule, and no parser of prose is exact. The enforced and judgement counts are
+     * exact. Nothing here fails the build - a budget on prose size would just be met by writing
+     * longer lines.
+     */
+    private static void reportRuleInventory(int enforced) throws IOException {
+        Path doc = Paths.get("CLAUDE.md");
+        if (!Files.isRegularFile(doc)) {
+            return;
+        }
+        List<String> lines = Files.readAllLines(doc, StandardCharsets.UTF_8);
+        Pattern boldedRule = Pattern.compile("^\\s*(?:[-*]\\s+|\\d+\\.\\s+)?\\*\\*\\S");
+        long stated = lines.stream().filter(l -> boldedRule.matcher(l).find()).count();
+        long judgement = lines.stream()
+                .filter(l -> l.toLowerCase(Locale.ROOT).contains("judgement, not a grep"))
+                .count();
+        System.out.printf("docs:  CLAUDE.md states ~%d rules - %d enforced above, "
+                        + "%d marked judgement, ~%d prose only.%n",
+                stated, enforced, judgement, Math.max(0, stated - enforced - judgement));
+        System.out.printf("       Prose-only rules are the ones that drift. "
+                + "See CLAUDE.md 10 question 1.%n");
     }
 
     /**
@@ -362,6 +400,79 @@ public final class VerifyRules {
             }
             return found;
         }
+    }
+
+    /**
+     * {@code CLAUDE.md} and this file must agree about which rules exist, in both directions.
+     * <p>
+     * Forwards: every check here is named in {@code CLAUDE.md}, so the build cannot enforce a
+     * rule nobody has been told about. Backwards: every check name cited there is real, so a
+     * citation cannot outlive the check it points at.
+     * <p>
+     * This is what lets a rule cite its check <em>by name</em> rather than by restating the
+     * check's own regex. Nine citations used to carry a copy of the pattern, and at least two
+     * had already drifted from what the check actually did - {@code no-static-random} scans
+     * tests as well as main, and the doc claimed only main. A name is one word and cannot be
+     * subtly wrong; a duplicated regex is neither.
+     */
+    private static Check checksAreDocumented(List<String> checkNames) {
+        return new Check() {
+            @Override
+            public String name() {
+                return "checks-are-documented";
+            }
+
+            @Override
+            public String section() {
+                return "CLAUDE.md 10";
+            }
+
+            @Override
+            public String why() {
+                return "CLAUDE.md and VerifyRules must name the same set of rules";
+            }
+
+            @Override
+            public List<String> violations() throws IOException {
+                Path doc = Paths.get("CLAUDE.md");
+                if (!Files.isRegularFile(doc)) {
+                    return List.of();
+                }
+                String text = Files.readString(doc, StandardCharsets.UTF_8);
+                List<String> found = new ArrayList<>();
+
+                for (String check : checkNames) {
+                    if (!text.contains("`" + check + "`")) {
+                        found.add("CLAUDE.md never mentions the `" + check
+                                + "` check - a rule the build enforces should be written down");
+                    }
+                }
+
+                // Only blockquote lines, because that is what a citation is: the convention
+                // stated at the top of CLAUDE.md is "> `check-name`" under the rule. Scanning
+                // the whole document instead would flag every kebab-case string in it - the
+                // `game-loop` thread and the `run-jtd` skill both read like check names and
+                // are not.
+                Set<String> known = new HashSet<>(checkNames);
+                known.add("checks-are-documented");
+                Pattern citation = Pattern.compile("`([a-z][a-z0-9]*(?:-[a-z0-9]+){1,4})`");
+                List<String> lines = Files.readAllLines(doc, StandardCharsets.UTF_8);
+                for (int i = 0; i < lines.size(); i++) {
+                    if (!lines.get(i).stripLeading().startsWith(">")) {
+                        continue;
+                    }
+                    Matcher m = citation.matcher(lines.get(i));
+                    while (m.find()) {
+                        String cited = m.group(1);
+                        if (!known.contains(cited)) {
+                            found.add(doc + ":" + (i + 1) + "  cites `" + cited
+                                    + "`, which is not a check in scripts/VerifyRules.java");
+                        }
+                    }
+                }
+                return found;
+            }
+        };
     }
 
     /** The root {@code CLAUDE.md} and every per-package one. */

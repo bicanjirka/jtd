@@ -20,7 +20,10 @@ mvn test -Dtest=GameEngineTest#placingATowerOnABuildableCellChargesCreditsAndOcc
 ```
 
 `mvn verify` runs `scripts/VerifyRules.java`, which fails the build on any mechanically
-checkable rule below. Each such rule states its check. **A rule that can be checked must be**
+checkable rule below. **A rule that has a check cites it by name**, as a blockquote under the
+rule — `> \`no-instanceof\`` — never by restating the check's own regex, which is a second copy
+of the logic and drifts from it. `checks-are-documented` verifies the citations both ways: every
+check exists in this file, and every name cited here is a real check. **A rule that can be checked must be**
 — if a reviewer could detect a violation by reading, a program can, and a rule left as prose
 is a rule that drifts: the checks for enum constants and for field ownership were both added
 after the tree had been violating them for months with the build reporting OK.
@@ -37,7 +40,7 @@ Structural. Breaking one is not a style disagreement.
 state and input semantics. They never construct a window, touch `Graphics2D`, or require a
 display.
 
-> `grep -rn "javax\.swing\|java\.awt" src/main/java/td/{board,cell,damage,economy,effect,enemy,level,projectile,tower,util,wave}`
+> `engine-is-headless`
 
 **2.2 New gameplay logic goes in `GameEngine`/`GameWorld`/the domain packages, never in
 `TowerDefense`** — a rule placed there is a rule that cannot be tested. If a change needs
@@ -53,7 +56,7 @@ AWT-free draw commands; a backend turns that into output. If a change makes a fr
 to describe without AWT, the change is in the wrong place. `Panel*` components may import
 `java.awt` for layout and their own previews; board content always goes through the pipeline.
 
-> `grep -rn "import java\.awt" src/main/java/td/ui/render`
+> `render-has-no-awt`
 
 ## 3. Threading
 
@@ -147,7 +150,7 @@ every part of the board, so naming six collaborators would say less than naming 
 is where a tower gets one. `Math.random()` is unseeded and global, so a run cannot be
 reproduced — which is what `td.BalanceHarness` needs.
 
-> `grep -rn "Math\.random(" src/main/java` matches nothing.
+> `no-static-random`
 
 **Stateful engine/service classes** (`GameEngine`, `GameLoop`, `GameWorld`, `EconomyLedger`, the
 rosters) are exempt from rule 1 by nature, and §3 overrides this section wherever they conflict.
@@ -169,18 +172,18 @@ Still applies:
     `TowerVisitor`, `ProjectileVisitor`. A `switch` over a *sealed* type is fine — a new case is
     then a compile error, not a silent `default`.
 
-> `grep -rn "instanceof" src/main/java --include=*.java` returns only comments.
+> `no-instanceof`
 
 **One scoped exception to rule 3:** `td.ui` frame builders return `null` for "no draw command".
 That is the only place `null` models absence; engine and domain code returns `Optional`.
 
-> `grep -rn "return null" src/main/java --include=*.java` matches nothing outside `td/ui`.
+> `no-null-return-in-engine`
 
 ## 6. Conventions
 
 - **No wildcard imports.** Not stylistic: the project hit a real `java.util.List` / `java.awt.List`
   collision that only compiled because an explicit import shadowed a wildcard.
-  > `grep -rn "^import .*\.\*;" src/main/java src/test/java`
+  > `no-wildcard-imports`
 - **`this.` prefix on instance field access**, consistently.
 - **Names:** types `UpperCamelCase`, constants `UPPER_SNAKE_CASE`, everything else
   `lowerCamelCase`. **An enum constant is a constant**, so `Type.SNIPER`, not `Type.first`.
@@ -208,15 +211,17 @@ That is the only place `null` models absence; engine and domain code returns `Op
   converting a failure into a domain error, which is the one legitimate shape. A caught
   exception is logged or rethrown, never silently dropped. Content that cannot be loaded throws
   `td.util.GameStartupException`, which `Main` handles once.
-  > `grep -rnE "catch \(\s*(Throwable|Error)\b" src`
+  > `no-broad-catch`, `no-unchecked-catch`
 - `@Serial` on `serialVersionUID` in Swing classes.
 - **No inline `TODO` comments** — add a `TODO.md` entry instead; close a gap, delete its entry in
   the same commit.
-  > `grep -rn "// *TODO" src/main/java`
+  > `no-inline-todo`
 
 ## 7. Tests
 
 JUnit 5 + AssertJ. `assertThat(...)`, never JUnit's bare assertions.
+
+> `no-raw-junit-assert`
 
 - Test classes and methods are **package-private**.
 - **Method names are full sentences** describing behaviour and its consequence, not the method
@@ -242,7 +247,7 @@ not a per-change preference.
   bare Swing button styled by hand. A control must not look different because it happens to be a
   `JToggleButton`.
 - Panel borders come from `td.ui.Hud`, so panels and controls read as one surface.
-  > `grep -rn "createEtchedBorder" src/main/java`
+  > `no-etched-border`
 - **Nothing inherits its appearance from the platform look-and-feel.** Controls paint themselves.
   Swing's default chrome differs across Windows, macOS and Metal, and its disabled-text colour has
   repeatedly rendered invisible against this game's black panels.
@@ -288,12 +293,24 @@ with the grammar, and this file changes only when an invariant does.
    `docs/ARCHITECTURE.md` or the commit message.
 3. *Does it name content rather than structure?* A list of enemies, towers or levels grows
    with the game and belongs in the owning package's doc or `README.md`.
+4. *Does it enumerate something the code already enumerates?* A package list, a method count, a
+   set of class names — that is a copy of the code, not a constraint on it, and it has to be
+   edited every time the code it copies changes. This is what actually drove this file's churn:
+   it was the second most-modified file in the repository, and the edits were rarely rule
+   changes. Name the type that holds the enumeration and stop.
 
 Every backticked type name in a `CLAUDE.md` must be a real source file — the drift that
 survived three manual reviews was a doc citing classes deleted long before.
 
 > `docs-name-real-types` in `scripts/VerifyRules.java`. `docs/ARCHITECTURE.md` is exempt: its
 > job is history, so naming a class that no longer exists is correct there.
+
+**The number to watch is unverified rules, not commits touching this file.** A commit count
+cannot tell a rule change from a correction from a narrative paragraph, and it punishes paying
+down debt. `mvn verify` prints the inventory — how many rules this file states, how many are
+enforced, how many are explicitly judgement. A rule that only exists as prose is one that can be
+wrong, can drift, and invites a paragraph of explanation beside it; moving one into
+`scripts/VerifyRules.java` removes all three at once.
 
 **Adding a feature should normally change no line of this file** — if it does, the feature
 introduced a genuinely new invariant, which is exactly when it should. A refactor that moves a
