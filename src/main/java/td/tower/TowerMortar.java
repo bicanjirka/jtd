@@ -24,10 +24,10 @@ import java.util.List;
  */
 public final class TowerMortar extends AbstractTower {
 
-    public static final int price = 30;
-    public static final int damage = 2000;
-    public static final float range = 4.0f;
-    public static final float splashRadiusBase = 2.0f;
+    public static final int PRICE = 30;
+    public static final int DAMAGE = 2000;
+    public static final float RANGE = 4.0f;
+    public static final float SPLASH_RADIUS_BASE = 2.0f;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
     private static final float PROJECTILE_SPEED = 40f;
@@ -56,8 +56,8 @@ public final class TowerMortar extends AbstractTower {
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
     public TowerMortar(GameWorld context, int x, int y) {
-        super(TowerFactory.type.mortar, price, damage, range, COOLDOWN_MAX, context, x, y);
-        this.splashRadius = splashRadiusBase * context.getBoard().scale();
+        super(TowerFactory.Type.mortar, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
+        this.splashRadius = SPLASH_RADIUS_BASE * context.getBoard().scale();
     }
 
     @Override
@@ -76,7 +76,7 @@ public final class TowerMortar extends AbstractTower {
     }
 
     private EnemyMob findTarget() {
-        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.type.Normal)
+        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.Normal)
                 .matching(this.context.getEnemyRegistry());
         return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
     }

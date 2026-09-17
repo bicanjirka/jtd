@@ -26,7 +26,7 @@ public class TowerPlacement {
     private final Supplier<CellGrid> cellGrid;
 
     private boolean placingTower = false;
-    private TowerFactory.type placingTowerType;
+    private TowerFactory.Type placingTowerType;
     private float placingTowerRange = 0;
     private int[] highlitedCell;
 
@@ -39,7 +39,7 @@ public class TowerPlacement {
         return this.placingTower;
     }
 
-    public void start(TowerFactory.type t, float r) {
+    public void start(TowerFactory.Type t, float r) {
         this.placingTower = true;
         this.placingTowerType = t;
         this.placingTowerRange = r;
@@ -69,7 +69,7 @@ public class TowerPlacement {
 
     private void unHighlightCell() {
         if (this.highlitedCell != null) {
-            this.cellGrid.get().at(this.highlitedCell[0], this.highlitedCell[1]).setHighlight(Cell.highlightType.none);
+            this.cellGrid.get().at(this.highlitedCell[0], this.highlitedCell[1]).setHighlight(Cell.HighlightType.none);
             this.highlitedCell = null;
         }
     }
@@ -83,7 +83,7 @@ public class TowerPlacement {
             tempInt[1] = board.cellY(boardY);
             this.highlitedCell = tempInt;
             Cell cell = this.cellGrid.get().at(board.cellX(boardX), board.cellY(boardY));
-            cell.setHighlight(Cell.highlightType.place);
+            cell.setHighlight(Cell.HighlightType.place);
             cell.setHighlightRange(this.placingTowerRange);
         }
     }
@@ -103,7 +103,7 @@ public class TowerPlacement {
                 tempInt[0] = board.cellX(boardX);
                 tempInt[1] = board.cellY(boardY);
                 this.highlitedCell = tempInt;
-                cell.setHighlight(Cell.highlightType.select);
+                cell.setHighlight(Cell.HighlightType.select);
             } else if (this.placingTower) {
                 if (cell.buildable()) {
                     int cellX = board.cellX(boardX);

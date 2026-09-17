@@ -57,7 +57,7 @@ class BuiltInLevelCatalogEngineTest {
         engine.loadLevel(level);
         int creditsBefore = engine.getGameWorld().getCredits();
 
-        engine.startPlacing(TowerFactory.type.first, TowerOne.range);
+        engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
         Optional<Tower> selected = engine.mouseClicked(cellCenter(curveOnlyCell.x()), cellCenter(curveOnlyCell.y()));
 
         assertThat(selected).isEmpty();
@@ -71,7 +71,7 @@ class BuiltInLevelCatalogEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(level);
 
-        engine.startPlacing(TowerFactory.type.first, TowerOne.range);
+        engine.startPlacing(TowerFactory.Type.first, TowerOne.RANGE);
         engine.mouseClicked(cellCenter(0), cellCenter(level.height() - 1));
 
         assertThat(engine.cells().at(0, level.height() - 1).hasTower()).isTrue();

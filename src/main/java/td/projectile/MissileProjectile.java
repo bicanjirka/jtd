@@ -11,7 +11,7 @@ import java.util.List;
  * Homes on a live target, re-aiming each tick at its current position, until it reaches it or
  * the target is no longer valid - in which case it retargets to the nearest remaining enemy
  * (centred on the missile's own current position, not the tower that fired it) rather than
- * fizzling. Only a {@link EnemyMob.type#Normal} enemy is ever targeted or retargeted onto,
+ * fizzling. Only a {@link EnemyMob.Type#Normal} enemy is ever targeted or retargeted onto,
  * matching every other single-target tower's convention.
  * <p>
  * A missile that can find no valid target anywhere gives up rather than flying forever; a max
@@ -63,7 +63,7 @@ public final class MissileProjectile extends AbstractProjectile {
 
     private EnemyMob retarget() {
         List<EnemyMob> candidates = InRangeTargetQuery
-                .ofType((int) Math.round(this.x), (int) Math.round(this.y), Float.MAX_VALUE, EnemyMob.type.Normal)
+                .ofType((int) Math.round(this.x), (int) Math.round(this.y), Float.MAX_VALUE, EnemyMob.Type.Normal)
                 .matching(this.enemies);
         return new NearestSelector(this.x, this.y).selectFrom(candidates).orElse(null);
     }

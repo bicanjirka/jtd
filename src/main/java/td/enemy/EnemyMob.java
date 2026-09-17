@@ -25,9 +25,9 @@ public interface EnemyMob {
 
     boolean validTarget();
 
-    boolean validTarget(type type);
+    boolean validTarget(Type type);
 
-    boolean validTarget(type type0, type type1);
+    boolean validTarget(Type type0, Type type1);
 
     int getHealth();
 
@@ -62,7 +62,7 @@ public interface EnemyMob {
      * single-target towers and reachable only by area damage; {@code Flying} is declared but
      * unused by any enemy today.
      */
-    enum type {
+    enum Type {
         Normal,
         Flying,
         Invisible

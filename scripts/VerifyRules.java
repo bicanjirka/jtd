@@ -68,8 +68,12 @@ public final class VerifyRules {
                 "types are UpperCamelCase",
                 "^\\s*(public |protected |private )?(static )?(final )?"
                         + "(class|interface|enum|record)\\s+[a-z]", List.of(MAIN, TEST))
-                .skippingComments()
-                .pending("TODO.md: Lowercase type and constant names"));
+                .skippingComments());
+
+        rules.add(Rule.of("no-lowercase-constants", "CLAUDE.md 6",
+                "constants are UPPER_SNAKE_CASE (serialVersionUID is exempt - the JVM fixes that name)",
+                "\\bstatic final +[A-Za-z_][\\w.<>\\[\\], ]*? +(?!serialVersionUID\\b)[a-z]\\w*\\s*=",
+                List.of(MAIN, TEST)).skippingComments());
 
         rules.add(Rule.of("no-inline-todo", "CLAUDE.md 6",
                 "gaps belong in TODO.md, which carries a Where and an Approach for each",

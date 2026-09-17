@@ -13,7 +13,7 @@ import java.util.List;
  * corner (what drawing uses). They are not interchangeable.
  */
 public interface Tower {
-    TowerFactory.type getType();
+    TowerFactory.Type getType();
 
     void doTick(int gameTime);
 

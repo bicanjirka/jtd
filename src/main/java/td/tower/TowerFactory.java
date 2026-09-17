@@ -3,14 +3,14 @@ package td.tower;
 import td.util.GameWorld;
 
 /**
- * Constructs towers from their {@link type}. That enum is the closed set of buildable towers
+ * Constructs towers from their {@link Type}. That enum is the closed set of buildable towers
  * and the single source of each one's price - the toolbar, the affordability check and the
  * tower itself all read it, so a price lives in exactly one place. The {@code createTower}
  * switch has no {@code default}, so adding a constant without wiring up its class is a
  * compile error rather than a silent gap.
  */
 public class TowerFactory {
-    public static Tower createTower(type t, GameWorld c, int x, int y) {
+    public static Tower createTower(Type t, GameWorld c, int x, int y) {
         return switch (t) {
             case first -> new TowerOne(c, x, y);
             case second -> new TowerTwo(c, x, y);
@@ -23,19 +23,19 @@ public class TowerFactory {
         };
     }
 
-    public enum type {
-        first(TowerOne.price),
-        second(TowerTwo.price),
-        third(TowerThree.price),
-        fourth(TowerFour.price),
-        aura(TowerAura.price),
-        mortar(TowerMortar.price),
-        seeker(TowerSeeker.price),
-        cinder(TowerCinder.price);
+    public enum Type {
+        first(TowerOne.PRICE),
+        second(TowerTwo.PRICE),
+        third(TowerThree.PRICE),
+        fourth(TowerFour.PRICE),
+        aura(TowerAura.PRICE),
+        mortar(TowerMortar.PRICE),
+        seeker(TowerSeeker.PRICE),
+        cinder(TowerCinder.PRICE);
 
         public final int price;
 
-        type(int price) {
+        Type(int price) {
             this.price = price;
         }
     }

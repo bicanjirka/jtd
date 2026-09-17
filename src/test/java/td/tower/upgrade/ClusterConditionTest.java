@@ -13,7 +13,7 @@ class ClusterConditionTest {
     private final GameWorld context = new GameWorld(new RecordingGameHost());
 
     private Tower towerAt(int cellX, int cellY) {
-        Tower t = TowerFactory.createTower(TowerFactory.type.first, this.context, cellX, cellY);
+        Tower t = TowerFactory.createTower(TowerFactory.Type.first, this.context, cellX, cellY);
         this.context.addTower(t);
         return t;
     }

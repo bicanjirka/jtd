@@ -13,9 +13,9 @@ final class CellFrameBuilder {
     private CellFrameBuilder() {
     }
 
-    /** Returns {@code null} for a cell with nothing to draw ({@link Cell.highlightType#none}). */
+    /** Returns {@code null} for a cell with nothing to draw ({@link Cell.HighlightType#none}). */
     static CellDraw build(Cell cell) {
-        if (cell.getHighlight() == Cell.highlightType.none) {
+        if (cell.getHighlight() == Cell.HighlightType.none) {
             return null;
         }
         return new CellDraw(cell.getX(), cell.getY(), cell.getHighlight(), cell.buildable(), cell.getHighlightRange());

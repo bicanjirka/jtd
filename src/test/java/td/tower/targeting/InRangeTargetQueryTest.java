@@ -23,9 +23,9 @@ class InRangeTargetQueryTest {
     @Test
     void enemiesOfTheWrongTypeAreExcludedWhenATypeIsSpecified() {
         FakeEnemyMob normal = FakeEnemyMob.at(0, 0);
-        FakeEnemyMob flying = FakeEnemyMob.at(0, 0).withType(EnemyMob.type.Flying);
+        FakeEnemyMob flying = FakeEnemyMob.at(0, 0).withType(EnemyMob.Type.Flying);
 
-        List<EnemyMob> matches = InRangeTargetQuery.ofType(0, 0, 50, EnemyMob.type.Normal)
+        List<EnemyMob> matches = InRangeTargetQuery.ofType(0, 0, 50, EnemyMob.Type.Normal)
                 .matching(() -> new EnemyMob[]{normal, flying});
 
         assertThat(matches).containsExactly(normal);
@@ -34,7 +34,7 @@ class InRangeTargetQueryTest {
     @Test
     void enemiesOfAnyTypeMatchWhenTypeIsNotRestricted() {
         FakeEnemyMob normal = FakeEnemyMob.at(0, 0);
-        FakeEnemyMob flying = FakeEnemyMob.at(0, 0).withType(EnemyMob.type.Flying);
+        FakeEnemyMob flying = FakeEnemyMob.at(0, 0).withType(EnemyMob.Type.Flying);
 
         List<EnemyMob> matches = InRangeTargetQuery.anyType(0, 0, 50)
                 .matching(() -> new EnemyMob[]{normal, flying});

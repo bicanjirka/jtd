@@ -22,23 +22,23 @@ final class RecordingEnemyMob implements EnemyMob {
 
     private final double x;
     private final double y;
-    private final type mobType;
+    private final Type mobType;
     private final List<Damage> hits = new ArrayList<>();
     private final List<Effect> appliedEffects = new ArrayList<>();
 
-    private RecordingEnemyMob(double x, double y, type mobType) {
+    private RecordingEnemyMob(double x, double y, Type mobType) {
         this.x = x;
         this.y = y;
         this.mobType = mobType;
     }
 
     static RecordingEnemyMob normalAt(double x, double y) {
-        return new RecordingEnemyMob(x, y, type.Normal);
+        return new RecordingEnemyMob(x, y, Type.Normal);
     }
 
     /** Invisible mobs are excluded from a tower's primary-target scan but not from its splash. */
     static RecordingEnemyMob ghostAt(double x, double y) {
-        return new RecordingEnemyMob(x, y, type.Invisible);
+        return new RecordingEnemyMob(x, y, Type.Invisible);
     }
 
     List<Damage> hits() {
@@ -88,12 +88,12 @@ final class RecordingEnemyMob implements EnemyMob {
     }
 
     @Override
-    public boolean validTarget(type type) {
+    public boolean validTarget(Type type) {
         return type == this.mobType;
     }
 
     @Override
-    public boolean validTarget(type type0, type type1) {
+    public boolean validTarget(Type type0, Type type1) {
         return this.validTarget(type0) || this.validTarget(type1);
     }
 

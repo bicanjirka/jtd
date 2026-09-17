@@ -156,8 +156,8 @@ models absence; engine and domain code returns `Optional`.
   > `grep -rn "^import .*\.\*;" src/main/java src/test/java`
 - **`this.` prefix on instance field access**, consistently.
 - **Names:** types `UpperCamelCase`, constants `UPPER_SNAKE_CASE`, everything else
-  `lowerCamelCase`. No lowercase type names, no lowercase `static final`. (PENDING: 3 lowercase
-  enums remain, see `TODO.md`.)
+  `lowerCamelCase`. `serialVersionUID` is the one exempt constant — the JVM fixes that name.
+  > `grep -rnE "(class|interface|enum|record) +[a-z]" src/main/java src/test/java`
 - **Fields ordered:** constants, injected/final collaborators, mutable state. A value type has no
   third bucket.
 - `@Serial` on `serialVersionUID` in Swing classes.

@@ -22,10 +22,10 @@ import java.util.Optional;
  */
 public final class TowerTwo extends AbstractTower {
 
-    public static final int price = 15;
-    public static final int damage = 1600;
-    public static final float range = 3.2f;
-    public static final float spreadRadiusBase = 1.75f;
+    public static final int PRICE = 15;
+    public static final int DAMAGE = 1600;
+    public static final float RANGE = 3.2f;
+    public static final float SPREAD_RADIUS_BASE = 1.75f;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.25;
 
@@ -53,8 +53,8 @@ public final class TowerTwo extends AbstractTower {
     private final TargetSelector targetSelector;
 
     public TowerTwo(GameWorld context, int x, int y) {
-        super(TowerFactory.type.second, price, damage, range, COOLDOWN_MAX, context, x, y);
-        this.spreadRadius = spreadRadiusBase * context.getBoard().scale();
+        super(TowerFactory.Type.second, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
+        this.spreadRadius = SPREAD_RADIUS_BASE * context.getBoard().scale();
         this.targetSelector = new RandomSelector(context.random());
     }
 
@@ -72,7 +72,7 @@ public final class TowerTwo extends AbstractTower {
     }
 
     private List<EnemyMob> findEnemiesInRangeVisible(int x, int y, float r) {
-        return InRangeTargetQuery.ofType(x, y, r, EnemyMob.type.Normal).matching(this.context.getEnemyRegistry());
+        return InRangeTargetQuery.ofType(x, y, r, EnemyMob.Type.Normal).matching(this.context.getEnemyRegistry());
     }
 
     private List<EnemyMob> findEnemiesInRange(int x, int y, float r) {
@@ -156,7 +156,7 @@ public final class TowerTwo extends AbstractTower {
     public String getInfoString() {
         return "Circle tower\n\n" +
                 super.getInfoString() +
-                "Splash radius " + spreadRadiusBase + "\n" +
+                "Splash radius " + SPREAD_RADIUS_BASE + "\n" +
                 "Targets random";
     }
 

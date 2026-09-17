@@ -9,16 +9,6 @@ this file is the single place to look for outstanding design/feature gaps.
 Findings from the architecture audit of 2026-09-17, highest-severity first. The threading
 group has landed; what remains is listed below.
 
-### Lowercase type and constant names
-
-`TowerFactory.type` and `EnemyMob.type` are lowercase nested enums; `TowerAura.price`,
-`damage` and `range` are lowercase `public static final` sitting beside a correctly-cased
-`DEFAULT_POWER` in the same class.
-
-- **Where:** `td.tower.TowerFactory`, `td.enemy.EnemyMob`, `td.tower.TowerAura`, and callers.
-- **Approach:** rename to `UpperCamelCase` types and `UPPER_SNAKE_CASE` constants, per the
-  naming rule now stated in `CLAUDE.md`.
-
 ### A command queue would make the simulation a true single writer
 
 Not a defect - an option, recorded with the condition that would make it worth taking.

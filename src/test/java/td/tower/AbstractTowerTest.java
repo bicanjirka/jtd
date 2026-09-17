@@ -30,7 +30,7 @@ class AbstractTowerTest {
     void sellPriceIsSeventyFivePercentOfPriceRoundedHalfUp() {
         TowerOne tower = new TowerOne(context, 0, 0);
 
-        assertThat(tower.getSellPrice()).isEqualTo((int) Math.round(0.75 * TowerOne.price));
+        assertThat(tower.getSellPrice()).isEqualTo((int) Math.round(0.75 * TowerOne.PRICE));
     }
 
     @Test
@@ -86,7 +86,7 @@ class AbstractTowerTest {
     void towerOutsideAuraRangeIsNotBuffed() {
         TowerOne near = new TowerOne(context, 0, 0);
         context.addTower(near);
-        // TowerAura.range is 1.5 cells; placing far away puts this well outside it
+        // TowerAura.RANGE is 1.5 cells; placing far away puts this well outside it
         TowerOne far = new TowerOne(context, 100, 100);
         context.addTower(far);
 

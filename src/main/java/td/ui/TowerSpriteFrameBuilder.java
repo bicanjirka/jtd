@@ -62,10 +62,10 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     /**
      * The one place a tower type names its body's {@link Palette} role - deliberately no
-     * {@code default}, so a new {@link TowerFactory.type} is a compile error here until its
+     * {@code default}, so a new {@link TowerFactory.Type} is a compile error here until its
      * art is wired up, the same way {@link Java2DFrameRenderer}'s draw-command switches are.
      */
-    public static Palette bodyPaletteFor(TowerFactory.type type) {
+    public static Palette bodyPaletteFor(TowerFactory.Type type) {
         return switch (type) {
             case first -> Palette.TOWER_ONE_BODY;
             case second -> Palette.TOWER_TWO_BODY;

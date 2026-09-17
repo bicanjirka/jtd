@@ -75,7 +75,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private static final int MENU_WIDTH = 1040;
     private static final int MENU_HEIGHT = 700;
     /**
-     * One placement shortcut per {@link TowerFactory.type}, in enum order - indexed by ordinal
+     * One placement shortcut per {@link TowerFactory.Type}, in enum order - indexed by ordinal
      * rather than hand-matched per tower, so a new tower type needs only a key appended here.
      */
     private static final char[] TOWER_PLACEMENT_KEYS = {'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o'};
@@ -500,7 +500,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.painting = false;
     }
 
-    public void startPlacing(TowerFactory.type t, float r) {
+    public void startPlacing(TowerFactory.Type t, float r) {
         this.engine.startPlacing(t, r);
     }
 
@@ -560,7 +560,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             return;
         }
         int placementIndex = indexOf(TOWER_PLACEMENT_KEYS, key);
-        if (placementIndex >= 0 && placementIndex < TowerFactory.type.values().length) {
+        if (placementIndex >= 0 && placementIndex < TowerFactory.Type.values().length) {
             this.panelTowerSelector.doPlace(placementIndex);
             return;
         }

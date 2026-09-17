@@ -32,9 +32,9 @@ import java.util.List;
  */
 public final class TowerCinder extends AbstractTower {
 
-    public static final int price = 28;
-    public static final int damage = 150;
-    public static final float range = 2.2f;
+    public static final int PRICE = 28;
+    public static final int DAMAGE = 150;
+    public static final float RANGE = 2.2f;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.15;
     private static final double HALF_WIDTH_RADIANS_BASE = 0.35;
@@ -54,7 +54,7 @@ public final class TowerCinder extends AbstractTower {
 
     public TowerCinder(GameWorld context, int x, int y) {
         // No cooldown: it burns whatever is in its cone every tick - see rateLine.
-        super(TowerFactory.type.cinder, price, damage, range, 0, context, x, y);
+        super(TowerFactory.Type.cinder, PRICE, DAMAGE, RANGE, 0, context, x, y);
     }
 
     @Override

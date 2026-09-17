@@ -81,7 +81,7 @@ class WaveScriptTest {
     @Test
     void aPerLevelCustomIdResolvesTheSameWayABuiltInDoes() {
         EnemyDefinition tankySquare = new EnemyDefinition("tankySquare", "Tanky Square", "", 100, 5, 1.28f, 1f,
-                EnemyMob.type.Normal, BodyArchetype.SQUARE, new FixedMovement(), List.of(), List.of());
+                EnemyMob.Type.Normal, BodyArchetype.SQUARE, new FixedMovement(), List.of(), List.of());
         EnemyCatalog perLevelCatalog = EnemyCatalog.builtIn();
         perLevelCatalog.register(tankySquare);
 

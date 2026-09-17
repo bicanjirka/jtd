@@ -51,7 +51,7 @@ class TowerMortarTest {
         tower.doTick(1);
         this.flyProjectilesToCompletion();
 
-        assertThat(target.onlyHitAmount()).isEqualTo(TowerMortar.damage);
+        assertThat(target.onlyHitAmount()).isEqualTo(TowerMortar.DAMAGE);
         assertThat(target.appliedEffects()).hasSize(1);
         assertThat(target.appliedEffects().get(0).kind()).isEqualTo(EffectKind.SLOW);
     }
@@ -92,7 +92,7 @@ class TowerMortarTest {
         boolean chosen = tower.chooseUpgradePath(concussiveCharge);
 
         assertThat(chosen).isTrue();
-        assertThat(tower.getRangeReal()).isGreaterThan(TowerMortar.range * SCALE);
+        assertThat(tower.getRangeReal()).isGreaterThan(TowerMortar.RANGE * SCALE);
     }
 
     @Test

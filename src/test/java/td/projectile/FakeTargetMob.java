@@ -59,12 +59,12 @@ final class FakeTargetMob implements EnemyMob {
     }
 
     @Override
-    public boolean validTarget(type type) {
+    public boolean validTarget(Type type) {
         return this.valid;
     }
 
     @Override
-    public boolean validTarget(type type0, type type1) {
+    public boolean validTarget(Type type0, Type type1) {
         return validTarget(type0) || validTarget(type1);
     }
 

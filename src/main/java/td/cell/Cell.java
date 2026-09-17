@@ -13,9 +13,9 @@ import td.tower.Tower;
  */
 public interface Cell {
 
-    void setHighlight(highlightType highlight);
+    void setHighlight(HighlightType highlight);
 
-    highlightType getHighlight();
+    HighlightType getHighlight();
 
     void setHighlightRange(float range);
 
@@ -43,7 +43,7 @@ public interface Cell {
      * {@code select} the outline on an already-placed tower's cell, {@code none} the resting
      * state - which is also the only one the renderer skips entirely.
      */
-    enum highlightType {
+    enum HighlightType {
         none,
         select,
         place
