@@ -11,6 +11,7 @@ import td.wave.Point;
 import td.wave.WaveDefinition;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -42,9 +43,9 @@ class GameEngineTest {
         engine.loadLevel(levelWith(List.of(), 100));
 
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
-        Tower selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
+        Optional<Tower> selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
 
-        assertThat(selected).isNull(); // placing doesn't "select" the newly-built tower
+        assertThat(selected).isEmpty(); // placing doesn't "select" the newly-built tower
         assertThat(engine.getGameWorld().getCredits()).isEqualTo(100 - TowerOne.price);
         assertThat(engine.cells().at(0, 0).hasTower()).isTrue();
         assertThat(engine.isPlacingTower()).isFalse();
@@ -56,9 +57,9 @@ class GameEngineTest {
         engine.loadLevel(levelWith(List.of(), TowerOne.price - 1));
 
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
-        Tower selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
+        Optional<Tower> selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
 
-        assertThat(selected).isNull();
+        assertThat(selected).isEmpty();
         assertThat(engine.getGameWorld().getCredits()).isEqualTo(TowerOne.price - 1);
         assertThat(engine.cells().at(0, 0).hasTower()).isFalse();
         assertThat(engine.isPlacingTower()).isFalse(); // failed payment still cancels placement mode
@@ -71,10 +72,9 @@ class GameEngineTest {
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
         engine.mouseClicked(cellCenter(0), cellCenter(0));
 
-        Tower selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
+        Optional<Tower> selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
 
-        assertThat(selected).isNotNull();
-        assertThat(selected.getType()).isEqualTo(TowerFactory.type.first);
+        assertThat(selected).get().extracting(Tower::getType).isEqualTo(TowerFactory.type.first);
     }
 
     @Test
@@ -337,9 +337,9 @@ class GameEngineTest {
         List<String> ids = engine.getGameWorld().getEnemyCatalog().ids();
 
         for (String expected : ids) {
-            assertThat(engine.debugSpawnNextCatalogEnemy()).isEqualTo(expected);
+            assertThat(engine.debugSpawnNextCatalogEnemy()).contains(expected);
         }
-        assertThat(engine.debugSpawnNextCatalogEnemy()).isEqualTo(ids.get(0)); // wraps around
+        assertThat(engine.debugSpawnNextCatalogEnemy()).contains(ids.get(0)); // wraps around
     }
 
     @Test
@@ -353,10 +353,10 @@ class GameEngineTest {
     }
 
     @Test
-    void debugSpawnWithNoLevelLoadedReturnsNull() {
+    void debugSpawnWithNoLevelLoadedSpawnsNothing() {
         GameEngine engine = FakeGameHost.newBoundEngine();
 
-        assertThat(engine.debugSpawnNextCatalogEnemy()).isNull();
+        assertThat(engine.debugSpawnNextCatalogEnemy()).isEmpty();
     }
 
     @Test

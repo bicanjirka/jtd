@@ -29,7 +29,7 @@ public interface EnemyMob {
 
     boolean validTarget(type type0, type type1);
 
-    long getHealth();
+    int getHealth();
 
     boolean isDead();
 

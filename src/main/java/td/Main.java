@@ -37,7 +37,11 @@ public class Main {
         try {
             @SuppressWarnings("unused")
             TowerDefense game = new TowerDefense();
-        } catch (Throwable e) {
+        } catch (Exception e) {
+            // Exception, not Throwable: an Error means the JVM itself is in trouble (out of
+            // memory, a stack overflow) and turning that into a tidy log line and exit 1
+            // hides it. GameStartupException - bad level or enemy content - is the case this
+            // boundary exists for.
             log.error("jTD failed to start", e);
             System.exit(1);
         }

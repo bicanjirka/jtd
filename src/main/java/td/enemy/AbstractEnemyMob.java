@@ -28,6 +28,14 @@ import java.util.Set;
  */
 public abstract class AbstractEnemyMob implements EnemyMob {
 
+    /**
+     * Health is stored in hundredths, matching the scale {@code td.tower} expresses damage in
+     * ({@code TowerOne.damage} of {@code 4000} is 40 points a shot). Storing the fine-grained
+     * unit is what lets a percentage resistance or a damage-over-time tick subtract a fraction
+     * of a point without rounding to nothing.
+     */
+    private static final int HEALTH_UNITS_PER_POINT = 100;
+
     protected type type;
     protected boolean inactive = true;
     protected boolean validTarget = false;
@@ -70,8 +78,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         this.gameWorld = gameWorld;
         this.price = price;
         this.level = level;
-        this.health = health * 100;
-        this.healthMax = health * 100;
+        this.health = health * HEALTH_UNITS_PER_POINT;
+        this.healthMax = health * HEALTH_UNITS_PER_POINT;
         Optional<ArcLengthPath> arcLength = ArcLengthPath.of(this.gameWorld.getPath());
         this.arcLengthPath = arcLength.orElse(null);
         // A degenerate path (fewer than two points - e.g. an empty placeholder GameWorld has
@@ -96,7 +104,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         this.prevY = this.y;
     }
 
-    public long getHealth() {
+    public int getHealth() {
         return this.health;
     }
 

@@ -21,8 +21,9 @@ public final class EnemyMobEmpty extends AbstractEnemyMob {
         return visitor.visitEmpty(this);
     }
 
+    /** Never displayed - a spacer is not a real enemy and no panel ever selects one. */
     public String getInfoString() {
-        return null;
+        return "";
     }
 
     public boolean validTarget() {

@@ -9,61 +9,6 @@ this file is the single place to look for outstanding design/feature gaps.
 Findings from the architecture audit of 2026-09-17, highest-severity first. The threading
 group has landed; what remains is listed below.
 
-### `WaveScript` accepts an unrecognized token instead of failing
-
-A token that is neither the `e` spacer, a registered enemy id, nor an integer is logged at
-`WARN` and defaulted to a repeat count of 1, silently producing a wave the author did not
-write. This is also why a passing test run prints a stack trace, which trains readers to
-ignore the one signal that would surface a real authoring error.
-
-- **Where:** `td.wave.WaveScript.parse`, `WaveScriptTest`, `README.md`'s logging note.
-- **Approach:** throw `td.util.GameStartupException`, which already exists for exactly this
-  class of content error and is already used by `EnemyCatalog`. Change the test to
-  `assertThatThrownBy` and delete the "a green run still prints a stack trace" notes.
-
-### `Math.random()` makes balance runs irreproducible, and `RandomSelector` is unused
-
-`td.BalanceHarness` exists to produce comparable balance numbers, but `TowerTwo.doTick` and
-`RandomSelector` both call `Math.random()` — a global, unseedable generator — so two runs of
-the same loadout are not comparable. Separately, `TowerTwo` picks its target with an inline
-`Math.random()` expression rather than composing `RandomSelector`, which therefore has no
-production caller at all despite being documented in `td/tower/CLAUDE.md` as one of the three
-selectors a tower composes.
-
-- **Where:** `td.tower.TowerTwo.doTick`, `td.tower.targeting.RandomSelector`, `td.BalanceHarness`.
-- **Approach:** introduce a one-method `RandomSource`, inject it, default it to `Math.random()`
-  in the game and seed it in the harness. Have `TowerTwo` compose `RandomSelector` instead of
-  inlining the pick.
-
-### Engine code returns `null` to model absence
-
-`GameEngine.mouseClicked` returns `null` when nothing was selected and
-`debugSpawnNextCatalogEnemy` returns `null` when no level is loaded, contradicting the
-model-absence-as-a-value rule. The `td.ui` frame builders' use of `null` for "no draw command"
-is a deliberate scoped exception, documented as such in `CLAUDE.md`.
-
-- **Where:** `td.GameEngine.mouseClicked`, `td.GameEngine.debugSpawnNextCatalogEnemy`.
-- **Approach:** return `Optional`, then add a `no-null-return-in-engine` check to
-  `scripts/VerifyRules.java`.
-
-### `Main` catches `Throwable`; `PanelTowerInfo` catches `NullPointerException`
-
-`Main.main` turns an `OutOfMemoryError` or `StackOverflowError` into a log line and exit 1.
-`PanelTowerInfo.setText` wraps `JTextPane.setText` in a `catch (NullPointerException)` that
-either masks a real initialization-order defect or is dead code, and it runs at ~60fps.
-
-- **Where:** `td.Main.main`, `td.ui.PanelTowerInfo.setText`.
-- **Approach:** catch `Exception` (or `GameStartupException` specifically, which is what the
-  boundary was built for). Remove the NPE catch and fix, or confirm dead, whatever it masks.
-
-### `gameLost()` is not idempotent
-
-`TowerDefense.economyChanged` calls `gameLost()` whenever `state.isGameOver()`, so every
-economy change after lives reach zero re-logs the loss and re-posts the overlay.
-
-- **Where:** `td.TowerDefense.economyChanged`.
-- **Approach:** guard on `!this.gameStopped`.
-
 ### Lowercase type and constant names
 
 `TowerFactory.type` and `EnemyMob.type` are lowercase nested enums; `TowerAura.price`,
@@ -73,15 +18,6 @@ economy change after lives reach zero re-logs the loss and re-posts the overlay.
 - **Where:** `td.tower.TowerFactory`, `td.enemy.EnemyMob`, `td.tower.TowerAura`, and callers.
 - **Approach:** rename to `UpperCamelCase` types and `UPPER_SNAKE_CASE` constants, per the
   naming rule now stated in `CLAUDE.md`.
-
-### `health * 100` is an undocumented scaling
-
-`AbstractEnemyMob.doInit` multiplies every incoming health value by 100 with no explanation,
-and `getHealth()` returns a `long` while the field it reads is an `int`.
-
-- **Where:** `td.enemy.AbstractEnemyMob.doInit`, `getHealth`.
-- **Approach:** name the factor as a constant with one line saying what unit it buys, and
-  reconcile the accessor's return type with the field's.
 
 ### A command queue would make the simulation a true single writer
 

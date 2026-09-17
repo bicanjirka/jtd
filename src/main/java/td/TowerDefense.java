@@ -401,13 +401,24 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
     }
 
+    /**
+     * Reached from {@link #economyChanged}, which fires on every economy event - so once lives
+     * hit zero, every later event would re-announce the loss without this guard.
+     */
     private void gameLost() {
+        if (this.gameStopped) {
+            return;
+        }
         LOG.info("Game over - lost, score={}", this.gameWorld.getScore());
         this.setGameStopped(true);
         SwingUtilities.invokeLater(this.boardOverlays::showLost);
     }
 
+    /** Guarded like {@link #gameLost()}: the last enemy of the last wave reports once. */
     private void gameWon() {
+        if (this.gameStopped) {
+            return;
+        }
         LOG.info("Game won, score={}", this.gameWorld.getScore());
         this.setGameStopped(true);
         SwingUtilities.invokeLater(this.boardOverlays::showWon);
@@ -517,10 +528,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         boolean wasPlacing = this.engine.isPlacingTower();
         int boardX = evt.getX() - this.gameBoard.getX();
         int boardY = evt.getY() - this.gameBoard.getY();
-        Tower selected = this.engine.mouseClicked(boardX, boardY);
-        if (selected != null) {
-            this.gameConsole.getTowerInfo().setTower(selected);
-        }
+        this.engine.mouseClicked(boardX, boardY)
+                .ifPresent(this.gameConsole.getTowerInfo()::setTower);
         if (wasPlacing && !this.engine.isPlacingTower()) {
             this.panelTowerSelector.stopPlacing();
         }
@@ -560,7 +569,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             case 'f' -> this.cycleSpeed();
             case 's' -> this.nextWave();
             case 'n' -> this.debugSkipWave();
-            case 'x' -> this.setInfoText("Debug spawned: " + this.engine.debugSpawnNextCatalogEnemy());
+            case 'x' -> this.setInfoText(this.engine.debugSpawnNextCatalogEnemy()
+                    .map(id -> "Debug spawned: " + id)
+                    .orElse("Debug spawn needs a level loaded first"));
             case 'c' -> this.engine.debugGrantCredits(DEBUG_CREDIT_GRANT);
             case KeyEvent.VK_ESCAPE -> {
                 if (this.engine.isPlacingTower()) {

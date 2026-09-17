@@ -120,10 +120,6 @@ default — raise the root level in `src/main/resources/logback.xml` for a deep-
 Old run logs are pruned on startup. Tests use `src/test/resources/logback-test.xml` and stay
 quiet.
 
-> A passing test run still prints one `WARN` and a stack trace: `WaveScriptTest` deliberately
-> feeds an unparseable token through the wave parser. Check `Failures: 0`, not the absence of
-> output.
-
 ## Project layout
 
 ```

@@ -103,8 +103,8 @@ final class RecordingEnemyMob implements EnemyMob {
     }
 
     @Override
-    public long getHealth() {
-        return Long.MAX_VALUE;
+    public int getHealth() {
+        return Integer.MAX_VALUE;
     }
 
     @Override

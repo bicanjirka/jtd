@@ -111,7 +111,7 @@ class AbstractTowerTest {
     void dealDamageCountsAKillWhenTheHitIsLethal() {
         TowerOne tower = new TowerOne(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
-        long healthBefore = enemy.getHealth();
+        int healthBefore = enemy.getHealth();
 
         tower.dealDamage(enemy, Damage.physical(4000));
 
@@ -126,7 +126,7 @@ class AbstractTowerTest {
     void dealDamageIntoAnAlreadyDeadEnemyIsNotCountedAgain() {
         TowerOne tower = new TowerOne(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
-        long healthBefore = enemy.getHealth();
+        int healthBefore = enemy.getHealth();
         tower.dealDamage(enemy, Damage.physical(4000));
 
         // simulates a second tower's shot landing on the same tick, after this one already killed it

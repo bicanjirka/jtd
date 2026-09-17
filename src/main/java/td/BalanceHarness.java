@@ -6,6 +6,7 @@ import td.level.LevelDefinition;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.GameHost;
+import td.util.RandomSource;
 import td.util.GameWorld;
 
 import java.util.ArrayList;
@@ -25,7 +26,15 @@ import java.util.List;
  */
 public final class BalanceHarness implements GameHost {
 
-    private final GameEngine engine = new GameEngine(this);
+    /**
+     * Fixed so two runs of the same loadout are comparable. Randomness in the simulation
+     * (TowerTwo picking its primary target) would otherwise come from the unseeded global
+     * {@code Math.random()} and make every run a different experiment - see
+     * {@link RandomSource}. Change it deliberately to sample a different sequence.
+     */
+    private static final long RANDOM_SEED = 20260917L;
+
+    private final GameEngine engine = new GameEngine(this, RandomSource.seeded(RANDOM_SEED));
     private final List<Integer> ticksToClearPerWave = new ArrayList<>();
     private int waveStartTick = 0;
     private boolean waveJustCleared = false;

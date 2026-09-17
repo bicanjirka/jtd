@@ -1,8 +1,7 @@
 package td.wave;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import td.enemy.EnemyCatalog;
+import td.util.GameStartupException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,12 +14,11 @@ import java.util.List;
  * like a built-in one; there is no separate syntax for the two, since every non-reserved token
  * is looked up the same way. {@code e} is the one reserved token - the spacer - recognized
  * before any catalog lookup. A token this can't recognize as the spacer, a registered id, or an
- * integer repeat count is logged at {@code WARN} and treated as a multiplier of 1 rather than
- * failing the parse - see CLAUDE.md §9.
+ * integer repeat count fails the parse with a {@link GameStartupException}: a wave the author
+ * did not write is content corruption, not something to recover from silently.
  */
 public final class WaveScript {
 
-    private static final Logger LOG = LoggerFactory.getLogger(WaveScript.class);
     private static final String EMPTY_TOKEN = "e";
 
     private WaveScript() {
@@ -34,6 +32,11 @@ public final class WaveScript {
         List<WaveSlot> spawnSequence = new ArrayList<>();
         int repeat = 1;
         for (String token : tokens) {
+            // An empty string is whitespace, not a token: "".split(" ") yields one blank, and
+            // so does any run of spaces between real tokens.
+            if (token.isBlank()) {
+                continue;
+            }
             if (token.equals(EMPTY_TOKEN)) {
                 for (int i = 0; i < repeat; i++) {
                     spawnSequence.add(new EmptySlot());
@@ -49,8 +52,9 @@ public final class WaveScript {
                 try {
                     repeat = Integer.parseInt(token);
                 } catch (NumberFormatException ex) {
-                    LOG.warn("Unrecognized wave token '{}', treating as x1", token, ex);
-                    repeat = 1;
+                    throw new GameStartupException("Unrecognized wave token '" + token
+                            + "': expected the spacer 'e', a repeat count, or an id registered in the"
+                            + " enemy catalog (" + catalog.ids() + ")", ex);
                 }
             }
         }

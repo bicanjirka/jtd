@@ -13,6 +13,7 @@ import td.level.LevelDefinition;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.GameHost;
+import td.util.RandomSource;
 import td.util.GameWorld;
 import td.wave.Path;
 import td.wave.PathBuilder;
@@ -24,6 +25,7 @@ import td.wave.WaveScript;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Owns the game state and input handling that {@link TowerDefense} used to
@@ -57,7 +59,16 @@ public class GameEngine {
     private int debugSpawnCursor = 0;
 
     public GameEngine(GameHost host) {
-        this.gameWorld = new GameWorld(host);
+        this(new GameWorld(host));
+    }
+
+    /** For a run that has to be reproducible - see {@code td.BalanceHarness}. */
+    public GameEngine(GameHost host, RandomSource random) {
+        this(new GameWorld(host, random));
+    }
+
+    private GameEngine(GameWorld gameWorld) {
+        this.gameWorld = gameWorld;
         this.placement = new TowerPlacement(this.gameWorld, () -> this.cellGrid);
     }
 
@@ -245,9 +256,10 @@ public class GameEngine {
     }
 
     /**
-     * @return the tower now selected by clicking its occupied cell, or null if nothing was selected
+     * @return the tower now selected by clicking its occupied cell, or empty if nothing was
+     * selected
      */
-    public Tower mouseClicked(int boardX, int boardY) {
+    public Optional<Tower> mouseClicked(int boardX, int boardY) {
         return this.placement.mouseClicked(boardX, boardY);
     }
 
@@ -271,11 +283,11 @@ public class GameEngine {
      * {@code baseHealth}/{@code price} (there is no wave context to scale from) and appears
      * immediately at the path's start.
      *
-     * @return the id spawned, or null if no level is loaded
+     * @return the id spawned, or empty if no level is loaded
      */
-    public String debugSpawnNextCatalogEnemy() {
+    public Optional<String> debugSpawnNextCatalogEnemy() {
         if (!this.cellGrid.isLoaded()) {
-            return null;
+            return Optional.empty();
         }
         EnemyCatalog catalog = this.gameWorld.getEnemyCatalog();
         List<String> ids = catalog.ids();
@@ -284,7 +296,7 @@ public class GameEngine {
         EnemyDefinition definition = catalog.get(id);
         EnemyMob mob = catalog.spawn(id, this.gameWorld, 0, definition.baseHealth(), definition.price(), 1);
         this.gameWorld.addEnemy(mob);
-        return id;
+        return Optional.of(id);
     }
 
     /** Debug tool: grants a lump sum of credits, through the same path a kill or a sale uses. */
