@@ -7,5 +7,5 @@ package td.enemy;
  * and {@code td.ui.render}'s sealed draw-command hierarchies already use in this codebase.
  * {@link AbilityEvaluator} is the one place that pattern-matches over this closed set.
  */
-public sealed interface AbilityTrigger permits PeriodicTrigger, OnceTrigger, HealthThresholdTrigger, OnDeathTrigger, TimeSinceLastHitTrigger {
+public sealed interface AbilityTrigger permits PeriodicTrigger, OnceTrigger, HealthThresholdTrigger, OnDeathTrigger, TimeSinceLastHitTrigger, OnCriticalHitTakenTrigger {
 }

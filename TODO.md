@@ -207,19 +207,6 @@ than dropping it.
   the same damage-over-time mechanism? Only then add an `EffectKind.ACID` case and an `Effect.acid(...)` factory,
   mirroring `Effect.burn(...)`.
 
-### Critical damage is not implemented
-
-The original request listed critical (chance-based bonus damage) as a post-hit effect alongside slow/burn/freeze; a
-product-review pass concluded it isn't mechanically one — slow/burn/freeze happen to the enemy after a hit lands, but
-a critical hit is a pre-hit, chance-based multiplier on the attacker's own roll — and recommended modeling it as a
-tower stat instead. That recommendation was accepted but never built.
-
-- **Where:** no code yet — `td.tower.AbstractTower` has no crit chance/multiplier of any kind.
-- **Approach:** add a chance/multiplier pair (base fields on `AbstractTower`, or per-leaf like `TowerTwo`'s
-  `spreadRadius`) rolled at the point `dealDamage` is called, scaling the `Damage` passed in before the enemy ever
-  sees it. Deliberately **not** a `td.effect.Effect` — a crit is resolved once, at the moment of the hit, not applied
-  to the enemy afterward the way a status effect is.
-
 ### Damage-type resistance doesn't exist yet
 
 Every hit carries a `DamageType` (`PHYSICAL`/`MAGIC`), but no enemy differentiates by it. The
@@ -307,3 +294,32 @@ single hit), making the Warden's armor mechanically inert regardless of which to
   and the `n`/`x`/`c` debug keybindings (see the root `CLAUDE.md`'s "Playtesting and balance
   tooling") now make this cheap to actually do - `x` specifically can spawn the Warden chain's
   stages on demand without playing to wave 18 first.
+
+### Critical-damage numbers are unbalanced placeholders
+
+`FEATURE-critical-damage.md` shipped `Damage.CRITICAL_MULTIPLIER` (1.5x), `SniperTower.VETERAN`'s
+crit-chance bonus (15%), and the Warden's new on-crit-survived shield (30% for 100 ticks) as
+illustrative placeholders, the same situation every other feature's first-pass numbers were in
+before their own balance passes.
+
+- **Where:** `td.damage.Damage.CRITICAL_MULTIPLIER`, `SniperTower.VETERAN`'s `TowerBuff`,
+  `BuiltInEnemies.WARDEN_STANDING_ABILITIES`'s new `OnCriticalHitTakenTrigger` ability.
+- **Approach:** tune via actual play (or `td.BalanceHarness`) once the other placeholder-number
+  entries in this file get their own pass - no code or architecture change needed, every number
+  here is already a named constant or a `TowerBuff` literal.
+
+### `ActiveEffects.applyShield` is never called
+
+Found while wiring critical damage into the Warden's existing shield abilities: nothing in
+`AbstractEnemyMob`/`DefinedEnemyMob.absorb` ever calls `ActiveEffects.applyShield`, so a
+`td.effect.EffectKind.SHIELD` effect (the Warden's periodic self-shield, its health-threshold
+ally-shield, and the new on-crit-survived shield) only ever shows its status marker - it grants
+no actual damage reduction. Pre-existing, not introduced by the critical-damage feature; every
+shield-granting ability shipped before it has the same gap.
+
+- **Where:** `td.effect.ActiveEffects.applyShield` (defined, unused); `DefinedEnemyMob.absorb`
+  (where a shield reduction would need to fold in, alongside the trait loop it already runs).
+- **Approach:** call `activeEffects.applyShield(...)` from `absorb` (or from `AbstractEnemyMob
+  .doDamage` before capping), composing with trait resistance the same way a percent/flat trait
+  already does - `ActiveEffects.applyShield`'s own doc comment already states the intended
+  composition ("this composes with rather than replaces" a `Trait`'s resistance).

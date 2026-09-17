@@ -90,6 +90,24 @@ class AbilityEvaluatorTest {
     }
 
     @Test
+    void anOnCriticalHitTakenTriggerFiresEveryTimeItIsObservedUnlikeAFireOnceTrigger() {
+        AbilityTrigger trigger = new OnCriticalHitTakenTrigger();
+        AbilityState state = AbilityState.forTrigger(trigger);
+        FakeAbilityContext context = new FakeAbilityContext();
+
+        assertThat(AbilityEvaluator.shouldFire(trigger, state, context)).isFalse();
+
+        context.setJustTookCriticalHit(true);
+        assertThat(AbilityEvaluator.shouldFire(trigger, state, context)).isTrue();
+        // still true this same tick if asked again - unlike OnDeathTrigger, nothing here marks
+        // it fired, since surviving another crit later must be able to fire again
+        assertThat(AbilityEvaluator.shouldFire(trigger, state, context)).isTrue();
+
+        context.setJustTookCriticalHit(false);
+        assertThat(AbilityEvaluator.shouldFire(trigger, state, context)).isFalse();
+    }
+
+    @Test
     void executingAnApplyEffectActionAppliesItsTemplateToItsTarget() {
         FakeAbilityContext context = new FakeAbilityContext();
         EffectTemplate template = new ShieldTemplate(0.5f, 10);

@@ -99,6 +99,13 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     private double prevY;
     private int delay;
     private int deathTick = -1;
+    // Set synchronously in doDamage() (which has no gameTime to record against) and captured
+    // as criticalHitTick on this mob's own next doTick - the same deferred-capture shape
+    // deathTick already uses, and for the same reason: a hit can land during another phase of
+    // the same game tick (see td/enemy/CLAUDE.md's death-timing invariant), so "a critical hit
+    // landed" and "this tick is the one to report it on" are not necessarily the same tick.
+    private boolean criticalHitPending;
+    private int criticalHitTick = -1;
     private double distanceIntoLap = 0;
     private double lastFacingRadians = 0;
 
@@ -185,6 +192,9 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         if (this.validTarget()) {
             landed = this.absorb(damage).cappedAt(this.health);
             this.health -= landed.amount();
+            if (landed.critical()) {
+                this.criticalHitPending = true;
+            }
         }
         if (this.health <= 0) {
             this.validTarget = false;
@@ -323,6 +333,16 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         return 3 * this.level + 6;
     }
 
+    /**
+     * Ticks elapsed since this mob was last observed to survive a critical hit, or {@code -1}
+     * if it never has. Mirrors {@link #ticksSinceDeath} exactly, including the deferred-capture
+     * reason: {@code doDamage} has no {@code gameTime} to record against, so a landed critical
+     * hit is captured as {@link #criticalHitTick} on this mob's own next {@link #doTick} instead.
+     */
+    public int ticksSinceCriticalHit(int gameTime) {
+        return this.criticalHitTick < 0 ? -1 : gameTime - this.criticalHitTick;
+    }
+
     public boolean isFadeComplete(int gameTime) {
         int age = this.ticksSinceDeath(gameTime);
         return age > this.fadeDurationTicks();
@@ -391,6 +411,10 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * entirely for the rest of this call - there is nothing left to move.
      */
     public void doTick(int gameTime) {
+        if (this.criticalHitPending) {
+            this.criticalHitPending = false;
+            this.criticalHitTick = gameTime;
+        }
         if (this.inactive) {
             if (this.delay > 0) {
                 this.delay--;

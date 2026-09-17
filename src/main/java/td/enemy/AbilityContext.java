@@ -34,6 +34,15 @@ public interface AbilityContext {
     boolean justDied();
 
     /**
+     * {@code true} only on the tick this mob is first observed to have survived a critical
+     * hit - edge-triggered the same way {@link #justDied()} is, and for the same reason: a
+     * hit can land during another phase of the same game tick (see
+     * {@code td/enemy/CLAUDE.md}'s death-timing invariant), so this is captured on the mob's
+     * own next {@code doTick} rather than read synchronously where the hit landed.
+     */
+    boolean justTookCriticalHit();
+
+    /**
      * Applies {@code template} to {@code target}, relative to this mob.
      */
     void applyEffect(EffectTemplate template, EffectTarget target);

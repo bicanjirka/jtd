@@ -242,6 +242,11 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         }
 
         @Override
+        public boolean justTookCriticalHit() {
+            return DefinedEnemyMob.this.ticksSinceCriticalHit(this.gameTime) == 0;
+        }
+
+        @Override
         public void applyEffect(EffectTemplate template, EffectTarget target) {
             switch (target) {
                 case SelfTarget ignored -> DefinedEnemyMob.this.applyEffect(template.toEffect(this::creditNoOne));

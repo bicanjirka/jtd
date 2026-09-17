@@ -37,10 +37,10 @@ final class BuiltInEnemies {
             BodyArchetype.CIRCLE, new FixedMovement(),
             List.of(), List.of());
     static final EnemyDefinition ARMORED = new EnemyDefinition(
-            "s", "Armored mob", "Takes less damage.",
+            "s", "Armored mob", "Takes less damage. Immune to critical hits.",
             80, 3, 1.28f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(5.0)),
-            List.of(new PercentResistTrait(0.8f, 0.05f)), List.of());
+            List.of(new PercentResistTrait(0.8f, 0.05f), new CriticalImmunityTrait()), List.of());
     static final EnemyDefinition FRENZIED = new EnemyDefinition(
             "t", "Frenzied mob", "Increases speed as it takes damage.",
             60, 3, 1.28f, 1f, EnemyMob.Type.NORMAL,
@@ -84,7 +84,10 @@ final class BuiltInEnemies {
             // at half health, shields every nearby ally - a one-time "call to arms"
             new Ability(new HealthThresholdTrigger(0.5f), new ApplyEffectAction(new ShieldTemplate(0.3f, 150), new RadiusTarget(150f))),
             // punishes being ignored with a bonus reinforcement
-            new Ability(new TimeSinceLastHitTrigger(200), new SpawnEnemiesAction("c", 1, false)));
+            new Ability(new TimeSinceLastHitTrigger(200), new SpawnEnemiesAction("c", 1, false)),
+            // shields itself every time it survives a critical hit - repeatable, unlike the
+            // fire-once triggers above
+            new Ability(new OnCriticalHitTakenTrigger(), new ApplyEffectAction(new ShieldTemplate(0.3f, 100), new SelfTarget())));
     static final EnemyDefinition WARDEN_1 = new EnemyDefinition(
             "warden1", "The Warden", "A hulking armored sentinel. Calls for reinforcements and shields itself and its allies.",
             8000, 100, 1.28f, 1f, EnemyMob.Type.NORMAL,
