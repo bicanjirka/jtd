@@ -51,12 +51,29 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
         this.count.set(count);
     }
 
-    public void remove() {
+    /**
+     * How many of the current wave's mobs are still alive - the same count {@link #reportDeath}
+     * decrements and reports to the host, exposed for a caller (a {@code BalanceHarness} run
+     * loop) that needs to ask "is anything left" without depending on {@link #getEnemies}'
+     * length, which is the wave's slot count for as long as any dead mob is still fading and
+     * therefore still in the list.
+     */
+    public int aliveCount() {
+        return this.count.get();
+    }
+
+    /**
+     * A mob has died (by combat kill or by leaking off the path's end) - not a removal despite
+     * the name this replaced: the mob stays in {@link #getEnemies}' list for its death fade,
+     * this only decrements the alive count and reports it to the host, which is how the UI
+     * learns a wave is cleared.
+     */
+    public void reportDeath() {
         this.host.enemyDied(this.count.decrementAndGet());
     }
 
     /**
-     * Tearing a level down is not a death: unlike {@link #remove()}, this does not notify the host.
+     * Tearing a level down is not a death: unlike {@link #reportDeath}, this does not notify the host.
      */
     public void clear() {
         this.count.set(0);

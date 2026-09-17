@@ -55,25 +55,6 @@ unnecessary, and every mutation lands on a deterministic tick boundary.
   machines. If that becomes a goal, this stops being indirection and starts being the feature
     - do it then, and not before.
 
-### `EnemyRoster.remove()` does not remove, and one caller depends on it doing so
-
-`remove()` decrements the alive count and fires `GameHost.enemyDied`; it never touches the
-list, because a dead mob has to stay in it for the death-fade animation. So
-`EnemyRegistry.getEnemies()` returns the wave's *slot* count for the whole wave, not the alive
-count, and it only changes when `setEnemies` installs the next wave.
-
-`BalanceHarness` exits its run loop on
-`getCurrentWaveIndex() >= getWaveCount() && getEnemies().length == 0`. After the last wave there
-is no next `setEnemies`, so the length never reaches zero, the condition never fires, and every
-harness run burns its full tick budget instead of stopping when the level is actually decided.
-Reported totals may be skewed accordingly.
-
-- **Where:** `td.enemy.EnemyRoster.remove`, `td.BalanceHarness`'s run loop.
-- **Approach:** two separable fixes. Rename `remove()` to `reportDeath()` so it stops promising
-  something it does not do. Then give the harness a real "nothing alive left" question to ask -
-  the roster already tracks that count internally for `enemyDied`, so exposing it is likely
-  enough. Do not make `remove()` actually remove: the fade needs the mob.
-
 ### `Tower` is a twenty-three-method interface
 
 `CLAUDE.md` §5 rule 6 asks for interfaces of one to five methods. `Tower` has twenty-three:
