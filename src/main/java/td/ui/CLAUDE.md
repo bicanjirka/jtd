@@ -41,7 +41,7 @@ Each domain type has one *frame builder* that describes it and knows nothing abo
 | Builder                   | Describes                                                                                   | Dispatch                                    |
 |---------------------------|---------------------------------------------------------------------------------------------|---------------------------------------------|
 | `CellFrameBuilder`        | placement/selection highlights                                                              | plain getters — only one `Cell` impl exists |
-| `EnemyFrameBuilder`       | enemy bodies, death fades, and (via a second `buildMarkers()` output) status-effect markers | `EnemyMobVisitor`                           |
+| `EnemyFrameBuilder`       | enemy bodies, death fades, status-effect markers (`buildMarkers()`), and critical-hit sparks (`buildCritSparks()`) | `EnemyMobVisitor`                           |
 | `TowerSpriteFrameBuilder` | tower base + animated turret head                                                           | `TowerVisitor`                              |
 | `TowerEffectFrameBuilder` | beams, splash, pulse, aura, cone                                                            | `TowerVisitor`                              |
 | `ProjectileFrameBuilder`  | in-flight shells and missiles                                                               | `ProjectileVisitor`                         |
@@ -60,6 +60,13 @@ further — a heavily-buffed enemy in a packed wave still reads at a glance inst
 an unbounded strip of icons. This is a deliberately simpler stand-in for an exact "+N" count (which would need real text
 rendering, a new render primitive nothing else here has) — a
 future pass could add that without changing the cap itself.
+
+**A critical hit's spark (`CritSparkDraw`, `RenderFrame.critSparks`) is a third, timed
+`EnemyFrameBuilder` output, not a `StatusMarkerDraw`.** A crit is a one-shot event, not an
+ongoing status - it is shaped like `EnemyFadeDraw` instead (position, scale, a `fadeProgress`),
+keyed off `AbstractEnemyMob.ticksSinceCriticalHit(gameTime)` the same deferred-capture way a
+death fade is keyed off `ticksSinceDeath`, and fades out over `EnemyFrameBuilder
+.CRIT_SPARK_DURATION_TICKS`.
 
 ## Two independent clocks, and which one to use
 

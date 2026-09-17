@@ -2,10 +2,12 @@ package td.ui;
 
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
+import td.damage.Damage;
 import td.effect.Effect;
 import td.enemy.AbstractEnemyMob;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.ui.render.CritSparkDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.Palette;
@@ -163,6 +165,48 @@ class EnemyFrameBuilderTest {
 
         assertThat(markers).hasSize(EnemyFrameBuilder.MAX_VISIBLE_MARKERS + 1);
         assertThat(markers.getLast().palette()).isEqualTo(Palette.STATUS_MARKER_OVERFLOW);
+    }
+
+    @Test
+    void anEnemyThatNeverTookACriticalHitYieldsNoCritSpark() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        enemy.doTick(1);
+
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(1, 0.0);
+        enemy.accept(builder);
+
+        assertThat(builder.buildCritSparks()).isEmpty();
+    }
+
+    @Test
+    void anEnemyThatJustSurvivedACriticalHitYieldsOneCritSpark() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        enemy.doDamage(Damage.physical(10).asCritical());
+        enemy.doTick(1); // captures the critical hit
+
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(1, 0.0);
+        enemy.accept(builder);
+        List<CritSparkDraw> sparks = builder.buildCritSparks();
+
+        assertThat(sparks).hasSize(1);
+        assertThat(sparks.getFirst().palette()).isEqualTo(Palette.CRIT_SPARK);
+        assertThat(sparks.getFirst().fadeProgress()).isZero();
+    }
+
+    @Test
+    void theCritSparkStopsShowingAfterItsDurationElapses() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        enemy.doDamage(Damage.physical(10).asCritical());
+        enemy.doTick(1); // captures the critical hit at tick 1
+
+        int afterDuration = 1 + EnemyFrameBuilder.CRIT_SPARK_DURATION_TICKS + 1;
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(afterDuration, 0.0);
+        enemy.accept(builder);
+
+        assertThat(builder.buildCritSparks()).isEmpty();
     }
 
     @Test

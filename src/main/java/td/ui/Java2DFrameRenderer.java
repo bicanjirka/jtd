@@ -5,6 +5,7 @@ import td.ui.render.BeamDraw;
 import td.ui.render.CannonballDraw;
 import td.ui.render.CellDraw;
 import td.ui.render.ConeDraw;
+import td.ui.render.CritSparkDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
@@ -355,6 +356,7 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_SHIELD -> new Color(220, 220, 100);
             case STATUS_MARKER_INVISIBLE -> new Color(180, 180, 180);
             case STATUS_MARKER_OVERFLOW -> Color.WHITE;
+            case CRIT_SPARK -> Color.WHITE;
             case PATH_MARKER_MOVING -> withAlpha(Color.WHITE, 100);
             case PATH_MARKER_STATIC -> withAlpha(Color.WHITE, 40);
         };
@@ -394,6 +396,9 @@ public final class Java2DFrameRenderer {
         }
         for (StatusMarkerDraw marker : frame.statusMarkers()) {
             this.paintStatusMarker(g2, marker);
+        }
+        for (CritSparkDraw spark : frame.critSparks()) {
+            this.paintCritSpark(g2, spark);
         }
         for (TowerSpriteDraw sprite : frame.towerSprites()) {
             this.paintTowerSprite(g2, sprite, frame.scale());
@@ -526,6 +531,21 @@ public final class Java2DFrameRenderer {
         g2.translate(marker.x(), marker.y());
         g2.setColor(colorFor(marker.palette()));
         g2.fill(diamondShape(marker.scale()));
+        g2.setTransform(save);
+    }
+
+    /**
+     * A brief, fading four-point sparkle at the point a critical hit landed - a sharper star
+     * than {@link Palette#TOWER_PULSE_BODY}'s five-point one, so the two don't read as the
+     * same glyph at a glance. Grows slightly and fades out over its duration, the same "small
+     * timed animation" shape {@link #paintEnemyFade} uses for a death fade.
+     */
+    private void paintCritSpark(Graphics2D g2, CritSparkDraw spark) {
+        AffineTransform save = g2.getTransform();
+        g2.translate(spark.x(), spark.y());
+        g2.setColor(withAlpha(colorFor(spark.palette()), Math.round((1f - spark.fadeProgress()) * 255f)));
+        float sparkScale = spark.scale() * (1f + spark.fadeProgress());
+        g2.fill(starShape(4, sparkScale, sparkScale * 0.25f));
         g2.setTransform(save);
     }
 
