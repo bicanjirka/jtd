@@ -79,11 +79,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private static final String CARD_GAME = "game";
     private static final int MENU_WIDTH = 1040;
     private static final int MENU_HEIGHT = 700;
-    /**
-     * One placement shortcut per {@link TowerFactory.Type}, in enum order - indexed by ordinal
-     * rather than hand-matched per tower, so a new tower type needs only a key appended here.
-     */
-    private static final char[] TOWER_PLACEMENT_KEYS = {'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o'};
     /** Debug keybinding: how many credits `c` grants in one press - see docs/features/FEATURE-playtesting-and-balance-tooling.md. */
     private static final int DEBUG_CREDIT_GRANT = 1000;
 
@@ -192,8 +187,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setFocusable(true);
         this.engine = new GameEngine(this);
         this.gameWorld = this.engine.getGameWorld();
-        this.boardRenderer = new BoardRenderer(this.engine, this.gameWorld.enemies(),
-                this.gameWorld.projectiles(), this.gameWorld::getBoard, this.gameWorld::getPath);
+        this.boardRenderer = new BoardRenderer(this.gameWorld);
         this.gameWorld.economy().addEconomyListener(this);
         this.gameBoard = new GameBoard(this, this.gameWorld);
         initComponents();
@@ -616,10 +610,13 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (this.gameStopped) {
             return;
         }
-        int placementIndex = indexOf(TOWER_PLACEMENT_KEYS, key);
-        if (placementIndex >= 0 && placementIndex < TowerFactory.Type.values().length) {
-            this.panelTowerSelector.doPlace(placementIndex);
-            return;
+        // Each tower type carries its own placement key, so a new tower needs no change here.
+        TowerFactory.Type[] types = TowerFactory.Type.values();
+        for (int i = 0; i < types.length; i++) {
+            if (types[i].placementKey == key) {
+                this.panelTowerSelector.doPlace(i);
+                return;
+            }
         }
         switch (key) {
             case 'p' -> this.togglePause();
@@ -639,15 +636,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             default -> {
             }
         }
-    }
-
-    private static int indexOf(char[] keys, char key) {
-        for (int i = 0; i < keys.length; i++) {
-            if (keys[i] == key) {
-                return i;
-            }
-        }
-        return -1;
     }
 
     private void initComponents() {

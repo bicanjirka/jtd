@@ -223,7 +223,7 @@ class AbstractTowerTest {
         assertThat(chosen).isTrue();
         assertThat(context.economy().getCredits()).isEqualTo(60);
         assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * 1.5f));
-        assertThat(tower.getChosenPath()).isEqualTo(path);
+        assertThat(tower.getChosenPath()).contains(path);
     }
 
     @Test
@@ -237,7 +237,7 @@ class AbstractTowerTest {
         boolean chosenAgain = tower.chooseUpgradePath(second);
 
         assertThat(chosenAgain).isFalse();
-        assertThat(tower.getChosenPath()).isEqualTo(first);
+        assertThat(tower.getChosenPath()).contains(first);
     }
 
     @Test
@@ -250,7 +250,7 @@ class AbstractTowerTest {
         boolean chosen = tower.chooseUpgradePath(foreign);
 
         assertThat(chosen).isFalse();
-        assertThat(tower.getChosenPath()).isNull();
+        assertThat(tower.getChosenPath()).isEmpty();
     }
 
     @Test
@@ -263,7 +263,7 @@ class AbstractTowerTest {
 
         assertThat(chosen).isFalse();
         assertThat(context.economy().getCredits()).isEqualTo(5);
-        assertThat(tower.getChosenPath()).isNull();
+        assertThat(tower.getChosenPath()).isEmpty();
     }
 
     @Test
@@ -301,7 +301,7 @@ class AbstractTowerTest {
 
         assertThat(chosen).isFalse();
         assertThat(context.economy().getCredits()).isEqualTo(100);
-        assertThat(tower.getChosenPath()).isNull();
+        assertThat(tower.getChosenPath()).isEmpty();
     }
 
     @Test

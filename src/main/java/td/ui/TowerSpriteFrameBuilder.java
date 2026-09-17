@@ -91,7 +91,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
      * back one of the exact instances {@code availablePaths()} itself returned.
      */
     private static Optional<Palette> accentPaletteFor(Tower tower) {
-        UpgradePath chosen = tower.getChosenPath();
+        UpgradePath chosen = tower.getChosenPath().orElse(null);
         if (chosen == null) {
             return Optional.empty();
         }

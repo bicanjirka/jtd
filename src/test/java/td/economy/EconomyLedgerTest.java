@@ -19,6 +19,19 @@ class EconomyLedgerTest {
     private final EconomyLedger ledger = new EconomyLedger();
 
     @Test
+    void stateReportsCreditsScoreAndLivesFromOneSnapshot() {
+        EconomyLedger ledger = new EconomyLedger();
+        ledger.startEconomy(120, 4);
+
+        ledger.apply(EconomyDelta.kill(7));
+
+        EconomyState state = ledger.state();
+        assertThat(state.credits()).isEqualTo(ledger.getCredits());
+        assertThat(state.score()).isEqualTo(ledger.getScore());
+        assertThat(state.lives()).isEqualTo(ledger.getLives());
+    }
+
+    @Test
     void doPayChargesCreditsWhenAffordable() {
         ledger.startEconomy(100, 5);
 

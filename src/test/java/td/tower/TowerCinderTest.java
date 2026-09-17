@@ -94,7 +94,7 @@ class TowerCinderTest {
         boolean chosen = tower.chooseUpgradePath(whiteFlame);
 
         assertThat(chosen).isFalse();
-        assertThat(tower.getChosenPath()).isNull();
+        assertThat(tower.getChosenPath()).isEmpty();
     }
 
     @Test

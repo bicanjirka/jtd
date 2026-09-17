@@ -39,8 +39,7 @@ class BoardRendererTest {
     }
 
     private static BoardRenderer rendererFor(GameEngine engine, GameWorld context) {
-        return new BoardRenderer(engine, context.enemies(), context.projectiles(),
-                context::getBoard, context::getPath);
+        return new BoardRenderer(context);
     }
 
     @Test

@@ -104,7 +104,7 @@ class TowerMortarTest {
         boolean chosen = tower.chooseUpgradePath(heavyShell);
 
         assertThat(chosen).isFalse();
-        assertThat(tower.getChosenPath()).isNull();
+        assertThat(tower.getChosenPath()).isEmpty();
     }
 
     @Test

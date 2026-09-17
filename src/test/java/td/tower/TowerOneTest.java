@@ -37,6 +37,6 @@ class TowerOneTest {
         boolean chosen = tower.chooseUpgradePath(veteran);
 
         assertThat(chosen).isFalse();
-        assertThat(tower.getChosenPath()).isNull();
+        assertThat(tower.getChosenPath()).isEmpty();
     }
 }

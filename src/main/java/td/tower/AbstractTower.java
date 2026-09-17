@@ -6,8 +6,10 @@ import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
+import td.util.TickRate;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Everything every tower shares: board position, price, base and buffed damage/range/fire
@@ -26,11 +28,11 @@ import java.util.List;
 public abstract class AbstractTower implements Tower {
 
     /**
-     * Simulation ticks per second at {@code TickSpeed.NORMAL}, i.e. the reciprocal of
-     * {@code GameLoop.BASE_TICK_NANOS}. Towers express their cadence in seconds for the
-     * player's benefit, and this is what converts it.
+     * Simulation ticks per second at {@code TickSpeed.NORMAL}. Derived from the one place the
+     * tick rate is defined, so a change to the loop's timestep reaches every tower's displayed
+     * fire rate instead of leaving it quietly wrong.
      */
-    protected static final float TICKS_PER_SECOND = 20f;
+    protected static final float TICKS_PER_SECOND = TickRate.TICKS_PER_SECOND;
 
     protected final GameWorld context;
     protected final int boardX;
@@ -54,7 +56,9 @@ public abstract class AbstractTower implements Tower {
     protected volatile boolean selected = false;
     protected volatile long damageDealt = 0;
     protected volatile int killCount = 0;
-    protected volatile UpgradePath chosenPath;
+    // Optional, not a nullable reference: absence is modelled as a value (CLAUDE.md 5 rule 3).
+    // Volatile because it is chosen on the EDT and read by tick code for the bounty bonus.
+    protected volatile Optional<UpgradePath> chosenPath = Optional.empty();
     private volatile boolean removed = false;
 
     /**
@@ -144,11 +148,23 @@ public abstract class AbstractTower implements Tower {
      * sees either the whole old set or the whole new one.
      */
     public void recalculateStats() {
+        this.publishStats(this.chosenPath);
+    }
+
+    /**
+     * Recomputes and publishes {@link TowerStats} treating {@code path} as this tower's chosen
+     * specialization. Separate from {@link #recalculateStats()} so that
+     * {@link #chooseUpgradePath} can publish the new stats <em>before</em> it publishes the
+     * path itself: a tick landing between the two writes then sees the upgraded stats without
+     * the path, rather than the path without its stats - which would have paid the path's
+     * bounty bonus on a kill dealt at un-upgraded damage.
+     */
+    private void publishStats(Optional<UpgradePath> path) {
         TowerBuff externalBuff = this.context.towers().all().stream()
                 .map(t -> t.buffFor(this))
                 .reduce(TowerBuff.none(), TowerBuff::combine);
-        TowerBuff pathBuff = this.chosenPath == null ? TowerBuff.none() : this.chosenPath.statBonus();
-        TowerBuff totalBuff = externalBuff.combine(pathBuff);
+        TowerBuff totalBuff = externalBuff.combine(
+                path.map(UpgradePath::statBonus).orElseGet(TowerBuff::none));
         this.stats = TowerStats.of(this.damageBase, this.rangeBase, this.coolDownMax,
                 totalBuff, this.context.getBoard().scale());
     }
@@ -185,9 +201,11 @@ public abstract class AbstractTower implements Tower {
             this.damageDealt += landed.amount();
             if (enemy.isDead()) {
                 this.killCount++;
-                if (this.chosenPath != null && this.chosenPath.statBonus().bountyBonus() != 0f) {
-                    int bonus = Math.round(enemy.getBounty() * this.chosenPath.statBonus().bountyBonus());
-                    this.context.economy().apply(EconomyDelta.credits(bonus));
+                float bountyBonus = this.chosenPath
+                        .map(p -> p.statBonus().bountyBonus()).orElse(0f);
+                if (bountyBonus != 0f) {
+                    this.context.economy().apply(EconomyDelta.credits(
+                            Math.round(enemy.getBounty() * bountyBonus)));
                 }
             }
         }
@@ -206,12 +224,12 @@ public abstract class AbstractTower implements Tower {
         return List.of();
     }
 
-    public UpgradePath getChosenPath() {
+    public Optional<UpgradePath> getChosenPath() {
         return this.chosenPath;
     }
 
     public boolean chooseUpgradePath(UpgradePath path) {
-        if (this.chosenPath != null || !this.availablePaths().contains(path)) {
+        if (this.chosenPath.isPresent() || !this.availablePaths().contains(path)) {
             return false;
         }
         if (!path.condition().isSatisfied(this, this.context)) {
@@ -220,9 +238,10 @@ public abstract class AbstractTower implements Tower {
         if (!this.context.economy().doPay(path.price())) {
             return false;
         }
-        this.chosenPath = path;
         this.onUpgradePathChosen(path);
-        this.recalculateStats();
+        // Stats first, then the path - see publishStats for why the order matters.
+        this.publishStats(Optional.of(path));
+        this.chosenPath = Optional.of(path);
         return true;
     }
 
@@ -295,9 +314,7 @@ public abstract class AbstractTower implements Tower {
                     "Kills: " + this.killCount + "\n" +
                     "Damage dealt: " + this.damageDealt / 100f + "\n\n";
         }
-        if (this.chosenPath != null) {
-            s += "Specialized: " + this.chosenPath.displayName() + "\n";
-        }
+        s += this.chosenPath.map(p -> "Specialized: " + p.displayName() + "\n").orElse("");
         return s;
     }
 

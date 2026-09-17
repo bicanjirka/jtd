@@ -1,21 +1,17 @@
 package td.ui;
 
-import td.GameEngine;
 import td.board.BoardGeometry;
-import td.cell.Cell;
 import td.enemy.EnemyMob;
-import td.enemy.EnemyRegistry;
 import td.projectile.Projectile;
-import td.projectile.ProjectileRegistry;
 import td.tower.Tower;
 import td.ui.render.CellDraw;
 import td.ui.render.PathMarkerDraw;
 import td.ui.render.RenderFrame;
-import td.wave.Path;
+import td.util.GameWorld;
+import td.util.LoadedLevel;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * Describes one frame of the game board: cell highlights, enemies, and towers,
@@ -25,30 +21,29 @@ import java.util.function.Supplier;
  * backend's job (e.g. {@link Java2DFrameRenderer}), not this class's - this
  * class has no {@code java.awt} import at all.
  * <p>
- * {@code board}/{@code path} are suppliers rather than fixed values because both are
- * replaced wholesale when a level loads, after this renderer is constructed - a fixed
- * field captured at construction would render a stale board forever.
+ * It takes the {@link GameWorld} rather than a handful of narrower slices. Drawing the board
+ * means drawing all of it - cells, enemies, towers, projectiles, the board geometry and the
+ * path - so naming six collaborators at the call site would say less than naming the one thing
+ * that is "everything on the board". What it deliberately does <em>not</em> take is
+ * {@code GameEngine}: a renderer has no business next to input handling and level loading.
+ * <p>
+ * The level is read fresh on every frame through {@link GameWorld#level()}, not captured at
+ * construction, because it is replaced wholesale when a level loads - and read <em>once</em>
+ * per frame, so a frame cannot mix the board geometry of one level with the cells of another.
  */
 public final class BoardRenderer {
 
-    private final GameEngine engine;
-    private final EnemyRegistry enemies;
-    private final ProjectileRegistry projectiles;
-    private final Supplier<BoardGeometry> board;
-    private final Supplier<Path> path;
+    private final GameWorld world;
 
-    public BoardRenderer(GameEngine engine, EnemyRegistry enemies, ProjectileRegistry projectiles,
-                          Supplier<BoardGeometry> board, Supplier<Path> path) {
-        this.engine = engine;
-        this.enemies = enemies;
-        this.projectiles = projectiles;
-        this.board = board;
-        this.path = path;
+    public BoardRenderer(GameWorld world) {
+        this.world = world;
     }
 
     public RenderFrame buildFrame(int gameTime, double interpolationAlpha, double animationSeconds) {
+        LoadedLevel level = this.world.level();
+
         List<CellDraw> cells = new ArrayList<>();
-        this.engine.cells().forEach(cell -> {
+        level.cells().forEach(cell -> {
             CellDraw draw = CellFrameBuilder.build(cell);
             if (draw != null) {
                 cells.add(draw);
@@ -56,24 +51,24 @@ public final class BoardRenderer {
         });
 
         EnemyFrameBuilder enemyFrameBuilder = new EnemyFrameBuilder(gameTime, interpolationAlpha);
-        for (EnemyMob enemy : this.enemies.getEnemies()) {
+        for (EnemyMob enemy : this.world.enemies().getEnemies()) {
             enemy.accept(enemyFrameBuilder);
         }
 
         TowerSpriteFrameBuilder spriteFrameBuilder = new TowerSpriteFrameBuilder(interpolationAlpha, animationSeconds);
         TowerEffectFrameBuilder effectFrameBuilder = new TowerEffectFrameBuilder(gameTime, interpolationAlpha, animationSeconds);
-        for (Tower tower : this.engine.getTowers()) {
+        for (Tower tower : this.world.towers().all()) {
             tower.accept(spriteFrameBuilder);
             tower.accept(effectFrameBuilder);
         }
 
         ProjectileFrameBuilder projectileFrameBuilder = new ProjectileFrameBuilder(interpolationAlpha);
-        for (Projectile projectile : this.projectiles.getProjectiles()) {
+        for (Projectile projectile : this.world.projectiles().getProjectiles()) {
             projectile.accept(projectileFrameBuilder);
         }
 
-        BoardGeometry board = this.board.get();
-        List<PathMarkerDraw> pathMarkers = PathMarkerFrameBuilder.build(this.path.get(), board.scale(), animationSeconds);
+        BoardGeometry board = level.board();
+        List<PathMarkerDraw> pathMarkers = PathMarkerFrameBuilder.build(level.path(), board.scale(), animationSeconds);
 
         return new RenderFrame(board.scale(), board.maxX(), board.maxY(),
                 cells, enemyFrameBuilder.build(), enemyFrameBuilder.buildMarkers(),

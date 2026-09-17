@@ -12,13 +12,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  * cleared (see GameHost.enemyDied). Backed by a {@link CopyOnWriteArrayList} - like
  * {@code TowerRoster}/{@code ProjectileRoster} - since {@link #add}/{@link #replace} are
  * called from an enemy's own {@code doTick} on the {@code game-loop} thread (an ability
- * spawning a reinforcement or hatching an egg) while {@link #getEnemies} is read from the EDT
- * for rendering.
+ * spawning a reinforcement or hatching an egg). The frame build reads it on that same thread;
+ * the array {@link #getEnemies} hands back is a fresh snapshot either way.
  */
 public class EnemyRoster implements EnemyRegistry, EnemySpawner {
 
     private final GameHost host;
-    private final List<EnemyMob> enemies = new CopyOnWriteArrayList<>();
+    // Volatile rather than final: setEnemies swaps the whole list in one write, so a reader
+    // sees the outgoing wave or the incoming one and never a half-filled roster. Still a
+    // CopyOnWriteArrayList, because add/replace mutate it in place from an enemy's own doTick.
+    private volatile List<EnemyMob> enemies = new CopyOnWriteArrayList<>();
     // Decremented on the game-loop thread as mobs die and reset from the EDT on level load, and
     // the value a decrement produces is what decides "wave cleared" and "you won" - so the
     // decrement and the value reported for it have to be one operation, not two.
@@ -33,9 +36,15 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
         return this.enemies.toArray(new EnemyMob[0]);
     }
 
+    /**
+     * Replaces the live list wholesale, as one write. Deliberately not {@code clear()} followed
+     * by {@code addAll()}: a CopyOnWriteArrayList makes each of those atomic on its own, but
+     * between them a reader sees an <em>empty</em> roster - which, mid-level, reads as "the
+     * wave is cleared". A concurrent collection makes the collection safe, not the operation
+     * (CLAUDE.md 3).
+     */
     public void setEnemies(EnemyMob[] enemies) {
-        this.enemies.clear();
-        this.enemies.addAll(List.of(enemies));
+        this.enemies = new CopyOnWriteArrayList<>(List.of(enemies));
     }
 
     public void setCount(int count) {

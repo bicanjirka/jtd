@@ -26,7 +26,13 @@ Dispatch Thread; a kill or a leak happens on the `game-loop` thread. So:
 - The listener list is a `CopyOnWriteArrayList` on purpose. Do not "optimize" it to
   `ArrayList`.
 - `economy` is `volatile` so the unsynchronized readers (`getCredits`, `getScore`,
-  `getLives`, `canPay`) see a consistent published snapshot rather than a torn one.
+  `getLives`, `canPay`) each see a consistent published snapshot rather than a torn one.
+- **Each of them is its own read, though, so two of them are not consistent with each other.**
+  `EconomyState` exists precisely because credits, score and lives are correlated, and calling
+  `getCredits()` then `getLives()` is two reads of the volatile that a kill or a purchase can
+  land between — reporting a state that never existed. A caller needing more than one of them
+  calls `state()` once and reads the value. The listener path was always handed the whole
+  `EconomyState`; `state()` is the same guarantee for a caller that polls.
 
 `canPay` is advisory only — it is a read with no lock held. The atomic check-and-charge is
 `doPay`, which returns `false` if the player cannot afford it. Never write
