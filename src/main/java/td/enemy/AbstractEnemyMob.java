@@ -433,16 +433,19 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     /**
-     * Reaching the path's end costs the same life/score penalty {@link EconomyDelta#leak}
-     * always has, but the mob does not loop back to the path's start to try again - it goes
-     * through the exact {@code dead}/fade/{@code reportDeath()} path a combat kill does, just
-     * with a leak penalty instead of {@link EconomyDelta#kill}. That is the actual punishment:
-     * gone for good means no tower ever gets a second chance to kill it for its bounty.
+     * Reaching the path's end costs a life and docks the score by exactly the bounty this mob
+     * would have paid on a kill - {@link EconomyDelta#leak}, mirroring {@link EconomyDelta#kill}
+     * - but the mob does not loop back to the path's start to try again - it goes through the
+     * exact {@code dead}/fade/{@code reportDeath()} path a combat kill does, just with a leak
+     * penalty instead of a bounty. That is the actual punishment: gone for good means no tower
+     * ever gets a second chance to kill it for its bounty. A price-0 mob (a wave authored to pay
+     * no bounty at all) still costs the life; it was never going to cost any score either way,
+     * on a kill or a leak.
      */
     private void leak() {
         this.validTarget = false;
         this.dead = true;
-        this.gameWorld.economy().apply(EconomyDelta.leak(this.price == 0 ? 10 : this.price));
+        this.gameWorld.economy().apply(EconomyDelta.leak(this.price));
         this.gameWorld.enemies().reportDeath();
     }
 }

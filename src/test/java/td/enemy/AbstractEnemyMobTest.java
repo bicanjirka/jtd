@@ -266,6 +266,23 @@ class AbstractEnemyMobTest {
     }
 
     @Test
+    void aPriceZeroEnemyLeakingCostsTheLifeButNoScore() {
+        GameWorld context = newContext();
+        context.setPath(straightPath(10, 0, 1));
+        int initialLives = context.economy().getLives();
+        int initialScore = context.economy().getScore();
+
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 0, 1);
+        for (int i = 1; i <= 100; i++) {
+            enemy.doTick(i);
+        }
+
+        assertThat(enemy.isDead()).isTrue();
+        assertThat(context.economy().getLives()).isEqualTo(initialLives - 1);
+        assertThat(context.economy().getScore()).isEqualTo(initialScore);
+    }
+
+    @Test
     void anEnemySpawnedAtAnOffBoardPathPointStartsOffscreenAndWalksOntoTheBoard() {
         GameWorld context = newContext();
         context.setBoard(BoardGeometry.of(10, 5, 5));
