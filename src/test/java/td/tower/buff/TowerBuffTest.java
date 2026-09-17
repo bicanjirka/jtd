@@ -89,4 +89,33 @@ class TowerBuffTest {
     void noBuffLeavesTheCooldownUnchanged() {
         assertThat(TowerBuff.none().fireRateFor(20)).isEqualTo(20);
     }
+
+    @Test
+    void theFourArgumentConstructorDefaultsCritChanceBonusToZero() {
+        TowerBuff buff = new TowerBuff(0.1f, 0.1f, 0.1f, 0.1f);
+
+        assertThat(buff.critChanceBonus()).isZero();
+    }
+
+    @Test
+    void combineIsAdditiveOnCritChanceBonusToo() {
+        TowerBuff a = new TowerBuff(0f, 0f, 0f, 0f, 0.1f);
+        TowerBuff b = new TowerBuff(0f, 0f, 0f, 0f, 0.05f);
+
+        assertThat(a.combine(b).critChanceBonus()).isCloseTo(0.15f, org.assertj.core.data.Offset.offset(1e-6f));
+    }
+
+    @Test
+    void critChanceForAddsTheBonusToTheBase() {
+        TowerBuff buff = new TowerBuff(0f, 0f, 0f, 0f, 0.15f);
+
+        assertThat(buff.critChanceFor(0f)).isCloseTo(0.15f, org.assertj.core.data.Offset.offset(1e-6f));
+    }
+
+    @Test
+    void critChanceForClampsToAValidProbability() {
+        TowerBuff buff = new TowerBuff(0f, 0f, 0f, 0f, 1.5f);
+
+        assertThat(buff.critChanceFor(0f)).isEqualTo(1f);
+    }
 }

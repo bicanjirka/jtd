@@ -118,6 +118,15 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
+     * Current chance, in {@code [0, 1]}, that this tower's next hit rolls critical -
+     * shorthand for {@code stats().critChance()}. {@code 0} unless an upgrade path has granted
+     * some (see {@code td.tower.buff.TowerBuff.critChanceBonus}).
+     */
+    protected float critChance() {
+        return this.stats.critChance();
+    }
+
+    /**
      * Whether this tower never attacks and exists only to buff its neighbours. A fixed
      * property of the tower type rather than mutable state, so only {@code AuraTower}
      * overrides it.
@@ -185,6 +194,10 @@ public abstract class AbstractTower implements Tower {
      * regardless of which subclass fires: a shot into an enemy another tower already killed
      * this tick is a no-op in EnemyMob.doDamage() and must not be counted as a kill twice.
      * <p>
+     * Rolls this tower's crit chance first (see {@link #rollCritical}), so every subclass's
+     * call site gets a critical hit for free the moment its stats carry one, with no per-leaf
+     * change needed.
+     * <p>
      * {@code damageDealt} accumulates what {@code doDamage} reports actually landed, not the
      * {@code damage} argument: a mob that resists part of a hit (see
      * {@code td.enemy.PercentResistTrait}) takes less than was fired at it, and a tower
@@ -207,7 +220,7 @@ public abstract class AbstractTower implements Tower {
             return;
         }
         boolean wasAlive = !enemy.isDead();
-        Damage landed = enemy.doDamage(damage);
+        Damage landed = enemy.doDamage(this.rollCritical(damage));
         if (wasAlive) {
             this.damageDealt += landed.amount();
             if (enemy.isDead()) {
@@ -220,6 +233,21 @@ public abstract class AbstractTower implements Tower {
                 }
             }
         }
+    }
+
+    /**
+     * Rolls this tower's current {@link #critChance()} against {@code context.random()} (per
+     * this project's "randomness is injected" rule - never {@code Math.random()}) and, on
+     * success, returns {@code damage.asCritical()} - otherwise {@code damage} unchanged. A
+     * tower with no crit chance (every tower not carrying an upgrade path that grants some)
+     * takes the same branch it always has, at the cost of one comparison.
+     */
+    private Damage rollCritical(Damage damage) {
+        float chance = this.critChance();
+        if (chance > 0f && this.context.random().nextDouble() < chance) {
+            return damage.asCritical();
+        }
+        return damage;
     }
 
     public long getDamageDealt() {
@@ -323,8 +351,11 @@ public abstract class AbstractTower implements Tower {
             s += "\n";
         } else {
             s += "Damage: " + this.stats.damage() / 100f + "\n" +
-                    this.rateLine(this.stats.coolDown()) +
-                    "Kills: " + this.killCount + "\n" +
+                    this.rateLine(this.stats.coolDown());
+            if (this.stats.critChance() > 0f) {
+                s += "Crit chance: " + Math.round(this.stats.critChance() * 100) + "%\n";
+            }
+            s += "Kills: " + this.killCount + "\n" +
                     "Damage dealt: " + this.damageDealt / 100f + "\n\n";
         }
         s += this.chosenPath.map(p -> "Specialized: " + p.displayName() + "\n").orElse("");
