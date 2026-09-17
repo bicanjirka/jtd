@@ -285,6 +285,24 @@ threads get instead of it" before reaching for a keyword — and when the answer
 `volatile`, check first whether the fields are correlated. If they are, the answer is a
 snapshot.
 
+### The tower-stats case, and why it is a snapshot too
+
+`AbstractTower.recalculateStats()` runs on the EDT - an aura tower registering, an upgrade
+path being bought - and produces five numbers that are meaningless apart: current damage,
+current range, current cooldown, and the pixel and squared-pixel forms of that range. Tick
+code reads all five.
+
+This was originally five separate fields, and the Phase 3 threading pass marked three of them
+`volatile`, which made each read fresh without making the set coherent: a tick could fire with
+the new damage and the previous cooldown, or scan using `rangeReal` and `rangeReal2` from
+different generations. That is the "half-updated object" the snapshot rule exists to prevent,
+in a place where `volatile` looked like a sufficient answer.
+
+They now live in one immutable `TowerStats` swapped through a single volatile reference. The
+useful test, when deciding between the two mechanisms, is whether the fields have to agree
+with one another: a tower's kill count and its damage dealt do not (they are two independent
+readouts in a text panel), but its damage and its cooldown do.
+
 ### Other threading decisions
 
 - `GameLoop.stop()` joins the loop thread (bounded, and skipped when called from that thread

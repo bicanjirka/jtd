@@ -31,14 +31,17 @@ public final class TowerAura extends AbstractTower implements TowerListener {
      * aura towers can stack unequal amounts via TowerBuff's additive combine.
      */
     public TowerAura(GameWorld context, int x, int y, float power) {
-        super(TowerFactory.type.aura, price, damage, range);
-        this.passive = true;
+        super(TowerFactory.type.aura, price, damage, range, 0, context, x, y);
         this.power = power;
         this.clients = new ArrayList<>();
-        this.doInit(context, x, y);
 
         this.context.addTowerListener(this);
         this.scanTowers();
+    }
+
+    @Override
+    protected boolean isPassive() {
+        return true;
     }
 
     public TowerBuff buff() {
@@ -55,7 +58,7 @@ public final class TowerAura extends AbstractTower implements TowerListener {
                     default -> {
                         dx = this.centerX - t.getX();
                         dy = this.centerY - t.getY();
-                        if ((dx * dx + dy * dy) < this.rangeReal2) {
+                        if ((dx * dx + dy * dy) < this.rangeReal2()) {
                             t.registerTower(this);
                         }
                     }
@@ -64,9 +67,10 @@ public final class TowerAura extends AbstractTower implements TowerListener {
         }
     }
 
-    protected void calcDamageRange() {
+    @Override
+    protected void recalculateStats() {
         this.scanTowers();
-        super.calcDamageRange();
+        super.recalculateStats();
     }
 
     public void doTick(int gameTime) {
@@ -80,7 +84,7 @@ public final class TowerAura extends AbstractTower implements TowerListener {
                 default -> {
                     int dx = this.centerX - t.getX();
                     int dy = this.centerY - t.getY();
-                    if ((dx * dx + dy * dy) < this.rangeReal2) {
+                    if ((dx * dx + dy * dy) < this.rangeReal2()) {
                         t.registerTower(this);
                     }
                 }

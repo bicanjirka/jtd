@@ -88,7 +88,7 @@ class TowerSeekerTest {
         boolean chosen = tower.chooseUpgradePath(twinWarhead);
 
         assertThat(chosen).isTrue();
-        assertThat(tower.coolDownCurrent).isLessThan(tower.coolDownMax);
+        assertThat(tower.coolDownCurrent()).isLessThan(tower.coolDownMax);
     }
 
     @Test

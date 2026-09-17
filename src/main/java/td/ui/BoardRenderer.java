@@ -48,17 +48,12 @@ public final class BoardRenderer {
 
     public RenderFrame buildFrame(int gameTime, double interpolationAlpha, double animationSeconds) {
         List<CellDraw> cells = new ArrayList<>();
-        Cell[][] cellGrid = this.engine.getCellGrid();
-        if (cellGrid != null) {
-            for (Cell[] column : cellGrid) {
-                for (Cell cell : column) {
-                    CellDraw draw = CellFrameBuilder.build(cell);
-                    if (draw != null) {
-                        cells.add(draw);
-                    }
-                }
+        this.engine.cells().forEach(cell -> {
+            CellDraw draw = CellFrameBuilder.build(cell);
+            if (draw != null) {
+                cells.add(draw);
             }
-        }
+        });
 
         EnemyFrameBuilder enemyFrameBuilder = new EnemyFrameBuilder(gameTime, interpolationAlpha);
         for (EnemyMob enemy : this.enemies.getEnemies()) {

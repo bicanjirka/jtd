@@ -150,7 +150,7 @@ class BoardRendererTest {
     void aSelectedCellProducesExactlyOneCellDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        engine.getCellGrid()[0][0].setHighlight(Cell.highlightType.select);
+        engine.cells().at(0, 0).setHighlight(Cell.highlightType.select);
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 

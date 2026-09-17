@@ -43,8 +43,8 @@ class AbstractTowerTest {
         new TowerAura(context, 0, 0);
 
         float expectedMultiplier = 1f + TowerAura.DEFAULT_POWER; // one aura tower registered
-        assertThat(tower.damageCurrent).isEqualTo((int) (tower.damageBase * expectedMultiplier));
-        assertThat(tower.damageCurrent).isNotEqualTo(tower.damageBase);
+        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
+        assertThat(tower.damageCurrent()).isNotEqualTo(tower.damageBase);
     }
 
     @Test
@@ -56,7 +56,7 @@ class AbstractTowerTest {
         new TowerAura(context, 0, 0);
 
         float expectedMultiplier = 1f + 2 * TowerAura.DEFAULT_POWER;
-        assertThat(tower.damageCurrent).isEqualTo((int) (tower.damageBase * expectedMultiplier));
+        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
     }
 
     @Test
@@ -68,7 +68,7 @@ class AbstractTowerTest {
         new TowerAura(context, 0, 0, 0.3f);
 
         float expectedMultiplier = 1f + 0.1f + 0.3f;
-        assertThat(tower.damageCurrent).isEqualTo((int) (tower.damageBase * expectedMultiplier));
+        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
     }
 
     @Test
@@ -79,7 +79,7 @@ class AbstractTowerTest {
 
         tower.unregisterTower(aura);
 
-        assertThat(tower.damageCurrent).isEqualTo(tower.damageBase);
+        assertThat(tower.damageCurrent()).isEqualTo(tower.damageBase);
     }
 
     @Test
@@ -92,8 +92,8 @@ class AbstractTowerTest {
 
         new TowerAura(context, 0, 0);
 
-        assertThat(near.damageCurrent).isNotEqualTo(near.damageBase);
-        assertThat(far.damageCurrent).isEqualTo(far.damageBase);
+        assertThat(near.damageCurrent()).isNotEqualTo(near.damageBase);
+        assertThat(far.damageCurrent()).isEqualTo(far.damageBase);
     }
 
     @Test
@@ -182,7 +182,7 @@ class AbstractTowerTest {
 
         assertThat(chosen).isTrue();
         assertThat(context.getCredits()).isEqualTo(60);
-        assertThat(tower.damageCurrent).isEqualTo((int) (tower.damageBase * 1.5f));
+        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * 1.5f));
         assertThat(tower.getChosenPath()).isEqualTo(path);
     }
 
@@ -237,7 +237,7 @@ class AbstractTowerTest {
         tower.chooseUpgradePath(path);
 
         float expectedMultiplier = 1f + 0.2f + TowerAura.DEFAULT_POWER;
-        assertThat(tower.damageCurrent).isEqualTo((int) (tower.damageBase * expectedMultiplier));
+        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
     }
 
     @Test
@@ -248,7 +248,7 @@ class AbstractTowerTest {
 
         tower.chooseUpgradePath(path);
 
-        assertThat(tower.coolDownCurrent).isEqualTo(Math.round(tower.coolDownMax * 0.5f));
+        assertThat(tower.coolDownCurrent()).isEqualTo(Math.round(tower.coolDownMax * 0.5f));
     }
 
     @Test

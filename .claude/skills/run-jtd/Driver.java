@@ -217,13 +217,13 @@ public class Driver {
         Object engine = engineField.get(game);
         Class<?> engineClass = engine.getClass();
 
-        Object cellGrid = call(engine, engineClass, "getCellGrid");
-        String gridDims = "null";
-        if (cellGrid != null) {
-            Object[] grid = (Object[]) cellGrid;
-            Object[] col0 = (Object[]) grid[0];
-            gridDims = grid.length + "x" + col0.length;
-        }
+        // GameEngine.cells() returns a td.cell.CellGrid, which owns the board and never
+        // hands out its backing array - ask it for its dimensions rather than indexing.
+        Object cellGrid = call(engine, engineClass, "cells");
+        Class<?> gridClass = cellGrid.getClass();
+        String gridDims = Boolean.TRUE.equals(call(cellGrid, gridClass, "isLoaded"))
+                ? call(cellGrid, gridClass, "width") + "x" + call(cellGrid, gridClass, "height")
+                : "not loaded";
         Object context = call(engine, engineClass, "getGameWorld");
         Class<?> contextClass = context.getClass();
 

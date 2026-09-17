@@ -36,6 +36,9 @@ public final class TowerTwo extends AbstractTower {
             "Cluster Charge", 30, new TowerBuff(0.2f, 0.2f, 0f, 0f), new ClusterCondition(2));
     private static final List<UpgradePath> PATHS = List.of(SIEGE, CLUSTER_CHARGE);
 
+    /** Ticks between shots before any fire-rate buff. */
+    private static final int COOLDOWN_MAX = 19;
+
     private float spreadRadius;
     private int coolDown = 0;
 
@@ -46,11 +49,8 @@ public final class TowerTwo extends AbstractTower {
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
     public TowerTwo(GameWorld context, int x, int y) {
-        super(TowerFactory.type.second, price, damage, range);
-        this.coolDownMax = 19;
-        this.coolDownCurrent = this.coolDownMax;
+        super(TowerFactory.type.second, price, damage, range, COOLDOWN_MAX, context, x, y);
         this.spreadRadius = spreadRadiusBase * context.getBoard().scale();
-        this.doInit(context, x, y);
     }
 
     @Override
@@ -78,7 +78,7 @@ public final class TowerTwo extends AbstractTower {
         if (this.coolDown > 0) {
             this.coolDown--;
         } else {
-            List<EnemyMob> enemies = this.findEnemiesInRangeVisible(this.centerX, this.centerY, this.rangeReal);
+            List<EnemyMob> enemies = this.findEnemiesInRangeVisible(this.centerX, this.centerY, this.rangeReal());
 
             if (!enemies.isEmpty()) {
                 this.primaryTarget = enemies.get((int) (Math.random() * enemies.size()));
@@ -93,11 +93,11 @@ public final class TowerTwo extends AbstractTower {
                     dx = ex - (int) splashTarget.getX();
                     dy = ey - (int) splashTarget.getY();
                     r2 = dx * dx + dy * dy;
-                    damage = Math.round(this.damageCurrent * (1 - r2 / (this.spreadRadius * this.spreadRadius)));
+                    damage = Math.round(this.damageCurrent() * (1 - r2 / (this.spreadRadius * this.spreadRadius)));
                     this.dealDamage(splashTarget, Damage.physical(damage));
                 }
 
-                this.coolDown = this.coolDownCurrent;
+                this.coolDown = this.coolDownCurrent();
                 this.splashCenterX = ex;
                 this.splashCenterY = ey;
             } else {
@@ -136,11 +136,11 @@ public final class TowerTwo extends AbstractTower {
     }
 
     public float getCoolDownFraction() {
-        return (float) this.coolDown / this.coolDownCurrent;
+        return (float) this.coolDown / this.coolDownCurrent();
     }
 
     public boolean isSplashVisible() {
-        return this.coolDown >= this.coolDownCurrent;
+        return this.coolDown >= this.coolDownCurrent();
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {

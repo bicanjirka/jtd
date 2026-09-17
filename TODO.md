@@ -46,15 +46,6 @@ is a deliberate scoped exception, documented as such in `CLAUDE.md`.
 - **Approach:** return `Optional`, then add a `no-null-return-in-engine` check to
   `scripts/VerifyRules.java`.
 
-### `GameEngine.getCellGrid()` hands out the live array
-
-The only piece of engine state exposed raw. `BoardRenderer` has to null-check it because "no
-level loaded" is itself modelled as `null`.
-
-- **Where:** `td.GameEngine.getCellGrid`, `td.ui.BoardRenderer.buildFrame`, `td.BalanceHarness`.
-- **Approach:** expose the read-only queries callers actually need (cell at x/y, board
-  dimensions) rather than the array, and model "no level loaded" explicitly.
-
 ### `Main` catches `Throwable`; `PanelTowerInfo` catches `NullPointerException`
 
 `Main.main` turns an `OutOfMemoryError` or `StackOverflowError` into a log line and exit 1.
@@ -92,17 +83,31 @@ and `getHealth()` returns a `long` while the field it reads is an `int`.
 - **Approach:** name the factor as a constant with one line saying what unit it buys, and
   reconcile the accessor's return type with the field's.
 
-### `AbstractTower` exposes fifteen `protected` mutable fields
+### A command queue would make the simulation a true single writer
 
-`context`, `boardX/Y`, `centerX/Y`, `rangeReal`, `rangeReal2`, `damageCurrent` and others are
-`protected` and mutable across eight `final` leaves. This is why `td/tower/CLAUDE.md` needs
-three paragraphs stating that `doInit` must be the last call in a leaf constructor: the
-ordering constraint cannot be expressed in code as the class is shaped.
+Not a defect - an option, recorded with the condition that would make it worth taking.
 
-- **Where:** `td.tower.AbstractTower`, the eight `Tower*` leaves, `td.tower.TowerFactory`.
-- **Approach:** make construction-derived fields `private final`, set through the constructor
-  rather than a post-construction `doInit`. The ordering hazard then becomes a compile error
-  and its documentation can be deleted.
+Every mutation originating on the EDT (placing or selling a tower, choosing an upgrade path,
+loading a level, requesting a wave) currently reaches the simulation by one of three ad-hoc
+routes: a volatile flag `doTick` consumes (`requestNextWave`), direct mutation under a stopped
+loop (`loadLevel`), or direct mutation while the loop runs (tower placement). Each is
+individually safe, but there are three of them, and the third is why `AbstractTower`,
+`CellNormal` and `GameEngine` all carry publication rules of their own.
+
+A single `ConcurrentLinkedQueue<Runnable>` drained at the top of `doTick` would replace all
+three: the simulation thread becomes the only writer, most of the volatile markers become
+unnecessary, and every mutation lands on a deterministic tick boundary.
+
+- **Where:** `td.GameEngine.doTick`, `td.TowerPlacement`, `td.TowerDefense`'s listeners.
+- **Why not yet:** buying a tower deducts credits and reports success synchronously, and the
+  UI uses that answer immediately. Through a queue, click feedback waits for the next tick -
+  up to 50ms at normal speed, and unbounded while paused, where the queue never drains. That
+  needs optimistic UI or a second synchronous path for purchases, which puts two mechanisms
+  back.
+- **The trigger:** deterministic replay. A recorded command log is what would let
+  `td.BalanceHarness` produce runs that are comparable to each other and reproducible across
+  machines. If that becomes a goal, this stops being indirection and starts being the feature
+  - do it then, and not before.
 
 ### `GameWorld` is a 42-method facade over six collaborators
 

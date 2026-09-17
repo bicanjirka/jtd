@@ -55,8 +55,8 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
     private final List<SonarHit> recentHits = new ArrayList<>();
 
     public TowerThree(GameWorld context, int x, int y) {
-        super(TowerFactory.type.third, price, damage, range);
-        this.doInit(context, x, y);
+        // No cooldown: this tower's cadence is its sweep rate, not a reload - see rateLine.
+        super(TowerFactory.type.third, price, damage, range, 0, context, x, y);
         this.context.addWaveStartListener(this);
     }
 
@@ -79,13 +79,13 @@ public final class TowerThree extends AbstractTower implements WaveStartListener
         this.recentHits.removeIf(hit -> gameTime - hit.tick() >= HIT_FLASH_TICKS);
 
         List<EnemyMob> inRange = InRangeTargetQuery
-                .ofType(this.centerX, this.centerY, this.rangeReal, EnemyMob.type.Normal)
+                .ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.type.Normal)
                 .matching(this.context.getEnemyRegistry());
 
         for (EnemyMob enemy : inRange) {
             double bearing = TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(), enemy.getY());
             if (this.sweep.sweptThisTick(bearing)) {
-                this.dealDamage(enemy, Damage.physical(this.damageCurrent));
+                this.dealDamage(enemy, Damage.physical(this.damageCurrent()));
                 this.recentHits.add(new SonarHit((float) enemy.getX(), (float) enemy.getY(), gameTime));
             }
         }

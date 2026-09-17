@@ -53,8 +53,8 @@ public final class TowerCinder extends AbstractTower {
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
     public TowerCinder(GameWorld context, int x, int y) {
-        super(TowerFactory.type.cinder, price, damage, range);
-        this.doInit(context, x, y);
+        // No cooldown: it burns whatever is in its cone every tick - see rateLine.
+        super(TowerFactory.type.cinder, price, damage, range, 0, context, x, y);
     }
 
     @Override
@@ -71,7 +71,7 @@ public final class TowerCinder extends AbstractTower {
     }
 
     public void doTick(int gameTime) {
-        List<EnemyMob> inRange = InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal)
+        List<EnemyMob> inRange = InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal())
                 .matching(this.context.getEnemyRegistry());
         // No target: hold the last heading rather than snapping back to a neutral angle - see
         // TurretAim's class doc on skipping tick() while idle.
@@ -79,10 +79,10 @@ public final class TowerCinder extends AbstractTower {
                 .ifPresent(nearest -> this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, nearest.getX(), nearest.getY())));
 
         List<EnemyMob> caught = new InWedgeTargetQuery(this.centerX, this.centerY, this.turretAim.currentRadians(), this.halfWidthRadians)
-                .and(InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal))
+                .and(InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal()))
                 .matching(this.context.getEnemyRegistry());
         for (EnemyMob enemy : caught) {
-            enemy.applyEffect(Effect.burn(Damage.magic(this.damageCurrent), BURN_DURATION_TICKS, d -> this.dealDamage(enemy, d)));
+            enemy.applyEffect(Effect.burn(Damage.magic(this.damageCurrent()), BURN_DURATION_TICKS, d -> this.dealDamage(enemy, d)));
         }
     }
 

@@ -70,7 +70,9 @@ on whether its fields are correlated:
    A moving enemy's position, health and death state only mean anything together, so the
    board crosses as one `RenderFrame` — built by `TowerDefense.buildAndPublishFrame` on the
    `game-loop` thread and published through a single `volatile` reference that `paintBoard`
-   reads. `paintBoard` builds nothing and touches no domain object.
+   reads. `paintBoard` builds nothing and touches no domain object. `TowerStats` is the same
+   shape in the other direction: a tower's buffed damage, range and cooldown are recomputed
+   on the EDT and swapped whole, so a tick never fires on a half-applied recalculation.
 2. **Independent scalars may cross as `volatile` fields** — a tower's kill count, a cell's
    highlight. `volatile` is not a cheaper substitute for a snapshot: it fixes tearing and
    visibility, not a half-updated object (this tick's `x` with last tick's `y`). Use it only

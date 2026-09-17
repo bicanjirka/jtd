@@ -48,16 +48,16 @@ public final class TowerSeeker extends AbstractTower {
             "Deep Freeze", 35, new TowerBuff(0.3f, 0f, 0f, 0f), new KillCountCondition(10));
     private static final List<UpgradePath> PATHS = List.of(TWIN_WARHEAD, DEEP_FREEZE);
 
+    /** Ticks between shots before any fire-rate buff - paired with this tower's damage. */
+    private static final int COOLDOWN_MAX = 45;
+
     private int freezeDurationTicks = FREEZE_DURATION_TICKS_BASE;
     private int coolDown = 0;
     private EnemyMob currentTarget;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
     public TowerSeeker(GameWorld context, int x, int y) {
-        super(TowerFactory.type.seeker, price, damage, range);
-        this.coolDownMax = 45; // paired with the damage bump above - see its comment
-        this.coolDownCurrent = this.coolDownMax;
-        this.doInit(context, x, y);
+        super(TowerFactory.type.seeker, price, damage, range, COOLDOWN_MAX, context, x, y);
     }
 
     @Override
@@ -74,7 +74,7 @@ public final class TowerSeeker extends AbstractTower {
     }
 
     private EnemyMob findTarget() {
-        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal, EnemyMob.type.Normal)
+        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.type.Normal)
                 .matching(this.context.getEnemyRegistry());
         return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
     }
@@ -86,7 +86,7 @@ public final class TowerSeeker extends AbstractTower {
             this.currentTarget = this.findTarget();
             if (this.currentTarget != null) {
                 this.fireAt(this.currentTarget);
-                this.coolDown = this.coolDownCurrent;
+                this.coolDown = this.coolDownCurrent();
             }
         }
         // No target: hold the last heading rather than snapping back to a neutral angle - see
@@ -102,7 +102,7 @@ public final class TowerSeeker extends AbstractTower {
     }
 
     private void onImpact(EnemyMob target) {
-        this.dealDamage(target, Damage.magic(this.damageCurrent));
+        this.dealDamage(target, Damage.magic(this.damageCurrent()));
         target.applyEffect(Effect.freeze(this.freezeDurationTicks, d -> this.dealDamage(target, d)));
     }
 

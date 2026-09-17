@@ -60,7 +60,7 @@ class BuiltInLevelCatalogEngineTest {
         Tower selected = engine.mouseClicked(cellCenter(curveOnlyCell.x()), cellCenter(curveOnlyCell.y()));
 
         assertThat(selected).isNull();
-        assertThat(engine.getCellGrid()[curveOnlyCell.x()][curveOnlyCell.y()].hasTower()).isFalse();
+        assertThat(engine.cells().at(curveOnlyCell.x(), curveOnlyCell.y()).hasTower()).isFalse();
         assertThat(engine.getGameWorld().getCredits()).isEqualTo(creditsBefore);
     }
 
@@ -73,7 +73,7 @@ class BuiltInLevelCatalogEngineTest {
         engine.startPlacing(TowerFactory.type.first, TowerOne.range);
         engine.mouseClicked(cellCenter(0), cellCenter(level.height() - 1));
 
-        assertThat(engine.getCellGrid()[0][level.height() - 1].hasTower()).isTrue();
+        assertThat(engine.cells().at(0, level.height() - 1).hasTower()).isTrue();
     }
 
     /**
