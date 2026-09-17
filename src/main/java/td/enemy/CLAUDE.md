@@ -34,7 +34,7 @@ safety net despite there being only one real concrete class to visit.
 `getEnemy(String, ...)`/`isEnemy(String)` are stable, unchanged signatures that delegate to a
 freshly built `EnemyCatalog.builtIn()` (plus the same `e`-is-a-spacer special case
 `WaveScript` has) - that's what keeps every enemy-behavior test that predates this feature
-(`EnemyMobSquareTest`, `AbstractEnemyMobTest`, and others) working unchanged. Real gameplay
+(`PercentResistTraitTest`, `AbstractEnemyMobTest`, and others) working unchanged. Real gameplay
 spawning (`WaveScript`/`Wave`/`GameEngine.loadLevel`) goes through `EnemyCatalog` directly,
 not this class, since it needs per-level catalog scoping `EnemyFactory` doesn't offer. The
 old `EnemyFactory.Enemy` enum and `identifyEnemy` are gone - nothing needs a closed
