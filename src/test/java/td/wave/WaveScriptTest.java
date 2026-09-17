@@ -41,6 +41,16 @@ class WaveScriptTest {
     }
 
     @Test
+    void aNumericPrefixBeforeTheSpacerRepeatsItTheSameWayAsAnyOtherToken() {
+        WaveContent fourSeparateSpacers = WaveScript.parse("c e e e e c", this.catalog);
+        WaveContent oneCountedSpacer = WaveScript.parse("c 4 e c", this.catalog);
+
+        assertThat(oneCountedSpacer.spawnSequence()).isEqualTo(fourSeparateSpacers.spawnSequence());
+        assertThat(oneCountedSpacer.spawnSequence()).hasSize(6);
+        assertThat(oneCountedSpacer.enemyCount()).isEqualTo(2);
+    }
+
+    @Test
     void aCountAppliesOnlyToTheTokenImmediatelyFollowingItAndThenResets() {
         WaveContent content = WaveScript.parse("2 c s", this.catalog);
 
