@@ -15,12 +15,14 @@ import td.tower.TowerFactory;
 import td.util.GameHost;
 import td.util.RandomSource;
 import td.util.GameWorld;
+import td.util.LoadedLevel;
 import td.wave.Path;
 import td.wave.PathBuilder;
 import td.wave.PathCoverage;
 import td.wave.Point;
 import td.wave.Wave;
 import td.wave.WaveDefinition;
+import td.wave.WaveProgress;
 import td.wave.WaveScript;
 
 import java.util.ArrayList;
@@ -45,13 +47,13 @@ public class GameEngine {
     private final GameWorld gameWorld;
     private final TowerPlacement placement;
 
-    // Every field below is written on one thread and read on the other: the EDT loads a
-    // level, requests a wave and sells towers; the game-loop thread consumes those requests
-    // in doTick and advances the wave counter. Each is an independent scalar or an immutable
-    // reference swapped wholesale, so volatile publication is the whole requirement - there
-    // is no multi-field invariant here to guard. See CLAUDE.md 3.
-    private volatile CellGrid cellGrid = CellGrid.empty();
-    private volatile List<Wave> waves = new ArrayList<>();
+    // The level itself - cell grid, board, path, catalog and wave list - is NOT here: it is
+    // one correlated bundle, so it lives behind GameWorld's single volatile LoadedLevel (see
+    // CLAUDE.md 3 rule 1). What remains here is per-run progress, and each of these genuinely
+    // is an independent scalar written on one thread and read on the other: the EDT loads a
+    // level, requests a wave and sells towers; the game-loop thread consumes those requests in
+    // doTick and advances the wave counter. Pair the wave counter with the wave list only
+    // through waveProgress(), which reads one snapshot of each.
     private volatile int wave = 0;
     private volatile boolean waveReady = true;
     private volatile boolean startWave = false;
@@ -69,7 +71,9 @@ public class GameEngine {
 
     private GameEngine(GameWorld gameWorld) {
         this.gameWorld = gameWorld;
-        this.placement = new TowerPlacement(this.gameWorld, () -> this.cellGrid);
+        // gameWorld::cells rather than a lambda closing over this: nothing here hands a
+        // partially-constructed GameEngine to a collaborator.
+        this.placement = new TowerPlacement(this.gameWorld, this.gameWorld::cells);
     }
 
     public GameWorld getGameWorld() {
@@ -81,11 +85,11 @@ public class GameEngine {
     }
 
     /**
-  * The board, as a queryable grid rather than the backing array - see {@link CellGrid}.
-  * Never null: a level that has not been loaded yields {@link CellGrid#empty()}.
-  */
+     * The board, as a queryable grid rather than the backing array - see {@link CellGrid}.
+     * Never null: a level that has not been loaded yields {@link CellGrid#empty()}.
+     */
     public CellGrid cells() {
-        return this.cellGrid;
+        return this.gameWorld.cells();
     }
 
     public int getCurrentWaveIndex() {
@@ -93,11 +97,28 @@ public class GameEngine {
     }
 
     public int getWaveCount() {
-        return this.waves.size();
+        return this.gameWorld.level().waveCount();
     }
 
-    public Wave getWaveAt(int index) {
-        return this.waves.get(index);
+    /**
+     * Wave index, wave count and the waves either side of the cursor, read from <em>one</em>
+     * snapshot of the installed level. Callers needing more than one of those must use this
+     * rather than combining {@link #getCurrentWaveIndex()} with {@link #getWaveCount()}: those
+     * are two reads, and a level installing between them pairs an index belonging to one level
+     * with a count belonging to another. See {@link WaveProgress}.
+     */
+    public WaveProgress waveProgress() {
+        LoadedLevel installed = this.gameWorld.level();
+        int index = this.wave;
+        int count = installed.waveCount();
+        if (index > count) {
+            // The wave counter still belongs to a level that is no longer installed - report
+            // the incoming level rather than indexing off the end of its shorter wave list.
+            return new WaveProgress(count, count, Optional.empty(), Optional.empty());
+        }
+        Optional<Wave> current = index > 0 ? Optional.of(installed.waveAt(index - 1)) : Optional.empty();
+        Optional<Wave> next = index < count ? Optional.of(installed.waveAt(index)) : Optional.empty();
+        return new WaveProgress(index, count, current, next);
     }
 
     /** Whether the previous wave is cleared, so the next one is allowed to start. */
@@ -130,21 +151,26 @@ public class GameEngine {
         CellGrid grid = CellGrid.of(width, height, scale);
         Path path = PathBuilder.build(level.path(), level.smoothing(), scale);
         markUnbuildableCells(grid, path, scale);
-        this.cellGrid = grid;
-        this.gameWorld.setBoard(BoardGeometry.of(scale, width, height));
-        this.gameWorld.setPath(path);
-        this.wave = 0;
+        EnemyCatalog catalog = EnemyCatalog.builtIn();
 
-        this.gameWorld.setEnemyCatalog(EnemyCatalog.builtIn());
+        // Waves are built before the level is installed, against the catalog local rather than
+        // through the world. A Wave holds only its content until it starts (see Wave.spawn),
+        // so nothing here reads the level state this method is in the middle of replacing.
         List<Wave> loaded = new ArrayList<>();
         for (WaveDefinition wd : level.waves()) {
-            loaded.add(new Wave(this.gameWorld, wd.hp(), wd.price(), wd.level(), WaveScript.parse(wd.enemies(), this.gameWorld.getEnemyCatalog())));
+            loaded.add(new Wave(this.gameWorld, wd.hp(), wd.price(), wd.level(),
+                    WaveScript.parse(wd.enemies(), catalog)));
         }
-        this.waves = loaded;
+
+        // One write. Everything above filled a local; none of it is reachable by the game-loop
+        // thread until this line publishes all five parts at once. See LoadedLevel.
+        this.wave = 0;
+        this.gameWorld.installLevel(new LoadedLevel(grid,
+                BoardGeometry.of(scale, width, height), path, catalog, loaded));
 
         this.gameWorld.economy().startEconomy(level.startingCredits(), level.startingLives());
         LOG.info("Level loaded: {} ({}x{} board, {} waves, {} starting credits, {} starting lives)",
-                level.name(), width, height, this.waves.size(), level.startingCredits(), level.startingLives());
+                level.name(), width, height, loaded.size(), level.startingCredits(), level.startingLives());
     }
 
     /**
@@ -193,14 +219,15 @@ public class GameEngine {
      * @return true if a new wave actually started (i.e. one was ready and available)
      */
     public boolean nextWave() {
-        if (this.waveReady && this.wave < this.waves.size()) {
+        LoadedLevel installed = this.gameWorld.level();
+        if (this.waveReady && this.wave < installed.waveCount()) {
             this.startWave = false;
             this.waveReady = false;
-            Wave tempWave = this.waves.get(this.wave);
-            this.gameWorld.enemies().setEnemies(tempWave.getEnemies());
+            Wave tempWave = installed.waveAt(this.wave);
+            this.gameWorld.enemies().setEnemies(tempWave.spawn());
             this.gameWorld.startWave(tempWave);
             this.wave++;
-            LOG.info("Wave {}/{} started, {} enemies", this.wave, this.waves.size(), tempWave.enemyCount());
+            LOG.info("Wave {}/{} started, {} enemies", this.wave, installed.waveCount(), tempWave.enemyCount());
             return true;
         }
         return false;
@@ -246,7 +273,7 @@ public class GameEngine {
      * roster stays ignorant of the cell grid.
      */
     public void clearCell(int x, int y) {
-        Cell cell = this.cellGrid.at(x, y);
+        Cell cell = this.gameWorld.cells().at(x, y);
         cell.unSetTower();
         cell.enable(true);
     }
@@ -286,7 +313,7 @@ public class GameEngine {
      * @return the id spawned, or empty if no level is loaded
      */
     public Optional<String> debugSpawnNextCatalogEnemy() {
-        if (!this.cellGrid.isLoaded()) {
+        if (!this.gameWorld.level().isLoaded()) {
             return Optional.empty();
         }
         EnemyCatalog catalog = this.gameWorld.getEnemyCatalog();
