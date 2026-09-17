@@ -4,7 +4,9 @@ import td.tower.buff.TowerBuff;
 import td.util.GameWorld;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * "Aura tower" - passive. Never attacks; instead it contributes a {@link TowerBuff} to every
@@ -19,7 +21,10 @@ public final class TowerAura extends AbstractTower implements TowerListener {
     public static final float RANGE = 1.5f;
     public static final float DEFAULT_POWER = 0.2f;
 
-    private final List<Tower> clients;
+    // A LinkedHashSet, not a List: every path here asks "is this tower already a client",
+    // and scanTowers asks it once per tower on the board on every towerBuild notification -
+    // quadratic with a List. Insertion-ordered so doCleanup and the info string stay stable.
+    private final Set<Tower> clients;
     private final float power;
 
     public TowerAura(GameWorld context, int x, int y) {
@@ -33,7 +38,7 @@ public final class TowerAura extends AbstractTower implements TowerListener {
     public TowerAura(GameWorld context, int x, int y, float power) {
         super(TowerFactory.Type.aura, PRICE, DAMAGE, RANGE, 0, context, x, y);
         this.power = power;
-        this.clients = new ArrayList<>();
+        this.clients = new LinkedHashSet<>();
 
         this.context.addTowerListener(this);
         this.scanTowers();
@@ -99,9 +104,7 @@ public final class TowerAura extends AbstractTower implements TowerListener {
     }
 
     public void addClient(Tower t) {
-        if (!this.clients.contains(t)) {
-            this.clients.add(t);
-        }
+        this.clients.add(t);
     }
 
     public void removeClient(Tower t) {
@@ -110,8 +113,9 @@ public final class TowerAura extends AbstractTower implements TowerListener {
 
     public void doCleanup() {
         super.doCleanup();
-        for (int i = this.clients.size() - 1; i >= 0; i--) {
-            Tower t = this.clients.get(i);
+        // Over a copy: unregisterTower calls back into removeClient, so iterating the live
+        // set would be a concurrent modification.
+        for (Tower t : new ArrayList<>(this.clients)) {
             t.unregisterTower(this);
         }
         this.context.removeTowerListener(this);
