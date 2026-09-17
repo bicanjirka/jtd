@@ -4,10 +4,9 @@ import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.cell.Cell;
 import td.cell.CellGrid;
-import td.cell.CellNormal;
+import td.tower.SniperTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
-import td.tower.SniperTower;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 

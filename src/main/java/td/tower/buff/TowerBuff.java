@@ -17,7 +17,9 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
         return NONE;
     }
 
-    /** A buff touching only damage and range by the same fraction - what every Aura tower grants. */
+    /**
+     * A buff touching only damage and range by the same fraction - what every Aura tower grants.
+     */
     public static TowerBuff amplifying(float fraction) {
         return new TowerBuff(fraction, fraction, 0f, 0f);
     }

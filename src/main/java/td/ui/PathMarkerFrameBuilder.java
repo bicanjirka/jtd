@@ -74,7 +74,9 @@ final class PathMarkerFrameBuilder {
         return remainder < 0 ? remainder + modulus : remainder;
     }
 
-    /** One layer's symbol, spacing, size, and colour role - see the STATIC/MOVING constants above. */
+    /**
+     * One layer's symbol, spacing, size, and colour role - see the STATIC/MOVING constants above.
+     */
     private record MarkerStyle(PathMarkerShape shape, Palette palette, float spacingCells, float sizeCells) {
         static MarkerStyle of(PathMarkerShape shape, Palette palette, float spacingCells, float sizeCells) {
             return new MarkerStyle(shape, palette, spacingCells, sizeCells);

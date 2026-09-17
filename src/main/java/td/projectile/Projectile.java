@@ -16,11 +16,15 @@ public interface Projectile {
 
     double getY();
 
-    /** This projectile's position as of the tick before last - the interpolation source for a render landing between two ticks. */
+    /**
+     * This projectile's position as of the tick before last - the interpolation source for a render landing between two ticks.
+     */
     double getPrevX();
 
     double getPrevY();
 
-    /** True once this projectile has resolved (hit something, or given up) and is ready to be dropped from the roster. */
+    /**
+     * True once this projectile has resolved (hit something, or given up) and is ready to be dropped from the roster.
+     */
     boolean isFinished();
 }

@@ -7,7 +7,6 @@ import td.economy.EconomyState;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelCatalog;
 import td.level.LevelDefinition;
-import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.ui.BoardOverlays;
 import td.ui.BoardRenderer;
@@ -21,9 +20,9 @@ import td.ui.render.AsciiBoardRenderer;
 import td.ui.render.RenderFrame;
 import td.util.GameHost;
 import td.util.GameWorld;
+import td.util.ThreadConfined;
 import td.util.Threads;
 import td.wave.WaveProgress;
-import td.util.ThreadConfined;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -49,6 +48,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 // Inspired by HexTD
+
 /**
  * The application window, and the wiring between the headless {@link GameEngine} and Swing.
  * It owns the {@link GameLoop}, translates mouse and key events into engine calls, and is
@@ -68,20 +68,22 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This class is a shrinking legacy shell: new gameplay rules belong in {@code GameEngine} or
  * the domain packages, where they can be tested without a display.
  */
-@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // Swing components and input state; the fields that genuinely cross are volatile
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
+// Swing components and input state; the fields that genuinely cross are volatile
 public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     private static final Logger LOG = LoggerFactory.getLogger(TowerDefense.class);
-
+    static final String VERSION = loadVersion();
     @Serial
     private static final long serialVersionUID = 1L;
     private static final String NAME = "Tower Defense";
-    static final String VERSION = loadVersion();
     private static final String CARD_MENU = "menu";
     private static final String CARD_GAME = "game";
     private static final int MENU_WIDTH = 1040;
     private static final int MENU_HEIGHT = 700;
-    /** Debug keybinding: how many credits `c` grants in one press - see docs/features/FEATURE-playtesting-and-balance-tooling.md. */
+    /**
+     * Debug keybinding: how many credits `c` grants in one press - see docs/features/FEATURE-playtesting-and-balance-tooling.md.
+     */
     private static final int DEBUG_CREDIT_GRANT = 1000;
 
     private final LevelCatalog levelCatalog = new BuiltInLevelCatalog();
@@ -97,7 +99,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private final String statusMessage = """
             Welcome to Tower Defense
             Shortcuts:
-
+            
             q - build sniper
             w - build splash
             e - build sonar
@@ -123,7 +125,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         t.setDaemon(true);
         return t;
     });
-    /** Bumped on the EDT per level change, so a superseded install drops itself. */
+    /**
+     * Bumped on the EDT per level change, so a superseded install drops itself.
+     */
     private final AtomicInteger levelGeneration = new AtomicInteger();
     // Incremented only by doGameTick on the game-loop thread, and read on the EDT by the
     // render pulse. It is reset to 0 by installLevel on the EDT, which is safe because
@@ -158,22 +162,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private PanelLevelSelect panelLevelSelect;
     private PanelTowerSelector panelTowerSelector;
     private JPanel jPanel_board;
-
-    /**
-     * Reads the version baked into {@code version.properties} by Maven resource filtering
-     * (see {@code pom.xml}), so the displayed/logged version always matches the pom's
-     * {@code <version>} rather than a second hand-maintained copy.
-     */
-    private static String loadVersion() {
-        try (InputStream in = TowerDefense.class.getResourceAsStream("/version.properties")) {
-            Properties props = new Properties();
-            props.load(in);
-            return props.getProperty("version");
-        } catch (IOException e) {
-            LOG.error("Failed to load version.properties", e);
-            return "unknown";
-        }
-    }
 
     /**
      * Builds the whole component tree. <strong>Must run on the Event Dispatch Thread</strong>
@@ -218,6 +206,22 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setSize(MENU_WIDTH, MENU_HEIGHT);
         this.setLocationRelativeTo(null);
         this.setVisible(true);
+    }
+
+    /**
+     * Reads the version baked into {@code version.properties} by Maven resource filtering
+     * (see {@code pom.xml}), so the displayed/logged version always matches the pom's
+     * {@code <version>} rather than a second hand-maintained copy.
+     */
+    private static String loadVersion() {
+        try (InputStream in = TowerDefense.class.getResourceAsStream("/version.properties")) {
+            Properties props = new Properties();
+            props.load(in);
+            return props.getProperty("version");
+        } catch (IOException e) {
+            LOG.error("Failed to load version.properties", e);
+            return "unknown";
+        }
     }
 
     /**
@@ -321,7 +325,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         });
     }
 
-    /** The EDT half of {@link #startSelectedLevel}, run once the loop has stopped. */
+    /**
+     * The EDT half of {@link #startSelectedLevel}, run once the loop has stopped.
+     */
     private void installLevel(LevelDefinition level) {
         this.setGameStopped(false);
         this.boardOverlays.reset();
@@ -369,7 +375,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.stopLoopThen(this::showMenu);
     }
 
-    /** The EDT half of {@link #returnToMenu}, run once the loop has stopped. */
+    /**
+     * The EDT half of {@link #returnToMenu}, run once the loop has stopped.
+     */
     private void showMenu() {
         this.setSpeed(TickSpeed.PAUSED);
         this.boardOverlays.reset();
@@ -434,7 +442,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
     }
 
-    /** Debug keybinding ('n'): clears the current wave with no penalty and starts the next. */
+    /**
+     * Debug keybinding ('n'): clears the current wave with no penalty and starts the next.
+     */
     private void debugSkipWave() {
         this.engine.debugSkipCurrentWave();
         this.setWavePreview();
@@ -447,7 +457,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.gameConsole.setWaveProgress(progress.index(), progress.count());
     }
 
-    /** Also reachable from the game-loop thread - see enemyDied(). */
+    /**
+     * Also reachable from the game-loop thread - see enemyDied().
+     */
     public void economyChanged(EconomyState state) {
         SwingUtilities.invokeLater(this::updateInfo);
         if (state.isGameOver()) {
@@ -468,7 +480,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         SwingUtilities.invokeLater(this.boardOverlays::showLost);
     }
 
-    /** Guarded like {@link #gameLost()}: the last enemy of the last wave reports once. */
+    /**
+     * Guarded like {@link #gameLost()}: the last enemy of the last wave reports once.
+     */
     private void gameWon() {
         if (this.gameStopped) {
             return;
@@ -493,7 +507,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setWavePreview();
     }
 
-    /** Called from doGameTick() on the game-loop thread, not the EDT. */
+    /**
+     * Called from doGameTick() on the game-loop thread, not the EDT.
+     */
     public void doTick(int time) {
         boolean waveStarted = this.engine.doTick(time);
         if (waveStarted) {
@@ -734,7 +750,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setSpeed(TickSpeed.PAUSED);
     }
 
-    /** While paused, ">>" single-steps one tick instead of changing tick speed. */
+    /**
+     * While paused, ">>" single-steps one tick instead of changing tick speed.
+     */
     private void fastPressed() {
         if (this.currentSpeed == TickSpeed.PAUSED) {
             this.doGameTick();

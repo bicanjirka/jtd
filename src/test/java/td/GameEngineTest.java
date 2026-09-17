@@ -3,10 +3,10 @@ package td;
 import org.junit.jupiter.api.Test;
 import td.level.LevelDefinition;
 import td.projectile.CannonballProjectile;
-import td.tower.Tower;
-import td.tower.TowerFactory;
 import td.tower.MortarTower;
 import td.tower.SniperTower;
+import td.tower.Tower;
+import td.tower.TowerFactory;
 import td.util.LoadedLevel;
 import td.wave.Point;
 import td.wave.WaveDefinition;
@@ -37,6 +37,10 @@ class GameEngineTest {
 
     private static LevelDefinition biggerLevelWith(List<WaveDefinition> waves, int startingCredits) {
         return LevelDefinition.unsmoothed("Bigger Level", "", 20, 15, STRAIGHT_PATH, waves, startingCredits, 5);
+    }
+
+    private static int cellCenter(int cellIndex) {
+        return cellIndex * SCALE + SCALE / 2;
     }
 
     @Test
@@ -436,9 +440,5 @@ class GameEngineTest {
         engine.debugGrantCredits(250);
 
         assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(350);
-    }
-
-    private static int cellCenter(int cellIndex) {
-        return cellIndex * SCALE + SCALE / 2;
     }
 }

@@ -10,16 +10,16 @@ fire-rate, this tower's own permanently-chosen upgrade path (if any), and the sh
 `dealDamage` accounting. It holds **no** list of the Aura towers buffing it — see below. The eight leaf classes are
 `final` and are constructed only through `TowerFactory`:
 
-| Class | Name in the UI | Body shape | Targeting |
-|---|---|---|---|
-| `SniperTower` | Sniper | triangle | one enemy, furthest along the path |
-| `SplashTower` | Splash | ring | one random enemy, plus distance-falloff splash |
-| `SonarTower` | Sonar | spiral | sonar scan: a beam sweeps the circle, hitting whatever it passes |
-| `PulseTower` | Pulse | star | everything in range at once, ghosts included |
-| `AuraTower` | Aura | circle | passive; buffs neighbouring towers, never attacks |
-| `MortarTower` | Mortar | diamond | one enemy, furthest along the path; fires an unguided `CannonballProjectile` that splashes and slows on arrival |
-| `SeekerTower` | Seeker | kite | one enemy, furthest along the path; fires a homing `MissileProjectile` that deals magic damage and freezes on arrival |
-| `CinderTower` | Cinder | flame | no cooldown; a wedge (`InWedgeTargetQuery`) that reorients toward the nearest enemy and applies/refreshes burn every tick |
+| Class         | Name in the UI | Body shape | Targeting                                                                                                                 |
+|---------------|----------------|------------|---------------------------------------------------------------------------------------------------------------------------|
+| `SniperTower` | Sniper         | triangle   | one enemy, furthest along the path                                                                                        |
+| `SplashTower` | Splash         | ring       | one random enemy, plus distance-falloff splash                                                                            |
+| `SonarTower`  | Sonar          | spiral     | sonar scan: a beam sweeps the circle, hitting whatever it passes                                                          |
+| `PulseTower`  | Pulse          | star       | everything in range at once, ghosts included                                                                              |
+| `AuraTower`   | Aura           | circle     | passive; buffs neighbouring towers, never attacks                                                                         |
+| `MortarTower` | Mortar         | diamond    | one enemy, furthest along the path; fires an unguided `CannonballProjectile` that splashes and slows on arrival           |
+| `SeekerTower` | Seeker         | kite       | one enemy, furthest along the path; fires a homing `MissileProjectile` that deals magic damage and freezes on arrival     |
+| `CinderTower` | Cinder         | flame      | no cooldown; a wedge (`InWedgeTargetQuery`) that reorients toward the nearest enemy and applies/refreshes burn every tick |
 
 **A tower's class name and its in-game name say the same thing, and neither describes its
 shape.** Both name the behaviour; the body shape is `Java2DFrameRenderer.towerBodyShape`'s
@@ -101,8 +101,8 @@ them; it does not hand-roll a scan over `EnemyRegistry.getEnemies()`.
 - `TargetQuery` — "which enemies are legal targets right now", as a fresh immutable
   snapshot. `and` intersects; `all()` is the identity, `none()` the absorber (it
   short-circuits without evaluating the other side).
-- `TargetSelector` — picks at most one out of a candidate list
-  (`FurthestAlongPathSelector`, `RandomSelector`, `NearestSelector`). `RandomSelector` takes a
+- `TargetSelector` — picks at most one out of a candidate list (`FurthestAlongPathSelector`, `RandomSelector`,
+  `NearestSelector`). `RandomSelector` takes a
   `td.util.RandomSource` rather than calling `Math.random()`, so a seeded run replays the same
   picks; `SplashTower` composes it instead of inlining a random index.
 
@@ -125,8 +125,8 @@ composes `anyType` with `OfTypeTargetQuery`. It is deliberately **not** built on
 `SonarSweep.sweptThisTick` exists because a continuously rotating beam is essentially never
 exactly on a target when a tick samples it, so it has to test the arc swept *since the last
 tick*, not the beam's instantaneous angle. A wedge is static or only slowly reorients, so
-there is no "missed it between ticks" case to guard against — it is simply tested against its
-*current* heading, every tick. That heading comes from `TurretAim.currentRadians()` (added
+there is no "missed it between ticks" case to guard against — it is simply tested against its *current* heading, every
+tick. That heading comes from `TurretAim.currentRadians()` (added
 alongside this query, for exactly this use), so a cone's hit test and its rendered turret head
 are guaranteed to agree, the same guarantee `SonarTower`'s `sweepRadiansAt` already gives its
 beam.
@@ -178,8 +178,8 @@ nothing to recompute and nothing left to read a stale value.
 **A tower's fire rate has a base/current split just like damage and range.**
 `coolDownMax` is the base cooldown a leaf passes to `super(...)`; `coolDownCurrent()` is what
 tick code actually resets `coolDown` to after firing, and is `coolDownMax` shortened by
-`TowerBuff.fireRateFor`. `rateLine(int)` takes whichever one the caller means to describe
-(`getInfoString` passes `coolDownMax`, `getStatusString` passes the current one) rather
+`TowerBuff.fireRateFor`. `rateLine(int)` takes whichever one the caller means to describe (`getInfoString` passes
+`coolDownMax`, `getStatusString` passes the current one) rather
 than assuming which is wanted the way the old zero-argument version did.
 
 ## In-place upgrade paths (`td.tower.upgrade`)
@@ -210,11 +210,11 @@ changes what *this* tower itself is, once, and stays changed for its lifetime.
   private `UpgradePath` constants rather than by a string/id (keeps the match type-safe and
   avoids a stringly-typed switch). This is now the common case, not a rare exception - most
   attack towers have at least one path that needs it.
-- `AbstractTower.availablePaths()` defaults to `List.of()` - only a tower with real content
-  (added per-leaf, not part of this shared mechanism) overrides it. The Aura tower does not
+- `AbstractTower.availablePaths()` defaults to `List.of()` - only a tower with real content (added per-leaf, not part of
+  this shared mechanism) overrides it. The Aura tower does not
   override it and offers no paths of its own for v1.
-- The UI (`td.ui.PanelTowerInfo`) and the render accent ring
-  (`Java2DFrameRenderer.paintUpgradeAccent`, see `td/ui/CLAUDE.md`) both key off
+- The UI (`td.ui.PanelTowerInfo`) and the render accent ring (`Java2DFrameRenderer.paintUpgradeAccent`, see
+  `td/ui/CLAUDE.md`) both key off
   `availablePaths()`/`getChosenPath()` alone - a tower's own domain state is the single
   source of truth for what's choosable and what's already chosen, not any UI-side tracking.
 

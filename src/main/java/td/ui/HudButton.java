@@ -19,7 +19,9 @@ final class HudButton extends JButton {
         Hud.styleControl(this);
     }
 
-    /** Deliberately does not call {@code super}: the look-and-feel must not paint this control. */
+    /**
+     * Deliberately does not call {@code super}: the look-and-feel must not paint this control.
+     */
     @Override
     protected void paintComponent(Graphics g) {
         Hud.paintControl(g, this);

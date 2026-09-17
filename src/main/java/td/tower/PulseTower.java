@@ -27,10 +27,14 @@ public final class PulseTower extends AbstractTower {
     public static final int DAMAGE = 200;
     public static final float RANGE = 1.5f;
 
-    /** More damage - earned by this tower having already proven itself against real targets. */
+    /**
+     * More damage - earned by this tower having already proven itself against real targets.
+     */
     private static final UpgradePath OVERLOAD_CORE = new UpgradePath(
             "Overload Core", 30, new TowerBuff(0.5f, 0f, 0f, 0f), new DamageDealtCondition(15000));
-    /** More range - a straightforward money-gated specialization needing no track record. */
+    /**
+     * More range - a straightforward money-gated specialization needing no track record.
+     */
     private static final UpgradePath EXPANDED_FIELD = new UpgradePath(
             "Expanded Field", 25, new TowerBuff(0f, 0.3f, 0f, 0f), UpgradeCondition.always());
     private static final List<UpgradePath> PATHS = List.of(OVERLOAD_CORE, EXPANDED_FIELD);

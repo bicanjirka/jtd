@@ -15,7 +15,7 @@ public final class CannonballProjectile extends AbstractProjectile {
     private final PointImpact impact;
 
     public CannonballProjectile(double startX, double startY, double destinationX, double destinationY,
-                                 float speed, PointImpact impact) {
+                                float speed, PointImpact impact) {
         super(startX, startY);
         this.destinationX = destinationX;
         this.destinationY = destinationY;

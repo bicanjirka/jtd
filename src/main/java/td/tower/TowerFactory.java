@@ -39,7 +39,9 @@ public class TowerFactory {
         CINDER(CinderTower.PRICE, 'i');
 
         public final int price;
-        /** The keyboard shortcut that starts placing this tower. */
+        /**
+         * The keyboard shortcut that starts placing this tower.
+         */
         public final char placementKey;
 
         Type(int price, char placementKey) {

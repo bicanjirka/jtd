@@ -44,12 +44,6 @@ public abstract class AbstractTower implements Tower {
     protected final int coolDownMax;
     private final TowerFactory.Type type;
     private final int price;
-
-    // The buffed combat stats, as one coherent value swapped whole - recalculated on the EDT
-    // when an aura tower registers or a path is bought, read by tick code on the game-loop
-    // thread. Five separate volatile fields would each read fresh but would still let a tick
-    // observe a half-applied recalculation. See TowerStats and CLAUDE.md 3.
-    private volatile TowerStats stats;
     // Independent readouts rather than a correlated set: damageDealt/killCount are written by
     // tick code and read by the info panel on the EDT (damageDealt is a long, whose
     // non-volatile reads may tear), and the rest are single flags.
@@ -59,6 +53,11 @@ public abstract class AbstractTower implements Tower {
     // Optional, not a nullable reference: absence is modelled as a value (CLAUDE.md 5 rule 3).
     // Volatile because it is chosen on the EDT and read by tick code for the bounty bonus.
     protected volatile Optional<UpgradePath> chosenPath = Optional.empty();
+    // The buffed combat stats, as one coherent value swapped whole - recalculated on the EDT
+    // when an aura tower registers or a path is bought, read by tick code on the game-loop
+    // thread. Five separate volatile fields would each read fresh but would still let a tick
+    // observe a half-applied recalculation. See TowerStats and CLAUDE.md 3.
+    private volatile TowerStats stats;
     private volatile boolean removed = false;
 
     /**
@@ -83,27 +82,37 @@ public abstract class AbstractTower implements Tower {
         this.stats = TowerStats.of(damage, range, coolDownMax, TowerBuff.none(), scale);
     }
 
-    /** This tower's current buffed stats, as one coherent snapshot. Never null. */
+    /**
+     * This tower's current buffed stats, as one coherent snapshot. Never null.
+     */
     protected TowerStats stats() {
         return this.stats;
     }
 
-    /** Current damage per hit, in hundredths - shorthand for {@code stats().damage()}. */
+    /**
+     * Current damage per hit, in hundredths - shorthand for {@code stats().damage()}.
+     */
     protected int damageCurrent() {
         return this.stats.damage();
     }
 
-    /** Current ticks between shots - shorthand for {@code stats().coolDown()}. */
+    /**
+     * Current ticks between shots - shorthand for {@code stats().coolDown()}.
+     */
     protected int coolDownCurrent() {
         return this.stats.coolDown();
     }
 
-    /** Current range in pixels - shorthand for {@code stats().rangeReal()}. */
+    /**
+     * Current range in pixels - shorthand for {@code stats().rangeReal()}.
+     */
     protected float rangeReal() {
         return this.stats.rangeReal();
     }
 
-    /** Current range in pixels, squared - shorthand for {@code stats().rangeReal2()}. */
+    /**
+     * Current range in pixels, squared - shorthand for {@code stats().rangeReal2()}.
+     */
     protected float rangeReal2() {
         return this.stats.rangeReal2();
     }
@@ -125,7 +134,9 @@ public abstract class AbstractTower implements Tower {
         return this.stats.rangeReal();
     }
 
-    /** Three quarters of what was paid - selling is always a loss, buffs bought since don't raise it. */
+    /**
+     * Three quarters of what was paid - selling is always a loss, buffs bought since don't raise it.
+     */
     public int getSellPrice() {
         return (int) Math.round(0.75 * this.price);
     }
@@ -219,7 +230,9 @@ public abstract class AbstractTower implements Tower {
         return this.killCount;
     }
 
-    /** No paths by default - only the four attack towers override this with real content. */
+    /**
+     * No paths by default - only the four attack towers override this with real content.
+     */
     public List<UpgradePath> availablePaths() {
         return List.of();
     }
@@ -253,12 +266,12 @@ public abstract class AbstractTower implements Tower {
     protected void onUpgradePathChosen(UpgradePath path) {
     }
 
-    public void setSelected(boolean selected) {
-        this.selected = selected;
-    }
-
     public boolean isSelected() {
         return this.selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
     }
 
     public int getX() {
@@ -318,7 +331,9 @@ public abstract class AbstractTower implements Tower {
         return s;
     }
 
-    /** Contributes nothing - only {@code AuraTower} overrides this. */
+    /**
+     * Contributes nothing - only {@code AuraTower} overrides this.
+     */
     public TowerBuff buffFor(Tower other) {
         return TowerBuff.none();
     }

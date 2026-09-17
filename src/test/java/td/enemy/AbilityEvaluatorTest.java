@@ -9,7 +9,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Headless proof of every {@link AbilityTrigger} kind's firing rule and both {@link AbilityAction} shapes. */
+/**
+ * Headless proof of every {@link AbilityTrigger} kind's firing rule and both {@link AbilityAction} shapes.
+ */
 class AbilityEvaluatorTest {
 
     private static List<Boolean> fireSequence(AbilityTrigger trigger, AbilityState state, AbilityContext context, int ticks) {

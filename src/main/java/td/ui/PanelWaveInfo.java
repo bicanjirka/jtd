@@ -2,8 +2,8 @@ package td.ui;
 
 import td.enemy.EnemyDefinition;
 import td.util.GameWorld;
-import td.wave.Wave;
 import td.util.ThreadConfined;
+import td.wave.Wave;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -20,7 +20,8 @@ import java.io.Serial;
  * Both halves are permanent components refreshed in place; {@link #clearWaves()} blanks them
  * rather than removing them.
  */
-@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // Swing components, assigned once by initComponents
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
+// Swing components, assigned once by initComponents
 public class PanelWaveInfo extends JPanel {
     @Serial
     private static final long serialVersionUID = 1L;

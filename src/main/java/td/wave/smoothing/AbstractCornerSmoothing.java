@@ -41,6 +41,28 @@ public abstract class AbstractCornerSmoothing implements PathSmoothing {
         this.samplesPerCorner = samplesPerCorner;
     }
 
+    private static boolean isDegenerateCorner(Vec2 prev, Vec2 corner, Vec2 next) {
+        double v1x = corner.x() - prev.x();
+        double v1y = corner.y() - prev.y();
+        double v2x = next.x() - corner.x();
+        double v2y = next.y() - corner.y();
+        double cross = v1x * v2y - v1y * v2x;
+        double dot = v1x * v2x + v1y * v2y;
+        double turnAngle = Math.atan2(cross, dot);
+        return Math.abs(turnAngle) < COLLINEAR_ANGLE_RADIANS || Math.abs(turnAngle) > Math.PI - MIN_TURN_ANGLE_RADIANS;
+    }
+
+    private static double distance(Vec2 a, Vec2 b) {
+        return Math.hypot(b.x() - a.x(), b.y() - a.y());
+    }
+
+    private static Vec2 pointToward(Vec2 from, Vec2 towards, double distance) {
+        double dx = towards.x() - from.x();
+        double dy = towards.y() - from.y();
+        double t = distance / Math.hypot(dx, dy);
+        return new Vec2(from.x() + dx * t, from.y() + dy * t);
+    }
+
     /**
      * Samples one corner's replacement curve, given the two points it has been pulled back to
      * (equidistant from the corner along each adjacent leg, by construction). Returns strictly
@@ -78,27 +100,5 @@ public abstract class AbstractCornerSmoothing implements PathSmoothing {
 
         result.add(pixelPolyline.get(pixelPolyline.size() - 1));
         return result;
-    }
-
-    private static boolean isDegenerateCorner(Vec2 prev, Vec2 corner, Vec2 next) {
-        double v1x = corner.x() - prev.x();
-        double v1y = corner.y() - prev.y();
-        double v2x = next.x() - corner.x();
-        double v2y = next.y() - corner.y();
-        double cross = v1x * v2y - v1y * v2x;
-        double dot = v1x * v2x + v1y * v2y;
-        double turnAngle = Math.atan2(cross, dot);
-        return Math.abs(turnAngle) < COLLINEAR_ANGLE_RADIANS || Math.abs(turnAngle) > Math.PI - MIN_TURN_ANGLE_RADIANS;
-    }
-
-    private static double distance(Vec2 a, Vec2 b) {
-        return Math.hypot(b.x() - a.x(), b.y() - a.y());
-    }
-
-    private static Vec2 pointToward(Vec2 from, Vec2 towards, double distance) {
-        double dx = towards.x() - from.x();
-        double dy = towards.y() - from.y();
-        double t = distance / Math.hypot(dx, dy);
-        return new Vec2(from.x() + dx * t, from.y() + dy * t);
     }
 }

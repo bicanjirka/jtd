@@ -21,6 +21,25 @@ public final class ActiveEffects {
 
     private final Map<EffectKind, Effect> active = new EnumMap<>(EffectKind.class);
 
+    private static Effect strongerOf(Effect a, Effect b) {
+        Effect stronger = magnitude(a) >= magnitude(b) ? a : b;
+        return stronger.withRemainingTicks(Math.max(a.remainingTicks(), b.remainingTicks()));
+    }
+
+    /**
+     * How hard this kind of effect bites, in a unit specific to its kind - only ever compared
+     * against another effect of the same kind, so the different units across cases are safe.
+     */
+    private static float magnitude(Effect effect) {
+        return switch (effect.kind()) {
+            case SLOW, FREEZE -> 1f - effect.speedMultiplier();
+            case BURN -> effect.damagePerTick().amount();
+            case SHIELD -> effect.shieldPercent();
+            // On/off, not gradated - any reapplication is at least as strong as what's already active.
+            case INVISIBLE -> 1f;
+        };
+    }
+
     public void apply(Effect effect) {
         Effect existing = this.active.get(effect.kind());
         this.active.put(effect.kind(), existing == null ? effect : strongerOf(existing, effect));
@@ -35,7 +54,9 @@ public final class ActiveEffects {
         return this.active.isEmpty() ? EnumSet.noneOf(EffectKind.class) : EnumSet.copyOf(this.active.keySet());
     }
 
-    /** The product of every active effect's speed multiplier - {@code 1f} (unaffected) with none active. */
+    /**
+     * The product of every active effect's speed multiplier - {@code 1f} (unaffected) with none active.
+     */
     public float speedMultiplier() {
         float multiplier = 1f;
         for (Effect effect : this.active.values()) {
@@ -44,7 +65,9 @@ public final class ActiveEffects {
         return multiplier;
     }
 
-    /** Not a valid target while an {@link EffectKind#INVISIBLE} effect is active. */
+    /**
+     * Not a valid target while an {@link EffectKind#INVISIBLE} effect is active.
+     */
     public boolean isInvisible() {
         return this.active.containsKey(EffectKind.INVISIBLE);
     }
@@ -78,24 +101,5 @@ public final class ActiveEffects {
             }
         }
         expired.forEach(this.active::remove);
-    }
-
-    private static Effect strongerOf(Effect a, Effect b) {
-        Effect stronger = magnitude(a) >= magnitude(b) ? a : b;
-        return stronger.withRemainingTicks(Math.max(a.remainingTicks(), b.remainingTicks()));
-    }
-
-    /**
-     * How hard this kind of effect bites, in a unit specific to its kind - only ever compared
-     * against another effect of the same kind, so the different units across cases are safe.
-     */
-    private static float magnitude(Effect effect) {
-        return switch (effect.kind()) {
-            case SLOW, FREEZE -> 1f - effect.speedMultiplier();
-            case BURN -> effect.damagePerTick().amount();
-            case SHIELD -> effect.shieldPercent();
-            // On/off, not gradated - any reapplication is at least as strong as what's already active.
-            case INVISIBLE -> 1f;
-        };
     }
 }

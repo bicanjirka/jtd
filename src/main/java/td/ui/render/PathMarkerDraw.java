@@ -7,5 +7,5 @@ package td.ui.render;
  * model (see {@link PathMarkerShape}).
  */
 public record PathMarkerDraw(PathMarkerShape shape, Palette palette, float x, float y,
-                              double facingRadians, float size) {
+                             double facingRadians, float size) {
 }

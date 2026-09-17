@@ -25,6 +25,34 @@ public final class EnemyCatalog {
     private final Map<String, EnemyDefinition> definitions = new LinkedHashMap<>();
 
     /**
+     * A fresh catalog with the four basic built-ins and the Warden boss chain pre-registered
+     * under their existing wave-script ids. Fresh, not shared/cached: {@code GameEngine.loadLevel}
+     * is idempotent and re-enterable (see the root {@code CLAUDE.md}'s Levels section), so each
+     * level load gets its own catalog rather than accumulating a previous level's registrations.
+     */
+    public static EnemyCatalog builtIn() {
+        EnemyCatalog catalog = new EnemyCatalog();
+        catalog.register(BuiltInEnemies.SIMPLE);
+        catalog.register(BuiltInEnemies.ARMORED);
+        catalog.register(BuiltInEnemies.FRENZIED);
+        catalog.register(BuiltInEnemies.GHOST);
+        catalog.register(BuiltInEnemies.WARDEN_EGG_3);
+        catalog.register(BuiltInEnemies.WARDEN_3);
+        catalog.register(BuiltInEnemies.WARDEN_EGG_2);
+        catalog.register(BuiltInEnemies.WARDEN_2);
+        catalog.register(BuiltInEnemies.WARDEN_EGG_1);
+        catalog.register(BuiltInEnemies.WARDEN_1);
+        return catalog;
+    }
+
+    private static EnemyDefinition withId(EnemyDefinition source, String newId) {
+        return new EnemyDefinition(newId, source.displayName(), source.description(),
+                source.baseHealth(), source.price(), source.baseSpeed(),
+                source.healthDivisor(), source.mobType(), source.archetype(), source.movement(),
+                source.traits(), source.abilities());
+    }
+
+    /**
      * Registers {@code definition} under its own id. Throws {@link GameStartupException} for a
      * duplicate id, or if this definition's own spawn chain - or any chain it completes by
      * being registered - turns out to be cyclical (see {@link #checkAcyclic}).
@@ -71,37 +99,11 @@ public final class EnemyCatalog {
         return definition;
     }
 
-    /** Builds a live mob from the definition registered under {@code id} - what {@code Wave}/{@code WaveScript} spawn through. */
+    /**
+     * Builds a live mob from the definition registered under {@code id} - what {@code Wave}/{@code WaveScript} spawn through.
+     */
     public EnemyMob spawn(String id, GameWorld gameWorld, int delay, int health, int price, int level) {
         return new DefinedEnemyMob(this.get(id), gameWorld, delay, health, price, level);
-    }
-
-    /**
-     * A fresh catalog with the four basic built-ins and the Warden boss chain pre-registered
-     * under their existing wave-script ids. Fresh, not shared/cached: {@code GameEngine.loadLevel}
-     * is idempotent and re-enterable (see the root {@code CLAUDE.md}'s Levels section), so each
-     * level load gets its own catalog rather than accumulating a previous level's registrations.
-     */
-    public static EnemyCatalog builtIn() {
-        EnemyCatalog catalog = new EnemyCatalog();
-        catalog.register(BuiltInEnemies.SIMPLE);
-        catalog.register(BuiltInEnemies.ARMORED);
-        catalog.register(BuiltInEnemies.FRENZIED);
-        catalog.register(BuiltInEnemies.GHOST);
-        catalog.register(BuiltInEnemies.WARDEN_EGG_3);
-        catalog.register(BuiltInEnemies.WARDEN_3);
-        catalog.register(BuiltInEnemies.WARDEN_EGG_2);
-        catalog.register(BuiltInEnemies.WARDEN_2);
-        catalog.register(BuiltInEnemies.WARDEN_EGG_1);
-        catalog.register(BuiltInEnemies.WARDEN_1);
-        return catalog;
-    }
-
-    private static EnemyDefinition withId(EnemyDefinition source, String newId) {
-        return new EnemyDefinition(newId, source.displayName(), source.description(),
-                source.baseHealth(), source.price(), source.baseSpeed(),
-                source.healthDivisor(), source.mobType(), source.archetype(), source.movement(),
-                source.traits(), source.abilities());
     }
 
     /**

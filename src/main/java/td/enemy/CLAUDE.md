@@ -33,8 +33,8 @@ safety net despite there being only one real concrete class to visit.
 **`EnemyFactory` still exists, but only as a global-catalog test convenience.** Its
 `getEnemy(String, ...)`/`isEnemy(String)` are stable, unchanged signatures that delegate to a
 freshly built `EnemyCatalog.builtIn()` (plus the same `e`-is-a-spacer special case
-`WaveScript` has) - that's what keeps every enemy-behavior test that predates this feature
-(`PercentResistTraitTest`, `AbstractEnemyMobTest`, and others) working unchanged. Real gameplay
+`WaveScript` has) - that's what keeps every enemy-behavior test that predates this feature (`PercentResistTraitTest`,
+`AbstractEnemyMobTest`, and others) working unchanged. Real gameplay
 spawning (`WaveScript`/`Wave`/`GameEngine.loadLevel`) goes through `EnemyCatalog` directly,
 not this class, since it needs per-level catalog scoping `EnemyFactory` doesn't offer. The
 old `EnemyFactory.Enemy` enum and `identifyEnemy` are gone - nothing needs a closed
@@ -58,7 +58,8 @@ moment something registers one (see `WaveScriptTest`'s
 
 A `Trait` is a passive, always-on modifier: `onHit` (resistance, folded in sequence by
 `DefinedEnemyMob.absorb`), `speedFactor` (a hurt-speed curve applied to `baseSpeed`),
-`isValidTarget` (see the gotcha below — **not** what makes Ghost invisible). `PercentResistTrait`/`HurtSpeedTrait`/`FlatResistTrait`
+`isValidTarget` (see the gotcha below — **not** what makes Ghost invisible). `PercentResistTrait`/`HurtSpeedTrait`/
+`FlatResistTrait`
 are the three built-in implementations, reused (not subclassed) by `BuiltInEnemies.ARMORED`/
 `FRENZIED`/the Warden stages - `FlatResistTrait` is deliberately a *flat per-hit* reduction,
 not a depleting shield pool, since a pool that's "used up" over one mob's lifetime needs
@@ -85,7 +86,7 @@ private `MobAbilityContext` (an inner class - it needs this mob's own `GameWorld
 
 **A mob's own `AbilityState` list is built once, in its constructor, parallel to
 `definition.abilities()`** - a `PeriodicTrigger`'s countdown, a `TimeSinceLastHitTrigger`'s
-"waiting for a hit to re-arm" flag, and so on are all per-*mob* state, unlike the shared,
+"waiting for a hit to re-arm" flag, and so on are all per- *mob* state, unlike the shared,
 stateless `Trait`s above.
 
 **`ticksSinceLastHit` starts at `0`, not "a very long time."** A fresh spawn hasn't been hit
@@ -101,8 +102,8 @@ to decide whether this is the exact tick `deathTick` was captured, because a tow
 mob during the tower phase of a game tick, *after* that mob's own `doTick` already ran for that
 tick (see the root `CLAUDE.md` §3 (Threading) on tick ordering) - so "`dead` just became
 true" and "`deathTick` was just captured" are not necessarily the same tick, and only the
-latter must gate an `OnDeathTrigger` firing exactly once. Getting this wrong lets a dead mob's
-*other* abilities (a `OnceTrigger`, say) keep evaluating throughout its fade window and
+latter must gate an `OnDeathTrigger` firing exactly once. Getting this wrong lets a dead mob's *other* abilities (a
+`OnceTrigger`, say) keep evaluating throughout its fade window and
 possibly fire late - which is exactly how the boss egg could wrongly hatch after being
 legitimately killed, if evaluation ran on every fade tick instead of stopping after the one
 death-transition tick.
@@ -142,8 +143,8 @@ invisibility effect (`td.effect.EffectKind.INVISIBLE`, already built) is ever wi
 hide a mob from targeting, it will need to feed the *same* `type`-based mechanism, not
 `isValidTarget` — nothing does this yet, and no v1 content needs it to.
 
-**Facing is never derived from a per-tick pixel delta.** Enemies move at sub-pixel speeds
-(`1.28` px/tick is every v1 built-in's `baseSpeed`), so an `atan2` over one tick's movement
+**Facing is never derived from a per-tick pixel delta.** Enemies move at sub-pixel speeds (`1.28` px/tick is every v1
+built-in's `baseSpeed`), so an `atan2` over one tick's movement
 intermittently collapses to zero. A `PathDirectionalMovement` mob reads the path's exact
 geometric facing (`getPathFacingRadians()`) instead — no v1 built-in uses this behavior yet,
 but the mechanism is there. Don't "simplify" it back to a pixel-delta `atan2`.
@@ -189,7 +190,8 @@ the path's first point (or the origin). Keep that branch.
 **Speed has an intrinsic/effective split, like `AbstractTower`'s base/current damage.** The
 `speed` field stays the *intrinsic* value — `DefinedEnemyMob.doDamage` recomputes it fresh from
 `definition.baseSpeed() * (product of every Trait.speedFactor)` on every hit through
-`setSpeed`, and the constructor's spawn-delay calculation reads it before any damage lands — while `getSpeed()` and movement both
+`setSpeed`, and the constructor's spawn-delay calculation reads it before any damage lands — while `getSpeed()` and
+movement both
 additionally fold in every currently active `td.effect.Effect`'s speed multiplier via
 `ActiveEffects.speedMultiplier()`. A slow or freeze therefore never gets permanently baked into
 `speed`, and is never wiped out the next time a trait recomputes it. `doTick` reads that
@@ -221,8 +223,8 @@ compiler-enforced checklist, same spirit as before:
 1. Add the constant to `BodyArchetype`.
 2. Add its case to `EnemyFrameBuilder.paletteFor` (a `Palette` role) — the compiler forces
    this, since `BodyArchetype`'s switch there has no `default`.
-3. Add that `Palette` constant's shape (`Java2DFrameRenderer.enemyShape`) and colour
-   (`colorFor`, and the fade switch in `paintEnemyFade`) — **not** compiler-enforced (those
+3. Add that `Palette` constant's shape (`Java2DFrameRenderer.enemyShape`) and colour (`colorFor`, and the fade switch in
+   `paintEnemyFade`) — **not** compiler-enforced (those
    switches fall back to a runtime exception / silently skip rather than fail to compile), so
    do this in the same change as step 1-2, not "later."
 4. Document the new letter in the root `CLAUDE.md` §9 and in
@@ -232,10 +234,10 @@ compiler-enforced checklist, same spirit as before:
 `PercentResistTrait`/`HurtSpeedTrait` for the shape), reuse it from any `EnemyDefinition`.
 
 **Never branch on a mob's concrete type with `instanceof` or a `switch`.** Use
-`EnemyMobVisitor`. `EnemyFrameBuilder`/`EnemyCatalog`/`AbilityEvaluator` switching on the
-*sealed* `BodyArchetype`/`MovementBehavior`/`AbilityTrigger`/`AbilityAction` types is the
-narrow, compiler-checked exception this project already carves out for sealed DTO hierarchies
-(root `CLAUDE.md`) — not license to switch on `EnemyMob`'s own concrete type.
+`EnemyMobVisitor`. `EnemyFrameBuilder`/`EnemyCatalog`/`AbilityEvaluator` switching on the *sealed* `BodyArchetype`/
+`MovementBehavior`/`AbilityTrigger`/`AbilityAction` types is the
+narrow, compiler-checked exception this project already carves out for sealed DTO hierarchies (root `CLAUDE.md`) — not
+license to switch on `EnemyMob`'s own concrete type.
 
 ## Roster
 

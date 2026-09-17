@@ -27,15 +27,16 @@ import java.util.List;
  */
 public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
 
+    /**
+     * How many real effect markers show before the rest collapse into one overflow marker.
+     */
+    static final int MAX_VISIBLE_MARKERS = 3;
     // How far above the body the marker row sits, and how far apart consecutive markers are,
     // both as a fraction of the mob's own body scale - so the row scales with the mob's size
     // rather than needing a fixed pixel offset that would look wrong at a different board scale.
     private static final float MARKER_ROW_OFFSET_FRACTION = 1.6f;
     private static final float MARKER_SPACING_FRACTION = 1.1f;
     private static final float MARKER_SCALE_FRACTION = 0.35f;
-    /** How many real effect markers show before the rest collapse into one overflow marker. */
-    static final int MAX_VISIBLE_MARKERS = 3;
-
     private final List<EnemyDraw> draws = new ArrayList<>();
     private final List<StatusMarkerDraw> markerDraws = new ArrayList<>();
     private final int gameTime;
@@ -44,14 +45,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     public EnemyFrameBuilder(int gameTime, double interpolationAlpha) {
         this.gameTime = gameTime;
         this.interpolationAlpha = interpolationAlpha;
-    }
-
-    public List<EnemyDraw> build() {
-        return this.draws;
-    }
-
-    public List<StatusMarkerDraw> buildMarkers() {
-        return this.markerDraws;
     }
 
     private static float lerp(double from, double to, double alpha) {
@@ -66,6 +59,24 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case SHIELD -> Palette.STATUS_MARKER_SHIELD;
             case INVISIBLE -> Palette.STATUS_MARKER_INVISIBLE;
         };
+    }
+
+    private static Palette paletteFor(BodyArchetype archetype) {
+        return switch (archetype) {
+            case CIRCLE -> Palette.ENEMY_CIRCLE;
+            case GHOST -> Palette.ENEMY_GHOST;
+            case SQUARE -> Palette.ENEMY_SQUARE;
+            case TRIANGLE -> Palette.ENEMY_TRIANGLE;
+            case EGG -> Palette.ENEMY_EGG;
+        };
+    }
+
+    public List<EnemyDraw> build() {
+        return this.draws;
+    }
+
+    public List<StatusMarkerDraw> buildMarkers() {
+        return this.markerDraws;
     }
 
     private Void body(Palette palette, AbstractEnemyMob mob, float scale, double facingRadians) {
@@ -108,15 +119,5 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
 
     public Void visitEmpty(EnemyMobEmpty mob) {
         return null;
-    }
-
-    private static Palette paletteFor(BodyArchetype archetype) {
-        return switch (archetype) {
-            case CIRCLE -> Palette.ENEMY_CIRCLE;
-            case GHOST -> Palette.ENEMY_GHOST;
-            case SQUARE -> Palette.ENEMY_SQUARE;
-            case TRIANGLE -> Palette.ENEMY_TRIANGLE;
-            case EGG -> Palette.ENEMY_EGG;
-        };
     }
 }

@@ -21,7 +21,8 @@ import java.util.Optional;
  * from the blast centre. The splash deliberately uses an any-type query, so it is one of the
  * two towers that can hurt ghosts even though it cannot target them directly.
  */
-@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // cooldown, the primary target and the splash centre, all set within a tick
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
+// cooldown, the primary target and the splash centre, all set within a tick
 public final class SplashTower extends AbstractTower {
 
     public static final int PRICE = 15;
@@ -31,19 +32,28 @@ public final class SplashTower extends AbstractTower {
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.25;
 
-    /** How much bigger a splash "Siege" gives this tower's blast radius. */
+    /**
+     * How much bigger a splash "Siege" gives this tower's blast radius.
+     */
     private static final float SIEGE_SPREAD_MULTIPLIER = 1.3f;
-    /** More damage and a bigger blast - earned by this tower having proven itself already. */
+    /**
+     * More damage and a bigger blast - earned by this tower having proven itself already.
+     */
     private static final UpgradePath SIEGE = new UpgradePath(
             "Siege", 35, new TowerBuff(0.35f, 0f, 0f, 0f), new DamageDealtCondition(20000));
-    /** More damage and range - rewards a deliberately grouped placement rather than a solo one. */
+    /**
+     * More damage and range - rewards a deliberately grouped placement rather than a solo one.
+     */
     private static final UpgradePath CLUSTER_CHARGE = new UpgradePath(
             "Cluster Charge", 30, new TowerBuff(0.2f, 0.2f, 0f, 0f), new ClusterCondition(2));
     private static final List<UpgradePath> PATHS = List.of(SIEGE, CLUSTER_CHARGE);
 
-    /** Ticks between shots before any fire-rate buff. */
+    /**
+     * Ticks between shots before any fire-rate buff.
+     */
     private static final int COOLDOWN_MAX = 19;
-
+    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
+    private final TargetSelector targetSelector;
     // Bought on the EDT (onUpgradePathChosen) and read every tick on the game-loop thread, so
     // it is published volatile - CLAUDE.md 3 rule 2. Each is an independent scalar with no
     // invariant tying it to another, which is what makes a volatile scalar the right mechanism
@@ -51,13 +61,10 @@ public final class SplashTower extends AbstractTower {
     // after an upgrade is correct, just briefly stale.
     private volatile float spreadRadius;
     private int coolDown = 0;
-
     private EnemyMob primaryTarget;
     private List<EnemyMob> splashTargets = List.of();
     private int splashCenterX;
     private int splashCenterY;
-    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
-    private final TargetSelector targetSelector;
 
     public SplashTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SPLASH, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
@@ -70,7 +77,9 @@ public final class SplashTower extends AbstractTower {
         return PATHS;
     }
 
-    /** Siege's blast-radius bump isn't a {@link TowerBuff} axis, so it's applied here instead. */
+    /**
+     * Siege's blast-radius bump isn't a {@link TowerBuff} axis, so it's applied here instead.
+     */
     @Override
     protected void onUpgradePathChosen(UpgradePath path) {
         if (path == SIEGE) {

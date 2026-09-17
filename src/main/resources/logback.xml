@@ -23,15 +23,15 @@
     </appender>
 
     <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="FILE" />
+        <appender-ref ref="FILE"/>
         <!-- never drop events by blocking the game-loop thread on a full queue -->
         <discardingThreshold>0</discardingThreshold>
         <queueSize>2048</queueSize>
     </appender>
 
     <root level="INFO">
-        <appender-ref ref="CONSOLE" />
-        <appender-ref ref="ASYNC_FILE" />
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
     </root>
 
 </configuration>

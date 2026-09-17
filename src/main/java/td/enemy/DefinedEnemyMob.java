@@ -15,7 +15,8 @@ import java.util.List;
  * drawn stays its own tiny class rather than being forced through a trait/ability model it has
  * no real use for.
  */
-@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // body scale, facing and the two tick counters, all advanced by doTick
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
+// body scale, facing and the two tick counters, all advanced by doTick
 public final class DefinedEnemyMob extends AbstractEnemyMob {
 
     private final EnemyDefinition definition;
@@ -225,7 +226,9 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
             }
         }
 
-        /** Ability-produced effects deal no direct damage in v1 (shield/invisibility only) - this sink is never actually invoked. */
+        /**
+         * Ability-produced effects deal no direct damage in v1 (shield/invisibility only) - this sink is never actually invoked.
+         */
         private void creditNoOne(Damage damage) {
         }
 

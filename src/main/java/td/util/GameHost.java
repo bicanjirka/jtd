@@ -1,12 +1,6 @@
 package td.util;
 
 public interface GameHost {
-    void enemyDied(int enemiesLeft);
-
-    void setInfoText(String s);
-
-    void clearCell(int x, int y);
-
     /**
      * A real, safe substitute for a display-less world (e.g. a toolbar's preview towers, or
      * a wave-preview panel's off-board enemies) - answers every callback with a no-op instead
@@ -27,4 +21,10 @@ public interface GameHost {
             }
         };
     }
+
+    void enemyDied(int enemiesLeft);
+
+    void setInfoText(String s);
+
+    void clearCell(int x, int y);
 }

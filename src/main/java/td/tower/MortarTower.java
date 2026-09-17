@@ -35,21 +35,30 @@ public final class MortarTower extends AbstractTower {
     private static final float PROJECTILE_SPEED = 40f;
     private static final float SLOW_MULTIPLIER_BASE = 0.5f;
     private static final int SLOW_DURATION_TICKS_BASE = 40;
-    /** How much bigger a splash "Heavy Shell" gives this tower's blast radius - same shape as {@code SplashTower}'s Siege. */
+    /**
+     * How much bigger a splash "Heavy Shell" gives this tower's blast radius - same shape as {@code SplashTower}'s Siege.
+     */
     private static final float HEAVY_SHELL_SPLASH_MULTIPLIER = 1.3f;
     private static final float CONCUSSIVE_CHARGE_SLOW_DURATION_MULTIPLIER = 1.5f;
 
-    /** Bigger blast radius, earned by this tower having proven itself already. */
+    /**
+     * Bigger blast radius, earned by this tower having proven itself already.
+     */
     private static final UpgradePath HEAVY_SHELL = new UpgradePath(
             "Heavy Shell", 35, new TowerBuff(0.4f, 0f, 0f, 0f), new DamageDealtCondition(20000));
-    /** A longer-lasting slow, plus more range - rewards a deliberately grouped placement rather than a solo one. */
+    /**
+     * A longer-lasting slow, plus more range - rewards a deliberately grouped placement rather than a solo one.
+     */
     private static final UpgradePath CONCUSSIVE_CHARGE = new UpgradePath(
             "Concussive Charge", 30, new TowerBuff(0f, 0.25f, 0f, 0f), new ClusterCondition(2));
     private static final List<UpgradePath> PATHS = List.of(HEAVY_SHELL, CONCUSSIVE_CHARGE);
 
-    /** Ticks between shots before any fire-rate buff. */
+    /**
+     * Ticks between shots before any fire-rate buff.
+     */
     private static final int COOLDOWN_MAX = 50;
-
+    private final float slowMultiplier = SLOW_MULTIPLIER_BASE;
+    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     // Bought on the EDT (onUpgradePathChosen) and read every tick on the game-loop thread, so
     // it is published volatile - CLAUDE.md 3 rule 2. Each is an independent scalar with no
     // invariant tying it to another, which is what makes a volatile scalar the right mechanism
@@ -57,10 +66,8 @@ public final class MortarTower extends AbstractTower {
     // after an upgrade is correct, just briefly stale.
     private volatile float splashRadius;
     private volatile int slowDurationTicks = SLOW_DURATION_TICKS_BASE;
-    private final float slowMultiplier = SLOW_MULTIPLIER_BASE;
     private int coolDown = 0;
     private EnemyMob currentTarget;
-    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
     public MortarTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.MORTAR, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
@@ -72,7 +79,9 @@ public final class MortarTower extends AbstractTower {
         return PATHS;
     }
 
-    /** Neither bonus is a {@link TowerBuff} axis, so each is applied here instead - same shape as {@code SplashTower}'s Siege. */
+    /**
+     * Neither bonus is a {@link TowerBuff} axis, so each is applied here instead - same shape as {@code SplashTower}'s Siege.
+     */
     @Override
     protected void onUpgradePathChosen(UpgradePath path) {
         if (path == HEAVY_SHELL) {

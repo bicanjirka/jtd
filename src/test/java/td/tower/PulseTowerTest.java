@@ -7,7 +7,9 @@ import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Covers PulseTower's two upgrade paths. */
+/**
+ * Covers PulseTower's two upgrade paths.
+ */
 class PulseTowerTest {
 
     private final GameWorld context = new GameWorld(new RecordingGameHost());

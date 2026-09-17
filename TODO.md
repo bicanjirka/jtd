@@ -53,7 +53,7 @@ unnecessary, and every mutation lands on a deterministic tick boundary.
 - **The trigger:** deterministic replay. A recorded command log is what would let
   `td.BalanceHarness` produce runs that are comparable to each other and reproducible across
   machines. If that becomes a goal, this stops being indirection and starts being the feature
-  - do it then, and not before.
+    - do it then, and not before.
 
 ### `EnemyRoster.remove()` does not remove, and one caller depends on it doing so
 
@@ -119,7 +119,8 @@ scales with `level`. Health reduction should probably scale the same way so ghos
 `Math.round(22.4f * delay / this.speed)`. The `22.4f` is a magic constant with no way to override it per-wave.
 
 - **Where:** `AbstractEnemyMob.doInit()`
-- **Approach:** add a `delay`-scaling field to `WaveDefinition` (or `Wave`) that defaults to `22.4f`, and extend the wave
+- **Approach:** add a `delay`-scaling field to `WaveDefinition` (or `Wave`) that defaults to `22.4f`, and extend the
+  wave
   mini-language (see `WaveScript.parse`'s `c`/`e`/`t`/... token grammar) with a token — e.g. a `w<number>` prefix — that
   lets a wave definition override the spacing between spawns before listing enemies.
 
@@ -225,7 +226,8 @@ and condition thresholds are equally unverified guesses.
 ### Acid is not implemented as a second damage-over-time effect
 
 The original damage-types request named acid alongside burn as a second damage-over-time effect; v1 shipped only
-slow, burn and freeze (see `docs/features/FEATURE-damage-types-and-projectiles.md`'s Decisions and V1 Scope), deferring acid rather
+slow, burn and freeze (see `docs/features/FEATURE-damage-types-and-projectiles.md`'s Decisions and V1 Scope), deferring
+acid rather
 than dropping it.
 
 - **Where:** `td.effect` (`EffectKind`, `Effect`) has no `ACID` case; nothing produces one.
@@ -255,8 +257,9 @@ TraitContext)` already receives the incoming `Damage` (type included) and is fre
 `incoming.type()` - but no concrete trait actually does: `PercentResistTrait`/`FlatResistTrait`
 (Square's and the Warden's) both reduce every hit uniformly regardless of type. A magic shield
 or a physical shield (the original request's examples) is now a small, self-contained addition
+
 - a new `Trait` implementation, not a `Damage`/`absorb` change - rather than infrastructure
-work, which is what this entry used to track.
+  work, which is what this entry used to track.
 
 - **Where:** a new `td.enemy.Trait` implementation (no existing file needs to change).
 - **Approach:** e.g. `DamageTypeResistTrait(DamageType resisted, float fraction)` whose

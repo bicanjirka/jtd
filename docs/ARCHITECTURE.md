@@ -78,14 +78,14 @@ log after every tick, which is a display-free way to see enemy and tower positio
 
 Each domain type has one *frame builder* that describes it and knows nothing about pixels:
 
-| Builder | Describes | Dispatch |
-|---|---|---|
-| `CellFrameBuilder` | placement/selection highlights | plain getters — only one `Cell` impl exists |
-| `EnemyFrameBuilder` | enemy bodies, death fades, and (via `buildMarkers()`) status-effect markers | `EnemyMobVisitor` |
-| `TowerSpriteFrameBuilder` | tower base + animated turret head | `TowerVisitor` |
-| `TowerEffectFrameBuilder` | beams, splash, pulse, aura, cone | `TowerVisitor` |
-| `ProjectileFrameBuilder` | in-flight shells and missiles | `ProjectileVisitor` |
-| `PathMarkerFrameBuilder` | the path's static trail and moving chevrons | none — pure geometry |
+| Builder                   | Describes                                                                   | Dispatch                                    |
+|---------------------------|-----------------------------------------------------------------------------|---------------------------------------------|
+| `CellFrameBuilder`        | placement/selection highlights                                              | plain getters — only one `Cell` impl exists |
+| `EnemyFrameBuilder`       | enemy bodies, death fades, and (via `buildMarkers()`) status-effect markers | `EnemyMobVisitor`                           |
+| `TowerSpriteFrameBuilder` | tower base + animated turret head                                           | `TowerVisitor`                              |
+| `TowerEffectFrameBuilder` | beams, splash, pulse, aura, cone                                            | `TowerVisitor`                              |
+| `ProjectileFrameBuilder`  | in-flight shells and missiles                                               | `ProjectileVisitor`                         |
+| `PathMarkerFrameBuilder`  | the path's static trail and moving chevrons                                 | none — pure geometry                        |
 
 A status-effect marker is deliberately its own `RenderFrame` list (`statusMarkers`), not a
 third permitted `EnemyDraw` subtype. `EnemyDraw`'s contract is "an enemy is either an alive
@@ -126,14 +126,14 @@ differs, for three reasons found the hard way:
 `GameWorld` (in `td.util`) used to be a single god object named `Context` owning five
 unrelated jobs directly. Each is now its own independently testable class:
 
-| Collaborator | Package | Owns |
-|---|---|---|
-| `BoardGeometry` | `td.board` | scale, board size, cell↔pixel conversion (an immutable value, replaced wholesale on `setBoard`) |
-| `EconomyLedger` | `td.economy` | the `EconomyState` (credits/score/lives) and `EconomyListener` notification |
-| `EnemyRoster` (implements `EnemyRegistry`) | `td.enemy` | the live per-wave enemy list and death reporting to `GameHost` |
-| `TowerRoster` | `td.tower` | the tower list, buy/sell/clear, and `TowerListener` notification |
-| `ProjectileRoster` (implements `ProjectileRegistry`) | `td.projectile` | the live in-flight shells/missiles |
-| `WaveAnnouncer` | `td.wave` | the `WaveStartListener` hub (`TowerThree` is the only subscriber, clearing the hit markers its scan left on the previous wave) |
+| Collaborator                                         | Package         | Owns                                                                                                                           |
+|------------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `BoardGeometry`                                      | `td.board`      | scale, board size, cell↔pixel conversion (an immutable value, replaced wholesale on `setBoard`)                                |
+| `EconomyLedger`                                      | `td.economy`    | the `EconomyState` (credits/score/lives) and `EconomyListener` notification                                                    |
+| `EnemyRoster` (implements `EnemyRegistry`)           | `td.enemy`      | the live per-wave enemy list and death reporting to `GameHost`                                                                 |
+| `TowerRoster`                                        | `td.tower`      | the tower list, buy/sell/clear, and `TowerListener` notification                                                               |
+| `ProjectileRoster` (implements `ProjectileRegistry`) | `td.projectile` | the live in-flight shells/missiles                                                                                             |
+| `WaveAnnouncer`                                      | `td.wave`       | the `WaveStartListener` hub (`TowerThree` is the only subscriber, clearing the hit markers its scan left on the previous wave) |
 
 `GameWorld` **hands these out rather than wrapping them**, and additionally owns four fields
 of its own: `board`, `path`, `enemyCatalog` and `random`. It is therefore not a pure
@@ -190,8 +190,8 @@ mid-level (behind a confirm dialog, skipped once the level has already ended). B
 through `TowerDefense.requestReturnToMenu()`. The player can then pick any level, including a
 different one, with no state left over from the previous run.
 
-This works because `GameEngine.loadLevel()` unloads the outgoing level as its first step,
-*before* installing the new board geometry and grid. The ordering inside `unloadCurrentLevel`
+This works because `GameEngine.loadLevel()` unloads the outgoing level as its first step, *before* installing the new
+board geometry and grid. The ordering inside `unloadCurrentLevel`
 matters:
 
 1. `GameWorld.projectiles().clear()` first. A projectile in flight holds no reference to board
@@ -304,8 +304,8 @@ was to build it on the `game-loop` thread — `GameLoop` now calls both of its c
 and has no Swing dependency at all — and publish it through one `volatile` field that
 `paintBoard` reads.
 
-The tower info panel was the same bug for a different set of fields, and part of it got a
-*different* answer. Its kill count and damage dealt are independent readouts in a text panel
+The tower info panel was the same bug for a different set of fields, and part of it got a *different* answer. Its kill
+count and damage dealt are independent readouts in a text panel
 with no invariant tying them together, so they are published `volatile`. That is not mere
 tidiness — `damageDealt` is a `long`, whose non-volatile read may tear. Its damage, range and
 cooldown are a different matter and are *not* volatile scalars: they have to agree with one
@@ -354,8 +354,8 @@ readouts in a text panel), but its damage and its cooldown do.
   at the call site.
 - `EconomyLedger` fires listener notifications *outside* its lock because listeners re-enter
   the ledger and touch Swing. Holding the lock across a callout is how this deadlocks.
-- `GameLoop.start()` is idempotent and restartable. A second call while running is a no-op
-  (logged, not a second thread); a call after `stop()` resets the accumulators, interpolation
+- `GameLoop.start()` is idempotent and restartable. A second call while running is a no-op (logged, not a second
+  thread); a call after `stop()` resets the accumulators, interpolation
   alpha, tick counter and circuit breaker before starting a fresh thread — needed because
   returning to the menu stops the loop and the next level starts the same instance again.
   `animationSeconds` is the one exception, left monotonic on purpose since it is wall-clock
@@ -454,14 +454,14 @@ obvious next step looks like doing the same to the five per-package `CLAUDE.md` 
 together are larger than the root one ever was. It was recorded as a gap, and then measured,
 and the measurement said not to.
 
-| File | Size | Commits touching it | Lines of history |
-|---|---|---|---|
-| root `CLAUDE.md`, before the rewrite | 36 KB | 43 | throughout |
-| `td/enemy` | 17 KB | 14 | 3, all marginal |
-| `td/tower` | 15 KB | 19 | 0 |
-| `td/ui` | 12 KB | 15 | 0 |
-| `td/wave` | 6 KB | 6 | 0 |
-| `td/economy` | 2 KB | 2 | 0 |
+| File                                 | Size  | Commits touching it | Lines of history |
+|--------------------------------------|-------|---------------------|------------------|
+| root `CLAUDE.md`, before the rewrite | 36 KB | 43                  | throughout       |
+| `td/enemy`                           | 17 KB | 14                  | 3, all marginal  |
+| `td/tower`                           | 15 KB | 19                  | 0                |
+| `td/ui`                              | 12 KB | 15                  | 0                |
+| `td/wave`                            | 6 KB  | 6                   | 0                |
+| `td/economy`                         | 2 KB  | 2                   | 0                |
 
 Three reasons the root file's argument does not transfer:
 

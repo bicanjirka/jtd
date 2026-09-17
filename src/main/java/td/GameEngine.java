@@ -13,9 +13,10 @@ import td.level.LevelDefinition;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.GameHost;
-import td.util.RandomSource;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
+import td.util.RandomSource;
+import td.util.ThreadConfined;
 import td.wave.Path;
 import td.wave.PathBuilder;
 import td.wave.PathCoverage;
@@ -24,7 +25,6 @@ import td.wave.Wave;
 import td.wave.WaveDefinition;
 import td.wave.WaveProgress;
 import td.wave.WaveScript;
-import td.util.ThreadConfined;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +41,8 @@ import java.util.Optional;
  * translating a real MouseEvent's screen position into that is a UI concern
  * {@link TowerDefense} still owns.
  */
-@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // debugSpawnCursor is advanced by a key event; everything else here is volatile or in LoadedLevel
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
+// debugSpawnCursor is advanced by a key event; everything else here is volatile or in LoadedLevel
 public class GameEngine {
 
     private static final Logger LOG = LoggerFactory.getLogger(GameEngine.class);
@@ -66,7 +67,9 @@ public class GameEngine {
         this(new GameWorld(host));
     }
 
-    /** For a run that has to be reproducible - see {@code td.BalanceHarness}. */
+    /**
+     * For a run that has to be reproducible - see {@code td.BalanceHarness}.
+     */
     public GameEngine(GameHost host, RandomSource random) {
         this(new GameWorld(host, random));
     }
@@ -123,7 +126,9 @@ public class GameEngine {
         return new WaveProgress(index, count, current, next);
     }
 
-    /** Whether the previous wave is cleared, so the next one is allowed to start. */
+    /**
+     * Whether the previous wave is cleared, so the next one is allowed to start.
+     */
     public boolean isWaveReady() {
         return this.waveReady;
     }
@@ -203,7 +208,9 @@ public class GameEngine {
         }
     }
 
-    /** Opens the gate on the first wave, once a level is loaded and the player is ready to play it. */
+    /**
+     * Opens the gate on the first wave, once a level is loaded and the player is ready to play it.
+     */
     public void startLevel() {
         this.waveReady = true;
     }
@@ -328,7 +335,9 @@ public class GameEngine {
         return Optional.of(id);
     }
 
-    /** Debug tool: grants a lump sum of credits, through the same path a kill or a sale uses. */
+    /**
+     * Debug tool: grants a lump sum of credits, through the same path a kill or a sale uses.
+     */
     public void debugGrantCredits(int amount) {
         this.gameWorld.economy().apply(EconomyDelta.credits(amount));
     }

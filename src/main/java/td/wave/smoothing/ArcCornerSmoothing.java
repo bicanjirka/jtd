@@ -17,22 +17,6 @@ public final class ArcCornerSmoothing extends AbstractCornerSmoothing {
         super(cornerPull, samplesPerCorner);
     }
 
-    @Override
-    protected List<Vec2> sampleCorner(Vec2 pulledBackBefore, Vec2 corner, Vec2 pulledBackAfter, int samples) {
-        Vec2 center = arcCenter(pulledBackBefore, corner, pulledBackAfter);
-        double radius = Math.hypot(pulledBackBefore.x() - center.x(), pulledBackBefore.y() - center.y());
-        double startAngle = Math.atan2(pulledBackBefore.y() - center.y(), pulledBackBefore.x() - center.x());
-        double endAngle = Math.atan2(pulledBackAfter.y() - center.y(), pulledBackAfter.x() - center.x());
-        double sweep = shortestSignedAngle(endAngle - startAngle);
-
-        List<Vec2> points = new ArrayList<>(samples);
-        for (int i = 1; i <= samples; i++) {
-            double angle = startAngle + sweep * ((double) i / (samples + 1));
-            points.add(new Vec2(center.x() + radius * Math.cos(angle), center.y() + radius * Math.sin(angle)));
-        }
-        return points;
-    }
-
     /**
      * The tangent-circle center: {@code pulledBackBefore} and {@code pulledBackAfter} both
      * lie on the circle, and the circle is tangent to each leg at its respective point, so the
@@ -62,7 +46,9 @@ public final class ArcCornerSmoothing extends AbstractCornerSmoothing {
         return new Vec2(pulledBackBefore.x() + t1 * perp1x, pulledBackBefore.y() + t1 * perp1y);
     }
 
-    /** Normalizes an angular difference into (-pi, pi] - the shorter way around the circle. */
+    /**
+     * Normalizes an angular difference into (-pi, pi] - the shorter way around the circle.
+     */
     private static double shortestSignedAngle(double angle) {
         double normalized = angle % (2 * Math.PI);
         if (normalized > Math.PI) {
@@ -71,5 +57,21 @@ public final class ArcCornerSmoothing extends AbstractCornerSmoothing {
             normalized += 2 * Math.PI;
         }
         return normalized;
+    }
+
+    @Override
+    protected List<Vec2> sampleCorner(Vec2 pulledBackBefore, Vec2 corner, Vec2 pulledBackAfter, int samples) {
+        Vec2 center = arcCenter(pulledBackBefore, corner, pulledBackAfter);
+        double radius = Math.hypot(pulledBackBefore.x() - center.x(), pulledBackBefore.y() - center.y());
+        double startAngle = Math.atan2(pulledBackBefore.y() - center.y(), pulledBackBefore.x() - center.x());
+        double endAngle = Math.atan2(pulledBackAfter.y() - center.y(), pulledBackAfter.x() - center.x());
+        double sweep = shortestSignedAngle(endAngle - startAngle);
+
+        List<Vec2> points = new ArrayList<>(samples);
+        for (int i = 1; i <= samples; i++) {
+            double angle = startAngle + sweep * ((double) i / (samples + 1));
+            points.add(new Vec2(center.x() + radius * Math.cos(angle), center.y() + radius * Math.sin(angle)));
+        }
+        return points;
     }
 }

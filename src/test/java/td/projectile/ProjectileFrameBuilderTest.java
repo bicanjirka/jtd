@@ -11,7 +11,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-/** Verifies ProjectileFrameBuilder lerps position the same way EnemyFrameBuilder does for an enemy. */
+/**
+ * Verifies ProjectileFrameBuilder lerps position the same way EnemyFrameBuilder does for an enemy.
+ */
 class ProjectileFrameBuilderTest {
 
     @Test

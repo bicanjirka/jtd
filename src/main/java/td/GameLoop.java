@@ -2,9 +2,9 @@ package td;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import td.util.ThreadConfined;
 import td.util.Threads;
 import td.util.TickRate;
-import td.util.ThreadConfined;
 
 /**
  * Drives the simulation on its own dedicated thread using two independent
@@ -23,7 +23,8 @@ import td.util.ThreadConfined;
  * class contains no Swing dependency at all; crossing to the EDT is the
  * caller's job and happens after the snapshot exists. See CLAUDE.md 3.
  */
-@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // the tick counter and the failure circuit breaker, both touched only inside run()
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
+// the tick counter and the failure circuit breaker, both touched only inside run()
 public class GameLoop implements Runnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(GameLoop.class);
@@ -59,6 +60,25 @@ public class GameLoop implements Runnable {
     }
 
     /**
+     * How fast {@link #animationSeconds} advances relative to wall-clock time, given the
+     * current tick-speed multiplier. {@code 1.0} means ignore game speed entirely, which is
+     * today's behaviour: markers keep the same pace while paused and while fast-forwarding.
+     * Swap the body for {@code multiplier} to make animation track game speed exactly, or
+     * something like {@code Math.sqrt(multiplier)} for a damped middle ground.
+     */
+    private static double animationTimeScale(double multiplier) {
+        return 1.0;
+    }
+
+    private static void sleepQuietly(long nanos) {
+        try {
+            Thread.sleep(nanos / 1_000_000L, (int) (nanos % 1_000_000L));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
      * How far past the last completed simulation tick the loop currently is, as a fraction
      * of one tick step ({@code [0, 1)}). Intended for interpolating a render frame between
      * the previous and current tick's state, and refreshed immediately before each onRender
@@ -76,17 +96,6 @@ public class GameLoop implements Runnable {
      */
     public double animationSeconds() {
         return this.animationSeconds;
-    }
-
-    /**
-     * How fast {@link #animationSeconds} advances relative to wall-clock time, given the
-     * current tick-speed multiplier. {@code 1.0} means ignore game speed entirely, which is
-     * today's behaviour: markers keep the same pace while paused and while fast-forwarding.
-     * Swap the body for {@code multiplier} to make animation track game speed exactly, or
-     * something like {@code Math.sqrt(multiplier)} for a damped middle ground.
-     */
-    private static double animationTimeScale(double multiplier) {
-        return 1.0;
     }
 
     public void setSpeed(TickSpeed speed) {
@@ -220,14 +229,6 @@ public class GameLoop implements Runnable {
             this.onRender.run();
         } catch (RuntimeException e) {
             LOG.error("Render failed", e);
-        }
-    }
-
-    private static void sleepQuietly(long nanos) {
-        try {
-            Thread.sleep(nanos / 1_000_000L, (int) (nanos % 1_000_000L));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
         }
     }
 }

@@ -28,7 +28,9 @@ public final class CellGrid {
         this.height = this.width == 0 ? 0 : cells[0].length;
     }
 
-    /** The board of a level that has not been loaded: no cells, and {@link #isLoaded()} false. */
+    /**
+     * The board of a level that has not been loaded: no cells, and {@link #isLoaded()} false.
+     */
     public static CellGrid empty() {
         return EMPTY;
     }
@@ -50,7 +52,9 @@ public final class CellGrid {
         return new CellGrid(cells);
     }
 
-    /** Whether a level's board is actually loaded, as opposed to {@link #empty()}. */
+    /**
+     * Whether a level's board is actually loaded, as opposed to {@link #empty()}.
+     */
     public boolean isLoaded() {
         return this.width > 0;
     }
@@ -81,7 +85,9 @@ public final class CellGrid {
         return this.cells[x][y];
     }
 
-    /** Visits every cell, column by column. A no-op on {@link #empty()}. */
+    /**
+     * Visits every cell, column by column. A no-op on {@link #empty()}.
+     */
     public void forEach(Consumer<Cell> action) {
         for (Cell[] column : this.cells) {
             for (Cell cell : column) {

@@ -5,18 +5,13 @@ import td.effect.EffectTemplate;
 import java.util.ArrayList;
 import java.util.List;
 
-/** A configurable, recording {@link AbilityContext} double for headless ability tests. */
+/**
+ * A configurable, recording {@link AbilityContext} double for headless ability tests.
+ */
 final class FakeAbilityContext implements AbilityContext {
-
-    record AppliedEffect(EffectTemplate template, EffectTarget target) {
-    }
-
-    record SpawnCall(String definitionId, int count, boolean consumesSelf) {
-    }
 
     final List<AppliedEffect> appliedEffects = new ArrayList<>();
     final List<SpawnCall> spawnCalls = new ArrayList<>();
-
     private float healthFraction = 1f;
     private int ticksSinceLastHit = Integer.MAX_VALUE / 2;
     private boolean justDied;
@@ -61,5 +56,11 @@ final class FakeAbilityContext implements AbilityContext {
     @Override
     public void spawnEnemies(String definitionId, int count, boolean consumesSelf) {
         this.spawnCalls.add(new SpawnCall(definitionId, count, consumesSelf));
+    }
+
+    record AppliedEffect(EffectTemplate template, EffectTarget target) {
+    }
+
+    record SpawnCall(String definitionId, int count, boolean consumesSelf) {
     }
 }

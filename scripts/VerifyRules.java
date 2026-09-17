@@ -36,11 +36,30 @@ public final class VerifyRules {
     private static final Path MAIN = Paths.get("src/main/java");
     private static final Path TEST = Paths.get("src/test/java");
 
-    /** The domain packages CLAUDE.md 2.1 requires to be free of any Swing or AWT dependency. */
+    /**
+     * The domain packages CLAUDE.md 2.1 requires to be free of any Swing or AWT dependency.
+     */
     private static final String[] HEADLESS_PACKAGES = {
             "board", "cell", "damage", "economy", "effect", "enemy",
             "level", "projectile", "tower", "util", "wave"
     };
+    /**
+     * Types a doc may name that are not files in this repository: JDK and Swing types, and the
+     * one inner class the enemy package's doc refers to. Anything else backticked in a
+     * {@code CLAUDE.md} must exist as a source file.
+     */
+    private static final Set<String> KNOWN_EXTERNAL_TYPES = Set.of(
+            "ArrayList", "CardLayout", "ClassCastException", "CopyOnWriteArrayList", "Error",
+            "Exception", "Graphics2D", "GridBagLayout", "HashMap", "IndexOutOfBoundsException",
+            "LinkedHashMap", "NullPointerException", "NumberFormatException", "Optional",
+            "Runnable", "Shape", "Throwable",
+            // an inner class of DefinedEnemyMob, so it has no file of its own
+            "MobAbilityContext",
+            // prose, not a type - the naming rule's own example
+            "UpperCamelCase");
+
+    private VerifyRules() {
+    }
 
     public static void main(String[] args) throws IOException {
         List<Check> rules = new ArrayList<>();
@@ -58,9 +77,9 @@ public final class VerifyRules {
                 "\\binstanceof\\b", List.of(MAIN)).skippingComments());
 
         rules.add(Rule.of("no-null-return-in-engine", "CLAUDE.md 5",
-                "engine and domain code models absence as a value, not null "
-                        + "(td.ui frame builders are the one scoped exception)",
-                "return null\\s*;", List.of(MAIN))
+                        "engine and domain code models absence as a value, not null "
+                                + "(td.ui frame builders are the one scoped exception)",
+                        "return null\\s*;", List.of(MAIN))
                 .skippingComments()
                 .excludingPath("td/ui/"));
 
@@ -69,9 +88,9 @@ public final class VerifyRules {
                 "^import .*\\.\\*\\s*;", List.of(MAIN, TEST)).skippingComments());
 
         rules.add(Rule.of("no-lowercase-type-names", "CLAUDE.md 6",
-                "types are UpperCamelCase",
-                "^\\s*(public |protected |private )?(static )?(final )?"
-                        + "(class|interface|enum|record)\\s+[a-z]", List.of(MAIN, TEST))
+                        "types are UpperCamelCase",
+                        "^\\s*(public |protected |private )?(static )?(final )?"
+                                + "(class|interface|enum|record)\\s+[a-z]", List.of(MAIN, TEST))
                 .skippingComments());
 
         rules.add(Rule.of("no-lowercase-constants", "CLAUDE.md 6",
@@ -84,10 +103,10 @@ public final class VerifyRules {
                 "catch\\s*\\(\\s*(Throwable|Error)\\b", List.of(MAIN, TEST)).skippingComments());
 
         rules.add(Rule.of("no-unchecked-catch", "CLAUDE.md 6",
-                "test the condition instead of catching an unchecked exception as control flow "
-                        + "(NumberFormatException around a parse is the one legitimate shape)",
-                "catch\\s*\\(\\s*(NullPointerException|ClassCastException"
-                        + "|(Array)?IndexOutOfBoundsException)\\b", List.of(MAIN, TEST))
+                        "test the condition instead of catching an unchecked exception as control flow "
+                                + "(NumberFormatException around a parse is the one legitimate shape)",
+                        "catch\\s*\\(\\s*(NullPointerException|ClassCastException"
+                                + "|(Array)?IndexOutOfBoundsException)\\b", List.of(MAIN, TEST))
                 .skippingComments());
 
         rules.add(Rule.of("no-static-random", "CLAUDE.md 5",
@@ -172,21 +191,6 @@ public final class VerifyRules {
         System.out.printf("       Prose-only rules are the ones that drift. "
                 + "See CLAUDE.md 10 question 1.%n");
     }
-
-    /**
-     * Types a doc may name that are not files in this repository: JDK and Swing types, and the
-     * one inner class the enemy package's doc refers to. Anything else backticked in a
-     * {@code CLAUDE.md} must exist as a source file.
-     */
-    private static final Set<String> KNOWN_EXTERNAL_TYPES = Set.of(
-            "ArrayList", "CardLayout", "ClassCastException", "CopyOnWriteArrayList", "Error",
-            "Exception", "Graphics2D", "GridBagLayout", "HashMap", "IndexOutOfBoundsException",
-            "LinkedHashMap", "NullPointerException", "NumberFormatException", "Optional",
-            "Runnable", "Shape", "Throwable",
-            // an inner class of DefinedEnemyMob, so it has no file of its own
-            "MobAbilityContext",
-            // prose, not a type - the naming rule's own example
-            "UpperCamelCase");
 
     /**
      * Every backticked {@code UpperCamelCase} name in a {@code CLAUDE.md} must be a real source
@@ -350,58 +354,6 @@ public final class VerifyRules {
         };
     }
 
-    /** A rule needing real per-file logic rather than a single line-matching regex. */
-    private abstract static class SourceCheck implements Check {
-
-        private final String name;
-        private final String section;
-        private final String why;
-        private final List<Path> roots;
-
-        SourceCheck(String name, String section, String why, List<Path> roots) {
-            this.name = name;
-            this.section = section;
-            this.why = why;
-            this.roots = roots;
-        }
-
-        /** Adds one entry to {@code found} per violation in {@code file}. */
-        abstract void inspect(Path file, List<String> lines, List<String> found) throws IOException;
-
-        @Override
-        public String name() {
-            return this.name;
-        }
-
-        @Override
-        public String section() {
-            return this.section;
-        }
-
-        @Override
-        public String why() {
-            return this.why;
-        }
-
-        @Override
-        public List<String> violations() throws IOException {
-            List<String> found = new ArrayList<>();
-            for (Path root : this.roots) {
-                if (!Files.isDirectory(root)) {
-                    continue;
-                }
-                try (Stream<Path> files = Files.walk(root)) {
-                    for (Path file : files.filter(Files::isRegularFile)
-                            .filter(f -> f.toString().endsWith(".java"))
-                            .toList()) {
-                        this.inspect(file, Files.readAllLines(file, StandardCharsets.UTF_8), found);
-                    }
-                }
-            }
-            return found;
-        }
-    }
-
     /**
      * {@code CLAUDE.md} and this file must agree about which rules exist, in both directions.
      * <p>
@@ -475,7 +427,9 @@ public final class VerifyRules {
         };
     }
 
-    /** The root {@code CLAUDE.md} and every per-package one. */
+    /**
+     * The root {@code CLAUDE.md} and every per-package one.
+     */
     private static List<Path> docFiles() throws IOException {
         List<Path> docs = new ArrayList<>();
         docs.add(Paths.get("CLAUDE.md"));
@@ -495,7 +449,9 @@ public final class VerifyRules {
         return roots;
     }
 
-    /** One verifiable rule. Most are greps ({@link Rule}); a few need real logic. */
+    /**
+     * One verifiable rule. Most are greps ({@link Rule}); a few need real logic.
+     */
     private interface Check {
         String name();
 
@@ -504,6 +460,62 @@ public final class VerifyRules {
         String why();
 
         List<String> violations() throws IOException;
+    }
+
+    /**
+     * A rule needing real per-file logic rather than a single line-matching regex.
+     */
+    private abstract static class SourceCheck implements Check {
+
+        private final String name;
+        private final String section;
+        private final String why;
+        private final List<Path> roots;
+
+        SourceCheck(String name, String section, String why, List<Path> roots) {
+            this.name = name;
+            this.section = section;
+            this.why = why;
+            this.roots = roots;
+        }
+
+        /**
+         * Adds one entry to {@code found} per violation in {@code file}.
+         */
+        abstract void inspect(Path file, List<String> lines, List<String> found) throws IOException;
+
+        @Override
+        public String name() {
+            return this.name;
+        }
+
+        @Override
+        public String section() {
+            return this.section;
+        }
+
+        @Override
+        public String why() {
+            return this.why;
+        }
+
+        @Override
+        public List<String> violations() throws IOException {
+            List<String> found = new ArrayList<>();
+            for (Path root : this.roots) {
+                if (!Files.isDirectory(root)) {
+                    continue;
+                }
+                try (Stream<Path> files = Files.walk(root)) {
+                    for (Path file : files.filter(Files::isRegularFile)
+                            .filter(f -> f.toString().endsWith(".java"))
+                            .toList()) {
+                        this.inspect(file, Files.readAllLines(file, StandardCharsets.UTF_8), found);
+                    }
+                }
+            }
+            return found;
+        }
     }
 
     private static final class Rule implements Check {
@@ -528,7 +540,9 @@ public final class VerifyRules {
             return new Rule(name, section, why, regex, roots);
         }
 
-        /** Ignores matches on comment lines - see this class's note on the heuristic. */
+        /**
+         * Ignores matches on comment lines - see this class's note on the heuristic.
+         */
         Rule skippingComments() {
             this.lineFilter = line -> {
                 String trimmed = line.trim();
@@ -537,7 +551,9 @@ public final class VerifyRules {
             return this;
         }
 
-        /** Exempts a subtree, for a rule CLAUDE.md scopes rather than applies everywhere. */
+        /**
+         * Exempts a subtree, for a rule CLAUDE.md scopes rather than applies everywhere.
+         */
         Rule excludingPath(String fragment) {
             String normalized = fragment.replace('/', java.io.File.separatorChar);
             this.pathFilter = path -> !path.toString().contains(normalized);
@@ -583,8 +599,5 @@ public final class VerifyRules {
             }
             return found;
         }
-    }
-
-    private VerifyRules() {
     }
 }

@@ -41,21 +41,24 @@ public final class CinderTower extends AbstractTower {
     private static final int BURN_DURATION_TICKS = 15;
     private static final double WIDE_NOZZLE_HALF_WIDTH_MULTIPLIER = 1.4;
 
-    /** More damage (and so more burn per tick, since burn's magnitude is this tower's own damageCurrent) - earned by proven output. */
+    /**
+     * More damage (and so more burn per tick, since burn's magnitude is this tower's own damageCurrent) - earned by proven output.
+     */
     private static final UpgradePath WHITE_FLAME = new UpgradePath(
             "White Flame", 30, new TowerBuff(0.4f, 0f, 0f, 0f), new DamageDealtCondition(15000));
-    /** A wider cone and more range - a straightforward money-gated specialization needing no track record. */
+    /**
+     * A wider cone and more range - a straightforward money-gated specialization needing no track record.
+     */
     private static final UpgradePath WIDE_NOZZLE = new UpgradePath(
             "Wide Nozzle", 25, new TowerBuff(0f, 0.3f, 0f, 0f), UpgradeCondition.always());
     private static final List<UpgradePath> PATHS = List.of(WHITE_FLAME, WIDE_NOZZLE);
-
+    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     // Bought on the EDT (onUpgradePathChosen) and read every tick on the game-loop thread, so
     // it is published volatile - CLAUDE.md 3 rule 2. Each is an independent scalar with no
     // invariant tying it to another, which is what makes a volatile scalar the right mechanism
     // here rather than a TowerStats-style snapshot: reading last pulse's value for one tick
     // after an upgrade is correct, just briefly stale.
     private volatile double halfWidthRadians = HALF_WIDTH_RADIANS_BASE;
-    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
     public CinderTower(GameWorld context, int x, int y) {
         // No cooldown: it burns whatever is in its cone every tick - see rateLine.
@@ -67,7 +70,9 @@ public final class CinderTower extends AbstractTower {
         return PATHS;
     }
 
-    /** Wide Nozzle's wider cone isn't a {@link TowerBuff} axis, so it's applied here instead. */
+    /**
+     * Wide Nozzle's wider cone isn't a {@link TowerBuff} axis, so it's applied here instead.
+     */
     @Override
     protected void onUpgradePathChosen(UpgradePath path) {
         if (path == WIDE_NOZZLE) {

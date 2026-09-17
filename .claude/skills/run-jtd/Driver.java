@@ -353,11 +353,6 @@ public class Driver {
         }
     }
 
-    /** A reflective invocation, which unlike Runnable is allowed to throw. */
-    private interface ReflectiveCall {
-        void run() throws Exception;
-    }
-
     // Playtesting cheats: jump straight to an economy value instead of buying/selling towers
     // or surviving/leaking waves to get there. GameWorld.apply is safe to call from this thread -
     // it's already designed to be reachable from both the EDT and the game-loop thread (see
@@ -380,5 +375,12 @@ public class Driver {
         game.setAlwaysOnTop(false);
         System.out.println("OK quit");
         System.exit(0);
+    }
+
+    /**
+     * A reflective invocation, which unlike Runnable is allowed to throw.
+     */
+    private interface ReflectiveCall {
+        void run() throws Exception;
     }
 }

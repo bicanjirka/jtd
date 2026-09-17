@@ -15,7 +15,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-/** Exercises the effect wiring AbstractEnemyMob adds on top of movement and damage. */
+/**
+ * Exercises the effect wiring AbstractEnemyMob adds on top of movement and damage.
+ */
 class AbstractEnemyMobEffectTest {
 
     private static GameWorld newContext() {

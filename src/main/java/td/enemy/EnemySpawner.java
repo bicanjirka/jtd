@@ -9,7 +9,9 @@ package td.enemy;
  */
 public interface EnemySpawner {
 
-    /** Adds a new, independent enemy to the roster - the Warden's periodic reinforcement and its on-death egg spawn. */
+    /**
+     * Adds a new, independent enemy to the roster - the Warden's periodic reinforcement and its on-death egg spawn.
+     */
     void add(EnemyMob mob);
 
     /**

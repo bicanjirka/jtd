@@ -34,7 +34,9 @@ public record LevelDefinition(
         }
     }
 
-    /** A level with no path smoothing - the common case for a level that doesn't care. */
+    /**
+     * A level with no path smoothing - the common case for a level that doesn't care.
+     */
     public static LevelDefinition unsmoothed(
             String name,
             String description,

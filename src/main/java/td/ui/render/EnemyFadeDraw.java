@@ -12,5 +12,5 @@ package td.ui.render;
  * @param fadeProgress {@code 0} the tick it died, {@code 1} fully faded out
  */
 public record EnemyFadeDraw(Palette palette, float x, float y, double facingRadians, float scale,
-                             float growth, float fadeProgress) implements EnemyDraw {
+                            float growth, float fadeProgress) implements EnemyDraw {
 }

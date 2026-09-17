@@ -1,6 +1,7 @@
 package td.ui;
 
 import td.util.ThreadConfined;
+
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.Color;
@@ -29,7 +30,8 @@ import java.io.Serial;
  * read its stats, which still works because the board keeps rendering and the banner covers
  * almost none of it.
  */
-@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // Swing overlays and the callback the menu button fires
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
+// Swing overlays and the callback the menu button fires
 public class BoardOverlays {
 
     private static final Color BANNER_FILL = new Color(0, 0, 0, 210);
@@ -46,35 +48,6 @@ public class BoardOverlays {
     public BoardOverlays() {
         this.lostPanel = buildOverlay("Game Over!");
         this.wonPanel = buildOverlay("Congratulations!");
-    }
-
-    /**
-     * The rounded, translucent plate the message actually sits on. It paints itself rather
-     * than using a background colour with an alpha channel: an opaque Swing component is
-     * contracted to fill every pixel of its bounds, so Swing skips painting what is underneath
-     * and the alpha has nothing to blend against - which is why the old overlay, whose only
-     * translucency was a background colour, came out solid black over the board.
-     */
-    private static final class Plate extends JPanel {
-        @Serial
-        private static final long serialVersionUID = 1L;
-
-        Plate() {
-            super(new GridBagLayout());
-            this.setOpaque(false);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(BANNER_FILL);
-            g2.fillRoundRect(0, 0, this.getWidth(), this.getHeight(), CORNER_RADIUS, CORNER_RADIUS);
-            g2.setColor(BANNER_EDGE);
-            g2.drawRoundRect(0, 0, this.getWidth() - 1, this.getHeight() - 1, CORNER_RADIUS, CORNER_RADIUS);
-            g2.dispose();
-            super.paintComponent(g);
-        }
     }
 
     /**
@@ -114,7 +87,9 @@ public class BoardOverlays {
         return layer;
     }
 
-    /** Adds both overlay layers to {@code board}, at the same grid cell as the board itself. */
+    /**
+     * Adds both overlay layers to {@code board}, at the same grid cell as the board itself.
+     */
     public void addTo(JPanel board, GridBagConstraints cellConstraints) {
         board.add(this.lostPanel, cellConstraints);
         board.add(this.wonPanel, cellConstraints);
@@ -139,5 +114,34 @@ public class BoardOverlays {
 
     private void backToMenuActionPerformed(ActionEvent evt) {
         this.onBackToMenu.run();
+    }
+
+    /**
+     * The rounded, translucent plate the message actually sits on. It paints itself rather
+     * than using a background colour with an alpha channel: an opaque Swing component is
+     * contracted to fill every pixel of its bounds, so Swing skips painting what is underneath
+     * and the alpha has nothing to blend against - which is why the old overlay, whose only
+     * translucency was a background colour, came out solid black over the board.
+     */
+    private static final class Plate extends JPanel {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        Plate() {
+            super(new GridBagLayout());
+            this.setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(BANNER_FILL);
+            g2.fillRoundRect(0, 0, this.getWidth(), this.getHeight(), CORNER_RADIUS, CORNER_RADIUS);
+            g2.setColor(BANNER_EDGE);
+            g2.drawRoundRect(0, 0, this.getWidth() - 1, this.getHeight() - 1, CORNER_RADIUS, CORNER_RADIUS);
+            g2.dispose();
+            super.paintComponent(g);
+        }
     }
 }

@@ -30,22 +30,30 @@ public record LoadedLevel(CellGrid cells, BoardGeometry board, Path path,
             CellGrid.empty(), BoardGeometry.empty(), new PathNormal(List.of()),
             EnemyCatalog.builtIn(), List.of());
 
-    /** Defensive copy, so the list a caller built cannot be changed after publication. */
+    /**
+     * Defensive copy, so the list a caller built cannot be changed after publication.
+     */
     public LoadedLevel {
         waves = List.copyOf(waves);
     }
 
-    /** The state before any level is loaded, and after one is torn down. */
+    /**
+     * The state before any level is loaded, and after one is torn down.
+     */
     public static LoadedLevel none() {
         return NONE;
     }
 
-    /** Whether a level's board is actually installed, as opposed to {@link #none()}. */
+    /**
+     * Whether a level's board is actually installed, as opposed to {@link #none()}.
+     */
     public boolean isLoaded() {
         return this.cells.isLoaded();
     }
 
-    /** How many waves this level runs. */
+    /**
+     * How many waves this level runs.
+     */
     public int waveCount() {
         return this.waves.size();
     }
@@ -60,17 +68,23 @@ public record LoadedLevel(CellGrid cells, BoardGeometry board, Path path,
         return this.waves.get(index);
     }
 
-    /** This level with a different board, for a display-only world - see {@link GameWorld}. */
+    /**
+     * This level with a different board, for a display-only world - see {@link GameWorld}.
+     */
     public LoadedLevel withBoard(BoardGeometry board) {
         return new LoadedLevel(this.cells, board, this.path, this.catalog, this.waves);
     }
 
-    /** This level with a different path, for a display-only world - see {@link GameWorld}. */
+    /**
+     * This level with a different path, for a display-only world - see {@link GameWorld}.
+     */
     public LoadedLevel withPath(Path path) {
         return new LoadedLevel(this.cells, this.board, path, this.catalog, this.waves);
     }
 
-    /** This level with a different enemy catalog - see {@link GameWorld}. */
+    /**
+     * This level with a different enemy catalog - see {@link GameWorld}.
+     */
     public LoadedLevel withCatalog(EnemyCatalog catalog) {
         return new LoadedLevel(this.cells, this.board, this.path, catalog, this.waves);
     }

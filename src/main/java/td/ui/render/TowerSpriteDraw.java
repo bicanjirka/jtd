@@ -11,5 +11,5 @@ import java.util.Optional;
  * pick" language instead of eight colours to memorize.
  */
 public record TowerSpriteDraw(Palette palette, int boardX, int boardY, boolean selected,
-                               float centerX, float centerY, float rangeReal, Optional<Palette> accent) {
+                              float centerX, float centerY, float rangeReal, Optional<Palette> accent) {
 }

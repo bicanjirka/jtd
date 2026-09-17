@@ -1,15 +1,15 @@
 package td.ui;
 
-import td.tower.Tower;
 import td.tower.AuraTower;
 import td.tower.CinderTower;
-import td.tower.TowerFactory;
-import td.tower.PulseTower;
 import td.tower.MortarTower;
-import td.tower.SniperTower;
+import td.tower.PulseTower;
 import td.tower.SeekerTower;
+import td.tower.SniperTower;
 import td.tower.SonarTower;
 import td.tower.SplashTower;
+import td.tower.Tower;
+import td.tower.TowerFactory;
 import td.tower.TowerVisitor;
 import td.tower.upgrade.UpgradePath;
 import td.ui.render.Palette;
@@ -52,14 +52,6 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         this.animationSeconds = animationSeconds;
     }
 
-    public List<TowerSpriteDraw> build() {
-        return this.draws;
-    }
-
-    public List<TurretHeadDraw> buildHeads() {
-        return this.headDraws;
-    }
-
     /**
      * The one place a tower type names its body's {@link Palette} role - deliberately no
      * {@code default}, so a new {@link TowerFactory.Type} is a compile error here until its
@@ -78,11 +70,6 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         };
     }
 
-    private void sprite(Tower tower) {
-        this.draws.add(new TowerSpriteDraw(bodyPaletteFor(tower.getType()), tower.getBoardX(), tower.getBoardY(),
-                tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(), accentPaletteFor(tower)));
-    }
-
     /**
      * The specialization-ring role for a tower's chosen upgrade path, if any - path A gets
      * {@code TOWER_UPGRADE_PATH_A}, path B gets {@code TOWER_UPGRADE_PATH_B}, regardless of
@@ -99,7 +86,22 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return Optional.of(index == 0 ? Palette.TOWER_UPGRADE_PATH_A : Palette.TOWER_UPGRADE_PATH_B);
     }
 
-    /** A head with a constant nominal size - every tower but the (pulsing) Aura tower. */
+    public List<TowerSpriteDraw> build() {
+        return this.draws;
+    }
+
+    public List<TurretHeadDraw> buildHeads() {
+        return this.headDraws;
+    }
+
+    private void sprite(Tower tower) {
+        this.draws.add(new TowerSpriteDraw(bodyPaletteFor(tower.getType()), tower.getBoardX(), tower.getBoardY(),
+                tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(), accentPaletteFor(tower)));
+    }
+
+    /**
+     * A head with a constant nominal size - every tower but the (pulsing) Aura tower.
+     */
     private void head(Tower tower, double headingRadians) {
         this.headWithScale(tower, headingRadians, 1.0f);
     }

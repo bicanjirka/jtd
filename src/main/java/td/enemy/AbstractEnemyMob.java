@@ -6,10 +6,10 @@ import td.effect.ActiveEffects;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.util.GameWorld;
+import td.util.ThreadConfined;
 import td.wave.ArcLengthPath;
 import td.wave.PathPose;
 import td.wave.Vec2;
-import td.util.ThreadConfined;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,16 +38,9 @@ import java.util.Set;
  * no invariant here could survive a subclass; a leaf now reaches state through the accessors
  * below. See CLAUDE.md 3 and 5.
  */
-@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // per-tick simulation state; the frame build that reads it runs on the loop thread too
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
+// per-tick simulation state; the frame build that reads it runs on the loop thread too
 public abstract class AbstractEnemyMob implements EnemyMob {
-
-    /**
-     * Health is stored in hundredths, matching the scale {@code td.tower} expresses damage in
-     * ({@code SniperTower.DAMAGE} of {@code 4000} is 40 points a shot). Storing the fine-grained
-     * unit is what lets a percentage resistance or a damage-over-time tick subtract a fraction
-     * of a point without rounding to nothing.
-     */
-    private static final int HEALTH_UNITS_PER_POINT = 100;
 
     /**
      * Pixels per tick for a mob whose definition names no speed of its own. Rescaled from the
@@ -56,8 +49,16 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * so every enemy's actual speed is unchanged; only the unit it is expressed in is.
      */
     public static final float DEFAULT_SPEED = 1.28f;
-
-    /** How many ticks of spawn delay one slot of wave ordering is worth, at DEFAULT_SPEED. */
+    /**
+     * Health is stored in hundredths, matching the scale {@code td.tower} expresses damage in
+     * ({@code SniperTower.DAMAGE} of {@code 4000} is 40 points a shot). Storing the fine-grained
+     * unit is what lets a percentage resistance or a damage-over-time tick subtract a fraction
+     * of a point without rounding to nothing.
+     */
+    private static final int HEALTH_UNITS_PER_POINT = 100;
+    /**
+     * How many ticks of spawn delay one slot of wave ordering is worth, at DEFAULT_SPEED.
+     */
     private static final float DELAY_TICKS_PER_SLOT = 22.4f;
 
     // Injected collaborators and the constants a mob is born with. All final, all set below.
@@ -248,7 +249,9 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         return (int) this.distanceIntoLap;
     }
 
-    /** The exact, sub-pixel distance into the path's current lap - see {@link #jumpToDistance}. */
+    /**
+     * The exact, sub-pixel distance into the path's current lap - see {@link #jumpToDistance}.
+     */
     protected double getDistanceIntoLap() {
         return this.distanceIntoLap;
     }
@@ -266,7 +269,9 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         this.prevY = this.y;
     }
 
-    /** Spawned, on the board, and still alive - the precondition every targeting query applies. */
+    /**
+     * Spawned, on the board, and still alive - the precondition every targeting query applies.
+     */
     public boolean validTarget() {
         return ((!this.inactive) && this.validTarget && (!this.dead));
     }

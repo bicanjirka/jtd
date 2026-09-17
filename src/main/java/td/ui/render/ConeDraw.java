@@ -7,5 +7,5 @@ package td.ui.render;
  * {@code td.tower.CinderTower}), interpolated the same way a turret head's own heading is.
  */
 public record ConeDraw(Palette palette, float originX, float originY, float headingRadians,
-                        float radius, float halfWidthRadians, float alpha) implements TowerEffectDraw {
+                       float radius, float halfWidthRadians, float alpha) implements TowerEffectDraw {
 }

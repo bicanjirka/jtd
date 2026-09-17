@@ -39,7 +39,9 @@ public final class AbilityEvaluator {
         return false;
     }
 
-    /** Counts down from {@code delayTicks}, fires once, then never again - see {@link OnceTrigger}. */
+    /**
+     * Counts down from {@code delayTicks}, fires once, then never again - see {@link OnceTrigger}.
+     */
     private static boolean fireOnce(AbilityState state) {
         if (state.isFired()) {
             return false;
@@ -52,7 +54,9 @@ public final class AbilityEvaluator {
         return false;
     }
 
-    /** Edge-triggered: fires once, the tick health first reaches the threshold - see {@link HealthThresholdTrigger}. */
+    /**
+     * Edge-triggered: fires once, the tick health first reaches the threshold - see {@link HealthThresholdTrigger}.
+     */
     private static boolean fireHealthThreshold(HealthThresholdTrigger trigger, AbilityState state, AbilityContext context) {
         if (state.isFired() || context.healthFraction() > trigger.fraction()) {
             return false;

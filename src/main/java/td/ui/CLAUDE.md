@@ -38,14 +38,14 @@ change is in the wrong place.
 
 Each domain type has one *frame builder* that describes it and knows nothing about pixels:
 
-| Builder | Describes | Dispatch |
-|---|---|---|
-| `CellFrameBuilder` | placement/selection highlights | plain getters — only one `Cell` impl exists |
-| `EnemyFrameBuilder` | enemy bodies, death fades, and (via a second `buildMarkers()` output) status-effect markers | `EnemyMobVisitor` |
-| `TowerSpriteFrameBuilder` | tower base + animated turret head | `TowerVisitor` |
-| `TowerEffectFrameBuilder` | beams, splash, pulse, aura, cone | `TowerVisitor` |
-| `ProjectileFrameBuilder` | in-flight shells and missiles | `ProjectileVisitor` |
-| `PathMarkerFrameBuilder` | the path's static trail and moving chevrons | none — pure geometry |
+| Builder                   | Describes                                                                                   | Dispatch                                    |
+|---------------------------|---------------------------------------------------------------------------------------------|---------------------------------------------|
+| `CellFrameBuilder`        | placement/selection highlights                                                              | plain getters — only one `Cell` impl exists |
+| `EnemyFrameBuilder`       | enemy bodies, death fades, and (via a second `buildMarkers()` output) status-effect markers | `EnemyMobVisitor`                           |
+| `TowerSpriteFrameBuilder` | tower base + animated turret head                                                           | `TowerVisitor`                              |
+| `TowerEffectFrameBuilder` | beams, splash, pulse, aura, cone                                                            | `TowerVisitor`                              |
+| `ProjectileFrameBuilder`  | in-flight shells and missiles                                                               | `ProjectileVisitor`                         |
+| `PathMarkerFrameBuilder`  | the path's static trail and moving chevrons                                                 | none — pure geometry                        |
 
 A status-effect marker is deliberately its own `RenderFrame` list (`statusMarkers`), not a
 third permitted `EnemyDraw` subtype — `EnemyDraw`'s contract is "an enemy is either an alive
@@ -57,8 +57,8 @@ alongside `build()`, the same shape `TowerSpriteFrameBuilder` already uses for
 **The marker row caps at `EnemyFrameBuilder.MAX_VISIBLE_MARKERS` (3).** A 4th+ simultaneous
 effect collapses into one `Palette.STATUS_MARKER_OVERFLOW` marker rather than growing the row
 further — a heavily-buffed enemy in a packed wave still reads at a glance instead of sprouting
-an unbounded strip of icons. This is a deliberately simpler stand-in for an exact "+N" count
-(which would need real text rendering, a new render primitive nothing else here has) — a
+an unbounded strip of icons. This is a deliberately simpler stand-in for an exact "+N" count (which would need real text
+rendering, a new render primitive nothing else here has) — a
 future pass could add that without changing the cap itself.
 
 ## Two independent clocks, and which one to use
@@ -66,8 +66,8 @@ future pass could add that without changing the cap itself.
 `buildFrame` receives both, and picking the wrong one is the most likely mistake in this
 package:
 
-- **`interpolationAlpha`** — where this frame lands between the last two *simulation* ticks
-  (`[0, 1)`). Use it for anything reading domain state that advances per tick: an alive
+- **`interpolationAlpha`** — where this frame lands between the last two *simulation* ticks (`[0, 1)`). Use it for
+  anything reading domain state that advances per tick: an alive
   enemy's position, an aiming turret's heading, a projectile's position (`ProjectileFrameBuilder`
   lerps `getPrevX/Y()`/`getX/Y()` exactly like `EnemyFrameBuilder` does), or a cone tower's
   wedge heading (`TowerEffectFrameBuilder.visitCinderTower` reads `radiansAt(interpolationAlpha)`,
@@ -123,8 +123,7 @@ A tower that has permanently chosen an upgrade path (see `td.tower.upgrade`) get
 ring drawn just outside its body — `Java2DFrameRenderer.paintUpgradeAccent`, fed by
 `TowerSpriteDraw.accent()`. This is deliberately **not** one more per-tower-per-path shape:
 there are only two accent roles, `Palette.TOWER_UPGRADE_PATH_A`/`_B`, shared across every
-tower type and keyed off *which slot* the tower specialized into
-(`TowerSpriteFrameBuilder.accentPaletteFor` does `tower.availablePaths().indexOf(tower
+tower type and keyed off *which slot* the tower specialized into (`TowerSpriteFrameBuilder.accentPaletteFor` does `tower.availablePaths().indexOf(tower
 .getChosenPath())`, not a per-path identity lookup) — so the accent is one consistent
 two-colour visual language the player learns once, not eight colours to memorize. It is
 also always a circle regardless of the body's own shape, for the same reason the selection
@@ -180,8 +179,8 @@ frame.
 cell**, and two things about that are easy to break:
 
 - Both need the same cell and the same `fill`/`weight`. Give either one different
-  constraints and they stop overlapping — they end up side by side, and whichever gets cell
-  (0,0) pushes the other out of view.
+  constraints and they stop overlapping — they end up side by side, and whichever gets cell (0,0) pushes the other out
+  of view.
 - `TowerDefense.requestRender` repaints the *container*, not `GameBoard`. A `JPanel` reports
   that its children never overlap, so repainting the board alone paints over the overlay
   without painting it back and the message vanishes on the next frame.

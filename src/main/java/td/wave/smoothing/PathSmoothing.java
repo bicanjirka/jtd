@@ -10,10 +10,12 @@ import java.util.List;
  */
 public interface PathSmoothing {
 
-    List<Vec2> smooth(List<Vec2> pixelPolyline);
-
-    /** The identity/no-op strategy - the polyline is returned exactly as given. */
+    /**
+     * The identity/no-op strategy - the polyline is returned exactly as given.
+     */
     static PathSmoothing none() {
         return List::copyOf;
     }
+
+    List<Vec2> smooth(List<Vec2> pixelPolyline);
 }

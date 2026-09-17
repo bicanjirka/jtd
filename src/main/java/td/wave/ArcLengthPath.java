@@ -25,7 +25,9 @@ public final class ArcLengthPath {
         this.totalLength = totalLength;
     }
 
-    /** Empty for a path with fewer than two points, or zero total length. */
+    /**
+     * Empty for a path with fewer than two points, or zero total length.
+     */
     public static Optional<ArcLengthPath> of(Path path) {
         List<Vec2> points = path.points();
         int n = points.size();
@@ -48,6 +50,10 @@ public final class ArcLengthPath {
             return Optional.empty();
         }
         return Optional.of(new ArcLengthPath(xs, ys, cumulative, totalLength));
+    }
+
+    private static double lerp(double from, double to, double t) {
+        return from + (to - from) * t;
     }
 
     public double totalLength() {
@@ -73,9 +79,5 @@ public final class ArcLengthPath {
         double y = lerp(this.ys[segment], this.ys[segment + 1], t);
         double facing = Math.atan2(this.ys[segment + 1] - this.ys[segment], this.xs[segment + 1] - this.xs[segment]);
         return new PathPose(new Vec2(x, y), facing);
-    }
-
-    private static double lerp(double from, double to, double t) {
-        return from + (to - from) * t;
     }
 }

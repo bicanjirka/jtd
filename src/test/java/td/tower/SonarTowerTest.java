@@ -30,13 +30,13 @@ class SonarTowerTest {
 
     private final GameWorld context = new GameWorld(new RecordingGameHost());
 
+    private static int hitCount(RecordingEnemyMob mob) {
+        return mob.hits().size();
+    }
+
     private SonarTower tower() {
         this.context.setBoard(BoardGeometry.of(SCALE, 20, 20));
         return new SonarTower(this.context, 3, 3);
-    }
-
-    private static int hitCount(RecordingEnemyMob mob) {
-        return mob.hits().size();
     }
 
     @Test

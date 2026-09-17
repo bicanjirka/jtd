@@ -18,22 +18,30 @@ import java.util.Optional;
  */
 public record WaveProgress(int index, int count, Optional<Wave> current, Optional<Wave> next) {
 
-    /** The state of a world with no level installed. */
+    /**
+     * The state of a world with no level installed.
+     */
     public static WaveProgress none() {
         return new WaveProgress(0, 0, Optional.empty(), Optional.empty());
     }
 
-    /** Whether a wave remains to be started. */
+    /**
+     * Whether a wave remains to be started.
+     */
     public boolean hasNextWave() {
         return this.index < this.count;
     }
 
-    /** The 1-based number of the wave in play, as the HUD shows it. */
+    /**
+     * The 1-based number of the wave in play, as the HUD shows it.
+     */
     public int currentNumber() {
         return this.index;
     }
 
-    /** The 1-based number of the wave that starting would run. */
+    /**
+     * The 1-based number of the wave that starting would run.
+     */
     public int nextNumber() {
         return this.index + 1;
     }

@@ -12,6 +12,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RandomSelectorTest {
 
+    private static List<EnemyMob> picksFrom(List<EnemyMob> candidates, RandomSource source) {
+        RandomSelector selector = new RandomSelector(source);
+        List<EnemyMob> picks = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            selector.selectFrom(candidates).ifPresent(picks::add);
+        }
+        return picks;
+    }
+
     @Test
     void theOnlyCandidateIsAlwaysSelected() {
         FakeEnemyMob onlyOne = FakeEnemyMob.at(0, 0);
@@ -45,15 +54,6 @@ class RandomSelectorTest {
         Optional<EnemyMob> selected = new RandomSelector(() -> 0.9).selectFrom(candidates);
 
         assertThat(selected).contains(candidates.get(2));
-    }
-
-    private static List<EnemyMob> picksFrom(List<EnemyMob> candidates, RandomSource source) {
-        RandomSelector selector = new RandomSelector(source);
-        List<EnemyMob> picks = new ArrayList<>();
-        for (int i = 0; i < 20; i++) {
-            selector.selectFrom(candidates).ifPresent(picks::add);
-        }
-        return picks;
     }
 
     @Test

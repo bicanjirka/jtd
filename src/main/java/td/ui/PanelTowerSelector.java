@@ -46,9 +46,9 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
     private final HudToggleButton[] buttons;
     private final String[] infoText;
     private final float[] towerRanges;
+    private final List<TowerFactory.Type> towerTypes;
     private GameWorld context;
     private TowerDefense mainApp;
-    private final List<TowerFactory.Type> towerTypes;
     private boolean placing = false;
 
     public PanelTowerSelector() {
@@ -63,6 +63,22 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         this.buttons = new HudToggleButton[this.towerTypes.size()];
         this.infoText = new String[this.towerTypes.size()];
         this.towerRanges = new float[this.towerTypes.size()];
+    }
+
+    /**
+     * Swing's built-in "gray out the icon when disabled" behaviour only fires for a plain
+     * {@link ImageIcon}; {@link SharpImageIcon} implements {@code Icon} directly (for its
+     * bilinear repaint), so an unaffordable button was correctly disabled but still painted
+     * as if enabled without this explicit disabled icon.
+     */
+    private static BufferedImage grayedOut(BufferedImage image) {
+        Image filtered = GrayFilter.createDisabledImage(image);
+        ImageIcon loader = new ImageIcon(filtered);
+        BufferedImage result = new BufferedImage(loader.getIconWidth(), loader.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = result.createGraphics();
+        loader.paintIcon(null, g2, 0, 0);
+        g2.dispose();
+        return result;
     }
 
     private void makeButtons() {
@@ -119,7 +135,9 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         this.placing = false;
     }
 
-    /** Also reachable from the game-loop thread - see GameWorld.apply()'s callers. */
+    /**
+     * Also reachable from the game-loop thread - see GameWorld.apply()'s callers.
+     */
     public void economyChanged(EconomyState state) {
         SwingUtilities.invokeLater(() -> {
             for (int i = 0; i < this.buttons.length; i++) {
@@ -139,22 +157,6 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         this.buttons[i].setSelected(true);
         this.mainApp.setInfoText(this.infoText[i]);
         this.startPlacing(this.towerTypes.get(i), this.towerRanges[i]);
-    }
-
-    /**
-     * Swing's built-in "gray out the icon when disabled" behaviour only fires for a plain
-     * {@link ImageIcon}; {@link SharpImageIcon} implements {@code Icon} directly (for its
-     * bilinear repaint), so an unaffordable button was correctly disabled but still painted
-     * as if enabled without this explicit disabled icon.
-     */
-    private static BufferedImage grayedOut(BufferedImage image) {
-        Image filtered = GrayFilter.createDisabledImage(image);
-        ImageIcon loader = new ImageIcon(filtered);
-        BufferedImage result = new BufferedImage(loader.getIconWidth(), loader.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = result.createGraphics();
-        loader.paintIcon(null, g2, 0, 0);
-        g2.dispose();
-        return result;
     }
 
     private void mouseOver(int i) {

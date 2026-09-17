@@ -8,7 +8,9 @@ import td.enemy.EnemyMobVisitor;
 
 import java.util.Set;
 
-/** A minimal, mutable {@link EnemyMob} double - lets a test move a target mid-flight or invalidate it. */
+/**
+ * A minimal, mutable {@link EnemyMob} double - lets a test move a target mid-flight or invalidate it.
+ */
 final class FakeTargetMob implements EnemyMob {
 
     private double x;

@@ -42,17 +42,23 @@ public final class SeekerTower extends AbstractTower {
     private static final int FREEZE_DURATION_TICKS_BASE = 30;
     private static final float DEEP_FREEZE_DURATION_MULTIPLIER = 1.5f;
 
-    /** Faster reloading - a straightforward money-gated specialization needing no track record. */
+    /**
+     * Faster reloading - a straightforward money-gated specialization needing no track record.
+     */
     private static final UpgradePath TWIN_WARHEAD = new UpgradePath(
             "Twin Warhead", 30, new TowerBuff(0f, 0f, 0.35f, 0f), UpgradeCondition.always());
-    /** More damage and a longer freeze - earned by this tower having racked up proven kills. */
+    /**
+     * More damage and a longer freeze - earned by this tower having racked up proven kills.
+     */
     private static final UpgradePath DEEP_FREEZE = new UpgradePath(
             "Deep Freeze", 35, new TowerBuff(0.3f, 0f, 0f, 0f), new KillCountCondition(10));
     private static final List<UpgradePath> PATHS = List.of(TWIN_WARHEAD, DEEP_FREEZE);
 
-    /** Ticks between shots before any fire-rate buff - paired with this tower's damage. */
+    /**
+     * Ticks between shots before any fire-rate buff - paired with this tower's damage.
+     */
     private static final int COOLDOWN_MAX = 45;
-
+    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     // Bought on the EDT (onUpgradePathChosen) and read every tick on the game-loop thread, so
     // it is published volatile - CLAUDE.md 3 rule 2. Each is an independent scalar with no
     // invariant tying it to another, which is what makes a volatile scalar the right mechanism
@@ -61,7 +67,6 @@ public final class SeekerTower extends AbstractTower {
     private volatile int freezeDurationTicks = FREEZE_DURATION_TICKS_BASE;
     private int coolDown = 0;
     private EnemyMob currentTarget;
-    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
 
     public SeekerTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SEEKER, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
@@ -72,7 +77,9 @@ public final class SeekerTower extends AbstractTower {
         return PATHS;
     }
 
-    /** Deep Freeze's longer duration isn't a {@link TowerBuff} axis, so it's applied here instead. */
+    /**
+     * Deep Freeze's longer duration isn't a {@link TowerBuff} axis, so it's applied here instead.
+     */
     @Override
     protected void onUpgradePathChosen(UpgradePath path) {
         if (path == DEEP_FREEZE) {

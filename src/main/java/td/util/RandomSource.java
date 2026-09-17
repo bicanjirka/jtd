@@ -14,12 +14,8 @@ import java.util.Random;
 public interface RandomSource {
 
     /**
-     * The next value in {@code [0, 1)}, with the same contract as {@link Math#random()}.
-     * Implementations must be safe to call from the {@code game-loop} thread.
+     * The JVM-wide generator behind {@link Math#random()} - unseeded, and what the game uses.
      */
-    double nextDouble();
-
-    /** The JVM-wide generator behind {@link Math#random()} - unseeded, and what the game uses. */
     static RandomSource shared() {
         return Math::random;
     }
@@ -32,6 +28,12 @@ public interface RandomSource {
         Random random = new Random(seed);
         return random::nextDouble;
     }
+
+    /**
+     * The next value in {@code [0, 1)}, with the same contract as {@link Math#random()}.
+     * Implementations must be safe to call from the {@code game-loop} thread.
+     */
+    double nextDouble();
 
     /**
      * Picks an index in {@code [0, size)}. The one place the double-to-index conversion

@@ -2,6 +2,7 @@ package td.tower;
 
 
 import td.util.ThreadConfined;
+
 /**
  * A beam sweeping the full circle at a constant rate, and the test for whether a given bearing
  * was crossed during the last step - the "sonar scan" behind {@code SonarTower}.
@@ -21,7 +22,8 @@ import td.util.ThreadConfined;
  * {@link #advance()} moves exactly one tick's worth per call, so the scan speeds up and slows
  * down with the simulation rather than with wall-clock time.
  */
-@ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)  // owned by the SonarTower that advances it, so game-loop in practice
+@ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
+// owned by the SonarTower that advances it, so game-loop in practice
 public final class SonarSweep {
 
     private static final double TWO_PI = Math.PI * 2;
@@ -48,7 +50,30 @@ public final class SonarSweep {
         return new SonarSweep(TWO_PI / (secondsPerRevolution * ticksPerSecond));
     }
 
-    /** Moves the beam one tick's worth counterclockwise. */
+    /**
+     * Wraps to {@code [0, 2PI)} - "how far counterclockwise from here to there".
+     */
+    private static double normalizeToCircle(double radians) {
+        double wrapped = radians % TWO_PI;
+        return wrapped < 0 ? wrapped + TWO_PI : wrapped;
+    }
+
+    /**
+     * Wraps to {@code [-PI, PI)}, keeping the stored angle bounded over a long game.
+     */
+    private static double normalizeSigned(double radians) {
+        double wrapped = radians % TWO_PI;
+        if (wrapped < -Math.PI) {
+            wrapped += TWO_PI;
+        } else if (wrapped >= Math.PI) {
+            wrapped -= TWO_PI;
+        }
+        return wrapped;
+    }
+
+    /**
+     * Moves the beam one tick's worth counterclockwise.
+     */
     public void advance() {
         this.previousRadians = this.currentRadians;
         this.currentRadians = normalizeSigned(this.currentRadians - this.radiansPerTick);
@@ -75,22 +100,5 @@ public final class SonarSweep {
 
     public double radiansPerTick() {
         return this.radiansPerTick;
-    }
-
-    /** Wraps to {@code [0, 2PI)} - "how far counterclockwise from here to there". */
-    private static double normalizeToCircle(double radians) {
-        double wrapped = radians % TWO_PI;
-        return wrapped < 0 ? wrapped + TWO_PI : wrapped;
-    }
-
-    /** Wraps to {@code [-PI, PI)}, keeping the stored angle bounded over a long game. */
-    private static double normalizeSigned(double radians) {
-        double wrapped = radians % TWO_PI;
-        if (wrapped < -Math.PI) {
-            wrapped += TWO_PI;
-        } else if (wrapped >= Math.PI) {
-            wrapped -= TWO_PI;
-        }
-        return wrapped;
     }
 }
