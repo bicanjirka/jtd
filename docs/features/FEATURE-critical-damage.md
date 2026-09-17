@@ -196,13 +196,17 @@ Per this project's standing "commit after each phase" convention:
 
 ## Open questions
 
-1. **Should `CriticalImmunityTrait` or `OnCriticalHitTakenTrigger` actually ship on any concrete enemy in v1**, or
-   do they land as correct-but-unexercised building blocks (the same state `TODO.md` already tolerates for
-   `DamageTypeResistTrait`)? Wiring the shield-on-crit-survived ability onto the Warden is the obvious payoff (it
-   already demonstrates every other `AbilityTrigger`/`AbilityAction` combination) but that changes already-shipped
-   boss content and is a decision, not an implementation detail.
-2. Are the placeholder numbers (`1.5×` multiplier, Veteran's added crit-chance bonus) in the right neighborhood, or
-   should they wait entirely for the balance pass in phase 5?
-3. Does a crit-spark visual actually read clearly at this game's board scale, or does it need to be paired with
-   something louder (a brief screen-shake-free flash on the hit tower, say) once seen in `run-jtd` — a call better
-   made from a screenshot than from this document?
+Resolved during implementation, recorded here rather than left open:
+
+1. **Both shipped, on concrete content.** `CriticalImmunityTrait` went onto `ARMORED` (alongside its existing
+   percent resistance — an armored mob shrugging off a precisely placed shot reads as the same idea) and
+   `OnCriticalHitTakenTrigger` went onto the Warden as a sixth ability (a self-shield, reusing the same
+   `ShieldTemplate`/`SelfTarget` shape its two existing shield abilities already use) — the "obvious payoff" this
+   question named, rather than landing as unexercised building blocks.
+2. **Left as placeholders, not tuned.** The `1.5×` multiplier, Veteran's `15%` crit-chance bonus, and the Warden's
+   new `30%`/100-tick shield are all illustrative, the same as every other number this feature and its predecessors
+   introduced. Tracked in `TODO.md`'s "Critical-damage numbers are unbalanced placeholders" entry rather than
+   guessed at here.
+3. **Not resolved by a screenshot** — a live crit didn't land during the `run-jtd` verification pass in the time
+   available (10 tower kills plus a 15% per-shot roll is a real grind for an automated pass), so whether the spark
+   reads clearly at board scale is still an open call for the next person to actually see one land in play.
