@@ -210,3 +210,28 @@ Resolved during implementation, recorded here rather than left open:
 3. **Not resolved by a screenshot** — a live crit didn't land during the `run-jtd` verification pass in the time
    available (10 tower kills plus a 15% per-shot roll is a real grind for an automated pass), so whether the spark
    reads clearly at board scale is still an open call for the next person to actually see one land in play.
+
+## Addendum: burning doubles crit chance
+
+A follow-up request, added after v1 shipped: a burning enemy should be twice as likely to take a critical hit -
+the first interaction between the damage-types feature's status effects and this feature's crit roll.
+
+**Universal, not a new upgrade path.** The doubling applies to every tower's roll against every burning target,
+the moment either side has any nonzero ingredients (a tower with crit chance, a target that's burning) - not a
+perk gated behind its own price or condition. This matches how `td.effect.Effect` is already documented as "a
+shared, neutral primitive" any tower or ability can produce or react to, rather than something owned by whichever
+tower happens to apply burn (`CinderTower` today). A tower with no crit chance still rolls nothing, same as
+before; a burning target only ever *helps* a roll that was already possible, never creates one from zero.
+
+**Shape:** `AbstractTower.rollCritical` takes the target `EnemyMob` as well as the `Damage`, and checks
+`enemy.activeEffectKinds().contains(EffectKind.BURN)` - a query this interface already exposes publicly (the
+status-marker UI already reads it) - no new plumbing needed on the enemy side. When burning, the effective chance
+is `Math.min(1f, critChance() * BURN_CRIT_CHANCE_MULTIPLIER)` before the roll; `BURN_CRIT_CHANCE_MULTIPLIER = 2f`
+lives once, as a constant on `AbstractTower`, the same discipline `Damage.CRITICAL_MULTIPLIER` already follows.
+The doubling is invisible to `getStatusString()`'s displayed "Crit chance: N%" line - that stays the tower's own
+base chance, since the game has no per-target UI to show a chance that depends on whichever enemy happens to be
+in the crosshairs right now; this is a documented, deliberate scope cut, not an oversight.
+
+Not in scope: any other `EffectKind` interacting with crit chance (freeze, slow, shield, invisible), and any
+change to how burn itself is applied - this only reads whether it is currently active.
+

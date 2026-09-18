@@ -2,6 +2,7 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.effect.Effect;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
@@ -369,6 +370,53 @@ class AbstractTowerTest {
         EnemyMob enemy = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, 1);
 
         tower.dealDamage(enemy, Damage.physical(1000));
+
+        assertThat(tower.getDamageDealt()).isEqualTo(1000);
+    }
+
+    @Test
+    void aBurningTargetDoublesTheEffectiveCritChance() {
+        // roll lands strictly between the base 20% chance and its doubled 40% - only a burning
+        // target's doubled chance should turn this into a critical hit
+        GameWorld world = new GameWorld(new RecordingGameHost(), () -> 0.3);
+        world.economy().startEconomy(100, 5);
+        UpgradePath path = new UpgradePath("Precision", 10, new TowerBuff(0f, 0f, 0f, 0f, 0.2f), UpgradeCondition.always());
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(world, 0, 0, List.of(path));
+        tower.chooseUpgradePath(path);
+        EnemyMob burning = EnemyFactory.getEnemy("c", world, 0, 100000, 3, 1);
+        burning.applyEffect(Effect.burn(Damage.magic(1), 100, d -> {
+        }));
+
+        tower.dealDamage(burning, Damage.physical(1000));
+
+        assertThat(tower.getDamageDealt()).isEqualTo(Math.round(1000 * Damage.CRITICAL_MULTIPLIER));
+    }
+
+    @Test
+    void aNonBurningTargetDoesNotGetTheDoubledCritChance() {
+        // same roll and base chance as aBurningTargetDoublesTheEffectiveCritChance, but no burn
+        // active - the same roll that crit there must not crit here
+        GameWorld world = new GameWorld(new RecordingGameHost(), () -> 0.3);
+        world.economy().startEconomy(100, 5);
+        UpgradePath path = new UpgradePath("Precision", 10, new TowerBuff(0f, 0f, 0f, 0f, 0.2f), UpgradeCondition.always());
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(world, 0, 0, List.of(path));
+        tower.chooseUpgradePath(path);
+        EnemyMob notBurning = EnemyFactory.getEnemy("c", world, 0, 100000, 3, 1);
+
+        tower.dealDamage(notBurning, Damage.physical(1000));
+
+        assertThat(tower.getDamageDealt()).isEqualTo(1000);
+    }
+
+    @Test
+    void aBurningTargetAgainstATowerWithNoCritChanceStillNeverCrits() {
+        GameWorld alwaysCrits = new GameWorld(new RecordingGameHost(), () -> 0.0);
+        SniperTower tower = new SniperTower(alwaysCrits, 0, 0);
+        EnemyMob burning = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, 1);
+        burning.applyEffect(Effect.burn(Damage.magic(1), 100, d -> {
+        }));
+
+        tower.dealDamage(burning, Damage.physical(1000));
 
         assertThat(tower.getDamageDealt()).isEqualTo(1000);
     }

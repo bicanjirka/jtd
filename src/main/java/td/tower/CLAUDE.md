@@ -154,6 +154,16 @@ chance of its own, so today the axis is purely upgrade-path-granted (see `Sniper
 scaling the `Damage` through `Damage.asCritical()` on success — see that record's own doc
 comment for the fixed, project-wide multiplier this always applies.
 
+**A burning target doubles the effective crit chance for every tower, not just whichever one
+applied the burn.** `AbstractTower.rollCritical` checks `enemy.activeEffectKinds().contains
+(EffectKind.BURN)` — a plain public query, no coupling to `CinderTower` or any other producer
+of burn — and multiplies the roll by `BURN_CRIT_CHANCE_MULTIPLIER` (clamped at 100%) before
+rolling. Universal by design (see `docs/features/FEATURE-critical-damage.md`'s Addendum): a
+tower with zero crit chance still rolls nothing against a burning target, so the doubling only
+ever helps a roll that was already possible. Not reflected in `getStatusString()`'s displayed
+crit-chance line, which stays the tower's own base chance — there is no per-target UI to show
+a number that depends on whichever enemy is currently in range.
+
 **`AbstractTower.recalculateStats()` publishes one new `TowerStats`, never five separate
 fields.** Damage, range, cooldown and the two pixel-range forms are correlated: they are
 recomputed on the EDT (a tower being built or sold, a path being bought) and read by tick code
