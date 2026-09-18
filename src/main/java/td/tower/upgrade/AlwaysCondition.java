@@ -17,4 +17,9 @@ final class AlwaysCondition implements UpgradeCondition {
     public boolean isSatisfied(Tower tower, GameWorld context) {
         return true;
     }
+
+    @Override
+    public String describe() {
+        return "money only";
+    }
 }

@@ -12,4 +12,11 @@ public record DamageDealtCondition(long threshold) implements UpgradeCondition {
     public boolean isSatisfied(Tower tower, GameWorld context) {
         return tower.getDamageDealt() >= this.threshold;
     }
+
+    @Override
+    public String describe() {
+        // threshold is in hundredths, the same scale getDamageDealt() reports in - see
+        // AbstractTower.getStatusString()'s own "Damage dealt" line for the precedent.
+        return (this.threshold / 100f) + " damage dealt";
+    }
 }

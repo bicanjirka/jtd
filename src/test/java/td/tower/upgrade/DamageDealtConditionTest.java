@@ -34,4 +34,9 @@ class DamageDealtConditionTest {
         assertThat(new DamageDealtCondition(tower.getDamageDealt()).isSatisfied(tower, this.context)).isTrue();
         assertThat(new DamageDealtCondition(tower.getDamageDealt() + 1).isSatisfied(tower, this.context)).isFalse();
     }
+
+    @Test
+    void describesItselfInWholeDamagePointsNotHundredths() {
+        assertThat(new DamageDealtCondition(20000).describe()).isEqualTo("200.0 damage dealt");
+    }
 }

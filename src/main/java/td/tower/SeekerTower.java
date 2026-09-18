@@ -51,7 +51,7 @@ public final class SeekerTower extends AbstractTower {
      * More damage and a longer freeze - earned by this tower having racked up proven kills.
      */
     private static final UpgradePath DEEP_FREEZE = new UpgradePath(
-            "Deep Freeze", 35, new TowerBuff(0.3f, 0f, 0f, 0f), new KillCountCondition(10));
+            "Deep Freeze", 35, new TowerBuff(0.3f, 0f, 0f, 0f), new KillCountCondition(10), "+50% freeze duration");
     private static final List<UpgradePath> PATHS = List.of(TWIN_WARHEAD, DEEP_FREEZE);
 
     /**

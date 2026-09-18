@@ -45,12 +45,12 @@ public final class MortarTower extends AbstractTower {
      * Bigger blast radius, earned by this tower having proven itself already.
      */
     private static final UpgradePath HEAVY_SHELL = new UpgradePath(
-            "Heavy Shell", 35, new TowerBuff(0.4f, 0f, 0f, 0f), new DamageDealtCondition(20000));
+            "Heavy Shell", 35, new TowerBuff(0.4f, 0f, 0f, 0f), new DamageDealtCondition(20000), "+30% splash radius");
     /**
      * A longer-lasting slow, plus more range - rewards a deliberately grouped placement rather than a solo one.
      */
     private static final UpgradePath CONCUSSIVE_CHARGE = new UpgradePath(
-            "Concussive Charge", 30, new TowerBuff(0f, 0.25f, 0f, 0f), new ClusterCondition(2));
+            "Concussive Charge", 30, new TowerBuff(0f, 0.25f, 0f, 0f), new ClusterCondition(2), "+50% slow duration");
     private static final List<UpgradePath> PATHS = List.of(HEAVY_SHELL, CONCUSSIVE_CHARGE);
 
     /**

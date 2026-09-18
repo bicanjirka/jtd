@@ -50,7 +50,7 @@ public final class CinderTower extends AbstractTower {
      * A wider cone and more range - a straightforward money-gated specialization needing no track record.
      */
     private static final UpgradePath WIDE_NOZZLE = new UpgradePath(
-            "Wide Nozzle", 25, new TowerBuff(0f, 0.3f, 0f, 0f), UpgradeCondition.always());
+            "Wide Nozzle", 25, new TowerBuff(0f, 0.3f, 0f, 0f), UpgradeCondition.always(), "+40% cone width");
     private static final List<UpgradePath> PATHS = List.of(WHITE_FLAME, WIDE_NOZZLE);
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     // Bought on the EDT (onUpgradePathChosen) and read every tick on the game-loop thread, so
