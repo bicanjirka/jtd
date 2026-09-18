@@ -76,6 +76,13 @@ final class BuiltInEnemies {
     // meaningfully denting a big single hit (SniperTower's 4000) the way the Warden's own doc
     // comment ("armor") implies it should.
     private static final int WARDEN_FLAT_RESIST = 100;
+    // Shared by all three stages, appended to each stage's own flavor sentence - every stage
+    // carries the exact same WARDEN_STANDING_ABILITIES plus its own on-death egg spawn, so one
+    // description keeps the three in agreement instead of drifting the way WARDEN_2/WARDEN_3
+    // used to (neither mentioned any ability at all).
+    private static final String WARDEN_ABILITY_BLURB = " Periodically calls a reinforcement and re-shields itself; "
+            + "shields every nearby ally once below half health; calls an extra reinforcement if left unattacked "
+            + "too long; gains a shield whenever it survives a critical hit; and leaves behind an egg on death.";
     private static final List<Ability> WARDEN_STANDING_ABILITIES = List.of(
             // periodically calls for a reinforcement
             new Ability(new PeriodicTrigger(300), new SpawnEnemiesAction("c", 1, false)),
@@ -89,17 +96,18 @@ final class BuiltInEnemies {
             // fire-once triggers above
             new Ability(new OnCriticalHitTakenTrigger(), new ApplyEffectAction(new ShieldTemplate(0.3f, 100), new SelfTarget())));
     static final EnemyDefinition WARDEN_1 = new EnemyDefinition(
-            "warden1", "The Warden", "A hulking armored sentinel. Calls for reinforcements and shields itself and its allies.",
+            "warden1", "The Warden", "A hulking armored sentinel." + WARDEN_ABILITY_BLURB,
             8000, 100, 1.28f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(2.0)),
             List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)), wardenAbilities("wardenEgg1"));
     static final EnemyDefinition WARDEN_2 = new EnemyDefinition(
-            "warden2", "The Weakened Warden", "A hulking armored sentinel, worn down from its last hatching.",
+            "warden2", "The Weakened Warden", "A hulking armored sentinel, worn down from its last hatching."
+            + WARDEN_ABILITY_BLURB,
             5000, 100, 1.28f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(2.0)),
             List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)), wardenAbilities("wardenEgg2"));
     static final EnemyDefinition WARDEN_3 = new EnemyDefinition(
-            "warden3", "The Exhausted Warden", "A hulking armored sentinel, barely standing.",
+            "warden3", "The Exhausted Warden", "A hulking armored sentinel, barely standing." + WARDEN_ABILITY_BLURB,
             3000, 100, 1.28f, 1f, EnemyMob.Type.NORMAL,
             BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(2.0)),
             List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)), wardenAbilities("wardenEgg3"));
