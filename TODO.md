@@ -298,12 +298,14 @@ single hit), making the Warden's armor mechanically inert regardless of which to
 ### Critical-damage numbers are unbalanced placeholders
 
 `FEATURE-critical-damage.md` shipped `Damage.CRITICAL_MULTIPLIER` (1.5x), `SniperTower.VETERAN`'s
-crit-chance bonus (15%), and the Warden's new on-crit-survived shield (30% for 100 ticks) as
-illustrative placeholders, the same situation every other feature's first-pass numbers were in
-before their own balance passes.
+crit-chance bonus (15%), the Warden's new on-crit-survived shield (30% for 100 ticks), and (per
+the feature doc's Addendum) `AbstractTower.BURN_CRIT_CHANCE_MULTIPLIER` (2x) as illustrative
+placeholders, the same situation every other feature's first-pass numbers were in before their
+own balance passes.
 
 - **Where:** `td.damage.Damage.CRITICAL_MULTIPLIER`, `SniperTower.VETERAN`'s `TowerBuff`,
-  `BuiltInEnemies.WARDEN_STANDING_ABILITIES`'s new `OnCriticalHitTakenTrigger` ability.
+  `BuiltInEnemies.WARDEN_STANDING_ABILITIES`'s new `OnCriticalHitTakenTrigger` ability,
+  `td.tower.AbstractTower.BURN_CRIT_CHANCE_MULTIPLIER`.
 - **Approach:** tune via actual play (or `td.BalanceHarness`) once the other placeholder-number
   entries in this file get their own pass - no code or architecture change needed, every number
   here is already a named constant or a `TowerBuff` literal.

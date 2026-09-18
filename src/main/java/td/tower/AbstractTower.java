@@ -2,6 +2,7 @@ package td.tower;
 
 import td.damage.Damage;
 import td.economy.EconomyDelta;
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradePath;
@@ -33,6 +34,13 @@ public abstract class AbstractTower implements Tower {
      * fire rate instead of leaving it quietly wrong.
      */
     protected static final float TICKS_PER_SECOND = TickRate.TICKS_PER_SECOND;
+    /**
+     * A burning target is this much more likely to take a critical hit - universal, applied to
+     * every tower's roll against every burning enemy, not a perk any one tower or path owns.
+     * One constant rather than restated inline, the same discipline {@link Damage#CRITICAL_MULTIPLIER}
+     * already follows.
+     */
+    private static final float BURN_CRIT_CHANCE_MULTIPLIER = 2f;
 
     protected final GameWorld context;
     protected final int boardX;
@@ -220,7 +228,7 @@ public abstract class AbstractTower implements Tower {
             return;
         }
         boolean wasAlive = !enemy.isDead();
-        Damage landed = enemy.doDamage(this.rollCritical(damage));
+        Damage landed = enemy.doDamage(this.rollCritical(enemy, damage));
         if (wasAlive) {
             this.damageDealt += landed.amount();
             if (enemy.isDead()) {
@@ -241,10 +249,22 @@ public abstract class AbstractTower implements Tower {
      * success, returns {@code damage.asCritical()} - otherwise {@code damage} unchanged. A
      * tower with no crit chance (every tower not carrying an upgrade path that grants some)
      * takes the same branch it always has, at the cost of one comparison.
+     * <p>
+     * A burning {@code enemy} doubles the effective chance (clamped at 100%) before the roll -
+     * universal, not owned by whichever tower happens to apply burn, since
+     * {@code enemy.activeEffectKinds()} is a plain, public query any tower can already read
+     * (the status-marker UI already does). A tower with no crit chance still rolls nothing
+     * against a burning target; the doubling only ever helps a roll that was already possible.
      */
-    private Damage rollCritical(Damage damage) {
+    private Damage rollCritical(EnemyMob enemy, Damage damage) {
         float chance = this.critChance();
-        if (chance > 0f && this.context.random().nextDouble() < chance) {
+        if (chance <= 0f) {
+            return damage;
+        }
+        if (enemy.activeEffectKinds().contains(EffectKind.BURN)) {
+            chance = Math.min(1f, chance * BURN_CRIT_CHANCE_MULTIPLIER);
+        }
+        if (this.context.random().nextDouble() < chance) {
             return damage.asCritical();
         }
         return damage;
