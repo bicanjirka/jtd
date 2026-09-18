@@ -50,4 +50,9 @@ class ClusterConditionTest {
         assertThat(new ClusterCondition(2).isSatisfied(subject, this.context)).isTrue();
         assertThat(new ClusterCondition(3).isSatisfied(subject, this.context)).isFalse();
     }
+
+    @Test
+    void describesItselfByItsRequiredNeighbourCount() {
+        assertThat(new ClusterCondition(2).describe()).isEqualTo("2 nearby towers");
+    }
 }

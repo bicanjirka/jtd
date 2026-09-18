@@ -31,4 +31,9 @@ public record ClusterCondition(int requiredAdjacent) implements UpgradeCondition
         }
         return adjacent >= this.requiredAdjacent;
     }
+
+    @Override
+    public String describe() {
+        return this.requiredAdjacent + " nearby towers";
+    }
 }

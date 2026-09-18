@@ -33,4 +33,9 @@ class KillCountConditionTest {
         assertThat(new KillCountCondition(1).isSatisfied(tower, this.context)).isTrue();
         assertThat(new KillCountCondition(2).isSatisfied(tower, this.context)).isFalse();
     }
+
+    @Test
+    void describesItselfByItsThreshold() {
+        assertThat(new KillCountCondition(10).describe()).isEqualTo("10 kills");
+    }
 }

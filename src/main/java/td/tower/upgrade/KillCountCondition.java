@@ -12,4 +12,9 @@ public record KillCountCondition(int threshold) implements UpgradeCondition {
     public boolean isSatisfied(Tower tower, GameWorld context) {
         return tower.getKillCount() >= this.threshold;
     }
+
+    @Override
+    public String describe() {
+        return this.threshold + " kills";
+    }
 }

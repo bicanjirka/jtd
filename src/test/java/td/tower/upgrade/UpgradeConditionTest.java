@@ -17,4 +17,9 @@ class UpgradeConditionTest {
 
         assertThat(UpgradeCondition.always().isSatisfied(tower, context)).isTrue();
     }
+
+    @Test
+    void alwaysDescribesItselfAsMoneyOnly() {
+        assertThat(UpgradeCondition.always().describe()).isEqualTo("money only");
+    }
 }

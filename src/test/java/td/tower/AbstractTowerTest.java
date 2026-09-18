@@ -409,6 +409,35 @@ class AbstractTowerTest {
     }
 
     @Test
+    void getStatusStringListsEveryAvailablePathUntilOneIsChosenThenListsNone() {
+        this.context.economy().startEconomy(100, 5);
+        UpgradePath path = new UpgradePath("Veteran", 10, TowerBuff.amplifying(0.2f), UpgradeCondition.always());
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(this.context, 0, 0, List.of(path));
+
+        assertThat(tower.getStatusString()).contains("Upgrade paths:").contains(path.describe());
+
+        tower.chooseUpgradePath(path);
+
+        assertThat(tower.getStatusString()).doesNotContain("Upgrade paths:");
+    }
+
+    @Test
+    void getInfoStringAlsoListsAvailablePathsBeforeAnyoneHasBoughtOne() {
+        UpgradePath path = new UpgradePath("Veteran", 10, TowerBuff.amplifying(0.2f), UpgradeCondition.always());
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(this.context, 0, 0, List.of(path));
+
+        assertThat(tower.getInfoString()).contains("Upgrade paths:").contains(path.describe());
+    }
+
+    @Test
+    void aPassiveTowerWithNoUpgradePathsShowsNoUpgradePathsBlock() {
+        AuraTower passive = new AuraTower(this.context, 0, 0);
+
+        assertThat(passive.getStatusString()).doesNotContain("Upgrade paths:");
+        assertThat(passive.getInfoString()).doesNotContain("Upgrade paths:");
+    }
+
+    @Test
     void aBurningTargetAgainstATowerWithNoCritChanceStillNeverCrits() {
         GameWorld alwaysCrits = new GameWorld(new RecordingGameHost(), () -> 0.0);
         SniperTower tower = new SniperTower(alwaysCrits, 0, 0);

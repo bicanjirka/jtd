@@ -40,7 +40,7 @@ public final class SplashTower extends AbstractTower {
      * More damage and a bigger blast - earned by this tower having proven itself already.
      */
     private static final UpgradePath SIEGE = new UpgradePath(
-            "Siege", 35, new TowerBuff(0.35f, 0f, 0f, 0f), new DamageDealtCondition(20000));
+            "Siege", 35, new TowerBuff(0.35f, 0f, 0f, 0f), new DamageDealtCondition(20000), "+30% splash radius");
     /**
      * More damage and range - rewards a deliberately grouped placement rather than a solo one.
      */

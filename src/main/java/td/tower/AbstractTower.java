@@ -362,7 +362,7 @@ public abstract class AbstractTower implements Tower {
             s += "Damage: " + this.damageBase / 100f + "\n" +
                     this.rateLine(this.coolDownMax) + "\n";
         }
-        return s;
+        return s + this.upgradePathsBlock();
     }
 
     public String getStatusString() {
@@ -379,7 +379,31 @@ public abstract class AbstractTower implements Tower {
                     "Damage dealt: " + this.damageDealt / 100f + "\n\n";
         }
         s += this.chosenPath.map(p -> "Specialized: " + p.displayName() + "\n").orElse("");
-        return s;
+        return s + this.upgradePathsBlock();
+    }
+
+    /**
+     * Describes every upgrade path this tower still offers, one per line - "" once this tower
+     * has already chosen one (its {@code getStatusString()}'s own "Specialized: ..." line
+     * already covers that, and {@code availablePaths()} keeps returning the full static list
+     * regardless of what's been chosen) or for a tower with none (the empty list
+     * {@code availablePaths()} defaults to). Shown in both {@link #getInfoString()} (so a
+     * player can see what a tower will offer before ever buying it) and
+     * {@link #getStatusString()}.
+     */
+    private String upgradePathsBlock() {
+        if (this.chosenPath.isPresent()) {
+            return "";
+        }
+        List<UpgradePath> paths = this.availablePaths();
+        if (paths.isEmpty()) {
+            return "";
+        }
+        StringBuilder s = new StringBuilder("\nUpgrade paths:\n");
+        for (UpgradePath path : paths) {
+            s.append("- ").append(path.describe()).append('\n');
+        }
+        return s.toString();
     }
 
     /**

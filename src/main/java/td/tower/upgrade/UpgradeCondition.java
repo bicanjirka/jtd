@@ -20,4 +20,10 @@ public interface UpgradeCondition {
     }
 
     boolean isSatisfied(Tower tower, GameWorld context);
+
+    /**
+     * A short, human-readable gate description - what the info panel shows next to an upgrade
+     * path's name, e.g. {@code "10 kills"} or {@code "money only"}.
+     */
+    String describe();
 }

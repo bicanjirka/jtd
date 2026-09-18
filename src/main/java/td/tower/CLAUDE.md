@@ -206,11 +206,19 @@ above: an Aura tower buffs *other* towers continuously from outside; a chosen up
 changes what *this* tower itself is, once, and stays changed for its lifetime.
 
 - `UpgradePath` — a tower's specialization: a display name, a price (paid the same way
-  buying a tower is), a `TowerBuff` stat bonus, and the `UpgradeCondition` gating it.
-- `UpgradeCondition` — "is this path currently available", independent of affordability.
-  `always()` is the identity (the "money only" gate — the path is limited by price alone).
-  `ClusterCondition`, `DamageDealtCondition`, `KillCountCondition` read a tower's own
-  position/stats and, for `ClusterCondition`, the roster via `GameWorld`.
+  buying a tower is), a `TowerBuff` stat bonus, the `UpgradeCondition` gating it, and an
+  optional `extraEffect` phrase (defaulted to `""` by a four-argument constructor) for the
+  handful of paths whose bonus isn't expressible through `TowerBuff` at all — see below.
+  `UpgradePath.describe()` turns all of that into the one line `AbstractTower.upgradePathsBlock()`
+  shows per path in `getInfoString()`/`getStatusString()` (e.g. `"Veteran (10 kills): +30%
+  damage, +10% range, +25% bounty, +15% crit chance"`) — never write a path's bonus out by hand
+  in a tower's own description text; `describe()` derives it from the same `TowerBuff`/
+  `extraEffect`/`UpgradeCondition` values `chooseUpgradePath` itself reads, so the two can't drift.
+- `UpgradeCondition` — "is this path currently available", independent of affordability, and
+  `describe()`, a short human phrase for the same gate (`"10 kills"`, `"2 nearby towers"`,
+  `"money only"`). `always()` is the identity (the "money only" gate — the path is limited by
+  price alone). `ClusterCondition`, `DamageDealtCondition`, `KillCountCondition` read a tower's
+  own position/stats and, for `ClusterCondition`, the roster via `GameWorld`.
 - `AbstractTower.chooseUpgradePath(path)` is the one entry point: it validates `path` is
   actually one of this tower's own `availablePaths()` and that none has been chosen yet,
   pays its price via `context.doPay`, sets `chosenPath`, calls the `onUpgradePathChosen`
@@ -225,7 +233,11 @@ changes what *this* tower itself is, once, and stays changed for its lifetime.
   overriding this hook mutates its own field directly, matched by reference against its own
   private `UpgradePath` constants rather than by a string/id (keeps the match type-safe and
   avoids a stringly-typed switch). This is now the common case, not a rare exception - most
-  attack towers have at least one path that needs it.
+  attack towers have at least one path that needs it. **Its own `UpgradePath` constant also
+  carries the same bonus as a short `extraEffect` phrase** (`"+30% splash radius"`, `"sweeps
+  40% faster"`) - the two are set together, at the same constant, precisely so the mechanical
+  effect and the text describing it can never drift apart the way a hand-written prose
+  description elsewhere in the tower's own text would risk.
 - `AbstractTower.availablePaths()` defaults to `List.of()` - only a tower with real content (added per-leaf, not part of
   this shared mechanism) overrides it. The Aura tower does not
   override it and offers no paths of its own for v1.
@@ -250,8 +262,12 @@ changes what *this* tower itself is, once, and stays changed for its lifetime.
 5. Add it to `README.md`'s tower table.
 6. If it offers upgrade paths, override `availablePaths()` with its (currently: exactly
    two) `UpgradePath`s, and `onUpgradePathChosen` only if one of them bumps a stat outside
-   `TowerBuff`'s four axes. No new `Palette` role is needed for this: the specialization
-   ring's two roles are shared across every tower type (see `td/ui/CLAUDE.md`).
+   `TowerBuff`'s five axes - pass that same bump's `extraEffect` phrase to the `UpgradePath`
+   constant itself (see In-place upgrade paths, above) rather than hand-writing it into the
+   tower's own `getInfoString()`/`getStatusString()`, which never needs to change for this -
+   `AbstractTower.upgradePathsBlock()` already lists every path automatically. No new `Palette`
+   role is needed for this: the specialization ring's two roles are shared across every tower
+   type (see `td/ui/CLAUDE.md`).
 
 The toolbar icon needs no separate art — `PanelTowerSelector` renders it through the same
 paint code at a fixed pose, so a tower's board look and its icon cannot drift apart.

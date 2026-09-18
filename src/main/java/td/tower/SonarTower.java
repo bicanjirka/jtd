@@ -52,7 +52,7 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
      * Faster sweep and more range - a payoff for a deliberately grouped placement.
      */
     private static final UpgradePath OVERCHARGED_ARRAY = new UpgradePath(
-            "Overcharged Array", 35, new TowerBuff(0f, 0.2f, 0f, 0f), new ClusterCondition(2));
+            "Overcharged Array", 35, new TowerBuff(0f, 0.2f, 0f, 0f), new ClusterCondition(2), "sweeps 40% faster");
     /**
      * More damage per hit - earned by this tower's own proven kill record.
      */
