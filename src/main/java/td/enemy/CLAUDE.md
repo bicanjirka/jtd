@@ -44,8 +44,16 @@ resolves to the same one; a per-level custom enemy that needs a real ladder regi
 over every rank the original authored, so "a Square with double the usual resistance for this
 one level" comes out the same shape as the original - one rank if that's all the original
 defines, five if it defines five - rather than flattening a real ladder down to a single cloned
-rank. `EnemyCatalog.cloneAndAdjust(baseId, newId, adjust)` is the catalog-level entry point:
-resolves `baseId`'s `RankedEnemy`, clones it, and registers the result under `newId`.
+rank. It's overloaded on what `adjust` is: a plain `UnaryOperator<EnemyDefinition>` is rank-blind
+(a uniform change, applied the same way to every rank - the result still differs per rank, since
+each rank's own input already did), while a `BiFunction<Rank, EnemyDefinition, EnemyDefinition>`
+sees each rank alongside its definition, so it can branch on rank - "give Veteran and every rank
+above it a gold shield, leave Grunt and Soldier alone" is `(rank, d) -> rank.compareTo(Rank
+.VETERAN) >= 0 ? d.withAdditionalTraits(...) : d`. Either way each rank is cloned from *that
+ladder's own* definition for that rank, never from the previous rank's already-adjusted clone.
+`EnemyCatalog.cloneAndAdjust(baseId, newId, adjust)` is the catalog-level entry point, overloaded
+the same way: resolves `baseId`'s `RankedEnemy`, clones it, and registers the result under
+`newId`.
 
 **`EnemyDefinition.of(id, displayName, baseHealth, price, baseSpeed, archetype)`** is the
 required shape every definition has - no description, `EnemyMob.Type.NORMAL`, a `FixedMovement`

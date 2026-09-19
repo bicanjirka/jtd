@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
 
 /**
@@ -85,9 +86,22 @@ public final class EnemyCatalog {
      * replaced by {@code newId} and {@code adjust} run over every rank the original authored -
      * e.g. "a Square with double the usual resistance for this one level", applied consistently
      * whether the original defines one rank or five, without touching the original. See
-     * {@link RankedEnemy#cloneAs}.
+     * {@link RankedEnemy#cloneAs(String, UnaryOperator)}.
      */
     public RankedEnemy cloneAndAdjust(String baseId, String newId, UnaryOperator<EnemyDefinition> adjust) {
+        RankedEnemy cloned = this.ranked(baseId).cloneAs(newId, adjust);
+        this.register(cloned);
+        return cloned;
+    }
+
+    /**
+     * The rank-aware counterpart to {@link #cloneAndAdjust(String, String, UnaryOperator)} -
+     * {@code adjust} sees each rank alongside its own definition, so it can change only some
+     * ranks and leave others alone - e.g. "give Veteran and up a gold shield". See
+     * {@link RankedEnemy#cloneAs(String, BiFunction)}.
+     */
+    public RankedEnemy cloneAndAdjust(String baseId, String newId,
+            BiFunction<Rank, EnemyDefinition, EnemyDefinition> adjust) {
         RankedEnemy cloned = this.ranked(baseId).cloneAs(newId, adjust);
         this.register(cloned);
         return cloned;
