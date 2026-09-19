@@ -10,15 +10,17 @@ package td.enemy;
  * enemy type" checklist - since {@code Java2DFrameRenderer.enemyShape}'s per-palette switch
  * isn't compiler-enforced exhaustive (it falls back to a runtime exception for an unhandled
  * palette): a case added here without its render wiring landing in the same change would
- * compile clean and only fail the first time something actually renders it. {@code EGG}
- * reuses {@code circleShape} with its own tint rather than a new geometry, matching
- * {@code CIRCLE}/{@code GHOST}'s existing precedent.
+ * compile clean and only fail the first time something actually renders it. {@code WARDEN_EGG}
+ * is the Warden boss's own egg stage - its own spiked, elongated variant of {@code WARDEN}'s
+ * star silhouette (see {@code Java2DFrameRenderer.wardenEggShape}) and the same dark-red tint,
+ * rather than a generic egg shape - nothing else in this game lays an egg, so there is no
+ * separate "generic egg" case to keep distinct from it.
  */
 public enum BodyArchetype {
     CIRCLE,
     SQUARE,
     TRIANGLE,
     GHOST,
-    EGG,
-    WARDEN
+    WARDEN,
+    WARDEN_EGG
 }

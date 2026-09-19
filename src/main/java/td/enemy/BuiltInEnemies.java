@@ -54,19 +54,19 @@ final class BuiltInEnemies {
     static final EnemyDefinition WARDEN_EGG_3 = new EnemyDefinition(
             "wardenEgg3", "Warden's Final Egg", "Must be defeated to end the encounter - it will not hatch again.",
             1500, 20, 0f, 1f, EnemyMob.Type.NORMAL,
-            BodyArchetype.EGG, new FixedMovement(),
+            BodyArchetype.WARDEN_EGG, new FixedMovement(),
             List.of(), List.of());
     // 20 ticks/second at 1.0x tick speed (GameLoop.BASE_TICK_NANOS = 50ms) - 8 seconds.
     private static final int EGG_HATCH_DELAY_TICKS = 160;
     static final EnemyDefinition WARDEN_EGG_1 = new EnemyDefinition(
             "wardenEgg1", "Warden's Egg", "Hatches into a weaker Warden if not defeated in time.",
             1500, 20, 0f, 1f, EnemyMob.Type.NORMAL,
-            BodyArchetype.EGG, new FixedMovement(),
+            BodyArchetype.WARDEN_EGG, new FixedMovement(),
             List.of(), List.of(new Ability(new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden2", 1, true))));
     static final EnemyDefinition WARDEN_EGG_2 = new EnemyDefinition(
             "wardenEgg2", "Warden's Egg", "Hatches into a weaker Warden if not defeated in time.",
             1500, 20, 0f, 1f, EnemyMob.Type.NORMAL,
-            BodyArchetype.EGG, new FixedMovement(),
+            BodyArchetype.WARDEN_EGG, new FixedMovement(),
             List.of(), List.of(new Ability(new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden3", 1, true))));
     // Tuned, not a placeholder: raised from an original 15 (see git history), which was
     // negligible against every attack tower's actual per-hit/per-tick damage (150-4000, see
