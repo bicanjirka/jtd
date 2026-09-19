@@ -288,7 +288,7 @@ with the grammar, and this file changes only when an invariant does.
 | **`CLAUDE.md`**                        | Always loaded. Constraints only.                                                                                                                                    |
 | **`docs/ARCHITECTURE.md`**             | The why: rationale, history, rejected alternatives. Not auto-loaded.                                                                                                |
 | **`docs/features/`**                   | One design doc per feature, written as a request before implementation and kept afterwards. A doc here may describe something not yet built; it says so at the top. |
-| **`src/main/java/td/<pkg>/CLAUDE.md`** | Per-package invariants and per-type checklists, loaded when working there. `economy`, `enemy`, `tower`, `ui`, `wave`.                                               |
+| **`src/main/java/td/<pkg>/CLAUDE.md`** | Per-package invariants and per-type checklists, loaded when working there. `economy`, `enemy`, `level`, `tower`, `ui`, `wave`.                                       |
 | **`README.md`**                        | Human-facing: build, run, controls, content tables.                                                                                                                 |
 | **`TODO.md`**                          | Known gaps; each entry carries a **Where** and an **Approach**.                                                                                                     |
 

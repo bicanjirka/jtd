@@ -154,6 +154,61 @@ builds one `EnemyCatalog.builtIn()` per level load and passes it to every wave's
 call - a level does not yet register its own custom/cloned definitions into it (that's a
 later phase); today `builtIn()` is the only catalog any level actually gets.
 
+## Multiple paths and rounds
+
+A `td.level.LevelDefinition` owns a `List<PathDefinition>` (minimum one), not one path and one
+wave list. Each `PathDefinition` is a lane's own corners, `PathSmoothing`, waves, `PathColor`
+and speed multiplier - `PathDefinition.of`/`.smoothed` are the required shape (corners, waves);
+`.withColor`/`.withSpeed` are optional fluent copies defaulting to white and `1x`, the same
+"with"-copy shape `td.util.LoadedLevel` itself already uses, rather than constructor parameters
+every path would otherwise have to name.
+
+**Every path in a level must define the same number of waves - `LevelDefinition`'s compact
+constructor enforces it.** A level's waves run as *synchronized rounds*: starting round `N`
+spawns every path's wave `N` together, via `LoadedLevel.wavesAt(N)` (one `Wave` per path, in
+path order), and the round is cleared only once every path's enemies from it are gone. This
+reuses `GameEngine`'s single wave counter and ready-gate unchanged - `EnemyRoster` already
+tracks one alive count shared across whatever it was handed, so seeding it from the *sum* of
+every path's `Wave.enemyCount()` for the round (`GameWorld.startWave(List<Wave>)`) is what makes
+"the round is cleared" wait for every lane automatically, the same mechanism that already made a
+multi-member shaped slot count correctly before multiple paths existed at all.
+
+Independent per-path progression - path A on round 6 while path B is still on round 3, each with
+its own ready-gate - was considered and rejected: it would need a second per-path gate and a
+redesigned wave-info HUD, and it drops the very invariant (`LevelDefinition`'s same-round-count
+check) that makes "start the next round" still mean one button, one counter.
+
+**An enemy mob binds to its own path by index, not to "the" path.** `SpawnParameters.pathIndex`
+(defaulting to `0`) is resolved once, in `AbstractEnemyMob`'s constructor, against
+`GameWorld.level().pathAt(index)` - not cached anywhere else. `Wave` carries its own `pathIndex`
+and `speedMultiplier` (that path's `speedMultiplier()` already composed with its own
+`WaveDefinition.speedMultiplier()`, resolved once by `GameEngine.loadLevel`); `spawnShaped`
+multiplies that into `SpawnShape.speedMultiplier()` before handing it to `SpawnParameters` -
+**this needs no new mechanism**, since `SpawnParameters.speedMultiplier()` is already stored as
+`DefinedEnemyMob.shapeSpeedMultiplier` and reused by every `doDamage` speed recompute, the exact
+thing that already keeps a `SpawnShape.boss()`'s slow from being wiped by the first hit it takes.
+An ability-driven spawn (`SpawnEnemiesAction`, the Warden's egg) passes its parent's own
+`getPathIndex()` rather than defaulting to path 0, so a hatch stays on the path its parent walked
+- see `td/enemy/CLAUDE.md`.
+
+**`EnemyMob.getProgression()` is a fraction of a mob's own path length, not raw pixels**,
+specifically because `FurthestAlongPathSelector` compares it across candidates that can now be
+on different paths of different total lengths - comparing raw `distanceIntoLap` would rank
+whichever path happens to be longer as "further along" regardless of which mob is actually
+closer to leaking.
+
+Buildability still means exactly what it always meant - no tower on any path - just unioned:
+`GameEngine.markUnbuildableCells` calls `PathCoverage.unbuildableCells` once per path and
+disables the union of every returned cell. `PathCoverage` itself is unchanged; it has never
+known how many paths exist.
+
+`PathColor` (plain 0-255 RGB, no `java.awt` dependency) is real per-path *content*, not a
+`Palette` role - `Palette` names the game's own fixed design language (`td/ui/CLAUDE.md`), while
+a path's color is level-authored data the same way an enemy's health or a wave's price is. It
+reaches the renderer as a field on `td.ui.render.PathMarkerDraw`, combined at paint time with the
+`PathMarkerBrightness` (`STATIC`/`MOVING`) role the two marker layers have always had - `Palette`
+itself no longer has path-marker cases.
+
 ## Wave start broadcast
 
 `WaveAnnouncer`/`WaveStartListener` are just the "a wave started" hub, kept separate from
