@@ -3,6 +3,7 @@ package td.wave;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.enemy.SpawnParameters;
 import td.util.GameWorld;
 import td.util.RandomSource;
@@ -41,7 +42,7 @@ public class Wave {
     private final GameWorld gameWorld;
     private final int baseHealth;
     private final int basePrice;
-    private final int level;
+    private final Rank rank;
     private final WaveContent content;
     private final long scatterSeed;
     private final int pathIndex;
@@ -51,16 +52,16 @@ public class Wave {
      * On path 0 at {@code 1x} speed - every pre-existing caller (every wave, before this
      * feature, belonged to the level's only path at its only pace) needs to name neither.
      */
-    public Wave(GameWorld gameWorld, int baseHealth, int basePrice, int level, WaveContent content, long scatterSeed) {
-        this(gameWorld, baseHealth, basePrice, level, content, scatterSeed, 0, 1f);
+    public Wave(GameWorld gameWorld, int baseHealth, int basePrice, Rank rank, WaveContent content, long scatterSeed) {
+        this(gameWorld, baseHealth, basePrice, rank, content, scatterSeed, 0, 1f);
     }
 
-    public Wave(GameWorld gameWorld, int baseHealth, int basePrice, int level, WaveContent content, long scatterSeed,
+    public Wave(GameWorld gameWorld, int baseHealth, int basePrice, Rank rank, WaveContent content, long scatterSeed,
                 int pathIndex, float speedMultiplier) {
         this.gameWorld = gameWorld;
         this.baseHealth = baseHealth;
         this.basePrice = basePrice;
-        this.level = level;
+        this.rank = rank;
         this.content = content;
         this.scatterSeed = scatterSeed;
         this.pathIndex = pathIndex;
@@ -68,20 +69,20 @@ public class Wave {
     }
 
     private static List<EnemyMob> spawnEnemies(GameWorld gameWorld, WaveContent content, int baseHealth, int basePrice,
-                                                 int level, long scatterSeed, int pathIndex, float speedMultiplier) {
+                                                 Rank rank, long scatterSeed, int pathIndex, float speedMultiplier) {
         List<EnemyMob> enemies = new ArrayList<>();
         int delay = 0;
         for (WaveSlot slot : content.spawnSequence()) {
-            enemies.addAll(spawnSlot(slot, gameWorld, delay, baseHealth, basePrice, level, scatterSeed, pathIndex, speedMultiplier));
+            enemies.addAll(spawnSlot(slot, gameWorld, delay, baseHealth, basePrice, rank, scatterSeed, pathIndex, speedMultiplier));
             delay++;
         }
         return List.copyOf(enemies);
     }
 
     private static List<EnemyMob> spawnSlot(WaveSlot slot, GameWorld gameWorld, int delay, int health, int price,
-                                              int level, long scatterSeed, int pathIndex, float speedMultiplier) {
+                                              Rank rank, long scatterSeed, int pathIndex, float speedMultiplier) {
         return switch (slot) {
-            case EnemySlot s -> spawnShaped(s, gameWorld, delay, health, price, level, scatterSeed, pathIndex, speedMultiplier);
+            case EnemySlot s -> spawnShaped(s, gameWorld, delay, health, price, rank, scatterSeed, pathIndex, speedMultiplier);
             case EmptySlot ignored -> List.of();
         };
     }
@@ -109,7 +110,7 @@ public class Wave {
      * recompute, the same way a boss's own 50% multiplier already survives combat.
      */
     private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int delay, int baseHealth,
-                                                int basePrice, int level, long scatterSeed, int pathIndex, float speedMultiplier) {
+                                                int basePrice, Rank rank, long scatterSeed, int pathIndex, float speedMultiplier) {
         EnemyDefinition definition = enemySlot.definition();
         SpawnShape shape = enemySlot.shape();
         int health = Math.max(1, Math.round(baseHealth * shape.healthMultiplier()));
@@ -123,7 +124,7 @@ public class Wave {
             SpawnParameters spawnParameters = SpawnParameters.of(slotPosition, definition.baseSpeed(), health,
                     bountyShares[i], shape.sizeMultiplier(), shape.speedMultiplier() * speedMultiplier,
                     shape.damageTakenMultiplier(), localOffset, pathIndex);
-            members.add(new DefinedEnemyMob(definition, gameWorld, spawnParameters, level));
+            members.add(new DefinedEnemyMob(definition, gameWorld, spawnParameters, rank));
         }
         return List.copyOf(members);
     }
@@ -149,7 +150,7 @@ public class Wave {
      * describe a wave that has not run yet.
      */
     public EnemyMob[] spawn() {
-        return spawnEnemies(this.gameWorld, this.content, this.baseHealth, this.basePrice, this.level, this.scatterSeed,
+        return spawnEnemies(this.gameWorld, this.content, this.baseHealth, this.basePrice, this.rank, this.scatterSeed,
                 this.pathIndex, this.speedMultiplier)
                 .toArray(new EnemyMob[0]);
     }
@@ -162,8 +163,8 @@ public class Wave {
         return basePrice;
     }
 
-    public int getLevel() {
-        return level;
+    public Rank getRank() {
+        return this.rank;
     }
 
     /**

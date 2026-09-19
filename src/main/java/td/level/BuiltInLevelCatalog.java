@@ -10,6 +10,7 @@ import td.enemy.HealthThresholdTrigger;
 import td.enemy.HurtSpeedTrait;
 import td.enemy.OnDeathTrigger;
 import td.enemy.PathDirectionalMovement;
+import td.enemy.Rank;
 import td.enemy.SelfTarget;
 import td.enemy.SpawnEnemiesAction;
 import td.wave.PathColor;
@@ -44,7 +45,7 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     + "brief shield once badly wounded, and splits into two stragglers when finally brought down.")
             .withMovement(new PathDirectionalMovement())
             .withHealthDivisor(0.8f)
-            .withTraits(List.of(new HurtSpeedTrait(1.3f, 0.05f), new FlatResistTrait(10)))
+            .withTraits(List.of(new HurtSpeedTrait(1.3f), new FlatResistTrait(10)))
             .withAbilities(List.of(
                     new Ability(new HealthThresholdTrigger(0.5f),
                             new ApplyEffectAction(new ShieldTemplate(0.25f, 100), new SelfTarget())),
@@ -62,33 +63,32 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     new Point(17, 6), new Point(15, 6), new Point(15, 9), new Point(12, 9),
                     new Point(12, 12), new Point(20, 12)),
             List.of(
-                    new WaveDefinition("c e c e c e c e c", 251, 2, 1),
-                    new WaveDefinition("c e 2 c e 3 c e 4 c", 377, 3, 1),
-                    new WaveDefinition("c e c", 812, 10, 2),
-                    new WaveDefinition("4 c 2 e 2 s", 747, 5, 1),
-                    new WaveDefinition("c c e s", 1109, 15, 3),
-                    new WaveDefinition("10 c", 953, 2, 1),
-                    new WaveDefinition("3 s e 4 c t e s t", 1117, 4, 2),
-                    new WaveDefinition("2 c e e t", 2193, 15, 4),
-                    new WaveDefinition("g 2 e 2 s", 1493, 10, 2),
-                    new WaveDefinition("s t s c g c t c s g t c s g c t s g t c", 1476, 2, 2),
-                    new WaveDefinition("g c g", 3789, 15, 4),
-                    new WaveDefinition("6 g 2 e 4 t", 3088, 7, 3),
-                    new WaveDefinition("c e c e c e c e c", 2912, 1, 2),
-                    new WaveDefinition("2 s 3 t 2 g 4 e c", 3242, 10, 3),
-                    new WaveDefinition("s 4 e t", 4014, 50, 6),
-                    new WaveDefinition("c 5 e 3 g 3 e 3 s 3 t", 4016, 4, 4),
-                    new WaveDefinition("s", 4751, 0, 8),
+                    new WaveDefinition("c e c e c e c e c", 251, 2, Rank.GRUNT),
+                    new WaveDefinition("c e 2 c e 3 c e 4 c", 377, 3, Rank.GRUNT),
+                    new WaveDefinition("c e c", 812, 10, Rank.SOLDIER),
+                    new WaveDefinition("4 c 2 e 2 s", 747, 5, Rank.GRUNT),
+                    new WaveDefinition("c c e s", 1109, 15, Rank.VETERAN),
+                    new WaveDefinition("10 c", 953, 2, Rank.GRUNT),
+                    new WaveDefinition("3 s e 4 c t e s t", 1117, 4, Rank.SOLDIER),
+                    new WaveDefinition("2 c e e t", 2193, 15, Rank.ELITE),
+                    new WaveDefinition("g 2 e 2 s", 1493, 10, Rank.SOLDIER),
+                    new WaveDefinition("s t s c g c t c s g t c s g c t s g t c", 1476, 2, Rank.SOLDIER),
+                    new WaveDefinition("g c g", 3789, 15, Rank.ELITE),
+                    new WaveDefinition("6 g 2 e 4 t", 3088, 7, Rank.VETERAN),
+                    new WaveDefinition("c e c e c e c e c", 2912, 1, Rank.SOLDIER),
+                    new WaveDefinition("2 s 3 t 2 g 4 e c", 3242, 10, Rank.VETERAN),
+                    new WaveDefinition("s 4 e t", 4014, 50, Rank.BOSS),
+                    new WaveDefinition("c 5 e 3 g 3 e 3 s 3 t", 4016, 4, Rank.ELITE),
+                    new WaveDefinition("s", 4751, 0, Rank.BOSS),
                     // The Warden boss - hp/price here deliberately match BuiltInEnemies.WARDEN_1's
                     // own baseHealth/price, since this wave slot is what constructs its first
                     // appearance (every later stage, reached only via its egg hatching, is
                     // ability-spawned and reads those same fields directly instead - see
-                    // EnemyDefinition's own doc comment). level=8, matching the wave immediately
-                    // before it: the Warden's own BodyArchetype now gives it a fixed, always-large
-                    // body size (DefinedEnemyMob.bodyScaleFor), so this level no longer needs to
-                    // be artificially inflated the way it was back when the Warden borrowed
-                    // Square's level-scaled formula.
-                    new WaveDefinition("warden1", 8000, 100, 8)),
+                    // EnemyDefinition's own doc comment). Rank.BOSS, matching the wave immediately
+                    // before it: the Warden's own BodyArchetype gives it a fixed, always-large
+                    // body size (DefinedEnemyMob.bodyScaleFor), so this rank doesn't need to
+                    // inflate its body the way it would if that formula still scaled with it.
+                    new WaveDefinition("warden1", 8000, 100, Rank.BOSS)),
             50, 5);
 
     // cornerPull=0.3 keeps a comfortable margin under the tightest corner's leg (the shortest
@@ -102,14 +102,14 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     new Point(-1, 5), new Point(3, 5), new Point(3, 8), new Point(7, 8),
                     new Point(10, 2), new Point(10, 9), new Point(12, 9)),
             List.of(
-                    new WaveDefinition("c e c e c e c", 200, 2, 1),
-                    new WaveDefinition("5 c", 280, 2, 1),
-                    new WaveDefinition("s e s e s", 450, 4, 2),
-                    new WaveDefinition("t e t e t e t", 600, 3, 2),
-                    new WaveDefinition("3 s 2 e 3 c", 900, 3, 2),
-                    new WaveDefinition("g e g e g", 1200, 8, 3),
-                    new WaveDefinition("2 g 2 t 2 s 2 c", 1800, 5, 3),
-                    new WaveDefinition("10 c e 5 s e 3 t e g", 2600, 4, 4)),
+                    new WaveDefinition("c e c e c e c", 200, 2, Rank.GRUNT),
+                    new WaveDefinition("5 c", 280, 2, Rank.GRUNT),
+                    new WaveDefinition("s e s e s", 450, 4, Rank.SOLDIER),
+                    new WaveDefinition("t e t e t e t", 600, 3, Rank.SOLDIER),
+                    new WaveDefinition("3 s 2 e 3 c", 900, 3, Rank.SOLDIER),
+                    new WaveDefinition("g e g e g", 1200, 8, Rank.VETERAN),
+                    new WaveDefinition("2 g 2 t 2 s 2 c", 1800, 5, Rank.VETERAN),
+                    new WaveDefinition("10 c e 5 s e 3 t e g", 2600, 4, Rank.ELITE)),
             75, 3,
             new ArcCornerSmoothing(0.3, 8));
 
@@ -129,16 +129,16 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     new Point(-1, 3), new Point(14, 3), new Point(14, 15), new Point(28, 15),
                     new Point(28, 4), new Point(30, 4)),
             List.of(
-                    new WaveDefinition("c e c e reaver e c e c", 220, 2, 1),
-                    new WaveDefinition("6 c", 300, 2, 1),
-                    new WaveDefinition("s e s e s", 480, 3, 1),
-                    new WaveDefinition("t e t e t", 620, 3, 2),
-                    new WaveDefinition("4 s 2 e 4 c", 850, 4, 2),
-                    new WaveDefinition("g e g e g", 1100, 6, 2),
-                    new WaveDefinition("2 g 3 t 3 s", 1450, 5, 3),
-                    new WaveDefinition("8 c e 6 s e 4 t", 1800, 4, 3),
-                    new WaveDefinition("3 g 2 t 2 g 2 t", 2400, 8, 4),
-                    new WaveDefinition("s", 4200, 0, 6)),
+                    new WaveDefinition("c e c e reaver e c e c", 220, 2, Rank.GRUNT),
+                    new WaveDefinition("6 c", 300, 2, Rank.GRUNT),
+                    new WaveDefinition("s e s e s", 480, 3, Rank.GRUNT),
+                    new WaveDefinition("t e t e t", 620, 3, Rank.SOLDIER),
+                    new WaveDefinition("4 s 2 e 4 c", 850, 4, Rank.SOLDIER),
+                    new WaveDefinition("g e g e g", 1100, 6, Rank.SOLDIER),
+                    new WaveDefinition("2 g 3 t 3 s", 1450, 5, Rank.VETERAN),
+                    new WaveDefinition("8 c e 6 s e 4 t", 1800, 4, Rank.VETERAN),
+                    new WaveDefinition("3 g 2 t 2 g 2 t", 2400, 8, Rank.ELITE),
+                    new WaveDefinition("s", 4200, 0, Rank.BOSS)),
             new QuadraticBezierSmoothing(0.5, 14))
             .withColor(PathColor.of(230, 170, 60));
 
@@ -152,16 +152,16 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     new Point(5, -1), new Point(5, 5), new Point(22, 5), new Point(22, 11),
                     new Point(9, 11), new Point(9, 18)),
             List.of(
-                    new WaveDefinition("c e c e c e c", 180, 2, 1),
-                    new WaveDefinition("s e s e s", 260, 3, 1),
-                    new WaveDefinition("5 t", 340, 3, 2),
-                    new WaveDefinition("g e g e g e g", 420, 4, 2),
-                    new WaveDefinition("line 3 c e line 3 s", 520, 4, 2),
-                    new WaveDefinition("flank c e flank t", 650, 5, 3),
-                    new WaveDefinition("swarm 4 c e swarm 4 s", 820, 5, 3),
-                    new WaveDefinition("column 3 t e column 3 g", 1050, 6, 3),
-                    new WaveDefinition("drip 4 s e drip 4 t", 1350, 7, 4),
-                    new WaveDefinition("3 g 3 t 3 s 3 c", 1800, 8, 4)),
+                    new WaveDefinition("c e c e c e c", 180, 2, Rank.GRUNT),
+                    new WaveDefinition("s e s e s", 260, 3, Rank.GRUNT),
+                    new WaveDefinition("5 t", 340, 3, Rank.SOLDIER),
+                    new WaveDefinition("g e g e g e g", 420, 4, Rank.SOLDIER),
+                    new WaveDefinition("line 3 c e line 3 s", 520, 4, Rank.SOLDIER),
+                    new WaveDefinition("flank c e flank t", 650, 5, Rank.VETERAN),
+                    new WaveDefinition("swarm 4 c e swarm 4 s", 820, 5, Rank.VETERAN),
+                    new WaveDefinition("column 3 t e column 3 g", 1050, 6, Rank.VETERAN),
+                    new WaveDefinition("drip 4 s e drip 4 t", 1350, 7, Rank.ELITE),
+                    new WaveDefinition("3 g 3 t 3 s 3 c", 1800, 8, Rank.ELITE)),
             new ArcCornerSmoothing(0.4, 10))
             .withColor(PathColor.of(90, 190, 230))
             .withSpeed(1.3f);

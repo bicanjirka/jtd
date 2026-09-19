@@ -56,7 +56,7 @@ the two (see `td/level/CLAUDE.md` and `WaveScriptTest.aPerLevelCustomIdResolvesT
 The Warden's six-definition chain still ships as *global* built-in content rather than using
 this - it needs to be available regardless of which level reaches it, and predates this field.
 
-## Traits, abilities, and level-scaling
+## Traits, abilities, and rank
 
 A `Trait` is a passive, always-on modifier: `onHit` (resistance, folded in sequence by
 `DefinedEnemyMob.absorb`), `speedFactor` (a hurt-speed curve applied to `baseSpeed`),
@@ -70,11 +70,11 @@ per-mob mutable trait state nothing else here has (see its own doc comment).
 reducing the amount by some fraction of its own, so it stays exact regardless of which tower's
 roll produced the bonus - `ARMORED` carries it alongside its percent resistance.
 
-**A `Trait` instance is shared across every mob built from the same `EnemyDefinition`,
-regardless of which wave's `level` spawned it** — `TraitContext(level, healthFraction)` is
-passed into every `Trait` method for exactly this reason. Don't be tempted to bake a level into
-a `Trait` at construction time; `PercentResistTrait(0.8f, 0.05f)` means "the formula," not "the
-formula at some fixed level."
+**A `Trait` instance is shared across every mob built from the same `EnemyDefinition`.**
+`TraitContext(healthFraction)` is passed into every `Trait` method for whatever per-mob state a
+formula needs (currently just health fraction) — it carries no `Rank`, because a stronger
+resistance at a higher rank is authored as a different concrete `PercentResistTrait` instance,
+not the same instance read at a different rank.
 
 **A `Trait`/`Ability` carries its identity separately, through `IdentifiedTrait`/
 `IdentifiedAbility`, not as a field on itself.** `EnemyDefinition.traitSlots()`/`abilitySlots()`
@@ -105,7 +105,7 @@ see the death-timing note below, which `AbstractEnemyMob.criticalHitTick` reuses
 
 `DefinedEnemyMob` evaluates its own `definition.abilities()` once per `doTick`, each against a
 private `MobAbilityContext` (an inner class - it needs this mob's own `GameWorld`, position and
-`level`, which `AbilityEvaluator` itself never sees). Three things are easy to get wrong here:
+`rank`, which `AbilityEvaluator` itself never sees). Three things are easy to get wrong here:
 
 **A mob's own `AbilityState` list is built once, in its constructor, parallel to
 `definition.abilities()`** - a `PeriodicTrigger`'s countdown, a `TimeSinceLastHitTrigger`'s
@@ -138,7 +138,10 @@ the same path.** `AbstractEnemyMob`'s constructor always starts a fresh mob at `
 `DefinedEnemyMob.this.getPathIndex()` into `SpawnParameters.atSlot(...)` when building it -
 without the first, the Warden's egg would visibly teleport to the path's start instead of
 appearing where the Warden died; without the second, it would relocate onto path 0's geometry
-regardless of which path the Warden was actually walking.
+regardless of which path the Warden was actually walking. It also passes
+`DefinedEnemyMob.this.rank` into the new mob's own constructor - an ability-driven spawn (a
+reinforcement, an egg) inherits its parent's rank, the same precedent path inheritance already
+set.
 
 **`SpawnEnemiesAction`'s `count`/`consumesSelf` combination is only proven for
 `count == 1`.** Every v1 use is `count == 1` (a single reinforcement, or the one egg/next-stage

@@ -111,10 +111,10 @@ public final class EnemyCatalog {
     /**
      * Builds a live mob from the definition registered under {@code id} - what {@code Wave}/{@code WaveScript} spawn through.
      */
-    public EnemyMob spawn(String id, GameWorld gameWorld, int delay, int health, int price, int level) {
+    public EnemyMob spawn(String id, GameWorld gameWorld, int delay, int health, int price, Rank rank) {
         EnemyDefinition definition = this.get(id);
         SpawnParameters spawnParameters = SpawnParameters.atSlot(delay, definition.baseSpeed(), health, price);
-        return new DefinedEnemyMob(definition, gameWorld, spawnParameters, level);
+        return new DefinedEnemyMob(definition, gameWorld, spawnParameters, rank);
     }
 
     /**

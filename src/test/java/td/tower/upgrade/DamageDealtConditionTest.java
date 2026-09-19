@@ -3,6 +3,7 @@ package td.tower.upgrade;
 import org.junit.jupiter.api.Test;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.fixtures.WorldFixtures;
 import td.tower.Tower;
 import td.tower.TowerFactory;
@@ -25,7 +26,7 @@ class DamageDealtConditionTest {
     void satisfiedOnceEnoughDamageHasLanded() {
         Tower tower = TowerFactory.createTower(TowerFactory.Type.SNIPER, this.context, 0, 0);
         // high health so the hit doesn't kill it - only damageDealt is under test here
-        EnemyMob enemy = EnemyFactory.getEnemy("c", this.context, 0, 100000, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", this.context, 0, 100000, 3, Rank.GRUNT);
         this.context.enemies().setEnemies(new EnemyMob[]{enemy});
 
         tower.doTick(0);

@@ -19,21 +19,10 @@ class PercentResistTraitTest {
 
     @Test
     void damageTakenIsReducedByTheArmoredMobsResistance() {
-        EnemyMob armored = EnemyFactory.getEnemy("s", context, 0, 100, 5, 1);
-        // healthMax = 100*100 = 10000; K at level 1 is 0.8-0.05 = 0.75, so 1000 raw damage becomes 750 applied
+        EnemyMob armored = EnemyFactory.getEnemy("s", context, 0, 100, 5, Rank.GRUNT);
+        // healthMax = 100*100 = 10000; the fraction is 0.8, so 1000 raw damage becomes 800 applied
         armored.doDamage(Damage.physical(1000));
 
-        assertThat(armored.getHealth()).isEqualTo(10000 - 750);
-    }
-
-    @Test
-    void higherLevelArmoredMobsTakeEvenLessDamage() {
-        EnemyMob levelOne = EnemyFactory.getEnemy("s", context, 0, 1000, 5, 1);
-        EnemyMob levelFive = EnemyFactory.getEnemy("s", context, 0, 1000, 5, 5);
-
-        levelOne.doDamage(Damage.physical(1000));
-        levelFive.doDamage(Damage.physical(1000));
-
-        assertThat(levelFive.getHealth()).isGreaterThan(levelOne.getHealth());
+        assertThat(armored.getHealth()).isEqualTo(10000 - 800);
     }
 }

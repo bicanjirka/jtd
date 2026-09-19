@@ -39,17 +39,17 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
     // immediately.
     private int ticksSinceLastHit;
 
-    public DefinedEnemyMob(EnemyDefinition definition, GameWorld gameWorld, SpawnParameters spawnParameters, int level) {
+    public DefinedEnemyMob(EnemyDefinition definition, GameWorld gameWorld, SpawnParameters spawnParameters, Rank rank) {
         // The wave's base health is this definition's to scale: a tougher archetype divides it
         // down. Done in the super call rather than a second init step, so bodyScale below is
         // the only thing left to compute and nothing observes a half-built mob.
         super(gameWorld, definition.mobType(), definition.baseSpeed() * spawnParameters.speedMultiplier(),
-                withDividedHealth(spawnParameters, definition.healthDivisor()), level);
+                withDividedHealth(spawnParameters, definition.healthDivisor()), rank);
         this.definition = definition;
         this.shapeSpeedMultiplier = spawnParameters.speedMultiplier();
         this.shapeDamageTakenMultiplier = spawnParameters.damageTakenMultiplier();
         this.abilityStates = definition.abilities().stream().map(a -> AbilityState.forTrigger(a.trigger())).toList();
-        this.bodyScale = bodyScaleFor(definition.archetype(), gameWorld.getBoard().scale(), level) * spawnParameters.sizeMultiplier();
+        this.bodyScale = bodyScaleFor(definition.archetype(), gameWorld.getBoard().scale(), rank) * spawnParameters.sizeMultiplier();
     }
 
     /**
@@ -64,11 +64,13 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
                 spawnParameters.damageTakenMultiplier(), spawnParameters.localOffset(), spawnParameters.pathIndex());
     }
 
-    private static float bodyScaleFor(BodyArchetype archetype, int scale, int level) {
+    private static float bodyScaleFor(BodyArchetype archetype, int scale, Rank rank) {
         return switch (archetype) {
             case CIRCLE -> scale / 6f;
-            case SQUARE, TRIANGLE, GHOST -> scale / (float) ((level < 6) ? (7 - level) : 2);
-            // Fixed, not level-scaled like SQUARE/TRIANGLE/GHOST above: the Warden is meant to
+            // The ladder is a closed, five-tier enum, so this needs no cap the way a
+            // once-unbounded numeric level did - BOSS's ordinal (4) is the largest this ever sees.
+            case SQUARE, TRIANGLE, GHOST -> scale / (float) (7 - rank.ordinal());
+            // Fixed, not rank-scaled like SQUARE/TRIANGLE/GHOST above: the Warden is meant to
             // read as visibly the biggest thing on the board regardless of which wave slot
             // spawned it, not merely tied with an ordinary Square at its own size cap.
             case WARDEN -> scale / 1.5f;
@@ -202,7 +204,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
     }
 
     private TraitContext traitContext() {
-        return new TraitContext(this.level, this.getHealthFraction());
+        return new TraitContext(this.getHealthFraction());
     }
 
     public <R> R accept(EnemyMobVisitor<R> visitor) {
@@ -289,7 +291,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
             for (int i = 0; i < count; i++) {
                 SpawnParameters spawnParameters = SpawnParameters.atSlot(0, spawnedDefinition.baseSpeed(),
                         spawnedDefinition.baseHealth(), spawnedDefinition.price(), DefinedEnemyMob.this.getPathIndex());
-                DefinedEnemyMob spawned = new DefinedEnemyMob(spawnedDefinition, world, spawnParameters, DefinedEnemyMob.this.level);
+                DefinedEnemyMob spawned = new DefinedEnemyMob(spawnedDefinition, world, spawnParameters, DefinedEnemyMob.this.rank);
                 spawned.spawnAtSamePositionAs(DefinedEnemyMob.this);
                 if (consumesSelf) {
                     world.enemies().replace(DefinedEnemyMob.this, spawned);

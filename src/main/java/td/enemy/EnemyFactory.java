@@ -20,7 +20,7 @@ public final class EnemyFactory {
         return EnemyCatalog.builtIn().contains(name);
     }
 
-    public static EnemyMob getEnemy(String name, GameWorld gameWorld, int delay, int health, int price, int level) {
-        return EnemyCatalog.builtIn().spawn(name, gameWorld, delay, health, price, level);
+    public static EnemyMob getEnemy(String name, GameWorld gameWorld, int delay, int health, int price, Rank rank) {
+        return EnemyCatalog.builtIn().spawn(name, gameWorld, delay, health, price, rank);
     }
 }

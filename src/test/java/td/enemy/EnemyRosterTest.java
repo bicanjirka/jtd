@@ -12,7 +12,7 @@ class EnemyRosterTest {
     private final EnemyRoster roster = new EnemyRoster(host);
 
     private static EnemyMob anEnemy() {
-        return EnemyFactory.getEnemy("c", WorldFixtures.newWorld(), 0, 50, 3, 1);
+        return EnemyFactory.getEnemy("c", WorldFixtures.newWorld(), 0, 50, 3, Rank.GRUNT);
     }
 
     @Test

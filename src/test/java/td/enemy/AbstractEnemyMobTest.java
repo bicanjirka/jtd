@@ -27,7 +27,7 @@ class AbstractEnemyMobTest {
     void enemyWithZeroDelayIsActiveImmediately() {
         GameWorld context = newContext();
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
 
         assertThat(enemy.validTarget()).isTrue();
     }
@@ -39,7 +39,7 @@ class AbstractEnemyMobTest {
         float speed = 1.28f; // AbstractEnemyMob's default speed field, in pixels/tick
         int expectedActivationTick = Math.round(22.4f * delayArg / speed);
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, delayArg, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, delayArg, 50, 3, Rank.GRUNT);
         assertThat(enemy.validTarget()).isFalse();
 
         for (int i = 1; i < expectedActivationTick; i++) {
@@ -57,7 +57,7 @@ class AbstractEnemyMobTest {
         GameWorld context = WorldFixtures.newWorldOnBoard(host, 1, 1001, 1001);
         context.enemies().setCount(1);
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 7, 2);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 7, Rank.GRUNT);
         assertThat(enemy.getHealth()).isEqualTo(5000);
 
         enemy.doDamage(Damage.physical(5000));
@@ -74,7 +74,7 @@ class AbstractEnemyMobTest {
         GameWorld context = WorldFixtures.newWorldOnBoard(host, 1, 1001, 1001);
         context.enemies().setCount(1);
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 7, 2);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 7, Rank.GRUNT);
         enemy.doDamage(Damage.physical(5000));
         enemy.doDamage(Damage.physical(5000));
 
@@ -86,7 +86,7 @@ class AbstractEnemyMobTest {
     @Test
     void nonLethalDamageReducesHealthWithoutKilling() {
         GameWorld context = newContext();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
 
         enemy.doDamage(Damage.physical(2000));
 
@@ -97,7 +97,7 @@ class AbstractEnemyMobTest {
     @Test
     void anActiveShieldReducesLandedDamageByItsPercent() {
         GameWorld context = newContext();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         assertThat(enemy.getHealth()).isEqualTo(5000);
         enemy.applyEffect(Effect.shield(0.4f, 5, d -> {
         }));
@@ -113,7 +113,7 @@ class AbstractEnemyMobTest {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100)); // one straight segment, 100px long at scale 1
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         assertThat(enemy.getX()).isEqualTo(0.0);
         assertThat(enemy.getY()).isEqualTo(0.0);
 
@@ -138,7 +138,7 @@ class AbstractEnemyMobTest {
         // and the loop below would never observe x >= 30).
         context.setPath(LevelFixtures.straightPath(1, 0, 10, 30, 31));
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
 
         int tick = 0;
         while (enemy.getX() < 10.0) {
@@ -159,10 +159,10 @@ class AbstractEnemyMobTest {
     @Test
     void deathFadeCompletesExactlyFadeDurationTicksAfterTheTickThatNoticedDeath() {
         GameWorld context = newContext();
-        int level = 2;
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, level);
+        Rank rank = Rank.SOLDIER;
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, rank);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
-        int fadeDuration = 3 * level + 6;
+        int fadeDuration = 3 * rank.ordinal() + 6;
 
         enemy.doDamage(Damage.physical(5000));
         enemy.doTick(1); // first doTick after death: captures deathTick = 1
@@ -175,7 +175,7 @@ class AbstractEnemyMobTest {
     @Test
     void fadeAlphaStaysWithinValidColorRangeBeforeDeathTickIsCaptured() {
         GameWorld context = newContext();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
 
         // doDamage() (called by a tower) can kill an enemy mid-tick, before this
@@ -190,7 +190,7 @@ class AbstractEnemyMobTest {
     @Test
     void ticksSinceCriticalHitIsMinusOneUntilOneLands() {
         GameWorld context = newContext();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
 
         assertThat(mob.ticksSinceCriticalHit(5)).isEqualTo(-1);
@@ -199,7 +199,7 @@ class AbstractEnemyMobTest {
     @Test
     void aCriticalHitIsCapturedOnTheMobsOwnNextDoTickNotSynchronouslyInDoDamage() {
         GameWorld context = newContext();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
 
         // doDamage() (called by a tower) can land mid-tick, before this mob's own doTick()
@@ -217,7 +217,7 @@ class AbstractEnemyMobTest {
     @Test
     void aNonCriticalHitLeavesTicksSinceCriticalHitAtMinusOne() {
         GameWorld context = newContext();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
 
         enemy.doDamage(Damage.physical(100));
@@ -230,7 +230,7 @@ class AbstractEnemyMobTest {
     void previousPositionTracksOneTickBehindCurrentPosition() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(10, 0, 10));
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
 
         // nothing to interpolate from at spawn
@@ -252,7 +252,7 @@ class AbstractEnemyMobTest {
         context.setPath(LevelFixtures.straightPath(10, 0, 1));
         int initialLives = context.economy().getLives();
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
         int tick = 0;
         while (context.economy().getLives() == initialLives) {
@@ -272,7 +272,7 @@ class AbstractEnemyMobTest {
         context.setPath(LevelFixtures.straightPath(10, 0, 1));
         int initialLives = context.economy().getLives();
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
         for (int i = 1; i <= 100; i++) {
             enemy.doTick(i);
         }
@@ -287,7 +287,7 @@ class AbstractEnemyMobTest {
         context.setPath(LevelFixtures.straightPath(10, 0, 1));
         int creditsBeforeLeak = context.economy().getCredits();
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
         for (int i = 1; i <= 100; i++) {
             enemy.doTick(i);
         }
@@ -308,7 +308,7 @@ class AbstractEnemyMobTest {
         int initialLives = context.economy().getLives();
         int initialScore = context.economy().getScore();
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 0, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 0, Rank.GRUNT);
         for (int i = 1; i <= 100; i++) {
             enemy.doTick(i);
         }
@@ -324,7 +324,7 @@ class AbstractEnemyMobTest {
         context.setBoard(BoardGeometry.of(10, 5, 5));
         context.setPath(LevelFixtures.straightPath(10, -1, 4));
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
 
         assertThat(enemy.getX()).isNegative();
     }
@@ -335,7 +335,7 @@ class AbstractEnemyMobTest {
         context.setBoard(BoardGeometry.of(10, 5, 5));
         context.setPath(LevelFixtures.straightPath(10, 0, 6));
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
         for (int i = 1; i <= 100; i++) {
             enemy.doTick(i);
         }

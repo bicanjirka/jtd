@@ -3,6 +3,7 @@ package td.tower.upgrade;
 import org.junit.jupiter.api.Test;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.fixtures.WorldFixtures;
 import td.tower.Tower;
 import td.tower.TowerFactory;
@@ -24,7 +25,7 @@ class KillCountConditionTest {
     @Test
     void satisfiedOnceEnoughKillsHaveLanded() {
         Tower tower = TowerFactory.createTower(TowerFactory.Type.SNIPER, this.context, 0, 0);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", this.context, 0, 1, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", this.context, 0, 1, 3, Rank.GRUNT);
         this.context.enemies().setEnemies(new EnemyMob[]{enemy});
 
         tower.doTick(0);

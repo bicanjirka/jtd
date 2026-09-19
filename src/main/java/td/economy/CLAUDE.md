@@ -8,7 +8,10 @@ its own note.
 
 - `EconomyState` — credits/score/lives as one immutable snapshot.
 - `EconomyDelta` — what a single game event changes, with `none()` as the identity and
-  `plus` as the combinator. `kill(bounty)` and `leak(penalty)` are the two named events.
+  `plus` as the combinator. `kill(bounty)`/`kill(bounty, score)` and `leak(penalty)` are the
+  named events - the two-arg `kill` is what `AbstractEnemyMob` uses for a real kill, whose score
+  is weighted by the killed mob's `td.enemy.Rank` rather than mirroring its bounty 1:1; the
+  one-arg form is 1:1 shorthand for a caller that doesn't care.
 - `EconomyLedger` — owns the current state and the listener list.
 - `EconomyListener` — the one-method notification interface.
 

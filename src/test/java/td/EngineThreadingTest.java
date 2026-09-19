@@ -1,6 +1,7 @@
 package td;
 
 import org.junit.jupiter.api.Test;
+import td.enemy.Rank;
 import td.fixtures.LevelFixtures;
 import td.level.LevelDefinition;
 import td.wave.WaveDefinition;
@@ -28,7 +29,7 @@ class EngineThreadingTest {
     // needs an actual wave to start.
     private static LevelDefinition level(String name, int width, int height) {
         return LevelDefinition.unsmoothed(name, "", width, height, LevelFixtures.STRAIGHT_PATH,
-                List.of(new WaveDefinition("3 c", 2, 5, 1)), 100, 5);
+                List.of(new WaveDefinition("3 c", 2, 5, Rank.GRUNT)), 100, 5);
     }
 
     /**
