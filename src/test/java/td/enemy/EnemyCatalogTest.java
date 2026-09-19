@@ -40,19 +40,37 @@ class EnemyCatalogTest {
     }
 
     @Test
-    void cloneAndAdjustRegistersAnIndependentDefinitionUnderTheNewIdWithoutMutatingTheOriginal() {
+    void cloneAndAdjustRegistersAnIndependentSingleRankLadderUnderTheNewIdWithoutMutatingTheOriginal() {
         EnemyCatalog catalog = new EnemyCatalog();
         EnemyDefinition square = EnemyDefinition.of("s", "Square", 100, 5, 1.28f, BodyArchetype.SQUARE)
                 .withMovement(new RotorMovement(0.1f));
         catalog.register(square);
 
-        EnemyDefinition tankySquare = catalog.cloneAndAdjust("s", "tankySquare",
+        RankedEnemy tankySquare = catalog.cloneAndAdjust("s", "tankySquare",
                 d -> d.withHealthDivisor(d.healthDivisor() / 2f));
 
         assertThat(catalog.get("s").healthDivisor()).isEqualTo(1f);
-        assertThat(catalog.get("tankySquare")).isEqualTo(tankySquare);
+        assertThat(catalog.get("tankySquare")).isEqualTo(tankySquare.definitionFor(Rank.GRUNT));
         assertThat(tankySquare.id()).isEqualTo("tankySquare");
-        assertThat(tankySquare.healthDivisor()).isEqualTo(0.5f);
+        assertThat(tankySquare.definitionFor(Rank.GRUNT).healthDivisor()).isEqualTo(0.5f);
+    }
+
+    @Test
+    void cloneAndAdjustAppliesTheAdjustmentToEveryRankTheOriginalLadderAuthored() {
+        EnemyCatalog catalog = new EnemyCatalog();
+        RankedEnemy square = RankedEnemy.startingAt(EnemyDefinition.of("s", "Square", 100, 5, 1.28f, BodyArchetype.SQUARE))
+                .thenAt(Rank.SOLDIER, d -> d.withHealthAndPrice(200, 8))
+                .build();
+        catalog.register(square);
+
+        RankedEnemy tankySquare = catalog.cloneAndAdjust("s", "tankySquare",
+                d -> d.withHealthAndPrice(d.baseHealth() * 2, d.price()));
+
+        assertThat(tankySquare.definitionFor(Rank.GRUNT).baseHealth()).isEqualTo(200);
+        assertThat(tankySquare.definitionFor(Rank.SOLDIER).baseHealth()).isEqualTo(400);
+        // the original ladder's own two ranks are untouched
+        assertThat(catalog.get("s", Rank.GRUNT).baseHealth()).isEqualTo(100);
+        assertThat(catalog.get("s", Rank.SOLDIER).baseHealth()).isEqualTo(200);
     }
 
     @Test

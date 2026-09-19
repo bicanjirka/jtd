@@ -50,13 +50,6 @@ public final class EnemyCatalog {
         return catalog;
     }
 
-    private static EnemyDefinition withId(EnemyDefinition source, String newId) {
-        return new EnemyDefinition(newId, source.displayName(), source.description(),
-                source.baseHealth(), source.price(), source.baseSpeed(),
-                source.healthDivisor(), source.mobType(), source.archetype(), source.movement(),
-                source.traitSlots(), source.abilitySlots());
-    }
-
     /**
      * Registers a single-rank ladder - {@code definition} becomes this id's {@link Rank#GRUNT}
      * (and only) definition, so any requested rank resolves to it (the fallback rule). The
@@ -88,17 +81,16 @@ public final class EnemyCatalog {
     }
 
     /**
-     * Registers a copy of the definition already registered under {@code baseId} at
-     * {@link Rank#GRUNT}, with its id replaced by {@code newId} and then run through
-     * {@code adjust} - e.g. "a Square with double the usual resistance for this one level",
-     * without touching the original. The clone is registered as a single-rank ladder, the same
-     * as {@link #register(EnemyDefinition)} - cloning a full ladder is not a v1 need.
+     * Registers a copy of the whole ladder already registered under {@code baseId}, with its id
+     * replaced by {@code newId} and {@code adjust} run over every rank the original authored -
+     * e.g. "a Square with double the usual resistance for this one level", applied consistently
+     * whether the original defines one rank or five, without touching the original. See
+     * {@link RankedEnemy#cloneAs}.
      */
-    public EnemyDefinition cloneAndAdjust(String baseId, String newId, UnaryOperator<EnemyDefinition> adjust) {
-        EnemyDefinition base = this.get(baseId);
-        EnemyDefinition adjusted = adjust.apply(withId(base, newId));
-        this.register(adjusted);
-        return adjusted;
+    public RankedEnemy cloneAndAdjust(String baseId, String newId, UnaryOperator<EnemyDefinition> adjust) {
+        RankedEnemy cloned = this.ranked(baseId).cloneAs(newId, adjust);
+        this.register(cloned);
+        return cloned;
     }
 
     public boolean contains(String id) {
