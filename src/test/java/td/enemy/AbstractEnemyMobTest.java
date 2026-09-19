@@ -3,6 +3,7 @@ package td.enemy;
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.damage.Damage;
+import td.effect.Effect;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 import td.wave.PathNormal;
@@ -108,6 +109,20 @@ class AbstractEnemyMobTest {
 
         assertThat(enemy.getHealth()).isEqualTo(3000);
         assertThat(enemy.validTarget()).isTrue();
+    }
+
+    @Test
+    void anActiveShieldReducesLandedDamageByItsPercent() {
+        GameWorld context = newContext();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        assertThat(enemy.getHealth()).isEqualTo(5000);
+        enemy.applyEffect(Effect.shield(0.4f, 5, d -> {
+        }));
+
+        Damage landed = enemy.doDamage(Damage.physical(1000));
+
+        assertThat(landed).isEqualTo(Damage.physical(600));
+        assertThat(enemy.getHealth()).isEqualTo(4400);
     }
 
     @Test

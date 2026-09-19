@@ -168,17 +168,21 @@ something real to draw from instead of a teleport to the path's start.
 
 **`doDamage` returns the damage that actually landed, not what was passed in.** `absorb` (which
 `DefinedEnemyMob` implements by folding every `Trait.onHit` in sequence) lets a mob resist part
-of a hit; a mob that is not a valid target takes none of it at all; and the result is capped at
-the health the mob had left, so a killing blow reports only what it actually removed rather
-than its overkill. That cap is also why a dead mob sits at exactly zero health instead of going
-negative. Anything reporting damage figures — `AbstractTower.dealDamage` is the only such
-caller today — must use the return value. `DefinedEnemyMob.doDamage` propagates it after
-recomputing `speed` from the traits' `speedFactor`.
+of a hit; `AbstractEnemyMob.doDamage` then runs that result through its own
+`ActiveEffects.applyShield` before capping, so a timed `EffectKind.SHIELD` (`ShieldTemplate`'s
+percentage reduction) composes with a `Trait`'s permanent resistance rather than replacing it —
+the two are independent mechanisms applied in sequence, same as `absorb`'s own trait chain. A
+mob that is not a valid target takes none of it at all; and the result is capped at the health
+the mob had left, so a killing blow reports only what it actually removed rather than its
+overkill. That cap is also why a dead mob sits at exactly zero health instead of going negative.
+Anything reporting damage figures — `AbstractTower.dealDamage` is the only such caller today —
+must use the return value. `DefinedEnemyMob.doDamage` propagates it after recomputing `speed`
+from the traits' `speedFactor`.
 
-**The health cap is applied to `absorb`'s result, via `Damage.cappedAt`, never by re-wrapping
-the incoming hit.** A `Trait.onHit` is free to change a hit's `DamageType` as well as its
-amount; capping from the original `damage` argument instead would silently discard whatever
-type it chose.
+**The health cap is applied after `absorb` and `applyShield`, via `Damage.cappedAt`, never by
+re-wrapping the incoming hit.** A `Trait.onHit` is free to change a hit's `DamageType` as well
+as its amount; capping from the original `damage` argument instead would silently discard
+whatever type it chose.
 
 **A spawn shape's permanent damage-taken reduction (Elite's 50%) is folded into `absorb`
 *after* every `Trait.onHit`, via `Damage.scaledBy`, so it composes with a definition's own
