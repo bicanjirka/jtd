@@ -50,7 +50,7 @@ public final class EnemyCatalog {
         return new EnemyDefinition(newId, source.displayName(), source.description(),
                 source.baseHealth(), source.price(), source.baseSpeed(),
                 source.healthDivisor(), source.mobType(), source.archetype(), source.movement(),
-                source.traits(), source.abilities());
+                source.traitSlots(), source.abilitySlots());
     }
 
     /**
