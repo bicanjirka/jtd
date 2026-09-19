@@ -124,7 +124,11 @@ shapes that take one (`swarm 4 c`):
 
 Three levels ship with the game: **Classic Loop** (the original 20×15 winding path, 17
 waves), **Zigzag Gauntlet** (a smaller board with smoothly curved corners and only 3 lives)
-and **Wild Bezier Sweep** (long Bezier curves that swing wide of the authored corners).
+and **Wild Bezier Sweep** (long Bezier curves that swing wide of the authored corners, 10
+waves per lane). A level can define more than one enemy path, each with its own color, waves
+and pace; Wild Bezier Sweep is the one built-in level that does, with a second, faster lane
+(cyan, 1.3× speed) crossing its original amber one. A level's paths all run the same number of
+waves as synchronized rounds - starting a round spawns every path's wave for it together.
 
 Levels are defined as Java constants in `td.level.BuiltInLevelCatalog`, so adding one today
 means a code change and a rebuild. See `TODO.md` for the planned file-based catalog.

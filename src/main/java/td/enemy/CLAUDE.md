@@ -211,13 +211,17 @@ the path's first point (or the origin). Keep that branch.
 **Speed has an intrinsic/effective split, like `AbstractTower`'s base/current damage.** The
 `speed` field stays the *intrinsic* value — `DefinedEnemyMob.doDamage` recomputes it fresh from
 `definition.baseSpeed() * shapeSpeedMultiplier * (product of every Trait.speedFactor)` on every
-hit through `setSpeed`, folding in the spawning `SpawnShape`'s own speed multiplier (a boss's
-50%) alongside the traits' — a one-time `setSpeed` at construction would be silently wiped by
-the first hit, the same trap a trait's own multiplier would fall into if it weren't folded into
-this recomputation — while `getSpeed()` and movement both additionally fold in every currently
-active `td.effect.Effect`'s speed multiplier via `ActiveEffects.speedMultiplier()`. A slow or
-freeze therefore never gets permanently baked into `speed`, and is never wiped out the next time
-a trait recomputes it. `doTick` reads that multiplier *before* calling `ActiveEffects.tick()`,
+hit through `setSpeed`, folding in `shapeSpeedMultiplier` alongside the traits' —
+`spawnParameters.speedMultiplier()`, which by the time `td.wave.Wave` builds it is already the
+*product* of the spawning `SpawnShape`'s own multiplier (a boss's 50%), that path's
+`PathDefinition.speedMultiplier()`, and that round's `WaveDefinition.speedMultiplier()` — a
+fast path or a called-out fast round needs no mechanism beyond this one composed number. A
+one-time `setSpeed` at construction would be silently wiped by the first hit, the same trap any
+of those three multipliers would fall into if they weren't folded into this recomputation —
+while `getSpeed()` and movement both additionally fold in every currently active
+`td.effect.Effect`'s speed multiplier via `ActiveEffects.speedMultiplier()`. A slow or freeze
+therefore never gets permanently baked into `speed`, and is never wiped out the next time a
+trait recomputes it. `doTick` reads that multiplier *before* calling `ActiveEffects.tick()`,
 not after — the tick call both applies this tick's damage-over-time and decrements durations,
 and an effect entering the last tick of its duration must still suppress this tick's movement,
 not just its damage. A damage-over-time tick that kills the mob sets `dead` synchronously (its

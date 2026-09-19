@@ -1,9 +1,19 @@
 # Feature Request: Multiple Enemy Paths Per Level
 
-**Status: proposed, not yet implemented.** This document describes the request in full — there
-is no separate "later phase" of scope; everything below is one feature. **Add a second path to
-Wild Bezier Sweep** is part of this request, not a follow-up, since it is the only way the other
-pieces (per-path color, per-path speed, the stacked wave panels) are visibly exercised at all.
+**Status: implemented**, as two commits following this doc's plan: data model/runtime/rendering
+first, then Wild Bezier Sweep's second path and the round-sync integration tests. This document
+is kept as the record of the request and the decisions behind it; see `td/wave/CLAUDE.md`'s
+"Multiple paths and rounds" section and the new `td/level/CLAUDE.md` for the durable rules that
+came out of it. Two things landed slightly differently than described below, both because
+building the feature surfaced them, not because the request changed:
+
+- **`EnemyMob.getProgression()` was rescaled to a fraction of a mob's own path length**, not
+  raw pixels. Not called out in the original request: `FurthestAlongPathSelector` compares this
+  value across candidates that can now sit on different paths of different total lengths, and
+  raw pixel distance stopped being a fair comparison the moment that became possible.
+- **The wave-info panel's per-path rows also carry their own health/reward/level labels**, not
+  just a swatch and an enemy strip, since those numbers genuinely differ per path per round once
+  a round is more than one wave.
 
 ## Summary
 
