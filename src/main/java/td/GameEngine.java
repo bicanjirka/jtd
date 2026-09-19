@@ -161,6 +161,7 @@ public class GameEngine {
         // never one another thread could see mid-fill.
         CellGrid grid = CellGrid.of(width, height, scale);
         EnemyCatalog catalog = EnemyCatalog.builtIn();
+        level.customEnemies().forEach(catalog::register);
 
         // Every path is built independently, against the catalog local rather than through the
         // world. A Wave holds only its content until it starts (see Wave.spawn), so nothing here

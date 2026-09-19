@@ -294,27 +294,6 @@ do this — see below). This was a speculative "nice to have," not a committed d
 
 ## Enemy features
 
-### A level cannot register its own custom or cloned enemy
-
-`FEATURE-enemy-traits-and-effects.md` asked for per-level enemy registration/cloning as part of
-its original scope. The mechanism is already there — `EnemyCatalog.register`/its clone support
-work, and `WaveScriptTest`'s `aPerLevelCustomIdResolvesTheSameWayABuiltInDoes` proves a per-level
-custom id resolves exactly like a built-in one — but `LevelDefinition` has no field to carry a
-level's own registrations, so no level actually uses it yet. `td/enemy/CLAUDE.md`'s "A level
-cannot yet register its own custom or cloned enemy" note tracks the same gap from the package
-side. The Warden's six-stage chain shipped as *global* built-in content specifically to avoid
-needing this field.
-
-- **Where:** `td.level.LevelDefinition` (needs a new field), `td.GameEngine.loadLevel` (already
-  builds a fresh per-level `EnemyCatalog` via `EnemyCatalog.builtIn()` — needs to also register
-  whatever this new field carries).
-- **Approach:** add a field (e.g. a `List<EnemyDefinition>`) to `LevelDefinition`, defaulting to
-  empty, grown by a fluent `withX` copy the same way `withDescription`/`withStartingCredits`
-  already are (root `CLAUDE.md` §5's rule for wide records) — not a wider factory argument list.
-  Have `loadLevel` register each one against the level's catalog right after `builtIn()` runs.
-  `EnemyCatalog.register` already rejects an id colliding with a reserved wave-script token, so
-  a level authoring a custom enemy is safe by construction once this is wired.
-
 ### The effect-marker overflow indicator has no count
 
 `EnemyFrameBuilder`'s marker row caps at 3 visible status-effect icons; a 4th+ simultaneous

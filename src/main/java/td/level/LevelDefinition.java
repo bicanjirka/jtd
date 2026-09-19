@@ -1,5 +1,6 @@
 package td.level;
 
+import td.enemy.EnemyDefinition;
 import td.wave.PathDefinition;
 import td.wave.Point;
 import td.wave.WaveDefinition;
@@ -18,6 +19,12 @@ import java.util.List;
  * together, and the round is cleared only once every path's enemies from it are gone (see
  * {@code td/wave/CLAUDE.md}) - a level whose paths disagree on round count is an authoring
  * mistake caught here, not a runtime surprise.
+ * <p>
+ * {@code customEnemies} is this level's own {@link EnemyDefinition} roster, registered by
+ * {@code GameEngine.loadLevel} into that level's fresh {@code td.enemy.EnemyCatalog} right after
+ * the built-ins, before any wave's tokens are parsed - a wave-script token names one of these
+ * exactly like it names a built-in, since {@code td.wave.WaveScript} resolves every token
+ * against whichever catalog is in scope with no separate syntax for the two.
  */
 public record LevelDefinition(
         String name,
@@ -25,11 +32,13 @@ public record LevelDefinition(
         int width,
         int height,
         List<PathDefinition> paths,
+        List<EnemyDefinition> customEnemies,
         int startingCredits,
         int startingLives) {
 
     public LevelDefinition {
         paths = List.copyOf(paths);
+        customEnemies = List.copyOf(customEnemies);
         if (paths.isEmpty()) {
             throw new IllegalArgumentException("A level needs at least 1 path");
         }
@@ -45,28 +54,38 @@ public record LevelDefinition(
 
     /**
      * The required shape every level has: its name, board size and paths, at the traditional
-     * default starting economy ($100/5 lives) and no description. A level that needs any of
-     * those calls the matching {@code withX} copy below instead of this factory growing another
-     * parameter - the same "with"-copy shape {@link PathDefinition} and {@code td.util.LoadedLevel}
-     * already use.
+     * default starting economy ($100/5 lives), no description and no custom enemy roster. A
+     * level that needs any of those calls the matching {@code withX} copy below instead of this
+     * factory growing another parameter - the same "with"-copy shape {@link PathDefinition} and
+     * {@code td.util.LoadedLevel} already use.
      */
     public static LevelDefinition of(String name, int width, int height, List<PathDefinition> paths) {
-        return new LevelDefinition(name, "", width, height, paths, 100, 5);
+        return new LevelDefinition(name, "", width, height, paths, List.of(), 100, 5);
     }
 
     public LevelDefinition withDescription(String description) {
         return new LevelDefinition(this.name, description, this.width, this.height, this.paths,
-                this.startingCredits, this.startingLives);
+                this.customEnemies, this.startingCredits, this.startingLives);
     }
 
     public LevelDefinition withStartingCredits(int startingCredits) {
         return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
-                startingCredits, this.startingLives);
+                this.customEnemies, startingCredits, this.startingLives);
     }
 
     public LevelDefinition withStartingLives(int startingLives) {
         return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
-                this.startingCredits, startingLives);
+                this.customEnemies, this.startingCredits, startingLives);
+    }
+
+    /**
+     * This level's own {@link EnemyDefinition} roster - built-in ids used as-is need nothing
+     * here; a level authoring a custom or cloned enemy passes it through this copy so
+     * {@code GameEngine.loadLevel} registers it into that level's own catalog.
+     */
+    public LevelDefinition withCustomEnemies(List<EnemyDefinition> customEnemies) {
+        return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
+                customEnemies, this.startingCredits, this.startingLives);
     }
 
     /**
