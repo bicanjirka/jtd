@@ -241,24 +241,6 @@ Towers don't rotate their sprite image to visually face their current target (en
 
 ## Enemy features
 
-### The Warden boss shares Square's exact art
-
-`BuiltInEnemies.WARDEN_1`/`WARDEN_2`/`WARDEN_3` reuse `BodyArchetype.SQUARE`, so a Warden is
-the same pink flat square every regular Square enemy is - only a deliberately high `level`
-parameter on its wave slot (`BuiltInLevelCatalog`'s `warden1` entry) makes it render larger,
-via the existing level-scaled body-size formula every Square already has. That's a size-only
-substitute for a real boss look, not actual distinct art, and risks the exact legibility
-problem this feature's own product-review notes warned against (a player should be able to
-tell at a glance that this is the boss, not just "a big Square").
-
-- **Where:** `BuiltInEnemies.WARDEN_1`/`WARDEN_2`/`WARDEN_3`/`WARDEN_EGG_1`/`WARDEN_EGG_2`/
-  `WARDEN_EGG_3`, `BuiltInLevelCatalog`'s `warden1` wave entry.
-- **Approach:** give the Warden its own `BodyArchetype` (and the egg, if `EGG`'s shared
-  circle-tint isn't distinct enough once seen next to Circle/Ghost in practice), following
-  `td/enemy/CLAUDE.md`'s "Adding a genuinely new `BodyArchetype`" checklist - a new `Palette`
-  role plus its shape/colour cases in `Java2DFrameRenderer`. Drop the `level=10` workaround
-  once real size/shape comes from the archetype itself rather than a borrowed formula.
-
 ### The effect-marker overflow indicator has no count
 
 `EnemyFrameBuilder`'s marker row caps at 3 visible status-effect icons; a 4th+ simultaneous

@@ -19,5 +19,6 @@ public enum BodyArchetype {
     SQUARE,
     TRIANGLE,
     GHOST,
-    EGG
+    EGG,
+    WARDEN
 }
