@@ -16,7 +16,8 @@ class UpgradePathTest {
 
     @Test
     void describeListsEveryNonZeroBuffAxisWithASignedPercentage() {
-        UpgradePath path = new UpgradePath("Veteran", 30, new TowerBuff(0.3f, 0.1f, 0f, 0.25f, 0.15f),
+        UpgradePath path = new UpgradePath("Veteran", 30,
+                TowerBuff.none().withDamage(0.3f).withRange(0.1f).withBounty(0.25f).withCritChance(0.15f),
                 new KillCountCondition(10));
 
         assertThat(path.describe()).isEqualTo(

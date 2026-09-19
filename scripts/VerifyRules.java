@@ -5,8 +5,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -130,6 +132,10 @@ public final class VerifyRules {
         rules.add(enumConstantsAreUpperSnakeCase());
 
         rules.add(fieldsDeclareTheirOwner());
+
+        rules.add(wideValuesHaveANarrowEntryPoint());
+
+        rules.add(noWideValueLiteralsInTests());
 
         rules.add(docsNameRealTypes());
 
@@ -352,6 +358,227 @@ public final class VerifyRules {
                 }
             }
         };
+    }
+
+    /**
+     * A record with 5 or more components must offer something narrower than its own canonical
+     * constructor - a static factory naming only the required shape (CLAUDE.md 5), a secondary
+     * constructor, or both - so a caller means to set the axes it names, not spell out every
+     * component to reach the ones it cares about.
+     * <p>
+     * This is the rule a churn analysis found missing: {@code EnemyDefinition} grew to 12
+     * components with no factory at all, and every test that built one wrote a 12-argument
+     * literal that broke on the next added component. {@code PathDefinition}/{@code SpawnParameters}/
+     * {@code LoadedLevel} already had the narrower shape and absorbed the same kind of change
+     * with zero call-site edits - this check is what keeps a new wide record from repeating
+     * {@code EnemyDefinition}'s mistake.
+     * <p>
+     * Scoped away from {@code td.ui.render}: those records are frame-pipeline DTOs built exactly
+     * once per frame by their own dedicated frame-builder class (CLAUDE.md 2.4), not authored
+     * content constructed from dozens of scattered call sites - they have no blast radius for a
+     * factory to reduce, and forcing one on them would be an abstraction with no payoff. The same
+     * boundary {@code render-has-no-awt} already carves out.
+     */
+    private static Check wideValuesHaveANarrowEntryPoint() {
+        return new Check() {
+            @Override
+            public String name() {
+                return "wide-values-have-a-narrow-entry-point";
+            }
+
+            @Override
+            public String section() {
+                return "CLAUDE.md 5";
+            }
+
+            @Override
+            public String why() {
+                return "a record with 5+ components needs a narrower static factory or secondary "
+                        + "constructor - see td.wave.PathDefinition for the shape";
+            }
+
+            @Override
+            public List<String> violations() throws IOException {
+                List<String> found = new ArrayList<>();
+                for (WideRecord record : wideRecordsInMain()) {
+                    String remainder = record.text().substring(record.bodyEnd());
+                    boolean hasFactory = Pattern.compile(
+                                    "public static\\s+(?:\\w[\\w.]*\\s+)?" + Pattern.quote(record.name())
+                                            + "\\s+\\w+\\s*\\(")
+                            .matcher(remainder).find();
+                    boolean hasSecondaryConstructor = Pattern.compile(
+                                    "\\b(public|private|protected)\\s+" + Pattern.quote(record.name()) + "\\s*\\(")
+                            .matcher(remainder).find();
+                    if (!hasFactory && !hasSecondaryConstructor) {
+                        found.add(record.file() + ":" + lineOf(record.text(), record.headerStart()) + "  record "
+                                + record.name() + " has " + record.componentCount() + " components and no "
+                                + "narrower factory or secondary constructor");
+                    }
+                }
+                return found;
+            }
+        };
+    }
+
+    /**
+     * A test must not construct a {@link #wideValuesHaveANarrowEntryPoint} record by spelling
+     * out every one of its components positionally - it names the value through that record's
+     * own narrower factory, a fluent {@code withX} copy, or {@code td.fixtures} instead.
+     * <p>
+     * Exempt: a record's own test (it has to be able to construct the full canonical shape to
+     * prove the compact constructor's own invariants - {@code WaveDefinitionTest} exercises
+     * {@code speedMultiplier}'s validation exactly this way) and {@code td.fixtures} itself,
+     * which exists to be the one place this construction happens on every other test's behalf.
+     * <p>
+     * A call using a <em>narrower</em> constructor or factory - {@code new WaveDefinition("c",
+     * 100, 3, 1)}, four arguments, not the five-component canonical form - is not a violation:
+     * only a call site whose argument count matches the record's full component count is.
+     */
+    private static Check noWideValueLiteralsInTests() {
+        return new Check() {
+            @Override
+            public String name() {
+                return "no-wide-value-literals-in-tests";
+            }
+
+            @Override
+            public String section() {
+                return "CLAUDE.md 7";
+            }
+
+            @Override
+            public String why() {
+                return "construct this through its named factory, a fluent withX copy, or "
+                        + "td.fixtures instead of spelling out every component";
+            }
+
+            @Override
+            public List<String> violations() throws IOException {
+                List<String> found = new ArrayList<>();
+                Map<String, Integer> wide = new LinkedHashMap<>();
+                for (WideRecord record : wideRecordsInMain()) {
+                    wide.put(record.name(), record.componentCount());
+                }
+                if (wide.isEmpty() || !Files.isDirectory(TEST)) {
+                    return found;
+                }
+                try (Stream<Path> files = Files.walk(TEST)) {
+                    for (Path file : files.filter(Files::isRegularFile)
+                            .filter(f -> f.toString().endsWith(".java"))
+                            .toList()) {
+                        if (normalizedPath(file).contains("td/fixtures/")) {
+                            continue;
+                        }
+                        String fileName = file.getFileName().toString();
+                        String text = String.join("\n", Files.readAllLines(file, StandardCharsets.UTF_8));
+                        for (Map.Entry<String, Integer> entry : wide.entrySet()) {
+                            String name = entry.getKey();
+                            if (fileName.equals(name + "Test.java")) {
+                                continue;
+                            }
+                            int fullArity = entry.getValue();
+                            Matcher m = Pattern.compile("\\bnew\\s+" + Pattern.quote(name) + "\\s*\\(").matcher(text);
+                            while (m.find()) {
+                                int argCount = scanComponents(text, m.end())[0];
+                                if (argCount == fullArity) {
+                                    found.add(file + ":" + lineOf(text, m.start()) + "  constructs " + name
+                                            + " with all " + fullArity + " components positionally");
+                                }
+                            }
+                        }
+                    }
+                }
+                return found;
+            }
+        };
+    }
+
+    /**
+     * One occurrence of a {@code record} declaration in {@code src/main} with 5 or more
+     * components, found by {@link #wideRecordsInMain}.
+     */
+    private record WideRecord(String name, Path file, int componentCount, String text, int headerStart,
+                               int bodyEnd) {
+    }
+
+    private static final Pattern RECORD_HEADER = Pattern.compile("\\brecord\\s+([A-Z]\\w*)\\s*\\(");
+
+    /**
+     * Every record in {@code src/main} with 5+ components, outside {@code td.ui.render} - see
+     * {@link #wideValuesHaveANarrowEntryPoint}'s doc comment for why that package is exempt.
+     */
+    private static List<WideRecord> wideRecordsInMain() throws IOException {
+        List<WideRecord> found = new ArrayList<>();
+        if (!Files.isDirectory(MAIN)) {
+            return found;
+        }
+        try (Stream<Path> files = Files.walk(MAIN)) {
+            for (Path file : files.filter(Files::isRegularFile)
+                    .filter(f -> f.toString().endsWith(".java"))
+                    .toList()) {
+                if (normalizedPath(file).contains("td/ui/render/")) {
+                    continue;
+                }
+                String text = String.join("\n", Files.readAllLines(file, StandardCharsets.UTF_8));
+                Matcher m = RECORD_HEADER.matcher(text);
+                while (m.find()) {
+                    int[] scanned = scanComponents(text, m.end());
+                    if (scanned[0] >= 5) {
+                        found.add(new WideRecord(m.group(1), file, scanned[0], text, m.start(), scanned[1]));
+                    }
+                }
+            }
+        }
+        return found;
+    }
+
+    /**
+     * Scans a parameter/argument list starting right after its opening {@code (}, respecting
+     * nested parens and {@code <...>} generics so a comma inside either doesn't split a
+     * component. Returns {@code {componentCount, indexOfClosingParen}}.
+     */
+    private static int[] scanComponents(String text, int start) {
+        int parenDepth = 0;
+        int angleDepth = 0;
+        int commas = 0;
+        boolean sawContent = false;
+        int i = start;
+        for (; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '(') {
+                parenDepth++;
+            } else if (c == ')') {
+                if (parenDepth == 0) {
+                    break;
+                }
+                parenDepth--;
+            } else if (c == '<') {
+                angleDepth++;
+            } else if (c == '>') {
+                if (angleDepth > 0) {
+                    angleDepth--;
+                }
+            } else if (c == ',' && parenDepth == 0 && angleDepth == 0) {
+                commas++;
+            } else if (!Character.isWhitespace(c)) {
+                sawContent = true;
+            }
+        }
+        return new int[]{sawContent ? commas + 1 : 0, i};
+    }
+
+    private static int lineOf(String text, int index) {
+        int line = 1;
+        for (int i = 0; i < index && i < text.length(); i++) {
+            if (text.charAt(i) == '\n') {
+                line++;
+            }
+        }
+        return line;
+    }
+
+    private static String normalizedPath(Path path) {
+        return path.toString().replace(java.io.File.separatorChar, '/');
     }
 
     /**

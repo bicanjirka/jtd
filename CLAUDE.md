@@ -147,6 +147,15 @@ every part of the board, so naming six collaborators would say less than naming 
 4. Where two values of a kind combine, give the type an algebra: operation, combinator, identity,
    and an absorber if one exists. See `Damage`, `TowerBuff`, `TargetQuery`.
 
+**A record of 5 or more components grows by a fluent `withX` copy, never by widening its
+constructor or factory argument list.** It needs a narrower static factory or secondary
+constructor naming only its required shape - see `PathDefinition`, `EnemyDefinition`,
+`LevelDefinition`. Exempt: `td.ui.render`'s draw records, each built once per frame by its own
+frame-builder class rather than from scattered call sites, so there is no blast radius for a
+factory to reduce.
+
+> `wide-values-have-a-narrow-entry-point`
+
 **Randomness is injected, never static.** Take a `td.util.RandomSource`; `GameWorld.random()`
 is where a tower gets one. `Math.random()` is unseeded and global, so a run cannot be
 reproduced — which is what `td.BalanceHarness` needs.
@@ -237,6 +246,10 @@ JUnit 5 + AssertJ. `assertThat(...)`, never JUnit's bare assertions.
 - Test doubles live beside the tests they serve, named for their role: `FakeGameHost`,
   `RecordingGameHost`, `FakeEnemyMob`, `RecordingEnemyMob`. Shared setup used across packages -
   building a world, a board, a test level - lives in `td.fixtures` instead, and is public.
+- **A test builds a wide value type through its named factory or `td.fixtures`, never a
+  positional literal spelling out every component.** Exempt: a record's own test, which has to
+  reach its canonical constructor to prove that constructor's own invariants.
+  > `no-wide-value-literals-in-tests`
 - `GameEngineTest` is the integration surface, exercising the same entry points `TowerDefense`'s
   listeners call. New gameplay rules should be provable there.
 
