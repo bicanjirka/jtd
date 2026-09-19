@@ -23,6 +23,11 @@ import java.util.List;
  * before this feature - only the axis they scale along changed, from a wave-authored level to an
  * enemy-authored rank.
  * <p>
+ * Every trait and ability below is named ({@link IdentifiedTrait#named}/
+ * {@link IdentifiedAbility#named}), never anonymous - so a later rank step, or a per-level clone
+ * (see {@code EnemyCatalog.cloneAndAdjust}), can replace one by id instead of only ever being
+ * able to add a second, competing entry alongside it.
+ * <p>
  * {@code WARDEN_1}/{@code WARDEN_EGG_1}/{@code WARDEN_2}/{@code WARDEN_EGG_2}/{@code WARDEN_3}/
  * {@code WARDEN_EGG_3} are the boss encounter's finite, six-definition, strictly linear spawn
  * chain (see {@code docs/features/FEATURE-enemy-traits-and-effects.md}'s V1 Scope): each Warden's on-death
@@ -51,7 +56,8 @@ final class BuiltInEnemies {
             .startingAt(EnemyDefinition.of("s", "Armored mob", 80, 3, 1.28f, BodyArchetype.SQUARE)
                     .withDescription("Takes less damage. Immune to critical hits.")
                     .withMovement(new RotorMovement((float) Math.toRadians(5.0)))
-                    .withTraits(List.of(new PercentResistTrait(0.8f), new CriticalImmunityTrait())))
+                    .withIdentifiedTraits(List.of(IdentifiedTrait.named("resist", new PercentResistTrait(0.8f)),
+                            IdentifiedTrait.named("criticalImmune", new CriticalImmunityTrait()))))
             .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(160, 5))
             .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(320, 8))
             .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(640, 13))
@@ -61,7 +67,7 @@ final class BuiltInEnemies {
             .startingAt(EnemyDefinition.of("t", "Frenzied mob", 60, 3, 1.28f, BodyArchetype.TRIANGLE)
                     .withDescription("Increases speed as it takes damage.")
                     .withMovement(new RotorMovement((float) Math.toRadians(-5.0)))
-                    .withTraits(List.of(new HurtSpeedTrait(1.4f))))
+                    .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.4f)))))
             .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(120, 5))
             .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(240, 8))
             .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(480, 13))
@@ -85,13 +91,13 @@ final class BuiltInEnemies {
     static final EnemyDefinition WARDEN_EGG_1 = EnemyDefinition
             .of("wardenEgg1", "Warden's Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)
             .withDescription("Hatches into a weaker Warden if not defeated in time.")
-            .withAbilities(List.of(new Ability(new OnceTrigger(EGG_HATCH_DELAY_TICKS),
-                    new SpawnEnemiesAction("warden2", 1, true))));
+            .withIdentifiedAbilities(List.of(IdentifiedAbility.named("hatch", new Ability(
+                    new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden2", 1, true)))));
     static final EnemyDefinition WARDEN_EGG_2 = EnemyDefinition
             .of("wardenEgg2", "Warden's Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)
             .withDescription("Hatches into a weaker Warden if not defeated in time.")
-            .withAbilities(List.of(new Ability(new OnceTrigger(EGG_HATCH_DELAY_TICKS),
-                    new SpawnEnemiesAction("warden3", 1, true))));
+            .withIdentifiedAbilities(List.of(IdentifiedAbility.named("hatch", new Ability(
+                    new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden3", 1, true)))));
     // Tuned, not a placeholder: raised from an original 15 (see git history), which was
     // negligible against every attack tower's actual per-hit/per-tick damage (150-4000, see
     // SniperTower.DAMAGE..CinderTower.DAMAGE) - a reduction that small is a rounding error, not
@@ -107,43 +113,47 @@ final class BuiltInEnemies {
     private static final String WARDEN_ABILITY_BLURB = " Periodically calls a reinforcement and re-shields itself; "
             + "shields every nearby ally once below half health; calls an extra reinforcement if left unattacked "
             + "too long; gains a shield whenever it survives a critical hit; and leaves behind an egg on death.";
-    private static final List<Ability> WARDEN_STANDING_ABILITIES = List.of(
+    private static final List<IdentifiedAbility> WARDEN_STANDING_ABILITIES = List.of(
             // periodically calls for a reinforcement
-            new Ability(new PeriodicTrigger(300), new SpawnEnemiesAction("c", 1, false)),
+            IdentifiedAbility.named("reinforce", new Ability(new PeriodicTrigger(300), new SpawnEnemiesAction("c", 1, false))),
             // periodically re-shields itself on top of its permanent armor trait
-            new Ability(new PeriodicTrigger(400), new ApplyEffectAction(new ShieldTemplate(0.5f, 100), new SelfTarget())),
+            IdentifiedAbility.named("reshield", new Ability(new PeriodicTrigger(400),
+                    new ApplyEffectAction(new ShieldTemplate(0.5f, 100), new SelfTarget()))),
             // at half health, shields every nearby ally - a one-time "call to arms"
-            new Ability(new HealthThresholdTrigger(0.5f), new ApplyEffectAction(new ShieldTemplate(0.3f, 150), new RadiusTarget(150f))),
+            IdentifiedAbility.named("callToArms", new Ability(new HealthThresholdTrigger(0.5f),
+                    new ApplyEffectAction(new ShieldTemplate(0.3f, 150), new RadiusTarget(150f)))),
             // punishes being ignored with a bonus reinforcement
-            new Ability(new TimeSinceLastHitTrigger(200), new SpawnEnemiesAction("c", 1, false)),
+            IdentifiedAbility.named("neglectPenalty", new Ability(new TimeSinceLastHitTrigger(200),
+                    new SpawnEnemiesAction("c", 1, false))),
             // shields itself every time it survives a critical hit - repeatable, unlike the
             // fire-once triggers above
-            new Ability(new OnCriticalHitTakenTrigger(), new ApplyEffectAction(new ShieldTemplate(0.3f, 100), new SelfTarget())));
+            IdentifiedAbility.named("critShield", new Ability(new OnCriticalHitTakenTrigger(),
+                    new ApplyEffectAction(new ShieldTemplate(0.3f, 100), new SelfTarget()))));
     static final EnemyDefinition WARDEN_1 = EnemyDefinition
             .of("warden1", "The Warden", 8000, 100, 1.28f, BodyArchetype.WARDEN)
             .withDescription("A hulking armored sentinel." + WARDEN_ABILITY_BLURB)
             .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
-            .withTraits(List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)))
-            .withAbilities(wardenAbilities("wardenEgg1"));
+            .withIdentifiedTraits(List.of(IdentifiedTrait.named("armor", new FlatResistTrait(WARDEN_FLAT_RESIST))))
+            .withIdentifiedAbilities(wardenAbilities("wardenEgg1"));
     static final EnemyDefinition WARDEN_2 = EnemyDefinition
             .of("warden2", "The Weakened Warden", 5000, 100, 1.28f, BodyArchetype.WARDEN)
             .withDescription("A hulking armored sentinel, worn down from its last hatching." + WARDEN_ABILITY_BLURB)
             .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
-            .withTraits(List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)))
-            .withAbilities(wardenAbilities("wardenEgg2"));
+            .withIdentifiedTraits(List.of(IdentifiedTrait.named("armor", new FlatResistTrait(WARDEN_FLAT_RESIST))))
+            .withIdentifiedAbilities(wardenAbilities("wardenEgg2"));
     static final EnemyDefinition WARDEN_3 = EnemyDefinition
             .of("warden3", "The Exhausted Warden", 3000, 100, 1.28f, BodyArchetype.WARDEN)
             .withDescription("A hulking armored sentinel, barely standing." + WARDEN_ABILITY_BLURB)
             .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
-            .withTraits(List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)))
-            .withAbilities(wardenAbilities("wardenEgg3"));
+            .withIdentifiedTraits(List.of(IdentifiedTrait.named("armor", new FlatResistTrait(WARDEN_FLAT_RESIST))))
+            .withIdentifiedAbilities(wardenAbilities("wardenEgg3"));
 
     private BuiltInEnemies() {
     }
 
-    private static List<Ability> wardenAbilities(String eggId) {
-        List<Ability> abilities = new ArrayList<>(WARDEN_STANDING_ABILITIES);
-        abilities.add(new Ability(new OnDeathTrigger(), new SpawnEnemiesAction(eggId, 1, false)));
+    private static List<IdentifiedAbility> wardenAbilities(String eggId) {
+        List<IdentifiedAbility> abilities = new ArrayList<>(WARDEN_STANDING_ABILITIES);
+        abilities.add(IdentifiedAbility.named("hatchEgg", new Ability(new OnDeathTrigger(), new SpawnEnemiesAction(eggId, 1, false))));
         return List.copyOf(abilities);
     }
 }

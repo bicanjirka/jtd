@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
 
 /**
@@ -78,16 +79,33 @@ public final class RankedEnemy {
      * Clones this whole ladder under {@code newId}, running {@code adjust} over every rank this
      * enemy actually authored - e.g. "a Square with double the usual resistance for this one
      * level," applied consistently across whatever ranks the original defines, not just
-     * {@link Rank#GRUNT}. What {@code EnemyCatalog.cloneAndAdjust} builds on.
+     * {@link Rank#GRUNT}. Rank-blind: {@code adjust} cannot tell which rank it's being run
+     * against, so it can only express a change uniform across every rank (the result still
+     * differs per rank, since each rank's own input already did). {@link #cloneAs(String,
+     * BiFunction)} is the rank-aware counterpart for a change that only starts at some rank -
+     * "give Veteran and up a gold shield," say.
      */
     public RankedEnemy cloneAs(String newId, UnaryOperator<EnemyDefinition> adjust) {
+        return this.cloneAs(newId, (rank, definition) -> adjust.apply(definition));
+    }
+
+    /**
+     * The rank-aware counterpart to {@link #cloneAs(String, UnaryOperator)} - {@code adjust}
+     * receives each rank alongside its own definition, so it can branch on rank (e.g. {@code
+     * rank.compareTo(Rank.VETERAN) >= 0} to change Veteran and every rank above it, leaving Grunt
+     * and Soldier untouched). Each rank is still cloned from *this* ladder's own definition for
+     * that rank, not from the previous rank's already-adjusted clone - {@code adjust} sees the
+     * same starting point {@link #cloneAs(String, UnaryOperator)} does, just with its rank named.
+     */
+    public RankedEnemy cloneAs(String newId, BiFunction<Rank, EnemyDefinition, EnemyDefinition> adjust) {
         Iterator<Map.Entry<Rank, EnemyDefinition>> ranks = this.definitionsByRank.entrySet().iterator();
         Map.Entry<Rank, EnemyDefinition> grunt = ranks.next();
-        Builder builder = RankedEnemy.startingAt(adjust.apply(withId(grunt.getValue(), newId)));
+        Builder builder = RankedEnemy.startingAt(adjust.apply(grunt.getKey(), withId(grunt.getValue(), newId)));
         while (ranks.hasNext()) {
             Map.Entry<Rank, EnemyDefinition> entry = ranks.next();
+            Rank rank = entry.getKey();
             EnemyDefinition renamed = withId(entry.getValue(), newId);
-            builder.thenAt(entry.getKey(), ignored -> adjust.apply(renamed));
+            builder.thenAt(rank, ignored -> adjust.apply(rank, renamed));
         }
         return builder.build();
     }

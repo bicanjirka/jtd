@@ -8,6 +8,8 @@ import td.enemy.EnemyDefinition;
 import td.enemy.FlatResistTrait;
 import td.enemy.HealthThresholdTrigger;
 import td.enemy.HurtSpeedTrait;
+import td.enemy.IdentifiedAbility;
+import td.enemy.IdentifiedTrait;
 import td.enemy.OnDeathTrigger;
 import td.enemy.PathDirectionalMovement;
 import td.enemy.Rank;
@@ -48,11 +50,13 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                             + "brief shield once badly wounded, and splits into two stragglers when finally brought down.")
                     .withMovement(new PathDirectionalMovement())
                     .withHealthDivisor(0.8f)
-                    .withTraits(List.of(new HurtSpeedTrait(1.3f), new FlatResistTrait(10)))
-                    .withAbilities(List.of(
-                            new Ability(new HealthThresholdTrigger(0.5f),
-                                    new ApplyEffectAction(new ShieldTemplate(0.25f, 100), new SelfTarget())),
-                            new Ability(new OnDeathTrigger(), new SpawnEnemiesAction("c", 2, false)))))
+                    .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.3f)),
+                            IdentifiedTrait.named("armor", new FlatResistTrait(10))))
+                    .withIdentifiedAbilities(List.of(
+                            IdentifiedAbility.named("panicShield", new Ability(new HealthThresholdTrigger(0.5f),
+                                    new ApplyEffectAction(new ShieldTemplate(0.25f, 100), new SelfTarget()))),
+                            IdentifiedAbility.named("splitOnDeath",
+                                    new Ability(new OnDeathTrigger(), new SpawnEnemiesAction("c", 2, false))))))
             .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(1000, 20))
             .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(2000, 32))
             .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(4000, 50))
