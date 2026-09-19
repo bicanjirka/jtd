@@ -51,7 +51,7 @@ class WardenChainTest {
         assertThat(enemies).hasSize(2); // the fading Warden, plus its newly spawned egg
         EnemyMob egg = enemies.stream().filter(e -> e != warden).findFirst().orElseThrow();
         assertThat(egg).isInstanceOf(DefinedEnemyMob.class);
-        assertThat(((DefinedEnemyMob) egg).archetype()).isEqualTo(BodyArchetype.EGG);
+        assertThat(((DefinedEnemyMob) egg).archetype()).isEqualTo(BodyArchetype.WARDEN_EGG);
         assertThat(egg.getX()).isEqualTo(wardenX);
         assertThat(egg.getY()).isEqualTo(wardenY);
     }

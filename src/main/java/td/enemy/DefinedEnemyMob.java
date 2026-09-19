@@ -66,11 +66,11 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         return switch (archetype) {
             case CIRCLE -> scale / 6f;
             case SQUARE, TRIANGLE, GHOST -> scale / (float) ((level < 6) ? (7 - level) : 2);
-            case EGG -> scale / 3f;
             // Fixed, not level-scaled like SQUARE/TRIANGLE/GHOST above: the Warden is meant to
             // read as visibly the biggest thing on the board regardless of which wave slot
             // spawned it, not merely tied with an ordinary Square at its own size cap.
             case WARDEN -> scale / 1.5f;
+            case WARDEN_EGG -> scale / 3f;
         };
     }
 
