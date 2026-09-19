@@ -74,50 +74,73 @@ enemy table when you register a new id.
 | `e`       | Empty - the reserved spacer; counts toward spawn timing, not toward the enemy count |
 | `warden1` | The Warden boss - the only id in its six-stage chain a wave spawns directly         |
 
-**The spawn-shape keyword table.** A keyword goes *before* the token it shapes - `boss
+**The rank keyword table.** A rank keyword goes *before the token it ranks* - an enemy id
+(`elite c`) or, when both are present, before the spawn-shape keyword that follows it
+(`elite swarm 4 c`) - always in that order, rank first. It sets that one slot's `td.enemy.Rank`,
+overriding the wave's own default (`WaveDefinition.rank()`) for that slot only.
+
+| Keyword    | `Rank`             |
+|------------|--------------------|
+| `grunt`    | `Rank.GRUNT`       |
+| `soldier`  | `Rank.SOLDIER`     |
+| `veteran`  | `Rank.VETERAN`     |
+| `elite`    | `Rank.ELITE`       |
+| `boss`     | `Rank.BOSS`        |
+
+**The spawn-shape keyword table.** A keyword goes *before* the token it shapes - `armored
 warden1`, `swarm 4 c`. `SpawnShape.normal()` (no keyword) is the identity every plain token
-already gets.
+already gets. `armored` absorbed the old `boss` shape's slot in this table when `boss` became a
+rank keyword instead (the Boss rank tier took over its job); `elite`, the old shape keyword, was
+renamed `armored` once `elite` the rank name needed the string for itself.
 
-| Keyword  | `SpawnShape` factory | Members       | Mechanism(s)                                    |
-|----------|-----------------------|---------------|--------------------------------------------------|
-| `boss`   | `boss()`               | 1 (fixed)     | 200% size, 50% speed, 2× bounty                   |
-| `elite`  | `elite()`              | 1 (fixed)     | 150% size, +health, 1.5× bounty, permanent 50% shield |
-| `swarm`  | `swarm(n)`             | *n* (required) | 50% size, health/bounty split, circular scatter  |
-| `line`   | `line(n)`              | *n* (required) | evenly spread offset, no multipliers             |
-| `flank`  | `flank()`              | 2 (fixed)     | offset at opposite maximums, no multipliers       |
-| `column` | `column(n)`            | *n* (required) | delay spacing tighter than one slot apart         |
-| `drip`   | `drip(n)`              | *n* (required) | delay spacing looser than one slot apart          |
+| Keyword    | `SpawnShape` factory | Members        | Mechanism(s)                                      |
+|------------|-----------------------|----------------|-----------------------------------------------------|
+| `armored`  | `armored()`            | 1 (fixed)      | attaches/replaces a defensive trait, no multipliers  |
+| `swarm`    | `swarm(n)`             | *n* (required) | 50% size, health/bounty split, circular scatter      |
+| `line`     | `line(n)`              | *n* (required) | evenly spread offset, no multipliers                 |
+| `flank`    | `flank()`              | 2 (fixed)      | offset at opposite maximums, no multipliers          |
+| `column`   | `column(n)`            | *n* (required) | delay spacing tighter than one slot apart            |
+| `drip`     | `drip(n)`              | *n* (required) | delay spacing looser than one slot apart             |
 
-A count immediately **before** a spawn-type keyword repeats the whole shaped slot (`3 boss
-warden1` is three boss slots); a count immediately **after** one sets that slot's member count
-instead (`swarm 4 c` is one slot of four) - the same "a count applies to the token immediately
-following it" rule as any other token, just read against whichever kind of token follows. A
-count is required after `swarm`/`line`/`column`/`drip` and rejected after `boss`/`elite`/
-`flank`, whose member count the shape itself fixes; both are parse errors, like any other
-malformed token.
+A count immediately **before** a rank or spawn-type keyword repeats the whole ranked-and/or-
+shaped slot (`3 elite swarm 4 c` is three Elite-ranked swarm-of-4 slots) - whichever of the two
+keywords comes first in a slot is the one the count attaches to, since a rank keyword (when
+present) always precedes a spawn-type one, never the reverse. A count immediately **after** a
+spawn-type keyword sets that slot's member count instead (`swarm 4 c` is one slot of four) - the
+same "a count applies to the token immediately following it" rule as any other token, just read
+against whichever kind of token follows. A count is required after `swarm`/`line`/`column`/
+`drip` and rejected after `armored`/`flank`, whose member count the shape itself fixes; both are
+parse errors, like any other malformed token. A rank token cannot immediately follow a spawn-type
+token (rank always comes first), cannot immediately precede the `e` spacer, and two rank tokens
+cannot appear back to back - all three are parse errors.
 
 Parsing and instantiation are deliberately separate:
 
-- `WaveScript.parse(tokens, catalog)` turns a token string into a `WaveContent` against a
-  given `td.enemy.EnemyCatalog`. No `GameWorld` involved, so it is trivially testable. Every
-  non-reserved token is looked up the same way regardless of whether it names a built-in or
-  a per-level custom/cloned definition — there is no separate syntax for the two, only
-  whether the id happens to be registered in the catalog passed in. `WaveScript.RESERVED_TOKENS`
-  — `e` (the spacer) plus seven spawn-type keywords (`boss`/`elite`/`swarm`/`line`/`flank`/
-  `column`/`drip`, each naming a `SpawnShape` factory) — are recognized before any catalog
-  lookup; `EnemyCatalog.register` rejects an id that collides with one. A token this can't
-  recognize as one of those, a registered id, or an integer repeat count **fails the parse**
-  with a `GameStartupException` — a wave the author did not write is content corruption, and
-  recovering from it silently produced a level that was subtly not the authored one. Blank
-  tokens are whitespace rather than content and are skipped, which is what lets `"".split(" ")`
-  and any run of spaces parse cleanly.
+- `WaveScript.parse(tokens, defaultRank, catalog)` turns a token string into a `WaveContent`
+  against a wave's default `td.enemy.Rank` and a given `td.enemy.EnemyCatalog`. No `GameWorld`
+  involved, so it is trivially testable. Every non-reserved token is looked up the same way
+  regardless of whether it names a built-in or a per-level custom/cloned definition — there is
+  no separate syntax for the two, only whether the id happens to be registered in the catalog
+  passed in. Resolving an id against `defaultRank` (or a slot's own rank-token override) already
+  applies `RankedEnemy`'s fallback rule (`td/enemy/CLAUDE.md`), so a slot's `EnemyDefinition` and
+  effective `Rank` are both fully resolved by the time `WaveContent` exists - `Wave.spawn()`
+  needs no further rank logic. `WaveScript.RESERVED_TOKENS` — the spacer, six spawn-type
+  keywords and five rank keywords — are recognized before any catalog lookup; `EnemyCatalog
+  .register` rejects an id that collides with one. A token this can't recognize as one of those,
+  a registered id, or an integer repeat count **fails the parse** with a `GameStartupException`
+  — a wave the author did not write is content corruption, and recovering from it silently
+  produced a level that was subtly not the authored one. Blank tokens are whitespace rather than
+  content and are skipped, which is what lets `"".split(" ")` and any run of spaces parse
+  cleanly.
 - `WaveContent` is the parsed result: one `WaveSlot` per spawn slot, in order, repeat counts
-  already flattened. `WaveSlot` is a closed pair - `EnemySlot(EnemyDefinition, SpawnShape)` for
-  a real enemy, `EmptySlot()` for the spacer, which keeps its slot (it counts toward spawn
+  already flattened. `WaveSlot` is a closed pair - `EnemySlot(EnemyDefinition, Rank, SpawnShape)`
+  for a real enemy, `EmptySlot()` for the spacer, which keeps its slot (it counts toward spawn
   *timing*) but is excluded from `enemyCount()`/`enemySet()`. `enemyCount()`/
   `enemyCount(definition)` count **members, not slots**: a slot whose `SpawnShape` holds 4
   members counts as 4, not 1 - this is what `GameWorld.startWave` seeds a wave's alive count
-  from, so it gates when a wave is declared cleared.
+  from, so it gates when a wave is declared cleared. `WaveContent.rankFor(definition)` is the
+  preview panel's way to ask "what rank did the slot spawning this resolve to" without spawning
+  anything.
 - `Wave` holds that content and does the world-bound instantiation in `spawn()`, **not in its
   constructor** — `shape.members()` `DefinedEnemyMob`s for an `EnemySlot` (zero for a plain
   `EnemySlot` is impossible; `SpawnShape.normal()`'s one member is the floor), nothing at all
@@ -130,6 +153,13 @@ Parsing and instantiation are deliberately separate:
   installed at that moment, so calling it twice puts two copies of the wave on the board.
   `enemyCount()`/`enemySet()` come from the content and need no spawn, which is what lets the
   preview panel describe a wave before it runs.
+- **A member's health and bounty come from its own slot's resolved `EnemyDefinition`, not from
+  `Wave` itself.** `Wave` carries no health/price of its own any more - `spawnShaped` reads
+  `definition.baseHealth()`/`.price()` straight off the slot, applies the shape's own
+  `healthMultiplier()`/`bountyShares()` on top, and - if `shape.traitOverride()` is present
+  (`armored`'s case) - composes it onto the definition via `EnemyDefinition
+  .withAdditionalTraits` before building any mob from it, so every member of a shaped slot
+  spawns from the same (possibly trait-augmented) definition.
 - **A `Wave` carries its own `scatterSeed`**, one `long` fixed at construction and reused by
   every `spawn()` call. `GameEngine.loadLevel` derives it from the level's name and the wave's
   index, so the same level and wave scatter identically on every run and every machine.

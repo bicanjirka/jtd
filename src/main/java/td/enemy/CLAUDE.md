@@ -11,14 +11,33 @@ and the fade animation's timing.
 **`DefinedEnemyMob` is the only concrete `EnemyMob` implementation.** Its behavior comes
 entirely from the `EnemyDefinition` it was built from — a name/id, base stats, a
 `BodyArchetype`/`MovementBehavior` pair for rendering, and composable `Trait`s/`Ability`s —
-never from a per-type Java override. `EnemyCatalog.spawn(id, ...)` builds one of these from
-whichever definition is registered under `id`; `BuiltInEnemies` holds the four basic built-in
-`EnemyDefinition`s (`SIMPLE`/`ARMORED`/`FRENZIED`/`GHOST`) plus the Warden boss's six-stage
-chain (`WARDEN_1`/`WARDEN_EGG_1`/`WARDEN_2`/`WARDEN_EGG_2`/`WARDEN_3`/`WARDEN_EGG_3`), which
-`EnemyCatalog.builtIn()` pre-registers under their wave-script ids. `e`, the wave
-mini-language's spacer token, no longer spawns a mob of any kind — `td.wave.WaveScript`
-recognizes it before ever consulting a catalog and it produces zero enemies (see
-`td/wave/CLAUDE.md`).
+never from a per-type Java override. `EnemyCatalog.spawn(id, ..., rank)` builds one of these
+from whichever definition `id`'s `RankedEnemy` resolves `rank` to; `BuiltInEnemies` holds the
+four basic built-in ladders (`SIMPLE`/`ARMORED`/`FRENZIED`/`GHOST`, each a full `RankedEnemy`)
+plus the Warden boss's six-stage chain (`WARDEN_1`/`WARDEN_EGG_1`/`WARDEN_2`/`WARDEN_EGG_2`/
+`WARDEN_3`/`WARDEN_EGG_3`, six single-rank `EnemyDefinition`s), which `EnemyCatalog.builtIn()`
+pre-registers under their wave-script ids. `e`, the wave mini-language's spacer token, no
+longer spawns a mob of any kind — `td.wave.WaveScript` recognizes it before ever consulting a
+catalog and it produces zero enemies (see `td/wave/CLAUDE.md`).
+
+**`RankedEnemy` is one enemy id's rank ladder — a `Rank` to `EnemyDefinition` mapping, authored
+progressively.** `RankedEnemy.startingAt(grunt)` defines `Rank.GRUNT` from scratch; each
+`.thenAt(next, change)` step receives the *previous* rank's own resulting definition and returns
+the next one, so a step that only changes health (say) keeps everything else - traits included -
+unchanged from the rank before it (`EnemyDefinition.withHealthAndPrice` is the ordinary shape
+such a step takes). Ranks are authored contiguously upward from `GRUNT`, one at a time; skipping,
+repeating or going backward is a `GameStartupException` at registration time. Not every enemy
+reaches `Rank.BOSS` - `BuiltInEnemies.SIMPLE` is this package's demonstration ladder, adding an
+identified `"shield"` trait at `Rank.ELITE` and replacing it with a stronger one at `Rank.BOSS`,
+following `docs/features/FEATURE-enemy-rank-system.md`'s own pseudocode.
+
+**Asking a `RankedEnemy` for a rank it never authored is never an authoring error.**
+`RankedEnemy.definitionFor(requested)`/`.effectiveRank(requested)` silently fall back to that
+enemy's own highest authored rank instead - an enemy that only defines up through `Rank.VETERAN`
+spawns at `Rank.VETERAN` for a wave slot asking for `Rank.BOSS`. `EnemyCatalog.register
+(EnemyDefinition)` is the convenience for an enemy that only ever needs `Rank.GRUNT` - the
+Warden chain and any per-level custom/cloned enemy use it, wrapping the definition as a
+single-rank ladder where every requested rank resolves to the same one.
 
 **`EnemyDefinition.of(id, displayName, baseHealth, price, baseSpeed, archetype)`** is the
 required shape every definition has - no description, `EnemyMob.Type.NORMAL`, a `FixedMovement`
@@ -212,16 +231,14 @@ re-wrapping the incoming hit.** A `Trait.onHit` is free to change a hit's `Damag
 as its amount; capping from the original `damage` argument instead would silently discard
 whatever type it chose.
 
-**A spawn shape's permanent damage-taken reduction (Elite's 50%) is folded into `absorb`
-*after* every `Trait.onHit`, via `Damage.scaledBy`, so it composes with a definition's own
-resistance rather than overriding it.** It is a `SpawnParameters` field
-(`damageTakenMultiplier`), not a `Trait` and not a `td.effect.Effect` — see `SpawnShape`'s own
-doc comment for why a spawn-shape-wide, permanent reduction needs a mechanism neither of those
-two is shaped for. `DefinedEnemyMob.activeEffectKinds()` still adds `EffectKind.SHIELD` to the
-mob's status markers whenever this multiplier is active, purely so the player sees the same
-shield glyph a real timed shield effect would show — the one place this package deliberately
-blurs a cosmetic marker and a real `Effect`, and only for that marker; `absorb` above is the
-actual mechanism.
+**A spawn shape modifies what a spawned enemy *is*, not a separate multiplier mechanism.**
+`SpawnShape.traitOverride()` (only `armored` sets it) is composed onto the slot's
+`EnemyDefinition` via `EnemyDefinition.withAdditionalTraits` before `td.wave.Wave` builds any
+mob from it - by the time `DefinedEnemyMob`'s constructor runs, the attached trait is just
+another entry in `definition.traits()`, folded into `absorb` like any other. There is no
+separate "shape-wide damage multiplier" field or mechanism any more, and no cosmetic-marker
+special case for it either - a spawn shape's trait shows up exactly the way a rank-authored one
+does, because it *is* one.
 
 **Death timing is captured in `doTick`, not lazily at paint time.** `doDamage` sets `dead`; the
 next `doTick` records `deathTick`. The fade therefore advances with the simulation clock, so it
@@ -238,7 +255,7 @@ the path's first point (or the origin). Keep that branch.
 `definition.baseSpeed() * shapeSpeedMultiplier * (product of every Trait.speedFactor)` on every
 hit through `setSpeed`, folding in `shapeSpeedMultiplier` alongside the traits' —
 `spawnParameters.speedMultiplier()`, which by the time `td.wave.Wave` builds it is already the
-*product* of the spawning `SpawnShape`'s own multiplier (a boss's 50%), that path's
+*product* of the spawning `SpawnShape`'s own multiplier, that path's
 `PathDefinition.speedMultiplier()`, and that round's `WaveDefinition.speedMultiplier()` — a
 fast path or a called-out fast round needs no mechanism beyond this one composed number. A
 one-time `setSpeed` at construction would be silently wiped by the first hit, the same trap any
@@ -293,12 +310,17 @@ Two different things can mean "a new enemy," with very different cost:
 
 **Reusing an existing `BodyArchetype`/`MovementBehavior`/`Trait` combination** (the common
 case, and the entire point of this model) needs no new Java class at all: add a new
-`EnemyDefinition` and register it. Content meant for every level goes in `BuiltInEnemies` and
-`EnemyCatalog.builtIn()` - the Warden's six stages are exactly this: no new Java class, just six
+`EnemyDefinition` and register it - either directly (a single-rank ladder, via `EnemyCatalog
+.register(EnemyDefinition)`) or as a full `RankedEnemy` ladder if it should scale with rank.
+Content meant for every level goes in `BuiltInEnemies` and `EnemyCatalog.builtIn()` - the
+Warden's six stages are exactly the single-rank case: no new Java class, just six
 `EnemyDefinition`s composing `FlatResistTrait` and the `Ability`s in
-`BuiltInEnemies.wardenAbilities`. Content meant for one level instead goes on that level's own
-`LevelDefinition.customEnemies()` (see `td/level/CLAUDE.md`) - `BuiltInLevelCatalog`'s Wild
-Bezier Sweep is this case.
+`BuiltInEnemies.wardenAbilities`, registered single-rank since the fight is already staged
+through its own six hand-authored definitions rather than through rank. `BuiltInEnemies.SIMPLE`
+is the ladder case - see `RankedEnemy`'s own doc comment above. Content meant for one level
+instead goes on that level's own `LevelDefinition.customEnemies()` (see `td/level/CLAUDE.md`) -
+`BuiltInLevelCatalog`'s Wild Bezier Sweep is this case, registered single-rank like the Warden
+chain.
 
 **Adding a genuinely new `BodyArchetype`** (a shape nothing existing uses) is still a fixed,
 compiler-enforced checklist, same spirit as before:

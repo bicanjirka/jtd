@@ -272,23 +272,30 @@ not a per-change preference.
 
 ## 9. Wave mini-language
 
-`WaveScript.parse(tokens, catalog)` turns a space-separated token string into a `WaveContent` —
-an ordered, `GameWorld`-free slot list with repeat counts flattened. `Wave` holds that content
-and does the world-bound instantiation in `spawn()`, called when the wave starts — never in its
-constructor, which is what lets a level install in one write (§3, `LoadedLevel`).
+`WaveScript.parse(tokens, defaultRank, catalog)` turns a space-separated token string into a
+`WaveContent` — an ordered, `GameWorld`-free slot list with repeat counts flattened, each slot's
+`EnemyDefinition` and `td.enemy.Rank` already resolved. `Wave` holds that content and does the
+world-bound instantiation in `spawn()`, called when the wave starts — never in its constructor,
+which is what lets a level install in one write (§3, `LoadedLevel`).
 
+- **Every enemy spawns at one of five named `Rank`s — Grunt, Soldier, Veteran, Elite, Boss — never
+  a plain number, anywhere a wave author or the player can see it.** A wave declares its slots'
+  default rank; a slot's own leading rank keyword overrides it. A rank an enemy kind doesn't
+  define is not an authoring error — it silently resolves to that enemy's own highest defined
+  rank instead (`td.enemy.RankedEnemy`). Health, bounty and a kill's score all scale with rank,
+  authored per enemy rather than read off a wave-wide number.
 - A count applies to the token immediately following it and resets to 1 afterward:
   `"3 s e 4 c"` = three Squares, one spacer, four Circles. The spacer is a token like any
   other, so a count works on it too — `"4 e"` is four spacers, exactly like `"e e e e"` — there
-  is no separate rule for it. Before a spawn-type keyword (below) a count repeats the whole
-  shaped slot; immediately after one it sets that slot's member count instead — the same rule,
-  applied to whichever kind of token follows.
-- A small, closed set of tokens — the `e` spacer plus seven spawn-type keywords naming a
-  `SpawnShape` (`WaveSlot`'s companion value describing how many members a slot spawns, and how)
-  — is recognized before any catalog lookup. Every other token resolves against the
-  `EnemyCatalog` identically whether it names a built-in or a per-level definition; there is no
-  separate syntax for the two. `EnemyCatalog.register` rejects an id colliding with a reserved
-  token, so a level can never silently shadow the grammar.
+  is no separate rule for it. Before a rank or spawn-type keyword (below) a count repeats the
+  whole ranked-and/or-shaped slot; immediately after a spawn-type keyword it sets that slot's
+  member count instead — the same rule, applied to whichever kind of token follows.
+- A small, closed set of tokens — the `e` spacer, six spawn-type keywords naming a `SpawnShape`
+  (`WaveSlot`'s companion value describing how many members a slot spawns, and how) and five
+  rank keywords naming a `Rank` — is recognized before any catalog lookup. Every other token
+  resolves against the `EnemyCatalog` identically whether it names a built-in or a per-level
+  definition; there is no separate syntax for the two. `EnemyCatalog.register` rejects an id
+  colliding with a reserved token, so a level can never silently shadow the grammar.
 - An unrecognized token is an authoring error and **fails the parse** with a
   `GameStartupException`. Whitespace is not a token: blank entries are skipped.
 

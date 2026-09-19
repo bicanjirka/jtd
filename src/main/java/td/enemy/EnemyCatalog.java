@@ -15,15 +15,19 @@ import java.util.function.UnaryOperator;
  * The open, string-keyed source of buildable enemy types - replaces the closed
  * {@code EnemyFactory.Enemy} enum. {@link #builtIn()} returns a fresh catalog with the four
  * built-in definitions pre-registered under their existing single-letter wave-script ids; a
- * level can additionally register its own new {@link EnemyDefinition}s, or clone-and-adjust an
+ * level can additionally register its own new {@link RankedEnemy}s, or clone-and-adjust an
  * existing one under a new id, scoped to that catalog instance only - though no level does yet
  * (see {@code td/enemy/CLAUDE.md}). Named after the existing {@code LevelCatalog}/
  * {@code BuiltInLevelCatalog} precedent rather than "Registry", since {@link EnemyRegistry}
  * already names the live per-wave roster's read interface and reusing the word would collide.
+ * <p>
+ * Every registered id is a {@link RankedEnemy}, even one that only ever authors
+ * {@link Rank#GRUNT} - {@link #register(EnemyDefinition)} is the convenience for exactly that
+ * case, so a plain, non-ranked definition registers exactly as it always has.
  */
 public final class EnemyCatalog {
 
-    private final Map<String, EnemyDefinition> definitions = new LinkedHashMap<>();
+    private final Map<String, RankedEnemy> rankedEnemies = new LinkedHashMap<>();
 
     /**
      * A fresh catalog with the four basic built-ins and the Warden boss chain pre-registered
@@ -54,30 +58,41 @@ public final class EnemyCatalog {
     }
 
     /**
-     * Registers {@code definition} under its own id. Throws {@link GameStartupException} for a
-     * duplicate id, for an id colliding with one of {@link WaveScript#RESERVED_TOKENS} (the
-     * spacer or a spawn-type keyword - those are recognized before any catalog lookup, so a
-     * registered id under one of them could never be reached), or if this definition's own
-     * spawn chain - or any chain it completes by being registered - turns out to be cyclical
-     * (see {@link #checkAcyclic}).
+     * Registers a single-rank ladder - {@code definition} becomes this id's {@link Rank#GRUNT}
+     * (and only) definition, so any requested rank resolves to it (the fallback rule). The
+     * ordinary shape for an enemy this feature doesn't give a real ladder to.
      */
     public void register(EnemyDefinition definition) {
-        if (WaveScript.RESERVED_TOKENS.contains(definition.id())) {
-            throw new GameStartupException(
-                    "Enemy id '" + definition.id() + "' collides with a reserved wave-script token "
-                            + WaveScript.RESERVED_TOKENS);
-        }
-        if (this.definitions.containsKey(definition.id())) {
-            throw new GameStartupException("Duplicate enemy definition id '" + definition.id() + "'");
-        }
-        this.definitions.put(definition.id(), definition);
-        this.checkAcyclic(definition.id());
+        this.register(RankedEnemy.startingAt(definition).build());
     }
 
     /**
-     * Registers a copy of the definition already registered under {@code baseId}, with its id
-     * replaced by {@code newId} and then run through {@code adjust} - e.g. "a Square with
-     * double the usual resistance for this one level", without touching the original.
+     * Registers {@code rankedEnemy} under its own id. Throws {@link GameStartupException} for a
+     * duplicate id, for an id colliding with one of {@link WaveScript#RESERVED_TOKENS} (the
+     * spacer, a spawn-type keyword, or a rank name - those are recognized before any catalog
+     * lookup, so a registered id under one of them could never be reached), or if this enemy's
+     * own spawn chain - or any chain it completes by being registered - turns out to be
+     * cyclical (see {@link #checkAcyclic}).
+     */
+    public void register(RankedEnemy rankedEnemy) {
+        String id = rankedEnemy.id();
+        if (WaveScript.RESERVED_TOKENS.contains(id)) {
+            throw new GameStartupException(
+                    "Enemy id '" + id + "' collides with a reserved wave-script token " + WaveScript.RESERVED_TOKENS);
+        }
+        if (this.rankedEnemies.containsKey(id)) {
+            throw new GameStartupException("Duplicate enemy definition id '" + id + "'");
+        }
+        this.rankedEnemies.put(id, rankedEnemy);
+        this.checkAcyclic(id);
+    }
+
+    /**
+     * Registers a copy of the definition already registered under {@code baseId} at
+     * {@link Rank#GRUNT}, with its id replaced by {@code newId} and then run through
+     * {@code adjust} - e.g. "a Square with double the usual resistance for this one level",
+     * without touching the original. The clone is registered as a single-rank ladder, the same
+     * as {@link #register(EnemyDefinition)} - cloning a full ladder is not a v1 need.
      */
     public EnemyDefinition cloneAndAdjust(String baseId, String newId, UnaryOperator<EnemyDefinition> adjust) {
         EnemyDefinition base = this.get(baseId);
@@ -87,7 +102,7 @@ public final class EnemyCatalog {
     }
 
     public boolean contains(String id) {
-        return this.definitions.containsKey(id);
+        return this.rankedEnemies.containsKey(id);
     }
 
     /**
@@ -97,33 +112,52 @@ public final class EnemyCatalog {
      * spawns it, since a forward reference is only walked once its target is itself registered).
      */
     public List<String> ids() {
-        return List.copyOf(this.definitions.keySet());
-    }
-
-    public EnemyDefinition get(String id) {
-        EnemyDefinition definition = this.definitions.get(id);
-        if (definition == null) {
-            throw new GameStartupException("No enemy definition registered for id '" + id + "'");
-        }
-        return definition;
+        return List.copyOf(this.rankedEnemies.keySet());
     }
 
     /**
-     * Builds a live mob from the definition registered under {@code id} - what {@code Wave}/{@code WaveScript} spawn through.
+     * The full rank ladder registered under {@code id}.
+     */
+    public RankedEnemy ranked(String id) {
+        RankedEnemy rankedEnemy = this.rankedEnemies.get(id);
+        if (rankedEnemy == null) {
+            throw new GameStartupException("No enemy definition registered for id '" + id + "'");
+        }
+        return rankedEnemy;
+    }
+
+    /**
+     * {@code id}'s {@link Rank#GRUNT} definition - what every rank-unaware caller (
+     * {@code EnemyFactory}, an ability-spawn resolved before this feature) gets.
+     */
+    public EnemyDefinition get(String id) {
+        return this.ranked(id).definitionFor(Rank.GRUNT);
+    }
+
+    /**
+     * {@code id}'s definition at {@code rank}, or its own highest authored rank if it doesn't go
+     * that high - the silent fallback rule (see {@link RankedEnemy}).
+     */
+    public EnemyDefinition get(String id, Rank rank) {
+        return this.ranked(id).definitionFor(rank);
+    }
+
+    /**
+     * Builds a live mob from the definition registered under {@code id} at {@code rank} - what {@code Wave}/{@code WaveScript} spawn through.
      */
     public EnemyMob spawn(String id, GameWorld gameWorld, int delay, int health, int price, Rank rank) {
-        EnemyDefinition definition = this.get(id);
+        EnemyDefinition definition = this.get(id, rank);
         SpawnParameters spawnParameters = SpawnParameters.atSlot(delay, definition.baseSpeed(), health, price);
         return new DefinedEnemyMob(definition, gameWorld, spawnParameters, rank);
     }
 
     /**
-     * Walks the directed graph formed by every registered definition's {@link SpawnEnemiesAction}
-     * references, starting from {@code startId}, and rejects a definition that, directly or
-     * transitively, could spawn itself. A finite, strictly linear chain (the Warden/egg's 6
-     * stages) passes; an actual cycle does not. A reference to an id not yet registered is
-     * skipped rather than failing - registration order isn't fixed, so a forward reference is
-     * valid and simply isn't walked until that id is itself registered.
+     * Walks the directed graph formed by every registered enemy's own authored ranks' own
+     * {@link SpawnEnemiesAction} references, starting from {@code startId}, and rejects a
+     * definition that, directly or transitively, could spawn itself. A finite, strictly linear
+     * chain (the Warden/egg's 6 stages) passes; an actual cycle does not. A reference to an id
+     * not yet registered is skipped rather than failing - registration order isn't fixed, so a
+     * forward reference is valid and simply isn't walked until that id is itself registered.
      */
     private void checkAcyclic(String startId) {
         this.walk(startId, new HashSet<>());
@@ -133,10 +167,12 @@ public final class EnemyCatalog {
         if (!visiting.add(id)) {
             throw new GameStartupException("Enemy definition '" + id + "' has a cyclical spawn chain");
         }
-        EnemyDefinition definition = this.definitions.get(id);
-        if (definition != null) {
-            for (Ability ability : definition.abilities()) {
-                this.walkAction(ability.action(), visiting);
+        RankedEnemy rankedEnemy = this.rankedEnemies.get(id);
+        if (rankedEnemy != null) {
+            for (EnemyDefinition definition : rankedEnemy.authoredDefinitions()) {
+                for (Ability ability : definition.abilities()) {
+                    this.walkAction(ability.action(), visiting);
+                }
             }
         }
         visiting.remove(id);
@@ -145,7 +181,7 @@ public final class EnemyCatalog {
     private void walkAction(AbilityAction action, Set<String> visiting) {
         switch (action) {
             case SpawnEnemiesAction spawn -> {
-                if (this.definitions.containsKey(spawn.definitionId())) {
+                if (this.rankedEnemies.containsKey(spawn.definitionId())) {
                     this.walk(spawn.definitionId(), visiting);
                 }
             }
