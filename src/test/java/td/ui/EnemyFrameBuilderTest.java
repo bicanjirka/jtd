@@ -6,6 +6,7 @@ import td.effect.Effect;
 import td.enemy.AbstractEnemyMob;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.fixtures.WorldFixtures;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EnemyBodyDraw;
@@ -43,7 +44,7 @@ class EnemyFrameBuilderTest {
     @Test
     void alphaZeroReproducesThePreviousTickPosition() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
         enemy.doTick(1);
 
@@ -56,7 +57,7 @@ class EnemyFrameBuilderTest {
     @Test
     void alphaOneReproducesTheCurrentTickPosition() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
         enemy.doTick(1);
 
@@ -69,7 +70,7 @@ class EnemyFrameBuilderTest {
     @Test
     void alphaOneHalfIsTheMidpointBetweenPreviousAndCurrentPosition() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
         enemy.doTick(1);
         float expectedX = (float) ((mob.getPrevX() + mob.getX()) / 2.0);
@@ -86,7 +87,7 @@ class EnemyFrameBuilderTest {
         GameWorld context = WorldFixtures.newWorldOnBoard(1, 1001, 1001);
         context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5))));
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
         int initialLives = context.economy().getLives();
         int tick = 0;
         while (context.economy().getLives() == initialLives) {
@@ -103,7 +104,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEnemyWithNoActiveEffectsYieldsNoStatusMarkers() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
         enemy.accept(builder);
@@ -114,7 +115,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anActiveSlowYieldsExactlyOneStatusMarkerWithTheSlowRole() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         enemy.applyEffect(Effect.slow(0.5f, 5, d -> {
         }));
 
@@ -129,7 +130,7 @@ class EnemyFrameBuilderTest {
     @Test
     void twoActiveEffectsYieldTwoDistinctlyPositionedMarkers() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         enemy.applyEffect(Effect.slow(0.5f, 5, d -> {
         }));
         enemy.applyEffect(Effect.burn(td.damage.Damage.magic(10), 5, d -> {
@@ -146,7 +147,7 @@ class EnemyFrameBuilderTest {
     @Test
     void aFourthSimultaneousEffectCollapsesIntoOneOverflowMarkerInsteadOfGrowingTheRow() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         enemy.applyEffect(Effect.slow(0.5f, 5, d -> {
         }));
         enemy.applyEffect(Effect.burn(td.damage.Damage.magic(10), 5, d -> {
@@ -167,7 +168,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEnemyThatNeverTookACriticalHitYieldsNoCritSpark() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         enemy.doTick(1);
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(1, 0.0);
@@ -179,7 +180,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEnemyThatJustSurvivedACriticalHitYieldsOneCritSpark() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         enemy.doDamage(Damage.physical(10).asCritical());
         enemy.doTick(1); // captures the critical hit
 
@@ -195,7 +196,7 @@ class EnemyFrameBuilderTest {
     @Test
     void theCritSparkStopsShowingAfterItsDurationElapses() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         enemy.doDamage(Damage.physical(10).asCritical());
         enemy.doTick(1); // captures the critical hit at tick 1
 
@@ -209,7 +210,7 @@ class EnemyFrameBuilderTest {
     @Test
     void aFifthSimultaneousEffectDoesNotGrowTheRowFurther() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         enemy.applyEffect(Effect.slow(0.5f, 5, d -> {
         }));
         enemy.applyEffect(Effect.burn(td.damage.Damage.magic(10), 5, d -> {

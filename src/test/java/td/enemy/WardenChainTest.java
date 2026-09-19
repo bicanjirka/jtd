@@ -33,7 +33,7 @@ class WardenChainTest {
     @Test
     void killingTheWardenSpawnsItsEggAtTheSamePosition() {
         GameWorld world = worldWithStraightPath();
-        DefinedEnemyMob warden = (DefinedEnemyMob) world.getEnemyCatalog().spawn("warden1", world, 0, 8000, 100, 1);
+        DefinedEnemyMob warden = (DefinedEnemyMob) world.getEnemyCatalog().spawn("warden1", world, 0, 8000, 100, Rank.GRUNT);
         world.enemies().add(warden);
 
         for (int t = 1; t <= 10; t++) {
@@ -57,7 +57,7 @@ class WardenChainTest {
     @Test
     void anEggLeftAliveForItsFullDelayHatchesIntoTheNextWardenStageInPlace() {
         GameWorld world = worldWithStraightPath();
-        EnemyMob egg = world.getEnemyCatalog().spawn("wardenEgg1", world, 0, 1500, 20, 1);
+        EnemyMob egg = world.getEnemyCatalog().spawn("wardenEgg1", world, 0, 1500, 20, Rank.GRUNT);
         world.enemies().add(egg);
 
         for (int t = 1; t <= 165; t++) { // past the 160-tick hatch delay
@@ -75,7 +75,7 @@ class WardenChainTest {
     @Test
     void anEggKilledBeforeItsDelayNeverHatches() {
         GameWorld world = worldWithStraightPath();
-        DefinedEnemyMob egg = (DefinedEnemyMob) world.getEnemyCatalog().spawn("wardenEgg1", world, 0, 1500, 20, 1);
+        DefinedEnemyMob egg = (DefinedEnemyMob) world.getEnemyCatalog().spawn("wardenEgg1", world, 0, 1500, 20, Rank.GRUNT);
         world.enemies().add(egg);
 
         for (int t = 1; t <= 50; t++) {
@@ -107,7 +107,7 @@ class WardenChainTest {
     @Test
     void theWardenGainsAShieldAfterSurvivingACriticalHit() {
         GameWorld world = worldWithStraightPath();
-        DefinedEnemyMob warden = (DefinedEnemyMob) world.getEnemyCatalog().spawn("warden1", world, 0, 8000, 100, 1);
+        DefinedEnemyMob warden = (DefinedEnemyMob) world.getEnemyCatalog().spawn("warden1", world, 0, 8000, 100, Rank.GRUNT);
         world.enemies().add(warden);
 
         warden.doDamage(Damage.physical(5000).asCritical());

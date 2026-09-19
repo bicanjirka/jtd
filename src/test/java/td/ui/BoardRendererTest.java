@@ -6,6 +6,7 @@ import td.cell.Cell;
 import td.damage.Damage;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.fixtures.LevelFixtures;
 import td.projectile.CannonballProjectile;
 import td.tower.CinderTower;
@@ -110,7 +111,7 @@ class BoardRendererTest {
     void aDeadEnemyYieldsAFadeDrawAndNoBodyDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         enemy.doDamage(Damage.physical(5000));
         enemy.doTick(1); // captures deathTick, matching how AbstractEnemyMob really ticks
 

@@ -23,7 +23,7 @@ class EnemyFactoryTest {
 
     @Test
     void getEnemyBuildsARealEnemyWithHealthScaledByOneHundred() {
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
 
         assertThat(enemy).isInstanceOf(DefinedEnemyMob.class);
         assertThat(enemy.getHealth()).isEqualTo(5000);
@@ -31,8 +31,8 @@ class EnemyFactoryTest {
 
     @Test
     void repeatedCallsReturnIndependentInstances() {
-        EnemyMob first = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
-        EnemyMob second = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob first = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob second = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
 
         assertThat(first).isNotSameAs(second);
 

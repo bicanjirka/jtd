@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
@@ -47,10 +48,10 @@ class SniperTowerTest {
     void veteranGrantsACritChanceOnceKillCountIsMet() {
         this.context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(this.context, 0, 0);
-        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, 1);
+        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
         for (int i = 0; i < 10; i++) {
             tower.dealDamage(fodder, Damage.physical(1_000_000));
-            fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, 1);
+            fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
         }
         UpgradePath veteran = UpgradePaths.named(tower, "Veteran");
 

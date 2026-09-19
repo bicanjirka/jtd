@@ -27,10 +27,20 @@ public record EconomyDelta(int credits, int score, int lives) {
     }
 
     /**
-     * An enemy killed for its bounty: credits the player and scores the same amount.
+     * An enemy killed for its bounty: credits the player and scores the same amount. Every test
+     * that doesn't care about a kill's rank-weighted score uses this 1:1 shorthand.
      */
     public static EconomyDelta kill(int bounty) {
         return new EconomyDelta(bounty, bounty, 0);
+    }
+
+    /**
+     * An enemy killed for its bounty, with a score decoupled from it - {@code
+     * AbstractEnemyMob.doDamage}'s real kill path, where score is weighted by the killed mob's
+     * {@code Rank} rather than mirroring its bounty 1:1.
+     */
+    public static EconomyDelta kill(int bounty, int score) {
+        return new EconomyDelta(bounty, score, 0);
     }
 
     /**

@@ -40,7 +40,7 @@ final class PathWaveRow extends JPanel {
     private final Swatch swatch = new Swatch();
     private final JLabel healthLabel = new JLabel("0hp");
     private final JLabel rewardLabel = new JLabel("$0");
-    private final JLabel levelLabel = new JLabel("lvl 0");
+    private final JLabel levelLabel = new JLabel("");
     private final PanelEnemy panelEnemy = new PanelEnemy();
     private GameWorld gameWorld;
 
@@ -61,14 +61,16 @@ final class PathWaveRow extends JPanel {
     void setWave(Wave wave) {
         this.healthLabel.setText(wave.getBaseHealth() + "hp");
         this.rewardLabel.setText(wave.getBasePrice() + "$");
-        this.levelLabel.setText("lvl " + wave.getLevel());
+        // Interim, until Phase 4 draws a real rank badge on each preview mob instead - the rank
+        // name as text still satisfies "never a number" in the meantime.
+        this.levelLabel.setText(wave.getRank().name());
         if (this.gameWorld != null && wave.getPathIndex() < this.gameWorld.level().pathCount()) {
             this.swatch.color = this.gameWorld.level().paths().get(wave.getPathIndex()).color();
             this.swatch.repaint();
         }
         this.panelEnemy.clearEnemies();
         for (EnemyDefinition e : wave.enemySet()) {
-            this.panelEnemy.addEnemy(e, wave.enemyCount(e), wave.getLevel());
+            this.panelEnemy.addEnemy(e, wave.enemyCount(e), wave.getRank());
         }
         this.panelEnemy.recalculateSize();
     }

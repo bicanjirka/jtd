@@ -9,6 +9,7 @@ import td.economy.EconomyDelta;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.level.LevelDefinition;
 import td.tower.Tower;
 import td.tower.TowerFactory;
@@ -181,7 +182,7 @@ public class GameEngine {
                 // for that.
                 long scatterSeed = ((long) level.name().hashCode() * 31L + pathIndex) * 31L + round;
                 float speedMultiplier = pathDefinition.speedMultiplier() * wd.speedMultiplier();
-                pathWaves.add(new Wave(this.gameWorld, wd.hp(), wd.price(), wd.level(),
+                pathWaves.add(new Wave(this.gameWorld, wd.hp(), wd.price(), wd.rank(),
                         WaveScript.parse(wd.enemies(), catalog), scatterSeed, pathIndex, speedMultiplier));
             }
             pathRuntimes.add(new PathRuntime(path, pathWaves, pathDefinition.color()));
@@ -364,7 +365,7 @@ public class GameEngine {
         String id = ids.get(this.debugSpawnCursor % ids.size());
         this.debugSpawnCursor++;
         EnemyDefinition definition = catalog.get(id);
-        EnemyMob mob = catalog.spawn(id, this.gameWorld, 0, definition.baseHealth(), definition.price(), 1);
+        EnemyMob mob = catalog.spawn(id, this.gameWorld, 0, definition.baseHealth(), definition.price(), Rank.GRUNT);
         this.gameWorld.enemies().add(mob);
         return Optional.of(id);
     }

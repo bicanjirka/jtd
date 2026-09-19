@@ -2,6 +2,7 @@ package td.util;
 
 import org.junit.jupiter.api.Test;
 import td.enemy.EnemyCatalog;
+import td.enemy.Rank;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerListener;
@@ -73,7 +74,7 @@ class GameWorldTest {
     void startingAWaveNotifiesWaveStartListeners() {
         AtomicInteger waveStartedCalls = new AtomicInteger();
         context.waves().addListener(waveStartedCalls::incrementAndGet);
-        Wave wave = new Wave(context, 100, 5, 1, WaveScript.parse("c c", EnemyCatalog.builtIn()), 1L);
+        Wave wave = new Wave(context, 100, 5, Rank.GRUNT, WaveScript.parse("c c", EnemyCatalog.builtIn()), 1L);
 
         context.startWave(List.of(wave));
 

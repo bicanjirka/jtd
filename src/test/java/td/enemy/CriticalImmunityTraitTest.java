@@ -18,20 +18,20 @@ class CriticalImmunityTraitTest {
 
     @Test
     void aCriticalHitAgainstAnArmoredMobLandsAtItsNonCriticalAmount() {
-        EnemyMob armored = EnemyFactory.getEnemy("s", this.context, 0, 100000, 5, 1);
+        EnemyMob armored = EnemyFactory.getEnemy("s", this.context, 0, 100000, 5, Rank.GRUNT);
         int healthBefore = armored.getHealth();
 
         Damage landed = armored.doDamage(Damage.physical(1000).asCritical());
 
-        // PercentResistTrait still applies on top: 1000 * 0.75 (level 1) = 750, unaffected by
-        // stripping the crit bonus first, since stripCritical divides the amount, not the type.
-        assertThat(landed.amount()).isEqualTo(750);
-        assertThat(healthBefore - armored.getHealth()).isEqualTo(750);
+        // PercentResistTrait still applies on top: 1000 * 0.8 = 800, unaffected by stripping the
+        // crit bonus first, since stripCritical divides the amount, not the type.
+        assertThat(landed.amount()).isEqualTo(800);
+        assertThat(healthBefore - armored.getHealth()).isEqualTo(800);
     }
 
     @Test
     void anArmoredMobNeverSurvivesACriticalHitForAbilityPurposes() {
-        DefinedEnemyMob armored = (DefinedEnemyMob) EnemyFactory.getEnemy("s", this.context, 0, 100000, 5, 1);
+        DefinedEnemyMob armored = (DefinedEnemyMob) EnemyFactory.getEnemy("s", this.context, 0, 100000, 5, Rank.GRUNT);
 
         Damage landed = armored.doDamage(Damage.physical(1000).asCritical());
 

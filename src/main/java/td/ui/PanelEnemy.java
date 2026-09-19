@@ -4,6 +4,7 @@ import td.board.BoardGeometry;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.enemy.SpawnParameters;
 import td.util.GameHost;
 import td.util.GameWorld;
@@ -44,7 +45,7 @@ public class PanelEnemy extends JPanel {
 
     private final List<EnemyMob> enemies = new CopyOnWriteArrayList<>();
     private final List<EnemyDefinition> definitions = new ArrayList<>();
-    private final List<Integer> levels = new ArrayList<>();
+    private final List<Rank> ranks = new ArrayList<>();
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
     private final GameWorld contextLocal;
     private List<Integer> enemiesCount = new ArrayList<>();
@@ -67,15 +68,15 @@ public class PanelEnemy extends JPanel {
 
     public void clearEnemies() {
         this.definitions.clear();
-        this.levels.clear();
+        this.ranks.clear();
         this.enemies.clear();
         this.enemiesCount = new ArrayList<>();
         this.contextLocal.setPath(new PathNormal(List.of()));
     }
 
-    public void addEnemy(EnemyDefinition definition, int count, int level) {
+    public void addEnemy(EnemyDefinition definition, int count, Rank rank) {
         this.definitions.add(definition);
-        this.levels.add(level);
+        this.ranks.add(rank);
         this.enemiesCount.add(count);
     }
 
@@ -108,7 +109,7 @@ public class PanelEnemy extends JPanel {
             this.contextLocal.setPath(new PathNormal(List.of(new Vec2(this.scale / 2 + this.scale * nr, this.pHeight / 2))));
             EnemyDefinition definition = this.definitions.get(nr);
             SpawnParameters spawnParameters = SpawnParameters.atSlot(0, definition.baseSpeed(), 0, 0);
-            EnemyMob enemy = new DefinedEnemyMob(definition, this.contextLocal, spawnParameters, this.levels.get(nr));
+            EnemyMob enemy = new DefinedEnemyMob(definition, this.contextLocal, spawnParameters, this.ranks.get(nr));
             enemy.doTick(0);
             this.enemies.add(enemy);
         }

@@ -38,12 +38,12 @@ final class BuiltInEnemies {
             .of("s", "Armored mob", 80, 3, 1.28f, BodyArchetype.SQUARE)
             .withDescription("Takes less damage. Immune to critical hits.")
             .withMovement(new RotorMovement((float) Math.toRadians(5.0)))
-            .withTraits(List.of(new PercentResistTrait(0.8f, 0.05f), new CriticalImmunityTrait()));
+            .withTraits(List.of(new PercentResistTrait(0.8f), new CriticalImmunityTrait()));
     static final EnemyDefinition FRENZIED = EnemyDefinition
             .of("t", "Frenzied mob", 60, 3, 1.28f, BodyArchetype.TRIANGLE)
             .withDescription("Increases speed as it takes damage.")
             .withMovement(new RotorMovement((float) Math.toRadians(-5.0)))
-            .withTraits(List.of(new HurtSpeedTrait(1.4f, 0.1f)));
+            .withTraits(List.of(new HurtSpeedTrait(1.4f)));
     static final EnemyDefinition GHOST = EnemyDefinition
             .of("g", "Ghost mob", 100, 4, 1.28f, BodyArchetype.GHOST)
             .withDescription("Invisible to all towers. Area damage hurts them.")

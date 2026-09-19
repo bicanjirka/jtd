@@ -91,7 +91,7 @@ class EnemyCatalogTest {
         catalog.register(EnemyFixtures.simpleDefinition("c"));
         GameWorld gameWorld = WorldFixtures.newWorld();
 
-        EnemyMob enemy = catalog.spawn("c", gameWorld, 0, 50, 3, 1);
+        EnemyMob enemy = catalog.spawn("c", gameWorld, 0, 50, 3, Rank.GRUNT);
 
         assertThat(enemy).isInstanceOf(DefinedEnemyMob.class);
         assertThat(enemy.getHealth()).isEqualTo(5000);

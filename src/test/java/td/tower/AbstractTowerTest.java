@@ -5,6 +5,7 @@ import td.damage.Damage;
 import td.effect.Effect;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.fixtures.WorldFixtures;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.KillCountCondition;
@@ -140,7 +141,7 @@ class AbstractTowerTest {
     @Test
     void dealDamageTracksDamageDealtWithoutKillingTheTarget() {
         SniperTower tower = new SniperTower(context, 0, 0);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1000, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1000, 3, Rank.GRUNT);
 
         tower.dealDamage(enemy, Damage.physical(4000));
 
@@ -151,7 +152,7 @@ class AbstractTowerTest {
     @Test
     void dealDamageCountsAKillWhenTheHitIsLethal() {
         SniperTower tower = new SniperTower(context, 0, 0);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
         int healthBefore = enemy.getHealth();
 
         tower.dealDamage(enemy, Damage.physical(4000));
@@ -166,7 +167,7 @@ class AbstractTowerTest {
     @Test
     void dealDamageIntoAnAlreadyDeadEnemyIsNotCountedAgain() {
         SniperTower tower = new SniperTower(context, 0, 0);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
         int healthBefore = enemy.getHealth();
         tower.dealDamage(enemy, Damage.physical(4000));
 
@@ -180,7 +181,7 @@ class AbstractTowerTest {
     @Test
     void aKilledEnemyIsLeftAtZeroHealthRatherThanNegative() {
         SniperTower tower = new SniperTower(context, 0, 0);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
 
         tower.dealDamage(enemy, Damage.physical(4000));
 
@@ -191,7 +192,7 @@ class AbstractTowerTest {
     void damageDealtAgainstAResistantEnemyMatchesTheHealthItActuallyLost() {
         SniperTower tower = new SniperTower(context, 0, 0);
         // an armored mob absorbs part of every hit, unlike the simple mob every other case uses
-        EnemyMob armored = EnemyFactory.getEnemy("s", context, 0, 1000, 3, 1);
+        EnemyMob armored = EnemyFactory.getEnemy("s", context, 0, 1000, 3, Rank.GRUNT);
         long healthBefore = armored.getHealth();
 
         tower.dealDamage(armored, Damage.physical(4000));
@@ -204,7 +205,7 @@ class AbstractTowerTest {
     @Test
     void multipleHitsAccumulateDamageDealt() {
         SniperTower tower = new SniperTower(context, 0, 0);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1000, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1000, 3, Rank.GRUNT);
 
         tower.dealDamage(enemy, Damage.physical(1000));
         tower.dealDamage(enemy, Damage.physical(500));
@@ -308,7 +309,7 @@ class AbstractTowerTest {
     @Test
     void dealDamageIsANoOpOnceTheTowerHasBeenCleanedUp() {
         SniperTower tower = new SniperTower(context, 0, 0);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
 
         tower.doCleanup(); // what TowerRoster.sell()/clear() call before dropping the tower
         tower.dealDamage(enemy, Damage.physical(4000));
@@ -326,7 +327,7 @@ class AbstractTowerTest {
         tower.chooseUpgradePath(path);
         int creditsAfterBuying = context.economy().getCredits();
         int scoreBefore = context.economy().getScore();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1, 20, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1, 20, Rank.GRUNT);
 
         tower.dealDamage(enemy, Damage.physical(4000));
 
@@ -342,7 +343,7 @@ class AbstractTowerTest {
         UpgradePath path = new UpgradePath("Precision", 10, TowerBuff.critChance(0.5f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(alwaysCrits, 0, 0, List.of(path));
         tower.chooseUpgradePath(path);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, Rank.GRUNT);
 
         tower.dealDamage(enemy, Damage.physical(1000));
 
@@ -356,7 +357,7 @@ class AbstractTowerTest {
         UpgradePath path = new UpgradePath("Precision", 10, TowerBuff.critChance(0.5f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(neverCrits, 0, 0, List.of(path));
         tower.chooseUpgradePath(path);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", neverCrits, 0, 100000, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", neverCrits, 0, 100000, 3, Rank.GRUNT);
 
         tower.dealDamage(enemy, Damage.physical(1000));
 
@@ -367,7 +368,7 @@ class AbstractTowerTest {
     void aTowerWithNoCritChanceNeverRollsACriticalHitEvenWithAnAlwaysSucceedingRandomSource() {
         GameWorld alwaysCrits = WorldFixtures.newWorld(() -> 0.0);
         SniperTower tower = new SniperTower(alwaysCrits, 0, 0);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, Rank.GRUNT);
 
         tower.dealDamage(enemy, Damage.physical(1000));
 
@@ -383,7 +384,7 @@ class AbstractTowerTest {
         UpgradePath path = new UpgradePath("Precision", 10, TowerBuff.critChance(0.2f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(world, 0, 0, List.of(path));
         tower.chooseUpgradePath(path);
-        EnemyMob burning = EnemyFactory.getEnemy("c", world, 0, 100000, 3, 1);
+        EnemyMob burning = EnemyFactory.getEnemy("c", world, 0, 100000, 3, Rank.GRUNT);
         burning.applyEffect(Effect.burn(Damage.magic(1), 100, d -> {
         }));
 
@@ -401,7 +402,7 @@ class AbstractTowerTest {
         UpgradePath path = new UpgradePath("Precision", 10, TowerBuff.critChance(0.2f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(world, 0, 0, List.of(path));
         tower.chooseUpgradePath(path);
-        EnemyMob notBurning = EnemyFactory.getEnemy("c", world, 0, 100000, 3, 1);
+        EnemyMob notBurning = EnemyFactory.getEnemy("c", world, 0, 100000, 3, Rank.GRUNT);
 
         tower.dealDamage(notBurning, Damage.physical(1000));
 
@@ -441,7 +442,7 @@ class AbstractTowerTest {
     void aBurningTargetAgainstATowerWithNoCritChanceStillNeverCrits() {
         GameWorld alwaysCrits = WorldFixtures.newWorld(() -> 0.0);
         SniperTower tower = new SniperTower(alwaysCrits, 0, 0);
-        EnemyMob burning = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, 1);
+        EnemyMob burning = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, Rank.GRUNT);
         burning.applyEffect(Effect.burn(Damage.magic(1), 100, d -> {
         }));
 

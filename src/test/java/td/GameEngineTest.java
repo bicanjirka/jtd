@@ -3,6 +3,7 @@ package td;
 import org.junit.jupiter.api.Test;
 import td.enemy.BodyArchetype;
 import td.enemy.EnemyDefinition;
+import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.LevelFixtures;
 import td.level.LevelDefinition;
@@ -37,7 +38,7 @@ class GameEngineTest {
         // those cells unbuildable. They cross to the game-loop thread as one LoadedLevel, so a
         // reader can never pair the incoming board with the outgoing grid.
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 100, 3, Rank.GRUNT)), 100));
         engine.nextWave();
 
         engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(), 50));
@@ -55,7 +56,7 @@ class GameEngineTest {
         EnemyDefinition tankySquare = EnemyDefinition.of("tankySquare", "Tanky Square", 100, 5, 1.28f,
                 BodyArchetype.SQUARE);
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("tankySquare", 100, 3, 1)), 100)
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("tankySquare", 100, 3, Rank.GRUNT)), 100)
                 .withCustomEnemies(List.of(tankySquare)));
 
         assertThat(engine.getGameWorld().getEnemyCatalog().ids()).contains("tankySquare");
@@ -67,8 +68,8 @@ class GameEngineTest {
     void waveProgressReportsAnIndexAndCountThatBelongToTheSameLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(
-                new WaveDefinition("c", 100, 3, 1),
-                new WaveDefinition("s", 120, 4, 1)), 100));
+                new WaveDefinition("c", 100, 3, Rank.GRUNT),
+                new WaveDefinition("s", 120, 4, Rank.GRUNT)), 100));
 
         engine.nextWave();
 
@@ -83,7 +84,7 @@ class GameEngineTest {
     @Test
     void waveProgressOnTheLastWaveOffersNoNextWave() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 100, 3, Rank.GRUNT)), 100));
 
         engine.nextWave();
 
@@ -100,8 +101,8 @@ class GameEngineTest {
         // indexing off the end of its shorter list.
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(
-                new WaveDefinition("c", 100, 3, 1),
-                new WaveDefinition("s", 120, 4, 1)), 100));
+                new WaveDefinition("c", 100, 3, Rank.GRUNT),
+                new WaveDefinition("s", 120, 4, Rank.GRUNT)), 100));
         engine.nextWave();
 
         engine.getGameWorld().installLevel(engine.getGameWorld().level().withCatalog(
@@ -172,8 +173,8 @@ class GameEngineTest {
         // a 2nd wave must exist for "wave cleared" to mean "next wave ready"
         // rather than "no more waves" (game won) - see GameEngine.doTick/nextWave
         engine.loadLevel(LevelFixtures.levelWith(
-                List.of(new WaveDefinition("c", 1, 7, 1),
-                        new WaveDefinition("c", 1, 7, 1)), 100));
+                List.of(new WaveDefinition("c", 1, 7, Rank.GRUNT),
+                        new WaveDefinition("c", 1, 7, Rank.GRUNT)), 100));
 
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
@@ -200,8 +201,8 @@ class GameEngineTest {
         // kills to clear, not 1, or the wave clears early (or never).
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(
-                List.of(new WaveDefinition("swarm 3 c", 1, 7, 1),
-                        new WaveDefinition("c", 1, 7, 1)), 100));
+                List.of(new WaveDefinition("swarm 3 c", 1, 7, Rank.GRUNT),
+                        new WaveDefinition("c", 1, 7, Rank.GRUNT)), 100));
 
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
@@ -233,8 +234,8 @@ class GameEngineTest {
     void startingARoundSpawnsBothPathsWavesInOneCall() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.twoPathLevelWith(
-                List.of(new WaveDefinition("c", 1, 7, 1)),
-                List.of(new WaveDefinition("2 c", 1, 7, 1))));
+                List.of(new WaveDefinition("c", 1, 7, Rank.GRUNT)),
+                List.of(new WaveDefinition("2 c", 1, 7, Rank.GRUNT))));
 
         assertThat(engine.nextWave()).isTrue();
 
@@ -252,8 +253,8 @@ class GameEngineTest {
         // long dead - "the round is cleared" has to wait for every path, not just one.
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.twoPathLevelWith(
-                List.of(new WaveDefinition("c", 1, 7, 1), new WaveDefinition("c", 1, 7, 1)),
-                List.of(new WaveDefinition("c", 1, 7, 1), new WaveDefinition("c", 1, 7, 1))));
+                List.of(new WaveDefinition("c", 1, 7, Rank.GRUNT), new WaveDefinition("c", 1, 7, Rank.GRUNT)),
+                List.of(new WaveDefinition("c", 1, 7, Rank.GRUNT), new WaveDefinition("c", 1, 7, Rank.GRUNT))));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1)); // in range of path A's row (y=2) only
         int scoreBefore = engine.getGameWorld().economy().getScore();
@@ -296,8 +297,8 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         // same placement as the SniperTower case above - well within Mortar's own (larger) range too.
         engine.loadLevel(LevelFixtures.levelWith(
-                List.of(new WaveDefinition("c", 1, 7, 1),
-                        new WaveDefinition("c", 1, 7, 1)), 100));
+                List.of(new WaveDefinition("c", 1, 7, Rank.GRUNT),
+                        new WaveDefinition("c", 1, 7, Rank.GRUNT)), 100));
 
         engine.startPlacing(TowerFactory.Type.MORTAR, MortarTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
@@ -318,7 +319,7 @@ class GameEngineTest {
     @Test
     void enemyReachingTheEndOfThePathCostsALife() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 100, 3, Rank.GRUNT)), 100));
         int initialLives = engine.getGameWorld().economy().getLives();
 
         engine.nextWave();
@@ -362,7 +363,7 @@ class GameEngineTest {
     @Test
     void reloadingALevelClearsEnemiesStillAliveFromThePreviousLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 1000, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 1000, 3, Rank.GRUNT)), 100));
         engine.nextWave();
         assertThat(engine.getGameWorld().enemies().getEnemies()).isNotEmpty();
 
@@ -413,11 +414,11 @@ class GameEngineTest {
     @Test
     void reloadingALevelRewindsTheWaveCounterAndReArmsTheFirstWave() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 1, 3, Rank.GRUNT)), 100));
         engine.nextWave();
         assertThat(engine.getCurrentWaveIndex()).isEqualTo(1);
 
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 1, 3, Rank.GRUNT)), 100));
 
         assertThat(engine.getCurrentWaveIndex()).isEqualTo(0);
         assertThat(engine.isWaveReady()).isTrue();
@@ -426,10 +427,10 @@ class GameEngineTest {
     @Test
     void aWaveRequestedButNotYetStartedDoesNotCarryIntoTheNextLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 1, 3, Rank.GRUNT)), 100));
         engine.requestNextWave();
 
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 1, 3, Rank.GRUNT)), 100));
 
         assertThat(engine.doTick(1)).isFalse();
         assertThat(engine.getCurrentWaveIndex()).isZero();
@@ -463,8 +464,8 @@ class GameEngineTest {
     void debugSkippingAWaveClearsItAndStartsTheNextOneImmediately() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(
-                List.of(new WaveDefinition("c", 100, 3, 1),
-                        new WaveDefinition("c", 100, 3, 1)), 100));
+                List.of(new WaveDefinition("c", 100, 3, Rank.GRUNT),
+                        new WaveDefinition("c", 100, 3, Rank.GRUNT)), 100));
         engine.nextWave();
         assertThat(engine.getCurrentWaveIndex()).isEqualTo(1);
 
@@ -478,7 +479,7 @@ class GameEngineTest {
     @Test
     void debugSkippingTheFinalWaveClearsTheBoardButStartsNothing() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 100, 3, Rank.GRUNT)), 100));
         engine.nextWave();
         assertThat(engine.getGameWorld().enemies().getEnemies()).isNotEmpty();
 
@@ -491,7 +492,7 @@ class GameEngineTest {
     @Test
     void debugSkippingAWaveCostsNoLivesAndPaysNoCredits() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 100, 7, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 100, 7, Rank.GRUNT)), 100));
         engine.nextWave();
         int livesBefore = engine.getGameWorld().economy().getLives();
         int creditsBefore = engine.getGameWorld().economy().getCredits();

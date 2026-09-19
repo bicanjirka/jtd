@@ -23,7 +23,7 @@ class AbstractEnemyMobEffectTest {
     void aSlowReducesTheDistanceCoveredInOneTick() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         float fullSpeed = enemy.getSpeed();
 
         enemy.applyEffect(Effect.slow(0.5f, 5, d -> {
@@ -37,7 +37,7 @@ class AbstractEnemyMobEffectTest {
     void aFreezeHaltsMovementForExactlyItsDurationInTicks() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
 
         enemy.applyEffect(Effect.freeze(2, d -> {
         }));
@@ -54,7 +54,7 @@ class AbstractEnemyMobEffectTest {
         GameWorld context = newContext();
         context.enemies().setCount(1);
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1, 3, 1); // 100 health
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1, 3, Rank.GRUNT); // 100 health
 
         enemy.applyEffect(Effect.burn(Damage.magic(1000), 3, enemy::doDamage));
         enemy.doTick(1);
@@ -67,7 +67,7 @@ class AbstractEnemyMobEffectTest {
     void aBurnEffectAppliesItsDamagePerTickThroughItsBoundSinkEveryTick() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100, 3, 1); // 10000 health
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100, 3, Rank.GRUNT); // 10000 health
 
         enemy.applyEffect(Effect.burn(Damage.magic(2000), 5, enemy::doDamage));
         enemy.doTick(1);

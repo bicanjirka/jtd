@@ -3,14 +3,16 @@ package td.enemy;
 import td.damage.Damage;
 
 /**
- * Absorbs a level-scaled fraction of every incoming hit - the migrated Square's resistance.
- * The surviving fraction is {@code baseFraction - perLevelReduction * level}, which {@link Damage}'s
- * own zero-clamp turns into full immunity, never a healing hit, once it reaches zero or below.
+ * Absorbs a fixed fraction of every incoming hit - the migrated Square's resistance. {@link
+ * Damage}'s own zero-clamp turns a {@code fraction} of zero or below into full immunity, never a
+ * healing hit. A stronger or weaker resistance is a different concrete instance authored at a
+ * different {@link Rank}, not a formula scaled by anything live on the mob - see
+ * {@code td/enemy/CLAUDE.md}'s note on why {@link TraitContext} no longer carries a level.
  */
-public record PercentResistTrait(float baseFraction, float perLevelReduction) implements Trait {
+public record PercentResistTrait(float fraction) implements Trait {
 
     @Override
     public Damage onHit(Damage incoming, TraitContext context) {
-        return incoming.scaledBy(this.baseFraction - this.perLevelReduction * context.level());
+        return incoming.scaledBy(this.fraction);
     }
 }

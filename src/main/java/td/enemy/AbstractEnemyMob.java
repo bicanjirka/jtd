@@ -66,7 +66,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
 
     // Injected collaborators and the constants a mob is born with. All final, all set below.
     protected final GameWorld gameWorld;
-    protected final int level;
+    protected final Rank rank;
     private final Type type;
     private final int price;
     private final int healthMax;
@@ -128,7 +128,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * <p>
      * A leaf passes its own constants straight through - there is no second initialization
      * step to remember, and no window in which a half-built mob is reachable. Anything a leaf
-     * derives from the board scale or from {@code level} (a body scale, a speed curve) it
+     * derives from the board scale or from {@code rank} (a body scale, a speed curve) it
      * computes after this returns, by which point every field here is set.
      *
      * @param speed           this mob's own px/tick speed - already folded in with any
@@ -137,12 +137,12 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * @param spawnParameters this mob's spawn delay (already converted to a tick countdown),
      *                        health (in whole points; stored internally in hundredths) and bounty
      */
-    protected AbstractEnemyMob(GameWorld gameWorld, Type type, float speed, SpawnParameters spawnParameters, int level) {
+    protected AbstractEnemyMob(GameWorld gameWorld, Type type, float speed, SpawnParameters spawnParameters, Rank rank) {
         this.gameWorld = gameWorld;
         this.type = type;
         this.speed = speed;
         this.price = spawnParameters.price();
-        this.level = level;
+        this.rank = rank;
         this.health = spawnParameters.health() * HEALTH_UNITS_PER_POINT;
         this.healthMax = spawnParameters.health() * HEALTH_UNITS_PER_POINT;
         this.pathIndex = spawnParameters.pathIndex();
@@ -216,7 +216,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         if (this.health <= 0) {
             this.validTarget = false;
             this.dead = true;
-            this.gameWorld.economy().apply(EconomyDelta.kill(this.price));
+            int score = Math.round(this.price * this.rank.scoreMultiplier());
+            this.gameWorld.economy().apply(EconomyDelta.kill(this.price, score));
             this.gameWorld.enemies().reportDeath();
         }
         return landed;
@@ -360,7 +361,16 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     public int fadeDurationTicks() {
-        return 3 * this.level + 6;
+        return 3 * this.rank.ordinal() + 6;
+    }
+
+    /**
+     * This mob's {@link Rank} - what an ability-driven spawn (the Warden's egg, a reinforcement)
+     * inherits via {@code SpawnEnemiesAction}, the same precedent {@link #getPathIndex()}
+     * already set for path inheritance.
+     */
+    public Rank getRank() {
+        return this.rank;
     }
 
     /**
