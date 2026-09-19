@@ -51,7 +51,5 @@ public enum Palette {
     /**
      * A brief, fading burst at the point a critical hit landed - see CritSparkDraw.
      */
-    CRIT_SPARK,
-    PATH_MARKER_STATIC,
-    PATH_MARKER_MOVING
+    CRIT_SPARK
 }

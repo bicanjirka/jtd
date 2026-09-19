@@ -20,9 +20,11 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
 
     private final EnemyDefinition definition;
     private final List<AbilityState> abilityStates;
-    // The spawn shape's speed multiplier (1 for a normal spawn, 0.5 for a boss) - folded into
-    // every doDamage() speed recomputation alongside the traits' own speedFactor, rather than
-    // applied once at construction, which the first hit would silently wipe.
+    // The spawn's full speed multiplier - its SpawnShape's own factor (1 for a normal spawn,
+    // 0.5 for a boss) already composed with its path's and wave's speedMultiplier by
+    // td.wave.Wave, so a fast path or a called-out fast round needs no separate mechanism here.
+    // Folded into every doDamage() speed recomputation alongside the traits' own speedFactor,
+    // rather than applied once at construction, which the first hit would silently wipe.
     private final float shapeSpeedMultiplier;
     // The spawn shape's permanent damage-taken multiplier (1 for a normal spawn, 0.5 for an
     // elite) - folded into absorb() alongside the definition's own traits. Permanent, unlike
@@ -59,7 +61,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
     private static SpawnParameters withDividedHealth(SpawnParameters spawnParameters, float healthDivisor) {
         return new SpawnParameters(spawnParameters.delayTicks(), Math.round(spawnParameters.health() / healthDivisor),
                 spawnParameters.price(), spawnParameters.sizeMultiplier(), spawnParameters.speedMultiplier(),
-                spawnParameters.damageTakenMultiplier(), spawnParameters.localOffset());
+                spawnParameters.damageTakenMultiplier(), spawnParameters.localOffset(), spawnParameters.pathIndex());
     }
 
     private static float bodyScaleFor(BodyArchetype archetype, int scale, int level) {
@@ -286,7 +288,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
             EnemyDefinition spawnedDefinition = world.getEnemyCatalog().get(definitionId);
             for (int i = 0; i < count; i++) {
                 SpawnParameters spawnParameters = SpawnParameters.atSlot(0, spawnedDefinition.baseSpeed(),
-                        spawnedDefinition.baseHealth(), spawnedDefinition.price());
+                        spawnedDefinition.baseHealth(), spawnedDefinition.price(), DefinedEnemyMob.this.getPathIndex());
                 DefinedEnemyMob spawned = new DefinedEnemyMob(spawnedDefinition, world, spawnParameters, DefinedEnemyMob.this.level);
                 spawned.spawnAtSamePositionAs(DefinedEnemyMob.this);
                 if (consumesSelf) {

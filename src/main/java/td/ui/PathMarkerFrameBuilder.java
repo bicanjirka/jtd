@@ -1,10 +1,11 @@
 package td.ui;
 
-import td.ui.render.Palette;
+import td.ui.render.PathMarkerBrightness;
 import td.ui.render.PathMarkerDraw;
 import td.ui.render.PathMarkerShape;
 import td.wave.ArcLengthPath;
 import td.wave.Path;
+import td.wave.PathColor;
 import td.wave.PathPose;
 
 import java.util.ArrayList;
@@ -35,26 +36,26 @@ final class PathMarkerFrameBuilder {
     private static final float MOVING_CELLS_PER_SECOND = 0.4f;
 
     private static final MarkerStyle STATIC =
-            MarkerStyle.of(PathMarkerShape.DOT, Palette.PATH_MARKER_STATIC, 0.5f, 0.06f);
+            MarkerStyle.of(PathMarkerShape.DOT, PathMarkerBrightness.STATIC, 0.5f, 0.06f);
     private static final MarkerStyle MOVING =
-            MarkerStyle.of(PathMarkerShape.CHEVRON, Palette.PATH_MARKER_MOVING, 1.5f, 0.12f);
+            MarkerStyle.of(PathMarkerShape.CHEVRON, PathMarkerBrightness.MOVING, 1.5f, 0.12f);
 
     private PathMarkerFrameBuilder() {
     }
 
-    static List<PathMarkerDraw> build(Path path, int scale, double animationSeconds) {
+    static List<PathMarkerDraw> build(Path path, PathColor color, int scale, double animationSeconds) {
         Optional<ArcLengthPath> arcLengthPath = ArcLengthPath.of(path);
         if (arcLengthPath.isEmpty()) {
             return List.of();
         }
         ArcLengthPath polyline = arcLengthPath.get();
         List<PathMarkerDraw> draws = new ArrayList<>();
-        addLayer(draws, polyline, scale, STATIC, 0.0);
-        addLayer(draws, polyline, scale, MOVING, animationSeconds * MOVING_CELLS_PER_SECOND * scale);
+        addLayer(draws, polyline, color, scale, STATIC, 0.0);
+        addLayer(draws, polyline, color, scale, MOVING, animationSeconds * MOVING_CELLS_PER_SECOND * scale);
         return draws;
     }
 
-    private static void addLayer(List<PathMarkerDraw> draws, ArcLengthPath polyline, int scale, MarkerStyle style, double offset) {
+    private static void addLayer(List<PathMarkerDraw> draws, ArcLengthPath polyline, PathColor color, int scale, MarkerStyle style, double offset) {
         float targetSpacing = style.spacingCells() * scale;
         int count = Math.max(1, (int) Math.round(polyline.totalLength() / targetSpacing));
         // Dividing the exact total length by the marker count (rather than using
@@ -64,7 +65,7 @@ final class PathMarkerFrameBuilder {
         float size = style.sizeCells() * scale;
         for (int i = 0; i < count; i++) {
             PathPose pose = polyline.poseAt(mod(i * spacing + offset, polyline.totalLength()));
-            draws.add(new PathMarkerDraw(style.shape(), style.palette(), (float) pose.position().x(),
+            draws.add(new PathMarkerDraw(style.shape(), style.brightness(), color, (float) pose.position().x(),
                     (float) pose.position().y(), pose.facingRadians(), size));
         }
     }
@@ -75,11 +76,13 @@ final class PathMarkerFrameBuilder {
     }
 
     /**
-     * One layer's symbol, spacing, size, and colour role - see the STATIC/MOVING constants above.
+     * One layer's symbol, spacing, size, and brightness role - see the STATIC/MOVING constants
+     * above. The actual color is a per-path value passed into {@link #build}, not part of this
+     * style.
      */
-    private record MarkerStyle(PathMarkerShape shape, Palette palette, float spacingCells, float sizeCells) {
-        static MarkerStyle of(PathMarkerShape shape, Palette palette, float spacingCells, float sizeCells) {
-            return new MarkerStyle(shape, palette, spacingCells, sizeCells);
+    private record MarkerStyle(PathMarkerShape shape, PathMarkerBrightness brightness, float spacingCells, float sizeCells) {
+        static MarkerStyle of(PathMarkerShape shape, PathMarkerBrightness brightness, float spacingCells, float sizeCells) {
+            return new MarkerStyle(shape, brightness, spacingCells, sizeCells);
         }
     }
 }

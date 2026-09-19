@@ -8,6 +8,7 @@ import td.effect.EffectKind;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 import td.wave.ArcLengthPath;
+import td.wave.Path;
 import td.wave.PathPose;
 import td.wave.Vec2;
 
@@ -56,6 +57,12 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * of a point without rounding to nothing.
      */
     private static final int HEALTH_UNITS_PER_POINT = 100;
+    /**
+     * The scale {@link #getProgression()} expresses its path-length fraction in - large enough
+     * that two mobs a fraction of a percent apart on their own (possibly different-length)
+     * paths still compare distinctly as ints.
+     */
+    private static final int PROGRESSION_SCALE = 1_000_000;
 
     // Injected collaborators and the constants a mob is born with. All final, all set below.
     protected final GameWorld gameWorld;
@@ -63,6 +70,13 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     private final Type type;
     private final int price;
     private final int healthMax;
+    /**
+     * Which of the installed level's paths this mob walks - resolved once, at construction,
+     * from {@code spawnParameters.pathIndex()}. Exposed via {@link #getPathIndex()} so an
+     * ability-driven spawn (the Warden's egg) can pass its parent's own path index along instead
+     * of defaulting to path 0.
+     */
+    private final int pathIndex;
     private final ActiveEffects activeEffects = new ActiveEffects();
     /**
      * The path this mob measures its progress along, empty for a degenerate path - fewer than
@@ -131,13 +145,15 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         this.level = level;
         this.health = spawnParameters.health() * HEALTH_UNITS_PER_POINT;
         this.healthMax = spawnParameters.health() * HEALTH_UNITS_PER_POINT;
-        this.arcLengthPath = ArcLengthPath.of(gameWorld.getPath());
-        List<Vec2> pathPoints = gameWorld.getPath().points();
+        this.pathIndex = spawnParameters.pathIndex();
+        Path path = gameWorld.level().pathAt(this.pathIndex);
+        this.arcLengthPath = ArcLengthPath.of(path);
+        List<Vec2> pathPoints = path.points();
         this.stationaryPosition = pathPoints.isEmpty() ? new Vec2(0, 0) : pathPoints.getFirst();
         // Every mob's distanceIntoLap starts at 0 regardless of delay or shape, so poseAt(0) is
         // always the true spawn point - this is the one and only place the offset's rotation is
         // computed, ever.
-        double spawnFacing = this.arcLengthPath.map(path -> path.poseAt(0).facingRadians()).orElse(0.0);
+        double spawnFacing = this.arcLengthPath.map(arcPath -> arcPath.poseAt(0).facingRadians()).orElse(0.0);
         double cos = Math.cos(spawnFacing);
         double sin = Math.sin(spawnFacing);
         Vec2 localOffset = spawnParameters.localOffset();
@@ -272,13 +288,17 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     /**
-     * A coarse "how far into this lap of the path" ranking value, used only to compare two
-     * enemies on the same path (see FurthestAlongPathSelector) - sub-pixel precision has no
-     * practical effect on that ranking, so this stays an int rather than widening to match
-     * the double-precision position/distance it's derived from.
+     * A coarse "how far into this lap of the path" ranking value, expressed as a fraction of
+     * this mob's own path's total length (see FurthestAlongPathSelector) rather than as raw
+     * pixels - two paths can have different total lengths, so comparing raw
+     * {@code distanceIntoLap} between a mob on one and a mob on another would rank whichever
+     * path happens to be longer as "further along" regardless of which is actually closer to
+     * leaking. Sub-pixel precision has no practical effect on this ranking, so it stays an int.
      */
     public int getProgression() {
-        return (int) this.distanceIntoLap;
+        return this.arcLengthPath
+                .map(path -> (int) Math.round(this.distanceIntoLap / path.totalLength() * PROGRESSION_SCALE))
+                .orElse(0);
     }
 
     /**
@@ -286,6 +306,15 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      */
     protected double getDistanceIntoLap() {
         return this.distanceIntoLap;
+    }
+
+    /**
+     * Which of the installed level's paths this mob walks - what an ability-driven spawn (the
+     * Warden's egg) passes to {@link SpawnParameters#atSlot(double, float, int, int, int)} so a
+     * hatched mob stays on its parent's path instead of defaulting to path 0.
+     */
+    protected int getPathIndex() {
+        return this.pathIndex;
     }
 
     /**

@@ -11,6 +11,7 @@ import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.MissileDraw;
 import td.ui.render.Palette;
+import td.ui.render.PathMarkerBrightness;
 import td.ui.render.PathMarkerDraw;
 import td.ui.render.PathMarkerShape;
 import td.ui.render.ProjectileDraw;
@@ -21,6 +22,7 @@ import td.ui.render.StatusMarkerDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TurretHeadDraw;
+import td.wave.PathColor;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
@@ -375,8 +377,6 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_INVISIBLE -> new Color(180, 180, 180);
             case STATUS_MARKER_OVERFLOW -> Color.WHITE;
             case CRIT_SPARK -> Color.WHITE;
-            case PATH_MARKER_MOVING -> withAlpha(Color.WHITE, 100);
-            case PATH_MARKER_STATIC -> withAlpha(Color.WHITE, 40);
         };
     }
 
@@ -485,9 +485,21 @@ public final class Java2DFrameRenderer {
         AffineTransform save = g2.getTransform();
         g2.translate(marker.x(), marker.y());
         g2.rotate(marker.facingRadians());
-        g2.setColor(colorFor(marker.palette()));
+        PathColor color = marker.color();
+        g2.setColor(withAlpha(new Color(color.r(), color.g(), color.b()), pathMarkerAlpha(marker.brightness())));
         g2.fill(markerShape(marker.shape(), marker.size()));
         g2.setTransform(save);
+    }
+
+    /**
+     * The dim-trail-vs-bright-chevron alpha the two path-marker layers have always had - now
+     * combined with a path's own {@link PathColor} rather than baked into one fixed hue.
+     */
+    private static int pathMarkerAlpha(PathMarkerBrightness brightness) {
+        return switch (brightness) {
+            case STATIC -> 40;
+            case MOVING -> 100;
+        };
     }
 
     /**
@@ -496,6 +508,18 @@ public final class Java2DFrameRenderer {
     public void paintEnemies(Graphics2D g2, List<EnemyDraw> enemies) {
         for (EnemyDraw enemy : enemies) {
             this.paintEnemy(g2, enemy);
+        }
+    }
+
+    /**
+     * Paints a set of path markers directly, the same reuse-outside-the-board-frame shape
+     * {@link #paintEnemies} already gives {@code PanelEnemy} - used by {@code PathWaveRow}'s
+     * own small per-path color swatch, so "which lane is this" reads in the exact dot/chevron
+     * language the board itself draws its path trail with.
+     */
+    public void paintPathMarkers(Graphics2D g2, List<PathMarkerDraw> markers) {
+        for (PathMarkerDraw marker : markers) {
+            this.paintPathMarker(g2, marker);
         }
     }
 

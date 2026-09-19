@@ -59,7 +59,7 @@ class GameEngineTest {
         assertThat(installed.cells().width()).isEqualTo(20);
         assertThat(installed.board().maxX()).isEqualTo(20 * SCALE - 1);
         assertThat(installed.waveCount()).isZero();
-        assertThat(installed.path().points()).isNotEmpty();
+        assertThat(installed.pathAt(0).points()).isNotEmpty();
         assertThat(engine.getCurrentWaveIndex()).isZero();
     }
 
@@ -76,8 +76,8 @@ class GameEngineTest {
         assertThat(progress.index()).isEqualTo(1);
         assertThat(progress.count()).isEqualTo(2);
         assertThat(progress.hasNextWave()).isTrue();
-        assertThat(progress.current()).isPresent();
-        assertThat(progress.next()).isPresent();
+        assertThat(progress.current()).isNotEmpty();
+        assertThat(progress.next()).isNotEmpty();
     }
 
     @Test
@@ -90,7 +90,7 @@ class GameEngineTest {
         WaveProgress progress = engine.waveProgress();
         assertThat(progress.hasNextWave()).isFalse();
         assertThat(progress.next()).isEmpty();
-        assertThat(progress.current()).isPresent();
+        assertThat(progress.current()).isNotEmpty();
     }
 
     @Test

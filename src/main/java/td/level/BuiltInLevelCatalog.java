@@ -57,7 +57,7 @@ public class BuiltInLevelCatalog implements LevelCatalog {
     // cornerPull=0.3 keeps a comfortable margin under the tightest corner's leg (the shortest
     // is 2 cells = 64px, so pullback there is ~19px); 8 samples per corner is plenty smooth at
     // this board's scale without generating an excessive number of extra path points.
-    private static final LevelDefinition ZIGZAG_GAUNTLET = new LevelDefinition(
+    private static final LevelDefinition ZIGZAG_GAUNTLET = LevelDefinition.singlePath(
             "Zigzag Gauntlet",
             "A tighter, smoothly curving path on a smaller board. 8 waves, starting with $75 and only 3 lives.",
             12, 10,
@@ -82,7 +82,7 @@ public class BuiltInLevelCatalog implements LevelCatalog {
     // pull over 2-4 cell legs. The resulting curve cuts deep inside each raw right-angle corner,
     // sweeping the actual path through cells the straight two-leg corners never touch at all
     // (BuiltInLevelCatalogTest measures this directly against Zigzag Gauntlet's own path).
-    private static final LevelDefinition WILD_BEZIER_SWEEP = new LevelDefinition(
+    private static final LevelDefinition WILD_BEZIER_SWEEP = LevelDefinition.singlePath(
             "Wild Bezier Sweep",
             "Long bezier curves that swing far wide of the path's straight corners. "
                     + "10 waves, starting with $100 and 4 lives.",

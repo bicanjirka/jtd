@@ -25,6 +25,12 @@ import java.util.Set;
  * in two writes instead of one. Deferring the spawn to the moment a wave actually starts
  * removes that ordering entirely, and stops a level with eighteen waves allocating every enemy
  * of all eighteen before the first one runs.
+ * <p>
+ * <strong>A wave belongs to exactly one of the level's paths</strong> ({@link #pathIndex}), and
+ * carries its own {@link #speedMultiplier} - the product of that path's own
+ * {@code PathDefinition.speedMultiplier()} and this wave's {@code WaveDefinition
+ * .speedMultiplier()}, resolved once by {@code GameEngine.loadLevel}. See
+ * {@code td/wave/CLAUDE.md}'s round model for how multiple paths' waves start together.
  */
 public class Wave {
 
@@ -38,29 +44,44 @@ public class Wave {
     private final int level;
     private final WaveContent content;
     private final long scatterSeed;
+    private final int pathIndex;
+    private final float speedMultiplier;
 
+    /**
+     * On path 0 at {@code 1x} speed - every pre-existing caller (every wave, before this
+     * feature, belonged to the level's only path at its only pace) needs to name neither.
+     */
     public Wave(GameWorld gameWorld, int baseHealth, int basePrice, int level, WaveContent content, long scatterSeed) {
+        this(gameWorld, baseHealth, basePrice, level, content, scatterSeed, 0, 1f);
+    }
+
+    public Wave(GameWorld gameWorld, int baseHealth, int basePrice, int level, WaveContent content, long scatterSeed,
+                int pathIndex, float speedMultiplier) {
         this.gameWorld = gameWorld;
         this.baseHealth = baseHealth;
         this.basePrice = basePrice;
         this.level = level;
         this.content = content;
         this.scatterSeed = scatterSeed;
+        this.pathIndex = pathIndex;
+        this.speedMultiplier = speedMultiplier;
     }
 
-    private static List<EnemyMob> spawnEnemies(GameWorld gameWorld, WaveContent content, int baseHealth, int basePrice, int level, long scatterSeed) {
+    private static List<EnemyMob> spawnEnemies(GameWorld gameWorld, WaveContent content, int baseHealth, int basePrice,
+                                                 int level, long scatterSeed, int pathIndex, float speedMultiplier) {
         List<EnemyMob> enemies = new ArrayList<>();
         int delay = 0;
         for (WaveSlot slot : content.spawnSequence()) {
-            enemies.addAll(spawnSlot(slot, gameWorld, delay, baseHealth, basePrice, level, scatterSeed));
+            enemies.addAll(spawnSlot(slot, gameWorld, delay, baseHealth, basePrice, level, scatterSeed, pathIndex, speedMultiplier));
             delay++;
         }
         return List.copyOf(enemies);
     }
 
-    private static List<EnemyMob> spawnSlot(WaveSlot slot, GameWorld gameWorld, int delay, int health, int price, int level, long scatterSeed) {
+    private static List<EnemyMob> spawnSlot(WaveSlot slot, GameWorld gameWorld, int delay, int health, int price,
+                                              int level, long scatterSeed, int pathIndex, float speedMultiplier) {
         return switch (slot) {
-            case EnemySlot s -> spawnShaped(s, gameWorld, delay, health, price, level, scatterSeed);
+            case EnemySlot s -> spawnShaped(s, gameWorld, delay, health, price, level, scatterSeed, pathIndex, speedMultiplier);
             case EmptySlot ignored -> List.of();
         };
     }
@@ -79,8 +100,16 @@ public class Wave {
      * would otherwise depend on how many towers happened to fire first. The offset itself is
      * relative to the mob's own spawn-facing direction, not world space -
      * {@link td.enemy.AbstractEnemyMob} is what fixes it into a world vector, once, at spawn.
+     * <p>
+     * The shape's own {@code speedMultiplier()} is composed with this wave's {@code
+     * speedMultiplier} (its path's pace times its own) into the one value handed to
+     * {@link SpawnParameters}, which is what lets a fast path or a called-out fast round affect
+     * a mob's speed with no new mechanism: that composed value is stored once as
+     * {@code DefinedEnemyMob.shapeSpeedMultiplier} and reused on every {@code doDamage} speed
+     * recompute, the same way a boss's own 50% multiplier already survives combat.
      */
-    private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int delay, int baseHealth, int basePrice, int level, long scatterSeed) {
+    private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int delay, int baseHealth,
+                                                int basePrice, int level, long scatterSeed, int pathIndex, float speedMultiplier) {
         EnemyDefinition definition = enemySlot.definition();
         SpawnShape shape = enemySlot.shape();
         int health = Math.max(1, Math.round(baseHealth * shape.healthMultiplier()));
@@ -92,8 +121,8 @@ public class Wave {
             double slotPosition = delay + i * shape.delaySpacingSlots();
             Vec2 localOffset = shape.spread().offsetFor(i, shape.members(), maxRadius, scatter);
             SpawnParameters spawnParameters = SpawnParameters.of(slotPosition, definition.baseSpeed(), health,
-                    bountyShares[i], shape.sizeMultiplier(), shape.speedMultiplier(), shape.damageTakenMultiplier(),
-                    localOffset);
+                    bountyShares[i], shape.sizeMultiplier(), shape.speedMultiplier() * speedMultiplier,
+                    shape.damageTakenMultiplier(), localOffset, pathIndex);
             members.add(new DefinedEnemyMob(definition, gameWorld, spawnParameters, level));
         }
         return List.copyOf(members);
@@ -120,7 +149,8 @@ public class Wave {
      * describe a wave that has not run yet.
      */
     public EnemyMob[] spawn() {
-        return spawnEnemies(this.gameWorld, this.content, this.baseHealth, this.basePrice, this.level, this.scatterSeed)
+        return spawnEnemies(this.gameWorld, this.content, this.baseHealth, this.basePrice, this.level, this.scatterSeed,
+                this.pathIndex, this.speedMultiplier)
                 .toArray(new EnemyMob[0]);
     }
 
@@ -134,6 +164,14 @@ public class Wave {
 
     public int getLevel() {
         return level;
+    }
+
+    /**
+     * Which of the level's paths this wave belongs to - what a wave-info panel resolves a
+     * matching {@code PathColor} swatch from, via {@code GameWorld.level().paths()}.
+     */
+    public int getPathIndex() {
+        return this.pathIndex;
     }
 
 }

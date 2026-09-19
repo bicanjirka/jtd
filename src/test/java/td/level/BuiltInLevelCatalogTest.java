@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.wave.Path;
 import td.wave.PathBuilder;
 import td.wave.PathCoverage;
+import td.wave.PathDefinition;
 import td.wave.Point;
 import td.wave.Vec2;
 
@@ -21,7 +22,8 @@ class BuiltInLevelCatalogTest {
         Set<Point> straightCornerCoverage = PathCoverage.unbuildableCells(
                 rawPixelPolyline(level), SCALE, level.width(), level.height());
 
-        Path smoothedPath = PathBuilder.build(level.path(), level.smoothing(), SCALE);
+        PathDefinition path = level.paths().getFirst();
+        Path smoothedPath = PathBuilder.build(path.corners(), path.smoothing(), SCALE);
         Set<Point> smoothedCoverage = PathCoverage.unbuildableCells(
                 smoothedPath.points(), SCALE, level.width(), level.height());
 
@@ -35,7 +37,7 @@ class BuiltInLevelCatalogTest {
     }
 
     private static List<Vec2> rawPixelPolyline(LevelDefinition level) {
-        return level.path().stream()
+        return level.paths().getFirst().corners().stream()
                 .map(cell -> new Vec2(cell.x() * SCALE + (SCALE / 2.0), cell.y() * SCALE + (SCALE / 2.0)))
                 .toList();
     }
@@ -70,13 +72,14 @@ class BuiltInLevelCatalogTest {
     @Test
     void wildBezierSweepsPathStaysEntirelyWithinItsOwnBoard() {
         LevelDefinition level = thirdLevel();
+        PathDefinition path = level.paths().getFirst();
 
-        Path smoothedPath = PathBuilder.build(level.path(), level.smoothing(), SCALE);
+        Path smoothedPath = PathBuilder.build(path.corners(), path.smoothing(), SCALE);
 
-        int minX = level.path().stream().mapToInt(Point::x).min().orElseThrow();
-        int maxX = level.path().stream().mapToInt(Point::x).max().orElseThrow();
-        int minY = level.path().stream().mapToInt(Point::y).min().orElseThrow();
-        int maxY = level.path().stream().mapToInt(Point::y).max().orElseThrow();
+        int minX = path.corners().stream().mapToInt(Point::x).min().orElseThrow();
+        int maxX = path.corners().stream().mapToInt(Point::x).max().orElseThrow();
+        int minY = path.corners().stream().mapToInt(Point::y).min().orElseThrow();
+        int maxY = path.corners().stream().mapToInt(Point::y).max().orElseThrow();
 
         // The convex-hull property of a quadratic Bezier guarantees the smoothed curve never
         // leaves the bounding box of its own raw corners, however large cornerPull is.

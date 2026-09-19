@@ -9,6 +9,7 @@ import td.tower.TowerFactory;
 import td.wave.Path;
 import td.wave.PathBuilder;
 import td.wave.PathCoverage;
+import td.wave.PathDefinition;
 import td.wave.Point;
 import td.wave.Vec2;
 
@@ -34,12 +35,13 @@ class BuiltInLevelCatalogEngineTest {
      * unsmoothed corners would not - i.e. a cell only the wild Bezier sweep itself reaches.
      */
     private static Point aCellOnlyTheSmoothedCurveCovers(LevelDefinition level) {
-        List<Vec2> rawPolyline = level.path().stream()
+        PathDefinition path = level.paths().getFirst();
+        List<Vec2> rawPolyline = path.corners().stream()
                 .map(cell -> new Vec2(cell.x() * SCALE + (SCALE / 2.0), cell.y() * SCALE + (SCALE / 2.0)))
                 .toList();
         Set<Point> straightCornerCoverage = PathCoverage.unbuildableCells(rawPolyline, SCALE, level.width(), level.height());
 
-        Path smoothedPath = PathBuilder.build(level.path(), level.smoothing(), SCALE);
+        Path smoothedPath = PathBuilder.build(path.corners(), path.smoothing(), SCALE);
         Set<Point> smoothedCoverage = PathCoverage.unbuildableCells(smoothedPath.points(), SCALE, level.width(), level.height());
 
         return smoothedCoverage.stream()

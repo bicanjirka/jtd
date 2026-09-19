@@ -2,6 +2,8 @@ package td.ui;
 
 import td.level.LevelDefinition;
 import td.wave.PathBuilder;
+import td.wave.PathColor;
+import td.wave.PathDefinition;
 import td.wave.Vec2;
 
 import javax.swing.BorderFactory;
@@ -145,7 +147,7 @@ public class PanelLevelSelect extends JPanel {
         JPanel stats = new JPanel(new GridLayout(1, 3, 10, 0));
         stats.setOpaque(false);
         stats.setBorder(new EmptyBorder(16, 0, 12, 0));
-        stats.add(buildStat("WAVES", String.valueOf(level.waves().size()), accent));
+        stats.add(buildStat("WAVES", String.valueOf(level.paths().getFirst().waves().size()), accent));
         stats.add(buildStat("CREDITS", "$" + level.startingCredits(), accent));
         stats.add(buildStat("LIVES", String.valueOf(level.startingLives()), accent));
         south.add(stats);
@@ -300,22 +302,36 @@ public class PanelLevelSelect extends JPanel {
             this.setPreferredSize(new Dimension(200, 150));
         }
 
-        private static List<Point2D.Float> mapToBounds(List<Vec2> points, int width, int height, int margin) {
-            if (points.isEmpty()) {
-                return List.of();
-            }
+        /**
+         * The bounds of every path's points together, not one path in isolation - drawing two
+         * differently-routed paths through independently-computed bounds would scale each one
+         * into the same box at a different scale, which draws them in two incompatible
+         * coordinate systems on top of each other.
+         */
+        private static double[] sharedBounds(List<List<Vec2>> everyPathsPoints) {
             double minX = Double.MAX_VALUE;
             double maxX = -Double.MAX_VALUE;
             double minY = Double.MAX_VALUE;
             double maxY = -Double.MAX_VALUE;
-            for (Vec2 p : points) {
-                minX = Math.min(minX, p.x());
-                maxX = Math.max(maxX, p.x());
-                minY = Math.min(minY, p.y());
-                maxY = Math.max(maxY, p.y());
+            for (List<Vec2> points : everyPathsPoints) {
+                for (Vec2 p : points) {
+                    minX = Math.min(minX, p.x());
+                    maxX = Math.max(maxX, p.x());
+                    minY = Math.min(minY, p.y());
+                    maxY = Math.max(maxY, p.y());
+                }
             }
-            double spanX = Math.max(1, maxX - minX);
-            double spanY = Math.max(1, maxY - minY);
+            return new double[] {minX, maxX, minY, maxY};
+        }
+
+        private static List<Point2D.Float> mapToBounds(List<Vec2> points, double[] bounds, int width, int height, int margin) {
+            if (points.isEmpty()) {
+                return List.of();
+            }
+            double minX = bounds[0];
+            double spanX = Math.max(1, bounds[1] - bounds[0]);
+            double minY = bounds[2];
+            double spanY = Math.max(1, bounds[3] - bounds[2]);
             float innerWidth = width - margin * 2f;
             float innerHeight = height - margin * 2f;
 
@@ -356,15 +372,32 @@ public class PanelLevelSelect extends JPanel {
                 }
             }
 
-            List<Vec2> points = PathBuilder.build(this.level.path(), this.level.smoothing(), 1).points();
-            List<Point2D.Float> mapped = mapToBounds(points, width, height, 14);
-            if (mapped.size() >= 2) {
+            List<PathDefinition> paths = this.level.paths();
+            List<List<Vec2>> everyPathsPoints = paths.stream()
+                    .map(path -> PathBuilder.build(path.corners(), path.smoothing(), 1).points())
+                    .toList();
+            double[] bounds = sharedBounds(everyPathsPoints);
+
+            for (int i = 0; i < paths.size(); i++) {
+                List<Point2D.Float> mapped = mapToBounds(everyPathsPoints.get(i), bounds, width, height, 14);
+                if (mapped.size() < 2) {
+                    continue;
+                }
+                // A path that never called withColor stays PathColor.DEFAULT (white), which
+                // would look flat against every level's own themed accent - falling back to the
+                // card's accent there preserves today's single-path look exactly, and only a
+                // path with a real, authored color draws in that color instead.
+                PathColor pathColor = paths.get(i).color();
+                Color strokeColor = pathColor.equals(PathColor.DEFAULT)
+                        ? this.accent
+                        : new Color(pathColor.r(), pathColor.g(), pathColor.b());
+
                 GeneralPath outline = new GeneralPath();
                 outline.moveTo(mapped.getFirst().x, mapped.getFirst().y);
-                for (int i = 1; i < mapped.size(); i++) {
-                    outline.lineTo(mapped.get(i).x, mapped.get(i).y);
+                for (int p = 1; p < mapped.size(); p++) {
+                    outline.lineTo(mapped.get(p).x, mapped.get(p).y);
                 }
-                g2.setColor(new Color(this.accent.getRed(), this.accent.getGreen(), this.accent.getBlue(), 150));
+                g2.setColor(new Color(strokeColor.getRed(), strokeColor.getGreen(), strokeColor.getBlue(), 150));
                 g2.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                 g2.draw(outline);
 
@@ -375,7 +408,7 @@ public class PanelLevelSelect extends JPanel {
                 Point2D.Float end = mapped.getLast();
                 Point2D.Float beforeEnd = mapped.get(Math.max(0, mapped.size() - 2));
                 double angle = Math.atan2(end.y - beforeEnd.y, end.x - beforeEnd.x);
-                g2.setColor(this.accent);
+                g2.setColor(strokeColor);
                 g2.fill(arrowShape(end.x, end.y, angle));
             }
 

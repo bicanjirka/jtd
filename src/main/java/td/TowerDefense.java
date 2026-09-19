@@ -431,8 +431,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private void setWavePreview() {
         WaveProgress progress = this.engine.waveProgress();
         this.gameConsole.getWaveInfo().clearWaves();
-        progress.current().ifPresent(w -> this.gameConsole.getWaveInfo().setWaveCur(progress.currentNumber(), w));
-        progress.next().ifPresent(w -> this.gameConsole.getWaveInfo().setWaveNext(progress.nextNumber(), w));
+        if (!progress.current().isEmpty()) {
+            this.gameConsole.getWaveInfo().setWaveCur(progress.currentNumber(), progress.current());
+        }
+        if (!progress.next().isEmpty()) {
+            this.gameConsole.getWaveInfo().setWaveNext(progress.nextNumber(), progress.next());
+        }
     }
 
     private void nextWave() {
