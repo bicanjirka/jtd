@@ -1,5 +1,8 @@
 import td.TowerDefense;
 import td.economy.EconomyDelta;
+import td.enemy.EnemyCatalog;
+import td.enemy.EnemyDefinition;
+import td.enemy.EnemyMob;
 import td.level.LevelDefinition;
 import td.util.GameWorld;
 
@@ -83,6 +86,7 @@ public class Driver {
             case "menu" -> returnToMenu();
             case "setcredits" -> setCredits(rest.trim());
             case "setlives" -> setLives(rest.trim());
+            case "spawn" -> spawnEnemy(rest.trim());
             case "sleep" -> Thread.sleep(Long.parseLong(rest.trim()));
             case "quit" -> quit();
             default -> System.out.println("ERROR: unknown command '" + cmd + "'");
@@ -369,6 +373,21 @@ public class Driver {
         int target = Integer.parseInt(arg.trim());
         context.economy().apply(EconomyDelta.lives(target - context.economy().getLives()));
         System.out.println("OK setlives " + target + " (lives=" + context.economy().getLives() + ")");
+    }
+
+    // Spawns one instance of an exact EnemyCatalog id - unlike the game's own 'x' debug
+    // keybinding (GameEngine.debugSpawnNextCatalogEnemy), which cycles through
+    // EnemyCatalog.ids() in registration order and needs counting keypresses to reach a
+    // specific one, this goes straight to the id asked for, immune to that order ever
+    // changing. Mirrors debugSpawnNextCatalogEnemy's own mechanism (definition's own
+    // baseHealth/price, delay 0, level 1) rather than inventing a second spawn path.
+    private static void spawnEnemy(String id) throws Exception {
+        GameWorld context = getGameWorld();
+        EnemyCatalog catalog = context.getEnemyCatalog();
+        EnemyDefinition definition = catalog.get(id);
+        EnemyMob mob = catalog.spawn(id, context, 0, definition.baseHealth(), definition.price(), 1);
+        context.enemies().add(mob);
+        System.out.println("OK spawn " + id);
     }
 
     private static void quit() {
