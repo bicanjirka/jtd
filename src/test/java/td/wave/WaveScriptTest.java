@@ -4,11 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.enemy.BodyArchetype;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
-import td.enemy.EnemyMob;
-import td.enemy.FixedMovement;
 import td.util.GameStartupException;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -92,8 +88,8 @@ class WaveScriptTest {
 
     @Test
     void aPerLevelCustomIdResolvesTheSameWayABuiltInDoes() {
-        EnemyDefinition tankySquare = new EnemyDefinition("tankySquare", "Tanky Square", "", 100, 5, 1.28f, 1f,
-                EnemyMob.Type.NORMAL, BodyArchetype.SQUARE, new FixedMovement(), List.of(), List.of());
+        EnemyDefinition tankySquare = EnemyDefinition.of("tankySquare", "Tanky Square", 100, 5, 1.28f,
+                BodyArchetype.SQUARE);
         EnemyCatalog perLevelCatalog = EnemyCatalog.builtIn();
         perLevelCatalog.register(tankySquare);
 

@@ -6,8 +6,6 @@ import td.fixtures.WorldFixtures;
 import td.util.GameStartupException;
 import td.util.GameWorld;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,15 +42,13 @@ class EnemyCatalogTest {
     @Test
     void cloneAndAdjustRegistersAnIndependentDefinitionUnderTheNewIdWithoutMutatingTheOriginal() {
         EnemyCatalog catalog = new EnemyCatalog();
-        EnemyDefinition square = new EnemyDefinition("s", "Square", "", 100, 5, 1.28f, 1f, EnemyMob.Type.NORMAL,
-                BodyArchetype.SQUARE, new RotorMovement(0.1f), List.of(), List.of());
+        EnemyDefinition square = EnemyDefinition.of("s", "Square", 100, 5, 1.28f, BodyArchetype.SQUARE)
+                .withMovement(new RotorMovement(0.1f));
         catalog.register(square);
 
         // "a Square with double the usual resistance for this one level" - the feature request's own example
         EnemyDefinition tankySquare = catalog.cloneAndAdjust("s", "tankySquare",
-                d -> new EnemyDefinition(d.id(), d.displayName(), d.description(), d.baseHealth(), d.price(),
-                        d.baseSpeed(), d.healthDivisor() / 2f,
-                        d.mobType(), d.archetype(), d.movement(), d.traits(), d.abilities()));
+                d -> d.withHealthDivisor(d.healthDivisor() / 2f));
 
         assertThat(catalog.get("s").healthDivisor()).isEqualTo(1f);
         assertThat(catalog.get("tankySquare")).isEqualTo(tankySquare);
