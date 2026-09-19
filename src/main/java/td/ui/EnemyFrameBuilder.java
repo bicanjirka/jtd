@@ -5,11 +5,13 @@ import td.enemy.AbstractEnemyMob;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMobVisitor;
+import td.enemy.Rank;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.Palette;
+import td.ui.render.RankBadge;
 import td.ui.render.StatusMarkerDraw;
 
 import java.util.ArrayList;
@@ -78,6 +80,16 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         };
     }
 
+    private static RankBadge badgeFor(Rank rank) {
+        return switch (rank) {
+            case GRUNT -> RankBadge.NONE;
+            case SOLDIER -> RankBadge.ONE_CHEVRON;
+            case VETERAN -> RankBadge.TWO_CHEVRON;
+            case ELITE -> RankBadge.STAR;
+            case BOSS -> RankBadge.SKULL;
+        };
+    }
+
     public List<EnemyDraw> build() {
         return this.draws;
     }
@@ -100,7 +112,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         } else if (!mob.isInactive()) {
             float x = lerp(mob.getPrevX(), mob.getX(), this.interpolationAlpha);
             float y = lerp(mob.getPrevY(), mob.getY(), this.interpolationAlpha);
-            this.draws.add(new EnemyBodyDraw(palette, x, y, facingRadians, scale, mob.getHealthFraction()));
+            this.draws.add(new EnemyBodyDraw(palette, x, y, facingRadians, scale, mob.getHealthFraction(),
+                    badgeFor(mob.getRank())));
             this.markers(mob, x, y, scale);
             this.critSpark(mob, x, y, scale);
         }
