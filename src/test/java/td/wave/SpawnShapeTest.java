@@ -3,6 +3,8 @@ package td.wave;
 import org.junit.jupiter.api.Test;
 import td.util.GameStartupException;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -27,23 +29,25 @@ class SpawnShapeTest {
     }
 
     @Test
-    void bossIsOneMemberDoubleSizeHalfSpeedDoubleBounty() {
-        SpawnShape shape = SpawnShape.boss();
+    void armoredIsOneMemberWithNoMultiplierChangeButATraitOverride() {
+        SpawnShape shape = SpawnShape.armored();
 
         assertThat(shape.members()).isEqualTo(1);
-        assertThat(shape.sizeMultiplier()).isEqualTo(2.0f);
-        assertThat(shape.speedMultiplier()).isEqualTo(0.5f);
-        assertThat(shape.bountyMultiplier()).isEqualTo(2.0f);
+        assertThat(shape.sizeMultiplier()).isEqualTo(1f);
+        assertThat(shape.speedMultiplier()).isEqualTo(1f);
+        assertThat(shape.healthMultiplier()).isEqualTo(1f);
+        assertThat(shape.bountyMultiplier()).isEqualTo(1f);
+        assertThat(shape.traitOverride()).isPresent();
     }
 
     @Test
-    void eliteIsOneMemberWithMoreSizeHealthAndBounty() {
-        SpawnShape shape = SpawnShape.elite();
-
-        assertThat(shape.members()).isEqualTo(1);
-        assertThat(shape.sizeMultiplier()).isEqualTo(1.5f);
-        assertThat(shape.healthMultiplier()).isEqualTo(2.0f);
-        assertThat(shape.bountyMultiplier()).isEqualTo(1.5f);
+    void everyOtherShapeHasNoTraitOverride() {
+        assertThat(SpawnShape.normal().traitOverride()).isEmpty();
+        assertThat(SpawnShape.swarm(2).traitOverride()).isEmpty();
+        assertThat(SpawnShape.line(2).traitOverride()).isEmpty();
+        assertThat(SpawnShape.flank().traitOverride()).isEmpty();
+        assertThat(SpawnShape.column(2).traitOverride()).isEmpty();
+        assertThat(SpawnShape.drip(2).traitOverride()).isEmpty();
     }
 
     @Test
@@ -113,7 +117,12 @@ class SpawnShapeTest {
 
     @Test
     void bountySharesReflectTheShapesBountyMultiplier() {
-        int[] shares = SpawnShape.boss().bountyShares(10);
+        // No built-in shape carries a non-1 bountyMultiplier any more (armored is trait-only) -
+        // this is SpawnShape's own test, so it reaches the canonical constructor directly to
+        // prove bountyShares multiplies before it splits.
+        SpawnShape doubledBounty = new SpawnShape(1, 1f, 1f, 1f, 2.0f, Optional.empty(), SpawnSpread.NONE, 0.0);
+
+        int[] shares = doubledBounty.bountyShares(10);
 
         assertThat(shares).containsExactly(20);
     }

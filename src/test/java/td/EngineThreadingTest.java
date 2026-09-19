@@ -29,7 +29,7 @@ class EngineThreadingTest {
     // needs an actual wave to start.
     private static LevelDefinition level(String name, int width, int height) {
         return LevelDefinition.unsmoothed(name, "", width, height, LevelFixtures.STRAIGHT_PATH,
-                List.of(new WaveDefinition("3 c", 2, 5, Rank.GRUNT)), 100, 5);
+                List.of(new WaveDefinition("3 c", Rank.GRUNT)), 100, 5);
     }
 
     /**

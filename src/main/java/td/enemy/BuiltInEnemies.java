@@ -6,17 +6,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The built-in {@link EnemyDefinition}s. {@link EnemyCatalog#builtIn()} pre-registers all of
- * these under their wave-script ids. Two groups:
+ * The built-in {@link RankedEnemy} ladders and standalone {@link EnemyDefinition}s.
+ * {@link EnemyCatalog#builtIn()} pre-registers all of these under their wave-script ids. Two
+ * groups:
  * <p>
- * {@code SIMPLE}/{@code ARMORED}/{@code FRENZIED}/{@code GHOST} are the four basic mobs,
- * reproducing via {@link DefinedEnemyMob} the exact wave-spawned behavior of the per-type leaf
- * classes that used to exist. <strong>A definition is named for what it does; its
+ * {@code SIMPLE}/{@code ARMORED}/{@code FRENZIED}/{@code GHOST} are the four basic mobs, each a
+ * full five-rank ladder - every rank above {@link Rank#GRUNT} simply doubles the rank before it's
+ * health and scales its bounty to match, {@code withHealthAndPrice} being the only thing each
+ * step changes, except {@code SIMPLE} itself: its own ladder is this feature's demonstration that
+ * a later rank can both add a trait (at {@link Rank#ELITE}) and replace it with a stronger one
+ * (at {@link Rank#BOSS}) via the same identified-trait mechanism, following the shape of the
+ * request's own pseudocode. <strong>A definition is named for what it does; its
  * {@link BodyArchetype} is what names the shape it is drawn as</strong> - so {@code ARMORED} is
  * a square and {@code FRENZIED} a triangle, the same way {@code SniperTower} is drawn as a
- * triangle. Their own
- * {@code baseHealth}/{@code price} are placeholders only ever consulted if something
- * ability-spawns one directly (the Warden's reinforcement ability does, for {@code SIMPLE}).
+ * triangle. Every number here is still a placeholder for a later balance pass, the same as
+ * before this feature - only the axis they scale along changed, from a wave-authored level to an
+ * enemy-authored rank.
  * <p>
  * {@code WARDEN_1}/{@code WARDEN_EGG_1}/{@code WARDEN_2}/{@code WARDEN_EGG_2}/{@code WARDEN_3}/
  * {@code WARDEN_EGG_3} are the boss encounter's finite, six-definition, strictly linear spawn
@@ -24,31 +29,54 @@ import java.util.List;
  * ability spawns its own stage's egg; each egg's {@code Once} ability hatches into the next
  * (weaker) Warden stage if left alive for its full delay, via {@code consumesSelf} - a
  * transformation, not a kill. The final egg carries no ability at all, so the encounter is
- * guaranteed to terminate. Most numbers here (health, price, ability intervals, shield
- * percentages) are still placeholders for a later balance pass, like every other number in
- * this feature - {@link #WARDEN_FLAT_RESIST} is the one exception, tuned against the actual
- * per-hit damage scale every attack tower operates at (see its own comment).
+ * guaranteed to terminate. These six stay single-rank (registered as plain
+ * {@link EnemyDefinition}s, resolving to {@link Rank#GRUNT} at every requested rank) - the Warden
+ * fight is staged through its own six hand-authored definitions already, not through rank.
  */
 final class BuiltInEnemies {
 
-    static final EnemyDefinition SIMPLE = EnemyDefinition
-            .of("c", "Simple mob", 50, 2, 1.28f, BodyArchetype.CIRCLE)
-            .withDescription("No special abilities.");
-    static final EnemyDefinition ARMORED = EnemyDefinition
-            .of("s", "Armored mob", 80, 3, 1.28f, BodyArchetype.SQUARE)
-            .withDescription("Takes less damage. Immune to critical hits.")
-            .withMovement(new RotorMovement((float) Math.toRadians(5.0)))
-            .withTraits(List.of(new PercentResistTrait(0.8f), new CriticalImmunityTrait()));
-    static final EnemyDefinition FRENZIED = EnemyDefinition
-            .of("t", "Frenzied mob", 60, 3, 1.28f, BodyArchetype.TRIANGLE)
-            .withDescription("Increases speed as it takes damage.")
-            .withMovement(new RotorMovement((float) Math.toRadians(-5.0)))
-            .withTraits(List.of(new HurtSpeedTrait(1.4f)));
-    static final EnemyDefinition GHOST = EnemyDefinition
-            .of("g", "Ghost mob", 100, 4, 1.28f, BodyArchetype.GHOST)
-            .withDescription("Invisible to all towers. Area damage hurts them.")
-            .withMobType(EnemyMob.Type.INVISIBLE)
-            .withHealthDivisor(5f);
+    static final RankedEnemy SIMPLE = RankedEnemy
+            .startingAt(EnemyDefinition.of("c", "Simple mob", 50, 2, 1.28f, BodyArchetype.CIRCLE)
+                    .withDescription("No special abilities."))
+            .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(100, 3))
+            .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(200, 5))
+            .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(400, 8)
+                    .withDescription("No special abilities, but a faint shield has started forming.")
+                    .withAdditionalTraits(List.of(IdentifiedTrait.named("shield", new PercentResistTrait(0.85f)))))
+            .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(800, 15)
+                    .withDescription("No special abilities, but its shield has grown formidable.")
+                    .withAdditionalTraits(List.of(IdentifiedTrait.named("shield", new PercentResistTrait(0.7f)))))
+            .build();
+    static final RankedEnemy ARMORED = RankedEnemy
+            .startingAt(EnemyDefinition.of("s", "Armored mob", 80, 3, 1.28f, BodyArchetype.SQUARE)
+                    .withDescription("Takes less damage. Immune to critical hits.")
+                    .withMovement(new RotorMovement((float) Math.toRadians(5.0)))
+                    .withTraits(List.of(new PercentResistTrait(0.8f), new CriticalImmunityTrait())))
+            .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(160, 5))
+            .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(320, 8))
+            .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(640, 13))
+            .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1280, 22))
+            .build();
+    static final RankedEnemy FRENZIED = RankedEnemy
+            .startingAt(EnemyDefinition.of("t", "Frenzied mob", 60, 3, 1.28f, BodyArchetype.TRIANGLE)
+                    .withDescription("Increases speed as it takes damage.")
+                    .withMovement(new RotorMovement((float) Math.toRadians(-5.0)))
+                    .withTraits(List.of(new HurtSpeedTrait(1.4f))))
+            .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(120, 5))
+            .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(240, 8))
+            .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(480, 13))
+            .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(960, 22))
+            .build();
+    static final RankedEnemy GHOST = RankedEnemy
+            .startingAt(EnemyDefinition.of("g", "Ghost mob", 100, 4, 1.28f, BodyArchetype.GHOST)
+                    .withDescription("Invisible to all towers. Area damage hurts them.")
+                    .withMobType(EnemyMob.Type.INVISIBLE)
+                    .withHealthDivisor(5f))
+            .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(200, 6))
+            .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(400, 10))
+            .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(800, 16))
+            .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1600, 28))
+            .build();
     static final EnemyDefinition WARDEN_EGG_3 = EnemyDefinition
             .of("wardenEgg3", "Warden's Final Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)
             .withDescription("Must be defeated to end the encounter - it will not hatch again.");

@@ -4,9 +4,9 @@ import td.wave.Vec2;
 
 /**
  * A mob's birth parameters as one value - its spawn delay (already converted to ticks), health,
- * bounty, the size/speed/damage-taken multipliers its {@code SpawnShape} applies, its formation
- * offset, and which of the level's paths it walks - so {@link AbstractEnemyMob}'s constructor
- * takes one argument instead of growing a new parameter for every spawn-shape mechanism.
+ * bounty, the size/speed multipliers its {@code SpawnShape} applies, its formation offset, and
+ * which of the level's paths it walks - so {@link AbstractEnemyMob}'s constructor takes one
+ * argument instead of growing a new parameter for every spawn-shape mechanism.
  * {@link #atSlot(double, float, int, int)} is the identity form: today's spawn behaviour,
  * unmultiplied, on the path centre, on path 0.
  * <p>
@@ -16,7 +16,7 @@ import td.wave.Vec2;
  * once, at construction - see its own doc comment for why that has to happen only once.
  */
 public record SpawnParameters(int delayTicks, int health, int price, float sizeMultiplier, float speedMultiplier,
-                               float damageTakenMultiplier, Vec2 localOffset, int pathIndex) {
+                               Vec2 localOffset, int pathIndex) {
 
     /**
      * How many ticks of spawn delay one slot of wave ordering is worth, at a mob's own speed.
@@ -39,7 +39,7 @@ public record SpawnParameters(int delayTicks, int health, int price, float sizeM
      * egg) uses to inherit its parent's own path instead of defaulting to path 0.
      */
     public static SpawnParameters atSlot(double slotPosition, float baseSpeed, int health, int price, int pathIndex) {
-        return of(slotPosition, baseSpeed, health, price, 1f, 1f, 1f, new Vec2(0, 0), pathIndex);
+        return of(slotPosition, baseSpeed, health, price, 1f, 1f, new Vec2(0, 0), pathIndex);
     }
 
     /**
@@ -47,15 +47,12 @@ public record SpawnParameters(int delayTicks, int health, int price, float sizeM
      * spawned on) needs to name.
      */
     public static SpawnParameters of(double slotPosition, float baseSpeed, int health, int price,
-                                      float sizeMultiplier, float speedMultiplier, float damageTakenMultiplier,
-                                      Vec2 localOffset) {
-        return of(slotPosition, baseSpeed, health, price, sizeMultiplier, speedMultiplier, damageTakenMultiplier,
-                localOffset, 0);
+                                      float sizeMultiplier, float speedMultiplier, Vec2 localOffset) {
+        return of(slotPosition, baseSpeed, health, price, sizeMultiplier, speedMultiplier, localOffset, 0);
     }
 
     public static SpawnParameters of(double slotPosition, float baseSpeed, int health, int price,
-                                      float sizeMultiplier, float speedMultiplier, float damageTakenMultiplier,
-                                      Vec2 localOffset, int pathIndex) {
+                                      float sizeMultiplier, float speedMultiplier, Vec2 localOffset, int pathIndex) {
         float speed = baseSpeed * speedMultiplier;
         // A slot at position 0, or a mob with no speed of its own (an ability-spawned egg), is
         // never delayed - guarded explicitly rather than dividing by a possibly-zero speed,
@@ -63,7 +60,6 @@ public record SpawnParameters(int delayTicks, int health, int price, float sizeM
         int delayTicks = slotPosition <= 0 || speed <= 0
                 ? 0
                 : (int) Math.round(DELAY_TICKS_PER_SLOT * slotPosition / speed);
-        return new SpawnParameters(delayTicks, health, price, sizeMultiplier, speedMultiplier, damageTakenMultiplier,
-                localOffset, pathIndex);
+        return new SpawnParameters(delayTicks, health, price, sizeMultiplier, speedMultiplier, localOffset, pathIndex);
     }
 }

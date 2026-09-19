@@ -23,22 +23,22 @@ class PathDefinitionTest {
 
     @Test
     void mutatingTheListPassedInDoesNotChangeTheStoredWaves() {
-        List<WaveDefinition> waves = new ArrayList<>(List.of(new WaveDefinition("c", 1, 1, Rank.GRUNT)));
+        List<WaveDefinition> waves = new ArrayList<>(List.of(new WaveDefinition("c", Rank.GRUNT)));
         PathDefinition path = PathDefinition.of(List.of(new Point(0, 0), new Point(1, 0)), waves);
 
-        waves.add(new WaveDefinition("s", 1, 1, Rank.GRUNT));
+        waves.add(new WaveDefinition("s", Rank.GRUNT));
 
-        assertThat(path.waves()).containsExactly(new WaveDefinition("c", 1, 1, Rank.GRUNT));
+        assertThat(path.waves()).containsExactly(new WaveDefinition("c", Rank.GRUNT));
     }
 
     @Test
     void theStoredCornersAndWavesCannotBeMutatedThroughTheirAccessors() {
         PathDefinition path = PathDefinition.of(
-                List.of(new Point(0, 0), new Point(1, 0)), List.of(new WaveDefinition("c", 1, 1, Rank.GRUNT)));
+                List.of(new Point(0, 0), new Point(1, 0)), List.of(new WaveDefinition("c", Rank.GRUNT)));
 
         assertThatThrownBy(() -> path.corners().add(new Point(2, 0)))
                 .isInstanceOf(UnsupportedOperationException.class);
-        assertThatThrownBy(() -> path.waves().add(new WaveDefinition("s", 1, 1, Rank.GRUNT)))
+        assertThatThrownBy(() -> path.waves().add(new WaveDefinition("s", Rank.GRUNT)))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 

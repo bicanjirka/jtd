@@ -74,7 +74,7 @@ class GameWorldTest {
     void startingAWaveNotifiesWaveStartListeners() {
         AtomicInteger waveStartedCalls = new AtomicInteger();
         context.waves().addListener(waveStartedCalls::incrementAndGet);
-        Wave wave = new Wave(context, 100, 5, Rank.GRUNT, WaveScript.parse("c c", EnemyCatalog.builtIn()), 1L);
+        Wave wave = new Wave(context, WaveScript.parse("c c", Rank.GRUNT, EnemyCatalog.builtIn()), 1L);
 
         context.startWave(List.of(wave));
 

@@ -11,14 +11,12 @@ import java.util.function.Function;
  * class. Built once, at {@link EnemyCatalog} registration time, not per-spawn; {@link Trait}s
  * and {@link Ability}s are shared across every mob spawned from this definition.
  * <p>
- * Carries its own {@code baseHealth}/{@code price}, but a v1 wave-spawned enemy ignores
- * them: its health and price are supplied per-wave, uniformly across whatever mix of types
- * that wave spawns (matching today's {@code WaveDefinition.hp()}/{@code price()} - see
- * {@code EnemyCatalog.spawn}'s explicit parameters, which override these). Only an
- * *ability*-spawned enemy (a {@code SpawnEnemiesAction}, resolved through
- * {@code DefinedEnemyMob}'s own ability execution) reads {@link #baseHealth()}/{@link #price()}
- * directly, since it has no wave slot of its own to inherit stats from - the Warden's boss egg
- * chain is what actually needs this.
+ * Carries its own {@code baseHealth}/{@code price}, scoped to whichever {@link Rank} this
+ * particular definition represents within its {@link RankedEnemy} ladder - a rank-1 Circle has
+ * the same health and bounty in every wave that spawns it. A wave-spawned enemy (via
+ * {@code td.wave.Wave}) and an ability-spawned one (a {@code SpawnEnemiesAction}, resolved
+ * through {@code DefinedEnemyMob}'s own ability execution) both read {@link #baseHealth()}/
+ * {@link #price()} directly now - there is no separate "wave supplies the numbers" path left.
  *
  * @param id            the wave-script token this definition spawns under - built-ins use a
  *                      single letter (matching today's {@code c}/{@code s}/{@code t}/
@@ -28,16 +26,15 @@ import java.util.function.Function;
  *                      {@link EnemyCatalog} is in scope.
  * @param displayName   shown as the first line of the in-game info text.
  * @param description   shown as the second line of the in-game info text.
- * @param baseHealth    only consulted for an ability-spawned instance of this definition -
- *                      ignored for a wave-spawned one (see above).
- * @param price         only consulted for an ability-spawned instance of this definition -
- *                      ignored for a wave-spawned one (see above).
+ * @param baseHealth    this rank's own base health, before per-type {@code healthDivisor}
+ *                      adjustment and a spawn shape's own multiplier.
+ * @param price         this rank's own bounty per kill, and the score penalty if one leaks.
  * @param baseSpeed     pixels per tick before any active effect - {@code 0} means the mob never
  *                      advances along the path at all (the boss egg), which needs no separate
  *                      "stationary" flag: {@code distanceIntoLap} simply never accumulates.
- * @param healthDivisor the wave-supplied base health is divided by this before any other
- *                      scaling - generalizes Ghost's flat {@code /5}. {@code 1} for every
- *                      definition that doesn't need one.
+ * @param healthDivisor {@code baseHealth} is divided by this before any other scaling -
+ *                      generalizes Ghost's flat {@code /5}. {@code 1} for every definition that
+ *                      doesn't need one.
  * @param mobType       which {@link EnemyMob.Type} this definition spawns as - what
  *                      type-filtering targeting queries (see {@code td.tower.targeting}) see,
  *                      independent of anything a {@link Trait} does.
@@ -95,6 +92,16 @@ public record EnemyDefinition(
      */
     public List<Ability> abilities() {
         return this.abilitySlots.stream().map(IdentifiedAbility::ability).toList();
+    }
+
+    /**
+     * A rank ladder step's ordinary shape: the next rank's own health and bounty, everything
+     * else (traits included) unchanged from the rank before it - see {@link RankedEnemy}.
+     */
+    public EnemyDefinition withHealthAndPrice(int baseHealth, int price) {
+        return new EnemyDefinition(this.id, this.displayName, this.description, baseHealth, price,
+                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
+                this.abilitySlots);
     }
 
     public EnemyDefinition withDescription(String description) {

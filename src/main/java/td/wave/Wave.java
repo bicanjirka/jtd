@@ -17,7 +17,11 @@ import java.util.Set;
  * demand. Parsing the token string into content is {@link WaveScript}'s job - this class only
  * spawns it: each spawn slot becomes zero or more {@code EnemyMob}s (an {@link EmptySlot}
  * spacer spawns none), with a delay derived from its position in the flattened content, so a
- * later slot spawns later regardless of how many mobs the slots before it produced.
+ * later slot spawns later regardless of how many mobs the slots before it produced. Each
+ * {@link EnemySlot} already carries its own fully-resolved {@code EnemyDefinition} and effective
+ * {@link Rank} by the time {@code WaveScript} builds it, so this class needs no wave-wide
+ * health/price/rank of its own - only the shape's own multipliers and trait override are
+ * arithmetic here.
  * <p>
  * <strong>Spawning is deferred to {@link #spawn()}</strong>, which is what makes a level load
  * a single atomic publication. An {@code EnemyMob} binds to the world's installed path when it
@@ -40,59 +44,55 @@ public class Wave {
     private static final double PATH_WIDTH_MARGIN_FRACTION = 0.7;
 
     private final GameWorld gameWorld;
-    private final int baseHealth;
-    private final int basePrice;
-    private final Rank rank;
     private final WaveContent content;
     private final long scatterSeed;
     private final int pathIndex;
     private final float speedMultiplier;
 
     /**
-     * On path 0 at {@code 1x} speed - every pre-existing caller (every wave, before this
-     * feature, belonged to the level's only path at its only pace) needs to name neither.
+     * On path 0 at {@code 1x} speed - every pre-existing caller (every wave, before multiple
+     * paths existed) needs to name neither.
      */
-    public Wave(GameWorld gameWorld, int baseHealth, int basePrice, Rank rank, WaveContent content, long scatterSeed) {
-        this(gameWorld, baseHealth, basePrice, rank, content, scatterSeed, 0, 1f);
+    public Wave(GameWorld gameWorld, WaveContent content, long scatterSeed) {
+        this(gameWorld, content, scatterSeed, 0, 1f);
     }
 
-    public Wave(GameWorld gameWorld, int baseHealth, int basePrice, Rank rank, WaveContent content, long scatterSeed,
-                int pathIndex, float speedMultiplier) {
+    public Wave(GameWorld gameWorld, WaveContent content, long scatterSeed, int pathIndex, float speedMultiplier) {
         this.gameWorld = gameWorld;
-        this.baseHealth = baseHealth;
-        this.basePrice = basePrice;
-        this.rank = rank;
         this.content = content;
         this.scatterSeed = scatterSeed;
         this.pathIndex = pathIndex;
         this.speedMultiplier = speedMultiplier;
     }
 
-    private static List<EnemyMob> spawnEnemies(GameWorld gameWorld, WaveContent content, int baseHealth, int basePrice,
-                                                 Rank rank, long scatterSeed, int pathIndex, float speedMultiplier) {
+    private static List<EnemyMob> spawnEnemies(GameWorld gameWorld, WaveContent content, long scatterSeed,
+                                                 int pathIndex, float speedMultiplier) {
         List<EnemyMob> enemies = new ArrayList<>();
         int delay = 0;
         for (WaveSlot slot : content.spawnSequence()) {
-            enemies.addAll(spawnSlot(slot, gameWorld, delay, baseHealth, basePrice, rank, scatterSeed, pathIndex, speedMultiplier));
+            enemies.addAll(spawnSlot(slot, gameWorld, delay, scatterSeed, pathIndex, speedMultiplier));
             delay++;
         }
         return List.copyOf(enemies);
     }
 
-    private static List<EnemyMob> spawnSlot(WaveSlot slot, GameWorld gameWorld, int delay, int health, int price,
-                                              Rank rank, long scatterSeed, int pathIndex, float speedMultiplier) {
+    private static List<EnemyMob> spawnSlot(WaveSlot slot, GameWorld gameWorld, int delay, long scatterSeed,
+                                              int pathIndex, float speedMultiplier) {
         return switch (slot) {
-            case EnemySlot s -> spawnShaped(s, gameWorld, delay, health, price, rank, scatterSeed, pathIndex, speedMultiplier);
+            case EnemySlot s -> spawnShaped(s, gameWorld, delay, scatterSeed, pathIndex, speedMultiplier);
             case EmptySlot ignored -> List.of();
         };
     }
 
     /**
      * Builds every member of one shaped slot: the shape's health and bounty multipliers are
-     * arithmetic here, against the wave's own base health/price (bounty split exactly, via
-     * {@link SpawnShape#bountyShares}); the size and speed multipliers pass straight through to
-     * {@link SpawnParameters}, which folds them into the mob itself. A member's own slot
-     * position is this slot's index plus its member index scaled by
+     * arithmetic here, against the slot's own resolved definition's {@code baseHealth}/{@code
+     * price} (bounty split exactly, via {@link SpawnShape#bountyShares}); the size and speed
+     * multipliers pass straight through to {@link SpawnParameters}, which folds them into the
+     * mob itself. The shape's own {@link SpawnShape#traitOverride()}, if present, is composed
+     * onto the definition via {@code EnemyDefinition.withAdditionalTraits} before any mob is
+     * built from it - what {@code armored} uses to attach or replace a defensive trait. A
+     * member's own slot position is this slot's index plus its member index scaled by
      * {@link SpawnShape#delaySpacingSlots()} - zero for every shape but Column and Drip, so
      * every other shape's members still share the slot's own position. A member's formation
      * offset comes from {@link SpawnShape#spread()}, drawn from a {@link RandomSource} seeded
@@ -107,14 +107,17 @@ public class Wave {
      * {@link SpawnParameters}, which is what lets a fast path or a called-out fast round affect
      * a mob's speed with no new mechanism: that composed value is stored once as
      * {@code DefinedEnemyMob.shapeSpeedMultiplier} and reused on every {@code doDamage} speed
-     * recompute, the same way a boss's own 50% multiplier already survives combat.
+     * recompute.
      */
-    private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int delay, int baseHealth,
-                                                int basePrice, Rank rank, long scatterSeed, int pathIndex, float speedMultiplier) {
-        EnemyDefinition definition = enemySlot.definition();
+    private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int delay, long scatterSeed,
+                                                int pathIndex, float speedMultiplier) {
+        EnemyDefinition definition = enemySlot.shape().traitOverride()
+                .map(trait -> enemySlot.definition().withAdditionalTraits(List.of(trait)))
+                .orElse(enemySlot.definition());
+        Rank rank = enemySlot.rank();
         SpawnShape shape = enemySlot.shape();
-        int health = Math.max(1, Math.round(baseHealth * shape.healthMultiplier()));
-        int[] bountyShares = shape.bountyShares(basePrice);
+        int health = Math.max(1, Math.round(definition.baseHealth() * shape.healthMultiplier()));
+        int[] bountyShares = shape.bountyShares(definition.price());
         double maxRadius = gameWorld.getBoard().scale() * PathCoverage.PATH_WIDTH_CELLS / 2.0 * PATH_WIDTH_MARGIN_FRACTION;
         RandomSource scatter = RandomSource.seeded(scatterSeed * 31 + delay);
         List<EnemyMob> members = new ArrayList<>(shape.members());
@@ -122,8 +125,8 @@ public class Wave {
             double slotPosition = delay + i * shape.delaySpacingSlots();
             Vec2 localOffset = shape.spread().offsetFor(i, shape.members(), maxRadius, scatter);
             SpawnParameters spawnParameters = SpawnParameters.of(slotPosition, definition.baseSpeed(), health,
-                    bountyShares[i], shape.sizeMultiplier(), shape.speedMultiplier() * speedMultiplier,
-                    shape.damageTakenMultiplier(), localOffset, pathIndex);
+                    bountyShares[i], shape.sizeMultiplier(), shape.speedMultiplier() * speedMultiplier, localOffset,
+                    pathIndex);
             members.add(new DefinedEnemyMob(definition, gameWorld, spawnParameters, rank));
         }
         return List.copyOf(members);
@@ -142,6 +145,14 @@ public class Wave {
     }
 
     /**
+     * The effective {@link Rank} the slot spawning {@code definition} resolved to - what the
+     * wave-preview panel reads for its badge (see {@code td.ui.PathWaveRow}).
+     */
+    public Rank rankFor(EnemyDefinition definition) {
+        return this.content.rankFor(definition);
+    }
+
+    /**
      * Builds this wave's enemies against the world as it stands right now, bound to the path
      * currently installed. Called once, when the wave starts - each call produces a fresh,
      * independent set of mobs, so calling it twice would put two copies of the wave on the
@@ -150,21 +161,8 @@ public class Wave {
      * describe a wave that has not run yet.
      */
     public EnemyMob[] spawn() {
-        return spawnEnemies(this.gameWorld, this.content, this.baseHealth, this.basePrice, this.rank, this.scatterSeed,
-                this.pathIndex, this.speedMultiplier)
+        return spawnEnemies(this.gameWorld, this.content, this.scatterSeed, this.pathIndex, this.speedMultiplier)
                 .toArray(new EnemyMob[0]);
-    }
-
-    public int getBaseHealth() {
-        return baseHealth;
-    }
-
-    public int getBasePrice() {
-        return basePrice;
-    }
-
-    public Rank getRank() {
-        return this.rank;
     }
 
     /**

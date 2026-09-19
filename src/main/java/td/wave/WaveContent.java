@@ -1,6 +1,7 @@
 package td.wave;
 
 import td.enemy.EnemyDefinition;
+import td.enemy.Rank;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,6 +32,26 @@ public record WaveContent(List<WaveSlot> spawnSequence) {
             }
         }
         return set;
+    }
+
+    /**
+     * The effective {@link Rank} the slot spawning {@code definition} resolved to - what the
+     * wave-preview panel shows a badge for, since {@link Wave#spawn()} needs no call to answer
+     * this (see {@code td.ui.PathWaveRow}).
+     */
+    public Rank rankFor(EnemyDefinition definition) {
+        for (WaveSlot slot : this.spawnSequence) {
+            switch (slot) {
+                case EnemySlot s -> {
+                    if (s.definition().equals(definition)) {
+                        return s.rank();
+                    }
+                }
+                case EmptySlot ignored -> {
+                }
+            }
+        }
+        throw new IllegalArgumentException("No slot in this wave spawns " + definition.id());
     }
 
     public int enemyCount(EnemyDefinition definition) {

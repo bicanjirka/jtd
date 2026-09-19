@@ -104,22 +104,31 @@ the board by a coloured ring around it. The Aura tower is passive and offers non
 | The Warden | large spiked crest | A boss: armored, periodically summons reinforcements and shields itself and nearby allies, and shields itself again whenever it survives a critical hit. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. Appears as the final wave of Classic Loop. |
 | Reaver     | triangle, path-facing | Speeds up as it's hurt, shrugs off a flat amount of every hit, shields itself once badly wounded, and splits into two Simple mobs on death. Appears in Wild Bezier Sweep's first wave — a level-authored enemy, registered only for that level rather than globally (see `td.level.LevelDefinition.customEnemies`). |
 
+### Rank
+
+Every enemy spawns at one of five named ranks — **Grunt, Soldier, Veteran, Elite, Boss** — shown
+as a badge on its body rather than as a number. A wave declares the rank its slots default to;
+any slot can name a different rank inline, before the enemy id (`elite c`) or before a spawn
+shape (`elite swarm 4 c`). Health and bounty both rise with rank, and a kill's score is weighted
+by it too — a Boss-rank kill is worth disproportionately more than a Grunt-rank one of the same
+bounty. Not every enemy defines all five ranks; asking for one an enemy doesn't have silently
+uses its own highest defined rank instead.
+
 ### Spawn shapes
 
 A wave's script can shape how a slot spawns, not just what it spawns — write the shape's
-keyword before the enemy id (`boss warden1`), or before a member count and the enemy id for the
-shapes that take one (`swarm 4 c`):
+keyword before the enemy id (`armored warden1`), or before a member count and the enemy id for
+the shapes that take one (`swarm 4 c`):
 
-| Shape  | Keyword  | What one slot produces                                                |
-|--------|----------|-------------------------------------------------------------------------|
-| Normal | (none)   | One enemy on the path centre                                            |
-| Boss   | `boss`   | One enemy at 200% size, 50% speed, double bounty                        |
-| Elite  | `elite`  | One enemy at 150% size, more health, 1.5× bounty                        |
-| Swarm  | `swarm`  | *N* enemies at 50% size, scattered off-path, sharing one spawn's bounty and health |
-| Line   | `line`   | *N* enemies spread evenly across the path's width, abreast              |
-| Flank  | `flank`  | Two enemies hugging opposite edges of the path                          |
-| Column | `column` | *N* enemies in a tight single file, closer together than *N* separate spawns |
-| Drip   | `drip`   | *N* enemies stretched over more time than *N* separate spawns           |
+| Shape   | Keyword  | What one slot produces                                                |
+|---------|----------|-------------------------------------------------------------------------|
+| Normal  | (none)   | One enemy on the path centre                                            |
+| Armored | `armored`| One enemy with an extra defensive trait it wouldn't otherwise have — no size, speed, health or bounty change |
+| Swarm   | `swarm`  | *N* enemies at 50% size, scattered off-path, sharing one spawn's bounty and health |
+| Line    | `line`   | *N* enemies spread evenly across the path's width, abreast              |
+| Flank   | `flank`  | Two enemies hugging opposite edges of the path                          |
+| Column  | `column` | *N* enemies in a tight single file, closer together than *N* separate spawns |
+| Drip    | `drip`   | *N* enemies stretched over more time than *N* separate spawns           |
 
 ### Levels
 

@@ -182,8 +182,8 @@ public class GameEngine {
                 // for that.
                 long scatterSeed = ((long) level.name().hashCode() * 31L + pathIndex) * 31L + round;
                 float speedMultiplier = pathDefinition.speedMultiplier() * wd.speedMultiplier();
-                pathWaves.add(new Wave(this.gameWorld, wd.hp(), wd.price(), wd.rank(),
-                        WaveScript.parse(wd.enemies(), catalog), scatterSeed, pathIndex, speedMultiplier));
+                pathWaves.add(new Wave(this.gameWorld, WaveScript.parse(wd.enemies(), wd.rank(), catalog),
+                        scatterSeed, pathIndex, speedMultiplier));
             }
             pathRuntimes.add(new PathRuntime(path, pathWaves, pathDefinition.color()));
         }

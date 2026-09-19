@@ -9,7 +9,6 @@ import td.util.ThreadConfined;
 import td.wave.PathColor;
 import td.wave.Wave;
 
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import java.awt.Color;
@@ -24,10 +23,12 @@ import java.io.Serial;
 import java.util.List;
 
 /**
- * One path's summary within a round: a small color swatch identifying the path, its health/
- * reward/level for this round, and the {@link PanelEnemy} strip showing what it spawns. One of
- * these is stacked per path under {@link PanelWaveInfo}'s current/next side, in path order, so a
- * player can see at a glance which enemies come down which lane.
+ * One path's summary within a round: a small color swatch identifying the path, and the
+ * {@link PanelEnemy} strip showing what it spawns - each preview mob its own resolved health,
+ * bounty and rank badge (the badge lands in a later pass; see {@code td/ui/CLAUDE.md}), since
+ * those numbers are no longer wave-uniform the way they were before enemies carried their own
+ * per-rank stats. One of these is stacked per path under {@link PanelWaveInfo}'s current/next
+ * side, in path order, so a player can see at a glance which enemies come down which lane.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 // Swing components, assigned once by initComponents
@@ -38,9 +39,6 @@ final class PathWaveRow extends JPanel {
     private static final int SWATCH_SIZE = 16;
 
     private final Swatch swatch = new Swatch();
-    private final JLabel healthLabel = new JLabel("0hp");
-    private final JLabel rewardLabel = new JLabel("$0");
-    private final JLabel levelLabel = new JLabel("");
     private final PanelEnemy panelEnemy = new PanelEnemy();
     private GameWorld gameWorld;
 
@@ -59,18 +57,13 @@ final class PathWaveRow extends JPanel {
      * source of truth for a path's color is {@code GameWorld.level().paths()}.
      */
     void setWave(Wave wave) {
-        this.healthLabel.setText(wave.getBaseHealth() + "hp");
-        this.rewardLabel.setText(wave.getBasePrice() + "$");
-        // Interim, until Phase 4 draws a real rank badge on each preview mob instead - the rank
-        // name as text still satisfies "never a number" in the meantime.
-        this.levelLabel.setText(wave.getRank().name());
         if (this.gameWorld != null && wave.getPathIndex() < this.gameWorld.level().pathCount()) {
             this.swatch.color = this.gameWorld.level().paths().get(wave.getPathIndex()).color();
             this.swatch.repaint();
         }
         this.panelEnemy.clearEnemies();
         for (EnemyDefinition e : wave.enemySet()) {
-            this.panelEnemy.addEnemy(e, wave.enemyCount(e), wave.getRank());
+            this.panelEnemy.addEnemy(e, wave.enemyCount(e), wave.rankFor(e));
         }
         this.panelEnemy.recalculateSize();
     }
@@ -92,35 +85,10 @@ final class PathWaveRow extends JPanel {
         c.insets = new Insets(0, 0, 0, 5);
         add(this.swatch, c);
 
-        this.healthLabel.setForeground(new Color(220, 255, 220));
-        c = new GridBagConstraints();
-        c.gridx = 1;
-        c.gridy = 0;
-        c.anchor = GridBagConstraints.WEST;
-        c.insets = new Insets(0, 0, 0, 5);
-        add(this.healthLabel, c);
-
-        this.rewardLabel.setForeground(new Color(220, 255, 220));
-        c = new GridBagConstraints();
-        c.gridx = 2;
-        c.gridy = 0;
-        c.anchor = GridBagConstraints.WEST;
-        c.weightx = 0.01;
-        c.insets = new Insets(0, 0, 0, 5);
-        add(this.rewardLabel, c);
-
-        this.levelLabel.setForeground(new Color(220, 255, 220));
-        c = new GridBagConstraints();
-        c.gridx = 3;
-        c.gridy = 0;
-        c.anchor = GridBagConstraints.EAST;
-        add(this.levelLabel, c);
-
         this.panelEnemy.setMinimumSize(new Dimension(30, 30));
         c = new GridBagConstraints();
         c.gridx = 0;
         c.gridy = 1;
-        c.gridwidth = 4;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.weightx = 0.01;
         c.insets = new Insets(2, 0, 2, 0);

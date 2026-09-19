@@ -3,7 +3,6 @@ package td.wave;
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.damage.Damage;
-import td.effect.EffectKind;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
@@ -28,8 +27,8 @@ class WaveTest {
     private final GameWorld context = WorldFixtures.newWorld();
     private final EnemyCatalog catalog = EnemyCatalog.builtIn();
 
-    private Wave wave(int baseHealth, int basePrice, Rank rank, String tokens) {
-        return new Wave(this.context, baseHealth, basePrice, rank, WaveScript.parse(tokens, this.catalog), SEED);
+    private Wave wave(String tokens) {
+        return new Wave(this.context, WaveScript.parse(tokens, Rank.GRUNT, this.catalog), SEED);
     }
 
     /**
@@ -45,7 +44,7 @@ class WaveTest {
     void spawningTwiceProducesTwoIndependentSetsOfEnemies() {
         // spawn() is a factory, not an accessor: it binds fresh mobs to the path installed at
         // the moment it is called, which is what lets a level be published in one write.
-        Wave built = wave(100, 5, Rank.GRUNT, "c c");
+        Wave built = wave("c c");
 
         EnemyMob[] first = built.spawn();
         EnemyMob[] second = built.spawn();
@@ -57,7 +56,7 @@ class WaveTest {
 
     @Test
     void aSpacerOccupiesATimingSlotButSpawnsNoMob() {
-        Wave built = wave(100, 5, Rank.GRUNT, "c e c");
+        Wave built = wave("c e c");
 
         assertThat(built.spawn()).hasSize(2);
         assertThat(built.enemyCount()).isEqualTo(2);
@@ -67,7 +66,7 @@ class WaveTest {
     void enemySetAndEnemyCountDelegateToTheParsedContent() {
         EnemyDefinition simple = this.catalog.get("c");
         EnemyDefinition armored = this.catalog.get("s");
-        Wave built = wave(100, 5, Rank.GRUNT, "2 c s");
+        Wave built = wave("2 c s");
 
         assertThat(built.enemySet()).containsExactlyInAnyOrder(simple, armored);
         assertThat(built.enemyCount(simple)).isEqualTo(2);
@@ -76,93 +75,53 @@ class WaveTest {
 
     @Test
     void gettersReturnConstructorArguments() {
-        Wave wave = new Wave(this.context, 251, 2, Rank.VETERAN, new WaveContent(List.of()), SEED);
+        Wave wave = new Wave(this.context, new WaveContent(List.of()), SEED, 2, 1.5f);
 
-        assertThat(wave.getBaseHealth()).isEqualTo(251);
-        assertThat(wave.getBasePrice()).isEqualTo(2);
-        assertThat(wave.getRank()).isEqualTo(Rank.VETERAN);
+        assertThat(wave.getPathIndex()).isEqualTo(2);
     }
 
     @Test
-    void aBossSlotDoublesSizeHalvesSpeedAndDoublesBounty() {
-        DefinedEnemyMob normal = (DefinedEnemyMob) wave(100, 10, Rank.GRUNT, "c").spawn()[0];
-        DefinedEnemyMob boss = (DefinedEnemyMob) wave(100, 10, Rank.GRUNT, "boss c").spawn()[0];
+    void anArmoredSlotAttachesADefensiveTraitWithNoOtherChange() {
+        DefinedEnemyMob normal = (DefinedEnemyMob) wave("c").spawn()[0];
+        DefinedEnemyMob armored = (DefinedEnemyMob) wave("armored c").spawn()[0];
 
-        assertThat(boss.getBodyScale()).isEqualTo(normal.getBodyScale() * 2f);
-        assertThat(boss.getSpeed()).isEqualTo(normal.getSpeed() * 0.5f);
-        assertThat(boss.getBounty()).isEqualTo(normal.getBounty() * 2);
-        assertThat(boss.getHealth()).isEqualTo(normal.getHealth());
-    }
+        assertThat(armored.getBodyScale()).isEqualTo(normal.getBodyScale());
+        assertThat(armored.getSpeed()).isEqualTo(normal.getSpeed());
+        assertThat(armored.getBounty()).isEqualTo(normal.getBounty());
+        assertThat(armored.getHealth()).isEqualTo(normal.getHealth());
 
-    @Test
-    void anEliteSlotIncreasesSizeHealthAndBounty() {
-        DefinedEnemyMob normal = (DefinedEnemyMob) wave(100, 10, Rank.GRUNT, "c").spawn()[0];
-        DefinedEnemyMob elite = (DefinedEnemyMob) wave(100, 10, Rank.GRUNT, "elite c").spawn()[0];
-
-        assertThat(elite.getBodyScale()).isEqualTo(normal.getBodyScale() * 1.5f);
-        assertThat(elite.getHealth()).isEqualTo(normal.getHealth() * 2);
-        assertThat(elite.getBounty()).isEqualTo(Math.round(normal.getBounty() * 1.5f));
-    }
-
-    @Test
-    void anEliteSlotTakesHalfDamagePerHit() {
-        DefinedEnemyMob normal = (DefinedEnemyMob) wave(500, 10, Rank.GRUNT, "c").spawn()[0];
-        DefinedEnemyMob elite = (DefinedEnemyMob) wave(500, 10, Rank.GRUNT, "elite c").spawn()[0];
         int normalHealthBefore = normal.getHealth();
-        int eliteHealthBefore = elite.getHealth();
-
+        int armoredHealthBefore = armored.getHealth();
         normal.doDamage(Damage.physical(1000));
-        elite.doDamage(Damage.physical(1000));
+        armored.doDamage(Damage.physical(1000));
 
         int normalLoss = normalHealthBefore - normal.getHealth();
-        int eliteLoss = eliteHealthBefore - elite.getHealth();
-        assertThat(eliteLoss).isEqualTo(normalLoss / 2);
+        int armoredLoss = armoredHealthBefore - armored.getHealth();
+        assertThat(armoredLoss).isLessThan(normalLoss);
     }
 
     @Test
-    void anEliteSlotsDamageReductionComposesWithTheDefinitionsOwnResistance() {
-        // Armored ("s") alone survives 80% of a hit (PercentResistTrait(0.8)); Elite alone
-        // survives 50%. Stacked, a definition's own resistance and the shape's permanent
-        // reduction multiply rather than one overriding the other.
-        DefinedEnemyMob armoredOnly = (DefinedEnemyMob) wave(500, 10, Rank.GRUNT, "s").spawn()[0];
-        DefinedEnemyMob eliteArmored = (DefinedEnemyMob) wave(500, 10, Rank.GRUNT, "elite s").spawn()[0];
-        int armoredHealthBefore = armoredOnly.getHealth();
-        int eliteArmoredHealthBefore = eliteArmored.getHealth();
+    void anArmoredSlotsTraitComposesWithTheDefinitionsOwnResistance() {
+        // Armored ("s") alone survives 80% of a hit (PercentResistTrait(0.8)); the "armored"
+        // spawn shape's own flat reduction then applies on top, composing rather than replacing
+        // it, since they carry different trait ids.
+        DefinedEnemyMob plainArmored = (DefinedEnemyMob) wave("s").spawn()[0];
+        DefinedEnemyMob armoredArmored = (DefinedEnemyMob) wave("armored s").spawn()[0];
+        int plainHealthBefore = plainArmored.getHealth();
+        int armoredHealthBefore = armoredArmored.getHealth();
 
-        armoredOnly.doDamage(Damage.physical(1000));
-        eliteArmored.doDamage(Damage.physical(1000));
+        plainArmored.doDamage(Damage.physical(1000));
+        armoredArmored.doDamage(Damage.physical(1000));
 
-        assertThat(armoredHealthBefore - armoredOnly.getHealth()).isEqualTo(800);
-        assertThat(eliteArmoredHealthBefore - eliteArmored.getHealth()).isEqualTo(400);
-    }
-
-    @Test
-    void anEliteSlotShowsAPermanentShieldMarkerButANormalSlotDoesNot() {
-        DefinedEnemyMob normal = (DefinedEnemyMob) wave(100, 10, Rank.GRUNT, "c").spawn()[0];
-        DefinedEnemyMob elite = (DefinedEnemyMob) wave(100, 10, Rank.GRUNT, "elite c").spawn()[0];
-
-        assertThat(elite.activeEffectKinds()).contains(EffectKind.SHIELD);
-        assertThat(normal.activeEffectKinds()).doesNotContain(EffectKind.SHIELD);
-    }
-
-    @Test
-    void aBosssSpeedMultiplierSurvivesTakingDamage() {
-        // The trap this closes: DefinedEnemyMob.doDamage recomputes intrinsic speed from
-        // definition.baseSpeed() on every hit, so a one-time setSpeed() at construction would be
-        // silently wiped by the first shot. The shape's speed multiplier must be folded into
-        // that recomputation instead.
-        DefinedEnemyMob boss = (DefinedEnemyMob) wave(100, 10, Rank.GRUNT, "boss c").spawn()[0];
-        float speedBeforeHit = boss.getSpeed();
-
-        boss.doDamage(Damage.physical(1));
-
-        assertThat(boss.getSpeed()).isEqualTo(speedBeforeHit);
+        int plainLoss = plainHealthBefore - plainArmored.getHealth();
+        int armoredLoss = armoredHealthBefore - armoredArmored.getHealth();
+        assertThat(armoredLoss).isLessThan(plainLoss);
     }
 
     @Test
     void aSwarmSlotSplitsBountyExactlyAcrossItsMembersSummingToOneNormalSpawn() {
-        EnemyMob normal = wave(90, 10, Rank.GRUNT, "c").spawn()[0];
-        EnemyMob[] swarm = wave(90, 10, Rank.GRUNT, "swarm 3 c").spawn();
+        EnemyMob normal = wave("c").spawn()[0];
+        EnemyMob[] swarm = wave("swarm 3 c").spawn();
 
         assertThat(swarm).hasSize(3);
         int totalBounty = 0;
@@ -175,8 +134,8 @@ class WaveTest {
     @Test
     void columnPacksItsSecondAndThirdMembersTighterThanThreeSeparateSlots() {
         this.context.setBoard(BoardGeometry.of(32, 100, 100)); // wide enough that validTarget()'s bounds check never fails
-        EnemyMob[] separateSlots = wave(100, 5, Rank.GRUNT, "3 c").spawn();
-        EnemyMob[] column = wave(100, 5, Rank.GRUNT, "column 3 c").spawn();
+        EnemyMob[] separateSlots = wave("3 c").spawn();
+        EnemyMob[] column = wave("column 3 c").spawn();
 
         assertThat(column).hasSize(3);
         int[] separateTicks = activationTicks(separateSlots);
@@ -192,8 +151,8 @@ class WaveTest {
     @Test
     void dripSpacesItsSecondAndThirdMembersLooserThanThreeSeparateSlots() {
         this.context.setBoard(BoardGeometry.of(32, 100, 100));
-        EnemyMob[] separateSlots = wave(100, 5, Rank.GRUNT, "3 c").spawn();
-        EnemyMob[] drip = wave(100, 5, Rank.GRUNT, "drip 3 c").spawn();
+        EnemyMob[] separateSlots = wave("3 c").spawn();
+        EnemyMob[] drip = wave("drip 3 c").spawn();
 
         assertThat(drip).hasSize(3);
         int[] separateTicks = activationTicks(separateSlots);
@@ -208,7 +167,7 @@ class WaveTest {
     void flankPlacesItsTwoMembersAtOppositeMaximumLateralOffsets() {
         setStraightHorizontalPath();
 
-        EnemyMob[] flank = wave(100, 10, Rank.GRUNT, "flank c").spawn();
+        EnemyMob[] flank = wave("flank c").spawn();
 
         assertThat(flank).hasSize(2);
         double offset0 = flank[0].getY() - 50.0;
@@ -221,7 +180,7 @@ class WaveTest {
     void lineSpreadsItsMembersEvenlyWithTheMiddleOneOnThePathCentre() {
         setStraightHorizontalPath();
 
-        EnemyMob[] line = wave(100, 10, Rank.GRUNT, "line 3 c").spawn();
+        EnemyMob[] line = wave("line 3 c").spawn();
 
         assertThat(line).hasSize(3);
         double first = line[0].getY() - 50.0;
@@ -235,10 +194,10 @@ class WaveTest {
     @Test
     void swarmScatterIsReproducibleForTheSameWaveAndSlot() {
         setStraightHorizontalPath();
-        WaveContent content = WaveScript.parse("swarm 5 c", this.catalog);
+        WaveContent content = WaveScript.parse("swarm 5 c", Rank.GRUNT, this.catalog);
 
-        EnemyMob[] first = new Wave(this.context, 100, 10, Rank.GRUNT, content, 42L).spawn();
-        EnemyMob[] second = new Wave(this.context, 100, 10, Rank.GRUNT, content, 42L).spawn();
+        EnemyMob[] first = new Wave(this.context, content, 42L).spawn();
+        EnemyMob[] second = new Wave(this.context, content, 42L).spawn();
 
         for (int i = 0; i < first.length; i++) {
             assertThat(first[i].getX()).isEqualTo(second[i].getX());
@@ -249,10 +208,10 @@ class WaveTest {
     @Test
     void swarmScatterDiffersForADifferentWaveSeed() {
         setStraightHorizontalPath();
-        WaveContent content = WaveScript.parse("swarm 5 c", this.catalog);
+        WaveContent content = WaveScript.parse("swarm 5 c", Rank.GRUNT, this.catalog);
 
-        EnemyMob[] first = new Wave(this.context, 100, 10, Rank.GRUNT, content, 1L).spawn();
-        EnemyMob[] second = new Wave(this.context, 100, 10, Rank.GRUNT, content, 2L).spawn();
+        EnemyMob[] first = new Wave(this.context, content, 1L).spawn();
+        EnemyMob[] second = new Wave(this.context, content, 2L).spawn();
 
         boolean anyDifferent = false;
         for (int i = 0; i < first.length; i++) {
@@ -271,7 +230,7 @@ class WaveTest {
         double spawnY = 50.0;
 
         for (int n = 1; n <= SpawnShape.MAX_MEMBERS; n++) {
-            EnemyMob[] swarm = wave(100, 10, Rank.GRUNT, "swarm " + n + " c").spawn();
+            EnemyMob[] swarm = wave("swarm " + n + " c").spawn();
 
             assertThat(swarm).hasSize(n);
             for (EnemyMob member : swarm) {
@@ -290,8 +249,8 @@ class WaveTest {
         this.context.setBoard(BoardGeometry.of(32, 500, 500));
         this.context.setPath(new PathNormal(List.of(new Vec2(0, 100), new Vec2(300, 100), new Vec2(300, 400))));
 
-        EnemyMob member = wave(100, 10, Rank.GRUNT, "flank c").spawn()[0];
-        EnemyMob centerline = wave(100, 10, Rank.GRUNT, "c").spawn()[0];
+        EnemyMob member = wave("flank c").spawn()[0];
+        EnemyMob centerline = wave("c").spawn()[0];
 
         member.doTick(1);
         centerline.doTick(1);
@@ -315,7 +274,7 @@ class WaveTest {
         // hugging the board's top edge, so an unclamped upward offset would go negative
         this.context.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(200, 0))));
 
-        EnemyMob[] flank = wave(100, 10, Rank.GRUNT, "flank c").spawn();
+        EnemyMob[] flank = wave("flank c").spawn();
 
         for (EnemyMob member : flank) {
             assertThat(member.getY()).isBetween(0.0, (double) this.context.getBoard().maxY());
