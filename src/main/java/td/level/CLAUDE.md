@@ -16,9 +16,12 @@ this and throws on a mismatch, the same way its own "at least one path" check al
 both are plain illegal-argument errors, since this is a hand-authored-content mistake, not
 loaded content (`GameStartupException` is for the latter).
 
-Two named factories cover authoring a level with exactly one path, mirroring the shape a level
-with two or more paths (Wild Bezier Sweep) builds by hand from `PathDefinition.smoothed(...)`
-directly:
+`LevelDefinition.of(name, width, height, paths)` is the required shape every level has - no
+description, $100 starting credits, 5 starting lives, the traditional defaults. A level that
+needs any of those calls the matching fluent `withDescription`/`withStartingCredits`/
+`withStartingLives` copy instead - see `BuiltInLevelCatalog.WILD_BEZIER_SWEEP` for the pattern
+with a multi-path level. Two named factories cover authoring a level with exactly one path, both
+built on top of `of`:
 
 - `LevelDefinition.unsmoothed(name, description, width, height, path, waves, credits, lives)` -
   one path, no smoothing. The common case.

@@ -31,43 +31,39 @@ import java.util.List;
  */
 final class BuiltInEnemies {
 
-    static final EnemyDefinition SIMPLE = new EnemyDefinition(
-            "c", "Simple mob", "No special abilities.",
-            50, 2, 1.28f, 1f, EnemyMob.Type.NORMAL,
-            BodyArchetype.CIRCLE, new FixedMovement(),
-            List.of(), List.of());
-    static final EnemyDefinition ARMORED = new EnemyDefinition(
-            "s", "Armored mob", "Takes less damage. Immune to critical hits.",
-            80, 3, 1.28f, 1f, EnemyMob.Type.NORMAL,
-            BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(5.0)),
-            List.of(new PercentResistTrait(0.8f, 0.05f), new CriticalImmunityTrait()), List.of());
-    static final EnemyDefinition FRENZIED = new EnemyDefinition(
-            "t", "Frenzied mob", "Increases speed as it takes damage.",
-            60, 3, 1.28f, 1f, EnemyMob.Type.NORMAL,
-            BodyArchetype.TRIANGLE, new RotorMovement((float) Math.toRadians(-5.0)),
-            List.of(new HurtSpeedTrait(1.4f, 0.1f)), List.of());
-    static final EnemyDefinition GHOST = new EnemyDefinition(
-            "g", "Ghost mob", "Invisible to all towers. Area damage hurts them.",
-            100, 4, 1.28f, 5f, EnemyMob.Type.INVISIBLE,
-            BodyArchetype.GHOST, new FixedMovement(),
-            List.of(), List.of());
-    static final EnemyDefinition WARDEN_EGG_3 = new EnemyDefinition(
-            "wardenEgg3", "Warden's Final Egg", "Must be defeated to end the encounter - it will not hatch again.",
-            1500, 20, 0f, 1f, EnemyMob.Type.NORMAL,
-            BodyArchetype.WARDEN_EGG, new FixedMovement(),
-            List.of(), List.of());
+    static final EnemyDefinition SIMPLE = EnemyDefinition
+            .of("c", "Simple mob", 50, 2, 1.28f, BodyArchetype.CIRCLE)
+            .withDescription("No special abilities.");
+    static final EnemyDefinition ARMORED = EnemyDefinition
+            .of("s", "Armored mob", 80, 3, 1.28f, BodyArchetype.SQUARE)
+            .withDescription("Takes less damage. Immune to critical hits.")
+            .withMovement(new RotorMovement((float) Math.toRadians(5.0)))
+            .withTraits(List.of(new PercentResistTrait(0.8f, 0.05f), new CriticalImmunityTrait()));
+    static final EnemyDefinition FRENZIED = EnemyDefinition
+            .of("t", "Frenzied mob", 60, 3, 1.28f, BodyArchetype.TRIANGLE)
+            .withDescription("Increases speed as it takes damage.")
+            .withMovement(new RotorMovement((float) Math.toRadians(-5.0)))
+            .withTraits(List.of(new HurtSpeedTrait(1.4f, 0.1f)));
+    static final EnemyDefinition GHOST = EnemyDefinition
+            .of("g", "Ghost mob", 100, 4, 1.28f, BodyArchetype.GHOST)
+            .withDescription("Invisible to all towers. Area damage hurts them.")
+            .withMobType(EnemyMob.Type.INVISIBLE)
+            .withHealthDivisor(5f);
+    static final EnemyDefinition WARDEN_EGG_3 = EnemyDefinition
+            .of("wardenEgg3", "Warden's Final Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)
+            .withDescription("Must be defeated to end the encounter - it will not hatch again.");
     // 20 ticks/second at 1.0x tick speed (GameLoop.BASE_TICK_NANOS = 50ms) - 8 seconds.
     private static final int EGG_HATCH_DELAY_TICKS = 160;
-    static final EnemyDefinition WARDEN_EGG_1 = new EnemyDefinition(
-            "wardenEgg1", "Warden's Egg", "Hatches into a weaker Warden if not defeated in time.",
-            1500, 20, 0f, 1f, EnemyMob.Type.NORMAL,
-            BodyArchetype.WARDEN_EGG, new FixedMovement(),
-            List.of(), List.of(new Ability(new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden2", 1, true))));
-    static final EnemyDefinition WARDEN_EGG_2 = new EnemyDefinition(
-            "wardenEgg2", "Warden's Egg", "Hatches into a weaker Warden if not defeated in time.",
-            1500, 20, 0f, 1f, EnemyMob.Type.NORMAL,
-            BodyArchetype.WARDEN_EGG, new FixedMovement(),
-            List.of(), List.of(new Ability(new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden3", 1, true))));
+    static final EnemyDefinition WARDEN_EGG_1 = EnemyDefinition
+            .of("wardenEgg1", "Warden's Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)
+            .withDescription("Hatches into a weaker Warden if not defeated in time.")
+            .withAbilities(List.of(new Ability(new OnceTrigger(EGG_HATCH_DELAY_TICKS),
+                    new SpawnEnemiesAction("warden2", 1, true))));
+    static final EnemyDefinition WARDEN_EGG_2 = EnemyDefinition
+            .of("wardenEgg2", "Warden's Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)
+            .withDescription("Hatches into a weaker Warden if not defeated in time.")
+            .withAbilities(List.of(new Ability(new OnceTrigger(EGG_HATCH_DELAY_TICKS),
+                    new SpawnEnemiesAction("warden3", 1, true))));
     // Tuned, not a placeholder: raised from an original 15 (see git history), which was
     // negligible against every attack tower's actual per-hit/per-tick damage (150-4000, see
     // SniperTower.DAMAGE..CinderTower.DAMAGE) - a reduction that small is a rounding error, not
@@ -95,22 +91,24 @@ final class BuiltInEnemies {
             // shields itself every time it survives a critical hit - repeatable, unlike the
             // fire-once triggers above
             new Ability(new OnCriticalHitTakenTrigger(), new ApplyEffectAction(new ShieldTemplate(0.3f, 100), new SelfTarget())));
-    static final EnemyDefinition WARDEN_1 = new EnemyDefinition(
-            "warden1", "The Warden", "A hulking armored sentinel." + WARDEN_ABILITY_BLURB,
-            8000, 100, 1.28f, 1f, EnemyMob.Type.NORMAL,
-            BodyArchetype.WARDEN, new RotorMovement((float) Math.toRadians(2.0)),
-            List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)), wardenAbilities("wardenEgg1"));
-    static final EnemyDefinition WARDEN_2 = new EnemyDefinition(
-            "warden2", "The Weakened Warden", "A hulking armored sentinel, worn down from its last hatching."
-            + WARDEN_ABILITY_BLURB,
-            5000, 100, 1.28f, 1f, EnemyMob.Type.NORMAL,
-            BodyArchetype.WARDEN, new RotorMovement((float) Math.toRadians(2.0)),
-            List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)), wardenAbilities("wardenEgg2"));
-    static final EnemyDefinition WARDEN_3 = new EnemyDefinition(
-            "warden3", "The Exhausted Warden", "A hulking armored sentinel, barely standing." + WARDEN_ABILITY_BLURB,
-            3000, 100, 1.28f, 1f, EnemyMob.Type.NORMAL,
-            BodyArchetype.WARDEN, new RotorMovement((float) Math.toRadians(2.0)),
-            List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)), wardenAbilities("wardenEgg3"));
+    static final EnemyDefinition WARDEN_1 = EnemyDefinition
+            .of("warden1", "The Warden", 8000, 100, 1.28f, BodyArchetype.WARDEN)
+            .withDescription("A hulking armored sentinel." + WARDEN_ABILITY_BLURB)
+            .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
+            .withTraits(List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)))
+            .withAbilities(wardenAbilities("wardenEgg1"));
+    static final EnemyDefinition WARDEN_2 = EnemyDefinition
+            .of("warden2", "The Weakened Warden", 5000, 100, 1.28f, BodyArchetype.WARDEN)
+            .withDescription("A hulking armored sentinel, worn down from its last hatching." + WARDEN_ABILITY_BLURB)
+            .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
+            .withTraits(List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)))
+            .withAbilities(wardenAbilities("wardenEgg2"));
+    static final EnemyDefinition WARDEN_3 = EnemyDefinition
+            .of("warden3", "The Exhausted Warden", 3000, 100, 1.28f, BodyArchetype.WARDEN)
+            .withDescription("A hulking armored sentinel, barely standing." + WARDEN_ABILITY_BLURB)
+            .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
+            .withTraits(List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)))
+            .withAbilities(wardenAbilities("wardenEgg3"));
 
     private BuiltInEnemies() {
     }
