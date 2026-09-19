@@ -1,14 +1,15 @@
 package td.enemy;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * A data-driven enemy type: a name/id (the wave-script token), base stats, a graphical
  * representation, and the composable {@link Trait}s and {@link Ability}s that give it its
  * behavior - replacing what today is a hardcoded method override on a {@code final} leaf
  * class. Built once, at {@link EnemyCatalog} registration time, not per-spawn; {@link Trait}s
- * and {@link Ability}s are shared across every mob spawned from this definition regardless of
- * level (see {@link TraitContext}).
+ * and {@link Ability}s are shared across every mob spawned from this definition.
  * <p>
  * Carries its own {@code baseHealth}/{@code price}, but a v1 wave-spawned enemy ignores
  * them: its health and price are supplied per-wave, uniformly across whatever mix of types
@@ -31,18 +32,21 @@ import java.util.List;
  *                      ignored for a wave-spawned one (see above).
  * @param price         only consulted for an ability-spawned instance of this definition -
  *                      ignored for a wave-spawned one (see above).
- * @param baseSpeed     pixels per tick before any level scaling or active effect - {@code 0}
- *                      means the mob never advances along the path at all (the boss egg),
- *                      which needs no separate "stationary" flag: {@code distanceIntoLap}
- *                      simply never accumulates.
+ * @param baseSpeed     pixels per tick before any active effect - {@code 0} means the mob never
+ *                      advances along the path at all (the boss egg), which needs no separate
+ *                      "stationary" flag: {@code distanceIntoLap} simply never accumulates.
  * @param healthDivisor the wave-supplied base health is divided by this before any other
  *                      scaling - generalizes Ghost's flat {@code /5}. {@code 1} for every
  *                      definition that doesn't need one.
  * @param mobType       which {@link EnemyMob.Type} this definition spawns as - what
  *                      type-filtering targeting queries (see {@code td.tower.targeting}) see,
  *                      independent of anything a {@link Trait} does.
- * @param traits        always-on, no per-mob state of their own beyond what {@link TraitContext} supplies
- * @param abilities     triggered behaviors - see {@link Ability}
+ * @param traitSlots    always-on, no per-mob state of their own beyond what a {@link Trait}'s
+ *                      own method parameters supply - see {@link #traits()} for the plain,
+ *                      identity-free view most callers want, and {@link #withAdditionalTraits}
+ *                      for how a later composition step replaces one by {@link TraitId}
+ * @param abilitySlots  triggered behaviors - see {@link Ability}, and {@link #abilities()}/
+ *                      {@link #withAdditionalAbilities} for the same identity-aware shape
  */
 public record EnemyDefinition(
         String id,
@@ -55,12 +59,12 @@ public record EnemyDefinition(
         EnemyMob.Type mobType,
         BodyArchetype archetype,
         MovementBehavior movement,
-        List<Trait> traits,
-        List<Ability> abilities) {
+        List<IdentifiedTrait> traitSlots,
+        List<IdentifiedAbility> abilitySlots) {
 
     public EnemyDefinition {
-        traits = List.copyOf(traits);
-        abilities = List.copyOf(abilities);
+        traitSlots = List.copyOf(traitSlots);
+        abilitySlots = List.copyOf(abilitySlots);
     }
 
     /**
@@ -76,39 +80,110 @@ public record EnemyDefinition(
                 EnemyMob.Type.NORMAL, archetype, new FixedMovement(), List.of(), List.of());
     }
 
+    /**
+     * This definition's traits with their {@link TraitId} identity stripped - what every
+     * runtime consumer (damage resistance, speed curves, target validity) actually needs.
+     */
+    public List<Trait> traits() {
+        return this.traitSlots.stream().map(IdentifiedTrait::trait).toList();
+    }
+
+    /**
+     * This definition's abilities with their {@link TraitId} identity stripped - what
+     * {@code DefinedEnemyMob}'s ability evaluation and {@code EnemyCatalog}'s spawn-cycle check
+     * actually need.
+     */
+    public List<Ability> abilities() {
+        return this.abilitySlots.stream().map(IdentifiedAbility::ability).toList();
+    }
+
     public EnemyDefinition withDescription(String description) {
         return new EnemyDefinition(this.id, this.displayName, description, this.baseHealth, this.price,
-                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traits,
-                this.abilities);
+                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
+                this.abilitySlots);
     }
 
     public EnemyDefinition withHealthDivisor(float healthDivisor) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
-                this.baseSpeed, healthDivisor, this.mobType, this.archetype, this.movement, this.traits,
-                this.abilities);
+                this.baseSpeed, healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
+                this.abilitySlots);
     }
 
     public EnemyDefinition withMobType(EnemyMob.Type mobType) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
-                this.baseSpeed, this.healthDivisor, mobType, this.archetype, this.movement, this.traits,
-                this.abilities);
+                this.baseSpeed, this.healthDivisor, mobType, this.archetype, this.movement, this.traitSlots,
+                this.abilitySlots);
     }
 
     public EnemyDefinition withMovement(MovementBehavior movement) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
-                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, movement, this.traits,
-                this.abilities);
+                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, movement, this.traitSlots,
+                this.abilitySlots);
     }
 
+    /**
+     * Replaces every trait wholesale, each wrapped as an anonymous, non-replaceable
+     * {@link IdentifiedTrait} - the ordinary authoring shape for a definition that isn't part of
+     * a rank ladder. {@link #withAdditionalTraits} is the identity-aware alternative a rank step
+     * (or a spawn shape's trait override) composes with instead.
+     */
     public EnemyDefinition withTraits(List<Trait> traits) {
+        return withIdentifiedTraits(traits.stream().map(IdentifiedTrait::anonymous).toList());
+    }
+
+    public EnemyDefinition withIdentifiedTraits(List<IdentifiedTrait> traitSlots) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
-                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, traits,
-                this.abilities);
+                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, traitSlots,
+                this.abilitySlots);
+    }
+
+    /**
+     * Composes {@code additions} onto this definition's existing traits by {@link TraitId}: an
+     * addition whose id matches an existing entry replaces it in place; every other addition is
+     * appended. What a later rank step, and a spawn shape's trait override (e.g. {@code
+     * armored}), both use to add or upgrade one trait without disturbing the rest.
+     */
+    public EnemyDefinition withAdditionalTraits(List<IdentifiedTrait> additions) {
+        return withIdentifiedTraits(compose(this.traitSlots, additions, IdentifiedTrait::id));
     }
 
     public EnemyDefinition withAbilities(List<Ability> abilities) {
+        return withIdentifiedAbilities(abilities.stream().map(IdentifiedAbility::anonymous).toList());
+    }
+
+    public EnemyDefinition withIdentifiedAbilities(List<IdentifiedAbility> abilitySlots) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
-                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traits,
-                abilities);
+                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
+                abilitySlots);
+    }
+
+    /**
+     * The ability composition counterpart to {@link #withAdditionalTraits} - see its doc comment.
+     */
+    public EnemyDefinition withAdditionalAbilities(List<IdentifiedAbility> additions) {
+        return withIdentifiedAbilities(compose(this.abilitySlots, additions, IdentifiedAbility::id));
+    }
+
+    private static <T> List<T> compose(List<T> existing, List<T> additions, Function<T, TraitId> idOf) {
+        List<T> result = new ArrayList<>(existing);
+        for (T addition : additions) {
+            TraitId id = idOf.apply(addition);
+            int index = indexOfId(result, id, idOf);
+            if (index >= 0) {
+                result.set(index, addition);
+            } else {
+                result.add(addition);
+            }
+        }
+        return List.copyOf(result);
+    }
+
+    private static <T> int indexOfId(List<T> items, TraitId id, Function<T, TraitId> idOf) {
+        for (int i = 0; i < items.size(); i++) {
+            if (idOf.apply(items.get(i)).equals(id)) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

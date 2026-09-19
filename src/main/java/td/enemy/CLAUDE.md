@@ -76,6 +76,19 @@ passed into every `Trait` method for exactly this reason. Don't be tempted to ba
 a `Trait` at construction time; `PercentResistTrait(0.8f, 0.05f)` means "the formula," not "the
 formula at some fixed level."
 
+**A `Trait`/`Ability` carries its identity separately, through `IdentifiedTrait`/
+`IdentifiedAbility`, not as a field on itself.** `EnemyDefinition.traitSlots()`/`abilitySlots()`
+are the identity-carrying lists a definition actually stores; `traits()`/`abilities()` are the
+plain, identity-free views every runtime consumer (damage resistance, speed curves, ability
+evaluation) reads instead. `TraitId.named("shield")` lets a later composition step —
+`EnemyDefinition.withAdditionalTraits`/`withAdditionalAbilities` — replace an earlier
+same-identified entry in place instead of stacking a second one beside it; `TraitId.anonymous()`
+(the default `withTraits`/`withAbilities` wrap) is a fresh, guaranteed-unique token per call,
+deliberately not the trait/ability instance itself, since every built-in implementation here is a
+structurally-equal record and two unrelated same-shaped instances would otherwise collide.
+Composition is always scoped to one definition's own list, so two different enemies reusing the
+same name (e.g. both calling a trait `"shield"`) never collide with each other.
+
 An `Ability` pairs a closed `AbilityTrigger` (periodic, once-after-a-delay, health-threshold-
 crossed, on-death, time-since-last-hit, on-critical-hit-taken) with a closed `AbilityAction`
 (apply an effect, or spawn more enemies) — see `AbilityEvaluator`'s own doc comment for how
