@@ -8,6 +8,7 @@ import td.tower.SniperTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.LoadedLevel;
+import td.wave.PathDefinition;
 import td.wave.Point;
 import td.wave.WaveDefinition;
 import td.wave.WaveProgress;
@@ -37,6 +38,18 @@ class GameEngineTest {
 
     private static LevelDefinition biggerLevelWith(List<WaveDefinition> waves, int startingCredits) {
         return LevelDefinition.unsmoothed("Bigger Level", "", 20, 15, STRAIGHT_PATH, waves, startingCredits, 5);
+    }
+
+    /**
+     * A two-path level: path A repeats {@link #STRAIGHT_PATH} at row 2, path B is a separate
+     * short straight path at row 5, on a taller board than {@link #levelWith} uses so the two
+     * rows sit well apart - far enough that a tower covering path A cannot also reach path B.
+     */
+    private static LevelDefinition twoPathLevelWith(List<WaveDefinition> wavesA, List<WaveDefinition> wavesB) {
+        return new LevelDefinition("Two-Path Test Level", "", 5, 7,
+                List.of(PathDefinition.of(STRAIGHT_PATH, wavesA),
+                        PathDefinition.of(List.of(new Point(0, 5), new Point(4, 5)), wavesB)),
+                100, 5);
     }
 
     private static int cellCenter(int cellIndex) {
@@ -227,6 +240,68 @@ class GameEngineTest {
         // neither pays out more nor less than the definition it was built from
         assertThat(engine.getGameWorld().economy().getScore()).isEqualTo(scoreBefore + 7);
         assertThat(engine.isWaveReady()).isTrue();
+    }
+
+    @Test
+    void startingARoundSpawnsBothPathsWavesInOneCall() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(twoPathLevelWith(
+                List.of(new WaveDefinition("c", 1, 7, 1)),
+                List.of(new WaveDefinition("2 c", 1, 7, 1))));
+
+        assertThat(engine.nextWave()).isTrue();
+
+        // 1 enemy from path A's wave, 2 from path B's - one nextWave() call spawns every path's
+        // wave for the round together, into the one roster both share.
+        assertThat(engine.getGameWorld().enemies().getEnemies()).hasSize(3);
+    }
+
+    @Test
+    void aRoundDoesNotClearUntilEveryPathsEnemiesAreGone() {
+        // Path A's one enemy sits in a tower's range and gets killed quickly; path B's one
+        // enemy is on a separate row no tower here can reach, so it is only removed from the
+        // roster once it leaks off the far end of its own short path. The round must stay
+        // un-ready the whole time path B's enemy is still walking, even though path A's is
+        // long dead - "the round is cleared" has to wait for every path, not just one.
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(twoPathLevelWith(
+                List.of(new WaveDefinition("c", 1, 7, 1), new WaveDefinition("c", 1, 7, 1)),
+                List.of(new WaveDefinition("c", 1, 7, 1), new WaveDefinition("c", 1, 7, 1))));
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.mouseClicked(cellCenter(2), cellCenter(1)); // in range of path A's row (y=2) only
+        int scoreBefore = engine.getGameWorld().economy().getScore();
+
+        assertThat(engine.nextWave()).isTrue();
+
+        int t = 0;
+        for (; t <= 60 && engine.getGameWorld().economy().getScore() == scoreBefore; t++) {
+            engine.doTick(t);
+        }
+
+        // path A's enemy is dead (credited with a kill's score); path B's is still walking its
+        // own path, so the round must not be ready yet.
+        assertThat(engine.getGameWorld().economy().getScore()).isGreaterThan(scoreBefore);
+        assertThat(engine.isWaveReady()).isFalse();
+
+        for (; t <= 400 && !engine.isWaveReady(); t++) {
+            engine.doTick(t);
+        }
+
+        assertThat(engine.isWaveReady()).isTrue();
+    }
+
+    @Test
+    void buildabilityUnionsEveryPathNotJustTheFirst() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(twoPathLevelWith(List.of(), List.of()));
+
+        // (2, 5) sits on path B's row - path A's own coverage (row 2) never reaches it, so this
+        // cell is unbuildable only because path B's coverage is unioned in too.
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        Optional<Tower> selected = engine.mouseClicked(cellCenter(2), cellCenter(5));
+
+        assertThat(selected).isEmpty();
+        assertThat(engine.cells().at(2, 5).hasTower()).isFalse();
     }
 
     @Test
