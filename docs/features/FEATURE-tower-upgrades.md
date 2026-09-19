@@ -1,5 +1,13 @@
 # Feature Request: In-Place Tower Upgrades
 
+**Status: implemented.** Shipped as the four per-instance enablement conditions and the
+per-tower bounty multiplier this document's V1 Scope settled on. The Power tower was renamed to
+`td.tower.AuraTower`, not `TowerAura` as the Decisions-made and V1-Scope sections below originally
+said — corrected there directly rather than left wrong, since it names a real class. The global
+buy-once-for-all-present-and-future upgrade and the any-kill-in-aura bounty effect, both deferred
+to a later phase below, are now tracked as open work in `TODO.md` rather than left only in this
+document.
+
 **Priority: Phase 1 — build first.** Of the three feature requests, this is the most
 genre-standard, highest player-value mechanic and the one with the least new-system risk:
 its core doesn't depend on feature 2 (damage types/projectiles) or feature 1 (enemy
@@ -219,7 +227,7 @@ worth recording alongside the decisions below:
 ## Decisions made
 
 - The naming collision is resolved by renaming the existing Power tower (`td.tower.TowerUpgrade`) to the **Aura tower**
-  (`td.tower.TowerAura`) — "upgrade" stays
+  (`td.tower.AuraTower`) — "upgrade" stays
   the name of this feature's in-place mechanic, in code and in the UI.
 - Upgrades are **branching specializations**: each tower offers exactly **two** upgrade
   paths, and choosing one is a **permanent, mutually exclusive** choice for that tower
@@ -246,8 +254,12 @@ contains: concrete content, the shape of the solution, and a phased implementati
 
 ### Boundary
 
-- 4 attack towers (`TowerOne`/`TowerTwo`/`TowerThree`/`TowerFour`), each with exactly 2
-  upgrade paths — 8 concrete upgrade paths total for v1.
+- 4 attack towers (`SniperTower`/`SplashTower`/`SonarTower`/`PulseTower` — named `TowerOne`–
+  `TowerFour` at the time this was written, before the project-wide tower rename), each with
+  exactly 2 upgrade paths — 8 concrete upgrade paths total for v1. (The three towers added by
+  `FEATURE-damage-types-and-projectiles.md` — `MortarTower`/`SeekerTower`/`CinderTower` — later
+  got two upgrade paths each too, per that feature's own decision to extend this pattern rather
+  than ship unupgradeable; not part of this document's original scope.)
 - 4 enablement conditions in play across those 8 paths: money, cluster, damage-dealt,
   kill-count.
 - No new targeting, delivery, or enemy-facing mechanic. **Because this feature ships before
@@ -255,7 +267,7 @@ contains: concrete content, the shape of the solution, and a phased implementati
   enemy-affecting status effect** — those become natural additions to a tower's path set
   once phase 2 lands (see Priority, above), not something v1 blocks on. Every v1 path is
   built from primitives the engine already has: damage, range, fire-rate (cooldown), one
-  tower-specific stat (`TowerTwo`'s splash radius, `TowerThree`'s sweep speed), a sprite/
+  tower-specific stat (`SplashTower`'s splash radius, `SonarTower`'s sweep speed), a sprite/
   visual change, and a bounty multiplier on the tower's own kills (self-contained — no
   phase-2 dependency, since it only touches the firing tower's own kill accounting).
 - The Aura tower (renamed from Power tower/`TowerUpgrade`) is **not** in scope for its own
@@ -266,14 +278,14 @@ contains: concrete content, the shape of the solution, and a phased implementati
 
 | Tower                   | Path A                                                                                     | Gate         | Path B                                                                | Gate       |
 |-------------------------|--------------------------------------------------------------------------------------------|--------------|-----------------------------------------------------------------------|------------|
-| `TowerOne` (Triangle)   | **Veteran** — modest damage/range bump, plus a bounty multiplier on this tower's own kills | kill-count   | **Overclock** — shorter cooldown (faster fire), lower per-shot damage | money      |
-| `TowerTwo` (Circle)     | **Siege** — bigger damage and splash radius                                                | damage-dealt | **Cluster Charge** — bigger damage and range                          | cluster    |
-| `TowerThree` (Sunshine) | **Overcharged Array** — faster sweep (shorter `secondsPerRevolution`) and more range       | cluster      | **Marksman Beam** — bigger per-hit damage                             | kill-count |
-| `TowerFour` (Stardust)  | **Overload Core** — bigger damage                                                          | damage-dealt | **Expanded Field** — bigger range                                     | money      |
+| `SniperTower` (Triangle)   | **Veteran** — modest damage/range bump, plus a bounty multiplier on this tower's own kills | kill-count   | **Overclock** — shorter cooldown (faster fire), lower per-shot damage | money      |
+| `SplashTower` (Circle)     | **Siege** — bigger damage and splash radius                                                | damage-dealt | **Cluster Charge** — bigger damage and range                          | cluster    |
+| `SonarTower` (Sunshine)    | **Overcharged Array** — faster sweep (shorter `secondsPerRevolution`) and more range       | cluster      | **Marksman Beam** — bigger per-hit damage                             | kill-count |
+| `PulseTower` (Stardust)    | **Overload Core** — bigger damage                                                          | damage-dealt | **Expanded Field** — bigger range                                     | money      |
 
 Each condition is used exactly twice across the 8 paths, so the feature exercises all four
-gates in actual content rather than leaving one theoretical. `TowerTwo`'s "Cluster Charge"
-and `TowerThree`'s "Overcharged Array" deliberately lean into the cluster gate's flavor —
+gates in actual content rather than leaving one theoretical. `SplashTower`'s "Cluster Charge"
+and `SonarTower`'s "Overcharged Array" deliberately lean into the cluster gate's flavor —
 towers built as a group empowering each other reads naturally for a splash tower and a
 sensor-sweep tower specifically.
 
@@ -289,7 +301,7 @@ sensor-sweep tower specifically.
   fields; widening the record with additional optional-bonus fields (each defaulting to 0,
   preserving `none()` as the identity) is more consistent with this codebase's existing
   "algebra" pattern than introducing a second, differently-shaped modifier type.
-- **Tower-specific stats (`TowerTwo.spreadRadius`, `TowerThree`'s sweep-speed constant)
+- **Tower-specific stats (`SplashTower.spreadRadius`, `SonarTower`'s sweep-speed constant)
   stay outside `TowerBuff`.** Only one path per tower touches one, so this is the exception,
   not the rule — a per-leaf-class delta applied directly at path-selection time, the same
   way `spreadRadius` is already computed once at construction.
@@ -312,7 +324,7 @@ sensor-sweep tower specifically.
   `TowerListener.towerBuild`/`towerRemoved` in addition to its existing
   `EconomyListener.economyChanged`, since the cluster condition can flip as neighbors are
   built or sold.
-- **Rename mechanics for the Power tower → Aura tower**: class rename (`td.tower.TowerUpgrade` → `td.tower.TowerAura`),
+- **Rename mechanics for the Power tower → Aura tower**: class rename (`td.tower.TowerUpgrade` → `td.tower.AuraTower`),
   its display string ("Power tower" →
   "Aura tower"), every reference in `TowerFactory.type`, tests, `td/tower/CLAUDE.md`'s tower
   table, and `README.md`'s tower table — done as its own early phase (see below) so no code

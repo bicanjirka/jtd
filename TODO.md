@@ -74,25 +74,36 @@ position and the visitor, `AuraTower` wants position and type.
 
 ### Ghost health doesn't scale with level
 
-`EnemyMobGhost.doInit()` always divides incoming health by a flat `5`, unlike its body size (`bodyScale`), which already
-scales with `level`. Health reduction should probably scale the same way so ghosts stay balanced at higher levels.
+`BuiltInEnemies.GHOST` (`EnemyDefinition.of(...).withHealthDivisor(5f)`) always divides incoming
+health by a flat `5`, unlike its body size, which already scales with `level` via
+`DefinedEnemyMob.bodyScaleFor`'s `(level < 6) ? (7 - level) : 2` curve (the same one `SQUARE`/
+`TRIANGLE` use). Health reduction should probably scale the same way so ghosts stay balanced at
+higher levels.
 
-- **Where:** `EnemyMobGhost.doInit()`
-- **Approach:** replace the flat `/5` with a level-scaled divisor, mirroring the `(this.level < 6) ? (7 - level) : (2)`
-  pattern already used for `bodyScale` in the same method (or a deliberately different curve, if `5` was chosen for a
-  reason that's no longer documented — worth play-testing either way).
+- **Where:** `BuiltInEnemies.GHOST`'s `withHealthDivisor(5f)`; the division itself is applied in
+  `DefinedEnemyMob.withDividedHealth(SpawnParameters, float)`, called from the constructor before
+  `level` is otherwise available to it.
+- **Approach:** replace the flat `5f` with a level-scaled value, mirroring `bodyScaleFor`'s
+  `(level < 6) ? (7 - level) : 2` curve (or a deliberately different one, if `5` was chosen for a
+  reason that's no longer documented — worth play-testing either way). `healthDivisor` is a
+  fixed field on the `EnemyDefinition` today, not computed per-spawn, so this needs
+  `withDividedHealth` (or its caller) to take `level` as well, not just a differently-shaped
+  constant.
 
 ## Movement / pathing
 
 ### Wave-entry spawn delay is a hardcoded constant
 
-`AbstractEnemyMob.doInit()` converts an enemy's `delay` (its position within a wave) to tick-count via
-`Math.round(22.4f * delay / this.speed)`. The `22.4f` is a magic constant with no way to override it per-wave.
+`SpawnParameters.DELAY_TICKS_PER_SLOT` (a `private static final float`, consumed inside
+`SpawnParameters.atSlot(...)`/`.of(...)`) converts an enemy's slot position within a wave to a
+tick-count countdown via `Math.round(DELAY_TICKS_PER_SLOT * slotPosition / speed)`. The `22.4f`
+value is a magic constant with no way to override it per-wave.
 
-- **Where:** `AbstractEnemyMob.doInit()`
+- **Where:** `td.enemy.SpawnParameters`
 - **Approach:** add a `delay`-scaling field to `WaveDefinition` (or `Wave`) that defaults to `22.4f`, and extend the
   wave
-  mini-language (see `WaveScript.parse`'s `c`/`e`/`t`/... token grammar) with a token — e.g. a `w<number>` prefix — that
+  mini-language (see `WaveScript.parse`'s spawn-shape/spacer token grammar — root `CLAUDE.md` §9) with a token — e.g. a
+  `w<number>` prefix — that
   lets a wave definition override the spacing between spawns before listing enemies.
 
 ## Levels
@@ -111,14 +122,47 @@ implementation. There is no way to add or edit a level without a code change and
 
 ## Tower features
 
+### A global, buy-once upgrade for a whole tower type doesn't exist
+
+`FEATURE-tower-upgrades.md` named a second kind of upgrade alongside the four per-instance ones
+that shipped: bought once, it retroactively applies to every tower of a type already on the
+field and to every one built afterward. Deferred because nothing today reaches back into an
+already-built tower to change its base behavior, and nothing persists a per-type flag across a
+tower purchase — both real, new mechanisms, not a variation on the per-instance model.
+
+- **Where:** a new field on `GameWorld` (or wherever per-level persistent state would live),
+  consulted by `TowerFactory` at construction and by something that re-walks `TowerRoster.all()`
+  at purchase time.
+- **Approach:** see `FEATURE-tower-upgrades.md`'s "Architectural implications" section for the
+  concrete blockers (level-teardown/reload correctness in particular — a purchased global
+  upgrade must not leak into the next level or the next run, the same discipline
+  `TowerRoster.clear()`/`EnemyRoster.clear()` already follow). Settle where that persistent state
+  lives before writing the retroactive-apply logic.
+
+### Bounty for any kill inside an aura, not just the aura tower's own kills
+
+Also named and deferred in `FEATURE-tower-upgrades.md`: an aura that pays out bonus bounty for
+*any* kill scored inside its radius, not only the aura-owning tower's own. `EconomyDelta.kill`
+is computed once, inside the dying enemy's own kill path, with no notion of which tower killed
+it or which auras cover that location — a new coupling between `td.enemy` and `td.tower` that
+the codebase has deliberately avoided so far (towers query enemies, never the reverse).
+
+- **Where:** `AbstractEnemyMob`'s kill/death path (`td.enemy`), `EconomyDelta.kill` (`td.economy`).
+- **Approach:** see `FEATURE-tower-upgrades.md`'s "Architectural implications" and "Risks and
+  costs" sections. Either pass the killing tower's position outward from the death path so an
+  aura-owning tower can be consulted, or add a new aura-query step in the kill path — both are a
+  real, new cross-package coupling and should be designed deliberately, not bolted on.
+
 ### Upgrade-path numbers are unbalanced placeholders
 
-The 8 upgrade paths (`TowerOne`/`TowerTwo`/`TowerThree`/`TowerFour`, two each) all have real prices and stat bonuses,
+The 8 upgrade paths (`SniperTower`/`SplashTower`/`SonarTower`/`PulseTower`, two each) all have real prices and stat
+bonuses,
 but none of them have been played against actual waves — the numbers were chosen to be plausible, not tuned. The
 `ClusterCondition`/`DamageDealtCondition`/`KillCountCondition` thresholds are similarly unverified guesses at what a
 reasonable mid-level of investment looks like.
 
-- **Where:** the `private static final UpgradePath` constants in `TowerOne`, `TowerTwo`, `TowerThree`, `TowerFour`.
+- **Where:** the `private static final UpgradePath` constants in `SniperTower`, `SplashTower`, `SonarTower`,
+  `PulseTower`.
 - **Approach:** play each of the built-in levels with every path chosen at least once, and adjust price/stat-bonus/
   condition-threshold values until each path feels like a meaningful, roughly-comparable-in-power choice rather than
   a strictly-better-or-worse one. No code or architecture change needed — every number here is already a named
@@ -127,13 +171,13 @@ reasonable mid-level of investment looks like.
 
 ### New tower numbers are unbalanced placeholders
 
-`TowerMortar`, `TowerSeeker` and `TowerCinder`'s price, damage, range, cooldown, splash radius, and slow/freeze/burn
+`MortarTower`, `SeekerTower` and `CinderTower`'s price, damage, range, cooldown, splash radius, and slow/freeze/burn
 magnitudes and durations were chosen to be plausible, not tuned - the same situation the upgrade-path numbers above
 were in before their own balance pass. The same is true of their own 6 upgrade paths (2 each): prices, stat bonuses
 and condition thresholds are equally unverified guesses.
 
-- **Where:** the `public static final` constants and effect-duration fields in `TowerMortar`, `TowerSeeker`,
-  `TowerCinder`, and the `private static final UpgradePath` constants in each.
+- **Where:** the `public static final` constants and effect-duration fields in `MortarTower`, `SeekerTower`,
+  `CinderTower`, and the `private static final UpgradePath` constants in each.
 - **Approach:** play each of the built-in levels with all three new towers (and each of their upgrade paths chosen at
   least once), and adjust values until each feels like a meaningful, roughly-comparable-in-power choice next to the
   existing four attack towers and their own paths. No code or architecture change needed - every number here is
@@ -178,7 +222,7 @@ and condition thresholds are equally unverified guesses.
   narrower intended role (e.g. a single tough priority target, boss-adjacent) rather than a general crowd-clear
   price point.
 - **`seeker`'s damage/cooldown buffed, its role deliberately left alone:** decided to take the straightforward-buff
-  direction above, not the reroll - `TowerSeeker.damage` 1800 -> 2600 and its `coolDownMax` 60 -> 45 (dmg/tick
+  direction above, not the reroll - `SeekerTower.damage` 1800 -> 2600 and its `coolDownMax` 60 -> 45 (dmg/tick
   30 -> ~58), keeping guaranteed-hit reliability and freeze CC as its reason to exist rather than adding any
   splash/multi-target mechanic. Re-ran the same formation test against the buffed numbers: dmg-per-credit in the
   moderate-hp (800) 40-Circle scenario roughly doubled (2931 -> 5720), and it went from killing nothing at all
@@ -228,18 +272,48 @@ or a physical shield (the original request's examples) is now a small, self-cont
 
 ### Rotating tower sprites
 
-Towers don't rotate their sprite image to visually face their current target (enemy mobs already do this via
-`AbstractEnemyMobDirectional`/`AbstractEnemyMobRotor`). This was a speculative "nice to have," not a committed design.
+Towers don't rotate their sprite image to visually face their current target (enemy mobs already
+do this — see below). This was a speculative "nice to have," not a committed design.
 
 - **Where:** `td.ui.TowerSpriteFrameBuilder`, `td.ui.render.TowerSpriteDraw`
-- **Approach:** if pursued, reuse the facing-angle approach already implemented for directional/rotor enemies
-  (`AbstractEnemyMobRotor.getFacingRadians()`/`AbstractEnemyMobDirectional.getFacingRadians()`); needs per-tower
-  "facing" state updated whenever a tower picks a new target (`TowerOne.findEnemy()`, `TowerTwo`'s find methods,
-  etc.) and exposed as a getter, then threaded through as a new `facingRadians` field on `TowerSpriteDraw` (currently
-  unused by towers - `EnemyBodyDraw`/`EnemyFadeDraw` already carry one) and applied as a rotation in
-  `Java2DFrameRenderer.paintTowerSprite()` alongside rotated sprite art for each tower.
+- **Approach:** if pursued, note the facing-angle precedent on the enemy side no longer looks the
+  way this entry originally described: mob movement is composed via `MovementBehavior`
+  implementations (`FixedMovement`/`PulseMovement`/`PathDirectionalMovement`/`RotorMovement`,
+  `td.enemy`), and the current facing logic is `DefinedEnemyMob.getFacingRadians()` — a `switch`
+  over `this.definition.movement()`'s sealed type. Towers have no equivalent composed-movement
+  model, so there's no direct mechanism to reuse from there; a tower's facing would instead need
+  to be derived from its own chosen target, per tower. There's also no `findEnemy()` method to
+  hook today — targeting is composed per-tower inside `doTick` via `td.tower.targeting` pieces
+  (e.g. `SniperTower.doTick` builds candidates through `InRangeTargetQuery.ofType(...)` then a
+  `TargetSelector`; see the root `CLAUDE.md` §4/`td/tower/CLAUDE.md`'s "Targeting" section) — so
+  this needs new per-tower "facing" state updated wherever each tower's `doTick` calls its
+  selector, exposed as a getter, then threaded through as a new `facingRadians` field on
+  `TowerSpriteDraw` (currently absent — `EnemyBodyDraw`/`EnemyFadeDraw` already carry one) and
+  applied as a rotation in `Java2DFrameRenderer.paintTowerSprite()` alongside rotated sprite art
+  for each tower.
 
 ## Enemy features
+
+### A level cannot register its own custom or cloned enemy
+
+`FEATURE-enemy-traits-and-effects.md` asked for per-level enemy registration/cloning as part of
+its original scope. The mechanism is already there — `EnemyCatalog.register`/its clone support
+work, and `WaveScriptTest`'s `aPerLevelCustomIdResolvesTheSameWayABuiltInDoes` proves a per-level
+custom id resolves exactly like a built-in one — but `LevelDefinition` has no field to carry a
+level's own registrations, so no level actually uses it yet. `td/enemy/CLAUDE.md`'s "A level
+cannot yet register its own custom or cloned enemy" note tracks the same gap from the package
+side. The Warden's six-stage chain shipped as *global* built-in content specifically to avoid
+needing this field.
+
+- **Where:** `td.level.LevelDefinition` (needs a new field), `td.GameEngine.loadLevel` (already
+  builds a fresh per-level `EnemyCatalog` via `EnemyCatalog.builtIn()` — needs to also register
+  whatever this new field carries).
+- **Approach:** add a field (e.g. a `List<EnemyDefinition>`) to `LevelDefinition`, defaulting to
+  empty, grown by a fluent `withX` copy the same way `withDescription`/`withStartingCredits`
+  already are (root `CLAUDE.md` §5's rule for wide records) — not a wider factory argument list.
+  Have `loadLevel` register each one against the level's catalog right after `builtIn()` runs.
+  `EnemyCatalog.register` already rejects an id colliding with a reserved wave-script token, so
+  a level authoring a custom enemy is safe by construction once this is wired.
 
 ### The effect-marker overflow indicator has no count
 

@@ -67,40 +67,6 @@ Verify: `mvn verify` must stay at the pre-change test count (548 as of `a034f2e`
 if other work landed between then and now — check via `mvn test 2>&1 | grep "Tests run:"` on the
 tree *before* this change and confirm the count doesn't drop after).
 
-### 1.2 `TODO.md` cites classes and methods that no longer exist
-
-**Confidence: high (all verified directly against current source, not just subagent-reported).
-Risk: none (doc-only). Effort: ~15-20 minutes for a careful sweep.**
-
-`TODO.md` predates several renames/refactors and was never swept afterward. Every stale
-reference found so far, with the corrected current name/location:
-
-| `TODO.md` line(s) | Stale reference | Current reality |
-|---|---|---|
-| 80 (`### Ghost health doesn't scale with level`) | `EnemyMobGhost.doInit()` | No such class. Ghost is now `BuiltInEnemies.GHOST`, a data-driven `EnemyDefinition` built via `EnemyDefinition.of("g", "Ghost mob", 100, 4, 1.28f, BodyArchetype.GHOST).withMobType(EnemyMob.Type.INVISIBLE).withHealthDivisor(5f)` (`src/main/java/td/enemy/BuiltInEnemies.java`). The flat, non-level-scaled divisor is applied in `DefinedEnemyMob.withDividedHealth(SpawnParameters, float)` (`src/main/java/td/enemy/DefinedEnemyMob.java:61-64`), called from the constructor at line 47. **The gap itself is still real** — `healthDivisor` is a flat constant (`5f`) with no level term, while body size (`DefinedEnemyMob.bodyScaleFor`, same file, line 67) does scale with `level`. Only the "Where" needs correcting, not the substance. |
-| 89, 92 (`### Wave-entry spawn delay is a hardcoded constant`) | `AbstractEnemyMob.doInit()` | No such method exists anywhere — `AbstractEnemyMob`'s own doc comment (`src/main/java/td/enemy/AbstractEnemyMob.java:32`) explicitly notes the two-phase constructor/`doInit` pattern was replaced by a single constructor. The `22.4f` magic constant now lives as `SpawnParameters.DELAY_TICKS_PER_SLOT` (`src/main/java/td/enemy/SpawnParameters.java:27`), a `private static final float`, consumed inside `SpawnParameters.atSlot(...)`/`.of(...)`. **The gap itself is still real** — it's still a single hardcoded constant with no per-wave override. Correct the "Where" to `SpawnParameters.DELAY_TICKS_PER_SLOT` and `SpawnParameters.of(...)`. |
-| 116, 121 | `TowerOne`/`TowerTwo`/`TowerThree`/`TowerFour` | Renamed to `SniperTower`/`SplashTower`/`SonarTower`/`PulseTower` (`src/main/java/td/tower/`). The `UpgradePath` constants these lines refer to are `SniperTower.VETERAN`/`.OVERCLOCK`, `SplashTower.SIEGE`/`.CLUSTER_CHARGE`, `SonarTower.OVERCHARGED_ARRAY`/`.MARKSMAN_BEAM`, `PulseTower.OVERLOAD_CORE`/`.EXPANDED_FIELD` — verify exact constant names with `grep -n "static final UpgradePath" src/main/java/td/tower/{Sniper,Splash,Sonar,Pulse}Tower.java` before editing. |
-| 130, 135-136 | `TowerMortar`, `TowerSeeker`, `TowerCinder` | Renamed to `MortarTower`, `SeekerTower`, `CinderTower` (`src/main/java/td/tower/`). |
-| 237 | `TowerOne.findEnemy()`, "`TowerTwo`'s find methods" | No `findEnemy()` method exists on any tower today. Targeting is composed per-tower inside `doTick` via `td.tower.targeting` pieces (e.g. `SniperTower.doTick`, `src/main/java/td/tower/SniperTower.java:62`, builds candidates through `InRangeTargetQuery.ofType(...)` then a `TargetSelector`) — see the root `CLAUDE.md` §4/`td/tower/CLAUDE.md`'s "Targeting" section for the current model. This whole entry ("Rotating tower sprites") should be reworded around that composed-targeting shape rather than a per-tower `findEnemy()` method — there is no single method to add a "just picked a new target" hook to anymore; it would need to go wherever each tower's `doTick` currently calls its selector. |
-| 231-232, 235-236 | `AbstractEnemyMobDirectional`/`AbstractEnemyMobRotor` (as subclasses), `AbstractEnemyMobRotor.getFacingRadians()`/`AbstractEnemyMobDirectional.getFacingRadians()` | Movement is now composed via `MovementBehavior` implementations (`FixedMovement`, `PulseMovement`, `PathDirectionalMovement`, `RotorMovement` — `src/main/java/td/enemy/`), not mob subclasses. The current facing logic is `DefinedEnemyMob.getFacingRadians()` (`src/main/java/td/enemy/DefinedEnemyMob.java:87-94`), a `switch` over `this.definition.movement()`'s sealed type. The "Rotating tower sprites" approach paragraph should point here instead, and note there is no per-tower equivalent to reuse from (see the 237 entry above — towers have no comparable composed-movement model yet, so this entry's "reuse the facing-angle approach" premise needs re-examining, not just a renamed pointer). |
-
-**Suggested approach for whoever picks this up:** re-read each flagged entry's "Where"/"Approach"
-in full (not just the table above, which only excerpts the stale token), confirm the gap it
-describes is still real against current source (two of six confirmed still-real above; the
-other four are tower/method renames where the substance is probably unaffected but wasn't
-re-verified line-by-line — do that before editing, in case the underlying feature also changed
-shape, not just its name), then fix the "Where" in place. Don't do a mechanical find-replace of
-old names to new names blindly — at least one entry (237, the `findEnemy()` one) needs an actual
-rewrite of its "Approach" paragraph, not just a renamed pointer, because the mechanism it
-describes reusing no longer exists in that shape.
-
-This sweep is exactly the kind of drift `CLAUDE.md` §10's `docs-name-real-types` check already
-prevents for `CLAUDE.md` files — `TODO.md` has no equivalent mechanical check today (it isn't
-in `scripts/VerifyRules.java`'s `docFiles()` scan), so this is manual-only. Worth considering,
-separately, whether `TODO.md` should be added to that check's scope — the `` ` ``-backtick type
-names in it (`EnemyMobGhost`, `TowerOne`, etc.) are exactly the pattern that check already
-catches in `CLAUDE.md` files.
-
 ### 1.3 `td/enemy/CLAUDE.md` overstated which render switches are compiler-enforced — **fixed**
 
 **Confidence: high (verified directly against source). Status: already fixed, in the same

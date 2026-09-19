@@ -1,5 +1,12 @@
 # Feature Request: Critical Damage
 
+**Status: implemented.** `Damage.critical`/`CRITICAL_MULTIPLIER`, `TowerBuff.critChanceBonus`,
+`SniperTower.VETERAN`'s crit-chance bonus, `CriticalImmunityTrait`, `OnCriticalHitTakenTrigger`
+and the crit-spark render marker all shipped as this document describes. The Open questions
+section below is answered in place, and the burning-doubles-crit-chance addendum shipped too.
+Remaining numbers are tracked as placeholders in `TODO.md`'s "Critical-damage numbers are
+unbalanced placeholders" entry.
+
 **Priority: unblocks two already-deferred items.** `TODO.md`'s "Critical damage is not implemented" entry has carried a
 settled design recommendation (a pre-hit, chance-based multiplier rolled as a tower stat) since the damage-types
 feature's product review, but no code. `FEATURE-enemy-traits-and-effects.md`'s V1 Scope explicitly dropped any
