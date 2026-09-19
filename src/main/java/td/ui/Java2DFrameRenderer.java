@@ -118,6 +118,7 @@ public final class Java2DFrameRenderer {
             case ENEMY_CIRCLE, ENEMY_GHOST, ENEMY_EGG -> circleShape(scale);
             case ENEMY_SQUARE -> new Rectangle2D.Float(-scale, -scale, scale * 2, scale * 2);
             case ENEMY_TRIANGLE -> triangleShape(scale, true);
+            case ENEMY_WARDEN -> starShape(8, scale, scale * 0.55f);
             default -> throw new IllegalStateException("Not an enemy palette: " + palette);
         };
     }
@@ -331,6 +332,7 @@ public final class Java2DFrameRenderer {
             case ENEMY_SQUARE -> Color.PINK;
             case ENEMY_TRIANGLE -> Color.YELLOW;
             case ENEMY_EGG -> new Color(230, 220, 170);
+            case ENEMY_WARDEN -> new Color(139, 0, 0);
             case TOWER_SNIPER_BODY -> Color.GREEN;
             case TOWER_SPLASH_BODY -> Color.RED;
             case TOWER_SONAR_BODY -> Color.YELLOW;
@@ -518,6 +520,7 @@ public final class Java2DFrameRenderer {
                 g2.draw(triangleShape(grownScale, false));
                 g2.draw(triangleShape(grownScale, true));
             }
+            case ENEMY_WARDEN -> g2.draw(starShape(8, grownScale, grownScale * 0.55f));
             default -> throw new IllegalStateException("Not an enemy palette: " + fade.palette());
         }
         g2.setTransform(save);

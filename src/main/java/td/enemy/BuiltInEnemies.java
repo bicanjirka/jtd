@@ -98,18 +98,18 @@ final class BuiltInEnemies {
     static final EnemyDefinition WARDEN_1 = new EnemyDefinition(
             "warden1", "The Warden", "A hulking armored sentinel." + WARDEN_ABILITY_BLURB,
             8000, 100, 1.28f, 1f, EnemyMob.Type.NORMAL,
-            BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(2.0)),
+            BodyArchetype.WARDEN, new RotorMovement((float) Math.toRadians(2.0)),
             List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)), wardenAbilities("wardenEgg1"));
     static final EnemyDefinition WARDEN_2 = new EnemyDefinition(
             "warden2", "The Weakened Warden", "A hulking armored sentinel, worn down from its last hatching."
             + WARDEN_ABILITY_BLURB,
             5000, 100, 1.28f, 1f, EnemyMob.Type.NORMAL,
-            BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(2.0)),
+            BodyArchetype.WARDEN, new RotorMovement((float) Math.toRadians(2.0)),
             List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)), wardenAbilities("wardenEgg2"));
     static final EnemyDefinition WARDEN_3 = new EnemyDefinition(
             "warden3", "The Exhausted Warden", "A hulking armored sentinel, barely standing." + WARDEN_ABILITY_BLURB,
             3000, 100, 1.28f, 1f, EnemyMob.Type.NORMAL,
-            BodyArchetype.SQUARE, new RotorMovement((float) Math.toRadians(2.0)),
+            BodyArchetype.WARDEN, new RotorMovement((float) Math.toRadians(2.0)),
             List.of(new FlatResistTrait(WARDEN_FLAT_RESIST)), wardenAbilities("wardenEgg3"));
 
     private BuiltInEnemies() {
