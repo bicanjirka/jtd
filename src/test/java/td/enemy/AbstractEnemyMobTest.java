@@ -4,13 +4,10 @@ import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.damage.Damage;
 import td.effect.Effect;
+import td.fixtures.LevelFixtures;
+import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
-import td.wave.PathNormal;
-import td.wave.Vec2;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -23,19 +20,7 @@ import static org.assertj.core.api.Assertions.within;
 class AbstractEnemyMobTest {
 
     private static GameWorld newContext() {
-        GameWorld context = new GameWorld(new RecordingGameHost());
-        context.setBoard(BoardGeometry.of(1, 1001, 1001));
-        return context;
-    }
-
-    // xCoords are cell coordinates, converted to pixel-space cell centers the same way
-    // production code (PathBuilder) does, since PathNormal stores pixel points directly.
-    private static PathNormal straightPath(int scale, int... xCoords) {
-        List<Vec2> points = new ArrayList<>();
-        for (int x : xCoords) {
-            points.add(new Vec2(x * scale + (scale / 2), scale / 2));
-        }
-        return new PathNormal(points);
+        return WorldFixtures.newWorldOnBoard(1, 1001, 1001);
     }
 
     @Test
@@ -69,8 +54,7 @@ class AbstractEnemyMobTest {
     @Test
     void lethalDamageKillsTheEnemyAndCreditsThePlayer() {
         RecordingGameHost host = new RecordingGameHost();
-        GameWorld context = new GameWorld(host);
-        context.setBoard(BoardGeometry.of(1, 1001, 1001));
+        GameWorld context = WorldFixtures.newWorldOnBoard(host, 1, 1001, 1001);
         context.enemies().setCount(1);
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 7, 2);
@@ -87,8 +71,7 @@ class AbstractEnemyMobTest {
     @Test
     void anAlreadyDeadEnemyDamagedAgainDoesNotPayTheBountyTwice() {
         RecordingGameHost host = new RecordingGameHost();
-        GameWorld context = new GameWorld(host);
-        context.setBoard(BoardGeometry.of(1, 1001, 1001));
+        GameWorld context = WorldFixtures.newWorldOnBoard(host, 1, 1001, 1001);
         context.enemies().setCount(1);
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 7, 2);
@@ -128,7 +111,7 @@ class AbstractEnemyMobTest {
     @Test
     void oneTickAdvancesTheEnemyBySpeedPixelsAlongTheCurrentSegment() {
         GameWorld context = newContext();
-        context.setPath(straightPath(1, 0, 100)); // one straight segment, 100px long at scale 1
+        context.setPath(LevelFixtures.straightPath(1, 0, 100)); // one straight segment, 100px long at scale 1
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
         assertThat(enemy.getX()).isEqualTo(0.0);
@@ -153,7 +136,7 @@ class AbstractEnemyMobTest {
         // segment lengths 10, then 20, then a trailing 1 so reaching x=30 happens strictly
         // before the path wraps (which would otherwise snap x back near 0 exactly at x=30,
         // and the loop below would never observe x >= 30).
-        context.setPath(straightPath(1, 0, 10, 30, 31));
+        context.setPath(LevelFixtures.straightPath(1, 0, 10, 30, 31));
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
 
@@ -246,7 +229,7 @@ class AbstractEnemyMobTest {
     @Test
     void previousPositionTracksOneTickBehindCurrentPosition() {
         GameWorld context = newContext();
-        context.setPath(straightPath(10, 0, 10));
+        context.setPath(LevelFixtures.straightPath(10, 0, 10));
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
 
@@ -266,7 +249,7 @@ class AbstractEnemyMobTest {
     @Test
     void reachingTheEndOfThePathSnapsRatherThanInterpolatingAcrossTheBoard() {
         GameWorld context = newContext();
-        context.setPath(straightPath(10, 0, 1));
+        context.setPath(LevelFixtures.straightPath(10, 0, 1));
         int initialLives = context.economy().getLives();
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
@@ -286,7 +269,7 @@ class AbstractEnemyMobTest {
     @Test
     void enemyReachingEndOfPathCostsALife() {
         GameWorld context = newContext();
-        context.setPath(straightPath(10, 0, 1));
+        context.setPath(LevelFixtures.straightPath(10, 0, 1));
         int initialLives = context.economy().getLives();
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
@@ -300,9 +283,8 @@ class AbstractEnemyMobTest {
     @Test
     void enemyReachingEndOfPathDespawnsPermanentlyInsteadOfLoopingBackForABounty() {
         RecordingGameHost host = new RecordingGameHost();
-        GameWorld context = new GameWorld(host);
-        context.setBoard(BoardGeometry.of(1, 1001, 1001));
-        context.setPath(straightPath(10, 0, 1));
+        GameWorld context = WorldFixtures.newWorldOnBoard(host, 1, 1001, 1001);
+        context.setPath(LevelFixtures.straightPath(10, 0, 1));
         int creditsBeforeLeak = context.economy().getCredits();
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
@@ -322,7 +304,7 @@ class AbstractEnemyMobTest {
     @Test
     void aPriceZeroEnemyLeakingCostsTheLifeButNoScore() {
         GameWorld context = newContext();
-        context.setPath(straightPath(10, 0, 1));
+        context.setPath(LevelFixtures.straightPath(10, 0, 1));
         int initialLives = context.economy().getLives();
         int initialScore = context.economy().getScore();
 
@@ -340,7 +322,7 @@ class AbstractEnemyMobTest {
     void anEnemySpawnedAtAnOffBoardPathPointStartsOffscreenAndWalksOntoTheBoard() {
         GameWorld context = newContext();
         context.setBoard(BoardGeometry.of(10, 5, 5));
-        context.setPath(straightPath(10, -1, 4));
+        context.setPath(LevelFixtures.straightPath(10, -1, 4));
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, 1);
 
@@ -351,7 +333,7 @@ class AbstractEnemyMobTest {
     void anEnemyDespawnsWhileStillVisiblyPastTheBoardsFarEdge() {
         GameWorld context = newContext();
         context.setBoard(BoardGeometry.of(10, 5, 5));
-        context.setPath(straightPath(10, 0, 6));
+        context.setPath(LevelFixtures.straightPath(10, 0, 6));
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);
         for (int i = 1; i <= 100; i++) {

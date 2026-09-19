@@ -1,6 +1,8 @@
 package td;
 
 import org.junit.jupiter.api.Test;
+import td.fixtures.BoardFixtures;
+import td.fixtures.LevelFixtures;
 import td.level.LevelDefinition;
 import td.projectile.CannonballProjectile;
 import td.tower.MortarTower;
@@ -8,8 +10,6 @@ import td.tower.SniperTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.LoadedLevel;
-import td.wave.PathDefinition;
-import td.wave.Point;
 import td.wave.WaveDefinition;
 import td.wave.WaveProgress;
 
@@ -28,34 +28,6 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  */
 class GameEngineTest {
 
-    private static final int SCALE = 32; // GameWorld's default scale, unless a test changes it
-    // straight path along row y=2; also the path waypoint PathNormal.finalise() marks unbuildable
-    private static final List<Point> STRAIGHT_PATH = List.of(new Point(0, 2), new Point(4, 2));
-
-    private static LevelDefinition levelWith(List<WaveDefinition> waves, int startingCredits) {
-        return LevelDefinition.unsmoothed("Test Level", "", 5, 5, STRAIGHT_PATH, waves, startingCredits, 5);
-    }
-
-    private static LevelDefinition biggerLevelWith(List<WaveDefinition> waves, int startingCredits) {
-        return LevelDefinition.unsmoothed("Bigger Level", "", 20, 15, STRAIGHT_PATH, waves, startingCredits, 5);
-    }
-
-    /**
-     * A two-path level: path A repeats {@link #STRAIGHT_PATH} at row 2, path B is a separate
-     * short straight path at row 5, on a taller board than {@link #levelWith} uses so the two
-     * rows sit well apart - far enough that a tower covering path A cannot also reach path B.
-     */
-    private static LevelDefinition twoPathLevelWith(List<WaveDefinition> wavesA, List<WaveDefinition> wavesB) {
-        return new LevelDefinition("Two-Path Test Level", "", 5, 7,
-                List.of(PathDefinition.of(STRAIGHT_PATH, wavesA),
-                        PathDefinition.of(List.of(new Point(0, 5), new Point(4, 5)), wavesB)),
-                100, 5);
-    }
-
-    private static int cellCenter(int cellIndex) {
-        return cellIndex * SCALE + SCALE / 2;
-    }
-
     @Test
     void loadingALevelReplacesEveryPartOfTheWorldInOneVisibleStep() {
         // The five parts of a level are correlated: the wave counter indexes the wave list,
@@ -63,14 +35,14 @@ class GameEngineTest {
         // those cells unbuildable. They cross to the game-loop thread as one LoadedLevel, so a
         // reader can never pair the incoming board with the outgoing grid.
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
         engine.nextWave();
 
-        engine.loadLevel(biggerLevelWith(List.of(), 50));
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(), 50));
 
         LoadedLevel installed = engine.getGameWorld().level();
         assertThat(installed.cells().width()).isEqualTo(20);
-        assertThat(installed.board().maxX()).isEqualTo(20 * SCALE - 1);
+        assertThat(installed.board().maxX()).isEqualTo(20 * BoardFixtures.SCALE - 1);
         assertThat(installed.waveCount()).isZero();
         assertThat(installed.pathAt(0).points()).isNotEmpty();
         assertThat(engine.getCurrentWaveIndex()).isZero();
@@ -79,7 +51,7 @@ class GameEngineTest {
     @Test
     void waveProgressReportsAnIndexAndCountThatBelongToTheSameLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(
+        engine.loadLevel(LevelFixtures.levelWith(List.of(
                 new WaveDefinition("c", 100, 3, 1),
                 new WaveDefinition("s", 120, 4, 1)), 100));
 
@@ -96,7 +68,7 @@ class GameEngineTest {
     @Test
     void waveProgressOnTheLastWaveOffersNoNextWave() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
 
         engine.nextWave();
 
@@ -112,7 +84,7 @@ class GameEngineTest {
         // wave the newly installed level does not have. Reporting the incoming level beats
         // indexing off the end of its shorter list.
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(
+        engine.loadLevel(LevelFixtures.levelWith(List.of(
                 new WaveDefinition("c", 100, 3, 1),
                 new WaveDefinition("s", 120, 4, 1)), 100));
         engine.nextWave();
@@ -126,10 +98,10 @@ class GameEngineTest {
     @Test
     void placingATowerOnABuildableCellChargesCreditsAndOccupiesTheCell() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
 
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        Optional<Tower> selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
+        Optional<Tower> selected = engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
 
         assertThat(selected).isEmpty(); // placing doesn't "select" the newly-built tower
         assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100 - SniperTower.PRICE);
@@ -140,10 +112,10 @@ class GameEngineTest {
     @Test
     void placingATowerWithoutEnoughCreditsCancelsPlacementWithoutBuildingOrCharging() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(), SniperTower.PRICE - 1));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), SniperTower.PRICE - 1));
 
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        Optional<Tower> selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
+        Optional<Tower> selected = engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
 
         assertThat(selected).isEmpty();
         assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(SniperTower.PRICE - 1);
@@ -154,11 +126,11 @@ class GameEngineTest {
     @Test
     void clickingAnOccupiedCellSelectsItsTower() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(cellCenter(0), cellCenter(0));
+        engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
 
-        Optional<Tower> selected = engine.mouseClicked(cellCenter(0), cellCenter(0));
+        Optional<Tower> selected = engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
 
         assertThat(selected).get().extracting(Tower::getType).isEqualTo(TowerFactory.Type.SNIPER);
     }
@@ -166,10 +138,10 @@ class GameEngineTest {
     @Test
     void placingOnAPathCellIsRejectedAndCostsNothing() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
 
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(cellCenter(0), cellCenter(2));
+        engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(2));
 
         assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100);
         assertThat(engine.cells().at(0, 2).hasTower()).isFalse();
@@ -184,12 +156,12 @@ class GameEngineTest {
         // just its two listed endpoints.
         // a 2nd wave must exist for "wave cleared" to mean "next wave ready"
         // rather than "no more waves" (game won) - see GameEngine.doTick/nextWave
-        engine.loadLevel(levelWith(
+        engine.loadLevel(LevelFixtures.levelWith(
                 List.of(new WaveDefinition("c", 1, 7, 1),
                         new WaveDefinition("c", 1, 7, 1)), 100));
 
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(cellCenter(2), cellCenter(1));
+        engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
         int creditsAfterBuild = engine.getGameWorld().economy().getCredits();
         int scoreBefore = engine.getGameWorld().economy().getScore();
 
@@ -212,12 +184,12 @@ class GameEngineTest {
         // GameWorld.startWave seeds the roster's alive count from - a swarm of 3 must cost 3
         // kills to clear, not 1, or the wave clears early (or never).
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(
+        engine.loadLevel(LevelFixtures.levelWith(
                 List.of(new WaveDefinition("swarm 3 c", 1, 7, 1),
                         new WaveDefinition("c", 1, 7, 1)), 100));
 
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(cellCenter(2), cellCenter(1));
+        engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
         int scoreBefore = engine.getGameWorld().economy().getScore();
 
         assertThat(engine.nextWave()).isTrue();
@@ -245,7 +217,7 @@ class GameEngineTest {
     @Test
     void startingARoundSpawnsBothPathsWavesInOneCall() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(twoPathLevelWith(
+        engine.loadLevel(LevelFixtures.twoPathLevelWith(
                 List.of(new WaveDefinition("c", 1, 7, 1)),
                 List.of(new WaveDefinition("2 c", 1, 7, 1))));
 
@@ -264,11 +236,11 @@ class GameEngineTest {
         // un-ready the whole time path B's enemy is still walking, even though path A's is
         // long dead - "the round is cleared" has to wait for every path, not just one.
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(twoPathLevelWith(
+        engine.loadLevel(LevelFixtures.twoPathLevelWith(
                 List.of(new WaveDefinition("c", 1, 7, 1), new WaveDefinition("c", 1, 7, 1)),
                 List.of(new WaveDefinition("c", 1, 7, 1), new WaveDefinition("c", 1, 7, 1))));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(cellCenter(2), cellCenter(1)); // in range of path A's row (y=2) only
+        engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1)); // in range of path A's row (y=2) only
         int scoreBefore = engine.getGameWorld().economy().getScore();
 
         assertThat(engine.nextWave()).isTrue();
@@ -293,12 +265,12 @@ class GameEngineTest {
     @Test
     void buildabilityUnionsEveryPathNotJustTheFirst() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(twoPathLevelWith(List.of(), List.of()));
+        engine.loadLevel(LevelFixtures.twoPathLevelWith(List.of(), List.of()));
 
         // (2, 5) sits on path B's row - path A's own coverage (row 2) never reaches it, so this
         // cell is unbuildable only because path B's coverage is unioned in too.
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        Optional<Tower> selected = engine.mouseClicked(cellCenter(2), cellCenter(5));
+        Optional<Tower> selected = engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(5));
 
         assertThat(selected).isEmpty();
         assertThat(engine.cells().at(2, 5).hasTower()).isFalse();
@@ -308,12 +280,12 @@ class GameEngineTest {
     void aMortarShellTravelsThenSplashesAnInRangeEnemyCreditingThePlayer() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         // same placement as the SniperTower case above - well within Mortar's own (larger) range too.
-        engine.loadLevel(levelWith(
+        engine.loadLevel(LevelFixtures.levelWith(
                 List.of(new WaveDefinition("c", 1, 7, 1),
                         new WaveDefinition("c", 1, 7, 1)), 100));
 
         engine.startPlacing(TowerFactory.Type.MORTAR, MortarTower.RANGE);
-        engine.mouseClicked(cellCenter(2), cellCenter(1));
+        engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
         int creditsAfterBuild = engine.getGameWorld().economy().getCredits();
         int scoreBefore = engine.getGameWorld().economy().getScore();
 
@@ -331,7 +303,7 @@ class GameEngineTest {
     @Test
     void enemyReachingTheEndOfThePathCostsALife() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
         int initialLives = engine.getGameWorld().economy().getLives();
 
         engine.nextWave();
@@ -345,9 +317,9 @@ class GameEngineTest {
     @Test
     void sellingATowerRefundsSeventyFivePercentAndClearsTheCell() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(cellCenter(0), cellCenter(0));
+        engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
         int creditsAfterBuild = engine.getGameWorld().economy().getCredits();
         Tower placed = engine.cells().at(0, 0).getTower();
 
@@ -361,12 +333,12 @@ class GameEngineTest {
     @Test
     void reloadingALevelRemovesTowersLeftFromThePreviousLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(cellCenter(0), cellCenter(0));
+        engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
         assertThat(engine.cells().at(0, 0).hasTower()).isTrue();
 
-        engine.loadLevel(levelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
 
         assertThat(engine.getGameWorld().towers().all()).isEmpty();
         assertThat(engine.cells().at(0, 0).hasTower()).isFalse();
@@ -375,11 +347,11 @@ class GameEngineTest {
     @Test
     void reloadingALevelClearsEnemiesStillAliveFromThePreviousLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 1000, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 1000, 3, 1)), 100));
         engine.nextWave();
         assertThat(engine.getGameWorld().enemies().getEnemies()).isNotEmpty();
 
-        engine.loadLevel(levelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
 
         assertThat(engine.getGameWorld().enemies().getEnemies()).isEmpty();
     }
@@ -387,12 +359,12 @@ class GameEngineTest {
     @Test
     void reloadingALevelClearsProjectilesStillInFlightFromThePreviousLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         engine.getGameWorld().projectiles().add(new CannonballProjectile(0, 0, 1000, 0, 1f, (x, y) -> {
         }));
         assertThat(engine.getGameWorld().projectiles().getProjectiles()).isNotEmpty();
 
-        engine.loadLevel(levelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
 
         assertThat(engine.getGameWorld().projectiles().getProjectiles()).isEmpty();
     }
@@ -400,7 +372,7 @@ class GameEngineTest {
     @Test
     void aProjectileAdvancesOnATickBetweenEnemiesAndTowersMoving() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         engine.getGameWorld().projectiles().add(new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
         }));
 
@@ -412,11 +384,11 @@ class GameEngineTest {
     @Test
     void reloadingALevelReseedsCreditsAndLivesFromTheNewLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(cellCenter(0), cellCenter(0));
+        engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
 
-        LevelDefinition next = LevelDefinition.unsmoothed("Next", "", 5, 5, STRAIGHT_PATH, List.of(), 75, 3);
+        LevelDefinition next = LevelDefinition.unsmoothed("Next", "", 5, 5, LevelFixtures.STRAIGHT_PATH, List.of(), 75, 3);
         engine.loadLevel(next);
 
         assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(75);
@@ -426,11 +398,11 @@ class GameEngineTest {
     @Test
     void reloadingALevelRewindsTheWaveCounterAndReArmsTheFirstWave() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
         engine.nextWave();
         assertThat(engine.getCurrentWaveIndex()).isEqualTo(1);
 
-        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
 
         assertThat(engine.getCurrentWaveIndex()).isEqualTo(0);
         assertThat(engine.isWaveReady()).isTrue();
@@ -439,10 +411,10 @@ class GameEngineTest {
     @Test
     void aWaveRequestedButNotYetStartedDoesNotCarryIntoTheNextLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
         engine.requestNextWave();
 
-        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 1, 3, 1)), 100));
 
         assertThat(engine.doTick(1)).isFalse();
         assertThat(engine.getCurrentWaveIndex()).isZero();
@@ -451,11 +423,11 @@ class GameEngineTest {
     @Test
     void loadingASmallerLevelWithACellHighlightedFromTheBiggerOneDoesNotCrash() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(biggerLevelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(), 100));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.highlightCell(cellCenter(18), cellCenter(14));
+        engine.highlightCell(BoardFixtures.cellCenter(18), BoardFixtures.cellCenter(14));
 
-        assertThatCode(() -> engine.loadLevel(levelWith(List.of(), 100)))
+        assertThatCode(() -> engine.loadLevel(LevelFixtures.levelWith(List.of(), 100)))
                 .doesNotThrowAnyException();
         assertThatCode(() -> engine.doTick(1)).doesNotThrowAnyException();
     }
@@ -463,19 +435,19 @@ class GameEngineTest {
     @Test
     void loadingASmallerLevelClearsTowersAgainstTheOldBoardRatherThanTheNewOne() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(biggerLevelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(), 100));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(cellCenter(18), cellCenter(14));
+        engine.mouseClicked(BoardFixtures.cellCenter(18), BoardFixtures.cellCenter(14));
         assertThat(engine.cells().at(18, 14).hasTower()).isTrue();
 
-        assertThatCode(() -> engine.loadLevel(levelWith(List.of(), 100)))
+        assertThatCode(() -> engine.loadLevel(LevelFixtures.levelWith(List.of(), 100)))
                 .doesNotThrowAnyException();
     }
 
     @Test
     void debugSkippingAWaveClearsItAndStartsTheNextOneImmediately() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(
+        engine.loadLevel(LevelFixtures.levelWith(
                 List.of(new WaveDefinition("c", 100, 3, 1),
                         new WaveDefinition("c", 100, 3, 1)), 100));
         engine.nextWave();
@@ -491,7 +463,7 @@ class GameEngineTest {
     @Test
     void debugSkippingTheFinalWaveClearsTheBoardButStartsNothing() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 100, 3, 1)), 100));
         engine.nextWave();
         assertThat(engine.getGameWorld().enemies().getEnemies()).isNotEmpty();
 
@@ -504,7 +476,7 @@ class GameEngineTest {
     @Test
     void debugSkippingAWaveCostsNoLivesAndPaysNoCredits() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(new WaveDefinition("c", 100, 7, 1)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", 100, 7, 1)), 100));
         engine.nextWave();
         int livesBefore = engine.getGameWorld().economy().getLives();
         int creditsBefore = engine.getGameWorld().economy().getCredits();
@@ -518,7 +490,7 @@ class GameEngineTest {
     @Test
     void debugSpawnCyclesThroughEveryCatalogIdInOrderThenWraps() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         List<String> ids = engine.getGameWorld().getEnemyCatalog().ids();
 
         for (String expected : ids) {
@@ -530,7 +502,7 @@ class GameEngineTest {
     @Test
     void debugSpawnAddsALiveEnemyToTheRosterImmediately() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
 
         engine.debugSpawnNextCatalogEnemy();
 
@@ -547,7 +519,7 @@ class GameEngineTest {
     @Test
     void debugGrantingCreditsRaisesTheBalanceByExactlyTheAmount() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(levelWith(List.of(), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
 
         engine.debugGrantCredits(250);
 

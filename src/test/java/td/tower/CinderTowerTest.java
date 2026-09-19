@@ -1,13 +1,13 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
-import td.board.BoardGeometry;
 import td.damage.DamageType;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.fixtures.BoardFixtures;
+import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
-import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,12 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class CinderTowerTest {
 
-    private static final int SCALE = 32;
-
-    private final GameWorld context = new GameWorld(new RecordingGameHost());
+    private final GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
 
     private CinderTower towerAt(int cellX, int cellY) {
-        this.context.setBoard(BoardGeometry.of(SCALE, 20, 20));
         return new CinderTower(this.context, cellX, cellY);
     }
 
@@ -82,7 +79,7 @@ class CinderTowerTest {
         boolean chosen = tower.chooseUpgradePath(wideNozzle);
 
         assertThat(chosen).isTrue();
-        assertThat(tower.getRangeReal()).isGreaterThan(CinderTower.RANGE * SCALE);
+        assertThat(tower.getRangeReal()).isGreaterThan(CinderTower.RANGE * BoardFixtures.SCALE);
     }
 
     @Test

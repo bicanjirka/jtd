@@ -1,8 +1,8 @@
 package td;
 
 import org.junit.jupiter.api.Test;
+import td.fixtures.LevelFixtures;
 import td.level.LevelDefinition;
-import td.wave.Point;
 import td.wave.WaveDefinition;
 
 import java.util.List;
@@ -24,10 +24,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class EngineThreadingTest {
 
-    private static final List<Point> STRAIGHT_PATH = List.of(new Point(0, 2), new Point(4, 2));
-
+    // Unlike LevelFixtures.level, this carries a real wave - aWaveRequestedFromAnotherThreadIsConsumedByTheTickThread
+    // needs an actual wave to start.
     private static LevelDefinition level(String name, int width, int height) {
-        return LevelDefinition.unsmoothed(name, "", width, height, STRAIGHT_PATH,
+        return LevelDefinition.unsmoothed(name, "", width, height, LevelFixtures.STRAIGHT_PATH,
                 List.of(new WaveDefinition("3 c", 2, 5, 1)), 100, 5);
     }
 

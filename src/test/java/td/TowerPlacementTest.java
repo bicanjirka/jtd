@@ -4,11 +4,12 @@ import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.cell.Cell;
 import td.cell.CellGrid;
+import td.fixtures.BoardFixtures;
+import td.fixtures.WorldFixtures;
 import td.tower.SniperTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.GameWorld;
-import td.util.RecordingGameHost;
 
 import java.util.Optional;
 
@@ -22,19 +23,12 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  */
 class TowerPlacementTest {
 
-    private static final int SCALE = 32;
-
     private static CellGrid grid(int width, int height) {
-        return CellGrid.of(width, height, SCALE);
-    }
-
-    private static int cellCenter(int cellIndex) {
-        return cellIndex * SCALE + SCALE / 2;
+        return CellGrid.of(width, height, BoardFixtures.SCALE);
     }
 
     private static TowerPlacement newPlacement(CellGrid grid, int credits) {
-        GameWorld context = new GameWorld(new RecordingGameHost());
-        context.setBoard(BoardGeometry.of(SCALE, grid.width(), grid.height()));
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, grid.width(), grid.height());
         context.economy().startEconomy(credits, 5);
         return new TowerPlacement(context, () -> grid);
     }
@@ -53,7 +47,7 @@ class TowerPlacementTest {
         CellGrid grid = grid(3, 3);
         TowerPlacement placement = newPlacement(grid, 100);
         placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        placement.highlightCell(cellCenter(1), cellCenter(1));
+        placement.highlightCell(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(1));
 
         placement.cancel();
 
@@ -67,8 +61,8 @@ class TowerPlacementTest {
         TowerPlacement placement = newPlacement(grid, 100);
         placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
 
-        placement.highlightCell(cellCenter(0), cellCenter(0));
-        placement.highlightCell(cellCenter(1), cellCenter(1));
+        placement.highlightCell(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
+        placement.highlightCell(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(1));
 
         assertThat(grid.at(0, 0).getHighlight()).isEqualTo(Cell.HighlightType.NONE);
         assertThat(grid.at(1, 1).getHighlight()).isEqualTo(Cell.HighlightType.PLACE);
@@ -79,9 +73,9 @@ class TowerPlacementTest {
         CellGrid grid = grid(3, 3);
         TowerPlacement placement = newPlacement(grid, 100);
         placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        placement.mouseClicked(cellCenter(0), cellCenter(0));
+        placement.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
 
-        Optional<Tower> selected = placement.mouseClicked(cellCenter(0), cellCenter(0));
+        Optional<Tower> selected = placement.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
 
         assertThat(selected).isPresent();
         assertThat(grid.at(0, 0).getHighlight()).isEqualTo(Cell.HighlightType.SELECT);
@@ -92,8 +86,8 @@ class TowerPlacementTest {
         CellGrid grid = grid(3, 3);
         TowerPlacement placement = newPlacement(grid, 100);
         placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        placement.mouseClicked(cellCenter(0), cellCenter(0));
-        placement.mouseClicked(cellCenter(0), cellCenter(0));
+        placement.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
+        placement.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
 
         placement.unSelectTower();
 
@@ -105,7 +99,7 @@ class TowerPlacementTest {
         CellGrid bigGrid = grid(3, 3);
         TowerPlacement placement = newPlacement(bigGrid, 100);
         placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        placement.highlightCell(cellCenter(2), cellCenter(2));
+        placement.highlightCell(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(2));
 
         placement.reset();
 
@@ -121,18 +115,17 @@ class TowerPlacementTest {
         // answer changes when a new (possibly smaller) level replaces the grid
         CellGrid bigGrid = grid(3, 3);
         CellGrid[] currentGrid = {bigGrid};
-        GameWorld context = new GameWorld(new RecordingGameHost());
-        context.setBoard(BoardGeometry.of(SCALE, bigGrid.width(), bigGrid.height()));
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, bigGrid.width(), bigGrid.height());
         context.economy().startEconomy(100, 5);
         TowerPlacement placement = new TowerPlacement(context, () -> currentGrid[0]);
         placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        placement.highlightCell(cellCenter(2), cellCenter(2));
+        placement.highlightCell(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(2));
 
         placement.reset();
         currentGrid[0] = grid(1, 1);
-        context.setBoard(BoardGeometry.of(SCALE, 1, 1));
+        context.setBoard(BoardGeometry.of(BoardFixtures.SCALE, 1, 1));
 
-        assertThatCode(() -> placement.highlightCell(cellCenter(0), cellCenter(0)))
+        assertThatCode(() -> placement.highlightCell(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0)))
                 .doesNotThrowAnyException();
     }
 
@@ -142,7 +135,7 @@ class TowerPlacementTest {
         TowerPlacement placement = newPlacement(grid, SniperTower.PRICE - 1);
         placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
 
-        Optional<Tower> selected = placement.mouseClicked(cellCenter(0), cellCenter(0));
+        Optional<Tower> selected = placement.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
 
         assertThat(selected).isEmpty();
         assertThat(grid.at(0, 0).hasTower()).isFalse();

@@ -235,7 +235,8 @@ JUnit 5 + AssertJ. `assertThat(...)`, never JUnit's bare assertions.
   explicit tick numbers. Never rely on the real loop's timing or open a window.
 - Arrange / act / assert separated by blank lines — no `// given` comments, no `@Nested`.
 - Test doubles live beside the tests they serve, named for their role: `FakeGameHost`,
-  `RecordingGameHost`, `FakeEnemyMob`, `RecordingEnemyMob`.
+  `RecordingGameHost`, `FakeEnemyMob`, `RecordingEnemyMob`. Shared setup used across packages -
+  building a world, a board, a test level - lives in `td.fixtures` instead, and is public.
 - `GameEngineTest` is the integration surface, exercising the same entry points `TowerDefense`'s
   listeners call. New gameplay rules should be provable there.
 

@@ -1,6 +1,7 @@
 package td;
 
 import org.junit.jupiter.api.Test;
+import td.fixtures.BoardFixtures;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
 import td.tower.SniperTower;
@@ -28,8 +29,6 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  */
 class BuiltInLevelCatalogEngineTest {
 
-    private static final int SCALE = 32;
-
     /**
      * Finds a cell the smoothed (curved) path marks unbuildable that the same level's raw,
      * unsmoothed corners would not - i.e. a cell only the wild Bezier sweep itself reaches.
@@ -37,21 +36,20 @@ class BuiltInLevelCatalogEngineTest {
     private static Point aCellOnlyTheSmoothedCurveCovers(LevelDefinition level) {
         PathDefinition path = level.paths().getFirst();
         List<Vec2> rawPolyline = path.corners().stream()
-                .map(cell -> new Vec2(cell.x() * SCALE + (SCALE / 2.0), cell.y() * SCALE + (SCALE / 2.0)))
+                .map(cell -> new Vec2(cell.x() * BoardFixtures.SCALE + (BoardFixtures.SCALE / 2.0),
+                        cell.y() * BoardFixtures.SCALE + (BoardFixtures.SCALE / 2.0)))
                 .toList();
-        Set<Point> straightCornerCoverage = PathCoverage.unbuildableCells(rawPolyline, SCALE, level.width(), level.height());
+        Set<Point> straightCornerCoverage = PathCoverage.unbuildableCells(
+                rawPolyline, BoardFixtures.SCALE, level.width(), level.height());
 
-        Path smoothedPath = PathBuilder.build(path.corners(), path.smoothing(), SCALE);
-        Set<Point> smoothedCoverage = PathCoverage.unbuildableCells(smoothedPath.points(), SCALE, level.width(), level.height());
+        Path smoothedPath = PathBuilder.build(path.corners(), path.smoothing(), BoardFixtures.SCALE);
+        Set<Point> smoothedCoverage = PathCoverage.unbuildableCells(
+                smoothedPath.points(), BoardFixtures.SCALE, level.width(), level.height());
 
         return smoothedCoverage.stream()
                 .filter(cell -> !straightCornerCoverage.contains(cell))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Expected the smoothed curve to cover at least one cell the raw corners don't"));
-    }
-
-    private static int cellCenter(int cellIndex) {
-        return cellIndex * SCALE + SCALE / 2;
     }
 
     @Test
@@ -83,7 +81,7 @@ class BuiltInLevelCatalogEngineTest {
         int creditsBefore = engine.getGameWorld().economy().getCredits();
 
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        Optional<Tower> selected = engine.mouseClicked(cellCenter(curveOnlyCell.x()), cellCenter(curveOnlyCell.y()));
+        Optional<Tower> selected = engine.mouseClicked(BoardFixtures.cellCenter(curveOnlyCell.x()), BoardFixtures.cellCenter(curveOnlyCell.y()));
 
         assertThat(selected).isEmpty();
         assertThat(engine.cells().at(curveOnlyCell.x(), curveOnlyCell.y()).hasTower()).isFalse();
@@ -97,7 +95,7 @@ class BuiltInLevelCatalogEngineTest {
         engine.loadLevel(level);
 
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(cellCenter(0), cellCenter(level.height() - 1));
+        engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(level.height() - 1));
 
         assertThat(engine.cells().at(0, level.height() - 1).hasTower()).isTrue();
     }

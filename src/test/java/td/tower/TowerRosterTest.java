@@ -3,6 +3,8 @@ package td.tower;
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.economy.EconomyLedger;
+import td.fixtures.BoardFixtures;
+import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
@@ -15,8 +17,8 @@ class TowerRosterTest {
 
     private final RecordingGameHost host = new RecordingGameHost();
     private final EconomyLedger economy = new EconomyLedger();
-    private final TowerRoster roster = new TowerRoster(host, economy, () -> BoardGeometry.of(32, 10, 10));
-    private final GameWorld context = new GameWorld(host);
+    private final TowerRoster roster = new TowerRoster(host, economy, () -> BoardGeometry.of(BoardFixtures.SCALE, 10, 10));
+    private final GameWorld context = WorldFixtures.newWorld(host);
 
     private Tower aTower() {
         return TowerFactory.createTower(TowerFactory.Type.SNIPER, context, 2, 3);

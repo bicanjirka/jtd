@@ -1,11 +1,10 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
-import td.board.BoardGeometry;
 import td.damage.Damage;
 import td.effect.EffectKind;
+import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
-import td.util.RecordingGameHost;
 import td.wave.PathNormal;
 import td.wave.Vec2;
 
@@ -26,8 +25,7 @@ class WardenChainTest {
     private static final Damage LETHAL = Damage.physical(5_000_000);
 
     private static GameWorld worldWithStraightPath() {
-        GameWorld world = new GameWorld(new RecordingGameHost());
-        world.setBoard(BoardGeometry.of(32, 1000, 1000));
+        GameWorld world = WorldFixtures.newWorldOnBoard(32, 1000, 1000);
         world.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(1000, 0))));
         return world;
     }
