@@ -62,4 +62,53 @@ public record EnemyDefinition(
         traits = List.copyOf(traits);
         abilities = List.copyOf(abilities);
     }
+
+    /**
+     * The required shape every enemy has: no description, {@link EnemyMob.Type#NORMAL}, a
+     * {@link FixedMovement} pace, no health divisor, no traits, no abilities. A definition that
+     * needs any of those calls the matching {@code withX} copy below instead of this factory
+     * growing another parameter - the same "with"-copy shape {@link td.wave.PathDefinition} and
+     * {@code td.util.LoadedLevel} already use.
+     */
+    public static EnemyDefinition of(String id, String displayName, int baseHealth, int price, float baseSpeed,
+            BodyArchetype archetype) {
+        return new EnemyDefinition(id, displayName, "", baseHealth, price, baseSpeed, 1f,
+                EnemyMob.Type.NORMAL, archetype, new FixedMovement(), List.of(), List.of());
+    }
+
+    public EnemyDefinition withDescription(String description) {
+        return new EnemyDefinition(this.id, this.displayName, description, this.baseHealth, this.price,
+                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traits,
+                this.abilities);
+    }
+
+    public EnemyDefinition withHealthDivisor(float healthDivisor) {
+        return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
+                this.baseSpeed, healthDivisor, this.mobType, this.archetype, this.movement, this.traits,
+                this.abilities);
+    }
+
+    public EnemyDefinition withMobType(EnemyMob.Type mobType) {
+        return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
+                this.baseSpeed, this.healthDivisor, mobType, this.archetype, this.movement, this.traits,
+                this.abilities);
+    }
+
+    public EnemyDefinition withMovement(MovementBehavior movement) {
+        return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
+                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, movement, this.traits,
+                this.abilities);
+    }
+
+    public EnemyDefinition withTraits(List<Trait> traits) {
+        return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
+                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, traits,
+                this.abilities);
+    }
+
+    public EnemyDefinition withAbilities(List<Ability> abilities) {
+        return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
+                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traits,
+                abilities);
+    }
 }

@@ -131,14 +131,12 @@ public class BuiltInLevelCatalog implements LevelCatalog {
             .withColor(PathColor.of(90, 190, 230))
             .withSpeed(1.3f);
 
-    private static final LevelDefinition WILD_BEZIER_SWEEP = new LevelDefinition(
-            "Wild Bezier Sweep",
-            "Long bezier curves that swing far wide of the path's straight corners, crossed by a "
+    private static final LevelDefinition WILD_BEZIER_SWEEP = LevelDefinition
+            .of("Wild Bezier Sweep", 30, 18, List.of(WILD_BEZIER_SWEEP_PATH_A, WILD_BEZIER_SWEEP_PATH_B))
+            .withDescription("Long bezier curves that swing far wide of the path's straight corners, crossed by a "
                     + "second, faster lane sweeping top to bottom. 10 waves per lane, starting with "
-                    + "$100 and 4 lives.",
-            30, 18,
-            List.of(WILD_BEZIER_SWEEP_PATH_A, WILD_BEZIER_SWEEP_PATH_B),
-            100, 4);
+                    + "$100 and 4 lives.")
+            .withStartingLives(4);
 
     @Override
     public List<LevelDefinition> levels() {

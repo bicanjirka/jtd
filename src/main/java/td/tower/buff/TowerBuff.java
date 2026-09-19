@@ -8,6 +8,11 @@ package td.tower.buff;
  * {@code upgTowers.stream().map(AuraTower::buff).reduce(TowerBuff.none(), TowerBuff::combine)}
  * with no size-0/size-1 special case. Combining is additive rather than multiplicative so
  * that upgrades of equal strength stack the same way {@code 1 + power * count} used to.
+ * <p>
+ * A call site that means to name one or two axes can build off {@link #none()} through the
+ * fluent {@code withX} copies (e.g. {@code TowerBuff.none().withDamage(0.3f).withRange(0.1f)})
+ * instead of a positional literal that has to spell out every axis to reach the ones it cares
+ * about - a sixth axis, were one ever added, would cost these call sites no edits.
  */
 public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus, float bountyBonus,
                         float critChanceBonus) {
@@ -32,6 +37,31 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
      */
     public static TowerBuff amplifying(float fraction) {
         return new TowerBuff(fraction, fraction, 0f, 0f);
+    }
+
+    public TowerBuff withDamage(float damageBonus) {
+        return new TowerBuff(damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus,
+                this.critChanceBonus);
+    }
+
+    public TowerBuff withRange(float rangeBonus) {
+        return new TowerBuff(this.damageBonus, rangeBonus, this.fireRateBonus, this.bountyBonus,
+                this.critChanceBonus);
+    }
+
+    public TowerBuff withFireRate(float fireRateBonus) {
+        return new TowerBuff(this.damageBonus, this.rangeBonus, fireRateBonus, this.bountyBonus,
+                this.critChanceBonus);
+    }
+
+    public TowerBuff withBounty(float bountyBonus) {
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, bountyBonus,
+                this.critChanceBonus);
+    }
+
+    public TowerBuff withCritChance(float critChanceBonus) {
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus,
+                critChanceBonus);
     }
 
     public TowerBuff combine(TowerBuff other) {

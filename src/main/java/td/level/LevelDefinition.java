@@ -44,6 +44,32 @@ public record LevelDefinition(
     }
 
     /**
+     * The required shape every level has: its name, board size and paths, at the traditional
+     * default starting economy ($100/5 lives) and no description. A level that needs any of
+     * those calls the matching {@code withX} copy below instead of this factory growing another
+     * parameter - the same "with"-copy shape {@link PathDefinition} and {@code td.util.LoadedLevel}
+     * already use.
+     */
+    public static LevelDefinition of(String name, int width, int height, List<PathDefinition> paths) {
+        return new LevelDefinition(name, "", width, height, paths, 100, 5);
+    }
+
+    public LevelDefinition withDescription(String description) {
+        return new LevelDefinition(this.name, description, this.width, this.height, this.paths,
+                this.startingCredits, this.startingLives);
+    }
+
+    public LevelDefinition withStartingCredits(int startingCredits) {
+        return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
+                startingCredits, this.startingLives);
+    }
+
+    public LevelDefinition withStartingLives(int startingLives) {
+        return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
+                this.startingCredits, startingLives);
+    }
+
+    /**
      * A level with one unsmoothed path - the common case for a level that doesn't care about
      * multiple paths or smoothing.
      */
@@ -73,7 +99,9 @@ public record LevelDefinition(
             int startingCredits,
             int startingLives,
             PathSmoothing smoothing) {
-        return new LevelDefinition(name, description, width, height,
-                List.of(PathDefinition.smoothed(path, waves, smoothing)), startingCredits, startingLives);
+        return of(name, width, height, List.of(PathDefinition.smoothed(path, waves, smoothing)))
+                .withDescription(description)
+                .withStartingCredits(startingCredits)
+                .withStartingLives(startingLives);
     }
 }

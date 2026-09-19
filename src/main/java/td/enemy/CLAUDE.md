@@ -20,6 +20,16 @@ mini-language's spacer token, no longer spawns a mob of any kind — `td.wave.Wa
 recognizes it before ever consulting a catalog and it produces zero enemies (see
 `td/wave/CLAUDE.md`).
 
+**`EnemyDefinition.of(id, displayName, baseHealth, price, baseSpeed, archetype)`** is the
+required shape every definition has - no description, `EnemyMob.Type.NORMAL`, a `FixedMovement`
+pace, no health divisor, no traits, no abilities. A definition that needs any of those calls the
+matching fluent `withDescription`/`withMobType`/`withMovement`/`withHealthDivisor`/`withTraits`/
+`withAbilities` copy instead - see every constant in `BuiltInEnemies` for the pattern. This is
+what let the Warden's six-stage chain (12 components each, several shared verbatim across
+stages) read as "what's different about this stage" instead of a 12-argument positional literal
+each; adding a 13th component later costs one new `withX` method, not an edit to every existing
+definition.
+
 `EnemyMobVisitor` reflects this: it has exactly one method, `visitDefined`, kept as a visitor
 rather than collapsed into a plain call so a second non-data-driven mob can be added later
 without reopening every call site — see its own doc comment.
