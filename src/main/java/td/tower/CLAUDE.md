@@ -147,10 +147,13 @@ static — that is what lets two aura towers of different strengths stack correc
 `TowerBuff` carries five independent bonus axes — `damageBonus`, `rangeBonus`,
 `fireRateBonus`, `bountyBonus`, `critChanceBonus` — each defaulting to 0 at `none()`. An Aura
 tower's own `buff()` only ever sets the first two; the latter three exist for upgrade paths
-(below) to use. A call site that means to name only one or two axes builds off `none()`
-through the fluent `withDamage`/`withRange`/`withFireRate`/`withBounty`/`withCritChance`
-copies rather than a positional literal spelling out every axis to reach the ones it cares
-about - a sixth axis, were one ever added, would cost these call sites no edits. A tower's crit chance itself is `TowerStats.critChance`, computed as
+(below) to use. A call site that means to name only one or two axes starts from whichever
+axis it cares about first, through the matching static entry point (`TowerBuff.damage(...)`,
+`.range(...)`, `.fireRate(...)`, `.bounty(...)`, `.critChance(...)`), then continues with the
+fluent instance `withDamage`/`withRange`/`withFireRate`/`withBounty`/`withCritChance` copies
+for any further axis — e.g. `TowerBuff.damage(0.3f).withRange(0.1f)` — rather than a positional
+literal spelling out every axis to reach the ones it cares about, or seeding the chain off
+`none()`. A sixth axis, were one ever added, would cost these call sites no edits. A tower's crit chance itself is `TowerStats.critChance`, computed as
 `critChanceBonus` alone (via `TowerBuff.critChanceFor(0f)`) — no tower has any innate crit
 chance of its own, so today the axis is purely upgrade-path-granted (see `SniperTower.VETERAN`).
 `AbstractTower.dealDamage` rolls it via `context.random()` before the enemy ever sees the hit,

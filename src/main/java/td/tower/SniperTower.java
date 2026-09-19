@@ -33,12 +33,14 @@ public final class SniperTower extends AbstractTower {
      * critical hit - a veteran marksman's proven aim starts placing shots that count extra.
      */
     private static final UpgradePath VETERAN = new UpgradePath(
-            "Veteran", 30, new TowerBuff(0.3f, 0.1f, 0f, 0.25f, 0.15f), new KillCountCondition(10));
+            "Veteran", 30,
+            TowerBuff.damage(0.3f).withRange(0.1f).withBounty(0.25f).withCritChance(0.15f),
+            new KillCountCondition(10));
     /**
      * Faster, weaker shots - a straightforward money-gated specialization needing no track record.
      */
     private static final UpgradePath OVERCLOCK = new UpgradePath(
-            "Overclock", 25, new TowerBuff(-0.2f, 0f, 0.4f, 0f), UpgradeCondition.always());
+            "Overclock", 25, TowerBuff.damage(-0.2f).withFireRate(0.4f), UpgradeCondition.always());
     private static final List<UpgradePath> PATHS = List.of(VETERAN, OVERCLOCK);
 
     /**

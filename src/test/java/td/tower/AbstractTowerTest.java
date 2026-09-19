@@ -339,7 +339,7 @@ class AbstractTowerTest {
     void dealDamageRollsACriticalHitWhenTheRandomRollIsBelowCritChance() {
         GameWorld alwaysCrits = WorldFixtures.newWorld(() -> 0.0);
         alwaysCrits.economy().startEconomy(100, 5);
-        UpgradePath path = new UpgradePath("Precision", 10, TowerBuff.none().withCritChance(0.5f), UpgradeCondition.always());
+        UpgradePath path = new UpgradePath("Precision", 10, TowerBuff.critChance(0.5f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(alwaysCrits, 0, 0, List.of(path));
         tower.chooseUpgradePath(path);
         EnemyMob enemy = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, 1);
@@ -353,7 +353,7 @@ class AbstractTowerTest {
     void dealDamageDoesNotRollACriticalHitWhenTheRandomRollIsAboveCritChance() {
         GameWorld neverCrits = WorldFixtures.newWorld(() -> 0.99);
         neverCrits.economy().startEconomy(100, 5);
-        UpgradePath path = new UpgradePath("Precision", 10, TowerBuff.none().withCritChance(0.5f), UpgradeCondition.always());
+        UpgradePath path = new UpgradePath("Precision", 10, TowerBuff.critChance(0.5f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(neverCrits, 0, 0, List.of(path));
         tower.chooseUpgradePath(path);
         EnemyMob enemy = EnemyFactory.getEnemy("c", neverCrits, 0, 100000, 3, 1);
@@ -380,7 +380,7 @@ class AbstractTowerTest {
         // target's doubled chance should turn this into a critical hit
         GameWorld world = WorldFixtures.newWorld(() -> 0.3);
         world.economy().startEconomy(100, 5);
-        UpgradePath path = new UpgradePath("Precision", 10, TowerBuff.none().withCritChance(0.2f), UpgradeCondition.always());
+        UpgradePath path = new UpgradePath("Precision", 10, TowerBuff.critChance(0.2f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(world, 0, 0, List.of(path));
         tower.chooseUpgradePath(path);
         EnemyMob burning = EnemyFactory.getEnemy("c", world, 0, 100000, 3, 1);
@@ -398,7 +398,7 @@ class AbstractTowerTest {
         // active - the same roll that crit there must not crit here
         GameWorld world = WorldFixtures.newWorld(() -> 0.3);
         world.economy().startEconomy(100, 5);
-        UpgradePath path = new UpgradePath("Precision", 10, TowerBuff.none().withCritChance(0.2f), UpgradeCondition.always());
+        UpgradePath path = new UpgradePath("Precision", 10, TowerBuff.critChance(0.2f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(world, 0, 0, List.of(path));
         tower.chooseUpgradePath(path);
         EnemyMob notBurning = EnemyFactory.getEnemy("c", world, 0, 100000, 3, 1);

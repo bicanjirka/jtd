@@ -46,12 +46,12 @@ public final class SeekerTower extends AbstractTower {
      * Faster reloading - a straightforward money-gated specialization needing no track record.
      */
     private static final UpgradePath TWIN_WARHEAD = new UpgradePath(
-            "Twin Warhead", 30, new TowerBuff(0f, 0f, 0.35f, 0f), UpgradeCondition.always());
+            "Twin Warhead", 30, TowerBuff.fireRate(0.35f), UpgradeCondition.always());
     /**
      * More damage and a longer freeze - earned by this tower having racked up proven kills.
      */
     private static final UpgradePath DEEP_FREEZE = new UpgradePath(
-            "Deep Freeze", 35, new TowerBuff(0.3f, 0f, 0f, 0f), new KillCountCondition(10), "+50% freeze duration");
+            "Deep Freeze", 35, TowerBuff.damage(0.3f), new KillCountCondition(10), "+50% freeze duration");
     private static final List<UpgradePath> PATHS = List.of(TWIN_WARHEAD, DEEP_FREEZE);
 
     /**
