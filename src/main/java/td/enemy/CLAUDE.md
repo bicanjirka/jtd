@@ -288,12 +288,13 @@ stages are exactly this: no new Java class, just six `EnemyDefinition`s composin
 compiler-enforced checklist, same spirit as before:
 
 1. Add the constant to `BodyArchetype`.
-2. Add its case to `EnemyFrameBuilder.paletteFor` (a `Palette` role) — the compiler forces
-   this, since `BodyArchetype`'s switch there has no `default`.
-3. Add that `Palette` constant's shape (`Java2DFrameRenderer.enemyShape`) and colour (`colorFor`, and the fade switch in
-   `paintEnemyFade`) — **not** compiler-enforced (those
-   switches fall back to a runtime exception / silently skip rather than fail to compile), so
-   do this in the same change as step 1-2, not "later."
+2. Add its case to `EnemyFrameBuilder.paletteFor` (a `Palette` role) and to
+   `Java2DFrameRenderer.colorFor` — the compiler forces both, since each switches on `Palette`
+   with no `default`.
+3. Add that `Palette` constant's shape (`Java2DFrameRenderer.enemyShape`) and its case in the
+   fade switch inside `paintEnemyFade` — **not** compiler-enforced (both switches carry a
+   `default -> throw new IllegalStateException(...)` instead), so do this in the same change as
+   steps 1-2, not "later."
 4. Document the new letter in the root `CLAUDE.md` §9 and in
    `README.md`'s enemy table.
 
