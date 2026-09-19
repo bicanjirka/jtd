@@ -18,55 +18,6 @@ condition changes — re-researching those would be pure token waste, the answer
 
 ## 1. Worth doing
 
-### 1.1 `BoardRendererTest.java` was missed by the Phase 2 fixture migration
-
-**Confidence: high. Risk: low. Effort: ~5 minutes.**
-
-Every other engine-level test file was migrated onto `td.fixtures` in commit `b71c6f6`, but
-`src/test/java/td/ui/BoardRendererTest.java` was not in that commit's touched-file list and
-still hand-builds its engine/level the old way.
-
-Current code (`src/test/java/td/ui/BoardRendererTest.java:34-43`):
-
-```java
-private static GameEngine newEngine() {
-    GameEngine engine = new GameEngine(new RecordingGameHost());
-    engine.loadLevel(LevelDefinition.unsmoothed("Test Level", "", 5, 5,
-            List.of(new Point(0, 2), new Point(4, 2)), List.of(), 100, 5));
-    return engine;
-}
-
-private static BoardRenderer rendererFor(GameEngine engine, GameWorld context) {
-    return new BoardRenderer(context);
-}
-```
-
-Fix — mirror the pattern every migrated file uses (e.g. `src/test/java/td/GameEngineTest.java`'s
-`FakeGameHost.newBoundEngine()` + `LevelFixtures.levelWith(...)`, or, since this file doesn't need
-`FakeGameHost`'s host-bound-to-engine wiring, the simpler `WorldFixtures`/`LevelFixtures` pair
-other non-`GameEngineTest` files use). Concretely:
-
-```java
-private static GameEngine newEngine() {
-    GameEngine engine = new GameEngine(new RecordingGameHost());
-    engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-    return engine;
-}
-```
-
-Note `LevelFixtures.levelWith(waves, credits)` builds a 5x5 level on `LevelFixtures.STRAIGHT_PATH`
-(`(0,2)`→`(4,2)`) at 5 starting lives — check the rest of the file's tests don't depend on the
-level being named exactly `"Test Level"` (`LevelFixtures.levelWith` names it `"Test Level"` too,
-so this should be a no-op rename) or on board dimensions other than 5x5 before assuming a
-drop-in replacement; if any test asserts on the level's name/description string, that still
-matches. After the swap: delete the now-unused `td.level.LevelDefinition` and `td.wave.Point`
-imports if nothing else in the file uses them (check with `grep -n "LevelDefinition\.\|Point("`
-first), add `import td.fixtures.LevelFixtures;`.
-
-Verify: `mvn verify` must stay at the pre-change test count (548 as of `a034f2e`, may have grown
-if other work landed between then and now — check via `mvn test 2>&1 | grep "Tests run:"` on the
-tree *before* this change and confirm the count doesn't drop after).
-
 ### 1.3 `td/enemy/CLAUDE.md` overstated which render switches are compiler-enforced — **fixed**
 
 **Confidence: high (verified directly against source). Status: already fixed, in the same
