@@ -4,6 +4,7 @@ import td.economy.EconomyDelta;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.level.LevelDefinition;
 import td.util.GameWorld;
 
@@ -377,19 +378,23 @@ public class Driver {
         System.out.println("OK setlives " + target + " (lives=" + context.economy().getLives() + ")");
     }
 
-    // Spawns one instance of an exact EnemyCatalog id - unlike the game's own 'x' debug
-    // keybinding (GameEngine.debugSpawnNextCatalogEnemy), which cycles through
-    // EnemyCatalog.ids() in registration order and needs counting keypresses to reach a
-    // specific one, this goes straight to the id asked for, immune to that order ever
-    // changing. Mirrors debugSpawnNextCatalogEnemy's own mechanism (definition's own
-    // baseHealth/price, delay 0, level 1) rather than inventing a second spawn path.
-    private static void spawnEnemy(String id) throws Exception {
+    // Spawns one instance of an exact EnemyCatalog id at an optional rank (defaults to GRUNT).
+    // Format: spawn <id> [rank] where rank is one of: GRUNT, SOLDIER, VETERAN, ELITE, BOSS
+    // Unlike the game's own 'x' debug keybinding (GameEngine.debugSpawnNextCatalogEnemy), which
+    // cycles through EnemyCatalog.ids() in registration order and needs counting keypresses to
+    // reach a specific one, this goes straight to the id asked for. Mirrors debugSpawnNextCatalogEnemy's
+    // mechanism (definition's own baseHealth/price, delay 0) rather than inventing a second spawn path.
+    private static void spawnEnemy(String args) throws Exception {
+        String[] parts = args.split("\\s+", 2);
+        String id = parts[0];
+        Rank rank = parts.length > 1 ? Rank.valueOf(parts[1].toUpperCase()) : Rank.GRUNT;
+
         GameWorld context = getGameWorld();
         EnemyCatalog catalog = context.getEnemyCatalog();
         EnemyDefinition definition = catalog.get(id);
-        EnemyMob mob = catalog.spawn(id, context, 0, definition.baseHealth(), definition.price(), 1);
+        EnemyMob mob = catalog.spawn(id, context, 0, definition.baseHealth(), definition.price(), rank);
         context.enemies().add(mob);
-        System.out.println("OK spawn " + id);
+        System.out.println("OK spawn " + id + " at rank " + rank);
     }
 
     // Deals lethal damage to every currently-alive enemy through the same doDamage path a

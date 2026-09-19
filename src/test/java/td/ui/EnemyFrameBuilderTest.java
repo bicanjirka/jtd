@@ -12,6 +12,7 @@ import td.ui.render.CritSparkDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.Palette;
+import td.ui.render.RankBadge;
 import td.ui.render.StatusMarkerDraw;
 import td.util.GameWorld;
 import td.wave.PathNormal;
@@ -80,6 +81,28 @@ class EnemyFrameBuilderTest {
 
         assertThat(draw.x()).isCloseTo(expectedX, within(0.01f));
         assertThat(draw.y()).isCloseTo(expectedY, within(0.01f));
+    }
+
+    @Test
+    void aGruntSpawnsWithNoBadgeAtAll() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+
+        assertThat(bodyDrawAt(enemy, 0, 0.0).badge()).isEqualTo(RankBadge.NONE);
+    }
+
+    @Test
+    void everyNonGruntRankMapsToItsOwnDistinctBadge() {
+        GameWorld context = contextWithStraightPath();
+
+        assertThat(bodyDrawAt(EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.SOLDIER), 0, 0.0).badge())
+                .isEqualTo(RankBadge.ONE_CHEVRON);
+        assertThat(bodyDrawAt(EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.VETERAN), 0, 0.0).badge())
+                .isEqualTo(RankBadge.TWO_CHEVRON);
+        assertThat(bodyDrawAt(EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.ELITE), 0, 0.0).badge())
+                .isEqualTo(RankBadge.STAR);
+        assertThat(bodyDrawAt(EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.BOSS), 0, 0.0).badge())
+                .isEqualTo(RankBadge.SKULL);
     }
 
     @Test

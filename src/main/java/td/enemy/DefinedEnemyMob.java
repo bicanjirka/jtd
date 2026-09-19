@@ -186,8 +186,20 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         return visitor.visitDefined(this);
     }
 
+    /**
+     * The rank/health/bounty line makes up for {@code td.ui.PathWaveRow} no longer showing a
+     * wave-wide hp/price/rank label - those numbers are per-enemy now, so hovering the mob that
+     * actually has them is where they belong.
+     */
     public String getInfoString() {
-        return this.definition.displayName() + "\n\n" + this.definition.description();
+        return this.definition.displayName() + "\n\n" + this.definition.description() + "\n\nRank: "
+                + titleCase(this.rank) + "   Health: " + this.definition.baseHealth() + "   Bounty: "
+                + this.definition.price();
+    }
+
+    private static String titleCase(Rank rank) {
+        String name = rank.name();
+        return name.charAt(0) + name.substring(1).toLowerCase();
     }
 
     /**

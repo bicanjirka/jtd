@@ -51,5 +51,13 @@ public enum Palette {
     /**
      * A brief, fading burst at the point a critical hit landed - see CritSparkDraw.
      */
-    CRIT_SPARK
+    CRIT_SPARK,
+    /**
+     * An enemy's rank badge - see {@link RankBadge}. One shared role for Soldier's one chevron
+     * and Veteran's two, since both read as the same army-insignia language; Elite's star and
+     * Boss's skull each get their own role so they can carry their own (gold, silver) colour.
+     */
+    RANK_BADGE_CHEVRON,
+    RANK_BADGE_ELITE,
+    RANK_BADGE_BOSS
 }

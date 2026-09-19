@@ -41,7 +41,7 @@ Each domain type has one *frame builder* that describes it and knows nothing abo
 | Builder                   | Describes                                                                                   | Dispatch                                    |
 |---------------------------|---------------------------------------------------------------------------------------------|---------------------------------------------|
 | `CellFrameBuilder`        | placement/selection highlights                                                              | plain getters — only one `Cell` impl exists |
-| `EnemyFrameBuilder`       | enemy bodies, death fades, status-effect markers (`buildMarkers()`), and critical-hit sparks (`buildCritSparks()`) | `EnemyMobVisitor`                           |
+| `EnemyFrameBuilder`       | enemy bodies (each carrying its own `RankBadge`), death fades, status-effect markers (`buildMarkers()`), and critical-hit sparks (`buildCritSparks()`) | `EnemyMobVisitor`                           |
 | `TowerSpriteFrameBuilder` | tower base + animated turret head                                                           | `TowerVisitor`                              |
 | `TowerEffectFrameBuilder` | beams, splash, pulse, aura, cone                                                            | `TowerVisitor`                              |
 | `ProjectileFrameBuilder`  | in-flight shells and missiles                                                               | `ProjectileVisitor`                         |
@@ -98,6 +98,17 @@ model AWT-free.
 To add a new enemy's or tower's art: add the `Palette` constant, add its shape and colour
 cases in `Java2DFrameRenderer`, and wire the domain class into the existing visitor. The
 per-type checklists live in `td/enemy/CLAUDE.md` and `td/tower/CLAUDE.md`.
+
+**Every enemy carries a rank badge, `EnemyBodyDraw.badge()` (a `RankBadge`), painted upright just
+above the body - never rotated with `facingRadians`, the same reasoning `paintUpgradeAccent`'s
+ring already follows for a tower's upgrade path.** `EnemyFrameBuilder`'s `badgeFor(Rank)` is the
+one place a `Rank` maps to a badge; `Java2DFrameRenderer.paintRankBadge` is the one place a badge
+becomes pixels. `RankBadge.NONE` (Grunt) paints nothing at all. Two of the five glyphs reuse
+existing vocabulary - `chevronShape` (extracted from the path trail's own moving marker) for
+Soldier/Veteran's one/two stripes, `starShape` for Elite. **Boss's skull is this package's first
+representational glyph** - everything else here is a geometric primitive (circle, square,
+triangle, spiral, star, pulsar); `skullShape` builds it from `java.awt.geom.Area` boolean ops
+(a cranium fused with a jaw, minus two eye sockets and a nose notch) rather than one closed path.
 
 Several switches here are deliberately exhaustive with **no `default`** —
 `TowerSpriteFrameBuilder.bodyPaletteFor`, `Java2DFrameRenderer.colorFor`, the sealed

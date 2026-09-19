@@ -16,6 +16,7 @@ import td.ui.render.PathMarkerDraw;
 import td.ui.render.PathMarkerShape;
 import td.ui.render.ProjectileDraw;
 import td.ui.render.PulseDraw;
+import td.ui.render.RankBadge;
 import td.ui.render.RenderFrame;
 import td.ui.render.SplashDraw;
 import td.ui.render.StatusMarkerDraw;
@@ -96,6 +97,16 @@ public final class Java2DFrameRenderer {
     private static final int SONAR_TRAIL_STEPS = 4;
     private static final int SONAR_TRAIL_ALPHA = 150;
     /**
+     * A rank badge's glyph size and vertical offset, both as a fraction of the mob's own body
+     * scale - so the badge scales with the mob's size rather than needing a fixed pixel offset
+     * that would look wrong at a different board scale. Sized and offset generously (larger than
+     * a first pass used) after a screenshot showed a smaller badge reading as a barely-visible
+     * sliver overlapping the body's own edge rather than a legible glyph sitting above it.
+     */
+    private static final float RANK_BADGE_SIZE_FRACTION = 0.6f;
+    private static final float RANK_BADGE_OFFSET_FRACTION = 1.7f;
+    private static final float RANK_BADGE_CHEVRON_SPACING_FRACTION = 0.55f;
+    /**
      * How big a projectile is drawn - smaller than a tower's own head, since it's the shot, not the gun.
      */
     private static final float PROJECTILE_SIZE = 5f;
@@ -103,17 +114,49 @@ public final class Java2DFrameRenderer {
     private static Shape markerShape(PathMarkerShape shape, float size) {
         return switch (shape) {
             case DOT -> circleShape(size);
-            case CHEVRON -> {
-                GeneralPath p = new GeneralPath();
-                p.moveTo(-size, -size);
-                p.lineTo(size, 0);
-                p.lineTo(-size, size);
-                p.lineTo(-size * 0.4f, 0);
-                p.closePath();
-                yield p;
-            }
+            case CHEVRON -> chevronShape(size);
         };
     }
+
+    /**
+     * A single sideways arrowhead, shared by the path trail's moving marker and a Soldier/
+     * Veteran rank badge's stripe - both read as "direction of travel" / "a stripe of rank" with
+     * the same glyph, at whatever size and however many are stacked.
+     */
+    private static Shape chevronShape(float size) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(-size, -size);
+        p.lineTo(size, 0);
+        p.lineTo(-size, size);
+        p.lineTo(-size * 0.4f, 0);
+        p.closePath();
+        return p;
+    }
+
+    /**
+     * A skull silhouette for the Boss rank badge - the first representational glyph in this
+     * package's vocabulary (everything else is a geometric primitive: circle, square, triangle,
+     * spiral, star, pulsar). Built from {@link Area} boolean ops rather than a single closed
+     * path: a rounded cranium fused with a jaw, minus two eye sockets and a nose notch.
+     */
+    private static Shape skullShape(float scale) {
+        Area skull = new Area(circleShape(scale));
+        Shape jaw = new Rectangle2D.Float(-scale * 0.55f, scale * 0.1f, scale * 1.1f, scale * 0.55f);
+        skull.add(new Area(jaw));
+        float eyeRadius = scale * 0.22f;
+        Shape leftEye = new Ellipse2D.Float(-scale * 0.5f, -scale * 0.15f, eyeRadius * 2, eyeRadius * 2);
+        Shape rightEye = new Ellipse2D.Float(scale * 0.5f - eyeRadius * 2, -scale * 0.15f, eyeRadius * 2, eyeRadius * 2);
+        skull.subtract(new Area(leftEye));
+        skull.subtract(new Area(rightEye));
+        GeneralPath nose = new GeneralPath();
+        nose.moveTo(0, scale * 0.05f);
+        nose.lineTo(-scale * 0.12f, scale * 0.32f);
+        nose.lineTo(scale * 0.12f, scale * 0.32f);
+        nose.closePath();
+        skull.subtract(new Area(nose));
+        return skull;
+    }
+
 
     private static Shape enemyShape(Palette palette, float scale) {
         return switch (palette) {
@@ -377,6 +420,9 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_INVISIBLE -> new Color(180, 180, 180);
             case STATUS_MARKER_OVERFLOW -> Color.WHITE;
             case CRIT_SPARK -> Color.WHITE;
+            case RANK_BADGE_CHEVRON -> Color.WHITE;
+            case RANK_BADGE_ELITE -> new Color(230, 190, 60);
+            case RANK_BADGE_BOSS -> new Color(210, 210, 220);
         };
     }
 
@@ -540,6 +586,59 @@ public final class Java2DFrameRenderer {
         g2.draw(shape);
         g2.setColor(healthColor(color, body.healthFraction()));
         g2.fill(shape);
+        g2.setTransform(save);
+        this.paintRankBadge(g2, body);
+    }
+
+    /**
+     * A rank badge is drawn upright - translated to just above the body, but never rotated with
+     * {@link EnemyBodyDraw#facingRadians()} - an insignia reads best right-side up regardless of
+     * which way its wearer is facing, the same reasoning {@code paintUpgradeAccent}'s ring
+     * already follows for a tower's upgrade path.
+     */
+    private void paintRankBadge(Graphics2D g2, EnemyBodyDraw body) {
+        if (body.badge() == RankBadge.NONE) {
+            return;
+        }
+        float badgeSize = body.scale() * RANK_BADGE_SIZE_FRACTION;
+        AffineTransform save = g2.getTransform();
+        g2.translate(body.x(), body.y() - body.scale() * RANK_BADGE_OFFSET_FRACTION);
+        switch (body.badge()) {
+            case ONE_CHEVRON -> {
+                g2.setColor(colorFor(Palette.RANK_BADGE_CHEVRON));
+                this.paintUprightChevron(g2, badgeSize);
+            }
+            case TWO_CHEVRON -> {
+                g2.setColor(colorFor(Palette.RANK_BADGE_CHEVRON));
+                float spacing = body.scale() * RANK_BADGE_CHEVRON_SPACING_FRACTION;
+                g2.translate(0, -spacing / 2);
+                this.paintUprightChevron(g2, badgeSize);
+                g2.translate(0, spacing);
+                this.paintUprightChevron(g2, badgeSize);
+            }
+            case STAR -> {
+                g2.setColor(colorFor(Palette.RANK_BADGE_ELITE));
+                g2.fill(starShape(5, badgeSize, badgeSize * 0.45f));
+            }
+            case SKULL -> {
+                g2.setColor(colorFor(Palette.RANK_BADGE_BOSS));
+                g2.fill(skullShape(badgeSize));
+            }
+            case NONE -> {
+            }
+        }
+        g2.setTransform(save);
+    }
+
+    /**
+     * {@link #chevronShape} points along {@code +X} (its path-marker orientation); a rank stripe
+     * reads as a conventional military chevron pointing up instead, so this rotates it -90°
+     * around whatever point {@code g2} is already translated to.
+     */
+    private void paintUprightChevron(Graphics2D g2, float size) {
+        AffineTransform save = g2.getTransform();
+        g2.rotate(-Math.PI / 2);
+        g2.fill(chevronShape(size));
         g2.setTransform(save);
     }
 
