@@ -129,8 +129,6 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     new Point(-1, 3), new Point(14, 3), new Point(14, 15), new Point(28, 15),
                     new Point(28, 4), new Point(30, 4)),
             List.of(
-                    // Wave 1's one "c" swapped for the Reaver - a rich, level-authored enemy
-                    // right at the level's opening, in place of the routine token it replaces.
                     new WaveDefinition("c e c e reaver e c e c", 220, 2, 1),
                     new WaveDefinition("6 c", 300, 2, 1),
                     new WaveDefinition("s e s e s", 480, 3, 1),
