@@ -40,12 +40,12 @@ public final class SplashTower extends AbstractTower {
      * More damage and a bigger blast - earned by this tower having proven itself already.
      */
     private static final UpgradePath SIEGE = new UpgradePath(
-            "Siege", 35, new TowerBuff(0.35f, 0f, 0f, 0f), new DamageDealtCondition(20000), "+30% splash radius");
+            "Siege", 35, TowerBuff.damage(0.35f), new DamageDealtCondition(20000), "+30% splash radius");
     /**
      * More damage and range - rewards a deliberately grouped placement rather than a solo one.
      */
     private static final UpgradePath CLUSTER_CHARGE = new UpgradePath(
-            "Cluster Charge", 30, new TowerBuff(0.2f, 0.2f, 0f, 0f), new ClusterCondition(2));
+            "Cluster Charge", 30, TowerBuff.damage(0.2f).withRange(0.2f), new ClusterCondition(2));
     private static final List<UpgradePath> PATHS = List.of(SIEGE, CLUSTER_CHARGE);
 
     /**

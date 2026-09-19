@@ -9,10 +9,12 @@ package td.tower.buff;
  * with no size-0/size-1 special case. Combining is additive rather than multiplicative so
  * that upgrades of equal strength stack the same way {@code 1 + power * count} used to.
  * <p>
- * A call site that means to name one or two axes can build off {@link #none()} through the
- * fluent {@code withX} copies (e.g. {@code TowerBuff.none().withDamage(0.3f).withRange(0.1f)})
- * instead of a positional literal that has to spell out every axis to reach the ones it cares
- * about - a sixth axis, were one ever added, would cost these call sites no edits.
+ * A call site that means to name one or two axes starts the chain from whichever axis it cares
+ * about first, through a static entry point named for that axis (e.g.
+ * {@code TowerBuff.damage(0.3f).withRange(0.1f)}), then continues with the fluent instance
+ * {@code withX} copies for any further axis - instead of a positional literal that has to spell
+ * out every axis to reach the ones it cares about, or seeding the chain from {@link #none()}. A
+ * sixth axis, were one ever added, would cost these call sites no edits.
  */
 public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus, float bountyBonus,
                         float critChanceBonus) {
@@ -37,6 +39,41 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
      */
     public static TowerBuff amplifying(float fraction) {
         return new TowerBuff(fraction, fraction, 0f, 0f);
+    }
+
+    /**
+     * Starts a fluent chain naming damage first, equivalent to {@code none().withDamage(...)}.
+     */
+    public static TowerBuff damage(float damageBonus) {
+        return NONE.withDamage(damageBonus);
+    }
+
+    /**
+     * Starts a fluent chain naming range first, equivalent to {@code none().withRange(...)}.
+     */
+    public static TowerBuff range(float rangeBonus) {
+        return NONE.withRange(rangeBonus);
+    }
+
+    /**
+     * Starts a fluent chain naming fire rate first, equivalent to {@code none().withFireRate(...)}.
+     */
+    public static TowerBuff fireRate(float fireRateBonus) {
+        return NONE.withFireRate(fireRateBonus);
+    }
+
+    /**
+     * Starts a fluent chain naming bounty first, equivalent to {@code none().withBounty(...)}.
+     */
+    public static TowerBuff bounty(float bountyBonus) {
+        return NONE.withBounty(bountyBonus);
+    }
+
+    /**
+     * Starts a fluent chain naming crit chance first, equivalent to {@code none().withCritChance(...)}.
+     */
+    public static TowerBuff critChance(float critChanceBonus) {
+        return NONE.withCritChance(critChanceBonus);
     }
 
     public TowerBuff withDamage(float damageBonus) {

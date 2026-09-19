@@ -45,12 +45,12 @@ public final class CinderTower extends AbstractTower {
      * More damage (and so more burn per tick, since burn's magnitude is this tower's own damageCurrent) - earned by proven output.
      */
     private static final UpgradePath WHITE_FLAME = new UpgradePath(
-            "White Flame", 30, new TowerBuff(0.4f, 0f, 0f, 0f), new DamageDealtCondition(15000));
+            "White Flame", 30, TowerBuff.damage(0.4f), new DamageDealtCondition(15000));
     /**
      * A wider cone and more range - a straightforward money-gated specialization needing no track record.
      */
     private static final UpgradePath WIDE_NOZZLE = new UpgradePath(
-            "Wide Nozzle", 25, new TowerBuff(0f, 0.3f, 0f, 0f), UpgradeCondition.always(), "+40% cone width");
+            "Wide Nozzle", 25, TowerBuff.range(0.3f), UpgradeCondition.always(), "+40% cone width");
     private static final List<UpgradePath> PATHS = List.of(WHITE_FLAME, WIDE_NOZZLE);
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     // Bought on the EDT (onUpgradePathChosen) and read every tick on the game-loop thread, so

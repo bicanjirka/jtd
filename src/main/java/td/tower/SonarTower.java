@@ -52,12 +52,12 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
      * Faster sweep and more range - a payoff for a deliberately grouped placement.
      */
     private static final UpgradePath OVERCHARGED_ARRAY = new UpgradePath(
-            "Overcharged Array", 35, new TowerBuff(0f, 0.2f, 0f, 0f), new ClusterCondition(2), "sweeps 40% faster");
+            "Overcharged Array", 35, TowerBuff.range(0.2f), new ClusterCondition(2), "sweeps 40% faster");
     /**
      * More damage per hit - earned by this tower's own proven kill record.
      */
     private static final UpgradePath MARKSMAN_BEAM = new UpgradePath(
-            "Marksman Beam", 30, new TowerBuff(0.4f, 0f, 0f, 0f), new KillCountCondition(15));
+            "Marksman Beam", 30, TowerBuff.damage(0.4f), new KillCountCondition(15));
     private static final List<UpgradePath> PATHS = List.of(OVERCHARGED_ARRAY, MARKSMAN_BEAM);
     private final List<SonarHit> recentHits = new ArrayList<>();
     // Bought on the EDT (onUpgradePathChosen) and read every tick on the game-loop thread, so
