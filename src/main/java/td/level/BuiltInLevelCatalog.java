@@ -1,5 +1,7 @@
 package td.level;
 
+import td.wave.PathColor;
+import td.wave.PathDefinition;
 import td.wave.Point;
 import td.wave.WaveDefinition;
 import td.wave.smoothing.ArcCornerSmoothing;
@@ -82,11 +84,12 @@ public class BuiltInLevelCatalog implements LevelCatalog {
     // pull over 2-4 cell legs. The resulting curve cuts deep inside each raw right-angle corner,
     // sweeping the actual path through cells the straight two-leg corners never touch at all
     // (BuiltInLevelCatalogTest measures this directly against Zigzag Gauntlet's own path).
-    private static final LevelDefinition WILD_BEZIER_SWEEP = LevelDefinition.singlePath(
-            "Wild Bezier Sweep",
-            "Long bezier curves that swing far wide of the path's straight corners. "
-                    + "10 waves, starting with $100 and 4 lives.",
-            30, 18,
+    //
+    // This level's second lane (below) enters from the top edge and exits through the bottom,
+    // deliberately crossing this lane's own corridor rather than running parallel to it - the
+    // two lanes are independent paths, so a crossing is just a cell both happen to make
+    // unbuildable, not a hazard to route around. See docs/features/FEATURE-multiple-enemy-paths.md.
+    private static final PathDefinition WILD_BEZIER_SWEEP_PATH_A = PathDefinition.smoothed(
             List.of(
                     new Point(-1, 3), new Point(14, 3), new Point(14, 15), new Point(28, 15),
                     new Point(28, 4), new Point(30, 4)),
@@ -101,8 +104,41 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     new WaveDefinition("8 c e 6 s e 4 t", 1800, 4, 3),
                     new WaveDefinition("3 g 2 t 2 g 2 t", 2400, 8, 4),
                     new WaveDefinition("s", 4200, 0, 6)),
-            100, 4,
-            new QuadraticBezierSmoothing(0.5, 14));
+            new QuadraticBezierSmoothing(0.5, 14))
+            .withColor(PathColor.of(230, 170, 60));
+
+    // A circular fillet rather than a Bezier - a genuinely different curve character from Path
+    // A's, at a cornerPull comfortably under half of every adjacent leg's length (the shortest,
+    // the 6-cell legs either side of each interior corner, allows up to 3 cells of pullback).
+    // withSpeed(1.3f) is this level's one called-out "faster by default" lane; every other
+    // built-in path stays at the 1x default.
+    private static final PathDefinition WILD_BEZIER_SWEEP_PATH_B = PathDefinition.smoothed(
+            List.of(
+                    new Point(5, -1), new Point(5, 5), new Point(22, 5), new Point(22, 11),
+                    new Point(9, 11), new Point(9, 18)),
+            List.of(
+                    new WaveDefinition("c e c e c e c", 180, 2, 1),
+                    new WaveDefinition("s e s e s", 260, 3, 1),
+                    new WaveDefinition("5 t", 340, 3, 2),
+                    new WaveDefinition("g e g e g e g", 420, 4, 2),
+                    new WaveDefinition("line 3 c e line 3 s", 520, 4, 2),
+                    new WaveDefinition("flank c e flank t", 650, 5, 3),
+                    new WaveDefinition("swarm 4 c e swarm 4 s", 820, 5, 3),
+                    new WaveDefinition("column 3 t e column 3 g", 1050, 6, 3),
+                    new WaveDefinition("drip 4 s e drip 4 t", 1350, 7, 4),
+                    new WaveDefinition("3 g 3 t 3 s 3 c", 1800, 8, 4)),
+            new ArcCornerSmoothing(0.4, 10))
+            .withColor(PathColor.of(90, 190, 230))
+            .withSpeed(1.3f);
+
+    private static final LevelDefinition WILD_BEZIER_SWEEP = new LevelDefinition(
+            "Wild Bezier Sweep",
+            "Long bezier curves that swing far wide of the path's straight corners, crossed by a "
+                    + "second, faster lane sweeping top to bottom. 10 waves per lane, starting with "
+                    + "$100 and 4 lives.",
+            30, 18,
+            List.of(WILD_BEZIER_SWEEP_PATH_A, WILD_BEZIER_SWEEP_PATH_B),
+            100, 4);
 
     @Override
     public List<LevelDefinition> levels() {
