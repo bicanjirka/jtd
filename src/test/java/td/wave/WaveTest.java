@@ -8,8 +8,8 @@ import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
+import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
-import td.util.RecordingGameHost;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ class WaveTest {
 
     private static final long SEED = 1L; // arbitrary, fixed: only the scatter-specific tests below care what it is
 
-    private final GameWorld context = new GameWorld(new RecordingGameHost());
+    private final GameWorld context = WorldFixtures.newWorld();
     private final EnemyCatalog catalog = EnemyCatalog.builtIn();
 
     private Wave wave(int baseHealth, int basePrice, int level, String tokens) {

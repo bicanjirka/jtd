@@ -2,14 +2,14 @@ package td.enemy;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
-import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class EnemyFactoryTest {
 
-    private final GameWorld context = new GameWorld(new RecordingGameHost());
+    private final GameWorld context = WorldFixtures.newWorld();
 
     @Test
     void isEnemyRecognizesKnownCodesOnly() {

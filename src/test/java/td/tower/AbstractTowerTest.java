@@ -5,12 +5,12 @@ import td.damage.Damage;
 import td.effect.Effect;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.fixtures.WorldFixtures;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
-import td.util.RecordingGameHost;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class AbstractTowerTest {
 
-    private final GameWorld context = new GameWorld(new RecordingGameHost());
+    private final GameWorld context = WorldFixtures.newWorld();
 
     @Test
     void sellPriceIsSeventyFivePercentOfPriceRoundedHalfUp() {
@@ -337,7 +337,7 @@ class AbstractTowerTest {
 
     @Test
     void dealDamageRollsACriticalHitWhenTheRandomRollIsBelowCritChance() {
-        GameWorld alwaysCrits = new GameWorld(new RecordingGameHost(), () -> 0.0);
+        GameWorld alwaysCrits = WorldFixtures.newWorld(() -> 0.0);
         alwaysCrits.economy().startEconomy(100, 5);
         UpgradePath path = new UpgradePath("Precision", 10, new TowerBuff(0f, 0f, 0f, 0f, 0.5f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(alwaysCrits, 0, 0, List.of(path));
@@ -351,7 +351,7 @@ class AbstractTowerTest {
 
     @Test
     void dealDamageDoesNotRollACriticalHitWhenTheRandomRollIsAboveCritChance() {
-        GameWorld neverCrits = new GameWorld(new RecordingGameHost(), () -> 0.99);
+        GameWorld neverCrits = WorldFixtures.newWorld(() -> 0.99);
         neverCrits.economy().startEconomy(100, 5);
         UpgradePath path = new UpgradePath("Precision", 10, new TowerBuff(0f, 0f, 0f, 0f, 0.5f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(neverCrits, 0, 0, List.of(path));
@@ -365,7 +365,7 @@ class AbstractTowerTest {
 
     @Test
     void aTowerWithNoCritChanceNeverRollsACriticalHitEvenWithAnAlwaysSucceedingRandomSource() {
-        GameWorld alwaysCrits = new GameWorld(new RecordingGameHost(), () -> 0.0);
+        GameWorld alwaysCrits = WorldFixtures.newWorld(() -> 0.0);
         SniperTower tower = new SniperTower(alwaysCrits, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, 1);
 
@@ -378,7 +378,7 @@ class AbstractTowerTest {
     void aBurningTargetDoublesTheEffectiveCritChance() {
         // roll lands strictly between the base 20% chance and its doubled 40% - only a burning
         // target's doubled chance should turn this into a critical hit
-        GameWorld world = new GameWorld(new RecordingGameHost(), () -> 0.3);
+        GameWorld world = WorldFixtures.newWorld(() -> 0.3);
         world.economy().startEconomy(100, 5);
         UpgradePath path = new UpgradePath("Precision", 10, new TowerBuff(0f, 0f, 0f, 0f, 0.2f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(world, 0, 0, List.of(path));
@@ -396,7 +396,7 @@ class AbstractTowerTest {
     void aNonBurningTargetDoesNotGetTheDoubledCritChance() {
         // same roll and base chance as aBurningTargetDoublesTheEffectiveCritChance, but no burn
         // active - the same roll that crit there must not crit here
-        GameWorld world = new GameWorld(new RecordingGameHost(), () -> 0.3);
+        GameWorld world = WorldFixtures.newWorld(() -> 0.3);
         world.economy().startEconomy(100, 5);
         UpgradePath path = new UpgradePath("Precision", 10, new TowerBuff(0f, 0f, 0f, 0f, 0.2f), UpgradeCondition.always());
         FakeUpgradeableTower tower = new FakeUpgradeableTower(world, 0, 0, List.of(path));
@@ -439,7 +439,7 @@ class AbstractTowerTest {
 
     @Test
     void aBurningTargetAgainstATowerWithNoCritChanceStillNeverCrits() {
-        GameWorld alwaysCrits = new GameWorld(new RecordingGameHost(), () -> 0.0);
+        GameWorld alwaysCrits = WorldFixtures.newWorld(() -> 0.0);
         SniperTower tower = new SniperTower(alwaysCrits, 0, 0);
         EnemyMob burning = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, 1);
         burning.applyEffect(Effect.burn(Damage.magic(1), 100, d -> {

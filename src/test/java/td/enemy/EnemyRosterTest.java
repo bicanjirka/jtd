@@ -1,7 +1,7 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
-import td.util.GameWorld;
+import td.fixtures.WorldFixtures;
 import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -12,7 +12,7 @@ class EnemyRosterTest {
     private final EnemyRoster roster = new EnemyRoster(host);
 
     private static EnemyMob anEnemy() {
-        return EnemyFactory.getEnemy("c", new GameWorld(new RecordingGameHost()), 0, 50, 3, 1);
+        return EnemyFactory.getEnemy("c", WorldFixtures.newWorld(), 0, 50, 3, 1);
     }
 
     @Test

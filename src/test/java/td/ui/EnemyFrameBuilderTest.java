@@ -1,19 +1,18 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
-import td.board.BoardGeometry;
 import td.damage.Damage;
 import td.effect.Effect;
 import td.enemy.AbstractEnemyMob;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.fixtures.WorldFixtures;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.Palette;
 import td.ui.render.StatusMarkerDraw;
 import td.util.GameWorld;
-import td.util.RecordingGameHost;
 import td.wave.PathNormal;
 import td.wave.Vec2;
 
@@ -30,8 +29,7 @@ import static org.assertj.core.api.Assertions.within;
 class EnemyFrameBuilderTest {
 
     private static GameWorld contextWithStraightPath() {
-        GameWorld context = new GameWorld(new RecordingGameHost());
-        context.setBoard(BoardGeometry.of(1, 1001, 1001));
+        GameWorld context = WorldFixtures.newWorldOnBoard(1, 1001, 1001);
         context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(105, 5))));
         return context;
     }
@@ -85,8 +83,7 @@ class EnemyFrameBuilderTest {
 
     @Test
     void anEnemyThatReachesThePathsEndFadesInPlaceInsteadOfWrappingToTheStart() {
-        GameWorld context = new GameWorld(new RecordingGameHost());
-        context.setBoard(BoardGeometry.of(1, 1001, 1001));
+        GameWorld context = WorldFixtures.newWorldOnBoard(1, 1001, 1001);
         context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5))));
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, 1);

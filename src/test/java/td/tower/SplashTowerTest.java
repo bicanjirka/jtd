@@ -1,11 +1,11 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
-import td.board.BoardGeometry;
 import td.enemy.EnemyMob;
+import td.fixtures.BoardFixtures;
+import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
-import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,14 +17,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class SplashTowerTest {
 
-    private static final int SCALE = 32;
     // SplashTower derives its blast radius from the board scale at construction.
-    private static final float SPREAD_RADIUS = SplashTower.SPREAD_RADIUS_BASE * SCALE; // 56.0
+    private static final float SPREAD_RADIUS = SplashTower.SPREAD_RADIUS_BASE * BoardFixtures.SCALE; // 56.0
 
-    private final GameWorld context = new GameWorld(new RecordingGameHost());
+    private final GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
 
     private SplashTower towerNear(int cellX, int cellY) {
-        this.context.setBoard(BoardGeometry.of(SCALE, 20, 20));
         return new SplashTower(this.context, cellX, cellY);
     }
 
@@ -121,6 +119,6 @@ class SplashTowerTest {
 
         assertThat(chosen).isTrue();
         assertThat(tower.damageCurrent()).isGreaterThan(tower.damageBase);
-        assertThat(tower.getRangeReal()).isGreaterThan(SplashTower.RANGE * SCALE);
+        assertThat(tower.getRangeReal()).isGreaterThan(SplashTower.RANGE * BoardFixtures.SCALE);
     }
 }

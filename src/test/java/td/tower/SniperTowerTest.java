@@ -4,9 +4,9 @@ import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
-import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class SniperTowerTest {
 
-    private final GameWorld context = new GameWorld(new RecordingGameHost());
+    private final GameWorld context = WorldFixtures.newWorld();
 
     @Test
     void overclockIsChoosableWithMoneyAloneAndAppliesItsFireRateAndDamagePenalty() {

@@ -1,13 +1,14 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
-import td.board.BoardGeometry;
 import td.damage.DamageType;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.fixtures.BoardFixtures;
+import td.fixtures.TowerFixtures;
+import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradePath;
 import td.util.GameWorld;
-import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,19 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class SeekerTowerTest {
 
-    private static final int SCALE = 32;
-
-    private final GameWorld context = new GameWorld(new RecordingGameHost());
+    private final GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
 
     private SeekerTower towerAt(int cellX, int cellY) {
-        this.context.setBoard(BoardGeometry.of(SCALE, 20, 20));
         return new SeekerTower(this.context, cellX, cellY);
-    }
-
-    private void flyProjectilesToCompletion() {
-        for (int t = 1; t <= 50 && !this.context.projectiles().getProjectiles().isEmpty(); t++) {
-            this.context.projectiles().doTick(t);
-        }
     }
 
     @Test
@@ -50,7 +42,7 @@ class SeekerTowerTest {
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tower.doTick(1);
-        this.flyProjectilesToCompletion();
+        TowerFixtures.flyProjectilesToCompletion(this.context);
 
         assertThat(target.onlyHitAmount()).isEqualTo(SeekerTower.DAMAGE);
         assertThat(target.hits().getFirst().type()).isEqualTo(DamageType.MAGIC);

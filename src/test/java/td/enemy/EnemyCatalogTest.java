@@ -1,9 +1,10 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
+import td.fixtures.EnemyFixtures;
+import td.fixtures.WorldFixtures;
 import td.util.GameStartupException;
 import td.util.GameWorld;
-import td.util.RecordingGameHost;
 
 import java.util.List;
 
@@ -13,24 +14,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EnemyCatalogTest {
 
-    private static EnemyDefinition simpleDefinition(String id) {
-        return new EnemyDefinition(id, id, "", 100, 5, 1.28f, 1f, EnemyMob.Type.NORMAL,
-                BodyArchetype.CIRCLE, new FixedMovement(), List.of(), List.of());
-    }
-
-    /**
-     * A minimal definition whose only ability spawns {@code spawnedId} on death.
-     */
-    private static EnemyDefinition definitionThatSpawns(String id, String spawnedId) {
-        Ability spawnOnDeath = new Ability(new OnDeathTrigger(), new SpawnEnemiesAction(spawnedId, 1, false));
-        return new EnemyDefinition(id, id, "", 100, 5, 1.28f, 1f, EnemyMob.Type.NORMAL,
-                BodyArchetype.CIRCLE, new FixedMovement(), List.of(), List.of(spawnOnDeath));
-    }
-
     @Test
     void aRegisteredDefinitionIsRetrievableByItsId() {
         EnemyCatalog catalog = new EnemyCatalog();
-        EnemyDefinition definition = simpleDefinition("c");
+        EnemyDefinition definition = EnemyFixtures.simpleDefinition("c");
 
         catalog.register(definition);
 
@@ -41,9 +28,9 @@ class EnemyCatalogTest {
     @Test
     void registeringADuplicateIdThrows() {
         EnemyCatalog catalog = new EnemyCatalog();
-        catalog.register(simpleDefinition("c"));
+        catalog.register(EnemyFixtures.simpleDefinition("c"));
 
-        assertThatThrownBy(() -> catalog.register(simpleDefinition("c")))
+        assertThatThrownBy(() -> catalog.register(EnemyFixtures.simpleDefinition("c")))
                 .isInstanceOf(GameStartupException.class);
     }
 
@@ -77,36 +64,37 @@ class EnemyCatalogTest {
     void aFiniteMultiHopSpawnChainRegistersSuccessfully() {
         EnemyCatalog catalog = new EnemyCatalog();
         // warden1 -> egg1 -> warden2 -> egg2 -> warden3 (terminal, no spawn ability of its own)
-        catalog.register(simpleDefinition("warden3"));
-        catalog.register(definitionThatSpawns("egg2", "warden3"));
-        catalog.register(definitionThatSpawns("warden2", "egg2"));
-        catalog.register(definitionThatSpawns("egg1", "warden2"));
+        catalog.register(EnemyFixtures.simpleDefinition("warden3"));
+        catalog.register(EnemyFixtures.definitionThatSpawns("egg2", "warden3"));
+        catalog.register(EnemyFixtures.definitionThatSpawns("warden2", "egg2"));
+        catalog.register(EnemyFixtures.definitionThatSpawns("egg1", "warden2"));
 
-        assertThatCode(() -> catalog.register(definitionThatSpawns("warden1", "egg1"))).doesNotThrowAnyException();
+        assertThatCode(() -> catalog.register(EnemyFixtures.definitionThatSpawns("warden1", "egg1")))
+                .doesNotThrowAnyException();
     }
 
     @Test
     void aDefinitionThatDirectlySpawnsItselfIsRejected() {
         EnemyCatalog catalog = new EnemyCatalog();
 
-        assertThatThrownBy(() -> catalog.register(definitionThatSpawns("selfSpawner", "selfSpawner")))
+        assertThatThrownBy(() -> catalog.register(EnemyFixtures.definitionThatSpawns("selfSpawner", "selfSpawner")))
                 .isInstanceOf(GameStartupException.class);
     }
 
     @Test
     void aDefinitionThatTransitivelySpawnsItselfIsRejected() {
         EnemyCatalog catalog = new EnemyCatalog();
-        catalog.register(definitionThatSpawns("a", "b")); // fine on its own - "b" doesn't exist yet
+        catalog.register(EnemyFixtures.definitionThatSpawns("a", "b")); // fine on its own - "b" doesn't exist yet
 
-        assertThatThrownBy(() -> catalog.register(definitionThatSpawns("b", "a")))
+        assertThatThrownBy(() -> catalog.register(EnemyFixtures.definitionThatSpawns("b", "a")))
                 .isInstanceOf(GameStartupException.class);
     }
 
     @Test
     void spawnBuildsALiveMobFromTheRegisteredDefinition() {
         EnemyCatalog catalog = new EnemyCatalog();
-        catalog.register(simpleDefinition("c"));
-        GameWorld gameWorld = new GameWorld(new RecordingGameHost());
+        catalog.register(EnemyFixtures.simpleDefinition("c"));
+        GameWorld gameWorld = WorldFixtures.newWorld();
 
         EnemyMob enemy = catalog.spawn("c", gameWorld, 0, 50, 3, 1);
 
@@ -139,9 +127,9 @@ class EnemyCatalogTest {
     @Test
     void idsListsEveryRegisteredIdInRegistrationOrder() {
         EnemyCatalog catalog = new EnemyCatalog();
-        catalog.register(simpleDefinition("first"));
-        catalog.register(simpleDefinition("second"));
-        catalog.register(simpleDefinition("third"));
+        catalog.register(EnemyFixtures.simpleDefinition("first"));
+        catalog.register(EnemyFixtures.simpleDefinition("second"));
+        catalog.register(EnemyFixtures.simpleDefinition("third"));
 
         assertThat(catalog.ids()).containsExactly("first", "second", "third");
     }
@@ -150,7 +138,7 @@ class EnemyCatalogTest {
     void idsIncludesALaterRegistrationAddedAfterBuiltIn() {
         EnemyCatalog catalog = EnemyCatalog.builtIn();
 
-        catalog.register(simpleDefinition("custom"));
+        catalog.register(EnemyFixtures.simpleDefinition("custom"));
 
         assertThat(catalog.ids()).contains("c", "s", "t", "g", "warden1").endsWith("custom");
     }
@@ -158,7 +146,7 @@ class EnemyCatalogTest {
     @Test
     void builtInReturnsAFreshCatalogEachCallNotASharedSingleton() {
         EnemyCatalog first = EnemyCatalog.builtIn();
-        first.register(simpleDefinition("custom"));
+        first.register(EnemyFixtures.simpleDefinition("custom"));
 
         EnemyCatalog second = EnemyCatalog.builtIn();
 
@@ -169,7 +157,7 @@ class EnemyCatalogTest {
     void registeringAnIdThatCollidesWithAReservedWaveScriptTokenFails() {
         EnemyCatalog catalog = new EnemyCatalog();
 
-        assertThatThrownBy(() -> catalog.register(simpleDefinition("swarm")))
+        assertThatThrownBy(() -> catalog.register(EnemyFixtures.simpleDefinition("swarm")))
                 .isInstanceOf(GameStartupException.class)
                 .hasMessageContaining("swarm");
     }
