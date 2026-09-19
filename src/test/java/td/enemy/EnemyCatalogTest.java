@@ -46,7 +46,6 @@ class EnemyCatalogTest {
                 .withMovement(new RotorMovement(0.1f));
         catalog.register(square);
 
-        // "a Square with double the usual resistance for this one level" - the feature request's own example
         EnemyDefinition tankySquare = catalog.cloneAndAdjust("s", "tankySquare",
                 d -> d.withHealthDivisor(d.healthDivisor() / 2f));
 
