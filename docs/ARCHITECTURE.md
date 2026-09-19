@@ -23,6 +23,7 @@ If a paragraph here ever contradicts `CLAUDE.md`, `CLAUDE.md` wins and this file
 9. [Playtesting and balance tooling](#9-playtesting-and-balance-tooling)
 10. [Why the per-package docs are not held to the root file's size discipline](#10-why-the-per-package-docs-are-not-held-to-the-root-files-size-discipline)
 11. [Style lineage](#11-style-lineage)
+12. [Reducing test churn from feature work](#12-reducing-test-churn-from-feature-work)
 
 ---
 
@@ -503,3 +504,74 @@ The substance survives. The ten rules, the composition patterns and the testing 
 that jTD genuinely applies are inlined in `CLAUDE.md`, in their jTD-specific form, with the
 exceptions this codebase actually takes stated alongside them instead of being discovered
 later as contradictions.
+
+## 12. Reducing test churn from feature work
+
+A review of recent feature commits found that a large share of the time went into editing
+tests that had nothing to do with the feature - a signature changed, and every call site had to
+follow. Measured over the 40 commits leading up to this one: test-diff lines averaged 0.55 per
+production line, but in 12 of the 40 the test diff was *larger* than the production diff,
+peaking at 4.5x (`a675939`, adding column/drip delay spacing) and 3.3x (`61dd95e`, scrambling
+`RandomSource.seeded`). Classifying the hunks of the ten highest-churn commits: roughly 500
+lines were genuinely new tests, roughly 570 were assertions rewritten because behaviour really
+changed, and roughly **810 - the largest bucket, about 40% - were mechanical**: a call site
+rewritten only because a constructor grew an argument or something was renamed. Representative
+examples: `SpawnParameters.of(2, 1.28f, 50, 3, 1f, 1f)` becoming `...1f, 1f, 0.0)` when a
+component was added; `LevelDefinitionTest`'s entire body rewritten when `path`/`waves` became a
+`paths` list.
+
+Two root causes, found by comparing the records that absorbed a feature change for free against
+the ones that didn't:
+
+- **Wide positional value types.** `EnemyDefinition` had grown to 12 components with no factory
+  at all, so every test built one from a 12-argument literal; `TowerBuff` was constructed raw at
+  19 call sites; `LevelDefinition`'s `unsmoothed`/`singlePath` factories were 8- and 9-argument
+  aliases rather than a narrower shape with defaults. Meanwhile `PathDefinition`,
+  `SpawnParameters` and `LoadedLevel` - each already built from a narrow required-args factory
+  plus fluent `withX` copies - absorbed the *same kind* of change (the multiple-paths feature)
+  with zero call-site edits.
+- **No shared test-fixture layer.** 26 test files each wrote `new GameWorld(new
+  RecordingGameHost())` by hand, 12 redeclared a `SCALE = 32` constant, and helpers like
+  `straightPath`, `cellCenter`, `towerAt` and `flyProjectilesToCompletion` were copy-pasted
+  verbatim across four to six files each. Every copy was a separate edit whenever the thing it
+  built changed shape.
+
+The fix landed in three commits, one per phase, each independently green:
+
+1. Gave `EnemyDefinition`, `TowerBuff` and `LevelDefinition` the same narrow-factory-plus-`withX`
+   shape `PathDefinition` already had, and rewrote their production call sites
+   (`BuiltInEnemies`, the tower leaves, `BuiltInLevelCatalog`) through it.
+2. Added `td.fixtures` (`WorldFixtures`, `BoardFixtures`, `LevelFixtures`, `TowerFixtures`,
+   `EnemyFixtures`) and migrated roughly thirty affected test files onto it, deleting each local
+   duplicate.
+3. Added two checks to `scripts/VerifyRules.java` - `wide-values-have-a-narrow-entry-point` and
+   `no-wide-value-literals-in-tests` - so the pattern is enforced rather than left to review.
+   Getting the tree clean for the second check surfaced the last holdouts (a few remaining
+   12-argument `EnemyDefinition` and 5-argument `TowerBuff` literals in tests not otherwise
+   touched by phases 1-2), fixed in the same commit.
+
+**Rejected alternatives**, each considered and set aside in favour of the above:
+
+- *Migrating fixtures opportunistically* (only when a future change already touches a given test
+  file) rather than all at once. Rejected because a half-migrated suite has all the same-package
+  ambiguity as before - a new test can't tell by looking whether the shared fixture or the local
+  copy is the one to extend - for months, for a saving that a single, verified, three-phase pass
+  captures immediately.
+- *Fixing only the two or three highest-arity types* (`EnemyDefinition`, `TowerBuff`) and leaving
+  `LevelDefinition`'s positional factories alone. Rejected because `LevelDefinition.unsmoothed`/
+  `singlePath` were exactly the shape (a wide factory standing in for a narrower one) that
+  caused the pain in the first place, just one level removed from the record itself.
+- *An advisory report instead of a failing check* - printing a blast-radius inventory (types
+  constructed directly in more than N test files) the way `reportRuleInventory` already prints a
+  rule-coverage count, without failing the build. Rejected for the same reason every other rule
+  in `scripts/VerifyRules.java` is a check and not a paragraph: a rule that only exists as prose
+  can be wrong, can drift, and invites exactly the kind of explanatory paragraph this section is
+  - see `CLAUDE.md` §10's own argument for the general case.
+
+The scoping choice worth remembering if this needs revisiting: `wide-values-have-a-narrow-entry-
+point` deliberately excludes `td.ui.render`. Its draw records (`RenderFrame`, `TowerSpriteDraw`,
+`EnemyFadeDraw` and the rest) have 5+ components too, but each is built exactly once per frame by
+its own dedicated frame-builder class - there is no scattered-call-site blast radius for a
+factory to reduce, and forcing one on would-be-single-caller DTOs is an abstraction with no
+payoff. The check's exemption follows the same package boundary `render-has-no-awt` already
+draws, rather than inventing a new one.
