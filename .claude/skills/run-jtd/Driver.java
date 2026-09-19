@@ -1,4 +1,5 @@
 import td.TowerDefense;
+import td.damage.Damage;
 import td.economy.EconomyDelta;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
@@ -87,6 +88,7 @@ public class Driver {
             case "setcredits" -> setCredits(rest.trim());
             case "setlives" -> setLives(rest.trim());
             case "spawn" -> spawnEnemy(rest.trim());
+            case "kill" -> killEnemies();
             case "sleep" -> Thread.sleep(Long.parseLong(rest.trim()));
             case "quit" -> quit();
             default -> System.out.println("ERROR: unknown command '" + cmd + "'");
@@ -388,6 +390,18 @@ public class Driver {
         EnemyMob mob = catalog.spawn(id, context, 0, definition.baseHealth(), definition.price(), 1);
         context.enemies().add(mob);
         System.out.println("OK spawn " + id);
+    }
+
+    // Deals lethal damage to every currently-alive enemy through the same doDamage path a
+    // tower's hit uses, so an on-death ability (the Warden's egg-spawn, via
+    // spawnAtSamePositionAs) fires exactly as it would in real combat - useful for reaching
+    // an ability-driven spawn without needing towers built or a real kill.
+    private static void killEnemies() throws Exception {
+        GameWorld context = getGameWorld();
+        for (EnemyMob mob : context.enemies().getEnemies()) {
+            mob.doDamage(Damage.physical(Integer.MAX_VALUE / 2));
+        }
+        System.out.println("OK kill");
     }
 
     private static void quit() {
