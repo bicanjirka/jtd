@@ -43,6 +43,8 @@ public class PanelEnemy extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private final List<EnemyMob> enemies = new CopyOnWriteArrayList<>();
+    private final List<EnemyDefinition> definitions = new ArrayList<>();
+    private final List<Integer> levels = new ArrayList<>();
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
     private final GameWorld contextLocal;
     private List<Integer> enemiesCount = new ArrayList<>();
@@ -64,18 +66,16 @@ public class PanelEnemy extends JPanel {
     }
 
     public void clearEnemies() {
+        this.definitions.clear();
+        this.levels.clear();
         this.enemies.clear();
         this.enemiesCount = new ArrayList<>();
         this.contextLocal.setPath(new PathNormal(List.of()));
     }
 
     public void addEnemy(EnemyDefinition definition, int count, int level) {
-        int nr = this.enemies.size();
-        this.contextLocal.setPath(new PathNormal(List.of(new Vec2(this.scale / 2 + this.scale * nr, this.pHeight / 2))));
-        SpawnParameters spawnParameters = SpawnParameters.atSlot(0, definition.baseSpeed(), 0, 0);
-        EnemyMob enemy = new DefinedEnemyMob(definition, this.contextLocal, spawnParameters, level);
-        enemy.doTick(0);
-        this.enemies.add(enemy);
+        this.definitions.add(definition);
+        this.levels.add(level);
         this.enemiesCount.add(count);
     }
 
@@ -85,14 +85,33 @@ public class PanelEnemy extends JPanel {
 
     public void recalculateSize() {
         this.pWidth = this.getWidth();
-        if (!this.enemies.isEmpty()) {
-            this.pHeight = Math.min(this.pWidth / this.enemies.size(), this.getHeight());
+        if (!this.definitions.isEmpty()) {
+            this.pHeight = Math.min(this.pWidth / this.definitions.size(), this.getHeight());
         } else {
             this.pHeight = this.getHeight();
         }
         this.scale = this.pHeight;
         this.contextLocal.setBoard(BoardGeometry.of(this.scale, 0, 0));
         this.font = new Font(Font.DIALOG, Font.PLAIN, (int) (0.30 * this.scale));
+        rebuildEnemies();
+    }
+
+    /**
+     * Builds every preview mob fresh at the just-computed {@link #scale}/{@link #pHeight} -
+     * positions can't be baked in earlier, at {@link #addEnemy}, because a mob's x/y are
+     * captured once at construction and never recomputed, and the final scale isn't known
+     * until every enemy for this wave has been recorded.
+     */
+    private void rebuildEnemies() {
+        this.enemies.clear();
+        for (int nr = 0; nr < this.definitions.size(); nr++) {
+            this.contextLocal.setPath(new PathNormal(List.of(new Vec2(this.scale / 2 + this.scale * nr, this.pHeight / 2))));
+            EnemyDefinition definition = this.definitions.get(nr);
+            SpawnParameters spawnParameters = SpawnParameters.atSlot(0, definition.baseSpeed(), 0, 0);
+            EnemyMob enemy = new DefinedEnemyMob(definition, this.contextLocal, spawnParameters, this.levels.get(nr));
+            enemy.doTick(0);
+            this.enemies.add(enemy);
+        }
     }
 
     public void doTick(int gameTime) {
