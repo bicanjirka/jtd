@@ -6,7 +6,7 @@ import td.cell.Cell;
 import td.damage.Damage;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
-import td.level.LevelDefinition;
+import td.fixtures.LevelFixtures;
 import td.projectile.CannonballProjectile;
 import td.tower.CinderTower;
 import td.tower.SniperTower;
@@ -18,7 +18,6 @@ import td.ui.render.RenderFrame;
 import td.ui.render.TowerSpriteDraw;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
-import td.wave.Point;
 
 import java.util.List;
 
@@ -33,8 +32,7 @@ class BoardRendererTest {
 
     private static GameEngine newEngine() {
         GameEngine engine = new GameEngine(new RecordingGameHost());
-        engine.loadLevel(LevelDefinition.unsmoothed("Test Level", "", 5, 5,
-                List.of(new Point(0, 2), new Point(4, 2)), List.of(), 100, 5));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         return engine;
     }
 
