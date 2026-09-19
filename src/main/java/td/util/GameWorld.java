@@ -11,6 +11,8 @@ import td.wave.Path;
 import td.wave.Wave;
 import td.wave.WaveAnnouncer;
 
+import java.util.List;
+
 /**
  * The composition root wiring a level's economy, enemy roster, tower roster, projectile
  * roster and wave-start hub into the one object {@code Tower}/{@code EnemyMob}/{@code Wave}
@@ -101,12 +103,19 @@ public class GameWorld {
     }
 
     /**
-     * Seeds the roster's alive count from the wave about to run and announces the start, in
-     * that order - a listener reacting to the announcement must not see a stale count. The one
-     * method here that coordinates two collaborators rather than handing one out.
+     * Seeds the roster's alive count from every path's wave about to run - summed, since a
+     * round's enemies all share one roster and one alive count regardless of which path spawned
+     * them, which is what makes "the round is cleared" wait for every path automatically - and
+     * announces the start, in that order: a listener reacting to the announcement must not see a
+     * stale count. The one method here that coordinates two collaborators rather than handing
+     * one out.
      */
-    public void startWave(Wave w) {
-        this.enemies.setCount(w.enemyCount());
+    public void startWave(List<Wave> starting) {
+        int total = 0;
+        for (Wave w : starting) {
+            total += w.enemyCount();
+        }
+        this.enemies.setCount(total);
         this.waves.announce();
     }
 
@@ -154,14 +163,14 @@ public class GameWorld {
     }
 
     public Path getPath() {
-        return this.level.path();
+        return this.level.pathAt(0);
     }
 
     /**
      * Replaces one part of the installed level - see {@link #setBoard}.
      */
     public void setPath(Path path) {
-        this.level = this.level.withPath(path);
+        this.level = this.level.withSinglePath(path);
     }
 
     public EnemyCatalog getEnemyCatalog() {

@@ -15,11 +15,13 @@ import td.tower.TowerFactory;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
+import td.util.PathRuntime;
 import td.util.RandomSource;
 import td.util.ThreadConfined;
 import td.wave.Path;
 import td.wave.PathBuilder;
 import td.wave.PathCoverage;
+import td.wave.PathDefinition;
 import td.wave.Point;
 import td.wave.Wave;
 import td.wave.WaveDefinition;
@@ -27,8 +29,10 @@ import td.wave.WaveProgress;
 import td.wave.WaveScript;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Owns the game state and input handling that {@link TowerDefense} used to
@@ -119,10 +123,10 @@ public class GameEngine {
         if (index > count) {
             // The wave counter still belongs to a level that is no longer installed - report
             // the incoming level rather than indexing off the end of its shorter wave list.
-            return new WaveProgress(count, count, Optional.empty(), Optional.empty());
+            return new WaveProgress(count, count, List.of(), List.of());
         }
-        Optional<Wave> current = index > 0 ? Optional.of(installed.waveAt(index - 1)) : Optional.empty();
-        Optional<Wave> next = index < count ? Optional.of(installed.waveAt(index)) : Optional.empty();
+        List<Wave> current = index > 0 ? installed.wavesAt(index - 1) : List.of();
+        List<Wave> next = index < count ? installed.wavesAt(index) : List.of();
         return new WaveProgress(index, count, current, next);
     }
 
@@ -156,34 +160,44 @@ public class GameEngine {
         // Built fully, then published: a publishing write must hand over a finished object,
         // never one another thread could see mid-fill.
         CellGrid grid = CellGrid.of(width, height, scale);
-        Path path = PathBuilder.build(level.path(), level.smoothing(), scale);
-        markUnbuildableCells(grid, path, scale);
         EnemyCatalog catalog = EnemyCatalog.builtIn();
 
-        // Waves are built before the level is installed, against the catalog local rather than
-        // through the world. A Wave holds only its content until it starts (see Wave.spawn),
-        // so nothing here reads the level state this method is in the middle of replacing.
-        List<Wave> loaded = new ArrayList<>();
-        List<WaveDefinition> waveDefinitions = level.waves();
-        for (int waveIndex = 0; waveIndex < waveDefinitions.size(); waveIndex++) {
-            WaveDefinition wd = waveDefinitions.get(waveIndex);
-            // Derived from the level's own name and this wave's index, not GameWorld.random() -
-            // the same level and wave must scatter the same way on every run and every machine,
-            // and String.hashCode() is specified by the JLS to be stable across JVMs for that.
-            long scatterSeed = (long) level.name().hashCode() * 31L + waveIndex;
-            loaded.add(new Wave(this.gameWorld, wd.hp(), wd.price(), wd.level(),
-                    WaveScript.parse(wd.enemies(), catalog), scatterSeed));
+        // Every path is built independently, against the catalog local rather than through the
+        // world. A Wave holds only its content until it starts (see Wave.spawn), so nothing here
+        // reads the level state this method is in the middle of replacing.
+        List<PathRuntime> pathRuntimes = new ArrayList<>();
+        List<PathDefinition> pathDefinitions = level.paths();
+        for (int pathIndex = 0; pathIndex < pathDefinitions.size(); pathIndex++) {
+            PathDefinition pathDefinition = pathDefinitions.get(pathIndex);
+            Path path = PathBuilder.build(pathDefinition.corners(), pathDefinition.smoothing(), scale);
+            List<Wave> pathWaves = new ArrayList<>();
+            List<WaveDefinition> waveDefinitions = pathDefinition.waves();
+            for (int round = 0; round < waveDefinitions.size(); round++) {
+                WaveDefinition wd = waveDefinitions.get(round);
+                // Derived from the level's own name and this path/round, not GameWorld.random() -
+                // the same level, path and round must scatter the same way on every run and every
+                // machine, and String.hashCode() is specified by the JLS to be stable across JVMs
+                // for that.
+                long scatterSeed = ((long) level.name().hashCode() * 31L + pathIndex) * 31L + round;
+                float speedMultiplier = pathDefinition.speedMultiplier() * wd.speedMultiplier();
+                pathWaves.add(new Wave(this.gameWorld, wd.hp(), wd.price(), wd.level(),
+                        WaveScript.parse(wd.enemies(), catalog), scatterSeed, pathIndex, speedMultiplier));
+            }
+            pathRuntimes.add(new PathRuntime(path, pathWaves, pathDefinition.color()));
         }
+        markUnbuildableCells(grid, pathRuntimes, scale);
 
         // One write. Everything above filled a local; none of it is reachable by the game-loop
-        // thread until this line publishes all five parts at once. See LoadedLevel.
+        // thread until this line publishes every part at once. See LoadedLevel.
         this.wave = 0;
         this.gameWorld.installLevel(new LoadedLevel(grid,
-                BoardGeometry.of(scale, width, height), path, catalog, loaded));
+                BoardGeometry.of(scale, width, height), pathRuntimes, catalog));
 
         this.gameWorld.economy().startEconomy(level.startingCredits(), level.startingLives());
-        LOG.info("Level loaded: {} ({}x{} board, {} waves, {} starting credits, {} starting lives)",
-                level.name(), width, height, loaded.size(), level.startingCredits(), level.startingLives());
+        LOG.info("Level loaded: {} ({}x{} board, {} paths, {} waves per path, {} starting credits, {} starting lives)",
+                level.name(), width, height, pathRuntimes.size(),
+                pathRuntimes.isEmpty() ? 0 : pathRuntimes.getFirst().waves().size(),
+                level.startingCredits(), level.startingLives());
     }
 
     /**
@@ -204,12 +218,18 @@ public class GameEngine {
     }
 
     /**
-     * Marks unbuildable every cell the path's actual geometry covers - not just the cells it
+     * Marks unbuildable every cell any path's actual geometry covers - not just the cells it
      * was authored through, so a smoothed/curved path's buildable set correctly reflects its
-     * real shape. See {@link PathCoverage} for the geometry itself.
+     * real shape. Every path affects buildability identically and the result is unioned, so no
+     * tower is buildable on any path regardless of how many a level has. See {@link PathCoverage}
+     * for the geometry itself.
      */
-    private void markUnbuildableCells(CellGrid grid, Path path, int scale) {
-        for (Point cell : PathCoverage.unbuildableCells(path.points(), scale, grid.width(), grid.height())) {
+    private void markUnbuildableCells(CellGrid grid, List<PathRuntime> pathRuntimes, int scale) {
+        Set<Point> unbuildable = new HashSet<>();
+        for (PathRuntime pathRuntime : pathRuntimes) {
+            unbuildable.addAll(PathCoverage.unbuildableCells(pathRuntime.path().points(), scale, grid.width(), grid.height()));
+        }
+        for (Point cell : unbuildable) {
             grid.at(cell.x(), cell.y()).enable(false);
         }
     }
@@ -238,11 +258,18 @@ public class GameEngine {
         if (this.waveReady && this.wave < installed.waveCount()) {
             this.startWave = false;
             this.waveReady = false;
-            Wave starting = installed.waveAt(this.wave);
-            this.gameWorld.enemies().setEnemies(starting.spawn());
+            List<Wave> starting = installed.wavesAt(this.wave);
+            List<EnemyMob> spawned = new ArrayList<>();
+            int totalEnemies = 0;
+            for (Wave w : starting) {
+                spawned.addAll(List.of(w.spawn()));
+                totalEnemies += w.enemyCount();
+            }
+            this.gameWorld.enemies().setEnemies(spawned.toArray(new EnemyMob[0]));
             this.gameWorld.startWave(starting);
             this.wave++;
-            LOG.info("Wave {}/{} started, {} enemies", this.wave, installed.waveCount(), starting.enemyCount());
+            LOG.info("Round {}/{} started, {} paths, {} enemies", this.wave, installed.waveCount(),
+                    starting.size(), totalEnemies);
             return true;
         }
         return false;

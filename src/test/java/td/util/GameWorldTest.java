@@ -75,7 +75,7 @@ class GameWorldTest {
         context.waves().addListener(waveStartedCalls::incrementAndGet);
         Wave wave = new Wave(context, 100, 5, 1, WaveScript.parse("c c", EnemyCatalog.builtIn()), 1L);
 
-        context.startWave(wave);
+        context.startWave(List.of(wave));
 
         assertThat(waveStartedCalls).hasValue(1);
     }

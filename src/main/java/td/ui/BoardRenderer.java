@@ -9,6 +9,7 @@ import td.ui.render.PathMarkerDraw;
 import td.ui.render.RenderFrame;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
+import td.util.PathRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +23,7 @@ import java.util.List;
  * class has no {@code java.awt} import at all.
  * <p>
  * It takes the {@link GameWorld} rather than a handful of narrower slices. Drawing the board
- * means drawing all of it - cells, enemies, towers, projectiles, the board geometry and the
+ * means drawing all of it - cells, enemies, towers, projectiles, the board geometry and every
  * path - so naming six collaborators at the call site would say less than naming the one thing
  * that is "everything on the board". What it deliberately does <em>not</em> take is
  * {@code GameEngine}: a renderer has no business next to input handling and level loading.
@@ -68,7 +69,10 @@ public final class BoardRenderer {
         }
 
         BoardGeometry board = level.board();
-        List<PathMarkerDraw> pathMarkers = PathMarkerFrameBuilder.build(level.path(), board.scale(), animationSeconds);
+        List<PathMarkerDraw> pathMarkers = new ArrayList<>();
+        for (PathRuntime pathRuntime : level.paths()) {
+            pathMarkers.addAll(PathMarkerFrameBuilder.build(pathRuntime.path(), pathRuntime.color(), board.scale(), animationSeconds));
+        }
 
         return new RenderFrame(board.scale(), board.maxX(), board.maxY(),
                 cells, enemyFrameBuilder.build(), enemyFrameBuilder.buildMarkers(), enemyFrameBuilder.buildCritSparks(),

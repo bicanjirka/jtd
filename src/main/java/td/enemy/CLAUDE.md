@@ -109,11 +109,14 @@ possibly fire late - which is exactly how the boss egg could wrongly hatch after
 legitimately killed, if evaluation ran on every fade tick instead of stopping after the one
 death-transition tick.
 
-**An ability-driven spawn appears where the spawning mob was, not at the path's start.**
-`AbstractEnemyMob`'s constructor always starts a fresh mob at `distanceIntoLap` `0`; a
-`SpawnEnemiesAction`'s execution calls the new mob's own `spawnAtSamePositionAs`/
-`jumpToDistance` afterward to relocate it - without that, the Warden's egg would visibly
-teleport to the path's start instead of appearing where the Warden died.
+**An ability-driven spawn appears where the spawning mob was, not at the path's start, and on
+the same path.** `AbstractEnemyMob`'s constructor always starts a fresh mob at `distanceIntoLap`
+`0` on `spawnParameters.pathIndex()`; a `SpawnEnemiesAction`'s execution calls the new mob's own
+`spawnAtSamePositionAs`/`jumpToDistance` afterward to relocate it, and passes
+`DefinedEnemyMob.this.getPathIndex()` into `SpawnParameters.atSlot(...)` when building it -
+without the first, the Warden's egg would visibly teleport to the path's start instead of
+appearing where the Warden died; without the second, it would relocate onto path 0's geometry
+regardless of which path the Warden was actually walking.
 
 **`SpawnEnemiesAction`'s `count`/`consumesSelf` combination is only proven for
 `count == 1`.** Every v1 use is `count == 1` (a single reinforcement, or the one egg/next-stage
