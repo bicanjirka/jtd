@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.enemy.BodyArchetype;
 import td.enemy.EnemyDefinition;
 import td.enemy.Rank;
+import td.enemy.RankedEnemy;
 import td.wave.PathDefinition;
 import td.wave.Point;
 import td.wave.WaveDefinition;
@@ -27,7 +28,7 @@ class LevelDefinitionTest {
     @Test
     void mutatingTheListPassedInDoesNotChangeTheStoredPaths() {
         List<PathDefinition> paths = new ArrayList<>(List.of(pathWithRounds(1)));
-        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, paths, List.of(), 100, 5);
+        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, paths, List.of(), List.of(), 100, 5);
 
         paths.add(pathWithRounds(1));
 
@@ -36,7 +37,7 @@ class LevelDefinitionTest {
 
     @Test
     void theStoredPathsCannotBeMutatedThroughTheirAccessor() {
-        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, List.of(pathWithRounds(1)), List.of(), 100, 5);
+        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, List.of(pathWithRounds(1)), List.of(), List.of(), 100, 5);
 
         assertThatThrownBy(() -> level.paths().add(pathWithRounds(1)))
                 .isInstanceOf(UnsupportedOperationException.class);
@@ -44,21 +45,21 @@ class LevelDefinitionTest {
 
     @Test
     void aLevelNeedsAtLeastOnePath() {
-        assertThatThrownBy(() -> new LevelDefinition("Test", "", 5, 5, List.of(), List.of(), 100, 5))
+        assertThatThrownBy(() -> new LevelDefinition("Test", "", 5, 5, List.of(), List.of(), List.of(), 100, 5))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void everyPathMustDefineTheSameNumberOfWaves() {
         assertThatThrownBy(() -> new LevelDefinition("Test", "", 5, 5,
-                List.of(pathWithRounds(3), pathWithRounds(2)), List.of(), 100, 5))
+                List.of(pathWithRounds(3), pathWithRounds(2)), List.of(), List.of(), 100, 5))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void pathsWithMatchingRoundCountsAreAccepted() {
         LevelDefinition level = new LevelDefinition("Test", "", 5, 5,
-                List.of(pathWithRounds(3), pathWithRounds(3)), List.of(), 100, 5);
+                List.of(pathWithRounds(3), pathWithRounds(3)), List.of(), List.of(), 100, 5);
 
         assertThat(level.paths()).hasSize(2);
     }
@@ -101,6 +102,38 @@ class LevelDefinitionTest {
                 .withCustomEnemies(List.of(tankySquare));
 
         assertThatThrownBy(() -> level.customEnemies().add(tankySquare))
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void aLevelHasNoCustomRankedEnemiesUnlessItAsksForSome() {
+        LevelDefinition level = LevelDefinition.of("Test", 5, 5, List.of(pathWithRounds(1)));
+
+        assertThat(level.customRankedEnemies()).isEmpty();
+    }
+
+    @Test
+    void withCustomRankedEnemiesIsIndependentOfWithCustomEnemies() {
+        EnemyDefinition tankySquare = EnemyDefinition.of("tankySquare", "Tanky Square", 100, 5, 1.28f,
+                BodyArchetype.SQUARE);
+        RankedEnemy ranked = RankedEnemy.startingAt(
+                EnemyDefinition.of("ranked", "Ranked", 50, 2, 1.28f, BodyArchetype.CIRCLE)).build();
+        LevelDefinition level = LevelDefinition.of("Test", 5, 5, List.of(pathWithRounds(1)))
+                .withCustomEnemies(List.of(tankySquare))
+                .withCustomRankedEnemies(List.of(ranked));
+
+        assertThat(level.customEnemies()).containsExactly(tankySquare);
+        assertThat(level.customRankedEnemies()).containsExactly(ranked);
+    }
+
+    @Test
+    void theStoredCustomRankedEnemiesCannotBeMutatedThroughTheirAccessor() {
+        RankedEnemy ranked = RankedEnemy.startingAt(
+                EnemyDefinition.of("ranked", "Ranked", 50, 2, 1.28f, BodyArchetype.CIRCLE)).build();
+        LevelDefinition level = LevelDefinition.of("Test", 5, 5, List.of(pathWithRounds(1)))
+                .withCustomRankedEnemies(List.of(ranked));
+
+        assertThatThrownBy(() -> level.customRankedEnemies().add(ranked))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 }

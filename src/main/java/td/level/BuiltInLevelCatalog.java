@@ -11,6 +11,7 @@ import td.enemy.HurtSpeedTrait;
 import td.enemy.OnDeathTrigger;
 import td.enemy.PathDirectionalMovement;
 import td.enemy.Rank;
+import td.enemy.RankedEnemy;
 import td.enemy.SelfTarget;
 import td.enemy.SpawnEnemiesAction;
 import td.wave.PathColor;
@@ -28,7 +29,7 @@ import java.util.List;
  */
 public class BuiltInLevelCatalog implements LevelCatalog {
 
-    // Wild Bezier Sweep's one level-authored enemy (LevelDefinition.customEnemies, see
+    // Wild Bezier Sweep's one level-authored enemy (LevelDefinition.customRankedEnemies, see
     // td/level/CLAUDE.md) - deliberately reaches for two options no built-in enemy exercises
     // yet: PathDirectionalMovement, so its triangle nose actually tracks the sweeping curve
     // instead of spinning in place the way Frenzied's RotorMovement does, and a healthDivisor
@@ -38,19 +39,25 @@ public class BuiltInLevelCatalog implements LevelCatalog {
     // appearance rather than a boss encounter; the health-threshold panic shield and the
     // on-death split are both real Ability/AbilityAction wiring, just aimed at itself and at a
     // "spawn two, don't replace" reinforcement instead of the Warden's "shield allies"/"replace
-    // with the next stage" uses of the same two mechanisms. Registered single-rank, like the
-    // Warden chain - not every custom enemy needs a real ladder.
-    private static final EnemyDefinition REAVER = EnemyDefinition
-            .of("reaver", "Reaver", 500, 12, 1.28f, BodyArchetype.TRIANGLE)
-            .withDescription("Speeds up as it's hurt, shrugs off a flat amount of every hit, panics into a "
-                    + "brief shield once badly wounded, and splits into two stragglers when finally brought down.")
-            .withMovement(new PathDirectionalMovement())
-            .withHealthDivisor(0.8f)
-            .withTraits(List.of(new HurtSpeedTrait(1.3f), new FlatResistTrait(10)))
-            .withAbilities(List.of(
-                    new Ability(new HealthThresholdTrigger(0.5f),
-                            new ApplyEffectAction(new ShieldTemplate(0.25f, 100), new SelfTarget())),
-                    new Ability(new OnDeathTrigger(), new SpawnEnemiesAction("c", 2, false))));
+    // with the next stage" uses of the same two mechanisms. A full five-rank ladder, like the
+    // four basic built-ins - traits/abilities/movement stay the same across ranks, only health
+    // and bounty escalate, the same pattern ARMORED/FRENZIED/GHOST use.
+    private static final RankedEnemy REAVER = RankedEnemy
+            .startingAt(EnemyDefinition.of("reaver", "Reaver", 500, 12, 1.28f, BodyArchetype.TRIANGLE)
+                    .withDescription("Speeds up as it's hurt, shrugs off a flat amount of every hit, panics into a "
+                            + "brief shield once badly wounded, and splits into two stragglers when finally brought down.")
+                    .withMovement(new PathDirectionalMovement())
+                    .withHealthDivisor(0.8f)
+                    .withTraits(List.of(new HurtSpeedTrait(1.3f), new FlatResistTrait(10)))
+                    .withAbilities(List.of(
+                            new Ability(new HealthThresholdTrigger(0.5f),
+                                    new ApplyEffectAction(new ShieldTemplate(0.25f, 100), new SelfTarget())),
+                            new Ability(new OnDeathTrigger(), new SpawnEnemiesAction("c", 2, false)))))
+            .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(1000, 20))
+            .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(2000, 32))
+            .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(4000, 50))
+            .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(8000, 80))
+            .build();
 
     private static final LevelDefinition CLASSIC_LOOP = LevelDefinition.unsmoothed(
             "Classic Loop",
@@ -171,7 +178,7 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     + "second, faster lane sweeping top to bottom. 10 waves per lane, starting with "
                     + "$100 and 4 lives.")
             .withStartingLives(4)
-            .withCustomEnemies(List.of(REAVER));
+            .withCustomRankedEnemies(List.of(REAVER));
 
     @Override
     public List<LevelDefinition> levels() {

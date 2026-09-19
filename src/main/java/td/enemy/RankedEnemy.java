@@ -4,7 +4,9 @@ import td.util.GameStartupException;
 import td.util.ThreadConfined;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 
@@ -20,11 +22,15 @@ import java.util.function.UnaryOperator;
  * slot asking for a rank this enemy doesn't define silently resolves to this enemy's own highest
  * authored rank instead - see {@link #effectiveRank(Rank)} for the same resolution as a
  * {@link Rank} rather than a definition, which is what a spawned mob's own badge and internal
- * formulas (fade duration, body scale, score weight) need.
+ * formulas (fade duration, body scale, score weight) need. {@link #cloneAs} clones a whole ladder
+ * under a new id, not just one rank's definition - what {@code EnemyCatalog.cloneAndAdjust} uses.
  */
 public final class RankedEnemy {
 
     private final String id;
+    // Always built from an EnumMap (see Builder.build) and never re-wrapped through something
+    // that doesn't preserve that ordering (Map.copyOf does not) - cloneAs walks this in rank
+    // order, low to high.
     private final Map<Rank, EnemyDefinition> definitionsByRank;
     private final Rank highestDefinedRank;
 
@@ -69,6 +75,30 @@ public final class RankedEnemy {
     }
 
     /**
+     * Clones this whole ladder under {@code newId}, running {@code adjust} over every rank this
+     * enemy actually authored - e.g. "a Square with double the usual resistance for this one
+     * level," applied consistently across whatever ranks the original defines, not just
+     * {@link Rank#GRUNT}. What {@code EnemyCatalog.cloneAndAdjust} builds on.
+     */
+    public RankedEnemy cloneAs(String newId, UnaryOperator<EnemyDefinition> adjust) {
+        Iterator<Map.Entry<Rank, EnemyDefinition>> ranks = this.definitionsByRank.entrySet().iterator();
+        Map.Entry<Rank, EnemyDefinition> grunt = ranks.next();
+        Builder builder = RankedEnemy.startingAt(adjust.apply(withId(grunt.getValue(), newId)));
+        while (ranks.hasNext()) {
+            Map.Entry<Rank, EnemyDefinition> entry = ranks.next();
+            EnemyDefinition renamed = withId(entry.getValue(), newId);
+            builder.thenAt(entry.getKey(), ignored -> adjust.apply(renamed));
+        }
+        return builder.build();
+    }
+
+    private static EnemyDefinition withId(EnemyDefinition source, String newId) {
+        return new EnemyDefinition(newId, source.displayName(), source.description(), source.baseHealth(),
+                source.price(), source.baseSpeed(), source.healthDivisor(), source.mobType(), source.archetype(),
+                source.movement(), source.traitSlots(), source.abilitySlots());
+    }
+
+    /**
      * Builds a {@link RankedEnemy} one rank at a time, each step describing only what changed
      * from the rank before it - see the class doc comment.
      */
@@ -110,7 +140,12 @@ public final class RankedEnemy {
         }
 
         public RankedEnemy build() {
-            return new RankedEnemy(this.id, Map.copyOf(this.definitionsByRank), this.highestSoFar);
+            // Not Map.copyOf: it does not promise to preserve an EnumMap's own natural (ordinal)
+            // iteration order, which RankedEnemy.cloneAs relies on to walk ranks low-to-high.
+            // EnumMap always iterates in enum order, by its own contract - wrapping a private
+            // copy of it keeps that guarantee while still being unmodifiable from the outside.
+            return new RankedEnemy(this.id, Collections.unmodifiableMap(new EnumMap<>(this.definitionsByRank)),
+                    this.highestSoFar);
         }
     }
 }

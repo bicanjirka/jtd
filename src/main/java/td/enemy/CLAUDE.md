@@ -36,8 +36,16 @@ following `docs/features/FEATURE-enemy-rank-system.md`'s own pseudocode.
 enemy's own highest authored rank instead - an enemy that only defines up through `Rank.VETERAN`
 spawns at `Rank.VETERAN` for a wave slot asking for `Rank.BOSS`. `EnemyCatalog.register
 (EnemyDefinition)` is the convenience for an enemy that only ever needs `Rank.GRUNT` - the
-Warden chain and any per-level custom/cloned enemy use it, wrapping the definition as a
-single-rank ladder where every requested rank resolves to the same one.
+Warden chain wraps a definition this way, as a single-rank ladder where every requested rank
+resolves to the same one; a per-level custom enemy that needs a real ladder registers a
+`RankedEnemy` directly instead (see `td/level/CLAUDE.md`'s `customRankedEnemies`).
+
+**`RankedEnemy.cloneAs(newId, adjust)` clones a whole ladder, not just one rank.** `adjust` runs
+over every rank the original authored, so "a Square with double the usual resistance for this
+one level" comes out the same shape as the original - one rank if that's all the original
+defines, five if it defines five - rather than flattening a real ladder down to a single cloned
+rank. `EnemyCatalog.cloneAndAdjust(baseId, newId, adjust)` is the catalog-level entry point:
+resolves `baseId`'s `RankedEnemy`, clones it, and registers the result under `newId`.
 
 **`EnemyDefinition.of(id, displayName, baseHealth, price, baseSpeed, archetype)`** is the
 required shape every definition has - no description, `EnemyMob.Type.NORMAL`, a `FixedMovement`
@@ -68,12 +76,15 @@ nothing needs a closed enumeration of ids anymore.
 debug keybinding spawn every enemy type a level's catalog knows about, one press at a time.
 
 **A level can register its own custom or cloned enemy.** `GameEngine.loadLevel` builds a
-fresh `EnemyCatalog.builtIn()` per level load, then registers every entry of
-`LevelDefinition.customEnemies()` into it before any wave's tokens are parsed - a wave-script
-token then names a custom id exactly like it names a built-in one, with no separate syntax for
-the two (see `td/level/CLAUDE.md` and `WaveScriptTest.aPerLevelCustomIdResolvesTheSameWayABuiltInDoes`).
-The Warden's six-definition chain still ships as *global* built-in content rather than using
-this - it needs to be available regardless of which level reaches it, and predates this field.
+fresh `EnemyCatalog.builtIn()` per level load, then registers every entry of both
+`LevelDefinition.customEnemies()` (single-rank) and `.customRankedEnemies()` (a real ladder)
+into it before any wave's tokens are parsed - a wave-script token then names a custom id exactly
+like it names a built-in one, with no separate syntax for the two (see `td/level/CLAUDE.md` and
+`WaveScriptTest.aPerLevelCustomIdResolvesTheSameWayABuiltInDoes`). `BuiltInLevelCatalog`'s
+Reaver is the ranked case: a full five-rank ladder authored the same way a built-in's is, just
+registered per-level instead of globally. The Warden's six-definition chain still ships as
+*global* built-in content rather than using either list - it needs to be available regardless of
+which level reaches it, and predates both fields.
 
 ## Traits, abilities, and rank
 
