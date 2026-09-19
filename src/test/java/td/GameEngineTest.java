@@ -1,6 +1,8 @@
 package td;
 
 import org.junit.jupiter.api.Test;
+import td.enemy.BodyArchetype;
+import td.enemy.EnemyDefinition;
 import td.fixtures.BoardFixtures;
 import td.fixtures.LevelFixtures;
 import td.level.LevelDefinition;
@@ -46,6 +48,19 @@ class GameEngineTest {
         assertThat(installed.waveCount()).isZero();
         assertThat(installed.pathAt(0).points()).isNotEmpty();
         assertThat(engine.getCurrentWaveIndex()).isZero();
+    }
+
+    @Test
+    void loadingALevelRegistersItsOwnCustomEnemiesSoItsWavesCanSpawnThem() {
+        EnemyDefinition tankySquare = EnemyDefinition.of("tankySquare", "Tanky Square", 100, 5, 1.28f,
+                BodyArchetype.SQUARE);
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("tankySquare", 100, 3, 1)), 100)
+                .withCustomEnemies(List.of(tankySquare)));
+
+        assertThat(engine.getGameWorld().getEnemyCatalog().ids()).contains("tankySquare");
+        assertThat(engine.nextWave()).isTrue();
+        assertThat(engine.getGameWorld().enemies().getEnemies()).hasSize(1);
     }
 
     @Test

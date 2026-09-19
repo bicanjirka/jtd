@@ -3,10 +3,19 @@
 Read the root `CLAUDE.md` first; this file only covers what is specific to this package.
 
 `LevelDefinition` is a level's authored content: name, description, board size, its own starting
-credits/lives, and a `List<td.wave.PathDefinition>` - a level's one or more enemy paths, each
-with its own corners, `PathSmoothing`, waves, `PathColor` and speed multiplier. There is no
-separate `path`/`waves`/`smoothing` field for "the" path; even a single-lane level is a
-one-entry `paths` list.
+credits/lives, a `List<td.wave.PathDefinition>` - a level's one or more enemy paths, each
+with its own corners, `PathSmoothing`, waves, `PathColor` and speed multiplier - and a
+`List<td.enemy.EnemyDefinition> customEnemies`, this level's own enemy roster on top of the
+built-ins. There is no separate `path`/`waves`/`smoothing` field for "the" path; even a
+single-lane level is a one-entry `paths` list.
+
+`customEnemies` defaults to empty via `LevelDefinition.of`, grown by the fluent
+`withCustomEnemies` copy - see `BuiltInLevelCatalog`'s Wild Bezier Sweep for the pattern.
+`GameEngine.loadLevel` registers every entry into that level's fresh `td.enemy.EnemyCatalog`
+right after the built-ins, before any wave's tokens are parsed, so a wave-script token names a
+custom id exactly like it names a built-in one - `td.wave.WaveScript` resolves every token
+against whichever catalog is in scope, with no separate syntax for the two (see
+`td/wave/CLAUDE.md` and `td/enemy/CLAUDE.md`).
 
 **Every path in a level must define the same number of waves.** A level's waves run as
 synchronized rounds - starting round `N` spawns every path's wave `N` together, and the round

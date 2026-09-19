@@ -48,14 +48,13 @@ nothing needs a closed enumeration of ids anymore.
 `GameEngine.debugSpawnNextCatalogEnemy()` is the one caller, cycling through it to let a
 debug keybinding spawn every enemy type a level's catalog knows about, one press at a time.
 
-**A level cannot yet register its own custom or cloned enemy.** `EnemyCatalog.builtIn()` is
-the only catalog any level gets - `GameEngine.loadLevel` builds one fresh per level load and
-every wave resolves its tokens against it, but `LevelDefinition` has no field yet for a
-level's own registrations. The Warden's six-definition chain ships as *global* built-in
-content specifically to avoid needing that field yet (see `docs/features/FEATURE-enemy-traits-and-effects.md`) -
-the wave mini-language and `EnemyCatalog` are already fully able to resolve a custom id the
-moment something registers one (see `WaveScriptTest`'s
-`aPerLevelCustomIdResolvesTheSameWayABuiltInDoes`); no *level* does yet.
+**A level can register its own custom or cloned enemy.** `GameEngine.loadLevel` builds a
+fresh `EnemyCatalog.builtIn()` per level load, then registers every entry of
+`LevelDefinition.customEnemies()` into it before any wave's tokens are parsed - a wave-script
+token then names a custom id exactly like it names a built-in one, with no separate syntax for
+the two (see `td/level/CLAUDE.md` and `WaveScriptTest.aPerLevelCustomIdResolvesTheSameWayABuiltInDoes`).
+The Warden's six-definition chain still ships as *global* built-in content rather than using
+this - it needs to be available regardless of which level reaches it, and predates this field.
 
 ## Traits, abilities, and level-scaling
 
@@ -278,11 +277,12 @@ Two different things can mean "a new enemy," with very different cost:
 
 **Reusing an existing `BodyArchetype`/`MovementBehavior`/`Trait` combination** (the common
 case, and the entire point of this model) needs no new Java class at all: add a new
-`EnemyDefinition` and register it under its wave-script id - today that means adding it to
-`BuiltInEnemies` and `EnemyCatalog.builtIn()`, since no level can register its own yet (see
-above); once that lands, a level-scoped registration is exactly as valid. The Warden's six
-stages are exactly this: no new Java class, just six `EnemyDefinition`s composing
-`FlatResistTrait` and the `Ability`s in `BuiltInEnemies.wardenAbilities`.
+`EnemyDefinition` and register it. Content meant for every level goes in `BuiltInEnemies` and
+`EnemyCatalog.builtIn()` - the Warden's six stages are exactly this: no new Java class, just six
+`EnemyDefinition`s composing `FlatResistTrait` and the `Ability`s in
+`BuiltInEnemies.wardenAbilities`. Content meant for one level instead goes on that level's own
+`LevelDefinition.customEnemies()` (see `td/level/CLAUDE.md`) - `BuiltInLevelCatalog`'s Wild
+Bezier Sweep is this case.
 
 **Adding a genuinely new `BodyArchetype`** (a shape nothing existing uses) is still a fixed,
 compiler-enforced checklist, same spirit as before:

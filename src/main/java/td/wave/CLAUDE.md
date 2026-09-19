@@ -150,9 +150,9 @@ Parsing and instantiation are deliberately separate:
   `getWaveCount()` is two reads and can straddle a level change.
 
 The token grammar itself is documented in the root `CLAUDE.md` §9. `GameEngine.loadLevel`
-builds one `EnemyCatalog.builtIn()` per level load and passes it to every wave's `parse`
-call - a level does not yet register its own custom/cloned definitions into it (that's a
-later phase); today `builtIn()` is the only catalog any level actually gets.
+builds one `EnemyCatalog.builtIn()` per level load, registers that level's own
+`LevelDefinition.customEnemies()` into it, and passes the result to every wave's `parse` call -
+see `td/level/CLAUDE.md` and `td/enemy/CLAUDE.md`.
 
 ## Multiple paths and rounds
 

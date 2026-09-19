@@ -6,7 +6,11 @@ in `BuiltInEnemies`. One point below is now stale: "not in scope: any trait or a
 off a critical hit" was true when this document's v1 shipped, but `FEATURE-critical-damage.md`
 later closed that gap — `CriticalImmunityTrait` went onto `ARMORED` and
 `OnCriticalHitTakenTrigger` onto the Warden. Balance numbers remain placeholders, tracked in
-`TODO.md`'s "Enemy traits/abilities numbers are unbalanced placeholders" entry.
+`TODO.md`'s "Enemy traits/abilities numbers are unbalanced placeholders" entry. Per-level
+authoring, the other point this document called out as deferred, has since landed too:
+`LevelDefinition.customEnemies()` (a fluent `withCustomEnemies` copy) is registered into that
+level's own `EnemyCatalog` by `GameEngine.loadLevel`; Wild Bezier Sweep's Reaver is the first
+level-authored enemy to use it.
 
 **Priority: Phase 3 — after tower upgrades and damage types.** This is the most
 foundational-feeling of the three requests but also the most speculative if the game

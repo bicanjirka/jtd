@@ -1,6 +1,8 @@
 package td.level;
 
 import org.junit.jupiter.api.Test;
+import td.enemy.BodyArchetype;
+import td.enemy.EnemyDefinition;
 import td.wave.PathDefinition;
 import td.wave.Point;
 import td.wave.WaveDefinition;
@@ -24,7 +26,7 @@ class LevelDefinitionTest {
     @Test
     void mutatingTheListPassedInDoesNotChangeTheStoredPaths() {
         List<PathDefinition> paths = new ArrayList<>(List.of(pathWithRounds(1)));
-        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, paths, 100, 5);
+        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, paths, List.of(), 100, 5);
 
         paths.add(pathWithRounds(1));
 
@@ -33,7 +35,7 @@ class LevelDefinitionTest {
 
     @Test
     void theStoredPathsCannotBeMutatedThroughTheirAccessor() {
-        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, List.of(pathWithRounds(1)), 100, 5);
+        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, List.of(pathWithRounds(1)), List.of(), 100, 5);
 
         assertThatThrownBy(() -> level.paths().add(pathWithRounds(1)))
                 .isInstanceOf(UnsupportedOperationException.class);
@@ -41,21 +43,21 @@ class LevelDefinitionTest {
 
     @Test
     void aLevelNeedsAtLeastOnePath() {
-        assertThatThrownBy(() -> new LevelDefinition("Test", "", 5, 5, List.of(), 100, 5))
+        assertThatThrownBy(() -> new LevelDefinition("Test", "", 5, 5, List.of(), List.of(), 100, 5))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void everyPathMustDefineTheSameNumberOfWaves() {
         assertThatThrownBy(() -> new LevelDefinition("Test", "", 5, 5,
-                List.of(pathWithRounds(3), pathWithRounds(2)), 100, 5))
+                List.of(pathWithRounds(3), pathWithRounds(2)), List.of(), 100, 5))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void pathsWithMatchingRoundCountsAreAccepted() {
         LevelDefinition level = new LevelDefinition("Test", "", 5, 5,
-                List.of(pathWithRounds(3), pathWithRounds(3)), 100, 5);
+                List.of(pathWithRounds(3), pathWithRounds(3)), List.of(), 100, 5);
 
         assertThat(level.paths()).hasSize(2);
     }
@@ -68,5 +70,36 @@ class LevelDefinitionTest {
         assertThat(level.paths()).hasSize(1);
         assertThat(level.paths().getFirst().corners()).containsExactly(new Point(0, 0), new Point(1, 0));
         assertThat(level.paths().getFirst().waves()).containsExactly(new WaveDefinition("c", 1, 1, 1));
+    }
+
+    @Test
+    void aLevelHasNoCustomEnemiesUnlessItAsksForSome() {
+        LevelDefinition level = LevelDefinition.of("Test", 5, 5, List.of(pathWithRounds(1)));
+
+        assertThat(level.customEnemies()).isEmpty();
+    }
+
+    @Test
+    void mutatingTheListPassedInDoesNotChangeTheStoredCustomEnemies() {
+        EnemyDefinition tankySquare = EnemyDefinition.of("tankySquare", "Tanky Square", 100, 5, 1.28f,
+                BodyArchetype.SQUARE);
+        List<EnemyDefinition> customEnemies = new ArrayList<>(List.of(tankySquare));
+        LevelDefinition level = LevelDefinition.of("Test", 5, 5, List.of(pathWithRounds(1)))
+                .withCustomEnemies(customEnemies);
+
+        customEnemies.add(tankySquare);
+
+        assertThat(level.customEnemies()).containsExactly(tankySquare);
+    }
+
+    @Test
+    void theStoredCustomEnemiesCannotBeMutatedThroughTheirAccessor() {
+        EnemyDefinition tankySquare = EnemyDefinition.of("tankySquare", "Tanky Square", 100, 5, 1.28f,
+                BodyArchetype.SQUARE);
+        LevelDefinition level = LevelDefinition.of("Test", 5, 5, List.of(pathWithRounds(1)))
+                .withCustomEnemies(List.of(tankySquare));
+
+        assertThatThrownBy(() -> level.customEnemies().add(tankySquare))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 }
