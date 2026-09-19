@@ -309,19 +309,3 @@ own balance passes.
 - **Approach:** tune via actual play (or `td.BalanceHarness`) once the other placeholder-number
   entries in this file get their own pass - no code or architecture change needed, every number
   here is already a named constant or a `TowerBuff` literal.
-
-### `ActiveEffects.applyShield` is never called
-
-Found while wiring critical damage into the Warden's existing shield abilities: nothing in
-`AbstractEnemyMob`/`DefinedEnemyMob.absorb` ever calls `ActiveEffects.applyShield`, so a
-`td.effect.EffectKind.SHIELD` effect (the Warden's periodic self-shield, its health-threshold
-ally-shield, and the new on-crit-survived shield) only ever shows its status marker - it grants
-no actual damage reduction. Pre-existing, not introduced by the critical-damage feature; every
-shield-granting ability shipped before it has the same gap.
-
-- **Where:** `td.effect.ActiveEffects.applyShield` (defined, unused); `DefinedEnemyMob.absorb`
-  (where a shield reduction would need to fold in, alongside the trait loop it already runs).
-- **Approach:** call `activeEffects.applyShield(...)` from `absorb` (or from `AbstractEnemyMob
-  .doDamage` before capping), composing with trait resistance the same way a percent/flat trait
-  already does - `ActiveEffects.applyShield`'s own doc comment already states the intended
-  composition ("this composes with rather than replaces" a `Trait`'s resistance).
