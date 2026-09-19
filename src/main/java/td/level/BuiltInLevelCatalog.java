@@ -1,5 +1,17 @@
 package td.level;
 
+import td.effect.ShieldTemplate;
+import td.enemy.Ability;
+import td.enemy.ApplyEffectAction;
+import td.enemy.BodyArchetype;
+import td.enemy.EnemyDefinition;
+import td.enemy.FlatResistTrait;
+import td.enemy.HealthThresholdTrigger;
+import td.enemy.HurtSpeedTrait;
+import td.enemy.OnDeathTrigger;
+import td.enemy.PathDirectionalMovement;
+import td.enemy.SelfTarget;
+import td.enemy.SpawnEnemiesAction;
 import td.wave.PathColor;
 import td.wave.PathDefinition;
 import td.wave.Point;
@@ -14,6 +26,29 @@ import java.util.List;
  * that exists today. A future file-based catalog implements the same interface.
  */
 public class BuiltInLevelCatalog implements LevelCatalog {
+
+    // Wild Bezier Sweep's one level-authored enemy (LevelDefinition.customEnemies, see
+    // td/level/CLAUDE.md) - deliberately reaches for two options no built-in enemy exercises
+    // yet: PathDirectionalMovement, so its triangle nose actually tracks the sweeping curve
+    // instead of spinning in place the way Frenzied's RotorMovement does, and a healthDivisor
+    // below 1, the opposite direction from Ghost's flat /5 - it makes a Reaver tougher than its
+    // wave's base health rather than weaker. HurtSpeedTrait/FlatResistTrait combine a Frenzied-
+    // style speed curve with a Warden-style flat reduction, at values scaled down to a wave-1
+    // appearance rather than a boss encounter; the health-threshold panic shield and the
+    // on-death split are both real Ability/AbilityAction wiring, just aimed at itself and at a
+    // "spawn two, don't replace" reinforcement instead of the Warden's "shield allies"/"replace
+    // with the next stage" uses of the same two mechanisms.
+    private static final EnemyDefinition REAVER = EnemyDefinition
+            .of("reaver", "Reaver", 500, 12, 1.28f, BodyArchetype.TRIANGLE)
+            .withDescription("Speeds up as it's hurt, shrugs off a flat amount of every hit, panics into a "
+                    + "brief shield once badly wounded, and splits into two stragglers when finally brought down.")
+            .withMovement(new PathDirectionalMovement())
+            .withHealthDivisor(0.8f)
+            .withTraits(List.of(new HurtSpeedTrait(1.3f, 0.05f), new FlatResistTrait(10)))
+            .withAbilities(List.of(
+                    new Ability(new HealthThresholdTrigger(0.5f),
+                            new ApplyEffectAction(new ShieldTemplate(0.25f, 100), new SelfTarget())),
+                    new Ability(new OnDeathTrigger(), new SpawnEnemiesAction("c", 2, false))));
 
     private static final LevelDefinition CLASSIC_LOOP = LevelDefinition.unsmoothed(
             "Classic Loop",
@@ -94,7 +129,9 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     new Point(-1, 3), new Point(14, 3), new Point(14, 15), new Point(28, 15),
                     new Point(28, 4), new Point(30, 4)),
             List.of(
-                    new WaveDefinition("c e c e c e c e c", 220, 2, 1),
+                    // Wave 1's one "c" swapped for the Reaver - a rich, level-authored enemy
+                    // right at the level's opening, in place of the routine token it replaces.
+                    new WaveDefinition("c e c e reaver e c e c", 220, 2, 1),
                     new WaveDefinition("6 c", 300, 2, 1),
                     new WaveDefinition("s e s e s", 480, 3, 1),
                     new WaveDefinition("t e t e t", 620, 3, 2),
@@ -136,7 +173,8 @@ public class BuiltInLevelCatalog implements LevelCatalog {
             .withDescription("Long bezier curves that swing far wide of the path's straight corners, crossed by a "
                     + "second, faster lane sweeping top to bottom. 10 waves per lane, starting with "
                     + "$100 and 4 lives.")
-            .withStartingLives(4);
+            .withStartingLives(4)
+            .withCustomEnemies(List.of(REAVER));
 
     @Override
     public List<LevelDefinition> levels() {

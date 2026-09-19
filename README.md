@@ -102,6 +102,7 @@ the board by a coloured ring around it. The Aura tower is passive and offers non
 | Ghost      | tinted circle | Invisible to single-target towers; only area damage reaches it                                                                                                                                                                                                                                                    |
 | Empty      | —             | Not a real enemy — a spacer that opens a timing gap inside a wave                                                                                                                                                                                                                                                 |
 | The Warden | large spiked crest | A boss: armored, periodically summons reinforcements and shields itself and nearby allies, and shields itself again whenever it survives a critical hit. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. Appears as the final wave of Classic Loop. |
+| Reaver     | triangle, path-facing | Speeds up as it's hurt, shrugs off a flat amount of every hit, shields itself once badly wounded, and splits into two Simple mobs on death. Appears in Wild Bezier Sweep's first wave — a level-authored enemy, registered only for that level rather than globally (see `td.level.LevelDefinition.customEnemies`). |
 
 ### Spawn shapes
 
@@ -128,7 +129,9 @@ and **Wild Bezier Sweep** (long Bezier curves that swing wide of the authored co
 waves per lane). A level can define more than one enemy path, each with its own color, waves
 and pace; Wild Bezier Sweep is the one built-in level that does, with a second, faster lane
 (cyan, 1.3× speed) crossing its original amber one. A level's paths all run the same number of
-waves as synchronized rounds - starting a round spawns every path's wave for it together.
+waves as synchronized rounds - starting a round spawns every path's wave for it together. A
+level can also register its own enemy on top of the ones above, scoped to that level only;
+Wild Bezier Sweep's Reaver (see the Enemies table) is the one built-in level that does.
 
 Levels are defined as Java constants in `td.level.BuiltInLevelCatalog`, so adding one today
 means a code change and a rebuild. See `TODO.md` for the planned file-based catalog.
