@@ -1,5 +1,11 @@
 # Feature Request: Playtesting and Balance Tooling
 
+**Status: implemented.** The three debug keybindings (`n` skip wave, `x` spawn next catalog
+enemy, `c` grant credits) and `td.BalanceHarness` both shipped as this document describes; every
+"unbalanced placeholder" `TODO.md` entry for the other three features now cites this tooling as
+what makes tuning them cheap. The "written up as a future feature request, not scoped or
+committed to a timeline" line under Product review notes below is superseded by this line.
+
 **Priority: not sequenced against the other three feature requests.** This is enabling
 infrastructure, not player-facing content, and has no hard dependency forcing it before or
 after any of them. It is best read alongside `FEATURE-tower-upgrades.md`,

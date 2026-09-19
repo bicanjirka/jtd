@@ -1,5 +1,13 @@
 # Feature Request: Enemy Traits, Abilities and Effects
 
+**Status: implemented.** `EnemyDefinition`/`EnemyCatalog` replaced `EnemyFactory.Enemy`; all
+five original enemies migrated onto the trait/ability model; the Warden/egg boss chain shipped
+in `BuiltInEnemies`. One point below is now stale: "not in scope: any trait or ability keyed
+off a critical hit" was true when this document's v1 shipped, but `FEATURE-critical-damage.md`
+later closed that gap — `CriticalImmunityTrait` went onto `ARMORED` and
+`OnCriticalHitTakenTrigger` onto the Warden. Balance numbers remain placeholders, tracked in
+`TODO.md`'s "Enemy traits/abilities numbers are unbalanced placeholders" entry.
+
 **Priority: Phase 3 — after tower upgrades and damage types.** This is the most
 foundational-feeling of the three requests but also the most speculative if the game
 stayed small — its full scope (registry, builder, per-level authoring and cloning) is

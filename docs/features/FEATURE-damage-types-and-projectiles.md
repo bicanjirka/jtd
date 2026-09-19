@@ -1,5 +1,12 @@
 # Feature Request: Damage Types, Projectile Types and On-Hit Effects
 
+**Status: implemented.** `Damage` carries `DamageType`; `td.effect` (`Effect`/`EffectKind`/
+`ActiveEffects`/`DamageSink`) shipped as the shared primitive this document called for;
+`td.projectile` (`AbstractProjectile`/`CannonballProjectile`/`MissileProjectile`/
+`ProjectileRoster`) and the Mortar/Seeker/Cinder towers shipped as the v1 content. Acid and
+damage-type resistance were deferred past v1 as decided below and are tracked in `TODO.md`
+("Acid is not implemented...", "Damage-type resistance doesn't exist yet"), not lost.
+
 **Priority: Phase 2 — after tower upgrades.** This feature exists in part to give phase 1 (in-place tower upgrades)
 something real to grant — an upgrade path that applies slow or
 burn needs those effects to exist first. It precedes enemy traits/effects (phase 3), which
@@ -21,6 +28,13 @@ freeze, stun, burning damage-over-time, acid damage-over-time, and critical (bon
 chance-based) damage.
 
 ## Current state (what exists today)
+
+*(This section is a snapshot from before this feature's own implementation and before the
+later tower rename and the enemy-traits data-driven migration — `TowerOne`–`Four` are now
+`SniperTower`/`SplashTower`/`SonarTower`/`PulseTower`, and `EnemyMobSquare`/`EnemyMobTriangle`
+are now the `ARMORED`/`FRENZIED` `EnemyDefinition`s built through `Trait`. The "there is no
+cone shape today" claim below also no longer holds — `CinderTower`'s cone delivery shipped as
+this feature's own v1 content, described under What this feature adds/V1 Scope.)*
 
 - **`Damage`** (`td.damage.Damage`) is a single-field record: an `int amount`, clamped at
   zero by its compact constructor, with `none()` as the identity and `plus`/`scaledBy` as
