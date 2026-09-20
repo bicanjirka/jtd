@@ -220,10 +220,22 @@ regardless of which path the Warden was actually walking. It also passes
 reinforcement, an egg) inherits its parent's rank, the same precedent path inheritance already
 set.
 
-**`SpawnEnemiesAction`'s `count`/`consumesSelf` combination is only proven for
-`count == 1`.** Every v1 use is `count == 1` (a single reinforcement, or the one egg/next-stage
-Warden); `consumesSelf == true` with `count > 1` has no defined meaning (this mob can only be
-replaced by one thing) and isn't validated against.
+**`SpawnEnemiesAction` carries an `AbilitySpawnShape`, not a bare count.** Member count,
+per-member size/health/bounty multipliers and an optional trait override compose the same way
+`td.wave.SpawnShape` does for a wave slot - but as its own type, not that one: `SpawnShape` also
+carries a `SpawnSpread` and slot-relative delay spacing defined against a wave slot's position on
+the path, and an ability spawn has no slot - it places every member at the caster's own live
+position (`spawnAtSamePositionAs`), where a path-relative formation offset has nothing to rotate
+against. `AbilitySpawnShape.delaySpacingSlots` staggers members in time instead: member `i`'s
+slot position is `i * delaySpacingSlots`, converted to a tick delay through the same
+`SpawnParameters.atSlot`/`.of` conversion a wave slot uses, so a member after the first starts
+`isInactive()` (undrawn, untargetable) and only becomes live once its own delay elapses -
+without this, every member of a multi-member spawn would appear stacked on the exact same pixel
+on the same tick. The `shape.members()`/`consumesSelf` combination is only proven for
+`shape.members() == 1`. Every v1 use with `consumesSelf == true` is exactly that (a single
+reinforcement, or the one egg/next-stage Warden); `consumesSelf == true` with more than one
+member has no defined meaning (this mob can only be replaced by one thing) and isn't validated
+against.
 
 **Two more moments get recorded for the UI, both set directly with no deferred-capture step -
 `AbilityCast`/`ticksSinceAbilitySpawn`.** `MobAbilityContext.applyEffect` already has `gameTime`

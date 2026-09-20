@@ -6,6 +6,7 @@ import td.effect.EffectKind;
 import td.effect.EffectTemplate;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
+import td.wave.Vec2;
 
 import java.util.List;
 import java.util.Optional;
@@ -323,13 +324,19 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         }
 
         @Override
-        public void spawnEnemies(String definitionId, int count, boolean consumesSelf) {
+        public void spawnEnemies(String definitionId, AbilitySpawnShape shape, boolean consumesSelf) {
             GameWorld world = DefinedEnemyMob.this.gameWorld;
-            EnemyDefinition spawnedDefinition = world.getEnemyCatalog().get(definitionId, DefinedEnemyMob.this.rank);
-            for (int i = 0; i < count; i++) {
-                SpawnParameters spawnParameters = SpawnParameters.atSlot(0, spawnedDefinition.baseSpeed(),
-                        spawnedDefinition.baseHealth(), spawnedDefinition.price(), DefinedEnemyMob.this.getPathIndex());
-                DefinedEnemyMob spawned = new DefinedEnemyMob(spawnedDefinition, world, spawnParameters, DefinedEnemyMob.this.rank);
+            EnemyDefinition baseDefinition = world.getEnemyCatalog().get(definitionId, DefinedEnemyMob.this.rank);
+            EnemyDefinition shapedDefinition = shape.traitOverride()
+                    .map(trait -> baseDefinition.withAdditionalTraits(List.of(trait)))
+                    .orElse(baseDefinition);
+            int health = Math.round(shapedDefinition.baseHealth() * shape.healthMultiplier());
+            int price = Math.round(shapedDefinition.price() * shape.bountyMultiplier());
+            for (int i = 0; i < shape.members(); i++) {
+                double slotPosition = i * shape.delaySpacingSlots();
+                SpawnParameters spawnParameters = SpawnParameters.of(slotPosition, shapedDefinition.baseSpeed(),
+                        health, price, shape.sizeMultiplier(), 1f, new Vec2(0, 0), DefinedEnemyMob.this.getPathIndex());
+                DefinedEnemyMob spawned = new DefinedEnemyMob(shapedDefinition, world, spawnParameters, DefinedEnemyMob.this.rank);
                 spawned.spawnAtSamePositionAs(DefinedEnemyMob.this);
                 spawned.recordAbilitySpawn(this.gameTime);
                 if (consumesSelf) {
