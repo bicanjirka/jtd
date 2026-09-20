@@ -78,6 +78,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case TRIANGLE -> Palette.ENEMY_TRIANGLE;
             case WARDEN -> Palette.ENEMY_WARDEN;
             case WARDEN_EGG -> Palette.ENEMY_WARDEN_EGG;
+            case MENDER -> Palette.ENEMY_MENDER;
         };
     }
 

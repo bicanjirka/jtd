@@ -165,8 +165,20 @@ public final class Java2DFrameRenderer {
             case ENEMY_TRIANGLE -> triangleShape(scale, true);
             case ENEMY_WARDEN -> starShape(8, scale, scale * 0.55f);
             case ENEMY_WARDEN_EGG -> wardenEggShape(scale);
+            case ENEMY_MENDER -> crossShape(scale);
             default -> throw new IllegalStateException("Not an enemy palette: " + palette);
         };
+    }
+
+    /**
+     * A plus/cross silhouette for the Mender - two overlapping rectangles unioned via
+     * {@link Area}, the same additive technique {@link #skullShape} uses subtractively.
+     */
+    private static Shape crossShape(float scale) {
+        float arm = scale * 0.55f;
+        Area cross = new Area(new Rectangle2D.Float(-scale, -arm, scale * 2, arm * 2));
+        cross.add(new Area(new Rectangle2D.Float(-arm, -scale, arm * 2, scale * 2)));
+        return cross;
     }
 
     /**
@@ -394,6 +406,7 @@ public final class Java2DFrameRenderer {
             // creature's egg, and the two never appear on screen at once (the egg only spawns
             // after the Warden that laid it has died).
             case ENEMY_WARDEN, ENEMY_WARDEN_EGG -> new Color(139, 0, 0);
+            case ENEMY_MENDER -> new Color(120, 220, 150);
             case TOWER_SNIPER_BODY -> Color.GREEN;
             case TOWER_SPLASH_BODY -> Color.RED;
             case TOWER_SONAR_BODY -> Color.YELLOW;
@@ -662,6 +675,7 @@ public final class Java2DFrameRenderer {
             }
             case ENEMY_WARDEN -> g2.draw(starShape(8, grownScale, grownScale * 0.55f));
             case ENEMY_WARDEN_EGG -> g2.draw(wardenEggShape(grownScale));
+            case ENEMY_MENDER -> g2.draw(crossShape(grownScale));
             default -> throw new IllegalStateException("Not an enemy palette: " + fade.palette());
         }
         g2.setTransform(save);

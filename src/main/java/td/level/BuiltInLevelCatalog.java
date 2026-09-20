@@ -42,7 +42,7 @@ public class BuiltInLevelCatalog implements LevelCatalog {
     // on-death split are both real Ability/AbilityAction wiring, just aimed at itself and at a
     // "spawn two, don't replace" reinforcement instead of the Warden's "shield allies"/"replace
     // with the next stage" uses of the same two mechanisms. A full five-rank ladder, like the
-    // four basic built-ins - traits/abilities/movement stay the same across ranks, only health
+    // five basic built-ins - traits/abilities/movement stay the same across ranks, only health
     // and bounty escalate, the same pattern ARMORED/FRENZIED/GHOST use.
     private static final RankedEnemy REAVER = RankedEnemy
             .startingAt(EnemyDefinition.of("reaver", "Reaver", 500, 12, 1.28f, BodyArchetype.TRIANGLE)
@@ -86,7 +86,7 @@ public class BuiltInLevelCatalog implements LevelCatalog {
                     new WaveDefinition("g 2 e 2 s", Rank.SOLDIER),
                     new WaveDefinition("s t s c g c t c s g t c s g c t s g t c", Rank.SOLDIER),
                     new WaveDefinition("g c g", Rank.ELITE),
-                    new WaveDefinition("6 g 2 e 4 t", Rank.VETERAN),
+                    new WaveDefinition("6 g 2 e 4 t 2 m", Rank.VETERAN),
                     new WaveDefinition("c e c e c e c e c", Rank.SOLDIER),
                     new WaveDefinition("2 s 3 t 2 g 4 e c", Rank.VETERAN),
                     new WaveDefinition("s 4 e t", Rank.BOSS),
