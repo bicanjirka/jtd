@@ -48,11 +48,11 @@ binding, buildability unioning) this package's own `LevelDefinition` feeds into 
 
 `BuiltInLevelCatalog` is the only `LevelCatalog` implementation today - `levels()` just lists
 three `LevelDefinition` constants. **Each level's own definition lives in its own package-private
-class**, named for the level (`ClassicLoopLevel`, `ZigzagGauntletLevel`, `WildBezierSweepLevel`),
+class**, named for the level (`CurlyPathLevel`, `ZigZagPathLevel`, `TwistedHourglassLevel`),
 following `td.enemy.BuiltInEnemies`'s shape (a stateless holder, private constructor, package-
 private `static final` fields) - so a change to one level's path, waves or numbers touches one
 file instead of a shared one every level lives in. A level-authored enemy belongs beside the
-level that authors it, not in the catalog: `WildBezierSweepLevel` also holds its Reaver
-`RankedEnemy`, exercising two paths with distinct colors and one called-out faster lane. Content
+level that authors it, not in the catalog: `TwistedHourglassLevel` also holds its Reaver
+`RankedEnemy`, exercising multiple paths with distinct colors. Content
 (which enemies, what a wave says, a level's numbers) belongs in these classes and in
 `README.md`'s level table, not in this file.

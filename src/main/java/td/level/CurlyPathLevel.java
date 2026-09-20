@@ -3,26 +3,33 @@ package td.level;
 import td.enemy.Rank;
 import td.wave.Point;
 import td.wave.WaveDefinition;
+import td.wave.smoothing.ArcCornerSmoothing;
 
 import java.util.List;
 
 /**
- * The original winding path - a single, unsmoothed lane on a 20x15 board, 17 waves ending in
- * the Warden boss encounter.
+ * A single lane that spirals through two tight loops on the left half of the board before
+ * unwinding into a steady zigzag on the way to the exit - a 20x15 board, 17 waves ending in the
+ * Warden boss encounter. Gently rounded (the same {@link ArcCornerSmoothing} pull Zigzag Path
+ * used to carry alone), not the sharp right angles the original version of this level had.
  */
-final class ClassicLoopLevel {
+final class CurlyPathLevel {
 
-    static final LevelDefinition DEFINITION = LevelDefinition.unsmoothed(
-            "Classic Loop",
-            "The original winding path. 17 waves, starting with $50.",
+    // cornerPull=0.22 over this path's shortest leg (1 cell = 32px, so pullback there is ~7px)
+    // is tighter than Zigzag Path's 0.4 - just enough to take the edge off every turn without
+    // rounding the loops into circles, so they still read as square coils the way the design
+    // sketch draws them.
+    static final LevelDefinition DEFINITION = LevelDefinition.singlePath(
+            "Curly Path",
+            "A lane that spirals through two tight loops before unwinding into a steady zigzag. "
+                    + "17 waves, starting with $50.",
             20, 15,
             List.of(
-                    new Point(-1, 11), new Point(5, 11), new Point(5, 12), new Point(7, 12),
-                    new Point(7, 6), new Point(4, 6), new Point(4, 5), new Point(3, 5),
-                    new Point(3, 2), new Point(6, 2), new Point(6, 3), new Point(11, 3),
-                    new Point(11, 5), new Point(14, 5), new Point(14, 3), new Point(17, 3),
-                    new Point(17, 6), new Point(15, 6), new Point(15, 9), new Point(12, 9),
-                    new Point(12, 12), new Point(20, 12)),
+                    new Point(-1, 11), new Point(2, 11), new Point(2, 2), new Point(6, 2),
+                    new Point(6, 8), new Point(3, 8), new Point(3, 5), new Point(7, 5),
+                    new Point(7, 10), new Point(10, 10), new Point(10, 4), new Point(8, 4),
+                    new Point(8, 7), new Point(13, 7), new Point(13, 2), new Point(16, 2),
+                    new Point(16, 11), new Point(18, 11), new Point(18, 7), new Point(20, 7)),
             List.of(
                     new WaveDefinition("c e c e c e c e c", Rank.GRUNT),
                     new WaveDefinition("c e 2 c e 3 c e 4 c", Rank.GRUNT),
@@ -48,8 +55,9 @@ final class ClassicLoopLevel {
                     // before it; the Warden's own BodyArchetype gives it a fixed, always-large
                     // body size (DefinedEnemyMob.bodyScaleFor) regardless of rank.
                     new WaveDefinition("warden1", Rank.BOSS)),
-            50, 5);
+            50, 5,
+            new ArcCornerSmoothing(0.22, 8));
 
-    private ClassicLoopLevel() {
+    private CurlyPathLevel() {
     }
 }

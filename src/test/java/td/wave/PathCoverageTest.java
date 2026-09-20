@@ -95,28 +95,28 @@ class PathCoverageTest {
 
     /**
      * The load-bearing regression test for this whole rewrite: proves that for a real,
-     * shipped level (Classic Loop), the sparse corner-only path this change introduces covers
+     * shipped level (Curly Path), the sparse corner-only path this change introduces covers
      * *exactly* the same cells as the old dense, one-cell-per-step path did. {@code
      * expandThroughCornersLikeTheOldLevelPathDid} is a frozen copy of the axis-aligned
      * expansion {@code LevelPath.throughCorners} used to perform before it was deleted - it
      * exists only as a comparison baseline in this test, not as production code.
      */
     @Test
-    void classicLoopsSparseCornersCoverTheSameCellsAsTheOldDenseExpansionDid() {
-        LevelDefinition classicLoop = new BuiltInLevelCatalog().levels().getFirst();
-        List<Point> corners = classicLoop.paths().getFirst().corners();
+    void curlyPathsSparseCornersCoverTheSameCellsAsTheOldDenseExpansionDid() {
+        LevelDefinition curlyPath = new BuiltInLevelCatalog().levels().getFirst();
+        List<Point> corners = curlyPath.paths().getFirst().corners();
 
         List<Vec2> oldDensePolyline = expandThroughCornersLikeTheOldLevelPathDid(corners).stream()
                 .map(cell -> new Vec2(cell.x() * SCALE + (SCALE / 2), cell.y() * SCALE + (SCALE / 2)))
                 .toList();
         Set<Point> coveredByOldDensePath = PathCoverage.unbuildableCells(
-                oldDensePolyline, SCALE, classicLoop.width(), classicLoop.height());
+                oldDensePolyline, SCALE, curlyPath.width(), curlyPath.height());
 
         List<Vec2> sparsePolyline = corners.stream()
                 .map(cell -> new Vec2(cell.x() * SCALE + (SCALE / 2), cell.y() * SCALE + (SCALE / 2)))
                 .toList();
         Set<Point> coveredBySparsePath = PathCoverage.unbuildableCells(
-                sparsePolyline, SCALE, classicLoop.width(), classicLoop.height());
+                sparsePolyline, SCALE, curlyPath.width(), curlyPath.height());
 
         assertThat(coveredBySparsePath).containsExactlyInAnyOrderElementsOf(coveredByOldDensePath);
     }

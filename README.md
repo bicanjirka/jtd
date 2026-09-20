@@ -69,7 +69,7 @@ mvn -q dependency:build-classpath -Dmdep.outputFile=target/runtime-classpath.txt
 java -cp "target/classes;$(cat target/runtime-classpath.txt)" td.BalanceHarness
 ```
 
-Run with no arguments it plays one built-in loadout against Classic Loop; edit `main()` to try
+Run with no arguments it plays one built-in loadout against Curly Path; edit `main()` to try
 a different loadout or level, since v1 has no config format for either.
 
 ### Towers
@@ -103,8 +103,8 @@ faint line to every tower it's currently amplifying.
 | Ghost      | tinted circle | Turns invisible to single-target towers for ~10s the first time it's hit (area damage still reaches it); at Elite and Boss rank, also permanently shrouds every other ally near it                                                                                                                              |
 | Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it                                                                                                                                                                                                                             |
 | Empty      | —             | Not a real enemy — a spacer that opens a timing gap inside a wave                                                                                                                                                                                                                                                 |
-| The Warden | large spiked crest | A boss: armored, periodically summons reinforcements and shields itself and nearby allies, and shields itself again whenever it survives a critical hit. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. Appears as the final wave of Classic Loop. |
-| Reaver     | triangle, path-facing | Speeds up as it's hurt, shrugs off a flat amount of every hit, shields itself once badly wounded, and splits into two Simple mobs on death. Appears in Wild Bezier Sweep's first wave — a level-authored enemy, registered only for that level rather than globally (see `td.level.LevelDefinition.customEnemies`). |
+| The Warden | large spiked crest | A boss: armored, periodically summons reinforcements and shields itself and nearby allies, and shields itself again whenever it survives a critical hit. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. Appears as the final wave of Curly Path. |
+| Reaver     | triangle, path-facing | Speeds up as it's hurt, shrugs off a flat amount of every hit, shields itself once badly wounded, and splits into two Simple mobs on death. Appears in Twisted Hourglass's first wave — a level-authored enemy, registered only for that level rather than globally (see `td.level.LevelDefinition.customEnemies`). |
 
 ### Rank
 
@@ -134,15 +134,17 @@ the shapes that take one (`swarm 4 c`):
 
 ### Levels
 
-Three levels ship with the game: **Classic Loop** (the original 20×15 winding path, 17
-waves), **Zigzag Gauntlet** (a smaller board with smoothly curved corners and only 3 lives)
-and **Wild Bezier Sweep** (long Bezier curves that swing wide of the authored corners, 10
-waves per lane). A level can define more than one enemy path, each with its own color, waves
-and pace; Wild Bezier Sweep is the one built-in level that does, with a second, faster lane
-(cyan, 1.3× speed) crossing its original amber one. A level's paths all run the same number of
-waves as synchronized rounds - starting a round spawns every path's wave for it together. A
-level can also register its own enemy on top of the ones above, scoped to that level only;
-Wild Bezier Sweep's Reaver (see the Enemies table) is the one built-in level that does.
+Three levels ship with the game: **Curly Path** (a 20×15 board whose single lane spirals
+through two tight loops before unwinding into a zigzag, 17 waves), **Zigzag Path** (a smaller,
+16×11 board where a fuchsia lane hooks back on itself and a lime lane cuts across it twice, 8
+waves per lane, only 3 lives) and **Twisted Hourglass** (a tight, 9×14 portrait board where three
+Bezier lanes - crimson, teal and amber - twist through a pinched waist so the layout reads as an
+hourglass, 10 waves per lane). A level can define more than one enemy path, each with its own color, waves
+and pace; Zigzag Path and Twisted Hourglass are the two built-in levels that do. A level's
+paths all run the same number of waves as synchronized rounds - starting a round spawns every
+path's wave for it together. A level can also register its own enemy on top of the ones above,
+scoped to that level only; Twisted Hourglass's Reaver (see the Enemies table) is the one
+built-in level that does.
 
 Levels are defined as Java constants in `td.level.BuiltInLevelCatalog`, so adding one today
 means a code change and a rebuild. See `TODO.md` for the planned file-based catalog.
