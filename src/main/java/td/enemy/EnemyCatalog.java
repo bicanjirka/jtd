@@ -14,7 +14,7 @@ import java.util.function.UnaryOperator;
 
 /**
  * The open, string-keyed source of buildable enemy types - replaces the closed
- * {@code EnemyFactory.Enemy} enum. {@link #builtIn()} returns a fresh catalog with the four
+ * {@code EnemyFactory.Enemy} enum. {@link #builtIn()} returns a fresh catalog with the five
  * built-in definitions pre-registered under their existing single-letter wave-script ids; a
  * level can additionally register its own new {@link RankedEnemy}s, or clone-and-adjust an
  * existing one under a new id, scoped to that catalog instance only - though no level does yet
@@ -31,7 +31,7 @@ public final class EnemyCatalog {
     private final Map<String, RankedEnemy> rankedEnemies = new LinkedHashMap<>();
 
     /**
-     * A fresh catalog with the four basic built-ins and the Warden boss chain pre-registered
+     * A fresh catalog with the five basic built-ins and the Warden boss chain pre-registered
      * under their existing wave-script ids. Fresh, not shared/cached: {@code GameEngine.loadLevel}
      * is idempotent and re-enterable (see the root {@code CLAUDE.md}'s Levels section), so each
      * level load gets its own catalog rather than accumulating a previous level's registrations.
@@ -42,6 +42,7 @@ public final class EnemyCatalog {
         catalog.register(BuiltInEnemies.ARMORED);
         catalog.register(BuiltInEnemies.FRENZIED);
         catalog.register(BuiltInEnemies.GHOST);
+        catalog.register(BuiltInEnemies.MENDER);
         catalog.register(BuiltInEnemies.WARDEN_EGG_3);
         catalog.register(BuiltInEnemies.WARDEN_3);
         catalog.register(BuiltInEnemies.WARDEN_EGG_2);

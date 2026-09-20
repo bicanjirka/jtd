@@ -14,7 +14,10 @@ package td.enemy;
  * is the Warden boss's own egg stage - its own spiked, elongated variant of {@code WARDEN}'s
  * star silhouette (see {@code Java2DFrameRenderer.wardenEggShape}) and the same dark-red tint,
  * rather than a generic egg shape - nothing else in this game lays an egg, so there is no
- * separate "generic egg" case to keep distinct from it.
+ * separate "generic egg" case to keep distinct from it. {@code MENDER} is a support enemy's
+ * cross silhouette - the first enemy shape built from two overlapping rectangles rather than one
+ * closed path, the same {@link java.awt.geom.Area} union technique {@code skullShape} already
+ * uses for the Boss rank badge, just additive instead of subtractive.
  */
 public enum BodyArchetype {
     CIRCLE,
@@ -22,5 +25,6 @@ public enum BodyArchetype {
     TRIANGLE,
     GHOST,
     WARDEN,
-    WARDEN_EGG
+    WARDEN_EGG,
+    MENDER
 }

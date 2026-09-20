@@ -1,5 +1,6 @@
 package td.enemy;
 
+import td.effect.HealTemplate;
 import td.effect.InvisibleTemplate;
 import td.effect.ShieldTemplate;
 
@@ -11,18 +12,22 @@ import java.util.List;
  * {@link EnemyCatalog#builtIn()} pre-registers all of these under their wave-script ids. Two
  * groups:
  * <p>
- * {@code SIMPLE}/{@code ARMORED}/{@code FRENZIED}/{@code GHOST} are the four basic mobs, each a
- * full five-rank ladder - every rank above {@link Rank#GRUNT} simply doubles the rank before it's
- * health and scales its bounty to match, {@code withHealthAndPrice} being the only thing each
- * step changes, except {@code SIMPLE} itself: its own ladder is this feature's demonstration that
- * a later rank can both add a trait (at {@link Rank#ELITE}) and replace it with a stronger one
- * (at {@link Rank#BOSS}) via the same identified-trait mechanism, following the shape of the
- * request's own pseudocode; {@code GHOST}'s own ladder is the ability-driven counterpart - it
- * carries no native invisibility of any kind, only an ordinary mob with a "vanish on first hit"
- * ability at every rank, plus a second, radius-targeted "shroud nearby allies" ability added at
- * {@link Rank#ELITE} (and, like {@code SIMPLE}'s shield, carried forward unchanged into
- * {@link Rank#BOSS} since that step only touches health and price). <strong>A definition is
- * named for what it does; its
+ * {@code SIMPLE}/{@code ARMORED}/{@code FRENZIED}/{@code GHOST}/{@code MENDER} are the five basic
+ * mobs, each a full five-rank ladder - every rank above {@link Rank#GRUNT} simply doubles the
+ * rank before it's health and scales its bounty to match, {@code withHealthAndPrice} being the
+ * only thing each step changes, except {@code SIMPLE} itself: its own ladder is this feature's
+ * demonstration that a later rank can both add a trait (at {@link Rank#ELITE}) and replace it
+ * with a stronger one (at {@link Rank#BOSS}) via the same identified-trait mechanism, following
+ * the shape of the request's own pseudocode; {@code GHOST}'s own ladder is the ability-driven
+ * counterpart - it carries no native invisibility of any kind, only an ordinary mob with a
+ * "vanish on first hit" ability at every rank, plus a second, radius-targeted "shroud nearby
+ * allies" ability added at {@link Rank#ELITE} (and, like {@code SIMPLE}'s shield, carried forward
+ * unchanged into {@link Rank#BOSS} since that step only touches health and price).
+ * {@code MENDER} carries the same radius-targeted shape as {@code GHOST}'s shroud, just with
+ * {@link td.effect.HealTemplate} in place of {@link InvisibleTemplate}, and - unlike the shroud -
+ * present at every rank rather than added at Elite, since periodically healing nearby allies is
+ * this mob's whole reason to exist rather than an upgrade over a baseline behaviour.
+ * <strong>A definition is named for what it does; its
  * {@link BodyArchetype} is what names the shape it is drawn as</strong> - so {@code ARMORED} is
  * a square and {@code FRENZIED} a triangle, the same way {@code SniperTower} is drawn as a
  * triangle. Every number here is still a placeholder for a later balance pass, the same as
@@ -104,6 +109,24 @@ final class BuiltInEnemies {
                             new PeriodicTrigger(GHOST_SHROUD_INTERVAL_TICKS),
                             new ApplyEffectAction(new InvisibleTemplate(GHOST_SHROUD_DURATION_TICKS), new RadiusTarget(GHOST_SHROUD_RADIUS)))))))
             .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1600, 28))
+            .build();
+    // Placeholder numbers, not yet balanced - see TODO.md.
+    private static final int MENDER_HEAL_INTERVAL_TICKS = 20;
+    private static final int MENDER_HEAL_DURATION_TICKS = 40;
+    private static final int MENDER_HEAL_PER_TICK = 200;
+    private static final float MENDER_HEAL_RADIUS = 80f;
+    static final RankedEnemy MENDER = RankedEnemy
+            .startingAt(EnemyDefinition.of("m", "Mender mob", 60, 3, 1.28f, BodyArchetype.MENDER)
+                    .withDescription("Deals no damage of its own. Periodically restores health to every "
+                            + "other ally near it.")
+                    .withIdentifiedAbilities(List.of(IdentifiedAbility.named("heal", new Ability(
+                            new PeriodicTrigger(MENDER_HEAL_INTERVAL_TICKS),
+                            new ApplyEffectAction(new HealTemplate(MENDER_HEAL_PER_TICK, MENDER_HEAL_DURATION_TICKS),
+                                    new RadiusTarget(MENDER_HEAL_RADIUS)))))))
+            .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(120, 5))
+            .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(240, 8))
+            .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(480, 13))
+            .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(960, 22))
             .build();
     static final EnemyDefinition WARDEN_EGG_3 = EnemyDefinition
             .of("wardenEgg3", "Warden's Final Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)

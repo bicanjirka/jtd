@@ -344,3 +344,17 @@ own balance passes.
 - **Approach:** tune via actual play (or `td.BalanceHarness`) once the other placeholder-number
   entries in this file get their own pass - no code or architecture change needed, every number
   here is already a named constant or a `TowerBuff` literal.
+
+### Mender numbers are unbalanced placeholders
+
+`BuiltInEnemies.MENDER_HEAL_INTERVAL_TICKS`/`MENDER_HEAL_DURATION_TICKS`/`MENDER_HEAL_PER_TICK`/
+`MENDER_HEAL_RADIUS`, and the Mender ladder's own health/price progression, were chosen to be
+plausible, not tuned - the same situation every other feature's first-pass numbers were in before
+their own balance passes. Healing is a genuinely new mechanic (see
+`docs/features/FEATURE-effect-visuals.md`), so there is no prior value to anchor these against.
+
+- **Where:** `BuiltInEnemies` (the `MENDER_*` constants and the `MENDER` ladder itself).
+- **Approach:** play a level with the Mender in its waves (Classic Loop's wave 12 today) and
+  adjust the heal rate/radius/interval until a Mender-protected pack meaningfully outlasts an
+  unprotected one, without making it invincible - no code or architecture change needed, every
+  number here is already a named constant.

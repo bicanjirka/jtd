@@ -67,6 +67,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
             // spawned it, not merely tied with an ordinary Square at its own size cap.
             case WARDEN -> scale / 1.5f;
             case WARDEN_EGG -> scale / 3f;
+            case MENDER -> scale / (float) (7 - rank.ordinal());
         };
     }
 
@@ -271,7 +272,8 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         }
 
         /**
-         * Ability-produced effects deal no direct damage in v1 (shield/invisibility only) - this sink is never actually invoked.
+         * Ability-produced effects deal no direct damage in v1 (shield/invisibility/heal only) -
+         * this sink is never actually invoked.
          */
         private void creditNoOne(Damage damage) {
         }

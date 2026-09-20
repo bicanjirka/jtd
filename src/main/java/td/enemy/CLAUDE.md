@@ -13,7 +13,7 @@ entirely from the `EnemyDefinition` it was built from — a name/id, base stats,
 `BodyArchetype`/`MovementBehavior` pair for rendering, and composable `Trait`s/`Ability`s —
 never from a per-type Java override. `EnemyCatalog.spawn(id, ..., rank)` builds one of these
 from whichever definition `id`'s `RankedEnemy` resolves `rank` to; `BuiltInEnemies` holds the
-four basic built-in ladders (`SIMPLE`/`ARMORED`/`FRENZIED`/`GHOST`, each a full `RankedEnemy`)
+five basic built-in ladders (`SIMPLE`/`ARMORED`/`FRENZIED`/`GHOST`/`MENDER`, each a full `RankedEnemy`)
 plus the Warden boss's six-stage chain (`WARDEN_1`/`WARDEN_EGG_1`/`WARDEN_2`/`WARDEN_EGG_2`/
 `WARDEN_3`/`WARDEN_EGG_3`, six single-rank `EnemyDefinition`s), which `EnemyCatalog.builtIn()`
 pre-registers under their wave-script ids. `e`, the wave mini-language's spacer token, no
@@ -365,8 +365,9 @@ compiler-enforced checklist, same spirit as before:
    fade switch inside `paintEnemyFade` — **not** compiler-enforced (both switches carry a
    `default -> throw new IllegalStateException(...)` instead), so do this in the same change as
    steps 1-2, not "later."
-4. Document the new letter in the root `CLAUDE.md` §9 and in
-   `README.md`'s enemy table.
+4. Document the new letter in `td/wave/CLAUDE.md`'s token table and in
+   `README.md`'s enemy table — **not** the root `CLAUDE.md`, which explicitly disclaims listing
+   ids (§10, "the list of ids lives in `td/wave/CLAUDE.md`, not here").
 
 **Adding a genuinely new `Trait` or `Ability`** is ordinary Java: implement the interface (see
 `PercentResistTrait`/`HurtSpeedTrait` for the shape), reuse it from any `EnemyDefinition`.
