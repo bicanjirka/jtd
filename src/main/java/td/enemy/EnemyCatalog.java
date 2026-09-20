@@ -14,8 +14,8 @@ import java.util.function.UnaryOperator;
 
 /**
  * The open, string-keyed source of buildable enemy types - replaces the closed
- * {@code EnemyFactory.Enemy} enum. {@link #builtIn()} returns a fresh catalog with the five
- * built-in definitions pre-registered under their existing single-letter wave-script ids; a
+ * {@code EnemyFactory.Enemy} enum. {@link #builtIn()} returns a fresh catalog with every
+ * built-in definition pre-registered under its existing wave-script id; a
  * level can additionally register its own new {@link RankedEnemy}s, or clone-and-adjust an
  * existing one under a new id, scoped to that catalog instance only - though no level does yet
  * (see {@code td/enemy/CLAUDE.md}). Named after the existing {@code LevelCatalog}/
@@ -31,16 +31,19 @@ public final class EnemyCatalog {
     private final Map<String, RankedEnemy> rankedEnemies = new LinkedHashMap<>();
 
     /**
-     * A fresh catalog with the five basic built-ins and the Warden boss chain pre-registered
-     * under their existing wave-script ids. Fresh, not shared/cached: {@code GameEngine.loadLevel}
-     * is idempotent and re-enterable (see the root {@code CLAUDE.md}'s Levels section), so each
-     * level load gets its own catalog rather than accumulating a previous level's registrations.
+     * A fresh catalog with every built-in enemy pre-registered under its existing wave-script id
+     * - the five basic mobs, the Frenzied Boss's own spawnling (ability-spawned only, like the
+     * Warden's own chain below it - see {@code BuiltInEnemies.T_SPAWN}), and the Warden boss
+     * chain. Fresh, not shared/cached: {@code GameEngine.loadLevel} is idempotent and re-enterable
+     * (see the root {@code CLAUDE.md}'s Levels section), so each level load gets its own catalog
+     * rather than accumulating a previous level's registrations.
      */
     public static EnemyCatalog builtIn() {
         EnemyCatalog catalog = new EnemyCatalog();
         catalog.register(BuiltInEnemies.SIMPLE);
         catalog.register(BuiltInEnemies.ARMORED);
         catalog.register(BuiltInEnemies.FRENZIED);
+        catalog.register(BuiltInEnemies.T_SPAWN);
         catalog.register(BuiltInEnemies.GHOST);
         catalog.register(BuiltInEnemies.MENDER);
         catalog.register(BuiltInEnemies.WARDEN_EGG_3);

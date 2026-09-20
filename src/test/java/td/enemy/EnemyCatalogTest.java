@@ -226,6 +226,14 @@ class EnemyCatalogTest {
     }
 
     @Test
+    void builtInPreRegistersTheFrenziedBossSSpawnlingEvenThoughNoWaveScriptSpawnsItDirectly() {
+        EnemyCatalog catalog = EnemyCatalog.builtIn();
+
+        assertThat(catalog.contains("tSpawn")).isTrue();
+        assertThat(catalog.get("tSpawn")).isNotNull();
+    }
+
+    @Test
     void idsListsEveryRegisteredIdInRegistrationOrder() {
         EnemyCatalog catalog = new EnemyCatalog();
         catalog.register(EnemyFixtures.simpleDefinition("first"));

@@ -33,6 +33,14 @@ public record AbilitySpawnShape(int members, float sizeMultiplier, float healthM
      */
     public static final int MAX_MEMBERS = 12;
 
+    // Visibly smaller than a normal-sized reinforcement - no built-in spawn shape has a real
+    // cosmetic-scale mechanic beyond SpawnShape.swarm's own 0.5f precedent, which this matches
+    // closely enough to read as the same kind of brood.
+    private static final float BROOD_SIZE_MULTIPLIER = 0.7f;
+    // Same order of magnitude as td.wave.SpawnShape.DRIP_SPACING_SLOTS (2.0) - loose enough that
+    // members visibly trail one another rather than arrive shoulder to shoulder.
+    private static final double BROOD_DELAY_SPACING_SLOTS = 2.0;
+
     private static final AbilitySpawnShape NORMAL =
             new AbilitySpawnShape(1, 1f, 1f, 1f, 0.0, Optional.empty());
 
@@ -43,10 +51,6 @@ public record AbilitySpawnShape(int members, float sizeMultiplier, float healthM
         }
     }
 
-    public static AbilitySpawnShape normal() {
-        return NORMAL;
-    }
-
     /**
      * {@code members} members, spaced {@code delaySpacingSlots} apart, every multiplier {@code
      * 1f} and no trait override - the narrow shape a caller that only wants temporal spacing
@@ -54,6 +58,21 @@ public record AbilitySpawnShape(int members, float sizeMultiplier, float healthM
      */
     public AbilitySpawnShape(int members, double delaySpacingSlots) {
         this(members, 1f, 1f, 1f, delaySpacingSlots, Optional.empty());
+    }
+
+    public static AbilitySpawnShape normal() {
+        return NORMAL;
+    }
+
+    /**
+     * A shrunken, temporally-spaced brood of {@code members} reinforcements - what a boss-tier
+     * "call a swarm of adds" ability reaches for, rather than {@link #normal()}'s single
+     * full-size spawn. {@code healthMultiplier}/{@code bountyMultiplier} are per member, not a
+     * split of one shared total - see this type's own doc comment.
+     */
+    public static AbilitySpawnShape brood(int members, float healthMultiplier, float bountyMultiplier) {
+        return new AbilitySpawnShape(members, BROOD_SIZE_MULTIPLIER, healthMultiplier, bountyMultiplier,
+                BROOD_DELAY_SPACING_SLOTS, Optional.empty());
     }
 
     /**
