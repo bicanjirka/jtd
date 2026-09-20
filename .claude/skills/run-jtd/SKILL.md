@@ -116,6 +116,57 @@ overlay rings, since those need a live simulation tick to have anything to show;
 needs a real `Driver.java` `spawn`. It also only reaches `EnemyCatalog.builtIn()`'s ids, not a
 level's own custom/cloned enemies, which aren't registered anywhere outside that level's load.
 
+## Composing a full board scene - towers, enemies, projectiles mid-combat (no window)
+
+For anything bigger than one enemy's shape - "does this tower's beam look right against a
+wounded Elite," "do two towers' ranges overlap the way this level intends," any screenshot that
+needs a real level's path/cells plus placed towers and/or spawned enemies - `PreviewBoard.java`
+(also in this directory) drives the same headless `GameEngine` `td.BalanceHarness` already uses
+for balance simulation, and renders through the exact `BoardRenderer`/`Java2DFrameRenderer`
+pipeline the real board paints through. No `TowerDefense`, no `JFrame`, no `Robot`, no display
+needed at all - `GameEngine` is headless by design (see its own doc comment), so this doesn't
+even need a real desktop, unlike `Driver.java`.
+
+```bash
+javac -cp target/classes -d .claude/skills/run-jtd .claude/skills/run-jtd/PreviewBoard.java
+java -cp "target/classes;.claude/skills/run-jtd;$(cat target/runtime-classpath.txt)" PreviewBoard
+```
+
+Reads one command per line from stdin, same shape as `Driver.java`:
+
+| command                 | what it does                                                                                                                                                                     |
+|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `levels`                | Lists built-in levels as `<index>: <name>`.                                                                                                                                   |
+| `level <n>`              | Loads level `n` via `GameEngine.loadLevel`. Resets the internal tick counter to 0.                                                                                            |
+| `credits <n>`            | Sets credits to exactly `n`, same delta-via-`EconomyDelta` shape as `Driver.java`'s `setcredits`.                                                                             |
+| `lives <n>`              | Same, for lives.                                                                                                                                                               |
+| `place <type> <x> <y>`   | Places a tower (`sniper`/`splash`/`sonar`/`pulse`/`aura`/...) at cell `(x, y)` through the real `startPlacing`+`mouseClicked` input path (what `BalanceHarness.placeLoadout` and `TowerDefense`'s own mouse listener use) - affordability/buildability are the real rules, not reimplemented. Reports `FAILED` if the cell has no tower afterward. |
+| `spawn <id> [rank]`      | Spawns one enemy at the path's start, rank-scaled health/price included (`rank` defaults to `GRUNT`) - same fix as `Driver.java`'s `spawn`. Two enemies spawned back-to-back with no `tick` between land on the exact same pixel (same path-start caveat `Driver.java`'s `spawn` documents) - `tick` a few times between spawns to see them apart. |
+| `wave`                   | Starts the next real wave (`GameEngine.nextWave()`) if one is ready and any remain.                                                                                            |
+| `tick <n>`               | Advances the simulation `n` ticks (`GameEngine.doTick`) - deterministic, no wall-clock `sleep` needed. Enemies walk, towers acquire targets and fire, projectiles fly.        |
+| `kill`                   | Deals lethal damage to every alive enemy, same as `Driver.java`'s `kill`.                                                                                                       |
+| `render <path>`          | Builds a `RenderFrame` at the current tick and paints it (cells, path, enemies with badges/markers, towers, turret heads, beams/splash/auras, projectiles - everything) to a PNG at `path`. |
+| `state`                  | Prints tick, wave progress, credits/lives/score, alive-enemy count, tower/projectile counts.                                                                                    |
+| `quit`                   | Exits.                                                                                                                                                                          |
+
+```bash
+cat <<'EOF' | java -cp "$CP" PreviewBoard
+level 0
+credits 5000
+place sniper 6 11
+place splash 8 9
+spawn c veteran
+tick 20
+spawn s elite
+tick 40
+render .claude/skills/run-jtd/shots/scene.png
+quit
+EOF
+```
+
+Only reaches `EnemyCatalog.builtIn()`'s ids, same limitation as `PreviewEnemy.java` - a level's
+own custom/cloned enemies need the full `Driver.java` + `spawn` path instead.
+
 ## Run (human path)
 
 ```bash
