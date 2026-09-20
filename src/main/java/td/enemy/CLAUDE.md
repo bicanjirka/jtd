@@ -111,6 +111,12 @@ critical hit's bonus via `Damage.stripCritical()` rather than reducing the amoun
 fraction of its own, so it stays exact regardless of which tower's roll produced the bonus -
 `ARMORED` carries it alongside its percent resistance.
 
+**`PercentResistTrait`/`FlatResistTrait` can each be scoped to one `td.damage.DamageType`.**
+Their `restrictedTo` field (empty by default, meaning "resists both") is set by their own
+`physicalOnly`/`magicOnly` factories; `onHit` passes a hit of the other type through unchanged.
+`td.wave.SpawnShape`'s `armored` shape is physical-only, so a magic-damage tower ignores it
+entirely rather than being blunted the way a physical one is.
+
 **Effect immunity blocks an incoming status effect outright, before `ActiveEffects` ever
 sees it - it does not reduce an already-landed hit the way `onHit` does.**
 `BurnImmunityTrait`/`FreezeImmunityTrait` are the two built-ins (`BuiltInEnemies.WARDEN_EGG_2`
