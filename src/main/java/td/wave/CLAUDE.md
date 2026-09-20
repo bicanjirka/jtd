@@ -96,7 +96,7 @@ renamed `armored` once `elite` the rank name needed the string for itself.
 
 | Keyword    | `SpawnShape` factory | Members        | Mechanism(s)                                      |
 |------------|-----------------------|----------------|-----------------------------------------------------|
-| `armored`  | `armored()`            | 1 (fixed)      | attaches/replaces a defensive trait, no multipliers  |
+| `armored`  | `armored()`            | 1 (fixed)      | attaches/replaces a physical-only defensive trait, no multipliers |
 | `swarm`    | `swarm(n)`             | *n* (required) | 50% size, health/bounty split, circular scatter      |
 | `line`     | `line(n)`              | *n* (required) | evenly spread offset, no multipliers                 |
 | `flank`    | `flank()`              | 2 (fixed)      | offset at opposite maximums, no multipliers          |

@@ -42,8 +42,10 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
     // Named, not anonymous: an enemy that is armored twice (already carries its own "armor"
     // trait from a rank step) gets this trait *replacing* that one, not stacked alongside it -
     // the same identity mechanism a rank ladder step uses, applied from the spawn-shape side.
+    // Physical-only, so a magic-damage tower ignores it entirely rather than being blunted the
+    // same as a physical one.
     private static final IdentifiedTrait ARMORED_TRAIT =
-            IdentifiedTrait.named("armor", new FlatResistTrait(ARMORED_FLAT_RESIST));
+            IdentifiedTrait.named("armor", FlatResistTrait.physicalOnly(ARMORED_FLAT_RESIST));
 
     private static final SpawnShape NORMAL =
             new SpawnShape(1, 1f, 1f, 1f, 1f, Optional.empty(), SpawnSpread.NONE, 0.0);

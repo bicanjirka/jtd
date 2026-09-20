@@ -1,6 +1,9 @@
 package td.wave;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
+import td.enemy.Trait;
+import td.enemy.TraitContext;
 import td.util.GameStartupException;
 
 import java.util.Optional;
@@ -38,6 +41,15 @@ class SpawnShapeTest {
         assertThat(shape.healthMultiplier()).isEqualTo(1f);
         assertThat(shape.bountyMultiplier()).isEqualTo(1f);
         assertThat(shape.traitOverride()).isPresent();
+    }
+
+    @Test
+    void armoredsTraitBluntsPhysicalDamageButLeavesMagicDamageUntouched() {
+        Trait armor = SpawnShape.armored().traitOverride().orElseThrow().trait();
+        TraitContext traitContext = new TraitContext(1f);
+
+        assertThat(armor.onHit(Damage.physical(100), traitContext).amount()).isLessThan(100);
+        assertThat(armor.onHit(Damage.magic(100), traitContext)).isEqualTo(Damage.magic(100));
     }
 
     @Test

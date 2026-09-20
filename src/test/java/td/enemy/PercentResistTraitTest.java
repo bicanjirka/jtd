@@ -8,10 +8,11 @@ import td.util.GameWorld;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * {@link PercentResistTrait}, exercised end to end through the built-in Armored definition that
- * carries it - {@code BuiltInEnemies.ARMORED}. There is no Armored class to test: every real
- * enemy is a {@link DefinedEnemyMob}, and what distinguishes one is its {@link EnemyDefinition}'s
- * traits. This is the trait's test, spawned the way the game spawns it.
+ * {@link PercentResistTrait}. The unrestricted case is exercised end to end through the built-in
+ * Armored definition that carries it - {@code BuiltInEnemies.ARMORED}. There is no Armored class
+ * to test: every real enemy is a {@link DefinedEnemyMob}, and what distinguishes one is its
+ * {@link EnemyDefinition}'s traits. The damage-kind-restricted case is tested directly against
+ * the trait, since it needs no enemy to carry it to prove {@code onHit}'s own guard.
  */
 class PercentResistTraitTest {
 
@@ -24,5 +25,14 @@ class PercentResistTraitTest {
         armored.doDamage(Damage.physical(1000));
 
         assertThat(armored.getHealth()).isEqualTo(10000 - 800);
+    }
+
+    @Test
+    void aPhysicalOnlyResistanceReducesPhysicalDamageButLeavesMagicUntouched() {
+        PercentResistTrait resist = PercentResistTrait.physicalOnly(0.5f);
+        TraitContext traitContext = new TraitContext(1f);
+
+        assertThat(resist.onHit(Damage.physical(1000), traitContext)).isEqualTo(Damage.physical(500));
+        assertThat(resist.onHit(Damage.magic(1000), traitContext)).isEqualTo(Damage.magic(1000));
     }
 }
