@@ -46,7 +46,13 @@ A path's color and speed multiplier are optional and default to white/`1x`, set 
 binding, buildability unioning) this package's own `LevelDefinition` feeds into via
 `GameEngine.loadLevel`.
 
-`BuiltInLevelCatalog` is the only `LevelCatalog` implementation today - three levels as Java
-constants, one of them (Wild Bezier Sweep) exercising two paths with distinct colors and one
-called-out faster lane. Content (which enemies, what a wave says, a level's numbers) belongs
-here and in `README.md`'s level table, not in this file.
+`BuiltInLevelCatalog` is the only `LevelCatalog` implementation today - `levels()` just lists
+three `LevelDefinition` constants. **Each level's own definition lives in its own package-private
+class**, named for the level (`ClassicLoopLevel`, `ZigzagGauntletLevel`, `WildBezierSweepLevel`),
+following `td.enemy.BuiltInEnemies`'s shape (a stateless holder, private constructor, package-
+private `static final` fields) - so a change to one level's path, waves or numbers touches one
+file instead of a shared one every level lives in. A level-authored enemy belongs beside the
+level that authors it, not in the catalog: `WildBezierSweepLevel` also holds its Reaver
+`RankedEnemy`, exercising two paths with distinct colors and one called-out faster lane. Content
+(which enemies, what a wave says, a level's numbers) belongs in these classes and in
+`README.md`'s level table, not in this file.
