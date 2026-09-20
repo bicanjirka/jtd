@@ -16,5 +16,6 @@ public record RenderFrame(int scale, int maxX, int maxY,
                           List<TurretHeadDraw> towerHeads,
                           List<TowerEffectDraw> towerEffects,
                           List<ProjectileDraw> projectiles,
-                          List<PathMarkerDraw> pathMarkers) {
+                          List<PathMarkerDraw> pathMarkers,
+                          List<EnemyOverlayDraw> enemyOverlays) {
 }

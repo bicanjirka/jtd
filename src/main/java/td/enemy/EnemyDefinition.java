@@ -2,6 +2,7 @@ package td.enemy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -92,6 +93,35 @@ public record EnemyDefinition(
      */
     public List<Ability> abilities() {
         return this.abilitySlots.stream().map(IdentifiedAbility::ability).toList();
+    }
+
+    /**
+     * What this definition projects onto nearby allies, and how far - the largest
+     * {@link RadiusTarget} radius among its abilities, paired with the {@link td.effect.EffectKind}
+     * the effect at that radius applies. {@link Optional#empty()} for a definition that casts
+     * nothing at a radius (every ability is {@link SelfTarget}, or there are no abilities at
+     * all). A UI wanting "what should this mob's support-aura ring show" reads this rather than
+     * walking {@link #abilities()} itself - see {@code td.ui.EnemyFrameBuilder}.
+     */
+    public Optional<SupportAura> supportAura() {
+        SupportAura largest = null;
+        for (Ability ability : this.abilities()) {
+            Optional<SupportAura> candidate = supportAuraFor(ability.action());
+            if (candidate.isPresent() && (largest == null || candidate.get().radius() > largest.radius())) {
+                largest = candidate.get();
+            }
+        }
+        return Optional.ofNullable(largest);
+    }
+
+    private static Optional<SupportAura> supportAuraFor(AbilityAction action) {
+        return switch (action) {
+            case ApplyEffectAction apply -> switch (apply.target()) {
+                case RadiusTarget radiusTarget -> Optional.of(new SupportAura(apply.template().kind(), radiusTarget.radius()));
+                case SelfTarget ignored -> Optional.empty();
+            };
+            case SpawnEnemiesAction ignored -> Optional.empty();
+        };
     }
 
     /**

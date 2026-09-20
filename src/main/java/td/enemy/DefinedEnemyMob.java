@@ -6,6 +6,7 @@ import td.util.GameWorld;
 import td.util.ThreadConfined;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The single concrete {@link EnemyMob} implementation for every data-driven enemy - behavior
@@ -77,6 +78,10 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
 
     public BodyArchetype archetype() {
         return this.definition.archetype();
+    }
+
+    public Optional<SupportAura> supportAura() {
+        return this.definition.supportAura();
     }
 
     public double getFacingRadians() {
