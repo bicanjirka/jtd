@@ -251,4 +251,66 @@ class EnemyFrameBuilderTest {
 
         assertThat(markers).hasSize(EnemyFrameBuilder.MAX_VISIBLE_MARKERS + 1);
     }
+
+    @Test
+    void anEnemyThatWasNeverInvisibleHasNoCloakProgress() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+
+        assertThat(bodyDrawAt(enemy, 0, 0.0).cloakProgress()).isZero();
+    }
+
+    @Test
+    void cloakProgressRampsUpOverTheFadeDurationAfterGainingInvisibility() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.invisible(200, d -> {
+        }));
+        enemy.doTick(1); // captures the gain at tick 1
+
+        assertThat(bodyDrawAt(enemy, 1, 0.0).cloakProgress()).isZero();
+        assertThat(bodyDrawAt(enemy, 1 + EnemyFrameBuilder.CLOAK_FADE_DURATION_TICKS / 2, 0.0).cloakProgress())
+                .isCloseTo(0.5f, within(0.01f));
+        assertThat(bodyDrawAt(enemy, 1 + EnemyFrameBuilder.CLOAK_FADE_DURATION_TICKS, 0.0).cloakProgress())
+                .isEqualTo(1f);
+    }
+
+    @Test
+    void cloakProgressRampsBackDownOverTheFadeDurationAfterInvisibilityExpires() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.invisible(3, d -> {
+        }));
+        enemy.doTick(1);
+        enemy.doTick(2);
+        enemy.doTick(3); // the effect expires on this tick
+
+        assertThat(bodyDrawAt(enemy, 3, 0.0).cloakProgress()).isEqualTo(1f);
+        assertThat(bodyDrawAt(enemy, 3 + EnemyFrameBuilder.CLOAK_FADE_DURATION_TICKS / 2, 0.0).cloakProgress())
+                .isCloseTo(0.5f, within(0.01f));
+        assertThat(bodyDrawAt(enemy, 3 + EnemyFrameBuilder.CLOAK_FADE_DURATION_TICKS, 0.0).cloakProgress())
+                .isZero();
+    }
+
+    /**
+     * Regression test for a crash only found by actually running the game (see
+     * EnemyFrameBuilder.cloakProgress's own doc comment): an ability that applies INVISIBLE
+     * (the Ghost's vanish) does so on the same tick doTick's own EffectTransitions.observe call
+     * already ran, so a frame built at that exact tick must not read a stale, unobserved
+     * transition as a negative progress.
+     */
+    @Test
+    void cloakProgressIsValidOnTheExactTickAnAbilityFirstAppliesInvisibility() {
+        GameWorld world = WorldFixtures.newWorldOnBoard(32, 1000, 1000);
+        world.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(1000, 0))));
+        EnemyMob ghost = world.getEnemyCatalog().spawn("g", world, 0, 100, 4, Rank.GRUNT);
+        world.enemies().add(ghost);
+
+        ghost.doDamage(Damage.physical(10));
+        ghost.doTick(1); // captures the hit and fires the vanish ability in the same call
+
+        EnemyBodyDraw draw = bodyDrawAt(ghost, 1, 0.0);
+
+        assertThat(draw.cloakProgress()).isBetween(0f, 1f);
+    }
 }

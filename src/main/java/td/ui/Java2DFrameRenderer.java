@@ -448,6 +448,18 @@ public final class Java2DFrameRenderer {
         return withAlpha(base, Math.round(healthFraction * 255));
     }
 
+    /**
+     * Scales {@code base}'s existing alpha by {@code factor} rather than replacing it, so a
+     * cloak fade composes with whatever alpha (e.g. {@link #healthColor}'s) was already there.
+     * Clamped the same way {@link #withAlpha} clamps its own {@code int} argument - {@code
+     * factor} is expected in {@code [0, 1]}, but a caller passing a progress value derived from
+     * elsewhere should not be able to crash the renderer if that value is ever slightly out of
+     * range.
+     */
+    private static Color scaleAlpha(Color base, float factor) {
+        return withAlpha(base, Math.round(base.getAlpha() * factor));
+    }
+
     public void paint(Graphics2D g2, RenderFrame frame) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
@@ -596,9 +608,12 @@ public final class Java2DFrameRenderer {
         g2.translate(body.x(), body.y());
         g2.rotate(body.facingRadians());
         Shape shape = enemyShape(body.palette(), body.scale());
-        g2.setColor(color);
+        // Cloaking is a further alpha reduction on top of the health-fraction one below, not a
+        // replacement for it - a badly wounded, cloaked mob still reads as both at once.
+        float visibility = 1f - body.cloakProgress();
+        g2.setColor(scaleAlpha(color, visibility));
         g2.draw(shape);
-        g2.setColor(healthColor(color, body.healthFraction()));
+        g2.setColor(scaleAlpha(healthColor(color, body.healthFraction()), visibility));
         g2.fill(shape);
         g2.setTransform(save);
         this.paintRankBadge(g2, body);
