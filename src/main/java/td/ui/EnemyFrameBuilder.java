@@ -7,6 +7,8 @@ import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMobVisitor;
 import td.enemy.Rank;
 import td.enemy.SupportAura;
+import td.enemy.Trait;
+import td.enemy.TraitMarker;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBodyDraw;
@@ -18,6 +20,7 @@ import td.ui.render.Palette;
 import td.ui.render.PulseDirection;
 import td.ui.render.RankBadge;
 import td.ui.render.StatusMarkerDraw;
+import td.ui.render.TraitMarkerDraw;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +48,12 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private static final float MARKER_ROW_OFFSET_FRACTION = 1.6f;
     private static final float MARKER_SPACING_FRACTION = 1.1f;
     private static final float MARKER_SCALE_FRACTION = 0.35f;
+    /**
+     * The trait-marker row sits below the body, mirroring the effect row's own offset/spacing/
+     * scale above it - same visual language, opposite side, so the two rows never collide and
+     * both scale with the mob's own size the same way.
+     */
+    private static final float TRAIT_MARKER_ROW_OFFSET_FRACTION = 1.6f;
     /**
      * How long a critical hit's spark stays visible - 8 ticks is 0.4s at the normal tick rate,
      * a brief flash rather than a lingering marker.
@@ -113,6 +122,15 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         };
     }
 
+    private static Palette traitMarkerPaletteFor(TraitMarker marker) {
+        return switch (marker) {
+            case PERCENT_RESIST -> Palette.TRAIT_MARKER_PERCENT_RESIST;
+            case FLAT_RESIST -> Palette.TRAIT_MARKER_FLAT_RESIST;
+            case CRITICAL_IMMUNE -> Palette.TRAIT_MARKER_CRITICAL_IMMUNE;
+            case HURT_SPEED -> Palette.TRAIT_MARKER_HURT_SPEED;
+        };
+    }
+
     private static Palette paletteFor(BodyArchetype archetype) {
         return switch (archetype) {
             case CIRCLE -> Palette.ENEMY_CIRCLE;
@@ -151,7 +169,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return this.overlayDraws;
     }
 
-    private Void body(Palette palette, AbstractEnemyMob mob, float scale, double facingRadians, Optional<SupportAura> supportAura) {
+    private Void body(Palette palette, AbstractEnemyMob mob, float scale, double facingRadians,
+            Optional<SupportAura> supportAura, List<Trait> traits) {
         if (mob.isDead()) {
             if (!mob.isFadeComplete(this.gameTime)) {
                 int age = mob.ticksSinceDeath(this.gameTime);
@@ -167,8 +186,29 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             this.critSpark(mob, x, y, scale);
             this.overlays(mob, x, y, scale, supportAura);
             this.pulses(mob, x, y, scale);
+            this.traitMarkers(x, y, scale, traits);
         }
         return null;
+    }
+
+    /**
+     * A row of hollow diamonds below the body, one per always-on {@link Trait} this mob carries -
+     * see {@link Trait#marker()}. Capped at {@link #MAX_VISIBLE_MARKERS}, the same overflow
+     * discipline the timed effect row above the body already uses.
+     */
+    private void traitMarkers(float x, float y, float scale, List<Trait> traits) {
+        float markerY = y + scale * TRAIT_MARKER_ROW_OFFSET_FRACTION;
+        float markerX = x - scale;
+        int shown = 0;
+        for (Trait trait : traits) {
+            if (shown == MAX_VISIBLE_MARKERS) {
+                this.overlayDraws.add(new TraitMarkerDraw(Palette.TRAIT_MARKER_OVERFLOW, markerX, markerY, scale * MARKER_SCALE_FRACTION));
+                return;
+            }
+            this.overlayDraws.add(new TraitMarkerDraw(traitMarkerPaletteFor(trait.marker()), markerX, markerY, scale * MARKER_SCALE_FRACTION));
+            markerX += scale * MARKER_SPACING_FRACTION;
+            shown++;
+        }
     }
 
     /**
@@ -281,6 +321,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     }
 
     public Void visitDefined(DefinedEnemyMob mob) {
-        return this.body(paletteFor(mob.archetype()), mob, mob.getBodyScale(), mob.getFacingRadians(), mob.supportAura());
+        return this.body(paletteFor(mob.archetype()), mob, mob.getBodyScale(), mob.getFacingRadians(), mob.supportAura(), mob.traits());
     }
 }

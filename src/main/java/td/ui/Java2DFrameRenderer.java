@@ -26,6 +26,7 @@ import td.ui.render.SplashDraw;
 import td.ui.render.StatusMarkerDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerSpriteDraw;
+import td.ui.render.TraitMarkerDraw;
 import td.ui.render.TurretHeadDraw;
 import td.wave.PathColor;
 
@@ -442,6 +443,11 @@ public final class Java2DFrameRenderer {
             case RANK_BADGE_CHEVRON -> Color.WHITE;
             case RANK_BADGE_ELITE -> new Color(230, 190, 60);
             case RANK_BADGE_BOSS -> new Color(210, 210, 220);
+            case TRAIT_MARKER_PERCENT_RESIST -> new Color(180, 150, 255);
+            case TRAIT_MARKER_FLAT_RESIST -> new Color(140, 110, 200);
+            case TRAIT_MARKER_CRITICAL_IMMUNE -> new Color(255, 210, 130);
+            case TRAIT_MARKER_HURT_SPEED -> new Color(255, 140, 140);
+            case TRAIT_MARKER_OVERFLOW -> Color.LIGHT_GRAY;
         };
     }
 
@@ -734,7 +740,21 @@ public final class Java2DFrameRenderer {
         switch (overlay) {
             case EnemyRingDraw ring -> this.paintEnemyRing(g2, ring);
             case EffectPulseDraw pulse -> this.paintEffectPulse(g2, pulse);
+            case TraitMarkerDraw marker -> this.paintTraitMarker(g2, marker);
         }
+    }
+
+    /**
+     * A small hollow diamond naming an always-on trait - the same {@link #diamondShape} the
+     * timed status row's {@link #paintStatusMarker} fills, stroked instead so the two rows read
+     * as different kinds of thing (permanent vs. timed) at a glance.
+     */
+    private void paintTraitMarker(Graphics2D g2, TraitMarkerDraw marker) {
+        AffineTransform save = g2.getTransform();
+        g2.translate(marker.x(), marker.y());
+        g2.setColor(colorFor(marker.palette()));
+        g2.draw(diamondShape(marker.scale()));
+        g2.setTransform(save);
     }
 
     /**

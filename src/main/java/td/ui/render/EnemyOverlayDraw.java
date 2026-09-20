@@ -8,5 +8,5 @@ package td.ui.render;
  * either an alive body or a fading corpse," and an overlay is neither on its own - see
  * {@code EnemyFrameBuilder.buildOverlays}.
  */
-public sealed interface EnemyOverlayDraw permits EnemyRingDraw, EffectPulseDraw {
+public sealed interface EnemyOverlayDraw permits EnemyRingDraw, EffectPulseDraw, TraitMarkerDraw {
 }

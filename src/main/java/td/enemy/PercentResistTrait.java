@@ -15,4 +15,9 @@ public record PercentResistTrait(float fraction) implements Trait {
     public Damage onHit(Damage incoming, TraitContext context) {
         return incoming.scaledBy(this.fraction);
     }
+
+    @Override
+    public TraitMarker marker() {
+        return TraitMarker.PERCENT_RESIST;
+    }
 }

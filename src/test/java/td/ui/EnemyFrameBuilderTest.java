@@ -4,8 +4,14 @@ import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.effect.Effect;
 import td.enemy.AbstractEnemyMob;
+import td.enemy.BodyArchetype;
+import td.enemy.CriticalImmunityTrait;
+import td.enemy.EnemyDefinition;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.enemy.FlatResistTrait;
+import td.enemy.HurtSpeedTrait;
+import td.enemy.PercentResistTrait;
 import td.enemy.Rank;
 import td.fixtures.WorldFixtures;
 import td.ui.render.CritSparkDraw;
@@ -18,6 +24,7 @@ import td.ui.render.Palette;
 import td.ui.render.PulseDirection;
 import td.ui.render.RankBadge;
 import td.ui.render.StatusMarkerDraw;
+import td.ui.render.TraitMarkerDraw;
 import td.util.GameWorld;
 import td.wave.PathNormal;
 import td.wave.Vec2;
@@ -432,5 +439,52 @@ class EnemyFrameBuilderTest {
         assertThat(pulse.palette()).isEqualTo(Palette.SPAWN_BURST);
         assertThat(pulse.direction()).isEqualTo(PulseDirection.OUTWARD);
         assertThat(pulse.progress()).isZero();
+    }
+
+    @Test
+    void anEnemyWithNoTraitsYieldsNoTraitMarkers() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT); // Simple has no traits
+
+        assertThat(overlaysOf(enemy, 0)).isEmpty();
+    }
+
+    @Test
+    void anArmoredEnemysTraitsEachYieldTheirOwnMarker() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob armored = EnemyFactory.getEnemy("s", context, 0, 80, 3, Rank.GRUNT); // resist + crit-immune
+
+        List<EnemyOverlayDraw> overlays = overlaysOf(armored, 0);
+
+        assertThat(overlays).hasSize(2);
+        assertThat(overlays).allMatch(TraitMarkerDraw.class::isInstance);
+        List<Palette> palettes = overlays.stream().map(o -> ((TraitMarkerDraw) o).palette()).toList();
+        assertThat(palettes).containsExactlyInAnyOrder(Palette.TRAIT_MARKER_PERCENT_RESIST, Palette.TRAIT_MARKER_CRITICAL_IMMUNE);
+    }
+
+    @Test
+    void traitMarkersSitBelowTheBodyWhileEffectMarkersSitAbove() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob armored = EnemyFactory.getEnemy("s", context, 0, 80, 3, Rank.GRUNT);
+        EnemyBodyDraw body = bodyDrawAt(armored, 0, 0.0);
+
+        List<EnemyOverlayDraw> overlays = overlaysOf(armored, 0);
+
+        assertThat(overlays).allSatisfy(o -> assertThat(((TraitMarkerDraw) o).y()).isGreaterThan(body.y()));
+    }
+
+    @Test
+    void aFourthSimultaneousTraitCollapsesIntoOneOverflowMarkerInsteadOfGrowingTheRow() {
+        GameWorld context = contextWithStraightPath();
+        EnemyDefinition heavilyTraited = EnemyDefinition.of("heavy", "Heavy", 100, 5, 1.28f, BodyArchetype.CIRCLE)
+                .withTraits(List.of(new PercentResistTrait(0.8f), new FlatResistTrait(5),
+                        new CriticalImmunityTrait(), new HurtSpeedTrait(1.2f)));
+        context.getEnemyCatalog().register(heavilyTraited);
+        EnemyMob enemy = context.getEnemyCatalog().spawn("heavy", context, 0, 100, 5, Rank.GRUNT);
+
+        List<EnemyOverlayDraw> overlays = overlaysOf(enemy, 0);
+
+        assertThat(overlays).hasSize(EnemyFrameBuilder.MAX_VISIBLE_MARKERS + 1);
+        assertThat(((TraitMarkerDraw) overlays.getLast()).palette()).isEqualTo(Palette.TRAIT_MARKER_OVERFLOW);
     }
 }
