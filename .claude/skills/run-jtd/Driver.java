@@ -383,7 +383,10 @@ public class Driver {
     // Unlike the game's own 'x' debug keybinding (GameEngine.debugSpawnNextCatalogEnemy), which
     // cycles through EnemyCatalog.ids() in registration order and needs counting keypresses to
     // reach a specific one, this goes straight to the id asked for. Mirrors debugSpawnNextCatalogEnemy's
-    // mechanism (definition's own baseHealth/price, delay 0) rather than inventing a second spawn path.
+    // mechanism (the requested rank's own baseHealth/price, delay 0) rather than inventing a second
+    // spawn path. Must resolve the definition at `rank`, not catalog.get(id)'s always-GRUNT one -
+    // otherwise every non-Grunt spawn gets the mob's real rank-scaled traits/appearance but the
+    // Grunt's health/price, which made higher ranks die in one hit during manual testing.
     private static void spawnEnemy(String args) throws Exception {
         String[] parts = args.split("\\s+", 2);
         String id = parts[0];
@@ -391,7 +394,7 @@ public class Driver {
 
         GameWorld context = getGameWorld();
         EnemyCatalog catalog = context.getEnemyCatalog();
-        EnemyDefinition definition = catalog.get(id);
+        EnemyDefinition definition = catalog.get(id, rank);
         EnemyMob mob = catalog.spawn(id, context, 0, definition.baseHealth(), definition.price(), rank);
         context.enemies().add(mob);
         System.out.println("OK spawn " + id + " at rank " + rank);
