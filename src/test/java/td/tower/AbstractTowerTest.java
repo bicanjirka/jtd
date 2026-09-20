@@ -154,7 +154,7 @@ class AbstractTowerTest {
 
     @Test
     void dealDamageTracksDamageDealtWithoutKillingTheTarget() {
-        SniperTower tower = new SniperTower(context, 0, 0);
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of());
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1000, 3, Rank.GRUNT);
 
         tower.dealDamage(enemy, Damage.physical(4000));
@@ -204,7 +204,7 @@ class AbstractTowerTest {
 
     @Test
     void damageDealtAgainstAResistantEnemyMatchesTheHealthItActuallyLost() {
-        SniperTower tower = new SniperTower(context, 0, 0);
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of());
         // an armored mob absorbs part of every hit, unlike the simple mob every other case uses
         EnemyMob armored = EnemyFactory.getEnemy("s", context, 0, 1000, 3, Rank.GRUNT);
         long healthBefore = armored.getHealth();
@@ -218,7 +218,7 @@ class AbstractTowerTest {
 
     @Test
     void multipleHitsAccumulateDamageDealt() {
-        SniperTower tower = new SniperTower(context, 0, 0);
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(context, 0, 0, List.of());
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1000, 3, Rank.GRUNT);
 
         tower.dealDamage(enemy, Damage.physical(1000));

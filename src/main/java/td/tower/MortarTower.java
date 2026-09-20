@@ -70,7 +70,7 @@ public final class MortarTower extends AbstractTower {
     private EnemyMob currentTarget;
 
     public MortarTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.MORTAR, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, 0f, context, x, y);
+        super(TowerFactory.Type.MORTAR, PRICE, new TowerBaseStats(DAMAGE, RANGE, COOLDOWN_MAX), context, x, y);
         this.splashRadius = SPLASH_RADIUS_BASE * context.getBoard().scale();
     }
 

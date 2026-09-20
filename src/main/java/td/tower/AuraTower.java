@@ -29,7 +29,7 @@ public final class AuraTower extends AbstractTower {
      * aura towers can stack unequal amounts via TowerBuff's additive combine.
      */
     public AuraTower(GameWorld context, int x, int y, float power) {
-        super(TowerFactory.Type.AURA, PRICE, DAMAGE, RANGE, 0, 0f, context, x, y);
+        super(TowerFactory.Type.AURA, PRICE, new TowerBaseStats(DAMAGE, RANGE, 0), context, x, y);
         this.power = power;
     }
 

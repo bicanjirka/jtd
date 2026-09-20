@@ -25,11 +25,7 @@ public final class SniperTower extends AbstractTower {
     public static final int PRICE = 10;
     public static final int DAMAGE = 4000;
     public static final float RANGE = 3.8f;
-    /**
-     * A sniper's own innate chance to land a critical hit, before any upgrade path.
-     */
     public static final float CRIT_CHANCE = 0.15f;
-
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.4;
 
     /**
@@ -57,7 +53,8 @@ public final class SniperTower extends AbstractTower {
     private EnemyMob currentTarget;
 
     public SniperTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.SNIPER, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, CRIT_CHANCE, context, x, y);
+        super(TowerFactory.Type.SNIPER, PRICE,
+                new TowerBaseStats(DAMAGE, RANGE, COOLDOWN_MAX).withCritChance(CRIT_CHANCE), context, x, y);
     }
 
     @Override
