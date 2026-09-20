@@ -90,7 +90,8 @@ offers two permanent, mutually-exclusive upgrade paths, shown as buttons in its 
 once selected. A path is gated by its own condition (an affordable price alone, a cluster of
 towers built nearby, the tower having dealt enough damage, or having racked up enough kills)
 — choosing one is a one-time, irreversible specialization for that specific tower, marked on
-the board by a coloured ring around it. The Aura tower is passive and offers none.
+the board by a coloured ring around it. The Aura tower is passive and offers none, but draws a
+faint line to every tower it's currently amplifying.
 
 ### Enemies
 

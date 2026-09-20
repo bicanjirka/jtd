@@ -9,6 +9,7 @@ import td.tower.SeekerTower;
 import td.tower.SniperTower;
 import td.tower.SonarTower;
 import td.tower.SplashTower;
+import td.tower.Tower;
 import td.tower.TowerVisitor;
 import td.ui.render.AuraDraw;
 import td.ui.render.BeamDraw;
@@ -115,6 +116,10 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             double phase = phaseFraction(this.animationSeconds, phaseOffset);
             this.draws.add(new AuraDraw(Palette.TOWER_AURA_RING, tower.getX(), tower.getY(),
                     (float) (phase * maxRadius), (float) (1.0 - phase)));
+        }
+        for (Tower buffed : tower.buffedTowers()) {
+            this.draws.add(new BeamDraw(Palette.TOWER_AURA_LINK, tower.getX(), tower.getY(),
+                    buffed.getX(), buffed.getY(), 1.0f));
         }
         return null;
     }

@@ -139,6 +139,20 @@ class AbstractTowerTest {
     }
 
     @Test
+    void buffedTowersListsExactlyTheInRangeNonAuraTowersAndNoOthers() {
+        AuraTower aura = new AuraTower(context, 0, 0);
+        context.towers().add(aura);
+        SniperTower near = new SniperTower(context, 0, 0);
+        context.towers().add(near);
+        SniperTower far = new SniperTower(context, 100, 100);
+        context.towers().add(far);
+        AuraTower otherAura = new AuraTower(context, 0, 0);
+        context.towers().add(otherAura);
+
+        assertThat(aura.buffedTowers()).containsExactly(near);
+    }
+
+    @Test
     void dealDamageTracksDamageDealtWithoutKillingTheTarget() {
         SniperTower tower = new SniperTower(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1000, 3, Rank.GRUNT);
