@@ -43,6 +43,15 @@ public interface AbilityContext {
     boolean justTookCriticalHit();
 
     /**
+     * {@code true} only on the tick this mob is first observed to have taken any damage at
+     * all (critical or not) - edge-triggered the same way {@link #justTookCriticalHit()} is,
+     * and for the same deferred-capture reason (see {@code td/enemy/CLAUDE.md}'s death-timing
+     * invariant): a hit can land during another phase of the same game tick, so it is captured
+     * on this mob's own next tick rather than read synchronously where the hit landed.
+     */
+    boolean justTookDamage();
+
+    /**
      * Applies {@code template} to {@code target}, relative to this mob.
      */
     void applyEffect(EffectTemplate template, EffectTarget target);

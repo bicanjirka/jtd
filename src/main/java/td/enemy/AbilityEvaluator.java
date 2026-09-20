@@ -21,6 +21,7 @@ public final class AbilityEvaluator {
             case OnDeathTrigger ignored -> fireOnDeath(state, context);
             case TimeSinceLastHitTrigger t -> fireTimeSinceLastHit(t, state, context);
             case OnCriticalHitTakenTrigger ignored -> context.justTookCriticalHit();
+            case OnFirstDamageTakenTrigger ignored -> fireOnFirstDamageTaken(state, context);
         };
     }
 
@@ -68,6 +69,18 @@ public final class AbilityEvaluator {
 
     private static boolean fireOnDeath(AbilityState state, AbilityContext context) {
         if (state.isFired() || !context.justDied()) {
+            return false;
+        }
+        state.markFired();
+        return true;
+    }
+
+    /**
+     * Edge-triggered like {@link #fireOnDeath} - fires once, the tick a hit is first observed,
+     * then never again - see {@link OnFirstDamageTakenTrigger}.
+     */
+    private static boolean fireOnFirstDamageTaken(AbilityState state, AbilityContext context) {
+        if (state.isFired() || !context.justTookDamage()) {
             return false;
         }
         state.markFired();

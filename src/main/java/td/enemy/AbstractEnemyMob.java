@@ -120,6 +120,13 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     // landed" and "this tick is the one to report it on" are not necessarily the same tick.
     private boolean criticalHitPending;
     private int criticalHitTick = -1;
+    // Same deferred-capture shape as criticalHitPending/criticalHitTick, and for the same
+    // reason - doDamage() has no gameTime to record against, and a hit can land during another
+    // phase of the same game tick (see td/enemy/CLAUDE.md's death-timing invariant) - but for
+    // *any* landed damage rather than only a critical one, which is what an ability like the
+    // Ghost's vanish-on-first-hit needs.
+    private boolean damageTakenPending;
+    private int damageTakenTick = -1;
     private double distanceIntoLap = 0;
     private double lastFacingRadians = 0;
 
@@ -209,6 +216,9 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         if (this.validTarget()) {
             landed = this.activeEffects.applyShield(this.absorb(damage)).cappedAt(this.health);
             this.health -= landed.amount();
+            if (landed.amount() > 0) {
+                this.damageTakenPending = true;
+            }
             if (landed.critical()) {
                 this.criticalHitPending = true;
             }
@@ -339,7 +349,18 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     public boolean validTarget(Type type) {
-        return (this.validTarget() && (type.equals(this.type)));
+        return (this.validTarget() && (type.equals(this.effectiveType())));
+    }
+
+    /**
+     * This mob's type as a targeting query sees it right now: its authored {@link Type}, unless
+     * an {@link EffectKind#INVISIBLE} effect is currently active, in which case it reports
+     * {@link Type#INVISIBLE} regardless of its authored type. This is what lets invisibility be
+     * granted to any enemy by an ability/effect rather than baked into one mob's own type - see
+     * {@code td/enemy/CLAUDE.md}.
+     */
+    private Type effectiveType() {
+        return this.activeEffects.isInvisible() ? Type.INVISIBLE : this.type;
     }
 
     public boolean validTarget(Type type1, Type type2) {
@@ -381,6 +402,15 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      */
     public int ticksSinceCriticalHit(int gameTime) {
         return this.criticalHitTick < 0 ? -1 : gameTime - this.criticalHitTick;
+    }
+
+    /**
+     * Ticks elapsed since this mob was last observed to take any damage, or {@code -1} if it
+     * never has. Mirrors {@link #ticksSinceCriticalHit} exactly, including the deferred-capture
+     * reason - see {@link #damageTakenTick}.
+     */
+    public int ticksSinceDamageTaken(int gameTime) {
+        return this.damageTakenTick < 0 ? -1 : gameTime - this.damageTakenTick;
     }
 
     public boolean isFadeComplete(int gameTime) {
@@ -454,6 +484,10 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         if (this.criticalHitPending) {
             this.criticalHitPending = false;
             this.criticalHitTick = gameTime;
+        }
+        if (this.damageTakenPending) {
+            this.damageTakenPending = false;
+            this.damageTakenTick = gameTime;
         }
         if (this.inactive) {
             if (this.delay > 0) {
