@@ -381,7 +381,7 @@ class AbstractTowerTest {
     @Test
     void aTowerWithNoCritChanceNeverRollsACriticalHitEvenWithAnAlwaysSucceedingRandomSource() {
         GameWorld alwaysCrits = WorldFixtures.newWorld(() -> 0.0);
-        SniperTower tower = new SniperTower(alwaysCrits, 0, 0);
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(alwaysCrits, 0, 0, List.of());
         EnemyMob enemy = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, Rank.GRUNT);
 
         tower.dealDamage(enemy, Damage.physical(1000));
@@ -455,7 +455,7 @@ class AbstractTowerTest {
     @Test
     void aBurningTargetAgainstATowerWithNoCritChanceStillNeverCrits() {
         GameWorld alwaysCrits = WorldFixtures.newWorld(() -> 0.0);
-        SniperTower tower = new SniperTower(alwaysCrits, 0, 0);
+        FakeUpgradeableTower tower = new FakeUpgradeableTower(alwaysCrits, 0, 0, List.of());
         EnemyMob burning = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, Rank.GRUNT);
         burning.applyEffect(Effect.burn(Damage.magic(1), 100, d -> {
         }));

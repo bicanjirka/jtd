@@ -25,16 +25,21 @@ public final class SniperTower extends AbstractTower {
     public static final int PRICE = 10;
     public static final int DAMAGE = 4000;
     public static final float RANGE = 3.8f;
+    /**
+     * A sniper's own innate chance to land a critical hit, before any upgrade path.
+     */
+    public static final float CRIT_CHANCE = 0.15f;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.4;
 
     /**
-     * More damage and range, a bounty top-up on this tower's own kills, and a chance to land a
-     * critical hit - a veteran marksman's proven aim starts placing shots that count extra.
+     * More damage and range, a bounty top-up on this tower's own kills, and a further boost to
+     * this tower's own crit chance - a veteran marksman's proven aim starts placing shots that
+     * count extra even more often.
      */
     private static final UpgradePath VETERAN = new UpgradePath(
             "Veteran", 30,
-            TowerBuff.damage(0.3f).withRange(0.1f).withBounty(0.25f).withCritChance(0.15f),
+            TowerBuff.damage(0.3f).withRange(0.1f).withBounty(0.25f).withCritChance(0.3f),
             new KillCountCondition(10));
     /**
      * Faster, weaker shots - a straightforward money-gated specialization needing no track record.
@@ -52,7 +57,7 @@ public final class SniperTower extends AbstractTower {
     private EnemyMob currentTarget;
 
     public SniperTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.SNIPER, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
+        super(TowerFactory.Type.SNIPER, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, CRIT_CHANCE, context, x, y);
     }
 
     @Override

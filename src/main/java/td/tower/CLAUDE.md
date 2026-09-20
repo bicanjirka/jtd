@@ -154,8 +154,10 @@ fluent instance `withDamage`/`withRange`/`withFireRate`/`withBounty`/`withCritCh
 for any further axis — e.g. `TowerBuff.damage(0.3f).withRange(0.1f)` — rather than a positional
 literal spelling out every axis to reach the ones it cares about, or seeding the chain off
 `none()`. A sixth axis, were one ever added, would cost these call sites no edits. A tower's crit chance itself is `TowerStats.critChance`, computed as
-`critChanceBonus` alone (via `TowerBuff.critChanceFor(0f)`) — no tower has any innate crit
-chance of its own, so today the axis is purely upgrade-path-granted (see `SniperTower.VETERAN`).
+`critChanceBonus` added to the tower's own innate `critChanceBase` (via
+`TowerBuff.critChanceFor`, a constructor argument every leaf passes to `AbstractTower` — `0`
+for every leaf except `SniperTower`, whose base is `SniperTower.CRIT_CHANCE`; its `VETERAN`
+path then adds more on top through this same axis).
 `AbstractTower.dealDamage` rolls it via `context.random()` before the enemy ever sees the hit,
 scaling the `Damage` through `Damage.asCritical()` on success — see that record's own doc
 comment for the fixed, project-wide multiplier this always applies.
@@ -224,7 +226,7 @@ changes what *this* tower itself is, once, and stays changed for its lifetime.
   handful of paths whose bonus isn't expressible through `TowerBuff` at all — see below.
   `UpgradePath.describe()` turns all of that into the one line `AbstractTower.upgradePathsBlock()`
   shows per path in `getInfoString()`/`getStatusString()` (e.g. `"Veteran (10 kills): +30%
-  damage, +10% range, +25% bounty, +15% crit chance"`) — never write a path's bonus out by hand
+  damage, +10% range, +25% bounty, +30% crit chance"`) — never write a path's bonus out by hand
   in a tower's own description text; `describe()` derives it from the same `TowerBuff`/
   `extraEffect`/`UpgradeCondition` values `chooseUpgradePath` itself reads, so the two can't drift.
 - `UpgradeCondition` — "is this path currently available", independent of affordability, and

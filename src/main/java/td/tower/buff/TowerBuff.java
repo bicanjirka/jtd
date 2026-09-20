@@ -127,10 +127,10 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
     }
 
     /**
-     * {@code base} plus this buff's crit-chance bonus, clamped to a valid probability - every
-     * tower's base crit chance is {@code 0} today (see {@code TowerStats}), so in practice this
-     * is just the bonus itself, but the base parameter mirrors {@link #rangeFor}/{@link #damageFor}
-     * rather than assuming that will always stay true.
+     * {@code base} plus this buff's crit-chance bonus, clamped to a valid probability - mirrors
+     * {@link #rangeFor}/{@link #damageFor} in taking the tower's own innate base as a parameter
+     * rather than assuming it is always {@code 0} (most towers' is, but see
+     * {@code SniperTower.CRIT_CHANCE}).
      */
     public float critChanceFor(float base) {
         return Math.max(0f, Math.min(1f, base + this.critChanceBonus));

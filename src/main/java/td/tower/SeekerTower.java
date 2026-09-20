@@ -69,7 +69,7 @@ public final class SeekerTower extends AbstractTower {
     private EnemyMob currentTarget;
 
     public SeekerTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.SEEKER, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, context, x, y);
+        super(TowerFactory.Type.SEEKER, PRICE, DAMAGE, RANGE, COOLDOWN_MAX, 0f, context, x, y);
     }
 
     @Override
