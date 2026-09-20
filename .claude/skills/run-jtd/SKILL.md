@@ -88,6 +88,34 @@ convenient scratch location, already gitignored-worthy (don't commit captured PN
 | `sleep <ms>`         | Pause between commands - Swing needs a beat to repaint/relayout after a click before the next screenshot is meaningful.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `quit`               | Turns off always-on-top and exits cleanly.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
+## Previewing one enemy's shape/badge (no window, no level)
+
+For "does this rank's body/badge look right" - a shape, a palette, the Boss skull badge -
+`Driver.java`'s full round trip (build window, load a level, `spawn`, screenshot, `quit`) is
+much more than the question needs. `PreviewEnemy.java` (also in this directory) renders one
+enemy directly to a PNG with no `TowerDefense`/`JFrame`/`Robot` at all - it builds a throwaway
+`GameWorld` the same way `td.ui.PanelEnemy` already does for its in-game wave-preview strip, and
+paints through the same `Java2DFrameRenderer.paintEnemies` the real board uses, so it can't drift
+from the real in-game look:
+
+```bash
+javac -cp target/classes -d .claude/skills/run-jtd .claude/skills/run-jtd/PreviewEnemy.java
+java -cp "target/classes;.claude/skills/run-jtd;$(cat target/runtime-classpath.txt)" PreviewEnemy <id> [rank] [outputPath] [scale]
+```
+
+`id` is an `EnemyCatalog.builtIn()` id (the wave-script token, e.g. `s` for Armored - see
+`td/wave/CLAUDE.md`'s token table), `rank` defaults to `GRUNT`, `outputPath` defaults to
+`.claude/skills/run-jtd/shots/preview_<id>_<rank>.png`, `scale` (px/cell) defaults to `64`.
+
+```bash
+java -cp "$CP" PreviewEnemy s boss .claude/skills/run-jtd/shots/armored_boss.png
+```
+
+Only covers body + rank badge (what `PanelEnemy` itself shows) - no status-effect markers or
+overlay rings, since those need a live simulation tick to have anything to show; that still
+needs a real `Driver.java` `spawn`. It also only reaches `EnemyCatalog.builtIn()`'s ids, not a
+level's own custom/cloned enemies, which aren't registered anywhere outside that level's load.
+
 ## Run (human path)
 
 ```bash
