@@ -8,5 +8,6 @@ public enum EffectKind {
     BURN,
     FREEZE,
     SHIELD,
-    INVISIBLE
+    INVISIBLE,
+    HEAL
 }
