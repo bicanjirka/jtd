@@ -2,6 +2,7 @@ package td.effect;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.damage.DamageType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -182,6 +183,26 @@ class ActiveEffectsTest {
         }));
 
         assertThat(effects.applyShield(Damage.physical(100))).isEqualTo(Damage.physical(40));
+    }
+
+    @Test
+    void aPhysicalOnlyShieldReducesPhysicalDamageButLeavesMagicUntouched() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.shield(0.4f, 5, d -> {
+        }).withShieldRestrictedTo(DamageType.PHYSICAL));
+
+        assertThat(effects.applyShield(Damage.physical(100))).isEqualTo(Damage.physical(60));
+        assertThat(effects.applyShield(Damage.magic(100))).isEqualTo(Damage.magic(100));
+    }
+
+    @Test
+    void anUnrestrictedShieldStillAbsorbsBothDamageKinds() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.shield(0.4f, 5, d -> {
+        }));
+
+        assertThat(effects.applyShield(Damage.physical(100))).isEqualTo(Damage.physical(60));
+        assertThat(effects.applyShield(Damage.magic(100))).isEqualTo(Damage.magic(60));
     }
 
     @Test

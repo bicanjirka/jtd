@@ -287,6 +287,19 @@ than dropping it.
   the same damage-over-time mechanism? Only then add an `EffectKind.ACID` case and an `Effect.acid(...)` factory,
   mirroring `Effect.burn(...)`.
 
+### A typed shield has no concrete user yet
+
+`ShieldTemplate`/`Effect`/`ActiveEffects.applyShield` can all restrict a shield to one `DamageType`
+(`ShieldTemplate.physicalOnly`/`.magicOnly`), mirroring the same restriction `PercentResistTrait`/
+`FlatResistTrait` already carry - but no built-in ability actually authors one. This has precedent:
+`td/effect/CLAUDE.md` already records that `SLOW`/`BURN`/`FREEZE` ship with no `EffectTemplate`
+authoring them either.
+
+- **Where:** `td.effect.ShieldTemplate.physicalOnly`/`.magicOnly`, `ActiveEffects.applyShield`.
+- **Approach:** give a concrete enemy ability a typed shield so it is play-verified, not just
+  unit-tested - the Warden's `reshield`/`callToArms` (`BuiltInEnemies.WARDEN_STANDING_ABILITIES`)
+  are the obvious carriers.
+
 ### Rotating tower sprites
 
 Towers don't rotate their sprite image to visually face their current target (enemy mobs already

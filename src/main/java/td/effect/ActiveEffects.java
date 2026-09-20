@@ -75,12 +75,20 @@ public final class ActiveEffects {
 
     /**
      * Reduces {@code incoming} by the active {@link EffectKind#SHIELD} effect's percentage,
-     * unreduced if none is active - the effect-side counterpart to a {@code Trait}'s own,
-     * permanent {@code onHit} resistance, which this composes with rather than replaces.
+     * unreduced if none is active, or if the active shield is restricted to a
+     * {@link td.damage.DamageType} {@code incoming} doesn't carry - the effect-side counterpart
+     * to a {@code Trait}'s own, permanent {@code onHit} resistance, which this composes with
+     * rather than replaces.
      */
     public Damage applyShield(Damage incoming) {
         Effect shield = this.active.get(EffectKind.SHIELD);
-        return shield == null ? incoming : incoming.scaledBy(1f - shield.shieldPercent());
+        if (shield == null) {
+            return incoming;
+        }
+        if (shield.shieldRestrictedTo().isPresent() && shield.shieldRestrictedTo().get() != incoming.type()) {
+            return incoming;
+        }
+        return incoming.scaledBy(1f - shield.shieldPercent());
     }
 
     /**
