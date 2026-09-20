@@ -24,6 +24,13 @@ for the UI marker row), `speedMultiplier()`, `isInvisible()`, `applyShield(Damag
 `healPerTick()` and `apply(Effect)`/`tick()` are the whole surface. Nothing outside this package
 reaches into which `Effect` is stored under which kind.
 
+`EffectTransitions` is a separate, per-mob holder answering a different question than
+`ActiveEffects` does: not "which kinds are active right now" but "when did each kind last change."
+`AbstractEnemyMob` owns one alongside its `ActiveEffects` and feeds it `activeKinds()`'s output
+every tick (see "Ordering, once per tick" below) - this is what lets `td.ui.EnemyFrameBuilder`
+render a gain/loss transition (the Ghost's cloak fade today) without either package tracking a
+mob's effect history a second time.
+
 ## Healing is a query, not a sink
 
 Every damaging kind (`BURN`) deals its damage *through* `Effect.sink()` - a `DamageSink` bound at
@@ -50,6 +57,18 @@ way reading `speedMultiplier()` afterward would silently shorten a slow's.
 dead-skip for free, since the heal application only runs inside `doTick`'s live-mob branch,
 which a dead mob never reaches (a dead mob takes the sibling branch that captures `deathTick`
 instead). A heal must never resurrect a mob already fading.
+
+**`EffectTransitions.observe` runs after `ActiveEffects.tick()`, but before `doTick`'s
+dead-return check that follows it.** It records, per `EffectKind`, the tick a kind was last
+gained or lost - the "entity records a tick, a frame builder derives a progress from it" idiom
+`deathTick`/`criticalHitTick` already use, applied to *any* effect transition rather than one
+fixed event. After `tick()` so an effect that just expired is seen lost on the tick it actually
+expired, rather than one tick late; before the dead-return so a damage-over-time tick that kills
+the mob this same tick still records whatever it lost (e.g. a `SHIELD` it was holding) instead of
+silently skipping the observation forever. It is *not* placed beside the `criticalHitPending`/
+`damageTakenPending` captures near the top of `doTick`, because those also run while a mob is
+inactive or already dead - states in which `ActiveEffects` never ticks at all, so there would be
+nothing there to diff.
 
 ## Adding a new effect kind
 

@@ -44,6 +44,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
      * a brief flash rather than a lingering marker.
      */
     static final int CRIT_SPARK_DURATION_TICKS = 8;
+    /**
+     * How long a cloak fade-in/fade-out takes, in ticks - same duration as the crit spark, for
+     * the same "brief, legible transition" reasoning.
+     */
+    static final int CLOAK_FADE_DURATION_TICKS = 8;
     private final List<EnemyDraw> draws = new ArrayList<>();
     private final List<StatusMarkerDraw> markerDraws = new ArrayList<>();
     private final List<CritSparkDraw> critSparkDraws = new ArrayList<>();
@@ -115,7 +120,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             float x = lerp(mob.getPrevX(), mob.getX(), this.interpolationAlpha);
             float y = lerp(mob.getPrevY(), mob.getY(), this.interpolationAlpha);
             this.draws.add(new EnemyBodyDraw(palette, x, y, facingRadians, scale, mob.getHealthFraction(),
-                    badgeFor(mob.getRank())));
+                    badgeFor(mob.getRank()), this.cloakProgress(mob)));
             this.markers(mob, x, y, scale);
             this.critSpark(mob, x, y, scale);
         }
@@ -128,6 +133,37 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             float fadeProgress = (float) ticksSince / CRIT_SPARK_DURATION_TICKS;
             this.critSparkDraws.add(new CritSparkDraw(Palette.CRIT_SPARK, x, y, scale, fadeProgress));
         }
+    }
+
+    /**
+     * 0 (fully solid) to 1 (fully cloaked) - ramps up over {@link #CLOAK_FADE_DURATION_TICKS}
+     * after {@link EffectKind#INVISIBLE} is gained, holds at 1 while it stays active, and ramps
+     * back down over the same window after it's lost. Derived the same way
+     * {@code EnemyFadeDraw.fadeProgress} is derived from ticks since death - see
+     * {@code AbstractEnemyMob.ticksSinceEffectGained}/{@code ticksSinceEffectLost}.
+     * <p>
+     * {@code ticksSinceGained} is clamped at 0 rather than used raw: an ability that applies
+     * {@code INVISIBLE} (e.g. the Ghost's vanish) does so via {@code DefinedEnemyMob
+     * .evaluateAbilities}, which runs <em>after</em> {@code AbstractEnemyMob.doTick} has already
+     * called {@code EffectTransitions.observe} for this tick - so on the exact tick a mob first
+     * becomes invisible, {@code activeEffectKinds()} already reports it but the transition isn't
+     * observed until next tick, and {@code ticksSinceEffectGained} still returns {@code -1}.
+     * Unclamped, that produces a negative progress and, since visibility is {@code 1 -
+     * progress}, an out-of-range alpha - reproduced by actually running the game (a real ability
+     * firing crashed the renderer; no unit test caught it because none built a frame on the same
+     * tick an ability fires). Clamping to 0 is also the correct reading: "not yet observed" while
+     * already active means it just started.
+     */
+    private float cloakProgress(AbstractEnemyMob mob) {
+        if (mob.activeEffectKinds().contains(EffectKind.INVISIBLE)) {
+            int ticksSinceGained = Math.max(0, mob.ticksSinceEffectGained(EffectKind.INVISIBLE, this.gameTime));
+            return Math.min(1f, (float) ticksSinceGained / CLOAK_FADE_DURATION_TICKS);
+        }
+        int ticksSinceLost = mob.ticksSinceEffectLost(EffectKind.INVISIBLE, this.gameTime);
+        if (ticksSinceLost < 0 || ticksSinceLost >= CLOAK_FADE_DURATION_TICKS) {
+            return 0f;
+        }
+        return 1f - (float) ticksSinceLost / CLOAK_FADE_DURATION_TICKS;
     }
 
     private void markers(AbstractEnemyMob mob, float x, float y, float scale) {

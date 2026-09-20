@@ -5,6 +5,7 @@ import td.economy.EconomyDelta;
 import td.effect.ActiveEffects;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.EffectTransitions;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 import td.wave.ArcLengthPath;
@@ -78,6 +79,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      */
     private final int pathIndex;
     private final ActiveEffects activeEffects = new ActiveEffects();
+    private final EffectTransitions effectTransitions = new EffectTransitions();
     /**
      * The path this mob measures its progress along, empty for a degenerate path - fewer than
      * two points, as a world has before any level is installed. An empty one has nothing to
@@ -299,6 +301,22 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     /**
+     * Ticks elapsed since {@code kind} was last observed to become active, or {@code -1} if it
+     * never has - see {@link EffectTransitions#ticksSinceGained}.
+     */
+    public int ticksSinceEffectGained(EffectKind kind, int gameTime) {
+        return this.effectTransitions.ticksSinceGained(kind, gameTime);
+    }
+
+    /**
+     * Ticks elapsed since {@code kind} was last observed to become inactive, or {@code -1} if it
+     * never has - see {@link EffectTransitions#ticksSinceLost}.
+     */
+    public int ticksSinceEffectLost(EffectKind kind, int gameTime) {
+        return this.effectTransitions.ticksSinceLost(kind, gameTime);
+    }
+
+    /**
      * A coarse "how far into this lap of the path" ranking value, expressed as a fraction of
      * this mob's own path's total length (see FurthestAlongPathSelector) rather than as raw
      * pixels - two paths can have different total lengths, so comparing raw
@@ -517,6 +535,10 @@ public abstract class AbstractEnemyMob implements EnemyMob {
             // never resurrect a mob already fading.
             this.health = Math.min(this.healthMax, this.health + this.activeEffects.healPerTick());
             this.activeEffects.tick();
+            // After tick() (so an expiry is seen the tick it happens) and before the dead-return
+            // just below (so a damage-over-time-lethal tick still records the loss) - see
+            // td/effect/CLAUDE.md.
+            this.effectTransitions.observe(this.activeEffects.activeKinds(), gameTime);
             if (this.dead) {
                 // A damage-over-time tick just killed this mob - doDamage() already set
                 // dead=true synchronously (its sink calls straight back into doDamage()).

@@ -41,7 +41,7 @@ Each domain type has one *frame builder* that describes it and knows nothing abo
 | Builder                   | Describes                                                                                   | Dispatch                                    |
 |---------------------------|---------------------------------------------------------------------------------------------|---------------------------------------------|
 | `CellFrameBuilder`        | placement/selection highlights                                                              | plain getters — only one `Cell` impl exists |
-| `EnemyFrameBuilder`       | enemy bodies (each carrying its own `RankBadge`), death fades, status-effect markers (`buildMarkers()`), and critical-hit sparks (`buildCritSparks()`) | `EnemyMobVisitor`                           |
+| `EnemyFrameBuilder`       | enemy bodies (each carrying its own `RankBadge` and cloak transition), death fades, status-effect markers (`buildMarkers()`), and critical-hit sparks (`buildCritSparks()`) | `EnemyMobVisitor`                           |
 | `TowerSpriteFrameBuilder` | tower base + animated turret head                                                           | `TowerVisitor`                              |
 | `TowerEffectFrameBuilder` | beams, splash, pulse, aura, cone                                                            | `TowerVisitor`                              |
 | `ProjectileFrameBuilder`  | in-flight shells and missiles                                                               | `ProjectileVisitor`                         |
@@ -67,6 +67,18 @@ ongoing status - it is shaped like `EnemyFadeDraw` instead (position, scale, a `
 keyed off `AbstractEnemyMob.ticksSinceCriticalHit(gameTime)` the same deferred-capture way a
 death fade is keyed off `ticksSinceDeath`, and fades out over `EnemyFrameBuilder
 .CRIT_SPARK_DURATION_TICKS`.
+
+**Invisibility's transition is a component on the body itself, not a fourth marker/spark
+list.** `EnemyBodyDraw.cloakProgress()` (0 = fully solid, 1 = fully cloaked) ramps over
+`EnemyFrameBuilder.CLOAK_FADE_DURATION_TICKS` on either side of an `EffectKind.INVISIBLE`
+gain/loss, derived from `AbstractEnemyMob.ticksSinceEffectGained`/`ticksSinceEffectLost` (backed
+by `td.effect.EffectTransitions` - see `td/effect/CLAUDE.md`). `Java2DFrameRenderer.paintEnemyBody`
+folds it into the body's alpha via `scaleAlpha`, composing with (not replacing) the existing
+health-fraction alpha from `healthColor` - a badly wounded, cloaked mob reads as both at once. A
+gain/loss transition for one of the other four kinds still goes through the ordinary marker row
+(the dot appearing/disappearing *is* its transition); invisibility gets its own body-level
+treatment because it is the one kind that changes what a mob's silhouette itself should look like,
+not just what is decorated around it.
 
 ## Two independent clocks, and which one to use
 
