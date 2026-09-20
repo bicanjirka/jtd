@@ -1,6 +1,7 @@
 package td.enemy;
 
 import td.damage.Damage;
+import td.effect.EffectKind;
 
 /**
  * A passive, always-on modifier of an enemy's properties or of incoming interactions -
@@ -46,6 +47,16 @@ public interface Trait {
      */
     default float speedFactor(TraitContext context) {
         return 1f;
+    }
+
+    /**
+     * Whether this trait blocks an incoming {@link EffectKind} outright, before it is ever
+     * applied - see {@link BurnImmunityTrait}/{@link FreezeImmunityTrait}. Unlike {@link #onHit},
+     * which only ever sees an instant hit, this is consulted by {@link DefinedEnemyMob#applyEffect}
+     * for a status effect a tower or ability tries to apply directly.
+     */
+    default boolean blocksEffect(EffectKind kind) {
+        return false;
     }
 
     /**

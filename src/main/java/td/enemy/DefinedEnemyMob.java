@@ -1,6 +1,8 @@
 package td.enemy;
 
 import td.damage.Damage;
+import td.effect.Effect;
+import td.effect.EffectKind;
 import td.effect.EffectTemplate;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -136,7 +138,35 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
             case PulseMovement ignored -> {
             }
         }
-        this.evaluateAbilities(gameTime);
+        // A frozen mob cannot cast - see this class's own applyEffect and td/enemy/CLAUDE.md.
+        // Not consulted on the death-tick evaluateAbilities call above: dying always spawns
+        // whatever an OnDeathTrigger carries, regardless of any effect the killing hit applied.
+        if (!this.isIncapacitated()) {
+            this.evaluateAbilities(gameTime);
+        }
+    }
+
+    /**
+     * Whether this mob is currently unable to cast an ability - today, only an active {@link
+     * EffectKind#FREEZE}. Named for the broader condition rather than the one effect that causes
+     * it today, so a future stun-like effect only needs adding to this check, not a second one.
+     */
+    private boolean isIncapacitated() {
+        return this.activeEffectKinds().contains(EffectKind.FREEZE);
+    }
+
+    /**
+     * Rejects an incoming effect outright if any trait blocks its {@link EffectKind} - see
+     * {@link Trait#blocksEffect} - before ever handing it to {@link td.effect.ActiveEffects}.
+     */
+    @Override
+    public void applyEffect(Effect effect) {
+        for (Trait trait : this.definition.traits()) {
+            if (trait.blocksEffect(effect.kind())) {
+                return;
+            }
+        }
+        super.applyEffect(effect);
     }
 
     private void evaluateAbilities(int gameTime) {

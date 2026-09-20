@@ -12,5 +12,7 @@ public enum TraitMarker {
     PERCENT_RESIST,
     FLAT_RESIST,
     CRITICAL_IMMUNE,
-    HURT_SPEED
+    HURT_SPEED,
+    BURN_IMMUNE,
+    FREEZE_IMMUNE
 }

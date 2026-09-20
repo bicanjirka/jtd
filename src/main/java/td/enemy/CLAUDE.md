@@ -99,15 +99,35 @@ which level reaches it, and predates both fields.
 A `Trait` is a passive, always-on modifier: `onHit` (resistance, folded in sequence by
 `DefinedEnemyMob.absorb`), `speedFactor` (a hurt-speed curve applied to `baseSpeed`),
 `isValidTarget` (see the gotcha below — **not** what makes Ghost invisible; Ghost's
-invisibility is ability-driven, see "Invisibility" below). `PercentResistTrait`/`HurtSpeedTrait`/
-`FlatResistTrait`/`CriticalImmunityTrait`
-are the four built-in implementations, reused (not subclassed) by `BuiltInEnemies.ARMORED`/
-`FRENZIED`/the Warden stages - `FlatResistTrait` is deliberately a *flat per-hit* reduction,
-not a depleting shield pool, since a pool that's "used up" over one mob's lifetime needs
-per-mob mutable trait state nothing else here has (see its own doc comment).
-`CriticalImmunityTrait` strips a critical hit's bonus via `Damage.stripCritical()` rather than
-reducing the amount by some fraction of its own, so it stays exact regardless of which tower's
-roll produced the bonus - `ARMORED` carries it alongside its percent resistance.
+invisibility is ability-driven, see "Invisibility" below), and `blocksEffect` (whether this
+trait rejects an incoming `td.effect.EffectKind` outright before it is ever applied - see
+"Effect immunity", below). `PercentResistTrait`/`HurtSpeedTrait`/`FlatResistTrait`/
+`CriticalImmunityTrait`/`BurnImmunityTrait`/`FreezeImmunityTrait` are the six built-in
+implementations, reused (not subclassed) by `BuiltInEnemies.ARMORED`/`FRENZIED`/the Warden
+stages/eggs - `FlatResistTrait` is deliberately a *flat per-hit* reduction, not a depleting
+shield pool, since a pool that's "used up" over one mob's lifetime needs per-mob mutable trait
+state nothing else here has (see its own doc comment). `CriticalImmunityTrait` strips a
+critical hit's bonus via `Damage.stripCritical()` rather than reducing the amount by some
+fraction of its own, so it stays exact regardless of which tower's roll produced the bonus -
+`ARMORED` carries it alongside its percent resistance.
+
+**Effect immunity blocks an incoming status effect outright, before `ActiveEffects` ever
+sees it - it does not reduce an already-landed hit the way `onHit` does.**
+`BurnImmunityTrait`/`FreezeImmunityTrait` are the two built-ins (`BuiltInEnemies.WARDEN_EGG_2`
+carries both); `DefinedEnemyMob.applyEffect` overrides `AbstractEnemyMob.applyEffect` to consult
+every trait's `blocksEffect(effect.kind())` first and silently drop the effect if any trait says
+yes, only delegating to `super.applyEffect` otherwise. A damage-over-time kind blocked this way
+never even reaches `ActiveEffects.tick()`'s sink call, unlike a `Trait.onHit` resistance, which
+only ever reduces an instant hit's amount.
+
+**A frozen mob cannot cast an ability.** `DefinedEnemyMob.isIncapacitated()` - currently just
+"has an active `EffectKind.FREEZE`" - gates the live-tick call to `evaluateAbilities`, so every
+trigger (periodic countdowns included) simply stops progressing for as long as the mob is
+frozen, rather than only suppressing the resulting cast. It is *not* consulted on the
+death-tick `evaluateAbilities` call: dying still spawns whatever an `OnDeathTrigger` carries
+regardless of what the killing hit also applied. Named for the general condition rather than
+the one effect that causes it today, so a future stun-like effect only needs adding to this one
+check.
 
 **Every `Trait` names its own on-board glyph via `marker()`.** Unlike `onHit`/`isValidTarget`/
 `speedFactor`, this method is deliberately non-default: a new `Trait` implementation is a
@@ -398,7 +418,11 @@ compiler-enforced checklist, same spirit as before:
    ids (§10, "the list of ids lives in `td/wave/CLAUDE.md`, not here").
 
 **Adding a genuinely new `Trait` or `Ability`** is ordinary Java: implement the interface (see
-`PercentResistTrait`/`HurtSpeedTrait` for the shape), reuse it from any `EnemyDefinition`.
+`PercentResistTrait`/`HurtSpeedTrait` for the shape), reuse it from any `EnemyDefinition`. A new
+`Trait` also needs a `TraitMarker` constant and its glyph colour - `marker()` is deliberately
+non-default, so the compiler forces both that and the matching cases in
+`td.ui.EnemyFrameBuilder.traitMarkerPaletteFor`/`Java2DFrameRenderer.colorFor` (via
+`td.ui.render.Palette`) before the new trait compiles at all.
 
 **Never branch on a mob's concrete type with `instanceof` or a `switch`.** Use
 `EnemyMobVisitor`. `EnemyFrameBuilder`/`EnemyCatalog`/`AbilityEvaluator` switching on the *sealed* `BodyArchetype`/
