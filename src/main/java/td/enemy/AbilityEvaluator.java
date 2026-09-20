@@ -28,7 +28,7 @@ public final class AbilityEvaluator {
     public static void execute(AbilityAction action, AbilityContext context) {
         switch (action) {
             case ApplyEffectAction a -> context.applyEffect(a.template(), a.target());
-            case SpawnEnemiesAction a -> context.spawnEnemies(a.definitionId(), a.count(), a.consumesSelf());
+            case SpawnEnemiesAction a -> context.spawnEnemies(a.definitionId(), a.shape(), a.consumesSelf());
         }
     }
 

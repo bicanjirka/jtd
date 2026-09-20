@@ -143,6 +143,7 @@ class AbilityEvaluatorTest {
 
         AbilityEvaluator.execute(new SpawnEnemiesAction("wardenEgg", 1, true), context);
 
-        assertThat(context.spawnCalls).containsExactly(new FakeAbilityContext.SpawnCall("wardenEgg", 1, true));
+        assertThat(context.spawnCalls)
+                .containsExactly(new FakeAbilityContext.SpawnCall("wardenEgg", AbilitySpawnShape.normal(), true));
     }
 }
