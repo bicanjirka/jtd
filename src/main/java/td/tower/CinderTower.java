@@ -38,7 +38,7 @@ public final class CinderTower extends AbstractTower {
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.15;
     private static final double HALF_WIDTH_RADIANS_BASE = 0.35;
-    private static final int BURN_DURATION_TICKS = 15;
+    private static final int BURN_DURATION_TICKS = 60;
     private static final double WIDE_NOZZLE_HALF_WIDTH_MULTIPLIER = 1.4;
 
     /**

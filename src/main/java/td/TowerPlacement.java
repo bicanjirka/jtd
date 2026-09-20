@@ -31,7 +31,7 @@ public class TowerPlacement {
     private boolean placingTower = false;
     private TowerFactory.Type placingTowerType;
     private float placingTowerRange = 0;
-    private int[] highlitedCell;
+    private int[] highlightedCell;
 
     public TowerPlacement(GameWorld gameWorld, Supplier<CellGrid> cellGrid) {
         this.gameWorld = gameWorld;
@@ -67,13 +67,13 @@ public class TowerPlacement {
         this.placingTower = false;
         this.placingTowerType = null;
         this.placingTowerRange = 0;
-        this.highlitedCell = null;
+        this.highlightedCell = null;
     }
 
     private void unHighlightCell() {
-        if (this.highlitedCell != null) {
-            this.cellGrid.get().at(this.highlitedCell[0], this.highlitedCell[1]).setHighlight(Cell.HighlightType.NONE);
-            this.highlitedCell = null;
+        if (this.highlightedCell != null) {
+            this.cellGrid.get().at(this.highlightedCell[0], this.highlightedCell[1]).setHighlight(Cell.HighlightType.NONE);
+            this.highlightedCell = null;
         }
     }
 
@@ -81,7 +81,7 @@ public class TowerPlacement {
         this.unHighlightCell();
         BoardGeometry board = this.gameWorld.getBoard();
         if (board.containsPixel(boardX, boardY)) {
-            this.highlitedCell = new int[]{board.cellX(boardX), board.cellY(boardY)};
+            this.highlightedCell = new int[]{board.cellX(boardX), board.cellY(boardY)};
             Cell cell = this.cellGrid.get().at(board.cellX(boardX), board.cellY(boardY));
             cell.setHighlight(Cell.HighlightType.PLACE);
             cell.setHighlightRange(this.placingTowerRange);
@@ -99,7 +99,7 @@ public class TowerPlacement {
             Cell cell = this.cellGrid.get().at(board.cellX(boardX), board.cellY(boardY));
             if (cell.hasTower()) {
                 selected = cell.getTower();
-                this.highlitedCell = new int[]{board.cellX(boardX), board.cellY(boardY)};
+                this.highlightedCell = new int[]{board.cellX(boardX), board.cellY(boardY)};
                 cell.setHighlight(Cell.HighlightType.SELECT);
             } else if (this.placingTower) {
                 if (cell.buildable()) {

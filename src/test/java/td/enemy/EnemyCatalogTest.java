@@ -83,7 +83,7 @@ class EnemyCatalogTest {
         RankedEnemy toughCircle = catalog.cloneAndAdjust("c", "toughCircle",
                 d -> d.withHealthAndPrice(d.baseHealth() + 50, d.price() + 5));
 
-        // "c"'s own five ranks (50/2, 100/3, 200/5, 400/8, 800/15 - see BuiltInEnemies.SIMPLE)
+        // "c"'s own five ranks (50/2, 100/5, 200/13, 400/33, 800/83 - see BuiltInEnemies.SIMPLE)
         // each pick up the same +50/+5 adjustment, so the clone's own five ranks land on five
         // different values too - the adjustment is uniform, but what it's applied to isn't.
         assertThat(toughCircle.definitionFor(Rank.GRUNT).baseHealth()).isEqualTo(100);
@@ -92,7 +92,7 @@ class EnemyCatalogTest {
         assertThat(toughCircle.definitionFor(Rank.ELITE).baseHealth()).isEqualTo(450);
         assertThat(toughCircle.definitionFor(Rank.BOSS).baseHealth()).isEqualTo(850);
         assertThat(toughCircle.definitionFor(Rank.GRUNT).price()).isEqualTo(7);
-        assertThat(toughCircle.definitionFor(Rank.BOSS).price()).isEqualTo(20);
+        assertThat(toughCircle.definitionFor(Rank.BOSS).price()).isEqualTo(88);
 
         // every rank's own id is renamed, and every rank of the original "c" is untouched
         for (Rank rank : Rank.values()) {
@@ -101,7 +101,7 @@ class EnemyCatalogTest {
         assertThat(catalog.get("c", Rank.GRUNT).baseHealth()).isEqualTo(50);
         assertThat(catalog.get("c", Rank.BOSS).baseHealth()).isEqualTo(800);
 
-        // Elite/Boss's own "shield" trait (added, then strengthened, on top of the ladder's
+        // Elite/Boss's own "armor" trait (added, then strengthened, on top of the ladder's
         // health/price progression) survives the clone unchanged - cloneAs copies each rank's
         // whole definition, traits included, not just the two stats adjust touches here.
         assertThat(toughCircle.definitionFor(Rank.SOLDIER).traits()).isEmpty();
@@ -119,13 +119,15 @@ class EnemyCatalogTest {
             // Health/price set outright, not derived from d - proves each rank's adjustment is
             // a real replacement, not a delta on whatever that rank already had.
             case GRUNT -> d.withHealthAndPrice(1000, 100);
-            // Untouched: the old "resist"/"criticalImmune" traits must survive as-is.
+            // Untouched: the old "resist" (already strengthened to 0.75 at this rank - see
+            // BuiltInEnemies.ARMORED)/"criticalImmune" traits must survive as-is.
             case SOLDIER -> d;
             // A new trait added alongside the two existing ones.
             case VETERAN -> d.withAdditionalTraits(
                     List.of(IdentifiedTrait.named("goldShield", new PercentResistTrait(0.5f))));
             // The old "resist" trait replaced by a stronger one under the same id -
-            // "criticalImmune" is left alone.
+            // "criticalImmune" and "flatResist" (added at this rank - see BuiltInEnemies.ARMORED)
+            // are left alone.
             case ELITE -> d.withAdditionalTraits(
                     List.of(IdentifiedTrait.named("resist", new PercentResistTrait(0.3f))));
             case BOSS -> d;
@@ -136,19 +138,20 @@ class EnemyCatalogTest {
         assertThat(grunt.price()).isEqualTo(100);
 
         EnemyDefinition soldier = toughenedSquare.definitionFor(Rank.SOLDIER);
-        assertThat(traitNamed(soldier, "resist")).contains(new PercentResistTrait(0.8f));
+        assertThat(traitNamed(soldier, "resist")).contains(new PercentResistTrait(0.75f));
         assertThat(traitNamed(soldier, "criticalImmune")).contains(new CriticalImmunityTrait());
 
         EnemyDefinition veteran = toughenedSquare.definitionFor(Rank.VETERAN);
         assertThat(veteran.traitSlots()).hasSize(3);
-        assertThat(traitNamed(veteran, "resist")).contains(new PercentResistTrait(0.8f));
+        assertThat(traitNamed(veteran, "resist")).contains(new PercentResistTrait(0.7f));
         assertThat(traitNamed(veteran, "criticalImmune")).contains(new CriticalImmunityTrait());
         assertThat(traitNamed(veteran, "goldShield")).contains(new PercentResistTrait(0.5f));
 
         EnemyDefinition elite = toughenedSquare.definitionFor(Rank.ELITE);
-        assertThat(elite.traitSlots()).hasSize(2);
+        assertThat(elite.traitSlots()).hasSize(3);
         assertThat(traitNamed(elite, "resist")).contains(new PercentResistTrait(0.3f));
         assertThat(traitNamed(elite, "criticalImmune")).contains(new CriticalImmunityTrait());
+        assertThat(traitNamed(elite, "flatResist")).contains(new FlatResistTrait(80));
     }
 
     private static Optional<Trait> traitNamed(EnemyDefinition definition, String name) {
