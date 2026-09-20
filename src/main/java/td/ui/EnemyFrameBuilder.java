@@ -6,16 +6,20 @@ import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMobVisitor;
 import td.enemy.Rank;
+import td.enemy.SupportAura;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
+import td.ui.render.EnemyOverlayDraw;
+import td.ui.render.EnemyRingDraw;
 import td.ui.render.Palette;
 import td.ui.render.RankBadge;
 import td.ui.render.StatusMarkerDraw;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Describes each enemy's body and death-fade animation as {@link EnemyDraw}
@@ -49,9 +53,23 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
      * the same "brief, legible transition" reasoning.
      */
     static final int CLOAK_FADE_DURATION_TICKS = 8;
+    /**
+     * A shield bubble is drawn a bit outside the body itself, in the shield marker's colour, at
+     * a fixed, subtle alpha - it's a persistent state indicator, not a flash, so it stays faint
+     * enough not to compete with the body underneath it.
+     */
+    private static final float SHIELD_BUBBLE_SCALE_FRACTION = 1.3f;
+    private static final float SHIELD_BUBBLE_ALPHA = 0.5f;
+    /**
+     * A support-aura ring's radius is typically many times the body's own scale (a Ghost
+     * Elite's shroud reaches 100px), so it needs a much fainter alpha than the shield bubble to
+     * avoid reading as a solid, competing shape rather than a background reach indicator.
+     */
+    private static final float SUPPORT_AURA_RING_ALPHA = 0.12f;
     private final List<EnemyDraw> draws = new ArrayList<>();
     private final List<StatusMarkerDraw> markerDraws = new ArrayList<>();
     private final List<CritSparkDraw> critSparkDraws = new ArrayList<>();
+    private final List<EnemyOverlayDraw> overlayDraws = new ArrayList<>();
     private final int gameTime;
     private final double interpolationAlpha;
 
@@ -109,7 +127,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return this.critSparkDraws;
     }
 
-    private Void body(Palette palette, AbstractEnemyMob mob, float scale, double facingRadians) {
+    public List<EnemyOverlayDraw> buildOverlays() {
+        return this.overlayDraws;
+    }
+
+    private Void body(Palette palette, AbstractEnemyMob mob, float scale, double facingRadians, Optional<SupportAura> supportAura) {
         if (mob.isDead()) {
             if (!mob.isFadeComplete(this.gameTime)) {
                 int age = mob.ticksSinceDeath(this.gameTime);
@@ -123,8 +145,23 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
                     badgeFor(mob.getRank()), this.cloakProgress(mob)));
             this.markers(mob, x, y, scale);
             this.critSpark(mob, x, y, scale);
+            this.overlays(mob, x, y, scale, supportAura);
         }
         return null;
+    }
+
+    /**
+     * A shield bubble while {@link EffectKind#SHIELD} is active, and a support-aura ring for a
+     * definition that projects an effect onto nearby allies at a radius - both static rings, not
+     * timed ones, since each reflects an ongoing state (an active shield, an authored ability)
+     * rather than a one-shot event.
+     */
+    private void overlays(AbstractEnemyMob mob, float x, float y, float scale, Optional<SupportAura> supportAura) {
+        if (mob.activeEffectKinds().contains(EffectKind.SHIELD)) {
+            this.overlayDraws.add(new EnemyRingDraw(Palette.STATUS_MARKER_SHIELD, x, y, scale * SHIELD_BUBBLE_SCALE_FRACTION, SHIELD_BUBBLE_ALPHA));
+        }
+        supportAura.ifPresent(aura -> this.overlayDraws.add(
+                new EnemyRingDraw(markerPaletteFor(aura.kind()), x, y, aura.radius(), SUPPORT_AURA_RING_ALPHA)));
     }
 
     private void critSpark(AbstractEnemyMob mob, float x, float y, float scale) {
@@ -185,6 +222,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     }
 
     public Void visitDefined(DefinedEnemyMob mob) {
-        return this.body(paletteFor(mob.archetype()), mob, mob.getBodyScale(), mob.getFacingRadians());
+        return this.body(paletteFor(mob.archetype()), mob, mob.getBodyScale(), mob.getFacingRadians(), mob.supportAura());
     }
 }

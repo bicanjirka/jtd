@@ -41,7 +41,7 @@ Each domain type has one *frame builder* that describes it and knows nothing abo
 | Builder                   | Describes                                                                                   | Dispatch                                    |
 |---------------------------|---------------------------------------------------------------------------------------------|---------------------------------------------|
 | `CellFrameBuilder`        | placement/selection highlights                                                              | plain getters — only one `Cell` impl exists |
-| `EnemyFrameBuilder`       | enemy bodies (each carrying its own `RankBadge` and cloak transition), death fades, status-effect markers (`buildMarkers()`), and critical-hit sparks (`buildCritSparks()`) | `EnemyMobVisitor`                           |
+| `EnemyFrameBuilder`       | enemy bodies (each carrying its own `RankBadge` and cloak transition), death fades, status-effect markers (`buildMarkers()`), critical-hit sparks (`buildCritSparks()`), and shield/support-aura rings (`buildOverlays()`) | `EnemyMobVisitor`                           |
 | `TowerSpriteFrameBuilder` | tower base + animated turret head                                                           | `TowerVisitor`                              |
 | `TowerEffectFrameBuilder` | beams, splash, pulse, aura, cone                                                            | `TowerVisitor`                              |
 | `ProjectileFrameBuilder`  | in-flight shells and missiles                                                               | `ProjectileVisitor`                         |
@@ -79,6 +79,18 @@ gain/loss transition for one of the other four kinds still goes through the ordi
 (the dot appearing/disappearing *is* its transition); invisibility gets its own body-level
 treatment because it is the one kind that changes what a mob's silhouette itself should look like,
 not just what is decorated around it.
+
+**`EnemyOverlayDraw` (`RenderFrame.enemyOverlays`) is one sealed hierarchy for every
+enemy-centred ring, reused rather than grown into a new list per case.** Its one variant so far,
+`EnemyRingDraw`, covers both the shield bubble (while `EffectKind.SHIELD` is active, at
+`EnemyFrameBuilder.SHIELD_BUBBLE_SCALE_FRACTION` times the body's own scale) and a support-aura
+ring (`td.enemy.EnemyDefinition.supportAura()`'s radius, for a definition that projects an effect
+onto nearby allies - the Ghost Elite's shroud, the Warden's call-to-arms, the Mender's heal).
+This is the same move `TowerEffectDraw` already made for beams/splash/pulse/aura/cone: one list,
+one exhaustive `Java2DFrameRenderer.paintEnemyOverlay` switch, rather than a `RenderFrame`
+component per new overlay kind. Both rings are static (no `animationSeconds` involved) because
+each reflects an ongoing state rather than a one-shot event - `EnemyFrameBuilder`'s constructor
+still takes only `gameTime`/`interpolationAlpha`, deliberately not widened for this.
 
 ## Two independent clocks, and which one to use
 

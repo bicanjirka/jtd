@@ -11,6 +11,8 @@ import td.fixtures.WorldFixtures;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyFadeDraw;
+import td.ui.render.EnemyOverlayDraw;
+import td.ui.render.EnemyRingDraw;
 import td.ui.render.Palette;
 import td.ui.render.RankBadge;
 import td.ui.render.StatusMarkerDraw;
@@ -40,6 +42,12 @@ class EnemyFrameBuilderTest {
         EnemyFrameBuilder builder = new EnemyFrameBuilder(gameTime, alpha);
         enemy.accept(builder);
         return (EnemyBodyDraw) builder.build().getFirst();
+    }
+
+    private static List<EnemyOverlayDraw> overlaysOf(EnemyMob enemy, int gameTime) {
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(gameTime, 0.0);
+        enemy.accept(builder);
+        return builder.buildOverlays();
     }
 
     @Test
@@ -312,5 +320,51 @@ class EnemyFrameBuilderTest {
         EnemyBodyDraw draw = bodyDrawAt(ghost, 1, 0.0);
 
         assertThat(draw.cloakProgress()).isBetween(0f, 1f);
+    }
+
+    @Test
+    void anEnemyWithNoShieldAndNoSupportAuraYieldsNoOverlays() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+
+        assertThat(overlaysOf(enemy, 0)).isEmpty();
+    }
+
+    @Test
+    void anActiveShieldYieldsARingInTheShieldMarkersColour() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.shield(0.3f, 5, d -> {
+        }));
+
+        List<EnemyOverlayDraw> overlays = overlaysOf(enemy, 0);
+
+        assertThat(overlays).hasSize(1);
+        EnemyRingDraw ring = (EnemyRingDraw) overlays.getFirst();
+        assertThat(ring.palette()).isEqualTo(Palette.STATUS_MARKER_SHIELD);
+    }
+
+    @Test
+    void theShieldRingDisappearsOnceTheShieldExpires() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.shield(0.3f, 1, d -> {
+        }));
+        enemy.doTick(1); // the shield expires this tick
+
+        assertThat(overlaysOf(enemy, 1)).isEmpty();
+    }
+
+    @Test
+    void aDefinitionWithARadiusAbilityYieldsASupportAuraRingAtItsAuthoredRadius() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob eliteGhost = EnemyFactory.getEnemy("g", context, 0, 800, 16, Rank.ELITE); // has the shroud ability
+
+        List<EnemyOverlayDraw> overlays = overlaysOf(eliteGhost, 0);
+
+        assertThat(overlays).hasSize(1);
+        EnemyRingDraw ring = (EnemyRingDraw) overlays.getFirst();
+        assertThat(ring.radius()).isEqualTo(100f);
+        assertThat(ring.palette()).isEqualTo(Palette.STATUS_MARKER_INVISIBLE);
     }
 }

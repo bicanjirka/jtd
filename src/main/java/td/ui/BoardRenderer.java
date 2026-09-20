@@ -77,6 +77,7 @@ public final class BoardRenderer {
         return new RenderFrame(board.scale(), board.maxX(), board.maxY(),
                 cells, enemyFrameBuilder.build(), enemyFrameBuilder.buildMarkers(), enemyFrameBuilder.buildCritSparks(),
                 spriteFrameBuilder.build(), spriteFrameBuilder.buildHeads(),
-                effectFrameBuilder.build(), projectileFrameBuilder.build(), pathMarkers);
+                effectFrameBuilder.build(), projectileFrameBuilder.build(), pathMarkers,
+                enemyFrameBuilder.buildOverlays());
     }
 }

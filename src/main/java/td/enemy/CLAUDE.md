@@ -223,6 +223,18 @@ the shrouding mob itself excluded, no special-casing needed. Any enemy can be ma
 this way; `Trait.isValidTarget` stays available for a future trait that makes a mob untargetable
 through some other means entirely.
 
+**`EnemyDefinition.supportAura()` derives what a definition projects onto allies from its
+abilities, rather than a UI walking `abilities()` itself.** It returns the `EffectKind`/radius of
+the largest `RadiusTarget`-targeted ability a definition carries, as an `Optional<SupportAura>`
+(empty for a definition with no radius-targeted ability at all) - `td.ui.EnemyFrameBuilder` reads
+this to draw a support-aura ring at the ability's real reach, so the Ghost Elite's shroud, the
+Warden's call-to-arms and the Mender's heal all get the same visual with no per-enemy UI
+special-casing. This is a third place that pattern-matches over the sealed `AbilityAction`/
+`EffectTarget` pair, alongside `AbilityEvaluator` and `EnemyCatalog` (see `AbilityAction`'s own
+doc comment) - not license to add a fourth casually; prefer teaching `EffectTemplate`/
+`AbilityAction` a new query method the way `EffectTemplate.kind()` already exists for exactly
+this purpose, over adding another switch.
+
 **Facing is never derived from a per-tick pixel delta.** Enemies move at sub-pixel speeds (`1.28` px/tick is every v1
 built-in's `baseSpeed`), so an `atan2` over one tick's movement
 intermittently collapses to zero. A `PathDirectionalMovement` mob reads the path's exact

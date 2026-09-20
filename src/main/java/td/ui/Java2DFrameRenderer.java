@@ -9,6 +9,8 @@ import td.ui.render.CritSparkDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
+import td.ui.render.EnemyOverlayDraw;
+import td.ui.render.EnemyRingDraw;
 import td.ui.render.MissileDraw;
 import td.ui.render.Palette;
 import td.ui.render.PathMarkerBrightness;
@@ -490,6 +492,9 @@ public final class Java2DFrameRenderer {
         for (CritSparkDraw spark : frame.critSparks()) {
             this.paintCritSpark(g2, spark);
         }
+        for (EnemyOverlayDraw overlay : frame.enemyOverlays()) {
+            this.paintEnemyOverlay(g2, overlay);
+        }
         for (TowerSpriteDraw sprite : frame.towerSprites()) {
             this.paintTowerSprite(g2, sprite, frame.scale());
         }
@@ -720,6 +725,27 @@ public final class Java2DFrameRenderer {
         float sparkScale = spark.scale() * (1f + spark.fadeProgress());
         g2.fill(starShape(4, sparkScale, sparkScale * 0.25f));
         g2.setTransform(save);
+    }
+
+    private void paintEnemyOverlay(Graphics2D g2, EnemyOverlayDraw overlay) {
+        switch (overlay) {
+            case EnemyRingDraw ring -> this.paintEnemyRing(g2, ring);
+        }
+    }
+
+    /**
+     * A thin stroked ring around an enemy - a shield bubble or a support-aura reach indicator.
+     * Shaped exactly like {@link #paintAura}'s tower-side ring, just centred on an enemy instead.
+     */
+    private void paintEnemyRing(Graphics2D g2, EnemyRingDraw ring) {
+        if (ring.radius() <= 0) {
+            return;
+        }
+        Stroke defaultStroke = g2.getStroke();
+        g2.setColor(withAlpha(colorFor(ring.palette()), Math.round(ring.alpha() * 255)));
+        g2.setStroke(new BasicStroke(2.0f));
+        g2.draw(new Ellipse2D.Float(ring.centerX() - ring.radius(), ring.centerY() - ring.radius(), ring.radius() * 2, ring.radius() * 2));
+        g2.setStroke(defaultStroke);
     }
 
     /**
