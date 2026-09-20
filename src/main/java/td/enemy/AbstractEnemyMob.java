@@ -509,6 +509,13 @@ public abstract class AbstractEnemyMob implements EnemyMob {
             // silently shorten its effect on movement by one tick relative to its effect on
             // damage-over-time (which it applies before removing itself either way).
             float speedMultiplier = this.activeEffects.speedMultiplier();
+            // Same reasoning as speedMultiplier above, for the same reason: an effect entering
+            // the last tick of its duration must still act this tick. Applied directly to
+            // health rather than through activeEffects.tick()'s sink mechanism - see
+            // Effect.heal's own doc comment for why a heal isn't a negative damagePerTick.
+            // this.dead is always false here (this branch only runs for a live mob), so this can
+            // never resurrect a mob already fading.
+            this.health = Math.min(this.healthMax, this.health + this.activeEffects.healPerTick());
             this.activeEffects.tick();
             if (this.dead) {
                 // A damage-over-time tick just killed this mob - doDamage() already set

@@ -74,4 +74,48 @@ class AbstractEnemyMobEffectTest {
 
         assertThat(enemy.getHealth()).isEqualTo(8000);
     }
+
+    @Test
+    void aHealEffectRestoresHealthEveryTickUntilItExpires() {
+        GameWorld context = newContext();
+        context.setPath(LevelFixtures.straightPath(1, 0, 100));
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100, 3, Rank.GRUNT); // 10000 health
+        enemy.doDamage(Damage.physical(4000)); // down to 6000
+
+        enemy.applyEffect(Effect.heal(1000, 2, d -> {
+        }));
+        enemy.doTick(1);
+
+        assertThat(enemy.getHealth()).isEqualTo(7000);
+    }
+
+    @Test
+    void aHealEffectNeverRestoresHealthAboveTheMobsMax() {
+        GameWorld context = newContext();
+        context.setPath(LevelFixtures.straightPath(1, 0, 100));
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100, 3, Rank.GRUNT); // 10000 health
+        enemy.doDamage(Damage.physical(500)); // down to 9500
+
+        enemy.applyEffect(Effect.heal(1000, 2, d -> {
+        }));
+        enemy.doTick(1);
+
+        assertThat(enemy.getHealth()).isEqualTo(10000);
+    }
+
+    @Test
+    void aHealEffectNeverAppliesToAMobAlreadyKilledThisTick() {
+        GameWorld context = newContext();
+        context.enemies().setCount(1);
+        context.setPath(LevelFixtures.straightPath(1, 0, 100));
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1, 3, Rank.GRUNT); // 100 health
+
+        enemy.applyEffect(Effect.heal(1000, 5, d -> {
+        }));
+        enemy.doDamage(Damage.physical(100)); // kills it before this tick's doTick runs
+        enemy.doTick(1);
+
+        assertThat(enemy.isDead()).isTrue();
+        assertThat(enemy.getHealth()).isZero();
+    }
 }

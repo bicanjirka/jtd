@@ -183,4 +183,38 @@ class ActiveEffectsTest {
 
         assertThat(effects.applyShield(Damage.physical(100))).isEqualTo(Damage.physical(40));
     }
+
+    @Test
+    void withNoActiveHealHealPerTickIsZero() {
+        ActiveEffects effects = new ActiveEffects();
+
+        assertThat(effects.healPerTick()).isZero();
+    }
+
+    @Test
+    void aHealEffectRestoresItsPerTickAmountForItsDuration() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.heal(50, 2, d -> {
+        }));
+
+        assertThat(effects.healPerTick()).isEqualTo(50);
+
+        effects.tick();
+        assertThat(effects.healPerTick()).isEqualTo(50);
+
+        effects.tick();
+        assertThat(effects.healPerTick()).isZero();
+    }
+
+    @Test
+    void reapplyingHealAtALowerRateKeepsTheStrongerOne() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.heal(80, 5, d -> {
+        }));
+
+        effects.apply(Effect.heal(20, 10, d -> {
+        }));
+
+        assertThat(effects.healPerTick()).isEqualTo(80);
+    }
 }

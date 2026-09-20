@@ -37,6 +37,7 @@ public final class ActiveEffects {
             case SHIELD -> effect.shieldPercent();
             // On/off, not gradated - any reapplication is at least as strong as what's already active.
             case INVISIBLE -> 1f;
+            case HEAL -> effect.healPerTick();
         };
     }
 
@@ -80,6 +81,17 @@ public final class ActiveEffects {
     public Damage applyShield(Damage incoming) {
         Effect shield = this.active.get(EffectKind.SHIELD);
         return shield == null ? incoming : incoming.scaledBy(1f - shield.shieldPercent());
+    }
+
+    /**
+     * How much health the active {@link EffectKind#HEAL} effect restores this tick, {@code 0}
+     * with none active - the effect-side counterpart to {@link #applyShield}, a query rather
+     * than a mutation, since restoring health is the mob's own {@code health} field to touch,
+     * not this holder's.
+     */
+    public int healPerTick() {
+        Effect heal = this.active.get(EffectKind.HEAL);
+        return heal == null ? 0 : heal.healPerTick();
     }
 
     /**

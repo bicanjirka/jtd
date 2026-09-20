@@ -11,45 +11,59 @@ import td.damage.Damage;
  * enemy's active effects needs no per-kind branching: effective speed is the product of every
  * active effect's {@link #speedMultiplier}, damage-over-time is each effect's
  * {@link #damagePerTick} applied through its own {@link #sink}, and damage absorption is each
- * effect's {@link #shieldPercent}. A slow carries {@code Damage.none()}; a burn carries a
- * {@code speedMultiplier} of {@code 1f}. Freeze is modelled as a slow with a
- * {@code speedMultiplier} of {@code 0f} - deliberately one speed-to-zero effect rather than a
- * separate "stun" mechanic, since nothing in this game distinguishes the two until an ability
- * exists for stun to suppress that freeze wouldn't already cover.
+ * effect's {@link #shieldPercent}, and restoring health is each effect's {@link #healPerTick},
+ * read directly rather than through {@link #sink} (see {@link #heal}). A slow carries
+ * {@code Damage.none()}; a burn carries a {@code speedMultiplier} of {@code 1f}. Freeze is
+ * modelled as a slow with a {@code speedMultiplier} of {@code 0f} - deliberately one
+ * speed-to-zero effect rather than a separate "stun" mechanic, since nothing in this game
+ * distinguishes the two until an ability exists for stun to suppress that freeze wouldn't
+ * already cover.
  * <p>
  * {@link #kind} exists only for the UI marker and for matching against an already-active
  * effect of the same kind when re-applying one - see {@code ActiveEffects}.
  */
 public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTick, float shieldPercent,
-                     int remainingTicks, DamageSink sink) {
+                     int remainingTicks, DamageSink sink, int healPerTick) {
 
     public static Effect slow(float speedMultiplier, int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.SLOW, speedMultiplier, Damage.none(), 0f, durationTicks, sink);
+        return new Effect(EffectKind.SLOW, speedMultiplier, Damage.none(), 0f, durationTicks, sink, 0);
     }
 
     public static Effect freeze(int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.FREEZE, 0f, Damage.none(), 0f, durationTicks, sink);
+        return new Effect(EffectKind.FREEZE, 0f, Damage.none(), 0f, durationTicks, sink, 0);
     }
 
     public static Effect burn(Damage damagePerTick, int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.BURN, 1f, damagePerTick, 0f, durationTicks, sink);
+        return new Effect(EffectKind.BURN, 1f, damagePerTick, 0f, durationTicks, sink, 0);
     }
 
     /**
      * Reduces a percentage of every incoming hit while active - see {@code ActiveEffects.applyShield}.
      */
     public static Effect shield(float shieldPercent, int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.SHIELD, 1f, Damage.none(), shieldPercent, durationTicks, sink);
+        return new Effect(EffectKind.SHIELD, 1f, Damage.none(), shieldPercent, durationTicks, sink, 0);
     }
 
     /**
      * Not a valid target while active - see {@code ActiveEffects.isInvisible}.
      */
     public static Effect invisible(int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.INVISIBLE, 1f, Damage.none(), 0f, durationTicks, sink);
+        return new Effect(EffectKind.INVISIBLE, 1f, Damage.none(), 0f, durationTicks, sink, 0);
+    }
+
+    /**
+     * Restores {@code healPerTick} health, every tick, for {@code durationTicks} - see
+     * {@code ActiveEffects.healPerTick}. Deliberately not modelled as a negative
+     * {@code damagePerTick} through the {@code sink} a burn uses - {@code Damage}'s compact
+     * constructor clamps at zero specifically so a healing hit can never exist, and a heal
+     * credits nobody the way a damage-over-time tick credits the tower that applied it. This is
+     * a plain per-tick amount a mob reads and applies to its own health directly.
+     */
+    public static Effect heal(int healPerTick, int durationTicks, DamageSink sink) {
+        return new Effect(EffectKind.HEAL, 1f, Damage.none(), 0f, durationTicks, sink, healPerTick);
     }
 
     Effect withRemainingTicks(int remainingTicks) {
-        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent, remainingTicks, this.sink);
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent, remainingTicks, this.sink, this.healPerTick);
     }
 }

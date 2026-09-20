@@ -9,4 +9,9 @@ public record ShieldTemplate(float percent, int durationTicks) implements Effect
     public Effect toEffect(DamageSink sink) {
         return Effect.shield(this.percent, this.durationTicks, sink);
     }
+
+    @Override
+    public EffectKind kind() {
+        return EffectKind.SHIELD;
+    }
 }
