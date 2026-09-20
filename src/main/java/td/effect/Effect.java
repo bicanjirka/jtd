@@ -1,6 +1,9 @@
 package td.effect;
 
 import td.damage.Damage;
+import td.damage.DamageType;
+
+import java.util.Optional;
 
 /**
  * A timed, stacking-or-not modifier attached to a live enemy - the runtime result of a tower's
@@ -21,34 +24,41 @@ import td.damage.Damage;
  * <p>
  * {@link #kind} exists only for the UI marker and for matching against an already-active
  * effect of the same kind when re-applying one - see {@code ActiveEffects}.
+ * <p>
+ * {@link #shieldRestrictedTo} is meaningful only for {@link EffectKind#SHIELD} - empty (every
+ * factory below) means "absorbs both damage kinds", the same identity-value convention
+ * {@code shieldPercent} being {@code 0f} for a non-shield kind already follows. It is reached
+ * through {@link #withShieldRestrictedTo}, not a widened {@link #shield} argument list - see
+ * {@code ShieldTemplate}, the authored counterpart that actually sets it.
  */
 public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTick, float shieldPercent,
-                     int remainingTicks, DamageSink sink, int healPerTick) {
+                     int remainingTicks, DamageSink sink, int healPerTick,
+                     Optional<DamageType> shieldRestrictedTo) {
 
     public static Effect slow(float speedMultiplier, int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.SLOW, speedMultiplier, Damage.none(), 0f, durationTicks, sink, 0);
+        return new Effect(EffectKind.SLOW, speedMultiplier, Damage.none(), 0f, durationTicks, sink, 0, Optional.empty());
     }
 
     public static Effect freeze(int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.FREEZE, 0f, Damage.none(), 0f, durationTicks, sink, 0);
+        return new Effect(EffectKind.FREEZE, 0f, Damage.none(), 0f, durationTicks, sink, 0, Optional.empty());
     }
 
     public static Effect burn(Damage damagePerTick, int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.BURN, 1f, damagePerTick, 0f, durationTicks, sink, 0);
+        return new Effect(EffectKind.BURN, 1f, damagePerTick, 0f, durationTicks, sink, 0, Optional.empty());
     }
 
     /**
      * Reduces a percentage of every incoming hit while active - see {@code ActiveEffects.applyShield}.
      */
     public static Effect shield(float shieldPercent, int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.SHIELD, 1f, Damage.none(), shieldPercent, durationTicks, sink, 0);
+        return new Effect(EffectKind.SHIELD, 1f, Damage.none(), shieldPercent, durationTicks, sink, 0, Optional.empty());
     }
 
     /**
      * Not a valid target while active - see {@code ActiveEffects.isInvisible}.
      */
     public static Effect invisible(int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.INVISIBLE, 1f, Damage.none(), 0f, durationTicks, sink, 0);
+        return new Effect(EffectKind.INVISIBLE, 1f, Damage.none(), 0f, durationTicks, sink, 0, Optional.empty());
     }
 
     /**
@@ -60,10 +70,21 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
      * a plain per-tick amount a mob reads and applies to its own health directly.
      */
     public static Effect heal(int healPerTick, int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.HEAL, 1f, Damage.none(), 0f, durationTicks, sink, healPerTick);
+        return new Effect(EffectKind.HEAL, 1f, Damage.none(), 0f, durationTicks, sink, healPerTick, Optional.empty());
+    }
+
+    /**
+     * Narrows a {@link EffectKind#SHIELD} effect to absorb one {@link DamageType} only - the
+     * other passes through untouched. The narrow entry point this record's width (8 components)
+     * asks for, rather than widening {@link #shield}'s own argument list.
+     */
+    public Effect withShieldRestrictedTo(DamageType type) {
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
+                this.remainingTicks, this.sink, this.healPerTick, Optional.of(type));
     }
 
     Effect withRemainingTicks(int remainingTicks) {
-        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent, remainingTicks, this.sink, this.healPerTick);
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent, remainingTicks,
+                this.sink, this.healPerTick, this.shieldRestrictedTo);
     }
 }

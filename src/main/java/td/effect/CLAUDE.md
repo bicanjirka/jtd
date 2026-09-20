@@ -19,6 +19,12 @@ graph rather than needing to depend on it.
 ability, only a tower applies them directly via `Effect.slow`/`.burn`/`.freeze`. Add one the same
 shape as `ShieldTemplate`/`HealTemplate` if an ability ever needs to.
 
+**`ShieldTemplate` can be scoped to one `td.damage.DamageType`.** Its `restrictedTo` field (empty
+by default, meaning "absorbs both") is set by its own `physicalOnly`/`magicOnly` factories, and
+carried onto the `Effect` it builds via `Effect.withShieldRestrictedTo`; `ActiveEffects.applyShield`
+passes a hit of the other type through unabsorbed. No built-in ability authors a typed shield yet -
+see `TODO.md`'s "A typed shield has no concrete user yet".
+
 **`ActiveEffects` exposes only queries, never its internal map.** `activeKinds()` (a snapshot,
 for the UI marker row), `speedMultiplier()`, `isInvisible()`, `applyShield(Damage)`,
 `healPerTick()` and `apply(Effect)`/`tick()` are the whole surface. Nothing outside this package
