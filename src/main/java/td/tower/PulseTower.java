@@ -42,7 +42,7 @@ public final class PulseTower extends AbstractTower {
     private boolean fire = false;
 
     public PulseTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.PULSE, PRICE, DAMAGE, RANGE, 0, 0f, context, x, y);
+        super(TowerFactory.Type.PULSE, PRICE, new TowerBaseStats(DAMAGE, RANGE, 0), context, x, y);
     }
 
     @Override

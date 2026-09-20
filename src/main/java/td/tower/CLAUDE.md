@@ -154,10 +154,9 @@ fluent instance `withDamage`/`withRange`/`withFireRate`/`withBounty`/`withCritCh
 for any further axis — e.g. `TowerBuff.damage(0.3f).withRange(0.1f)` — rather than a positional
 literal spelling out every axis to reach the ones it cares about, or seeding the chain off
 `none()`. A sixth axis, were one ever added, would cost these call sites no edits. A tower's crit chance itself is `TowerStats.critChance`, computed as
-`critChanceBonus` added to the tower's own innate `critChanceBase` (via
-`TowerBuff.critChanceFor`, a constructor argument every leaf passes to `AbstractTower` — `0`
-for every leaf except `SniperTower`, whose base is `SniperTower.CRIT_CHANCE`; its `VETERAN`
-path then adds more on top through this same axis).
+`critChanceBonus` added to the tower's own innate `critChanceBase` (via `TowerBuff.critChanceFor`)
+— `0` for every leaf except `SniperTower`, whose `TowerBaseStats` starts at `SniperTower.CRIT_CHANCE`
+via `TowerBaseStats.withCritChance`; its `VETERAN` path then adds more on top through this same axis.
 `AbstractTower.dealDamage` rolls it via `context.random()` before the enemy ever sees the hit,
 scaling the `Damage` through `Damage.asCritical()` on success — see that record's own doc
 comment for the fixed, project-wide multiplier this always applies.
@@ -265,7 +264,8 @@ changes what *this* tower itself is, once, and stays changed for its lifetime.
 
 1. Add the leaf class (make it `final`), extending `AbstractTower`, composing
    `td.tower.targeting` pieces rather than writing a new scan. Its constructor passes its
-   type, price, damage, range and base cooldown plus the world and its cell coordinates
+   type, price, a `TowerBaseStats` (damage, range, base cooldown, plus `withCritChance(...)`
+   for the rare tower that has innate crit chance) and the world and its cell coordinates
    straight to `super(...)`; a passive tower also overrides `isPassive()`.
 2. Add a constant to `TowerFactory.Type` with its price, and its `createTower` branch.
 3. Add a `visit…` method to `TowerVisitor`. The compiler then points you at every place

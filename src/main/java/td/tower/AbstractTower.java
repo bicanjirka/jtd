@@ -71,28 +71,29 @@ public abstract class AbstractTower implements Tower {
 
     /**
      * Binds this tower to a world and converts its cell coordinates into the pixel centre and
-     * pixel range everything else works in. A leaf passes its own constants straight through;
-     * a leaf with no cooldown (a continuous or swept weapon) passes {@code 0} for
+     * pixel range everything else works in. A leaf passes its own constants straight through in
+     * {@code base}; a leaf with no cooldown (a continuous or swept weapon) passes {@code 0} for
      * {@code coolDownMax} and overrides {@link #rateLine(int)} to describe its cadence some
-     * other way. {@code critChanceBase} is {@code 0} for every leaf except {@code SniperTower},
-     * whose marksman aim starts with some crit chance of its own before any upgrade path adds
-     * more.
+     * other way. {@code base.critChanceBase()} is {@code 0} for every leaf except
+     * {@code SniperTower}, whose marksman aim starts with some crit chance of its own before
+     * any upgrade path adds more.
      */
-    protected AbstractTower(TowerFactory.Type t, int price, int damage, float range, int coolDownMax,
-                            float critChanceBase, GameWorld context, int cellX, int cellY) {
+    protected AbstractTower(TowerFactory.Type t, int price, TowerBaseStats base,
+                            GameWorld context, int cellX, int cellY) {
         this.price = price;
         this.type = t;
-        this.damageBase = damage;
-        this.rangeBase = range;
-        this.coolDownMax = coolDownMax;
-        this.critChanceBase = critChanceBase;
+        this.damageBase = base.damage();
+        this.rangeBase = base.range();
+        this.coolDownMax = base.coolDownMax();
+        this.critChanceBase = base.critChanceBase();
         this.context = context;
         int scale = context.getBoard().scale();
         this.boardX = cellX * scale;
         this.boardY = cellY * scale;
         this.centerX = this.boardX + scale / 2;
         this.centerY = this.boardY + scale / 2;
-        this.stats = TowerStats.of(damage, range, coolDownMax, critChanceBase, TowerBuff.none(), scale);
+        this.stats = TowerStats.of(this.damageBase, this.rangeBase, this.coolDownMax,
+                this.critChanceBase, TowerBuff.none(), scale);
     }
 
     /**
