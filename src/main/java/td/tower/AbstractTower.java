@@ -50,6 +50,7 @@ public abstract class AbstractTower implements Tower {
     protected final float rangeBase;
     protected final int damageBase;
     protected final int coolDownMax;
+    protected final float critChanceBase;
     private final TowerFactory.Type type;
     private final int price;
     // Independent readouts rather than a correlated set: damageDealt/killCount are written by
@@ -71,23 +72,27 @@ public abstract class AbstractTower implements Tower {
     /**
      * Binds this tower to a world and converts its cell coordinates into the pixel centre and
      * pixel range everything else works in. A leaf passes its own constants straight through;
-     * a leaf with no cooldown (a continuous or swept weapon) passes {@code 0} and overrides
-     * {@link #rateLine(int)} to describe its cadence some other way.
+     * a leaf with no cooldown (a continuous or swept weapon) passes {@code 0} for
+     * {@code coolDownMax} and overrides {@link #rateLine(int)} to describe its cadence some
+     * other way. {@code critChanceBase} is {@code 0} for every leaf except {@code SniperTower},
+     * whose marksman aim starts with some crit chance of its own before any upgrade path adds
+     * more.
      */
     protected AbstractTower(TowerFactory.Type t, int price, int damage, float range, int coolDownMax,
-                            GameWorld context, int cellX, int cellY) {
+                            float critChanceBase, GameWorld context, int cellX, int cellY) {
         this.price = price;
         this.type = t;
         this.damageBase = damage;
         this.rangeBase = range;
         this.coolDownMax = coolDownMax;
+        this.critChanceBase = critChanceBase;
         this.context = context;
         int scale = context.getBoard().scale();
         this.boardX = cellX * scale;
         this.boardY = cellY * scale;
         this.centerX = this.boardX + scale / 2;
         this.centerY = this.boardY + scale / 2;
-        this.stats = TowerStats.of(damage, range, coolDownMax, TowerBuff.none(), scale);
+        this.stats = TowerStats.of(damage, range, coolDownMax, critChanceBase, TowerBuff.none(), scale);
     }
 
     /**
@@ -127,8 +132,9 @@ public abstract class AbstractTower implements Tower {
 
     /**
      * Current chance, in {@code [0, 1]}, that this tower's next hit rolls critical -
-     * shorthand for {@code stats().critChance()}. {@code 0} unless an upgrade path has granted
-     * some (see {@code td.tower.buff.TowerBuff.critChanceBonus}).
+     * shorthand for {@code stats().critChance()}. This tower's own {@link #critChanceBase}
+     * (0 for most towers) plus whatever an upgrade path has granted on top (see
+     * {@code td.tower.buff.TowerBuff.critChanceBonus}).
      */
     protected float critChance() {
         return this.stats.critChance();
@@ -193,7 +199,7 @@ public abstract class AbstractTower implements Tower {
                 .reduce(TowerBuff.none(), TowerBuff::combine);
         TowerBuff totalBuff = externalBuff.combine(
                 path.map(UpgradePath::statBonus).orElseGet(TowerBuff::none));
-        this.stats = TowerStats.of(this.damageBase, this.rangeBase, this.coolDownMax,
+        this.stats = TowerStats.of(this.damageBase, this.rangeBase, this.coolDownMax, this.critChanceBase,
                 totalBuff, this.context.getBoard().scale());
     }
 

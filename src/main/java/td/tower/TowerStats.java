@@ -22,9 +22,10 @@ import td.tower.buff.TowerBuff;
  * @param rangeReal  current range in pixels
  * @param rangeReal2 {@code rangeReal} squared, so a per-tick scan never calls {@code Math.sqrt}
  * @param critChance current chance, in {@code [0, 1]}, that this tower's next hit rolls
- *                   critical - {@code 0} for every tower until an upgrade path grants some
- *                   (see {@code td.tower.buff.TowerBuff.critChanceBonus}), since no tower has
- *                   any innate crit chance of its own
+ *                   critical - a tower's own innate {@code critChanceBase} (see
+ *                   {@code AbstractTower}; {@code 0} unless a leaf sets otherwise, e.g.
+ *                   {@code SniperTower}) plus whatever an upgrade path has granted on top
+ *                   (see {@code td.tower.buff.TowerBuff.critChanceBonus})
  */
 public record TowerStats(int damage, float range, int coolDown, float rangeReal, float rangeReal2, float critChance) {
 
@@ -33,10 +34,11 @@ public record TowerStats(int damage, float range, int coolDown, float rangeReal,
      * {@code scale} is the board's pixels-per-cell, which is what turns a range in cells into
      * the pixel range every distance check actually uses.
      */
-    public static TowerStats of(int damageBase, float rangeBase, int coolDownMax, TowerBuff buff, int scale) {
+    public static TowerStats of(int damageBase, float rangeBase, int coolDownMax, float critChanceBase,
+                                TowerBuff buff, int scale) {
         float range = buff.rangeFor(rangeBase);
         float rangeReal = range * scale;
         return new TowerStats(buff.damageFor(damageBase), range, buff.fireRateFor(coolDownMax),
-                rangeReal, rangeReal * rangeReal, buff.critChanceFor(0f));
+                rangeReal, rangeReal * rangeReal, buff.critChanceFor(critChanceBase));
     }
 }

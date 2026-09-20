@@ -62,7 +62,7 @@ public final class CinderTower extends AbstractTower {
 
     public CinderTower(GameWorld context, int x, int y) {
         // No cooldown: it burns whatever is in its cone every tick - see rateLine.
-        super(TowerFactory.Type.CINDER, PRICE, DAMAGE, RANGE, 0, context, x, y);
+        super(TowerFactory.Type.CINDER, PRICE, DAMAGE, RANGE, 0, 0f, context, x, y);
     }
 
     @Override

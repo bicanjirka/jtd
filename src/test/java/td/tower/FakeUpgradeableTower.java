@@ -15,7 +15,7 @@ final class FakeUpgradeableTower extends AbstractTower {
     private final List<UpgradePath> paths;
 
     FakeUpgradeableTower(GameWorld context, int x, int y, List<UpgradePath> paths) {
-        super(TowerFactory.Type.SNIPER, 10, 1000, 3f, 20, context, x, y);
+        super(TowerFactory.Type.SNIPER, 10, 1000, 3f, 20, 0f, context, x, y);
         this.paths = paths;
     }
 
