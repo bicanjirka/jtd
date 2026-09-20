@@ -14,4 +14,9 @@ public record CriticalImmunityTrait() implements Trait {
     public Damage onHit(Damage incoming, TraitContext context) {
         return incoming.stripCritical();
     }
+
+    @Override
+    public TraitMarker marker() {
+        return TraitMarker.CRITICAL_IMMUNE;
+    }
 }

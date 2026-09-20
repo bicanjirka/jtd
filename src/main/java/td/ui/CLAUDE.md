@@ -41,7 +41,7 @@ Each domain type has one *frame builder* that describes it and knows nothing abo
 | Builder                   | Describes                                                                                   | Dispatch                                    |
 |---------------------------|---------------------------------------------------------------------------------------------|---------------------------------------------|
 | `CellFrameBuilder`        | placement/selection highlights                                                              | plain getters — only one `Cell` impl exists |
-| `EnemyFrameBuilder`       | enemy bodies (each carrying its own `RankBadge` and cloak transition), death fades, status-effect markers (`buildMarkers()`), critical-hit sparks (`buildCritSparks()`), and shield/support-aura rings (`buildOverlays()`) | `EnemyMobVisitor`                           |
+| `EnemyFrameBuilder`       | enemy bodies (each carrying its own `RankBadge` and cloak transition), death fades, status-effect markers (`buildMarkers()`), critical-hit sparks (`buildCritSparks()`), and shield/support-aura rings, gain/loss/cast/spawn pulses, and trait markers (all three via `buildOverlays()`) | `EnemyMobVisitor`                           |
 | `TowerSpriteFrameBuilder` | tower base + animated turret head                                                           | `TowerVisitor`                              |
 | `TowerEffectFrameBuilder` | beams, splash, pulse, aura, cone                                                            | `TowerVisitor`                              |
 | `ProjectileFrameBuilder`  | in-flight shells and missiles                                                               | `ProjectileVisitor`                         |
@@ -104,6 +104,15 @@ needs capturing on the caster at all, not just relying on each recipient's own g
 one for `ticksSinceAbilitySpawn` - all three share `EFFECT_PULSE_DURATION_TICKS` and the same
 grow/shrink-and-fade treatment, just keyed off a different tick and a different `Palette` role
 (`Palette.SPAWN_BURST` for the spawn case, `markerPaletteFor(kind)` for the other two).
+
+**`TraitMarkerDraw`, the hierarchy's third member, is a second, permanent marker row - hollow
+diamonds below the body, mirroring the timed status row's filled ones above it.** One per
+`td.enemy.Trait` a mob carries (`trait.marker()` names its glyph - see `Trait`'s own doc comment
+for why that method is deliberately non-default), capped at the same `MAX_VISIBLE_MARKERS` and
+collapsing into `Palette.TRAIT_MARKER_OVERFLOW` past it, for the same legibility reason. Hollow
+rather than filled is the one deliberate visual difference from the status row, so the two are
+never confused at a glance: a trait is permanent for this mob's whole lifetime, a status marker
+is not.
 
 ## Two independent clocks, and which one to use
 

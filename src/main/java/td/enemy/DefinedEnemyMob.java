@@ -84,6 +84,10 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         return this.definition.supportAura();
     }
 
+    public List<Trait> traits() {
+        return this.definition.traits();
+    }
+
     public double getFacingRadians() {
         return switch (this.definition.movement()) {
             case FixedMovement ignored -> 0.0;

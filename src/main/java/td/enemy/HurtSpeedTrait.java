@@ -14,4 +14,9 @@ public record HurtSpeedTrait(float maxMultiplier) implements Trait {
     public float speedFactor(TraitContext context) {
         return 1f + (this.maxMultiplier - 1f) * (1f - context.healthFraction());
     }
+
+    @Override
+    public TraitMarker marker() {
+        return TraitMarker.HURT_SPEED;
+    }
 }

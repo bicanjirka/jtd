@@ -109,6 +109,12 @@ per-mob mutable trait state nothing else here has (see its own doc comment).
 reducing the amount by some fraction of its own, so it stays exact regardless of which tower's
 roll produced the bonus - `ARMORED` carries it alongside its percent resistance.
 
+**Every `Trait` names its own on-board glyph via `marker()`.** Unlike `onHit`/`isValidTarget`/
+`speedFactor`, this method is deliberately non-default: a new `Trait` implementation is a
+compile error until it names a `TraitMarker`, the same discipline `EffectTemplate.kind()` gives
+a new effect template. `td.ui.EnemyFrameBuilder` draws one hollow diamond per trait in a row
+below the body - see `td/ui/CLAUDE.md`.
+
 **A `Trait` instance is shared across every mob built from the same `EnemyDefinition`.**
 `TraitContext(healthFraction)` is passed into every `Trait` method for whatever per-mob state a
 formula needs (currently just health fraction) — it carries no `Rank`, because a stronger

@@ -66,5 +66,14 @@ public enum Palette {
      */
     RANK_BADGE_CHEVRON,
     RANK_BADGE_ELITE,
-    RANK_BADGE_BOSS
+    RANK_BADGE_BOSS,
+    /**
+     * A small hollow glyph naming one of a mob's always-on traits - see TraitMarkerDraw. One
+     * role per td.enemy.TraitMarker, plus an overflow role for the row's own cap.
+     */
+    TRAIT_MARKER_PERCENT_RESIST,
+    TRAIT_MARKER_FLAT_RESIST,
+    TRAIT_MARKER_CRITICAL_IMMUNE,
+    TRAIT_MARKER_HURT_SPEED,
+    TRAIT_MARKER_OVERFLOW
 }
