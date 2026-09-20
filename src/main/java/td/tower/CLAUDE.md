@@ -197,6 +197,13 @@ every tower whenever the set changes (`add`/`sell`), and `chooseUpgradePath` cal
 path side. `TowerRoster.clear()` deliberately does not — every tower is gone, so there is
 nothing to recompute and nothing left to read a stale value.
 
+**`AuraTower.buffedTowers()` is the same derived-not-stored shape, reused for the board's own
+link-line visual.** It stays a fresh `stream().filter(this::buffs).toList()` snapshot rather than
+tracked state — `td.ui.TowerEffectFrameBuilder.visitAuraTower` draws one faint
+`Palette.TOWER_AURA_LINK` beam per tower it returns, which is what makes a second, stored index
+here exactly the bidirectional-graph mistake the paragraph above already describes, just for a
+render feature instead of the buff itself.
+
 **A tower's fire rate has a base/current split just like damage and range.**
 `coolDownMax` is the base cooldown a leaf passes to `super(...)`; `coolDownCurrent()` is what
 tick code actually resets `coolDown` to after firing, and is `coolDownMax` shortened by

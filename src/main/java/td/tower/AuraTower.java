@@ -3,6 +3,8 @@ package td.tower;
 import td.tower.buff.TowerBuff;
 import td.util.GameWorld;
 
+import java.util.List;
+
 /**
  * "Aura tower" - passive. Never attacks; instead it contributes a {@link TowerBuff} to every
  * non-aura tower whose centre falls within its range, and several stack additively. It
@@ -59,10 +61,15 @@ public final class AuraTower extends AbstractTower {
     }
 
     /**
-     * How many towers this aura is currently amplifying - counted, not tracked.
+     * The towers this aura is currently amplifying, as a fresh snapshot - derived the same way
+     * {@link #buffFor} is, never stored. A stored bidirectional buff graph (this class's own
+     * {@code clients} set, paired with a {@code List<AuraTower>} on every tower) was deliberately
+     * deleted once already - two structures that must agree is a bug factory - so this stays a
+     * query, not new tracked state, even though it now feeds a render line as well as the status
+     * text below.
      */
-    private long buffedTowerCount() {
-        return this.context.towers().all().stream().filter(this::buffs).count();
+    public List<Tower> buffedTowers() {
+        return this.context.towers().all().stream().filter(this::buffs).toList();
     }
 
     public void doTick(int gameTime) {
@@ -82,6 +89,6 @@ public final class AuraTower extends AbstractTower {
         return "Aura tower\n\n" +
                 super.getStatusString() +
                 "Increases damage and range of nearby towers by " + (this.power * 100) + "%\n\n" +
-                "Affects towers: " + this.buffedTowerCount();
+                "Affects towers: " + this.buffedTowers().size();
     }
 }

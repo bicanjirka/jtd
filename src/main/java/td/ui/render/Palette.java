@@ -24,6 +24,10 @@ public enum Palette {
     TOWER_CINDER_BODY,
     TOWER_AURA_RING,
     /**
+     * A faint line from an Aura tower to a tower it's currently amplifying - see AuraTower.buffedTowers.
+     */
+    TOWER_AURA_LINK,
+    /**
      * The specialization-ring accent for a tower's first vs. second upgrade path - one shared pair of roles, not one per tower type.
      */
     TOWER_UPGRADE_PATH_A,
