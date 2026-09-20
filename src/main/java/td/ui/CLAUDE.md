@@ -81,8 +81,8 @@ treatment because it is the one kind that changes what a mob's silhouette itself
 not just what is decorated around it.
 
 **`EnemyOverlayDraw` (`RenderFrame.enemyOverlays`) is one sealed hierarchy for every
-enemy-centred ring, reused rather than grown into a new list per case.** Its one variant so far,
-`EnemyRingDraw`, covers both the shield bubble (while `EffectKind.SHIELD` is active, at
+enemy-centred ring, reused rather than grown into a new list per case.** `EnemyRingDraw` covers
+both the shield bubble (while `EffectKind.SHIELD` is active, at
 `EnemyFrameBuilder.SHIELD_BUBBLE_SCALE_FRACTION` times the body's own scale) and a support-aura
 ring (`td.enemy.EnemyDefinition.supportAura()`'s radius, for a definition that projects an effect
 onto nearby allies - the Ghost Elite's shroud, the Warden's call-to-arms, the Mender's heal).
@@ -91,6 +91,19 @@ one exhaustive `Java2DFrameRenderer.paintEnemyOverlay` switch, rather than a `Re
 component per new overlay kind. Both rings are static (no `animationSeconds` involved) because
 each reflects an ongoing state rather than a one-shot event - `EnemyFrameBuilder`'s constructor
 still takes only `gameTime`/`interpolationAlpha`, deliberately not widened for this.
+
+**`EffectPulseDraw`, the hierarchy's other member, is one shape for every one-shot transition: a
+gain, a loss, an ability cast, or an ability-driven spawn's arrival.** It carries a target
+`radius` and a 0..1 `progress`, never a stored current radius/alpha - the backend grows
+(`PulseDirection.OUTWARD`) or shrinks (`INWARD`) the drawn ring from `progress` and fades it out
+the same way, mirroring `CritSparkDraw`'s own shape. `EnemyFrameBuilder.pulses()` emits one for
+every `EffectKind` (except `INVISIBLE`, whose transition is `cloakProgress` on the body itself)
+that was just gained or lost per `AbstractEnemyMob.ticksSinceEffectGained`/`ticksSinceEffectLost`,
+one for `AbstractEnemyMob.lastAbilityCast()` (see that record's own doc comment for why a cast
+needs capturing on the caster at all, not just relying on each recipient's own gain pulse), and
+one for `ticksSinceAbilitySpawn` - all three share `EFFECT_PULSE_DURATION_TICKS` and the same
+grow/shrink-and-fade treatment, just keyed off a different tick and a different `Palette` role
+(`Palette.SPAWN_BURST` for the spawn case, `markerPaletteFor(kind)` for the other two).
 
 ## Two independent clocks, and which one to use
 

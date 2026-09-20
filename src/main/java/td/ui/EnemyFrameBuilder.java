@@ -8,12 +8,14 @@ import td.enemy.EnemyMobVisitor;
 import td.enemy.Rank;
 import td.enemy.SupportAura;
 import td.ui.render.CritSparkDraw;
+import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
 import td.ui.render.Palette;
+import td.ui.render.PulseDirection;
 import td.ui.render.RankBadge;
 import td.ui.render.StatusMarkerDraw;
 
@@ -66,6 +68,24 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
      * avoid reading as a solid, competing shape rather than a background reach indicator.
      */
     private static final float SUPPORT_AURA_RING_ALPHA = 0.12f;
+    /**
+     * How long a gain/loss/cast/spawn pulse takes to fully grow-or-shrink and fade - same
+     * duration as the crit spark and the cloak fade, for the same brief-and-legible reasoning,
+     * kept as its own constant since it means something different (a ring's lifetime, not a
+     * spark's or a cloak's).
+     */
+    static final int EFFECT_PULSE_DURATION_TICKS = 8;
+    /**
+     * A gain/loss/cast pulse's ring size, as a fraction of the mob's own body scale - just
+     * outside the body, reading as a ripple from it, the same relative size the shield bubble
+     * uses.
+     */
+    private static final float GAIN_LOSS_PULSE_RADIUS_FRACTION = 1.6f;
+    /**
+     * An ability-driven spawn's arrival burst is drawn a bit larger than a gain/loss pulse - it
+     * marks a new mob appearing, not a status change on one already there.
+     */
+    private static final float SPAWN_BURST_RADIUS_FRACTION = 2.2f;
     private final List<EnemyDraw> draws = new ArrayList<>();
     private final List<StatusMarkerDraw> markerDraws = new ArrayList<>();
     private final List<CritSparkDraw> critSparkDraws = new ArrayList<>();
@@ -146,6 +166,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             this.markers(mob, x, y, scale);
             this.critSpark(mob, x, y, scale);
             this.overlays(mob, x, y, scale, supportAura);
+            this.pulses(mob, x, y, scale);
         }
         return null;
     }
@@ -162,6 +183,44 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         }
         supportAura.ifPresent(aura -> this.overlayDraws.add(
                 new EnemyRingDraw(markerPaletteFor(aura.kind()), x, y, aura.radius(), SUPPORT_AURA_RING_ALPHA)));
+    }
+
+    /**
+     * A ring wherever this mob just changed state: gaining or losing an effect kind, casting an
+     * ability-applied effect, or arriving via an ability-driven spawn.
+     */
+    private void pulses(AbstractEnemyMob mob, float x, float y, float scale) {
+        for (EffectKind kind : EffectKind.values()) {
+            if (kind == EffectKind.INVISIBLE) {
+                // The cloak fade on the body itself is this transition - see cloakProgress.
+                continue;
+            }
+            this.addTransitionPulse(x, y, scale, kind, mob.ticksSinceEffectGained(kind, this.gameTime), PulseDirection.OUTWARD);
+            this.addTransitionPulse(x, y, scale, kind, mob.ticksSinceEffectLost(kind, this.gameTime), PulseDirection.INWARD);
+        }
+        mob.lastAbilityCast().ifPresent(cast -> {
+            int ticksSince = this.gameTime - cast.tick();
+            if (ticksSince >= 0 && ticksSince <= EFFECT_PULSE_DURATION_TICKS) {
+                float progress = (float) ticksSince / EFFECT_PULSE_DURATION_TICKS;
+                // A SelfTarget cast carries radius 0 - fall back to the same ripple size a
+                // gain/loss pulse uses, since a literal zero-radius ring would be invisible.
+                float ringRadius = cast.radius() > 0 ? cast.radius() : scale * GAIN_LOSS_PULSE_RADIUS_FRACTION;
+                this.overlayDraws.add(new EffectPulseDraw(markerPaletteFor(cast.kind()), x, y, ringRadius, progress, PulseDirection.OUTWARD));
+            }
+        });
+        int ticksSinceSpawn = mob.ticksSinceAbilitySpawn(this.gameTime);
+        if (ticksSinceSpawn >= 0 && ticksSinceSpawn <= EFFECT_PULSE_DURATION_TICKS) {
+            float progress = (float) ticksSinceSpawn / EFFECT_PULSE_DURATION_TICKS;
+            this.overlayDraws.add(new EffectPulseDraw(Palette.SPAWN_BURST, x, y, scale * SPAWN_BURST_RADIUS_FRACTION, progress, PulseDirection.OUTWARD));
+        }
+    }
+
+    private void addTransitionPulse(float x, float y, float scale, EffectKind kind, int ticksSince, PulseDirection direction) {
+        if (ticksSince < 0 || ticksSince > EFFECT_PULSE_DURATION_TICKS) {
+            return;
+        }
+        float progress = (float) ticksSince / EFFECT_PULSE_DURATION_TICKS;
+        this.overlayDraws.add(new EffectPulseDraw(markerPaletteFor(kind), x, y, scale * GAIN_LOSS_PULSE_RADIUS_FRACTION, progress, direction));
     }
 
     private void critSpark(AbstractEnemyMob mob, float x, float y, float scale) {

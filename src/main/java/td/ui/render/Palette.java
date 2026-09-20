@@ -55,6 +55,11 @@ public enum Palette {
      */
     CRIT_SPARK,
     /**
+     * A brief ring where an ability-driven spawn (an egg hatch, a death split, a reinforcement)
+     * arrived - not tied to any EffectKind, so it gets its own role rather than reusing one.
+     */
+    SPAWN_BURST,
+    /**
      * An enemy's rank badge - see {@link RankBadge}. One shared role for Soldier's one chevron
      * and Veteran's two, since both read as the same army-insignia language; Elite's star and
      * Boss's skull each get their own role so they can carry their own (gold, silver) colour.

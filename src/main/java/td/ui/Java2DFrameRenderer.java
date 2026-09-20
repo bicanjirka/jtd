@@ -6,6 +6,7 @@ import td.ui.render.CannonballDraw;
 import td.ui.render.CellDraw;
 import td.ui.render.ConeDraw;
 import td.ui.render.CritSparkDraw;
+import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
@@ -17,6 +18,7 @@ import td.ui.render.PathMarkerBrightness;
 import td.ui.render.PathMarkerDraw;
 import td.ui.render.PathMarkerShape;
 import td.ui.render.ProjectileDraw;
+import td.ui.render.PulseDirection;
 import td.ui.render.PulseDraw;
 import td.ui.render.RankBadge;
 import td.ui.render.RenderFrame;
@@ -436,6 +438,7 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_HEAL -> new Color(120, 220, 140);
             case STATUS_MARKER_OVERFLOW -> Color.WHITE;
             case CRIT_SPARK -> Color.WHITE;
+            case SPAWN_BURST -> Color.WHITE;
             case RANK_BADGE_CHEVRON -> Color.WHITE;
             case RANK_BADGE_ELITE -> new Color(230, 190, 60);
             case RANK_BADGE_BOSS -> new Color(210, 210, 220);
@@ -730,6 +733,7 @@ public final class Java2DFrameRenderer {
     private void paintEnemyOverlay(Graphics2D g2, EnemyOverlayDraw overlay) {
         switch (overlay) {
             case EnemyRingDraw ring -> this.paintEnemyRing(g2, ring);
+            case EffectPulseDraw pulse -> this.paintEffectPulse(g2, pulse);
         }
     }
 
@@ -745,6 +749,25 @@ public final class Java2DFrameRenderer {
         g2.setColor(withAlpha(colorFor(ring.palette()), Math.round(ring.alpha() * 255)));
         g2.setStroke(new BasicStroke(2.0f));
         g2.draw(new Ellipse2D.Float(ring.centerX() - ring.radius(), ring.centerY() - ring.radius(), ring.radius() * 2, ring.radius() * 2));
+        g2.setStroke(defaultStroke);
+    }
+
+    /**
+     * A ring that grows outward from nothing (a gain, a cast, a spawn burst) or shrinks inward
+     * to nothing (a loss) as {@code progress} advances 0..1, fading out at the same rate -
+     * {@code pulse.radius()} is the ring's target/starting size, never its current one.
+     */
+    private void paintEffectPulse(Graphics2D g2, EffectPulseDraw pulse) {
+        float radius = pulse.direction() == PulseDirection.OUTWARD
+                ? pulse.radius() * pulse.progress()
+                : pulse.radius() * (1f - pulse.progress());
+        if (radius <= 0) {
+            return;
+        }
+        Stroke defaultStroke = g2.getStroke();
+        g2.setColor(withAlpha(colorFor(pulse.palette()), Math.round((1f - pulse.progress()) * 255)));
+        g2.setStroke(new BasicStroke(2.0f));
+        g2.draw(new Ellipse2D.Float(pulse.centerX() - radius, pulse.centerY() - radius, radius * 2, radius * 2));
         g2.setStroke(defaultStroke);
     }
 

@@ -258,6 +258,11 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
                 case SelfTarget ignored -> DefinedEnemyMob.this.applyEffect(template.toEffect(this::creditNoOne));
                 case RadiusTarget radiusTarget -> this.applyToOthersInRadius(template, radiusTarget.radius());
             }
+            float castRadius = switch (target) {
+                case SelfTarget ignored -> 0f;
+                case RadiusTarget radiusTarget -> radiusTarget.radius();
+            };
+            DefinedEnemyMob.this.recordAbilityCast(template.kind(), castRadius, this.gameTime);
         }
 
         private void applyToOthersInRadius(EffectTemplate template, float radius) {
@@ -292,6 +297,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
                         spawnedDefinition.baseHealth(), spawnedDefinition.price(), DefinedEnemyMob.this.getPathIndex());
                 DefinedEnemyMob spawned = new DefinedEnemyMob(spawnedDefinition, world, spawnParameters, DefinedEnemyMob.this.rank);
                 spawned.spawnAtSamePositionAs(DefinedEnemyMob.this);
+                spawned.recordAbilitySpawn(this.gameTime);
                 if (consumesSelf) {
                     world.enemies().replace(DefinedEnemyMob.this, spawned);
                 } else {

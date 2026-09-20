@@ -9,11 +9,13 @@ import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.WorldFixtures;
 import td.ui.render.CritSparkDraw;
+import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
 import td.ui.render.Palette;
+import td.ui.render.PulseDirection;
 import td.ui.render.RankBadge;
 import td.ui.render.StatusMarkerDraw;
 import td.util.GameWorld;
@@ -366,5 +368,69 @@ class EnemyFrameBuilderTest {
         EnemyRingDraw ring = (EnemyRingDraw) overlays.getFirst();
         assertThat(ring.radius()).isEqualTo(100f);
         assertThat(ring.palette()).isEqualTo(Palette.STATUS_MARKER_INVISIBLE);
+    }
+
+    @Test
+    void aGainedEffectYieldsAnOutwardPulseAtTheMomentItsGained() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.slow(0.5f, 200, d -> {
+        }));
+        enemy.doTick(1); // captures the gain at tick 1
+
+        List<EnemyOverlayDraw> overlays = overlaysOf(enemy, 1);
+
+        assertThat(overlays).hasSize(1);
+        EffectPulseDraw pulse = (EffectPulseDraw) overlays.getFirst();
+        assertThat(pulse.palette()).isEqualTo(Palette.STATUS_MARKER_SLOW);
+        assertThat(pulse.direction()).isEqualTo(PulseDirection.OUTWARD);
+        assertThat(pulse.progress()).isZero();
+    }
+
+    @Test
+    void theGainPulseDisappearsAfterItsDuration() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.slow(0.5f, 200, d -> {
+        }));
+        enemy.doTick(1);
+
+        assertThat(overlaysOf(enemy, 1 + EnemyFrameBuilder.EFFECT_PULSE_DURATION_TICKS)).hasSize(1);
+        assertThat(overlaysOf(enemy, 1 + EnemyFrameBuilder.EFFECT_PULSE_DURATION_TICKS + 1)).isEmpty();
+    }
+
+    @Test
+    void aLostEffectYieldsAnInwardPulseAtTheMomentItExpires() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        int durationTicks = EnemyFrameBuilder.EFFECT_PULSE_DURATION_TICKS + 2;
+        enemy.applyEffect(Effect.slow(0.5f, durationTicks, d -> {
+        }));
+        for (int t = 1; t <= durationTicks; t++) { // the slow expires on the last of these
+            enemy.doTick(t);
+        }
+
+        // Query past the gain pulse's own window, so only the loss pulse this expiry just
+        // produced remains - the two are far enough apart in every real effect's duration.
+        List<EnemyOverlayDraw> overlays = overlaysOf(enemy, durationTicks);
+
+        assertThat(overlays).hasSize(1);
+        EffectPulseDraw pulse = (EffectPulseDraw) overlays.getFirst();
+        assertThat(pulse.direction()).isEqualTo(PulseDirection.INWARD);
+    }
+
+    @Test
+    void anAbilityDrivenSpawnYieldsASpawnBurstPulseAtItsArrival() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        ((AbstractEnemyMob) enemy).recordAbilitySpawn(0);
+
+        List<EnemyOverlayDraw> overlays = overlaysOf(enemy, 0);
+
+        assertThat(overlays).hasSize(1);
+        EffectPulseDraw pulse = (EffectPulseDraw) overlays.getFirst();
+        assertThat(pulse.palette()).isEqualTo(Palette.SPAWN_BURST);
+        assertThat(pulse.direction()).isEqualTo(PulseDirection.OUTWARD);
+        assertThat(pulse.progress()).isZero();
     }
 }

@@ -193,6 +193,16 @@ set.
 Warden); `consumesSelf == true` with `count > 1` has no defined meaning (this mob can only be
 replaced by one thing) and isn't validated against.
 
+**Two more moments get recorded for the UI, both set directly with no deferred-capture step -
+`AbilityCast`/`ticksSinceAbilitySpawn`.** `MobAbilityContext.applyEffect` already has `gameTime`
+in hand when a cast resolves, so it calls `AbstractEnemyMob.recordAbilityCast` synchronously,
+unlike `deathTick`/`criticalHitTick`/`damageTakenTick`'s deferred capture - applying an effect
+cannot land during another phase of the tick the way a hit can, so there is no cross-phase gap to
+defer across. `SpawnEnemiesAction`'s execution calls the new mob's own `recordAbilitySpawn`
+right after `spawnAtSamePositionAs` for the same reason - both are `td.ui.EnemyFrameBuilder`'s
+inputs for a brief arrival/cast ring; see `AbilityCast`'s own doc comment for why a cast needs
+recording on the caster at all.
+
 ## Invariants worth knowing before you change anything here
 
 **A mob is built by one constructor, and every field it is born with is `final`.** There is no

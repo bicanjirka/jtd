@@ -129,6 +129,16 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     // Ghost's vanish-on-first-hit needs.
     private boolean damageTakenPending;
     private int damageTakenTick = -1;
+    // Set directly by DefinedEnemyMob.MobAbilityContext.applyEffect, which already has gameTime
+    // in hand when a cast resolves - unlike the three fields above, this needs no deferred
+    // capture, since applying an effect is not something that can land during another phase of
+    // the tick the way a hit can. Null until the first cast; never exposed as null - see
+    // lastAbilityCast().
+    private AbilityCast lastAbilityCast;
+    // Same shape as deathTick/criticalHitTick: set directly (an ability-driven spawn's
+    // constructor runs synchronously, so there is no cross-phase timing gap to defer across),
+    // read back as ticksSinceAbilitySpawn(gameTime).
+    private int abilitySpawnTick = -1;
     private double distanceIntoLap = 0;
     private double lastFacingRadians = 0;
 
@@ -429,6 +439,37 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      */
     public int ticksSinceDamageTaken(int gameTime) {
         return this.damageTakenTick < 0 ? -1 : gameTime - this.damageTakenTick;
+    }
+
+    /**
+     * Records this mob having just cast an ability-applied effect - see {@link #lastAbilityCast}.
+     */
+    public void recordAbilityCast(EffectKind kind, float radius, int gameTime) {
+        this.lastAbilityCast = new AbilityCast(kind, radius, gameTime);
+    }
+
+    /**
+     * The most recent ability-applied effect this mob cast, if any - see {@link AbilityCast}'s
+     * own doc comment for why this is recorded at all.
+     */
+    public Optional<AbilityCast> lastAbilityCast() {
+        return Optional.ofNullable(this.lastAbilityCast);
+    }
+
+    /**
+     * Records this mob having just arrived via an ability-driven spawn (an egg hatch, a death
+     * split, a reinforcement) - see {@link #ticksSinceAbilitySpawn}.
+     */
+    public void recordAbilitySpawn(int gameTime) {
+        this.abilitySpawnTick = gameTime;
+    }
+
+    /**
+     * Ticks elapsed since this mob arrived via an ability-driven spawn, or {@code -1} if it did
+     * not (the ordinary case - a wave-spawned mob never calls {@link #recordAbilitySpawn}).
+     */
+    public int ticksSinceAbilitySpawn(int gameTime) {
+        return this.abilitySpawnTick < 0 ? -1 : gameTime - this.abilitySpawnTick;
     }
 
     public boolean isFadeComplete(int gameTime) {
