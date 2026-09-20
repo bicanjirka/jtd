@@ -69,7 +69,7 @@ enemy table when you register a new id.
 |-----------|-------------------------------------------------------------------------------------|
 | `c`       | Simple — no special behaviour (drawn as a circle)                                   |
 | `s`       | Armored — takes reduced damage (drawn as a square)                                  |
-| `t`       | Frenzied — speeds up as it is hurt (drawn as a triangle)                            |
+| `t`       | Frenzied — speeds up as it is hurt; Boss also calls a brood of spawnlings (drawn as a triangle) |
 | `g`       | Ghost — vanishes to single-target towers the first time it's hit; Elite/Boss also shroud nearby allies (drawn as a tinted circle) |
 | `m`       | Mender — deals no damage; periodically heals nearby allies (drawn as a cross)       |
 | `e`       | Empty - the reserved spacer; counts toward spawn timing, not toward the enemy count |

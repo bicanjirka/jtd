@@ -13,9 +13,11 @@ entirely from the `EnemyDefinition` it was built from — a name/id, base stats,
 `BodyArchetype`/`MovementBehavior` pair for rendering, and composable `Trait`s/`Ability`s —
 never from a per-type Java override. `EnemyCatalog.spawn(id, ..., rank)` builds one of these
 from whichever definition `id`'s `RankedEnemy` resolves `rank` to; `BuiltInEnemies` holds the
-five basic built-in ladders (`SIMPLE`/`ARMORED`/`FRENZIED`/`GHOST`/`MENDER`, each a full `RankedEnemy`)
-plus the Warden boss's six-stage chain (`WARDEN_1`/`WARDEN_EGG_1`/`WARDEN_2`/`WARDEN_EGG_2`/
-`WARDEN_3`/`WARDEN_EGG_3`, six single-rank `EnemyDefinition`s), which `EnemyCatalog.builtIn()`
+five basic built-in ladders (`SIMPLE`/`ARMORED`/`FRENZIED`/`GHOST`/`MENDER`, each a full `RankedEnemy`),
+the Warden boss's six-stage chain (`WARDEN_1`/`WARDEN_EGG_1`/`WARDEN_2`/`WARDEN_EGG_2`/
+`WARDEN_3`/`WARDEN_EGG_3`, six single-rank `EnemyDefinition`s), and single-rank ability-spawned
+reinforcements like `T_SPAWN` (the Frenzied Boss's own brood, never spawned by a wave script
+directly - only by that Boss's `spawn` ability), all of which `EnemyCatalog.builtIn()`
 pre-registers under their wave-script ids. `e`, the wave mini-language's spacer token, no
 longer spawns a mob of any kind — `td.wave.WaveScript` recognizes it before ever consulting a
 catalog and it produces zero enemies (see `td/wave/CLAUDE.md`).

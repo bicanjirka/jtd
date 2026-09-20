@@ -97,9 +97,8 @@ final class BuiltInEnemies {
     // Boss's health-threshold spawn and neglect-heal each combine three or more numbers that
     // read better with a name than as bare literals inside the definition below.
     private static final float FRENZIED_SPAWN_HEALTH_THRESHOLD = 0.5f;
-    // A swarm of three, spawned in one shot - SpawnEnemiesAction has no separate "swarm" shape of
-    // its own, so a count this high, applied once, is what reads as a swarm rather than a lone
-    // reinforcement.
+    // A brood of three spawnlings, spaced apart in time by AbilitySpawnShape.brood so they
+    // trail one another rather than appearing stacked on the Boss's exact position.
     private static final int FRENZIED_SPAWN_COUNT = 3;
     private static final int FRENZIED_NEGLECT_WINDOW_TICKS = 200;
     private static final int FRENZIED_NEGLECT_HEAL_PER_TICK = 2;
@@ -123,11 +122,28 @@ final class BuiltInEnemies {
                     .withMovement(new RotorMovement((float) Math.toRadians(-10.0)))
                     .withAdditionalAbilities(List.of(
                             IdentifiedAbility.named("spawn", new Ability(new HealthThresholdTrigger(FRENZIED_SPAWN_HEALTH_THRESHOLD),
-                                    new SpawnEnemiesAction("t_spawn", FRENZIED_SPAWN_COUNT, false))),
+                                    new SpawnEnemiesAction("tSpawn", AbilitySpawnShape.brood(FRENZIED_SPAWN_COUNT, 1f, 1f), false))),
                             IdentifiedAbility.named("neglectPenalty", new Ability(new TimeSinceLastHitTrigger(FRENZIED_NEGLECT_WINDOW_TICKS),
                                     new ApplyEffectAction(new HealTemplate(FRENZIED_NEGLECT_HEAL_PER_TICK, FRENZIED_NEGLECT_HEAL_DURATION_TICKS),
                                             new SelfTarget()))))))
             .build();
+    // A single-rank reinforcement, not a RankedEnemy ladder - the Boss's brood ability always
+    // spawns this one shape, the same precedent WARDEN_EGG_1/2/3 already set for ability-spawned
+    // content that never needs to scale with the caster's own rank.
+    private static final int T_SPAWN_DEATH_HEAL_PER_TICK = 4;
+    private static final int T_SPAWN_DEATH_HEAL_DURATION_TICKS = 40;
+    // "Big area" - matches the Warden's own callToArms radius, this codebase's existing "big"
+    // scale (Mender's own heal radius is 80f).
+    private static final float T_SPAWN_DEATH_HEAL_RADIUS = 150f;
+    static final EnemyDefinition T_SPAWN = EnemyDefinition
+            .of("tSpawn", "Frenzy Spawnling", 140, 2, 1.28f, BodyArchetype.TRIANGLE)
+            .withDescription("A spawnling of an enraged Frenzied boss. Speeds up as it is hurt, and heals nearby "
+                    + "allies with its dying breath.")
+            .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.4f))))
+            .withIdentifiedAbilities(List.of(IdentifiedAbility.named("deathHeal", new Ability(
+                    new OnDeathTrigger(),
+                    new ApplyEffectAction(new HealTemplate(T_SPAWN_DEATH_HEAL_PER_TICK, T_SPAWN_DEATH_HEAL_DURATION_TICKS),
+                            new RadiusTarget(T_SPAWN_DEATH_HEAL_RADIUS))))));
     // 20 ticks/second (see TickRate) - 10 seconds, same conversion EGG_HATCH_DELAY_TICKS uses.
     private static final int GHOST_VANISH_DURATION_TICKS = 200;
     // Reapplied every second to every ally still in radius; each application's own duration
