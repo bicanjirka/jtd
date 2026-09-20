@@ -108,6 +108,25 @@ class AbilityEvaluatorTest {
     }
 
     @Test
+    void anOnFirstDamageTakenTriggerFiresOnceOnTheFirstHitObservedThenNeverAgain() {
+        AbilityTrigger trigger = new OnFirstDamageTakenTrigger();
+        AbilityState state = AbilityState.forTrigger(trigger);
+        FakeAbilityContext context = new FakeAbilityContext();
+
+        assertThat(AbilityEvaluator.shouldFire(trigger, state, context)).isFalse();
+
+        context.setJustTookDamage(true);
+        assertThat(AbilityEvaluator.shouldFire(trigger, state, context)).isTrue();
+        // still true this same tick if asked again, but already fired - unlike
+        // OnCriticalHitTakenTrigger, this must never fire a second time
+        assertThat(AbilityEvaluator.shouldFire(trigger, state, context)).isFalse();
+
+        context.setJustTookDamage(false);
+        context.setJustTookDamage(true); // a later hit must not re-fire it either
+        assertThat(AbilityEvaluator.shouldFire(trigger, state, context)).isFalse();
+    }
+
+    @Test
     void executingAnApplyEffectActionAppliesItsTemplateToItsTarget() {
         FakeAbilityContext context = new FakeAbilityContext();
         EffectTemplate template = new ShieldTemplate(0.5f, 10);

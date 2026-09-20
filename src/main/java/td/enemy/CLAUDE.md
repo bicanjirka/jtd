@@ -98,7 +98,8 @@ which level reaches it, and predates both fields.
 
 A `Trait` is a passive, always-on modifier: `onHit` (resistance, folded in sequence by
 `DefinedEnemyMob.absorb`), `speedFactor` (a hurt-speed curve applied to `baseSpeed`),
-`isValidTarget` (see the gotcha below — **not** what makes Ghost invisible). `PercentResistTrait`/`HurtSpeedTrait`/
+`isValidTarget` (see the gotcha below — **not** what makes Ghost invisible; Ghost's
+invisibility is ability-driven, see "Invisibility" below). `PercentResistTrait`/`HurtSpeedTrait`/
 `FlatResistTrait`/`CriticalImmunityTrait`
 are the four built-in implementations, reused (not subclassed) by `BuiltInEnemies.ARMORED`/
 `FRENZIED`/the Warden stages - `FlatResistTrait` is deliberately a *flat per-hit* reduction,
@@ -128,16 +129,22 @@ Composition is always scoped to one definition's own list, so two different enem
 same name (e.g. both calling a trait `"shield"`) never collide with each other.
 
 An `Ability` pairs a closed `AbilityTrigger` (periodic, once-after-a-delay, health-threshold-
-crossed, on-death, time-since-last-hit, on-critical-hit-taken) with a closed `AbilityAction`
-(apply an effect, or spawn more enemies) — see `AbilityEvaluator`'s own doc comment for how
-firing is decided, and `EnemyCatalog.register`'s doc comment for the spawn-graph cycle check a
-`SpawnEnemiesAction` chain has to pass. The Warden boss is what actually exercises this - see
-"Ability execution", below, for how a live `DefinedEnemyMob` drives it.
+crossed, on-death, time-since-last-hit, on-critical-hit-taken, on-first-damage-taken) with a
+closed `AbilityAction` (apply an effect, or spawn more enemies) — see `AbilityEvaluator`'s own
+doc comment for how firing is decided, and `EnemyCatalog.register`'s doc comment for the
+spawn-graph cycle check a `SpawnEnemiesAction` chain has to pass. The Warden boss and
+`BuiltInEnemies.GHOST` are what actually exercise this - see "Ability execution", below, for how
+a live `DefinedEnemyMob` drives it.
 `OnCriticalHitTakenTrigger` is the one trigger that fires repeatably rather than once ever -
 "survived another crit" is a recurring event, not a one-time transition the way death or a
 health threshold is, so it needs no `AbilityState` bookkeeping: `AbilityContext.justTookCriticalHit()`
 is itself already edge-triggered, captured the same deferred way `justDied()`/`deathTick` are -
 see the death-timing note below, which `AbstractEnemyMob.criticalHitTick` reuses verbatim.
+`OnFirstDamageTakenTrigger` is the fire-once counterpart of the same underlying signal -
+`AbilityContext.justTookDamage()` is edge-triggered exactly like `justTookCriticalHit()` (same
+deferred capture, via `AbstractEnemyMob.damageTakenTick`, of *any* landed hit rather than only a
+critical one), but `AbilityEvaluator.fireOnFirstDamageTaken` gates it with an `AbilityState`
+`fired` flag the same way `OnDeathTrigger` is gated, so it can never fire a second time.
 
 ## Ability execution
 
@@ -200,15 +207,21 @@ once exposed fourteen `protected` mutable fields, which meant no invariant it de
 survive a subclass. `setSpeed` is the one mutator a leaf needs (`DefinedEnemyMob.doDamage`
 recomputes intrinsic speed from its traits); the rest is read through the existing getters.
 
-**Ghost's invisibility does not go through `Trait.isValidTarget`.** Single-target towers filter
-by `EnemyMob.Type` (see `td.tower.targeting.OfTypeTargetQuery`/`InRangeTargetQuery.ofType`), a
-separate, pre-existing mechanism `EnemyDefinition.mobType()` feeds directly —
-`DefinedEnemyMob`'s constructor sets `this.type = definition.mobType()`. `Trait.isValidTarget`
-is real API, just not what Ghost's migration needed; it stays available for a future trait that
-makes a mob untargetable through some other means. If a future ability-applied temporary
-invisibility effect (`td.effect.EffectKind.INVISIBLE`, already built) is ever wired to actually
-hide a mob from targeting, it will need to feed the *same* `type`-based mechanism, not
-`isValidTarget` — nothing does this yet, and no v1 content needs it to.
+**Invisibility does not go through `Trait.isValidTarget`, and no enemy authors it natively.**
+Single-target towers filter by `EnemyMob.Type` (see
+`td.tower.targeting.OfTypeTargetQuery`/`InRangeTargetQuery.ofType`); `EnemyDefinition.mobType()`
+sets a mob's *authored* type (`DefinedEnemyMob`'s constructor sets `this.type` from it), but
+`AbstractEnemyMob.effectiveType()` — the method `validTarget(Type)` actually reads — reports
+`Type.INVISIBLE` instead, for *any* mob, whenever `ActiveEffects.isInvisible()` is true,
+regardless of that mob's own authored type. Invisibility is therefore purely
+ability/effect-driven: `BuiltInEnemies.GHOST` carries no `withMobType` at all (an ordinary
+`Type.NORMAL` peon) and instead composes an `OnFirstDamageTakenTrigger` ability that applies
+`td.effect.InvisibleTemplate` to itself the first time it's hit, plus (at `Rank.ELITE` and
+`Rank.BOSS`) a `PeriodicTrigger` "shroud" ability that applies the same template with a
+`RadiusTarget` — `RadiusTarget`'s own "every *other* valid-target enemy" semantics is what keeps
+the shrouding mob itself excluded, no special-casing needed. Any enemy can be made invisible
+this way; `Trait.isValidTarget` stays available for a future trait that makes a mob untargetable
+through some other means entirely.
 
 **Facing is never derived from a per-tick pixel delta.** Enemies move at sub-pixel speeds (`1.28` px/tick is every v1
 built-in's `baseSpeed`), so an `atan2` over one tick's movement

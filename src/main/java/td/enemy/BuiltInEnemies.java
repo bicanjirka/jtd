@@ -1,5 +1,6 @@
 package td.enemy;
 
+import td.effect.InvisibleTemplate;
 import td.effect.ShieldTemplate;
 
 import java.util.ArrayList;
@@ -16,7 +17,12 @@ import java.util.List;
  * step changes, except {@code SIMPLE} itself: its own ladder is this feature's demonstration that
  * a later rank can both add a trait (at {@link Rank#ELITE}) and replace it with a stronger one
  * (at {@link Rank#BOSS}) via the same identified-trait mechanism, following the shape of the
- * request's own pseudocode. <strong>A definition is named for what it does; its
+ * request's own pseudocode; {@code GHOST}'s own ladder is the ability-driven counterpart - it
+ * carries no native invisibility of any kind, only an ordinary mob with a "vanish on first hit"
+ * ability at every rank, plus a second, radius-targeted "shroud nearby allies" ability added at
+ * {@link Rank#ELITE} (and, like {@code SIMPLE}'s shield, carried forward unchanged into
+ * {@link Rank#BOSS} since that step only touches health and price). <strong>A definition is
+ * named for what it does; its
  * {@link BodyArchetype} is what names the shape it is drawn as</strong> - so {@code ARMORED} is
  * a square and {@code FRENZIED} a triangle, the same way {@code SniperTower} is drawn as a
  * triangle. Every number here is still a placeholder for a later balance pass, the same as
@@ -73,14 +79,30 @@ final class BuiltInEnemies {
             .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(480, 13))
             .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(960, 22))
             .build();
+    // 20 ticks/second (see TickRate) - 10 seconds, same conversion EGG_HATCH_DELAY_TICKS uses.
+    private static final int GHOST_VANISH_DURATION_TICKS = 200;
+    // Reapplied every second to every ally still in radius; each application's own duration
+    // outlasts the interval so a lingering ally is never visible for even one tick between
+    // refreshes - see ActiveEffects' "always extends to the longer remaining duration" rule.
+    private static final int GHOST_SHROUD_INTERVAL_TICKS = 20;
+    private static final int GHOST_SHROUD_DURATION_TICKS = 40;
+    private static final float GHOST_SHROUD_RADIUS = 100f;
     static final RankedEnemy GHOST = RankedEnemy
             .startingAt(EnemyDefinition.of("g", "Ghost mob", 100, 4, 1.28f, BodyArchetype.GHOST)
-                    .withDescription("Invisible to all towers. Area damage hurts them.")
-                    .withMobType(EnemyMob.Type.INVISIBLE)
-                    .withHealthDivisor(5f))
+                    .withDescription("An ordinary mob that turns invisible to towers for a while "
+                            + "the first time it's hit. Area damage still finds it.")
+                    .withHealthDivisor(5f)
+                    .withIdentifiedAbilities(List.of(IdentifiedAbility.named("vanish", new Ability(
+                            new OnFirstDamageTakenTrigger(),
+                            new ApplyEffectAction(new InvisibleTemplate(GHOST_VANISH_DURATION_TICKS), new SelfTarget()))))))
             .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(200, 6))
             .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(400, 10))
-            .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(800, 16))
+            .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(800, 16)
+                    .withDescription("Turns invisible to towers for a while the first time it's "
+                            + "hit, and permanently shrouds every other ally near it - itself excluded.")
+                    .withAdditionalAbilities(List.of(IdentifiedAbility.named("shroud", new Ability(
+                            new PeriodicTrigger(GHOST_SHROUD_INTERVAL_TICKS),
+                            new ApplyEffectAction(new InvisibleTemplate(GHOST_SHROUD_DURATION_TICKS), new RadiusTarget(GHOST_SHROUD_RADIUS)))))))
             .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1600, 28))
             .build();
     static final EnemyDefinition WARDEN_EGG_3 = EnemyDefinition

@@ -64,9 +64,12 @@ public interface EnemyMob {
     String getInfoString();
 
     /**
-     * What a tower is allowed to see. {@code INVISIBLE} (the ghost) is skipped by
-     * single-target towers and reachable only by area damage; {@code FLYING} is declared but
-     * unused by any enemy today.
+     * What a tower is allowed to see. {@code INVISIBLE} is skipped by single-target towers and
+     * reachable only by area damage; no built-in enemy authors it directly - it is instead the
+     * *effective* type any mob reports while an invisibility effect is active (see
+     * {@code AbstractEnemyMob}'s {@code effectiveType}), so any enemy can be made invisible by
+     * an ability rather than only one hardcoded to it. {@code FLYING} is declared but unused by
+     * any enemy today.
      */
     enum Type {
         NORMAL,
