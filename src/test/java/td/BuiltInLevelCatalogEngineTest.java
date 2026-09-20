@@ -22,19 +22,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * Drives every catalog level (Classic Loop, Zigzag Gauntlet, Wild Bezier Sweep) through the same
- * GameEngine entry points TowerDefence's real listeners call, proving a new level with an
- * aggressively curved path (see Wild Bezier Sweep's cornerPull=0.5) is safe to load and play, not
- * just a geometrically valid LevelDefinition.
+ * Drives every catalog level (Curly Path, Zigzag Path, Twisted Hourglass) through the same
+ * GameEngine entry points TowerDefence's real listeners call, proving a level with a curved path
+ * is safe to load and play, not just a geometrically valid LevelDefinition.
  */
 class BuiltInLevelCatalogEngineTest {
 
     /**
-     * Finds a cell the smoothed (curved) path marks unbuildable that the same level's raw,
-     * unsmoothed corners would not - i.e. a cell only the wild Bezier sweep itself reaches.
+     * Finds a cell the smoothed (curved) path marks unbuildable that the same path's raw,
+     * unsmoothed corners would not - i.e. a cell only the curve itself reaches.
      */
-    private static Point aCellOnlyTheSmoothedCurveCovers(LevelDefinition level) {
-        PathDefinition path = level.paths().getFirst();
+    private static Point aCellOnlyTheSmoothedCurveCovers(LevelDefinition level, PathDefinition path) {
         List<Vec2> rawPolyline = path.corners().stream()
                 .map(cell -> new Vec2(cell.x() * BoardFixtures.SCALE + (BoardFixtures.SCALE / 2.0),
                         cell.y() * BoardFixtures.SCALE + (BoardFixtures.SCALE / 2.0)))
@@ -72,9 +70,10 @@ class BuiltInLevelCatalogEngineTest {
     }
 
     @Test
-    void wildBezierSweepsCurvedCorridorBlocksBuildingOnACellTheRawStraightCornersNeverCovered() {
+    void twistedHourglassesCurvedCorridorBlocksBuildingOnACellTheRawStraightCornersNeverCovered() {
         LevelDefinition level = new BuiltInLevelCatalog().levels().get(2);
-        Point curveOnlyCell = aCellOnlyTheSmoothedCurveCovers(level);
+        PathDefinition amberPath = level.paths().get(2);
+        Point curveOnlyCell = aCellOnlyTheSmoothedCurveCovers(level, amberPath);
 
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(level);
@@ -89,14 +88,14 @@ class BuiltInLevelCatalogEngineTest {
     }
 
     @Test
-    void wildBezierSweepsFarCornerAwayFromTheCurveIsStillBuildable() {
+    void twistedHourglassesFarCornerAwayFromTheCurveIsStillBuildable() {
         LevelDefinition level = new BuiltInLevelCatalog().levels().get(2);
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(level);
 
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(level.height() - 1));
+        engine.mouseClicked(BoardFixtures.cellCenter(level.width() - 1), BoardFixtures.cellCenter(level.height() - 1));
 
-        assertThat(engine.cells().at(0, level.height() - 1).hasTower()).isTrue();
+        assertThat(engine.cells().at(level.width() - 1, level.height() - 1).hasTower()).isTrue();
     }
 }

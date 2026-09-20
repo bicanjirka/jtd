@@ -43,15 +43,15 @@ public final class BalanceHarness implements GameHost {
     private boolean waveJustCleared = false;
 
     /**
-     * Runs one built-in loadout against Classic Loop, so this class is executable with no arguments.
+     * Runs one built-in loadout against Curly Path, so this class is executable with no arguments.
      */
     public static void main(String[] args) {
-        LevelDefinition classicLoop = new BuiltInLevelCatalog().levels().getFirst();
+        LevelDefinition curlyPath = new BuiltInLevelCatalog().levels().getFirst();
         List<TowerPlacementSpec> loadout = List.of(
-                TowerPlacementSpec.of(TowerFactory.Type.SNIPER, 6, 11),
-                TowerPlacementSpec.of(TowerFactory.Type.SNIPER, 8, 9),
-                TowerPlacementSpec.of(TowerFactory.Type.SPLASH, 5, 3));
-        new BalanceHarness().run(classicLoop, loadout, 5000);
+                TowerPlacementSpec.of(TowerFactory.Type.SNIPER, 4, 10),
+                TowerPlacementSpec.of(TowerFactory.Type.SNIPER, 10, 8),
+                TowerPlacementSpec.of(TowerFactory.Type.SPLASH, 16, 9));
+        new BalanceHarness().run(curlyPath, loadout, 5000);
     }
 
     @Override

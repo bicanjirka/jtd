@@ -399,7 +399,7 @@ Warden's six stages are exactly the single-rank case: no new Java class, just si
 through its own six hand-authored definitions rather than through rank. `BuiltInEnemies.SIMPLE`
 is the ladder case - see `RankedEnemy`'s own doc comment above. Content meant for one level
 instead goes on that level's own `LevelDefinition.customEnemies()` (see `td/level/CLAUDE.md`) -
-`BuiltInLevelCatalog`'s Wild Bezier Sweep is this case, registered single-rank like the Warden
+`BuiltInLevelCatalog`'s Twisted Hourglass is this case, registered single-rank like the Warden
 chain.
 
 **Adding a genuinely new `BodyArchetype`** (a shape nothing existing uses) is still a fixed,

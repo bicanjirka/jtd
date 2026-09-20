@@ -315,14 +315,14 @@ Every number introduced by the data-driven enemy model - `PercentResistTrait`/
 ability intervals, shield percentages/radii and `EGG_HATCH_DELAY_TICKS` - was chosen to be
 plausible, not tuned, the same situation the tower-upgrade and new-tower-numbers entries above
 were in before their own balance passes. **One exception:** the Warden's `FlatResistTrait`
-value has been tuned (15 -> `BuiltInEnemies.WARDEN_FLAT_RESIST` = 100) against the actual
+value has been tuned (15 -> `BuiltInEnemies.WARDEN_FLAT_RESIST` = 200) against the actual
 per-hit/per-tick damage scale every attack tower deals (150-4000, see the head-to-head data in
 the new-tower-numbers entry above) - 15 was negligible against any of them (0.375%-10% of a
 single hit), making the Warden's armor mechanically inert regardless of which tower fought it.
 
 - **Where:** `BuiltInEnemies` (all trait/ability constants), `PercentResistTrait`,
   `HurtSpeedTrait`, `FlatResistTrait`.
-- **Approach:** play Classic Loop through to the Warden encounter (and the other two levels,
+- **Approach:** play Curly Path through to the Warden encounter (and the other two levels,
   once they get their own late-game content) repeatedly, adjusting values until the chain and
   the migrated traits feel meaningfully tuned rather than placeholder guesses - no code or
   architecture change needed, every number here is already a named constant. `td.BalanceHarness`
