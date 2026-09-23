@@ -39,14 +39,14 @@ class CinderTowerTest {
     }
 
     @Test
-    void aGhostIsStillCaughtByTheCone() {
+    void aGhostIsNotCaughtByTheCone() {
         CinderTower tower = towerAt(3, 3);
         RecordingEnemyMob ghost = RecordingEnemyMob.ghostAt(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{ghost});
 
         tower.doTick(1);
 
-        assertThat(ghost.appliedEffects()).hasSize(1);
+        assertThat(ghost.appliedEffects()).isEmpty();
     }
 
     @Test
