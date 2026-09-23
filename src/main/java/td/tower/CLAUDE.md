@@ -29,8 +29,8 @@ in their head.
 
 `MortarTower`/`SeekerTower`/`CinderTower` are the three towers added by the damage-types-and-
 projectiles feature — see `td.projectile` and `td.effect` in the root `CLAUDE.md` §4's domain-
-package list. Like the original four, each offers two exclusive `HEAD` upgrade nodes (see
-below); only `AuraTower` stays passive and offers none yet.
+package list. Every tower, `AuraTower` included, has a full `base`/`head`/`special` upgrade
+tree (see below).
 
 ## Invariants worth knowing before you change anything here
 
@@ -218,10 +218,14 @@ than assuming which is wanted the way the old zero-argument version did.
 A tower owns a set of `UpgradeNode`s it can buy, organized into three `UpgradeSlot`s
 (`BASE`/`HEAD`/`SPECIAL`) by `UpgradeTree`. This is a different mechanic from the Aura tower's
 buff above: an Aura tower buffs *other* towers continuously from outside; a bought node
-changes what *this* tower itself is, and stays changed for its lifetime. **As of this
-writing every attack tower's `upgradeTree()` populates only `HEAD`**, with two mutually
-exclusive root nodes each (the `BASE`/`SPECIAL` catalogue, and Aura's own tree, are a planned
-follow-up - see `docs/features/FEATURE-tower-upgrade-trees.md`).
+changes what *this* tower itself is, and stays changed for its lifetime. Every tower - Aura
+included - populates all three slots: `BASE` is always a range node plus an Awaken node
+that unlocks `HEAD`/`SPECIAL` for purchase (`StandardBaseSlot`, the same shape on every tower);
+`HEAD` is two mutually exclusive chains, each 2-3 levels deep; `SPECIAL` is one to three mutually
+exclusive roots, gated on Awaken being owned. The concrete content for every tower is authored
+in `docs/features/FEATURE-tower-specialization-abilities.md`; several `SPECIAL` and a few `HEAD`
+nodes are real, priced, gated `UpgradeNode`s whose hook is still a documented no-op pending a
+combat primitive that doesn't exist yet - each one has its own `TODO.md` entry.
 
 - `UpgradeNode` — a tree node: a stable `id` (unique within one tower's own tree), its
   `UpgradeSlot`, a display name, a price (paid the same way buying a tower is), a `TowerBuff`
@@ -233,10 +237,9 @@ follow-up - see `docs/features/FEATURE-tower-upgrade-trees.md`).
   from `UpgradeNode.of(id, slot, displayName, price)` plus fluent `withBuff`/`withRequires`/
   `withGate`/`withExtraEffect` copies, never a positional literal. `UpgradeNode.describe()` turns
   the `gate`/`statBonus`/`extraEffect` into the one line `AbstractTower.upgradeNodesBlock()` shows
-  per offered node in `getInfoString()`/`getStatusString()` (e.g. `"Veteran (10 kills): +30%
-  damage, +10% range, +25% bounty, +30% crit chance"`) — never write a node's bonus out by hand in
-  a tower's own description text; `describe()` derives it from the same values `buyUpgrade` itself
-  reads, so the two can't drift.
+  per offered node in `getInfoString()`/`getStatusString()` (e.g. `"Marksman's Eye (15 kills):
+  +15% crit chance"`) — never write a node's bonus out by hand in a tower's own description text;
+  `describe()` derives it from the same values `buyUpgrade` itself reads, so the two can't drift.
 - `UpgradeCondition` — `isSatisfied(tower, context)`, independent of affordability, plus
   `describe()` (a short human phrase, e.g. `"10 kills"`, `"money only"`) and `progress(tower,
   context)` (the same gate's live progress, e.g. `"7/10 kills"`, defaulting to `describe()` for a
@@ -273,9 +276,8 @@ follow-up - see `docs/features/FEATURE-tower-upgrade-trees.md`).
   faster"`) - the two are set together, at the same constant, precisely so the mechanical effect
   and the text describing it can never drift apart the way a hand-written prose description
   elsewhere in the tower's own text would risk.
-- `AbstractTower.upgradeTree()` defaults to `UpgradeTree.none()` - only a tower with real content
-  (added per-leaf, not part of this shared mechanism) overrides it. The Aura tower does not
-  override it and offers no nodes of its own yet.
+- `AbstractTower.upgradeTree()` defaults to `UpgradeTree.none()`; every real tower overrides it
+  with its own content, added per-leaf rather than part of this shared mechanism.
 - The UI (`td.ui.PanelTowerInfo`) and the render accent ring (`Java2DFrameRenderer.paintUpgradeAccent`, see
   `td/ui/CLAUDE.md`) both key off
   `offeredUpgrades()`/`upgrades()` alone - a tower's own domain state is the single source of
@@ -296,13 +298,14 @@ follow-up - see `docs/features/FEATURE-tower-upgrade-trees.md`).
    (an exhaustive switch with no `default`) and in `td.ui.Java2DFrameRenderer`'s
    `towerBodyShape` / `turretHeadShape` / `colorFor`.
 5. Add it to `README.md`'s tower table.
-6. If it offers upgrade nodes, override `upgradeTree()` with its `UpgradeNode`s (currently:
-   two exclusive `HEAD` roots per attack tower - `requires(UpgradeCondition.slotEmpty(HEAD))`
-   on each), and `onUpgradeBought` only if one of them bumps a stat outside `TowerBuff`'s five
-   axes - pass that same bump's `extraEffect` phrase to the `UpgradeNode` constant itself (see
-   Upgrade tree, above) rather than hand-writing it into the tower's own
-   `getInfoString()`/`getStatusString()`, which never needs to change for this -
-   `AbstractTower.upgradeNodesBlock()` already lists every offered node automatically. No new
+6. Override `upgradeTree()` with `StandardBaseSlot.rangeNode`/`awakenNode` plus its own `HEAD`
+   (two exclusive 2-3-level chains, `requires(StandardBaseSlot.opens(HEAD))` on each root) and
+   `SPECIAL` (one to three exclusive roots, `requires(StandardBaseSlot.opens(SPECIAL))`) content,
+   and `onUpgradeBought` only for a node that bumps a stat outside `TowerBuff`'s five axes - pass
+   that same bump's `extraEffect` phrase to the `UpgradeNode` constant itself (see Upgrade tree,
+   above) rather than hand-writing it into the tower's own `getInfoString()`/`getStatusString()`,
+   which never needs to change for this - `AbstractTower.upgradeNodesBlock()` already lists every
+   offered node automatically. No new
    `Palette` role is needed for this: the specialization ring's two roles are shared across
    every tower type (see `td/ui/CLAUDE.md`).
 

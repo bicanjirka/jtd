@@ -1,8 +1,11 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
 import td.effect.EffectKind;
+import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.TowerFixtures;
 import td.fixtures.WorldFixtures;
@@ -74,41 +77,42 @@ class MortarTowerTest {
     }
 
     @Test
-    void concussiveChargeIsChoosableOnceTwoNeighboursExistAndAppliesItsRangeBonus() {
+    void siegeRoundsIsChoosableOnceAwakenIsBoughtAndAppliesItsDamageBonus() {
         this.context.economy().startEconomy(1000, 5);
         MortarTower tower = towerAt(3, 3);
-        this.context.towers().add(tower);
-        this.context.towers().add(new SniperTower(this.context, 2, 2));
-        this.context.towers().add(new SniperTower(this.context, 4, 4));
-        UpgradeNode concussiveCharge = UpgradePaths.named(tower, "Concussive Charge");
+        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 100000, 3, Rank.GRUNT);
+        tower.dealDamage(fodder, Damage.physical(16000));
+        UpgradeNode siegeRounds = UpgradePaths.named(tower, "Siege Rounds");
 
-        boolean chosen = tower.buyUpgrade(concussiveCharge);
+        boolean chosen = tower.buyUpgrade(siegeRounds);
 
         assertThat(chosen).isTrue();
-        assertThat(tower.getRangeReal()).isGreaterThan(MortarTower.RANGE * BoardFixtures.SCALE);
+        assertThat(tower.damageCurrent()).isGreaterThan(tower.damageBase);
     }
 
     @Test
-    void heavyShellIsNotYetChoosableBeforeEnoughDamageDealt() {
+    void fragmentationRoundsIsNotYetChoosableBeforeTwelveKills() {
         this.context.economy().startEconomy(1000, 5);
         MortarTower tower = towerAt(3, 3);
-        UpgradeNode heavyShell = UpgradePaths.named(tower, "Heavy Shell");
+        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradeNode fragmentationRounds = UpgradePaths.named(tower, "Fragmentation Rounds");
 
-        boolean chosen = tower.buyUpgrade(heavyShell);
+        boolean chosen = tower.buyUpgrade(fragmentationRounds);
 
         assertThat(chosen).isFalse();
         assertThat(tower.upgrades().tip(UpgradeSlot.HEAD)).isEmpty();
     }
 
     @Test
-    void heavyShellBumpsTheSplashRadiusBeyondTheBase() {
+    void siegeRoundsIiBumpsTheSplashRadiusBeyondTheBase() {
         MortarTower tower = towerAt(3, 3);
-        UpgradeNode heavyShell = UpgradePaths.named(tower, "Heavy Shell");
+        UpgradeNode siegeRoundsTwo = UpgradePaths.named(tower, "Siege Rounds II");
         float radiusBeforeChoosing = tower.getSplashRadius();
 
-        // onUpgradeBought is exercised directly - Heavy Shell's own gate (a damage-dealt
+        // onUpgradeBought is exercised directly - Siege Rounds II's own gate (a damage-dealt
         // threshold) is covered generically by DamageDealtConditionTest; this proves the bump itself.
-        tower.onUpgradeBought(heavyShell);
+        tower.onUpgradeBought(siegeRoundsTwo);
 
         assertThat(tower.getSplashRadius()).isGreaterThan(radiusBeforeChoosing);
     }

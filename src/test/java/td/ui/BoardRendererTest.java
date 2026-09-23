@@ -99,8 +99,12 @@ class BoardRendererTest {
         context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(context, 1, 1);
         context.towers().add(tower);
-        // SniperTower's HEAD nodes are [Veteran, Overclock] - Overclock (index 1) is money-gated,
-        // so it's choosable immediately without grinding out Veteran's kill-count condition.
+        // SniperTower's HEAD nodes are [Focused Optics, Focused Optics II, Marksman's Eye,
+        // Marksman's Eye II] - the accent keys off index within this list, not branch identity,
+        // so buying straight up Focused Optics' own chain reaches index 1 (accent B) without
+        // grinding out Marksman's Eye's kill-count gate.
+        tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.BASE).get(1)); // Awaken
+        tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).get(0));
         tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).get(1));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);

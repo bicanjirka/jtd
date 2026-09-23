@@ -1,9 +1,12 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.EffectKind;
+import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
@@ -137,9 +140,15 @@ class CinderTowerTest {
     }
 
     @Test
-    void wideNozzleIsChoosableWithMoneyAloneAndAppliesItsRangeBonus() {
+    void wideNozzleIsChoosableAfterTenKillsAndAppliesItsRangeBonus() {
         this.context.economy().startEconomy(1000, 5);
         CinderTower tower = towerAt(3, 3);
+        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
+        for (int i = 0; i < 10; i++) {
+            tower.dealDamage(fodder, Damage.physical(1_000_000));
+            fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
+        }
         UpgradeNode wideNozzle = UpgradePaths.named(tower, "Wide Nozzle");
 
         boolean chosen = tower.buyUpgrade(wideNozzle);
@@ -149,7 +158,7 @@ class CinderTowerTest {
     }
 
     @Test
-    void whiteFlameIsNotYetChoosableBeforeEnoughDamageDealt() {
+    void whiteFlameIsNotYetChoosableBeforeAwakenIsBought() {
         this.context.economy().startEconomy(1000, 5);
         CinderTower tower = towerAt(3, 3);
         UpgradeNode whiteFlame = UpgradePaths.named(tower, "White Flame");
@@ -166,10 +175,27 @@ class CinderTowerTest {
         UpgradeNode wideNozzle = UpgradePaths.named(tower, "Wide Nozzle");
         double halfWidthBeforeChoosing = tower.getHalfWidthRadians();
 
-        // onUpgradeBought is exercised directly - Wide Nozzle's own gate (money alone) is
-        // trivially satisfied and covered by the choosability test above; this proves the bump itself.
+        // onUpgradeBought is exercised directly - Wide Nozzle's own gate (a kill-count
+        // threshold) is covered generically by KillCountConditionTest; this proves the bump itself.
         tower.onUpgradeBought(wideNozzle);
 
         assertThat(tower.getHalfWidthRadians()).isGreaterThan(halfWidthBeforeChoosing);
+    }
+
+    @Test
+    void whiteFlameIiExtendsTheBurnDurationBeyondTheBase() {
+        CinderTower before = towerAt(3, 3);
+        RecordingEnemyMob beforeTarget = RecordingEnemyMob.normalAt(150, 112);
+        this.context.enemies().setEnemies(new EnemyMob[]{beforeTarget});
+        tickThrough(before, 1, 1 + CinderTower.WAVE_TRAVEL_TICKS);
+
+        CinderTower after = towerAt(3, 3);
+        after.onUpgradeBought(UpgradePaths.named(after, "White Flame II"));
+        RecordingEnemyMob afterTarget = RecordingEnemyMob.normalAt(150, 112);
+        this.context.enemies().setEnemies(new EnemyMob[]{afterTarget});
+        tickThrough(after, 1, 1 + CinderTower.WAVE_TRAVEL_TICKS);
+
+        assertThat(afterTarget.appliedEffects().getFirst().authoredDurationTicks())
+                .isGreaterThan(beforeTarget.appliedEffects().getFirst().authoredDurationTicks());
     }
 }

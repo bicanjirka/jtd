@@ -5,7 +5,9 @@ import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.ClusterCondition;
+import td.tower.upgrade.DamageDealtCondition;
 import td.tower.upgrade.KillCountCondition;
+import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -47,31 +49,84 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
      */
     private static final int HIT_FLASH_TICKS = 8;
 
+    private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(12);
+    private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(20);
+
     /**
-     * How much faster "Overcharged Array" makes the scan turn.
+     * More damage per hit.
      */
-    private static final float OVERCHARGED_SPEEDUP_FACTOR = 0.6f;
+    private static final UpgradeNode TWIN_ARRAY_1 = UpgradeNode.of("sonar.head.twin_array.1", UpgradeSlot.HEAD,
+            "Twin Array", 35)
+            .withBuff(TowerBuff.damage(0.25f))
+            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
+            .withGate(new DamageDealtCondition(10000));
     /**
-     * Faster sweep and more range - a payoff for a deliberately grouped placement.
+     * More damage still, plus some crit chance.
      */
-    private static final UpgradeNode OVERCHARGED_ARRAY = UpgradeNode.of("sonar.head.overcharged_array",
-            UpgradeSlot.HEAD, "Overcharged Array", 35)
-            .withBuff(TowerBuff.range(0.2f))
-            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
+    private static final UpgradeNode TWIN_ARRAY_2 = UpgradeNode.of("sonar.head.twin_array.2", UpgradeSlot.HEAD,
+            "Twin Array II", 53)
+            .withBuff(TowerBuff.damage(0.25f).withCritChance(0.1f))
+            .withRequires(UpgradeCondition.owns(TWIN_ARRAY_1.id()))
+            .withGate(new DamageDealtCondition(20000));
+    /**
+     * A second turret facing the opposite direction, once the second-turret render/aim
+     * primitive exists - see TODO.md.
+     */
+    private static final UpgradeNode TWIN_ARRAY_3 = UpgradeNode.of("sonar.head.twin_array.3", UpgradeSlot.HEAD,
+            "Twin Array III", 70)
+            .withRequires(UpgradeCondition.owns(TWIN_ARRAY_2.id()))
+            .withGate(new KillCountCondition(25))
+            .withExtraEffect("a second turret, facing the opposite direction");
+    /**
+     * More crit chance.
+     */
+    private static final UpgradeNode LONG_REACH_1 = UpgradeNode.of("sonar.head.long_reach.1", UpgradeSlot.HEAD,
+            "Long Reach", 30)
+            .withBuff(TowerBuff.critChance(0.15f))
+            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
+            .withGate(new KillCountCondition(10));
+    /**
+     * Damage scales up to +100% at max range, once the distance-scaling-damage primitive
+     * exists - see TODO.md.
+     */
+    private static final UpgradeNode LONG_REACH_2 = UpgradeNode.of("sonar.head.long_reach.2", UpgradeSlot.HEAD,
+            "Long Reach II", 45)
+            .withRequires(UpgradeCondition.owns(LONG_REACH_1.id()))
+            .withGate(new DamageDealtCondition(20000))
+            .withExtraEffect("damage scales up to +100% at max range");
+    /**
+     * Each revolution briefly reveals invisible enemies to every tower, once the
+     * reveal-to-every-tower primitive exists - see TODO.md.
+     */
+    private static final UpgradeNode WIDE_BAND = UpgradeNode.of("sonar.special.wide_band", UpgradeSlot.SPECIAL,
+            "Wide Band", 40)
+            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
             .withGate(new ClusterCondition(2))
-            .withExtraEffect("sweeps 40% faster");
+            .withExtraEffect("each revolution briefly reveals invisible enemies to every tower");
     /**
-     * More damage per hit - earned by this tower's own proven kill record.
+     * A beam hit marks its target for a guaranteed crit on the next hit, once the
+     * guaranteed-crit primitive exists - see TODO.md.
      */
-    private static final UpgradeNode MARKSMAN_BEAM = UpgradeNode.of("sonar.head.marksman_beam", UpgradeSlot.HEAD,
-            "Marksman Beam", 30)
-            .withBuff(TowerBuff.damage(0.4f))
-            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
-            .withGate(new KillCountCondition(15));
-    private static final UpgradeTree TREE = UpgradeTree.of(OVERCHARGED_ARRAY, MARKSMAN_BEAM);
+    private static final UpgradeNode MARK_ON_SWEEP = UpgradeNode.of("sonar.special.mark_on_sweep", UpgradeSlot.SPECIAL,
+            "Mark on Sweep", 40)
+            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+            .withGate(new KillCountCondition(15))
+            .withExtraEffect("a beam hit marks its target; the next hit on it is a guaranteed crit");
+    /**
+     * Bonus magic damage against physically armored/shielded enemies, once the
+     * resistance-aware-damage-scaling primitive exists - see TODO.md.
+     */
+    private static final UpgradeNode PIERCING_TONE = UpgradeNode.of("sonar.special.piercing_tone", UpgradeSlot.SPECIAL,
+            "Piercing Tone", 40)
+            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+            .withGate(new DamageDealtCondition(20000))
+            .withExtraEffect("bonus magic damage against physically armored/shielded enemies");
+
+    private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, TWIN_ARRAY_1, TWIN_ARRAY_2,
+            TWIN_ARRAY_3, LONG_REACH_1, LONG_REACH_2, WIDE_BAND, MARK_ON_SWEEP, PIERCING_TONE);
+
     private final List<SonarHit> recentHits = new ArrayList<>();
     private volatile SonarSweep sweep = SonarSweep.perRevolution(SECONDS_PER_REVOLUTION, TICKS_PER_SECOND);
-    private volatile float secondsPerRevolutionCurrent = SECONDS_PER_REVOLUTION;
 
     public SonarTower(GameWorld context, int x, int y) {
         // No cooldown: this tower's cadence is its sweep rate, not a reload - see rateLine.
@@ -82,17 +137,6 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
     @Override
     public UpgradeTree upgradeTree() {
         return TREE;
-    }
-
-    /**
-     * Overcharged Array's turn-speed bump isn't a {@link TowerBuff} axis, so it's applied here instead.
-     */
-    @Override
-    protected void onUpgradeBought(UpgradeNode node) {
-        if (node.equals(OVERCHARGED_ARRAY)) {
-            this.secondsPerRevolutionCurrent = SECONDS_PER_REVOLUTION * OVERCHARGED_SPEEDUP_FACTOR;
-            this.sweep = SonarSweep.perRevolution(this.secondsPerRevolutionCurrent, TICKS_PER_SECOND);
-        }
     }
 
     public void doTick(int gameTime) {
@@ -136,7 +180,7 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
 
     @Override
     protected String rateLine(int coolDown) {
-        return "Rotation: " + this.secondsPerRevolutionCurrent + "s/turn\n";
+        return "Rotation: " + SECONDS_PER_REVOLUTION + "s/turn\n";
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {

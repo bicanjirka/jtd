@@ -464,11 +464,11 @@ class AbstractTowerTest {
     }
 
     @Test
-    void aPassiveTowerWithNoUpgradeTreeShowsNoUpgradePathsBlock() {
-        AuraTower passive = new AuraTower(this.context, 0, 0);
+    void aTowerWithNoUpgradeTreeShowsNoUpgradePathsBlock() {
+        FakeUpgradeableTower noTree = new FakeUpgradeableTower(this.context, 0, 0, UpgradeTree.none());
 
-        assertThat(passive.getStatusString()).doesNotContain("Upgrade paths:");
-        assertThat(passive.getInfoString()).doesNotContain("Upgrade paths:");
+        assertThat(noTree.getStatusString()).doesNotContain("Upgrade paths:");
+        assertThat(noTree.getInfoString()).doesNotContain("Upgrade paths:");
     }
 
     @Test

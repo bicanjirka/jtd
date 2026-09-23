@@ -1,7 +1,10 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
+import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
@@ -159,20 +162,29 @@ class SonarTowerTest {
     }
 
     @Test
-    void overchargedArraySpeedsUpTheSweepBeyondTheBaseRate() {
+    void twinArrayIsChoosableOnceAwakenIsBoughtAndAppliesItsDamageBonus() {
+        this.context.economy().startEconomy(1000, 5);
         SonarTower tower = tower();
-        UpgradeNode overchargedArray = UpgradePaths.named(tower, "Overcharged Array");
-        tower.doTick(1);
-        double radiansPerTickBeforeChoosing = tower.sweepRadiansAt(0) - tower.sweepRadiansAt(1);
+        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 100000, 3, Rank.GRUNT);
+        tower.dealDamage(fodder, Damage.physical(11000));
+        UpgradeNode twinArray = UpgradePaths.named(tower, "Twin Array");
 
-        // onUpgradeBought is exercised directly - Overcharged Array's own gate (a cluster
-        // of nearby towers) is covered generically by ClusterConditionTest and by
-        // AbstractTowerTest's condition-gating test; this proves the sweep-speed bump itself.
-        tower.onUpgradeBought(overchargedArray);
-        tower.doTick(2);
-        double radiansPerTickAfterChoosing = tower.sweepRadiansAt(0) - tower.sweepRadiansAt(1);
+        boolean chosen = tower.buyUpgrade(twinArray);
 
-        assertThat(radiansPerTickAfterChoosing).isGreaterThan(radiansPerTickBeforeChoosing);
-        assertThat(tower.getStatusString()).contains("Rotation");
+        assertThat(chosen).isTrue();
+        assertThat(tower.damageCurrent()).isGreaterThan(tower.damageBase);
+    }
+
+    @Test
+    void longReachIsNotYetChoosableBeforeTenKills() {
+        this.context.economy().startEconomy(1000, 5);
+        SonarTower tower = tower();
+        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradeNode longReach = UpgradePaths.named(tower, "Long Reach");
+
+        boolean chosen = tower.buyUpgrade(longReach);
+
+        assertThat(chosen).isFalse();
     }
 }
