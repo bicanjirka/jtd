@@ -1,3 +1,10 @@
+# Notes written by hand, to be processed later - write nicer detailed TODO entries from it
+
+I would like to add feature ideas to this todo as well to have all possible work idead at one place.
+
+- non-feature request. I see you mention exact names in line comments frequently. I do not like unnecessary line comments at all and I hate that you have to change so many of them when performing as simple thing as renaming a level for example. Save me some tokens by having as little line comments as possible. And do not mention obvious things in them. Propose a review of the code to apply this.
+- review how many code rules in Rules.java you have, I think maintaining of this project got very VERY expensive because the amount of documentation, tests, inline comments and rules you added here. Propose me a simplification. I am not willing to spend 100k tokens on simple tasks anymore. Propose me something based on best practices from other projects. Or I will delete it all manually.
+
 # Known gaps and future work
 
 Extracted from inline `TODO` comments (and one unmarked-but-real gap) found throughout the codebase during a
@@ -138,7 +145,7 @@ value is a magic constant with no way to override it per-wave.
 - **Where:** `td.enemy.SpawnParameters`
 - **Approach:** add a `delay`-scaling field to `WaveDefinition` (or `Wave`) that defaults to `22.4f`, and extend the
   wave
-  mini-language (see `WaveScript.parse`'s spawn-shape/spacer token grammar — root `CLAUDE.md` §9) with a token — e.g. a
+  mini-language (see `WaveScript.parse`'s spawn-shape/spacer token grammar — `td/wave/CLAUDE.md`) with a token — e.g. a
   `w<number>` prefix — that
   lets a wave definition override the spacing between spawns before listing enemies.
 
@@ -272,7 +279,62 @@ and condition thresholds are equally unverified guesses.
   finished off - only a targeting-behavior change (out of scope here; the ask was numbers only) would fix that, so
   a future pass could reconsider it if `seeker` still feels weak after this buff lands in real play.
 
+### Tower upgrades are a flat, mutually-exclusive pair today, not a tree
+
+`docs/features/FEATURE-tower-upgrade-trees.md` proposes the branching redesign: three
+independent per-slot progression graphs (`base`/`head`/`special`), same-instance mutation
+(no tower is ever spawned anew), node prerequisites and AND/OR conditions, and a dedicated
+upgrade-tree panel that replaces `PanelWaveInfo` when a tower is selected. It also folds in
+the coupled UX asks - number-key shortcuts, a per-slot "ready to upgrade" indicator, and
+moving upgrade descriptions off the build button onto per-slot hover text - and scopes
+`AuraTower`'s own (currently nonexistent) upgrade paths as a future consumer of the new
+model rather than the old two-path one.
+
+- **Where:** `td.tower.AbstractTower.chosenPath`/`availablePaths()`, `td.tower.upgrade.*`,
+  `td.ui.PanelTowerInfo`/`PanelWaveInfo`/`PanelGameConsole`, `TowerSpriteFrameBuilder`'s
+  two-role accent ring.
+- **Approach:** see the feature doc's "Constraints and open risks" section - the sidebar's
+  fixed 200px width and the render layer's two-role (not three-role) accent-ring model are
+  the two open engineering questions flagged there, not yet resolved.
+
+### Sniper's beam doesn't change color on a critical hit
+
+`docs/features/FEATURE-sniper-crit-beam.md`: the beam should draw in the crit spark's colour
+on a crit instead of always drawing green. `AbstractTower.dealDamage`'s crit roll is computed
+and discarded every hit today - nothing propagates it out to the tower-specific renderer.
+
+- **Where:** `td.tower.AbstractTower.dealDamage`, `td.tower.SniperTower`,
+  `td.ui.TowerEffectFrameBuilder.visitSniperTower`.
+- **Approach:** see the feature doc for the proposed plumbing (widening `dealDamage`'s return
+  type, a new `SniperTower` field read by the frame builder) and its threading analysis.
+
+### Cinder Tower's cone is instantaneous and continuous, not a travelling wave
+
+`docs/features/FEATURE-cinder-cone-wave.md`: give Cinder a real cooldown and make its flame
+visibly travel outward over several frames (fading with distance), applying its burn only
+once the wave reaches the target, instead of firing every tick and burning whatever's
+currently in its static wedge.
+
+- **Where:** `td.tower.CinderTower`, `td.ui.render.ConeDraw`/`TowerEffectFrameBuilder`.
+- **Approach:** see the feature doc's open question on whether the new delayed-hit
+  bookkeeping belongs in `td.projectile` or stays `CinderTower`-local - flagged, not decided.
+
 ## Damage types
+
+### Slow/burn stacking is flat, with no diminishing-returns recovery curve
+
+`docs/features/FEATURE-effect-diminishing-returns.md`: slow should recover along a quadratic
+ease-in curve (`factor = x*x`) instead of vanishing instantly at expiry; burn should become an
+additive decaying fuel pool (`α = e^(-3/T)` per-tick decay, diminishing-returns refill on
+restack) instead of a flat magnitude. Slow's existing max-magnitude/max-duration stacking rule
+stays, but with a proposed fix for the case where a strong-short slow would otherwise borrow a
+weak-long slow's remaining duration - see the doc's worked example. Freeze is confirmed already
+correct (binary full-stop, not a parametrized slow) and needs no change.
+
+- **Where:** `td.effect.Effect`/`EffectKind`/`ActiveEffects` only - no `td.tower` changes.
+- **Approach:** see the feature doc's "Open questions" section for the two still-undecided
+  tunables (burn's `Lmax` cap and its termination floor) and the bounded-superseded-application
+  stacking proposal, flagged as needing review before implementation.
 
 ### Acid is not implemented as a second damage-over-time effect
 
@@ -324,6 +386,18 @@ do this — see below). This was a speculative "nice to have," not a committed d
 
 ## Enemy features
 
+### Freeze looks like a variant of Slow instead of a distinct effect
+
+`docs/features/FEATURE-freeze-visual.md`: today Slow and Freeze differ only by marker fill
+colour (two close blues on the same diamond shape) even though Freeze is mechanically a full
+stop, not a parametrized slow. Proposes a new body-level ice-crystal overlay (faceted polygon,
+icy blue-white), added to the existing `EnemyOverlayDraw` sealed hierarchy the way Shield's
+bubble ring already plugs in, rather than another marker-row dot.
+
+- **Where:** `td.ui.EnemyFrameBuilder`/`Java2DFrameRenderer`, `td.ui.render.EnemyOverlayDraw`.
+- **Approach:** see the feature doc for the concrete shape/palette sketch and its one open
+  question - whether the existing marker-row dot should be dropped once the overlay ships.
+
 ### The effect-marker overflow indicator has no count
 
 `EnemyFrameBuilder`'s marker row caps at 3 visible status-effect icons; a 4th+ simultaneous
@@ -374,3 +448,17 @@ own balance passes.
 - **Approach:** tune via actual play (or `td.BalanceHarness`) once the other placeholder-number
   entries in this file get their own pass - no code or architecture change needed, every number
   here is already a named constant or a `TowerBuff` literal.
+
+## UI
+
+### The wave-preview panel's path swatch wastes a row and duplicates the board's own chevron
+
+`docs/features/FEATURE-wave-preview-cleanup.md`: border the current/next-wave sections, drop
+the swatch's own now-empty row, and move its path-colour signal onto the enemy strip's row as
+a chevron - reusing `PathMarkerShape.CHEVRON` (the same vector marker the board's own moving
+path trail already draws), not a new Swing text glyph.
+
+- **Where:** `td.ui.PanelWaveInfo`, `td.ui.PathWaveRow`.
+- **Approach:** see the feature doc for the exact layout change; it corrects the original
+  request's assumption that the chevron would be a new plain-text glyph - the project already
+  has this exact marker as a vector shape.
