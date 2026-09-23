@@ -1,7 +1,8 @@
 # Feature Request: Wave-Preview Panel Cleanup
 
-**Status: not yet built.** This document describes a small UI-polish change to the existing
-current/next-wave preview panel; nothing below has been implemented.
+**Status: implemented.** `PanelWaveInfo` now nests each half in its own `Hud.outlineBorder()`
+section, and `PathWaveRow` collapsed to one row with a chevron-only marker beside the enemy
+strip, exactly as decided below.
 
 ## Summary
 
@@ -101,17 +102,15 @@ that row instead of getting a full line to itself), and the same total informati
 - The swatch's dot is dropped along with its row; only the chevron carries the path color
   forward, placed to the left of the enemy strip on its row.
 
-## Open questions
+## Open questions (resolved)
 
-- Exact chevron size/spacing against `PanelEnemy`'s strip, and whether the chevron sits inside
-  `PathWaveRow`'s own layout or inside a small wrapper shared with the strip — left to
-  implementation, verified visually.
-- Whether the per-section border should hug just `curSide`/`nextSide`, or wrap the round label
-  together with its side as one bordered group — either reads as "a bounded panel"; pick
-  whichever looks right in a screenshot.
+- The chevron sits directly inside `PathWaveRow`'s own `GridBagLayout`, at `gridx = 0`, with
+  `panelEnemy` moved to `gridx = 1` on the same row — no separate wrapper needed.
+- The per-section border wraps the round label together with its side, as one `curSection`/
+  `nextSection` panel each — a border around the rows alone, with the label floating outside it,
+  would not have read as "the label headings its own panel."
 
 ---
 
-*After planning and implementation, update this document rather than deleting it (see the root
-`CLAUDE.md`'s documentation map): mark it implemented, prune resolved open questions, and either
-promote deferred scope to a new request or note it's still wanted for a later version.*
+*Implemented. Visual verification (screenshot with a multi-path level loaded) is covered as
+part of this implementation's end-of-plan verification pass.*

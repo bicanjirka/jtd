@@ -23,7 +23,7 @@ import java.io.Serial;
 import java.util.List;
 
 /**
- * One path's summary within a round: a small color swatch identifying the path, and the
+ * One path's summary within a round: a small chevron marking the path's color, and the
  * {@link PanelEnemy} strip showing what it spawns - each preview mob its own resolved health,
  * bounty and rank badge (the badge lands in a later pass; see {@code td/ui/CLAUDE.md}), since
  * those numbers are no longer wave-uniform the way they were before enemies carried their own
@@ -36,7 +36,8 @@ final class PathWaveRow extends JPanel {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final int SWATCH_SIZE = 16;
+    private static final int SWATCH_WIDTH = 10;
+    private static final int SWATCH_HEIGHT = 16;
 
     private final Swatch swatch = new Swatch();
     private final PanelEnemy panelEnemy = new PanelEnemy();
@@ -77,7 +78,7 @@ final class PathWaveRow extends JPanel {
         setBackground(Color.BLACK);
         setFocusable(false);
 
-        this.swatch.setPreferredSize(new Dimension(SWATCH_SIZE, SWATCH_SIZE));
+        this.swatch.setPreferredSize(new Dimension(SWATCH_WIDTH, SWATCH_HEIGHT));
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 0;
         c.gridy = 0;
@@ -87,8 +88,8 @@ final class PathWaveRow extends JPanel {
 
         this.panelEnemy.setMinimumSize(new Dimension(30, 30));
         c = new GridBagConstraints();
-        c.gridx = 0;
-        c.gridy = 1;
+        c.gridx = 1;
+        c.gridy = 0;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.weightx = 0.01;
         c.insets = new Insets(2, 0, 2, 0);
@@ -96,10 +97,9 @@ final class PathWaveRow extends JPanel {
     }
 
     /**
-     * A static dot and a moving-styled chevron in the row's path color - the same two marker
-     * shapes the board's own path trail uses, reused here through
-     * {@link Java2DFrameRenderer#paintPathMarkers} rather than a second, hand-drawn visual
-     * language for "which lane is this."
+     * A moving-styled chevron in the row's path color - the same marker shape the board's own
+     * path trail uses, reused here through {@link Java2DFrameRenderer#paintPathMarkers} rather
+     * than a second, hand-drawn visual language for "which lane is this."
      */
     @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
     // painted only from the EDT render pulse, like every other Panel* component
@@ -118,13 +118,10 @@ final class PathWaveRow extends JPanel {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            float size = Math.min(getWidth(), getHeight()) * 0.22f;
-            float cy = getHeight() / 2f;
-            PathMarkerDraw dot = new PathMarkerDraw(PathMarkerShape.DOT, PathMarkerBrightness.MOVING, this.color,
-                    getWidth() * 0.3f, cy, 0.0, size);
+            float size = Math.min(getWidth(), getHeight()) * 0.6f;
             PathMarkerDraw chevron = new PathMarkerDraw(PathMarkerShape.CHEVRON, PathMarkerBrightness.MOVING, this.color,
-                    getWidth() * 0.75f, cy, 0.0, size);
-            this.renderer.paintPathMarkers(g2, List.of(dot, chevron));
+                    getWidth() / 2f, getHeight() / 2f, 0.0, size);
+            this.renderer.paintPathMarkers(g2, List.of(chevron));
             g2.dispose();
         }
     }
