@@ -27,13 +27,6 @@ import java.util.List;
 public final class SeekerTower extends AbstractTower {
 
     public static final int PRICE = 35;
-    // Buffed from 1800/60 (30 dmg/tick) - see TODO.md's "New tower numbers are unbalanced
-    // placeholders" formation-test entry: at the old numbers this was the lowest-DPS attack
-    // tower in the game by a wide margin (first's 4000/39 is ~103/tick) with no splash/sweep/
-    // continuous-AoE multiplier to make up the gap, and it registered zero kills against even
-    // a small enemy column in that test. 2600/45 (~58 dmg/tick) roughly doubles its throughput
-    // without matching or exceeding first's, keeping guaranteed-hit reliability and freeze CC
-    // as the reason to pick this over a cheaper single-target tower rather than raw DPS alone.
     public static final int DAMAGE = 2600;
     public static final float RANGE = 4.5f;
 
@@ -58,12 +51,8 @@ public final class SeekerTower extends AbstractTower {
      * Ticks between shots before any fire-rate buff - paired with this tower's damage.
      */
     private static final int COOLDOWN_MAX = 45;
+
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
-    // Bought on the EDT (onUpgradePathChosen) and read every tick on the game-loop thread, so
-    // it is published volatile - CLAUDE.md 3 rule 2. Each is an independent scalar with no
-    // invariant tying it to another, which is what makes a volatile scalar the right mechanism
-    // here rather than a TowerStats-style snapshot: reading last pulse's value for one tick
-    // after an upgrade is correct, just briefly stale.
     private volatile int freezeDurationTicks = FREEZE_DURATION_TICKS_BASE;
     private int coolDown = 0;
     private EnemyMob currentTarget;

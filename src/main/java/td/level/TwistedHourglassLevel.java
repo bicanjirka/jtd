@@ -33,19 +33,12 @@ import java.util.List;
  */
 final class TwistedHourglassLevel {
 
-    // This level's one level-authored enemy (LevelDefinition.customRankedEnemies, see
-    // td/level/CLAUDE.md) - deliberately reaches for two options no built-in enemy exercises
-    // yet: PathDirectionalMovement, so its triangle nose actually tracks the sweeping curve
-    // instead of spinning in place the way Frenzied's RotorMovement does, and a healthDivisor
-    // below 1, the opposite direction from Ghost's flat /5 - it makes a Reaver tougher than its
-    // own base health rather than weaker. HurtSpeedTrait/FlatResistTrait combine a Frenzied-
-    // style speed curve with a Warden-style flat reduction, at values scaled down to a wave-1
-    // appearance rather than a boss encounter; the health-threshold panic shield and the
-    // on-death split are both real Ability/AbilityAction wiring, just aimed at itself and at a
-    // "spawn two, don't replace" reinforcement instead of the Warden's "shield allies"/"replace
-    // with the next stage" uses of the same two mechanisms. A full five-rank ladder, like the
-    // five basic built-ins - traits/abilities/movement stay the same across ranks, only health
-    // and bounty escalate, the same pattern ARMORED/FRENZIED/GHOST use.
+    private static final String LEVEL_NAME = "Twisted Hourglass";
+    private static final String LEVEL_DESCRIPTION = "Three lanes twist through the same knot of cells, pinched together twice on their "
+            + "way from one edge of the board to another.";
+    private static final int STARTING_CREDITS = 100;
+    private static final int STARTING_LIVES = 4;
+
     private static final RankedEnemy REAVER = RankedEnemy
             .startingAt(EnemyDefinition.of("reaver", "Reaver", 500, 12, 1.28f, BodyArchetype.TRIANGLE)
                     .withDescription("Speeds up as it's hurt, shrugs off a flat amount of every hit, panics into a "
@@ -71,6 +64,7 @@ final class TwistedHourglassLevel {
     // corners that share it rather than meeting.
     private static final QuadraticBezierSmoothing SMOOTHING = new QuadraticBezierSmoothing(0.28, 12);
 
+    private static final PathColor TEAL_COLOR = PathColor.of(30, 150, 140);
     private static final PathDefinition TEAL_PATH = PathDefinition.smoothed(
                     List.of(
                             new Point(-1, 1), new Point(7, 1), new Point(7, 5),
@@ -88,8 +82,9 @@ final class TwistedHourglassLevel {
                             new WaveDefinition("drip 4 s e drip 4 t", Rank.ELITE),
                             new WaveDefinition("3 g 3 t 3 s 3 c", Rank.ELITE)),
                     SMOOTHING)
-            .withColor(PathColor.of(30, 150, 140));
+            .withColor(TEAL_COLOR);
 
+    private static final PathColor AMBER_COLOR = PathColor.of(230, 160, 40);
     private static final PathDefinition AMBER_PATH = PathDefinition.smoothed(
                     List.of(
                             new Point(2, -1), new Point(2, 5), new Point(5, 7),
@@ -106,8 +101,9 @@ final class TwistedHourglassLevel {
                             new WaveDefinition("3 g 2 t 2 g", Rank.ELITE),
                             new WaveDefinition("s", Rank.ELITE)),
                     SMOOTHING)
-            .withColor(PathColor.of(230, 160, 40));
+            .withColor(AMBER_COLOR);
 
+    private static final PathColor CRIMSON_COLOR = PathColor.of(200, 30, 60);
     private static final PathDefinition CRIMSON_PATH = PathDefinition.smoothed(
                     List.of(
                             new Point(9, 5), new Point(2, 5), new Point(0, 7),
@@ -124,14 +120,13 @@ final class TwistedHourglassLevel {
                             new WaveDefinition("3 g 2 t 2 g 2 t", Rank.ELITE),
                             new WaveDefinition("s", Rank.BOSS)),
                     SMOOTHING)
-            .withColor(PathColor.of(200, 30, 60));
+            .withColor(CRIMSON_COLOR);
 
     static final LevelDefinition DEFINITION = LevelDefinition
-            .of("Twisted Hourglass", 9, 14, List.of(CRIMSON_PATH, TEAL_PATH, AMBER_PATH))
-            .withDescription("Three lanes twist through the same knot of cells, pinched together twice on their "
-                    + "way from one edge of the board to another. 10 waves per lane, starting with $100 and 4 lives.")
-            .withStartingCredits(100)
-            .withStartingLives(4)
+            .of(LEVEL_NAME, 9, 14, List.of(CRIMSON_PATH, TEAL_PATH, AMBER_PATH))
+            .withDescription(LEVEL_DESCRIPTION)
+            .withStartingCredits(STARTING_CREDITS)
+            .withStartingLives(STARTING_LIVES)
             .withCustomRankedEnemies(List.of(REAVER));
 
     private TwistedHourglassLevel() {

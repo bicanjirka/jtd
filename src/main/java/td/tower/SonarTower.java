@@ -60,11 +60,6 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
             "Marksman Beam", 30, TowerBuff.damage(0.4f), new KillCountCondition(15));
     private static final List<UpgradePath> PATHS = List.of(OVERCHARGED_ARRAY, MARKSMAN_BEAM);
     private final List<SonarHit> recentHits = new ArrayList<>();
-    // Bought on the EDT (onUpgradePathChosen) and read every tick on the game-loop thread, so
-    // it is published volatile - CLAUDE.md 3 rule 2. Each is an independent scalar with no
-    // invariant tying it to another, which is what makes a volatile scalar the right mechanism
-    // here rather than a TowerStats-style snapshot: reading last pulse's value for one tick
-    // after an upgrade is correct, just briefly stale.
     private volatile SonarSweep sweep = SonarSweep.perRevolution(SECONDS_PER_REVOLUTION, TICKS_PER_SECOND);
     private volatile float secondsPerRevolutionCurrent = SECONDS_PER_REVOLUTION;
 
