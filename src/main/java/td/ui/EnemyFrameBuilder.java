@@ -43,15 +43,26 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
      */
     static final int MAX_VISIBLE_MARKERS = 3;
     // How far above the body the marker row sits, and how far apart consecutive markers are,
-    // both as a fraction of the mob's own body scale - so the row scales with the mob's size
-    // rather than needing a fixed pixel offset that would look wrong at a different board scale.
+    // as a fraction of the mob's own body scale - so the row's position keeps clear of a large
+    // body rather than needing a fixed pixel offset that would sit inside a boss's silhouette.
+    // The glyph size itself is deliberately NOT one of these fractions - see
+    // MARKER_FIXED_SCALE below.
     private static final float MARKER_ROW_OFFSET_FRACTION = 1.6f;
     private static final float MARKER_SPACING_FRACTION = 1.1f;
-    private static final float MARKER_SCALE_FRACTION = 0.35f;
     /**
-     * The trait-marker row sits below the body, mirroring the effect row's own offset/spacing/
-     * scale above it - same visual language, opposite side, so the two rows never collide and
-     * both scale with the mob's own size the same way.
+     * A status/trait marker's own glyph size, fixed rather than a fraction of body scale - a
+     * slow icon should read the same whether it is stuck to a swarm Circle or a Warden, and
+     * scaling it with the body made it nearly invisible on the former and oversized on the
+     * latter. Only the row's position/spacing above stays proportional, so a large body still
+     * has clearance for it. Sized to match what a mid-rank enemy's marker already looked like
+     * before this change.
+     */
+    private static final float MARKER_FIXED_SCALE = 4.5f;
+    /**
+     * The trait-marker row sits below the body, mirroring the effect row's own offset/spacing
+     * above it - same visual language, opposite side, so the two rows never collide. Its
+     * position stays proportional to body scale for the same clearance reason as the status
+     * row; its glyph size is the same fixed MARKER_FIXED_SCALE.
      */
     private static final float TRAIT_MARKER_ROW_OFFSET_FRACTION = 1.6f;
     /**
@@ -59,6 +70,13 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
      * a brief flash rather than a lingering marker.
      */
     static final int CRIT_SPARK_DURATION_TICKS = 8;
+    /**
+     * A crit spark's size, fixed rather than the hit mob's own body scale - a crit reads as the
+     * same event regardless of which enemy it landed on, so it should look the same size on a
+     * swarm Circle and a Warden alike. Sized to match what a mid-rank enemy's spark already
+     * looked like before this change.
+     */
+    private static final float CRIT_SPARK_FIXED_SCALE = 12f;
     /**
      * How long a cloak fade-in/fade-out takes, in ticks - same duration as the crit spark, for
      * the same "brief, legible transition" reasoning.
@@ -185,7 +203,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             this.draws.add(new EnemyBodyDraw(palette, x, y, facingRadians, scale, mob.getHealthFraction(),
                     badgeFor(mob.getRank()), this.cloakProgress(mob)));
             this.markers(mob, x, y, scale);
-            this.critSpark(mob, x, y, scale);
+            this.critSpark(mob, x, y);
             this.overlays(mob, x, y, scale, supportAura);
             this.pulses(mob, x, y, scale);
             this.traitMarkers(x, y, scale, traits);
@@ -204,10 +222,10 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         int shown = 0;
         for (Trait trait : traits) {
             if (shown == MAX_VISIBLE_MARKERS) {
-                this.overlayDraws.add(new TraitMarkerDraw(Palette.TRAIT_MARKER_OVERFLOW, markerX, markerY, scale * MARKER_SCALE_FRACTION));
+                this.overlayDraws.add(new TraitMarkerDraw(Palette.TRAIT_MARKER_OVERFLOW, markerX, markerY, MARKER_FIXED_SCALE));
                 return;
             }
-            this.overlayDraws.add(new TraitMarkerDraw(traitMarkerPaletteFor(trait.marker()), markerX, markerY, scale * MARKER_SCALE_FRACTION));
+            this.overlayDraws.add(new TraitMarkerDraw(traitMarkerPaletteFor(trait.marker()), markerX, markerY, MARKER_FIXED_SCALE));
             markerX += scale * MARKER_SPACING_FRACTION;
             shown++;
         }
@@ -265,11 +283,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         this.overlayDraws.add(new EffectPulseDraw(markerPaletteFor(kind), x, y, scale * GAIN_LOSS_PULSE_RADIUS_FRACTION, progress, direction));
     }
 
-    private void critSpark(AbstractEnemyMob mob, float x, float y, float scale) {
+    private void critSpark(AbstractEnemyMob mob, float x, float y) {
         int ticksSince = mob.ticksSinceCriticalHit(this.gameTime);
         if (ticksSince >= 0 && ticksSince <= CRIT_SPARK_DURATION_TICKS) {
             float fadeProgress = (float) ticksSince / CRIT_SPARK_DURATION_TICKS;
-            this.critSparkDraws.add(new CritSparkDraw(Palette.CRIT_SPARK, x, y, scale, fadeProgress));
+            this.critSparkDraws.add(new CritSparkDraw(Palette.CRIT_SPARK, x, y, CRIT_SPARK_FIXED_SCALE, fadeProgress));
         }
     }
 
@@ -313,10 +331,10 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
                 // A 4th+ simultaneous effect collapses into one overflow marker rather than
                 // growing the row further - legible even on a heavily-buffed enemy in a packed
                 // wave (see docs/features/FEATURE-enemy-traits-and-effects.md's V1 Scope).
-                this.markerDraws.add(new StatusMarkerDraw(Palette.STATUS_MARKER_OVERFLOW, markerX, markerY, scale * MARKER_SCALE_FRACTION));
+                this.markerDraws.add(new StatusMarkerDraw(Palette.STATUS_MARKER_OVERFLOW, markerX, markerY, MARKER_FIXED_SCALE));
                 return;
             }
-            this.markerDraws.add(new StatusMarkerDraw(markerPaletteFor(kind), markerX, markerY, scale * MARKER_SCALE_FRACTION));
+            this.markerDraws.add(new StatusMarkerDraw(markerPaletteFor(kind), markerX, markerY, MARKER_FIXED_SCALE));
             markerX += scale * MARKER_SPACING_FRACTION;
             shown++;
         }
