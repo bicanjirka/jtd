@@ -224,9 +224,9 @@ public abstract class AbstractTower implements Tower {
      * keep inflating {@code damageDealt}/{@code killCount} and paying bounty bonuses on an
      * object the player has already been refunded for.
      */
-    protected void dealDamage(EnemyMob enemy, Damage damage) {
+    protected boolean dealDamage(EnemyMob enemy, Damage damage) {
         if (this.removed) {
-            return;
+            return false;
         }
         boolean wasAlive = !enemy.isDead();
         Damage landed = enemy.doDamage(this.rollCritical(enemy, damage));
@@ -242,6 +242,7 @@ public abstract class AbstractTower implements Tower {
                 }
             }
         }
+        return landed.critical();
     }
 
     /**

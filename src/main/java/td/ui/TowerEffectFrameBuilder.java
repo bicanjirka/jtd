@@ -67,7 +67,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     public Void visitSniperTower(SniperTower tower) {
         EnemyMob target = tower.getCurrentTarget();
         if (target != null) {
-            this.draws.add(new BeamDraw(Palette.TOWER_SNIPER_BEAM, tower.getX(), tower.getY(),
+            Palette beamColor = tower.wasLastShotCritical() ? Palette.CRIT_SPARK : Palette.TOWER_SNIPER_BEAM;
+            this.draws.add(new BeamDraw(beamColor, tower.getX(), tower.getY(),
                     (float) target.getX(), (float) target.getY(), beamWidth(tower.getCoolDownFraction())));
         }
         return null;
