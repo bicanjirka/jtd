@@ -712,7 +712,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = GridBagConstraints.BOTH;
+        // No fill: jPanel_board is already sized to the loaded level's exact pixel dimensions
+        // (GameBoard.recalculateBoard), so it must not stretch to fill extra window space -
+        // it stays at its natural size, centered in its cell by the default CENTER anchor.
         gridBagConstraints.weightx = 0.1;
         gridBagConstraints.weighty = 0.1;
         jPanel_game.add(jPanel_board, gridBagConstraints);
