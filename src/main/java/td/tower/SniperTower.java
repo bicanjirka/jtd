@@ -51,6 +51,7 @@ public final class SniperTower extends AbstractTower {
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private int coolDown = 0;
     private EnemyMob currentTarget;
+    private boolean lastShotCritical;
 
     public SniperTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SNIPER, PRICE,
@@ -74,7 +75,7 @@ public final class SniperTower extends AbstractTower {
         } else {
             this.currentTarget = this.findEnemy();
             if (this.currentTarget != null) {
-                this.dealDamage(this.currentTarget, Damage.physical(this.damageCurrent()));
+                this.lastShotCritical = this.dealDamage(this.currentTarget, Damage.physical(this.damageCurrent()));
                 this.coolDown = this.coolDownCurrent();
             }
         }
@@ -87,6 +88,10 @@ public final class SniperTower extends AbstractTower {
 
     public EnemyMob getCurrentTarget() {
         return this.currentTarget;
+    }
+
+    public boolean wasLastShotCritical() {
+        return this.lastShotCritical;
     }
 
     public TurretAim getTurretAim() {

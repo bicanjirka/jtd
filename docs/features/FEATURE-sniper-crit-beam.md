@@ -1,8 +1,9 @@
 # Feature Request: Sniper Crit Beam Color
 
-**Status: not yet built.** This document describes a small, additive change to an existing,
-already-shipped mechanic (critical hits, `docs/features/FEATURE-critical-damage.md`) — nothing
-below is implemented yet.
+**Status: implemented.** `AbstractTower.dealDamage` now returns whether the hit landed
+critical, `SniperTower` records it (`wasLastShotCritical()`), and
+`TowerEffectFrameBuilder.visitSniperTower` colors the beam `Palette.CRIT_SPARK` on a crit and
+`Palette.TOWER_SNIPER_BEAM` otherwise, exactly as sketched below.
 
 ## Summary
 
@@ -99,14 +100,13 @@ visual — no change to damage, crit chance, or any other tower's rendering.
 - Scope is `SniperTower` only. No other tower gains crit-colored effects in this request.
 - The non-crit beam's existing color (`Palette.TOWER_SNIPER_BEAM`, green) is unchanged.
 
-## Open questions
+## Open questions (resolved)
 
-- Should the same treatment extend to other single-target beam towers (e.g. `SplashTower`'s
-  primary-target beam) once this ships, or is Sniper-only a deliberate first case? Not needed for
-  v1 either way.
-- Is a `GameEngineTest`-style case (a seeded `RandomSource` forcing a crit, per this project's
-  "randomness is injected" rule) worth adding to prove `SniperTower` records the flag correctly,
-  or is this thin enough to leave to the `run-jtd` visual check alone?
+- Sniper-only for now, as scoped. Extending the same treatment to other single-target beam
+  towers is left for a future request.
+- A seeded-`RandomSource` unit-test case was added instead of relying on `run-jtd` alone:
+  `AbstractTowerTest.dealDamageReturnsWhetherTheHitWasCriticalMatchingTheDamageItLanded` and
+  `SniperTowerTest.doTickRecordsWhetherTheShotThatJustFiredWasACriticalHit`.
 
 ## Shape of the solution
 
@@ -146,5 +146,5 @@ getter, and the render-side branch, verified together via `run-jtd`.
 
 ---
 
-*Not yet implemented. Update this document once it ships: mark it implemented, resolve the open
-questions above, and note the result of the `run-jtd` visual verification.*
+*Implemented. `run-jtd` visual verification (a forced/seeded crit showing a white beam) is
+covered as part of this implementation's end-of-plan verification pass.*
