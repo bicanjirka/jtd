@@ -2,6 +2,7 @@ package td.tower;
 
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeState;
 
 import java.util.List;
 import java.util.Optional;
@@ -112,5 +113,15 @@ public interface Tower {
      * must not gate this on a separate affordability or condition check first.
      */
     boolean chooseUpgradePath(UpgradePath path);
+
+    /**
+     * This tower's currently owned upgrade-tree nodes, one immutable snapshot - queried by
+     * {@code UpgradeCondition.owns}/{@code slotEmpty} rather than tracked separately by a
+     * condition itself. Defaults to {@link UpgradeState#none()}; a placeholder until
+     * {@code AbstractTower} starts overriding it in place of {@code chosenPath}.
+     */
+    default UpgradeState upgrades() {
+        return UpgradeState.none();
+    }
 
 }

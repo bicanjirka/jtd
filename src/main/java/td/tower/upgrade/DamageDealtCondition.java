@@ -19,4 +19,10 @@ public record DamageDealtCondition(long threshold) implements UpgradeCondition {
         // AbstractTower.getStatusString()'s own "Damage dealt" line for the precedent.
         return (this.threshold / 100f) + " damage dealt";
     }
+
+    @Override
+    public String progress(Tower tower, GameWorld context) {
+        long current = Math.min(tower.getDamageDealt(), this.threshold);
+        return (current / 100f) + "/" + (this.threshold / 100f) + " damage dealt";
+    }
 }

@@ -15,6 +15,21 @@ public record ClusterCondition(int requiredAdjacent) implements UpgradeCondition
 
     @Override
     public boolean isSatisfied(Tower tower, GameWorld context) {
+        return adjacentCount(tower, context) >= this.requiredAdjacent;
+    }
+
+    @Override
+    public String describe() {
+        return this.requiredAdjacent + " nearby towers";
+    }
+
+    @Override
+    public String progress(Tower tower, GameWorld context) {
+        return Math.min(adjacentCount(tower, context), this.requiredAdjacent) + "/" + this.requiredAdjacent
+                + " nearby towers";
+    }
+
+    private static int adjacentCount(Tower tower, GameWorld context) {
         BoardGeometry board = context.getBoard();
         int cellX = board.cellX(tower.getX());
         int cellY = board.cellY(tower.getY());
@@ -29,11 +44,6 @@ public record ClusterCondition(int requiredAdjacent) implements UpgradeCondition
                 adjacent++;
             }
         }
-        return adjacent >= this.requiredAdjacent;
-    }
-
-    @Override
-    public String describe() {
-        return this.requiredAdjacent + " nearby towers";
+        return adjacent;
     }
 }

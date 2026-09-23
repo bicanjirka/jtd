@@ -17,4 +17,9 @@ public record KillCountCondition(int threshold) implements UpgradeCondition {
     public String describe() {
         return this.threshold + " kills";
     }
+
+    @Override
+    public String progress(Tower tower, GameWorld context) {
+        return Math.min(tower.getKillCount(), this.threshold) + "/" + this.threshold + " kills";
+    }
 }
