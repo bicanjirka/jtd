@@ -1,13 +1,11 @@
 package td.enemy;
 
-import td.damage.DamageType;
 import td.effect.HealTemplate;
 import td.effect.InvisibleTemplate;
 import td.effect.ShieldTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * The built-in {@link RankedEnemy} ladders and standalone {@link EnemyDefinition}s.
