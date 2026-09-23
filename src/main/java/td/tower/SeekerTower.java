@@ -9,7 +9,9 @@ import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.UpgradeCondition;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
@@ -38,14 +40,20 @@ public final class SeekerTower extends AbstractTower {
     /**
      * Faster reloading - a straightforward money-gated specialization needing no track record.
      */
-    private static final UpgradePath TWIN_WARHEAD = new UpgradePath(
-            "Twin Warhead", 30, TowerBuff.fireRate(0.35f), UpgradeCondition.always());
+    private static final UpgradeNode TWIN_WARHEAD = UpgradeNode.of("seeker.head.twin_warhead", UpgradeSlot.HEAD,
+            "Twin Warhead", 30)
+            .withBuff(TowerBuff.fireRate(0.35f))
+            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD));
     /**
      * More damage and a longer freeze - earned by this tower having racked up proven kills.
      */
-    private static final UpgradePath DEEP_FREEZE = new UpgradePath(
-            "Deep Freeze", 35, TowerBuff.damage(0.3f), new KillCountCondition(10), "+50% freeze duration");
-    private static final List<UpgradePath> PATHS = List.of(TWIN_WARHEAD, DEEP_FREEZE);
+    private static final UpgradeNode DEEP_FREEZE = UpgradeNode.of("seeker.head.deep_freeze", UpgradeSlot.HEAD,
+            "Deep Freeze", 35)
+            .withBuff(TowerBuff.damage(0.3f))
+            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
+            .withGate(new KillCountCondition(10))
+            .withExtraEffect("+50% freeze duration");
+    private static final UpgradeTree TREE = UpgradeTree.of(TWIN_WARHEAD, DEEP_FREEZE);
 
     /**
      * Ticks between shots before any fire-rate buff - paired with this tower's damage.
@@ -62,16 +70,16 @@ public final class SeekerTower extends AbstractTower {
     }
 
     @Override
-    public List<UpgradePath> availablePaths() {
-        return PATHS;
+    public UpgradeTree upgradeTree() {
+        return TREE;
     }
 
     /**
      * Deep Freeze's longer duration isn't a {@link TowerBuff} axis, so it's applied here instead.
      */
     @Override
-    protected void onUpgradePathChosen(UpgradePath path) {
-        if (path == DEEP_FREEZE) {
+    protected void onUpgradeBought(UpgradeNode node) {
+        if (node.equals(DEEP_FREEZE)) {
             this.freezeDurationTicks = Math.round(this.freezeDurationTicks * DEEP_FREEZE_DURATION_MULTIPLIER);
         }
     }

@@ -6,7 +6,10 @@ import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.ClusterCondition;
 import td.tower.upgrade.KillCountCondition;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeCondition;
+import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.wave.WaveStartListener;
 
@@ -51,14 +54,21 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
     /**
      * Faster sweep and more range - a payoff for a deliberately grouped placement.
      */
-    private static final UpgradePath OVERCHARGED_ARRAY = new UpgradePath(
-            "Overcharged Array", 35, TowerBuff.range(0.2f), new ClusterCondition(2), "sweeps 40% faster");
+    private static final UpgradeNode OVERCHARGED_ARRAY = UpgradeNode.of("sonar.head.overcharged_array",
+            UpgradeSlot.HEAD, "Overcharged Array", 35)
+            .withBuff(TowerBuff.range(0.2f))
+            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
+            .withGate(new ClusterCondition(2))
+            .withExtraEffect("sweeps 40% faster");
     /**
      * More damage per hit - earned by this tower's own proven kill record.
      */
-    private static final UpgradePath MARKSMAN_BEAM = new UpgradePath(
-            "Marksman Beam", 30, TowerBuff.damage(0.4f), new KillCountCondition(15));
-    private static final List<UpgradePath> PATHS = List.of(OVERCHARGED_ARRAY, MARKSMAN_BEAM);
+    private static final UpgradeNode MARKSMAN_BEAM = UpgradeNode.of("sonar.head.marksman_beam", UpgradeSlot.HEAD,
+            "Marksman Beam", 30)
+            .withBuff(TowerBuff.damage(0.4f))
+            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
+            .withGate(new KillCountCondition(15));
+    private static final UpgradeTree TREE = UpgradeTree.of(OVERCHARGED_ARRAY, MARKSMAN_BEAM);
     private final List<SonarHit> recentHits = new ArrayList<>();
     private volatile SonarSweep sweep = SonarSweep.perRevolution(SECONDS_PER_REVOLUTION, TICKS_PER_SECOND);
     private volatile float secondsPerRevolutionCurrent = SECONDS_PER_REVOLUTION;
@@ -70,16 +80,16 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
     }
 
     @Override
-    public List<UpgradePath> availablePaths() {
-        return PATHS;
+    public UpgradeTree upgradeTree() {
+        return TREE;
     }
 
     /**
      * Overcharged Array's turn-speed bump isn't a {@link TowerBuff} axis, so it's applied here instead.
      */
     @Override
-    protected void onUpgradePathChosen(UpgradePath path) {
-        if (path == OVERCHARGED_ARRAY) {
+    protected void onUpgradeBought(UpgradeNode node) {
+        if (node.equals(OVERCHARGED_ARRAY)) {
             this.secondsPerRevolutionCurrent = SECONDS_PER_REVOLUTION * OVERCHARGED_SPEEDUP_FACTOR;
             this.sweep = SonarSweep.perRevolution(this.secondsPerRevolutionCurrent, TICKS_PER_SECOND);
         }

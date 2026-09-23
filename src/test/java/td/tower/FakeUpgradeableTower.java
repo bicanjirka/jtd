@@ -1,27 +1,25 @@
 package td.tower;
 
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 
-import java.util.List;
-
 /**
- * A minimal concrete tower exposing a fixed, test-supplied set of {@link UpgradePath}s, used
- * to exercise {@link AbstractTower}'s upgrade-path mechanism (choosing, permanence,
- * composing with an Aura tower's buff) in isolation from any real tower's own content.
+ * A minimal concrete tower exposing a fixed, test-supplied {@link UpgradeTree}, used
+ * to exercise {@link AbstractTower}'s upgrade mechanism (buying, exclusivity, composing
+ * with an Aura tower's buff) in isolation from any real tower's own content.
  */
 final class FakeUpgradeableTower extends AbstractTower {
 
-    private final List<UpgradePath> paths;
+    private final UpgradeTree tree;
 
-    FakeUpgradeableTower(GameWorld context, int x, int y, List<UpgradePath> paths) {
+    FakeUpgradeableTower(GameWorld context, int x, int y, UpgradeTree tree) {
         super(TowerFactory.Type.SNIPER, 10, new TowerBaseStats(1000, 3f, 20), context, x, y);
-        this.paths = paths;
+        this.tree = tree;
     }
 
     @Override
-    public List<UpgradePath> availablePaths() {
-        return this.paths;
+    public UpgradeTree upgradeTree() {
+        return this.tree;
     }
 
     @Override

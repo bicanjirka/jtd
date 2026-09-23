@@ -11,7 +11,8 @@ import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerVisitor;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
 import td.ui.render.Palette;
 import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TurretHeadDraw;
@@ -71,18 +72,19 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     /**
-     * The specialization-ring role for a tower's chosen upgrade path, if any - path A gets
-     * {@code TOWER_UPGRADE_PATH_A}, path B gets {@code TOWER_UPGRADE_PATH_B}, regardless of
-     * tower type, so the accent is one consistent two-colour language rather than a role per
-     * tower per path. {@code indexOf} works because {@code chooseUpgradePath} always stores
-     * back one of the exact instances {@code availablePaths()} itself returned.
+     * The specialization-ring role for a tower's chosen {@code HEAD} node, if any - the first
+     * node in {@code upgradeTree()}'s {@code HEAD} nodes gets {@code TOWER_UPGRADE_PATH_A}, the
+     * second gets {@code TOWER_UPGRADE_PATH_B}, regardless of tower type, so the accent is one
+     * consistent two-colour language rather than a role per tower per node. A temporary
+     * stand-in for the real per-slot marker set phase 5 adds - see
+     * {@code docs/features/FEATURE-tower-upgrade-trees.md}.
      */
     private static Optional<Palette> accentPaletteFor(Tower tower) {
-        UpgradePath chosen = tower.getChosenPath().orElse(null);
+        UpgradeNode chosen = tower.upgrades().tip(UpgradeSlot.HEAD).orElse(null);
         if (chosen == null) {
             return Optional.empty();
         }
-        int index = tower.availablePaths().indexOf(chosen);
+        int index = tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).indexOf(chosen);
         return Optional.of(index == 0 ? Palette.TOWER_UPGRADE_PATH_A : Palette.TOWER_UPGRADE_PATH_B);
     }
 

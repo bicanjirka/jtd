@@ -1,19 +1,19 @@
 package td.tower;
 
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
 
 /**
- * Looks up one of a tower's own upgrade paths by display name, so tests don't depend on list order.
+ * Looks up one of a tower's own upgrade nodes by display name, so tests don't depend on list order.
  */
 final class UpgradePaths {
 
     private UpgradePaths() {
     }
 
-    static UpgradePath named(Tower tower, String displayName) {
-        return tower.availablePaths().stream()
-                .filter(p -> p.displayName().equals(displayName))
+    static UpgradeNode named(Tower tower, String displayName) {
+        return tower.upgradeTree().nodes().stream()
+                .filter(n -> n.displayName().equals(displayName))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No path named '" + displayName + "' on " + tower));
+                .orElseThrow(() -> new IllegalArgumentException("No node named '" + displayName + "' on " + tower));
     }
 }

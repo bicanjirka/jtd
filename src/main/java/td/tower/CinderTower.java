@@ -9,7 +9,9 @@ import td.tower.targeting.InWedgeTargetQuery;
 import td.tower.targeting.NearestSelector;
 import td.tower.upgrade.DamageDealtCondition;
 import td.tower.upgrade.UpgradeCondition;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
@@ -64,14 +66,20 @@ public final class CinderTower extends AbstractTower {
     /**
      * More damage (and so more burn per tick, since burn's magnitude is this tower's own damageCurrent) - earned by proven output.
      */
-    private static final UpgradePath WHITE_FLAME = new UpgradePath(
-            "White Flame", 30, TowerBuff.damage(0.4f), new DamageDealtCondition(15000));
+    private static final UpgradeNode WHITE_FLAME = UpgradeNode.of("cinder.head.white_flame", UpgradeSlot.HEAD,
+            "White Flame", 30)
+            .withBuff(TowerBuff.damage(0.4f))
+            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
+            .withGate(new DamageDealtCondition(15000));
     /**
      * A wider cone and more range - a straightforward money-gated specialization needing no track record.
      */
-    private static final UpgradePath WIDE_NOZZLE = new UpgradePath(
-            "Wide Nozzle", 25, TowerBuff.range(0.3f), UpgradeCondition.always(), "+40% cone width");
-    private static final List<UpgradePath> PATHS = List.of(WHITE_FLAME, WIDE_NOZZLE);
+    private static final UpgradeNode WIDE_NOZZLE = UpgradeNode.of("cinder.head.wide_nozzle", UpgradeSlot.HEAD,
+            "Wide Nozzle", 25)
+            .withBuff(TowerBuff.range(0.3f))
+            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
+            .withExtraEffect("+40% cone width");
+    private static final UpgradeTree TREE = UpgradeTree.of(WHITE_FLAME, WIDE_NOZZLE);
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final List<FlameWave> inFlightWaves = new ArrayList<>();
     private volatile double halfWidthRadians = HALF_WIDTH_RADIANS_BASE;
@@ -82,16 +90,16 @@ public final class CinderTower extends AbstractTower {
     }
 
     @Override
-    public List<UpgradePath> availablePaths() {
-        return PATHS;
+    public UpgradeTree upgradeTree() {
+        return TREE;
     }
 
     /**
      * Wide Nozzle's wider cone isn't a {@link TowerBuff} axis, so it's applied here instead.
      */
     @Override
-    protected void onUpgradePathChosen(UpgradePath path) {
-        if (path == WIDE_NOZZLE) {
+    protected void onUpgradeBought(UpgradeNode node) {
+        if (node.equals(WIDE_NOZZLE)) {
             this.halfWidthRadians *= WIDE_NOZZLE_HALF_WIDTH_MULTIPLIER;
         }
     }

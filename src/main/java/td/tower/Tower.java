@@ -1,11 +1,12 @@
 package td.tower;
 
 import td.tower.buff.TowerBuff;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
+import td.tower.upgrade.UpgradeTree;
+import td.util.GameWorld;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * One tower on the board, as seen by the roster, the cell it occupies and the renderer.
@@ -71,8 +72,8 @@ public interface Tower {
 
     /**
      * Recomputes this tower's buffed damage/range/fire rate from the towers currently on the
-     * board and its own chosen upgrade path. Called by {@code TowerRoster} whenever the set of
-     * towers changes, and by {@code chooseUpgradePath}.
+     * board and its own owned upgrade nodes. Called by {@code TowerRoster} whenever the set of
+     * towers changes, and by {@code buyUpgrade}.
      */
     void recalculateStats();
 
@@ -94,34 +95,35 @@ public interface Tower {
     int getKillCount();
 
     /**
-     * This tower's specialization paths (exactly two, for v1) - empty for a tower that offers
-     * none, like the Aura tower.
+     * This tower's full upgrade-tree content, across all three slots - {@link UpgradeTree#none()}
+     * for a tower that offers none.
      */
-    List<UpgradePath> availablePaths();
-
-    /**
-     * The path this tower has permanently specialized into, or {@code null} if it hasn't chosen one yet.
-     */
-    Optional<UpgradePath> getChosenPath();
-
-    /**
-     * Spends {@code path}'s price and permanently specializes this tower along it. Returns
-     * {@code false} without effect if a path is already chosen, {@code path} isn't one of
-     * this tower's own {@link #availablePaths()}, {@code path}'s own
-     * {@code UpgradeCondition} isn't currently satisfied, or the player can't afford it -
-     * mirrors {@code EconomyLedger.doPay}'s check-and-charge-in-one-call contract, so a caller
-     * must not gate this on a separate affordability or condition check first.
-     */
-    boolean chooseUpgradePath(UpgradePath path);
+    UpgradeTree upgradeTree();
 
     /**
      * This tower's currently owned upgrade-tree nodes, one immutable snapshot - queried by
      * {@code UpgradeCondition.owns}/{@code slotEmpty} rather than tracked separately by a
-     * condition itself. Defaults to {@link UpgradeState#none()}; a placeholder until
-     * {@code AbstractTower} starts overriding it in place of {@code chosenPath}.
+     * condition itself.
      */
-    default UpgradeState upgrades() {
-        return UpgradeState.none();
+    UpgradeState upgrades();
+
+    /**
+     * The nodes not yet owned whose {@code requires} is currently satisfied - shorthand for
+     * {@code upgradeTree().offered(this, context)}, what the sidebar panel, the number-key
+     * shortcut and the board's "ready" marker all read from.
+     */
+    default List<UpgradeNode> offeredUpgrades(GameWorld context) {
+        return this.upgradeTree().offered(this, context);
     }
+
+    /**
+     * Spends {@code node}'s price and adds it to this tower's owned nodes. Returns
+     * {@code false} without effect if {@code node} isn't one of this tower's own
+     * {@link #upgradeTree()}, is already owned, its {@code requires} or {@code gate} isn't
+     * currently satisfied, or the player can't afford it - mirrors
+     * {@code EconomyLedger.doPay}'s check-and-charge-in-one-call contract, so a caller must not
+     * gate this on a separate affordability or condition check first.
+     */
+    boolean buyUpgrade(UpgradeNode node);
 
 }

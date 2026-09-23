@@ -6,7 +6,8 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.WorldFixtures;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
 import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -139,9 +140,9 @@ class CinderTowerTest {
     void wideNozzleIsChoosableWithMoneyAloneAndAppliesItsRangeBonus() {
         this.context.economy().startEconomy(1000, 5);
         CinderTower tower = towerAt(3, 3);
-        UpgradePath wideNozzle = UpgradePaths.named(tower, "Wide Nozzle");
+        UpgradeNode wideNozzle = UpgradePaths.named(tower, "Wide Nozzle");
 
-        boolean chosen = tower.chooseUpgradePath(wideNozzle);
+        boolean chosen = tower.buyUpgrade(wideNozzle);
 
         assertThat(chosen).isTrue();
         assertThat(tower.getRangeReal()).isGreaterThan(CinderTower.RANGE * BoardFixtures.SCALE);
@@ -151,23 +152,23 @@ class CinderTowerTest {
     void whiteFlameIsNotYetChoosableBeforeEnoughDamageDealt() {
         this.context.economy().startEconomy(1000, 5);
         CinderTower tower = towerAt(3, 3);
-        UpgradePath whiteFlame = UpgradePaths.named(tower, "White Flame");
+        UpgradeNode whiteFlame = UpgradePaths.named(tower, "White Flame");
 
-        boolean chosen = tower.chooseUpgradePath(whiteFlame);
+        boolean chosen = tower.buyUpgrade(whiteFlame);
 
         assertThat(chosen).isFalse();
-        assertThat(tower.getChosenPath()).isEmpty();
+        assertThat(tower.upgrades().tip(UpgradeSlot.HEAD)).isEmpty();
     }
 
     @Test
     void wideNozzleBumpsTheHalfWidthRadiansBeyondTheBase() {
         CinderTower tower = towerAt(3, 3);
-        UpgradePath wideNozzle = UpgradePaths.named(tower, "Wide Nozzle");
+        UpgradeNode wideNozzle = UpgradePaths.named(tower, "Wide Nozzle");
         double halfWidthBeforeChoosing = tower.getHalfWidthRadians();
 
-        // onUpgradePathChosen is exercised directly - Wide Nozzle's own gate (money alone) is
+        // onUpgradeBought is exercised directly - Wide Nozzle's own gate (money alone) is
         // trivially satisfied and covered by the choosability test above; this proves the bump itself.
-        tower.onUpgradePathChosen(wideNozzle);
+        tower.onUpgradeBought(wideNozzle);
 
         assertThat(tower.getHalfWidthRadians()).isGreaterThan(halfWidthBeforeChoosing);
     }

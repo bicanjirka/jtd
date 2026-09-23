@@ -11,6 +11,7 @@ import td.fixtures.LevelFixtures;
 import td.projectile.CannonballProjectile;
 import td.tower.CinderTower;
 import td.tower.SniperTower;
+import td.tower.upgrade.UpgradeSlot;
 import td.ui.render.ConeDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.Palette;
@@ -98,9 +99,9 @@ class BoardRendererTest {
         context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(context, 1, 1);
         context.towers().add(tower);
-        // SniperTower.availablePaths() = [Veteran, Overclock] - Overclock (index 1) is money-gated,
+        // SniperTower's HEAD nodes are [Veteran, Overclock] - Overclock (index 1) is money-gated,
         // so it's choosable immediately without grinding out Veteran's kill-count condition.
-        tower.chooseUpgradePath(tower.availablePaths().get(1));
+        tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).get(1));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
