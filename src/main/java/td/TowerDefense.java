@@ -684,6 +684,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         contentCardLayout = new CardLayout();
         getContentPane().setLayout(contentCardLayout);
         jPanel_game.setLayout(new GridBagLayout());
+        jPanel_game.setBackground(new Color(0, 0, 0));
 
         jPanel_board.setLayout(new GridBagLayout());
 
