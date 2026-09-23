@@ -142,6 +142,19 @@ shipped with zero upgrade paths, becomes a scoped-in future consumer of the new 
 - **`AuraTower` becomes a scoped-in future consumer of this system** — it gets its own upgrade
   paths under the new three-slot model once this feature is implemented. This document scopes
   that in as a target; it does not design `AuraTower`'s specific upgrade content.
+- **This feature builds a real `UpgradeNode` for every `base`/`head`/`special` node across all 9
+  towers** — the concrete content (names, prices, gates, `TowerBuff` bonuses) is authored in
+  `docs/features/FEATURE-tower-specialization-abilities.md`, not invented at this feature's own
+  planning time. Every node's hook is wired to real behavior where the engine already supports
+  the mechanic (a `TowerBuff` axis, the existing per-tower field-bump hook pattern, an existing
+  `Effect` kind reused as-is, a straightforward `td.tower.targeting` composition); where a node
+  depends on a combat primitive that doesn't exist yet (that sibling document tags these **[S]**
+  — a stacking damage-amplifying status effect, a guaranteed-crit trigger, an on-kill secondary
+  effect, and others), this feature still builds the node itself — a real, selectable, priced,
+  gated `UpgradeNode` with its own id and description — and gives its hook a documented no-op
+  body, carrying a `TODO.md` entry per root `CLAUDE.md`'s "no inline TODO" convention. Wiring
+  that no-op into real behavior is `FEATURE-tower-specialization-abilities.md`'s job, not a third
+  feature.
 
 ## Interconnections
 
@@ -162,13 +175,16 @@ shipped with zero upgrade paths, becomes a scoped-in future consumer of the new 
 - **Touches the same `PanelTowerInfo`/`PanelGameConsole`/`PanelWaveInfo` sidebar surface** the v1
   upgrade doc already flagged as tight for two buttons — this feature's panel-swap and
   three-times-the-content ask make that tension concrete rather than theoretical.
-- **`docs/features/FEATURE-vulnerability-effect.md` depends on this feature.** Several
-  `special`-slot node ideas drafted for this document's per-tower content (a Sniper crit applying
-  a stacking damage-taken debuff, and similar nodes on other towers) need a status effect that
-  doesn't exist in `td.effect` today; that document adds it. This feature is the prerequisite —
-  its slot/node/gating shape (in particular, `head`/`special` being exclusive pick-one-path-forever
-  slots rather than a freely branching DAG) is what the Vulnerability effect's own gating design
-  has to stay compatible with, not the other way around.
+- **Two-way dependency with `docs/features/FEATURE-tower-specialization-abilities.md`** (formerly
+  "Vulnerability Status Effect" — renamed once its scope grew to cover every tower's concrete
+  node content, not just one status effect). This feature is that document's prerequisite for the
+  slot/node/gating shape — in particular, `head`/`special` being exclusive pick-one-path-forever
+  slots, and `base` being the one slot where both of its own nodes are buyable rather than
+  exclusive — which that document's own node content and gating stay compatible with, not the
+  other way around. In return, this feature depends on that document for the concrete node
+  content itself (every node's name, price, gate and `TowerBuff` bonus) and for the real
+  behavioral logic behind every node this feature can only stub out — see "What this feature
+  adds," above.
 
 ## Constraints and open risks
 
@@ -251,6 +267,12 @@ These are settled by the project owner; planning designs the mechanism, not whet
 7. **`AuraTower` is an explicit target/follow-up consumer** of the new system once it's built —
    it currently has zero upgrade paths (`FEATURE-tower-upgrades.md`'s v1 explicitly excluded
    it). Its specific upgrade content is not designed by this document.
+8. **Every node this feature builds is a real `UpgradeNode`, never a placeholder entry in a
+   list.** A node whose behavior depends on a combat primitive that doesn't exist yet still gets
+   a real id, price, gate and description, and is selectable in the UI — only its hook body is a
+   documented no-op, closed out via `TODO.md` once
+   `FEATURE-tower-specialization-abilities.md` supplies the real behavior. This feature never
+   invents the node content itself; it's authored in that sibling document.
 
 ## Proposed shape (planning input, not commitments)
 
@@ -292,11 +314,11 @@ concrete-enough proposals that a planning pass has somewhere to start.
 
 1. **Sidebar width**: widen the fixed 200px column, or render the three-slot tree compactly/
    scrollably within it? Not resolved here — flagged as a real engineering decision for planning.
-2. **Migration of the eight existing shipped `UpgradePath`s** (two each on `SniperTower`/
-   `SplashTower`/`SonarTower`/`PulseTower`, plus the three added by the damage-types feature) —
-   do they become `head`-slot nodes uniformly, or does each get re-sorted into whichever slot its
-   actual effect belongs to (e.g. a pure range/rotation bump reads as `base`, not `head`)? This
-   document doesn't decide it.
+2. ~~Migration of the eight existing shipped `UpgradePath`s~~ — **resolved by
+   `FEATURE-tower-specialization-abilities.md`**: that document defines a full, fresh
+   `base`/`head`/`special` catalogue for every tower rather than migrating the eight shipped
+   paths verbatim. Each tower's existing two paths are superseded by that catalogue's `head`
+   content, not carried forward unchanged.
 3. **Cross-slot compatibility/synergy** (e.g. "this `special` requires that `head`) is out of
    scope for this feature but named as a plausible future extension — no mechanism is proposed
    here, intentionally.
