@@ -23,7 +23,7 @@ import java.util.List;
 public final class SniperTower extends AbstractTower {
 
     public static final int PRICE = 10;
-    public static final int DAMAGE = 4000;
+    public static final int DAMAGE = 3000;
     public static final float RANGE = 3.8f;
     public static final float CRIT_CHANCE = 0.15f;
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.4;
