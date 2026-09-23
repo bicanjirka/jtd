@@ -24,13 +24,31 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void aSlowReducesTheSpeedMultiplierForItsDuration() {
+    void aSlowRecoversSpeedAlongAQuadraticEaseInCurveRatherThanStayingFlat() {
         ActiveEffects effects = new ActiveEffects();
-
-        effects.apply(Effect.slow(0.5f, 3, d -> {
+        // ratio = 1 - 0.4 = 0.6, total = 100 - the doc's own worked table
+        effects.apply(Effect.slow(0.4f, 100, d -> {
         }));
 
-        assertThat(effects.speedMultiplier()).isCloseTo(0.5f, within(0.001f));
+        assertThat(effects.speedMultiplier()).isCloseTo(0.400f, within(0.001f)); // x = 0.00
+
+        tickTimes(effects, 25);
+        assertThat(effects.speedMultiplier()).isCloseTo(0.4375f, within(0.001f)); // x = 0.25
+
+        tickTimes(effects, 25);
+        assertThat(effects.speedMultiplier()).isCloseTo(0.550f, within(0.001f)); // x = 0.50
+
+        tickTimes(effects, 25);
+        assertThat(effects.speedMultiplier()).isCloseTo(0.7375f, within(0.001f)); // x = 0.75
+
+        tickTimes(effects, 25);
+        assertThat(effects.speedMultiplier()).isEqualTo(1f); // x = 1.00, fully recovered and expired
+    }
+
+    private static void tickTimes(ActiveEffects effects, int times) {
+        for (int i = 0; i < times; i++) {
+            effects.tick();
+        }
     }
 
     @Test
@@ -61,55 +79,84 @@ class ActiveEffectsTest {
         effects.apply(Effect.slow(0.5f, 2, d -> {
         }));
 
+        // x = 0.5, factor = 0.25, multiplier = (1 - 0.5) + 0.5 * 0.25 = 0.625 - partway
+        // recovered already, not still flat at its authored 0.5
         effects.tick();
-        assertThat(effects.speedMultiplier()).isCloseTo(0.5f, within(0.001f));
+        assertThat(effects.speedMultiplier()).isCloseTo(0.625f, within(0.001f));
 
         effects.tick();
         assertThat(effects.speedMultiplier()).isEqualTo(1f);
     }
 
     @Test
-    void aBurnDealsItsDamagePerTickThroughItsSinkEveryTickUntilItExpires() {
+    void aBurningFuelPoolDecaysExponentiallyMatchingTheDocumentedWorkedTable() {
         ActiveEffects effects = new ActiveEffects();
         List<Damage> received = new ArrayList<>();
-        effects.apply(Effect.burn(Damage.magic(50), 2, recordingSink(received)));
+        // L0 = 10, T = 60, alpha = e^(-3/60) ~= 0.9512 - the doc's own worked table
+        effects.apply(Effect.burn(Damage.magic(10), 60, recordingSink(received)));
 
-        effects.tick();
-        effects.tick();
-        effects.tick(); // already expired - must not fire a third time
+        effects.tick(); // L = 10.000 -> damage 10, decays to 9.512
+        effects.tick(); // L = 9.512 -> damage 10, decays to 9.048
+        effects.tick(); // L = 9.048 -> damage 9, decays to 8.607
 
-        assertThat(received).containsExactly(Damage.magic(50), Damage.magic(50));
+        assertThat(received).containsExactly(Damage.magic(10), Damage.magic(10), Damage.magic(9));
     }
 
     @Test
-    void reapplyingTheSameKindAtALowerMagnitudeKeepsTheStrongerOne() {
+    void aBurningFuelPoolSelfTerminatesOnceItsRoundedDamageReachesZero() {
+        ActiveEffects effects = new ActiveEffects();
+        List<Damage> received = new ArrayList<>();
+        effects.apply(Effect.burn(Damage.magic(1), 10, recordingSink(received)));
+
+        tickTimes(effects, 10);
+
+        assertThat(effects.activeKinds()).doesNotContain(EffectKind.BURN);
+        assertThat(received).isNotEmpty();
+    }
+
+    @Test
+    void reapplyingBurnAddsFuelWithDiminishingReturnsAsThePoolNearsItsCap() {
+        ActiveEffects effects = new ActiveEffects();
+        List<Damage> received = new ArrayList<>();
+        effects.apply(Effect.burn(Damage.magic(10), 60, recordingSink(received)));
+
+        // Lmax = 2 * max(10, 8) = 20; deltaL = 8 * (1 - 10/20) = 4; pool becomes 10 + 4 = 14
+        effects.apply(Effect.burn(Damage.magic(8), 60, recordingSink(received)));
+        effects.tick();
+
+        assertThat(received).containsExactly(Damage.magic(14));
+    }
+
+    @Test
+    void reapplyingSlowAtALowerMagnitudeKeepsTheStrongerOneActiveAndDoesNotDiscardTheWeakerOne() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.slow(0.2f, 5, d -> {
         })); // the stronger slow (lower multiplier)
 
         effects.apply(Effect.slow(0.8f, 10, d -> {
-        })); // weaker, but longer
+        })); // weaker, but longer - bumped into the superseded slot, not discarded
 
+        // x = 0 for the newly-applied winner, so its multiplier is exactly its authored minimum
         assertThat(effects.speedMultiplier()).isCloseTo(0.2f, within(0.001f));
     }
 
     @Test
-    void reapplyingTheSameKindExtendsDurationToTheLongerOfTheTwoRegardlessOfWhichIsStronger() {
+    void aSupersededSlowResumesItsOwnCurveFromWhereItsClockHasActuallyReachedOnceTheWinnerExpires() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.slow(0.2f, 2, d -> {
-        })); // strong but short
+        // weak but long: ratio = 0.2, total = 200 - applied first
+        effects.apply(Effect.slow(0.8f, 200, d -> {
+        }));
+        // strong but short: ratio = 0.8, total = 20 - lands on top and becomes the winner,
+        // bumping the weak slow into the superseded slot
+        effects.apply(Effect.slow(0.2f, 20, d -> {
+        }));
 
-        effects.apply(Effect.slow(0.8f, 10, d -> {
-        })); // weak but long
+        tickTimes(effects, 20); // the strong slow's own duration completes and is removed
 
-        for (int i = 0; i < 9; i++) {
-            effects.tick();
-        }
-        // the stronger multiplier survived at the longer duration
-        assertThat(effects.speedMultiplier()).isCloseTo(0.2f, within(0.001f));
-
-        effects.tick();
-        assertThat(effects.speedMultiplier()).isEqualTo(1f);
+        // the weak slow resumes as the winner with elapsed = 20, x = 20/200 = 0.1,
+        // multiplier = 0.8 + 0.2 * 0.01 = 0.802 - almost exactly where its own curve would be
+        // had it never been superseded, not restarted from x = 0
+        assertThat(effects.speedMultiplier()).isCloseTo(0.802f, within(0.001f));
     }
 
     @Test
@@ -122,7 +169,8 @@ class ActiveEffectsTest {
 
         effects.tick();
 
-        assertThat(effects.speedMultiplier()).isCloseTo(0.5f, within(0.001f));
+        // x = 0.2, factor = 0.04, multiplier = (1 - 0.5) + 0.5 * 0.04 = 0.52 - partway recovered
+        assertThat(effects.speedMultiplier()).isCloseTo(0.52f, within(0.001f));
         assertThat(received).containsExactly(Damage.magic(10));
     }
 
