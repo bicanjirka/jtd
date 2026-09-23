@@ -5,6 +5,17 @@ into the full concrete content for every tower's `head`/`special` upgrade nodes,
 combat primitive that content needs and the engine doesn't have yet. The Vulnerability effect is
 still here — it's this document's largest and first primitive, not its only one anymore.*
 
+**Status: partially implemented.** Every node named below is a real, priced, gated
+`UpgradeNode` in its tower's own `upgradeTree()` (`td.tower`). Every **[F]** node's behavior is
+wired for real. Every **[S]** node still runs its documented no-op hook, one `TODO.md` entry per
+missing primitive (see "Tower specialization primitives" there), each naming every stub node
+waiting on it. Prices weren't tuned here - they were assigned by a placeholder rule recorded in
+`TODO.md`'s "Upgrade-tree node numbers are unbalanced placeholders" entry (a `head` chain's
+level 1 ≈ its superseded v1 path's own price, level 2 ≈ 1.5×, level 3 ≈ 2×; a `special` root ≈
+2× the tower's own price; `base`'s Range ≈ 0.6×, Awaken ≈ 1×) rather than the numbers this
+document originally sketched inline below, which stayed as flavor text for the mechanic each
+node describes rather than as literal implemented values.
+
 ## Summary
 
 `docs/features/FEATURE-tower-upgrade-trees.md` proposes the three-slot (`base`/`head`/`special`)
@@ -330,9 +341,12 @@ Eleven consumers above are tagged **[S]**. They share exactly these missing prim
 5. Does each Vulnerable stack track its own independent remaining duration, or does any
    reapplication — even one that adds a new stack rather than refreshing an existing one —
    extend every current stack's duration to the longest?
-6. Should the 11 new primitives be implemented incrementally, only as whichever tower's content
-   is actually queued for a given implementation pass needs them, or built out fully as this
-   document's own single pass once it's picked up? Not resolved here.
+6. ~~Should the 11 new primitives be implemented incrementally...~~ — **resolved by how
+   `docs/features/FEATURE-tower-upgrade-trees.md` actually landed**: none of the 11 were
+   implemented in that pass. Every node needing one is a real, priced, gated `UpgradeNode` with
+   a documented no-op hook, and `TODO.md`'s "Tower specialization primitives" section tracks
+   each primitive as its own entry, closeable independently whenever picked up - incremental by
+   construction, not a single follow-up pass.
 7. **`Damage.asCritical()`'s fixed, project-wide crit multiplier conflicts with Fifth Shot's
    250%, Momentum's 500%, and Sonar's guaranteed-crit-on-mark.** Does this feature revise that
    constant into a per-node override, or do these nodes instead reuse the existing fixed

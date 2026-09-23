@@ -1,8 +1,13 @@
 # Feature Request: Three-Slot Tower Upgrade Trees
 
-**Status: proposed, not yet built.** This document describes a successor to the shipped v1
-in-place upgrade system (`docs/features/FEATURE-tower-upgrades.md`), not something currently in
-the codebase. Nothing below exists yet except where explicitly marked "today."
+**Status: implemented.** Every tower has a `base`/`head`/`special` `UpgradeTree`
+(`td.tower.upgrade`), the sidebar swaps `PanelWaveInfo` for `PanelUpgradeTree` while a tower is
+selected, number keys buy the correspondingly-numbered offered node
+(`GameEngine.buyUpgradeForSelected`), and the board shows per-slot pips, ready chevrons and a
+`SPECIAL`-slot halo instead of the old two-role accent ring. The concrete node content itself
+(names, prices, gates, buffs) is `docs/features/FEATURE-tower-specialization-abilities.md`'s
+job, and that document's own `[S]`-tagged stub nodes still wait on their primitives - see
+`TODO.md`'s "Tower specialization primitives".
 
 ## Summary
 
@@ -312,22 +317,18 @@ concrete-enough proposals that a planning pass has somewhere to start.
 
 ## Open questions
 
-1. **Sidebar width**: widen the fixed 200px column, or render the three-slot tree compactly/
-   scrollably within it? Not resolved here — flagged as a real engineering decision for planning.
-2. ~~Migration of the eight existing shipped `UpgradePath`s~~ — **resolved by
-   `FEATURE-tower-specialization-abilities.md`**: that document defines a full, fresh
-   `base`/`head`/`special` catalogue for every tower rather than migrating the eight shipped
-   paths verbatim. Each tower's existing two paths are superseded by that catalogue's `head`
-   content, not carried forward unchanged.
-3. **Cross-slot compatibility/synergy** (e.g. "this `special` requires that `head`) is out of
-   scope for this feature but named as a plausible future extension — no mechanism is proposed
-   here, intentionally.
-4. **Exact visual design of the `special` render layer** — beyond "aura/pulse-style, analogous to
-   `AuraTower`'s existing visual" — is not designed here; it needs its own pass once the render
-   layer's data shape is settled.
-5. **Does an indicator glyph on the board (`"1⇧"`) compete for space with the existing accent
-   ring, rank badges, and status markers `td/ui/CLAUDE.md` already documents on a crowded
-   tile?** Worth a legibility pass once the render shape is chosen.
+Resolved during implementation: the sidebar kept its fixed 200px column, rendering each slot as
+a header line plus up to three numbered buttons rather than widening the panel or drawing a
+graph; migration of the eight shipped v1 `UpgradePath`s was superseded outright by
+`FEATURE-tower-specialization-abilities.md`'s fresh catalogue rather than migrated verbatim; the
+`special` slot's render layer is a pulsing halo reusing the Aura tower's own pulse clock; the
+board-marker legibility question was resolved by dropping the doc's original `"1⇧"` digit
+proposal in favour of a plain chevron with no digit (the number already appears on the sidebar's
+own buttons), avoiding text rendering on the board entirely.
+
+**Still open, deliberately deferred:** cross-slot compatibility/synergy (e.g. "this `special`
+requires that `head`") stays out of scope, as a plausible future extension with no mechanism
+proposed here.
 
 ---
 

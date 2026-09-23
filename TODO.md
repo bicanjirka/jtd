@@ -13,23 +13,18 @@ this file is the single place to look for outstanding design/feature gaps.
 
 ## Feature request implementation order
 
-One request is not yet built; the rest already shipped (see each doc's own status line) and are
-listed at the end only for reference.
+Every feature request has shipped (see each doc's own status line). `FEATURE-tower-
+specialization-abilities.md` is the one partial exception: its [F]-tagged content is built, its
+[S]-tagged stub nodes wait on the primitives listed under "Tower specialization primitives"
+below.
 
-`FEATURE-tower-upgrade-trees.md` — the largest and most architecturally significant pending
-request: three independent per-slot upgrade graphs, node prerequisites, a new render layer, a
-sidebar redesign, and migration of every existing `UpgradePath` (including Cinder's, now settled
-by `FEATURE-cinder-cone-wave.md`) into the new model. It lands on an already-settled
-`PanelWaveInfo` and an already-settled Cinder upgrade shape, rather than migrating content that
-was about to change again out from under it.
-
-Already implemented, for reference: `FEATURE-enemy-spawn-types.md`,
-`FEATURE-multiple-enemy-paths.md`, `FEATURE-playtesting-and-balance-tooling.md`,
-`FEATURE-enemy-rank-system.md`, `FEATURE-effect-visuals.md`, `FEATURE-tower-upgrades.md`,
-`FEATURE-critical-damage.md`, `FEATURE-damage-types-and-projectiles.md`,
-`FEATURE-enemy-traits-and-effects.md`, `FEATURE-sniper-crit-beam.md`,
-`FEATURE-wave-preview-cleanup.md`, `FEATURE-freeze-visual.md`,
-`FEATURE-effect-diminishing-returns.md`, `FEATURE-cinder-cone-wave.md`.
+Implemented, for reference: `FEATURE-enemy-spawn-types.md`, `FEATURE-multiple-enemy-paths.md`,
+`FEATURE-playtesting-and-balance-tooling.md`, `FEATURE-enemy-rank-system.md`,
+`FEATURE-effect-visuals.md`, `FEATURE-tower-upgrades.md`, `FEATURE-critical-damage.md`,
+`FEATURE-damage-types-and-projectiles.md`, `FEATURE-enemy-traits-and-effects.md`,
+`FEATURE-sniper-crit-beam.md`, `FEATURE-wave-preview-cleanup.md`, `FEATURE-freeze-visual.md`,
+`FEATURE-effect-diminishing-returns.md`, `FEATURE-cinder-cone-wave.md`,
+`FEATURE-tower-upgrade-trees.md`.
 
 ## Architecture and correctness
 
@@ -300,20 +295,6 @@ with the cooldown-gated travelling-wave firing model) join this same bucket.
   because each hit still knocks its target out of the "furthest along path" lead it needs to be re-selected and
   finished off - only a targeting-behavior change (out of scope here; the ask was numbers only) would fix that, so
   a future pass could reconsider it if `seeker` still feels weak after this buff lands in real play.
-
-### The board still shows the old two-role accent ring, not per-slot marks
-
-`docs/features/FEATURE-tower-upgrade-trees.md`'s data model, sidebar panel (`PanelUpgradeTree`,
-swapping with `PanelWaveInfo` while a tower is selected) and number-key shortcut
-(`GameEngine.buyUpgradeForSelected`) are all built. What's left is the board itself:
-`TowerSpriteFrameBuilder.accentPaletteFor`/`Java2DFrameRenderer.paintUpgradeAccent` still draw
-the old two-role ring keyed off the `HEAD` slot's tip index, not the per-slot pips/ready-chevrons/
-special-slot halo the feature doc's render section describes.
-
-- **Where:** `td.ui.TowerSpriteFrameBuilder`/`Java2DFrameRenderer`'s accent ring,
-  `td.ui.render.TowerSpriteDraw`, `td.ui.render.Palette`.
-- **Approach:** see the feature doc's "Constraints and open risks" section - the sidebar's
-  fixed 200px width is the one open engineering question flagged there, not yet resolved.
 
 ## Tower specialization primitives
 
