@@ -441,34 +441,43 @@ class AbstractTowerTest {
     }
 
     @Test
-    void getStatusStringListsEveryOfferedNodeUntilOneIsBoughtThenListsNone() {
+    void getStatusStringListsEveryOfferedNodeWithItsGateProgressUntilOneIsBoughtThenListsNone() {
         this.context.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("veteran", UpgradeSlot.HEAD, "Veteran", 10)
-                .withBuff(TowerBuff.amplifying(0.2f));
+                .withBuff(TowerBuff.amplifying(0.2f))
+                .withGate(new KillCountCondition(10));
         FakeUpgradeableTower tower = new FakeUpgradeableTower(this.context, 0, 0, UpgradeTree.of(node));
 
-        assertThat(tower.getStatusString()).contains("Upgrade paths:").contains(node.describe());
+        assertThat(tower.getStatusString()).contains("Upgrades:").contains("Veteran").contains("0/10 kills");
+
+        tower.dealDamage(EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT), Damage.physical(1_000_000));
+        assertThat(tower.getStatusString()).contains("✘");
+
+        for (int i = 0; i < 9; i++) {
+            tower.dealDamage(EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT), Damage.physical(1_000_000));
+        }
+        assertThat(tower.getStatusString()).contains("✔");
 
         tower.buyUpgrade(node);
 
-        assertThat(tower.getStatusString()).doesNotContain("Upgrade paths:");
+        assertThat(tower.getStatusString()).doesNotContain("Upgrades:");
     }
 
     @Test
-    void getInfoStringAlsoListsOfferedNodesBeforeAnyoneHasBoughtOne() {
+    void getInfoStringNeverListsUpgradeContentEvenBeforeAnyoneHasBoughtOne() {
         UpgradeNode node = UpgradeNode.of("veteran", UpgradeSlot.HEAD, "Veteran", 10)
                 .withBuff(TowerBuff.amplifying(0.2f));
         FakeUpgradeableTower tower = new FakeUpgradeableTower(this.context, 0, 0, UpgradeTree.of(node));
 
-        assertThat(tower.getInfoString()).contains("Upgrade paths:").contains(node.describe());
+        assertThat(tower.getInfoString()).doesNotContain("Upgrades:").doesNotContain("Veteran");
     }
 
     @Test
     void aTowerWithNoUpgradeTreeShowsNoUpgradePathsBlock() {
         FakeUpgradeableTower noTree = new FakeUpgradeableTower(this.context, 0, 0, UpgradeTree.none());
 
-        assertThat(noTree.getStatusString()).doesNotContain("Upgrade paths:");
-        assertThat(noTree.getInfoString()).doesNotContain("Upgrade paths:");
+        assertThat(noTree.getStatusString()).doesNotContain("Upgrades:");
+        assertThat(noTree.getInfoString()).doesNotContain("Upgrades:");
     }
 
     @Test

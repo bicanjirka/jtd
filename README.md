@@ -38,8 +38,9 @@ The game opens on a level-select screen. Pick a level to start it; each level br
 board size, path, wave list, starting credits and starting lives.
 
 Buy a tower from the toolbar on the right (or with `q`–`t`), then click a buildable
-cell to place it. Clicking a placed tower selects it and shows its stats. Start each wave
-yourself when you are ready — waves do not auto-advance.
+cell to place it. Clicking a placed tower selects it and shows its stats and its own upgrade
+tree — three slots, `base`/`head`/`special`, each offering a small number of nodes to buy.
+Start each wave yourself when you are ready — waves do not auto-advance.
 
 ### Controls
 
@@ -47,6 +48,7 @@ yourself when you are ready — waves do not auto-advance.
 |---------------------------------|------------------------------------------------------------------------------------------------------|
 | `q` `w` `e` `r` `t` `y` `u` `i` | Select tower 1–8 for placement                                                                       |
 | `Esc`                           | Cancel tower placement                                                                               |
+| `1`–`9`                         | With a tower selected, buy the correspondingly-numbered upgrade node it currently offers             |
 | `s`                             | Start the next wave                                                                                  |
 | `p`                             | Pause / unpause                                                                                      |
 | `f`                             | Cycle tick speed (normal → fast → super fast → normal)                                               |
@@ -55,7 +57,8 @@ yourself when you are ready — waves do not auto-advance.
 | `x`                             | Debug: spawn one instance of the next enemy type in the level's catalog, cycling through all of them |
 | `c`                             | Debug: grant a lump sum of credits                                                                   |
 
-Mouse: move to preview placement, click to place or to select a placed tower.
+Mouse: move to preview placement, click to place or to select a placed tower, or click an
+upgrade-tree button to buy that node.
 
 The `n`/`x`/`c` debug keys are always available, not gated behind a build flag — they exist to
 make manual playtesting cheap (see `docs/features/FEATURE-playtesting-and-balance-tooling.md`). There's also

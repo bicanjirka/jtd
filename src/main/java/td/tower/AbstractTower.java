@@ -367,6 +367,12 @@ public abstract class AbstractTower implements Tower {
         return "Fire rate: " + TICKS_PER_SECOND / (coolDown + 1) + "/s\n";
     }
 
+    /**
+     * Pre-purchase blurb: base stats and price only. Upgrade content moved off this text
+     * entirely - the toolbar hover is for deciding whether to buy the tower, not for reading
+     * its upgrade tree, which the sidebar panel shows once the tower is actually built and
+     * selected (see {@link #getStatusString()}).
+     */
     public String getInfoString() {
         String s = "Price: " + this.price + "\n" +
                 "Range: " + this.rangeBase + "\n";
@@ -376,7 +382,7 @@ public abstract class AbstractTower implements Tower {
             s += "Damage: " + this.damageBase / 100f + "\n" +
                     this.rateLine(this.coolDownMax) + "\n";
         }
-        return s + this.upgradeNodesBlock();
+        return s;
     }
 
     public String getStatusString() {
@@ -392,27 +398,42 @@ public abstract class AbstractTower implements Tower {
             s += "Kills: " + this.killCount + "\n" +
                     "Damage dealt: " + this.damageDealt / 100f + "\n\n";
         }
-        s += this.upgrades.tip(UpgradeSlot.HEAD).map(n -> "Specialized: " + n.displayName() + "\n").orElse("");
+        s += this.ownedNodesBlock();
         return s + this.upgradeNodesBlock();
     }
 
     /**
-     * Describes every upgrade node currently offered, one per line - "" once nothing is left
-     * offered in this tree (either every node is owned, or the sole slot with content today,
-     * {@code HEAD}'s two exclusive roots, has had one bought - see
-     * {@code getStatusString()}'s own "Specialized: ..." line for that case) or for a tower
-     * with no tree at all (the empty {@link UpgradeTree#none()} default). Shown in both
-     * {@link #getInfoString()} (so a player can see what a tower will offer before ever buying
-     * it) and {@link #getStatusString()}.
+     * One line per slot currently holding a bought node, e.g. {@code "HEAD: Focused Optics"} -
+     * "" for a slot nothing has been bought in yet.
+     */
+    private String ownedNodesBlock() {
+        StringBuilder s = new StringBuilder();
+        for (UpgradeSlot slot : UpgradeSlot.values()) {
+            this.upgrades.tip(slot).ifPresent(node -> s.append(slot).append(": ").append(node.displayName()).append('\n'));
+        }
+        return s.toString();
+    }
+
+    /**
+     * One line per currently offered node, marked with a coloured (see
+     * {@code td.ui.PanelTowerInfo}) ✔/✘ and that node's own gate progress rather than
+     * the full {@link UpgradeNode#describe()} - the node's name, price and full description now
+     * live on its own sidebar button (see {@code td.ui.PanelUpgradeTree}), revealed on hover;
+     * this text's job is showing how close every offered node is to buyable. "" once nothing is
+     * offered (every node owned, or every slot locked) or for a tower with no tree at all (the
+     * empty {@link UpgradeTree#none()} default).
      */
     private String upgradeNodesBlock() {
         List<UpgradeNode> offered = this.upgradeTree().offered(this, this.context);
         if (offered.isEmpty()) {
             return "";
         }
-        StringBuilder s = new StringBuilder("\nUpgrade paths:\n");
+        StringBuilder s = new StringBuilder("\nUpgrades:\n");
         for (UpgradeNode node : offered) {
-            s.append("- ").append(node.describe()).append('\n');
+            boolean satisfied = node.gate().isSatisfied(this, this.context);
+            String mark = satisfied ? "✔" : "✘";
+            s.append("- ").append(mark).append(' ').append(node.displayName())
+                    .append(" (").append(node.gate().progress(this, this.context)).append(")\n");
         }
         return s.toString();
     }

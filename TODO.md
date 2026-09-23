@@ -301,20 +301,17 @@ with the cooldown-gated travelling-wave firing model) join this same bucket.
   finished off - only a targeting-behavior change (out of scope here; the ask was numbers only) would fix that, so
   a future pass could reconsider it if `seeker` still feels weak after this buff lands in real play.
 
-### The upgrade-tree sidebar panel and per-slot render marks are still the old two-path UI
+### The board still shows the old two-role accent ring, not per-slot marks
 
-`docs/features/FEATURE-tower-upgrade-trees.md`'s data model is built: `td.tower.upgrade`'s
-`UpgradeSlot`/`UpgradeNode`/`UpgradeState`/`UpgradeTree`, `AbstractTower.buyUpgrade`, and every
-tower's full `base`/`head`/`special` catalogue from `FEATURE-tower-specialization-abilities.md`.
-What's not yet built is the UI: `PanelTowerInfo` still shows the first two `offeredUpgrades()`
-through two plain buttons (a stand-in from before the catalogue existed), there is no dedicated
-upgrade-tree panel replacing `PanelWaveInfo`, no number-key shortcut, and
+`docs/features/FEATURE-tower-upgrade-trees.md`'s data model, sidebar panel (`PanelUpgradeTree`,
+swapping with `PanelWaveInfo` while a tower is selected) and number-key shortcut
+(`GameEngine.buyUpgradeForSelected`) are all built. What's left is the board itself:
 `TowerSpriteFrameBuilder.accentPaletteFor`/`Java2DFrameRenderer.paintUpgradeAccent` still draw
-the old two-role ring keyed off the `HEAD` slot's tip index rather than per-slot pips/chevrons/a
-special-slot halo.
+the old two-role ring keyed off the `HEAD` slot's tip index, not the per-slot pips/ready-chevrons/
+special-slot halo the feature doc's render section describes.
 
-- **Where:** `td.ui.PanelTowerInfo`/`PanelGameConsole`/`PanelWaveInfo`, a new `PanelUpgradeTree`,
-  `TowerSpriteFrameBuilder`/`Java2DFrameRenderer`'s accent ring, `TowerDefense.keyTyped`.
+- **Where:** `td.ui.TowerSpriteFrameBuilder`/`Java2DFrameRenderer`'s accent ring,
+  `td.ui.render.TowerSpriteDraw`, `td.ui.render.Palette`.
 - **Approach:** see the feature doc's "Constraints and open risks" section - the sidebar's
   fixed 200px width is the one open engineering question flagged there, not yet resolved.
 

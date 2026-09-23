@@ -2,6 +2,7 @@ package td.ui;
 
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
+import td.tower.Tower;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
@@ -37,6 +38,7 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
 
     private final PanelTowerInfo panelTowerInfo = new PanelTowerInfo();
     private final PanelWaveInfo panelWaveInfo = new PanelWaveInfo();
+    private final PanelUpgradeTree panelUpgradeTree = new PanelUpgradeTree();
 
     private HudButton jButton_play;
     private HudButton jButton_pause;
@@ -58,6 +60,10 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
 
     public PanelGameConsole(String titleText) {
         initComponents(titleText);
+        this.panelUpgradeTree.onHover(node -> this.panelTowerInfo.showUpgradeHover(node.describe()));
+        this.panelUpgradeTree.onHoverEnd(this.panelTowerInfo::clearUpgradeHover);
+        this.panelUpgradeTree.onBought(this.panelTowerInfo::refreshSelected);
+        this.panelTowerInfo.onDeselected(this::unselectTower);
     }
 
     private static HudButton glyphButton(String glyph) {
@@ -78,6 +84,47 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         world.economy().addEconomyListener(this);
         this.panelTowerInfo.setGameWorld(world);
         this.panelWaveInfo.setGameWorld(world);
+        this.panelUpgradeTree.setGameWorld(world);
+    }
+
+    /**
+     * Selects {@code t}: shows its live status/sell button on {@link #panelTowerInfo} and swaps
+     * {@link #panelWaveInfo} out for {@link #panelUpgradeTree} in the same layout slot, so the
+     * sidebar shows what a selected tower can buy instead of the round summary while it's
+     * selected.
+     */
+    public void selectTower(Tower t) {
+        this.panelTowerInfo.setTower(t);
+        this.panelUpgradeTree.setTower(t);
+        this.panelWaveInfo.setVisible(false);
+        this.panelUpgradeTree.setVisible(true);
+    }
+
+    /**
+     * Deselects whatever tower is currently selected (a no-op if none is) and swaps
+     * {@link #panelWaveInfo} back in. Also reached from {@link PanelTowerInfo}'s own sell
+     * button via {@link PanelTowerInfo#onDeselected}, so selling swaps the panel back too.
+     */
+    public void unselectTower() {
+        this.panelTowerInfo.unselectTower();
+        this.panelUpgradeTree.setTower(null);
+        this.panelUpgradeTree.setVisible(false);
+        this.panelWaveInfo.setVisible(true);
+    }
+
+    public void setLevelEnded(boolean ended) {
+        this.panelTowerInfo.setLevelEnded(ended);
+        this.panelUpgradeTree.setLevelEnded(ended);
+    }
+
+    /**
+     * The render-pulse refresh: both the selected tower's live status text and its upgrade
+     * panel need to track the simulation without waiting for an economy event - a gate's own
+     * progress (kills, damage dealt, a cluster of neighbours) can change with no purchase at all.
+     */
+    public void refreshSelected() {
+        this.panelTowerInfo.refreshSelected();
+        this.panelUpgradeTree.refresh();
     }
 
     public void setWaveProgress(int current, int total) {
@@ -344,6 +391,19 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         gridBagConstraints.anchor = GridBagConstraints.PAGE_END;
         gridBagConstraints.insets = new Insets(0, 2, 0, 0);
         this.add(this.panelWaveInfo, gridBagConstraints);
+
+        // Same cell as panelWaveInfo - the two are toggled by visibility, never both shown at
+        // once (see selectTower/unselectTower), the same "stacked, not side by side" shape
+        // BoardOverlays/GameBoard already use for their own cell (see td/ui/CLAUDE.md).
+        this.panelUpgradeTree.setFocusable(false);
+        this.panelUpgradeTree.setVisible(false);
+        gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.PAGE_END;
+        gridBagConstraints.insets = new Insets(0, 2, 0, 0);
+        this.add(this.panelUpgradeTree, gridBagConstraints);
     }
 
     private void jButton_playActionPerformed(ActionEvent evt) {
