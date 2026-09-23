@@ -162,6 +162,13 @@ shipped with zero upgrade paths, becomes a scoped-in future consumer of the new 
 - **Touches the same `PanelTowerInfo`/`PanelGameConsole`/`PanelWaveInfo` sidebar surface** the v1
   upgrade doc already flagged as tight for two buttons — this feature's panel-swap and
   three-times-the-content ask make that tension concrete rather than theoretical.
+- **`docs/features/FEATURE-vulnerability-effect.md` depends on this feature.** Several
+  `special`-slot node ideas drafted for this document's per-tower content (a Sniper crit applying
+  a stacking damage-taken debuff, and similar nodes on other towers) need a status effect that
+  doesn't exist in `td.effect` today; that document adds it. This feature is the prerequisite —
+  its slot/node/gating shape (in particular, `head`/`special` being exclusive pick-one-path-forever
+  slots rather than a freely branching DAG) is what the Vulnerability effect's own gating design
+  has to stay compatible with, not the other way around.
 
 ## Constraints and open risks
 
