@@ -162,6 +162,16 @@ structurally-equal record and two unrelated same-shaped instances would otherwis
 Composition is always scoped to one definition's own list, so two different enemies reusing the
 same name (e.g. both calling a trait `"shield"`) never collide with each other.
 
+**Naming is opt-in, not a blanket policy.** `BuiltInEnemies` names a trait or ability only when
+it is realistically going to be replaced by id later — a parametrized one that varies across its
+own rank ladder (`SIMPLE`'s `"armor"` going from a weaker `PercentResistTrait` at `Rank.ELITE`
+to a stronger one at `Rank.BOSS`; `MENDER`'s `"heal"`/`"selfHeal"`), or one `td.wave.SpawnShape
+.armored()` is known to override under its own fixed `"armor"` id regardless of which enemy it's
+composed onto. A zero-argument or unparametrized trait/ability that no later step ever looks up
+by name — `CriticalImmunityTrait()`, `BurnImmunityTrait()`, `FreezeImmunityTrait()`, a one-off
+ability like `GHOST`'s `"vanish"`/`"shroud"` or the Warden's standing abilities — is anonymous
+instead; naming it would only pay the wrapping cost for no payoff.
+
 An `Ability` pairs a closed `AbilityTrigger` (periodic, once-after-a-delay, health-threshold-
 crossed, on-death, time-since-last-hit, on-critical-hit-taken, on-first-damage-taken) with a
 closed `AbilityAction` (apply an effect, or spawn more enemies) — see `AbilityEvaluator`'s own

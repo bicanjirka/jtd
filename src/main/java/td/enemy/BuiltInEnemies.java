@@ -1,11 +1,13 @@
 package td.enemy;
 
+import td.damage.DamageType;
 import td.effect.HealTemplate;
 import td.effect.InvisibleTemplate;
 import td.effect.ShieldTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The built-in {@link RankedEnemy} ladders and standalone {@link EnemyDefinition}s.
@@ -32,10 +34,17 @@ import java.util.List;
  * a square and {@code FRENZIED} a triangle, the same way {@code SniperTower} is drawn as a
  * triangle.
  * <p>
- * Every trait and ability below is named ({@link IdentifiedTrait#named}/
- * {@link IdentifiedAbility#named}), never anonymous - so a later rank step, or a per-level clone
- * (see {@code EnemyCatalog.cloneAndAdjust}), can replace one by id instead of only ever being
- * able to add a second, competing entry alongside it.
+ * A trait or ability below is named ({@link IdentifiedTrait#named}/{@link IdentifiedAbility#named})
+ * only when it is realistically going to be replaced by id later - a parametrized one that
+ * varies across this enemy's own rank ladder (so a later rank step, or a per-level clone via
+ * {@code EnemyCatalog.cloneAndAdjust}, can upgrade it in place instead of only ever adding a
+ * second, competing entry alongside it), or one a spawn shape is known to override by id (see
+ * {@code td.wave.SpawnShape#armored()}, which composes onto whatever it spawns under the fixed
+ * id {@code "armor"}). A zero-argument or unparametrized trait/ability that is never replaced by
+ * a same-slot variant is anonymous instead ({@link IdentifiedTrait#anonymous}/
+ * {@link IdentifiedAbility#anonymous}, or the plain {@code withTraits}/{@code withAbilities}
+ * that wraps every entry this way) - naming buys nothing for a trait or ability no later step
+ * ever looks up by that name.
  * <p>
  * {@code WARDEN_1}/{@code WARDEN_EGG_1}/{@code WARDEN_2}/{@code WARDEN_EGG_2}/{@code WARDEN_3}/
  * {@code WARDEN_EGG_3} are the boss encounter's finite, six-definition, strictly linear spawn
@@ -83,14 +92,14 @@ final class BuiltInEnemies {
                     // its flat amount from whatever the percentage already let through, not the
                     // reverse.
                     .withAdditionalTraits(List.of(
-                            IdentifiedTrait.named("resist", new PercentResistTrait(0.6f)),
-                            IdentifiedTrait.named("flatResist", new FlatResistTrait(80)))))
+                            IdentifiedTrait.named("flatResist", FlatResistTrait.physicalOnly(800)),
+                            IdentifiedTrait.named("resist", new PercentResistTrait(0.6f)))))
             .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1280, 125)
                     .withDescription("Takes drastically less damage, and its plating blunts a large flat chunk of "
                             + "every hit outright. Immune to critical hits.")
                     .withAdditionalTraits(List.of(
-                            IdentifiedTrait.named("resist", new PercentResistTrait(0.5f)),
-                            IdentifiedTrait.named("flatResist", new FlatResistTrait(120)))))
+                            IdentifiedTrait.named("flatResist", FlatResistTrait.physicalOnly(1000)),
+                            IdentifiedTrait.named("resist", new PercentResistTrait(0.5f)))))
             .build();
 
     // The Boss step's own ability constants - named rather than inlined since the FRENZIED
@@ -118,12 +127,12 @@ final class BuiltInEnemies {
                             + "swarm of reinforcements once badly hurt, and heals itself if left unattacked too long.")
                     .withAdditionalTraits(List.of(
                             IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(2f)),
-                            IdentifiedTrait.named("criticalImmune", new CriticalImmunityTrait())))
+                            IdentifiedTrait.anonymous(new CriticalImmunityTrait())))
                     .withMovement(new RotorMovement((float) Math.toRadians(-10.0)))
                     .withAdditionalAbilities(List.of(
-                            IdentifiedAbility.named("spawn", new Ability(new HealthThresholdTrigger(FRENZIED_SPAWN_HEALTH_THRESHOLD),
+                            IdentifiedAbility.anonymous(new Ability(new HealthThresholdTrigger(FRENZIED_SPAWN_HEALTH_THRESHOLD),
                                     new SpawnEnemiesAction("tSpawn", AbilitySpawnShape.brood(FRENZIED_SPAWN_COUNT, 1f, 1f), false))),
-                            IdentifiedAbility.named("neglectPenalty", new Ability(new TimeSinceLastHitTrigger(FRENZIED_NEGLECT_WINDOW_TICKS),
+                            IdentifiedAbility.anonymous(new Ability(new TimeSinceLastHitTrigger(FRENZIED_NEGLECT_WINDOW_TICKS),
                                     new ApplyEffectAction(new HealTemplate(FRENZIED_NEGLECT_HEAL_PER_TICK, FRENZIED_NEGLECT_HEAL_DURATION_TICKS),
                                             new SelfTarget()))))))
             .build();
@@ -139,11 +148,11 @@ final class BuiltInEnemies {
             .of("tSpawn", "Frenzy Spawnling", 140, 2, 1.28f, BodyArchetype.TRIANGLE)
             .withDescription("A spawnling of an enraged Frenzied boss. Speeds up as it is hurt, and heals nearby "
                     + "allies with its dying breath.")
-            .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.4f))))
-            .withIdentifiedAbilities(List.of(IdentifiedAbility.named("deathHeal", new Ability(
+            .withTraits(List.of(new HurtSpeedTrait(1.4f)))
+            .withAbilities(List.of(new Ability(
                     new OnDeathTrigger(),
                     new ApplyEffectAction(new HealTemplate(T_SPAWN_DEATH_HEAL_PER_TICK, T_SPAWN_DEATH_HEAL_DURATION_TICKS),
-                            new RadiusTarget(T_SPAWN_DEATH_HEAL_RADIUS))))));
+                            new RadiusTarget(T_SPAWN_DEATH_HEAL_RADIUS)))));
     // 20 ticks/second (see TickRate) - 10 seconds, same conversion EGG_HATCH_DELAY_TICKS uses.
     private static final int GHOST_VANISH_DURATION_TICKS = 200;
     // Reapplied every second to every ally still in radius; each application's own duration
@@ -157,20 +166,20 @@ final class BuiltInEnemies {
                     .withDescription("An ordinary mob that turns invisible to towers for a while "
                             + "the first time it's hit. Area damage still finds it.")
                     .withHealthDivisor(5f)
-                    .withIdentifiedAbilities(List.of(IdentifiedAbility.named("vanish", new Ability(
+                    .withAbilities(List.of(new Ability(
                             // A hit that also freezes this mob on the same tick suppresses this
                             // cast rather than delaying it: DefinedEnemyMob.isIncapacitated()
                             // gates every ability while FREEZE is active, including this
                             // fire-once trigger, so a frozen mob simply never gets to vanish for
                             // that hit instead of vanishing once the freeze wears off.
                             new OnFirstDamageTakenTrigger(),
-                            new ApplyEffectAction(new InvisibleTemplate(GHOST_VANISH_DURATION_TICKS), new SelfTarget()))))))
+                            new ApplyEffectAction(new InvisibleTemplate(GHOST_VANISH_DURATION_TICKS), new SelfTarget())))))
             .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(200, 10))
             .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(400, 25))
             .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(800, 63)
                     .withDescription("Turns invisible to towers for a while the first time it's "
                             + "hit, and permanently shrouds every other ally near it - itself excluded.")
-                    .withAdditionalAbilities(List.of(IdentifiedAbility.named("shroud", new Ability(
+                    .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(
                             new PeriodicTrigger(GHOST_SHROUD_INTERVAL_TICKS),
                             new ApplyEffectAction(new InvisibleTemplate(GHOST_SHROUD_DURATION_TICKS), new RadiusTarget(GHOST_SHROUD_RADIUS)))))))
             .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1600, 158))
@@ -230,20 +239,20 @@ final class BuiltInEnemies {
             .withDescription("Hatches into a weaker Warden if not defeated in time. Immune to critical hits, and "
                     + "its armor blunts part of every hit.")
             .withIdentifiedTraits(List.of(
-                    IdentifiedTrait.named("criticalImmune", new CriticalImmunityTrait()),
+                    IdentifiedTrait.anonymous(new CriticalImmunityTrait()),
                     IdentifiedTrait.named("armor", new PercentResistTrait(0.6f))))
-            .withIdentifiedAbilities(List.of(IdentifiedAbility.named("hatch", new Ability(
-                    new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden2", 1, true)))));
+            .withAbilities(List.of(new Ability(
+                    new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden2", 1, true))));
     static final EnemyDefinition WARDEN_EGG_2 = EnemyDefinition
             .of("wardenEgg2", "Warden's Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)
             .withDescription("Hatches into a weaker Warden if not defeated in time. Immune to burn and freeze, "
                     + "and its plating blunts a flat chunk of every hit.")
             .withIdentifiedTraits(List.of(
-                    IdentifiedTrait.named("burnImmune", new BurnImmunityTrait()),
-                    IdentifiedTrait.named("freezeImmune", new FreezeImmunityTrait()),
+                    IdentifiedTrait.anonymous(new BurnImmunityTrait()),
+                    IdentifiedTrait.anonymous(new FreezeImmunityTrait()),
                     IdentifiedTrait.named("armor", new FlatResistTrait(100))))
-            .withIdentifiedAbilities(List.of(IdentifiedAbility.named("hatch", new Ability(
-                    new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden3", 1, true)))));
+            .withAbilities(List.of(new Ability(
+                    new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden3", 1, true))));
     // Raised from an original 100 (itself raised from 15 - see git history) specifically so an
     // un-upgraded weak tower does zero damage against the Warden: 200 fully absorbs
     // CinderTower's 150 burn and PulseTower's 200 hit, matching the design intent that a player
@@ -252,7 +261,7 @@ final class BuiltInEnemies {
     // ("armor") implies it should. WARDEN_2/WARDEN_3 halve/quarter this as the boss weakens
     // across its own egg-hatch chain, so a tower that could do nothing against WARDEN_1 starts
     // landing real damage by the time it faces WARDEN_3.
-    private static final int WARDEN_FLAT_RESIST = 200;
+    private static final int WARDEN_FLAT_RESIST = 1000;
     // Shared by all three stages, appended to each stage's own flavor sentence - every stage
     // carries the exact same WARDEN_STANDING_ABILITIES plus its own on-death egg spawn, so one
     // description keeps the three in agreement instead of drifting the way WARDEN_2/WARDEN_3
@@ -262,40 +271,40 @@ final class BuiltInEnemies {
             + "too long; gains a shield whenever it survives a critical hit; and leaves behind an egg on death.";
     private static final List<IdentifiedAbility> WARDEN_STANDING_ABILITIES = List.of(
             // periodically calls for a reinforcement
-            IdentifiedAbility.named("reinforce", new Ability(new PeriodicTrigger(300), new SpawnEnemiesAction("c", 1, false))),
+            IdentifiedAbility.anonymous(new Ability(new PeriodicTrigger(300), new SpawnEnemiesAction("c", 1, false))),
             // periodically re-shields itself on top of its permanent armor trait
-            IdentifiedAbility.named("reshield", new Ability(new PeriodicTrigger(400),
+            IdentifiedAbility.anonymous(new Ability(new PeriodicTrigger(400),
                     new ApplyEffectAction(new ShieldTemplate(0.5f, 100), new SelfTarget()))),
             // at half health, shields every nearby ally - a one-time "call to arms"
-            IdentifiedAbility.named("callToArms", new Ability(new HealthThresholdTrigger(0.5f),
+            IdentifiedAbility.anonymous(new Ability(new HealthThresholdTrigger(0.5f),
                     new ApplyEffectAction(new ShieldTemplate(0.3f, 150), new RadiusTarget(150f)))),
             // punishes being ignored by healing itself - TimeSinceLastHitTrigger re-arms once
             // ticksSinceLastHit drops back below its window (i.e. the Warden is hit again) and
             // then reaches the window a second time, so this fires every time it's left alone for
             // 200 ticks, not just the first - see AbilityEvaluator.fireTimeSinceLastHit.
-            IdentifiedAbility.named("neglectPenalty", new Ability(new TimeSinceLastHitTrigger(200),
+            IdentifiedAbility.anonymous(new Ability(new TimeSinceLastHitTrigger(200),
                     new ApplyEffectAction(new HealTemplate(4, 40), new SelfTarget()))),
             // shields itself every time it survives a critical hit - repeatable, unlike the
             // fire-once triggers above
-            IdentifiedAbility.named("critShield", new Ability(new OnCriticalHitTakenTrigger(),
+            IdentifiedAbility.anonymous(new Ability(new OnCriticalHitTakenTrigger(),
                     new ApplyEffectAction(new ShieldTemplate(0.3f, 30), new SelfTarget()))));
     static final EnemyDefinition WARDEN_1 = EnemyDefinition
             .of("warden1", "The Warden", 8000, 100, 0.8f, BodyArchetype.WARDEN)
             .withDescription("A hulking armored sentinel." + WARDEN_ABILITY_BLURB)
             .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
-            .withIdentifiedTraits(List.of(IdentifiedTrait.named("armor", new FlatResistTrait(WARDEN_FLAT_RESIST))))
+            .withIdentifiedTraits(List.of(IdentifiedTrait.named("armor", FlatResistTrait.physicalOnly(WARDEN_FLAT_RESIST))))
             .withIdentifiedAbilities(wardenAbilities("wardenEgg1"));
     static final EnemyDefinition WARDEN_2 = EnemyDefinition
             .of("warden2", "The Weakened Warden", 5000, 100, 0.8f, BodyArchetype.WARDEN)
             .withDescription("A hulking armored sentinel, worn down from its last hatching." + WARDEN_ABILITY_BLURB)
             .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
-            .withIdentifiedTraits(List.of(IdentifiedTrait.named("armor", new FlatResistTrait(WARDEN_FLAT_RESIST / 2))))
+            .withIdentifiedTraits(List.of(IdentifiedTrait.named("armor", FlatResistTrait.physicalOnly(WARDEN_FLAT_RESIST / 2))))
             .withIdentifiedAbilities(wardenAbilities("wardenEgg2"));
     static final EnemyDefinition WARDEN_3 = EnemyDefinition
             .of("warden3", "The Exhausted Warden", 3000, 100, 0.8f, BodyArchetype.WARDEN)
             .withDescription("A hulking armored sentinel, barely standing." + WARDEN_ABILITY_BLURB)
             .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
-            .withIdentifiedTraits(List.of(IdentifiedTrait.named("armor", new FlatResistTrait(WARDEN_FLAT_RESIST / 4))))
+            .withIdentifiedTraits(List.of(IdentifiedTrait.named("armor", FlatResistTrait.physicalOnly(WARDEN_FLAT_RESIST / 4))))
             .withIdentifiedAbilities(wardenAbilities("wardenEgg3"));
 
     private BuiltInEnemies() {
@@ -303,7 +312,7 @@ final class BuiltInEnemies {
 
     private static List<IdentifiedAbility> wardenAbilities(String eggId) {
         List<IdentifiedAbility> abilities = new ArrayList<>(WARDEN_STANDING_ABILITIES);
-        abilities.add(IdentifiedAbility.named("hatchEgg", new Ability(new OnDeathTrigger(), new SpawnEnemiesAction(eggId, 1, false))));
+        abilities.add(IdentifiedAbility.anonymous(new Ability(new OnDeathTrigger(), new SpawnEnemiesAction(eggId, 1, false))));
         return List.copyOf(abilities);
     }
 }
