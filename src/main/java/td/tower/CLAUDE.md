@@ -19,7 +19,7 @@ fire-rate, this tower's own permanently-chosen upgrade path (if any), and the sh
 | `AuraTower`   | Aura           | circle     | passive; buffs neighbouring towers, never attacks                                                                         |
 | `MortarTower` | Mortar         | diamond    | one enemy, furthest along the path; fires an unguided `CannonballProjectile` that splashes and slows on arrival           |
 | `SeekerTower` | Seeker         | kite       | one enemy, furthest along the path; fires a homing `MissileProjectile` that deals magic damage and freezes on arrival     |
-| `CinderTower` | Cinder         | flame      | no cooldown; a wedge (`InWedgeTargetQuery`) that reorients toward the nearest enemy and applies/refreshes burn every tick |
+| `CinderTower` | Cinder         | flame      | cooldown-gated; each shot is a wedge-shaped wave (`InWedgeTargetQuery`) that travels outward over several ticks and burns an enemy once, the first time its expanding front reaches it |
 
 **A tower's class name and its in-game name say the same thing, and neither describes its
 shape.** Both name the behaviour; the body shape is `Java2DFrameRenderer.towerBodyShape`'s
@@ -41,8 +41,9 @@ coordinates and computes everything derived from the board - `centerX`/`centerY`
 read a half-built tower, and cannot reorder itself into doing so: the constraint is a compile
 error, not a convention.
 
-A leaf with no reload cadence (`SonarTower`'s sweep, `CinderTower`'s continuous cone) passes
-`0` for `coolDownMax` and overrides `rateLine(int)` to describe its cadence some other way.
+A leaf with no reload cadence (`SonarTower`'s sweep) passes `0` for `coolDownMax` and overrides
+`rateLine(int)` to describe its cadence some other way. `CinderTower` is cooldown-gated like
+every other attack tower and needs no such override.
 
 **Every hit goes through `AbstractTower.dealDamage`, never `enemy.doDamage` directly.** It
 is what keeps `damageDealt`/`killCount` honest, in two ways that are easy to get wrong:
