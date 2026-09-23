@@ -17,15 +17,15 @@ import java.util.List;
  */
 final class ZigZagPathLevel {
 
-    // cornerPull=0.4 rounds every corner noticeably more than Curly Path's 0.3 - this level's
-    // own tighter, rounder character - while staying safely under half of every adjacent leg:
-    // the shortest legs here are 2 cells (64px), and two corners sharing one such leg each pull
-    // back 0.4*64=25.6px, leaving a comfortable ~13px gap between them.
+    private static final int STARTING_CREDITS = 75;
+    private static final int STARTING_LIVES = 3;
+    private static final String LEVEL_NAME = "Zigzag Path";
+    private static final String LEVEL_DESCRIPTION = "Two lanes weave through the same cramped arena - fuchsia loops back on itself "
+            + "before lime cuts clean across it.";
+
     private static final ArcCornerSmoothing SMOOTHING = new ArcCornerSmoothing(0.4, 10);
 
-    // Fuchsia enters near the top-left corner and exits near the bottom-right one, spanning
-    // nearly the board's full 11-row height on its way across - the wide, flattened loop sits
-    // left-of-center, well below the entry line, its open end pointing back to the right.
+    private static final PathColor FUCHSIA_COLOR = PathColor.of(230, 60, 200);
     private static final PathDefinition FUCHSIA_PATH = PathDefinition.smoothed(
                     List.of(
                             new Point(-1, 2), new Point(13, 2), new Point(13, 5), new Point(2, 5),
@@ -40,11 +40,9 @@ final class ZigZagPathLevel {
                             new WaveDefinition("2 g 2 t 2 s 2 c", Rank.VETERAN),
                             new WaveDefinition("10 c e 5 s e 3 t e g", Rank.ELITE)),
                     SMOOTHING)
-            .withColor(PathColor.of(230, 60, 200));
+            .withColor(FUCHSIA_COLOR);
 
-    // Placeholder content only - hand-authored waves for this brand-new second lane come later;
-    // this exists to satisfy LevelDefinition's equal-round-count check and give something to
-    // playtest the crossing layout against in the meantime.
+    private static final PathColor LIME_COLOR = PathColor.of(170, 230, 40);
     private static final PathDefinition LIME_PATH = PathDefinition.smoothed(
                     List.of(
                             new Point(12, -1), new Point(12, 2), new Point(9, 10), new Point(7, 10),
@@ -59,14 +57,13 @@ final class ZigZagPathLevel {
                             new WaveDefinition("2 g 2 t 2 s", Rank.VETERAN),
                             new WaveDefinition("10 c e 5 s e g", Rank.ELITE)),
                     SMOOTHING)
-            .withColor(PathColor.of(170, 230, 40));
+            .withColor(LIME_COLOR);
 
     static final LevelDefinition DEFINITION = LevelDefinition
-            .of("Zigzag Path", 16, 11, List.of(FUCHSIA_PATH, LIME_PATH))
-            .withDescription("Two lanes weave through the same cramped arena - fuchsia loops back on itself "
-                    + "before lime cuts clean across it. 8 waves per lane, starting with $75 and only 3 lives.")
-            .withStartingCredits(75)
-            .withStartingLives(3);
+            .of(LEVEL_NAME, 16, 11, List.of(FUCHSIA_PATH, LIME_PATH))
+            .withDescription(LEVEL_DESCRIPTION)
+            .withStartingCredits(STARTING_CREDITS)
+            .withStartingLives(STARTING_LIVES);
 
     private ZigZagPathLevel() {
     }

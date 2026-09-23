@@ -59,13 +59,7 @@ public abstract class AbstractTower implements Tower {
     protected volatile boolean selected = false;
     protected volatile long damageDealt = 0;
     protected volatile int killCount = 0;
-    // Optional, not a nullable reference: absence is modelled as a value (CLAUDE.md 5 rule 3).
-    // Volatile because it is chosen on the EDT and read by tick code for the bounty bonus.
     protected volatile Optional<UpgradePath> chosenPath = Optional.empty();
-    // The buffed combat stats, as one coherent value swapped whole - recalculated on the EDT
-    // when an aura tower registers or a path is bought, read by tick code on the game-loop
-    // thread. Five separate volatile fields would each read fresh but would still let a tick
-    // observe a half-applied recalculation. See TowerStats and CLAUDE.md 3.
     private volatile TowerStats stats;
     private volatile boolean removed = false;
 

@@ -15,15 +15,16 @@ import java.util.List;
  */
 final class CurlyPathLevel {
 
+    private static final int STARTING_CREDITS = 50;
+    private static final int STARTING_LIVES = 5;
+
     // cornerPull=0.22 over this path's shortest leg (1 cell = 32px, so pullback there is ~7px)
-    // is tighter than Zigzag Path's 0.4 - just enough to take the edge off every turn without
-    // rounding the loops into circles, so they still read as square coils the way the design
-    // sketch draws them.
+    private static final ArcCornerSmoothing SMOOTHING = new ArcCornerSmoothing(0.22, 8);
+
     static final LevelDefinition DEFINITION = LevelDefinition.singlePath(
             "Curly Path",
-            "A lane that spirals through two tight loops before unwinding into a steady zigzag. "
-                    + "17 waves, starting with $50.",
-            20, 15,
+            "A lane that spirals through two tight loops before unwinding into a steady zigzag, creating a curly visuals.",
+            20, 13,
             List.of(
                     new Point(-1, 11), new Point(2, 11), new Point(2, 2), new Point(6, 2),
                     new Point(6, 8), new Point(3, 8), new Point(3, 5), new Point(7, 5),
@@ -31,8 +32,8 @@ final class CurlyPathLevel {
                     new Point(8, 7), new Point(13, 7), new Point(13, 2), new Point(16, 2),
                     new Point(16, 11), new Point(18, 11), new Point(18, 7), new Point(20, 7)),
             List.of(
-                    new WaveDefinition("c e c e c e c e c", Rank.GRUNT),
-                    new WaveDefinition("c e 2 c e 3 c e 4 c", Rank.GRUNT),
+                    new WaveDefinition("4 c", Rank.GRUNT),
+                    new WaveDefinition("9 c e s", Rank.GRUNT),
                     new WaveDefinition("c e c", Rank.SOLDIER),
                     new WaveDefinition("4 c 2 e 2 s", Rank.GRUNT),
                     new WaveDefinition("c c e s", Rank.VETERAN),
@@ -48,15 +49,8 @@ final class CurlyPathLevel {
                     new WaveDefinition("s 4 e t", Rank.BOSS),
                     new WaveDefinition("c 5 e 3 g 3 e 3 s 3 t", Rank.ELITE),
                     new WaveDefinition("s", Rank.BOSS),
-                    // The Warden boss - this wave slot is what constructs its first appearance,
-                    // reading BuiltInEnemies.WARDEN_1's own baseHealth/price directly (every later
-                    // stage, reached only via its egg hatching, is ability-spawned and reads its
-                    // own stage's fields the same way). Rank.BOSS matches the wave immediately
-                    // before it; the Warden's own BodyArchetype gives it a fixed, always-large
-                    // body size (DefinedEnemyMob.bodyScaleFor) regardless of rank.
                     new WaveDefinition("warden1", Rank.BOSS)),
-            50, 5,
-            new ArcCornerSmoothing(0.22, 8));
+            STARTING_CREDITS, STARTING_LIVES, SMOOTHING);
 
     private CurlyPathLevel() {
     }
