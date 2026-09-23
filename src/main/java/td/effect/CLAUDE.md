@@ -7,11 +7,50 @@ Read the root `CLAUDE.md` first; this file only covers what is specific to this 
 `Effect` is the runtime value: six kinds (`SLOW`, `BURN`, `FREEZE`, `SHIELD`, `INVISIBLE`,
 `HEAL`), one record, no per-kind subclassing - every field has a meaningful identity value for
 every kind, so resolving a mob's active effects never branches on which kind it's holding.
-`ActiveEffects` holds at most one `Effect` per `EffectKind` on one mob, keyed by kind so a
-reapplication is a refresh, not a stack. Both are deliberately unaware of `td.enemy` -
-`DamageSink` is the one seam a producer (a tower, or an enemy's own ability) binds at the moment
-an effect is created, which is what lets this package sit below `td.enemy` in the dependency
-graph rather than needing to depend on it.
+`ActiveEffects` holds at most one live `Effect` per `EffectKind` on one mob, keyed by kind so a
+reapplication is a refresh, not a stack - **with one exception: `SLOW` additionally keeps a
+single superseded application in the background**, so a weaker top-up isn't discarded outright
+when it loses to a stronger one already active - see "Slow's recovery curve and bounded stack"
+below. Both `Effect` and `ActiveEffects` are deliberately unaware of `td.enemy` - `DamageSink` is
+the one seam a producer (a tower, or an enemy's own ability) binds at the moment an effect is
+created, which is what lets this package sit below `td.enemy` in the dependency graph rather than
+needing to depend on it.
+
+## Slow's recovery curve and bounded stack, and burn's fuel pool
+
+**`SLOW` recovers speed along a quadratic ease-in curve instead of snapping to full speed at
+expiry.** `Effect.authoredDurationTicks` (set equal to the authored duration at creation, never
+decremented) and `remainingTicks` (which still counts down) together give `ActiveEffects` a
+progress `x = (authoredDurationTicks - remainingTicks) / authoredDurationTicks` at any tick;
+`ActiveEffects.slowCurrentMultiplier` computes `minSpeedMultiplier + ratio * x²` from it, where
+`ratio = 1 - effect.speedMultiplier()`. `FREEZE` is untouched by this - it stays a hard,
+non-gradated stop, read directly from its own stored `speedMultiplier` (always `0f`).
+
+**A `SLOW` reapplication that loses to the current winner isn't discarded - it becomes (or
+displaces) a single superseded slot**, tracked in `ActiveEffects.slowSuperseded`, outside the
+ordinary `active` map. The superseded application's own clock keeps ticking down in the
+background every `tick()` call regardless of what happens to the winner; if the winner's own
+duration elapses, the superseded application is promoted into its place and resumes its curve
+from wherever its own clock has actually reached, never restarted from `x = 0`. A new
+application that beats the current winner bumps the old winner into the superseded slot,
+dropping whatever was there before; one that loses to the winner is compared against the
+existing superseded slot the same way, and only the stronger of the two survives there - see
+`ActiveEffects.applySlow`.
+
+**`BURN` is an additive, decaying fuel pool (`Effect.fuelLevel`), not a flat per-tick amount.**
+Each tick deals `Math.round(fuelLevel)` through the effect's own sink, then decays it by
+`alpha = e^(-3 / authoredDurationTicks)` - the currently-active application's own duration, kept
+fixed across any later top-up. A reapplication adds `deltaL = L0 * (1 - fuelLevel / lmax)` to the
+pool rather than replacing it outright, where `L0` is the new application's own intensity and
+`lmax` is `2 × Effect.peakBurnL0` (the strongest single application's own intensity this mob has
+ever taken, which only ever grows) - a pool near the cap barely grows from another application,
+an empty or low one grows close to the new application's full intensity. The effect
+self-terminates once a tick's rounded damage would be zero, rather than on a duration countdown
+- see `ActiveEffects.applyBurn`/`tickBurn`.
+
+This is the one place a *bounded* cap (the single superseded `SLOW` slot, and burn's fuel-pool
+cap) is load-bearing for correctness rather than only for balance - the rest of this package
+still holds "balance is a content-authoring discipline, not an engine limit."
 
 `EffectTemplate` (sealed: `ShieldTemplate`, `InvisibleTemplate`, `HealTemplate`) is the
 *authored* counterpart - what an `Ability` carries as data, before a `DamageSink` is bound.

@@ -14,32 +14,29 @@ this file is the single place to look for outstanding design/feature gaps.
 ## Feature request implementation order
 
 A priority pass over every doc in `docs/features/`, ordered by prerequisites and shared-file risk
-rather than by request date. Three requests are not yet built; the rest already shipped (see each
+rather than by request date. Two requests are not yet built; the rest already shipped (see each
 doc's own status line) and are listed at the end only for reference.
 
-1. **`FEATURE-effect-diminishing-returns.md`** — medium, scoped entirely to `td.effect`
-   (`Effect`/`ActiveEffects`/`EffectTemplate`). No dependency on any other pending item, but its
-   own doc flags the superseded-slow-stack proposal as needing explicit design sign-off before
-   implementation starts, which is why it isn't first.
-2. **`FEATURE-cinder-cone-wave.md`** — medium-large. Independent of the other two, but its open
+1. **`FEATURE-cinder-cone-wave.md`** — medium-large. Independent of the other item, but its open
    questions (does the travelling-wave bookkeeping live in `td.projectile` or stay
    `CinderTower`-local; do `WHITE_FLAME`/`WIDE_NOZZLE` need to change shape, not just tuning, once
    firing is discrete) settle Cinder's two upgrade paths into their final form. Doing this before
-   item 3 means `FEATURE-tower-upgrade-trees.md` migrates Cinder's paths into the three-slot model
+   item 2 means `FEATURE-tower-upgrade-trees.md` migrates Cinder's paths into the three-slot model
    once, instead of migrating them and reworking them again when this lands afterward.
-3. **`FEATURE-tower-upgrade-trees.md`** — the largest and most architecturally significant of the
-   three: three independent per-slot upgrade graphs, node prerequisites, a new render layer, a
-   sidebar redesign, and migration of every existing `UpgradePath` (including Cinder's, see item
-   2) into the new model. Sequenced last so it lands on an already-settled `PanelWaveInfo` (already
-   cleaned up) and an already-settled Cinder upgrade shape (item 2), rather than migrating content
-   that is about to change again out from under it.
+2. **`FEATURE-tower-upgrade-trees.md`** — the largest and most architecturally significant
+   pending request: three independent per-slot upgrade graphs, node prerequisites, a new render
+   layer, a sidebar redesign, and migration of every existing `UpgradePath` (including Cinder's,
+   see item 1) into the new model. Sequenced last so it lands on an already-settled
+   `PanelWaveInfo` (already cleaned up) and an already-settled Cinder upgrade shape (item 1),
+   rather than migrating content that is about to change again out from under it.
 
 Already implemented, for reference: `FEATURE-enemy-spawn-types.md`,
 `FEATURE-multiple-enemy-paths.md`, `FEATURE-playtesting-and-balance-tooling.md`,
 `FEATURE-enemy-rank-system.md`, `FEATURE-effect-visuals.md`, `FEATURE-tower-upgrades.md`,
 `FEATURE-critical-damage.md`, `FEATURE-damage-types-and-projectiles.md`,
 `FEATURE-enemy-traits-and-effects.md`, `FEATURE-sniper-crit-beam.md`,
-`FEATURE-wave-preview-cleanup.md`, `FEATURE-freeze-visual.md`.
+`FEATURE-wave-preview-cleanup.md`, `FEATURE-freeze-visual.md`,
+`FEATURE-effect-diminishing-returns.md`.
 
 ## Architecture and correctness
 

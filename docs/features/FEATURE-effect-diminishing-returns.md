@@ -1,11 +1,8 @@
 # Feature Request: Effect Diminishing Returns
 
-**Status: proposed, not yet built.** Nothing described below exists in the codebase today —
-`td.effect` currently applies a flat magnitude for an effect's whole duration and removes it
-outright the instant its tick counter hits zero (see Current state). This formalizes the
-hand-written idea in `TODO.md`'s "add diminishing return to slow and burn effects" note; once
-this document is planned and implemented, that note should be removed from `TODO.md` in the
-same commit, per this project's own convention for closing a gap.
+**Status: implemented.** `Effect`/`ActiveEffects` now carry the quadratic slow-recovery curve
+and the additive burn fuel-pool model described below, with the five open questions resolved
+by the plan that implemented this document (see Open questions).
 
 ## Summary
 
@@ -242,34 +239,18 @@ none of this needs any change in `td.tower`.
   still hands an intensity and a duration to `Effect.slow`/`Effect.burn` exactly as it does
   today.
 
-## Open questions
+## Open questions (resolved)
 
-1. **Is the proposed bounded-superseded-application-stack resolution for slow's edge case the
-   right one?** It's presented above as a concrete proposal, not a final decision — it's the
-   single biggest structural change this feature needs to `ActiveEffects` (see Constraints and
-   open risks) and needs explicit sign-off during planning before implementation starts. In
-   particular: how many superseded applications should be retained (proposed: 2) and whether a
-   superseded application's clock should keep counting down in the background while suppressed
-   (assumed above, since "resuming from its own elapsed/total point" only makes sense if time
-   passed for it too) or freeze until it becomes active again — the document above assumes the
-   former but this isn't yet confirmed.
-2. **`Lmax`'s exact derivation is open.** Proposed default: a fixed multiple (e.g. `2×`) of the
-   strongest single `L0` ever applied to that mob so far, rather than one fixed absolute
-   constant across every enemy/tower combination — but this is a tunable to decide during
-   implementation, not a final number.
-3. **The termination rule for a decaying-but-never-zero fuel pool is open.** Two candidate
-   floors: end the effect once `L` drops below some small fraction of the strongest `L0` ever
-   applied (e.g. 5%, matching the `α` derivation's own ~5%-at-authored-duration target), or once
-   a tick's rounded damage (`Math.round(L)`) reaches `0`. Either is a reasonable default to
-   propose; neither is finalized, and the two can disagree (a large enough `L0` could round to a
-   nonzero `Damage` well past a 5%-of-peak floor). Needs a concrete number and a concrete rule
-   during implementation.
-4. **Which decay rate applies after a second, differently-authored-duration burn stacks onto an
-   in-progress pool?** The formula above names a single `T` per burn, but once two applications
-   with different authored durations have merged additively into one `L`, it's unspecified
-   whether `α` should be recomputed from the newest application's `T`, kept from the original,
-   or blended. Not resolved here; needs a decision during planning.
-5. **Should the marker row (`FEATURE-effect-visuals.md`) represent slow/burn intensity now that
-   both vary continuously, instead of the current binary presence dot?** Out of scope for this
-   document's own delivery either way, but worth deciding explicitly rather than leaving the
-   marker silently stale relative to what the effect is actually doing.
+1. **The bounded-superseded-application-stack resolution ships as proposed**, with exactly 1
+   superseded slot (2 applications total for `SLOW`), and the superseded application's clock
+   keeps counting down in the background while suppressed - `ActiveEffects.tickSlowSuperseded()`.
+2. **`Lmax = 2 × the strongest single `L0` ever applied to that mob so far`**, tracked as
+   `Effect.peakBurnL0` and only ever growing.
+3. **Termination is once a tick's rounded damage (`Math.round(L)`) reaches `0`** -
+   `ActiveEffects.tickBurn` returns empty at that point, simpler than a percent-of-peak floor and
+   needing no state beyond `peakBurnL0`.
+4. **The decay rate kept is whichever application is currently active's own `authoredDurationTicks`**
+   - a reapplication only ever changes the fuel level (`fuelLevel`/`peakBurnL0`), never the decay
+   rate, so `T` stays fixed at whatever the active `Effect` object already carries.
+5. **The marker row stays binary presence**, unchanged by this feature - `EnemyFrameBuilder`/
+   `EnemyOverlayDraw` were not touched.
