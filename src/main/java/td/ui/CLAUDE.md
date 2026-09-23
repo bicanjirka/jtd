@@ -219,14 +219,16 @@ none of them — that is deliberate, and there are two reasons it has to stay th
 The L&F's *listeners* stay installed, so pressed/rollover/selected still track the mouse
 normally. Only painting is taken over.
 
-**The one sanctioned exception is a control's text colour**, used by `PanelTowerInfo` to
-set its sell button's text apart from its upgrade-path buttons (destructive vs. constructive
-action) via the ordinary `Component.setForeground` — `Hud.paintControl`'s
+**The one sanctioned exception is a control's text colour**, used by `PanelTowerInfo` to set
+its sell button's text apart from an ordinary control (a destructive action, not a
+constructive one) via the ordinary `Component.setForeground` — `Hud.paintControl`'s
 `paintCentredText` already reads a button's own foreground colour rather than a hardcoded
 one, so this needs no change to `Hud`/`HudButton` and no bypass of their painting. This is
 narrow on purpose: border, fill, hover/press states and font all still come from `Hud`
 untouched. Don't read it as license to style a control by hand more broadly — the rule
-above still holds for anything else.
+above still holds for anything else. `PanelTowerInfo` also colours its own status text's
+✔/✘ gate-progress marks green/red directly on the `JTextPane`'s styled document
+(`colorizeMarks`) — text colouring, not a second control-painting exception.
 
 Prefer a glyph character (`►`, `▮▮`) over drawn artwork for a simple control. **Verify any
 UI change from an actual screenshot of the running game** — see the `run-jtd` skill.
@@ -234,14 +236,21 @@ UI change from an actual screenshot of the running game** — see the `run-jtd` 
 ## Swing panels
 
 `GameBoard`, `PanelGameConsole`, `PanelTowerSelector`, `PanelTowerInfo`, `PanelWaveInfo`,
-`PanelEnemy`, `PanelLevelSelect` and `BoardOverlays` are ordinary Swing components. Two
-conventions run through them:
+`PanelUpgradeTree`, `PanelEnemy`, `PanelLevelSelect` and `BoardOverlays` are ordinary Swing
+components. Two conventions run through them:
 
 - Components are **built once and shown/hidden or refreshed**, not rebuilt per level. The
   level-select screen and the board are two cards of one `CardLayout`; the win/lose overlays
-  are permanent children toggled by visibility.
+  are permanent children toggled by visibility. `PanelWaveInfo`/`PanelUpgradeTree` are the
+  same shape one layer down: both live in `PanelGameConsole`'s same `GridBagLayout` cell,
+  and `PanelGameConsole.selectTower`/`unselectTower` toggle which one is visible rather than
+  swapping components in and out — a tower selected shows what it can buy, nothing selected
+  shows the round summary.
 - A panel that needs to tell `TowerDefense` something exposes a `Runnable` setter with a
   no-op default (see `BoardOverlays.onBackToMenu`) rather than reaching upward for the frame.
+  `PanelUpgradeTree` follows the same shape for `PanelTowerInfo`: `onHover`/`onHoverEnd` push
+  a hovered node's own description onto `PanelTowerInfo` (see `PanelTowerInfo.showUpgradeHover`)
+  and `onBought` asks it to refresh, rather than either panel reaching for the other directly.
 
 `GameBoard.paint` overrides Swing's painting wholesale with no `super.paint()` call, which
 is why `Java2DFrameRenderer`'s background fill is also the only thing clearing the previous

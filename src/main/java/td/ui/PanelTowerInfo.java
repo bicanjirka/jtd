@@ -1,11 +1,8 @@
 package td.ui;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.tower.Tower;
-import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
@@ -13,6 +10,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -20,7 +20,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.io.Serial;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -28,11 +27,14 @@ import java.util.Objects;
  * a sell button, or - via {@link #setExternalText} - whatever the engine last pushed through
  * {@code GameHost.setInfoText} (a hovered tower's pre-purchase stats, a rejected placement).
  * The two are mutually exclusive: selecting a tower replaces external text and vice versa.
+ * <p>
+ * A selected tower's own upgrade buying happens on {@link PanelUpgradeTree}, not here - this
+ * panel only shows gate progress (via {@code AbstractTower.getStatusString()}'s ✔/✘
+ * lines, coloured by {@link #colorizeMarks}) and, while hovering a node button, that node's
+ * full description (see {@link #showUpgradeHover}).
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // Swing components and the current selection
 public class PanelTowerInfo extends JPanel implements EconomyListener {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PanelTowerInfo.class);
 
     /**
      * A single-property, narrow exception to every control otherwise sharing one look (see
@@ -42,6 +44,8 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
      * so no change to {@code Hud}/{@code HudButton} is needed to support this.
      */
     private static final Color SELL_TEXT_COLOR = new Color(255, 120, 120);
+    private static final Color GATE_MET_COLOR = new Color(140, 255, 140);
+    private static final Color GATE_UNMET_COLOR = SELL_TEXT_COLOR;
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -50,10 +54,10 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private Tower selectedTower;
     private String lastText;
     private boolean levelEnded = false;
+    private boolean hovering = false;
+    private Runnable onDeselected = () -> {
+    };
     private HudButton jButton_sell;
-    private HudButton jButton_path1;
-    private HudButton jButton_path2;
-    private JPanel jPanel_buttons;
     private JScrollPane jScrollPane1;
     private JTextPane jTextPane1;
 
@@ -67,12 +71,17 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         }
         this.selectedTower = t;
         this.selectedTower.setSelected(true);
+        this.hovering = false;
         this.updateInterface();
     }
 
     public void setExternalText(String s) {
-        this.jPanel_buttons.setVisible(false);
+        this.jButton_sell.setVisible(false);
         this.setText(s);
+    }
+
+    public void onDeselected(Runnable listener) {
+        this.onDeselected = listener;
     }
 
     /**
@@ -88,54 +97,30 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     }
 
     private void updateInterface() {
-        this.jPanel_buttons.setVisible(this.selectedTower != null);
         this.jButton_sell.setVisible(this.selectedTower != null);
 
         if (this.selectedTower != null) {
             this.jButton_sell.setEnabled(!this.levelEnded);
             this.jButton_sell.setText("Sell ( $" + this.selectedTower.getSellPrice() + " )");
             this.setText(this.selectedTower.getStatusString());
-            this.updatePathButtons();
         }
     }
 
     /**
-     * Shows up to two upgrade-node buttons for the selected tower, one per
-     * {@code offeredUpgrades()} entry - a temporary stand-in for the sidebar upgrade-tree
-     * panel, which replaces this with a full per-slot layout.
-     * Called from both {@link #updateInterface} and the render-pulse {@link #refreshSelected},
-     * the same way sell's affordability and the live kill/damage figures already are - a
-     * node's enablement (cluster size, damage dealt, kill count) can change without any
-     * economy event, so it needs the same per-frame re-derivation.
+     * Shows a hovered upgrade node's full description, overriding the selected tower's own
+     * status text until {@link #clearUpgradeHover} - called by {@code PanelUpgradeTree}'s own
+     * hover callback (see {@code PanelGameConsole}'s wiring).
      */
-    private void updatePathButtons() {
-        List<UpgradeNode> offered = this.selectedTower.offeredUpgrades(this.context);
-        this.updatePathButton(this.jButton_path1, offered, 0);
-        this.updatePathButton(this.jButton_path2, offered, 1);
+    public void showUpgradeHover(String text) {
+        this.hovering = true;
+        this.lastText = null;
+        this.jTextPane1.setText(text);
+        this.colorizeMarks(text);
     }
 
-    private void updatePathButton(HudButton button, List<UpgradeNode> offered, int index) {
-        if (index >= offered.size()) {
-            button.setVisible(false);
-            return;
-        }
-        UpgradeNode node = offered.get(index);
-        button.setVisible(true);
-        button.setText(node.displayName() + " ( $" + node.price() + " )");
-        boolean available = !this.levelEnded
-                && node.gate().isSatisfied(this.selectedTower, this.context)
-                && this.context.economy().canPay(node.price());
-        button.setEnabled(available);
-    }
-
-    private void choosePathAt(int index) {
-        if (this.selectedTower == null) {
-            return;
-        }
-        List<UpgradeNode> offered = this.selectedTower.offeredUpgrades(this.context);
-        if (index < offered.size() && this.selectedTower.buyUpgrade(offered.get(index))) {
-            this.updateInterface();
-        }
+    public void clearUpgradeHover() {
+        this.hovering = false;
+        this.updateInterface();
     }
 
     /**
@@ -149,20 +134,43 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     public void refreshSelected() {
         if (this.selectedTower != null) {
             this.setText(this.selectedTower.getStatusString());
-            this.updatePathButtons();
         }
     }
 
     /**
      * Skips identical text, which matters because this is now called every frame: handing a
      * {@code JTextPane} the same string again still resets its caret and scroll position.
+     * A no-op while a node's hover text owns the pane - see {@link #showUpgradeHover}.
      */
     private void setText(String s) {
-        if (Objects.equals(s, this.lastText)) {
+        if (this.hovering || Objects.equals(s, this.lastText)) {
             return;
         }
         this.lastText = s;
         this.jTextPane1.setText(s);
+        this.colorizeMarks(s);
+    }
+
+    /**
+     * Colours every ✔ green and every ✘ red - the only styling this pane applies
+     * beyond {@link Hud}'s own control/panel look, since {@code AbstractTower.getStatusString()}
+     * marks a gate's own met/unmet state with those two characters rather than this panel
+     * re-deriving it.
+     */
+    private void colorizeMarks(String text) {
+        StyledDocument doc = this.jTextPane1.getStyledDocument();
+        SimpleAttributeSet met = new SimpleAttributeSet();
+        StyleConstants.setForeground(met, GATE_MET_COLOR);
+        SimpleAttributeSet unmet = new SimpleAttributeSet();
+        StyleConstants.setForeground(unmet, GATE_UNMET_COLOR);
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '✔') {
+                doc.setCharacterAttributes(i, 1, met, false);
+            } else if (c == '✘') {
+                doc.setCharacterAttributes(i, 1, unmet, false);
+            }
+        }
     }
 
     public void unselectTower() {
@@ -170,6 +178,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
             this.selectedTower.setSelected(false);
         }
         this.selectedTower = null;
+        this.hovering = false;
     }
 
     public void setGameWorld(GameWorld context) {
@@ -182,6 +191,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
             this.context.towers().sell(this.selectedTower);
             this.unselectTower();
             this.updateInterface();
+            this.onDeselected.run();
         }
     }
 
@@ -197,10 +207,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
         jScrollPane1 = new JScrollPane();
         jTextPane1 = new JTextPane();
-        jPanel_buttons = new JPanel();
         jButton_sell = new HudButton("Sell");
-        jButton_path1 = new HudButton("");
-        jButton_path2 = new HudButton("");
 
         setLayout(new GridBagLayout());
 
@@ -226,48 +233,17 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         gridBagConstraints.weighty = 0.01;
         add(jScrollPane1, gridBagConstraints);
 
-        jPanel_buttons.setLayout(new GridBagLayout());
-
-        jPanel_buttons.setBackground(new Color(0, 0, 0));
-        jPanel_buttons.setForeground(new Color(220, 255, 220));
-
         jButton_sell.setText("Sell");
         jButton_sell.setForeground(SELL_TEXT_COLOR);
         jButton_sell.addActionListener(this::jButton_sellActionPerformed);
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.WEST;
-        gridBagConstraints.weightx = 0.01;
-        jPanel_buttons.add(jButton_sell, gridBagConstraints);
-
-        jButton_path1.addActionListener(evt -> this.choosePathAt(0));
-
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.WEST;
-        gridBagConstraints.weightx = 0.01;
-        jPanel_buttons.add(jButton_path1, gridBagConstraints);
-
-        jButton_path2.addActionListener(evt -> this.choosePathAt(1));
-
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = GridBagConstraints.WEST;
         gridBagConstraints.weightx = 0.01;
-        jPanel_buttons.add(jButton_path2, gridBagConstraints);
-
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        add(jPanel_buttons, gridBagConstraints);
+        add(jButton_sell, gridBagConstraints);
 
     }
 

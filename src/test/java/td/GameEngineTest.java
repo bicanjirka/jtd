@@ -159,6 +159,55 @@ class GameEngineTest {
     }
 
     @Test
+    void buyUpgradeForSelectedBuysTheNthCurrentlyOfferedNodeOfTheSelectedTower() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0)); // places
+        Tower tower = engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0))
+                .orElseThrow(); // selects
+        // Selection itself is PanelTowerInfo's job in the real UI (see TowerDefense.jPanel_boardMouseClicked
+        // -> PanelGameConsole.selectTower); this test drives the engine's own entry point directly.
+        tower.setSelected(true);
+        int creditsBeforeUpgrade = engine.getGameWorld().economy().getCredits();
+
+        // offeredUpgrades() lists base.range then base.awaken first for a freshly-built tower.
+        engine.buyUpgradeForSelected(1);
+
+        assertThat(engine.getGameWorld().economy().getCredits()).isLessThan(creditsBeforeUpgrade);
+        assertThat(tower.upgrades().owns("base.range")).isTrue();
+    }
+
+    @Test
+    void buyUpgradeForSelectedWithNoTowerSelectedSpendsNothing() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
+        int creditsBeforeUpgrade = engine.getGameWorld().economy().getCredits();
+
+        engine.buyUpgradeForSelected(1);
+
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsBeforeUpgrade);
+    }
+
+    @Test
+    void buyUpgradeForSelectedWithAnOutOfRangeNumberSpendsNothing() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0)); // places
+        Tower tower = engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0))
+                .orElseThrow(); // selects
+        tower.setSelected(true);
+        int creditsBeforeUpgrade = engine.getGameWorld().economy().getCredits();
+
+        engine.buyUpgradeForSelected(99);
+
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsBeforeUpgrade);
+    }
+
+    @Test
     void placingOnAPathCellIsRejectedAndCostsNothing() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));

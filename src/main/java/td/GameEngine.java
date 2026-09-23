@@ -13,6 +13,7 @@ import td.enemy.Rank;
 import td.level.LevelDefinition;
 import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.tower.upgrade.UpgradeNode;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
@@ -376,5 +377,24 @@ public class GameEngine {
      */
     public void debugGrantCredits(int amount) {
         this.gameWorld.economy().apply(EconomyDelta.credits(amount));
+    }
+
+    /**
+     * With a tower selected, buys the {@code number}-th (1-based) node in its own {@code
+     * offeredUpgrades()}, in the same {@code BASE}/{@code HEAD}/{@code SPECIAL} order the
+     * sidebar panel numbers its buttons in - so a button's own number always matches the key
+     * that buys it. A no-op if no tower is selected or {@code number} is out of range, mirroring
+     * {@code Tower.buyUpgrade}'s own refuse-silently-on-failure contract.
+     */
+    public void buyUpgradeForSelected(int number) {
+        this.gameWorld.towers().all().stream()
+                .filter(Tower::isSelected)
+                .findFirst()
+                .ifPresent(tower -> {
+                    List<UpgradeNode> offered = tower.offeredUpgrades(this.gameWorld);
+                    if (number >= 1 && number <= offered.size()) {
+                        tower.buyUpgrade(offered.get(number - 1));
+                    }
+                });
     }
 }

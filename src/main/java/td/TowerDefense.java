@@ -271,7 +271,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      * per-tower stats. Skips the repaint while a previous paint is still in flight.
      */
     private void repaintPublishedFrame() {
-        this.gameConsole.getTowerInfo().refreshSelected();
+        this.gameConsole.refreshSelected();
         // The wave-preview panels animate their own display-only mobs. This used to be driven
         // straight from doTick on the game-loop thread, which touched Swing from tick code and
         // wrote PanelEnemy's clock across a thread boundary. Driving it from the render pulse
@@ -504,7 +504,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      */
     private void setGameStopped(boolean stopped) {
         this.gameStopped = stopped;
-        SwingUtilities.invokeLater(() -> this.gameConsole.getTowerInfo().setLevelEnded(stopped));
+        SwingUtilities.invokeLater(() -> this.gameConsole.setLevelEnded(stopped));
     }
 
     public void startLevel() {
@@ -580,7 +580,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     public void unSelectTower() {
         this.engine.unSelectTower();
-        this.gameConsole.getTowerInfo().unselectTower();
+        this.gameConsole.unselectTower();
         this.gameConsole.getTowerInfo().setExternalText(this.statusMessage);
     }
 
@@ -603,7 +603,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         int boardX = evt.getX() - this.gameBoard.getX();
         int boardY = evt.getY() - this.gameBoard.getY();
         this.engine.mouseClicked(boardX, boardY)
-                .ifPresent(this.gameConsole.getTowerInfo()::setTower);
+                .ifPresent(this.gameConsole::selectTower);
         if (wasPlacing && !this.engine.isPlacingTower()) {
             this.panelTowerSelector.stopPlacing();
         }
@@ -631,6 +631,15 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         // nothing that would change its outcome - building, selling, sending a wave, changing
         // speed - still applies. Leaving the menu is the only way on from here.
         if (this.gameStopped) {
+            return;
+        }
+        // With a tower selected, a digit buys the correspondingly-numbered currently-offered
+        // upgrade node, in the same order PanelUpgradeTree numbers its own buttons - a no-op
+        // if nothing is selected or no node has that number. Digits aren't a placement key for
+        // any tower type, so this can't collide with the loop below.
+        if (key >= '1' && key <= '9') {
+            this.engine.buyUpgradeForSelected(key - '0');
+            this.gameConsole.refreshSelected();
             return;
         }
         // Each tower type carries its own placement key, so a new tower needs no change here.
