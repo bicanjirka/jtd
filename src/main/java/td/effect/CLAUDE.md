@@ -37,16 +37,26 @@ dropping whatever was there before; one that loses to the winner is compared aga
 existing superseded slot the same way, and only the stronger of the two survives there - see
 `ActiveEffects.applySlow`.
 
-**`BURN` is an additive, decaying fuel pool (`Effect.fuelLevel`), not a flat per-tick amount.**
-Each tick deals `Math.round(fuelLevel)` through the effect's own sink, then decays it by
-`alpha = e^(-3 / authoredDurationTicks)` - the currently-active application's own duration, kept
-fixed across any later top-up. A reapplication adds `deltaL = L0 * (1 - fuelLevel / lmax)` to the
-pool rather than replacing it outright, where `L0` is the new application's own intensity and
-`lmax` is `2 × Effect.peakBurnL0` (the strongest single application's own intensity this mob has
-ever taken, which only ever grows) - a pool near the cap barely grows from another application,
-an empty or low one grows close to the new application's full intensity. The effect
-self-terminates once a tick's rounded damage would be zero, rather than on a duration countdown
-- see `ActiveEffects.applyBurn`/`tickBurn`.
+**`BURN` is an additive, decaying fuel pool (`Effect.fuelLevel()`), not a flat per-tick amount,
+and it is credited per contributor, not through one shared sink.** The pool is a list of
+`BurnContribution(DamageSink sink, float amount)` - one per still-contributing application,
+`Effect.burnFuel` - rather than a single scalar; `fuelLevel()` sums them for anything that only
+cares about the pool's current total. Each tick deals `Math.round(fuelLevel())` total, but that
+total is split across every contribution in proportion to its own current `amount`, using
+largest-remainder apportionment (`ActiveEffects.apportionBurnDamage`) so the parts always sum to
+exactly the rounded total - a single contributor reduces to today's whole-pool behaviour. Every
+contribution is then decayed individually by `alpha = e^(-3 / authoredDurationTicks)` - the
+currently-active application's own duration, kept fixed across any later top-up; decay is
+multiplicative, so decaying each contribution separately by the same `alpha` leaves the pool's
+total exactly where decaying it as one pooled number would have. A reapplication doesn't fold
+into the existing contributions - it appends one more, `BurnContribution(incomingSink, deltaL)`,
+where `deltaL = L0 * (1 - fuelLevel() / lmax)` (`L0` the new application's own intensity, `lmax`
+`2 × Effect.peakBurnL0` - the strongest single application's own intensity this mob has ever
+taken, which only ever grows) - a pool near the cap barely grows from another application, an
+empty or low one grows close to the new application's full intensity. This is what lets a second
+tower's own top-up be credited to *that* tower's `dealDamage` instead of vanishing into whichever
+tower's application happened to be first - see `ActiveEffects.applyBurn`/`tickBurn`. The effect
+self-terminates once a tick's rounded total would be zero, rather than on a duration countdown.
 
 This is the one place a *bounded* cap (the single superseded `SLOW` slot, and burn's fuel-pool
 cap) is load-bearing for correctness rather than only for balance - the rest of this package
@@ -78,9 +88,12 @@ mob's effect history a second time.
 
 ## Healing is a query, not a sink
 
-Every damaging kind (`BURN`) deals its damage *through* `Effect.sink()` - a `DamageSink` bound at
-creation time, so a damage-over-time tick is credited to whichever tower applied it exactly like
-an instant hit is. `HEAL` deliberately does **not** work this way: `Damage`'s own compact
+Every damaging kind (`BURN`) deals its damage *through* a `DamageSink` bound at creation time, so
+a damage-over-time tick is credited to whichever tower applied it exactly like an instant hit is
+- for `BURN` specifically, each of a mob's several `BurnContribution`s carries its own sink, so a
+tick's damage is credited to every contributing tower in proportion to what it added, not only to
+whichever tower's application happened to apply first (see "Slow's recovery curve and bounded
+stack, and burn's fuel pool" above). `HEAL` deliberately does **not** work this way: `Damage`'s own compact
 constructor clamps every amount at zero specifically so a "healing hit" can never exist, and a
 heal credits nobody the way a damage-over-time tick credits its tower. `Effect.healPerTick`
 is instead a plain `int` a mob reads directly via `ActiveEffects.healPerTick()` and applies to

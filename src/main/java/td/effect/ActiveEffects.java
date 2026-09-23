@@ -1,6 +1,7 @@
 package td.effect;
 
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.util.ThreadConfined;
 
 import java.util.ArrayList;
@@ -126,20 +127,26 @@ public final class ActiveEffects {
      * pool already is to {@code Lmax} - a pool near the cap barely grows from another
      * application, an empty or low one grows close to the new application's full intensity. The
      * pool's decay rate ({@code authoredDurationTicks}, read by {@link #tickBurn}) is kept from
-     * whichever application is already active - a reapplication only ever changes the fuel
-     * level, never the decay rate. See {@code td/effect/CLAUDE.md}.
+     * whichever application is already active - a reapplication only ever adds one more
+     * {@link BurnContribution}, never changes the decay rate. Each reapplication's own
+     * {@link DamageSink} is kept alongside its share of the pool rather than displacing the
+     * existing sink, which is what lets {@link #tickBurn} credit every contributing tower for
+     * its own share instead of crediting whichever tower happened to apply first. See
+     * {@code td/effect/CLAUDE.md}.
      */
     private void applyBurn(Effect incoming) {
         Effect existing = this.active.get(EffectKind.BURN);
-        float incomingL0 = incoming.damagePerTick().amount();
         if (existing == null) {
-            this.active.put(EffectKind.BURN, incoming.withFuelLevel(incomingL0, incomingL0));
+            this.active.put(EffectKind.BURN, incoming);
             return;
         }
+        float incomingL0 = incoming.damagePerTick().amount();
         float peakL0 = Math.max(existing.peakBurnL0(), incomingL0);
         float lmax = BURN_LMAX_MULTIPLIER * peakL0;
         float deltaL = incomingL0 * (1f - existing.fuelLevel() / lmax);
-        this.active.put(EffectKind.BURN, existing.withFuelLevel(existing.fuelLevel() + deltaL, peakL0));
+        List<BurnContribution> fuel = new ArrayList<>(existing.burnFuel());
+        fuel.add(new BurnContribution(incoming.sink(), deltaL));
+        this.active.put(EffectKind.BURN, existing.withBurnFuel(List.copyOf(fuel), peakL0));
     }
 
     /**
@@ -243,20 +250,70 @@ public final class ActiveEffects {
     }
 
     /**
-     * One tick of {@code BURN}'s fuel-pool model: deals the current level's rounded damage, then
-     * decays it by {@code alpha = e^(BURN_DECAY_EXPONENT / authoredDurationTicks)} - the
-     * currently-active application's own duration, kept fixed across any later top-up (see
-     * {@link #applyBurn}). Empty once a tick's rounded damage would be zero - the pool's own
-     * termination floor, since the exponential decay never reaches exactly zero on its own.
+     * One tick of {@code BURN}'s fuel-pool model: deals the pool's current rounded total, split
+     * across every contributing tower in proportion to its own current share (see
+     * {@link #apportionBurnDamage}), then decays every contribution by
+     * {@code alpha = e^(BURN_DECAY_EXPONENT / authoredDurationTicks)} - the currently-active
+     * application's own duration, kept fixed across any later top-up (see {@link #applyBurn}).
+     * Decay is multiplicative, so decaying each contribution individually by the same
+     * {@code alpha} leaves the pool's total exactly where decaying the pooled total once would
+     * have. Empty once a tick's rounded damage would be zero - the pool's own termination floor,
+     * since the exponential decay never reaches exactly zero on its own.
      */
     private Optional<Effect> tickBurn(Effect effect) {
-        int damage = Math.round(effect.fuelLevel());
+        List<BurnContribution> contributions = effect.burnFuel();
+        float total = effect.fuelLevel();
+        int damage = Math.round(total);
         if (damage <= 0) {
             return Optional.empty();
         }
-        effect.sink().apply(new Damage(damage, effect.damagePerTick().type()));
+        int[] shares = apportionBurnDamage(contributions, total, damage);
+        DamageType type = effect.damagePerTick().type();
+        for (int i = 0; i < contributions.size(); i++) {
+            if (shares[i] > 0) {
+                contributions.get(i).sink().apply(new Damage(shares[i], type));
+            }
+        }
         double alpha = Math.exp(BURN_DECAY_EXPONENT / effect.authoredDurationTicks());
-        return Optional.of(effect.withFuelLevel((float) (effect.fuelLevel() * alpha), effect.peakBurnL0()));
+        List<BurnContribution> decayed = contributions.stream()
+                .map(c -> c.decayedBy((float) alpha))
+                .toList();
+        return Optional.of(effect.withBurnFuel(decayed, effect.peakBurnL0()));
+    }
+
+    /**
+     * Splits {@code roundedTotal} across {@code contributions} in proportion to each one's own
+     * share of {@code total}, using largest-remainder apportionment so the parts always sum to
+     * exactly {@code roundedTotal} - with one contributor this reduces to
+     * {@code roundedTotal} itself, exactly today's single-sink behaviour. Each contribution
+     * first gets the floor of its exact share; whatever is left over goes to the largest
+     * fractional remainders, earliest contribution first on a tie, so the result never depends
+     * on iteration order alone and stays reproducible for {@code td.BalanceHarness}.
+     */
+    private static int[] apportionBurnDamage(List<BurnContribution> contributions, float total, int roundedTotal) {
+        int n = contributions.size();
+        int[] shares = new int[n];
+        float[] remainders = new float[n];
+        int assigned = 0;
+        for (int i = 0; i < n; i++) {
+            float raw = contributions.get(i).amount() / total * roundedTotal;
+            shares[i] = (int) Math.floor(raw);
+            remainders[i] = raw - shares[i];
+            assigned += shares[i];
+        }
+        int leftover = roundedTotal - assigned;
+        while (leftover > 0) {
+            int best = -1;
+            for (int i = 0; i < n; i++) {
+                if (remainders[i] >= 0 && (best == -1 || remainders[i] > remainders[best])) {
+                    best = i;
+                }
+            }
+            shares[best]++;
+            remainders[best] = -1f;
+            leftover--;
+        }
+        return shares;
     }
 
     /**

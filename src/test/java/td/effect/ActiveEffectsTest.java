@@ -117,14 +117,57 @@ class ActiveEffectsTest {
     @Test
     void reapplyingBurnAddsFuelWithDiminishingReturnsAsThePoolNearsItsCap() {
         ActiveEffects effects = new ActiveEffects();
-        List<Damage> received = new ArrayList<>();
-        effects.apply(Effect.burn(Damage.magic(10), 60, recordingSink(received)));
+        List<Damage> firstTower = new ArrayList<>();
+        List<Damage> secondTower = new ArrayList<>();
+        effects.apply(Effect.burn(Damage.magic(10), 60, recordingSink(firstTower)));
 
         // Lmax = 2 * max(10, 8) = 20; deltaL = 8 * (1 - 10/20) = 4; pool becomes 10 + 4 = 14
-        effects.apply(Effect.burn(Damage.magic(8), 60, recordingSink(received)));
+        effects.apply(Effect.burn(Damage.magic(8), 60, recordingSink(secondTower)));
         effects.tick();
 
-        assertThat(received).containsExactly(Damage.magic(14));
+        // the pool's total damage this tick is unchanged by splitting it (still 14), but each
+        // tower is now credited with only the share it actually fuelled - the second tower's
+        // reapplication no longer disappears into the first tower's own dealDamage
+        assertThat(firstTower).containsExactly(Damage.magic(10));
+        assertThat(secondTower).containsExactly(Damage.magic(4));
+    }
+
+    @Test
+    void aSecondTowersBurnFuelIsCreditedToThatTowerRatherThanToTheTowerThatIgnitedTheBurn() {
+        ActiveEffects effects = new ActiveEffects();
+        List<Damage> firstTower = new ArrayList<>();
+        List<Damage> secondTower = new ArrayList<>();
+        effects.apply(Effect.burn(Damage.magic(10), 60, recordingSink(firstTower)));
+
+        effects.tick(); // L = 10.000 -> 10 to the first tower, decays to 9.512
+
+        // peakBurnL0 stays 10 (8 < 10), so Lmax = 20; deltaL = 8 * (1 - 9.512/20) ~= 4.195
+        effects.apply(Effect.burn(Damage.magic(8), 60, recordingSink(secondTower)));
+        effects.tick(); // pool = 9.512 + 4.195 ~= 13.707 -> rounds to 14, split by each share
+
+        assertThat(firstTower).containsExactly(Damage.magic(10), Damage.magic(10));
+        assertThat(secondTower).containsExactly(Damage.magic(4));
+    }
+
+    @Test
+    void threeTowersFuellingTheSameBurnAreEachCreditedTheirOwnProportionalShareOfOneTick() {
+        ActiveEffects effects = new ActiveEffects();
+        List<Damage> firstTower = new ArrayList<>();
+        List<Damage> secondTower = new ArrayList<>();
+        List<Damage> thirdTower = new ArrayList<>();
+        effects.apply(Effect.burn(Damage.magic(10), 60, recordingSink(firstTower)));
+        // Lmax = 2 * max(10, 8) = 20; deltaL = 8 * (1 - 10/20) = 4; pool becomes 10 + 4 = 14
+        effects.apply(Effect.burn(Damage.magic(8), 60, recordingSink(secondTower)));
+        // Lmax = 2 * max(10, 6) = 20; deltaL = 6 * (1 - 14/20) = 1.8; pool becomes 14 + 1.8 = 15.8
+        effects.apply(Effect.burn(Damage.magic(6), 60, recordingSink(thirdTower)));
+
+        // total = 15.8, rounds to 16; exact shares are 10.13/4.05/1.82 - the third tower's
+        // largest fractional remainder (0.82) wins the one leftover unit, giving 10/4/2 = 16
+        effects.tick();
+
+        assertThat(firstTower).containsExactly(Damage.magic(10));
+        assertThat(secondTower).containsExactly(Damage.magic(4));
+        assertThat(thirdTower).containsExactly(Damage.magic(2));
     }
 
     @Test
