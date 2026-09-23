@@ -335,10 +335,19 @@ public class PanelLevelSelect extends JPanel {
             float innerWidth = width - margin * 2f;
             float innerHeight = height - margin * 2f;
 
+            // One uniform scale for both axes, not spanX/spanY mapped independently - an
+            // independent mapping stretches the path into the box's aspect ratio instead of
+            // preserving its own. The smaller of the two candidate scales is the one that keeps
+            // the whole path inside the box; the leftover space on the other axis centers it
+            // rather than leaving it pinned to the top-left corner.
+            double scale = Math.min(innerWidth / spanX, innerHeight / spanY);
+            float offsetX = margin + (float) (innerWidth - spanX * scale) / 2f;
+            float offsetY = margin + (float) (innerHeight - spanY * scale) / 2f;
+
             ArrayList<Point2D.Float> mapped = new ArrayList<>(points.size());
             for (Vec2 p : points) {
-                float x = margin + (float) ((p.x() - minX) / spanX) * innerWidth;
-                float y = margin + (float) ((p.y() - minY) / spanY) * innerHeight;
+                float x = offsetX + (float) ((p.x() - minX) * scale);
+                float y = offsetY + (float) ((p.y() - minY) * scale);
                 mapped.add(new Point2D.Float(x, y));
             }
             return mapped;
