@@ -12,6 +12,7 @@ import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
+import td.ui.render.IceCrystalDraw;
 import td.ui.render.MissileDraw;
 import td.ui.render.Palette;
 import td.ui.render.PathMarkerBrightness;
@@ -277,6 +278,33 @@ public final class Java2DFrameRenderer {
     }
 
     /**
+     * One elongated, angular shard - a building block for {@link #crystalShape}, not used on
+     * its own.
+     */
+    private static Shape shardShape(float size, double rotationRadians) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(0, -size);
+        p.lineTo(size * 0.35f, -size * 0.2f);
+        p.lineTo(size * 0.15f, size);
+        p.lineTo(-size * 0.15f, size);
+        p.lineTo(-size * 0.35f, -size * 0.2f);
+        p.closePath();
+        return AffineTransform.getRotateInstance(rotationRadians).createTransformedShape(p);
+    }
+
+    /**
+     * A small cluster of three overlapping shards at different rotations and sizes - the
+     * faceted ice-crystal overlay drawn over a frozen enemy, distinct from every smooth body
+     * silhouette and ring already in use.
+     */
+    private static Shape crystalShape(float size) {
+        Area crystal = new Area(shardShape(size, 0));
+        crystal.add(new Area(shardShape(size * 0.75f, 2.1)));
+        crystal.add(new Area(shardShape(size * 0.6f, -2.4)));
+        return crystal;
+    }
+
+    /**
      * An annulus - {@code innerFraction} of {@code size} is cut out of the middle.
      */
     private static Shape ringShape(float size, float innerFraction) {
@@ -439,6 +467,7 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_INVISIBLE -> new Color(180, 180, 180);
             case STATUS_MARKER_HEAL -> new Color(120, 220, 140);
             case STATUS_MARKER_OVERFLOW -> Color.WHITE;
+            case FREEZE_CRYSTAL -> new Color(220, 245, 255);
             case CRIT_SPARK -> Color.WHITE;
             case SPAWN_BURST -> Color.WHITE;
             case RANK_BADGE_CHEVRON -> Color.WHITE;
@@ -744,7 +773,27 @@ public final class Java2DFrameRenderer {
             case EnemyRingDraw ring -> this.paintEnemyRing(g2, ring);
             case EffectPulseDraw pulse -> this.paintEffectPulse(g2, pulse);
             case TraitMarkerDraw marker -> this.paintTraitMarker(g2, marker);
+            case IceCrystalDraw crystal -> this.paintIceCrystal(g2, crystal);
         }
+    }
+
+    /**
+     * A faceted ice-crystal cluster encasing a frozen enemy - a translucent icy fill plus a
+     * near-white facet-line stroke, so it reads as "solid ice" rather than another status-marker
+     * dot in the same blue family as {@code STATUS_MARKER_SLOW}.
+     */
+    private void paintIceCrystal(Graphics2D g2, IceCrystalDraw crystal) {
+        AffineTransform save = g2.getTransform();
+        g2.translate(crystal.centerX(), crystal.centerY());
+        Shape shape = crystalShape(crystal.scale());
+        g2.setColor(withAlpha(colorFor(crystal.palette()), 130));
+        g2.fill(shape);
+        Stroke defaultStroke = g2.getStroke();
+        g2.setColor(withAlpha(Color.WHITE, 210));
+        g2.setStroke(new BasicStroke(1.2f));
+        g2.draw(shape);
+        g2.setStroke(defaultStroke);
+        g2.setTransform(save);
     }
 
     /**

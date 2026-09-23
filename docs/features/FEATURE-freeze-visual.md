@@ -1,6 +1,8 @@
 # Feature Request: A distinct ice-crystal visual for Freeze
 
-> Not yet built. Nothing described below exists in the codebase today; this document proposes it.
+> Implemented. `IceCrystalDraw` joins `EnemyOverlayDraw`, drawn by
+> `Java2DFrameRenderer.paintIceCrystal` from `EnemyFrameBuilder.overlays()`, exactly as decided
+> below.
 
 ## Summary
 
@@ -121,11 +123,11 @@ in `TODO.md`'s raw notes.
   it, not a replacement for the row's own bookkeeping - see Open questions on whether this is
   the right call long-term.
 
-## Open questions
+## Open questions (resolved)
 
-- Does the marker-row dot for `FREEZE` stay indefinitely once the body overlay exists (redundant,
-  but lower-risk and consistent with every other kind), or should it be dropped/recoloured once
-  the crystal is the primary signal, so a frozen enemy doesn't carry two blue-family indicators
-  at once?
-- Exact facet count, polygon vertices, and final RGB values are left to implementation - this
-  document sketches them concretely enough to build from, not pixel-perfect.
+- The marker-row dot for `FREEZE` stays indefinitely, unchanged, per the Decisions above -
+  redundant but lower-risk and consistent with every other kind. Revisit only if a future pass
+  reworks the marker row itself.
+- Facet count/vertices/RGB: `crystalShape` composes three overlapping five-sided shards
+  (`Java2DFrameRenderer.shardShape`) at different rotations/sizes; the fill is
+  `Palette.FREEZE_CRYSTAL` (`new Color(220, 245, 255)`) at low alpha, stroked in near-white.
