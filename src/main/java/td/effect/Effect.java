@@ -3,6 +3,7 @@ package td.effect;
 import td.damage.Damage;
 import td.damage.DamageType;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -38,32 +39,36 @@ import java.util.Optional;
  * ones that never read it back - the same harmless-identity-value convention every other field
  * here already follows for the kinds that don't use it.
  * <p>
- * {@link #fuelLevel} and {@link #peakBurnL0} exist only for {@link EffectKind#BURN}'s decaying
+ * {@link #burnFuel} and {@link #peakBurnL0} exist only for {@link EffectKind#BURN}'s decaying
  * fuel-pool model - see {@code ActiveEffects}' burn handling and {@code td/effect/CLAUDE.md}.
- * {@code fuelLevel} is the pool's current level {@code L}; {@code peakBurnL0} is the strongest
- * single application's own {@code damagePerTick} this mob has ever taken, which bounds how much
- * a reapplication can still add. Both are {@code 0f} - a harmless identity value - for every
- * other kind.
+ * {@code burnFuel} is the pool's current level, kept as one {@link BurnContribution} per
+ * application that is still contributing to it rather than one merged scalar - each carries the
+ * {@link DamageSink} of the tower that added it, so a tick's damage can be credited to every
+ * contributor in proportion to what it actually added, not only to whichever application
+ * happened to apply first. {@code fuelLevel()} sums them back into the pool's current total.
+ * {@code peakBurnL0} is the strongest single application's own {@code damagePerTick} this mob has
+ * ever taken, which bounds how much a reapplication can still add. Both are the empty list /
+ * {@code 0f} - a harmless identity value - for every other kind.
  */
 public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTick, float shieldPercent,
                      int remainingTicks, DamageSink sink, int healPerTick,
                      Optional<DamageType> shieldRestrictedTo, int authoredDurationTicks,
-                     float fuelLevel, float peakBurnL0) {
+                     List<BurnContribution> burnFuel, float peakBurnL0) {
 
     public static Effect slow(float speedMultiplier, int durationTicks, DamageSink sink) {
         return new Effect(EffectKind.SLOW, speedMultiplier, Damage.none(), 0f, durationTicks, sink, 0,
-                Optional.empty(), durationTicks, 0f, 0f);
+                Optional.empty(), durationTicks, List.of(), 0f);
     }
 
     public static Effect freeze(int durationTicks, DamageSink sink) {
         return new Effect(EffectKind.FREEZE, 0f, Damage.none(), 0f, durationTicks, sink, 0,
-                Optional.empty(), durationTicks, 0f, 0f);
+                Optional.empty(), durationTicks, List.of(), 0f);
     }
 
     public static Effect burn(Damage damagePerTick, int durationTicks, DamageSink sink) {
         float l0 = damagePerTick.amount();
         return new Effect(EffectKind.BURN, 1f, damagePerTick, 0f, durationTicks, sink, 0,
-                Optional.empty(), durationTicks, l0, l0);
+                Optional.empty(), durationTicks, List.of(new BurnContribution(sink, l0)), l0);
     }
 
     /**
@@ -71,7 +76,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
      */
     public static Effect shield(float shieldPercent, int durationTicks, DamageSink sink) {
         return new Effect(EffectKind.SHIELD, 1f, Damage.none(), shieldPercent, durationTicks, sink, 0,
-                Optional.empty(), durationTicks, 0f, 0f);
+                Optional.empty(), durationTicks, List.of(), 0f);
     }
 
     /**
@@ -79,7 +84,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
      */
     public static Effect invisible(int durationTicks, DamageSink sink) {
         return new Effect(EffectKind.INVISIBLE, 1f, Damage.none(), 0f, durationTicks, sink, 0,
-                Optional.empty(), durationTicks, 0f, 0f);
+                Optional.empty(), durationTicks, List.of(), 0f);
     }
 
     /**
@@ -92,7 +97,19 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
      */
     public static Effect heal(int healPerTick, int durationTicks, DamageSink sink) {
         return new Effect(EffectKind.HEAL, 1f, Damage.none(), 0f, durationTicks, sink, healPerTick,
-                Optional.empty(), durationTicks, 0f, 0f);
+                Optional.empty(), durationTicks, List.of(), 0f);
+    }
+
+    /**
+     * The burn fuel pool's current total - the sum of every still-contributing tower's own
+     * {@link BurnContribution#amount}. {@code 0f} for every kind but {@link EffectKind#BURN}.
+     */
+    public float fuelLevel() {
+        float total = 0f;
+        for (BurnContribution contribution : this.burnFuel) {
+            total += contribution.amount();
+        }
+        return total;
     }
 
     /**
@@ -103,23 +120,24 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
     public Effect withShieldRestrictedTo(DamageType type) {
         return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
                 this.remainingTicks, this.sink, this.healPerTick, Optional.of(type),
-                this.authoredDurationTicks, this.fuelLevel, this.peakBurnL0);
+                this.authoredDurationTicks, this.burnFuel, this.peakBurnL0);
     }
 
     Effect withRemainingTicks(int remainingTicks) {
         return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent, remainingTicks,
                 this.sink, this.healPerTick, this.shieldRestrictedTo, this.authoredDurationTicks,
-                this.fuelLevel, this.peakBurnL0);
+                this.burnFuel, this.peakBurnL0);
     }
 
     /**
      * A copy carrying {@code BURN}'s fuel pool forward - after a tick's decay, or after a
-     * reapplication tops it up. {@code peakBurnL0} only ever grows, since it bounds how much any
-     * future reapplication can still add regardless of which application is currently active.
+     * reapplication tops it up with one more {@link BurnContribution}. {@code peakBurnL0} only
+     * ever grows, since it bounds how much any future reapplication can still add regardless of
+     * which application is currently active.
      */
-    Effect withFuelLevel(float fuelLevel, float peakBurnL0) {
+    Effect withBurnFuel(List<BurnContribution> burnFuel, float peakBurnL0) {
         return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
                 this.remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
-                this.authoredDurationTicks, fuelLevel, peakBurnL0);
+                this.authoredDurationTicks, burnFuel, peakBurnL0);
     }
 }

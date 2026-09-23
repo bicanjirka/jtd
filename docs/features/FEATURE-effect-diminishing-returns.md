@@ -254,3 +254,11 @@ none of this needs any change in `td.tower`.
    rate, so `T` stays fixed at whatever the active `Effect` object already carries.
 5. **The marker row stays binary presence**, unchanged by this feature - `EnemyFrameBuilder`/
    `EnemyOverlayDraw` were not touched.
+6. **A reapplication's damage is credited to the tower that applied it, not to whichever tower
+   applied first.** The initial implementation folded a reapplication into the existing `Effect`
+   via `existing.withFuelLevel(...)`, which kept only the first application's `DamageSink` -
+   every tower that topped up the pool afterward saw its own contribution silently credited to
+   the first tower's `dealDamage`/`damageDealt`/`killCount`. Fixed by keeping the pool as a list
+   of per-application `BurnContribution(DamageSink, amount)` entries (`Effect.burnFuel`) and
+   splitting each tick's rounded total across them by largest-remainder apportionment, in
+   proportion to each contribution's own current share - see `td/effect/CLAUDE.md`.
