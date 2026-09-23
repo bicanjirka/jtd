@@ -216,18 +216,20 @@ the codebase has deliberately avoided so far (towers query enemies, never the re
   aura-owning tower can be consulted, or add a new aura-query step in the kill path — both are a
   real, new cross-package coupling and should be designed deliberately, not bolted on.
 
-### Upgrade-path numbers are unbalanced placeholders
+### Upgrade-tree node numbers are unbalanced placeholders
 
-The 8 upgrade paths (`SniperTower`/`SplashTower`/`SonarTower`/`PulseTower`, two each) all have real prices and stat
-bonuses,
-but none of them have been played against actual waves — the numbers were chosen to be plausible, not tuned. The
-`ClusterCondition`/`DamageDealtCondition`/`KillCountCondition` thresholds are similarly unverified guesses at what a
-reasonable mid-level of investment looks like.
+Every tower's `base`/`head`/`special` `UpgradeNode`s (see `docs/features/FEATURE-tower-specialization-abilities.md`
+and `docs/features/FEATURE-tower-upgrade-trees.md`) carry real prices and stat bonuses, but none of them have been
+played against actual waves — the numbers follow a mechanical placeholder rule (Base Range ≈ +15% range at ~0.6×
+tower price; Awaken ≈ 1× tower price; a `head` chain's level 1 ≈ its superseded v1 path's own price, level 2 ≈ 1.5×,
+level 3 ≈ 2×; a `special` root ≈ 2× tower price; an unquantified "+X" in the source doc became +25%, an unquantified
+crit bonus +10%) rather than a tuned one. The `ClusterCondition`/`DamageDealtCondition`/`KillCountCondition`
+thresholds are similarly unverified guesses at what a reasonable mid-level of investment looks like.
 
-- **Where:** the `private static final UpgradePath` constants in `SniperTower`, `SplashTower`, `SonarTower`,
-  `PulseTower`.
-- **Approach:** play each of the built-in levels with every path chosen at least once, and adjust price/stat-bonus/
-  condition-threshold values until each path feels like a meaningful, roughly-comparable-in-power choice rather than
+- **Where:** the `private static final UpgradeNode` constants in every leaf under `td.tower`
+  (`SniperTower`/`SplashTower`/`SonarTower`/`PulseTower`/`MortarTower`/`SeekerTower`/`CinderTower`/`AuraTower`).
+- **Approach:** play each of the built-in levels with every node bought at least once, and adjust price/stat-bonus/
+  condition-threshold values until each node feels like a meaningful, roughly-comparable-in-power choice rather than
   a strictly-better-or-worse one. No code or architecture change needed — every number here is already a named
   constant, not embedded in logic. `td.BalanceHarness` and the `n`/`x`/`c` debug keybindings (see the root
   `CLAUDE.md`'s "Playtesting and balance tooling") now make this cheap to actually do.
@@ -235,18 +237,17 @@ reasonable mid-level of investment looks like.
 ### New tower numbers are unbalanced placeholders
 
 `MortarTower`, `SeekerTower` and `CinderTower`'s price, damage, range, cooldown, splash radius, and slow/freeze/burn
-magnitudes and durations were chosen to be plausible, not tuned - the same situation the upgrade-path numbers above
-were in before their own balance pass. The same is true of their own 6 upgrade paths (2 each): prices, stat bonuses
-and condition thresholds are equally unverified guesses. `CinderTower.COOLDOWN_MAX` and
-`CinderTower.WAVE_TRAVEL_TICKS` (added with the cooldown-gated travelling-wave firing model) join this same bucket.
+magnitudes and durations were chosen to be plausible, not tuned - the same situation the upgrade-tree node numbers
+above were in before their own balance pass. `CinderTower.COOLDOWN_MAX` and `CinderTower.WAVE_TRAVEL_TICKS` (added
+with the cooldown-gated travelling-wave firing model) join this same bucket.
 
 - **Where:** the `public static final` constants and effect-duration fields in `MortarTower`, `SeekerTower`,
-  `CinderTower`, and the `private static final UpgradePath` constants in each.
-- **Approach:** play each of the built-in levels with all three new towers (and each of their upgrade paths chosen at
-  least once), and adjust values until each feels like a meaningful, roughly-comparable-in-power choice next to the
-  existing four attack towers and their own paths. No code or architecture change needed - every number here is
-  already a named constant, not embedded in logic. `td.BalanceHarness` and the `n`/`x`/`c` debug keybindings (see
-  the root `CLAUDE.md`'s "Playtesting and balance tooling") now make this cheap to actually do.
+  `CinderTower`.
+- **Approach:** play each of the built-in levels with all three new towers, and adjust values until each feels like
+  a meaningful, roughly-comparable-in-power choice next to the existing four attack towers. No code or architecture
+  change needed - every number here is already a named constant, not embedded in logic. `td.BalanceHarness` and the
+  `n`/`x`/`c` debug keybindings (see the root `CLAUDE.md`'s "Playtesting and balance tooling") now make this cheap
+  to actually do.
 - **Evidence gathered, not yet acted on:** a one-tower-vs-one-captive-target comparison (all 7 attack towers, same
   position/level/2000-tick budget, single very-tanky enemy so none of them run out of target) found raw damage-per-
   credit-spent of `first` 16000, `second` 6827, `third` 4000, `cinder` 4270, `fourth` 3520, `mortar` 2393, `seeker`
@@ -300,23 +301,144 @@ and condition thresholds are equally unverified guesses. `CinderTower.COOLDOWN_M
   finished off - only a targeting-behavior change (out of scope here; the ask was numbers only) would fix that, so
   a future pass could reconsider it if `seeker` still feels weak after this buff lands in real play.
 
-### Tower upgrades are a flat, mutually-exclusive pair today, not a tree
+### The upgrade-tree sidebar panel and per-slot render marks are still the old two-path UI
 
-`docs/features/FEATURE-tower-upgrade-trees.md` proposes the branching redesign: three
-independent per-slot progression graphs (`base`/`head`/`special`), same-instance mutation
-(no tower is ever spawned anew), node prerequisites and AND/OR conditions, and a dedicated
-upgrade-tree panel that replaces `PanelWaveInfo` when a tower is selected. It also folds in
-the coupled UX asks - number-key shortcuts, a per-slot "ready to upgrade" indicator, and
-moving upgrade descriptions off the build button onto per-slot hover text - and scopes
-`AuraTower`'s own (currently nonexistent) upgrade paths as a future consumer of the new
-model rather than the old two-path one.
+`docs/features/FEATURE-tower-upgrade-trees.md`'s data model is built: `td.tower.upgrade`'s
+`UpgradeSlot`/`UpgradeNode`/`UpgradeState`/`UpgradeTree`, `AbstractTower.buyUpgrade`, and every
+tower's full `base`/`head`/`special` catalogue from `FEATURE-tower-specialization-abilities.md`.
+What's not yet built is the UI: `PanelTowerInfo` still shows the first two `offeredUpgrades()`
+through two plain buttons (a stand-in from before the catalogue existed), there is no dedicated
+upgrade-tree panel replacing `PanelWaveInfo`, no number-key shortcut, and
+`TowerSpriteFrameBuilder.accentPaletteFor`/`Java2DFrameRenderer.paintUpgradeAccent` still draw
+the old two-role ring keyed off the `HEAD` slot's tip index rather than per-slot pips/chevrons/a
+special-slot halo.
 
-- **Where:** `td.tower.AbstractTower.chosenPath`/`availablePaths()`, `td.tower.upgrade.*`,
-  `td.ui.PanelTowerInfo`/`PanelWaveInfo`/`PanelGameConsole`, `TowerSpriteFrameBuilder`'s
-  two-role accent ring.
+- **Where:** `td.ui.PanelTowerInfo`/`PanelGameConsole`/`PanelWaveInfo`, a new `PanelUpgradeTree`,
+  `TowerSpriteFrameBuilder`/`Java2DFrameRenderer`'s accent ring, `TowerDefense.keyTyped`.
 - **Approach:** see the feature doc's "Constraints and open risks" section - the sidebar's
-  fixed 200px width and the render layer's two-role (not three-role) accent-ring model are
-  the two open engineering questions flagged there, not yet resolved.
+  fixed 200px width is the one open engineering question flagged there, not yet resolved.
+
+## Tower specialization primitives
+
+`docs/features/FEATURE-tower-specialization-abilities.md` tags eleven consumers across the tower
+catalogue **[S]** - the node itself is real (id, price, gate, description, selectable in the UI)
+but its behavioral hook is a documented no-op until the primitive below lands, per that document's
+own two-document build order. Each entry closes once its primitive is implemented and every node
+listed is wired to real behavior in the same commit.
+
+### `EffectKind.VULNERABLE` doesn't exist
+
+The largest of the eleven: a stacking (cap 3) damage-amplifying status effect. Six nodes wait on
+it: Marked Round (`SniperTower`), Warding Field (`PulseTower`), Cursed Shrapnel (`MortarTower`),
+Homing Curse (`SeekerTower`), Hexflame (`CinderTower`), Withering Field (`AuraTower`).
+
+- **Where:** `td.effect` (`EffectKind`, `Effect`'s static factories, `ActiveEffects.magnitude`),
+  per `td/effect/CLAUDE.md`'s "Adding a new effect kind" checklist.
+- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #1 and its own
+  open questions (stack shape, per-stack magnitude, composition order with `SHIELD`/`Trait`
+  resistance) - none of those are resolved yet.
+
+### Partial or full armor/shield bypass on a hit doesn't exist
+
+`AbstractEnemyMob.doDamage`'s `absorb`/`applyShield` steps are always fully applied or not applied
+at all; nothing can skip part of either. Two nodes wait on it: Sniper's Marksman's Eye II (50%
+ignore) and Momentum (100% ignore, "Fifth Shot"'s sibling special).
+
+- **Where:** `td.enemy.AbstractEnemyMob.doDamage`.
+- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #2.
+
+### A guaranteed-crit trigger with a per-node crit multiplier doesn't exist
+
+`Damage.asCritical()` applies one fixed, project-wide multiplier; nothing can force a crit outside
+the normal roll or override that multiplier per node. Three nodes wait on it: Sniper's Fifth Shot
+(every 5th shot, 250%) and Momentum (crit-then-boosted-next-shot, 500%), and Sonar's Mark on Sweep
+(mark-then-guaranteed-crit).
+
+- **Where:** `td.tower.AbstractTower.rollCritical`, `td.damage.Damage.asCritical`.
+- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #3 and open
+  question #7 (revise the fixed multiplier into a per-node override, or treat these nodes' own
+  percentages as flavor text for the existing fixed one - not resolved).
+
+### A timed, non-stacking self-buff pulse triggered by a kill doesn't exist
+
+Momentum's "+100% fire rate for 5s, does not stack" - every upgrade-node buff today is permanent
+from the moment it's bought, not one with its own expiry layered on top.
+
+- **Where:** `td.tower.AbstractTower` (or a new small per-tower timed-buff holder).
+- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #4.
+
+### An on-kill secondary trigger, aware of the kill's own status effects, doesn't exist
+
+Two nodes wait on it: Seeker's Deep Freeze II (shatter-on-kill splash, only if the kill was
+frozen) and Splash's Concussive Blast (a killed enemy explodes).
+
+- **Where:** `td.tower.AbstractTower.dealDamage` or `td.enemy.AbstractEnemyMob`'s kill path.
+- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #5.
+
+### "Reveal an invisible enemy to every tower" doesn't exist
+
+Distinct from Pulse's existing "already hit because something else triggered it" behavior - this
+is an active reveal other towers can then target off of. Two nodes wait on it: Pulse's Resonant
+Field II and Sonar's Wide Band.
+
+- **Where:** `td.enemy.EnemyMob`/`ActiveEffects` (a reveal needs to be visible to every tower's
+  own targeting query, not just this one's).
+- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #6.
+
+### Crit-triggered behavior override, beyond bonus damage, doesn't exist
+
+Two nodes wait on it: Splash's Overpressure (a crit fires at every enemy in range instead of the
+one target) and Rapid Battery III (a crit's splash is 50% bigger).
+
+- **Where:** `td.tower.SplashTower`, once `AbstractTower.rollCritical`/`dealDamage` can report a
+  hit's crit outcome back to the caller before the caller's own splash loop finishes (it already
+  can via `dealDamage`'s boolean return - what's missing is a place to act on it mid-loop).
+- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #7.
+
+### Distance-scaling damage doesn't exist
+
+Sonar's Long Reach II: damage scales up to +100% at max range. `TowerBuff` has no axis for
+"strength depends on this shot's own distance from the tower."
+
+- **Where:** `td.tower.SonarTower.doTick`.
+- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #8.
+
+### A second, independently-aimed turret head doesn't exist
+
+Sonar's Twin Array III - primarily a render/aim concern (a second `TurretAim` instance, a second
+`TurretHeadDraw`), not damage math.
+
+- **Where:** `td.tower.SonarTower`, `td.ui.TowerSpriteFrameBuilder.visitSonarTower`.
+- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #9.
+
+### A toxic-DoT `EffectKind`, distinct from burn, doesn't exist
+
+Splash's Toxic Bloom - its own decay curve, separate from `BURN`'s fuel-pool model.
+
+- **Where:** `td.effect`, per `td/effect/CLAUDE.md`'s "Adding a new effect kind" checklist.
+- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #10.
+
+### Resistance-aware damage scaling doesn't exist
+
+Sonar's Piercing Tone: bonus magic damage against physically armored/shielded enemies, scaling
+with how much resistance they carry, up to a cap.
+
+- **Where:** `td.tower.SonarTower.doTick`, reading the target's own `Trait`/`SHIELD` state.
+- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #11.
+
+### A shrapnel damage ring past the main splash doesn't exist
+
+Not one of `FEATURE-tower-specialization-abilities.md`'s own eleven primitives - a gap this
+feature's own implementation pass found in Mortar's `head` chain. Fragmentation Rounds (25% weapon
+damage in a wider ring past the main splash) and Fragmentation Rounds II (the same shrapnel also
+applies this tower's slow, at half duration) both wait on it; the second literally cannot exist
+without the first.
+
+- **Where:** `td.tower.MortarTower.onImpact`.
+- **Approach:** add a second, wider `InRangeTargetQuery` ring past the existing splash radius,
+  dealing 25% of `damageCurrent()` with no falloff, gated on Fragmentation Rounds being owned;
+  Fragmentation Rounds II then applies `Effect.slow` (the same call `onImpact` already makes for
+  the main splash) at half `slowDurationTicks` to whatever the ring catches.
 
 ## Damage types
 

@@ -1,7 +1,11 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
+import td.effect.EffectKind;
+import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
@@ -93,32 +97,70 @@ class SplashTowerTest {
     }
 
     @Test
-    void siegeBumpsTheSpreadRadiusBeyondTheBase() {
+    void blastEngineeringBumpsTheSpreadRadiusBeyondTheBase() {
         SplashTower tower = towerNear(3, 3);
-        UpgradeNode siege = UpgradePaths.named(tower, "Siege");
+        UpgradeNode blastEngineering = UpgradePaths.named(tower, "Blast Engineering");
         float radiusBeforeChoosing = tower.getSpreadRadius();
 
-        // onUpgradeBought is exercised directly - Siege's own gate (a damage-dealt
+        // onUpgradeBought is exercised directly - Blast Engineering's own gate (a damage-dealt
         // threshold) is covered generically by DamageDealtConditionTest and by
         // AbstractTowerTest's condition-gating test; this proves the stat bump itself.
-        tower.onUpgradeBought(siege);
+        tower.onUpgradeBought(blastEngineering);
 
         assertThat(tower.getSpreadRadius()).isGreaterThan(radiusBeforeChoosing);
     }
 
     @Test
-    void clusterChargeIsChoosableOnceTwoNeighboursExistAndAppliesItsDamageAndRangeBonus() {
+    void blastEngineeringIiFlattensTheFalloffCurve() {
+        SplashTower before = towerNear(3, 3);
+        RecordingEnemyMob edgeBefore = RecordingEnemyMob.ghostAt(100, 100 + SPREAD_RADIUS - 1);
+        this.context.enemies().setEnemies(new EnemyMob[]{RecordingEnemyMob.normalAt(100, 100), edgeBefore});
+        before.doTick(0);
+
+        SplashTower after = towerNear(3, 3);
+        after.onUpgradeBought(UpgradePaths.named(after, "Blast Engineering II"));
+        RecordingEnemyMob edgeAfter = RecordingEnemyMob.ghostAt(100, 100 + SPREAD_RADIUS - 1);
+        this.context.enemies().setEnemies(new EnemyMob[]{RecordingEnemyMob.normalAt(100, 100), edgeAfter});
+        after.doTick(0);
+
+        assertThat(edgeAfter.onlyHitAmount()).isGreaterThan(edgeBefore.onlyHitAmount());
+    }
+
+    @Test
+    void rapidBatteryIsChoosableAfterEightKillsAndAppliesItsFireRateBonus() {
         this.context.economy().startEconomy(1000, 5);
         SplashTower tower = towerNear(3, 3);
-        this.context.towers().add(tower);
-        this.context.towers().add(new SniperTower(this.context, 2, 2));
-        this.context.towers().add(new SniperTower(this.context, 4, 4));
-        UpgradeNode clusterCharge = UpgradePaths.named(tower, "Cluster Charge");
+        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
+        for (int i = 0; i < 8; i++) {
+            tower.dealDamage(fodder, Damage.physical(1_000_000));
+            fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
+        }
+        UpgradeNode rapidBattery = UpgradePaths.named(tower, "Rapid Battery");
 
-        boolean chosen = tower.buyUpgrade(clusterCharge);
+        boolean chosen = tower.buyUpgrade(rapidBattery);
 
         assertThat(chosen).isTrue();
-        assertThat(tower.damageCurrent()).isGreaterThan(tower.damageBase);
-        assertThat(tower.getRangeReal()).isGreaterThan(SplashTower.RANGE * BoardFixtures.SCALE);
+        assertThat(tower.coolDownCurrent()).isLessThan(tower.coolDownMax);
+    }
+
+    @Test
+    void concussiveBlastAppliesSlowToEverySplashTarget() {
+        this.context.economy().startEconomy(1000, 5);
+        SplashTower tower = towerNear(3, 3);
+        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
+        for (int i = 0; i < 15; i++) {
+            tower.dealDamage(fodder, Damage.physical(1_000_000));
+            fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
+        }
+        tower.buyUpgrade(UpgradePaths.named(tower, "Concussive Blast"));
+        RecordingEnemyMob blastCentre = RecordingEnemyMob.normalAt(100, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{blastCentre});
+
+        tower.doTick(0);
+
+        assertThat(blastCentre.appliedEffects()).hasSize(1);
+        assertThat(blastCentre.appliedEffects().getFirst().kind()).isEqualTo(EffectKind.SLOW);
     }
 }

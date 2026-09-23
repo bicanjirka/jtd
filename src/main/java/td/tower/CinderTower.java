@@ -8,6 +8,8 @@ import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.InWedgeTargetQuery;
 import td.tower.targeting.NearestSelector;
 import td.tower.upgrade.DamageDealtCondition;
+import td.tower.upgrade.KillCountCondition;
+import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -40,7 +42,7 @@ import java.util.Set;
  * once the burn ticks (see {@code Effect}'s sink), so its damage/kill accounting stays accurate
  * without a second, parallel damage path.
  */
-@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // cooldown, advanced by doTick
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // cooldown and every upgrade-bumped field, advanced by doTick/onUpgradeBought
 public final class CinderTower extends AbstractTower {
 
     public static final int PRICE = 28;
@@ -60,29 +62,68 @@ public final class CinderTower extends AbstractTower {
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.15;
     private static final double HALF_WIDTH_RADIANS_BASE = 0.35;
-    private static final int BURN_DURATION_TICKS = 60;
-    private static final double WIDE_NOZZLE_HALF_WIDTH_MULTIPLIER = 1.4;
+    private static final int BURN_DURATION_TICKS_BASE = 60;
+    private static final float WHITE_FLAME_BURN_DURATION_MULTIPLIER = 1.5f;
+    private static final double WIDE_NOZZLE_HALF_WIDTH_MULTIPLIER_1 = 1.3;
+    private static final double WIDE_NOZZLE_HALF_WIDTH_MULTIPLIER_2 = 1.2;
+
+    private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(17);
+    private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(28);
 
     /**
-     * More damage (and so more burn per tick, since burn's magnitude is this tower's own damageCurrent) - earned by proven output.
+     * More damage (and so more burn per tick, since burn's magnitude is this tower's own
+     * damageCurrent) - earned by proven output.
      */
-    private static final UpgradeNode WHITE_FLAME = UpgradeNode.of("cinder.head.white_flame", UpgradeSlot.HEAD,
+    private static final UpgradeNode WHITE_FLAME_1 = UpgradeNode.of("cinder.head.white_flame.1", UpgradeSlot.HEAD,
             "White Flame", 30)
-            .withBuff(TowerBuff.damage(0.4f))
-            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
+            .withBuff(TowerBuff.damage(0.3f))
+            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new DamageDealtCondition(15000));
     /**
-     * A wider cone and more range - a straightforward money-gated specialization needing no track record.
+     * More damage still, and a longer burn.
      */
-    private static final UpgradeNode WIDE_NOZZLE = UpgradeNode.of("cinder.head.wide_nozzle", UpgradeSlot.HEAD,
+    private static final UpgradeNode WHITE_FLAME_2 = UpgradeNode.of("cinder.head.white_flame.2", UpgradeSlot.HEAD,
+            "White Flame II", 45)
+            .withBuff(TowerBuff.damage(0.25f))
+            .withRequires(UpgradeCondition.owns(WHITE_FLAME_1.id()))
+            .withGate(new DamageDealtCondition(30000))
+            .withExtraEffect("+50% burn duration");
+    /**
+     * More range and a wider cone.
+     */
+    private static final UpgradeNode WIDE_NOZZLE_1 = UpgradeNode.of("cinder.head.wide_nozzle.1", UpgradeSlot.HEAD,
             "Wide Nozzle", 25)
-            .withBuff(TowerBuff.range(0.3f))
-            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
-            .withExtraEffect("+40% cone width");
-    private static final UpgradeTree TREE = UpgradeTree.of(WHITE_FLAME, WIDE_NOZZLE);
+            .withBuff(TowerBuff.range(0.25f))
+            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
+            .withGate(new KillCountCondition(10))
+            .withExtraEffect("+30% cone width");
+    /**
+     * More range and cone width still, plus a shorter cooldown - the cooldown cut is the
+     * existing fire-rate {@link TowerBuff} axis, needing no new hook of its own.
+     */
+    private static final UpgradeNode WIDE_NOZZLE_2 = UpgradeNode.of("cinder.head.wide_nozzle.2", UpgradeSlot.HEAD,
+            "Wide Nozzle II", 38)
+            .withBuff(TowerBuff.range(0.2f).withFireRate(0.2f))
+            .withRequires(UpgradeCondition.owns(WIDE_NOZZLE_1.id()))
+            .withGate(new DamageDealtCondition(25000))
+            .withExtraEffect("+20% cone width, -20% cooldown");
+    /**
+     * Each wave that newly ignites an enemy also grants a Vulnerable stack, once that primitive
+     * exists - see TODO.md.
+     */
+    private static final UpgradeNode HEXFLAME = UpgradeNode.of("cinder.special.hexflame", UpgradeSlot.SPECIAL,
+            "Hexflame", 56)
+            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+            .withGate(new KillCountCondition(20))
+            .withExtraEffect("each wave that newly ignites an enemy also grants 1 Vulnerable stack (cap 3)");
+
+    private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, WHITE_FLAME_1, WHITE_FLAME_2,
+            WIDE_NOZZLE_1, WIDE_NOZZLE_2, HEXFLAME);
+
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final List<FlameWave> inFlightWaves = new ArrayList<>();
     private volatile double halfWidthRadians = HALF_WIDTH_RADIANS_BASE;
+    private volatile int burnDurationTicks = BURN_DURATION_TICKS_BASE;
     private int coolDown = 0;
 
     public CinderTower(GameWorld context, int x, int y) {
@@ -95,12 +136,16 @@ public final class CinderTower extends AbstractTower {
     }
 
     /**
-     * Wide Nozzle's wider cone isn't a {@link TowerBuff} axis, so it's applied here instead.
+     * Bonuses that aren't a {@link TowerBuff} axis are applied here instead.
      */
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
-        if (node.equals(WIDE_NOZZLE)) {
-            this.halfWidthRadians *= WIDE_NOZZLE_HALF_WIDTH_MULTIPLIER;
+        if (node.equals(WHITE_FLAME_2)) {
+            this.burnDurationTicks = Math.round(this.burnDurationTicks * WHITE_FLAME_BURN_DURATION_MULTIPLIER);
+        } else if (node.equals(WIDE_NOZZLE_1)) {
+            this.halfWidthRadians *= WIDE_NOZZLE_HALF_WIDTH_MULTIPLIER_1;
+        } else if (node.equals(WIDE_NOZZLE_2)) {
+            this.halfWidthRadians *= WIDE_NOZZLE_HALF_WIDTH_MULTIPLIER_2;
         }
     }
 
@@ -139,7 +184,7 @@ public final class CinderTower extends AbstractTower {
                     .matching(this.context.enemies());
             for (EnemyMob enemy : caught) {
                 if (wave.alreadyHit.add(enemy)) {
-                    enemy.applyEffect(Effect.burn(Damage.magic(this.damageCurrent()), BURN_DURATION_TICKS, d -> this.dealDamage(enemy, d)));
+                    enemy.applyEffect(Effect.burn(Damage.magic(this.damageCurrent()), this.burnDurationTicks, d -> this.dealDamage(enemy, d)));
                 }
             }
             if (travelled >= 1f) {

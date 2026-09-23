@@ -9,6 +9,8 @@ import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.ClusterCondition;
 import td.tower.upgrade.DamageDealtCondition;
+import td.tower.upgrade.KillCountCondition;
+import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -39,39 +41,70 @@ public final class MortarTower extends AbstractTower {
     private static final float SLOW_MULTIPLIER_BASE = 0.5f;
     private static final int SLOW_DURATION_TICKS_BASE = 40;
     /**
-     * How much bigger a splash "Heavy Shell" gives this tower's blast radius - same shape as {@code SplashTower}'s Siege.
+     * How much bigger a splash "Siege Rounds II" gives this tower's blast radius - same shape
+     * as {@code SplashTower}'s Blast Engineering.
      */
-    private static final float HEAVY_SHELL_SPLASH_MULTIPLIER = 1.3f;
-    private static final float CONCUSSIVE_CHARGE_SLOW_DURATION_MULTIPLIER = 1.5f;
+    private static final float SIEGE_ROUNDS_SPLASH_MULTIPLIER = 1.4f;
+
+    private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(18);
+    private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(30);
 
     /**
-     * Bigger blast radius, earned by this tower having proven itself already.
+     * More damage, earned by this tower having proven itself already.
      */
-    private static final UpgradeNode HEAVY_SHELL = UpgradeNode.of("mortar.head.heavy_shell", UpgradeSlot.HEAD,
-            "Heavy Shell", 35)
-            .withBuff(TowerBuff.damage(0.4f))
-            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
-            .withGate(new DamageDealtCondition(20000))
-            .withExtraEffect("+30% splash radius");
+    private static final UpgradeNode SIEGE_ROUNDS_1 = UpgradeNode.of("mortar.head.siege_rounds.1", UpgradeSlot.HEAD,
+            "Siege Rounds", 35)
+            .withBuff(TowerBuff.damage(0.3f))
+            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
+            .withGate(new DamageDealtCondition(15000));
     /**
-     * A longer-lasting slow, plus more range - rewards a deliberately grouped placement rather than a solo one.
+     * More damage still, plus a bigger blast radius.
      */
-    private static final UpgradeNode CONCUSSIVE_CHARGE = UpgradeNode.of("mortar.head.concussive_charge",
-            UpgradeSlot.HEAD, "Concussive Charge", 30)
-            .withBuff(TowerBuff.range(0.25f))
-            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
+    private static final UpgradeNode SIEGE_ROUNDS_2 = UpgradeNode.of("mortar.head.siege_rounds.2", UpgradeSlot.HEAD,
+            "Siege Rounds II", 53)
+            .withBuff(TowerBuff.damage(0.25f))
+            .withRequires(UpgradeCondition.owns(SIEGE_ROUNDS_1.id()))
+            .withGate(new DamageDealtCondition(30000))
+            .withExtraEffect("+40% splash radius");
+    /**
+     * Shrapnel deals bonus damage in a wider ring past the main splash, once the shrapnel-ring
+     * primitive exists - see TODO.md.
+     */
+    private static final UpgradeNode FRAGMENTATION_ROUNDS_1 = UpgradeNode.of("mortar.head.fragmentation_rounds.1",
+            UpgradeSlot.HEAD, "Fragmentation Rounds", 30)
+            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
+            .withGate(new KillCountCondition(12))
+            .withExtraEffect("shrapnel deals 25% weapon damage in a wider ring past the main splash");
+    /**
+     * Shrapnel also applies this tower's slow, at half duration - depends on Fragmentation
+     * Rounds' own not-yet-existing shrapnel primitive - see TODO.md.
+     */
+    private static final UpgradeNode FRAGMENTATION_ROUNDS_2 = UpgradeNode.of("mortar.head.fragmentation_rounds.2",
+            UpgradeSlot.HEAD, "Fragmentation Rounds II", 45)
+            .withRequires(UpgradeCondition.owns(FRAGMENTATION_ROUNDS_1.id()))
             .withGate(new ClusterCondition(2))
-            .withExtraEffect("+50% slow duration");
-    private static final UpgradeTree TREE = UpgradeTree.of(HEAVY_SHELL, CONCUSSIVE_CHARGE);
+            .withExtraEffect("shrapnel also applies this tower's slow, at half duration");
+    /**
+     * Every enemy caught in the blast gets a guaranteed Vulnerable stack, once that primitive
+     * exists - see TODO.md.
+     */
+    private static final UpgradeNode CURSED_SHRAPNEL = UpgradeNode.of("mortar.special.cursed_shrapnel",
+            UpgradeSlot.SPECIAL, "Cursed Shrapnel", 60)
+            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+            .withGate(new KillCountCondition(20))
+            .withExtraEffect("every enemy caught in the blast gets a guaranteed Vulnerable stack (cap 3), refreshed on every hit");
+
+    private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, SIEGE_ROUNDS_1, SIEGE_ROUNDS_2,
+            FRAGMENTATION_ROUNDS_1, FRAGMENTATION_ROUNDS_2, CURSED_SHRAPNEL);
 
     /**
      * Ticks between shots before any fire-rate buff.
      */
     private static final int COOLDOWN_MAX = 50;
     private final float slowMultiplier = SLOW_MULTIPLIER_BASE;
+    private final int slowDurationTicks = SLOW_DURATION_TICKS_BASE;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private volatile float splashRadius;
-    private volatile int slowDurationTicks = SLOW_DURATION_TICKS_BASE;
     private int coolDown = 0;
     private EnemyMob currentTarget;
 
@@ -86,14 +119,12 @@ public final class MortarTower extends AbstractTower {
     }
 
     /**
-     * Neither bonus is a {@link TowerBuff} axis, so each is applied here instead - same shape as {@code SplashTower}'s Siege.
+     * Siege Rounds II's blast-radius bump isn't a {@link TowerBuff} axis, so it's applied here instead.
      */
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
-        if (node.equals(HEAVY_SHELL)) {
-            this.splashRadius *= HEAVY_SHELL_SPLASH_MULTIPLIER;
-        } else if (node.equals(CONCUSSIVE_CHARGE)) {
-            this.slowDurationTicks = Math.round(this.slowDurationTicks * CONCUSSIVE_CHARGE_SLOW_DURATION_MULTIPLIER);
+        if (node.equals(SIEGE_ROUNDS_2)) {
+            this.splashRadius *= SIEGE_ROUNDS_SPLASH_MULTIPLIER;
         }
     }
 

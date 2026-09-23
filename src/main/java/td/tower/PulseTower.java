@@ -7,6 +7,8 @@ import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.OfTypeTargetQuery;
 import td.tower.targeting.TargetQuery;
 import td.tower.upgrade.DamageDealtCondition;
+import td.tower.upgrade.KillCountCondition;
+import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -20,32 +22,69 @@ import java.util.List;
  * "Pulse tower" - short range, no cooldown, damages everything in range every tick,
  * ghosts included. It only fires when at least one non-ghost is in range, so its visible
  * pulse never gives away a ghost that is alone in range - but once something else triggers
- * it, that ghost takes the damage too.
+ * it, that ghost takes the damage too. Buying "Resonant Field" deliberately trades that
+ * protection away, so the tower always fires once anything is in range (see {@link #doTick}).
  */
-@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // the fire flag, set and read within a tick
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // the fire flag and resonantField, set within a tick/onUpgradeBought
 public final class PulseTower extends AbstractTower {
 
     public static final int PRICE = 25;
     public static final int DAMAGE = 200;
     public static final float RANGE = 1.5f;
 
+    private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(15);
+    private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(25);
+
     /**
      * More damage - earned by this tower having already proven itself against real targets.
      */
-    private static final UpgradeNode OVERLOAD_CORE = UpgradeNode.of("pulse.head.overload_core", UpgradeSlot.HEAD,
-            "Overload Core", 30)
-            .withBuff(TowerBuff.damage(0.5f))
-            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
-            .withGate(new DamageDealtCondition(15000));
+    private static final UpgradeNode OVERCHARGED_COILS_1 = UpgradeNode.of("pulse.head.overcharged_coils.1",
+            UpgradeSlot.HEAD, "Overcharged Coils", 30)
+            .withBuff(TowerBuff.damage(0.3f))
+            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
+            .withGate(new DamageDealtCondition(10000));
     /**
-     * More range - a straightforward money-gated specialization needing no track record.
+     * More damage still, plus a flat crit chance.
      */
-    private static final UpgradeNode EXPANDED_FIELD = UpgradeNode.of("pulse.head.expanded_field", UpgradeSlot.HEAD,
-            "Expanded Field", 25)
-            .withBuff(TowerBuff.range(0.3f))
-            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD));
-    private static final UpgradeTree TREE = UpgradeTree.of(OVERLOAD_CORE, EXPANDED_FIELD);
+    private static final UpgradeNode OVERCHARGED_COILS_2 = UpgradeNode.of("pulse.head.overcharged_coils.2",
+            UpgradeSlot.HEAD, "Overcharged Coils II", 45)
+            .withBuff(TowerBuff.damage(0.25f).withCritChance(0.1f))
+            .withRequires(UpgradeCondition.owns(OVERCHARGED_COILS_1.id()))
+            .withGate(new KillCountCondition(20));
+    /**
+     * More range, and the tower now fires every tick anything is in range - no longer holding
+     * back to avoid revealing a ghost alone in range (see {@link #doTick}).
+     */
+    private static final UpgradeNode RESONANT_FIELD_1 = UpgradeNode.of("pulse.head.resonant_field.1",
+            UpgradeSlot.HEAD, "Resonant Field", 25)
+            .withBuff(TowerBuff.range(0.2f))
+            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
+            .withGate(new KillCountCondition(10))
+            .withExtraEffect("damages invisible enemies every tick, cover no longer required");
+    /**
+     * More range still; any invisible enemy hit is revealed to every tower for 2s, once the
+     * reveal-to-every-tower primitive exists - see TODO.md.
+     */
+    private static final UpgradeNode RESONANT_FIELD_2 = UpgradeNode.of("pulse.head.resonant_field.2",
+            UpgradeSlot.HEAD, "Resonant Field II", 38)
+            .withBuff(TowerBuff.range(0.15f))
+            .withRequires(UpgradeCondition.owns(RESONANT_FIELD_1.id()))
+            .withGate(new DamageDealtCondition(20000))
+            .withExtraEffect("any invisible enemy it hits is revealed to every tower for 2s");
+    /**
+     * Each tick, everything currently being hit has a chance to gain a Vulnerable stack, once
+     * that primitive exists - see TODO.md.
+     */
+    private static final UpgradeNode WARDING_FIELD = UpgradeNode.of("pulse.special.warding_field", UpgradeSlot.SPECIAL,
+            "Warding Field", 50)
+            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+            .withGate(new KillCountCondition(20))
+            .withExtraEffect("each tick, everything hit has a 10% chance to gain 1 Vulnerable stack (cap 3)");
 
+    private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, OVERCHARGED_COILS_1,
+            OVERCHARGED_COILS_2, RESONANT_FIELD_1, RESONANT_FIELD_2, WARDING_FIELD);
+
+    private volatile boolean resonantField = false;
     private boolean fire = false;
 
     public PulseTower(GameWorld context, int x, int y) {
@@ -57,12 +96,20 @@ public final class PulseTower extends AbstractTower {
         return TREE;
     }
 
+    @Override
+    protected void onUpgradeBought(UpgradeNode node) {
+        if (node.equals(RESONANT_FIELD_1)) {
+            this.resonantField = true;
+        }
+    }
+
     public void doTick(int gameTime) {
         TargetQuery inRange = InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal());
         List<EnemyMob> enemies = inRange.matching(this.context.enemies());
         List<EnemyMob> ghosts = inRange.and(OfTypeTargetQuery.of(EnemyMob.Type.INVISIBLE)).matching(this.context.enemies());
 
-        if (enemies.size() > ghosts.size()) {
+        boolean shouldFire = this.resonantField ? !enemies.isEmpty() : enemies.size() > ghosts.size();
+        if (shouldFire) {
             this.fire = true;
             for (EnemyMob enemy : enemies) {
                 this.dealDamage(enemy, Damage.physical(this.damageCurrent()));

@@ -1,9 +1,12 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.EffectKind;
+import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.TowerFixtures;
 import td.fixtures.WorldFixtures;
@@ -73,10 +76,16 @@ class SeekerTowerTest {
     }
 
     @Test
-    void twinWarheadIsChoosableWithMoneyAloneAndAppliesItsFireRateBonus() {
+    void twinWarheadIsChoosableOnceAwakenIsBoughtAndAppliesItsFireRateBonus() {
         this.context.economy().startEconomy(1000, 5);
         SeekerTower tower = towerAt(3, 3);
+        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
         UpgradeNode twinWarhead = UpgradePaths.named(tower, "Twin Warhead");
+        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
+        for (int i = 0; i < 10; i++) {
+            tower.dealDamage(fodder, Damage.physical(1_000_000));
+            fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
+        }
 
         boolean chosen = tower.buyUpgrade(twinWarhead);
 
@@ -85,7 +94,7 @@ class SeekerTowerTest {
     }
 
     @Test
-    void deepFreezeIsNotYetChoosableBeforeTenKills() {
+    void deepFreezeIsNotYetChoosableBeforeAwakenIsBought() {
         this.context.economy().startEconomy(1000, 5);
         SeekerTower tower = towerAt(3, 3);
         UpgradeNode deepFreeze = UpgradePaths.named(tower, "Deep Freeze");
@@ -97,15 +106,27 @@ class SeekerTowerTest {
     }
 
     @Test
-    void deepFreezeBumpsTheFreezeDurationBeyondTheBase() {
+    void deepFreezeIiBumpsTheFreezeDurationBeyondTheBase() {
         SeekerTower tower = towerAt(3, 3);
-        UpgradeNode deepFreeze = UpgradePaths.named(tower, "Deep Freeze");
+        UpgradeNode deepFreezeTwo = UpgradePaths.named(tower, "Deep Freeze II");
         int durationBeforeChoosing = tower.getFreezeDurationTicks();
 
-        // onUpgradeBought is exercised directly - Deep Freeze's own gate (a kill-count
+        // onUpgradeBought is exercised directly - Deep Freeze II's own gate (a kill-count
         // threshold) is covered generically by KillCountConditionTest; this proves the bump itself.
-        tower.onUpgradeBought(deepFreeze);
+        tower.onUpgradeBought(deepFreezeTwo);
 
         assertThat(tower.getFreezeDurationTicks()).isGreaterThan(durationBeforeChoosing);
+    }
+
+    @Test
+    void twinWarheadIiFiresTwoMissilesInsteadOfOne() {
+        SeekerTower tower = towerAt(3, 3);
+        tower.onUpgradeBought(UpgradePaths.named(tower, "Twin Warhead II"));
+        RecordingEnemyMob target = RecordingEnemyMob.normalAt(100, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        tower.doTick(1);
+
+        assertThat(this.context.projectiles().getProjectiles()).hasSize(2);
     }
 }
