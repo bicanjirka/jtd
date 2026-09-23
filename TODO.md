@@ -14,39 +14,36 @@ this file is the single place to look for outstanding design/feature gaps.
 ## Feature request implementation order
 
 A priority pass over every doc in `docs/features/`, ordered by prerequisites and shared-file risk
-rather than by request date. Five requests are not yet built; the rest already shipped (see each
+rather than by request date. Four requests are not yet built; the rest already shipped (see each
 doc's own status line) and are listed at the end only for reference.
 
-1. **`FEATURE-wave-preview-cleanup.md`** — small, `PanelWaveInfo`-only UI polish. Land before
-   `FEATURE-tower-upgrade-trees.md`, which also rewrites `PanelWaveInfo`'s sidebar slot (swapping
-   it for an upgrade-tree panel while a tower is selected) — landing the small cleanup first
-   avoids the big feature rebasing over it later.
-2. **`FEATURE-freeze-visual.md`** — small and additive: one new `EnemyOverlayDraw` case reusing
-   the hierarchy `FEATURE-effect-visuals.md` already built. Explicitly untouched by item 3's
+1. **`FEATURE-freeze-visual.md`** — small and additive: one new `EnemyOverlayDraw` case reusing
+   the hierarchy `FEATURE-effect-visuals.md` already built. Explicitly untouched by item 2's
    changes (Freeze stays a hard on/off effect there), so it has no real ordering dependency on
    it — placed first between the two only for being the smaller change.
-3. **`FEATURE-effect-diminishing-returns.md`** — medium, scoped entirely to `td.effect`
+2. **`FEATURE-effect-diminishing-returns.md`** — medium, scoped entirely to `td.effect`
    (`Effect`/`ActiveEffects`/`EffectTemplate`). No dependency on any other pending item, but its
    own doc flags the superseded-slow-stack proposal as needing explicit design sign-off before
    implementation starts, which is why it isn't first.
-4. **`FEATURE-cinder-cone-wave.md`** — medium-large. Independent of the other four, but its open
+3. **`FEATURE-cinder-cone-wave.md`** — medium-large. Independent of the other three, but its open
    questions (does the travelling-wave bookkeeping live in `td.projectile` or stay
    `CinderTower`-local; do `WHITE_FLAME`/`WIDE_NOZZLE` need to change shape, not just tuning, once
    firing is discrete) settle Cinder's two upgrade paths into their final form. Doing this before
-   item 5 means `FEATURE-tower-upgrade-trees.md` migrates Cinder's paths into the three-slot model
+   item 4 means `FEATURE-tower-upgrade-trees.md` migrates Cinder's paths into the three-slot model
    once, instead of migrating them and reworking them again when this lands afterward.
-5. **`FEATURE-tower-upgrade-trees.md`** — the largest and most architecturally significant of the
-   five: three independent per-slot upgrade graphs, node prerequisites, a new render layer, a
+4. **`FEATURE-tower-upgrade-trees.md`** — the largest and most architecturally significant of the
+   four: three independent per-slot upgrade graphs, node prerequisites, a new render layer, a
    sidebar redesign, and migration of every existing `UpgradePath` (including Cinder's, see item
-   4) into the new model. Sequenced last so it lands on an already-settled `PanelWaveInfo` (item
-   1) and an already-settled Cinder upgrade shape (item 4), rather than migrating content that is
-   about to change again out from under it.
+   3) into the new model. Sequenced last so it lands on an already-settled `PanelWaveInfo` (already
+   cleaned up) and an already-settled Cinder upgrade shape (item 3), rather than migrating content
+   that is about to change again out from under it.
 
 Already implemented, for reference: `FEATURE-enemy-spawn-types.md`,
 `FEATURE-multiple-enemy-paths.md`, `FEATURE-playtesting-and-balance-tooling.md`,
 `FEATURE-enemy-rank-system.md`, `FEATURE-effect-visuals.md`, `FEATURE-tower-upgrades.md`,
 `FEATURE-critical-damage.md`, `FEATURE-damage-types-and-projectiles.md`,
-`FEATURE-enemy-traits-and-effects.md`, `FEATURE-sniper-crit-beam.md`.
+`FEATURE-enemy-traits-and-effects.md`, `FEATURE-sniper-crit-beam.md`,
+`FEATURE-wave-preview-cleanup.md`.
 
 ## Architecture and correctness
 

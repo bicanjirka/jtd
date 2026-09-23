@@ -32,6 +32,8 @@ public class PanelWaveInfo extends JPanel {
     private final JLabel nextRoundLabel = new JLabel("-");
     private final JPanel curSide = new JPanel();
     private final JPanel nextSide = new JPanel();
+    private final JPanel curSection = new JPanel();
+    private final JPanel nextSection = new JPanel();
     private final List<PathWaveRow> curRows = new ArrayList<>();
     private final List<PathWaveRow> nextRows = new ArrayList<>();
     private GameWorld gameWorld;
@@ -118,38 +120,45 @@ public class PanelWaveInfo extends JPanel {
         setBorder(Hud.panelBorder("Current & Next Wave"));
         setForeground(new Color(220, 255, 220));
 
-        this.curRoundLabel.setForeground(new Color(220, 255, 220));
+        buildSection(this.curSection, this.curRoundLabel, this.curSide, 0);
+        buildSection(this.nextSection, this.nextRoundLabel, this.nextSide, 1);
+    }
+
+    /**
+     * One bordered section - a round-number heading over its column of {@link PathWaveRow}s -
+     * nested inside this panel's outer "Current & Next Wave" border, mirroring the
+     * {@code jPanel_gameInfo}/{@code jPanel_gameButtons} nesting {@code PanelGameConsole} already
+     * uses. Untitled ({@link Hud#outlineBorder()}) since the round label already headings the
+     * section; a second title would just repeat it.
+     */
+    private void buildSection(JPanel section, JLabel roundLabel, JPanel side, int row) {
+        section.setLayout(new GridBagLayout());
+        section.setBackground(new Color(0, 0, 0));
+        section.setBorder(Hud.outlineBorder());
+
+        roundLabel.setForeground(new Color(220, 255, 220));
+        GridBagConstraints labelConstraints = new GridBagConstraints();
+        labelConstraints.gridx = 0;
+        labelConstraints.gridy = 0;
+        labelConstraints.anchor = GridBagConstraints.NORTHWEST;
+        labelConstraints.insets = new Insets(0, 0, 2, 0);
+        section.add(roundLabel, labelConstraints);
+
+        side.setLayout(new GridBagLayout());
+        side.setBackground(new Color(0, 0, 0));
+        GridBagConstraints sideConstraints = new GridBagConstraints();
+        sideConstraints.gridx = 0;
+        sideConstraints.gridy = 1;
+        sideConstraints.fill = GridBagConstraints.HORIZONTAL;
+        sideConstraints.weightx = 1.0;
+        section.add(side, sideConstraints);
+
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 0;
-        c.gridy = 0;
-        c.anchor = GridBagConstraints.NORTHWEST;
-        c.insets = new Insets(0, 0, 2, 0);
-        add(this.curRoundLabel, c);
-
-        this.curSide.setLayout(new GridBagLayout());
-        this.curSide.setBackground(new Color(0, 0, 0));
-        c = new GridBagConstraints();
-        c.gridx = 0;
-        c.gridy = 1;
+        c.gridy = row;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.weightx = 1.0;
-        add(this.curSide, c);
-
-        this.nextRoundLabel.setForeground(new Color(220, 255, 220));
-        c = new GridBagConstraints();
-        c.gridx = 0;
-        c.gridy = 2;
-        c.anchor = GridBagConstraints.NORTHWEST;
-        c.insets = new Insets(6, 0, 2, 0);
-        add(this.nextRoundLabel, c);
-
-        this.nextSide.setLayout(new GridBagLayout());
-        this.nextSide.setBackground(new Color(0, 0, 0));
-        c = new GridBagConstraints();
-        c.gridx = 0;
-        c.gridy = 3;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.weightx = 1.0;
-        add(this.nextSide, c);
+        c.insets = new Insets(row == 0 ? 0 : 6, 0, 0, 0);
+        add(section, c);
     }
 }
