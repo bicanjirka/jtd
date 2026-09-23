@@ -7,7 +7,8 @@ import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.TowerFixtures;
 import td.fixtures.WorldFixtures;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
 import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -75,9 +76,9 @@ class SeekerTowerTest {
     void twinWarheadIsChoosableWithMoneyAloneAndAppliesItsFireRateBonus() {
         this.context.economy().startEconomy(1000, 5);
         SeekerTower tower = towerAt(3, 3);
-        UpgradePath twinWarhead = UpgradePaths.named(tower, "Twin Warhead");
+        UpgradeNode twinWarhead = UpgradePaths.named(tower, "Twin Warhead");
 
-        boolean chosen = tower.chooseUpgradePath(twinWarhead);
+        boolean chosen = tower.buyUpgrade(twinWarhead);
 
         assertThat(chosen).isTrue();
         assertThat(tower.coolDownCurrent()).isLessThan(tower.coolDownMax);
@@ -87,23 +88,23 @@ class SeekerTowerTest {
     void deepFreezeIsNotYetChoosableBeforeTenKills() {
         this.context.economy().startEconomy(1000, 5);
         SeekerTower tower = towerAt(3, 3);
-        UpgradePath deepFreeze = UpgradePaths.named(tower, "Deep Freeze");
+        UpgradeNode deepFreeze = UpgradePaths.named(tower, "Deep Freeze");
 
-        boolean chosen = tower.chooseUpgradePath(deepFreeze);
+        boolean chosen = tower.buyUpgrade(deepFreeze);
 
         assertThat(chosen).isFalse();
-        assertThat(tower.getChosenPath()).isEmpty();
+        assertThat(tower.upgrades().tip(UpgradeSlot.HEAD)).isEmpty();
     }
 
     @Test
     void deepFreezeBumpsTheFreezeDurationBeyondTheBase() {
         SeekerTower tower = towerAt(3, 3);
-        UpgradePath deepFreeze = UpgradePaths.named(tower, "Deep Freeze");
+        UpgradeNode deepFreeze = UpgradePaths.named(tower, "Deep Freeze");
         int durationBeforeChoosing = tower.getFreezeDurationTicks();
 
-        // onUpgradePathChosen is exercised directly - Deep Freeze's own gate (a kill-count
+        // onUpgradeBought is exercised directly - Deep Freeze's own gate (a kill-count
         // threshold) is covered generically by KillCountConditionTest; this proves the bump itself.
-        tower.onUpgradePathChosen(deepFreeze);
+        tower.onUpgradeBought(deepFreeze);
 
         assertThat(tower.getFreezeDurationTicks()).isGreaterThan(durationBeforeChoosing);
     }

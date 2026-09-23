@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.WorldFixtures;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 
 import java.util.LinkedHashMap;
@@ -161,14 +161,14 @@ class SonarTowerTest {
     @Test
     void overchargedArraySpeedsUpTheSweepBeyondTheBaseRate() {
         SonarTower tower = tower();
-        UpgradePath overchargedArray = UpgradePaths.named(tower, "Overcharged Array");
+        UpgradeNode overchargedArray = UpgradePaths.named(tower, "Overcharged Array");
         tower.doTick(1);
         double radiansPerTickBeforeChoosing = tower.sweepRadiansAt(0) - tower.sweepRadiansAt(1);
 
-        // onUpgradePathChosen is exercised directly - Overcharged Array's own gate (a cluster
+        // onUpgradeBought is exercised directly - Overcharged Array's own gate (a cluster
         // of nearby towers) is covered generically by ClusterConditionTest and by
         // AbstractTowerTest's condition-gating test; this proves the sweep-speed bump itself.
-        tower.onUpgradePathChosen(overchargedArray);
+        tower.onUpgradeBought(overchargedArray);
         tower.doTick(2);
         double radiansPerTickAfterChoosing = tower.sweepRadiansAt(0) - tower.sweepRadiansAt(1);
 

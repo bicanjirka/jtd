@@ -6,7 +6,8 @@ import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.TowerFixtures;
 import td.fixtures.WorldFixtures;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
 import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -79,9 +80,9 @@ class MortarTowerTest {
         this.context.towers().add(tower);
         this.context.towers().add(new SniperTower(this.context, 2, 2));
         this.context.towers().add(new SniperTower(this.context, 4, 4));
-        UpgradePath concussiveCharge = UpgradePaths.named(tower, "Concussive Charge");
+        UpgradeNode concussiveCharge = UpgradePaths.named(tower, "Concussive Charge");
 
-        boolean chosen = tower.chooseUpgradePath(concussiveCharge);
+        boolean chosen = tower.buyUpgrade(concussiveCharge);
 
         assertThat(chosen).isTrue();
         assertThat(tower.getRangeReal()).isGreaterThan(MortarTower.RANGE * BoardFixtures.SCALE);
@@ -91,23 +92,23 @@ class MortarTowerTest {
     void heavyShellIsNotYetChoosableBeforeEnoughDamageDealt() {
         this.context.economy().startEconomy(1000, 5);
         MortarTower tower = towerAt(3, 3);
-        UpgradePath heavyShell = UpgradePaths.named(tower, "Heavy Shell");
+        UpgradeNode heavyShell = UpgradePaths.named(tower, "Heavy Shell");
 
-        boolean chosen = tower.chooseUpgradePath(heavyShell);
+        boolean chosen = tower.buyUpgrade(heavyShell);
 
         assertThat(chosen).isFalse();
-        assertThat(tower.getChosenPath()).isEmpty();
+        assertThat(tower.upgrades().tip(UpgradeSlot.HEAD)).isEmpty();
     }
 
     @Test
     void heavyShellBumpsTheSplashRadiusBeyondTheBase() {
         MortarTower tower = towerAt(3, 3);
-        UpgradePath heavyShell = UpgradePaths.named(tower, "Heavy Shell");
+        UpgradeNode heavyShell = UpgradePaths.named(tower, "Heavy Shell");
         float radiusBeforeChoosing = tower.getSplashRadius();
 
-        // onUpgradePathChosen is exercised directly - Heavy Shell's own gate (a damage-dealt
+        // onUpgradeBought is exercised directly - Heavy Shell's own gate (a damage-dealt
         // threshold) is covered generically by DamageDealtConditionTest; this proves the bump itself.
-        tower.onUpgradePathChosen(heavyShell);
+        tower.onUpgradeBought(heavyShell);
 
         assertThat(tower.getSplashRadius()).isGreaterThan(radiusBeforeChoosing);
     }

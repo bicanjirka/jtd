@@ -9,7 +9,10 @@ import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.ClusterCondition;
 import td.tower.upgrade.DamageDealtCondition;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeCondition;
+import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
@@ -44,14 +47,22 @@ public final class MortarTower extends AbstractTower {
     /**
      * Bigger blast radius, earned by this tower having proven itself already.
      */
-    private static final UpgradePath HEAVY_SHELL = new UpgradePath(
-            "Heavy Shell", 35, TowerBuff.damage(0.4f), new DamageDealtCondition(20000), "+30% splash radius");
+    private static final UpgradeNode HEAVY_SHELL = UpgradeNode.of("mortar.head.heavy_shell", UpgradeSlot.HEAD,
+            "Heavy Shell", 35)
+            .withBuff(TowerBuff.damage(0.4f))
+            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
+            .withGate(new DamageDealtCondition(20000))
+            .withExtraEffect("+30% splash radius");
     /**
      * A longer-lasting slow, plus more range - rewards a deliberately grouped placement rather than a solo one.
      */
-    private static final UpgradePath CONCUSSIVE_CHARGE = new UpgradePath(
-            "Concussive Charge", 30, TowerBuff.range(0.25f), new ClusterCondition(2), "+50% slow duration");
-    private static final List<UpgradePath> PATHS = List.of(HEAVY_SHELL, CONCUSSIVE_CHARGE);
+    private static final UpgradeNode CONCUSSIVE_CHARGE = UpgradeNode.of("mortar.head.concussive_charge",
+            UpgradeSlot.HEAD, "Concussive Charge", 30)
+            .withBuff(TowerBuff.range(0.25f))
+            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
+            .withGate(new ClusterCondition(2))
+            .withExtraEffect("+50% slow duration");
+    private static final UpgradeTree TREE = UpgradeTree.of(HEAVY_SHELL, CONCUSSIVE_CHARGE);
 
     /**
      * Ticks between shots before any fire-rate buff.
@@ -70,18 +81,18 @@ public final class MortarTower extends AbstractTower {
     }
 
     @Override
-    public List<UpgradePath> availablePaths() {
-        return PATHS;
+    public UpgradeTree upgradeTree() {
+        return TREE;
     }
 
     /**
      * Neither bonus is a {@link TowerBuff} axis, so each is applied here instead - same shape as {@code SplashTower}'s Siege.
      */
     @Override
-    protected void onUpgradePathChosen(UpgradePath path) {
-        if (path == HEAVY_SHELL) {
+    protected void onUpgradeBought(UpgradeNode node) {
+        if (node.equals(HEAVY_SHELL)) {
             this.splashRadius *= HEAVY_SHELL_SPLASH_MULTIPLIER;
-        } else if (path == CONCUSSIVE_CHARGE) {
+        } else if (node.equals(CONCUSSIVE_CHARGE)) {
             this.slowDurationTicks = Math.round(this.slowDurationTicks * CONCUSSIVE_CHARGE_SLOW_DURATION_MULTIPLIER);
         }
     }

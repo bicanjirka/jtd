@@ -8,7 +8,10 @@ import td.tower.targeting.RandomSelector;
 import td.tower.targeting.TargetSelector;
 import td.tower.upgrade.ClusterCondition;
 import td.tower.upgrade.DamageDealtCondition;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeCondition;
+import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
@@ -39,14 +42,20 @@ public final class SplashTower extends AbstractTower {
     /**
      * More damage and a bigger blast - earned by this tower having proven itself already.
      */
-    private static final UpgradePath SIEGE = new UpgradePath(
-            "Siege", 35, TowerBuff.damage(0.35f), new DamageDealtCondition(20000), "+30% splash radius");
+    private static final UpgradeNode SIEGE = UpgradeNode.of("splash.head.siege", UpgradeSlot.HEAD, "Siege", 35)
+            .withBuff(TowerBuff.damage(0.35f))
+            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
+            .withGate(new DamageDealtCondition(20000))
+            .withExtraEffect("+30% splash radius");
     /**
      * More damage and range - rewards a deliberately grouped placement rather than a solo one.
      */
-    private static final UpgradePath CLUSTER_CHARGE = new UpgradePath(
-            "Cluster Charge", 30, TowerBuff.damage(0.2f).withRange(0.2f), new ClusterCondition(2));
-    private static final List<UpgradePath> PATHS = List.of(SIEGE, CLUSTER_CHARGE);
+    private static final UpgradeNode CLUSTER_CHARGE = UpgradeNode.of("splash.head.cluster_charge", UpgradeSlot.HEAD,
+            "Cluster Charge", 30)
+            .withBuff(TowerBuff.damage(0.2f).withRange(0.2f))
+            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
+            .withGate(new ClusterCondition(2));
+    private static final UpgradeTree TREE = UpgradeTree.of(SIEGE, CLUSTER_CHARGE);
 
     /**
      * Ticks between shots before any fire-rate buff.
@@ -68,16 +77,16 @@ public final class SplashTower extends AbstractTower {
     }
 
     @Override
-    public List<UpgradePath> availablePaths() {
-        return PATHS;
+    public UpgradeTree upgradeTree() {
+        return TREE;
     }
 
     /**
      * Siege's blast-radius bump isn't a {@link TowerBuff} axis, so it's applied here instead.
      */
     @Override
-    protected void onUpgradePathChosen(UpgradePath path) {
-        if (path == SIEGE) {
+    protected void onUpgradeBought(UpgradeNode node) {
+        if (node.equals(SIEGE)) {
             this.spreadRadius *= SIEGE_SPREAD_MULTIPLIER;
         }
     }

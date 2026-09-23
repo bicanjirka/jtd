@@ -8,7 +8,9 @@ import td.tower.targeting.OfTypeTargetQuery;
 import td.tower.targeting.TargetQuery;
 import td.tower.upgrade.DamageDealtCondition;
 import td.tower.upgrade.UpgradeCondition;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
@@ -30,14 +32,19 @@ public final class PulseTower extends AbstractTower {
     /**
      * More damage - earned by this tower having already proven itself against real targets.
      */
-    private static final UpgradePath OVERLOAD_CORE = new UpgradePath(
-            "Overload Core", 30, TowerBuff.damage(0.5f), new DamageDealtCondition(15000));
+    private static final UpgradeNode OVERLOAD_CORE = UpgradeNode.of("pulse.head.overload_core", UpgradeSlot.HEAD,
+            "Overload Core", 30)
+            .withBuff(TowerBuff.damage(0.5f))
+            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
+            .withGate(new DamageDealtCondition(15000));
     /**
      * More range - a straightforward money-gated specialization needing no track record.
      */
-    private static final UpgradePath EXPANDED_FIELD = new UpgradePath(
-            "Expanded Field", 25, TowerBuff.range(0.3f), UpgradeCondition.always());
-    private static final List<UpgradePath> PATHS = List.of(OVERLOAD_CORE, EXPANDED_FIELD);
+    private static final UpgradeNode EXPANDED_FIELD = UpgradeNode.of("pulse.head.expanded_field", UpgradeSlot.HEAD,
+            "Expanded Field", 25)
+            .withBuff(TowerBuff.range(0.3f))
+            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD));
+    private static final UpgradeTree TREE = UpgradeTree.of(OVERLOAD_CORE, EXPANDED_FIELD);
 
     private boolean fire = false;
 
@@ -46,8 +53,8 @@ public final class PulseTower extends AbstractTower {
     }
 
     @Override
-    public List<UpgradePath> availablePaths() {
-        return PATHS;
+    public UpgradeTree upgradeTree() {
+        return TREE;
     }
 
     public void doTick(int gameTime) {

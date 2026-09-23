@@ -1,4 +1,4 @@
-# `td.tower` — towers, targeting, aura buffs and upgrade paths
+# `td.tower` — towers, targeting, aura buffs and the upgrade tree
 
 Read the root `CLAUDE.md` first; this file only covers what is specific to this package and
 its three subpackages (`targeting`, `buff`, `upgrade`).
@@ -6,7 +6,7 @@ its three subpackages (`targeting`, `buff`, `upgrade`).
 ## Shape
 
 `Tower` is the interface; `AbstractTower` holds position, price, base/current damage/range/
-fire-rate, this tower's own permanently-chosen upgrade path (if any), and the shared
+fire-rate, this tower's own owned upgrade nodes, and the shared
 `dealDamage` accounting. It holds **no** list of the Aura towers buffing it — see below. The eight leaf classes are
 `final` and are constructed only through `TowerFactory`:
 
@@ -29,8 +29,8 @@ in their head.
 
 `MortarTower`/`SeekerTower`/`CinderTower` are the three towers added by the damage-types-and-
 projectiles feature — see `td.projectile` and `td.effect` in the root `CLAUDE.md` §4's domain-
-package list. Like the original four, each offers two upgrade paths (see below); only
-`AuraTower` stays passive and pathless.
+package list. Like the original four, each offers two exclusive `HEAD` upgrade nodes (see
+below); only `AuraTower` stays passive and offers none yet.
 
 ## Invariants worth knowing before you change anything here
 
@@ -61,7 +61,7 @@ before being removed.** `doCleanup` sets a `removed` flag, and `dealDamage` is a
 it's set. This matters because a damage-over-time `td.effect.Effect` (a burn) a tower applied
 is bound to that tower's own `dealDamage` and keeps ticking on the enemy for several ticks
 after the tower itself might be sold — without the guard, a sold tower would keep inflating
-`damageDealt`/`killCount` and paying its upgrade path's bounty bonus on an object the player
+`damageDealt`/`killCount` and paying its owned nodes' bounty bonus on an object the player
 has already been refunded for.
 
 **A tower that subscribes to anything must unsubscribe in `doCleanup`.** `SonarTower`
@@ -91,8 +91,8 @@ half-way out still takes 75% — so it is much more forgiving than a linear fall
 The same `spreadRadius` bounds the splash query and divides the falloff, which is what keeps
 the result positive for everything the query returns. `spreadRadius` is set at construction
 and, unlike damage and range, is untouched by an Aura tower's buff — its only way to change
-is `SplashTower`'s own "Siege" upgrade path bumping it once via `onUpgradePathChosen` (see
-below), not any live, continuously-recomputed algebra.
+is `SplashTower`'s own "Siege" node bumping it once via `onUpgradeBought` (see below), not any
+live, continuously-recomputed algebra.
 
 ## Targeting (`td.tower.targeting`)
 
@@ -140,14 +140,14 @@ forbids.
 
 `TowerBuff` is the algebra: `none()` is the identity, `combine` is additive, and a tower's
 total buff is a `reduce` over what every tower on the board contributes to it **combined with
-its own chosen upgrade path's bonus** (see below) — `AbstractTower.recalculateStats()` does
-both in one fold, which is what lets a specialization and an Aura tower's buff stack for free. Buff
-strength is per-aura-tower (`AuraTower`'s `power` constructor argument), not a shared
+its own owned upgrade nodes' combined bonus** (see below) — `AbstractTower.recalculateStats()`
+does both in one fold, which is what lets a specialization and an Aura tower's buff stack for
+free. Buff strength is per-aura-tower (`AuraTower`'s `power` constructor argument), not a shared
 static — that is what lets two aura towers of different strengths stack correctly.
 
 `TowerBuff` carries five independent bonus axes — `damageBonus`, `rangeBonus`,
 `fireRateBonus`, `bountyBonus`, `critChanceBonus` — each defaulting to 0 at `none()`. An Aura
-tower's own `buff()` only ever sets the first two; the latter three exist for upgrade paths
+tower's own `buff()` only ever sets the first two; the latter three exist for upgrade nodes
 (below) to use. A call site that means to name only one or two axes starts from whichever
 axis it cares about first, through the matching static entry point (`TowerBuff.damage(...)`,
 `.range(...)`, `.fireRate(...)`, `.bounty(...)`, `.critChance(...)`), then continues with the
@@ -195,9 +195,9 @@ lived inside a `recalculateStats()` override, so recomputing one tower's stats m
 towers' state. Deriving the buff costs one pass over the roster per recompute and cannot drift.
 
 `recalculateStats()` must be called on every change to either input. `TowerRoster` calls it on
-every tower whenever the set changes (`add`/`sell`), and `chooseUpgradePath` calls it for the
-path side. `TowerRoster.clear()` deliberately does not — every tower is gone, so there is
-nothing to recompute and nothing left to read a stale value.
+every tower whenever the set changes (`add`/`sell`), and `buyUpgrade` calls it on every tower
+for the upgrade side. `TowerRoster.clear()` deliberately does not — every tower is gone, so
+there is nothing to recompute and nothing left to read a stale value.
 
 **`AuraTower.buffedTowers()` is the same derived-not-stored shape, reused for the board's own
 link-line visual.** It stays a fresh `stream().filter(this::buffs).toList()` snapshot rather than
@@ -213,53 +213,73 @@ tick code actually resets `coolDown` to after firing, and is `coolDownMax` short
 `coolDownMax`, `getStatusString` passes the current one) rather
 than assuming which is wanted the way the old zero-argument version did.
 
-## In-place upgrade paths (`td.tower.upgrade`)
+## Upgrade tree (`td.tower.upgrade`)
 
-A tower can permanently specialize into one of its own `availablePaths()` — at most once,
-ever, for that tower instance. This is a different mechanic from the Aura tower's buff
-above: an Aura tower buffs *other* towers continuously from outside; a chosen upgrade path
-changes what *this* tower itself is, once, and stays changed for its lifetime.
+A tower owns a set of `UpgradeNode`s it can buy, organized into three `UpgradeSlot`s
+(`BASE`/`HEAD`/`SPECIAL`) by `UpgradeTree`. This is a different mechanic from the Aura tower's
+buff above: an Aura tower buffs *other* towers continuously from outside; a bought node
+changes what *this* tower itself is, and stays changed for its lifetime. **As of this
+writing every attack tower's `upgradeTree()` populates only `HEAD`**, with two mutually
+exclusive root nodes each (the `BASE`/`SPECIAL` catalogue, and Aura's own tree, are a planned
+follow-up - see `docs/features/FEATURE-tower-upgrade-trees.md`).
 
-- `UpgradePath` — a tower's specialization: a display name, a price (paid the same way
-  buying a tower is), a `TowerBuff` stat bonus, the `UpgradeCondition` gating it, and an
-  optional `extraEffect` phrase (defaulted to `""` by a four-argument constructor) for the
-  handful of paths whose bonus isn't expressible through `TowerBuff` at all — see below.
-  `UpgradePath.describe()` turns all of that into the one line `AbstractTower.upgradePathsBlock()`
-  shows per path in `getInfoString()`/`getStatusString()` (e.g. `"Veteran (10 kills): +30%
-  damage, +10% range, +25% bounty, +30% crit chance"`) — never write a path's bonus out by hand
-  in a tower's own description text; `describe()` derives it from the same `TowerBuff`/
-  `extraEffect`/`UpgradeCondition` values `chooseUpgradePath` itself reads, so the two can't drift.
-- `UpgradeCondition` — "is this path currently available", independent of affordability, and
-  `describe()`, a short human phrase for the same gate (`"10 kills"`, `"2 nearby towers"`,
-  `"money only"`). `always()` is the identity (the "money only" gate — the path is limited by
-  price alone). `ClusterCondition`, `DamageDealtCondition`, `KillCountCondition` read a tower's
-  own position/stats and, for `ClusterCondition`, the roster via `GameWorld`.
-- `AbstractTower.chooseUpgradePath(path)` is the one entry point: it validates `path` is
-  actually one of this tower's own `availablePaths()` and that none has been chosen yet,
-  pays its price via `context.doPay`, sets `chosenPath`, calls the `onUpgradePathChosen`
-  hook (a no-op unless a leaf overrides it - see below), and recomputes
-  `recalculateStats()`. It returns `false` without effect on any failure, mirroring
+- `UpgradeNode` — a tree node: a stable `id` (unique within one tower's own tree), its
+  `UpgradeSlot`, a display name, a price (paid the same way buying a tower is), a `TowerBuff`
+  stat bonus, a `requires` condition (the structural prerequisite deciding whether the node is
+  offered at all - e.g. "nothing bought yet in this slot"), a `gate` condition (the independent
+  performance condition a player clears once offered), and an optional `extraEffect` phrase for
+  the handful of nodes whose bonus isn't expressible through `TowerBuff` at all — see below.
+  Eight components puts it past the root `CLAUDE.md`'s five-component threshold, so it's built
+  from `UpgradeNode.of(id, slot, displayName, price)` plus fluent `withBuff`/`withRequires`/
+  `withGate`/`withExtraEffect` copies, never a positional literal. `UpgradeNode.describe()` turns
+  the `gate`/`statBonus`/`extraEffect` into the one line `AbstractTower.upgradeNodesBlock()` shows
+  per offered node in `getInfoString()`/`getStatusString()` (e.g. `"Veteran (10 kills): +30%
+  damage, +10% range, +25% bounty, +30% crit chance"`) — never write a node's bonus out by hand in
+  a tower's own description text; `describe()` derives it from the same values `buyUpgrade` itself
+  reads, so the two can't drift.
+- `UpgradeCondition` — `isSatisfied(tower, context)`, independent of affordability, plus
+  `describe()` (a short human phrase, e.g. `"10 kills"`, `"money only"`) and `progress(tower,
+  context)` (the same gate's live progress, e.g. `"7/10 kills"`, defaulting to `describe()` for a
+  gate with no partial progress). `always()` is the identity (the "money only" gate). `owns(id)`
+  and `slotEmpty(slot)` are the two structural checks a `requires` composes via the default
+  `and`/`or` combinators; `ClusterCondition`, `DamageDealtCondition`, `KillCountCondition` are
+  performance gates reading a tower's own position/stats and, for `ClusterCondition`, the roster
+  via `GameWorld`.
+- `UpgradeState` — a tower's owned nodes, in purchase order, as one immutable snapshot
+  (`AbstractTower`'s single `private volatile UpgradeState upgrades` field, replacing what used
+  to be three independent per-slot fields would have been - root `CLAUDE.md` §3). `tip(slot)` is
+  a slot's currently active node (its most recently bought one); `totalBuff()` folds every owned
+  node's `TowerBuff` additively, the same algebra an Aura buff already uses.
+- `AbstractTower.buyUpgrade(node)` is the one entry point: it validates `node` is actually one of
+  this tower's own `upgradeTree()`, not already owned, and that both `requires` and `gate` are
+  satisfied, pays its price via `context.doPay`, calls the `onUpgradeBought` hook (a no-op unless
+  a leaf overrides it - see below), publishes the new `TowerStats` *before* publishing the new
+  `UpgradeState` (so a tick landing in between sees the upgraded stats without the node, never the
+  node without its stats - which would pay a bounty bonus at un-upgraded damage), and recomputes
+  every tower on the board (buying an Aura tower's own upgrade can change what it contributes to
+  its neighbours). It returns `false` without effect on any failure, mirroring
   `EconomyLedger.doPay`'s check-and-charge-in-one-call contract - never gate a call to it on a
   separate affordability check first.
-- **A path's bonus that isn't expressible through `TowerBuff` is applied via
-  `onUpgradePathChosen`, not through the shared algebra.** `SplashTower`'s `spreadRadius`,
-  `SonarTower`'s sweep rate, `MortarTower`'s slow duration, `SeekerTower`'s freeze duration
-  and `CinderTower`'s wedge half-width are each touched by only one tower's one path - a leaf
-  overriding this hook mutates its own field directly, matched by reference against its own
-  private `UpgradePath` constants rather than by a string/id (keeps the match type-safe and
-  avoids a stringly-typed switch). This is now the common case, not a rare exception - most
-  attack towers have at least one path that needs it. **Its own `UpgradePath` constant also
-  carries the same bonus as a short `extraEffect` phrase** (`"+30% splash radius"`, `"sweeps
-  40% faster"`) - the two are set together, at the same constant, precisely so the mechanical
-  effect and the text describing it can never drift apart the way a hand-written prose
-  description elsewhere in the tower's own text would risk.
-- `AbstractTower.availablePaths()` defaults to `List.of()` - only a tower with real content (added per-leaf, not part of
-  this shared mechanism) overrides it. The Aura tower does not
-  override it and offers no paths of its own for v1.
+- **A node's bonus that isn't expressible through `TowerBuff` is applied via `onUpgradeBought`,
+  not through the shared algebra.** `SplashTower`'s `spreadRadius`, `SonarTower`'s sweep rate,
+  `MortarTower`'s slow duration, `SeekerTower`'s freeze duration and `CinderTower`'s wedge
+  half-width are each touched by only one tower's one node - a leaf overriding this hook mutates
+  its own field directly, matched against its own private `UpgradeNode` constants by
+  **record equality** (`node.equals(SIEGE)`), not by reference: once a slot's graph branches and
+  reconverges, a node reaching this hook is no longer guaranteed to be the exact instance a
+  constant holds, only to carry the same id. This is the common case, not a rare exception - most
+  attack towers have at least one node that needs it. **Its own `UpgradeNode` constant also
+  carries the same bonus as a short `extraEffect` phrase** (`"+30% splash radius"`, `"sweeps 40%
+  faster"`) - the two are set together, at the same constant, precisely so the mechanical effect
+  and the text describing it can never drift apart the way a hand-written prose description
+  elsewhere in the tower's own text would risk.
+- `AbstractTower.upgradeTree()` defaults to `UpgradeTree.none()` - only a tower with real content
+  (added per-leaf, not part of this shared mechanism) overrides it. The Aura tower does not
+  override it and offers no nodes of its own yet.
 - The UI (`td.ui.PanelTowerInfo`) and the render accent ring (`Java2DFrameRenderer.paintUpgradeAccent`, see
   `td/ui/CLAUDE.md`) both key off
-  `availablePaths()`/`getChosenPath()` alone - a tower's own domain state is the single
-  source of truth for what's choosable and what's already chosen, not any UI-side tracking.
+  `offeredUpgrades()`/`upgrades()` alone - a tower's own domain state is the single source of
+  truth for what's buyable and what's already bought, not any UI-side tracking.
 
 ## Adding a new tower
 
@@ -276,14 +296,15 @@ changes what *this* tower itself is, once, and stays changed for its lifetime.
    (an exhaustive switch with no `default`) and in `td.ui.Java2DFrameRenderer`'s
    `towerBodyShape` / `turretHeadShape` / `colorFor`.
 5. Add it to `README.md`'s tower table.
-6. If it offers upgrade paths, override `availablePaths()` with its (currently: exactly
-   two) `UpgradePath`s, and `onUpgradePathChosen` only if one of them bumps a stat outside
-   `TowerBuff`'s five axes - pass that same bump's `extraEffect` phrase to the `UpgradePath`
-   constant itself (see In-place upgrade paths, above) rather than hand-writing it into the
-   tower's own `getInfoString()`/`getStatusString()`, which never needs to change for this -
-   `AbstractTower.upgradePathsBlock()` already lists every path automatically. No new `Palette`
-   role is needed for this: the specialization ring's two roles are shared across every tower
-   type (see `td/ui/CLAUDE.md`).
+6. If it offers upgrade nodes, override `upgradeTree()` with its `UpgradeNode`s (currently:
+   two exclusive `HEAD` roots per attack tower - `requires(UpgradeCondition.slotEmpty(HEAD))`
+   on each), and `onUpgradeBought` only if one of them bumps a stat outside `TowerBuff`'s five
+   axes - pass that same bump's `extraEffect` phrase to the `UpgradeNode` constant itself (see
+   Upgrade tree, above) rather than hand-writing it into the tower's own
+   `getInfoString()`/`getStatusString()`, which never needs to change for this -
+   `AbstractTower.upgradeNodesBlock()` already lists every offered node automatically. No new
+   `Palette` role is needed for this: the specialization ring's two roles are shared across
+   every tower type (see `td/ui/CLAUDE.md`).
 
 The toolbar icon needs no separate art — `PanelTowerSelector` renders it through the same
 paint code at a fixed pose, so a tower's board look and its icon cannot drift apart.

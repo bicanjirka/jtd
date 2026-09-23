@@ -7,7 +7,9 @@ import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.UpgradeCondition;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
@@ -33,16 +35,18 @@ public final class SniperTower extends AbstractTower {
      * this tower's own crit chance - a veteran marksman's proven aim starts placing shots that
      * count extra even more often.
      */
-    private static final UpgradePath VETERAN = new UpgradePath(
-            "Veteran", 30,
-            TowerBuff.damage(0.3f).withRange(0.1f).withBounty(0.25f).withCritChance(0.3f),
-            new KillCountCondition(10));
+    private static final UpgradeNode VETERAN = UpgradeNode.of("sniper.head.veteran", UpgradeSlot.HEAD, "Veteran", 30)
+            .withBuff(TowerBuff.damage(0.3f).withRange(0.1f).withBounty(0.25f).withCritChance(0.3f))
+            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD))
+            .withGate(new KillCountCondition(10));
     /**
      * Faster, weaker shots - a straightforward money-gated specialization needing no track record.
      */
-    private static final UpgradePath OVERCLOCK = new UpgradePath(
-            "Overclock", 25, TowerBuff.damage(-0.2f).withFireRate(0.4f), UpgradeCondition.always());
-    private static final List<UpgradePath> PATHS = List.of(VETERAN, OVERCLOCK);
+    private static final UpgradeNode OVERCLOCK = UpgradeNode.of("sniper.head.overclock", UpgradeSlot.HEAD,
+            "Overclock", 25)
+            .withBuff(TowerBuff.damage(-0.2f).withFireRate(0.4f))
+            .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD));
+    private static final UpgradeTree TREE = UpgradeTree.of(VETERAN, OVERCLOCK);
 
     /**
      * Ticks between shots before any fire-rate buff.
@@ -59,8 +63,8 @@ public final class SniperTower extends AbstractTower {
     }
 
     @Override
-    public List<UpgradePath> availablePaths() {
-        return PATHS;
+    public UpgradeTree upgradeTree() {
+        return TREE;
     }
 
     private EnemyMob findEnemy() {

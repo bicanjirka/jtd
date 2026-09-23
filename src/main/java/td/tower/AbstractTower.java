@@ -5,12 +5,14 @@ import td.economy.EconomyDelta;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeState;
+import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.TickRate;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Everything every tower shares: board position, price, base and buffed damage/range/fire
@@ -59,7 +61,7 @@ public abstract class AbstractTower implements Tower {
     protected volatile boolean selected = false;
     protected volatile long damageDealt = 0;
     protected volatile int killCount = 0;
-    protected volatile Optional<UpgradePath> chosenPath = Optional.empty();
+    private volatile UpgradeState upgrades = UpgradeState.none();
     private volatile TowerStats stats;
     private volatile boolean removed = false;
 
@@ -161,9 +163,9 @@ public abstract class AbstractTower implements Tower {
 
     /**
      * Recomputes damage, range and fire rate from the Aura towers currently on the board
-     * <em>and</em> this tower's own chosen upgrade path (if any), folded through
-     * {@link TowerBuff}'s additive algebra so bonuses of unequal strength stack correctly -
-     * a specialization composes with an Aura tower's buff for free.
+     * <em>and</em> this tower's own owned upgrade nodes, folded through {@link TowerBuff}'s
+     * additive algebra so bonuses of unequal strength stack correctly - a specialization
+     * composes with an Aura tower's buff for free.
      * <p>
      * The external buff is <em>computed</em> from the roster on each call rather than read
      * from a list this tower maintains. Asking every tower what it contributes
@@ -171,29 +173,30 @@ public abstract class AbstractTower implements Tower {
      * and in exchange there is no index to keep in agreement with anything: no client set on
      * the Aura side, no aura list on this side, and no way for the two to drift apart.
      * {@code TowerRoster} calls this on every tower when the set changes;
-     * {@link #chooseUpgradePath} calls it when the path side changes.
+     * {@link #buyUpgrade} calls it when this tower's own upgrades change, and also calls it on
+     * every other tower - buying an Aura tower's own upgrade can change what it contributes to
+     * its neighbours.
      * <p>
      * Publishes the result as one new {@link TowerStats}, so tick code reading concurrently
      * sees either the whole old set or the whole new one.
      */
     public void recalculateStats() {
-        this.publishStats(this.chosenPath);
+        this.publishStats(this.upgrades);
     }
 
     /**
-     * Recomputes and publishes {@link TowerStats} treating {@code path} as this tower's chosen
-     * specialization. Separate from {@link #recalculateStats()} so that
-     * {@link #chooseUpgradePath} can publish the new stats <em>before</em> it publishes the
-     * path itself: a tick landing between the two writes then sees the upgraded stats without
-     * the path, rather than the path without its stats - which would have paid the path's
-     * bounty bonus on a kill dealt at un-upgraded damage.
+     * Recomputes and publishes {@link TowerStats} treating {@code upgrades} as this tower's
+     * owned nodes. Separate from {@link #recalculateStats()} so that {@link #buyUpgrade} can
+     * publish the new stats <em>before</em> it publishes the new {@link UpgradeState} itself: a
+     * tick landing between the two writes then sees the upgraded stats without the new node,
+     * rather than the node without its stats - which would have paid its bounty bonus on a kill
+     * dealt at un-upgraded damage.
      */
-    private void publishStats(Optional<UpgradePath> path) {
+    private void publishStats(UpgradeState upgrades) {
         TowerBuff externalBuff = this.context.towers().all().stream()
                 .map(t -> t.buffFor(this))
                 .reduce(TowerBuff.none(), TowerBuff::combine);
-        TowerBuff totalBuff = externalBuff.combine(
-                path.map(UpgradePath::statBonus).orElseGet(TowerBuff::none));
+        TowerBuff totalBuff = externalBuff.combine(upgrades.totalBuff());
         this.stats = TowerStats.of(this.damageBase, this.rangeBase, this.coolDownMax, this.critChanceBase,
                 totalBuff, this.context.getBoard().scale());
     }
@@ -213,10 +216,10 @@ public abstract class AbstractTower implements Tower {
      * claiming the full amount would over-report against exactly the enemies it performs
      * worst on.
      * <p>
-     * A kill that lands here tops up credits by {@code chosenPath}'s {@code bountyBonus}
-     * (if any) on top of the flat {@code EconomyDelta.kill} bounty {@code enemy.doDamage}
-     * already granted - extra <em>credits</em> only, no extra score, so a tower's bounty
-     * specialization is a cash bonus rather than a scoring one.
+     * A kill that lands here tops up credits by the owned upgrade nodes' combined
+     * {@code bountyBonus} (if any) on top of the flat {@code EconomyDelta.kill} bounty
+     * {@code enemy.doDamage} already granted - extra <em>credits</em> only, no extra score, so
+     * a tower's bounty specialization is a cash bonus rather than a scoring one.
      * <p>
      * A no-op once this tower has been sold or cleared (see {@link #doCleanup}). A
      * damage-over-time effect this tower applied can still be ticking on an enemy several
@@ -234,8 +237,7 @@ public abstract class AbstractTower implements Tower {
             this.damageDealt += landed.amount();
             if (enemy.isDead()) {
                 this.killCount++;
-                float bountyBonus = this.chosenPath
-                        .map(p -> p.statBonus().bountyBonus()).orElse(0f);
+                float bountyBonus = this.upgrades.totalBuff().bountyBonus();
                 if (bountyBonus != 0f) {
                     this.context.economy().apply(EconomyDelta.credits(
                             Math.round(enemy.getBounty() * bountyBonus)));
@@ -281,39 +283,49 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * No paths by default - only the four attack towers override this with real content.
+     * No nodes by default - only a leaf with real content overrides this.
      */
-    public List<UpgradePath> availablePaths() {
-        return List.of();
+    public UpgradeTree upgradeTree() {
+        return UpgradeTree.none();
     }
 
-    public Optional<UpgradePath> getChosenPath() {
-        return this.chosenPath;
+    public UpgradeState upgrades() {
+        return this.upgrades;
     }
 
-    public boolean chooseUpgradePath(UpgradePath path) {
-        if (this.chosenPath.isPresent() || !this.availablePaths().contains(path)) {
+    public boolean buyUpgrade(UpgradeNode node) {
+        if (this.upgrades.owns(node.id()) || !this.upgradeTree().nodes().contains(node)) {
             return false;
         }
-        if (!path.condition().isSatisfied(this, this.context)) {
+        if (!node.requires().isSatisfied(this, this.context) || !node.gate().isSatisfied(this, this.context)) {
             return false;
         }
-        if (!this.context.economy().doPay(path.price())) {
+        if (!this.context.economy().doPay(node.price())) {
             return false;
         }
-        this.onUpgradePathChosen(path);
-        // Stats first, then the path - see publishStats for why the order matters.
-        this.publishStats(Optional.of(path));
-        this.chosenPath = Optional.of(path);
+        this.onUpgradeBought(node);
+        UpgradeState nextState = this.upgrades.with(node);
+        // Stats first, then the state - see publishStats for why the order matters.
+        this.publishStats(nextState);
+        this.upgrades = nextState;
+        // Buying this node may have changed what this tower itself contributes to its
+        // neighbours (an Aura tower's own upgrade), so every tower - not just this one -
+        // recomputes, the same blanket recompute TowerRoster.add/sell already does.
+        for (Tower t : this.context.towers().all()) {
+            t.recalculateStats();
+        }
         return true;
     }
 
     /**
-     * Hook for a leaf tower whose chosen path bumps a stat {@link TowerBuff} can't express
+     * Hook for a leaf tower whose bought node bumps a stat {@link TowerBuff} can't express
      * (e.g. {@code SplashTower}'s splash radius, {@code SonarTower}'s sweep speed) - a no-op by
-     * default. Called once, right when {@link #chooseUpgradePath} commits the choice.
+     * default. Called once, right when {@link #buyUpgrade} commits the purchase, matched
+     * against a leaf's own {@code private static final UpgradeNode} constants by record
+     * equality (each carries its own unique id) rather than by reference, since a slot's graph
+     * can reconverge and no longer guarantees exactly one instance reaches this hook.
      */
-    protected void onUpgradePathChosen(UpgradePath path) {
+    protected void onUpgradeBought(UpgradeNode node) {
     }
 
     public boolean isSelected() {
@@ -364,7 +376,7 @@ public abstract class AbstractTower implements Tower {
             s += "Damage: " + this.damageBase / 100f + "\n" +
                     this.rateLine(this.coolDownMax) + "\n";
         }
-        return s + this.upgradePathsBlock();
+        return s + this.upgradeNodesBlock();
     }
 
     public String getStatusString() {
@@ -380,30 +392,27 @@ public abstract class AbstractTower implements Tower {
             s += "Kills: " + this.killCount + "\n" +
                     "Damage dealt: " + this.damageDealt / 100f + "\n\n";
         }
-        s += this.chosenPath.map(p -> "Specialized: " + p.displayName() + "\n").orElse("");
-        return s + this.upgradePathsBlock();
+        s += this.upgrades.tip(UpgradeSlot.HEAD).map(n -> "Specialized: " + n.displayName() + "\n").orElse("");
+        return s + this.upgradeNodesBlock();
     }
 
     /**
-     * Describes every upgrade path this tower still offers, one per line - "" once this tower
-     * has already chosen one (its {@code getStatusString()}'s own "Specialized: ..." line
-     * already covers that, and {@code availablePaths()} keeps returning the full static list
-     * regardless of what's been chosen) or for a tower with none (the empty list
-     * {@code availablePaths()} defaults to). Shown in both {@link #getInfoString()} (so a
-     * player can see what a tower will offer before ever buying it) and
-     * {@link #getStatusString()}.
+     * Describes every upgrade node currently offered, one per line - "" once nothing is left
+     * offered in this tree (either every node is owned, or the sole slot with content today,
+     * {@code HEAD}'s two exclusive roots, has had one bought - see
+     * {@code getStatusString()}'s own "Specialized: ..." line for that case) or for a tower
+     * with no tree at all (the empty {@link UpgradeTree#none()} default). Shown in both
+     * {@link #getInfoString()} (so a player can see what a tower will offer before ever buying
+     * it) and {@link #getStatusString()}.
      */
-    private String upgradePathsBlock() {
-        if (this.chosenPath.isPresent()) {
-            return "";
-        }
-        List<UpgradePath> paths = this.availablePaths();
-        if (paths.isEmpty()) {
+    private String upgradeNodesBlock() {
+        List<UpgradeNode> offered = this.upgradeTree().offered(this, this.context);
+        if (offered.isEmpty()) {
             return "";
         }
         StringBuilder s = new StringBuilder("\nUpgrade paths:\n");
-        for (UpgradePath path : paths) {
-            s.append("- ").append(path.describe()).append('\n');
+        for (UpgradeNode node : offered) {
+            s.append("- ").append(node.describe()).append('\n');
         }
         return s.toString();
     }

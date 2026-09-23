@@ -2,7 +2,8 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.fixtures.WorldFixtures;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
 import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,9 +19,9 @@ class PulseTowerTest {
     void expandedFieldIsChoosableWithMoneyAloneAndAppliesItsRangeBonus() {
         this.context.economy().startEconomy(1000, 5);
         PulseTower tower = new PulseTower(this.context, 0, 0);
-        UpgradePath expandedField = UpgradePaths.named(tower, "Expanded Field");
+        UpgradeNode expandedField = UpgradePaths.named(tower, "Expanded Field");
 
-        boolean chosen = tower.chooseUpgradePath(expandedField);
+        boolean chosen = tower.buyUpgrade(expandedField);
 
         assertThat(chosen).isTrue();
         assertThat(tower.getRangeReal()).isGreaterThan(PulseTower.RANGE * this.context.getBoard().scale());
@@ -30,11 +31,11 @@ class PulseTowerTest {
     void overloadCoreIsNotYetChoosableBeforeEnoughDamageDealt() {
         this.context.economy().startEconomy(1000, 5);
         PulseTower tower = new PulseTower(this.context, 0, 0);
-        UpgradePath overloadCore = UpgradePaths.named(tower, "Overload Core");
+        UpgradeNode overloadCore = UpgradePaths.named(tower, "Overload Core");
 
-        boolean chosen = tower.chooseUpgradePath(overloadCore);
+        boolean chosen = tower.buyUpgrade(overloadCore);
 
         assertThat(chosen).isFalse();
-        assertThat(tower.getChosenPath()).isEmpty();
+        assertThat(tower.upgrades().tip(UpgradeSlot.HEAD)).isEmpty();
     }
 }

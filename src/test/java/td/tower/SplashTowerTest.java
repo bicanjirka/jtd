@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.WorldFixtures;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -95,13 +95,13 @@ class SplashTowerTest {
     @Test
     void siegeBumpsTheSpreadRadiusBeyondTheBase() {
         SplashTower tower = towerNear(3, 3);
-        UpgradePath siege = UpgradePaths.named(tower, "Siege");
+        UpgradeNode siege = UpgradePaths.named(tower, "Siege");
         float radiusBeforeChoosing = tower.getSpreadRadius();
 
-        // onUpgradePathChosen is exercised directly - Siege's own gate (a damage-dealt
+        // onUpgradeBought is exercised directly - Siege's own gate (a damage-dealt
         // threshold) is covered generically by DamageDealtConditionTest and by
         // AbstractTowerTest's condition-gating test; this proves the stat bump itself.
-        tower.onUpgradePathChosen(siege);
+        tower.onUpgradeBought(siege);
 
         assertThat(tower.getSpreadRadius()).isGreaterThan(radiusBeforeChoosing);
     }
@@ -113,9 +113,9 @@ class SplashTowerTest {
         this.context.towers().add(tower);
         this.context.towers().add(new SniperTower(this.context, 2, 2));
         this.context.towers().add(new SniperTower(this.context, 4, 4));
-        UpgradePath clusterCharge = UpgradePaths.named(tower, "Cluster Charge");
+        UpgradeNode clusterCharge = UpgradePaths.named(tower, "Cluster Charge");
 
-        boolean chosen = tower.chooseUpgradePath(clusterCharge);
+        boolean chosen = tower.buyUpgrade(clusterCharge);
 
         assertThat(chosen).isTrue();
         assertThat(tower.damageCurrent()).isGreaterThan(tower.damageBase);

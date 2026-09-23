@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.tower.Tower;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
@@ -100,33 +100,31 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     }
 
     /**
-     * Shows up to two upgrade-path buttons for the selected tower, one per
-     * {@code availablePaths()} entry - or none, once a path has already been chosen (its name
-     * then reads from {@code getStatusString()}'s own "Specialized: ..." line instead).
+     * Shows up to two upgrade-node buttons for the selected tower, one per
+     * {@code offeredUpgrades()} entry - a temporary stand-in for the sidebar upgrade-tree
+     * panel, which replaces this with a full per-slot layout.
      * Called from both {@link #updateInterface} and the render-pulse {@link #refreshSelected},
      * the same way sell's affordability and the live kill/damage figures already are - a
-     * path's enablement (cluster size, damage dealt, kill count) can change without any
+     * node's enablement (cluster size, damage dealt, kill count) can change without any
      * economy event, so it needs the same per-frame re-derivation.
      */
     private void updatePathButtons() {
-        List<UpgradePath> paths = this.selectedTower.getChosenPath().isPresent()
-                ? List.of()
-                : this.selectedTower.availablePaths();
-        this.updatePathButton(this.jButton_path1, paths, 0);
-        this.updatePathButton(this.jButton_path2, paths, 1);
+        List<UpgradeNode> offered = this.selectedTower.offeredUpgrades(this.context);
+        this.updatePathButton(this.jButton_path1, offered, 0);
+        this.updatePathButton(this.jButton_path2, offered, 1);
     }
 
-    private void updatePathButton(HudButton button, List<UpgradePath> paths, int index) {
-        if (index >= paths.size()) {
+    private void updatePathButton(HudButton button, List<UpgradeNode> offered, int index) {
+        if (index >= offered.size()) {
             button.setVisible(false);
             return;
         }
-        UpgradePath path = paths.get(index);
+        UpgradeNode node = offered.get(index);
         button.setVisible(true);
-        button.setText(path.displayName() + " ( $" + path.price() + " )");
+        button.setText(node.displayName() + " ( $" + node.price() + " )");
         boolean available = !this.levelEnded
-                && path.condition().isSatisfied(this.selectedTower, this.context)
-                && this.context.economy().canPay(path.price());
+                && node.gate().isSatisfied(this.selectedTower, this.context)
+                && this.context.economy().canPay(node.price());
         button.setEnabled(available);
     }
 
@@ -134,8 +132,8 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         if (this.selectedTower == null) {
             return;
         }
-        List<UpgradePath> paths = this.selectedTower.availablePaths();
-        if (index < paths.size() && this.selectedTower.chooseUpgradePath(paths.get(index))) {
+        List<UpgradeNode> offered = this.selectedTower.offeredUpgrades(this.context);
+        if (index < offered.size() && this.selectedTower.buyUpgrade(offered.get(index))) {
             this.updateInterface();
         }
     }

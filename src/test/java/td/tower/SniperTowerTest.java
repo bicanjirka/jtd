@@ -8,7 +8,8 @@ import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.WorldFixtures;
-import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
@@ -26,9 +27,9 @@ class SniperTowerTest {
     void overclockIsChoosableWithMoneyAloneAndAppliesItsFireRateAndDamagePenalty() {
         this.context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(this.context, 0, 0);
-        UpgradePath overclock = UpgradePaths.named(tower, "Overclock");
+        UpgradeNode overclock = UpgradePaths.named(tower, "Overclock");
 
-        boolean chosen = tower.chooseUpgradePath(overclock);
+        boolean chosen = tower.buyUpgrade(overclock);
 
         assertThat(chosen).isTrue();
         assertThat(tower.damageCurrent()).isLessThan(tower.damageBase);
@@ -39,12 +40,12 @@ class SniperTowerTest {
     void veteranIsNotYetChoosableBeforeTenKills() {
         this.context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(this.context, 0, 0);
-        UpgradePath veteran = UpgradePaths.named(tower, "Veteran");
+        UpgradeNode veteran = UpgradePaths.named(tower, "Veteran");
 
-        boolean chosen = tower.chooseUpgradePath(veteran);
+        boolean chosen = tower.buyUpgrade(veteran);
 
         assertThat(chosen).isFalse();
-        assertThat(tower.getChosenPath()).isEmpty();
+        assertThat(tower.upgrades().tip(UpgradeSlot.HEAD)).isEmpty();
     }
 
     @Test
@@ -56,9 +57,9 @@ class SniperTowerTest {
             tower.dealDamage(fodder, Damage.physical(1_000_000));
             fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
         }
-        UpgradePath veteran = UpgradePaths.named(tower, "Veteran");
+        UpgradeNode veteran = UpgradePaths.named(tower, "Veteran");
 
-        boolean chosen = tower.chooseUpgradePath(veteran);
+        boolean chosen = tower.buyUpgrade(veteran);
 
         assertThat(chosen).isTrue();
         assertThat(tower.critChance()).isGreaterThan(0f);
