@@ -154,8 +154,8 @@ cases in `Java2DFrameRenderer`, and wire the domain class into the existing visi
 per-type checklists live in `td/enemy/CLAUDE.md` and `td/tower/CLAUDE.md`.
 
 **Every enemy carries a rank badge, `EnemyBodyDraw.badge()` (a `RankBadge`), painted upright just
-above the body - never rotated with `facingRadians`, the same reasoning `paintUpgradeAccent`'s
-ring already follows for a tower's upgrade path.** `EnemyFrameBuilder`'s `badgeFor(Rank)` is the
+above the body - never rotated with `facingRadians`, the same reasoning `paintEnchantHalo`'s
+ring already follows for a tower's `SPECIAL` slot.** `EnemyFrameBuilder`'s `badgeFor(Rank)` is the
 one place a `Rank` maps to a badge; `Java2DFrameRenderer.paintRankBadge` is the one place a badge
 becomes pixels. `RankBadge.NONE` (Grunt) paints nothing at all. Two of the five glyphs reuse
 existing vocabulary - `chevronShape` (extracted from the path trail's own moving marker) for
@@ -191,15 +191,23 @@ different alphas, so it has its own `paintSonarSweep` and `turretHeadShape` thro
 It is also sized to stay inside its own tile: a head reaching across neighbouring cells reads
 as a weapon with reach rather than as an instrument.
 
-A tower that has permanently chosen an upgrade path (see `td.tower.upgrade`) gets a thin
-ring drawn just outside its body — `Java2DFrameRenderer.paintUpgradeAccent`, fed by
-`TowerSpriteDraw.accent()`. This is deliberately **not** one more per-tower-per-path shape:
-there are only two accent roles, `Palette.TOWER_UPGRADE_PATH_A`/`_B`, shared across every
-tower type and keyed off *which slot* the tower specialized into (`TowerSpriteFrameBuilder.accentPaletteFor` does `tower.availablePaths().indexOf(tower
-.getChosenPath())`, not a per-path identity lookup) — so the accent is one consistent
-two-colour visual language the player learns once, not eight colours to memorize. It is
-also always a circle regardless of the body's own shape, for the same reason the selection
-ring is: legibility matters more than matching the body's silhouette here.
+A tower's upgrade-tree state (see `td.tower.upgrade`) shows on its sprite as three marks, fed
+by `TowerSpriteDraw.slotMarks()`/`enchantPulse()` (`TowerSpriteFrameBuilder.slotMarksFor`/
+`enchantPulseFor`) - one consistent visual language per `UpgradeSlot`, not one shape per tower
+per node:
+
+- **A row of small pips just below the body** (`Java2DFrameRenderer.paintSlotPips`), one per
+  node owned in each slot, grouped by slot and coloured by its own `Palette.TOWER_UPGRADE_BASE`/
+  `_HEAD`/`_SPECIAL` role - "what has this tower already bought."
+- **An up-pointing chevron just above the body per slot that's currently ready**
+  (`paintSlotReadyChevrons`) - offers a node whose gate is met and which is affordable right
+  now, reusing `chevronShape` rotated rather than a second arrowhead shape. A separate signal
+  from the pip row on purpose: "what could it buy right now" is not "what has it already
+  bought."
+- **A pulsing halo just outside the body once anything is owned in `SPECIAL`**
+  (`paintEnchantHalo`), reusing the Aura tower's own pulse clock so both cosmetics read at the
+  same rate. Always a circle regardless of the body's own shape, for the same reason the
+  selection ring is: legibility matters more than matching the body's silhouette here.
 
 ## The HUD look is ours, not the platform's
 

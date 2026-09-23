@@ -1,15 +1,15 @@
 package td.ui.render;
 
-import java.util.Optional;
+import java.util.List;
 
 /**
- * A tower's body sprite, plus its selection range ring when {@code selected}.
- * {@code accent}, when present, marks a tower that has permanently chosen an upgrade path
- * (see {@code td.tower.upgrade}) - one of exactly two roles
- * ({@code TOWER_UPGRADE_PATH_A}/{@code _B}), shared across every tower type rather than one
- * role per tower per path, so the ring reads as one consistent "which slot did this tower
- * pick" language instead of eight colours to memorize.
+ * A tower's body sprite, plus its selection range ring when {@code selected}. {@code
+ * slotMarks} carries one {@link SlotMarkDraw} per {@code td.tower.upgrade.UpgradeSlot}, always
+ * three, in slot order; {@code enchantPulse} is {@code 0} for a tower with nothing owned in its
+ * {@code SPECIAL} slot, otherwise a 0..1 phase driving a pulsing halo - the same "function of
+ * elapsed time" cosmetic animation the Aura tower's own pulse already uses.
  */
 public record TowerSpriteDraw(Palette palette, int boardX, int boardY, boolean selected,
-                              float centerX, float centerY, float rangeReal, Optional<Palette> accent) {
+                              float centerX, float centerY, float rangeReal,
+                              List<SlotMarkDraw> slotMarks, float enchantPulse) {
 }

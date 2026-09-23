@@ -56,7 +56,7 @@ public final class BoardRenderer {
             enemy.accept(enemyFrameBuilder);
         }
 
-        TowerSpriteFrameBuilder spriteFrameBuilder = new TowerSpriteFrameBuilder(interpolationAlpha, animationSeconds);
+        TowerSpriteFrameBuilder spriteFrameBuilder = new TowerSpriteFrameBuilder(this.world, interpolationAlpha, animationSeconds);
         TowerEffectFrameBuilder effectFrameBuilder = new TowerEffectFrameBuilder(gameTime, interpolationAlpha, animationSeconds);
         for (Tower tower : this.world.towers().all()) {
             tower.accept(spriteFrameBuilder);

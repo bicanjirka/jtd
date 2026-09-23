@@ -278,8 +278,8 @@ combat primitive that doesn't exist yet - each one has its own `TODO.md` entry.
   elsewhere in the tower's own text would risk.
 - `AbstractTower.upgradeTree()` defaults to `UpgradeTree.none()`; every real tower overrides it
   with its own content, added per-leaf rather than part of this shared mechanism.
-- The UI (`td.ui.PanelTowerInfo`) and the render accent ring (`Java2DFrameRenderer.paintUpgradeAccent`, see
-  `td/ui/CLAUDE.md`) both key off
+- The UI (`td.ui.PanelUpgradeTree`) and the render slot marks (`Java2DFrameRenderer.paintSlotPips`/
+  `paintSlotReadyChevrons`/`paintEnchantHalo`, see `td/ui/CLAUDE.md`) both key off
   `offeredUpgrades()`/`upgrades()` alone - a tower's own domain state is the single source of
   truth for what's buyable and what's already bought, not any UI-side tracking.
 

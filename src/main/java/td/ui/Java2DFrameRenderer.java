@@ -23,6 +23,7 @@ import td.ui.render.PulseDirection;
 import td.ui.render.PulseDraw;
 import td.ui.render.RankBadge;
 import td.ui.render.RenderFrame;
+import td.ui.render.SlotMarkDraw;
 import td.ui.render.SplashDraw;
 import td.ui.render.StatusMarkerDraw;
 import td.ui.render.TowerEffectDraw;
@@ -46,6 +47,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -75,10 +77,32 @@ public final class Java2DFrameRenderer {
      */
     private static final float ICON_BODY_SIZE_FRACTION = 0.25f;
     /**
-     * How far outside the body the specialization ring sits - every body shape's own extent stays within {@code bodySize}.
+     * A slot pip's radius and centre-to-centre spacing, both fractions of {@code bodySize} - see
+     * {@link #paintSlotMarks}.
      */
-    private static final float UPGRADE_ACCENT_RADIUS_FRACTION = 1.3f;
-    private static final float UPGRADE_ACCENT_STROKE_WIDTH = 2.0f;
+    private static final float SLOT_PIP_RADIUS_FRACTION = 0.11f;
+    private static final float SLOT_PIP_SPACING_FRACTION = 0.3f;
+    /**
+     * How far below the body centre the pip row sits.
+     */
+    private static final float SLOT_PIP_ROW_OFFSET_FRACTION = 0.95f;
+    /**
+     * A gap between one slot's pips and the next slot's, on top of the ordinary pip spacing.
+     */
+    private static final float SLOT_GROUP_GAP_FRACTION = 0.16f;
+    /**
+     * A ready chevron's size and how far above the body centre its row sits.
+     */
+    private static final float SLOT_CHEVRON_SIZE_FRACTION = 0.16f;
+    private static final float SLOT_CHEVRON_ROW_OFFSET_FRACTION = 1.05f;
+    private static final float SLOT_CHEVRON_SPACING_FRACTION = 0.45f;
+    /**
+     * How far outside the body the SPECIAL-slot enchant halo sits - every body shape's own
+     * extent stays within {@code bodySize}, the same margin the accent ring this halo replaced
+     * used.
+     */
+    private static final float ENCHANT_HALO_RADIUS_FRACTION = 1.3f;
+    private static final float ENCHANT_HALO_STROKE_WIDTH = 2.0f;
     /**
      * How big a turret head is drawn relative to a cell - smaller than the base it sits on.
      */
@@ -455,8 +479,9 @@ public final class Java2DFrameRenderer {
             case TOWER_CINDER_BODY -> new Color(255, 90, 30);
             case TOWER_AURA_RING -> Color.WHITE;
             case TOWER_AURA_LINK -> withAlpha(Color.WHITE, 60);
-            case TOWER_UPGRADE_PATH_A -> new Color(255, 200, 60);
-            case TOWER_UPGRADE_PATH_B -> new Color(100, 180, 255);
+            case TOWER_UPGRADE_BASE -> new Color(140, 255, 140);
+            case TOWER_UPGRADE_HEAD -> new Color(255, 200, 60);
+            case TOWER_UPGRADE_SPECIAL -> new Color(200, 100, 255);
             case TOWER_SNIPER_BEAM -> Color.GREEN;
             case TOWER_SPLASH_BEAM -> Color.RED;
             case TOWER_SPLASH_LINE, TOWER_SPLASH_FILL -> withAlpha(Color.RED, 80);
@@ -884,24 +909,96 @@ public final class Java2DFrameRenderer {
         AffineTransform save = g2.getTransform();
         g2.translate(sprite.centerX(), sprite.centerY());
         float bodySize = scale * TOWER_BODY_SIZE_FRACTION;
+        this.paintEnchantHalo(g2, sprite.enchantPulse(), bodySize);
         this.paintTowerBody(g2, sprite.palette(), bodySize);
-        sprite.accent().ifPresent(accent -> this.paintUpgradeAccent(g2, accent, bodySize));
+        this.paintSlotPips(g2, sprite.slotMarks(), bodySize);
+        this.paintSlotReadyChevrons(g2, sprite.slotMarks(), bodySize);
         g2.setTransform(save);
     }
 
     /**
-     * A thin ring just outside a tower's body, marking a permanently-chosen upgrade path (see
-     * {@code td.tower.upgrade}). Deliberately shape-agnostic - always a circle, regardless of
-     * the body's own triangle/ring/spiral/star/pulsar - so it reads the same way on every
-     * tower and never needs updating when a body shape changes.
+     * A pulsing ring just outside a tower's body, shown once anything is owned in its
+     * {@code SPECIAL} slot (see {@code td.tower.upgrade}) - the same "function of elapsed time"
+     * pulse the Aura tower's own animation already uses (see
+     * {@code TowerSpriteFrameBuilder.enchantPulseFor}), so a specialized tower reads as
+     * enchanted the same way an Aura tower already reads as pulsing. Deliberately
+     * shape-agnostic - always a circle, regardless of the body's own triangle/ring/spiral/
+     * star/pulsar - so it reads the same way on every tower and never needs updating when a
+     * body shape changes.
      */
-    private void paintUpgradeAccent(Graphics2D g2, Palette accent, float bodySize) {
-        float radius = bodySize * UPGRADE_ACCENT_RADIUS_FRACTION;
+    private void paintEnchantHalo(Graphics2D g2, float pulse, float bodySize) {
+        if (pulse <= 0f) {
+            return;
+        }
+        float radius = bodySize * ENCHANT_HALO_RADIUS_FRACTION;
         Stroke previousStroke = g2.getStroke();
-        g2.setStroke(new BasicStroke(UPGRADE_ACCENT_STROKE_WIDTH));
-        g2.setColor(colorFor(accent));
+        g2.setStroke(new BasicStroke(ENCHANT_HALO_STROKE_WIDTH));
+        g2.setColor(withAlpha(colorFor(Palette.TOWER_UPGRADE_SPECIAL), Math.round(80 + pulse * 150)));
         g2.draw(new Ellipse2D.Float(-radius, -radius, radius * 2, radius * 2));
         g2.setStroke(previousStroke);
+    }
+
+    /**
+     * A row of small filled pips just below a tower's body, one per node owned in each slot -
+     * "what has this tower already bought." Grouped by slot in slot order, coloured by each
+     * slot's own {@link Palette} role, with a one-spacing gap between groups (an undrawn pip
+     * slot, not a separate constant) rather than one contiguous row a player would have to
+     * count carefully to tell slots apart.
+     */
+    private void paintSlotPips(Graphics2D g2, List<SlotMarkDraw> marks, float bodySize) {
+        List<Color> pipColors = new ArrayList<>();
+        for (SlotMarkDraw mark : marks) {
+            if (mark.level() == 0) {
+                continue;
+            }
+            if (!pipColors.isEmpty()) {
+                pipColors.add(null);
+            }
+            Color color = colorFor(mark.palette());
+            for (int i = 0; i < mark.level(); i++) {
+                pipColors.add(color);
+            }
+        }
+        if (pipColors.isEmpty()) {
+            return;
+        }
+        float pipRadius = bodySize * SLOT_PIP_RADIUS_FRACTION;
+        float spacing = bodySize * SLOT_PIP_SPACING_FRACTION;
+        float y = bodySize * SLOT_PIP_ROW_OFFSET_FRACTION;
+        float x = -(pipColors.size() - 1) * spacing / 2f;
+        for (Color color : pipColors) {
+            if (color != null) {
+                g2.setColor(color);
+                g2.fill(new Ellipse2D.Float(x - pipRadius, y - pipRadius, pipRadius * 2, pipRadius * 2));
+            }
+            x += spacing;
+        }
+    }
+
+    /**
+     * One small up-pointing chevron just above a tower's body per slot that's currently
+     * ready - offers a node whose gate is met and which is affordable right now. Reuses
+     * {@link #chevronShape}, rotated to point up, rather than a second arrowhead shape - "what
+     * could this tower buy right now," distinct from the pip row's "what has it already bought."
+     */
+    private void paintSlotReadyChevrons(Graphics2D g2, List<SlotMarkDraw> marks, float bodySize) {
+        List<Palette> ready = marks.stream().filter(SlotMarkDraw::ready).map(SlotMarkDraw::palette).toList();
+        if (ready.isEmpty()) {
+            return;
+        }
+        float size = bodySize * SLOT_CHEVRON_SIZE_FRACTION;
+        float spacing = bodySize * SLOT_CHEVRON_SPACING_FRACTION;
+        float y = -bodySize * SLOT_CHEVRON_ROW_OFFSET_FRACTION;
+        float x = -(ready.size() - 1) * spacing / 2f;
+        Shape upChevron = AffineTransform.getRotateInstance(-Math.PI / 2).createTransformedShape(chevronShape(size));
+        AffineTransform save = g2.getTransform();
+        for (Palette palette : ready) {
+            g2.setColor(colorFor(palette));
+            g2.translate(x, y);
+            g2.fill(upChevron);
+            g2.setTransform(save);
+            x += spacing;
+        }
     }
 
     /**

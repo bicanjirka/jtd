@@ -9,6 +9,7 @@ import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.LevelFixtures;
 import td.projectile.CannonballProjectile;
+import td.tower.AuraTower;
 import td.tower.CinderTower;
 import td.tower.SniperTower;
 import td.tower.upgrade.UpgradeSlot;
@@ -17,6 +18,7 @@ import td.ui.render.EnemyFadeDraw;
 import td.ui.render.Palette;
 import td.ui.render.ProjectileDraw;
 import td.ui.render.RenderFrame;
+import td.ui.render.SlotMarkDraw;
 import td.ui.render.TowerSpriteDraw;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
@@ -82,34 +84,74 @@ class BoardRendererTest {
     }
 
     @Test
-    void aTowerWithNoChosenUpgradePathYieldsNoAccent() {
+    void aTowerWithNothingBoughtYieldsEmptySlotMarksAndNoEnchantPulse() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         context.towers().add(new SniperTower(context, 1, 1));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
-        assertThat(frame.towerSprites().getFirst().accent()).isEmpty();
+        TowerSpriteDraw sprite = frame.towerSprites().getFirst();
+        assertThat(sprite.slotMarks()).extracting(SlotMarkDraw::level).containsExactly(0, 0, 0);
+        assertThat(sprite.enchantPulse()).isZero();
     }
 
     @Test
-    void aTowersSecondUpgradePathYieldsTheAccentPathBRole() {
+    void aFundedFreshTowersBaseSlotIsMarkedReadyButHeadIsNotYetLocked() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        context.economy().startEconomy(1000, 5);
+        context.towers().add(new SniperTower(context, 1, 1));
+
+        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+
+        List<SlotMarkDraw> marks = frame.towerSprites().getFirst().slotMarks();
+        assertThat(marks.get(UpgradeSlot.BASE.ordinal()).ready()).isTrue();
+        assertThat(marks.get(UpgradeSlot.HEAD.ordinal()).ready()).isFalse();
+        assertThat(marks.get(UpgradeSlot.SPECIAL.ordinal()).ready()).isFalse();
+    }
+
+    @Test
+    void buyingTwoHeadNodesShowsTwoPipsInTheHeadSlotAndOneInBase() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(context, 1, 1);
         context.towers().add(tower);
         // SniperTower's HEAD nodes are [Focused Optics, Focused Optics II, Marksman's Eye,
-        // Marksman's Eye II] - the accent keys off index within this list, not branch identity,
-        // so buying straight up Focused Optics' own chain reaches index 1 (accent B) without
-        // grinding out Marksman's Eye's kill-count gate.
+        // Marksman's Eye II] - buying straight up Focused Optics' own chain needs no kills.
         tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.BASE).get(1)); // Awaken
         tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).get(0));
         tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).get(1));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
 
-        assertThat(frame.towerSprites().getFirst().accent()).contains(Palette.TOWER_UPGRADE_PATH_B);
+        List<SlotMarkDraw> marks = frame.towerSprites().getFirst().slotMarks();
+        assertThat(marks.get(UpgradeSlot.BASE.ordinal()).level()).isEqualTo(1);
+        assertThat(marks.get(UpgradeSlot.HEAD.ordinal()).level()).isEqualTo(2);
+        assertThat(marks.get(UpgradeSlot.SPECIAL.ordinal()).level()).isZero();
+    }
+
+    @Test
+    void owningASpecialNodeGivesTheSpriteAPositiveEnchantPulse() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        context.economy().startEconomy(1000, 5);
+        // AuraTower's own SPECIAL root (Withering Field) is gated on a cluster of 2 nearby
+        // towers, reachable without simulating combat from outside td.tower's own package.
+        AuraTower tower = new AuraTower(context, 1, 1);
+        context.towers().add(tower);
+        context.towers().add(new SniperTower(context, 0, 0));
+        context.towers().add(new SniperTower(context, 2, 2));
+        tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.BASE).get(1)); // Awaken
+        tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.SPECIAL).get(0)); // Withering Field
+
+        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+
+        TowerSpriteDraw sprite = frame.towerSprites().stream()
+                .filter(s -> s.palette() == Palette.TOWER_AURA_BODY)
+                .findFirst().orElseThrow();
+        assertThat(sprite.enchantPulse()).isGreaterThan(0f);
     }
 
     @Test

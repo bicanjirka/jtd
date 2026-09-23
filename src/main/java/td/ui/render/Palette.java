@@ -28,10 +28,12 @@ public enum Palette {
      */
     TOWER_AURA_LINK,
     /**
-     * The specialization-ring accent for a tower's first vs. second upgrade path - one shared pair of roles, not one per tower type.
+     * A slot mark's colour - see {@link SlotMarkDraw}. One role per {@code UpgradeSlot}, shared
+     * across every tower type, not one per tower per node.
      */
-    TOWER_UPGRADE_PATH_A,
-    TOWER_UPGRADE_PATH_B,
+    TOWER_UPGRADE_BASE,
+    TOWER_UPGRADE_HEAD,
+    TOWER_UPGRADE_SPECIAL,
     TOWER_SNIPER_BEAM,
     TOWER_SPLASH_BEAM,
     TOWER_SPLASH_LINE,
