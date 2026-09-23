@@ -448,6 +448,12 @@ The three debug methods it shares with the `n`/`x`/`c` keybindings live on `Game
 `TowerDefense`, per the headless/Swing boundary — they are ordinary engine rules and are unit
 tested the same way every other `GameEngineTest` case is.
 
+For visual work, the `run-jtd` Claude Code skill also offers `PreviewBoard`/`PreviewEnemy` —
+headless dev tools that compose a board or a single enemy scene and render it straight to a PNG,
+without opening a window or driving the real UI. They exist so an agent can check a rendering
+change quickly, the same way `BalanceHarness` lets one check a numeric one. Full CLI usage and
+worked examples live in `.claude/skills/run-jtd/SKILL.md`.
+
 ## 10. Why the per-package docs are not held to the root file's size discipline
 
 The root `CLAUDE.md` was cut from 36 KB to about 15 by moving history and rationale here. The
