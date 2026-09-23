@@ -16,9 +16,10 @@ import java.util.List;
 
 /**
  * "Cinder tower" - a continuous flame cone with no cooldown, slowly reorienting toward the
- * nearest enemy in range and burning everything currently caught in its wedge, ghosts
- * included - the same "hits everyone in the shape" spirit as {@link PulseTower}, just confined
- * to a cone instead of the whole range circle.
+ * nearest enemy in range and burning everything currently caught in its wedge - the same
+ * "hits everyone in the shape" spirit as {@link PulseTower}, just confined to a cone instead
+ * of the whole range circle. Like every other non-{@link PulseTower} tower, it cannot target
+ * or hit an invisible enemy.
  * <p>
  * Unlike {@link SonarTower}'s continuously rotating beam, this cone only slowly reorients and
  * is never "between" two headings in a way that would let it miss something, so it decides
@@ -53,11 +54,6 @@ public final class CinderTower extends AbstractTower {
             "Wide Nozzle", 25, TowerBuff.range(0.3f), UpgradeCondition.always(), "+40% cone width");
     private static final List<UpgradePath> PATHS = List.of(WHITE_FLAME, WIDE_NOZZLE);
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
-    // Bought on the EDT (onUpgradePathChosen) and read every tick on the game-loop thread, so
-    // it is published volatile - CLAUDE.md 3 rule 2. Each is an independent scalar with no
-    // invariant tying it to another, which is what makes a volatile scalar the right mechanism
-    // here rather than a TowerStats-style snapshot: reading last pulse's value for one tick
-    // after an upgrade is correct, just briefly stale.
     private volatile double halfWidthRadians = HALF_WIDTH_RADIANS_BASE;
 
     public CinderTower(GameWorld context, int x, int y) {
@@ -81,7 +77,7 @@ public final class CinderTower extends AbstractTower {
     }
 
     public void doTick(int gameTime) {
-        List<EnemyMob> inRange = InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal())
+        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.NORMAL)
                 .matching(this.context.enemies());
         // No target: hold the last heading rather than snapping back to a neutral angle - see
         // TurretAim's class doc on skipping tick() while idle.
@@ -89,7 +85,7 @@ public final class CinderTower extends AbstractTower {
                 .ifPresent(nearest -> this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, nearest.getX(), nearest.getY())));
 
         List<EnemyMob> caught = new InWedgeTargetQuery(this.centerX, this.centerY, this.turretAim.currentRadians(), this.halfWidthRadians)
-                .and(InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal()))
+                .and(InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.NORMAL))
                 .matching(this.context.enemies());
         for (EnemyMob enemy : caught) {
             enemy.applyEffect(Effect.burn(Damage.magic(this.damageCurrent()), BURN_DURATION_TICKS, d -> this.dealDamage(enemy, d)));
