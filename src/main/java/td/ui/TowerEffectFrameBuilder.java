@@ -35,7 +35,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     // spinning turret heads, not tick-based domain state.
     private static final double AURA_PERIOD_SECONDS = 1.8;
     private static final double[] AURA_PHASE_OFFSETS = {0.0, 0.5};
-    private static final float CINDER_CONE_ALPHA = 0.35f;
 
     private final List<TowerEffectDraw> draws = new ArrayList<>();
     private final int gameTime;
@@ -140,12 +139,26 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /**
-     * The wedge itself, in the same heading {@code InWedgeTargetQuery} decides hits against.
+     * One {@link ConeDraw} per wave currently travelling outward from this tower - not a single,
+     * unconditional wedge drawn every frame the way the old continuous cone was. Each wave's
+     * progress is computed the same way the turret head's own heading is interpolated, using
+     * {@link #interpolationAlpha} for the sub-tick position between its previous and current
+     * tick's travel distance - see {@code td/ui/CLAUDE.md}'s "use interpolationAlpha for anything
+     * advancing per tick" rule.
      */
     public Void visitCinderTower(CinderTower tower) {
-        float headingRadians = (float) tower.getTurretAim().radiansAt(this.interpolationAlpha);
-        this.draws.add(new ConeDraw(Palette.TOWER_CINDER_CONE, tower.getX(), tower.getY(),
-                headingRadians, tower.getRangeReal(), (float) tower.getHalfWidthRadians(), CINDER_CONE_ALPHA));
+        for (CinderTower.FlameWave wave : tower.getInFlightWaves()) {
+            float previousProgress = waveProgress(wave, this.gameTime - 1);
+            float currentProgress = waveProgress(wave, this.gameTime);
+            float progress = previousProgress + (currentProgress - previousProgress) * (float) this.interpolationAlpha;
+            this.draws.add(new ConeDraw(Palette.TOWER_CINDER_CONE, tower.getX(), tower.getY(),
+                    (float) wave.headingRadians(), tower.getRangeReal(), (float) wave.halfWidthRadians(), progress));
+        }
         return null;
+    }
+
+    private static float waveProgress(CinderTower.FlameWave wave, int atTick) {
+        float travelled = (float) (atTick - wave.firedAtTick()) / CinderTower.WAVE_TRAVEL_TICKS;
+        return Math.max(0f, Math.min(1f, travelled));
     }
 }

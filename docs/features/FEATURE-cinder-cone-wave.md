@@ -1,7 +1,9 @@
 # Feature Request: Cinder Tower Cone Wave
 
-**Status: not yet built.** Nothing in this document exists in the codebase today — it describes
-a change to `CinderTower`'s firing model and its render effect, not a feature already shipped.
+**Status: implemented.** `CinderTower` now fires on a real cooldown, each shot is a travelling
+`FlameWave` that burns an enemy once its expanding front reaches it, and
+`TowerEffectFrameBuilder`/`Java2DFrameRenderer` draw one fading `ConeDraw` per in-flight wave,
+exactly as decided below.
 
 ## Summary
 
@@ -201,25 +203,23 @@ Interconnections).
 - Whether the underlying delayed-hit bookkeeping lives in `td.projectile` or stays local to
   `CinderTower` is explicitly **not** decided here — see Interconnections and Open questions.
 
-## Open questions
+## Open questions (resolved)
 
-1. **`td.projectile` vs. tower-local state** for the in-flight wave bookkeeping (see
-   Interconnections) — the single biggest design question this request raises. Leaning toward
-   `td.projectile` on the grounds that it's already the package meant to own "fired now, resolves
-   later," but its current contract is shaped for one point reaching one target, not a widening
-   wedge reaching several — this needs a real planning-time decision, not a default.
-2. Can one travelling wave hit the same enemy more than once while that enemy lingers inside its
-   expanding band, or does a wave resolve against each enemy exactly once?
-3. Does Cinder's cooldown play by the same buffable-fire-rate axis (`TowerBuff.fireRateFor`,
-   `td/tower/CLAUDE.md`'s "Aura buff stacking" section) every other cooldown-based tower already
-   uses, or does it need its own treatment given how recently it had no cooldown at all?
-4. Do `WHITE_FLAME`/`WIDE_NOZZLE`'s existing gates and bonuses need to change in kind (not just
-   in tuned magnitude) now that damage is delivered in discrete, cooled-down bursts instead of a
-   continuous refresh — e.g. does `WHITE_FLAME`'s pitch still make sense unchanged, or does the
-   new firing model suggest a different bonus shape?
+1. **The in-flight wave bookkeeping stays local to `CinderTower`** (`CinderTower.FlameWave`),
+   not `td.projectile` — widening `Projectile`'s single-point-impact contract for one tower's
+   one-off widening-wedge shape was judged the wrong direction; `CinderTower` already owned the
+   equivalent wedge/turret-aim bookkeeping shape, so this is one more field, not a new pattern.
+2. **A wave resolves against each enemy exactly once**, tracked by the wave's own per-wave hit
+   set (`FlameWave.alreadyHit`) — not a continuous refresh while an enemy lingers inside the
+   expanding band.
+3. **Cinder's cooldown plays by the same buffable fire-rate axis every other cooldown tower
+   uses** (`coolDownCurrent()`) — no special-casing.
+4. **`WHITE_FLAME`/`WIDE_NOZZLE` stay mechanically as they are** — out of scope for this
+   request's own delivery; `WHITE_FLAME`'s damage bonus still scales each wave's burn intensity,
+   `WIDE_NOZZLE` still widens `halfWidthRadians`, both via the same `onUpgradePathChosen` hook as
+   before. Retuning either against the new cooldown-gated cadence is left to a later balance pass.
 
 ---
 
-*After planning and implementation, update this document rather than deleting it: mark it
-implemented, prune resolved open questions, and either promote deferred scope to a new request
-or note it's still wanted for a later version.*
+*Implemented. `run-jtd` visual verification (watching a wave actually travel and fade in real
+play) is covered as part of this implementation's end-of-plan verification pass.*

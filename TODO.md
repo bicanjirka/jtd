@@ -13,22 +13,15 @@ this file is the single place to look for outstanding design/feature gaps.
 
 ## Feature request implementation order
 
-A priority pass over every doc in `docs/features/`, ordered by prerequisites and shared-file risk
-rather than by request date. Two requests are not yet built; the rest already shipped (see each
-doc's own status line) and are listed at the end only for reference.
+One request is not yet built; the rest already shipped (see each doc's own status line) and are
+listed at the end only for reference.
 
-1. **`FEATURE-cinder-cone-wave.md`** — medium-large. Independent of the other item, but its open
-   questions (does the travelling-wave bookkeeping live in `td.projectile` or stay
-   `CinderTower`-local; do `WHITE_FLAME`/`WIDE_NOZZLE` need to change shape, not just tuning, once
-   firing is discrete) settle Cinder's two upgrade paths into their final form. Doing this before
-   item 2 means `FEATURE-tower-upgrade-trees.md` migrates Cinder's paths into the three-slot model
-   once, instead of migrating them and reworking them again when this lands afterward.
-2. **`FEATURE-tower-upgrade-trees.md`** — the largest and most architecturally significant
-   pending request: three independent per-slot upgrade graphs, node prerequisites, a new render
-   layer, a sidebar redesign, and migration of every existing `UpgradePath` (including Cinder's,
-   see item 1) into the new model. Sequenced last so it lands on an already-settled
-   `PanelWaveInfo` (already cleaned up) and an already-settled Cinder upgrade shape (item 1),
-   rather than migrating content that is about to change again out from under it.
+`FEATURE-tower-upgrade-trees.md` — the largest and most architecturally significant pending
+request: three independent per-slot upgrade graphs, node prerequisites, a new render layer, a
+sidebar redesign, and migration of every existing `UpgradePath` (including Cinder's, now settled
+by `FEATURE-cinder-cone-wave.md`) into the new model. It lands on an already-settled
+`PanelWaveInfo` and an already-settled Cinder upgrade shape, rather than migrating content that
+was about to change again out from under it.
 
 Already implemented, for reference: `FEATURE-enemy-spawn-types.md`,
 `FEATURE-multiple-enemy-paths.md`, `FEATURE-playtesting-and-balance-tooling.md`,
@@ -36,7 +29,7 @@ Already implemented, for reference: `FEATURE-enemy-spawn-types.md`,
 `FEATURE-critical-damage.md`, `FEATURE-damage-types-and-projectiles.md`,
 `FEATURE-enemy-traits-and-effects.md`, `FEATURE-sniper-crit-beam.md`,
 `FEATURE-wave-preview-cleanup.md`, `FEATURE-freeze-visual.md`,
-`FEATURE-effect-diminishing-returns.md`.
+`FEATURE-effect-diminishing-returns.md`, `FEATURE-cinder-cone-wave.md`.
 
 ## Architecture and correctness
 
@@ -244,7 +237,8 @@ reasonable mid-level of investment looks like.
 `MortarTower`, `SeekerTower` and `CinderTower`'s price, damage, range, cooldown, splash radius, and slow/freeze/burn
 magnitudes and durations were chosen to be plausible, not tuned - the same situation the upgrade-path numbers above
 were in before their own balance pass. The same is true of their own 6 upgrade paths (2 each): prices, stat bonuses
-and condition thresholds are equally unverified guesses.
+and condition thresholds are equally unverified guesses. `CinderTower.COOLDOWN_MAX` and
+`CinderTower.WAVE_TRAVEL_TICKS` (added with the cooldown-gated travelling-wave firing model) join this same bucket.
 
 - **Where:** the `public static final` constants and effect-duration fields in `MortarTower`, `SeekerTower`,
   `CinderTower`, and the `private static final UpgradePath` constants in each.
@@ -324,44 +318,7 @@ model rather than the old two-path one.
   fixed 200px width and the render layer's two-role (not three-role) accent-ring model are
   the two open engineering questions flagged there, not yet resolved.
 
-### Sniper's beam doesn't change color on a critical hit
-
-`docs/features/FEATURE-sniper-crit-beam.md`: the beam should draw in the crit spark's colour
-on a crit instead of always drawing green. `AbstractTower.dealDamage`'s crit roll is computed
-and discarded every hit today - nothing propagates it out to the tower-specific renderer.
-
-- **Where:** `td.tower.AbstractTower.dealDamage`, `td.tower.SniperTower`,
-  `td.ui.TowerEffectFrameBuilder.visitSniperTower`.
-- **Approach:** see the feature doc for the proposed plumbing (widening `dealDamage`'s return
-  type, a new `SniperTower` field read by the frame builder) and its threading analysis.
-
-### Cinder Tower's cone is instantaneous and continuous, not a travelling wave
-
-`docs/features/FEATURE-cinder-cone-wave.md`: give Cinder a real cooldown and make its flame
-visibly travel outward over several frames (fading with distance), applying its burn only
-once the wave reaches the target, instead of firing every tick and burning whatever's
-currently in its static wedge.
-
-- **Where:** `td.tower.CinderTower`, `td.ui.render.ConeDraw`/`TowerEffectFrameBuilder`.
-- **Approach:** see the feature doc's open question on whether the new delayed-hit
-  bookkeeping belongs in `td.projectile` or stays `CinderTower`-local - flagged, not decided.
-
 ## Damage types
-
-### Slow/burn stacking is flat, with no diminishing-returns recovery curve
-
-`docs/features/FEATURE-effect-diminishing-returns.md`: slow should recover along a quadratic
-ease-in curve (`factor = x*x`) instead of vanishing instantly at expiry; burn should become an
-additive decaying fuel pool (`α = e^(-3/T)` per-tick decay, diminishing-returns refill on
-restack) instead of a flat magnitude. Slow's existing max-magnitude/max-duration stacking rule
-stays, but with a proposed fix for the case where a strong-short slow would otherwise borrow a
-weak-long slow's remaining duration - see the doc's worked example. Freeze is confirmed already
-correct (binary full-stop, not a parametrized slow) and needs no change.
-
-- **Where:** `td.effect.Effect`/`EffectKind`/`ActiveEffects` only - no `td.tower` changes.
-- **Approach:** see the feature doc's "Open questions" section for the two still-undecided
-  tunables (burn's `Lmax` cap and its termination floor) and the bounded-superseded-application
-  stacking proposal, flagged as needing review before implementation.
 
 ### Acid is not implemented as a second damage-over-time effect
 
@@ -413,18 +370,6 @@ do this — see below). This was a speculative "nice to have," not a committed d
 
 ## Enemy features
 
-### Freeze looks like a variant of Slow instead of a distinct effect
-
-`docs/features/FEATURE-freeze-visual.md`: today Slow and Freeze differ only by marker fill
-colour (two close blues on the same diamond shape) even though Freeze is mechanically a full
-stop, not a parametrized slow. Proposes a new body-level ice-crystal overlay (faceted polygon,
-icy blue-white), added to the existing `EnemyOverlayDraw` sealed hierarchy the way Shield's
-bubble ring already plugs in, rather than another marker-row dot.
-
-- **Where:** `td.ui.EnemyFrameBuilder`/`Java2DFrameRenderer`, `td.ui.render.EnemyOverlayDraw`.
-- **Approach:** see the feature doc for the concrete shape/palette sketch and its one open
-  question - whether the existing marker-row dot should be dropped once the overlay ships.
-
 ### The effect-marker overflow indicator has no count
 
 `EnemyFrameBuilder`'s marker row caps at 3 visible status-effect icons; a 4th+ simultaneous
@@ -475,17 +420,3 @@ own balance passes.
 - **Approach:** tune via actual play (or `td.BalanceHarness`) once the other placeholder-number
   entries in this file get their own pass - no code or architecture change needed, every number
   here is already a named constant or a `TowerBuff` literal.
-
-## UI
-
-### The wave-preview panel's path swatch wastes a row and duplicates the board's own chevron
-
-`docs/features/FEATURE-wave-preview-cleanup.md`: border the current/next-wave sections, drop
-the swatch's own now-empty row, and move its path-colour signal onto the enemy strip's row as
-a chevron - reusing `PathMarkerShape.CHEVRON` (the same vector marker the board's own moving
-path trail already draws), not a new Swing text glyph.
-
-- **Where:** `td.ui.PanelWaveInfo`, `td.ui.PathWaveRow`.
-- **Approach:** see the feature doc for the exact layout change; it corrects the original
-  request's assumption that the chevron would be a new plain-text glyph - the project already
-  has this exact marker as a vector shape.

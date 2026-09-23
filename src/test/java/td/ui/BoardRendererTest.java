@@ -146,12 +146,28 @@ class BoardRendererTest {
     }
 
     @Test
-    void aCinderTowerYieldsAConeDrawEveryTick() {
+    void aCinderTowerWithNoInFlightWaveYieldsNoConeDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         context.towers().add(new CinderTower(context, 1, 1));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+
+        assertThat(frame.towerEffects()).isEmpty();
+    }
+
+    @Test
+    void aCinderTowerThatJustFiredAWaveYieldsAConeDraw() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        CinderTower tower = new CinderTower(context, 1, 1);
+        context.towers().add(tower);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        context.enemies().setEnemies(new EnemyMob[]{enemy});
+
+        tower.doTick(1); // in range, cools down from 0 - fires a wave
+
+        RenderFrame frame = rendererFor(engine, context).buildFrame(1, 0.0, 0.0);
 
         assertThat(frame.towerEffects()).hasSize(1);
         assertThat(frame.towerEffects().getFirst()).isInstanceOf(ConeDraw.class);

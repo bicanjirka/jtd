@@ -116,6 +116,11 @@ public final class Java2DFrameRenderer {
      * How big a projectile is drawn - smaller than a tower's own head, since it's the shot, not the gun.
      */
     private static final float PROJECTILE_SIZE = 5f;
+    /**
+     * A Cinder wave's alpha at the moment it fires, before {@link #paintCone} fades it out as it
+     * travels farther - configurable here rather than inline, per that feature's own ask.
+     */
+    private static final float CINDER_CONE_BASE_ALPHA = 0.55f;
 
     private static Shape markerShape(PathMarkerShape shape, float size) {
         return switch (shape) {
@@ -980,15 +985,23 @@ public final class Java2DFrameRenderer {
     // --- projectiles ---------------------------------------------------------
 
     /**
-     * A symmetric pie wedge centred on {@code cone}'s heading - the same shape {@code InWedgeTargetQuery} tests against.
+     * A symmetric pie wedge centred on {@code cone}'s heading - the same shape
+     * {@code InWedgeTargetQuery} tests against - growing outward from nothing and fading out as
+     * {@code cone.progress()} advances 0..1, a "gout of flame" travelling outward and
+     * dissipating rather than a static area-of-effect marker.
      */
     private void paintCone(Graphics2D g2, ConeDraw cone) {
+        float currentRadius = cone.maxRadius() * cone.progress();
+        if (currentRadius <= 0) {
+            return;
+        }
+        float alpha = CINDER_CONE_BASE_ALPHA * (1f - cone.progress());
         AffineTransform save = g2.getTransform();
         g2.translate(cone.originX(), cone.originY());
         g2.rotate(cone.headingRadians());
         float halfWidthDegrees = (float) Math.toDegrees(cone.halfWidthRadians());
-        g2.setColor(withAlpha(colorFor(cone.palette()), Math.round(cone.alpha() * 255)));
-        g2.fill(new Arc2D.Float(-cone.radius(), -cone.radius(), cone.radius() * 2, cone.radius() * 2,
+        g2.setColor(withAlpha(colorFor(cone.palette()), Math.round(alpha * 255)));
+        g2.fill(new Arc2D.Float(-currentRadius, -currentRadius, currentRadius * 2, currentRadius * 2,
                 -halfWidthDegrees, halfWidthDegrees * 2, Arc2D.PIE));
         g2.setTransform(save);
     }

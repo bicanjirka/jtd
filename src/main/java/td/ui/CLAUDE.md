@@ -130,11 +130,11 @@ package:
 - **`interpolationAlpha`** — where this frame lands between the last two *simulation* ticks (`[0, 1)`). Use it for
   anything reading domain state that advances per tick: an alive
   enemy's position, an aiming turret's heading, a projectile's position (`ProjectileFrameBuilder`
-  lerps `getPrevX/Y()`/`getX/Y()` exactly like `EnemyFrameBuilder` does), or a cone tower's
-  wedge heading (`TowerEffectFrameBuilder.visitCinderTower` reads `radiansAt(interpolationAlpha)`,
-  the same heading its turret head renders at — not `TurretAim.currentRadians()`, which is what
-  `InWedgeTargetQuery` uses to decide hits, a tick-boundary value rather than a rendering one).
-  It respects pause and fast-forward.
+  lerps `getPrevX/Y()`/`getX/Y()` exactly like `EnemyFrameBuilder` does), or a Cinder wave's
+  travel progress (`TowerEffectFrameBuilder.visitCinderTower` lerps the wave's progress at the
+  previous and current tick by `interpolationAlpha`, the same sub-tick treatment its turret head
+  gets via `radiansAt`) — a wave's *heading* itself is captured once, at the tick it fired, so it
+  is never re-interpolated the way a live turret heading is. It respects pause and fast-forward.
 - **`animationSeconds`** — monotonic wall-clock seconds. Use it for cosmetic animation with
   no domain state behind it: spinning turret heads, the Aura tower's pulse and ring, the
   moving path markers. It deliberately keeps running while the game is paused, and does not
