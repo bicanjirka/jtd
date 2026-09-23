@@ -14,12 +14,13 @@ import td.tower.TowerVisitor;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.ui.render.Palette;
+import td.ui.render.SlotMarkDraw;
 import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TurretHeadDraw;
+import td.util.GameWorld;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Describes each tower's static base ({@link TowerSpriteDraw}, unchanged regardless of type -
@@ -38,17 +39,27 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     private static final double TOWER_FOUR_SPIN_RADIANS_PER_SECOND = -2.0;
 
     // The aura tower's head pulses (scale, not heading) via a sine wave instead of spinning -
-    // same "function of elapsed time" reasoning as the two constants above.
+    // same "function of elapsed time" reasoning as the two constants above. The SPECIAL-slot
+    // enchant halo (see enchantPulseFor) reuses this same clock for its own pulse, so both
+    // pulsing cosmetics in this frame stay in phase with each other.
     private static final double TOWER_AURA_PULSE_RADIANS_PER_SECOND = 2.4;
     private static final float TOWER_AURA_PULSE_MIN_SCALE = 0.8f;
     private static final float TOWER_AURA_PULSE_MAX_SCALE = 1.25f;
 
+    /**
+     * One role per {@link UpgradeSlot}, in slot order - see {@link #slotMarksFor}.
+     */
+    private static final Palette[] SLOT_PALETTES =
+            {Palette.TOWER_UPGRADE_BASE, Palette.TOWER_UPGRADE_HEAD, Palette.TOWER_UPGRADE_SPECIAL};
+
     private final List<TowerSpriteDraw> draws = new ArrayList<>();
     private final List<TurretHeadDraw> headDraws = new ArrayList<>();
+    private final GameWorld world;
     private final double interpolationAlpha;
     private final double animationSeconds;
 
-    public TowerSpriteFrameBuilder(double interpolationAlpha, double animationSeconds) {
+    public TowerSpriteFrameBuilder(GameWorld world, double interpolationAlpha, double animationSeconds) {
+        this.world = world;
         this.interpolationAlpha = interpolationAlpha;
         this.animationSeconds = animationSeconds;
     }
@@ -72,20 +83,35 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     /**
-     * The specialization-ring role for a tower's chosen {@code HEAD} node, if any - the first
-     * node in {@code upgradeTree()}'s {@code HEAD} nodes gets {@code TOWER_UPGRADE_PATH_A}, the
-     * second gets {@code TOWER_UPGRADE_PATH_B}, regardless of tower type, so the accent is one
-     * consistent two-colour language rather than a role per tower per node. A temporary
-     * stand-in for the real per-slot marker set phase 5 adds - see
-     * {@code docs/features/FEATURE-tower-upgrade-trees.md}.
+     * One {@link SlotMarkDraw} per {@link UpgradeSlot}, always three, in slot order - {@code
+     * level} is how many nodes this tower owns in that slot, {@code ready} is whether the slot
+     * currently offers a node whose gate is met and which is affordable right now. Two different
+     * signals ("what did I pick" vs. "what could I pick right now"), computed once here rather
+     * than twice at the render layer.
      */
-    private static Optional<Palette> accentPaletteFor(Tower tower) {
-        UpgradeNode chosen = tower.upgrades().tip(UpgradeSlot.HEAD).orElse(null);
-        if (chosen == null) {
-            return Optional.empty();
+    private List<SlotMarkDraw> slotMarksFor(Tower tower) {
+        List<UpgradeNode> offered = tower.offeredUpgrades(this.world);
+        List<SlotMarkDraw> marks = new ArrayList<>(UpgradeSlot.values().length);
+        for (UpgradeSlot slot : UpgradeSlot.values()) {
+            int level = tower.upgrades().inSlot(slot).size();
+            boolean ready = offered.stream().anyMatch(node -> node.slot() == slot
+                    && node.gate().isSatisfied(tower, this.world)
+                    && this.world.economy().canPay(node.price()));
+            marks.add(new SlotMarkDraw(SLOT_PALETTES[slot.ordinal()], level, ready));
         }
-        int index = tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).indexOf(chosen);
-        return Optional.of(index == 0 ? Palette.TOWER_UPGRADE_PATH_A : Palette.TOWER_UPGRADE_PATH_B);
+        return marks;
+    }
+
+    /**
+     * {@code 0} for a tower with nothing owned in {@code SPECIAL}; otherwise the same 0..1
+     * sine phase the Aura tower's own pulse already uses, so a specialized tower's halo pulses
+     * at the same rate a player has already learned to read.
+     */
+    private float enchantPulseFor(Tower tower) {
+        if (tower.upgrades().tip(UpgradeSlot.SPECIAL).isEmpty()) {
+            return 0f;
+        }
+        return (float) (0.5 + 0.5 * Math.sin(this.animationSeconds * TOWER_AURA_PULSE_RADIANS_PER_SECOND));
     }
 
     public List<TowerSpriteDraw> build() {
@@ -98,7 +124,8 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     private void sprite(Tower tower) {
         this.draws.add(new TowerSpriteDraw(bodyPaletteFor(tower.getType()), tower.getBoardX(), tower.getBoardY(),
-                tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(), accentPaletteFor(tower)));
+                tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(),
+                this.slotMarksFor(tower), this.enchantPulseFor(tower)));
     }
 
     /**
