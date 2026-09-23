@@ -20,6 +20,7 @@ import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
+import td.ui.render.IceCrystalDraw;
 import td.ui.render.Palette;
 import td.ui.render.PulseDirection;
 import td.ui.render.RankBadge;
@@ -360,6 +361,31 @@ class EnemyFrameBuilderTest {
         enemy.applyEffect(Effect.shield(0.3f, 1, d -> {
         }));
         enemy.doTick(1); // the shield expires this tick
+
+        assertThat(overlaysOf(enemy, 1)).isEmpty();
+    }
+
+    @Test
+    void anActiveFreezeYieldsAnIceCrystalOverlayInTheFreezeCrystalColour() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.freeze(5, d -> {
+        }));
+
+        List<EnemyOverlayDraw> overlays = overlaysOf(enemy, 0);
+
+        assertThat(overlays).hasSize(1);
+        IceCrystalDraw crystal = (IceCrystalDraw) overlays.getFirst();
+        assertThat(crystal.palette()).isEqualTo(Palette.FREEZE_CRYSTAL);
+    }
+
+    @Test
+    void theIceCrystalOverlayDisappearsOnceTheFreezeExpires() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.freeze(1, d -> {
+        }));
+        enemy.doTick(1); // the freeze expires this tick
 
         assertThat(overlaysOf(enemy, 1)).isEmpty();
     }

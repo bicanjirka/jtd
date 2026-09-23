@@ -114,6 +114,14 @@ rather than filled is the one deliberate visual difference from the status row, 
 never confused at a glance: a trait is permanent for this mob's whole lifetime, a status marker
 is not.
 
+**`IceCrystalDraw`, the hierarchy's fourth member, is a static, body-level overlay for
+`EffectKind.FREEZE` - additive to, not a replacement for, the ordinary `STATUS_MARKER_FREEZE`
+marker-row dot.** `EnemyFrameBuilder.overlays()` adds one at
+`EnemyFrameBuilder.FREEZE_CRYSTAL_SCALE_FRACTION` times the body's own scale, right alongside the
+`SHIELD` ring check; `Java2DFrameRenderer.paintIceCrystal` fills `crystalShape` (three overlapping
+shards from `shardShape`) with `Palette.FREEZE_CRYSTAL` and strokes it near-white, so a frozen
+enemy reads apart from a merely slowed one even in a crowd.
+
 ## Two independent clocks, and which one to use
 
 `buildFrame` receives both, and picking the wrong one is the most likely mistake in this

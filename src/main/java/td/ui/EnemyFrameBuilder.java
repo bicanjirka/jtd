@@ -16,6 +16,7 @@ import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
+import td.ui.render.IceCrystalDraw;
 import td.ui.render.Palette;
 import td.ui.render.PulseDirection;
 import td.ui.render.RankBadge;
@@ -89,6 +90,12 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
      */
     private static final float SHIELD_BUBBLE_SCALE_FRACTION = 1.3f;
     private static final float SHIELD_BUBBLE_ALPHA = 0.5f;
+    /**
+     * The ice-crystal overlay's size, as a fraction of the mob's own body scale - just outside
+     * the body like the shield bubble, but drawn as a solid faceted fill rather than a ring so
+     * it reads as "encasing" the enemy.
+     */
+    private static final float FREEZE_CRYSTAL_SCALE_FRACTION = 1.35f;
     /**
      * A support-aura ring's radius is typically many times the body's own scale (a Ghost
      * Elite's shroud reaches 100px), so it needs a much fainter alpha than the shield bubble to
@@ -232,14 +239,18 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     }
 
     /**
-     * A shield bubble while {@link EffectKind#SHIELD} is active, and a support-aura ring for a
-     * definition that projects an effect onto nearby allies at a radius - both static rings, not
-     * timed ones, since each reflects an ongoing state (an active shield, an authored ability)
-     * rather than a one-shot event.
+     * A shield bubble while {@link EffectKind#SHIELD} is active, an ice-crystal cluster while
+     * {@link EffectKind#FREEZE} is active, and a support-aura ring for a definition that
+     * projects an effect onto nearby allies at a radius - all static, not timed, since each
+     * reflects an ongoing state (an active shield, a frozen mob, an authored ability) rather
+     * than a one-shot event.
      */
     private void overlays(AbstractEnemyMob mob, float x, float y, float scale, Optional<SupportAura> supportAura) {
         if (mob.activeEffectKinds().contains(EffectKind.SHIELD)) {
             this.overlayDraws.add(new EnemyRingDraw(Palette.STATUS_MARKER_SHIELD, x, y, scale * SHIELD_BUBBLE_SCALE_FRACTION, SHIELD_BUBBLE_ALPHA));
+        }
+        if (mob.activeEffectKinds().contains(EffectKind.FREEZE)) {
+            this.overlayDraws.add(new IceCrystalDraw(Palette.FREEZE_CRYSTAL, x, y, scale * FREEZE_CRYSTAL_SCALE_FRACTION));
         }
         supportAura.ifPresent(aura -> this.overlayDraws.add(
                 new EnemyRingDraw(markerPaletteFor(aura.kind()), x, y, aura.radius(), SUPPORT_AURA_RING_ALPHA)));

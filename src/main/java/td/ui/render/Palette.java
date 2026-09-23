@@ -55,6 +55,12 @@ public enum Palette {
      */
     STATUS_MARKER_OVERFLOW,
     /**
+     * A faceted ice-crystal overlay encasing a frozen enemy - icy blue-white, brighter and
+     * whiter than both STATUS_MARKER_SLOW and STATUS_MARKER_FREEZE's own marker dot, so a
+     * frozen enemy reads apart from a merely slowed one at a glance. See IceCrystalDraw.
+     */
+    FREEZE_CRYSTAL,
+    /**
      * A brief, fading burst at the point a critical hit landed - see CritSparkDraw.
      */
     CRIT_SPARK,
