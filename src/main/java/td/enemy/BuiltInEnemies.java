@@ -35,7 +35,7 @@ final class BuiltInEnemies {
             .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(400, 33)
                     .withDescription("No special abilities, but a layer of armor has formed, "
                             + "hardened against whichever damage type has hit hardest this level.")
-                    .withAdaptiveResist(ELITE_ARMOR))
+                    .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(ELITE_ARMOR))))
             .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(800, 83)
                     .withDescription("No special abilities, but twice an elite's bulk under the same armor, hardened "
                             + "against whichever damage type has hit hardest this level."))
@@ -155,7 +155,7 @@ final class BuiltInEnemies {
                     .withDescription("Its healing pulse now lasts twice as long, and a personal layer of armor, "
                             + "hardened against whichever damage type has hit hardest this level, joins its own "
                             + "quiet self-repair when left unattacked.")
-                    .withAdaptiveResist(ELITE_ARMOR)
+                    .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(ELITE_ARMOR)))
                     .withAdditionalAbilities(List.of(IdentifiedAbility.named("heal", new Ability(
                             new PeriodicTrigger(MENDER_HEAL_INTERVAL_TICKS),
                             new ApplyEffectAction(new HealTemplate(MENDER_HEAL_PER_TICK, MENDER_HEAL_DURATION_TICKS * 2),

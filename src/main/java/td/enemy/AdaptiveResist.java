@@ -10,13 +10,14 @@ import java.util.Optional;
  *
  * @param fullFraction the percentage-resist fraction when every landed point was one type
  */
-public record AdaptiveResist(float fullFraction) {
+public record AdaptiveResist(float fullFraction) implements TraitTemplate {
 
     /**
      * The resist this mob spawns with: restricted to the dominant type and scaled linearly from no
      * effect at an even split to {@code fullFraction} at a one-sided mix; empty when nothing
      * dominates.
      */
+    @Override
     public Optional<Trait> resolvedFor(DamageMix mix) {
         float dominance = mix.dominance();
         if (dominance == 0f) {
