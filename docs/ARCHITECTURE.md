@@ -444,6 +444,11 @@ The three debug methods it shares with the `n`/`x`/`c` keybindings live on `Game
 `TowerDefense`, per the headless/Swing boundary — they are ordinary engine rules and are unit
 tested the same way every other `GameEngineTest` case is.
 
+`td.PerformanceHarness` is its timing sibling: it fills every buildable cell of the last
+built-in level with towers, plays the level through once to warm the JIT and five more times
+measured, and reports p50/p99/max tick time, frame-build time (`BoardRenderer.buildFrame`, which
+is AWT-free and so runs headless) and bytes allocated per frame build.
+
 For visual work, the `run-jtd` Claude Code skill also offers `PreviewBoard`/`PreviewEnemy` —
 headless dev tools that compose a board or a single enemy scene and render it straight to a PNG,
 without opening a window or driving the real UI. They exist so an agent can check a rendering
