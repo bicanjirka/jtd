@@ -63,7 +63,7 @@
 
 ## Movement and damage
 
-- Movement is arc-length distance along `td.wave.ArcLengthPath`. A `baseSpeed` of `0` means
+- Movement (`PathMotion`) is arc-length distance along `td.wave.ArcLengthPath`. A `baseSpeed` of `0` means
   stationary. A degenerate path (fewer than 2 points) is valid: the mob holds still.
 - Facing is never derived from a per-tick pixel delta (sub-pixel speeds make `atan2` collapse to
   zero); use the path's facing.
