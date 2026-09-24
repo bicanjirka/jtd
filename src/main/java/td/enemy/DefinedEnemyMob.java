@@ -10,7 +10,6 @@ import td.effect.EffectTransitions;
 import td.enemy.MobMoments.Moment;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
-import td.wave.Vec2;
 
 import java.util.List;
 import java.util.Optional;
@@ -177,6 +176,11 @@ public final class DefinedEnemyMob implements EnemyMob {
     /** Places this mob anywhere along its path, so an ability spawn appears where its parent was. */
     void jumpToDistance(double distanceIntoLap) {
         this.motion.jumpTo(distanceIntoLap);
+    }
+
+    /** Passed on by an ability spawn so the new mob stays on its parent's path. */
+    int pathIndex() {
+        return this.pathIndex;
     }
 
     /** Places this freshly built mob where {@code other} is on the path. */
@@ -525,24 +529,13 @@ public final class DefinedEnemyMob implements EnemyMob {
 
         @Override
         public void spawnEnemies(String definitionId, AbilitySpawnShape shape, boolean consumesSelf) {
-            GameWorld world = DefinedEnemyMob.this.gameWorld;
-            EnemyDefinition baseDefinition = world.getEnemyCatalog().get(definitionId, DefinedEnemyMob.this.rank);
-            EnemyDefinition shapedDefinition = shape.traitOverride()
-                    .map(trait -> baseDefinition.withAdditionalTraits(List.of(trait)))
-                    .orElse(baseDefinition);
-            int health = Math.round(shapedDefinition.baseHealth() * shape.healthMultiplier());
-            int price = Math.round(shapedDefinition.price() * shape.bountyMultiplier());
-            for (int i = 0; i < shape.members(); i++) {
-                double slotPosition = i * shape.delaySpacingSlots();
-                SpawnParameters spawnParameters = SpawnParameters.of(slotPosition, shapedDefinition.baseSpeed(),
-                        health, price, shape.sizeMultiplier(), 1f, new Vec2(0, 0), DefinedEnemyMob.this.pathIndex);
-                DefinedEnemyMob spawned = new DefinedEnemyMob(shapedDefinition, world, spawnParameters, DefinedEnemyMob.this.rank);
-                spawned.spawnAtSamePositionAs(DefinedEnemyMob.this);
-                spawned.recordAbilitySpawn(this.gameTime);
+            DefinedEnemyMob caster = DefinedEnemyMob.this;
+            EnemySpawner roster = caster.gameWorld.enemies();
+            for (DefinedEnemyMob spawned : AbilitySpawnFactory.build(caster.gameWorld, caster, definitionId, shape, this.gameTime)) {
                 if (consumesSelf) {
-                    world.enemies().replace(DefinedEnemyMob.this, spawned);
+                    roster.replace(caster, spawned);
                 } else {
-                    world.enemies().add(spawned);
+                    roster.add(spawned);
                 }
             }
         }
