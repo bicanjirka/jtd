@@ -29,6 +29,10 @@ public final class PerformanceHarness {
     private static final int GRANTED_CREDITS = 10_000_000;
     private static final double NANOS_PER_MILLI = 1_000_000.0;
     private static final int BYTES_PER_KB = 1024;
+    // Budgets: about 3x the measured p99, and one tick at super-fast speed is 3 ms.
+    private static final double TICK_P99_BUDGET_MILLIS = 1.0;
+    private static final double FRAME_P99_BUDGET_MILLIS = 1.0;
+    private static final long FRAME_ALLOC_P99_BUDGET_KB = 512;
 
     private final com.sun.management.ThreadMXBean threads =
             (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
@@ -41,10 +45,13 @@ public final class PerformanceHarness {
 
     public static void main(String[] args) {
         LevelDefinition level = new BuiltInLevelCatalog().levels().getLast();
-        new PerformanceHarness().run(level);
+        if (!new PerformanceHarness().run(level)) {
+            System.exit(1);
+        }
     }
 
-    public void run(LevelDefinition level) {
+    /** Plays the passes, prints the report and returns whether every p99 is within budget. */
+    public boolean run(LevelDefinition level) {
         for (int pass = 0; pass < WARM_UP_PASSES + MEASURED_PASSES; pass++) {
             this.playPass(level, pass >= WARM_UP_PASSES);
         }
@@ -52,13 +59,17 @@ public final class PerformanceHarness {
         System.out.println("=== Performance report: " + level.name() + " ===");
         System.out.println("Towers: " + this.towerCount + ", peak alive enemies: " + this.peakEnemies
                 + ", measured ticks: " + this.measured);
-        printMillis("Tick", Arrays.copyOf(this.tickNanos, this.measured));
-        printMillis("Frame build", Arrays.copyOf(this.frameNanos, this.measured));
+        boolean tickOk = printMillis("Tick", Arrays.copyOf(this.tickNanos, this.measured), TICK_P99_BUDGET_MILLIS);
+        boolean frameOk = printMillis("Frame build", Arrays.copyOf(this.frameNanos, this.measured),
+                FRAME_P99_BUDGET_MILLIS);
         long[] bytes = Arrays.copyOf(this.frameBytes, this.measured);
         Arrays.sort(bytes);
-        System.out.printf("%-13s p50 %6d KB  p99 %6d KB  max %6d KB%n", "Frame alloc",
-                percentile(bytes, 0.50) / BYTES_PER_KB, percentile(bytes, 0.99) / BYTES_PER_KB,
-                bytes[bytes.length - 1] / BYTES_PER_KB);
+        long allocP99Kb = percentile(bytes, 0.99) / BYTES_PER_KB;
+        boolean allocOk = allocP99Kb <= FRAME_ALLOC_P99_BUDGET_KB;
+        System.out.printf("%-13s p50 %6d KB  p99 %6d KB  max %6d KB  budget p99 %d KB %s%n", "Frame alloc",
+                percentile(bytes, 0.50) / BYTES_PER_KB, allocP99Kb, bytes[bytes.length - 1] / BYTES_PER_KB,
+                FRAME_ALLOC_P99_BUDGET_KB, verdict(allocOk));
+        return tickOk && frameOk && allocOk;
     }
 
     private void playPass(LevelDefinition level, boolean record) {
@@ -109,11 +120,18 @@ public final class PerformanceHarness {
         return placed;
     }
 
-    private static void printMillis(String label, long[] nanos) {
+    private static boolean printMillis(String label, long[] nanos, double p99BudgetMillis) {
         Arrays.sort(nanos);
-        System.out.printf("%-13s p50 %6.3f ms  p99 %6.3f ms  max %6.3f ms%n", label,
-                percentile(nanos, 0.50) / NANOS_PER_MILLI, percentile(nanos, 0.99) / NANOS_PER_MILLI,
-                nanos[nanos.length - 1] / NANOS_PER_MILLI);
+        double p99Millis = percentile(nanos, 0.99) / NANOS_PER_MILLI;
+        boolean ok = p99Millis <= p99BudgetMillis;
+        System.out.printf("%-13s p50 %6.3f ms  p99 %6.3f ms  max %6.3f ms  budget p99 %.1f ms %s%n", label,
+                percentile(nanos, 0.50) / NANOS_PER_MILLI, p99Millis, nanos[nanos.length - 1] / NANOS_PER_MILLI,
+                p99BudgetMillis, verdict(ok));
+        return ok;
+    }
+
+    private static String verdict(boolean ok) {
+        return ok ? "OK" : "OVER BUDGET";
     }
 
     private static long percentile(long[] sorted, double p) {

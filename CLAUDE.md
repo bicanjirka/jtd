@@ -9,6 +9,7 @@ mvn -q compile            # fast type check
 mvn spotless:apply        # fix formatting
 mvn test -Dtest=GameEngineTest#someSentenceName
 mvn package && java -jar target/jTD.jar
+mvn -q compile exec:java -Dexec.mainClass=td.PerformanceHarness   # performance budget
 ```
 
 Mechanical rules live in `checkstyle.xml` / `checkstyle-imports.xml`; `mvn verify` names any
@@ -21,6 +22,9 @@ violation. They are not restated here.
   Cheaper headless checks: `PreviewBoard`/`PreviewEnemy` render a scene to PNG, and
   `td.BalanceHarness` plays a level with a fixed loadout and reports numbers (usage in the
   `run-jtd` skill).
+- Performance budget (p99, last built-in level, every buildable cell a tower): tick ≤ 1 ms,
+  frame build ≤ 1 ms, ≤ 512 KB allocated per frame build. `td.PerformanceHarness` exits non-zero
+  when over; run it after changing per-tick or per-frame code. Tests: 5 s each, 60 s per fork.
 - Feature requests live in `docs/features/`, one doc per feature. Content tables (towers,
   enemies, levels, controls) live in `README.md`.
 - Known gaps go in `TODO.md` (with **Where** and **Approach**), never an inline TODO. Closing a
