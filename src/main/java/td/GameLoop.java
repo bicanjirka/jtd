@@ -7,21 +7,12 @@ import td.util.Threads;
 import td.util.TickRate;
 
 /**
- * Drives the simulation on its own dedicated thread using two independent
- * fixed-timestep {@link TickAccumulator}s: {@code onTick} runs a variable
- * number of times per real-world interval - zero while paused
- * ({@link TickSpeed#PAUSED}), several in a row when running fast - while
- * {@code onRender} fires on a flat ~60fps real-time cadence, regardless of
- * tick speed or pause, so the board (tower placement highlights, hover
- * effects, ...) keeps redrawing even while the simulation itself is paused
- * or running fast.
+ * Runs the simulation on its own thread with two fixed-timestep accumulators: {@code onTick} runs
+ * zero or more times per interval depending on tick speed, while {@code onRender} fires at a flat
+ * ~60fps, so the board keeps redrawing while paused.
  * <p>
- * <strong>Both callbacks run on the {@code game-loop} thread, never on the
- * Event Dispatch Thread.</strong> That is deliberate: {@code onRender} is
- * where the caller builds an immutable snapshot of simulation state it then
- * hands to the EDT, so it has to run on the thread that owns that state. This
- * class contains no Swing dependency at all; crossing to the EDT is the
- * caller's job and happens after the snapshot exists. See CLAUDE.md 3.
+ * Both callbacks run on the {@code game-loop} thread, never the EDT: {@code onRender} builds a
+ * snapshot of state that thread owns. Handing it to the EDT is the caller's job.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public class GameLoop implements Runnable {
@@ -52,11 +43,8 @@ public class GameLoop implements Runnable {
     }
 
     /**
-     * How fast {@link #animationSeconds} advances relative to wall-clock time, given the
-     * current tick-speed multiplier. {@code 1.0} means ignore game speed entirely, which is
-     * today's behaviour: markers keep the same pace while paused and while fast-forwarding.
-     * Swap the body for {@code multiplier} to make animation track game speed exactly, or
-     * something like {@code Math.sqrt(multiplier)} for a damped middle ground.
+     * How fast {@link #animationSeconds} advances relative to wall-clock time. {@code 1.0} ignores
+     * game speed; return {@code multiplier} to track it exactly.
      */
     private static double animationTimeScale(double multiplier) {
         return 1.0;
@@ -71,20 +59,16 @@ public class GameLoop implements Runnable {
     }
 
     /**
-     * How far past the last completed simulation tick the loop currently is, as a fraction
-     * of one tick step ({@code [0, 1)}). Intended for interpolating a render frame between
-     * the previous and current tick's state, and refreshed immediately before each onRender
-     * callback so a frame built there reads the value belonging to that frame.
+     * How far past the last tick the loop is, as a fraction of a step in {@code [0, 1)}, for
+     * interpolating a frame. Refreshed immediately before each {@code onRender}.
      */
     public double tickInterpolationAlpha() {
         return this.tickInterpolationAlpha;
     }
 
     /**
-     * Elapsed time, in seconds, for driving cosmetic animation that should not freeze while
-     * paused or race ahead while fast-forwarding. Advances by wall-clock time scaled through
-     * {@link #animationTimeScale(double)}, which today ignores tick speed entirely - see that
-     * method to change how (or whether) game speed influences the rate.
+     * Seconds of cosmetic animation time, which neither freezes while paused nor races while
+     * fast-forwarding. See {@link #animationTimeScale(double)}.
      */
     public double animationSeconds() {
         return this.animationSeconds;
@@ -96,14 +80,9 @@ public class GameLoop implements Runnable {
     }
 
     /**
-     * Starts the loop on a new daemon thread. Idempotent (a second call while already running
-     * is a no-op, logged and ignored, rather than spawning a second thread ticking the same
-     * engine) and restartable after {@link #stop()} - returning to the level-select menu and
-     * then starting another level calls this a second time on the same instance, so a fresh
-     * start must not carry over the previous run's stale progress: the tick/render
-     * accumulators, interpolation alpha, tick counter and consecutive-failure circuit breaker
-     * are all reset here. {@code animationSeconds} is deliberately left alone - it is
-     * wall-clock cosmetic animation with no level semantics, not simulation state.
+     * Starts the loop on a new daemon thread. A second call while running is ignored. Restartable
+     * after {@link #stop()}: all per-run progress is reset, except the cosmetic
+     * {@code animationSeconds}.
      */
     public synchronized void start() {
         if (this.running) {
@@ -124,26 +103,12 @@ public class GameLoop implements Runnable {
     }
 
     /**
-     * Stops the loop and <strong>waits without bound for the in-flight tick to finish</strong>
-     * before returning. The join is the point: a caller that stops the loop in order to tear
-     * the current level down (see {@code TowerDefense.startSelectedLevel}) would otherwise
-     * clear the rosters and swap the cell grid, board geometry and path out from under a tick
-     * still running. {@code GameEngine.loadLevel} being idempotent does not cover that -
-     * idempotency is about calling twice, not about calling concurrently.
+     * Stops the loop and <strong>waits without bound</strong> for the in-flight tick to finish, so
+     * a caller tearing the level down never races a running tick. A bounded wait would hand the
+     * caller exactly that race.
      * <p>
-     * The wait is unbounded on purpose. It was once capped at half a second, after which this
-     * method logged a warning and returned anyway - which handed the caller exactly the race
-     * the join exists to prevent, reported only as a log line. A guarantee a caller is written
-     * against either holds or is not stated.
-     * <p>
-     * Because it blocks, it <strong>must not be called from the Event Dispatch Thread</strong>
-     * - a wedged tick would freeze the UI. {@code Threads.assertNotEventDispatchThread} makes
-     * that a failure here rather than a hang somewhere else; {@code TowerDefense} runs its
-     * level teardown on a single-threaded lifecycle executor for this reason. Calling from the
-     * loop thread itself (the circuit breaker's path) is a no-op rather than a self-join.
-     * <p>
-     * {@code synchronized} with {@link #start()}, so a stop and a restart cannot interleave
-     * and leave {@link #thread} pointing at a thread the other call is still reasoning about.
+     * Must not be called on the EDT, where a wedged tick would freeze the UI. Called from the loop
+     * thread itself it is a no-op rather than a self-join.
      */
     public synchronized void stop() {
         Threads.assertNotEventDispatchThread("GameLoop.stop()");

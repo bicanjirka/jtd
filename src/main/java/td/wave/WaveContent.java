@@ -8,10 +8,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The parsed result of a wave's token string (see the wave mini-language table in
- * CLAUDE.md) - one {@link WaveSlot} per spawn slot, in spawn order, with repeat counts
- * already flattened out. Deliberately GameWorld-free, unlike {@link Wave} itself, which turns
- * this into live {@code EnemyMob}s bound to a world.
+ * A parsed wave: one {@link WaveSlot} per spawn slot, in order, repeats expanded. World-free;
+ * {@link Wave} makes it live.
  */
 public record WaveContent(List<WaveSlot> spawnSequence) {
 
@@ -19,9 +17,7 @@ public record WaveContent(List<WaveSlot> spawnSequence) {
         spawnSequence = List.copyOf(spawnSequence);
     }
 
-    /**
-     * The distinct enemy definitions used in this wave, in first-seen order - never includes the {@code e} spacer.
-     */
+    /** Distinct enemy definitions in first-seen order, without the spacer. */
     public Set<EnemyDefinition> enemySet() {
         Set<EnemyDefinition> set = new LinkedHashSet<>();
         for (WaveSlot slot : this.spawnSequence) {
@@ -34,11 +30,7 @@ public record WaveContent(List<WaveSlot> spawnSequence) {
         return set;
     }
 
-    /**
-     * The effective {@link Rank} the slot spawning {@code definition} resolved to - what the
-     * wave-preview panel shows a badge for, since {@link Wave#spawn()} needs no call to answer
-     * this (see {@code td.ui.PathWaveRow}).
-     */
+    /** The resolved rank of the slot spawning {@code definition}. */
     public Rank rankFor(EnemyDefinition definition) {
         for (WaveSlot slot : this.spawnSequence) {
             switch (slot) {
@@ -71,10 +63,8 @@ public record WaveContent(List<WaveSlot> spawnSequence) {
     }
 
     /**
-     * The real enemy count - every shaped slot's member count summed, excluding the {@code e}
-     * spacer. A shaped slot (e.g. a swarm of 4) counts as its member count, not as one, since
-     * this is what {@code GameWorld.startWave} seeds the roster's alive count from and a wave is
-     * cleared only once every member is dead.
+     * Enemies in the wave: every slot's member count, without spacers. The roster's alive count is
+     * seeded from this, so a wave clears only when every member is dead.
      */
     public int enemyCount() {
         int count = 0;

@@ -11,12 +11,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * An {@link EnemyMob} double that sits at a fixed point and records every hit and effect
- * aimed at it. A real mob's position comes from how far it has walked the level's path, which
- * is no way to place one at a chosen distance from a blast centre.
- * <p>
- * It never dies and absorbs nothing, so a recorded hit is exactly what the tower decided to
- * deal - which is the thing under test here, separate from what a real mob would do with it.
+ * An {@link EnemyMob} at a fixed point that records every hit and effect. A real mob's position
+ * comes from its path, which cannot place it at a chosen distance. It never dies and absorbs
+ * nothing, so a recorded hit is exactly what the tower dealt.
  */
 final class RecordingEnemyMob implements EnemyMob {
 
@@ -36,9 +33,7 @@ final class RecordingEnemyMob implements EnemyMob {
         return new RecordingEnemyMob(x, y, Type.NORMAL);
     }
 
-    /**
-     * Invisible mobs are excluded from a tower's primary-target scan but not from its splash.
-     */
+    /** Excluded from primary-target scans but not from splash. */
     static RecordingEnemyMob ghostAt(double x, double y) {
         return new RecordingEnemyMob(x, y, Type.INVISIBLE);
     }

@@ -23,10 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Describes each tower's transient targeting effect (beam, splash, pulse, cone, or - for the
- * aura tower, which never attacks - a pulsing ring) as {@link TowerEffectDraw} commands. One
- * visit method per concrete tower type, since - unlike the sprite - these genuinely differ by
- * tower.
+ * Describes each tower's transient effect - beam, splash, pulse, cone, or an aura's ring - as draw
+ * commands.
  */
 public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
@@ -49,9 +47,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return 3.0f * coolDownFraction;
     }
 
-    /**
-     * Where in a looping {@code [0, 1)} cycle {@code seconds} sits, offset by {@code phaseOffset}.
-     */
+    /** Position of {@code seconds} in a repeating {@code [0, 1)} cycle. */
     private static double phaseFraction(double seconds, double phaseOffset) {
         double t = (seconds / AURA_PERIOD_SECONDS + phaseOffset) % 1.0;
         return t < 0 ? t + 1.0 : t;
@@ -89,9 +85,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /**
-     * A fading beam to each enemy the scan has recently caught. The scan line itself is not
-     * drawn out across the board - the tower's own turret head shows where it is pointing,
-     * and a full range-length beam swinging around read as an attack rather than as a scan.
+     * A fading beam to each enemy recently caught. The scan line itself is not drawn; the turret
+     * head shows it.
      */
     public Void visitSonarTower(SonarTower tower) {
         for (SonarTower.SonarHit hit : tower.getRecentHits()) {
@@ -122,28 +117,17 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
-    /**
-     * No transient effect of its own - the shell in flight is what's visible, drawn as a {@code ProjectileDraw}.
-     */
+    /** Nothing: the shell is drawn as a projectile. */
     public Void visitMortarTower(MortarTower tower) {
         return null;
     }
 
-    /**
-     * No transient effect of its own - the missile in flight is what's visible, drawn as a {@code ProjectileDraw}.
-     */
+    /** Nothing: the missile is drawn as a projectile. */
     public Void visitSeekerTower(SeekerTower tower) {
         return null;
     }
 
-    /**
-     * One {@link ConeDraw} per wave currently travelling outward from this tower - not a single,
-     * unconditional wedge drawn every frame the way the old continuous cone was. Each wave's
-     * progress is computed the same way the turret head's own heading is interpolated, using
-     * {@link #interpolationAlpha} for the sub-tick position between its previous and current
-     * tick's travel distance - see {@code td/ui/CLAUDE.md}'s "use interpolationAlpha for anything
-     * advancing per tick" rule.
-     */
+    /** One cone per wave in flight, its progress interpolated between ticks. */
     public Void visitCinderTower(CinderTower tower) {
         for (CinderTower.FlameWave wave : tower.getInFlightWaves()) {
             float previousProgress = waveProgress(wave, this.gameTime - 1);

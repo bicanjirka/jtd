@@ -8,16 +8,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * Threads identifies the owning thread by name rather than through an AWT call, because
- * td.util is one of the headless packages. These tests therefore drive it with threads named
- * the way the JDK and GameLoop name theirs, which keeps them headless too - no EDT is started.
- */
+/** Uses threads named like the JDK's and the loop's, so no EDT is started. */
 class ThreadsTest {
 
-    /**
-     * Runs {@code body} on a thread with the given name and hands back whatever it threw.
-     */
+    /** Runs {@code body} on a thread named {@code name} and returns what it threw. */
     private static RuntimeException runNamed(String name, Runnable body) throws InterruptedException {
         AtomicReference<RuntimeException> thrown = new AtomicReference<>();
         Thread t = new Thread(() -> {

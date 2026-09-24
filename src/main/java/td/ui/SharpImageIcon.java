@@ -9,12 +9,8 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
 /**
- * An {@link Icon} that paints a {@link BufferedImage} with bilinear interpolation.
- * {@code javax.swing.ImageIcon.paintIcon} draws straight onto the {@code Graphics} it is
- * given with no interpolation hint of its own, so under a scaled (HiDPI per-monitor)
- * {@code Graphics2D} transform it falls back to nearest-neighbor and looks blocky - the
- * same failure mode {@link Java2DFrameRenderer} sets {@code KEY_INTERPOLATION} to avoid
- * for the board itself.
+ * Paints an image with bilinear interpolation, which {@code ImageIcon} doesn't set; without it a
+ * HiDPI scale renders blocky.
  */
 record SharpImageIcon(BufferedImage image) implements Icon {
 

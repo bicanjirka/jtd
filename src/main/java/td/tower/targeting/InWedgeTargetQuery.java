@@ -8,12 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Enemies within a wedge (a cone) extending from a point in a facing direction. Unlike
- * {@code SonarSweep}, which decides hits against the arc swept <em>since the last tick</em>
- * because its beam continuously rotates, a wedge is static or only slowly reorients, so it is
- * always tested against its <em>current</em> heading - there is no "missed it between ticks"
- * case to guard against here. Meant to be combined via {@link TargetQuery#and} with an
- * {@link InRangeTargetQuery} bounding the wedge's reach.
+ * Enemies within a cone from a point, tested against its current heading. Combine with an
+ * {@link InRangeTargetQuery} to bound its reach.
  */
 public final class InWedgeTargetQuery implements TargetQuery {
 

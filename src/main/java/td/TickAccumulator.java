@@ -4,11 +4,8 @@ package td;
 import td.util.ThreadConfined;
 
 /**
- * Fixed-timestep accumulator: converts elapsed wall-clock nanoseconds into a
- * whole number of logic ticks, carrying any leftover fraction of a step
- * forward to the next call. Has no thread, clock, or Swing dependency, so
- * the tick-rate math is fully unit-testable with fabricated elapsed times,
- * independent of however the real loop drives it.
+ * Converts elapsed nanoseconds into whole logic ticks, carrying the remainder to the next call.
+ * Clock-free, so the tick math is testable with fabricated times.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 public final class TickAccumulator {
@@ -23,12 +20,7 @@ public final class TickAccumulator {
         this.stepNanos = stepNanos;
     }
 
-    /**
-     * Adds the given elapsed time to the accumulator and returns how many
-     * whole logic ticks that amount of time now covers, deducting them from
-     * the accumulator. Any remainder smaller than one step is kept for the
-     * next call.
-     */
+    /** Adds elapsed time and returns how many whole ticks it now covers, keeping the remainder. */
     public int accumulate(long elapsedNanos) {
         if (elapsedNanos < 0) {
             throw new IllegalArgumentException("elapsedNanos must not be negative: " + elapsedNanos);
@@ -43,12 +35,7 @@ public final class TickAccumulator {
         this.accumulatedNanos = 0;
     }
 
-    /**
-     * The leftover sub-step remainder, as a fraction of one step (always in
-     * {@code [0, 1)}). This is how far past the last whole tick the
-     * accumulator currently sits - the basis for interpolating a render
-     * frame between the previous and current tick's state.
-     */
+    /** The remainder as a fraction of one step, in {@code [0, 1)}. */
     public double fractionElapsed() {
         return this.accumulatedNanos / (double) this.stepNanos;
     }

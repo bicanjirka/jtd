@@ -14,10 +14,8 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * Tower-placement mode and the shared click-highlight state a board click needs whether it's
- * placing a new tower or selecting an already-placed one. {@code cellGrid} is a supplier
- * rather than a fixed grid since {@link GameEngine} replaces it wholesale on every
- * {@code loadLevel}, after this is constructed.
+ * Placement mode and the click highlight shared by placing and selecting. The grid is supplied,
+ * since each level load replaces it.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class TowerPlacement {
@@ -57,10 +55,8 @@ public class TowerPlacement {
     }
 
     /**
-     * Drops placement mode and any highlighted cell without touching the grid - unlike
-     * {@link #cancel()}, which un-highlights a cell in the still-current grid, this is for
-     * tearing down before a new (possibly smaller) grid replaces the one {@code highlitedCell}
-     * was indexing, where dereferencing it would be unsafe.
+     * Drops placement mode and the highlight without touching the grid, for use before a possibly
+     * smaller grid replaces it.
      */
     public void reset() {
         this.placingTower = false;
@@ -88,8 +84,7 @@ public class TowerPlacement {
     }
 
     /**
-     * @return the tower now selected by clicking its occupied cell, or empty if the click
-     * selected nothing - a placement, a rejected placement, or a click on bare board
+     * @return the tower selected by the click, or empty
      */
     public Optional<Tower> mouseClicked(int boardX, int boardY) {
         Tower selected = null;

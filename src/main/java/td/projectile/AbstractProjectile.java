@@ -4,10 +4,8 @@ package td.projectile;
 import td.util.ThreadConfined;
 
 /**
- * Everything every projectile shares: its current and previous-tick position (for the
- * renderer's interpolation, exactly like {@code AbstractEnemyMob}'s prevX/prevY pair), and
- * the finished/live lifecycle a {@code ProjectileRoster} drops it from once it resolves.
- * Subclasses supply only how one tick's worth of flight is resolved.
+ * What every projectile shares: current and previous-tick position for interpolation, and the
+ * finished flag that gets it dropped from the roster. Subclasses supply one tick of flight.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public abstract class AbstractProjectile implements Projectile {
@@ -35,9 +33,7 @@ public abstract class AbstractProjectile implements Projectile {
         this.advance(gameTime);
     }
 
-    /**
-     * Moves this projectile one tick's worth of flight, calling {@link #finish()} once it resolves.
-     */
+    /** Moves one tick, calling {@link #finish()} once resolved. */
     protected abstract void advance(int gameTime);
 
     protected void finish() {

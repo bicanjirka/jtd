@@ -9,11 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Pins down EconomyLedger's own contract directly: payment gating, and that a mutation
- * fires exactly one EconomyListener notification (GameEngineTest exercises the same rules
- * only incidentally through gameplay flows).
- */
 class EconomyLedgerTest {
 
     private final EconomyLedger ledger = new EconomyLedger();

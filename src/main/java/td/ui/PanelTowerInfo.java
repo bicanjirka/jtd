@@ -23,25 +23,17 @@ import java.io.Serial;
 import java.util.Objects;
 
 /**
- * The text pane under the tower toolbar, showing either the selected tower's live status and
- * a sell button, or - via {@link #setExternalText} - whatever the engine last pushed through
- * {@code GameHost.setInfoText} (a hovered tower's pre-purchase stats, a rejected placement).
- * The two are mutually exclusive: selecting a tower replaces external text and vice versa.
- * <p>
- * A selected tower's own upgrade buying happens on {@link PanelUpgradeTree}, not here - this
- * panel only shows gate progress (via {@code AbstractTower.getStatusString()}'s ✔/✘
- * lines, coloured by {@link #colorizeMarks}) and, while hovering a node button, that node's
- * full description (see {@link #showUpgradeHover}).
+ * The text pane under the tower toolbar: either the selected tower's status and a sell button, or
+ * text the engine pushed via {@code GameHost.setInfoText}. Each replaces the other. Buying upgrades
+ * happens on {@link PanelUpgradeTree}; this pane shows gate progress and a hovered node's
+ * description.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     /**
-     * A single-property, narrow exception to every control otherwise sharing one look (see
-     * {@link Hud}): selling is destructive and irreversible, so its text alone reads
-     * differently. Border, fill, hover/press states and font all still come from {@link Hud}
-     * untouched - {@code paintCentredText} already reads a button's own foreground colour,
-     * so no change to {@code Hud}/{@code HudButton} is needed to support this.
+     * The one colour exception to the shared control look: selling is irreversible, so its text
+     * reads differently.
      */
     private static final Color SELL_TEXT_COLOR = new Color(255, 120, 120);
     private static final Color GATE_MET_COLOR = new Color(140, 255, 140);
@@ -84,13 +76,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         this.onDeselected = listener;
     }
 
-    /**
-     * Whether the level is over. A finished level still shows a selected tower's stats - that
-     * is the point of leaving the board visible behind the win/lose banner - but selling is a
-     * move in a game that has already been decided, so the button is greyed out, matching how
-     * {@code TowerDefense.keyTyped} refuses the keyboard equivalents. {@link Hud} paints the
-     * disabled state, so it stays legible on this panel's dark face.
-     */
+    /** After a level ends, a selected tower's stats stay visible but selling is disabled. */
     public void setLevelEnded(boolean ended) {
         this.levelEnded = ended;
         this.updateInterface();
@@ -107,9 +93,8 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     }
 
     /**
-     * Shows a hovered upgrade node's full description, overriding the selected tower's own
-     * status text until {@link #clearUpgradeHover} - called by {@code PanelUpgradeTree}'s own
-     * hover callback (see {@code PanelGameConsole}'s wiring).
+     * Shows a hovered upgrade node's description in place of the tower status until
+     * {@link #clearUpgradeHover}.
      */
     public void showUpgradeHover(String text) {
         this.hovering = true;
@@ -124,12 +109,8 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     }
 
     /**
-     * Rebuilds the selected tower's status text, if there is one. Damage dealt and kill count
-     * change on any tick the tower fires, and nothing reports that - {@link #economyChanged} only
-     * fires on a kill or a purchase, so between kills the panel used to sit stale until the
-     * tower was clicked again. Called from the render pulse rather than from tick code: it runs
-     * on the EDT at a flat ~60fps, so the text tracks the simulation without being rewritten
-     * once per tick while fast-forwarding.
+     * Rebuilds the selected tower's status. Called from the render pulse, since damage and kills
+     * change every tick without any economy event.
      */
     public void refreshSelected() {
         if (this.selectedTower != null) {
@@ -138,9 +119,8 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     }
 
     /**
-     * Skips identical text, which matters because this is now called every frame: handing a
-     * {@code JTextPane} the same string again still resets its caret and scroll position.
-     * A no-op while a node's hover text owns the pane - see {@link #showUpgradeHover}.
+     * Skips identical text, since resetting a {@code JTextPane} moves its caret and scroll, and
+     * does nothing while hover text owns the pane.
      */
     private void setText(String s) {
         if (this.hovering || Objects.equals(s, this.lastText)) {
@@ -151,12 +131,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         this.colorizeMarks(s);
     }
 
-    /**
-     * Colours every ✔ green and every ✘ red - the only styling this pane applies
-     * beyond {@link Hud}'s own control/panel look, since {@code AbstractTower.getStatusString()}
-     * marks a gate's own met/unmet state with those two characters rather than this panel
-     * re-deriving it.
-     */
+    /** Colours every ✔ green and every ✘ red. */
     private void colorizeMarks(String text) {
         StyledDocument doc = this.jTextPane1.getStyledDocument();
         SimpleAttributeSet met = new SimpleAttributeSet();
@@ -195,9 +170,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         }
     }
 
-    /**
-     * Also reachable from the game-loop thread - see GameWorld.apply()'s callers.
-     */
+    /** May run on the game-loop thread. */
     public void economyChanged(EconomyState state) {
         SwingUtilities.invokeLater(this::updateInterface);
     }

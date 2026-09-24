@@ -3,14 +3,9 @@ package td.cell;
 import td.tower.Tower;
 
 /**
- * The only {@link Cell} implementation. Position is fixed at construction; everything else is
- * mutable board state.
- * <p>
- * A cell is owned by the Event Dispatch Thread - placement, hover and selling all arrive as
- * input events - but it is read by the {@code game-loop} thread, which walks the grid when it
- * builds a render frame. The mutable fields are therefore published volatile. Each is an
- * independent value with no invariant tying it to the others, so a frame that catches a
- * highlight one pulse late is correct, just momentarily stale. See CLAUDE.md 3.
+ * The {@link Cell} implementation. Owned by the EDT, where placement, hover and selling arrive, and
+ * read by the game-loop thread when it builds a frame, so mutable fields are volatile. They are
+ * independent, so a frame one pulse stale is still correct.
  */
 public class CellNormal implements Cell {
 
@@ -42,9 +37,7 @@ public class CellNormal implements Cell {
         return this.tower;
     }
 
-    /**
-     * Silently does nothing on an unbuildable cell - placement is gated before it gets here.
-     */
+    /** Does nothing on an unbuildable cell. */
     public void setTower(Tower tower) {
         if (this.buildable) {
             this.tower = tower;
@@ -80,10 +73,7 @@ public class CellNormal implements Cell {
         return this.y;
     }
 
-    /**
-     * Sets buildability directly, bypassing the tower check - used at level load to mark the
-     * cells the path covers, and again when a sold tower frees its cell.
-     */
+    /** Sets buildability directly, bypassing the tower check. */
     public void enable(boolean b) {
         this.buildable = b;
     }

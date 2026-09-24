@@ -35,11 +35,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-/**
- * Verifies EnemyFrameBuilder actually lerps an alive body between the mob's
- * previous and current tick position, rather than just plumbing gameTime
- * through untouched.
- */
 class EnemyFrameBuilderTest {
 
     private static GameWorld contextWithStraightPath() {
@@ -311,11 +306,8 @@ class EnemyFrameBuilderTest {
     }
 
     /**
-     * Regression test for a crash only found by actually running the game (see
-     * EnemyFrameBuilder.cloakProgress's own doc comment): an ability that applies INVISIBLE
-     * (the Ghost's vanish) does so on the same tick doTick's own EffectTransitions.observe call
-     * already ran, so a frame built at that exact tick must not read a stale, unobserved
-     * transition as a negative progress.
+     * An ability can apply invisibility after this tick's transitions were observed; a frame built
+     * on that tick must not see a negative progress.
      */
     @Test
     void cloakProgressIsValidOnTheExactTickAnAbilityFirstAppliesInvisibility() {

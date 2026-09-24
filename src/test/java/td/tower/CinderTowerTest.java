@@ -16,11 +16,8 @@ import td.util.GameWorld;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Covers CinderTower's wedge targeting and its cooldown-gated, travelling-wave burn - it never
- * calls dealDamage directly, so a hit only ever shows up once the applied burn effect itself
- * ticks (see AbstractEnemyMobEffectTest for that side of the contract). A shot's wave takes
- * CinderTower.WAVE_TRAVEL_TICKS to reach its full range, so every case here drives enough ticks
- * for the wave to actually arrive rather than firing once and checking immediately.
+ * Cinder only applies burns, so hits appear as burn ticks, and each case ticks long enough for the
+ * wave to arrive.
  */
 class CinderTowerTest {
 

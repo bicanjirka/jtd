@@ -5,11 +5,6 @@ import td.wave.Vec2;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * The slot-position-to-ticks conversion moved here from AbstractEnemyMob's constructor (see
- * docs/features/FEATURE-enemy-spawn-types.md's Risk 6), so it can be exercised without a
- * GameWorld.
- */
 class SpawnParametersTest {
 
     @Test

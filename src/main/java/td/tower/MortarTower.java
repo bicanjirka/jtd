@@ -21,12 +21,9 @@ import td.util.ThreadConfined;
 import java.util.List;
 
 /**
- * "Mortar tower" - lobs a slow, unguided shell at whichever visible enemy is furthest along
- * the path, the same target choice as {@link SniperTower}. The shell travels in a straight line
- * to that enemy's position at the moment of firing and never re-aims, so a fast-moving enemy
- * can dodge it by the time it lands (see {@code CannonballProjectile}); on arrival it splashes
- * physical damage with the same distance-falloff shape {@link SplashTower} uses, and slows every
- * enemy the blast reaches.
+ * Lobs an unguided shell at the visible enemy furthest along the path. The shell flies to where the
+ * enemy was when fired, so fast enemies can dodge it; the blast deals physical damage with distance
+ * falloff and slows everything it reaches.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class MortarTower extends AbstractTower {
@@ -40,54 +37,36 @@ public final class MortarTower extends AbstractTower {
     private static final float PROJECTILE_SPEED = 40f;
     private static final float SLOW_MULTIPLIER_BASE = 0.5f;
     private static final int SLOW_DURATION_TICKS_BASE = 40;
-    /**
-     * How much bigger a splash "Siege Rounds II" gives this tower's blast radius - same shape
-     * as {@code SplashTower}'s Blast Engineering.
-     */
+    /** Splash radius multiplier from the second damage upgrade. */
     private static final float SIEGE_ROUNDS_SPLASH_MULTIPLIER = 1.4f;
 
     private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(18);
     private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(30);
 
-    /**
-     * More damage, earned by this tower having proven itself already.
-     */
     private static final UpgradeNode SIEGE_ROUNDS_1 = UpgradeNode.of("mortar.head.siege_rounds.1", UpgradeSlot.HEAD,
             "Siege Rounds", 35)
             .withBuff(TowerBuff.damage(0.3f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new DamageDealtCondition(15000));
-    /**
-     * More damage still, plus a bigger blast radius.
-     */
     private static final UpgradeNode SIEGE_ROUNDS_2 = UpgradeNode.of("mortar.head.siege_rounds.2", UpgradeSlot.HEAD,
             "Siege Rounds II", 53)
             .withBuff(TowerBuff.damage(0.25f))
             .withRequires(UpgradeCondition.owns(SIEGE_ROUNDS_1.id()))
             .withGate(new DamageDealtCondition(30000))
             .withExtraEffect("+40% splash radius");
-    /**
-     * Shrapnel deals bonus damage in a wider ring past the main splash, once the shrapnel-ring
-     * primitive exists - see TODO.md.
-     */
+    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode FRAGMENTATION_ROUNDS_1 = UpgradeNode.of("mortar.head.fragmentation_rounds.1",
             UpgradeSlot.HEAD, "Fragmentation Rounds", 30)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(12))
             .withExtraEffect("shrapnel deals 25% weapon damage in a wider ring past the main splash");
-    /**
-     * Shrapnel also applies this tower's slow, at half duration - depends on Fragmentation
-     * Rounds' own not-yet-existing shrapnel primitive - see TODO.md.
-     */
+    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode FRAGMENTATION_ROUNDS_2 = UpgradeNode.of("mortar.head.fragmentation_rounds.2",
             UpgradeSlot.HEAD, "Fragmentation Rounds II", 45)
             .withRequires(UpgradeCondition.owns(FRAGMENTATION_ROUNDS_1.id()))
             .withGate(new ClusterCondition(2))
             .withExtraEffect("shrapnel also applies this tower's slow, at half duration");
-    /**
-     * Every enemy caught in the blast gets a guaranteed Vulnerable stack, once that primitive
-     * exists - see TODO.md.
-     */
+    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode CURSED_SHRAPNEL = UpgradeNode.of("mortar.special.cursed_shrapnel",
             UpgradeSlot.SPECIAL, "Cursed Shrapnel", 60)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
@@ -97,9 +76,6 @@ public final class MortarTower extends AbstractTower {
     private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, SIEGE_ROUNDS_1, SIEGE_ROUNDS_2,
             FRAGMENTATION_ROUNDS_1, FRAGMENTATION_ROUNDS_2, CURSED_SHRAPNEL);
 
-    /**
-     * Ticks between shots before any fire-rate buff.
-     */
     private static final int COOLDOWN_MAX = 50;
     private final float slowMultiplier = SLOW_MULTIPLIER_BASE;
     private final int slowDurationTicks = SLOW_DURATION_TICKS_BASE;
@@ -118,9 +94,6 @@ public final class MortarTower extends AbstractTower {
         return TREE;
     }
 
-    /**
-     * Siege Rounds II's blast-radius bump isn't a {@link TowerBuff} axis, so it's applied here instead.
-     */
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
         if (node.equals(SIEGE_ROUNDS_2)) {

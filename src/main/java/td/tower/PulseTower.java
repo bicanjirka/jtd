@@ -19,11 +19,9 @@ import td.util.ThreadConfined;
 import java.util.List;
 
 /**
- * "Pulse tower" - short range, no cooldown, damages everything in range every tick,
- * ghosts included. It only fires when at least one non-ghost is in range, so its visible
- * pulse never gives away a ghost that is alone in range - but once something else triggers
- * it, that ghost takes the damage too. Buying "Resonant Field" deliberately trades that
- * protection away, so the tower always fires once anything is in range (see {@link #doTick}).
+ * Short range, no cooldown: damages everything in range every tick, invisible enemies included.
+ * Fires only while a visible enemy is in range, so it never reveals an invisible enemy alone in
+ * range; an upgrade removes that restraint.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class PulseTower extends AbstractTower {
@@ -35,46 +33,30 @@ public final class PulseTower extends AbstractTower {
     private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(15);
     private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(25);
 
-    /**
-     * More damage - earned by this tower having already proven itself against real targets.
-     */
     private static final UpgradeNode OVERCHARGED_COILS_1 = UpgradeNode.of("pulse.head.overcharged_coils.1",
             UpgradeSlot.HEAD, "Overcharged Coils", 30)
             .withBuff(TowerBuff.damage(0.3f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new DamageDealtCondition(10000));
-    /**
-     * More damage still, plus a flat crit chance.
-     */
     private static final UpgradeNode OVERCHARGED_COILS_2 = UpgradeNode.of("pulse.head.overcharged_coils.2",
             UpgradeSlot.HEAD, "Overcharged Coils II", 45)
             .withBuff(TowerBuff.damage(0.25f).withCritChance(0.1f))
             .withRequires(UpgradeCondition.owns(OVERCHARGED_COILS_1.id()))
             .withGate(new KillCountCondition(20));
-    /**
-     * More range, and the tower now fires every tick anything is in range - no longer holding
-     * back to avoid revealing a ghost alone in range (see {@link #doTick}).
-     */
     private static final UpgradeNode RESONANT_FIELD_1 = UpgradeNode.of("pulse.head.resonant_field.1",
             UpgradeSlot.HEAD, "Resonant Field", 25)
             .withBuff(TowerBuff.range(0.2f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(10))
             .withExtraEffect("damages invisible enemies every tick, cover no longer required");
-    /**
-     * More range still; any invisible enemy hit is revealed to every tower for 2s, once the
-     * reveal-to-every-tower primitive exists - see TODO.md.
-     */
+    /** Its reveal effect is not implemented yet (TODO.md). */
     private static final UpgradeNode RESONANT_FIELD_2 = UpgradeNode.of("pulse.head.resonant_field.2",
             UpgradeSlot.HEAD, "Resonant Field II", 38)
             .withBuff(TowerBuff.range(0.15f))
             .withRequires(UpgradeCondition.owns(RESONANT_FIELD_1.id()))
             .withGate(new DamageDealtCondition(20000))
             .withExtraEffect("any invisible enemy it hits is revealed to every tower for 2s");
-    /**
-     * Each tick, everything currently being hit has a chance to gain a Vulnerable stack, once
-     * that primitive exists - see TODO.md.
-     */
+    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode WARDING_FIELD = UpgradeNode.of("pulse.special.warding_field", UpgradeSlot.SPECIAL,
             "Warding Field", 50)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))

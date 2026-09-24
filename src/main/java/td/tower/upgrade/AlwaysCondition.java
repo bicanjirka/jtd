@@ -3,9 +3,7 @@ package td.tower.upgrade;
 import td.tower.Tower;
 import td.util.GameWorld;
 
-/**
- * The identity element for {@link UpgradeCondition} - satisfied unconditionally.
- */
+/** The identity for {@link UpgradeCondition#and}: always satisfied. */
 final class AlwaysCondition implements UpgradeCondition {
 
     static final UpgradeCondition INSTANCE = new AlwaysCondition();

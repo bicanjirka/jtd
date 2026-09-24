@@ -14,10 +14,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 /**
- * The towers currently on the board and their buy/sell lifecycle. {@code board} is a
- * supplier rather than one fixed {@link BoardGeometry} because a tower can be sold after
- * the level (and its geometry) that placed it has already loaded - callers always want
- * whatever geometry is current, not whatever it was at construction time.
+ * Towers on the board and their buy/sell lifecycle. The board geometry is supplied, since a tower
+ * can be sold after a new level loaded.
  */
 public class TowerRoster {
 
@@ -35,10 +33,7 @@ public class TowerRoster {
         this.board = board;
     }
 
-    /**
-     * A live, read-only view - callers (BoardRenderer, AuraTower's proximity scan) must
-     * see towers added after this was called, not a snapshot.
-     */
+    /** A live, read-only view that sees later additions. */
     public List<Tower> all() {
         return Collections.unmodifiableList(this.towers);
     }
@@ -50,15 +45,9 @@ public class TowerRoster {
     }
 
     /**
-     * Recomputes every tower's buffed stats, because a tower arriving or leaving can change
-     * what any other tower receives - an Aura tower most obviously, but the rule is simply
-     * that the buff set is a function of which towers are on the board (see
-     * {@link Tower#buffFor}).
-     * <p>
-     * This is O(n^2) in the number of towers, on a user action, over a board that holds tens
-     * of them. It replaces a bidirectional index that was O(1) to read and had four methods,
-     * a listener subscription and a rescan keeping it correct. If a board ever grows large
-     * enough for this to matter, measure it before adding the index back.
+     * Recomputes every tower's stats, since any arrival or departure can change what the others
+     * receive. Quadratic in tower count, which is fine for a user action over tens of towers;
+     * measure before adding an index.
      */
     private void recalculateAllStats() {
         for (Tower t : this.towers) {

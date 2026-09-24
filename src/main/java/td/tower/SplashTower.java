@@ -21,10 +21,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * "Splash tower" - splash damage. Picks a random visible enemy in range, then damages
- * everything within {@code spreadRadius} of it, falling off with the square of the distance
- * from the blast centre. The splash deliberately uses an any-type query, so it is one of the
- * two towers that can hurt ghosts even though it cannot target them directly.
+ * Picks a random visible enemy in range and damages everything within {@code spreadRadius} of it,
+ * falling off with the square of the distance. The splash hits invisible enemies too.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class SplashTower extends AbstractTower {
@@ -38,90 +36,61 @@ public final class SplashTower extends AbstractTower {
     private static final float SLOW_MULTIPLIER = 0.5f;
     private static final int SLOW_DURATION_TICKS = 40;
 
-    /**
-     * How much bigger "Blast Engineering" gives this tower's blast radius.
-     */
+    /** Blast radius multiplier from the first blast upgrade. */
     private static final float BLAST_ENGINEERING_SPREAD_MULTIPLIER = 1.3f;
-    /**
-     * How much "Blast Engineering II" softens the falloff curve's own {@code r2} term - lower
-     * flattens it (closer to uniform damage across the blast) without changing its shape.
-     */
+    /** Scales the falloff term down, flattening damage across the blast. */
     private static final float FALLOFF_SOFTENING_FACTOR = 0.5f;
 
     private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(9);
     private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(15);
 
-    /**
-     * A bigger blast - earned by this tower having proven itself already.
-     */
     private static final UpgradeNode BLAST_ENGINEERING_1 = UpgradeNode.of("splash.head.blast_engineering.1",
             UpgradeSlot.HEAD, "Blast Engineering", 35)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new DamageDealtCondition(10000))
             .withExtraEffect("+30% splash radius");
-    /**
-     * More damage, and a flatter falloff curve so the blast's edge hits nearly as hard as its centre.
-     */
     private static final UpgradeNode BLAST_ENGINEERING_2 = UpgradeNode.of("splash.head.blast_engineering.2",
             UpgradeSlot.HEAD, "Blast Engineering II", 53)
             .withBuff(TowerBuff.damage(0.25f))
             .withRequires(UpgradeCondition.owns(BLAST_ENGINEERING_1.id()))
             .withGate(new DamageDealtCondition(20000))
             .withExtraEffect("flattens the falloff curve");
-    /**
-     * Fires 3 projectiles instead of 1, once the multi-projectile primitive exists - see TODO.md.
-     */
+    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode BLAST_ENGINEERING_3 = UpgradeNode.of("splash.head.blast_engineering.3",
             UpgradeSlot.HEAD, "Blast Engineering III", 70)
             .withRequires(UpgradeCondition.owns(BLAST_ENGINEERING_2.id()))
             .withGate(new KillCountCondition(20))
             .withExtraEffect("fires 3 projectiles instead of 1");
-    /**
-     * A faster reload - rewards a deliberately grouped placement rather than a solo one.
-     */
     private static final UpgradeNode RAPID_BATTERY_1 = UpgradeNode.of("splash.head.rapid_battery.1", UpgradeSlot.HEAD,
             "Rapid Battery", 30)
             .withBuff(TowerBuff.fireRate(0.25f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(8));
-    /**
-     * More damage and some crit chance.
-     */
     private static final UpgradeNode RAPID_BATTERY_2 = UpgradeNode.of("splash.head.rapid_battery.2", UpgradeSlot.HEAD,
             "Rapid Battery II", 45)
             .withBuff(TowerBuff.damage(0.25f).withCritChance(0.15f))
             .withRequires(UpgradeCondition.owns(RAPID_BATTERY_1.id()))
             .withGate(new KillCountCondition(18));
-    /**
-     * A crit splashes 50% bigger, once the crit-triggered-behavior primitive exists - see TODO.md.
-     */
+    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode RAPID_BATTERY_3 = UpgradeNode.of("splash.head.rapid_battery.3", UpgradeSlot.HEAD,
             "Rapid Battery III", 60)
             .withRequires(UpgradeCondition.owns(RAPID_BATTERY_2.id()))
             .withGate(new DamageDealtCondition(25000))
             .withExtraEffect("crits splash 50% bigger");
-    /**
-     * A toxic damage-over-time on the blast, once the toxic-DoT primitive exists - see TODO.md.
-     */
+    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode TOXIC_BLOOM = UpgradeNode.of("splash.special.toxic_bloom", UpgradeSlot.SPECIAL,
             "Toxic Bloom", 30)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
             .withGate(new DamageDealtCondition(15000))
             .withExtraEffect("splash applies a toxic damage-over-time");
-    /**
-     * A heavier, slower blast that also slows everything it hits; a killed enemy exploding is a
-     * separate, not-yet-existing on-kill-trigger primitive - see TODO.md.
-     */
+    /** Its on-kill explosion is not implemented yet (TODO.md). */
     private static final UpgradeNode CONCUSSIVE_BLAST = UpgradeNode.of("splash.special.concussive_blast",
             UpgradeSlot.SPECIAL, "Concussive Blast", 30)
             .withBuff(TowerBuff.fireRate(-0.5f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
             .withGate(new KillCountCondition(15))
             .withExtraEffect("-50% fire rate, blast applies slow, killed enemies explode");
-    /**
-     * A crit fires at every enemy in range instead of just the one target, once the
-     * crit-triggered-behavior-override primitive exists - see TODO.md.
-     */
+    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode OVERPRESSURE = UpgradeNode.of("splash.special.overpressure", UpgradeSlot.SPECIAL,
             "Overpressure", 30)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
@@ -132,9 +101,6 @@ public final class SplashTower extends AbstractTower {
             BLAST_ENGINEERING_2, BLAST_ENGINEERING_3, RAPID_BATTERY_1, RAPID_BATTERY_2, RAPID_BATTERY_3, TOXIC_BLOOM,
             CONCUSSIVE_BLAST, OVERPRESSURE);
 
-    /**
-     * Ticks between shots before any fire-rate buff.
-     */
     private static final int COOLDOWN_MAX = 19;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final TargetSelector targetSelector;
@@ -158,9 +124,6 @@ public final class SplashTower extends AbstractTower {
         return TREE;
     }
 
-    /**
-     * Bonuses that aren't a {@link TowerBuff} axis are applied here instead.
-     */
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
         if (node.equals(BLAST_ENGINEERING_1)) {

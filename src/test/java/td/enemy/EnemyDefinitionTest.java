@@ -10,12 +10,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * {@link EnemyDefinition#withAdditionalTraits}/{@link EnemyDefinition#withAdditionalAbilities} -
- * the {@link TraitId} identity mechanism a rank step, or a spawn shape's trait override, composes
- * a definition with. {@code withTraits}/{@code withAbilities} (full replace) need no test of
- * their own: they're exercised throughout {@code BuiltInEnemies} already.
- */
 class EnemyDefinitionTest {
 
     private final EnemyDefinition base = EnemyFixtures.simpleDefinition("test");

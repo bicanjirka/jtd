@@ -27,11 +27,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Asserts on BoardRenderer.buildFrame()'s output directly - no Graphics2D, no
- * window - proving the frame model is genuinely headless-testable, which the
- * old paint()-based renderer never was.
- */
 class BoardRendererTest {
 
     private static GameEngine newEngine() {

@@ -6,10 +6,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * AsciiBoardRenderer's whole point is deterministic, assertable output - unlike
- * Java2DFrameRenderer, its result is a plain String that can be compared exactly.
- */
 class AsciiBoardRendererTest {
 
     private static final int SCALE = 10;

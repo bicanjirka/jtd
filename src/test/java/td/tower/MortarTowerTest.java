@@ -15,10 +15,6 @@ import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Covers MortarTower's targeting, its shell's flight, and the splash+slow it applies on
- * impact - the shell itself is exercised more thoroughly by CannonballProjectileTest.
- */
 class MortarTowerTest {
 
     private final GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);

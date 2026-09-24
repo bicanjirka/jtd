@@ -7,11 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-/**
- * Enemies within a radius of a point, optionally restricted to one
- * {@link EnemyMob.Type}. Use {@link #anyType} or {@link #ofType} - never
- * {@code null} - to say which.
- */
+/** Enemies within a radius of a point, of any type ({@link #anyType}) or one ({@link #ofType}). */
 public final class InRangeTargetQuery implements TargetQuery {
 
     private final int x;

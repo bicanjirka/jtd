@@ -1,11 +1,8 @@
 package td.wave;
 
 /**
- * A path's own on-board color, as plain 0-255 RGB. Carries no {@code java.awt} dependency, so it
- * is exactly as safe to reference from {@code td.ui.render} as any other domain type - see
- * {@code td.ui.render.CellDraw}'s own reference to {@code td.cell.Cell}. {@link #DEFAULT} is
- * today's hardcoded white, so a path that never calls {@code PathDefinition.withColor} looks
- * exactly as every path always has.
+ * A path's colour as plain RGB, so render commands can carry it without AWT. {@link #DEFAULT} is
+ * white.
  */
 public record PathColor(int r, int g, int b) {
 

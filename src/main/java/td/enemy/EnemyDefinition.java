@@ -6,45 +6,21 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * A data-driven enemy type: a name/id (the wave-script token), base stats, a graphical
- * representation, and the composable {@link Trait}s and {@link Ability}s that give it its
- * behavior - replacing what today is a hardcoded method override on a {@code final} leaf
- * class. Built once, at {@link EnemyCatalog} registration time, not per-spawn; {@link Trait}s
- * and {@link Ability}s are shared across every mob spawned from this definition.
- * <p>
- * Carries its own {@code baseHealth}/{@code price}, scoped to whichever {@link Rank} this
- * particular definition represents within its {@link RankedEnemy} ladder - a rank-1 Circle has
- * the same health and bounty in every wave that spawns it. A wave-spawned enemy (via
- * {@code td.wave.Wave}) and an ability-spawned one (a {@code SpawnEnemiesAction}, resolved
- * through {@code DefinedEnemyMob}'s own ability execution) both read {@link #baseHealth()}/
- * {@link #price()} directly now - there is no separate "wave supplies the numbers" path left.
+ * A data-driven enemy type at one {@link Rank}: id, base stats, body, and the {@link Trait}s and
+ * {@link Ability}s that give it behaviour. Built once at registration and shared by every mob
+ * spawned from it.
  *
- * @param id            the wave-script token this definition spawns under - built-ins use a
- *                      single letter (matching today's {@code c}/{@code s}/{@code t}/
- *                      {@code g}/{@code e}); a per-level custom or cloned definition uses an
- *                      ordinary, longer id. There is no separate syntax for the two - the wave
- *                      mini-language treats every token as a plain id lookup against whichever
- *                      {@link EnemyCatalog} is in scope.
- * @param displayName   shown as the first line of the in-game info text.
- * @param description   shown as the second line of the in-game info text.
- * @param baseHealth    this rank's own base health, before per-type {@code healthDivisor}
- *                      adjustment and a spawn shape's own multiplier.
- * @param price         this rank's own bounty per kill, and the score penalty if one leaks.
- * @param baseSpeed     pixels per tick before any active effect - {@code 0} means the mob never
- *                      advances along the path at all (the boss egg), which needs no separate
- *                      "stationary" flag: {@code distanceIntoLap} simply never accumulates.
- * @param healthDivisor {@code baseHealth} is divided by this before any other scaling -
- *                      generalizes Ghost's flat {@code /5}. {@code 1} for every definition that
- *                      doesn't need one.
- * @param mobType       which {@link EnemyMob.Type} this definition spawns as - what
- *                      type-filtering targeting queries (see {@code td.tower.targeting}) see,
- *                      independent of anything a {@link Trait} does.
- * @param traitSlots    always-on, no per-mob state of their own beyond what a {@link Trait}'s
- *                      own method parameters supply - see {@link #traits()} for the plain,
- *                      identity-free view most callers want, and {@link #withAdditionalTraits}
- *                      for how a later composition step replaces one by {@link TraitId}
- * @param abilitySlots  triggered behaviors - see {@link Ability}, and {@link #abilities()}/
- *                      {@link #withAdditionalAbilities} for the same identity-aware shape
+ * @param id            the wave-script token it spawns under
+ * @param displayName   first line of the in-game info text
+ * @param description   second line of the in-game info text
+ * @param baseHealth    this rank's health, before {@code healthDivisor} and spawn-shape scaling
+ * @param price         bounty per kill, and the score lost if it leaks
+ * @param baseSpeed     pixels per tick; {@code 0} never moves
+ * @param healthDivisor divides {@code baseHealth} before any other scaling; {@code 1} for none
+ * @param mobType       the type targeting queries filter on
+ * @param traitSlots    always-on traits, identified so {@link #withAdditionalTraits} can replace
+ * one by id
+ * @param abilitySlots  triggered abilities, identified the same way
  */
 public record EnemyDefinition(
         String id,
@@ -66,11 +42,8 @@ public record EnemyDefinition(
     }
 
     /**
-     * The required shape every enemy has: no description, {@link EnemyMob.Type#NORMAL}, a
-     * {@link FixedMovement} pace, no health divisor, no traits, no abilities. A definition that
-     * needs any of those calls the matching {@code withX} copy below instead of this factory
-     * growing another parameter - the same "with"-copy shape {@link td.wave.PathDefinition} and
-     * {@code td.util.LoadedLevel} already use.
+     * The required shape: no description, normal type, fixed movement, no divisor, traits or
+     * abilities. Add the rest with the {@code withX} copies.
      */
     public static EnemyDefinition of(String id, String displayName, int baseHealth, int price, float baseSpeed,
             BodyArchetype archetype) {
@@ -78,30 +51,19 @@ public record EnemyDefinition(
                 EnemyMob.Type.NORMAL, archetype, new FixedMovement(), List.of(), List.of());
     }
 
-    /**
-     * This definition's traits with their {@link TraitId} identity stripped - what every
-     * runtime consumer (damage resistance, speed curves, target validity) actually needs.
-     */
+    /** Traits without their ids. */
     public List<Trait> traits() {
         return this.traitSlots.stream().map(IdentifiedTrait::trait).toList();
     }
 
-    /**
-     * This definition's abilities with their {@link TraitId} identity stripped - what
-     * {@code DefinedEnemyMob}'s ability evaluation and {@code EnemyCatalog}'s spawn-cycle check
-     * actually need.
-     */
+    /** Abilities without their ids. */
     public List<Ability> abilities() {
         return this.abilitySlots.stream().map(IdentifiedAbility::ability).toList();
     }
 
     /**
-     * What this definition projects onto nearby allies, and how far - the largest
-     * {@link RadiusTarget} radius among its abilities, paired with the {@link td.effect.EffectKind}
-     * the effect at that radius applies. {@link Optional#empty()} for a definition that casts
-     * nothing at a radius (every ability is {@link SelfTarget}, or there are no abilities at
-     * all). A UI wanting "what should this mob's support-aura ring show" reads this rather than
-     * walking {@link #abilities()} itself - see {@code td.ui.EnemyFrameBuilder}.
+     * The largest radius any ability casts at, with the kind it applies; empty if nothing is cast
+     * at a radius.
      */
     public Optional<SupportAura> supportAura() {
         SupportAura largest = null;
@@ -124,10 +86,7 @@ public record EnemyDefinition(
         };
     }
 
-    /**
-     * A rank ladder step's ordinary shape: the next rank's own health and bounty, everything
-     * else (traits included) unchanged from the rank before it - see {@link RankedEnemy}.
-     */
+    /** A rank step's usual change: new health and bounty, everything else kept. */
     public EnemyDefinition withHealthAndPrice(int baseHealth, int price) {
         return new EnemyDefinition(this.id, this.displayName, this.description, baseHealth, price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
@@ -159,10 +118,8 @@ public record EnemyDefinition(
     }
 
     /**
-     * Replaces every trait wholesale, each wrapped as an anonymous, non-replaceable
-     * {@link IdentifiedTrait} - the ordinary authoring shape for a definition that isn't part of
-     * a rank ladder. {@link #withAdditionalTraits} is the identity-aware alternative a rank step
-     * (or a spawn shape's trait override) composes with instead.
+     * Replaces every trait, each anonymous. Use {@link #withAdditionalTraits} to add or replace by
+     * id.
      */
     public EnemyDefinition withTraits(List<Trait> traits) {
         return withIdentifiedTraits(traits.stream().map(IdentifiedTrait::anonymous).toList());
@@ -175,10 +132,8 @@ public record EnemyDefinition(
     }
 
     /**
-     * Composes {@code additions} onto this definition's existing traits by {@link TraitId}: an
-     * addition whose id matches an existing entry replaces it in place; every other addition is
-     * appended. What a later rank step, and a spawn shape's trait override (e.g. {@code
-     * armored}), both use to add or upgrade one trait without disturbing the rest.
+     * Adds traits by id: one whose id matches an existing trait replaces it in place, the rest are
+     * appended.
      */
     public EnemyDefinition withAdditionalTraits(List<IdentifiedTrait> additions) {
         return withIdentifiedTraits(compose(this.traitSlots, additions, IdentifiedTrait::id));
@@ -194,9 +149,7 @@ public record EnemyDefinition(
                 abilitySlots);
     }
 
-    /**
-     * The ability composition counterpart to {@link #withAdditionalTraits} - see its doc comment.
-     */
+    /** Adds abilities by id, like {@link #withAdditionalTraits}. */
     public EnemyDefinition withAdditionalAbilities(List<IdentifiedAbility> additions) {
         return withIdentifiedAbilities(compose(this.abilitySlots, additions, IdentifiedAbility::id));
     }

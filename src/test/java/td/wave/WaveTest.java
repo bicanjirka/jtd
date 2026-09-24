@@ -16,10 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-/**
- * Wave turns an already-parsed {@link WaveContent} into live, world-bound enemies - see
- * {@link WaveScriptTest} for the token-parsing behavior itself, which needs no GameWorld.
- */
 class WaveTest {
 
     private static final long SEED = 1L; // arbitrary, fixed: only the scatter-specific tests below care what it is
@@ -31,10 +27,7 @@ class WaveTest {
         return new Wave(this.context, WaveScript.parse(tokens, Rank.GRUNT, this.catalog), SEED);
     }
 
-    /**
-     * A straight, horizontal path - so a lateral offset lands purely on Y, which is what the
-     * shape tests below read.
-     */
+    /** Horizontal, so a lateral offset lands purely on y. */
     private void setStraightHorizontalPath() {
         this.context.setBoard(BoardGeometry.of(32, 100, 100));
         this.context.setPath(new PathNormal(List.of(new Vec2(0, 50), new Vec2(200, 50))));
@@ -276,9 +269,8 @@ class WaveTest {
     }
 
     /**
-     * Ticks each mob from 1 until it becomes a valid target, returning the tick that happened
-     * on (0 if it was already active) - the spawn delay is otherwise a private tick countdown
-     * with no accessor, so this is the black-box way to pin it.
+     * The tick each mob becomes targetable (0 if already), measuring the private spawn delay from
+     * outside.
      */
     private static int[] activationTicks(EnemyMob[] mobs) {
         int[] ticks = new int[mobs.length];

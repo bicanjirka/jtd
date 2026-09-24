@@ -7,13 +7,6 @@ import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * {@link PercentResistTrait}. The unrestricted case is exercised end to end through the built-in
- * Armored definition that carries it - {@code BuiltInEnemies.ARMORED}. There is no Armored class
- * to test: every real enemy is a {@link DefinedEnemyMob}, and what distinguishes one is its
- * {@link EnemyDefinition}'s traits. The damage-kind-restricted case is tested directly against
- * the trait, since it needs no enemy to carry it to prove {@code onHit}'s own guard.
- */
 class PercentResistTraitTest {
 
     private final GameWorld context = WorldFixtures.newWorld();

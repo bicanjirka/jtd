@@ -1,13 +1,8 @@
 package td.tower;
 
 /**
- * Double-dispatch over the closed set of concrete {@link Tower} types, used
- * by td.ui's rendering code so it can draw type-specific tower effects
- * without an instanceof chain (see CLAUDE.md §5 rule 11).
- * <p>
- * Adding a method here is deliberately a breaking change: it forces both
- * {@code TowerSpriteFrameBuilder} and {@code TowerEffectFrameBuilder} to
- * describe the new tower rather than silently skipping it.
+ * Double dispatch over the concrete {@link Tower} types, so rendering needs no type checks. Adding
+ * a method forces every visitor to handle the new tower.
  */
 public interface TowerVisitor<R> {
     R visitSniperTower(SniperTower tower);

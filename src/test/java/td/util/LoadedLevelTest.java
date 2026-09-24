@@ -14,11 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * LoadedLevel is the single value the correlated parts of a level cross threads in. These cover
- * the properties that makes it safe to publish: it is immutable, it models "no level" as a
- * value, and it cannot be changed through the list a caller handed it.
- */
 class LoadedLevelTest {
 
     @Test

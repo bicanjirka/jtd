@@ -1,11 +1,8 @@
 package td.projectile;
 
 /**
- * Travels in a straight line, at a fixed speed, to the destination it was aimed at when
- * fired - it never re-aims in flight, so a fast-moving enemy can dodge it by the time it
- * arrives. Detonates at that destination whether or not anything is still there to hit; a
- * fixed destination is always reached in finite ticks, so this needs no lifetime cap the way
- * a homing {@link MissileProjectile} does.
+ * Flies straight to the point it was aimed at and never re-aims, so a fast enemy can dodge it.
+ * Detonates there whether or not anything is left to hit.
  */
 public final class CannonballProjectile extends AbstractProjectile {
 

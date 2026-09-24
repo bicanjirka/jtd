@@ -3,13 +3,10 @@ package td.cell;
 import td.tower.Tower;
 
 /**
- * One square of the board: where it sits in pixels, whether a tower may be built on it, the
- * tower currently occupying it, and its transient placement/selection highlight.
+ * One board square: pixel position, buildability, occupying tower and highlight.
  * <p>
- * Buildability has two independent sources - the level's path covers a cell
- * ({@code enable(false)} at load time, see {@link td.wave.PathCoverage}) or a tower occupies
- * it - and both funnel through the same flag, which is why selling a tower calls
- * {@code unSetTower()} followed by {@code enable(true)} rather than either one alone.
+ * A path covering the cell and a tower occupying it share one buildability flag, so selling calls
+ * {@code unSetTower()} and then {@code enable(true)}.
  */
 public interface Cell {
 
@@ -21,9 +18,7 @@ public interface Cell {
 
     void setHighlightRange(float range);
 
-    /**
-     * The cell's top-left corner in board pixels, not its grid index.
-     */
+    /** Top-left corner in board pixels, not the grid index. */
     int getX();
 
     int getY();
@@ -41,9 +36,8 @@ public interface Cell {
     void setTower(Tower tower);
 
     /**
-     * {@code PLACE} is the hover highlight shown while placing a tower (with a range circle),
-     * {@code SELECT} the outline on an already-placed tower's cell, {@code NONE} the resting
-     * state - which is also the only one the renderer skips entirely.
+     * {@code PLACE} is the placement hover, {@code SELECT} the selected tower's outline,
+     * {@code NONE} draws nothing.
      */
     enum HighlightType {
         NONE,

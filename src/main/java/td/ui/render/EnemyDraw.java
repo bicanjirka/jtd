@@ -1,7 +1,5 @@
 package td.ui.render;
 
-/**
- * An enemy is either an alive body or a fading corpse - never both, never neither.
- */
+/** An enemy is exactly one of a live body or a fading corpse. */
 public sealed interface EnemyDraw permits EnemyBodyDraw, EnemyFadeDraw {
 }

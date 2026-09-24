@@ -25,22 +25,12 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * "Cinder tower" - a cooldown-gated flame cone, slowly reorienting toward the nearest enemy in
- * range. Each shot is a wave that travels outward from the tower over several ticks and fades as
- * it goes, burning an enemy only once the wave's own expanding front actually reaches it - the
- * same "hits everyone in the shape" spirit as {@link PulseTower}, just confined to a cone
- * instead of the whole range circle, and spread out over time instead of instantaneous. Like
- * every other non-{@link PulseTower} tower, it cannot target or hit an invisible enemy.
+ * A cooldown-gated flame cone that turns slowly toward the nearest enemy. Each shot is a wave
+ * travelling outward over several ticks, burning an enemy once when its front reaches it. Cannot
+ * hit invisible enemies.
  * <p>
- * A wave's heading and half-width are captured once, at the moment it fires - it does not
- * retroactively change shape as the turret keeps tracking afterward, the same reasoning
- * {@code InWedgeTargetQuery} already applies to a static wedge's <em>current</em> heading, just
- * captured per-wave instead of read live.
- * <p>
- * Cinder never calls {@code dealDamage} directly - its entire attack is applying a burn once a
- * wave's front reaches an enemy. Damage still flows through this tower's own {@code dealDamage}
- * once the burn ticks (see {@code Effect}'s sink), so its damage/kill accounting stays accurate
- * without a second, parallel damage path.
+ * A wave's heading and width are fixed when it fires. The tower never deals direct damage: its
+ * burns credit it through {@code dealDamage}.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class CinderTower extends AbstractTower {
@@ -48,16 +38,9 @@ public final class CinderTower extends AbstractTower {
     public static final int PRICE = 28;
     public static final int DAMAGE = 150;
     public static final float RANGE = 2.2f;
-    /**
-     * Ticks between shots before any fire-rate buff - a placeholder for the balance pass
-     * {@code TODO.md} already tracks for Cinder's other numbers, not a tuned final value.
-     */
+    /** Ticks between shots before buffs. */
     public static final int COOLDOWN_MAX = 20;
-    /**
-     * How many ticks a wave takes to travel from the tower out to its full range - configurable
-     * here rather than inline, per this feature's own ask. A placeholder alongside
-     * {@link #COOLDOWN_MAX}, not a tuned final value.
-     */
+    /** Ticks a wave takes to reach full range. */
     public static final int WAVE_TRAVEL_TICKS = 10;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.15;
@@ -70,47 +53,30 @@ public final class CinderTower extends AbstractTower {
     private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(17);
     private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(28);
 
-    /**
-     * More damage (and so more burn per tick, since burn's magnitude is this tower's own
-     * damageCurrent) - earned by proven output.
-     */
     private static final UpgradeNode WHITE_FLAME_1 = UpgradeNode.of("cinder.head.white_flame.1", UpgradeSlot.HEAD,
             "White Flame", 30)
             .withBuff(TowerBuff.damage(0.3f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new DamageDealtCondition(15000));
-    /**
-     * More damage still, and a longer burn.
-     */
     private static final UpgradeNode WHITE_FLAME_2 = UpgradeNode.of("cinder.head.white_flame.2", UpgradeSlot.HEAD,
             "White Flame II", 45)
             .withBuff(TowerBuff.damage(0.25f))
             .withRequires(UpgradeCondition.owns(WHITE_FLAME_1.id()))
             .withGate(new DamageDealtCondition(30000))
             .withExtraEffect("+50% burn duration");
-    /**
-     * More range and a wider cone.
-     */
     private static final UpgradeNode WIDE_NOZZLE_1 = UpgradeNode.of("cinder.head.wide_nozzle.1", UpgradeSlot.HEAD,
             "Wide Nozzle", 25)
             .withBuff(TowerBuff.range(0.25f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(10))
             .withExtraEffect("+30% cone width");
-    /**
-     * More range and cone width still, plus a shorter cooldown - the cooldown cut is the
-     * existing fire-rate {@link TowerBuff} axis, needing no new hook of its own.
-     */
     private static final UpgradeNode WIDE_NOZZLE_2 = UpgradeNode.of("cinder.head.wide_nozzle.2", UpgradeSlot.HEAD,
             "Wide Nozzle II", 38)
             .withBuff(TowerBuff.range(0.2f).withFireRate(0.2f))
             .withRequires(UpgradeCondition.owns(WIDE_NOZZLE_1.id()))
             .withGate(new DamageDealtCondition(25000))
             .withExtraEffect("+20% cone width, -20% cooldown");
-    /**
-     * Each wave that newly ignites an enemy also grants a Vulnerable stack, once that primitive
-     * exists - see TODO.md.
-     */
+    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode HEXFLAME = UpgradeNode.of("cinder.special.hexflame", UpgradeSlot.SPECIAL,
             "Hexflame", 56)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
@@ -135,9 +101,6 @@ public final class CinderTower extends AbstractTower {
         return TREE;
     }
 
-    /**
-     * Bonuses that aren't a {@link TowerBuff} axis are applied here instead.
-     */
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
         if (node.equals(WHITE_FLAME_2)) {
@@ -166,10 +129,8 @@ public final class CinderTower extends AbstractTower {
     }
 
     /**
-     * Advances every in-flight wave by one tick, burning whichever enemies its expanding front
-     * has just reached for the first time - each wave hits a given enemy at most once, no matter
-     * how long that enemy lingers inside the band, tracked by the wave's own hit set. A wave that
-     * has fully travelled its range is dropped.
+     * Advances every wave, burning enemies its front reaches for the first time; each wave hits an
+     * enemy at most once. Drops waves that reached full range.
      */
     private void advanceWaves(int gameTime) {
         Iterator<FlameWave> waves = this.inFlightWaves.iterator();
@@ -199,10 +160,7 @@ public final class CinderTower extends AbstractTower {
         return this.halfWidthRadians;
     }
 
-    /**
-     * Waves still travelling outward, oldest first - what {@code td.ui.TowerEffectFrameBuilder}
-     * draws one {@code ConeDraw} per, each at its own progress.
-     */
+    /** Waves still travelling, oldest first. */
     public List<FlameWave> getInFlightWaves() {
         return Collections.unmodifiableList(this.inFlightWaves);
     }
@@ -224,9 +182,8 @@ public final class CinderTower extends AbstractTower {
     }
 
     /**
-     * One shot in flight: the heading and half-width it was fired at (captured once, so a wave
-     * doesn't retroactively change shape as the turret keeps tracking), when it fired, and which
-     * enemies its advancing front has already burned.
+     * One shot in flight: its fixed heading and width, fire time, and the enemies it has already
+     * burned.
      */
     public static final class FlameWave {
         private final double headingRadians;

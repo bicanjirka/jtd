@@ -14,11 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
-/**
- * Headless and clock-free: animationSeconds is passed in explicitly, the same way other
- * tests pass explicit tick numbers rather than relying on real timing (see CLAUDE.md's
- * "Tests are headless and clock-free").
- */
 class PathMarkerFrameBuilderTest {
 
     private static final int SCALE = 32;

@@ -7,12 +7,6 @@ import td.wave.smoothing.ArcCornerSmoothing;
 
 import java.util.List;
 
-/**
- * A single lane that spirals through two tight loops on the left half of the board before
- * unwinding into a steady zigzag on the way to the exit - a 20x15 board, 17 waves ending in the
- * Warden boss encounter. Gently rounded (the same {@link ArcCornerSmoothing} pull Zigzag Path
- * used to carry alone), not the sharp right angles the original version of this level had.
- */
 final class CurlyPathLevel {
 
     private static final int STARTING_CREDITS = 50;

@@ -8,51 +8,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The built-in {@link RankedEnemy} ladders and standalone {@link EnemyDefinition}s.
- * {@link EnemyCatalog#builtIn()} pre-registers all of these under their wave-script ids. Two
- * groups:
+ * The built-in rank ladders and standalone definitions that {@link EnemyCatalog#builtIn()}
+ * registers under their wave-script ids.
  * <p>
- * {@code SIMPLE}/{@code ARMORED}/{@code FRENZIED}/{@code GHOST}/{@code MENDER} are the five basic
- * mobs, each a full five-rank ladder - every rank above {@link Rank#GRUNT} simply doubles the
- * rank before it's health and scales its bounty to match, {@code withHealthAndPrice} being the
- * only thing each step changes, except {@code SIMPLE} itself: its own ladder is this feature's
- * demonstration that a later rank can both add a trait (at {@link Rank#ELITE}) and replace it
- * with a stronger one (at {@link Rank#BOSS}) via the same identified-trait mechanism, following
- * the shape of the request's own pseudocode; {@code GHOST}'s own ladder is the ability-driven
- * counterpart - it carries no native invisibility of any kind, only an ordinary mob with a
- * "vanish on first hit" ability at every rank, plus a second, radius-targeted "shroud nearby
- * allies" ability added at {@link Rank#ELITE} (and, like {@code SIMPLE}'s armor, carried forward
- * unchanged into {@link Rank#BOSS} since that step only touches health and price).
- * {@code MENDER} carries the same radius-targeted shape as {@code GHOST}'s shroud, just with
- * {@link td.effect.HealTemplate} in place of {@link InvisibleTemplate}, and - unlike the shroud -
- * present at every rank rather than added at Elite, since periodically healing nearby allies is
- * this mob's whole reason to exist rather than an upgrade over a baseline behaviour.
- * <strong>A definition is named for what it does; its
- * {@link BodyArchetype} is what names the shape it is drawn as</strong> - so {@code ARMORED} is
- * a square and {@code FRENZIED} a triangle, the same way {@code SniperTower} is drawn as a
- * triangle.
+ * A definition is named for what it does; its {@link BodyArchetype} names the shape it is drawn as.
  * <p>
- * A trait or ability below is named ({@link IdentifiedTrait#named}/{@link IdentifiedAbility#named})
- * only when it is realistically going to be replaced by id later - a parametrized one that
- * varies across this enemy's own rank ladder (so a later rank step, or a per-level clone via
- * {@code EnemyCatalog.cloneAndAdjust}, can upgrade it in place instead of only ever adding a
- * second, competing entry alongside it), or one a spawn shape is known to override by id (see
- * {@code td.wave.SpawnShape#armored()}, which composes onto whatever it spawns under the fixed
- * id {@code "armor"}). A zero-argument or unparametrized trait/ability that is never replaced by
- * a same-slot variant is anonymous instead ({@link IdentifiedTrait#anonymous}/
- * {@link IdentifiedAbility#anonymous}, or the plain {@code withTraits}/{@code withAbilities}
- * that wraps every entry this way) - naming buys nothing for a trait or ability no later step
- * ever looks up by that name.
+ * Name a trait or ability ({@link IdentifiedTrait#named}, {@link IdentifiedAbility#named}) only
+ * when a later rank step, a clone or a spawn shape will replace it by id; otherwise leave it
+ * anonymous.
  * <p>
- * {@code WARDEN_1}/{@code WARDEN_EGG_1}/{@code WARDEN_2}/{@code WARDEN_EGG_2}/{@code WARDEN_3}/
- * {@code WARDEN_EGG_3} are the boss encounter's finite, six-definition, strictly linear spawn
- * chain (see {@code docs/features/FEATURE-enemy-traits-and-effects.md}'s V1 Scope): each Warden's on-death
- * ability spawns its own stage's egg; each egg's {@code Once} ability hatches into the next
- * (weaker) Warden stage if left alive for its full delay, via {@code consumesSelf} - a
- * transformation, not a kill. The final egg carries no ability at all, so the encounter is
- * guaranteed to terminate. These six stay single-rank (registered as plain
- * {@link EnemyDefinition}s, resolving to {@link Rank#GRUNT} at every requested rank) - the Warden
- * fight is staged through its own six hand-authored definitions already, not through rank.
+ * The boss chain is a finite, linear sequence of single-rank definitions: each boss stage lays an
+ * egg on death, each egg hatches into the next, weaker stage unless killed, and the last egg has no
+ * ability, so the chain always ends.
  */
 final class BuiltInEnemies {
 

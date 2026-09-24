@@ -13,10 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Covers the Aura tower's buffed-tower link beams - everything else this builder draws is
- * exercised through {@code BoardRendererTest} instead.
- */
+/** Covers aura link beams; the other effects are covered by {@code BoardRendererTest}. */
 class TowerEffectFrameBuilderTest {
 
     @Test

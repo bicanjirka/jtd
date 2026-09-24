@@ -3,10 +3,8 @@ package td.enemy;
 import td.effect.EffectKind;
 
 /**
- * Rejects an incoming {@link EffectKind#BURN} outright, so it is never applied at all -
- * distinct from a resistance, which reduces a hit that still lands. See {@link
- * DefinedEnemyMob#applyEffect}, the one place a mob's traits are consulted before a status
- * effect is applied.
+ * Rejects a burn outright, so it never applies - unlike a resistance, which reduces a hit that
+ * still lands.
  */
 public record BurnImmunityTrait() implements Trait {
 

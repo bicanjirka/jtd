@@ -16,10 +16,6 @@ import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Covers SeekerTower's targeting and the magic damage + freeze it applies on impact - the
- * missile's own homing/retargeting is exercised more thoroughly by MissileProjectileTest.
- */
 class SeekerTowerTest {
 
     private final GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);

@@ -20,12 +20,8 @@ import td.util.ThreadConfined;
 import java.util.List;
 
 /**
- * "Seeker tower" - fires a homing missile at whichever visible enemy is furthest along the
- * path, the same target choice as {@link SniperTower}. Unlike {@link MortarTower}'s shell, the
- * missile re-aims each tick at its target's live position and retargets to the nearest
- * remaining enemy if that target dies or leaks before it arrives (see
- * {@code MissileProjectile}). On impact it deals magic damage and freezes whichever mob it
- * actually reached - which may not be the one it was originally fired at.
+ * Fires a homing missile at the visible enemy furthest along the path. On impact it deals magic
+ * damage and freezes whichever enemy it reached, which may not be the one it was fired at.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class SeekerTower extends AbstractTower {
@@ -42,45 +38,30 @@ public final class SeekerTower extends AbstractTower {
     private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(21);
     private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(35);
 
-    /**
-     * Faster reloading, earned by this tower's own proven kill record.
-     */
     private static final UpgradeNode TWIN_WARHEAD_1 = UpgradeNode.of("seeker.head.twin_warhead.1", UpgradeSlot.HEAD,
             "Twin Warhead", 30)
             .withBuff(TowerBuff.fireRate(0.3f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(10));
-    /**
-     * Faster reloading still, and fires two independently-retargeting missiles instead of one.
-     */
     private static final UpgradeNode TWIN_WARHEAD_2 = UpgradeNode.of("seeker.head.twin_warhead.2", UpgradeSlot.HEAD,
             "Twin Warhead II", 45)
             .withBuff(TowerBuff.fireRate(0.25f))
             .withRequires(UpgradeCondition.owns(TWIN_WARHEAD_1.id()))
             .withGate(new DamageDealtCondition(25000))
             .withExtraEffect("fires two independently-retargeting missiles instead of one");
-    /**
-     * More damage, earned by this tower's own proven kill record.
-     */
     private static final UpgradeNode DEEP_FREEZE_1 = UpgradeNode.of("seeker.head.deep_freeze.1", UpgradeSlot.HEAD,
             "Deep Freeze", 35)
             .withBuff(TowerBuff.damage(0.3f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(12));
-    /**
-     * More damage still and a longer freeze; killing a frozen enemy shatters it for splash
-     * damage once the on-kill-secondary-trigger primitive exists - see TODO.md.
-     */
+    /** Its shatter effect is not implemented yet (TODO.md). */
     private static final UpgradeNode DEEP_FREEZE_2 = UpgradeNode.of("seeker.head.deep_freeze.2", UpgradeSlot.HEAD,
             "Deep Freeze II", 53)
             .withBuff(TowerBuff.damage(0.25f))
             .withRequires(UpgradeCondition.owns(DEEP_FREEZE_1.id()))
             .withGate(new KillCountCondition(25))
             .withExtraEffect("+75% freeze duration, killing a frozen enemy shatters it for 50% weapon damage splash");
-    /**
-     * Impact applies a Vulnerable stack (2 if the target was already frozen or slowed), once
-     * that primitive exists - see TODO.md.
-     */
+    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode HOMING_CURSE = UpgradeNode.of("seeker.special.homing_curse", UpgradeSlot.SPECIAL,
             "Homing Curse", 70)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
@@ -90,9 +71,6 @@ public final class SeekerTower extends AbstractTower {
     private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, TWIN_WARHEAD_1, TWIN_WARHEAD_2,
             DEEP_FREEZE_1, DEEP_FREEZE_2, HOMING_CURSE);
 
-    /**
-     * Ticks between shots before any fire-rate buff - paired with this tower's damage.
-     */
     private static final int COOLDOWN_MAX = 45;
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
@@ -110,9 +88,6 @@ public final class SeekerTower extends AbstractTower {
         return TREE;
     }
 
-    /**
-     * Bonuses that aren't a {@link TowerBuff} axis are applied here instead.
-     */
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
         if (node.equals(DEEP_FREEZE_2)) {
@@ -143,11 +118,7 @@ public final class SeekerTower extends AbstractTower {
         }
     }
 
-    /**
-     * Fires one missile, or two independently-retargeting ones once Twin Warhead II is owned -
-     * {@code MissileProjectile} already retargets independently per instance, so firing two is
-     * reusing the existing projectile class twice, not a new primitive.
-     */
+    /** Fires one missile, or two once the upgrade is owned; each retargets on its own. */
     private void fireAt(EnemyMob target) {
         this.context.projectiles().add(new MissileProjectile(this.centerX, this.centerY, target,
                 this.context.enemies(), PROJECTILE_SPEED, this::onImpact));

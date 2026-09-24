@@ -17,19 +17,11 @@ import java.awt.event.ActionEvent;
 import java.io.Serial;
 
 /**
- * The "Game Over!"/"Congratulations!" banners shown over the board on a loss or a win.
- * Both exist the whole time (added to the board's layout once) and are shown/hidden via
- * {@link #showLost}/{@link #showWon}/{@link #reset}, matching how the board itself is a
- * permanent component whose content changes rather than being rebuilt per level. Each also
- * carries a "Back to menu" button, wired through {@link #onBackToMenu} the same way
- * {@link PanelGameConsole}'s speed buttons are - a no-op default {@link Runnable}, an
- * {@code addActionListener}, and a public setter TowerDefense wires up.
+ * The win and lose banners over the board, each with a "Back to menu" button. Both are added once
+ * and toggled with {@link #showLost}, {@link #showWon} and {@link #reset}.
  * <p>
- * A banner is deliberately small and anchored to the top of the board, not a full-board
- * cover. The simulation is stopped by then, but the final position of every enemy and tower
- * is exactly what a player wants to look at after a loss - including selecting a tower to
- * read its stats, which still works because the board keeps rendering and the banner covers
- * almost none of it.
+ * A banner is small and anchored to the top so the final board stays visible and its towers stay
+ * selectable.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class BoardOverlays {
@@ -51,10 +43,8 @@ public class BoardOverlays {
     }
 
     /**
-     * A transparent layer covering the board, holding the plate near the top. The layer keeps
-     * the board's own grid constraints - it must stay the same size as the board, or the cell
-     * they share collapses to the plate's size and takes the board down with it - and shows
-     * the board through everywhere the plate itself does not cover.
+     * A transparent layer over the board holding the plate. It keeps the board's grid constraints:
+     * at the plate's size, the shared cell would collapse and take the board with it.
      */
     private JPanel buildOverlay(String text) {
         JPanel layer = new JPanel(new GridBagLayout());
@@ -87,9 +77,7 @@ public class BoardOverlays {
         return layer;
     }
 
-    /**
-     * Adds both overlay layers to {@code board}, at the same grid cell as the board itself.
-     */
+    /** Adds both overlays to {@code board} in the board's own grid cell. */
     public void addTo(JPanel board, GridBagConstraints cellConstraints) {
         board.add(this.lostPanel, cellConstraints);
         board.add(this.wonPanel, cellConstraints);
@@ -117,11 +105,8 @@ public class BoardOverlays {
     }
 
     /**
-     * The rounded, translucent plate the message actually sits on. It paints itself rather
-     * than using a background colour with an alpha channel: an opaque Swing component is
-     * contracted to fill every pixel of its bounds, so Swing skips painting what is underneath
-     * and the alpha has nothing to blend against - which is why the old overlay, whose only
-     * translucency was a background colour, came out solid black over the board.
+     * The translucent plate the message sits on. It paints itself, because an opaque component with
+     * an alpha background has nothing beneath it to blend with and comes out solid.
      */
     private static final class Plate extends JPanel {
         @Serial

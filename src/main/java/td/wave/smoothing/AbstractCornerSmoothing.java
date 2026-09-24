@@ -6,11 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Shared corner-replacement skeleton for a family of {@link PathSmoothing} strategies: walk
- * each interior corner of the raw polyline, pull back a fraction of its shorter adjacent leg
- * on each side, and delegate the corner itself to a subclass-specific curve. A degenerate
- * corner - already straight, or so sharp it's a near-total reversal a tangent-circle/curve
- * construction can't handle cleanly - is passed through unrounded rather than forced into one.
+ * Corner rounding shared by curve strategies: pull back from each interior corner by a fraction of
+ * the shorter leg and let the subclass draw the curve. Straight corners and near-reversals are left
+ * as they are.
  */
 public abstract class AbstractCornerSmoothing implements PathSmoothing {
 
@@ -23,12 +21,9 @@ public abstract class AbstractCornerSmoothing implements PathSmoothing {
     private final int samplesPerCorner;
 
     /**
-     * @param cornerPull       fraction, in (0, 0.5], of the shorter adjacent leg's length to
-     *                         pull back from the corner before replacing it with a curve. A
-     *                         fraction rather than a fixed pixel distance so it scales down
-     *                         automatically on tightly-spaced corners instead of overlapping
-     *                         a neighboring corner's own rounding.
-     * @param samplesPerCorner how many points to sample along each corner's curve
+     * @param cornerPull       fraction, in (0, 0.5], of the shorter adjacent leg to pull back;
+     * relative, so neighbouring corners never overlap
+     * @param samplesPerCorner points sampled along each corner's curve
      */
     protected AbstractCornerSmoothing(double cornerPull, int samplesPerCorner) {
         if (cornerPull <= 0 || cornerPull > 0.5) {
@@ -64,10 +59,8 @@ public abstract class AbstractCornerSmoothing implements PathSmoothing {
     }
 
     /**
-     * Samples one corner's replacement curve, given the two points it has been pulled back to
-     * (equidistant from the corner along each adjacent leg, by construction). Returns strictly
-     * interior points only, in order from {@code pulledBackBefore} to {@code pulledBackAfter}
-     * - the template adds the pullback points themselves.
+     * Samples one corner's curve between the two pullback points, which are equidistant from the
+     * corner. Returns interior points only, in order.
      */
     protected abstract List<Vec2> sampleCorner(Vec2 pulledBackBefore, Vec2 corner, Vec2 pulledBackAfter, int samples);
 

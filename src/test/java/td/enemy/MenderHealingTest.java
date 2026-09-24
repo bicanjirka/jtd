@@ -11,11 +11,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * End-to-end, headless proof that the Mender's healing is entirely ability/effect-driven, the
- * same way {@code GhostInvisibilityTest} proves the Ghost's vanish/shroud abilities against a
- * real, live {@link DefinedEnemyMob}.
- */
 class MenderHealingTest {
 
     private static GameWorld worldWithStraightPath() {

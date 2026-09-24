@@ -1,33 +1,20 @@
 package td.damage;
 
 /**
- * An amount of damage, tagged with the {@link DamageType} it was dealt as and whether it landed
- * as a critical hit, about to be dealt to an enemy. The compact constructor clamps every
- * construction path at zero, so a falloff or resistance calculation that would otherwise go
- * negative (see {@code SplashTower}'s splash falloff) can never produce a healing hit.
- * {@link #none()} is the identity element for {@link #plus}.
+ * An amount of damage, its {@link DamageType}, and whether it is critical. Clamped at zero, so no
+ * calculation can produce a healing hit.
  * <p>
- * A zero-amount {@code Damage} is the identity for {@link #plus} <em>regardless of its own or
- * the other side's type</em> - {@code Damage.magic(0).plus(Damage.physical(5))} is
- * {@code Damage.physical(5)}, not a type mismatch. Combining two non-zero damages of
- * different types has no sensible meaning and throws.
+ * A zero amount is the identity for {@link #plus} whatever either side's type; adding two non-zero
+ * damages of different types throws.
  * <p>
- * {@link #critical()} is set by {@link #asCritical()} - what {@code AbstractTower.dealDamage}
- * calls once its crit-chance roll succeeds, never a factory or a combinator. It is preserved
- * through {@link #scaledBy}/{@link #cappedAt} (a resisted or capped critical hit is still the
- * critical hit a mob "survived", which matters for an ability triggered by surviving one), and
- * stripped back off by {@link #stripCritical()}, which a critical-hit-immune trait uses instead
- * of reducing the amount by some independent fraction of its own - see
- * {@code CriticalImmunityTrait}.
+ * {@link #critical()} survives {@link #scaledBy} and {@link #cappedAt}, so a resisted critical hit
+ * still counts as one, and {@link #stripCritical()} removes it.
  */
 public record Damage(int amount, DamageType type, boolean critical) {
 
     /**
-     * The bonus a critical hit deals, applied once by {@link #asCritical()} and undone once by
-     * {@link #stripCritical()}. One project-wide constant rather than a per-tower value - see
-     * {@code docs/features/FEATURE-critical-damage.md}'s Product review notes for why - the same
-     * discipline {@code TickRate} already applies to the tick rate: it lives once, here, and
-     * nothing else restates it.
+     * The one project-wide critical bonus, applied by {@link #asCritical()} and undone by
+     * {@link #stripCritical()}.
      */
     public static final float CRITICAL_MULTIPLIER = 1.5f;
 
@@ -37,11 +24,7 @@ public record Damage(int amount, DamageType type, boolean critical) {
         amount = Math.max(0, amount);
     }
 
-    /**
-     * Equivalent to {@code Damage(amount, type, false)} - every pre-existing two-argument
-     * construction path (this record's original shape, before critical hits existed) stays
-     * non-critical without needing to change.
-     */
+    /** A non-critical hit. */
     public Damage(int amount, DamageType type) {
         this(amount, type, false);
     }
@@ -78,28 +61,22 @@ public record Damage(int amount, DamageType type, boolean critical) {
         return new Damage(Math.round(this.amount * factor), this.type, this.critical);
     }
 
-    /**
-     * This damage's amount, capped at {@code max} - the type and critical flag are preserved either way.
-     */
+    /** Type and critical flag are preserved. */
     public Damage cappedAt(int max) {
         return new Damage(Math.min(this.amount, max), this.type, this.critical);
     }
 
     /**
-     * Marks this damage critical and applies {@link #CRITICAL_MULTIPLIER} - what
-     * {@code AbstractTower.dealDamage} calls once its crit-chance roll succeeds. A hit is rolled
-     * critical at most once, before an enemy ever sees it - this is never called on a
-     * {@code Damage} that is already critical.
+     * Applies {@link #CRITICAL_MULTIPLIER}. A hit is rolled critical at most once, so this is never
+     * called on a critical hit.
      */
     public Damage asCritical() {
         return new Damage(Math.round(this.amount * CRITICAL_MULTIPLIER), this.type, true);
     }
 
     /**
-     * Undoes {@link #asCritical()}'s bonus and clears the flag - a no-op on a {@code Damage}
-     * that isn't critical. Dividing back out by the one shared {@link #CRITICAL_MULTIPLIER}
-     * is exact regardless of which tower's roll produced the bonus, since every tower rolls
-     * against the same constant - see this type's own doc comment.
+     * Undoes {@link #asCritical()}; a no-op on a non-critical hit. Exact, because every crit uses
+     * the same multiplier.
      */
     public Damage stripCritical() {
         return this.critical ? new Damage(Math.round(this.amount / CRITICAL_MULTIPLIER), this.type, false) : this;

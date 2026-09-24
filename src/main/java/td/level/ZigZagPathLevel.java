@@ -9,12 +9,6 @@ import td.wave.smoothing.ArcCornerSmoothing;
 
 import java.util.List;
 
-/**
- * Two lanes cross a small, tight board - fuchsia loops back on itself in a fish-hook before
- * cutting across to its exit, lime sweeps diagonally corner to corner through a rounded bulge,
- * and the two cross twice along the way. A 16x11 board, 8 waves per lane, starting with $75 and
- * only 3 lives.
- */
 final class ZigZagPathLevel {
 
     private static final int STARTING_CREDITS = 75;

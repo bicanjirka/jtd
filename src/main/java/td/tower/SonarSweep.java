@@ -4,23 +4,14 @@ package td.tower;
 import td.util.ThreadConfined;
 
 /**
- * A beam sweeping the full circle at a constant rate, and the test for whether a given bearing
- * was crossed during the last step - the "sonar scan" behind {@code SonarTower}.
+ * A beam sweeping the full circle at a constant rate, and the test for whether it crossed a bearing
+ * during the last step.
  * <p>
- * The crossing test is an arc, not a point comparison, and that is the whole point of this
- * class: a beam advancing a fifth of a radian per tick is never <em>exactly</em> on an enemy
- * when the tick is sampled, so asking "is this enemy at the beam's angle" would miss almost
- * everything. {@link #sweptThisTick(double)} instead asks whether the bearing lies in the arc
- * the beam passed over since the previous tick, which catches every enemy the beam went by,
- * however fast the beam is turning or the enemy is moving.
+ * Hits are tested against the arc swept since the previous tick, not the beam's angle: a beam
+ * moving a fifth of a radian per tick is almost never exactly on an enemy.
  * <p>
- * Rotation is counterclockwise <em>on screen</em>, which means the angle decreases: the board's
- * y axis points down, so {@code Math.atan2}'s angle grows clockwise (see {@link TurretAim} for
- * the same convention).
- * <p>
- * Headless and clock-free like {@link TurretAim} and {@code td.TickAccumulator}:
- * {@link #advance()} moves exactly one tick's worth per call, so the scan speeds up and slows
- * down with the simulation rather than with wall-clock time.
+ * Rotation is counterclockwise on screen, so the angle decreases (the board's y axis points down).
+ * {@link #advance()} moves one tick, so the scan follows simulation speed.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 public final class SonarSweep {
@@ -35,10 +26,7 @@ public final class SonarSweep {
         this.radiansPerTick = radiansPerTick;
     }
 
-    /**
-     * A sweep completing one revolution every {@code secondsPerRevolution} seconds of
-     * simulation time, given how many ticks a second holds.
-     */
+    /** One revolution every {@code secondsPerRevolution} of simulation time. */
     public static SonarSweep perRevolution(double secondsPerRevolution, double ticksPerSecond) {
         if (secondsPerRevolution <= 0) {
             throw new IllegalArgumentException("secondsPerRevolution must be positive: " + secondsPerRevolution);
@@ -49,17 +37,13 @@ public final class SonarSweep {
         return new SonarSweep(TWO_PI / (secondsPerRevolution * ticksPerSecond));
     }
 
-    /**
-     * Wraps to {@code [0, 2PI)} - "how far counterclockwise from here to there".
-     */
+    /** Wraps to {@code [0, 2PI)}. */
     private static double normalizeToCircle(double radians) {
         double wrapped = radians % TWO_PI;
         return wrapped < 0 ? wrapped + TWO_PI : wrapped;
     }
 
-    /**
-     * Wraps to {@code [-PI, PI)}, keeping the stored angle bounded over a long game.
-     */
+    /** Wraps to {@code [-PI, PI)}, keeping the stored angle bounded. */
     private static double normalizeSigned(double radians) {
         double wrapped = radians % TWO_PI;
         if (wrapped < -Math.PI) {
@@ -70,28 +54,22 @@ public final class SonarSweep {
         return wrapped;
     }
 
-    /**
-     * Moves the beam one tick's worth counterclockwise.
-     */
     public void advance() {
         this.previousRadians = this.currentRadians;
         this.currentRadians = normalizeSigned(this.currentRadians - this.radiansPerTick);
     }
 
     /**
-     * Whether {@code bearing} lies in the arc the beam covered during the last {@link #advance()}.
-     * The arc is half-open - it includes the angle the beam started the tick on and excludes the
-     * one it ended on - so a stationary bearing is crossed exactly once per revolution rather
-     * than twice at the boundary.
+     * Whether {@code bearing} lies in the arc covered by the last {@link #advance()}. Half-open, so
+     * a still bearing is crossed exactly once per revolution.
      */
     public boolean sweptThisTick(double bearing) {
         return normalizeToCircle(this.previousRadians - bearing) < this.radiansPerTick;
     }
 
     /**
-     * The beam's heading for a render landing between two ticks - same {@code interpolationAlpha}
-     * contract as {@link TurretAim#radiansAt(double)}. Measured forward from where the beam
-     * started the tick, so it never has to blend across the wrap point.
+     * The heading between two ticks, measured forward from the tick's start so it never blends
+     * across the wrap point.
      */
     public double radiansAt(double interpolationAlpha) {
         return this.previousRadians - this.radiansPerTick * interpolationAlpha;

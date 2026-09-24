@@ -8,11 +8,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * Exercises the shared corner-walking/pullback-clamping skeleton via a concrete subclass -
- * QuadraticBezierSmoothing, chosen arbitrarily, since none of these behaviors depend on which
- * curve algorithm a subclass picks.
- */
+/** Uses one concrete subclass; none of these behaviours depend on the curve. */
 class AbstractCornerSmoothingTest {
 
     @Test

@@ -15,33 +15,17 @@ import td.util.TickRate;
 import java.util.List;
 
 /**
- * Everything every tower shares: board position, price, base and buffed damage/range/fire
- * rate, the list of Aura towers buffing it, this tower's own chosen upgrade path (if any),
- * and the damage/kill accounting. Subclasses supply only a targeting strategy and a
- * {@code doTick}.
+ * What every tower shares: position, price, current stats, upgrades, and damage and kill
+ * accounting. Subclasses supply targeting and {@code doTick}.
  * <p>
- * Everything derived from the board - the pixel centre, the pixel range - is computed in this
- * constructor and is {@code final}. A leaf therefore cannot read a half-built tower, and the
- * ordering rule that used to be documented prose ("{@code doInit} must be the last thing a
- * leaf constructor does") is now enforced by the compiler instead.
- * <p>
- * {@link #rangeReal2()} is the squared range, and every range check compares squared
- * distances - a per-tick scan has no business calling {@code Math.sqrt}.
+ * Everything derived from the board is computed in the constructor and {@code final}. Range checks
+ * compare squared distances ({@link #rangeReal2()}) to avoid a square root per scan.
  */
 public abstract class AbstractTower implements Tower {
 
-    /**
-     * Simulation ticks per second at {@code TickSpeed.NORMAL}. Derived from the one place the
-     * tick rate is defined, so a change to the loop's timestep reaches every tower's displayed
-     * fire rate instead of leaving it quietly wrong.
-     */
+    /** Ticks per second at normal speed, from the one place the tick rate is defined. */
     protected static final float TICKS_PER_SECOND = TickRate.TICKS_PER_SECOND;
-    /**
-     * A burning target is this much more likely to take a critical hit - universal, applied to
-     * every tower's roll against every burning enemy, not a perk any one tower or path owns.
-     * One constant rather than restated inline, the same discipline {@link Damage#CRITICAL_MULTIPLIER}
-     * already follows.
-     */
+    /** How much more likely a burning target is to take a critical hit, from any tower. */
     private static final float BURN_CRIT_CHANCE_MULTIPLIER = 2f;
 
     protected final GameWorld context;
@@ -64,13 +48,8 @@ public abstract class AbstractTower implements Tower {
     private volatile boolean removed = false;
 
     /**
-     * Binds this tower to a world and converts its cell coordinates into the pixel centre and
-     * pixel range everything else works in. A leaf passes its own constants straight through in
-     * {@code base}; a leaf with no cooldown (a continuous or swept weapon) passes {@code 0} for
-     * {@code coolDownMax} and overrides {@link #rateLine(int)} to describe its cadence some
-     * other way. {@code base.critChanceBase()} is {@code 0} for every leaf except
-     * {@code SniperTower}, whose marksman aim starts with some crit chance of its own before
-     * any upgrade path adds more.
+     * Converts the cell coordinates to the pixel centre and range. A tower with no cooldown passes
+     * {@code 0} and overrides {@link #rateLine(int)}.
      */
     protected AbstractTower(TowerFactory.Type t, int price, TowerBaseStats base,
                             GameWorld context, int cellX, int cellY) {
@@ -90,56 +69,37 @@ public abstract class AbstractTower implements Tower {
                 this.critChanceBase, TowerBuff.none(), scale);
     }
 
-    /**
-     * This tower's current buffed stats, as one coherent snapshot. Never null.
-     */
+    /** Current stats as one snapshot. Never null. */
     protected TowerStats stats() {
         return this.stats;
     }
 
-    /**
-     * Current damage per hit, in hundredths - shorthand for {@code stats().damage()}.
-     */
+    /** Damage per hit, in hundredths. */
     protected int damageCurrent() {
         return this.stats.damage();
     }
 
-    /**
-     * Current ticks between shots - shorthand for {@code stats().coolDown()}.
-     */
+    /** Ticks between shots. */
     protected int coolDownCurrent() {
         return this.stats.coolDown();
     }
 
-    /**
-     * Current range in pixels - shorthand for {@code stats().rangeReal()}.
-     */
+    /** Range in pixels. */
     protected float rangeReal() {
         return this.stats.rangeReal();
     }
 
-    /**
-     * Current range in pixels, squared - shorthand for {@code stats().rangeReal2()}.
-     */
+    /** Range in pixels, squared. */
     protected float rangeReal2() {
         return this.stats.rangeReal2();
     }
 
-    /**
-     * Current chance, in {@code [0, 1]}, that this tower's next hit rolls critical -
-     * shorthand for {@code stats().critChance()}. This tower's own {@link #critChanceBase}
-     * (0 for most towers) plus whatever an upgrade path has granted on top (see
-     * {@code td.tower.buff.TowerBuff.critChanceBonus}).
-     */
+    /** Chance in {@code [0, 1]} that the next hit is critical. */
     protected float critChance() {
         return this.stats.critChance();
     }
 
-    /**
-     * Whether this tower never attacks and exists only to buff its neighbours. A fixed
-     * property of the tower type rather than mutable state, so only {@code AuraTower}
-     * overrides it.
-     */
+    /** Whether this tower never attacks and only buffs its neighbours. */
     protected boolean isPassive() {
         return false;
     }
@@ -152,43 +112,27 @@ public abstract class AbstractTower implements Tower {
         return this.stats.rangeReal();
     }
 
-    /**
-     * Three quarters of what was paid - selling is always a loss, buffs bought since don't raise it.
-     */
+    /** Three quarters of the price paid; upgrades bought since don't raise it. */
     public int getSellPrice() {
         return (int) Math.round(0.75 * this.price);
     }
 
     /**
-     * Recomputes damage, range and fire rate from the Aura towers currently on the board
-     * <em>and</em> this tower's own owned upgrade nodes, folded through {@link TowerBuff}'s
-     * additive algebra so bonuses of unequal strength stack correctly - a specialization
-     * composes with an Aura tower's buff for free.
+     * Recomputes stats from the buffs other towers contribute and this tower's own upgrades, and
+     * publishes them as one {@link TowerStats} snapshot.
      * <p>
-     * The external buff is <em>computed</em> from the roster on each call rather than read
-     * from a list this tower maintains. Asking every tower what it contributes
-     * ({@link Tower#buffFor}) costs one pass over a board of tens of towers on a user action,
-     * and in exchange there is no index to keep in agreement with anything: no client set on
-     * the Aura side, no aura list on this side, and no way for the two to drift apart.
-     * {@code TowerRoster} calls this on every tower when the set changes;
-     * {@link #buyUpgrade} calls it when this tower's own upgrades change, and also calls it on
-     * every other tower - buying an Aura tower's own upgrade can change what it contributes to
-     * its neighbours.
-     * <p>
-     * Publishes the result as one new {@link TowerStats}, so tick code reading concurrently
-     * sees either the whole old set or the whole new one.
+     * Buffs are asked of every tower on each call instead of being tracked, so there is no index
+     * that can drift out of sync. Called on every tower whenever the tower set or any tower's
+     * upgrades change.
      */
     public void recalculateStats() {
         this.publishStats(this.upgrades);
     }
 
     /**
-     * Recomputes and publishes {@link TowerStats} treating {@code upgrades} as this tower's
-     * owned nodes. Separate from {@link #recalculateStats()} so that {@link #buyUpgrade} can
-     * publish the new stats <em>before</em> it publishes the new {@link UpgradeState} itself: a
-     * tick landing between the two writes then sees the upgraded stats without the new node,
-     * rather than the node without its stats - which would have paid its bounty bonus on a kill
-     * dealt at un-upgraded damage.
+     * Publishes stats for {@code upgrades}. Separate so that buying publishes the new stats before
+     * the new upgrade state: a tick between the two writes then never pays a node's bounty bonus on
+     * a kill made at the old damage.
      */
     private void publishStats(UpgradeState upgrades) {
         TowerBuff externalBuff = this.context.towers().all().stream()
@@ -200,30 +144,14 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * Routes every hit a tower lands through one place so damageDealt/killCount stay accurate
-     * regardless of which subclass fires: a shot into an enemy another tower already killed
-     * this tick is a no-op in EnemyMob.doDamage() and must not be counted as a kill twice.
+     * Every hit goes through here, so accounting is right whichever subclass fires. Rolls a
+     * critical hit first.
      * <p>
-     * Rolls this tower's crit chance first (see {@link #rollCritical}), so every subclass's
-     * call site gets a critical hit for free the moment its stats carry one, with no per-leaf
-     * change needed.
-     * <p>
-     * {@code damageDealt} accumulates what {@code doDamage} reports actually landed, not the
-     * {@code damage} argument: a mob that resists part of a hit (see
-     * {@code td.enemy.PercentResistTrait}) takes less than was fired at it, and a tower
-     * claiming the full amount would over-report against exactly the enemies it performs
-     * worst on.
-     * <p>
-     * A kill that lands here tops up credits by the owned upgrade nodes' combined
-     * {@code bountyBonus} (if any) on top of the flat {@code EconomyDelta.kill} bounty
-     * {@code enemy.doDamage} already granted - extra <em>credits</em> only, no extra score, so
-     * a tower's bounty specialization is a cash bonus rather than a scoring one.
-     * <p>
-     * A no-op once this tower has been sold or cleared (see {@link #doCleanup}). A
-     * damage-over-time effect this tower applied can still be ticking on an enemy several
-     * ticks after the tower itself is gone - without this guard, its lingering burn would
-     * keep inflating {@code damageDealt}/{@code killCount} and paying bounty bonuses on an
-     * object the player has already been refunded for.
+     * Counts the damage that actually landed, not the damage fired. A kill adds the upgrades'
+     * bounty bonus in credits, not score. A no-op once the tower is sold, so a lingering burn stops
+     * crediting it.
+     *
+     * @return whether the hit landed as a critical hit
      */
     protected boolean dealDamage(EnemyMob enemy, Damage damage) {
         if (this.removed) {
@@ -246,17 +174,8 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * Rolls this tower's current {@link #critChance()} against {@code context.random()} (per
-     * this project's "randomness is injected" rule - never {@code Math.random()}) and, on
-     * success, returns {@code damage.asCritical()} - otherwise {@code damage} unchanged. A
-     * tower with no crit chance (every tower not carrying an upgrade path that grants some)
-     * takes the same branch it always has, at the cost of one comparison.
-     * <p>
-     * A burning {@code enemy} doubles the effective chance (clamped at 100%) before the roll -
-     * universal, not owned by whichever tower happens to apply burn, since
-     * {@code enemy.activeEffectKinds()} is a plain, public query any tower can already read
-     * (the status-marker UI already does). A tower with no crit chance still rolls nothing
-     * against a burning target; the doubling only ever helps a roll that was already possible.
+     * Rolls {@link #critChance()} against the injected random source; a burning target doubles the
+     * chance, capped at 100%. A tower with no crit chance never crits.
      */
     private Damage rollCritical(EnemyMob enemy, Damage damage) {
         float chance = this.critChance();
@@ -280,9 +199,7 @@ public abstract class AbstractTower implements Tower {
         return this.killCount;
     }
 
-    /**
-     * No nodes by default - only a leaf with real content overrides this.
-     */
+    /** No upgrades by default. */
     public UpgradeTree upgradeTree() {
         return UpgradeTree.none();
     }
@@ -313,12 +230,8 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * Hook for a leaf tower whose bought node bumps a stat {@link TowerBuff} can't express
-     * (e.g. {@code SplashTower}'s splash radius, {@code SonarTower}'s sweep speed) - a no-op by
-     * default. Called once, right when {@link #buyUpgrade} commits the purchase, matched
-     * against a leaf's own {@code private static final UpgradeNode} constants by record
-     * equality (each carries its own unique id) rather than by reference, since a slot's graph
-     * can reconverge and no longer guarantees exactly one instance reaches this hook.
+     * Hook for an upgrade effect that no {@link TowerBuff} axis expresses; a no-op by default.
+     * Compare {@code node} by equality, not reference.
      */
     protected void onUpgradeBought(UpgradeNode node) {
     }
@@ -352,21 +265,16 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * The line describing how often this tower attacks at the given cooldown - callers pass
-     * {@code coolDownMax} for the pre-purchase base rate and {@code coolDownCurrent} for the
-     * live, possibly-buffed one. Overridden by a tower whose cadence is not a cooldown at all
-     * - see {@link SonarTower}, which sweeps continuously and has a rotation speed rather
-     * than a fire rate, and so ignores the argument.
+     * Describes how often the tower attacks at {@code coolDown}. A tower whose cadence is not a
+     * cooldown overrides this and ignores the argument.
      */
     protected String rateLine(int coolDown) {
         return "Fire rate: " + TICKS_PER_SECOND / (coolDown + 1) + "/s\n";
     }
 
     /**
-     * Pre-purchase blurb: base stats and price only. Upgrade content moved off this text
-     * entirely - the toolbar hover is for deciding whether to buy the tower, not for reading
-     * its upgrade tree, which the sidebar panel shows once the tower is actually built and
-     * selected (see {@link #getStatusString()}).
+     * The pre-purchase text: base stats and price. Upgrades appear once the tower is built and
+     * selected.
      */
     public String getInfoString() {
         String s = "Price: " + this.price + "\n" +
@@ -397,10 +305,7 @@ public abstract class AbstractTower implements Tower {
         return s + this.upgradeNodesBlock();
     }
 
-    /**
-     * One line per slot currently holding a bought node, e.g. {@code "HEAD: Focused Optics"} -
-     * "" for a slot nothing has been bought in yet.
-     */
+    /** One line per slot holding a bought node; empty if none. */
     private String ownedNodesBlock() {
         StringBuilder s = new StringBuilder();
         for (UpgradeSlot slot : UpgradeSlot.values()) {
@@ -410,13 +315,7 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * One line per currently offered node, marked with a coloured (see
-     * {@code td.ui.PanelTowerInfo}) ✔/✘ and that node's own gate progress rather than
-     * the full {@link UpgradeNode#describe()} - the node's name, price and full description now
-     * live on its own sidebar button (see {@code td.ui.PanelUpgradeTree}), revealed on hover;
-     * this text's job is showing how close every offered node is to buyable. "" once nothing is
-     * offered (every node owned, or every slot locked) or for a tower with no tree at all (the
-     * empty {@link UpgradeTree#none()} default).
+     * One line per offered node with a ✔/✘ and its gate progress; empty when nothing is offered.
      */
     private String upgradeNodesBlock() {
         List<UpgradeNode> offered = this.upgradeTree().offered(this, this.context);
@@ -433,19 +332,12 @@ public abstract class AbstractTower implements Tower {
         return s.toString();
     }
 
-    /**
-     * Contributes nothing - only {@code AuraTower} overrides this.
-     */
+    /** Contributes nothing by default. */
     public TowerBuff buffFor(Tower other) {
         return TowerBuff.none();
     }
 
-    /**
-     * Marks this tower gone, so a damage-over-time effect it applied stops crediting it once
-     * the player has been refunded for it (see {@link #dealDamage}). There is no buff
-     * bookkeeping left to undo here: the towers this one was buffing recompute from the roster
-     * the moment {@code TowerRoster} removes it.
-     */
+    /** Marks this tower gone, so effects it applied stop crediting it after the refund. */
     public void doCleanup() {
         this.removed = true;
     }

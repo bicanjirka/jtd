@@ -12,11 +12,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Proves an ability's cast is recorded on the casting mob itself (see {@link AbilityCast}'s own
- * doc comment for why), the same end-to-end shape {@code GhostInvisibilityTest} uses to prove
- * the underlying ability wiring.
- */
 class AbilityCastCaptureTest {
 
     private static final float GHOST_SHROUD_RADIUS = 100f;

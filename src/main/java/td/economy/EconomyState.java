@@ -1,9 +1,7 @@
 package td.economy;
 
 /**
- * The player's credits/score/lives as one immutable snapshot, replacing three separately
- * mutated {@code int} fields with a single value that moves by applying an
- * {@link EconomyDelta}.
+ * Credits, score and lives as one immutable snapshot, moved by applying an {@link EconomyDelta}.
  */
 public record EconomyState(int credits, int score, int lives) {
 

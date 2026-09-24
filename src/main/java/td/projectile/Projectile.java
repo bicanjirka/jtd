@@ -1,10 +1,8 @@
 package td.projectile;
 
 /**
- * One shell or missile in flight, as seen by the roster and the renderer. The implementation
- * hierarchy lives behind {@link AbstractProjectile}; concrete types are reached only through
- * {@link ProjectileVisitor}, never by casting or {@code instanceof} - the same discipline
- * {@code EnemyMob}/{@code Tower} already follow.
+ * One shell or missile in flight. Concrete types are reached only through
+ * {@link ProjectileVisitor}.
  */
 public interface Projectile {
 
@@ -16,15 +14,11 @@ public interface Projectile {
 
     double getY();
 
-    /**
-     * This projectile's position as of the tick before last - the interpolation source for a render landing between two ticks.
-     */
+    /** Position as of the previous tick, the interpolation source. */
     double getPrevX();
 
     double getPrevY();
 
-    /**
-     * True once this projectile has resolved (hit something, or given up) and is ready to be dropped from the roster.
-     */
+    /** True once resolved, so the roster drops it. */
     boolean isFinished();
 }

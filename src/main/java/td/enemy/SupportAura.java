@@ -2,10 +2,6 @@ package td.enemy;
 
 import td.effect.EffectKind;
 
-/**
- * What an {@link EnemyDefinition} projects onto nearby allies, and how far - see
- * {@link EnemyDefinition#supportAura()}. Purely descriptive: it names the effect kind and
- * radius for a UI to draw a ring at, not a live, applied effect.
- */
+/** The effect kind and radius a definition projects onto allies, for drawing a ring. */
 public record SupportAura(EffectKind kind, float radius) {
 }

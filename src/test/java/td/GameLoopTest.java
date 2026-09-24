@@ -11,9 +11,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * GameLoop's tick-rate math is covered exhaustively and deterministically by
- * TickAccumulatorTest; these are lightweight smoke tests confirming the loop
- * actually drives a real background thread end-to-end.
+ * Smoke tests that the loop drives a real thread; the tick math is covered by
+ * {@code TickAccumulatorTest}.
  */
 class GameLoopTest {
 

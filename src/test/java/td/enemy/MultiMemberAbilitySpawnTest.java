@@ -10,13 +10,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Proves the payoff of {@link AbilitySpawnShape#delaySpacingSlots} end to end: a multi-member
- * ability spawn's first member is placed active, but later members start {@link
- * DefinedEnemyMob#isInactive()} and only become valid targets once their own delay elapses - what
- * keeps them from arriving stacked on the caster's exact position. Uses its own small catalog
- * rather than a {@code BuiltInEnemies} entry, since this proves the mechanism, not any one boss.
- */
+/** Uses its own small catalog: it tests the mechanism, not a built-in enemy. */
 class MultiMemberAbilitySpawnTest {
 
     @Test

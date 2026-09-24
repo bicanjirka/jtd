@@ -12,9 +12,6 @@ import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Covers PulseTower's HEAD upgrades and Resonant Field's cover-requirement removal.
- */
 class PulseTowerTest {
 
     private final GameWorld context = WorldFixtures.newWorld();

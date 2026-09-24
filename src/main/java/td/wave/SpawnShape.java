@@ -7,30 +7,18 @@ import td.util.GameStartupException;
 import java.util.Optional;
 
 /**
- * How one wave slot spawns - a value composed from independent mechanisms rather than one
- * implementation per shape: a per-mob multiplier set (size/speed/health/bounty), an optional
- * trait override, a {@link SpawnSpread} pattern, and inter-member delay spacing (in slot-widths,
- * added to a member's index before it is converted to ticks). {@link #normal()} is the identity:
- * one member, every multiplier 1, no trait override, no spread, no extra delay - today's spawn
- * behaviour exactly. See docs/features/FEATURE-enemy-spawn-types.md's "Three mechanisms" section
- * for why the formation shapes are built this way instead of as separate variants.
+ * How one wave slot spawns, composed from independent parts: per-mob multipliers, an optional
+ * trait, a {@link SpawnSpread} formation, and delay spacing between members. {@link #normal()} is
+ * one plain mob.
  * <p>
- * {@code traitOverride}, when present, is composed onto the spawned mob's definition via
- * {@code EnemyDefinition.withAdditionalTraits} - {@link #armored()} is the one shape that uses
- * this, attaching (or, on an already-armored enemy, replacing) a defensive trait it wouldn't
- * otherwise have. This is deliberately not a stat multiplier the way {@code boss}/{@code elite}
- * used to be: a spawn shape can modify what a spawned enemy <em>is</em>, the same identity-based
- * mechanism a rank ladder step uses to upgrade one trait without disturbing the rest - see
- * {@code td/wave/CLAUDE.md}.
+ * {@code traitOverride} is added to the spawned definition by id, so a shape can change what an
+ * enemy is, not just scale it.
  */
 public record SpawnShape(int members, float sizeMultiplier, float speedMultiplier, float healthMultiplier,
                           float bountyMultiplier, Optional<IdentifiedTrait> traitOverride, SpawnSpread spread,
                           double delaySpacingSlots) {
 
-    /**
-     * One slot's member count is bounded so a typo like {@code swarm 300 c} fails to parse
-     * instead of becoming a frame-rate bug discovered at runtime.
-     */
+    /** Catches a typo like {@code swarm 300 c} at parse time. */
     public static final int MAX_MEMBERS = 12;
 
     private static final double COLUMN_SPACING_SLOTS = 0.3;
@@ -57,11 +45,8 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
     }
 
     /**
-     * Attaches a flat defensive trait to the spawned enemy - no size, speed, health or bounty
-     * change survives from the old, removed Elite multiplier shape this replaces. Composed via
-     * {@code EnemyDefinition.withAdditionalTraits} under the fixed id {@code "armor"}, so an
-     * enemy that is already armored (its own rank ladder authored a trait under that same id)
-     * gets this trait replacing that one, not a second instance stacked alongside it.
+     * Adds a flat armor trait under the id {@code "armor"}, replacing an existing armor trait
+     * rather than stacking.
      */
     public static SpawnShape armored() {
         return ARMORED;
@@ -88,11 +73,8 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
     }
 
     /**
-     * Splits {@code price} exactly across this shape's members: {@code round(price *
-     * bountyMultiplier) / members} each, with the remainder handed to the first {@code
-     * total % members} members, so the shares always sum to exactly the slot's total bounty and
-     * no credit is lost to rounding. Which member carries the extra credit is fixed here, at
-     * spawn - never recomputed at death, where kill order would otherwise change the payout.
+     * Splits the slot's bounty across members so the shares sum exactly, the remainder going to the
+     * first members. Fixed at spawn, so kill order never changes the payout.
      */
     public int[] bountyShares(int price) {
         int total = Math.round(price * this.bountyMultiplier);

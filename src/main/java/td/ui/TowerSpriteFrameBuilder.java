@@ -23,12 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Describes each tower's static base ({@link TowerSpriteDraw}, unchanged regardless of type -
- * every visit method delegates to the one shared {@link #sprite(Tower)}) and its animated
- * turret head ({@link TurretHeadDraw}, genuinely different per type: an aiming tower reads its
- * own {@link td.tower.TurretAim}, a spinning tower is a function of elapsed time, a pulsing
- * tower varies size instead of heading). The {@link TowerVisitor} dispatch exists so this class
- * never needs an instanceof/cast to reach tower-specific state.
+ * Describes each tower's base sprite, the same for every type, and its turret head, which differs:
+ * aimed, spinning with elapsed time, or pulsing in size.
  */
 public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
@@ -40,9 +36,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     private static final float TOWER_AURA_PULSE_MIN_SCALE = 0.8f;
     private static final float TOWER_AURA_PULSE_MAX_SCALE = 1.25f;
 
-    /**
-     * One role per {@link UpgradeSlot}, in slot order - see {@link #slotMarksFor}.
-     */
+    /** One role per {@link UpgradeSlot}, in slot order. */
     private static final Palette[] SLOT_PALETTES =
             {Palette.TOWER_UPGRADE_BASE, Palette.TOWER_UPGRADE_HEAD, Palette.TOWER_UPGRADE_SPECIAL};
 
@@ -58,11 +52,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         this.animationSeconds = animationSeconds;
     }
 
-    /**
-     * The one place a tower type names its body's {@link Palette} role - deliberately no
-     * {@code default}, so a new {@link TowerFactory.Type} is a compile error here until its
-     * art is wired up, the same way {@link Java2DFrameRenderer}'s draw-command switches are.
-     */
+    /** A tower type's body colour role. No {@code default}, so a new type fails to compile here. */
     public static Palette bodyPaletteFor(TowerFactory.Type type) {
         return switch (type) {
             case SNIPER -> Palette.TOWER_SNIPER_BODY;
@@ -77,11 +67,8 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     /**
-     * One {@link SlotMarkDraw} per {@link UpgradeSlot}, always three, in slot order - {@code
-     * level} is how many nodes this tower owns in that slot, {@code ready} is whether the slot
-     * currently offers a node whose gate is met and which is affordable right now. Two different
-     * signals ("what did I pick" vs. "what could I pick right now"), computed once here rather
-     * than twice at the render layer.
+     * One mark per slot, in order: how many nodes are owned, and whether an affordable, ungated
+     * node is offered.
      */
     private List<SlotMarkDraw> slotMarksFor(Tower tower) {
         List<UpgradeNode> offered = tower.offeredUpgrades(this.world);
@@ -96,11 +83,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return marks;
     }
 
-    /**
-     * {@code 0} for a tower with nothing owned in {@code SPECIAL}; otherwise the same 0..1
-     * sine phase the Aura tower's own pulse already uses, so a specialized tower's halo pulses
-     * at the same rate a player has already learned to read.
-     */
+    /** {@code 0} without a {@code SPECIAL} upgrade; otherwise the aura's pulse phase. */
     private float enchantPulseFor(Tower tower) {
         if (tower.upgrades().tip(UpgradeSlot.SPECIAL).isEmpty()) {
             return 0f;
@@ -122,9 +105,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
                 this.slotMarksFor(tower), this.enchantPulseFor(tower)));
     }
 
-    /**
-     * A head with a constant nominal size - every tower but the (pulsing) Aura tower.
-     */
+    /** A head of constant size. */
     private void head(Tower tower, double headingRadians) {
         this.headWithScale(tower, headingRadians, 1.0f);
     }

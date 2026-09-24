@@ -7,13 +7,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * The live enemy list for the wave currently in play, and how many of them are still
- * alive - reported to the host as each one dies, which is how the UI learns a wave is
- * cleared (see GameHost.enemyDied). Backed by a {@link CopyOnWriteArrayList} - like
- * {@code TowerRoster}/{@code ProjectileRoster} - since {@link #add}/{@link #replace} are
- * called from an enemy's own {@code doTick} on the {@code game-loop} thread (an ability
- * spawning a reinforcement or hatching an egg). The frame build reads it on that same thread;
- * the array {@link #getEnemies} hands back is a fresh snapshot either way.
+ * The current wave's live enemies and how many are still alive; each death is reported to the host,
+ * which is how a cleared wave is noticed. Mobs are added and replaced from an enemy's own
+ * {@code doTick}, and {@link #getEnemies} returns a fresh copy.
  */
 public class EnemyRoster implements EnemyRegistry, EnemySpawner {
 
@@ -34,11 +30,8 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
     }
 
     /**
-     * Replaces the live list wholesale, as one write. Deliberately not {@code clear()} followed
-     * by {@code addAll()}: a CopyOnWriteArrayList makes each of those atomic on its own, but
-     * between them a reader sees an <em>empty</em> roster - which, mid-level, reads as "the
-     * wave is cleared". A concurrent collection makes the collection safe, not the operation
-     * (CLAUDE.md 3).
+     * Replaces the list in one write. Not {@code clear()} then {@code addAll()}: between them a
+     * reader sees an empty roster, which reads as a cleared wave.
      */
     public void setEnemies(EnemyMob[] enemies) {
         this.enemies = new CopyOnWriteArrayList<>(List.of(enemies));
@@ -48,38 +41,25 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
         this.count.set(count);
     }
 
-    /**
-     * How many of the current wave's mobs are still alive - the same count {@link #reportDeath}
-     * decrements and reports to the host, exposed for a caller (a {@code BalanceHarness} run
-     * loop) that needs to ask "is anything left" without depending on {@link #getEnemies}'
-     * length, which is the wave's slot count for as long as any dead mob is still fading and
-     * therefore still in the list.
-     */
+    /** Mobs still alive. Unlike {@link #getEnemies}' length, excludes dead mobs still fading. */
     public int aliveCount() {
         return this.count.get();
     }
 
     /**
-     * A mob has died (by combat kill or by leaking off the path's end) - not a removal despite
-     * the name this replaced: the mob stays in {@link #getEnemies}' list for its death fade,
-     * this only decrements the alive count and reports it to the host, which is how the UI
-     * learns a wave is cleared.
+     * Decrements the alive count and reports it to the host. The mob stays listed for its death
+     * fade.
      */
     public void reportDeath() {
         this.host.enemyDied(this.count.decrementAndGet());
     }
 
-    /**
-     * Tearing a level down is not a death: unlike {@link #reportDeath}, this does not notify the host.
-     */
+    /** Tearing a level down is not a death, so the host is not notified. */
     public void clear() {
         this.count.set(0);
         this.enemies.clear();
     }
 
-    /**
-     * Adds a new, independent enemy - the count grows, since it's one more mob to account for.
-     */
     @Override
     public void add(EnemyMob mob) {
         this.enemies.add(mob);
@@ -87,9 +67,8 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
     }
 
     /**
-     * Removes {@code outgoing} and adds {@code incoming} as one step - the count is unchanged
-     * (one out, one in), and {@code outgoing} is not reported to the host: a hatch is a
-     * transformation, not a kill, so it earns no bounty/score/kill-count credit.
+     * Swaps {@code outgoing} for {@code incoming}. The count is unchanged and nothing is reported:
+     * a hatch is not a kill.
      */
     @Override
     public void replace(EnemyMob outgoing, EnemyMob incoming) {

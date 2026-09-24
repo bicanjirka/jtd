@@ -1,10 +1,8 @@
 package td;
 
 /**
- * Named presets over the engine's tick-speed multiplier. 1.0 runs at the
- * baseline rate the game was tuned at; any other non-negative value - not
- * just these presets - is a valid multiplier for the tick loop, so a future
- * UI (e.g. a slider) can set an arbitrary speed without any engine change.
+ * Named presets over the tick-speed multiplier. 1.0 is the baseline rate; any non-negative
+ * multiplier is valid.
  */
 public enum TickSpeed {
     PAUSED(0.0),
@@ -22,10 +20,7 @@ public enum TickSpeed {
         return this.multiplier;
     }
 
-    /**
-     * Cycles through the playable presets (skipping PAUSED, which is reached
-     * via the dedicated pause control, not by cycling).
-     */
+    /** Cycles the playable presets, skipping {@code PAUSED}. */
     public TickSpeed next() {
         TickSpeed[] cycle = {NORMAL, FAST, SUPER_FAST};
         for (int i = 0; i < cycle.length; i++) {

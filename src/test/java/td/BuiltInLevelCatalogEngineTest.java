@@ -22,16 +22,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * Drives every catalog level (Curly Path, Zigzag Path, Twisted Hourglass) through the same
- * GameEngine entry points TowerDefence's real listeners call, proving a level with a curved path
- * is safe to load and play, not just a geometrically valid LevelDefinition.
+ * Loads and plays every built-in level through the engine, proving curved paths work in play, not
+ * just in geometry.
  */
 class BuiltInLevelCatalogEngineTest {
 
-    /**
-     * Finds a cell the smoothed (curved) path marks unbuildable that the same path's raw,
-     * unsmoothed corners would not - i.e. a cell only the curve itself reaches.
-     */
+    /** A cell only the smoothed curve covers, not the raw corners. */
     private static Point aCellOnlyTheSmoothedCurveCovers(LevelDefinition level, PathDefinition path) {
         List<Vec2> rawPolyline = path.corners().stream()
                 .map(cell -> new Vec2(cell.x() * BoardFixtures.SCALE + (BoardFixtures.SCALE / 2.0),

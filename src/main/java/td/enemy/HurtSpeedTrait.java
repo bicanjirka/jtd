@@ -1,12 +1,8 @@
 package td.enemy;
 
 /**
- * Accelerates as the mob takes damage, from its intrinsic base speed at full health up to a
- * fixed maximum as it nears death - the migrated Triangle's hurt curve. {@link #speedFactor}
- * returns the multiplier on intrinsic speed for the current health fraction, recomputed fresh
- * on every hit rather than accumulated, so it can never drift. A higher top speed is a different
- * concrete instance authored at a different {@link Rank}, not a formula scaled by anything live
- * on the mob.
+ * Speeds up as health drops, from base speed at full health to {@code maxMultiplier} near death.
+ * Recomputed from the health fraction on each hit, so it never drifts.
  */
 public record HurtSpeedTrait(float maxMultiplier) implements Trait {
 

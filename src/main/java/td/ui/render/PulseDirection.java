@@ -1,9 +1,6 @@
 package td.ui.render;
 
-/**
- * Whether an {@link EffectPulseDraw}'s ring grows outward from nothing (a gain, a cast, a
- * spawn burst) or shrinks inward to nothing (a loss).
- */
+/** Whether an {@link EffectPulseDraw} grows from nothing or shrinks to nothing. */
 public enum PulseDirection {
     OUTWARD,
     INWARD

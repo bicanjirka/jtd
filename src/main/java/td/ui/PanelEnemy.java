@@ -30,12 +30,8 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * The wave-preview strip: the enemy types in one wave, each with a count, drawn as the real
- * mobs rather than as separate preview art. It builds them against its own throwaway
- * {@link GameWorld} - a {@link GameHost#noOp()} host and a one-point path per slot - so a
- * preview mob is positioned where the strip wants it and can never report a death or a leak
- * into the real game. Painting reuses {@link Java2DFrameRenderer#paintEnemies}, which is what
- * keeps a preview and the board in step automatically.
+ * The wave preview: each enemy type with its count, drawn as real mobs. They live in a throwaway
+ * {@link GameWorld} with a {@link GameHost#noOp()} host, so they can never affect the game.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelEnemy extends JPanel {
@@ -97,10 +93,8 @@ public class PanelEnemy extends JPanel {
     }
 
     /**
-     * Builds every preview mob fresh at the just-computed {@link #scale}/{@link #pHeight} -
-     * positions can't be baked in earlier, at {@link #addEnemy}, because a mob's x/y are
-     * captured once at construction and never recomputed, and the final scale isn't known
-     * until every enemy for this wave has been recorded.
+     * Builds the preview mobs once the final scale is known, since a mob's position is fixed at
+     * construction.
      */
     private void rebuildEnemies() {
         this.enemies.clear();

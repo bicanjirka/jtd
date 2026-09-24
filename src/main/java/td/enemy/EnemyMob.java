@@ -7,9 +7,8 @@ import td.effect.EffectKind;
 import java.util.Set;
 
 /**
- * One enemy walking the level's path, as seen by towers, targeting queries and the renderer.
- * The implementation hierarchy lives behind {@link AbstractEnemyMob}; concrete types are
- * reached only through {@link EnemyMobVisitor}, never by casting or {@code instanceof}.
+ * One enemy walking a path, as towers, targeting and the renderer see it. Concrete types are
+ * reached only through {@link EnemyMobVisitor}.
  */
 public interface EnemyMob {
     void doTick(int gameTime);
@@ -20,9 +19,7 @@ public interface EnemyMob {
 
     double getY();
 
-    /**
-     * How far along its current lap of the path this mob is - a ranking value only, not a distance to rely on.
-     */
+    /** How far along its lap this mob is; for ranking only. */
     int getProgression();
 
     boolean validTarget();
@@ -35,28 +32,18 @@ public interface EnemyMob {
 
     boolean isDead();
 
-    /**
-     * The bounty this mob pays on death (and the score penalty it costs if it leaks instead).
-     */
+    /** Paid on death, and lost as score if it leaks. */
     int getBounty();
 
     /**
-     * Applies a hit and returns how much of it actually landed, which is not necessarily what
-     * was passed in - a mob may resist part of it, or none of it may apply at all if the mob
-     * is not currently a valid target. Callers reporting damage figures must use the return
-     * value, not the argument.
+     * Applies a hit and returns what actually landed, which may be less or nothing. Report the
+     * return value, not the argument.
      */
     Damage doDamage(Damage damage);
 
-    /**
-     * Applies a status effect (slow, burn, freeze) to this mob. See {@link Effect} for how an
-     * effect already active of the same kind is handled when another is applied on top.
-     */
     void applyEffect(Effect effect);
 
-    /**
-     * Which status effect kinds are currently active - for the renderer's on-board marker, in a stable order.
-     */
+    /** Active effect kinds, in a stable order. */
     Set<EffectKind> activeEffectKinds();
 
     float getSpeed();
@@ -64,12 +51,8 @@ public interface EnemyMob {
     String getInfoString();
 
     /**
-     * What a tower is allowed to see. {@code INVISIBLE} is skipped by single-target towers and
-     * reachable only by area damage; no built-in enemy authors it directly - it is instead the
-     * *effective* type any mob reports while an invisibility effect is active (see
-     * {@code AbstractEnemyMob}'s {@code effectiveType}), so any enemy can be made invisible by
-     * an ability rather than only one hardcoded to it. {@code FLYING} is declared but unused by
-     * any enemy today.
+     * What a tower can see. {@code INVISIBLE} is reachable only by area damage; a mob reports it
+     * while an invisibility effect is active. {@code FLYING} is unused.
      */
     enum Type {
         NORMAL,

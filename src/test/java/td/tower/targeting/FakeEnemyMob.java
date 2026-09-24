@@ -8,9 +8,7 @@ import td.enemy.EnemyMobVisitor;
 
 import java.util.Set;
 
-/**
- * A minimal, immutable {@link EnemyMob} double - only the geometry/targeting-relevant state is real.
- */
+/** An immutable {@link EnemyMob} with only position and type. */
 final class FakeEnemyMob implements EnemyMob {
 
     private final int x;

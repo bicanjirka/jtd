@@ -15,11 +15,6 @@ import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Covers SniperTower's HEAD upgrades. Its targeting and firing are already exercised via
- * GameEngineTest/TowerPlacementTest. {@link td.tower.targeting.HighestHealthSelectorTest}
- * covers the special-slot retargeting selector's own logic.
- */
 class SniperTowerTest {
 
     private final GameWorld context = WorldFixtures.newWorld();

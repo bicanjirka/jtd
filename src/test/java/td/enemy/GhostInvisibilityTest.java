@@ -12,11 +12,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * End-to-end, headless proof that the Ghost's invisibility is entirely ability/effect-driven -
- * no native {@link EnemyMob.Type} override - the same way {@code WardenChainTest} proves the
- * boss's on-death/hatch chain against a real, live {@link DefinedEnemyMob}.
- */
 class GhostInvisibilityTest {
 
     private static final int VANISH_DURATION_TICKS = 200;

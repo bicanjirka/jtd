@@ -12,12 +12,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * A cross-tower invariant sweep over every real tower's {@code upgradeTree()}: unique ids
- * within the tree, a base range and Awaken node offered from the start, and every HEAD/SPECIAL
- * node locked behind Awaken until it's bought - the shape every leaf's own tree is built
- * against (see {@code StandardBaseSlot}).
- */
+/** Invariants every real tower's tree must hold. */
 class UpgradeTreeCatalogueTest {
 
     private final GameWorld context = WorldFixtures.newWorld();

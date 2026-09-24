@@ -24,13 +24,6 @@ import td.wave.smoothing.QuadraticBezierSmoothing;
 
 import java.util.List;
 
-/**
- * Three lanes twist through the same tall, narrow board: a center lane pinches into two stacked
- * round lobes, reading as an actual hourglass silhouette, while the two side lanes weave through
- * both pinch bands on their way from one edge to the other. A 9x14 portrait board, 10 waves per
- * lane, starting with $100 and 4 lives. Also this level's one level-authored enemy, the Reaver
- * (see {@link #REAVER}), still riding the crimson lane it always has.
- */
 final class TwistedHourglassLevel {
 
     private static final String LEVEL_NAME = "Twisted Hourglass";

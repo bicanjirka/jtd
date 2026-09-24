@@ -3,11 +3,7 @@ package td.tower.upgrade;
 import td.tower.Tower;
 import td.util.GameWorld;
 
-/**
- * Either {@code left} or {@code right} being satisfied is enough - built through
- * {@link UpgradeCondition#or}, mirroring {@code TargetQuery.and}'s combinator shape. Lets a
- * slot's graph reconverge: a node reachable from more than one earlier choice.
- */
+/** Lets a node be reached from more than one earlier choice. */
 record OrCondition(UpgradeCondition left, UpgradeCondition right) implements UpgradeCondition {
 
     @Override

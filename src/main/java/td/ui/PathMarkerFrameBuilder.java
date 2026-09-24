@@ -13,17 +13,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Describes the path as two layers of {@link PathMarkerDraw}s: a static trail and a moving
- * indicator, both computed from {@link Path}'s real pixel-space points via the shared
- * {@link ArcLengthPath} rather than baked into any art asset - so the visual always matches
- * whatever path a level actually defines, diagonal or curved segments included. Enemy movement
- * (see {@code AbstractEnemyMob}) is built on the same {@link ArcLengthPath}, so both move at a
- * consistent real-world pace along the same geometry.
- * <p>
- * Both layers run through the same arc-length placement code, driven only by {@link MarkerStyle}
- * below - swapping either layer's symbol, spacing, size, or brightness role is a one-line change
- * to one of the two constants, and every marker carries a facing angle regardless of shape, so a
- * static dot can become a direction-sensitive symbol without touching this class further.
+ * Describes each path as a static trail and moving markers, placed by arc length along its real
+ * geometry - the same {@link ArcLengthPath} enemies walk. Each layer's look is one
+ * {@link MarkerStyle} constant, and every marker has a facing.
  */
 final class PathMarkerFrameBuilder {
 
@@ -69,11 +61,7 @@ final class PathMarkerFrameBuilder {
         return remainder < 0 ? remainder + modulus : remainder;
     }
 
-    /**
-     * One layer's symbol, spacing, size, and brightness role - see the STATIC/MOVING constants
-     * above. The actual color is a per-path value passed into {@link #build}, not part of this
-     * style.
-     */
+    /** One layer's symbol, spacing, size and brightness; the colour comes from the path. */
     private record MarkerStyle(PathMarkerShape shape, PathMarkerBrightness brightness, float spacingCells, float sizeCells) {
         static MarkerStyle of(PathMarkerShape shape, PathMarkerBrightness brightness, float spacingCells, float sizeCells) {
             return new MarkerStyle(shape, brightness, spacingCells, sizeCells);

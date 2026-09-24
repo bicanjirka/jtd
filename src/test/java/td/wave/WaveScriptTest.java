@@ -10,9 +10,6 @@ import td.util.GameStartupException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * WaveScript.parse is the wave mini-language's parser (see CLAUDE.md) - no GameWorld needed.
- */
 class WaveScriptTest {
 
     private final EnemyCatalog catalog = EnemyCatalog.builtIn();

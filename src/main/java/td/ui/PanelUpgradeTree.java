@@ -23,20 +23,11 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * The selected tower's upgrade tree - one section per {@link UpgradeSlot}, each a header line
- * showing what the slot currently holds and up to three numbered {@link HudButton}s for the
- * nodes it currently offers. Takes {@code PanelWaveInfo}'s place in {@code PanelGameConsole}
- * while a tower is selected (see {@code PanelGameConsole.selectTower}/{@code unselectTower}).
+ * The selected tower's upgrade tree: per {@link UpgradeSlot}, a header with what the slot holds and
+ * a numbered button per offered node. Replaces the wave preview while a tower is selected.
  * <p>
- * A slot section shows at most three buttons because no slot's own {@code offered()} count ever
- * exceeds three today: {@code BASE} offers its range and Awaken nodes together (2), and
- * {@code HEAD}/{@code SPECIAL} offer either every exclusive root at once (up to 3, for a tower
- * with three {@code SPECIAL} roots) or a single chain's next level (1) once one root is chosen.
- * <p>
- * Numbering is global across every currently offered node, in the same {@code BASE}/{@code
- * HEAD}/{@code SPECIAL} order {@code UpgradeTree.offered} returns - the same order the
- * number-key shortcut ({@code GameEngine.buyUpgradeForSelected}) reads from, so a button's own
- * number always matches the key that buys it.
+ * No slot offers more than three nodes at once. Numbering runs across all slots in {@code offered}
+ * order, so a button's number is the key that buys it.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelUpgradeTree extends JPanel implements EconomyListener {
@@ -92,19 +83,15 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         this.onBought = listener;
     }
 
-    /**
-     * Also reachable from the game-loop thread - see GameWorld.apply()'s callers.
-     */
+    /** May run on the game-loop thread. */
     @Override
     public void economyChanged(EconomyState state) {
         SwingUtilities.invokeLater(this::refresh);
     }
 
     /**
-     * Rebuilds every slot's header and button set from the tower's current {@code
-     * offeredUpgrades()} - called on selection, on every economy change, and from the render
-     * pulse (a gate's own progress - kills, damage dealt, a cluster of neighbours - can change
-     * with no economy event at all).
+     * Rebuilds headers and buttons from the tower's offered upgrades. Also called from the render
+     * pulse, since gate progress changes without economy events.
      */
     public void refresh() {
         for (UpgradeSlot slot : SLOTS) {

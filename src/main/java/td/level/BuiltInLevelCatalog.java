@@ -2,13 +2,7 @@ package td.level;
 
 import java.util.List;
 
-/**
- * The Java-code source of levels - the only {@link LevelCatalog} implementation
- * that exists today. A future file-based catalog implements the same interface.
- * Each level's own definition lives in its own class ({@link CurlyPathLevel},
- * {@link ZigZagPathLevel}, {@link TwistedHourglassLevel}) so a change to one level's content
- * touches one file, not this shared list.
- */
+/** The levels defined in Java code, each in its own class so editing one level touches one file. */
 public class BuiltInLevelCatalog implements LevelCatalog {
 
     @Override

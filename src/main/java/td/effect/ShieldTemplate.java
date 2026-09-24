@@ -5,11 +5,8 @@ import td.damage.DamageType;
 import java.util.Optional;
 
 /**
- * Applies a timed, percentage damage-absorbing shield - see {@link ActiveEffects#applyShield}.
- * {@code restrictedTo}, when present, narrows the shield to one {@link DamageType} - a hit of
- * the other type is not absorbed at all. Empty (the 2-arg constructor, every pre-existing
- * caller's shape) absorbs both, unchanged from before this field existed - see
- * {@link #physicalOnly}/{@link #magicOnly}.
+ * A timed percentage shield. {@code restrictedTo}, when present, limits it to one
+ * {@link DamageType}.
  */
 public record ShieldTemplate(float percent, int durationTicks, Optional<DamageType> restrictedTo)
         implements EffectTemplate {

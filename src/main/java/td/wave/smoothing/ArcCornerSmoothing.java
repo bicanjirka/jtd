@@ -5,24 +5,14 @@ import td.wave.Vec2;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Rounds each corner with a circular arc tangent to both adjacent legs at the pullback
- * points. Since those two points are, by construction, equidistant from the corner, the
- * arc's center lies on the intersection of the perpendiculars erected at each of them - the
- * standard tangent-circle fillet construction.
- */
+/** Rounds each corner with a circular arc tangent to both legs at the pullback points. */
 public final class ArcCornerSmoothing extends AbstractCornerSmoothing {
 
     public ArcCornerSmoothing(double cornerPull, int samplesPerCorner) {
         super(cornerPull, samplesPerCorner);
     }
 
-    /**
-     * The tangent-circle center: {@code pulledBackBefore} and {@code pulledBackAfter} both
-     * lie on the circle, and the circle is tangent to each leg at its respective point, so the
-     * center lies on the perpendicular to that leg erected at that point - solved as the
-     * intersection of the two perpendiculars.
-     */
+    /** The intersection of the perpendiculars to each leg at its pullback point. */
     private static Vec2 arcCenter(Vec2 pulledBackBefore, Vec2 corner, Vec2 pulledBackAfter) {
         double leg1Length = Math.hypot(corner.x() - pulledBackBefore.x(), corner.y() - pulledBackBefore.y());
         double leg2Length = Math.hypot(pulledBackAfter.x() - corner.x(), pulledBackAfter.y() - corner.y());
@@ -46,9 +36,7 @@ public final class ArcCornerSmoothing extends AbstractCornerSmoothing {
         return new Vec2(pulledBackBefore.x() + t1 * perp1x, pulledBackBefore.y() + t1 * perp1y);
     }
 
-    /**
-     * Normalizes an angular difference into (-pi, pi] - the shorter way around the circle.
-     */
+    /** Wraps to (-pi, pi]. */
     private static double shortestSignedAngle(double angle) {
         double normalized = angle % (2 * Math.PI);
         if (normalized > Math.PI) {

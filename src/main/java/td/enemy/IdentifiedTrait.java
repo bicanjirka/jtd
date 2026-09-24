@@ -1,10 +1,6 @@
 package td.enemy;
 
-/**
- * Pairs a {@link Trait} with the {@link TraitId} identity mechanism
- * {@link EnemyDefinition#withAdditionalTraits} composes by - see {@link TraitId}'s own doc
- * comment for why identity lives here rather than on {@link Trait} itself.
- */
+/** A {@link Trait} with the {@link TraitId} it is composed by. */
 public record IdentifiedTrait(TraitId id, Trait trait) {
 
     public static IdentifiedTrait anonymous(Trait trait) {

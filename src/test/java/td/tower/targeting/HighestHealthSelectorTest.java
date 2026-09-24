@@ -28,10 +28,6 @@ class HighestHealthSelectorTest {
         assertThat(selected).isEmpty();
     }
 
-    /**
-     * A bare EnemyMob double reporting a fixed health, since no shared test fixture exposes a
-     * configurable one - this file's own role is narrow enough not to need td.fixtures.
-     */
     private static final class FakeHealthEnemyMob implements EnemyMob {
         private final int health;
 

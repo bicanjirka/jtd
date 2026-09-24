@@ -91,12 +91,8 @@ class PathCoverageTest {
     }
 
     /**
-     * The load-bearing regression test for this whole rewrite: proves that for a real,
-     * shipped level (Curly Path), the sparse corner-only path this change introduces covers
-     * *exactly* the same cells as the old dense, one-cell-per-step path did. {@code
-     * expandThroughCornersLikeTheOldLevelPathDid} is a frozen copy of the axis-aligned
-     * expansion {@code LevelPath.throughCorners} used to perform before it was deleted - it
-     * exists only as a comparison baseline in this test, not as production code.
+     * A shipped level's corner-only path covers exactly the cells the old one-cell-per-step
+     * expansion did.
      */
     @Test
     void curlyPathsSparseCornersCoverTheSameCellsAsTheOldDenseExpansionDid() {

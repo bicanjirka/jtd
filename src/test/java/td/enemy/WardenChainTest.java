@@ -13,12 +13,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * End-to-end, headless proof of the Warden/boss-egg chain: an ability-driven on-death spawn,
- * an ability-driven hatch-on-timeout with {@code consumesSelf}, and the resulting spawn never
- * firing once the spawning mob is legitimately killed first. Everything else about abilities
- * (each trigger kind in isolation, each action shape) is already covered headlessly by
- * {@code AbilityEvaluatorTest} against fakes - this proves the same machinery wired into a
- * real, live {@link DefinedEnemyMob} on a real {@link GameWorld}.
+ * The ability machinery wired into real mobs on a real world; trigger and action rules are covered
+ * against fakes in {@code AbilityEvaluatorTest}.
  */
 class WardenChainTest {
 
