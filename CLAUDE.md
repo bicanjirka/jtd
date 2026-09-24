@@ -17,11 +17,14 @@ violation. They are not restated here.
 
 ## Working here
 
-- Multi-phase plan: commit after each phase.
-- Verify gameplay changes by running the game, UI changes from a screenshot (`run-jtd` skill).
-  Cheaper headless checks: `PreviewBoard`/`PreviewEnemy` render a scene to PNG, and
-  `td.BalanceHarness` plays a level with a fixed loadout and reports numbers (usage in the
-  `run-jtd` skill).
+- Multi-phase plan: commit after each phase. Its verification section lists live checks only for
+  the end of the feature, each naming what no test can assert.
+- Verify with the cheapest thing that can prove it: a test (`GameEngineTest` for rules) →
+  `PreviewBoard`/`PreviewEnemy` render for how the board looks → `td.BalanceHarness` for
+  numbers → the live game (`run-jtd` Driver) only for Swing wiring: input routing, panel text
+  and layout. Never re-check live what a test already asserts.
+- One live `run-jtd` pass per feature, after its last phase, in the same session.
+- A test for UI text builds its input the way the panel does, not through a convenient factory.
 - Performance budget (p99, last built-in level, every buildable cell a tower): tick ≤ 1 ms,
   frame build ≤ 1 ms, ≤ 512 KB allocated per frame build. `td.PerformanceHarness` exits non-zero
   when over; run it after changing per-tick or per-frame code. Tests: 5 s each, 60 s per fork.
