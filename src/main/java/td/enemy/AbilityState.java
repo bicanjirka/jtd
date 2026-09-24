@@ -13,7 +13,6 @@ import td.util.ThreadConfined;
  * ability it carries.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
-// owned by the DefinedEnemyMob holding it, so evaluated only during a tick
 public final class AbilityState {
 
     private int ticksRemaining;

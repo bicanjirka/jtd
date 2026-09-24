@@ -20,7 +20,6 @@ import java.util.function.Supplier;
  * {@code loadLevel}, after this is constructed.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
-// placement is driven entirely by mouse and key events
 public class TowerPlacement {
 
     private static final Logger LOG = LoggerFactory.getLogger(TowerPlacement.class);

@@ -70,7 +70,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * the domain packages, where they can be tested without a display.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
-// Swing components and input state; the fields that genuinely cross are volatile
 public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     private static final Logger LOG = LoggerFactory.getLogger(TowerDefense.class);
@@ -130,32 +129,13 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      * Bumped on the EDT per level change, so a superseded install drops itself.
      */
     private final AtomicInteger levelGeneration = new AtomicInteger();
-    // Incremented only by doGameTick on the game-loop thread, and read on the EDT by the
-    // render pulse. It is reset to 0 by installLevel on the EDT, which is safe because
-    // stopLoopThen has already joined the loop by then - there is never a second writer live
-    // at the same time, so an independent volatile scalar is the whole requirement and the
-    // lock this used to be guarded by is gone. See CLAUDE.md 3 rule 2.
+    // Reset on the EDT only while the loop is stopped, so there is one writer at a time.
     private volatile int gameTime;
-    // The one channel simulation state takes to the EDT: built on the game-loop thread, which
-    // owns that state, and read by paintBoard() on the EDT. Immutable, so publishing the
-    // reference through this volatile publishes everything reachable from it. See CLAUDE.md 3.
     private volatile RenderFrame latestFrame;
-    // requestRender() and paintBoard() are both always invoked on the EDT (the former via
-    // SwingUtilities.invokeLater, the latter via Swing's own paint dispatch), so this needs
-    // no synchronization of its own - it's just in-flight bookkeeping on a single thread.
     private boolean painting = false;
-    // Single source of truth for both the tick speed and pause state (TickSpeed.PAUSED);
-    // EDT-only, since it's only ever touched from button/key listeners.
     private TickSpeed currentSpeed = TickSpeed.NORMAL;
-    // Set from the game-loop thread (gameLost/gameWon are reached from a tick) and from the
-    // EDT (starting a level), and read on both. Volatile, not plain: this decides whether input
-    // is refused and whether an ending has already been announced.
     private volatile boolean gameStopped = false;
-    // Guards input and the game loop against firing before a level has finished loading (the
-    // JFrame-level KeyListener is live the instant the frame is shown, well before any level
-    // and its cellGrid exists) or after returnToMenu() has torn one down. Cleared by
-    // stopLoopThen on the EDT and set again once installLevel finishes; volatile because
-    // doGameTick reads it from the game-loop thread.
+    // Input and the loop can fire before a level exists and after one is torn down.
     private volatile boolean levelLoaded = false;
 
     private CardLayout contentCardLayout;
@@ -190,10 +170,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.boardOverlays.onBackToMenu(this::requestReturnToMenu);
         this.panelTowerSelector.doInit(this.gameWorld, this);
 
-        // Explicitly the same cell the win/lose overlays occupy, so the two stack rather than
-        // sitting side by side. Added with no constraints, the board landed in a RELATIVE cell
-        // of its own and got shoved out of view the moment an overlay claimed cell (0,0) -
-        // which is what made the board go black on a win or a loss.
+        // Same cell as the win/lose overlays so they stack; in a cell of its own the board gets
+        // pushed out of view when an overlay appears.
         GridBagConstraints boardConstraints = new GridBagConstraints();
         boardConstraints.gridx = 0;
         boardConstraints.gridy = 0;
@@ -202,8 +180,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         boardConstraints.weighty = 0.1;
         this.jPanel_board.add(this.gameBoard, boardConstraints);
 
-        // CardLayout starts on the menu card; give the frame a size that fits it. The game
-        // card gets its own size from recalculateBoard() once a level is actually loaded.
         this.setSize(MENU_WIDTH, MENU_HEIGHT);
         this.setLocationRelativeTo(null);
         this.setVisible(true);
@@ -239,9 +215,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
         int time = ++this.gameTime;
         this.doTick(time);
-        // Off by default (see Logging in CLAUDE.md); the isDebugEnabled() guard skips
-        // building a frame for this every tick when it is. Alpha 0 - a tick-boundary
-        // dump wants this tick's resulting state, not a partial interpolation of it.
+        // Alpha 0: a tick-boundary dump wants the tick's result, not an interpolation.
         if (LOG.isDebugEnabled()) {
             LOG.debug("Board state after tick {}:\n{}", time,
                     this.asciiBoardRenderer.render(this.boardRenderer.buildFrame(time, 0.0, 0.0)));
@@ -272,17 +246,11 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      */
     private void repaintPublishedFrame() {
         this.gameConsole.refreshSelected();
-        // The wave-preview panels animate their own display-only mobs. This used to be driven
-        // straight from doTick on the game-loop thread, which touched Swing from tick code and
-        // wrote PanelEnemy's clock across a thread boundary. Driving it from the render pulse
-        // instead keeps it on the EDT and, being cosmetic, it belongs on the render cadence
-        // rather than the simulation's anyway.
+        // Cosmetic animation runs on the EDT render cadence, never in tick code.
         this.gameConsole.getWaveInfo().doTick(this.gameTime);
         if (!this.painting) {
-            // The container, not the board component: the win/lose overlay is a sibling
-            // stacked on top of the board, and a JPanel claims its children never overlap.
-            // Repainting the board alone therefore paints over the overlay without painting
-            // the overlay back, and the message disappears on the next frame.
+            // The container, not the board: repainting the board alone paints over the stacked
+            // overlay without repainting it.
             this.jPanel_board.repaint();
         }
     }
@@ -334,9 +302,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.boardOverlays.reset();
         this.unSelectTower();
         this.panelTowerSelector.stopPlacing();
-        // stopLoopThen has already joined the loop, so no frame can be published between here
-        // and the new level's first pulse - this just makes sure the outgoing level's last
-        // frame is not what gets painted in the meantime.
         this.latestFrame = null;
         this.engine.loadLevel(level);
         this.contentCardLayout.show(getContentPane(), CARD_GAME);
@@ -565,8 +530,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     public void paintBoard(Graphics2D g2) {
         RenderFrame frame = this.latestFrame;
         if (frame == null) {
-            // Before the loop's first render pulse - a level was just selected, or none has
-            // been. Nothing to paint yet; the next pulse is at most ~16ms away.
             return;
         }
         this.painting = true;
@@ -593,8 +556,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             return;
         }
         this.unSelectTower();
-        // See keyTyped: once the level has ended a board click may still select a tower to
-        // inspect, but must not place one.
         if (this.gameStopped && this.engine.isPlacingTower()) {
             this.engine.cancelPlacing();
             this.panelTowerSelector.stopPlacing();
@@ -627,22 +588,16 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             this.requestReturnToMenu();
             return;
         }
-        // The board stays visible and selectable after a win or a loss, but the level is over:
-        // nothing that would change its outcome - building, selling, sending a wave, changing
-        // speed - still applies. Leaving the menu is the only way on from here.
+        // After a win or loss the board stays inspectable, but nothing may change the outcome.
         if (this.gameStopped) {
             return;
         }
-        // With a tower selected, a digit buys the correspondingly-numbered currently-offered
-        // upgrade node, in the same order PanelUpgradeTree numbers its own buttons - a no-op
-        // if nothing is selected or no node has that number. Digits aren't a placement key for
-        // any tower type, so this can't collide with the loop below.
+        // A digit buys the selected tower's offered upgrade by number; no placement key is a digit.
         if (key >= '1' && key <= '9') {
             this.engine.buyUpgradeForSelected(key - '0');
             this.gameConsole.refreshSelected();
             return;
         }
-        // Each tower type carries its own placement key, so a new tower needs no change here.
         TowerFactory.Type[] types = TowerFactory.Type.values();
         for (int i = 0; i < types.length; i++) {
             if (types[i].placementKey == key) {
@@ -722,9 +677,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        // No fill: jPanel_board is already sized to the loaded level's exact pixel dimensions
-        // (GameBoard.recalculateBoard), so it must not stretch to fill extra window space -
-        // it stays at its natural size, centered in its cell by the default CENTER anchor.
+        // No fill: the board keeps its exact pixel size, centred in its cell.
         gridBagConstraints.weightx = 0.1;
         gridBagConstraints.weighty = 0.1;
         jPanel_game.add(jPanel_board, gridBagConstraints);

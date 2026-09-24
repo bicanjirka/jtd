@@ -55,9 +55,7 @@ public abstract class AbstractTower implements Tower {
     protected final float critChanceBase;
     private final TowerFactory.Type type;
     private final int price;
-    // Independent readouts rather than a correlated set: damageDealt/killCount are written by
-    // tick code and read by the info panel on the EDT (damageDealt is a long, whose
-    // non-volatile reads may tear), and the rest are single flags.
+    // damageDealt is a long read on the EDT; a non-volatile long read may tear.
     protected volatile boolean selected = false;
     protected volatile long damageDealt = 0;
     protected volatile int killCount = 0;
@@ -305,12 +303,9 @@ public abstract class AbstractTower implements Tower {
         }
         this.onUpgradeBought(node);
         UpgradeState nextState = this.upgrades.with(node);
-        // Stats first, then the state - see publishStats for why the order matters.
         this.publishStats(nextState);
         this.upgrades = nextState;
-        // Buying this node may have changed what this tower itself contributes to its
-        // neighbours (an Aura tower's own upgrade), so every tower - not just this one -
-        // recomputes, the same blanket recompute TowerRoster.add/sell already does.
+        // This tower's contribution to its neighbours may have changed, so every tower recomputes.
         for (Tower t : this.context.towers().all()) {
             t.recalculateStats();
         }

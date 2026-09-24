@@ -24,7 +24,6 @@ import td.util.TickRate;
  * caller's job and happens after the snapshot exists. See CLAUDE.md 3.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
-// the tick counter and the failure circuit breaker, both touched only inside run()
 public class GameLoop implements Runnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(GameLoop.class);
@@ -40,18 +39,11 @@ public class GameLoop implements Runnable {
 
     private volatile double speedMultiplier = TickSpeed.NORMAL.multiplier();
     private volatile boolean running = false;
-    // Identifies which thread run() is allowed to keep looping on - see start()'s javadoc for
-    // why this, not just `running`, is what a restart needs to be race-free.
     private volatile Thread thread;
     private long tickNumber = 0;
     private int consecutiveTickFailures = 0;
-    // Written and read on the game-loop thread, immediately before each onRender callback.
-    // Kept volatile because it is also readable from outside the loop (see the accessor).
     private volatile double tickInterpolationAlpha = 0.0;
-    // A clock for cosmetic, non-gameplay animation (e.g. the path's moving markers - see
-    // td.ui.PathMarkerFrameBuilder) that by design keeps advancing at its own pace while
-    // TickSpeed.PAUSED or fast-forwarding, unlike tickInterpolationAlpha above. Volatile for
-    // the same reason: written on the loop thread, readable from outside it.
+    // Cosmetic clock: advances in real time even while paused or fast-forwarding.
     private volatile double animationSeconds = 0.0;
 
     public GameLoop(Runnable onTick, Runnable onRender) {
@@ -172,9 +164,8 @@ public class GameLoop implements Runnable {
 
     @Override
     public void run() {
-        // Pins this run() to the thread start() launched it on, so a thread still finishing
-        // its last iteration when a fast stop()+start() replaces it cannot mistake the new
-        // run's `running = true` for its own and keep looping as an unwanted second loop.
+        // A thread finishing its last iteration after a fast stop()+start() must not adopt the
+        // new run's `running` and keep looping.
         Thread self = Thread.currentThread();
         long lastNanos = System.nanoTime();
         while (this.running && this.thread == self) {
@@ -188,9 +179,6 @@ public class GameLoop implements Runnable {
             if (multiplier > 0.0) {
                 int ticks = this.tickAccumulator.accumulate((long) (elapsedNanos * multiplier));
                 if (ticks > 1) {
-                    // Fell behind schedule (e.g. a debugger pause or a long GC) - run one
-                    // tick and resync rather than bursting through the whole backlog at
-                    // once, matching how the original loop handled falling behind.
                     ticks = 1;
                     this.tickAccumulator.reset();
                 }

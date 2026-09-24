@@ -129,9 +129,7 @@ class SpawnShapeTest {
 
     @Test
     void bountySharesReflectTheShapesBountyMultiplier() {
-        // No built-in shape carries a non-1 bountyMultiplier any more (armored is trait-only) -
-        // this is SpawnShape's own test, so it reaches the canonical constructor directly to
-        // prove bountyShares multiplies before it splits.
+        // no built-in shape has a non-1 bountyMultiplier, so this uses the canonical constructor
         SpawnShape doubledBounty = new SpawnShape(1, 1f, 1f, 1f, 2.0f, Optional.empty(), SpawnSpread.NONE, 0.0);
 
         int[] shares = doubledBounty.bountyShares(10);

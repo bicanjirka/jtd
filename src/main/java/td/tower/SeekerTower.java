@@ -27,7 +27,7 @@ import java.util.List;
  * {@code MissileProjectile}). On impact it deals magic damage and freezes whichever mob it
  * actually reached - which may not be the one it was originally fired at.
  */
-@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // cooldown, current target and twinMissiles, advanced by doTick/onUpgradeBought
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class SeekerTower extends AbstractTower {
 
     public static final int PRICE = 35;
@@ -138,8 +138,6 @@ public final class SeekerTower extends AbstractTower {
                 this.coolDown = this.coolDownCurrent();
             }
         }
-        // No target: hold the last heading rather than snapping back to a neutral angle - see
-        // TurretAim's class doc on skipping tick() while idle.
         if (this.currentTarget != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(), this.currentTarget.getY()));
         }

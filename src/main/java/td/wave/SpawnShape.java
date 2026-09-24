@@ -35,15 +35,8 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
 
     private static final double COLUMN_SPACING_SLOTS = 0.3;
     private static final double DRIP_SPACING_SLOTS = 2.0;
-    // A placeholder demo value, like every other new-content number this feature introduces -
-    // meaningful against an ordinary enemy's typical per-hit damage without trivializing it the
-    // way the Warden's own, much larger, WARDEN_FLAT_RESIST is tuned for boss-scale hits.
     private static final int ARMORED_FLAT_RESIST = 30;
-    // Named, not anonymous: an enemy that is armored twice (already carries its own "armor"
-    // trait from a rank step) gets this trait *replacing* that one, not stacked alongside it -
-    // the same identity mechanism a rank ladder step uses, applied from the spawn-shape side.
-    // Physical-only, so a magic-damage tower ignores it entirely rather than being blunted the
-    // same as a physical one.
+    // Named, so it replaces an existing armor trait rather than stacking with it.
     private static final IdentifiedTrait ARMORED_TRAIT =
             IdentifiedTrait.named("armor", FlatResistTrait.physicalOnly(ARMORED_FLAT_RESIST));
 

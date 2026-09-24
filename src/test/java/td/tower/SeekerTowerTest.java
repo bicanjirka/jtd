@@ -111,8 +111,6 @@ class SeekerTowerTest {
         UpgradeNode deepFreezeTwo = UpgradePaths.named(tower, "Deep Freeze II");
         int durationBeforeChoosing = tower.getFreezeDurationTicks();
 
-        // onUpgradeBought is exercised directly - Deep Freeze II's own gate (a kill-count
-        // threshold) is covered generically by KillCountConditionTest; this proves the bump itself.
         tower.onUpgradeBought(deepFreezeTwo);
 
         assertThat(tower.getFreezeDurationTicks()).isGreaterThan(durationBeforeChoosing);

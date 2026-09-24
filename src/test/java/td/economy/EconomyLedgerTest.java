@@ -96,9 +96,6 @@ class EconomyLedgerTest {
 
     @Test
     void concurrentEconomyEventsDoNotLoseUpdates() throws InterruptedException {
-        // apply() is a read-modify-write reached from both the EDT (a purchase) and the
-        // game-loop thread (a kill or a leak). Without the lock this loses updates, and the
-        // final total comes out short.
         int threads = 4;
         int eventsPerThread = 2000;
         CountDownLatch go = new CountDownLatch(1);

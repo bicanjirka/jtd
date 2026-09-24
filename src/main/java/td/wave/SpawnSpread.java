@@ -62,9 +62,7 @@ public enum SpawnSpread {
     // Vogel's sunflower-seed-head constant: the irrational angle that keeps any two members'
     // base angles from ever lining up at a nearby radius, no matter how many there are.
     private static final double GOLDEN_ANGLE = Math.PI * (3.0 - Math.sqrt(5.0));
-    // How far a member may jitter off its base placement, each as a fraction of the room that
-    // placement already guarantees it - not an absolute distance - so the jitter can never grow
-    // large enough to threaten the separation the base placement provides.
+    // Fractions of the room the base placement guarantees, so jitter cannot break separation.
     private static final double RADIUS_JITTER_FRACTION = 0.2;
     private static final double ANGLE_JITTER_FRACTION = 0.5;
 

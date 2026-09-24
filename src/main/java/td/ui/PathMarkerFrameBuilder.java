@@ -27,12 +27,8 @@ import java.util.Optional;
  */
 final class PathMarkerFrameBuilder {
 
-    // 50% of a baseline enemy's on-screen pace at TickSpeed.NORMAL: a mob advances
-    // AbstractEnemyMob.DEFAULT_SPEED of 1.28px = 0.04 of one 32px cell per tick, and NORMAL
-    // runs 1e9 / BASE_TICK_NANOS = 20 ticks/s (GameLoop), giving 0.8 cell/s; half of that is
-    // 0.4. Kept as its own named constant rather than reaching into those classes - a
-    // decorative overlay should not couple itself to simulation internals - and is a fixed
-    // cells/second pace: see GameLoop.animationSeconds() for how (not) game speed feeds in.
+    // Half a baseline enemy's pace at normal speed; deliberately not derived from simulation
+    // constants.
     private static final float MOVING_CELLS_PER_SECOND = 0.4f;
 
     private static final MarkerStyle STATIC =
@@ -58,9 +54,7 @@ final class PathMarkerFrameBuilder {
     private static void addLayer(List<PathMarkerDraw> draws, ArcLengthPath polyline, PathColor color, int scale, MarkerStyle style, double offset) {
         float targetSpacing = style.spacingCells() * scale;
         int count = Math.max(1, (int) Math.round(polyline.totalLength() / targetSpacing));
-        // Dividing the exact total length by the marker count (rather than using
-        // targetSpacing directly) keeps spacing uniform *and* closes the loop with no seam
-        // at the wrap point.
+        // Total length over count keeps spacing uniform with no seam at the wrap.
         double spacing = polyline.totalLength() / (double) count;
         float size = style.sizeCells() * scale;
         for (int i = 0; i < count; i++) {

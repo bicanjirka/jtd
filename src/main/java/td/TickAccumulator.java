@@ -11,7 +11,6 @@ import td.util.ThreadConfined;
  * independent of however the real loop drives it.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
-// owned by the GameLoop that holds it, so mutated only on the loop thread
 public final class TickAccumulator {
 
     private final long stepNanos;

@@ -28,7 +28,7 @@ import java.util.List;
  * physical damage with the same distance-falloff shape {@link SplashTower} uses, and slows every
  * enemy the blast reaches.
  */
-@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // cooldown and current target, advanced by doTick
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class MortarTower extends AbstractTower {
 
     public static final int PRICE = 30;
@@ -144,8 +144,6 @@ public final class MortarTower extends AbstractTower {
                 this.coolDown = this.coolDownCurrent();
             }
         }
-        // No target: hold the last heading rather than snapping back to a neutral angle - see
-        // TurretAim's class doc on skipping tick() while idle.
         if (this.currentTarget != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(), this.currentTarget.getY()));
         }

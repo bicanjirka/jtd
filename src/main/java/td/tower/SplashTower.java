@@ -27,8 +27,6 @@ import java.util.Optional;
  * two towers that can hurt ghosts even though it cannot target them directly.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
-// cooldown, the primary target, the splash centre and every upgrade-bumped field, all set
-// within a tick or onUpgradeBought
 public final class SplashTower extends AbstractTower {
 
     public static final int PRICE = 15;
@@ -218,8 +216,6 @@ public final class SplashTower extends AbstractTower {
                 this.primaryTarget = null;
             }
         }
-        // No target: hold the last heading rather than snapping back to a neutral angle - see
-        // TurretAim's class doc on skipping tick() while idle.
         if (this.primaryTarget != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.primaryTarget.getX(), this.primaryTarget.getY()));
         }

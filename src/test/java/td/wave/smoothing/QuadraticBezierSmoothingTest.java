@@ -26,9 +26,7 @@ class QuadraticBezierSmoothingTest {
 
     @Test
     void theMidpointSampleMatchesTheQuadraticBezierFormulaForANonRightAngleCorner() {
-        // same 6-8-10 triangle corner as ArcCornerSmoothingTest's non-right-angle case (about
-        // 53 degrees, neither 90 nor 45) - the bezier formula is angle-agnostic by construction,
-        // but this proves it directly rather than only for a 90 degree corner.
+        // the same non-right-angle corner as the arc test: the formula is angle-agnostic
         Vec2 before = new Vec2(5, 0);
         Vec2 corner = new Vec2(10, 0);
         Vec2 after = new Vec2(13, 4);

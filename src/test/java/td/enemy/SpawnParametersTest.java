@@ -29,8 +29,6 @@ class SpawnParametersTest {
 
     @Test
     void aStationaryMobAtANonZeroSlotPositionHasNoDelayInsteadOfAnUnboundedOne() {
-        // Guards against dividing by a zero speed (an egg's baseSpeed is 0), which would
-        // otherwise round to Integer.MAX_VALUE ticks rather than the intended zero.
         SpawnParameters parameters = SpawnParameters.atSlot(3, 0f, 50, 3);
 
         assertThat(parameters.delayTicks()).isZero();

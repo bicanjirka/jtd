@@ -42,8 +42,6 @@ class WaveTest {
 
     @Test
     void spawningTwiceProducesTwoIndependentSetsOfEnemies() {
-        // spawn() is a factory, not an accessor: it binds fresh mobs to the path installed at
-        // the moment it is called, which is what lets a level be published in one write.
         Wave built = wave("c c");
 
         EnemyMob[] first = built.spawn();
@@ -102,9 +100,7 @@ class WaveTest {
 
     @Test
     void anArmoredSlotsTraitComposesWithTheDefinitionsOwnResistance() {
-        // Armored ("s") alone survives 80% of a hit (PercentResistTrait(0.8)); the "armored"
-        // spawn shape's own flat reduction then applies on top, composing rather than replacing
-        // it, since they carry different trait ids.
+        // percent resist and the shape's flat resist compose: they carry different trait ids
         DefinedEnemyMob plainArmored = (DefinedEnemyMob) wave("s").spawn()[0];
         DefinedEnemyMob armoredArmored = (DefinedEnemyMob) wave("armored s").spawn()[0];
         int plainHealthBefore = plainArmored.getHealth();
@@ -243,9 +239,7 @@ class WaveTest {
 
     @Test
     void aShapedMembersOffsetFromTheCentrelineStaysConstantThroughAnUnroundedCorner() {
-        // A hard, unsmoothed right-angle turn - PathBuilder joins consecutive corners with one
-        // straight leg each, so this path's facing is genuinely discontinuous at (300, 100),
-        // exactly the case that used to make an offset member's position jump sideways there.
+        // a hard right-angle turn: facing is discontinuous at the corner
         this.context.setBoard(BoardGeometry.of(32, 500, 500));
         this.context.setPath(new PathNormal(List.of(new Vec2(0, 100), new Vec2(300, 100), new Vec2(300, 400))));
 

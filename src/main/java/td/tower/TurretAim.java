@@ -12,7 +12,7 @@ import td.util.ThreadConfined;
  * dependency. {@code td.ui} interpolates between two ticks' headings for a smooth 60fps render
  * the same way {@code EnemyFrameBuilder} does for enemy position - see {@link #radiansAt(double)}.
  */
-@ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)  // owned by the tower that turns it, so game-loop in practice
+@ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 public final class TurretAim {
 
     private static final double TWO_PI = Math.PI * 2;

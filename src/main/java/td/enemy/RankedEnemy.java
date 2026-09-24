@@ -29,9 +29,7 @@ import java.util.function.UnaryOperator;
 public final class RankedEnemy {
 
     private final String id;
-    // Always built from an EnumMap (see Builder.build) and never re-wrapped through something
-    // that doesn't preserve that ordering (Map.copyOf does not) - cloneAs walks this in rank
-    // order, low to high.
+    // EnumMap-backed: cloneAs walks ranks in order.
     private final Map<Rank, EnemyDefinition> definitionsByRank;
     private final Rank highestDefinedRank;
 
@@ -121,8 +119,6 @@ public final class RankedEnemy {
      * from the rank before it - see the class doc comment.
      */
     @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
-    // a short-lived authoring helper (a static initializer, a level's own registration code),
-    // never shared beyond whichever thread builds it
     public static final class Builder {
 
         private final String id;
@@ -158,10 +154,7 @@ public final class RankedEnemy {
         }
 
         public RankedEnemy build() {
-            // Not Map.copyOf: it does not promise to preserve an EnumMap's own natural (ordinal)
-            // iteration order, which RankedEnemy.cloneAs relies on to walk ranks low-to-high.
-            // EnumMap always iterates in enum order, by its own contract - wrapping a private
-            // copy of it keeps that guarantee while still being unmodifiable from the outside.
+            // Not Map.copyOf: it does not keep EnumMap's rank order.
             return new RankedEnemy(this.id, Collections.unmodifiableMap(new EnumMap<>(this.definitionsByRank)),
                     this.highestSoFar);
         }

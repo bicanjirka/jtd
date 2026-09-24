@@ -26,7 +26,7 @@ class ActiveEffectsTest {
     @Test
     void aSlowRecoversSpeedAlongAQuadraticEaseInCurveRatherThanStayingFlat() {
         ActiveEffects effects = new ActiveEffects();
-        // ratio = 1 - 0.4 = 0.6, total = 100 - the doc's own worked table
+        // ratio = 1 - 0.4 = 0.6, total = 100
         effects.apply(Effect.slow(0.4f, 100, d -> {
         }));
 
@@ -79,8 +79,7 @@ class ActiveEffectsTest {
         effects.apply(Effect.slow(0.5f, 2, d -> {
         }));
 
-        // x = 0.5, factor = 0.25, multiplier = (1 - 0.5) + 0.5 * 0.25 = 0.625 - partway
-        // recovered already, not still flat at its authored 0.5
+        // x = 0.5, factor = 0.25, multiplier = (1 - 0.5) + 0.5 * 0.25 = 0.625
         effects.tick();
         assertThat(effects.speedMultiplier()).isCloseTo(0.625f, within(0.001f));
 
@@ -92,7 +91,7 @@ class ActiveEffectsTest {
     void aBurningFuelPoolDecaysExponentiallyMatchingTheDocumentedWorkedTable() {
         ActiveEffects effects = new ActiveEffects();
         List<Damage> received = new ArrayList<>();
-        // L0 = 10, T = 60, alpha = e^(-3/60) ~= 0.9512 - the doc's own worked table
+        // L0 = 10, T = 60, alpha = e^(-3/60) ~= 0.9512
         effects.apply(Effect.burn(Damage.magic(10), 60, recordingSink(received)));
 
         effects.tick(); // L = 10.000 -> damage 10, decays to 9.512
@@ -125,9 +124,6 @@ class ActiveEffectsTest {
         effects.apply(Effect.burn(Damage.magic(8), 60, recordingSink(secondTower)));
         effects.tick();
 
-        // the pool's total damage this tick is unchanged by splitting it (still 14), but each
-        // tower is now credited with only the share it actually fuelled - the second tower's
-        // reapplication no longer disappears into the first tower's own dealDamage
         assertThat(firstTower).containsExactly(Damage.magic(10));
         assertThat(secondTower).containsExactly(Damage.magic(4));
     }
@@ -196,9 +192,8 @@ class ActiveEffectsTest {
 
         tickTimes(effects, 20); // the strong slow's own duration completes and is removed
 
-        // the weak slow resumes as the winner with elapsed = 20, x = 20/200 = 0.1,
-        // multiplier = 0.8 + 0.2 * 0.01 = 0.802 - almost exactly where its own curve would be
-        // had it never been superseded, not restarted from x = 0
+        // elapsed = 20, x = 20/200 = 0.1, multiplier = 0.8 + 0.2 * 0.01 = 0.802 - resumed, not
+        // restarted
         assertThat(effects.speedMultiplier()).isCloseTo(0.802f, within(0.001f));
     }
 

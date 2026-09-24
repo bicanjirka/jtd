@@ -32,7 +32,6 @@ import java.io.Serial;
  * almost none of it.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
-// Swing overlays and the callback the menu button fires
 public class BoardOverlays {
 
     private static final Color BANNER_FILL = new Color(0, 0, 0, 210);

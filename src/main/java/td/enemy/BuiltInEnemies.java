@@ -56,9 +56,8 @@ import java.util.List;
  */
 final class BuiltInEnemies {
 
-    // Bounty grows 2.5x per rank step (a fixed ratio, rounded to the nearest whole credit) while
-    // health only doubles - so a tougher mob is worth disproportionately more, on top of already
-    // costing more to kill. Health itself is untouched by this pass; only price below changed.
+    // Bounty grows 2.5x per rank while health only doubles, so tougher mobs pay
+    // disproportionately more.
     static final RankedEnemy SIMPLE = RankedEnemy
             .startingAt(EnemyDefinition.of("c", "Simple mob", 50, 2, 1.28f, BodyArchetype.CIRCLE)
                     .withDescription("No special abilities."))
@@ -85,10 +84,7 @@ final class BuiltInEnemies {
             .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(640, 50)
                     .withDescription("Takes far less damage, and its plating has grown thick enough to blunt a flat "
                             + "chunk of every hit outright. Immune to critical hits.")
-                    // Percentage listed before flat: DefinedEnemyMob.absorb folds every Trait.onHit
-                    // in this list's own order, so "resist" runs first and "flatResist" subtracts
-                    // its flat amount from whatever the percentage already let through, not the
-                    // reverse.
+                    // Percentage before flat: traits fold in list order.
                     .withAdditionalTraits(List.of(
                             IdentifiedTrait.named("flatResist", FlatResistTrait.physicalOnly(800)),
                             IdentifiedTrait.named("resist", new PercentResistTrait(0.6f)))))
@@ -100,12 +96,7 @@ final class BuiltInEnemies {
                             IdentifiedTrait.named("resist", new PercentResistTrait(0.5f)))))
             .build();
 
-    // The Boss step's own ability constants - named rather than inlined since the FRENZIED
-    // Boss's health-threshold spawn and neglect-heal each combine three or more numbers that
-    // read better with a name than as bare literals inside the definition below.
     private static final float FRENZIED_SPAWN_HEALTH_THRESHOLD = 0.5f;
-    // A brood of three spawnlings, spaced apart in time by AbilitySpawnShape.brood so they
-    // trail one another rather than appearing stacked on the Boss's exact position.
     private static final int FRENZIED_SPAWN_COUNT = 3;
     private static final int FRENZIED_NEGLECT_WINDOW_TICKS = 200;
     private static final int FRENZIED_NEGLECT_HEAL_PER_TICK = 2;
@@ -134,13 +125,8 @@ final class BuiltInEnemies {
                                     new ApplyEffectAction(new HealTemplate(FRENZIED_NEGLECT_HEAL_PER_TICK, FRENZIED_NEGLECT_HEAL_DURATION_TICKS),
                                             new SelfTarget()))))))
             .build();
-    // A single-rank reinforcement, not a RankedEnemy ladder - the Boss's brood ability always
-    // spawns this one shape, the same precedent WARDEN_EGG_1/2/3 already set for ability-spawned
-    // content that never needs to scale with the caster's own rank.
     private static final int T_SPAWN_DEATH_HEAL_PER_TICK = 4;
     private static final int T_SPAWN_DEATH_HEAL_DURATION_TICKS = 40;
-    // "Big area" - matches the Warden's own callToArms radius, this codebase's existing "big"
-    // scale (Mender's own heal radius is 80f).
     private static final float T_SPAWN_DEATH_HEAL_RADIUS = 150f;
     static final EnemyDefinition T_SPAWN = EnemyDefinition
             .of("tSpawn", "Frenzy Spawnling", 140, 2, 1.28f, BodyArchetype.TRIANGLE)
@@ -151,11 +137,8 @@ final class BuiltInEnemies {
                     new OnDeathTrigger(),
                     new ApplyEffectAction(new HealTemplate(T_SPAWN_DEATH_HEAL_PER_TICK, T_SPAWN_DEATH_HEAL_DURATION_TICKS),
                             new RadiusTarget(T_SPAWN_DEATH_HEAL_RADIUS)))));
-    // 20 ticks/second (see TickRate) - 10 seconds, same conversion EGG_HATCH_DELAY_TICKS uses.
     private static final int GHOST_VANISH_DURATION_TICKS = 200;
-    // Reapplied every second to every ally still in radius; each application's own duration
-    // outlasts the interval so a lingering ally is never visible for even one tick between
-    // refreshes - see ActiveEffects' "always extends to the longer remaining duration" rule.
+    // Each application outlasts the interval, so an ally in radius never flickers visible.
     private static final int GHOST_SHROUD_INTERVAL_TICKS = 20;
     private static final int GHOST_SHROUD_DURATION_TICKS = 40;
     private static final float GHOST_SHROUD_RADIUS = 100f;
@@ -165,11 +148,7 @@ final class BuiltInEnemies {
                             + "the first time it's hit. Area damage still finds it.")
                     .withHealthDivisor(5f)
                     .withAbilities(List.of(new Ability(
-                            // A hit that also freezes this mob on the same tick suppresses this
-                            // cast rather than delaying it: DefinedEnemyMob.isIncapacitated()
-                            // gates every ability while FREEZE is active, including this
-                            // fire-once trigger, so a frozen mob simply never gets to vanish for
-                            // that hit instead of vanishing once the freeze wears off.
+                            // A hit that also freezes suppresses this cast outright: a frozen mob cannot cast.
                             new OnFirstDamageTakenTrigger(),
                             new ApplyEffectAction(new InvisibleTemplate(GHOST_VANISH_DURATION_TICKS), new SelfTarget())))))
             .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(200, 10))
@@ -186,15 +165,11 @@ final class BuiltInEnemies {
     private static final int MENDER_HEAL_DURATION_TICKS = 40;
     private static final int MENDER_HEAL_PER_TICK = 2;
     private static final float MENDER_HEAL_RADIUS = 80f;
-    // A mob left unattacked long enough quietly mends itself on top of whatever it's already
-    // healing nearby - added at Veteran, and stronger at Boss (see that rank's own ability).
     private static final int MENDER_SELF_HEAL_WINDOW_TICKS = 100;
     private static final int MENDER_SELF_HEAL_DURATION_TICKS = 100;
     static final RankedEnemy MENDER = RankedEnemy
             .startingAt(EnemyDefinition.of("m", "Mender mob", 60, 3, 1.28f, BodyArchetype.MENDER)
-                    // "Other" is load-bearing, not flavor: RadiusTarget's own "every other
-                    // valid-target enemy" semantics is what excludes the Mender itself from its
-                    // own heal - see DefinedEnemyMob.MobAbilityContext.applyToOthersInRadius.
+                    // "other" is load-bearing: a radius target excludes the caster.
                     .withDescription("Periodically restores health to every other ally near it - itself excluded.")
                     .withIdentifiedAbilities(List.of(IdentifiedAbility.named("heal", new Ability(
                             new PeriodicTrigger(MENDER_HEAL_INTERVAL_TICKS),
@@ -230,7 +205,6 @@ final class BuiltInEnemies {
     static final EnemyDefinition WARDEN_EGG_3 = EnemyDefinition
             .of("wardenEgg3", "Warden's Final Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)
             .withDescription("Must be defeated to end the encounter - it will not hatch again.");
-    // 20 ticks/second at 1.0x tick speed (GameLoop.BASE_TICK_NANOS = 50ms) - 8 seconds.
     private static final int EGG_HATCH_DELAY_TICKS = 160;
     static final EnemyDefinition WARDEN_EGG_1 = EnemyDefinition
             .of("wardenEgg1", "Warden's Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)
@@ -251,39 +225,20 @@ final class BuiltInEnemies {
                     IdentifiedTrait.named("armor", new FlatResistTrait(100))))
             .withAbilities(List.of(new Ability(
                     new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden3", 1, true))));
-    // Raised from an original 100 (itself raised from 15 - see git history) specifically so an
-    // un-upgraded weak tower does zero damage against the Warden: 200 fully absorbs
-    // CinderTower's 150 burn and PulseTower's 200 hit, matching the design intent that a player
-    // must upgrade, or bring a heavier tower, to hurt it at all - while still meaningfully
-    // denting a big single hit (SniperTower's 4000) the way the Warden's own doc comment
-    // ("armor") implies it should. WARDEN_2/WARDEN_3 halve/quarter this as the boss weakens
-    // across its own egg-hatch chain, so a tower that could do nothing against WARDEN_1 starts
-    // landing real damage by the time it faces WARDEN_3.
+    // High enough that an un-upgraded weak tower does nothing; later stages weaken it.
     private static final int WARDEN_FLAT_RESIST = 1000;
-    // Shared by all three stages, appended to each stage's own flavor sentence - every stage
-    // carries the exact same WARDEN_STANDING_ABILITIES plus its own on-death egg spawn, so one
-    // description keeps the three in agreement instead of drifting the way WARDEN_2/WARDEN_3
-    // used to (neither mentioned any ability at all).
     private static final String WARDEN_ABILITY_BLURB = " Periodically calls a reinforcement and re-shields itself; "
             + "shields every nearby ally once below half health; calls an extra reinforcement if left unattacked "
             + "too long; gains a shield whenever it survives a critical hit; and leaves behind an egg on death.";
     private static final List<IdentifiedAbility> WARDEN_STANDING_ABILITIES = List.of(
-            // periodically calls for a reinforcement
             IdentifiedAbility.anonymous(new Ability(new PeriodicTrigger(300), new SpawnEnemiesAction("c", 1, false))),
-            // periodically re-shields itself on top of its permanent armor trait
             IdentifiedAbility.anonymous(new Ability(new PeriodicTrigger(400),
                     new ApplyEffectAction(new ShieldTemplate(0.5f, 100), new SelfTarget()))),
-            // at half health, shields every nearby ally - a one-time "call to arms"
             IdentifiedAbility.anonymous(new Ability(new HealthThresholdTrigger(0.5f),
                     new ApplyEffectAction(new ShieldTemplate(0.3f, 150), new RadiusTarget(150f)))),
-            // punishes being ignored by healing itself - TimeSinceLastHitTrigger re-arms once
-            // ticksSinceLastHit drops back below its window (i.e. the Warden is hit again) and
-            // then reaches the window a second time, so this fires every time it's left alone for
-            // 200 ticks, not just the first - see AbilityEvaluator.fireTimeSinceLastHit.
+            // Re-arms after each hit, so it fires every time it is left alone, not just once.
             IdentifiedAbility.anonymous(new Ability(new TimeSinceLastHitTrigger(200),
                     new ApplyEffectAction(new HealTemplate(4, 40), new SelfTarget()))),
-            // shields itself every time it survives a critical hit - repeatable, unlike the
-            // fire-once triggers above
             IdentifiedAbility.anonymous(new Ability(new OnCriticalHitTakenTrigger(),
                     new ApplyEffectAction(new ShieldTemplate(0.3f, 30), new SelfTarget()))));
     static final EnemyDefinition WARDEN_1 = EnemyDefinition

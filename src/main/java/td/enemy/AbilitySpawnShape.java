@@ -33,12 +33,9 @@ public record AbilitySpawnShape(int members, float sizeMultiplier, float healthM
      */
     public static final int MAX_MEMBERS = 12;
 
-    // Visibly smaller than a normal-sized reinforcement - no built-in spawn shape has a real
-    // cosmetic-scale mechanic beyond SpawnShape.swarm's own 0.5f precedent, which this matches
-    // closely enough to read as the same kind of brood.
+    // Visibly smaller than a normal reinforcement.
     private static final float BROOD_SIZE_MULTIPLIER = 0.7f;
-    // Same order of magnitude as td.wave.SpawnShape.DRIP_SPACING_SLOTS (2.0) - loose enough that
-    // members visibly trail one another rather than arrive shoulder to shoulder.
+    // Loose enough that members visibly trail one another.
     private static final double BROOD_DELAY_SPACING_SLOTS = 2.0;
 
     private static final AbilitySpawnShape NORMAL =

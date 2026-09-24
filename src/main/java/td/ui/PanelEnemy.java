@@ -38,7 +38,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * keeps a preview and the board in step automatically.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
-// a Swing component; its preview mobs and clock are touched only from the render pulse
 public class PanelEnemy extends JPanel {
     @Serial
     private static final long serialVersionUID = 1L;

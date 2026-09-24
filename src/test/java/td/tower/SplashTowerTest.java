@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class SplashTowerTest {
 
-    // SplashTower derives its blast radius from the board scale at construction.
     private static final float SPREAD_RADIUS = SplashTower.SPREAD_RADIUS_BASE * BoardFixtures.SCALE; // 56.0
 
     private final GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
@@ -102,9 +101,6 @@ class SplashTowerTest {
         UpgradeNode blastEngineering = UpgradePaths.named(tower, "Blast Engineering");
         float radiusBeforeChoosing = tower.getSpreadRadius();
 
-        // onUpgradeBought is exercised directly - Blast Engineering's own gate (a damage-dealt
-        // threshold) is covered generically by DamageDealtConditionTest and by
-        // AbstractTowerTest's condition-gating test; this proves the stat bump itself.
         tower.onUpgradeBought(blastEngineering);
 
         assertThat(tower.getSpreadRadius()).isGreaterThan(radiusBeforeChoosing);

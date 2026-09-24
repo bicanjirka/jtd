@@ -8,9 +8,6 @@ class TickSpeedTest {
 
     @Test
     void multipliersPreserveTheOriginalTickTimeRatios() {
-        // Original hardcoded tick times were 50ms (normal), 15ms (fast), 3ms (super fast);
-        // the multiplier is baseline-ms / preset-ms, so effective-ms = baseline-ms / multiplier
-        // reproduces the exact same speeds.
         assertThat(TickSpeed.PAUSED.multiplier()).isZero();
         assertThat(TickSpeed.NORMAL.multiplier()).isEqualTo(1.0);
         assertThat(TickSpeed.FAST.multiplier()).isEqualTo(50.0 / 15.0);

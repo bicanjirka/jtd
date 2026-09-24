@@ -18,14 +18,9 @@ import java.util.Set;
  */
 public final class PathCoverage {
 
-    // One cell wide, matching the corridor width a raw (unsmoothed) grid path implicitly has
-    // today: every step is exactly one cell, so the "corridor" was always just the cell itself.
-    // Public: Wave reads it too, as the footprint a shaped slot's lateral offset scatters within.
     public static final double PATH_WIDTH_CELLS = 1.0;
-    // A straight run's cells get exactly 100% coverage under a one-cell-wide corridor, and a
-    // corner cell (where two perpendicular corridors overlap) gets ~94.6% - the corridor's
-    // rounded end-caps don't quite reach the cell's far diagonal corner. 0.5 comfortably marks
-    // both as covered without false-positiving on a curve that only clips a cell's corner.
+    // A corner cell gets ~94.6% coverage; 0.5 counts it without catching a curve that only
+    // clips a cell's corner.
     private static final double COVERAGE_THRESHOLD = 0.5;
     private static final int SAMPLES_PER_AXIS = 4;
 
@@ -50,8 +45,7 @@ public final class PathCoverage {
             maxY = Math.max(maxY, p.y());
         }
 
-        // Cells outside this box are never checked at all - not just an optimisation: it's
-        // what keeps this safe to call against a grid where only some cells actually exist.
+        // Also what keeps this safe on a grid where only some cells exist.
         int minCellX = clamp((int) Math.floor((minX - halfWidth) / scale), 0, width - 1);
         int maxCellX = clamp((int) Math.floor((maxX + halfWidth) / scale), 0, width - 1);
         int minCellY = clamp((int) Math.floor((minY - halfWidth) / scale), 0, height - 1);

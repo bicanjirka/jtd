@@ -84,7 +84,7 @@ class WardenChainTest {
         egg.doDamage(LETHAL);
         egg.doTick(51); // captures deathTick
 
-        // well past the 160-tick hatch delay - nothing should fire once the egg is dead
+        // well past the hatch delay
         for (int t = 52; t <= 250; t++) {
             for (EnemyMob e : world.enemies().getEnemies()) {
                 e.doTick(t);

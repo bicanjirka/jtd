@@ -71,7 +71,6 @@ class EnemyCatalogTest {
 
         assertThat(tankySquare.definitionFor(Rank.GRUNT).baseHealth()).isEqualTo(200);
         assertThat(tankySquare.definitionFor(Rank.SOLDIER).baseHealth()).isEqualTo(400);
-        // the original ladder's own two ranks are untouched
         assertThat(catalog.get("s", Rank.GRUNT).baseHealth()).isEqualTo(100);
         assertThat(catalog.get("s", Rank.SOLDIER).baseHealth()).isEqualTo(200);
     }
@@ -83,9 +82,6 @@ class EnemyCatalogTest {
         RankedEnemy toughCircle = catalog.cloneAndAdjust("c", "toughCircle",
                 d -> d.withHealthAndPrice(d.baseHealth() + 50, d.price() + 5));
 
-        // "c"'s own five ranks (50/2, 100/5, 200/13, 400/33, 800/83 - see BuiltInEnemies.SIMPLE)
-        // each pick up the same +50/+5 adjustment, so the clone's own five ranks land on five
-        // different values too - the adjustment is uniform, but what it's applied to isn't.
         assertThat(toughCircle.definitionFor(Rank.GRUNT).baseHealth()).isEqualTo(100);
         assertThat(toughCircle.definitionFor(Rank.SOLDIER).baseHealth()).isEqualTo(150);
         assertThat(toughCircle.definitionFor(Rank.VETERAN).baseHealth()).isEqualTo(250);
@@ -94,16 +90,12 @@ class EnemyCatalogTest {
         assertThat(toughCircle.definitionFor(Rank.GRUNT).price()).isEqualTo(7);
         assertThat(toughCircle.definitionFor(Rank.BOSS).price()).isEqualTo(88);
 
-        // every rank's own id is renamed, and every rank of the original "c" is untouched
         for (Rank rank : Rank.values()) {
             assertThat(toughCircle.definitionFor(rank).id()).isEqualTo("toughCircle");
         }
         assertThat(catalog.get("c", Rank.GRUNT).baseHealth()).isEqualTo(50);
         assertThat(catalog.get("c", Rank.BOSS).baseHealth()).isEqualTo(800);
 
-        // Elite/Boss's own "armor" trait (added, then strengthened, on top of the ladder's
-        // health/price progression) survives the clone unchanged - cloneAs copies each rank's
-        // whole definition, traits included, not just the two stats adjust touches here.
         assertThat(toughCircle.definitionFor(Rank.SOLDIER).traits()).isEmpty();
         assertThat(toughCircle.definitionFor(Rank.ELITE).traits()).hasSize(1);
         assertThat(toughCircle.definitionFor(Rank.BOSS).traits()).hasSize(1);
@@ -111,23 +103,15 @@ class EnemyCatalogTest {
 
     @Test
     void theRankAwareOverloadCanSetHealthCompletelyPersistAddAndReplaceTraitsPerRank() {
-        // ARMORED ("s") carries two named traits from the start - "resist" (PercentResistTrait)
-        // and "criticalImmune" (CriticalImmunityTrait) - see BuiltInEnemies.ARMORED.
         EnemyCatalog catalog = EnemyCatalog.builtIn();
 
         RankedEnemy toughenedSquare = catalog.cloneAndAdjust("s", "toughenedSquare", (rank, d) -> switch (rank) {
-            // Health/price set outright, not derived from d - proves each rank's adjustment is
-            // a real replacement, not a delta on whatever that rank already had.
+            // set outright, proving a replacement rather than a delta
             case GRUNT -> d.withHealthAndPrice(1000, 100);
-            // Untouched: the old "resist" (already strengthened to 0.75 at this rank - see
-            // BuiltInEnemies.ARMORED)/"criticalImmune" traits must survive as-is.
             case SOLDIER -> d;
-            // A new trait added alongside the two existing ones.
             case VETERAN -> d.withAdditionalTraits(
                     List.of(IdentifiedTrait.named("goldShield", new PercentResistTrait(0.5f))));
-            // The old "resist" trait replaced by a stronger one under the same id -
-            // "criticalImmune" and "flatResist" (added at this rank - see BuiltInEnemies.ARMORED)
-            // are left alone.
+            // replaces "resist" under the same id; other traits stay
             case ELITE -> d.withAdditionalTraits(
                     List.of(IdentifiedTrait.named("resist", new PercentResistTrait(0.3f))));
             case BOSS -> d;
@@ -164,7 +148,6 @@ class EnemyCatalogTest {
     @Test
     void aFiniteMultiHopSpawnChainRegistersSuccessfully() {
         EnemyCatalog catalog = new EnemyCatalog();
-        // warden1 -> egg1 -> warden2 -> egg2 -> warden3 (terminal, no spawn ability of its own)
         catalog.register(EnemyFixtures.simpleDefinition("warden3"));
         catalog.register(EnemyFixtures.definitionThatSpawns("egg2", "warden3"));
         catalog.register(EnemyFixtures.definitionThatSpawns("warden2", "egg2"));

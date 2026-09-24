@@ -129,7 +129,7 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
     private volatile SonarSweep sweep = SonarSweep.perRevolution(SECONDS_PER_REVOLUTION, TICKS_PER_SECOND);
 
     public SonarTower(GameWorld context, int x, int y) {
-        // No cooldown: this tower's cadence is its sweep rate, not a reload - see rateLine.
+        // No cooldown: the cadence is the sweep rate.
         super(TowerFactory.Type.SONAR, PRICE, new TowerBaseStats(DAMAGE, RANGE, 0), context, x, y);
         this.context.waves().addListener(this);
     }

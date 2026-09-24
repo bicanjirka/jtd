@@ -175,8 +175,6 @@ class CinderTowerTest {
         UpgradeNode wideNozzle = UpgradePaths.named(tower, "Wide Nozzle");
         double halfWidthBeforeChoosing = tower.getHalfWidthRadians();
 
-        // onUpgradeBought is exercised directly - Wide Nozzle's own gate (a kill-count
-        // threshold) is covered generically by KillCountConditionTest; this proves the bump itself.
         tower.onUpgradeBought(wideNozzle);
 
         assertThat(tower.getHalfWidthRadians()).isGreaterThan(halfWidthBeforeChoosing);

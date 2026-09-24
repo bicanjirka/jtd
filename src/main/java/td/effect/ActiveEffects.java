@@ -24,7 +24,6 @@ import java.util.Set;
  * {@link #applyBurn}.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
-// mutated only from AbstractEnemyMob.doTick and the towers/effects that hit it, both game-loop
 public final class ActiveEffects {
 
     /**

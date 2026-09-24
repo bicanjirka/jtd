@@ -38,7 +38,7 @@ import java.util.List;
  * toggle rather than a push control because picking a tower is a mode, but they look exactly
  * like every other control - see {@link Hud}.
  */
-@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // Swing components and the placing flag
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelTowerSelector extends JPanel implements EconomyListener {
     @Serial
     private static final long serialVersionUID = 1L;

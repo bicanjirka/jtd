@@ -26,7 +26,7 @@ class TowerEffectFrameBuilderTest {
         context.towers().add(aura);
         SniperTower near = new SniperTower(context, 0, 0);
         context.towers().add(near);
-        // AuraTower.RANGE is 1.5 cells; placing far away puts this well outside it
+        // far outside the aura's range
         SniperTower far = new SniperTower(context, 100, 100);
         context.towers().add(far);
 

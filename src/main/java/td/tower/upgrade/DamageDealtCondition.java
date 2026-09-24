@@ -15,8 +15,7 @@ public record DamageDealtCondition(long threshold) implements UpgradeCondition {
 
     @Override
     public String describe() {
-        // threshold is in hundredths, the same scale getDamageDealt() reports in - see
-        // AbstractTower.getStatusString()'s own "Damage dealt" line for the precedent.
+        // threshold is in hundredths, like getDamageDealt()
         return (this.threshold / 100f) + " damage dealt";
     }
 

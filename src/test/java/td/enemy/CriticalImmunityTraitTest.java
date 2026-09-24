@@ -23,8 +23,7 @@ class CriticalImmunityTraitTest {
 
         Damage landed = armored.doDamage(Damage.physical(1000).asCritical());
 
-        // PercentResistTrait still applies on top: 1000 * 0.8 = 800, unaffected by stripping the
-        // crit bonus first, since stripCritical divides the amount, not the type.
+        // 1000 * 0.8: resistance still applies once the crit bonus is stripped
         assertThat(landed.amount()).isEqualTo(800);
         assertThat(healthBefore - armored.getHealth()).isEqualTo(800);
     }

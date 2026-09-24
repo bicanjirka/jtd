@@ -99,8 +99,7 @@ class AbilityEvaluatorTest {
 
         context.setJustTookCriticalHit(true);
         assertThat(AbilityEvaluator.shouldFire(trigger, state, context)).isTrue();
-        // still true this same tick if asked again - unlike OnDeathTrigger, nothing here marks
-        // it fired, since surviving another crit later must be able to fire again
+        // still true if asked again: a later crit must be able to fire it again
         assertThat(AbilityEvaluator.shouldFire(trigger, state, context)).isTrue();
 
         context.setJustTookCriticalHit(false);
@@ -117,8 +116,7 @@ class AbilityEvaluatorTest {
 
         context.setJustTookDamage(true);
         assertThat(AbilityEvaluator.shouldFire(trigger, state, context)).isTrue();
-        // still true this same tick if asked again, but already fired - unlike
-        // OnCriticalHitTakenTrigger, this must never fire a second time
+        // still true this tick, but it fires only once
         assertThat(AbilityEvaluator.shouldFire(trigger, state, context)).isFalse();
 
         context.setJustTookDamage(false);

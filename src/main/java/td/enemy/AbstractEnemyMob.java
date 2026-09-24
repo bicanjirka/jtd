@@ -41,7 +41,6 @@ import java.util.Set;
  * below. See CLAUDE.md 3 and 5.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
-// per-tick simulation state; the frame build that reads it runs on the loop thread too
 public abstract class AbstractEnemyMob implements EnemyMob {
 
     /**
@@ -65,7 +64,6 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      */
     private static final int PROGRESSION_SCALE = 1_000_000;
 
-    // Injected collaborators and the constants a mob is born with. All final, all set below.
     protected final GameWorld gameWorld;
     protected final Rank rank;
     private final Type type;
@@ -102,8 +100,6 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     private final double offsetX;
     private final double offsetY;
 
-    // Per-tick simulation state, owned by the game-loop thread. Private: a leaf that needs one
-    // of these goes through an accessor, so this class can hold an invariant over them.
     private int health;
     private boolean inactive;
     private boolean validTarget;
@@ -115,29 +111,15 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     private double prevY;
     private int delay;
     private int deathTick = -1;
-    // Set synchronously in doDamage() (which has no gameTime to record against) and captured
-    // as criticalHitTick on this mob's own next doTick - the same deferred-capture shape
-    // deathTick already uses, and for the same reason: a hit can land during another phase of
-    // the same game tick (see td/enemy/CLAUDE.md's death-timing invariant), so "a critical hit
-    // landed" and "this tick is the one to report it on" are not necessarily the same tick.
+    // Captured on the next doTick: doDamage() has no gameTime, and a hit can land in another
+    // phase of the same tick.
     private boolean criticalHitPending;
     private int criticalHitTick = -1;
-    // Same deferred-capture shape as criticalHitPending/criticalHitTick, and for the same
-    // reason - doDamage() has no gameTime to record against, and a hit can land during another
-    // phase of the same game tick (see td/enemy/CLAUDE.md's death-timing invariant) - but for
-    // *any* landed damage rather than only a critical one, which is what an ability like the
-    // Ghost's vanish-on-first-hit needs.
+    // Same deferred capture as criticalHitPending, for any landed damage.
     private boolean damageTakenPending;
     private int damageTakenTick = -1;
-    // Set directly by DefinedEnemyMob.MobAbilityContext.applyEffect, which already has gameTime
-    // in hand when a cast resolves - unlike the three fields above, this needs no deferred
-    // capture, since applying an effect is not something that can land during another phase of
-    // the tick the way a hit can. Null until the first cast; never exposed as null - see
-    // lastAbilityCast().
+    // Null until the first cast; never exposed as null.
     private AbilityCast lastAbilityCast;
-    // Same shape as deathTick/criticalHitTick: set directly (an ability-driven spawn's
-    // constructor runs synchronously, so there is no cross-phase timing gap to defer across),
-    // read back as ticksSinceAbilitySpawn(gameTime).
     private int abilitySpawnTick = -1;
     private double distanceIntoLap = 0;
     private double lastFacingRadians = 0;
@@ -169,9 +151,6 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         this.arcLengthPath = ArcLengthPath.of(path);
         List<Vec2> pathPoints = path.points();
         this.stationaryPosition = pathPoints.isEmpty() ? new Vec2(0, 0) : pathPoints.getFirst();
-        // Every mob's distanceIntoLap starts at 0 regardless of delay or shape, so poseAt(0) is
-        // always the true spawn point - this is the one and only place the offset's rotation is
-        // computed, ever.
         double spawnFacing = this.arcLengthPath.map(arcPath -> arcPath.poseAt(0).facingRadians()).orElse(0.0);
         double cos = Math.cos(spawnFacing);
         double sin = Math.sin(spawnFacing);
@@ -179,15 +158,11 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         this.offsetX = localOffset.x() * cos - localOffset.y() * sin;
         this.offsetY = localOffset.x() * sin + localOffset.y() * cos;
         this.delay = spawnParameters.delayTicks();
-        // Keyed off the converted tick count, not the raw slot position that produced it: a
-        // fractional per-member delay (see SpawnShape's column/drip spacing) can round down to
-        // zero ticks from a nonzero position, and doTick's inactive branch only ever counts
-        // down from delay > 0 - basing this on the raw position instead could leave such a mob
-        // inactive forever.
+        // From the rounded tick count, not the slot position: a fractional delay can round to zero
+        // ticks, and an inactive mob with no delay to count down would never activate.
         this.inactive = this.delay > 0;
         this.validTarget = !this.inactive;
         this.updatePosition();
-        // No prior tick to interpolate from at spawn - start with prev == current.
         this.prevX = this.x;
         this.prevY = this.y;
     }
@@ -562,28 +537,15 @@ public abstract class AbstractEnemyMob implements EnemyMob {
                 this.deathTick = gameTime;
             }
         } else {
-            // Read this tick's speed multiplier before ticking durations down, so an effect
-            // entering the last tick of its duration still suppresses this tick's movement -
-            // ActiveEffects.tick() removes it before returning, and querying afterward would
-            // silently shorten its effect on movement by one tick relative to its effect on
-            // damage-over-time (which it applies before removing itself either way).
+            // Read before tick(): an effect in its last tick must still slow this tick's movement.
             float speedMultiplier = this.activeEffects.speedMultiplier();
-            // Same reasoning as speedMultiplier above, for the same reason: an effect entering
-            // the last tick of its duration must still act this tick. Applied directly to
-            // health rather than through activeEffects.tick()'s sink mechanism - see
-            // Effect.heal's own doc comment for why a heal isn't a negative damagePerTick.
-            // this.dead is always false here (this branch only runs for a live mob), so this can
-            // never resurrect a mob already fading.
+            // Applied here, not through tick()'s sink: a heal is not a negative damagePerTick.
             this.health = Math.min(this.healthMax, this.health + this.activeEffects.healPerTick());
             this.activeEffects.tick();
-            // After tick() (so an expiry is seen the tick it happens) and before the dead-return
-            // just below (so a damage-over-time-lethal tick still records the loss) - see
-            // td/effect/CLAUDE.md.
+            // After tick() so an expiry is seen the tick it happens; before the dead-return so a lethal
+            // damage-over-time tick still records the loss.
             this.effectTransitions.observe(this.activeEffects.activeKinds(), gameTime);
             if (this.dead) {
-                // A damage-over-time tick just killed this mob - doDamage() already set
-                // dead=true synchronously (its sink calls straight back into doDamage()).
-                // Movement must not run this tick: there is nothing left to move.
                 return;
             }
             this.prevX = this.x;

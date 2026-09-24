@@ -21,9 +21,7 @@ class EnemyRosterTest {
 
         roster.setEnemies(enemies);
 
-        // content, not reference identity: getEnemies() snapshots a CopyOnWriteArrayList
-        // fresh each call (see EnemyRoster's own doc comment on why), unlike the old bare
-        // array it used to hand back directly.
+        // content, not identity: getEnemies() returns a fresh copy
         assertThat(roster.getEnemies()).containsExactly(enemies);
     }
 

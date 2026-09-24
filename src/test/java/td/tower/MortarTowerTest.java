@@ -110,8 +110,6 @@ class MortarTowerTest {
         UpgradeNode siegeRoundsTwo = UpgradePaths.named(tower, "Siege Rounds II");
         float radiusBeforeChoosing = tower.getSplashRadius();
 
-        // onUpgradeBought is exercised directly - Siege Rounds II's own gate (a damage-dealt
-        // threshold) is covered generically by DamageDealtConditionTest; this proves the bump itself.
         tower.onUpgradeBought(siegeRoundsTwo);
 
         assertThat(tower.getSplashRadius()).isGreaterThan(radiusBeforeChoosing);

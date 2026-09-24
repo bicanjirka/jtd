@@ -36,7 +36,7 @@ class FakeGameHost implements GameHost {
 
     @Override
     public void setInfoText(String s) {
-        // pure UI in TowerDefence's real implementation; nothing to replicate here
+        // pure UI
     }
 
     @Override

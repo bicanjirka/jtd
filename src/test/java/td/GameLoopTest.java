@@ -52,8 +52,6 @@ class GameLoopTest {
 
     @Test
     void rendersEvenWhilePaused() throws InterruptedException {
-        // Rendering runs on its own real-time cadence so the board (tower placement
-        // highlights, hover effects, ...) keeps redrawing while the simulation is paused.
         CountDownLatch sawARender = new CountDownLatch(1);
         GameLoop loop = new GameLoop(() -> {
         }, sawARender::countDown);
@@ -128,9 +126,6 @@ class GameLoopTest {
 
     @Test
     void animationSecondsDoesNotRaceAheadAtSuperFastSpeed() throws InterruptedException {
-        // Wall-clock animation is deliberately decoupled from tick speed - see
-        // GameLoop.animationTimeScale(). At 250ms real time, animationSeconds should read
-        // close to 0.25s regardless of the tick multiplier, not a multiple of it.
         GameLoop loop = new GameLoop(() -> {
         }, () -> {
         });
@@ -164,8 +159,6 @@ class GameLoopTest {
 
     @Test
     void aStoppedLoopCanBeStartedAgainAndResumesTicking() throws InterruptedException {
-        // same scenario as returning to the menu and starting another level: a fresh start()
-        // on an instance that already ran and stopped once
         AtomicInteger tickCount = new AtomicInteger();
         GameLoop loop = new GameLoop(tickCount::incrementAndGet, () -> {
         });
@@ -189,9 +182,6 @@ class GameLoopTest {
 
     @Test
     void stopWaitsForTheInFlightTickToFinishBeforeReturning() throws InterruptedException {
-        // The whole point of the join: a caller stops the loop in order to tear the current
-        // level down, and must not start clearing rosters and swapping the cell grid while a
-        // tick is still walking them.
         AtomicBoolean insideATick = new AtomicBoolean();
         CountDownLatch tickBegan = new CountDownLatch(1);
         GameLoop loop = new GameLoop(() -> {
@@ -218,9 +208,6 @@ class GameLoopTest {
 
     @Test
     void stopWaitsOutATickLongerThanTheHalfSecondBoundItUsedToGiveUpAfter() throws InterruptedException {
-        // The join was once capped at 500ms, after which stop() logged a warning and returned
-        // anyway - handing the caller the exact race the join exists to prevent. A tick that
-        // outlasts that old bound must still be waited out in full.
         AtomicBoolean insideATick = new AtomicBoolean();
         CountDownLatch tickBegan = new CountDownLatch(1);
         GameLoop loop = new GameLoop(() -> {

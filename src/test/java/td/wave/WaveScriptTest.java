@@ -59,7 +59,7 @@ class WaveScriptTest {
     void enemySetAndPerEnemyCountReflectTheParsedTokens() {
         WaveContent content = WaveScript.parse("c e c", Rank.GRUNT, this.catalog);
 
-        // the spacer never appears in enemySet(), unlike the old EnemyFactory.Enemy-keyed model
+        // the spacer never appears in enemySet()
         assertThat(content.enemySet()).containsExactly(this.simple);
         assertThat(content.enemyCount(this.simple)).isEqualTo(2);
         assertThat(content.enemyCount(this.ghost)).isZero();
@@ -204,7 +204,6 @@ class WaveScriptTest {
 
     @Test
     void aRankTokenAskingForARankTheEnemyDoesNotDefineFallsBackSilentlyToItsHighestRank() {
-        // wardenEgg1 only ever defines Rank.GRUNT.
         WaveContent content = WaveScript.parse("boss wardenEgg1", Rank.GRUNT, this.catalog);
 
         EnemyDefinition wardenEgg = this.catalog.get("wardenEgg1");
