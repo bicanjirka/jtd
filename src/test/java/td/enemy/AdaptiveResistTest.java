@@ -3,16 +3,18 @@ package td.enemy;
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageMix;
+import td.damage.DamageType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AdaptiveResistTest {
 
     private static final TraitContext FULL_HEALTH = new TraitContext(1f);
+    private static final AdaptiveResist PLATING = AdaptiveResist.against(DamageType.PHYSICAL, 0.8f, 0.2f);
 
     @Test
-    void anEvenOrEmptyMixResolvesToNoResistAtAll() {
-        AdaptiveResist adaptive = new AdaptiveResist(0.8f);
+    void againstDominantResolvesToNoResistAtAnEvenOrEmptyMix() {
+        AdaptiveResist adaptive = AdaptiveResist.againstDominant(0.8f);
         DamageMix even = DamageMix.of(Damage.physical(10)).plus(DamageMix.of(Damage.magic(10)));
 
         assertThat(adaptive.resolvedFor(DamageMix.none())).isEmpty();
@@ -20,8 +22,8 @@ class AdaptiveResistTest {
     }
 
     @Test
-    void aOneSidedMixResolvesToTheFullResistAgainstThatTypeOnly() {
-        Trait resist = new AdaptiveResist(0.8f).resolvedFor(DamageMix.of(Damage.magic(10))).orElseThrow();
+    void againstDominantResolvesToTheFullResistAgainstAOneSidedMixsTypeOnly() {
+        Trait resist = AdaptiveResist.againstDominant(0.8f).resolvedFor(DamageMix.of(Damage.magic(10))).orElseThrow();
 
         assertThat(resist.onHit(Damage.magic(100), FULL_HEALTH)).isEqualTo(Damage.magic(80));
         assertThat(resist.onHit(Damage.physical(100), FULL_HEALTH)).isEqualTo(Damage.physical(100));
@@ -29,12 +31,35 @@ class AdaptiveResistTest {
     }
 
     @Test
-    void aPartlyOneSidedMixResolvesToAProportionallyWeakerResist() {
+    void againstDominantResolvesToAProportionallyWeakerResistAtAPartlyOneSidedMix() {
         DamageMix threeToOne = DamageMix.of(Damage.physical(75)).plus(DamageMix.of(Damage.magic(25)));
 
-        Trait resist = new AdaptiveResist(0.8f).resolvedFor(threeToOne).orElseThrow();
+        Trait resist = AdaptiveResist.againstDominant(0.8f).resolvedFor(threeToOne).orElseThrow();
 
         assertThat(resist.onHit(Damage.physical(100), FULL_HEALTH)).isEqualTo(Damage.physical(90));
         assertThat(resist.marker()).isEqualTo(TraitMarker.PHYSICAL_RESIST);
+    }
+
+    @Test
+    void aFixedTypeResistKeepsItsEvenStrengthWithNoDamageAnEvenSplitOrAMagicHeavyMix() {
+        DamageMix even = DamageMix.of(Damage.physical(10)).plus(DamageMix.of(Damage.magic(10)));
+        DamageMix allMagic = DamageMix.of(Damage.magic(10));
+
+        for (DamageMix mix : new DamageMix[] {DamageMix.none(), even, allMagic}) {
+            Trait resist = PLATING.resolvedFor(mix).orElseThrow();
+            assertThat(resist.onHit(Damage.physical(100), FULL_HEALTH)).isEqualTo(Damage.physical(80));
+        }
+    }
+
+    @Test
+    void aFixedTypeResistHardensLinearlyToItsFullStrengthAsTheMixLeansTowardItsType() {
+        DamageMix threeToOne = DamageMix.of(Damage.physical(75)).plus(DamageMix.of(Damage.magic(25)));
+
+        Trait halfway = PLATING.resolvedFor(threeToOne).orElseThrow();
+        Trait full = PLATING.resolvedFor(DamageMix.of(Damage.physical(10))).orElseThrow();
+
+        assertThat(halfway.onHit(Damage.physical(100), FULL_HEALTH)).isEqualTo(Damage.physical(50));
+        assertThat(full.onHit(Damage.physical(100), FULL_HEALTH)).isEqualTo(Damage.physical(20));
+        assertThat(full.onHit(Damage.magic(100), FULL_HEALTH)).isEqualTo(Damage.magic(100));
     }
 }

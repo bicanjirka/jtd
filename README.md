@@ -130,7 +130,7 @@ the shapes that take one (`swarm 4 c`):
 | Shape   | Keyword  | What one slot produces                                                |
 |---------|----------|-------------------------------------------------------------------------|
 | Normal  | (none)   | One enemy on the path centre                                            |
-| Armored | `armored`| One enemy with an extra physical flat resist, on top of any armor it already has — no size, speed, health or bounty change |
+| Armored | `armored`| One enemy with extra physical-only armor, on top of any armor it already has: it blocks 20% of physical damage, rising to 80% as the level's landed damage leans fully physical — no size, speed, health or bounty change |
 | Swarm   | `swarm`  | *N* enemies at 50% size, scattered off-path, sharing one spawn's bounty and health |
 | Line    | `line`   | *N* enemies spread evenly across the path's width, abreast              |
 | Flank   | `flank`  | Two enemies hugging opposite edges of the path                          |

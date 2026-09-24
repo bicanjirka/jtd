@@ -1,6 +1,7 @@
 package td.wave;
 
-import td.enemy.FlatResistTrait;
+import td.damage.DamageType;
+import td.enemy.AdaptiveResist;
 import td.enemy.IdentifiedTrait;
 import td.util.GameStartupException;
 
@@ -23,10 +24,11 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
 
     private static final double COLUMN_SPACING_SLOTS = 0.3;
     private static final double DRIP_SPACING_SLOTS = 2.0;
-    private static final int ARMORED_FLAT_RESIST = 30;
+    private static final float ARMORED_EVEN_FRACTION = 0.8f;
+    private static final float ARMORED_FULL_FRACTION = 0.2f;
     // Anonymous, so it always stacks with whatever armor the enemy already has.
-    private static final IdentifiedTrait ARMORED_TRAIT =
-            IdentifiedTrait.anonymous(FlatResistTrait.physicalOnly(ARMORED_FLAT_RESIST));
+    private static final IdentifiedTrait ARMORED_TRAIT = IdentifiedTrait.anonymous(
+            AdaptiveResist.against(DamageType.PHYSICAL, ARMORED_EVEN_FRACTION, ARMORED_FULL_FRACTION));
 
     private static final SpawnShape NORMAL =
             new SpawnShape(1, 1f, 1f, 1f, 1f, Optional.empty(), SpawnSpread.NONE, 0.0);
@@ -45,7 +47,8 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
     }
 
     /**
-     * Adds a flat physical armor trait on top of any armor the enemy already has.
+     * Adds physical-only armor on top of any armor the enemy already has, harder the more of the
+     * level's landed damage was physical.
      */
     public static SpawnShape armored() {
         return ARMORED;

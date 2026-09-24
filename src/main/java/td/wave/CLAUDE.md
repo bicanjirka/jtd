@@ -36,7 +36,7 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 
 - **Rank keywords** `grunt soldier veteran elite boss` go before the enemy or shape they rank and
   override the wave's default rank for that slot.
-- **Shape keywords** go before the enemy: `armored` (1 member, stacks a physical-only flat
+- **Shape keywords** go before the enemy: `armored` (1 member, stacks a physical-only adaptive
   resist on any armor it has), `flank` (2 members at opposite sides), `swarm n` (half size, health/bounty split,
   scattered), `line n` (spread across), `column n` / `drip n` (spaced tighter / looser than one
   slot).
