@@ -8,8 +8,8 @@ import td.enemy.EnemyDefinition;
 import td.enemy.IdentifiedTrait;
 import td.enemy.PercentResistTrait;
 import td.enemy.Trait;
-import td.enemy.TraitContext;
 import td.enemy.TraitTemplate;
+import td.fixtures.EnemyFixtures;
 import td.util.GameStartupException;
 
 import java.util.List;
@@ -60,11 +60,10 @@ class SpawnShapeTest {
         TraitTemplate plating = SpawnShape.armored().traitOverride().orElseThrow().template();
         Trait fresh = plating.resolvedFor(DamageMix.none()).orElseThrow();
         Trait allPhysical = plating.resolvedFor(DamageMix.of(Damage.physical(10))).orElseThrow();
-        TraitContext traitContext = new TraitContext(1f);
 
-        assertThat(fresh.onHit(Damage.physical(100), traitContext)).isEqualTo(Damage.physical(80));
-        assertThat(allPhysical.onHit(Damage.physical(100), traitContext)).isEqualTo(Damage.physical(20));
-        assertThat(allPhysical.onHit(Damage.magic(100), traitContext)).isEqualTo(Damage.magic(100));
+        assertThat(EnemyFixtures.landedThrough(fresh, Damage.physical(100))).isEqualTo(Damage.physical(80));
+        assertThat(EnemyFixtures.landedThrough(allPhysical, Damage.physical(100))).isEqualTo(Damage.physical(20));
+        assertThat(EnemyFixtures.landedThrough(allPhysical, Damage.magic(100))).isEqualTo(Damage.magic(100));
     }
 
     @Test

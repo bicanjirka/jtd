@@ -1,6 +1,6 @@
 # Feature Request: Enemy Stats
 
-**Status: proposed.**
+**Status: planned, not started.** Implementation plan: `docs/plans/enemy-stats.md`.
 
 ## Summary
 

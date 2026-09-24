@@ -2,6 +2,9 @@ package td.effect;
 
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.stat.EnemyStat;
+import td.stat.StatAccumulator;
+import td.stat.StatModifier;
 import td.util.ThreadConfined;
 
 import java.util.ArrayList;
@@ -28,6 +31,10 @@ public final class ActiveEffects {
      * 5% of the fuel when the authored duration ends.
      */
     private static final double BURN_DECAY_EXPONENT = -3.0;
+
+    private static final StatModifier FROZEN = StatModifier.setTo(0f);
+    private static final StatModifier HIDDEN = StatModifier.setTo(1f);
+    private static final DamageType[] DAMAGE_TYPES = DamageType.values();
 
     private final Map<EffectKind, Effect> active = new EnumMap<>(EffectKind.class);
     private Effect slowSuperseded;
@@ -124,45 +131,36 @@ public final class ActiveEffects {
         return this.active.isEmpty() ? EnumSet.noneOf(EffectKind.class) : EnumSet.copyOf(this.active.keySet());
     }
 
+    /** Whether no effect is active, so the stats this object contributes cannot change on a tick. */
+    public boolean isEmpty() {
+        return this.active.isEmpty();
+    }
+
     /**
-     * Product of every active effect's speed multiplier, {@code 1f} with none. {@code SLOW} reads
-     * its point on the recovery curve; {@code FREEZE} stays a hard stop.
+     * Adds every active effect's stat modifiers: a slow multiplies speed at its point on the
+     * recovery curve, a freeze sets it to zero, a shield lowers damage taken for the types it covers,
+     * a heal adds regeneration and invisibility sets stealth. Shields and heals go in as restorative,
+     * so the enemy's spirit scales them.
      */
-    public float speedMultiplier() {
-        float multiplier = 1f;
+    public void contributeTo(StatAccumulator accumulator) {
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
             Effect effect = entry.getValue();
-            multiplier *= entry.getKey() == EffectKind.SLOW ? slowCurrentMultiplier(effect) : effect.speedMultiplier();
+            switch (entry.getKey()) {
+                case SLOW -> accumulator.multiply(EnemyStat.MOVE_SPEED, slowCurrentMultiplier(effect));
+                case FREEZE -> accumulator.add(EnemyStat.MOVE_SPEED, FROZEN);
+                case SHIELD -> {
+                    for (DamageType type : DAMAGE_TYPES) {
+                        if (effect.shieldRestrictedTo().isEmpty() || effect.shieldRestrictedTo().get() == type) {
+                            accumulator.restoreReduction(EnemyStat.damageTakenFor(type), effect.shieldPercent());
+                        }
+                    }
+                }
+                case HEAL -> accumulator.restoreFlat(EnemyStat.REGENERATION, effect.healPerTick());
+                case INVISIBLE -> accumulator.add(EnemyStat.STEALTH, HIDDEN);
+                case BURN -> {
+                }
+            }
         }
-        return multiplier;
-    }
-
-    public boolean isInvisible() {
-        return this.active.containsKey(EffectKind.INVISIBLE);
-    }
-
-    /**
-     * Reduces {@code incoming} by the active shield's percentage, unless the shield is restricted
-     * to the other damage type. Composes with a trait's permanent resistance.
-     */
-    public Damage applyShield(Damage incoming) {
-        Effect shield = this.active.get(EffectKind.SHIELD);
-        if (shield == null) {
-            return incoming;
-        }
-        if (shield.shieldRestrictedTo().isPresent() && shield.shieldRestrictedTo().get() != incoming.type()) {
-            return incoming;
-        }
-        return incoming.scaledBy(1f - shield.shieldPercent());
-    }
-
-    /**
-     * Health the active heal restores this tick, {@code 0} with none. A query: the mob applies it
-     * to its own health.
-     */
-    public int healPerTick() {
-        Effect heal = this.active.get(EffectKind.HEAL);
-        return heal == null ? 0 : heal.healPerTick();
     }
 
     /**

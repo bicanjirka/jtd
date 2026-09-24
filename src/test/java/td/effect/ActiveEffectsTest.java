@@ -3,6 +3,9 @@ package td.effect;
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.stat.BaseStats;
+import td.stat.EnemyStat;
+import td.stat.StatSheet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +15,10 @@ import static org.assertj.core.api.Assertions.within;
 
 class ActiveEffectsTest {
 
+    private static float resolved(ActiveEffects effects, EnemyStat stat) {
+        return new StatSheet(BaseStats.defaults().with(EnemyStat.MOVE_SPEED, 1f), effects::contributeTo).value(stat);
+    }
+
     private static DamageSink recordingSink(List<Damage> received) {
         return received::add;
     }
@@ -20,7 +27,7 @@ class ActiveEffectsTest {
     void withNoActiveEffectsSpeedMultiplierIsUnchanged() {
         ActiveEffects effects = new ActiveEffects();
 
-        assertThat(effects.speedMultiplier()).isEqualTo(1f);
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isEqualTo(1f);
     }
 
     @Test
@@ -30,19 +37,19 @@ class ActiveEffectsTest {
         effects.apply(Effect.slow(0.4f, 100, d -> {
         }));
 
-        assertThat(effects.speedMultiplier()).isCloseTo(0.400f, within(0.001f)); // x = 0.00
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.400f, within(0.001f)); // x = 0.00
 
         tickTimes(effects, 25);
-        assertThat(effects.speedMultiplier()).isCloseTo(0.4375f, within(0.001f)); // x = 0.25
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.4375f, within(0.001f)); // x = 0.25
 
         tickTimes(effects, 25);
-        assertThat(effects.speedMultiplier()).isCloseTo(0.550f, within(0.001f)); // x = 0.50
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.550f, within(0.001f)); // x = 0.50
 
         tickTimes(effects, 25);
-        assertThat(effects.speedMultiplier()).isCloseTo(0.7375f, within(0.001f)); // x = 0.75
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.7375f, within(0.001f)); // x = 0.75
 
         tickTimes(effects, 25);
-        assertThat(effects.speedMultiplier()).isEqualTo(1f); // x = 1.00, fully recovered and expired
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isEqualTo(1f); // x = 1.00, fully recovered and expired
     }
 
     private static void tickTimes(ActiveEffects effects, int times) {
@@ -58,7 +65,7 @@ class ActiveEffectsTest {
         effects.apply(Effect.freeze(3, d -> {
         }));
 
-        assertThat(effects.speedMultiplier()).isZero();
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isZero();
     }
 
     @Test
@@ -70,7 +77,7 @@ class ActiveEffectsTest {
         effects.apply(Effect.freeze(3, d -> {
         }));
 
-        assertThat(effects.speedMultiplier()).isZero();
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isZero();
     }
 
     @Test
@@ -81,10 +88,10 @@ class ActiveEffectsTest {
 
         // x = 0.5, factor = 0.25, multiplier = (1 - 0.5) + 0.5 * 0.25 = 0.625
         effects.tick();
-        assertThat(effects.speedMultiplier()).isCloseTo(0.625f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.625f, within(0.001f));
 
         effects.tick();
-        assertThat(effects.speedMultiplier()).isEqualTo(1f);
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isEqualTo(1f);
     }
 
     @Test
@@ -176,7 +183,7 @@ class ActiveEffectsTest {
         })); // weaker, but longer - bumped into the superseded slot, not discarded
 
         // x = 0 for the newly-applied winner, so its multiplier is exactly its authored minimum
-        assertThat(effects.speedMultiplier()).isCloseTo(0.2f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.2f, within(0.001f));
     }
 
     @Test
@@ -194,7 +201,7 @@ class ActiveEffectsTest {
 
         // elapsed = 20, x = 20/200 = 0.1, multiplier = 0.8 + 0.2 * 0.01 = 0.802 - resumed, not
         // restarted
-        assertThat(effects.speedMultiplier()).isCloseTo(0.802f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.802f, within(0.001f));
     }
 
     @Test
@@ -208,24 +215,24 @@ class ActiveEffectsTest {
         effects.tick();
 
         // x = 0.2, factor = 0.04, multiplier = (1 - 0.5) + 0.5 * 0.04 = 0.52 - partway recovered
-        assertThat(effects.speedMultiplier()).isCloseTo(0.52f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.52f, within(0.001f));
         assertThat(received).containsExactly(Damage.magic(10));
     }
 
     @Test
-    void withNoActiveShieldIncomingDamageIsUnreduced() {
+    void withNoActiveShieldDamageTakenIsUnchanged() {
         ActiveEffects effects = new ActiveEffects();
 
-        assertThat(effects.applyShield(Damage.physical(100))).isEqualTo(Damage.physical(100));
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.0f, within(0.001f));
     }
 
     @Test
-    void aShieldReducesIncomingDamageByItsPercent() {
+    void aShieldLowersDamageTakenByItsPercent() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.shield(0.4f, 5, d -> {
         }));
 
-        assertThat(effects.applyShield(Damage.physical(100))).isEqualTo(Damage.physical(60));
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(0.6f, within(0.001f));
     }
 
     @Test
@@ -236,27 +243,27 @@ class ActiveEffectsTest {
 
         effects.tick();
 
-        assertThat(effects.applyShield(Damage.physical(100))).isEqualTo(Damage.physical(100));
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.0f, within(0.001f));
     }
 
     @Test
-    void withNoActiveInvisibilityEffectIsInvisibleIsFalse() {
+    void withNoActiveInvisibilityEffectStealthIsZero() {
         ActiveEffects effects = new ActiveEffects();
 
-        assertThat(effects.isInvisible()).isFalse();
+        assertThat(resolved(effects, EnemyStat.STEALTH)).isZero();
     }
 
     @Test
-    void anInvisibilityEffectMakesIsInvisibleTrueForItsDuration() {
+    void anInvisibilityEffectSetsFullStealthForItsDuration() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.invisible(1, d -> {
         }));
 
-        assertThat(effects.isInvisible()).isTrue();
+        assertThat(resolved(effects, EnemyStat.STEALTH)).isEqualTo(1f);
 
         effects.tick();
 
-        assertThat(effects.isInvisible()).isFalse();
+        assertThat(resolved(effects, EnemyStat.STEALTH)).isZero();
     }
 
     @Test
@@ -268,7 +275,7 @@ class ActiveEffectsTest {
         effects.apply(Effect.shield(0.2f, 10, d -> {
         }));
 
-        assertThat(effects.applyShield(Damage.physical(100))).isEqualTo(Damage.physical(40));
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(0.4f, within(0.001f));
     }
 
     @Test
@@ -277,8 +284,8 @@ class ActiveEffectsTest {
         effects.apply(Effect.shield(0.4f, 5, d -> {
         }).withShieldRestrictedTo(DamageType.PHYSICAL));
 
-        assertThat(effects.applyShield(Damage.physical(100))).isEqualTo(Damage.physical(60));
-        assertThat(effects.applyShield(Damage.magic(100))).isEqualTo(Damage.magic(100));
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(0.6f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.0f, within(0.001f));
     }
 
     @Test
@@ -287,15 +294,15 @@ class ActiveEffectsTest {
         effects.apply(Effect.shield(0.4f, 5, d -> {
         }));
 
-        assertThat(effects.applyShield(Damage.physical(100))).isEqualTo(Damage.physical(60));
-        assertThat(effects.applyShield(Damage.magic(100))).isEqualTo(Damage.magic(60));
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(0.6f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(0.6f, within(0.001f));
     }
 
     @Test
-    void withNoActiveHealHealPerTickIsZero() {
+    void withNoActiveHealRegenerationIsZero() {
         ActiveEffects effects = new ActiveEffects();
 
-        assertThat(effects.healPerTick()).isZero();
+        assertThat(resolved(effects, EnemyStat.REGENERATION)).isZero();
     }
 
     @Test
@@ -304,13 +311,13 @@ class ActiveEffectsTest {
         effects.apply(Effect.heal(50, 2, d -> {
         }));
 
-        assertThat(effects.healPerTick()).isEqualTo(50);
+        assertThat(resolved(effects, EnemyStat.REGENERATION)).isEqualTo(50f);
 
         effects.tick();
-        assertThat(effects.healPerTick()).isEqualTo(50);
+        assertThat(resolved(effects, EnemyStat.REGENERATION)).isEqualTo(50f);
 
         effects.tick();
-        assertThat(effects.healPerTick()).isZero();
+        assertThat(resolved(effects, EnemyStat.REGENERATION)).isZero();
     }
 
     @Test
@@ -322,6 +329,6 @@ class ActiveEffectsTest {
         effects.apply(Effect.heal(20, 10, d -> {
         }));
 
-        assertThat(effects.healPerTick()).isEqualTo(80);
+        assertThat(resolved(effects, EnemyStat.REGENERATION)).isEqualTo(80f);
     }
 }

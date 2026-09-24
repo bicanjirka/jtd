@@ -1,13 +1,16 @@
 package td.enemy;
 
-import td.damage.Damage;
 import td.damage.DamageType;
+import td.stat.EnemyStat;
+import td.stat.StatModifier;
+import td.stat.StatModifiers;
 
 import java.util.Optional;
 
 /**
- * Absorbs a fixed fraction of every hit; damage's zero clamp keeps it from healing.
- * {@code restrictedTo}, when present, limits it to one damage type.
+ * Armor or magic resist authored as the fraction of a hit that is kept: {@code 0.5} is the armor
+ * that halves a hit. {@code restrictedTo}, when present, limits it to one damage type; otherwise it
+ * gives both.
  */
 public record PercentResistTrait(float fraction, Optional<DamageType> restrictedTo) implements Trait {
 
@@ -23,12 +26,20 @@ public record PercentResistTrait(float fraction, Optional<DamageType> restricted
         return new PercentResistTrait(fraction, Optional.of(DamageType.MAGIC));
     }
 
-    @Override
-    public Damage onHit(Damage incoming, TraitContext context) {
-        if (this.restrictedTo.isPresent() && this.restrictedTo.get() != incoming.type()) {
-            return incoming;
+    /** The armor whose {@code 100 / (100 + armor)} multiplier keeps {@code fraction} of a hit. */
+    public static float armorKeeping(float fraction) {
+        if (fraction <= 0f) {
+            return Float.MAX_VALUE;
         }
-        return incoming.scaledBy(this.fraction);
+        return 100f * (1f - fraction) / fraction;
+    }
+
+    @Override
+    public StatModifiers modifiers(TraitContext context) {
+        StatModifier armor = StatModifier.flat(armorKeeping(this.fraction));
+        return this.restrictedTo
+                .map(type -> StatModifiers.of(EnemyStat.mitigationFor(type), armor))
+                .orElseGet(() -> StatModifiers.of(EnemyStat.ARMOR, armor).and(EnemyStat.MAGIC_RESIST, armor));
     }
 
     @Override

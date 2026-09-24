@@ -1,6 +1,8 @@
 package td.enemy;
 
 import td.damage.DamageMix;
+import td.stat.BaseStats;
+import td.stat.EnemyStat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +25,7 @@ import java.util.function.Function;
  * @param traitSlots    always-on traits, resolved per mob at spawn, identified so
  * {@link #withAdditionalTraits} can replace one by id
  * @param abilitySlots  triggered abilities, identified the same way
+ * @param baseStats     authored stat bases; speed comes from {@code baseSpeed}, not from here
  */
 public record EnemyDefinition(
         String id,
@@ -36,7 +39,8 @@ public record EnemyDefinition(
         BodyArchetype archetype,
         MovementBehavior movement,
         List<IdentifiedTrait> traitSlots,
-        List<IdentifiedAbility> abilitySlots) {
+        List<IdentifiedAbility> abilitySlots,
+        BaseStats baseStats) {
 
     public EnemyDefinition {
         traitSlots = List.copyOf(traitSlots);
@@ -50,7 +54,7 @@ public record EnemyDefinition(
     public static EnemyDefinition of(String id, String displayName, int baseHealth, int price, float baseSpeed,
             BodyArchetype archetype) {
         return new EnemyDefinition(id, displayName, "", baseHealth, price, baseSpeed, 1f,
-                EnemyMob.Type.NORMAL, archetype, new FixedMovement(), List.of(), List.of());
+                EnemyMob.Type.NORMAL, archetype, new FixedMovement(), List.of(), List.of(), BaseStats.defaults());
     }
 
     /** The traits one mob spawned against {@code mix} carries, each slot resolved once. */
@@ -88,35 +92,42 @@ public record EnemyDefinition(
         };
     }
 
+    /** Authors the base of {@code stat} before any trait or effect modifies it. */
+    public EnemyDefinition withStat(EnemyStat stat, float base) {
+        return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
+                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
+                this.abilitySlots, this.baseStats.with(stat, base));
+    }
+
     /** A rank step's usual change: new health and bounty, everything else kept. */
     public EnemyDefinition withHealthAndPrice(int baseHealth, int price) {
         return new EnemyDefinition(this.id, this.displayName, this.description, baseHealth, price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots);
+                this.abilitySlots, this.baseStats);
     }
 
     public EnemyDefinition withDescription(String description) {
         return new EnemyDefinition(this.id, this.displayName, description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots);
+                this.abilitySlots, this.baseStats);
     }
 
     public EnemyDefinition withHealthDivisor(float healthDivisor) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots);
+                this.abilitySlots, this.baseStats);
     }
 
     public EnemyDefinition withMobType(EnemyMob.Type mobType) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, mobType, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots);
+                this.abilitySlots, this.baseStats);
     }
 
     public EnemyDefinition withMovement(MovementBehavior movement) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, movement, this.traitSlots,
-                this.abilitySlots);
+                this.abilitySlots, this.baseStats);
     }
 
     /**
@@ -130,7 +141,7 @@ public record EnemyDefinition(
     public EnemyDefinition withIdentifiedTraits(List<IdentifiedTrait> traitSlots) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, traitSlots,
-                this.abilitySlots);
+                this.abilitySlots, this.baseStats);
     }
 
     /**
@@ -148,7 +159,7 @@ public record EnemyDefinition(
     public EnemyDefinition withIdentifiedAbilities(List<IdentifiedAbility> abilitySlots) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
-                abilitySlots);
+                abilitySlots, this.baseStats);
     }
 
     /** Adds abilities by id, like {@link #withAdditionalTraits}. */

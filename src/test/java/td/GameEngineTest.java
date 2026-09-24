@@ -3,9 +3,12 @@ package td;
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageMix;
+import td.effect.Effect;
 import td.enemy.BodyArchetype;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
+import td.enemy.HurtSpeedTrait;
+import td.enemy.PercentResistTrait;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.LevelFixtures;
@@ -26,6 +29,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.within;
 
 class GameEngineTest {
 
@@ -40,6 +44,54 @@ class GameEngineTest {
             engine.doTick(t);
         }
         return t;
+    }
+
+    private static EnemyMob spawnOnly(GameEngine engine, EnemyDefinition definition) {
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition(definition.id(), Rank.GRUNT)), 100)
+                .withCustomEnemies(List.of(definition)));
+        engine.nextWave();
+        return engine.getGameWorld().enemies().getEnemies()[0];
+    }
+
+    @Test
+    void aHalfPhysicalResistEnemyTakesHalfOfAPhysicalHitAndAllOfAMagicOne() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyMob enemy = spawnOnly(engine, EnemyDefinition.of("resist", "Resist", 100, 1, 1f, BodyArchetype.SQUARE)
+                .withTraits(List.of(PercentResistTrait.physicalOnly(0.5f))));
+
+        Damage physical = enemy.doDamage(Damage.physical(1000));
+        Damage magic = enemy.doDamage(Damage.magic(1000));
+
+        assertThat(physical).isEqualTo(Damage.physical(500));
+        assertThat(magic).isEqualTo(Damage.magic(1000));
+    }
+
+    @Test
+    void aShieldMultipliesWithArmorRatherThanAddingToIt() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyMob enemy = spawnOnly(engine, EnemyDefinition.of("resist", "Resist", 100, 1, 1f, BodyArchetype.SQUARE)
+                .withTraits(List.of(PercentResistTrait.physicalOnly(0.5f))));
+        enemy.applyEffect(Effect.shield(0.5f, 100, d -> {
+        }));
+
+        Damage landed = enemy.doDamage(Damage.physical(1000));
+
+        assertThat(landed).isEqualTo(Damage.physical(250));
+    }
+
+    @Test
+    void aShieldedHurtSpeedEnemyStillSpeedsUpWhenHit() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyMob enemy = spawnOnly(engine, EnemyDefinition.of("hurry", "Hurry", 100, 1, 1f, BodyArchetype.TRIANGLE)
+                .withTraits(List.of(new HurtSpeedTrait(2f))));
+        enemy.applyEffect(Effect.shield(0.5f, 100, d -> {
+        }));
+        float before = enemy.getSpeed();
+
+        enemy.doDamage(Damage.physical(10000));
+
+        // Half of the 100-point pool is gone, so the multiplier is 1 + (2 - 1) * 0.5.
+        assertThat(enemy.getSpeed()).isCloseTo(before * 1.5f, within(0.001f));
     }
 
     @Test

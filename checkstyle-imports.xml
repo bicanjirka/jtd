@@ -4,7 +4,7 @@
         "https://checkstyle.org/dtds/import_control_1_4.dtd">
 
 <import-control pkg="td" strategyOnMismatch="allowed">
-    <subpackage name="board|cell|damage|economy|effect|enemy|level|projectile|tower|util|wave" regex="true">
+    <subpackage name="board|cell|damage|economy|effect|enemy|level|projectile|stat|tower|util|wave" regex="true">
         <disallow pkg="javax.swing"/>
         <disallow pkg="java.awt"/>
     </subpackage>

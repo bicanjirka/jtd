@@ -54,7 +54,6 @@ final class BuiltInEnemies {
             .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(640, 50)
                     .withDescription("Takes far less damage, and its plating has grown thick enough to blunt a flat "
                             + "chunk of every hit outright. Immune to critical hits.")
-                    // Percentage before flat: traits fold in list order.
                     .withAdditionalTraits(List.of(
                             IdentifiedTrait.named("flatResist", FlatResistTrait.physicalOnly(800)),
                             IdentifiedTrait.named("resist", new PercentResistTrait(0.6f)))))

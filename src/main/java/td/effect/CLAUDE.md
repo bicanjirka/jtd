@@ -13,8 +13,10 @@
   own sink. Tick damage is apportioned across contributors (largest remainder), so every tower
   gets credit for its share. A top-up adds `L0 * (1 - fuel / lmax)`. The burn ends when a tick
   would round to zero.
-- `HEAL` is a query (`healPerTick()`) the mob applies to itself, not a sink: `Damage` can't be
-  negative. The mob caps it at max health and never heals a dead mob.
+- Effects change a mob only through `contributeTo(StatAccumulator)`: slow and freeze on
+  `MOVE_SPEED`, shield on damage taken, heal on `REGENERATION`, invisible on `STEALTH`. Shield and
+  heal go in as restorative, so spirit scales them. The mob applies regeneration to itself, capped
+  at max health; `Damage` can't be negative.
 - `EffectTemplate` (sealed) is the authored form an ability carries. `SLOW`/`BURN`/`FREEZE`
   have no template because only towers apply them.
 - `ShieldTemplate` can be restricted to one `DamageType` (`physicalOnly`/`magicOnly`).
@@ -23,8 +25,8 @@
 
 ## Per-tick order (in `DefinedEnemyMob.doTick`)
 
-1. Read `speedMultiplier()` and `healPerTick()` **before** `ActiveEffects.tick()`, since `tick()`
-   removes an effect that is on its last tick.
+1. Read resolved speed and regeneration **before** `ActiveEffects.tick()`, since `tick()`
+   removes an effect that is on its last tick; invalidate the stat sheet after it.
 2. `tick()`.
 3. `EffectTransitions.observe` **after** `tick()` but **before** the dead-return, so an expiry is
    seen on time and a lethal DoT tick still records its losses.
@@ -32,7 +34,8 @@
 ## Adding a kind
 
 1. `EffectKind` constant.
-2. A named `Effect` factory, plus its case in `ActiveEffects.magnitude` (the compiler forces it).
+2. A named `Effect` factory, plus its cases in `ActiveEffects.magnitude` and `contributeTo` (the
+   compiler forces them).
 3. An `EffectTemplate` if abilities should author it.
 4. A `Palette.STATUS_MARKER_*` role and its cases in `EnemyFrameBuilder.markerPaletteFor` and
    `Java2DFrameRenderer.colorFor` (the compiler forces these).
