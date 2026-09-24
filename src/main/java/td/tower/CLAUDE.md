@@ -67,7 +67,7 @@
 ## Adding a tower
 
 1. A `final` leaf composing `td.tower.targeting` pieces, passing a `TowerBaseStats` to
-   `super(...)`. A passive tower overrides `isPassive()`.
+   `super(...)` (`withCritChance` for innate crit). A passive tower overrides `isPassive()`.
 2. A `TowerFactory.Type` constant and its `createTower` branch.
 3. A `TowerVisitor` method; the compiler then leads to `TowerSpriteFrameBuilder` and
    `TowerEffectFrameBuilder`.

@@ -18,7 +18,13 @@ keeps the seam honest.
   `Palette` role, never by domain type. There are no image assets; all art is vector.
 - A new enemy-centred visual goes into the existing sealed `EnemyOverlayDraw` hierarchy (rings,
   pulses, trait markers, ice crystal), not a new `RenderFrame` list. Tower transients likewise go
-  into `TowerEffectDraw`.
+  into `TowerEffectDraw`. Invisibility fades the body itself (`EnemyBodyDraw.cloakProgress`).
+- Timed visuals follow one idiom: the entity records the tick something happened
+  (`ticksSinceDeath`, `ticksSinceCriticalHit`, `ticksSinceEffectGained`/`Lost`), and the frame
+  builder turns it into a 0..1 progress. Draw records carry progress, never stored animation
+  state.
+- `Panel*` previews reuse `Java2DFrameRenderer`'s paint methods (`PanelEnemy` →
+  `paintEnemies`) rather than drawing their own copy.
 - Exhaustive switches with no `default` (`bodyPaletteFor`, `colorFor`, the sealed draw
   switches): fix a compile error by adding the case, never a `default`. Switching on these
   sealed draw records is fine; switching on `EnemyMob`/`Tower`/`Cell` is not.

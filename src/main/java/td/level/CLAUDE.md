@@ -2,8 +2,8 @@
 
 - `LevelDefinition.of(name, width, height, paths)` plus `withDescription`/`withStartingCredits`/
   `withStartingLives`/`withCustomEnemies`/`withCustomRankedEnemies`. `unsmoothed(...)` and
-  `singlePath(...)` are the one-path shortcuts. Defaults: 100 credits, 5 lives. Even a single-lane level is a one-entry
-  `paths` list.
+  `singlePath(...)` are the one-path shortcuts. Defaults: 100 credits, 5 lives. Even a
+  single-lane level is a one-entry `paths` list.
 - The compact constructor requires at least one path and an equal wave count on every path. It
   throws a plain illegal-argument error: this is authored code, not loaded content.
 - Per-level enemies are registered into that level's fresh `EnemyCatalog` before its waves are
