@@ -37,9 +37,9 @@ violation. They are not restated here.
 ## Packages (`td.*`)
 
 `board` (scale, cell↔pixel math) · `cell` (squares, buildability) · `damage` · `economy` ·
-`effect` (timed status effects) · `enemy` · `level` · `projectile` · `tower` (+ `targeting`,
-`buff`, `upgrade`) · `ui` (+ `render`) · `util` (`GameWorld`, `GameHost`, `Threads`) · `wave`
-(path geometry, wave scripts). `GameEngine`, `GameLoop`, `TowerDefense` and `Main` sit in `td`.
+`effect` (timed status effects) · `enemy` · `level` · `projectile` · `stat` (enemy stat sheet) ·
+`tower` (+ `targeting`, `buff`, `upgrade`) · `ui` (+ `render`) · `util` (`GameWorld`, `GameHost`,
+`Threads`) · `wave` (path geometry, wave scripts). `GameEngine`, `GameLoop`, `TowerDefense` and `Main` sit in `td`.
 
 ## Boundaries
 
@@ -55,7 +55,7 @@ violation. They are not restated here.
 - **Depend on the narrowest thing.** `GameWorld` hands out collaborators
   (`world.economy().doPay(n)`, `world.towers().all()`); a consumer needing one takes that type,
   one using most of the world takes `GameWorld`. `projectile` never depends on `tower`; `effect`
-  belongs to neither `tower` nor `enemy`.
+  belongs to neither `tower` nor `enemy`; `stat` depends only on `damage`.
 
 ## Threading
 

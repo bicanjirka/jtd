@@ -4,12 +4,11 @@ import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageMix;
 import td.damage.DamageType;
+import td.fixtures.EnemyFixtures;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AdaptiveResistTest {
-
-    private static final TraitContext FULL_HEALTH = new TraitContext(1f);
     private static final AdaptiveResist PLATING = AdaptiveResist.against(DamageType.PHYSICAL, 0.8f, 0.2f);
 
     @Test
@@ -25,8 +24,8 @@ class AdaptiveResistTest {
     void againstDominantResolvesToTheFullResistAgainstAOneSidedMixsTypeOnly() {
         Trait resist = AdaptiveResist.againstDominant(0.8f).resolvedFor(DamageMix.of(Damage.magic(10))).orElseThrow();
 
-        assertThat(resist.onHit(Damage.magic(100), FULL_HEALTH)).isEqualTo(Damage.magic(80));
-        assertThat(resist.onHit(Damage.physical(100), FULL_HEALTH)).isEqualTo(Damage.physical(100));
+        assertThat(EnemyFixtures.landedThrough(resist, Damage.magic(100))).isEqualTo(Damage.magic(80));
+        assertThat(EnemyFixtures.landedThrough(resist, Damage.physical(100))).isEqualTo(Damage.physical(100));
         assertThat(resist.marker()).isEqualTo(TraitMarker.MAGIC_RESIST);
     }
 
@@ -36,7 +35,7 @@ class AdaptiveResistTest {
 
         Trait resist = AdaptiveResist.againstDominant(0.8f).resolvedFor(threeToOne).orElseThrow();
 
-        assertThat(resist.onHit(Damage.physical(100), FULL_HEALTH)).isEqualTo(Damage.physical(90));
+        assertThat(EnemyFixtures.landedThrough(resist, Damage.physical(100))).isEqualTo(Damage.physical(90));
         assertThat(resist.marker()).isEqualTo(TraitMarker.PHYSICAL_RESIST);
     }
 
@@ -47,7 +46,7 @@ class AdaptiveResistTest {
 
         for (DamageMix mix : new DamageMix[] {DamageMix.none(), even, allMagic}) {
             Trait resist = PLATING.resolvedFor(mix).orElseThrow();
-            assertThat(resist.onHit(Damage.physical(100), FULL_HEALTH)).isEqualTo(Damage.physical(80));
+            assertThat(EnemyFixtures.landedThrough(resist, Damage.physical(100))).isEqualTo(Damage.physical(80));
         }
     }
 
@@ -58,8 +57,8 @@ class AdaptiveResistTest {
         Trait halfway = PLATING.resolvedFor(threeToOne).orElseThrow();
         Trait full = PLATING.resolvedFor(DamageMix.of(Damage.physical(10))).orElseThrow();
 
-        assertThat(halfway.onHit(Damage.physical(100), FULL_HEALTH)).isEqualTo(Damage.physical(50));
-        assertThat(full.onHit(Damage.physical(100), FULL_HEALTH)).isEqualTo(Damage.physical(20));
-        assertThat(full.onHit(Damage.magic(100), FULL_HEALTH)).isEqualTo(Damage.magic(100));
+        assertThat(EnemyFixtures.landedThrough(halfway, Damage.physical(100))).isEqualTo(Damage.physical(50));
+        assertThat(EnemyFixtures.landedThrough(full, Damage.physical(100))).isEqualTo(Damage.physical(20));
+        assertThat(EnemyFixtures.landedThrough(full, Damage.magic(100))).isEqualTo(Damage.magic(100));
     }
 }

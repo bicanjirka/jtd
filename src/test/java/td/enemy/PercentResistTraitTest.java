@@ -2,6 +2,7 @@ package td.enemy;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
 
@@ -23,9 +24,8 @@ class PercentResistTraitTest {
     @Test
     void aPhysicalOnlyResistanceReducesPhysicalDamageButLeavesMagicUntouched() {
         PercentResistTrait resist = PercentResistTrait.physicalOnly(0.5f);
-        TraitContext traitContext = new TraitContext(1f);
 
-        assertThat(resist.onHit(Damage.physical(1000), traitContext)).isEqualTo(Damage.physical(500));
-        assertThat(resist.onHit(Damage.magic(1000), traitContext)).isEqualTo(Damage.magic(1000));
+        assertThat(EnemyFixtures.landedThrough(resist, Damage.physical(1000))).isEqualTo(Damage.physical(500));
+        assertThat(EnemyFixtures.landedThrough(resist, Damage.magic(1000))).isEqualTo(Damage.magic(1000));
     }
 }

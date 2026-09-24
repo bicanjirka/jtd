@@ -1,14 +1,19 @@
 package td.enemy;
 
+import td.stat.EnemyStat;
+import td.stat.StatModifier;
+import td.stat.StatModifiers;
+
 /**
  * Speeds up as health drops, from base speed at full health to {@code maxMultiplier} near death.
- * Recomputed from the health fraction on each hit, so it never drifts.
+ * Derived from the health fraction whenever the stats resolve, so it never drifts.
  */
 public record HurtSpeedTrait(float maxMultiplier) implements Trait {
 
     @Override
-    public float speedFactor(TraitContext context) {
-        return 1f + (this.maxMultiplier - 1f) * (1f - context.healthFraction());
+    public StatModifiers modifiers(TraitContext context) {
+        float factor = 1f + (this.maxMultiplier - 1f) * (1f - context.healthFraction());
+        return StatModifiers.of(EnemyStat.MOVE_SPEED, StatModifier.times(factor));
     }
 
     @Override

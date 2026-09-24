@@ -1,11 +1,17 @@
 package td.fixtures;
 
+import td.damage.Damage;
 import td.enemy.Ability;
 import td.enemy.BodyArchetype;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
+import td.enemy.HitResolution;
 import td.enemy.OnDeathTrigger;
 import td.enemy.SpawnEnemiesAction;
+import td.enemy.Trait;
+import td.enemy.TraitContext;
+import td.stat.BaseStats;
+import td.stat.StatSheet;
 import td.util.GameWorld;
 
 import java.util.List;
@@ -24,6 +30,13 @@ public final class EnemyFixtures {
     public static EnemyDefinition definitionThatSpawns(String id, String spawnedId) {
         Ability spawnOnDeath = new Ability(new OnDeathTrigger(), new SpawnEnemiesAction(spawnedId, 1, false));
         return simpleDefinition(id).withAbilities(List.of(spawnOnDeath));
+    }
+
+    /** What {@code damage} lands for against an otherwise plain enemy carrying only {@code trait}. */
+    public static Damage landedThrough(Trait trait, Damage damage) {
+        StatSheet sheet = new StatSheet(BaseStats.defaults(),
+                accumulator -> trait.modifiers(new TraitContext(1f)).applyTo(accumulator));
+        return HitResolution.resolve(damage, sheet, Integer.MAX_VALUE);
     }
 
     /** Replaces a world's live enemies with exactly these mobs. */

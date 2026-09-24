@@ -7,6 +7,10 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.EffectTransitions;
 import td.enemy.MobMoments.Moment;
+import td.stat.EnemyStat;
+import td.stat.StatAccumulator;
+import td.stat.StatSheet;
+import td.stat.StatView;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
@@ -38,22 +42,18 @@ public final class DefinedEnemyMob implements EnemyMob {
     private final int price;
     private final int healthMax;
     private final int pathIndex;
-    // Folded into every speed recomputation; applied once at construction, the first hit
-    // would wipe it.
-    private final float shapeSpeedMultiplier;
     private final float bodyScale;
     private final List<AbilityState> abilityStates;
     private final ActiveEffects activeEffects = new ActiveEffects();
     private final EffectTransitions effectTransitions = new EffectTransitions();
     private final PathMotion motion;
     private final MobMoments moments = new MobMoments();
+    private final StatSheet stats;
 
     private int health;
     private LifeStage stage;
     // Only meaningful while LIVE: off-board mobs walk in from and out to off-screen untargetable.
     private boolean onBoard;
-    /** Intrinsic px/tick; effects multiply it on read, never baked in. */
-    private float speed;
     private int delay;
     // Null until the first cast; never exposed as null.
     private AbilityCast lastAbilityCast;
@@ -73,8 +73,9 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.health = healthPoints * HEALTH_UNITS_PER_POINT;
         this.healthMax = healthPoints * HEALTH_UNITS_PER_POINT;
         this.pathIndex = spawnParameters.pathIndex();
-        this.shapeSpeedMultiplier = spawnParameters.speedMultiplier();
-        this.speed = definition.baseSpeed() * spawnParameters.speedMultiplier();
+        this.stats = new StatSheet(definition.baseStats()
+                .with(EnemyStat.MOVE_SPEED, definition.baseSpeed() * spawnParameters.speedMultiplier()),
+                this::contributeStats);
         this.bodyScale = bodyScaleFor(definition.archetype(), gameWorld.getBoard().scale(), rank) * spawnParameters.sizeMultiplier();
         this.abilityStates = definition.abilities().stream().map(a -> AbilityState.forTrigger(a.trigger())).toList();
         this.motion = new PathMotion(gameWorld.level().pathAt(this.pathIndex), spawnParameters.localOffset(), gameWorld::getBoard);
@@ -198,9 +199,22 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.jumpToDistance(other.motion.distanceIntoLap());
     }
 
-    /** Intrinsic speed times the active effects' multiplier. */
+    /** Resolved {@link EnemyStat#MOVE_SPEED}, after traits and effects. */
     public float getSpeed() {
-        return this.speed * this.activeEffects.speedMultiplier();
+        return this.stats.value(EnemyStat.MOVE_SPEED);
+    }
+
+    /** This mob's resolved stats. */
+    public StatView stats() {
+        return this.stats;
+    }
+
+    private void contributeStats(StatAccumulator accumulator) {
+        TraitContext context = this.traitContext();
+        for (Trait trait : this.traits) {
+            trait.modifiers(context).applyTo(accumulator);
+        }
+        this.activeEffects.contributeTo(accumulator);
     }
 
     /** Rejects the effect if any trait blocks its kind. */
@@ -211,6 +225,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             }
         }
         this.activeEffects.apply(effect);
+        this.stats.invalidate();
     }
 
     public Set<EffectKind> activeEffectKinds() {
@@ -227,18 +242,9 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.effectTransitions.ticksSinceLost(kind, gameTime);
     }
 
-    /** Spawned, on the board, alive and not hidden by a trait. */
+    /** Spawned, on the board and alive. */
     public boolean validTarget() {
-        if (this.stage != LifeStage.LIVE || !this.onBoard) {
-            return false;
-        }
-        TraitContext context = this.traitContext();
-        for (Trait trait : this.traits) {
-            if (!trait.isValidTarget(context)) {
-                return false;
-            }
-        }
-        return true;
+        return this.stage == LifeStage.LIVE && this.onBoard;
     }
 
     public boolean validTarget(Type type) {
@@ -246,29 +252,25 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     /**
-     * {@link Type#INVISIBLE} while an invisibility effect is active, otherwise the authored type,
-     * so any enemy can be made invisible by an effect.
+     * {@link Type#INVISIBLE} while fully stealthed, otherwise the authored type, so any enemy can be
+     * made invisible by an effect.
      */
     private Type effectiveType() {
-        return this.activeEffects.isInvisible() ? Type.INVISIBLE : this.definition.mobType();
+        return this.stats.value(EnemyStat.STEALTH) >= 1f ? Type.INVISIBLE : this.definition.mobType();
     }
 
     /**
-     * Applies a hit, paying the bounty if it kills, then recomputes speed from the traits. A no-op
-     * on a dead mob, so only the first of several same-tick hits counts as the kill.
+     * Applies a hit through {@link HitResolution}, paying the bounty if it kills. A no-op on a dead
+     * mob, so only the first of several same-tick hits counts as the kill.
      *
-     * @return the damage that landed: after traits and shield, capped at remaining health so
-     * overkill is not credited, and {@link Damage#none()} if the mob is dead or untargetable
+     * @return the damage that landed, capped at remaining health so overkill is not credited, and
+     * {@link Damage#none()} if the mob is dead or untargetable
      */
     public Damage doDamage(Damage damage) {
         this.ticksSinceLastHit = 0;
         Damage landed = this.land(damage);
-        TraitContext context = this.traitContext();
-        float factor = 1f;
-        for (Trait trait : this.traits) {
-            factor *= trait.speedFactor(context);
-        }
-        this.speed = this.definition.baseSpeed() * this.shapeSpeedMultiplier * factor;
+        // Health-dependent traits re-derive from the new health.
+        this.stats.invalidate();
         return landed;
     }
 
@@ -278,7 +280,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         }
         Damage landed = Damage.none();
         if (this.validTarget()) {
-            landed = this.activeEffects.applyShield(this.absorb(damage)).cappedAt(this.health);
+            landed = HitResolution.resolve(this.absorb(damage), this.stats, this.health);
             this.health -= landed.amount();
             this.gameWorld.damageTally().record(landed);
             if (landed.amount() > 0) {
@@ -381,17 +383,22 @@ public final class DefinedEnemyMob implements EnemyMob {
             return;
         }
         // Read before tick(): an effect in its last tick must still slow this tick's movement.
-        float speedMultiplier = this.activeEffects.speedMultiplier();
+        float speed = this.stats.value(EnemyStat.MOVE_SPEED);
         // Applied here, not through tick()'s sink: a heal is not a negative damagePerTick.
-        this.health = Math.min(this.healthMax, this.health + this.activeEffects.healPerTick());
-        this.activeEffects.tick();
+        int healed = Math.min(this.healthMax, this.health + Math.round(this.stats.value(EnemyStat.REGENERATION)));
+        boolean healthChanged = healed != this.health;
+        this.health = healed;
+        if (healthChanged || !this.activeEffects.isEmpty()) {
+            this.activeEffects.tick();
+            this.stats.invalidate();
+        }
         // After tick() so an expiry is seen the tick it happens; before the dead-return so a lethal
         // damage-over-time tick still records the loss.
         this.effectTransitions.observe(this.activeEffects.activeKinds(), gameTime);
         if (this.isDead()) {
             return;
         }
-        if (this.motion.advance(this.speed * speedMultiplier)) {
+        if (this.motion.advance(speed)) {
             this.leak();
             return;
         }

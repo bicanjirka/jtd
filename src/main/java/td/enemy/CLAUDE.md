@@ -33,6 +33,8 @@
 
 - A `Trait` instance is shared by every mob of a definition, so it holds no per-mob state; per-mob
   input arrives as `TraitContext`. `Trait.marker()` has no default, on purpose.
+- A trait changes a mob only through `modifiers(context)` (a `td.stat` bundle), never through a
+  new hook on the hit or speed path. Event-shaped behaviour is an ability.
 - A trait slot holds a `TraitTemplate`: a plain `Trait` resolves to itself, an adaptive one
   (`AdaptiveResist`) reads `GameWorld.damageTally()`. The mob resolves every slot once, in its
   constructor (`EnemyDefinition.traitsFor`), and keeps that list. Spawn-time variation is a new
@@ -40,8 +42,9 @@
 - `withAdditionalTraits`/`withAdditionalAbilities` replace an entry with the same
   `TraitId.named(...)` id and stack anonymous ones. Name an entry only when a later step replaces
   it (e.g. `"armor"`, which a later rank step replaces).
-- Built-in traits include `PercentResistTrait`/`FlatResistTrait` (per hit, scopable with
-  `physicalOnly`/`magicOnly`), `HurtSpeedTrait`, and crit/burn/freeze immunities.
+- Built-in traits include `PercentResistTrait` (armor or magic resist, authored as the fraction
+  kept), `FlatResistTrait` (plating), both scopable with `physicalOnly`/`magicOnly`,
+  `HurtSpeedTrait`, and crit/burn/freeze immunities.
 - Effect immunity is `Trait.blocksEffect`, checked in `DefinedEnemyMob.applyEffect` before
   `ActiveEffects` sees the effect.
 - `AbilityEvaluator` decides when a trigger fires; actions execute through
@@ -62,8 +65,7 @@
   `delaySpacingSlots` staggers members so they don't stack. `consumesSelf` is only defined for
   one member. Spawns call `recordAbilitySpawn` and casts call `recordAbilityCast`; the UI draws
   rings from both.
-- Invisibility is effect-driven: `effectiveType()` reports `Type.INVISIBLE` while
-  `ActiveEffects.isInvisible()`. It does not go through `Trait.isValidTarget`.
+- Invisibility is the `STEALTH` stat: `effectiveType()` reports `Type.INVISIBLE` at stealth 1.
 - `EnemyDefinition.supportAura()` derives the aura ring the UI draws from radius-targeted
   abilities; the UI must not walk abilities itself.
 
@@ -73,13 +75,12 @@
   stationary. A degenerate path (fewer than 2 points) is valid: the mob holds still.
 - Facing is never derived from a per-tick pixel delta (sub-pixel speeds make `atan2` collapse to
   zero); use the path's facing.
-- The `speed` field is intrinsic: recomputed on every hit from `baseSpeed` × spawn multiplier ×
-  every trait's `speedFactor`. Effect multipliers are applied on read, never baked in. `doTick`
-  reads the effect multiplier *before* `ActiveEffects.tick()`, and returns early if a
-  damage-over-time tick killed the mob.
-- `doDamage` returns the damage that actually landed: traits' `absorb`, then
-  `ActiveEffects.applyShield`, then `Damage.cappedAt` remaining health, which keeps a type a trait
-  changed. Callers report that return value, not the input.
+- Each mob owns a `StatSheet` fed by its traits and `ActiveEffects`. `MOVE_SPEED`'s base is
+  `baseSpeed` × spawn multiplier. The sheet is invalidated on a hit, on applying an effect, and
+  after a tick that ticked effects or changed health. `doTick` reads speed and regeneration
+  *before* `ActiveEffects.tick()`, and returns early if a damage-over-time tick killed the mob.
+- `doDamage` lands a hit through `HitResolution` (mitigation, plating, damage taken, cap at
+  health) and returns what landed. Callers report that return value, not the input.
 - A spawn shape's trait override is composed into the definition before the mob is built. There
   is no separate multiplier mechanism.
 - Spawn delay: the mob starts inactive iff its *converted* tick delay is > 0.
