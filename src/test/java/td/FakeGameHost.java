@@ -1,6 +1,7 @@
 package td;
 
 import td.util.GameHost;
+import td.util.RandomSource;
 
 /**
  * A {@link GameHost} that forwards to a real engine like the UI does, minus Swing, so tests see
@@ -13,6 +14,13 @@ class FakeGameHost implements GameHost {
     static GameEngine newBoundEngine() {
         FakeGameHost host = new FakeGameHost();
         GameEngine engine = new GameEngine(host);
+        host.bind(engine);
+        return engine;
+    }
+
+    static GameEngine newBoundEngine(RandomSource random) {
+        FakeGameHost host = new FakeGameHost();
+        GameEngine engine = new GameEngine(host, random);
         host.bind(engine);
         return engine;
     }
