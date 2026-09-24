@@ -113,7 +113,6 @@ final class BuiltInEnemies {
             .startingAt(EnemyDefinition.of("g", "Ghost mob", 100, 4, 1.28f, BodyArchetype.GHOST)
                     .withDescription("An ordinary mob that turns invisible to towers for a while "
                             + "the first time it's hit. Area damage still finds it.")
-                    .withHealthDivisor(5f)
                     .withAbilities(List.of(new Ability(
                             // A hit that also freezes suppresses this cast outright: a frozen mob cannot cast.
                             new OnFirstDamageTakenTrigger(),
