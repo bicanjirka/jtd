@@ -8,7 +8,6 @@ import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,56 +24,31 @@ class TowerRosterTest {
     }
 
     @Test
-    void addingATowerNotifiesListenersAndAppearsInAll() {
+    void addingATowerAppearsInAll() {
         Tower tower = aTower();
-        List<Tower> built = new ArrayList<>();
-        roster.addListener(new TowerListener() {
-            @Override
-            public void towerRemoved(Tower t) {
-            }
-
-            @Override
-            public void towerBuild(Tower t) {
-                built.add(t);
-            }
-        });
 
         roster.add(tower);
 
-        assertThat(built).containsExactly(tower);
         assertThat(roster.all()).containsExactly(tower);
     }
 
     @Test
-    void allReturnsALiveViewThatSeesLaterAdditions() {
-        List<Tower> view = roster.all();
-        assertThat(view).isEmpty();
+    void allIsASnapshotThatDoesNotSeeLaterAdditions() {
+        List<Tower> snapshot = roster.all();
 
         roster.add(aTower());
 
-        assertThat(view).hasSize(1);
+        assertThat(snapshot).isEmpty();
     }
 
     @Test
-    void sellingATowerRefundsCreditsClearsItsCellAndNotifiesListeners() {
+    void sellingATowerRefundsCreditsAndClearsItsCell() {
         Tower tower = aTower();
         roster.add(tower);
-        List<Tower> removed = new ArrayList<>();
-        roster.addListener(new TowerListener() {
-            @Override
-            public void towerRemoved(Tower t) {
-                removed.add(t);
-            }
-
-            @Override
-            public void towerBuild(Tower t) {
-            }
-        });
 
         roster.sell(tower);
 
         assertThat(roster.all()).doesNotContain(tower);
-        assertThat(removed).containsExactly(tower);
         assertThat(economy.getCredits()).isEqualTo(tower.getSellPrice());
         assertThat(host.lastClearedCell).containsExactly(2, 3);
     }
@@ -87,26 +61,5 @@ class TowerRosterTest {
         roster.clear();
 
         assertThat(roster.all()).isEmpty();
-    }
-
-    @Test
-    void removedListenerStopsReceivingEvents() {
-        List<Tower> built = new ArrayList<>();
-        TowerListener listener = new TowerListener() {
-            @Override
-            public void towerRemoved(Tower t) {
-            }
-
-            @Override
-            public void towerBuild(Tower t) {
-                built.add(t);
-            }
-        };
-        roster.addListener(listener);
-        roster.removeListener(listener);
-
-        roster.add(aTower());
-
-        assertThat(built).isEmpty();
     }
 }
