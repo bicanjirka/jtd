@@ -2,6 +2,7 @@ package td.tower.targeting;
 
 import org.junit.jupiter.api.Test;
 import td.enemy.EnemyMob;
+import td.fixtures.FakeEnemyMob;
 
 import java.util.List;
 
@@ -44,7 +45,8 @@ class InRangeTargetQueryTest {
 
     @Test
     void deadOrInactiveEnemiesAreExcludedRegardlessOfDistance() {
-        FakeEnemyMob dead = FakeEnemyMob.at(0, 0).invalid();
+        FakeEnemyMob dead = FakeEnemyMob.at(0, 0);
+        dead.invalidate();
 
         List<EnemyMob> matches = InRangeTargetQuery.anyType(0, 0, 50)
                 .matching(() -> new EnemyMob[]{dead});

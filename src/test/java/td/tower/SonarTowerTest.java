@@ -6,6 +6,7 @@ import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
+import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
@@ -31,7 +32,7 @@ class SonarTowerTest {
 
     private final GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
 
-    private static int hitCount(RecordingEnemyMob mob) {
+    private static int hitCount(FakeEnemyMob mob) {
         return mob.hits().size();
     }
 
@@ -42,17 +43,17 @@ class SonarTowerTest {
     @Test
     void enemiesAreSweptInCounterclockwiseOrderOfTheirBearingNotOfTheirWaveOrder() {
         SonarTower tower = tower();
-        RecordingEnemyMob east = RecordingEnemyMob.normalAt(TOWER_X + NEAR, TOWER_Y);
-        RecordingEnemyMob north = RecordingEnemyMob.normalAt(TOWER_X, TOWER_Y - NEAR);
-        RecordingEnemyMob west = RecordingEnemyMob.normalAt(TOWER_X - NEAR, TOWER_Y);
-        RecordingEnemyMob south = RecordingEnemyMob.normalAt(TOWER_X, TOWER_Y + NEAR);
+        FakeEnemyMob east = FakeEnemyMob.at(TOWER_X + NEAR, TOWER_Y);
+        FakeEnemyMob north = FakeEnemyMob.at(TOWER_X, TOWER_Y - NEAR);
+        FakeEnemyMob west = FakeEnemyMob.at(TOWER_X - NEAR, TOWER_Y);
+        FakeEnemyMob south = FakeEnemyMob.at(TOWER_X, TOWER_Y + NEAR);
         // deliberately not in sweep order: where they sit decides, not where they are in the array
         this.context.enemies().setEnemies(new EnemyMob[]{south, west, north, east});
 
-        Map<RecordingEnemyMob, Integer> firstHit = new LinkedHashMap<>();
+        Map<FakeEnemyMob, Integer> firstHit = new LinkedHashMap<>();
         for (int tick = 1; tick <= TICKS_PER_REVOLUTION; tick++) {
             tower.doTick(tick);
-            for (RecordingEnemyMob mob : List.of(east, north, west, south)) {
+            for (FakeEnemyMob mob : List.of(east, north, west, south)) {
                 if (!mob.hits().isEmpty()) {
                     firstHit.putIfAbsent(mob, tick);
                 }
@@ -69,7 +70,7 @@ class SonarTowerTest {
     @Test
     void aStationaryEnemyIsHitExactlyOncePerRevolution() {
         SonarTower tower = tower();
-        RecordingEnemyMob enemy = RecordingEnemyMob.normalAt(TOWER_X, TOWER_Y - NEAR);
+        FakeEnemyMob enemy = FakeEnemyMob.at(TOWER_X, TOWER_Y - NEAR);
         this.context.enemies().setEnemies(new EnemyMob[]{enemy});
 
         for (int tick = 1; tick <= TICKS_PER_REVOLUTION * 3; tick++) {
@@ -83,8 +84,8 @@ class SonarTowerTest {
     void everyEnemyOnTheSameBearingIsHitOnTheSameTick() {
         SonarTower tower = tower();
         // same direction from the tower, different distances - the beam is a ray, not one target
-        RecordingEnemyMob close = RecordingEnemyMob.normalAt(TOWER_X, TOWER_Y - 40);
-        RecordingEnemyMob far = RecordingEnemyMob.normalAt(TOWER_X, TOWER_Y - 80);
+        FakeEnemyMob close = FakeEnemyMob.at(TOWER_X, TOWER_Y - 40);
+        FakeEnemyMob far = FakeEnemyMob.at(TOWER_X, TOWER_Y - 80);
         this.context.enemies().setEnemies(new EnemyMob[]{close, far});
 
         for (int tick = 1; tick <= TICKS_PER_REVOLUTION; tick++) {
@@ -99,7 +100,7 @@ class SonarTowerTest {
     void anEnemyBeyondTheTowersRangeIsNeverHit() {
         SonarTower tower = tower();
         // range is 5.2 cells = 166.4px at this scale
-        RecordingEnemyMob outOfRange = RecordingEnemyMob.normalAt(TOWER_X + 200, TOWER_Y);
+        FakeEnemyMob outOfRange = FakeEnemyMob.at(TOWER_X + 200, TOWER_Y);
         this.context.enemies().setEnemies(new EnemyMob[]{outOfRange});
 
         for (int tick = 1; tick <= TICKS_PER_REVOLUTION; tick++) {
@@ -112,7 +113,7 @@ class SonarTowerTest {
     @Test
     void aGhostIsNeverHitBecauseTheScanOnlySeesVisibleEnemies() {
         SonarTower tower = tower();
-        RecordingEnemyMob ghost = RecordingEnemyMob.ghostAt(TOWER_X + NEAR, TOWER_Y);
+        FakeEnemyMob ghost = FakeEnemyMob.ghostAt(TOWER_X + NEAR, TOWER_Y);
         this.context.enemies().setEnemies(new EnemyMob[]{ghost});
 
         for (int tick = 1; tick <= TICKS_PER_REVOLUTION; tick++) {
@@ -128,7 +129,7 @@ class SonarTowerTest {
         // a bearing deliberately off any exact tick boundary, so a naive "is the beam pointing
         // at it right now" test would step straight past it
         double awkward = -(Math.PI * 2 / TICKS_PER_REVOLUTION) * 4.37;
-        RecordingEnemyMob enemy = RecordingEnemyMob.normalAt(
+        FakeEnemyMob enemy = FakeEnemyMob.at(
                 TOWER_X + Math.cos(awkward) * NEAR, TOWER_Y + Math.sin(awkward) * NEAR);
         this.context.enemies().setEnemies(new EnemyMob[]{enemy});
 

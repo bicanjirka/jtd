@@ -3,6 +3,7 @@ package td.tower.targeting;
 import org.junit.jupiter.api.Test;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyRegistry;
+import td.fixtures.FakeEnemyMob;
 
 import java.util.List;
 

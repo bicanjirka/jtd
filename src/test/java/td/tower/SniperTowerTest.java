@@ -7,6 +7,7 @@ import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
+import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -80,7 +81,7 @@ class SniperTowerTest {
         GameWorld alwaysCrits = new GameWorld(new RecordingGameHost(), () -> 0.0);
         alwaysCrits.setBoard(BoardGeometry.of(BoardFixtures.SCALE, 20, 20));
         SniperTower tower = new SniperTower(alwaysCrits, 3, 3);
-        RecordingEnemyMob target = RecordingEnemyMob.normalAt(100, 100);
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         alwaysCrits.enemies().setEnemies(new EnemyMob[]{target});
 
         tower.doTick(1);

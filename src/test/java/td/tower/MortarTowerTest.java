@@ -7,6 +7,7 @@ import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
+import td.fixtures.FakeEnemyMob;
 import td.fixtures.TowerFixtures;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
@@ -26,7 +27,7 @@ class MortarTowerTest {
     @Test
     void firingLaunchesExactlyOneShellAtTheTarget() {
         MortarTower tower = towerAt(3, 3);
-        RecordingEnemyMob target = RecordingEnemyMob.normalAt(100, 100);
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tower.doTick(1);
@@ -37,7 +38,7 @@ class MortarTowerTest {
     @Test
     void theShellEventuallySplashesDamageAndSlowsTheTarget() {
         MortarTower tower = towerAt(3, 3);
-        RecordingEnemyMob target = RecordingEnemyMob.normalAt(100, 100);
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tower.doTick(1);
@@ -51,8 +52,8 @@ class MortarTowerTest {
     @Test
     void aGhostIsNeverSelectedAsTheInitialTargetButIsStillCaughtByTheSplash() {
         MortarTower tower = towerAt(3, 3);
-        RecordingEnemyMob normal = RecordingEnemyMob.normalAt(100, 100);
-        RecordingEnemyMob ghost = RecordingEnemyMob.ghostAt(105, 100);
+        FakeEnemyMob normal = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob ghost = FakeEnemyMob.ghostAt(105, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{normal, ghost});
 
         tower.doTick(1);
