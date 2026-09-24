@@ -443,16 +443,6 @@ own balance passes.
 
 ## UI
 
-### A long enemy stat block overflows the Info panel
-
-Armored's hover or inspector text (header, description, five stat lines, traits) is taller than
-the Info panel at the default window size, so it opens scrolled and the name, or the
-`Killed`/`Leaked` line, sits out of view.
-
-- **Where:** `td.ui.EnemyStatText`, the Info `JTextPane` in the side panel.
-- **Approach:** scroll the pane to the top whenever its text is replaced, and/or compact the block
-  (one line for armor and magic resist, drop a trait line that repeats a stat line).
-
 ### A hatched egg leaves its stale stats in the inspector
 
 Selecting a Warden egg and letting it hatch clears the selection ring, but the panel keeps the

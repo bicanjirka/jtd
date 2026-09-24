@@ -21,6 +21,8 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.Serial;
 import java.util.List;
 import java.util.Objects;
@@ -49,10 +51,13 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private final Java2DFrameRenderer glyphRenderer = new Java2DFrameRenderer();
+
     private GameWorld context;
     private Tower selectedTower;
     private String lastText;
     private EnemySheet lastSheet = NO_SHEET;
+    private int sheetWidth = 0;
     private boolean levelEnded = false;
     private boolean hovering = false;
     private Runnable onDeselected = () -> {
@@ -92,8 +97,24 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         }
         this.lastSheet = sheet;
         this.lastText = null;
-        this.jTextPane1.setStyledDocument(EnemySheetDocument.of(sheet, this.textWidth()));
+        this.layOutSheet();
+    }
+
+    /**
+     * Values align to the pane's current width, so a scrollbar coming or going, which changes that
+     * width, lays the sheet out again.
+     */
+    private void layOutSheet() {
+        this.sheetWidth = this.textWidth();
+        this.jTextPane1.setStyledDocument(EnemySheetDocument.of(this.lastSheet, this.glyphRenderer, this.sheetWidth,
+                this.jTextPane1.getFontMetrics(this.jTextPane1.getFont())));
         this.jTextPane1.setCaretPosition(0);
+    }
+
+    private void textPaneResized() {
+        if (!this.lastSheet.equals(NO_SHEET) && this.textWidth() != this.sheetWidth) {
+            this.layOutSheet();
+        }
     }
 
     private int textWidth() {
@@ -237,6 +258,12 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         jTextPane1.setBorder(null);
         jTextPane1.setForeground(new Color(220, 255, 220));
         jScrollPane1.setViewportView(jTextPane1);
+        jTextPane1.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent evt) {
+                textPaneResized();
+            }
+        });
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
