@@ -60,7 +60,7 @@ final class TwistedHourglassLevel {
                             new Point(5, 7), new Point(7, 9), new Point(7, 13),
                             new Point(-1, 13)),
                     List.of(
-                            new WaveDefinition("c e c e c e c", Rank.GRUNT),
+                            new WaveDefinition("c e c e c e c e armored c", Rank.GRUNT),
                             new WaveDefinition("s e s e s", Rank.GRUNT),
                             new WaveDefinition("5 t", Rank.SOLDIER),
                             new WaveDefinition("g e g e g e g", Rank.SOLDIER),
