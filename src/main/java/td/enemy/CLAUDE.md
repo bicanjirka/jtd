@@ -21,6 +21,7 @@
 - Gameplay spawns through `EnemyCatalog`. `EnemyFactory` is only a test convenience over
   `EnemyCatalog.builtIn()`. `EnemyCatalog.ids()` keeps registration order (the debug spawn
   cycles through it).
+- A consumer that only aims takes `EnemyTarget`; one that only hits takes `HitReceiver`.
 - Never branch on a mob's concrete type; use `EnemyMobVisitor`. Switching on the sealed
   `BodyArchetype`/`MovementBehavior`/`AbilityTrigger`/`AbilityAction` types is fine, but prefer
   adding a query method (like `EffectTemplate.kind()`) over another switch on

@@ -3,7 +3,7 @@ package td.tower;
 import td.damage.Damage;
 import td.economy.EconomyDelta;
 import td.effect.EffectKind;
-import td.enemy.EnemyMob;
+import td.enemy.HitReceiver;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -153,7 +153,7 @@ public abstract class AbstractTower implements Tower {
      *
      * @return whether the hit landed as a critical hit
      */
-    protected boolean dealDamage(EnemyMob enemy, Damage damage) {
+    protected boolean dealDamage(HitReceiver enemy, Damage damage) {
         if (this.removed) {
             return false;
         }
@@ -177,7 +177,7 @@ public abstract class AbstractTower implements Tower {
      * Rolls {@link #critChance()} against the injected random source; a burning target doubles the
      * chance, capped at 100%. A tower with no crit chance never crits.
      */
-    private Damage rollCritical(EnemyMob enemy, Damage damage) {
+    private Damage rollCritical(HitReceiver enemy, Damage damage) {
         float chance = this.critChance();
         if (chance <= 0f) {
             return damage;

@@ -1,6 +1,7 @@
 package td.tower.targeting;
 
 import td.enemy.EnemyMob;
+import td.enemy.EnemyTarget;
 
 import java.util.Comparator;
 import java.util.List;
@@ -22,7 +23,7 @@ public final class NearestSelector implements TargetSelector {
         return candidates.stream().min(Comparator.comparingDouble(this::distance2));
     }
 
-    private double distance2(EnemyMob e) {
+    private double distance2(EnemyTarget e) {
         double dx = e.getX() - this.x;
         double dy = e.getY() - this.y;
         return dx * dx + dy * dy;

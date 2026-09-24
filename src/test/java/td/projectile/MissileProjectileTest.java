@@ -1,7 +1,7 @@
 package td.projectile;
 
 import org.junit.jupiter.api.Test;
-import td.enemy.EnemyMob;
+import td.enemy.HitReceiver;
 import td.fixtures.FakeEnemyMob;
 
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ class MissileProjectileTest {
     void impactsOnceItReachesItsTargetAndReportsExactlyThatTarget() {
         FakeEnemyMob target = FakeEnemyMob.at(20, 0);
         FakeEnemyRegistry registry = new FakeEnemyRegistry(target);
-        List<EnemyMob> impacts = new ArrayList<>();
+        List<HitReceiver> impacts = new ArrayList<>();
         MissileProjectile missile = new MissileProjectile(0, 0, target, registry, 10f, impacts::add);
 
         for (int t = 1; t <= 5 && !missile.isFinished(); t++) {
@@ -46,7 +46,7 @@ class MissileProjectileTest {
         FakeEnemyMob nearest = FakeEnemyMob.at(5, 0);
         FakeEnemyMob further = FakeEnemyMob.at(50, 0);
         FakeEnemyRegistry registry = new FakeEnemyRegistry(original, nearest, further);
-        List<EnemyMob> impacts = new ArrayList<>();
+        List<HitReceiver> impacts = new ArrayList<>();
         MissileProjectile missile = new MissileProjectile(0, 0, original, registry, 10f, impacts::add);
 
         original.invalidate();
@@ -61,7 +61,7 @@ class MissileProjectileTest {
     void givesUpWithoutImpactingAnythingWhenNoValidTargetRemainsAnywhere() {
         FakeEnemyMob onlyTarget = FakeEnemyMob.at(20, 0);
         FakeEnemyRegistry registry = new FakeEnemyRegistry(onlyTarget);
-        List<EnemyMob> impacts = new ArrayList<>();
+        List<HitReceiver> impacts = new ArrayList<>();
         MissileProjectile missile = new MissileProjectile(0, 0, onlyTarget, registry, 10f, impacts::add);
 
         onlyTarget.invalidate();

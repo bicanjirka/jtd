@@ -1,50 +1,15 @@
 package td.enemy;
 
-import td.damage.Damage;
-import td.effect.Effect;
-import td.effect.EffectKind;
-
-import java.util.Set;
-
 /**
- * One enemy walking a path, as towers, targeting and the renderer see it. Concrete types are
- * reached only through {@link EnemyMobVisitor}.
+ * One enemy walking a path. Consumers that only aim or only hit take {@link EnemyTarget} or
+ * {@link HitReceiver}. Concrete types are reached only through {@link EnemyMobVisitor}.
  */
-public interface EnemyMob {
+public interface EnemyMob extends EnemyTarget, HitReceiver {
     void doTick(int gameTime);
 
     <R> R accept(EnemyMobVisitor<R> visitor);
 
-    double getX();
-
-    double getY();
-
-    /** How far along its lap this mob is; for ranking only. */
-    int getProgression();
-
-    boolean validTarget();
-
-    boolean validTarget(Type type);
-
-    boolean validTarget(Type type0, Type type1);
-
     int getHealth();
-
-    boolean isDead();
-
-    /** Paid on death, and lost as score if it leaks. */
-    int getBounty();
-
-    /**
-     * Applies a hit and returns what actually landed, which may be less or nothing. Report the
-     * return value, not the argument.
-     */
-    Damage doDamage(Damage damage);
-
-    void applyEffect(Effect effect);
-
-    /** Active effect kinds, in a stable order. */
-    Set<EffectKind> activeEffectKinds();
 
     float getSpeed();
 

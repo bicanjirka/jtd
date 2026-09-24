@@ -239,10 +239,6 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.validTarget() && type.equals(this.effectiveType());
     }
 
-    public boolean validTarget(Type type1, Type type2) {
-        return this.validTarget(type1) || this.validTarget(type2);
-    }
-
     /**
      * {@link Type#INVISIBLE} while an invisibility effect is active, otherwise the authored type,
      * so any enemy can be made invisible by an effect.
