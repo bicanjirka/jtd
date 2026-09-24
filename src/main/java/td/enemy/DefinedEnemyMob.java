@@ -2,6 +2,7 @@ package td.enemy;
 
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.economy.EconomyDelta;
 import td.effect.ActiveEffects;
 import td.effect.Effect;
@@ -251,6 +252,10 @@ public final class DefinedEnemyMob implements EnemyMob {
     /** Fresh freezes landed in the current diminishing-returns window; {@code 0} without it. */
     public int freezeDiminishingStep() {
         return this.freezeDiminishing.stepAt(this.ticksSinceSpawn);
+    }
+
+    public float reductionAgainst(DamageType type) {
+        return HitResolution.reductionAgainst(type, this.stats);
     }
 
     /** Ticks left on the active {@code kind}; empty when inactive or for a burn. */

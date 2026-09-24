@@ -47,7 +47,9 @@
   `TowerBuff` floors combined fire-rate and range bonuses at `MIN_BONUS` (-0.75).
 - Cooldown has a base/current split like damage and range (`coolDownMax` vs `coolDownCurrent()`).
 - `dealDamage` sends the hit with `TowerStats.attack()` (crit chance and multiplier, penetration);
-  the target rolls the crit. A tower never reads the target's stats to adjust its own hit.
+  the target rolls the crit. A special shot passes a one-off profile to
+  `dealDamage(enemy, damage, attack)` (a forced crit, extra penetration) instead of adding a
+  hook. Damage that scales with the target's protection asks `HitReceiver.reductionAgainst`.
 
 ## Upgrade tree
 

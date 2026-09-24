@@ -2,6 +2,7 @@ package td.enemy;
 
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectKind;
 
@@ -22,6 +23,12 @@ public interface HitReceiver {
     }
 
     void applyEffect(Effect effect);
+
+    /**
+     * The share of a {@code type} hit this enemy's armor or magic resist and damage taken remove
+     * right now, for damage that scales with how well protected the target is.
+     */
+    float reductionAgainst(DamageType type);
 
     /** Active effect kinds, in a stable order. */
     Set<EffectKind> activeEffectKinds();

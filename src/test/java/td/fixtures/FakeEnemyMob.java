@@ -2,6 +2,7 @@ package td.fixtures;
 
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
@@ -25,6 +26,7 @@ public final class FakeEnemyMob implements EnemyMob {
     private final List<Effect> appliedEffects = new ArrayList<>();
     private final List<AttackProfile> attackers = new ArrayList<>();
     private boolean hitsLandCritical;
+    private float physicalReduction;
     private double x;
     private double y;
     private boolean valid = true;
@@ -98,6 +100,19 @@ public final class FakeEnemyMob implements EnemyMob {
         this.hits.add(damage);
         this.attackers.add(attacker);
         return this.hitsLandCritical ? new Damage(damage.amount(), damage.type(), true) : damage;
+    }
+
+    /**
+     * Reports {@code reduction} as its protection against physical hits, for towers that scale with
+     * it; the hits it records are still unreduced.
+     */
+    public void reportPhysicalReduction(float reduction) {
+        this.physicalReduction = reduction;
+    }
+
+    @Override
+    public float reductionAgainst(DamageType type) {
+        return type == DamageType.PHYSICAL ? this.physicalReduction : 0f;
     }
 
     @Override

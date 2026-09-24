@@ -1,6 +1,7 @@
 # Feature Request: Enemy Stats
 
-**Status: planned, not started.** Implementation plan: `docs/plans/enemy-stats.md`.
+**Status: implemented.** Plan: `docs/plans/enemy-stats.md`. Deferred: tower detection levels
+(stealth is one level), and Momentum's kill-triggered fire-rate burst (`TODO.md`).
 
 ## Summary
 
@@ -262,17 +263,15 @@ re-derive them. They are proposals; planning may replace any of them.
 
 ## Open questions
 
-1. Starting base values: what armor, magic resist, spirit and resilience does each built-in
-   enemy start with, and do ranks scale anything besides health?
-2. Resilience: how much does one point reduce crit chance and crit damage, and where is its
-   cap?
-3. Stealth and detection: is a single level (hidden or not) enough for now, or should towers
-   have detection levels from the start?
-4. Which towers get non-zero attacker stats at base, and which only through upgrade nodes?
-5. Disruption: which tower attributes can it touch (fire rate, range, damage, disabling
-   specials), and which built-in enemy carries it first?
-6. Inspector: should the board show anything for a selected enemy besides the ring, such as a
-   health bar or a path-progress indicator?
+Resolved during planning: migrated stats are converted from the old traits and ranks scale only
+health (plus freeze diminishing returns at Elite and Boss); resilience is linear (1 point = 1% of
+crit chance and bonus, 100 = immune); stealth has a single level for now, so towers have no
+detection stat; towers start at a 1.5 crit multiplier and no penetration, which upgrade nodes
+raise; disruption touches fire rate and range, first carried by the Jammer; the board shows only
+a selection ring for an inspected enemy.
+
+1. Starting values for the built-in enemies are placeholders like every other number in the
+   game; tune them with the other balance entries in `TODO.md`.
 
 ---
 

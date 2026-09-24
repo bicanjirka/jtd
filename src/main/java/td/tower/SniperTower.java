@@ -1,5 +1,6 @@
 package td.tower;
 
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
@@ -49,31 +50,32 @@ public final class SniperTower extends AbstractTower {
             .withBuff(TowerBuff.critChance(0.15f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(15));
-    /** Its armor penetration is not implemented yet (TODO.md). */
     private static final UpgradeNode MARKSMANS_EYE_2 = UpgradeNode.of("sniper.head.marksmans_eye.2",
             UpgradeSlot.HEAD, "Marksman's Eye II", 45)
-            .withBuff(TowerBuff.critChance(0.2f))
+            .withBuff(TowerBuff.critChance(0.2f).withArmorPenetration(0.5f))
             .withRequires(UpgradeCondition.owns(MARKSMANS_EYE_1.id()))
-            .withGate(new DamageDealtCondition(20000))
-            .withExtraEffect("ignores 50% of armor and shields");
+            .withGate(new DamageDealtCondition(20000));
     /** Not implemented yet (TODO.md). */
     private static final UpgradeNode MARKED_ROUND = UpgradeNode.of("sniper.special.marked_round", UpgradeSlot.SPECIAL,
             "Marked Round", 20)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
             .withGate(new KillCountCondition(10))
             .withExtraEffect("crits apply Vulnerable, +15% damage taken, stacks x3");
-    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode FIFTH_SHOT = UpgradeNode.of("sniper.special.fifth_shot", UpgradeSlot.SPECIAL,
             "Fifth Shot", 20)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
             .withGate(new KillCountCondition(15))
-            .withExtraEffect("every 5th shot is a guaranteed crit dealing 250%");
-    /** Not implemented yet (TODO.md). */
+            .withExtraEffect("every 5th shot is a guaranteed crit, and its crits deal 250%");
+    /** Its fire-rate burst on a kill is not implemented yet (TODO.md). */
     private static final UpgradeNode MOMENTUM = UpgradeNode.of("sniper.special.momentum", UpgradeSlot.SPECIAL,
             "Momentum", 20)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
             .withGate(new KillCountCondition(20))
-            .withExtraEffect("post-crit shot deals 500% and ignores armor; a kill grants +100% fire rate for 5s");
+            .withExtraEffect("post-crit shot deals 500% and ignores armor and plating; a kill grants +100% fire "
+                    + "rate for 5s");
+    private static final int FIFTH_SHOT_INTERVAL = 5;
+    private static final float FIFTH_SHOT_CRIT_MULTIPLIER = 2.5f;
+    private static final int MOMENTUM_DAMAGE_MULTIPLIER = 5;
 
     private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, FOCUSED_OPTICS_1, FOCUSED_OPTICS_2,
             MARKSMANS_EYE_1, MARKSMANS_EYE_2, MARKED_ROUND, FIFTH_SHOT, MOMENTUM);
@@ -84,6 +86,8 @@ public final class SniperTower extends AbstractTower {
     private int coolDown = 0;
     private EnemyMob currentTarget;
     private boolean lastShotCritical;
+    private int shotsFired;
+    private boolean momentumCharged;
 
     public SniperTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SNIPER, PRICE,
@@ -118,13 +122,37 @@ public final class SniperTower extends AbstractTower {
         } else {
             this.currentTarget = this.findEnemy();
             if (this.currentTarget != null) {
-                this.lastShotCritical = this.dealDamage(this.currentTarget, Damage.physical(this.damageCurrent()));
+                this.lastShotCritical = this.fire(this.currentTarget);
                 this.coolDown = this.coolDownCurrent();
             }
         }
         if (this.currentTarget != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(), this.currentTarget.getY()));
         }
+    }
+
+    /**
+     * One shot, shaped by whichever {@code SPECIAL} node is owned: Fifth Shot forces every fifth
+     * shot to crit and raises the crit multiplier; Momentum turns the shot after a crit into a
+     * five-fold one that ignores armor and plating.
+     */
+    private boolean fire(EnemyMob target) {
+        this.shotsFired++;
+        int damage = this.damageCurrent();
+        AttackProfile attack = this.stats().attack();
+        if (this.upgrades().owns(FIFTH_SHOT.id())) {
+            attack = attack.withCritMultiplier(FIFTH_SHOT_CRIT_MULTIPLIER);
+            if (this.shotsFired % FIFTH_SHOT_INTERVAL == 0) {
+                attack = attack.withCritChance(1f);
+            }
+        }
+        if (this.momentumCharged) {
+            damage *= MOMENTUM_DAMAGE_MULTIPLIER;
+            attack = attack.withArmorPenetration(1f, 0f).withPlatingPenetration(1f);
+        }
+        boolean critical = this.dealDamage(target, Damage.physical(damage), attack);
+        this.momentumCharged = critical && this.upgrades().owns(MOMENTUM.id());
+        return critical;
     }
 
     public EnemyMob getCurrentTarget() {

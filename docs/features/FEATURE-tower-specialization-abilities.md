@@ -93,8 +93,9 @@ closed in the same commit that wires the real behavior in.
 
 **head**
 - *Focused Optics*: +20% damage (`always()`) → lv2 +20% damage, +25% fire rate (`always()`) — both **[F]**
-- *Marksman's Eye*: +15% crit (`KillCountCondition(15)`) → lv2 +20% crit **[F]**, ignores 50% of
-  armor/`PercentResistTrait`/`FlatResistTrait`/shield **[S]** (`DamageDealtCondition(20000)`)
+- *Marksman's Eye*: +15% crit (`KillCountCondition(15)`) → lv2 +20% crit, 50% armor penetration
+  **[F]** (`DamageDealtCondition(20000)`). A shield is damage taken, not armor, so it is not
+  bypassed.
 
 **special** — choosing any node in this slot also switches the tower's targeting from "furthest
 along the path" to **the highest-current-health enemy in range** — **[F]**, a new
@@ -106,11 +107,10 @@ last-hitting (which wastes the shot the rest of the wave needed) and to put dama
 most needed.
 - *Marked Round*: crits apply Vulnerable, +15% damage taken, stacks ×3 on the enemy **[S]**
   (`KillCountCondition(10)`)
-- *Fifth Shot*: every 5th shot is a guaranteed crit; crits from this tower deal 250% **[S]**
+- *Fifth Shot*: every 5th shot is a guaranteed crit; crits from this tower deal 250% **[F]**
   (`KillCountCondition(15)`)
-- *Momentum*: on crit, the next shot deals 500% damage and fully ignores armor/
-  `PercentResistTrait`/`FlatResistTrait`/shield — a complete bypass, not a percentage discount;
-  on kill, +100% fire rate for 5s, does not stack **[S]** (`KillCountCondition(20)`)
+- *Momentum*: on crit, the next shot deals 500% damage with 100% armor and plating penetration
+  **[F]**; on kill, +100% fire rate for 5s, does not stack **[S]** (`KillCountCondition(20)`)
 
 ### Splash
 
@@ -144,8 +144,8 @@ most needed.
   (`ClusterCondition(2)`)
 - *Mark on Sweep*: a beam hit marks its target; the next hit on that enemy is a guaranteed crit
   **[S]** (`KillCountCondition(15)`)
-- *Piercing Tone*: bonus magic damage against physically armored/shielded enemies, scaling with
-  how much resistance they carry, up to a cap **[S]** (`DamageDealtCondition(20000)`)
+- *Piercing Tone*: bonus magic damage against physically armored/shielded enemies, equal to the
+  share of a physical hit they remove, up to +50% **[F]** (`DamageDealtCondition(20000)`)
 
 ### Pulse
 
@@ -332,9 +332,9 @@ Eleven consumers above are tagged **[S]**. They share exactly these missing prim
    now a live question across six different consumers, some of which (Warding Field's
    chance-per-tick, Cursed Shrapnel's guaranteed-and-refreshed) already read as meaningfully
    different in aggressiveness even if their per-stack number matched?
-3. Composition order with `SHIELD`/`Trait` resistance — before `absorb`, after `applyShield`, or
-   interleaved with one of them? Also now the open question for where Marksman's Eye/Momentum's
-   bypass cuts in.
+3. ~~Composition order with `SHIELD`/`Trait` resistance~~ — **resolved by
+   `FEATURE-enemy-stats.md`**: Vulnerable is damage taken, which `HitResolution` applies last and
+   which multiplies with a shield; penetration cuts in before armor and plating.
 4. Should Vulnerability be restrictable to one `DamageType`, the way `ShieldTemplate`/
    `PercentResistTrait` already are? None of the drafted nodes ask for a typed restriction, but
    the precedent exists on both the resistance side and the shield side.
@@ -347,11 +347,9 @@ Eleven consumers above are tagged **[S]**. They share exactly these missing prim
    a documented no-op hook, and `TODO.md`'s "Tower specialization primitives" section tracks
    each primitive as its own entry, closeable independently whenever picked up - incremental by
    construction, not a single follow-up pass.
-7. **`Damage.asCritical()`'s fixed, project-wide crit multiplier conflicts with Fifth Shot's
-   250%, Momentum's 500%, and Sonar's guaranteed-crit-on-mark.** Does this feature revise that
-   constant into a per-node override, or do these nodes instead reuse the existing fixed
-   multiplier (making "250%"/"500%" descriptive flavor text to revise once the real number is
-   known, rather than literal targets)? A real design fork, not resolved here.
+7. ~~The fixed, project-wide crit multiplier~~ — **resolved by `FEATURE-enemy-stats.md`**: every
+   hit carries its tower's `AttackProfile`, whose crit multiplier and crit chance a node can
+   override per shot, so 250% and 500% are literal.
 
 ---
 

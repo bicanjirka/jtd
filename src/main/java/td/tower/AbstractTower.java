@@ -155,11 +155,16 @@ public abstract class AbstractTower implements Tower {
      * @return whether the hit landed as a critical hit
      */
     protected boolean dealDamage(HitReceiver enemy, Damage damage) {
+        return this.dealDamage(enemy, damage, this.stats.attack());
+    }
+
+    /** {@link #dealDamage(HitReceiver, Damage)} with a one-off attack profile, for a special shot. */
+    protected boolean dealDamage(HitReceiver enemy, Damage damage, AttackProfile attacker) {
         if (this.removed) {
             return false;
         }
         boolean wasAlive = !enemy.isDead();
-        Damage landed = enemy.doDamage(damage, this.stats.attack());
+        Damage landed = enemy.doDamage(damage, attacker);
         if (wasAlive) {
             this.damageDealt += landed.amount();
             if (enemy.isDead()) {
