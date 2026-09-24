@@ -33,6 +33,10 @@
 
 - A `Trait` instance is shared by every mob of a definition, so it holds no per-mob state; per-mob
   input arrives as `TraitContext`. `Trait.marker()` has no default, on purpose.
+- A trait slot holds a `TraitTemplate`: a plain `Trait` resolves to itself, an adaptive one
+  (`AdaptiveResist`) reads `GameWorld.damageTally()`. The mob resolves every slot once, in its
+  constructor (`EnemyDefinition.traitsFor`), and keeps that list. Spawn-time variation is a new
+  template, never a new `EnemyDefinition` component.
 - `withAdditionalTraits`/`withAdditionalAbilities` replace an entry with the same
   `TraitId.named(...)` id and stack anonymous ones. Name an entry only when a later step replaces
   it (e.g. `"armor"`, which a later rank step replaces).
@@ -78,8 +82,6 @@
   changed. Callers report that return value, not the input.
 - A spawn shape's trait override is composed into the definition before the mob is built. There
   is no separate multiplier mechanism.
-- An `AdaptiveResist` is resolved once, in the mob's constructor, against
-  `GameWorld.damageTally()` (`EnemyDefinition.adaptedTo`); the mob keeps the resolved definition.
 - Spawn delay: the mob starts inactive iff its *converted* tick delay is > 0.
 - A formation offset is rotated once, by the spawn point's facing, and stored as final
   `offsetX`/`offsetY`. Never recompute it from the current tangent (members pivot and jump at

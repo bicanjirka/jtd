@@ -1,13 +1,13 @@
 package td.enemy;
 
-/** A {@link Trait} with the {@link TraitId} it is composed by. */
-public record IdentifiedTrait(TraitId id, Trait trait) {
+/** A {@link TraitTemplate} with the {@link TraitId} it is composed by. */
+public record IdentifiedTrait(TraitId id, TraitTemplate template) {
 
-    public static IdentifiedTrait anonymous(Trait trait) {
-        return new IdentifiedTrait(TraitId.anonymous(), trait);
+    public static IdentifiedTrait anonymous(TraitTemplate template) {
+        return new IdentifiedTrait(TraitId.anonymous(), template);
     }
 
-    public static IdentifiedTrait named(String name, Trait trait) {
-        return new IdentifiedTrait(TraitId.named(name), trait);
+    public static IdentifiedTrait named(String name, TraitTemplate template) {
+        return new IdentifiedTrait(TraitId.named(name), template);
     }
 }

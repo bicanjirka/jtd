@@ -1,6 +1,7 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
+import td.damage.DamageMix;
 import td.effect.EffectKind;
 import td.effect.InvisibleTemplate;
 import td.effect.ShieldTemplate;
@@ -20,7 +21,7 @@ class EnemyDefinitionTest {
         EnemyDefinition withOne = this.base.withAdditionalTraits(List.of(IdentifiedTrait.anonymous(resist)));
         EnemyDefinition withTwo = withOne.withAdditionalTraits(List.of(IdentifiedTrait.anonymous(resist)));
 
-        assertThat(withTwo.traits()).containsExactly(resist, resist);
+        assertThat(withTwo.traitsFor(DamageMix.none())).containsExactly(resist, resist);
     }
 
     @Test
@@ -28,7 +29,7 @@ class EnemyDefinitionTest {
         Trait resist = new PercentResistTrait(0.8f);
         EnemyDefinition result = this.base.withAdditionalTraits(List.of(IdentifiedTrait.named("shield", resist)));
 
-        assertThat(result.traits()).containsExactly(resist);
+        assertThat(result.traitsFor(DamageMix.none())).containsExactly(resist);
     }
 
     @Test
@@ -41,7 +42,7 @@ class EnemyDefinitionTest {
 
         EnemyDefinition rankTwo = rankOne.withAdditionalTraits(List.of(IdentifiedTrait.named("shield", strongShield)));
 
-        assertThat(rankTwo.traits()).containsExactly(strongShield, unrelated);
+        assertThat(rankTwo.traitsFor(DamageMix.none())).containsExactly(strongShield, unrelated);
     }
 
     @Test

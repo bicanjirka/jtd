@@ -1,6 +1,8 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
+import td.damage.DamageMix;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
 import td.util.GameStartupException;
@@ -96,9 +98,12 @@ class EnemyCatalogTest {
         assertThat(catalog.get("c", Rank.GRUNT).baseHealth()).isEqualTo(50);
         assertThat(catalog.get("c", Rank.BOSS).baseHealth()).isEqualTo(800);
 
-        assertThat(toughCircle.definitionFor(Rank.SOLDIER).traits()).isEmpty();
-        assertThat(toughCircle.definitionFor(Rank.ELITE).adaptiveResist()).contains(new AdaptiveResist(0.6f));
-        assertThat(toughCircle.definitionFor(Rank.BOSS).adaptiveResist()).contains(new AdaptiveResist(0.6f));
+        assertThat(toughCircle.definitionFor(Rank.SOLDIER).traitsFor(DamageMix.none())).isEmpty();
+        DamageMix allPhysical = DamageMix.of(Damage.physical(10));
+        assertThat(toughCircle.definitionFor(Rank.ELITE).traitsFor(allPhysical))
+                .containsExactly(PercentResistTrait.physicalOnly(0.6f));
+        assertThat(toughCircle.definitionFor(Rank.BOSS).traitsFor(allPhysical))
+                .containsExactly(PercentResistTrait.physicalOnly(0.6f));
     }
 
     @Test
@@ -138,10 +143,10 @@ class EnemyCatalogTest {
         assertThat(traitNamed(elite, "flatResist")).contains(FlatResistTrait.physicalOnly(800));
     }
 
-    private static Optional<Trait> traitNamed(EnemyDefinition definition, String name) {
+    private static Optional<TraitTemplate> traitNamed(EnemyDefinition definition, String name) {
         return definition.traitSlots().stream()
                 .filter(slot -> slot.id().equals(TraitId.named(name)))
-                .map(IdentifiedTrait::trait)
+                .map(IdentifiedTrait::template)
                 .findFirst();
     }
 

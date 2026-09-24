@@ -33,6 +33,7 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     private final GameWorld gameWorld;
     private final EnemyDefinition definition;
+    private final List<Trait> traits;
     private final Rank rank;
     private final int price;
     private final int healthMax;
@@ -63,7 +64,8 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     public DefinedEnemyMob(EnemyDefinition definition, GameWorld gameWorld, SpawnParameters spawnParameters, Rank rank) {
         this.gameWorld = gameWorld;
-        this.definition = definition.adaptedTo(gameWorld.damageTally().mix());
+        this.definition = definition;
+        this.traits = definition.traitsFor(gameWorld.damageTally().mix());
         this.rank = rank;
         this.price = spawnParameters.price();
         // Divided after the spawn shape's multiplier, which the wave already applied to the health.
@@ -145,7 +147,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     public List<Trait> traits() {
-        return this.definition.traits();
+        return this.traits;
     }
 
     public double getX() {
@@ -203,7 +205,7 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     /** Rejects the effect if any trait blocks its kind. */
     public void applyEffect(Effect effect) {
-        for (Trait trait : this.definition.traits()) {
+        for (Trait trait : this.traits) {
             if (trait.blocksEffect(effect.kind())) {
                 return;
             }
@@ -231,7 +233,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             return false;
         }
         TraitContext context = this.traitContext();
-        for (Trait trait : this.definition.traits()) {
+        for (Trait trait : this.traits) {
             if (!trait.isValidTarget(context)) {
                 return false;
             }
@@ -263,7 +265,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         Damage landed = this.land(damage);
         TraitContext context = this.traitContext();
         float factor = 1f;
-        for (Trait trait : this.definition.traits()) {
+        for (Trait trait : this.traits) {
             factor *= trait.speedFactor(context);
         }
         this.speed = this.definition.baseSpeed() * this.shapeSpeedMultiplier * factor;
@@ -298,7 +300,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private Damage absorb(Damage incoming) {
         Damage result = incoming;
         TraitContext context = this.traitContext();
-        for (Trait trait : this.definition.traits()) {
+        for (Trait trait : this.traits) {
             result = trait.onHit(result, context);
         }
         return result;

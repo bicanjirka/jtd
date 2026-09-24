@@ -2,6 +2,7 @@ package td.wave;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.damage.DamageMix;
 import td.enemy.BodyArchetype;
 import td.enemy.EnemyDefinition;
 import td.enemy.IdentifiedTrait;
@@ -50,12 +51,12 @@ class SpawnShapeTest {
 
         EnemyDefinition armored = plated.withAdditionalTraits(List.of(SpawnShape.armored().traitOverride().orElseThrow()));
 
-        assertThat(armored.traits()).hasSize(2);
+        assertThat(armored.traitsFor(DamageMix.none())).hasSize(2);
     }
 
     @Test
     void armoredsTraitBluntsPhysicalDamageButLeavesMagicDamageUntouched() {
-        Trait armor = SpawnShape.armored().traitOverride().orElseThrow().trait();
+        Trait armor = SpawnShape.armored().traitOverride().orElseThrow().template().resolvedFor(DamageMix.none()).orElseThrow();
         TraitContext traitContext = new TraitContext(1f);
 
         assertThat(armor.onHit(Damage.physical(100), traitContext).amount()).isLessThan(100);
