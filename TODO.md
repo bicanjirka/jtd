@@ -3,7 +3,6 @@
 I would like to add feature ideas to this todo as well to have all possible work idead at one place.
 
 - non-feature request. I see you mention exact names in line comments frequently. I do not like unnecessary line comments at all and I hate that you have to change so many of them when performing as simple thing as renaming a level for example. Save me some tokens by having as little line comments as possible. And do not mention obvious things in them. Propose a review of the code to apply this.
-- review how many code rules in Rules.java you have, I think maintaining of this project got very VERY expensive because the amount of documentation, tests, inline comments and rules you added here. Propose me a simplification. I am not willing to spend 100k tokens on simple tasks anymore. Propose me something based on best practices from other projects. Or I will delete it all manually.
 
 # Known gaps and future work
 
@@ -79,7 +78,7 @@ unnecessary, and every mutation lands on a deterministic tick boundary.
 
 ### `Tower` is a twenty-three-method interface
 
-`CLAUDE.md` §5 rule 6 asks for interfaces of one to five methods. `Tower` has twenty-three:
+`CLAUDE.md`'s code style asks for interfaces of one to five methods. `Tower` has twenty-three:
 identity, position, rendering, selection, economy, damage accounting, upgrade paths and buff
 contribution, all on one type. It is what every consumer depends on, so every consumer depends
 on all of it — `PanelTowerInfo` wants the upgrade and accounting half, `BoardRenderer` wants
@@ -94,7 +93,7 @@ position and the visitor, `AuraTower` wants position and type.
 
 ### `EnemyMob`/`Tower`/`Projectile` use Visitor where a sealed type + switch might do
 
-`CLAUDE.md` §5 rule 11 bans `instanceof` type-switching and names `EnemyMobVisitor`/
+`CLAUDE.md`'s code style bans `instanceof` type-switching and names `EnemyMobVisitor`/
 `TowerVisitor`/`ProjectileVisitor` as the way to branch on domain type — but also carves out
 "a switch over a *sealed* type is fine," which `td.enemy` already prefers for `BodyArchetype`/
 `MovementBehavior`/`AbilityTrigger`/`AbilityAction`/`EffectTarget`: sealed interface, switched on
@@ -105,10 +104,9 @@ every call site until handled) without an `accept()` method per leaf or a Visito
 class per consumer operation.
 
 `EnemyMobVisitor` is the clearest case: it has exactly one method, `visitDefined`, because
-`DefinedEnemyMob` is the only leaf — the package's own `CLAUDE.md` says the machinery exists so
-"a second non-data-driven mob can be added later without reopening every call site," which is
-speculative generality for a hierarchy with one member, the thing root `CLAUDE.md`'s "Doing
-tasks" section says not to build for. `Tower` (8 leaves, several real per-type operations —
+`DefinedEnemyMob` is the only leaf. The machinery exists so "a second non-data-driven mob can be
+added later without reopening every call site", which is speculative generality for a hierarchy
+with one member. `Tower` (8 leaves, several real per-type operations —
 sprite render, effect render, targeting) is the closer-to-legitimate case, since Visitor avoids
 touching every leaf file when a new render pass is added — but sealed+switch would force the
 same per-leaf handling at every existing switch site, so it's not obvious Visitor buys anything
@@ -116,14 +114,14 @@ there either.
 
 - **Where:** `td.enemy.EnemyMob`/`EnemyMobVisitor`/`DefinedEnemyMob`; `td.tower.Tower`/
   `TowerVisitor` and its 8 leaf towers; `td.projectile.Projectile`/`ProjectileVisitor` and its 2
-  leaf projectiles; the rule itself, `CLAUDE.md` §5 rule 11 and `no-instanceof` in
-  `scripts/VerifyRules.java`.
+  leaf projectiles; the rule itself, in `CLAUDE.md`'s code style and the `LITERAL_INSTANCEOF` check in
+  `checkstyle.xml`.
 - **Approach:** validate on `EnemyMob` first — it's the cheapest case (one leaf, one Visitor
   method) to prove the idea before touching `Tower`'s eight. Seal `EnemyMob` to
   `permits DefinedEnemyMob`, replace `EnemyMobVisitor`'s single call site with a direct
   `switch` (pattern matching, exhaustive), and delete `EnemyMobVisitor`/`accept`. If that holds
   up and reads better, repeat for `Projectile` (2 leaves) and `Tower` (8 leaves, more render
-  consumers to update). If the pattern proves out, reword `CLAUDE.md` §5 rule 11 to state the
+  consumers to update). If the pattern proves out, reword that `CLAUDE.md` rule to state the
   actual invariant — exhaustive, compiler-checked dispatch only — rather than mandating Visitor
   by name, so sealed+switch is the default answer and Visitor is reserved for a hierarchy that
   genuinely needs several independently-growing operations over types that can't be sealed.
@@ -226,8 +224,7 @@ thresholds are similarly unverified guesses at what a reasonable mid-level of in
 - **Approach:** play each of the built-in levels with every node bought at least once, and adjust price/stat-bonus/
   condition-threshold values until each node feels like a meaningful, roughly-comparable-in-power choice rather than
   a strictly-better-or-worse one. No code or architecture change needed — every number here is already a named
-  constant, not embedded in logic. `td.BalanceHarness` and the `n`/`x`/`c` debug keybindings (see the root
-  `CLAUDE.md`'s "Playtesting and balance tooling") now make this cheap to actually do.
+  constant, not embedded in logic. `td.BalanceHarness` and the `n`/`x`/`c` debug keybindings (see `docs/ARCHITECTURE.md` section 9) now make this cheap to actually do.
 
 ### New tower numbers are unbalanced placeholders
 
@@ -241,7 +238,7 @@ with the cooldown-gated travelling-wave firing model) join this same bucket.
 - **Approach:** play each of the built-in levels with all three new towers, and adjust values until each feels like
   a meaningful, roughly-comparable-in-power choice next to the existing four attack towers. No code or architecture
   change needed - every number here is already a named constant, not embedded in logic. `td.BalanceHarness` and the
-  `n`/`x`/`c` debug keybindings (see the root `CLAUDE.md`'s "Playtesting and balance tooling") now make this cheap
+  `n`/`x`/`c` debug keybindings (see `docs/ARCHITECTURE.md` section 9) now make this cheap
   to actually do.
 - **Evidence gathered, not yet acted on:** a one-tower-vs-one-captive-target comparison (all 7 attack towers, same
   position/level/2000-tick budget, single very-tanky enemy so none of them run out of target) found raw damage-per-
@@ -311,7 +308,7 @@ it: Marked Round (`SniperTower`), Warding Field (`PulseTower`), Cursed Shrapnel 
 Homing Curse (`SeekerTower`), Hexflame (`CinderTower`), Withering Field (`AuraTower`).
 
 - **Where:** `td.effect` (`EffectKind`, `Effect`'s static factories, `ActiveEffects.magnitude`),
-  per `td/effect/CLAUDE.md`'s "Adding a new effect kind" checklist.
+  per `td/effect/CLAUDE.md`'s "Adding a kind" checklist.
 - **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #1 and its own
   open questions (stack shape, per-stack magnitude, composition order with `SHIELD`/`Trait`
   resistance) - none of those are resolved yet.
@@ -393,7 +390,7 @@ Sonar's Twin Array III - primarily a render/aim concern (a second `TurretAim` in
 
 Splash's Toxic Bloom - its own decay curve, separate from `BURN`'s fuel-pool model.
 
-- **Where:** `td.effect`, per `td/effect/CLAUDE.md`'s "Adding a new effect kind" checklist.
+- **Where:** `td.effect`, per `td/effect/CLAUDE.md`'s "Adding a kind" checklist.
 - **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #10.
 
 ### Resistance-aware damage scaling doesn't exist
@@ -461,7 +458,7 @@ do this — see below). This was a speculative "nice to have," not a committed d
   to be derived from its own chosen target, per tower. There's also no `findEnemy()` method to
   hook today — targeting is composed per-tower inside `doTick` via `td.tower.targeting` pieces
   (e.g. `SniperTower.doTick` builds candidates through `InRangeTargetQuery.ofType(...)` then a
-  `TargetSelector`; see the root `CLAUDE.md` §4/`td/tower/CLAUDE.md`'s "Targeting" section) — so
+  `TargetSelector`; see `td/tower/CLAUDE.md`'s "Targeting" section) — so
   this needs new per-tower "facing" state updated wherever each tower's `doTick` calls its
   selector, exposed as a getter, then threaded through as a new `facingRadians` field on
   `TowerSpriteDraw` (currently absent — `EnemyBodyDraw`/`EnemyFadeDraw` already carry one) and
@@ -502,8 +499,7 @@ single hit), making the Warden's armor mechanically inert regardless of which to
   once they get their own late-game content) repeatedly, adjusting values until the chain and
   the migrated traits feel meaningfully tuned rather than placeholder guesses - no code or
   architecture change needed, every number here is already a named constant. `td.BalanceHarness`
-  and the `n`/`x`/`c` debug keybindings (see the root `CLAUDE.md`'s "Playtesting and balance
-  tooling") now make this cheap to actually do - `x` specifically can spawn the Warden chain's
+  and the `n`/`x`/`c` debug keybindings (see `docs/ARCHITECTURE.md` section 9) now make this cheap to actually do - `x` specifically can spawn the Warden chain's
   stages on demand without playing to wave 18 first.
 
 ### Critical-damage numbers are unbalanced placeholders
