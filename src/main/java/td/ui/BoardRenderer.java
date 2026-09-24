@@ -50,6 +50,7 @@ public final class BoardRenderer {
         for (Tower tower : this.world.towers().all()) {
             tower.accept(spriteFrameBuilder);
             tower.accept(effectFrameBuilder);
+            effectFrameBuilder.addStatus(tower, level.board().scale());
         }
 
         ProjectileFrameBuilder projectileFrameBuilder = new ProjectileFrameBuilder(interpolationAlpha);

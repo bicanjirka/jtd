@@ -23,3 +23,11 @@ batch. Each entry says what to do and what should be true.
 - On the board: debug-spawn an Elite `c`, freeze it with Seekers repeatedly; check the freeze
   marker disappears sooner each time. The Warden egg (burn/freeze immune) still shows its immune
   glyphs; any `EffectResistTrait` below 1 shows the new resist glyph.
+
+## 4. Phase 4 - disruption (screenshot)
+
+- Start any level, place a few towers near the path's start, and debug-spawn the Jammer (`j`,
+  cycle the debug spawn to it). Screenshot while it walks past the towers.
+- Expect: a pink ring (100 px radius) around the Jammer; every tower whose centre is inside it
+  shows a small pink diamond in its top-right corner, and its range circle (when selected) is
+  20% smaller; both clear once the Jammer passes or dies.

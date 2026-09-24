@@ -20,6 +20,8 @@ import td.fixtures.LevelFixtures;
 import td.level.LevelDefinition;
 import td.level.LevelOutcome;
 import td.projectile.CannonballProjectile;
+import td.stat.DisruptionAura;
+import td.tower.AuraTower;
 import td.tower.MortarTower;
 import td.tower.SniperTower;
 import td.tower.Tower;
@@ -209,6 +211,31 @@ class GameEngineTest {
             enemy.doTick(t);
         }
         return received.stream().mapToInt(Damage::amount).sum();
+    }
+
+    @Test
+    void aDisruptingEnemyShrinksANearbyTowersRangeOnlyWhileItLives() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyDefinition jammer = EnemyDefinition.of("jam", "Jam", 100, 1, 0f, BodyArchetype.SQUARE)
+                .withDisruption(new DisruptionAura(1000f, 0.3f, 0.2f));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("jam", Rank.GRUNT)), 1000)
+                .withCustomEnemies(List.of(jammer)));
+        engine.startPlacing(TowerFactory.Type.AURA, AuraTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
+        Tower tower = engine.getGameWorld().towers().all().getFirst();
+        float fullRange = tower.getRangeReal();
+        engine.nextWave();
+
+        engine.doTick(1);
+        boolean disruptedWhileAlive = tower.isDisrupted();
+        float disruptedRange = tower.getRangeReal();
+        engine.getGameWorld().enemies().getEnemies()[0].doDamage(Damage.physical(1_000_000));
+        engine.doTick(2);
+
+        assertThat(disruptedWhileAlive).isTrue();
+        assertThat(disruptedRange).isCloseTo(fullRange * 0.8f, within(0.01f));
+        assertThat(tower.isDisrupted()).isFalse();
+        assertThat(tower.getRangeReal()).isEqualTo(fullRange);
     }
 
     @Test

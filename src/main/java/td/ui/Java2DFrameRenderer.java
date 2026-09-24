@@ -28,6 +28,7 @@ import td.ui.render.SplashDraw;
 import td.ui.render.StatusMarkerDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerSpriteDraw;
+import td.ui.render.TowerStatusDraw;
 import td.ui.render.TraitMarkerDraw;
 import td.ui.render.TurretHeadDraw;
 import td.wave.PathColor;
@@ -407,6 +408,7 @@ public final class Java2DFrameRenderer {
             case TRAIT_MARKER_EFFECT_RESIST -> new Color(200, 200, 160);
             case TRAIT_MARKER_FREEZE_DIMINISHING -> new Color(120, 180, 220);
             case TRAIT_MARKER_OVERFLOW -> Color.LIGHT_GRAY;
+            case DISRUPTION -> new Color(235, 90, 200);
         };
     }
 
@@ -890,6 +892,8 @@ public final class Java2DFrameRenderer {
                     this.paintFilledCircle(g2, pulse.palette(), pulse.centerX(), pulse.centerY(), pulse.radius());
             case AuraDraw aura -> this.paintAura(g2, aura);
             case ConeDraw cone -> this.paintCone(g2, cone);
+            case TowerStatusDraw status -> this.paintStatusMarker(g2,
+                    new StatusMarkerDraw(status.palette(), status.x(), status.y(), status.scale()));
         }
     }
 

@@ -1,6 +1,9 @@
 package td.tower.buff;
 
 import org.junit.jupiter.api.Test;
+import td.stat.DisruptionPenalty;
+import td.tower.TowerBaseStats;
+import td.tower.TowerStats;
 
 import java.util.List;
 
@@ -117,5 +120,22 @@ class TowerBuffTest {
         TowerBuff buff = new TowerBuff(0f, 0f, 0f, 0f, 1.5f);
 
         assertThat(buff.critChanceFor(0f)).isEqualTo(1f);
+    }
+
+    @Test
+    void stackedPenaltiesNeverTakeFireRateOrRangeBelowAQuarter() {
+        TowerBuff crushed = TowerBuff.fireRate(-2f).withRange(-2f);
+
+        assertThat(crushed.fireRateFor(20)).isEqualTo(35);
+        assertThat(crushed.rangeFor(4f)).isEqualTo(1f);
+    }
+
+    @Test
+    void anAuraBuffAndADisruptionPenaltyAddUp() {
+        TowerStats stats = TowerStats.of(new TowerBaseStats(100, 2f, 20), TowerBuff.range(0.5f),
+                new DisruptionPenalty(0.25f, 0.2f), 10);
+
+        assertThat(stats.range()).isCloseTo(2f * 1.3f, org.assertj.core.data.Offset.offset(1e-5f));
+        assertThat(stats.coolDown()).isEqualTo(25);
     }
 }

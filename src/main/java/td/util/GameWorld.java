@@ -7,6 +7,7 @@ import td.economy.EconomyLedger;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyRoster;
 import td.projectile.ProjectileRoster;
+import td.stat.DisruptionField;
 import td.tower.TowerRoster;
 import td.wave.Path;
 import td.wave.Wave;
@@ -33,6 +34,7 @@ public class GameWorld {
     private final ProjectileRoster projectiles = new ProjectileRoster();
     private final WaveAnnouncer waves = new WaveAnnouncer();
     private final DamageTally damageTally = new DamageTally();
+    private final DisruptionField disruptions = new DisruptionField();
     private volatile LoadedLevel level = LoadedLevel.none();
 
     public GameWorld(GameHost mainApp) {
@@ -70,6 +72,11 @@ public class GameWorld {
     /** Every hit that landed this level, by damage type. */
     public DamageTally damageTally() {
         return this.damageTally;
+    }
+
+    /** Where enemies weaken towers this tick. */
+    public DisruptionField disruptions() {
+        return this.disruptions;
     }
 
     /** The only source of randomness in the simulation. */

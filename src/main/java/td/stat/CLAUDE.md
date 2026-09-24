@@ -12,5 +12,8 @@
   `StatModifier`. A constant contribution is a constant `StatModifiers` bundle.
 - `StatSheet` caches until `invalidate()` and resolves into its own arrays: nothing on that path
   allocates. Whoever changes an input (a hit, an effect applied or ticked) invalidates.
+- `DisruptionField` is cleared at the start of every tick's enemies phase; live, on-board enemies
+  with a `DisruptionAura` add their zone, and towers sample it after. It is the only link
+  between them.
 - A new stat: an `EnemyStat` constant with its default and clamp. A new stat that a hit reads goes
   into `td.enemy.HitResolution`, the only place the hit formula lives.

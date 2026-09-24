@@ -83,7 +83,8 @@ public final class RankedEnemy {
     private static EnemyDefinition withId(EnemyDefinition source, String newId) {
         return new EnemyDefinition(newId, source.displayName(), source.description(), source.baseHealth(),
                 source.price(), source.baseSpeed(), source.healthDivisor(), source.mobType(), source.archetype(),
-                source.movement(), source.traitSlots(), source.abilitySlots(), source.baseStats());
+                source.movement(), source.traitSlots(), source.abilitySlots(), source.baseStats(),
+                source.disruption());
     }
 
     @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)

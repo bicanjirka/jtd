@@ -248,11 +248,13 @@ public class GameEngine {
         if (this.startWave) {
             waveStarted = this.nextWave();
         }
+        this.gameWorld.disruptions().clear();
         for (EnemyMob enemy : this.gameWorld.enemies().getEnemies()) {
             enemy.doTick(time);
         }
         this.gameWorld.projectiles().doTick(time);
         for (Tower tower : this.gameWorld.towers().all()) {
+            tower.refreshDisruption();
             tower.doTick(time);
         }
         this.settleWave();

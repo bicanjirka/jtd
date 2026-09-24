@@ -19,6 +19,12 @@ public interface Tower {
 
     void doTick(int gameTime);
 
+    /** Re-reads the disruption at this tower's centre, republishing stats only when it changed. */
+    void refreshDisruption();
+
+    /** Whether an enemy's disruption weakens this tower right now. */
+    boolean isDisrupted();
+
     <R> R accept(TowerVisitor<R> visitor);
 
     boolean isSelected();
