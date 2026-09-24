@@ -13,7 +13,8 @@
   not the authored cells. It takes scale/width/height, not the cell array. Multi-path levels
   use the union.
 - Smoothing: `PathSmoothing.none()` is the identity, never `null`. `cornerPull` is a fraction of
-  the shorter leg, capped at 0.5; degenerate corners stay unrounded.
+  the shorter leg, capped at 0.5; degenerate corners stay unrounded. A new strategy extends
+  `AbstractCornerSmoothing` and supplies only one corner's curve.
 
 ## Wave script
 
@@ -33,8 +34,10 @@ never in the constructor: that keeps a level load a single `LoadedLevel` publica
 
 - **Rank keywords** `grunt soldier veteran elite boss` go before the enemy or shape they rank and
   override the wave's default rank for that slot.
-- **Shape keywords** go before the enemy: `armored` (1, adds a physical-only resist trait),
-  `flank` (2), and `swarm n`, `line n`, `column n`, `drip n` (member count required).
+- **Shape keywords** go before the enemy: `armored` (1 member, adds a physical-only resist
+  trait), `flank` (2 members at opposite sides), `swarm n` (half size, health/bounty split,
+  scattered), `line n` (spread across), `column n` / `drip n` (spaced tighter / looser than one
+  slot).
 - A count applies to the next token: `3 s e 4 c`. Placed before a rank/shape keyword, it repeats
   the whole slot (`3 elite swarm 4 c`); placed right after a shape keyword, it is the member
   count.

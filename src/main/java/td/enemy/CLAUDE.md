@@ -9,9 +9,14 @@
   `EnemyCatalog.builtIn()`), one-level content in `LevelDefinition.customEnemies()` /
   `customRankedEnemies()`.
 - `RankedEnemy` ladders are authored contiguously upward from `Rank.GRUNT`
-  (`startingAt(...).thenAt(...)`); each step receives the previous rank's definition. Asking for
-  an unauthored rank falls back to the highest authored one. `cloneAs` clones every rank, each
-  from the original ladder's own definition for that rank.
+  (`startingAt(...).thenAt(...)`); each step receives the previous rank's definition (typically
+  `withHealthAndPrice`). A gap or a backward step is a `GameStartupException`. Asking for an
+  unauthored rank falls back to the highest authored one.
+- Single-rank enemy: `EnemyCatalog.register(EnemyDefinition)`. A variant of an existing one:
+  `EnemyCatalog.cloneAndAdjust(baseId, newId, adjust)`, which clones every rank from the
+  original's own definition. `adjust` is a `UnaryOperator` (rank-blind) or a
+  `BiFunction<Rank, EnemyDefinition, ...>` (rank-aware). `register` also rejects spawn-ability
+  cycles.
 - Gameplay spawns through `EnemyCatalog`. `EnemyFactory` is only a test convenience over
   `EnemyCatalog.builtIn()`. `EnemyCatalog.ids()` keeps registration order (the debug spawn
   cycles through it).
@@ -26,12 +31,16 @@
 
 - A `Trait` instance is shared by every mob of a definition, so it holds no per-mob state; per-mob
   input arrives as `TraitContext`. `Trait.marker()` has no default, on purpose.
-- Name a trait/ability (`TraitId.named`) only when a later composition step replaces it by id;
-  otherwise it stays anonymous.
+- `withAdditionalTraits`/`withAdditionalAbilities` replace an entry with the same
+  `TraitId.named(...)` id and stack anonymous ones. Name an entry only when a later step replaces
+  it (e.g. `"armor"`, which the `armored` spawn shape overrides).
+- Built-in traits include `PercentResistTrait`/`FlatResistTrait` (per hit, scopable with
+  `physicalOnly`/`magicOnly`), `HurtSpeedTrait`, and crit/burn/freeze immunities.
 - Effect immunity is `Trait.blocksEffect`, checked in `DefinedEnemyMob.applyEffect` before
   `ActiveEffects` sees the effect.
 - Per-mob `AbilityState` is built in the constructor, parallel to `definition.abilities()`.
 - `ticksSinceLastHit` starts at `0`, so an idle trigger counts from spawn, not "forever".
+  `WardenChainTest` covers the ability timing end to end.
 - A frozen mob (`isIncapacitated()`) doesn't evaluate abilities on live ticks, but still does on
   its death tick.
 - A tower can kill a mob *after* that mob's own `doTick` ran this tick. So death, crit-taken and

@@ -52,8 +52,10 @@
   `docs/features/FEATURE-tower-specialization-abilities.md`; nodes waiting on a missing primitive
   are no-op hooks with a `TODO.md` entry.
 - Build nodes with `UpgradeNode.of(...)` plus `withBuff`/`withRequires`/`withGate`/
-  `withExtraEffect`. `requires` decides whether a node is offered; `gate` is the performance
-  condition to clear once offered.
+  `withExtraEffect`. `requires` decides whether a node is offered (`UpgradeCondition.owns(id)`,
+  `slotEmpty(slot)`, `StandardBaseSlot.opens(slot)`, combined with `and`/`or`). `gate` is the
+  performance condition to clear once offered (`always()`, `KillCountCondition`,
+  `DamageDealtCondition`, `ClusterCondition`), and its `progress()` feeds the UI.
 - Never hand-write a node's bonus into a tower's description: `UpgradeNode.describe()` derives it
   and `upgradeNodesBlock()` lists offered nodes automatically.
 - A bonus outside `TowerBuff`'s axes goes in `onUpgradeBought`, matching the node by `equals` (not
@@ -71,5 +73,6 @@
    `TowerEffectFrameBuilder`.
 4. `Palette` constants plus cases in `TowerSpriteFrameBuilder.bodyPaletteFor` and
    `Java2DFrameRenderer`'s `towerBodyShape`/`turretHeadShape`/`colorFor`.
-5. `upgradeTree()` content (see above).
+5. `upgradeTree()`: `StandardBaseSlot.rangeNode`/`awakenNode`, two `HEAD` chains whose roots
+   require `StandardBaseSlot.opens(HEAD)`, and 1-3 `SPECIAL` roots requiring `opens(SPECIAL)`.
 6. `README.md`'s tower table. The toolbar icon reuses the board paint code, so it needs no art.
