@@ -24,9 +24,9 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
     private static final double COLUMN_SPACING_SLOTS = 0.3;
     private static final double DRIP_SPACING_SLOTS = 2.0;
     private static final int ARMORED_FLAT_RESIST = 30;
-    // Named, so it replaces an existing armor trait rather than stacking with it.
+    // Anonymous, so it always stacks with whatever armor the enemy already has.
     private static final IdentifiedTrait ARMORED_TRAIT =
-            IdentifiedTrait.named("armor", FlatResistTrait.physicalOnly(ARMORED_FLAT_RESIST));
+            IdentifiedTrait.anonymous(FlatResistTrait.physicalOnly(ARMORED_FLAT_RESIST));
 
     private static final SpawnShape NORMAL =
             new SpawnShape(1, 1f, 1f, 1f, 1f, Optional.empty(), SpawnSpread.NONE, 0.0);
@@ -45,8 +45,7 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
     }
 
     /**
-     * Adds a flat armor trait under the id {@code "armor"}, replacing an existing armor trait
-     * rather than stacking.
+     * Adds a flat physical armor trait on top of any armor the enemy already has.
      */
     public static SpawnShape armored() {
         return ARMORED;

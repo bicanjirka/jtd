@@ -93,6 +93,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private static Palette traitMarkerPaletteFor(TraitMarker marker) {
         return switch (marker) {
             case PERCENT_RESIST -> Palette.TRAIT_MARKER_PERCENT_RESIST;
+            case PHYSICAL_RESIST -> Palette.TRAIT_MARKER_PHYSICAL_RESIST;
+            case MAGIC_RESIST -> Palette.TRAIT_MARKER_MAGIC_RESIST;
             case FLAT_RESIST -> Palette.TRAIT_MARKER_FLAT_RESIST;
             case CRITICAL_IMMUNE -> Palette.TRAIT_MARKER_CRITICAL_IMMUNE;
             case HURT_SPEED -> Palette.TRAIT_MARKER_HURT_SPEED;

@@ -97,8 +97,8 @@ class EnemyCatalogTest {
         assertThat(catalog.get("c", Rank.BOSS).baseHealth()).isEqualTo(800);
 
         assertThat(toughCircle.definitionFor(Rank.SOLDIER).traits()).isEmpty();
-        assertThat(toughCircle.definitionFor(Rank.ELITE).traits()).hasSize(1);
-        assertThat(toughCircle.definitionFor(Rank.BOSS).traits()).hasSize(1);
+        assertThat(toughCircle.definitionFor(Rank.ELITE).adaptiveResist()).contains(new AdaptiveResist(0.85f));
+        assertThat(toughCircle.definitionFor(Rank.BOSS).adaptiveResist()).contains(new AdaptiveResist(0.7f));
     }
 
     @Test

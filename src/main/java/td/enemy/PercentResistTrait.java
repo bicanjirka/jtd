@@ -33,6 +33,9 @@ public record PercentResistTrait(float fraction, Optional<DamageType> restricted
 
     @Override
     public TraitMarker marker() {
-        return TraitMarker.PERCENT_RESIST;
+        return this.restrictedTo.map(type -> switch (type) {
+            case PHYSICAL -> TraitMarker.PHYSICAL_RESIST;
+            case MAGIC -> TraitMarker.MAGIC_RESIST;
+        }).orElse(TraitMarker.PERCENT_RESIST);
     }
 }

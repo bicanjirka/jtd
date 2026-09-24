@@ -31,11 +31,13 @@ final class BuiltInEnemies {
             .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(100, 5))
             .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(200, 13))
             .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(400, 33)
-                    .withDescription("No special abilities, but a faint layer of armor has started forming.")
-                    .withAdditionalTraits(List.of(IdentifiedTrait.named("armor", new PercentResistTrait(0.85f)))))
+                    .withDescription("No special abilities, but a faint layer of armor has started forming, "
+                            + "hardened against whichever damage type has hit hardest this level.")
+                    .withAdaptiveResist(new AdaptiveResist(0.85f)))
             .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(800, 83)
-                    .withDescription("No special abilities, but its armor has grown formidable.")
-                    .withAdditionalTraits(List.of(IdentifiedTrait.named("armor", new PercentResistTrait(0.7f)))))
+                    .withDescription("No special abilities, but its armor has grown formidable, hardened "
+                            + "against whichever damage type has hit hardest this level.")
+                    .withAdaptiveResist(new AdaptiveResist(0.7f)))
             .build();
 
     static final RankedEnemy ARMORED = RankedEnemy
@@ -149,9 +151,10 @@ final class BuiltInEnemies {
                             new TimeSinceLastHitTrigger(MENDER_SELF_HEAL_WINDOW_TICKS),
                             new ApplyEffectAction(new HealTemplate(1, MENDER_SELF_HEAL_DURATION_TICKS), new SelfTarget()))))))
             .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(480, 50)
-                    .withDescription("Its healing pulse now lasts twice as long, and a personal layer of armor "
-                            + "joins its own quiet self-repair when left unattacked.")
-                    .withAdditionalTraits(List.of(IdentifiedTrait.named("armor", new PercentResistTrait(0.8f))))
+                    .withDescription("Its healing pulse now lasts twice as long, and a personal layer of armor, "
+                            + "hardened against whichever damage type has hit hardest this level, joins its own "
+                            + "quiet self-repair when left unattacked.")
+                    .withAdaptiveResist(new AdaptiveResist(0.8f))
                     .withAdditionalAbilities(List.of(IdentifiedAbility.named("heal", new Ability(
                             new PeriodicTrigger(MENDER_HEAL_INTERVAL_TICKS),
                             new ApplyEffectAction(new HealTemplate(MENDER_HEAL_PER_TICK, MENDER_HEAL_DURATION_TICKS * 2),

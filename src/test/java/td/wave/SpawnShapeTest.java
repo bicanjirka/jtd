@@ -2,10 +2,15 @@ package td.wave;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.enemy.BodyArchetype;
+import td.enemy.EnemyDefinition;
+import td.enemy.IdentifiedTrait;
+import td.enemy.PercentResistTrait;
 import td.enemy.Trait;
 import td.enemy.TraitContext;
 import td.util.GameStartupException;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,6 +41,16 @@ class SpawnShapeTest {
         assertThat(shape.healthMultiplier()).isEqualTo(1f);
         assertThat(shape.bountyMultiplier()).isEqualTo(1f);
         assertThat(shape.traitOverride()).isPresent();
+    }
+
+    @Test
+    void armoredStacksWithAnArmorTraitTheEnemyAlreadyHas() {
+        EnemyDefinition plated = EnemyDefinition.of("plated", "Plated", 10, 1, 1f, BodyArchetype.SQUARE)
+                .withIdentifiedTraits(List.of(IdentifiedTrait.named("armor", new PercentResistTrait(0.5f))));
+
+        EnemyDefinition armored = plated.withAdditionalTraits(List.of(SpawnShape.armored().traitOverride().orElseThrow()));
+
+        assertThat(armored.traits()).hasSize(2);
     }
 
     @Test

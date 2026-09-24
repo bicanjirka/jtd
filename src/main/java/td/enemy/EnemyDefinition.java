@@ -1,5 +1,7 @@
 package td.enemy;
 
+import td.damage.DamageMix;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +23,7 @@ import java.util.function.Function;
  * @param traitSlots    always-on traits, identified so {@link #withAdditionalTraits} can replace
  * one by id
  * @param abilitySlots  triggered abilities, identified the same way
+ * @param adaptiveResist armor resolved against the level's damage mix when a mob is built
  */
 public record EnemyDefinition(
         String id,
@@ -34,7 +37,8 @@ public record EnemyDefinition(
         BodyArchetype archetype,
         MovementBehavior movement,
         List<IdentifiedTrait> traitSlots,
-        List<IdentifiedAbility> abilitySlots) {
+        List<IdentifiedAbility> abilitySlots,
+        Optional<AdaptiveResist> adaptiveResist) {
 
     public EnemyDefinition {
         traitSlots = List.copyOf(traitSlots);
@@ -48,7 +52,7 @@ public record EnemyDefinition(
     public static EnemyDefinition of(String id, String displayName, int baseHealth, int price, float baseSpeed,
             BodyArchetype archetype) {
         return new EnemyDefinition(id, displayName, "", baseHealth, price, baseSpeed, 1f,
-                EnemyMob.Type.NORMAL, archetype, new FixedMovement(), List.of(), List.of());
+                EnemyMob.Type.NORMAL, archetype, new FixedMovement(), List.of(), List.of(), Optional.empty());
     }
 
     /** Traits without their ids. */
@@ -90,31 +94,31 @@ public record EnemyDefinition(
     public EnemyDefinition withHealthAndPrice(int baseHealth, int price) {
         return new EnemyDefinition(this.id, this.displayName, this.description, baseHealth, price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots);
+                this.abilitySlots, this.adaptiveResist);
     }
 
     public EnemyDefinition withDescription(String description) {
         return new EnemyDefinition(this.id, this.displayName, description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots);
+                this.abilitySlots, this.adaptiveResist);
     }
 
     public EnemyDefinition withHealthDivisor(float healthDivisor) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots);
+                this.abilitySlots, this.adaptiveResist);
     }
 
     public EnemyDefinition withMobType(EnemyMob.Type mobType) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, mobType, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots);
+                this.abilitySlots, this.adaptiveResist);
     }
 
     public EnemyDefinition withMovement(MovementBehavior movement) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, movement, this.traitSlots,
-                this.abilitySlots);
+                this.abilitySlots, this.adaptiveResist);
     }
 
     /**
@@ -128,7 +132,7 @@ public record EnemyDefinition(
     public EnemyDefinition withIdentifiedTraits(List<IdentifiedTrait> traitSlots) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, traitSlots,
-                this.abilitySlots);
+                this.abilitySlots, this.adaptiveResist);
     }
 
     /**
@@ -146,7 +150,28 @@ public record EnemyDefinition(
     public EnemyDefinition withIdentifiedAbilities(List<IdentifiedAbility> abilitySlots) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
-                abilitySlots);
+                abilitySlots, this.adaptiveResist);
+    }
+
+    public EnemyDefinition withAdaptiveResist(AdaptiveResist adaptiveResist) {
+        return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
+                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
+                this.abilitySlots, Optional.of(adaptiveResist));
+    }
+
+    /**
+     * This definition as one mob spawned now sees it: the adaptive resist, if any, resolved
+     * against {@code mix} into an ordinary trait. Everything else is unchanged.
+     */
+    public EnemyDefinition adaptedTo(DamageMix mix) {
+        if (this.adaptiveResist.isEmpty()) {
+            return this;
+        }
+        List<IdentifiedTrait> resolved = this.adaptiveResist.get().resolvedFor(mix)
+                .map(IdentifiedTrait::anonymous).stream().toList();
+        return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
+                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement,
+                this.traitSlots, this.abilitySlots, Optional.empty()).withAdditionalTraits(resolved);
     }
 
     /** Adds abilities by id, like {@link #withAdditionalTraits}. */
