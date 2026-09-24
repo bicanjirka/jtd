@@ -1,12 +1,15 @@
 package td;
 
 import org.junit.jupiter.api.Test;
+import td.economy.EconomyState;
 import td.fixtures.BoardFixtures;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
+import td.level.LevelOutcome;
 import td.tower.SniperTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.util.RandomSource;
 import td.wave.Path;
 import td.wave.PathBuilder;
 import td.wave.PathCoverage;
@@ -19,13 +22,16 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * Loads and plays every built-in level through the engine, proving curved paths work in play, not
  * just in geometry.
  */
 class BuiltInLevelCatalogEngineTest {
+
+    private static final int UNLOSABLE_LIVES = 1_000_000;
+    private static final int TICK_BUDGET = 500_000;
+    private static final long RANDOM_SEED = 20260924L;
 
     /** A cell only the smoothed curve covers, not the raw corners. */
     private static Point aCellOnlyTheSmoothedCurveCovers(LevelDefinition level, PathDefinition path) {
@@ -46,22 +52,34 @@ class BuiltInLevelCatalogEngineTest {
                 .orElseThrow(() -> new AssertionError("Expected the smoothed curve to cover at least one cell the raw corners don't"));
     }
 
+    /**
+     * Plays every wave of every built-in level with no towers and lives that cannot run out, so
+     * each wave script spawns and walks its whole path whatever the balance numbers are.
+     */
     @Test
-    void everyBuiltInLevelLoadsAndRunsThroughItsFirstWaveWithoutError() {
-        for (LevelDefinition level : new BuiltInLevelCatalog().levels()) {
-            GameEngine engine = FakeGameHost.newBoundEngine();
+    void everyBuiltInLevelPlaysThroughEveryWaveToAWinWhenLivesCannotRunOut() {
+        for (LevelDefinition builtIn : new BuiltInLevelCatalog().levels()) {
+            LevelDefinition level = builtIn.withStartingLives(UNLOSABLE_LIVES);
+            GameEngine engine = FakeGameHost.newBoundEngine(RandomSource.seeded(RANDOM_SEED));
+            engine.loadLevel(level);
+            boolean livesEverRose = false;
+            int lowestCredits = level.startingCredits();
 
-            assertThatCode(() -> engine.loadLevel(level)).doesNotThrowAnyException();
+            int t = 1;
+            for (int previousLives = UNLOSABLE_LIVES; t <= TICK_BUDGET && !engine.outcome().isOver(); t++) {
+                engine.nextWave();
+                engine.doTick(t);
+                EconomyState state = engine.getGameWorld().economy().state();
+                livesEverRose |= state.lives() > previousLives;
+                lowestCredits = Math.min(lowestCredits, state.credits());
+                previousLives = state.lives();
+            }
 
-            engine.requestNextWave();
-            assertThatCode(() -> {
-                for (int t = 1; t <= 90; t++) {
-                    if (engine.isWaveReady()) {
-                        engine.nextWave();
-                    }
-                    engine.doTick(t);
-                }
-            }).describedAs("level '%s'", level.name()).doesNotThrowAnyException();
+            assertThat(engine.outcome()).describedAs("level '%s' after %d ticks", level.name(), t)
+                    .isEqualTo(LevelOutcome.WON);
+            assertThat(engine.getCurrentWaveIndex()).isEqualTo(engine.getWaveCount());
+            assertThat(livesEverRose).describedAs("level '%s' lives rose", level.name()).isFalse();
+            assertThat(lowestCredits).describedAs("level '%s' lowest credits", level.name()).isNotNegative();
         }
     }
 

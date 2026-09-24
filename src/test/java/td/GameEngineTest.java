@@ -29,6 +29,15 @@ class GameEngineTest {
     private static final EnemyDefinition WEAKLING = EnemyDefinition.of("weakling", "Weakling", 1, 7, 1.28f,
             BodyArchetype.CIRCLE);
 
+    /** Returns the tick the level ended on, or the budget if it never did. */
+    private static int tickUntilOver(GameEngine engine, int budget) {
+        int t = 1;
+        for (; t < budget && !engine.outcome().isOver(); t++) {
+            engine.doTick(t);
+        }
+        return t;
+    }
+
     @Test
     void loadingALevelReplacesEveryPartOfTheWorldInOneVisibleStep() {
         GameEngine engine = FakeGameHost.newBoundEngine();
@@ -561,5 +570,97 @@ class GameEngineTest {
         engine.debugGrantCredits(250);
 
         assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(350);
+    }
+
+    @Test
+    void killingTheLastWavesLastEnemyWinsTheLevel() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("weakling", Rank.GRUNT)), 100)
+                .withCustomEnemies(List.of(WEAKLING)));
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
+        int livesBefore = engine.getGameWorld().economy().getLives();
+
+        engine.nextWave();
+        tickUntilOver(engine, 60);
+
+        assertThat(engine.outcome()).isEqualTo(LevelOutcome.WON);
+        assertThat(engine.getGameWorld().economy().getLives()).isEqualTo(livesBefore);
+    }
+
+    @Test
+    void clearingAWaveThatIsNotTheLastReArmsTheNextInsteadOfWinning() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(
+                List.of(new WaveDefinition("c", Rank.GRUNT), new WaveDefinition("c", Rank.GRUNT)), 100));
+
+        engine.nextWave();
+        for (int t = 1; t <= 200 && !engine.isWaveReady(); t++) {
+            engine.doTick(t);
+        }
+
+        assertThat(engine.isWaveReady()).isTrue();
+        assertThat(engine.outcome()).isEqualTo(LevelOutcome.PLAYING);
+    }
+
+    @Test
+    void losingTheLastLifeLosesTheLevelBeforeItsLastWave() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(
+                List.of(new WaveDefinition("c", Rank.GRUNT), new WaveDefinition("c", Rank.GRUNT)), 100)
+                .withStartingLives(1));
+
+        engine.nextWave();
+        tickUntilOver(engine, 200);
+
+        assertThat(engine.outcome()).isEqualTo(LevelOutcome.LOST);
+        assertThat(engine.getCurrentWaveIndex()).isEqualTo(1);
+    }
+
+    @Test
+    void theLastEnemyLeakingTheLastLifeLosesRatherThanWins() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", Rank.GRUNT)), 100)
+                .withStartingLives(1));
+
+        engine.nextWave();
+        tickUntilOver(engine, 200);
+
+        assertThat(engine.outcome()).isEqualTo(LevelOutcome.LOST);
+    }
+
+    @Test
+    void anEndedLevelIgnoresTicksWavesPlacementAndUpgrades() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(
+                List.of(new WaveDefinition("c", Rank.GRUNT), new WaveDefinition("c", Rank.GRUNT)), 100)
+                .withStartingLives(1));
+        engine.nextWave();
+        int lastTick = tickUntilOver(engine, 200);
+        int creditsAtEnd = engine.getGameWorld().economy().getCredits();
+
+        engine.requestNextWave();
+        boolean waveStarted = engine.doTick(lastTick + 1) || engine.nextWave();
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
+
+        assertThat(waveStarted).isFalse();
+        assertThat(engine.getCurrentWaveIndex()).isEqualTo(1);
+        assertThat(engine.cells().at(2, 1).hasTower()).isFalse();
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAtEnd);
+    }
+
+    @Test
+    void reloadingAnEndedLevelPlaysAgain() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("c", Rank.GRUNT)), 100);
+        engine.loadLevel(level);
+        engine.nextWave();
+        engine.debugSkipCurrentWave();
+
+        engine.loadLevel(level);
+
+        assertThat(engine.outcome()).isEqualTo(LevelOutcome.PLAYING);
+        assertThat(engine.nextWave()).isTrue();
     }
 }
