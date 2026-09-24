@@ -7,6 +7,7 @@ import td.economy.EconomyState;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelCatalog;
 import td.level.LevelDefinition;
+import td.level.LevelOutcome;
 import td.tower.TowerFactory;
 import td.ui.BoardOverlays;
 import td.ui.BoardRenderer;
@@ -57,8 +58,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * A {@link CardLayout} switches between the level-select menu and the game.
  * {@link #startSelectedLevel} is re-enterable on the same engine and loop.
  * <p>
- * {@link #enemyDied} and {@link #economyChanged} run on the {@code game-loop} thread, so their
- * Swing work goes through {@code invokeLater}. New gameplay rules belong in the engine, not here.
+ * {@link #doTick} and {@link #economyChanged} run on the {@code game-loop} thread, so their Swing
+ * work goes through {@code invokeLater}. New gameplay rules belong in the engine, not here.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class TowerDefense extends JFrame implements EconomyListener, GameHost {
@@ -120,7 +121,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private volatile RenderFrame latestFrame;
     private boolean painting = false;
     private TickSpeed currentSpeed = TickSpeed.NORMAL;
-    private volatile boolean gameStopped = false;
     // Input and the loop can fire before a level exists and after one is torn down.
     private volatile boolean levelLoaded = false;
 
@@ -189,7 +189,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      * when the loop is not ticking.
      */
     private void doGameTick() {
-        if (this.gameStopped) {
+        if (this.engine.outcome().isOver()) {
             return;
         }
         int time = ++this.gameTime;
@@ -257,7 +257,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     private void installLevel(LevelDefinition level) {
-        this.setGameStopped(false);
+        this.gameConsole.setLevelEnded(false);
         this.boardOverlays.reset();
         this.unSelectTower();
         this.panelTowerSelector.stopPlacing();
@@ -279,7 +279,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (!this.levelLoaded) {
             return;
         }
-        if (!this.gameStopped && !this.confirmAbandonLevel()) {
+        if (!this.engine.outcome().isOver() && !this.confirmAbandonLevel()) {
             return;
         }
         this.returnToMenu();
@@ -325,18 +325,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.gameConsole.getTowerInfo().setExternalText(s);
     }
 
-    /** Runs on the game-loop thread, so Swing work is deferred with {@code invokeLater}. */
-    public void enemyDied(int enemiesLeft) {
-        WaveProgress progress = this.engine.waveProgress();
-        if (enemiesLeft == 0 && progress.hasNextWave()) {
-            LOG.info("Wave {} cleared, ready for the next one", progress.currentNumber());
-            this.engine.setWaveReady(true);
-            SwingUtilities.invokeLater(this::syncTransportButtons);
-        } else if (enemiesLeft == 0) {
-            this.gameWon();
-        }
-    }
-
     private void setWavePreview() {
         WaveProgress progress = this.engine.waveProgress();
         this.gameConsole.getWaveInfo().clearWaves();
@@ -361,6 +349,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setWavePreview();
         this.updateInfo();
         this.syncTransportButtons();
+        this.showOutcome(this.engine.outcome());
     }
 
     private void updateInfo() {
@@ -371,38 +360,22 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     /** Runs on the game-loop thread too. */
     public void economyChanged(EconomyState state) {
         SwingUtilities.invokeLater(this::updateInfo);
-        if (state.isGameOver()) {
-            this.gameLost();
-        }
     }
 
-    /** Guarded, since every later economy event would otherwise announce the loss again. */
-    private void gameLost() {
-        if (this.gameStopped) {
-            return;
+    /** Callers pass an outcome only on the transition, so each overlay shows once. */
+    private void showOutcome(LevelOutcome outcome) {
+        switch (outcome) {
+            case PLAYING -> {
+            }
+            case WON -> {
+                this.gameConsole.setLevelEnded(true);
+                this.boardOverlays.showWon();
+            }
+            case LOST -> {
+                this.gameConsole.setLevelEnded(true);
+                this.boardOverlays.showLost();
+            }
         }
-        LOG.info("Game over - lost, score={}", this.gameWorld.economy().getScore());
-        this.setGameStopped(true);
-        SwingUtilities.invokeLater(this.boardOverlays::showLost);
-    }
-
-    /** Guarded like {@link #gameLost()}. */
-    private void gameWon() {
-        if (this.gameStopped) {
-            return;
-        }
-        LOG.info("Game won, score={}", this.gameWorld.economy().getScore());
-        this.setGameStopped(true);
-        SwingUtilities.invokeLater(this.boardOverlays::showWon);
-    }
-
-    /**
-     * The single place the level-over flag changes. Reachable from the game-loop thread, so Swing
-     * work is deferred.
-     */
-    private void setGameStopped(boolean stopped) {
-        this.gameStopped = stopped;
-        SwingUtilities.invokeLater(() -> this.gameConsole.setLevelEnded(stopped));
     }
 
     public void startLevel() {
@@ -412,6 +385,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     /** Runs on the game-loop thread. */
     public void doTick(int time) {
+        boolean wasReady = this.engine.isWaveReady();
         boolean waveStarted = this.engine.doTick(time);
         if (waveStarted) {
             SwingUtilities.invokeLater(() -> {
@@ -419,6 +393,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
                 this.updateInfo();
                 this.syncTransportButtons();
             });
+        } else if (this.engine.isWaveReady() != wasReady) {
+            SwingUtilities.invokeLater(this::syncTransportButtons);
+        }
+        LevelOutcome outcome = this.engine.outcome();
+        if (outcome.isOver()) {
+            SwingUtilities.invokeLater(() -> this.showOutcome(outcome));
         }
     }
 
@@ -477,10 +457,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             return;
         }
         this.unSelectTower();
-        if (this.gameStopped && this.engine.isPlacingTower()) {
-            this.engine.cancelPlacing();
-            this.panelTowerSelector.stopPlacing();
-        }
         boolean wasPlacing = this.engine.isPlacingTower();
         int boardX = evt.getX() - this.gameBoard.getX();
         int boardY = evt.getY() - this.gameBoard.getY();
@@ -510,7 +486,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             return;
         }
         // After a win or loss the board stays inspectable, but nothing may change the outcome.
-        if (this.gameStopped) {
+        if (this.engine.outcome().isOver()) {
             return;
         }
         // A digit buys the selected tower's offered upgrade by number; no placement key is a digit.

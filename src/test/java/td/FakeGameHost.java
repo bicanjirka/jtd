@@ -22,13 +22,6 @@ class FakeGameHost implements GameHost {
     }
 
     @Override
-    public void enemyDied(int enemiesLeft) {
-        if (enemiesLeft == 0 && engine.getCurrentWaveIndex() < engine.getWaveCount()) {
-            engine.setWaveReady(true);
-        }
-    }
-
-    @Override
     public void setInfoText(String s) {
         // pure UI
     }

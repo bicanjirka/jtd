@@ -8,10 +8,6 @@ public interface GameHost {
     static GameHost noOp() {
         return new GameHost() {
             @Override
-            public void enemyDied(int enemiesLeft) {
-            }
-
-            @Override
             public void setInfoText(String s) {
             }
 
@@ -20,8 +16,6 @@ public interface GameHost {
             }
         };
     }
-
-    void enemyDied(int enemiesLeft);
 
     void setInfoText(String s);
 

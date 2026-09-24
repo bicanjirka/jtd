@@ -2,14 +2,12 @@ package td.enemy;
 
 import org.junit.jupiter.api.Test;
 import td.fixtures.WorldFixtures;
-import td.util.RecordingGameHost;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class EnemyRosterTest {
 
-    private final RecordingGameHost host = new RecordingGameHost();
-    private final EnemyRoster roster = new EnemyRoster(host);
+    private final EnemyRoster roster = new EnemyRoster();
 
     private static EnemyMob anEnemy() {
         return EnemyFactory.getEnemy("c", WorldFixtures.newWorld(), 0, 50, 3, Rank.GRUNT);
@@ -46,27 +44,26 @@ class EnemyRosterTest {
         roster.replace(outgoing, incoming);
 
         assertThat(roster.getEnemies()).containsExactly(incoming);
-        assertThat(host.enemyDiedCalls).isEmpty();
+        assertThat(roster.aliveCount()).isEqualTo(1);
     }
 
     @Test
-    void reportingADeathDecrementsTheAliveCountAndReportsItToTheHost() {
+    void reportingADeathDecrementsTheAliveCount() {
         roster.setCount(3);
 
         roster.reportDeath();
 
-        assertThat(host.enemyDiedCalls).containsExactly(2);
         assertThat(roster.aliveCount()).isEqualTo(2);
     }
 
     @Test
-    void clearingEveryEnemyZeroesTheCountWithoutReportingAClearedWave() {
+    void clearingEveryEnemyZeroesTheCount() {
         roster.setEnemies(new EnemyMob[]{anEnemy()});
         roster.setCount(5);
 
         roster.clear();
 
         assertThat(roster.getEnemies()).isEmpty();
-        assertThat(host.enemyDiedCalls).isEmpty();
+        assertThat(roster.aliveCount()).isZero();
     }
 }

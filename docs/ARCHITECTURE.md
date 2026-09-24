@@ -45,9 +45,11 @@ The split as it stands:
 - **`TowerDefense` (a `JFrame`) and `td.ui`** own presentation: layout, painting,
   `MouseEvent`/`KeyEvent` handling, and translating screen coordinates into the
   board-relative pixel coordinates `GameEngine.mouseClicked`/`highlightCell` expect.
-- **`GameHost`** is the engine's only channel back to the UI (`enemyDied`, `setInfoText`,
-  `clearCell`). `GameWorld` calls `setInfoText`; `EnemyRoster` and `TowerRoster` are handed the
-  host directly and call the other two. None of them knows about Swing.
+- **`GameHost`** is the engine's only channel back to the UI (`setInfoText`, `clearCell`).
+  `GameWorld` calls `setInfoText`; `TowerRoster` is handed the host directly and calls
+  `clearCell`. None of them knows about Swing. Wave re-arming and the level's end
+  (`GameEngine.outcome()`) are decided by the engine at the end of each tick and polled by the
+  UI, so every host - the window, tests, the balance harness - plays by the same rules.
 
 `TowerDefense` is the one class deliberately on both sides of the boundary. It is *not*
 shrinking, and calling it that would be wishful: it is around 700 lines and grew slightly
@@ -131,7 +133,7 @@ unrelated jobs directly. Each is now its own independently testable class:
 |------------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------------|
 | `BoardGeometry`                                      | `td.board`      | scale, board size, cell↔pixel conversion (an immutable value, replaced wholesale on `setBoard`)                                |
 | `EconomyLedger`                                      | `td.economy`    | the `EconomyState` (credits/score/lives) and `EconomyListener` notification                                                    |
-| `EnemyRoster` (implements `EnemyRegistry`)           | `td.enemy`      | the live per-wave enemy list and death reporting to `GameHost`                                                                 |
+| `EnemyRoster` (implements `EnemyRegistry`)           | `td.enemy`      | the live per-wave enemy list and its alive count                                                                               |
 | `TowerRoster`                                        | `td.tower`      | the tower list and buy/sell/clear                                                                                              |
 | `ProjectileRoster` (implements `ProjectileRegistry`) | `td.projectile` | the live in-flight shells/missiles                                                                                             |
 | `WaveAnnouncer`                                      | `td.wave`       | the `WaveStartListener` hub (`TowerThree` is the only subscriber, clearing the hit markers its scan left on the previous wave) |
@@ -201,9 +203,8 @@ matters:
 2. `TowerRoster.clear()` next, **while the outgoing geometry is still installed**: it maps
    each tower's pixel position back to a cell through the *current* `BoardGeometry` and calls
    back into the *current* `cellGrid`.
-3. `EnemyRoster.clear()` last. It deliberately does not notify `GameHost.enemyDied` — tearing
-   a level down is not a death, and the old name (`removeAll`) carried a notification that
-   could spuriously trigger the "won" overlay.
+3. `EnemyRoster.clear()` last. `loadLevel` also resets the level outcome, so an empty roster
+   from teardown never reads as a cleared final wave.
 
 `TowerDefense.returnToMenu()` itself clears no engine state at all. That is the payoff of
 `loadLevel()`'s contract.
@@ -430,14 +431,9 @@ SLF4J + Logback.
 See [`features/FEATURE-playtesting-and-balance-tooling.md`](features/FEATURE-playtesting-and-balance-tooling.md)
 for the full design.
 
-`td.BalanceHarness` implements `GameHost` itself and drives `GameEngine` through a level with
+`td.BalanceHarness` drives `GameEngine` (with `GameHost.noOp()`) through a level with
 a fixed `List<TowerPlacementSpec>` loadout, reporting lives lost, ticks-to-clear per wave, and
 each tower's cumulative kills and damage.
-
-It implements `GameHost` rather than using `GameHost.noOp()` specifically because the no-op
-host never re-arms `waveReady` — only the real `enemyDied(0)` callback does, and `GameWorld`
-has no alive-count accessor to poll instead — so the harness's own `enemyDied` mirrors
-`TowerDefense.enemyDied`'s `setWaveReady(true)` call.
 
 It also places towers through the same `startPlacing`/`mouseClicked` path the real mouse
 listener uses, verifying success via the cell grid afterward rather than trusting a return

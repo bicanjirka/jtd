@@ -41,7 +41,7 @@ public class GameWorld {
     public GameWorld(GameHost mainApp, RandomSource random) {
         this.random = random;
         this.mainApp = mainApp;
-        this.enemies = new EnemyRoster(mainApp);
+        this.enemies = new EnemyRoster();
         this.towers = new TowerRoster(mainApp, this.economy, this::getBoard);
     }
 

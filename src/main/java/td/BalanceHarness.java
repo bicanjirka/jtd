@@ -3,6 +3,7 @@ package td;
 import td.cell.CellGrid;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
+import td.level.LevelOutcome;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.GameHost;
@@ -16,12 +17,9 @@ import java.util.List;
 /**
  * Headless balance run: plays a level with a fixed tower loadout and no input, then reports lives
  * lost, ticks to clear each wave, and per-tower damage and kills. A tool run on demand, not a test.
- * <p>
- * Implements {@link GameHost} rather than using {@link GameHost#noOp()}, because only a real host
- * re-arms the next wave when the last enemy dies.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
-public final class BalanceHarness implements GameHost {
+public final class BalanceHarness {
 
     /**
      * Fixed so two runs of the same loadout are comparable; change it to sample a different
@@ -29,10 +27,8 @@ public final class BalanceHarness implements GameHost {
      */
     private static final long RANDOM_SEED = 20260917L;
 
-    private final GameEngine engine = new GameEngine(this, RandomSource.seeded(RANDOM_SEED));
+    private final GameEngine engine = new GameEngine(GameHost.noOp(), RandomSource.seeded(RANDOM_SEED));
     private final List<Integer> ticksToClearPerWave = new ArrayList<>();
-    private int waveStartTick = 0;
-    private boolean waveJustCleared = false;
 
     /** Runs one built-in loadout, so the class is executable with no arguments. */
     public static void main(String[] args) {
@@ -44,24 +40,6 @@ public final class BalanceHarness implements GameHost {
         new BalanceHarness().run(curlyPath, loadout, 5000);
     }
 
-    @Override
-    public void enemyDied(int enemiesLeft) {
-        if (enemiesLeft == 0) {
-            this.engine.setWaveReady(true); // GameHost.noOp() never marks the wave ready
-            this.waveJustCleared = true;
-        }
-    }
-
-    @Override
-    public void setInfoText(String s) {
-        // no UI to inform
-    }
-
-    @Override
-    public void clearCell(int x, int y) {
-        this.engine.clearCell(x, y);
-    }
-
     /**
      * Places the loadout, then ticks until every wave clears, lives run out or {@code tickBudget}
      * passes, and prints the report.
@@ -71,26 +49,18 @@ public final class BalanceHarness implements GameHost {
         this.placeLoadout(loadout, this.engine.getGameWorld().getBoard().scale());
 
         int t = 1;
-        for (; t <= tickBudget; t++) {
-            if (this.engine.isWaveReady() && this.engine.getCurrentWaveIndex() < this.engine.getWaveCount()) {
-                this.waveStartTick = t;
-                this.engine.nextWave();
+        int waveStartTick = 0;
+        for (; t <= tickBudget && !this.engine.outcome().isOver(); t++) {
+            if (this.engine.nextWave()) {
+                waveStartTick = t;
             }
             this.engine.doTick(t);
-            if (this.waveJustCleared) {
-                this.ticksToClearPerWave.add(t - this.waveStartTick);
-                this.waveJustCleared = false;
-            }
-            if (this.engine.getGameWorld().economy().getLives() <= 0) {
-                break;
-            }
-            if (this.engine.getCurrentWaveIndex() >= this.engine.getWaveCount()
-                    && this.engine.getGameWorld().enemies().aliveCount() == 0) {
-                break;
+            if (this.engine.isWaveReady() || this.engine.outcome() == LevelOutcome.WON) {
+                this.ticksToClearPerWave.add(t - waveStartTick);
             }
         }
 
-        this.printReport(level, t);
+        this.printReport(level, t - 1);
     }
 
     /**

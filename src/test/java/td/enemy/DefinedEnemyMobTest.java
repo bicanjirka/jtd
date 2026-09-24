@@ -60,7 +60,7 @@ class DefinedEnemyMobTest {
         assertThat(enemy.validTarget()).isFalse();
         assertThat(context.economy().getScore()).isEqualTo(7);
         assertThat(context.economy().getCredits()).isEqualTo(7);
-        assertThat(host.enemyDiedCalls).containsExactly(0);
+        assertThat(context.enemies().aliveCount()).isZero();
     }
 
     @Test
@@ -75,7 +75,7 @@ class DefinedEnemyMobTest {
 
         assertThat(context.economy().getScore()).isEqualTo(7);
         assertThat(context.economy().getCredits()).isEqualTo(7);
-        assertThat(host.enemyDiedCalls).containsExactly(0);
+        assertThat(context.enemies().aliveCount()).isZero();
     }
 
     @Test
@@ -246,7 +246,6 @@ class DefinedEnemyMobTest {
 
         assertThat(enemy.isDead()).isTrue();
         assertThat(context.economy().getCredits()).isEqualTo(creditsBeforeLeak);
-        assertThat(host.enemyDiedCalls).isNotEmpty();
 
         enemy.doDamage(Damage.physical(1000));
         assertThat(context.economy().getCredits()).isEqualTo(creditsBeforeLeak);
