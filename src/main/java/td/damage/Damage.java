@@ -8,15 +8,9 @@ package td.damage;
  * damages of different types throws.
  * <p>
  * {@link #critical()} survives {@link #scaledBy} and {@link #cappedAt}, so a resisted critical hit
- * still counts as one, and {@link #stripCritical()} removes it.
+ * still counts as one.
  */
 public record Damage(int amount, DamageType type, boolean critical) {
-
-    /**
-     * The one project-wide critical bonus, applied by {@link #asCritical()} and undone by
-     * {@link #stripCritical()}.
-     */
-    public static final float CRITICAL_MULTIPLIER = 1.5f;
 
     private static final Damage NONE = new Damage(0, DamageType.PHYSICAL);
 
@@ -66,19 +60,8 @@ public record Damage(int amount, DamageType type, boolean critical) {
         return new Damage(Math.min(this.amount, max), this.type, this.critical);
     }
 
-    /**
-     * Applies {@link #CRITICAL_MULTIPLIER}. A hit is rolled critical at most once, so this is never
-     * called on a critical hit.
-     */
-    public Damage asCritical() {
-        return new Damage(Math.round(this.amount * CRITICAL_MULTIPLIER), this.type, true);
-    }
-
-    /**
-     * Undoes {@link #asCritical()}; a no-op on a non-critical hit. Exact, because every crit uses
-     * the same multiplier.
-     */
-    public Damage stripCritical() {
-        return this.critical ? new Damage(Math.round(this.amount / CRITICAL_MULTIPLIER), this.type, false) : this;
+    /** Marks the hit critical and multiplies it; a hit is rolled critical at most once. */
+    public Damage asCritical(float multiplier) {
+        return new Damage(Math.round(this.amount * multiplier), this.type, true);
     }
 }

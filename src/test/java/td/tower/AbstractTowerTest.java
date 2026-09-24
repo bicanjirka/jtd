@@ -1,6 +1,7 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.Effect;
 import td.enemy.EnemyFactory;
@@ -368,7 +369,7 @@ class AbstractTowerTest {
 
         tower.dealDamage(enemy, Damage.physical(1000));
 
-        assertThat(tower.getDamageDealt()).isEqualTo(Math.round(1000 * Damage.CRITICAL_MULTIPLIER));
+        assertThat(tower.getDamageDealt()).isEqualTo(Math.round(1000 * AttackProfile.DEFAULT_CRIT_MULTIPLIER));
     }
 
     @Test
@@ -413,7 +414,23 @@ class AbstractTowerTest {
 
         tower.dealDamage(burning, Damage.physical(1000));
 
-        assertThat(tower.getDamageDealt()).isEqualTo(Math.round(1000 * Damage.CRITICAL_MULTIPLIER));
+        assertThat(tower.getDamageDealt()).isEqualTo(Math.round(1000 * AttackProfile.DEFAULT_CRIT_MULTIPLIER));
+    }
+
+    @Test
+    void aDamageOverTimeTickCanStillCrit() {
+        GameWorld alwaysCrits = WorldFixtures.newWorld(() -> 0.0);
+        alwaysCrits.economy().startEconomy(100, 5);
+        UpgradeNode node = UpgradeNode.of("precision", UpgradeSlot.HEAD, "Precision", 10)
+                .withBuff(TowerBuff.critChance(0.5f));
+        FakeTower tower = FakeTower.offering(alwaysCrits, 0, 0, UpgradeTree.of(node));
+        tower.buyUpgrade(node);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.burn(Damage.magic(1000), 100, d -> tower.dealDamage(enemy, d)));
+
+        enemy.doTick(1);
+
+        assertThat(tower.getDamageDealt()).isEqualTo(Math.round(1000 * AttackProfile.DEFAULT_CRIT_MULTIPLIER));
     }
 
     @Test

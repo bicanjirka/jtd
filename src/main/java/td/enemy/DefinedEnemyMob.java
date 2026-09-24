@@ -1,5 +1,6 @@
 package td.enemy;
 
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.economy.EconomyDelta;
 import td.effect.ActiveEffects;
@@ -266,21 +267,21 @@ public final class DefinedEnemyMob implements EnemyMob {
      * @return the damage that landed, capped at remaining health so overkill is not credited, and
      * {@link Damage#none()} if the mob is dead or untargetable
      */
-    public Damage doDamage(Damage damage) {
+    public Damage doDamage(Damage damage, AttackProfile attacker) {
         this.ticksSinceLastHit = 0;
-        Damage landed = this.land(damage);
+        Damage landed = this.land(damage, attacker);
         // Health-dependent traits re-derive from the new health.
         this.stats.invalidate();
         return landed;
     }
 
-    private Damage land(Damage damage) {
+    private Damage land(Damage damage, AttackProfile attacker) {
         if (this.isDead()) {
             return Damage.none();
         }
         Damage landed = Damage.none();
         if (this.validTarget()) {
-            landed = HitResolution.resolve(this.absorb(damage), this.stats, this.health);
+            landed = HitResolution.resolve(damage, attacker, this.stats, this.health, this.gameWorld.random());
             this.health -= landed.amount();
             this.gameWorld.damageTally().record(landed);
             if (landed.amount() > 0) {
@@ -297,15 +298,6 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.gameWorld.enemies().reportDeath();
         }
         return landed;
-    }
-
-    private Damage absorb(Damage incoming) {
-        Damage result = incoming;
-        TraitContext context = this.traitContext();
-        for (Trait trait : this.traits) {
-            result = trait.onHit(result, context);
-        }
-        return result;
     }
 
     private TraitContext traitContext() {

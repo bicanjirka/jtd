@@ -39,11 +39,12 @@
   `buffFor(this)` plus its own owned nodes' `totalBuff()`. No aura↔client index on either side
   (`AuraTower.buffedTowers()` is also derived). Call `recalculateStats()` on every tower whenever
   the roster or any upgrade changes; `TowerRoster.clear()` needn't.
-- `TowerBuff` axes: damage, range, fireRate, bounty, critChance. Build one from a single-axis
-  factory plus `withX` (`TowerBuff.damage(0.3f).withRange(0.1f)`), not from `none()`.
+- `TowerBuff` axes: damage, range, fireRate, bounty, critChance, armorPenetration,
+  magicPenetration. Build one from a single-axis factory plus `withX`
+  (`TowerBuff.damage(0.3f).withRange(0.1f)`), not from `none()`.
 - Cooldown has a base/current split like damage and range (`coolDownMax` vs `coolDownCurrent()`).
-- A crit is rolled in `dealDamage` via `context.random()`, and doubled
-  (`BURN_CRIT_CHANCE_MULTIPLIER`) against any burning target, whoever lit it.
+- `dealDamage` sends the hit with `TowerStats.attack()` (crit chance and multiplier, penetration);
+  the target rolls the crit. A tower never reads the target's stats to adjust its own hit.
 
 ## Upgrade tree
 
@@ -67,7 +68,8 @@
 ## Adding a tower
 
 1. A `final` leaf composing `td.tower.targeting` pieces, passing a `TowerBaseStats` to
-   `super(...)` (`withCritChance` for innate crit). A passive tower overrides `isPassive()`.
+   `super(...)` (`withCritChance`/`withCritMultiplier` for innate crit). A passive tower
+   overrides `isPassive()`.
 2. A `TowerFactory.Type` constant and its `createTower` branch.
 3. A `TowerVisitor` method; the compiler then leads to `TowerSpriteFrameBuilder` and
    `TowerEffectFrameBuilder`.

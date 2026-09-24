@@ -2,6 +2,7 @@ package td.enemy;
 
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.Effect;
 import td.fixtures.LevelFixtures;
@@ -158,7 +159,7 @@ class DefinedEnemyMobTest {
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
 
-        enemy.doDamage(Damage.physical(100).asCritical());
+        enemy.doDamage(Damage.physical(100), AttackProfile.critChance(1f));
 
         assertThat(mob.ticksSinceCriticalHit(0)).isEqualTo(-1);
 

@@ -1,6 +1,7 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.EffectKind;
 import td.fixtures.WorldFixtures;
@@ -106,7 +107,7 @@ class WardenChainTest {
         DefinedEnemyMob warden = (DefinedEnemyMob) world.getEnemyCatalog().spawn("warden1", world, 0, 8000, 100, Rank.GRUNT);
         world.enemies().add(warden);
 
-        warden.doDamage(Damage.physical(5000).asCritical());
+        warden.doDamage(Damage.physical(5000), AttackProfile.critChance(1f));
         warden.doTick(1); // captures the critical hit and fires the new ability in the same call
 
         assertThat(warden.activeEffectKinds()).contains(EffectKind.SHIELD);

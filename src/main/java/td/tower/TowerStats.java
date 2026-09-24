@@ -1,5 +1,6 @@
 package td.tower;
 
+import td.damage.AttackProfile;
 import td.tower.buff.TowerBuff;
 
 /**
@@ -11,19 +12,28 @@ import td.tower.buff.TowerBuff;
  * @param coolDown   ticks between shots
  * @param rangeReal  range in pixels
  * @param rangeReal2 {@code rangeReal} squared
- * @param critChance chance in {@code [0, 1]} that a hit is critical
+ * @param attack     what every hit carries: crit chance and multiplier, penetration
  */
-public record TowerStats(int damage, float range, int coolDown, float rangeReal, float rangeReal2, float critChance) {
+public record TowerStats(int damage, float range, int coolDown, float rangeReal, float rangeReal2,
+                         AttackProfile attack) {
 
     /**
      * Folds base stats and the total buff into one set; {@code scale} converts range from cells to
      * pixels.
      */
-    public static TowerStats of(int damageBase, float rangeBase, int coolDownMax, float critChanceBase,
-                                TowerBuff buff, int scale) {
-        float range = buff.rangeFor(rangeBase);
+    public static TowerStats of(TowerBaseStats base, TowerBuff buff, int scale) {
+        float range = buff.rangeFor(base.range());
         float rangeReal = range * scale;
-        return new TowerStats(buff.damageFor(damageBase), range, buff.fireRateFor(coolDownMax),
-                rangeReal, rangeReal * rangeReal, buff.critChanceFor(critChanceBase));
+        AttackProfile attack = AttackProfile.critChance(buff.critChanceFor(base.critChanceBase()))
+                .withCritMultiplier(base.critMultiplier())
+                .withArmorPenetration(buff.armorPenetrationBonus(), 0f)
+                .withMagicPenetration(buff.magicPenetrationBonus(), 0f);
+        return new TowerStats(buff.damageFor(base.damage()), range, buff.fireRateFor(base.coolDownMax()),
+                rangeReal, rangeReal * rangeReal, attack);
+    }
+
+    /** Chance in {@code [0, 1]} that a hit is critical, before the target's own stats. */
+    public float critChance() {
+        return this.attack.critChance();
     }
 }

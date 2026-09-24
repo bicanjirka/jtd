@@ -14,7 +14,8 @@
   gets credit for its share. A top-up adds `L0 * (1 - fuel / lmax)`. The burn ends when a tick
   would round to zero.
 - Effects change a mob only through `contributeTo(StatAccumulator)`: slow and freeze on
-  `MOVE_SPEED`, shield on damage taken, heal on `REGENERATION`, invisible on `STEALTH`. Shield and
+  `MOVE_SPEED`, shield on damage taken, heal on `REGENERATION`, invisible on `STEALTH`, burn on
+  `CRIT_CHANCE_TAKEN`. Shield and
   heal go in as restorative, so spirit scales them. The mob applies regeneration to itself, capped
   at max health; `Damage` can't be negative.
 - `EffectTemplate` (sealed) is the authored form an ability carries. `SLOW`/`BURN`/`FREEZE`

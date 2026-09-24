@@ -1,8 +1,8 @@
 package td.tower;
 
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.economy.EconomyDelta;
-import td.effect.EffectKind;
 import td.enemy.HitReceiver;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradeNode;
@@ -25,8 +25,6 @@ public abstract class AbstractTower implements Tower {
 
     /** Ticks per second at normal speed, from the one place the tick rate is defined. */
     protected static final float TICKS_PER_SECOND = TickRate.TICKS_PER_SECOND;
-    /** How much more likely a burning target is to take a critical hit, from any tower. */
-    private static final float BURN_CRIT_CHANCE_MULTIPLIER = 2f;
 
     protected final GameWorld context;
     protected final int boardX;
@@ -37,6 +35,7 @@ public abstract class AbstractTower implements Tower {
     protected final int damageBase;
     protected final int coolDownMax;
     protected final float critChanceBase;
+    private final TowerBaseStats baseStats;
     private final TowerFactory.Type type;
     private final int price;
     // damageDealt is a long read on the EDT; a non-volatile long read may tear.
@@ -59,14 +58,14 @@ public abstract class AbstractTower implements Tower {
         this.rangeBase = base.range();
         this.coolDownMax = base.coolDownMax();
         this.critChanceBase = base.critChanceBase();
+        this.baseStats = base;
         this.context = context;
         int scale = context.getBoard().scale();
         this.boardX = cellX * scale;
         this.boardY = cellY * scale;
         this.centerX = this.boardX + scale / 2;
         this.centerY = this.boardY + scale / 2;
-        this.stats = TowerStats.of(this.damageBase, this.rangeBase, this.coolDownMax,
-                this.critChanceBase, TowerBuff.none(), scale);
+        this.stats = TowerStats.of(base, TowerBuff.none(), scale);
     }
 
     /** Current stats as one snapshot. Never null. */
@@ -139,13 +138,12 @@ public abstract class AbstractTower implements Tower {
                 .map(t -> t.buffFor(this))
                 .reduce(TowerBuff.none(), TowerBuff::combine);
         TowerBuff totalBuff = externalBuff.combine(upgrades.totalBuff());
-        this.stats = TowerStats.of(this.damageBase, this.rangeBase, this.coolDownMax, this.critChanceBase,
-                totalBuff, this.context.getBoard().scale());
+        this.stats = TowerStats.of(this.baseStats, totalBuff, this.context.getBoard().scale());
     }
 
     /**
-     * Every hit goes through here, so accounting is right whichever subclass fires. Rolls a
-     * critical hit first.
+     * Every hit goes through here, so accounting is right whichever subclass fires. The hit carries
+     * this tower's current {@link AttackProfile}; the target rolls the crit.
      * <p>
      * Counts the damage that actually landed, not the damage fired. A kill adds the upgrades'
      * bounty bonus in credits, not score. A hit on a mob already killed this tick is not a second
@@ -158,7 +156,7 @@ public abstract class AbstractTower implements Tower {
             return false;
         }
         boolean wasAlive = !enemy.isDead();
-        Damage landed = enemy.doDamage(this.rollCritical(enemy, damage));
+        Damage landed = enemy.doDamage(damage, this.stats.attack());
         if (wasAlive) {
             this.damageDealt += landed.amount();
             if (enemy.isDead()) {
@@ -171,24 +169,6 @@ public abstract class AbstractTower implements Tower {
             }
         }
         return landed.critical();
-    }
-
-    /**
-     * Rolls {@link #critChance()} against the injected random source; a burning target doubles the
-     * chance, capped at 100%. A tower with no crit chance never crits.
-     */
-    private Damage rollCritical(HitReceiver enemy, Damage damage) {
-        float chance = this.critChance();
-        if (chance <= 0f) {
-            return damage;
-        }
-        if (enemy.activeEffectKinds().contains(EffectKind.BURN)) {
-            chance = Math.min(1f, chance * BURN_CRIT_CHANCE_MULTIPLIER);
-        }
-        if (this.context.random().nextDouble() < chance) {
-            return damage.asCritical();
-        }
-        return damage;
     }
 
     public long getDamageDealt() {
