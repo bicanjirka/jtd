@@ -154,9 +154,4 @@ public final class FakeEnemyMob implements EnemyMob {
     public <R> R accept(EnemyMobVisitor<R> visitor) {
         throw new UnsupportedOperationException("FakeEnemyMob is not a real enemy kind");
     }
-
-    @Override
-    public String getInfoString() {
-        return "fake";
-    }
 }

@@ -51,7 +51,7 @@
 - A tower can kill a mob *after* that mob's own `doTick` ran this tick. So death, crit-taken and
   damage-taken moments are marked pending in `MobMoments` and stamped on the next `doTick`, and death-tick abilities fire only when
   `ticksSinceDeath(gameTime) == 0`: exactly once, never during the fade. Until that capture,
-  a dead mob's `ticksSinceDeath` is `-1`; callers must handle it (`fadeAlpha` clamps).
+  a dead mob's `ticksSinceDeath` is `-1`; callers must handle it (`EnemyFrameBuilder.fadeProgress` clamps).
 - `AbilitySpawnFactory` builds an ability spawn at the caster's position, on the caster's
   path and at the caster's rank. It uses `AbilitySpawnShape` (not `td.wave.SpawnShape`);
   `delaySpacingSlots` staggers members so they don't stack. `consumesSelf` is only defined for

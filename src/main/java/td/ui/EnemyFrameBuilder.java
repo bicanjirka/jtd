@@ -142,9 +142,9 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private Void body(Palette palette, DefinedEnemyMob mob, float scale, double facingRadians,
             Optional<SupportAura> supportAura, List<Trait> traits) {
         if (mob.isDead()) {
-            if (!mob.isFadeComplete(this.gameTime)) {
-                int age = mob.ticksSinceDeath(this.gameTime);
-                float fadeProgress = 1f - (mob.fadeAlpha(age) / 255f);
+            int age = mob.ticksSinceDeath(this.gameTime);
+            if (age <= fadeDurationTicks(mob.getRank())) {
+                float fadeProgress = fadeProgress(mob.getRank(), age);
                 this.draws.add(new EnemyFadeDraw(palette, (float) mob.getX(), (float) mob.getY(), facingRadians, scale, age, fadeProgress));
             }
         } else if (!mob.isInactive()) {
@@ -266,6 +266,19 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             markerX += scale * MARKER_SPACING_FRACTION;
             shown++;
         }
+    }
+
+    static int fadeDurationTicks(Rank rank) {
+        return 3 * rank.ordinal() + 6;
+    }
+
+    /**
+     * {@code 0} at death to {@code 1} when gone. Clamped, because {@code ticksSinceDeath} is
+     * {@code -1} between a mid-tick death and the next {@code doTick}.
+     */
+    static float fadeProgress(Rank rank, int ticksSinceDeath) {
+        int alpha = 255 - (ticksSinceDeath * (255 / (fadeDurationTicks(rank) + 1)));
+        return 1f - (Math.min(255, Math.max(alpha, 0)) / 255f);
     }
 
     public Void visitDefined(DefinedEnemyMob mob) {

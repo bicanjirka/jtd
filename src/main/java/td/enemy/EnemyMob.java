@@ -48,8 +48,6 @@ public interface EnemyMob {
 
     float getSpeed();
 
-    String getInfoString();
-
     /**
      * What a tower can see. {@code INVISIBLE} is reachable only by area damage; a mob reports it
      * while an invisibility effect is active. {@code FLYING} is unused.
