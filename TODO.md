@@ -99,26 +99,6 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
 - **Approach:** only if the fakes go away first (tests built on real mobs/towers from
   `td.fixtures`). `Projectile` has no fakes but alone would leave two dispatch styles.
 
-## Gameplay / balance
-
-### Ghost health doesn't scale with level
-
-`BuiltInEnemies.GHOST` (`EnemyDefinition.of(...).withHealthDivisor(5f)`) always divides incoming
-health by a flat `5`, unlike its body size, which already scales with `level` via
-`DefinedEnemyMob.bodyScaleFor`'s `(level < 6) ? (7 - level) : 2` curve (the same one `SQUARE`/
-`TRIANGLE` use). Health reduction should probably scale the same way so ghosts stay balanced at
-higher levels.
-
-- **Where:** `BuiltInEnemies.GHOST`'s `withHealthDivisor(5f)`; the division itself is applied in
-  `DefinedEnemyMob.withDividedHealth(SpawnParameters, float)`, called from the constructor before
-  `level` is otherwise available to it.
-- **Approach:** replace the flat `5f` with a level-scaled value, mirroring `bodyScaleFor`'s
-  `(level < 6) ? (7 - level) : 2` curve (or a deliberately different one, if `5` was chosen for a
-  reason that's no longer documented — worth play-testing either way). `healthDivisor` is a
-  fixed field on the `EnemyDefinition` today, not computed per-spawn, so this needs
-  `withDividedHealth` (or its caller) to take `level` as well, not just a differently-shaped
-  constant.
-
 ## Movement / pathing
 
 ### Wave-entry spawn delay is a hardcoded constant
