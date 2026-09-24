@@ -13,29 +13,13 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A wave's {@link WaveContent}, and the ability to turn it into live, world-bound enemies on
- * demand. Parsing the token string into content is {@link WaveScript}'s job - this class only
- * spawns it: each spawn slot becomes zero or more {@code EnemyMob}s (an {@link EmptySlot}
- * spacer spawns none), with a delay derived from its position in the flattened content, so a
- * later slot spawns later regardless of how many mobs the slots before it produced. Each
- * {@link EnemySlot} already carries its own fully-resolved {@code EnemyDefinition} and effective
- * {@link Rank} by the time {@code WaveScript} builds it, so this class needs no wave-wide
- * health/price/rank of its own - only the shape's own multipliers and trait override are
- * arithmetic here.
+ * One path's wave: its parsed {@link WaveContent}, turned into live enemies by {@link #spawn()}.
+ * Each slot's delay comes from its position, and every {@link EnemySlot} already carries its
+ * resolved definition and rank.
  * <p>
- * <strong>Spawning is deferred to {@link #spawn()}</strong>, which is what makes a level load
- * a single atomic publication. An {@code EnemyMob} binds to the world's installed path when it
- * is built, so building every wave's enemies in this constructor forced {@code loadLevel} to
- * install the path <em>before</em> constructing the waves - and therefore to publish the level
- * in two writes instead of one. Deferring the spawn to the moment a wave actually starts
- * removes that ordering entirely, and stops a level with eighteen waves allocating every enemy
- * of all eighteen before the first one runs.
- * <p>
- * <strong>A wave belongs to exactly one of the level's paths</strong> ({@link #pathIndex}), and
- * carries its own {@link #speedMultiplier} - the product of that path's own
- * {@code PathDefinition.speedMultiplier()} and this wave's {@code WaveDefinition
- * .speedMultiplier()}, resolved once by {@code GameEngine.loadLevel}. See
- * {@code td/wave/CLAUDE.md}'s round model for how multiple paths' waves start together.
+ * <strong>Spawning waits for {@link #spawn()}</strong>, because a mob binds to the installed path
+ * when built; this is what lets a level install in one write. Carries its path index and its
+ * combined path and wave speed multiplier.
  */
 public class Wave {
 
@@ -49,10 +33,7 @@ public class Wave {
     private final int pathIndex;
     private final float speedMultiplier;
 
-    /**
-     * On path 0 at {@code 1x} speed - every pre-existing caller (every wave, before multiple
-     * paths existed) needs to name neither.
-     */
+    /** On path 0 at normal speed. */
     public Wave(GameWorld gameWorld, WaveContent content, long scatterSeed) {
         this(gameWorld, content, scatterSeed, 0, 1f);
     }
@@ -85,29 +66,12 @@ public class Wave {
     }
 
     /**
-     * Builds every member of one shaped slot: the shape's health and bounty multipliers are
-     * arithmetic here, against the slot's own resolved definition's {@code baseHealth}/{@code
-     * price} (bounty split exactly, via {@link SpawnShape#bountyShares}); the size and speed
-     * multipliers pass straight through to {@link SpawnParameters}, which folds them into the
-     * mob itself. The shape's own {@link SpawnShape#traitOverride()}, if present, is composed
-     * onto the definition via {@code EnemyDefinition.withAdditionalTraits} before any mob is
-     * built from it - what {@code armored} uses to attach or replace a defensive trait. A
-     * member's own slot position is this slot's index plus its member index scaled by
-     * {@link SpawnShape#delaySpacingSlots()} - zero for every shape but Column and Drip, so
-     * every other shape's members still share the slot's own position. A member's formation
-     * offset comes from {@link SpawnShape#spread()}, drawn from a {@link RandomSource} seeded
-     * from this wave's own {@code scatterSeed} and the slot's index - deliberately not
-     * {@code gameWorld.random()}, which tower targeting also draws from, so a formation's shape
-     * would otherwise depend on how many towers happened to fire first. The offset itself is
-     * relative to the mob's own spawn-facing direction, not world space -
-     * {@link td.enemy.AbstractEnemyMob} is what fixes it into a world vector, once, at spawn.
+     * Builds every member of one shaped slot: health and bounty scaled and split here, size and
+     * speed passed on to the mob, and the shape's trait applied to the definition first. Members
+     * are spaced by {@link SpawnShape#delaySpacingSlots()}.
      * <p>
-     * The shape's own {@code speedMultiplier()} is composed with this wave's {@code
-     * speedMultiplier} (its path's pace times its own) into the one value handed to
-     * {@link SpawnParameters}, which is what lets a fast path or a called-out fast round affect
-     * a mob's speed with no new mechanism: that composed value is stored once as
-     * {@code DefinedEnemyMob.shapeSpeedMultiplier} and reused on every {@code doDamage} speed
-     * recompute.
+     * Formation offsets draw from a random source seeded by the wave and slot, not the world's,
+     * which tower targeting also uses - otherwise a formation would depend on firing order.
      */
     private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int delay, long scatterSeed,
                                                 int pathIndex, float speedMultiplier) {
@@ -144,31 +108,20 @@ public class Wave {
         return this.content.enemyCount();
     }
 
-    /**
-     * The effective {@link Rank} the slot spawning {@code definition} resolved to - what the
-     * wave-preview panel reads for its badge (see {@code td.ui.PathWaveRow}).
-     */
+    /** The resolved rank of the slot spawning {@code definition}. */
     public Rank rankFor(EnemyDefinition definition) {
         return this.content.rankFor(definition);
     }
 
     /**
-     * Builds this wave's enemies against the world as it stands right now, bound to the path
-     * currently installed. Called once, when the wave starts - each call produces a fresh,
-     * independent set of mobs, so calling it twice would put two copies of the wave on the
-     * board. The counts and definitions {@link #enemySet()} and {@link #enemyCount()} report
-     * come from the content and need no spawn, which is what lets the wave-preview panel
-     * describe a wave that has not run yet.
+     * Builds this wave's enemies against the currently installed path. Call once, when the wave
+     * starts: each call makes a fresh set.
      */
     public EnemyMob[] spawn() {
         return spawnEnemies(this.gameWorld, this.content, this.scatterSeed, this.pathIndex, this.speedMultiplier)
                 .toArray(new EnemyMob[0]);
     }
 
-    /**
-     * Which of the level's paths this wave belongs to - what a wave-info panel resolves a
-     * matching {@code PathColor} swatch from, via {@code GameWorld.level().paths()}.
-     */
     public int getPathIndex() {
         return this.pathIndex;
     }

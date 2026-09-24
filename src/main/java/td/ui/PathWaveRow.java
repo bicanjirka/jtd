@@ -23,12 +23,8 @@ import java.io.Serial;
 import java.util.List;
 
 /**
- * One path's summary within a round: a small chevron marking the path's color, and the
- * {@link PanelEnemy} strip showing what it spawns - each preview mob its own resolved health,
- * bounty and rank badge (the badge lands in a later pass; see {@code td/ui/CLAUDE.md}), since
- * those numbers are no longer wave-uniform the way they were before enemies carried their own
- * per-rank stats. One of these is stacked per path under {@link PanelWaveInfo}'s current/next
- * side, in path order, so a player can see at a glance which enemies come down which lane.
+ * One path's part of a round: a swatch in the path's colour and a {@link PanelEnemy} strip of what
+ * it spawns.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 final class PathWaveRow extends JPanel {
@@ -52,9 +48,8 @@ final class PathWaveRow extends JPanel {
     }
 
     /**
-     * Resolves this row's swatch color from the wave's own {@link Wave#getPathIndex()} against
-     * the currently installed level, rather than taking a {@code PathColor} directly - the one
-     * source of truth for a path's color is {@code GameWorld.level().paths()}.
+     * Takes the colour from the installed level by the wave's path index, the one source of a
+     * path's colour.
      */
     void setWave(Wave wave) {
         if (this.gameWorld != null && wave.getPathIndex() < this.gameWorld.level().pathCount()) {
@@ -95,11 +90,7 @@ final class PathWaveRow extends JPanel {
         add(this.panelEnemy, c);
     }
 
-    /**
-     * A moving-styled chevron in the row's path color - the same marker shape the board's own
-     * path trail uses, reused here through {@link Java2DFrameRenderer#paintPathMarkers} rather
-     * than a second, hand-drawn visual language for "which lane is this."
-     */
+    /** A chevron in the path's colour, drawn like the board's path markers. */
     @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
     private static final class Swatch extends JPanel {
         @Serial

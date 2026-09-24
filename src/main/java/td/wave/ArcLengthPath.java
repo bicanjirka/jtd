@@ -4,12 +4,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Wraps a {@link Path}'s points with the cumulative distance travelled to reach each one, so
- * any distance travelled along the path resolves to an exact position and facing by linear
- * interpolation within the segment it falls in - diagonal or curved segments included, nothing
- * here assumes axis-aligned or uniform-length steps. Shared by enemy movement and the animated
- * path-marker overlay, which both need "where is distance d along this path" and previously
- * each had their own copy of this math.
+ * A {@link Path} with the cumulative distance to each point, so any distance along it resolves to
+ * an exact position and facing, whatever the segment shapes. Shared by enemy movement and path
+ * markers.
  */
 public final class ArcLengthPath {
 
@@ -25,9 +22,7 @@ public final class ArcLengthPath {
         this.totalLength = totalLength;
     }
 
-    /**
-     * Empty for a path with fewer than two points, or zero total length.
-     */
+    /** Empty for fewer than two points or zero length. */
     public static Optional<ArcLengthPath> of(Path path) {
         List<Vec2> points = path.points();
         int n = points.size();

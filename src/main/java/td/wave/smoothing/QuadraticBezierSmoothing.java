@@ -6,10 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Rounds each corner with a quadratic Bezier curve, using the corner itself as the single
- * control point: {@code B(t) = (1-t)^2 * before + 2(1-t)t * corner + t^2 * after}. A cheaper,
- * simpler alternative to {@link ArcCornerSmoothing}'s exact circular arc - it doesn't stay
- * exactly tangent to both legs, but bulges toward the corner in a visually similar way.
+ * Rounds each corner with a quadratic Bezier using the corner as control point:
+ * {@code B(t) = (1-t)^2 * before + 2(1-t)t * corner + t^2 * after}. Cheaper than an arc, not
+ * exactly tangent.
  */
 public final class QuadraticBezierSmoothing extends AbstractCornerSmoothing {
 

@@ -14,25 +14,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Headless batch balance simulation: drives a {@link GameEngine} through a level with a fixed
- * tower loadout and no human input, then reports the numbers a balance decision needs - lives
- * lost, ticks-to-clear per wave, and per-tower damage/kills. Lives in {@code src/main/java}
- * (not test scope), since it is a tool run on demand rather than a regression test - see
- * {@code docs/features/FEATURE-playtesting-and-balance-tooling.md}'s V1 Scope.
+ * Headless balance run: plays a level with a fixed tower loadout and no input, then reports lives
+ * lost, ticks to clear each wave, and per-tower damage and kills. A tool run on demand, not a test.
  * <p>
- * Implements {@link GameHost} itself rather than using {@link GameHost#noOp()}: the no-op
- * host never re-arms {@code waveReady} (only {@code TowerDefense.enemyDied} does that, and
- * {@code GameWorld} exposes no alive-count accessor to poll instead), so this class exercises
- * the exact same callback the real game advances waves on.
+ * Implements {@link GameHost} rather than using {@link GameHost#noOp()}, because only a real host
+ * re-arms the next wave when the last enemy dies.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 public final class BalanceHarness implements GameHost {
 
     /**
-     * Fixed so two runs of the same loadout are comparable. Randomness in the simulation
-     * (SplashTower picking its primary target) would otherwise come from the unseeded global
-     * {@code Math.random()} and make every run a different experiment - see
-     * {@link RandomSource}. Change it deliberately to sample a different sequence.
+     * Fixed so two runs of the same loadout are comparable; change it to sample a different
+     * sequence.
      */
     private static final long RANDOM_SEED = 20260917L;
 
@@ -41,9 +34,7 @@ public final class BalanceHarness implements GameHost {
     private int waveStartTick = 0;
     private boolean waveJustCleared = false;
 
-    /**
-     * Runs one built-in loadout against Curly Path, so this class is executable with no arguments.
-     */
+    /** Runs one built-in loadout, so the class is executable with no arguments. */
     public static void main(String[] args) {
         LevelDefinition curlyPath = new BuiltInLevelCatalog().levels().getFirst();
         List<TowerPlacementSpec> loadout = List.of(
@@ -72,9 +63,8 @@ public final class BalanceHarness implements GameHost {
     }
 
     /**
-     * Places every {@code loadout} tower, then runs the tick loop until every wave has
-     * cleared, the player runs out of lives, or {@code tickBudget} ticks pass - whichever
-     * comes first - printing the report at the end either way.
+     * Places the loadout, then ticks until every wave clears, lives run out or {@code tickBudget}
+     * passes, and prints the report.
      */
     public void run(LevelDefinition level, List<TowerPlacementSpec> loadout, int tickBudget) {
         this.engine.loadLevel(level);
@@ -104,11 +94,8 @@ public final class BalanceHarness implements GameHost {
     }
 
     /**
-     * Places each tower through the real input surface (start placing, click the cell's
-     * pixel centre) rather than reaching into engine state directly - the same path
-     * {@code TowerDefense}'s mouse listener drives. {@code TowerPlacement.mouseClicked}
-     * always leaves placement mode whether or not it actually built anything, so success is
-     * verified afterward via the cell grid rather than trusted from a return value.
+     * Places through the real input path. A click always leaves placement mode, so success is
+     * checked on the cell grid afterwards.
      */
     private void placeLoadout(List<TowerPlacementSpec> loadout, int scale) {
         CellGrid grid = this.engine.cells();

@@ -11,25 +11,15 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Parses a wave's token string (see the wave mini-language table in CLAUDE.md) into a
- * {@link WaveContent} against a given {@link EnemyCatalog} and the wave's own default
- * {@link Rank} - no {@code GameWorld} needed, unlike {@link Wave}, which is what turns that
- * content into live, world-bound enemies. The {@code catalog} argument is what lets a per-level
- * custom or cloned enemy id resolve exactly like a built-in one; there is no separate syntax for
- * the two, since every non-reserved token is looked up the same way. {@link #RESERVED_TOKENS} -
- * the spacer, six spawn-type keywords and five rank keywords - are recognized before any catalog
- * lookup. A token this can't recognize as one of those, a registered id, or an integer repeat
- * count fails the parse with a {@link GameStartupException}: a wave the author did not write is
- * content corruption, not something to recover from silently.
+ * Parses a wave's token string into {@link WaveContent} against an {@link EnemyCatalog}, so
+ * level-defined enemies resolve like built-ins. {@link #RESERVED_TOKENS} are recognized before any
+ * lookup. Anything else that is not a registered id or a count fails with
+ * {@link GameStartupException}.
  * <p>
- * <strong>A count applies to the token immediately following it</strong>, in any of three
- * positions: before an enemy id (or {@code e}) it repeats the slot; before a rank token or a
- * spawn-type token it repeats the whole ranked-and/or-shaped slot that token produces - whichever
- * of the two keywords comes first in a slot is the one a leading count attaches to, since a rank
- * token (if present) always precedes a spawn-type token, never the reverse. A count immediately
- * after a spawn-type token (before its enemy id) sets that one slot's member count instead -
- * required for {@code swarm}/{@code line}/{@code column}/{@code drip}, rejected for
- * {@code armored}/{@code flank}, whose member count is fixed by the shape.
+ * <strong>A count applies to the token right after it.</strong> Before an id or {@code e} it
+ * repeats the slot; before a rank or shape keyword it repeats the whole slot. After a shape keyword
+ * it sets that slot's member count: required for {@code swarm}, {@code line}, {@code column} and
+ * {@code drip}, rejected for {@code armored} and {@code flank}.
  */
 public final class WaveScript {
 
@@ -48,8 +38,7 @@ public final class WaveScript {
     private static final String BOSS_TOKEN = "boss";
 
     /**
-     * Every token recognized before any catalog lookup. {@code EnemyCatalog.register} rejects
-     * an id colliding with one of these, so a level can never silently shadow the grammar.
+     * Tokens recognized before any catalog lookup; the catalog rejects ids that collide with them.
      */
     public static final Set<String> RESERVED_TOKENS = Set.of(EMPTY_TOKEN, ARMORED_TOKEN,
             SWARM_TOKEN, LINE_TOKEN, FLANK_TOKEN, COLUMN_TOKEN, DRIP_TOKEN,
@@ -156,11 +145,8 @@ public final class WaveScript {
     }
 
     /**
-     * A slot's own repeat count: an explicit count immediately preceding the current token wins
-     * (the ordinary "applies to the token immediately following it" rule); failing that, a rank
-     * prefix's own captured count carries forward, since a rank token (if present) is always the
-     * first keyword in a slot and would otherwise have its leading count silently dropped once
-     * the shape or id token after it resets {@code repeat} back to its default.
+     * An explicit count before the current token wins; otherwise a count captured before a rank
+     * keyword carries forward.
      */
     private static int slotRepeat(int repeat, boolean repeatExplicit, Rank pendingRank, int pendingRankSlotRepeat) {
         if (repeatExplicit) {

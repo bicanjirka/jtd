@@ -51,14 +51,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Turns an AWT-free {@link RenderFrame} into {@code Graphics2D} calls - the only class that
- * does, and the only owner of a colour, shape or stroke choice for board content. Every one
- * of those is keyed off {@link Palette} rather than off any domain type, so a future backend
- * needs to understand the draw commands and nothing else.
+ * Turns a {@link RenderFrame} into {@code Graphics2D} calls: the only class that does, and the only
+ * owner of colours, shapes and strokes for board content, all keyed off {@link Palette}.
  * <p>
- * The {@code Panel*} Swing components in this package import {@code java.awt} too, for layout
- * and for their own small previews; what they must not do is paint board content themselves.
- * {@link #paintEnemies} and {@link #renderTowerIcon} exist so they don't have to.
+ * {@code Panel*} components use AWT for layout and previews but never paint board content;
+ * {@link #paintEnemies} and {@link #renderTowerIcon} exist for them.
  */
 public final class Java2DFrameRenderer {
 
@@ -66,81 +63,40 @@ public final class Java2DFrameRenderer {
     private static final Color CELL_NOK = Color.RED;
     private static final Color CELL_RANGE = new Color(250, 250, 210, 150);
     private static final Color BOARD_BACKGROUND = Color.BLACK;
-    /**
-     * How much of a cell a tower body fills - leaves a small margin, same spirit as enemy bodies.
-     */
+    /** Share of a cell a tower body fills. */
     private static final float TOWER_BODY_SIZE_FRACTION = 0.42f;
 
-    /**
-     * Half the icon, so the toolbar reads as a row of small glyphs rather than filled chips.
-     */
+    /** Small, so the toolbar reads as a row of glyphs. */
     private static final float ICON_BODY_SIZE_FRACTION = 0.25f;
-    /**
-     * A slot pip's radius and centre-to-centre spacing, both fractions of {@code bodySize} - see
-     * {@link #paintSlotMarks}.
-     */
+    /** Slot pip radius and spacing, as fractions of the body size. */
     private static final float SLOT_PIP_RADIUS_FRACTION = 0.11f;
     private static final float SLOT_PIP_SPACING_FRACTION = 0.3f;
-    /**
-     * How far below the body centre the pip row sits.
-     */
     private static final float SLOT_PIP_ROW_OFFSET_FRACTION = 0.95f;
-    /**
-     * A gap between one slot's pips and the next slot's, on top of the ordinary pip spacing.
-     */
+    /** Extra gap between one slot's pips and the next. */
     private static final float SLOT_GROUP_GAP_FRACTION = 0.16f;
-    /**
-     * A ready chevron's size and how far above the body centre its row sits.
-     */
     private static final float SLOT_CHEVRON_SIZE_FRACTION = 0.16f;
     private static final float SLOT_CHEVRON_ROW_OFFSET_FRACTION = 1.05f;
     private static final float SLOT_CHEVRON_SPACING_FRACTION = 0.45f;
-    /**
-     * How far outside the body the SPECIAL-slot enchant halo sits - every body shape's own
-     * extent stays within {@code bodySize}, the same margin the accent ring this halo replaced
-     * used.
-     */
+    /** Halo radius relative to the body; every body shape stays within its size. */
     private static final float ENCHANT_HALO_RADIUS_FRACTION = 1.3f;
     private static final float ENCHANT_HALO_STROKE_WIDTH = 2.0f;
-    /**
-     * How big a turret head is drawn relative to a cell - smaller than the base it sits on.
-     */
+    /** Turret head size relative to a cell. */
     private static final float TOWER_HEAD_SIZE_FRACTION = 0.24f;
 
-    /**
-     * How wide the sonar wedge opens, in degrees.
-     */
     private static final float SONAR_ARC_DEGREES = 62f;
     /**
-     * The wedge's radius as a multiple of the nominal head size. Not a free choice: with
-     * {@link #TOWER_HEAD_SIZE_FRACTION} at 0.24 of a cell this works out at 0.44 of a cell,
-     * which keeps the wedge just inside the tile's half-width at any board scale.
+     * Wedge radius relative to the head size; keeps the wedge just inside the cell at any scale.
      */
     private static final float SONAR_RADIUS_FACTOR = 1.85f;
 
-    /**
-     * How many bands the trail fades through, and how bright the band at the leading edge is.
-     */
     private static final int SONAR_TRAIL_STEPS = 4;
     private static final int SONAR_TRAIL_ALPHA = 150;
-    /**
-     * A rank badge's glyph size and vertical offset, both as a fraction of the mob's own body
-     * scale - so the badge scales with the mob's size rather than needing a fixed pixel offset
-     * that would look wrong at a different board scale. Sized and offset generously (larger than
-     * a first pass used) after a screenshot showed a smaller badge reading as a barely-visible
-     * sliver overlapping the body's own edge rather than a legible glyph sitting above it.
-     */
+    /** Badge size and offset relative to body scale; smaller badges were unreadable. */
     private static final float RANK_BADGE_SIZE_FRACTION = 0.6f;
     private static final float RANK_BADGE_OFFSET_FRACTION = 1.7f;
     private static final float RANK_BADGE_CHEVRON_SPACING_FRACTION = 0.55f;
-    /**
-     * How big a projectile is drawn - smaller than a tower's own head, since it's the shot, not the gun.
-     */
     private static final float PROJECTILE_SIZE = 5f;
-    /**
-     * A Cinder wave's alpha at the moment it fires, before {@link #paintCone} fades it out as it
-     * travels farther - configurable here rather than inline, per that feature's own ask.
-     */
+    /** Cone alpha when fired, before {@link #paintCone} fades it. */
     private static final float CINDER_CONE_BASE_ALPHA = 0.55f;
 
     private static Shape markerShape(PathMarkerShape shape, float size) {
@@ -150,11 +106,7 @@ public final class Java2DFrameRenderer {
         };
     }
 
-    /**
-     * A single sideways arrowhead, shared by the path trail's moving marker and a Soldier/
-     * Veteran rank badge's stripe - both read as "direction of travel" / "a stripe of rank" with
-     * the same glyph, at whatever size and however many are stacked.
-     */
+    /** A sideways arrowhead, shared by path markers and rank stripes. */
     private static Shape chevronShape(float size) {
         GeneralPath p = new GeneralPath();
         p.moveTo(-size, -size);
@@ -165,12 +117,7 @@ public final class Java2DFrameRenderer {
         return p;
     }
 
-    /**
-     * A skull silhouette for the Boss rank badge - the first representational glyph in this
-     * package's vocabulary (everything else is a geometric primitive: circle, square, triangle,
-     * spiral, star, pulsar). Built from {@link Area} boolean ops rather than a single closed
-     * path: a rounded cranium fused with a jaw, minus two eye sockets and a nose notch.
-     */
+    /** A skull built from {@link Area} operations: cranium and jaw, minus eyes and nose. */
     private static Shape skullShape(float scale) {
         Area skull = new Area(circleShape(scale));
         Shape jaw = new Rectangle2D.Float(-scale * 0.55f, scale * 0.1f, scale * 1.1f, scale * 0.55f);
@@ -202,10 +149,7 @@ public final class Java2DFrameRenderer {
         };
     }
 
-    /**
-     * A plus/cross silhouette for the Mender - two overlapping rectangles unioned via
-     * {@link Area}, the same additive technique {@link #skullShape} uses subtractively.
-     */
+    /** A cross: two rectangles unioned. */
     private static Shape crossShape(float scale) {
         float arm = scale * 0.55f;
         Area cross = new Area(new Rectangle2D.Float(-scale, -arm, scale * 2, arm * 2));
@@ -214,11 +158,8 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * A spiked, egg-shaped silhouette for the Warden boss's own egg stage - the same
-     * {@link #starShape} language as {@code ENEMY_WARDEN}'s adult body (six points rather than
-     * eight, and slightly softer spikes, reading as a smaller/younger sibling of the same
-     * creature) stretched taller and narrower into an ovoid instead of {@code ENEMY_WARDEN}'s
-     * flat star, so it reads as an egg belonging to that boss rather than a second copy of it.
+     * A tall, spiked ovoid in the same star language as the boss body, so it reads as that boss's
+     * egg.
      */
     private static Shape wardenEggShape(float scale) {
         Shape star = starShape(6, scale, scale * 0.65f);
@@ -243,10 +184,8 @@ public final class Java2DFrameRenderer {
 
 
     /**
-     * One flat symbol per tower, each naming what the tower does rather than decorating it:
-     * a triangle, a circle, a spiral, a star, a pulsar, a diamond, a kite and a flame. Every
-     * one is a single closed {@link Shape} so they all go through the same fill-then-outline
-     * paint, at any size.
+     * One flat symbol per tower, naming what it does. Each is one closed {@link Shape}, painted the
+     * same way at any size.
      */
     private static Shape towerBodyShape(Palette palette, float size) {
         return switch (palette) {
@@ -263,9 +202,7 @@ public final class Java2DFrameRenderer {
     }
 
 
-    /**
-     * A rotated square - a heavy, armoured silhouette for the artillery-style tower.
-     */
+    /** A rotated square. */
     private static Shape diamondShape(float size) {
         GeneralPath p = new GeneralPath();
         p.moveTo(0, -size);
@@ -276,9 +213,7 @@ public final class Java2DFrameRenderer {
         return p;
     }
 
-    /**
-     * A concave arrowhead - a guided-munition silhouette for the homing-missile tower.
-     */
+    /** A concave arrowhead. */
     private static Shape kiteShape(float size) {
         GeneralPath p = new GeneralPath();
         p.moveTo(size, 0);
@@ -289,9 +224,7 @@ public final class Java2DFrameRenderer {
         return p;
     }
 
-    /**
-     * A teardrop silhouette for the flame-cone tower.
-     */
+    /** A teardrop. */
     private static Shape flameShape(float size) {
         GeneralPath p = new GeneralPath();
         p.moveTo(0, -size);
@@ -301,10 +234,7 @@ public final class Java2DFrameRenderer {
         return p;
     }
 
-    /**
-     * One elongated, angular shard - a building block for {@link #crystalShape}, not used on
-     * its own.
-     */
+    /** One angular shard, a part of {@link #crystalShape}. */
     private static Shape shardShape(float size, double rotationRadians) {
         GeneralPath p = new GeneralPath();
         p.moveTo(0, -size);
@@ -316,11 +246,7 @@ public final class Java2DFrameRenderer {
         return AffineTransform.getRotateInstance(rotationRadians).createTransformedShape(p);
     }
 
-    /**
-     * A small cluster of three overlapping shards at different rotations and sizes - the
-     * faceted ice-crystal overlay drawn over a frozen enemy, distinct from every smooth body
-     * silhouette and ring already in use.
-     */
+    /** Three overlapping shards, faceted so ice reads unlike any smooth body. */
     private static Shape crystalShape(float size) {
         Area crystal = new Area(shardShape(size, 0));
         crystal.add(new Area(shardShape(size * 0.75f, 2.1)));
@@ -328,9 +254,7 @@ public final class Java2DFrameRenderer {
         return crystal;
     }
 
-    /**
-     * An annulus - {@code innerFraction} of {@code size} is cut out of the middle.
-     */
+    /** A ring with {@code innerFraction} of {@code size} cut out. */
     private static Shape ringShape(float size, float innerFraction) {
         Area ring = new Area(circleShape(size));
         ring.subtract(new Area(circleShape(size * innerFraction)));
@@ -338,8 +262,7 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * An Archimedean spiral, stroked into a closed ribbon so it can be filled like every other
-     * body shape - an open path would fill as a blob rather than as a line.
+     * An Archimedean spiral stroked into a closed ribbon, so it fills as a line rather than a blob.
      */
     private static Shape spiralShape(float size) {
         int turns = 2;
@@ -369,18 +292,13 @@ public final class Java2DFrameRenderer {
         return new Area(ribbon);
     }
 
-    /**
-     * A bright core inside a detached ring - the passive buff tower's "pulsar".
-     */
+    /** A bright core inside a detached ring. */
     private static Shape pulsarShape(float size) {
         Area pulsar = new Area(ringShape(size, 0.72f));
         pulsar.add(new Area(circleShape(size * 0.36f)));
         return pulsar;
     }
 
-    /**
-     * A classic N-pointed star polygon - {@code points}/radii let a future tower reuse this at a different count.
-     */
     private static Shape starShape(int points, float outerRadius, float innerRadius) {
         GeneralPath p = new GeneralPath();
         for (int i = 0; i < points * 2; i++) {
@@ -399,21 +317,9 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * The two aiming towers' heads (one/two) are authored pointing along {@code +X} (heading
-     * {@code 0}) so {@link Graphics2D#rotate(double)} alone aims them correctly - see
-     * {@link TurretHeadDraw}'s doc comment. The two spinning towers (three/four) have no such
-     * concern - any starting phase looks equally valid while continuously spinning - but their
-     * heads still need to reach *past* their own (larger) base's silhouette to actually read as
-     * moving: a same-shape-family head entirely contained within the base's footprint turned
-     * out to be visually indistinguishable from standing still, since both are the same hue.
-     * TOWER_FOUR gets a small star orbiting off-centre (a "moon"), echoing its base's own shape
-     * family while clearing the base's edge. TOWER_AURA's head ignores rotation entirely (it
-     * pulses via {@link TurretHeadDraw#scale()} instead) so a plain circle needs no special
-     * orientation.
-     * <p>
-     * TOWER_THREE is deliberately absent: its head is the sonar scan that decides what the tower
-     * shoots, and it needs more than one shape to read as a sweep, so it has its own
-     * {@link #paintSonarSweep} and reaching this method for it is a bug.
+     * Aiming heads are drawn pointing along {@code +X}, so rotating the graphics aims them.
+     * Spinning heads must reach past their base's outline, or the spin is invisible. The sonar head
+     * is not handled here: it has {@link #paintSonarSweep}.
      */
     private static Shape turretHeadShape(Palette palette, float size) {
         return switch (palette) {
@@ -429,11 +335,7 @@ public final class Java2DFrameRenderer {
         };
     }
 
-    /**
-     * A plain forward-pointing arrowhead, authored along {@code +X} like every other aiming
-     * head - a simple facing indicator for the three new towers. {@code CinderTower}'s actual
-     * cone is a separate {@code TowerEffectDraw}, not part of this shape (see `TODO.md`).
-     */
+    /** A forward arrowhead along {@code +X}. */
     private static Shape headArrowShape(float size) {
         GeneralPath p = new GeneralPath();
         p.moveTo(size * 1.3f, 0);
@@ -444,9 +346,8 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * One band of the sweep's trail. Angles run counterclockwise in {@link Arc2D}'s y-up
-     * convention, so the trail - which lies clockwise of the beam, the way it has just come -
-     * is at negative angles.
+     * One band of the sweep's trail. {@link Arc2D} angles are y-up, so the trail behind the beam
+     * has negative angles.
      */
     private static Shape sonarWedge(float radius, float fromDegrees, float extentDegrees) {
         return new Arc2D.Float(-radius, -radius, radius * 2, radius * 2,
@@ -513,14 +414,7 @@ public final class Java2DFrameRenderer {
         return withAlpha(base, Math.round(healthFraction * 255));
     }
 
-    /**
-     * Scales {@code base}'s existing alpha by {@code factor} rather than replacing it, so a
-     * cloak fade composes with whatever alpha (e.g. {@link #healthColor}'s) was already there.
-     * Clamped the same way {@link #withAlpha} clamps its own {@code int} argument - {@code
-     * factor} is expected in {@code [0, 1]}, but a caller passing a progress value derived from
-     * elsewhere should not be able to crash the renderer if that value is ever slightly out of
-     * range.
-     */
+    /** Multiplies {@code base}'s alpha by {@code factor}, clamped, so fades compose. */
     private static Color scaleAlpha(Color base, float factor) {
         return withAlpha(base, Math.round(base.getAlpha() * factor));
     }
@@ -627,10 +521,7 @@ public final class Java2DFrameRenderer {
         g2.setTransform(save);
     }
 
-    /**
-     * The dim-trail-vs-bright-chevron alpha the two path-marker layers have always had - now
-     * combined with a path's own {@link PathColor} rather than baked into one fixed hue.
-     */
+    /** Dim for the trail, bright for the moving chevrons. */
     private static int pathMarkerAlpha(PathMarkerBrightness brightness) {
         return switch (brightness) {
             case STATIC -> 40;
@@ -638,21 +529,14 @@ public final class Java2DFrameRenderer {
         };
     }
 
-    /**
-     * Draws just enemy bodies/fades with no board around them - used by the wave-preview strip.
-     */
+    /** Draws enemy bodies alone, for the wave preview. */
     public void paintEnemies(Graphics2D g2, List<EnemyDraw> enemies) {
         for (EnemyDraw enemy : enemies) {
             this.paintEnemy(g2, enemy);
         }
     }
 
-    /**
-     * Paints a set of path markers directly, the same reuse-outside-the-board-frame shape
-     * {@link #paintEnemies} already gives {@code PanelEnemy} - used by {@code PathWaveRow}'s
-     * own small per-path color swatch, so "which lane is this" reads in the exact dot/chevron
-     * language the board itself draws its path trail with.
-     */
+    /** Draws path markers alone, for a lane's colour swatch. */
     public void paintPathMarkers(Graphics2D g2, List<PathMarkerDraw> markers) {
         for (PathMarkerDraw marker : markers) {
             this.paintPathMarker(g2, marker);
@@ -683,12 +567,7 @@ public final class Java2DFrameRenderer {
         this.paintRankBadge(g2, body);
     }
 
-    /**
-     * A rank badge is drawn upright - translated to just above the body, but never rotated with
-     * {@link EnemyBodyDraw#facingRadians()} - an insignia reads best right-side up regardless of
-     * which way its wearer is facing, the same reasoning {@code paintUpgradeAccent}'s ring
-     * already follows for a tower's upgrade path.
-     */
+    /** Drawn upright above the body, never rotated with it. */
     private void paintRankBadge(Graphics2D g2, EnemyBodyDraw body) {
         if (body.badge() == RankBadge.NONE) {
             return;
@@ -723,11 +602,7 @@ public final class Java2DFrameRenderer {
         g2.setTransform(save);
     }
 
-    /**
-     * {@link #chevronShape} points along {@code +X} (its path-marker orientation); a rank stripe
-     * reads as a conventional military chevron pointing up instead, so this rotates it -90°
-     * around whatever point {@code g2} is already translated to.
-     */
+    /** Rotates the chevron to point up, around the current origin. */
     private void paintUprightChevron(Graphics2D g2, float size) {
         AffineTransform save = g2.getTransform();
         g2.rotate(-Math.PI / 2);
@@ -760,9 +635,7 @@ public final class Java2DFrameRenderer {
         g2.setTransform(save);
     }
 
-    /**
-     * A small filled diamond naming an active status effect - deliberately not a shape rotated or fill-then-outline like a body, since it's already a small glyph at a fixed pose.
-     */
+    /** A small filled diamond for an active status effect. */
     private void paintStatusMarker(Graphics2D g2, StatusMarkerDraw marker) {
         AffineTransform save = g2.getTransform();
         g2.translate(marker.x(), marker.y());
@@ -772,10 +645,7 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * A brief, fading four-point sparkle at the point a critical hit landed - a sharper star
-     * than {@link Palette#TOWER_PULSE_BODY}'s five-point one, so the two don't read as the
-     * same glyph at a glance. Grows slightly and fades out over its duration, the same "small
-     * timed animation" shape {@link #paintEnemyFade} uses for a death fade.
+     * A fading four-point sparkle where a critical hit landed, distinct from the five-point star.
      */
     private void paintCritSpark(Graphics2D g2, CritSparkDraw spark) {
         AffineTransform save = g2.getTransform();
@@ -796,9 +666,7 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * A faceted ice-crystal cluster encasing a frozen enemy - a translucent icy fill plus a
-     * near-white facet-line stroke, so it reads as "solid ice" rather than another status-marker
-     * dot in the same blue family as {@code STATUS_MARKER_SLOW}.
+     * Translucent ice with near-white facets, so it reads as solid ice rather than a blue marker.
      */
     private void paintIceCrystal(Graphics2D g2, IceCrystalDraw crystal) {
         AffineTransform save = g2.getTransform();
@@ -814,11 +682,7 @@ public final class Java2DFrameRenderer {
         g2.setTransform(save);
     }
 
-    /**
-     * A small hollow diamond naming an always-on trait - the same {@link #diamondShape} the
-     * timed status row's {@link #paintStatusMarker} fills, stroked instead so the two rows read
-     * as different kinds of thing (permanent vs. timed) at a glance.
-     */
+    /** A hollow diamond for a permanent trait; filled diamonds are timed effects. */
     private void paintTraitMarker(Graphics2D g2, TraitMarkerDraw marker) {
         AffineTransform save = g2.getTransform();
         g2.translate(marker.x(), marker.y());
@@ -827,10 +691,7 @@ public final class Java2DFrameRenderer {
         g2.setTransform(save);
     }
 
-    /**
-     * A thin stroked ring around an enemy - a shield bubble or a support-aura reach indicator.
-     * Shaped exactly like {@link #paintAura}'s tower-side ring, just centred on an enemy instead.
-     */
+    /** A thin ring around an enemy: a shield bubble or aura reach. */
     private void paintEnemyRing(Graphics2D g2, EnemyRingDraw ring) {
         if (ring.radius() <= 0) {
             return;
@@ -843,9 +704,8 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * A ring that grows outward from nothing (a gain, a cast, a spawn burst) or shrinks inward
-     * to nothing (a loss) as {@code progress} advances 0..1, fading out at the same rate -
-     * {@code pulse.radius()} is the ring's target/starting size, never its current one.
+     * A ring growing from nothing (gain, cast, spawn) or shrinking to nothing (loss), fading as it
+     * goes. {@code pulse.radius()} is its full size.
      */
     private void paintEffectPulse(Graphics2D g2, EffectPulseDraw pulse) {
         float radius = pulse.direction() == PulseDirection.OUTWARD
@@ -862,20 +722,11 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * Rasterizes one tower's symbol into a standalone icon - used for the toolbar's
-     * {@code JToggleButton} icons, which need a Swing {@code Icon} rather than a live paint.
-     * It uses the same {@link #towerBodyShape} the board does, so a tower's icon cannot drift
-     * from the symbol it shows once placed.
+     * Renders one tower's symbol as a toolbar icon, with the same {@link #towerBodyShape} as the
+     * board so the two cannot drift.
      * <p>
-     * Unlike the board, the symbol is painted as one flat colour rather than a translucent
-     * fill under a brighter outline: at this size a two-tone shape muddies into a smudge, and
-     * a single solid glyph is what actually reads. The turret head is left off for the same
-     * reason - on the board it carries information, where an aiming tower is pointing, but an
-     * icon has no target and no animation clock.
-     * <p>
-     * The glyph is drawn on a transparent background: the control it sits on paints its own
-     * dark face (see {@link Hud}), so the icon does not have to carry a scrap of board with it
-     * to stay legible.
+     * One solid colour and no turret head, since a two-tone glyph smudges at icon size. Transparent
+     * background; the control paints its own face.
      */
     public BufferedImage renderTowerIcon(Palette palette, int size) {
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
@@ -905,14 +756,7 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * A pulsing ring just outside a tower's body, shown once anything is owned in its
-     * {@code SPECIAL} slot (see {@code td.tower.upgrade}) - the same "function of elapsed time"
-     * pulse the Aura tower's own animation already uses (see
-     * {@code TowerSpriteFrameBuilder.enchantPulseFor}), so a specialized tower reads as
-     * enchanted the same way an Aura tower already reads as pulsing. Deliberately
-     * shape-agnostic - always a circle, regardless of the body's own triangle/ring/spiral/
-     * star/pulsar - so it reads the same way on every tower and never needs updating when a
-     * body shape changes.
+     * A pulsing circle around a tower with a {@code SPECIAL} upgrade, the same on every body shape.
      */
     private void paintEnchantHalo(Graphics2D g2, float pulse, float bodySize) {
         if (pulse <= 0f) {
@@ -926,13 +770,7 @@ public final class Java2DFrameRenderer {
         g2.setStroke(previousStroke);
     }
 
-    /**
-     * A row of small filled pips just below a tower's body, one per node owned in each slot -
-     * "what has this tower already bought." Grouped by slot in slot order, coloured by each
-     * slot's own {@link Palette} role, with a one-spacing gap between groups (an undrawn pip
-     * slot, not a separate constant) rather than one contiguous row a player would have to
-     * count carefully to tell slots apart.
-     */
+    /** Pips below a tower, one per owned node, grouped by slot with a gap between groups. */
     private void paintSlotPips(Graphics2D g2, List<SlotMarkDraw> marks, float bodySize) {
         List<Color> pipColors = new ArrayList<>();
         for (SlotMarkDraw mark : marks) {
@@ -963,12 +801,7 @@ public final class Java2DFrameRenderer {
         }
     }
 
-    /**
-     * One small up-pointing chevron just above a tower's body per slot that's currently
-     * ready - offers a node whose gate is met and which is affordable right now. Reuses
-     * {@link #chevronShape}, rotated to point up, rather than a second arrowhead shape - "what
-     * could this tower buy right now," distinct from the pip row's "what has it already bought."
-     */
+    /** One chevron above a tower per slot with an affordable, ungated node. */
     private void paintSlotReadyChevrons(Graphics2D g2, List<SlotMarkDraw> marks, float bodySize) {
         List<Palette> ready = marks.stream().filter(SlotMarkDraw::ready).map(SlotMarkDraw::palette).toList();
         if (ready.isEmpty()) {
@@ -989,11 +822,7 @@ public final class Java2DFrameRenderer {
         }
     }
 
-    /**
-     * Draws a tower's body centred on the origin - the caller has already translated {@code g2}
-     * to the tower's centre, matching {@link #paintEnemyBody}'s contract. Every tower, the
-     * passive aura one included, is a single {@link Shape} painted the same way.
-     */
+    /** Draws a tower body at the origin; the caller has translated to the tower's centre. */
     private void paintTowerBody(Graphics2D g2, Palette palette, float size) {
         Shape shape = towerBodyShape(palette, size);
         Color color = colorFor(palette);
@@ -1017,12 +846,8 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * The sonar head, which unlike every other head is not one solid shape. A radar sweep is
-     * read almost entirely from its fading trail, so this paints the wedge as a few sub-wedges
-     * of decreasing alpha behind a bright leading edge - the cheap approximation of an angular
-     * gradient, which Java2D has no paint for. Keeping it translucent also lets the tower's own
-     * body read through as the scope being swept, rather than being covered by a blob of the
-     * same colour.
+     * The sonar head: sub-wedges of decreasing alpha behind a bright edge, approximating the
+     * angular gradient Java2D lacks. Translucent, so the body shows through.
      */
     private void paintSonarSweep(Graphics2D g2, float size) {
         Color color = colorFor(Palette.TOWER_SONAR_BODY);
@@ -1042,9 +867,7 @@ public final class Java2DFrameRenderer {
         g2.setStroke(previous);
     }
 
-    /**
-     * Draws a turret head shape centred on the origin - the caller has already translated/rotated {@code g2}.
-     */
+    /** Draws a head at the origin; the caller has translated and rotated. */
     private void paintHeadShape(Graphics2D g2, Palette palette, float size) {
         Shape shape = turretHeadShape(palette, size);
         Color color = colorFor(palette);
@@ -1068,10 +891,8 @@ public final class Java2DFrameRenderer {
 
 
     /**
-     * A symmetric pie wedge centred on {@code cone}'s heading - the same shape
-     * {@code InWedgeTargetQuery} tests against - growing outward from nothing and fading out as
-     * {@code cone.progress()} advances 0..1, a "gout of flame" travelling outward and
-     * dissipating rather than a static area-of-effect marker.
+     * A wedge on the cone's heading that grows outward and fades as {@code cone.progress()} goes
+     * from 0 to 1.
      */
     private void paintCone(Graphics2D g2, ConeDraw cone) {
         float currentRadius = cone.maxRadius() * cone.progress();

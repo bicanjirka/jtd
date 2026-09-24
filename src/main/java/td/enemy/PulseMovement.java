@@ -1,7 +1,5 @@
 package td.enemy;
 
-/**
- * A cosmetic pulse with no facing angle of its own. No v1 built-in uses this yet.
- */
+/** A cosmetic pulse with no facing of its own. */
 public record PulseMovement() implements MovementBehavior {
 }

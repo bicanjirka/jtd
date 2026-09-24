@@ -28,93 +28,41 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Describes each enemy's body and death-fade animation as {@link EnemyDraw}
- * commands - {@link #visitDefined} switches on {@link BodyArchetype}, not on any Java type,
- * since body shape/palette come from a {@code DefinedEnemyMob}'s {@link td.enemy.EnemyDefinition}
- * rather than from which concrete class it is. An alive body's position is interpolated between
- * the mob's previous and current tick position (see {@code interpolationAlpha});
- * a fading (dead) mob is frozen at its death position and drawn as-is, since it
- * has stopped moving - interpolating it against alpha would make it slide back
- * and forth every frame between two positions that never change again.
+ * Describes each enemy's body, markers and effects as draw commands, switching on its
+ * {@link BodyArchetype}. A live body is interpolated between ticks; a dying one is drawn where it
+ * died, since it no longer moves.
  */
 public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
 
-    /**
-     * How many real effect markers show before the rest collapse into one overflow marker.
-     */
+    /** Markers shown before the rest collapse into one overflow marker. */
     static final int MAX_VISIBLE_MARKERS = 3;
     // Fractions of body scale, so the row clears a large body; the glyph size is fixed.
     private static final float MARKER_ROW_OFFSET_FRACTION = 1.6f;
     private static final float MARKER_SPACING_FRACTION = 1.1f;
-    /**
-     * A status/trait marker's own glyph size, fixed rather than a fraction of body scale - a
-     * slow icon should read the same whether it is stuck to a swarm Circle or a Warden, and
-     * scaling it with the body made it nearly invisible on the former and oversized on the
-     * latter. Only the row's position/spacing above stays proportional, so a large body still
-     * has clearance for it. Sized to match what a mid-rank enemy's marker already looked like
-     * before this change.
-     */
+    /** Marker glyph size, fixed so a marker reads the same on a small or a huge body. */
     private static final float MARKER_FIXED_SCALE = 4.5f;
-    /**
-     * The trait-marker row sits below the body, mirroring the effect row's own offset/spacing
-     * above it - same visual language, opposite side, so the two rows never collide. Its
-     * position stays proportional to body scale for the same clearance reason as the status
-     * row; its glyph size is the same fixed MARKER_FIXED_SCALE.
-     */
+    /** The trait row sits below the body, mirroring the effect row above it. */
     private static final float TRAIT_MARKER_ROW_OFFSET_FRACTION = 1.6f;
-    /**
-     * How long a critical hit's spark stays visible - 8 ticks is 0.4s at the normal tick rate,
-     * a brief flash rather than a lingering marker.
-     */
     static final int CRIT_SPARK_DURATION_TICKS = 8;
-    /**
-     * A crit spark's size, fixed rather than the hit mob's own body scale - a crit reads as the
-     * same event regardless of which enemy it landed on, so it should look the same size on a
-     * swarm Circle and a Warden alike. Sized to match what a mid-rank enemy's spark already
-     * looked like before this change.
-     */
+    /** Fixed, so a crit looks the same on every enemy. */
     private static final float CRIT_SPARK_FIXED_SCALE = 12f;
-    /**
-     * How long a cloak fade-in/fade-out takes, in ticks - same duration as the crit spark, for
-     * the same "brief, legible transition" reasoning.
-     */
     static final int CLOAK_FADE_DURATION_TICKS = 8;
     /**
-     * A shield bubble is drawn a bit outside the body itself, in the shield marker's colour, at
-     * a fixed, subtle alpha - it's a persistent state indicator, not a flash, so it stays faint
-     * enough not to compete with the body underneath it.
+     * Shield bubble size relative to the body, drawn at a faint fixed alpha since it marks a
+     * lasting state.
      */
     private static final float SHIELD_BUBBLE_SCALE_FRACTION = 1.3f;
     private static final float SHIELD_BUBBLE_ALPHA = 0.5f;
-    /**
-     * The ice-crystal overlay's size, as a fraction of the mob's own body scale - just outside
-     * the body like the shield bubble, but drawn as a solid faceted fill rather than a ring so
-     * it reads as "encasing" the enemy.
-     */
+    /** Ice overlay size relative to the body. */
     private static final float FREEZE_CRYSTAL_SCALE_FRACTION = 1.35f;
     /**
-     * A support-aura ring's radius is typically many times the body's own scale (a Ghost
-     * Elite's shroud reaches 100px), so it needs a much fainter alpha than the shield bubble to
-     * avoid reading as a solid, competing shape rather than a background reach indicator.
+     * Much fainter than the shield bubble, since an aura ring can be many times the body's size.
      */
     private static final float SUPPORT_AURA_RING_ALPHA = 0.12f;
-    /**
-     * How long a gain/loss/cast/spawn pulse takes to fully grow-or-shrink and fade - same
-     * duration as the crit spark and the cloak fade, for the same brief-and-legible reasoning,
-     * kept as its own constant since it means something different (a ring's lifetime, not a
-     * spark's or a cloak's).
-     */
     static final int EFFECT_PULSE_DURATION_TICKS = 8;
-    /**
-     * A gain/loss/cast pulse's ring size, as a fraction of the mob's own body scale - just
-     * outside the body, reading as a ripple from it, the same relative size the shield bubble
-     * uses.
-     */
+    /** Pulse ring size relative to the body. */
     private static final float GAIN_LOSS_PULSE_RADIUS_FRACTION = 1.6f;
-    /**
-     * An ability-driven spawn's arrival burst is drawn a bit larger than a gain/loss pulse - it
-     * marks a new mob appearing, not a status change on one already there.
-     */
+    /** Larger than a status pulse: it marks a new mob, not a change on an existing one. */
     private static final float SPAWN_BURST_RADIUS_FRACTION = 2.2f;
     private final List<EnemyDraw> draws = new ArrayList<>();
     private final List<StatusMarkerDraw> markerDraws = new ArrayList<>();
@@ -214,11 +162,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return null;
     }
 
-    /**
-     * A row of hollow diamonds below the body, one per always-on {@link Trait} this mob carries -
-     * see {@link Trait#marker()}. Capped at {@link #MAX_VISIBLE_MARKERS}, the same overflow
-     * discipline the timed effect row above the body already uses.
-     */
+    /** One hollow diamond per trait below the body, capped like the effect row. */
     private void traitMarkers(float x, float y, float scale, List<Trait> traits) {
         float markerY = y + scale * TRAIT_MARKER_ROW_OFFSET_FRACTION;
         float markerX = x - scale;
@@ -234,13 +178,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         }
     }
 
-    /**
-     * A shield bubble while {@link EffectKind#SHIELD} is active, an ice-crystal cluster while
-     * {@link EffectKind#FREEZE} is active, and a support-aura ring for a definition that
-     * projects an effect onto nearby allies at a radius - all static, not timed, since each
-     * reflects an ongoing state (an active shield, a frozen mob, an authored ability) rather
-     * than a one-shot event.
-     */
+    /** Static overlays for ongoing states: shield bubble, ice crystals and support-aura ring. */
     private void overlays(AbstractEnemyMob mob, float x, float y, float scale, Optional<SupportAura> supportAura) {
         if (mob.activeEffectKinds().contains(EffectKind.SHIELD)) {
             this.overlayDraws.add(new EnemyRingDraw(Palette.STATUS_MARKER_SHIELD, x, y, scale * SHIELD_BUBBLE_SCALE_FRACTION, SHIELD_BUBBLE_ALPHA));
@@ -253,8 +191,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     }
 
     /**
-     * A ring wherever this mob just changed state: gaining or losing an effect kind, casting an
-     * ability-applied effect, or arriving via an ability-driven spawn.
+     * A ring wherever the mob just gained or lost an effect, cast one, or arrived by an ability
+     * spawn.
      */
     private void pulses(AbstractEnemyMob mob, float x, float y, float scale) {
         for (EffectKind kind : EffectKind.values()) {
@@ -297,23 +235,12 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     }
 
     /**
-     * 0 (fully solid) to 1 (fully cloaked) - ramps up over {@link #CLOAK_FADE_DURATION_TICKS}
-     * after {@link EffectKind#INVISIBLE} is gained, holds at 1 while it stays active, and ramps
-     * back down over the same window after it's lost. Derived the same way
-     * {@code EnemyFadeDraw.fadeProgress} is derived from ticks since death - see
-     * {@code AbstractEnemyMob.ticksSinceEffectGained}/{@code ticksSinceEffectLost}.
+     * 0 (solid) to 1 (cloaked): ramps up after invisibility is gained, holds, and ramps down after
+     * it is lost.
      * <p>
-     * {@code ticksSinceGained} is clamped at 0 rather than used raw: an ability that applies
-     * {@code INVISIBLE} (e.g. the Ghost's vanish) does so via {@code DefinedEnemyMob
-     * .evaluateAbilities}, which runs <em>after</em> {@code AbstractEnemyMob.doTick} has already
-     * called {@code EffectTransitions.observe} for this tick - so on the exact tick a mob first
-     * becomes invisible, {@code activeEffectKinds()} already reports it but the transition isn't
-     * observed until next tick, and {@code ticksSinceEffectGained} still returns {@code -1}.
-     * Unclamped, that produces a negative progress and, since visibility is {@code 1 -
-     * progress}, an out-of-range alpha - reproduced by actually running the game (a real ability
-     * firing crashed the renderer; no unit test caught it because none built a frame on the same
-     * tick an ability fires). Clamping to 0 is also the correct reading: "not yet observed" while
-     * already active means it just started.
+     * Clamped at 0 because an ability can apply invisibility after this tick's transitions were
+     * observed, leaving the gain unrecorded for one tick; unclamped, that produced an invalid
+     * alpha.
      */
     private float cloakProgress(AbstractEnemyMob mob) {
         if (mob.activeEffectKinds().contains(EffectKind.INVISIBLE)) {

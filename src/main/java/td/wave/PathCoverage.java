@@ -5,16 +5,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Pure geometry: which grid cells does a pixel-space path's corridor cover "significantly"?
- * This is what makes buildability depend on the *final* path geometry - smoothed or not -
- * rather than a fixed list of grid cells the path happened to be authored through.
- * <p>
- * Deliberately takes {@code scale}/{@code width}/{@code height} rather than a {@code Cell[][]}:
- * a cell's own pixel bounds are recomputed here from its grid index the same way
- * {@code GameEngine.loadLevel} originally derived them ({@code (i*scale, j*scale, scale,
- * scale)}), rather than asking the {@code Cell} object - which has no notion of its own size
- * today. That keeps this class (and its tests) independent of the {@code Cell}/{@code
- * PathNormal} machinery entirely: a polyline and some dimensions in, a set of covered cells out.
+ * Which grid cells a pixel-space path's corridor significantly covers, so buildability follows the
+ * final geometry. Takes dimensions rather than cells, so it is pure geometry: a polyline in,
+ * covered cells out.
  */
 public final class PathCoverage {
 

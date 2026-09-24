@@ -3,30 +3,17 @@ package td.tower.upgrade;
 import td.tower.buff.TowerBuff;
 
 /**
- * One node in a tower's upgrade tree - the successor to the old, flat {@code UpgradePath}. A
- * stable {@code id} (unique within one tower's own {@link UpgradeTree}) is what a leaf's
- * {@code onUpgradeBought} hook and a sibling node's {@code requires} condition key off, rather
- * than Java reference equality: once a slot's graph branches and reconverges, "which node was
- * just bought" can no longer be answered by comparing object identity alone.
+ * One node in a tower's upgrade tree. Hooks and prerequisites match nodes by their {@code id},
+ * unique within one tree, since a branching graph can reconverge.
  * <p>
- * {@code requires} is the structural prerequisite (e.g. "Awaken is owned and this slot is still
- * empty") that decides whether this node is offered at all; {@code gate} is the independent
- * performance condition (kills, damage dealt, a cluster of neighbours) a player clears once the
- * node is offered. Keeping them apart is what lets the UI show an unreachable node as hidden and
- * a reachable-but-not-yet-gated one as visible with live progress.
- * <p>
- * Eight components puts this past the root {@code CLAUDE.md}'s five-component threshold, so the
- * narrow entry point is {@link #of(String, UpgradeSlot, String, int)}; every other field is set
- * through a fluent {@code withX} copy, mirroring {@code PathDefinition}/{@code EnemyDefinition}.
+ * {@code requires} decides whether the node is offered at all; {@code gate} is the performance
+ * condition to clear once it is. The UI hides an unreachable node and shows a gated one with its
+ * progress.
  */
 public record UpgradeNode(String id, UpgradeSlot slot, String displayName, int price, TowerBuff statBonus,
                           UpgradeCondition requires, UpgradeCondition gate, String extraEffect) {
 
-    /**
-     * A root, unconditionally-priced node with no stat bonus, no prerequisite and no extra
-     * effect text yet - every field beyond the four every node needs is added with a
-     * {@code withX} copy.
-     */
+    /** A node gated on price alone; add the rest with the {@code withX} copies. */
     public static UpgradeNode of(String id, UpgradeSlot slot, String displayName, int price) {
         return new UpgradeNode(id, slot, displayName, price, TowerBuff.none(), UpgradeCondition.always(),
                 UpgradeCondition.always(), "");
@@ -53,10 +40,8 @@ public record UpgradeNode(String id, UpgradeSlot slot, String displayName, int p
     }
 
     /**
-     * A short, human-readable summary of what buying this node costs and grants - the gate
-     * (never {@code requires}, which is a structural precondition the UI hides rather than
-     * shows unsatisfied) plus the same buff/extra-effect text {@code UpgradePath.describe()}
-     * used to build.
+     * What buying this node costs and grants: its gate and its bonuses. The structural prerequisite
+     * is not shown.
      */
     public String describe() {
         String buffText = describeBuff(this.statBonus);

@@ -14,14 +14,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * The engine is driven from two threads in the real application: the EDT loads levels,
- * requests waves and places towers, while the {@code game-loop} thread ticks and renders.
- * Every other test in this suite is deliberately single-threaded, so these exist to cover the
- * handful of behaviours that only exist between the two.
- * <p>
- * A race test can pass on a broken build - it only proves the failure did not happen this
- * run. These are regression nets, not proofs: the guarantees themselves come from the
- * publication rules in CLAUDE.md 3, and each test says which one it is exercising.
+ * Behaviour between the EDT and the game-loop thread. A passing race test only proves the race
+ * didn't happen this run; these are regression nets, not proofs.
  */
 class EngineThreadingTest {
 
@@ -31,13 +25,7 @@ class EngineThreadingTest {
                 List.of(new WaveDefinition("3 c", Rank.GRUNT)), 100, 5);
     }
 
-    /**
-     * Exercises the volatile publication of {@code cellGrid}, {@code waves}, and GameWorld's
-     * board/path: a level load replaces all of them while a tick is walking the previous
-     * level's state. Before those were published safely - and before {@code GameLoop.stop()}
-     * joined - this is the shape that threw from inside a tick and was swallowed as a one-off
-     * ERROR line.
-     */
+    /** A level load replaces the state a running tick walks. */
     @Test
     void loadingALevelWhileTicksAreRunningNeverThrowsFromTheTickThread() throws InterruptedException {
         GameEngine engine = FakeGameHost.newBoundEngine();
@@ -70,10 +58,7 @@ class EngineThreadingTest {
         assertThat(tickFailure.get()).isNull();
     }
 
-    /**
-     * Exercises the volatile publication of {@code startWave}: the request is made on one
-     * thread and consumed by {@code doTick} on another, with no lock between them.
-     */
+    /** The wave request is made on one thread and consumed by {@code doTick} on another. */
     @Test
     void aWaveRequestedFromAnotherThreadIsConsumedByTheTickThread() throws InterruptedException {
         GameEngine engine = FakeGameHost.newBoundEngine();

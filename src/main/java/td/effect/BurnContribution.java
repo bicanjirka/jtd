@@ -1,11 +1,8 @@
 package td.effect;
 
 /**
- * One tower's own share of a {@link EffectKind#BURN}'s fuel pool - {@code amount} decays
- * alongside every other contribution's, and {@code sink} is what {@link ActiveEffects#tickBurn}
- * credits that share's damage through, so a reapplication from a second tower never displaces
- * the first tower's own credit. See {@code ActiveEffects#applyBurn}/{@code #tickBurn} and
- * {@code td/effect/CLAUDE.md}.
+ * One tower's share of a burn pool: {@code amount} decays with the pool, and {@code sink} credits
+ * that tower for its share.
  */
 record BurnContribution(DamageSink sink, float amount) {
 

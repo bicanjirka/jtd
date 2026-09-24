@@ -6,9 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Builds a {@link Path} from a level's raw corner list: converts each corner to its
- * pixel-space center, runs the result through the level's {@link PathSmoothing} strategy,
- * then populates a {@link PathNormal}.
+ * Builds a {@link Path} from corner cells: to pixel centres, then through the level's
+ * {@link PathSmoothing}.
  */
 public final class PathBuilder {
 

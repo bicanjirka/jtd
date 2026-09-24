@@ -4,9 +4,8 @@ import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 
 /**
- * A minimal concrete tower exposing a fixed, test-supplied {@link UpgradeTree}, used
- * to exercise {@link AbstractTower}'s upgrade mechanism (buying, exclusivity, composing
- * with an Aura tower's buff) in isolation from any real tower's own content.
+ * A tower with a test-supplied {@link UpgradeTree}, for testing the upgrade mechanism apart from
+ * real content.
  */
 final class FakeUpgradeableTower extends AbstractTower {
 

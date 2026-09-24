@@ -15,13 +15,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * GameWorld is the shared mutable world (the tower list, the enemy roster, the
- * wave-start hub) that GameEngineTest exercises only incidentally through
- * gameplay flows. These tests pin down its own wiring directly: that each
- * listener family actually fires. Economy-specific behavior is covered by
- * EconomyLedgerTest, which GameWorld's doPay/apply/etc. delegate to.
- */
 class GameWorldTest {
 
     private final RecordingGameHost host = new RecordingGameHost();

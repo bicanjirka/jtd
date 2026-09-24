@@ -5,9 +5,6 @@ import td.effect.EffectTemplate;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A configurable, recording {@link AbilityContext} double for headless ability tests.
- */
 final class FakeAbilityContext implements AbilityContext {
 
     final List<AppliedEffect> appliedEffects = new ArrayList<>();

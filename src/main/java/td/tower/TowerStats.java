@@ -3,36 +3,21 @@ package td.tower;
 import td.tower.buff.TowerBuff;
 
 /**
- * A tower's live, buffed combat stats as one immutable value: what it currently hits for, how
- * far it currently reaches, how long it currently waits between shots, and how likely its next
- * hit is to land as a critical one.
- * <p>
- * These six numbers are <strong>correlated</strong> - {@code rangeReal} and
- * {@code rangeReal2} are two forms of the same reach, and a tower firing with this tick's
- * damage but last tick's cooldown is not a state the simulation ever produced. They are also
- * recomputed on the Event Dispatch Thread (an aura tower registering, an upgrade path being
- * bought) and read by tick code on the {@code game-loop} thread. Grouping them into one value
- * that is swapped through a single volatile field is what makes that crossing coherent:
- * marking six separate fields {@code volatile} would make each read fresh but would still
- * let a tick observe a half-applied recalculation. See CLAUDE.md 3.
+ * A tower's current stats as one immutable value. They are correlated and recomputed on the EDT
+ * while tick code reads them, so they are swapped as a whole through one volatile field.
  *
- * @param damage     current damage per hit, in hundredths (the same scale {@code damageBase} uses)
- * @param range      current range in cells, for display
- * @param coolDown   current ticks between shots, after any fire-rate bonus
- * @param rangeReal  current range in pixels
- * @param rangeReal2 {@code rangeReal} squared, so a per-tick scan never calls {@code Math.sqrt}
- * @param critChance current chance, in {@code [0, 1]}, that this tower's next hit rolls
- *                   critical - a tower's own innate {@code critChanceBase} (see
- *                   {@code AbstractTower}; {@code 0} unless a leaf sets otherwise, e.g.
- *                   {@code SniperTower}) plus whatever an upgrade path has granted on top
- *                   (see {@code td.tower.buff.TowerBuff.critChanceBonus})
+ * @param damage     damage per hit, in hundredths
+ * @param range      range in cells, for display
+ * @param coolDown   ticks between shots
+ * @param rangeReal  range in pixels
+ * @param rangeReal2 {@code rangeReal} squared
+ * @param critChance chance in {@code [0, 1]} that a hit is critical
  */
 public record TowerStats(int damage, float range, int coolDown, float rangeReal, float rangeReal2, float critChance) {
 
     /**
-     * Folds a tower's base stats and the total buff acting on it into one coherent set.
-     * {@code scale} is the board's pixels-per-cell, which is what turns a range in cells into
-     * the pixel range every distance check actually uses.
+     * Folds base stats and the total buff into one set; {@code scale} converts range from cells to
+     * pixels.
      */
     public static TowerStats of(int damageBase, float rangeBase, int coolDownMax, float critChanceBase,
                                 TowerBuff buff, int scale) {

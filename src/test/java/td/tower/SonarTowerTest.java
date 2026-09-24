@@ -17,11 +17,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-/**
- * Covers SonarTower's sonar scan. The board scale is 32 and the scan takes 2 seconds at 20
- * ticks a second, so a revolution is 40 ticks and each quarter turn is 10 - which is where
- * the tick numbers asserted below come from. The scan starts pointing along +X (east).
- */
+/** Scale 32; a revolution is 40 ticks, so a quarter turn is 10. The scan starts pointing east. */
 class SonarTowerTest {
 
     private static final int TICKS_PER_REVOLUTION = 40;

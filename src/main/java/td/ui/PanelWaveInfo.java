@@ -16,11 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Side-by-side summaries of the round in play and the one queued next. Each side stacks one
- * {@link PathWaveRow} per path, in path order - a round starts every path's wave together (see
- * {@code td/wave/CLAUDE.md}'s round model), so this panel shows one row per path rather than
- * one wave. Row count is rebuilt only when the number of paths actually changes (a new level
- * loading), not per frame - see this package's "built once, refreshed in place" convention.
+ * The round in play and the next one side by side, each with one {@link PathWaveRow} per path. Rows
+ * are rebuilt only when the path count changes.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelWaveInfo extends JPanel {
@@ -88,10 +85,7 @@ public class PanelWaveInfo extends JPanel {
         container.repaint();
     }
 
-    /**
-     * Rebuilds a side's rows only when the path count actually changed - a no-op on every
-     * ordinary wave start, which just refreshes the existing rows' content in {@link #setSide}.
-     */
+    /** Rebuilds a side's rows only when the path count changed. */
     private void resize(JPanel container, List<PathWaveRow> rows, int count) {
         if (rows.size() == count) {
             return;
@@ -124,11 +118,8 @@ public class PanelWaveInfo extends JPanel {
     }
 
     /**
-     * One bordered section - a round-number heading over its column of {@link PathWaveRow}s -
-     * nested inside this panel's outer "Current & Next Wave" border, mirroring the
-     * {@code jPanel_gameInfo}/{@code jPanel_gameButtons} nesting {@code PanelGameConsole} already
-     * uses. Untitled ({@link Hud#outlineBorder()}) since the round label already headings the
-     * section; a second title would just repeat it.
+     * One bordered section: a round heading over its rows. Untitled, since the heading already
+     * names it.
      */
     private void buildSection(JPanel section, JLabel roundLabel, JPanel side, int row) {
         section.setLayout(new GridBagLayout());

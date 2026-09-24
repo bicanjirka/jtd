@@ -3,15 +3,11 @@ package td.effect;
 import td.damage.Damage;
 
 /**
- * Where a damage-over-time {@link Effect} sends the damage it deals each tick, with the
- * target already captured by whoever produced the effect. A tower producing a burn binds
- * this to its own {@code dealDamage(enemy, damage)}, so a damage-over-time tick is credited
- * to the tower that applied it exactly like an instant hit is.
+ * Where a damage-over-time {@link Effect} sends each tick's damage, with the target already bound,
+ * so the tick is credited to the tower that applied it.
  * <p>
- * Deliberately one argument, not {@code apply(EnemyMob, Damage)}: a two-argument form would
- * force this package to depend on {@code td.enemy}, while {@code td.enemy} already needs to
- * depend on this package to hold an enemy's active effects. Keeping the target bound at
- * production time avoids that cycle.
+ * One argument on purpose: taking the enemy too would make this package depend on {@code td.enemy},
+ * which already depends on it.
  */
 @FunctionalInterface
 public interface DamageSink {

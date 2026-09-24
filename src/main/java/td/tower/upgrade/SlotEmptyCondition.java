@@ -4,9 +4,8 @@ import td.tower.Tower;
 import td.util.GameWorld;
 
 /**
- * Satisfied while nothing has been bought yet in {@code slot} - what makes two root nodes of
- * the same slot mutually exclusive once either one is chosen: the sibling root's own
- * {@code requires} stops being satisfied the moment the first node in that slot is owned.
+ * Satisfied while nothing is bought in {@code slot}, which makes a slot's root nodes mutually
+ * exclusive.
  */
 record SlotEmptyCondition(UpgradeSlot slot) implements UpgradeCondition {
 

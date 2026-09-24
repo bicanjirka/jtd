@@ -3,12 +3,9 @@ package td.enemy;
 import td.effect.EffectKind;
 
 /**
- * The most recent ability-applied effect a mob cast, and when - recorded on the <em>caster</em>
- * regardless of who the effect actually landed on. {@code radius} is {@code 0} for a
- * {@link SelfTarget} cast. This exists because a periodic re-application onto allies already
- * under its effect (the Ghost Elite's shroud, refreshed every interval) triggers no gain/loss
- * transition on any of them - without a moment recorded on the caster itself, such a re-cast
- * would be entirely invisible. See {@code td.ui.EnemyFrameBuilder}.
+ * The most recent ability effect a mob cast, recorded on the caster. {@code radius} is {@code 0}
+ * for a self cast. Needed because refreshing an effect on allies that already have it causes no
+ * gain or loss transition, so the cast would otherwise be invisible.
  */
 public record AbilityCast(EffectKind kind, float radius, int tick) {
 }

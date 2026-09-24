@@ -15,22 +15,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Describes one frame of the game board: cell highlights, enemies, and towers,
- * as an AWT-free {@link RenderFrame}. The one place that owns the per-object
- * builder dispatch, so a backend never needs to know how any domain type is
- * described. Background image blitting and the actual pixel drawing are the
- * backend's job (e.g. {@link Java2DFrameRenderer}), not this class's - this
- * class has no {@code java.awt} import at all.
+ * Describes one frame of the board as an AWT-free {@link RenderFrame}, owning the dispatch to each
+ * per-object builder. Drawing pixels is the backend's job.
  * <p>
- * It takes the {@link GameWorld} rather than a handful of narrower slices. Drawing the board
- * means drawing all of it - cells, enemies, towers, projectiles, the board geometry and every
- * path - so naming six collaborators at the call site would say less than naming the one thing
- * that is "everything on the board". What it deliberately does <em>not</em> take is
- * {@code GameEngine}: a renderer has no business next to input handling and level loading.
- * <p>
- * The level is read fresh on every frame through {@link GameWorld#level()}, not captured at
- * construction, because it is replaced wholesale when a level loads - and read <em>once</em>
- * per frame, so a frame cannot mix the board geometry of one level with the cells of another.
+ * Takes the whole {@link GameWorld}, since it draws everything on the board, but never the engine.
+ * Reads {@link GameWorld#level()} once per frame, so a frame cannot mix two levels.
  */
 public final class BoardRenderer {
 

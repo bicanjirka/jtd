@@ -9,11 +9,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * WaveContent's counting methods, specifically that a shaped slot counts its member count, not
- * one - this is the line GameWorld.startWave seeds a wave's alive count from, so getting it
- * wrong either clears a wave early or leaves it uncompletable.
- */
 class WaveContentTest {
 
     private final EnemyCatalog catalog = EnemyCatalog.builtIn();

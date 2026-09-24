@@ -17,13 +17,7 @@ import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Exercises AbstractTower's damage/range math, the AuraTower buff mechanism, and the
- * upgrade-tree mechanism (through the test-only {@link FakeUpgradeableTower}, since no real
- * tower's own content is exercised here - see td/tower/upgrade).
- * Lives in the same package as AbstractTower so it can read the protected
- * damageBase/damageCurrent fields directly instead of parsing getStatusString().
- */
+/** In {@code AbstractTower}'s package so it can read protected stats directly. */
 class AbstractTowerTest {
 
     private final GameWorld context = WorldFixtures.newWorld();

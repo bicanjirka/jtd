@@ -5,11 +5,8 @@ import td.tower.Tower;
 import td.util.GameWorld;
 
 /**
- * Satisfied once at least {@code requiredAdjacent} other towers occupy one of the 8 cells
- * surrounding this tower's own cell - a group built together, not any one tower's own
- * performance. Cell membership is derived from each tower's pixel centre
- * ({@link Tower#getX()}/{@link Tower#getY()}) the same way {@code TowerRoster} already
- * converts a tower's position to a cell for sell/clear.
+ * Satisfied once at least {@code requiredAdjacent} other towers stand in the 8 cells around this
+ * tower.
  */
 public record ClusterCondition(int requiredAdjacent) implements UpgradeCondition {
 

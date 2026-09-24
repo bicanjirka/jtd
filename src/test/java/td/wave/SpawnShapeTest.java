@@ -11,11 +11,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * SpawnShape's factories and its exact bounty split - see WaveTest/WaveScriptTest for the
- * shapes wired into a whole wave, and docs/features/FEATURE-enemy-spawn-types.md's "Three
- * mechanisms" section for what each field means.
- */
 class SpawnShapeTest {
 
     @Test

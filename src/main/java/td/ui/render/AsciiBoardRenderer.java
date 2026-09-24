@@ -3,13 +3,8 @@ package td.ui.render;
 import java.util.Arrays;
 
 /**
- * A second, deliberately minimal backend for {@link RenderFrame}: a compact
- * ASCII grid of the board's enemies and towers, with no display required.
- * Proves the describe/draw split is a real seam rather than a theoretical
- * one, and doubles as a headless troubleshooting aid - see its use at DEBUG
- * in {@code TowerDefense.doGameTick()}. Tower effects (beams/splash/pulse)
- * and cell highlights are intentionally omitted; this is a board-state
- * snapshot, not a full render.
+ * A minimal text backend for {@link RenderFrame}: enemies and towers as an ASCII grid. Used for
+ * debug logging, and proves the frame model is backend-independent.
  */
 public final class AsciiBoardRenderer {
 

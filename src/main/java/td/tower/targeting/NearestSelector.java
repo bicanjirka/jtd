@@ -6,10 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Picks the candidate closest to a fixed point - used by a homing projectile retargeting
- * around its own current position, not the tower that fired it.
- */
+/** Picks the candidate closest to a fixed point. */
 public final class NearestSelector implements TargetSelector {
 
     private final double x;

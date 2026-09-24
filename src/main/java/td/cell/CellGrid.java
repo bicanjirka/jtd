@@ -3,16 +3,8 @@ package td.cell;
 import java.util.function.Consumer;
 
 /**
- * A level's board of {@link Cell}s. Owns the grid outright and never hands it out: callers
- * get the queries they actually make - the cell at a position, the board's dimensions,
- * iteration - rather than the backing array.
- * <p>
- * That matters more for an array than for a collection, since an array cannot even be wrapped
- * in an unmodifiable view; returning one gives every caller unrestricted write access to this
- * class's internals and leaves it unable to hold any invariant over them.
- * <p>
- * {@link #empty()} is the "no level loaded" value, so nothing has to model that state as
- * {@code null} or guard against it before painting.
+ * A level's board of {@link Cell}s. Never hands out its backing array, only the queries callers
+ * make. {@link #empty()} stands for "no level loaded".
  */
 public final class CellGrid {
 
@@ -28,17 +20,11 @@ public final class CellGrid {
         this.height = this.width == 0 ? 0 : cells[0].length;
     }
 
-    /**
-     * The board of a level that has not been loaded: no cells, and {@link #isLoaded()} false.
-     */
     public static CellGrid empty() {
         return EMPTY;
     }
 
-    /**
-     * A fresh board of {@code width} x {@code height} buildable cells, each positioned at its
-     * own top-left pixel corner for the given board {@code scale}.
-     */
+    /** A board of buildable cells, each at its top-left pixel corner for {@code scale}. */
     public static CellGrid of(int width, int height, int scale) {
         if (width <= 0 || height <= 0) {
             return EMPTY;
@@ -52,9 +38,6 @@ public final class CellGrid {
         return new CellGrid(cells);
     }
 
-    /**
-     * Whether a level's board is actually loaded, as opposed to {@link #empty()}.
-     */
     public boolean isLoaded() {
         return this.width > 0;
     }
@@ -72,10 +55,7 @@ public final class CellGrid {
     }
 
     /**
-     * The cell at grid coordinates {@code (x, y)}.
-     *
-     * @throws IndexOutOfBoundsException if the coordinates are off the board - callers that
-     *                                   cannot rule that out first should ask {@link #contains}
+     * @throws IndexOutOfBoundsException off the board; check {@link #contains} first if unsure
      */
     public Cell at(int x, int y) {
         if (!this.contains(x, y)) {
@@ -85,9 +65,7 @@ public final class CellGrid {
         return this.cells[x][y];
     }
 
-    /**
-     * Visits every cell, column by column. A no-op on {@link #empty()}.
-     */
+    /** Visits every cell, column by column. */
     public void forEach(Consumer<Cell> action) {
         for (Cell[] column : this.cells) {
             for (Cell cell : column) {

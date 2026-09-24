@@ -14,21 +14,13 @@ import td.wave.WaveAnnouncer;
 import java.util.List;
 
 /**
- * The composition root wiring a level's economy, enemy roster, tower roster, projectile
- * roster and wave-start hub into the one object {@code Tower}/{@code EnemyMob}/{@code Wave}
- * are constructed against.
+ * Wires the economy, rosters and wave-start hub that towers, enemies and waves are built against.
  * <p>
- * <strong>It hands its collaborators out; it does not wrap them.</strong> Ask for
- * {@link #economy()} or {@link #towers()} and call that. This used to be forty-one
- * delegating pass-throughs, which hid how much of the world any one class actually touched -
- * a tower looked like it used "the world" when it used seven specific capabilities. Naming
- * the collaborator at the call site makes that visible, and each collaborator is
- * independently constructible and testable on its own.
+ * It hands out its collaborators rather than wrapping them: call {@link #economy()} or
+ * {@link #towers()}, so each call site shows what it uses.
  * <p>
- * It is <em>not</em> a pure composition root. Two things are its own state rather than a
- * collaborator's: the {@link LoadedLevel} currently installed and the {@link RandomSource}.
- * The level is a correlated bundle - board, path, cell grid, enemy catalog, waves - published
- * through a single {@code volatile}, never field by field. If you add state here, say so here.
+ * Its own state is the installed {@link LoadedLevel}, published through one {@code volatile}, and
+ * the {@link RandomSource}.
  */
 public class GameWorld {
 
@@ -45,9 +37,7 @@ public class GameWorld {
         this(mainApp, RandomSource.shared());
     }
 
-    /**
-     * For a run that has to be reproducible - see {@code td.BalanceHarness}.
-     */
+    /** For a run that has to be reproducible. */
     public GameWorld(GameHost mainApp, RandomSource random) {
         this.random = random;
         this.mainApp = mainApp;
@@ -55,55 +45,34 @@ public class GameWorld {
         this.towers = new TowerRoster(mainApp, this.economy, this::getBoard);
     }
 
-    /**
-     * The player's credits, score and lives.
-     */
     public EconomyLedger economy() {
         return this.economy;
     }
 
-    /**
-     * The live enemies of the wave in play. Also the {@code EnemyRegistry} readers depend on.
-     */
     public EnemyRoster enemies() {
         return this.enemies;
     }
 
-    /**
-     * The towers on the board, and their buy/sell lifecycle.
-     */
     public TowerRoster towers() {
         return this.towers;
     }
 
-    /**
-     * The shells and missiles currently in flight.
-     */
     public ProjectileRoster projectiles() {
         return this.projectiles;
     }
 
-    /**
-     * The "a wave started" broadcast hub.
-     */
     public WaveAnnouncer waves() {
         return this.waves;
     }
 
-    /**
-     * Where anything in the simulation that needs randomness gets it - never {@code Math.random()}.
-     */
+    /** The only source of randomness in the simulation. */
     public RandomSource random() {
         return this.random;
     }
 
     /**
-     * Seeds the roster's alive count from every path's wave about to run - summed, since a
-     * round's enemies all share one roster and one alive count regardless of which path spawned
-     * them, which is what makes "the round is cleared" wait for every path automatically - and
-     * announces the start, in that order: a listener reacting to the announcement must not see a
-     * stale count. The one method here that coordinates two collaborators rather than handing
-     * one out.
+     * Seeds the roster's alive count with the total across every path's starting wave, then
+     * announces the start - in that order, so listeners never see a stale count.
      */
     public void startWave(List<Wave> starting) {
         int total = 0;
@@ -115,27 +84,19 @@ public class GameWorld {
     }
 
     /**
-     * The level currently installed, as one consistent snapshot. <strong>A caller that needs
-     * two of its parts together must read it once and use that value</strong> - calling
-     * {@link #getBoard()} and then {@link #getPath()} is two reads of the volatile and can
-     * straddle a level change.
+     * The installed level as one snapshot. <strong>Read it once when you need two of its
+     * parts</strong>: separate getters can straddle a level change.
      */
     public LoadedLevel level() {
         return this.level;
     }
 
-    /**
-     * Installs a level as one atomic publication. The production path -
-     * {@code GameEngine.loadLevel} builds the whole {@link LoadedLevel} and hands it over here
-     * in a single write, so no reader can see a half-installed level.
-     */
+    /** Installs a level in one write. */
     public void installLevel(LoadedLevel level) {
         this.level = level;
     }
 
-    /**
-     * The installed level's board of cells - {@link CellGrid#empty()} when none is.
-     */
+    /** {@link CellGrid#empty()} when no level is installed. */
     public CellGrid cells() {
         return this.level.cells();
     }
@@ -145,13 +106,9 @@ public class GameWorld {
     }
 
     /**
-     * Replaces one part of the installed level.
-     * <p>
-     * <strong>For single-threaded worlds only</strong> - a test building a world up piece by
-     * piece, or {@code td.ui.PanelEnemy}'s display-only world, which repositions its preview
-     * mobs by swapping a one-point path. Each is a read-modify-write of {@link #level}, which
-     * is safe precisely because nothing else is touching that world. The world the simulation
-     * runs in installs a level through {@link #installLevel} instead, in one write.
+     * Replaces one part of the installed level. <strong>Single-threaded worlds only</strong>
+     * (tests, previews): it is a read-modify-write. The simulation installs levels with
+     * {@link #installLevel}.
      */
     public void setBoard(BoardGeometry board) {
         this.level = this.level.withBoard(board);
@@ -161,9 +118,7 @@ public class GameWorld {
         return this.level.pathAt(0);
     }
 
-    /**
-     * Replaces one part of the installed level - see {@link #setBoard}.
-     */
+    /** Single-threaded worlds only; see {@link #setBoard}. */
     public void setPath(Path path) {
         this.level = this.level.withSinglePath(path);
     }
@@ -172,9 +127,7 @@ public class GameWorld {
         return this.level.catalog();
     }
 
-    /**
-     * Replaces one part of the installed level - see {@link #setBoard}.
-     */
+    /** Single-threaded worlds only; see {@link #setBoard}. */
     public void setEnemyCatalog(EnemyCatalog enemyCatalog) {
         this.level = this.level.withCatalog(enemyCatalog);
     }

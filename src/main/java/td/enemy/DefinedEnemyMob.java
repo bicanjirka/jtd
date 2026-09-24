@@ -12,9 +12,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * The single concrete {@link EnemyMob} implementation for every data-driven enemy - behavior
- * comes entirely from its {@link EnemyDefinition}'s {@link Trait}s and {@link Ability}s, not
- * from which Java class was instantiated.
+ * The one concrete {@link EnemyMob}: behaviour comes entirely from its {@link EnemyDefinition}'s
+ * traits and abilities.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class DefinedEnemyMob extends AbstractEnemyMob {
@@ -39,12 +38,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         this.bodyScale = bodyScaleFor(definition.archetype(), gameWorld.getBoard().scale(), rank) * spawnParameters.sizeMultiplier();
     }
 
-    /**
-     * A shape's health multiplier composes before {@code healthDivisor}, not after: the caller
-     * (a {@code SpawnShape}, via {@link td.wave.Wave}) has already scaled the wave's base health
-     * by the time it builds {@code spawnParameters}, and this only applies the definition's own
-     * toughness division on top - exactly what happened here before shapes existed.
-     */
+    /** Divides after the spawn shape's multiplier, which the wave already applied to the health. */
     private static SpawnParameters withDividedHealth(SpawnParameters spawnParameters, float healthDivisor) {
         return new SpawnParameters(spawnParameters.delayTicks(), Math.round(spawnParameters.health() / healthDivisor),
                 spawnParameters.price(), spawnParameters.sizeMultiplier(), spawnParameters.speedMultiplier(),
@@ -87,11 +81,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         };
     }
 
-    /**
-     * Places this (freshly constructed) mob at the same point along the path another mob was
-     * at, rather than the path's start every mob otherwise spawns at - what lets an ability's
-     * spawn (the Warden's egg, a reinforcement) appear where the spawning mob actually was.
-     */
+    /** Places this freshly built mob where {@code other} is on the path. */
     void spawnAtSamePositionAs(AbstractEnemyMob other) {
         this.jumpToDistance(other.getDistanceIntoLap());
     }
@@ -129,19 +119,12 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         }
     }
 
-    /**
-     * Whether this mob is currently unable to cast an ability - today, only an active {@link
-     * EffectKind#FREEZE}. Named for the broader condition rather than the one effect that causes
-     * it today, so a future stun-like effect only needs adding to this check, not a second one.
-     */
+    /** Unable to cast, currently only while frozen. */
     private boolean isIncapacitated() {
         return this.activeEffectKinds().contains(EffectKind.FREEZE);
     }
 
-    /**
-     * Rejects an incoming effect outright if any trait blocks its {@link EffectKind} - see
-     * {@link Trait#blocksEffect} - before ever handing it to {@link td.effect.ActiveEffects}.
-     */
+    /** Rejects the effect if any trait blocks its kind. */
     @Override
     public void applyEffect(Effect effect) {
         for (Trait trait : this.definition.traits()) {
@@ -209,11 +192,6 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         return visitor.visitDefined(this);
     }
 
-    /**
-     * The rank/health/bounty line makes up for {@code td.ui.PathWaveRow} no longer showing a
-     * wave-wide hp/price/rank label - those numbers are per-enemy now, so hovering the mob that
-     * actually has them is where they belong.
-     */
     public String getInfoString() {
         return this.definition.displayName() + "\n\n" + this.definition.description() + "\n\nRank: "
                 + titleCase(this.rank) + "   Health: " + this.definition.baseHealth() + "   Bounty: "
@@ -225,12 +203,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
         return name.charAt(0) + name.substring(1).toLowerCase();
     }
 
-    /**
-     * The runtime {@link AbilityContext} a live mob's own abilities execute against - resolves
-     * {@link Ability}/{@link AbilityAction} data against this mob's actual {@link GameWorld},
-     * position and {@link EnemyDefinition}, which {@link AbilityEvaluator} itself never needs
-     * to see directly.
-     */
+    /** Resolves ability data against this mob's world, position and definition. */
     private final class MobAbilityContext implements AbilityContext {
 
         private final int gameTime;
@@ -298,10 +271,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
             }
         }
 
-        /**
-         * Ability-produced effects deal no direct damage in v1 (shield/invisibility/heal only) -
-         * this sink is never actually invoked.
-         */
+        /** Ability effects deal no direct damage, so this sink is never invoked. */
         private void creditNoOne(Damage damage) {
         }
 

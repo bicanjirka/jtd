@@ -7,12 +7,9 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Owns the player's credits/score/lives as one {@link EconomyState} and the
- * synchronized-compute/notify-outside-lock discipline required because it is written from
- * both the EDT (buying/selling a tower) and the {@code game-loop} thread (a kill or a leak) -
- * see CLAUDE.md §3 (Threading). Every mutation fires exactly one {@link EconomyListener}
- * notification, and never while holding the lock, since a listener re-enters and touches
- * Swing.
+ * Credits, score and lives as one {@link EconomyState}, written from the EDT (buying, selling) and
+ * the game-loop thread (kills, leaks). Each mutation fires exactly one notification, outside the
+ * lock, since listeners re-enter.
  */
 public class EconomyLedger {
 
@@ -23,14 +20,8 @@ public class EconomyLedger {
     private volatile EconomyState economy = EconomyState.startingWith(0, 5);
 
     /**
-     * Seeds the economy at the start of a level - credits and lives are both the level's own,
-     * not carried over from whatever ran before. Fires like any other economy change since
-     * listeners are already registered by the time a level loads.
-     * <p>
-     * Assigns inside the lock for the same reason {@link #apply} and {@link #doPay} compute
-     * inside it: a concurrent kill or leak on the {@code game-loop} thread is a
-     * read-modify-write, and an unsynchronized assignment here would let one of the two be
-     * silently lost.
+     * Seeds the level's starting credits and lives, notifying like any change. Assigns inside the
+     * lock so a concurrent kill's read-modify-write is not lost.
      */
     public void startEconomy(int startingCredits, int startingLives) {
         EconomyState seeded;
@@ -42,11 +33,7 @@ public class EconomyLedger {
         this.fireEconomyChangedEvent(seeded);
     }
 
-    /**
-     * Applies a game event's effect on credits/score/lives as one atomic move, firing exactly
-     * one notification for it - replacing what used to be up to three separate mutations
-     * (see EconomyDelta.kill/leak).
-     */
+    /** Applies one event atomically, firing one notification. */
     public void apply(EconomyDelta delta) {
         EconomyState updated;
         synchronized (this) {
@@ -58,14 +45,8 @@ public class EconomyLedger {
     }
 
     /**
-     * Credits, score and lives as one consistent snapshot.
-     * <p>
-     * <strong>A caller that needs more than one of them must use this</strong>, not two of the
-     * scalar accessors below. {@link EconomyState} exists precisely because those three are
-     * correlated, and reading them one at a time is two or three separate reads of the volatile
-     * - which can straddle a kill or a purchase and report a state that never existed. The
-     * listener path was always given the whole value; this is the same guarantee for a caller
-     * that polls.
+     * Credits, score and lives from one snapshot. <strong>Use this when you need more than one of
+     * them</strong>: separate reads can straddle a change and report a state that never existed.
      */
     public EconomyState state() {
         return this.economy;

@@ -6,10 +6,7 @@ import td.enemy.EnemyRegistry;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * The composition behind {@link TargetQuery#and}: matches whatever both delegate queries
- * match. Pure wiring - no domain logic of its own.
- */
+/** Matches what both delegates match. */
 final class IntersectingTargetQuery implements TargetQuery {
 
     private final TargetQuery first;

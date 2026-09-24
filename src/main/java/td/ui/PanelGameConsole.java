@@ -21,14 +21,9 @@ import java.awt.event.ActionEvent;
 import java.io.Serial;
 
 /**
- * The right-hand console: title, wave/lives/score/credits status, the four speed buttons,
- * and the tower-info/wave-preview panels. Registers itself as an {@link EconomyListener} on
- * {@link #setGameWorld}, so credits/lives/score stay current without TowerDefense pushing
- * them - only wave progress (not an economy value) still needs an explicit
- * {@link #setWaveProgress} push. Speed-button *behavior* stays in TowerDefense (tick speed
- * is a UI/EDT-only concern per CLAUDE.md, but deciding what a click does is still
- * TowerDefense's call) - this panel only owns the buttons existing and their play/pause
- * visibility.
+ * The right-hand console: status, speed buttons, and the tower-info and wave-preview panels. It
+ * listens to the economy itself; wave progress is pushed with {@link #setWaveProgress}. It owns the
+ * speed buttons and their visibility, not what a click does.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelGameConsole extends JPanel implements EconomyListener {
@@ -86,12 +81,7 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         this.panelUpgradeTree.setGameWorld(world);
     }
 
-    /**
-     * Selects {@code t}: shows its live status/sell button on {@link #panelTowerInfo} and swaps
-     * {@link #panelWaveInfo} out for {@link #panelUpgradeTree} in the same layout slot, so the
-     * sidebar shows what a selected tower can buy instead of the round summary while it's
-     * selected.
-     */
+    /** Shows {@code t}'s status and swaps the wave preview for its upgrade panel. */
     public void selectTower(Tower t) {
         this.panelTowerInfo.setTower(t);
         this.panelUpgradeTree.setTower(t);
@@ -99,11 +89,7 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         this.panelUpgradeTree.setVisible(true);
     }
 
-    /**
-     * Deselects whatever tower is currently selected (a no-op if none is) and swaps
-     * {@link #panelWaveInfo} back in. Also reached from {@link PanelTowerInfo}'s own sell
-     * button via {@link PanelTowerInfo#onDeselected}, so selling swaps the panel back too.
-     */
+    /** Clears the selection and swaps the wave preview back. Also runs after a sale. */
     public void unselectTower() {
         this.panelTowerInfo.unselectTower();
         this.panelUpgradeTree.setTower(null);
@@ -117,9 +103,8 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
     }
 
     /**
-     * The render-pulse refresh: both the selected tower's live status text and its upgrade
-     * panel need to track the simulation without waiting for an economy event - a gate's own
-     * progress (kills, damage dealt, a cluster of neighbours) can change with no purchase at all.
+     * Refreshes the selected tower's panels each render pulse, since gate progress changes without
+     * any economy event.
      */
     public void refreshSelected() {
         this.panelTowerInfo.refreshSelected();
@@ -151,9 +136,7 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         this.onSuperFast = r;
     }
 
-    /**
-     * Also reachable from the game-loop thread - see GameWorld.apply()'s callers.
-     */
+    /** May run on the game-loop thread. */
     @Override
     public void economyChanged(EconomyState state) {
         SwingUtilities.invokeLater(() -> {

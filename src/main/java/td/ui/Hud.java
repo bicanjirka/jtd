@@ -16,19 +16,13 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
 /**
- * The one place the game's HUD decides what it looks like: its palette, its fonts, the border
- * its panels wear, and how every clickable control paints itself.
+ * The HUD's look: palette, fonts, panel border, and how every control paints itself.
  * <p>
- * <strong>The controls paint themselves on purpose.</strong> Swing's default button chrome is
- * the platform look-and-feel's, so the same build looks different on Windows, macOS and Metal,
- * and its disabled-text colour is chosen for a light button face - against this game's black
- * panels it has repeatedly come out invisible. {@link #paintControl} therefore draws the
- * background, border and content itself and never delegates to the look-and-feel. The look-and-feel's
- * listeners are left installed, so pressed/rollover/selected still track the mouse normally;
- * only the painting is taken over.
- * <p>
- * Every control shares this one style. A new control belongs in {@link HudButton} or
- * {@link HudToggleButton}, not in a bare {@code JButton} styled by hand.
+ * <strong>Controls paint themselves on purpose.</strong> Platform look-and-feels differ between
+ * operating systems, and their disabled text has come out invisible on these dark panels.
+ * {@link #paintControl} draws everything itself; the look-and-feel's listeners stay, so pressed,
+ * rollover and selected states still work. New controls are {@link HudButton} or
+ * {@link HudToggleButton}.
  */
 public final class Hud {
 
@@ -42,34 +36,27 @@ public final class Hud {
     private static final Color FILL_HOVER = new Color(26, 38, 26);
     private static final Color FILL_PRESSED = new Color(46, 66, 46);
     private static final Color FILL_SELECTED = new Color(38, 56, 38);
-    /**
-     * Padding inside a control, since {@link #paintControl} draws the border itself.
-     */
+    /** Padding inside a control, since {@link #paintControl} draws the border. */
     private static final Border CONTROL_PADDING = new EmptyBorder(3, 8, 3, 8);
 
     private Hud() {
     }
 
     /**
-     * The plain outline shared by every panel and every control - one pixel, one colour. An
-     * explicit line rather than {@code createEtchedBorder}, whose shading is the look-and-feel's
-     * to choose and so differs between platforms.
+     * The one-pixel outline every panel and control shares. Not an etched border, whose shading
+     * varies by platform.
      */
     public static Border outlineBorder() {
         return BorderFactory.createLineBorder(BORDER_IDLE);
     }
 
-    /**
-     * The titled border every HUD panel wears, drawn with the same outline the controls use.
-     */
+    /** The titled border every HUD panel wears. */
     public static Border panelBorder(String title) {
         return BorderFactory.createTitledBorder(outlineBorder(), title, TitledBorder.DEFAULT_JUSTIFICATION,
                 TitledBorder.DEFAULT_POSITION, LABEL_FONT, FOREGROUND);
     }
 
-    /**
-     * Applies the shared control setup - colours, font, padding, and suppressing the look-and-feel's own chrome.
-     */
+    /** Shared control setup: colours, font, padding, and no look-and-feel chrome. */
     static void styleControl(AbstractButton button) {
         button.setBackground(BACKGROUND);
         button.setForeground(FOREGROUND);
@@ -83,9 +70,8 @@ public final class Hud {
     }
 
     /**
-     * Draws a control: a flat fill that reacts to the mouse, a one-pixel border, and either the
-     * button's icon or its text centred inside. A control carries one or the other - the icon
-     * wins if both are set, which no control here does.
+     * Draws a control: a flat fill reacting to the mouse, a one-pixel border, and its icon or else
+     * its text, centred.
      */
     static void paintControl(Graphics g, AbstractButton button) {
         Graphics2D g2 = (Graphics2D) g.create();

@@ -37,15 +37,11 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Owns the game state and input handling that {@link TowerDefense} used to
- * hold directly, minus anything Swing-specific. Nothing here constructs a
- * window, touches a Graphics2D, or requires a display - it can be built,
- * driven, and asserted on entirely from a test.
+ * Game state and input semantics, with nothing Swing-specific: it can be built and driven entirely
+ * from a test.
  * <p>
- * {@link #mouseClicked}/{@link #highlightCell} take board-relative pixel
- * coordinates (0,0 = top-left of the game board), not screen coordinates -
- * translating a real MouseEvent's screen position into that is a UI concern
- * {@link TowerDefense} still owns.
+ * {@link #mouseClicked} and {@link #highlightCell} take board-relative pixels (0,0 is the board's
+ * top-left), not screen coordinates.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class GameEngine {
@@ -65,9 +61,7 @@ public class GameEngine {
         this(new GameWorld(host));
     }
 
-    /**
-     * For a run that has to be reproducible - see {@code td.BalanceHarness}.
-     */
+    /** For a run that has to be reproducible. */
     public GameEngine(GameHost host, RandomSource random) {
         this(new GameWorld(host, random));
     }
@@ -85,10 +79,7 @@ public class GameEngine {
         return this.gameWorld.towers().all();
     }
 
-    /**
-     * The board, as a queryable grid rather than the backing array - see {@link CellGrid}.
-     * Never null: a level that has not been loaded yields {@link CellGrid#empty()}.
-     */
+    /** Never null: before a level loads this is {@link CellGrid#empty()}. */
     public CellGrid cells() {
         return this.gameWorld.cells();
     }
@@ -102,11 +93,9 @@ public class GameEngine {
     }
 
     /**
-     * Wave index, wave count and the waves either side of the cursor, read from <em>one</em>
-     * snapshot of the installed level. Callers needing more than one of those must use this
-     * rather than combining {@link #getCurrentWaveIndex()} with {@link #getWaveCount()}: those
-     * are two reads, and a level installing between them pairs an index belonging to one level
-     * with a count belonging to another. See {@link WaveProgress}.
+     * Wave index, count and neighbouring waves from one snapshot of the installed level. Use this
+     * rather than combining {@link #getCurrentWaveIndex()} with {@link #getWaveCount()}: a level
+     * installing between those two reads mixes two levels.
      */
     public WaveProgress waveProgress() {
         LoadedLevel installed = this.gameWorld.level();
@@ -121,9 +110,6 @@ public class GameEngine {
         return new WaveProgress(index, count, current, next);
     }
 
-    /**
-     * Whether the previous wave is cleared, so the next one is allowed to start.
-     */
     public boolean isWaveReady() {
         return this.waveReady;
     }
@@ -137,11 +123,8 @@ public class GameEngine {
     }
 
     /**
-     * Turns a level into live engine state: cell grid, path, buildability, waves and starting
-     * economy. This is the single entry point for doing so, and it is idempotent - always safe
-     * to call from any prior state, not just once per process, since returning to the
-     * level-select menu and picking another level calls it again on the same engine. See
-     * {@link #unloadCurrentLevel()} for the ordering that makes that safe.
+     * Turns a level into live engine state. Idempotent: safe from any prior state, since returning
+     * to the menu and picking another level calls it again.
      */
     public void loadLevel(LevelDefinition level) {
         unloadCurrentLevel();
@@ -185,12 +168,8 @@ public class GameEngine {
     }
 
     /**
-     * Makes {@link #loadLevel} safe to call from a dirty state - a level already in play, or
-     * another level's leftovers - by discarding everything the outgoing level owned before any
-     * new geometry or grid is installed. The ordering matters: {@link GameWorld#clearTowers()}
-     * maps each tower's pixel position back to a cell through the CURRENT {@code BoardGeometry}
-     * and calls back into the CURRENT {@code cellGrid} via {@link #clearCell}, so it must run
-     * against the outgoing board, before {@code loadLevel} replaces it below.
+     * Discards everything the outgoing level owned. Must run before the new board is installed:
+     * clearing towers maps their positions back to cells through the current board.
      */
     private void unloadCurrentLevel() {
         this.placement.reset();
@@ -202,11 +181,7 @@ public class GameEngine {
     }
 
     /**
-     * Marks unbuildable every cell any path's actual geometry covers - not just the cells it
-     * was authored through, so a smoothed/curved path's buildable set correctly reflects its
-     * real shape. Every path affects buildability identically and the result is unioned, so no
-     * tower is buildable on any path regardless of how many a level has. See {@link PathCoverage}
-     * for the geometry itself.
+     * Marks unbuildable every cell any path's real geometry covers, not just its authored corners.
      */
     private void markUnbuildableCells(CellGrid grid, List<PathRuntime> pathRuntimes, int scale) {
         Set<Point> unbuildable = new HashSet<>();
@@ -218,24 +193,20 @@ public class GameEngine {
         }
     }
 
-    /**
-     * Opens the gate on the first wave, once a level is loaded and the player is ready to play it.
-     */
     public void startLevel() {
         this.waveReady = true;
     }
 
     /**
-     * Asks for the next wave without starting it here. The request is a flag {@link #doTick}
-     * consumes on the game-loop thread, so spawning always happens in tick order - the UI
-     * (which calls this from the EDT) never mutates the enemy roster itself.
+     * Only sets a flag that {@link #doTick} consumes, so spawning always happens on the game-loop
+     * thread in tick order.
      */
     public void requestNextWave() {
         this.startWave = true;
     }
 
     /**
-     * @return true if a new wave actually started (i.e. one was ready and available)
+     * @return whether a wave actually started
      */
     public boolean nextWave() {
         LoadedLevel installed = this.gameWorld.level();
@@ -260,7 +231,7 @@ public class GameEngine {
     }
 
     /**
-     * @return true if this tick started a new wave (caller may want to refresh UI accordingly)
+     * @return whether this tick started a new wave
      */
     public boolean doTick(int time) {
         LOG.debug("doTick t={}", time);
@@ -291,9 +262,8 @@ public class GameEngine {
     }
 
     /**
-     * Frees the cell a sold (or torn-down) tower occupied, making it buildable again. Reached
-     * from {@code TowerRoster} through {@link GameHost#clearCell}, which is how the tower
-     * roster stays ignorant of the cell grid.
+     * Frees a sold tower's cell. Reached through {@link GameHost#clearCell}, which keeps the tower
+     * roster ignorant of the grid.
      */
     public void clearCell(int x, int y) {
         Cell cell = this.gameWorld.cells().at(x, y);
@@ -306,20 +276,17 @@ public class GameEngine {
     }
 
     /**
-     * @return the tower now selected by clicking its occupied cell, or empty if nothing was
-     * selected
+     * @return the tower selected by the click, or empty
      */
     public Optional<Tower> mouseClicked(int boardX, int boardY) {
         return this.placement.mouseClicked(boardX, boardY);
     }
 
     /**
-     * Debug tool: clears the current wave's enemies with no penalty (the same teardown path
-     * {@link #unloadCurrentLevel()} uses - no bounty, no score, no "you won" notification, since
-     * skipping is neither a kill nor a real clear) and starts the next one immediately.
+     * Debug: clears the current wave with no bounty, score or win notification, and starts the
+     * next.
      *
-     * @return true if a next wave actually started (false on the last wave, where the board is
-     * still cleared but there is nothing left to advance to)
+     * @return whether a next wave started; false on the last wave
      */
     public boolean debugSkipCurrentWave() {
         this.gameWorld.enemies().clear();
@@ -328,10 +295,8 @@ public class GameEngine {
     }
 
     /**
-     * Debug tool: spawns one instance of the next id in {@link EnemyCatalog#ids()}, cycling
-     * back to the first once every id has been used. Uses the definition's own
-     * {@code baseHealth}/{@code price} (there is no wave context to scale from) and appears
-     * immediately at the path's start.
+     * Debug: spawns the next catalog id at the path start with its base health and price, cycling
+     * through the catalog.
      *
      * @return the id spawned, or empty if no level is loaded
      */
@@ -349,19 +314,15 @@ public class GameEngine {
         return Optional.of(id);
     }
 
-    /**
-     * Debug tool: grants a lump sum of credits, through the same path a kill or a sale uses.
-     */
+    /** Debug: grants credits through the normal economy path. */
     public void debugGrantCredits(int amount) {
         this.gameWorld.economy().apply(EconomyDelta.credits(amount));
     }
 
     /**
-     * With a tower selected, buys the {@code number}-th (1-based) node in its own {@code
-     * offeredUpgrades()}, in the same {@code BASE}/{@code HEAD}/{@code SPECIAL} order the
-     * sidebar panel numbers its buttons in - so a button's own number always matches the key
-     * that buys it. A no-op if no tower is selected or {@code number} is out of range, mirroring
-     * {@code Tower.buyUpgrade}'s own refuse-silently-on-failure contract.
+     * Buys the selected tower's {@code number}-th (1-based) offered upgrade, in the order the
+     * upgrade panel numbers its buttons. A no-op if nothing is selected or the number is out of
+     * range.
      */
     public void buyUpgradeForSelected(int number) {
         this.gameWorld.towers().all().stream()

@@ -14,15 +14,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * The application entry point, and the one fatal-startup boundary: anything thrown while
- * building the game - notably {@link td.util.GameStartupException} - is logged here and
- * exits non-zero, rather than each failing component showing its own dialog and calling
- * {@code System.exit} itself.
+ * Entry point and the one fatal-startup boundary: anything thrown while building the game, notably
+ * {@link td.util.GameStartupException}, is logged here and exits non-zero.
  * <p>
- * Also owns per-run log file naming, which is why {@code jtd.logTimestamp} is set as the
- * very first statement in {@link #main}: {@code logback.xml} resolves it while configuring
- * itself, so any class touching SLF4J before that point would fix the property's absence
- * into the whole run's log filename.
+ * {@code jtd.logTimestamp} is set first because {@code logback.xml} reads it when it configures
+ * itself, on the first SLF4J use.
  */
 public class Main {
 
@@ -58,11 +54,9 @@ public class Main {
     }
 
     /**
-     * Keeps the most recent {@value #LOG_FILES_TO_KEEP} run logs, so a long-lived checkout's
-     * {@code logs/} does not grow without bound.
+     * Keeps the newest {@value #LOG_FILES_TO_KEEP} run logs.
      *
-     * @return the files it tried and failed to delete, for the caller to report once it has a
-     * logger - never null, and empty in the ordinary case
+     * @return the files that could not be deleted, for the caller to log once logging is up
      */
     private static List<File> pruneOldLogs() {
         File logDir = new File("logs");

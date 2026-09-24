@@ -3,10 +3,7 @@ package td.util;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Test double for {@link GameHost} that just records what was called,
- * so tests can build a real {@link GameWorld} without a live TowerDefence.
- */
+/** A {@link GameHost} that records what was called. */
 public class RecordingGameHost implements GameHost {
 
     public final List<Integer> enemyDiedCalls = new ArrayList<>();

@@ -2,11 +2,7 @@ package td;
 
 import td.tower.TowerFactory;
 
-/**
- * One tower a {@link BalanceHarness} loadout places before a run starts: a type and the cell
- * to build it on. No upgrade-path selection in v1 - see {@code docs/features/FEATURE-playtesting-and-balance-tooling.md}'s
- * V1 Scope.
- */
+/** One tower a {@link BalanceHarness} loadout places: a type and a cell. */
 public record TowerPlacementSpec(TowerFactory.Type type, int cellX, int cellY) {
 
     public static TowerPlacementSpec of(TowerFactory.Type type, int cellX, int cellY) {

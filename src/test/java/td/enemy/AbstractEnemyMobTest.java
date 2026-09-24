@@ -12,11 +12,6 @@ import td.util.RecordingGameHost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-/**
- * Exercises AbstractEnemyMob's damage/death and doTick movement, through
- * EnemyFactory.getEnemy("c", ...) (which builds a real DefinedEnemyMob via
- * the same construction path production uses).
- */
 class AbstractEnemyMobTest {
 
     private static GameWorld newContext() {
@@ -123,13 +118,7 @@ class AbstractEnemyMobTest {
         assertThat(enemy.getY()).isEqualTo(0.0);
     }
 
-    /**
-     * This is the behavior the old fixed-point model got wrong: every segment used to take
-     * the same number of ticks to cross regardless of its physical length (segmentProgression
-     * always ran 0-999 once per segment). Real arc-length movement crosses a segment twice as
-     * long in (roughly) twice as many ticks - this is what "distance-based progression" means,
-     * and what makes a smoothed, curved path move at a consistent real-world pace.
-     */
+    /** Movement is by arc length, so a segment's crossing time scales with its length. */
     @Test
     void crossingASegmentTwiceAsLongTakesRoughlyTwiceAsManyTicks() {
         GameWorld context = newContext();

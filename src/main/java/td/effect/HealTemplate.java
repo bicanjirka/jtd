@@ -1,9 +1,6 @@
 package td.effect;
 
-/**
- * Restores {@code healPerTick} health every tick for {@code durationTicks} - see
- * {@link Effect#heal} and {@link ActiveEffects#healPerTick}.
- */
+/** Restores {@code healPerTick} health every tick for {@code durationTicks}. */
 public record HealTemplate(int healPerTick, int durationTicks) implements EffectTemplate {
 
     @Override

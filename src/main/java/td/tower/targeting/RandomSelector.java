@@ -7,9 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Picks a uniformly random candidate from its {@link RandomSource}, so a seeded run replays
- * the same choices. A test can inject a fixed source and assert on the exact pick rather than
- * only on "it returned one of the candidates".
+ * Picks uniformly from the injected {@link RandomSource}, so a seeded run replays the same choices.
  */
 public final class RandomSelector implements TargetSelector {
 

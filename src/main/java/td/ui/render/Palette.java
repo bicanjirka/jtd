@@ -1,10 +1,8 @@
 package td.ui.render;
 
 /**
- * Names a draw command's colour role without committing to an actual
- * {@code java.awt.Color} - the frame model stays AWT-free, and the single
- * role-to-colour mapping lives in the one backend that needs it
- * ({@link td.ui.Java2DFrameRenderer}).
+ * A draw command's colour role, keeping the frame model AWT-free; the backend maps roles to
+ * colours.
  */
 public enum Palette {
     ENEMY_CIRCLE,
@@ -23,14 +21,9 @@ public enum Palette {
     TOWER_SEEKER_BODY,
     TOWER_CINDER_BODY,
     TOWER_AURA_RING,
-    /**
-     * A faint line from an Aura tower to a tower it's currently amplifying - see AuraTower.buffedTowers.
-     */
+    /** A faint line from an aura to a tower it buffs. */
     TOWER_AURA_LINK,
-    /**
-     * A slot mark's colour - see {@link SlotMarkDraw}. One role per {@code UpgradeSlot}, shared
-     * across every tower type, not one per tower per node.
-     */
+    /** Slot marks, one role per upgrade slot. */
     TOWER_UPGRADE_BASE,
     TOWER_UPGRADE_HEAD,
     TOWER_UPGRADE_SPECIAL,
@@ -43,46 +36,25 @@ public enum Palette {
     TOWER_CINDER_CONE,
     PROJECTILE_CANNONBALL,
     PROJECTILE_MISSILE,
-    /**
-     * A small on-board marker naming which status effect is currently active on a mob.
-     */
+    /** Status markers, one per effect kind. */
     STATUS_MARKER_SLOW,
     STATUS_MARKER_BURN,
     STATUS_MARKER_FREEZE,
     STATUS_MARKER_SHIELD,
     STATUS_MARKER_INVISIBLE,
     STATUS_MARKER_HEAL,
-    /**
-     * Stands in for every effect beyond the marker row's visible cap - see EnemyFrameBuilder.MAX_VISIBLE_MARKERS.
-     */
+    /** Stands in for every effect past the visible marker cap. */
     STATUS_MARKER_OVERFLOW,
-    /**
-     * A faceted ice-crystal overlay encasing a frozen enemy - icy blue-white, brighter and
-     * whiter than both STATUS_MARKER_SLOW and STATUS_MARKER_FREEZE's own marker dot, so a
-     * frozen enemy reads apart from a merely slowed one at a glance. See IceCrystalDraw.
-     */
+    /** Ice over a frozen enemy, whiter than the slow and freeze markers. */
     FREEZE_CRYSTAL,
-    /**
-     * A brief, fading burst at the point a critical hit landed - see CritSparkDraw.
-     */
     CRIT_SPARK,
-    /**
-     * A brief ring where an ability-driven spawn (an egg hatch, a death split, a reinforcement)
-     * arrived - not tied to any EffectKind, so it gets its own role rather than reusing one.
-     */
+    /** The ring where an ability spawn arrived. */
     SPAWN_BURST,
-    /**
-     * An enemy's rank badge - see {@link RankBadge}. One shared role for Soldier's one chevron
-     * and Veteran's two, since both read as the same army-insignia language; Elite's star and
-     * Boss's skull each get their own role so they can carry their own (gold, silver) colour.
-     */
+    /** Rank badges. The two chevron ranks share a role; star and skull each have their own. */
     RANK_BADGE_CHEVRON,
     RANK_BADGE_ELITE,
     RANK_BADGE_BOSS,
-    /**
-     * A small hollow glyph naming one of a mob's always-on traits - see TraitMarkerDraw. One
-     * role per td.enemy.TraitMarker, plus an overflow role for the row's own cap.
-     */
+    /** Trait markers, one role per trait marker plus overflow. */
     TRAIT_MARKER_PERCENT_RESIST,
     TRAIT_MARKER_FLAT_RESIST,
     TRAIT_MARKER_CRITICAL_IMMUNE,

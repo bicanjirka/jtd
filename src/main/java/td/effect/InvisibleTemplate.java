@@ -1,8 +1,5 @@
 package td.effect;
 
-/**
- * Applies temporary invisibility - see {@link ActiveEffects#isInvisible}.
- */
 public record InvisibleTemplate(int durationTicks) implements EffectTemplate {
 
     @Override

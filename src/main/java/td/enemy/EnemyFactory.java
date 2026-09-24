@@ -3,13 +3,8 @@ package td.enemy;
 import td.util.GameWorld;
 
 /**
- * A stable, global-catalog convenience for test code and simple call sites that just want "the
- * built-in enemy named X" without needing per-level catalog scoping. {@link EnemyCatalog} is the
- * general mechanism (register/clone per level, spawn from an arbitrary definition); this is a
- * thin wrapper over a freshly built {@link EnemyCatalog#builtIn()} for the common case. Real
- * gameplay spawning ({@code WaveScript}/{@code Wave}/{@code GameEngine}) goes through
- * {@link EnemyCatalog} directly, not this class, since it needs per-level scoping this doesn't
- * offer.
+ * Built-in enemies by id, for tests and simple call sites. Gameplay spawns through a level's
+ * {@link EnemyCatalog}, which this bypasses.
  */
 public final class EnemyFactory {
 

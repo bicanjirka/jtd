@@ -3,20 +3,12 @@ package td.wave;
 import td.util.RandomSource;
 
 /**
- * How a {@link SpawnShape}'s members are displaced from the slot's own spawn point - each
- * member's offset is fixed relative to the mob's own spawn-facing direction ({@code x} =
- * forward, along the path at spawn; {@code y} = lateral, perpendicular to it) and held for its
- * whole run, so a formation follows the path around corners rather than smearing or rotating.
- * {@link AbstractEnemyMob} is what turns this into a fixed world-space vector, once, at
- * construction - this type only ever describes the *shape* of a formation. A closed set with
- * one body per constant, so a new pattern is a compile error at every switch over it rather
- * than a silent default.
+ * How a shape's members are offset from the spawn point: {@code x} forward, {@code y} lateral,
+ * relative to the spawn-point facing, held for the whole run so a formation follows the path.
  */
 public enum SpawnSpread {
 
-    /**
-     * Every member sits on the spawn point - the identity, used by every single-member shape.
-     */
+    /** All members on the spawn point. */
     NONE {
         @Override
         public Vec2 offsetFor(int memberIndex, int members, double maxRadius, RandomSource random) {
@@ -24,10 +16,7 @@ public enum SpawnSpread {
         }
     },
 
-    /**
-     * Members fill a disc around the spawn point, semi-evenly rather than purely at random -
-     * see the doc comment on {@link #sunflowerDisc}, which does the actual placement.
-     */
+    /** Members scattered semi-evenly across a disc; see {@link #sunflowerDisc}. */
     SCATTERED {
         @Override
         public Vec2 offsetFor(int memberIndex, int members, double maxRadius, RandomSource random) {
@@ -35,9 +24,7 @@ public enum SpawnSpread {
         }
     },
 
-    /**
-     * Members space out evenly across the footprint, deterministic rather than scattered.
-     */
+    /** Members evenly spaced across the footprint. */
     EVEN {
         @Override
         public Vec2 offsetFor(int memberIndex, int members, double maxRadius, RandomSource random) {
@@ -49,9 +36,7 @@ public enum SpawnSpread {
         }
     },
 
-    /**
-     * Exactly two members, hugging opposite edges of the footprint.
-     */
+    /** Exactly two members, on opposite edges. */
     EDGES {
         @Override
         public Vec2 offsetFor(int memberIndex, int members, double maxRadius, RandomSource random) {
@@ -69,19 +54,10 @@ public enum SpawnSpread {
     public abstract Vec2 offsetFor(int memberIndex, int members, double maxRadius, RandomSource random);
 
     /**
-     * Fills a disc of radius {@code maxRadius} with {@code members} points that read as
-     * semi-evenly scattered - the reference is a sunflower's seed head, or the dot clusters a
-     * "random dots in a circle" generator produces - with <strong>no pairwise distance check of
-     * any kind</strong>. A member's *base* position alone already guarantees separation:
-     * {@code baseRadius} grows with {@code sqrt(memberIndex / members)} so equal-area rings get
-     * equal member counts, and each successive member's {@code baseAngle} advances by the
-     * golden angle, the classic result that keeps a spiral from ever stacking two points at a
-     * similar radius and angle. A small jitter on top - bounded by the room that base placement
-     * already leaves - breaks the rigid spiral look without ever being able to threaten it, so
-     * there is nothing left to check for overlap. Two draws from {@code random} per member,
-     * consuming the same per-slot {@link RandomSource} every other member of this slot draws
-     * from, in member order - see {@link Wave}'s scatter seed for why it is not
-     * {@code GameWorld.random()}.
+     * Scatters {@code members} points semi-evenly in a disc without any pairwise distance check.
+     * Radius grows with {@code sqrt(i / members)} and the angle advances by the golden angle, which
+     * alone keeps points apart; a small jitter bounded by that spacing breaks the spiral look.
+     * Draws twice per member from {@code random}, in member order.
      */
     private static Vec2 sunflowerDisc(int memberIndex, int members, double maxRadius, RandomSource random) {
         double baseRadius = maxRadius * Math.sqrt((memberIndex + 0.5) / members);

@@ -9,15 +9,10 @@ import td.util.ThreadConfined;
 import java.util.List;
 
 /**
- * Homes on a live target, re-aiming each tick at its current position, until it reaches it or
- * the target is no longer valid - in which case it retargets to the nearest remaining enemy
- * (centred on the missile's own current position, not the tower that fired it) rather than
- * fizzling. Only a {@link EnemyMob.Type#Normal} enemy is ever targeted or retargeted onto,
- * matching every other single-target tower's convention.
+ * Homes on a live target, re-aiming each tick. If the target stops being valid it retargets to the
+ * enemy nearest the missile. Only normal enemies are targeted.
  * <p>
- * A missile that can find no valid target anywhere gives up rather than flying forever; a max
- * lifetime is a second, independent safety net against a homing edge case (e.g. a target it
- * can never quite catch) doing the same.
+ * Gives up when no target is left, and after a maximum lifetime in case it can never catch one.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class MissileProjectile extends AbstractProjectile {

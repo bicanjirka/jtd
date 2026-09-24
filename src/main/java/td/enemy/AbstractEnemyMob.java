@@ -18,49 +18,29 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Everything every enemy shares: spawn delay, movement along the level's path, health and
- * damage, and the death-fade animation's timing. {@link DefinedEnemyMob} adds a body scale,
- * a facing angle, and whatever behavioural twist its {@link Trait}s give it (see
- * {@link #absorb} and {@link HurtSpeedTrait}'s speed-up on damage).
+ * What every enemy shares: spawn delay, movement along its path, health, damage and death-fade
+ * timing.
  * <p>
- * Movement is real arc-length distance: {@link #doTick} advances {@code distanceIntoLap} by
- * {@code speed} pixels and resolves it through the shared {@link ArcLengthPath}, so a curved
- * or diagonal path moves a mob at the same real-world pace a straight one does. Reaching the
- * end charges the player a {@link EconomyDelta#leak} and kills the mob outright, the same
- * {@code dead}/fade path a combat kill uses, just without the bounty - see {@link #leak()}.
+ * Movement is arc-length distance along an {@link ArcLengthPath}, so curves and diagonals move at
+ * the same pace as straight legs. Reaching the end charges a leak and kills the mob through the
+ * same fade path as a combat kill.
  * <p>
- * <strong>Everything a mob is born with is set by this constructor and is {@code final}.</strong>
- * A mob used to be built in two phases - an empty constructor, then a {@code doInit} a leaf had
- * to remember to call last - which left the whole object mutable and visible half-built. The
- * compiler enforces the ordering now, the same way it does for {@code td.tower.AbstractTower}.
- * <p>
- * Everything that remains mutable is per-tick simulation state, and it is {@code private}: a
- * mob is owned by the {@code game-loop} thread and published to that thread by the
- * {@code CopyOnWriteArrayList} it is added to. Fourteen {@code protected} mutable fields meant
- * no invariant here could survive a subclass; a leaf now reaches state through the accessors
- * below. See CLAUDE.md 3 and 5.
+ * Everything a mob is born with is {@code final} and set by the constructor. Mutable per-tick state
+ * is private and owned by the game-loop thread; subclasses reach it through accessors.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public abstract class AbstractEnemyMob implements EnemyMob {
 
-    /**
-     * Pixels per tick for a mob whose definition names no speed of its own. Rescaled from the
-     * old fixed-point model (speed=40 meant "40/1000 of the current segment per tick", which -
-     * since every segment was exactly one 32px cell - worked out to 40/1000*32 = 1.28 px/tick),
-     * so every enemy's actual speed is unchanged; only the unit it is expressed in is.
-     */
+    /** Pixels per tick for a mob whose definition names no speed. */
     public static final float DEFAULT_SPEED = 1.28f;
     /**
-     * Health is stored in hundredths, matching the scale {@code td.tower} expresses damage in
-     * ({@code SniperTower.DAMAGE} of {@code 4000} is 40 points a shot). Storing the fine-grained
-     * unit is what lets a percentage resistance or a damage-over-time tick subtract a fraction
-     * of a point without rounding to nothing.
+     * Health is stored in hundredths, the unit towers deal damage in, so a percentage resist or a
+     * damage-over-time tick can remove a fraction of a point.
      */
     private static final int HEALTH_UNITS_PER_POINT = 100;
     /**
-     * The scale {@link #getProgression()} expresses its path-length fraction in - large enough
-     * that two mobs a fraction of a percent apart on their own (possibly different-length)
-     * paths still compare distinctly as ints.
+     * Scale of {@link #getProgression()}: fine enough that mobs a fraction of a percent apart still
+     * compare distinctly.
      */
     private static final int PROGRESSION_SCALE = 1_000_000;
 
@@ -69,33 +49,19 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     private final Type type;
     private final int price;
     private final int healthMax;
-    /**
-     * Which of the installed level's paths this mob walks - resolved once, at construction,
-     * from {@code spawnParameters.pathIndex()}. Exposed via {@link #getPathIndex()} so an
-     * ability-driven spawn (the Warden's egg) can pass its parent's own path index along instead
-     * of defaulting to path 0.
-     */
     private final int pathIndex;
     private final ActiveEffects activeEffects = new ActiveEffects();
     private final EffectTransitions effectTransitions = new EffectTransitions();
     /**
-     * The path this mob measures its progress along, empty for a degenerate path - fewer than
-     * two points, as a world has before any level is installed. An empty one has nothing to
-     * measure distance along, so the mob holds at {@link #stationaryPosition} instead of moving.
+     * Empty for a path with fewer than two points; the mob then holds at
+     * {@link #stationaryPosition}.
      */
     private final Optional<ArcLengthPath> arcLengthPath;
     private final Vec2 stationaryPosition;
     /**
-     * This mob's formation offset, fixed in <em>world</em> space and computed once, in the
-     * constructor, from {@code spawnParameters.localOffset()} rotated by the path's facing at
-     * the spawn point - zero for a normal spawn. Deliberately not recomputed from the path's
-     * *current* tangent on every tick: that would make a shaped member's own position pivot
-     * around the centerline as the path curves (distorting its effective speed) and jump
-     * outright at an unrounded corner, where the tangent itself is discontinuous. Translating
-     * the centerline by a constant vector has neither problem - same arc-length speed as the
-     * centerline, always, and nothing to be discontinuous at. Applied in {@link #updatePosition()},
-     * clamped to the board so a shaped formation never silently drifts into permanent
-     * untargetability.
+     * Formation offset in world space, fixed at spawn from the path's facing there. Not re-rotated
+     * with the path's tangent each tick: that would warp a member's speed on curves and make it
+     * jump at sharp corners.
      */
     private final double offsetX;
     private final double offsetY;
@@ -125,18 +91,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     private double lastFacingRadians = 0;
 
     /**
-     * Binds this mob to a world, its type and speed, and a starting position on its path.
-     * <p>
-     * A leaf passes its own constants straight through - there is no second initialization
-     * step to remember, and no window in which a half-built mob is reachable. Anything a leaf
-     * derives from the board scale or from {@code rank} (a body scale, a speed curve) it
-     * computes after this returns, by which point every field here is set.
-     *
-     * @param speed           this mob's own px/tick speed - already folded in with any
-     *                        {@code SpawnShape} speed multiplier, since {@code spawnParameters}
-     *                        only carries the tick countdown that multiplier implied
-     * @param spawnParameters this mob's spawn delay (already converted to a tick countdown),
-     *                        health (in whole points; stored internally in hundredths) and bounty
+     * @param speed           px/tick, with any spawn-shape multiplier already applied
+     * @param spawnParameters spawn delay in ticks, health in whole points, and bounty
      */
     protected AbstractEnemyMob(GameWorld gameWorld, Type type, float speed, SpawnParameters spawnParameters, Rank rank) {
         this.gameWorld = gameWorld;
@@ -184,16 +140,11 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     /**
-     * Applies a hit, paying the player its bounty and removing it from the roster's alive
-     * count if this kills it. A hit on an already-dead mob is a no-op - several towers can
-     * fire into the same mob within one tick, and only the first may count as the kill (see
-     * {@code AbstractTower.dealDamage}, which relies on that).
+     * Applies a hit, paying the bounty if it kills. A no-op on a dead mob, so only the first of
+     * several same-tick hits counts as the kill.
      *
-     * @return the damage that actually landed: {@link #absorb}'s result, reduced further by
-     * any active {@link ActiveEffects#applyShield} percentage, capped at the health this mob
-     * had left, and {@link Damage#none()} for a mob that is already dead or not currently
-     * targetable. The cap means a killing blow reports only the health it actually removed,
-     * so overkill is not credited to whoever fired it.
+     * @return the damage that landed: after resistance and shield, capped at remaining health so
+     * overkill is not credited, and {@link Damage#none()} if the mob is dead or untargetable
      */
     public Damage doDamage(Damage damage) {
         if (this.dead) {
@@ -220,11 +171,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         return landed;
     }
 
-    /**
-     * Hook for a mob that resists part of an incoming hit (see {@link DefinedEnemyMob#absorb},
-     * which folds every {@link Trait#onHit}). The default is no resistance - the damage lands
-     * unchanged.
-     */
+    /** Hook for resisting part of a hit; by default the damage lands unchanged. */
     protected Damage absorb(Damage incoming) {
         return incoming;
     }
@@ -238,9 +185,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     /**
-     * This mob's x/y as of the tick before last, i.e. the interpolation source for a render
-     * landing between two ticks. Equal to getX()/getY() at spawn, where there is nothing
-     * meaningful to interpolate from.
+     * Position as of the previous tick, the interpolation source; equal to the current position at
+     * spawn.
      */
     public double getPrevX() {
         return this.prevX;
@@ -251,12 +197,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     /**
-     * This mob's speed, folding in every currently active speed-affecting {@link Effect}
-     * (see {@link #getSpeed()}). {@code speed} itself stays the intrinsic value - the one
-     * {@link DefinedEnemyMob#doDamage} recomputes from its traits' {@code speedFactor} (and,
-     * for a shaped spawn, its {@code SpawnShape}'s own speed multiplier) - so a slow or freeze
-     * never gets permanently baked into it, and never gets wiped out the next time a trait
-     * recomputes it.
+     * Intrinsic speed times the active effects' multiplier, so an effect is never baked into
+     * {@code speed}.
      */
     private float effectiveSpeed() {
         return this.speed * this.activeEffects.speedMultiplier();
@@ -267,11 +209,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     /**
-     * Replaces this mob's intrinsic speed - what a {@link Trait}'s {@code speedFactor}
-     * recomputes when the mob is hurt (see {@link DefinedEnemyMob#doDamage}). Deliberately the
-     * intrinsic value and not the effective one: a slow or a freeze multiplies this at read
-     * time (see {@link #effectiveSpeed()}), so recomputing here never bakes a status effect in
-     * permanently and never wipes one out.
+     * Replaces the intrinsic speed. Effects multiply it at read time, so this never bakes one in or
+     * wipes one out.
      */
     protected void setSpeed(float speed) {
         this.speed = speed;
@@ -285,29 +224,19 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         return this.activeEffects.activeKinds();
     }
 
-    /**
-     * Ticks elapsed since {@code kind} was last observed to become active, or {@code -1} if it
-     * never has - see {@link EffectTransitions#ticksSinceGained}.
-     */
+    /** {@code -1} if never gained. */
     public int ticksSinceEffectGained(EffectKind kind, int gameTime) {
         return this.effectTransitions.ticksSinceGained(kind, gameTime);
     }
 
-    /**
-     * Ticks elapsed since {@code kind} was last observed to become inactive, or {@code -1} if it
-     * never has - see {@link EffectTransitions#ticksSinceLost}.
-     */
+    /** {@code -1} if never lost. */
     public int ticksSinceEffectLost(EffectKind kind, int gameTime) {
         return this.effectTransitions.ticksSinceLost(kind, gameTime);
     }
 
     /**
-     * A coarse "how far into this lap of the path" ranking value, expressed as a fraction of
-     * this mob's own path's total length (see FurthestAlongPathSelector) rather than as raw
-     * pixels - two paths can have different total lengths, so comparing raw
-     * {@code distanceIntoLap} between a mob on one and a mob on another would rank whichever
-     * path happens to be longer as "further along" regardless of which is actually closer to
-     * leaking. Sub-pixel precision has no practical effect on this ranking, so it stays an int.
+     * Distance into the current lap as a fraction of this mob's own path length, so mobs on paths
+     * of different lengths rank by how close they are to leaking.
      */
     public int getProgression() {
         return this.arcLengthPath
@@ -315,27 +244,18 @@ public abstract class AbstractEnemyMob implements EnemyMob {
                 .orElse(0);
     }
 
-    /**
-     * The exact, sub-pixel distance into the path's current lap - see {@link #jumpToDistance}.
-     */
     protected double getDistanceIntoLap() {
         return this.distanceIntoLap;
     }
 
-    /**
-     * Which of the installed level's paths this mob walks - what an ability-driven spawn (the
-     * Warden's egg) passes to {@link SpawnParameters#atSlot(double, float, int, int, int)} so a
-     * hatched mob stays on its parent's path instead of defaulting to path 0.
-     */
+    /** Passed on by an ability spawn so the new mob stays on its parent's path. */
     protected int getPathIndex() {
         return this.pathIndex;
     }
 
     /**
-     * Places this mob at an arbitrary point along the path instead of the start every mob
-     * otherwise spawns at - what an ability-driven spawn (the Warden's egg, a reinforcement)
-     * uses to appear where the spawning mob actually was, via
-     * {@code DefinedEnemyMob.spawnAtSamePositionAs}.
+     * Places this mob at any point along the path, so an ability spawn appears where its parent
+     * was.
      */
     protected void jumpToDistance(double distanceIntoLap) {
         this.distanceIntoLap = distanceIntoLap;
@@ -344,9 +264,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         this.prevY = this.y;
     }
 
-    /**
-     * Spawned, on the board, and still alive - the precondition every targeting query applies.
-     */
+    /** Spawned, on the board and alive: the precondition every targeting query applies. */
     public boolean validTarget() {
         return ((!this.inactive) && this.validTarget && (!this.dead));
     }
@@ -356,11 +274,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     /**
-     * This mob's type as a targeting query sees it right now: its authored {@link Type}, unless
-     * an {@link EffectKind#INVISIBLE} effect is currently active, in which case it reports
-     * {@link Type#INVISIBLE} regardless of its authored type. This is what lets invisibility be
-     * granted to any enemy by an ability/effect rather than baked into one mob's own type - see
-     * {@code td/enemy/CLAUDE.md}.
+     * {@link Type#INVISIBLE} while an invisibility effect is active, otherwise the authored type,
+     * so any enemy can be made invisible by an effect.
      */
     private Type effectiveType() {
         return this.activeEffects.isInvisible() ? Type.INVISIBLE : this.type;
@@ -375,10 +290,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     /**
-     * Ticks elapsed since this mob died, or -1 while still alive. Death timing is
-     * captured here (the first doTick call after doDamage() sets dead=true) rather
-     * than lazily inside paint(), so the death-fade animation advances with the
-     * simulation clock instead of with however often the board happens to repaint.
+     * {@code -1} while alive. Captured on the first {@code doTick} after death, so the fade follows
+     * the simulation clock rather than the repaint rate.
      */
     public int ticksSinceDeath(int gameTime) {
         return this.deathTick < 0 ? -1 : gameTime - this.deathTick;
@@ -388,61 +301,37 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         return 3 * this.rank.ordinal() + 6;
     }
 
-    /**
-     * This mob's {@link Rank} - what an ability-driven spawn (the Warden's egg, a reinforcement)
-     * inherits via {@code SpawnEnemiesAction}, the same precedent {@link #getPathIndex()}
-     * already set for path inheritance.
-     */
+    /** Inherited by an ability spawn. */
     public Rank getRank() {
         return this.rank;
     }
 
     /**
-     * Ticks elapsed since this mob was last observed to survive a critical hit, or {@code -1}
-     * if it never has. Mirrors {@link #ticksSinceDeath} exactly, including the deferred-capture
-     * reason: {@code doDamage} has no {@code gameTime} to record against, so a landed critical
-     * hit is captured as {@link #criticalHitTick} on this mob's own next {@link #doTick} instead.
+     * {@code -1} if never. Captured on the next {@code doTick}, like {@link #ticksSinceDeath},
+     * because {@code doDamage} has no game time.
      */
     public int ticksSinceCriticalHit(int gameTime) {
         return this.criticalHitTick < 0 ? -1 : gameTime - this.criticalHitTick;
     }
 
-    /**
-     * Ticks elapsed since this mob was last observed to take any damage, or {@code -1} if it
-     * never has. Mirrors {@link #ticksSinceCriticalHit} exactly, including the deferred-capture
-     * reason - see {@link #damageTakenTick}.
-     */
+    /** {@code -1} if never. Captured like {@link #ticksSinceCriticalHit}. */
     public int ticksSinceDamageTaken(int gameTime) {
         return this.damageTakenTick < 0 ? -1 : gameTime - this.damageTakenTick;
     }
 
-    /**
-     * Records this mob having just cast an ability-applied effect - see {@link #lastAbilityCast}.
-     */
     public void recordAbilityCast(EffectKind kind, float radius, int gameTime) {
         this.lastAbilityCast = new AbilityCast(kind, radius, gameTime);
     }
 
-    /**
-     * The most recent ability-applied effect this mob cast, if any - see {@link AbilityCast}'s
-     * own doc comment for why this is recorded at all.
-     */
     public Optional<AbilityCast> lastAbilityCast() {
         return Optional.ofNullable(this.lastAbilityCast);
     }
 
-    /**
-     * Records this mob having just arrived via an ability-driven spawn (an egg hatch, a death
-     * split, a reinforcement) - see {@link #ticksSinceAbilitySpawn}.
-     */
     public void recordAbilitySpawn(int gameTime) {
         this.abilitySpawnTick = gameTime;
     }
 
-    /**
-     * Ticks elapsed since this mob arrived via an ability-driven spawn, or {@code -1} if it did
-     * not (the ordinary case - a wave-spawned mob never calls {@link #recordAbilitySpawn}).
-     */
+    /** {@code -1} for a mob that came from a wave. */
     public int ticksSinceAbilitySpawn(int gameTime) {
         return this.abilitySpawnTick < 0 ? -1 : gameTime - this.abilitySpawnTick;
     }
@@ -453,9 +342,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     /**
-     * ticksSinceDeath can be -1 (death recorded by doDamage() mid-tick, but this
-     * mob's own doTick() hasn't run yet to capture deathTick) - clamp to a valid
-     * Color alpha range rather than let that produce a value above 255.
+     * Clamped, because {@code ticksSinceDeath} is {@code -1} between a mid-tick death and the next
+     * {@code doTick}.
      */
     public int fadeAlpha(int ticksSinceDeath) {
         int alpha = 255 - (ticksSinceDeath * (255 / (this.fadeDurationTicks() + 1)));
@@ -463,18 +351,9 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     /**
-     * Recomputes x/y (and, while moving, the precise path-facing angle) from the current
-     * arcLengthPath/distanceIntoLap state, plus this mob's fixed {@link #offsetX}/{@link
-     * #offsetY}. The offset is clamped onto the board only while the path's own position is
-     * already on the board - an offset near an interior edge or corner would otherwise push a
-     * mob outside {@link #doTick}'s validTarget bounds check and leave it silently untargetable
-     * while still walking to the exit. Where the path's own position is authored off-board (a
-     * level's spawn/despawn buffer - see {@link td.wave.Point}'s doc comment), it is left
-     * unclamped instead, so an enemy visibly walks in from, and out to, off-screen rather than
-     * popping into view already sitting at the edge. A degenerate path has nothing to measure
-     * distance along, so it just holds at its one available point, offset the same fixed amount
-     * as anywhere else - the offset needs no tangent to be relative to any more, so the
-     * degenerate case needs no special-casing either.
+     * Recomputes position from the distance along the path plus the fixed offset. The offset is
+     * clamped to the board only while the path point is on the board: clamping keeps a formation
+     * member targetable, and skipping it off-board lets enemies walk in from and out to off-screen.
      */
     private void updatePosition() {
         if (this.arcLengthPath.isPresent()) {
@@ -499,20 +378,14 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         return Math.max(min, Math.min(value, max));
     }
 
-    /**
-     * The path's own facing direction at this mob's current position - exact, geometry-based,
-     * not derived from a pixel delta over one tick (see {@link PathDirectionalMovement}).
-     */
+    /** The path's exact facing at this mob's position, not derived from movement. */
     protected double getPathFacingRadians() {
         return this.lastFacingRadians;
     }
 
     /**
-     * Counts down the spawn delay, or - for a live mob - resolves this tick's active status
-     * effects and then advances it along the path, or - once dead - records the tick death
-     * happened on so the fade can be timed against the simulation clock rather than the
-     * repaint rate. A damage-over-time effect that kills the mob this tick skips movement
-     * entirely for the rest of this call - there is nothing left to move.
+     * Counts down the spawn delay; for a live mob resolves effects and moves; once dead, records
+     * the death tick. A damage-over-time kill skips movement.
      */
     public void doTick(int gameTime) {
         if (this.criticalHitPending) {
@@ -563,14 +436,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     /**
-     * Reaching the path's end costs a life and docks the score by exactly the bounty this mob
-     * would have paid on a kill - {@link EconomyDelta#leak}, mirroring {@link EconomyDelta#kill}
-     * - but the mob does not loop back to the path's start to try again - it goes through the
-     * exact {@code dead}/fade/{@code reportDeath()} path a combat kill does, just with a leak
-     * penalty instead of a bounty. That is the actual punishment: gone for good means no tower
-     * ever gets a second chance to kill it for its bounty. A price-0 mob (a wave authored to pay
-     * no bounty at all) still costs the life; it was never going to cost any score either way,
-     * on a kill or a leak.
+     * Costs a life and the score this mob's bounty would have paid, then kills it through the
+     * normal fade path. It does not loop back, so no tower gets a second chance at its bounty.
      */
     private void leak() {
         this.validTarget = false;

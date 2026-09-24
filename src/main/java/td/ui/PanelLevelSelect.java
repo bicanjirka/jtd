@@ -42,11 +42,8 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * The landing screen shown before any level is loaded: one clickable card per level, with a
- * small vector preview of its path, its stats (waves/credits/lives) and a decorative watermark
- * echoing the game's own flat-neon-on-black shape language. Presentation only - clicking a card
- * just invokes the callback given at construction, leaving it to {@link td.TowerDefense} to
- * actually load and start that level.
+ * The level-select screen: one card per level with a path preview and its waves, credits and lives.
+ * Clicking a card only calls the callback; loading the level is the caller's job.
  */
 public class PanelLevelSelect extends JPanel {
 
@@ -64,9 +61,7 @@ public class PanelLevelSelect extends JPanel {
     private static final Color PREVIEW_BACKGROUND = new Color(6, 7, 6);
     private static final Color PREVIEW_GRID_DOT = new Color(22, 24, 22);
 
-    /**
-     * Cycled by card index so any number of catalog levels each get a distinct accent.
-     */
+    /** Cycled by card index. */
     private static final Color[] ACCENTS = {Color.GREEN, Color.RED, Color.ORANGE};
 
     public PanelLevelSelect(List<LevelDefinition> levels, Consumer<LevelDefinition> onLevelSelected) {
@@ -183,10 +178,8 @@ public class PanelLevelSelect extends JPanel {
     }
 
     /**
-     * A card is many nested components (preview, labels, stat boxes); AWT delivers a mouse
-     * event to whichever leaf sits under the pointer, not to its ancestors, so a listener on
-     * {@code card} alone would miss clicks/hovers landing on any child. Attaching the same
-     * listener to every descendant makes the whole card act as one clickable, hoverable unit.
+     * Attaches {@code listener} to every descendant, since AWT delivers mouse events to the
+     * innermost component rather than to the card.
      */
     private static void attachToWholeCard(JComponent component, MouseListener listener) {
         component.addMouseListener(listener);
@@ -284,9 +277,7 @@ public class PanelLevelSelect extends JPanel {
         return star;
     }
 
-    /**
-     * A small, purely decorative sketch of a level's real (possibly smoothed) path.
-     */
+    /** A decorative sketch of a level's real paths. */
     private static final class PathPreview extends JComponent {
 
         @Serial
@@ -302,12 +293,7 @@ public class PanelLevelSelect extends JPanel {
             this.setPreferredSize(new Dimension(200, 150));
         }
 
-        /**
-         * The bounds of every path's points together, not one path in isolation - drawing two
-         * differently-routed paths through independently-computed bounds would scale each one
-         * into the same box at a different scale, which draws them in two incompatible
-         * coordinate systems on top of each other.
-         */
+        /** The bounds of all paths together, so every path is drawn at one scale. */
         private static double[] sharedBounds(List<List<Vec2>> everyPathsPoints) {
             double minX = Double.MAX_VALUE;
             double maxX = -Double.MAX_VALUE;

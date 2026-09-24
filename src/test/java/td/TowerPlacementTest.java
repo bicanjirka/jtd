@@ -16,11 +16,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-/**
- * Exercises TowerPlacement directly rather than through GameEngine, so it can assert on the
- * shared click-highlight state (cleared by cancel()/unSelectTower()) that GameEngineTest has
- * no way to observe from the outside.
- */
+/** Tests the click-highlight state directly, which engine-level tests cannot observe. */
 class TowerPlacementTest {
 
     private static CellGrid grid(int width, int height) {

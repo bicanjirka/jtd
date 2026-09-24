@@ -1,7 +1,5 @@
 package td.enemy;
 
-/**
- * Fires every {@code intervalTicks} while the mob is alive - the Warden's reinforcement and self-shield abilities.
- */
+/** Fires every {@code intervalTicks} while alive. */
 public record PeriodicTrigger(int intervalTicks) implements AbilityTrigger {
 }

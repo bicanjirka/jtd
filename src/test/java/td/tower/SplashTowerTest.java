@@ -14,10 +14,8 @@ import td.util.GameWorld;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Covers SplashTower's splash falloff. The blast centre is whichever visible enemy the tower
- * picks at random, so every case here puts exactly one Normal mob in range - making it
- * necessarily the primary - and uses ghosts as the splash targets, since a ghost cannot be
- * chosen as the primary but is still caught by the any-type splash query.
+ * Exactly one normal mob is in range, so it is the random primary; the splash targets are
+ * invisible, which splash reaches but targeting does not.
  */
 class SplashTowerTest {
 

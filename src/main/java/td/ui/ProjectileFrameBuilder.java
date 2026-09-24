@@ -12,11 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Describes each in-flight projectile as a {@link ProjectileDraw}, interpolating position
- * between its previous and current tick exactly like {@link EnemyFrameBuilder} does for an
- * enemy. A missile's facing comes from that same tick's movement delta - safe here (unlike an
- * enemy's facing, see {@code td/enemy/CLAUDE.md}) because a missile moves many pixels per
- * tick, never a sub-pixel fraction that would make the angle degenerate.
+ * Describes each projectile, interpolated between ticks. A missile's facing comes from its movement
+ * delta, which is safe because a missile moves many pixels per tick.
  */
 public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
 

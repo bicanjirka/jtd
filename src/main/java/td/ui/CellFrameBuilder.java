@@ -3,19 +3,13 @@ package td.ui;
 import td.cell.Cell;
 import td.ui.render.CellDraw;
 
-/**
- * Describes a cell's placement/selection highlight. Only one {@link Cell}
- * implementation exists, so unlike towers/enemies this needs no visitor -
- * just plain-data getters read here.
- */
+/** Describes a cell's placement or selection highlight. */
 final class CellFrameBuilder {
 
     private CellFrameBuilder() {
     }
 
-    /**
-     * Returns {@code null} for a cell with nothing to draw ({@link Cell.HighlightType#NONE}).
-     */
+    /** {@code null} when the cell has no highlight. */
     static CellDraw build(Cell cell) {
         if (cell.getHighlight() == Cell.HighlightType.NONE) {
             return null;

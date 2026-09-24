@@ -7,11 +7,6 @@ import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * {@link CriticalImmunityTrait}, exercised end to end through the built-in Armored definition
- * that carries it - {@code BuiltInEnemies.ARMORED} - the same shape {@link PercentResistTraitTest}
- * uses for the trait it shares that definition with.
- */
 class CriticalImmunityTraitTest {
 
     private final GameWorld context = WorldFixtures.newWorld();

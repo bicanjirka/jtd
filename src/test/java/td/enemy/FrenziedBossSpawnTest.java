@@ -11,12 +11,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * End-to-end, headless proof of the Frenzied Boss's two Phase 4 abilities: the health-threshold
- * brood spawn ({@code BuiltInEnemies.FRENZIED}'s "spawn") and the resulting Frenzy Spawnling's
- * own on-death heal ({@code BuiltInEnemies.T_SPAWN}'s "deathHeal") - the same real-mob-on-a-real-
- * {@link GameWorld} shape {@link WardenChainTest} uses for the Warden's own ability chain.
- */
 class FrenziedBossSpawnTest {
 
     private static GameWorld worldWithStraightPath() {

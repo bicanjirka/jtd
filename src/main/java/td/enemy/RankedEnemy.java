@@ -12,19 +12,12 @@ import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
 
 /**
- * One enemy kind's rank ladder: a {@link Rank} to {@link EnemyDefinition} mapping, authored
- * progressively rather than as an independent flat table - each rank's {@link Builder#thenAt}
- * step receives the <em>previous</em> rank's own resulting definition and returns the next one,
- * so a rank that only changes health (say) keeps everything else - traits included - unchanged
- * from the rank before it. Every ladder starts at {@link Rank#GRUNT} and is authored
- * contiguously upward; not every enemy has to reach {@link Rank#BOSS}.
+ * One enemy's rank ladder, authored progressively: each {@link Builder#thenAt} step receives the
+ * previous rank's definition, so unchanged parts carry forward. Starts at {@link Rank#GRUNT} and
+ * climbs without gaps; it need not reach {@link Rank#BOSS}.
  * <p>
- * {@link #definitionFor(Rank)} is never an authoring error for an unauthored rank: a wave or
- * slot asking for a rank this enemy doesn't define silently resolves to this enemy's own highest
- * authored rank instead - see {@link #effectiveRank(Rank)} for the same resolution as a
- * {@link Rank} rather than a definition, which is what a spawned mob's own badge and internal
- * formulas (fade duration, body scale, score weight) need. {@link #cloneAs} clones a whole ladder
- * under a new id, not just one rank's definition - what {@code EnemyCatalog.cloneAndAdjust} uses.
+ * Asking for an unauthored rank resolves to the highest authored rank below it;
+ * {@link #effectiveRank(Rank)} gives that rank itself.
  */
 public final class RankedEnemy {
 
@@ -39,11 +32,7 @@ public final class RankedEnemy {
         this.highestDefinedRank = highestDefinedRank;
     }
 
-    /**
-     * Starts a ladder at {@link Rank#GRUNT}, defined from scratch by {@code grunt}. A ladder
-     * that goes no further is legal on its own - {@link Rank#GRUNT} is a complete, one-rank
-     * ladder, not a required prelude to calling {@link Builder#thenAt}.
-     */
+    /** Starts a ladder; a one-rank ladder is complete on its own. */
     public static Builder startingAt(EnemyDefinition grunt) {
         return new Builder(grunt);
     }
@@ -52,10 +41,7 @@ public final class RankedEnemy {
         return this.id;
     }
 
-    /**
-     * This enemy's own highest authored rank, never higher than {@code requested} - the
-     * resolution {@link #definitionFor(Rank)} applies.
-     */
+    /** The highest authored rank not above {@code requested}. */
     public Rank effectiveRank(Rank requested) {
         return requested.compareTo(this.highestDefinedRank) > 0 ? this.highestDefinedRank : requested;
     }
@@ -64,36 +50,22 @@ public final class RankedEnemy {
         return this.definitionsByRank.get(this.effectiveRank(requested));
     }
 
-    /**
-     * Every rank this enemy actually authored, each definition once - what {@code EnemyCatalog}'s
-     * spawn-cycle check walks, rather than {@link #definitionFor} for every {@link Rank} value,
-     * which would walk a fallback rank's definition redundantly once per unauthored rank above it.
-     */
+    /** Each authored definition once. */
     Collection<EnemyDefinition> authoredDefinitions() {
         return this.definitionsByRank.values();
     }
 
     /**
-     * Clones this whole ladder under {@code newId}, running {@code adjust} over every rank this
-     * enemy actually authored - e.g. "a Square with double the usual resistance for this one
-     * level," applied consistently across whatever ranks the original defines, not just
-     * {@link Rank#GRUNT}. Rank-blind: {@code adjust} cannot tell which rank it's being run
-     * against, so it can only express a change uniform across every rank (the result still
-     * differs per rank, since each rank's own input already did). {@link #cloneAs(String,
-     * BiFunction)} is the rank-aware counterpart for a change that only starts at some rank -
-     * "give Veteran and up a gold shield," say.
+     * Clones the whole ladder under {@code newId}, running {@code adjust} over every authored rank.
+     * Rank-blind; see {@link #cloneAs(String, BiFunction)} for a rank-aware change.
      */
     public RankedEnemy cloneAs(String newId, UnaryOperator<EnemyDefinition> adjust) {
         return this.cloneAs(newId, (rank, definition) -> adjust.apply(definition));
     }
 
     /**
-     * The rank-aware counterpart to {@link #cloneAs(String, UnaryOperator)} - {@code adjust}
-     * receives each rank alongside its own definition, so it can branch on rank (e.g. {@code
-     * rank.compareTo(Rank.VETERAN) >= 0} to change Veteran and every rank above it, leaving Grunt
-     * and Soldier untouched). Each rank is still cloned from *this* ladder's own definition for
-     * that rank, not from the previous rank's already-adjusted clone - {@code adjust} sees the
-     * same starting point {@link #cloneAs(String, UnaryOperator)} does, just with its rank named.
+     * Like {@link #cloneAs(String, UnaryOperator)}, but {@code adjust} also sees the rank. Each
+     * rank is adjusted from this ladder's definition, not the previous adjusted clone.
      */
     public RankedEnemy cloneAs(String newId, BiFunction<Rank, EnemyDefinition, EnemyDefinition> adjust) {
         Iterator<Map.Entry<Rank, EnemyDefinition>> ranks = this.definitionsByRank.entrySet().iterator();
@@ -114,10 +86,6 @@ public final class RankedEnemy {
                 source.movement(), source.traitSlots(), source.abilitySlots());
     }
 
-    /**
-     * Builds a {@link RankedEnemy} one rank at a time, each step describing only what changed
-     * from the rank before it - see the class doc comment.
-     */
     @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
     public static final class Builder {
 
@@ -131,10 +99,8 @@ public final class RankedEnemy {
         }
 
         /**
-         * Authors {@code next} as a change from this ladder's own current highest rank -
-         * {@code change} receives that rank's full definition and returns {@code next}'s. Ranks
-         * must be authored strictly in ladder order, one step at a time, from {@link Rank#GRUNT};
-         * skipping one, repeating one, or going backward is an authoring error.
+         * Authors {@code next} as a change to the current highest rank. Ranks must be added in
+         * order, one step at a time.
          */
         public Builder thenAt(Rank next, UnaryOperator<EnemyDefinition> change) {
             if (next.ordinal() != this.highestSoFar.ordinal() + 1) {

@@ -3,14 +3,8 @@ package td;
 import td.util.GameHost;
 
 /**
- * A GameHost that actually forwards to a GameEngine, mirroring what
- * TowerDefence's real GameHost methods do (minus the Swing UI updates) -
- * so end-to-end tests exercise the same state transitions a real click
- * would trigger (e.g. selling a tower really clears the cell, a wave
- * completing really re-arms isWaveReady()).
- * <p>
- * Constructed in two steps because GameEngine's constructor needs a
- * GameHost before the GameEngine instance itself exists.
+ * A {@link GameHost} that forwards to a real engine like the UI does, minus Swing, so tests see
+ * real state transitions. Bound after construction, since the engine needs its host first.
  */
 class FakeGameHost implements GameHost {
 

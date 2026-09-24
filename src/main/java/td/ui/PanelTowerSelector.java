@@ -28,15 +28,8 @@ import java.util.List;
 
 /**
  * The tower toolbar: one {@link HudToggleButton} per {@link TowerFactory.Type}, in enum order,
- * so the buttons follow whatever that enum declares rather than a hand-maintained list -
- * {@code TowerDefense.TOWER_PLACEMENT_KEYS} likewise assigns one keyboard shortcut per ordinal.
- * Buttons the player cannot currently afford are greyed out, which is why this panel is an
- * {@link EconomyListener}.
- * <p>
- * Icons come from {@link Java2DFrameRenderer#renderTowerIcon}, i.e. the same shapes the board
- * uses, so a tower's icon cannot drift from how it actually looks once placed. They are a
- * toggle rather than a push control because picking a tower is a mode, but they look exactly
- * like every other control - see {@link Hud}.
+ * greyed out while unaffordable. Icons come from {@link Java2DFrameRenderer#renderTowerIcon}, so
+ * they match the board.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelTowerSelector extends JPanel implements EconomyListener {
@@ -66,12 +59,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         this.towerRanges = new float[this.towerTypes.size()];
     }
 
-    /**
-     * Swing's built-in "gray out the icon when disabled" behaviour only fires for a plain
-     * {@link ImageIcon}; {@link SharpImageIcon} implements {@code Icon} directly (for its
-     * bilinear repaint), so an unaffordable button was correctly disabled but still painted
-     * as if enabled without this explicit disabled icon.
-     */
+    /** An explicit disabled icon: Swing only greys out a plain {@link ImageIcon} automatically. */
     private static BufferedImage grayedOut(BufferedImage image) {
         Image filtered = GrayFilter.createDisabledImage(image);
         ImageIcon loader = new ImageIcon(filtered);
@@ -136,9 +124,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         this.placing = false;
     }
 
-    /**
-     * Also reachable from the game-loop thread - see GameWorld.apply()'s callers.
-     */
+    /** May run on the game-loop thread. */
     public void economyChanged(EconomyState state) {
         SwingUtilities.invokeLater(() -> {
             for (int i = 0; i < this.buttons.length; i++) {

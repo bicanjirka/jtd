@@ -51,23 +51,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 // Inspired by HexTD
 
 /**
- * The application window, and the wiring between the headless {@link GameEngine} and Swing.
- * It owns the {@link GameLoop}, translates mouse and key events into engine calls, and is
- * itself the {@link GameHost} the engine calls back through - so this is the only class that
- * sits on both sides of the headless/Swing boundary described in CLAUDE.md.
+ * The application window and the only class on both sides of the headless/Swing boundary: it owns
+ * the {@link GameLoop}, turns input into engine calls, and is the engine's {@link GameHost}.
  * <p>
- * The content pane is a {@link CardLayout} with two cards: the level-select menu and the
- * game. Nothing ticks and no board exists until a level is chosen, and
- * {@link #startSelectedLevel} is re-enterable - returning to the menu and picking another
- * level runs it again on the same engine and the same loop, both of which are documented as
- * safe to restart.
+ * A {@link CardLayout} switches between the level-select menu and the game.
+ * {@link #startSelectedLevel} is re-enterable on the same engine and loop.
  * <p>
- * Two of the callbacks implemented here ({@link #enemyDied}, {@link #economyChanged}) are
- * reached from the {@code game-loop} thread, not the EDT. Swing mutations in those must be
- * deferred through {@code SwingUtilities.invokeLater}; see CLAUDE.md §3 (Threading).
- * <p>
- * This class is a shrinking legacy shell: new gameplay rules belong in {@code GameEngine} or
- * the domain packages, where they can be tested without a display.
+ * {@link #enemyDied} and {@link #economyChanged} run on the {@code game-loop} thread, so their
+ * Swing work goes through {@code invokeLater}. New gameplay rules belong in the engine, not here.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class TowerDefense extends JFrame implements EconomyListener, GameHost {
@@ -81,9 +72,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private static final String CARD_GAME = "game";
     private static final int MENU_WIDTH = 1040;
     private static final int MENU_HEIGHT = 700;
-    /**
-     * Debug keybinding: how many credits `c` grants in one press - see docs/features/FEATURE-playtesting-and-balance-tooling.md.
-     */
+    /** Credits one press of the debug grant key adds. */
     private static final int DEBUG_CREDIT_GRANT = 1000;
 
     private final LevelCatalog levelCatalog = new BuiltInLevelCatalog();
@@ -116,18 +105,15 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     private final GameLoop gameLoop = new GameLoop(this::doGameTick, this::buildAndPublishFrame);
     /**
-     * Where {@link GameLoop#stop()} is called from. It joins the simulation thread without
-     * bound, so it must not run on the EDT; single-threaded so two level changes in flight
-     * cannot interleave their teardowns. See {@link #stopLoopThen}.
+     * Runs {@link GameLoop#stop()}, which must not block the EDT. Single-threaded so two level
+     * changes cannot interleave their teardowns.
      */
     private final ExecutorService lifecycleExecutor = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "game-lifecycle");
         t.setDaemon(true);
         return t;
     });
-    /**
-     * Bumped on the EDT per level change, so a superseded install drops itself.
-     */
+    /** Bumped on the EDT per level change, so a superseded install drops itself. */
     private final AtomicInteger levelGeneration = new AtomicInteger();
     // Reset on the EDT only while the loop is stopped, so there is one writer at a time.
     private volatile int gameTime;
@@ -145,10 +131,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private JPanel jPanel_board;
 
     /**
-     * Builds the whole component tree. <strong>Must run on the Event Dispatch Thread</strong>
-     * - see {@code Main}, which is why it is invoked through {@code invokeAndWait} rather than
-     * called directly. The frame is shown on the last line rather than in an initializer
-     * block, so it is never realized before the components it contains exist.
+     * Builds the component tree on the EDT. The frame is shown last, so it is never realized before
+     * its components exist.
      */
     public TowerDefense() {
         Threads.assertEventDispatchThread("TowerDefense construction");
@@ -186,9 +170,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /**
-     * Reads the version baked into {@code version.properties} by Maven resource filtering
-     * (see {@code pom.xml}), so the displayed/logged version always matches the pom's
-     * {@code <version>} rather than a second hand-maintained copy.
+     * Reads the version Maven filters into {@code version.properties}, so it always matches the
+     * pom.
      */
     private static String loadVersion() {
         try (InputStream in = TowerDefense.class.getResourceAsStream("/version.properties")) {
@@ -202,12 +185,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /**
-     * Runs one logic tick, called from the game loop thread. GameLoop itself
-     * already skips calling this while TickSpeed.PAUSED is selected, so the
-     * only remaining guard here is for after the game has ended. Also called
-     * directly from the EDT by fastPressed() to single-step while paused -
-     * safe because GameLoop guarantees it never calls this concurrently in
-     * that state.
+     * One logic tick, on the game-loop thread. Also called on the EDT to single-step while paused,
+     * when the loop is not ticking.
      */
     private void doGameTick() {
         if (this.gameStopped) {
@@ -223,14 +202,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /**
-     * The render pulse, called by {@link GameLoop} on the {@code game-loop} thread at a flat
-     * ~60fps regardless of tick speed. Describes the board as an immutable {@link RenderFrame}
-     * here, where the simulation state it walks is owned, then publishes it and asks the EDT
-     * to paint what was published - so the EDT never reads a live enemy, tower or projectile.
+     * The render pulse, on the {@code game-loop} thread: builds an immutable {@link RenderFrame},
+     * publishes it and asks the EDT to paint it, so the EDT never reads live simulation state.
      * <p>
-     * Deliberately keeps running after the game has ended, unlike {@link #doGameTick}: the
-     * simulation is frozen at that point, but the player can still look around the final
-     * board and click towers to read their stats, and both need the board to keep painting.
+     * Keeps running after the game ends, so the final board can still be inspected.
      */
     private void buildAndPublishFrame() {
         int time = this.gameTime;
@@ -240,9 +215,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /**
-     * The EDT half of the render pulse: repaints the board from whatever
-     * {@link #buildAndPublishFrame} last published, and refreshes the side panel's live
-     * per-tower stats. Skips the repaint while a previous paint is still in flight.
+     * Repaints from the last published frame and refreshes the side panel's live tower stats,
+     * skipping the repaint while one is still in flight.
      */
     private void repaintPublishedFrame() {
         this.gameConsole.refreshSelected();
@@ -256,29 +230,17 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /**
-     * The level-select screen's callback - also the target of returning from a level in
-     * progress and picking a (possibly different) one, so it is written to run any number of
-     * times, not just once. Safe to call from a dirty state: {@link GameEngine#loadLevel} is
-     * itself idempotent, and {@link GameLoop#start}/{@code stop} now tolerate being called
-     * more than once, so a fast double-click on a level card just tears the same level down
-     * and rebuilds it rather than leaving two loops ticking one engine.
+     * The level-select callback. Safe to run any number of times and from a dirty state, including
+     * a fast double-click.
      */
     private void startSelectedLevel(LevelDefinition level) {
         this.stopLoopThen(() -> this.installLevel(level));
     }
 
     /**
-     * The two-step every level lifecycle change goes through: stop the loop off the EDT, then
-     * do the EDT-side work once it has actually stopped.
-     * <p>
-     * {@link GameLoop#stop()} joins the simulation thread without bound, so calling it from
-     * the EDT would freeze the UI for as long as a wedged tick ran - it asserts against that.
-     * It therefore runs on {@link #lifecycleExecutor}, and {@code installOnEdt} is posted back
-     * afterwards. That hop is what makes a level change asynchronous, and asynchronous means a
-     * second request can arrive while the first is still in flight: {@link #levelGeneration}
-     * is bumped synchronously here, on the EDT, so an install posted for a superseded request
-     * finds a newer generation and drops itself rather than loading a level on top of a loop
-     * the newer request already restarted.
+     * Stops the loop off the EDT, then runs {@code installOnEdt} on the EDT. Because that is
+     * asynchronous, {@link #levelGeneration} is bumped here so an install for a superseded request
+     * drops itself.
      */
     private void stopLoopThen(Runnable installOnEdt) {
         Threads.assertEventDispatchThread("Level lifecycle change");
@@ -294,9 +256,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         });
     }
 
-    /**
-     * The EDT half of {@link #startSelectedLevel}, run once the loop has stopped.
-     */
     private void installLevel(LevelDefinition level) {
         this.setGameStopped(false);
         this.boardOverlays.reset();
@@ -315,12 +274,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.requestFocusInWindow();
     }
 
-    /**
-     * The single route back to the level-select menu, shared by each overlay's "Back to menu"
-     * button and the 'm' shortcut. Confirms first if the level is still in progress, so a
-     * misclick or stray keypress can't destroy a long run; skips the dialog once the level has
-     * already ended (the overlay button case), where there is nothing left to abandon.
-     */
+    /** The single route back to the menu. Confirms first while the level is still in progress. */
     private void requestReturnToMenu() {
         if (!this.levelLoaded) {
             return;
@@ -332,18 +286,13 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /**
-     * Tears down no engine state - {@link GameEngine#loadLevel} already makes a fresh
-     * {@link #startSelectedLevel} safe from any prior state, so this only needs to undo what
-     * it, specifically, set up: the running loop, the UI showing the board, and the overlays/
-     * selections a level in progress leaves behind.
+     * Undoes only what {@link #startSelectedLevel} set up; the engine is reset by the next level
+     * load.
      */
     private void returnToMenu() {
         this.stopLoopThen(this::showMenu);
     }
 
-    /**
-     * The EDT half of {@link #returnToMenu}, run once the loop has stopped.
-     */
     private void showMenu() {
         this.setSpeed(TickSpeed.PAUSED);
         this.boardOverlays.reset();
@@ -356,8 +305,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /**
-     * Pauses for the duration of the modal (the EDT is blocked by it anyway, but the
-     * game-loop thread is not) and restores whatever speed was active if the answer is "no".
+     * Pauses while the dialog is open, since the loop keeps running behind a modal, and restores
+     * the speed on "no".
      */
     private boolean confirmAbandonLevel() {
         TickSpeed previousSpeed = this.currentSpeed;
@@ -376,12 +325,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.gameConsole.getTowerInfo().setExternalText(s);
     }
 
-    /**
-     * A GameHost callback fired synchronously from GameWorld, which is reached
-     * from enemy/tower doTick() during a tick - i.e. this can run on the
-     * game-loop thread, not the EDT. Any Swing mutation here is deferred via
-     * invokeLater; engine-state changes are not, since they aren't Swing calls.
-     */
+    /** Runs on the game-loop thread, so Swing work is deferred with {@code invokeLater}. */
     public void enemyDied(int enemiesLeft) {
         WaveProgress progress = this.engine.waveProgress();
         if (enemiesLeft == 0 && progress.hasNextWave()) {
@@ -412,9 +356,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
     }
 
-    /**
-     * Debug keybinding ('n'): clears the current wave with no penalty and starts the next.
-     */
     private void debugSkipWave() {
         this.engine.debugSkipCurrentWave();
         this.setWavePreview();
@@ -427,9 +368,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.gameConsole.setWaveProgress(progress.index(), progress.count());
     }
 
-    /**
-     * Also reachable from the game-loop thread - see enemyDied().
-     */
+    /** Runs on the game-loop thread too. */
     public void economyChanged(EconomyState state) {
         SwingUtilities.invokeLater(this::updateInfo);
         if (state.isGameOver()) {
@@ -437,10 +376,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
     }
 
-    /**
-     * Reached from {@link #economyChanged}, which fires on every economy event - so once lives
-     * hit zero, every later event would re-announce the loss without this guard.
-     */
+    /** Guarded, since every later economy event would otherwise announce the loss again. */
     private void gameLost() {
         if (this.gameStopped) {
             return;
@@ -450,9 +386,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         SwingUtilities.invokeLater(this.boardOverlays::showLost);
     }
 
-    /**
-     * Guarded like {@link #gameLost()}: the last enemy of the last wave reports once.
-     */
+    /** Guarded like {@link #gameLost()}. */
     private void gameWon() {
         if (this.gameStopped) {
             return;
@@ -463,9 +397,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /**
-     * The single place the level-over flag moves, so every part of the UI that has to refuse
-     * moves in a decided game stays in step with it. Reachable from the game-loop thread (both
-     * endings are), hence the Swing work is deferred to the EDT.
+     * The single place the level-over flag changes. Reachable from the game-loop thread, so Swing
+     * work is deferred.
      */
     private void setGameStopped(boolean stopped) {
         this.gameStopped = stopped;
@@ -477,9 +410,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setWavePreview();
     }
 
-    /**
-     * Called from doGameTick() on the game-loop thread, not the EDT.
-     */
+    /** Runs on the game-loop thread. */
     public void doTick(int time) {
         boolean waveStarted = this.engine.doTick(time);
         if (waveStarted) {
@@ -491,11 +422,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
     }
 
-    /**
-     * The single place that changes tick speed - this owns keeping the
-     * play/pause button visibility consistent with it, so no caller has to
-     * remember to do that separately.
-     */
+    /** The single place tick speed changes, keeping the transport buttons in step. */
     private void setSpeed(TickSpeed speed) {
         this.currentSpeed = speed;
         this.gameLoop.setSpeed(speed);
@@ -503,11 +430,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /**
-     * Shows play whenever pressing it would do something the player is waiting for - the game
-     * is paused, or a wave is sitting ready to be sent - and pause only while a wave is
-     * actually running. Speed alone is not enough to decide this: between waves the loop is
-     * still ticking at normal speed with nothing on the board, and offering "pause" there is
-     * what made starting the first wave take two clicks.
+     * Shows play when pressing it would do what the player waits for - unpause, or send a ready
+     * wave - and pause only while a wave runs. Speed alone cannot decide this: between waves the
+     * loop runs at normal speed with an empty board.
      */
     private void syncTransportButtons() {
         boolean waveRunning = this.currentSpeed != TickSpeed.PAUSED && !this.engine.isWaveReady();
@@ -522,11 +447,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setSpeed(this.currentSpeed.next());
     }
 
-    /**
-     * Paints the frame {@link #buildAndPublishFrame} last published. This method builds
-     * nothing and reads no simulation state: everything it draws was described on the
-     * {@code game-loop} thread and handed over as one immutable value.
-     */
+    /** Paints the last published frame; reads no simulation state. */
     public void paintBoard(Graphics2D g2) {
         RenderFrame frame = this.latestFrame;
         if (frame == null) {
@@ -703,12 +624,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         contentCardLayout.show(getContentPane(), CARD_MENU);
     }
 
-    /**
-     * Resumes, and sends the next wave if one is ready - the same thing the 's' shortcut does.
-     * Deliberately not conditioned on having been paused first: at level start, and again after
-     * each wave is cleared, the loop is already running at normal speed and the only thing the
-     * player is waiting to do is send the next wave.
-     */
+    /** Resumes and sends the next wave if one is ready, whether or not the game was paused. */
     private void playPressed() {
         this.setSpeed(TickSpeed.NORMAL);
         if (this.engine.isWaveReady()) {
@@ -720,9 +636,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setSpeed(TickSpeed.PAUSED);
     }
 
-    /**
-     * While paused, ">>" single-steps one tick instead of changing tick speed.
-     */
+    /** While paused, single-steps one tick instead of changing speed. */
     private void fastPressed() {
         if (this.currentSpeed == TickSpeed.PAUSED) {
             this.doGameTick();

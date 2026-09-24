@@ -5,11 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * The projectiles currently in flight. A {@code CopyOnWriteArrayList}, like
- * {@code TowerRoster}'s tower list, because a tower spawns a projectile from the game-loop
- * thread while this same list is read from the EDT for rendering.
- */
+/** Projectiles in flight. Towers add to it during a tick. */
 public class ProjectileRoster implements ProjectileRegistry {
 
     private final List<Projectile> projectiles = new CopyOnWriteArrayList<>();
@@ -24,9 +20,7 @@ public class ProjectileRoster implements ProjectileRegistry {
     }
 
     /**
-     * Advances every live projectile one tick, then drops whichever ones just finished.
-     * Finished projectiles are collected into a plain list and removed afterward rather than
-     * through an iterator - {@code CopyOnWriteArrayList}'s iterator does not support removal.
+     * Advances every projectile, then removes the finished ones; the list's iterator cannot remove.
      */
     public void doTick(int gameTime) {
         List<Projectile> finished = new ArrayList<>();
@@ -39,9 +33,6 @@ public class ProjectileRoster implements ProjectileRegistry {
         this.projectiles.removeAll(finished);
     }
 
-    /**
-     * Level teardown: no projectile in flight carries over to the next level.
-     */
     public void clear() {
         this.projectiles.clear();
     }

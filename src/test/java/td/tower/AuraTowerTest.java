@@ -8,12 +8,7 @@ import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Covers AuraTower's own upgrade nodes: Amplifying Core (buff strength, then a fire-rate
- * bonus) and Resonance Field (range, then no longer refusing to buff other Aura towers). Every
- * tower here sits on the same cell, which trivially satisfies both nodes' own
- * cluster-of-nearby-towers gate.
- */
+/** Every tower here shares one cell, which satisfies the cluster gates. */
 class AuraTowerTest {
 
     private final GameWorld context = WorldFixtures.newWorld();

@@ -2,9 +2,8 @@ package td.util;
 
 public interface GameHost {
     /**
-     * A real, safe substitute for a display-less world (e.g. a toolbar's preview towers, or
-     * a wave-preview panel's off-board enemies) - answers every callback with a no-op instead
-     * of forcing a caller to pass {@code null} and hope nothing ever calls through it.
+     * A host that ignores every callback, for worlds with no display such as previews. Use instead
+     * of {@code null}.
      */
     static GameHost noOp() {
         return new GameHost() {

@@ -1,8 +1,6 @@
 package td.projectile;
 
-/**
- * Dispatches over the closed set of concrete projectile kinds - see {@link Projectile}.
- */
+/** Double dispatch over the concrete {@link Projectile} types. */
 public interface ProjectileVisitor<R> {
     R visitCannonball(CannonballProjectile projectile);
 

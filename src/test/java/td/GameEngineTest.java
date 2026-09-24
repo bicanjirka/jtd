@@ -22,13 +22,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-/**
- * End-to-end tests driven entirely through GameEngine's public API - the
- * same methods TowerDefence's mouse/keyboard listeners call - asserting on
- * resulting GameWorld state. No window, no AWT event, no real clock: doTick()
- * is called with explicit tick numbers instead of relying on the real game
- * loop's timing.
- */
 class GameEngineTest {
 
     // Weak enough for a guaranteed one-shot kill, independent of built-in content.

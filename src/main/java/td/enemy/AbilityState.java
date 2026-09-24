@@ -4,13 +4,8 @@ package td.enemy;
 import td.util.ThreadConfined;
 
 /**
- * Small, mutable, per-mob-per-{@link Ability} bookkeeping {@link AbilityEvaluator} needs
- * between ticks - a {@link PeriodicTrigger}'s countdown to its next fire, whether a one-shot
- * trigger ({@link OnceTrigger}/{@link HealthThresholdTrigger}/{@link OnDeathTrigger}) has
- * already fired, and whether a {@link TimeSinceLastHitTrigger} is currently waiting for a hit
- * to re-arm it. {@link Ability} itself stays an immutable record shared by every mob built from
- * the same {@link EnemyDefinition}; this is the mutable half a live mob holds one of per
- * ability it carries.
+ * A live mob's mutable bookkeeping for one {@link Ability}: periodic countdowns, fire-once flags
+ * and re-arm state. The {@link Ability} itself stays immutable and shared.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 public final class AbilityState {
