@@ -1,321 +1,75 @@
-# `td.tower` — towers, targeting, aura buffs and the upgrade tree
+# `td.tower` (+ `targeting`, `buff`, `upgrade`)
 
-Read the root `CLAUDE.md` first; this file only covers what is specific to this package and
-its three subpackages (`targeting`, `buff`, `upgrade`).
+## Towers
 
-## Shape
+- `AbstractTower` holds shared state; leaves are `final`, constructed only via `TowerFactory`,
+  and their constructor just calls `super(...)` (derived board fields are already `final`).
+- A tower's class name and its UI name are the same word and name the behaviour, not the shape.
+- Every hit goes through `AbstractTower.dealDamage`, never `enemy.doDamage`. It accumulates the
+  damage that *landed* (what `doDamage` returns) and won't count a kill on an already-dead mob.
+- After `doCleanup` (sell or teardown), `dealDamage` is a no-op, because a burn the tower applied
+  keeps ticking. A tower that subscribes to anything (e.g. `SonarTower` as a
+  `WaveStartListener`) unsubscribes in `doCleanup`.
+- Range checks compare squared distances (`rangeReal2()`); no `Math.sqrt` in per-tick scans.
+- A tower with no cooldown cadence passes `coolDownMax = 0` and overrides `rateLine(int)`.
+- `SonarTower` hits what lies in the arc swept since last tick (`SonarSweep`, half-open), never
+  the instantaneous beam angle. Its head is drawn from `sweepRadiansAt`, the same angle that
+  decides hits.
+- `SplashTower` falloff is `1 - (d/spreadRadius)²` from the hit mob. `spreadRadius` isn't
+  buffed; only its own upgrade node changes it.
+- Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
+  `AuraTower.buffs`' single "is this an aura" check stays the only role check.
 
-`Tower` is the interface; `AbstractTower` holds position, price, base/current damage/range/
-fire-rate, this tower's own owned upgrade nodes, and the shared
-`dealDamage` accounting. It holds **no** list of the Aura towers buffing it — see below. The eight leaf classes are
-`final` and are constructed only through `TowerFactory`:
+## Targeting
 
-| Class         | Name in the UI | Body shape | Targeting                                                                                                                 |
-|---------------|----------------|------------|---------------------------------------------------------------------------------------------------------------------------|
-| `SniperTower` | Sniper         | triangle   | one enemy, furthest along the path                                                                                        |
-| `SplashTower` | Splash         | ring       | one random enemy, plus distance-falloff splash                                                                            |
-| `SonarTower`  | Sonar          | spiral     | sonar scan: a beam sweeps the circle, hitting whatever it passes                                                          |
-| `PulseTower`  | Pulse          | star       | everything in range at once, ghosts included                                                                              |
-| `AuraTower`   | Aura           | circle     | passive; buffs neighbouring towers, never attacks                                                                         |
-| `MortarTower` | Mortar         | diamond    | one enemy, furthest along the path; fires an unguided `CannonballProjectile` that splashes and slows on arrival           |
-| `SeekerTower` | Seeker         | kite       | one enemy, furthest along the path; fires a homing `MissileProjectile` that deals magic damage and freezes on arrival     |
-| `CinderTower` | Cinder         | flame      | cooldown-gated; each shot is a wedge-shaped wave (`InWedgeTargetQuery`) that travels outward over several ticks and burns an enemy once, the first time its expanding front reaches it |
+- Compose a `TargetQuery` (filter; `and`, identity `all()`, absorber `none()`) with a
+  `TargetSelector` (picks one). Don't hand-roll a scan over `EnemyRegistry.getEnemies()`.
+- Targeting takes an `EnemyRegistry`, never `GameWorld`, so `td.projectile` can reuse it.
+- `InRangeTargetQuery` only through `anyType`/`ofType`. `NearestSelector` is centred on any point
+  (missiles retarget around themselves). `RandomSelector` takes a `RandomSource`.
+- `InWedgeTargetQuery` tests the *current* heading from `TurretAim.currentRadians()`, the same
+  angle the head is drawn at. It is deliberately not built on `SonarSweep`.
 
-**A tower's class name and its in-game name say the same thing, and neither describes its
-shape.** Both name the behaviour; the body shape is `Java2DFrameRenderer.towerBodyShape`'s
-business and is listed above only so a reader can connect a row to what is on the board. Adding
-a tower whose UI string does not match its class name reintroduces a gap a reader has to hold
-in their head.
+## Stats and buffs
 
-`MortarTower`/`SeekerTower`/`CinderTower` are the three towers added by the damage-types-and-
-projectiles feature — see `td.projectile` and `td.effect` in the root `CLAUDE.md` §4's domain-
-package list. Every tower, `AuraTower` included, has a full `base`/`head`/`special` upgrade
-tree (see below).
+- `recalculateStats()` publishes one immutable `TowerStats` (correlated fields, read by the tick
+  thread). Read it through `damageCurrent()`/`coolDownCurrent()`/`rangeReal()`/`rangeReal2()` or
+  `stats()`.
+- The buff a tower receives is **derived, never stored**: a fold of every tower's
+  `buffFor(this)` plus its own owned nodes' `totalBuff()`. No aura↔client index on either side
+  (`AuraTower.buffedTowers()` is also derived). Call `recalculateStats()` on every tower whenever
+  the roster or any upgrade changes; `TowerRoster.clear()` needn't.
+- `TowerBuff` axes: damage, range, fireRate, bounty, critChance. Build one from a single-axis
+  factory plus `withX` (`TowerBuff.damage(0.3f).withRange(0.1f)`), not from `none()`.
+- Cooldown has a base/current split like damage and range (`coolDownMax` vs `coolDownCurrent()`).
+- A crit is rolled in `dealDamage` via `context.random()`, and doubled
+  (`BURN_CRIT_CHANCE_MULTIPLIER`) against any burning target, whoever lit it.
 
-## Invariants worth knowing before you change anything here
+## Upgrade tree
 
-**A leaf's constructor calls `super(...)` and nothing else has to happen in any
-particular order.** `AbstractTower`'s constructor takes the world and the tower's cell
-coordinates and computes everything derived from the board - `centerX`/`centerY`,
-`boardX`/`boardY` - into `final` fields before the leaf body runs. A leaf therefore cannot
-read a half-built tower, and cannot reorder itself into doing so: the constraint is a compile
-error, not a convention.
+- Slots `BASE` (always `StandardBaseSlot` range + Awaken), `HEAD` (two exclusive chains) and
+  `SPECIAL` (one to three exclusive roots, gated on Awaken). Content per tower comes from
+  `docs/features/FEATURE-tower-specialization-abilities.md`; nodes waiting on a missing primitive
+  are no-op hooks with a `TODO.md` entry.
+- Build nodes with `UpgradeNode.of(...)` plus `withBuff`/`withRequires`/`withGate`/
+  `withExtraEffect`. `requires` decides whether a node is offered; `gate` is the performance
+  condition to clear once offered.
+- Never hand-write a node's bonus into a tower's description: `UpgradeNode.describe()` derives it
+  and `upgradeNodesBlock()` lists offered nodes automatically.
+- A bonus outside `TowerBuff`'s axes goes in `onUpgradeBought`, matching the node by `equals` (not
+  reference), and the same constant carries a matching `extraEffect` phrase.
+- `buyUpgrade` is the only entry point and is check-and-charge (returns `false` without effect).
+  Don't pre-check affordability. It publishes `TowerStats` before `UpgradeState`.
+- The UI reads `offeredUpgrades()`/`upgrades()` only; the tower is the source of truth.
 
-A leaf with no reload cadence (`SonarTower`'s sweep) passes `0` for `coolDownMax` and overrides
-`rateLine(int)` to describe its cadence some other way. `CinderTower` is cooldown-gated like
-every other attack tower and needs no such override.
+## Adding a tower
 
-**Every hit goes through `AbstractTower.dealDamage`, never `enemy.doDamage` directly.** It
-is what keeps `damageDealt`/`killCount` honest, in two ways that are easy to get wrong:
-
-- A shot into an enemy another tower already killed this tick is a no-op in the mob, and
-  must not be counted as a second kill.
-- `doDamage` **returns the damage that actually landed**, which is not the amount passed in
-  — a square resists part of every hit, a mob that is not currently a valid target takes
-  none of it, and a killing blow is capped at the health that was left. `damageDealt`
-  accumulates the return value. Adding the argument instead makes a tower over-report
-  against exactly the enemies it performs worst on, and credits it for overkill.
-
-**A sold or cleared tower must stop accounting for damage, including damage it applied
-before being removed.** `doCleanup` sets a `removed` flag, and `dealDamage` is a no-op once
-it's set. This matters because a damage-over-time `td.effect.Effect` (a burn) a tower applied
-is bound to that tower's own `dealDamage` and keeps ticking on the enemy for several ticks
-after the tower itself might be sold — without the guard, a sold tower would keep inflating
-`damageDealt`/`killCount` and paying its owned nodes' bounty bonus on an object the player
-has already been refunded for.
-
-**A tower that subscribes to anything must unsubscribe in `doCleanup`.** `SonarTower`
-registers as a `WaveStartListener` and removes itself in `doCleanup`, which `TowerRoster`
-calls on sell *and* on level teardown. A missed unsubscribe leaks the tower into the next
-level. `AuraTower` deliberately subscribes to nothing — that is the point of the buff design
-below.
-
-**`SonarTower` decides hits against a swept *arc*, never the beam's instantaneous angle.**
-The scan moves about a fifth of a radian per tick, so it is essentially never exactly on an
-enemy when a tick is sampled — "is this enemy at the beam's angle" would miss nearly
-everything. `SonarSweep.sweptThisTick` asks whether a bearing lies in the arc covered since
-the previous tick, and the arc is half-open so a stationary enemy is hit once per revolution
-rather than twice at the boundary. It targets by absolute bearing, so where an enemy sits
-decides when it is hit, not where it happens to be in the wave's array.
-
-**`SonarTower`'s turret head must be drawn from the same scan angle that decides its hits**
-(`sweepRadiansAt`), not from `animationSeconds` like the other spinning heads. A cosmetic
-spin would drift out of step and the tower would appear to shoot enemies it is not facing.
-
-**`rangeReal2()` is the squared range** and every range check compares squared distances.
-Don't introduce a `Math.sqrt` into a per-tick scan.
-
-**`SplashTower`'s splash falls off as `1 - (d/radius)²`**, where `d` is measured from the mob
-that was hit, not from the tower. That curve is flat near the centre and steep at the rim —
-half-way out still takes 75% — so it is much more forgiving than a linear falloff would be.
-The same `spreadRadius` bounds the splash query and divides the falloff, which is what keeps
-the result positive for everything the query returns. `spreadRadius` is set at construction
-and, unlike damage and range, is untouched by an Aura tower's buff — its only way to change
-is `SplashTower`'s own "Siege" node bumping it once via `onUpgradeBought` (see below), not any
-live, continuously-recomputed algebra.
-
-## Targeting (`td.tower.targeting`)
-
-Filtering and selection are deliberately separate, composable pieces. A tower composes
-them; it does not hand-roll a scan over `EnemyRegistry.getEnemies()`.
-
-- `TargetQuery` — "which enemies are legal targets right now", as a fresh immutable
-  snapshot. `and` intersects; `all()` is the identity, `none()` the absorber (it
-  short-circuits without evaluating the other side).
-- `TargetSelector` — picks at most one out of a candidate list (`FurthestAlongPathSelector`, `RandomSelector`,
-  `NearestSelector`). `RandomSelector` takes a
-  `td.util.RandomSource` rather than calling `Math.random()`, so a seeded run replays the same
-  picks; `SplashTower` composes it instead of inlining a random index.
-
-A tower whose cadence is geometric rather than a cooldown composes a query with its own
-sweep instead of a selector — see `SonarTower` filtering by range and type through
-`InRangeTargetQuery`, then deciding hits with `SonarSweep`.
-
-Implementations take an `EnemyRegistry`, never a `GameWorld` — the read-only slice is all
-they need. This is also what lets `td.projectile.MissileProjectile` reuse
-`InRangeTargetQuery`/`NearestSelector` directly for its own retargeting, without needing to
-depend on any concrete tower.
-
-`NearestSelector` is centred on an arbitrary point, not a tower's own position — a homing
-missile retargets around *its own current location*, which is the one case in this codebase
-where "nearest" means nearest to something other than the object doing the asking.
-
-`InWedgeTargetQuery` is a cone: enemies within a facing direction and a half-width, meant to
-be `and`-ed with an `InRangeTargetQuery` bounding its reach the same way `PulseTower` already
-composes `anyType` with `OfTypeTargetQuery`. It is deliberately **not** built on `SonarSweep`:
-`SonarSweep.sweptThisTick` exists because a continuously rotating beam is essentially never
-exactly on a target when a tick samples it, so it has to test the arc swept *since the last
-tick*, not the beam's instantaneous angle. A wedge is static or only slowly reorients, so
-there is no "missed it between ticks" case to guard against — it is simply tested against its *current* heading, every
-tick. That heading comes from `TurretAim.currentRadians()` (added
-alongside this query, for exactly this use), so a cone's hit test and its rendered turret head
-are guaranteed to agree, the same guarantee `SonarTower`'s `sweepRadiansAt` already gives its
-beam.
-
-`InRangeTargetQuery` has no public constructor: use `anyType` or `ofType`. Passing a
-`null` type to mean "any" is exactly the modelled-absence problem the style guide's rule 8
-forbids.
-
-## Aura buff stacking (`td.tower.buff`)
-
-`TowerBuff` is the algebra: `none()` is the identity, `combine` is additive, and a tower's
-total buff is a `reduce` over what every tower on the board contributes to it **combined with
-its own owned upgrade nodes' combined bonus** (see below) — `AbstractTower.recalculateStats()`
-does both in one fold, which is what lets a specialization and an Aura tower's buff stack for
-free. Buff strength is per-aura-tower (`AuraTower`'s `power` constructor argument), not a shared
-static — that is what lets two aura towers of different strengths stack correctly.
-
-`TowerBuff` carries five independent bonus axes — `damageBonus`, `rangeBonus`,
-`fireRateBonus`, `bountyBonus`, `critChanceBonus` — each defaulting to 0 at `none()`. An Aura
-tower's own `buff()` only ever sets the first two; the latter three exist for upgrade nodes
-(below) to use. A call site that means to name only one or two axes starts from whichever
-axis it cares about first, through the matching static entry point (`TowerBuff.damage(...)`,
-`.range(...)`, `.fireRate(...)`, `.bounty(...)`, `.critChance(...)`), then continues with the
-fluent instance `withDamage`/`withRange`/`withFireRate`/`withBounty`/`withCritChance` copies
-for any further axis — e.g. `TowerBuff.damage(0.3f).withRange(0.1f)` — rather than a positional
-literal spelling out every axis to reach the ones it cares about, or seeding the chain off
-`none()`. A sixth axis, were one ever added, would cost these call sites no edits. A tower's crit chance itself is `TowerStats.critChance`, computed as
-`critChanceBonus` added to the tower's own innate `critChanceBase` (via `TowerBuff.critChanceFor`)
-— `0` for every leaf except `SniperTower`, whose `TowerBaseStats` starts at `SniperTower.CRIT_CHANCE`
-via `TowerBaseStats.withCritChance`; its `VETERAN` path then adds more on top through this same axis.
-`AbstractTower.dealDamage` rolls it via `context.random()` before the enemy ever sees the hit,
-scaling the `Damage` through `Damage.asCritical()` on success — see that record's own doc
-comment for the fixed, project-wide multiplier this always applies.
-
-**A burning target doubles the effective crit chance for every tower, not just whichever one
-applied the burn.** `AbstractTower.rollCritical` checks `enemy.activeEffectKinds().contains
-(EffectKind.BURN)` — a plain public query, no coupling to `CinderTower` or any other producer
-of burn — and multiplies the roll by `BURN_CRIT_CHANCE_MULTIPLIER` (clamped at 100%) before
-rolling. Universal by design (see `docs/features/FEATURE-critical-damage.md`'s Addendum): a
-tower with zero crit chance still rolls nothing against a burning target, so the doubling only
-ever helps a roll that was already possible. Not reflected in `getStatusString()`'s displayed
-crit-chance line, which stays the tower's own base chance — there is no per-target UI to show
-a number that depends on whichever enemy is currently in range.
-
-**`AbstractTower.recalculateStats()` publishes one new `TowerStats`, never five separate
-fields.** Damage, range, cooldown and the two pixel-range forms are correlated: they are
-recomputed on the EDT (a tower being built or sold, a path being bought) and read by tick code
-on the `game-loop` thread, and a tick must never observe a half-applied recalculation - firing
-with this recalculation's damage and the previous one's cooldown. Marking five fields
-`volatile` would make each read fresh without making the set coherent, which is why they live
-in one immutable value swapped through a single volatile reference (root `CLAUDE.md` 3).
-Read them through `damageCurrent()`/`coolDownCurrent()`/`rangeReal()`/`rangeReal2()`, or take
-the whole set once with `stats()`.
-
-**The buff a tower receives is computed, never stored.** `recalculateStats()` folds
-`towers().all().stream().map(t -> t.buffFor(this))`: every tower is asked what it contributes,
-and `AbstractTower.buffFor` returns `TowerBuff.none()` for everything that is not an Aura tower
-in range. There is no index on either side.
-
-That replaced a bidirectional graph — `AuraTower` held a `Set<Tower> clients`, every
-`AbstractTower` held a `List<AuraTower> upgTowers`, and `registerTower`/`unregisterTower`/
-`addClient`/`removeClient` plus a `TowerListener` subscription plus a `scanTowers()` rescan kept
-the two halves in agreement. Two structures that must agree is a bug factory, and the rescan
-lived inside a `recalculateStats()` override, so recomputing one tower's stats mutated other
-towers' state. Deriving the buff costs one pass over the roster per recompute and cannot drift.
-
-`recalculateStats()` must be called on every change to either input. `TowerRoster` calls it on
-every tower whenever the set changes (`add`/`sell`), and `buyUpgrade` calls it on every tower
-for the upgrade side. `TowerRoster.clear()` deliberately does not — every tower is gone, so
-there is nothing to recompute and nothing left to read a stale value.
-
-**`AuraTower.buffedTowers()` is the same derived-not-stored shape, reused for the board's own
-link-line visual.** It stays a fresh `stream().filter(this::buffs).toList()` snapshot rather than
-tracked state — `td.ui.TowerEffectFrameBuilder.visitAuraTower` draws one faint
-`Palette.TOWER_AURA_LINK` beam per tower it returns, which is what makes a second, stored index
-here exactly the bidirectional-graph mistake the paragraph above already describes, just for a
-render feature instead of the buff itself.
-
-**A tower's fire rate has a base/current split just like damage and range.**
-`coolDownMax` is the base cooldown a leaf passes to `super(...)`; `coolDownCurrent()` is what
-tick code actually resets `coolDown` to after firing, and is `coolDownMax` shortened by
-`TowerBuff.fireRateFor`. `rateLine(int)` takes whichever one the caller means to describe (`getInfoString` passes
-`coolDownMax`, `getStatusString` passes the current one) rather
-than assuming which is wanted the way the old zero-argument version did.
-
-## Upgrade tree (`td.tower.upgrade`)
-
-A tower owns a set of `UpgradeNode`s it can buy, organized into three `UpgradeSlot`s
-(`BASE`/`HEAD`/`SPECIAL`) by `UpgradeTree`. This is a different mechanic from the Aura tower's
-buff above: an Aura tower buffs *other* towers continuously from outside; a bought node
-changes what *this* tower itself is, and stays changed for its lifetime. Every tower - Aura
-included - populates all three slots: `BASE` is always a range node plus an Awaken node
-that unlocks `HEAD`/`SPECIAL` for purchase (`StandardBaseSlot`, the same shape on every tower);
-`HEAD` is two mutually exclusive chains, each 2-3 levels deep; `SPECIAL` is one to three mutually
-exclusive roots, gated on Awaken being owned. The concrete content for every tower is authored
-in `docs/features/FEATURE-tower-specialization-abilities.md`; several `SPECIAL` and a few `HEAD`
-nodes are real, priced, gated `UpgradeNode`s whose hook is still a documented no-op pending a
-combat primitive that doesn't exist yet - each one has its own `TODO.md` entry.
-
-- `UpgradeNode` — a tree node: a stable `id` (unique within one tower's own tree), its
-  `UpgradeSlot`, a display name, a price (paid the same way buying a tower is), a `TowerBuff`
-  stat bonus, a `requires` condition (the structural prerequisite deciding whether the node is
-  offered at all - e.g. "nothing bought yet in this slot"), a `gate` condition (the independent
-  performance condition a player clears once offered), and an optional `extraEffect` phrase for
-  the handful of nodes whose bonus isn't expressible through `TowerBuff` at all — see below.
-  Eight components puts it past the root `CLAUDE.md`'s five-component threshold, so it's built
-  from `UpgradeNode.of(id, slot, displayName, price)` plus fluent `withBuff`/`withRequires`/
-  `withGate`/`withExtraEffect` copies, never a positional literal. `UpgradeNode.describe()` turns
-  the `gate`/`statBonus`/`extraEffect` into the one line `AbstractTower.upgradeNodesBlock()` shows
-  per offered node in `getInfoString()`/`getStatusString()` (e.g. `"Marksman's Eye (15 kills):
-  +15% crit chance"`) — never write a node's bonus out by hand in a tower's own description text;
-  `describe()` derives it from the same values `buyUpgrade` itself reads, so the two can't drift.
-- `UpgradeCondition` — `isSatisfied(tower, context)`, independent of affordability, plus
-  `describe()` (a short human phrase, e.g. `"10 kills"`, `"money only"`) and `progress(tower,
-  context)` (the same gate's live progress, e.g. `"7/10 kills"`, defaulting to `describe()` for a
-  gate with no partial progress). `always()` is the identity (the "money only" gate). `owns(id)`
-  and `slotEmpty(slot)` are the two structural checks a `requires` composes via the default
-  `and`/`or` combinators; `ClusterCondition`, `DamageDealtCondition`, `KillCountCondition` are
-  performance gates reading a tower's own position/stats and, for `ClusterCondition`, the roster
-  via `GameWorld`.
-- `UpgradeState` — a tower's owned nodes, in purchase order, as one immutable snapshot
-  (`AbstractTower`'s single `private volatile UpgradeState upgrades` field, replacing what used
-  to be three independent per-slot fields would have been - root `CLAUDE.md` §3). `tip(slot)` is
-  a slot's currently active node (its most recently bought one); `totalBuff()` folds every owned
-  node's `TowerBuff` additively, the same algebra an Aura buff already uses.
-- `AbstractTower.buyUpgrade(node)` is the one entry point: it validates `node` is actually one of
-  this tower's own `upgradeTree()`, not already owned, and that both `requires` and `gate` are
-  satisfied, pays its price via `context.doPay`, calls the `onUpgradeBought` hook (a no-op unless
-  a leaf overrides it - see below), publishes the new `TowerStats` *before* publishing the new
-  `UpgradeState` (so a tick landing in between sees the upgraded stats without the node, never the
-  node without its stats - which would pay a bounty bonus at un-upgraded damage), and recomputes
-  every tower on the board (buying an Aura tower's own upgrade can change what it contributes to
-  its neighbours). It returns `false` without effect on any failure, mirroring
-  `EconomyLedger.doPay`'s check-and-charge-in-one-call contract - never gate a call to it on a
-  separate affordability check first.
-- **A node's bonus that isn't expressible through `TowerBuff` is applied via `onUpgradeBought`,
-  not through the shared algebra.** `SplashTower`'s `spreadRadius`, `SonarTower`'s sweep rate,
-  `MortarTower`'s slow duration, `SeekerTower`'s freeze duration and `CinderTower`'s wedge
-  half-width are each touched by only one tower's one node - a leaf overriding this hook mutates
-  its own field directly, matched against its own private `UpgradeNode` constants by
-  **record equality** (`node.equals(SIEGE)`), not by reference: once a slot's graph branches and
-  reconverges, a node reaching this hook is no longer guaranteed to be the exact instance a
-  constant holds, only to carry the same id. This is the common case, not a rare exception - most
-  attack towers have at least one node that needs it. **Its own `UpgradeNode` constant also
-  carries the same bonus as a short `extraEffect` phrase** (`"+30% splash radius"`, `"sweeps 40%
-  faster"`) - the two are set together, at the same constant, precisely so the mechanical effect
-  and the text describing it can never drift apart the way a hand-written prose description
-  elsewhere in the tower's own text would risk.
-- `AbstractTower.upgradeTree()` defaults to `UpgradeTree.none()`; every real tower overrides it
-  with its own content, added per-leaf rather than part of this shared mechanism.
-- The UI (`td.ui.PanelUpgradeTree`) and the render slot marks (`Java2DFrameRenderer.paintSlotPips`/
-  `paintSlotReadyChevrons`/`paintEnchantHalo`, see `td/ui/CLAUDE.md`) both key off
-  `offeredUpgrades()`/`upgrades()` alone - a tower's own domain state is the single source of
-  truth for what's buyable and what's already bought, not any UI-side tracking.
-
-## Adding a new tower
-
-1. Add the leaf class (make it `final`), extending `AbstractTower`, composing
-   `td.tower.targeting` pieces rather than writing a new scan. Its constructor passes its
-   type, price, a `TowerBaseStats` (damage, range, base cooldown, plus `withCritChance(...)`
-   for the rare tower that has innate crit chance) and the world and its cell coordinates
-   straight to `super(...)`; a passive tower also overrides `isPassive()`.
-2. Add a constant to `TowerFactory.Type` with its price, and its `createTower` branch.
-3. Add a `visit…` method to `TowerVisitor`. The compiler then points you at every place
-   that needs the new tower's art: `td.ui.TowerSpriteFrameBuilder` (base and turret head)
-   and `td.ui.TowerEffectFrameBuilder` (its transient effect).
-4. Add `Palette` constants and their cases in `TowerSpriteFrameBuilder.bodyPaletteFor`
-   (an exhaustive switch with no `default`) and in `td.ui.Java2DFrameRenderer`'s
-   `towerBodyShape` / `turretHeadShape` / `colorFor`.
-5. Add it to `README.md`'s tower table.
-6. Override `upgradeTree()` with `StandardBaseSlot.rangeNode`/`awakenNode` plus its own `HEAD`
-   (two exclusive 2-3-level chains, `requires(StandardBaseSlot.opens(HEAD))` on each root) and
-   `SPECIAL` (one to three exclusive roots, `requires(StandardBaseSlot.opens(SPECIAL))`) content,
-   and `onUpgradeBought` only for a node that bumps a stat outside `TowerBuff`'s five axes - pass
-   that same bump's `extraEffect` phrase to the `UpgradeNode` constant itself (see Upgrade tree,
-   above) rather than hand-writing it into the tower's own `getInfoString()`/`getStatusString()`,
-   which never needs to change for this - `AbstractTower.upgradeNodesBlock()` already lists every
-   offered node automatically. No new
-   `Palette` role is needed for this: the specialization ring's two roles are shared across
-   every tower type (see `td/ui/CLAUDE.md`).
-
-The toolbar icon needs no separate art — `PanelTowerSelector` renders it through the same
-paint code at a fixed pose, so a tower's board look and its icon cannot drift apart.
-
-**Never branch on a tower's concrete type with `instanceof`, and don't cast one either.**
-Use `TowerVisitor`, or — where the question is "what does this tower contribute" rather than
-"what kind is it" — let the tower answer it: `Tower.buffFor` is a polymorphic call that
-replaced a `switch (t.getType())` plus a `(AuraTower) t` cast in two places. The one remaining
-type check, in `AuraTower.buffs`, asks the role question "is this an aura" so an aura does not
-buff another aura; adding a ninth tower needs no new branch in it. Keep it that way rather
-than growing it into a per-type dispatch.
+1. A `final` leaf composing `td.tower.targeting` pieces, passing a `TowerBaseStats` to
+   `super(...)`. A passive tower overrides `isPassive()`.
+2. A `TowerFactory.Type` constant and its `createTower` branch.
+3. A `TowerVisitor` method; the compiler then leads to `TowerSpriteFrameBuilder` and
+   `TowerEffectFrameBuilder`.
+4. `Palette` constants plus cases in `TowerSpriteFrameBuilder.bodyPaletteFor` and
+   `Java2DFrameRenderer`'s `towerBodyShape`/`turretHeadShape`/`colorFor`.
+5. `upgradeTree()` content (see above).
+6. `README.md`'s tower table. The toolbar icon reuses the board paint code, so it needs no art.
