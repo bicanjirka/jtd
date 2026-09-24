@@ -364,6 +364,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     /** Callers pass an outcome only on the transition, so each overlay shows once. */
     private void showOutcome(LevelOutcome outcome) {
+        this.syncTransportButtons();
         switch (outcome) {
             case PLAYING -> {
             }
@@ -412,10 +413,11 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     /**
      * Shows play when pressing it would do what the player waits for - unpause, or send a ready
      * wave - and pause only while a wave runs. Speed alone cannot decide this: between waves the
-     * loop runs at normal speed with an empty board.
+     * loop runs at normal speed with an empty board, and after the level ends no wave runs at all.
      */
     private void syncTransportButtons() {
-        boolean waveRunning = this.currentSpeed != TickSpeed.PAUSED && !this.engine.isWaveReady();
+        boolean waveRunning = this.currentSpeed != TickSpeed.PAUSED && !this.engine.isWaveReady()
+                && !this.engine.outcome().isOver();
         this.gameConsole.setPlaying(waveRunning);
     }
 
