@@ -7,7 +7,9 @@ import td.effect.ActiveEffects;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.EffectTransitions;
+import td.effect.FreezeDiminishing;
 import td.enemy.MobMoments.Moment;
+import td.stat.BaseStats;
 import td.stat.EnemyStat;
 import td.stat.StatAccumulator;
 import td.stat.StatSheet;
@@ -49,6 +51,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private final EffectTransitions effectTransitions = new EffectTransitions();
     private final PathMotion motion;
     private final MobMoments moments = new MobMoments();
+    private final FreezeDiminishing freezeDiminishing = new FreezeDiminishing();
     private final StatSheet stats;
 
     private int health;
@@ -74,9 +77,12 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.health = healthPoints * HEALTH_UNITS_PER_POINT;
         this.healthMax = healthPoints * HEALTH_UNITS_PER_POINT;
         this.pathIndex = spawnParameters.pathIndex();
-        this.stats = new StatSheet(definition.baseStats()
-                .with(EnemyStat.MOVE_SPEED, definition.baseSpeed() * spawnParameters.speedMultiplier()),
-                this::contributeStats);
+        BaseStats base = definition.baseStats()
+                .with(EnemyStat.MOVE_SPEED, definition.baseSpeed() * spawnParameters.speedMultiplier());
+        if (rank.diminishesFreezes()) {
+            base = base.with(EnemyStat.FREEZE_DR, 1f);
+        }
+        this.stats = new StatSheet(base, this::contributeStats);
         this.bodyScale = bodyScaleFor(definition.archetype(), gameWorld.getBoard().scale(), rank) * spawnParameters.sizeMultiplier();
         this.abilityStates = definition.abilities().stream().map(a -> AbilityState.forTrigger(a.trigger())).toList();
         this.motion = new PathMotion(gameWorld.level().pathAt(this.pathIndex), spawnParameters.localOffset(), gameWorld::getBoard);
@@ -218,15 +224,31 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.activeEffects.contributeTo(accumulator);
     }
 
-    /** Rejects the effect if any trait blocks its kind. */
+    /**
+     * Applies the effect with its duration shortened by this mob's resistance to its kind and, for a
+     * freeze, by diminishing returns. One that would last under a tick is blocked.
+     */
     public void applyEffect(Effect effect) {
-        for (Trait trait : this.traits) {
-            if (trait.blocksEffect(effect.kind())) {
-                return;
-            }
+        float factor = effect.kind().resistedBy().map(stat -> 1f - this.stats.value(stat)).orElse(1f);
+        boolean diminishing = effect.kind() == EffectKind.FREEZE && this.stats.value(EnemyStat.FREEZE_DR) >= 1f;
+        boolean frozen = this.activeEffectKinds().contains(EffectKind.FREEZE);
+        if (diminishing) {
+            factor *= this.freezeDiminishing.factorAt(this.ticksSinceSpawn, frozen);
         }
-        this.activeEffects.apply(effect);
+        Effect scaled = factor < 1f ? effect.withDurationScaledBy(factor) : effect;
+        if (factor < 1f && scaled.authoredDurationTicks() < 1) {
+            return;
+        }
+        if (diminishing) {
+            this.freezeDiminishing.recordAt(this.ticksSinceSpawn, frozen);
+        }
+        this.activeEffects.apply(scaled);
         this.stats.invalidate();
+    }
+
+    /** Fresh freezes landed in the current diminishing-returns window; {@code 0} without it. */
+    public int freezeDiminishingStep() {
+        return this.freezeDiminishing.stepAt(this.ticksSinceSpawn);
     }
 
     public Set<EffectKind> activeEffectKinds() {

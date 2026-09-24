@@ -44,9 +44,10 @@
   it (e.g. `"armor"`, which a later rank step replaces).
 - Built-in traits include `PercentResistTrait` (armor or magic resist, authored as the fraction
   kept), `FlatResistTrait` (plating), both scopable with `physicalOnly`/`magicOnly`,
-  `HurtSpeedTrait`, and crit/burn/freeze immunities.
-- Effect immunity is `Trait.blocksEffect`, checked in `DefinedEnemyMob.applyEffect` before
-  `ActiveEffects` sees the effect.
+  `HurtSpeedTrait`, `CriticalImmunityTrait` (full resilience), `EffectResistTrait` (`immuneTo`
+  at 1) and `FreezeDiminishingTrait`. `ELITE` and `BOSS` diminish freezes without the trait.
+- `DefinedEnemyMob.applyEffect` shortens the effect by its resistance and freeze diminishing
+  returns before `ActiveEffects` sees it; there is no separate immunity check.
 - `AbilityEvaluator` decides when a trigger fires; actions execute through
   `MobAbilityContext` (one per caster per tick), which reaches the world through
   `GameWorld.enemies()` (`EnemySpawner.add`/`replace`); spawned mobs are built by

@@ -15,9 +15,12 @@
   would round to zero.
 - Effects change a mob only through `contributeTo(StatAccumulator)`: slow and freeze on
   `MOVE_SPEED`, shield on damage taken, heal on `REGENERATION`, invisible on `STEALTH`, burn on
-  `CRIT_CHANCE_TAKEN`. Shield and
-  heal go in as restorative, so spirit scales them. The mob applies regeneration to itself, capped
-  at max health; `Damage` can't be negative.
+  `CRIT_CHANCE_TAKEN`. Shield and heal go in as restorative, so spirit scales them. The mob
+  applies regeneration to itself, capped at max health; `Damage` can't be negative.
+- Resistance and diminishing returns only shorten an authored duration, never change an effect's
+  curve: `duration = authored * (1 - resist[kind]) * freezeStep`, and under one tick is blocked.
+  `EffectKind.resistedBy()` names the resisting stat. Only `FREEZE` diminishes
+  (`FreezeDiminishing`, per mob, only a fresh freeze advances a step).
 - `EffectTemplate` (sealed) is the authored form an ability carries. `SLOW`/`BURN`/`FREEZE`
   have no template because only towers apply them.
 - `ShieldTemplate` can be restricted to one `DamageType` (`physicalOnly`/`magicOnly`).
@@ -34,7 +37,7 @@
 
 ## Adding a kind
 
-1. `EffectKind` constant.
+1. `EffectKind` constant, and its case in `resistedBy()`.
 2. A named `Effect` factory, plus its cases in `ActiveEffects.magnitude` and `contributeTo` (the
    compiler forces them).
 3. An `EffectTemplate` if abilities should author it.

@@ -9,5 +9,7 @@ public enum TraitMarker {
     CRITICAL_IMMUNE,
     HURT_SPEED,
     BURN_IMMUNE,
-    FREEZE_IMMUNE
+    FREEZE_IMMUNE,
+    EFFECT_RESIST,
+    FREEZE_DIMINISHING
 }
