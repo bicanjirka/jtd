@@ -6,6 +6,7 @@ import td.effect.ActiveEffects;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.EffectTransitions;
+import td.enemy.MobMoments.Moment;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
@@ -40,6 +41,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     private final ActiveEffects activeEffects = new ActiveEffects();
     private final EffectTransitions effectTransitions = new EffectTransitions();
     private final PathMotion motion;
+    private final MobMoments moments = new MobMoments();
 
     private int health;
     private boolean inactive;
@@ -47,17 +49,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     private boolean dead = false;
     private float speed;
     private int delay;
-    private int deathTick = -1;
-    // Captured on the next doTick: doDamage() has no gameTime, and a hit can land in another
-    // phase of the same tick.
-    private boolean criticalHitPending;
-    private int criticalHitTick = -1;
-    // Same deferred capture as criticalHitPending, for any landed damage.
-    private boolean damageTakenPending;
-    private int damageTakenTick = -1;
     // Null until the first cast; never exposed as null.
     private AbilityCast lastAbilityCast;
-    private int abilitySpawnTick = -1;
 
     /**
      * @param speed           px/tick, with any spawn-shape multiplier already applied
@@ -112,15 +105,16 @@ public abstract class AbstractEnemyMob implements EnemyMob {
             landed = this.activeEffects.applyShield(this.absorb(damage)).cappedAt(this.health);
             this.health -= landed.amount();
             if (landed.amount() > 0) {
-                this.damageTakenPending = true;
+                this.moments.markPending(Moment.DAMAGE_TAKEN);
             }
             if (landed.critical()) {
-                this.criticalHitPending = true;
+                this.moments.markPending(Moment.CRITICAL_HIT);
             }
         }
         if (this.health <= 0) {
             this.validTarget = false;
             this.dead = true;
+            this.moments.markPending(Moment.DEATH);
             int score = Math.round(this.price * this.rank.scoreMultiplier());
             this.gameWorld.economy().apply(EconomyDelta.kill(this.price, score));
             this.gameWorld.enemies().reportDeath();
@@ -242,7 +236,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * the simulation clock rather than the repaint rate.
      */
     public int ticksSinceDeath(int gameTime) {
-        return this.deathTick < 0 ? -1 : gameTime - this.deathTick;
+        return this.moments.ticksSince(Moment.DEATH, gameTime);
     }
 
     public int fadeDurationTicks() {
@@ -259,12 +253,12 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * because {@code doDamage} has no game time.
      */
     public int ticksSinceCriticalHit(int gameTime) {
-        return this.criticalHitTick < 0 ? -1 : gameTime - this.criticalHitTick;
+        return this.moments.ticksSince(Moment.CRITICAL_HIT, gameTime);
     }
 
     /** {@code -1} if never. Captured like {@link #ticksSinceCriticalHit}. */
     public int ticksSinceDamageTaken(int gameTime) {
-        return this.damageTakenTick < 0 ? -1 : gameTime - this.damageTakenTick;
+        return this.moments.ticksSince(Moment.DAMAGE_TAKEN, gameTime);
     }
 
     public void recordAbilityCast(EffectKind kind, float radius, int gameTime) {
@@ -276,12 +270,12 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     public void recordAbilitySpawn(int gameTime) {
-        this.abilitySpawnTick = gameTime;
+        this.moments.record(Moment.ABILITY_SPAWN, gameTime);
     }
 
     /** {@code -1} for a mob that came from a wave. */
     public int ticksSinceAbilitySpawn(int gameTime) {
-        return this.abilitySpawnTick < 0 ? -1 : gameTime - this.abilitySpawnTick;
+        return this.moments.ticksSince(Moment.ABILITY_SPAWN, gameTime);
     }
 
     public boolean isFadeComplete(int gameTime) {
@@ -308,14 +302,8 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * the death tick. A damage-over-time kill skips movement.
      */
     public void doTick(int gameTime) {
-        if (this.criticalHitPending) {
-            this.criticalHitPending = false;
-            this.criticalHitTick = gameTime;
-        }
-        if (this.damageTakenPending) {
-            this.damageTakenPending = false;
-            this.damageTakenTick = gameTime;
-        }
+        // doDamage() has no game time, and a hit can land in another phase of the same tick.
+        this.moments.capturePending(gameTime);
         if (this.inactive) {
             if (this.delay > 0) {
                 this.delay--;
@@ -325,11 +313,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
                     this.doTick(gameTime);
                 }
             }
-        } else if (this.dead) {
-            if (this.deathTick < 0) {
-                this.deathTick = gameTime;
-            }
-        } else {
+        } else if (!this.dead) {
             // Read before tick(): an effect in its last tick must still slow this tick's movement.
             float speedMultiplier = this.activeEffects.speedMultiplier();
             // Applied here, not through tick()'s sink: a heal is not a negative damagePerTick.
@@ -356,6 +340,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     private void leak() {
         this.validTarget = false;
         this.dead = true;
+        this.moments.markPending(Moment.DEATH);
         this.gameWorld.economy().apply(EconomyDelta.leak(this.price));
         this.gameWorld.enemies().reportDeath();
     }
