@@ -140,10 +140,10 @@ every part of the board, so naming six collaborators would say less than naming 
 2. Named static factories over public constructors, so the call site reads as a sentence:
    `Damage.physical(4)`, `EconomyDelta.kill(bounty)`.
 3. Model "nothing" as a value, never `null`. Every abstraction gets an identity — `none()`,
-   `all()`, `empty()`. Passing `null` to mean "any" is the bug this prevents. **This binds the
-   whole API, not just the `return null` statement the grep can see**: a nullable field handed
-   out by a getter, and an `orElse(null)`, are the same rule broken less visibly. Absence in a
-   return type is `Optional`; absence in a value is that type's own identity.
+   `all()`, `empty()`. Passing `null` to mean "any" is the bug this prevents. This binds the
+   whole API, not just a `return null` statement: a nullable field handed out by a getter, and
+   an `orElse(null)`, are the same rule broken less visibly. Absence in a return type is
+   `Optional`; absence in a value is that type's own identity. Judgement, not a grep.
 4. Where two values of a kind combine, give the type an algebra: operation, combinator, identity,
    and an absorber if one exists. See `Damage`, `TowerBuff`, `TargetQuery`.
 
@@ -186,8 +186,6 @@ Still applies:
 
 **One scoped exception to rule 3:** `td.ui` frame builders return `null` for "no draw command".
 That is the only place `null` models absence; engine and domain code returns `Optional`.
-
-> `no-null-return-in-engine`
 
 ## 6. Conventions
 

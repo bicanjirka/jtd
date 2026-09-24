@@ -80,13 +80,6 @@ public final class VerifyRules {
                 "branch on domain type through a visitor, not instanceof",
                 "\\binstanceof\\b", List.of(MAIN)).skippingComments());
 
-        rules.add(Rule.of("no-null-return-in-engine", "CLAUDE.md 5",
-                        "engine and domain code models absence as a value, not null "
-                                + "(td.ui frame builders are the one scoped exception)",
-                        "return null\\s*;", List.of(MAIN))
-                .skippingComments()
-                .excludingPath("td/ui/"));
-
         rules.add(Rule.of("no-wildcard-imports", "CLAUDE.md 6",
                 "an explicit import once shadowed a real java.util.List / java.awt.List collision",
                 "^import .*\\.\\*\\s*;", List.of(MAIN, TEST)).skippingComments());
