@@ -9,6 +9,7 @@ import td.enemy.IdentifiedTrait;
 import td.enemy.PercentResistTrait;
 import td.enemy.Trait;
 import td.enemy.TraitContext;
+import td.enemy.TraitTemplate;
 import td.util.GameStartupException;
 
 import java.util.List;
@@ -55,12 +56,15 @@ class SpawnShapeTest {
     }
 
     @Test
-    void armoredsTraitBluntsPhysicalDamageButLeavesMagicDamageUntouched() {
-        Trait armor = SpawnShape.armored().traitOverride().orElseThrow().template().resolvedFor(DamageMix.none()).orElseThrow();
+    void armoredsTraitBlocksAFifthToFourFifthsOfPhysicalDamageByPhysicalShareAndNoMagic() {
+        TraitTemplate plating = SpawnShape.armored().traitOverride().orElseThrow().template();
+        Trait fresh = plating.resolvedFor(DamageMix.none()).orElseThrow();
+        Trait allPhysical = plating.resolvedFor(DamageMix.of(Damage.physical(10))).orElseThrow();
         TraitContext traitContext = new TraitContext(1f);
 
-        assertThat(armor.onHit(Damage.physical(100), traitContext).amount()).isLessThan(100);
-        assertThat(armor.onHit(Damage.magic(100), traitContext)).isEqualTo(Damage.magic(100));
+        assertThat(fresh.onHit(Damage.physical(100), traitContext)).isEqualTo(Damage.physical(80));
+        assertThat(allPhysical.onHit(Damage.physical(100), traitContext)).isEqualTo(Damage.physical(20));
+        assertThat(allPhysical.onHit(Damage.magic(100), traitContext)).isEqualTo(Damage.magic(100));
     }
 
     @Test

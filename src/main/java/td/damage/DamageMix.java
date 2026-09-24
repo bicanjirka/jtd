@@ -33,14 +33,18 @@ public record DamageMix(long physical, long magic) {
     }
 
     /**
-     * How one-sided the mix is: {@code 0} for an even split or no damage at all, {@code 1} when
-     * every point landed as one type.
+     * How far the mix leans toward {@code type}: {@code 0} for an even split, no damage at all or a
+     * lean the other way, {@code 1} when every point landed as {@code type}.
      */
-    public float dominance() {
+    public float lean(DamageType type) {
         long total = this.total();
         if (total == 0) {
             return 0f;
         }
-        return (float) Math.abs(this.physical - this.magic) / total;
+        long margin = switch (type) {
+            case PHYSICAL -> this.physical - this.magic;
+            case MAGIC -> this.magic - this.physical;
+        };
+        return Math.max(0f, (float) margin / total);
     }
 }

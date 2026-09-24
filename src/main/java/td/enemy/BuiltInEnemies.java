@@ -23,7 +23,7 @@ import java.util.List;
  */
 final class BuiltInEnemies {
 
-    private static final AdaptiveResist ELITE_ARMOR = new AdaptiveResist(0.6f);
+    private static final AdaptiveResist ELITE_ARMOR = AdaptiveResist.againstDominant(0.6f);
 
     // Bounty grows 2.5x per rank while health only doubles, so tougher mobs pay
     // disproportionately more.

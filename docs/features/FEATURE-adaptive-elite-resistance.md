@@ -31,8 +31,14 @@ effectively unkillable.
 4. **Scope: the ranks that had untyped armor.** Simple and Mender at elite and boss rank.
    Deliberately typed armor (the Armored ladder's physical plating, the Warden and its eggs)
    stays fixed.
-5. **The `armored` spawn shape stacks.** Its flat physical resist is always added, never
-   replacing an existing armor trait, so an `armored` elite keeps its adaptive armor too.
+5. **The `armored` spawn shape stacks.** Its resist is always added, never replacing an existing
+   armor trait, so an `armored` elite keeps its adaptive armor too.
+6. **The `armored` spawn shape adapts too, physical only.** Instead of a flat resist it blocks
+   physical damage by the level's physical share: 20% at a 50% share or less (and before any
+   damage), 80% at 100%, linear in between. No cap on stacking with other armor; a later
+   armor-piercing mechanic is the counter.
+7. **One trait model.** Adaptive armor is an ordinary trait slot, resolved per mob at spawn, not
+   a separate component, so it composes, stacks and inherits like any other trait.
 
 ## Constraints
 
