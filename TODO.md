@@ -176,7 +176,7 @@ is computed once, inside the dying enemy's own kill path, with no notion of whic
 it or which auras cover that location — a new coupling between `td.enemy` and `td.tower` that
 the codebase has deliberately avoided so far (towers query enemies, never the reverse).
 
-- **Where:** `AbstractEnemyMob`'s kill/death path (`td.enemy`), `EconomyDelta.kill` (`td.economy`).
+- **Where:** `DefinedEnemyMob`'s kill/death path (`td.enemy`), `EconomyDelta.kill` (`td.economy`).
 - **Approach:** see `FEATURE-tower-upgrades.md`'s "Architectural implications" and "Risks and
   costs" sections. Either pass the killing tower's position outward from the death path so an
   aura-owning tower can be consulted, or add a new aura-query step in the kill path — both are a
@@ -288,11 +288,11 @@ Homing Curse (`SeekerTower`), Hexflame (`CinderTower`), Withering Field (`AuraTo
 
 ### Partial or full armor/shield bypass on a hit doesn't exist
 
-`AbstractEnemyMob.doDamage`'s `absorb`/`applyShield` steps are always fully applied or not applied
+`DefinedEnemyMob.doDamage`'s `absorb`/`applyShield` steps are always fully applied or not applied
 at all; nothing can skip part of either. Two nodes wait on it: Sniper's Marksman's Eye II (50%
 ignore) and Momentum (100% ignore, "Fifth Shot"'s sibling special).
 
-- **Where:** `td.enemy.AbstractEnemyMob.doDamage`.
+- **Where:** `td.enemy.DefinedEnemyMob.doDamage`.
 - **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #2.
 
 ### A guaranteed-crit trigger with a per-node crit multiplier doesn't exist
@@ -320,7 +320,7 @@ from the moment it's bought, not one with its own expiry layered on top.
 Two nodes wait on it: Seeker's Deep Freeze II (shatter-on-kill splash, only if the kill was
 frozen) and Splash's Concussive Blast (a killed enemy explodes).
 
-- **Where:** `td.tower.AbstractTower.dealDamage` or `td.enemy.AbstractEnemyMob`'s kill path.
+- **Where:** `td.tower.AbstractTower.dealDamage` or `td.enemy.DefinedEnemyMob`'s kill path.
 - **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #5.
 
 ### "Reveal an invisible enemy to every tower" doesn't exist

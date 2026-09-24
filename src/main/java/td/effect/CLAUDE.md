@@ -21,7 +21,7 @@
 - `EffectTransitions` records when each kind was last gained or lost; the UI derives
   transitions from it.
 
-## Per-tick order (in `AbstractEnemyMob.doTick`)
+## Per-tick order (in `DefinedEnemyMob.doTick`)
 
 1. Read `speedMultiplier()` and `healPerTick()` **before** `ActiveEffects.tick()`, since `tick()`
    removes an effect that is on its last tick.

@@ -10,7 +10,7 @@ import td.util.GameWorld;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-class AbstractEnemyMobEffectTest {
+class DefinedEnemyMobEffectTest {
 
     private static GameWorld newContext() {
         return WorldFixtures.newWorldOnBoard(1, 1001, 1001);
