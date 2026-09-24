@@ -440,3 +440,35 @@ own balance passes.
 - **Approach:** tune via actual play (or `td.BalanceHarness`) once the other placeholder-number
   entries in this file get their own pass - no code or architecture change needed, every number
   here is already a named constant or a `TowerBuff` literal.
+
+## UI
+
+### Wave-preview hover shows `Health: 0`, `Bounty: 0` and `Speed NaN px/s`
+
+The preview strip builds its mobs with zero health and price, so every hovered mob reads
+`Health: 0   Bounty: 0`. A mob with `HurtSpeedTrait` (Frenzied) also reads `Speed NaN px/s`,
+because its health fraction is `0 / 0`.
+
+- **Where:** `td.ui.PanelEnemy.rebuildEnemies()` (`SpawnParameters.atSlot(0, speed, 0, 0)`).
+- **Approach:** build each preview mob with its rank's health and price, as
+  `EnemyCatalog.spawn` callers pass `definition.baseHealth()` / `definition.price()`, and cover it
+  with a test asserting the hover text has a finite speed and a non-zero health.
+
+### A long enemy stat block overflows the Info panel
+
+Armored's hover or inspector text (header, description, five stat lines, traits) is taller than
+the Info panel at the default window size, so it opens scrolled and the name, or the
+`Killed`/`Leaked` line, sits out of view.
+
+- **Where:** `td.ui.EnemyStatText`, the Info `JTextPane` in the side panel.
+- **Approach:** scroll the pane to the top whenever its text is replaced, and/or compact the block
+  (one line for armor and magic resist, drop a trait line that repeats a stat line).
+
+### A hatched egg leaves its stale stats in the inspector
+
+Selecting a Warden egg and letting it hatch clears the selection ring, but the panel keeps the
+egg's last stats with no status line, unlike a kill (`Killed`) or a leak (`Leaked`).
+
+- **Where:** `td.enemy.EnemyInspection.Fate`, the hatch path in `SpawnEnemiesAction`.
+- **Approach:** give a mob replaced by its own spawn a fate (e.g. `Hatched`) so the inspector
+  says why it stopped updating.

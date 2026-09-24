@@ -84,6 +84,8 @@ public class Driver {
             case "key" -> typeKey(rest.trim());
             case "state" -> state();
             case "boardclick" -> boardClick(rest.trim());
+            case "clickenemy" -> clickEnemy(rest.trim());
+            case "text" -> printText(Integer.parseInt(rest.trim()));
             case "level" -> selectLevel(Integer.parseInt(rest.trim()));
             case "menu" -> returnToMenu();
             case "setcredits" -> setCredits(rest.trim());
@@ -140,6 +142,18 @@ public class Driver {
             System.out.println(i + ": " + describe(clickables.get(i)));
         }
         System.out.println("OK list " + clickables.size());
+    }
+
+    // Prints a text component's whole content, since a scrolled panel hides lines a screenshot can't show.
+    private static void printText(int index) throws Exception {
+        Component c = findClickables().get(index);
+        if (!(c instanceof javax.swing.text.JTextComponent text)) {
+            System.out.println("FAILED text " + index + ": " + c.getClass().getSimpleName() + " is not a text component");
+            return;
+        }
+        String[] content = new String[1];
+        onEventDispatchThread(() -> content[0] = text.getText());
+        System.out.println("--- text " + index + "\n" + content[0] + "\n--- OK text");
     }
 
     private static String describe(Component c) {
@@ -303,6 +317,30 @@ public class Driver {
         Thread.sleep(60);
         robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
         System.out.println("OK boardclick " + cellX + "," + cellY + " (robot at " + cx + "," + cy + ")");
+    }
+
+    // Robot-clicks where the n-th alive enemy is right now, so selecting a moving enemy goes through
+    // the board's real mouse listener instead of guessing its cell.
+    private static void clickEnemy(String args) throws Exception {
+        int index = args.isEmpty() ? 0 : Integer.parseInt(args);
+        List<EnemyMob> mobs = java.util.Arrays.stream(getGameWorld().enemies().getEnemies()).filter(m -> !m.isDead()).toList();
+        if (index >= mobs.size()) {
+            System.out.println("FAILED clickenemy " + index + ": only " + mobs.size() + " alive");
+            return;
+        }
+        EnemyMob mob = mobs.get(index);
+        Field gameBoardField = TowerDefense.class.getDeclaredField("gameBoard");
+        gameBoardField.setAccessible(true);
+        Point loc = ((Component) gameBoardField.get(game)).getLocationOnScreen();
+        int cx = loc.x + (int) Math.round(mob.getX());
+        int cy = loc.y + (int) Math.round(mob.getY());
+        robot.mouseMove(cx, cy);
+        Thread.sleep(40);
+        robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+        Thread.sleep(40);
+        robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+        System.out.println("OK clickenemy " + index + " " + mob.activeEffectKinds() + " at board px " + Math.round(mob.getX())
+                + "," + Math.round(mob.getY()));
     }
 
     // Reflects into TowerDefense's private startSelectedLevel(LevelDefinition) rather than
