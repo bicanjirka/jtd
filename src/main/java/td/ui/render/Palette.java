@@ -56,6 +56,8 @@ public enum Palette {
     RANK_BADGE_BOSS,
     /** Trait markers, one role per trait marker plus overflow. */
     TRAIT_MARKER_PERCENT_RESIST,
+    TRAIT_MARKER_PHYSICAL_RESIST,
+    TRAIT_MARKER_MAGIC_RESIST,
     TRAIT_MARKER_FLAT_RESIST,
     TRAIT_MARKER_CRITICAL_IMMUNE,
     TRAIT_MARKER_HURT_SPEED,

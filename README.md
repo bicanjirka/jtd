@@ -117,7 +117,9 @@ any slot can name a different rank inline, before the enemy id (`elite c`) or be
 shape (`elite swarm 4 c`). Health and bounty both rise with rank, and a kill's score is weighted
 by it too — a Boss-rank kill is worth disproportionately more than a Grunt-rank one of the same
 bounty. Not every enemy defines all five ranks; asking for one an enemy doesn't have silently
-uses its own highest defined rank instead.
+uses its own highest defined rank instead. Elite and Boss Simple and Mender enemies carry adaptive
+armor: it resists whichever damage type (physical or magic) has landed most this level, from not
+at all at an even split up to full strength against a one-type defence.
 
 ### Spawn shapes
 
@@ -128,7 +130,7 @@ the shapes that take one (`swarm 4 c`):
 | Shape   | Keyword  | What one slot produces                                                |
 |---------|----------|-------------------------------------------------------------------------|
 | Normal  | (none)   | One enemy on the path centre                                            |
-| Armored | `armored`| One enemy with an extra defensive trait it wouldn't otherwise have — no size, speed, health or bounty change |
+| Armored | `armored`| One enemy with an extra physical flat resist, on top of any armor it already has — no size, speed, health or bounty change |
 | Swarm   | `swarm`  | *N* enemies at 50% size, scattered off-path, sharing one spawn's bounty and health |
 | Line    | `line`   | *N* enemies spread evenly across the path's width, abreast              |
 | Flank   | `flank`  | Two enemies hugging opposite edges of the path                          |

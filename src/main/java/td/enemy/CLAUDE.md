@@ -35,7 +35,7 @@
   input arrives as `TraitContext`. `Trait.marker()` has no default, on purpose.
 - `withAdditionalTraits`/`withAdditionalAbilities` replace an entry with the same
   `TraitId.named(...)` id and stack anonymous ones. Name an entry only when a later step replaces
-  it (e.g. `"armor"`, which the `armored` spawn shape overrides).
+  it (e.g. `"armor"`, which a later rank step replaces).
 - Built-in traits include `PercentResistTrait`/`FlatResistTrait` (per hit, scopable with
   `physicalOnly`/`magicOnly`), `HurtSpeedTrait`, and crit/burn/freeze immunities.
 - Effect immunity is `Trait.blocksEffect`, checked in `DefinedEnemyMob.applyEffect` before
@@ -78,6 +78,8 @@
   changed. Callers report that return value, not the input.
 - A spawn shape's trait override is composed into the definition before the mob is built. There
   is no separate multiplier mechanism.
+- An `AdaptiveResist` is resolved once, in the mob's constructor, against
+  `GameWorld.damageTally()` (`EnemyDefinition.adaptedTo`); the mob keeps the resolved definition.
 - Spawn delay: the mob starts inactive iff its *converted* tick delay is > 0.
 - A formation offset is rotated once, by the spawn point's facing, and stored as final
   `offsetX`/`offsetY`. Never recompute it from the current tangent (members pivot and jump at

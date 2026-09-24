@@ -16,6 +16,7 @@ import td.tower.MortarTower;
 import td.tower.SniperTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.util.GameWorld;
 import td.util.LoadedLevel;
 import td.wave.WaveDefinition;
 import td.wave.WaveProgress;
@@ -69,6 +70,20 @@ class GameEngineTest {
         DamageMix mix = engine.getGameWorld().damageTally().mix();
         assertThat(mix.physical()).isEqualTo(landed.amount()).isPositive();
         assertThat(mix.magic()).isZero();
+    }
+
+    @Test
+    void anEliteSpawnedAfterMostlyPhysicalDamageResistsPhysicalButNotMagic() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", Rank.GRUNT)), 100));
+        engine.nextWave();
+        engine.getGameWorld().enemies().getEnemies()[0].doDamage(Damage.physical(10));
+        GameWorld world = engine.getGameWorld();
+
+        EnemyMob elite = world.getEnemyCatalog().spawn("c", world, 0, 100_000, 1, Rank.ELITE);
+
+        assertThat(elite.doDamage(Damage.physical(1000)).amount()).isLessThan(1000);
+        assertThat(elite.doDamage(Damage.magic(1000)).amount()).isEqualTo(1000);
     }
 
     @Test

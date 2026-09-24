@@ -397,6 +397,8 @@ public final class Java2DFrameRenderer {
             case RANK_BADGE_ELITE -> new Color(230, 190, 60);
             case RANK_BADGE_BOSS -> new Color(210, 210, 220);
             case TRAIT_MARKER_PERCENT_RESIST -> new Color(180, 150, 255);
+            case TRAIT_MARKER_PHYSICAL_RESIST -> new Color(230, 150, 70);
+            case TRAIT_MARKER_MAGIC_RESIST -> new Color(90, 190, 255);
             case TRAIT_MARKER_FLAT_RESIST -> new Color(140, 110, 200);
             case TRAIT_MARKER_CRITICAL_IMMUNE -> new Color(255, 210, 130);
             case TRAIT_MARKER_HURT_SPEED -> new Color(255, 140, 140);

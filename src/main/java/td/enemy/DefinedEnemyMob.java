@@ -63,7 +63,7 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     public DefinedEnemyMob(EnemyDefinition definition, GameWorld gameWorld, SpawnParameters spawnParameters, Rank rank) {
         this.gameWorld = gameWorld;
-        this.definition = definition;
+        this.definition = definition.adaptedTo(gameWorld.damageTally().mix());
         this.rank = rank;
         this.price = spawnParameters.price();
         // Divided after the spawn shape's multiplier, which the wave already applied to the health.
