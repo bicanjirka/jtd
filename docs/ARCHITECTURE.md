@@ -21,7 +21,7 @@ If a paragraph here ever contradicts `CLAUDE.md`, `CLAUDE.md` wins and this file
 7. [The algebras (operation + combinator + identity + absorber)](#7-the-algebras)
 8. [Logging setup](#8-logging-setup)
 9. [Playtesting and balance tooling](#9-playtesting-and-balance-tooling)
-10. [Why the per-package docs are not held to the root file's size discipline](#10-why-the-per-package-docs-are-not-held-to-the-root-files-size-discipline)
+10. [Lean CLAUDE.md files, standard tooling for rules](#10-lean-claudemd-files-standard-tooling-for-rules)
 11. [Style lineage](#11-style-lineage)
 12. [Reducing test churn from feature work](#12-reducing-test-churn-from-feature-work)
 
@@ -454,44 +454,19 @@ without opening a window or driving the real UI. They exist so an agent can chec
 change quickly, the same way `BalanceHarness` lets one check a numeric one. Full CLI usage and
 worked examples live in `.claude/skills/run-jtd/SKILL.md`.
 
-## 10. Why the per-package docs are not held to the root file's size discipline
+## 10. Lean CLAUDE.md files, standard tooling for rules
 
-The root `CLAUDE.md` was cut from 36 KB to about 15 by moving history and rationale here. The
-obvious next step looks like doing the same to the five per-package `CLAUDE.md` files, which
-together are larger than the root one ever was. It was recorded as a gap, and then measured,
-and the measurement said not to.
+Every `CLAUDE.md` used to back its rules with `scripts/VerifyRules.java`, a hand-rolled checker
+of about 800 lines. That included checks that policed the docs themselves: every backticked
+type had to be a real file, and every check had to be cited in `CLAUDE.md`. The per-package docs
+grew to 142 KB. A small task loaded tens of thousands of tokens of documentation, and a rename
+meant editing prose. That cost was too high for a hobby project.
 
-| File                                 | Size  | Commits touching it | Lines of history |
-|--------------------------------------|-------|---------------------|------------------|
-| root `CLAUDE.md`, before the rewrite | 36 KB | 43                  | throughout       |
-| `td/enemy`                           | 17 KB | 14                  | 3, all marginal  |
-| `td/tower`                           | 15 KB | 19                  | 0                |
-| `td/ui`                              | 12 KB | 15                  | 0                |
-| `td/wave`                            | 6 KB  | 6                   | 0                |
-| `td/economy`                         | 2 KB  | 2                   | 0                |
-
-Three reasons the root file's argument does not transfer:
-
-- **The context cost is scoped.** The root file's actual problem was being loaded on every
-  session whatever you were touching. A per-package file loads only when working in that
-  directory, so 12 KB while editing `td.ui` is proportionate in a way 36 KB while fixing a
-  wave parser was not.
-- **They do not churn.** Two to nineteen commits against the root's forty-three, and
-  `td/tower`'s nineteen tracks a package that genuinely gained three towers, upgrade paths and
-  `TowerStats`. That is an invariant file following real invariant changes, which is what it
-  is supposed to do.
-- **They are invariant-dense rather than narrative.** `td/ui/CLAUDE.md` is twelve kilobytes of
-  "the marker row caps at three", "both overlays need the same `GridBagLayout` cell", "use
-  `interpolationAlpha` for domain state and `animationSeconds` for cosmetics". The rationale
-  attached to those is *operative* - the last rule cannot be applied without knowing which
-  clock is which. That is a different thing from "this used to be a god object".
-
-The one failure mode they did share with the root file - citing classes that no longer exist -
-is now mechanically checked by `docs-name-real-types`, which is what found two dead enemy
-class names in `td/enemy/CLAUDE.md` after three manual reviews had missed them.
-
-So: leave them. Shrinking a document that is dense, scoped and stable would be churn performed
-for its own sake, which is the habit this whole exercise was against.
+So the rules moved to Checkstyle (`checkstyle.xml`, `checkstyle-imports.xml`); the doc-policing
+checks were dropped; and every `CLAUDE.md` was cut down to operative constraints (root 20.7 KB to
+6.5 KB, packages 142 KB to 22 KB). The long-form package docs are still in git:
+`git show 7a69e5c:src/main/java/td/<pkg>/CLAUDE.md`. They were never moved into per-package
+architecture files, because a second doc per package is one more thing to keep in step.
 
 ## 11. Style lineage
 
@@ -581,3 +556,6 @@ its own dedicated frame-builder class - there is no scattered-call-site blast ra
 factory to reduce, and forcing one on would-be-single-caller DTOs is an abstraction with no
 payoff. The check's exemption follows the same package boundary `render-has-no-awt` already
 draws, rather than inventing a new one.
+
+Superseded in part by section 10: the wide-record rule is now a Checkstyle `MatchXpath` check,
+and `no-wide-value-literals-in-tests` was dropped.
