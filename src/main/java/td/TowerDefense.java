@@ -8,6 +8,7 @@ import td.level.BuiltInLevelCatalog;
 import td.level.LevelCatalog;
 import td.level.LevelDefinition;
 import td.level.LevelOutcome;
+import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.ui.BoardOverlays;
 import td.ui.BoardRenderer;
@@ -44,6 +45,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serial;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -120,6 +122,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private volatile int gameTime;
     private volatile RenderFrame latestFrame;
     private boolean painting = false;
+    // Set by a board click that asked for an enemy; cleared with every deselection.
+    private boolean inspectingEnemy = false;
     private TickSpeed currentSpeed = TickSpeed.NORMAL;
     // Input and the loop can fire before a level exists and after one is torn down.
     private volatile boolean levelLoaded = false;
@@ -210,7 +214,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private void buildAndPublishFrame() {
         int time = this.gameTime;
         this.latestFrame = this.boardRenderer.buildFrame(time,
-                this.gameLoop.tickInterpolationAlpha(), this.gameLoop.animationSeconds());
+                this.gameLoop.tickInterpolationAlpha(), this.gameLoop.animationSeconds(),
+                this.engine.inspectSelectedEnemy());
         SwingUtilities.invokeLater(this::repaintPublishedFrame);
     }
 
@@ -220,6 +225,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      */
     private void repaintPublishedFrame() {
         this.gameConsole.refreshSelected();
+        this.showEnemyInspection();
         // Cosmetic animation runs on the EDT render cadence, never in tick code.
         this.gameConsole.getWaveInfo().doTick(this.gameTime);
         if (!this.painting) {
@@ -446,6 +452,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     public void unSelectTower() {
         this.engine.unSelectTower();
+        this.engine.clearEnemySelection();
+        this.inspectingEnemy = false;
         this.gameConsole.unselectTower();
         this.gameConsole.getTowerInfo().setExternalText(this.statusMessage);
     }
@@ -462,11 +470,27 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         boolean wasPlacing = this.engine.isPlacingTower();
         int boardX = evt.getX() - this.gameBoard.getX();
         int boardY = evt.getY() - this.gameBoard.getY();
-        this.engine.mouseClicked(boardX, boardY)
-                .ifPresent(this.gameConsole::selectTower);
+        Optional<Tower> clicked = this.engine.mouseClicked(boardX, boardY);
+        clicked.ifPresent(this.gameConsole::selectTower);
+        if (clicked.isEmpty() && !wasPlacing) {
+            this.engine.requestEnemySelectionAt(boardX, boardY);
+            this.inspectingEnemy = true;
+        }
         if (wasPlacing && !this.engine.isPlacingTower()) {
             this.panelTowerSelector.stopPlacing();
         }
+    }
+
+    /**
+     * Shows the selected enemy's inspector text from the published frame. Ignored until a click
+     * requested a selection, so a frame built before a clear can't bring stale text back.
+     */
+    private void showEnemyInspection() {
+        RenderFrame frame = this.latestFrame;
+        if (!this.inspectingEnemy || frame == null || this.gameConsole.getTowerInfo().hasSelectedTower()) {
+            return;
+        }
+        frame.enemyInspectionText().ifPresent(this.gameConsole.getTowerInfo()::setExternalText);
     }
 
     private void jPanel_boardMouseMoved(MouseEvent evt) {

@@ -8,6 +8,7 @@ import td.cell.CellGrid;
 import td.economy.EconomyDelta;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
+import td.enemy.EnemyInspection;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.level.LevelDefinition;
@@ -130,6 +131,7 @@ public class GameEngine {
      */
     public void loadLevel(LevelDefinition level) {
         unloadCurrentLevel();
+        this.gameWorld.enemySelection().requestClear();
         int width = level.width();
         int height = level.height();
         int scale = this.gameWorld.getBoard().scale();
@@ -311,6 +313,24 @@ public class GameEngine {
 
     public void highlightCell(int boardX, int boardY) {
         this.placement.highlightCell(boardX, boardY);
+    }
+
+    /** Any thread: selects the enemy nearest this board pixel on the next frame build. */
+    public void requestEnemySelectionAt(int boardX, int boardY) {
+        this.gameWorld.enemySelection().requestAt(boardX, boardY);
+    }
+
+    /** Any thread: drops the enemy selection on the next frame build. */
+    public void clearEnemySelection() {
+        this.gameWorld.enemySelection().requestClear();
+    }
+
+    /**
+     * Game-loop thread, once per frame build: applies pending selection requests and snapshots the
+     * selected enemy.
+     */
+    public Optional<EnemyInspection> inspectSelectedEnemy() {
+        return this.gameWorld.enemySelection().resolve(this.gameWorld.enemies());
     }
 
     /**

@@ -1,6 +1,7 @@
 package td.ui;
 
 import td.board.BoardGeometry;
+import td.enemy.EnemyInspection;
 import td.enemy.EnemyMob;
 import td.projectile.Projectile;
 import td.tower.Tower;
@@ -13,6 +14,7 @@ import td.util.PathRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Describes one frame of the board as an AWT-free {@link RenderFrame}, owning the dispatch to each
@@ -30,6 +32,12 @@ public final class BoardRenderer {
     }
 
     public RenderFrame buildFrame(int gameTime, double interpolationAlpha, double animationSeconds) {
+        return this.buildFrame(gameTime, interpolationAlpha, animationSeconds, Optional.empty());
+    }
+
+    /** A frame that also carries {@code inspection}'s text and rings the selected enemy. */
+    public RenderFrame buildFrame(int gameTime, double interpolationAlpha, double animationSeconds,
+            Optional<EnemyInspection> inspection) {
         LoadedLevel level = this.world.level();
 
         List<CellDraw> cells = new ArrayList<>();
@@ -40,7 +48,8 @@ public final class BoardRenderer {
             }
         });
 
-        EnemyFrameBuilder enemyFrameBuilder = new EnemyFrameBuilder(gameTime, interpolationAlpha);
+        Optional<EnemyMob> selected = inspection.isPresent() ? this.world.enemySelection().selectedAlive() : Optional.empty();
+        EnemyFrameBuilder enemyFrameBuilder = new EnemyFrameBuilder(gameTime, interpolationAlpha, selected);
         for (EnemyMob enemy : this.world.enemies().getEnemies()) {
             enemy.accept(enemyFrameBuilder);
         }
@@ -68,6 +77,6 @@ public final class BoardRenderer {
                 cells, enemyFrameBuilder.build(), enemyFrameBuilder.buildMarkers(), enemyFrameBuilder.buildCritSparks(),
                 spriteFrameBuilder.build(), spriteFrameBuilder.buildHeads(),
                 effectFrameBuilder.build(), projectileFrameBuilder.build(), pathMarkers,
-                enemyFrameBuilder.buildOverlays());
+                enemyFrameBuilder.buildOverlays(), inspection.map(EnemyStatText::live));
     }
 }

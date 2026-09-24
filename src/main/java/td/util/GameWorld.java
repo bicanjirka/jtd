@@ -6,6 +6,7 @@ import td.damage.DamageTally;
 import td.economy.EconomyLedger;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyRoster;
+import td.enemy.EnemySelection;
 import td.projectile.ProjectileRoster;
 import td.stat.DisruptionField;
 import td.tower.TowerRoster;
@@ -35,6 +36,7 @@ public class GameWorld {
     private final WaveAnnouncer waves = new WaveAnnouncer();
     private final DamageTally damageTally = new DamageTally();
     private final DisruptionField disruptions = new DisruptionField();
+    private final EnemySelection enemySelection = new EnemySelection();
     private volatile LoadedLevel level = LoadedLevel.none();
 
     public GameWorld(GameHost mainApp) {
@@ -72,6 +74,11 @@ public class GameWorld {
     /** Every hit that landed this level, by damage type. */
     public DamageTally damageTally() {
         return this.damageTally;
+    }
+
+    /** The enemy the player is inspecting. */
+    public EnemySelection enemySelection() {
+        return this.enemySelection;
     }
 
     /** Where enemies weaken towers this tick. */

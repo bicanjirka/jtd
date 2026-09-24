@@ -119,3 +119,6 @@ A new `Trait` also needs a `TraitMarker` constant and its palette cases in
 
 - The UI shows an enemy only through `EnemyInspection` (`DefinedEnemyMob.inspect()`), an
   immutable snapshot taken on the thread that owns the mob, never by reading live stats.
+- `EnemySelection` (world-owned) takes requests from any thread but resolves them only on the
+  game-loop thread, once per frame build. A killed or leaked selection keeps its snapshot; one
+  that left the roster alive (a hatch) is dropped.

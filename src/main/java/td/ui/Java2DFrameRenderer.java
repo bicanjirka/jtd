@@ -409,6 +409,7 @@ public final class Java2DFrameRenderer {
             case TRAIT_MARKER_FREEZE_DIMINISHING -> new Color(120, 180, 220);
             case TRAIT_MARKER_OVERFLOW -> Color.LIGHT_GRAY;
             case DISRUPTION -> new Color(235, 90, 200);
+            case SELECTION -> new Color(255, 255, 255);
         };
     }
 

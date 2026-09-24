@@ -58,7 +58,10 @@ Start each wave yourself when you are ready — waves do not auto-advance.
 | `c`                             | Debug: grant a lump sum of credits                                                                   |
 
 Mouse: move to preview placement, click to place or to select a placed tower, or click an
-upgrade-tree button to buy that node.
+upgrade-tree button to buy that node. Click a moving enemy (when not placing a tower) to inspect
+it: the side panel shows its live health, stats, effects and traits, updating even while paused,
+and keeps a "Killed" or "Leaked" line after it's gone until your next click. Hovering an enemy in
+the wave preview shows the same stat block for that enemy type.
 
 The `n`/`x`/`c` debug keys are always available, not gated behind a build flag — they exist to
 make manual playtesting cheap (see `docs/features/FEATURE-playtesting-and-balance-tooling.md`). There's also

@@ -1,8 +1,12 @@
 package td.ui.render;
 
 import java.util.List;
+import java.util.Optional;
 
-/** Everything needed to draw one frame of the board, without AWT. */
+/**
+ * Everything needed to draw one frame of the board, without AWT, plus the selected enemy's
+ * inspector text, so the EDT never reads a live mob.
+ */
 public record RenderFrame(int scale, int maxX, int maxY,
                           List<CellDraw> cells,
                           List<EnemyDraw> enemies,
@@ -13,5 +17,6 @@ public record RenderFrame(int scale, int maxX, int maxY,
                           List<TowerEffectDraw> towerEffects,
                           List<ProjectileDraw> projectiles,
                           List<PathMarkerDraw> pathMarkers,
-                          List<EnemyOverlayDraw> enemyOverlays) {
+                          List<EnemyOverlayDraw> enemyOverlays,
+                          Optional<String> enemyInspectionText) {
 }
