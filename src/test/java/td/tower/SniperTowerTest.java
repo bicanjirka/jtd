@@ -82,10 +82,12 @@ class SniperTowerTest {
         alwaysCrits.setBoard(BoardGeometry.of(BoardFixtures.SCALE, 20, 20));
         SniperTower tower = new SniperTower(alwaysCrits, 3, 3);
         FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        target.landEveryHitCritical();
         alwaysCrits.enemies().setEnemies(new EnemyMob[]{target});
 
         tower.doTick(1);
 
         assertThat(tower.wasLastShotCritical()).isTrue();
+        assertThat(target.attackers().getFirst().critChance()).isEqualTo(tower.critChance());
     }
 }

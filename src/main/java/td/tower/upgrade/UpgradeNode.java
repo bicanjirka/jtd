@@ -58,6 +58,8 @@ public record UpgradeNode(String id, UpgradeSlot slot, String displayName, int p
         appendIfNonZero(parts, buff.fireRateBonus(), "fire rate");
         appendIfNonZero(parts, buff.bountyBonus(), "bounty");
         appendIfNonZero(parts, buff.critChanceBonus(), "crit chance");
+        appendIfNonZero(parts, buff.armorPenetrationBonus(), "armor penetration");
+        appendIfNonZero(parts, buff.magicPenetrationBonus(), "magic penetration");
         return parts.toString();
     }
 

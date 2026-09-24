@@ -1,6 +1,7 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.Effect;
 import td.enemy.BodyArchetype;
@@ -245,7 +246,7 @@ class EnemyFrameBuilderTest {
     void anEnemyThatJustSurvivedACriticalHitYieldsOneCritSpark() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.doDamage(Damage.physical(10).asCritical());
+        enemy.doDamage(Damage.physical(10), AttackProfile.critChance(1f));
         enemy.doTick(1); // captures the critical hit
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(1, 0.0);
@@ -261,7 +262,7 @@ class EnemyFrameBuilderTest {
     void theCritSparkStopsShowingAfterItsDurationElapses() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.doDamage(Damage.physical(10).asCritical());
+        enemy.doDamage(Damage.physical(10), AttackProfile.critChance(1f));
         enemy.doTick(1); // captures the critical hit at tick 1
 
         int afterDuration = 1 + EnemyFrameBuilder.CRIT_SPARK_DURATION_TICKS + 1;

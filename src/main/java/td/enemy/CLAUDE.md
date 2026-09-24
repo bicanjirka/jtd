@@ -79,8 +79,9 @@
   `baseSpeed` × spawn multiplier. The sheet is invalidated on a hit, on applying an effect, and
   after a tick that ticked effects or changed health. `doTick` reads speed and regeneration
   *before* `ActiveEffects.tick()`, and returns early if a damage-over-time tick killed the mob.
-- `doDamage` lands a hit through `HitResolution` (mitigation, plating, damage taken, cap at
-  health) and returns what landed. Callers report that return value, not the input.
+- `doDamage(damage, attacker)` lands a hit through `HitResolution` (crit roll against resilience
+  and crit chance taken, penetration, mitigation, plating, damage taken, cap at health) and
+  returns what landed. Callers report that return value, not the input.
 - A spawn shape's trait override is composed into the definition before the mob is built. There
   is no separate multiplier mechanism.
 - Spawn delay: the mob starts inactive iff its *converted* tick delay is > 0.

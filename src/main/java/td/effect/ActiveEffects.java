@@ -32,6 +32,8 @@ public final class ActiveEffects {
      */
     private static final double BURN_DECAY_EXPONENT = -3.0;
 
+    /** A burning enemy is this much more likely to take a critical hit, from any tower. */
+    private static final float BURN_CRIT_CHANCE_TAKEN = 2f;
     private static final StatModifier FROZEN = StatModifier.setTo(0f);
     private static final StatModifier HIDDEN = StatModifier.setTo(1f);
     private static final DamageType[] DAMAGE_TYPES = DamageType.values();
@@ -139,7 +141,7 @@ public final class ActiveEffects {
     /**
      * Adds every active effect's stat modifiers: a slow multiplies speed at its point on the
      * recovery curve, a freeze sets it to zero, a shield lowers damage taken for the types it covers,
-     * a heal adds regeneration and invisibility sets stealth. Shields and heals go in as restorative,
+     * a heal adds regeneration, invisibility sets stealth and a burn doubles crit chance taken. Shields and heals go in as restorative,
      * so the enemy's spirit scales them.
      */
     public void contributeTo(StatAccumulator accumulator) {
@@ -157,8 +159,7 @@ public final class ActiveEffects {
                 }
                 case HEAL -> accumulator.restoreFlat(EnemyStat.REGENERATION, effect.healPerTick());
                 case INVISIBLE -> accumulator.add(EnemyStat.STEALTH, HIDDEN);
-                case BURN -> {
-                }
+                case BURN -> accumulator.multiply(EnemyStat.CRIT_CHANCE_TAKEN, BURN_CRIT_CHANCE_TAKEN);
             }
         }
     }

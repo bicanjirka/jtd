@@ -1,13 +1,17 @@
 package td.enemy;
 
-import td.damage.Damage;
+import td.stat.EnemyStat;
+import td.stat.StatModifier;
+import td.stat.StatModifiers;
 
-/** Strips a critical hit's bonus, so it lands as an ordinary hit. */
+/** Full resilience: no critical hit ever lands on this enemy. */
 public record CriticalImmunityTrait() implements Trait {
 
+    private static final StatModifiers FULL_RESILIENCE = StatModifiers.of(EnemyStat.RESILIENCE, StatModifier.flat(100f));
+
     @Override
-    public Damage onHit(Damage incoming, TraitContext context) {
-        return incoming.stripCritical();
+    public StatModifiers modifiers(TraitContext context) {
+        return FULL_RESILIENCE;
     }
 
     @Override

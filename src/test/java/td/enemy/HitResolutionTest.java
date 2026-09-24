@@ -1,6 +1,7 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.stat.BaseStats;
@@ -59,5 +60,58 @@ class HitResolutionTest {
 
         assertThat(HitResolution.resolve(new Damage(1000, DamageType.PHYSICAL, true), armored, 10000).critical())
                 .isTrue();
+    }
+    @Test
+    void fullResilienceNeverLetsACritLand() {
+        StatView resilient = stats(BaseStats.defaults().with(EnemyStat.RESILIENCE, 100f));
+
+        Damage landed = HitResolution.resolve(Damage.physical(1000), AttackProfile.critChance(1f), resilient, 10000,
+                () -> 0.0);
+
+        assertThat(landed).isEqualTo(Damage.physical(1000));
+    }
+
+    @Test
+    void halfResilienceHalvesBothTheCritChanceAndTheCritBonus() {
+        StatView halfResilient = stats(BaseStats.defaults().with(EnemyStat.RESILIENCE, 50f));
+        AttackProfile attacker = AttackProfile.critChance(0.8f).withCritMultiplier(3f);
+
+        Damage justInside = HitResolution.resolve(Damage.physical(1000), attacker, halfResilient, 10000, () -> 0.39);
+        Damage justOutside = HitResolution.resolve(Damage.physical(1000), attacker, halfResilient, 10000, () -> 0.41);
+
+        assertThat(justInside).isEqualTo(new Damage(2000, DamageType.PHYSICAL, true));
+        assertThat(justOutside).isEqualTo(Damage.physical(1000));
+    }
+
+    @Test
+    void anAttackerWithoutCritChanceNeverDrawsFromTheRandomSource() {
+        StatView plain = stats(BaseStats.defaults());
+
+        HitResolution.resolve(Damage.physical(1000), AttackProfile.none(), plain, 10000, () -> {
+            throw new IllegalStateException("drew a random number");
+        });
+    }
+
+    @Test
+    void penetrationLowersArmorButNeverBelowZero() {
+        StatView armored = stats(BaseStats.defaults().with(EnemyStat.ARMOR, 100f));
+
+        Damage halfPierced = HitResolution.resolve(Damage.physical(1000),
+                AttackProfile.none().withArmorPenetration(0.5f, 0f), armored, 10000, () -> 1.0);
+        Damage overPierced = HitResolution.resolve(Damage.physical(1000),
+                AttackProfile.none().withArmorPenetration(0.5f, 500f), armored, 10000, () -> 1.0);
+
+        assertThat(halfPierced.amount()).isEqualTo(Math.round(1000 * 100f / 150f));
+        assertThat(overPierced).isEqualTo(Damage.physical(1000));
+    }
+
+    @Test
+    void penetrationLeavesNegativeArmorAlone() {
+        StatView shredded = stats(BaseStats.defaults().with(EnemyStat.ARMOR, -100f));
+
+        Damage landed = HitResolution.resolve(Damage.physical(1000), AttackProfile.none().withArmorPenetration(1f, 50f),
+                shredded, 10000, () -> 1.0);
+
+        assertThat(landed).isEqualTo(Damage.physical(1500));
     }
 }

@@ -1,5 +1,6 @@
 package td.fixtures;
 
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -22,6 +23,8 @@ public final class FakeEnemyMob implements EnemyMob {
     private final Type mobType;
     private final List<Damage> hits = new ArrayList<>();
     private final List<Effect> appliedEffects = new ArrayList<>();
+    private final List<AttackProfile> attackers = new ArrayList<>();
+    private boolean hitsLandCritical;
     private double x;
     private double y;
     private boolean valid = true;
@@ -76,14 +79,25 @@ public final class FakeEnemyMob implements EnemyMob {
         return this.hits.getFirst().amount();
     }
 
+    /** The attack profile each recorded hit carried, in hit order. */
+    public List<AttackProfile> attackers() {
+        return List.copyOf(this.attackers);
+    }
+
+    /** From now on every hit comes back critical, as if every crit roll succeeded. */
+    public void landEveryHitCritical() {
+        this.hitsLandCritical = true;
+    }
+
     public List<Effect> appliedEffects() {
         return List.copyOf(this.appliedEffects);
     }
 
     @Override
-    public Damage doDamage(Damage damage) {
+    public Damage doDamage(Damage damage, AttackProfile attacker) {
         this.hits.add(damage);
-        return damage;
+        this.attackers.add(attacker);
+        return this.hitsLandCritical ? new Damage(damage.amount(), damage.type(), true) : damage;
     }
 
     @Override
