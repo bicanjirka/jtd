@@ -124,6 +124,10 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.rank;
     }
 
+    public EnemyDefinition definition() {
+        return this.definition;
+    }
+
     public float getBodyScale() {
         return this.bodyScale;
     }
@@ -311,23 +315,6 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.moments.ticksSince(Moment.DEATH, gameTime);
     }
 
-    public int fadeDurationTicks() {
-        return 3 * this.rank.ordinal() + 6;
-    }
-
-    public boolean isFadeComplete(int gameTime) {
-        return this.ticksSinceDeath(gameTime) > this.fadeDurationTicks();
-    }
-
-    /**
-     * Clamped, because {@code ticksSinceDeath} is {@code -1} between a mid-tick death and the next
-     * {@code doTick}.
-     */
-    public int fadeAlpha(int ticksSinceDeath) {
-        int alpha = 255 - (ticksSinceDeath * (255 / (this.fadeDurationTicks() + 1)));
-        return Math.min(255, Math.max(alpha, 0));
-    }
-
     /**
      * {@code -1} if never. Captured on the next {@code doTick}, like {@link #ticksSinceDeath},
      * because {@code doDamage} has no game time.
@@ -442,17 +429,6 @@ public final class DefinedEnemyMob implements EnemyMob {
                 AbilityEvaluator.execute(ability.action(), context);
             }
         }
-    }
-
-    public String getInfoString() {
-        return this.definition.displayName() + "\n\n" + this.definition.description() + "\n\nRank: "
-                + titleCase(this.rank) + "   Health: " + this.definition.baseHealth() + "   Bounty: "
-                + this.definition.price();
-    }
-
-    private static String titleCase(Rank rank) {
-        String name = rank.name();
-        return name.charAt(0) + name.substring(1).toLowerCase();
     }
 
     /** Resolves ability data against this mob's world, position and definition. */

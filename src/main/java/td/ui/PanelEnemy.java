@@ -138,7 +138,7 @@ public class PanelEnemy extends JPanel {
         int nr = x / this.scale;
         if (nr < this.enemies.size()) {
             EnemyMob e = this.enemies.get(nr);
-            this.contextFull.setInfoText(e.getInfoString());
+            this.contextFull.setInfoText(e.accept(new EnemyInfoText()));
         }
     }
 

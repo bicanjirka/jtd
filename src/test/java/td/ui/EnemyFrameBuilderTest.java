@@ -17,6 +17,7 @@ import td.fixtures.WorldFixtures;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBodyDraw;
+import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
@@ -47,6 +48,12 @@ class EnemyFrameBuilderTest {
         EnemyFrameBuilder builder = new EnemyFrameBuilder(gameTime, alpha);
         enemy.accept(builder);
         return (EnemyBodyDraw) builder.build().getFirst();
+    }
+
+    private static List<EnemyDraw> drawsAt(EnemyMob enemy, int gameTime) {
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(gameTime, 0.0);
+        enemy.accept(builder);
+        return builder.build();
     }
 
     private static List<EnemyOverlayDraw> overlaysOf(EnemyMob enemy, int gameTime) {
@@ -116,6 +123,27 @@ class EnemyFrameBuilderTest {
                 .isEqualTo(RankBadge.STAR);
         assertThat(bodyDrawAt(EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.BOSS), 0, 0.0).badge())
                 .isEqualTo(RankBadge.SKULL);
+    }
+
+    @Test
+    void deathFadeIsDrawnUntilFadeDurationTicksAfterTheTickThatNoticedDeath() {
+        GameWorld context = contextWithStraightPath();
+        Rank rank = Rank.SOLDIER;
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, rank);
+        int fadeDuration = EnemyFrameBuilder.fadeDurationTicks(rank);
+
+        enemy.doDamage(Damage.physical(5000));
+        enemy.doTick(1);
+
+        assertThat(drawsAt(enemy, 1 + fadeDuration)).hasSize(1).first().isInstanceOf(EnemyFadeDraw.class);
+        assertThat(drawsAt(enemy, 1 + fadeDuration + 1)).isEmpty();
+    }
+
+    @Test
+    void fadeProgressStaysWithinRangeBeforeTheDeathTickIsCaptured() {
+        float progress = EnemyFrameBuilder.fadeProgress(Rank.GRUNT, -1);
+
+        assertThat(progress).isBetween(0f, 1f);
     }
 
     @Test

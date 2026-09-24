@@ -144,35 +144,6 @@ class DefinedEnemyMobTest {
     }
 
     @Test
-    void deathFadeCompletesExactlyFadeDurationTicksAfterTheTickThatNoticedDeath() {
-        GameWorld context = newContext();
-        Rank rank = Rank.SOLDIER;
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, rank);
-        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
-        int fadeDuration = 3 * rank.ordinal() + 6;
-
-        enemy.doDamage(Damage.physical(5000));
-        enemy.doTick(1); // first doTick after death: captures deathTick = 1
-
-        assertThat(mob.isFadeComplete(1)).isFalse();
-        assertThat(mob.isFadeComplete(1 + fadeDuration)).isFalse();
-        assertThat(mob.isFadeComplete(1 + fadeDuration + 1)).isTrue();
-    }
-
-    @Test
-    void fadeAlphaStaysWithinValidColorRangeBeforeDeathTickIsCaptured() {
-        GameWorld context = newContext();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
-
-        // a tower can kill mid-tick, before doTick() captures deathTick
-        enemy.doDamage(Damage.physical(5000));
-
-        assertThat(mob.ticksSinceDeath(0)).isEqualTo(-1);
-        assertThat(mob.fadeAlpha(-1)).isBetween(0, 255);
-    }
-
-    @Test
     void ticksSinceCriticalHitIsMinusOneUntilOneLands() {
         GameWorld context = newContext();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
