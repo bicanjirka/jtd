@@ -89,40 +89,15 @@ position and the visitor, `AuraTower` wants position and type.
   actually hurt by the width, not as a tidying exercise: a wide interface with one
   implementation hierarchy costs far less than a wrong split.
 
-### `EnemyMob`/`Tower`/`Projectile` use Visitor where a sealed type + switch might do
+### `EnemyMob`/`Tower`/`Projectile` use Visitor, not a sealed type + switch
 
-`CLAUDE.md`'s code style bans `instanceof` type-switching and names `EnemyMobVisitor`/
-`TowerVisitor`/`ProjectileVisitor` as the way to branch on domain type — but also carves out
-"a switch over a *sealed* type is fine," which `td.enemy` already prefers for `BodyArchetype`/
-`MovementBehavior`/`AbilityTrigger`/`AbilityAction`/`EffectTarget`: sealed interface, switched on
-directly, no extra machinery. `EnemyMob`, `Tower` and `Projectile` are not sealed and go through
-classic double-dispatch Visitors instead, even though nothing stops them from being sealed too.
-Sealing them and switching would give the identical compile-time guarantee (a new leaf fails
-every call site until handled) without an `accept()` method per leaf or a Visitor-implementing
-class per consumer operation.
+Sealing would drop the `accept()` methods and the visitor interfaces, but `permits` cannot name
+test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would stop compiling.
 
-`EnemyMobVisitor` is the clearest case: it has exactly one method, `visitDefined`, because
-`DefinedEnemyMob` is the only leaf. The machinery exists so "a second non-data-driven mob can be
-added later without reopening every call site", which is speculative generality for a hierarchy
-with one member. `Tower` (8 leaves, several real per-type operations —
-sprite render, effect render, targeting) is the closer-to-legitimate case, since Visitor avoids
-touching every leaf file when a new render pass is added — but sealed+switch would force the
-same per-leaf handling at every existing switch site, so it's not obvious Visitor buys anything
-there either.
-
-- **Where:** `td.enemy.EnemyMob`/`EnemyMobVisitor`/`DefinedEnemyMob`; `td.tower.Tower`/
-  `TowerVisitor` and its 8 leaf towers; `td.projectile.Projectile`/`ProjectileVisitor` and its 2
-  leaf projectiles; the rule itself, in `CLAUDE.md`'s code style and the `LITERAL_INSTANCEOF` check in
-  `checkstyle.xml`.
-- **Approach:** validate on `EnemyMob` first — it's the cheapest case (one leaf, one Visitor
-  method) to prove the idea before touching `Tower`'s eight. Seal `EnemyMob` to
-  `permits DefinedEnemyMob`, replace `EnemyMobVisitor`'s single call site with a direct
-  `switch` (pattern matching, exhaustive), and delete `EnemyMobVisitor`/`accept`. If that holds
-  up and reads better, repeat for `Projectile` (2 leaves) and `Tower` (8 leaves, more render
-  consumers to update). If the pattern proves out, reword that `CLAUDE.md` rule to state the
-  actual invariant — exhaustive, compiler-checked dispatch only — rather than mandating Visitor
-  by name, so sealed+switch is the default answer and Visitor is reserved for a hierarchy that
-  genuinely needs several independently-growing operations over types that can't be sealed.
+- **Where:** `EnemyMobVisitor`, `TowerVisitor`, `ProjectileVisitor` and their `td.ui` frame
+  builders.
+- **Approach:** only if the fakes go away first (tests built on real mobs/towers from
+  `td.fixtures`). `Projectile` has no fakes but alone would leave two dispatch styles.
 
 ## Gameplay / balance
 

@@ -1,6 +1,7 @@
 package td.projectile;
 
 import org.junit.jupiter.api.Test;
+import td.fixtures.FakeEnemyMob;
 import td.ui.ProjectileFrameBuilder;
 import td.ui.render.CannonballDraw;
 import td.ui.render.MissileDraw;
@@ -31,7 +32,7 @@ class ProjectileFrameBuilderTest {
 
     @Test
     void aMissilesFacingMatchesItsDirectionOfTravelThisTick() {
-        FakeTargetMob target = new FakeTargetMob(0, 100);
+        FakeEnemyMob target = FakeEnemyMob.at(0, 100);
         FakeEnemyRegistry registry = new FakeEnemyRegistry(target);
         MissileProjectile missile = new MissileProjectile(0, 0, target, registry, 10f, t -> {
         });

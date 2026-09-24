@@ -2,6 +2,7 @@ package td.projectile;
 
 import org.junit.jupiter.api.Test;
 import td.enemy.EnemyMob;
+import td.fixtures.FakeEnemyMob;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +13,7 @@ class MissileProjectileTest {
 
     @Test
     void homesOnItsTargetsCurrentPositionEachTickRatherThanWhereItStarted() {
-        FakeTargetMob target = new FakeTargetMob(100, 0);
+        FakeEnemyMob target = FakeEnemyMob.at(100, 0);
         FakeEnemyRegistry registry = new FakeEnemyRegistry(target);
         MissileProjectile missile = new MissileProjectile(0, 0, target, registry, 10f, t -> {
         });
@@ -26,7 +27,7 @@ class MissileProjectileTest {
 
     @Test
     void impactsOnceItReachesItsTargetAndReportsExactlyThatTarget() {
-        FakeTargetMob target = new FakeTargetMob(20, 0);
+        FakeEnemyMob target = FakeEnemyMob.at(20, 0);
         FakeEnemyRegistry registry = new FakeEnemyRegistry(target);
         List<EnemyMob> impacts = new ArrayList<>();
         MissileProjectile missile = new MissileProjectile(0, 0, target, registry, 10f, impacts::add);
@@ -41,9 +42,9 @@ class MissileProjectileTest {
 
     @Test
     void retargetsToTheNearestRemainingEnemyWhenItsTargetBecomesInvalid() {
-        FakeTargetMob original = new FakeTargetMob(20, 0);
-        FakeTargetMob nearest = new FakeTargetMob(5, 0);
-        FakeTargetMob further = new FakeTargetMob(50, 0);
+        FakeEnemyMob original = FakeEnemyMob.at(20, 0);
+        FakeEnemyMob nearest = FakeEnemyMob.at(5, 0);
+        FakeEnemyMob further = FakeEnemyMob.at(50, 0);
         FakeEnemyRegistry registry = new FakeEnemyRegistry(original, nearest, further);
         List<EnemyMob> impacts = new ArrayList<>();
         MissileProjectile missile = new MissileProjectile(0, 0, original, registry, 10f, impacts::add);
@@ -58,7 +59,7 @@ class MissileProjectileTest {
 
     @Test
     void givesUpWithoutImpactingAnythingWhenNoValidTargetRemainsAnywhere() {
-        FakeTargetMob onlyTarget = new FakeTargetMob(20, 0);
+        FakeEnemyMob onlyTarget = FakeEnemyMob.at(20, 0);
         FakeEnemyRegistry registry = new FakeEnemyRegistry(onlyTarget);
         List<EnemyMob> impacts = new ArrayList<>();
         MissileProjectile missile = new MissileProjectile(0, 0, onlyTarget, registry, 10f, impacts::add);

@@ -113,8 +113,8 @@ frame build reads them.
 - AssertJ `assertThat`. Package-private classes and methods.
 - Method names are behaviour sentences (`placingOnAPathCellIsRejectedAndCostsNothing`): no
   `test`/`should` prefix, no underscores, no `@DisplayName`, no `@Nested`.
-- Hand-written fakes, no Mockito. Name them by role (`FakeGameHost`, `RecordingEnemyMob`) and
-  keep them beside their tests. Setup shared across packages lives in `td.fixtures`.
+- Hand-written fakes, no Mockito. Name them by role (`FakeGameHost`, `FakeEnemyMob`), one per
+  role: beside its tests, or in `td.fixtures` once a second package needs it. Reuse, never copy.
 - Headless and clock-free: drive the public API and call `doTick(t)` with explicit ticks.
 - Arrange / act / assert separated by blank lines, no `// given` comments.
 - Build wide records through their factory or `td.fixtures`, not a full positional literal

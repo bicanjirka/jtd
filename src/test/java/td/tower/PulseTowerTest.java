@@ -5,6 +5,7 @@ import td.damage.Damage;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
+import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -55,7 +56,7 @@ class PulseTowerTest {
             fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
         }
         tower.buyUpgrade(UpgradePaths.named(tower, "Resonant Field"));
-        RecordingEnemyMob ghost = RecordingEnemyMob.ghostAt(tower.getX(), tower.getY());
+        FakeEnemyMob ghost = FakeEnemyMob.ghostAt(tower.getX(), tower.getY());
         this.context.enemies().setEnemies(new EnemyMob[]{ghost});
 
         tower.doTick(0);

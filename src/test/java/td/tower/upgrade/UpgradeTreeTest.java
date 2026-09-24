@@ -1,6 +1,7 @@
 package td.tower.upgrade;
 
 import org.junit.jupiter.api.Test;
+import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
 import td.tower.Tower;
 import td.util.GameWorld;
@@ -30,7 +31,7 @@ class UpgradeTreeTest {
 
     @Test
     void offeredListsOnlyBaseNodesBeforeAwakenIsBought() {
-        Tower tower = new FakeUpgradeTower(context, 0, 0, UpgradeState.none());
+        Tower tower = FakeTower.owning(context, 0, 0, UpgradeState.none());
 
         assertThat(TREE.offered(tower, context)).containsExactly(RANGE, AWAKEN);
     }
@@ -38,7 +39,7 @@ class UpgradeTreeTest {
     @Test
     void offeredOrdersBySlotThenByDeclarationOrderWithinASlot() {
         UpgradeState afterAwaken = UpgradeState.none().with(AWAKEN);
-        Tower tower = new FakeUpgradeTower(context, 0, 0, afterAwaken);
+        Tower tower = FakeTower.owning(context, 0, 0, afterAwaken);
 
         assertThat(TREE.offered(tower, context)).containsExactly(RANGE, HEAD_ROOT_A, HEAD_ROOT_B, SPECIAL_ROOT);
     }
@@ -46,7 +47,7 @@ class UpgradeTreeTest {
     @Test
     void choosingOneHeadRootForeclosesTheOtherRootForever() {
         UpgradeState afterRootA = UpgradeState.none().with(AWAKEN).with(HEAD_ROOT_A);
-        Tower tower = new FakeUpgradeTower(context, 0, 0, afterRootA);
+        Tower tower = FakeTower.owning(context, 0, 0, afterRootA);
 
         List<UpgradeNode> offered = TREE.offered(tower, context);
 
@@ -55,8 +56,8 @@ class UpgradeTreeTest {
 
     @Test
     void aChainsNextLevelIsOfferedOnlyOnceItsOwnPredecessorIsOwned() {
-        Tower beforeRootA = new FakeUpgradeTower(context, 0, 0, UpgradeState.none().with(AWAKEN));
-        Tower afterRootA = new FakeUpgradeTower(context, 1, 0, UpgradeState.none().with(AWAKEN).with(HEAD_ROOT_A));
+        Tower beforeRootA = FakeTower.owning(context, 0, 0, UpgradeState.none().with(AWAKEN));
+        Tower afterRootA = FakeTower.owning(context, 1, 0, UpgradeState.none().with(AWAKEN).with(HEAD_ROOT_A));
 
         assertThat(TREE.offered(beforeRootA, context)).doesNotContain(HEAD_A_LV2);
         assertThat(TREE.offered(afterRootA, context)).contains(HEAD_A_LV2);
@@ -65,7 +66,7 @@ class UpgradeTreeTest {
     @Test
     void anAlreadyOwnedNodeIsNeverOfferedAgain() {
         UpgradeState afterRange = UpgradeState.none().with(RANGE);
-        Tower tower = new FakeUpgradeTower(context, 0, 0, afterRange);
+        Tower tower = FakeTower.owning(context, 0, 0, afterRange);
 
         assertThat(TREE.offered(tower, context)).doesNotContain(RANGE);
     }
@@ -74,9 +75,9 @@ class UpgradeTreeTest {
     void orReconvergesFromEitherBranch() {
         UpgradeCondition reachableFromEither = UpgradeCondition.owns(HEAD_ROOT_A.id())
                 .or(UpgradeCondition.owns(HEAD_ROOT_B.id()));
-        Tower viaA = new FakeUpgradeTower(context, 0, 0, UpgradeState.none().with(HEAD_ROOT_A));
-        Tower viaB = new FakeUpgradeTower(context, 1, 0, UpgradeState.none().with(HEAD_ROOT_B));
-        Tower viaNeither = new FakeUpgradeTower(context, 2, 0, UpgradeState.none());
+        Tower viaA = FakeTower.owning(context, 0, 0, UpgradeState.none().with(HEAD_ROOT_A));
+        Tower viaB = FakeTower.owning(context, 1, 0, UpgradeState.none().with(HEAD_ROOT_B));
+        Tower viaNeither = FakeTower.owning(context, 2, 0, UpgradeState.none());
 
         assertThat(reachableFromEither.isSatisfied(viaA, context)).isTrue();
         assertThat(reachableFromEither.isSatisfied(viaB, context)).isTrue();
@@ -95,7 +96,7 @@ class UpgradeTreeTest {
     void progressReadsLiveProgressTowardAKillCountGate() {
         UpgradeNode gated = UpgradeNode.of("gated", UpgradeSlot.HEAD, "Gated", 10)
                 .withGate(new KillCountCondition(10));
-        FakeUpgradeTower tower = new FakeUpgradeTower(context, 0, 0, UpgradeState.none());
+        FakeTower tower = FakeTower.owning(context, 0, 0, UpgradeState.none());
         tower.setKillCount(4);
 
         assertThat(gated.gate().progress(tower, context)).isEqualTo("4/10 kills");

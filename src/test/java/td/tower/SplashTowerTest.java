@@ -7,6 +7,7 @@ import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
+import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
@@ -30,10 +31,10 @@ class SplashTowerTest {
     @Test
     void splashDamageFallsOffWithDistanceFromTheBlastCentre() {
         SplashTower tower = towerNear(3, 3);
-        RecordingEnemyMob blastCentre = RecordingEnemyMob.normalAt(100, 100);
-        RecordingEnemyMob quarterOut = RecordingEnemyMob.ghostAt(100, 128);
-        RecordingEnemyMob threeQuartersOut = RecordingEnemyMob.ghostAt(100, 142);
-        RecordingEnemyMob atTheEdge = RecordingEnemyMob.ghostAt(100, 155);
+        FakeEnemyMob blastCentre = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob quarterOut = FakeEnemyMob.ghostAt(100, 128);
+        FakeEnemyMob threeQuartersOut = FakeEnemyMob.ghostAt(100, 142);
+        FakeEnemyMob atTheEdge = FakeEnemyMob.ghostAt(100, 155);
         this.context.enemies().setEnemies(new EnemyMob[]{blastCentre, quarterOut, threeQuartersOut, atTheEdge});
 
         tower.doTick(0);
@@ -49,10 +50,10 @@ class SplashTowerTest {
     @Test
     void everyStepAwayFromTheBlastCentreTakesStrictlyLessDamage() {
         SplashTower tower = towerNear(3, 3);
-        RecordingEnemyMob blastCentre = RecordingEnemyMob.normalAt(100, 100);
-        RecordingEnemyMob[] ring = new RecordingEnemyMob[11];
+        FakeEnemyMob blastCentre = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob[] ring = new FakeEnemyMob[11];
         for (int i = 0; i < ring.length; i++) {
-            ring[i] = RecordingEnemyMob.ghostAt(100, 100 + i * 5);
+            ring[i] = FakeEnemyMob.ghostAt(100, 100 + i * 5);
         }
         EnemyMob[] all = new EnemyMob[ring.length + 1];
         all[0] = blastCentre;
@@ -71,7 +72,7 @@ class SplashTowerTest {
     @Test
     void theBlastCentreItselfTakesFullDamage() {
         SplashTower tower = towerNear(3, 3);
-        RecordingEnemyMob blastCentre = RecordingEnemyMob.normalAt(100, 100);
+        FakeEnemyMob blastCentre = FakeEnemyMob.at(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{blastCentre});
 
         tower.doTick(0);
@@ -82,9 +83,9 @@ class SplashTowerTest {
     @Test
     void anEnemyBeyondTheBlastRadiusIsNotHitAtAll() {
         SplashTower tower = towerNear(3, 3);
-        RecordingEnemyMob blastCentre = RecordingEnemyMob.normalAt(100, 100);
+        FakeEnemyMob blastCentre = FakeEnemyMob.at(100, 100);
         // one pixel past the radius, but still well inside the tower's own range
-        RecordingEnemyMob outside = RecordingEnemyMob.ghostAt(100, 100 + SPREAD_RADIUS + 1);
+        FakeEnemyMob outside = FakeEnemyMob.ghostAt(100, 100 + SPREAD_RADIUS + 1);
         this.context.enemies().setEnemies(new EnemyMob[]{blastCentre, outside});
 
         tower.doTick(0);
@@ -107,14 +108,14 @@ class SplashTowerTest {
     @Test
     void blastEngineeringIiFlattensTheFalloffCurve() {
         SplashTower before = towerNear(3, 3);
-        RecordingEnemyMob edgeBefore = RecordingEnemyMob.ghostAt(100, 100 + SPREAD_RADIUS - 1);
-        this.context.enemies().setEnemies(new EnemyMob[]{RecordingEnemyMob.normalAt(100, 100), edgeBefore});
+        FakeEnemyMob edgeBefore = FakeEnemyMob.ghostAt(100, 100 + SPREAD_RADIUS - 1);
+        this.context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(100, 100), edgeBefore});
         before.doTick(0);
 
         SplashTower after = towerNear(3, 3);
         after.onUpgradeBought(UpgradePaths.named(after, "Blast Engineering II"));
-        RecordingEnemyMob edgeAfter = RecordingEnemyMob.ghostAt(100, 100 + SPREAD_RADIUS - 1);
-        this.context.enemies().setEnemies(new EnemyMob[]{RecordingEnemyMob.normalAt(100, 100), edgeAfter});
+        FakeEnemyMob edgeAfter = FakeEnemyMob.ghostAt(100, 100 + SPREAD_RADIUS - 1);
+        this.context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(100, 100), edgeAfter});
         after.doTick(0);
 
         assertThat(edgeAfter.onlyHitAmount()).isGreaterThan(edgeBefore.onlyHitAmount());
@@ -149,7 +150,7 @@ class SplashTowerTest {
             fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
         }
         tower.buyUpgrade(UpgradePaths.named(tower, "Concussive Blast"));
-        RecordingEnemyMob blastCentre = RecordingEnemyMob.normalAt(100, 100);
+        FakeEnemyMob blastCentre = FakeEnemyMob.at(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{blastCentre});
 
         tower.doTick(0);

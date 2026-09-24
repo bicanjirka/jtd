@@ -8,6 +8,7 @@ import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
+import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -36,7 +37,7 @@ class CinderTowerTest {
     @Test
     void anEnemyDirectlyAheadOfTheDefaultHeadingIsBurnedOnceTheWaveReachesIt() {
         CinderTower tower = towerAt(3, 3); // centre at (112, 112)
-        RecordingEnemyMob ahead = RecordingEnemyMob.normalAt(150, 112); // due +X of the tower, 38px out
+        FakeEnemyMob ahead = FakeEnemyMob.at(150, 112); // due +X of the tower, 38px out
         this.context.enemies().setEnemies(new EnemyMob[]{ahead});
 
         tickThrough(tower, 1, 1 + CinderTower.WAVE_TRAVEL_TICKS);
@@ -49,7 +50,7 @@ class CinderTowerTest {
     @Test
     void anEnemyIsNotBurnedOnTheSameTickItsWaveFires() {
         CinderTower tower = towerAt(3, 3);
-        RecordingEnemyMob ahead = RecordingEnemyMob.normalAt(150, 112);
+        FakeEnemyMob ahead = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{ahead});
 
         tower.doTick(1); // fires the wave; it hasn't travelled anywhere yet
@@ -60,7 +61,7 @@ class CinderTowerTest {
     @Test
     void aWaveBurnsALingeringEnemyExactlyOnceAcrossSeveralTicksInsideItsExpandingBand() {
         CinderTower tower = towerAt(3, 3);
-        RecordingEnemyMob close = RecordingEnemyMob.normalAt(119, 112); // 7px out - caught almost immediately
+        FakeEnemyMob close = FakeEnemyMob.at(119, 112); // 7px out - caught almost immediately
         this.context.enemies().setEnemies(new EnemyMob[]{close});
 
         tower.doTick(1); // fires
@@ -76,7 +77,7 @@ class CinderTowerTest {
     @Test
     void aWaveThatHasFullyTravelledStopsBeingTracked() {
         CinderTower tower = towerAt(3, 3);
-        RecordingEnemyMob ahead = RecordingEnemyMob.normalAt(150, 112);
+        FakeEnemyMob ahead = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{ahead});
 
         tickThrough(tower, 1, 1 + CinderTower.WAVE_TRAVEL_TICKS);
@@ -87,7 +88,7 @@ class CinderTowerTest {
     @Test
     void theCooldownGatesFiringASecondWaveUntilItActuallyElapses() {
         CinderTower tower = towerAt(3, 3);
-        RecordingEnemyMob ahead = RecordingEnemyMob.normalAt(150, 112);
+        FakeEnemyMob ahead = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{ahead});
 
         tickThrough(tower, 1, 1 + CinderTower.WAVE_TRAVEL_TICKS); // first wave fires and lands
@@ -106,7 +107,7 @@ class CinderTowerTest {
     @Test
     void aGhostIsNotCaughtByTheCone() {
         CinderTower tower = towerAt(3, 3);
-        RecordingEnemyMob ghost = RecordingEnemyMob.ghostAt(150, 112);
+        FakeEnemyMob ghost = FakeEnemyMob.ghostAt(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{ghost});
 
         tickThrough(tower, 1, 1 + CinderTower.WAVE_TRAVEL_TICKS);
@@ -117,7 +118,7 @@ class CinderTowerTest {
     @Test
     void anEnemyOutOfRangeIsNotBurned() {
         CinderTower tower = towerAt(3, 3);
-        RecordingEnemyMob farAway = RecordingEnemyMob.normalAt(10_000, 112);
+        FakeEnemyMob farAway = FakeEnemyMob.at(10_000, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{farAway});
 
         tickThrough(tower, 1, 1 + CinderTower.WAVE_TRAVEL_TICKS);
@@ -180,13 +181,13 @@ class CinderTowerTest {
     @Test
     void whiteFlameIiExtendsTheBurnDurationBeyondTheBase() {
         CinderTower before = towerAt(3, 3);
-        RecordingEnemyMob beforeTarget = RecordingEnemyMob.normalAt(150, 112);
+        FakeEnemyMob beforeTarget = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{beforeTarget});
         tickThrough(before, 1, 1 + CinderTower.WAVE_TRAVEL_TICKS);
 
         CinderTower after = towerAt(3, 3);
         after.onUpgradeBought(UpgradePaths.named(after, "White Flame II"));
-        RecordingEnemyMob afterTarget = RecordingEnemyMob.normalAt(150, 112);
+        FakeEnemyMob afterTarget = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{afterTarget});
         tickThrough(after, 1, 1 + CinderTower.WAVE_TRAVEL_TICKS);
 

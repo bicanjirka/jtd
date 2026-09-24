@@ -2,6 +2,7 @@ package td.tower.targeting;
 
 import org.junit.jupiter.api.Test;
 import td.enemy.EnemyMob;
+import td.fixtures.FakeEnemyMob;
 
 import java.util.List;
 
@@ -68,7 +69,8 @@ class InWedgeTargetQueryTest {
 
     @Test
     void deadOrInactiveEnemiesAreExcludedRegardlessOfBearing() {
-        FakeEnemyMob dead = atBearing(0.0, 100).invalid();
+        FakeEnemyMob dead = atBearing(0.0, 100);
+        dead.invalidate();
 
         List<EnemyMob> matches = new InWedgeTargetQuery(0, 0, 0.0, 0.5)
                 .matching(() -> new EnemyMob[]{dead});

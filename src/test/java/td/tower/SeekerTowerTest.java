@@ -8,6 +8,7 @@ import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
+import td.fixtures.FakeEnemyMob;
 import td.fixtures.TowerFixtures;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
@@ -27,7 +28,7 @@ class SeekerTowerTest {
     @Test
     void firingLaunchesExactlyOneMissileAtTheTarget() {
         SeekerTower tower = towerAt(3, 3);
-        RecordingEnemyMob target = RecordingEnemyMob.normalAt(100, 100);
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tower.doTick(1);
@@ -38,7 +39,7 @@ class SeekerTowerTest {
     @Test
     void theMissileEventuallyDealsMagicDamageAndFreezesTheTarget() {
         SeekerTower tower = towerAt(3, 3);
-        RecordingEnemyMob target = RecordingEnemyMob.normalAt(100, 100);
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tower.doTick(1);
@@ -53,7 +54,7 @@ class SeekerTowerTest {
     @Test
     void aGhostIsNeverTargeted() {
         SeekerTower tower = towerAt(3, 3);
-        RecordingEnemyMob ghost = RecordingEnemyMob.ghostAt(100, 100);
+        FakeEnemyMob ghost = FakeEnemyMob.ghostAt(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{ghost});
 
         tower.doTick(1);
@@ -116,7 +117,7 @@ class SeekerTowerTest {
     void twinWarheadIiFiresTwoMissilesInsteadOfOne() {
         SeekerTower tower = towerAt(3, 3);
         tower.onUpgradeBought(UpgradePaths.named(tower, "Twin Warhead II"));
-        RecordingEnemyMob target = RecordingEnemyMob.normalAt(100, 100);
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tower.doTick(1);
