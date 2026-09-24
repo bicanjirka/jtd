@@ -58,7 +58,9 @@ public final class VerifyRules {
             // an inner class of DefinedEnemyMob, so it has no file of its own
             "MobAbilityContext",
             // prose, not a type - the naming rule's own example
-            "UpperCamelCase");
+            "UpperCamelCase",
+            // Checkstyle module names, not source files
+            "TypeName", "ConstantName");
 
     private VerifyRules() {
     }
@@ -88,17 +90,6 @@ public final class VerifyRules {
         rules.add(Rule.of("no-wildcard-imports", "CLAUDE.md 6",
                 "an explicit import once shadowed a real java.util.List / java.awt.List collision",
                 "^import .*\\.\\*\\s*;", List.of(MAIN, TEST)).skippingComments());
-
-        rules.add(Rule.of("no-lowercase-type-names", "CLAUDE.md 6",
-                        "types are UpperCamelCase",
-                        "^\\s*(public |protected |private )?(static )?(final )?"
-                                + "(class|interface|enum|record)\\s+[a-z]", List.of(MAIN, TEST))
-                .skippingComments());
-
-        rules.add(Rule.of("no-lowercase-constants", "CLAUDE.md 6",
-                "constants are UPPER_SNAKE_CASE (serialVersionUID is exempt - the JVM fixes that name)",
-                "\\bstatic final +[A-Za-z_][\\w.<>\\[\\], ]*? +(?!serialVersionUID\\b)[a-z]\\w*\\s*=",
-                List.of(MAIN, TEST)).skippingComments());
 
         rules.add(Rule.of("no-broad-catch", "CLAUDE.md 6",
                 "catch Exception, never Throwable or Error - an Error means the JVM is in trouble",

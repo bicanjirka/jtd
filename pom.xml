@@ -118,6 +118,28 @@
                 </executions>
             </plugin>
             <plugin>
+                <!-- Fails `mvn verify` on a type or constant naming violation (CLAUDE.md 6).
+                     Build-scope only - not a runtime dependency. See checkstyle.xml for why
+                     enum constants aren't included here. -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.6.0</version>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    <violationSeverity>warning</violationSeverity>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>checkstyle-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <!-- Fails `mvn verify` on any violation of a greppable rule from CLAUDE.md.
                      Run through the single-file source launcher rather than a shell script so
                      the check behaves identically on every platform without needing a POSIX
