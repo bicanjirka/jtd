@@ -89,8 +89,6 @@ public class TowerRoster {
             this.towers.remove(t);
             this.fireRemoved(t);
         }
-        // No recalculateAllStats: every tower is gone, so there is nothing left to recompute
-        // and nothing left to read a stale value. sell() is the case that needs it.
     }
 
     public void addListener(TowerListener l) {

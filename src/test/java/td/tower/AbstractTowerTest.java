@@ -40,9 +40,7 @@ class AbstractTowerTest {
         SniperTower tower = new SniperTower(context, 0, 0);
         context.towers().add(tower);
 
-        // Putting the aura on the board is what applies the buff - its constructor has no
-        // side effects on other towers. TowerRoster recomputes every tower's stats, and each
-        // one asks the towers around it what they contribute (Tower.buffFor).
+        // Placing the aura applies the buff; its constructor has no side effects.
         context.towers().add(new AuraTower(context, 0, 0));
 
         float expectedMultiplier = 1f + AuraTower.DEFAULT_POWER;
@@ -128,7 +126,7 @@ class AbstractTowerTest {
     void towerOutsideAuraRangeIsNotBuffed() {
         SniperTower near = new SniperTower(context, 0, 0);
         context.towers().add(near);
-        // AuraTower.RANGE is 1.5 cells; placing far away puts this well outside it
+        // far outside the aura's range
         SniperTower far = new SniperTower(context, 100, 100);
         context.towers().add(far);
 
@@ -337,7 +335,7 @@ class AbstractTowerTest {
         SniperTower tower = new SniperTower(context, 0, 0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
 
-        tower.doCleanup(); // what TowerRoster.sell()/clear() call before dropping the tower
+        tower.doCleanup();
         tower.dealDamage(enemy, Damage.physical(4000));
 
         assertThat(enemy.isDead()).isFalse();
@@ -425,8 +423,7 @@ class AbstractTowerTest {
 
     @Test
     void aNonBurningTargetDoesNotGetTheDoubledCritChance() {
-        // same roll and base chance as aBurningTargetDoublesTheEffectiveCritChance, but no burn
-        // active - the same roll that crit there must not crit here
+        // same roll as the burning case, but no burn: must not crit
         GameWorld world = WorldFixtures.newWorld(() -> 0.3);
         world.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("precision", UpgradeSlot.HEAD, "Precision", 10)

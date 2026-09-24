@@ -335,11 +335,7 @@ public class PanelLevelSelect extends JPanel {
             float innerWidth = width - margin * 2f;
             float innerHeight = height - margin * 2f;
 
-            // One uniform scale for both axes, not spanX/spanY mapped independently - an
-            // independent mapping stretches the path into the box's aspect ratio instead of
-            // preserving its own. The smaller of the two candidate scales is the one that keeps
-            // the whole path inside the box; the leftover space on the other axis centers it
-            // rather than leaving it pinned to the top-left corner.
+            // One scale for both axes keeps the path's aspect ratio; the smaller one fits the box.
             double scale = Math.min(innerWidth / spanX, innerHeight / spanY);
             float offsetX = margin + (float) (innerWidth - spanX * scale) / 2f;
             float offsetY = margin + (float) (innerHeight - spanY * scale) / 2f;
@@ -392,10 +388,7 @@ public class PanelLevelSelect extends JPanel {
                 if (mapped.size() < 2) {
                     continue;
                 }
-                // A path that never called withColor stays PathColor.DEFAULT (white), which
-                // would look flat against every level's own themed accent - falling back to the
-                // card's accent there preserves today's single-path look exactly, and only a
-                // path with a real, authored color draws in that color instead.
+                // An uncoloured path takes the card's accent rather than flat white.
                 PathColor pathColor = paths.get(i).color();
                 Color strokeColor = pathColor.equals(PathColor.DEFAULT)
                         ? this.accent

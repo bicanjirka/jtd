@@ -58,10 +58,6 @@ final class TwistedHourglassLevel {
             .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(8000, 80))
             .build();
 
-    // Every lane shares the same Bezier fillet: this board's legs are short (as little as 1
-    // cell), so cornerPull is much gentler than a sprawling board could afford - 0.28 over the
-    // shortest 1-cell leg (32px) pulls back 8.96px on each side, leaving a 14px gap between two
-    // corners that share it rather than meeting.
     private static final QuadraticBezierSmoothing SMOOTHING = new QuadraticBezierSmoothing(0.28, 12);
 
     private static final PathColor TEAL_COLOR = PathColor.of(30, 150, 140);

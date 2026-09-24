@@ -470,7 +470,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEnemyWithNoTraitsYieldsNoTraitMarkers() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT); // Simple has no traits
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT); // no traits
 
         assertThat(overlaysOf(enemy, 0)).isEmpty();
     }

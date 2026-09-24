@@ -19,7 +19,7 @@ import java.util.List;
  * lifetime is a second, independent safety net against a homing edge case (e.g. a target it
  * can never quite catch) doing the same.
  */
-@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // its target and age, both retargeted during a tick
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class MissileProjectile extends AbstractProjectile {
 
     private static final int MAX_LIFETIME_TICKS = 400;

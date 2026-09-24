@@ -39,11 +39,6 @@ public class GameWorld {
     private final TowerRoster towers;
     private final ProjectileRoster projectiles = new ProjectileRoster();
     private final WaveAnnouncer waves = new WaveAnnouncer();
-    // The level-scoped state GameWorld owns directly rather than delegating, as ONE immutable
-    // value behind ONE volatile: the board, path, cell grid, enemy catalog and wave list are
-    // correlated, and publishing them independently let the game-loop thread pair a board from
-    // the incoming level with a cell grid from the outgoing one. See LoadedLevel and
-    // CLAUDE.md 3 rule 1.
     private volatile LoadedLevel level = LoadedLevel.none();
 
     public GameWorld(GameHost mainApp) {

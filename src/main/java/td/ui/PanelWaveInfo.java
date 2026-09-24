@@ -23,7 +23,6 @@ import java.util.List;
  * loading), not per frame - see this package's "built once, refreshed in place" convention.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
-// Swing components, assigned once by initComponents
 public class PanelWaveInfo extends JPanel {
     @Serial
     private static final long serialVersionUID = 1L;

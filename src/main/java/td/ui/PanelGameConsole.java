@@ -31,7 +31,6 @@ import java.io.Serial;
  * visibility.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
-// Swing components, assigned once by initComponents
 public class PanelGameConsole extends JPanel implements EconomyListener {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -392,9 +391,7 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         gridBagConstraints.insets = new Insets(0, 2, 0, 0);
         this.add(this.panelWaveInfo, gridBagConstraints);
 
-        // Same cell as panelWaveInfo - the two are toggled by visibility, never both shown at
-        // once (see selectTower/unselectTower), the same "stacked, not side by side" shape
-        // BoardOverlays/GameBoard already use for their own cell (see td/ui/CLAUDE.md).
+        // Shares panelWaveInfo's cell; the two toggle by visibility.
         this.panelUpgradeTree.setFocusable(false);
         this.panelUpgradeTree.setVisible(false);
         gridBagConstraints = new GridBagConstraints();

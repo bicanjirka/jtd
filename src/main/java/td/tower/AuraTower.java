@@ -18,7 +18,7 @@ import java.util.List;
  * listens for towers being built and removed so a tower placed after it still picks the buff
  * up, and it unregisters its clients in {@link #doCleanup()} so selling it takes the buff away.
  */
-@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // tickCounter, advanced by doTick
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class AuraTower extends AbstractTower {
 
     public static final int PRICE = 20;

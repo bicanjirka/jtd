@@ -14,8 +14,7 @@ class PathCoverageTest {
 
     private static final int SCALE = 32;
 
-    // This is what LevelPath.throughCorners used to do, before it was deleted - kept here only
-    // as a comparison baseline for the test above.
+    // comparison baseline: the old corner-expansion algorithm
     private static List<Point> expandThroughCornersLikeTheOldLevelPathDid(List<Point> corners) {
         List<Point> steps = new ArrayList<>();
         steps.add(corners.getFirst());
@@ -73,9 +72,7 @@ class PathCoverageTest {
 
     @Test
     void aDiagonalSegmentCoversTheCellsAlongItsActualLineNotJustAxisAlignedNeighbors() {
-        // (16,16) -> (144,144) is cell-center to cell-center, a full 45 degree diagonal across
-        // a 4x4 grid - not axis-aligned, proving buildability follows the raw path's real
-        // geometry even when the unsmoothed path itself is diagonal, not just a smoothed curve.
+        // a 45-degree diagonal: buildability follows the real geometry, not just axis-aligned legs
         List<Vec2> polyline = List.of(new Vec2(16, 16), new Vec2(144, 144));
 
         Set<Point> covered = PathCoverage.unbuildableCells(polyline, SCALE, 4, 4);

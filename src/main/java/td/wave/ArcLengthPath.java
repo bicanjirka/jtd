@@ -61,10 +61,6 @@ public final class ArcLengthPath {
     }
 
     public PathPose poseAt(double distance) {
-        // Clamp rather than extrapolate: the original code this was ported from only ever
-        // called poseAt with a distance already wrapped into [0, totalLength) - but as a
-        // shared, more widely-used type, an out-of-range distance should clamp to the
-        // nearest endpoint rather than extrapolate past it.
         distance = Math.max(0.0, Math.min(distance, this.totalLength));
         int segment = this.cumulative.length - 2;
         for (int i = 0; i < this.cumulative.length - 1; i++) {

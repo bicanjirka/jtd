@@ -18,13 +18,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class EnemyRoster implements EnemyRegistry, EnemySpawner {
 
     private final GameHost host;
-    // Decremented on the game-loop thread as mobs die and reset from the EDT on level load, and
-    // the value a decrement produces is what decides "wave cleared" and "you won" - so the
-    // decrement and the value reported for it have to be one operation, not two.
+    // The decrement and the value it reports must be one operation: that value decides
+    // "wave cleared" and "won".
     private final AtomicInteger count = new AtomicInteger();
-    // Volatile rather than final: setEnemies swaps the whole list in one write, so a reader
-    // sees the outgoing wave or the incoming one and never a half-filled roster. Still a
-    // CopyOnWriteArrayList, because add/replace mutate it in place from an enemy's own doTick.
+    // Swapped whole in one write, so a reader never sees a half-filled roster.
     private volatile List<EnemyMob> enemies = new CopyOnWriteArrayList<>();
 
     public EnemyRoster(GameHost host) {

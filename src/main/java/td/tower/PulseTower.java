@@ -25,7 +25,7 @@ import java.util.List;
  * it, that ghost takes the damage too. Buying "Resonant Field" deliberately trades that
  * protection away, so the tower always fires once anything is in range (see {@link #doTick}).
  */
-@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // the fire flag and resonantField, set within a tick/onUpgradeBought
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class PulseTower extends AbstractTower {
 
     public static final int PRICE = 25;

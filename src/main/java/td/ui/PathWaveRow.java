@@ -31,7 +31,6 @@ import java.util.List;
  * side, in path order, so a player can see at a glance which enemies come down which lane.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
-// Swing components, assigned once by initComponents
 final class PathWaveRow extends JPanel {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -102,7 +101,6 @@ final class PathWaveRow extends JPanel {
      * than a second, hand-drawn visual language for "which lane is this."
      */
     @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
-    // painted only from the EDT render pulse, like every other Panel* component
     private static final class Swatch extends JPanel {
         @Serial
         private static final long serialVersionUID = 1L;

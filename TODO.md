@@ -2,8 +2,6 @@
 
 I would like to add feature ideas to this todo as well to have all possible work idead at one place.
 
-- non-feature request. I see you mention exact names in line comments frequently. I do not like unnecessary line comments at all and I hate that you have to change so many of them when performing as simple thing as renaming a level for example. Save me some tokens by having as little line comments as possible. And do not mention obvious things in them. Propose a review of the code to apply this.
-
 # Known gaps and future work
 
 Extracted from inline `TODO` comments (and one unmarked-but-real gap) found throughout the codebase during a

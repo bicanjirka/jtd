@@ -32,16 +32,10 @@ import java.util.List;
  */
 public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
-    // Radians/second for a continuously-spinning head - purely cosmetic, so this lives here
-    // rather than as domain state (see the class doc comment's "function of elapsed time").
-    // SonarTower is deliberately not in this group: its head tracks the scan that decides what
-    // it shoots, so it reads that instead.
+    // Radians/second of a continuously spinning head.
     private static final double TOWER_FOUR_SPIN_RADIANS_PER_SECOND = -2.0;
 
-    // The aura tower's head pulses (scale, not heading) via a sine wave instead of spinning -
-    // same "function of elapsed time" reasoning as the two constants above. The SPECIAL-slot
-    // enchant halo (see enchantPulseFor) reuses this same clock for its own pulse, so both
-    // pulsing cosmetics in this frame stay in phase with each other.
+    // The enchant halo reuses this clock, keeping both pulses in phase.
     private static final double TOWER_AURA_PULSE_RADIANS_PER_SECOND = 2.4;
     private static final float TOWER_AURA_PULSE_MIN_SCALE = 0.8f;
     private static final float TOWER_AURA_PULSE_MAX_SCALE = 1.25f;
@@ -188,8 +182,6 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     public Void visitCinderTower(CinderTower tower) {
         this.sprite(tower);
-        // The head is a facing indicator only - the wide flame cone itself is a transient
-        // TowerEffectDraw (ConeDraw), not part of the turret head's own shape.
         this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
         return null;
     }

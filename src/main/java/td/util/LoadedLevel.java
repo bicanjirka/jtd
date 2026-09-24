@@ -31,10 +31,7 @@ import java.util.List;
  */
 public record LoadedLevel(CellGrid cells, BoardGeometry board, List<PathRuntime> paths, EnemyCatalog catalog) {
 
-    // One degenerate (empty-points, no waves) path rather than zero: a mob built against a
-    // world before any level loads still resolves pathAt(0) to something - a path with fewer
-    // than two points, which ArcLengthPath.of already treats as a supported "hold at the
-    // origin" state (see td/enemy/CLAUDE.md) - instead of an IndexOutOfBoundsException.
+    // One degenerate path rather than none, so pathAt(0) resolves before any level loads.
     private static final LoadedLevel NONE = new LoadedLevel(CellGrid.empty(), BoardGeometry.empty(),
             List.of(new PathRuntime(new PathNormal(List.of()), List.of(), PathColor.DEFAULT)), EnemyCatalog.builtIn());
 

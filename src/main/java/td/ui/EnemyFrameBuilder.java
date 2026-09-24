@@ -43,11 +43,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
      * How many real effect markers show before the rest collapse into one overflow marker.
      */
     static final int MAX_VISIBLE_MARKERS = 3;
-    // How far above the body the marker row sits, and how far apart consecutive markers are,
-    // as a fraction of the mob's own body scale - so the row's position keeps clear of a large
-    // body rather than needing a fixed pixel offset that would sit inside a boss's silhouette.
-    // The glyph size itself is deliberately NOT one of these fractions - see
-    // MARKER_FIXED_SCALE below.
+    // Fractions of body scale, so the row clears a large body; the glyph size is fixed.
     private static final float MARKER_ROW_OFFSET_FRACTION = 1.6f;
     private static final float MARKER_SPACING_FRACTION = 1.1f;
     /**
@@ -263,7 +259,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private void pulses(AbstractEnemyMob mob, float x, float y, float scale) {
         for (EffectKind kind : EffectKind.values()) {
             if (kind == EffectKind.INVISIBLE) {
-                // The cloak fade on the body itself is this transition - see cloakProgress.
                 continue;
             }
             this.addTransitionPulse(x, y, scale, kind, mob.ticksSinceEffectGained(kind, this.gameTime), PulseDirection.OUTWARD);
@@ -273,8 +268,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             int ticksSince = this.gameTime - cast.tick();
             if (ticksSince >= 0 && ticksSince <= EFFECT_PULSE_DURATION_TICKS) {
                 float progress = (float) ticksSince / EFFECT_PULSE_DURATION_TICKS;
-                // A SelfTarget cast carries radius 0 - fall back to the same ripple size a
-                // gain/loss pulse uses, since a literal zero-radius ring would be invisible.
+                // A zero radius would draw an invisible ring.
                 float ringRadius = cast.radius() > 0 ? cast.radius() : scale * GAIN_LOSS_PULSE_RADIUS_FRACTION;
                 this.overlayDraws.add(new EffectPulseDraw(markerPaletteFor(cast.kind()), x, y, ringRadius, progress, PulseDirection.OUTWARD));
             }
@@ -339,9 +333,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         int shown = 0;
         for (EffectKind kind : mob.activeEffectKinds()) {
             if (shown == MAX_VISIBLE_MARKERS) {
-                // A 4th+ simultaneous effect collapses into one overflow marker rather than
-                // growing the row further - legible even on a heavily-buffed enemy in a packed
-                // wave (see docs/features/FEATURE-enemy-traits-and-effects.md's V1 Scope).
                 this.markerDraws.add(new StatusMarkerDraw(Palette.STATUS_MARKER_OVERFLOW, markerX, markerY, MARKER_FIXED_SCALE));
                 return;
             }

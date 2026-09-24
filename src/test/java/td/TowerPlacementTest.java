@@ -104,15 +104,11 @@ class TowerPlacementTest {
         placement.reset();
 
         assertThat(placement.isPlacing()).isFalse();
-        // the highlighted cell belonged to the grid being discarded - reset() must not
-        // dereference it, since a real reload can replace it with a smaller one
         assertThat(bigGrid.at(2, 2).getHighlight()).isEqualTo(Cell.HighlightType.PLACE);
     }
 
     @Test
     void resetPreventsAStaleHighlightFromCrashingWhenTheGridLaterShrinks() {
-        // mirrors how GameEngine really wires this: one TowerPlacement, a Supplier whose
-        // answer changes when a new (possibly smaller) level replaces the grid
         CellGrid bigGrid = grid(3, 3);
         CellGrid[] currentGrid = {bigGrid};
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, bigGrid.width(), bigGrid.height());

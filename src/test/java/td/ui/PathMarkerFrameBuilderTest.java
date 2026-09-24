@@ -23,8 +23,7 @@ class PathMarkerFrameBuilderTest {
 
     private static final int SCALE = 32;
 
-    // Cell coordinates in, converted to pixel-space cell centers the same way production
-    // code (PathBuilder) does, since PathNormal stores pixel points directly.
+    // cell coordinates in, pixel cell centres out, as production path building does
     private static PathNormal pathOf(int... xyPairs) {
         List<Vec2> points = new ArrayList<>();
         for (int i = 0; i < xyPairs.length; i += 2) {
@@ -74,8 +73,7 @@ class PathMarkerFrameBuilderTest {
 
     @Test
     void movingMarkersAdvanceByPaceTimesElapsedSecondsAndWrap() {
-        // a path just short of two marker-spacings long places exactly one moving marker,
-        // which starts at distance 0 (see PathMarkerFrameBuilder.addLayer)
+        // just short of two marker spacings: exactly one moving marker, starting at distance 0
         PathNormal path = straightPath(0, 2);
         List<PathMarkerDraw> atZero = moving(PathMarkerFrameBuilder.build(path, PathColor.DEFAULT, SCALE, 0.0));
         assertThat(atZero).hasSize(1);

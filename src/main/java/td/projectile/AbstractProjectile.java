@@ -9,7 +9,7 @@ import td.util.ThreadConfined;
  * the finished/live lifecycle a {@code ProjectileRoster} drops it from once it resolves.
  * Subclasses supply only how one tick's worth of flight is resolved.
  */
-@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // position and lifetime, advanced by doTick
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public abstract class AbstractProjectile implements Projectile {
 
     protected double x;

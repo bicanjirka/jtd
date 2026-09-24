@@ -33,7 +33,7 @@ import java.util.Objects;
  * lines, coloured by {@link #colorizeMarks}) and, while hovering a node button, that node's
  * full description (see {@link #showUpgradeHover}).
  */
-@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)  // Swing components and the current selection
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     /**

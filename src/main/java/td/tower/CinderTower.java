@@ -42,7 +42,7 @@ import java.util.Set;
  * once the burn ticks (see {@code Effect}'s sink), so its damage/kill accounting stays accurate
  * without a second, parallel damage path.
  */
-@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)  // cooldown and every upgrade-bumped field, advanced by doTick/onUpgradeBought
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class CinderTower extends AbstractTower {
 
     public static final int PRICE = 28;
@@ -152,8 +152,6 @@ public final class CinderTower extends AbstractTower {
     public void doTick(int gameTime) {
         List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.NORMAL)
                 .matching(this.context.enemies());
-        // No target: hold the last heading rather than snapping back to a neutral angle - see
-        // TurretAim's class doc on skipping tick() while idle.
         new NearestSelector(this.centerX, this.centerY).selectFrom(inRange)
                 .ifPresent(nearest -> this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, nearest.getX(), nearest.getY())));
 

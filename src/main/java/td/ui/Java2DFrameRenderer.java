@@ -71,7 +71,6 @@ public final class Java2DFrameRenderer {
      */
     private static final float TOWER_BODY_SIZE_FRACTION = 0.42f;
 
-    // --- cells ---------------------------------------------------------
     /**
      * Half the icon, so the toolbar reads as a row of small glyphs rather than filled chips.
      */
@@ -108,7 +107,6 @@ public final class Java2DFrameRenderer {
      */
     private static final float TOWER_HEAD_SIZE_FRACTION = 0.24f;
 
-    // --- path markers ---------------------------------------------------------
     /**
      * How wide the sonar wedge opens, in degrees.
      */
@@ -120,7 +118,6 @@ public final class Java2DFrameRenderer {
      */
     private static final float SONAR_RADIUS_FACTOR = 1.85f;
 
-    // --- enemies ---------------------------------------------------------
     /**
      * How many bands the trail fades through, and how bright the band at the leading edge is.
      */
@@ -244,7 +241,6 @@ public final class Java2DFrameRenderer {
         return p;
     }
 
-    // --- status markers ---------------------------------------------------------
 
     /**
      * One flat symbol per tower, each naming what the tower does rather than decorating it:
@@ -266,7 +262,6 @@ public final class Java2DFrameRenderer {
         };
     }
 
-    // --- towers ---------------------------------------------------------
 
     /**
      * A rotated square - a heavy, armoured silhouette for the artillery-style tower.
@@ -464,9 +459,6 @@ public final class Java2DFrameRenderer {
             case ENEMY_GHOST -> Color.LIGHT_GRAY;
             case ENEMY_SQUARE -> Color.PINK;
             case ENEMY_TRIANGLE -> Color.YELLOW;
-            // Same exact colour as the adult Warden, not just a related tint - it's the same
-            // creature's egg, and the two never appear on screen at once (the egg only spawns
-            // after the Warden that laid it has died).
             case ENEMY_WARDEN, ENEMY_WARDEN_EGG -> new Color(139, 0, 0);
             case ENEMY_MENDER -> new Color(120, 220, 150);
             case TOWER_SNIPER_BODY -> Color.GREEN;
@@ -536,15 +528,11 @@ public final class Java2DFrameRenderer {
     public void paint(Graphics2D g2, RenderFrame frame) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-        // Board art is all vector now, so nothing here goes through drawImage and this hint
-        // changes no pixel on the board today. It is kept so a Graphics2D handed to this
-        // renderer is configured consistently with SharpImageIcon, which still needs it:
-        // without it, drawImage falls back to nearest-neighbor under a non-1:1 transform
-        // (e.g. Swing's per-monitor HiDPI scale on Windows) and looks blocky.
+        // Board art is all vector; set so this Graphics2D matches icon rendering, which needs it
+        // under HiDPI scaling.
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
-        // GameBoard.paint() overrides Swing's own painting wholesale (no super.paint() call),
-        // so this fill is also the only thing clearing the previous frame - not just cosmetic.
+        // paint() skips super.paint(), so this fill is what clears the previous frame.
         g2.setColor(BOARD_BACKGROUND);
         g2.fillRect(0, 0, frame.maxX(), frame.maxY());
 
@@ -1050,7 +1038,6 @@ public final class Java2DFrameRenderer {
         Stroke previous = g2.getStroke();
         g2.setColor(color);
         g2.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        // the leading edge, lying on the beam's exact heading - the part the eye tracks
         g2.draw(new Line2D.Float(0, 0, radius, 0));
         g2.setStroke(previous);
     }
@@ -1079,7 +1066,6 @@ public final class Java2DFrameRenderer {
         }
     }
 
-    // --- projectiles ---------------------------------------------------------
 
     /**
      * A symmetric pie wedge centred on {@code cone}'s heading - the same shape
@@ -1122,7 +1108,6 @@ public final class Java2DFrameRenderer {
         g2.setStroke(defaultStroke);
     }
 
-    // --- shared ---------------------------------------------------------
 
     private void paintFilledCircle(Graphics2D g2, Palette palette, float centerX, float centerY, float radius) {
         g2.setColor(colorFor(palette));

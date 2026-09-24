@@ -72,8 +72,7 @@ public final class WaveScript {
         int pendingRankSlotRepeat = 1;
 
         for (String token : tokens) {
-            // An empty string is whitespace, not a token: "".split(" ") yields one blank, and
-            // so does any run of spaces between real tokens.
+            // "".split(" ") yields a blank, as does a run of spaces.
             if (token.isBlank()) {
                 continue;
             }

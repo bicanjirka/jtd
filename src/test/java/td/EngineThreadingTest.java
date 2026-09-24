@@ -25,8 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class EngineThreadingTest {
 
-    // Unlike LevelFixtures.level, this carries a real wave - aWaveRequestedFromAnotherThreadIsConsumedByTheTickThread
-    // needs an actual wave to start.
+    // Carries a real wave, unlike the shared level fixture.
     private static LevelDefinition level(String name, int width, int height) {
         return LevelDefinition.unsmoothed(name, "", width, height, LevelFixtures.STRAIGHT_PATH,
                 List.of(new WaveDefinition("3 c", Rank.GRUNT)), 100, 5);

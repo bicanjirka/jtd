@@ -30,9 +30,7 @@ import java.util.List;
  */
 public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
-    // Two rings half a period apart read as a continuous "breathing" aura rather than one ring
-    // blinking in and out; purely cosmetic, so this is a function of elapsed time like the
-    // spinning turret heads, not tick-based domain state.
+    // Two rings half a period apart read as one breathing aura, not a blinking ring.
     private static final double AURA_PERIOD_SECONDS = 1.8;
     private static final double[] AURA_PHASE_OFFSETS = {0.0, 0.5};
 

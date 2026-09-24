@@ -48,7 +48,6 @@ import java.util.Set;
  * {@link TowerDefense} still owns.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
-// debugSpawnCursor is advanced by a key event; everything else here is volatile or in LoadedLevel
 public class GameEngine {
 
     private static final Logger LOG = LoggerFactory.getLogger(GameEngine.class);
@@ -56,17 +55,10 @@ public class GameEngine {
     private final GameWorld gameWorld;
     private final TowerPlacement placement;
 
-    // The level itself - cell grid, board, path, catalog and wave list - is NOT here: it is
-    // one correlated bundle, so it lives behind GameWorld's single volatile LoadedLevel (see
-    // CLAUDE.md 3 rule 1). What remains here is per-run progress, and each of these genuinely
-    // is an independent scalar written on one thread and read on the other: the EDT loads a
-    // level, requests a wave and sells towers; the game-loop thread consumes those requests in
-    // doTick and advances the wave counter. Pair the wave counter with the wave list only
-    // through waveProgress(), which reads one snapshot of each.
+    // Pair with the wave list only through waveProgress().
     private volatile int wave = 0;
     private volatile boolean waveReady = true;
     private volatile boolean startWave = false;
-    // EDT-only: the debug keybinding that advances it is a key event.
     private int debugSpawnCursor = 0;
 
     public GameEngine(GameHost host) {
@@ -82,8 +74,6 @@ public class GameEngine {
 
     private GameEngine(GameWorld gameWorld) {
         this.gameWorld = gameWorld;
-        // gameWorld::cells rather than a lambda closing over this: nothing here hands a
-        // partially-constructed GameEngine to a collaborator.
         this.placement = new TowerPlacement(this.gameWorld, this.gameWorld::cells);
     }
 
@@ -123,8 +113,7 @@ public class GameEngine {
         int index = this.wave;
         int count = installed.waveCount();
         if (index > count) {
-            // The wave counter still belongs to a level that is no longer installed - report
-            // the incoming level rather than indexing off the end of its shorter wave list.
+            // The wave counter can outrun a freshly installed, shorter level.
             return new WaveProgress(count, count, List.of(), List.of());
         }
         List<Wave> current = index > 0 ? installed.wavesAt(index - 1) : List.of();
@@ -159,16 +148,11 @@ public class GameEngine {
         int width = level.width();
         int height = level.height();
         int scale = this.gameWorld.getBoard().scale();
-        // Built fully, then published: a publishing write must hand over a finished object,
-        // never one another thread could see mid-fill.
         CellGrid grid = CellGrid.of(width, height, scale);
         EnemyCatalog catalog = EnemyCatalog.builtIn();
         level.customEnemies().forEach(catalog::register);
         level.customRankedEnemies().forEach(catalog::register);
 
-        // Every path is built independently, against the catalog local rather than through the
-        // world. A Wave holds only its content until it starts (see Wave.spawn), so nothing here
-        // reads the level state this method is in the middle of replacing.
         List<PathRuntime> pathRuntimes = new ArrayList<>();
         List<PathDefinition> pathDefinitions = level.paths();
         for (int pathIndex = 0; pathIndex < pathDefinitions.size(); pathIndex++) {
@@ -178,10 +162,8 @@ public class GameEngine {
             List<WaveDefinition> waveDefinitions = pathDefinition.waves();
             for (int round = 0; round < waveDefinitions.size(); round++) {
                 WaveDefinition wd = waveDefinitions.get(round);
-                // Derived from the level's own name and this path/round, not GameWorld.random() -
-                // the same level, path and round must scatter the same way on every run and every
-                // machine, and String.hashCode() is specified by the JLS to be stable across JVMs
-                // for that.
+                // Deterministic per level, path and round across runs and JVMs: String.hashCode is
+                // specified by the JLS.
                 long scatterSeed = ((long) level.name().hashCode() * 31L + pathIndex) * 31L + round;
                 float speedMultiplier = pathDefinition.speedMultiplier() * wd.speedMultiplier();
                 pathWaves.add(new Wave(this.gameWorld, WaveScript.parse(wd.enemies(), wd.rank(), catalog),
@@ -191,8 +173,6 @@ public class GameEngine {
         }
         markUnbuildableCells(grid, pathRuntimes, scale);
 
-        // One write. Everything above filled a local; none of it is reachable by the game-loop
-        // thread until this line publishes every part at once. See LoadedLevel.
         this.wave = 0;
         this.gameWorld.installLevel(new LoadedLevel(grid,
                 BoardGeometry.of(scale, width, height), pathRuntimes, catalog));
@@ -291,9 +271,6 @@ public class GameEngine {
         for (EnemyMob enemy : this.gameWorld.enemies().getEnemies()) {
             enemy.doTick(time);
         }
-        // Between enemies and towers: a projectile in flight aims at this tick's enemy
-        // positions, and one a tower spawns below first advances next tick rather than
-        // moving twice (once here, once after being added) in the tick it was fired.
         this.gameWorld.projectiles().doTick(time);
         for (Tower tower : this.gameWorld.towers().all()) {
             tower.doTick(time);

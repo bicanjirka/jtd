@@ -36,7 +36,7 @@ class AbstractEnemyMobTest {
     void enemyStaysInactiveUntilItsDelayElapses() {
         GameWorld context = newContext();
         int delayArg = 1;
-        float speed = 1.28f; // AbstractEnemyMob's default speed field, in pixels/tick
+        float speed = 1.28f; // default speed, px/tick
         int expectedActivationTick = Math.round(22.4f * delayArg / speed);
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, delayArg, 50, 3, Rank.GRUNT);
@@ -133,9 +133,7 @@ class AbstractEnemyMobTest {
     @Test
     void crossingASegmentTwiceAsLongTakesRoughlyTwiceAsManyTicks() {
         GameWorld context = newContext();
-        // segment lengths 10, then 20, then a trailing 1 so reaching x=30 happens strictly
-        // before the path wraps (which would otherwise snap x back near 0 exactly at x=30,
-        // and the loop below would never observe x >= 30).
+        // a trailing 1px leg so x=30 is reached strictly before the path wraps back to 0
         context.setPath(LevelFixtures.straightPath(1, 0, 10, 30, 31));
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
@@ -178,9 +176,7 @@ class AbstractEnemyMobTest {
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
 
-        // doDamage() (called by a tower) can kill an enemy mid-tick, before this
-        // mob's own doTick() next runs to capture deathTick - ticksSinceDeath()
-        // is -1 in that window, and a render can land here too.
+        // a tower can kill mid-tick, before doTick() captures deathTick
         enemy.doDamage(Damage.physical(5000));
 
         assertThat(mob.ticksSinceDeath(0)).isEqualTo(-1);
@@ -202,8 +198,6 @@ class AbstractEnemyMobTest {
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
 
-        // doDamage() (called by a tower) can land mid-tick, before this mob's own doTick()
-        // next runs to capture criticalHitTick - the same deferred-capture window deathTick has.
         enemy.doDamage(Damage.physical(100).asCritical());
 
         assertThat(mob.ticksSinceCriticalHit(0)).isEqualTo(-1);
@@ -233,7 +227,6 @@ class AbstractEnemyMobTest {
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
 
-        // nothing to interpolate from at spawn
         assertThat(mob.getPrevX()).isEqualTo(mob.getX());
         assertThat(mob.getPrevY()).isEqualTo(mob.getY());
         double spawnX = mob.getX();
@@ -260,8 +253,7 @@ class AbstractEnemyMobTest {
             enemy.doTick(tick);
         }
 
-        // the enemy just reappeared at the path's start - a genuine teleport, not motion
-        // along the path - so prev/current must coincide rather than spanning the board
+        // wrapping to the start is a teleport; prev must not span the board
         assertThat(mob.getPrevX()).isEqualTo(mob.getX());
         assertThat(mob.getPrevY()).isEqualTo(mob.getY());
     }
@@ -296,7 +288,6 @@ class AbstractEnemyMobTest {
         assertThat(context.economy().getCredits()).isEqualTo(creditsBeforeLeak);
         assertThat(host.enemyDiedCalls).isNotEmpty();
 
-        // Not looping back means no tower gets a second chance to kill it for its bounty.
         enemy.doDamage(Damage.physical(1000));
         assertThat(context.economy().getCredits()).isEqualTo(creditsBeforeLeak);
     }

@@ -23,7 +23,6 @@ import td.util.ThreadConfined;
  * down with the simulation rather than with wall-clock time.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
-// owned by the SonarTower that advances it, so game-loop in practice
 public final class SonarSweep {
 
     private static final double TWO_PI = Math.PI * 2;

@@ -17,29 +17,20 @@ import java.util.Optional;
  * from which Java class was instantiated.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
-// body scale, facing and the two tick counters, all advanced by doTick
 public final class DefinedEnemyMob extends AbstractEnemyMob {
 
     private final EnemyDefinition definition;
     private final List<AbilityState> abilityStates;
-    // The spawn's full speed multiplier - its SpawnShape's own factor (1 for a normal spawn,
-    // 0.5 for a boss) already composed with its path's and wave's speedMultiplier by
-    // td.wave.Wave, so a fast path or a called-out fast round needs no separate mechanism here.
-    // Folded into every doDamage() speed recomputation alongside the traits' own speedFactor,
-    // rather than applied once at construction, which the first hit would silently wipe.
+    // Folded into every speed recomputation; applied once at construction, the first hit
+    // would wipe it.
     private final float shapeSpeedMultiplier;
     private float bodyScale;
     private double facingRadians;
     private int ticksSinceSpawn;
-    // Starts at 0, not "infinite" - a TimeSinceLastHitTrigger's idle window counts from spawn,
-    // the same as from an actual hit, so a fresh spawn doesn't trivially satisfy any threshold
-    // immediately.
+    // Counts from spawn, so a fresh mob does not trivially satisfy an idle threshold.
     private int ticksSinceLastHit;
 
     public DefinedEnemyMob(EnemyDefinition definition, GameWorld gameWorld, SpawnParameters spawnParameters, Rank rank) {
-        // The wave's base health is this definition's to scale: a tougher archetype divides it
-        // down. Done in the super call rather than a second init step, so bodyScale below is
-        // the only thing left to compute and nothing observes a half-built mob.
         super(gameWorld, definition.mobType(), definition.baseSpeed() * spawnParameters.speedMultiplier(),
                 withDividedHealth(spawnParameters, definition.healthDivisor()), rank);
         this.definition = definition;
@@ -63,12 +54,8 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
     private static float bodyScaleFor(BodyArchetype archetype, int scale, Rank rank) {
         return switch (archetype) {
             case CIRCLE -> scale / 6f;
-            // The ladder is a closed, five-tier enum, so this needs no cap the way a
-            // once-unbounded numeric level did - BOSS's ordinal (4) is the largest this ever sees.
             case SQUARE, TRIANGLE, GHOST -> scale / (float) (7 - rank.ordinal());
-            // Fixed, not rank-scaled like SQUARE/TRIANGLE/GHOST above: the Warden is meant to
-            // read as visibly the biggest thing on the board regardless of which wave slot
-            // spawned it, not merely tied with an ordinary Square at its own size cap.
+            // Fixed, so it always reads as the biggest thing on the board.
             case WARDEN -> scale / 1.5f;
             case WARDEN_EGG -> scale / 3f;
             case MENDER -> scale / (float) (7 - rank.ordinal());
@@ -116,11 +103,8 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
             return;
         }
         if (this.isDead()) {
-            // Evaluate abilities exactly once - the tick deathTick is captured (checked via
-            // ticksSinceDeath, not a "was already dead" flag: a tower can kill this mob during
-            // its own doTick phase, after this mob's own doTick already ran for that tick - see
-            // AbstractEnemyMob's death-timing invariant - so "dead" and "deathTick captured"
-            // are not necessarily the same tick, and only the latter must gate firing once.
+            // Gated on deathTick capture, not on death: a tower can kill this mob after its own doTick
+            // already ran this tick.
             if (this.ticksSinceDeath(gameTime) == 0) {
                 this.evaluateAbilities(gameTime);
             }
@@ -139,9 +123,7 @@ public final class DefinedEnemyMob extends AbstractEnemyMob {
             case PulseMovement ignored -> {
             }
         }
-        // A frozen mob cannot cast - see this class's own applyEffect and td/enemy/CLAUDE.md.
-        // Not consulted on the death-tick evaluateAbilities call above: dying always spawns
-        // whatever an OnDeathTrigger carries, regardless of any effect the killing hit applied.
+        // A frozen mob cannot cast.
         if (!this.isIncapacitated()) {
             this.evaluateAbilities(gameTime);
         }

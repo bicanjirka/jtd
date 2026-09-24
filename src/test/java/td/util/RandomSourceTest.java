@@ -19,11 +19,8 @@ class RandomSourceTest {
 
     @Test
     void seedsOneApartProduceUncorrelatedFirstDraws() {
-        // The regression this guards: java.util.Random's own seed-to-state scramble is a thin,
-        // reversible XOR, so handing it seed, seed+1, seed+2, ... directly makes every one of
-        // those sources agree on their *first* draw to two decimal places - exactly the shape
-        // of seed td.wave.Wave derives per slot (scatterSeed * 31 + slotIndex). seeded() must
-        // scramble the seed first so that pathological case doesn't happen.
+        // java.util.Random's seed scramble is a reversible XOR, so consecutive seeds agree on their
+        // first draw; seeded() must scramble first.
         long base = 382695L;
         double first = RandomSource.seeded(base).nextDouble();
         boolean anyMeaningfullyDifferent = false;

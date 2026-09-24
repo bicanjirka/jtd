@@ -18,7 +18,6 @@ final class CurlyPathLevel {
     private static final int STARTING_CREDITS = 50;
     private static final int STARTING_LIVES = 5;
 
-    // cornerPull=0.22 over this path's shortest leg (1 cell = 32px, so pullback there is ~7px)
     private static final ArcCornerSmoothing SMOOTHING = new ArcCornerSmoothing(0.22, 8);
 
     static final LevelDefinition DEFINITION = LevelDefinition.singlePath(

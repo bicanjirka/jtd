@@ -26,7 +26,6 @@ import java.util.List;
  * the exact same callback the real game advances waves on.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
-// a headless harness driven start to finish by whichever thread calls run()
 public final class BalanceHarness implements GameHost {
 
     /**
@@ -57,7 +56,7 @@ public final class BalanceHarness implements GameHost {
     @Override
     public void enemyDied(int enemiesLeft) {
         if (enemiesLeft == 0) {
-            this.engine.setWaveReady(true); // mirrors TowerDefense.enemyDied - GameHost.noOp() never does this
+            this.engine.setWaveReady(true); // GameHost.noOp() never marks the wave ready
             this.waveJustCleared = true;
         }
     }

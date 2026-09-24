@@ -39,7 +39,6 @@ import java.util.function.Consumer;
  * number always matches the key that buys it.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
-// Swing components and the current tower/context, assigned once by initComponents/setTower
 public class PanelUpgradeTree extends JPanel implements EconomyListener {
 
     @Serial

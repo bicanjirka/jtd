@@ -54,9 +54,7 @@ public record SpawnParameters(int delayTicks, int health, int price, float sizeM
     public static SpawnParameters of(double slotPosition, float baseSpeed, int health, int price,
                                       float sizeMultiplier, float speedMultiplier, Vec2 localOffset, int pathIndex) {
         float speed = baseSpeed * speedMultiplier;
-        // A slot at position 0, or a mob with no speed of its own (an ability-spawned egg), is
-        // never delayed - guarded explicitly rather than dividing by a possibly-zero speed,
-        // which would round to Integer.MAX_VALUE ticks instead of the intended zero.
+        // Guarded rather than dividing by a zero speed, which would round to Integer.MAX_VALUE.
         int delayTicks = slotPosition <= 0 || speed <= 0
                 ? 0
                 : (int) Math.round(DELAY_TICKS_PER_SLOT * slotPosition / speed);

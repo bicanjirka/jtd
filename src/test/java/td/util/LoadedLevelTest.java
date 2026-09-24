@@ -28,8 +28,6 @@ class LoadedLevelTest {
         assertThat(none.isLoaded()).isFalse();
         assertThat(none.cells()).isSameAs(CellGrid.empty());
         assertThat(none.waveCount()).isZero();
-        // One degenerate path, not zero - see LoadedLevel.NONE's own doc comment: a mob built
-        // before any level loads still resolves pathAt(0) rather than throwing.
         assertThat(none.pathCount()).isEqualTo(1);
         assertThat(none.pathAt(0).points()).isEmpty();
     }
