@@ -49,11 +49,12 @@ final class PathWaveRow extends JPanel {
 
     /**
      * Takes the colour from the installed level by the wave's path index, the one source of a
-     * path's colour.
+     * path's colour. With a single path the swatch distinguishes nothing, so it is hidden.
      */
     void setWave(Wave wave) {
         if (this.gameWorld != null && wave.getPathIndex() < this.gameWorld.level().pathCount()) {
             this.swatch.color = this.gameWorld.level().paths().get(wave.getPathIndex()).color();
+            this.swatch.setVisible(this.gameWorld.level().pathCount() > 1);
             this.swatch.repaint();
         }
         this.panelEnemy.clearEnemies();
