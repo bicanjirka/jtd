@@ -23,6 +23,7 @@ import td.ui.render.PulseDirection;
 import td.ui.render.PulseDraw;
 import td.ui.render.RankBadge;
 import td.ui.render.RenderFrame;
+import td.ui.render.SheetLine;
 import td.ui.render.SlotMarkDraw;
 import td.ui.render.SplashDraw;
 import td.ui.render.StatusMarkerDraw;
@@ -50,13 +51,15 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Turns a {@link RenderFrame} into {@code Graphics2D} calls: the only class that does, and the only
  * owner of colours, shapes and strokes for board content, all keyed off {@link Palette}.
  * <p>
  * {@code Panel*} components use AWT for layout and previews but never paint board content;
- * {@link #paintEnemies} and {@link #renderTowerIcon} exist for them.
+ * {@link #paintEnemies}, {@link #renderTowerIcon} and the {@code paint*Glyph} methods exist for
+ * them.
  */
 public final class Java2DFrameRenderer {
 
@@ -64,6 +67,11 @@ public final class Java2DFrameRenderer {
     private static final Color CELL_NOK = Color.RED;
     private static final Color CELL_RANGE = new Color(250, 250, 210, 150);
     private static final Color BOARD_BACKGROUND = Color.BLACK;
+    /** An info-panel glyph for a stat nothing on the board marks. */
+    private static final Color UNMARKED_GLYPH = new Color(150, 170, 150);
+    private static final float HOLLOW_GLYPH_STROKE_WIDTH = 1.3f;
+    /** A dot is a small mark, not a body. */
+    private static final float DOT_GLYPH_SIZE_FRACTION = 0.4f;
     /** Share of a cell a tower body fills. */
     private static final float TOWER_BODY_SIZE_FRACTION = 0.42f;
 
@@ -355,7 +363,7 @@ public final class Java2DFrameRenderer {
                 fromDegrees, extentDegrees, Arc2D.PIE);
     }
 
-    private static Color colorFor(Palette palette) {
+    static Color colorFor(Palette palette) {
         return switch (palette) {
             case ENEMY_CIRCLE -> Color.CYAN;
             case ENEMY_GHOST -> Color.LIGHT_GRAY;
@@ -576,37 +584,66 @@ public final class Java2DFrameRenderer {
 
     /** Drawn upright above the body, never rotated with it. */
     private void paintRankBadge(Graphics2D g2, EnemyBodyDraw body) {
-        if (body.badge() == RankBadge.NONE) {
-            return;
-        }
-        float badgeSize = body.scale() * RANK_BADGE_SIZE_FRACTION;
         AffineTransform save = g2.getTransform();
         g2.translate(body.x(), body.y() - body.scale() * RANK_BADGE_OFFSET_FRACTION);
-        switch (body.badge()) {
-            case ONE_CHEVRON -> {
-                g2.setColor(colorFor(Palette.RANK_BADGE_CHEVRON));
-                this.paintUprightChevron(g2, badgeSize);
-            }
+        this.paintRankBadgeGlyph(g2, body.badge(), body.scale() * RANK_BADGE_SIZE_FRACTION);
+        g2.setTransform(save);
+    }
+
+    /** A rank badge centred on the origin, as above an enemy on the board. */
+    void paintRankBadgeGlyph(Graphics2D g2, RankBadge badge, float badgeSize) {
+        rankBadgePalette(badge).ifPresent(palette -> g2.setColor(colorFor(palette)));
+        AffineTransform save = g2.getTransform();
+        switch (badge) {
+            case ONE_CHEVRON -> this.paintUprightChevron(g2, badgeSize);
             case TWO_CHEVRON -> {
-                g2.setColor(colorFor(Palette.RANK_BADGE_CHEVRON));
-                float spacing = body.scale() * RANK_BADGE_CHEVRON_SPACING_FRACTION;
+                float spacing = badgeSize * RANK_BADGE_CHEVRON_SPACING_FRACTION / RANK_BADGE_SIZE_FRACTION;
                 g2.translate(0, -spacing / 2);
                 this.paintUprightChevron(g2, badgeSize);
                 g2.translate(0, spacing);
                 this.paintUprightChevron(g2, badgeSize);
             }
-            case STAR -> {
-                g2.setColor(colorFor(Palette.RANK_BADGE_ELITE));
-                g2.fill(starShape(5, badgeSize, badgeSize * 0.45f));
-            }
-            case SKULL -> {
-                g2.setColor(colorFor(Palette.RANK_BADGE_BOSS));
-                g2.fill(skullShape(badgeSize));
-            }
+            case STAR -> g2.fill(starShape(5, badgeSize, badgeSize * 0.45f));
+            case SKULL -> g2.fill(skullShape(badgeSize));
             case NONE -> {
             }
         }
         g2.setTransform(save);
+    }
+
+    /** The colour a rank badge is drawn in; a grunt has no badge. */
+    static Optional<Palette> rankBadgePalette(RankBadge badge) {
+        return switch (badge) {
+            case ONE_CHEVRON, TWO_CHEVRON -> Optional.of(Palette.RANK_BADGE_CHEVRON);
+            case STAR -> Optional.of(Palette.RANK_BADGE_ELITE);
+            case SKULL -> Optional.of(Palette.RANK_BADGE_BOSS);
+            case NONE -> Optional.empty();
+        };
+    }
+
+    /** An enemy's body centred on the origin, upright and at full health. */
+    void paintEnemyGlyph(Graphics2D g2, Palette body, float size) {
+        g2.setColor(colorFor(body));
+        g2.fill(enemyShape(body, size));
+    }
+
+    /**
+     * An info-panel row's glyph centred on the origin: the board's trait and effect diamonds, or a
+     * neutral mark for a stat nothing on the board marks.
+     */
+    void paintRowGlyph(Graphics2D g2, SheetLine.Glyph glyph, Optional<Palette> tone, float size) {
+        g2.setColor(tone.map(Java2DFrameRenderer::colorFor).orElse(UNMARKED_GLYPH));
+        switch (glyph) {
+            case HOLLOW_DIAMOND -> {
+                Stroke defaultStroke = g2.getStroke();
+                g2.setStroke(new BasicStroke(HOLLOW_GLYPH_STROKE_WIDTH));
+                g2.draw(diamondShape(size));
+                g2.setStroke(defaultStroke);
+            }
+            case FILLED_DIAMOND -> g2.fill(diamondShape(size));
+            case DOT -> g2.fill(circleShape(size * DOT_GLYPH_SIZE_FRACTION));
+            case CHEVRON -> g2.fill(chevronShape(size * 0.75f));
+        }
     }
 
     /** Rotates the chevron to point up, around the current origin. */

@@ -30,7 +30,7 @@ public final class Hud {
     static final Color FOREGROUND = new Color(220, 255, 220);
     static final Font LABEL_FONT = new Font("Dialog", Font.PLAIN, 11);
     static final Font GLYPH_FONT = new Font("Dialog", Font.PLAIN, 14);
-    private static final Color BORDER_IDLE = new Color(78, 104, 78);
+    static final Color BORDER_IDLE = new Color(78, 104, 78);
     private static final Color BORDER_DISABLED = new Color(48, 60, 48);
     private static final Color TEXT_DISABLED = new Color(96, 112, 96);
     private static final Color FILL_HOVER = new Color(26, 38, 26);
