@@ -20,11 +20,11 @@ import java.util.OptionalInt;
  * @param stats        every stat's resolved value
  * @param effects      active effects in kind order
  * @param freezeStep   fresh freezes landed in the current diminishing-returns window
- * @param traitLines   one description per authored trait slot
+ * @param traitLines   one row per authored trait slot
  */
-public record EnemyInspection(String name, String description, Rank rank, int health, int maxHealth, int bounty,
-                              Map<EnemyStat, Float> stats, List<EffectState> effects, int freezeStep,
-                              List<String> traitLines, Fate fate) {
+public record EnemyInspection(String name, String description, Rank rank, BodyArchetype archetype, int health,
+                              int maxHealth, int bounty, Map<EnemyStat, Float> stats, List<EffectState> effects,
+                              int freezeStep, List<TraitLine> traitLines, Fate fate) {
 
     public EnemyInspection {
         stats = Collections.unmodifiableMap(new EnumMap<>(stats));
@@ -43,8 +43,8 @@ public record EnemyInspection(String name, String description, Rank rank, int he
         for (EffectKind kind : mob.activeEffectKinds()) {
             effects.add(new EffectState(kind, mob.effectRemainingTicks(kind)));
         }
-        List<String> traitLines = definition.traitSlots().stream().map(slot -> slot.template().describe()).toList();
-        return new EnemyInspection(definition.displayName(), definition.description(), mob.getRank(),
+        List<TraitLine> traitLines = definition.traitSlots().stream().map(slot -> slot.template().describe()).toList();
+        return new EnemyInspection(definition.displayName(), definition.description(), mob.getRank(), mob.archetype(),
                 (mob.getHealth() + 99) / 100, mob.getMaxHealthPoints(), mob.getBounty(), stats, effects,
                 mob.freezeDiminishingStep(), traitLines, mob.fate());
     }

@@ -43,9 +43,9 @@ public record PercentResistTrait(float fraction, Optional<DamageType> restricted
     }
 
     @Override
-    public String describe() {
+    public TraitLine describe() {
         String target = this.restrictedTo.map(PercentResistTrait::damageName).orElse("all");
-        return "Resists " + Math.round((1f - this.fraction) * 100) + "% of " + target + " damage";
+        return new TraitLine(this.marker(), "Resist " + target, "-" + Math.round((1f - this.fraction) * 100) + "%");
     }
 
     static String damageName(DamageType type) {

@@ -27,7 +27,6 @@ import java.util.List;
  */
 public class GameWorld {
 
-    private final GameHost mainApp;
     private final RandomSource random;
     private final EconomyLedger economy = new EconomyLedger();
     private final EnemyRoster enemies;
@@ -46,7 +45,6 @@ public class GameWorld {
     /** For a run that has to be reproducible. */
     public GameWorld(GameHost mainApp, RandomSource random) {
         this.random = random;
-        this.mainApp = mainApp;
         this.enemies = new EnemyRoster();
         this.towers = new TowerRoster(mainApp, this.economy, this::getBoard);
     }
@@ -151,10 +149,6 @@ public class GameWorld {
     /** Single-threaded worlds only; see {@link #setBoard}. */
     public void setEnemyCatalog(EnemyCatalog enemyCatalog) {
         this.level = this.level.withCatalog(enemyCatalog);
-    }
-
-    public void setInfoText(String s) {
-        this.mainApp.setInfoText(s);
     }
 
 }

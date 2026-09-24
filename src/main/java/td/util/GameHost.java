@@ -8,16 +8,10 @@ public interface GameHost {
     static GameHost noOp() {
         return new GameHost() {
             @Override
-            public void setInfoText(String s) {
-            }
-
-            @Override
             public void clearCell(int x, int y) {
             }
         };
     }
-
-    void setInfoText(String s);
 
     void clearCell(int x, int y);
 }

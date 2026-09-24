@@ -155,6 +155,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.gameConsole.onPause(this::pausePressed);
         this.gameConsole.onFast(this::fastPressed);
         this.gameConsole.onSuperFast(this::superFastPressed);
+        this.gameConsole.getWaveInfo().onEnemyHover(sheet -> {
+            this.unSelectTower();
+            this.gameConsole.getTowerInfo().showEnemy(sheet);
+        });
         this.boardOverlays.onBackToMenu(this::requestReturnToMenu);
         this.panelTowerSelector.doInit(this.gameWorld, this);
 
@@ -490,7 +494,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (!this.inspectingEnemy || frame == null || this.gameConsole.getTowerInfo().hasSelectedTower()) {
             return;
         }
-        frame.enemyInspectionText().ifPresent(this.gameConsole.getTowerInfo()::setExternalText);
+        frame.enemyInspection().ifPresent(this.gameConsole.getTowerInfo()::showEnemy);
     }
 
     private void jPanel_boardMouseMoved(MouseEvent evt) {

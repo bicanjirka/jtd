@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.ui.render.EnemySheet;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 import td.wave.Wave;
@@ -14,6 +15,7 @@ import java.awt.Insets;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * The round in play and the next one side by side, each with one {@link PathWaveRow} per path. Rows
@@ -33,9 +35,16 @@ public class PanelWaveInfo extends JPanel {
     private final List<PathWaveRow> curRows = new ArrayList<>();
     private final List<PathWaveRow> nextRows = new ArrayList<>();
     private GameWorld gameWorld;
+    private Consumer<EnemySheet> onEnemyHover = sheet -> {
+    };
 
     public PanelWaveInfo() {
         initComponents();
+    }
+
+    /** Called with the sheet of a preview enemy under the pointer. */
+    public void onEnemyHover(Consumer<EnemySheet> listener) {
+        this.onEnemyHover = listener;
     }
 
     public void setGameWorld(GameWorld c) {
@@ -93,7 +102,7 @@ public class PanelWaveInfo extends JPanel {
         container.removeAll();
         rows.clear();
         for (int i = 0; i < count; i++) {
-            PathWaveRow row = new PathWaveRow();
+            PathWaveRow row = new PathWaveRow(sheet -> this.onEnemyHover.accept(sheet));
             row.setGameWorld(this.gameWorld);
             rows.add(row);
             GridBagConstraints c = new GridBagConstraints();

@@ -15,8 +15,8 @@ public record FreezeDiminishingTrait() implements Trait {
     }
 
     @Override
-    public String describe() {
-        return "Repeated freezes wear off faster";
+    public TraitLine describe() {
+        return TraitLine.of(this.marker(), "Freeze DR");
     }
 
     @Override

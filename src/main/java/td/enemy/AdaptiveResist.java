@@ -29,12 +29,14 @@ public record AdaptiveResist(Optional<DamageType> resisted, float evenFraction, 
 
     /** The range the player can expect: the preview cannot know this level's damage mix. */
     @Override
-    public String describe() {
-        String stat = this.resisted.map(type -> type == DamageType.PHYSICAL ? "armor" : "magic resist")
-                .orElse("armor or magic resist");
+    public TraitLine describe() {
         float strongest = Math.min(this.evenFraction, this.fullFraction);
-        return "Adaptive: up to " + Math.round(PercentResistTrait.armorKeeping(strongest)) + " " + stat
-                + ", depending on your damage mix";
+        TraitMarker marker = this.resisted.map(type -> switch (type) {
+            case PHYSICAL -> TraitMarker.PHYSICAL_RESIST;
+            case MAGIC -> TraitMarker.MAGIC_RESIST;
+        }).orElse(TraitMarker.PERCENT_RESIST);
+        String target = this.resisted.map(PercentResistTrait::damageName).orElse("resist");
+        return new TraitLine(marker, "Adaptive " + target, "up to -" + Math.round((1f - strongest) * 100) + "%");
     }
 
     @Override

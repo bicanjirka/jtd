@@ -30,11 +30,6 @@ class FakeGameHost implements GameHost {
     }
 
     @Override
-    public void setInfoText(String s) {
-        // pure UI
-    }
-
-    @Override
     public void clearCell(int x, int y) {
         engine.clearCell(x, y);
     }

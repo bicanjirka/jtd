@@ -5,7 +5,7 @@ import java.util.Optional;
 
 /**
  * Everything needed to draw one frame of the board, without AWT, plus the selected enemy's
- * inspector text, so the EDT never reads a live mob.
+ * inspector sheet, so the EDT never reads a live mob.
  */
 public record RenderFrame(int scale, int maxX, int maxY,
                           List<CellDraw> cells,
@@ -18,5 +18,5 @@ public record RenderFrame(int scale, int maxX, int maxY,
                           List<ProjectileDraw> projectiles,
                           List<PathMarkerDraw> pathMarkers,
                           List<EnemyOverlayDraw> enemyOverlays,
-                          Optional<String> enemyInspectionText) {
+                          Optional<EnemySheet> enemyInspection) {
 }
