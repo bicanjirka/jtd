@@ -31,6 +31,7 @@ public final class EnemyCatalog {
         catalog.register(BuiltInEnemies.T_SPAWN);
         catalog.register(BuiltInEnemies.GHOST);
         catalog.register(BuiltInEnemies.MENDER);
+        catalog.register(BuiltInEnemies.JAMMER);
         catalog.register(BuiltInEnemies.WARDEN_EGG_3);
         catalog.register(BuiltInEnemies.WARDEN_3);
         catalog.register(BuiltInEnemies.WARDEN_EGG_2);

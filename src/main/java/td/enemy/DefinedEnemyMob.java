@@ -417,6 +417,9 @@ public final class DefinedEnemyMob implements EnemyMob {
             return;
         }
         this.onBoard = this.motion.isOnBoard();
+        if (this.onBoard) {
+            this.definition.disruption().ifPresent(aura -> this.gameWorld.disruptions().add(this.getX(), this.getY(), aura));
+        }
         this.ticksSinceSpawn++;
         if (this.ticksSinceLastHit < Integer.MAX_VALUE) {
             this.ticksSinceLastHit++;

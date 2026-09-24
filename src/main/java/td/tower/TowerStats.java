@@ -1,6 +1,7 @@
 package td.tower;
 
 import td.damage.AttackProfile;
+import td.stat.DisruptionPenalty;
 import td.tower.buff.TowerBuff;
 
 /**
@@ -13,15 +14,21 @@ import td.tower.buff.TowerBuff;
  * @param rangeReal  range in pixels
  * @param rangeReal2 {@code rangeReal} squared
  * @param attack     what every hit carries: crit chance and multiplier, penetration
+ * @param disruption the enemy disruption these stats already include
  */
 public record TowerStats(int damage, float range, int coolDown, float rangeReal, float rangeReal2,
-                         AttackProfile attack) {
+                         AttackProfile attack, DisruptionPenalty disruption) {
 
     /**
      * Folds base stats and the total buff into one set; {@code scale} converts range from cells to
      * pixels.
      */
-    public static TowerStats of(TowerBaseStats base, TowerBuff buff, int scale) {
+    public static TowerStats of(TowerBaseStats base, TowerBuff buff, DisruptionPenalty disruption, int scale) {
+        TowerBuff total = buff.combine(TowerBuff.fireRate(-disruption.fireRate()).withRange(-disruption.range()));
+        return of(base, total, scale, disruption);
+    }
+
+    private static TowerStats of(TowerBaseStats base, TowerBuff buff, int scale, DisruptionPenalty disruption) {
         float range = buff.rangeFor(base.range());
         float rangeReal = range * scale;
         AttackProfile attack = AttackProfile.critChance(buff.critChanceFor(base.critChanceBase()))
@@ -29,7 +36,7 @@ public record TowerStats(int damage, float range, int coolDown, float rangeReal,
                 .withArmorPenetration(buff.armorPenetrationBonus(), 0f)
                 .withMagicPenetration(buff.magicPenetrationBonus(), 0f);
         return new TowerStats(buff.damageFor(base.damage()), range, buff.fireRateFor(base.coolDownMax()),
-                rangeReal, rangeReal * rangeReal, attack);
+                rangeReal, rangeReal * rangeReal, attack, disruption);
     }
 
     /** Chance in {@code [0, 1]} that a hit is critical, before the target's own stats. */

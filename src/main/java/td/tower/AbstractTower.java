@@ -4,6 +4,7 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.economy.EconomyDelta;
 import td.enemy.HitReceiver;
+import td.stat.DisruptionPenalty;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -45,6 +46,8 @@ public abstract class AbstractTower implements Tower {
     private volatile UpgradeState upgrades = UpgradeState.none();
     private volatile TowerStats stats;
     private volatile boolean removed = false;
+    // Sampled by the tick thread; also read when the EDT republishes stats after a purchase.
+    private volatile DisruptionPenalty disruption = DisruptionPenalty.none();
 
     /**
      * Converts the cell coordinates to the pixel centre and range. A tower with no cooldown passes
@@ -65,7 +68,7 @@ public abstract class AbstractTower implements Tower {
         this.boardY = cellY * scale;
         this.centerX = this.boardX + scale / 2;
         this.centerY = this.boardY + scale / 2;
-        this.stats = TowerStats.of(base, TowerBuff.none(), scale);
+        this.stats = TowerStats.of(base, TowerBuff.none(), DisruptionPenalty.none(), scale);
     }
 
     /** Current stats as one snapshot. Never null. */
@@ -138,7 +141,7 @@ public abstract class AbstractTower implements Tower {
                 .map(t -> t.buffFor(this))
                 .reduce(TowerBuff.none(), TowerBuff::combine);
         TowerBuff totalBuff = externalBuff.combine(upgrades.totalBuff());
-        this.stats = TowerStats.of(this.baseStats, totalBuff, this.context.getBoard().scale());
+        this.stats = TowerStats.of(this.baseStats, totalBuff, this.disruption, this.context.getBoard().scale());
     }
 
     /**
@@ -169,6 +172,22 @@ public abstract class AbstractTower implements Tower {
             }
         }
         return landed.critical();
+    }
+
+    /**
+     * Compared against the published stats rather than the last sample, so a republish from the EDT
+     * racing this one is corrected on the next tick.
+     */
+    public void refreshDisruption() {
+        DisruptionPenalty sampled = this.context.disruptions().penaltyAt(this.centerX, this.centerY);
+        this.disruption = sampled;
+        if (!sampled.equals(this.stats.disruption())) {
+            this.publishStats(this.upgrades);
+        }
+    }
+
+    public boolean isDisrupted() {
+        return !this.stats.disruption().isNone();
     }
 
     public long getDamageDealt() {

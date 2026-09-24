@@ -31,6 +31,7 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 | `t`       | Frenzied (faster when hurt; Boss spawns a brood)         |
 | `g`       | Ghost (turns invisible when first hit; Elite+ shrouds)   |
 | `m`       | Mender (heals allies)                                    |
+| `j`       | Jammer (weakens nearby towers; in no wave yet)           |
 | `e`       | spacer: takes a spawn slot, spawns nothing               |
 | `warden1` | the Warden boss chain                                    |
 

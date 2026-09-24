@@ -58,6 +58,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
      * Much fainter than the shield bubble, since an aura ring can be many times the body's size.
      */
     private static final float SUPPORT_AURA_RING_ALPHA = 0.12f;
+    // Stronger than a support aura: it threatens the player's towers rather than helping allies.
+    private static final float DISRUPTION_RING_ALPHA = 0.35f;
     static final int EFFECT_PULSE_DURATION_TICKS = 8;
     /** Pulse ring size relative to the body. */
     private static final float GAIN_LOSS_PULSE_RADIUS_FRACTION = 1.6f;
@@ -181,7 +183,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         }
     }
 
-    /** Static overlays for ongoing states: shield bubble, ice crystals and support-aura ring. */
+    /** Static overlays for ongoing states: shield bubble, ice crystals, support-aura and disruption rings. */
     private void overlays(DefinedEnemyMob mob, float x, float y, float scale, Optional<SupportAura> supportAura) {
         if (mob.activeEffectKinds().contains(EffectKind.SHIELD)) {
             this.overlayDraws.add(new EnemyRingDraw(Palette.STATUS_MARKER_SHIELD, x, y, scale * SHIELD_BUBBLE_SCALE_FRACTION, SHIELD_BUBBLE_ALPHA));
@@ -191,6 +193,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         }
         supportAura.ifPresent(aura -> this.overlayDraws.add(
                 new EnemyRingDraw(markerPaletteFor(aura.kind()), x, y, aura.radius(), SUPPORT_AURA_RING_ALPHA)));
+        mob.definition().disruption().ifPresent(aura -> this.overlayDraws.add(
+                new EnemyRingDraw(Palette.DISRUPTION, x, y, aura.radius(), DISRUPTION_RING_ALPHA)));
     }
 
     /**

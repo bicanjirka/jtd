@@ -10,6 +10,9 @@ package td.tower.buff;
 public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus, float bountyBonus,
                         float critChanceBonus, float armorPenetrationBonus, float magicPenetrationBonus) {
 
+    /** The lowest combined fire-rate or range bonus any mix of penalties can reach. */
+    public static final float MIN_BONUS = -0.75f;
+
     private static final TowerBuff NONE = new TowerBuff(0f, 0f, 0f, 0f, 0f, 0f, 0f);
 
     /** No crit-chance or penetration bonus. */
@@ -103,13 +106,17 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
         return (int) (base * (1f + this.damageBonus));
     }
 
+    /** The range grown by the range bonus, which never goes below {@link #MIN_BONUS}. */
     public float rangeFor(float base) {
-        return base * (1f + this.rangeBonus);
+        return base * (1f + Math.max(MIN_BONUS, this.rangeBonus));
     }
 
-    /** The cooldown shortened by the fire-rate bonus, never below one tick. */
+    /**
+     * The cooldown shortened by the fire-rate bonus, never below one tick. The bonus never goes
+     * below {@link #MIN_BONUS}, so no stack of penalties stalls a tower completely.
+     */
     public int fireRateFor(int baseCoolDown) {
-        return Math.max(1, Math.round(baseCoolDown * (1f - this.fireRateBonus)));
+        return Math.max(1, Math.round(baseCoolDown * (1f - Math.max(MIN_BONUS, this.fireRateBonus))));
     }
 
     /** {@code base} plus the crit bonus, clamped to a probability. */

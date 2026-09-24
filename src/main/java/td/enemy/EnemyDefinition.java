@@ -2,6 +2,7 @@ package td.enemy;
 
 import td.damage.DamageMix;
 import td.stat.BaseStats;
+import td.stat.DisruptionAura;
 import td.stat.EnemyStat;
 
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import java.util.function.Function;
  * {@link #withAdditionalTraits} can replace one by id
  * @param abilitySlots  triggered abilities, identified the same way
  * @param baseStats     authored stat bases; speed comes from {@code baseSpeed}, not from here
+ * @param disruption    what it does to towers near it, if anything
  */
 public record EnemyDefinition(
         String id,
@@ -40,7 +42,8 @@ public record EnemyDefinition(
         MovementBehavior movement,
         List<IdentifiedTrait> traitSlots,
         List<IdentifiedAbility> abilitySlots,
-        BaseStats baseStats) {
+        BaseStats baseStats,
+        Optional<DisruptionAura> disruption) {
 
     public EnemyDefinition {
         traitSlots = List.copyOf(traitSlots);
@@ -54,7 +57,8 @@ public record EnemyDefinition(
     public static EnemyDefinition of(String id, String displayName, int baseHealth, int price, float baseSpeed,
             BodyArchetype archetype) {
         return new EnemyDefinition(id, displayName, "", baseHealth, price, baseSpeed, 1f,
-                EnemyMob.Type.NORMAL, archetype, new FixedMovement(), List.of(), List.of(), BaseStats.defaults());
+                EnemyMob.Type.NORMAL, archetype, new FixedMovement(), List.of(), List.of(), BaseStats.defaults(),
+                Optional.empty());
     }
 
     /** The traits one mob spawned against {@code mix} carries, each slot resolved once. */
@@ -96,38 +100,45 @@ public record EnemyDefinition(
     public EnemyDefinition withStat(EnemyStat stat, float base) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats.with(stat, base));
+                this.abilitySlots, this.baseStats.with(stat, base), this.disruption);
+    }
+
+    /** Weakens every tower within the aura's radius while this enemy is alive on the board. */
+    public EnemyDefinition withDisruption(DisruptionAura aura) {
+        return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
+                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
+                this.abilitySlots, this.baseStats, Optional.of(aura));
     }
 
     /** A rank step's usual change: new health and bounty, everything else kept. */
     public EnemyDefinition withHealthAndPrice(int baseHealth, int price) {
         return new EnemyDefinition(this.id, this.displayName, this.description, baseHealth, price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats);
+                this.abilitySlots, this.baseStats, this.disruption);
     }
 
     public EnemyDefinition withDescription(String description) {
         return new EnemyDefinition(this.id, this.displayName, description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats);
+                this.abilitySlots, this.baseStats, this.disruption);
     }
 
     public EnemyDefinition withHealthDivisor(float healthDivisor) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats);
+                this.abilitySlots, this.baseStats, this.disruption);
     }
 
     public EnemyDefinition withMobType(EnemyMob.Type mobType) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, mobType, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats);
+                this.abilitySlots, this.baseStats, this.disruption);
     }
 
     public EnemyDefinition withMovement(MovementBehavior movement) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, movement, this.traitSlots,
-                this.abilitySlots, this.baseStats);
+                this.abilitySlots, this.baseStats, this.disruption);
     }
 
     /**
@@ -141,7 +152,7 @@ public record EnemyDefinition(
     public EnemyDefinition withIdentifiedTraits(List<IdentifiedTrait> traitSlots) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, traitSlots,
-                this.abilitySlots, this.baseStats);
+                this.abilitySlots, this.baseStats, this.disruption);
     }
 
     /**
@@ -159,7 +170,7 @@ public record EnemyDefinition(
     public EnemyDefinition withIdentifiedAbilities(List<IdentifiedAbility> abilitySlots) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
-                abilitySlots, this.baseStats);
+                abilitySlots, this.baseStats, this.disruption);
     }
 
     /** Adds abilities by id, like {@link #withAdditionalTraits}. */

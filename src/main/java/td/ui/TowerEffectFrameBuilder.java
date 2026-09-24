@@ -18,6 +18,7 @@ import td.ui.render.Palette;
 import td.ui.render.PulseDraw;
 import td.ui.render.SplashDraw;
 import td.ui.render.TowerEffectDraw;
+import td.ui.render.TowerStatusDraw;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     // Two rings half a period apart read as one breathing aura, not a blinking ring.
     private static final double AURA_PERIOD_SECONDS = 1.8;
     private static final double[] AURA_PHASE_OFFSETS = {0.0, 0.5};
+
+    private static final float STATUS_MARKER_SCALE_FRACTION = 0.12f;
 
     private final List<TowerEffectDraw> draws = new ArrayList<>();
     private final int gameTime;
@@ -51,6 +54,14 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static double phaseFraction(double seconds, double phaseOffset) {
         double t = (seconds / AURA_PERIOD_SECONDS + phaseOffset) % 1.0;
         return t < 0 ? t + 1.0 : t;
+    }
+
+    /** A marker in the tower's top-right corner while an enemy disrupts it. */
+    public void addStatus(Tower tower, int scale) {
+        if (tower.isDisrupted()) {
+            this.draws.add(new TowerStatusDraw(Palette.DISRUPTION, tower.getBoardX() + scale * 0.85f,
+                    tower.getBoardY() + scale * 0.15f, scale * STATUS_MARKER_SCALE_FRACTION));
+        }
     }
 
     public List<TowerEffectDraw> build() {

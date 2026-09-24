@@ -42,6 +42,9 @@
 - `TowerBuff` axes: damage, range, fireRate, bounty, critChance, armorPenetration,
   magicPenetration. Build one from a single-axis factory plus `withX`
   (`TowerBuff.damage(0.3f).withRange(0.1f)`), not from `none()`.
+- Enemy disruption reaches a tower only through `GameWorld.disruptions()`, sampled at the tower's
+  centre in the towers phase (`refreshDisruption`). It folds in as a negative `TowerBuff`, and
+  `TowerBuff` floors combined fire-rate and range bonuses at `MIN_BONUS` (-0.75).
 - Cooldown has a base/current split like damage and range (`coolDownMax` vs `coolDownCurrent()`).
 - `dealDamage` sends the hit with `TowerStats.attack()` (crit chance and multiplier, penetration);
   the target rolls the crit. A tower never reads the target's stats to adjust its own hit.

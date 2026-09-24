@@ -4,6 +4,7 @@ import td.effect.EffectKind;
 import td.effect.HealTemplate;
 import td.effect.InvisibleTemplate;
 import td.effect.ShieldTemplate;
+import td.stat.DisruptionAura;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,6 +66,14 @@ final class BuiltInEnemies {
                             IdentifiedTrait.named("flatResist", FlatResistTrait.physicalOnly(1000)),
                             IdentifiedTrait.named("resist", new PercentResistTrait(0.5f)))))
             .build();
+
+    private static final float JAMMER_RADIUS = 100f;
+    private static final float JAMMER_FIRE_RATE_PENALTY = 0.3f;
+    private static final float JAMMER_RANGE_PENALTY = 0.2f;
+    static final EnemyDefinition JAMMER = EnemyDefinition.of("j", "Jammer", 120, 6, 1.0f, BodyArchetype.SQUARE)
+            .withDescription("Jams every tower near it: they fire more slowly and see less far while it's in range.")
+            .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
+            .withDisruption(new DisruptionAura(JAMMER_RADIUS, JAMMER_FIRE_RATE_PENALTY, JAMMER_RANGE_PENALTY));
 
     private static final float FRENZIED_SPAWN_HEALTH_THRESHOLD = 0.5f;
     private static final int FRENZIED_SPAWN_COUNT = 3;

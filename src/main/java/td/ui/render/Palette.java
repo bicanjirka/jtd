@@ -65,5 +65,7 @@ public enum Palette {
     TRAIT_MARKER_FREEZE_IMMUNE,
     TRAIT_MARKER_EFFECT_RESIST,
     TRAIT_MARKER_FREEZE_DIMINISHING,
-    TRAIT_MARKER_OVERFLOW
+    TRAIT_MARKER_OVERFLOW,
+    /** An enemy's disruption ring and the marker on a tower it weakens. */
+    DISRUPTION
 }
