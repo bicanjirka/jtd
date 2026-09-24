@@ -64,4 +64,5 @@ keeps the seam honest.
   `EnemyInspection`; stats at their default are left out. The live inspector's text is built with
   the frame and travels in `RenderFrame.enemyInspectionText`; the EDT only shows it, and only
   after a board click asked for a selection.
-- Verify any UI change from a screenshot (`run-jtd` skill).
+- Verify a board-look change from a `PreviewBoard` render, a panel or control change from a
+  `run-jtd` screenshot.
