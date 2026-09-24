@@ -15,6 +15,11 @@ public record FreezeDiminishingTrait() implements Trait {
     }
 
     @Override
+    public String describe() {
+        return "Repeated freezes wear off faster";
+    }
+
+    @Override
     public TraitMarker marker() {
         return TraitMarker.FREEZE_DIMINISHING;
     }

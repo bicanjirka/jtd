@@ -112,4 +112,10 @@
 4. Add its token to `td/wave/CLAUDE.md`'s table and to `README.md`.
 
 A new `Trait` also needs a `TraitMarker` constant and its palette cases in
-`EnemyFrameBuilder.traitMarkerPaletteFor`/`Java2DFrameRenderer.colorFor`.
+`EnemyFrameBuilder.traitMarkerPaletteFor`/`Java2DFrameRenderer.colorFor`, and a player-facing
+`describe()` line (an adaptive template describes the most it can reach).
+
+## Display
+
+- The UI shows an enemy only through `EnemyInspection` (`DefinedEnemyMob.inspect()`), an
+  immutable snapshot taken on the thread that owns the mob, never by reading live stats.

@@ -35,6 +35,12 @@ public record FlatResistTrait(int flatReduction, Optional<DamageType> restricted
     }
 
     @Override
+    public String describe() {
+        String target = this.restrictedTo.map(PercentResistTrait::damageName).orElse("every");
+        return "Plating: shrugs off " + TraitText.points(this.flatReduction) + " of " + target + " hit";
+    }
+
+    @Override
     public TraitMarker marker() {
         return TraitMarker.FLAT_RESIST;
     }

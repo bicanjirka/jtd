@@ -19,6 +19,7 @@ import td.util.ThreadConfined;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 
 /**
@@ -55,6 +56,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private final StatSheet stats;
 
     private int health;
+    private EnemyInspection.Fate fate = EnemyInspection.Fate.ALIVE;
     private LifeStage stage;
     // Only meaningful while LIVE: off-board mobs walk in from and out to off-screen untargetable.
     private boolean onBoard;
@@ -251,6 +253,20 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.freezeDiminishing.stepAt(this.ticksSinceSpawn);
     }
 
+    /** Ticks left on the active {@code kind}; empty when inactive or for a burn. */
+    public OptionalInt effectRemainingTicks(EffectKind kind) {
+        return this.activeEffects.remainingTicks(kind);
+    }
+
+    public EnemyInspection.Fate fate() {
+        return this.fate;
+    }
+
+    /** A snapshot of this mob for display. */
+    public EnemyInspection inspect() {
+        return EnemyInspection.of(this);
+    }
+
     public Set<EffectKind> activeEffectKinds() {
         return this.activeEffects.activeKinds();
     }
@@ -315,6 +331,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         }
         if (this.health <= 0) {
             this.die();
+            this.fate = EnemyInspection.Fate.KILLED;
             int score = Math.round(this.price * this.rank.scoreMultiplier());
             this.gameWorld.economy().apply(EconomyDelta.kill(this.price, score));
             this.gameWorld.enemies().reportDeath();
@@ -445,6 +462,7 @@ public final class DefinedEnemyMob implements EnemyMob {
      */
     private void leak() {
         this.die();
+        this.fate = EnemyInspection.Fate.LEAKED;
         this.gameWorld.economy().apply(EconomyDelta.leak(this.price));
         this.gameWorld.enemies().reportDeath();
     }

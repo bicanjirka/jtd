@@ -31,3 +31,13 @@ batch. Each entry says what to do and what should be true.
 - Expect: a pink ring (100 px radius) around the Jammer; every tower whose centre is inside it
   shows a small pink diamond in its top-right corner, and its range circle (when selected) is
   20% smaller; both clear once the Jammer passes or dies.
+
+## 5. Phase 5 - wave-preview stat block (screenshot)
+
+- Start Curly Path (or any level with Armored and Elite/Boss waves), hover each mob in the wave
+  preview strip, and screenshot the info panel.
+- Expect: the panel shows name, description, the Rank/Health/Bounty line, then `Speed N px/s`,
+  and for Armored `Armor 25 (-20% physical)`, `Magic resist 25 (-20% magic)`,
+  `Resilience 100 (immune to crits)` and a `Traits:` list; an Elite Simple shows
+  `- Adaptive: up to 67 armor or magic resist, depending on your damage mix` and
+  `Freeze diminishing returns`. Check the text fits the panel (no clipping) in the Hud style.
