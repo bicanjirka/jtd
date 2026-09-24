@@ -20,7 +20,9 @@
 
 Space-separated tokens, parsed by `WaveScript.parse(tokens, defaultRank, catalog)` into a
 `WaveContent` without needing `GameWorld`. `Wave.spawn()` builds the mobs when the wave starts,
-never in the constructor: that keeps a level load a single `LoadedLevel` publication.
+never in the constructor: that keeps a level load a single `LoadedLevel` publication. Each
+`spawn()` call builds a fresh set, so calling it twice puts two copies on the board. For
+counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 
 | Token     | Enemy                                                    |
 |-----------|----------------------------------------------------------|

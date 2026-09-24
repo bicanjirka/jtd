@@ -42,8 +42,9 @@ violation. They are not restated here.
 - **The engine is headless.** `GameEngine`, `GameWorld` and the domain packages own all game
   state and input semantics, and never touch Swing/AWT. New gameplay logic goes there, never in
   `TowerDefense`.
-- **`GameHost` is the engine's only channel to the UI.** Widen it only for a real UI need. Use
-  `GameHost.noOp()`, never `null`.
+- **`GameHost` is the engine's only channel to the UI.** If the engine needs something from the
+  UI, add a `GameHost` method rather than reaching for a Swing type; never widen it
+  speculatively. Use `GameHost.noOp()`, never `null`.
 - **`td.ui.render` is AWT-free.** `BoardRenderer.buildFrame` describes a frame as immutable draw
   commands; `Java2DFrameRenderer` alone paints them. `Panel*` components may use AWT for layout
   and their own previews; board content always goes through the pipeline.
@@ -55,8 +56,9 @@ violation. They are not restated here.
 ## Threading
 
 The `game-loop` thread (`GameLoop`) runs the simulation *and* builds each frame; the EDT only
-paints a built frame and runs Swing. Tick code never touches Swing; Swing is built and mutated
-on the EDT (`Main` uses `invokeAndWait`). Cells go the other way: the EDT owns them and the
+paints a built frame and runs Swing. Tick code never touches Swing: it goes through a listener
+the UI observes, or the UI polls from the EDT render pulse. Swing is built and mutated on the
+EDT (`Main` uses `invokeAndWait`). Cells go the other way: the EDT owns them and the
 frame build reads them.
 
 - The owning thread publishes; the other reads only what was published. A class with a
