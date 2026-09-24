@@ -35,8 +35,8 @@ public final class BalanceHarness {
         LevelDefinition curlyPath = new BuiltInLevelCatalog().levels().getFirst();
         List<TowerPlacementSpec> loadout = List.of(
                 TowerPlacementSpec.of(TowerFactory.Type.SNIPER, 4, 10),
-                TowerPlacementSpec.of(TowerFactory.Type.SNIPER, 10, 8),
-                TowerPlacementSpec.of(TowerFactory.Type.SPLASH, 16, 9));
+                TowerPlacementSpec.of(TowerFactory.Type.SNIPER, 11, 8),
+                TowerPlacementSpec.of(TowerFactory.Type.SPLASH, 15, 9));
         new BalanceHarness().run(curlyPath, loadout, 5000);
     }
 
@@ -65,7 +65,8 @@ public final class BalanceHarness {
 
     /**
      * Places through the real input path. A click always leaves placement mode, so success is
-     * checked on the cell grid afterwards.
+     * checked on the cell grid afterwards. A rejected placement aborts the run: a report on a
+     * partial loadout silently measures a different game.
      */
     private void placeLoadout(List<TowerPlacementSpec> loadout, int scale) {
         CellGrid grid = this.engine.cells();
@@ -75,7 +76,7 @@ public final class BalanceHarness {
             int pixelY = spec.cellY() * scale + scale / 2;
             this.engine.mouseClicked(pixelX, pixelY);
             if (!grid.at(spec.cellX(), spec.cellY()).hasTower()) {
-                System.err.println("Placement rejected, cell not buildable or unaffordable: " + spec);
+                throw new IllegalArgumentException("Placement rejected, cell not buildable or unaffordable: " + spec);
             }
         }
     }
