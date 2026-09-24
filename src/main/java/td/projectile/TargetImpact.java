@@ -1,6 +1,6 @@
 package td.projectile;
 
-import td.enemy.EnemyMob;
+import td.enemy.HitReceiver;
 
 /**
  * Where a {@link MissileProjectile} lands, bound by its tower. The mob hit may not be the one it
@@ -8,5 +8,5 @@ import td.enemy.EnemyMob;
  */
 @FunctionalInterface
 public interface TargetImpact {
-    void onImpact(EnemyMob target);
+    void onImpact(HitReceiver target);
 }

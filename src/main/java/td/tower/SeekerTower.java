@@ -3,6 +3,7 @@ package td.tower;
 import td.damage.Damage;
 import td.effect.Effect;
 import td.enemy.EnemyMob;
+import td.enemy.HitReceiver;
 import td.projectile.MissileProjectile;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.FurthestAlongPathSelector;
@@ -128,7 +129,7 @@ public final class SeekerTower extends AbstractTower {
         }
     }
 
-    private void onImpact(EnemyMob target) {
+    private void onImpact(HitReceiver target) {
         this.dealDamage(target, Damage.magic(this.damageCurrent()));
         target.applyEffect(Effect.freeze(this.freezeDurationTicks, d -> this.dealDamage(target, d)));
     }

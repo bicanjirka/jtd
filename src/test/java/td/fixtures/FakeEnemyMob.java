@@ -122,11 +122,6 @@ public final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
-    public boolean validTarget(Type type0, Type type1) {
-        return this.validTarget(type0) || this.validTarget(type1);
-    }
-
-    @Override
     public boolean isDead() {
         return !this.valid;
     }

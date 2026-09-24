@@ -2,6 +2,7 @@ package td.tower.targeting;
 
 import td.enemy.EnemyMob;
 import td.enemy.EnemyRegistry;
+import td.enemy.EnemyTarget;
 import td.tower.TurretAim;
 
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ public final class InWedgeTargetQuery implements TargetQuery {
         return matches;
     }
 
-    private boolean withinWedge(EnemyMob e) {
+    private boolean withinWedge(EnemyTarget e) {
         double bearing = TurretAim.angleTo(this.x, this.y, e.getX(), e.getY());
         double diff = TurretAim.normalizeRadians(bearing - this.headingRadians);
         return Math.abs(diff) <= this.halfWidthRadians;
