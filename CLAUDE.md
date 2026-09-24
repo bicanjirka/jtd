@@ -5,6 +5,7 @@ The *why* behind these rules is in `docs/ARCHITECTURE.md`; most tasks don't need
 
 ```bash
 mvn verify                # Spotless + Checkstyle + tests - run before every commit
+mvn -q compile            # fast type check
 mvn spotless:apply        # fix formatting
 mvn test -Dtest=GameEngineTest#someSentenceName
 mvn package && java -jar target/jTD.jar
@@ -17,12 +18,24 @@ violation. They are not restated here.
 
 - Multi-phase plan: commit after each phase.
 - Verify gameplay changes by running the game, UI changes from a screenshot (`run-jtd` skill).
+  Cheaper headless checks: `PreviewBoard`/`PreviewEnemy` render a scene to PNG, and
+  `td.BalanceHarness` plays a level with a fixed loadout and reports numbers (usage in the
+  `run-jtd` skill).
+- Feature requests live in `docs/features/`, one doc per feature. Content tables (towers,
+  enemies, levels, controls) live in `README.md`.
 - Known gaps go in `TODO.md` (with **Where** and **Approach**), never an inline TODO. Closing a
   gap deletes its entry in the same commit.
 - Comments only for a non-obvious *why*. Don't name levels, content or other classes in them,
   and don't restate the code.
 - `CLAUDE.md` files hold constraints only - no history, no feature narrative. A change that
   makes a line in one false fixes it in the same commit.
+
+## Packages (`td.*`)
+
+`board` (scale, cell↔pixel math) · `cell` (squares, buildability) · `damage` · `economy` ·
+`effect` (timed status effects) · `enemy` · `level` · `projectile` · `tower` (+ `targeting`,
+`buff`, `upgrade`) · `ui` (+ `render`) · `util` (`GameWorld`, `GameHost`, `Threads`) · `wave`
+(path geometry, wave scripts). `GameEngine`, `GameLoop`, `TowerDefense` and `Main` sit in `td`.
 
 ## Boundaries
 
@@ -91,7 +104,7 @@ frame build reads them.
   fresh copy.
 - Catch `Exception`, never `Throwable`/`Error`, and never an unchecked exception as control
   flow (a `NumberFormatException` around a parse is fine). Log or rethrow; never swallow.
-  Unloadable content throws `GameStartupException`.
+  Unloadable content throws `GameStartupException`, which only `Main` catches.
 
 ## Tests
 

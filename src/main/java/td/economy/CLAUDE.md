@@ -10,6 +10,7 @@
   are separate reads.
 - `canPay` is advisory. `doPay` is the atomic check-and-charge; just call it and check the
   result.
-- Every event is one `EconomyDelta` (`kill(bounty, score)`, `leak(penalty)`, ...) applied through
+- Every event is one `EconomyDelta` (`kill(bounty, score)` with rank-weighted score for real
+  kills, `kill(bounty)` for 1:1, `leak(penalty)`) applied through
   `apply`, which fires exactly one notification. A new kind of event is a new `EconomyDelta`
   factory, never a new mutating method on the ledger.
