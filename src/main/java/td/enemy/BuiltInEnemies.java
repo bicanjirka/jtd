@@ -37,7 +37,7 @@ final class BuiltInEnemies {
                             + "hardened against whichever damage type has hit hardest this level.")
                     .withAdaptiveResist(ELITE_ARMOR))
             .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(800, 83)
-                    .withDescription("No special abilities, but its armor has grown formidable, hardened "
+                    .withDescription("No special abilities, but twice an elite's bulk under the same armor, hardened "
                             + "against whichever damage type has hit hardest this level."))
             .build();
 
