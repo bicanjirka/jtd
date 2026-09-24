@@ -443,17 +443,6 @@ own balance passes.
 
 ## UI
 
-### Wave-preview hover shows `Health: 0`, `Bounty: 0` and `Speed NaN px/s`
-
-The preview strip builds its mobs with zero health and price, so every hovered mob reads
-`Health: 0   Bounty: 0`. A mob with `HurtSpeedTrait` (Frenzied) also reads `Speed NaN px/s`,
-because its health fraction is `0 / 0`.
-
-- **Where:** `td.ui.PanelEnemy.rebuildEnemies()` (`SpawnParameters.atSlot(0, speed, 0, 0)`).
-- **Approach:** build each preview mob with its rank's health and price, as
-  `EnemyCatalog.spawn` callers pass `definition.baseHealth()` / `definition.price()`, and cover it
-  with a test asserting the hover text has a finite speed and a non-zero health.
-
 ### A long enemy stat block overflows the Info panel
 
 Armored's hover or inspector text (header, description, five stat lines, traits) is taller than

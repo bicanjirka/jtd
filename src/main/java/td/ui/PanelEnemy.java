@@ -100,12 +100,21 @@ public class PanelEnemy extends JPanel {
         this.enemies.clear();
         for (int nr = 0; nr < this.definitions.size(); nr++) {
             this.contextLocal.setPath(new PathNormal(List.of(new Vec2(this.scale / 2 + this.scale * nr, this.pHeight / 2))));
-            EnemyDefinition definition = this.definitions.get(nr);
-            SpawnParameters spawnParameters = SpawnParameters.atSlot(0, definition.baseSpeed(), 0, 0);
-            EnemyMob enemy = new DefinedEnemyMob(definition, this.contextLocal, spawnParameters, this.ranks.get(nr));
+            EnemyMob enemy = previewMob(this.definitions.get(nr), this.ranks.get(nr), this.contextLocal);
             enemy.doTick(0);
             this.enemies.add(enemy);
         }
+    }
+
+    /**
+     * A preview mob with the health and bounty a spawn of {@code definition} starts with, so its
+     * hover text reads like the real mob's; health-dependent stats such as a hurt-speed factor
+     * need a non-zero maximum.
+     */
+    static EnemyMob previewMob(EnemyDefinition definition, Rank rank, GameWorld world) {
+        SpawnParameters spawnParameters = SpawnParameters.atSlot(0, definition.baseSpeed(), definition.baseHealth(),
+                definition.price());
+        return new DefinedEnemyMob(definition, world, spawnParameters, rank);
     }
 
     public void doTick(int gameTime) {
