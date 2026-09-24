@@ -198,10 +198,9 @@ That is the only place `null` models absence; engine and domain code returns `Op
 - **Names:** types `UpperCamelCase`, constants `UPPER_SNAKE_CASE`, everything else
   `lowerCamelCase`. **An enum constant is a constant**, so `Type.SNIPER`, not `Type.first`.
   `serialVersionUID` is the one exemption — the JVM fixes that name.
-  > `no-lowercase-type-names`, `no-lowercase-constants` and `enum-constants-upper-snake` in
-  > `scripts/VerifyRules.java`. The third exists because the second greps for `static final`,
-  > which an enum constant is written without — it reported OK for a long time over fourteen
-  > lowercase enum constants.
+  > Types and constants: Checkstyle (`checkstyle.xml`, `TypeName`/`ConstantName`). Enum
+  > constants specifically: `enum-constants-upper-snake` in `scripts/VerifyRules.java` — a
+  > separate check because Checkstyle's `ConstantName` doesn't inspect enum constants at all.
 - **A type's name puts the distinguishing part first and the category noun last**, and names
   what a thing *does* rather than what it looks like: `SniperTower`, not TowerSniper and not
   TowerOne. (Counter-examples go unbackticked on purpose — `docs-name-real-types` requires every
