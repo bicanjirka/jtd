@@ -8,7 +8,6 @@ import td.economy.EconomyLedger;
 import td.util.GameHost;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
@@ -22,7 +21,6 @@ public class TowerRoster {
     private static final Logger LOG = LoggerFactory.getLogger(TowerRoster.class);
 
     private final List<Tower> towers = new CopyOnWriteArrayList<>();
-    private final List<TowerListener> listeners = new CopyOnWriteArrayList<>();
     private final GameHost host;
     private final EconomyLedger economy;
     private final Supplier<BoardGeometry> board;
@@ -33,15 +31,14 @@ public class TowerRoster {
         this.board = board;
     }
 
-    /** A live, read-only view that sees later additions. */
+    /** A snapshot; later additions and removals don't show in it. */
     public List<Tower> all() {
-        return Collections.unmodifiableList(this.towers);
+        return List.copyOf(this.towers);
     }
 
     public void add(Tower t) {
         this.towers.add(t);
         this.recalculateAllStats();
-        this.fireAdded(t);
     }
 
     /**
@@ -64,7 +61,6 @@ public class TowerRoster {
         this.towers.remove(t);
         this.recalculateAllStats();
         this.economy.apply(EconomyDelta.credits(t.getSellPrice()));
-        this.fireRemoved(t);
         LOG.info("Tower sold: {} at ({},{}), refund={}", t.getType(), cellX, cellY, t.getSellPrice());
     }
 
@@ -76,27 +72,6 @@ public class TowerRoster {
             this.host.clearCell(cellX, cellY);
             t.doCleanup();
             this.towers.remove(t);
-            this.fireRemoved(t);
-        }
-    }
-
-    public void addListener(TowerListener l) {
-        this.listeners.add(l);
-    }
-
-    public void removeListener(TowerListener l) {
-        this.listeners.remove(l);
-    }
-
-    private void fireAdded(Tower t) {
-        for (TowerListener l : this.listeners) {
-            l.towerBuild(t);
-        }
-    }
-
-    private void fireRemoved(Tower t) {
-        for (TowerListener l : this.listeners) {
-            l.towerRemoved(t);
         }
     }
 }

@@ -132,7 +132,7 @@ unrelated jobs directly. Each is now its own independently testable class:
 | `BoardGeometry`                                      | `td.board`      | scale, board size, cell↔pixel conversion (an immutable value, replaced wholesale on `setBoard`)                                |
 | `EconomyLedger`                                      | `td.economy`    | the `EconomyState` (credits/score/lives) and `EconomyListener` notification                                                    |
 | `EnemyRoster` (implements `EnemyRegistry`)           | `td.enemy`      | the live per-wave enemy list and death reporting to `GameHost`                                                                 |
-| `TowerRoster`                                        | `td.tower`      | the tower list, buy/sell/clear, and `TowerListener` notification                                                               |
+| `TowerRoster`                                        | `td.tower`      | the tower list and buy/sell/clear                                                                                              |
 | `ProjectileRoster` (implements `ProjectileRegistry`) | `td.projectile` | the live in-flight shells/missiles                                                                                             |
 | `WaveAnnouncer`                                      | `td.wave`       | the `WaveStartListener` hub (`TowerThree` is the only subscriber, clearing the hit markers its scan left on the previous wave) |
 
