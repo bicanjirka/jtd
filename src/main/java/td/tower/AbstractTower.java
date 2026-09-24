@@ -148,8 +148,8 @@ public abstract class AbstractTower implements Tower {
      * critical hit first.
      * <p>
      * Counts the damage that actually landed, not the damage fired. A kill adds the upgrades'
-     * bounty bonus in credits, not score. A no-op once the tower is sold, so a lingering burn stops
-     * crediting it.
+     * bounty bonus in credits, not score. A hit on a mob already killed this tick is not a second
+     * kill. A no-op once the tower is sold, so a lingering burn stops crediting it.
      *
      * @return whether the hit landed as a critical hit
      */
