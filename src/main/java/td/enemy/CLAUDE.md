@@ -41,17 +41,18 @@
   `ActiveEffects` sees the effect.
 - `AbilityEvaluator` decides when a trigger fires; actions execute through
   `DefinedEnemyMob`'s inner `MobAbilityContext`, which reaches the world through
-  `GameWorld.enemies()` (`EnemySpawner.add`/`replace`). Per-mob `AbilityState` (countdowns,
+  `GameWorld.enemies()` (`EnemySpawner.add`/`replace`); spawned mobs are built by
+  `AbilitySpawnFactory`. Per-mob `AbilityState` (countdowns,
   fire-once flags) is built in the constructor, parallel to `definition.abilities()`.
 - `ticksSinceLastHit` starts at `0`, so an idle trigger counts from spawn, not "forever".
   `WardenChainTest` covers the ability timing end to end.
-- A frozen mob (`isIncapacitated()`) doesn't evaluate abilities on live ticks, but still does on
+- A frozen mob doesn't evaluate abilities on live ticks, but still does on
   its death tick.
 - A tower can kill a mob *after* that mob's own `doTick` ran this tick. So death, crit-taken and
-  damage-taken moments are captured on the next `doTick`, and death-tick abilities fire only when
+  damage-taken moments are marked pending in `MobMoments` and stamped on the next `doTick`, and death-tick abilities fire only when
   `ticksSinceDeath(gameTime) == 0`: exactly once, never during the fade. Until that capture,
   a dead mob's `ticksSinceDeath` is `-1`; callers must handle it (`fadeAlpha` clamps).
-- An ability spawn appears at the caster's position (`spawnAtSamePositionAs`), on the caster's
+- `AbilitySpawnFactory` builds an ability spawn at the caster's position, on the caster's
   path and at the caster's rank. It uses `AbilitySpawnShape` (not `td.wave.SpawnShape`);
   `delaySpacingSlots` staggers members so they don't stack. `consumesSelf` is only defined for
   one member. Spawns call `recordAbilitySpawn` and casts call `recordAbilityCast`; the UI draws
