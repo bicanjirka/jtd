@@ -2,8 +2,8 @@
 <!--
   Test-scope logging config. Logback prefers logback-test.xml over
   logback.xml whenever both are on the classpath, so `mvn test` never
-  touches logs/ and stays quiet apart from genuine warnings/errors -
-  see CLAUDE.md's Gotchas entry about WaveTest's bad-token case.
+  touches logs/. A passing build prints no WARN or ERROR: a test that
+  provokes one captures and asserts it instead of printing it.
 -->
 <configuration>
 
