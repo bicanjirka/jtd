@@ -7,6 +7,7 @@ import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.LevelFixtures;
 import td.level.LevelDefinition;
+import td.level.LevelOutcome;
 import td.projectile.CannonballProjectile;
 import td.tower.MortarTower;
 import td.tower.SniperTower;
@@ -496,7 +497,7 @@ class GameEngineTest {
     }
 
     @Test
-    void debugSkippingTheFinalWaveClearsTheBoardButStartsNothing() {
+    void debugSkippingTheFinalWaveClearsTheBoardAndWinsTheLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", Rank.GRUNT)), 100));
         engine.nextWave();
@@ -506,6 +507,7 @@ class GameEngineTest {
 
         assertThat(engine.getGameWorld().enemies().getEnemies()).isEmpty();
         assertThat(engine.getCurrentWaveIndex()).isEqualTo(1);
+        assertThat(engine.outcome()).isEqualTo(LevelOutcome.WON);
     }
 
     @Test

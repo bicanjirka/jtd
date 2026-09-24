@@ -89,8 +89,8 @@
 ## Roster
 
 - Depend on `EnemyRegistry` (read-only) unless you mutate.
-- `reportDeath()` calls `GameHost.enemyDied`; `clear()` and `replace()` (a hatch) do not, so
-  going back to the menu can't trigger "you won" and a hatch earns no bounty.
+- `reportDeath()` decrements the alive count; `replace()` (a hatch) does not, so a hatch earns
+  no bounty and does not shorten the wave.
 - Dead mobs stay in the list for their fade: use `aliveCount()` for "is the wave over".
 - `getEnemies()` returns a fresh snapshot (a `CopyOnWriteArrayList` behind it), so don't rely on
   reference identity.

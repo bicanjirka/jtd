@@ -11,6 +11,7 @@ import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.level.LevelDefinition;
+import td.level.LevelOutcome;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeNode;
@@ -55,6 +56,7 @@ public class GameEngine {
     private volatile int wave = 0;
     private volatile boolean waveReady = true;
     private volatile boolean startWave = false;
+    private volatile LevelOutcome outcome = LevelOutcome.PLAYING;
     private int debugSpawnCursor = 0;
 
     public GameEngine(GameHost host) {
@@ -114,8 +116,8 @@ public class GameEngine {
         return this.waveReady;
     }
 
-    public void setWaveReady(boolean ready) {
-        this.waveReady = ready;
+    public LevelOutcome outcome() {
+        return this.outcome;
     }
 
     public boolean isPlacingTower() {
@@ -178,6 +180,7 @@ public class GameEngine {
         this.gameWorld.enemies().clear();
         this.startWave = false;
         this.waveReady = true;
+        this.outcome = LevelOutcome.PLAYING;
     }
 
     /**
@@ -210,7 +213,7 @@ public class GameEngine {
      */
     public boolean nextWave() {
         LoadedLevel installed = this.gameWorld.level();
-        if (this.waveReady && this.wave < installed.waveCount()) {
+        if (!this.outcome.isOver() && this.waveReady && this.wave < installed.waveCount()) {
             this.startWave = false;
             this.waveReady = false;
             List<Wave> starting = installed.wavesAt(this.wave);
@@ -231,9 +234,14 @@ public class GameEngine {
     }
 
     /**
+     * A no-op once the level is over, so nothing can change the outcome.
+     *
      * @return whether this tick started a new wave
      */
     public boolean doTick(int time) {
+        if (this.outcome.isOver()) {
+            return false;
+        }
         LOG.debug("doTick t={}", time);
         boolean waveStarted = false;
         if (this.startWave) {
@@ -246,11 +254,38 @@ public class GameEngine {
         for (Tower tower : this.gameWorld.towers().all()) {
             tower.doTick(time);
         }
+        this.settleWave();
         return waveStarted;
     }
 
+    /**
+     * Checked after the whole tick rather than on each death, so a death that spawns replacements
+     * later in the same tick does not read as a cleared wave. Loss is checked first: a last enemy
+     * leaking the last life loses.
+     */
+    private void settleWave() {
+        LoadedLevel installed = this.gameWorld.level();
+        if (this.gameWorld.economy().state().isGameOver()) {
+            this.endLevel(LevelOutcome.LOST);
+        } else if (this.wave > 0 && !this.waveReady && this.gameWorld.enemies().aliveCount() == 0) {
+            if (this.wave < installed.waveCount()) {
+                LOG.info("Wave {} cleared, ready for the next one", this.wave);
+                this.waveReady = true;
+            } else {
+                this.endLevel(LevelOutcome.WON);
+            }
+        }
+    }
+
+    private void endLevel(LevelOutcome reached) {
+        this.outcome = reached;
+        LOG.info("Level over - {}, score={}", reached, this.gameWorld.economy().getScore());
+    }
+
     public void startPlacing(TowerFactory.Type t, float r) {
-        this.placement.start(t, r);
+        if (!this.outcome.isOver()) {
+            this.placement.start(t, r);
+        }
     }
 
     public void cancelPlacing() {
@@ -276,22 +311,34 @@ public class GameEngine {
     }
 
     /**
+     * After the level is over a click can still select a tower to inspect, but never builds one.
+     *
      * @return the tower selected by the click, or empty
      */
     public Optional<Tower> mouseClicked(int boardX, int boardY) {
+        if (this.outcome.isOver()) {
+            this.placement.cancel();
+        }
         return this.placement.mouseClicked(boardX, boardY);
     }
 
     /**
-     * Debug: clears the current wave with no bounty, score or win notification, and starts the
-     * next.
+     * Debug: clears the current wave with no bounty or score and starts the next; skipping the
+     * last wave wins.
      *
      * @return whether a next wave started; false on the last wave
      */
     public boolean debugSkipCurrentWave() {
+        if (this.outcome.isOver() || !this.gameWorld.level().isLoaded()) {
+            return false;
+        }
         this.gameWorld.enemies().clear();
         this.waveReady = true;
-        return this.nextWave();
+        if (this.nextWave()) {
+            return true;
+        }
+        this.endLevel(LevelOutcome.WON);
+        return false;
     }
 
     /**
@@ -325,6 +372,9 @@ public class GameEngine {
      * range.
      */
     public void buyUpgradeForSelected(int number) {
+        if (this.outcome.isOver()) {
+            return;
+        }
         this.gameWorld.towers().all().stream()
                 .filter(Tower::isSelected)
                 .findFirst()
