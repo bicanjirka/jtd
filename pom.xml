@@ -118,16 +118,21 @@
                 </executions>
             </plugin>
             <plugin>
-                <!-- Fails `mvn verify` on a type or constant naming violation (CLAUDE.md 6).
-                     Build-scope only - not a runtime dependency. See checkstyle.xml for why
-                     enum constants aren't included here. -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>3.6.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>14.1.0</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
                     <configLocation>checkstyle.xml</configLocation>
+                    <propertyExpansion>basedir=${project.basedir}</propertyExpansion>
                     <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                    <violationSeverity>warning</violationSeverity>
+                    <consoleOutput>true</consoleOutput>
                 </configuration>
                 <executions>
                     <execution>
@@ -136,31 +141,6 @@
                         <goals>
                             <goal>check</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <!-- Fails `mvn verify` on any violation of a greppable rule from CLAUDE.md.
-                     Run through the single-file source launcher rather than a shell script so
-                     the check behaves identically on every platform without needing a POSIX
-                     shell on PATH. -->
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.5.0</version>
-                <executions>
-                    <execution>
-                        <id>verify-rules</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>${java.home}/bin/java</executable>
-                            <arguments>
-                                <argument>${project.basedir}/scripts/VerifyRules.java</argument>
-                            </arguments>
-                            <workingDirectory>${project.basedir}</workingDirectory>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

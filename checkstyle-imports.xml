@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!DOCTYPE import-control PUBLIC
+        "-//Checkstyle//DTD ImportControl Configuration 1.4//EN"
+        "https://checkstyle.org/dtds/import_control_1_4.dtd">
+
+<import-control pkg="td" strategyOnMismatch="allowed">
+    <subpackage name="board|cell|damage|economy|effect|enemy|level|projectile|tower|util|wave" regex="true">
+        <disallow pkg="javax.swing"/>
+        <disallow pkg="java.awt"/>
+    </subpackage>
+    <subpackage name="ui">
+        <subpackage name="render">
+            <disallow pkg="java.awt"/>
+        </subpackage>
+    </subpackage>
+</import-control>
