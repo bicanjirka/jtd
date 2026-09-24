@@ -1,8 +1,11 @@
 package td;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
+import td.damage.DamageMix;
 import td.enemy.BodyArchetype;
 import td.enemy.EnemyDefinition;
+import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.LevelFixtures;
@@ -52,6 +55,32 @@ class GameEngineTest {
         assertThat(installed.waveCount()).isZero();
         assertThat(installed.pathAt(0).points()).isNotEmpty();
         assertThat(engine.getCurrentWaveIndex()).isZero();
+    }
+
+    @Test
+    void damageThatLandsIsTalliedByType() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", Rank.GRUNT)), 100));
+        engine.nextWave();
+        EnemyMob enemy = engine.getGameWorld().enemies().getEnemies()[0];
+
+        Damage landed = enemy.doDamage(Damage.physical(10));
+
+        DamageMix mix = engine.getGameWorld().damageTally().mix();
+        assertThat(mix.physical()).isEqualTo(landed.amount()).isPositive();
+        assertThat(mix.magic()).isZero();
+    }
+
+    @Test
+    void loadingALevelStartsANewDamageTally() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", Rank.GRUNT)), 100));
+        engine.nextWave();
+        engine.getGameWorld().enemies().getEnemies()[0].doDamage(Damage.magic(10));
+
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+
+        assertThat(engine.getGameWorld().damageTally().mix()).isEqualTo(DamageMix.none());
     }
 
     @Test

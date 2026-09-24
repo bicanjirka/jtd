@@ -178,6 +178,7 @@ public class GameEngine {
         this.gameWorld.projectiles().clear();
         this.gameWorld.towers().clear();
         this.gameWorld.enemies().clear();
+        this.gameWorld.damageTally().clear();
         this.startWave = false;
         this.waveReady = true;
         this.outcome = LevelOutcome.PLAYING;

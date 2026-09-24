@@ -278,6 +278,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         if (this.validTarget()) {
             landed = this.activeEffects.applyShield(this.absorb(damage)).cappedAt(this.health);
             this.health -= landed.amount();
+            this.gameWorld.damageTally().record(landed);
             if (landed.amount() > 0) {
                 this.moments.markPending(Moment.DAMAGE_TAKEN);
             }
