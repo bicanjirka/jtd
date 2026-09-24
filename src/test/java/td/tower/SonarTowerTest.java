@@ -17,7 +17,10 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-/** Scale 32; a revolution is 40 ticks, so a quarter turn is 10. The scan starts pointing east. */
+/**
+ * Scale 32. A 2-second revolution at 20 ticks per second is 40 ticks, so a quarter turn is 10. The
+ * scan starts pointing east.
+ */
 class SonarTowerTest {
 
     private static final int TICKS_PER_REVOLUTION = 40;
