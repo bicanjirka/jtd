@@ -3,16 +3,87 @@
         "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
         "https://checkstyle.org/dtds/configuration_1_3.dtd">
 
-<!--
-  Two of CLAUDE.md 6's naming rules (types UpperCamelCase, constants UPPER_SNAKE_CASE), run by
-  `mvn verify`. Enum constant naming (also CLAUDE.md 6) stays a hand-rolled check in
-  scripts/VerifyRules.java: Checkstyle's own ConstantName module does not inspect enum constants
-  (they're a distinct AST node), and the only module that does is a third-party sevntu-checkstyle
-  extension - not worth a second plugin dependency for one rule.
--->
 <module name="Checker">
+    <property name="severity" value="error"/>
+
+    <module name="SuppressionSingleFilter">
+        <property name="id" value="mainOnly"/>
+        <property name="files" value="[\\/]src[\\/]test[\\/]"/>
+    </module>
+    <module name="SuppressionSingleFilter">
+        <property name="id" value="wideRecordFactory"/>
+        <property name="files" value="[\\/]td[\\/]ui[\\/]render[\\/]"/>
+    </module>
+
     <module name="TreeWalker">
         <module name="TypeName"/>
         <module name="ConstantName"/>
+        <module name="AvoidStarImport"/>
+        <module name="TodoComment">
+            <property name="format" value="(?i)\bTODO\b(?!\.md)"/>
+            <message key="todo.match" value="No inline TODO - add a TODO.md entry instead."/>
+        </module>
+
+        <module name="IllegalCatch">
+            <property name="illegalClassNames"
+                      value="Error, Throwable, NullPointerException, ClassCastException,
+                             IndexOutOfBoundsException, ArrayIndexOutOfBoundsException,
+                             java.lang.Error, java.lang.Throwable"/>
+        </module>
+
+        <module name="ImportControl">
+            <property name="file" value="${basedir}/checkstyle-imports.xml"/>
+        </module>
+
+        <module name="MatchXpath">
+            <property name="query"
+                      value="//ENUM_CONSTANT_DEF/IDENT[not(matches(@text, '^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'))]"/>
+            <message key="matchxpath.match" value="Enum constants are UPPER_SNAKE_CASE."/>
+        </module>
+
+        <module name="MatchXpath">
+            <property name="id" value="mainOnly"/>
+            <property name="query" value="//LITERAL_INSTANCEOF"/>
+            <message key="matchxpath.match"
+                     value="No instanceof - switch over a sealed type or use the domain visitor."/>
+        </module>
+
+        <module name="MatchXpath">
+            <property name="id" value="mainOnly"/>
+            <property name="query"
+                      value="//*[self::CLASS_DEF or self::ENUM_DEF]
+                             [not(ancestor-or-self::*/MODIFIERS/ANNOTATION/IDENT[@text='ThreadConfined'])]
+                             /OBJBLOCK/VARIABLE_DEF
+                             [not(./MODIFIERS/FINAL or ./MODIFIERS/LITERAL_STATIC or ./MODIFIERS/LITERAL_VOLATILE)]"/>
+            <message key="matchxpath.match"
+                     value="Mutable field: annotate the class with @ThreadConfined, or make it final/volatile."/>
+        </module>
+
+        <module name="MatchXpath">
+            <property name="id" value="wideRecordFactory"/>
+            <property name="query"
+                      value="//RECORD_DEF[count(./RECORD_COMPONENTS/RECORD_COMPONENT_DEF) >= 5]
+                             [not(./OBJBLOCK/CTOR_DEF)]
+                             [not(./OBJBLOCK/METHOD_DEF/MODIFIERS/LITERAL_STATIC)]"/>
+            <message key="matchxpath.match"
+                     value="Record with 5+ components needs a narrower static factory or constructor; grow it with withX copies."/>
+        </module>
+
+        <module name="RegexpSinglelineJava">
+            <property name="format" value="Math\.random\s*\("/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Inject td.util.RandomSource instead of Math.random()."/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="format" value="createEtchedBorder"/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Panel borders come from td.ui.Hud."/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="format"
+                      value="org\.junit\.jupiter\.api\.Assertions|(?&lt;![.\w])assert(Equals|True|False|Null|NotNull|Same)\s*\("/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Use AssertJ assertThat, not JUnit assertions."/>
+        </module>
     </module>
 </module>
