@@ -1,7 +1,6 @@
 package td.ui;
 
 import td.effect.EffectKind;
-import td.enemy.AbstractEnemyMob;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMobVisitor;
@@ -140,7 +139,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return this.overlayDraws;
     }
 
-    private Void body(Palette palette, AbstractEnemyMob mob, float scale, double facingRadians,
+    private Void body(Palette palette, DefinedEnemyMob mob, float scale, double facingRadians,
             Optional<SupportAura> supportAura, List<Trait> traits) {
         if (mob.isDead()) {
             if (!mob.isFadeComplete(this.gameTime)) {
@@ -179,7 +178,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     }
 
     /** Static overlays for ongoing states: shield bubble, ice crystals and support-aura ring. */
-    private void overlays(AbstractEnemyMob mob, float x, float y, float scale, Optional<SupportAura> supportAura) {
+    private void overlays(DefinedEnemyMob mob, float x, float y, float scale, Optional<SupportAura> supportAura) {
         if (mob.activeEffectKinds().contains(EffectKind.SHIELD)) {
             this.overlayDraws.add(new EnemyRingDraw(Palette.STATUS_MARKER_SHIELD, x, y, scale * SHIELD_BUBBLE_SCALE_FRACTION, SHIELD_BUBBLE_ALPHA));
         }
@@ -194,7 +193,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
      * A ring wherever the mob just gained or lost an effect, cast one, or arrived by an ability
      * spawn.
      */
-    private void pulses(AbstractEnemyMob mob, float x, float y, float scale) {
+    private void pulses(DefinedEnemyMob mob, float x, float y, float scale) {
         for (EffectKind kind : EffectKind.values()) {
             if (kind == EffectKind.INVISIBLE) {
                 continue;
@@ -226,7 +225,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         this.overlayDraws.add(new EffectPulseDraw(markerPaletteFor(kind), x, y, scale * GAIN_LOSS_PULSE_RADIUS_FRACTION, progress, direction));
     }
 
-    private void critSpark(AbstractEnemyMob mob, float x, float y) {
+    private void critSpark(DefinedEnemyMob mob, float x, float y) {
         int ticksSince = mob.ticksSinceCriticalHit(this.gameTime);
         if (ticksSince >= 0 && ticksSince <= CRIT_SPARK_DURATION_TICKS) {
             float fadeProgress = (float) ticksSince / CRIT_SPARK_DURATION_TICKS;
@@ -242,7 +241,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
      * observed, leaving the gain unrecorded for one tick; unclamped, that produced an invalid
      * alpha.
      */
-    private float cloakProgress(AbstractEnemyMob mob) {
+    private float cloakProgress(DefinedEnemyMob mob) {
         if (mob.activeEffectKinds().contains(EffectKind.INVISIBLE)) {
             int ticksSinceGained = Math.max(0, mob.ticksSinceEffectGained(EffectKind.INVISIBLE, this.gameTime));
             return Math.min(1f, (float) ticksSinceGained / CLOAK_FADE_DURATION_TICKS);
@@ -254,7 +253,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return 1f - (float) ticksSinceLost / CLOAK_FADE_DURATION_TICKS;
     }
 
-    private void markers(AbstractEnemyMob mob, float x, float y, float scale) {
+    private void markers(DefinedEnemyMob mob, float x, float y, float scale) {
         float markerY = y - scale * MARKER_ROW_OFFSET_FRACTION;
         float markerX = x - scale;
         int shown = 0;

@@ -3,9 +3,9 @@ package td.ui;
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.effect.Effect;
-import td.enemy.AbstractEnemyMob;
 import td.enemy.BodyArchetype;
 import td.enemy.CriticalImmunityTrait;
+import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
@@ -59,7 +59,7 @@ class EnemyFrameBuilderTest {
     void alphaZeroReproducesThePreviousTickPosition() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
         enemy.doTick(1);
 
         EnemyBodyDraw draw = bodyDrawAt(enemy, 1, 0.0);
@@ -72,7 +72,7 @@ class EnemyFrameBuilderTest {
     void alphaOneReproducesTheCurrentTickPosition() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
         enemy.doTick(1);
 
         EnemyBodyDraw draw = bodyDrawAt(enemy, 1, 1.0);
@@ -85,7 +85,7 @@ class EnemyFrameBuilderTest {
     void alphaOneHalfIsTheMidpointBetweenPreviousAndCurrentPosition() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
         enemy.doTick(1);
         float expectedX = (float) ((mob.getPrevX() + mob.getX()) / 2.0);
         float expectedY = (float) ((mob.getPrevY() + mob.getY()) / 2.0);
@@ -448,7 +448,7 @@ class EnemyFrameBuilderTest {
     void anAbilityDrivenSpawnYieldsASpawnBurstPulseAtItsArrival() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        ((AbstractEnemyMob) enemy).recordAbilitySpawn(0);
+        ((DefinedEnemyMob) enemy).recordAbilitySpawn(0);
 
         List<EnemyOverlayDraw> overlays = overlaysOf(enemy, 0);
 

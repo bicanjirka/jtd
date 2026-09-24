@@ -249,7 +249,7 @@ levels — but a smoothed path's buildable set correctly reflects its actual cur
 
 `ArcLengthPath` wraps a `Path`'s points with cumulative distance, resolving any distance
 travelled to an exact position and facing by interpolation within the segment it falls in. It
-is the single shared implementation behind both enemy movement (`AbstractEnemyMob`, which
+is the single shared implementation behind both enemy movement (`PathMotion`, which
 advances a pixels-per-tick `distanceIntoLap` accumulator each tick — real arc-length distance,
 not a fixed tick-count per segment regardless of its length) and the animated path-marker
 overlay (`PathMarkerFrameBuilder`). Both therefore move at a consistent real-world pace along
@@ -399,7 +399,7 @@ across several mutations.
   zero-amount `Damage` is `plus`'s identity regardless of either side's type, but combining
   two non-zero damages of different types throws, since there is no sensible way to merge
   them. `cappedAt(int)` caps the amount while preserving type, which is what
-  `AbstractEnemyMob.doDamage` applies to `absorb`'s result — re-wrapping from the incoming hit
+  `DefinedEnemyMob.doDamage` applies to `absorb`'s result — re-wrapping from the incoming hit
   instead would silently discard whatever type `absorb` chose.
 - **`td.wave.smoothing.PathSmoothing.none()`** is the identity for path smoothing, so a level
   with no smoothing configured just gets this rather than a null or special-cased field.

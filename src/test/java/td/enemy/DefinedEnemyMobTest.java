@@ -12,7 +12,7 @@ import td.util.RecordingGameHost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-class AbstractEnemyMobTest {
+class DefinedEnemyMobTest {
 
     private static GameWorld newContext() {
         return WorldFixtures.newWorldOnBoard(1, 1001, 1001);
@@ -148,7 +148,7 @@ class AbstractEnemyMobTest {
         GameWorld context = newContext();
         Rank rank = Rank.SOLDIER;
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, rank);
-        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
         int fadeDuration = 3 * rank.ordinal() + 6;
 
         enemy.doDamage(Damage.physical(5000));
@@ -163,7 +163,7 @@ class AbstractEnemyMobTest {
     void fadeAlphaStaysWithinValidColorRangeBeforeDeathTickIsCaptured() {
         GameWorld context = newContext();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
 
         // a tower can kill mid-tick, before doTick() captures deathTick
         enemy.doDamage(Damage.physical(5000));
@@ -176,7 +176,7 @@ class AbstractEnemyMobTest {
     void ticksSinceCriticalHitIsMinusOneUntilOneLands() {
         GameWorld context = newContext();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
 
         assertThat(mob.ticksSinceCriticalHit(5)).isEqualTo(-1);
     }
@@ -185,7 +185,7 @@ class AbstractEnemyMobTest {
     void aCriticalHitIsCapturedOnTheMobsOwnNextDoTickNotSynchronouslyInDoDamage() {
         GameWorld context = newContext();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
 
         enemy.doDamage(Damage.physical(100).asCritical());
 
@@ -201,7 +201,7 @@ class AbstractEnemyMobTest {
     void aNonCriticalHitLeavesTicksSinceCriticalHitAtMinusOne() {
         GameWorld context = newContext();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
 
         enemy.doDamage(Damage.physical(100));
         enemy.doTick(1);
@@ -214,7 +214,7 @@ class AbstractEnemyMobTest {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(10, 0, 10));
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
 
         assertThat(mob.getPrevX()).isEqualTo(mob.getX());
         assertThat(mob.getPrevY()).isEqualTo(mob.getY());
@@ -235,7 +235,7 @@ class AbstractEnemyMobTest {
         int initialLives = context.economy().getLives();
 
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
-        AbstractEnemyMob mob = (AbstractEnemyMob) enemy;
+        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
         int tick = 0;
         while (context.economy().getLives() == initialLives) {
             tick++;
