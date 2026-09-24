@@ -102,6 +102,11 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.health;
     }
 
+    /** Full health in points, after every divisor and spawn-shape multiplier. */
+    public int getMaxHealthPoints() {
+        return this.healthMax / HEALTH_UNITS_PER_POINT;
+    }
+
     public int getBounty() {
         return this.price;
     }

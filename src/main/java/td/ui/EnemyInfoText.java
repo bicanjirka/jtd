@@ -12,7 +12,7 @@ final class EnemyInfoText implements EnemyMobVisitor<String> {
     public String visitDefined(DefinedEnemyMob mob) {
         EnemyDefinition definition = mob.definition();
         return definition.displayName() + "\n\n" + definition.description() + "\n\nRank: " + titleCase(mob.getRank())
-                + "   Health: " + definition.baseHealth() + "   Bounty: " + definition.price();
+                + "   Health: " + mob.getMaxHealthPoints() + "   Bounty: " + mob.getBounty();
     }
 
     private static String titleCase(Rank rank) {
