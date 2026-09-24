@@ -60,4 +60,6 @@ keeps the seam honest.
   `TowerDefense.requestRender` repaints the *container* (repainting only the board erases the
   overlay). Overlay translucency is painted in `paintComponent`; an alpha background colour on an
   opaque component doesn't blend.
+- Enemy text (wave-preview hover, live inspector) is `EnemyStatText` formatting an
+  `EnemyInspection`; stats at their default are left out.
 - Verify any UI change from a screenshot (`run-jtd` skill).

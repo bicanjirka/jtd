@@ -43,6 +43,19 @@ public record PercentResistTrait(float fraction, Optional<DamageType> restricted
     }
 
     @Override
+    public String describe() {
+        String target = this.restrictedTo.map(PercentResistTrait::damageName).orElse("all");
+        return "Resists " + Math.round((1f - this.fraction) * 100) + "% of " + target + " damage";
+    }
+
+    static String damageName(DamageType type) {
+        return switch (type) {
+            case PHYSICAL -> "physical";
+            case MAGIC -> "magic";
+        };
+    }
+
+    @Override
     public TraitMarker marker() {
         return this.restrictedTo.map(type -> switch (type) {
             case PHYSICAL -> TraitMarker.PHYSICAL_RESIST;

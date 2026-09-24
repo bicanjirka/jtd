@@ -27,6 +27,16 @@ public record AdaptiveResist(Optional<DamageType> resisted, float evenFraction, 
         return new AdaptiveResist(Optional.of(type), evenFraction, fullFraction);
     }
 
+    /** The range the player can expect: the preview cannot know this level's damage mix. */
+    @Override
+    public String describe() {
+        String stat = this.resisted.map(type -> type == DamageType.PHYSICAL ? "armor" : "magic resist")
+                .orElse("armor or magic resist");
+        float strongest = Math.min(this.evenFraction, this.fullFraction);
+        return "Adaptive: up to " + Math.round(PercentResistTrait.armorKeeping(strongest)) + " " + stat
+                + ", depending on your damage mix";
+    }
+
     @Override
     public Optional<Trait> resolvedFor(DamageMix mix) {
         DamageType type = this.resisted.orElseGet(mix::dominant);

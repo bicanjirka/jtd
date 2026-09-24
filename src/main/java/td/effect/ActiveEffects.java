@@ -13,6 +13,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 
 /**
@@ -131,6 +132,18 @@ public final class ActiveEffects {
     /** Active kinds in enum order, as a snapshot, for UI markers. */
     public Set<EffectKind> activeKinds() {
         return this.active.isEmpty() ? EnumSet.noneOf(EffectKind.class) : EnumSet.copyOf(this.active.keySet());
+    }
+
+    /**
+     * Ticks left on the active effect of {@code kind}; empty when none is active or for a burn,
+     * which decays rather than counting down.
+     */
+    public OptionalInt remainingTicks(EffectKind kind) {
+        Effect effect = this.active.get(kind);
+        if (effect == null || kind == EffectKind.BURN) {
+            return OptionalInt.empty();
+        }
+        return OptionalInt.of(effect.remainingTicks());
     }
 
     /** Whether no effect is active, so the stats this object contributes cannot change on a tick. */

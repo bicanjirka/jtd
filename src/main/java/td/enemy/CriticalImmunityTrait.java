@@ -15,6 +15,11 @@ public record CriticalImmunityTrait() implements Trait {
     }
 
     @Override
+    public String describe() {
+        return "Immune to critical hits";
+    }
+
+    @Override
     public TraitMarker marker() {
         return TraitMarker.CRITICAL_IMMUNE;
     }
