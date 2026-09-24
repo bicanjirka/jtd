@@ -67,6 +67,10 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         this.updateInterface();
     }
 
+    public boolean hasSelectedTower() {
+        return this.selectedTower != null;
+    }
+
     public void setExternalText(String s) {
         this.jButton_sell.setVisible(false);
         this.setText(s);

@@ -3,6 +3,7 @@ package td.ui;
 import td.effect.EffectKind;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
+import td.enemy.EnemyMob;
 import td.enemy.EnemyMobVisitor;
 import td.enemy.Rank;
 import td.enemy.SupportAura;
@@ -58,6 +59,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
      * Much fainter than the shield bubble, since an aura ring can be many times the body's size.
      */
     private static final float SUPPORT_AURA_RING_ALPHA = 0.12f;
+    private static final float SELECTION_RING_SCALE_FRACTION = 1.6f;
+    private static final float SELECTION_RING_ALPHA = 0.9f;
     // Stronger than a support aura: it threatens the player's towers rather than helping allies.
     private static final float DISRUPTION_RING_ALPHA = 0.35f;
     static final int EFFECT_PULSE_DURATION_TICKS = 8;
@@ -71,10 +74,17 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private final List<EnemyOverlayDraw> overlayDraws = new ArrayList<>();
     private final int gameTime;
     private final double interpolationAlpha;
+    private final Optional<EnemyMob> selected;
 
     public EnemyFrameBuilder(int gameTime, double interpolationAlpha) {
+        this(gameTime, interpolationAlpha, Optional.empty());
+    }
+
+    /** Also rings {@code selected}, the enemy the player is inspecting. */
+    public EnemyFrameBuilder(int gameTime, double interpolationAlpha, Optional<EnemyMob> selected) {
         this.gameTime = gameTime;
         this.interpolationAlpha = interpolationAlpha;
+        this.selected = selected;
     }
 
     private static float lerp(double from, double to, double alpha) {
@@ -190,6 +200,10 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         }
         if (mob.activeEffectKinds().contains(EffectKind.FREEZE)) {
             this.overlayDraws.add(new IceCrystalDraw(Palette.FREEZE_CRYSTAL, x, y, scale * FREEZE_CRYSTAL_SCALE_FRACTION));
+        }
+        if (this.selected.isPresent() && this.selected.get() == mob) {
+            this.overlayDraws.add(new EnemyRingDraw(Palette.SELECTION, x, y, scale * SELECTION_RING_SCALE_FRACTION,
+                    SELECTION_RING_ALPHA));
         }
         supportAura.ifPresent(aura -> this.overlayDraws.add(
                 new EnemyRingDraw(markerPaletteFor(aura.kind()), x, y, aura.radius(), SUPPORT_AURA_RING_ALPHA)));

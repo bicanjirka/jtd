@@ -9,6 +9,7 @@ import td.effect.FreezeDiminishing;
 import td.enemy.BodyArchetype;
 import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
+import td.enemy.EnemyInspection;
 import td.enemy.EnemyMob;
 import td.enemy.FreezeDiminishingTrait;
 import td.enemy.HurtSpeedTrait;
@@ -236,6 +237,118 @@ class GameEngineTest {
         assertThat(disruptedRange).isCloseTo(fullRange * 0.8f, within(0.01f));
         assertThat(tower.isDisrupted()).isFalse();
         assertThat(tower.getRangeReal()).isEqualTo(fullRange);
+    }
+
+    private static final EnemyDefinition WALKER_A = EnemyDefinition.of("walkerA", "Walker A", 100, 1, 2f,
+            BodyArchetype.CIRCLE);
+    private static final EnemyDefinition WALKER_B = EnemyDefinition.of("walkerB", "Walker B", 100, 1, 2f,
+            BodyArchetype.CIRCLE);
+
+    /** Walker A leads Walker B by 20 px along the path. */
+    private static EnemyMob[] twoWalkers(GameEngine engine) {
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100).withCustomEnemies(List.of(WALKER_A, WALKER_B)));
+        GameWorld world = engine.getGameWorld();
+        EnemyMob a = world.getEnemyCatalog().spawn("walkerA", world, 0, 100, 1, Rank.GRUNT);
+        world.enemies().add(a);
+        for (int t = 1; t <= 10; t++) {
+            engine.doTick(t);
+        }
+        EnemyMob b = world.getEnemyCatalog().spawn("walkerB", world, 0, 100, 1, Rank.GRUNT);
+        world.enemies().add(b);
+        return new EnemyMob[] {a, b};
+    }
+
+    private static Optional<EnemyInspection> clickAndInspect(GameEngine engine, double x, double y) {
+        engine.requestEnemySelectionAt((int) Math.round(x), (int) Math.round(y));
+        return engine.inspectSelectedEnemy();
+    }
+
+    @Test
+    void clickingBetweenTwoEnemiesSelectsTheNearerOne() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyMob[] walkers = twoWalkers(engine);
+
+        Optional<EnemyInspection> picked = clickAndInspect(engine, walkers[1].getX() + 4, walkers[1].getY());
+
+        assertThat(picked).map(EnemyInspection::name).contains("Walker B");
+    }
+
+    @Test
+    void aClickOutsideTheGenerousRadiusSelectsNothing() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyMob[] walkers = twoWalkers(engine);
+
+        Optional<EnemyInspection> near = clickAndInspect(engine, walkers[0].getX(), walkers[0].getY() + 11);
+        Optional<EnemyInspection> far = clickAndInspect(engine, walkers[0].getX(), walkers[0].getY() + 14);
+
+        assertThat(near).map(EnemyInspection::name).contains("Walker A");
+        assertThat(far).isEmpty();
+    }
+
+    @Test
+    void anInvisibleEnemyCannotBePickedButAnExistingSelectionSurvivesItTurningInvisible() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyMob[] walkers = twoWalkers(engine);
+        walkers[0].applyEffect(Effect.invisible(100, d -> {
+        }));
+        Optional<EnemyInspection> hidden = clickAndInspect(engine, walkers[0].getX(), walkers[0].getY());
+        clickAndInspect(engine, walkers[1].getX(), walkers[1].getY());
+
+        walkers[1].applyEffect(Effect.invisible(100, d -> {
+        }));
+
+        assertThat(hidden).isEmpty();
+        assertThat(engine.inspectSelectedEnemy()).map(EnemyInspection::name).contains("Walker B");
+    }
+
+    @Test
+    void aKilledEnemyKeepsItsLastSnapshotMarkedKilled() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyMob[] walkers = twoWalkers(engine);
+        clickAndInspect(engine, walkers[0].getX(), walkers[0].getY());
+
+        walkers[0].doDamage(Damage.physical(1_000_000));
+        for (int t = 11; t <= 200; t++) {
+            engine.doTick(t);
+        }
+
+        assertThat(engine.inspectSelectedEnemy()).map(EnemyInspection::fate).contains(EnemyInspection.Fate.KILLED);
+    }
+
+    @Test
+    void aLeakedEnemyKeepsItsLastSnapshotMarkedLeaked() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyMob[] walkers = twoWalkers(engine);
+        clickAndInspect(engine, walkers[0].getX(), walkers[0].getY());
+
+        for (int t = 11; t <= 400 && !walkers[0].isDead(); t++) {
+            engine.doTick(t);
+        }
+
+        assertThat(engine.inspectSelectedEnemy()).map(EnemyInspection::fate).contains(EnemyInspection.Fate.LEAKED);
+    }
+
+    @Test
+    void anEnemyReplacedWhileAliveIsDeselected() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyMob[] walkers = twoWalkers(engine);
+        clickAndInspect(engine, walkers[0].getX(), walkers[0].getY());
+        GameWorld world = engine.getGameWorld();
+
+        world.enemies().replace(walkers[0], world.getEnemyCatalog().spawn("walkerB", world, 0, 100, 1, Rank.GRUNT));
+
+        assertThat(engine.inspectSelectedEnemy()).isEmpty();
+    }
+
+    @Test
+    void loadingALevelClearsTheEnemySelection() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyMob[] walkers = twoWalkers(engine);
+        clickAndInspect(engine, walkers[0].getX(), walkers[0].getY());
+
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+
+        assertThat(engine.inspectSelectedEnemy()).isEmpty();
     }
 
     @Test

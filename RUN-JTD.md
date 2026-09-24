@@ -41,3 +41,19 @@ batch. Each entry says what to do and what should be true.
   `Resilience 100 (immune to crits)` and a `Traits:` list; an Elite Simple shows
   `- Adaptive: up to 67 armor or magic resist, depending on your damage mix` and
   `Freeze diminishing returns`. Check the text fits the panel (no clipping) in the Hud style.
+
+## 6. Phase 6 - live enemy inspector (screenshots)
+
+- Start a level, start a wave, and click a moving enemy (not while placing a tower).
+  Expect: a white selection ring around it; the side panel shows `Name (Rank)`,
+  `Health: cur / max`, the stat lines, `Effects:` with time left (e.g. `- Frozen 1.2s` after a
+  Seeker hit) and `Traits:`.
+- Pause (`p`) and screenshot twice a second apart: the text must still be shown (live while
+  paused).
+- Let a tower kill it: the ring disappears and the panel keeps its last state with `Killed`.
+  Let one leak: `Leaked`.
+- Click a tower: the enemy ring and text go away and the tower's status shows. Click the enemy
+  again: the tower deselects. Hover an upgrade node while inspecting a selected tower: the hover
+  text still takes over the panel.
+- Try to click a Ghost while invisible: nothing gets selected. Select a Warden egg, let it hatch:
+  the selection clears.
