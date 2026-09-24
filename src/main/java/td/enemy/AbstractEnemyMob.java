@@ -8,22 +8,14 @@ import td.effect.EffectKind;
 import td.effect.EffectTransitions;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
-import td.wave.ArcLengthPath;
-import td.wave.Path;
-import td.wave.PathPose;
-import td.wave.Vec2;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 /**
  * What every enemy shares: spawn delay, movement along its path, health, damage and death-fade
- * timing.
- * <p>
- * Movement is arc-length distance along an {@link ArcLengthPath}, so curves and diagonals move at
- * the same pace as straight legs. Reaching the end charges a leak and kills the mob through the
- * same fade path as a combat kill.
+ * timing. Reaching the path's end charges a leak and kills the mob through the same fade path as a
+ * combat kill.
  * <p>
  * Everything a mob is born with is {@code final} and set by the constructor. Mutable per-tick state
  * is private and owned by the game-loop thread; subclasses reach it through accessors.
@@ -38,11 +30,6 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * damage-over-time tick can remove a fraction of a point.
      */
     private static final int HEALTH_UNITS_PER_POINT = 100;
-    /**
-     * Scale of {@link #getProgression()}: fine enough that mobs a fraction of a percent apart still
-     * compare distinctly.
-     */
-    private static final int PROGRESSION_SCALE = 1_000_000;
 
     protected final GameWorld gameWorld;
     protected final Rank rank;
@@ -52,29 +39,13 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     private final int pathIndex;
     private final ActiveEffects activeEffects = new ActiveEffects();
     private final EffectTransitions effectTransitions = new EffectTransitions();
-    /**
-     * Empty for a path with fewer than two points; the mob then holds at
-     * {@link #stationaryPosition}.
-     */
-    private final Optional<ArcLengthPath> arcLengthPath;
-    private final Vec2 stationaryPosition;
-    /**
-     * Formation offset in world space, fixed at spawn from the path's facing there. Not re-rotated
-     * with the path's tangent each tick: that would warp a member's speed on curves and make it
-     * jump at sharp corners.
-     */
-    private final double offsetX;
-    private final double offsetY;
+    private final PathMotion motion;
 
     private int health;
     private boolean inactive;
     private boolean validTarget;
     private boolean dead = false;
     private float speed;
-    private double x;
-    private double y;
-    private double prevX;
-    private double prevY;
     private int delay;
     private int deathTick = -1;
     // Captured on the next doTick: doDamage() has no gameTime, and a hit can land in another
@@ -87,8 +58,6 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     // Null until the first cast; never exposed as null.
     private AbilityCast lastAbilityCast;
     private int abilitySpawnTick = -1;
-    private double distanceIntoLap = 0;
-    private double lastFacingRadians = 0;
 
     /**
      * @param speed           px/tick, with any spawn-shape multiplier already applied
@@ -103,24 +72,12 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         this.health = spawnParameters.health() * HEALTH_UNITS_PER_POINT;
         this.healthMax = spawnParameters.health() * HEALTH_UNITS_PER_POINT;
         this.pathIndex = spawnParameters.pathIndex();
-        Path path = gameWorld.level().pathAt(this.pathIndex);
-        this.arcLengthPath = ArcLengthPath.of(path);
-        List<Vec2> pathPoints = path.points();
-        this.stationaryPosition = pathPoints.isEmpty() ? new Vec2(0, 0) : pathPoints.getFirst();
-        double spawnFacing = this.arcLengthPath.map(arcPath -> arcPath.poseAt(0).facingRadians()).orElse(0.0);
-        double cos = Math.cos(spawnFacing);
-        double sin = Math.sin(spawnFacing);
-        Vec2 localOffset = spawnParameters.localOffset();
-        this.offsetX = localOffset.x() * cos - localOffset.y() * sin;
-        this.offsetY = localOffset.x() * sin + localOffset.y() * cos;
+        this.motion = new PathMotion(gameWorld.level().pathAt(this.pathIndex), spawnParameters.localOffset(), gameWorld::getBoard);
         this.delay = spawnParameters.delayTicks();
         // From the rounded tick count, not the slot position: a fractional delay can round to zero
         // ticks, and an inactive mob with no delay to count down would never activate.
         this.inactive = this.delay > 0;
         this.validTarget = !this.inactive;
-        this.updatePosition();
-        this.prevX = this.x;
-        this.prevY = this.y;
     }
 
     public int getHealth() {
@@ -177,11 +134,11 @@ public abstract class AbstractEnemyMob implements EnemyMob {
     }
 
     public double getX() {
-        return this.x;
+        return this.motion.x();
     }
 
     public double getY() {
-        return this.y;
+        return this.motion.y();
     }
 
     /**
@@ -189,11 +146,11 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * spawn.
      */
     public double getPrevX() {
-        return this.prevX;
+        return this.motion.prevX();
     }
 
     public double getPrevY() {
-        return this.prevY;
+        return this.motion.prevY();
     }
 
     /**
@@ -234,18 +191,12 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         return this.effectTransitions.ticksSinceLost(kind, gameTime);
     }
 
-    /**
-     * Distance into the current lap as a fraction of this mob's own path length, so mobs on paths
-     * of different lengths rank by how close they are to leaking.
-     */
     public int getProgression() {
-        return this.arcLengthPath
-                .map(path -> (int) Math.round(this.distanceIntoLap / path.totalLength() * PROGRESSION_SCALE))
-                .orElse(0);
+        return this.motion.progression();
     }
 
     protected double getDistanceIntoLap() {
-        return this.distanceIntoLap;
+        return this.motion.distanceIntoLap();
     }
 
     /** Passed on by an ability spawn so the new mob stays on its parent's path. */
@@ -258,10 +209,7 @@ public abstract class AbstractEnemyMob implements EnemyMob {
      * was.
      */
     protected void jumpToDistance(double distanceIntoLap) {
-        this.distanceIntoLap = distanceIntoLap;
-        this.updatePosition();
-        this.prevX = this.x;
-        this.prevY = this.y;
+        this.motion.jumpTo(distanceIntoLap);
     }
 
     /** Spawned, on the board and alive: the precondition every targeting query applies. */
@@ -350,37 +298,9 @@ public abstract class AbstractEnemyMob implements EnemyMob {
         return Math.min(255, Math.max(alpha, 0));
     }
 
-    /**
-     * Recomputes position from the distance along the path plus the fixed offset. The offset is
-     * clamped to the board only while the path point is on the board: clamping keeps a formation
-     * member targetable, and skipping it off-board lets enemies walk in from and out to off-screen.
-     */
-    private void updatePosition() {
-        if (this.arcLengthPath.isPresent()) {
-            PathPose pose = this.arcLengthPath.get().poseAt(this.distanceIntoLap);
-            this.x = clampOntoBoard(pose.position().x(), this.offsetX, this.gameWorld.getBoard().maxX());
-            this.y = clampOntoBoard(pose.position().y(), this.offsetY, this.gameWorld.getBoard().maxY());
-            this.lastFacingRadians = pose.facingRadians();
-        } else {
-            this.x = this.stationaryPosition.x() + this.offsetX;
-            this.y = this.stationaryPosition.y() + this.offsetY;
-        }
-    }
-
-    private static double clampOntoBoard(double pathPosition, double offset, int max) {
-        if (pathPosition < 0 || pathPosition > max) {
-            return pathPosition + offset;
-        }
-        return clamp(pathPosition + offset, 0, max);
-    }
-
-    private static double clamp(double value, double min, double max) {
-        return Math.max(min, Math.min(value, max));
-    }
-
     /** The path's exact facing at this mob's position, not derived from movement. */
     protected double getPathFacingRadians() {
-        return this.lastFacingRadians;
+        return this.motion.facingRadians();
     }
 
     /**
@@ -421,17 +341,11 @@ public abstract class AbstractEnemyMob implements EnemyMob {
             if (this.dead) {
                 return;
             }
-            this.prevX = this.x;
-            this.prevY = this.y;
-            if (this.arcLengthPath.isPresent()) {
-                this.distanceIntoLap += this.speed * speedMultiplier;
-                if (this.distanceIntoLap >= this.arcLengthPath.get().totalLength()) {
-                    this.leak();
-                    return;
-                }
+            if (this.motion.advance(this.speed * speedMultiplier)) {
+                this.leak();
+                return;
             }
-            this.updatePosition();
-            this.validTarget = this.x >= 0 && this.x <= this.gameWorld.getBoard().maxX() && this.y >= 0 && this.y <= this.gameWorld.getBoard().maxY();
+            this.validTarget = this.motion.isOnBoard();
         }
     }
 
