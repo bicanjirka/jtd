@@ -41,7 +41,7 @@
 - Effect immunity is `Trait.blocksEffect`, checked in `DefinedEnemyMob.applyEffect` before
   `ActiveEffects` sees the effect.
 - `AbilityEvaluator` decides when a trigger fires; actions execute through
-  `DefinedEnemyMob`'s inner `MobAbilityContext`, which reaches the world through
+  `MobAbilityContext` (one per caster per tick), which reaches the world through
   `GameWorld.enemies()` (`EnemySpawner.add`/`replace`); spawned mobs are built by
   `AbilitySpawnFactory`. Per-mob `AbilityState` (countdowns,
   fire-once flags) is built in the constructor, parallel to `definition.abilities()`.

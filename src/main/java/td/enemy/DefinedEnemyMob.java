@@ -5,7 +5,6 @@ import td.economy.EconomyDelta;
 import td.effect.ActiveEffects;
 import td.effect.Effect;
 import td.effect.EffectKind;
-import td.effect.EffectTemplate;
 import td.effect.EffectTransitions;
 import td.enemy.MobMoments.Moment;
 import td.util.GameWorld;
@@ -336,6 +335,14 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.moments.record(Moment.ABILITY_SPAWN, gameTime);
     }
 
+    int ticksSinceSpawn() {
+        return this.ticksSinceSpawn;
+    }
+
+    int ticksSinceLastHit() {
+        return this.ticksSinceLastHit;
+    }
+
     /** {@code -1} for a mob that came from a wave. */
     public int ticksSinceAbilitySpawn(int gameTime) {
         return this.moments.ticksSince(Moment.ABILITY_SPAWN, gameTime);
@@ -420,95 +427,9 @@ public final class DefinedEnemyMob implements EnemyMob {
         for (int i = 0; i < abilities.size(); i++) {
             Ability ability = abilities.get(i);
             AbilityState state = this.abilityStates.get(i);
-            AbilityContext context = new MobAbilityContext(gameTime);
+            AbilityContext context = new MobAbilityContext(this, this.gameWorld, gameTime);
             if (AbilityEvaluator.shouldFire(ability.trigger(), state, context)) {
                 AbilityEvaluator.execute(ability.action(), context);
-            }
-        }
-    }
-
-    /** Resolves ability data against this mob's world, position and definition. */
-    private final class MobAbilityContext implements AbilityContext {
-
-        private final int gameTime;
-
-        MobAbilityContext(int gameTime) {
-            this.gameTime = gameTime;
-        }
-
-        @Override
-        public float healthFraction() {
-            return DefinedEnemyMob.this.getHealthFraction();
-        }
-
-        @Override
-        public int ticksSinceSpawn() {
-            return DefinedEnemyMob.this.ticksSinceSpawn;
-        }
-
-        @Override
-        public int ticksSinceLastHit() {
-            return DefinedEnemyMob.this.ticksSinceLastHit;
-        }
-
-        @Override
-        public boolean justDied() {
-            return DefinedEnemyMob.this.isDead() && DefinedEnemyMob.this.ticksSinceDeath(this.gameTime) == 0;
-        }
-
-        @Override
-        public boolean justTookCriticalHit() {
-            return DefinedEnemyMob.this.ticksSinceCriticalHit(this.gameTime) == 0;
-        }
-
-        @Override
-        public boolean justTookDamage() {
-            return DefinedEnemyMob.this.ticksSinceDamageTaken(this.gameTime) == 0;
-        }
-
-        @Override
-        public void applyEffect(EffectTemplate template, EffectTarget target) {
-            switch (target) {
-                case SelfTarget ignored -> DefinedEnemyMob.this.applyEffect(template.toEffect(this::creditNoOne));
-                case RadiusTarget radiusTarget -> this.applyToOthersInRadius(template, radiusTarget.radius());
-            }
-            float castRadius = switch (target) {
-                case SelfTarget ignored -> 0f;
-                case RadiusTarget radiusTarget -> radiusTarget.radius();
-            };
-            DefinedEnemyMob.this.recordAbilityCast(template.kind(), castRadius, this.gameTime);
-        }
-
-        private void applyToOthersInRadius(EffectTemplate template, float radius) {
-            float radius2 = radius * radius;
-            double selfX = DefinedEnemyMob.this.getX();
-            double selfY = DefinedEnemyMob.this.getY();
-            for (EnemyMob other : DefinedEnemyMob.this.gameWorld.enemies().getEnemies()) {
-                if (other == DefinedEnemyMob.this || !other.validTarget()) {
-                    continue;
-                }
-                double dx = other.getX() - selfX;
-                double dy = other.getY() - selfY;
-                if (dx * dx + dy * dy <= radius2) {
-                    other.applyEffect(template.toEffect(this::creditNoOne));
-                }
-            }
-        }
-
-        /** Ability effects deal no direct damage, so this sink is never invoked. */
-        private void creditNoOne(Damage damage) {
-        }
-
-        @Override
-        public void spawnEnemies(String definitionId, AbilitySpawnShape shape, boolean consumesSelf) {
-            DefinedEnemyMob caster = DefinedEnemyMob.this;
-            EnemySpawner roster = caster.gameWorld.enemies();
-            for (DefinedEnemyMob spawned : AbilitySpawnFactory.build(caster.gameWorld, caster, definitionId, shape, this.gameTime)) {
-                if (consumesSelf) {
-                    roster.replace(caster, spawned);
-                } else {
-                    roster.add(spawned);
-                }
             }
         }
     }
