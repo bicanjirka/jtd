@@ -1,5 +1,6 @@
 package td;
 
+import ch.qos.logback.classic.Level;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -70,22 +71,32 @@ class GameLoopTest {
     void aFailingTickIsLoggedAndDoesNotStopSubsequentTicks() throws InterruptedException {
         AtomicInteger attempts = new AtomicInteger();
         CountDownLatch sawTicksAfterAFailure = new CountDownLatch(3);
+        RuntimeException failure = new RuntimeException("tick failed on purpose");
         GameLoop loop = new GameLoop(() -> {
             if (attempts.getAndIncrement() == 0) {
-                throw new RuntimeException("boom");
+                throw failure;
             }
             sawTicksAfterAFailure.countDown();
         }, () -> {
         });
         loop.setSpeed(TickSpeed.SUPER_FAST);
 
-        loop.start();
-        try {
-            assertThat(sawTicksAfterAFailure.await(2, TimeUnit.SECONDS))
+        try (CapturedLog log = new CapturedLog(GameLoop.class)) {
+            loop.start();
+            boolean keptTicking;
+            try {
+                keptTicking = sawTicksAfterAFailure.await(2, TimeUnit.SECONDS);
+            } finally {
+                loop.stop();
+            }
+
+            assertThat(keptTicking)
                     .as("expected ticks to keep running after the first one threw")
                     .isTrue();
-        } finally {
-            loop.stop();
+            assertThat(log.atLevel(Level.ERROR))
+                    .singleElement()
+                    .satisfies(event -> assertThat(event.getThrowableProxy().getMessage())
+                            .isEqualTo(failure.getMessage()));
         }
     }
 
@@ -260,18 +271,22 @@ class GameLoopTest {
         });
         loop.setSpeed(TickSpeed.PAUSED);
 
-        loop.start();
-        try {
-            Thread.sleep(50);
+        try (CapturedLog log = new CapturedLog(GameLoop.class)) {
             loop.start();
-            Thread.sleep(50);
+            try {
+                Thread.sleep(50);
+                loop.start();
+                Thread.sleep(50);
 
-            long gameLoopThreads = Thread.getAllStackTraces().keySet().stream()
-                    .filter(t -> "game-loop".equals(t.getName()))
-                    .count();
-            assertThat(gameLoopThreads).isEqualTo(1);
-        } finally {
-            loop.stop();
+                long gameLoopThreads = Thread.getAllStackTraces().keySet().stream()
+                        .filter(t -> "game-loop".equals(t.getName()))
+                        .count();
+                assertThat(gameLoopThreads).isEqualTo(1);
+            } finally {
+                loop.stop();
+            }
+
+            assertThat(log.atLevel(Level.WARN)).hasSize(1);
         }
     }
 }
