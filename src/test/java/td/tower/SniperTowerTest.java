@@ -2,6 +2,7 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
@@ -89,5 +90,70 @@ class SniperTowerTest {
 
         assertThat(tower.wasLastShotCritical()).isTrue();
         assertThat(target.attackers().getFirst().critChance()).isEqualTo(tower.critChance());
+    }
+
+    private static SniperTower awakenedSniper(GameWorld world, int killsEarned) {
+        world.economy().startEconomy(1000, 5);
+        SniperTower tower = new SniperTower(world, 3, 3);
+        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        for (int i = 0; i < killsEarned; i++) {
+            tower.dealDamage(EnemyFactory.getEnemy("c", world, 0, 1, 1, Rank.GRUNT), Damage.physical(1_000_000));
+        }
+        return tower;
+    }
+
+    private static FakeEnemyMob targetFor(GameWorld world) {
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        world.enemies().setEnemies(new EnemyMob[]{target});
+        return target;
+    }
+
+    private static void fireShots(SniperTower tower, FakeEnemyMob target, int shots) {
+        for (int tick = 1; target.hits().size() < shots; tick++) {
+            tower.doTick(tick);
+        }
+    }
+
+    @Test
+    void marksmansEyeTwoIgnoresHalfOfTheTargetsArmor() {
+        GameWorld world = WorldFixtures.newWorld();
+        SniperTower tower = awakenedSniper(world, 15);
+        tower.buyUpgrade(UpgradePaths.named(tower, "Marksman's Eye"));
+        tower.dealDamage(EnemyFactory.getEnemy("c", world, 0, 100_000, 1, Rank.GRUNT), Damage.physical(20_000));
+
+        boolean bought = tower.buyUpgrade(UpgradePaths.named(tower, "Marksman's Eye II"));
+
+        assertThat(bought).isTrue();
+        assertThat(tower.stats().attack().armorPenetration()).isEqualTo(0.5f);
+    }
+
+    @Test
+    void fifthShotMakesEveryFifthShotACritWorthTwoAndAHalfTimes() {
+        GameWorld world = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SniperTower tower = awakenedSniper(world, 15);
+        tower.buyUpgrade(UpgradePaths.named(tower, "Fifth Shot"));
+        FakeEnemyMob target = targetFor(world);
+
+        fireShots(tower, target, 5);
+
+        assertThat(target.attackers()).extracting(AttackProfile::critChance)
+                .containsExactly(tower.critChance(), tower.critChance(), tower.critChance(), tower.critChance(), 1f);
+        assertThat(target.attackers()).extracting(AttackProfile::critMultiplier).containsOnly(2.5f);
+    }
+
+    @Test
+    void momentumTurnsTheShotAfterACritIntoAFivefoldShotThatIgnoresArmorAndPlating() {
+        GameWorld world = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SniperTower tower = awakenedSniper(world, 20);
+        tower.buyUpgrade(UpgradePaths.named(tower, "Momentum"));
+        FakeEnemyMob target = targetFor(world);
+        target.landEveryHitCritical();
+
+        fireShots(tower, target, 2);
+
+        assertThat(target.hits().get(1).amount()).isEqualTo(5 * target.hits().get(0).amount());
+        assertThat(target.attackers().get(0).armorPenetration()).isZero();
+        assertThat(target.attackers().get(1).armorPenetration()).isEqualTo(1f);
+        assertThat(target.attackers().get(1).platingPenetration()).isEqualTo(1f);
     }
 }

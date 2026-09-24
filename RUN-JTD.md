@@ -57,3 +57,13 @@ batch. Each entry says what to do and what should be true.
   text still takes over the panel.
 - Try to click a Ghost while invisible: nothing gets selected. Select a Warden egg, let it hatch:
   the selection clears.
+
+## 7. Phase 7 - specialization nodes (gameplay)
+
+- In a level with Armored waves, give credits (`c`), build a Sniper, buy Awaken, earn the gates
+  and buy Marksman's Eye II; check its status/upgrade text lists `+50% armor penetration` and it
+  visibly kills Armored mobs faster than before.
+- On another Sniper buy Fifth Shot: roughly every fifth shot draws the crit beam. On a third buy
+  Momentum: after a crit beam, the next shot hits much harder.
+- Build a Sonar, buy Awaken and Piercing Tone; against Armored mobs its hits should add magic
+  damage (the tower's damage dealt climbs faster than an unupgraded Sonar's).

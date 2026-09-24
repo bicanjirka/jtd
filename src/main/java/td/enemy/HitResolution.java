@@ -2,6 +2,7 @@ package td.enemy;
 
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.stat.EnemyStat;
 import td.stat.StatView;
 import td.util.RandomSource;
@@ -37,9 +38,18 @@ public final class HitResolution {
         }
         float mitigation = attacker.penetrate(incoming.type(), stats.value(EnemyStat.mitigationFor(incoming.type())));
         amount *= mitigationMultiplier(mitigation);
-        amount = Math.max(0f, amount - stats.value(EnemyStat.platingFor(incoming.type())));
+        amount = Math.max(0f, amount - attacker.penetratePlating(stats.value(EnemyStat.platingFor(incoming.type()))));
         amount *= stats.value(EnemyStat.damageTakenFor(incoming.type()));
         return new Damage(Math.round(amount), incoming.type(), critical).cappedAt(health);
+    }
+
+    /**
+     * The share of a {@code type} hit that mitigation and damage taken remove, before plating and
+     * with no penetration: {@code 0} for none, negative when the enemy takes extra.
+     */
+    public static float reductionAgainst(DamageType type, StatView stats) {
+        return 1f - mitigationMultiplier(stats.value(EnemyStat.mitigationFor(type)))
+                * stats.value(EnemyStat.damageTakenFor(type));
     }
 
     /**

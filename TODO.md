@@ -13,7 +13,8 @@ this file is the single place to look for outstanding design/feature gaps.
 Every feature request has shipped (see each doc's own status line). `FEATURE-tower-
 specialization-abilities.md` is the one partial exception: its [F]-tagged content is built, its
 [S]-tagged stub nodes wait on the primitives listed under "Tower specialization primitives"
-below.
+below. `FEATURE-enemy-stats.md` supplied the penetration, per-attacker crit and
+resistance-aware primitives.
 
 Implemented, for reference: `FEATURE-enemy-spawn-types.md`, `FEATURE-multiple-enemy-paths.md`,
 `FEATURE-playtesting-and-balance-tooling.md`, `FEATURE-enemy-rank-system.md`,
@@ -233,7 +234,7 @@ with the cooldown-gated travelling-wave firing model) join this same bucket.
 
 ## Tower specialization primitives
 
-`docs/features/FEATURE-tower-specialization-abilities.md` tags eleven consumers across the tower
+`docs/features/FEATURE-tower-specialization-abilities.md` tags consumers across the tower
 catalogue **[S]** - the node itself is real (id, price, gate, description, selectable in the UI)
 but its behavioral hook is a documented no-op until the primitive below lands, per that document's
 own two-document build order. Each entry closes once its primitive is implemented and every node
@@ -245,32 +246,23 @@ The largest of the eleven: a stacking (cap 3) damage-amplifying status effect. S
 it: Marked Round (`SniperTower`), Warding Field (`PulseTower`), Cursed Shrapnel (`MortarTower`),
 Homing Curse (`SeekerTower`), Hexflame (`CinderTower`), Withering Field (`AuraTower`).
 
-- **Where:** `td.effect` (`EffectKind`, `Effect`'s static factories, `ActiveEffects.magnitude`),
-  per `td/effect/CLAUDE.md`'s "Adding a kind" checklist.
-- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #1 and its own
-  open questions (stack shape, per-stack magnitude, composition order with `SHIELD`/`Trait`
-  resistance) - none of those are resolved yet.
+- **Where:** `td.effect` (`EffectKind`, `Effect`'s static factories, `ActiveEffects.magnitude`
+  and `contributeTo`), per `td/effect/CLAUDE.md`'s "Adding a kind" checklist.
+- **Approach:** the effect multiplies `PHYSICAL_DAMAGE_TAKEN`/`MAGIC_DAMAGE_TAKEN` in
+  `ActiveEffects.contributeTo`; `HitResolution` already applies damage taken last, and sources
+  multiply, so composition order is settled. Still open in
+  `FEATURE-tower-specialization-abilities.md`: stack shape and per-stack magnitude.
 
-### Partial or full armor/shield bypass on a hit doesn't exist
+### A per-target mark for a guaranteed crit doesn't exist
 
-`DefinedEnemyMob.doDamage`'s `absorb`/`applyShield` steps are always fully applied or not applied
-at all; nothing can skip part of either. Two nodes wait on it: Sniper's Marksman's Eye II (50%
-ignore) and Momentum (100% ignore, "Fifth Shot"'s sibling special).
+Sonar's Mark on Sweep: a beam hit marks its target, and the next hit on it is a guaranteed crit.
+A guaranteed crit is now just a hit sent with `AttackProfile.withCritChance(1f)`; what is missing
+is remembering which enemies this tower marked.
 
-- **Where:** `td.enemy.DefinedEnemyMob.doDamage`.
-- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #2.
-
-### A guaranteed-crit trigger with a per-node crit multiplier doesn't exist
-
-`Damage.asCritical()` applies one fixed, project-wide multiplier; nothing can force a crit outside
-the normal roll or override that multiplier per node. Three nodes wait on it: Sniper's Fifth Shot
-(every 5th shot, 250%) and Momentum (crit-then-boosted-next-shot, 500%), and Sonar's Mark on Sweep
-(mark-then-guaranteed-crit).
-
-- **Where:** `td.tower.AbstractTower.rollCritical`, `td.damage.Damage.asCritical`.
-- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #3 and open
-  question #7 (revise the fixed multiplier into a per-node override, or treat these nodes' own
-  percentages as flavor text for the existing fixed one - not resolved).
+- **Where:** `td.tower.SonarTower.doTick`.
+- **Approach:** keep the marked mobs in the tower (a small identity set, pruned when they die),
+  and send the next hit on a marked one through `dealDamage(enemy, damage, attack)` with crit
+  chance 1.
 
 ### A timed, non-stacking self-buff pulse triggered by a kill doesn't exist
 
@@ -278,7 +270,9 @@ Momentum's "+100% fire rate for 5s, does not stack" - every upgrade-node buff to
 from the moment it's bought, not one with its own expiry layered on top.
 
 - **Where:** `td.tower.AbstractTower` (or a new small per-tower timed-buff holder).
-- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #4.
+- **Approach:** fold it in like enemy disruption: a per-tower timed `TowerBuff` sampled each tick
+  in the towers phase, republishing `TowerStats` only when it starts or expires. See
+  `FEATURE-tower-specialization-abilities.md`'s "New primitives" #4.
 
 ### An on-kill secondary trigger, aware of the kill's own status effects, doesn't exist
 
@@ -294,18 +288,17 @@ Distinct from Pulse's existing "already hit because something else triggered it"
 is an active reveal other towers can then target off of. Two nodes wait on it: Pulse's Resonant
 Field II and Sonar's Wide Band.
 
-- **Where:** `td.enemy.EnemyMob`/`ActiveEffects` (a reveal needs to be visible to every tower's
-  own targeting query, not just this one's).
-- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #6.
+- **Where:** `td.effect.ActiveEffects.contributeTo` (a new reveal effect kind).
+- **Approach:** a reveal sets `STEALTH` to 0 with `StatModifier.setTo(0)`; the lowest set value
+  wins over invisibility's 1, so every tower's targeting sees the mob again with no new query.
 
 ### Crit-triggered behavior override, beyond bonus damage, doesn't exist
 
 Two nodes wait on it: Splash's Overpressure (a crit fires at every enemy in range instead of the
 one target) and Rapid Battery III (a crit's splash is 50% bigger).
 
-- **Where:** `td.tower.SplashTower`, once `AbstractTower.rollCritical`/`dealDamage` can report a
-  hit's crit outcome back to the caller before the caller's own splash loop finishes (it already
-  can via `dealDamage`'s boolean return - what's missing is a place to act on it mid-loop).
+- **Where:** `td.tower.SplashTower`. `dealDamage` already reports whether the hit landed
+  critical; what's missing is a place to act on it mid-loop.
 - **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #7.
 
 ### Distance-scaling damage doesn't exist
@@ -330,14 +323,6 @@ Splash's Toxic Bloom - its own decay curve, separate from `BURN`'s fuel-pool mod
 
 - **Where:** `td.effect`, per `td/effect/CLAUDE.md`'s "Adding a kind" checklist.
 - **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #10.
-
-### Resistance-aware damage scaling doesn't exist
-
-Sonar's Piercing Tone: bonus magic damage against physically armored/shielded enemies, scaling
-with how much resistance they carry, up to a cap.
-
-- **Where:** `td.tower.SonarTower.doTick`, reading the target's own `Trait`/`SHIELD` state.
-- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #11.
 
 ### A shrapnel damage ring past the main splash doesn't exist
 
@@ -370,13 +355,13 @@ than dropping it.
 
 ### A typed shield has no concrete user yet
 
-`ShieldTemplate`/`Effect`/`ActiveEffects.applyShield` can all restrict a shield to one `DamageType`
+`ShieldTemplate`/`Effect`/`ActiveEffects.contributeTo` can all restrict a shield to one `DamageType`
 (`ShieldTemplate.physicalOnly`/`.magicOnly`), mirroring the same restriction `PercentResistTrait`/
 `FlatResistTrait` already carry - but no built-in ability actually authors one. This has precedent:
 `td/effect/CLAUDE.md` already records that `SLOW`/`BURN`/`FREEZE` ship with no `EffectTemplate`
 authoring them either.
 
-- **Where:** `td.effect.ShieldTemplate.physicalOnly`/`.magicOnly`, `ActiveEffects.applyShield`.
+- **Where:** `td.effect.ShieldTemplate.physicalOnly`/`.magicOnly`, `ActiveEffects.contributeTo`.
 - **Approach:** give a concrete enemy ability a typed shield so it is play-verified, not just
   unit-tested - the Warden's `reshield`/`callToArms` (`BuiltInEnemies.WARDEN_STANDING_ABILITIES`)
   are the obvious carriers.
@@ -442,15 +427,16 @@ single hit), making the Warden's armor mechanically inert regardless of which to
 
 ### Critical-damage numbers are unbalanced placeholders
 
-`FEATURE-critical-damage.md` shipped `Damage.CRITICAL_MULTIPLIER` (1.5x), `SniperTower.VETERAN`'s
-crit-chance bonus (15%), the Warden's new on-crit-survived shield (30% for 100 ticks), and (per
-the feature doc's Addendum) `AbstractTower.BURN_CRIT_CHANCE_MULTIPLIER` (2x) as illustrative
+`FEATURE-critical-damage.md` shipped the default crit multiplier (1.5x, now
+`AttackProfile.DEFAULT_CRIT_MULTIPLIER`), `SniperTower.VETERAN`'s crit-chance bonus (15%), the
+Warden's new on-crit-survived shield (30% for 100 ticks), and (per the feature doc's Addendum)
+the burning-doubles-crit rule (2x, now `ActiveEffects.BURN_CRIT_CHANCE_TAKEN`) as illustrative
 placeholders, the same situation every other feature's first-pass numbers were in before their
 own balance passes.
 
-- **Where:** `td.damage.Damage.CRITICAL_MULTIPLIER`, `SniperTower.VETERAN`'s `TowerBuff`,
-  `BuiltInEnemies.WARDEN_STANDING_ABILITIES`'s new `OnCriticalHitTakenTrigger` ability,
-  `td.tower.AbstractTower.BURN_CRIT_CHANCE_MULTIPLIER`.
+- **Where:** `td.damage.AttackProfile.DEFAULT_CRIT_MULTIPLIER`, `SniperTower.VETERAN`'s
+  `TowerBuff`, `BuiltInEnemies.WARDEN_STANDING_ABILITIES`'s new `OnCriticalHitTakenTrigger`
+  ability, `td.effect.ActiveEffects.BURN_CRIT_CHANCE_TAKEN`.
 - **Approach:** tune via actual play (or `td.BalanceHarness`) once the other placeholder-number
   entries in this file get their own pass - no code or architecture change needed, every number
   here is already a named constant or a `TowerBuff` literal.

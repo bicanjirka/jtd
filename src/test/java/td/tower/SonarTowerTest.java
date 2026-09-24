@@ -187,4 +187,24 @@ class SonarTowerTest {
 
         assertThat(chosen).isFalse();
     }
+
+    @Test
+    void piercingToneAddsMagicDamageInProportionToTheTargetsPhysicalProtectionUpToHalf() {
+        this.context.economy().startEconomy(1000, 5);
+        SonarTower tower = tower();
+        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        tower.dealDamage(FakeEnemyMob.at(0, 0), Damage.physical(20_000));
+        tower.buyUpgrade(UpgradePaths.named(tower, "Piercing Tone"));
+        FakeEnemyMob lightlyArmored = FakeEnemyMob.at(TOWER_X + NEAR, TOWER_Y);
+        lightlyArmored.reportPhysicalReduction(0.2f);
+        FakeEnemyMob heavilyArmored = FakeEnemyMob.at(TOWER_X + NEAR + 30, TOWER_Y);
+        heavilyArmored.reportPhysicalReduction(0.9f);
+        this.context.enemies().setEnemies(new EnemyMob[]{lightlyArmored, heavilyArmored});
+
+        tower.doTick(1);
+
+        int weapon = tower.damageCurrent();
+        assertThat(lightlyArmored.hits()).containsExactly(Damage.physical(weapon), Damage.magic(Math.round(weapon * 0.2f)));
+        assertThat(heavilyArmored.hits()).containsExactly(Damage.physical(weapon), Damage.magic(Math.round(weapon * 0.5f)));
+    }
 }

@@ -1,6 +1,7 @@
 package td.tower;
 
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
@@ -77,12 +78,13 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
             .withGate(new KillCountCondition(15))
             .withExtraEffect("a beam hit marks its target; the next hit on it is a guaranteed crit");
-    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode PIERCING_TONE = UpgradeNode.of("sonar.special.piercing_tone", UpgradeSlot.SPECIAL,
             "Piercing Tone", 40)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
             .withGate(new DamageDealtCondition(20000))
-            .withExtraEffect("bonus magic damage against physically armored/shielded enemies");
+            .withExtraEffect("bonus magic damage against physically armored/shielded enemies, up to +50%");
+    /** Piercing Tone's bonus is the target's physical reduction, as a share of this hit, capped here. */
+    private static final float PIERCING_TONE_MAX_BONUS = 0.5f;
 
     private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, TWIN_ARRAY_1, TWIN_ARRAY_2,
             TWIN_ARRAY_3, LONG_REACH_1, LONG_REACH_2, WIDE_BAND, MARK_ON_SWEEP, PIERCING_TONE);
@@ -113,8 +115,20 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
             double bearing = TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(), enemy.getY());
             if (this.sweep.sweptThisTick(bearing)) {
                 this.dealDamage(enemy, Damage.physical(this.damageCurrent()));
+                this.piercingTone(enemy);
                 this.recentHits.add(new SonarHit((float) enemy.getX(), (float) enemy.getY(), gameTime));
             }
+        }
+    }
+
+    /** Adds magic damage in proportion to how much of a physical hit the target shrugs off. */
+    private void piercingTone(EnemyMob enemy) {
+        if (!this.upgrades().owns(PIERCING_TONE.id()) || enemy.isDead()) {
+            return;
+        }
+        float bonus = Math.min(PIERCING_TONE_MAX_BONUS, enemy.reductionAgainst(DamageType.PHYSICAL));
+        if (bonus > 0f) {
+            this.dealDamage(enemy, Damage.magic(Math.round(this.damageCurrent() * bonus)));
         }
     }
 
