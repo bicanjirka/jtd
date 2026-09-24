@@ -1,8 +1,10 @@
 import td.TowerDefense;
 import td.damage.Damage;
 import td.economy.EconomyDelta;
+import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
+import td.enemy.EnemyInspection;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.level.LevelDefinition;
@@ -49,7 +51,7 @@ public class Driver {
         // In-process bring-to-front: the app raising its own window. Doing this from a
         // *separate* process via Win32 SetForegroundWindow silently no-ops (Windows
         // foreground-lock) and risks screenshotting whatever unrelated window is actually
-        // on top - see SKILL.md Gotchas.
+        // on top - see GOTCHAS.md.
         game.setAlwaysOnTop(true);
         game.toFront();
         game.requestFocus();
@@ -78,7 +80,10 @@ public class Driver {
         String rest = parts.length > 1 ? parts[1] : "";
         switch (cmd) {
             case "ss" -> screenshot(rest);
-            case "list" -> list();
+            case "ssboard" -> screenshotBoard(rest.trim());
+            case "list" -> list(rest.trim());
+            case "enemies" -> enemies();
+            case "waitfor" -> waitFor(rest.trim());
             case "click" -> click(Integer.parseInt(rest.trim()));
             case "hover" -> hover(rest);
             case "key" -> typeKey(rest.trim());
@@ -136,24 +141,145 @@ public class Driver {
         }
     }
 
-    private static void list() {
+    // An optional filter keeps only lines containing it (case-insensitive), with their real
+    // indices, so finding one component doesn't cost the whole ~85-line tree.
+    private static void list(String filter) {
         List<Component> clickables = findClickables();
+        String needle = filter.toLowerCase();
         for (int i = 0; i < clickables.size(); i++) {
-            System.out.println(i + ": " + describe(clickables.get(i)));
+            String line = describe(clickables.get(i));
+            if (needle.isEmpty() || line.toLowerCase().contains(needle)) {
+                System.out.println(i + ": " + line);
+            }
         }
         System.out.println("OK list " + clickables.size());
     }
 
-    // Prints a text component's whole content, since a scrolled panel hides lines a screenshot can't show.
-    private static void printText(int index) throws Exception {
+    // Board-relative crop, scaled up: small glyphs and markers are unreadable in a full-window
+    // shot, and a crop costs a fraction of the tokens to look at.
+    private static void screenshotBoard(String args) throws Exception {
+        String[] p = args.split("\\s+");
+        String path = p[0];
+        int cellX = Integer.parseInt(p[1]);
+        int cellY = Integer.parseInt(p[2]);
+        int cellsW = Integer.parseInt(p[3]);
+        int cellsH = Integer.parseInt(p[4]);
+        int zoom = p.length > 5 ? Integer.parseInt(p[5]) : 3;
+        int scale = getGameWorld().getBoard().scale();
+        Point loc = gameBoard().getLocationOnScreen();
+        Rectangle bounds = new Rectangle(loc.x + cellX * scale, loc.y + cellY * scale, cellsW * scale, cellsH * scale);
+        BufferedImage crop = robot.createScreenCapture(bounds);
+        BufferedImage zoomed = new BufferedImage(bounds.width * zoom, bounds.height * zoom, BufferedImage.TYPE_INT_RGB);
+        java.awt.Graphics2D g2 = zoomed.createGraphics();
+        g2.drawImage(crop, 0, 0, zoomed.getWidth(), zoomed.getHeight(), null);
+        g2.dispose();
+        File file = new File(path);
+        if (file.getParentFile() != null) {
+            file.getParentFile().mkdirs();
+        }
+        ImageIO.write(zoomed, "png", file);
+        System.out.println("OK ssboard " + path + " cells " + cellX + "," + cellY + " " + cellsW + "x" + cellsH
+                + " x" + zoom);
+    }
+
+    // One line per enemy, dead ones included, so a script can assert on who is where without a
+    // screenshot. Indices match clickenemy's (which counts alive enemies only) in the alive= column.
+    private static void enemies() throws Exception {
+        EnemyMob[] mobs = getGameWorld().enemies().getEnemies();
+        int alive = 0;
+        for (int i = 0; i < mobs.length; i++) {
+            EnemyMob mob = mobs[i];
+            EnemyInspection inspection = mob.accept(DefinedEnemyMob::inspect);
+            String id = mob.accept(m -> m.definition().id());
+            String aliveIndex = mob.isDead() ? "-" : String.valueOf(alive++);
+            System.out.println(i + ": alive=" + aliveIndex + " " + id + " " + inspection.rank() + " hp "
+                    + inspection.health() + "/" + inspection.maxHealth() + " at board px " + Math.round(mob.getX())
+                    + "," + Math.round(mob.getY()) + " effects " + mob.activeEffectKinds() + " " + inspection.fate());
+        }
+        System.out.println("OK enemies " + mobs.length);
+    }
+
+    // Polls instead of sleeping a guessed wall-clock time, which reads the screen too early when
+    // the game runs slower than expected, and wastes time when it runs faster.
+    //   waitfor ticks <n> [ms]              - the game clock advanced n ticks (pausing stops it)
+    //   waitfor alive <n> [ms]              - exactly n enemies are alive
+    //   waitfor text <index> <substring>    - that text component contains the substring
+    private static void waitFor(String args) throws Exception {
+        String[] p = args.split("\\s+", 3);
+        long timeoutMs = 20_000;
+        java.util.function.BooleanSupplier condition;
+        String what = args;
+        switch (p[0]) {
+            case "ticks" -> {
+                int target = gameTime() + Integer.parseInt(p[1]);
+                timeoutMs = p.length > 2 ? Long.parseLong(p[2]) : timeoutMs;
+                condition = () -> probe(() -> gameTime() >= target);
+                what = "ticks until gameTime " + target;
+            }
+            case "alive" -> {
+                int target = Integer.parseInt(p[1]);
+                timeoutMs = p.length > 2 ? Long.parseLong(p[2]) : timeoutMs;
+                condition = () -> probe(() -> aliveCount() == target);
+            }
+            case "text" -> {
+                int index = Integer.parseInt(p[1]);
+                String needle = p[2];
+                condition = () -> probe(() -> readText(index).contains(needle));
+            }
+            default -> {
+                System.out.println("ERROR: waitfor " + p[0] + " - use ticks, alive or text");
+                return;
+            }
+        }
+        long start = System.currentTimeMillis();
+        while (!condition.getAsBoolean()) {
+            if (System.currentTimeMillis() - start > timeoutMs) {
+                System.out.println("TIMEOUT waitfor " + what + " after " + timeoutMs + " ms (gameTime=" + gameTime()
+                        + ", alive=" + aliveCount() + ")");
+                return;
+            }
+            Thread.sleep(50);
+        }
+        System.out.println("OK waitfor " + what + " in " + (System.currentTimeMillis() - start) + " ms");
+    }
+
+    private static boolean probe(ReflectiveCondition condition) {
+        try {
+            return condition.test();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static int gameTime() throws Exception {
+        Field gameTimeField = TowerDefense.class.getDeclaredField("gameTime");
+        gameTimeField.setAccessible(true);
+        return gameTimeField.getInt(game);
+    }
+
+    private static int aliveCount() throws Exception {
+        return (int) java.util.Arrays.stream(getGameWorld().enemies().getEnemies()).filter(m -> !m.isDead()).count();
+    }
+
+    private static String readText(int index) throws Exception {
         Component c = findClickables().get(index);
         if (!(c instanceof javax.swing.text.JTextComponent text)) {
-            System.out.println("FAILED text " + index + ": " + c.getClass().getSimpleName() + " is not a text component");
-            return;
+            throw new IllegalArgumentException(c.getClass().getSimpleName() + " is not a text component");
         }
         String[] content = new String[1];
         onEventDispatchThread(() -> content[0] = text.getText());
-        System.out.println("--- text " + index + "\n" + content[0] + "\n--- OK text");
+        return content[0];
+    }
+
+    private static Component gameBoard() throws Exception {
+        Field gameBoardField = TowerDefense.class.getDeclaredField("gameBoard");
+        gameBoardField.setAccessible(true);
+        return (Component) gameBoardField.get(game);
+    }
+
+    // Prints a text component's whole content, since a scrolled panel hides lines a screenshot can't show.
+    private static void printText(int index) throws Exception {
+        System.out.println("--- text " + index + "\n" + readText(index) + "\n--- OK text");
     }
 
     private static String describe(Component c) {
@@ -303,12 +429,8 @@ public class Driver {
         int cellX = Integer.parseInt(p[0]);
         int cellY = Integer.parseInt(p[1]);
 
-        Field gameBoardField = TowerDefense.class.getDeclaredField("gameBoard");
-        gameBoardField.setAccessible(true);
-        Component gameBoard = (Component) gameBoardField.get(game);
         int scale = getGameWorld().getBoard().scale();
-
-        Point loc = gameBoard.getLocationOnScreen();
+        Point loc = gameBoard().getLocationOnScreen();
         int cx = loc.x + cellX * scale + scale / 2;
         int cy = loc.y + cellY * scale + scale / 2;
         robot.mouseMove(cx, cy);
@@ -329,9 +451,7 @@ public class Driver {
             return;
         }
         EnemyMob mob = mobs.get(index);
-        Field gameBoardField = TowerDefense.class.getDeclaredField("gameBoard");
-        gameBoardField.setAccessible(true);
-        Point loc = ((Component) gameBoardField.get(game)).getLocationOnScreen();
+        Point loc = gameBoard().getLocationOnScreen();
         int cx = loc.x + (int) Math.round(mob.getX());
         int cy = loc.y + (int) Math.round(mob.getY());
         robot.mouseMove(cx, cy);
@@ -346,7 +466,7 @@ public class Driver {
     // Reflects into TowerDefense's private startSelectedLevel(LevelDefinition) rather than
     // clicking a PanelLevelSelect card via Robot - a card is a plain JPanel with its own
     // MouseListener, not a button, and a Robot click at its on-screen center did not reliably
-    // register in this environment (see SKILL.md Gotchas; button doClick() is unaffected).
+    // register in this environment (see GOTCHAS.md; button doClick() is unaffected).
     private static void selectLevel(int index) throws Exception {
         Field catalogField = TowerDefense.class.getDeclaredField("levelCatalog");
         catalogField.setAccessible(true);
@@ -358,11 +478,22 @@ public class Driver {
         Method startSelectedLevel = TowerDefense.class.getDeclaredMethod("startSelectedLevel", LevelDefinition.class);
         startSelectedLevel.setAccessible(true);
         // On the EDT, because that is where a real level-card click would call it from, and
-        // TowerDefense now asserts it. The call only *starts* the change: the loop is stopped
-        // on a lifecycle thread and the level installed on a later EDT pulse, so follow this
-        // with `sleep` before screenshotting or asserting on `state`.
+        // TowerDefense asserts it. The call only *starts* the change: the loop is stopped on a
+        // lifecycle thread and the level installed on a later EDT pulse. Waiting here for the new
+        // LoadedLevel snapshot makes the command synchronous, so scripts need no guessed sleep.
+        Object before = getGameWorld().level();
         onEventDispatchThread(() -> startSelectedLevel.invoke(game, level));
-        System.out.println("OK level " + index + " (" + level.name() + ") - asynchronous, sleep before asserting");
+        long start = System.currentTimeMillis();
+        while (getGameWorld().level() == before || !getGameWorld().level().isLoaded()) {
+            if (System.currentTimeMillis() - start > 10_000) {
+                System.out.println("TIMEOUT level " + index + ": not installed after 10 s");
+                return;
+            }
+            Thread.sleep(50);
+        }
+        onEventDispatchThread(() -> { });
+        System.out.println("OK level " + index + " (" + level.name() + ") in " + (System.currentTimeMillis() - start)
+                + " ms");
     }
 
     // Reflects into TowerDefense's private returnToMenu() directly rather than
@@ -461,5 +592,9 @@ public class Driver {
      */
     private interface ReflectiveCall {
         void run() throws Exception;
+    }
+
+    private interface ReflectiveCondition {
+        boolean test() throws Exception;
     }
 }
