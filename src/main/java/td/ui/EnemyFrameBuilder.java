@@ -91,7 +91,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return (float) (from + (to - from) * alpha);
     }
 
-    private static Palette markerPaletteFor(EffectKind kind) {
+    static Palette markerPaletteFor(EffectKind kind) {
         return switch (kind) {
             case SLOW -> Palette.STATUS_MARKER_SLOW;
             case BURN -> Palette.STATUS_MARKER_BURN;
@@ -102,7 +102,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         };
     }
 
-    private static Palette traitMarkerPaletteFor(TraitMarker marker) {
+    static Palette traitMarkerPaletteFor(TraitMarker marker) {
         return switch (marker) {
             case PERCENT_RESIST -> Palette.TRAIT_MARKER_PERCENT_RESIST;
             case PHYSICAL_RESIST -> Palette.TRAIT_MARKER_PHYSICAL_RESIST;
@@ -117,7 +117,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         };
     }
 
-    private static Palette paletteFor(BodyArchetype archetype) {
+    static Palette paletteFor(BodyArchetype archetype) {
         return switch (archetype) {
             case CIRCLE -> Palette.ENEMY_CIRCLE;
             case GHOST -> Palette.ENEMY_GHOST;
@@ -129,7 +129,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         };
     }
 
-    private static RankBadge badgeFor(Rank rank) {
+    static RankBadge badgeFor(Rank rank) {
         return switch (rank) {
             case GRUNT -> RankBadge.NONE;
             case SOLDIER -> RankBadge.ONE_CHEVRON;

@@ -3,6 +3,7 @@ package td.ui;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.tower.Tower;
+import td.ui.render.EnemySheet;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
@@ -10,6 +11,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
+import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
@@ -20,11 +22,13 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.io.Serial;
+import java.util.List;
 import java.util.Objects;
 
 /**
- * The text pane under the tower toolbar: either the selected tower's status and a sell button, or
- * text the engine pushed via {@code GameHost.setInfoText}. Each replaces the other. Buying upgrades
+ * The text pane under the tower toolbar: the selected tower's status and a sell button, an enemy's
+ * sheet, or other text such as a tower's shop description. Each replaces the other, and shows from
+ * its top. Buying upgrades
  * happens on {@link PanelUpgradeTree}; this pane shows gate progress and a hovered node's
  * description.
  */
@@ -38,6 +42,9 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private static final Color SELL_TEXT_COLOR = new Color(255, 120, 120);
     private static final Color GATE_MET_COLOR = new Color(140, 255, 140);
     private static final Color GATE_UNMET_COLOR = SELL_TEXT_COLOR;
+    private static final EnemySheet NO_SHEET = new EnemySheet(List.of());
+    /** Before the pane is laid out, the width the side panel gives it. */
+    private static final int FALLBACK_TEXT_WIDTH = 170;
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -45,6 +52,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private GameWorld context;
     private Tower selectedTower;
     private String lastText;
+    private EnemySheet lastSheet = NO_SHEET;
     private boolean levelEnded = false;
     private boolean hovering = false;
     private Runnable onDeselected = () -> {
@@ -76,6 +84,23 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         this.setText(s);
     }
 
+    /** Skips an identical sheet, as {@link #setText} does. */
+    public void showEnemy(EnemySheet sheet) {
+        this.jButton_sell.setVisible(false);
+        if (this.hovering || sheet.equals(this.lastSheet)) {
+            return;
+        }
+        this.lastSheet = sheet;
+        this.lastText = null;
+        this.jTextPane1.setStyledDocument(EnemySheetDocument.of(sheet, this.textWidth()));
+        this.jTextPane1.setCaretPosition(0);
+    }
+
+    private int textWidth() {
+        int width = this.jTextPane1.getWidth() - this.jTextPane1.getInsets().left - this.jTextPane1.getInsets().right;
+        return width > 0 ? width : FALLBACK_TEXT_WIDTH;
+    }
+
     public void onDeselected(Runnable listener) {
         this.onDeselected = listener;
     }
@@ -103,8 +128,8 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     public void showUpgradeHover(String text) {
         this.hovering = true;
         this.lastText = null;
-        this.jTextPane1.setText(text);
-        this.colorizeMarks(text);
+        this.lastSheet = NO_SHEET;
+        this.replaceText(text);
     }
 
     public void clearUpgradeHover() {
@@ -131,8 +156,19 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
             return;
         }
         this.lastText = s;
-        this.jTextPane1.setText(s);
-        this.colorizeMarks(s);
+        this.lastSheet = NO_SHEET;
+        this.replaceText(s);
+    }
+
+    /**
+     * A fresh document, so no style of a previous sheet carries over, read from the top: resetting
+     * the text otherwise leaves the caret, and the scroll, at the end.
+     */
+    private void replaceText(String text) {
+        this.jTextPane1.setStyledDocument(new DefaultStyledDocument());
+        this.jTextPane1.setText(text);
+        this.colorizeMarks(text);
+        this.jTextPane1.setCaretPosition(0);
     }
 
     /** Colours every ✔ green and every ✘ red. */

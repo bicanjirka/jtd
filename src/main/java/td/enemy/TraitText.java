@@ -22,6 +22,10 @@ final class TraitText {
         return String.format(Locale.ROOT, "%.1f", value);
     }
 
+    static String capitalized(String word) {
+        return word.substring(0, 1).toUpperCase(Locale.ROOT) + word.substring(1);
+    }
+
     static String effectName(EnemyStat resistance) {
         return switch (resistance) {
             case SLOW_RESIST -> "slow";

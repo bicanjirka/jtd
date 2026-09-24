@@ -6,6 +6,7 @@ import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.enemy.SpawnParameters;
+import td.ui.render.EnemySheet;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -28,6 +29,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 /**
  * The wave preview: each enemy type with its count, drawn as real mobs. They live in a throwaway
@@ -43,22 +45,20 @@ public class PanelEnemy extends JPanel {
     private final List<Rank> ranks = new ArrayList<>();
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
     private final GameWorld contextLocal;
+    private final Consumer<EnemySheet> onEnemyHover;
     private List<Integer> enemiesCount = new ArrayList<>();
     private Font font;
-    private GameWorld contextFull;
     private int pHeight = 0;
     private int pWidth = 0;
     private int scale = 32;
     private int gameTime = 0;
 
-    public PanelEnemy() {
+    /** {@code onEnemyHover} gets the sheet of the enemy under the pointer. */
+    public PanelEnemy(Consumer<EnemySheet> onEnemyHover) {
+        this.onEnemyHover = onEnemyHover;
         initComponents();
         this.contextLocal = new GameWorld(GameHost.noOp());
         this.contextLocal.setPath(new PathNormal(List.of()));
-    }
-
-    public void setGameWorld(GameWorld c) {
-        this.contextFull = c;
     }
 
     public void clearEnemies() {
@@ -147,7 +147,7 @@ public class PanelEnemy extends JPanel {
         int nr = x / this.scale;
         if (nr < this.enemies.size()) {
             EnemyMob e = this.enemies.get(nr);
-            this.contextFull.setInfoText(e.accept(new EnemyInfoText()));
+            this.onEnemyHover.accept(e.accept(new EnemyInfoText()));
         }
     }
 

@@ -17,8 +17,8 @@ public record HurtSpeedTrait(float maxMultiplier) implements Trait {
     }
 
     @Override
-    public String describe() {
-        return "Speeds up as it's hurt, up to x" + TraitText.decimal(this.maxMultiplier);
+    public TraitLine describe() {
+        return new TraitLine(this.marker(), "Hurt speed", "up to x" + TraitText.decimal(this.maxMultiplier));
     }
 
     @Override

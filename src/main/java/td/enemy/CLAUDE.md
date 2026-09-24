@@ -111,9 +111,10 @@
    compiler does **not** force these (they have a throwing `default`).
 4. Add its token to `td/wave/CLAUDE.md`'s table and to `README.md`.
 
-A new `Trait` also needs a `TraitMarker` constant and its palette cases in
-`EnemyFrameBuilder.traitMarkerPaletteFor`/`Java2DFrameRenderer.colorFor`, and a player-facing
-`describe()` line (an adaptive template describes the most it can reach).
+A new `Trait` also needs a `TraitMarker` constant (naming the stats whose info-panel rows stand
+in for it) and its palette cases in `EnemyFrameBuilder.traitMarkerPaletteFor`/
+`Java2DFrameRenderer.colorFor`, and a `describe()` `TraitLine` short enough for one row (an
+adaptive template describes the most it can reach).
 
 ## Display
 

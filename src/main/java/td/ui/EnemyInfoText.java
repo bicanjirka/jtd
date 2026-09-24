@@ -2,12 +2,13 @@ package td.ui;
 
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMobVisitor;
+import td.ui.render.EnemySheet;
 
-/** The info-panel text for an enemy under the pointer in the wave preview. */
-final class EnemyInfoText implements EnemyMobVisitor<String> {
+/** The info-panel sheet for an enemy under the pointer in the wave preview. */
+final class EnemyInfoText implements EnemyMobVisitor<EnemySheet> {
 
     @Override
-    public String visitDefined(DefinedEnemyMob mob) {
+    public EnemySheet visitDefined(DefinedEnemyMob mob) {
         return EnemyStatText.preview(mob.inspect());
     }
 }

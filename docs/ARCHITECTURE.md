@@ -45,9 +45,8 @@ The split as it stands:
 - **`TowerDefense` (a `JFrame`) and `td.ui`** own presentation: layout, painting,
   `MouseEvent`/`KeyEvent` handling, and translating screen coordinates into the
   board-relative pixel coordinates `GameEngine.mouseClicked`/`highlightCell` expect.
-- **`GameHost`** is the engine's only channel back to the UI (`setInfoText`, `clearCell`).
-  `GameWorld` calls `setInfoText`; `TowerRoster` is handed the host directly and calls
-  `clearCell`. None of them knows about Swing. Wave re-arming and the level's end
+- **`GameHost`** is the engine's only channel back to the UI (`clearCell`).
+  `TowerRoster` is handed the host directly and calls `clearCell`. Neither knows about Swing. Wave re-arming and the level's end
   (`GameEngine.outcome()`) are decided by the engine at the end of each tick and polled by the
   UI, so every host - the window, tests, the balance harness - plays by the same rules.
 

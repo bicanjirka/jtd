@@ -14,6 +14,6 @@ public interface TraitTemplate {
     /** The trait one mob spawned now carries; empty when it would have no effect. */
     Optional<Trait> resolvedFor(DamageMix mix);
 
-    /** One line for the player: what this slot does, or at most does for an adaptive one. */
-    String describe();
+    /** One row for the player: what this slot does, or at most does for an adaptive one. */
+    TraitLine describe();
 }
