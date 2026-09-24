@@ -50,9 +50,9 @@ public final class DefinedEnemyMob implements EnemyMob {
     private final MobMoments moments = new MobMoments();
 
     private int health;
-    private boolean inactive;
-    private boolean validTarget;
-    private boolean dead = false;
+    private LifeStage stage;
+    // Only meaningful while LIVE: off-board mobs walk in from and out to off-screen untargetable.
+    private boolean onBoard;
     /** Intrinsic px/tick; effects multiply it on read, never baked in. */
     private float speed;
     private int delay;
@@ -81,8 +81,8 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.delay = spawnParameters.delayTicks();
         // From the rounded tick count, not the slot position: a fractional delay can round to zero
         // ticks, and an inactive mob with no delay to count down would never activate.
-        this.inactive = this.delay > 0;
-        this.validTarget = !this.inactive;
+        this.stage = this.delay > 0 ? LifeStage.WAITING : LifeStage.LIVE;
+        this.onBoard = true;
     }
 
     private static float bodyScaleFor(BodyArchetype archetype, int scale, Rank rank) {
@@ -113,11 +113,11 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     public boolean isInactive() {
-        return this.inactive;
+        return this.stage == LifeStage.WAITING;
     }
 
     public boolean isDead() {
-        return this.dead;
+        return this.stage == LifeStage.DEAD;
     }
 
     /** Inherited by an ability spawn. */
@@ -215,7 +215,7 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     /** Spawned, on the board, alive and not hidden by a trait. */
     public boolean validTarget() {
-        if (this.inactive || !this.validTarget || this.dead) {
+        if (this.stage != LifeStage.LIVE || !this.onBoard) {
             return false;
         }
         TraitContext context = this.traitContext();
@@ -263,7 +263,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     private Damage land(Damage damage) {
-        if (this.dead) {
+        if (this.isDead()) {
             return Damage.none();
         }
         Damage landed = Damage.none();
@@ -362,18 +362,15 @@ public final class DefinedEnemyMob implements EnemyMob {
     public void doTick(int gameTime) {
         // doDamage() has no game time, and a hit can land in another phase of the same tick.
         this.moments.capturePending(gameTime);
-        if (this.inactive) {
-            if (this.delay > 0) {
-                this.delay--;
-                if (this.delay == 0) {
-                    this.inactive = false;
-                    this.validTarget = true;
-                    this.doTick(gameTime);
-                }
+        if (this.stage == LifeStage.WAITING) {
+            this.delay--;
+            if (this.delay == 0) {
+                this.stage = LifeStage.LIVE;
+                this.doTick(gameTime);
             }
             return;
         }
-        if (this.dead) {
+        if (this.isDead()) {
             // Gated on the death capture, not on death: a tower can kill this mob after its own
             // doTick already ran this tick.
             if (this.ticksSinceDeath(gameTime) == 0) {
@@ -389,14 +386,14 @@ public final class DefinedEnemyMob implements EnemyMob {
         // After tick() so an expiry is seen the tick it happens; before the dead-return so a lethal
         // damage-over-time tick still records the loss.
         this.effectTransitions.observe(this.activeEffects.activeKinds(), gameTime);
-        if (this.dead) {
+        if (this.isDead()) {
             return;
         }
         if (this.motion.advance(this.speed * speedMultiplier)) {
             this.leak();
             return;
         }
-        this.validTarget = this.motion.isOnBoard();
+        this.onBoard = this.motion.isOnBoard();
         this.ticksSinceSpawn++;
         if (this.ticksSinceLastHit < Integer.MAX_VALUE) {
             this.ticksSinceLastHit++;
@@ -427,8 +424,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     private void die() {
-        this.validTarget = false;
-        this.dead = true;
+        this.stage = LifeStage.DEAD;
         this.moments.markPending(Moment.DEATH);
     }
 
@@ -550,5 +546,13 @@ public final class DefinedEnemyMob implements EnemyMob {
                 }
             }
         }
+    }
+
+    private enum LifeStage {
+        /** Counting down its spawn delay: not on the board yet. */
+        WAITING,
+        LIVE,
+        /** Fading out; stays in the roster until the fade completes. */
+        DEAD
     }
 }
