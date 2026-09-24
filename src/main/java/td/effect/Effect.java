@@ -77,6 +77,16 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
                 this.authoredDurationTicks, this.burnFuel, this.peakBurnL0);
     }
 
+    /**
+     * Both the remaining and the authored duration times {@code factor}, rounded. A shorter authored
+     * duration also makes a burn decay faster, so its total damage shrinks with it.
+     */
+    public Effect withDurationScaledBy(float factor) {
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
+                Math.round(this.remainingTicks * factor), this.sink, this.healPerTick, this.shieldRestrictedTo,
+                Math.round(this.authoredDurationTicks * factor), this.burnFuel, this.peakBurnL0);
+    }
+
     Effect withRemainingTicks(int remainingTicks) {
         return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent, remainingTicks,
                 this.sink, this.healPerTick, this.shieldRestrictedTo, this.authoredDurationTicks,

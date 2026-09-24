@@ -4,12 +4,17 @@ import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageMix;
 import td.effect.Effect;
+import td.effect.EffectKind;
+import td.effect.FreezeDiminishing;
 import td.enemy.BodyArchetype;
+import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
+import td.enemy.FreezeDiminishingTrait;
 import td.enemy.HurtSpeedTrait;
 import td.enemy.PercentResistTrait;
 import td.enemy.Rank;
+import td.enemy.Trait;
 import td.fixtures.BoardFixtures;
 import td.fixtures.LevelFixtures;
 import td.level.LevelDefinition;
@@ -24,6 +29,7 @@ import td.util.LoadedLevel;
 import td.wave.WaveDefinition;
 import td.wave.WaveProgress;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -92,6 +98,117 @@ class GameEngineTest {
 
         // Half of the 100-point pool is gone, so the multiplier is 1 + (2 - 1) * 0.5.
         assertThat(enemy.getSpeed()).isCloseTo(before * 1.5f, within(0.001f));
+    }
+
+    private static EnemyMob spawnStill(GameEngine engine, Rank rank, Trait... traits) {
+        EnemyDefinition still = EnemyDefinition.of("still", "Still", 100, 1, 0f, BodyArchetype.CIRCLE)
+                .withTraits(List.of(traits));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100).withCustomEnemies(List.of(still)));
+        GameWorld world = engine.getGameWorld();
+        return world.getEnemyCatalog().spawn("still", world, 0, 100, 1, rank);
+    }
+
+    /** Ticks {@code enemy} until it thaws and returns how many ticks it stayed frozen. */
+    private static int ticksFrozen(EnemyMob enemy, int[] clock) {
+        int frozen = 0;
+        while (enemy.activeEffectKinds().contains(EffectKind.FREEZE)) {
+            enemy.doTick(++clock[0]);
+            frozen++;
+        }
+        return frozen;
+    }
+
+    private static int freezeFor(EnemyMob enemy, int durationTicks, int[] clock) {
+        enemy.applyEffect(Effect.freeze(durationTicks, d -> {
+        }));
+        return ticksFrozen(enemy, clock);
+    }
+
+    @Test
+    void aHalfFreezeResistHalvesAFreeze() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT,
+                EffectResistTrait.resisting(EffectKind.FREEZE, 0.5f));
+
+        int frozen = freezeFor(enemy, 20, new int[] {0});
+
+        assertThat(frozen).isEqualTo(10);
+    }
+
+    @Test
+    void fullFreezeResistBlocksAFreezeOutright() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, EffectResistTrait.immuneTo(EffectKind.FREEZE));
+
+        int frozen = freezeFor(enemy, 20, new int[] {0});
+
+        assertThat(frozen).isZero();
+    }
+
+    @Test
+    void repeatedFreshFreezesOnADiminishingEnemyLastFullHalfQuarterThenNotAtAll() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, new FreezeDiminishingTrait());
+        int[] clock = {0};
+
+        List<Integer> durations = List.of(freezeFor(enemy, 20, clock), freezeFor(enemy, 20, clock),
+                freezeFor(enemy, 20, clock), freezeFor(enemy, 20, clock));
+
+        assertThat(durations).containsExactly(20, 10, 5, 0);
+    }
+
+    @Test
+    void aFreezeReappliedWhileFrozenDoesNotSpendADiminishingStep() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, new FreezeDiminishingTrait());
+        int[] clock = {0};
+        enemy.applyEffect(Effect.freeze(20, d -> {
+        }));
+        enemy.doTick(++clock[0]);
+
+        enemy.applyEffect(Effect.freeze(20, d -> {
+        }));
+        ticksFrozen(enemy, clock);
+
+        assertThat(freezeFor(enemy, 20, clock)).isEqualTo(10);
+    }
+
+    @Test
+    void freezeDiminishingResetsTenSecondsAfterTheLastFreeze() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, new FreezeDiminishingTrait());
+        int[] clock = {0};
+        freezeFor(enemy, 20, clock);
+        freezeFor(enemy, 20, clock);
+
+        while (clock[0] < FreezeDiminishing.WINDOW_TICKS + 30) {
+            enemy.doTick(++clock[0]);
+        }
+
+        assertThat(freezeFor(enemy, 20, clock)).isEqualTo(20);
+    }
+
+    @Test
+    void anEliteDiminishesFreezesWithoutTheTrait() {
+        EnemyMob elite = spawnStill(FakeGameHost.newBoundEngine(), Rank.ELITE);
+        int[] clock = {0};
+
+        freezeFor(elite, 20, clock);
+
+        assertThat(freezeFor(elite, 20, clock)).isEqualTo(10);
+    }
+
+    @Test
+    void halfBurnResistRoughlyHalvesTotalBurnDamage() {
+        int unresisted = totalBurnDamage(spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT));
+        int resisted = totalBurnDamage(spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT,
+                EffectResistTrait.resisting(EffectKind.BURN, 0.5f)));
+
+        assertThat((float) resisted / unresisted).isCloseTo(0.5f, within(0.1f));
+    }
+
+    private static int totalBurnDamage(EnemyMob enemy) {
+        List<Damage> received = new ArrayList<>();
+        enemy.applyEffect(Effect.burn(Damage.magic(100), 60, received::add));
+        for (int t = 1; enemy.activeEffectKinds().contains(EffectKind.BURN); t++) {
+            enemy.doTick(t);
+        }
+        return received.stream().mapToInt(Damage::amount).sum();
     }
 
     @Test

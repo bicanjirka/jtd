@@ -119,7 +119,9 @@ by it too — a Boss-rank kill is worth disproportionately more than a Grunt-ran
 bounty. Not every enemy defines all five ranks; asking for one an enemy doesn't have silently
 uses its own highest defined rank instead. Elite and Boss Simple and Mender enemies carry adaptive
 armor: it resists whichever damage type (physical or magic) has landed most this level, from not
-at all at an even split up to full strength against a one-type defence.
+at all at an even split up to full strength against a one-type defence. Every Elite and Boss
+enemy also shrugs off repeated freezes: within 10 seconds of the last one, each fresh freeze
+lasts half as long as the one before, and a fourth doesn't take hold at all.
 
 ### Spawn shapes
 

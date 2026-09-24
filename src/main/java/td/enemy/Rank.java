@@ -18,6 +18,11 @@ public enum Rank {
         this.scoreMultiplier = scoreMultiplier;
     }
 
+    /** Whether successive freezes diminish on every enemy of this rank. */
+    public boolean diminishesFreezes() {
+        return this.compareTo(ELITE) >= 0;
+    }
+
     /** How much more a kill at this rank scores than it pays. */
     public float scoreMultiplier() {
         return this.scoreMultiplier;

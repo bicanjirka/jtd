@@ -404,6 +404,8 @@ public final class Java2DFrameRenderer {
             case TRAIT_MARKER_HURT_SPEED -> new Color(255, 140, 140);
             case TRAIT_MARKER_BURN_IMMUNE -> new Color(255, 150, 90);
             case TRAIT_MARKER_FREEZE_IMMUNE -> new Color(170, 225, 255);
+            case TRAIT_MARKER_EFFECT_RESIST -> new Color(200, 200, 160);
+            case TRAIT_MARKER_FREEZE_DIMINISHING -> new Color(120, 180, 220);
             case TRAIT_MARKER_OVERFLOW -> Color.LIGHT_GRAY;
         };
     }

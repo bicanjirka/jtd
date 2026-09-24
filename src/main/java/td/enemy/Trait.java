@@ -1,7 +1,6 @@
 package td.enemy;
 
 import td.damage.DamageMix;
-import td.effect.EffectKind;
 import td.stat.StatModifiers;
 
 import java.util.Optional;
@@ -25,13 +24,6 @@ public interface Trait extends TraitTemplate {
     /** What this trait adds to the mob's stat sheet; re-read whenever the sheet resolves. */
     default StatModifiers modifiers(TraitContext context) {
         return StatModifiers.none();
-    }
-
-    /**
-     * Whether this trait rejects an incoming status effect of {@code kind} before it is applied.
-     */
-    default boolean blocksEffect(EffectKind kind) {
-        return false;
     }
 
     /** The glyph shown for this trait in the marker row below the mob. */

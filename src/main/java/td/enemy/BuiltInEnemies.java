@@ -1,5 +1,6 @@
 package td.enemy;
 
+import td.effect.EffectKind;
 import td.effect.HealTemplate;
 import td.effect.InvisibleTemplate;
 import td.effect.ShieldTemplate;
@@ -189,8 +190,8 @@ final class BuiltInEnemies {
             .withDescription("Hatches into a weaker Warden if not defeated in time. Immune to burn and freeze, "
                     + "and its plating blunts a flat chunk of every hit.")
             .withIdentifiedTraits(List.of(
-                    IdentifiedTrait.anonymous(new BurnImmunityTrait()),
-                    IdentifiedTrait.anonymous(new FreezeImmunityTrait()),
+                    IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
+                    IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
                     IdentifiedTrait.named("armor", new FlatResistTrait(100))))
             .withAbilities(List.of(new Ability(
                     new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden3", 1, true))));

@@ -15,3 +15,11 @@ batch. Each entry says what to do and what should be true.
 - Expect: Sniper still crits at about its crit chance; Cinder-burning targets crit about twice as
   often; Armored and Frenzied Boss never show a crit spark.
 - On the board: a Sniper crit still draws its crit beam at the moment it fires.
+
+## 3. Phase 3 - effect resistance and freeze diminishing returns
+
+- Run `td.BalanceHarness` on a level with Seeker towers against Elite/Boss waves (e.g. Curly
+  Path's later waves). Expect: Elite/Boss freezes shorten 100/50/25% then stop within 10 s.
+- On the board: debug-spawn an Elite `c`, freeze it with Seekers repeatedly; check the freeze
+  marker disappears sooner each time. The Warden egg (burn/freeze immune) still shows its immune
+  glyphs; any `EffectResistTrait` below 1 shows the new resist glyph.
