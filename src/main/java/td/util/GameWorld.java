@@ -2,6 +2,7 @@ package td.util;
 
 import td.board.BoardGeometry;
 import td.cell.CellGrid;
+import td.damage.DamageTally;
 import td.economy.EconomyLedger;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyRoster;
@@ -31,6 +32,7 @@ public class GameWorld {
     private final TowerRoster towers;
     private final ProjectileRoster projectiles = new ProjectileRoster();
     private final WaveAnnouncer waves = new WaveAnnouncer();
+    private final DamageTally damageTally = new DamageTally();
     private volatile LoadedLevel level = LoadedLevel.none();
 
     public GameWorld(GameHost mainApp) {
@@ -63,6 +65,11 @@ public class GameWorld {
 
     public WaveAnnouncer waves() {
         return this.waves;
+    }
+
+    /** Every hit that landed this level, by damage type. */
+    public DamageTally damageTally() {
+        return this.damageTally;
     }
 
     /** The only source of randomness in the simulation. */
