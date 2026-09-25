@@ -238,6 +238,8 @@ worth recording alongside the decisions below:
 - Selling an upgraded tower **does not refund any upgrade spend** — `getSellPrice()` stays
   75% of the original build price only, unchanged from today. Upgrade cost is a permanent
   sunk cost, consistent with sell already being framed as "always a loss."
+  *Superseded by `FEATURE-tower-info-rows.md`: selling now refunds 75% of the tower and its
+  upgrades together.*
 - The global, buy-once-for-all-present-and-future upgrade and the any-kill-in-aura bounty
   effect are both **deferred to a later phase**. Both stay documented above as
   future-feature requests rather than dropped, since they're real ideas worth building

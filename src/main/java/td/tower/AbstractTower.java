@@ -116,9 +116,10 @@ public abstract class AbstractTower implements Tower {
         return this.stats.rangeReal();
     }
 
-    /** Three quarters of the price paid; upgrades bought since don't raise it. */
+    /** Three quarters of everything paid: the tower and every upgrade bought for it. */
     public int getSellPrice() {
-        return (int) Math.round(0.75 * this.price);
+        int upgradesPaid = this.upgrades().owned().stream().mapToInt(UpgradeNode::price).sum();
+        return (int) Math.round(0.75 * (this.price + upgradesPaid));
     }
 
     /**
@@ -324,7 +325,6 @@ public abstract class AbstractTower implements Tower {
                 .filter(other -> !other.buffFor(this).equals(TowerBuff.none()))
                 .count();
         return TowerInspection.of(this.type, this.price, lines)
-                .withSellPrice(this.getSellPrice())
                 .withBehaviours(this.behaviours())
                 .withDescription(this.description())
                 .withRecord(this.killCount, this.damageDealt)

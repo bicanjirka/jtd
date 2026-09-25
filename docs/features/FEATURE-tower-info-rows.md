@@ -171,7 +171,8 @@ Player-visible behaviour, view by view.
      status leaves it out, as the live enemy inspector does.
   7. Gate progress goes on the button face ("7/10 kills"), and so does a price the player can't
      pay yet ("need $30"). The hover repeats the gate as a ✔/✘ row.
-- **Sell value** sits on the status header's right, so the Sell button just reads "Sell".
+- **Sell value** stays on the Sell button ("Sell ( $34 )"), not on the status header. Selling
+  refunds 75% of everything paid: the tower and every upgrade bought for it.
 - **Upgrade buttons read as rows**: key and name on the left, price or gate progress on the
   right. A button face with a tab paints that way, and the name gives way with an ellipsis, so the
   hotkey number always shows.

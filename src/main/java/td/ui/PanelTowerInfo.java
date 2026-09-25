@@ -137,6 +137,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
         if (this.selectedTower != null) {
             this.jButton_sell.setEnabled(!this.levelEnded);
+            this.jButton_sell.setText("Sell ( $" + this.selectedTower.getSellPrice() + " )");
             this.refreshSelected();
         }
     }
