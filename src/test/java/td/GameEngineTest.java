@@ -27,6 +27,8 @@ import td.tower.MortarTower;
 import td.tower.SniperTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.tower.TowerStat;
+import td.tower.TowerStatLine;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
 import td.wave.WaveDefinition;
@@ -237,6 +239,32 @@ class GameEngineTest {
         assertThat(disruptedRange).isCloseTo(fullRange * 0.8f, within(0.01f));
         assertThat(tower.isDisrupted()).isFalse();
         assertThat(tower.getRangeReal()).isEqualTo(fullRange);
+    }
+
+    @Test
+    void aDisruptingEnemyLengthensANearbyTowersCooldownOnlyWhileItLives() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyDefinition jammer = EnemyDefinition.of("jam", "Jam", 100, 1, 0f, BodyArchetype.SQUARE)
+                .withDisruption(new DisruptionAura(1000f, 0.3f, 0.2f));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("jam", Rank.GRUNT)), 1000)
+                .withCustomEnemies(List.of(jammer)));
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
+        Tower tower = engine.getGameWorld().towers().all().getFirst();
+        engine.nextWave();
+
+        engine.doTick(1);
+        TowerStatLine jammedRate = fireRate(tower);
+        engine.getGameWorld().enemies().getEnemies()[0].doDamage(Damage.physical(1_000_000));
+        engine.doTick(2);
+
+        // A fire-rate penalty lengthens the cooldown by that fraction, so 30% leaves 1/1.3 of the shots.
+        assertThat(jammedRate.current() / jammedRate.base()).isCloseTo(1f / 1.3f, within(0.02f));
+        assertThat(fireRate(tower).current()).isEqualTo(fireRate(tower).base());
+    }
+
+    private static TowerStatLine fireRate(Tower tower) {
+        return tower.inspect().stats().stream().filter(line -> line.stat() == TowerStat.FIRE_RATE).findFirst().orElseThrow();
     }
 
     private static final EnemyDefinition WALKER_A = EnemyDefinition.of("walkerA", "Walker A", 100, 1, 2f,

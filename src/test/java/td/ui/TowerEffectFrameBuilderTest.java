@@ -2,18 +2,20 @@ package td.ui;
 
 import org.junit.jupiter.api.Test;
 import td.fixtures.WorldFixtures;
+import td.stat.DisruptionAura;
 import td.tower.AuraTower;
 import td.tower.SniperTower;
 import td.ui.render.BeamDraw;
 import td.ui.render.Palette;
 import td.ui.render.TowerEffectDraw;
+import td.ui.render.TowerStatusDraw;
 import td.util.GameWorld;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Covers aura link beams; the other effects are covered by {@code BoardRendererTest}. */
+/** Covers aura link beams and the disruption marker; the other effects are covered by {@code BoardRendererTest}. */
 class TowerEffectFrameBuilderTest {
 
     @Test
@@ -46,6 +48,23 @@ class TowerEffectFrameBuilderTest {
         aura.accept(builder);
 
         assertThat(linkBeamsIn(builder.build())).isEmpty();
+    }
+
+    @Test
+    void aDisruptedTowerWearsAMarkerInTheDisruptionColourAndAnUndisruptedOneNone() {
+        GameWorld context = WorldFixtures.newWorld();
+        SniperTower jammed = new SniperTower(context, 0, 0);
+        SniperTower clear = new SniperTower(context, 10, 10);
+        context.disruptions().add(jammed.getX(), jammed.getY(), new DisruptionAura(20f, 0.3f, 0.2f));
+        jammed.refreshDisruption();
+        clear.refreshDisruption();
+
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(0, 0.0, 0.0);
+        builder.addStatus(jammed, context.getBoard().scale());
+        builder.addStatus(clear, context.getBoard().scale());
+
+        assertThat(builder.build()).singleElement().isInstanceOfSatisfying(TowerStatusDraw.class,
+                marker -> assertThat(marker.palette()).isEqualTo(Palette.DISRUPTION));
     }
 
     private static List<BeamDraw> linkBeamsIn(List<TowerEffectDraw> draws) {
