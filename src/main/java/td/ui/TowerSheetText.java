@@ -42,12 +42,13 @@ final class TowerSheetText {
     }
 
     /**
-     * A placed tower: sell value, current stats and behaviours, what changes them, and its record.
+     * A placed tower: current stats and behaviours, what changes them, and its record. Its sell
+     * value is on the Sell button.
      * The upgrades it holds are the Upgrades panel's slot headers, right below.
      */
     static InfoSheet status(TowerInspection tower) {
         List<SheetLine> lines = new ArrayList<>();
-        lines.add(title(tower, "sell $" + tower.sellPrice()));
+        lines.add(title(tower, ""));
         lines.add(new SheetLine.Gap());
         tower.stats().forEach(stat -> lines.add(statRow(stat.stat(), stat)));
         tower.behaviours().forEach(behaviour -> lines.add(behaviourRow(behaviour)));

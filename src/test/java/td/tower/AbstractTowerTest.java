@@ -32,6 +32,20 @@ class AbstractTowerTest {
     }
 
     @Test
+    void sellPriceRefundsSeventyFivePercentOfEveryUpgradeBoughtToo() {
+        this.context.economy().startEconomy(1000, 5);
+        SniperTower tower = new SniperTower(this.context, 0, 0);
+        UpgradeNode first = tower.offeredUpgrades(this.context).get(0);
+        UpgradeNode second = tower.offeredUpgrades(this.context).get(1);
+
+        tower.buyUpgrade(first);
+        tower.buyUpgrade(second);
+
+        int paid = SniperTower.PRICE + first.price() + second.price();
+        assertThat(tower.getSellPrice()).isEqualTo((int) Math.round(0.75 * paid));
+    }
+
+    @Test
     void anAuraTowerAddedToTheBoardBuffsTheTowersInRangeOfIt() {
         SniperTower tower = new SniperTower(context, 0, 0);
         context.towers().add(tower);

@@ -79,13 +79,13 @@ class TowerSheetTextTest {
     }
 
     @Test
-    void theStatusShowsTheSellValueAndLeavesOutTheDescription() {
+    void theStatusTitleLeavesTheSellValueToTheButtonAndLeavesOutTheDescription() {
         Tower mortar = this.place(TowerFactory.Type.MORTAR, 0, 0);
 
         InfoSheet sheet = TowerSheetText.status(mortar.inspect());
 
         assertThat(sheet.lines().getFirst()).isEqualTo(new SheetLine.Title(Glyph.TOWER_BODY, Palette.TOWER_MORTAR_BODY,
-                "Mortar tower", "sell $" + mortar.getSellPrice()));
+                "Mortar tower", ""));
         assertThat(sheet.lines()).noneMatch(SheetLine.Prose.class::isInstance);
     }
 
