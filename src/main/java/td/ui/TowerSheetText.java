@@ -5,7 +5,6 @@ import td.tower.BehaviourLine;
 import td.tower.TowerInspection;
 import td.tower.TowerStat;
 import td.tower.TowerStatLine;
-import td.tower.upgrade.UpgradeSlot;
 import td.ui.render.InfoSheet;
 import td.ui.render.Palette;
 import td.ui.render.SheetLine;
@@ -15,14 +14,13 @@ import td.ui.render.SheetLine.Trend;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Turns a {@link TowerInspection} into info-panel rows. Pure: no Swing, no live tower.
  * <p>
  * One row per stat or behaviour, marked with what the board draws for it. The shop shows the
  * tower as authored; the status shows it as it is now, a changed stat as base → current, and
- * leaves out what the Upgrades panel already offers.
+ * leaves out what the Upgrades panel already shows.
  */
 final class TowerSheetText {
 
@@ -44,8 +42,8 @@ final class TowerSheetText {
     }
 
     /**
-     * A placed tower: sell value, current stats and behaviours, what changes them, its record, then
-     * the upgrade each slot holds.
+     * A placed tower: sell value, current stats and behaviours, what changes them, and its record.
+     * The upgrades it holds are the Upgrades panel's slot headers, right below.
      */
     static InfoSheet status(TowerInspection tower) {
         List<SheetLine> lines = new ArrayList<>();
@@ -60,15 +58,6 @@ final class TowerSheetText {
             lines.add(Row.toned(Glyph.RING, Palette.TOWER_AURA_RING, "Aura", tower.auras() > 1 ? "x" + tower.auras() : ""));
         }
         lines.add(Row.plain(Glyph.SKULL, "Kills", tower.kills() + " · " + Math.round(tower.damageDealt() / 100f) + " dmg"));
-        List<Row> upgrades = new ArrayList<>();
-        for (UpgradeSlot slot : UpgradeSlot.values()) {
-            tower.upgrades().tip(slot).ifPresent(node -> upgrades.add(Row.toned(Glyph.PIP,
-                    TowerSpriteFrameBuilder.slotPaletteFor(slot), node.displayName(), slot.name().toLowerCase(Locale.ROOT))));
-        }
-        if (!upgrades.isEmpty()) {
-            lines.add(new SheetLine.Gap());
-            lines.addAll(upgrades);
-        }
         return new InfoSheet(lines);
     }
 

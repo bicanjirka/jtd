@@ -112,7 +112,7 @@ class TowerSheetTextTest {
     }
 
     @Test
-    void theStatusListsTheUpgradeEachSlotHoldsInThatSlotsColourAndNoOfferedOne() {
+    void anUpgradeShowsInTheStatsItRaisesWhileTheUpgradesPanelNamesIt() {
         this.world.economy().startEconomy(1000, 5);
         Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
         UpgradeNode range = sniper.offeredUpgrades(this.world).getFirst();
@@ -121,9 +121,8 @@ class TowerSheetTextTest {
 
         InfoSheet sheet = TowerSheetText.status(sniper.inspect());
         assertThat(row(sheet, "Range").trend()).isEqualTo(Trend.BETTER);
-        assertThat(rows(sheet)).contains(Row.toned(Glyph.PIP, Palette.TOWER_UPGRADE_BASE, range.displayName(), "base"));
-        assertThat(labels(sheet)).doesNotContainAnyElementsOf(
-                sniper.offeredUpgrades(this.world).stream().map(UpgradeNode::displayName).toList());
+        assertThat(rows(sheet)).noneMatch(row -> row.glyph() == Glyph.PIP);
+        assertThat(labels(sheet)).doesNotContain("Awaken");
     }
 
     @Test

@@ -38,6 +38,6 @@ class DamageDealtConditionTest {
 
     @Test
     void describesItselfInWholeDamagePointsNotHundredths() {
-        assertThat(new DamageDealtCondition(20000).describe()).isEqualTo("200.0 damage dealt");
+        assertThat(new DamageDealtCondition(20000).describe()).isEqualTo("200 damage dealt");
     }
 }

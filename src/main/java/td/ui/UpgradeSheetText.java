@@ -35,7 +35,10 @@ final class UpgradeSheetText {
         return new InfoSheet(lines);
     }
 
-    /** Its key and name, then its price, or why it can't be bought yet. */
+    /**
+     * Its key and name, then after a tab its price, or why it can't be bought yet: the button
+     * paints the two as a row.
+     */
     static String buttonText(UpgradeOffer offer) {
         String state;
         if (!offer.gateMet()) {
@@ -45,7 +48,7 @@ final class UpgradeSheetText {
         } else {
             state = "$" + offer.node().price();
         }
-        return offer.number() + "  " + offer.node().displayName() + "  " + state;
+        return offer.number() + "  " + offer.node().displayName() + "\t" + state;
     }
 
     /** "Base: Range" once a node is owned, "Base" while one is offered, else "Special: locked". */
