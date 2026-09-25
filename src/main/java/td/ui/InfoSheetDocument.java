@@ -146,7 +146,11 @@ final class InfoSheetDocument {
         SimpleAttributeSet label = row.tone().map(Java2DFrameRenderer::colorFor).map(InfoSheetDocument::colored).orElseGet(SimpleAttributeSet::new);
         this.insert(" " + row.label(), label);
         if (!row.value().isEmpty()) {
-            this.insert("\t" + row.value(), colored(VALUE_COLOR));
+            this.insert("\t" + row.value(), colored(switch (row.trend()) {
+                case NONE -> VALUE_COLOR;
+                case BETTER -> BETTER_COLOR;
+                case WORSE -> WORSE_COLOR;
+            }));
         }
     }
 

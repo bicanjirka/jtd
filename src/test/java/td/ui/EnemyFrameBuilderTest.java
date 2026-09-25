@@ -362,6 +362,21 @@ class EnemyFrameBuilderTest {
     }
 
     @Test
+    void aJammerDrawsADisruptionRingAsWideAsItsReach() {
+        GameWorld context = contextWithStraightPath();
+        DefinedEnemyMob jammer = (DefinedEnemyMob) EnemyFactory.getEnemy("j", context, 0, 50, 3, Rank.GRUNT);
+
+        List<EnemyOverlayDraw> overlays = overlaysOf(jammer, 0);
+
+        assertThat(overlays).filteredOn(EnemyRingDraw.class::isInstance).map(EnemyRingDraw.class::cast)
+                .singleElement()
+                .satisfies(ring -> {
+                    assertThat(ring.palette()).isEqualTo(Palette.DISRUPTION);
+                    assertThat(ring.radius()).isEqualTo(jammer.definition().disruption().orElseThrow().radius());
+                });
+    }
+
+    @Test
     void anActiveShieldYieldsARingInTheShieldMarkersColour() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);

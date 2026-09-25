@@ -3,6 +3,7 @@ package td.ui;
 import org.junit.jupiter.api.Test;
 import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
+import td.stat.DisruptionAura;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeNode;
@@ -99,6 +100,20 @@ class TowerSheetTextTest {
         assertThat(row(sheet, "Physical damage")).extracting(Row::value, Row::trend).containsExactly("30 → 36", Trend.BETTER);
         assertThat(row(sheet, "Fire rate").trend()).isEqualTo(Trend.NONE);
         assertThat(row(sheet, "Aura")).isEqualTo(Row.toned(Glyph.RING, Palette.TOWER_AURA_RING, "Aura", ""));
+    }
+
+    @Test
+    void aJammedTowersStatusSaysSoAndShowsTheLostRangeAndRateInTheWorseColour() {
+        Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
+        this.world.disruptions().add(sniper.getX(), sniper.getY(), new DisruptionAura(20f, 0.3f, 0.2f));
+        sniper.refreshDisruption();
+
+        InfoSheet sheet = TowerSheetText.status(sniper.inspect());
+
+        assertThat(rows(sheet)).contains(Row.effect(Palette.DISRUPTION, "Jammed", ""));
+        assertThat(row(sheet, "Range")).extracting(Row::value, Row::trend).containsExactly("3.8 → 3", Trend.WORSE);
+        assertThat(row(sheet, "Fire rate")).extracting(Row::value, Row::trend).containsExactly("0.5 → 0.4/s", Trend.WORSE);
+        assertThat(row(sheet, "Physical damage").trend()).isEqualTo(Trend.NONE);
     }
 
     @Test
