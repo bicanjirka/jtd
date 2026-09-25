@@ -62,7 +62,7 @@
   `slotEmpty(slot)`, `StandardBaseSlot.opens(slot)`, combined with `and`/`or`). `gate` is the
   performance condition to clear once offered (`always()`, `KillCountCondition`,
   `DamageDealtCondition`, `ClusterCondition`), and its `progress()` feeds the UI.
-- Never hand-write a node's bonus into a tower's description: `UpgradeNode.describe()` derives it
+- Never hand-write a node's bonus into a tower's description: `UpgradeNode.bonuses()` derives it
   and the Upgrades panel lists offered nodes.
 - A bonus outside `TowerBuff`'s axes goes in `onUpgradeBought`, matching the node by `equals` (not
   reference), and the same constant carries a matching `extraEffect` phrase.
