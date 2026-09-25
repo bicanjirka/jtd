@@ -216,22 +216,28 @@ public final class SplashTower extends AbstractTower {
         return this.coolDown >= this.coolDownCurrent();
     }
 
+    @Override
+    protected List<TowerStatLine> ownStats() {
+        return List.of(new TowerStatLine(TowerStat.SPLASH_RADIUS, SPREAD_RADIUS_BASE,
+                this.spreadRadius / this.context.getBoard().scale()));
+    }
+
+    @Override
+    protected List<BehaviourLine> behaviours() {
+        BehaviourLine targets = new BehaviourLine(BehaviourMarker.TARGETING, "Targets", "random");
+        if (!this.concussiveBlast) {
+            return List.of(targets);
+        }
+        return List.of(targets, new BehaviourLine(BehaviourMarker.SLOW, "Slows",
+                BehaviourLine.percent(1f - SLOW_MULTIPLIER) + ", " + BehaviourLine.seconds(SLOW_DURATION_TICKS)));
+    }
+
+    @Override
+    protected String description() {
+        return "Damage falls off away from the blast's centre.";
+    }
+
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitSplashTower(this);
     }
-
-    public String getInfoString() {
-        return "Splash tower\n\n" +
-                super.getInfoString() +
-                "Splash radius " + SPREAD_RADIUS_BASE + "\n" +
-                "Targets random";
-    }
-
-    public String getStatusString() {
-        return "Splash tower\n\n" +
-                super.getStatusString() +
-                "Splash radius " + (this.spreadRadius / this.context.getBoard().scale()) + "\n" +
-                "Targets random";
-    }
-
 }

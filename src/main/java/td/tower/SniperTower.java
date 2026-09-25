@@ -171,20 +171,13 @@ public final class SniperTower extends AbstractTower {
         return (float) this.coolDown / this.coolDownCurrent();
     }
 
+    @Override
+    protected List<BehaviourLine> behaviours() {
+        boolean special = this.upgrades().tip(UpgradeSlot.SPECIAL).isPresent();
+        return List.of(new BehaviourLine(BehaviourMarker.TARGETING, "Targets", special ? "most health" : "first"));
+    }
+
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitSniperTower(this);
     }
-
-    public String getInfoString() {
-        return "Sniper tower\n\n" +
-                super.getInfoString() +
-                "Targets first one";
-    }
-
-    public String getStatusString() {
-        return "Sniper tower\n\n" +
-                super.getStatusString() +
-                "Targets first one";
-    }
-
 }

@@ -3,7 +3,7 @@ package td.ui;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.tower.Tower;
-import td.ui.render.EnemySheet;
+import td.ui.render.InfoSheet;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
@@ -29,10 +29,8 @@ import java.util.Objects;
 
 /**
  * The text pane under the tower toolbar: the selected tower's status and a sell button, an enemy's
- * sheet, or other text such as a tower's shop description. Each replaces the other, and shows from
- * its top. Buying upgrades
- * happens on {@link PanelUpgradeTree}; this pane shows gate progress and a hovered node's
- * description.
+ * or a shop tower's sheet, or plain text. Each replaces the other, and shows from its top. Buying
+ * upgrades happens on {@link PanelUpgradeTree}; this pane shows a hovered node's description.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelTowerInfo extends JPanel implements EconomyListener {
@@ -44,7 +42,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private static final Color SELL_TEXT_COLOR = new Color(255, 120, 120);
     private static final Color GATE_MET_COLOR = new Color(140, 255, 140);
     private static final Color GATE_UNMET_COLOR = SELL_TEXT_COLOR;
-    private static final EnemySheet NO_SHEET = new EnemySheet(List.of());
+    private static final InfoSheet NO_SHEET = new InfoSheet(List.of());
     /** Before the pane is laid out, the width the side panel gives it. */
     private static final int FALLBACK_TEXT_WIDTH = 170;
 
@@ -56,7 +54,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private GameWorld context;
     private Tower selectedTower;
     private String lastText;
-    private EnemySheet lastSheet = NO_SHEET;
+    private InfoSheet lastSheet = NO_SHEET;
     private int sheetWidth = 0;
     private boolean levelEnded = false;
     private boolean hovering = false;
@@ -89,10 +87,17 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         this.setText(s);
     }
 
-    /** Skips an identical sheet, as {@link #setText} does. */
-    public void showEnemy(EnemySheet sheet) {
+    /** An enemy's or a shop tower's sheet, in place of any tower status. */
+    public void showSheet(InfoSheet sheet) {
         this.jButton_sell.setVisible(false);
-        if (this.hovering || sheet.equals(this.lastSheet)) {
+        if (!this.hovering) {
+            this.replaceSheet(sheet);
+        }
+    }
+
+    /** Skips an identical sheet, as {@link #setText} does. */
+    private void replaceSheet(InfoSheet sheet) {
+        if (sheet.equals(this.lastSheet)) {
             return;
         }
         this.lastSheet = sheet;
@@ -106,7 +111,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
      */
     private void layOutSheet() {
         this.sheetWidth = this.textWidth();
-        this.jTextPane1.setStyledDocument(EnemySheetDocument.of(this.lastSheet, this.glyphRenderer, this.sheetWidth,
+        this.jTextPane1.setStyledDocument(InfoSheetDocument.of(this.lastSheet, this.glyphRenderer, this.sheetWidth,
                 this.jTextPane1.getFontMetrics(this.jTextPane1.getFont())));
         this.jTextPane1.setCaretPosition(0);
     }
@@ -137,8 +142,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
         if (this.selectedTower != null) {
             this.jButton_sell.setEnabled(!this.levelEnded);
-            this.jButton_sell.setText("Sell ( $" + this.selectedTower.getSellPrice() + " )");
-            this.setText(this.selectedTower.getStatusString());
+            this.refreshSelected();
         }
     }
 
@@ -163,8 +167,8 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
      * change every tick without any economy event.
      */
     public void refreshSelected() {
-        if (this.selectedTower != null) {
-            this.setText(this.selectedTower.getStatusString());
+        if (this.selectedTower != null && !this.hovering) {
+            this.replaceSheet(TowerSheetText.status(this.selectedTower.inspect()));
         }
     }
 

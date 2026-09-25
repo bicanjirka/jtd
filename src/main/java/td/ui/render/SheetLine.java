@@ -2,11 +2,18 @@ package td.ui.render;
 
 import java.util.Optional;
 
-/** One line of an {@link EnemySheet}. */
+/** One line of an {@link InfoSheet}. */
 public sealed interface SheetLine {
 
     /** The enemy's body glyph and name, with its rank badge and rank name on the right. */
-    record Header(Palette body, RankBadge badge, String name, String rank) implements SheetLine {
+    record EnemyHeader(Palette body, RankBadge badge, String name, String rank) implements SheetLine {
+    }
+
+    /**
+     * A glyph and a bold name, with a value on the right: a tower and its price, or an upgrade
+     * node and its price.
+     */
+    record Title(Glyph glyph, Palette tone, String name, String value) implements SheetLine {
     }
 
     /**
@@ -22,22 +29,32 @@ public sealed interface SheetLine {
      * the same colour the board draws that trait or effect in.
      *
      * @param value empty when the label says everything
+     * @param trend whether the value is better or worse than the thing's own base
      */
-    record Row(Glyph glyph, Optional<Palette> tone, String label, String value) implements SheetLine {
+    record Row(Glyph glyph, Optional<Palette> tone, String label, String value, Trend trend) implements SheetLine {
 
         /** A permanent trait: a hollow diamond, as under the enemy on the board. */
         public static Row trait(Palette tone, String label, String value) {
-            return new Row(Glyph.HOLLOW_DIAMOND, Optional.of(tone), label, value);
+            return toned(Glyph.HOLLOW_DIAMOND, tone, label, value);
         }
 
         /** A timed effect: a filled diamond, as above the enemy on the board. */
         public static Row effect(Palette tone, String label, String value) {
-            return new Row(Glyph.FILLED_DIAMOND, Optional.of(tone), label, value);
+            return toned(Glyph.FILLED_DIAMOND, tone, label, value);
         }
 
         /** A stat nothing on the board marks. */
         public static Row plain(Glyph glyph, String label, String value) {
-            return new Row(glyph, Optional.empty(), label, value);
+            return new Row(glyph, Optional.empty(), label, value, Trend.NONE);
+        }
+
+        /** Any glyph, with it and the label in {@code tone}'s colour. */
+        public static Row toned(Glyph glyph, Palette tone, String label, String value) {
+            return new Row(glyph, Optional.of(tone), label, value, Trend.NONE);
+        }
+
+        public Row withTrend(Trend trend) {
+            return new Row(this.glyph, this.tone, this.label, this.value, trend);
         }
     }
 
@@ -53,6 +70,24 @@ public sealed interface SheetLine {
         HOLLOW_DIAMOND,
         FILLED_DIAMOND,
         DOT,
-        CHEVRON
+        CHEVRON,
+        /** A range or a radius. */
+        RING,
+        /** The four-point spark the board draws where a crit lands. */
+        SPARK,
+        SKULL,
+        /** A slot pip, as under an upgraded tower on the board. */
+        PIP,
+        CHECK,
+        CROSS,
+        /** The body shape of the tower whose body palette is the row's tone. */
+        TOWER_BODY
+    }
+
+    /** How a value compares with its own base. */
+    enum Trend {
+        NONE,
+        BETTER,
+        WORSE
     }
 }

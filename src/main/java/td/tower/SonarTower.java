@@ -19,6 +19,7 @@ import td.wave.WaveStartListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A beam sweeps the full circle and hits every visible enemy in range as it passes its bearing. No
@@ -149,24 +150,17 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
     }
 
     @Override
-    protected String rateLine(int coolDown) {
-        return "Rotation: " + SECONDS_PER_REVOLUTION + "s/turn\n";
+    protected Optional<TowerStatLine> cadence() {
+        return Optional.of(TowerStatLine.fixed(TowerStat.ROTATION, SECONDS_PER_REVOLUTION));
+    }
+
+    @Override
+    protected List<BehaviourLine> behaviours() {
+        return List.of(new BehaviourLine(BehaviourMarker.TARGETING, "Hits", "all it sweeps"));
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitSonarTower(this);
-    }
-
-    public String getInfoString() {
-        return "Sonar tower\n\n" +
-                super.getInfoString() +
-                "Sweeps a beam around itself, hitting everything it passes over";
-    }
-
-    public String getStatusString() {
-        return "Sonar tower\n\n" +
-                super.getStatusString() +
-                "Sweeps a beam around itself, hitting everything it passes over";
     }
 
     public void doCleanup() {

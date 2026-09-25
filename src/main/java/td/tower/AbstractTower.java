@@ -2,18 +2,20 @@ package td.tower;
 
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.economy.EconomyDelta;
 import td.enemy.HitReceiver;
 import td.stat.DisruptionPenalty;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.TickRate;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * What every tower shares: position, price, current stats, upgrades, and damage and kill
@@ -51,7 +53,7 @@ public abstract class AbstractTower implements Tower {
 
     /**
      * Converts the cell coordinates to the pixel centre and range. A tower with no cooldown passes
-     * {@code 0} and overrides {@link #rateLine(int)}.
+     * {@code 0} and overrides {@link #cadence()}.
      */
     protected AbstractTower(TowerFactory.Type t, int price, TowerBaseStats base,
                             GameWorld context, int cellX, int cellY) {
@@ -269,71 +271,66 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * Describes how often the tower attacks at {@code coolDown}. A tower whose cadence is not a
-     * cooldown overrides this and ignores the argument.
+     * How often the tower attacks, as authored and now; empty for a tower that never attacks. A
+     * tower whose cadence is not a cooldown overrides this.
      */
-    protected String rateLine(int coolDown) {
-        return "Fire rate: " + TICKS_PER_SECOND / (coolDown + 1) + "/s\n";
-    }
-
-    /**
-     * The pre-purchase text: base stats and price. Upgrades appear once the tower is built and
-     * selected.
-     */
-    public String getInfoString() {
-        String s = "Price: " + this.price + "\n" +
-                "Range: " + this.rangeBase + "\n";
+    protected Optional<TowerStatLine> cadence() {
         if (this.isPassive()) {
-            s += "\n";
-        } else {
-            s += "Damage: " + this.damageBase / 100f + "\n" +
-                    this.rateLine(this.coolDownMax) + "\n";
+            return Optional.empty();
         }
-        return s;
+        return Optional.of(new TowerStatLine(TowerStat.FIRE_RATE, TICKS_PER_SECOND / (this.coolDownMax + 1),
+                TICKS_PER_SECOND / (this.stats.coolDown() + 1)));
     }
 
-    public String getStatusString() {
-        String s = "Range: " + this.stats.range() + "\n";
-        if (this.isPassive()) {
-            s += "\n";
-        } else {
-            s += "Damage: " + this.stats.damage() / 100f + "\n" +
-                    this.rateLine(this.stats.coolDown());
-            if (this.stats.critChance() > 0f) {
-                s += "Crit chance: " + Math.round(this.stats.critChance() * 100) + "%\n";
+    /** Physical by default. */
+    protected DamageType damageType() {
+        return DamageType.PHYSICAL;
+    }
+
+    /** Stats of this tower's own, such as a splash radius, shown after the shared ones. */
+    protected List<TowerStatLine> ownStats() {
+        return List.of();
+    }
+
+    /** What the tower does beyond its stats; nothing by default. */
+    protected List<BehaviourLine> behaviours() {
+        return List.of();
+    }
+
+    /** What no row says, for the shop; empty by default. */
+    protected String description() {
+        return "";
+    }
+
+    /** Whether this tower stands on the board, rather than being a shop preview. */
+    protected boolean isPlaced() {
+        return this.context.towers().all().contains(this);
+    }
+
+    public TowerInspection inspect() {
+        TowerStats now = this.stats;
+        List<TowerStatLine> lines = new ArrayList<>();
+        lines.add(new TowerStatLine(TowerStat.RANGE, this.rangeBase, now.range()));
+        if (!this.isPassive()) {
+            TowerStat damage = this.damageType() == DamageType.MAGIC ? TowerStat.MAGIC_DAMAGE : TowerStat.PHYSICAL_DAMAGE;
+            lines.add(new TowerStatLine(damage, this.damageBase / 100f, now.damage() / 100f));
+            this.cadence().ifPresent(lines::add);
+            if (this.critChanceBase > 0f || now.critChance() > 0f) {
+                lines.add(new TowerStatLine(TowerStat.CRIT_CHANCE, this.critChanceBase, now.critChance()));
             }
-            s += "Kills: " + this.killCount + "\n" +
-                    "Damage dealt: " + this.damageDealt / 100f + "\n\n";
         }
-        s += this.ownedNodesBlock();
-        return s + this.upgradeNodesBlock();
-    }
-
-    /** One line per slot holding a bought node; empty if none. */
-    private String ownedNodesBlock() {
-        StringBuilder s = new StringBuilder();
-        for (UpgradeSlot slot : UpgradeSlot.values()) {
-            this.upgrades.tip(slot).ifPresent(node -> s.append(slot).append(": ").append(node.displayName()).append('\n'));
-        }
-        return s.toString();
-    }
-
-    /**
-     * One line per offered node with a ✔/✘ and its gate progress; empty when nothing is offered.
-     */
-    private String upgradeNodesBlock() {
-        List<UpgradeNode> offered = this.upgradeTree().offered(this, this.context);
-        if (offered.isEmpty()) {
-            return "";
-        }
-        StringBuilder s = new StringBuilder("\nUpgrades:\n");
-        for (UpgradeNode node : offered) {
-            boolean satisfied = node.gate().isSatisfied(this, this.context);
-            String mark = satisfied ? "✔" : "✘";
-            s.append("- ").append(mark).append(' ').append(node.displayName())
-                    .append(" (").append(node.gate().progress(this, this.context)).append(")\n");
-        }
-        return s.toString();
+        lines.addAll(this.ownStats());
+        int auras = (int) this.context.towers().all().stream()
+                .filter(other -> !other.buffFor(this).equals(TowerBuff.none()))
+                .count();
+        return TowerInspection.of(this.type, this.price, lines)
+                .withSellPrice(this.getSellPrice())
+                .withBehaviours(this.behaviours())
+                .withDescription(this.description())
+                .withRecord(this.killCount, this.damageDealt)
+                .withUpgrades(this.upgrades())
+                .withDisruption(now.disruption())
+                .withAuras(auras);
     }
 
     /** Contributes nothing by default. */

@@ -1,6 +1,7 @@
 package td.tower;
 
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.effect.Effect;
 import td.enemy.EnemyMob;
 import td.enemy.HitReceiver;
@@ -146,21 +147,23 @@ public final class SeekerTower extends AbstractTower {
         return this.turretAim;
     }
 
+    @Override
+    protected DamageType damageType() {
+        return DamageType.MAGIC;
+    }
+
+    @Override
+    protected List<BehaviourLine> behaviours() {
+        return List.of(new BehaviourLine(BehaviourMarker.FREEZE, "Freezes", BehaviourLine.seconds(this.freezeDurationTicks)),
+                new BehaviourLine(BehaviourMarker.TARGETING, "Targets", "first"));
+    }
+
+    @Override
+    protected String description() {
+        return "Fires a homing missile.";
+    }
+
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitSeekerTower(this);
-    }
-
-    public String getInfoString() {
-        return "Seeker tower\n\n" +
-                super.getInfoString() +
-                "Fires a homing missile\n" +
-                "Freezes what it hits";
-    }
-
-    public String getStatusString() {
-        return "Seeker tower\n\n" +
-                super.getStatusString() +
-                "Fires a homing missile\n" +
-                "Freezes what it hits";
     }
 }

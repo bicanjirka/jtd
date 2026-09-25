@@ -11,7 +11,7 @@
   keeps ticking. A tower that subscribes to anything (e.g. `SonarTower` as a
   `WaveStartListener`) unsubscribes in `doCleanup`.
 - Range checks compare squared distances (`rangeReal2()`); no `Math.sqrt` in per-tick scans.
-- A tower with no cooldown cadence passes `coolDownMax = 0` and overrides `rateLine(int)`.
+- A tower with no cooldown cadence passes `coolDownMax = 0` and overrides `cadence()`.
 - `SonarTower` hits what lies in the arc swept since last tick (`SonarSweep`, half-open), never
   the instantaneous beam angle. Its head is drawn from `sweepRadiansAt`, the same angle that
   decides hits.
@@ -63,7 +63,7 @@
   performance condition to clear once offered (`always()`, `KillCountCondition`,
   `DamageDealtCondition`, `ClusterCondition`), and its `progress()` feeds the UI.
 - Never hand-write a node's bonus into a tower's description: `UpgradeNode.describe()` derives it
-  and `upgradeNodesBlock()` lists offered nodes automatically.
+  and the Upgrades panel lists offered nodes.
 - A bonus outside `TowerBuff`'s axes goes in `onUpgradeBought`, matching the node by `equals` (not
   reference), and the same constant carries a matching `extraEffect` phrase.
 - `buyUpgrade` is the only entry point and is check-and-charge (returns `false` without effect).
@@ -82,4 +82,6 @@
    `Java2DFrameRenderer`'s `towerBodyShape`/`turretHeadShape`/`colorFor`.
 5. `upgradeTree()`: `StandardBaseSlot.rangeNode`/`awakenNode`, two `HEAD` chains whose roots
    require `StandardBaseSlot.opens(HEAD)`, and 1-3 `SPECIAL` roots requiring `opens(SPECIAL)`.
-6. `README.md`'s tower table. The toolbar icon reuses the board paint code, so it needs no art.
+6. `behaviours()` (one short row each: targeting, effects applied) and, for the shop only, a
+   `description()` saying what no row does.
+7. `README.md`'s tower table. The toolbar icon reuses the board paint code, so it needs no art.

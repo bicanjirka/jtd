@@ -31,11 +31,8 @@ public interface Tower {
 
     void setSelected(boolean selected);
 
-    /** Pre-purchase text: base stats and price. */
-    String getInfoString();
-
-    /** Text for a placed, selected tower: current stats, kills and damage. */
-    String getStatusString();
+    /** What the info panel shows: stats as authored and now, behaviours, kills, damage and upgrades. */
+    TowerInspection inspect();
 
     int getSellPrice();
 
@@ -90,5 +87,4 @@ public interface Tower {
      * in one call, so don't check affordability first.
      */
     boolean buyUpgrade(UpgradeNode node);
-
 }

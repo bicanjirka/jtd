@@ -19,6 +19,7 @@ import td.ui.PanelGameConsole;
 import td.ui.PanelLevelSelect;
 import td.ui.PanelTowerSelector;
 import td.ui.render.AsciiBoardRenderer;
+import td.ui.render.InfoSheet;
 import td.ui.render.RenderFrame;
 import td.util.GameHost;
 import td.util.GameWorld;
@@ -157,7 +158,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.gameConsole.onSuperFast(this::superFastPressed);
         this.gameConsole.getWaveInfo().onEnemyHover(sheet -> {
             this.unSelectTower();
-            this.gameConsole.getTowerInfo().showEnemy(sheet);
+            this.gameConsole.getTowerInfo().showSheet(sheet);
         });
         this.boardOverlays.onBackToMenu(this::requestReturnToMenu);
         this.panelTowerSelector.doInit(this.gameWorld, this);
@@ -335,6 +336,11 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.gameConsole.getTowerInfo().setExternalText(s);
     }
 
+    public void showInfoSheet(InfoSheet sheet) {
+        this.unSelectTower();
+        this.gameConsole.getTowerInfo().showSheet(sheet);
+    }
+
     private void setWavePreview() {
         WaveProgress progress = this.engine.waveProgress();
         this.gameConsole.getWaveInfo().clearWaves();
@@ -494,7 +500,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (!this.inspectingEnemy || frame == null || this.gameConsole.getTowerInfo().hasSelectedTower()) {
             return;
         }
-        frame.enemyInspection().ifPresent(this.gameConsole.getTowerInfo()::showEnemy);
+        frame.enemyInspection().ifPresent(this.gameConsole.getTowerInfo()::showSheet);
     }
 
     private void jPanel_boardMouseMoved(MouseEvent evt) {

@@ -147,20 +147,25 @@ Player-visible behaviour, view by view.
   glyph's colour (coloured text), values right-aligned, one line per item, bars where a quantity
   has a maximum.
 - Timed effects get no countdown bars, as on the enemy side.
-
-## Open questions
-
-1. Once the Upgrades panel shows gate state, should the selected-tower status stop listing
-   offered upgrades entirely? The recommendation is yes, since that list is the main source of
-   the overflow.
-2. How should a changed stat look: base → current ("3.2 → 3.7"), current plus a signed bonus, or
-   current tinted by whether it's buffed or debuffed?
-3. Units: keep range and radius in cells, or match enemy speed's px/s? Should the two sides agree?
-4. Is there a bar anywhere? Candidates are gate progress on a button (7/10 kills) and fire-rate
-   cooldown. Neither has an obvious "health" equivalent.
-5. Should a jammed tower show the disruption as its own row in the disruption colour, and an
-   aura-buffed tower name its buff source?
-6. Keep the leaves' flavour sentences ("Sweeps a beam around itself, hitting everything it passes
-   over") as dimmed prose, shorten them, or drop them where the rows already say it?
-7. On the Upgrades panel, should gate progress be on the button face itself, or only in the hover
-   rows?
+- **One sheet model for the whole pane.** Enemy and tower views share the AWT-free `InfoSheet`
+  (the renamed `EnemySheet`), its layout code and glyph painters. The domain hands over an
+  immutable `TowerInspection` (numbers plus short behaviour rows), and `td.ui` words it, as
+  `EnemyInspection` does for enemies. It replaces `getInfoString`/`getStatusString`.
+- **Glyphs:** the tower's own body shape heads its sheets. Range and radii get a ring, fire rate
+  the speed chevron, crit the board's crit spark, kills a skull, and an owned upgrade a pip in its
+  slot colour. An effect the tower applies gets the filled diamond the board draws on the enemy,
+  in that effect's colour. Damage is labelled "Physical damage" or "Magic damage" in the
+  damage-type colour, so the colour is never the only cue.
+- **Answers to the open questions:**
+  1. The status stops listing offered upgrades. The Upgrades panel shows each node's gate state.
+  2. A changed stat reads base → current ("3.2 → 3.7"), green when better and pink when worse.
+     That one form works for every stat, including crit chance, where a signed bonus is ambiguous.
+  3. Range and radius stay in cells, the unit the player builds in. Enemy speed is out of scope.
+  4. No bars: gate progress is text, and conditions report it only as text.
+  5. A jammed tower gets a "Jammed" row in the disruption colour. An aura-buffed tower gets one
+     "Aura" row in the aura colour, counting the auras when more than one buffs it.
+  6. Flavour appears only in the shop, dimmed, and only what the rows don't already say. The
+     status leaves it out, as the live enemy inspector does.
+  7. Gate progress goes on the button face ("7/10 kills"), and so does a price the player can't
+     pay yet ("need $30"). The hover repeats the gate as a ✔/✘ row.
+- **Sell value** sits on the status header's right, so the Sell button just reads "Sell".

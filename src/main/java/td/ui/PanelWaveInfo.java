@@ -1,6 +1,6 @@
 package td.ui;
 
-import td.ui.render.EnemySheet;
+import td.ui.render.InfoSheet;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 import td.wave.Wave;
@@ -35,7 +35,7 @@ public class PanelWaveInfo extends JPanel {
     private final List<PathWaveRow> curRows = new ArrayList<>();
     private final List<PathWaveRow> nextRows = new ArrayList<>();
     private GameWorld gameWorld;
-    private Consumer<EnemySheet> onEnemyHover = sheet -> {
+    private Consumer<InfoSheet> onEnemyHover = sheet -> {
     };
 
     public PanelWaveInfo() {
@@ -43,7 +43,7 @@ public class PanelWaveInfo extends JPanel {
     }
 
     /** Called with the sheet of a preview enemy under the pointer. */
-    public void onEnemyHover(Consumer<EnemySheet> listener) {
+    public void onEnemyHover(Consumer<InfoSheet> listener) {
         this.onEnemyHover = listener;
     }
 

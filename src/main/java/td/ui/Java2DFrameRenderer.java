@@ -406,8 +406,8 @@ public final class Java2DFrameRenderer {
             case RANK_BADGE_ELITE -> new Color(230, 190, 60);
             case RANK_BADGE_BOSS -> new Color(210, 210, 220);
             case TRAIT_MARKER_PERCENT_RESIST -> new Color(180, 150, 255);
-            case TRAIT_MARKER_PHYSICAL_RESIST -> new Color(230, 150, 70);
-            case TRAIT_MARKER_MAGIC_RESIST -> new Color(90, 190, 255);
+            case TRAIT_MARKER_PHYSICAL_RESIST, DAMAGE_PHYSICAL -> new Color(230, 150, 70);
+            case TRAIT_MARKER_MAGIC_RESIST, DAMAGE_MAGIC -> new Color(90, 190, 255);
             case TRAIT_MARKER_FLAT_RESIST -> new Color(140, 110, 200);
             case TRAIT_MARKER_CRITICAL_IMMUNE -> new Color(255, 210, 130);
             case TRAIT_MARKER_HURT_SPEED -> new Color(255, 140, 140);
@@ -418,6 +418,8 @@ public final class Java2DFrameRenderer {
             case TRAIT_MARKER_OVERFLOW -> Color.LIGHT_GRAY;
             case DISRUPTION -> new Color(235, 90, 200);
             case SELECTION -> new Color(255, 255, 255);
+            case UPGRADE_GATE_MET -> new Color(140, 255, 140);
+            case UPGRADE_GATE_UNMET -> new Color(255, 120, 120);
         };
     }
 
@@ -628,22 +630,47 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * An info-panel row's glyph centred on the origin: the board's trait and effect diamonds, or a
-     * neutral mark for a stat nothing on the board marks.
+     * An info-panel row's glyph centred on the origin: the board's own marks (trait and effect
+     * diamonds, crit spark, slot pip, tower body), or a neutral mark for a stat nothing on the
+     * board marks. {@link SheetLine.Glyph#TOWER_BODY} takes its shape from {@code tone}.
      */
     void paintRowGlyph(Graphics2D g2, SheetLine.Glyph glyph, Optional<Palette> tone, float size) {
         g2.setColor(tone.map(Java2DFrameRenderer::colorFor).orElse(UNMARKED_GLYPH));
+        Stroke defaultStroke = g2.getStroke();
+        g2.setStroke(new BasicStroke(HOLLOW_GLYPH_STROKE_WIDTH, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         switch (glyph) {
-            case HOLLOW_DIAMOND -> {
-                Stroke defaultStroke = g2.getStroke();
-                g2.setStroke(new BasicStroke(HOLLOW_GLYPH_STROKE_WIDTH));
-                g2.draw(diamondShape(size));
-                g2.setStroke(defaultStroke);
-            }
+            case HOLLOW_DIAMOND -> g2.draw(diamondShape(size));
             case FILLED_DIAMOND -> g2.fill(diamondShape(size));
             case DOT -> g2.fill(circleShape(size * DOT_GLYPH_SIZE_FRACTION));
             case CHEVRON -> g2.fill(chevronShape(size * 0.75f));
+            case RING -> g2.draw(circleShape(size * 0.8f));
+            case SPARK -> g2.fill(starShape(4, size, size * 0.3f));
+            case SKULL -> g2.fill(skullShape(size * 0.85f));
+            case PIP -> g2.fill(circleShape(size * 0.6f));
+            case CHECK -> g2.draw(checkShape(size * 0.8f));
+            case CROSS -> g2.draw(crossStrokesShape(size * 0.6f));
+            case TOWER_BODY -> g2.fill(towerBodyShape(tone.orElseThrow(), size));
         }
+        g2.setStroke(defaultStroke);
+    }
+
+    /** A tick mark, to be stroked. */
+    private static Shape checkShape(float size) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(-size, 0);
+        p.lineTo(-size * 0.3f, size * 0.7f);
+        p.lineTo(size, -size * 0.7f);
+        return p;
+    }
+
+    /** Two crossing strokes, to be stroked. */
+    private static Shape crossStrokesShape(float size) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(-size, -size);
+        p.lineTo(size, size);
+        p.moveTo(size, -size);
+        p.lineTo(-size, size);
+        return p;
     }
 
     /** Rotates the chevron to point up, around the current origin. */

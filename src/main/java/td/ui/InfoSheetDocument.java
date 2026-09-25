@@ -1,6 +1,6 @@
 package td.ui;
 
-import td.ui.render.EnemySheet;
+import td.ui.render.InfoSheet;
 import td.ui.render.SheetLine;
 
 import javax.swing.text.AttributeSet;
@@ -21,15 +21,17 @@ import java.awt.geom.Rectangle2D;
 import java.util.Optional;
 
 /**
- * Lays an {@link EnemySheet} out as a styled document: one paragraph per line, each row's glyph
+ * Lays an {@link InfoSheet} out as a styled document: one paragraph per line, each row's glyph
  * painted by {@link Java2DFrameRenderer} and its label in that glyph's colour, values on a
  * right-aligned tab stop at the pane's edge.
  */
-final class EnemySheetDocument {
+final class InfoSheetDocument {
 
     private static final Color VALUE_COLOR = new Color(170, 205, 170);
     private static final Color PROSE_COLOR = new Color(150, 170, 150);
     private static final Color GONE_COLOR = new Color(255, 120, 120);
+    private static final Color BETTER_COLOR = new Color(140, 255, 140);
+    private static final Color WORSE_COLOR = GONE_COLOR;
     private static final Color BAR_BACKGROUND = new Color(12, 22, 12);
     private static final Color BAR_FILL = new Color(52, 122, 52);
     private static final Color BAR_FILL_GONE = new Color(60, 66, 60);
@@ -52,7 +54,7 @@ final class EnemySheetDocument {
     private final int width;
     private final FontMetrics metrics;
 
-    private EnemySheetDocument(Java2DFrameRenderer renderer, int width, FontMetrics metrics) {
+    private InfoSheetDocument(Java2DFrameRenderer renderer, int width, FontMetrics metrics) {
         this.renderer = renderer;
         this.width = width - EDGE_MARGIN;
         this.metrics = metrics;
@@ -62,8 +64,8 @@ final class EnemySheetDocument {
      * @param width   the text width, where values align
      * @param metrics the pane's font, to size the health bar beside its value
      */
-    static StyledDocument of(EnemySheet sheet, Java2DFrameRenderer renderer, int width, FontMetrics metrics) {
-        EnemySheetDocument writer = new EnemySheetDocument(renderer, width, metrics);
+    static StyledDocument of(InfoSheet sheet, Java2DFrameRenderer renderer, int width, FontMetrics metrics) {
+        InfoSheetDocument writer = new InfoSheetDocument(renderer, width, metrics);
         sheet.lines().forEach(writer::append);
         writer.finish();
         return writer.doc;
@@ -71,7 +73,8 @@ final class EnemySheetDocument {
 
     private void append(SheetLine line) {
         switch (line) {
-            case SheetLine.Header header -> this.header(header);
+            case SheetLine.EnemyHeader header -> this.header(header);
+            case SheetLine.Title title -> this.title(title);
             case SheetLine.HealthBar bar -> this.healthBar(bar);
             case SheetLine.Row row -> this.row(row);
             case SheetLine.Prose prose -> {
@@ -89,7 +92,7 @@ final class EnemySheetDocument {
         this.insert("\n", new SimpleAttributeSet());
     }
 
-    private void header(SheetLine.Header header) {
+    private void header(SheetLine.EnemyHeader header) {
         this.icon(new PaintedIcon(BODY_BOX, BODY_BOX, g2 -> this.renderer.paintEnemyGlyph(g2, header.body(), BODY_SIZE)));
         SimpleAttributeSet name = new SimpleAttributeSet();
         StyleConstants.setBold(name, true);
@@ -100,6 +103,17 @@ final class EnemySheetDocument {
         SimpleAttributeSet rank = colored(badgeColor.orElse(PROSE_COLOR));
         StyleConstants.setFontSize(rank, RANK_FONT_SIZE);
         this.insert(" " + header.rank(), rank);
+    }
+
+    private void title(SheetLine.Title title) {
+        this.icon(new PaintedIcon(BODY_BOX, BODY_BOX,
+                g2 -> this.renderer.paintRowGlyph(g2, title.glyph(), Optional.of(title.tone()), BODY_SIZE)));
+        SimpleAttributeSet name = new SimpleAttributeSet();
+        StyleConstants.setBold(name, true);
+        this.insert(" " + title.name(), name);
+        if (!title.value().isEmpty()) {
+            this.insert("\t" + title.value(), colored(VALUE_COLOR));
+        }
     }
 
     /** The bar fills what its value leaves, with health written across it. */
@@ -129,7 +143,7 @@ final class EnemySheetDocument {
 
     private void row(SheetLine.Row row) {
         this.icon(new PaintedIcon(GLYPH_BOX, GLYPH_BOX, g2 -> this.renderer.paintRowGlyph(g2, row.glyph(), row.tone(), GLYPH_SIZE)));
-        SimpleAttributeSet label = row.tone().map(Java2DFrameRenderer::colorFor).map(EnemySheetDocument::colored).orElseGet(SimpleAttributeSet::new);
+        SimpleAttributeSet label = row.tone().map(Java2DFrameRenderer::colorFor).map(InfoSheetDocument::colored).orElseGet(SimpleAttributeSet::new);
         this.insert(" " + row.label(), label);
         if (!row.value().isEmpty()) {
             this.insert("\t" + row.value(), colored(VALUE_COLOR));
