@@ -40,7 +40,7 @@ class UpgradeSheetTextTest {
     void aButtonShowsItsKeyNameAndPriceWhenItCanBeBought() {
         this.world.economy().startEconomy(100, 5);
 
-        assertThat(UpgradeSheetText.buttonText(this.offer(RANGE))).isEqualTo("1  Range  $30");
+        assertThat(UpgradeSheetText.buttonText(this.offer(RANGE))).isEqualTo("1  Range\t$30");
         assertThat(this.offer(RANGE).buyable()).isTrue();
     }
 
@@ -49,7 +49,7 @@ class UpgradeSheetTextTest {
         this.world.economy().startEconomy(100, 5);
         this.tower.setKillCount(7);
 
-        assertThat(UpgradeSheetText.buttonText(this.offer(VETERAN))).isEqualTo("2  Veteran  7/10 kills");
+        assertThat(UpgradeSheetText.buttonText(this.offer(VETERAN))).isEqualTo("2  Veteran\t7/10 kills");
         assertThat(this.offer(VETERAN).buyable()).isFalse();
     }
 
@@ -57,7 +57,7 @@ class UpgradeSheetTextTest {
     void anUnaffordableButtonSaysWhatItNeeds() {
         this.world.economy().startEconomy(20, 5);
 
-        assertThat(UpgradeSheetText.buttonText(this.offer(RANGE))).isEqualTo("1  Range  need $30");
+        assertThat(UpgradeSheetText.buttonText(this.offer(RANGE))).isEqualTo("1  Range\tneed $30");
     }
 
     @Test

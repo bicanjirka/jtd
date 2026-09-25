@@ -38,6 +38,9 @@ public final class Hud {
     private static final Color FILL_SELECTED = new Color(38, 56, 38);
     /** Padding inside a control, since {@link #paintControl} draws the border. */
     private static final Border CONTROL_PADDING = new EmptyBorder(3, 8, 3, 8);
+    /** Inset and minimum gap of a row-style face's two parts. */
+    private static final int ROW_PADDING = 6;
+    private static final int ROW_GAP = 8;
 
     private Hud() {
     }
@@ -115,6 +118,10 @@ public final class Hud {
         return button.getDisabledIcon() != null ? button.getDisabledIcon() : button.getIcon();
     }
 
+    /**
+     * Centred text, or with a tab, a row like the info pane's: the part before it on the left,
+     * shortened with an ellipsis if the two would meet, and the part after it on the right.
+     */
     private static void paintCentredText(Graphics2D g2, AbstractButton button, int width, int height, boolean enabled) {
         String text = button.getText();
         if (text == null || text.isEmpty()) {
@@ -122,9 +129,28 @@ public final class Hud {
         }
         g2.setFont(button.getFont());
         FontMetrics metrics = g2.getFontMetrics();
-        int x = (width - metrics.stringWidth(text)) / 2;
         int baseline = (height - metrics.getHeight()) / 2 + metrics.getAscent();
         g2.setColor(enabled ? button.getForeground() : TEXT_DISABLED);
-        g2.drawString(text, x, baseline);
+        int tab = text.indexOf('\t');
+        if (tab < 0) {
+            g2.drawString(text, (width - metrics.stringWidth(text)) / 2, baseline);
+            return;
+        }
+        String right = text.substring(tab + 1);
+        int rightX = width - ROW_PADDING - metrics.stringWidth(right);
+        g2.drawString(right, rightX, baseline);
+        String left = fitted(text.substring(0, tab), rightX - ROW_GAP - ROW_PADDING, metrics);
+        g2.drawString(left, ROW_PADDING, baseline);
+    }
+
+    private static String fitted(String text, int available, FontMetrics metrics) {
+        if (metrics.stringWidth(text) <= available) {
+            return text;
+        }
+        String shortened = text;
+        while (!shortened.isEmpty() && metrics.stringWidth(shortened + "…") > available) {
+            shortened = shortened.substring(0, shortened.length() - 1);
+        }
+        return shortened.stripTrailing() + "…";
     }
 }

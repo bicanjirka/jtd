@@ -1,5 +1,8 @@
 # Feature Request: Tower info as rows
 
+**Status: implemented** in `a0ffdf9` (shop and status sheets) and `5f9a9cd` (upgrade hover and
+Upgrades panel), with the live check's fixes in the commit that follows them, as decided below.
+
 ## Summary
 
 Give towers the same info-panel treatment enemies got: every stat, behaviour and upgrade is
@@ -169,3 +172,9 @@ Player-visible behaviour, view by view.
   7. Gate progress goes on the button face ("7/10 kills"), and so does a price the player can't
      pay yet ("need $30"). The hover repeats the gate as a ✔/✘ row.
 - **Sell value** sits on the status header's right, so the Sell button just reads "Sell".
+- **Upgrade buttons read as rows**: key and name on the left, price or gate progress on the
+  right. A button face with a tab paints that way, and the name gives way with an ellipsis, so the
+  hotkey number always shows.
+- **Owned upgrades show once**, on the Upgrades panel's slot headers ("Base: Range"), not also as
+  status rows. A live check showed a Mortar with all three slots filled would push the status past
+  the pane, and those rows repeated the headers right below them.
