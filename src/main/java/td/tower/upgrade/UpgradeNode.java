@@ -2,6 +2,9 @@ package td.tower.upgrade;
 
 import td.tower.buff.TowerBuff;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * One node in a tower's upgrade tree. Hooks and prerequisites match nodes by their {@code id},
  * unique within one tree, since a branching graph can reconverge.
@@ -40,40 +43,27 @@ public record UpgradeNode(String id, UpgradeSlot slot, String displayName, int p
     }
 
     /**
-     * What buying this node costs and grants: its gate and its bonuses. The structural prerequisite
-     * is not shown.
+     * What buying this node grants: every non-zero buff axis, then the extra effect. The gate and
+     * the structural prerequisite are not bonuses.
      */
-    public String describe() {
-        String buffText = describeBuff(this.statBonus);
-        String stats = this.extraEffect.isEmpty()
-                ? buffText
-                : buffText.isEmpty() ? this.extraEffect : buffText + ", " + this.extraEffect;
-        return this.displayName + " (" + this.gate.describe() + "): " + stats;
-    }
-
-    private static String describeBuff(TowerBuff buff) {
-        StringBuilder parts = new StringBuilder();
-        appendIfNonZero(parts, buff.damageBonus(), "damage");
-        appendIfNonZero(parts, buff.rangeBonus(), "range");
-        appendIfNonZero(parts, buff.fireRateBonus(), "fire rate");
-        appendIfNonZero(parts, buff.bountyBonus(), "bounty");
-        appendIfNonZero(parts, buff.critChanceBonus(), "crit chance");
-        appendIfNonZero(parts, buff.armorPenetrationBonus(), "armor penetration");
-        appendIfNonZero(parts, buff.magicPenetrationBonus(), "magic penetration");
-        return parts.toString();
-    }
-
-    private static void appendIfNonZero(StringBuilder parts, float fraction, String label) {
-        if (fraction == 0f) {
-            return;
+    public List<UpgradeBonus> bonuses() {
+        List<UpgradeBonus> bonuses = new ArrayList<>();
+        addIfNonZero(bonuses, this.statBonus.damageBonus(), "Damage");
+        addIfNonZero(bonuses, this.statBonus.rangeBonus(), "Range");
+        addIfNonZero(bonuses, this.statBonus.fireRateBonus(), "Fire rate");
+        addIfNonZero(bonuses, this.statBonus.bountyBonus(), "Bounty");
+        addIfNonZero(bonuses, this.statBonus.critChanceBonus(), "Crit chance");
+        addIfNonZero(bonuses, this.statBonus.armorPenetrationBonus(), "Armor penetration");
+        addIfNonZero(bonuses, this.statBonus.magicPenetrationBonus(), "Magic penetration");
+        if (!this.extraEffect.isEmpty()) {
+            bonuses.add(new UpgradeBonus(Character.toUpperCase(this.extraEffect.charAt(0)) + this.extraEffect.substring(1), ""));
         }
-        if (!parts.isEmpty()) {
-            parts.append(", ");
-        }
-        parts.append(signedPercent(fraction)).append(' ').append(label);
+        return bonuses;
     }
 
-    private static String signedPercent(float fraction) {
-        return (fraction >= 0 ? "+" : "") + Math.round(fraction * 100) + "%";
+    private static void addIfNonZero(List<UpgradeBonus> bonuses, float fraction, String label) {
+        if (fraction != 0f) {
+            bonuses.add(new UpgradeBonus(label, (fraction >= 0 ? "+" : "") + Math.round(fraction * 100) + "%"));
+        }
     }
 }

@@ -12,9 +12,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.text.DefaultStyledDocument;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -40,8 +37,6 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
      * reads differently.
      */
     private static final Color SELL_TEXT_COLOR = new Color(255, 120, 120);
-    private static final Color GATE_MET_COLOR = new Color(140, 255, 140);
-    private static final Color GATE_UNMET_COLOR = SELL_TEXT_COLOR;
     private static final InfoSheet NO_SHEET = new InfoSheet(List.of());
     /** Before the pane is laid out, the width the side panel gives it. */
     private static final int FALLBACK_TEXT_WIDTH = 170;
@@ -147,14 +142,12 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     }
 
     /**
-     * Shows a hovered upgrade node's description in place of the tower status until
+     * Shows a hovered upgrade node's sheet in place of the tower status until
      * {@link #clearUpgradeHover}.
      */
-    public void showUpgradeHover(String text) {
+    public void showUpgradeHover(InfoSheet sheet) {
         this.hovering = true;
-        this.lastText = null;
-        this.lastSheet = NO_SHEET;
-        this.replaceText(text);
+        this.replaceSheet(sheet);
     }
 
     public void clearUpgradeHover() {
@@ -192,25 +185,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private void replaceText(String text) {
         this.jTextPane1.setStyledDocument(new DefaultStyledDocument());
         this.jTextPane1.setText(text);
-        this.colorizeMarks(text);
         this.jTextPane1.setCaretPosition(0);
-    }
-
-    /** Colours every ✔ green and every ✘ red. */
-    private void colorizeMarks(String text) {
-        StyledDocument doc = this.jTextPane1.getStyledDocument();
-        SimpleAttributeSet met = new SimpleAttributeSet();
-        StyleConstants.setForeground(met, GATE_MET_COLOR);
-        SimpleAttributeSet unmet = new SimpleAttributeSet();
-        StyleConstants.setForeground(unmet, GATE_UNMET_COLOR);
-        for (int i = 0; i < text.length(); i++) {
-            char c = text.charAt(i);
-            if (c == '✔') {
-                doc.setCharacterAttributes(i, 1, met, false);
-            } else if (c == '✘') {
-                doc.setCharacterAttributes(i, 1, unmet, false);
-            }
-        }
     }
 
     public void unselectTower() {

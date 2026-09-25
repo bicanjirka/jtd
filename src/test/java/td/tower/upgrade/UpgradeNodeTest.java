@@ -17,40 +17,32 @@ class UpgradeNodeTest {
     }
 
     @Test
-    void describeListsEveryNonZeroBuffAxisWithASignedPercentage() {
+    void bonusesListEveryNonZeroBuffAxisWithASignedPercentage() {
         UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.HEAD, "Veteran", 30)
                 .withBuff(TowerBuff.damage(0.3f).withRange(0.1f).withBounty(0.25f).withCritChance(0.15f))
                 .withGate(new KillCountCondition(10));
 
-        assertThat(node.describe()).isEqualTo(
-                "Veteran (10 kills): +30% damage, +10% range, +25% bounty, +15% crit chance");
+        assertThat(node.bonuses()).containsExactly(new UpgradeBonus("Damage", "+30%"), new UpgradeBonus("Range", "+10%"),
+                new UpgradeBonus("Bounty", "+25%"), new UpgradeBonus("Crit chance", "+15%"));
     }
 
     @Test
-    void describeAppendsTheExtraEffectAfterAnyBuffAxes() {
+    void bonusesEndWithTheExtraEffectInWordsAfterAnyBuffAxes() {
         UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.HEAD, "Siege", 35)
                 .withBuff(TowerBuff.damage(0.35f))
-                .withGate(new DamageDealtCondition(20000))
                 .withExtraEffect("+30% splash radius");
 
-        assertThat(node.describe()).isEqualTo("Siege (200.0 damage dealt): +35% damage, +30% splash radius");
+        assertThat(node.bonuses()).containsExactly(new UpgradeBonus("Damage", "+35%"),
+                new UpgradeBonus("+30% splash radius", ""));
     }
 
     @Test
-    void describeWithOnlyAnExtraEffectAndNoBuffAxesOmitsTheLeadingComma() {
-        UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.HEAD, "Overcharged Array", 35)
-                .withGate(new ClusterCondition(2))
-                .withExtraEffect("sweeps 40% faster");
+    void aNegativeAxisIsABonusWithAMinusSign() {
+        UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.SPECIAL, "Concussive", 35)
+                .withBuff(TowerBuff.fireRate(-0.5f))
+                .withExtraEffect("blast applies slow");
 
-        assertThat(node.describe()).isEqualTo("Overcharged Array (2 nearby towers): sweeps 40% faster");
-    }
-
-    @Test
-    void describeUsesTheGateNotTheRequiresCondition() {
-        UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.HEAD, "A2", 15)
-                .withRequires(UpgradeCondition.owns("a1"))
-                .withGate(new KillCountCondition(5));
-
-        assertThat(node.describe()).startsWith("A2 (5 kills)");
+        assertThat(node.bonuses()).containsExactly(new UpgradeBonus("Fire rate", "-50%"),
+                new UpgradeBonus("Blast applies slow", ""));
     }
 }
