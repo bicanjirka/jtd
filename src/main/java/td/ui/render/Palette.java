@@ -69,5 +69,10 @@ public enum Palette {
     /** An enemy's disruption ring and the marker on a tower it weakens. */
     DISRUPTION,
     /** The ring around the enemy the player is inspecting. */
-    SELECTION
+    SELECTION,
+    /** Info-panel tones: a damage type, and an upgrade gate met or not. */
+    DAMAGE_PHYSICAL,
+    DAMAGE_MAGIC,
+    UPGRADE_GATE_MET,
+    UPGRADE_GATE_UNMET
 }

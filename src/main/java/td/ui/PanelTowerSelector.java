@@ -5,6 +5,7 @@ import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.ui.render.InfoSheet;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -38,7 +39,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
     private static final int ICON_SIZE = 32;
 
     private final HudToggleButton[] buttons;
-    private final String[] infoText;
+    private final InfoSheet[] shopSheets;
     private final float[] towerRanges;
     private final List<TowerFactory.Type> towerTypes;
     private GameWorld context;
@@ -55,7 +56,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         }
 
         this.buttons = new HudToggleButton[this.towerTypes.size()];
-        this.infoText = new String[this.towerTypes.size()];
+        this.shopSheets = new InfoSheet[this.towerTypes.size()];
         this.towerRanges = new float[this.towerTypes.size()];
     }
 
@@ -103,7 +104,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         for (int i = 0; i < this.towerTypes.size(); i++) {
             TowerFactory.Type type = this.towerTypes.get(i);
             Tower tower = TowerFactory.createTower(type, previewWorld, 0, 0);
-            this.infoText[i] = tower.getInfoString();
+            this.shopSheets[i] = TowerSheetText.shop(tower.inspect());
             this.towerRanges[i] = tower.getRange();
 
             BufferedImage icon = iconRenderer.renderTowerIcon(TowerSpriteFrameBuilder.bodyPaletteFor(type), ICON_SIZE);
@@ -142,13 +143,13 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
     public void doPlace(int i) {
         this.untoggleAll();
         this.buttons[i].setSelected(true);
-        this.mainApp.setInfoText(this.infoText[i]);
+        this.mainApp.showInfoSheet(this.shopSheets[i]);
         this.startPlacing(this.towerTypes.get(i), this.towerRanges[i]);
     }
 
     private void mouseOver(int i) {
         if (!this.placing) {
-            this.mainApp.setInfoText(this.infoText[i]);
+            this.mainApp.showInfoSheet(this.shopSheets[i]);
         }
     }
 

@@ -6,7 +6,7 @@ import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.enemy.SpawnParameters;
-import td.ui.render.EnemySheet;
+import td.ui.render.InfoSheet;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -45,7 +45,7 @@ public class PanelEnemy extends JPanel {
     private final List<Rank> ranks = new ArrayList<>();
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
     private final GameWorld contextLocal;
-    private final Consumer<EnemySheet> onEnemyHover;
+    private final Consumer<InfoSheet> onEnemyHover;
     private List<Integer> enemiesCount = new ArrayList<>();
     private Font font;
     private int pHeight = 0;
@@ -54,7 +54,7 @@ public class PanelEnemy extends JPanel {
     private int gameTime = 0;
 
     /** {@code onEnemyHover} gets the sheet of the enemy under the pointer. */
-    public PanelEnemy(Consumer<EnemySheet> onEnemyHover) {
+    public PanelEnemy(Consumer<InfoSheet> onEnemyHover) {
         this.onEnemyHover = onEnemyHover;
         initComponents();
         this.contextLocal = new GameWorld(GameHost.noOp());

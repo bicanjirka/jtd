@@ -105,20 +105,12 @@ public final class PulseTower extends AbstractTower {
         return this.fire;
     }
 
+    @Override
+    protected List<BehaviourLine> behaviours() {
+        return List.of(new BehaviourLine(BehaviourMarker.TARGETING, "Hits", "all in range"));
+    }
+
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitPulseTower(this);
     }
-
-    public String getInfoString() {
-        return "Pulse tower\n\n" +
-                super.getInfoString() +
-                "Hurts everyone in range";
-    }
-
-    public String getStatusString() {
-        return "Pulse tower\n\n" +
-                super.getStatusString() +
-                "Hurts everyone in range";
-    }
-
 }

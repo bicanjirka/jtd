@@ -60,10 +60,11 @@ keeps the seam honest.
   `TowerDefense.requestRender` repaints the *container* (repainting only the board erases the
   overlay). Overlay translucency is painted in `paintComponent`; an alpha background colour on an
   opaque component doesn't blend.
-- Enemy info (wave-preview hover, live inspector) is an AWT-free `EnemySheet` that
-  `EnemyStatText` builds from an `EnemyInspection`: one row per thing on the board, in its
-  marker's colour, each fitting one line; stats at their default are left out. The live sheet is
-  built with the frame and travels in `RenderFrame.enemyInspection`; the EDT only shows it, and
-  only after a board click asked for a selection.
+- Info-pane content is an AWT-free `InfoSheet` that a `*SheetText` builds from a domain
+  inspection (`EnemyInspection`, `TowerInspection`): one row per thing on the board, with the
+  glyph and colour the board draws for it, each fitting one line. `InfoSheetDocument` alone lays
+  a sheet out. The live enemy sheet is built with the frame and travels in
+  `RenderFrame.enemyInspection`; the EDT only shows it, and only after a board click asked for a
+  selection.
 - Verify a board-look change from a `PreviewBoard` render, a panel or control change from a
   `run-jtd` screenshot.

@@ -6,7 +6,7 @@ import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.WorldFixtures;
-import td.ui.render.EnemySheet;
+import td.ui.render.InfoSheet;
 import td.ui.render.Palette;
 import td.ui.render.SheetLine;
 import td.ui.render.SheetLine.Row;
@@ -18,7 +18,7 @@ class PanelEnemyTest {
 
     private final GameWorld world = WorldFixtures.newWorld();
 
-    private EnemySheet hoverSheet(String id, Rank rank) {
+    private InfoSheet hoverSheet(String id, Rank rank) {
         EnemyDefinition definition = EnemyCatalog.builtIn().ranked(id).definitionFor(rank);
         EnemyMob mob = PanelEnemy.previewMob(definition, rank, this.world);
 
@@ -29,7 +29,7 @@ class PanelEnemyTest {
     void aPreviewedEnemyShowsTheHealthAndBountyItWillSpawnWith() {
         EnemyDefinition definition = EnemyCatalog.builtIn().ranked("s").definitionFor(Rank.SOLDIER);
 
-        EnemySheet sheet = this.hoverSheet("s", Rank.SOLDIER);
+        InfoSheet sheet = this.hoverSheet("s", Rank.SOLDIER);
 
         assertThat(definition.baseHealth()).isPositive();
         assertThat(sheet.lines()).contains(new SheetLine.HealthBar(definition.baseHealth(), definition.baseHealth(),
@@ -38,7 +38,7 @@ class PanelEnemyTest {
 
     @Test
     void aPreviewedEnemyThatSpeedsUpWhenHurtShowsItsUnhurtSpeedAndHowFastItCanGet() {
-        EnemySheet sheet = this.hoverSheet("t", Rank.ELITE);
+        InfoSheet sheet = this.hoverSheet("t", Rank.ELITE);
 
         assertThat(sheet.lines().stream().filter(Row.class::isInstance).map(Row.class::cast)
                 .filter(row -> row.label().equals("Speed")).map(Row::value))

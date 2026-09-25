@@ -10,6 +10,7 @@ import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -136,20 +137,27 @@ public final class AuraTower extends AbstractTower {
         }
     }
 
+    @Override
+    protected List<BehaviourLine> behaviours() {
+        String bonus = "+" + BehaviourLine.percent(this.power);
+        List<BehaviourLine> lines = new ArrayList<>();
+        lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby damage", bonus));
+        lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby range", bonus));
+        if (this.grantsFireRate) {
+            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby fire rate", bonus));
+        }
+        if (this.isPlaced()) {
+            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Buffing", this.buffedTowers().size() + " towers"));
+        }
+        return lines;
+    }
+
+    @Override
+    protected String description() {
+        return "Never attacks. Several auras stack.";
+    }
+
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitAuraTower(this);
-    }
-
-    public String getInfoString() {
-        return "Aura tower\n\n" +
-                super.getInfoString() +
-                "Increases damage and range of nearby towers by " + (this.power * 100) + "%";
-    }
-
-    public String getStatusString() {
-        return "Aura tower\n\n" +
-                super.getStatusString() +
-                "Increases damage and range of nearby towers by " + (this.power * 100) + "%\n\n" +
-                "Affects towers: " + this.buffedTowers().size();
     }
 }

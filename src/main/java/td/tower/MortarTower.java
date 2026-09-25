@@ -152,21 +152,25 @@ public final class MortarTower extends AbstractTower {
         return this.turretAim;
     }
 
+    @Override
+    protected List<TowerStatLine> ownStats() {
+        return List.of(new TowerStatLine(TowerStat.SPLASH_RADIUS, SPLASH_RADIUS_BASE,
+                this.splashRadius / this.context.getBoard().scale()));
+    }
+
+    @Override
+    protected List<BehaviourLine> behaviours() {
+        return List.of(new BehaviourLine(BehaviourMarker.SLOW, "Slows",
+                        BehaviourLine.percent(1f - this.slowMultiplier) + ", " + BehaviourLine.seconds(this.slowDurationTicks)),
+                new BehaviourLine(BehaviourMarker.TARGETING, "Targets", "first"));
+    }
+
+    @Override
+    protected String description() {
+        return "Lobs a slow, unguided shell.";
+    }
+
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitMortarTower(this);
-    }
-
-    public String getInfoString() {
-        return "Mortar tower\n\n" +
-                super.getInfoString() +
-                "Lobs a slow, unguided shell\n" +
-                "Splashes and slows on impact";
-    }
-
-    public String getStatusString() {
-        return "Mortar tower\n\n" +
-                super.getStatusString() +
-                "Lobs a slow, unguided shell\n" +
-                "Splashes and slows on impact";
     }
 }

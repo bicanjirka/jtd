@@ -36,10 +36,6 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     private static final float TOWER_AURA_PULSE_MIN_SCALE = 0.8f;
     private static final float TOWER_AURA_PULSE_MAX_SCALE = 1.25f;
 
-    /** One role per {@link UpgradeSlot}, in slot order. */
-    private static final Palette[] SLOT_PALETTES =
-            {Palette.TOWER_UPGRADE_BASE, Palette.TOWER_UPGRADE_HEAD, Palette.TOWER_UPGRADE_SPECIAL};
-
     private final List<TowerSpriteDraw> draws = new ArrayList<>();
     private final List<TurretHeadDraw> headDraws = new ArrayList<>();
     private final GameWorld world;
@@ -66,6 +62,15 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         };
     }
 
+    /** An upgrade slot's colour role, for its pips, chevrons and info rows. */
+    static Palette slotPaletteFor(UpgradeSlot slot) {
+        return switch (slot) {
+            case BASE -> Palette.TOWER_UPGRADE_BASE;
+            case HEAD -> Palette.TOWER_UPGRADE_HEAD;
+            case SPECIAL -> Palette.TOWER_UPGRADE_SPECIAL;
+        };
+    }
+
     /**
      * One mark per slot, in order: how many nodes are owned, and whether an affordable, ungated
      * node is offered.
@@ -78,7 +83,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
             boolean ready = offered.stream().anyMatch(node -> node.slot() == slot
                     && node.gate().isSatisfied(tower, this.world)
                     && this.world.economy().canPay(node.price()));
-            marks.add(new SlotMarkDraw(SLOT_PALETTES[slot.ordinal()], level, ready));
+            marks.add(new SlotMarkDraw(slotPaletteFor(slot), level, ready));
         }
         return marks;
     }

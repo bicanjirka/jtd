@@ -450,43 +450,34 @@ class AbstractTowerTest {
     }
 
     @Test
-    void getStatusStringListsEveryOfferedNodeWithItsGateProgressUntilOneIsBoughtThenListsNone() {
-        this.context.economy().startEconomy(100, 5);
-        UpgradeNode node = UpgradeNode.of("veteran", UpgradeSlot.HEAD, "Veteran", 10)
-                .withBuff(TowerBuff.amplifying(0.2f))
-                .withGate(new KillCountCondition(10));
-        FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.of(node));
+    void inspectReportsEachStatAsAuthoredAndAsItIsNow() {
+        SniperTower tower = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(tower);
 
-        assertThat(tower.getStatusString()).contains("Upgrades:").contains("Veteran").contains("0/10 kills");
+        this.context.towers().add(new AuraTower(this.context, 0, 0));
+
+        TowerInspection inspection = tower.inspect();
+        assertThat(inspection.stats()).first().isEqualTo(
+                new TowerStatLine(TowerStat.RANGE, SniperTower.RANGE, tower.stats().range()));
+        assertThat(tower.stats().range()).isGreaterThan(SniperTower.RANGE);
+        assertThat(inspection.auras()).isEqualTo(1);
+    }
+
+    @Test
+    void inspectCountsKillsAndTheDamageThatLanded() {
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.none());
 
         tower.dealDamage(EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT), Damage.physical(1_000_000));
-        assertThat(tower.getStatusString()).contains("✘");
 
-        for (int i = 0; i < 9; i++) {
-            tower.dealDamage(EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT), Damage.physical(1_000_000));
-        }
-        assertThat(tower.getStatusString()).contains("✔");
-
-        tower.buyUpgrade(node);
-
-        assertThat(tower.getStatusString()).doesNotContain("Upgrades:");
+        assertThat(tower.inspect().kills()).isEqualTo(1);
+        assertThat(tower.inspect().damageDealt()).isEqualTo(tower.getDamageDealt()).isPositive();
     }
 
     @Test
-    void getInfoStringNeverListsUpgradeContentEvenBeforeAnyoneHasBoughtOne() {
-        UpgradeNode node = UpgradeNode.of("veteran", UpgradeSlot.HEAD, "Veteran", 10)
-                .withBuff(TowerBuff.amplifying(0.2f));
-        FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.of(node));
+    void aPassiveTowerReportsNoDamageNoCadenceAndNoCritChance() {
+        AuraTower aura = new AuraTower(this.context, 0, 0);
 
-        assertThat(tower.getInfoString()).doesNotContain("Upgrades:").doesNotContain("Veteran");
-    }
-
-    @Test
-    void aTowerWithNoUpgradeTreeShowsNoUpgradePathsBlock() {
-        FakeTower noTree = FakeTower.offering(this.context, 0, 0, UpgradeTree.none());
-
-        assertThat(noTree.getStatusString()).doesNotContain("Upgrades:");
-        assertThat(noTree.getInfoString()).doesNotContain("Upgrades:");
+        assertThat(aura.inspect().stats()).extracting(TowerStatLine::stat).containsExactly(TowerStat.RANGE);
     }
 
     @Test

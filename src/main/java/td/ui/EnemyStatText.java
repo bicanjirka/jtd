@@ -2,10 +2,9 @@ package td.ui;
 
 import td.enemy.EnemyInspection;
 import td.enemy.HitResolution;
-import td.enemy.Rank;
 import td.enemy.TraitLine;
 import td.stat.EnemyStat;
-import td.ui.render.EnemySheet;
+import td.ui.render.InfoSheet;
 import td.ui.render.SheetLine;
 import td.ui.render.SheetLine.Glyph;
 import td.ui.render.SheetLine.Row;
@@ -32,7 +31,7 @@ final class EnemyStatText {
     }
 
     /** The wave-preview hover: identity, full health, stats and traits, then the description. */
-    static EnemySheet preview(EnemyInspection inspection) {
+    static InfoSheet preview(EnemyInspection inspection) {
         List<SheetLine> lines = new ArrayList<>();
         lines.add(header(inspection));
         lines.add(new SheetLine.HealthBar(inspection.maxHealth(), inspection.maxHealth(), "$" + inspection.bounty(), false));
@@ -42,11 +41,11 @@ final class EnemyStatText {
             lines.add(new SheetLine.Gap());
             lines.add(new SheetLine.Prose(inspection.description()));
         }
-        return new EnemySheet(lines);
+        return new InfoSheet(lines);
     }
 
     /** The live inspector: current health and fate, stats, traits, then effects with time left. */
-    static EnemySheet live(EnemyInspection inspection) {
+    static InfoSheet live(EnemyInspection inspection) {
         List<SheetLine> lines = new ArrayList<>();
         lines.add(header(inspection));
         lines.add(switch (inspection.fate()) {
@@ -57,12 +56,12 @@ final class EnemyStatText {
         lines.add(new SheetLine.Gap());
         lines.addAll(statAndTraitRows(inspection, true));
         inspection.effects().forEach(effect -> lines.add(effectRow(effect)));
-        return new EnemySheet(lines);
+        return new InfoSheet(lines);
     }
 
-    private static SheetLine.Header header(EnemyInspection inspection) {
-        return new SheetLine.Header(EnemyFrameBuilder.paletteFor(inspection.archetype()),
-                EnemyFrameBuilder.badgeFor(inspection.rank()), inspection.name(), titleCase(inspection.rank()));
+    private static SheetLine.EnemyHeader header(EnemyInspection inspection) {
+        return new SheetLine.EnemyHeader(EnemyFrameBuilder.paletteFor(inspection.archetype()),
+                EnemyFrameBuilder.badgeFor(inspection.rank()), inspection.name(), SheetNumbers.titleCase(inspection.rank()));
     }
 
     /** Speed first, which always shows, then every other stat off its default, then traits no stat covers. */
@@ -124,14 +123,14 @@ final class EnemyStatText {
             case MAGIC_RESIST -> new StatText(value >= 0 ? "Resist magic" : "Weak to magic", mitigationText(value));
             case PHYSICAL_PLATING -> new StatText("Plating, physical", platingText(value));
             case MAGIC_PLATING -> new StatText("Plating, magic", platingText(value));
-            case MOVE_SPEED -> new StatText("Speed", decimal(value * TickRate.TICKS_PER_SECOND) + " px/s");
-            case PHYSICAL_DAMAGE_TAKEN -> new StatText("Physical taken", percent(value));
-            case MAGIC_DAMAGE_TAKEN -> new StatText("Magic taken", percent(value));
+            case MOVE_SPEED -> new StatText("Speed", SheetNumbers.decimal(value * TickRate.TICKS_PER_SECOND) + " px/s");
+            case PHYSICAL_DAMAGE_TAKEN -> new StatText("Physical taken", SheetNumbers.percent(value));
+            case MAGIC_DAMAGE_TAKEN -> new StatText("Magic taken", SheetNumbers.percent(value));
             case RESILIENCE -> value >= 100f ? new StatText("Crit immune", "")
-                    : new StatText("Resilience", "-" + percent(value / 100f) + " crits");
-            case CRIT_CHANCE_TAKEN -> new StatText("Crit chance taken", "x" + decimal(value));
-            case SPIRIT -> new StatText("Spirit", signedPercent(value / 100f) + " heals");
-            case REGENERATION -> new StatText("Regenerates", decimal(value / 100f * TickRate.TICKS_PER_SECOND) + "/s");
+                    : new StatText("Resilience", "-" + SheetNumbers.percent(value / 100f) + " crits");
+            case CRIT_CHANCE_TAKEN -> new StatText("Crit chance taken", "x" + SheetNumbers.decimal(value));
+            case SPIRIT -> new StatText("Spirit", SheetNumbers.signedPercent(value / 100f) + " heals");
+            case REGENERATION -> new StatText("Regenerates", SheetNumbers.decimal(value / 100f * TickRate.TICKS_PER_SECOND) + "/s");
             case SLOW_RESIST -> resistText("Slow", value);
             case BURN_RESIST -> resistText("Burn", value);
             case FREEZE_RESIST -> resistText("Freeze", value);
@@ -165,37 +164,16 @@ final class EnemyStatText {
     }
 
     private static StatText resistText(String kind, float value) {
-        return value >= 1f ? new StatText(kind + " immune", "") : new StatText(kind + " resist", percent(value));
+        return value >= 1f ? new StatText(kind + " immune", "") : new StatText(kind + " resist", SheetNumbers.percent(value));
     }
 
     private static String platingText(float value) {
-        return "-" + decimal(value / 100f) + "/hit";
+        return "-" + SheetNumbers.decimal(value / 100f) + "/hit";
     }
 
     /** "-50%" for armor that halves a hit, "+25%" for negative armor. */
     private static String mitigationText(float armor) {
-        return signedPercent(HitResolution.mitigationMultiplier(armor) - 1f);
-    }
-
-    private static String percent(float fraction) {
-        return Math.round(fraction * 100) + "%";
-    }
-
-    private static String signedPercent(float fraction) {
-        int rounded = Math.round(fraction * 100);
-        return (rounded > 0 ? "+" : "") + rounded + "%";
-    }
-
-    private static String decimal(float value) {
-        if (Math.abs(value - Math.round(value)) < 0.05f) {
-            return Integer.toString(Math.round(value));
-        }
-        return String.format(Locale.ROOT, "%.1f", value);
-    }
-
-    private static String titleCase(Rank rank) {
-        String name = rank.name();
-        return name.charAt(0) + name.substring(1).toLowerCase(Locale.ROOT);
+        return SheetNumbers.signedPercent(HitResolution.mitigationMultiplier(armor) - 1f);
     }
 
     /** A stat row's words before its colour is known. */

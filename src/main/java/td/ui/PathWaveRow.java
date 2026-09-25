@@ -1,7 +1,7 @@
 package td.ui;
 
 import td.enemy.EnemyDefinition;
-import td.ui.render.EnemySheet;
+import td.ui.render.InfoSheet;
 import td.ui.render.PathMarkerBrightness;
 import td.ui.render.PathMarkerDraw;
 import td.ui.render.PathMarkerShape;
@@ -40,7 +40,7 @@ final class PathWaveRow extends JPanel {
     private final PanelEnemy panelEnemy;
     private GameWorld gameWorld;
 
-    PathWaveRow(Consumer<EnemySheet> onEnemyHover) {
+    PathWaveRow(Consumer<InfoSheet> onEnemyHover) {
         this.panelEnemy = new PanelEnemy(onEnemyHover);
         initComponents();
     }

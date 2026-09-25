@@ -18,5 +18,5 @@ public record RenderFrame(int scale, int maxX, int maxY,
                           List<ProjectileDraw> projectiles,
                           List<PathMarkerDraw> pathMarkers,
                           List<EnemyOverlayDraw> enemyOverlays,
-                          Optional<EnemySheet> enemyInspection) {
+                          Optional<InfoSheet> enemyInspection) {
 }

@@ -1,6 +1,7 @@
 package td.tower;
 
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.effect.Effect;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
@@ -165,20 +166,24 @@ public final class CinderTower extends AbstractTower {
         return Collections.unmodifiableList(this.inFlightWaves);
     }
 
+    @Override
+    protected DamageType damageType() {
+        return DamageType.MAGIC;
+    }
+
+    @Override
+    protected List<BehaviourLine> behaviours() {
+        return List.of(new BehaviourLine(BehaviourMarker.BURN, "Burns", BehaviourLine.seconds(this.burnDurationTicks)),
+                new BehaviourLine(BehaviourMarker.TARGETING, "Aims at", "nearest"));
+    }
+
+    @Override
+    protected String description() {
+        return "Fires a cone of flame that sets everything in it alight.";
+    }
+
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitCinderTower(this);
-    }
-
-    public String getInfoString() {
-        return "Cinder tower\n\n" +
-                super.getInfoString() +
-                "Burns everything in a cone";
-    }
-
-    public String getStatusString() {
-        return "Cinder tower\n\n" +
-                super.getStatusString() +
-                "Burns everything in a cone";
     }
 
     /**

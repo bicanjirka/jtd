@@ -154,11 +154,11 @@ class SonarTowerTest {
     }
 
     @Test
-    void theStatusReportsARotationSpeedRatherThanAFireRate() {
+    void itsCadenceIsARotationRatherThanAFireRate() {
         SonarTower tower = tower();
 
-        assertThat(tower.getStatusString()).contains("Rotation");
-        assertThat(tower.getStatusString()).doesNotContain("Fire rate");
+        assertThat(tower.inspect().stats()).extracting(TowerStatLine::stat)
+                .contains(TowerStat.ROTATION).doesNotContain(TowerStat.FIRE_RATE);
     }
 
     @Test

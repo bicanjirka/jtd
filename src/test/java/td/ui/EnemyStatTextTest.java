@@ -9,7 +9,7 @@ import td.enemy.EnemyDefinition;
 import td.enemy.EnemyFactory;
 import td.enemy.Rank;
 import td.fixtures.WorldFixtures;
-import td.ui.render.EnemySheet;
+import td.ui.render.InfoSheet;
 import td.ui.render.Palette;
 import td.ui.render.RankBadge;
 import td.ui.render.SheetLine;
@@ -25,7 +25,7 @@ class EnemyStatTextTest {
 
     private final GameWorld world = WorldFixtures.newWorld();
 
-    private EnemySheet hoverSheet(String id, Rank rank) {
+    private InfoSheet hoverSheet(String id, Rank rank) {
         EnemyDefinition definition = EnemyCatalog.builtIn().ranked(id).definitionFor(rank);
         return PanelEnemy.previewMob(definition, rank, this.world).accept(new EnemyInfoText());
     }
@@ -34,28 +34,28 @@ class EnemyStatTextTest {
         return (DefinedEnemyMob) EnemyFactory.getEnemy(id, this.world, 0, 100, 5, rank);
     }
 
-    private static List<String> labels(EnemySheet sheet) {
+    private static List<String> labels(InfoSheet sheet) {
         return sheet.lines().stream().filter(Row.class::isInstance).map(Row.class::cast).map(Row::label).toList();
     }
 
     @Test
     void aPlainEnemyShowsOnlyItsSpeed() {
-        EnemySheet sheet = this.hoverSheet("c", Rank.GRUNT);
+        InfoSheet sheet = this.hoverSheet("c", Rank.GRUNT);
 
         assertThat(labels(sheet)).containsExactly("Speed");
     }
 
     @Test
     void theHeaderShowsTheBodyGlyphNameAndRankBadge() {
-        EnemySheet sheet = this.hoverSheet("s", Rank.BOSS);
+        InfoSheet sheet = this.hoverSheet("s", Rank.BOSS);
 
         assertThat(sheet.lines().getFirst())
-                .isEqualTo(new SheetLine.Header(Palette.ENEMY_SQUARE, RankBadge.SKULL, "Armored mob", "Boss"));
+                .isEqualTo(new SheetLine.EnemyHeader(Palette.ENEMY_SQUARE, RankBadge.SKULL, "Armored mob", "Boss"));
     }
 
     @Test
     void aTraitAndTheStatsItSetsShowAsOneRowInTheTraitsBoardColour() {
-        EnemySheet sheet = this.hoverSheet("s", Rank.GRUNT);
+        InfoSheet sheet = this.hoverSheet("s", Rank.GRUNT);
 
         assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_PERCENT_RESIST, "Resist all", "-20%"),
                 Row.trait(Palette.TRAIT_MARKER_CRITICAL_IMMUNE, "Crit immune", ""));
@@ -64,7 +64,7 @@ class EnemyStatTextTest {
 
     @Test
     void platingOnOneDamageTypeNamesItAndShowsThePointsAHitLoses() {
-        EnemySheet sheet = this.hoverSheet("s", Rank.ELITE);
+        InfoSheet sheet = this.hoverSheet("s", Rank.ELITE);
 
         assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_FLAT_RESIST, "Plating, physical", "-8/hit"),
                 Row.trait(Palette.TRAIT_MARKER_PERCENT_RESIST, "Resist all", "-40%"));
@@ -72,21 +72,21 @@ class EnemyStatTextTest {
 
     @Test
     void aRankGivenStatNoTraitExplainsIsAPlainRow() {
-        EnemySheet sheet = this.hoverSheet("s", Rank.BOSS);
+        InfoSheet sheet = this.hoverSheet("s", Rank.BOSS);
 
         assertThat(sheet.lines()).contains(Row.plain(Glyph.DOT, "Freeze DR", ""));
     }
 
     @Test
     void anAdaptiveTraitIsShownAsTheMostItCanReach() {
-        EnemySheet sheet = this.hoverSheet("c", Rank.ELITE);
+        InfoSheet sheet = this.hoverSheet("c", Rank.ELITE);
 
         assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_PERCENT_RESIST, "Adaptive resist", "up to -40%"));
     }
 
     @Test
     void thePreviewEndsWithTheDescription() {
-        EnemySheet sheet = this.hoverSheet("s", Rank.GRUNT);
+        InfoSheet sheet = this.hoverSheet("s", Rank.GRUNT);
 
         assertThat(sheet.lines().getLast()).isEqualTo(new SheetLine.Prose("Takes less damage. Immune to critical hits."));
     }
@@ -98,9 +98,9 @@ class EnemyStatTextTest {
         }));
         mob.doDamage(Damage.physical(4000));
 
-        EnemySheet alive = EnemyStatText.live(mob.inspect());
+        InfoSheet alive = EnemyStatText.live(mob.inspect());
         mob.doDamage(Damage.physical(1_000_000));
-        EnemySheet killed = EnemyStatText.live(mob.inspect());
+        InfoSheet killed = EnemyStatText.live(mob.inspect());
 
         assertThat(alive.lines()).contains(new SheetLine.HealthBar(60, 100, "$5", false),
                 Row.effect(Palette.STATUS_MARKER_FREEZE, "Frozen", "1.5 s"), Row.plain(Glyph.CHEVRON, "Speed", "0 px/s"));
