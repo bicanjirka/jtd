@@ -36,6 +36,8 @@ violation. They are not restated here.
   and don't restate the code.
 - `CLAUDE.md` files hold constraints only - no history, no feature narrative. A change that
   makes a line in one false fixes it in the same commit.
+- Commit subject lines are imperative mood, capitalized, no trailing period (`Add X`, not
+  `added X` or `X added`).
 
 ## Packages (`td.*`)
 
