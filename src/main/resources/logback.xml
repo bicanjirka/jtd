@@ -2,7 +2,7 @@
 <!--
   Runtime logging config. logs/jTD-<run-timestamp>.log is one file per play
   session - Main sets the jtd.logTimestamp system property as its very first
-  statement, before this config is ever read. See CLAUDE.md "Logging".
+  statement, before this config is ever read.
 
   Raise the root level to DEBUG below for tick-by-tick / tower-fire detail,
   or override via -Dlogback.configurationFile=path/to/alt-logback.xml.
@@ -24,8 +24,10 @@
 
     <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="FILE"/>
-        <!-- never drop events by blocking the game-loop thread on a full queue -->
+        <!-- keep every level while the queue has room, but when it is full drop the
+             event rather than stall the game-loop thread inside its tick budget -->
         <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
         <queueSize>2048</queueSize>
     </appender>
 
