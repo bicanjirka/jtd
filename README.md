@@ -9,7 +9,7 @@ All of the artwork is vector — every enemy, tower, beam and path marker is a
 
 ## Requirements
 
-- **JDK 26** (the build targets release 26)
+- **JDK 25** (the build targets release 25)
 - **Maven 3.9+**
 
 ## Build and run
