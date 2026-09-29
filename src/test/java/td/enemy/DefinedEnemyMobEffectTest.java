@@ -3,9 +3,13 @@ package td.enemy;
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.effect.Effect;
+import td.effect.EffectKind;
 import td.fixtures.LevelFixtures;
 import td.fixtures.WorldFixtures;
+import td.stat.EnemyStat;
 import td.util.GameWorld;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -23,7 +27,7 @@ class DefinedEnemyMobEffectTest {
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         float fullSpeed = enemy.getSpeed();
 
-        enemy.applyEffect(Effect.slow(0.5f, 5, d -> {
+        enemy.applyEffect(Effect.chill(0.5f, 5, d -> {
         }));
         enemy.doTick(1);
 
@@ -114,5 +118,35 @@ class DefinedEnemyMobEffectTest {
 
         assertThat(enemy.isDead()).isTrue();
         assertThat(enemy.getHealth()).isZero();
+    }
+
+    @Test
+    void anEnemyAtTheSpiritFloorNeverLosesItsScorchedStacksWhileOneAtNeutralSpiritDoes() {
+        GameWorld context = newContext();
+        context.setPath(LevelFixtures.straightPath(1, 0, 100));
+        context.getEnemyCatalog().register(EnemyDefinition.of("brittle", "Brittle", 100_000, 5, 0f, BodyArchetype.CIRCLE)
+                .withStat(EnemyStat.SPIRIT, -100f));
+        context.getEnemyCatalog().register(EnemyDefinition.of("plain", "Plain", 100_000, 5, 0f, BodyArchetype.CIRCLE));
+        DefinedEnemyMob brittle = (DefinedEnemyMob) context.getEnemyCatalog().spawn("brittle", context, 0, 100_000, 5, Rank.GRUNT);
+        DefinedEnemyMob plain = (DefinedEnemyMob) context.getEnemyCatalog().spawn("plain", context, 0, 100_000, 5, Rank.GRUNT);
+        for (DefinedEnemyMob mob : List.of(brittle, plain)) {
+            mob.applyEffect(Effect.burn(Damage.magic(10), 30, d -> {
+            }));
+            for (int t = 1; t <= 40; t++) {
+                mob.doTick(t);
+            }
+        }
+        int brittleStacks = brittle.effectStacks(EffectKind.SCORCHED);
+        int plainStacks = plain.effectStacks(EffectKind.SCORCHED);
+
+        for (int t = 41; t <= 240; t++) {
+            brittle.doTick(t);
+            plain.doTick(t);
+        }
+
+        assertThat(brittleStacks).isGreaterThan(0);
+        assertThat(brittle.effectStacks(EffectKind.SCORCHED)).isEqualTo(brittleStacks);
+        assertThat(plainStacks).isGreaterThan(0);
+        assertThat(plain.effectStacks(EffectKind.SCORCHED)).isZero();
     }
 }

@@ -1,6 +1,8 @@
 import td.GameEngine;
 import td.cell.CellGrid;
 import td.damage.Damage;
+import td.effect.Effect;
+import td.effect.EffectKind;
 import td.economy.EconomyDelta;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
@@ -74,6 +76,7 @@ public class PreviewBoard {
             case "lives" -> setLives(rest.trim());
             case "place" -> placeTower(rest.trim());
             case "spawn" -> spawnEnemy(rest.trim());
+            case "effect" -> applyEffect(rest.trim());
             case "wave" -> startWave();
             case "tick" -> tick(Integer.parseInt(rest.trim()));
             case "kill" -> killEnemies();
@@ -151,6 +154,29 @@ public class PreviewBoard {
         EnemyMob mob = catalog.spawn(id, world, 0, definition.baseHealth(), definition.price(), rank);
         world.enemies().add(mob);
         System.out.println("OK spawn " + id + " at rank " + rank);
+    }
+
+    /** {@code effect <kind> [ticks]}: puts the effect on every enemy, as a tower would. */
+    private static void applyEffect(String args) {
+        String[] parts = args.split("\s+");
+        EffectKind kind = EffectKind.valueOf(parts[0].toUpperCase());
+        int ticks = parts.length > 1 ? Integer.parseInt(parts[1]) : 200;
+        for (EnemyMob mob : engine.getGameWorld().enemies().getEnemies()) {
+            Effect effect = switch (kind) {
+                case CHILL -> Effect.chill(0.5f, ticks, d -> { });
+                case BURN -> Effect.burn(Damage.magic(1), ticks, d -> { });
+                case POISON -> Effect.poison(Damage.magic(1), ticks, d -> { });
+                case FREEZE -> Effect.freeze(ticks, d -> { });
+                case SHIELD -> Effect.shield(0.3f, ticks, d -> { });
+                case INVISIBLE -> Effect.invisible(ticks, d -> { });
+                case HEAL -> Effect.heal(1, ticks, d -> { });
+                case VULNERABLE -> Effect.vulnerable(2, ticks, d -> { });
+                case REVEALED -> Effect.revealed(ticks, d -> { });
+                case SCORCHED, SICKENED -> throw new IllegalArgumentException(kind + " is earned by burn and poison");
+            };
+            mob.applyEffect(effect);
+        }
+        System.out.println("OK effect " + kind);
     }
 
     private static void startWave() {

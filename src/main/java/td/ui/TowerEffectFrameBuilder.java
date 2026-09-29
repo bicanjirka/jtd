@@ -79,18 +79,17 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     public Void visitSplashTower(SplashTower tower) {
-        EnemyMob target = tower.getPrimaryTarget();
-        if (target != null) {
+        for (SplashTower.Blast blast : tower.getBlasts()) {
+            EnemyMob target = blast.primary();
             this.draws.add(new BeamDraw(Palette.TOWER_SPLASH_BEAM, tower.getX(), tower.getY(),
                     (float) target.getX(), (float) target.getY(), beamWidth(tower.getCoolDownFraction())));
-            for (EnemyMob splashTarget : tower.getSplashTargets()) {
+            for (EnemyMob splashTarget : blast.caught()) {
                 this.draws.add(new BeamDraw(Palette.TOWER_SPLASH_LINE, (float) target.getX(), (float) target.getY(),
                         (float) splashTarget.getX(), (float) splashTarget.getY(), 1.0f));
             }
-        }
-        if (tower.isSplashVisible()) {
-            this.draws.add(new SplashDraw(Palette.TOWER_SPLASH_FILL,
-                    tower.getSplashCenterX(), tower.getSplashCenterY(), tower.getSpreadRadius()));
+            if (tower.isSplashVisible()) {
+                this.draws.add(new SplashDraw(Palette.TOWER_SPLASH_FILL, blast.area().centerX(), blast.area().centerY(), blast.area().radius()));
+            }
         }
         return null;
     }

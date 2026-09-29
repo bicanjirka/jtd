@@ -96,9 +96,12 @@ final class TowerSheetText {
     private static Row behaviourRow(BehaviourLine behaviour) {
         return switch (behaviour.marker()) {
             case TARGETING -> Row.plain(Glyph.DOT, behaviour.label(), behaviour.value());
-            case SLOW -> Row.effect(EnemyFrameBuilder.markerPaletteFor(EffectKind.SLOW), behaviour.label(), behaviour.value());
+            case CHILL -> Row.effect(EnemyFrameBuilder.markerPaletteFor(EffectKind.CHILL), behaviour.label(), behaviour.value());
             case BURN -> Row.effect(EnemyFrameBuilder.markerPaletteFor(EffectKind.BURN), behaviour.label(), behaviour.value());
             case FREEZE -> Row.effect(EnemyFrameBuilder.markerPaletteFor(EffectKind.FREEZE), behaviour.label(), behaviour.value());
+            case VULNERABLE -> Row.effect(EnemyFrameBuilder.markerPaletteFor(EffectKind.VULNERABLE), behaviour.label(), behaviour.value());
+            case REVEAL -> Row.effect(EnemyFrameBuilder.markerPaletteFor(EffectKind.REVEALED), behaviour.label(), behaviour.value());
+            case POISON -> Row.effect(EnemyFrameBuilder.markerPaletteFor(EffectKind.POISON), behaviour.label(), behaviour.value());
             case BUFF -> Row.toned(Glyph.RING, Palette.TOWER_AURA_RING, behaviour.label(), behaviour.value());
         };
     }

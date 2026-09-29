@@ -19,8 +19,8 @@ public interface Tower {
 
     void doTick(int gameTime);
 
-    /** Re-reads the disruption at this tower's centre, republishing stats only when it changed. */
-    void refreshDisruption();
+    /** Start of the tower's turn: expires a timed buff and re-reads its disruption, republishing stats only on a change. */
+    void beginTick(int gameTime);
 
     /** Whether an enemy's disruption weakens this tower right now. */
     boolean isDisrupted();

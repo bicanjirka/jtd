@@ -71,10 +71,15 @@ class EnemyStatTextTest {
     }
 
     @Test
-    void aRankGivenStatNoTraitExplainsIsAPlainRow() {
-        InfoSheet sheet = this.hoverSheet("s", Rank.BOSS);
+    void aFrozenEnemyShowsThatItIsImmuneToBurnAndWhatItsNextFreezeWillLast() {
+        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        mob.applyEffect(Effect.freeze(30, d -> {
+        }));
 
-        assertThat(sheet.lines()).contains(Row.plain(Glyph.DOT, "Freeze DR", ""));
+        InfoSheet sheet = EnemyStatText.live(mob.inspect());
+
+        assertThat(sheet.lines()).contains(Row.effect(Palette.STATUS_MARKER_BURN, "Immune to burn", ""),
+                Row.plain(Glyph.DOT, "Freeze DR", "next 50%"));
     }
 
     @Test
@@ -103,7 +108,38 @@ class EnemyStatTextTest {
         InfoSheet killed = EnemyStatText.live(mob.inspect());
 
         assertThat(alive.lines()).contains(new SheetLine.HealthBar(60, 100, "$5", false),
-                Row.effect(Palette.STATUS_MARKER_FREEZE, "Frozen", "1.5 s"), Row.plain(Glyph.CHEVRON, "Speed", "0 px/s"));
+                Row.effect(Palette.STATUS_MARKER_FREEZE, "Frozen", "hard CC 1.5 s"), Row.plain(Glyph.CHEVRON, "Speed", "0 px/s"));
         assertThat(killed.lines()).contains(new SheetLine.HealthBar(0, 100, "Killed", true));
+    }
+
+    @Test
+    void aBurningEnemyShowsItsScorchedStacksAndTheResilienceTheyCost() {
+        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        mob.applyEffect(Effect.burn(Damage.magic(100), 100, d -> {
+        }));
+
+        InfoSheet sheet = EnemyStatText.live(mob.inspect());
+
+        assertThat(sheet.lines()).contains(
+                Row.effect(Palette.STATUS_MARKER_BURN, "Burning", "damage over time"),
+                Row.effect(Palette.STATUS_MARKER_SCORCHED, "Scorched x1", "debuff"),
+                Row.plain(Glyph.DOT, "Resilience", "+1% crit damage"));
+    }
+
+    @Test
+    void aChilledEnemyShowsItsLevelAndAPoisonedOneItsSickenedStacksAndSpiritLoss() {
+        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        mob.applyEffect(Effect.chill(0.4f, 100, d -> {
+        }));
+        mob.applyEffect(Effect.poison(Damage.magic(100), 100, d -> {
+        }));
+
+        InfoSheet sheet = EnemyStatText.live(mob.inspect());
+
+        assertThat(sheet.lines()).contains(
+                Row.effect(Palette.STATUS_MARKER_CHILL, "Chilled", "soft CC 40%"),
+                Row.effect(Palette.STATUS_MARKER_POISON, "Poisoned", "damage over time"),
+                Row.effect(Palette.STATUS_MARKER_SICKENED, "Sickened x1", "debuff"),
+                Row.plain(Glyph.DOT, "Spirit", "-1% heals"));
     }
 }

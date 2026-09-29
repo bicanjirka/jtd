@@ -220,6 +220,9 @@ Resolved during implementation, recorded here rather than left open:
 
 ## Addendum: burning doubles crit chance
 
+*Removed later: a burning enemy no longer takes extra crits (judged too strong). The section below is the
+original design, kept for history.*
+
 A follow-up request, added after v1 shipped: a burning enemy should be twice as likely to take a critical hit -
 the first interaction between the damage-types feature's status effects and this feature's crit roll.
 

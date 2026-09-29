@@ -413,9 +413,8 @@ class AbstractTowerTest {
     }
 
     @Test
-    void aBurningTargetDoublesTheEffectiveCritChance() {
-        // roll lands strictly between the base 20% chance and its doubled 40% - only a burning
-        // target's doubled chance should turn this into a critical hit
+    void aBurningTargetDoesNotRaiseTheCritChanceTakenFromAnyTower() {
+        // roll lands strictly between the tower's 20% chance and a doubled 40%
         GameWorld world = WorldFixtures.newWorld(() -> 0.3);
         world.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("precision", UpgradeSlot.HEAD, "Precision", 10)
@@ -428,7 +427,7 @@ class AbstractTowerTest {
 
         tower.dealDamage(burning, Damage.physical(1000));
 
-        assertThat(tower.getDamageDealt()).isEqualTo(Math.round(1000 * AttackProfile.DEFAULT_CRIT_MULTIPLIER));
+        assertThat(tower.getDamageDealt()).isEqualTo(1000);
     }
 
     @Test
@@ -444,23 +443,8 @@ class AbstractTowerTest {
 
         enemy.doTick(1);
 
-        assertThat(tower.getDamageDealt()).isEqualTo(Math.round(1000 * AttackProfile.DEFAULT_CRIT_MULTIPLIER));
-    }
-
-    @Test
-    void aNonBurningTargetDoesNotGetTheDoubledCritChance() {
-        // same roll as the burning case, but no burn: must not crit
-        GameWorld world = WorldFixtures.newWorld(() -> 0.3);
-        world.economy().startEconomy(100, 5);
-        UpgradeNode node = UpgradeNode.of("precision", UpgradeSlot.HEAD, "Precision", 10)
-                .withBuff(TowerBuff.critChance(0.2f));
-        FakeTower tower = FakeTower.offering(world, 0, 0, UpgradeTree.of(node));
-        tower.buyUpgrade(node);
-        EnemyMob notBurning = EnemyFactory.getEnemy("c", world, 0, 100000, 3, Rank.GRUNT);
-
-        tower.dealDamage(notBurning, Damage.physical(1000));
-
-        assertThat(tower.getDamageDealt()).isEqualTo(1000);
+        // the burn's first stack has already lowered resilience by one, widening the crit bonus by 1%
+        assertThat(tower.getDamageDealt()).isEqualTo(Math.round(1000 * (1f + 0.5f * 1.01f)));
     }
 
     @Test

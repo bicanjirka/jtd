@@ -1,6 +1,10 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.effect.Effect;
+import td.effect.EffectKind;
+import td.enemy.EnemyMob;
+import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradeNode;
@@ -69,5 +73,40 @@ class AuraTowerTest {
         first.buyUpgrade(resonanceFieldTwo);
 
         assertThat(first.buffFor(second)).isNotEqualTo(TowerBuff.none());
+    }
+
+    @Test
+    void witheringFieldGivesEveryEnemyInsideTheAuraAVulnerabilityStackEveryInterval() {
+        this.addClusterFiller();
+        AuraTower aura = new AuraTower(this.context, 0, 0);
+        this.context.towers().add(aura);
+        UpgradePaths.buy(aura, this.context, "Withering Field");
+        FakeEnemyMob inside = FakeEnemyMob.at(aura.getX(), aura.getY());
+        FakeEnemyMob hidden = FakeEnemyMob.ghostAt(aura.getX(), aura.getY());
+        FakeEnemyMob outside = FakeEnemyMob.at(10_000, 10_000);
+        this.context.enemies().setEnemies(new EnemyMob[]{inside, hidden, outside});
+
+        for (int t = 1; t < 20; t++) {
+            aura.doTick(t);
+        }
+        assertThat(inside.appliedEffects()).isEmpty();
+        aura.doTick(20);
+
+        assertThat(inside.appliedEffects()).extracting(Effect::kind).containsExactly(EffectKind.VULNERABLE);
+        assertThat(hidden.appliedEffects()).extracting(Effect::kind).containsExactly(EffectKind.VULNERABLE);
+        assertThat(outside.appliedEffects()).isEmpty();
+    }
+
+    @Test
+    void withoutWitheringFieldTheAuraAppliesNothingToEnemies() {
+        AuraTower aura = new AuraTower(this.context, 0, 0);
+        FakeEnemyMob inside = FakeEnemyMob.at(aura.getX(), aura.getY());
+        this.context.enemies().setEnemies(new EnemyMob[]{inside});
+
+        for (int t = 1; t <= 40; t++) {
+            aura.doTick(t);
+        }
+
+        assertThat(inside.appliedEffects()).isEmpty();
     }
 }

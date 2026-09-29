@@ -19,8 +19,7 @@ public enum TraitMarker {
     HURT_SPEED,
     BURN_IMMUNE(EnemyStat.BURN_RESIST),
     FREEZE_IMMUNE(EnemyStat.FREEZE_RESIST),
-    EFFECT_RESIST(EnemyStat.SLOW_RESIST, EnemyStat.BURN_RESIST, EnemyStat.FREEZE_RESIST),
-    FREEZE_DIMINISHING(EnemyStat.FREEZE_DR);
+    EFFECT_RESIST(EnemyStat.CHILL_RESIST, EnemyStat.BURN_RESIST, EnemyStat.FREEZE_RESIST);
 
     private final Set<EnemyStat> shownAs;
 

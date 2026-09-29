@@ -19,28 +19,44 @@ import java.util.Set;
 /**
  * The effects active on one enemy, at most one per {@link EffectKind}. Reapplying a kind keeps the
  * stronger one and the longer remaining duration, so a weak top-up never cuts short a strong
- * effect. {@code SLOW} and {@code BURN} combine differently: see {@link #applySlow} and
- * {@link #applyBurn}.
+ * effect. The decaying kinds and {@code VULNERABLE} combine differently: see {@link #applyChill},
+ * {@link #applyPool} and {@link #applyVulnerable}.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class ActiveEffects {
 
-    /** Caps the burn pool at this multiple of the strongest single application ever taken. */
-    private static final float BURN_LMAX_MULTIPLIER = 2f;
+    /** Caps a fuel pool at this multiple of the strongest single application ever taken. */
+    private static final float POOL_LMAX_MULTIPLIER = 2f;
     /**
-     * Per-tick decay {@code alpha = e^(BURN_DECAY_EXPONENT / authoredDurationTicks)} leaves about
+     * Per-tick decay {@code alpha = e^(POOL_DECAY_EXPONENT / authoredDurationTicks)} leaves about
      * 5% of the fuel when the authored duration ends.
      */
-    private static final double BURN_DECAY_EXPONENT = -3.0;
+    private static final double POOL_DECAY_EXPONENT = -3.0;
 
-    /** A burning enemy is this much more likely to take a critical hit, from any tower. */
-    private static final float BURN_CRIT_CHANCE_TAKEN = 2f;
+    /** The most speed a chill takes away, so stacked chills never freeze. */
+    private static final float MAX_CHILL = 0.8f;
+    /** The most speed a full poison pool takes away; weaker than a chill, and it stacks with it. */
+    private static final float POISON_MAX_SLOW = 0.3f;
+    /** How much of a burn's damage a full chill takes away. */
+    private static final float BURN_CHILL_DAMPENING = 0.5f;
+
+    /**
+     * A stack debuff loses a stack this often at neutral spirit: one per second, half as fast as a pool
+     * earns them. A spirit above zero speeds it up, and at -100 it never happens.
+     */
+    private static final int STACK_DECAY_INTERVAL_TICKS = 20;
+
+    private static final int VULNERABLE_MAX_STACKS = 3;
+    /** Extra damage taken per vulnerable stack, of every damage type. */
+    private static final float VULNERABLE_PER_STACK = 0.15f;
     private static final StatModifier FROZEN = StatModifier.setTo(0f);
     private static final StatModifier HIDDEN = StatModifier.setTo(1f);
+    private static final StatModifier REVEALED = StatModifier.setTo(0f);
     private static final DamageType[] DAMAGE_TYPES = DamageType.values();
 
     private final Map<EffectKind, Effect> active = new EnumMap<>(EffectKind.class);
-    private Effect slowSuperseded;
+    /** How far each stack debuff is towards losing its next stack, in spirit-scaled ticks. */
+    private final Map<EffectKind, Float> decayProgress = new EnumMap<>(EffectKind.class);
 
     private static Effect strongerOf(Effect a, Effect b) {
         Effect stronger = magnitude(a) >= magnitude(b) ? a : b;
@@ -50,83 +66,109 @@ public final class ActiveEffects {
     /** How hard an effect bites, in a unit specific to its kind; only compared within one kind. */
     private static float magnitude(Effect effect) {
         return switch (effect.kind()) {
-            case SLOW, FREEZE -> 1f - effect.speedMultiplier();
-            case BURN -> effect.damagePerTick().amount();
+            case FREEZE -> 1f - effect.speedMultiplier();
+            case CHILL -> effect.fuelLevel();
+            case BURN, POISON -> effect.damagePerTick().amount();
             case SHIELD -> effect.shieldPercent();
             // On/off, not gradated - any reapplication is at least as strong as what's already active.
-            case INVISIBLE -> 1f;
+            case INVISIBLE, REVEALED -> 1f;
             case HEAL -> effect.healPerTick();
+            case VULNERABLE, SCORCHED, SICKENED -> effect.stacks();
         };
     }
 
     /**
-     * Where {@code slow} is in its life: {@code 0} when applied, {@code 1} once its authored
-     * duration has elapsed.
+     * Applies {@code effect} unless an active effect keeps its kind out (see
+     * {@link EffectInteractions}); applying it also removes the kinds it consumes, and a freeze
+     * that consumes a chill lasts longer by the chill's level.
      */
-    private static float slowProgress(Effect slow) {
-        if (slow.authoredDurationTicks() <= 0) {
-            return 1f;
-        }
-        float elapsed = slow.authoredDurationTicks() - slow.remainingTicks();
-        return Math.max(0f, Math.min(1f, elapsed / slow.authoredDurationTicks()));
-    }
-
-    /** Speed recovers along a quadratic ease-in rather than snapping back at expiry. */
-    private static float slowCurrentMultiplier(Effect slow) {
-        float ratio = 1f - slow.speedMultiplier();
-        float x = slowProgress(slow);
-        return (1f - ratio) + ratio * (x * x);
-    }
-
     public void apply(Effect effect) {
-        switch (effect.kind()) {
-            case SLOW -> this.applySlow(effect);
-            case BURN -> this.applyBurn(effect);
+        if (EffectInteractions.blocks(this.active.keySet(), effect.kind())) {
+            return;
+        }
+        Effect incoming = effect;
+        Effect chill = this.active.get(EffectKind.CHILL);
+        if (effect.kind() == EffectKind.FREEZE && chill != null) {
+            incoming = effect.withDurationScaledBy(1f + chillLevel(chill));
+        }
+        EffectInteractions.removedBy(effect.kind()).forEach(this.active::remove);
+        switch (incoming.kind()) {
+            case CHILL -> this.applyChill(incoming);
+            case BURN, POISON -> this.applyPool(incoming);
+            case VULNERABLE -> this.applyVulnerable(incoming);
             default -> {
-                Effect existing = this.active.get(effect.kind());
-                this.active.put(effect.kind(), existing == null ? effect : strongerOf(existing, effect));
+                Effect existing = this.active.get(incoming.kind());
+                this.active.put(incoming.kind(), existing == null ? incoming : strongerOf(existing, incoming));
             }
         }
     }
 
-    /**
-     * {@code SLOW} keeps a two-deep stack: the strongest application is active, and one superseded
-     * application keeps its own clock in the background, resuming from where its curve has reached
-     * once the winner expires. A newcomer that beats the winner bumps it into that slot; one that
-     * loses competes for the slot, and the stronger stays.
-     */
-    private void applySlow(Effect incoming) {
-        Effect winner = this.active.get(EffectKind.SLOW);
-        if (winner == null) {
-            this.active.put(EffectKind.SLOW, incoming);
-            return;
-        }
-        if (magnitude(incoming) >= magnitude(winner)) {
-            this.active.put(EffectKind.SLOW, incoming);
-            this.slowSuperseded = winner;
-        } else if (this.slowSuperseded == null || magnitude(incoming) >= magnitude(this.slowSuperseded)) {
-            this.slowSuperseded = incoming;
-        }
+    private static float chillLevel(Effect chill) {
+        return Math.min(MAX_CHILL, chill.fuelLevel());
     }
 
     /**
-     * {@code BURN} is an additive, decaying fuel pool. A reapplication adds its intensity, scaled
-     * down the closer the pool is to its cap, and never changes the decay rate. Each contribution
-     * keeps its own sink, so every contributing tower is credited for its share.
+     * {@code CHILL} is a level that adds up, up to {@value #MAX_CHILL}, and decays linearly: each
+     * application keeps the slope it came with. An application only adds what fits under the cap,
+     * so a chill held at the cap is refilled only by what has decayed.
      */
-    private void applyBurn(Effect incoming) {
-        Effect existing = this.active.get(EffectKind.BURN);
+    private void applyChill(Effect incoming) {
+        Effect existing = this.active.get(EffectKind.CHILL);
+        float headroom = MAX_CHILL - (existing == null ? 0f : existing.fuelLevel());
+        if (headroom <= 0f) {
+            return;
+        }
+        FuelContribution contribution = incoming.fuel().getFirst();
+        FuelContribution added = contribution.amount() <= headroom ? contribution : contribution.scaledTo(headroom);
         if (existing == null) {
-            this.active.put(EffectKind.BURN, incoming);
+            this.active.put(EffectKind.CHILL, incoming.withFuel(List.of(added), 0f));
+            return;
+        }
+        List<FuelContribution> fuel = new ArrayList<>(existing.fuel());
+        fuel.add(added);
+        this.active.put(EffectKind.CHILL, existing.withFuel(List.copyOf(fuel), 0f));
+    }
+
+    /**
+     * A fuel pool ({@code BURN} or {@code POISON}, each its own pool) is additive and decaying. A
+     * reapplication adds its intensity, scaled down the closer the pool is to its cap, and never
+     * changes the decay rate or earns a stack. A pool that starts earns its first stack at once and
+     * another every {@code STACK_INTERVAL_TICKS} while it lasts. Each contribution keeps its own
+     * sink, so every contributing tower is credited for its share.
+     */
+    private void applyPool(Effect incoming) {
+        Effect existing = this.active.get(incoming.kind());
+        if (existing == null) {
+            this.active.put(incoming.kind(), incoming);
+            this.earnStack(incoming.kind());
             return;
         }
         float incomingL0 = incoming.damagePerTick().amount();
-        float peakL0 = Math.max(existing.peakBurnL0(), incomingL0);
-        float lmax = BURN_LMAX_MULTIPLIER * peakL0;
+        float peakL0 = Math.max(existing.peakL0(), incomingL0);
+        float lmax = POOL_LMAX_MULTIPLIER * peakL0;
         float deltaL = incomingL0 * (1f - existing.fuelLevel() / lmax);
-        List<BurnContribution> fuel = new ArrayList<>(existing.burnFuel());
-        fuel.add(new BurnContribution(incoming.sink(), deltaL));
-        this.active.put(EffectKind.BURN, existing.withBurnFuel(List.copyOf(fuel), peakL0));
+        List<FuelContribution> fuel = new ArrayList<>(existing.fuel());
+        fuel.add(new FuelContribution(incoming.sink(), deltaL));
+        this.active.put(incoming.kind(), existing.withFuel(List.copyOf(fuel), peakL0));
+    }
+
+    /** Adds a stack of the debuff that {@code pool} earns, starting the debuff if the enemy has none. */
+    private void earnStack(EffectKind pool) {
+        EffectKind debuff = pool.debuffEarned().orElseThrow();
+        Effect existing = this.active.get(debuff);
+        this.active.put(debuff, Effect.stackDebuff(debuff, existing == null ? 1 : existing.stacks() + 1));
+    }
+
+    /**
+     * {@code VULNERABLE} stacks up to {@value #VULNERABLE_MAX_STACKS} on the enemy, whichever tower
+     * applied them, on one clock that every application refreshes. A full stack only refreshes.
+     */
+    private void applyVulnerable(Effect incoming) {
+        Effect existing = this.active.get(EffectKind.VULNERABLE);
+        int stacks = Math.min(VULNERABLE_MAX_STACKS,
+                (existing == null ? 0 : existing.stacks()) + incoming.stacks());
+        int remaining = Math.max(existing == null ? 0 : existing.remainingTicks(), incoming.remainingTicks());
+        this.active.put(EffectKind.VULNERABLE, incoming.withStacks(stacks, remaining));
     }
 
     /** Active kinds in enum order, as a snapshot, for UI markers. */
@@ -135,15 +177,32 @@ public final class ActiveEffects {
     }
 
     /**
-     * Ticks left on the active effect of {@code kind}; empty when none is active or for a burn,
-     * which decays rather than counting down.
+     * Ticks left on the active effect of {@code kind}; empty when none is active or for a decaying
+     * level, which fades rather than counting down.
      */
     public OptionalInt remainingTicks(EffectKind kind) {
         Effect effect = this.active.get(kind);
-        if (effect == null || kind == EffectKind.BURN) {
+        if (effect == null || kind.isDecaying()) {
             return OptionalInt.empty();
         }
         return OptionalInt.of(effect.remainingTicks());
+    }
+
+    /** The kinds an active effect currently keeps out, for the inspector. */
+    public Set<EffectKind> blockedKinds() {
+        return EffectInteractions.blockedBy(this.active.keySet());
+    }
+
+    /** The stack count of the active {@code kind}; {@code 0} when inactive or the kind does not stack. */
+    public int stacks(EffectKind kind) {
+        Effect effect = this.active.get(kind);
+        return effect == null ? 0 : effect.stacks();
+    }
+
+    /** How much speed the active chill takes away, from {@code 0} to {@value #MAX_CHILL}. */
+    public float chillLevel() {
+        Effect chill = this.active.get(EffectKind.CHILL);
+        return chill == null ? 0f : chillLevel(chill);
     }
 
     /** Whether no effect is active, so the stats this object contributes cannot change on a tick. */
@@ -152,16 +211,18 @@ public final class ActiveEffects {
     }
 
     /**
-     * Adds every active effect's stat modifiers: a slow multiplies speed at its point on the
-     * recovery curve, a freeze sets it to zero, a shield lowers damage taken for the types it covers,
-     * a heal adds regeneration, invisibility sets stealth and a burn doubles crit chance taken. Shields and heals go in as restorative,
-     * so the enemy's spirit scales them.
+     * Adds every active effect's stat modifiers: a chill multiplies speed by what is left of its
+     * level and a poison by what is left of its pool, a freeze sets it to zero, a shield lowers
+     * damage taken for the types it covers, a heal adds regeneration, invisibility sets stealth to
+     * one and a reveal sets it to zero (the lowest set value wins), a vulnerability multiplies damage
+     * taken by its stacks, each scorched stack lowers resilience by one and each sickened stack
+     * lowers spirit by one. Shields and heals go in as restorative, so the enemy's spirit scales them.
      */
     public void contributeTo(StatAccumulator accumulator) {
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
             Effect effect = entry.getValue();
             switch (entry.getKey()) {
-                case SLOW -> accumulator.multiply(EnemyStat.MOVE_SPEED, slowCurrentMultiplier(effect));
+                case CHILL -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - chillLevel(effect));
                 case FREEZE -> accumulator.add(EnemyStat.MOVE_SPEED, FROZEN);
                 case SHIELD -> {
                     for (DamageType type : DAMAGE_TYPES) {
@@ -172,79 +233,129 @@ public final class ActiveEffects {
                 }
                 case HEAL -> accumulator.restoreFlat(EnemyStat.REGENERATION, effect.healPerTick());
                 case INVISIBLE -> accumulator.add(EnemyStat.STEALTH, HIDDEN);
-                case BURN -> accumulator.multiply(EnemyStat.CRIT_CHANCE_TAKEN, BURN_CRIT_CHANCE_TAKEN);
+                case REVEALED -> accumulator.add(EnemyStat.STEALTH, REVEALED);
+                case VULNERABLE -> {
+                    float taken = 1f + VULNERABLE_PER_STACK * effect.stacks();
+                    for (DamageType type : DAMAGE_TYPES) {
+                        accumulator.multiply(EnemyStat.damageTakenFor(type), taken);
+                    }
+                }
+                case BURN -> {
+                }
+                case SCORCHED -> accumulator.addFlat(EnemyStat.RESILIENCE, -effect.stacks());
+                case SICKENED -> accumulator.addFlat(EnemyStat.SPIRIT, -effect.stacks());
+                case POISON -> {
+                    float pool = effect.fuelLevel() / (POOL_LMAX_MULTIPLIER * effect.peakL0());
+                    accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - POISON_MAX_SLOW * Math.min(1f, pool));
+                }
             }
         }
+    }
+
+    /** {@link #tick(float)} at neutral spirit. */
+    public void tick() {
+        this.tick(1f);
     }
 
     /**
      * Applies one tick of damage-over-time, then counts every duration down and removes what
-     * expired. {@code BURN} decays instead of counting down, and the superseded {@code SLOW} ticks
-     * in the background, taking over if the winner expires.
+     * expired. A decaying level fades instead of counting down, and a stack debuff loses stacks at
+     * a pace {@code spiritFactor} scales ({@code 1} at neutral spirit, {@code 0} when spirit is at
+     * its floor).
      */
-    public void tick() {
+    public void tick(float spiritFactor) {
         List<EffectKind> expired = new ArrayList<>();
+        float burnFactor = 1f - BURN_CHILL_DAMPENING * this.chillLevel() / MAX_CHILL;
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
             EffectKind kind = entry.getKey();
             Effect effect = entry.getValue();
-            if (kind == EffectKind.BURN) {
-                Optional<Effect> decayed = this.tickBurn(effect);
-                if (decayed.isPresent()) {
-                    entry.setValue(decayed.get());
-                } else {
-                    expired.add(kind);
-                }
-                continue;
-            }
-            if (effect.damagePerTick().amount() > 0) {
-                effect.sink().apply(effect.damagePerTick());
-            }
-            int remaining = effect.remainingTicks() - 1;
-            if (remaining <= 0) {
-                expired.add(kind);
+            Optional<Effect> next;
+            if (kind.isStackDebuff()) {
+                next = this.decayStacks(effect, spiritFactor);
+            } else if (kind == EffectKind.CHILL) {
+                next = this.tickChill(effect);
+            } else if (kind.isFuelPool()) {
+                next = this.tickPool(effect, kind == EffectKind.BURN ? burnFactor : 1f);
             } else {
-                entry.setValue(effect.withRemainingTicks(remaining));
+                if (effect.damagePerTick().amount() > 0) {
+                    effect.sink().apply(effect.damagePerTick());
+                }
+                int remaining = effect.remainingTicks() - 1;
+                next = remaining <= 0 ? Optional.empty() : Optional.of(effect.withRemainingTicks(remaining));
+            }
+            if (next.isPresent()) {
+                entry.setValue(next.get());
+            } else {
+                expired.add(kind);
             }
         }
         expired.forEach(this.active::remove);
-        this.tickSlowSuperseded();
-        if (expired.contains(EffectKind.SLOW) && this.slowSuperseded != null) {
-            this.active.put(EffectKind.SLOW, this.slowSuperseded);
-            this.slowSuperseded = null;
+    }
+
+    /** Lets a stack debuff fall one stack each time its spirit-scaled progress fills; ends at no stacks. */
+    private Optional<Effect> decayStacks(Effect debuff, float spiritFactor) {
+        float progress = this.decayProgress.getOrDefault(debuff.kind(), 0f) + spiritFactor;
+        int stacks = debuff.stacks();
+        while (progress >= STACK_DECAY_INTERVAL_TICKS && stacks > 0) {
+            progress -= STACK_DECAY_INTERVAL_TICKS;
+            stacks--;
         }
+        if (stacks == 0) {
+            this.decayProgress.remove(debuff.kind());
+            return Optional.empty();
+        }
+        this.decayProgress.put(debuff.kind(), progress);
+        return Optional.of(Effect.stackDebuff(debuff.kind(), stacks));
+    }
+
+    /** One tick of linear decay on every contribution; ends when all of them have run out. */
+    private Optional<Effect> tickChill(Effect effect) {
+        List<FuelContribution> remaining = effect.fuel().stream()
+                .map(FuelContribution::decayedLinearly)
+                .filter(c -> c.amount() > 0f)
+                .toList();
+        return remaining.isEmpty() ? Optional.empty() : Optional.of(effect.withFuel(remaining, 0f));
     }
 
     /**
-     * Deals the pool's rounded total, split by share, then decays every contribution by the same
-     * {@code alpha}, which decays the total exactly. Ends once a tick would round to zero damage,
-     * since exponential decay never reaches zero.
+     * Deals the pool's rounded total times {@code damageFactor}, split by share, then decays every
+     * contribution by the same {@code alpha}, which decays the total exactly, and lets the stack
+     * clock run. Ends once a tick would round to zero damage before the factor, since exponential
+     * decay never reaches zero.
      */
-    private Optional<Effect> tickBurn(Effect effect) {
-        List<BurnContribution> contributions = effect.burnFuel();
+    private Optional<Effect> tickPool(Effect effect, float damageFactor) {
+        List<FuelContribution> contributions = effect.fuel();
         float total = effect.fuelLevel();
-        int damage = Math.round(total);
-        if (damage <= 0) {
+        if (Math.round(total) <= 0) {
             return Optional.empty();
         }
-        int[] shares = apportionBurnDamage(contributions, total, damage);
-        DamageType type = effect.damagePerTick().type();
-        for (int i = 0; i < contributions.size(); i++) {
-            if (shares[i] > 0) {
-                contributions.get(i).sink().apply(new Damage(shares[i], type));
+        int damage = Math.round(total * damageFactor);
+        if (damage > 0) {
+            int[] shares = apportionPoolDamage(contributions, total, damage);
+            DamageType type = effect.damagePerTick().type();
+            for (int i = 0; i < contributions.size(); i++) {
+                if (shares[i] > 0) {
+                    contributions.get(i).sink().apply(new Damage(shares[i], type));
+                }
             }
         }
-        double alpha = Math.exp(BURN_DECAY_EXPONENT / effect.authoredDurationTicks());
-        List<BurnContribution> decayed = contributions.stream()
+        double alpha = Math.exp(POOL_DECAY_EXPONENT / effect.authoredDurationTicks());
+        List<FuelContribution> decayed = contributions.stream()
                 .map(c -> c.decayedBy((float) alpha))
                 .toList();
-        return Optional.of(effect.withBurnFuel(decayed, effect.peakBurnL0()));
+        int clock = effect.stackClock() - 1;
+        if (clock <= 0) {
+            this.earnStack(effect.kind());
+            clock = Effect.STACK_INTERVAL_TICKS;
+        }
+        return Optional.of(effect.withFuel(decayed, effect.peakL0()).withStackClock(clock));
     }
 
     /**
      * Splits {@code roundedTotal} by share using largest-remainder apportionment, so the parts sum
      * exactly. Ties go to the earliest contribution, keeping runs reproducible.
      */
-    private static int[] apportionBurnDamage(List<BurnContribution> contributions, float total, int roundedTotal) {
+    private static int[] apportionPoolDamage(List<FuelContribution> contributions, float total, int roundedTotal) {
         int n = contributions.size();
         int[] shares = new int[n];
         float[] remainders = new float[n];
@@ -268,17 +379,5 @@ public final class ActiveEffects {
             leftover--;
         }
         return shares;
-    }
-
-    /**
-     * Ticks the superseded slow even when the winner expires this tick, so a promoted slow is never
-     * one tick stale.
-     */
-    private void tickSlowSuperseded() {
-        if (this.slowSuperseded == null) {
-            return;
-        }
-        int remaining = this.slowSuperseded.remainingTicks() - 1;
-        this.slowSuperseded = remaining <= 0 ? null : this.slowSuperseded.withRemainingTicks(remaining);
     }
 }

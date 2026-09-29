@@ -18,12 +18,13 @@ import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Lobs an unguided shell at the visible enemy furthest along the path. The shell flies to where the
  * enemy was when fired, so fast enemies can dodge it; the blast deals physical damage with distance
- * falloff and slows everything it reaches.
+ * falloff and chills everything it reaches.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class MortarTower extends AbstractTower {
@@ -35,10 +36,15 @@ public final class MortarTower extends AbstractTower {
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
     private static final float PROJECTILE_SPEED = 40f;
-    private static final float SLOW_MULTIPLIER_BASE = 0.5f;
-    private static final int SLOW_DURATION_TICKS_BASE = 40;
+    private static final float CHILL_AMOUNT_BASE = 0.5f;
+    private static final int CHILL_DURATION_TICKS_BASE = 40;
     /** Splash radius multiplier from the second damage upgrade. */
     private static final float SIEGE_ROUNDS_SPLASH_MULTIPLIER = 1.4f;
+    /** Fragmentation Rounds: shrapnel reaches this far past the main splash, as a multiple of its radius. */
+    private static final float SHRAPNEL_RING_MULTIPLIER = 1.75f;
+    /** Share of weapon damage each piece of shrapnel deals, with no falloff. */
+    private static final float SHRAPNEL_DAMAGE_SHARE = 0.25f;
+    private static final float SHRAPNEL_CHILL_DURATION_SHARE = 0.5f;
 
     private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(18);
     private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(30);
@@ -54,19 +60,16 @@ public final class MortarTower extends AbstractTower {
             .withRequires(UpgradeCondition.owns(SIEGE_ROUNDS_1.id()))
             .withGate(new DamageDealtCondition(30000))
             .withExtraEffect("+40% splash radius");
-    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode FRAGMENTATION_ROUNDS_1 = UpgradeNode.of("mortar.head.fragmentation_rounds.1",
             UpgradeSlot.HEAD, "Fragmentation Rounds", 30)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(12))
             .withExtraEffect("shrapnel deals 25% weapon damage in a wider ring past the main splash");
-    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode FRAGMENTATION_ROUNDS_2 = UpgradeNode.of("mortar.head.fragmentation_rounds.2",
             UpgradeSlot.HEAD, "Fragmentation Rounds II", 45)
             .withRequires(UpgradeCondition.owns(FRAGMENTATION_ROUNDS_1.id()))
             .withGate(new ClusterCondition(2))
-            .withExtraEffect("shrapnel also applies this tower's slow, at half duration");
-    /** Not implemented yet (TODO.md). */
+            .withExtraEffect("shrapnel also applies this tower's chill, at half duration");
     private static final UpgradeNode CURSED_SHRAPNEL = UpgradeNode.of("mortar.special.cursed_shrapnel",
             UpgradeSlot.SPECIAL, "Cursed Shrapnel", 60)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
@@ -77,8 +80,8 @@ public final class MortarTower extends AbstractTower {
             FRAGMENTATION_ROUNDS_1, FRAGMENTATION_ROUNDS_2, CURSED_SHRAPNEL);
 
     private static final int COOLDOWN_MAX = 50;
-    private final float slowMultiplier = SLOW_MULTIPLIER_BASE;
-    private final int slowDurationTicks = SLOW_DURATION_TICKS_BASE;
+    private final float chillAmount = CHILL_AMOUNT_BASE;
+    private final int chillDurationTicks = CHILL_DURATION_TICKS_BASE;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private volatile float splashRadius;
     private int coolDown = 0;
@@ -136,7 +139,32 @@ public final class MortarTower extends AbstractTower {
             float r2 = (float) (dx * dx + dy * dy);
             int amount = Math.round(this.damageCurrent() * (1 - r2 / (this.splashRadius * this.splashRadius)));
             this.dealDamage(enemy, Damage.physical(amount));
-            enemy.applyEffect(Effect.slow(this.slowMultiplier, this.slowDurationTicks, d -> this.dealDamage(enemy, d)));
+            enemy.applyEffect(Effect.chill(this.chillAmount, this.chillDurationTicks, d -> this.dealDamage(enemy, d)));
+            if (this.upgrades().owns(CURSED_SHRAPNEL.id())) {
+                this.applyVulnerable(enemy, 1);
+            }
+        }
+        if (this.upgrades().owns(FRAGMENTATION_ROUNDS_1.id())) {
+            this.shrapnel((int) Math.round(x), (int) Math.round(y), hit);
+        }
+    }
+
+    /**
+     * Fragmentation Rounds: everything past the main splash but within the wider ring takes a fixed
+     * share of weapon damage, and with the second node the tower's chill for half as long.
+     */
+    private void shrapnel(int x, int y, List<EnemyMob> alreadyHit) {
+        Damage shard = Damage.physical(Math.round(this.damageCurrent() * SHRAPNEL_DAMAGE_SHARE));
+        int chillTicks = Math.round(this.chillDurationTicks * SHRAPNEL_CHILL_DURATION_SHARE);
+        for (EnemyMob enemy : InRangeTargetQuery.everyone(x, y, this.splashRadius * SHRAPNEL_RING_MULTIPLIER)
+                .matching(this.context.enemies())) {
+            if (alreadyHit.contains(enemy)) {
+                continue;
+            }
+            this.dealDamage(enemy, shard);
+            if (this.upgrades().owns(FRAGMENTATION_ROUNDS_2.id())) {
+                enemy.applyEffect(Effect.chill(this.chillAmount, chillTicks, d -> this.dealDamage(enemy, d)));
+            }
         }
     }
 
@@ -160,9 +188,17 @@ public final class MortarTower extends AbstractTower {
 
     @Override
     protected List<BehaviourLine> behaviours() {
-        return List.of(new BehaviourLine(BehaviourMarker.SLOW, "Slows",
-                        BehaviourLine.percent(1f - this.slowMultiplier) + ", " + BehaviourLine.seconds(this.slowDurationTicks)),
-                new BehaviourLine(BehaviourMarker.TARGETING, "Targets", "first"));
+        List<BehaviourLine> lines = new ArrayList<>();
+        lines.add(new BehaviourLine(BehaviourMarker.CHILL, "Chills",
+                BehaviourLine.percent(this.chillAmount) + ", " + BehaviourLine.seconds(this.chillDurationTicks)));
+        lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Targets", "first"));
+        if (this.upgrades().owns(FRAGMENTATION_ROUNDS_1.id())) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Shrapnel", BehaviourLine.percent(SHRAPNEL_DAMAGE_SHARE) + " damage"));
+        }
+        if (this.upgrades().owns(CURSED_SHRAPNEL.id())) {
+            lines.add(new BehaviourLine(BehaviourMarker.VULNERABLE, "Blast applies", "vulnerable"));
+        }
+        return lines;
     }
 
     @Override

@@ -9,6 +9,7 @@ import td.enemy.EnemyMob;
 import td.enemy.EnemyMobVisitor;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -26,6 +27,8 @@ public final class FakeEnemyMob implements EnemyMob {
     private final List<Effect> appliedEffects = new ArrayList<>();
     private final List<AttackProfile> attackers = new ArrayList<>();
     private boolean hitsLandCritical;
+    private boolean diesOnHit;
+    private boolean frozen;
     private float physicalReduction;
     private double x;
     private double y;
@@ -87,6 +90,16 @@ public final class FakeEnemyMob implements EnemyMob {
         return List.copyOf(this.attackers);
     }
 
+    /** From now on any hit kills it. */
+    public void dieOnAnyHit() {
+        this.diesOnHit = true;
+    }
+
+    /** Reports a freeze as active, without any real effect. */
+    public void reportFrozen() {
+        this.frozen = true;
+    }
+
     /** From now on every hit comes back critical, as if every crit roll succeeded. */
     public void landEveryHitCritical() {
         this.hitsLandCritical = true;
@@ -100,6 +113,9 @@ public final class FakeEnemyMob implements EnemyMob {
     public Damage doDamage(Damage damage, AttackProfile attacker) {
         this.hits.add(damage);
         this.attackers.add(attacker);
+        if (this.diesOnHit) {
+            this.valid = false;
+        }
         return this.hitsLandCritical ? new Damage(damage.amount(), damage.type(), true) : damage;
     }
 
@@ -123,7 +139,12 @@ public final class FakeEnemyMob implements EnemyMob {
 
     @Override
     public Set<EffectKind> activeEffectKinds() {
-        return Set.of();
+        Set<EffectKind> kinds = EnumSet.noneOf(EffectKind.class);
+        if (this.frozen) {
+            kinds.add(EffectKind.FREEZE);
+        }
+        this.appliedEffects.forEach(effect -> kinds.add(effect.kind()));
+        return kinds;
     }
 
     @Override

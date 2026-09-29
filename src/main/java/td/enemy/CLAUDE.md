@@ -45,7 +45,7 @@
 - Built-in traits include `PercentResistTrait` (armor or magic resist, authored as the fraction
   kept), `FlatResistTrait` (plating), both scopable with `physicalOnly`/`magicOnly`,
   `HurtSpeedTrait`, `CriticalImmunityTrait` (full resilience), `EffectResistTrait` (`immuneTo`
-  at 1) and `FreezeDiminishingTrait`. `ELITE` and `BOSS` diminish freezes without the trait.
+  at 1). Every enemy diminishes hard-CC durations; there is no opt-in.
 - `DefinedEnemyMob.applyEffect` shortens the effect by its resistance and freeze diminishing
   returns before `ActiveEffects` sees it; there is no separate immunity check.
 - `AbilityEvaluator` decides when a trigger fires; actions execute through

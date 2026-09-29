@@ -124,4 +124,90 @@ class SeekerTowerTest {
 
         assertThat(this.context.projectiles().getProjectiles()).hasSize(2);
     }
+
+    @Test
+    void deepFreezeTwoShattersAFrozenEnemyItKillsHurtingItsNeighbours() {
+        SeekerTower tower = this.deepFreezeTwoSeeker();
+        FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
+        frozen.reportFrozen();
+        frozen.dieOnAnyHit();
+        FakeEnemyMob neighbour = FakeEnemyMob.at(120, 100);
+        FakeEnemyMob far = FakeEnemyMob.at(400, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{frozen, neighbour, far});
+
+        tower.dealDamage(frozen, Damage.magic(1));
+
+        assertThat(neighbour.onlyHitAmount()).isEqualTo(Math.round(tower.damageCurrent() * 0.5f));
+        assertThat(far.hits()).isEmpty();
+    }
+
+    @Test
+    void deepFreezeTwoDoesNotShatterAnEnemyThatWasNotFrozen() {
+        SeekerTower tower = this.deepFreezeTwoSeeker();
+        FakeEnemyMob unfrozen = FakeEnemyMob.at(100, 100);
+        unfrozen.dieOnAnyHit();
+        FakeEnemyMob neighbour = FakeEnemyMob.at(120, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{unfrozen, neighbour});
+
+        tower.dealDamage(unfrozen, Damage.magic(1));
+
+        assertThat(neighbour.hits()).isEmpty();
+    }
+
+    @Test
+    void aShatterThatKillsAFrozenNeighbourDoesNotShatterItInTurn() {
+        SeekerTower tower = this.deepFreezeTwoSeeker();
+        FakeEnemyMob first = FakeEnemyMob.at(100, 100);
+        first.reportFrozen();
+        first.dieOnAnyHit();
+        FakeEnemyMob second = FakeEnemyMob.at(120, 100);
+        second.reportFrozen();
+        second.dieOnAnyHit();
+        FakeEnemyMob third = FakeEnemyMob.at(160, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{first, second, third});
+
+        tower.dealDamage(first, Damage.magic(1));
+
+        assertThat(second.isDead()).isTrue();
+        assertThat(third.hits()).isEmpty();
+    }
+
+    private SeekerTower deepFreezeTwoSeeker() {
+        this.context.economy().startEconomy(100000, 5);
+        SeekerTower tower = towerAt(3, 3);
+        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
+        for (int i = 0; i < 25; i++) {
+            tower.dealDamage(fodder, Damage.magic(1_000_000));
+            fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
+        }
+        tower.buyUpgrade(UpgradePaths.named(tower, "Deep Freeze"));
+        tower.buyUpgrade(UpgradePaths.named(tower, "Deep Freeze II"));
+        return tower;
+    }
+
+    @Test
+    void homingCurseAppliesOneStackToAFreshTargetAndTwoToOneAlreadyFrozen() {
+        SeekerTower tower = towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, "Homing Curse");
+        FakeEnemyMob fresh = FakeEnemyMob.at(100, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{fresh});
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+        FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
+        frozen.reportFrozen();
+        this.context.enemies().setEnemies(new EnemyMob[]{frozen});
+        for (int t = 2; t <= tower.coolDownCurrent() + 2; t++) {
+            tower.doTick(t);
+        }
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(stacksApplied(fresh)).isEqualTo(1);
+        assertThat(stacksApplied(frozen)).isEqualTo(2);
+    }
+
+    private static int stacksApplied(FakeEnemyMob mob) {
+        return mob.appliedEffects().stream().filter(e -> e.kind() == EffectKind.VULNERABLE)
+                .mapToInt(td.effect.Effect::stacks).sum();
+    }
 }

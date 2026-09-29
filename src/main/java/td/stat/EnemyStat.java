@@ -20,19 +20,20 @@ public enum EnemyStat {
     // Floored above zero so a stacked reduction never makes an enemy immune by accident.
     PHYSICAL_DAMAGE_TAKEN(1f, 0.1f, Float.MAX_VALUE),
     MAGIC_DAMAGE_TAKEN(1f, 0.1f, Float.MAX_VALUE),
-    /** Each point removes 1% of an attacker's crit chance and crit bonus; 100 is crit-immune. */
-    RESILIENCE(0f, 0f, 100f),
+    /**
+     * Each point removes 1% of an attacker's crit chance and crit bonus; 100 is crit-immune. Below
+     * zero it only adds to the crit bonus taken, never to the chance.
+     */
+    RESILIENCE(0f, -100f, 100f),
     CRIT_CHANCE_TAKEN(1f, 0f, Float.MAX_VALUE),
     /** Heals and shields the enemy receives are scaled by {@code max(0, 1 + spirit / 100)}. */
     SPIRIT(0f, -100f, Float.MAX_VALUE),
     REGENERATION(0f, 0f, Float.MAX_VALUE),
-    SLOW_RESIST(0f, 0f, 1f),
+    CHILL_RESIST(0f, 0f, 1f),
     BURN_RESIST(0f, 0f, 1f),
     FREEZE_RESIST(0f, 0f, 1f),
     /** At {@code 1} towers cannot target the enemy. */
-    STEALTH(0f, 0f, 1f),
-    /** At {@code 1} successive freezes diminish. */
-    FREEZE_DR(0f, 0f, 1f);
+    STEALTH(0f, 0f, 1f);
 
     private final float defaultBase;
     private final float min;

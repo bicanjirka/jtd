@@ -2,6 +2,7 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
@@ -46,7 +47,7 @@ class MortarTowerTest {
 
         assertThat(target.onlyHitAmount()).isEqualTo(MortarTower.DAMAGE);
         assertThat(target.appliedEffects()).hasSize(1);
-        assertThat(target.appliedEffects().getFirst().kind()).isEqualTo(EffectKind.SLOW);
+        assertThat(target.appliedEffects().getFirst().kind()).isEqualTo(EffectKind.CHILL);
     }
 
     @Test
@@ -110,5 +111,58 @@ class MortarTowerTest {
         tower.onUpgradeBought(siegeRoundsTwo);
 
         assertThat(tower.getSplashRadius()).isGreaterThan(radiusBeforeChoosing);
+    }
+
+    @Test
+    void cursedShrapnelAppliesAVulnerabilityStackToEveryEnemyCaughtInTheBlast() {
+        MortarTower tower = new MortarTower(this.context, 3, 3);
+        UpgradePaths.buy(tower, this.context, "Cursed Shrapnel");
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob ghost = FakeEnemyMob.ghostAt(105, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{target, ghost});
+
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(target.appliedEffects()).extracting(Effect::kind).contains(EffectKind.VULNERABLE);
+        assertThat(ghost.appliedEffects()).extracting(Effect::kind).contains(EffectKind.VULNERABLE);
+    }
+
+    @Test
+    void fragmentationRoundsHitEnemiesInTheRingPastTheSplashForAQuarterDamageAndOnlyOnce() {
+        MortarTower tower = towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, "Fragmentation Rounds");
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob ring = FakeEnemyMob.ghostAt(100, 100 + Math.round(MortarTower.SPLASH_RADIUS_BASE * BoardFixtures.SCALE) + 20);
+        FakeEnemyMob outside = FakeEnemyMob.ghostAt(100, 400);
+        this.context.enemies().setEnemies(new EnemyMob[]{target, ring, outside});
+
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(ring.onlyHitAmount()).isEqualTo(Math.round(tower.damageCurrent() * 0.25f));
+        assertThat(target.hits()).hasSize(1);
+        assertThat(outside.hits()).isEmpty();
+    }
+
+    @Test
+    void fragmentationRoundsTwoSlowsTheRingForHalfTheSlowDuration() {
+        for (int i = 0; i < 3; i++) {
+            this.context.towers().add(new SniperTower(this.context, 3, 3));
+        }
+        MortarTower tower = towerAt(3, 3);
+        this.context.towers().add(tower);
+        UpgradePaths.buy(tower, this.context, "Fragmentation Rounds", "Fragmentation Rounds II");
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob ring = FakeEnemyMob.ghostAt(100, 100 + Math.round(MortarTower.SPLASH_RADIUS_BASE * BoardFixtures.SCALE) + 20);
+        this.context.enemies().setEnemies(new EnemyMob[]{target, ring});
+
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(ring.appliedEffects()).hasSize(1);
+        assertThat(ring.appliedEffects().getFirst().kind()).isEqualTo(EffectKind.CHILL);
+        assertThat(ring.appliedEffects().getFirst().remainingTicks()).isEqualTo(20);
+        assertThat(target.appliedEffects().getFirst().remainingTicks()).isEqualTo(40);
     }
 }

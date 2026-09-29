@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.effect.EffectKind;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
@@ -155,5 +156,55 @@ class SniperTowerTest {
         assertThat(target.attackers().get(0).armorPenetration()).isZero();
         assertThat(target.attackers().get(1).armorPenetration()).isEqualTo(1f);
         assertThat(target.attackers().get(1).platingPenetration()).isEqualTo(1f);
+    }
+
+    @Test
+    void momentumHalvesTheCooldownForFiveSecondsAfterAKillThenItEnds() {
+        GameWorld world = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SniperTower tower = awakenedSniper(world, 20);
+        tower.buyUpgrade(UpgradePaths.named(tower, "Momentum"));
+        FakeEnemyMob target = targetFor(world);
+        target.dieOnAnyHit();
+        int unbuffed = tower.coolDownCurrent();
+
+        tower.beginTick(1);
+        tower.doTick(1); // kills the target
+
+        assertThat(tower.coolDownCurrent()).isEqualTo(Math.round(unbuffed * 0.5f));
+        tower.beginTick(1 + 99);
+        assertThat(tower.coolDownCurrent()).isLessThan(unbuffed);
+        tower.beginTick(1 + 100);
+        assertThat(tower.coolDownCurrent()).isEqualTo(unbuffed);
+    }
+
+    @Test
+    void withoutMomentumAKillGrantsNoBuff() {
+        GameWorld world = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SniperTower tower = awakenedSniper(world, 10);
+        FakeEnemyMob target = targetFor(world);
+        target.dieOnAnyHit();
+        int unbuffed = tower.coolDownCurrent();
+
+        tower.doTick(1);
+
+        assertThat(tower.coolDownCurrent()).isEqualTo(unbuffed);
+    }
+
+    @Test
+    void markedRoundAppliesAVulnerabilityStackOnlyWhenTheShotCrits() {
+        GameWorld world = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SniperTower tower = new SniperTower(world, 0, 0);
+        UpgradePaths.buy(tower, world, "Marked Round");
+        FakeEnemyMob target = targetFor(world);
+
+        fireShots(tower, target, 1);
+        assertThat(target.appliedEffects()).isEmpty();
+
+        target.landEveryHitCritical();
+        fireShots(tower, target, 2);
+
+        assertThat(target.appliedEffects()).hasSize(1);
+        assertThat(target.appliedEffects().getFirst().kind()).isEqualTo(EffectKind.VULNERABLE);
+        assertThat(target.appliedEffects().getFirst().stacks()).isEqualTo(1);
     }
 }

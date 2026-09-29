@@ -17,6 +17,7 @@ import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,13 +34,22 @@ public final class SplashTower extends AbstractTower {
     public static final float SPREAD_RADIUS_BASE = 1.75f;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.25;
-    private static final float SLOW_MULTIPLIER = 0.5f;
-    private static final int SLOW_DURATION_TICKS = 40;
+    private static final float CHILL_AMOUNT = 0.5f;
+    private static final int CHILL_DURATION_TICKS = 40;
 
     /** Blast radius multiplier from the first blast upgrade. */
     private static final float BLAST_ENGINEERING_SPREAD_MULTIPLIER = 1.3f;
     /** Scales the falloff term down, flattening damage across the blast. */
     private static final float FALLOFF_SOFTENING_FACTOR = 0.5f;
+    /** Blasts per shot once Blast Engineering III is owned. */
+    private static final int BLAST_ENGINEERING_BLAST_COUNT = 3;
+    /** Rapid Battery III: a critical shot's blast is this much wider. */
+    private static final float RAPID_BATTERY_CRIT_RADIUS_MULTIPLIER = 1.5f;
+    /** Toxic Bloom's damage per tick, as a share of weapon damage, and how long it lasts. */
+    private static final float POISON_DAMAGE_SHARE = 0.1f;
+    private static final float POISON_SECONDS = 4f;
+    /** Concussive Blast: a kill explodes for this share of weapon damage. */
+    private static final float EXPLOSION_DAMAGE_SHARE = 0.5f;
 
     private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(9);
     private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(15);
@@ -55,7 +65,6 @@ public final class SplashTower extends AbstractTower {
             .withRequires(UpgradeCondition.owns(BLAST_ENGINEERING_1.id()))
             .withGate(new DamageDealtCondition(20000))
             .withExtraEffect("flattens the falloff curve");
-    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode BLAST_ENGINEERING_3 = UpgradeNode.of("splash.head.blast_engineering.3",
             UpgradeSlot.HEAD, "Blast Engineering III", 70)
             .withRequires(UpgradeCondition.owns(BLAST_ENGINEERING_2.id()))
@@ -71,26 +80,22 @@ public final class SplashTower extends AbstractTower {
             .withBuff(TowerBuff.damage(0.25f).withCritChance(0.15f))
             .withRequires(UpgradeCondition.owns(RAPID_BATTERY_1.id()))
             .withGate(new KillCountCondition(18));
-    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode RAPID_BATTERY_3 = UpgradeNode.of("splash.head.rapid_battery.3", UpgradeSlot.HEAD,
             "Rapid Battery III", 60)
             .withRequires(UpgradeCondition.owns(RAPID_BATTERY_2.id()))
             .withGate(new DamageDealtCondition(25000))
             .withExtraEffect("crits splash 50% bigger");
-    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode TOXIC_BLOOM = UpgradeNode.of("splash.special.toxic_bloom", UpgradeSlot.SPECIAL,
             "Toxic Bloom", 30)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
             .withGate(new DamageDealtCondition(15000))
-            .withExtraEffect("splash applies a toxic damage-over-time");
-    /** Its on-kill explosion is not implemented yet (TODO.md). */
+            .withExtraEffect("splash applies poison");
     private static final UpgradeNode CONCUSSIVE_BLAST = UpgradeNode.of("splash.special.concussive_blast",
             UpgradeSlot.SPECIAL, "Concussive Blast", 30)
             .withBuff(TowerBuff.fireRate(-0.5f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
             .withGate(new KillCountCondition(15))
-            .withExtraEffect("-50% fire rate, blast applies slow, killed enemies explode");
-    /** Not implemented yet (TODO.md). */
+            .withExtraEffect("-50% fire rate, blast applies chill, killed enemies explode");
     private static final UpgradeNode OVERPRESSURE = UpgradeNode.of("splash.special.overpressure", UpgradeSlot.SPECIAL,
             "Overpressure", 30)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
@@ -108,10 +113,8 @@ public final class SplashTower extends AbstractTower {
     private volatile float falloffSoftening = 1f;
     private volatile boolean concussiveBlast = false;
     private int coolDown = 0;
-    private EnemyMob primaryTarget;
-    private List<EnemyMob> splashTargets = List.of();
-    private int splashCenterX;
-    private int splashCenterY;
+    private boolean overpressureArmed = false;
+    private List<Blast> blasts = List.of();
 
     public SplashTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SPLASH, PRICE, new TowerBaseStats(DAMAGE, RANGE, COOLDOWN_MAX), context, x, y);
@@ -147,65 +150,123 @@ public final class SplashTower extends AbstractTower {
         if (this.coolDown > 0) {
             this.coolDown--;
         } else {
-            List<EnemyMob> enemies = this.findEnemiesInRangeVisible(this.centerX, this.centerY, this.rangeReal());
-            Optional<EnemyMob> picked = this.targetSelector.selectFrom(enemies);
-
-            if (picked.isPresent()) {
-                this.primaryTarget = picked.get();
-                int ex = (int) this.primaryTarget.getX();
-                int ey = (int) this.primaryTarget.getY();
-                int dx, dy, r2;
-                int damage;
-
-                this.splashTargets = this.findEnemiesInRange(ex, ey, this.spreadRadius);
-
-                for (EnemyMob splashTarget : this.splashTargets) {
-                    dx = ex - (int) splashTarget.getX();
-                    dy = ey - (int) splashTarget.getY();
-                    r2 = dx * dx + dy * dy;
-                    damage = Math.round(this.damageCurrent()
-                            * (1 - (r2 * this.falloffSoftening) / (this.spreadRadius * this.spreadRadius)));
-                    this.dealDamage(splashTarget, Damage.physical(damage));
-                    if (this.concussiveBlast) {
-                        splashTarget.applyEffect(Effect.slow(SLOW_MULTIPLIER, SLOW_DURATION_TICKS,
-                                d -> this.dealDamage(splashTarget, d)));
-                    }
-                }
-
-                this.coolDown = this.coolDownCurrent();
-                this.splashCenterX = ex;
-                this.splashCenterY = ey;
+            List<EnemyMob> targets = this.pickTargets(this.findEnemiesInRangeVisible(this.centerX, this.centerY, this.rangeReal()));
+            if (targets.isEmpty()) {
+                this.blasts = List.of();
             } else {
-                this.primaryTarget = null;
+                this.blasts = this.fire(targets);
+                this.coolDown = this.coolDownCurrent();
             }
         }
-        if (this.primaryTarget != null) {
-            this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.primaryTarget.getX(), this.primaryTarget.getY()));
+        if (!this.blasts.isEmpty()) {
+            EnemyMob aimed = this.blasts.getFirst().primary();
+            this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, aimed.getX(), aimed.getY()));
         }
     }
 
+    /**
+     * Who this shot blasts: everyone visible in range after an armed Overpressure, else one random
+     * enemy, or three distinct ones with Blast Engineering III.
+     */
+    private List<EnemyMob> pickTargets(List<EnemyMob> visible) {
+        if (this.overpressureArmed && !visible.isEmpty()) {
+            this.overpressureArmed = false;
+            return visible;
+        }
+        int count = this.upgrades().owns(BLAST_ENGINEERING_3.id()) ? BLAST_ENGINEERING_BLAST_COUNT : 1;
+        List<EnemyMob> remaining = new ArrayList<>(visible);
+        List<EnemyMob> picked = new ArrayList<>();
+        while (picked.size() < count) {
+            Optional<EnemyMob> next = this.targetSelector.selectFrom(remaining);
+            if (next.isEmpty()) {
+                break;
+            }
+            picked.add(next.get());
+            remaining.remove(next.get());
+        }
+        return picked;
+    }
+
+    /** One blast per target. A shot is critical if any blast's primary hit was; that arms Overpressure. */
+    private List<Blast> fire(List<EnemyMob> targets) {
+        List<Blast> fired = new ArrayList<>();
+        boolean critical = false;
+        for (EnemyMob primary : targets) {
+            Blast blast = this.blast(primary);
+            critical |= blast.critical();
+            fired.add(blast);
+        }
+        if (critical && this.upgrades().owns(OVERPRESSURE.id())) {
+            this.overpressureArmed = true;
+        }
+        return List.copyOf(fired);
+    }
+
+    /**
+     * Hits the primary first, at full damage, then everything else within the blast. A critical
+     * primary hit widens the blast (Rapid Battery III).
+     */
+    private Blast blast(EnemyMob primary) {
+        int centerX = (int) primary.getX();
+        int centerY = (int) primary.getY();
+        boolean critical = this.hit(primary, centerX, centerY, this.spreadRadius);
+        float radius = critical && this.upgrades().owns(RAPID_BATTERY_3.id())
+                ? this.spreadRadius * RAPID_BATTERY_CRIT_RADIUS_MULTIPLIER
+                : this.spreadRadius;
+        List<EnemyMob> caught = this.findEnemiesInRange(centerX, centerY, radius);
+        for (EnemyMob enemy : caught) {
+            if (enemy != primary) {
+                this.hit(enemy, centerX, centerY, radius);
+            }
+        }
+        return new Blast(primary, caught, new Blast.Area(centerX, centerY, radius), critical);
+    }
+
+    /** One enemy's share of a blast: falloff damage, then the effects the upgrades add. */
+    private boolean hit(EnemyMob enemy, int centerX, int centerY, float radius) {
+        int dx = centerX - (int) enemy.getX();
+        int dy = centerY - (int) enemy.getY();
+        int r2 = dx * dx + dy * dy;
+        int damage = Math.round(this.damageCurrent() * (1 - (r2 * this.falloffSoftening) / (radius * radius)));
+        boolean critical = this.dealDamage(enemy, Damage.physical(damage));
+        if (this.concussiveBlast) {
+            enemy.applyEffect(Effect.chill(CHILL_AMOUNT, CHILL_DURATION_TICKS, d -> this.dealDamage(enemy, d)));
+        }
+        if (this.upgrades().owns(TOXIC_BLOOM.id())) {
+            Damage perTick = Damage.magic(Math.round(this.damageCurrent() * POISON_DAMAGE_SHARE));
+            enemy.applyEffect(Effect.poison(perTick, Math.round(POISON_SECONDS * TICKS_PER_SECOND), d -> this.dealDamage(enemy, d)));
+        }
+        return critical;
+    }
+
+    /** Concussive Blast: an enemy this tower kills explodes onto whatever stands within one blast radius. */
+    @Override
+    protected void onKill(EnemyMob killed) {
+        if (!this.concussiveBlast) {
+            return;
+        }
+        Damage explosion = Damage.physical(Math.round(this.damageCurrent() * EXPLOSION_DAMAGE_SHARE));
+        for (EnemyMob nearby : this.findEnemiesInRange((int) killed.getX(), (int) killed.getY(), this.spreadRadius)) {
+            this.dealDamage(nearby, explosion);
+        }
+    }
+
+    /** The first blast's target, which the turret follows; {@code null} when the last look found none. */
     public EnemyMob getPrimaryTarget() {
-        return this.primaryTarget;
+        return this.blasts.isEmpty() ? null : this.blasts.getFirst().primary();
     }
 
     public TurretAim getTurretAim() {
         return this.turretAim;
     }
 
-    public List<EnemyMob> getSplashTargets() {
-        return this.splashTargets;
+    /** The blasts of the latest shot, in the order they were fired. */
+    public List<Blast> getBlasts() {
+        return this.blasts;
     }
 
     public float getSpreadRadius() {
         return this.spreadRadius;
-    }
-
-    public int getSplashCenterX() {
-        return this.splashCenterX;
-    }
-
-    public int getSplashCenterY() {
-        return this.splashCenterY;
     }
 
     public float getCoolDownFraction() {
@@ -224,12 +285,21 @@ public final class SplashTower extends AbstractTower {
 
     @Override
     protected List<BehaviourLine> behaviours() {
-        BehaviourLine targets = new BehaviourLine(BehaviourMarker.TARGETING, "Targets", "random");
-        if (!this.concussiveBlast) {
-            return List.of(targets);
+        boolean triple = this.upgrades().owns(BLAST_ENGINEERING_3.id());
+        List<BehaviourLine> lines = new ArrayList<>();
+        lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Targets", triple ? "3 random" : "random"));
+        if (this.concussiveBlast) {
+            lines.add(new BehaviourLine(BehaviourMarker.CHILL, "Chills",
+                    BehaviourLine.percent(CHILL_AMOUNT) + ", " + BehaviourLine.seconds(CHILL_DURATION_TICKS)));
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Kills", "explode"));
         }
-        return List.of(targets, new BehaviourLine(BehaviourMarker.SLOW, "Slows",
-                BehaviourLine.percent(1f - SLOW_MULTIPLIER) + ", " + BehaviourLine.seconds(SLOW_DURATION_TICKS)));
+        if (this.upgrades().owns(TOXIC_BLOOM.id())) {
+            lines.add(new BehaviourLine(BehaviourMarker.POISON, "Poisons", BehaviourLine.seconds(Math.round(POISON_SECONDS * TICKS_PER_SECOND))));
+        }
+        if (this.upgrades().owns(OVERPRESSURE.id())) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Crit arms", "blast on all"));
+        }
+        return lines;
     }
 
     @Override
@@ -239,5 +309,18 @@ public final class SplashTower extends AbstractTower {
 
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitSplashTower(this);
+    }
+
+    /**
+     * One blast of a shot: the enemy it centred on, everything it caught, and where and how wide it
+     * was.
+     *
+     * @param critical whether the primary hit was a critical hit
+     */
+    public record Blast(EnemyMob primary, List<EnemyMob> caught, Area area, boolean critical) {
+
+        /** The disc the blast covered, in board pixels. */
+        public record Area(int centerX, int centerY, float radius) {
+        }
     }
 }

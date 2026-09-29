@@ -156,6 +156,114 @@ class SplashTowerTest {
         tower.doTick(0);
 
         assertThat(blastCentre.appliedEffects()).hasSize(1);
-        assertThat(blastCentre.appliedEffects().getFirst().kind()).isEqualTo(EffectKind.SLOW);
+        assertThat(blastCentre.appliedEffects().getFirst().kind()).isEqualTo(EffectKind.CHILL);
+    }
+
+    private SplashTower upgradedTower(String... nodes) {
+        SplashTower tower = towerNear(3, 3);
+        this.context.towers().add(tower);
+        UpgradePaths.buy(tower, this.context, nodes);
+        return tower;
+    }
+
+    private static void tickThrough(SplashTower tower, int ticks) {
+        for (int t = 0; t < ticks; t++) {
+            tower.doTick(t);
+        }
+    }
+
+    @Test
+    void blastEngineeringThreeBlastsThreeDistinctTargetsAndFewerWhenFewerAreInRange() {
+        SplashTower tower = upgradedTower("Blast Engineering", "Blast Engineering II", "Blast Engineering III");
+        FakeEnemyMob a = FakeEnemyMob.at(60, 60);
+        FakeEnemyMob b = FakeEnemyMob.at(60, 160);
+        FakeEnemyMob c = FakeEnemyMob.at(160, 60);
+        this.context.enemies().setEnemies(new EnemyMob[]{a, b, c});
+
+        tower.doTick(0);
+
+        assertThat(tower.getBlasts()).hasSize(3);
+        assertThat(a.hits()).hasSize(1);
+        assertThat(b.hits()).hasSize(1);
+        assertThat(c.hits()).hasSize(1);
+        this.context.enemies().setEnemies(new EnemyMob[]{a});
+        tickThrough(tower, tower.coolDownCurrent() + 2);
+        assertThat(tower.getBlasts()).hasSize(1);
+    }
+
+    @Test
+    void rapidBatteryThreeWidensTheBlastOfACriticalShotOnly() {
+        SplashTower tower = upgradedTower("Rapid Battery", "Rapid Battery II", "Rapid Battery III");
+        FakeEnemyMob primary = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob outerRing = FakeEnemyMob.ghostAt(100, 100 + Math.round(SPREAD_RADIUS) + 14);
+        this.context.enemies().setEnemies(new EnemyMob[]{primary, outerRing});
+
+        tower.doTick(0);
+        assertThat(outerRing.hits()).isEmpty();
+
+        primary.landEveryHitCritical();
+        tickThrough(tower, tower.coolDownCurrent() + 2);
+
+        assertThat(outerRing.hits()).isNotEmpty();
+        assertThat(tower.getBlasts().getFirst().area().radius()).isEqualTo(tower.getSpreadRadius() * 1.5f);
+    }
+
+    @Test
+    void overpressureBlastsEveryVisibleEnemyOnTheShotAfterACrit() {
+        SplashTower tower = upgradedTower("Overpressure");
+        FakeEnemyMob a = FakeEnemyMob.at(60, 60);
+        FakeEnemyMob b = FakeEnemyMob.at(60, 200);
+        a.landEveryHitCritical();
+        b.landEveryHitCritical();
+        this.context.enemies().setEnemies(new EnemyMob[]{a, b});
+
+        tower.doTick(0);
+        assertThat(tower.getBlasts()).hasSize(1);
+        tickThrough(tower, tower.coolDownCurrent() + 2);
+
+        assertThat(tower.getBlasts()).hasSize(2);
+        assertThat(a.hits().size() + b.hits().size()).isEqualTo(3);
+    }
+
+    @Test
+    void withoutACritOverpressureStaysUnarmed() {
+        SplashTower tower = upgradedTower("Overpressure");
+        FakeEnemyMob a = FakeEnemyMob.at(60, 60);
+        FakeEnemyMob b = FakeEnemyMob.at(60, 200);
+        this.context.enemies().setEnemies(new EnemyMob[]{a, b});
+
+        tower.doTick(0);
+        tickThrough(tower, tower.coolDownCurrent() + 2);
+
+        assertThat(tower.getBlasts()).hasSize(1);
+    }
+
+    @Test
+    void toxicBloomPoisonsEveryEnemyTheBlastCatches() {
+        SplashTower tower = upgradedTower("Toxic Bloom");
+        FakeEnemyMob primary = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob ghost = FakeEnemyMob.ghostAt(100, 120);
+        this.context.enemies().setEnemies(new EnemyMob[]{primary, ghost});
+
+        tower.doTick(0);
+
+        assertThat(primary.appliedEffects()).extracting(td.effect.Effect::kind).containsExactly(EffectKind.POISON);
+        assertThat(ghost.appliedEffects()).extracting(td.effect.Effect::kind).containsExactly(EffectKind.POISON);
+    }
+
+    @Test
+    void concussiveBlastMakesAKilledEnemyExplodeOntoItsNeighboursWithoutChaining() {
+        SplashTower tower = upgradedTower("Concussive Blast");
+        FakeEnemyMob primary = FakeEnemyMob.at(100, 100);
+        primary.dieOnAnyHit();
+        FakeEnemyMob neighbour = FakeEnemyMob.ghostAt(100, 150);
+        neighbour.dieOnAnyHit();
+        FakeEnemyMob beyond = FakeEnemyMob.ghostAt(100, 200);
+        this.context.enemies().setEnemies(new EnemyMob[]{primary, neighbour, beyond});
+
+        tower.doTick(0);
+
+        assertThat(neighbour.hits()).contains(Damage.physical(Math.round(tower.damageCurrent() * 0.5f)));
+        assertThat(beyond.hits()).isEmpty();
     }
 }

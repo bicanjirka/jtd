@@ -181,7 +181,7 @@ class EnemyFrameBuilderTest {
     void anActiveSlowYieldsExactlyOneStatusMarkerWithTheSlowRole() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.slow(0.5f, 5, d -> {
+        enemy.applyEffect(Effect.chill(0.5f, 5, d -> {
         }));
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
@@ -189,16 +189,16 @@ class EnemyFrameBuilderTest {
         List<StatusMarkerDraw> markers = builder.buildMarkers();
 
         assertThat(markers).hasSize(1);
-        assertThat(markers.getFirst().palette()).isEqualTo(Palette.STATUS_MARKER_SLOW);
+        assertThat(markers.getFirst().palette()).isEqualTo(Palette.STATUS_MARKER_CHILL);
     }
 
     @Test
     void twoActiveEffectsYieldTwoDistinctlyPositionedMarkers() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.slow(0.5f, 5, d -> {
+        enemy.applyEffect(Effect.chill(0.5f, 5, d -> {
         }));
-        enemy.applyEffect(Effect.burn(td.damage.Damage.magic(10), 5, d -> {
+        enemy.applyEffect(Effect.heal(1, 5, d -> {
         }));
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
@@ -213,13 +213,15 @@ class EnemyFrameBuilderTest {
     void aFourthSimultaneousEffectCollapsesIntoOneOverflowMarkerInsteadOfGrowingTheRow() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.slow(0.5f, 5, d -> {
+        enemy.applyEffect(Effect.chill(0.5f, 5, d -> {
         }));
-        enemy.applyEffect(Effect.burn(td.damage.Damage.magic(10), 5, d -> {
+        enemy.applyEffect(Effect.heal(1, 5, d -> {
         }));
-        enemy.applyEffect(Effect.freeze(5, d -> {
+        enemy.applyEffect(Effect.vulnerable(1, 5, d -> {
         }));
         enemy.applyEffect(Effect.shield(0.3f, 5, d -> {
+        }));
+        enemy.applyEffect(Effect.revealed(5, d -> {
         }));
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
@@ -228,6 +230,7 @@ class EnemyFrameBuilderTest {
 
         assertThat(markers).hasSize(EnemyFrameBuilder.MAX_VISIBLE_MARKERS + 1);
         assertThat(markers.getLast().palette()).isEqualTo(Palette.STATUS_MARKER_OVERFLOW);
+        assertThat(markers.getLast().hiddenCount()).isEqualTo(2);
     }
 
     @Test
@@ -276,11 +279,11 @@ class EnemyFrameBuilderTest {
     void aFifthSimultaneousEffectDoesNotGrowTheRowFurther() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.slow(0.5f, 5, d -> {
+        enemy.applyEffect(Effect.chill(0.5f, 5, d -> {
         }));
-        enemy.applyEffect(Effect.burn(td.damage.Damage.magic(10), 5, d -> {
+        enemy.applyEffect(Effect.heal(1, 5, d -> {
         }));
-        enemy.applyEffect(Effect.freeze(5, d -> {
+        enemy.applyEffect(Effect.heal(1, 5, d -> {
         }));
         enemy.applyEffect(Effect.shield(0.3f, 5, d -> {
         }));
@@ -443,7 +446,7 @@ class EnemyFrameBuilderTest {
     void aGainedEffectYieldsAnOutwardPulseAtTheMomentItsGained() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.slow(0.5f, 200, d -> {
+        enemy.applyEffect(Effect.chill(0.5f, 200, d -> {
         }));
         enemy.doTick(1); // captures the gain at tick 1
 
@@ -451,7 +454,7 @@ class EnemyFrameBuilderTest {
 
         assertThat(overlays).hasSize(1);
         EffectPulseDraw pulse = (EffectPulseDraw) overlays.getFirst();
-        assertThat(pulse.palette()).isEqualTo(Palette.STATUS_MARKER_SLOW);
+        assertThat(pulse.palette()).isEqualTo(Palette.STATUS_MARKER_CHILL);
         assertThat(pulse.direction()).isEqualTo(PulseDirection.OUTWARD);
         assertThat(pulse.progress()).isZero();
     }
@@ -460,7 +463,7 @@ class EnemyFrameBuilderTest {
     void theGainPulseDisappearsAfterItsDuration() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.slow(0.5f, 200, d -> {
+        enemy.applyEffect(Effect.chill(0.5f, 200, d -> {
         }));
         enemy.doTick(1);
 
@@ -473,7 +476,7 @@ class EnemyFrameBuilderTest {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         int durationTicks = EnemyFrameBuilder.EFFECT_PULSE_DURATION_TICKS + 2;
-        enemy.applyEffect(Effect.slow(0.5f, durationTicks, d -> {
+        enemy.applyEffect(Effect.chill(0.5f, durationTicks, d -> {
         }));
         for (int t = 1; t <= durationTicks; t++) { // the slow expires on the last of these
             enemy.doTick(t);

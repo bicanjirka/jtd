@@ -37,12 +37,17 @@ public enum Palette {
     PROJECTILE_CANNONBALL,
     PROJECTILE_MISSILE,
     /** Status markers, one per effect kind. */
-    STATUS_MARKER_SLOW,
+    STATUS_MARKER_CHILL,
     STATUS_MARKER_BURN,
     STATUS_MARKER_FREEZE,
     STATUS_MARKER_SHIELD,
     STATUS_MARKER_INVISIBLE,
     STATUS_MARKER_HEAL,
+    STATUS_MARKER_VULNERABLE,
+    STATUS_MARKER_REVEALED,
+    STATUS_MARKER_POISON,
+    STATUS_MARKER_SCORCHED,
+    STATUS_MARKER_SICKENED,
     /** Stands in for every effect past the visible marker cap. */
     STATUS_MARKER_OVERFLOW,
     /** Ice over a frozen enemy, whiter than the slow and freeze markers. */
@@ -64,7 +69,6 @@ public enum Palette {
     TRAIT_MARKER_BURN_IMMUNE,
     TRAIT_MARKER_FREEZE_IMMUNE,
     TRAIT_MARKER_EFFECT_RESIST,
-    TRAIT_MARKER_FREEZE_DIMINISHING,
     TRAIT_MARKER_OVERFLOW,
     /** An enemy's disruption ring and the marker on a tower it weakens. */
     DISRUPTION,

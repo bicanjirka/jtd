@@ -60,8 +60,8 @@ class TowerSheetTextTest {
     void theShopListsStatsThenBehavioursOneRowEachThenWhatNoRowSays() {
         InfoSheet sheet = shopSheet(TowerFactory.Type.MORTAR);
 
-        assertThat(labels(sheet)).containsExactly("Range", "Physical damage", "Fire rate", "Splash radius", "Slows", "Targets");
-        assertThat(row(sheet, "Slows")).isEqualTo(Row.effect(Palette.STATUS_MARKER_SLOW, "Slows", "50%, 2 s"));
+        assertThat(labels(sheet)).containsExactly("Range", "Physical damage", "Fire rate", "Splash radius", "Chills", "Targets");
+        assertThat(row(sheet, "Chills")).isEqualTo(Row.effect(Palette.STATUS_MARKER_CHILL, "Chills", "50%, 2 s"));
         assertThat(sheet.lines().getLast()).isEqualTo(new SheetLine.Prose("Lobs a slow, unguided shell."));
     }
 
@@ -106,7 +106,7 @@ class TowerSheetTextTest {
     void aJammedTowersStatusSaysSoAndShowsTheLostRangeAndRateInTheWorseColour() {
         Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
         this.world.disruptions().add(sniper.getX(), sniper.getY(), new DisruptionAura(20f, 0.3f, 0.2f));
-        sniper.refreshDisruption();
+        sniper.beginTick(0);
 
         InfoSheet sheet = TowerSheetText.status(sniper.inspect());
 

@@ -31,7 +31,8 @@ public final class HitResolution {
         float amount = incoming.amount();
         boolean critical = incoming.critical();
         float resilienceKept = 1f - stats.value(EnemyStat.RESILIENCE) / 100f;
-        float critChance = attacker.critChance() * stats.value(EnemyStat.CRIT_CHANCE_TAKEN) * resilienceKept;
+        // Negative resilience never makes a crit likelier, only harder-hitting.
+        float critChance = attacker.critChance() * stats.value(EnemyStat.CRIT_CHANCE_TAKEN) * Math.min(1f, resilienceKept);
         if (!critical && critChance > 0f && random.nextDouble() < critChance) {
             critical = true;
             amount *= 1f + (attacker.critMultiplier() - 1f) * resilienceKept;

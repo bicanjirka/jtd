@@ -1,7 +1,35 @@
 # Feature Request: Effect Interactions and Effect Categories
 
-**Status: draft, brainstorming.** Nothing here is decided except where "Decisions made" says so.
-Written from a design discussion; the user will keep iterating on it.
+**Status: implemented in part.** The effects now share one model: chilled, burning and poisoned are
+*levelled debuffs*. Each has a level that rises when it is applied and wears off on its own curve, and
+each has a visible negative impact.
+
+- **Chilled** (formerly slow, and it replaces every slow): the level is the share of speed lost, added up
+  to a cap of 80% so stacked chills never freeze, and it fades linearly. It also cuts the damage the
+  enemy takes from burning, by up to half at the cap.
+- **Burning**: a decaying damage pool (exponential) that earns **Scorched** stacks: one when it starts
+  and another every half second while it lasts. Each Scorched stack lowers resilience by one, without
+  limit; resilience is floored at -100. Scorched is an effect of its own (marker, inspector row): it
+  outlasts the burn, then loses one stack per second. Resilience below zero never makes crits likelier,
+  it only raises the crit bonus taken.
+- **Poisoned** (formerly toxic): its own exponential pool, so it stacks with burning. It deals damage,
+  slows in proportion to the pool (at most 30%, multiplying with chill), and earns **Sickened** stacks
+  the same way, each lowering spirit by one, floored at -100 (heals and shields received reach zero
+  there).
+- **Vulnerable** and **Revealed** as before: up to 3 stacks at +15% damage taken on one shared clock;
+  a reveal sets stealth to zero and beats invisibility.
+- **Stack decay** is scaled by spirit, the same scale that weakens heals and shields: neutral spirit
+  loses one stack per second (half as fast as they are earned), more spirit is faster, and at -100 spirit
+  they never wear off, so a fully sickened enemy stays sickened. A future priest enemy is meant to
+  cleanse these debuffs.
+- **Interactions** (one table, `EffectInteractions`): a frozen enemy cannot burn and freezing puts out
+  its burn; freezing a chilled enemy consumes the chill and the freeze lasts longer by the chill's level.
+  Freeze diminishing returns apply to every enemy. Burn's old crit doubling is gone.
+- Effect categories exist as metadata (they decide which kinds diminish and label effects in the
+  inspector), and marker overflow shows a "+N" count.
+
+Deliberately left out: stun, cleansing, a frost-side synergy. Everything below is the original draft,
+kept for the deferred parts; where it says slow or toxic, read chilled and poisoned.
 
 ## Summary
 
@@ -24,7 +52,8 @@ to extend.
 - Burning doubles the crit chance the enemy takes, from any tower (`FEATURE-critical-damage.md`
   Addendum). It is a tuned-by-guess placeholder and is judged too strong: it multiplies every
   tower's crit chance, so it scales with everything.
-- Freeze is the only kind with diminishing returns. Resistances shorten durations only.
+- Freeze is the only kind whose duration diminishes (slow has a recovery curve and burn a decaying
+  pool, which are different things). Resistances shorten durations only.
 - Heal already exists as a linear per-tick regeneration for its duration.
 - Vocabulary in the code today: a *trait* is innate and permanent (part of an enemy definition),
   an *ability* is a trigger plus an authored effect, an *effect* is a timed state applied at

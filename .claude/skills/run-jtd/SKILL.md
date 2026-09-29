@@ -45,6 +45,7 @@ on `quit` or end of input.
 | `clickenemy [n]` | Clicks where the `n`-th alive enemy is now and prints its effects. |
 | `enemies` | One line per enemy: alive index, id, rank, health, board px, effects, fate. |
 | `spawn <id> [rank]` | Spawns a catalog id (a wave token, such as `s` for Armored) at the path start. |
+| `effect <kind> [ticks]` | Puts an effect (`chill`, `burn`, `poison`, `freeze`, `shield`, `invisible`, `heal`, `vulnerable`, `revealed`) on every alive enemy. |
 | `kill` | Deals lethal damage to every enemy through the real hit path, so on-death abilities fire. |
 | `setcredits <n>`, `setlives <n>` | Economy cheats. |
 | `waitfor ticks <n> [ms]` | Waits until the game clock advances `n` ticks (20 per second; pausing stops it). |
@@ -75,7 +76,7 @@ EOF
 
 `java -cp "$CP" PreviewBoard` reads commands the same way: `levels`, `level <n>`,
 `credits <n>`, `lives <n>`, `place <tower> <x> <y>` (a `TowerFactory.Type` name, any case),
-`spawn <id> [rank]`, `wave`, `tick <n>`, `kill`, `render <path>`, `state`, `quit`. `tick` advances
+`spawn <id> [rank]`, `effect <kind> [ticks]` (on every enemy), `wave`, `tick <n>`, `kill`, `render <path>`, `state`, `quit`. `tick` advances
 the real `GameEngine`, and `render` paints through the real `BoardRenderer` /
 `Java2DFrameRenderer` pipeline. Two spawns with no `tick` between them land on the same pixel.
 

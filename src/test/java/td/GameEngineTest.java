@@ -11,7 +11,6 @@ import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyInspection;
 import td.enemy.EnemyMob;
-import td.enemy.FreezeDiminishingTrait;
 import td.enemy.HurtSpeedTrait;
 import td.enemy.PercentResistTrait;
 import td.enemy.Rank;
@@ -151,7 +150,7 @@ class GameEngineTest {
 
     @Test
     void repeatedFreshFreezesOnADiminishingEnemyLastFullHalfQuarterThenNotAtAll() {
-        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, new FreezeDiminishingTrait());
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
         int[] clock = {0};
 
         List<Integer> durations = List.of(freezeFor(enemy, 20, clock), freezeFor(enemy, 20, clock),
@@ -162,7 +161,7 @@ class GameEngineTest {
 
     @Test
     void aFreezeReappliedWhileFrozenDoesNotSpendADiminishingStep() {
-        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, new FreezeDiminishingTrait());
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
         int[] clock = {0};
         enemy.applyEffect(Effect.freeze(20, d -> {
         }));
@@ -177,7 +176,7 @@ class GameEngineTest {
 
     @Test
     void freezeDiminishingResetsTenSecondsAfterTheLastFreeze() {
-        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, new FreezeDiminishingTrait());
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
         int[] clock = {0};
         freezeFor(enemy, 20, clock);
         freezeFor(enemy, 20, clock);

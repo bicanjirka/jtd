@@ -37,6 +37,7 @@ import td.wave.PathColor;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
@@ -105,6 +106,7 @@ public final class Java2DFrameRenderer {
     private static final float RANK_BADGE_OFFSET_FRACTION = 1.7f;
     private static final float RANK_BADGE_CHEVRON_SPACING_FRACTION = 0.55f;
     private static final float PROJECTILE_SIZE = 5f;
+    private static final Font MARKER_COUNT_FONT = Hud.LABEL_FONT.deriveFont(9f);
     /** Flame wave alpha, the same from launch to burn-out. */
     private static final float CINDER_CONE_ALPHA = 0.45f;
     /** How deep the wave's band is, as a share of the cone's full reach. */
@@ -394,12 +396,17 @@ public final class Java2DFrameRenderer {
             case TOWER_CINDER_CONE -> new Color(255, 90, 30);
             case PROJECTILE_CANNONBALL -> new Color(139, 90, 43);
             case PROJECTILE_MISSILE -> new Color(80, 180, 255);
-            case STATUS_MARKER_SLOW -> new Color(120, 120, 255);
+            case STATUS_MARKER_CHILL -> new Color(120, 120, 255);
             case STATUS_MARKER_BURN -> new Color(255, 120, 40);
             case STATUS_MARKER_FREEZE -> new Color(150, 220, 255);
             case STATUS_MARKER_SHIELD -> new Color(220, 220, 100);
             case STATUS_MARKER_INVISIBLE -> new Color(180, 180, 180);
             case STATUS_MARKER_HEAL -> new Color(120, 220, 140);
+            case STATUS_MARKER_VULNERABLE -> new Color(235, 80, 150);
+            case STATUS_MARKER_REVEALED -> new Color(200, 160, 255);
+            case STATUS_MARKER_POISON -> new Color(170, 210, 40);
+            case STATUS_MARKER_SCORCHED -> new Color(170, 80, 40);
+            case STATUS_MARKER_SICKENED -> new Color(110, 140, 70);
             case STATUS_MARKER_OVERFLOW -> Color.WHITE;
             case FREEZE_CRYSTAL -> new Color(220, 245, 255);
             case CRIT_SPARK -> Color.WHITE;
@@ -416,7 +423,6 @@ public final class Java2DFrameRenderer {
             case TRAIT_MARKER_BURN_IMMUNE -> new Color(255, 150, 90);
             case TRAIT_MARKER_FREEZE_IMMUNE -> new Color(170, 225, 255);
             case TRAIT_MARKER_EFFECT_RESIST -> new Color(200, 200, 160);
-            case TRAIT_MARKER_FREEZE_DIMINISHING -> new Color(120, 180, 220);
             case TRAIT_MARKER_OVERFLOW -> Color.LIGHT_GRAY;
             case DISRUPTION -> new Color(235, 90, 200);
             case SELECTION -> new Color(255, 255, 255);
@@ -714,6 +720,11 @@ public final class Java2DFrameRenderer {
         g2.translate(marker.x(), marker.y());
         g2.setColor(colorFor(marker.palette()));
         g2.fill(diamondShape(marker.scale()));
+        if (marker.hiddenCount() > 0) {
+            g2.setColor(Color.WHITE);
+            g2.setFont(MARKER_COUNT_FONT);
+            g2.drawString("+" + marker.hiddenCount(), marker.scale() * 1.4f, marker.scale() * 0.8f);
+        }
         g2.setTransform(save);
     }
 
