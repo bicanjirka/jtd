@@ -204,9 +204,12 @@ class BoardRendererTest {
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         context.enemies().setEnemies(new EnemyMob[]{enemy});
 
-        tower.doTick(1); // in range, cools down from 0 - fires a wave
+        int firedAt = 1;
+        while (tower.getInFlightWaves().isEmpty() && firedAt < 60) {
+            tower.doTick(firedAt++); // turns toward the enemy, then fires a wave
+        }
 
-        RenderFrame frame = rendererFor(engine, context).buildFrame(1, 0.0, 0.0);
+        RenderFrame frame = rendererFor(engine, context).buildFrame(firedAt - 1, 0.0, 0.0);
 
         assertThat(frame.towerEffects()).hasSize(1);
         assertThat(frame.towerEffects().getFirst()).isInstanceOf(ConeDraw.class);

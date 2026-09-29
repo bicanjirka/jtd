@@ -89,7 +89,7 @@ a different loadout or level, since v1 has no config format for either.
 | Aura   | 20    | Passive — boosts the damage and range of nearby towers; several stack                                                                               |
 | Mortar | 30    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path; splashes physical damage and slows everything the blast reaches |
 | Seeker | 35    | Fires a homing missile that re-aims each tick and retargets if its target dies; deals magic damage and freezes whichever mob it actually hits       |
-| Cinder | 28    | No cooldown; a slowly-reorienting flame cone burns everything currently caught in it, ghosts included                                               |
+| Cinder | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included |
 
 Every attack tower — Sniper, Splash, Sonar, Pulse, Mortar, Seeker and Cinder — also
 offers two permanent, mutually-exclusive upgrade paths, shown as buttons in its info panel

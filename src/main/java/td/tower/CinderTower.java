@@ -26,9 +26,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A cooldown-gated flame cone that turns slowly toward the nearest enemy. Each shot is a wave
- * travelling outward over several ticks, burning an enemy once when its front reaches it. Cannot
- * hit invisible enemies.
+ * A cooldown-gated flame cone that turns slowly toward the nearest enemy and fires only once an
+ * enemy is inside the cone. Each shot is a wave travelling outward over several ticks, burning an
+ * enemy once when its front reaches it. Never aims at an invisible enemy, but burns one caught in a wave.
  * <p>
  * A wave's heading and width are fixed when it fires. The tower never deals direct damage: its
  * burns credit it through {@code dealDamage}.
@@ -121,12 +121,20 @@ public final class CinderTower extends AbstractTower {
 
         if (this.coolDown > 0) {
             this.coolDown--;
-        } else if (!inRange.isEmpty()) {
+        } else if (this.hasEnemyAhead()) {
             this.inFlightWaves.add(new FlameWave(this.turretAim.currentRadians(), this.halfWidthRadians, gameTime));
             this.coolDown = this.coolDownCurrent();
         }
 
         this.advanceWaves(gameTime);
+    }
+
+    /** Whether a wave fired at the turret's current heading would reach at least one enemy. */
+    private boolean hasEnemyAhead() {
+        return !new InWedgeTargetQuery(this.centerX, this.centerY, this.turretAim.currentRadians(), this.halfWidthRadians)
+                .and(InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.NORMAL))
+                .matching(this.context.enemies())
+                .isEmpty();
     }
 
     /**
@@ -140,7 +148,7 @@ public final class CinderTower extends AbstractTower {
             float travelled = Math.min(1f, (float) (gameTime - wave.firedAtTick) / WAVE_TRAVEL_TICKS);
             float currentRadius = travelled * this.rangeReal();
             List<EnemyMob> caught = new InWedgeTargetQuery(this.centerX, this.centerY, wave.headingRadians, wave.halfWidthRadians)
-                    .and(InRangeTargetQuery.ofType(this.centerX, this.centerY, currentRadius, EnemyMob.Type.NORMAL))
+                    .and(InRangeTargetQuery.anyType(this.centerX, this.centerY, currentRadius))
                     .matching(this.context.enemies());
             for (EnemyMob enemy : caught) {
                 if (wave.alreadyHit.add(enemy)) {

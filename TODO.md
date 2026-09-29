@@ -21,8 +21,7 @@ Implemented, for reference: `FEATURE-enemy-spawn-types.md`, `FEATURE-multiple-en
 `FEATURE-effect-visuals.md`, `FEATURE-tower-upgrades.md`, `FEATURE-critical-damage.md`,
 `FEATURE-damage-types-and-projectiles.md`, `FEATURE-enemy-traits-and-effects.md`,
 `FEATURE-sniper-crit-beam.md`, `FEATURE-wave-preview-cleanup.md`, `FEATURE-freeze-visual.md`,
-`FEATURE-effect-diminishing-returns.md`, `FEATURE-cinder-cone-wave.md`,
-`FEATURE-tower-upgrade-trees.md`.
+`FEATURE-effect-diminishing-returns.md`, `FEATURE-tower-upgrade-trees.md`.
 
 ## Architecture and correctness
 

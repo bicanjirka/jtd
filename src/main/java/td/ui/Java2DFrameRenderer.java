@@ -105,8 +105,10 @@ public final class Java2DFrameRenderer {
     private static final float RANK_BADGE_OFFSET_FRACTION = 1.7f;
     private static final float RANK_BADGE_CHEVRON_SPACING_FRACTION = 0.55f;
     private static final float PROJECTILE_SIZE = 5f;
-    /** Cone alpha when fired, before {@link #paintCone} fades it. */
-    private static final float CINDER_CONE_BASE_ALPHA = 0.55f;
+    /** Flame wave alpha, the same from launch to burn-out. */
+    private static final float CINDER_CONE_ALPHA = 0.45f;
+    /** How deep the wave's band is, as a share of the cone's full reach. */
+    private static final float CINDER_CONE_BAND_FRACTION = 0.35f;
 
     private static Shape markerShape(PathMarkerShape shape, float size) {
         return switch (shape) {
@@ -964,23 +966,32 @@ public final class Java2DFrameRenderer {
 
 
     /**
-     * A wedge on the cone's heading that grows outward and fades as {@code cone.progress()} goes
-     * from 0 to 1.
+     * A band between two arcs on the cone's heading, its outer arc at the wave's front as
+     * {@code cone.progress()} goes from 0 to 1. The trailing arc keeps the band clear of the tower.
      */
     private void paintCone(Graphics2D g2, ConeDraw cone) {
-        float currentRadius = cone.maxRadius() * cone.progress();
-        if (currentRadius <= 0) {
+        float frontRadius = cone.maxRadius() * cone.progress();
+        if (frontRadius <= 0) {
             return;
         }
-        float alpha = CINDER_CONE_BASE_ALPHA * (1f - cone.progress());
+        float trailingRadius = Math.max(0f, frontRadius - cone.maxRadius() * CINDER_CONE_BAND_FRACTION);
         AffineTransform save = g2.getTransform();
         g2.translate(cone.originX(), cone.originY());
         g2.rotate(cone.headingRadians());
-        float halfWidthDegrees = (float) Math.toDegrees(cone.halfWidthRadians());
-        g2.setColor(withAlpha(colorFor(cone.palette()), Math.round(alpha * 255)));
-        g2.fill(new Arc2D.Float(-currentRadius, -currentRadius, currentRadius * 2, currentRadius * 2,
-                -halfWidthDegrees, halfWidthDegrees * 2, Arc2D.PIE));
+        g2.setColor(withAlpha(colorFor(cone.palette()), Math.round(CINDER_CONE_ALPHA * 255)));
+        Area band = new Area(wedge(frontRadius, cone.halfWidthRadians()));
+        if (trailingRadius > 0) {
+            band.subtract(new Area(wedge(trailingRadius, cone.halfWidthRadians())));
+        }
+        g2.fill(band);
         g2.setTransform(save);
+    }
+
+    /** A pie slice centred on the origin along the x axis. */
+    private static Shape wedge(float radius, double halfWidthRadians) {
+        float halfWidthDegrees = (float) Math.toDegrees(halfWidthRadians);
+        return new Arc2D.Float(-radius, -radius, radius * 2, radius * 2, -halfWidthDegrees, halfWidthDegrees * 2,
+                Arc2D.PIE);
     }
 
     private void paintAura(Graphics2D g2, AuraDraw aura) {

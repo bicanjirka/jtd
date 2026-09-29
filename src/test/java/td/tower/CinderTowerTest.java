@@ -105,13 +105,48 @@ class CinderTowerTest {
     }
 
     @Test
-    void aGhostIsNotCaughtByTheCone() {
+    void anEnemyBehindTheTurretIsNotFiredAtUntilTheTurretHasTurnedToIt() {
+        CinderTower tower = towerAt(3, 3);
+        FakeEnemyMob behind = FakeEnemyMob.at(74, 112); // due -X, half a turn from the default heading
+        this.context.enemies().setEnemies(new EnemyMob[]{behind});
+
+        tower.doTick(1);
+
+        assertThat(tower.getInFlightWaves()).isEmpty();
+    }
+
+    @Test
+    void theFirstWaveFiredAtAnEnemyBehindTheTurretHeadsAtTheEnemy() {
+        CinderTower tower = towerAt(3, 3);
+        FakeEnemyMob behind = FakeEnemyMob.at(74, 112);
+        this.context.enemies().setEnemies(new EnemyMob[]{behind});
+
+        tickThrough(tower, 1, 40);
+
+        assertThat(behind.appliedEffects()).isNotEmpty();
+    }
+
+    @Test
+    void aGhostCaughtInAWaveFiredAtAVisibleEnemyIsBurnedToo() {
+        CinderTower tower = towerAt(3, 3);
+        FakeEnemyMob visible = FakeEnemyMob.at(150, 112);
+        FakeEnemyMob ghost = FakeEnemyMob.ghostAt(140, 112);
+        this.context.enemies().setEnemies(new EnemyMob[]{visible, ghost});
+
+        tickThrough(tower, 1, 1 + CinderTower.WAVE_TRAVEL_TICKS);
+
+        assertThat(ghost.appliedEffects()).hasSize(1);
+    }
+
+    @Test
+    void aLoneGhostIsNeitherAimedAtNorFiredAt() {
         CinderTower tower = towerAt(3, 3);
         FakeEnemyMob ghost = FakeEnemyMob.ghostAt(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{ghost});
 
         tickThrough(tower, 1, 1 + CinderTower.WAVE_TRAVEL_TICKS);
 
+        assertThat(tower.getInFlightWaves()).isEmpty();
         assertThat(ghost.appliedEffects()).isEmpty();
     }
 
