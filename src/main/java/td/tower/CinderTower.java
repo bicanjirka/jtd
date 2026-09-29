@@ -114,7 +114,7 @@ public final class CinderTower extends AbstractTower {
     }
 
     public void doTick(int gameTime) {
-        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.NORMAL)
+        List<EnemyMob> inRange = InRangeTargetQuery.visible(this.centerX, this.centerY, this.rangeReal())
                 .matching(this.context.enemies());
         new NearestSelector(this.centerX, this.centerY).selectFrom(inRange)
                 .ifPresent(nearest -> this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, nearest.getX(), nearest.getY())));
@@ -132,7 +132,7 @@ public final class CinderTower extends AbstractTower {
     /** Whether a wave fired at the turret's current heading would reach at least one enemy. */
     private boolean hasEnemyAhead() {
         return !new InWedgeTargetQuery(this.centerX, this.centerY, this.turretAim.currentRadians(), this.halfWidthRadians)
-                .and(InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.NORMAL))
+                .and(InRangeTargetQuery.visible(this.centerX, this.centerY, this.rangeReal()))
                 .matching(this.context.enemies())
                 .isEmpty();
     }
@@ -148,7 +148,7 @@ public final class CinderTower extends AbstractTower {
             float travelled = Math.min(1f, (float) (gameTime - wave.firedAtTick) / WAVE_TRAVEL_TICKS);
             float currentRadius = travelled * this.rangeReal();
             List<EnemyMob> caught = new InWedgeTargetQuery(this.centerX, this.centerY, wave.headingRadians, wave.halfWidthRadians)
-                    .and(InRangeTargetQuery.anyType(this.centerX, this.centerY, currentRadius))
+                    .and(InRangeTargetQuery.everyone(this.centerX, this.centerY, currentRadius))
                     .matching(this.context.enemies());
             for (EnemyMob enemy : caught) {
                 if (wave.alreadyHit.add(enemy)) {

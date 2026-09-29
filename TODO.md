@@ -390,7 +390,7 @@ do this — see below). This was a speculative "nice to have," not a committed d
   model, so there's no direct mechanism to reuse from there; a tower's facing would instead need
   to be derived from its own chosen target, per tower. There's also no `findEnemy()` method to
   hook today — targeting is composed per-tower inside `doTick` via `td.tower.targeting` pieces
-  (e.g. `SniperTower.doTick` builds candidates through `InRangeTargetQuery.ofType(...)` then a
+  (e.g. `SniperTower.doTick` builds candidates through `InRangeTargetQuery.visible(...)` then a
   `TargetSelector`; see `td/tower/CLAUDE.md`'s "Targeting" section) — so
   this needs new per-tower "facing" state updated wherever each tower's `doTick` calls its
   selector, exposed as a getter, then threaded through as a new `facingRadians` field on

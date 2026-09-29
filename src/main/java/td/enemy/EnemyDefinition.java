@@ -22,7 +22,6 @@ import java.util.function.Function;
  * @param price         bounty per kill, and the score lost if it leaks
  * @param baseSpeed     pixels per tick; {@code 0} never moves
  * @param healthDivisor divides {@code baseHealth} before any other scaling; {@code 1} for none
- * @param mobType       the type targeting queries filter on
  * @param traitSlots    always-on traits, resolved per mob at spawn, identified so
  * {@link #withAdditionalTraits} can replace one by id
  * @param abilitySlots  triggered abilities, identified the same way
@@ -37,7 +36,6 @@ public record EnemyDefinition(
         int price,
         float baseSpeed,
         float healthDivisor,
-        EnemyMob.Type mobType,
         BodyArchetype archetype,
         MovementBehavior movement,
         List<IdentifiedTrait> traitSlots,
@@ -51,14 +49,13 @@ public record EnemyDefinition(
     }
 
     /**
-     * The required shape: no description, normal type, fixed movement, no divisor, traits or
+     * The required shape: no description, fixed movement, no divisor, traits or
      * abilities. Add the rest with the {@code withX} copies.
      */
     public static EnemyDefinition of(String id, String displayName, int baseHealth, int price, float baseSpeed,
             BodyArchetype archetype) {
         return new EnemyDefinition(id, displayName, "", baseHealth, price, baseSpeed, 1f,
-                EnemyMob.Type.NORMAL, archetype, new FixedMovement(), List.of(), List.of(), BaseStats.defaults(),
-                Optional.empty());
+                archetype, new FixedMovement(), List.of(), List.of(), BaseStats.defaults(), Optional.empty());
     }
 
     /** The traits one mob spawned against {@code mix} carries, each slot resolved once. */
@@ -99,45 +96,39 @@ public record EnemyDefinition(
     /** Authors the base of {@code stat} before any trait or effect modifies it. */
     public EnemyDefinition withStat(EnemyStat stat, float base) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
-                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
+                this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
                 this.abilitySlots, this.baseStats.with(stat, base), this.disruption);
     }
 
     /** Weakens every tower within the aura's radius while this enemy is alive on the board. */
     public EnemyDefinition withDisruption(DisruptionAura aura) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
-                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
+                this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
                 this.abilitySlots, this.baseStats, Optional.of(aura));
     }
 
     /** A rank step's usual change: new health and bounty, everything else kept. */
     public EnemyDefinition withHealthAndPrice(int baseHealth, int price) {
         return new EnemyDefinition(this.id, this.displayName, this.description, baseHealth, price,
-                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
+                this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
                 this.abilitySlots, this.baseStats, this.disruption);
     }
 
     public EnemyDefinition withDescription(String description) {
         return new EnemyDefinition(this.id, this.displayName, description, this.baseHealth, this.price,
-                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
+                this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
                 this.abilitySlots, this.baseStats, this.disruption);
     }
 
     public EnemyDefinition withHealthDivisor(float healthDivisor) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
-                this.baseSpeed, healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats, this.disruption);
-    }
-
-    public EnemyDefinition withMobType(EnemyMob.Type mobType) {
-        return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
-                this.baseSpeed, this.healthDivisor, mobType, this.archetype, this.movement, this.traitSlots,
+                this.baseSpeed, healthDivisor, this.archetype, this.movement, this.traitSlots,
                 this.abilitySlots, this.baseStats, this.disruption);
     }
 
     public EnemyDefinition withMovement(MovementBehavior movement) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
-                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, movement, this.traitSlots,
+                this.baseSpeed, this.healthDivisor, this.archetype, movement, this.traitSlots,
                 this.abilitySlots, this.baseStats, this.disruption);
     }
 
@@ -151,7 +142,7 @@ public record EnemyDefinition(
 
     public EnemyDefinition withIdentifiedTraits(List<IdentifiedTrait> traitSlots) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
-                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, traitSlots,
+                this.baseSpeed, this.healthDivisor, this.archetype, this.movement, traitSlots,
                 this.abilitySlots, this.baseStats, this.disruption);
     }
 
@@ -169,7 +160,7 @@ public record EnemyDefinition(
 
     public EnemyDefinition withIdentifiedAbilities(List<IdentifiedAbility> abilitySlots) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
-                this.baseSpeed, this.healthDivisor, this.mobType, this.archetype, this.movement, this.traitSlots,
+                this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
                 abilitySlots, this.baseStats, this.disruption);
     }
 

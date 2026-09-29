@@ -291,16 +291,13 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.stage == LifeStage.LIVE && this.onBoard;
     }
 
-    public boolean validTarget(Type type) {
-        return this.validTarget() && type.equals(this.effectiveType());
-    }
-
     /**
-     * {@link Type#INVISIBLE} while fully stealthed, otherwise the authored type, so any enemy can be
-     * made invisible by an effect.
+     * Fully stealthed. The one place that reads the stat, so whatever lowers stealth (a reveal)
+     * shows through to every tower and to selection at once.
      */
-    private Type effectiveType() {
-        return this.stats.value(EnemyStat.STEALTH) >= 1f ? Type.INVISIBLE : this.definition.mobType();
+    @Override
+    public boolean isHidden() {
+        return this.stats.value(EnemyStat.STEALTH) >= 1f;
     }
 
     /**

@@ -12,14 +12,4 @@ public interface EnemyMob extends EnemyTarget, HitReceiver {
     int getHealth();
 
     float getSpeed();
-
-    /**
-     * What a tower can see. {@code INVISIBLE} is reachable only by area damage; a mob reports it
-     * while an invisibility effect is active. {@code FLYING} is unused.
-     */
-    enum Type {
-        NORMAL,
-        FLYING,
-        INVISIBLE
-    }
 }

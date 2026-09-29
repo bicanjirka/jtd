@@ -60,7 +60,7 @@ public final class MissileProjectile extends AbstractProjectile {
 
     private EnemyMob retarget() {
         List<EnemyMob> candidates = InRangeTargetQuery
-                .ofType((int) Math.round(this.x), (int) Math.round(this.y), Float.MAX_VALUE, EnemyMob.Type.NORMAL)
+                .visible((int) Math.round(this.x), (int) Math.round(this.y), Float.MAX_VALUE)
                 .matching(this.enemies);
         return new NearestSelector(this.x, this.y).selectFrom(candidates).orElse(null);
     }
