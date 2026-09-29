@@ -208,8 +208,6 @@ re-derive them. They are proposals; planning may replace any of them.
 - **`FEATURE-adaptive-elite-resistance.md`**: adaptive armor now resolves to armor or magic
   resist values.
 - **`FEATURE-enemy-rank-system.md`**: `ELITE` and `BOSS` gain freeze DR automatically.
-- **`FEATURE-sniper-crit-beam.md`**: the beam is drawn when the shot fires; moving the crit
-  roll to hit resolution must keep it correct (see risks).
 
 ## Constraints and open risks
 
