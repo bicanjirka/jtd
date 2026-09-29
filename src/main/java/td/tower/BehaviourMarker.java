@@ -4,9 +4,12 @@ package td.tower;
 public enum BehaviourMarker {
     /** Who the tower attacks. */
     TARGETING,
-    SLOW,
+    CHILL,
     BURN,
     FREEZE,
+    VULNERABLE,
+    REVEAL,
+    POISON,
     /** A bonus the tower gives others. */
     BUFF
 }

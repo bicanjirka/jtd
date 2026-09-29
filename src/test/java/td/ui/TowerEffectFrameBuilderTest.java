@@ -56,8 +56,8 @@ class TowerEffectFrameBuilderTest {
         SniperTower jammed = new SniperTower(context, 0, 0);
         SniperTower clear = new SniperTower(context, 10, 10);
         context.disruptions().add(jammed.getX(), jammed.getY(), new DisruptionAura(20f, 0.3f, 0.2f));
-        jammed.refreshDisruption();
-        clear.refreshDisruption();
+        jammed.beginTick(0);
+        clear.beginTick(0);
 
         TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(0, 0.0, 0.0);
         builder.addStatus(jammed, context.getBoard().scale());

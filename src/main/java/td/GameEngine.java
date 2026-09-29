@@ -256,7 +256,7 @@ public class GameEngine {
         }
         this.gameWorld.projectiles().doTick(time);
         for (Tower tower : this.gameWorld.towers().all()) {
-            tower.refreshDisruption();
+            tower.beginTick(time);
             tower.doTick(time);
         }
         this.settleDeaths(time);

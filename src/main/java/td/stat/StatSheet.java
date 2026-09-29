@@ -94,6 +94,11 @@ public final class StatSheet implements StatView {
         }
 
         @Override
+        public void addFlat(EnemyStat stat, float amount) {
+            StatSheet.this.flat[stat.ordinal()] += amount;
+        }
+
+        @Override
         public void restoreFlat(EnemyStat stat, float amount) {
             StatSheet.this.restoreFlat[stat.ordinal()] += amount;
         }

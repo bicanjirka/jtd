@@ -46,9 +46,12 @@
   (`TowerBuff.damage(0.3f).withRange(0.1f)`), not from `none()`. `combine` adds every axis except
   fireRate, where each bonus cuts the cooldown that remains (they multiply).
 - Enemy disruption reaches a tower only through `GameWorld.disruptions()`, sampled at the tower's
-  centre in the towers phase (`refreshDisruption`). It folds in as a negative `TowerBuff`, and
+  centre in the towers phase (`beginTick`). It folds in as a negative `TowerBuff`, and
   `TowerBuff` floors combined fire-rate and range bonuses at `MIN_BONUS` (-0.75).
 - Cooldown has a base/current split like damage and range (`coolDownMax` vs `coolDownCurrent()`).
+- A kill this tower makes runs `onKill(EnemyMob)` (the mob still carries the effects it died
+  under); a kill made from inside the hook, such as an explosion's, triggers nothing. A
+  temporary self-buff goes through `grantTimedBuff` and ends in `beginTick`; it never stacks.
 - `dealDamage` sends the hit with `TowerStats.attack()` (crit chance and multiplier, penetration);
   the target rolls the crit. A special shot passes a one-off profile to
   `dealDamage(enemy, damage, attack)` (a forced crit, extra penetration) instead of adding a
@@ -58,8 +61,7 @@
 
 - Slots `BASE` (always `StandardBaseSlot` range + Awaken), `HEAD` (two exclusive chains) and
   `SPECIAL` (one to three exclusive roots, gated on Awaken). Content per tower comes from
-  `docs/features/FEATURE-tower-specialization-abilities.md`; nodes waiting on a missing primitive
-  are no-op hooks with a `TODO.md` entry.
+  `docs/features/FEATURE-tower-specialization-abilities.md`.
 - Build nodes with `UpgradeNode.of(...)` plus `withBuff`/`withRequires`/`withGate`/
   `withExtraEffect`. `requires` decides whether a node is offered (`UpgradeCondition.owns(id)`,
   `slotEmpty(slot)`, `StandardBaseSlot.opens(slot)`, combined with `and`/`or`). `gate` is the

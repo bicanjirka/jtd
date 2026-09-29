@@ -1,6 +1,8 @@
 package td.tower;
 
+import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
+import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.ClusterCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeCondition;
@@ -52,7 +54,6 @@ public final class AuraTower extends AbstractTower {
             .withRequires(UpgradeCondition.owns(RESONANCE_FIELD_1.id()))
             .withGate(new ClusterCondition(3))
             .withExtraEffect("the aura no longer refuses to buff other Aura towers");
-    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode WITHERING_FIELD = UpgradeNode.of("aura.special.withering_field",
             UpgradeSlot.SPECIAL, "Withering Field", 40)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
@@ -129,11 +130,18 @@ public final class AuraTower extends AbstractTower {
         return this.context.towers().all().stream().filter(this::buffs).toList();
     }
 
-    /** Counts ticks toward the periodic pass, which has no effect yet (TODO.md). */
+    /** Withering Field: every interval, each enemy inside the aura, hidden or not, gains a vulnerability stack. */
     public void doTick(int gameTime) {
         this.tickCounter++;
-        if (this.tickCounter >= WITHERING_FIELD_TICK_INTERVAL) {
-            this.tickCounter = 0;
+        if (this.tickCounter < WITHERING_FIELD_TICK_INTERVAL) {
+            return;
+        }
+        this.tickCounter = 0;
+        if (this.upgrades().owns(WITHERING_FIELD.id())) {
+            for (EnemyMob enemy : InRangeTargetQuery.everyone(this.centerX, this.centerY, this.rangeReal())
+                    .matching(this.context.enemies())) {
+                this.applyVulnerable(enemy, 1);
+            }
         }
     }
 
@@ -145,6 +153,9 @@ public final class AuraTower extends AbstractTower {
         lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby range", bonus));
         if (this.grantsFireRate) {
             lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby fire rate", bonus));
+        }
+        if (this.upgrades().owns(WITHERING_FIELD.id())) {
+            lines.add(new BehaviourLine(BehaviourMarker.VULNERABLE, "Enemies inside", "vulnerable"));
         }
         if (this.isPlaced()) {
             lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Buffing", this.buffedTowers().size() + " towers"));

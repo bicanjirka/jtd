@@ -1,5 +1,7 @@
 import td.TowerDefense;
 import td.damage.Damage;
+import td.effect.Effect;
+import td.effect.EffectKind;
 import td.economy.EconomyDelta;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyCatalog;
@@ -96,6 +98,7 @@ public class Driver {
             case "setcredits" -> setCredits(rest.trim());
             case "setlives" -> setLives(rest.trim());
             case "spawn" -> spawnEnemy(rest.trim());
+            case "effect" -> applyEffect(rest.trim());
             case "kill" -> killEnemies();
             case "sleep" -> Thread.sleep(Long.parseLong(rest.trim()));
             case "quit" -> quit();
@@ -567,6 +570,29 @@ public class Driver {
         EnemyMob mob = catalog.spawn(id, context, 0, definition.baseHealth(), definition.price(), rank);
         context.enemies().add(mob);
         System.out.println("OK spawn " + id + " at rank " + rank);
+    }
+
+    // Puts an effect on every alive enemy, as a tower would: effect <kind> [ticks].
+    private static void applyEffect(String args) throws Exception {
+        String[] parts = args.split("\s+");
+        EffectKind kind = EffectKind.valueOf(parts[0].toUpperCase());
+        int ticks = parts.length > 1 ? Integer.parseInt(parts[1]) : 200;
+        for (EnemyMob mob : getGameWorld().enemies().getEnemies()) {
+            Effect effect = switch (kind) {
+                case CHILL -> Effect.chill(0.5f, ticks, d -> { });
+                case BURN -> Effect.burn(Damage.magic(1), ticks, d -> { });
+                case POISON -> Effect.poison(Damage.magic(1), ticks, d -> { });
+                case FREEZE -> Effect.freeze(ticks, d -> { });
+                case SHIELD -> Effect.shield(0.3f, ticks, d -> { });
+                case INVISIBLE -> Effect.invisible(ticks, d -> { });
+                case HEAL -> Effect.heal(1, ticks, d -> { });
+                case VULNERABLE -> Effect.vulnerable(2, ticks, d -> { });
+                case REVEALED -> Effect.revealed(ticks, d -> { });
+                case SCORCHED, SICKENED -> throw new IllegalArgumentException(kind + " is earned by burn and poison");
+            };
+            mob.applyEffect(effect);
+        }
+        System.out.println("OK effect " + kind);
     }
 
     // Deals lethal damage to every currently-alive enemy through the same doDamage path a

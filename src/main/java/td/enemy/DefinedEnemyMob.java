@@ -6,6 +6,7 @@ import td.damage.DamageType;
 import td.economy.EconomyDelta;
 import td.effect.ActiveEffects;
 import td.effect.Effect;
+import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.effect.EffectTransitions;
 import td.effect.FreezeDiminishing;
@@ -82,9 +83,6 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.pathIndex = spawnParameters.pathIndex();
         BaseStats base = definition.baseStats()
                 .with(EnemyStat.MOVE_SPEED, definition.baseSpeed() * spawnParameters.speedMultiplier());
-        if (rank.diminishesFreezes()) {
-            base = base.with(EnemyStat.FREEZE_DR, 1f);
-        }
         this.stats = new StatSheet(base, this::contributeStats);
         this.bodyScale = bodyScaleFor(definition.archetype(), gameWorld.getBoard().scale(), rank) * spawnParameters.sizeMultiplier();
         this.abilityStates = definition.abilities().stream().map(a -> AbilityState.forTrigger(a.trigger())).toList();
@@ -228,12 +226,12 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     /**
-     * Applies the effect with its duration shortened by this mob's resistance to its kind and, for a
-     * freeze, by diminishing returns. One that would last under a tick is blocked.
+     * Applies the effect with its duration shortened by this mob's resistance to its kind and, for
+     * hard crowd control, by diminishing returns. One that would last under a tick is blocked.
      */
     public void applyEffect(Effect effect) {
         float factor = effect.kind().resistedBy().map(stat -> 1f - this.stats.value(stat)).orElse(1f);
-        boolean diminishing = effect.kind() == EffectKind.FREEZE && this.stats.value(EnemyStat.FREEZE_DR) >= 1f;
+        boolean diminishing = effect.kind().category() == EffectCategory.HARD_CC;
         boolean frozen = this.activeEffectKinds().contains(EffectKind.FREEZE);
         if (diminishing) {
             factor *= this.freezeDiminishing.factorAt(this.ticksSinceSpawn, frozen);
@@ -249,7 +247,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.stats.invalidate();
     }
 
-    /** Fresh freezes landed in the current diminishing-returns window; {@code 0} without it. */
+    /** Fresh freezes landed in the current diminishing-returns window. */
     public int freezeDiminishingStep() {
         return this.freezeDiminishing.stepAt(this.ticksSinceSpawn);
     }
@@ -258,7 +256,22 @@ public final class DefinedEnemyMob implements EnemyMob {
         return HitResolution.reductionAgainst(type, this.stats);
     }
 
-    /** Ticks left on the active {@code kind}; empty when inactive or for a burn. */
+    /** The kinds an active effect currently keeps out. */
+    public Set<EffectKind> blockedEffectKinds() {
+        return this.activeEffects.blockedKinds();
+    }
+
+    /** How much speed the active chill takes away; {@code 0} for any other kind or when inactive. */
+    public float effectLevel(EffectKind kind) {
+        return kind == EffectKind.CHILL ? this.activeEffects.chillLevel() : 0f;
+    }
+
+    /** Stacks of the active {@code kind}; {@code 0} when inactive or the kind does not stack. */
+    public int effectStacks(EffectKind kind) {
+        return this.activeEffects.stacks(kind);
+    }
+
+    /** Ticks left on the active {@code kind}; empty when inactive or for a fuel pool. */
     public OptionalInt effectRemainingTicks(EffectKind kind) {
         return this.activeEffects.remainingTicks(kind);
     }
@@ -422,7 +435,8 @@ public final class DefinedEnemyMob implements EnemyMob {
         boolean healthChanged = healed != this.health;
         this.health = healed;
         if (healthChanged || !this.activeEffects.isEmpty()) {
-            this.activeEffects.tick();
+            // The pace of stack decay is the same scale that spirit puts on heals and shields.
+            this.activeEffects.tick(Math.max(0f, 1f + this.stats.value(EnemyStat.SPIRIT) / 100f));
             this.stats.invalidate();
         }
         // After tick() so an expiry is seen the tick it happens; before the dead-return so a lethal

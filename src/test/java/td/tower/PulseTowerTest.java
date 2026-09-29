@@ -2,6 +2,8 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.effect.Effect;
+import td.effect.EffectKind;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
@@ -63,5 +65,46 @@ class PulseTowerTest {
 
         assertThat(tower.isFiring()).isTrue();
         assertThat(ghost.hits()).hasSize(1);
+    }
+
+    @Test
+    void wardingFieldAppliesAVulnerabilityStackToEveryEnemyHitWhenTheChanceRollSucceeds() {
+        GameWorld lucky = WorldFixtures.newWorld(() -> 0.0);
+        PulseTower tower = new PulseTower(lucky, 0, 0);
+        UpgradePaths.buy(tower, lucky, "Warding Field");
+        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
+        lucky.enemies().setEnemies(new EnemyMob[]{enemy});
+
+        tower.doTick(0);
+
+        assertThat(enemy.appliedEffects()).extracting(Effect::kind).containsExactly(EffectKind.VULNERABLE);
+    }
+
+    @Test
+    void wardingFieldAppliesNothingWhenTheChanceRollFails() {
+        GameWorld unlucky = WorldFixtures.newWorld(() -> 0.5);
+        PulseTower tower = new PulseTower(unlucky, 0, 0);
+        UpgradePaths.buy(tower, unlucky, "Warding Field");
+        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
+        unlucky.enemies().setEnemies(new EnemyMob[]{enemy});
+
+        tower.doTick(0);
+
+        assertThat(enemy.appliedEffects()).isEmpty();
+    }
+
+    @Test
+    void resonantFieldTwoRevealsAHiddenEnemyItHitsForTwoSeconds() {
+        PulseTower tower = new PulseTower(this.context, 0, 0);
+        UpgradePaths.buy(tower, this.context, "Resonant Field", "Resonant Field II");
+        FakeEnemyMob ghost = FakeEnemyMob.ghostAt(tower.getX(), tower.getY());
+        FakeEnemyMob visible = FakeEnemyMob.at(tower.getX(), tower.getY());
+        this.context.enemies().setEnemies(new EnemyMob[]{ghost, visible});
+
+        tower.doTick(0);
+
+        assertThat(ghost.appliedEffects()).extracting(Effect::kind).containsExactly(EffectKind.REVEALED);
+        assertThat(ghost.appliedEffects().getFirst().remainingTicks()).isEqualTo(40);
+        assertThat(visible.appliedEffects()).isEmpty();
     }
 }

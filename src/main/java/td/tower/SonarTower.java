@@ -1,5 +1,6 @@
 package td.tower;
 
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.enemy.EnemyMob;
@@ -18,8 +19,10 @@ import td.wave.WaveStartListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * A beam sweeps the full circle and hits every visible enemy in range as it passes its bearing. No
@@ -50,7 +53,6 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
             .withBuff(TowerBuff.damage(0.25f).withCritChance(0.1f))
             .withRequires(UpgradeCondition.owns(TWIN_ARRAY_1.id()))
             .withGate(new DamageDealtCondition(20000));
-    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode TWIN_ARRAY_3 = UpgradeNode.of("sonar.head.twin_array.3", UpgradeSlot.HEAD,
             "Twin Array III", 70)
             .withRequires(UpgradeCondition.owns(TWIN_ARRAY_2.id()))
@@ -61,19 +63,16 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
             .withBuff(TowerBuff.critChance(0.15f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(10));
-    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode LONG_REACH_2 = UpgradeNode.of("sonar.head.long_reach.2", UpgradeSlot.HEAD,
             "Long Reach II", 45)
             .withRequires(UpgradeCondition.owns(LONG_REACH_1.id()))
             .withGate(new DamageDealtCondition(20000))
             .withExtraEffect("damage scales up to +100% at max range");
-    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode WIDE_BAND = UpgradeNode.of("sonar.special.wide_band", UpgradeSlot.SPECIAL,
             "Wide Band", 40)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
             .withGate(new ClusterCondition(2))
             .withExtraEffect("each revolution briefly reveals invisible enemies to every tower");
-    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode MARK_ON_SWEEP = UpgradeNode.of("sonar.special.mark_on_sweep", UpgradeSlot.SPECIAL,
             "Mark on Sweep", 40)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
@@ -86,11 +85,17 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
             .withExtraEffect("bonus magic damage against physically armored/shielded enemies, up to +50%");
     /** Piercing Tone's bonus is the target's physical reduction, as a share of this hit, capped here. */
     private static final float PIERCING_TONE_MAX_BONUS = 0.5f;
+    /** Wide Band's reveal lasts this long from the beam's pass. */
+    private static final float WIDE_BAND_REVEAL_SECONDS = 3f;
+    /** Long Reach II adds up to this much damage at the edge of the range. */
+    private static final float LONG_REACH_MAX_BONUS = 1f;
 
     private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, TWIN_ARRAY_1, TWIN_ARRAY_2,
             TWIN_ARRAY_3, LONG_REACH_1, LONG_REACH_2, WIDE_BAND, MARK_ON_SWEEP, PIERCING_TONE);
 
     private final List<SonarHit> recentHits = new ArrayList<>();
+    private final Set<EnemyMob> marked = Collections.newSetFromMap(new IdentityHashMap<>());
+    private volatile boolean twinBeam = false;
     private volatile SonarSweep sweep = SonarSweep.perRevolution(SECONDS_PER_REVOLUTION, TICKS_PER_SECOND);
 
     public SonarTower(GameWorld context, int x, int y) {
@@ -104,22 +109,64 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
         return TREE;
     }
 
+    @Override
+    protected void onUpgradeBought(UpgradeNode node) {
+        if (node.equals(TWIN_ARRAY_3)) {
+            this.twinBeam = true;
+        }
+    }
+
     public void doTick(int gameTime) {
         this.sweep.advance();
         this.recentHits.removeIf(hit -> gameTime - hit.tick() >= HIT_FLASH_TICKS);
+        this.marked.removeIf(EnemyMob::isDead);
 
-        List<EnemyMob> inRange = InRangeTargetQuery
-                .visible(this.centerX, this.centerY, this.rangeReal())
+        // Wide Band lets the beam reach hidden enemies, and reveals them as it does.
+        boolean wideBand = this.upgrades().owns(WIDE_BAND.id());
+        List<EnemyMob> inRange = (wideBand
+                ? InRangeTargetQuery.everyone(this.centerX, this.centerY, this.rangeReal())
+                : InRangeTargetQuery.visible(this.centerX, this.centerY, this.rangeReal()))
                 .matching(this.context.enemies());
 
         for (EnemyMob enemy : inRange) {
             double bearing = TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(), enemy.getY());
-            if (this.sweep.sweptThisTick(bearing)) {
-                this.dealDamage(enemy, Damage.physical(this.damageCurrent()));
-                this.piercingTone(enemy);
-                this.recentHits.add(new SonarHit((float) enemy.getX(), (float) enemy.getY(), gameTime));
+            if (this.sweptByABeam(bearing)) {
+                this.strike(enemy, gameTime);
             }
         }
+    }
+
+    /** Twin Array III adds a second beam half a turn behind the first. */
+    private boolean sweptByABeam(double bearing) {
+        return this.sweep.sweptThisTick(bearing) || (this.twinBeam && this.sweep.sweptThisTick(bearing + Math.PI));
+    }
+
+    /**
+     * One beam hit: reveals a hidden enemy (Wide Band), sends a marked one's hit as a guaranteed
+     * crit that spends the mark, and marks an unmarked one (Mark on Sweep).
+     */
+    private void strike(EnemyMob enemy, int gameTime) {
+        if (enemy.isHidden()) {
+            this.reveal(enemy, Math.round(WIDE_BAND_REVEAL_SECONDS * TICKS_PER_SECOND));
+        }
+        boolean wasMarked = this.marked.remove(enemy);
+        AttackProfile attack = wasMarked ? this.stats().attack().withCritChance(1f) : this.stats().attack();
+        this.dealDamage(enemy, Damage.physical(this.distanceScaled(enemy)), attack);
+        this.piercingTone(enemy);
+        if (!wasMarked && !enemy.isDead() && this.upgrades().owns(MARK_ON_SWEEP.id())) {
+            this.marked.add(enemy);
+        }
+        this.recentHits.add(new SonarHit((float) enemy.getX(), (float) enemy.getY(), gameTime));
+    }
+
+    /** Long Reach II: the hit grows linearly with the enemy's distance, up to double at the edge. */
+    private int distanceScaled(EnemyMob enemy) {
+        if (!this.upgrades().owns(LONG_REACH_2.id())) {
+            return this.damageCurrent();
+        }
+        double distance = Math.hypot(enemy.getX() - this.centerX, enemy.getY() - this.centerY);
+        float share = (float) Math.min(1.0, distance / this.rangeReal());
+        return Math.round(this.damageCurrent() * (1f + LONG_REACH_MAX_BONUS * share));
     }
 
     /** Adds magic damage in proportion to how much of a physical hit the target shrugs off. */
@@ -131,6 +178,11 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
         if (bonus > 0f) {
             this.dealDamage(enemy, Damage.magic(Math.round(this.damageCurrent() * bonus)));
         }
+    }
+
+    /** Whether a second beam sweeps half a turn opposite the first. */
+    public boolean hasTwinBeam() {
+        return this.twinBeam;
     }
 
     /** The beam's heading between two ticks; the turret head uses it too. */
@@ -156,7 +208,21 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
 
     @Override
     protected List<BehaviourLine> behaviours() {
-        return List.of(new BehaviourLine(BehaviourMarker.TARGETING, "Hits", "all it sweeps"));
+        List<BehaviourLine> lines = new ArrayList<>();
+        lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Hits", "all it sweeps"));
+        if (this.twinBeam) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Beams", "2"));
+        }
+        if (this.upgrades().owns(WIDE_BAND.id())) {
+            lines.add(new BehaviourLine(BehaviourMarker.REVEAL, "Reveals hidden", BehaviourLine.seconds(Math.round(WIDE_BAND_REVEAL_SECONDS * TICKS_PER_SECOND))));
+        }
+        if (this.upgrades().owns(MARK_ON_SWEEP.id())) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Marks", "next hit crits"));
+        }
+        if (this.upgrades().owns(LONG_REACH_2.id())) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Far hits", "up to +100%"));
+        }
+        return lines;
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
@@ -168,10 +234,11 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
         this.context.waves().removeListener(this);
     }
 
-    /** Drops the previous wave's hit markers. */
+    /** Drops the previous wave's hit markers and marks. */
     @Override
     public void waveStarted() {
         this.recentHits.clear();
+        this.marked.clear();
     }
 
     /** Where and when the beam caught an enemy. */

@@ -28,7 +28,7 @@ final class TraitText {
 
     static String effectName(EnemyStat resistance) {
         return switch (resistance) {
-            case SLOW_RESIST -> "slow";
+            case CHILL_RESIST -> "chill";
             case BURN_RESIST -> "burn";
             case FREEZE_RESIST -> "freeze";
             default -> resistance.name().toLowerCase(Locale.ROOT);

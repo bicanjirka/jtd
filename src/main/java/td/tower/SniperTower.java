@@ -55,7 +55,6 @@ public final class SniperTower extends AbstractTower {
             .withBuff(TowerBuff.critChance(0.2f).withArmorPenetration(0.5f))
             .withRequires(UpgradeCondition.owns(MARKSMANS_EYE_1.id()))
             .withGate(new DamageDealtCondition(20000));
-    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode MARKED_ROUND = UpgradeNode.of("sniper.special.marked_round", UpgradeSlot.SPECIAL,
             "Marked Round", 20)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
@@ -66,7 +65,6 @@ public final class SniperTower extends AbstractTower {
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
             .withGate(new KillCountCondition(15))
             .withExtraEffect("every 5th shot is a guaranteed crit, and its crits deal 250%");
-    /** Its fire-rate burst on a kill is not implemented yet (TODO.md). */
     private static final UpgradeNode MOMENTUM = UpgradeNode.of("sniper.special.momentum", UpgradeSlot.SPECIAL,
             "Momentum", 20)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
@@ -76,6 +74,9 @@ public final class SniperTower extends AbstractTower {
     private static final int FIFTH_SHOT_INTERVAL = 5;
     private static final float FIFTH_SHOT_CRIT_MULTIPLIER = 2.5f;
     private static final int MOMENTUM_DAMAGE_MULTIPLIER = 5;
+    /** Cooldown cut for {@link #MOMENTUM_KILL_BUFF_SECONDS} after a kill. */
+    private static final float MOMENTUM_KILL_FIRE_RATE = 0.5f;
+    private static final float MOMENTUM_KILL_BUFF_SECONDS = 5f;
 
     private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, FOCUSED_OPTICS_1, FOCUSED_OPTICS_2,
             MARKSMANS_EYE_1, MARKSMANS_EYE_2, MARKED_ROUND, FIFTH_SHOT, MOMENTUM);
@@ -152,7 +153,19 @@ public final class SniperTower extends AbstractTower {
         }
         boolean critical = this.dealDamage(target, Damage.physical(damage), attack);
         this.momentumCharged = critical && this.upgrades().owns(MOMENTUM.id());
+        if (critical && this.upgrades().owns(MARKED_ROUND.id())) {
+            this.applyVulnerable(target, 1);
+        }
         return critical;
+    }
+
+    /** Momentum: a kill buffs the fire rate for a few seconds; another kill restarts the clock. */
+    @Override
+    protected void onKill(EnemyMob killed) {
+        if (this.upgrades().owns(MOMENTUM.id())) {
+            this.grantTimedBuff(TowerBuff.fireRate(MOMENTUM_KILL_FIRE_RATE),
+                    Math.round(MOMENTUM_KILL_BUFF_SECONDS * TICKS_PER_SECOND));
+        }
     }
 
     public EnemyMob getCurrentTarget() {
@@ -174,7 +187,11 @@ public final class SniperTower extends AbstractTower {
     @Override
     protected List<BehaviourLine> behaviours() {
         boolean special = this.upgrades().tip(UpgradeSlot.SPECIAL).isPresent();
-        return List.of(new BehaviourLine(BehaviourMarker.TARGETING, "Targets", special ? "most health" : "first"));
+        BehaviourLine targets = new BehaviourLine(BehaviourMarker.TARGETING, "Targets", special ? "most health" : "first");
+        if (!this.upgrades().owns(MARKED_ROUND.id())) {
+            return List.of(targets);
+        }
+        return List.of(targets, new BehaviourLine(BehaviourMarker.VULNERABLE, "Crits apply", "vulnerable"));
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {

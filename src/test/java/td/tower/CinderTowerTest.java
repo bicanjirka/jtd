@@ -3,6 +3,7 @@ package td.tower;
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
@@ -228,5 +229,20 @@ class CinderTowerTest {
 
         assertThat(afterTarget.appliedEffects().getFirst().authoredDurationTicks())
                 .isGreaterThan(beforeTarget.appliedEffects().getFirst().authoredDurationTicks());
+    }
+
+    @Test
+    void hexflameAppliesOneVulnerabilityStackWhenAWaveNewlyIgnitesAnEnemyAndNotWhenItIsAlreadyBurning() {
+        CinderTower tower = towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, "Hexflame");
+        FakeEnemyMob ahead = FakeEnemyMob.at(150, 112);
+        this.context.enemies().setEnemies(new EnemyMob[]{ahead});
+
+        tickThrough(tower, 1, 2 * (CinderTower.COOLDOWN_MAX + CinderTower.WAVE_TRAVEL_TICKS));
+
+        assertThat(ahead.appliedEffects()).extracting(Effect::kind)
+                .containsOnly(EffectKind.BURN, EffectKind.VULNERABLE);
+        assertThat(ahead.appliedEffects().stream().filter(e -> e.kind() == EffectKind.BURN).count()).isGreaterThan(1);
+        assertThat(ahead.appliedEffects().stream().filter(e -> e.kind() == EffectKind.VULNERABLE).count()).isEqualTo(1);
     }
 }

@@ -11,6 +11,9 @@ public interface StatAccumulator {
 
     void multiply(EnemyStat stat, float factor);
 
+    /** A flat amount added to the stat, for one that changes every tick. */
+    void addFlat(EnemyStat stat, float amount);
+
     /** A flat amount the enemy receives, scaled by its spirit (a heal's regeneration). */
     void restoreFlat(EnemyStat stat, float amount);
 

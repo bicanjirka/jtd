@@ -87,7 +87,7 @@ a different loadout or level, since v1 has no config format for either.
 | Sonar  | 20    | Long range; a beam sweeps around it once every 2s, hitting everything it passes                                                                     |
 | Pulse  | 25    | Short range; damages everything in range at once, ghosts included                                                                                   |
 | Aura   | 20    | Passive — boosts the damage and range of nearby towers; several stack                                                                               |
-| Mortar | 30    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path; splashes physical damage and slows everything the blast reaches |
+| Mortar | 30    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path; splashes physical damage and chills everything the blast reaches |
 | Seeker | 35    | Fires a homing missile that re-aims each tick and retargets if its target dies; deals magic damage and freezes whichever mob it actually hits       |
 | Cinder | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included |
 
@@ -123,9 +123,28 @@ by it too — a Boss-rank kill is worth disproportionately more than a Grunt-ran
 bounty. Not every enemy defines all five ranks; asking for one an enemy doesn't have silently
 uses its own highest defined rank instead. Elite and Boss Simple and Mender enemies carry adaptive
 armor: it resists whichever damage type (physical or magic) has landed most this level, from not
-at all at an even split up to full strength against a one-type defence. Every Elite and Boss
-enemy also shrugs off repeated freezes: within 10 seconds of the last one, each fresh freeze
-lasts half as long as the one before, and a fourth doesn't take hold at all.
+at all at an even split up to full strength against a one-type defence.
+
+### Status effects
+
+Towers and enemy abilities put timed effects on enemies. An enemy shows up to three as markers and
+the rest as a "+N"; selecting it lists every effect with what kind it is and the time left.
+
+| Effect     | Kind             | What it does                                                                                       |
+|------------|------------------|----------------------------------------------------------------------------------------------------|
+| Chilled    | soft CC          | Slows in proportion to its level, which adds up (never past 80%) and fades linearly. Every slowing tower chills. It also cuts the damage the enemy takes from burning |
+| Freeze     | hard CC          | Stops the enemy. Every enemy diminishes it: within 10 s of the last one, each fresh freeze lasts half as long as the one before, and a fourth doesn't take hold. Freezing a chilled enemy uses up the chill and lasts longer by its level |
+| Burning    | damage over time | Damage that decays as it burns; several towers add to one pool and each is credited its share. It earns a Scorched stack when it starts and another every half second while it lasts |
+| Poisoned   | damage over time | Its own decaying pool, so it stacks with burning. It slows in proportion to the pool (at most 30%, on top of chill) and earns Sickened stacks the same way |
+| Scorched   | debuff           | Burning's lasting mark: each stack lowers resilience by 1 (down to -100; below 0 crits hit harder but no likelier). It outlasts the fire, then loses a stack per second |
+| Sickened   | debuff           | Poison's lasting mark: each stack lowers spirit by 1 (down to -100), so heals and shields shrink and vanish at the floor. Loses a stack per second |
+| Vulnerable | debuff           | Up to 3 stacks, +15% damage taken each, from any tower; one shared 4 s clock any application refreshes |
+| Shield     | restorative      | Absorbs a share of every hit                                                                       |
+| Heal       | restorative      | Restores health every tick                                                                         |
+| Invisible  | stealth          | Towers cannot target the enemy; area damage still reaches it                                       |
+| Revealed   | stealth          | Towers can target the enemy again, even through invisibility                                       |
+
+Stacks wear off at a pace spirit sets: neutral spirit loses one per second, more spirit is faster, and at -100 they never wear off, so a fully sickened enemy stays sickened. A frozen enemy cannot burn, and freezing an enemy puts out its burn but keeps its Scorched stacks. Nothing else cancels anything.
 
 ### Spawn shapes
 

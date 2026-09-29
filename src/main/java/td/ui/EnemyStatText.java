@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.effect.EffectKind;
 import td.enemy.EnemyInspection;
 import td.enemy.HitResolution;
 import td.enemy.TraitLine;
@@ -36,7 +37,7 @@ final class EnemyStatText {
         lines.add(header(inspection));
         lines.add(new SheetLine.HealthBar(inspection.maxHealth(), inspection.maxHealth(), "$" + inspection.bounty(), false));
         lines.add(new SheetLine.Gap());
-        lines.addAll(statAndTraitRows(inspection, false));
+        lines.addAll(statAndTraitRows(inspection));
         if (!inspection.description().isEmpty()) {
             lines.add(new SheetLine.Gap());
             lines.add(new SheetLine.Prose(inspection.description()));
@@ -54,8 +55,13 @@ final class EnemyStatText {
             case LEAKED -> new SheetLine.HealthBar(inspection.health(), inspection.maxHealth(), "Leaked", true);
         });
         lines.add(new SheetLine.Gap());
-        lines.addAll(statAndTraitRows(inspection, true));
+        lines.addAll(statAndTraitRows(inspection));
         inspection.effects().forEach(effect -> lines.add(effectRow(effect)));
+        inspection.blocked().forEach(kind -> lines.add(Row.effect(EnemyFrameBuilder.markerPaletteFor(kind),
+                "Immune to " + kind.name().toLowerCase(Locale.ROOT), "")));
+        if (inspection.freezeStep() > 0) {
+            lines.add(Row.plain(Glyph.DOT, "Freeze DR", "next " + freezeStepText(inspection.freezeStep())));
+        }
         return new InfoSheet(lines);
     }
 
@@ -65,9 +71,9 @@ final class EnemyStatText {
     }
 
     /** Speed first, which always shows, then every other stat off its default, then traits no stat covers. */
-    private static List<Row> statAndTraitRows(EnemyInspection inspection, boolean live) {
+    private static List<Row> statAndTraitRows(EnemyInspection inspection) {
         List<Row> rows = new ArrayList<>();
-        StatText speed = statText(EnemyStat.MOVE_SPEED, inspection.stat(EnemyStat.MOVE_SPEED), inspection, live);
+        StatText speed = statText(EnemyStat.MOVE_SPEED, inspection.stat(EnemyStat.MOVE_SPEED));
         rows.add(Row.plain(Glyph.CHEVRON, speed.label(), speed.value()));
         Set<EnemyStat> shown = EnumSet.noneOf(EnemyStat.class);
         for (EnemyStat stat : EnemyStat.values()) {
@@ -77,7 +83,7 @@ final class EnemyStatText {
             Optional<EnemyStat> pair = pairedWith(stat).filter(other -> inspection.stat(other) == inspection.stat(stat));
             shown.add(stat);
             pair.ifPresent(shown::add);
-            StatText text = pair.isPresent() ? pairText(stat, inspection.stat(stat)) : statText(stat, inspection.stat(stat), inspection, live);
+            StatText text = pair.isPresent() ? pairText(stat, inspection.stat(stat)) : statText(stat, inspection.stat(stat));
             rows.add(toned(inspection, stat, text));
         }
         for (TraitLine trait : inspection.traitLines()) {
@@ -117,7 +123,7 @@ final class EnemyStatText {
         return new StatText(value >= 0 ? "Resist all" : "Weak to all", mitigationText(value));
     }
 
-    static StatText statText(EnemyStat stat, float value, EnemyInspection inspection, boolean live) {
+    static StatText statText(EnemyStat stat, float value) {
         return switch (stat) {
             case ARMOR -> new StatText(value >= 0 ? "Resist physical" : "Weak to physical", mitigationText(value));
             case MAGIC_RESIST -> new StatText(value >= 0 ? "Resist magic" : "Weak to magic", mitigationText(value));
@@ -126,31 +132,46 @@ final class EnemyStatText {
             case MOVE_SPEED -> new StatText("Speed", SheetNumbers.decimal(value * TickRate.TICKS_PER_SECOND) + " px/s");
             case PHYSICAL_DAMAGE_TAKEN -> new StatText("Physical taken", SheetNumbers.percent(value));
             case MAGIC_DAMAGE_TAKEN -> new StatText("Magic taken", SheetNumbers.percent(value));
-            case RESILIENCE -> value >= 100f ? new StatText("Crit immune", "")
-                    : new StatText("Resilience", "-" + SheetNumbers.percent(value / 100f) + " crits");
+            case RESILIENCE -> resilienceText(value);
             case CRIT_CHANCE_TAKEN -> new StatText("Crit chance taken", "x" + SheetNumbers.decimal(value));
             case SPIRIT -> new StatText("Spirit", SheetNumbers.signedPercent(value / 100f) + " heals");
             case REGENERATION -> new StatText("Regenerates", SheetNumbers.decimal(value / 100f * TickRate.TICKS_PER_SECOND) + "/s");
-            case SLOW_RESIST -> resistText("Slow", value);
+            case CHILL_RESIST -> resistText("Chill", value);
             case BURN_RESIST -> resistText("Burn", value);
             case FREEZE_RESIST -> resistText("Freeze", value);
             case STEALTH -> new StatText("Stealthed", "");
-            case FREEZE_DR -> new StatText("Freeze DR", live && value >= 1f && inspection.freezeStep() > 0
-                    ? "next " + freezeStepText(inspection.freezeStep()) : "");
         };
+    }
+
+    private static StatText resilienceText(float value) {
+        if (value >= 100f) {
+            return new StatText("Crit immune", "");
+        }
+        return value < 0f
+                ? new StatText("Resilience", "+" + SheetNumbers.percent(-value / 100f) + " crit damage")
+                : new StatText("Resilience", "-" + SheetNumbers.percent(value / 100f) + " crits");
     }
 
     private static Row effectRow(EnemyInspection.EffectState effect) {
         String name = switch (effect.kind()) {
-            case SLOW -> "Slowed";
+            case CHILL -> "Chilled";
             case BURN -> "Burning";
             case FREEZE -> "Frozen";
             case SHIELD -> "Shielded";
             case INVISIBLE -> "Invisible";
             case HEAL -> "Healing";
+            case VULNERABLE -> "Vulnerable x" + effect.stacks();
+            case REVEALED -> "Revealed";
+            case POISON -> "Poisoned";
+            case SCORCHED -> "Scorched x" + effect.stacks();
+            case SICKENED -> "Sickened x" + effect.stacks();
         };
-        String left = effect.remainingTicks().isEmpty() ? ""
-                : String.format(Locale.ROOT, "%.1f s", effect.remainingTicks().getAsInt() / TickRate.TICKS_PER_SECOND);
+        String category = effect.kind().category().label();
+        if (effect.kind() == EffectKind.CHILL) {
+            category += " " + SheetNumbers.percent(effect.level());
+        }
+        String left = effect.remainingTicks().isEmpty() ? category
+                : category + " " + String.format(Locale.ROOT, "%.1f s", effect.remainingTicks().getAsInt() / TickRate.TICKS_PER_SECOND);
         return Row.effect(EnemyFrameBuilder.markerPaletteFor(effect.kind()), name, left);
     }
 

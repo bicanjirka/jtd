@@ -4,13 +4,15 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.economy.EconomyDelta;
-import td.enemy.HitReceiver;
+import td.effect.Effect;
+import td.enemy.EnemyMob;
 import td.stat.DisruptionPenalty;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
+import td.util.ThreadConfined;
 import td.util.TickRate;
 
 import java.util.ArrayList;
@@ -24,10 +26,13 @@ import java.util.Optional;
  * Everything derived from the board is computed in the constructor and {@code final}. Range checks
  * compare squared distances ({@link #rangeReal2()}) to avoid a square root per scan.
  */
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public abstract class AbstractTower implements Tower {
 
     /** Ticks per second at normal speed, from the one place the tick rate is defined. */
     protected static final float TICKS_PER_SECOND = TickRate.TICKS_PER_SECOND;
+    /** How long a vulnerability lasts from its latest application. */
+    private static final float VULNERABLE_SECONDS = 4f;
 
     protected final GameWorld context;
     protected final int boardX;
@@ -50,6 +55,11 @@ public abstract class AbstractTower implements Tower {
     private volatile boolean removed = false;
     // Sampled by the tick thread; also read when the EDT republishes stats after a purchase.
     private volatile DisruptionPenalty disruption = DisruptionPenalty.none();
+    // A temporary buff a tower grants itself; published like an upgrade's buff, expired on the tick thread.
+    private volatile TowerBuff timedBuff = TowerBuff.none();
+    private int timedBuffEndsAt;
+    private int currentTick;
+    private boolean inKillHook;
 
     /**
      * Converts the cell coordinates to the pixel centre and range. A tower with no cooldown passes
@@ -143,7 +153,7 @@ public abstract class AbstractTower implements Tower {
         TowerBuff externalBuff = this.context.towers().all().stream()
                 .map(t -> t.buffFor(this))
                 .reduce(TowerBuff.none(), TowerBuff::combine);
-        TowerBuff totalBuff = externalBuff.combine(upgrades.totalBuff());
+        TowerBuff totalBuff = externalBuff.combine(upgrades.totalBuff()).combine(this.timedBuff);
         this.stats = TowerStats.of(this.baseStats, totalBuff, this.disruption, this.context.getBoard().scale());
     }
 
@@ -157,12 +167,12 @@ public abstract class AbstractTower implements Tower {
      *
      * @return whether the hit landed as a critical hit
      */
-    protected boolean dealDamage(HitReceiver enemy, Damage damage) {
+    protected boolean dealDamage(EnemyMob enemy, Damage damage) {
         return this.dealDamage(enemy, damage, this.stats.attack());
     }
 
-    /** {@link #dealDamage(HitReceiver, Damage)} with a one-off attack profile, for a special shot. */
-    protected boolean dealDamage(HitReceiver enemy, Damage damage, AttackProfile attacker) {
+    /** {@link #dealDamage(EnemyMob, Damage)} with a one-off attack profile, for a special shot. */
+    protected boolean dealDamage(EnemyMob enemy, Damage damage, AttackProfile attacker) {
         if (this.removed) {
             return false;
         }
@@ -177,16 +187,68 @@ public abstract class AbstractTower implements Tower {
                     this.context.economy().apply(EconomyDelta.credits(
                             Math.round(enemy.getBounty() * bountyBonus)));
                 }
+                this.runKillHook(enemy);
             }
         }
         return landed.critical();
     }
 
     /**
-     * Compared against the published stats rather than the last sample, so a republish from the EDT
-     * racing this one is corrected on the next tick.
+     * Runs {@link #onKill} for a kill this tower made. A kill made from inside the hook (an
+     * explosion's) triggers nothing, so hooks never chain.
      */
-    public void refreshDisruption() {
+    private void runKillHook(EnemyMob killed) {
+        if (this.inKillHook) {
+            return;
+        }
+        this.inKillHook = true;
+        try {
+            this.onKill(killed);
+        } finally {
+            this.inKillHook = false;
+        }
+    }
+
+    /** Adds {@code stacks} of vulnerability to {@code target}; the stacks belong to the enemy, not this tower. */
+    protected void applyVulnerable(EnemyMob target, int stacks) {
+        target.applyEffect(Effect.vulnerable(stacks, Math.round(VULNERABLE_SECONDS * TICKS_PER_SECOND),
+                d -> this.dealDamage(target, d)));
+    }
+
+    /** Makes {@code target} targetable by every tower for {@code durationTicks}, even if invisible. */
+    protected void reveal(EnemyMob target, int durationTicks) {
+        target.applyEffect(Effect.revealed(durationTicks, d -> this.dealDamage(target, d)));
+    }
+
+    /**
+     * Hook for a kill this tower just made, with the mob still carrying the effects it died under.
+     * A no-op by default.
+     */
+    protected void onKill(EnemyMob killed) {
+    }
+
+    /**
+     * Buffs this tower for {@code durationTicks} from now, replacing any timed buff (it never
+     * stacks; granting again restarts the clock).
+     */
+    protected void grantTimedBuff(TowerBuff buff, int durationTicks) {
+        this.timedBuffEndsAt = this.currentTick + durationTicks;
+        this.timedBuff = buff;
+        this.publishStats(this.upgrades);
+    }
+
+    /**
+     * Start of this tower's turn: ends a timed buff that has run out, and re-reads the disruption at
+     * its centre. Stats are republished only when one of them changed; compared against the
+     * published stats rather than the last sample, so a republish from the EDT racing this one is
+     * corrected on the next tick.
+     */
+    public void beginTick(int gameTime) {
+        this.currentTick = gameTime;
+        if (this.timedBuff != TowerBuff.none() && gameTime >= this.timedBuffEndsAt) {
+            this.timedBuff = TowerBuff.none();
+            this.publishStats(this.upgrades);
+        }
         DisruptionPenalty sampled = this.context.disruptions().penaltyAt(this.centerX, this.centerY);
         this.disruption = sampled;
         if (!sampled.equals(this.stats.disruption())) {

@@ -136,7 +136,11 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         this.sprite(tower);
         // The head is the scan: it must point exactly where the beam is, or the tower appears
         // to shoot enemies it is not facing.
-        this.head(tower, tower.sweepRadiansAt(this.interpolationAlpha));
+        double heading = tower.sweepRadiansAt(this.interpolationAlpha);
+        this.head(tower, heading);
+        if (tower.hasTwinBeam()) {
+            this.head(tower, heading + Math.PI);
+        }
         return null;
     }
 

@@ -26,6 +26,7 @@ import td.ui.render.TraitMarkerDraw;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Describes each enemy's body, markers and effects as draw commands, switching on its
@@ -93,12 +94,17 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
 
     static Palette markerPaletteFor(EffectKind kind) {
         return switch (kind) {
-            case SLOW -> Palette.STATUS_MARKER_SLOW;
+            case CHILL -> Palette.STATUS_MARKER_CHILL;
             case BURN -> Palette.STATUS_MARKER_BURN;
             case FREEZE -> Palette.STATUS_MARKER_FREEZE;
             case SHIELD -> Palette.STATUS_MARKER_SHIELD;
             case INVISIBLE -> Palette.STATUS_MARKER_INVISIBLE;
             case HEAL -> Palette.STATUS_MARKER_HEAL;
+            case VULNERABLE -> Palette.STATUS_MARKER_VULNERABLE;
+            case REVEALED -> Palette.STATUS_MARKER_REVEALED;
+            case POISON -> Palette.STATUS_MARKER_POISON;
+            case SCORCHED -> Palette.STATUS_MARKER_SCORCHED;
+            case SICKENED -> Palette.STATUS_MARKER_SICKENED;
         };
     }
 
@@ -113,7 +119,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case BURN_IMMUNE -> Palette.TRAIT_MARKER_BURN_IMMUNE;
             case FREEZE_IMMUNE -> Palette.TRAIT_MARKER_FREEZE_IMMUNE;
             case EFFECT_RESIST -> Palette.TRAIT_MARKER_EFFECT_RESIST;
-            case FREEZE_DIMINISHING -> Palette.TRAIT_MARKER_FREEZE_DIMINISHING;
         };
     }
 
@@ -264,6 +269,9 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
      * alpha.
      */
     private float cloakProgress(DefinedEnemyMob mob) {
+        if (mob.activeEffectKinds().contains(EffectKind.REVEALED)) {
+            return 0f;
+        }
         if (mob.activeEffectKinds().contains(EffectKind.INVISIBLE)) {
             int ticksSinceGained = Math.max(0, mob.ticksSinceEffectGained(EffectKind.INVISIBLE, this.gameTime));
             return Math.min(1f, (float) ticksSinceGained / CLOAK_FADE_DURATION_TICKS);
@@ -279,9 +287,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         float markerY = y - scale * MARKER_ROW_OFFSET_FRACTION;
         float markerX = x - scale;
         int shown = 0;
-        for (EffectKind kind : mob.activeEffectKinds()) {
+        Set<EffectKind> active = mob.activeEffectKinds();
+        for (EffectKind kind : active) {
             if (shown == MAX_VISIBLE_MARKERS) {
-                this.markerDraws.add(new StatusMarkerDraw(Palette.STATUS_MARKER_OVERFLOW, markerX, markerY, MARKER_FIXED_SCALE));
+                this.markerDraws.add(new StatusMarkerDraw(Palette.STATUS_MARKER_OVERFLOW, markerX, markerY,
+                        MARKER_FIXED_SCALE, active.size() - MAX_VISIBLE_MARKERS));
                 return;
             }
             this.markerDraws.add(new StatusMarkerDraw(markerPaletteFor(kind), markerX, markerY, MARKER_FIXED_SCALE));

@@ -10,11 +10,9 @@ this file is the single place to look for outstanding design/feature gaps.
 
 ## Feature request implementation order
 
-Every feature request has shipped (see each doc's own status line). `FEATURE-tower-
-specialization-abilities.md` is the one partial exception: its [F]-tagged content is built, its
-[S]-tagged stub nodes wait on the primitives listed under "Tower specialization primitives"
-below. `FEATURE-enemy-stats.md` supplied the penetration, per-attacker crit and
-resistance-aware primitives.
+Every feature request has shipped (see each doc's own status line) except the draft
+`FEATURE-effect-interactions.md`, whose scope has landed in part (vulnerable, poison, revealed,
+freeze-burn, universal freeze diminishing returns) and is closed out in its own status line.
 
 Implemented, for reference: `FEATURE-enemy-spawn-types.md`, `FEATURE-multiple-enemy-paths.md`,
 `FEATURE-playtesting-and-balance-tooling.md`, `FEATURE-enemy-rank-system.md`,
@@ -231,122 +229,29 @@ with the cooldown-gated travelling-wave firing model) join this same bucket.
   finished off - only a targeting-behavior change (out of scope here; the ask was numbers only) would fix that, so
   a future pass could reconsider it if `seeker` still feels weak after this buff lands in real play.
 
-### Seeker freeze uptime is held down by a stopgap cooldown
+### Effect and specialization numbers are unbalanced placeholders
 
-A grunt has no freeze diminishing returns (only `ELITE`, `BOSS` and `FreezeDiminishingTrait` carry them), so a
-Seeker with a 45-tick cooldown kept one frozen about two ticks in three. `SeekerTower.COOLDOWN_MAX` was doubled to 90
-as a stopgap, which halves its damage output too; both Twin Warhead upgrades bring the cooldown back to
-about the old base, so a fully upgraded Seeker is where it was.
+Every number the effect-interactions and specialization work introduced was chosen to be plausible,
+not tuned: vulnerable (+15% per stack, cap 3, 4 s), the chill cap (80%), how far a chill cuts a burn (half
+at the cap), poison's damage (10% of weapon damage per tick, 4 s), its slow (up to 30%) and the half-second
+stack interval of burning and poisoned, revealed (3 s from Wide Band, 2 s from Resonant Field II),
+Momentum's cooldown cut and 5 s, the shatter and explosion share and radius, shrapnel's ring width and
+share, Warding Field's 10% chance, Withering Field's interval, Long Reach II's scaling, and Splash's three
+blasts. Burning's resilience loss (-1 per stack) and poisoned's spirit loss (-1 per stack) grow without
+limit up to their stat floors of -100. Scorched and Sickened lose a stack per second at neutral spirit
+(one per 20 ticks, `ActiveEffects.STACK_DECAY_INTERVAL_TICKS`), so steady burning nets one stack per
+second and needs about 100 s to reach the floor; at -100 spirit they never wear off.
 
-- **Where:** `td.enemy.DefinedEnemyMob.applyEffect`, `td.effect.FreezeDiminishing`, `SeekerTower`.
-- **Approach:** decide with `FEATURE-effect-interactions.md` whether freeze diminishing returns apply to every enemy
-  or a shorter window; then restore the cooldown and retune Seeker damage against the result.
+**Not as designed - to iterate on:** stack decay currently runs all the time, including while a burn or
+poison is still earning stacks. A burning enemy earns 2 stacks per second and loses 1, so the net gain is 1
+per second. That is a side effect of the first implementation, not the intended design, and the behaviour
+wanted here is still to be settled: for example decay paused while the pool is active, decay only once it has
+ended, or a different rate. Sickened lowering spirit, which slows the decay of its own stacks and of Scorched,
+interacts with whichever is chosen.
 
-## Tower specialization primitives
-
-`docs/features/FEATURE-tower-specialization-abilities.md` tags consumers across the tower
-catalogue **[S]** - the node itself is real (id, price, gate, description, selectable in the UI)
-but its behavioral hook is a documented no-op until the primitive below lands, per that document's
-own two-document build order. Each entry closes once its primitive is implemented and every node
-listed is wired to real behavior in the same commit.
-
-### `EffectKind.VULNERABLE` doesn't exist
-
-The largest of the eleven: a stacking (cap 3) damage-amplifying status effect. Six nodes wait on
-it: Marked Round (`SniperTower`), Warding Field (`PulseTower`), Cursed Shrapnel (`MortarTower`),
-Homing Curse (`SeekerTower`), Hexflame (`CinderTower`), Withering Field (`AuraTower`).
-
-- **Where:** `td.effect` (`EffectKind`, `Effect`'s static factories, `ActiveEffects.magnitude`
-  and `contributeTo`), per `td/effect/CLAUDE.md`'s "Adding a kind" checklist.
-- **Approach:** the effect multiplies `PHYSICAL_DAMAGE_TAKEN`/`MAGIC_DAMAGE_TAKEN` in
-  `ActiveEffects.contributeTo`; `HitResolution` already applies damage taken last, and sources
-  multiply, so composition order is settled. Still open in
-  `FEATURE-tower-specialization-abilities.md`: stack shape and per-stack magnitude.
-
-### A per-target mark for a guaranteed crit doesn't exist
-
-Sonar's Mark on Sweep: a beam hit marks its target, and the next hit on it is a guaranteed crit.
-A guaranteed crit is now just a hit sent with `AttackProfile.withCritChance(1f)`; what is missing
-is remembering which enemies this tower marked.
-
-- **Where:** `td.tower.SonarTower.doTick`.
-- **Approach:** keep the marked mobs in the tower (a small identity set, pruned when they die),
-  and send the next hit on a marked one through `dealDamage(enemy, damage, attack)` with crit
-  chance 1.
-
-### A timed, non-stacking self-buff pulse triggered by a kill doesn't exist
-
-Momentum's "+100% fire rate for 5s, does not stack" - every upgrade-node buff today is permanent
-from the moment it's bought, not one with its own expiry layered on top.
-
-- **Where:** `td.tower.AbstractTower` (or a new small per-tower timed-buff holder).
-- **Approach:** fold it in like enemy disruption: a per-tower timed `TowerBuff` sampled each tick
-  in the towers phase, republishing `TowerStats` only when it starts or expires. See
-  `FEATURE-tower-specialization-abilities.md`'s "New primitives" #4.
-
-### An on-kill secondary trigger, aware of the kill's own status effects, doesn't exist
-
-Two nodes wait on it: Seeker's Deep Freeze II (shatter-on-kill splash, only if the kill was
-frozen) and Splash's Concussive Blast (a killed enemy explodes).
-
-- **Where:** `td.tower.AbstractTower.dealDamage` or `td.enemy.DefinedEnemyMob`'s kill path.
-- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #5.
-
-### "Reveal an invisible enemy to every tower" doesn't exist
-
-Distinct from Pulse's existing "already hit because something else triggered it" behavior - this
-is an active reveal other towers can then target off of. Two nodes wait on it: Pulse's Resonant
-Field II and Sonar's Wide Band.
-
-- **Where:** `td.effect.ActiveEffects.contributeTo` (a new reveal effect kind).
-- **Approach:** a reveal sets `STEALTH` to 0 with `StatModifier.setTo(0)`; the lowest set value
-  wins over invisibility's 1, so every tower's targeting sees the mob again with no new query.
-
-### Crit-triggered behavior override, beyond bonus damage, doesn't exist
-
-Two nodes wait on it: Splash's Overpressure (a crit fires at every enemy in range instead of the
-one target) and Rapid Battery III (a crit's splash is 50% bigger).
-
-- **Where:** `td.tower.SplashTower`. `dealDamage` already reports whether the hit landed
-  critical; what's missing is a place to act on it mid-loop.
-- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #7.
-
-### Distance-scaling damage doesn't exist
-
-Sonar's Long Reach II: damage scales up to +100% at max range. `TowerBuff` has no axis for
-"strength depends on this shot's own distance from the tower."
-
-- **Where:** `td.tower.SonarTower.doTick`.
-- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #8.
-
-### A second, independently-aimed turret head doesn't exist
-
-Sonar's Twin Array III - primarily a render/aim concern (a second `TurretAim` instance, a second
-`TurretHeadDraw`), not damage math.
-
-- **Where:** `td.tower.SonarTower`, `td.ui.TowerSpriteFrameBuilder.visitSonarTower`.
-- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #9.
-
-### A toxic-DoT `EffectKind`, distinct from burn, doesn't exist
-
-Splash's Toxic Bloom - its own decay curve, separate from `BURN`'s fuel-pool model.
-
-- **Where:** `td.effect`, per `td/effect/CLAUDE.md`'s "Adding a kind" checklist.
-- **Approach:** see `FEATURE-tower-specialization-abilities.md`'s "New primitives" #10.
-
-### A shrapnel damage ring past the main splash doesn't exist
-
-Not one of `FEATURE-tower-specialization-abilities.md`'s own eleven primitives - a gap this
-feature's own implementation pass found in Mortar's `head` chain. Fragmentation Rounds (25% weapon
-damage in a wider ring past the main splash) and Fragmentation Rounds II (the same shrapnel also
-applies this tower's slow, at half duration) both wait on it; the second literally cannot exist
-without the first.
-
-- **Where:** `td.tower.MortarTower.onImpact`.
-- **Approach:** add a second, wider `InRangeTargetQuery` ring past the existing splash radius,
-  dealing 25% of `damageCurrent()` with no falloff, gated on Fragmentation Rounds being owned;
-  Fragmentation Rounds II then applies `Effect.slow` (the same call `onImpact` already makes for
-  the main splash) at half `slowDurationTicks` to whatever the ring catches.
+- **Where:** the named constants in `td.effect.ActiveEffects`, `AbstractTower` and each tower.
+- **Approach:** tune through play or `td.BalanceHarness` with the other placeholder entries; decide
+  whether a long burn's resilience loss (crit damage up to double at the floor) is too strong.
 
 ## Damage types
 
@@ -400,20 +305,6 @@ do this — see below). This was a speculative "nice to have," not a committed d
 
 ## Enemy features
 
-### The effect-marker overflow indicator has no count
-
-`EnemyFrameBuilder`'s marker row caps at 3 visible status-effect icons; a 4th+ simultaneous
-effect collapses into one generic `Palette.STATUS_MARKER_OVERFLOW` marker rather than the "+N"
-badge `docs/features/FEATURE-enemy-traits-and-effects.md`'s V1 Scope originally called for. The render frame
-model has no text-drawing primitive today (every draw command is a coloured `Shape`), so
-showing an actual number would be new render infrastructure, not a tweak to this one marker.
-
-- **Where:** `td.ui.EnemyFrameBuilder.markers()`, `td.ui.render.Palette.STATUS_MARKER_OVERFLOW`.
-- **Approach:** add a small text-drawing `RenderFrame` primitive (a `Palette` role isn't enough
-  on its own - it needs the string/number itself, so a new sealed draw record carrying the
-  count) and a `Java2DFrameRenderer.drawString` case for it, then have the overflow marker
-  carry `activeCount - MAX_VISIBLE_MARKERS` instead of being a fixed, countless glyph.
-
 ### Enemy traits/abilities numbers are unbalanced placeholders
 
 Every number introduced by the data-driven enemy model - `PercentResistTrait`/
@@ -439,14 +330,13 @@ single hit), making the Warden's armor mechanically inert regardless of which to
 
 `FEATURE-critical-damage.md` shipped the default crit multiplier (1.5x, now
 `AttackProfile.DEFAULT_CRIT_MULTIPLIER`), `SniperTower.VETERAN`'s crit-chance bonus (15%), the
-Warden's new on-crit-survived shield (30% for 100 ticks), and (per the feature doc's Addendum)
-the burning-doubles-crit rule (2x, now `ActiveEffects.BURN_CRIT_CHANCE_TAKEN`) as illustrative
+Warden's new on-crit-survived shield (30% for 100 ticks) as illustrative
 placeholders, the same situation every other feature's first-pass numbers were in before their
 own balance passes.
 
 - **Where:** `td.damage.AttackProfile.DEFAULT_CRIT_MULTIPLIER`, `SniperTower.VETERAN`'s
   `TowerBuff`, `BuiltInEnemies.WARDEN_STANDING_ABILITIES`'s new `OnCriticalHitTakenTrigger`
-  ability, `td.effect.ActiveEffects.BURN_CRIT_CHANCE_TAKEN`.
+  ability.
 - **Approach:** tune via actual play (or `td.BalanceHarness`) once the other placeholder-number
   entries in this file get their own pass - no code or architecture change needed, every number
   here is already a named constant or a `TowerBuff` literal.

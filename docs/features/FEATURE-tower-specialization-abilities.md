@@ -5,16 +5,24 @@ into the full concrete content for every tower's `head`/`special` upgrade nodes,
 combat primitive that content needs and the engine doesn't have yet. The Vulnerability effect is
 still here — it's this document's largest and first primitive, not its only one anymore.*
 
-**Status: partially implemented.** Every node named below is a real, priced, gated
-`UpgradeNode` in its tower's own `upgradeTree()` (`td.tower`). Every **[F]** node's behavior is
-wired for real. Every **[S]** node still runs its documented no-op hook, one `TODO.md` entry per
-missing primitive (see "Tower specialization primitives" there), each naming every stub node
-waiting on it. Prices weren't tuned here - they were assigned by a placeholder rule recorded in
-`TODO.md`'s "Upgrade-tree node numbers are unbalanced placeholders" entry (a `head` chain's
-level 1 ≈ its superseded v1 path's own price, level 2 ≈ 1.5×, level 3 ≈ 2×; a `special` root ≈
-2× the tower's own price; `base`'s Range ≈ 0.6×, Awaken ≈ 1×) rather than the numbers this
-document originally sketched inline below, which stayed as flavor text for the mechanic each
-node describes rather than as literal implemented values.
+**Status: implemented.** Every node named below is a real, priced, gated `UpgradeNode` in its
+tower's own `upgradeTree()` (`td.tower`) with its behaviour wired for real; no stub is left. The
+eleven primitives listed under "New primitives" landed as: `EffectKind.VULNERABLE`, `REVEALED` and
+`POISON` (`td.effect`); the on-kill hook, timed self-buff, `applyVulnerable` and `reveal` helpers on
+`AbstractTower`; and per-tower code for the rest (marks, distance scaling, a second beam, shrapnel,
+multi-blast). Prices and every effect number are placeholders, recorded in `TODO.md`'s balance
+entries; the inline numbers below stayed flavour text for the mechanic each node describes.
+
+Choices made where the text was open: Vulnerable is up to 3 stacks at +15% damage taken each, all
+damage types, on one shared 4 s clock any application refreshes. Poisoned (originally "toxic"; the node keeps the name Toxic Bloom) is a second fuel pool like burn's
+that also slows in proportion to the pool and earns Sickened stacks that lower spirit by one each and wear off slowly; every slow is now Chilled. Momentum's "+100% fire rate" halves the
+cooldown for 5 s after a kill. Deep Freeze II's shatter and Concussive Blast's explosion deal 50%
+weapon damage and never chain. Blast Engineering III blasts up to three distinct random targets; a
+Splash shot is critical when its primary target's hit was, which arms Overpressure (a full blast on
+every visible enemy on the next shot) and widens Rapid Battery III's blast by half. Wide Band makes
+the beam reach hidden enemies, reveal them for 3 s and hit them in the same pass. Mark on Sweep makes
+every second hit on an enemy a guaranteed crit. Long Reach II scales damage linearly with distance
+up to double. Twin Array III sweeps a second beam half a turn opposite the first.
 
 ## Summary
 
@@ -323,33 +331,15 @@ Eleven consumers above are tagged **[S]**. They share exactly these missing prim
 6. **Momentum's post-crit shot fully bypasses armor/`PercentResistTrait`/`FlatResistTrait`/
    shield**, not a percentage discount — a complete ignore, matching its escalated 500% damage.
 
-## Open questions
+## Open questions (resolved)
 
-1. What does a 4th (or later) Vulnerability application do once 3 stacks are already active —
-   refresh the weakest stack's remaining duration, get dropped entirely, or something else?
-2. Does each Vulnerable stack contribute a fixed amplification (flat +15% per stack, +45% at the
-   cap) set once by this document, or does each granting node set its own per-stack potency —
-   now a live question across six different consumers, some of which (Warding Field's
-   chance-per-tick, Cursed Shrapnel's guaranteed-and-refreshed) already read as meaningfully
-   different in aggressiveness even if their per-stack number matched?
-3. ~~Composition order with `SHIELD`/`Trait` resistance~~ — **resolved by
-   `FEATURE-enemy-stats.md`**: Vulnerable is damage taken, which `HitResolution` applies last and
-   which multiplies with a shield; penetration cuts in before armor and plating.
-4. Should Vulnerability be restrictable to one `DamageType`, the way `ShieldTemplate`/
-   `PercentResistTrait` already are? None of the drafted nodes ask for a typed restriction, but
-   the precedent exists on both the resistance side and the shield side.
-5. Does each Vulnerable stack track its own independent remaining duration, or does any
-   reapplication — even one that adds a new stack rather than refreshing an existing one —
-   extend every current stack's duration to the longest?
-6. ~~Should the 11 new primitives be implemented incrementally...~~ — **resolved by how
-   `docs/features/FEATURE-tower-upgrade-trees.md` actually landed**: none of the 11 were
-   implemented in that pass. Every node needing one is a real, priced, gated `UpgradeNode` with
-   a documented no-op hook, and `TODO.md`'s "Tower specialization primitives" section tracks
-   each primitive as its own entry, closeable independently whenever picked up - incremental by
-   construction, not a single follow-up pass.
-7. ~~The fixed, project-wide crit multiplier~~ — **resolved by `FEATURE-enemy-stats.md`**: every
-   hit carries its tower's `AttackProfile`, whose crit multiplier and crit chance a node can
-   override per shot, so 250% and 500% are literal.
+1. A 4th Vulnerable application only refreshes the shared clock.
+2. The per-stack potency is fixed at 15% for every consumer; each node decides only how stacks are granted.
+3. Composition order with shields and resistances: resolved by `FEATURE-enemy-stats.md`.
+4. Vulnerable is not restricted to a damage type.
+5. One shared clock, not a timer per stack.
+6. The primitives landed incrementally, phase by phase.
+7. Per-node crit multipliers: resolved by `FEATURE-enemy-stats.md`.
 
 ---
 

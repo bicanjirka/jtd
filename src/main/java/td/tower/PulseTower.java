@@ -14,6 +14,7 @@ import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -47,19 +48,21 @@ public final class PulseTower extends AbstractTower {
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(10))
             .withExtraEffect("damages invisible enemies every tick, cover no longer required");
-    /** Its reveal effect is not implemented yet (TODO.md). */
     private static final UpgradeNode RESONANT_FIELD_2 = UpgradeNode.of("pulse.head.resonant_field.2",
             UpgradeSlot.HEAD, "Resonant Field II", 38)
             .withBuff(TowerBuff.range(0.15f))
             .withRequires(UpgradeCondition.owns(RESONANT_FIELD_1.id()))
             .withGate(new DamageDealtCondition(20000))
             .withExtraEffect("any invisible enemy it hits is revealed to every tower for 2s");
-    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode WARDING_FIELD = UpgradeNode.of("pulse.special.warding_field", UpgradeSlot.SPECIAL,
             "Warding Field", 50)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
             .withGate(new KillCountCondition(20))
             .withExtraEffect("each tick, everything hit has a 10% chance to gain 1 Vulnerable stack (cap 3)");
+
+    /** Chance per tick that each enemy hit gains a vulnerability stack. */
+    private static final double WARDING_FIELD_CHANCE = 0.1;
+    private static final float REVEAL_SECONDS = 2f;
 
     private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, OVERCHARGED_COILS_1,
             OVERCHARGED_COILS_2, RESONANT_FIELD_1, RESONANT_FIELD_2, WARDING_FIELD);
@@ -93,9 +96,20 @@ public final class PulseTower extends AbstractTower {
             this.fire = true;
             for (EnemyMob enemy : enemies) {
                 this.dealDamage(enemy, Damage.physical(this.damageCurrent()));
+                this.applyUpgradeEffects(enemy);
             }
         } else {
             this.fire = false;
+        }
+    }
+
+    /** Warding Field's chance of a stack, and Resonant Field II's reveal of a hidden enemy it hits. */
+    private void applyUpgradeEffects(EnemyMob enemy) {
+        if (this.upgrades().owns(WARDING_FIELD.id()) && this.context.random().nextDouble() < WARDING_FIELD_CHANCE) {
+            this.applyVulnerable(enemy, 1);
+        }
+        if (this.upgrades().owns(RESONANT_FIELD_2.id()) && enemy.isHidden()) {
+            this.reveal(enemy, Math.round(REVEAL_SECONDS * TICKS_PER_SECOND));
         }
     }
 
@@ -105,7 +119,15 @@ public final class PulseTower extends AbstractTower {
 
     @Override
     protected List<BehaviourLine> behaviours() {
-        return List.of(new BehaviourLine(BehaviourMarker.TARGETING, "Hits", "all in range"));
+        List<BehaviourLine> lines = new ArrayList<>();
+        lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Hits", "all in range"));
+        if (this.upgrades().owns(WARDING_FIELD.id())) {
+            lines.add(new BehaviourLine(BehaviourMarker.VULNERABLE, "Each tick", BehaviourLine.percent((float) WARDING_FIELD_CHANCE) + " vulnerable"));
+        }
+        if (this.upgrades().owns(RESONANT_FIELD_2.id())) {
+            lines.add(new BehaviourLine(BehaviourMarker.REVEAL, "Reveals hidden", BehaviourLine.seconds(Math.round(REVEAL_SECONDS * TICKS_PER_SECOND))));
+        }
+        return lines;
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {

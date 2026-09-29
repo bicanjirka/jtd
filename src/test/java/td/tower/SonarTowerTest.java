@@ -207,4 +207,93 @@ class SonarTowerTest {
         assertThat(lightlyArmored.hits()).containsExactly(Damage.physical(weapon), Damage.magic(Math.round(weapon * 0.2f)));
         assertThat(heavilyArmored.hits()).containsExactly(Damage.physical(weapon), Damage.magic(Math.round(weapon * 0.5f)));
     }
+
+    private SonarTower upgradedTower(String... nodes) {
+        SonarTower tower = tower();
+        this.context.towers().add(tower);
+        UpgradePaths.buy(tower, this.context, nodes);
+        return tower;
+    }
+
+    @Test
+    void twinArrayThreeSweepsASecondBeamSoAnEnemyIsHitTwiceAsOftenPerRevolution() {
+        SonarTower single = tower();
+        SonarTower twin = upgradedTower("Twin Array", "Twin Array II", "Twin Array III");
+        FakeEnemyMob forSingle = FakeEnemyMob.at(TOWER_X + NEAR, TOWER_Y);
+        FakeEnemyMob forTwin = FakeEnemyMob.at(TOWER_X + NEAR, TOWER_Y);
+
+        this.context.enemies().setEnemies(new EnemyMob[]{forSingle});
+        for (int tick = 1; tick <= TICKS_PER_REVOLUTION; tick++) {
+            single.doTick(tick);
+        }
+        this.context.enemies().setEnemies(new EnemyMob[]{forTwin});
+        for (int tick = 1; tick <= TICKS_PER_REVOLUTION; tick++) {
+            twin.doTick(tick);
+        }
+
+        assertThat(hitCount(forSingle)).isEqualTo(1);
+        assertThat(hitCount(forTwin)).isEqualTo(2);
+        assertThat(twin.hasTwinBeam()).isTrue();
+    }
+
+    @Test
+    void longReachTwoScalesADistantHitUpToDoubleAndLeavesAPointBlankHitAlone() {
+        SonarTower tower = upgradedTower("Long Reach", "Long Reach II");
+        float range = tower.getRangeReal();
+        FakeEnemyMob close = FakeEnemyMob.at(TOWER_X + 1, TOWER_Y);
+        FakeEnemyMob far = FakeEnemyMob.at(TOWER_X, TOWER_Y - Math.round(range) + 1);
+        this.context.enemies().setEnemies(new EnemyMob[]{close, far});
+
+        for (int tick = 1; tick <= TICKS_PER_REVOLUTION; tick++) {
+            tower.doTick(tick);
+        }
+
+        assertThat(close.onlyHitAmount()).isCloseTo(tower.damageCurrent(), within(tower.damageCurrent() / 50));
+        assertThat(far.onlyHitAmount()).isCloseTo(2 * tower.damageCurrent(), within(tower.damageCurrent() / 20));
+    }
+
+    @Test
+    void markOnSweepMakesEveryOtherHitOnAnEnemyAGuaranteedCrit() {
+        SonarTower tower = upgradedTower("Mark on Sweep");
+        FakeEnemyMob target = FakeEnemyMob.at(TOWER_X + NEAR, TOWER_Y);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        for (int tick = 1; tick <= 3 * TICKS_PER_REVOLUTION; tick++) {
+            tower.doTick(tick);
+        }
+
+        assertThat(target.attackers()).extracting(td.damage.AttackProfile::critChance)
+                .containsExactly(tower.critChance(), 1f, tower.critChance());
+    }
+
+    @Test
+    void wideBandRevealsAHiddenEnemyTheBeamPassesAndHitsItInTheSamePass() {
+        this.context.towers().add(new SniperTower(this.context, 3, 3));
+        this.context.towers().add(new SniperTower(this.context, 3, 3));
+        this.context.towers().add(new SniperTower(this.context, 3, 3));
+        SonarTower tower = upgradedTower("Wide Band");
+        FakeEnemyMob ghost = FakeEnemyMob.ghostAt(TOWER_X + NEAR, TOWER_Y);
+        this.context.enemies().setEnemies(new EnemyMob[]{ghost});
+
+        for (int tick = 1; tick <= TICKS_PER_REVOLUTION; tick++) {
+            tower.doTick(tick);
+        }
+
+        assertThat(hitCount(ghost)).isEqualTo(1);
+        assertThat(ghost.appliedEffects()).extracting(td.effect.Effect::kind).containsExactly(td.effect.EffectKind.REVEALED);
+        assertThat(ghost.appliedEffects().getFirst().remainingTicks()).isEqualTo(60);
+    }
+
+    @Test
+    void withoutWideBandTheBeamNeverTouchesAHiddenEnemy() {
+        SonarTower tower = tower();
+        FakeEnemyMob ghost = FakeEnemyMob.ghostAt(TOWER_X + NEAR, TOWER_Y);
+        this.context.enemies().setEnemies(new EnemyMob[]{ghost});
+
+        for (int tick = 1; tick <= TICKS_PER_REVOLUTION; tick++) {
+            tower.doTick(tick);
+        }
+
+        assertThat(ghost.hits()).isEmpty();
+    }
 }

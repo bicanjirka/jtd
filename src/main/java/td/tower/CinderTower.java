@@ -3,6 +3,7 @@ package td.tower;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.Effect;
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
@@ -77,7 +78,6 @@ public final class CinderTower extends AbstractTower {
             .withRequires(UpgradeCondition.owns(WIDE_NOZZLE_1.id()))
             .withGate(new DamageDealtCondition(25000))
             .withExtraEffect("+20% cone width, -20% cooldown");
-    /** Not implemented yet (TODO.md). */
     private static final UpgradeNode HEXFLAME = UpgradeNode.of("cinder.special.hexflame", UpgradeSlot.SPECIAL,
             "Hexflame", 56)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
@@ -152,7 +152,11 @@ public final class CinderTower extends AbstractTower {
                     .matching(this.context.enemies());
             for (EnemyMob enemy : caught) {
                 if (wave.alreadyHit.add(enemy)) {
+                    boolean wasBurning = enemy.activeEffectKinds().contains(EffectKind.BURN);
                     enemy.applyEffect(Effect.burn(Damage.magic(this.damageCurrent()), this.burnDurationTicks, d -> this.dealDamage(enemy, d)));
+                    if (!wasBurning && enemy.activeEffectKinds().contains(EffectKind.BURN) && this.upgrades().owns(HEXFLAME.id())) {
+                        this.applyVulnerable(enemy, 1);
+                    }
                 }
             }
             if (travelled >= 1f) {
@@ -181,8 +185,13 @@ public final class CinderTower extends AbstractTower {
 
     @Override
     protected List<BehaviourLine> behaviours() {
-        return List.of(new BehaviourLine(BehaviourMarker.BURN, "Burns", BehaviourLine.seconds(this.burnDurationTicks)),
-                new BehaviourLine(BehaviourMarker.TARGETING, "Aims at", "nearest"));
+        List<BehaviourLine> lines = new ArrayList<>();
+        lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burns", BehaviourLine.seconds(this.burnDurationTicks)));
+        lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Aims at", "nearest"));
+        if (this.upgrades().owns(HEXFLAME.id())) {
+            lines.add(new BehaviourLine(BehaviourMarker.VULNERABLE, "New burns apply", "vulnerable"));
+        }
+        return lines;
     }
 
     @Override

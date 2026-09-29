@@ -13,18 +13,18 @@ class EffectTransitionsTest {
     void aKindNeverObservedHasNoGainOrLossTick() {
         EffectTransitions transitions = new EffectTransitions();
 
-        assertThat(transitions.ticksSinceGained(EffectKind.SLOW, 10)).isEqualTo(-1);
-        assertThat(transitions.ticksSinceLost(EffectKind.SLOW, 10)).isEqualTo(-1);
+        assertThat(transitions.ticksSinceGained(EffectKind.CHILL, 10)).isEqualTo(-1);
+        assertThat(transitions.ticksSinceLost(EffectKind.CHILL, 10)).isEqualTo(-1);
     }
 
     @Test
     void aKindPresentOnTheFirstObservationCountsAsGainedThatTick() {
         EffectTransitions transitions = new EffectTransitions();
 
-        transitions.observe(Set.of(EffectKind.SLOW), 5);
+        transitions.observe(Set.of(EffectKind.CHILL), 5);
 
-        assertThat(transitions.ticksSinceGained(EffectKind.SLOW, 5)).isZero();
-        assertThat(transitions.ticksSinceGained(EffectKind.SLOW, 8)).isEqualTo(3);
+        assertThat(transitions.ticksSinceGained(EffectKind.CHILL, 5)).isZero();
+        assertThat(transitions.ticksSinceGained(EffectKind.CHILL, 8)).isEqualTo(3);
     }
 
     @Test
@@ -65,10 +65,10 @@ class EffectTransitionsTest {
     void independentKindsAreTrackedSeparately() {
         EffectTransitions transitions = new EffectTransitions();
 
-        transitions.observe(EnumSet.of(EffectKind.SLOW, EffectKind.BURN), 1);
+        transitions.observe(EnumSet.of(EffectKind.CHILL, EffectKind.BURN), 1);
         transitions.observe(EnumSet.of(EffectKind.BURN), 2); // SLOW lost, BURN still active
 
-        assertThat(transitions.ticksSinceLost(EffectKind.SLOW, 2)).isZero();
+        assertThat(transitions.ticksSinceLost(EffectKind.CHILL, 2)).isZero();
         assertThat(transitions.ticksSinceLost(EffectKind.BURN, 2)).isEqualTo(-1);
         assertThat(transitions.ticksSinceGained(EffectKind.BURN, 2)).isEqualTo(1);
     }
