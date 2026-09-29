@@ -231,6 +231,17 @@ with the cooldown-gated travelling-wave firing model) join this same bucket.
   finished off - only a targeting-behavior change (out of scope here; the ask was numbers only) would fix that, so
   a future pass could reconsider it if `seeker` still feels weak after this buff lands in real play.
 
+### Seeker freeze uptime is held down by a stopgap cooldown
+
+A grunt has no freeze diminishing returns (only `ELITE`, `BOSS` and `FreezeDiminishingTrait` carry them), so a
+Seeker with a 45-tick cooldown kept one frozen about two ticks in three. `SeekerTower.COOLDOWN_MAX` was doubled to 90
+as a stopgap, which halves its damage output too; both Twin Warhead upgrades bring the cooldown back to
+about the old base, so a fully upgraded Seeker is where it was.
+
+- **Where:** `td.enemy.DefinedEnemyMob.applyEffect`, `td.effect.FreezeDiminishing`, `SeekerTower`.
+- **Approach:** decide with `FEATURE-effect-interactions.md` whether freeze diminishing returns apply to every enemy
+  or a shorter window; then restore the cooldown and retune Seeker damage against the result.
+
 ## Tower specialization primitives
 
 `docs/features/FEATURE-tower-specialization-abilities.md` tags consumers across the tower

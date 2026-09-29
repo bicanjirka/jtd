@@ -73,7 +73,7 @@ public final class SeekerTower extends AbstractTower {
     private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, TWIN_WARHEAD_1, TWIN_WARHEAD_2,
             DEEP_FREEZE_1, DEEP_FREEZE_2, HOMING_CURSE);
 
-    private static final int COOLDOWN_MAX = 45;
+    private static final int COOLDOWN_MAX = 90;
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private volatile int freezeDurationTicks = FREEZE_DURATION_TICKS_BASE;
