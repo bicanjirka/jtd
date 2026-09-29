@@ -41,7 +41,8 @@
   the roster or any upgrade changes; `TowerRoster.clear()` needn't.
 - `TowerBuff` axes: damage, range, fireRate, bounty, critChance, armorPenetration,
   magicPenetration. Build one from a single-axis factory plus `withX`
-  (`TowerBuff.damage(0.3f).withRange(0.1f)`), not from `none()`.
+  (`TowerBuff.damage(0.3f).withRange(0.1f)`), not from `none()`. `combine` adds every axis except
+  fireRate, where each bonus cuts the cooldown that remains (they multiply).
 - Enemy disruption reaches a tower only through `GameWorld.disruptions()`, sampled at the tower's
   centre in the towers phase (`refreshDisruption`). It folds in as a negative `TowerBuff`, and
   `TowerBuff` floors combined fire-rate and range bonuses at `MIN_BONUS` (-0.75).
