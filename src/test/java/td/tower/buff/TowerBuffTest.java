@@ -31,15 +31,7 @@ class TowerBuffTest {
     }
 
     @Test
-    void combineIsAdditiveOnFireRateAndBountyToo() {
-        TowerBuff a = new TowerBuff(0f, 0f, 0.1f, 0.2f);
-        TowerBuff b = new TowerBuff(0f, 0f, 0.05f, 0.1f);
-
-        TowerBuff combined = a.combine(b);
-
-        assertThat(combined.fireRateBonus()).isCloseTo(0.15f, org.assertj.core.data.Offset.offset(1e-6f));
-        assertThat(combined.bountyBonus()).isCloseTo(0.3f, org.assertj.core.data.Offset.offset(1e-6f));
-    }
+void combineIsAdditiveOnBountyToo() {        TowerBuff a = new TowerBuff(0f, 0f, 0f, 0.2f);        TowerBuff b = new TowerBuff(0f, 0f, 0f, 0.1f);        assertThat(a.combine(b).bountyBonus()).isCloseTo(0.3f, org.assertj.core.data.Offset.offset(1e-6f));    }    @Test    void fireRateBonusesEachCutWhatIsLeftOfTheCooldown() {        TowerBuff a = TowerBuff.fireRate(0.3f);        TowerBuff b = TowerBuff.fireRate(0.25f);        TowerBuff combined = a.combine(b);        assertThat(combined.fireRateBonus()).isCloseTo(1f - 0.7f * 0.75f, org.assertj.core.data.Offset.offset(1e-6f));        assertThat(combined.fireRateFor(100)).isBetween(52, 53);    }    @Test    void manyStackedFireRateBonusesNeverShortenACooldownToOneTick() {        TowerBuff stacked = List.of(TowerBuff.fireRate(0.55f), TowerBuff.fireRate(0.45f), TowerBuff.fireRate(0.45f))                .stream().reduce(TowerBuff.none(), TowerBuff::combine);        assertThat(stacked.fireRateFor(45)).isGreaterThan(5);    }
 
     @Test
     void amplifyingOnlyTouchesDamageAndRange() {

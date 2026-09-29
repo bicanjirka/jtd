@@ -2,7 +2,8 @@ package td.tower.buff;
 
 /**
  * Bonuses on each axis as fractions, 0 meaning none. {@link #none()} is the identity for
- * {@link #combine}, which adds, so buffs of equal strength stack linearly.
+ * {@link #combine}, which adds, except fire rate: each fire-rate bonus cuts the cooldown that is
+ * left, so they multiply and no stack of them shortens a cooldown to nothing.
  * <p>
  * Start from the axis you care about ({@code TowerBuff.damage(0.3f).withRange(0.1f)}) rather than a
  * positional literal.
@@ -95,7 +96,7 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
         return new TowerBuff(
                 this.damageBonus + other.damageBonus,
                 this.rangeBonus + other.rangeBonus,
-                this.fireRateBonus + other.fireRateBonus,
+                this.fireRateBonus + other.fireRateBonus - this.fireRateBonus * other.fireRateBonus,
                 this.bountyBonus + other.bountyBonus,
                 this.critChanceBonus + other.critChanceBonus,
                 this.armorPenetrationBonus + other.armorPenetrationBonus,
