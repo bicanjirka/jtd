@@ -17,6 +17,7 @@ import td.enemy.PercentResistTrait;
 import td.enemy.Rank;
 import td.enemy.Trait;
 import td.fixtures.BoardFixtures;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.LevelFixtures;
 import td.level.LevelDefinition;
 import td.level.LevelOutcome;
@@ -967,6 +968,27 @@ class GameEngineTest {
 
         assertThat(engine.outcome()).isEqualTo(LevelOutcome.WON);
         assertThat(engine.getGameWorld().economy().getLives()).isEqualTo(livesBefore);
+    }
+
+    @Test
+    void killingTheLastWavesLastEnemyDoesNotWinWhileItsOnDeathSpawnIsStillToCome() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyDefinition mother = EnemyDefinition.of("mother", "Mother", 1, 7, 1.28f, BodyArchetype.CIRCLE)
+                .withAbilities(EnemyFixtures.definitionThatSpawns("mother", "child").abilities());
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("mother", Rank.GRUNT)), 100)
+                .withCustomEnemies(List.of(mother, EnemyFixtures.simpleDefinition("child"))));
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
+        engine.nextWave();
+        EnemyMob killed = engine.getGameWorld().enemies().getEnemies()[0];
+
+        for (int t = 1; t < 60 && !killed.isDead(); t++) {
+            engine.doTick(t);
+        }
+
+        assertThat(killed.isDead()).isTrue();
+        assertThat(engine.outcome()).isEqualTo(LevelOutcome.PLAYING);
+        assertThat(engine.getGameWorld().enemies().aliveCount()).isEqualTo(1);
     }
 
     @Test
