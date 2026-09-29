@@ -1,6 +1,6 @@
 # jTD — Tower Defense
 
-Swing tower-defense game. Java 26, Maven. Runtime deps: SLF4J + Logback. Tests: JUnit 5 + AssertJ.
+Swing tower-defense game. Java 25, Maven. Runtime deps: SLF4J + Logback. Tests: JUnit 5 + AssertJ.
 The *why* behind these rules is in `docs/ARCHITECTURE.md`; most tasks don't need it.
 
 ```bash
