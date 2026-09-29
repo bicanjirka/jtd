@@ -12,7 +12,9 @@
   cap. It also cuts a burn's damage by up to half at the cap. `FREEZE` is a hard stop.
 - `BURN` and `POISON` are each a decaying fuel pool of one `FuelContribution` per application, each
   with its own sink (`EffectKind.isFuelPool()`). Tick damage is apportioned across contributors
-  (largest remainder), so every tower gets credit for its share. A top-up adds
+  (largest remainder), so every tower gets credit for its share. Damage lands in a pulse four times
+  a second carrying the whole window's worth; the pool still decays every tick, and pulses ride the
+  stack clock, so `STACK_INTERVAL_TICKS` must stay a multiple of the pulse interval. A top-up adds
   `L0 * (1 - fuel / lmax)`. A pool ends when a tick would round to zero. The two kinds are separate
   pools, so they stack with each other. A pool earns a stack of its lasting mark (`SCORCHED` for
   burn, `SICKENED` for poison, `EffectKind.debuffEarned()`) when it starts and another every

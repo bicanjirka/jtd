@@ -65,7 +65,7 @@ class DefinedEnemyMobEffectTest {
     }
 
     @Test
-    void aBurnEffectAppliesItsDamagePerTickThroughItsBoundSinkEveryTick() {
+    void aBurnEffectDealsItsFirstPulseThroughItsBoundSinkOnItsFirstTick() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100, 3, Rank.GRUNT); // 10000 health
@@ -73,7 +73,8 @@ class DefinedEnemyMobEffectTest {
         enemy.applyEffect(Effect.burn(Damage.magic(2000), 5, enemy::doDamage));
         enemy.doTick(1);
 
-        assertThat(enemy.getHealth()).isEqualTo(8000);
+        // alpha = e^(-3/5); the pulse is 2000 * (1 + a + a^2 + a^3 + a^4) ~= 4212
+        assertThat(enemy.getHealth()).isEqualTo(5788);
     }
 
     @Test

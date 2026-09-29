@@ -88,17 +88,31 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void aBurningFuelPoolDecaysExponentiallyMatchingTheDocumentedWorkedTable() {
+    void aBurningFuelPoolDealsItsDecayingDamageInAPulseEveryFiveTicks() {
         ActiveEffects effects = new ActiveEffects();
         List<Damage> received = new ArrayList<>();
-        // L0 = 10, T = 60, alpha = e^(-3/60) ~= 0.9512
+        // L0 = 10, T = 60, alpha = e^(-3/60) ~= 0.9512; a pulse is L * (1 + a + a^2 + a^3 + a^4) ~= L * 4.5355
         effects.apply(Effect.burn(Damage.magic(10), 60, recordingSink(received)));
 
-        effects.tick(); // L = 10.000 -> damage 10, decays to 9.512
-        effects.tick(); // L = 9.512 -> damage 10, decays to 9.048
-        effects.tick(); // L = 9.048 -> damage 9, decays to 8.607
+        effects.tick(); // L = 10.000 -> pulse of 45
+        tickTimes(effects, 4);
+        assertThat(received).containsExactly(Damage.magic(45));
 
-        assertThat(received).containsExactly(Damage.magic(10), Damage.magic(10), Damage.magic(9));
+        effects.tick(); // L = 10 * a^5 = 7.788 -> pulse of 35
+        assertThat(received).containsExactly(Damage.magic(45), Damage.magic(35));
+    }
+
+    @Test
+    void pulsingDealsAboutAsMuchInTotalAsDamagingEveryTickWould() {
+        ActiveEffects effects = new ActiveEffects();
+        List<Damage> received = new ArrayList<>();
+        effects.apply(Effect.burn(Damage.magic(100), 60, recordingSink(received)));
+
+        tickTimes(effects, 600);
+
+        // the sum of 100 * alpha^k over every tick, alpha = e^(-3/60)
+        int total = received.stream().mapToInt(Damage::amount).sum();
+        assertThat(total).isCloseTo(2050, within(60));
     }
 
     @Test
@@ -124,8 +138,9 @@ class ActiveEffectsTest {
         effects.apply(Effect.burn(Damage.magic(8), 60, recordingSink(secondTower)));
         effects.tick();
 
-        assertThat(firstTower).containsExactly(Damage.magic(10));
-        assertThat(secondTower).containsExactly(Damage.magic(4));
+        // pool = 14, pulse = 14 * 4.5355 ~= 63, split 10:4
+        assertThat(firstTower).containsExactly(Damage.magic(45));
+        assertThat(secondTower).containsExactly(Damage.magic(18));
     }
 
     @Test
@@ -135,18 +150,18 @@ class ActiveEffectsTest {
         List<Damage> secondTower = new ArrayList<>();
         effects.apply(Effect.burn(Damage.magic(10), 60, recordingSink(firstTower)));
 
-        effects.tick(); // L = 10.000 -> 10 to the first tower, decays to 9.512
+        tickTimes(effects, 5); // the first pulse, 45 to the first tower; the pool decays to 7.788
 
-        // peakL0 stays 10 (8 < 10), so Lmax = 20; deltaL = 8 * (1 - 9.512/20) ~= 4.195
+        // peakL0 stays 10 (8 < 10), so Lmax = 20; deltaL = 8 * (1 - 7.788/20) ~= 4.885
         effects.apply(Effect.burn(Damage.magic(8), 60, recordingSink(secondTower)));
-        effects.tick(); // pool = 9.512 + 4.195 ~= 13.707 -> rounds to 14, split by each share
+        effects.tick(); // pool ~= 12.673 -> pulse of 57, split by each share
 
-        assertThat(firstTower).containsExactly(Damage.magic(10), Damage.magic(10));
-        assertThat(secondTower).containsExactly(Damage.magic(4));
+        assertThat(firstTower).containsExactly(Damage.magic(45), Damage.magic(35));
+        assertThat(secondTower).containsExactly(Damage.magic(22));
     }
 
     @Test
-    void threeTowersFuellingTheSameBurnAreEachCreditedTheirOwnProportionalShareOfOneTick() {
+    void threeTowersFuellingTheSameBurnAreEachCreditedTheirOwnProportionalShareOfOnePulse() {
         ActiveEffects effects = new ActiveEffects();
         List<Damage> firstTower = new ArrayList<>();
         List<Damage> secondTower = new ArrayList<>();
@@ -157,13 +172,13 @@ class ActiveEffectsTest {
         // Lmax = 2 * max(10, 6) = 20; deltaL = 6 * (1 - 14/20) = 1.8; pool becomes 14 + 1.8 = 15.8
         effects.apply(Effect.burn(Damage.magic(6), 60, recordingSink(thirdTower)));
 
-        // total = 15.8, rounds to 16; exact shares are 10.13/4.05/1.82 - the third tower's
-        // largest fractional remainder (0.82) wins the one leftover unit, giving 10/4/2 = 16
+        // total = 15.8, pulse = 15.8 * 4.5355 ~= 72; exact shares are 45.57/18.23/8.20 - the first
+        // tower's largest fractional remainder (0.57) wins the one leftover unit, giving 46/18/8 = 72
         effects.tick();
 
-        assertThat(firstTower).containsExactly(Damage.magic(10));
-        assertThat(secondTower).containsExactly(Damage.magic(4));
-        assertThat(thirdTower).containsExactly(Damage.magic(2));
+        assertThat(firstTower).containsExactly(Damage.magic(46));
+        assertThat(secondTower).containsExactly(Damage.magic(18));
+        assertThat(thirdTower).containsExactly(Damage.magic(8));
     }
 
     @Test
@@ -462,8 +477,8 @@ class ActiveEffectsTest {
 
         effects.tick();
 
-        assertThat(burnTower).containsExactly(Damage.magic(10));
-        assertThat(poisonTower).containsExactly(Damage.magic(6));
+        assertThat(burnTower).containsExactly(Damage.magic(45));
+        assertThat(poisonTower).containsExactly(Damage.magic(27));
         assertThat(effects.activeKinds()).contains(EffectKind.BURN, EffectKind.POISON);
     }
 
@@ -557,8 +572,8 @@ class ActiveEffectsTest {
         plain.tick();
         chilled.tick();
 
-        assertThat(plainDamage).containsExactly(Damage.magic(100));
-        assertThat(chilledDamage).containsExactly(Damage.magic(50));
+        assertThat(plainDamage).containsExactly(Damage.magic(454));
+        assertThat(chilledDamage).containsExactly(Damage.magic(227));
     }
 
     @Test

@@ -6,6 +6,7 @@ import td.stat.EnemyStat;
 import td.stat.StatAccumulator;
 import td.stat.StatModifier;
 import td.util.ThreadConfined;
+import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -32,6 +33,8 @@ public final class ActiveEffects {
      * 5% of the fuel when the authored duration ends.
      */
     private static final double POOL_DECAY_EXPONENT = -3.0;
+    /** A pool deals its damage in a pulse this often: four times a second. */
+    private static final int POOL_PULSE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 4f);
 
     /** The most speed a chill takes away, so stacked chills never freeze. */
     private static final float MAX_CHILL = 0.8f;
@@ -318,10 +321,12 @@ public final class ActiveEffects {
     }
 
     /**
-     * Deals the pool's rounded total times {@code damageFactor}, split by share, then decays every
+     * On a pulse tick, deals what the pool would have dealt over the next {@code POOL_PULSE_TICKS}
+     * ticks, rounded and times {@code damageFactor}, split by share. Every tick decays every
      * contribution by the same {@code alpha}, which decays the total exactly, and lets the stack
      * clock run. Ends once a tick would round to zero damage before the factor, since exponential
-     * decay never reaches zero.
+     * decay never reaches zero. Pulses ride the stack clock, which is a multiple of the pulse
+     * interval, so a pool always pulses on its first tick.
      */
     private Optional<Effect> tickPool(Effect effect, float damageFactor) {
         List<FuelContribution> contributions = effect.fuel();
@@ -329,17 +334,19 @@ public final class ActiveEffects {
         if (Math.round(total) <= 0) {
             return Optional.empty();
         }
-        int damage = Math.round(total * damageFactor);
-        if (damage > 0) {
-            int[] shares = apportionPoolDamage(contributions, total, damage);
-            DamageType type = effect.damagePerTick().type();
-            for (int i = 0; i < contributions.size(); i++) {
-                if (shares[i] > 0) {
-                    contributions.get(i).sink().apply(new Damage(shares[i], type));
+        double alpha = Math.exp(POOL_DECAY_EXPONENT / effect.authoredDurationTicks());
+        if (effect.stackClock() % POOL_PULSE_TICKS == 0) {
+            int damage = Math.round(total * (float) windowFactor(alpha) * damageFactor);
+            if (damage > 0) {
+                int[] shares = apportionPoolDamage(contributions, total, damage);
+                DamageType type = effect.damagePerTick().type();
+                for (int i = 0; i < contributions.size(); i++) {
+                    if (shares[i] > 0) {
+                        contributions.get(i).sink().apply(new Damage(shares[i], type));
+                    }
                 }
             }
         }
-        double alpha = Math.exp(POOL_DECAY_EXPONENT / effect.authoredDurationTicks());
         List<FuelContribution> decayed = contributions.stream()
                 .map(c -> c.decayedBy((float) alpha))
                 .toList();
@@ -349,6 +356,17 @@ public final class ActiveEffects {
             clock = Effect.STACK_INTERVAL_TICKS;
         }
         return Optional.of(effect.withFuel(decayed, effect.peakL0()).withStackClock(clock));
+    }
+
+    /** The pool's total over one pulse window as a multiple of its level now: {@code 1 + a + a^2 + ...}. */
+    private static double windowFactor(double alpha) {
+        double factor = 0;
+        double term = 1;
+        for (int i = 0; i < POOL_PULSE_TICKS; i++) {
+            factor += term;
+            term *= alpha;
+        }
+        return factor;
     }
 
     /**

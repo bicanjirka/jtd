@@ -443,8 +443,9 @@ class AbstractTowerTest {
 
         enemy.doTick(1);
 
-        // the burn's first stack has already lowered resilience by one, widening the crit bonus by 1%
-        assertThat(tower.getDamageDealt()).isEqualTo(Math.round(1000 * (1f + 0.5f * 1.01f)));
+        // the first pulse is 1000 * 4.7137 ~= 4713; the burn's first stack has already lowered
+        // resilience by one, widening the crit bonus by 1%
+        assertThat(tower.getDamageDealt()).isEqualTo(Math.round(4713 * (1f + 0.5f * 1.01f)));
     }
 
     @Test
