@@ -2,8 +2,13 @@ package td.enemy;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.effect.Effect;
 import td.effect.EffectKind;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
+import td.stat.EnemyStat;
+import td.stat.StatModifier;
+import td.stat.StatModifiers;
 import td.util.GameWorld;
 import td.wave.PathNormal;
 import td.wave.Vec2;
@@ -28,7 +33,7 @@ class GhostInvisibilityTest {
         DefinedEnemyMob ghost = (DefinedEnemyMob) world.getEnemyCatalog().spawn("g", world, 0, 100, 4, Rank.GRUNT);
         world.enemies().add(ghost);
 
-        assertThat(ghost.validTarget(EnemyMob.Type.NORMAL)).isTrue();
+        assertThat(ghost.canBeTargeted()).isTrue();
         assertThat(ghost.activeEffectKinds()).doesNotContain(EffectKind.INVISIBLE);
     }
 
@@ -42,9 +47,9 @@ class GhostInvisibilityTest {
         ghost.doTick(1); // captures the hit and fires the vanish ability in the same call
 
         assertThat(ghost.activeEffectKinds()).contains(EffectKind.INVISIBLE);
-        assertThat(ghost.validTarget(EnemyMob.Type.NORMAL)).isFalse();
-        assertThat(ghost.validTarget(EnemyMob.Type.INVISIBLE)).isTrue();
-        // still a valid target for area damage, which doesn't filter by type at all
+        assertThat(ghost.canBeTargeted()).isFalse();
+        assertThat(ghost.isHidden()).isTrue();
+        // still a valid target for area damage, which doesn't care whether it is hidden
         assertThat(ghost.validTarget()).isTrue();
 
         for (int t = 2; t <= VANISH_DURATION_TICKS + 2; t++) {
@@ -52,7 +57,7 @@ class GhostInvisibilityTest {
         }
 
         assertThat(ghost.activeEffectKinds()).doesNotContain(EffectKind.INVISIBLE);
-        assertThat(ghost.validTarget(EnemyMob.Type.NORMAL)).isTrue();
+        assertThat(ghost.canBeTargeted()).isTrue();
     }
 
     @Test
@@ -72,6 +77,40 @@ class GhostInvisibilityTest {
         ghost.doTick(VANISH_DURATION_TICKS + 3); // a second hit must not re-trigger the ability
 
         assertThat(ghost.activeEffectKinds()).doesNotContain(EffectKind.INVISIBLE);
+    }
+
+    /** Stands in for a reveal: sets stealth to zero, which beats invisibility's one. */
+    private record RevealTrait() implements Trait {
+        @Override
+        public StatModifiers modifiers(TraitContext context) {
+            return StatModifiers.of(EnemyStat.STEALTH, StatModifier.setTo(0f));
+        }
+
+        @Override
+        public TraitLine describe() {
+            return TraitLine.of(this.marker(), "Revealed");
+        }
+
+        @Override
+        public TraitMarker marker() {
+            return TraitMarker.HURT_SPEED;
+        }
+    }
+
+    @Test
+    void aRevealedMobIsTargetableAgainWhileItsInvisibilityEffectKeepsRunning() {
+        GameWorld world = worldWithStraightPath();
+        world.getEnemyCatalog().register(EnemyFixtures.simpleDefinition("revealed")
+                .withTraits(List.of(new RevealTrait())));
+        DefinedEnemyMob mob = (DefinedEnemyMob) world.getEnemyCatalog().spawn("revealed", world, 0, 100, 4, Rank.GRUNT);
+        world.enemies().add(mob);
+
+        mob.applyEffect(Effect.invisible(100, d -> {
+        }));
+
+        assertThat(mob.activeEffectKinds()).contains(EffectKind.INVISIBLE);
+        assertThat(mob.isHidden()).isFalse();
+        assertThat(mob.canBeTargeted()).isTrue();
     }
 
     @Test

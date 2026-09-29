@@ -4,8 +4,6 @@ import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
-import td.tower.targeting.OfTypeTargetQuery;
-import td.tower.targeting.TargetQuery;
 import td.tower.upgrade.DamageDealtCondition;
 import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
@@ -86,12 +84,12 @@ public final class PulseTower extends AbstractTower {
     }
 
     public void doTick(int gameTime) {
-        TargetQuery inRange = InRangeTargetQuery.anyType(this.centerX, this.centerY, this.rangeReal());
-        List<EnemyMob> enemies = inRange.matching(this.context.enemies());
-        List<EnemyMob> ghosts = inRange.and(OfTypeTargetQuery.of(EnemyMob.Type.INVISIBLE)).matching(this.context.enemies());
-
-        boolean shouldFire = this.resonantField ? !enemies.isEmpty() : enemies.size() > ghosts.size();
-        if (shouldFire) {
+        List<EnemyMob> enemies = InRangeTargetQuery.everyone(this.centerX, this.centerY, this.rangeReal())
+                .matching(this.context.enemies());
+        boolean triggered = this.resonantField
+                ? !enemies.isEmpty()
+                : enemies.stream().anyMatch(EnemyMob::canBeTargeted);
+        if (triggered) {
             this.fire = true;
             for (EnemyMob enemy : enemies) {
                 this.dealDamage(enemy, Damage.physical(this.damageCurrent()));

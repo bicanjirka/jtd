@@ -1,6 +1,5 @@
 package td.enemy;
 
-import td.stat.EnemyStat;
 import td.util.ThreadConfined;
 
 import java.util.Optional;
@@ -71,7 +70,7 @@ public final class EnemySelection {
         double nearestDistance2 = Double.MAX_VALUE;
         for (EnemyMob enemy : roster) {
             DefinedEnemyMob mob = enemy.accept(AS_DEFINED);
-            if (mob.isDead() || mob.isInactive() || mob.stats().value(EnemyStat.STEALTH) >= 1f) {
+            if (mob.isDead() || mob.isInactive() || mob.isHidden()) {
                 continue;
             }
             double dx = mob.getX() - x;

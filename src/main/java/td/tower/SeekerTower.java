@@ -100,7 +100,7 @@ public final class SeekerTower extends AbstractTower {
     }
 
     private EnemyMob findTarget() {
-        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.NORMAL)
+        List<EnemyMob> inRange = InRangeTargetQuery.visible(this.centerX, this.centerY, this.rangeReal())
                 .matching(this.context.enemies());
         return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
     }

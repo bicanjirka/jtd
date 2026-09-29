@@ -102,7 +102,7 @@ public final class MortarTower extends AbstractTower {
     }
 
     private EnemyMob findTarget() {
-        List<EnemyMob> inRange = InRangeTargetQuery.ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.NORMAL)
+        List<EnemyMob> inRange = InRangeTargetQuery.visible(this.centerX, this.centerY, this.rangeReal())
                 .matching(this.context.enemies());
         return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
     }
@@ -128,7 +128,7 @@ public final class MortarTower extends AbstractTower {
     }
 
     private void onImpact(double x, double y) {
-        List<EnemyMob> hit = InRangeTargetQuery.anyType((int) Math.round(x), (int) Math.round(y), this.splashRadius)
+        List<EnemyMob> hit = InRangeTargetQuery.everyone((int) Math.round(x), (int) Math.round(y), this.splashRadius)
                 .matching(this.context.enemies());
         for (EnemyMob enemy : hit) {
             double dx = x - enemy.getX();

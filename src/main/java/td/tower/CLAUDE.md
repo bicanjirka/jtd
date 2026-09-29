@@ -25,7 +25,9 @@
 - Compose a `TargetQuery` (filter; `and`, identity `all()`, absorber `none()`) with a
   `TargetSelector` (picks one). Don't hand-roll a scan over `EnemyRegistry.getEnemies()`.
 - Targeting takes an `EnemyRegistry`, never `GameWorld`, so `td.projectile` can reuse it.
-- `InRangeTargetQuery` only through `anyType`/`ofType`. `NearestSelector` is centred on any point
+- `InRangeTargetQuery` only through `visible` (what a tower may aim at or be triggered by) or
+  `everyone` (what an area effect touches, hidden enemies included). Test invisibility nowhere else:
+  a tower picks per action, never per tower kind. `NearestSelector` is centred on any point
   (missiles retarget around themselves). `RandomSelector` takes a `RandomSource`.
 - `InWedgeTargetQuery` tests the *current* heading from `TurretAim.currentRadians()`, the same
   angle the head is drawn at. It is deliberately not built on `SonarSweep`.

@@ -21,7 +21,7 @@ public final class FakeEnemyMob implements EnemyMob {
 
     private final int progression;
     private final int health;
-    private final Type mobType;
+    private final boolean hidden;
     private final List<Damage> hits = new ArrayList<>();
     private final List<Effect> appliedEffects = new ArrayList<>();
     private final List<AttackProfile> attackers = new ArrayList<>();
@@ -31,33 +31,34 @@ public final class FakeEnemyMob implements EnemyMob {
     private double y;
     private boolean valid = true;
 
-    private FakeEnemyMob(double x, double y, int progression, int health, Type mobType) {
+    private FakeEnemyMob(double x, double y, int progression, int health, boolean hidden) {
         this.x = x;
         this.y = y;
         this.progression = progression;
         this.health = health;
-        this.mobType = mobType;
+        this.hidden = hidden;
     }
 
     public static FakeEnemyMob at(double x, double y) {
-        return new FakeEnemyMob(x, y, 0, Integer.MAX_VALUE, Type.NORMAL);
+        return new FakeEnemyMob(x, y, 0, Integer.MAX_VALUE, false);
     }
 
     /** Excluded from primary-target scans but not from splash. */
     public static FakeEnemyMob ghostAt(double x, double y) {
-        return at(x, y).withType(Type.INVISIBLE);
+        return at(x, y).hidden();
     }
 
     public FakeEnemyMob withProgression(int progression) {
-        return new FakeEnemyMob(this.x, this.y, progression, this.health, this.mobType);
+        return new FakeEnemyMob(this.x, this.y, progression, this.health, this.hidden);
     }
 
     public FakeEnemyMob withHealth(int health) {
-        return new FakeEnemyMob(this.x, this.y, this.progression, health, this.mobType);
+        return new FakeEnemyMob(this.x, this.y, this.progression, health, this.hidden);
     }
 
-    public FakeEnemyMob withType(Type mobType) {
-        return new FakeEnemyMob(this.x, this.y, this.progression, this.health, mobType);
+    /** A copy that stealth keeps towers from targeting. */
+    public FakeEnemyMob hidden() {
+        return new FakeEnemyMob(this.x, this.y, this.progression, this.health, true);
     }
 
     public void moveTo(double x, double y) {
@@ -146,8 +147,8 @@ public final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
-    public boolean validTarget(Type type) {
-        return this.valid && type == this.mobType;
+    public boolean isHidden() {
+        return this.hidden;
     }
 
     @Override

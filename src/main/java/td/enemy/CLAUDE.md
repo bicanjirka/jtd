@@ -66,7 +66,8 @@
   `delaySpacingSlots` staggers members so they don't stack. `consumesSelf` is only defined for
   one member. Spawns call `recordAbilitySpawn` and casts call `recordAbilityCast`; the UI draws
   rings from both.
-- Invisibility is the `STEALTH` stat: `effectiveType()` reports `Type.INVISIBLE` at stealth 1.
+- Invisibility is an `INVISIBLE` effect that raises `STEALTH`; `DefinedEnemyMob.isHidden()` is the
+  only place that reads it. A reveal sets `STEALTH` to 0, which beats invisibility's 1.
 - `EnemyDefinition.supportAura()` derives the aura ring the UI draws from radius-targeted
   abilities; the UI must not walk abilities itself.
 

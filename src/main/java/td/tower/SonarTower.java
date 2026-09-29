@@ -109,7 +109,7 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
         this.recentHits.removeIf(hit -> gameTime - hit.tick() >= HIT_FLASH_TICKS);
 
         List<EnemyMob> inRange = InRangeTargetQuery
-                .ofType(this.centerX, this.centerY, this.rangeReal(), EnemyMob.Type.NORMAL)
+                .visible(this.centerX, this.centerY, this.rangeReal())
                 .matching(this.context.enemies());
 
         for (EnemyMob enemy : inRange) {

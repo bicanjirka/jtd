@@ -16,7 +16,7 @@ class TargetQueryCompositionTest {
         FakeEnemyMob a = FakeEnemyMob.at(0, 0);
         FakeEnemyMob b = FakeEnemyMob.at(100, 100);
         EnemyRegistry enemies = () -> new EnemyMob[]{a, b};
-        TargetQuery inRangeOfA = InRangeTargetQuery.anyType(0, 0, 5);
+        TargetQuery inRangeOfA = InRangeTargetQuery.everyone(0, 0, 5);
 
         List<EnemyMob> combined = TargetQuery.all().and(inRangeOfA).matching(enemies);
 
@@ -38,14 +38,14 @@ class TargetQueryCompositionTest {
 
     @Test
     void andComputesTheIntersectionOfTwoQueries() {
-        FakeEnemyMob inRangeGhost = FakeEnemyMob.at(0, 0).withType(EnemyMob.Type.INVISIBLE);
+        FakeEnemyMob inRangeGhost = FakeEnemyMob.ghostAt(0, 0);
         FakeEnemyMob inRangeNormal = FakeEnemyMob.at(1, 1);
-        FakeEnemyMob outOfRangeGhost = FakeEnemyMob.at(100, 100).withType(EnemyMob.Type.INVISIBLE);
-        EnemyRegistry enemies = () -> new EnemyMob[]{inRangeGhost, inRangeNormal, outOfRangeGhost};
+        FakeEnemyMob outOfRangeNormal = FakeEnemyMob.at(100, 100);
+        EnemyRegistry enemies = () -> new EnemyMob[]{inRangeGhost, inRangeNormal, outOfRangeNormal};
 
-        TargetQuery inRange = InRangeTargetQuery.anyType(0, 0, 5);
-        TargetQuery ghosts = OfTypeTargetQuery.of(EnemyMob.Type.INVISIBLE);
+        TargetQuery inRange = InRangeTargetQuery.everyone(0, 0, 5);
+        TargetQuery visible = InRangeTargetQuery.visible(0, 0, 1000);
 
-        assertThat(inRange.and(ghosts).matching(enemies)).containsExactly(inRangeGhost);
+        assertThat(inRange.and(visible).matching(enemies)).containsExactly(inRangeNormal);
     }
 }

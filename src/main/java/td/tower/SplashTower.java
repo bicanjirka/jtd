@@ -136,11 +136,11 @@ public final class SplashTower extends AbstractTower {
     }
 
     private List<EnemyMob> findEnemiesInRangeVisible(int x, int y, float r) {
-        return InRangeTargetQuery.ofType(x, y, r, EnemyMob.Type.NORMAL).matching(this.context.enemies());
+        return InRangeTargetQuery.visible(x, y, r).matching(this.context.enemies());
     }
 
     private List<EnemyMob> findEnemiesInRange(int x, int y, float r) {
-        return InRangeTargetQuery.anyType(x, y, r).matching(this.context.enemies());
+        return InRangeTargetQuery.everyone(x, y, r).matching(this.context.enemies());
     }
 
     public void doTick(int gameTime) {
