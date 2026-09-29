@@ -259,8 +259,22 @@ public class GameEngine {
             tower.refreshDisruption();
             tower.doTick(time);
         }
+        this.settleDeaths(time);
         this.settleWave();
         return waveStarted;
+    }
+
+    /**
+     * Lets every mob killed this tick run its on-death abilities now. A mob only notices its death
+     * on its own next tick, which would land after {@link #settleWave} had already counted the
+     * board as empty.
+     */
+    private void settleDeaths(int time) {
+        for (EnemyMob enemy : this.gameWorld.enemies().getEnemies()) {
+            if (enemy.isDead()) {
+                enemy.doTick(time);
+            }
+        }
     }
 
     /**
