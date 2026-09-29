@@ -22,6 +22,7 @@ Implemented, for reference: `FEATURE-enemy-spawn-types.md`, `FEATURE-multiple-en
 `FEATURE-damage-types-and-projectiles.md`, `FEATURE-enemy-traits-and-effects.md`,
 `FEATURE-wave-preview-cleanup.md`, `FEATURE-effect-diminishing-returns.md`,
 `FEATURE-tower-upgrade-trees.md`.
+
 ## Architecture and correctness
 
 Findings from the architecture audits of 2026-09-17, highest-severity first. The threading
