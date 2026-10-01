@@ -87,7 +87,7 @@ theme is mostly words.
 - [ ] ⭐ **One line of flavour at most.** No fake-science paragraphs. A name and its rule do the
   work, and poetic licence is fine.
   - 💬
-- [ ] **Two marks, two hues.** ☉ warm (amber), ψ cool (violet). Used for meaning only (damage
+- [ ] **Two marks, two hues.** ☉ warm (star gold), ψ cool (oxygen teal), on a deep indigo base (section 10). Used for meaning only (damage
   type, a chain's scale), never to colour every object.
   - 💬
 
@@ -135,9 +135,9 @@ mark. Nothing in the rules changes.
 
 - [ ] ⭐ 🟢 Head chain A / B = ☉ / ψ on every tower, marked in the upgrade panel.
   - 💬
-- [ ] 🟡 The tower shows its chosen scale on the board too. Head pips are gold and special pips
-  violet today, so either the slot colours change or the scale shows only in the panel. ⭐ panel
-  only.
+- [ ] ⭐ 🟡 The tower shows its chosen scale on the board too: its head pips take the chain's gold
+  or teal. Each slot has its own row of pips, so the row already says which slot and colour is
+  free to say which scale (section 10's palette rules).
   - 💬
 - [ ] ⭐ Iteration 2's **extra head node** (exclusive with nothing) is where a tower borrows from
   its *other* scale, for example a kinetic Quasar's Phase Rounds (every Nth shot deals phase). It
@@ -420,8 +420,9 @@ affixes → **exotic properties**.
 
 ### Is an overhaul necessary?
 
-**No.** The look is already a black board with phosphor-green outlines and flat vector symbols: an
-instrument console, which is what the fiction wants. Every control already paints itself from one
+**No.** The layout stays. Its colours change: the black-and-green instrument console becomes
+deep-space indigo with gold and teal accents (the palette below), but that is constants, not
+structure. Every control already paints itself from one
 `Hud` palette, every board colour and shape lives in `Java2DFrameRenderer` behind a `Palette` role,
 and the toolbar icons reuse the board shapes. The theme needs labels, a handful of colours and five
 silhouettes, not a new UI.
@@ -434,16 +435,17 @@ What to do instead, highest value per cost first:
    exclusive-choice mark for the two chains: the choice reads "☉ or ψ".
    - 💬
 3. [ ] ⭐ 🟢 **Recolour only what the new names contradict**: Comet brown → ice white-blue (body and
-   shell); Singularity orange → amber ring around a dark centre; Entangler white → violet, its link
+   shell); Singularity orange → gold ring around a dark centre; Entangler white → oxygen teal, its link
    lines too. Everything else keeps its colour, so the board still reads the same.
    - 💬
 4. [ ] ⭐ 🟡 **New silhouettes** for Quasar, Nova, Singularity, Entangler and Comet (section 5),
    one closed shape each as the render rules require. The toolbar follows for free.
    - 💬
-5. [ ] 🟡 **A backdrop.** [ ] ⭐ a faint lattice on buildable cells (a "spacetime grid": theme *and*
-   it shows where you can build) / [ ] a dim starfield / [ ] none. A starfield of dots would
-   camouflage the dotted path, so stars must stay off path cells and well below the markers'
-   brightness. Either one is static, so it must stay out of the per-frame budget.
+5. [ ] 🟡 **A backdrop.** [ ] ⭐ the deep-field gradient plus faint **tick marks** (a tiny +) at
+   the corners of buildable cells: a "spacetime grid" that is theme *and* shows where you can build
+   / [ ] a dim starfield / [ ] none. Full lattice lines were tried and drowned the path dots; a
+   starfield of dots would camouflage the dotted path the same way. Both are static, so they're
+   painted once per level and stay out of the per-frame budget.
    - 💬
 6. [ ] 🟡 **Path ends**: a swirl where anomalies enter (the horizon) and a core mark where they
    leave.
@@ -451,9 +453,143 @@ What to do instead, highest value per cost first:
 7. [ ] 🟡 **Projectile tails**: a comet tail on the shell, a streak behind the tachyon. Needs each
    shot's heading when it's drawn.
    - 💬
-8. [ ] 🟢 **HUD tint**: [ ] ⭐ keep the phosphor green (an oscilloscope; no change) / [ ] a cool
-   cyan-grey console with ☉ amber and ψ violet accents (about ten constants in `Hud`).
+8. [ ] ⭐ 🟢 **The deep-space palette** below: indigo and violet instead of phosphor green.
    - 💬
+
+### The palette: the Hubble palette on a deep field
+
+**The idea in one line:** an indigo deep field, violet chrome as the game's "space" voice, and
+meaning carried by **gold ☉ and teal ψ**, which is the signature of the Hubble narrowband palette.
+It maps sulfur light to red, hydrogen to green and oxygen to blue, so gas rich in sulfur and
+hydrogen comes out gold and oxygen-rich gas teal-blue (the Pillars of Creation look). The UI's two
+scales wear the colours of some of the most famous space images ever made.
+
+**Loudness follows information density.** The title screen is loud (a nebula), the HUD is medium
+(violet chrome, quiet surfaces), and the board is the quietest (a deep field you feel rather than
+see). The board is where the player reads the game, so decoration stays out of its way.
+
+Measured, not eyeballed: WCAG contrast, CIELAB lightness and chroma, ΔE2000 colour distance,
+colour-blind simulation (Machado 2009, full severity), and a clash check against every colour the
+board already draws. The mock render is at the end of this subsection.
+
+| Role                          | Today                 | ⭐ Proposed                   | Hex       | Contrast on deep field | Where                                                        |
+|-------------------------------|-----------------------|------------------------------|-----------|------------------------|--------------------------------------------------------------|
+| Deep field                    | black                 | near-black indigo            | `#0A0716` | (base)                 | window, panels, board edges                                  |
+| Board centre                  | black                 | deep indigo, radial to edges | `#181238` | 1.12                   | a static gradient under the board: felt, not seen            |
+| Raised                        | black                 | dark indigo                  | `#16122C` | 1.10                   | hover, level cards (85% opaque over the nebula), bar tracks  |
+| Selected / pressed            | dark green            | deep violet                  | `#2D2263` | 1.44                   | selected toggle, pressed button                              |
+| Border                        | `#4E684E` (3.41)      | dusky violet                 | `#6E62A8` | **3.77**               | every panel and control outline                              |
+| Border, disabled              | `#303C30`             | faint indigo                 | `#332F4C` | 1.57                   | disabled controls (exempt)                                   |
+| Panel titles                  | pale green            | **nebula violet**            | `#B7A6FF` | 9.40                   | "Telemetry", "Readout"…: the HUD's space voice               |
+| Text and values               | `#DCFFDC`             | starlight                    | `#E8E3FF` | 15.99                  | everything read first, numbers included                      |
+| Labels                        | `#AACDAA`, `#96AA96`  | lavender grey                | `#A9A2CC` | 8.27                   | "Wave:", stat names, prose                                   |
+| Disabled text                 | `#607060`             | muted lavender               | `#7B7596` | 4.58                   |                                                              |
+| **☉ astral**                  | `#E69646` (physical)  | star gold                    | `#FFB85C` | 11.62                  | kinetic damage, ☉ marks, head pips of a ☉ chain              |
+| **ψ quantum**                 | `#5ABEFF` (magic)     | oxygen teal                  | `#5CDCE0` | 12.10                  | phase damage, ψ marks, head pips of a ψ chain                |
+| Problem                       | `#FF7878`             | rose                         | `#FF7F7F` | 8.15                   | unmet gate (with ✕), can't afford, Breached                  |
+| Special pips                  | `#C864FF`             | lavender violet              | `#C49BFF` | 8.99                   | special slot pips and halo                                   |
+| Lattice ticks                 | (none)                | faint indigo                 | `#211C3E` | 1.23                   | tiny + at cell corners, buildable cells only                 |
+| Title-screen nebula           | (none)                | violet, hydrogen pink, oxygen teal | `#3F2A85`, `#5A2150`, `#12505A` | glow peaks | soft glows behind the level cards                            |
+
+**Rules that come with it**
+
+- [ ] ⭐ **Only gold, teal and rose mean something.** Everything else is chrome (violet, starlight)
+  or identity (tower, enemy, lane and effect colours, which stay as they are, so nobody relearns
+  the board).
+  - 💬
+- [ ] ⭐ **Good news needs no colour.** A met gate is starlight with ✓ and an improvement is
+  starlight with →; only a problem is coloured (rose with ✕). That frees green entirely, and
+  green is the colour least at home in an indigo scheme.
+  - 💬
+- [ ] ⭐ **Both scales show both marks.** Duality and the extra head node show ☉ in gold and ψ in
+  teal side by side, never a third "both" colour.
+  - 💬
+- [ ] ⭐ **Pip colour says scale, not slot.** Each slot has its own row of pips, so the row already
+  says which slot. Colour is then free to say which scale: base pips starlight, head pips the
+  chosen chain's gold or teal, special pips lavender violet. This also ends a collision: today's
+  gold head pip is almost exactly ☉ gold (ΔE 9).
+  - 💬
+- [ ] ⭐ **Board chrome follows**: placement highlight and the range ring turn lavender (today
+  grey and cream); the health bar becomes a starlight fill on a raised track (today green).
+  - 💬
+- [ ] Level accents: Spiral Arm gold, Double Slit teal, Wormhole violet with a two-colour ☉ψ.
+  - 💬
+
+**What the measurements say**
+
+- ☉ against ψ: ΔE 42.6 in normal vision, and still 33 (protan), 40 (deutan) and 53 (tritan).
+  Clearly distinct for every type of colour vision, and the ☉/ψ glyphs back it up anyway.
+- Every text colour is at least 11:1 on every surface. Borders reach 3.77:1, better than today's
+  green (3.41). Disabled text is 4.58:1. Gold and teal stay at least 8:1 on every surface; rose is
+  5.65:1 at worst (on the selected fill).
+- Inside a level card at the nebula's brightest point, text reads 15:1 and labels 7.8:1. Without
+  the card fill, labels fell to 2.1:1.
+- Path markers are alpha-blended, so they keep their contrast on a lighter field. Opaque dark
+  pieces don't:
+
+  | Board background        | Path chevron | Mortar brown | Warden red | Chill marker |
+  |-------------------------|--------------|--------------|------------|--------------|
+  | black (today)           | 3.55         | 3.60         | 2.10       | 5.93         |
+  | `#181238` ⭐ centre      | 3.67         | 3.04         | 1.77       | 5.01         |
+  | `#22184C` richer        | 3.57         | 2.76         | 1.61       | 4.55         |
+  | `#2A1E5C` too rich      | 3.45         | 2.50         | 1.46       | 4.12         |
+
+  - [ ] ⭐ `#181238` now. [ ] `#22184C` for a richer board once Comet (ice white) and the boss
+    are recoloured.
+    - 💬
+- **A bug the theme can fix:** today's Warden red (`#8B0000`) is under 2.1:1 on *any* dark
+  background, so the boss is the hardest thing on the board to see. A Red Giant in bright
+  red-orange (`#FF6B4A`, 7:1) fixes it. That's for the enemy iteration; mind that it then sits
+  close to Flare's orange (ΔE 6), so Flare should move toward a yellower solar orange.
+- **Known compromises:** to deuteranopes, the violet titles sit closer to ψ teal (ΔE 12). Titles
+  are positional chrome, so that's acceptable. ψ teal is near the Simple enemy's cyan (ΔE 8),
+  which the enemy iteration can revisit. ☉ gold equals Twisted Hourglass's amber lane, which is
+  harmless because lanes carry no meaning.
+
+**The science, honestly.** Deep space isn't purple. A true-colour photo of the sky is near-black,
+with pink hydrogen glow and teal oxygen glow where gas shines. So the base stays almost neutral
+(chroma 8: it reads as night, not as synthwave). Saturated violet appears only as chrome and in
+the title-screen nebula, where hydrogen pink and oxygen teal glow as they do in real emission
+nebulae. Gold and teal for the two scales are an imaging convention, but a real one.
+
+**How it got here.** Four rounds, each measured and rendered:
+
+- **v1**: indigo everywhere, violet borders, two tones per scale, magenta as the second ψ tone.
+  Rejected. Borders fell to 2.1:1 (below today's green). Full lattice lines drowned the path dots
+  (1.09:1 against them). Magenta collided with the special pips (ΔE 4) and the Jammer's pink. The
+  rose second ☉ tone collided with the unmet-gate red. Saturated surfaces read as a purple slab.
+- **v2**: quiet slate-indigo, a tick lattice, one tone per scale, uncoloured met gates. Legible,
+  but it lost the space feel this palette exists for.
+- **v3**: violet put back where it costs nothing (titles, selected state, the deep-field gradient,
+  the title-screen nebula). Two problems remained: card labels over the nebula failed (2.1:1),
+  and values were dimmer than their labels.
+- **v4** (this table): filled cards, values brightest, ☉ψ in two colours everywhere.
+
+**Cost, corrected.** The green does not live in `Hud` alone. It is about 50 colour literals across
+about ten classes: `Hud`, the console, tower info, wave info, upgrade tree, wave rows, enemy
+preview, level select, overlays and the info sheet's text and bar colours, plus the board
+background and cell highlights in `Java2DFrameRenderer`. Gathering them into one HUD palette is
+the natural first step. The deep-field gradient and the title nebula are static, so they're
+painted once into a cached image, never per frame.
+
+![Palette v4 mock](palette-v4-mock.png)
+
+*The mock is today's board render composited onto the new base, beside a hand-drawn HUD and title
+screen. It shows colours, not final layout.*
+
+How far to take it:
+
+- [ ] ⭐ **Everywhere**: board, HUD, buttons, level select, overlays. One look.
+  - 💬
+- [ ] **Board and menus only**: keep the green HUD, but the board gets the deep field and the
+  level select the nebula. Cheaper, but two looks side by side.
+  - 💬
+- [ ] **Accents only**: keep black and green, use gold and teal just for meaning. The smallest
+  change and the least "space".
+  - 💬
+
+Once implemented, confirm with a `PreviewBoard` render (board) and one `run-jtd` screenshot
+(panels): Java2D's antialiasing and the real fonts differ slightly from the mock.
 
 **Already in place, nothing to do:** physical damage already shows warm orange in the info sheet;
 every effect marker already fits its themed name (Dilated blue, Stasis ice, Irradiated
@@ -522,7 +658,7 @@ The brief asks for a synergy of the two. Two layers exist for free; the rest is 
 | `enemy`                                                        | slight now, moderate in its own iteration | display names and descriptions, the boss chain's names; body shapes later                                                          |
 | `projectile`                                                   | slight, optional                         | a comet tail and a tachyon streak, visual only                                                                                     |
 | `tower`, `tower.upgrade`                                       | **moderate**                             | 8 tower names (today derived from the code name), 32 upgrade names, behaviour rows and shop descriptions, a ☉ / ψ mark per chain     |
-| `ui` panels, menus, overlays                                   | **moderate**                             | a few dozen labels, title, banners, price formatting; an optional re-tint                                                          |
+| `ui` panels, menus, overlays                                   | **moderate**                             | a few dozen labels, title, banners, price formatting; the palette's ~50 colour literals across ~10 classes                         |
 | `ui.render`, `Java2DFrameRenderer`                             | moderate, mostly optional                | a few colours, five body shapes, a backdrop                                                                                        |
 | Tests                                                          | **moderate**                             | about 15 test files assert display strings (UI text tests, tower tests); rule tests and `GameEngineTest` are untouched              |
 | Docs                                                           | **large in volume**                      | `README.md` tables, the iteration-2 request, the towers brainstorm, `td/tower/CLAUDE.md`'s naming rule; shipped feature docs are history and can keep old names |
@@ -736,7 +872,7 @@ section 14.
 
 - [ ] UI: ⭐ no overhaul; labels, marks, three recolours (section 10).
   - 💬
-- [ ] HUD tint: ⭐ keep the green / cyan-grey console.
+- [ ] Palette: ⭐ deep-space indigo everywhere / board and menus only / accents only (section 10).
   - 💬
 - [ ] Silhouettes for five towers.
   - 💬
