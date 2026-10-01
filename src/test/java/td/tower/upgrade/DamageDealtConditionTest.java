@@ -1,6 +1,7 @@
 package td.tower.upgrade;
 
 import org.junit.jupiter.api.Test;
+import td.damage.DamageUnits;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
@@ -31,13 +32,14 @@ class DamageDealtConditionTest {
 
         tower.doTick(0);
 
-        assertThat(tower.getDamageDealt()).isGreaterThan(0);
-        assertThat(new DamageDealtCondition(tower.getDamageDealt()).isSatisfied(tower, this.context)).isTrue();
-        assertThat(new DamageDealtCondition(tower.getDamageDealt() + 1).isSatisfied(tower, this.context)).isFalse();
+        long wholePoints = tower.getDamageDealt() / DamageUnits.PER_POINT;
+        assertThat(wholePoints).isGreaterThan(0);
+        assertThat(new DamageDealtCondition(wholePoints).isSatisfied(tower, this.context)).isTrue();
+        assertThat(new DamageDealtCondition(wholePoints + 1).isSatisfied(tower, this.context)).isFalse();
     }
 
     @Test
-    void describesItselfInWholeDamagePointsNotHundredths() {
-        assertThat(new DamageDealtCondition(20000).describe()).isEqualTo("200 damage dealt");
+    void describesItselfInDamagePoints() {
+        assertThat(new DamageDealtCondition(200).describe()).isEqualTo("200 damage dealt");
     }
 }

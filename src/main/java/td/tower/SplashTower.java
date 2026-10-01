@@ -29,7 +29,7 @@ import java.util.Optional;
 public final class SplashTower extends AbstractTower {
 
     public static final int PRICE = 15;
-    public static final int DAMAGE = 1600;
+    public static final float DAMAGE_POINTS = 16f;
     public static final float RANGE = 3.2f;
     public static final float SPREAD_RADIUS_BASE = 1.75f;
 
@@ -57,13 +57,13 @@ public final class SplashTower extends AbstractTower {
     private static final UpgradeNode BLAST_ENGINEERING_1 = UpgradeNode.of("splash.head.blast_engineering.1",
             UpgradeSlot.HEAD, "Blast Engineering", 35)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
-            .withGate(new DamageDealtCondition(10000))
+            .withGate(new DamageDealtCondition(100))
             .withExtraEffect("+30% splash radius");
     private static final UpgradeNode BLAST_ENGINEERING_2 = UpgradeNode.of("splash.head.blast_engineering.2",
             UpgradeSlot.HEAD, "Blast Engineering II", 53)
             .withBuff(TowerBuff.damage(0.25f))
             .withRequires(UpgradeCondition.owns(BLAST_ENGINEERING_1.id()))
-            .withGate(new DamageDealtCondition(20000))
+            .withGate(new DamageDealtCondition(200))
             .withExtraEffect("flattens the falloff curve");
     private static final UpgradeNode BLAST_ENGINEERING_3 = UpgradeNode.of("splash.head.blast_engineering.3",
             UpgradeSlot.HEAD, "Blast Engineering III", 70)
@@ -83,12 +83,12 @@ public final class SplashTower extends AbstractTower {
     private static final UpgradeNode RAPID_BATTERY_3 = UpgradeNode.of("splash.head.rapid_battery.3", UpgradeSlot.HEAD,
             "Rapid Battery III", 60)
             .withRequires(UpgradeCondition.owns(RAPID_BATTERY_2.id()))
-            .withGate(new DamageDealtCondition(25000))
+            .withGate(new DamageDealtCondition(250))
             .withExtraEffect("crits splash 50% bigger");
     private static final UpgradeNode TOXIC_BLOOM = UpgradeNode.of("splash.special.toxic_bloom", UpgradeSlot.SPECIAL,
             "Toxic Bloom", 30)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
-            .withGate(new DamageDealtCondition(15000))
+            .withGate(new DamageDealtCondition(150))
             .withExtraEffect("splash applies poison");
     private static final UpgradeNode CONCUSSIVE_BLAST = UpgradeNode.of("splash.special.concussive_blast",
             UpgradeSlot.SPECIAL, "Concussive Blast", 30)
@@ -117,7 +117,7 @@ public final class SplashTower extends AbstractTower {
     private List<Blast> blasts = List.of();
 
     public SplashTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.SPLASH, PRICE, new TowerBaseStats(DAMAGE, RANGE, COOLDOWN_MAX), context, x, y);
+        super(TowerFactory.Type.SPLASH, PRICE, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
         this.spreadRadius = SPREAD_RADIUS_BASE * context.getBoard().scale();
         this.targetSelector = new RandomSelector(context.random());
     }

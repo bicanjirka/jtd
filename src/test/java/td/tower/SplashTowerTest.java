@@ -2,6 +2,7 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.damage.DamageUnits;
 import td.effect.EffectKind;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
@@ -77,7 +78,7 @@ class SplashTowerTest {
 
         tower.doTick(0);
 
-        assertThat(blastCentre.onlyHitAmount()).isEqualTo(SplashTower.DAMAGE);
+        assertThat(blastCentre.onlyHitAmount()).isEqualTo(DamageUnits.ofPoints(SplashTower.DAMAGE_POINTS));
     }
 
     @Test

@@ -10,11 +10,7 @@ final class TraitText {
     private TraitText() {
     }
 
-    /** Hundredths as points, without a trailing {@code .0}. */
-    static String points(int hundredths) {
-        return decimal(hundredths / 100f);
-    }
-
+    /** Without a trailing {@code .0}. */
     static String decimal(float value) {
         if (value == Math.round(value)) {
             return Integer.toString(Math.round(value));

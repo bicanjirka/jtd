@@ -67,6 +67,13 @@ void combineIsAdditiveOnBountyToo() {        TowerBuff a = new TowerBuff(0f, 0f,
     }
 
     @Test
+    void damageForRoundsInsteadOfDroppingTheFraction() {
+        TowerBuff buff = TowerBuff.amplifying(0.25f);
+
+        assertThat(buff.damageFor(150)).isEqualTo(188);
+    }
+
+    @Test
     void fireRateForShortensTheCooldownByTheBonusFraction() {
         TowerBuff buff = new TowerBuff(0f, 0f, 0.5f, 0f);
 
@@ -124,7 +131,7 @@ void combineIsAdditiveOnBountyToo() {        TowerBuff a = new TowerBuff(0f, 0f,
 
     @Test
     void anAuraBuffAndADisruptionPenaltyAddUp() {
-        TowerStats stats = TowerStats.of(new TowerBaseStats(100, 2f, 20), TowerBuff.range(0.5f),
+        TowerStats stats = TowerStats.of(new TowerBaseStats(1, 2f, 20), TowerBuff.range(0.5f),
                 new DisruptionPenalty(0.25f, 0.2f), 10);
 
         assertThat(stats.range()).isCloseTo(2f * 1.3f, org.assertj.core.data.Offset.offset(1e-5f));

@@ -3,6 +3,7 @@ package td.tower;
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.damage.DamageUnits;
 import td.effect.EffectKind;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
@@ -45,7 +46,7 @@ class SeekerTowerTest {
         tower.doTick(1);
         TowerFixtures.flyProjectilesToCompletion(this.context);
 
-        assertThat(target.onlyHitAmount()).isEqualTo(SeekerTower.DAMAGE);
+        assertThat(target.onlyHitAmount()).isEqualTo(DamageUnits.ofPoints(SeekerTower.DAMAGE_POINTS));
         assertThat(target.hits().getFirst().type()).isEqualTo(DamageType.MAGIC);
         assertThat(target.appliedEffects()).hasSize(1);
         assertThat(target.appliedEffects().getFirst().kind()).isEqualTo(EffectKind.FREEZE);

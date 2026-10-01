@@ -38,7 +38,7 @@ import java.util.Set;
 public final class CinderTower extends AbstractTower {
 
     public static final int PRICE = 28;
-    public static final int DAMAGE = 150;
+    public static final float DAMAGE_POINTS = 1.5f;
     public static final float RANGE = 2.2f;
     /** Ticks between shots before buffs. */
     public static final int COOLDOWN_MAX = 20;
@@ -59,12 +59,12 @@ public final class CinderTower extends AbstractTower {
             "White Flame", 30)
             .withBuff(TowerBuff.damage(0.3f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
-            .withGate(new DamageDealtCondition(15000));
+            .withGate(new DamageDealtCondition(150));
     private static final UpgradeNode WHITE_FLAME_2 = UpgradeNode.of("cinder.head.white_flame.2", UpgradeSlot.HEAD,
             "White Flame II", 45)
             .withBuff(TowerBuff.damage(0.25f))
             .withRequires(UpgradeCondition.owns(WHITE_FLAME_1.id()))
-            .withGate(new DamageDealtCondition(30000))
+            .withGate(new DamageDealtCondition(300))
             .withExtraEffect("+50% burn duration");
     private static final UpgradeNode WIDE_NOZZLE_1 = UpgradeNode.of("cinder.head.wide_nozzle.1", UpgradeSlot.HEAD,
             "Wide Nozzle", 25)
@@ -76,7 +76,7 @@ public final class CinderTower extends AbstractTower {
             "Wide Nozzle II", 38)
             .withBuff(TowerBuff.range(0.2f).withFireRate(0.2f))
             .withRequires(UpgradeCondition.owns(WIDE_NOZZLE_1.id()))
-            .withGate(new DamageDealtCondition(25000))
+            .withGate(new DamageDealtCondition(250))
             .withExtraEffect("+20% cone width, -20% cooldown");
     private static final UpgradeNode HEXFLAME = UpgradeNode.of("cinder.special.hexflame", UpgradeSlot.SPECIAL,
             "Hexflame", 56)
@@ -94,7 +94,7 @@ public final class CinderTower extends AbstractTower {
     private int coolDown = 0;
 
     public CinderTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.CINDER, PRICE, new TowerBaseStats(DAMAGE, RANGE, COOLDOWN_MAX), context, x, y);
+        super(TowerFactory.Type.CINDER, PRICE, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
     }
 
     @Override

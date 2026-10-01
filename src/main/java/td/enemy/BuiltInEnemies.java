@@ -57,13 +57,13 @@ final class BuiltInEnemies {
                     .withDescription("Takes far less damage, and its plating has grown thick enough to blunt a flat "
                             + "chunk of every hit outright. Immune to critical hits.")
                     .withAdditionalTraits(List.of(
-                            IdentifiedTrait.named("flatResist", FlatResistTrait.physicalOnly(800)),
+                            IdentifiedTrait.named("flatResist", FlatResistTrait.physicalOnly(8)),
                             IdentifiedTrait.named("resist", new PercentResistTrait(0.6f)))))
             .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1280, 125)
                     .withDescription("Takes drastically less damage, and its plating blunts a large flat chunk of "
                             + "every hit outright. Immune to critical hits.")
                     .withAdditionalTraits(List.of(
-                            IdentifiedTrait.named("flatResist", FlatResistTrait.physicalOnly(1000)),
+                            IdentifiedTrait.named("flatResist", FlatResistTrait.physicalOnly(10)),
                             IdentifiedTrait.named("resist", new PercentResistTrait(0.5f)))))
             .build();
 
@@ -78,7 +78,7 @@ final class BuiltInEnemies {
     private static final float FRENZIED_SPAWN_HEALTH_THRESHOLD = 0.5f;
     private static final int FRENZIED_SPAWN_COUNT = 3;
     private static final int FRENZIED_NEGLECT_WINDOW_TICKS = 200;
-    private static final int FRENZIED_NEGLECT_HEAL_PER_TICK = 2;
+    private static final float FRENZIED_NEGLECT_HEAL_PER_TICK = 0.02f;
     private static final int FRENZIED_NEGLECT_HEAL_DURATION_TICKS = 200;
     static final RankedEnemy FRENZIED = RankedEnemy
             .startingAt(EnemyDefinition.of("t", "Frenzied mob", 60, 3, 1.28f, BodyArchetype.TRIANGLE)
@@ -104,7 +104,7 @@ final class BuiltInEnemies {
                                     new ApplyEffectAction(new HealTemplate(FRENZIED_NEGLECT_HEAL_PER_TICK, FRENZIED_NEGLECT_HEAL_DURATION_TICKS),
                                             new SelfTarget()))))))
             .build();
-    private static final int T_SPAWN_DEATH_HEAL_PER_TICK = 4;
+    private static final float T_SPAWN_DEATH_HEAL_PER_TICK = 0.04f;
     private static final int T_SPAWN_DEATH_HEAL_DURATION_TICKS = 40;
     private static final float T_SPAWN_DEATH_HEAL_RADIUS = 150f;
     static final EnemyDefinition T_SPAWN = EnemyDefinition
@@ -141,7 +141,7 @@ final class BuiltInEnemies {
             .build();
     private static final int MENDER_HEAL_INTERVAL_TICKS = 20;
     private static final int MENDER_HEAL_DURATION_TICKS = 40;
-    private static final int MENDER_HEAL_PER_TICK = 2;
+    private static final float MENDER_HEAL_PER_TICK = 0.02f;
     private static final float MENDER_HEAL_RADIUS = 80f;
     private static final int MENDER_SELF_HEAL_WINDOW_TICKS = 100;
     private static final int MENDER_SELF_HEAL_DURATION_TICKS = 100;
@@ -159,7 +159,7 @@ final class BuiltInEnemies {
                             + "quietly mends itself if left unattacked long enough.")
                     .withAdditionalAbilities(List.of(IdentifiedAbility.named("selfHeal", new Ability(
                             new TimeSinceLastHitTrigger(MENDER_SELF_HEAL_WINDOW_TICKS),
-                            new ApplyEffectAction(new HealTemplate(1, MENDER_SELF_HEAL_DURATION_TICKS), new SelfTarget()))))))
+                            new ApplyEffectAction(new HealTemplate(0.01f, MENDER_SELF_HEAL_DURATION_TICKS), new SelfTarget()))))))
             .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(480, 50)
                     .withDescription("Its healing pulse now lasts twice as long, and a personal layer of armor, "
                             + "hardened against whichever damage type has hit hardest this level, joins its own "
@@ -179,7 +179,7 @@ final class BuiltInEnemies {
                                             new RadiusTarget(MENDER_HEAL_RADIUS)))),
                             IdentifiedAbility.named("selfHeal", new Ability(
                                     new TimeSinceLastHitTrigger(MENDER_SELF_HEAL_WINDOW_TICKS),
-                                    new ApplyEffectAction(new HealTemplate(2, MENDER_SELF_HEAL_DURATION_TICKS), new SelfTarget()))))))
+                                    new ApplyEffectAction(new HealTemplate(0.02f, MENDER_SELF_HEAL_DURATION_TICKS), new SelfTarget()))))))
             .build();
     static final EnemyDefinition WARDEN_EGG_3 = EnemyDefinition
             .of("wardenEgg3", "Warden's Final Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)
@@ -201,11 +201,11 @@ final class BuiltInEnemies {
             .withIdentifiedTraits(List.of(
                     IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
                     IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
-                    IdentifiedTrait.named("armor", new FlatResistTrait(100))))
+                    IdentifiedTrait.named("armor", new FlatResistTrait(1))))
             .withAbilities(List.of(new Ability(
                     new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden3", 1, true))));
     // High enough that an un-upgraded weak tower does nothing; later stages weaken it.
-    private static final int WARDEN_FLAT_RESIST = 1000;
+    private static final float WARDEN_FLAT_RESIST = 10f;
     private static final String WARDEN_ABILITY_BLURB = " Periodically calls a reinforcement and re-shields itself; "
             + "shields every nearby ally once below half health; calls an extra reinforcement if left unattacked "
             + "too long; gains a shield whenever it survives a critical hit; and leaves behind an egg on death.";
@@ -217,7 +217,7 @@ final class BuiltInEnemies {
                     new ApplyEffectAction(new ShieldTemplate(0.3f, 150), new RadiusTarget(150f)))),
             // Re-arms after each hit, so it fires every time it is left alone, not just once.
             IdentifiedAbility.anonymous(new Ability(new TimeSinceLastHitTrigger(200),
-                    new ApplyEffectAction(new HealTemplate(4, 40), new SelfTarget()))),
+                    new ApplyEffectAction(new HealTemplate(0.04f, 40), new SelfTarget()))),
             IdentifiedAbility.anonymous(new Ability(new OnCriticalHitTakenTrigger(),
                     new ApplyEffectAction(new ShieldTemplate(0.3f, 30), new SelfTarget()))));
     static final EnemyDefinition WARDEN_1 = EnemyDefinition

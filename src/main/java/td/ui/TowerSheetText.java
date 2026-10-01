@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.damage.DamageUnits;
 import td.effect.EffectKind;
 import td.tower.BehaviourLine;
 import td.tower.TowerInspection;
@@ -58,7 +59,7 @@ final class TowerSheetText {
         if (tower.auras() > 0) {
             lines.add(Row.toned(Glyph.RING, Palette.TOWER_AURA_RING, "Aura", tower.auras() > 1 ? "x" + tower.auras() : ""));
         }
-        lines.add(Row.plain(Glyph.SKULL, "Kills", tower.kills() + " · " + Math.round(tower.damageDealt() / 100f) + " dmg"));
+        lines.add(Row.plain(Glyph.SKULL, "Kills", tower.kills() + " · " + Math.round(DamageUnits.inPoints(tower.damageDealt())) + " dmg"));
         return new InfoSheet(lines);
     }
 

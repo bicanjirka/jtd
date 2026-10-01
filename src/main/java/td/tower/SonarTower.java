@@ -32,7 +32,7 @@ import java.util.Set;
 public final class SonarTower extends AbstractTower implements WaveStartListener {
 
     public static final int PRICE = 20;
-    public static final int DAMAGE = 1600;
+    public static final float DAMAGE_POINTS = 16f;
     public static final float RANGE = 5.2f;
     /** Seconds per revolution; this tower's fire rate. */
     public static final float SECONDS_PER_REVOLUTION = 2f;
@@ -47,12 +47,12 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
             "Twin Array", 35)
             .withBuff(TowerBuff.damage(0.25f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
-            .withGate(new DamageDealtCondition(10000));
+            .withGate(new DamageDealtCondition(100));
     private static final UpgradeNode TWIN_ARRAY_2 = UpgradeNode.of("sonar.head.twin_array.2", UpgradeSlot.HEAD,
             "Twin Array II", 53)
             .withBuff(TowerBuff.damage(0.25f).withCritChance(0.1f))
             .withRequires(UpgradeCondition.owns(TWIN_ARRAY_1.id()))
-            .withGate(new DamageDealtCondition(20000));
+            .withGate(new DamageDealtCondition(200));
     private static final UpgradeNode TWIN_ARRAY_3 = UpgradeNode.of("sonar.head.twin_array.3", UpgradeSlot.HEAD,
             "Twin Array III", 70)
             .withRequires(UpgradeCondition.owns(TWIN_ARRAY_2.id()))
@@ -66,7 +66,7 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
     private static final UpgradeNode LONG_REACH_2 = UpgradeNode.of("sonar.head.long_reach.2", UpgradeSlot.HEAD,
             "Long Reach II", 45)
             .withRequires(UpgradeCondition.owns(LONG_REACH_1.id()))
-            .withGate(new DamageDealtCondition(20000))
+            .withGate(new DamageDealtCondition(200))
             .withExtraEffect("damage scales up to +100% at max range");
     private static final UpgradeNode WIDE_BAND = UpgradeNode.of("sonar.special.wide_band", UpgradeSlot.SPECIAL,
             "Wide Band", 40)
@@ -81,7 +81,7 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
     private static final UpgradeNode PIERCING_TONE = UpgradeNode.of("sonar.special.piercing_tone", UpgradeSlot.SPECIAL,
             "Piercing Tone", 40)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
-            .withGate(new DamageDealtCondition(20000))
+            .withGate(new DamageDealtCondition(200))
             .withExtraEffect("bonus magic damage against physically armored/shielded enemies, up to +50%");
     /** Piercing Tone's bonus is the target's physical reduction, as a share of this hit, capped here. */
     private static final float PIERCING_TONE_MAX_BONUS = 0.5f;
@@ -100,7 +100,7 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
 
     public SonarTower(GameWorld context, int x, int y) {
         // No cooldown: the cadence is the sweep rate.
-        super(TowerFactory.Type.SONAR, PRICE, new TowerBaseStats(DAMAGE, RANGE, 0), context, x, y);
+        super(TowerFactory.Type.SONAR, PRICE, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0), context, x, y);
         this.context.waves().addListener(this);
     }
 

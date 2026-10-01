@@ -1,5 +1,6 @@
 package td.enemy;
 
+import td.damage.DamageUnits;
 import td.effect.EffectKind;
 import td.stat.EnemyStat;
 
@@ -49,7 +50,7 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
         }
         List<TraitLine> traitLines = definition.traitSlots().stream().map(slot -> slot.template().describe()).toList();
         return new EnemyInspection(definition.displayName(), definition.description(), mob.getRank(), mob.archetype(),
-                (mob.getHealth() + 99) / 100, mob.getMaxHealthPoints(), mob.getBounty(), stats, effects, List.copyOf(mob.blockedEffectKinds()),
+                (mob.getHealth() + DamageUnits.PER_POINT - 1) / DamageUnits.PER_POINT, mob.getMaxHealthPoints(), mob.getBounty(), stats, effects, List.copyOf(mob.blockedEffectKinds()),
                 mob.freezeDiminishingStep(), traitLines, mob.fate());
     }
 

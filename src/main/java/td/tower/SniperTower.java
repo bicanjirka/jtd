@@ -29,7 +29,7 @@ import java.util.List;
 public final class SniperTower extends AbstractTower {
 
     public static final int PRICE = 10;
-    public static final int DAMAGE = 3000;
+    public static final float DAMAGE_POINTS = 30f;
     public static final float RANGE = 3.8f;
     public static final float CRIT_CHANCE = 0.15f;
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.4;
@@ -54,7 +54,7 @@ public final class SniperTower extends AbstractTower {
             UpgradeSlot.HEAD, "Marksman's Eye II", 45)
             .withBuff(TowerBuff.critChance(0.2f).withArmorPenetration(0.5f))
             .withRequires(UpgradeCondition.owns(MARKSMANS_EYE_1.id()))
-            .withGate(new DamageDealtCondition(20000));
+            .withGate(new DamageDealtCondition(200));
     private static final UpgradeNode MARKED_ROUND = UpgradeNode.of("sniper.special.marked_round", UpgradeSlot.SPECIAL,
             "Marked Round", 20)
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
@@ -92,7 +92,7 @@ public final class SniperTower extends AbstractTower {
 
     public SniperTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SNIPER, PRICE,
-                new TowerBaseStats(DAMAGE, RANGE, COOLDOWN_MAX).withCritChance(CRIT_CHANCE), context, x, y);
+                new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX).withCritChance(CRIT_CHANCE), context, x, y);
     }
 
     @Override
