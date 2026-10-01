@@ -91,13 +91,14 @@ a different loadout or level, since v1 has no config format for either.
 | Seeker | 35    | Fires a homing missile that re-aims each tick and retargets if its target dies; deals magic damage and freezes whichever mob it actually hits       |
 | Cinder | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included |
 
-Every attack tower — Sniper, Splash, Sonar, Pulse, Mortar, Seeker and Cinder — also
-offers two permanent, mutually-exclusive upgrade paths, shown as buttons in its info panel
-once selected. A path is gated by its own condition (an affordable price alone, a cluster of
-towers built nearby, the tower having dealt enough damage, or having racked up enough kills)
-— choosing one is a one-time, irreversible specialization for that specific tower, marked on
-the board by a coloured ring around it. The Aura tower is passive and offers none, but draws a
-faint line to every tower it's currently amplifying.
+Every tower, the Aura included, has its own upgrade tree of three slots, shown in place of the
+wave preview once the tower is selected. `base` holds a range node and Awaken, which unlocks the
+other two; `head` offers two exclusive chains; `special` offers one to three exclusive
+specializations. A node is gated by its own condition (an affordable price alone, a cluster of
+towers built nearby, the tower having dealt enough damage, or having racked up enough kills),
+and every purchase is permanent for that tower. Pips on the board show each slot's level, and a
+tower with a special glows. The Aura tower draws a faint line to every tower it's currently
+amplifying.
 
 ### Enemies
 
@@ -164,8 +165,8 @@ the shapes that take one (`swarm 4 c`):
 
 ### Levels
 
-Three levels ship with the game: **Curly Path** (a 20×15 board whose single lane spirals
-through two tight loops before unwinding into a zigzag, 17 waves), **Zigzag Path** (a smaller,
+Three levels ship with the game: **Curly Path** (a 20×13 board whose single lane spirals
+through two tight loops before unwinding into a zigzag, 18 waves), **Zigzag Path** (a smaller,
 16×11 board where a fuchsia lane hooks back on itself and a lime lane cuts across it twice, 8
 waves per lane, only 3 lives) and **Twisted Hourglass** (a tight, 9×14 portrait board where three
 Bezier lanes - crimson, teal and amber - twist through a pinched waist so the layout reads as an
@@ -196,9 +197,12 @@ src/main/java/td/
   cell/     board squares and buildability
   damage/   the damage value type
   economy/  credits, score and lives
-  enemy/    the enemy mob hierarchy
+  effect/   timed status effects
+  enemy/    enemy definitions, traits, abilities and the live mob
   level/    level definitions and the level catalog
-  tower/    the tower hierarchy, targeting, aura buffs and upgrade paths
+  projectile/ in-flight shells and missiles
+  stat/     the enemy stat sheet
+  tower/    the tower hierarchy, targeting, buffs and upgrade trees
   ui/       Swing presentation, render commands and the Java2D backend
   util/     GameWorld (the composition root) and GameHost
   wave/     path geometry, smoothing and wave composition
@@ -222,9 +226,14 @@ driven and asserted from tests with no display.
   internals have invariants worth stating up front.
 - **`TODO.md`** — the single source of truth for known gaps and future work. Inline `TODO`
   comments are deliberately not used; add an entry here instead.
+- **`docs/releases/`** — one frozen snapshot per released version: every feature, its numbers
+  and the technical shape of the game at that tag.
 
 ## Version
 
 `pom.xml`'s `<version>` is the single source of truth. It is filtered into
-`src/main/resources/version.properties` at build time and read back at startup, so cutting a
-release only means editing the pom.
+`src/main/resources/version.properties` at build time and read back at startup.
+
+Cutting a release: write `docs/releases/v<version>.md`, commit it, tag that commit
+`v<version>`, then raise the pom version in the next commit, so everything after the tag builds
+as the next version.

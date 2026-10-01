@@ -341,6 +341,16 @@ own balance passes.
   entries in this file get their own pass - no code or architecture change needed, every number
   here is already a named constant or a `TowerBuff` literal.
 
+### The Warden's description promises a reinforcement its ability doesn't call
+
+Every Warden stage's description says it "calls an extra reinforcement if left unattacked too
+long", but the ability behind that trigger heals the Warden instead.
+
+- **Where:** `BuiltInEnemies.WARDEN_ABILITY_BLURB` and the `TimeSinceLastHitTrigger` entry in
+  `WARDEN_STANDING_ABILITIES`.
+- **Approach:** decide which behaviour is intended, then change either the ability's action or
+  the description so they agree.
+
 ## UI
 
 ### A hatched egg leaves its stale stats in the inspector
