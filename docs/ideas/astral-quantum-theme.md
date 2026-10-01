@@ -2,8 +2,9 @@
 
 A proposal to give jTD a character: a science theme at the two extreme scales, the **astral**
 (stars, gravity, light-years) and the **quantum** (particles, probability, entanglement), leaning
-quantum. It renames everything the player reads, recolours a little, reshapes a few symbols, and
-changes no rules. Nothing here is decided.
+quantum, with sci-fi welcome wherever it plays better. It renames everything the player reads,
+recolours a little, reshapes a few symbols, and changes no rules; section 11 adds optional
+mechanics the theme suggests. Nothing here is decided.
 
 **How to use it** (the same conventions as `towers-brainstorm.md`)
 
@@ -16,30 +17,34 @@ changes no rules. Nothing here is decided.
 
 Contents: 1 The pitch · 2 Ground rules · 3 Setting and frame · 4 The two scales as a design grammar
 · 5 Towers · 6 Upgrade trees · 7 Damage, stats and effects · 8 HUD, menus and levels · 9 Enemies
-(draft) · 10 Visuals and UI · 11 Synergy mechanics (optional) · 12 Impact assessment · 13 For the
-better, for the worse · 14 Iteration 2 and the towers brainstorm · 15 Adoption tiers · 16 Word bank
-· 17 Decisions
+(draft) · 10 Visuals and UI · 11 Theme mechanics and decisions (optional) · 12 Impact assessment ·
+13 For the better, for the worse · 14 Iteration 2 and the towers brainstorm · 15 Adoption tiers ·
+16 Word bank · 17 Decisions · 18 Review notes and sources
 
 ---
 
 ## 1. The pitch
 
-**Thesis: astral on the board, quantum in the rules.**
+**Thesis: two scales, one language.** Everything the player meets belongs to the very large (☉),
+the very small (ψ), or, rarely and on purpose, both. Three signals always agree: the **name** (a
+body in the sky, or a particle or quantum effect), the **colour** (star gold or oxygen teal) and
+the **mark** (☉, astronomy's sign for the Sun; ψ, physics' sign for a wavefunction). A tower's
+home scale is its damage type, so its name tells the player the colour of its damage before they
+read a number. One rule to learn, used everywhere: that is the uniform experience.
 
-What the player *sees* (towers, shells, the boss) are cosmic objects with silhouettes everyone
-knows: a comet, a pulsar, a nova. What *happens* (effects, stats, upgrades) is told in quantum
-words, because quantum words describe *states* (superposed, observed, entangled, coherent,
-unstable), and states are what rules are made of. The game leans quantum where the player reads
-and astral where the player looks. The two scales meet where physics says they meet: at a black
-hole, the one place where both matter at once.
+The lean is quantum where it shapes play most, in the rules: effects, stats and upgrade logic
+speak of *states* (superposed, observed, coherent, unstable), and states are what rules are made
+of. Astral words go where the eye lands first, on big recognisable objects: a comet, a pulsar, a
+nova. The scales meet at a black hole, where physics needs both at once, so the bridge pieces (the
+Singularity tower, Duality, the Wormhole level) are black-hole pieces.
 
 **The fiction**, in four sentences. This is the whole lore budget; nothing in the game needs more.
 
-> At the edge of a black hole, the very large and the very small stop being separate. Your lab
-> keeps a quantum core there, and anomalies pour out of the horizon toward it: particles that
-> shouldn't exist and the debris of dying stars. Every anomaly that reaches the core decoheres one
-> of its qubits; lose them all and the computation is gone. You hold the line with instruments
-> that harness both scales.
+> Near a black hole, the very large and the very small stop being separate. Your lab keeps a
+> quantum core in orbit there, and something has torn the space beside the horizon: anomalies pour
+> through the tear toward the core, particles that shouldn't exist and the debris of dying stars.
+> Every anomaly that reaches the core decoheres one of its qubits; lose them all and the
+> computation is gone. You hold the line with instruments that harness both scales.
 
 **Why this theme fits jTD unusually well.** Most themes would be paint. This one names mechanics
 the game already has:
@@ -52,13 +57,13 @@ the game already has:
 | Sonar's beam sweeps around once every 2 s                                               | A pulsar, exactly                                                                                                       |
 | Burn and poison are separate damage-over-time pools that stack                          | Two kinds of slow damage: stellar heat and radiation                                                                    |
 | Waves                                                                                   | Already a physics word; it stays                                                                                        |
-| The Warden dies into an egg that hatches a weaker Warden, twice                         | A star's life: red giant, remnant, white dwarf, black dwarf                                                             |
+| The Warden dies into an egg that hatches a weaker Warden, twice                         | A star's death in stages: red giant, white dwarf, black dwarf, each smaller than the last                               |
 | Reaver splits into two Simple mobs on death                                             | A meson is a pair of quarks                                                                                             |
 | Black board, phosphor-green self-painted HUD                                            | Already reads as an instrument console                                                                                  |
 
 It is also cheap. Board art is vector code keyed by colour roles in one class, every control
-paints itself from one `Hud` palette, and effect and stat labels each live in one switch. The
-theme is mostly words.
+paints itself (so its look is colour constants, though today they sit in about ten classes), and
+effect and stat labels each live in one switch. The theme is mostly words.
 
 💬
 
@@ -66,6 +71,11 @@ theme is mostly words.
 
 ## 2. Ground rules for the theme
 
+- [ ] ⭐ **Play first, then feel, then science.** A name earns its place by hinting at what the
+  thing does; then it should sound good aloud; real science is the seasoning, not the judge. Pop
+  science and sci-fi tropes (cloaks, phase shifts, stasis fields, tachyons) are welcome wherever
+  they play better than the textbook. The theme exists to make decisions readable and interesting.
+  - 💬
 - [ ] ⭐ **Rename what belongs to another genre; keep what already fits science.** Fantasy and
   military words go: Spirit, Hex, Curse, Aura, Awaken, Transcendent, Warden, Mender, Ghost, Grunt,
   Siege, Marksman, Warhead, Withering, Warding, Toxic Bloom, "mob". Science-ready words stay: Wave,
@@ -85,10 +95,13 @@ theme is mostly words.
   through things. This is the lens for every node iteration 2 still has to write (section 4).
   - 💬
 - [ ] ⭐ **One line of flavour at most.** No fake-science paragraphs. A name and its rule do the
-  work, and poetic licence is fine.
+  work.
   - 💬
-- [ ] **Two marks, two hues.** ☉ warm (star gold), ψ cool (oxygen teal), on a deep indigo base (section 10). Used for meaning only (damage
-  type, a chain's scale), never to colour every object.
+- [ ] ⭐ **A tower's name is one short word that sounds good aloud**, from the sky, the particle
+  zoo or a famous effect, and it follows the tower's damage type (section 5).
+  - 💬
+- [ ] **Two marks, two hues.** ☉ warm (star gold), ψ cool (oxygen teal), on a deep indigo base
+  (section 10). Used for meaning only (damage type, a chain's scale), never to colour every object.
   - 💬
 
 ---
@@ -97,14 +110,14 @@ theme is mostly words.
 
 | Today                                | ⭐ Themed                            | Alternatives                      | Why                                                                                    |
 |--------------------------------------|-------------------------------------|-----------------------------------|----------------------------------------------------------------------------------------|
-| "Tower Defense" (window, title)      | **Quantum Horizon**                 | Planck & Parsec; Event Horizon; Rift | quantum first (the lean), horizon for the black hole. "Planck & Parsec" names the two extremes, but it's harder to say |
+| "Tower Defense" (window, title)      | **Quantum Horizon**                 | Planck & Parsec; Event Horizon; Rift | quantum first (the lean), horizon for the black hole. A search found no game by that name, while "Event Horizon" is a film and several games. "Planck & Parsec" names the two extremes but is harder to say |
 | enemies, "mob"                       | **anomalies**                       |                                   | neither scale owns the word                                                            |
 | Lives                                | **Qubits**                          | Containment, Integrity            | a count that reads naturally ("Qubits: 5"); quantum computing in one word              |
 | Cash / credits, `$35`                | **Energy**, written `35 eV`         | Quanta (`ħ 35`)                   | a destroyed anomaly releases its energy; `eV` reads as a unit like `$`                 |
 | Score                                | **Data**                            | keep Score                        | the lab collects observations                                                          |
 | Bounty                               | **Yield**                           |                                   | an anomaly's energy yield                                                              |
 | Sell                                 | **Recycle**                         | Dismantle                         | energy comes back                                                                      |
-| "Killed" (inspector)                 | **Annihilated**                     | Collapsed                         |                                                                                        |
+| "Killed" (inspector)                 | **Annihilated**                     | Destroyed                         | the strongest word for "gone completely"                                               |
 | "Leaked"                             | **Breached**                        | Reached core                      |                                                                                        |
 | "Game Over!"                         | **Decoherence**                     | Core lost                         | all qubits gone                                                                        |
 | "Congratulations!"                   | **Horizon held**                    | Rift sealed                       | echoes the title                                                                       |
@@ -125,13 +138,15 @@ theme is mostly words.
 | Feels like      | mass, gravity, heat, distance, time                   | chance, states, links, barriers that aren't there                 |
 | Upgrades do     | more damage, area, range and heat; slow and stop      | crit, two-at-once, reveal, through armor and shields, links       |
 | Damage type     | Kinetic                                               | Phase                                                             |
-| Damage over time| Burning (stellar heat), leaving Scorched              | Irradiated (decay), leaving Decohering                            |
-| Control         | Dilated, then Stasis                                  | Superposed and Observed; Unstable                                 |
-| Name sources    | celestial objects and astronomy                       | particles, quantum effects, quantum computing                     |
+| Damage over time| Burning (stellar heat), leaving Scorched              | Irradiated (decay), leaving Decohered                             |
+| Control         | Dilated, then in stasis                               | Superposed and Observed; Unstable                                 |
+| Name sources    | bodies and events in the sky, astronomy               | particles, quantum effects, quantum computing                     |
+| Towers at home  | Quasar, Nova, Pulsar, Comet (kinetic)                 | Tachyon, Photon (phase), Entangler (support)                      |
 
-**Every tower picks a scale.** Each tower's two exclusive head chains already split cleanly, one ☉
-and one ψ (table in 6.2). Choosing a chain becomes choosing a scale, and the panel can say so with a
-mark. Nothing in the rules changes.
+**Every tower has a home scale and picks a lean.** Its home scale is its damage type, which its
+name follows (section 5). Its lean is its head chain: each tower's two exclusive chains already
+split cleanly, one ☉ and one ψ (table in 6.2), so choosing a chain becomes choosing a lean, and the
+panel can say so with a mark. A kinetic Quasar can lean quantum. Nothing in the rules changes.
 
 - [ ] ⭐ 🟢 Head chain A / B = ☉ / ψ on every tower, marked in the upgrade panel.
   - 💬
@@ -151,37 +166,50 @@ mark. Nothing in the rules changes.
 
 ## 5. Towers
 
-| Today  | ⭐ Themed        | Scale | Why it fits                                                                                                                                                       | Symbol (one closed shape)                       | Alternatives                                                                   |
-|--------|-----------------|-------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------|--------------------------------------------------------------------------------|
-| Sniper | **Quasar**      | ☉     | a quasar's jet is a narrow beam across the universe: long range, one target, huge hits. Its hotkey is already `q`                                                    | a dot with two opposite thin jets               | Photon ψ, Laser ψ, Railgun                                                     |
-| Splash | **Nova**        | ☉     | a sudden burst of light at a point, cheap and frequent                                                                                                             | a four-point sparkle                            | Positron ψ (an annihilation burst; fits if Splash turns phase), Scatter ψ      |
-| Sonar  | **Pulsar**      | ☉     | a spinning neutron star sweeping a beam: the tower's exact mechanic. Its "Rotation" stat becomes "Period"                                                          | a small disc; the sweeping head is the beam     | Interferometer, Lighthouse                                                     |
-| Pulse  | **Singularity** | ☉ψ    | a tiny black hole that hurts everything near it, the unseen too. The brainstorm's Pulse ideas (undertow, pull, debuffs lasting longer inside, Event Horizon) are already black-hole physics | a thin bright ring around a dark centre         | Collider ψ, Cyclotron ψ                                                        |
-| Aura   | **Entangler**   | ψ     | links nearby towers so they act as one; the faint lines it draws already look like entanglement                                                                    | two interlocked rings                           | Beacon ☉, Lattice                                                              |
-| Mortar | **Comet**       | ☉     | a slow lob with a tail; comets are ice, so its chill explains itself                                                                                               | a disc with a tapered tail; the shell matches   | Meteor, Mass Driver                                                            |
-| Seeker | **Tachyon**     | ψ     | a particle from the future: it can't miss, and where it lands time stops                                                                                           | keep the kite                                   | Probe, Positron                                                                |
-| Cinder | **Flare**       | ☉     | a solar flare is a cone of burning plasma                                                                                                                          | keep the flame                                  | Corona                                                                         |
+| Today  | ⭐ Themed        | Home scale         | Why it fits                                                                                                                                                                | Symbol (one closed shape)                                    | Alternatives                                                        |
+|--------|-----------------|--------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|---------------------------------------------------------------------|
+| Sniper | **Quasar**      | ☉ kinetic          | the brightest objects in the universe, some firing jets across intergalactic space: long range, one target, huge hits. Its hotkey is already `q`                              | a dot with two opposite thin jets                            | Railgun (sci-fi), Lancer                                            |
+| Splash | **Nova**        | ☉ kinetic          | a star's sudden flash: a burst at one point, cheap and frequent                                                                                                            | a four-point sparkle                                         | Positron ψ, if Splash turns phase (brainstorm 3.2 B)                |
+| Sonar  | **Pulsar**      | ☉ kinetic          | a spinning neutron star sweeping its beam like a lighthouse: the tower's exact mechanic. "Rotation" becomes "Period", the number astronomers quote for a pulsar               | a small disc; the sweeping head is the beam                  | Lighthouse                                                          |
+| Pulse  | **Singularity** | ☉ψ, either damage  | a tiny black hole that hurts everything near it, the unseen too. The brainstorm's Pulse ideas (pull, slowing inside, debuffs lasting longer inside, Event Horizon) are black-hole ideas already | a thin bright ring around a dark centre                      | Black Hole, Gravity Well                                            |
+| Aura   | **Entangler**   | ψ (no damage)      | links nearby towers so they act as one; the faint lines it already draws to them read as entanglement                                                                      | two interlocked rings                                        | Ansible (sci-fi's instant link), Gluon (the particle named after glue) |
+| Mortar | **Comet**       | ☉ kinetic          | a slow lob with a tail; comets are ice and dust, so its chill explains itself                                                                                              | a disc with a tapered tail; the shell matches                | Mass Driver, Orbital Strike (sci-fi)                                |
+| Seeker | **Tachyon**     | ψ phase            | the faster-than-light particle of sci-fi: it arrives before it's fired, so it never misses                                                                                 | keep the kite                                                | Positron                                                            |
+| Cinder | **Photon**      | ψ phase            | a particle of light: Cinder's cone becomes a cone of light hot enough to burn                                                                                              | a wave packet (the squiggle physicists draw for a photon), or keep the flame | Flare ☉, Plasma Torch (sci-fi)                                      |
 
-- [ ] ⭐ **The roster above.** On the board it leans astral (five ☉, two ψ, one both), by design:
-  the rules carry the quantum lean.
+**The home-scale rule.** A tower's name belongs to the scale of its damage: kinetic towers are
+bodies in the sky, phase towers are particles. The player learns a tower's damage colour from its
+name. The Singularity, the bridge piece, fits either way, so its name doesn't pre-empt the
+brainstorm's question whether Pulse should deal phase (1.3). Nova turns into Positron only if
+Splash turns phase.
+
+**Does the name hint at the job?** (play first)
+
+| Tower       | Hint                                     | Verdict                                                  |
+|-------------|------------------------------------------|----------------------------------------------------------|
+| Quasar      | far and powerful                         | partly: "long-range sniper" needs the silhouette's jets  |
+| Nova        | a burst                                  | yes                                                      |
+| Pulsar      | spinning beam                            | yes, for anyone who has heard of one; the sweep teaches the rest |
+| Singularity | everything near it is pulled and crushed | yes                                                      |
+| Entangler   | links                                    | yes                                                      |
+| Comet       | slow, lobbed, icy                        | yes                                                      |
+| Tachyon     | fast, can't miss                         | yes                                                      |
+| Photon      | light                                    | partly: the cone and the burn need the art               |
+
+- [ ] ⭐ **The roster above**: four ☉, three ψ, one both. The name predicts the damage colour.
   - 💬
-- [ ] **A quantum-leaning roster**: Photon (Sniper), Positron (Splash), Pulsar, Collider (Pulse),
-  Entangler, Comet, Tachyon, Flare. Four ψ. The trade: particles have no silhouette (a photon is a
-  dot), so the board's shapes say less.
+- [ ] **Flare for Cinder** (the first draft): a vivid picture of a burst of fire, but an astral
+  name on a phase-damage tower, so the name stops predicting the colour, and the board leans astral
+  five to two on a quantum-leaning brief.
+  - 💬
+- [ ] **Sci-fi tech names**: Railgun, Nova, Pulsar, Gravity Well, Ansible, Mass Driver, Tachyon,
+  Plasma Torch. Clearer about each job, but the board then reads as hardware rather than the two
+  scales, and the home-scale rule loses its anchor.
   - 💬
 
-**Names against damage types.** Kinetic towers named for matter (Quasar's jet, Nova's shock,
-Comet) and phase towers named for fields and exotic particles (Singularity, Tachyon) read right.
-Three to watch:
-
-- Pulsar deals kinetic damage while a real pulsar beams radiation. Fine as licence, or one more
-  input to the brainstorm's damage-type review (1.3).
-- Nova or Positron hangs on Splash's damage type: kinetic, Nova; phase (the brainstorm's "Arcane
-  Splash", 3.2 B), Positron.
-- Flare deals phase, as it should: quanta were discovered by studying the light of hot bodies.
-
-**Pulsar and Quasar sound alike.** They sit on `e` and `q` and behave oppositely (one sweeps, one
-aims), which helps, but it's a small recognition cost. 💬
+**Look-alike names.** Pulsar and Quasar rhyme; Pulsar and Photon share a first letter. Each pair
+behaves oppositely (sweeps or aims; kinetic or phase), and the toolbar shows shapes, not names, so
+the cost is small. 💬
 
 **Tower sheet rows**: Physical damage → **Kinetic damage**; Magic damage → **Phase damage**;
 Rotation → **Period**; Splash radius → **Blast radius**. Range, Fire rate, Crit chance, Targets,
@@ -224,14 +252,17 @@ chain mixed an engineering word with two spiritual ones.
 | Nova        | Blast Engineering → **Shockfront**                            | Rapid Battery → **Cascade** (a particle shower)                               |
 | Pulsar      | Long Reach → **Parallax** (how astronomers measure distance)  | Twin Array → **Beam Splitter** (one beam, two paths)                          |
 | Singularity | Overcharged Coils → **Accretion**                             | Resonant Field → **Observer Effect** (touches and reveals the superposed)     |
-| Entangler   | Resonance Field → **Orbit**                                   | Amplifying Core → **Coupling**                                                |
+| Entangler   | Resonance Field → **Gravity Reach**                           | Amplifying Core → **Coupling**                                                |
 | Comet       | Siege Rounds → **Impactor**                                   | Fragmentation Rounds → **Fission**                                            |
 | Tachyon     | Twin Warhead → **Binary**                                     | Deep Freeze → **Zeno Lock** (a system watched closely can't change)           |
-| Flare       | White Flame → **Fusion**                                      | Wide Nozzle → **Dispersion** (a wave packet spreads out)                      |
+| Photon      | White Flame → **Fusion** (how stars make their light)         | Wide Nozzle → **Dispersion** (light spreading out, as in a prism)             |
 
 Every pair fits its lens with no content change: the ☉ chains are raw power, area, reach and heat;
 the ψ chains are crit, reveal, stasis, splitting and spreading. It also ends the Resonant Field /
 Resonance Field near-duplicate (brainstorm 9.5).
+
+The 32 themed names average 9.9 characters against today's 12.3 and none is longer than 15, so
+the narrow upgrade buttons cut fewer names short than they do now ("Fragmentation Rounds II").
 
 Still true after renaming: some level Is don't deliver their name (Beam Splitter I is +25% damage,
 Binary I is fire rate, Zeno Lock I is damage). That is the content fix in brainstorm 9.4, not a
@@ -244,20 +275,20 @@ naming one; the themed names are vaguer, so they promise less.
 
 | Tower       | Today            | ⭐ Themed              | Why                                                                     |
 |-------------|------------------|-----------------------|-------------------------------------------------------------------------|
-| Quasar      | Marked Round     | **Destabilizer**      | applies Unstable; frees "mark" for the brainstorm's Marked effect        |
+| Quasar      | Marked Round     | **Destabilizer**      | applies Unstable; the old name clashed with Mark on Sweep               |
 |             | Fifth Shot       | **Fifth Harmonic**    | keeps the "fifth" that explains it                                      |
 |             | Momentum         | **Momentum** (keep)   | already physics                                                         |
 | Nova        | Toxic Bloom      | **Fallout**           | applies Irradiated                                                      |
-|             | Concussive Blast | **Annihilation**      | kills explode                                                           |
+|             | Concussive Blast | **Supernova**         | kills explode; a nova's big sibling                                     |
 |             | Overpressure     | **Gamma Burst**       | after a crit, the next shot hits everything in range                    |
 | Pulsar      | Wide Band        | **Sky Survey**        | each revolution observes every superposed anomaly it passes             |
 |             | Mark on Sweep    | **Collapse**          | collapses chance into certainty: the next hit crits                     |
 |             | Piercing Tone    | **Tunneling**         | its bonus goes through armor and shields                                |
 | Singularity | Warding Field    | **Tidal Stress**      | applies Unstable, and no longer sounds protective                       |
-| Entangler   | Withering Field  | **Instability Field** | enemies in range turn Unstable                                          |
+| Entangler   | Withering Field  | **Instability**       | enemies in range turn Unstable                                          |
 | Comet       | Cursed Shrapnel  | **Volatile Core**     | comets are made of volatiles                                            |
-| Tachyon     | Homing Curse     | **Paradox**           |                                                                         |
-| Flare       | Hexflame         | **Magnetic Storm**    |                                                                         |
+| Tachyon     | Homing Curse     | **Paradox**           | a hit that breaks cause and effect leaves the target Unstable           |
+| Photon      | Hexflame         | **Ionizer**           | ionizing light leaves atoms unstable: a new ignition applies Unstable   |
 
 The six Vulnerable-applying specials lose their hex, curse and mark words (brainstorm 9.5). They
 still all apply the same debuff: the theme renames the duplication in brainstorm 1.4, it doesn't
@@ -306,11 +337,11 @@ whichever of kinetic and phase has landed most, so mix the scales.* Only its tex
 | Today     | Kind        | ⭐ Themed            | Scale | The inspector's plain line                                  |
 |-----------|-------------|---------------------|-------|-------------------------------------------------------------|
 | Chilled   | soft CC     | **Dilated**         | ☉     | slowed by its depth, never past 80%                          |
-| Freeze    | hard CC     | **Stasis**          | ☉     | stopped. The ice-crystal art stays: cryostasis              |
+| Freeze    | hard CC     | **In stasis**       | ☉     | stopped. The ice-crystal art stays: cryostasis              |
 | Burning   | DoT         | **Burning** (keep)  | ☉     | stars burn                                                  |
 | Poisoned  | DoT         | **Irradiated**      | ψ     | its own pool; slows a little                                |
 | Scorched  | debuff      | **Scorched** (keep) | ☉     | resilience down                                             |
-| Sickened  | debuff      | **Decohering**      | ψ     | coherence down                                              |
+| Sickened  | debuff      | **Decohered**       | ψ     | coherence down (stacks, like Scorched)                      |
 | Vulnerable| debuff      | **Unstable**        | ψ     | takes more damage                                           |
 | Shield    | restorative | **Shielded** (keep) |       |                                                             |
 | Heal      | restorative | **Restoring**       |       | anomalies don't heal, they restore                          |
@@ -327,10 +358,22 @@ The existing rules read as physics once renamed:
   scale.
 - Superposed anomalies dodge every aimed shot but not a field over the whole region.
 
-- [ ] ⭐ Time words: Dilated and Stasis.
+**Effect families.** A cause and its result share a word family, so they read as one: Observer
+Effect and Sky Survey leave anomalies Observed; Fallout leaves them Irradiated; Zeno Lock puts
+them in stasis; Destabilizer, Tidal Stress, Instability, Volatile Core, Paradox and Ionizer leave
+them Unstable; Collapse leaves them Measured (the brainstorm's Marked, section 14). A concept may
+appear on both sides of the board when it means the same thing: an anomaly is Decohered, the
+core's loss is Decoherence.
+
+- [ ] ⭐ Time words: Dilated and In stasis.
   - 💬
 - [ ] Cold words: keep Chilled and Frozen. The most legible, and Comet's chill fits them, but it
   loses the slow-then-stop story.
+  - 💬
+- [ ] ⭐ Superposed and Observed for stealth: the theme's best idea, explained by the plain line.
+  - 💬
+- [ ] Sci-fi stealth words: **Cloaked** and **Scanned**. Every gamer reads them instantly; the
+  quantum lean loses its signature rule.
   - 💬
 
 ---
@@ -355,8 +398,8 @@ The existing rules read as physics once renamed:
 | Today             | ⭐ Themed        | Scale | Why                                                                                            |
 |-------------------|-----------------|-------|------------------------------------------------------------------------------------------------|
 | Curly Path        | **Spiral Arm**  | ☉     | a lane that spirals through two tight loops: a galaxy's arm                                    |
-| Zigzag Path       | **Double Slit** | ψ     | two lanes, one crossing the other twice: the experiment where one particle takes both paths    |
-| Twisted Hourglass | **Wormhole**    | ☉ψ    | three lanes through a pinched waist: the textbook drawing of a wormhole *is* an hourglass      |
+| Zigzag Path       | **Double Slit** | ψ     | two lanes, one crossing the other twice: the experiment where a particle seems to take both paths at once |
+| Twisted Hourglass | **Wormhole**    | ☉ψ    | three lanes through a pinched waist: the classic wormhole drawing is two funnels joined at a throat, and Wheeler named it for that shape |
 
 - [ ] ⭐ The three level names.
   - 💬
@@ -368,50 +411,64 @@ The existing rules read as physics once renamed:
 ## 9. Enemies (a draft, for the enemy iteration)
 
 Enemies are yours to redo after the towers, so this is only the grammar and a first mapping, good
-enough that a renamed game isn't left with "Simple mob" in it. **Grammar:** ψ particles for plain,
-small or strange anomalies; ☉ bodies for heavy, big or supporting ones; the boss is a star's life.
+enough that a renamed game isn't left with "Simple mob" in it. **Grammar:** ψ for particles and
+quantum processes (plain, small, strange or repairing anomalies); ☉ for bodies (heavy, big or
+disruptive ones); the boss is a star's death in stages.
 
-| Today                                         | Draft                                            | Scale | Why                                                              |
-|-----------------------------------------------|--------------------------------------------------|-------|------------------------------------------------------------------|
-| Simple                                        | **Quark**                                        | ψ     | the basic building block                                         |
-| Armored                                       | **Asteroid**                                     | ☉     | rock: armor, and no weak spot to crit                             |
-| Frenzied                                      | **Meteoroid**                                    | ☉     | falls faster as it burns away                                    |
-| Frenzy Spawnling                              | Shard                                            | ☉     |                                                                  |
-| Ghost                                         | **Neutrino**                                     | ψ     | physicists' nickname for it is "the ghost particle"              |
-| Mender                                        | **Nebula**                                       | ☉     | a stellar nursery restores what's near it                        |
-| Jammer                                        | **Magnetar**                                     | ☉     | a magnetic field that wrecks instruments; Grounding answers it   |
-| The Warden / Weakened / Exhausted, and its egg | **Red Giant / White Dwarf / Black Dwarf**, egg **Remnant** | ☉ | a dying star leaves a core that reignites smaller                |
-| Reaver                                        | **Meson**                                        | ψ     | a quark pair: splitting into two Quarks is its exact ability     |
-| Empty (spacer)                                | **Vacuum**                                       |       |                                                                  |
+| Today                                 | Draft                                     | Scale | Why                                                                                                     |
+|---------------------------------------|-------------------------------------------|-------|---------------------------------------------------------------------------------------------------------|
+| Simple                                | **Quark**                                 | ψ     | the basic building block                                                                                 |
+| Armored                               | **Asteroid**                              | ☉     | rock: armour, and no weak spot to crit                                                                   |
+| Frenzied                              | **Sungrazer**                             | ☉     | a comet diving at the Sun: faster as it falls, shedding itself as it goes (Meteor works too)            |
+| Frenzy Spawnling                      | **Fragment**                              | ☉     | sungrazers break into pieces near the Sun                                                               |
+| Ghost                                 | **Neutrino**                              | ψ     | nicknamed "the ghost particle": trillions pass through you every second unnoticed                       |
+| Mender                                | **Nebula**                                | ☉     | a stellar nursery: things near it grow back                                                             |
+| Jammer                                | **Magnetar**                              | ☉     | the strongest magnets known: its field wrecks instruments, and Grounding answers it                     |
+| The Warden / Weakened / Exhausted     | **Red Giant / White Dwarf / Black Dwarf** | ☉     | a star's death in stages, each smaller than the last (no black dwarf exists yet: the universe is too young to have cooled one) |
+| the egg                               | **Remnant**                               | ☉     | what a dying star leaves behind, still glowing, ready to flare up again                                 |
+| Reaver                                | **Meson**                                 | ψ     | a pair of quarks: destroyed, it splits into two Quarks                                                  |
+| Empty (spacer)                        | **Vacuum**                                |       |                                                                                                         |
 
 - [ ] ⭐ Rename enemies with these drafts in the same pass as everything else, so no "mob" survives,
   and redo them in the enemy iteration.
   - 💬
-- [ ] Ranks Grunt / Soldier / Veteran / Elite / Boss → Trace / Stable / Heavy / Exotic / Prime. The
-  Boss badge's skull → a horizon mark (a dark disc with a bright rim).
+- [ ] ⭐ Ranks Grunt / Soldier / Veteran / Elite / Boss → energy classes **keV / MeV / GeV / TeV /
+  PeV**, the prefixes physicists use for particle and cosmic-ray energies. Everyone knows kilo <
+  mega < giga < tera < peta from file sizes, so the order needs no teaching, it sounds like an
+  arcade's power ladder, and it ties rank to Yield, which already rises with rank. The Boss
+  badge's skull → a horizon mark (a dark disc with a bright rim).
+  - 💬
+- [ ] Ranks as words: Trace / Stable / Heavy / Exotic / Prime. Their order has to be learned.
   - 💬
 
-**The brainstorm's enemy ideas (section 5), themed** — they fall into the grammar easily: Blinker
-(teleports forward when hit) → **Tunneler** ψ · Burrower (untargetable, hurt only by fields and
-ground effects) → **Dark Matter** ☉ · Priest (cleanses allies' debuffs) → **Corrector** ψ (quantum
-error correction removes errors) · Juggernaut (huge plating) → **Neutron Star** ☉ · Mites → **Quark
-swarm** · Courier → **Photon** · Shieldbearer → **Magnetosphere** · Drummer (haste aura) →
-**Accelerator** · Salamander (burn-immune) → **Sunspot** · Yeti (freeze-immune) → **Ice Giant** ·
-Necromancer → **Recombiner** · Mirror (resists the last type it took) → **Antiparticle** · Elite
-affixes → **exotic properties**.
+**The brainstorm's enemy ideas (section 5), themed**: Blinker (teleports forward when hit) →
+**Tunneler** ψ · Burrower (untargetable, hurt only by fields and ground effects) → **Dark Matter**
+☉, felt only through gravity · Priest (cleanses allies' debuffs) → **Corrector** ψ (quantum error
+correction wipes out errors) · Juggernaut (huge plating) → **Neutron Star** ☉ · Mites → **Cosmic
+Dust** ☉ · Courier → **Muon** ψ (fast and short-lived) · Shieldbearer → **Magnetosphere** ☉ ·
+Drummer (haste aura) → **Accelerator** ψ · Salamander (burn-immune) → **Sunspot** ☉ · Yeti
+(freeze-immune) → **Ice Giant** ☉ · Necromancer → **Recombiner** ψ · Mirror (resists the last type
+it took) → **Antiparticle** ψ · Elite affixes → **exotic properties**.
 
-**New enemy ideas the theme suggests**
+**New enemy ideas the theme suggests** (each asks the player a question)
 
-- [ ] 🟡 **Entangled pair**: two anomalies sharing one health pool; damage to either drains both.
+- [ ] ⭐ 🟡 **Phase Shifter** (sci-fi): flips every few seconds between immune to kinetic and immune
+  to phase, with a visible tell before each flip. *Which towers fire when?* It makes the
+  kinetic/phase mix a timing decision, not just a ratio.
   - 💬
-- [ ] 🟡 **Virtual pair**: two anomalies pop into existence mid-path and annihilate each other after
-  a few seconds, unless one is killed first, which makes the other one real and permanent.
+- [ ] 🟡 **Bell Pair** (the textbook entangled pair): two anomalies in one shared state; destroy
+  either and the other collapses at the same instant. *Kill the easy one or the dangerous one?*
+  Focus fire suddenly pays twice.
   - 💬
-- [ ] 🟡 **Unobserved**: invisible everywhere except inside a Pulsar's range. Gives the Pulsar a job
-  in every level.
+- [ ] 🟡 **Virtual Pair**: two anomalies pop into existence mid-path and annihilate each other after
+  a few seconds, unless one is killed first, which makes the other real and permanent. *Leave them
+  alone?* The rare enemy you should not shoot.
+  - 💬
+- [ ] 🟡 **Unobserved**: invisible everywhere except inside a Pulsar's range. *Where do the Pulsars
+  go?* Gives the Pulsar a job in every level.
   - 💬
 - [ ] 🔴 **Schrödinger**: drawn at two points of the path at once; the first hit collapses it into
-  that one.
+  that one. *Hit it early, at the safe copy, or let it come?*
   - 💬
 
 ---
@@ -422,9 +479,9 @@ affixes → **exotic properties**.
 
 **No.** The layout stays. Its colours change: the black-and-green instrument console becomes
 deep-space indigo with gold and teal accents (the palette below), but that is constants, not
-structure. Every control already paints itself from one
-`Hud` palette, every board colour and shape lives in `Java2DFrameRenderer` behind a `Palette` role,
-and the toolbar icons reuse the board shapes. The theme needs labels, a handful of colours and five
+structure. Every control already paints itself (its colours sit in about ten classes today, see
+the cost note below), every board colour and shape lives in `Java2DFrameRenderer` behind a
+`Palette` role, and the toolbar icons reuse the board shapes. The theme needs labels, a handful of colours and five
 silhouettes, not a new UI.
 
 What to do instead, highest value per cost first:
@@ -447,7 +504,7 @@ What to do instead, highest value per cost first:
    starfield of dots would camouflage the dotted path the same way. Both are static, so they're
    painted once per level and stay out of the per-frame budget.
    - 💬
-6. [ ] 🟡 **Path ends**: a swirl where anomalies enter (the horizon) and a core mark where they
+6. [ ] 🟡 **Path ends**: a swirl where anomalies enter (the tear) and a core mark where they
    leave.
    - 💬
 7. [ ] 🟡 **Projectile tails**: a comet tail on the shell, a streak behind the tachyon. Needs each
@@ -540,7 +597,7 @@ board already draws. The mock render is at the end of this subsection.
 - **A bug the theme can fix:** today's Warden red (`#8B0000`) is under 2.1:1 on *any* dark
   background, so the boss is the hardest thing on the board to see. A Red Giant in bright
   red-orange (`#FF6B4A`, 7:1) fixes it. That's for the enemy iteration; mind that it then sits
-  close to Flare's orange (ΔE 6), so Flare should move toward a yellower solar orange.
+  close to Cinder's orange (ΔE 6), so the Photon should move toward a whiter, yellower light.
 - **Known compromises:** to deuteranopes, the violet titles sit closer to ψ teal (ΔE 12). Titles
   are positional chrome, so that's acceptable. ψ teal is near the Simple enemy's cyan (ΔE 8),
   which the enemy iteration can revisit. ☉ gold equals Twisted Hourglass's amber lane, which is
@@ -620,27 +677,41 @@ screenshot on each OS, or paint ☉ as a tiny vector mark (a circle with a dot).
 
 ---
 
-## 11. Synergy of both scales (optional mechanics)
+## 11. Theme mechanics and decisions (optional)
 
-The brief asks for a synergy of the two. Two layers exist for free; the rest is optional.
+The theme's job in play is to make decisions readable and to suggest new ones. Each item names the
+decision it gives the player. Two exist already; the rest are optional, cost-tagged, and each would
+be its own feature request.
 
-1. [ ] ⭐ 🟢 **Already shipped**: adaptive elite armor resists whichever of kinetic and phase has
-   landed most, so mixing scales is already rewarded. Say it in the text (7.1).
+1. [ ] ⭐ 🟢 **Mix the scales** (already shipped): adaptive elite armor resists whichever of kinetic
+   and phase has landed most. *How much of each?* The theme only has to say it (7.1).
    - 💬
-2. [ ] ⭐ 🟢 **Chain choice is scale choice** (section 4). Flavour, no rule.
+2. [ ] ⭐ 🟢 **Lean each tower** (section 4): ☉ bigger or ψ stranger, shown by the mark. *What does
+   this spot on the board need?* Flavour on an existing choice; no rule changes.
    - 💬
-3. [ ] 🟡 **Coupled scales**, the Entangler's own theme job: its buff is stronger while it links at
-   least one ☉ tower and one ψ tower. It rewards mixed clusters and stays inside one tower, so the
-   balance risk stays local. It needs a notion of which scale a tower is on (its owned chain).
+3. [ ] 🟡 **Coupled scales**, the Entangler's own job: its buff is stronger while it links at least
+   one ☉-leaning tower and one ψ-leaning tower. *Build a mixed cluster or a pure one?* Contained to
+   one tower, so the balance risk stays local. It needs to know which way a tower leans (its owned
+   chain).
    - 💬
-4. [ ] 🟡 **Cross-scale reactions.** The theme gives reasons to effect interactions the towers
-   brainstorm already lists (2.7) rather than inventing new ones: *burning reveals* (a burning
-   anomaly glows, so it can't stay superposed); *revealed enemies are Exposed* (observed through a
-   telescope); *freezing a burning enemy bursts the burn* (stasis meeting fusion).
+4. [ ] 🟡 **Cross-scale reactions**: effect interactions where the scales meet, taken from the towers
+   brainstorm (2.7) rather than invented: *burning reveals* (a glowing anomaly can't stay
+   superposed); *revealed enemies are Exposed* (observed through a telescope); *freezing a burning
+   enemy bursts the burn* (thermal shock). *Which towers cover the same stretch of path?*
    - 💬
-5. Rejected: 🔴 **scale tides** (a level alternates rounds that favour ☉ or ψ; global rule load,
-   little play value) and 🔴 **fog of observation** (towers target only what a Pulsar sees; a
-   rewrite of targeting).
+5. [ ] 🟡 **Theme enemies** (section 9): Phase Shifter, Bell Pair, Virtual Pair, Unobserved. Each is a
+   new question for an existing tower, which is the cheapest way to make the roster deeper.
+   - 💬
+6. [ ] 🔴 **Duality powers** (the brainstorm's Transcendent actives, 6): a tower at Duality gains one
+   click-to-fire power on a cooldown, named in sci-fi style: Quasar *Relativistic Lance* (one
+   guaranteed crit on the selected anomaly), Comet *Meteor Storm* (shells rain on a clicked spot),
+   Singularity *Implosion* (pulls everything nearby to its centre), Tachyon *Time Stop* (every
+   anomaly in range in stasis for 2 s), Pulsar *Full Scan* (the whole board observed for 3 s).
+   *When do I spend it?* The biggest decision the theme could add, and the most work.
+   - 💬
+7. Rejected: 🔴 **scale tides** (a level alternates rounds favouring ☉ or ψ: global rule load,
+   little play value) and 🔴 **fog of observation** (towers target only what a Pulsar sees: a
+   rewrite of targeting; Unobserved gives the same question for one enemy type).
    - 💬
 
 ---
@@ -694,8 +765,8 @@ behaviour. Themed names describe fiction, not behaviour.
 
 1. **Identity.** "Tower Defense v1.4" becomes a game with a name, a place and a voice.
 2. **Names that teach.** Pulsar sweeps. Superposed and Observed explain the stealth rule, including
-   why area damage still lands. Neutrino is the ghost, Meson splits into Quarks, Magnetar jams,
-   Comet chills.
+   why area damage still lands. Neutrino is the ghost, a Meson splits into two Quarks, the Magnetar
+   jams, the Entangler links.
 3. **A grammar for the content flood.** Iteration 2 needs about 95 new node levels. "☉ bigger, ψ
    stranger" plus the word bank names them faster, and it doubles as a filter for the brainstorm's
    two hundred ideas: if an idea fits neither scale, that's a reason to cut it.
@@ -706,14 +777,19 @@ behaviour. Themed names describe fiction, not behaviour.
    chill into freeze becomes dilation into stasis; the two damage-over-time pools become heat and
    radiation.
 6. **Nearly no engine work.** The architecture made a reskin cheap; this mostly spends that.
+7. **One language.** Name, colour and mark agree on every tower, chain and damage number, so the
+   player learns one rule (gold is the very large, teal the very small) instead of a list.
+8. **New questions for the player.** The theme suggests mechanics that ask something (section 11),
+   not just new words for old ones.
 
 **For the worse**
 
 1. **Legibility.** Genre words (slow, burn, poison, stun, invisible) are free knowledge; themed
    words must be learned. Mitigated by plain inspector lines and unchanged markers, but some names
-   are obscure: Zeno Lock, Parallax, Fifth Harmonic, Meson.
-2. **Technobabble.** Forced metaphors can feel cheap, and a physics-literate player notices the
-   stretches (a comet that dilates time, a pulsar dealing kinetic damage).
+   are obscure: Zeno Lock, Parallax, Fifth Harmonic, Meson, Sungrazer.
+2. **Technobabble.** Forced metaphors can feel cheap. The guard is play first: a name that hints at
+   the job beats a clever one, and where the clever one is obscure, a plain sci-fi word wins
+   (Dampened, Tethered, Gravity Mire in section 14).
 3. **Two vocabularies** if only display names change: you and every session translate between
    `SniperTower` and Quasar. Or a large rename diff if the code changes too.
 4. **Churn** in tests and docs. The towers brainstorm and the iteration-2 request are written in
@@ -754,42 +830,48 @@ the theme absorbs them; the rest follow the word bank.
 
 New effects (brainstorm 2.2):
 
-| Brainstorm        | Themed            | Scale |   | Brainstorm   | Themed           | Scale |
-|-------------------|-------------------|-------|---|--------------|------------------|-------|
-| Sundered (armor)  | **Fractured**     | ☉     |   | Brittle      | **Brittle** (keep) | ☉   |
-| Unraveled (magic resist) | **Dephased** | ψ   |   | Anchored     | **Phase-locked**   | ψ   |
-| Cracked (plating) | **Cracked** (keep)| ☉     |   | Bleeding (per cell travelled) | **Ablating** (meteors lose mass with speed) | ☉ |
-| Exposed (crit taken) | **Exposed** (keep: a telescope exposure) | ☉ | | Resonating | **Resonating** (keep) | ψ |
-| Marked (next hit crits) | **Measured** | ψ    |   | Susceptible  | **Susceptible** (keep: a physics word) | ψ |
-| Silenced          | **Damped**        | ψ     |   | Soulfire (blue third pool) | **Cherenkov** (the blue glow of too-fast particles) | ψ |
-| Dazed             | **Concussed**     | ☉     |   | Haste (enemy) | **Accelerated** |       |
+| Brainstorm                    | Themed                                     | Scale |
+|-------------------------------|--------------------------------------------|-------|
+| Sundered (armor down)         | **Fractured**                              | ☉     |
+| Unraveled (magic resist down) | **Dephased**                               | ψ     |
+| Cracked (plating down)        | **Cracked** (keep)                         | ☉     |
+| Exposed (crit taken up)       | **Exposed** (keep: a telescope's exposure) | ☉     |
+| Marked (next hit crits)       | **Measured**                               | ψ     |
+| Silenced                      | **Dampened** (sci-fi's dampening field)    | ψ     |
+| Dazed                         | **Concussed**                              | ☉     |
+| Brittle                       | **Brittle** (keep)                         | ☉     |
+| Anchored (no speed-ups)       | **Tethered**                               | ☉     |
+| Bleeding (per cell travelled) | **Ablating** (meteors lose mass the faster they fly) | ☉ |
+| Resonating                    | **Resonating** (keep)                      | ψ     |
+| Susceptible                   | **Susceptible** (keep)                     | ψ     |
+| Soulfire (a blue third pool)  | **Cherenkov** (the blue glow in a reactor pool) | ψ |
+| Haste (enemy)                 | **Accelerated**                            |       |
 
 Hexes (2.3) become **metastable states** ψ: a state that waits for a disturbance, then decays into
 its payload. Echoes → **Echo**; Contagion → **Chain Decay**; Reversal (heals become damage) →
 **Antimatter**; Inversion (speed-ups slow) → **Time Reversal**; Greed → **Harvest**; Doom (stored
-damage released at the end) → **Half-life**; Binding / Soul Link → **Entangled** (consistent with
-the Entangler: entangled things share, towers their strength, anomalies their pain; 💬 or too
-close?); Kindling → **Ignition**; Grief → **Resonant Decay**.
+damage released at the end) → **Half-life**; Binding / Soul Link (linked enemies share damage) →
+**Entangled**, the Entangler's word on the enemy side; Kindling → **Ignition**; Grief →
+**Resonant Decay**.
 
-Ground effects (2.4): burning ground → **plasma pool**; tar → **dark matter**; frost ground →
+Ground effects (2.4): burning ground → **plasma pool**; tar → **gravity mire**; frost ground →
 **cryo field**; fallout → **radiation zone**; mines → **antimatter mines**.
 
 Extra head nodes, one per tower: Silver Ammunition → **Phase Rounds** (Quasar) · Arc Emitter →
 **Quantum Leap** (Nova) · Frequency → **Spectrum** (Pulsar) · Field Shaping → **Curvature**
-(Singularity: Undertow → Frame Dragging, Corrosion → Tidal Shear, Stasis → Deep Well, and Event
-Horizon stays) · Tutelage → **Calibration** (Entangler) · Ballistics → **Orbital Mechanics**
+(Singularity: Undertow → **Gravity Well**, Corrosion → **Tidal Shear**, Stasis → **Time Well**,
+Event Horizon stays) · Tutelage → **Calibration** (Entangler) · Ballistics → **Orbital Mechanics**
 (Comet) · Mixed Payloads → **Flavor Oscillation** (Tachyon: particles really do change "flavour"
-in flight) · Fuel → **Fuel** (Flare; stars burn fuel).
+in flight) · Fuel → **Intensity** (Photon).
 
-Named nodes and specials: Railgun → **Relativistic Jet** · Executioner → **Gravitational Collapse**
-· Deadeye → **Uncertainty** · Tactical Nuke → **Extinction Event** ·
-Bunker Buster → **Neutron Core** · Cluster Shell → **Fragmenting Nucleus** · Carpet Bombing →
-**Meteor Shower** · Cryo Shells → **Ice Core** (a comet's own core) · Napalm → **Solar Plasma** ·
-Tar → **Dark Matter** · Gravity Shell (keep) · Seeker's nest → **Orbit** (stored missiles circle
-the tower like moons) · Kill Zone → **Event Horizon** · Shockwave → **Gravitational Wave** ·
-Harvester → **Hawking Radiation** (energy out of a black hole) · Null Field → **Damping Field** ·
-Phase Lock (keep) · Anchor and Counter-Jamming → **Faraday Cage** · Keen Edge → **Focus** · Command
-Ping → **Beacon**.
+Named nodes and specials: Railgun → **Relativistic Jet** · Executioner → **Escape Velocity** (below
+it, nothing gets away) · Deadeye → **Uncertainty** · Tactical Nuke → **Extinction Event** · Bunker
+Buster → **Iron Core** · Cluster Shell → **Fragmenting Nucleus** · Carpet Bombing → **Meteor
+Shower** · Cryo Shells → **Ice Core** · Napalm → **Solar Plasma** · Tar → **Gravity Mire** · Gravity
+Shell (keep) · Seeker's nest → **Orbit** (stored missiles circle the tower like moons) · Kill Zone →
+**Event Horizon** · Shockwave → **Gravitational Wave** · Harvester → **Hawking Radiation** · Null
+Field → **Dampening Field** · Phase Lock → **Tether Field** · Anchor and Counter-Jamming →
+**Faraday Cage** · Keen Edge → **Focus** · Command Ping → **Beacon**.
 
 **Ideas the theme strains** (translate or cut): Soul Drain, Mentor and Chosen, Tithe, Headhunter,
 Bipod. None is hard to rename, but each loses its picture; that is a small argument for cutting
@@ -809,7 +891,7 @@ What to take, as product scope. Each tier is usable on its own; none changes a r
 | 2    | **Marks and tints**: ☉ / ψ on chains, three recolours, the title screen                    | S    | ⭐ yes, with tier 1          |
 | 3    | **Silhouettes**: five body shapes, the comet tail, the singularity ring                     | S-M  | ⭐ yes                       |
 | 4    | **Backdrop**: lattice or starfield, path-end marks                                          | S    | optional; check legibility   |
-| 5    | **One theme mechanic**: Coupled scales or cross-scale reactions, as its own feature request | M + balance | optional; after iteration 2 |
+| 5    | **Theme mechanics** (section 11), each its own feature request                              | M + balance | optional; after iteration 2 |
 
 Tier 1 is the bulk: about 25-30 source files of string literals, about 15 test files, and the docs.
 One live `run-jtd` look at the end catches truncated labels (the side panel is narrow and some
@@ -825,20 +907,25 @@ themed names are longer).
 Unspent words for content still to come. Strike one through when it's used.
 
 **☉ Astral**: aphelion, apogee, aurora, barycentre, blueshift, celestial, chromosphere,
-constellation, cosmic ray, dark energy, Doppler, eclipse, ejecta, escape velocity, galaxy,
+constellation, cosmic ray, dark energy, Doppler, eclipse, ejecta, galaxy,
 heliosphere, hypernova, inertia, Kuiper, Lagrange point, light-year, magnitude, occultation,
 parsec, perihelion, planetesimal, prominence, redshift, regolith, Roche limit, solar wind,
-spaghettification, supernova, syzygy, tidal lock, transit, zenith.
+spaghettification, syzygy, tidal lock, transit, zenith.
 
-**ψ Quantum**: annealing, Bell state, boson, bra-ket, Casimir, condensate, eigenstate, fermion,
-fluctuation, gluon, Hadamard, Heisenberg, Higgs, isotope, lepton, muon, observable, Pauli
-exclusion, Planck, positron, quantum foam, spin, teleportation, wavefunction, zero-point.
+**ψ Quantum**: annealing, boson, bra-ket, Casimir, condensate, eigenstate, fermion, fluctuation,
+gluon, Hadamard, Heisenberg, Higgs, isotope, lepton, observable, Pauli exclusion, Planck,
+positron, quantum foam, spin, teleportation, wavefunction, zero-point.
+
+**Sci-fi** (welcome where it plays better): ansible, cloak, deflector, Dyson swarm, EMP, hardlight,
+hyperspace, ion cannon, mass driver, nanite, overdrive, phaser, plasma torch, railgun, ringworld,
+stasis field, tractor beam, warp.
 
 **Spent** (sections 3-14): Quantum Horizon, anomaly, qubit, eV, yield, annihilated, breached,
-decoherence, Quasar, Nova, Pulsar, Singularity, Entangler, Comet, Tachyon, Flare, Aperture,
+decoherence, Quasar, Nova, Pulsar, Singularity, Entangler, Comet, Tachyon, Photon, Aperture,
 Grounding, Excitation, Duality, the 16 chain names, the 14 specials, Kinetic, Phase, Coherence,
-Superposed, Observed, Dilated, Stasis, Irradiated, Decohering, Unstable, Restoring, Spiral Arm,
-Double Slit, Wormhole, interference pattern, the enemy drafts, and the brainstorm translations in
+Superposed, Observed, Dilated, stasis, Irradiated, Decohered, Unstable, Restoring, Spiral Arm,
+Double Slit, Wormhole, interference pattern, the energy classes keV to PeV, the enemy drafts and
+ideas (Phase Shifter, Bell Pair), the Duality powers, and the brainstorm translations in
 section 14.
 
 ---
@@ -849,7 +936,13 @@ section 14.
 
 - [ ] Adopt the theme at all.
   - 💬
-- [ ] Thesis: ⭐ astral on the board, quantum in the rules / quantum on the board too (section 5).
+- [ ] Priority: ⭐ play first, then feel, then science (section 2).
+  - 💬
+- [ ] Thesis: ⭐ two scales, one language: a tower's name follows its damage type (sections 1
+  and 5).
+  - 💬
+- [ ] Roster: ⭐ Quasar, Nova, Pulsar, Singularity, Entangler, Comet, Tachyon, Photon / Flare for
+  Cinder / sci-fi tech names (section 5).
   - 💬
 - [ ] Title: ⭐ Quantum Horizon / Planck & Parsec / Event Horizon / other.
   - 💬
@@ -859,13 +952,17 @@ section 14.
   - 💬
 - [ ] Economy words: ⭐ Qubits, Energy (eV), Data / alternatives (section 3).
   - 💬
-- [ ] Control effects: ⭐ Dilated and Stasis / keep Chilled and Frozen (7.3).
+- [ ] Control effects: ⭐ Dilated and In stasis / keep Chilled and Frozen (7.3).
+  - 💬
+- [ ] Stealth effects: ⭐ Superposed and Observed / Cloaked and Scanned (7.3).
   - 💬
 - [ ] The generic word: ⭐ "tower" stays / "instrument".
   - 💬
 - [ ] Every tower's chains split ☉ / ψ (section 4).
   - 💬
 - [ ] Enemies: ⭐ rename now with drafts / wait for the enemy iteration (section 9).
+  - 💬
+- [ ] Ranks: ⭐ energy classes keV to PeV / words (section 9).
   - 💬
 
 **The look**
@@ -883,5 +980,59 @@ section 14.
 
 **Optional, later**
 
-- [ ] A theme mechanic: none / Coupled scales / cross-scale reactions (section 11).
+- [ ] Theme mechanics: none / Coupled scales / cross-scale reactions / theme enemies / Duality
+  powers (section 11).
   - 💬
+
+---
+
+## 18. Review notes and sources
+
+After the palette, the rest of the document had an expert pass in rounds: every scientific claim
+checked against a source, then everything except the palette and UI challenged for a uniform
+player experience. Your guidance set the priority: play first, then feel (sci-fi and pop science
+welcome), then science. So the facts were used as raw material, not as a judge: pop physics stays
+wherever it sounds and plays better (Quark and Meson, the Entangler, a Tachyon that never misses,
+a Gravitational Wave that shoves), and only claims that were wrong *without* being more fun were
+changed.
+
+**Changed for feel**
+
+- Anomalies poured "out of the horizon"; now through a tear beside it (same picture, no snag).
+- Cinder was a Flare, "a cone of burning plasma", on a phase-damage tower; it's now Photon, which
+  keeps the home-scale rule and still burns.
+- A Meteoroid "fell faster as it burned"; the Sungrazer is the better picture and really does
+  speed up as it falls.
+- The boss's star "reignited"; it's now a star dying in stages, with a Remnant that flares up again.
+- Obscure clever words lost to plain sci-fi ones: Silenced is Dampened (not Quenched), Anchored is
+  Tethered, tar is a Gravity Mire.
+
+**Changed for a uniform experience**
+
+- The home-scale rule: a tower's name follows its damage type, so name, colour and mark agree.
+- Effects share word families with their causes (7.3); Decohered matches Scorched as a stack mark;
+  "In stasis" matches the other state words.
+- Ranks became energy classes, an order everyone already knows.
+- Name clashes removed: Annihilation against every kill's "Annihilated" (now Supernova), Orbit
+  used twice (now Gravity Reach), "Phase" as both a damage type and a speed lock (now Tethered),
+  and the two names over 15 characters.
+- Section 11 now names the decision each theme mechanic gives the player.
+
+**Sources** (used to check the claims the doc keeps)
+
+- Hubble palette and nebula colours: [Astronomy](https://www.astronomy.com/science/why-is-one-of-the-three-filters-in-the-hubble-palette-ionized-sulfur-is-sulfur-really-that-prevalent-in-the-universe/),
+  [Clarkvision](https://clarkvision.com/articles/color.of.nebulae.and.interstellar.dust)
+- Stellar death and black dwarfs: [Black dwarf](https://en.wikipedia.org/wiki/Black_dwarf)
+- Infall seen from afar: [arXiv 0710.2443](https://arxiv.org/pdf/0710.2443)
+- Meteor deceleration: [arXiv 2007.04041](https://arxiv.org/pdf/2007.04041); sungrazers: [arXiv 1507.05062](https://arxiv.org/pdf/1507.05062)
+- Neutrino as "ghost particle": [3 Quarks Daily](https://3quarksdaily.com/?p=212146)
+- Solar flares: [Solar flare](https://en.wikipedia.org/wiki/Solar_flare)
+- Cherenkov light: [CERN](https://hst-archive.web.cern.ch/archiv/HST2002/Bubblech/mbitu/cerenkov_effect.htm)
+- Gluon: [Gluon](https://en.wikipedia.org/wiki/Gluon); quark confinement: [Physics Forums](https://www.physicsforums.com/showthread.php?p=4536321)
+- Entanglement: [No-communication theorem](https://en.wikipedia.org/wiki/No-communication_theorem)
+- Quasar jets: [Cambridge](https://resolve.cambridge.org/core/journals/proceedings-of-the-international-astronomical-union/article/why-only-a-small-fraction-of-quasars-are-radio-loud/8E069DBB57DFFC4CC7717E813E1A5ECE)
+- Tachyons: [Tachyonic antitelephone](https://en.wikipedia.org/wiki/Tachyonic_antitelephone)
+- Quantum Zeno effect: [Quantum Zeno effect](https://en.wikipedia.org/wiki/Quantum_Zeno_effect)
+- Wormhole drawing: [Wormhole](https://en.wikipedia.org/wiki/Wormhole)
+- PeV energies: [arXiv 2404.16591](https://arxiv.org/pdf/2404.16591)
+- Dark-theme contrast: [Material Design](https://m2.material.io/design/color/dark-theme); colour-blind-safe pairs: [Okabe-Ito](https://conceptviz.app/blog/okabe-ito-palette-hex-codes-complete-reference)
