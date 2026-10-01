@@ -2,7 +2,7 @@ package td.damage;
 
 /**
  * An amount of damage, its {@link DamageType}, and whether it is critical. Clamped at zero, so no
- * calculation can produce a healing hit.
+ * calculation can produce a healing hit. The amount is in {@link DamageUnits}, not points.
  * <p>
  * A zero amount is the identity for {@link #plus} whatever either side's type; adding two non-zero
  * damages of different types throws.

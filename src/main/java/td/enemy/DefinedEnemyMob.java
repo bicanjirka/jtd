@@ -3,6 +3,7 @@ package td.enemy;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.damage.DamageUnits;
 import td.economy.EconomyDelta;
 import td.effect.ActiveEffects;
 import td.effect.Effect;
@@ -35,12 +36,6 @@ import java.util.Set;
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class DefinedEnemyMob implements EnemyMob {
 
-    /**
-     * Health is stored in hundredths, the unit towers deal damage in, so a percentage resist or a
-     * damage-over-time tick can remove a fraction of a point.
-     */
-    private static final int HEALTH_UNITS_PER_POINT = 100;
-
     private final GameWorld gameWorld;
     private final EnemyDefinition definition;
     private final List<Trait> traits;
@@ -69,6 +64,8 @@ public final class DefinedEnemyMob implements EnemyMob {
     private int ticksSinceSpawn;
     // Counts from spawn, so a fresh mob does not trivially satisfy an idle threshold.
     private int ticksSinceLastHit;
+    // The part of a heal too small to land as a whole unit this tick; paid out once it adds up.
+    private float regenCarry;
 
     public DefinedEnemyMob(EnemyDefinition definition, GameWorld gameWorld, SpawnParameters spawnParameters, Rank rank) {
         this.gameWorld = gameWorld;
@@ -78,8 +75,8 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.price = spawnParameters.price();
         // Divided after the spawn shape's multiplier, which the wave already applied to the health.
         int healthPoints = Math.round(spawnParameters.health() / definition.healthDivisor());
-        this.health = healthPoints * HEALTH_UNITS_PER_POINT;
-        this.healthMax = healthPoints * HEALTH_UNITS_PER_POINT;
+        this.health = DamageUnits.ofPoints(healthPoints);
+        this.healthMax = DamageUnits.ofPoints(healthPoints);
         this.pathIndex = spawnParameters.pathIndex();
         BaseStats base = definition.baseStats()
                 .with(EnemyStat.MOVE_SPEED, definition.baseSpeed() * spawnParameters.speedMultiplier());
@@ -115,7 +112,7 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     /** Full health in points, after every divisor and spawn-shape multiplier. */
     public int getMaxHealthPoints() {
-        return this.healthMax / HEALTH_UNITS_PER_POINT;
+        return this.healthMax / DamageUnits.PER_POINT;
     }
 
     public int getBounty() {
@@ -431,7 +428,10 @@ public final class DefinedEnemyMob implements EnemyMob {
         // Read before tick(): an effect in its last tick must still slow this tick's movement.
         float speed = this.stats.value(EnemyStat.MOVE_SPEED);
         // Applied here, not through tick()'s sink: a heal is not a negative damagePerTick.
-        int healed = Math.min(this.healthMax, this.health + Math.round(this.stats.value(EnemyStat.REGENERATION)));
+        this.regenCarry += this.stats.value(EnemyStat.REGENERATION);
+        int whole = (int) this.regenCarry;
+        this.regenCarry -= whole;
+        int healed = Math.min(this.healthMax, this.health + whole);
         boolean healthChanged = healed != this.health;
         this.health = healed;
         if (healthChanged || !this.activeEffects.isEmpty()) {

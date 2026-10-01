@@ -10,7 +10,7 @@ class FlatResistTraitTest {
 
     @Test
     void damageTakenIsReducedByTheFlatAmountAndClampedAtZero() {
-        FlatResistTrait resist = new FlatResistTrait(30);
+        FlatResistTrait resist = new FlatResistTrait(0.3f);
 
         assertThat(EnemyFixtures.landedThrough(resist, Damage.physical(100))).isEqualTo(Damage.physical(70));
         assertThat(EnemyFixtures.landedThrough(resist, Damage.physical(10))).isEqualTo(Damage.physical(0));
@@ -18,7 +18,7 @@ class FlatResistTraitTest {
 
     @Test
     void aPhysicalOnlyResistanceReducesPhysicalDamageButLeavesMagicUntouched() {
-        FlatResistTrait resist = FlatResistTrait.physicalOnly(30);
+        FlatResistTrait resist = FlatResistTrait.physicalOnly(0.3f);
 
         assertThat(EnemyFixtures.landedThrough(resist, Damage.physical(100))).isEqualTo(Damage.physical(70));
         assertThat(EnemyFixtures.landedThrough(resist, Damage.magic(100))).isEqualTo(Damage.magic(100));

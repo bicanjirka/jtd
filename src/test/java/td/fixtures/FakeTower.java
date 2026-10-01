@@ -17,7 +17,7 @@ public final class FakeTower extends AbstractTower {
     private final Optional<UpgradeState> ownedUpgrades;
 
     private FakeTower(GameWorld context, int x, int y, UpgradeTree tree, Optional<UpgradeState> ownedUpgrades) {
-        super(TowerFactory.Type.SNIPER, 10, new TowerBaseStats(1000, 3f, 20), context, x, y);
+        super(TowerFactory.Type.SNIPER, 10, new TowerBaseStats(10, 3f, 20), context, x, y);
         this.tree = tree;
         this.ownedUpgrades = ownedUpgrades;
     }

@@ -140,7 +140,7 @@ class EnemyCatalogTest {
         assertThat(elite.traitSlots()).hasSize(3);
         assertThat(traitNamed(elite, "resist")).contains(new PercentResistTrait(0.3f));
         assertThat(traitNamed(elite, "criticalImmune")).contains(new CriticalImmunityTrait());
-        assertThat(traitNamed(elite, "flatResist")).contains(FlatResistTrait.physicalOnly(800));
+        assertThat(traitNamed(elite, "flatResist")).contains(FlatResistTrait.physicalOnly(8));
     }
 
     private static Optional<TraitTemplate> traitNamed(EnemyDefinition definition, String name) {

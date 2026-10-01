@@ -39,7 +39,7 @@ final class TwistedHourglassLevel {
                     .withMovement(new PathDirectionalMovement())
                     .withHealthDivisor(0.8f)
                     .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.3f)),
-                            IdentifiedTrait.named("armor", new FlatResistTrait(10))))
+                            IdentifiedTrait.named("armor", new FlatResistTrait(0.1f))))
                     .withIdentifiedAbilities(List.of(
                             IdentifiedAbility.named("panicShield", new Ability(new HealthThresholdTrigger(0.5f),
                                     new ApplyEffectAction(new ShieldTemplate(0.25f, 100), new SelfTarget()))),

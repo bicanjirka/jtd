@@ -3,6 +3,7 @@ package td.tower;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.damage.DamageUnits;
 import td.economy.EconomyDelta;
 import td.effect.Effect;
 import td.enemy.EnemyMob;
@@ -376,7 +377,7 @@ public abstract class AbstractTower implements Tower {
         lines.add(new TowerStatLine(TowerStat.RANGE, this.rangeBase, now.range()));
         if (!this.isPassive()) {
             TowerStat damage = this.damageType() == DamageType.MAGIC ? TowerStat.MAGIC_DAMAGE : TowerStat.PHYSICAL_DAMAGE;
-            lines.add(new TowerStatLine(damage, this.damageBase / 100f, now.damage() / 100f));
+            lines.add(new TowerStatLine(damage, DamageUnits.inPoints(this.damageBase), DamageUnits.inPoints(now.damage())));
             this.cadence().ifPresent(lines::add);
             if (this.critChanceBase > 0f || now.critChance() > 0f) {
                 lines.add(new TowerStatLine(TowerStat.CRIT_CHANCE, this.critChanceBase, now.critChance()));

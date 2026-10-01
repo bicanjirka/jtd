@@ -30,7 +30,7 @@ import java.util.List;
 public final class MortarTower extends AbstractTower {
 
     public static final int PRICE = 30;
-    public static final int DAMAGE = 2000;
+    public static final float DAMAGE_POINTS = 20f;
     public static final float RANGE = 4.0f;
     public static final float SPLASH_RADIUS_BASE = 2.0f;
 
@@ -53,12 +53,12 @@ public final class MortarTower extends AbstractTower {
             "Siege Rounds", 35)
             .withBuff(TowerBuff.damage(0.3f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
-            .withGate(new DamageDealtCondition(15000));
+            .withGate(new DamageDealtCondition(150));
     private static final UpgradeNode SIEGE_ROUNDS_2 = UpgradeNode.of("mortar.head.siege_rounds.2", UpgradeSlot.HEAD,
             "Siege Rounds II", 53)
             .withBuff(TowerBuff.damage(0.25f))
             .withRequires(UpgradeCondition.owns(SIEGE_ROUNDS_1.id()))
-            .withGate(new DamageDealtCondition(30000))
+            .withGate(new DamageDealtCondition(300))
             .withExtraEffect("+40% splash radius");
     private static final UpgradeNode FRAGMENTATION_ROUNDS_1 = UpgradeNode.of("mortar.head.fragmentation_rounds.1",
             UpgradeSlot.HEAD, "Fragmentation Rounds", 30)
@@ -88,7 +88,7 @@ public final class MortarTower extends AbstractTower {
     private EnemyMob currentTarget;
 
     public MortarTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.MORTAR, PRICE, new TowerBaseStats(DAMAGE, RANGE, COOLDOWN_MAX), context, x, y);
+        super(TowerFactory.Type.MORTAR, PRICE, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
         this.splashRadius = SPLASH_RADIUS_BASE * context.getBoard().scale();
     }
 

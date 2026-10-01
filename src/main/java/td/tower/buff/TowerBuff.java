@@ -104,7 +104,7 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
     }
 
     public int damageFor(int base) {
-        return (int) (base * (1f + this.damageBonus));
+        return Math.round(base * (1f + this.damageBonus));
     }
 
     /** The range grown by the range bonus, which never goes below {@link #MIN_BONUS}. */

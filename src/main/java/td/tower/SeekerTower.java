@@ -31,7 +31,7 @@ import java.util.Set;
 public final class SeekerTower extends AbstractTower {
 
     public static final int PRICE = 35;
-    public static final int DAMAGE = 2600;
+    public static final float DAMAGE_POINTS = 26f;
     public static final float RANGE = 4.5f;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
@@ -54,7 +54,7 @@ public final class SeekerTower extends AbstractTower {
             "Twin Warhead II", 45)
             .withBuff(TowerBuff.fireRate(0.25f))
             .withRequires(UpgradeCondition.owns(TWIN_WARHEAD_1.id()))
-            .withGate(new DamageDealtCondition(25000))
+            .withGate(new DamageDealtCondition(250))
             .withExtraEffect("fires two independently-retargeting missiles instead of one");
     private static final UpgradeNode DEEP_FREEZE_1 = UpgradeNode.of("seeker.head.deep_freeze.1", UpgradeSlot.HEAD,
             "Deep Freeze", 35)
@@ -85,7 +85,7 @@ public final class SeekerTower extends AbstractTower {
     private EnemyMob currentTarget;
 
     public SeekerTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.SEEKER, PRICE, new TowerBaseStats(DAMAGE, RANGE, COOLDOWN_MAX), context, x, y);
+        super(TowerFactory.Type.SEEKER, PRICE, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
     }
 
     @Override

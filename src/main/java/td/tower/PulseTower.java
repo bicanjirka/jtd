@@ -26,7 +26,7 @@ import java.util.List;
 public final class PulseTower extends AbstractTower {
 
     public static final int PRICE = 25;
-    public static final int DAMAGE = 200;
+    public static final float DAMAGE_POINTS = 2f;
     public static final float RANGE = 1.5f;
 
     private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(15);
@@ -36,7 +36,7 @@ public final class PulseTower extends AbstractTower {
             UpgradeSlot.HEAD, "Overcharged Coils", 30)
             .withBuff(TowerBuff.damage(0.3f))
             .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
-            .withGate(new DamageDealtCondition(10000));
+            .withGate(new DamageDealtCondition(100));
     private static final UpgradeNode OVERCHARGED_COILS_2 = UpgradeNode.of("pulse.head.overcharged_coils.2",
             UpgradeSlot.HEAD, "Overcharged Coils II", 45)
             .withBuff(TowerBuff.damage(0.25f).withCritChance(0.1f))
@@ -52,7 +52,7 @@ public final class PulseTower extends AbstractTower {
             UpgradeSlot.HEAD, "Resonant Field II", 38)
             .withBuff(TowerBuff.range(0.15f))
             .withRequires(UpgradeCondition.owns(RESONANT_FIELD_1.id()))
-            .withGate(new DamageDealtCondition(20000))
+            .withGate(new DamageDealtCondition(200))
             .withExtraEffect("any invisible enemy it hits is revealed to every tower for 2s");
     private static final UpgradeNode WARDING_FIELD = UpgradeNode.of("pulse.special.warding_field", UpgradeSlot.SPECIAL,
             "Warding Field", 50)
@@ -71,7 +71,7 @@ public final class PulseTower extends AbstractTower {
     private boolean fire = false;
 
     public PulseTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.PULSE, PRICE, new TowerBaseStats(DAMAGE, RANGE, 0), context, x, y);
+        super(TowerFactory.Type.PULSE, PRICE, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0), context, x, y);
     }
 
     @Override

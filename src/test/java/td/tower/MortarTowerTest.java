@@ -2,6 +2,7 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.damage.DamageUnits;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyFactory;
@@ -45,7 +46,7 @@ class MortarTowerTest {
         tower.doTick(1);
         TowerFixtures.flyProjectilesToCompletion(this.context);
 
-        assertThat(target.onlyHitAmount()).isEqualTo(MortarTower.DAMAGE);
+        assertThat(target.onlyHitAmount()).isEqualTo(DamageUnits.ofPoints(MortarTower.DAMAGE_POINTS));
         assertThat(target.appliedEffects()).hasSize(1);
         assertThat(target.appliedEffects().getFirst().kind()).isEqualTo(EffectKind.CHILL);
     }

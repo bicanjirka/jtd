@@ -90,7 +90,7 @@ frame build reads them.
 
 ## Code style
 
-- **Value types** are immutable records with named factories (`Damage.physical(4)`,
+- **Value types** are immutable records with named factories (`Damage.physical(400)`,
   `EconomyDelta.kill(bounty)`). Absence is a value (`none()`, `empty()`) or `Optional`, never
   `null`. The one exception: `td.ui` frame builders return `null` for "no draw command".
 - Values that combine get an algebra: operation, identity, absorber if any (`Damage`,

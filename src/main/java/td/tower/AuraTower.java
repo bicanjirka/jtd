@@ -23,7 +23,7 @@ import java.util.List;
 public final class AuraTower extends AbstractTower {
 
     public static final int PRICE = 20;
-    public static final int DAMAGE = 0;
+    public static final float DAMAGE_POINTS = 0f;
     public static final float RANGE = 1.5f;
     public static final float DEFAULT_POWER = 0.2f;
 
@@ -74,7 +74,7 @@ public final class AuraTower extends AbstractTower {
 
     /** An aura with a non-default buff strength. */
     public AuraTower(GameWorld context, int x, int y, float power) {
-        super(TowerFactory.Type.AURA, PRICE, new TowerBaseStats(DAMAGE, RANGE, 0), context, x, y);
+        super(TowerFactory.Type.AURA, PRICE, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0), context, x, y);
         this.power = power;
     }
 

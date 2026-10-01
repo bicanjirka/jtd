@@ -92,6 +92,25 @@ class DefinedEnemyMobEffectTest {
     }
 
     @Test
+    void aHealTooSmallForOneUnitPerTickStillAddsUpAtReducedSpirit() {
+        GameWorld context = newContext();
+        context.setPath(LevelFixtures.straightPath(1, 0, 100));
+        context.getEnemyCatalog().register(EnemyDefinition.of("dull", "Dull", 100_000, 5, 0f, BodyArchetype.CIRCLE)
+                .withStat(EnemyStat.SPIRIT, -50f));
+        EnemyMob enemy = context.getEnemyCatalog().spawn("dull", context, 0, 100_000, 5, Rank.GRUNT);
+        enemy.doDamage(Damage.physical(4000));
+        int damaged = enemy.getHealth();
+
+        enemy.applyEffect(Effect.heal(1, 10, d -> {
+        }));
+        for (int t = 1; t <= 10; t++) {
+            enemy.doTick(t);
+        }
+
+        assertThat(enemy.getHealth() - damaged).isEqualTo(5);
+    }
+
+    @Test
     void aHealEffectNeverRestoresHealthAboveTheMobsMax() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));

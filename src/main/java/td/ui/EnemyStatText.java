@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.damage.DamageUnits;
 import td.effect.EffectKind;
 import td.enemy.EnemyInspection;
 import td.enemy.HitResolution;
@@ -135,7 +136,7 @@ final class EnemyStatText {
             case RESILIENCE -> resilienceText(value);
             case CRIT_CHANCE_TAKEN -> new StatText("Crit chance taken", "x" + SheetNumbers.decimal(value));
             case SPIRIT -> new StatText("Spirit", SheetNumbers.signedPercent(value / 100f) + " heals");
-            case REGENERATION -> new StatText("Regenerates", SheetNumbers.decimal(value / 100f * TickRate.TICKS_PER_SECOND) + "/s");
+            case REGENERATION -> new StatText("Regenerates", SheetNumbers.decimal(DamageUnits.inPoints(value) * TickRate.TICKS_PER_SECOND) + "/s");
             case CHILL_RESIST -> resistText("Chill", value);
             case BURN_RESIST -> resistText("Burn", value);
             case FREEZE_RESIST -> resistText("Freeze", value);
@@ -189,7 +190,7 @@ final class EnemyStatText {
     }
 
     private static String platingText(float value) {
-        return "-" + SheetNumbers.decimal(value / 100f) + "/hit";
+        return "-" + SheetNumbers.decimal(DamageUnits.inPoints(value)) + "/hit";
     }
 
     /** "-50%" for armor that halves a hit, "+25%" for negative armor. */
