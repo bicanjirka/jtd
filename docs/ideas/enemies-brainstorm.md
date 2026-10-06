@@ -1,7 +1,7 @@
 # Enemy Design Brainstorm
 
 Enemies that give each tower a job, to review once the towers are settled. Moved here from the
-tower brainstorm (its section 5), which became the six tower-rework feature requests
+tower brainstorm (its section 5), which became the seven tower-rework feature requests
 (`docs/features/`, order in `TODO.md`). Nothing here is reviewed yet.
 
 ## How to use it

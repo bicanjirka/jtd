@@ -1,7 +1,7 @@
 # Feature Request: Ground Zones, Mortar and Cinder
 
-**Status: not started.** Feature 5 of 6 in the tower rework (order in `TODO.md`). Needs features
-1 to 4.
+**Status: not started.** Feature 6 of 7 in the tower rework (order in `TODO.md`). Needs features
+1 to 5.
 
 ## Summary
 
@@ -39,25 +39,26 @@ those towers a combo instead of a conflict.
 
 ### Ground zones
 
-- **A zone** is a disc on the board with a lifetime. Each pulse it applies its effect to every
-  enemy inside, credited to the tower that made it (damage, XP, kills). Zones touch invisible
-  enemies, like all area damage.
-- **Zones don't stack.** Two zones of the same kind on top of each other act as one; the same goes
-  for every kind.
+- **A zone** is a disc on the board with a lifetime. Each pulse it applies its effects to every
+  enemy inside, credited to the tower that made it (damage and kills). Zones touch invisible
+  enemies, like all area damage. A zone's pulses are periodic damage: they never crit.
+- **Zones don't stack.** Two zones of the same kind on top of each other act as one: an enemy
+  standing in both is treated as standing in one.
 - **Each kind has its own look:** a translucent patch with a pattern of its own.
-- **Zone interactions**, in the same table as effect interactions:
-  - fire on tar ignites it (inferno): the tar burns, and a burn started in it begins at double pool;
-  - frost on fire puts the fire out and bursts the burns of the enemies inside (thermal shock);
-  - frost on tar hardens it: enemies inside are rooted for 1 s.
+- **Zones combine through the enemies standing in them,** never zone against zone. Each zone puts
+  its effect on the enemy, and the effect rules do the rest: an enemy in tar that steps into fire
+  burns at double pool; an enemy that freezes in frost ground while burning has its burn burst; a
+  tarred enemy that freezes stays frozen 1 s longer. The combos of earlier drafts (inferno, thermal
+  shock, hardened tar) survive as these three rows.
 
-| Zone | Made by | Effect |
+| Zone | Made by | Effect on enemies inside |
 |---|---|---|
-| Burning ground | Mortar's Napalm, Cinder's Lingering Flames | burns what is inside (a burn pool, earning Scorched) |
-| Tar | Mortar's Tar | 40% slow and poison; a tarred enemy that catches fire burns at double pool |
+| Burning ground | Mortar's Napalm, Cinder's Lingering Flames | burns (a burn pool, earning Scorched) |
+| Tar | Mortar's Tar | 40% slow and poison; Tarred, so a burn starts at double pool |
 | Frost ground | Mortar's Cryo Shells | chill builds while inside; 2 s inside without leaving freezes it (diminishing returns apply) |
-| Fallout | Mortar's Tactical Nuke | drains spirit; regeneration inside becomes damage |
-| Mine | Splash, Range III (below) | detonates under the next enemy for one blast |
-| Cursed cloud | Hexer's Mastery (feature 3) | gives every enemy entering it the debuffs the dead enemy had |
+| Fallout | Mortar's Tactical Nuke | drains spirit (Sickened stacks) and blocks healing |
+| Mine | Splash, Range III (below) | the first enemy to enter sets it off as one blast; then it is gone |
+| Cursed cloud | Hexer's Mastery (feature 4) | gives every enemy inside the debuffs the dead enemy had |
 
 ### Fire and ice, for every tower
 
@@ -66,7 +67,8 @@ those towers a combo instead of a conflict.
 - **Burning reveals:** a burning invisible enemy is visible while its burn pool is above a fuel
   level; a little burn doesn't reveal.
 - **Tar and burn:** a tarred enemy's burn starts at double pool.
-- Dazed doesn't put out burn (feature 3).
+- **Tar and freeze:** a tarred enemy that freezes stays frozen 1 s longer.
+- Dazed doesn't put out burn (feature 4).
 
 ### Mortar - the Artillery
 
@@ -112,7 +114,7 @@ SPECIAL  one shared set of shell types: Napalm, Tar, Cryo Shells
   refreshed by each shell). Explosions crack plates; this is the Mortar's own debuff.
 - **No base chill.** Chill moves to the Cryo special, so the base Mortar is a pure boom.
 - **Slow, visible shells** (40 -> 8 px a tick) that fast enemies can dodge. Shell speed and size
-  are tower stats (feature 4), shown in the info rows and drawn.
+  are tower stats (feature 5), shown in the info rows and drawn.
 - **The dead zone** (1.5 cells, 2.5 with Long Battery) is a fixed distance: range bonuses don't
   change it.
 - **Bracketing** shows a ranging marker on the spot, tightening with each step.
@@ -138,8 +140,8 @@ How special shells are fired:
 **Look:** shell size grows with damage; a faster shell is smaller with a streak; napalm an orange
 flickering patch, tar a dark glossy one, frost pale blue, fallout a sickly green.
 
-**XP job events:** each enemy beyond the first in one blast; an enemy Cracked; a zone pulse that
-lands. **Rank perk (Expert):** Bracketing starts at 1 step.
+**Purpose gate** (head III, feature 2): 15 bracketed shells (landing within 1.5 cells of the
+last).
 
 ### Cinder - the Pyre
 
@@ -171,7 +173,8 @@ HEAD A   White Flame (hot and short: the single enemy melts)
 HEAD B   Wide Nozzle (wide and long: the crowd smoulders)
          I    +25% range, +30% cone; an enemy that leaves the cone keeps its Stoke for 2 s
          II   +20% range, +20% fire rate, +20% cone
-         III  Lingering Flames: each wave leaves burning ground on the path it swept, for 2 s
+         III  Lingering Flames: each wave leaves a patch of burning ground where its target
+              stands, for 2 s
          IV-A Inferno Ring: the cone becomes a full ring at -25% range
          IV-B Dragon's Breath: x3 fire rate, per-wave damage divided by 2.5, +30% range: a
               continuous stream that keeps every pool topped up and Stoke always full
@@ -199,8 +202,7 @@ SPECIAL  one shared set: Searing Flame, Thermal Shock, Pyromancer's Mark
 **Look:** flame colour by tier: orange, white (White Flame), blue (Soulfire), deep red under
 Searing Flame; Stoke as a brighter core per step; lingering flames as flickering patches.
 
-**XP job events:** an ignition; 5 Scorched stacks earned; a burning enemy revealed. **Rank perk
-(Expert):** Stoke starts at 1.
+**Purpose gate** (head III, feature 2): 45 waves that Stoke an enemy already burning from it.
 
 ### Also in this feature
 
@@ -209,9 +211,12 @@ Searing Flame; Stoke as a brighter core per step; lingering flames as flickering
 - **Cracked** (new effect): plating -50%, 5 s, refreshes. Applied by every Mortar shell (Bunker
   Buster no longer needs to add it).
 - **Soulfire** (new effect): a third fuel pool beside burn and poison; earns Sickened and Scorched.
+- **Tarred** (new effect): put on by tar, while inside and briefly after; a burn it catches starts
+  at double pool, and a freeze it suffers lasts 1 s longer.
 - **Splash Range III gains Mines:** every 4th blast leaves a mine on the path where it landed; the
-  next enemy to step on it sets it off as one blast.
-- **The Hexer's Mastery gains its cursed cloud** (feature 3).
+  next enemy to step on it sets it off as one blast. A mine lasts 10 s, and one Splash keeps at
+  most 3 (a fourth replaces the oldest).
+- **The Hexer's Mastery gains its cursed cloud** (feature 4).
 
 ### What happens to today's nodes
 
@@ -227,15 +232,15 @@ Searing Flame; Stoke as a brighter core per step; lingering flames as flickering
 
 ## Interconnections
 
-- **Feature 1:** Attune passives, level IV, XP. The Cinder's Bellows is an Awaken perk, the only
-  one.
-- **Feature 2:** the DoT crit rule (a pulse never crits), Sundered (Bunker Buster), Scorched with
-  Resonant Crack opening crit immunity.
-- **Feature 3:** Dazed (Heavy Shell); the Hexer's Rime (freeze bursts) and Ash (bigger pools); the
+- **Feature 1:** Attune passives, level IV. The Cinder's Bellows is an Awaken perk, the only one.
+- **Feature 2:** XP and the purpose gate kind (bracketed shells and Stokes are the deeds).
+- **Feature 3:** periodic damage never crits (burns and zone pulses), Sundered (Bunker Buster),
+  Scorched with Resonant Crack opening crit immunity.
+- **Feature 4:** Dazed (Heavy Shell); the Hexer's Rime (freeze bursts) and Ash (bigger pools); the
   cursed cloud and the Splash's Mines are the zones it waited for.
-- **Feature 4:** projectile speed and size as stats; the Seeker's freezes meet Thermal Shock and
+- **Feature 5:** projectile speed and size as stats; the Seeker's freezes meet Thermal Shock and
   the global burst; the Pulse's Undertow holds a column inside the bracket.
-- **Feature 6:** the Aura's fire-rate buff feeds Bellows; Conduit lengthens burns and zones'
+- **Feature 7:** the Aura's fire-rate buff feeds Bellows; Conduit lengthens burns and zones'
   effects.
 
 ## Constraints and open risks
@@ -245,8 +250,8 @@ Searing Flame; Stoke as a brighter core per step; lingering flames as flickering
   every wave and a cursed cloud per hexed death can put many zones on the board: the per-tick and
   per-frame budgets (`td.PerformanceHarness`) are the check. A cap per tower was rejected as a
   design rule; if the budget needs one, it is an implementation call.
-- **"Zones don't stack"** needs a rule for which zone of a kind wins when two overlap (credit,
-  remaining life).
+- **"Zones don't stack":** when two zones of one kind overlap, the enemy takes one pulse a pulse,
+  credited to the zone that was there first.
 - **Special shells and the Nuke share one shell count.** Every 4th shell is a nuke; the special
   pattern runs on the remaining shells.
 - **Slow shells miss.** Predictive Fire (Ballistics II) is the answer; until it is owned, a fast
@@ -281,11 +286,15 @@ Searing Flame; Stoke as a brighter core per step; lingering flames as flickering
 - Bellows (your pool pick) is the Cinder's Awaken perk.
 - **Mines' home is the Splash's Range III** (every 4th blast leaves one). You wanted Mines once
   zones exist, but the Splash tree had no free slot.
+- **Zones are kept in full** (your call). **Simplified for cost** around them:
+  - **zone-to-zone interactions** (fire igniting tar, frost putting out fire, frost hardening tar)
+    become enemy-effect rows: the same combos, with no zone ever reacting to another zone;
+  - **Fallout** drains spirit and blocks healing, instead of turning regeneration into damage (that
+    needs the same heal-to-damage hook as Hex of Inversion, for a 4 s patch);
+  - **Lingering Flames** leaves one patch where its wave's target stands, instead of burning the
+    stretch of path the cone swept (a cone-shaped zone, cut along a looping path).
 
 ## Open questions
 
-- **Inferno and hardened tar:** does an ignited tar patch burn longer than either zone alone, and
-  is "rooted 1 s" its own effect or a Dazed without the silence?
-- **Mine count:** does a mine expire, and how many can one Splash keep on the path at once?
-- **Lingering Flames on a path that loops:** a wave sweeps a cone, so "the path it swept" may be
-  two path segments; both burn?
+- None blocking. Patch sizes and lengths, Mines' 10 s and 3 per Splash, and the special-shell
+  pattern are starting points for the balance pass.

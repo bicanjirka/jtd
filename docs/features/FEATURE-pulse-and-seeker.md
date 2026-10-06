@@ -1,7 +1,7 @@
 # Feature Request: Pulse and Seeker, the Control Towers
 
-**Status: not started.** Feature 4 of 6 in the tower rework (order in `TODO.md`). Needs features
-1 to 3.
+**Status: not started.** Feature 5 of 7 in the tower rework (order in `TODO.md`). Needs features
+1 to 4.
 
 ## Summary
 
@@ -64,10 +64,10 @@ HEAD A   Overcharged Coils (the charge: the field bites)
               field; every zapped enemy is Dazed 0.25 s
 HEAD B   Phase Field (the rules)
          I    +20% range; Toll stays 2 s after an enemy leaves
-         II   +15% range; reveals what it hits for 2 s, once per enemy
+         II   +15% range; an enemy is revealed for 2 s when it gains its first Toll stack (once
+              per visit)
          III  Null Field: enemies inside are Silenced
-         IV-A True Sight: an enemy the field reveals is Dazed 2 s; reveals last 4 s; an enemy can
-              be revealed again after it leaves the field and comes back
+         IV-A True Sight: the visit's reveal lasts 4 s and Dazes the enemy for 2 s
          IV-B Dead Zone: nothing inside can be healed or shielded
 EXTRA    Field Shaping
          I    Corrosion: -30 armor while inside (armor stops at 0)
@@ -85,6 +85,11 @@ SPECIAL  one shared set: Rattle Field, Soul Drain, Kill Zone
 - **Arc Discharge's zap** is a visible moment instead of a hidden crit on 20 ticks a second: a
   bright bolt from the tower to its target, magic damage.
 - **Tesla Coil's Dazed** follows every Dazed rule, its diminishing returns included.
+- **A visit** starts when an enemy gains its first Toll stack and ends when its Toll has faded:
+  Phase Field reveals once per visit, so an enemy that loops back is revealed (and, with True
+  Sight, Dazed) again, but not on every tick.
+- **"While inside"** effects (Corrosion, Undertow, Null Field, Dead Zone, Kill Zone) last only
+  while the enemy is inside, and end a moment after it leaves.
 
 **Specials** (all about what happens inside):
 
@@ -94,7 +99,7 @@ SPECIAL  one shared set: Rattle Field, Soul Drain, Kill Zone
 - **Soul Drain:** each second inside costs 5 spirit (as Sickened stacks), and the field deals +1%
   damage per point of spirit below zero. At -100: double field damage, no heals or shields, and
   stacked debuffs never wear off. High-spirit enemies (bosses) are drained longest.
-- **Kill Zone:** enemies inside take +25% damage from every *other* tower, as its own multiplier,
+- **Kill Zone:** enemies inside take +25% damage from every source, as its own multiplier,
   outside Vulnerable's cap. The place every other tower should point at.
 
 They combine by themselves: Soul Drain's lost spirit and Toll both slow every debuff, so Rattle
@@ -103,7 +108,7 @@ Field's stacks never fall off; Kill Zone turns that into the whole defence's dam
 **Look:** rings rippling outward, faster as Toll builds; the field's colour says its mode (violet
 under Null Field, green under Corrosion, blue under Undertow); enemies inside flicker.
 
-**XP job events:** a Toll stack; a silence; a reveal. **Rank perk (Expert):** Toll starts at 1.
+**Purpose gate** (head III, feature 2): 30 seconds with an enemy at full Toll inside.
 
 ### Seeker - the Hunter
 
@@ -134,8 +139,8 @@ HEAD B   Deep Freeze (control: the boss stands still)
          II   +30% damage, +10% crit; a frozen kill shatters
          III  Brittle: frozen enemies take +30% physical damage
          IV-A Absolute Zero: the missile freezes everything within 1 cell of the impact; shatters
-              deal x2; an enemy this tower froze, or hit while frozen, shatters when its freeze
-              ends (the same burst, without dying)
+              deal x2; an enemy this tower froze shatters when its freeze ends (the same burst,
+              without dying)
          IV-B Frostbite: this tower's hits on a frozen enemy are guaranteed crits, and so are its
               hits on an enemy whose freezes are diminished by repeated freezing
 EXTRA    Mixed Payloads (some missiles carry something else)
@@ -143,13 +148,13 @@ EXTRA    Mixed Payloads (some missiles carry something else)
          II   EMP: strips shields and Silences for 2 s
          III  Tracer: reveals and Marks
          IV   every missile carries a payload, cycling Cryo, Arcane, EMP, Tracer, each 25%
-              stronger; the orbiting missiles show the order
+              stronger
 SPECIAL  one shared set: Arcane Warhead, Nullifier, Hunter's Mark
 ```
 
 - **Slower missiles** (35 -> 8 px a tick): you can see them hunt, and the nest has time to matter.
   **Projectile speed and size become tower stats**, shown in the info rows and drawn (a heavier
-  missile looks heavier). The Mortar's shells use the same stats in feature 5.
+  missile looks heavier). The Mortar's shells use the same stats in feature 6.
 - **Aims at the fastest enemy.** Changing targets often is wanted: a frozen enemy has stopped, so
   the next missile hunts the next runner.
 - **Lock-on:** a missile keeps its target through invisibility; the Ghost's first-hit vanish no
@@ -172,8 +177,7 @@ SPECIAL  one shared set: Arcane Warhead, Nullifier, Hunter's Mark
 **Look:** slower missiles with smoke trails and a visible curve; stored missiles orbit the tower as
 the nest fills; payload colours (ice blue Cryo, violet Arcane, yellow EMP, red Tracer).
 
-**XP job events:** a freeze; a shield stripped; a salvo of 3 or more. **Rank perk (Expert):** the
-nest holds one more.
+**Purpose gate** (head III, feature 2): 25 freezes that land.
 
 ### New effects and rules
 
@@ -195,7 +199,7 @@ nest holds one more.
 | Pulse physical, needs a visible enemy | magic, fires regardless |
 | Overcharged Coils II's hidden crit | the zap's visible crit (III) |
 | Resonant Field I (hits invisible) | Phase Field I: range and lingering Toll |
-| Resonant Field II (reveals 2 s) | Phase Field II, once per enemy |
+| Resonant Field II (reveals what it hits, 2 s) | Phase Field II, once per visit |
 | Warding Field (10% Vulnerable a tick) | Rattle Field (5% Sundered or Exposed a tick) |
 | Seeker $35, 26 damage, missile 35 | $30, 40 damage, missile 8 |
 | Seeker aims furthest along the path | aims at the fastest enemy |
@@ -205,13 +209,14 @@ nest holds one more.
 
 ## Interconnections
 
-- **Feature 1:** Attune passives, level IV, XP and job events.
-- **Feature 2:** Sundered and Exposed (Rattle Field), Marked (Tracer, Over the Horizon),
+- **Feature 1:** Attune passives, level IV, the extra node.
+- **Feature 2:** XP and the purpose gate kind (Toll and freezes are the deeds).
+- **Feature 3:** Sundered and Exposed (Rattle Field), Marked (Tracer, Over the Horizon),
   guaranteed crits that land below 100 resilience (Frostbite), armor stopping at 0 (Corrosion),
   spirit pacing every debuff (Toll and Soul Drain build on it).
-- **Feature 3:** Dazed and its ladder (Tesla Coil, True Sight). Hexes last longer under Toll and
+- **Feature 4:** Dazed and its ladder (Tesla Coil, True Sight). Hexes last longer under Toll and
   Soul Drain, and Rime makes the Seeker's freezes longer and burstier.
-- **Feature 5:** freezing a burning enemy bursts its burn (the global row and the Cinder's
+- **Feature 6:** freezing a burning enemy bursts its burn (the global row and the Cinder's
   Thermal Shock), and the Mortar's shells reuse projectile speed and size.
 
 ## Constraints and open risks
@@ -238,13 +243,22 @@ nest holds one more.
 ## Decisions made
 
 - The Pulse and the Seeker ship together: both are control (silence, freeze, anchor, Daze), and
-  both lean on what features 2 and 3 built.
+  both lean on what features 3 and 4 built.
 - Pulse: magic, range 1.5 (1.75 rejected), fires without a visible target.
 - Field Shaping order is **Corrosion, Mirror Field, Undertow, Event Horizon** (your reorder:
   Undertow is strong, so it moved to III). Stasis is dropped; Mirror Field takes its place.
-- True Sight: no doubled reveal radius; it Dazes what it reveals for 2 s and can reveal an enemy
-  again on a later visit. Phase Field II's "once per enemy" means once per visit when True Sight is
-  owned.
+- Phase Field reveals **once per visit**, a visit being an enemy's stay measured by its Toll.
+  That keeps your "revealed only once" (no reveal on every tick) and True Sight's "again after it
+  left and came back" without the field remembering every enemy. True Sight has no doubled radius;
+  it lengthens the reveal to 4 s and Dazes 2 s.
+- **Simplified for cost:** Kill Zone's +25% counts damage from every source, the Pulse's own field
+  included, instead of "every other tower" (the Pulse's own ticks are small, and excluding one
+  source means tagging every hit with it); Absolute Zero's shatter on thaw covers enemies this
+  tower froze, not also those it hit while frozen; the orbiting missiles show how many are stored,
+  not Mixed Payloads' order.
+- Absolute Zero's thaw burst is the same burst as a frozen kill's shatter. Mirror Field returns the
+  full amount a shield absorbed. Soul Drain's spirit loss is ordinary Sickened stacks, so it adds to
+  poison's toward the -100 floor.
 - Dead Zone only blocks heals and shields inside; it doesn't strip shields on entry.
 - Rattle Field rolls at 5% a tick (not 10%).
 - Seeker: aims at the fastest enemy (sticky targeting rejected); the nest fills between waves.
@@ -252,14 +266,11 @@ nest holds one more.
   Rearm's guard (a rearmed missile's freeze rearms nothing) fills a gap: every streak needs one.
 - Deep Freeze I is +50% freeze only; Absolute Zero keeps its area freeze and adds shatter on thaw;
   Permafrost is replaced by Frostbite.
-- Renames: Twin Warhead III Hive -> **Brood** (feature 6 renames the tower itself "Hive"); Homing
+- Renames: Twin Warhead III Hive -> **Brood** (feature 7 renames the tower itself "Hive"); Homing
   Curse -> Arcane Warhead; Warding Field -> Rattle Field; Resonant Field -> Phase Field (it
   clashed with the Aura's Resonance Field).
 
 ## Open questions
 
-- **Shatter on thaw (Absolute Zero):** how big is the burst (the shatter kill's share), and does
-  an enemy that shatters on thaw count toward Shatterburst?
-- **Mirror Field:** is the reflected damage the full absorbed amount, or a share of it?
-- **Soul Drain** spends spirit as Sickened stacks: does that stack with poison's Sickened toward
-  the -100 floor, as written?
+- None blocking: the earlier three (the thaw burst's size, Mirror Field's share, Soul Drain's
+  stacks) are answered under Decisions, as starting points for the balance pass.

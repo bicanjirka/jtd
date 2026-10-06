@@ -1,15 +1,16 @@
 # Feature Request: Aura and the Balance Pass
 
-**Status: not started.** Feature 6 of 6 in the tower rework (order in `TODO.md`). Needs features
-1 to 5.
+**Status: not started.** Feature 7 of 7 in the tower rework (order in `TODO.md`). Needs features
+1 to 6.
 
 ## Summary
 
 The last tower and the finish of the rework. The **Aura** becomes the Mentor: it makes a mixed
 cluster stronger, shields it from jamming and helps young towers climb (XP). It comes last because
 its worth is what it lets every other tower do. Then the **balance pass** prices everything with
-`td.BalanceHarness` simulations that count effects and support as well as damage, sets the XP
-weights, and closes the placeholder-number entries in `TODO.md`. Finally the towers get their new
+`td.BalanceHarness` simulations that count effects and support as well as damage, checks the XP
+and purpose tables (feature 2) against play, and closes the placeholder-number entries in
+`TODO.md`. Finally the towers get their new
 **display names** and `README.md` is rewritten for the new trees.
 
 ## Current state (what exists today)
@@ -26,7 +27,7 @@ weights, and closes the placeholder-number entries in `TODO.md`. Finally the tow
 - **Disruption** (the Jammer) is an aura on towers: it cuts their fire rate and range while they
   stand in it. The Jammer is in no level yet.
 - `TowerBuff` axes: damage, range, fire rate, bounty, crit chance, armor and magic penetration.
-  Feature 2 adds crit damage.
+  Feature 3 adds crit damage.
 - **`td.BalanceHarness`** runs one built-in loadout on a level, headless and reproducible (seeded
   `RandomSource`), and reports what happened. It doesn't compare purchases.
 - `TODO.md` carries five "unbalanced placeholders" entries: upgrade-tree node numbers, new tower
@@ -61,11 +62,11 @@ HEAD B   Broadcast (reach: the cluster grows)
               its cap
          II   a timed buff on a buffed tower lasts twice as long, a timed debuff half as long;
               disruption is halved again
-         III  Conduit: buffed towers' effects last 25% longer and bite 15% harder
+         III  Conduit: effects that buffed towers apply last 30% longer
 EXTRA    Tutelage (the gate helper, I to III)
          I    buffed towers earn +10% XP, on top of Kinship
-         II   Shared Lessons: a kill by a buffed tower also gives its kill XP to every other
-              buffed tower (XP only, not a kill)
+         II   Shared Lessons: buffed towers share what they see: each earns the XP of every
+              enemy any of them reached (once per enemy)
          III  Apprentice: the buffed tower with the least XP is marked and earns double XP from
               every source; it stacks with Kinship
 SPECIAL  one slot: Withering Field, Chosen, Rally
@@ -84,31 +85,32 @@ SPECIAL  one slot: Withering Field, Chosen, Rally
   Rally's bursts last twice as long. No tower debuff is timed today (disruption lasts while the
   Jammer is near), so "half as long" also means disruption is halved again: a quarter under a
   Broadcast Aura.
-- **Conduit** covers chill level, burn and poison pools, freeze time, the Vulnerable clock, hexes
-  and zone effects. It makes the Aura matter to the Sonar, Seeker, Cinder and Hexer, not only to
-  damage dealers.
+- **Conduit** lengthens every effect a buffed tower puts on an enemy: chill, burn and poison,
+  freeze, Vulnerable, Sundered and the rest, hexes, and the zones it leaves. It makes the Aura
+  matter to the Sonar, Seeker, Cinder and Hexer, not only to damage dealers.
 - **Keen Edge** needs another Aura next to this one: two Auras side by side unlock each other's
   top level without feeding each other's numbers.
-- **Gates:** the Aura keeps its neighbour gates (they are about the board) and earns XP as 20% of
-  what its buffed towers earn (feature 1).
+- **Gates** (feature 2): price and XP like every tower; the Aura earns an enemy's XP when any
+  tower it buffs earns it. Its purpose gate on head III is a layout condition, **buffing 4 or more
+  towers**, and Keen Edge also needs another Aura next to it. Today's neighbour gates (near-2,
+  near-3, near-6 on Awaken) go.
 
 **Specials** (one slot; three on offer, for either chain):
 
-- **Withering Field** (reworked): every buffed tower's shots may apply Vulnerable, with a chance of
-  10% times the seconds between its shots: 0.5% a shot for a tower firing 20 times a second, 20%
-  for one that fires every 2 s. Every buffed tower then adds about one stack every 10 s, whatever
-  its fire rate. The Aura still owns Vulnerable; it now reaches the path through its towers.
-- **Chosen:** buffs only the one tower in range with the most damage dealt, at triple strength
-  (every buff this Aura gives, tripled). For the Transcendent hero; the opposite of spreading thin.
+- **Withering Field** (reworked): every buffed tower applies Vulnerable with its next hit once
+  every 10 s. That is your "10% a second, whatever the fire rate" without dice: a tower firing 20
+  times a second and one firing every 2 s both add one stack every 10 s. The Aura still owns
+  Vulnerable; it now reaches the path through its towers.
+- **Chosen:** buffs only the most experienced tower in range (most XP), at triple strength (every
+  buff this Aura gives, tripled). For the Transcendent hero; the opposite of spreading thin.
 - **Rally:** the Aura marks the path spot closest to it (shown only while the Aura is selected).
   When an enemy steps on it, every buffed tower gets +30% fire rate for 5 s; then 10 s cooldown.
 
-**Look:** glow lines to buffed towers (they exist), coloured by what the aura grants; a small glyph
-per tower type it counts for Kinship; a book glyph on the tower Apprentice is mentoring; Rally's
-spot when selected.
+**Look:** glow lines to buffed towers (they exist), coloured by what the aura grants; a book glyph
+on the tower Apprentice is mentoring; Rally's spot when selected. Kinship's count shows in the
+Aura's info rows.
 
-**XP:** the Aura has no job events; it earns 20% of its buffed towers' XP. **Rank perk (Expert):**
-Kinship counts the Aura's own type too.
+**Purpose gate** (head III, feature 2): buffing 4 or more towers.
 
 ### The balance pass
 
@@ -123,9 +125,13 @@ Kinship counts the Aura's own type too.
   - a stat node gains between 0.7x and 1x of the damage per credit that building another copy of
     the tower would; prefer bigger bonuses to tiny prices;
   - specials cost more than head III; all of a tower's specials cost the same;
-  - **XP weights:** for each built-in level, the wave at which each tower type, built early and
-    doing its job, reaches head III falls in a narrow band (not equal numbers);
-  - rank milestones and the +3% a rank (feature 1's open question).
+  - a tower being weak against some enemies is intended (plating against small hits, crit
+    immunity against the Sniper): other towers and combos answer it, so the pass never tunes a
+    tower out of its counter;
+  - **XP and purpose:** XP needs no weights (feature 2 derives it from bounty); the pass checks
+    that the gate table opens where feature 2's table says on every built-in level, and that each
+    tower placed for its job meets its purpose gate no later than its XP reaches head III. A deed
+    rate far from feature 2's estimate changes that tower's threshold, never the rule.
 - **Watch list** carried from the design rounds:
   - the crit ceiling: x2.0 base, Tradecraft +0.5, Keen Edge +0.5, then Momentum's x5 (x15 in one
     hit; Momentum may need x3);
@@ -133,7 +139,7 @@ Kinship counts the Aura's own type too.
   - Arc on tight clumps before Lightning Rod (Ground Strike was the rejected fix);
   - whether the Hexer feels slow before Awaken (Brew's extra targets could move to I);
   - Rally under Broadcast II lasts 10 s on a 10 s cooldown: always on;
-  - Withering Field's chance, Rattle Field's 5%, Soul Drain's -100 state;
+  - Withering Field's 10 s, Rattle Field's 5%, Soul Drain's -100 state;
   - the per-copy price rule (+15%) against the value rule above.
 - **Closes** the `TODO.md` placeholder entries it settles, in the same commits (upgrade-tree node
   numbers, new tower numbers, effect and specialization numbers, critical-damage numbers) and keeps
@@ -146,7 +152,7 @@ Kinship counts the Aura's own type too.
   | Today | Shown as |
   |---|---|
   | Sniper | Sniper |
-  | Splash | Burst (Stormcaller and Hexer once forked, feature 3) |
+  | Splash | Burst (Stormcaller and Hexer once forked, feature 4) |
   | Sonar | Radar (a rotating beam is radar; sonar is pings) |
   | Pulse | Obelisk (a stone that changes the rules around it) |
   | Aura | Beacon |
@@ -166,10 +172,12 @@ Kinship counts the Aura's own type too.
 
 ## Interconnections
 
-- **Feature 1:** XP (Kinship and Tutelage are XP mechanics), price rules, layout gates.
-- **Feature 2:** the crit-damage axis (Keen Edge), Exposed and Marked in the harness's crit
+- **Feature 1:** price rules; the Aura caps at Awaken.
+- **Feature 2:** XP (Kinship, Tutelage, Apprentice, Shared Lessons and Chosen read it), the
+  purpose and layout gates.
+- **Feature 3:** the crit-damage axis (Keen Edge), Exposed and Marked in the harness's crit
   measurements.
-- **Features 3 to 5:** every effect Conduit stretches, every timed tower buff Broadcast II
+- **Features 4 to 6:** every effect Conduit stretches, every timed tower buff Broadcast II
   lengthens (Frenzy, Momentum's burst), the Cinder's Bellows reading the Aura's fire rate.
 - **`docs/ideas/enemies-brainstorm.md`** is the next round of design once this lands: the Jammer
   in real waves is what makes the Aura's half disruption matter.
@@ -180,13 +188,12 @@ Kinship counts the Aura's own type too.
   name are the same word, and the earlier decision was to rename display names only so node ids and
   tests don't churn. Either the rule changes in the same commit or the classes are renamed too;
   the request leaves that to planning, and the rule must not be left false.
-- **Brood vs Hive:** the Seeker's head III was renamed Brood (feature 4) so it doesn't share the
+- **Brood vs Hive:** the Seeker's head III was renamed Brood (feature 5) so it doesn't share the
   tower's new name.
-- **Withering Field reads every buffed tower's shots.** Shots happen in many places (missiles,
-  sweeps, field ticks, waves); the chance must be per attack, not per damage tick (a Pulse's tick
-  is not a shot).
-- **Chosen's "most damage dealt"** picks the tower that already dealt most, which favours early
-  builds; XP would be an alternative measure.
+- **Withering Field and Conduit reach into every buffed tower's attacks.** Withering Field needs
+  "the next hit" (feature 3's hit rule: a Pulse's field tick is not a hit); Conduit needs every
+  effect a tower applies to know how long its maker's buffs stretch it. Effects are made in many
+  places today, one per tower.
 - **Rally's spot** is a path point chosen per Aura; on a level with several paths, "closest" may
   sit on a path the Aura's towers can't reach.
 - **The harness method costs time:** many seeded runs per node per level. It runs offline, not in
@@ -211,9 +218,16 @@ Kinship counts the Aura's own type too.
   the buff +20%.
 - Amplifying Core is additive with a flat +10% fire rate (proposal above, your request).
 - Tower display names as in the table; ids and hotkeys unchanged; toolbar order unchanged.
+- Chosen picks by XP: one number every tower shows, and the most experienced tower is the hero.
+- **Simplified for cost:** Conduit lengthens effects (+30%) but no longer makes them "bite 15%
+  harder" (strength means something different for every effect: chill level, pool size, freeze
+  time, stacks); Withering Field is a 10 s timer per tower instead of a chance scaled by each
+  tower's shot interval (towers without a shot interval, a field or a sweep, had no answer); the
+  Kinship glyph per tower type becomes a count in the info rows; Shared Lessons shares what the
+  cluster sees, since XP no longer comes from kills.
+- New Aura axes are built only with a node that uses them: crit damage (Keen Edge) and effect
+  duration (Conduit). Penetration and projectile speed, ticked in the brainstorm, wait for one.
 
 ## Open questions
 
-- **Chosen** by damage dealt, or by XP?
-- **Withering Field's chance** for towers with no fixed shot interval (the Pulse's ticks, the
-  Sonar's sweep): per tick at the 20-a-second rate, or per revolution?
+- None blocking.
