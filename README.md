@@ -91,6 +91,10 @@ a different loadout or level, since v1 has no config format for either.
 | Seeker | 35    | Fires a homing missile that re-aims each tick and retargets if its target dies; deals magic damage and freezes whichever mob it actually hits       |
 | Cinder | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included |
 
+The price is the first copy's: each copy of a tower already on the board makes the next one cost
+15% more, and the shop shows the current price. Selling refunds three quarters of what the tower
+and its upgrades cost.
+
 Every tower, the Aura included, has its own upgrade tree of three slots, shown in place of the
 wave preview once the tower is selected. `base` holds three Range steps and the chain Attune ->
 Awaken -> Transcendent: Attune opens the first two levels of `head`, Awaken opens level III and

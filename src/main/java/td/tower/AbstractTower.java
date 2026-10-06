@@ -66,9 +66,9 @@ public abstract class AbstractTower implements Tower {
      * Converts the cell coordinates to the pixel centre and range. A tower with no cooldown passes
      * {@code 0} and overrides {@link #cadence()}.
      */
-    protected AbstractTower(TowerFactory.Type t, int price, TowerBaseStats base,
-                            GameWorld context, int cellX, int cellY) {
-        this.price = price;
+    protected AbstractTower(TowerFactory.Type t, TowerBaseStats base, GameWorld context, int cellX, int cellY) {
+        // Built after its price is charged and before it joins the roster, so this is what was paid.
+        this.price = context.towers().priceOf(t);
         this.type = t;
         this.damageBase = base.damage();
         this.rangeBase = base.range();
@@ -127,7 +127,10 @@ public abstract class AbstractTower implements Tower {
         return this.stats.rangeReal();
     }
 
-    /** Three quarters of everything paid: the tower and every upgrade bought for it. */
+    /**
+     * Three quarters of everything paid: the tower at the price it was bought for, and every
+     * upgrade bought for it.
+     */
     public int getSellPrice() {
         int upgradesPaid = this.upgrades().owned().stream().mapToInt(UpgradeNode::price).sum();
         return (int) Math.round(0.75 * (this.price + upgradesPaid));

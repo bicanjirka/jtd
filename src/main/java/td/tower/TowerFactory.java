@@ -31,12 +31,20 @@ public class TowerFactory {
         SEEKER(SeekerTower.PRICE, 'u'),
         CINDER(CinderTower.PRICE, 'i');
 
+        private static final int COPY_SURCHARGE_PERCENT = 15;
+
+        /** The list price: what the first copy costs and what upgrade prices are multiples of. */
         public final int price;
         public final char placementKey;
 
         Type(int price, char placementKey) {
             this.price = price;
             this.placementKey = placementKey;
+        }
+
+        /** The price with {@code copiesOnBoard} of this type already built: +15% each, rounded half up. */
+        public int priceFor(int copiesOnBoard) {
+            return (this.price * (100 + COPY_SURCHARGE_PERCENT * copiesOnBoard) + 50) / 100;
         }
     }
 

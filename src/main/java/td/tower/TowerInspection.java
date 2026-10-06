@@ -39,6 +39,11 @@ public record TowerInspection(TowerFactory.Type type, int price, List<TowerStatL
         return new TowerInspection(this.type, this.price, this.stats, this.behaviours, description, this.kills, this.damageDealt, this.upgrades, this.disruption, this.auras);
     }
 
+    /** The same tower at {@code price}: the shop's current price for its type. */
+    public TowerInspection withPrice(int price) {
+        return new TowerInspection(this.type, price, this.stats, this.behaviours, this.description, this.kills, this.damageDealt, this.upgrades, this.disruption, this.auras);
+    }
+
     /** What the tower has achieved: kills and damage landed, in hundredths. */
     public TowerInspection withRecord(int kills, long damageDealt) {
         return new TowerInspection(this.type, this.price, this.stats, this.behaviours, this.description, kills, damageDealt, this.upgrades, this.disruption, this.auras);

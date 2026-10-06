@@ -36,6 +36,17 @@ public class TowerRoster {
         return List.copyOf(this.towers);
     }
 
+    /** What the next tower of {@code type} costs, given the copies already on the board. */
+    public int priceOf(TowerFactory.Type type) {
+        int copies = 0;
+        for (Tower t : this.towers) {
+            if (t.getType() == type) {
+                copies++;
+            }
+        }
+        return type.priceFor(copies);
+    }
+
     public void add(Tower t) {
         this.towers.add(t);
         this.recalculateAllStats();

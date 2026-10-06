@@ -4,6 +4,8 @@
 
 - `AbstractTower` holds shared state; leaves are `final`, constructed only via `TowerFactory`,
   and their constructor just calls `super(...)` (derived board fields are already `final`).
+- A tower records its price from `TowerRoster.priceOf` in its constructor (each copy on the board
+  adds 15%), so build it after charging that price and before `TowerRoster.add`.
 - A tower's class name and its UI name are the same word and name the behaviour, not the shape.
 - Every hit goes through `AbstractTower.dealDamage`, never `enemy.doDamage`. It accumulates the
   damage that *landed* (what `doDamage` returns) and won't count a kill on an already-dead mob.

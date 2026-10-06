@@ -85,8 +85,7 @@ public final class SniperTower extends AbstractTower {
     private boolean momentumCharged;
 
     public SniperTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.SNIPER, PRICE,
-                new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX).withCritChance(CRIT_CHANCE), context, x, y);
+        super(TowerFactory.Type.SNIPER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX).withCritChance(CRIT_CHANCE), context, x, y);
     }
 
     @Override
