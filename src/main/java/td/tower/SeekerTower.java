@@ -10,11 +10,11 @@ import td.tower.buff.TowerBuff;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.DamageDealtCondition;
+import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
-import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -42,39 +42,34 @@ public final class SeekerTower extends AbstractTower {
     private static final float SHATTER_DAMAGE_SHARE = 0.5f;
     private static final float SHATTER_RADIUS_CELLS = 1.5f;
 
-    private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(21);
-    private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(35);
-
-    private static final UpgradeNode TWIN_WARHEAD_1 = UpgradeNode.of("seeker.head.twin_warhead.1", UpgradeSlot.HEAD,
-            "Twin Warhead", 30)
+    private static final UpgradeNode TWIN_WARHEAD_1 = UpgradeTier.HEAD_1.node("seeker.head.twin_warhead.1",
+            "Twin Warhead", PRICE)
             .withBuff(TowerBuff.fireRate(0.3f))
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(10));
-    private static final UpgradeNode TWIN_WARHEAD_2 = UpgradeNode.of("seeker.head.twin_warhead.2", UpgradeSlot.HEAD,
-            "Twin Warhead II", 45)
+    private static final UpgradeNode TWIN_WARHEAD_2 = UpgradeTier.HEAD_2.node("seeker.head.twin_warhead.2",
+            "Twin Warhead II", PRICE)
             .withBuff(TowerBuff.fireRate(0.25f))
-            .withRequires(UpgradeCondition.owns(TWIN_WARHEAD_1.id()))
+            .after(TWIN_WARHEAD_1)
             .withGate(new DamageDealtCondition(250))
             .withExtraEffect("fires two independently-retargeting missiles instead of one");
-    private static final UpgradeNode DEEP_FREEZE_1 = UpgradeNode.of("seeker.head.deep_freeze.1", UpgradeSlot.HEAD,
-            "Deep Freeze", 35)
+    private static final UpgradeNode DEEP_FREEZE_1 = UpgradeTier.HEAD_1.node("seeker.head.deep_freeze.1",
+            "Deep Freeze", PRICE)
             .withBuff(TowerBuff.damage(0.3f))
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(12));
-    private static final UpgradeNode DEEP_FREEZE_2 = UpgradeNode.of("seeker.head.deep_freeze.2", UpgradeSlot.HEAD,
-            "Deep Freeze II", 53)
+    private static final UpgradeNode DEEP_FREEZE_2 = UpgradeTier.HEAD_2.node("seeker.head.deep_freeze.2",
+            "Deep Freeze II", PRICE)
             .withBuff(TowerBuff.damage(0.25f))
-            .withRequires(UpgradeCondition.owns(DEEP_FREEZE_1.id()))
+            .after(DEEP_FREEZE_1)
             .withGate(new KillCountCondition(25))
             .withExtraEffect("+75% freeze duration, killing a frozen enemy shatters it for 50% weapon damage splash");
-    private static final UpgradeNode HOMING_CURSE = UpgradeNode.of("seeker.special.homing_curse", UpgradeSlot.SPECIAL,
-            "Homing Curse", 70)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+    private static final UpgradeNode HOMING_CURSE = UpgradeTier.SPECIAL.node("seeker.special.homing_curse",
+            "Homing Curse", PRICE)
             .withGate(new KillCountCondition(20))
             .withExtraEffect("impact applies 1 Vulnerable stack, or 2 if the target was already frozen or chilled");
 
-    private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, TWIN_WARHEAD_1, TWIN_WARHEAD_2,
-            DEEP_FREEZE_1, DEEP_FREEZE_2, HOMING_CURSE);
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE))
+            .with(TWIN_WARHEAD_1, TWIN_WARHEAD_2, DEEP_FREEZE_1, DEEP_FREEZE_2, HOMING_CURSE)
+            .withChoice(ExclusiveChoice.oneOf(TWIN_WARHEAD_1, DEEP_FREEZE_1));
 
     private static final int COOLDOWN_MAX = 45;
 

@@ -12,6 +12,9 @@ import td.projectile.CannonballProjectile;
 import td.tower.AuraTower;
 import td.tower.CinderTower;
 import td.tower.SniperTower;
+import td.tower.Tower;
+import td.tower.upgrade.StandardBaseSlot;
+import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.ui.render.ConeDraw;
 import td.ui.render.EnemyFadeDraw;
@@ -113,7 +116,7 @@ class BoardRendererTest {
         context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(context, 1, 1);
         context.towers().add(tower);
-        tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.BASE).get(1));
+        tower.buyUpgrade(baseNode(tower, StandardBaseSlot.ATTUNE_ID));
         tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).get(0));
         tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).get(1));
 
@@ -135,7 +138,8 @@ class BoardRendererTest {
         context.towers().add(tower);
         context.towers().add(new SniperTower(context, 0, 0));
         context.towers().add(new SniperTower(context, 2, 2));
-        tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.BASE).get(1));
+        tower.buyUpgrade(baseNode(tower, StandardBaseSlot.ATTUNE_ID));
+        tower.buyUpgrade(baseNode(tower, StandardBaseSlot.AWAKEN_ID));
         tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.SPECIAL).get(0));
 
         RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
@@ -226,5 +230,9 @@ class BoardRendererTest {
 
         assertThat(frame.projectiles()).hasSize(1);
         assertThat(frame.projectiles().getFirst()).isInstanceOf(ProjectileDraw.class);
+    }
+
+    private static UpgradeNode baseNode(Tower tower, String id) {
+        return tower.upgradeTree().nodesIn(UpgradeSlot.BASE).stream().filter(n -> n.id().equals(id)).findFirst().orElseThrow();
     }
 }

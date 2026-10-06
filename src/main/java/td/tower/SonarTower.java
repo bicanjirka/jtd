@@ -8,11 +8,11 @@ import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.ClusterCondition;
 import td.tower.upgrade.DamageDealtCondition;
+import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
-import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.wave.WaveStartListener;
@@ -40,47 +40,38 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
     /** How long a hit stays drawn. */
     private static final int HIT_FLASH_TICKS = 8;
 
-    private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(12);
-    private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(20);
-
-    private static final UpgradeNode TWIN_ARRAY_1 = UpgradeNode.of("sonar.head.twin_array.1", UpgradeSlot.HEAD,
-            "Twin Array", 35)
+    private static final UpgradeNode TWIN_ARRAY_1 = UpgradeTier.HEAD_1.node("sonar.head.twin_array.1",
+            "Twin Array", PRICE)
             .withBuff(TowerBuff.damage(0.25f))
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new DamageDealtCondition(100));
-    private static final UpgradeNode TWIN_ARRAY_2 = UpgradeNode.of("sonar.head.twin_array.2", UpgradeSlot.HEAD,
-            "Twin Array II", 53)
+    private static final UpgradeNode TWIN_ARRAY_2 = UpgradeTier.HEAD_2.node("sonar.head.twin_array.2",
+            "Twin Array II", PRICE)
             .withBuff(TowerBuff.damage(0.25f).withCritChance(0.1f))
-            .withRequires(UpgradeCondition.owns(TWIN_ARRAY_1.id()))
+            .after(TWIN_ARRAY_1)
             .withGate(new DamageDealtCondition(200));
-    private static final UpgradeNode TWIN_ARRAY_3 = UpgradeNode.of("sonar.head.twin_array.3", UpgradeSlot.HEAD,
-            "Twin Array III", 70)
-            .withRequires(UpgradeCondition.owns(TWIN_ARRAY_2.id()))
+    private static final UpgradeNode TWIN_ARRAY_3 = UpgradeTier.HEAD_3.node("sonar.head.twin_array.3",
+            "Twin Array III", PRICE)
+            .after(TWIN_ARRAY_2)
             .withGate(new KillCountCondition(25))
             .withExtraEffect("a second turret, facing the opposite direction");
-    private static final UpgradeNode LONG_REACH_1 = UpgradeNode.of("sonar.head.long_reach.1", UpgradeSlot.HEAD,
-            "Long Reach", 30)
+    private static final UpgradeNode LONG_REACH_1 = UpgradeTier.HEAD_1.node("sonar.head.long_reach.1",
+            "Long Reach", PRICE)
             .withBuff(TowerBuff.critChance(0.15f))
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(10));
-    private static final UpgradeNode LONG_REACH_2 = UpgradeNode.of("sonar.head.long_reach.2", UpgradeSlot.HEAD,
-            "Long Reach II", 45)
-            .withRequires(UpgradeCondition.owns(LONG_REACH_1.id()))
+    private static final UpgradeNode LONG_REACH_2 = UpgradeTier.HEAD_2.node("sonar.head.long_reach.2",
+            "Long Reach II", PRICE)
+            .after(LONG_REACH_1)
             .withGate(new DamageDealtCondition(200))
             .withExtraEffect("damage scales up to +100% at max range");
-    private static final UpgradeNode WIDE_BAND = UpgradeNode.of("sonar.special.wide_band", UpgradeSlot.SPECIAL,
-            "Wide Band", 40)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+    private static final UpgradeNode WIDE_BAND = UpgradeTier.SPECIAL.node("sonar.special.wide_band", "Wide Band", PRICE)
             .withGate(new ClusterCondition(2))
             .withExtraEffect("each revolution briefly reveals invisible enemies to every tower");
-    private static final UpgradeNode MARK_ON_SWEEP = UpgradeNode.of("sonar.special.mark_on_sweep", UpgradeSlot.SPECIAL,
-            "Mark on Sweep", 40)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+    private static final UpgradeNode MARK_ON_SWEEP = UpgradeTier.SPECIAL.node("sonar.special.mark_on_sweep",
+            "Mark on Sweep", PRICE)
             .withGate(new KillCountCondition(15))
             .withExtraEffect("a beam hit marks its target; the next hit on it is a guaranteed crit");
-    private static final UpgradeNode PIERCING_TONE = UpgradeNode.of("sonar.special.piercing_tone", UpgradeSlot.SPECIAL,
-            "Piercing Tone", 40)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+    private static final UpgradeNode PIERCING_TONE = UpgradeTier.SPECIAL.node("sonar.special.piercing_tone",
+            "Piercing Tone", PRICE)
             .withGate(new DamageDealtCondition(200))
             .withExtraEffect("bonus magic damage against physically armored/shielded enemies, up to +50%");
     /** Piercing Tone's bonus is the target's physical reduction, as a share of this hit, capped here. */
@@ -90,8 +81,11 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
     /** Long Reach II adds up to this much damage at the edge of the range. */
     private static final float LONG_REACH_MAX_BONUS = 1f;
 
-    private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, TWIN_ARRAY_1, TWIN_ARRAY_2,
-            TWIN_ARRAY_3, LONG_REACH_1, LONG_REACH_2, WIDE_BAND, MARK_ON_SWEEP, PIERCING_TONE);
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, TWIN_ARRAY_3))
+            .with(TWIN_ARRAY_1, TWIN_ARRAY_2, TWIN_ARRAY_3, LONG_REACH_1, LONG_REACH_2,
+                    WIDE_BAND, MARK_ON_SWEEP, PIERCING_TONE)
+            .withChoice(ExclusiveChoice.oneOf(TWIN_ARRAY_1, LONG_REACH_1))
+            .withChoice(ExclusiveChoice.specials(WIDE_BAND, MARK_ON_SWEEP, PIERCING_TONE));
 
     private final List<SonarHit> recentHits = new ArrayList<>();
     private final Set<EnemyMob> marked = Collections.newSetFromMap(new IdentityHashMap<>());

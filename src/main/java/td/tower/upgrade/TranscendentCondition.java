@@ -39,7 +39,7 @@ public record TranscendentCondition(List<String> levelThreeIds) implements Upgra
     }
 
     private static boolean ownsSpecial(Tower tower) {
-        return !tower.upgrades().inSlot(UpgradeSlot.SPECIAL).isEmpty();
+        return tower.upgrades().countIn(UpgradeSlot.SPECIAL) > 0;
     }
 
     private boolean ownsLevelThree(Tower tower) {

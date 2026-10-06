@@ -92,13 +92,16 @@ a different loadout or level, since v1 has no config format for either.
 | Cinder | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included |
 
 Every tower, the Aura included, has its own upgrade tree of three slots, shown in place of the
-wave preview once the tower is selected. `base` holds a range node and Awaken, which unlocks the
-other two; `head` offers two exclusive chains; `special` offers one to three exclusive
-specializations. A node is gated by its own condition (an affordable price alone, a cluster of
-towers built nearby, the tower having dealt enough damage, or having racked up enough kills),
-and every purchase is permanent for that tower. Pips on the board show each slot's level, and a
-tower with a special glows. The Aura tower draws a faint line to every tower it's currently
-amplifying.
+wave preview once the tower is selected. `base` holds three Range steps and the chain Attune ->
+Awaken -> Transcendent: Attune opens the first two levels of `head`, Awaken opens level III and
+a special, and Transcendent (once a special and a level III head are owned) opens Range III and a
+second special. `head` offers two chains that exclude each other; `special` offers one to three
+specializations, of which a tower keeps one, or two once Transcendent. A node is gated by its own
+condition (an affordable price alone, a cluster of towers built nearby, the tower having dealt
+enough damage, or having racked up enough kills), and every purchase is permanent for that
+tower. Upgrade prices are multiples of the tower's price. Pips on the board show each slot's
+level, and a tower with a special glows. The Aura tower draws a faint line to every tower it's
+currently amplifying.
 
 ### Enemies
 

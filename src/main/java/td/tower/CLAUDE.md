@@ -59,14 +59,20 @@
 
 ## Upgrade tree
 
-- Slots `BASE` (always `StandardBaseSlot` range + Awaken), `HEAD` (two exclusive chains) and
-  `SPECIAL` (one to three exclusive roots, gated on Awaken). Content per tower comes from
-  `docs/features/FEATURE-tower-specialization-abilities.md`.
-- Build nodes with `UpgradeNode.of(...)` plus `withBuff`/`withRequires`/`withGate`/
-  `withExtraEffect`. `requires` decides whether a node is offered (`UpgradeCondition.owns(id)`,
-  `slotEmpty(slot)`, `StandardBaseSlot.opens(slot)`, combined with `and`/`or`). `gate` is the
-  performance condition to clear once offered (`always()`, `KillCountCondition`,
-  `DamageDealtCondition`, `ClusterCondition`), and its `progress()` feeds the UI.
+- Slots `BASE` (always `StandardBaseSlot.nodes`: the Range line and Attune -> Awaken ->
+  Transcendent), `HEAD` (two chains, plus an extra node that excludes nothing) and `SPECIAL` (one
+  set of up to three, or one set per chain). Content per tower comes from
+  `docs/features/FEATURE-tower-specialization-abilities.md` and the tower-rework feature requests.
+- Build a node at its step: `UpgradeTier.HEAD_2.node(id, name, PRICE)` sets its slot, its price
+  (a multiple of the list price) and the base node that opens it; `after(previous)` adds its line.
+  Then `withBuff`/`withGate`/`withExtraEffect`. `requires` decides whether a node is offered;
+  `gate` is the condition to clear once offered (`always()`, `KillCountCondition`,
+  `DamageDealtCondition`, `ClusterCondition`, `TranscendentCondition`), and its `progress()` feeds
+  the UI.
+- Exclusivity is an `ExclusiveChoice` on the tree (`oneOf` for chain roots and IV-A | IV-B,
+  `specials` for a special set), never `slotEmpty` in `requires`: the tree enforces it and the
+  panel draws it. Pass `StandardBaseSlot.nodes` a tree's level III heads; without any, the tree
+  has no Transcendent and no Range III.
 - Never hand-write a node's bonus into a tower's description: `UpgradeNode.bonuses()` derives it
   and the Upgrades panel lists offered nodes.
 - A bonus outside `TowerBuff`'s axes goes in `onUpgradeBought`, matching the node by `equals` (not
@@ -85,8 +91,9 @@
    `TowerEffectFrameBuilder`.
 4. `Palette` constants plus cases in `TowerSpriteFrameBuilder.bodyPaletteFor` and
    `Java2DFrameRenderer`'s `towerBodyShape`/`turretHeadShape`/`colorFor`.
-5. `upgradeTree()`: `StandardBaseSlot.rangeNode`/`awakenNode`, two `HEAD` chains whose roots
-   require `StandardBaseSlot.opens(HEAD)`, and 1-3 `SPECIAL` roots requiring `opens(SPECIAL)`.
+5. `upgradeTree()`: `UpgradeTree.of(StandardBaseSlot.nodes(PRICE, levelThrees...))` with two
+   `HEAD` chains built from `UpgradeTier` steps and 1-3 `UpgradeTier.SPECIAL` nodes, plus an
+   `ExclusiveChoice` per choice.
 6. `behaviours()` (one short row each: targeting, effects applied) and, for the shop only, a
    `description()` saying what no row does.
 7. `README.md`'s tower table. The toolbar icon reuses the board paint code, so it needs no art.

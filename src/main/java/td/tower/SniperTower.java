@@ -9,11 +9,12 @@ import td.tower.targeting.HighestHealthSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.TargetSelector;
 import td.tower.upgrade.DamageDealtCondition;
+import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
-import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -34,40 +35,31 @@ public final class SniperTower extends AbstractTower {
     public static final float CRIT_CHANCE = 0.15f;
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.4;
 
-    private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(6);
-    private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(10);
-
-    private static final UpgradeNode FOCUSED_OPTICS_1 = UpgradeNode.of("sniper.head.focused_optics.1",
-            UpgradeSlot.HEAD, "Focused Optics", 25)
-            .withBuff(TowerBuff.damage(0.2f))
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD));
-    private static final UpgradeNode FOCUSED_OPTICS_2 = UpgradeNode.of("sniper.head.focused_optics.2",
-            UpgradeSlot.HEAD, "Focused Optics II", 38)
+    private static final UpgradeNode FOCUSED_OPTICS_1 = UpgradeTier.HEAD_1.node("sniper.head.focused_optics.1",
+            "Focused Optics", PRICE)
+            .withBuff(TowerBuff.damage(0.2f));
+    private static final UpgradeNode FOCUSED_OPTICS_2 = UpgradeTier.HEAD_2.node("sniper.head.focused_optics.2",
+            "Focused Optics II", PRICE)
             .withBuff(TowerBuff.damage(0.2f).withFireRate(0.25f))
-            .withRequires(UpgradeCondition.owns(FOCUSED_OPTICS_1.id()));
-    private static final UpgradeNode MARKSMANS_EYE_1 = UpgradeNode.of("sniper.head.marksmans_eye.1",
-            UpgradeSlot.HEAD, "Marksman's Eye", 30)
+            .after(FOCUSED_OPTICS_1);
+    private static final UpgradeNode MARKSMANS_EYE_1 = UpgradeTier.HEAD_1.node("sniper.head.marksmans_eye.1",
+            "Marksman's Eye", PRICE)
             .withBuff(TowerBuff.critChance(0.15f))
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(15));
-    private static final UpgradeNode MARKSMANS_EYE_2 = UpgradeNode.of("sniper.head.marksmans_eye.2",
-            UpgradeSlot.HEAD, "Marksman's Eye II", 45)
+    private static final UpgradeNode MARKSMANS_EYE_2 = UpgradeTier.HEAD_2.node("sniper.head.marksmans_eye.2",
+            "Marksman's Eye II", PRICE)
             .withBuff(TowerBuff.critChance(0.2f).withArmorPenetration(0.5f))
-            .withRequires(UpgradeCondition.owns(MARKSMANS_EYE_1.id()))
+            .after(MARKSMANS_EYE_1)
             .withGate(new DamageDealtCondition(200));
-    private static final UpgradeNode MARKED_ROUND = UpgradeNode.of("sniper.special.marked_round", UpgradeSlot.SPECIAL,
-            "Marked Round", 20)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+    private static final UpgradeNode MARKED_ROUND = UpgradeTier.SPECIAL.node("sniper.special.marked_round",
+            "Marked Round", PRICE)
             .withGate(new KillCountCondition(10))
             .withExtraEffect("crits apply Vulnerable, +15% damage taken, stacks x3");
-    private static final UpgradeNode FIFTH_SHOT = UpgradeNode.of("sniper.special.fifth_shot", UpgradeSlot.SPECIAL,
-            "Fifth Shot", 20)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+    private static final UpgradeNode FIFTH_SHOT = UpgradeTier.SPECIAL.node("sniper.special.fifth_shot",
+            "Fifth Shot", PRICE)
             .withGate(new KillCountCondition(15))
             .withExtraEffect("every 5th shot is a guaranteed crit, and its crits deal 250%");
-    private static final UpgradeNode MOMENTUM = UpgradeNode.of("sniper.special.momentum", UpgradeSlot.SPECIAL,
-            "Momentum", 20)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+    private static final UpgradeNode MOMENTUM = UpgradeTier.SPECIAL.node("sniper.special.momentum", "Momentum", PRICE)
             .withGate(new KillCountCondition(20))
             .withExtraEffect("post-crit shot deals 500% and ignores armor and plating; a kill grants +100% fire "
                     + "rate for 5s");
@@ -78,8 +70,10 @@ public final class SniperTower extends AbstractTower {
     private static final float MOMENTUM_KILL_FIRE_RATE = 0.5f;
     private static final float MOMENTUM_KILL_BUFF_SECONDS = 5f;
 
-    private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, FOCUSED_OPTICS_1, FOCUSED_OPTICS_2,
-            MARKSMANS_EYE_1, MARKSMANS_EYE_2, MARKED_ROUND, FIFTH_SHOT, MOMENTUM);
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE))
+            .with(FOCUSED_OPTICS_1, FOCUSED_OPTICS_2, MARKSMANS_EYE_1, MARKSMANS_EYE_2, MARKED_ROUND, FIFTH_SHOT, MOMENTUM)
+            .withChoice(ExclusiveChoice.oneOf(FOCUSED_OPTICS_1, MARKSMANS_EYE_1))
+            .withChoice(ExclusiveChoice.specials(MARKED_ROUND, FIFTH_SHOT, MOMENTUM));
 
     private static final int COOLDOWN_MAX = 39;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
@@ -186,7 +180,7 @@ public final class SniperTower extends AbstractTower {
 
     @Override
     protected List<BehaviourLine> behaviours() {
-        boolean special = this.upgrades().tip(UpgradeSlot.SPECIAL).isPresent();
+        boolean special = this.upgrades().countIn(UpgradeSlot.SPECIAL) > 0;
         BehaviourLine targets = new BehaviourLine(BehaviourMarker.TARGETING, "Targets", special ? "most health" : "first");
         if (!this.upgrades().owns(MARKED_ROUND.id())) {
             return List.of(targets);

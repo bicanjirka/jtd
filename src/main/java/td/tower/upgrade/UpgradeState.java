@@ -28,8 +28,24 @@ public record UpgradeState(List<UpgradeNode> owned) {
         return new UpgradeState(next);
     }
 
+    // Indexed loops: these run for every tower on every frame build, which has an allocation budget.
     public boolean owns(String nodeId) {
-        return this.owned.stream().anyMatch(n -> n.id().equals(nodeId));
+        for (int i = 0; i < this.owned.size(); i++) {
+            if (this.owned.get(i).id().equals(nodeId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public int countIn(UpgradeSlot slot) {
+        int count = 0;
+        for (int i = 0; i < this.owned.size(); i++) {
+            if (this.owned.get(i).slot() == slot) {
+                count++;
+            }
+        }
+        return count;
     }
 
     public List<UpgradeNode> inSlot(UpgradeSlot slot) {

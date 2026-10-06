@@ -26,7 +26,7 @@ class SniperTowerTest {
     void focusedOpticsIsChoosableOnceAwakenIsBoughtAndAppliesItsDamageBonus() {
         this.context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(this.context, 0, 0);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradePaths.awaken(tower);
         UpgradeNode focusedOptics = UpgradePaths.named(tower, "Focused Optics");
 
         boolean chosen = tower.buyUpgrade(focusedOptics);
@@ -39,7 +39,7 @@ class SniperTowerTest {
     void marksmansEyeIsNotYetChoosableBeforeFifteenKills() {
         this.context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(this.context, 0, 0);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradePaths.awaken(tower);
         UpgradeNode marksmansEye = UpgradePaths.named(tower, "Marksman's Eye");
 
         boolean chosen = tower.buyUpgrade(marksmansEye);
@@ -52,7 +52,7 @@ class SniperTowerTest {
     void marksmansEyeGrantsACritChanceOnceKillCountIsMet() {
         this.context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(this.context, 0, 0);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradePaths.awaken(tower);
         EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
         for (int i = 0; i < 15; i++) {
             tower.dealDamage(fodder, Damage.physical(1_000_000));
@@ -70,7 +70,7 @@ class SniperTowerTest {
     void buyingAnyHeadRootForeclosesTheOtherHeadRootForever() {
         this.context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(this.context, 0, 0);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradePaths.awaken(tower);
         tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics"));
 
         boolean chosenMarksmansEye = tower.buyUpgrade(UpgradePaths.named(tower, "Marksman's Eye"));
@@ -96,7 +96,7 @@ class SniperTowerTest {
     private static SniperTower awakenedSniper(GameWorld world, int killsEarned) {
         world.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(world, 3, 3);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradePaths.awaken(tower);
         for (int i = 0; i < killsEarned; i++) {
             tower.dealDamage(EnemyFactory.getEnemy("c", world, 0, 1, 1, Rank.GRUNT), Damage.physical(1_000_000));
         }
