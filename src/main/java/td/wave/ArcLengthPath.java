@@ -55,6 +55,44 @@ public final class ArcLengthPath {
         return this.totalLength;
     }
 
+    /**
+     * Whether the stretch of path between distances {@code from} and {@code to} comes within
+     * {@code radius} of the point. Allocation-free: it runs once per tower for every finished walk.
+     */
+    public boolean passesWithin(double pointX, double pointY, double radius, double from, double to) {
+        double start = Math.max(0.0, Math.min(from, to));
+        double end = Math.min(this.totalLength, Math.max(from, to));
+        double radius2 = radius * radius;
+        for (int i = 0; i < this.cumulative.length - 1; i++) {
+            double segmentStart = this.cumulative[i];
+            double segmentEnd = this.cumulative[i + 1];
+            if (segmentEnd < start || segmentStart > end || segmentEnd == segmentStart) {
+                continue;
+            }
+            double length = segmentEnd - segmentStart;
+            double t0 = (Math.max(start, segmentStart) - segmentStart) / length;
+            double t1 = (Math.min(end, segmentEnd) - segmentStart) / length;
+            double ax = lerp(this.xs[i], this.xs[i + 1], t0);
+            double ay = lerp(this.ys[i], this.ys[i + 1], t0);
+            double bx = lerp(this.xs[i], this.xs[i + 1], t1);
+            double by = lerp(this.ys[i], this.ys[i + 1], t1);
+            if (distanceToSegment2(pointX, pointY, ax, ay, bx, by) <= radius2) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static double distanceToSegment2(double px, double py, double ax, double ay, double bx, double by) {
+        double dx = bx - ax;
+        double dy = by - ay;
+        double length2 = dx * dx + dy * dy;
+        double t = length2 == 0.0 ? 0.0 : Math.max(0.0, Math.min(1.0, ((px - ax) * dx + (py - ay) * dy) / length2));
+        double cx = ax + t * dx - px;
+        double cy = ay + t * dy - py;
+        return cx * cx + cy * cy;
+    }
+
     public PathPose poseAt(double distance) {
         distance = Math.max(0.0, Math.min(distance, this.totalLength));
         int segment = this.cumulative.length - 2;

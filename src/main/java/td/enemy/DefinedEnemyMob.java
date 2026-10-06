@@ -58,6 +58,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     // Only meaningful while LIVE: off-board mobs walk in from and out to off-screen untargetable.
     private boolean onBoard;
     private int delay;
+    private long entryOrdinal;
     // Null until the first cast; never exposed as null.
     private AbilityCast lastAbilityCast;
     private double facingRadians;
@@ -88,6 +89,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         // From the rounded tick count, not the slot position: a fractional delay can round to zero
         // ticks, and an inactive mob with no delay to count down would never activate.
         this.stage = this.delay > 0 ? LifeStage.WAITING : LifeStage.LIVE;
+        this.entryOrdinal = this.stage == LifeStage.LIVE ? gameWorld.enemies().recordEntry() : 0;
         this.onBoard = true;
     }
 
@@ -117,6 +119,16 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     public int getBounty() {
         return this.price;
+    }
+
+    @Override
+    public long entryOrdinal() {
+        return this.entryOrdinal;
+    }
+
+    @Override
+    public boolean walkedWithin(double x, double y, double radius) {
+        return this.motion.walkedWithin(x, y, radius);
     }
 
     public float getHealthFraction() {
@@ -346,7 +358,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.fate = EnemyInspection.Fate.KILLED;
             int score = Math.round(this.price * this.rank.scoreMultiplier());
             this.gameWorld.economy().apply(EconomyDelta.kill(this.price, score));
-            this.gameWorld.enemies().reportDeath();
+            this.gameWorld.enemies().reportDeath(this);
         }
         return landed;
     }
@@ -413,6 +425,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.delay--;
             if (this.delay == 0) {
                 this.stage = LifeStage.LIVE;
+                this.entryOrdinal = this.gameWorld.enemies().recordEntry();
                 this.doTick(gameTime);
             }
             return;
@@ -480,7 +493,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.die();
         this.fate = EnemyInspection.Fate.LEAKED;
         this.gameWorld.economy().apply(EconomyDelta.leak(this.price));
-        this.gameWorld.enemies().reportDeath();
+        this.gameWorld.enemies().reportDeath(this);
     }
 
     private void die() {

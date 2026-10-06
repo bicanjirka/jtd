@@ -1,6 +1,7 @@
 package td.tower;
 
 import td.enemy.EnemyMob;
+import td.enemy.EnemyWalk;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.ClusterCondition;
@@ -113,6 +114,12 @@ public final class AuraTower extends AbstractTower {
         int dx = this.centerX - other.getX();
         int dy = this.centerY - other.getY();
         return (dx * dx + dy * dy) < this.rangeReal2();
+    }
+
+    /** An aura has no reach on the path: it earns through the towers it buffs. */
+    @Override
+    public boolean reached(EnemyWalk walk) {
+        return false;
     }
 
     @Override

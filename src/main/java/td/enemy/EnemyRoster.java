@@ -3,6 +3,7 @@ package td.enemy;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The current wave's live enemies and how many are still alive, which is how a cleared wave is
@@ -12,6 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class EnemyRoster implements EnemyRegistry, EnemySpawner {
 
     private final AtomicInteger count = new AtomicInteger();
+    private final AtomicLong entries = new AtomicLong();
+    private final List<WalkEndListener> walkEndListeners = new CopyOnWriteArrayList<>();
     // Swapped whole in one write, so a reader never sees a half-filled roster.
     private volatile List<EnemyMob> enemies = new CopyOnWriteArrayList<>();
 
@@ -37,9 +40,26 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
         return this.count.get();
     }
 
-    /** The mob stays listed for its death fade. */
-    public void reportDeath() {
+    /** The mob stays listed for its death fade. Its walk is over, killed or leaked. */
+    public void reportDeath(EnemyWalk walk) {
         this.count.decrementAndGet();
+        for (WalkEndListener listener : this.walkEndListeners) {
+            listener.walkEnded(walk);
+        }
+    }
+
+    public void addWalkEndListener(WalkEndListener listener) {
+        this.walkEndListeners.add(listener);
+    }
+
+    /** A mob going live takes the next place in the entry order. */
+    public long recordEntry() {
+        return this.entries.incrementAndGet();
+    }
+
+    /** How many mobs have gone live so far: a mob whose ordinal is higher entered after this call. */
+    public long entries() {
+        return this.entries.get();
     }
 
     public void clear() {

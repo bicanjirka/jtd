@@ -187,6 +187,18 @@ public final class FakeEnemyMob implements EnemyMob {
         return 0;
     }
 
+    /** Entered after every tower, so only its position decides whether a tower reached it. */
+    @Override
+    public long entryOrdinal() {
+        return Long.MAX_VALUE;
+    }
+
+    /** It walks nowhere: only where it stands counts. */
+    @Override
+    public boolean walkedWithin(double pointX, double pointY, double radius) {
+        return Math.hypot(this.x - pointX, this.y - pointY) <= radius;
+    }
+
     @Override
     public float getSpeed() {
         return 0;

@@ -137,4 +137,12 @@ void combineIsAdditiveOnBountyToo() {        TowerBuff a = new TowerBuff(0f, 0f,
         assertThat(stats.range()).isCloseTo(2f * 1.3f, org.assertj.core.data.Offset.offset(1e-5f));
         assertThat(stats.coolDown()).isEqualTo(25);
     }
+
+    @Test
+    void reachForXpKeepsTheBuffedRangeAndIgnoresTheDisruption() {
+        TowerStats stats = TowerStats.of(new TowerBaseStats(1, 2f, 20), TowerBuff.range(0.5f),
+                new DisruptionPenalty(0.25f, 0.2f), 10);
+
+        assertThat(stats.reachReal()).isCloseTo(2f * 1.5f * 10, org.assertj.core.data.Offset.offset(1e-4f));
+    }
 }

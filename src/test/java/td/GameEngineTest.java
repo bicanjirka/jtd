@@ -818,6 +818,91 @@ class GameEngineTest {
     }
 
     @Test
+    void everyTowerAnEnemyReachedEarnsItsBountyAsXpNotJustTheOneThatKilledIt() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("c", Rank.GRUNT)), 1000));
+        Tower first = placeTower(engine, TowerFactory.Type.SNIPER, 1, 1);
+        Tower second = placeTower(engine, TowerFactory.Type.SNIPER, 2, 3);
+        engine.nextWave();
+        int bounty = engine.getGameWorld().enemies().getEnemies()[0].getBounty();
+
+        tickUntilWaveCleared(engine);
+
+        assertThat(first.getKillCount() + second.getKillCount()).isEqualTo(1);
+        assertThat(first.experience().xp()).isEqualTo(bounty);
+        assertThat(second.experience().xp()).isEqualTo(bounty);
+    }
+
+    @Test
+    void aLeakedEnemyPaysTheSameXpAsAKilledOne() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("c", Rank.BOSS)), 1000)
+                .withStartingLives(50));
+        Tower tower = placeTower(engine, TowerFactory.Type.SNIPER, 1, 1);
+        engine.nextWave();
+        int bounty = engine.getGameWorld().enemies().getEnemies()[0].getBounty();
+
+        tickUntilWaveCleared(engine);
+
+        assertThat(tower.getKillCount()).isZero();
+        assertThat(tower.experience().xp()).isEqualTo(bounty);
+    }
+
+    @Test
+    void anEnemyWhoseWalkNeverCameWithinRangePaysNoXp() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("c", Rank.GRUNT)), 1000));
+        Tower farAway = placeTower(engine, TowerFactory.Type.SNIPER, 15, 12);
+        engine.nextWave();
+
+        tickUntilWaveCleared(engine);
+
+        assertThat(farAway.experience().xp()).isZero();
+    }
+
+    @Test
+    void anEnemyAlreadyWalkingWhenTheTowerWasBuiltPaysItNoXp() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("c", Rank.BOSS)), 1000)
+                .withStartingLives(50));
+        engine.nextWave();
+        engine.doTick(1);
+        Tower lateBuild = placeTower(engine, TowerFactory.Type.SNIPER, 1, 1);
+
+        tickUntilWaveCleared(engine);
+
+        assertThat(lateBuild.experience().xp()).isZero();
+    }
+
+    @Test
+    void anAuraEarnsAnEnemysXpOnceWhenTheTowersItBuffsEarnIt() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("c", Rank.GRUNT)), 1000));
+        placeTower(engine, TowerFactory.Type.SNIPER, 1, 1);
+        placeTower(engine, TowerFactory.Type.SNIPER, 2, 1);
+        Tower aura = placeTower(engine, TowerFactory.Type.AURA, 1, 0);
+        engine.nextWave();
+        int bounty = engine.getGameWorld().enemies().getEnemies()[0].getBounty();
+
+        tickUntilWaveCleared(engine);
+
+        assertThat(aura.experience().xp()).isEqualTo(bounty);
+    }
+
+    @Test
+    void anAuraWithNoTowerToBuffEarnsNothingFromEnemiesPassingItsRange() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("c", Rank.BOSS)), 1000)
+                .withStartingLives(50));
+        Tower aura = placeTower(engine, TowerFactory.Type.AURA, 1, 1);
+        engine.nextWave();
+
+        tickUntilWaveCleared(engine);
+
+        assertThat(aura.experience().xp()).isZero();
+    }
+
+    @Test
     void reloadingALevelRemovesTowersLeftFromThePreviousLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
@@ -1128,8 +1213,20 @@ class GameEngineTest {
     }
 
     private static Tower placeSniper(GameEngine engine, int cellX, int cellY) {
-        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        return placeTower(engine, TowerFactory.Type.SNIPER, cellX, cellY);
+    }
+
+    private static Tower placeTower(GameEngine engine, TowerFactory.Type type, int cellX, int cellY) {
+        engine.startPlacing(type, 0f);
         engine.mouseClicked(BoardFixtures.cellCenter(cellX), BoardFixtures.cellCenter(cellY));
         return engine.cells().at(cellX, cellY).getTower();
+    }
+
+    /** Ticks past the wave's last walk, killed or leaked, capped so a stuck wave fails fast. */
+    private static void tickUntilWaveCleared(GameEngine engine) {
+        for (int t = 2; t < 2000 && engine.getGameWorld().enemies().aliveCount() > 0; t++) {
+            engine.doTick(t);
+        }
+        assertThat(engine.getGameWorld().enemies().aliveCount()).as("enemies still walking").isZero();
     }
 }

@@ -37,6 +37,8 @@ final class PathMotion {
     private final double offsetY;
 
     private double distanceIntoLap = 0;
+    /** Where on the path this mob appeared: a summon or a hatchling appears where its parent was. */
+    private double startDistance = 0;
     private double x;
     private double y;
     private double prevX;
@@ -93,6 +95,18 @@ final class PathMotion {
                 .orElse(0);
     }
 
+    /**
+     * Whether the path walked from {@link #startDistance} to here came within {@code radius} of the
+     * point. The formation offset shifts the whole walk; the board clamp at the edges is ignored.
+     */
+    boolean walkedWithin(double pointX, double pointY, double radius) {
+        if (this.arcLengthPath.isEmpty()) {
+            return Math.hypot(this.x - pointX, this.y - pointY) <= radius;
+        }
+        return this.arcLengthPath.get().passesWithin(pointX - this.offsetX, pointY - this.offsetY, radius,
+                this.startDistance, this.distanceIntoLap);
+    }
+
     boolean isOnBoard() {
         BoardGeometry geometry = this.board.get();
         return this.x >= 0 && this.x <= geometry.maxX() && this.y >= 0 && this.y <= geometry.maxY();
@@ -101,6 +115,7 @@ final class PathMotion {
     /** Places this mob anywhere along the path with no interpolation from where it was. */
     void jumpTo(double distanceIntoLap) {
         this.distanceIntoLap = distanceIntoLap;
+        this.startDistance = distanceIntoLap;
         this.updatePosition();
         this.prevX = this.x;
         this.prevY = this.y;

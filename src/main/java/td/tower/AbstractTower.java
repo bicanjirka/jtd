@@ -7,6 +7,7 @@ import td.damage.DamageUnits;
 import td.economy.EconomyDelta;
 import td.effect.Effect;
 import td.enemy.EnemyMob;
+import td.enemy.EnemyWalk;
 import td.stat.DisruptionPenalty;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradeNode;
@@ -47,6 +48,9 @@ public abstract class AbstractTower implements Tower {
     private final TowerBaseStats baseStats;
     private final TowerFactory.Type type;
     private final int price;
+    private final TowerExperience experience = new TowerExperience();
+    /** How many mobs had gone live when this tower was built; only later ones count for its XP. */
+    private final long entriesBeforeBuilt;
     // damageDealt is a long read on the EDT; a non-volatile long read may tear.
     protected volatile boolean selected = false;
     protected volatile long damageDealt = 0;
@@ -69,6 +73,7 @@ public abstract class AbstractTower implements Tower {
     protected AbstractTower(TowerFactory.Type t, TowerBaseStats base, GameWorld context, int cellX, int cellY) {
         // Built after its price is charged and before it joins the roster, so this is what was paid.
         this.price = context.towers().priceOf(t);
+        this.entriesBeforeBuilt = context.enemies().entries();
         this.type = t;
         this.damageBase = base.damage();
         this.rangeBase = base.range();
@@ -266,6 +271,20 @@ public abstract class AbstractTower implements Tower {
 
     public long getDamageDealt() {
         return this.damageDealt;
+    }
+
+    public TowerExperience experience() {
+        return this.experience;
+    }
+
+    /** Runs on the game-loop thread, so the rank-up is stamped with this tower's own tick. */
+    public void earnXp(int bounty) {
+        this.experience.earn(bounty, this.currentTick);
+    }
+
+    public boolean reached(EnemyWalk walk) {
+        return walk.entryOrdinal() > this.entriesBeforeBuilt
+                && walk.walkedWithin(this.centerX, this.centerY, this.stats.reachReal());
     }
 
     public int getKillCount() {
