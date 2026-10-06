@@ -37,6 +37,11 @@ public record UpgradeNode(String id, UpgradeSlot slot, String displayName, int p
                 gate, this.extraEffect);
     }
 
+    /** This node, offered only once {@code previous} (the level before it in its line) is owned too. */
+    public UpgradeNode after(UpgradeNode previous) {
+        return this.withRequires(this.requires.and(UpgradeCondition.owns(previous.id())));
+    }
+
     public UpgradeNode withExtraEffect(String extraEffect) {
         return new UpgradeNode(this.id, this.slot, this.displayName, this.price, this.statBonus, this.requires,
                 this.gate, extraEffect);
