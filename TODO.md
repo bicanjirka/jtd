@@ -14,8 +14,8 @@ The tower rework, in this order (each needs the ones before it):
 
 1. `FEATURE-tower-progression.md` (implemented): Attune -> Awaken -> Transcendent, level IV,
    the extra head node, two special slots, the exclusive-choice mark, price rules.
-2. `FEATURE-xp-and-purpose-gates.md`: XP from bounty and one purpose gate per tower replace kill
-   and damage gates.
+2. `FEATURE-xp-and-purpose-gates.md` (implemented): XP from bounty and one purpose gate per tower
+   replace kill and damage gates.
 3. `FEATURE-sniper-and-sonar.md`: crit per tower, the hit / periodic rule, the first debuffs and
    the effect rules every tower follows.
 4. `FEATURE-splash-stormcaller-and-hexer.md`: Dazed and the hex pool.

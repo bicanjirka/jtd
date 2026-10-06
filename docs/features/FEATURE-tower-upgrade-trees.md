@@ -10,6 +10,8 @@ job, and that document's own `[S]`-tagged stub nodes still wait on their primiti
 `TODO.md`'s "Tower specialization primitives". `FEATURE-tower-progression.md` since reshaped
 the slots: `base` is the Range line and Attune -> Awaken -> Transcendent, `head` gains an extra
 node, and exclusivity became an `ExclusiveChoice` the panel marks before the player pays.
+`FEATURE-xp-and-purpose-gates.md` then replaced the kill and damage gates with XP and purpose
+gates.
 
 ## Summary
 

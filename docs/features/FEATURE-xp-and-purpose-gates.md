@@ -1,7 +1,11 @@
 # Feature Request: XP and Purpose Gates
 
-**Status: not started.** Feature 2 of 7 in the tower rework (order in `TODO.md`). Needs feature
-1 (`FEATURE-tower-progression.md`).
+**Status: implemented.** Feature 2 of 7 in the tower rework (order in `TODO.md`). Needs feature
+1 (`FEATURE-tower-progression.md`). XP is paid by `ExperienceAwarder` when `EnemyRoster` reports a
+walk's end; reach is `Tower.reached` (an entry ordinal and `ArcLengthPath.passesWithin` over the
+stretch walked); XP and deeds live in `TowerExperience`; the gate table is `UpgradeTier`'s XP;
+`PurposeCondition` is the purpose gate kind. No tower has a deed yet: each arrives with its own
+feature (3 to 7), with the info row that shows its count.
 
 ## Summary
 
@@ -193,6 +197,19 @@ pays. Back-line towers see only what survives the front, and get there later.
 - Tower ranks are Recruit, Seasoned, Expert, Hero: the enemy ranks already use Veteran and Elite.
 - Specials need XP 150; the second special, head IV, extra IV and Range III need only
   Transcendent.
+
+- **As built:**
+  - Reach is measured once, at walk end, with the tower's range at that moment (before
+    disruption): a range upgrade bought mid-walk counts for the whole walk.
+  - "Spawned after the tower was built" means went live after it: wave mobs wait out a spawn
+    delay, so a tower built mid-wave counts the mobs still waiting.
+  - The existing layout gates (`ClusterCondition` on the Aura's nodes, Wide Band and
+    Fragmentation Rounds II) stay, on top of the node's XP.
+  - XP is node data (`UpgradeNode.xp`), not a condition, so the panel's bar can tick at the next
+    node XP opens. The hover shows XP and any other gate as separate ✔/✘ rows.
+  - Rank pips are silver diamonds stacked beside the tower (slot pips stay below it), and the
+    rank-up glow is a silver ring that widens and fades over 1.5 s. The info row reads
+    "XP 160 · Expert".
 
 ## Open questions
 
