@@ -86,6 +86,31 @@ class DevControlsTest {
     }
 
     @Test
+    void checkingAScriptPreviewsItsWaveOnTheChosenPathAndSpawnsNothing() {
+        this.engine.loadLevel(LevelFixtures.twoPathLevelWith(List.of(), List.of()));
+
+        DevControls.WaveScriptCheck check = this.dev.checkWaveScript("2 elite c", Rank.GRUNT, 1);
+        this.dev.runPending();
+
+        assertThat(check.wave()).get().satisfies(wave -> {
+            assertThat(wave.enemyCount()).isEqualTo(2);
+            assertThat(wave.getPathIndex()).isEqualTo(1);
+            assertThat(wave.enemySet()).allSatisfy(enemy -> assertThat(wave.rankFor(enemy)).isEqualTo(Rank.ELITE));
+        });
+        assertThat(this.world.enemies().getEnemies()).isEmpty();
+    }
+
+    @Test
+    void checkingAScriptThatDoesNotParseGivesTheProblemAndNoWave() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+
+        DevControls.WaveScriptCheck check = this.dev.checkWaveScript("3 nosuchenemy", Rank.GRUNT, 0);
+
+        assertThat(check.wave()).isEmpty();
+        assertThat(check.problem()).contains("nosuchenemy");
+    }
+
+    @Test
     void killAllPaysEachEnemysBountyAndXpLikeARealKill() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         Tower tower = this.placeSniper(1, 1);

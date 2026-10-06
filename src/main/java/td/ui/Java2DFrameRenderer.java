@@ -4,6 +4,7 @@ import td.ui.render.AuraDraw;
 import td.ui.render.BeamDraw;
 import td.ui.render.CannonballDraw;
 import td.ui.render.CellDraw;
+import td.ui.render.CellGridDraw;
 import td.ui.render.ConeDraw;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
@@ -69,6 +70,9 @@ public final class Java2DFrameRenderer {
     private static final Color CELL_NOK = Color.RED;
     private static final Color CELL_RANGE = new Color(250, 250, 210, 150);
     private static final Color BOARD_BACKGROUND = Color.BLACK;
+    /** The HUD's dark grey-green, so the dev grid reads as part of the panel chrome. */
+    private static final Color CELL_GRID_LINE = new Color(48, 60, 48);
+    private static final Color CELL_BLOCKED = new Color(26, 34, 26);
     /** An info-panel glyph for a stat nothing on the board marks. */
     private static final Color UNMARKED_GLYPH = new Color(150, 170, 150);
     private static final float HOLLOW_GLYPH_STROKE_WIDTH = 1.3f;
@@ -470,6 +474,7 @@ public final class Java2DFrameRenderer {
         g2.setColor(BOARD_BACKGROUND);
         g2.fillRect(0, 0, frame.maxX(), frame.maxY());
 
+        frame.cellGrid().ifPresent(grid -> this.paintCellGrid(g2, grid, frame));
         for (PathMarkerDraw marker : frame.pathMarkers()) {
             this.paintPathMarker(g2, marker);
         }
@@ -499,6 +504,22 @@ public final class Java2DFrameRenderer {
         }
         for (ProjectileDraw projectile : frame.projectiles()) {
             this.paintProjectile(g2, projectile);
+        }
+    }
+
+    /** One-pixel lines on each cell's right and bottom edge only, so neighbours share one line. */
+    private void paintCellGrid(Graphics2D g2, CellGridDraw grid, RenderFrame frame) {
+        int scale = frame.scale();
+        g2.setColor(CELL_BLOCKED);
+        for (CellGridDraw.BlockedCell cell : grid.blockedCells()) {
+            g2.fillRect(cell.x(), cell.y(), scale - 1, scale - 1);
+        }
+        g2.setColor(CELL_GRID_LINE);
+        for (int x = scale - 1; x <= frame.maxX(); x += scale) {
+            g2.drawLine(x, 0, x, frame.maxY());
+        }
+        for (int y = scale - 1; y <= frame.maxY(); y += scale) {
+            g2.drawLine(0, y, frame.maxX(), y);
         }
     }
 

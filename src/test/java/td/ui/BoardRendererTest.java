@@ -7,16 +7,19 @@ import td.damage.Damage;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
+import td.fixtures.BoardFixtures;
 import td.fixtures.LevelFixtures;
 import td.projectile.CannonballProjectile;
 import td.tower.AuraTower;
 import td.tower.CinderTower;
 import td.tower.SniperTower;
 import td.tower.Tower;
+import td.tower.TowerFactory;
 import td.tower.TowerRank;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
+import td.ui.render.CellGridDraw;
 import td.ui.render.ConeDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.Palette;
@@ -57,6 +60,37 @@ class BoardRendererTest {
         TowerSpriteDraw sprite = frame.towerSprites().getFirst();
         assertThat(sprite.palette()).isEqualTo(Palette.TOWER_SNIPER_BODY);
         assertThat(sprite.selected()).isTrue();
+    }
+
+    @Test
+    void theCellGridIsDrawnOnlyWhileShown() {
+        GameEngine engine = newEngine();
+        BoardRenderer renderer = rendererFor(engine, engine.getGameWorld());
+
+        RenderFrame hidden = renderer.buildFrame(0, 0.0, 0.0);
+        renderer.setCellGridShown(true);
+        RenderFrame shown = renderer.buildFrame(0, 0.0, 0.0);
+
+        assertThat(hidden.cellGrid()).isEmpty();
+        assertThat(shown.cellGrid()).isPresent();
+    }
+
+    @Test
+    void theCellGridShadesThePathsCellsButNotATowersCell() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        context.economy().startEconomy(1000, 5);
+        BoardRenderer renderer = rendererFor(engine, context);
+        renderer.setCellGridShown(true);
+        int pathCells = renderer.buildFrame(0, 0.0, 0.0).cellGrid().orElseThrow().blockedCells().size();
+        engine.startPlacing(TowerFactory.Type.SNIPER, 0f);
+        engine.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(1));
+
+        List<CellGridDraw.BlockedCell> blocked = renderer.buildFrame(0, 0.0, 0.0).cellGrid().orElseThrow().blockedCells();
+
+        assertThat(engine.cells().at(1, 1).hasTower()).isTrue();
+        assertThat(pathCells).isPositive();
+        assertThat(blocked).hasSize(pathCells);
     }
 
     @Test

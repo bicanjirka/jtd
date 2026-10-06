@@ -87,34 +87,43 @@ public final class DevControls implements EconomyListener {
     }
 
     /**
-     * Parses {@code script} in the level's wave language and queues its enemies on path
-     * {@code pathIndex}, alongside whatever wave is running.
-     *
-     * @return what happened, or why nothing did
+     * Parses {@code script} in the level's wave language for path {@code pathIndex}, without
+     * spawning anything: the dev panel previews it as it is typed.
      */
-    public String spawnWave(String script, Rank defaultRank, int pathIndex) {
+    public WaveScriptCheck checkWaveScript(String script, Rank defaultRank, int pathIndex) {
         LoadedLevel level = this.world.level();
         if (!level.isLoaded()) {
-            return "Load a level first";
+            return WaveScriptCheck.problem("Load a level first");
         }
         WaveContent content;
         try {
             content = WaveScript.parse(script, defaultRank, level.catalog());
         } catch (GameStartupException e) {
             // Typed input, so a script that doesn't parse is reported, not fatal.
-            return e.getMessage();
+            return WaveScriptCheck.problem(e.getMessage());
         }
         if (content.enemyCount() == 0) {
-            return "Nothing to spawn";
+            return WaveScriptCheck.problem("Nothing to spawn");
         }
         int path = Math.floorMod(pathIndex, level.pathCount());
-        Wave wave = new Wave(this.world, content, ++this.spawnSeed, path, 1f);
-        this.pending.add(() -> {
+        return WaveScriptCheck.of(new Wave(this.world, content, ++this.spawnSeed, path, 1f));
+    }
+
+    /**
+     * Queues {@code script}'s enemies on path {@code pathIndex}, alongside whatever wave is
+     * running.
+     *
+     * @return what happened, or why nothing did
+     */
+    public String spawnWave(String script, Rank defaultRank, int pathIndex) {
+        WaveScriptCheck check = this.checkWaveScript(script, defaultRank, pathIndex);
+        check.wave().ifPresent(wave -> this.pending.add(() -> {
             for (EnemyMob mob : wave.spawn()) {
                 this.world.enemies().add(mob);
             }
-        });
-        return "Spawning " + content.enemyCount() + " on path " + (path + 1);
+        }));
+        return check.wave().map(wave -> "Spawning " + wave.enemyCount() + " on path " + (wave.getPathIndex() + 1))
+                .orElse(check.problem());
     }
 
     /** Kills every enemy on the board through the normal hit, so bounty and XP are paid. */
@@ -156,6 +165,18 @@ public final class DevControls implements EconomyListener {
     public void runPending() {
         for (Runnable change = this.pending.poll(); change != null; change = this.pending.poll()) {
             change.run();
+        }
+    }
+
+    /** A wave script's parse: the wave it would spawn, or the problem that stops it. */
+    public record WaveScriptCheck(Optional<Wave> wave, String problem) {
+
+        static WaveScriptCheck of(Wave wave) {
+            return new WaveScriptCheck(Optional.of(wave), "");
+        }
+
+        static WaveScriptCheck problem(String problem) {
+            return new WaveScriptCheck(Optional.empty(), problem);
         }
     }
 }
