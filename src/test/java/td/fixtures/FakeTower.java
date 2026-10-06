@@ -47,6 +47,16 @@ public final class FakeTower extends AbstractTower {
         this.killCount = killCount;
     }
 
+    /** Does its job once, as an attack would. */
+    public void performDeedOfAttack() {
+        this.countDeedOfAttack();
+    }
+
+    /** Does its job for a moment, as a continuous effect would. */
+    public void performDeedOfSecond() {
+        this.countDeedOfSecond();
+    }
+
     @Override
     public void doTick(int gameTime) {
     }

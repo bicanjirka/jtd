@@ -69,6 +69,9 @@
   `TowerStats.reachReal()` (range before disruption). A tower with no reach on the path (the Aura)
   returns `false` and earns through the towers it buffs.
 - `TowerExperience` publishes XP and the rank-up tick as one snapshot; only the game loop earns.
+- A tower's deed (the moment it does its job, which its `PurposeCondition` on head III counts) goes
+  through `countDeedOfAttack()` (one per attack, however many enemies it hit) or
+  `countDeedOfSecond()` (a continuous effect, once a second). Both count only once Attune is owned.
 
 ## Upgrade tree
 
