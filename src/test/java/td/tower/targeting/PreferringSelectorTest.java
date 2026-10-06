@@ -57,4 +57,15 @@ class PreferringSelectorTest {
     void selectingFromNoCandidatesReturnsEmpty() {
         assertThat(PreferringSelector.priority(new HighestHealthSelector()).selectFrom(List.of())).isEmpty();
     }
+
+    @Test
+    void frozenFirstPrefersAFrozenEnemyOverWhatTheInnerSelectorWouldPick() {
+        FakeEnemyMob strong = FakeEnemyMob.at(0, 0).withHealth(9000);
+        FakeEnemyMob frozen = FakeEnemyMob.at(0, 0).withHealth(10);
+        frozen.reportFrozen();
+
+        var selected = PreferringSelector.frozenFirst(new HighestHealthSelector()).selectFrom(List.of(strong, frozen));
+
+        assertThat(selected).contains(frozen);
+    }
 }

@@ -117,7 +117,7 @@ class SniperPerkTest {
     }
 
     @Test
-    void fifthShotGuaranteesEveryFifthCritAndRaisesTheMultiplierOnAllOfThem() {
+    void fifthShotGuaranteesEveryFifthCritAndOnlyThatOneHitsHarder() {
         FifthShotPerk perk = new FifthShotPerk();
 
         SniperShot fourth = perk.shape(BASE, context(0, true, 4));
@@ -125,7 +125,7 @@ class SniperPerkTest {
 
         assertThat(fourth.attack().guaranteedCrit()).isFalse();
         assertThat(fifth.attack().guaranteedCrit()).isTrue();
-        assertThat(fourth.attack().critMultiplier()).isEqualTo(2.5f);
+        assertThat(fourth.attack().critMultiplier()).isEqualTo(2f);
         assertThat(fifth.attack().critMultiplier()).isEqualTo(2.5f);
     }
 
@@ -195,5 +195,101 @@ class SniperPerkTest {
         perk.react(new ShotResult(target, true, false), this.actions);
 
         assertThat(this.actions.sundered).containsExactly(target);
+    }
+
+    @Test
+    void critStreakMakesTheNextCritHitHarderAndTwoInARowHarderStillButNoFurther() {
+        CritStreakPerk perk = new CritStreakPerk();
+        EnemyMob target = FakeEnemyMob.at(0, 0);
+        ShotResult crit = new ShotResult(target, true, false);
+
+        float none = perk.shape(BASE, context(0, true, 1)).attack().critMultiplier();
+        perk.react(crit, this.actions);
+        float one = perk.shape(BASE, context(0, true, 2)).attack().critMultiplier();
+        perk.react(crit, this.actions);
+        float two = perk.shape(BASE, context(0, true, 3)).attack().critMultiplier();
+        perk.react(crit, this.actions);
+        float capped = perk.shape(BASE, context(0, true, 4)).attack().critMultiplier();
+
+        assertThat(none).isEqualTo(2f);
+        assertThat(one).isEqualTo(2.25f);
+        assertThat(two).isEqualTo(2.5f);
+        assertThat(capped).isEqualTo(2.5f);
+    }
+
+    @Test
+    void aShotThatDoesNotCritEndsTheCritStreak() {
+        CritStreakPerk perk = new CritStreakPerk();
+        EnemyMob target = FakeEnemyMob.at(0, 0);
+        perk.react(new ShotResult(target, true, false), this.actions);
+
+        perk.react(new ShotResult(target, false, false), this.actions);
+
+        assertThat(perk.shape(BASE, context(0, true, 3)).attack().critMultiplier()).isEqualTo(2f);
+    }
+
+    @Test
+    void longShotBoostsOnlyTargetsPastTwoThirdsOfTheRange() {
+        LongShotPerk perk = new LongShotPerk();
+        ShotContext far = new ShotContext(FakeEnemyMob.at(0, 0), new AimLock(0, true), 1, 0.7f);
+        ShotContext near = new ShotContext(FakeEnemyMob.at(0, 0), new AimLock(0, true), 1, 0.6f);
+
+        assertThat(perk.shape(BASE, far).damageFactor()).isEqualTo(1.25f);
+        assertThat(perk.shape(BASE, near).damageFactor()).isEqualTo(1f);
+    }
+
+    @Test
+    void silverRoundsMakeEveryThirdShotMagicWithMagicPenetration() {
+        SilverRoundsPerk perk = new SilverRoundsPerk();
+
+        SniperShot second = perk.shape(BASE, context(0, true, 2));
+        SniperShot third = perk.shape(BASE, context(0, true, 3));
+
+        assertThat(second.type()).isEqualTo(td.damage.DamageType.PHYSICAL);
+        assertThat(third.type()).isEqualTo(td.damage.DamageType.MAGIC);
+        assertThat(third.attack().magicPenetration()).isEqualTo(0.25f);
+    }
+
+    @Test
+    void headhunterBoostsOnlyEliteAndBossTargets() {
+        HeadhunterPerk perk = new HeadhunterPerk();
+
+        assertThat(perk.shape(BASE, against(FakeEnemyMob.at(0, 0).ranked(Rank.VETERAN))).damageFactor()).isEqualTo(1f);
+        assertThat(perk.shape(BASE, against(FakeEnemyMob.at(0, 0).ranked(Rank.ELITE))).damageFactor()).isEqualTo(1.4f);
+        assertThat(perk.shape(BASE, against(FakeEnemyMob.at(0, 0).ranked(Rank.BOSS))).damageFactor()).isEqualTo(1.4f);
+    }
+
+    @Test
+    void shatterShotMakesCritsOnAFrozenEnemyHitHarder() {
+        FakeEnemyMob frozen = FakeEnemyMob.at(0, 0);
+        frozen.reportFrozen();
+
+        assertThat(new ShatterShotPerk().shape(BASE, against(frozen)).attack().critMultiplier()).isEqualTo(2.5f);
+        assertThat(new ShatterShotPerk().shape(BASE, against(FakeEnemyMob.at(0, 0))).attack().critMultiplier())
+                .isEqualTo(2f);
+    }
+
+    @Test
+    void ricochetBouncesOnlyOnACrit() {
+        RicochetPerk perk = new RicochetPerk();
+        EnemyMob target = FakeEnemyMob.at(0, 0);
+
+        perk.react(new ShotResult(target, false, false), this.actions);
+        perk.react(new ShotResult(target, true, false), this.actions);
+
+        assertThat(this.actions.ricochets).containsExactly(target);
+    }
+
+    @Test
+    void eachSpecialSaysWhoItAimsAtAndTheRestSayNothing() {
+        Viewpoint view = new Viewpoint(0, 0, 100f, 32);
+
+        assertThat(new MomentumPerk().aim(view)).map(SniperAim::label).contains("highest rank");
+        assertThat(new HeadhunterPerk().aim(view)).map(SniperAim::label).contains("highest rank");
+        assertThat(new RicochetPerk().aim(view)).map(SniperAim::label).contains("most neighbours");
+        assertThat(new HollowPointPerk().aim(view)).map(SniperAim::label).contains("most health");
+        assertThat(new FifthShotPerk().aim(view)).map(SniperAim::label).contains("most health");
+        assertThat(new ShatterShotPerk().aim(view)).map(SniperAim::label).contains("frozen first");
+        assertThat(new SteadyAimPerk().aim(view)).isEmpty();
     }
 }

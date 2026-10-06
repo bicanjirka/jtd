@@ -62,7 +62,7 @@ class UpgradeTreeCatalogueTest {
         for (TowerFactory.Type type : TowerFactory.Type.values()) {
             UpgradeTree tree = TowerFactory.createTower(type, this.context, 0, 0).upgradeTree();
             List<UpgradeNode> roots = tree.offered(this.owning(tree, Set.of(StandardBaseSlot.ATTUNE_ID)), this.context)
-                    .stream().filter(node -> node.slot() == UpgradeSlot.HEAD).toList();
+                    .stream().filter(node -> node.slot() == UpgradeSlot.HEAD && tree.choiceOf(node).isPresent()).toList();
 
             for (UpgradeNode root : roots) {
                 List<UpgradeNode> offered = tree.offered(

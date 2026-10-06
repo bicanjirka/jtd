@@ -18,4 +18,11 @@ public interface ShotActions {
     void applyVulnerable(EnemyMob target, int stacks);
 
     void applySundered(EnemyMob target, int stacks);
+
+    /**
+     * Bounces the shot that just landed from {@code from} to the nearest enemy next to it, up to
+     * {@code bounces} times, each for {@code share} of the Sniper's damage; each bounce may crit.
+     * "Next to" is within {@code reachCells} of the enemy last struck.
+     */
+    void ricochet(EnemyMob from, int bounces, float share, float reachCells);
 }

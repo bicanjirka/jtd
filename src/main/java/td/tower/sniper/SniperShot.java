@@ -27,6 +27,10 @@ public record SniperShot(DamageType type, float damageFactor, AttackProfile atta
         return new SniperShot(type, this.damageFactor, this.attack, this.fireRateBonus, this.piercing);
     }
 
+    public SniperShot withDamageFactor(float damageFactor) {
+        return new SniperShot(this.type, damageFactor, this.attack, this.fireRateBonus, this.piercing);
+    }
+
     /** Multiplies the damage by {@code factor}. */
     public SniperShot scaledBy(float factor) {
         return new SniperShot(this.type, this.damageFactor * factor, this.attack, this.fireRateBonus, this.piercing);
