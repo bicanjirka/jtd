@@ -7,7 +7,9 @@ selected, number keys buy the correspondingly-numbered offered node
 `SPECIAL`-slot halo instead of the old two-role accent ring. The concrete node content itself
 (names, prices, gates, buffs) is `docs/features/FEATURE-tower-specialization-abilities.md`'s
 job, and that document's own `[S]`-tagged stub nodes still wait on their primitives - see
-`TODO.md`'s "Tower specialization primitives".
+`TODO.md`'s "Tower specialization primitives". `FEATURE-tower-progression.md` since reshaped
+the slots: `base` is the Range line and Attune -> Awaken -> Transcendent, `head` gains an extra
+node, and exclusivity became an `ExclusiveChoice` the panel marks before the player pays.
 
 ## Summary
 

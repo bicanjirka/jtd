@@ -34,7 +34,7 @@ public record TranscendentCondition(List<String> levelThreeIds) implements Upgra
             return "special and head III";
         }
         if (!special && !levelThree) {
-            return "needs special, head III";
+            return "special, head III";
         }
         return special ? "needs head III" : "needs special";
     }

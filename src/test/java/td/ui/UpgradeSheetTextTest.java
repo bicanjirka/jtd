@@ -7,6 +7,7 @@ import td.tower.buff.TowerBuff;
 import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
+import td.tower.upgrade.UpgradeDecision;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.tower.upgrade.UpgradeState;
@@ -150,7 +151,8 @@ class UpgradeSheetTextTest {
         InfoSheet root = UpgradeSheetText.hover(this.offer(attuned, OPTICS));
         InfoSheet extra = UpgradeSheetText.hover(this.offer(attuned, STEADY));
 
-        assertThat(root.lines()).contains(Row.plain(Glyph.LOCK, "Locks out Marksman's Eye", ""));
+        assertThat(root.lines()).containsSubsequence(Row.plain(Glyph.LOCK, "Locks out", ""),
+                Row.plain(Glyph.DOT, "Marksman's Eye", ""));
         assertThat(extra.lines()).noneMatch(line -> line instanceof Row row && row.glyph() == Glyph.LOCK);
     }
 
@@ -160,8 +162,8 @@ class UpgradeSheetTextTest {
 
         InfoSheet sheet = UpgradeSheetText.hover(this.offer(awakened, FIFTH));
 
-        assertThat(sheet.lines()).contains(Row.plain(Glyph.LOCK, "The others wait for Transcendent", ""))
-                .noneMatch(line -> line instanceof Row row && row.label().startsWith("Locks out"));
+        assertThat(sheet.lines()).contains(Row.plain(Glyph.LOCK, "Next pick", "Transcendent"))
+                .noneMatch(line -> line instanceof Row row && row.label().equals("Locks out"));
     }
 
     @Test
@@ -174,11 +176,14 @@ class UpgradeSheetTextTest {
     }
 
     @Test
-    void aMadeChoiceReadsAsTheChosenNodeOverWhatItLockedOut() {
+    void aMadeChoiceGetsARowPerNodeItLockedOut() {
         FakeTower chosen = this.choosing("Attune", "Awaken", "Marksman's Eye", "Fifth Shot");
+        List<UpgradeDecision> decisions = CHOICES.decisions(chosen.upgrades());
 
-        List<String> rows = CHOICES.decisions(chosen.upgrades()).stream().map(UpgradeSheetText::decisionText).toList();
+        List<String> head = UpgradeSheetText.decisionRows(decisions.stream().filter(d -> d.chosen().slot() == UpgradeSlot.HEAD).toList());
+        List<String> special = UpgradeSheetText.decisionRows(decisions.stream().filter(d -> d.chosen().slot() == UpgradeSlot.SPECIAL).toList());
 
-        assertThat(rows).containsExactly("Marksman's Eye over Focused Optics", "Fifth Shot over Marked Round, Momentum");
+        assertThat(head).containsExactly("chosen over Focused Optics");
+        assertThat(special).containsExactly("chosen over Marked Round", "chosen over Momentum");
     }
 }
