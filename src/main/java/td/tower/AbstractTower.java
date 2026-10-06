@@ -36,6 +36,7 @@ public abstract class AbstractTower implements Tower {
     protected static final float TICKS_PER_SECOND = TickRate.TICKS_PER_SECOND;
     /** How long a vulnerability lasts from its latest application. */
     private static final float VULNERABLE_SECONDS = 4f;
+    private static final float SUNDERED_SECONDS = 5f;
 
     protected final GameWorld context;
     protected final int boardX;
@@ -241,6 +242,12 @@ public abstract class AbstractTower implements Tower {
     protected void applyVulnerable(EnemyMob target, int stacks) {
         target.applyEffect(Effect.vulnerable(stacks, Math.round(VULNERABLE_SECONDS * TICKS_PER_SECOND),
                 d -> this.dealDamage(target, d)));
+    }
+
+    /** Adds {@code stacks} of sundered armor to {@code target}; the stacks belong to the enemy, not this tower. */
+    protected void applySundered(EnemyMob target, int stacks) {
+        target.applyEffect(Effect.sundered(stacks, Math.round(SUNDERED_SECONDS * TICKS_PER_SECOND),
+                d -> this.dealPeriodicDamage(target, d)));
     }
 
     /** Makes {@code target} targetable by every tower for {@code durationTicks}, even if invisible. */

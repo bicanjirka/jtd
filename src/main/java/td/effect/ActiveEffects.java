@@ -236,8 +236,8 @@ public final class ActiveEffects {
 
     /**
      * Adds every active effect's stat modifiers: a chill multiplies speed by what is left of its
-     * level and a poison by what is left of its pool, a freeze sets it to zero, a shield lowers
-     * damage taken for the types it covers, a heal adds regeneration, invisibility sets stealth to
+     * level and a poison by what is left of its pool, a freeze sets it to zero, a shield adds
+     * shielding for the types it covers, a heal adds regeneration, invisibility sets stealth to
      * one and a reveal sets it to zero (the lowest set value wins), a vulnerability multiplies damage
      * taken by its stacks, each scorched stack lowers resilience by one and each sickened stack
      * lowers spirit by one. Shields and heals go in as restorative, so the enemy's spirit scales them.
@@ -252,7 +252,7 @@ public final class ActiveEffects {
                 case SHIELD -> {
                     for (DamageType type : DAMAGE_TYPES) {
                         if (effect.shieldRestrictedTo().isEmpty() || effect.shieldRestrictedTo().get() == type) {
-                            accumulator.restoreReduction(EnemyStat.damageTakenFor(type), effect.shieldPercent());
+                            accumulator.restoreFlat(EnemyStat.shieldingFor(type), effect.shieldPercent());
                         }
                     }
                 }

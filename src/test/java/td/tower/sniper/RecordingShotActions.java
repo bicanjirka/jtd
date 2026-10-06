@@ -12,6 +12,7 @@ final class RecordingShotActions implements ShotActions {
     int bursts;
     final List<EnemyMob> executed = new ArrayList<>();
     final List<EnemyMob> vulnerable = new ArrayList<>();
+    final List<EnemyMob> sundered = new ArrayList<>();
     boolean executionKills = true;
 
     @Override
@@ -28,6 +29,11 @@ final class RecordingShotActions implements ShotActions {
     public boolean execute(EnemyMob target) {
         this.executed.add(target);
         return this.executionKills;
+    }
+
+    @Override
+    public void applySundered(EnemyMob target, int stacks) {
+        this.sundered.add(target);
     }
 
     @Override

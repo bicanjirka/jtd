@@ -162,4 +162,38 @@ class SniperPerkTest {
 
         assertThat(this.actions.vulnerable).containsExactly(target);
     }
+
+    @Test
+    void steadyAimStacksAndUnbrokenAimRaiseTheCapAndOnlyUnbrokenAimSurvivesAKill() {
+        AimRules attuned = AimRules.attuned();
+
+        assertThat(new SteadyAimStacksPerk(3).refineAim(attuned)).isEqualTo(new AimRules(3, false));
+        assertThat(new UnbrokenAimPerk().refineAim(attuned)).isEqualTo(new AimRules(5, true));
+    }
+
+    @Test
+    void armorPierceAddsToWhatTheShotAlreadyIgnores() {
+        SniperShot shot = BASE.withAttack(attack -> attack.withArmorPenetration(0.2f, 10f));
+
+        AttackProfile attack = new ArmorPiercePerk(30f).shape(shot, context(0, true, 1)).attack();
+
+        assertThat(attack.armorPenetration()).isEqualTo(0.2f);
+        assertThat(attack.armorPenetrationFlat()).isEqualTo(40f);
+    }
+
+    @Test
+    void cleanShotMakesCritsPierceShields() {
+        assertThat(new CleanShotPerk().shape(BASE, context(0, true, 1)).attack().critsPierceShields()).isTrue();
+    }
+
+    @Test
+    void sunderRoundsSundersOnlyOnACrit() {
+        SunderRoundsPerk perk = new SunderRoundsPerk();
+        EnemyMob target = FakeEnemyMob.at(0, 0);
+
+        perk.react(new ShotResult(target, false, false), this.actions);
+        perk.react(new ShotResult(target, true, false), this.actions);
+
+        assertThat(this.actions.sundered).containsExactly(target);
+    }
 }

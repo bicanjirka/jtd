@@ -7,6 +7,9 @@ import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.sniper.AimFocus;
 import td.tower.sniper.AimLock;
+import td.tower.sniper.AimRules;
+import td.tower.sniper.ArmorPiercePerk;
+import td.tower.sniper.CleanShotPerk;
 import td.tower.sniper.ExecutionerPerk;
 import td.tower.sniper.FifthShotPerk;
 import td.tower.sniper.FrenzyPerk;
@@ -21,7 +24,10 @@ import td.tower.sniper.SniperPerk;
 import td.tower.sniper.SniperShot;
 import td.tower.sniper.SniperTempo;
 import td.tower.sniper.SteadyAimPerk;
+import td.tower.sniper.SteadyAimStacksPerk;
 import td.tower.sniper.SteadyTempoPerk;
+import td.tower.sniper.SunderRoundsPerk;
+import td.tower.sniper.UnbrokenAimPerk;
 import td.tower.sniper.WeakSpotPerk;
 import td.tower.targeting.BeyondRadiusTargetQuery;
 import td.tower.targeting.FurthestAlongPathSelector;
@@ -77,7 +83,6 @@ public final class SniperTower extends AbstractTower {
     /** Enough to kill anything, so that an execution takes exactly what health is left. */
     private static final int EXECUTION_DAMAGE = 1_000_000_000;
     private static final float MOMENTUM_BURST_SECONDS = 5f;
-    private static final int STEADY_AIM_STACKS = 1;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
             .withAttune("Steady Aim: +10% crit chance on every shot after the first at one target")
@@ -110,11 +115,26 @@ public final class SniperTower extends AbstractTower {
             .after(FOCUSED_OPTICS_3);
     private static final UpgradeNode MARKSMANS_EYE_1 = UpgradeTier.HEAD_1.node("sniper.head.marksmans_eye.1",
             "Marksman's Eye", PRICE)
-            .withBuff(TowerBuff.critChance(0.15f));
+            .withExtraEffect("Steady Aim stacks to 3 (+30%: 35% crit from the 4th shot)");
     private static final UpgradeNode MARKSMANS_EYE_2 = UpgradeTier.HEAD_2.node("sniper.head.marksmans_eye.2",
             "Marksman's Eye II", PRICE)
-            .withBuff(TowerBuff.critChance(0.2f).withArmorPenetration(0.5f))
+            .withBuff(TowerBuff.fireRate(0.25f))
+            .withExtraEffect("ignores 30 armor")
             .after(MARKSMANS_EYE_1);
+    private static final UpgradeNode MARKSMANS_EYE_3 = UpgradeTier.HEAD_3.node("sniper.head.marksmans_eye.3",
+            "Marksman's Eye III", PRICE)
+            .withGate(new PurposeCondition("Steady Aim shots", 20))
+            .withExtraEffect("Clean Shot: crits go through shields straight to health")
+            .after(MARKSMANS_EYE_2);
+    private static final UpgradeNode UNBROKEN_AIM = UpgradeTier.HEAD_4.node("sniper.head.marksmans_eye.4a",
+            "Unbroken Aim", PRICE)
+            .withExtraEffect("Steady Aim stacks to 5 (55% crit) and survives a kill; only retargeting a living "
+                    + "enemy resets it")
+            .after(MARKSMANS_EYE_3);
+    private static final UpgradeNode SUNDER_ROUNDS = UpgradeTier.HEAD_4.node("sniper.head.marksmans_eye.4b",
+            "Sunder Rounds", PRICE)
+            .withExtraEffect("every crit adds 1 Sundered")
+            .after(MARKSMANS_EYE_3);
     private static final UpgradeNode HOLLOW_POINT = UpgradeTier.SPECIAL.node("sniper.special.hollow_point",
             "Hollow Point", PRICE)
             .withExtraEffect("crits apply Vulnerable, +15% damage taken, stacks x3");
@@ -125,24 +145,31 @@ public final class SniperTower extends AbstractTower {
             .withExtraEffect("post-crit shot deals 500% and ignores armor and plating; a kill grants +100% fire "
                     + "rate for 5s");
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, FOCUSED_OPTICS_3))
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, FOCUSED_OPTICS_3,
+            MARKSMANS_EYE_3))
             .with(FOCUSED_OPTICS_1, FOCUSED_OPTICS_2, FOCUSED_OPTICS_3, RAILGUN, EXECUTIONER, MARKSMANS_EYE_1,
-                    MARKSMANS_EYE_2, HOLLOW_POINT, FIFTH_SHOT, MOMENTUM)
+                    MARKSMANS_EYE_2, MARKSMANS_EYE_3, UNBROKEN_AIM, SUNDER_ROUNDS, HOLLOW_POINT, FIFTH_SHOT, MOMENTUM)
             .withChoice(ExclusiveChoice.oneOf(FOCUSED_OPTICS_1, MARKSMANS_EYE_1))
             .withChoice(ExclusiveChoice.oneOf(RAILGUN, EXECUTIONER))
+            .withChoice(ExclusiveChoice.oneOf(UNBROKEN_AIM, SUNDER_ROUNDS))
             .withChoice(ExclusiveChoice.specials(HOLLOW_POINT, FIFTH_SHOT, MOMENTUM));
 
     /** The perk each node brings, by node id: a new one for every tower, as some carry state. */
-    private static final Map<String, Supplier<SniperPerk>> PERKS = Map.of(
-            StandardBaseSlot.ATTUNE_ID, SteadyAimPerk::new,
-            FOCUSED_OPTICS_1.id(), () -> new Both(new QuickScopePerk(), new SteadyTempoPerk()),
-            FOCUSED_OPTICS_2.id(), FrenzyPerk::new,
-            FOCUSED_OPTICS_3.id(), WeakSpotPerk::new,
-            RAILGUN.id(), RailgunPerk::new,
-            EXECUTIONER.id(), ExecutionerPerk::new,
-            HOLLOW_POINT.id(), HollowPointPerk::new,
-            FIFTH_SHOT.id(), FifthShotPerk::new,
-            MOMENTUM.id(), MomentumPerk::new);
+    private static final Map<String, Supplier<SniperPerk>> PERKS = Map.ofEntries(
+            Map.entry(StandardBaseSlot.ATTUNE_ID, SteadyAimPerk::new),
+            Map.entry(FOCUSED_OPTICS_1.id(), () -> new Both(new QuickScopePerk(), new SteadyTempoPerk())),
+            Map.entry(FOCUSED_OPTICS_2.id(), FrenzyPerk::new),
+            Map.entry(FOCUSED_OPTICS_3.id(), WeakSpotPerk::new),
+            Map.entry(RAILGUN.id(), RailgunPerk::new),
+            Map.entry(EXECUTIONER.id(), ExecutionerPerk::new),
+            Map.entry(MARKSMANS_EYE_1.id(), () -> new SteadyAimStacksPerk(3)),
+            Map.entry(MARKSMANS_EYE_2.id(), () -> new ArmorPiercePerk(30f)),
+            Map.entry(MARKSMANS_EYE_3.id(), CleanShotPerk::new),
+            Map.entry(UNBROKEN_AIM.id(), UnbrokenAimPerk::new),
+            Map.entry(SUNDER_ROUNDS.id(), SunderRoundsPerk::new),
+            Map.entry(HOLLOW_POINT.id(), HollowPointPerk::new),
+            Map.entry(FIFTH_SHOT.id(), FifthShotPerk::new),
+            Map.entry(MOMENTUM.id(), MomentumPerk::new));
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final AimFocus focus = new AimFocus();
@@ -210,9 +237,13 @@ public final class SniperTower extends AbstractTower {
     /** One shot: shaped by the owned perks, landed, settled and reacted to, and the wait that follows. */
     private void fire(EnemyMob target) {
         this.shotsFired++;
-        AimLock lock = this.focus.lock(target, STEADY_AIM_STACKS, false);
-        ShotContext context = new ShotContext(target, lock, this.shotsFired);
         List<SniperPerk> owned = this.perks;
+        AimRules aim = AimRules.attuned();
+        for (SniperPerk perk : owned) {
+            aim = perk.refineAim(aim);
+        }
+        AimLock lock = this.focus.lock(target, aim.stackCap(), aim.survivesKill());
+        ShotContext context = new ShotContext(target, lock, this.shotsFired);
         SniperShot shot = SniperShot.of(this.stats().attack());
         for (SniperPerk perk : owned) {
             shot = perk.shape(shot, context);
@@ -318,6 +349,11 @@ public final class SniperTower extends AbstractTower {
         @Override
         public void applyVulnerable(EnemyMob target, int stacks) {
             SniperTower.this.applyVulnerable(target, stacks);
+        }
+
+        @Override
+        public void applySundered(EnemyMob target, int stacks) {
+            SniperTower.this.applySundered(target, stacks);
         }
     }
 
