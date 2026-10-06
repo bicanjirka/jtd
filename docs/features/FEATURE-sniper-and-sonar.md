@@ -1,7 +1,7 @@
 # Feature Request: Sniper and Sonar, the Crit Team
 
-**Status: not started.** Feature 2 of 6 in the tower rework (order in `TODO.md`). Needs feature
-1 (`FEATURE-tower-progression.md`).
+**Status: not started.** Feature 3 of 7 in the tower rework (order in `TODO.md`). Needs features
+1 and 2 (`FEATURE-tower-progression.md`, `FEATURE-xp-and-purpose-gates.md`).
 
 ## Summary
 
@@ -57,9 +57,13 @@ armor and magic resist floored at 0, spirit pacing every debuff, and markers gro
 - **A guaranteed crit lands whenever the enemy's resilience is below 100.** Its size still
   shrinks with resilience, as every crit's does. **At 100 nothing crits**: not a Mark, not a
   guaranteed crit, not penetration. Lowering resilience is the only way in.
-- **A DoT pulse never crits; the hit that applies it can**, and a crit application starts the pool
-  at the crit multiplier. One crit moment per ignition, visible, instead of a hidden crit chance
-  rolled four times a second.
+- **Hits and periodic damage.** A *hit* is a tower's attack landing: a shot, a blast, a beam
+  pass, a missile, a flame wave, a zap. *Periodic damage* is everything that ticks: burn and poison
+  pulses, a field's ticks, a zone's pulses. **Periodic damage never crits; the hit that applies it
+  can**, and a crit application starts the pool at the crit multiplier: one visible crit moment
+  per ignition instead of a hidden crit chance rolled many times a second. The same line decides
+  everything that waits for "the next hit": a Mark, a Charge (feature 4) and the Aura's Withering
+  Field (feature 7) are spent only by hits.
 - **Armor and magic resist stop at 0.** Extra damage comes from stacking armor or resist loss with
   Vulnerable, never from negative armor.
 - **Spirit paces every debuff**, not only Scorched and Sickened: a debuff's timer runs at
@@ -78,7 +82,8 @@ armor and magic resist floored at 0, spirit pacing every debuff, and markers gro
 |---|---|---|
 | Sundered | -5 armor a stack, 10 stacks, one 5 s clock | Sniper's Sunder Rounds |
 | Exposed | crit chance taken x2 | Sonar's Ping; every revealed enemy |
-| Marked | the next hit from **any** tower is a guaranteed crit and spends the mark; one per enemy; a hit that can't crit (resilience 100) doesn't spend it | Sonar's Mark on Sweep |
+| Marked | the next hit from **any** tower is a guaranteed crit and spends the mark; one per enemy; periodic damage never spends it, nor does a hit on a crit-immune enemy (resilience 100) | Sonar's Mark on Sweep |
+| Priority | +15% damage taken from every tower; towers that pick one target pick it while it is in their range | Sonar's Command Ping |
 | Resonating | +8% magic damage taken a stack, 3 stacks, 4 s | Sonar's Harmonics |
 | Fractured | -10 resilience a hit, down to -50, recovering 10 a second | Sonar's Resonant Crack |
 
@@ -139,14 +144,14 @@ combo with freezes.
 - **Fifth Shot** (exists, reworded): every 5th shot is a guaranteed crit with +50% crit damage
   (instead of "crits deal 250%"), so it stacks with the x2.0 base. Aims at most health.
 - **Shatter Shot** (new): crits on a frozen or Dazed enemy deal +50% crit damage. Aims at a frozen
-  or Dazed enemy first. Dazed arrives with feature 3; until then it reads frozen only.
+  or Dazed enemy first. Dazed arrives with feature 4; until then it reads frozen only.
 
 **Look by tier:** a thin barrel; a faint laser line to its target that brightens with each Steady
 Aim stack (Attune); a gold barrel and a white tracer (Transcendent); silver shots as a pale blue
 beam.
 
-**XP job events:** a crit; reaching full Steady Aim; an execution. **Rank perk (Expert):** Steady
-Aim starts at 1 stack.
+**Purpose gate** (head III, feature 2): 20 shots under Steady Aim (a shot at a target it has
+already shot).
 
 ### Sonar - the Spotter
 
@@ -168,8 +173,8 @@ HEAD A   Rapid Array (more passes: more hits, more pings)
          II   +25% damage, +10% crit; a beam crit refreshes Exposed on its target
          III  Spin-Up: a revolution every 2 s instead of 3
          IV-A Twin Beam: a second beam, opposite, at 70% damage
-         IV-B Phased Array: stops spinning, locks onto the enemy with most health in range and
-              sweeps a 60 degree arc back and forth over it (about 3x the hits on the focus)
+         IV-B Phased Array: stops spinning and keeps the beam on the enemy with most health in
+              range, hitting everything on the beam three times per former revolution
 HEAD B   Long Reach (far: the spotter on the hill)
          I    +20% range; Ping picks the healthiest enemy past half range, Exposed for two passes
          II   damage up to +100% at max range, +10% crit
@@ -193,14 +198,15 @@ SPECIAL  one shared set: Mark on Sweep, Wide Band, Command Ping
   it waits, and fires once Scorched or Resonant Crack opens it.
 - **Wide Band** (exists, extended): each revolution reveals invisible enemies it passes, and a
   revealed enemy is Pinged (Exposed) for 1 s.
-- **Command Ping** (new): each revolution names the pinged enemy the Priority: every tower that
-  can reach it switches to it and deals +15% to it. A built-in focus fire, not a player choice.
+- **Command Ping** (new): each revolution makes the pinged enemy the **Priority** until the next
+  pass: it takes +15% damage from every tower, and towers that pick one target (the Sniper, the
+  Seeker, and the aim of the Mortar, the Cinder and the Splash) pick it while it is in their range.
+  Fields and sweeps hit what they hit, as always. A built-in focus fire, not a player choice.
 
 **Look:** a faint ping ring each revolution, so the rhythm reads; a crosshair over the pinged
 enemy; the second beam (Twin Beam); a blue beam once it deals magic.
 
-**XP job events:** a reveal; an enemy Exposed by Ping; a Mark another tower spends. **Rank perk
-(Expert):** Ping's Exposed lasts one pass longer.
+**Purpose gate** (head III, feature 2): 25 Pings (revolutions that Expose an enemy).
 
 ### What happens to today's nodes
 
@@ -221,32 +227,35 @@ enemy; the second beam (Twin Beam); a blue beam once it deals magic.
 
 ## Interconnections
 
-- **Feature 1** provides Attune, level IV, the extra node, per-chain specials, XP, job events and
-  rank perks. The Sniper is the first tower with full content, so it is where Transcendent and
-  the level IV choice are first seen in play.
-- **Feature 3** adds Dazed (Shatter Shot then reads it) and the Splash's Sympathy, which copies
+- **Feature 1** provides Attune, level IV, the extra node and per-chain specials. The Sniper is
+  the first tower with full content, so it is where Transcendent and the level IV choice are first
+  seen in play.
+- **Feature 2** provides XP and the purpose gate kind; this feature defines both towers' deeds.
+- **Feature 4** adds Dazed (Shatter Shot then reads it) and the Splash's Sympathy, which copies
   Sundered and Exposed across hexed groups.
-- **Feature 4** adds Seeker's Tracer (another Marked source) and Pulse's Rattle Field (Sundered
+- **Feature 5** adds Seeker's Tracer (another Marked source) and Pulse's Rattle Field (Sundered
   or Exposed).
-- **Feature 5**'s Cinder lowers resilience with Scorched: with Resonant Crack it opens crit
+- **Feature 6**'s Cinder lowers resilience with Scorched: with Resonant Crack it opens crit
   immunity fast.
-- **Feature 6**'s Aura grants crit damage (Keen Edge) on top of the per-tower multiplier.
+- **Feature 7**'s Aura grants crit damage (Keen Edge) on top of the per-tower multiplier.
 - `TODO.md`'s "Critical-damage numbers are unbalanced placeholders" names
   `DEFAULT_CRIT_MULTIPLIER` and the Sniper's 15%; both change here.
 
 ## Constraints and open risks
 
-- **Command Ping overrides other towers' aim.** Today each tower composes its own targeting and
-  nothing reaches across towers. The Priority must not become a player-chosen target, and towers
-  whose job is not single-target (a Pulse field, a Sonar sweep) have nothing to switch.
-- **Marked moves from the tower to the enemy.** Any tower's next hit spends it, including small
-  and periodic hits. Field ticks and DoT pulses should not spend a mark meant for a real shot;
-  this is a rule to state, not yet decided in code.
+- **The Priority reaches across towers.** Today each tower composes its own targeting and nothing
+  reaches across towers; the Priority is one shared preference that single-target aiming checks
+  first. It must not become a player-chosen target.
+- **Marked moves from the tower to the enemy,** and the hit / periodic line decides what spends
+  it. Damage today doesn't say which of the two it is.
+- **Today's Pulse crit goes quiet.** Overcharged Coils II's crit rolls on field ticks, which no
+  longer crit. It was a hidden +5% (the brainstorm's finding), and feature 5 moves the Pulse's crit
+  to a visible zap.
 - **Spirit pacing every debuff** touches every existing timed effect (Vulnerable, Revealed,
   chill) and so every existing balance number; the high-spirit enemies that would show it off
   are in the enemies brainstorm, not built.
 - **The crit ceiling.** The Sniper's crit damage can reach about x3.0 (x2.0, Tradecraft's streak
-  +0.5, Aura's Keen Edge +0.5 in feature 6), and Momentum multiplies a shot by 5: about x15 in
+  +0.5, Aura's Keen Edge +0.5 in feature 7), and Momentum multiplies a shot by 5: about x15 in
   one hit. Momentum's x5 may need to become x3 (balance pass).
 - **Fire rate on chain A:** +25% under Steady Aim, doubled in Frenzy (fire-rate bonuses multiply)
   is x2.5 for three shots. A timed self-buff never stacks today: Momentum's kill burst replaces a
@@ -279,11 +288,14 @@ enemy; the second beam (Twin Beam); a blue beam once it deals magic.
   effect on the enemy is called **Fractured**, so it doesn't collide with the Mortar's Cracked
   (plating).
 - The Sonar's Command Ping is the only automatic focus fire in the game; there is no
-  player-chosen target priority.
+  player-chosen target priority. Its +15% applies to all damage, periodic included; only the
+  switching is limited to towers that pick one target.
+- **Simplified for cost:** "periodic damage never crits" replaces three separate rules (DoT
+  crits, what spends a Mark, what discharges a Charge). Phased Array keeps its beam on the target
+  instead of sweeping a 60 degree arc back and forth (the sweep's hit test assumes one direction
+  of turn); the result, about 3x the hits on the focus, is the same.
 
 ## Open questions
 
-- **Which hits spend a Mark?** Proposed: any tower's direct hit, never a field tick, a DoT pulse
-  or a zone pulse.
-- **Command Ping and fields:** does "+15% to it" apply to the Pulse field's ticks and burn
-  pulses, or only to direct hits?
+- None open: the hit / periodic line settles which hits spend a Mark, and the Priority's +15% is
+  all damage.

@@ -13,13 +13,15 @@ this file is the single place to look for outstanding design/feature gaps.
 The tower rework, in this order (each needs the ones before it):
 
 1. `FEATURE-tower-progression.md`: Attune -> Awaken -> Transcendent, level IV, the extra head
-   node, two special slots, the exclusive-choice mark, XP replacing performance gates, price rules.
-2. `FEATURE-sniper-and-sonar.md`: crit per tower, the first debuffs and the effect rules every
-   tower follows.
-3. `FEATURE-splash-stormcaller-and-hexer.md`: Dazed and the hex pool.
-4. `FEATURE-pulse-and-seeker.md`: Silenced, Anchored, Unraveled, Brittle, the nest.
-5. `FEATURE-ground-zones-mortar-and-cinder.md`: ground zones and the fire-and-ice rules.
-6. `FEATURE-aura-and-balance-pass.md`: the Aura, harness pricing, display names, the README.
+   node, two special slots, the exclusive-choice mark, price rules.
+2. `FEATURE-xp-and-purpose-gates.md`: XP from bounty and one purpose gate per tower replace kill
+   and damage gates.
+3. `FEATURE-sniper-and-sonar.md`: crit per tower, the hit / periodic rule, the first debuffs and
+   the effect rules every tower follows.
+4. `FEATURE-splash-stormcaller-and-hexer.md`: Dazed and the hex pool.
+5. `FEATURE-pulse-and-seeker.md`: Silenced, Anchored, Unraveled, Brittle, the nest.
+6. `FEATURE-ground-zones-mortar-and-cinder.md`: ground zones and the fire-and-ice rules.
+7. `FEATURE-aura-and-balance-pass.md`: the Aura, harness pricing, display names, the README.
 
 Enemies come after, from `docs/ideas/enemies-brainstorm.md`.
 

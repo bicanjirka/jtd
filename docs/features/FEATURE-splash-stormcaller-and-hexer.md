@@ -1,7 +1,7 @@
 # Feature Request: Splash, Stormcaller and Hexer
 
-**Status: not started.** Feature 3 of 6 in the tower rework (order in `TODO.md`). Needs features
-1 and 2.
+**Status: not started.** Feature 4 of 7 in the tower rework (order in `TODO.md`). Needs features
+1 to 3.
 
 ## Summary
 
@@ -78,12 +78,12 @@ that expands as a ring and darkens from light to dark as it grows.
 
 **Attune: Fire Control.**
 
-- **Aims for its purpose.** Unforked, and on the Hexer: the enemy with most neighbours inside the
-  blast. Stormcaller: where blast and arcs together reach most enemies (the head of a column).
-- **Saturation**, the Splash's Steady Aim: an enemy caught by blasts on consecutive shots gains a
-  stack, up to 3; a shot that misses it clears them. +5% blast damage a stack. It is an effect on
-  the enemy, so two Splashes build it together. Each chain's level I reads it, and the extra node
-  grows it. Smart aim keeps pounding one crowd, so stacks build.
+- **Aims for its purpose:** the blast lands on the enemy with most neighbours inside the blast,
+  forked or not.
+- **Saturation**, the Splash's Steady Aim: every blast that catches an enemy adds a stack, up to 3;
+  the stacks fade 1.5 s after the last blast that caught it, so only an enemy pounded shot after
+  shot keeps them. +5% blast damage a stack. It is an effect on the enemy, so two Splashes build it
+  together. Each chain's level I reads it, and the extra node grows it.
 
 **Range III and the blast radius.** Every distance the chains use (an arc's jump reach, how far a
 hex spreads or shares) grows with the tower's blast radius bonus, so Range III and Wide Charge
@@ -91,7 +91,7 @@ help the payload as well as the blast.
 
 **The name follows the fork.** Unforked it is the Splash; on Arc the **Stormcaller**, on Hex the
 **Hexer**. Only the panel title and tooltip change; the id stays. (The unforked display name
-becomes "Burst" in feature 6.)
+becomes "Burst" in feature 7.)
 
 **Specials follow the fork.** Awaken offers no special until a chain root is owned; then it offers
 that chain's three (feature 1's per-chain rule).
@@ -119,8 +119,8 @@ that chain's three (feature 1's per-chain rule).
   crits don't re-arm it.
 - **Static Charge** (the team's conductor): arcs leave enemies **Charged** for 3 s. The next hit
   from another tower discharges it for +30% of that hit as magic, credited to this Splash; a crit
-  discharges at double. Field ticks and DoT pulses don't discharge it, so a Pulse can't eat the
-  charge.
+  discharges at double. Periodic damage never discharges it (feature 3's hit rule), so a Pulse's
+  field or a burn can't eat the charge.
 - **Thunderstrike** (the boss answer): every 6th shot calls lightning onto the enemy with most
   health in range: 4x the blast as magic, Dazed 0.5 s, and that shot's arcs start there at full
   damage. It counts as a crit for triggers.
@@ -130,21 +130,34 @@ everything in range; Chain Lightning and Lightning Rod multiply all three.
 
 ### Chain B - Hex (the Hexer)
 
-**How a Hexer curses.** Casting is an ability, separate from the blast and much slower: each shot
-is either a plain blast or a **cast** that curses its target instead of blasting (starting point:
-one cast every 4 s). Every hex the tower owns joins its **pool**: buying a level adds a hex, it
-never replaces one. At each cast the tower casts the hex **worth most in the moment**: a fully
-upgraded Hexer still opens on a lone tough enemy with Doom, but meets a swarm with Blight or
-Contagion. The choice has to stay cheap (it runs per cast, not per tick). An enemy carries each
-hex at most once; when no enemy in range can take another hex from this tower, the tower stops
-casting and only blasts.
+**How a Hexer curses.** Casting is the Hexer's ability, much slower than its blast: **every 4th
+shot is a cast** that curses one enemy instead of blasting, so fire-rate bonuses speed casting
+too. Every hex the tower owns joins its **pool**: buying a level adds a hex, it never replaces
+one.
 
-**Rare by design.** Only the Hexer casts hexes. Each hex is a rune drawn over the enemy, and its
-glyph says what it does. A cap on hexes per enemy (two, as earlier rounds decided) is open for
-planning to keep or drop after measuring play, complexity and cost (Open questions). A Rime rune
-and an Ash rune can't share an enemy: the newer replaces the other.
+**Which hex, on whom.** The Hexer **takes its hexes in turn**, and each hex picks its own target
+with one simple rule (below). A hex with no fitting target in range is skipped for that cast, and
+the turn restarts with Doom whenever the tower's range has been empty. So a fully upgraded Hexer
+still opens on a lone tough enemy with Doom, but meets a swarm with Blight on the densest group
+and Contagion on the enemy about to die. When no hex in its pool has a target, the cast becomes a
+plain blast.
 
-Every hex is credited to the Hexer that cast it, for damage, XP and kills.
+| Hex | Its target |
+|---|---|
+| Doom | the healthiest enemy in range without Doom |
+| Blight | the enemy with most neighbours, without Blight |
+| Contagion | the lowest-health enemy with a neighbour within 1.5 cells, without Contagion |
+| Rime, Ash | the healthiest enemy without it |
+| Inversion | an enemy that heals, shields or vanishes (a Mender, the Warden, a Ghost), without it |
+| Sympathy | the enemy with most neighbours, without Sympathy |
+| Reckoning | the enemy with most Doomed neighbours within 2 cells, if any |
+
+**Rare by design.** Only the Hexer casts hexes, one every four shots, and an enemy carries each
+hex at most once. Each hex is a rune drawn over the enemy, and its glyph says what it does. A
+hex lasts 6 s unless it says otherwise (spirit and the Pulse's Toll stretch it like any debuff).
+A Rime rune and an Ash rune can't share an enemy: the newer replaces the other.
+
+Every hex is credited to the Hexer that cast it, for damage and kills.
 
 - **I Hex of Doom:** lasts 4 s, +1 s per Saturation stack. When it ends, the enemy takes 30% of
   all the damage it took while hexed, as one magic hit. One big hit is also the witch's answer to
@@ -167,13 +180,12 @@ Every hex is credited to the Hexer that cast it, for damage, XP and kills.
 **Hex specials** (each adds its hex to the pool):
 
 - **Hex of Inversion** (control: what helps it hurts it): heals and shields it receives are dealt
-  to it as damage; anything that would speed it up slows it instead (Frenzied and Reaver hurt
-  speed, any future haste); if it would turn invisible, it is revealed instead and takes full
-  Vulnerable. Menders become bombs, the Warden's reshield hurts it, a Ghost's vanish backfires.
-- **Hex of Sympathy** (support: what one suffers, all suffer): a debuff that lands on this enemy
-  (Vulnerable, Sundered, Exposed, chill, and later ones such as Unraveled and Cracked) is copied
-  to every other enemy within 2 cells that carries any hex from this tower. A copy never copies again,
-  and one enemy shares each debuff kind at most once a second, so one Sniper's Sunder becomes the
+  to it as damage instead, and it can't turn invisible (it stays revealed). Menders become bombs,
+  the Warden's reshield hurts it, a Ghost can't vanish.
+- **Hex of Sympathy** (support: what one suffers, all suffer): once a second, the debuffs on this
+  enemy (Vulnerable, Sundered, Exposed, chill, and later ones such as Unraveled and Cracked) are
+  copied to every other enemy within 2 cells that carries any hex from this tower. Only the
+  Sympathy carrier shares, so copies never spread further: one Sniper's Sunder becomes the
   group's without a loop.
 - **Hex of Reckoning** (offense): when this enemy dies, every Doom within 2 cells cast by this
   tower releases at once and restarts. Kills chain into detonations.
@@ -195,7 +207,7 @@ chain's payload stronger. Levels III and IV read the chain, so they need a chain
 - **IV Mastery** (strengthens levels II and III): Stormcaller: Conductor gives +10% more crit
   (+20% in all) and Overload's Daze lasts 1 s. Hexer: Blight poisons 50% harder, and Contagion's
   death leaves a **cursed cloud** for 4 s that holds every debuff the dead enemy had; any enemy
-  entering it gets them. The cloud is a ground zone, so it arrives with feature 5; until then
+  entering it gets them. The cloud is a ground zone, so it arrives with feature 6; until then
   Mastery's Hexer half is Blight's boost alone.
 
 ### Dazed (the stun)
@@ -208,10 +220,9 @@ chain's payload stronger. Levels III and IV read the chain, so they need a chain
 - Applied in this feature by Overload, Thunderclap, Thunderstrike and Mastery; later by the
   Pulse (Tesla Coil, True Sight) and the Mortar (Heavy Shell).
 
-### XP and rank
+### Purpose gate
 
-**Job events:** an arc jump; a hex cast; a hex passed on by Contagion. **Rank perk (Expert):**
-Saturation caps one higher.
+On head III (feature 2): 45 blasts whose primary target is Saturated.
 
 ### What happens to today's Splash
 
@@ -228,32 +239,33 @@ Saturation caps one higher.
 ## Interconnections
 
 - **Feature 1:** per-chain specials (Awaken offers them once a chain root is owned), the extra
-  node's chain requirement, XP.
-- **Feature 2:** crit per tower and guaranteed crits (Overload and Thunderstrike are crit-driven);
-  Sundered and Exposed (Sympathy and Contagion carry them); Shatter Shot starts reading Dazed.
-- **Feature 4:** Seeker's freezes feed Rime; Pulse's Toll and Soul Drain stretch every hex; the
+  node's chain requirement.
+- **Feature 2:** XP and the purpose gate kind.
+- **Feature 3:** crit per tower and guaranteed crits (Overload and Thunderstrike are crit-driven);
+  the hit / periodic rule (Static Charge); Sundered and Exposed (Sympathy and Contagion carry
+  them); Shatter Shot starts reading Dazed.
+- **Feature 5:** Seeker's freezes feed Rime; Pulse's Toll and Soul Drain stretch every hex; the
   Pulse and Seeker add Unraveled and Silenced, which Sympathy and Contagion then carry; Tesla
   Coil and True Sight Daze.
-- **Feature 5:** ground zones (the Hexer's cursed cloud, and the Splash's Mines); Cinder's burns
+- **Feature 6:** ground zones (the Hexer's cursed cloud, and the Splash's Mines); Cinder's burns
   feed Ash; the global "freezing a burning enemy bursts the burn (50%)" row arrives there, and
   Rime's 100% burst is the hex's stronger version of it.
-- **Feature 6** renames the unforked tower "Burst" and its Aura's Conduit lengthens hexes.
+- **Feature 7** renames the unforked tower "Burst" and its Aura's Conduit lengthens hexes.
 
 ## Constraints and open risks
 
 - **Hexes are a new system**: a timed debuff that waits for something to happen to the enemy
-  (death, a heal, a speed-up, a vanish, a debuff landing) and then pays out, credited to its
-  caster. It is the most expensive piece of this feature. The enemy trigger vocabulary and
-  `DamageSink` are the closest existing pieces.
-- **Choosing a hex** must stay cheap: per cast, never a per-tick scan of every enemy against
-  every hex. With a 4 s cast cooldown that is a handful of evaluations a second per Hexer.
+  (its end, its death, a heal or shield landing) and then pays out, credited to its caster. It is
+  the most expensive piece of this feature. The enemy trigger vocabulary and `DamageSink` are the
+  closest existing pieces. Doom also has to add up the damage its enemy takes while hexed.
+- **Choosing a hex** runs once per cast (every 4th shot): one target rule for one hex, over the
+  enemies in range, with skips. Never a per-tick scan.
 - **Chain targeting** ("the nearest enemy not yet hit, within a jump radius") is a new kind of
   query; arcs, Chain Lightning's fork and Lightning Rod's returns run many of them per shot on a
   swarm. Check the per-tick budget.
-- **Copying debuffs** (Sympathy, Contagion) can cascade. The guards: a copy never copies again; a
-  jumped hex jumps once more at most; one share per debuff kind per second.
-- **Saturation with two Splashes:** "a shot that misses it clears the stacks" needs a rule for
-  whose shot that is.
+- **Copying effects with their remaining time** (Contagion, Sympathy) must keep each copy's own
+  clock; the guards are that only a Sympathy carrier shares, and a jumped hex jumps once more at
+  most.
 - **Static Charge** credits damage to a different tower than the one whose hit discharged it.
 - Visual budget: arcs, runes and the detonation ring are per-frame draws; check
   `td.PerformanceHarness`.
@@ -266,9 +278,20 @@ Saturation caps one higher.
   rejected.
 - The arc chain and the hex chain are exclusive. Each has its own three specials, and no special
   is offered before the fork.
-- **The Hexer casts from a pool** (your round-2 call): every level and special adds a hex; casts
-  replace blasts at a much slower rate; the tower picks the most valuable hex for the moment and
-  stops casting when nothing in range can take another.
+- **The Hexer casts from a pool** (your round-2 call): every level and special adds a hex; every
+  4th shot is a cast instead of a blast; when nothing in range can take a hex, the cast is a blast.
+- **"The most valuable hex" is taken in turns, each hex with its own target rule.** A scoring
+  system that weighs every hex against every enemy is what your "smart, fast and cheap" asked to
+  avoid; turns plus target rules keep the behaviour you described (Doom first on a lone tough
+  enemy, a different mix on a swarm) at the cost of one simple pick per cast.
+- **No cap on hexes per enemy** beyond "each hex at most once": one cast every four shots already
+  keeps hexes rare. You left the cap to planning; this is the default, and planning may add one if
+  play shows hexes everywhere.
+- **Simplified for cost:** Saturation fades with time instead of being cleared by "a shot that
+  misses it" (which needed a rule for whose shot); the Stormcaller aims like the unforked tower
+  (simulating every arc path per candidate target was dropped); Inversion keeps heals, shields and
+  vanishing and drops "speed-ups become slows" (that one rewrote speed traits); Sympathy shares
+  once a second from its carrier instead of reacting to every debuff landing anywhere.
 - Hex III Spreading Curse becomes Hex of Contagion in the pool; IV are Rime and Ash, exclusive.
   Plague and Grand Hex were rejected. Hex of Echoes was the alternative to Reckoning and is not
   taken.
@@ -280,13 +303,9 @@ Saturation caps one higher.
 - Overload over Ground Strike at Arc III; Thunderstrike over Ball Lightning.
 - Arc ships before Hex inside this feature: it is the cheaper chain.
 - Mines (a blast leaves a charge on the path) and the cursed cloud are wanted, and land with
-  ground zones in feature 5.
+  ground zones in feature 6.
 
 ## Open questions
 
-- **Hexes per enemy:** keep the cap of two hexes from one tower, or drop it? Planning measures
-  play, the cost of the choice and how often a Hexer goes quiet.
-- **Hex length:** Doom is 4 s (+1 per Saturation stack); Blight, Contagion, Rime, Ash and the
-  specials need a length (proposed: 6 s, also stretched by spirit and Toll).
-- **Cast rate:** one cast every 4 s is a starting point; does Range, Aura's buffs or fire-rate
-  bonuses speed casting too?
+- None blocking. The cast rate (every 4th shot), hex length (6 s) and the uncapped pool are
+  starting points for the balance pass (feature 7).
