@@ -91,6 +91,12 @@ public final class Java2DFrameRenderer {
     /** Halo radius relative to the body; every body shape stays within its size. */
     private static final float ENCHANT_HALO_RADIUS_FRACTION = 1.3f;
     private static final float ENCHANT_HALO_STROKE_WIDTH = 2.0f;
+    /** Outside the enchant halo, so a tower wearing both shows both. */
+    private static final float TRANSCENDENT_HALO_RADIUS_FRACTION = 1.5f;
+    private static final float TRANSCENDENT_HALO_STROKE_WIDTH = 1.6f;
+    private static final int TRANSCENDENT_HALO_DASHES = 8;
+    private static final int TRANSCENDENT_HALO_ALPHA = 200;
+    private static final float TRANSCENDENT_PIP_SCALE = 1.6f;
     /** Turret head size relative to a cell. */
     private static final float TOWER_HEAD_SIZE_FRACTION = 0.24f;
 
@@ -389,6 +395,7 @@ public final class Java2DFrameRenderer {
             case TOWER_UPGRADE_BASE -> new Color(140, 255, 140);
             case TOWER_UPGRADE_HEAD -> new Color(255, 200, 60);
             case TOWER_UPGRADE_SPECIAL -> new Color(200, 100, 255);
+            case TOWER_TRANSCENDENT -> new Color(255, 205, 70);
             case TOWER_SNIPER_BEAM -> Color.GREEN;
             case TOWER_SPLASH_BEAM -> Color.RED;
             case TOWER_SPLASH_LINE, TOWER_SPLASH_FILL -> withAlpha(Color.RED, 80);
@@ -853,9 +860,12 @@ public final class Java2DFrameRenderer {
         AffineTransform save = g2.getTransform();
         g2.translate(sprite.centerX(), sprite.centerY());
         float bodySize = scale * TOWER_BODY_SIZE_FRACTION;
+        if (sprite.transcendent()) {
+            this.paintTranscendentHalo(g2, sprite.haloTurn(), bodySize);
+        }
         this.paintEnchantHalo(g2, sprite.enchantPulse(), bodySize);
         this.paintTowerBody(g2, sprite.palette(), bodySize);
-        this.paintSlotPips(g2, sprite.slotMarks(), bodySize);
+        this.paintSlotPips(g2, sprite.slotMarks(), sprite.transcendent(), bodySize);
         this.paintSlotReadyChevrons(g2, sprite.slotMarks(), bodySize);
         g2.setTransform(save);
     }
@@ -863,6 +873,20 @@ public final class Java2DFrameRenderer {
     /**
      * A pulsing circle around a tower with a {@code SPECIAL} upgrade, the same on every body shape.
      */
+    /** A ring of gold dashes, turned {@code turn} of the way round. */
+    private void paintTranscendentHalo(Graphics2D g2, float turn, float bodySize) {
+        float radius = bodySize * TRANSCENDENT_HALO_RADIUS_FRACTION;
+        Stroke previousStroke = g2.getStroke();
+        g2.setStroke(new BasicStroke(TRANSCENDENT_HALO_STROKE_WIDTH, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setColor(withAlpha(colorFor(Palette.TOWER_TRANSCENDENT), TRANSCENDENT_HALO_ALPHA));
+        double dash = 360.0 / TRANSCENDENT_HALO_DASHES;
+        for (int i = 0; i < TRANSCENDENT_HALO_DASHES; i++) {
+            g2.draw(new Arc2D.Float(-radius, -radius, radius * 2, radius * 2,
+                    (float) (turn * 360.0 + i * dash), (float) (dash * 0.55), Arc2D.OPEN));
+        }
+        g2.setStroke(previousStroke);
+    }
+
     private void paintEnchantHalo(Graphics2D g2, float pulse, float bodySize) {
         if (pulse <= 0f) {
             return;
@@ -875,9 +899,14 @@ public final class Java2DFrameRenderer {
         g2.setStroke(previousStroke);
     }
 
-    /** Pips below a tower, one per owned node, grouped by slot with a gap between groups. */
-    private void paintSlotPips(Graphics2D g2, List<SlotMarkDraw> marks, float bodySize) {
+    /**
+     * Pips below a tower, one per owned node, grouped by slot with a gap between groups. A
+     * Transcendent tower's last base pip, Transcendent's own, is a gold diamond: the head's pips
+     * are gold too, so the shape tells them apart.
+     */
+    private void paintSlotPips(Graphics2D g2, List<SlotMarkDraw> marks, boolean transcendent, float bodySize) {
         List<Color> pipColors = new ArrayList<>();
+        int crownIndex = -1;
         for (SlotMarkDraw mark : marks) {
             if (mark.level() == 0) {
                 continue;
@@ -889,6 +918,10 @@ public final class Java2DFrameRenderer {
             for (int i = 0; i < mark.level(); i++) {
                 pipColors.add(color);
             }
+            if (transcendent && mark.palette() == Palette.TOWER_UPGRADE_BASE) {
+                crownIndex = pipColors.size() - 1;
+                pipColors.set(crownIndex, colorFor(Palette.TOWER_TRANSCENDENT));
+            }
         }
         if (pipColors.isEmpty()) {
             return;
@@ -897,16 +930,23 @@ public final class Java2DFrameRenderer {
         float spacing = bodySize * SLOT_PIP_SPACING_FRACTION;
         float y = bodySize * SLOT_PIP_ROW_OFFSET_FRACTION;
         float x = -(pipColors.size() - 1) * spacing / 2f;
-        for (Color color : pipColors) {
+        for (int i = 0; i < pipColors.size(); i++) {
+            Color color = pipColors.get(i);
             if (color != null) {
                 g2.setColor(color);
-                g2.fill(new Ellipse2D.Float(x - pipRadius, y - pipRadius, pipRadius * 2, pipRadius * 2));
+                if (i == crownIndex) {
+                    AffineTransform save = g2.getTransform();
+                    g2.translate(x, y);
+                    g2.fill(diamondShape(pipRadius * TRANSCENDENT_PIP_SCALE));
+                    g2.setTransform(save);
+                } else {
+                    g2.fill(new Ellipse2D.Float(x - pipRadius, y - pipRadius, pipRadius * 2, pipRadius * 2));
+                }
             }
             x += spacing;
         }
     }
 
-    /** One chevron above a tower per slot with an affordable, ungated node. */
     private void paintSlotReadyChevrons(Graphics2D g2, List<SlotMarkDraw> marks, float bodySize) {
         List<Palette> ready = marks.stream().filter(SlotMarkDraw::ready).map(SlotMarkDraw::palette).toList();
         if (ready.isEmpty()) {

@@ -11,6 +11,7 @@ import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerVisitor;
+import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.ui.render.Palette;
@@ -35,6 +36,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     private static final double TOWER_AURA_PULSE_RADIANS_PER_SECOND = 2.4;
     private static final float TOWER_AURA_PULSE_MIN_SCALE = 0.8f;
     private static final float TOWER_AURA_PULSE_MAX_SCALE = 1.25f;
+    private static final double TRANSCENDENT_HALO_SECONDS_PER_TURN = 12.0;
 
     private final List<TowerSpriteDraw> draws = new ArrayList<>();
     private final List<TurretHeadDraw> headDraws = new ArrayList<>();
@@ -109,7 +111,9 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     private void sprite(Tower tower) {
         this.draws.add(new TowerSpriteDraw(bodyPaletteFor(tower.getType()), tower.getBoardX(), tower.getBoardY(),
                 tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(),
-                this.slotMarksFor(tower), this.enchantPulseFor(tower)));
+                this.slotMarksFor(tower), this.enchantPulseFor(tower),
+                tower.upgrades().owns(StandardBaseSlot.TRANSCENDENT_ID),
+                (float) (this.animationSeconds / TRANSCENDENT_HALO_SECONDS_PER_TURN % 1.0)));
     }
 
     /** A head of constant size. */

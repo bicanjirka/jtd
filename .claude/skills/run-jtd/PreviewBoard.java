@@ -10,7 +10,9 @@ import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
+import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.tower.upgrade.UpgradeNode;
 import td.ui.BoardRenderer;
 import td.ui.Java2DFrameRenderer;
 import td.ui.render.RenderFrame;
@@ -75,6 +77,7 @@ public class PreviewBoard {
             case "credits" -> setCredits(rest.trim());
             case "lives" -> setLives(rest.trim());
             case "place" -> placeTower(rest.trim());
+            case "upgrade" -> upgradeTower(rest.trim());
             case "spawn" -> spawnEnemy(rest.trim());
             case "effect" -> applyEffect(rest.trim());
             case "wave" -> startWave();
@@ -198,6 +201,26 @@ public class PreviewBoard {
             engine.doTick(gameTime);
         }
         System.out.println("OK tick (gameTime=" + gameTime + ")");
+    }
+
+    /**
+     * Buys the named node for the tower at a cell through the real mechanism, so its gate must be
+     * cleared first (tick a fight); a refusal prints why.
+     */
+    private static void upgradeTower(String args) {
+        String[] parts = args.split("\s+", 3);
+        Tower tower = engine.cells().at(Integer.parseInt(parts[0]), Integer.parseInt(parts[1])).getTower();
+        String name = parts[2];
+        UpgradeNode node = tower.upgradeTree().nodes().stream().filter(n -> n.displayName().equals(name))
+                .findFirst().orElseThrow(() -> new IllegalArgumentException("no node named " + name));
+        boolean offered = tower.offeredUpgrades(engine.getGameWorld()).contains(node);
+        if (tower.buyUpgrade(node)) {
+            System.out.println("OK upgrade " + name);
+        } else {
+            System.out.println("FAILED upgrade " + name + ": " + (offered
+                    ? node.gate().progress(tower, engine.getGameWorld()) + ", credits " + engine.getGameWorld().economy().getCredits()
+                    : "not offered"));
+        }
     }
 
     private static void killEnemies() {
