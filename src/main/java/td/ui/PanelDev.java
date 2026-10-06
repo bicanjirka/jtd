@@ -8,7 +8,6 @@ import td.util.ThreadConfined;
 import td.wave.PathColor;
 
 import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -58,13 +57,16 @@ public class PanelDev extends JPanel {
     private static final Color MUTED = new Color(150, 170, 150);
     private static final String CARD_PREVIEW = "preview";
     private static final String CARD_PROBLEM = "problem";
-    /** Space between unrelated groups and between unrelated controls in a row. */
-    private static final int GROUP_GAP = 6;
+    /** Space between sections, and between unrelated controls in a row. */
+    private static final int ROW_GAP = 3;
     private static final int CONTROL_GAP = 12;
+    /** The preview strip is as tall as its enemy slots plus their padding. */
+    private static final int PREVIEW_WIDTH = 160;
+    private static final int PREVIEW_HEIGHT = 34;
 
     private final HudTextField credits = new HudTextField("10000", 6);
     private final HudTextField lives = new HudTextField("20", 4);
-    private final HudTextField script = new HudTextField("3 c", 16);
+    private final HudTextField script = new HudTextField("3 c", 14);
     private final HudTextField jumpTo = new HudTextField("1", 3);
     private final HudTextField xp = new HudTextField("150", 5);
     private final HudButton rankButton = new HudButton("");
@@ -285,65 +287,56 @@ public class PanelDev extends JPanel {
         infiniteLives.addActionListener(evt -> this.dev.setInfiniteLives(infiniteLives.isSelected()));
         HudToggleButton freeBuild = toggle("Free build");
         freeBuild.addActionListener(evt -> this.dev.setFreeBuild(freeBuild.isSelected()));
-        JPanel economy = group("Economy",
-                row(label("Credits"), this.credits, setCredits),
-                row(label("Lives"), this.lives, setLives),
-                row(infiniteLives, freeBuild));
+        this.section(0, "Economy", row(label("Credits"), this.credits, setCredits, gap(),
+                label("Lives"), this.lives, setLives, gap(), infiniteLives, freeBuild));
 
         HudButton skip = button("Skip wave", () -> this.onSkipWave.run());
         HudButton step = button("Step", () -> this.onStep.run());
         HudButton restart = button("Restart", () -> this.onRestart.run());
         HudButton killAll = button("Kill all", () -> this.dev.killAll());
         HudButton clearAll = button("Clear all", () -> this.dev.clearAll());
-        JPanel level = group("Level",
-                row(skip, step, gap(), restart),
-                row(label("Jump to wave"), this.jumpTo, button("Go", this::jump)),
-                row(killAll, clearAll));
+        this.section(1, "Level", row(skip, step, gap(), label("Wave"), this.jumpTo, button("Go", this::jump), gap(),
+                killAll, clearAll, gap(), restart));
 
         this.problem.setForeground(PROBLEM);
         this.previewArea.setOpaque(false);
         this.previewArea.add(this.preview, CARD_PREVIEW);
         this.previewArea.add(this.problem, CARD_PROBLEM);
+        this.previewArea.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT));
         widthFollowsPanel(this.problem);
         widthFollowsPanel(this.status);
-        JPanel spawn = group("Spawn",
-                row(this.script, this.rankButton, this.pathButton, button("Spawn", this::spawn)),
-                this.previewArea);
+        JPanel spawnRow = new JPanel(new GridBagLayout());
+        spawnRow.setOpaque(false);
+        spawnRow.add(row(this.script, this.rankButton, this.pathButton, button("Spawn", this::spawn)));
+        GridBagConstraints previewCell = new GridBagConstraints();
+        previewCell.weightx = 1.0;
+        previewCell.fill = GridBagConstraints.HORIZONTAL;
+        previewCell.insets = new Insets(0, CONTROL_GAP - 4, 0, 0);
+        spawnRow.add(this.previewArea, previewCell);
+        this.section(2, "Spawn", spawnRow);
 
         HudButton grant = button("Grant", this::grantXp);
         HudToggleButton ignoreGates = toggle("Ignore gates");
         ignoreGates.addActionListener(evt -> this.dev.setUpgradeGatesIgnored(ignoreGates.isSelected()));
         HudButton reset = button("Reset", () -> this.onResetTower.run());
-        JPanel tower = group("Selected tower",
-                row(label("XP"), this.xp, grant),
-                row(ignoreGates, gap(), reset));
+        this.section(3, "Tower", row(label("XP"), this.xp, grant, gap(), ignoreGates, gap(), reset));
 
         this.pointerCell.setForeground(MUTED);
         this.clickedCell.setForeground(MUTED);
         this.clearPointerCell();
         this.clickedCell.setText("Clicked  -");
-        JPanel board = group("Board",
-                row(this.cellGridToggle),
-                row(this.pointerCell),
-                row(this.clickedCell));
-
         HudButton help = button("? Help", () -> this.onInfoText.accept(this.helpText()));
-        this.status.setForeground(MUTED);
-
-        add(economy, cell(0, 0, 1));
-        add(level, cell(1, 0, 1));
-        add(spawn, cell(0, 1, 2));
-        add(tower, cell(0, 2, 1));
-        add(board, cell(1, 2, 1));
-        JPanel footer = new JPanel(new GridBagLayout());
-        footer.setOpaque(false);
+        this.status.setForeground(Hud.FOREGROUND);
+        JPanel boardRow = new JPanel(new GridBagLayout());
+        boardRow.setOpaque(false);
+        boardRow.add(row(this.cellGridToggle, this.pointerCell, this.clickedCell));
         GridBagConstraints statusCell = new GridBagConstraints();
         statusCell.weightx = 1.0;
         statusCell.fill = GridBagConstraints.HORIZONTAL;
-        statusCell.insets = new Insets(0, 4, 0, CONTROL_GAP);
-        footer.add(this.status, statusCell);
-        footer.add(help, new GridBagConstraints());
-        add(footer, cell(0, 3, 2));
+        statusCell.insets = new Insets(0, CONTROL_GAP, 0, CONTROL_GAP);
+        boardRow.add(this.status, statusCell);
+        boardRow.add(help, new GridBagConstraints());
+        this.section(4, "Board", boardRow);
 
         this.bind("Economy", alt(KeyEvent.VK_C), "credits", focus(this.credits));
         this.bind("Economy", alt(KeyEvent.VK_L), "lives", focus(this.lives));
@@ -358,9 +351,9 @@ public class PanelDev extends JPanel {
         this.bind("Spawn", alt(KeyEvent.VK_S), "wave script", focus(this.script));
         this.bind("Spawn", alt(KeyEvent.VK_R), "next rank", this.rankButton::doClick);
         this.bind("Spawn", alt(KeyEvent.VK_P), "next path", this.pathButton::doClick);
-        this.bind("Selected tower", alt(KeyEvent.VK_X), "XP to grant", focus(this.xp));
-        this.bind("Selected tower", alt(KeyEvent.VK_U), "ignore upgrade gates", ignoreGates::doClick);
-        this.bind("Selected tower", altShift(KeyEvent.VK_X), "reset", reset::doClick);
+        this.bind("Tower", alt(KeyEvent.VK_X), "XP to grant", focus(this.xp));
+        this.bind("Tower", alt(KeyEvent.VK_U), "ignore upgrade gates", ignoreGates::doClick);
+        this.bind("Tower", altShift(KeyEvent.VK_X), "reset", reset::doClick);
         this.bind("Board", alt(KeyEvent.VK_G), "cell grid", this.cellGridToggle::doClick);
         this.bind("Board", alt(KeyEvent.VK_H), "this help", help::doClick);
 
@@ -493,37 +486,23 @@ public class PanelDev extends JPanel {
         return "alt+" + (shift ? "shift+" : "") + KeyEvent.getKeyText(stroke.getKeyCode()).toLowerCase(Locale.ROOT);
     }
 
-    private static GridBagConstraints cell(int x, int y, int width) {
+    /** One row of the panel: a muted caption naming the section, then its controls. */
+    private void section(int y, String caption, JComponent content) {
+        JLabel title = label(caption);
+        title.setForeground(MUTED);
         GridBagConstraints c = new GridBagConstraints();
-        c.gridx = x;
+        c.gridx = 0;
         c.gridy = y;
-        c.gridwidth = width;
-        c.fill = GridBagConstraints.BOTH;
+        c.anchor = GridBagConstraints.WEST;
+        c.insets = new Insets(y == 0 ? 0 : ROW_GAP, 2, 0, CONTROL_GAP - 4);
+        add(title, c);
+        c = new GridBagConstraints();
+        c.gridx = 1;
+        c.gridy = y;
         c.weightx = 1.0;
-        c.insets = new Insets(y == 0 ? 0 : GROUP_GAP, x == 0 ? 0 : GROUP_GAP, 0, 0);
-        return c;
-    }
-
-    /** A titled box of rows, stacked top-down. */
-    private static JPanel group(String title, Component... rows) {
-        JPanel group = new JPanel(new GridBagLayout());
-        group.setOpaque(false);
-        group.setBorder(BorderFactory.createCompoundBorder(Hud.panelBorder(title),
-                BorderFactory.createEmptyBorder(0, 2, 2, 2)));
-        for (int i = 0; i < rows.length; i++) {
-            GridBagConstraints c = new GridBagConstraints();
-            c.gridx = 0;
-            c.gridy = i;
-            c.weightx = 1.0;
-            c.fill = GridBagConstraints.HORIZONTAL;
-            c.anchor = GridBagConstraints.NORTHWEST;
-            c.insets = new Insets(i == 0 ? 0 : 2, 0, 0, 0);
-            if (i == rows.length - 1) {
-                c.weighty = 1.0;
-            }
-            group.add(rows[i], c);
-        }
-        return group;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new Insets(y == 0 ? 0 : ROW_GAP, 0, 0, 0);
+        add(content, c);
     }
 
     private static JPanel row(Component... components) {
