@@ -4,10 +4,10 @@ import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.ClusterCondition;
+import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.StandardBaseSlot;
-import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -30,38 +30,33 @@ public final class AuraTower extends AbstractTower {
     /** Ticks between periodic passes over enemies in range. */
     private static final int WITHERING_FIELD_TICK_INTERVAL = 20;
 
-    private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(12);
-    private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(20);
-
-    private static final UpgradeNode AMPLIFYING_CORE_1 = UpgradeNode.of("aura.head.amplifying_core.1",
-            UpgradeSlot.HEAD, "Amplifying Core", 20)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
+    private static final UpgradeNode AMPLIFYING_CORE_1 = UpgradeTier.HEAD_1.node("aura.head.amplifying_core.1",
+            "Amplifying Core", PRICE)
             .withGate(new ClusterCondition(2))
             .withExtraEffect("+50% buff strength");
-    private static final UpgradeNode AMPLIFYING_CORE_2 = UpgradeNode.of("aura.head.amplifying_core.2",
-            UpgradeSlot.HEAD, "Amplifying Core II", 30)
-            .withRequires(UpgradeCondition.owns(AMPLIFYING_CORE_1.id()))
+    private static final UpgradeNode AMPLIFYING_CORE_2 = UpgradeTier.HEAD_2.node("aura.head.amplifying_core.2",
+            "Amplifying Core II", PRICE)
+            .after(AMPLIFYING_CORE_1)
             .withGate(new ClusterCondition(3))
             .withExtraEffect("+50% more buff strength, and the aura now also grants a fire-rate bonus");
-    private static final UpgradeNode RESONANCE_FIELD_1 = UpgradeNode.of("aura.head.resonance_field.1",
-            UpgradeSlot.HEAD, "Resonance Field", 20)
+    private static final UpgradeNode RESONANCE_FIELD_1 = UpgradeTier.HEAD_1.node("aura.head.resonance_field.1",
+            "Resonance Field", PRICE)
             .withBuff(TowerBuff.range(0.3f))
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new ClusterCondition(2));
-    private static final UpgradeNode RESONANCE_FIELD_2 = UpgradeNode.of("aura.head.resonance_field.2",
-            UpgradeSlot.HEAD, "Resonance Field II", 30)
+    private static final UpgradeNode RESONANCE_FIELD_2 = UpgradeTier.HEAD_2.node("aura.head.resonance_field.2",
+            "Resonance Field II", PRICE)
             .withBuff(TowerBuff.range(0.25f))
-            .withRequires(UpgradeCondition.owns(RESONANCE_FIELD_1.id()))
+            .after(RESONANCE_FIELD_1)
             .withGate(new ClusterCondition(3))
             .withExtraEffect("the aura no longer refuses to buff other Aura towers");
-    private static final UpgradeNode WITHERING_FIELD = UpgradeNode.of("aura.special.withering_field",
-            UpgradeSlot.SPECIAL, "Withering Field", 40)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+    private static final UpgradeNode WITHERING_FIELD = UpgradeTier.SPECIAL.node("aura.special.withering_field",
+            "Withering Field", PRICE)
             .withGate(new ClusterCondition(2))
             .withExtraEffect("every few ticks, every enemy inside the aura's range gains 1 Vulnerable stack (cap 3)");
 
-    private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, AMPLIFYING_CORE_1, AMPLIFYING_CORE_2,
-            RESONANCE_FIELD_1, RESONANCE_FIELD_2, WITHERING_FIELD);
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE))
+            .with(AMPLIFYING_CORE_1, AMPLIFYING_CORE_2, RESONANCE_FIELD_1, RESONANCE_FIELD_2, WITHERING_FIELD)
+            .withChoice(ExclusiveChoice.oneOf(AMPLIFYING_CORE_1, RESONANCE_FIELD_1));
 
     private volatile float power;
     private volatile boolean grantsFireRate = false;

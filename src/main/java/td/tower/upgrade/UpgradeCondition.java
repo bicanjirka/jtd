@@ -8,7 +8,8 @@ import td.util.GameWorld;
  * checked separately.
  * <p>
  * {@link #always()} is the identity. {@link #owns(String)} and {@link #slotEmpty(UpgradeSlot)}
- * compose with {@link #and} and {@link #or} into prerequisites and slot exclusivity.
+ * compose with {@link #and} and {@link #or} into prerequisites. Exclusivity between nodes is an
+ * {@link ExclusiveChoice}, not a condition.
  */
 public interface UpgradeCondition {
 

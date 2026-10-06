@@ -162,16 +162,16 @@ the codebase has deliberately avoided so far (towers query enemies, never the re
 
 ### Upgrade-tree node numbers are unbalanced placeholders
 
-Every tower's `base`/`head`/`special` `UpgradeNode`s (see `docs/features/FEATURE-tower-specialization-abilities.md`
-and `docs/features/FEATURE-tower-upgrade-trees.md`) carry real prices and stat bonuses, but none of them have been
-played against actual waves — the numbers follow a mechanical placeholder rule (Base Range ≈ +15% range at ~0.6×
-tower price; Awaken ≈ 1× tower price; a `head` chain's level 1 ≈ its superseded v1 path's own price, level 2 ≈ 1.5×,
-level 3 ≈ 2×; a `special` root ≈ 2× tower price; an unquantified "+X" in the source doc became +25%, an unquantified
-crit bonus +10%) rather than a tuned one. The `ClusterCondition`/`DamageDealtCondition`/`KillCountCondition`
-thresholds are similarly unverified guesses at what a reasonable mid-level of investment looks like.
+Every tower's `UpgradeNode`s carry real prices and stat bonuses, but none of them have been played
+against actual waves. Prices start from `UpgradeTier`'s multiples of the tower's list price (the table in
+`docs/features/FEATURE-tower-progression.md`); the stat bonuses still follow the placeholder rule of the
+first trees (an unquantified "+X" in the source doc became +25%, an unquantified crit bonus +10%). The
+`ClusterCondition`/`DamageDealtCondition`/`KillCountCondition` thresholds are unverified guesses at what a
+reasonable mid-level of investment looks like. Feature 7's balance pass sets the final numbers.
 
-- **Where:** the `private static final UpgradeNode` constants in every leaf under `td.tower`
-  (`SniperTower`/`SplashTower`/`SonarTower`/`PulseTower`/`MortarTower`/`SeekerTower`/`CinderTower`/`AuraTower`).
+- **Where:** `UpgradeTier`'s price multiples, and the `private static final UpgradeNode` constants in every
+  leaf under `td.tower` (`SniperTower`/`SplashTower`/`SonarTower`/`PulseTower`/`MortarTower`/`SeekerTower`/
+  `CinderTower`/`AuraTower`).
 - **Approach:** play each of the built-in levels with every node bought at least once, and adjust price/stat-bonus/
   condition-threshold values until each node feels like a meaningful, roughly-comparable-in-power choice rather than
   a strictly-better-or-worse one. No code or architecture change needed — every number here is already a named

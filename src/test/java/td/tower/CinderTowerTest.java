@@ -177,7 +177,7 @@ class CinderTowerTest {
     void wideNozzleIsChoosableAfterTenKillsAndAppliesItsRangeBonus() {
         this.context.economy().startEconomy(1000, 5);
         CinderTower tower = towerAt(3, 3);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradePaths.awaken(tower);
         EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
         for (int i = 0; i < 10; i++) {
             tower.dealDamage(fodder, Damage.physical(1_000_000));

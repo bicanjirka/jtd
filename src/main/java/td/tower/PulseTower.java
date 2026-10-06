@@ -5,11 +5,11 @@ import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.DamageDealtCondition;
+import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
-import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -29,34 +29,28 @@ public final class PulseTower extends AbstractTower {
     public static final float DAMAGE_POINTS = 2f;
     public static final float RANGE = 1.5f;
 
-    private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(15);
-    private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(25);
-
-    private static final UpgradeNode OVERCHARGED_COILS_1 = UpgradeNode.of("pulse.head.overcharged_coils.1",
-            UpgradeSlot.HEAD, "Overcharged Coils", 30)
+    private static final UpgradeNode OVERCHARGED_COILS_1 = UpgradeTier.HEAD_1.node("pulse.head.overcharged_coils.1",
+            "Overcharged Coils", PRICE)
             .withBuff(TowerBuff.damage(0.3f))
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new DamageDealtCondition(100));
-    private static final UpgradeNode OVERCHARGED_COILS_2 = UpgradeNode.of("pulse.head.overcharged_coils.2",
-            UpgradeSlot.HEAD, "Overcharged Coils II", 45)
+    private static final UpgradeNode OVERCHARGED_COILS_2 = UpgradeTier.HEAD_2.node("pulse.head.overcharged_coils.2",
+            "Overcharged Coils II", PRICE)
             .withBuff(TowerBuff.damage(0.25f).withCritChance(0.1f))
-            .withRequires(UpgradeCondition.owns(OVERCHARGED_COILS_1.id()))
+            .after(OVERCHARGED_COILS_1)
             .withGate(new KillCountCondition(20));
-    private static final UpgradeNode RESONANT_FIELD_1 = UpgradeNode.of("pulse.head.resonant_field.1",
-            UpgradeSlot.HEAD, "Resonant Field", 25)
+    private static final UpgradeNode RESONANT_FIELD_1 = UpgradeTier.HEAD_1.node("pulse.head.resonant_field.1",
+            "Resonant Field", PRICE)
             .withBuff(TowerBuff.range(0.2f))
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(10))
             .withExtraEffect("damages invisible enemies every tick, cover no longer required");
-    private static final UpgradeNode RESONANT_FIELD_2 = UpgradeNode.of("pulse.head.resonant_field.2",
-            UpgradeSlot.HEAD, "Resonant Field II", 38)
+    private static final UpgradeNode RESONANT_FIELD_2 = UpgradeTier.HEAD_2.node("pulse.head.resonant_field.2",
+            "Resonant Field II", PRICE)
             .withBuff(TowerBuff.range(0.15f))
-            .withRequires(UpgradeCondition.owns(RESONANT_FIELD_1.id()))
+            .after(RESONANT_FIELD_1)
             .withGate(new DamageDealtCondition(200))
             .withExtraEffect("any invisible enemy it hits is revealed to every tower for 2s");
-    private static final UpgradeNode WARDING_FIELD = UpgradeNode.of("pulse.special.warding_field", UpgradeSlot.SPECIAL,
-            "Warding Field", 50)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+    private static final UpgradeNode WARDING_FIELD = UpgradeTier.SPECIAL.node("pulse.special.warding_field",
+            "Warding Field", PRICE)
             .withGate(new KillCountCondition(20))
             .withExtraEffect("each tick, everything hit has a 10% chance to gain 1 Vulnerable stack (cap 3)");
 
@@ -64,8 +58,9 @@ public final class PulseTower extends AbstractTower {
     private static final double WARDING_FIELD_CHANCE = 0.1;
     private static final float REVEAL_SECONDS = 2f;
 
-    private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, OVERCHARGED_COILS_1,
-            OVERCHARGED_COILS_2, RESONANT_FIELD_1, RESONANT_FIELD_2, WARDING_FIELD);
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE))
+            .with(OVERCHARGED_COILS_1, OVERCHARGED_COILS_2, RESONANT_FIELD_1, RESONANT_FIELD_2, WARDING_FIELD)
+            .withChoice(ExclusiveChoice.oneOf(OVERCHARGED_COILS_1, RESONANT_FIELD_1));
 
     private volatile boolean resonantField = false;
     private boolean fire = false;

@@ -8,11 +8,11 @@ import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.RandomSelector;
 import td.tower.targeting.TargetSelector;
 import td.tower.upgrade.DamageDealtCondition;
+import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
-import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -51,60 +51,55 @@ public final class SplashTower extends AbstractTower {
     /** Concussive Blast: a kill explodes for this share of weapon damage. */
     private static final float EXPLOSION_DAMAGE_SHARE = 0.5f;
 
-    private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(9);
-    private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(15);
-
-    private static final UpgradeNode BLAST_ENGINEERING_1 = UpgradeNode.of("splash.head.blast_engineering.1",
-            UpgradeSlot.HEAD, "Blast Engineering", 35)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
+    private static final UpgradeNode BLAST_ENGINEERING_1 = UpgradeTier.HEAD_1.node("splash.head.blast_engineering.1",
+            "Blast Engineering", PRICE)
             .withGate(new DamageDealtCondition(100))
             .withExtraEffect("+30% splash radius");
-    private static final UpgradeNode BLAST_ENGINEERING_2 = UpgradeNode.of("splash.head.blast_engineering.2",
-            UpgradeSlot.HEAD, "Blast Engineering II", 53)
+    private static final UpgradeNode BLAST_ENGINEERING_2 = UpgradeTier.HEAD_2.node("splash.head.blast_engineering.2",
+            "Blast Engineering II", PRICE)
             .withBuff(TowerBuff.damage(0.25f))
-            .withRequires(UpgradeCondition.owns(BLAST_ENGINEERING_1.id()))
+            .after(BLAST_ENGINEERING_1)
             .withGate(new DamageDealtCondition(200))
             .withExtraEffect("flattens the falloff curve");
-    private static final UpgradeNode BLAST_ENGINEERING_3 = UpgradeNode.of("splash.head.blast_engineering.3",
-            UpgradeSlot.HEAD, "Blast Engineering III", 70)
-            .withRequires(UpgradeCondition.owns(BLAST_ENGINEERING_2.id()))
+    private static final UpgradeNode BLAST_ENGINEERING_3 = UpgradeTier.HEAD_3.node("splash.head.blast_engineering.3",
+            "Blast Engineering III", PRICE)
+            .after(BLAST_ENGINEERING_2)
             .withGate(new KillCountCondition(20))
             .withExtraEffect("fires 3 projectiles instead of 1");
-    private static final UpgradeNode RAPID_BATTERY_1 = UpgradeNode.of("splash.head.rapid_battery.1", UpgradeSlot.HEAD,
-            "Rapid Battery", 30)
+    private static final UpgradeNode RAPID_BATTERY_1 = UpgradeTier.HEAD_1.node("splash.head.rapid_battery.1",
+            "Rapid Battery", PRICE)
             .withBuff(TowerBuff.fireRate(0.25f))
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(8));
-    private static final UpgradeNode RAPID_BATTERY_2 = UpgradeNode.of("splash.head.rapid_battery.2", UpgradeSlot.HEAD,
-            "Rapid Battery II", 45)
+    private static final UpgradeNode RAPID_BATTERY_2 = UpgradeTier.HEAD_2.node("splash.head.rapid_battery.2",
+            "Rapid Battery II", PRICE)
             .withBuff(TowerBuff.damage(0.25f).withCritChance(0.15f))
-            .withRequires(UpgradeCondition.owns(RAPID_BATTERY_1.id()))
+            .after(RAPID_BATTERY_1)
             .withGate(new KillCountCondition(18));
-    private static final UpgradeNode RAPID_BATTERY_3 = UpgradeNode.of("splash.head.rapid_battery.3", UpgradeSlot.HEAD,
-            "Rapid Battery III", 60)
-            .withRequires(UpgradeCondition.owns(RAPID_BATTERY_2.id()))
+    private static final UpgradeNode RAPID_BATTERY_3 = UpgradeTier.HEAD_3.node("splash.head.rapid_battery.3",
+            "Rapid Battery III", PRICE)
+            .after(RAPID_BATTERY_2)
             .withGate(new DamageDealtCondition(250))
             .withExtraEffect("crits splash 50% bigger");
-    private static final UpgradeNode TOXIC_BLOOM = UpgradeNode.of("splash.special.toxic_bloom", UpgradeSlot.SPECIAL,
-            "Toxic Bloom", 30)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+    private static final UpgradeNode TOXIC_BLOOM = UpgradeTier.SPECIAL.node("splash.special.toxic_bloom",
+            "Toxic Bloom", PRICE)
             .withGate(new DamageDealtCondition(150))
             .withExtraEffect("splash applies poison");
-    private static final UpgradeNode CONCUSSIVE_BLAST = UpgradeNode.of("splash.special.concussive_blast",
-            UpgradeSlot.SPECIAL, "Concussive Blast", 30)
+    private static final UpgradeNode CONCUSSIVE_BLAST = UpgradeTier.SPECIAL.node("splash.special.concussive_blast",
+            "Concussive Blast", PRICE)
             .withBuff(TowerBuff.fireRate(-0.5f))
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
             .withGate(new KillCountCondition(15))
             .withExtraEffect("-50% fire rate, blast applies chill, killed enemies explode");
-    private static final UpgradeNode OVERPRESSURE = UpgradeNode.of("splash.special.overpressure", UpgradeSlot.SPECIAL,
-            "Overpressure", 30)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+    private static final UpgradeNode OVERPRESSURE = UpgradeTier.SPECIAL.node("splash.special.overpressure",
+            "Overpressure", PRICE)
             .withGate(new KillCountCondition(25))
             .withExtraEffect("on crit, the next shot fires at every enemy in range");
 
-    private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, BLAST_ENGINEERING_1,
-            BLAST_ENGINEERING_2, BLAST_ENGINEERING_3, RAPID_BATTERY_1, RAPID_BATTERY_2, RAPID_BATTERY_3, TOXIC_BLOOM,
-            CONCUSSIVE_BLAST, OVERPRESSURE);
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BLAST_ENGINEERING_3, RAPID_BATTERY_3))
+            .with(BLAST_ENGINEERING_1, BLAST_ENGINEERING_2, BLAST_ENGINEERING_3,
+                    RAPID_BATTERY_1, RAPID_BATTERY_2, RAPID_BATTERY_3,
+                    TOXIC_BLOOM, CONCUSSIVE_BLAST, OVERPRESSURE)
+            .withChoice(ExclusiveChoice.oneOf(BLAST_ENGINEERING_1, RAPID_BATTERY_1))
+            .withChoice(ExclusiveChoice.specials(TOXIC_BLOOM, CONCUSSIVE_BLAST, OVERPRESSURE));
 
     private static final int COOLDOWN_MAX = 19;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);

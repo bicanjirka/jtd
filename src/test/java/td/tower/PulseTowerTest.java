@@ -23,7 +23,7 @@ class PulseTowerTest {
     void overchargedCoilsIsChoosableOnceAwakenIsBoughtAndAppliesItsDamageBonus() {
         this.context.economy().startEconomy(1000, 5);
         PulseTower tower = new PulseTower(this.context, 0, 0);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradePaths.awaken(tower);
         EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 100000, 3, Rank.GRUNT);
         tower.dealDamage(fodder, Damage.physical(11000));
         UpgradeNode overchargedCoils = UpgradePaths.named(tower, "Overcharged Coils");
@@ -38,7 +38,7 @@ class PulseTowerTest {
     void resonantFieldIsNotYetChoosableBeforeTenKills() {
         this.context.economy().startEconomy(1000, 5);
         PulseTower tower = new PulseTower(this.context, 0, 0);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradePaths.awaken(tower);
         UpgradeNode resonantField = UpgradePaths.named(tower, "Resonant Field");
 
         boolean chosen = tower.buyUpgrade(resonantField);
@@ -51,7 +51,7 @@ class PulseTowerTest {
     void resonantFieldFiresEvenWithOnlyAGhostInRange() {
         this.context.economy().startEconomy(1000, 5);
         PulseTower tower = new PulseTower(this.context, 0, 0);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradePaths.awaken(tower);
         EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
         for (int i = 0; i < 10; i++) {
             tower.dealDamage(fodder, Damage.physical(1_000_000));

@@ -9,6 +9,7 @@ import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
 import td.util.GameWorld;
 
 import java.util.LinkedHashMap;
@@ -165,7 +166,7 @@ class SonarTowerTest {
     void twinArrayIsChoosableOnceAwakenIsBoughtAndAppliesItsDamageBonus() {
         this.context.economy().startEconomy(1000, 5);
         SonarTower tower = tower();
-        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradePaths.awaken(tower);
         EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 100000, 3, Rank.GRUNT);
         tower.dealDamage(fodder, Damage.physical(11000));
         UpgradeNode twinArray = UpgradePaths.named(tower, "Twin Array");
@@ -180,7 +181,7 @@ class SonarTowerTest {
     void longReachIsNotYetChoosableBeforeTenKills() {
         this.context.economy().startEconomy(1000, 5);
         SonarTower tower = tower();
-        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradePaths.awaken(tower);
         UpgradeNode longReach = UpgradePaths.named(tower, "Long Reach");
 
         boolean chosen = tower.buyUpgrade(longReach);
@@ -192,7 +193,7 @@ class SonarTowerTest {
     void piercingToneAddsMagicDamageInProportionToTheTargetsPhysicalProtectionUpToHalf() {
         this.context.economy().startEconomy(1000, 5);
         SonarTower tower = tower();
-        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradePaths.awaken(tower);
         tower.dealDamage(FakeEnemyMob.at(0, 0), Damage.physical(20_000));
         tower.buyUpgrade(UpgradePaths.named(tower, "Piercing Tone"));
         FakeEnemyMob lightlyArmored = FakeEnemyMob.at(TOWER_X + NEAR, TOWER_Y);
@@ -206,6 +207,15 @@ class SonarTowerTest {
         int weapon = tower.damageCurrent();
         assertThat(lightlyArmored.hits()).containsExactly(Damage.physical(weapon), Damage.magic(Math.round(weapon * 0.2f)));
         assertThat(heavilyArmored.hits()).containsExactly(Damage.physical(weapon), Damage.magic(Math.round(weapon * 0.5f)));
+    }
+
+    @Test
+    void aSonarWithTwinArrayThreeAndASpecialTranscendsAndPicksASecondSpecial() {
+        SonarTower tower = this.upgradedTower("Twin Array", "Twin Array II", "Twin Array III", "Mark on Sweep",
+                "Transcendent", "Piercing Tone");
+
+        assertThat(tower.upgrades().inSlot(UpgradeSlot.SPECIAL)).extracting(UpgradeNode::displayName)
+                .containsExactly("Mark on Sweep", "Piercing Tone");
     }
 
     private SonarTower upgradedTower(String... nodes) {

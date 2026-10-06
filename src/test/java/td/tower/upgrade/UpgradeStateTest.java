@@ -7,7 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UpgradeStateTest {
 
-    private static final UpgradeNode RANGE = StandardBaseSlot.rangeNode(10);
+    private static final UpgradeNode RANGE = UpgradeNode.of("range", UpgradeSlot.BASE, "Range", 10).withBuff(TowerBuff.range(0.15f));
     private static final UpgradeNode HEAD_LV1 = UpgradeNode.of("head.a.1", UpgradeSlot.HEAD, "A1", 10)
             .withBuff(TowerBuff.damage(0.25f));
     private static final UpgradeNode HEAD_LV2 = UpgradeNode.of("head.a.2", UpgradeSlot.HEAD, "A2", 20)

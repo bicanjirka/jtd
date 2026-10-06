@@ -5,7 +5,6 @@ import td.util.GameWorld;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +17,7 @@ import java.util.Set;
 public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices) {
 
     private static final UpgradeTree NONE = new UpgradeTree(List.of(), List.of());
+    private static final UpgradeSlot[] SLOTS = UpgradeSlot.values();
 
     /**
      * Rejects duplicate node ids, which would make matching by id ambiguous, and a choice naming a
@@ -77,23 +77,44 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
      * isn't offered is absent, not disabled.
      */
     public List<UpgradeNode> offered(Tower tower, GameWorld context) {
-        return this.nodes.stream()
-                .filter(n -> this.offers(n, tower, context))
-                .sorted(Comparator.comparing(UpgradeNode::slot))
-                .toList();
+        List<UpgradeNode> offered = new ArrayList<>();
+        for (UpgradeSlot slot : SLOTS) {
+            for (int i = 0; i < this.nodes.size(); i++) {
+                UpgradeNode node = this.nodes.get(i);
+                if (node.slot() == slot && this.isOffered(node, tower, context)) {
+                    offered.add(node);
+                }
+            }
+        }
+        return offered;
     }
 
     /** Whether {@code node} is one of {@link #offered}: the check a purchase makes. */
     public boolean offers(UpgradeNode node, Tower tower, GameWorld context) {
-        UpgradeState owned = tower.upgrades();
-        return this.nodes.contains(node)
-                && !owned.owns(node.id())
-                && this.choiceOf(node).map(choice -> !choice.isSpent(owned)).orElse(true)
-                && node.requires().isSatisfied(tower, context);
+        return this.nodes.contains(node) && this.isOffered(node, tower, context);
     }
 
     public Optional<ExclusiveChoice> choiceOf(UpgradeNode node) {
-        return this.choices.stream().filter(choice -> choice.contains(node.id())).findFirst();
+        return Optional.ofNullable(this.choiceContaining(node));
+    }
+
+    // Allocation-free: offered() runs for every tower on every frame build.
+    private boolean isOffered(UpgradeNode node, Tower tower, GameWorld context) {
+        UpgradeState owned = tower.upgrades();
+        if (owned.owns(node.id())) {
+            return false;
+        }
+        ExclusiveChoice choice = this.choiceContaining(node);
+        return (choice == null || !choice.isSpent(owned)) && node.requires().isSatisfied(tower, context);
+    }
+
+    private ExclusiveChoice choiceContaining(UpgradeNode node) {
+        for (int i = 0; i < this.choices.size(); i++) {
+            if (this.choices.get(i).contains(node.id())) {
+                return this.choices.get(i);
+            }
+        }
+        return null;
     }
 
     /**

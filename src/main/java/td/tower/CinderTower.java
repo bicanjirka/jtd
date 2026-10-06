@@ -10,11 +10,11 @@ import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.InWedgeTargetQuery;
 import td.tower.targeting.NearestSelector;
 import td.tower.upgrade.DamageDealtCondition;
+import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
-import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -52,40 +52,34 @@ public final class CinderTower extends AbstractTower {
     private static final double WIDE_NOZZLE_HALF_WIDTH_MULTIPLIER_1 = 1.3;
     private static final double WIDE_NOZZLE_HALF_WIDTH_MULTIPLIER_2 = 1.2;
 
-    private static final UpgradeNode BASE_RANGE = StandardBaseSlot.rangeNode(17);
-    private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(28);
-
-    private static final UpgradeNode WHITE_FLAME_1 = UpgradeNode.of("cinder.head.white_flame.1", UpgradeSlot.HEAD,
-            "White Flame", 30)
+    private static final UpgradeNode WHITE_FLAME_1 = UpgradeTier.HEAD_1.node("cinder.head.white_flame.1",
+            "White Flame", PRICE)
             .withBuff(TowerBuff.damage(0.3f))
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new DamageDealtCondition(150));
-    private static final UpgradeNode WHITE_FLAME_2 = UpgradeNode.of("cinder.head.white_flame.2", UpgradeSlot.HEAD,
-            "White Flame II", 45)
+    private static final UpgradeNode WHITE_FLAME_2 = UpgradeTier.HEAD_2.node("cinder.head.white_flame.2",
+            "White Flame II", PRICE)
             .withBuff(TowerBuff.damage(0.25f))
-            .withRequires(UpgradeCondition.owns(WHITE_FLAME_1.id()))
+            .after(WHITE_FLAME_1)
             .withGate(new DamageDealtCondition(300))
             .withExtraEffect("+50% burn duration");
-    private static final UpgradeNode WIDE_NOZZLE_1 = UpgradeNode.of("cinder.head.wide_nozzle.1", UpgradeSlot.HEAD,
-            "Wide Nozzle", 25)
+    private static final UpgradeNode WIDE_NOZZLE_1 = UpgradeTier.HEAD_1.node("cinder.head.wide_nozzle.1",
+            "Wide Nozzle", PRICE)
             .withBuff(TowerBuff.range(0.25f))
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD))
             .withGate(new KillCountCondition(10))
             .withExtraEffect("+30% cone width");
-    private static final UpgradeNode WIDE_NOZZLE_2 = UpgradeNode.of("cinder.head.wide_nozzle.2", UpgradeSlot.HEAD,
-            "Wide Nozzle II", 38)
+    private static final UpgradeNode WIDE_NOZZLE_2 = UpgradeTier.HEAD_2.node("cinder.head.wide_nozzle.2",
+            "Wide Nozzle II", PRICE)
             .withBuff(TowerBuff.range(0.2f).withFireRate(0.2f))
-            .withRequires(UpgradeCondition.owns(WIDE_NOZZLE_1.id()))
+            .after(WIDE_NOZZLE_1)
             .withGate(new DamageDealtCondition(250))
             .withExtraEffect("+20% cone width, -20% cooldown");
-    private static final UpgradeNode HEXFLAME = UpgradeNode.of("cinder.special.hexflame", UpgradeSlot.SPECIAL,
-            "Hexflame", 56)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL))
+    private static final UpgradeNode HEXFLAME = UpgradeTier.SPECIAL.node("cinder.special.hexflame", "Hexflame", PRICE)
             .withGate(new KillCountCondition(20))
             .withExtraEffect("each wave that newly ignites an enemy also grants 1 Vulnerable stack (cap 3)");
 
-    private static final UpgradeTree TREE = UpgradeTree.of(BASE_RANGE, AWAKEN, WHITE_FLAME_1, WHITE_FLAME_2,
-            WIDE_NOZZLE_1, WIDE_NOZZLE_2, HEXFLAME);
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE))
+            .with(WHITE_FLAME_1, WHITE_FLAME_2, WIDE_NOZZLE_1, WIDE_NOZZLE_2, HEXFLAME)
+            .withChoice(ExclusiveChoice.oneOf(WHITE_FLAME_1, WIDE_NOZZLE_1));
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final List<FlameWave> inFlightWaves = new ArrayList<>();

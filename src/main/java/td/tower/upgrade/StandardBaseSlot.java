@@ -6,8 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * The {@code BASE} slot every tower shares: a range node and an awaken node that unlocks
- * {@code HEAD} and {@code SPECIAL}. Both are bought independently, gated on price alone.
+ * The {@code BASE} slot every tower shares: the Range line, and the chain Attune, Awaken,
+ * Transcendent that opens the other slots step by step (see {@link UpgradeTier#openedBy()}).
  */
 public final class StandardBaseSlot {
 
@@ -48,23 +48,5 @@ public final class StandardBaseSlot {
                 .withGate(new TranscendentCondition(Arrays.stream(levelThrees).map(UpgradeNode::id).toList()))
                 .withExtraEffect("unlocks a second special and Range III");
         return List.of(range1, range2, range3, attune, awaken, transcendent);
-    }
-
-    public static UpgradeNode rangeNode(int price) {
-        return UpgradeNode.of(RANGE_ID, UpgradeSlot.BASE, "Range", price)
-                .withBuff(TowerBuff.range(RANGE_BONUS));
-    }
-
-    public static UpgradeNode awakenNode(int price) {
-        return UpgradeNode.of(AWAKEN_ID, UpgradeSlot.BASE, "Awaken", price)
-                .withExtraEffect("unlocks head and special");
-    }
-
-    /**
-     * The prerequisite for a {@code HEAD} or {@code SPECIAL} root: awaken owned and {@code slot}
-     * still empty, which makes the roots mutually exclusive.
-     */
-    public static UpgradeCondition opens(UpgradeSlot slot) {
-        return UpgradeCondition.owns(AWAKEN_ID).and(UpgradeCondition.slotEmpty(slot));
     }
 }

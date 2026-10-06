@@ -77,7 +77,7 @@ class SeekerTowerTest {
     void twinWarheadIsChoosableOnceAwakenIsBoughtAndAppliesItsFireRateBonus() {
         this.context.economy().startEconomy(1000, 5);
         SeekerTower tower = towerAt(3, 3);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradePaths.awaken(tower);
         UpgradeNode twinWarhead = UpgradePaths.named(tower, "Twin Warhead");
         EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
         for (int i = 0; i < 10; i++) {
@@ -176,7 +176,7 @@ class SeekerTowerTest {
     private SeekerTower deepFreezeTwoSeeker() {
         this.context.economy().startEconomy(100000, 5);
         SeekerTower tower = towerAt(3, 3);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        UpgradePaths.awaken(tower);
         EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
         for (int i = 0; i < 25; i++) {
             tower.dealDamage(fodder, Damage.magic(1_000_000));

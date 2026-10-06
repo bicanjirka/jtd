@@ -15,16 +15,16 @@ class UpgradeTreeTest {
 
     private final GameWorld context = WorldFixtures.newWorld();
 
-    private static final UpgradeNode RANGE = StandardBaseSlot.rangeNode(10);
-    private static final UpgradeNode AWAKEN = StandardBaseSlot.awakenNode(20);
+    private static final UpgradeNode RANGE = UpgradeNode.of("range", UpgradeSlot.BASE, "Range", 10);
+    private static final UpgradeNode AWAKEN = UpgradeNode.of("awaken", UpgradeSlot.BASE, "Awaken", 20);
     private static final UpgradeNode HEAD_ROOT_A = UpgradeNode.of("head.a.1", UpgradeSlot.HEAD, "Root A", 10)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD));
+            .withRequires(opens(UpgradeSlot.HEAD));
     private static final UpgradeNode HEAD_A_LV2 = UpgradeNode.of("head.a.2", UpgradeSlot.HEAD, "A lv2", 15)
             .withRequires(UpgradeCondition.owns(HEAD_ROOT_A.id()));
     private static final UpgradeNode HEAD_ROOT_B = UpgradeNode.of("head.b.1", UpgradeSlot.HEAD, "Root B", 10)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.HEAD));
+            .withRequires(opens(UpgradeSlot.HEAD));
     private static final UpgradeNode SPECIAL_ROOT = UpgradeNode.of("special.1", UpgradeSlot.SPECIAL, "Special", 10)
-            .withRequires(StandardBaseSlot.opens(UpgradeSlot.SPECIAL));
+            .withRequires(opens(UpgradeSlot.SPECIAL));
 
     private static final UpgradeTree TREE = UpgradeTree.of(RANGE, AWAKEN, HEAD_ROOT_A, HEAD_A_LV2, HEAD_ROOT_B,
             SPECIAL_ROOT);
@@ -100,5 +100,10 @@ class UpgradeTreeTest {
         tower.setKillCount(4);
 
         assertThat(gated.gate().progress(tower, context)).isEqualTo("4/10 kills");
+    }
+
+    /** Awaken owned and {@code slot} still empty, which makes a slot's roots exclude each other. */
+    private static UpgradeCondition opens(UpgradeSlot slot) {
+        return UpgradeCondition.owns(AWAKEN.id()).and(UpgradeCondition.slotEmpty(slot));
     }
 }

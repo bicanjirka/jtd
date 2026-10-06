@@ -79,18 +79,20 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         List<UpgradeNode> offered = tower.offeredUpgrades(this.world);
         List<SlotMarkDraw> marks = new ArrayList<>(UpgradeSlot.values().length);
         for (UpgradeSlot slot : UpgradeSlot.values()) {
-            int level = tower.upgrades().inSlot(slot).size();
-            boolean ready = offered.stream().anyMatch(node -> node.slot() == slot
-                    && node.gate().isSatisfied(tower, this.world)
-                    && this.world.economy().canPay(node.price()));
-            marks.add(new SlotMarkDraw(slotPaletteFor(slot), level, ready));
+            boolean ready = false;
+            for (int i = 0; i < offered.size() && !ready; i++) {
+                UpgradeNode node = offered.get(i);
+                ready = node.slot() == slot && node.gate().isSatisfied(tower, this.world)
+                        && this.world.economy().canPay(node.price());
+            }
+            marks.add(new SlotMarkDraw(slotPaletteFor(slot), tower.upgrades().countIn(slot), ready));
         }
         return marks;
     }
 
     /** {@code 0} without a {@code SPECIAL} upgrade; otherwise the aura's pulse phase. */
     private float enchantPulseFor(Tower tower) {
-        if (tower.upgrades().tip(UpgradeSlot.SPECIAL).isEmpty()) {
+        if (tower.upgrades().countIn(UpgradeSlot.SPECIAL) == 0) {
             return 0f;
         }
         return (float) (0.5 + 0.5 * Math.sin(this.animationSeconds * TOWER_AURA_PULSE_RADIANS_PER_SECOND));
