@@ -1,6 +1,7 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -168,5 +169,68 @@ class DefinedEnemyMobEffectTest {
         assertThat(brittle.effectStacks(EffectKind.SCORCHED)).isEqualTo(brittleStacks);
         assertThat(plainStacks).isGreaterThan(0);
         assertThat(plain.effectStacks(EffectKind.SCORCHED)).isZero();
+    }
+
+    @Test
+    void aHitOnAMarkedEnemyIsAGuaranteedCritAndSpendsTheMark() {
+        GameWorld context = WorldFixtures.newWorld(() -> 0.99);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100000, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.marked(100, d -> {
+        }));
+
+        Damage first = enemy.doDamage(Damage.physical(1000), AttackProfile.none());
+        Damage second = enemy.doDamage(Damage.physical(1000), AttackProfile.none());
+
+        assertThat(first.critical()).isTrue();
+        assertThat(second.critical()).isFalse();
+        assertThat(enemy.activeEffectKinds()).doesNotContain(EffectKind.MARKED);
+    }
+
+    @Test
+    void periodicDamageNeitherCritsNorSpendsAMark() {
+        GameWorld context = WorldFixtures.newWorld(() -> 0.0);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100000, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.marked(100, d -> {
+        }));
+
+        Damage landed = enemy.doDamage(Damage.physical(1000), AttackProfile.critChance(1f).asPeriodic());
+
+        assertThat(landed.critical()).isFalse();
+        assertThat(enemy.activeEffectKinds()).contains(EffectKind.MARKED);
+    }
+
+    @Test
+    void aMarkWaitsOnACritImmuneEnemyUntilItsResilienceDrops() {
+        GameWorld context = WorldFixtures.newWorld(() -> 0.99);
+        EnemyMob armored = EnemyFactory.getEnemy("s", context, 0, 100000, 5, Rank.GRUNT);
+        armored.applyEffect(Effect.marked(100, d -> {
+        }));
+
+        Damage blocked = armored.doDamage(Damage.physical(1000), AttackProfile.none());
+        armored.applyEffect(Effect.fractured(5, d -> {
+        }));
+        Damage opened = armored.doDamage(Damage.physical(1000), AttackProfile.none());
+
+        assertThat(blocked.critical()).isFalse();
+        assertThat(opened.critical()).isTrue();
+        assertThat(armored.activeEffectKinds()).doesNotContain(EffectKind.MARKED);
+    }
+
+    @Test
+    void aRevealedEnemyIsExposedAndHidesAgainWhenItIsShroudedAgain() {
+        GameWorld context = newContext();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100000, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.invisible(100, d -> {
+        }));
+        enemy.applyEffect(Effect.revealed(100, d -> {
+        }));
+        boolean visibleWhileRevealed = enemy.canBeTargeted();
+
+        enemy.applyEffect(Effect.invisible(100, d -> {
+        }));
+
+        assertThat(visibleWhileRevealed).isTrue();
+        assertThat(enemy.canBeTargeted()).isFalse();
+        assertThat(enemy.activeEffectKinds()).doesNotContain(EffectKind.REVEALED);
     }
 }

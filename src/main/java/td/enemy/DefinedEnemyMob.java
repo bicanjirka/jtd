@@ -4,6 +4,7 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.damage.DamageUnits;
+import td.damage.Delivery;
 import td.economy.EconomyDelta;
 import td.effect.ActiveEffects;
 import td.effect.Effect;
@@ -347,7 +348,8 @@ public final class DefinedEnemyMob implements EnemyMob {
         }
         Damage landed = Damage.none();
         if (this.validTarget()) {
-            landed = HitResolution.resolve(damage, attacker, this.stats, this.health, this.gameWorld.random());
+            landed = HitResolution.resolve(damage, this.spendMark(attacker), this.stats, this.health,
+                    this.gameWorld.random());
             this.health -= landed.amount();
             this.gameWorld.damageTally().record(landed);
             if (landed.amount() > 0) {
@@ -365,6 +367,16 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.gameWorld.enemies().reportDeath(this);
         }
         return landed;
+    }
+
+    /**
+     * A hit on a marked enemy is a guaranteed crit and ends the mark. Periodic damage never spends it,
+     * nor does a hit on a crit-immune enemy: the mark waits.
+     */
+    private AttackProfile spendMark(AttackProfile attacker) {
+        boolean spent = attacker.delivery() == Delivery.HIT && this.stats.value(EnemyStat.RESILIENCE) < 100f
+                && this.activeEffects.consume(EffectKind.MARKED);
+        return spent ? attacker.withGuaranteedCrit() : attacker;
     }
 
     private TraitContext traitContext() {

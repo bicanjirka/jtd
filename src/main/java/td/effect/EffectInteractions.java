@@ -16,12 +16,13 @@ final class EffectInteractions {
     /** Blocked kind to the kinds that block it: a frozen enemy cannot burn. */
     private static final Map<EffectKind, Set<EffectKind>> BLOCKED_BY = new EnumMap<>(EffectKind.class);
 
-    /** Consumed kind to the kinds that consume it: freezing a chilled enemy removes the chill. */
+    /** Consumed kind to the kinds that consume it: freezing a chilled enemy removes the chill, and shrouding a revealed one hides it again. */
     private static final Map<EffectKind, Set<EffectKind>> CONSUMED_BY = new EnumMap<>(EffectKind.class);
 
     static {
         BLOCKED_BY.put(EffectKind.BURN, EnumSet.of(EffectKind.FREEZE));
         CONSUMED_BY.put(EffectKind.CHILL, EnumSet.of(EffectKind.FREEZE));
+        CONSUMED_BY.put(EffectKind.REVEALED, EnumSet.of(EffectKind.INVISIBLE));
     }
 
     private EffectInteractions() {

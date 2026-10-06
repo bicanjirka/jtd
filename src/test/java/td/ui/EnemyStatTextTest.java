@@ -142,4 +142,31 @@ class EnemyStatTextTest {
                 Row.effect(Palette.STATUS_MARKER_SICKENED, "Sickened x1", "debuff"),
                 Row.plain(Glyph.DOT, "Spirit", "-1% heals"));
     }
+
+    @Test
+    void theSpotterEffectsShowTheirStacksAndASpiritedEnemyShowsHowFastDebuffsWearOff() {
+        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        mob.applyEffect(Effect.sundered(3, 100, d -> {
+        }));
+        mob.applyEffect(Effect.exposed(100, d -> {
+        }));
+        mob.applyEffect(Effect.priority(100, d -> {
+        }));
+
+        InfoSheet sheet = EnemyStatText.live(mob.inspect());
+
+        assertThat(sheet.lines()).contains(
+                Row.effect(Palette.STATUS_MARKER_SUNDERED, "Sundered x3", "debuff 5.0 s"),
+                Row.effect(Palette.STATUS_MARKER_EXPOSED, "Exposed", "spotted 5.0 s"),
+                Row.effect(Palette.STATUS_MARKER_PRIORITY, "Priority", "spotted 5.0 s"));
+    }
+
+    @Test
+    void spiritThatChangesTheDebuffPaceSaysSoInWords() {
+        assertThat(EnemyStatText.statText(td.stat.EnemyStat.SPIRIT, 50f).value())
+                .isEqualTo("+50% heals, debuffs 1.5x faster");
+        assertThat(EnemyStatText.statText(td.stat.EnemyStat.SPIRIT, -50f).value())
+                .isEqualTo("-50% heals, debuffs 2x slower");
+        assertThat(EnemyStatText.statText(td.stat.EnemyStat.SPIRIT, -1f).value()).isEqualTo("-1% heals");
+    }
 }

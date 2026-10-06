@@ -105,6 +105,12 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case POISON -> Palette.STATUS_MARKER_POISON;
             case SCORCHED -> Palette.STATUS_MARKER_SCORCHED;
             case SICKENED -> Palette.STATUS_MARKER_SICKENED;
+            case SUNDERED -> Palette.STATUS_MARKER_SUNDERED;
+            case EXPOSED -> Palette.STATUS_MARKER_EXPOSED;
+            case MARKED -> Palette.STATUS_MARKER_MARKED;
+            case PRIORITY -> Palette.STATUS_MARKER_PRIORITY;
+            case RESONATING -> Palette.STATUS_MARKER_RESONATING;
+            case FRACTURED -> Palette.STATUS_MARKER_FRACTURED;
         };
     }
 

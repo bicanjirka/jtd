@@ -656,4 +656,155 @@ class ActiveEffectsTest {
         }
         assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(stacks - 1);
     }
+
+    private static float resolvedOn(BaseStats base, ActiveEffects effects, EnemyStat stat) {
+        return new StatSheet(base, effects::contributeTo).value(stat);
+    }
+
+    @Test
+    void sunderedStacksEachTakeFiveArmorAndStopAtTenOnOneClock() {
+        ActiveEffects effects = new ActiveEffects();
+        BaseStats armored = BaseStats.defaults().with(EnemyStat.ARMOR, 80f);
+
+        effects.apply(Effect.sundered(4, 100, d -> {
+        }));
+        assertThat(resolvedOn(armored, effects, EnemyStat.ARMOR)).isEqualTo(60f);
+
+        effects.apply(Effect.sundered(20, 100, d -> {
+        }));
+        assertThat(effects.stacks(EffectKind.SUNDERED)).isEqualTo(10);
+        assertThat(resolvedOn(armored, effects, EnemyStat.ARMOR)).isEqualTo(30f);
+    }
+
+    @Test
+    void sunderedNeverTakesArmorBelowZero() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.sundered(10, 100, d -> {
+        }));
+
+        assertThat(resolvedOn(BaseStats.defaults().with(EnemyStat.ARMOR, 20f), effects, EnemyStat.ARMOR)).isEqualTo(0f);
+    }
+
+    @Test
+    void exposedAndRevealedEachDoubleTheCritChanceTakenButNeverQuadrupleIt() {
+        ActiveEffects exposed = new ActiveEffects();
+        exposed.apply(Effect.exposed(100, d -> {
+        }));
+        ActiveEffects both = new ActiveEffects();
+        both.apply(Effect.exposed(100, d -> {
+        }));
+        both.apply(Effect.revealed(100, d -> {
+        }));
+        ActiveEffects revealed = new ActiveEffects();
+        revealed.apply(Effect.revealed(100, d -> {
+        }));
+
+        assertThat(resolved(exposed, EnemyStat.CRIT_CHANCE_TAKEN)).isEqualTo(2f);
+        assertThat(resolved(revealed, EnemyStat.CRIT_CHANCE_TAKEN)).isEqualTo(2f);
+        assertThat(resolved(both, EnemyStat.CRIT_CHANCE_TAKEN)).isEqualTo(2f);
+    }
+
+    @Test
+    void priorityAndVulnerableMultiplyEachOtherAndResonatingOnlyRaisesMagicTaken() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.priority(100, d -> {
+        }));
+        effects.apply(Effect.vulnerable(1, 100, d -> {
+        }));
+        effects.apply(Effect.resonating(2, 100, d -> {
+        }));
+
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.15f * 1.15f, within(1e-5f));
+        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.15f * 1.15f * 1.16f, within(1e-5f));
+    }
+
+    @Test
+    void fracturedStacksEachTakeTenResilienceStopAtFiveAndRecoverOneASecond() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.fractured(3, d -> {
+        }));
+        effects.apply(Effect.fractured(9, d -> {
+        }));
+
+        assertThat(effects.stacks(EffectKind.FRACTURED)).isEqualTo(5);
+        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-50f);
+
+        tickTimes(effects, 20);
+        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-40f);
+        tickTimes(effects, 80);
+        assertThat(effects.activeKinds()).isEmpty();
+    }
+
+    @Test
+    void aDebuffTimerRunsAtTheSpiritPaceButNeverBelowAQuarter() {
+        ActiveEffects fast = new ActiveEffects();
+        fast.apply(Effect.exposed(20, d -> {
+        }));
+        ActiveEffects slowest = new ActiveEffects();
+        slowest.apply(Effect.exposed(20, d -> {
+        }));
+
+        for (int i = 0; i < 10; i++) {
+            fast.tick(2f);
+        }
+        for (int i = 0; i < 79; i++) {
+            slowest.tick(0f);
+        }
+
+        assertThat(fast.activeKinds()).isEmpty();
+        assertThat(slowest.activeKinds()).containsExactly(EffectKind.EXPOSED);
+        slowest.tick(0f);
+        assertThat(slowest.activeKinds()).isEmpty();
+    }
+
+    @Test
+    void aFreezeAndAnInvisibilityAreNotPacedBySpirit() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.freeze(10, d -> {
+        }));
+        effects.apply(Effect.invisible(10, d -> {
+        }));
+
+        for (int i = 0; i < 10; i++) {
+            effects.tick(0f);
+        }
+
+        assertThat(effects.activeKinds()).isEmpty();
+    }
+
+    @Test
+    void aChillFadesAtTheSpiritPaceToo() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.chill(0.4f, 100, d -> {
+        }));
+
+        for (int i = 0; i < 50; i++) {
+            effects.tick(2f);
+        }
+
+        assertThat(effects.activeKinds()).isEmpty();
+    }
+
+    @Test
+    void shroudingARevealedEnemyEndsTheReveal() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.revealed(100, d -> {
+        }));
+
+        effects.apply(Effect.invisible(100, d -> {
+        }));
+
+        assertThat(effects.activeKinds()).containsExactly(EffectKind.INVISIBLE);
+        assertThat(resolved(effects, EnemyStat.STEALTH)).isEqualTo(1f);
+    }
+
+    @Test
+    void consumingAnEffectEndsItOnceAndTellsWhetherThereWasOne() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.marked(100, d -> {
+        }));
+
+        assertThat(effects.consume(EffectKind.MARKED)).isTrue();
+        assertThat(effects.consume(EffectKind.MARKED)).isFalse();
+    }
 }

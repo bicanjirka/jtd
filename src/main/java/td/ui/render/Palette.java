@@ -52,6 +52,12 @@ public enum Palette {
     STATUS_MARKER_POISON,
     STATUS_MARKER_SCORCHED,
     STATUS_MARKER_SICKENED,
+    STATUS_MARKER_SUNDERED,
+    STATUS_MARKER_EXPOSED,
+    STATUS_MARKER_MARKED,
+    STATUS_MARKER_PRIORITY,
+    STATUS_MARKER_RESONATING,
+    STATUS_MARKER_FRACTURED,
     /** Stands in for every effect past the visible marker cap. */
     STATUS_MARKER_OVERFLOW,
     /** Ice over a frozen enemy, whiter than the slow and freeze markers. */

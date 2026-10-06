@@ -20,8 +20,8 @@ import java.util.Set;
 /**
  * The effects active on one enemy, at most one per {@link EffectKind}. Reapplying a kind keeps the
  * stronger one and the longer remaining duration, so a weak top-up never cuts short a strong
- * effect. The decaying kinds and {@code VULNERABLE} combine differently: see {@link #applyChill},
- * {@link #applyPool} and {@link #applyVulnerable}.
+ * effect. The decaying kinds and the stacking kinds combine differently: see {@link #applyChill},
+ * {@link #applyPool} and {@link #applyStacks}.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class ActiveEffects {
@@ -49,17 +49,29 @@ public final class ActiveEffects {
      */
     private static final int STACK_DECAY_INTERVAL_TICKS = 20;
 
-    private static final int VULNERABLE_MAX_STACKS = 3;
+    /** The slowest a spirit-paced timer runs, however low the enemy's spirit. */
+    private static final float MIN_DEBUFF_PACE = 0.25f;
+
     /** Extra damage taken per vulnerable stack, of every damage type. */
     private static final float VULNERABLE_PER_STACK = 0.15f;
+    /** Damage taken while a priority lasts, of every damage type. */
+    private static final float PRIORITY_DAMAGE_TAKEN = 1.15f;
+    private static final float ARMOR_LOST_PER_SUNDERED_STACK = 5f;
+    private static final float MAGIC_DAMAGE_TAKEN_PER_RESONATING_STACK = 0.08f;
+    private static final float RESILIENCE_LOST_PER_FRACTURED_STACK = 10f;
+    /** What an exposed or revealed enemy multiplies the crit chance taken by. */
+    private static final float EXPOSED_CRIT_CHANCE_TAKEN = 2f;
     private static final StatModifier FROZEN = StatModifier.setTo(0f);
     private static final StatModifier HIDDEN = StatModifier.setTo(1f);
     private static final StatModifier REVEALED = StatModifier.setTo(0f);
     private static final DamageType[] DAMAGE_TYPES = DamageType.values();
 
     private final Map<EffectKind, Effect> active = new EnumMap<>(EffectKind.class);
-    /** How far each stack debuff is towards losing its next stack, in spirit-scaled ticks. */
-    private final Map<EffectKind, Float> decayProgress = new EnumMap<>(EffectKind.class);
+    /**
+     * Per kind, spirit-scaled progress that is not yet a whole step: towards a stack debuff's next
+     * lost stack, or the part of a tick a paced timer has gathered.
+     */
+    private final float[] progress = new float[EffectKind.values().length];
 
     private static Effect strongerOf(Effect a, Effect b) {
         Effect stronger = magnitude(a) >= magnitude(b) ? a : b;
@@ -74,9 +86,9 @@ public final class ActiveEffects {
             case BURN, POISON -> effect.damagePerTick().amount();
             case SHIELD -> effect.shieldPercent();
             // On/off, not gradated - any reapplication is at least as strong as what's already active.
-            case INVISIBLE, REVEALED -> 1f;
+            case INVISIBLE, REVEALED, EXPOSED, MARKED, PRIORITY -> 1f;
             case HEAL -> effect.healPerTick();
-            case VULNERABLE, SCORCHED, SICKENED -> effect.stacks();
+            case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED -> effect.stacks();
         };
     }
 
@@ -98,7 +110,7 @@ public final class ActiveEffects {
         switch (incoming.kind()) {
             case CHILL -> this.applyChill(incoming);
             case BURN, POISON -> this.applyPool(incoming);
-            case VULNERABLE -> this.applyVulnerable(incoming);
+            case VULNERABLE, SUNDERED, RESONATING, FRACTURED -> this.applyStacks(incoming);
             default -> {
                 Effect existing = this.active.get(incoming.kind());
                 this.active.put(incoming.kind(), existing == null ? incoming : strongerOf(existing, incoming));
@@ -163,15 +175,20 @@ public final class ActiveEffects {
     }
 
     /**
-     * {@code VULNERABLE} stacks up to {@value #VULNERABLE_MAX_STACKS} on the enemy, whichever tower
-     * applied them, on one clock that every application refreshes. A full stack only refreshes.
+     * A stacking kind adds up to {@link EffectKind#maxStacks()} on the enemy, whichever tower applied
+     * them, on one clock that every application refreshes. A full stack only refreshes.
      */
-    private void applyVulnerable(Effect incoming) {
-        Effect existing = this.active.get(EffectKind.VULNERABLE);
-        int stacks = Math.min(VULNERABLE_MAX_STACKS,
+    private void applyStacks(Effect incoming) {
+        Effect existing = this.active.get(incoming.kind());
+        int stacks = Math.min(incoming.kind().maxStacks(),
                 (existing == null ? 0 : existing.stacks()) + incoming.stacks());
         int remaining = Math.max(existing == null ? 0 : existing.remainingTicks(), incoming.remainingTicks());
-        this.active.put(EffectKind.VULNERABLE, incoming.withStacks(stacks, remaining));
+        this.active.put(incoming.kind(), incoming.withStacks(stacks, remaining));
+    }
+
+    /** Ends the active {@code kind} and tells whether there was one, for an effect that one hit spends. */
+    public boolean consume(EffectKind kind) {
+        return this.active.remove(kind) != null;
     }
 
     /** Active kinds in enum order, as a snapshot, for UI markers. */
@@ -220,6 +237,7 @@ public final class ActiveEffects {
      * one and a reveal sets it to zero (the lowest set value wins), a vulnerability multiplies damage
      * taken by its stacks, each scorched stack lowers resilience by one and each sickened stack
      * lowers spirit by one. Shields and heals go in as restorative, so the enemy's spirit scales them.
+     * Being exposed or revealed doubles the crit chance taken, once however many apply.
      */
     public void contributeTo(StatAccumulator accumulator) {
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
@@ -237,11 +255,15 @@ public final class ActiveEffects {
                 case HEAL -> accumulator.restoreFlat(EnemyStat.REGENERATION, effect.healPerTick());
                 case INVISIBLE -> accumulator.add(EnemyStat.STEALTH, HIDDEN);
                 case REVEALED -> accumulator.add(EnemyStat.STEALTH, REVEALED);
-                case VULNERABLE -> {
-                    float taken = 1f + VULNERABLE_PER_STACK * effect.stacks();
-                    for (DamageType type : DAMAGE_TYPES) {
-                        accumulator.multiply(EnemyStat.damageTakenFor(type), taken);
-                    }
+                case VULNERABLE -> multiplyDamageTaken(accumulator, 1f + VULNERABLE_PER_STACK * effect.stacks());
+                case PRIORITY -> multiplyDamageTaken(accumulator, PRIORITY_DAMAGE_TAKEN);
+                case RESONATING -> accumulator.multiply(EnemyStat.MAGIC_DAMAGE_TAKEN,
+                        1f + MAGIC_DAMAGE_TAKEN_PER_RESONATING_STACK * effect.stacks());
+                case SUNDERED -> accumulator.addFlat(EnemyStat.ARMOR,
+                        -ARMOR_LOST_PER_SUNDERED_STACK * effect.stacks());
+                case FRACTURED -> accumulator.addFlat(EnemyStat.RESILIENCE,
+                        -RESILIENCE_LOST_PER_FRACTURED_STACK * effect.stacks());
+                case EXPOSED, MARKED -> {
                 }
                 case BURN -> {
                 }
@@ -253,6 +275,15 @@ public final class ActiveEffects {
                 }
             }
         }
+        if (this.active.containsKey(EffectKind.EXPOSED) || this.active.containsKey(EffectKind.REVEALED)) {
+            accumulator.multiply(EnemyStat.CRIT_CHANCE_TAKEN, EXPOSED_CRIT_CHANCE_TAKEN);
+        }
+    }
+
+    private static void multiplyDamageTaken(StatAccumulator accumulator, float taken) {
+        for (DamageType type : DAMAGE_TYPES) {
+            accumulator.multiply(EnemyStat.damageTakenFor(type), taken);
+        }
     }
 
     /** {@link #tick(float)} at neutral spirit. */
@@ -262,28 +293,30 @@ public final class ActiveEffects {
 
     /**
      * Applies one tick of damage-over-time, then counts every duration down and removes what
-     * expired. A decaying level fades instead of counting down, and a stack debuff loses stacks at
-     * a pace {@code spiritFactor} scales ({@code 1} at neutral spirit, {@code 0} when spirit is at
-     * its floor).
+     * expired. A decaying level fades instead of counting down. {@code spiritFactor} ({@code 1} at
+     * neutral spirit, {@code 0} when spirit is at its floor) sets the pace of the stack debuffs a pool
+     * earns; every debuff a tower applies runs at {@code max(MIN_DEBUFF_PACE, spiritFactor)}.
      */
     public void tick(float spiritFactor) {
         List<EffectKind> expired = new ArrayList<>();
         float burnFactor = 1f - BURN_CHILL_DAMPENING * this.chillLevel() / MAX_CHILL;
+        float debuffPace = Math.max(MIN_DEBUFF_PACE, spiritFactor);
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
             EffectKind kind = entry.getKey();
             Effect effect = entry.getValue();
             Optional<Effect> next;
             if (kind.isStackDebuff()) {
-                next = this.decayStacks(effect, spiritFactor);
+                next = this.decayStacks(effect, kind == EffectKind.FRACTURED ? debuffPace : spiritFactor);
             } else if (kind == EffectKind.CHILL) {
-                next = this.tickChill(effect);
+                next = this.tickChill(effect, this.paceSteps(kind, debuffPace));
             } else if (kind.isFuelPool()) {
                 next = this.tickPool(effect, kind == EffectKind.BURN ? burnFactor : 1f);
             } else {
                 if (effect.damagePerTick().amount() > 0) {
                     effect.sink().apply(effect.damagePerTick());
                 }
-                int remaining = effect.remainingTicks() - 1;
+                int steps = kind.isPacedBySpirit() ? this.paceSteps(kind, debuffPace) : 1;
+                int remaining = effect.remainingTicks() - steps;
                 next = remaining <= 0 ? Optional.empty() : Optional.of(effect.withRemainingTicks(remaining));
             }
             if (next.isPresent()) {
@@ -295,26 +328,44 @@ public final class ActiveEffects {
         expired.forEach(this.active::remove);
     }
 
+    /** The whole ticks a paced timer of {@code kind} runs this tick at {@code pace}, carrying the rest over. */
+    private int paceSteps(EffectKind kind, float pace) {
+        float gathered = this.progress[kind.ordinal()] + pace;
+        int steps = (int) gathered;
+        this.progress[kind.ordinal()] = gathered - steps;
+        return steps;
+    }
+
     /** Lets a stack debuff fall one stack each time its spirit-scaled progress fills; ends at no stacks. */
-    private Optional<Effect> decayStacks(Effect debuff, float spiritFactor) {
-        float progress = this.decayProgress.getOrDefault(debuff.kind(), 0f) + spiritFactor;
+    private Optional<Effect> decayStacks(Effect debuff, float pace) {
+        int slot = debuff.kind().ordinal();
+        float gathered = this.progress[slot] + pace;
         int stacks = debuff.stacks();
-        while (progress >= STACK_DECAY_INTERVAL_TICKS && stacks > 0) {
-            progress -= STACK_DECAY_INTERVAL_TICKS;
+        while (gathered >= STACK_DECAY_INTERVAL_TICKS && stacks > 0) {
+            gathered -= STACK_DECAY_INTERVAL_TICKS;
             stacks--;
         }
         if (stacks == 0) {
-            this.decayProgress.remove(debuff.kind());
+            this.progress[slot] = 0f;
             return Optional.empty();
         }
-        this.decayProgress.put(debuff.kind(), progress);
+        this.progress[slot] = gathered;
         return Optional.of(Effect.stackDebuff(debuff.kind(), stacks));
     }
 
-    /** One tick of linear decay on every contribution; ends when all of them have run out. */
-    private Optional<Effect> tickChill(Effect effect) {
+    /** {@code steps} ticks of linear decay on every contribution; ends when all of them have run out. */
+    private Optional<Effect> tickChill(Effect effect, int steps) {
+        if (steps == 0) {
+            return Optional.of(effect);
+        }
         List<FuelContribution> remaining = effect.fuel().stream()
-                .map(FuelContribution::decayedLinearly)
+                .map(contribution -> {
+                    FuelContribution decayed = contribution;
+                    for (int i = 0; i < steps; i++) {
+                        decayed = decayed.decayedLinearly();
+                    }
+                    return decayed;
+                })
                 .filter(c -> c.amount() > 0f)
                 .toList();
         return remaining.isEmpty() ? Optional.empty() : Optional.of(effect.withFuel(remaining, 0f));

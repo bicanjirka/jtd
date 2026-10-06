@@ -14,6 +14,8 @@ public enum EffectCategory {
     DEBUFF("debuff"),
     /** Gives the target back health or absorbs a hit. */
     RESTORATIVE("restorative"),
+    /** Marks the target for the towers that follow up on it. */
+    SPOTTED("spotted"),
     /** Changes whether towers can see the target. */
     STEALTH("stealth");
 
