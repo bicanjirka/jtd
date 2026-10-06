@@ -144,6 +144,10 @@ public class PanelEnemy extends JPanel {
     }
 
     private void mouseOver(int x) {
+        // Zero until the first layout gives the strip a height.
+        if (this.scale == 0) {
+            return;
+        }
         int nr = x / this.scale;
         if (nr < this.enemies.size()) {
             EnemyMob e = this.enemies.get(nr);

@@ -40,7 +40,9 @@ on `quit` or end of input.
 | `click <n>` | Clicks component `n`. |
 | `hover <n> [dx dy]` | Moves the pointer onto component `n` so its hover fires; `dx dy` picks a point inside it, such as a wave-preview slot. |
 | `text <n>` | Prints a text component's full content. Use it on the Info pane instead of a screenshot. |
-| `key <c>` | Types a frame shortcut: `q w e r t y u i` build a tower, `p` pause, `f` speed, `s` next wave; debug `n` skips a wave, `x` spawns the next catalog id, `c` grants credits. |
+| `key <c>` | Presses a key or chord through `Robot`: `q w e r t y u i` build a tower, `p` pause, `f` speed, `s` next wave; `ctrl+shift+d` opens the dev panel; `alt+<letter>` runs a dev panel control (`alt+h` lists them in the Info pane); `enter`, `esc`, `tab`, `space`. Debug `n` skips a wave, `x` spawns the next catalog id, `c` grants credits - only while the dev panel is open. |
+| `type <text>` | Replaces the focused text field's content, such as a dev panel field after `key alt+s`; `key enter` then applies it. |
+| `devlabels` | Prints the dev panel's labels: its status line, the script problem and the pointer and clicked cells. |
 | `boardclick <x> <y>` | Clicks board cell (x, y): places the tower chosen with `key`, or selects a tower. |
 | `clickenemy [n]` | Clicks where the `n`-th alive enemy is now and prints its effects. |
 | `enemies` | One line per enemy: alive index, id, rank, health, board px, effects, fate. |
@@ -77,7 +79,9 @@ EOF
 `java -cp "$CP" PreviewBoard` reads commands the same way: `levels`, `level <n>`,
 `credits <n>`, `lives <n>`, `place <tower> <x> <y>` (a `TowerFactory.Type` name, any case),
 `upgrade <x> <y> <node name>` (buys through the real mechanism, so tick a fight to clear its gate first),
-`spawn <id> [rank]`, `effect <kind> [ticks]` (on every enemy), `wave`, `tick <n>`, `kill`, `render <path>`, `state`, `quit`. `tick` advances
+`spawn <id> [rank]`, `effect <kind> [ticks]` (on every enemy), `wave`, `tick <n>`, `kill`,
+`grid [off]` (the dev cell grid), `hoverplace <tower> <x> <y>` (the placement highlight on a cell),
+`render <path>`, `state`, `quit`. `tick` advances
 the real `GameEngine`, and `render` paints through the real `BoardRenderer` /
 `Java2DFrameRenderer` pipeline. Two spawns with no `tick` between them land on the same pixel.
 

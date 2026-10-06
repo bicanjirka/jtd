@@ -44,7 +44,8 @@ keeps the seam honest.
 
 ## Swing
 
-- Every control is a `HudButton`/`HudToggleButton`, and every border comes from `Hud`. Controls
+- Every control is a `HudButton`/`HudToggleButton`, every text input a `HudTextField` (Swing's
+  basic UI, never the platform's), and every border comes from `Hud`. Controls
   override `paintComponent` without calling `super`, so the look-and-feel paints nothing but its
   listeners still work. The one allowed tweak is a control's foreground (text) colour.
 - Every component is `@ThreadConfined(EVENT_DISPATCH_THREAD)`. Nothing here is touched from tick

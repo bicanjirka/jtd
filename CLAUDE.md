@@ -115,7 +115,8 @@ frame build reads them.
   fresh copy.
 - Catch `Exception`, never `Throwable`/`Error`, and never an unchecked exception as control
   flow (a `NumberFormatException` around a parse is fine). Log or rethrow; never swallow.
-  Unloadable content throws `GameStartupException`, which only `Main` catches.
+  Unloadable content throws `GameStartupException`, which only `Main` catches, except the dev
+  panel's wave-script check, whose input is typed.
 
 ## Tests
 

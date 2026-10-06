@@ -29,8 +29,6 @@ import td.util.ThreadConfined;
 import td.util.Threads;
 import td.wave.WaveProgress;
 
-import javax.swing.AbstractAction;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -40,10 +38,15 @@ import javax.swing.UIManager;
 
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -85,6 +88,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private static final int MENU_HEIGHT = 700;
     /** Credits one press of the debug grant key adds. */
     private static final int DEBUG_CREDIT_GRANT = 1000;
+    private static final KeyStroke DEV_PANEL_KEY = KeyStroke.getKeyStroke(KeyEvent.VK_D,
+            InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
 
     private final LevelCatalog levelCatalog = new BuiltInLevelCatalog();
 
@@ -114,11 +119,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             f - cycle speed
             s - start wave
             m - back to menu
-            ctrl+shift+d - dev panel
-            while it is open:
-            n - skip wave
-            x - spawn next enemy type
-            c - +1000 credits""";
+            ctrl+shift+d - dev panel""";
 
     private final GameLoop gameLoop = new GameLoop(this::doGameTick, this::buildAndPublishFrame);
     /**
@@ -147,6 +148,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private PanelLevelSelect panelLevelSelect;
     private PanelTowerSelector panelTowerSelector;
     private PanelDev panelDev;
+    /** The window's size before the dev panel opened; {@code null} while it is closed. */
+    private Dimension sizeWithoutDevPanel;
     private LevelDefinition currentLevel;
     private JPanel jPanel_board;
 
@@ -179,21 +182,18 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         });
         this.boardOverlays.onBackToMenu(this::requestReturnToMenu);
         this.panelTowerSelector.doInit(this.gameWorld, this);
-        this.panelDev.setDevControls(this.devControls);
+        this.panelDev.setGameWorld(this.gameWorld, this.devControls);
         this.panelDev.onSkipWave(this::debugSkipWave);
         this.panelDev.onJumpToWave(this::debugJumpToWave);
         this.panelDev.onRestart(this::restartLevel);
         this.panelDev.onStep(this::stepOneTick);
         this.panelDev.onResetTower(this::rebuildSelectedTower);
-        // In the focused window, so it works while a dev panel text field has the focus too.
-        this.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
-                KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK), "devPanel");
-        this.getRootPane().getActionMap().put("devPanel", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent evt) {
-                TowerDefense.this.toggleDevPanel();
-            }
-        });
+        this.panelDev.onCellGrid(this.boardRenderer::setCellGridShown);
+        this.panelDev.onInfoText(this::setInfoText);
+        this.panelDev.onReleaseFocus(this::requestFocusInWindow);
+        // A dispatcher, not a key binding: the frame itself usually holds the focus, and a
+        // Window runs no bindings. It also sees keys while a dev panel field has the focus.
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this::dispatchShortcut);
 
         // Same cell as the win/lose overlays so they stack; in a cell of its own the board gets
         // pushed out of view when an overlay appears.
@@ -266,6 +266,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.showEnemyInspection();
         // Cosmetic animation runs on the EDT render cadence, never in tick code.
         this.gameConsole.getWaveInfo().doTick(this.gameTime);
+        if (this.panelDev.isVisible()) {
+            this.panelDev.doTick(this.gameTime);
+        }
         if (!this.painting) {
             // The container, not the board: repainting the board alone paints over the stacked
             // overlay without repainting it.
@@ -310,10 +313,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.engine.loadLevel(level);
         this.contentCardLayout.show(getContentPane(), CARD_GAME);
         this.gameBoard.recalculateBoard(level.width(), level.height());
-        if (this.panelDev.isVisible()) {
-            this.setSize(this.getWidth(), this.getHeight() + this.panelDev.getPreferredSize().height);
-        }
+        this.sizeWithoutDevPanel = null;
         this.panelDev.refresh();
+        this.fitDevPanel();
         this.setLocationRelativeTo(null);
         this.startLevel();
         this.gameTime = 0;
@@ -349,6 +351,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.gameConsole.getWaveInfo().clearWaves();
         this.panelTowerSelector.stopPlacing();
         this.panelDev.setVisible(false);
+        this.boardRenderer.setCellGridShown(false);
+        this.sizeWithoutDevPanel = null;
         this.contentCardLayout.show(getContentPane(), CARD_MENU);
         this.setSize(MENU_WIDTH, MENU_HEIGHT);
         this.setLocationRelativeTo(null);
@@ -415,7 +419,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.panelDev.showMessage(next == 0 ? "No level in play" : "Wave " + next + " is next");
     }
 
-    /** Opens or closes the dev panel, growing or shrinking the window by its height. */
+    /** Opens or closes the dev panel. The cell grid shows only while the panel is open. */
     private void toggleDevPanel() {
         if (!this.levelLoaded) {
             return;
@@ -423,9 +427,62 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         boolean show = !this.panelDev.isVisible();
         this.panelDev.refresh();
         this.panelDev.setVisible(show);
-        int height = this.panelDev.getPreferredSize().height;
-        this.setSize(this.getWidth(), this.getHeight() + (show ? height : -height));
+        this.boardRenderer.setCellGridShown(show && this.panelDev.isCellGridOn());
+        if (!show) {
+            this.requestFocusInWindow();
+        }
+        this.fitDevPanel();
+    }
+
+    /**
+     * Grows the window to fit the open dev panel, wider too when the board is narrower than the
+     * panel, and keeps it on screen; closing the panel restores the size it had.
+     * <p>
+     * At least the game card's preferred size: below it, {@link GridBagLayout} falls back to
+     * minimum sizes and the board collapses.
+     */
+    private void fitDevPanel() {
+        if (this.panelDev.isVisible()) {
+            if (this.sizeWithoutDevPanel == null) {
+                this.sizeWithoutDevPanel = this.getSize();
+            }
+            Dimension game = this.jPanel_game.getPreferredSize();
+            Insets frame = this.getInsets();
+            this.setSize(Math.max(this.sizeWithoutDevPanel.width, game.width + frame.left + frame.right),
+                    Math.max(this.sizeWithoutDevPanel.height + this.panelDev.getPreferredSize().height,
+                            game.height + frame.top + frame.bottom));
+        } else if (this.sizeWithoutDevPanel != null) {
+            this.setSize(this.sizeWithoutDevPanel);
+            this.sizeWithoutDevPanel = null;
+        }
+        this.keepOnScreen();
         this.validate();
+    }
+
+    private void keepOnScreen() {
+        GraphicsConfiguration screen = this.getGraphicsConfiguration();
+        Rectangle bounds = screen.getBounds();
+        Insets taskbar = Toolkit.getDefaultToolkit().getScreenInsets(screen);
+        int bottom = bounds.y + bounds.height - taskbar.bottom;
+        int y = Math.max(bounds.y + taskbar.top, Math.min(this.getY(), bottom - this.getHeight()));
+        this.setLocation(this.getX(), y);
+    }
+
+    /**
+     * Ctrl+Shift+D anywhere in this window, and the dev panel's own shortcuts while it shows.
+     *
+     * @return whether the key was used up
+     */
+    private boolean dispatchShortcut(KeyEvent evt) {
+        if (evt.getID() != KeyEvent.KEY_PRESSED || !this.isFocused()) {
+            return false;
+        }
+        KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(evt);
+        if (stroke.equals(DEV_PANEL_KEY)) {
+            this.toggleDevPanel();
+            return true;
+        }
+        return this.panelDev.runShortcut(stroke);
     }
 
     private void restartLevel() {
@@ -573,10 +630,15 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (!this.levelLoaded) {
             return;
         }
+        this.requestFocusInWindow();
         this.unSelectTower();
         boolean wasPlacing = this.engine.isPlacingTower();
         int boardX = evt.getX() - this.gameBoard.getX();
         int boardY = evt.getY() - this.gameBoard.getY();
+        BoardGeometry board = this.gameWorld.getBoard();
+        if (board.containsPixel(boardX, boardY)) {
+            this.panelDev.showClickedCell(board.cellX(boardX), board.cellY(boardY));
+        }
         Optional<Tower> clicked = this.engine.mouseClicked(boardX, boardY);
         clicked.ifPresent(this.gameConsole::selectTower);
         if (clicked.isEmpty() && !wasPlacing) {
@@ -604,9 +666,20 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (!this.levelLoaded) {
             return;
         }
-        this.requestFocusInWindow();
+        // Not away from a dev panel field: glancing at the board mid-typing must not eat the text.
+        if (!this.panelDev.holdsFocus()) {
+            this.requestFocusInWindow();
+        }
+        int boardX = evt.getX() - this.gameBoard.getX();
+        int boardY = evt.getY() - this.gameBoard.getY();
         if (this.engine.isPlacingTower()) {
-            this.engine.highlightCell(evt.getX() - this.gameBoard.getX(), evt.getY() - this.gameBoard.getY());
+            this.engine.highlightCell(boardX, boardY);
+        }
+        BoardGeometry board = this.gameWorld.getBoard();
+        if (board.containsPixel(boardX, boardY)) {
+            this.panelDev.showPointerCell(board.cellX(boardX), board.cellY(boardY));
+        } else {
+            this.panelDev.clearPointerCell();
         }
     }
 
@@ -686,7 +759,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         jPanel_board = new JPanel();
         jPanel_game = new JPanel();
         panelTowerSelector = new PanelTowerSelector();
-        panelDev = new PanelDev();
+        panelDev = new PanelDev(this::showInfoSheet);
         panelDev.setVisible(false);
         panelLevelSelect = new PanelLevelSelect(this.levelCatalog.levels(), this::startSelectedLevel);
 
@@ -703,6 +776,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         jPanel_board.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
                 jPanel_boardMouseClicked(evt);
+            }
+
+            public void mouseExited(MouseEvent evt) {
+                panelDev.clearPointerCell();
             }
         });
         jPanel_board.addMouseMotionListener(new MouseMotionAdapter() {
@@ -781,7 +858,11 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setSpeed(TickSpeed.SUPER_FAST);
     }
 
+    /** An Alt or Ctrl chord also types its letter; that letter is not a bare shortcut. */
     private void formKeyTyped(KeyEvent evt) {
+        if (evt.isAltDown() || evt.isControlDown()) {
+            return;
+        }
         this.keyTyped(evt.getKeyChar());
     }
 

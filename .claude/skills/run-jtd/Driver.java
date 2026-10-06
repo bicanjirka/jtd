@@ -89,6 +89,8 @@ public class Driver {
             case "click" -> click(Integer.parseInt(rest.trim()));
             case "hover" -> hover(rest);
             case "key" -> typeKey(rest.trim());
+            case "type" -> typeText(rest);
+            case "devlabels" -> devLabels();
             case "state" -> state();
             case "boardclick" -> boardClick(rest.trim());
             case "clickenemy" -> clickEnemy(rest.trim());
@@ -364,14 +366,67 @@ public class Driver {
         System.out.println("OK hover " + index + " (robot at " + cx + "," + cy + ")");
     }
 
-    // Simulates a real keypress for jTD's JFrame-level keyboard shortcuts (q/w/e/r/t build,
-    // p pause, f speed, s next wave) - these are only wired via a KeyListener on the frame,
-    // not buttons, so this goes through Robot rather than findClickables().
-    private static void typeKey(String key) {
-        int code = KeyEvent.getExtendedKeyCodeForChar(key.charAt(0));
-        robot.keyPress(code);
-        robot.keyRelease(code);
-        System.out.println("OK key " + key);
+    // Simulates a real keypress through Robot, since the frame's shortcuts are a KeyListener and
+    // key bindings, not buttons. A chord joins modifiers with '+' (alt+c, ctrl+shift+d); named keys
+    // are enter, esc, tab and space.
+    private static void typeKey(String chord) throws InterruptedException {
+        String[] parts = chord.toLowerCase().split("[+]");
+        List<Integer> codes = new ArrayList<>();
+        for (String part : parts) {
+            codes.add(switch (part) {
+                case "ctrl" -> KeyEvent.VK_CONTROL;
+                case "shift" -> KeyEvent.VK_SHIFT;
+                case "alt" -> KeyEvent.VK_ALT;
+                case "enter" -> KeyEvent.VK_ENTER;
+                case "esc" -> KeyEvent.VK_ESCAPE;
+                case "tab" -> KeyEvent.VK_TAB;
+                case "space" -> KeyEvent.VK_SPACE;
+                default -> KeyEvent.getExtendedKeyCodeForChar(part.charAt(0));
+            });
+        }
+        for (int code : codes) {
+            robot.keyPress(code);
+        }
+        for (int i = codes.size() - 1; i >= 0; i--) {
+            robot.keyRelease(codes.get(i));
+        }
+        Thread.sleep(80);
+        System.out.println("OK key " + chord);
+    }
+
+    // Prints every non-blank label in the dev panel: its status, problem and cell lines.
+    private static void devLabels() throws Exception {
+        Field panelField = TowerDefense.class.getDeclaredField("panelDev");
+        panelField.setAccessible(true);
+        Container panel = (Container) panelField.get(game);
+        List<String> texts = new ArrayList<>();
+        onEventDispatchThread(() -> collectLabels(panel, texts));
+        texts.forEach(text -> System.out.println("  " + text));
+        System.out.println("OK devlabels");
+    }
+
+    private static void collectLabels(Container container, List<String> texts) {
+        for (Component child : container.getComponents()) {
+            if (child instanceof JLabel label && label.getText() != null && !label.getText().isBlank()) {
+                texts.add(label.getText());
+            } else if (child instanceof Container nested) {
+                collectLabels(nested, texts);
+            }
+        }
+    }
+
+    // Replaces the focused text field's content, as if typed after selecting all.
+    private static void typeText(String text) throws Exception {
+        onEventDispatchThread(() -> {
+            if (java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                    .getFocusOwner() instanceof javax.swing.text.JTextComponent field) {
+                field.setText(text);
+                System.out.println("OK type " + text);
+            } else {
+                System.out.println("ERROR: no text field has the focus");
+            }
+        });
+        Thread.sleep(80);
     }
 
     // Reflects into TowerDefense's private engine field rather than adding test-only public
