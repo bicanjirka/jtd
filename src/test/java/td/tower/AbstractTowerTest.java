@@ -10,6 +10,7 @@ import td.enemy.Rank;
 import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
 import td.tower.buff.TowerBuff;
+import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
@@ -267,6 +268,21 @@ class AbstractTowerTest {
 
         assertThat(chosenAgain).isFalse();
         assertThat(tower.upgrades().tip(UpgradeSlot.HEAD)).contains(first);
+    }
+
+    @Test
+    void buyingTheMemberAChoiceLockedOutIsRejectedAndSpendsNothing() {
+        context.economy().startEconomy(100, 5);
+        UpgradeNode chosen = UpgradeNode.of("chosen", UpgradeSlot.HEAD, "Chosen", 10);
+        UpgradeNode rival = UpgradeNode.of("rival", UpgradeSlot.HEAD, "Rival", 10);
+        FakeTower tower = FakeTower.offering(context, 0, 0,
+                UpgradeTree.of(chosen, rival).withChoice(ExclusiveChoice.oneOf(chosen, rival)));
+        tower.buyUpgrade(chosen);
+
+        boolean boughtRival = tower.buyUpgrade(rival);
+
+        assertThat(boughtRival).isFalse();
+        assertThat(context.economy().getCredits()).isEqualTo(90);
     }
 
     @Test

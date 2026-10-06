@@ -20,4 +20,9 @@ final class AlwaysCondition implements UpgradeCondition {
     public String describe() {
         return "money only";
     }
+
+    @Override
+    public UpgradeCondition and(UpgradeCondition other) {
+        return other;
+    }
 }
