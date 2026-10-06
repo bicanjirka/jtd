@@ -10,7 +10,20 @@ this file is the single place to look for outstanding design/feature gaps.
 
 ## Feature request implementation order
 
-Every feature request has shipped (see each doc's own status line) except the draft
+The tower rework, in this order (each needs the ones before it):
+
+1. `FEATURE-tower-progression.md`: Attune -> Awaken -> Transcendent, level IV, the extra head
+   node, two special slots, the exclusive-choice mark, XP replacing performance gates, price rules.
+2. `FEATURE-sniper-and-sonar.md`: crit per tower, the first debuffs and the effect rules every
+   tower follows.
+3. `FEATURE-splash-stormcaller-and-hexer.md`: Dazed and the hex pool.
+4. `FEATURE-pulse-and-seeker.md`: Silenced, Anchored, Unraveled, Brittle, the nest.
+5. `FEATURE-ground-zones-mortar-and-cinder.md`: ground zones and the fire-and-ice rules.
+6. `FEATURE-aura-and-balance-pass.md`: the Aura, harness pricing, display names, the README.
+
+Enemies come after, from `docs/ideas/enemies-brainstorm.md`.
+
+Every earlier feature request has shipped (see each doc's own status line) except the draft
 `FEATURE-effect-interactions.md`, whose scope has landed in part (vulnerable, poison, revealed,
 freeze-burn, universal freeze diminishing returns) and is closed out in its own status line.
 
