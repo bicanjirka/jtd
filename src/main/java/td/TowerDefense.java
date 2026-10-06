@@ -2,6 +2,7 @@ package td;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import td.board.BoardGeometry;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.level.BuiltInLevelCatalog;
@@ -15,6 +16,7 @@ import td.ui.BoardRenderer;
 import td.ui.GameBoard;
 import td.ui.Hud;
 import td.ui.Java2DFrameRenderer;
+import td.ui.PanelDev;
 import td.ui.PanelGameConsole;
 import td.ui.PanelLevelSelect;
 import td.ui.PanelTowerSelector;
@@ -27,9 +29,12 @@ import td.util.ThreadConfined;
 import td.util.Threads;
 import td.wave.WaveProgress;
 
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
@@ -38,6 +43,8 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -83,6 +90,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     private final GameEngine engine;
     private final GameWorld gameWorld;
+    private final DevControls devControls;
     private final GameBoard gameBoard;
     private final BoardRenderer boardRenderer;
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
@@ -105,7 +113,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             p - pause
             f - cycle speed
             s - start wave
-            m - back to menu""";
+            m - back to menu
+            ctrl+shift+d - dev panel
+            while it is open:
+            n - skip wave
+            x - spawn next enemy type
+            c - +1000 credits""";
 
     private final GameLoop gameLoop = new GameLoop(this::doGameTick, this::buildAndPublishFrame);
     /**
@@ -133,6 +146,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private JPanel jPanel_game;
     private PanelLevelSelect panelLevelSelect;
     private PanelTowerSelector panelTowerSelector;
+    private PanelDev panelDev;
+    private LevelDefinition currentLevel;
     private JPanel jPanel_board;
 
     /**
@@ -147,8 +162,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setFocusable(true);
         this.engine = new GameEngine(this);
         this.gameWorld = this.engine.getGameWorld();
+        this.devControls = new DevControls(this.gameWorld);
         this.boardRenderer = new BoardRenderer(this.gameWorld);
         this.gameWorld.economy().addEconomyListener(this);
+        this.gameWorld.economy().addEconomyListener(this.devControls);
         this.gameBoard = new GameBoard(this, this.gameWorld);
         initComponents();
         this.gameConsole.setGameWorld(this.gameWorld);
@@ -162,6 +179,21 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         });
         this.boardOverlays.onBackToMenu(this::requestReturnToMenu);
         this.panelTowerSelector.doInit(this.gameWorld, this);
+        this.panelDev.setDevControls(this.devControls);
+        this.panelDev.onSkipWave(this::debugSkipWave);
+        this.panelDev.onJumpToWave(this::debugJumpToWave);
+        this.panelDev.onRestart(this::restartLevel);
+        this.panelDev.onStep(this::stepOneTick);
+        this.panelDev.onResetTower(this::rebuildSelectedTower);
+        // In the focused window, so it works while a dev panel text field has the focus too.
+        this.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+                KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK), "devPanel");
+        this.getRootPane().getActionMap().put("devPanel", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent evt) {
+                TowerDefense.this.toggleDevPanel();
+            }
+        });
 
         // Same cell as the win/lose overlays so they stack; in a cell of its own the board gets
         // pushed out of view when an overlay appears.
@@ -217,6 +249,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      * Keeps running after the game ends, so the final board can still be inspected.
      */
     private void buildAndPublishFrame() {
+        this.devControls.runPending();
         int time = this.gameTime;
         this.latestFrame = this.boardRenderer.buildFrame(time,
                 this.gameLoop.tickInterpolationAlpha(), this.gameLoop.animationSeconds(),
@@ -268,6 +301,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     private void installLevel(LevelDefinition level) {
+        this.currentLevel = level;
         this.gameConsole.setLevelEnded(false);
         this.boardOverlays.reset();
         this.unSelectTower();
@@ -276,6 +310,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.engine.loadLevel(level);
         this.contentCardLayout.show(getContentPane(), CARD_GAME);
         this.gameBoard.recalculateBoard(level.width(), level.height());
+        if (this.panelDev.isVisible()) {
+            this.setSize(this.getWidth(), this.getHeight() + this.panelDev.getPreferredSize().height);
+        }
+        this.panelDev.refresh();
         this.setLocationRelativeTo(null);
         this.startLevel();
         this.gameTime = 0;
@@ -310,6 +348,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.unSelectTower();
         this.gameConsole.getWaveInfo().clearWaves();
         this.panelTowerSelector.stopPlacing();
+        this.panelDev.setVisible(false);
         this.contentCardLayout.show(getContentPane(), CARD_MENU);
         this.setSize(MENU_WIDTH, MENU_HEIGHT);
         this.setLocationRelativeTo(null);
@@ -366,6 +405,64 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.updateInfo();
         this.syncTransportButtons();
         this.showOutcome(this.engine.outcome());
+    }
+
+    private void debugJumpToWave(int number) {
+        int next = this.engine.debugJumpToWave(number);
+        this.setWavePreview();
+        this.updateInfo();
+        this.syncTransportButtons();
+        this.panelDev.showMessage(next == 0 ? "No level in play" : "Wave " + next + " is next");
+    }
+
+    /** Opens or closes the dev panel, growing or shrinking the window by its height. */
+    private void toggleDevPanel() {
+        if (!this.levelLoaded) {
+            return;
+        }
+        boolean show = !this.panelDev.isVisible();
+        this.panelDev.refresh();
+        this.panelDev.setVisible(show);
+        int height = this.panelDev.getPreferredSize().height;
+        this.setSize(this.getWidth(), this.getHeight() + (show ? height : -height));
+        this.validate();
+    }
+
+    private void restartLevel() {
+        if (this.currentLevel != null) {
+            this.startSelectedLevel(this.currentLevel);
+        }
+    }
+
+    /** Pauses if needed, then runs exactly one tick. */
+    private void stepOneTick() {
+        if (this.currentSpeed != TickSpeed.PAUSED) {
+            this.setSpeed(TickSpeed.PAUSED);
+        }
+        this.doGameTick();
+    }
+
+    /**
+     * Sells the selected tower and builds a fresh one of its type on its cell, through the same
+     * input path a player uses, then selects it: its upgrades and XP start over.
+     */
+    private void rebuildSelectedTower() {
+        Optional<Tower> selected = this.devControls.selectedTower();
+        if (selected.isEmpty()) {
+            this.panelDev.showMessage("Select a tower first");
+            return;
+        }
+        Tower tower = selected.get();
+        BoardGeometry board = this.gameWorld.getBoard();
+        int scale = board.scale();
+        int boardX = board.cellX(tower.getX()) * scale + scale / 2;
+        int boardY = board.cellY(tower.getY()) * scale + scale / 2;
+        this.unSelectTower();
+        this.gameWorld.towers().sell(tower);
+        this.engine.startPlacing(tower.getType(), 0f);
+        this.engine.mouseClicked(boardX, boardY);
+        this.engine.mouseClicked(boardX, boardY).ifPresent(this.gameConsole::selectTower);
+        this.panelDev.showMessage("Rebuilt fresh: upgrades and XP reset");
     }
 
     private void updateInfo() {
@@ -542,17 +639,30 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             case 'p' -> this.togglePause();
             case 'f' -> this.cycleSpeed();
             case 's' -> this.nextWave();
-            case 'n' -> this.debugSkipWave();
-            case 'x' -> this.setInfoText(this.engine.debugSpawnNextCatalogEnemy()
-                    .map(id -> "Debug spawned: " + id)
-                    .orElse("Debug spawn needs a level loaded first"));
-            case 'c' -> this.engine.debugGrantCredits(DEBUG_CREDIT_GRANT);
+            case 'n', 'x', 'c' -> {
+                if (this.panelDev.isVisible()) {
+                    this.debugKeyTyped(key);
+                }
+            }
             case KeyEvent.VK_ESCAPE -> {
                 if (this.engine.isPlacingTower()) {
                     this.engine.cancelPlacing();
                     this.panelTowerSelector.stopPlacing();
                 }
             }
+            default -> {
+            }
+        }
+    }
+
+    /** The debug keys, live only while the dev panel is open. */
+    private void debugKeyTyped(char key) {
+        switch (key) {
+            case 'n' -> this.debugSkipWave();
+            case 'x' -> this.setInfoText(this.engine.debugSpawnNextCatalogEnemy()
+                    .map(id -> "Debug spawned: " + id)
+                    .orElse("Debug spawn needs a level loaded first"));
+            case 'c' -> this.engine.debugGrantCredits(DEBUG_CREDIT_GRANT);
             default -> {
             }
         }
@@ -576,6 +686,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         jPanel_board = new JPanel();
         jPanel_game = new JPanel();
         panelTowerSelector = new PanelTowerSelector();
+        panelDev = new PanelDev();
+        panelDev.setVisible(false);
         panelLevelSelect = new PanelLevelSelect(this.levelCatalog.levels(), this::startSelectedLevel);
 
         contentCardLayout = new CardLayout();
@@ -618,7 +730,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.gridheight = 3;
         gridBagConstraints.fill = GridBagConstraints.VERTICAL;
         gridBagConstraints.anchor = GridBagConstraints.PAGE_END;
         gridBagConstraints.weighty = 1.0;
@@ -626,10 +738,18 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 2;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = GridBagConstraints.PAGE_END;
         jPanel_game.add(panelTowerSelector, gridBagConstraints);
+
+        // Between the board and the tower buttons, but added last, so the run-jtd Driver's
+        // component indices for everything else stay as they were.
+        gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        jPanel_game.add(panelDev, gridBagConstraints);
 
         getContentPane().add(panelLevelSelect, CARD_MENU);
         getContentPane().add(jPanel_game, CARD_GAME);
