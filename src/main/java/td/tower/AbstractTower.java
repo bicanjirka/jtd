@@ -10,6 +10,7 @@ import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
 import td.stat.DisruptionPenalty;
 import td.tower.buff.TowerBuff;
+import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
@@ -280,6 +281,23 @@ public abstract class AbstractTower implements Tower {
     /** Runs on the game-loop thread, so the rank-up is stamped with this tower's own tick. */
     public void earnXp(int bounty) {
         this.experience.earn(bounty, this.currentTick);
+    }
+
+    /**
+     * Counts one deed of this tower's purpose, done by an attack: further calls in the same tick
+     * (one per enemy the attack hit) don't add. Counting starts once Attune is owned.
+     */
+    protected void countDeedOfAttack() {
+        if (this.upgrades.owns(StandardBaseSlot.ATTUNE_ID)) {
+            this.experience.countDeedOfAttack(this.currentTick);
+        }
+    }
+
+    /** Counts one deed done over time, at most once a second. Counting starts once Attune is owned. */
+    protected void countDeedOfSecond() {
+        if (this.upgrades.owns(StandardBaseSlot.ATTUNE_ID)) {
+            this.experience.countDeedOfSecond(this.currentTick);
+        }
     }
 
     public boolean reached(EnemyWalk walk) {
