@@ -55,9 +55,13 @@ public record UpgradeNode(String id, UpgradeSlot slot, String displayName, int p
                 this.gate, extraEffect, this.xp);
     }
 
-    /** Whether {@code tower} has this node's XP and meets its gate: price aside, it may buy it. */
+    /**
+     * Whether {@code tower} has this node's XP and meets its gate, or playtesting ignores both:
+     * price aside, it may buy it.
+     */
     public boolean gateMet(Tower tower, GameWorld context) {
-        return this.xpMet(tower) && this.gate.isSatisfied(tower, context);
+        return context.playtestRules().upgradeGatesIgnored()
+                || (this.xpMet(tower) && this.gate.isSatisfied(tower, context));
     }
 
     public boolean xpMet(Tower tower) {

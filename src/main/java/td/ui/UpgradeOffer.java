@@ -12,11 +12,13 @@ import java.util.List;
  * @param number            the key that buys it
  * @param xpProgress        progress toward its XP, e.g. {@code "XP 120/150"}
  * @param conditionProgress progress toward its gate condition, e.g. {@code "1/2 nearby towers"}
+ * @param gateMet           its XP and gate condition both met (or ignored while playtesting)
  * @param rivals            the other members of its exclusive choice on offer, empty outside a choice
  * @param lastPick          whether buying it locks its rivals out for good
  */
 record UpgradeOffer(UpgradeNode node, int number, boolean xpMet, String xpProgress, boolean conditionMet,
-                    String conditionProgress, boolean affordable, List<UpgradeNode> rivals, boolean lastPick) {
+                    String conditionProgress, boolean gateMet, boolean affordable, List<UpgradeNode> rivals,
+                    boolean lastPick) {
 
     UpgradeOffer {
         rivals = List.copyOf(rivals);
@@ -27,13 +29,8 @@ record UpgradeOffer(UpgradeNode node, int number, boolean xpMet, String xpProgre
         UpgradeNode node = offered.get(index);
         return new UpgradeOffer(node, index + 1, node.xpMet(tower), node.xpProgress(tower),
                 node.gate().isSatisfied(tower, world), node.gate().progress(tower, world),
-                world.economy().canPay(node.price()), tower.upgradeTree().rivalsOnOffer(node, offered),
+                node.gateMet(tower, world), world.economy().canPay(node.price()), tower.upgradeTree().rivalsOnOffer(node, offered),
                 tower.upgradeTree().isLastPick(node, tower.upgrades()));
-    }
-
-    /** Its XP and its gate condition both met: price aside, it can be bought. */
-    boolean gateMet() {
-        return this.xpMet && this.conditionMet;
     }
 
     /** What still stands between the tower and this node, XP first. */
