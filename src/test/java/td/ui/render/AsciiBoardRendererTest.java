@@ -13,7 +13,7 @@ class AsciiBoardRendererTest {
 
     private static RenderFrame frameOf(List<EnemyDraw> enemies, List<TowerSpriteDraw> towers) {
         return new RenderFrame(SCALE, 3 * SCALE - 1, 2 * SCALE - 1, List.of(), enemies, List.of(), List.of(), towers,
-                List.of(), List.of(), List.of(), List.of(), List.of(), Optional.empty());
+                List.of(), List.of(), List.of(), List.of(), List.of(), Optional.empty(), Optional.empty());
     }
 
     @Test

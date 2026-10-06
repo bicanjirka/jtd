@@ -6,6 +6,7 @@ import td.enemy.EnemyMob;
 import td.projectile.Projectile;
 import td.tower.Tower;
 import td.ui.render.CellDraw;
+import td.ui.render.CellGridDraw;
 import td.ui.render.PathMarkerDraw;
 import td.ui.render.RenderFrame;
 import td.util.GameWorld;
@@ -27,8 +28,15 @@ public final class BoardRenderer {
 
     private final GameWorld world;
 
+    private volatile boolean cellGridShown;
+
     public BoardRenderer(GameWorld world) {
         this.world = world;
+    }
+
+    /** Set from the EDT; the next frame built carries the grid, or drops it. */
+    public void setCellGridShown(boolean shown) {
+        this.cellGridShown = shown;
     }
 
     public RenderFrame buildFrame(int gameTime, double interpolationAlpha, double animationSeconds) {
@@ -77,6 +85,20 @@ public final class BoardRenderer {
                 cells, enemyFrameBuilder.build(), enemyFrameBuilder.buildMarkers(), enemyFrameBuilder.buildCritSparks(),
                 spriteFrameBuilder.build(), spriteFrameBuilder.buildHeads(),
                 effectFrameBuilder.build(), projectileFrameBuilder.build(), pathMarkers,
-                enemyFrameBuilder.buildOverlays(), inspection.map(EnemyStatText::live));
+                enemyFrameBuilder.buildOverlays(), inspection.map(EnemyStatText::live), this.cellGrid(level));
+    }
+
+    /** Blocked means unbuildable with no tower on it: a path covers the cell. */
+    private Optional<CellGridDraw> cellGrid(LoadedLevel level) {
+        if (!this.cellGridShown) {
+            return Optional.empty();
+        }
+        List<CellGridDraw.BlockedCell> blocked = new ArrayList<>();
+        level.cells().forEach(cell -> {
+            if (!cell.buildable() && !cell.hasTower()) {
+                blocked.add(new CellGridDraw.BlockedCell(cell.getX(), cell.getY()));
+            }
+        });
+        return Optional.of(new CellGridDraw(blocked));
     }
 }
