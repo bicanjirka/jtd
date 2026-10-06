@@ -13,6 +13,7 @@ final class RecordingShotActions implements ShotActions {
     final List<EnemyMob> executed = new ArrayList<>();
     final List<EnemyMob> vulnerable = new ArrayList<>();
     final List<EnemyMob> sundered = new ArrayList<>();
+    final List<EnemyMob> ricochets = new ArrayList<>();
     boolean executionKills = true;
 
     @Override
@@ -29,6 +30,11 @@ final class RecordingShotActions implements ShotActions {
     public boolean execute(EnemyMob target) {
         this.executed.add(target);
         return this.executionKills;
+    }
+
+    @Override
+    public void ricochet(EnemyMob from, int bounces, float share, float reachCells) {
+        this.ricochets.add(from);
     }
 
     @Override

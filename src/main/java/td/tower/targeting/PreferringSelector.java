@@ -26,6 +26,11 @@ public final class PreferringSelector implements TargetSelector {
         return new PreferringSelector(enemy -> enemy.hasEffect(EffectKind.PRIORITY), inner);
     }
 
+    /** Aims at a frozen enemy first. */
+    public static PreferringSelector frozenFirst(TargetSelector inner) {
+        return new PreferringSelector(enemy -> enemy.hasEffect(EffectKind.FREEZE), inner);
+    }
+
     @Override
     public Optional<EnemyMob> selectFrom(List<EnemyMob> candidates) {
         List<EnemyMob> favoured = candidates.stream().filter(this.preferred).toList();

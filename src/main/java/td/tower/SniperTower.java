@@ -10,29 +10,38 @@ import td.tower.sniper.AimLock;
 import td.tower.sniper.AimRules;
 import td.tower.sniper.ArmorPiercePerk;
 import td.tower.sniper.CleanShotPerk;
+import td.tower.sniper.CritStreakPerk;
 import td.tower.sniper.ExecutionerPerk;
 import td.tower.sniper.FifthShotPerk;
 import td.tower.sniper.FrenzyPerk;
+import td.tower.sniper.HeadhunterPerk;
 import td.tower.sniper.HollowPointPerk;
+import td.tower.sniper.LongShotPerk;
 import td.tower.sniper.MomentumPerk;
 import td.tower.sniper.QuickScopePerk;
 import td.tower.sniper.RailgunPerk;
+import td.tower.sniper.RicochetPerk;
+import td.tower.sniper.ShatterShotPerk;
 import td.tower.sniper.ShotActions;
 import td.tower.sniper.ShotContext;
 import td.tower.sniper.ShotResult;
+import td.tower.sniper.SilverRoundsPerk;
+import td.tower.sniper.SniperAim;
 import td.tower.sniper.SniperPerk;
 import td.tower.sniper.SniperShot;
 import td.tower.sniper.SniperTempo;
+import td.tower.sniper.SpotterUplinkPerk;
 import td.tower.sniper.SteadyAimPerk;
 import td.tower.sniper.SteadyAimStacksPerk;
 import td.tower.sniper.SteadyTempoPerk;
 import td.tower.sniper.SunderRoundsPerk;
 import td.tower.sniper.UnbrokenAimPerk;
+import td.tower.sniper.Viewpoint;
 import td.tower.sniper.WeakSpotPerk;
 import td.tower.targeting.BeyondRadiusTargetQuery;
 import td.tower.targeting.FurthestAlongPathSelector;
-import td.tower.targeting.HighestHealthSelector;
 import td.tower.targeting.InRangeTargetQuery;
+import td.tower.targeting.NearestSelector;
 import td.tower.targeting.OnSegmentTargetQuery;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.TargetQuery;
@@ -42,7 +51,6 @@ import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
 import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
@@ -51,12 +59,13 @@ import td.util.ThreadConfined;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
  * The patient single-target tower: it gets better the longer it stays on one enemy. It fires at the
- * visible enemy in range furthest along the path; any {@code SPECIAL} upgrade switches it to the
- * enemy with the most health. The turret turns at a capped rate and holds its heading when idle.
+ * visible enemy in range furthest along the path; the first special it owns decides whom it aims at
+ * instead. The turret turns at a capped rate and holds its heading when idle.
  * <p>
  * What each owned node does lives in a {@link SniperPerk}: the tower shapes every shot through them
  * and lets them react to how it landed.
@@ -135,24 +144,57 @@ public final class SniperTower extends AbstractTower {
             "Sunder Rounds", PRICE)
             .withExtraEffect("every crit adds 1 Sundered")
             .after(MARKSMANS_EYE_3);
+    private static final UpgradeNode TRADECRAFT_1 = UpgradeTier.EXTRA_1.node("sniper.extra.tradecraft.1",
+            "Tradecraft", PRICE)
+            .withExtraEffect("a crit makes the next crit deal +25% crit damage, two in a row +50%, no further");
+    private static final UpgradeNode TRADECRAFT_2 = UpgradeTier.EXTRA_2.node("sniper.extra.tradecraft.2",
+            "Tradecraft II", PRICE)
+            .withExtraEffect("+25% damage against targets past two thirds of its range")
+            .after(TRADECRAFT_1);
+    private static final UpgradeNode SILVER_ROUNDS = UpgradeTier.EXTRA_3.node("sniper.extra.tradecraft.3",
+            "Silver Rounds", PRICE)
+            .withExtraEffect("every 3rd shot is magic with +25% magic penetration; it keeps the crit streak")
+            .after(TRADECRAFT_2);
+    private static final UpgradeNode SPOTTER_UPLINK = UpgradeTier.EXTRA_4.node("sniper.extra.tradecraft.4",
+            "Spotter Uplink", PRICE)
+            .withExtraEffect("may shoot Marked or Revealed enemies within twice its range")
+            .after(SILVER_ROUNDS);
+    private static final UpgradeNode MOMENTUM = UpgradeTier.SPECIAL.node("sniper.special.momentum", "Momentum", PRICE)
+            .withExtraEffect("a crit charges the next shot to x5 damage that ignores armor and plating; a kill grants "
+                    + "+100% fire rate for 5s; aims at the highest rank")
+            .after(FOCUSED_OPTICS_1);
+    private static final UpgradeNode RICOCHET = UpgradeTier.SPECIAL.node("sniper.special.ricochet", "Ricochet", PRICE)
+            .withExtraEffect("a crit bounces to the nearest enemy within 1.5 cells for 60%, up to 3 bounces, each "
+                    + "can crit; aims at the enemy with most neighbours")
+            .after(FOCUSED_OPTICS_1);
+    private static final UpgradeNode HEADHUNTER = UpgradeTier.SPECIAL.node("sniper.special.headhunter", "Headhunter",
+            PRICE)
+            .withExtraEffect("+40% damage against Elite and Boss rank; aims at the highest rank")
+            .after(FOCUSED_OPTICS_1);
     private static final UpgradeNode HOLLOW_POINT = UpgradeTier.SPECIAL.node("sniper.special.hollow_point",
             "Hollow Point", PRICE)
-            .withExtraEffect("crits apply Vulnerable, +15% damage taken, stacks x3");
+            .withExtraEffect("crits apply Vulnerable, +15% damage taken, stacks x3; aims at the most health")
+            .after(MARKSMANS_EYE_1);
     private static final UpgradeNode FIFTH_SHOT = UpgradeTier.SPECIAL.node("sniper.special.fifth_shot",
             "Fifth Shot", PRICE)
-            .withExtraEffect("every 5th shot is a guaranteed crit, and its crits deal 250%");
-    private static final UpgradeNode MOMENTUM = UpgradeTier.SPECIAL.node("sniper.special.momentum", "Momentum", PRICE)
-            .withExtraEffect("post-crit shot deals 500% and ignores armor and plating; a kill grants +100% fire "
-                    + "rate for 5s");
+            .withExtraEffect("every 5th shot is a guaranteed crit with +50% crit damage; aims at the most health")
+            .after(MARKSMANS_EYE_1);
+    private static final UpgradeNode SHATTER_SHOT = UpgradeTier.SPECIAL.node("sniper.special.shatter_shot",
+            "Shatter Shot", PRICE)
+            .withExtraEffect("crits on a frozen enemy deal +50% crit damage; aims at a frozen enemy first")
+            .after(MARKSMANS_EYE_1);
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, FOCUSED_OPTICS_3,
             MARKSMANS_EYE_3))
             .with(FOCUSED_OPTICS_1, FOCUSED_OPTICS_2, FOCUSED_OPTICS_3, RAILGUN, EXECUTIONER, MARKSMANS_EYE_1,
-                    MARKSMANS_EYE_2, MARKSMANS_EYE_3, UNBROKEN_AIM, SUNDER_ROUNDS, HOLLOW_POINT, FIFTH_SHOT, MOMENTUM)
+                    MARKSMANS_EYE_2, MARKSMANS_EYE_3, UNBROKEN_AIM, SUNDER_ROUNDS, TRADECRAFT_1, TRADECRAFT_2,
+                    SILVER_ROUNDS, SPOTTER_UPLINK, MOMENTUM, RICOCHET, HEADHUNTER, HOLLOW_POINT, FIFTH_SHOT,
+                    SHATTER_SHOT)
             .withChoice(ExclusiveChoice.oneOf(FOCUSED_OPTICS_1, MARKSMANS_EYE_1))
             .withChoice(ExclusiveChoice.oneOf(RAILGUN, EXECUTIONER))
             .withChoice(ExclusiveChoice.oneOf(UNBROKEN_AIM, SUNDER_ROUNDS))
-            .withChoice(ExclusiveChoice.specials(HOLLOW_POINT, FIFTH_SHOT, MOMENTUM));
+            .withChoice(ExclusiveChoice.specials(MOMENTUM, RICOCHET, HEADHUNTER, HOLLOW_POINT, FIFTH_SHOT,
+                    SHATTER_SHOT));
 
     /** The perk each node brings, by node id: a new one for every tower, as some carry state. */
     private static final Map<String, Supplier<SniperPerk>> PERKS = Map.ofEntries(
@@ -167,16 +209,23 @@ public final class SniperTower extends AbstractTower {
             Map.entry(MARKSMANS_EYE_3.id(), CleanShotPerk::new),
             Map.entry(UNBROKEN_AIM.id(), UnbrokenAimPerk::new),
             Map.entry(SUNDER_ROUNDS.id(), SunderRoundsPerk::new),
+            Map.entry(TRADECRAFT_1.id(), CritStreakPerk::new),
+            Map.entry(TRADECRAFT_2.id(), LongShotPerk::new),
+            Map.entry(SILVER_ROUNDS.id(), SilverRoundsPerk::new),
+            Map.entry(SPOTTER_UPLINK.id(), SpotterUplinkPerk::new),
+            Map.entry(MOMENTUM.id(), MomentumPerk::new),
+            Map.entry(RICOCHET.id(), RicochetPerk::new),
+            Map.entry(HEADHUNTER.id(), HeadhunterPerk::new),
             Map.entry(HOLLOW_POINT.id(), HollowPointPerk::new),
             Map.entry(FIFTH_SHOT.id(), FifthShotPerk::new),
-            Map.entry(MOMENTUM.id(), MomentumPerk::new));
+            Map.entry(SHATTER_SHOT.id(), ShatterShotPerk::new));
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final AimFocus focus = new AimFocus();
     private final SniperTempo tempo = new SniperTempo();
     private final ShotActions actions = new Actions();
     private volatile List<SniperPerk> perks = List.of();
-    private volatile TargetSelector targetSelector = PreferringSelector.priority(new FurthestAlongPathSelector());
+    private SniperShot shotInFlight;
     private int coolDown = 0;
     private EnemyMob currentTarget;
     private boolean lastShotCritical;
@@ -193,10 +242,6 @@ public final class SniperTower extends AbstractTower {
         return TREE;
     }
 
-    /**
-     * A {@code SPECIAL} tower's pricier shots go to the enemy with the most health left, not to
-     * finishing off the nearly dead.
-     */
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
         Supplier<SniperPerk> perk = PERKS.get(node.id());
@@ -205,18 +250,35 @@ public final class SniperTower extends AbstractTower {
             next.add(perk.get());
             this.perks = List.copyOf(next);
         }
-        if (node.slot() == UpgradeSlot.SPECIAL) {
-            this.targetSelector = PreferringSelector.priority(new HighestHealthSelector());
+    }
+
+    private Viewpoint viewpoint() {
+        return new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
+    }
+
+    /** The aim of the first special owned, else the enemy furthest along the path. */
+    private SniperAim aim(Viewpoint view) {
+        for (SniperPerk perk : this.perks) {
+            Optional<SniperAim> aim = perk.aim(view);
+            if (aim.isPresent()) {
+                return aim.get();
+            }
         }
+        return new SniperAim(new FurthestAlongPathSelector(), "first");
     }
 
     private EnemyMob findEnemy() {
+        Viewpoint view = this.viewpoint();
         TargetQuery query = InRangeTargetQuery.visible(this.centerX, this.centerY, this.rangeReal());
+        for (SniperPerk perk : this.perks) {
+            query = perk.widen(query, view);
+        }
         if (this.upgrades().owns(StandardBaseSlot.RANGE_3_ID)) {
-            float deadZone = DEAD_ZONE_CELLS * this.context.getBoard().scale();
+            float deadZone = DEAD_ZONE_CELLS * view.cellSize();
             query = query.and(new BeyondRadiusTargetQuery(this.centerX, this.centerY, deadZone));
         }
-        return this.targetSelector.selectFrom(query.matching(this.context.enemies())).orElse(null);
+        TargetSelector selector = PreferringSelector.priority(this.aim(view).selector());
+        return selector.selectFrom(query.matching(this.context.enemies())).orElse(null);
     }
 
     public void doTick(int gameTime) {
@@ -243,11 +305,12 @@ public final class SniperTower extends AbstractTower {
             aim = perk.refineAim(aim);
         }
         AimLock lock = this.focus.lock(target, aim.stackCap(), aim.survivesKill());
-        ShotContext context = new ShotContext(target, lock, this.shotsFired);
+        ShotContext context = new ShotContext(target, lock, this.shotsFired, this.rangeShareOf(target));
         SniperShot shot = SniperShot.of(this.stats().attack());
         for (SniperPerk perk : owned) {
             shot = perk.shape(shot, context);
         }
+        this.shotInFlight = shot;
         boolean critical = shot.piercing() ? this.pierce(shot, target) : this.land(shot, target, 1f);
         ShotResult result = new ShotResult(target, critical, target.isDead());
         for (SniperPerk perk : owned) {
@@ -264,6 +327,10 @@ public final class SniperTower extends AbstractTower {
         float tempoBonus = this.tempo.takeFireRateBonus(this.currentTick);
         this.coolDown = TowerBuff.fireRate(fireRate).combine(TowerBuff.fireRate(tempoBonus))
                 .fireRateFor(this.coolDownCurrent());
+    }
+
+    private float rangeShareOf(EnemyMob target) {
+        return (float) (Math.hypot(target.getX() - this.centerX, target.getY() - this.centerY) / this.rangeReal());
     }
 
     /** Lands {@code shot} on {@code target} at {@code share} of its damage; whether it crit. */
@@ -294,6 +361,26 @@ public final class SniperTower extends AbstractTower {
         return critical;
     }
 
+    /** A bounce hits the nearest enemy beside the last one struck that this shot has not hit yet. */
+    private void ricochet(EnemyMob from, int bounces, float share, float reachCells) {
+        SniperShot bounce = this.shotInFlight.withDamageFactor(share);
+        float reach = reachCells * this.context.getBoard().scale();
+        List<EnemyMob> struck = new ArrayList<>(List.of(from));
+        EnemyMob last = from;
+        for (int i = 0; i < bounces; i++) {
+            List<EnemyMob> beside = InRangeTargetQuery.visible((int) last.getX(), (int) last.getY(), reach)
+                    .matching(this.context.enemies());
+            beside.removeAll(struck);
+            Optional<EnemyMob> next = new NearestSelector(last.getX(), last.getY()).selectFrom(beside);
+            if (next.isEmpty()) {
+                return;
+            }
+            this.land(bounce, next.get(), 1f);
+            struck.add(next.get());
+            last = next.get();
+        }
+    }
+
     public EnemyMob getCurrentTarget() {
         return this.currentTarget;
     }
@@ -312,8 +399,7 @@ public final class SniperTower extends AbstractTower {
 
     @Override
     protected List<BehaviourLine> behaviours() {
-        boolean special = this.upgrades().countIn(UpgradeSlot.SPECIAL) > 0;
-        BehaviourLine targets = new BehaviourLine(BehaviourMarker.TARGETING, "Targets", special ? "most health" : "first");
+        BehaviourLine targets = new BehaviourLine(BehaviourMarker.TARGETING, "Targets", this.aim(this.viewpoint()).label());
         if (!this.upgrades().owns(HOLLOW_POINT.id())) {
             return List.of(targets);
         }
@@ -354,6 +440,11 @@ public final class SniperTower extends AbstractTower {
         @Override
         public void applySundered(EnemyMob target, int stacks) {
             SniperTower.this.applySundered(target, stacks);
+        }
+
+        @Override
+        public void ricochet(EnemyMob from, int bounces, float share, float reachCells) {
+            SniperTower.this.ricochet(from, bounces, share, reachCells);
         }
     }
 

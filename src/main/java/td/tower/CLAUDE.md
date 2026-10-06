@@ -24,7 +24,7 @@
 
 ## Targeting
 
-- Compose a `TargetQuery` (filter; `and`, identity `all()`, absorber `none()`) with a
+- Compose a `TargetQuery` (filter; `and`, `or`, identity `all()`, absorber `none()`) with a
   `TargetSelector` (picks one). Don't hand-roll a scan over `EnemyRegistry.getEnemies()`.
 - Targeting takes an `EnemyRegistry`, never `GameWorld`, so `td.projectile` can reuse it.
 - `InRangeTargetQuery` only through `visible` (what a tower may aim at or be triggered by) or

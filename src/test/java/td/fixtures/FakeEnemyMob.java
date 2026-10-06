@@ -55,11 +55,18 @@ public final class FakeEnemyMob implements EnemyMob {
     }
 
     public FakeEnemyMob withProgression(int progression) {
-        return new FakeEnemyMob(this.x, this.y, progression, this.health, this.hidden);
+        return new FakeEnemyMob(this.x, this.y, progression, this.health, this.hidden).likeThis(this);
     }
 
     public FakeEnemyMob withHealth(int health) {
-        return new FakeEnemyMob(this.x, this.y, this.progression, health, this.hidden);
+        return new FakeEnemyMob(this.x, this.y, this.progression, health, this.hidden).likeThis(this);
+    }
+
+    /** This fake itself, with the rank and health fraction of {@code other}. */
+    private FakeEnemyMob likeThis(FakeEnemyMob other) {
+        this.rank = other.rank;
+        this.healthFraction = other.healthFraction;
+        return this;
     }
 
     /** This fake itself, now of {@code rank}. */
@@ -86,7 +93,7 @@ public final class FakeEnemyMob implements EnemyMob {
 
     /** A copy that stealth keeps towers from targeting. */
     public FakeEnemyMob hidden() {
-        return new FakeEnemyMob(this.x, this.y, this.progression, this.health, true);
+        return new FakeEnemyMob(this.x, this.y, this.progression, this.health, true).likeThis(this);
     }
 
     public void moveTo(double x, double y) {
