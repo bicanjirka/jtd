@@ -93,8 +93,47 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
 
     /** {@code stacks} more hits' worth of extra damage taken, on one shared clock. */
     public static Effect vulnerable(int stacks, int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.VULNERABLE, 1f, Damage.none(), 0f, durationTicks, sink, 0,
+        return stacking(EffectKind.VULNERABLE, stacks, durationTicks, sink);
+    }
+
+    /** {@code stacks} more points of lost armor, five each, on one shared clock. */
+    public static Effect sundered(int stacks, int durationTicks, DamageSink sink) {
+        return stacking(EffectKind.SUNDERED, stacks, durationTicks, sink);
+    }
+
+    /** {@code stacks} more steps of magic damage taken, on one shared clock. */
+    public static Effect resonating(int stacks, int durationTicks, DamageSink sink) {
+        return stacking(EffectKind.RESONATING, stacks, durationTicks, sink);
+    }
+
+    /** {@code stacks} more steps of lost resilience; each wears off on its own, so there is no clock. */
+    public static Effect fractured(int stacks, DamageSink sink) {
+        return stacking(EffectKind.FRACTURED, stacks, 0, sink);
+    }
+
+    /** Crit chance taken doubles while it lasts. */
+    public static Effect exposed(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.EXPOSED, durationTicks, sink);
+    }
+
+    /** The next hit lands as a guaranteed crit and ends the mark; it ends by itself after {@code durationTicks}. */
+    public static Effect marked(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.MARKED, durationTicks, sink);
+    }
+
+    /** Extra damage from every tower, and the preferred target of towers that pick one. */
+    public static Effect priority(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.PRIORITY, durationTicks, sink);
+    }
+
+    private static Effect stacking(EffectKind kind, int stacks, int durationTicks, DamageSink sink) {
+        return new Effect(kind, 1f, Damage.none(), 0f, durationTicks, sink, 0,
                 Optional.empty(), durationTicks, List.of(), 0f, stacks, 0);
+    }
+
+    private static Effect timed(EffectKind kind, int durationTicks, DamageSink sink) {
+        return new Effect(kind, 1f, Damage.none(), 0f, durationTicks, sink, 0,
+                Optional.empty(), durationTicks, List.of(), 0f, 0, 0);
     }
 
     /**

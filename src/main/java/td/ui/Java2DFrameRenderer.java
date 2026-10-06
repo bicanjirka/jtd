@@ -426,6 +426,12 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_POISON -> new Color(170, 210, 40);
             case STATUS_MARKER_SCORCHED -> new Color(170, 80, 40);
             case STATUS_MARKER_SICKENED -> new Color(110, 140, 70);
+            case STATUS_MARKER_SUNDERED -> new Color(190, 190, 200);
+            case STATUS_MARKER_EXPOSED -> new Color(255, 215, 80);
+            case STATUS_MARKER_MARKED -> new Color(255, 80, 80);
+            case STATUS_MARKER_PRIORITY -> new Color(255, 150, 60);
+            case STATUS_MARKER_RESONATING -> new Color(90, 160, 255);
+            case STATUS_MARKER_FRACTURED -> new Color(160, 110, 220);
             case STATUS_MARKER_OVERFLOW -> Color.WHITE;
             case FREEZE_CRYSTAL -> new Color(220, 245, 255);
             case CRIT_SPARK -> Color.WHITE;

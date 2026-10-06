@@ -23,12 +23,18 @@
   `RESILIENCE` or `SPIRIT` by one. They outlast the pool, are never cleared by another effect
   (a freeze puts out the burn, not its mark) and lose a stack every `STACK_DECAY_INTERVAL_TICKS`
   scaled by the enemy's spirit factor (`tick(spiritFactor)`; `0` at spirit -100 means never).
-- `VULNERABLE` stacks (cap 3) on the enemy, whichever tower applied them, on one shared clock that
-  any application refreshes; a full stack only refreshes.
+- A kind with `EffectKind.maxStacks()` above 0 (`VULNERABLE`, `SUNDERED`, `RESONATING`,
+  `FRACTURED`) stacks on the enemy, whichever tower applied them, on one shared clock that any
+  application refreshes; a full stack only refreshes. `FRACTURED` has no clock: it loses a stack at
+  a time like `SCORCHED`, at the spirit pace floored at `MIN_DEBUFF_PACE`.
+- A kind with `isPacedBySpirit()` counts its timer down at `max(MIN_DEBUFF_PACE, spiritFactor)`;
+  freeze, invisible, shield, heal and the pools keep their own pace.
+- `MARKED` is spent by a hit, never by periodic damage: the mob calls `consume(MARKED)`, and only
+  when its resilience is below 100.
 - Effects change a mob only through `contributeTo(StatAccumulator)`: chill and poison on
   `MOVE_SPEED` (multiplying), freeze setting it to zero, shield and vulnerable on damage taken, heal
   on `REGENERATION`, invisible and revealed on `STEALTH` (revealed sets it to 0, which beats
-  invisibility's 1), scorched stacks on `RESILIENCE` (-1 each) and sickened stacks on `SPIRIT` (-1 each), both floored
+  invisibility's 1; exposed or revealed doubles `CRIT_CHANCE_TAKEN` once), scorched stacks on `RESILIENCE` (-1 each) and sickened stacks on `SPIRIT` (-1 each), both floored
   by the stat's range. Shield and heal go in as restorative, so spirit scales them.
   The mob applies regeneration to itself, capped at max health; `Damage` can't be negative.
 - Resistance and diminishing returns only shorten an authored duration, never change an effect's
@@ -38,7 +44,7 @@
   step).
 - `EffectInteractions` is the one table of how an active kind acts on another: what it keeps out (a
   frozen enemy cannot burn) and what applying it consumes (freezing removes a burn, and a chill,
-  which also makes the freeze last longer by the chill's level). Add a rule there, never a
+  which also makes the freeze last longer by the chill's level; shrouding removes a reveal). Add a rule there, never a
   condition in `ActiveEffects`.
 - `EffectKind.category()` groups kinds for diminishing returns and the inspector; it never changes
   numbers.

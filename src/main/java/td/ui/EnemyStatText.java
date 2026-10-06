@@ -135,13 +135,23 @@ final class EnemyStatText {
             case MAGIC_DAMAGE_TAKEN -> new StatText("Magic taken", SheetNumbers.percent(value));
             case RESILIENCE -> resilienceText(value);
             case CRIT_CHANCE_TAKEN -> new StatText("Crit chance taken", "x" + SheetNumbers.decimal(value));
-            case SPIRIT -> new StatText("Spirit", SheetNumbers.signedPercent(value / 100f) + " heals");
+            case SPIRIT -> new StatText("Spirit", SheetNumbers.signedPercent(value / 100f) + " heals" + debuffPaceText(value));
             case REGENERATION -> new StatText("Regenerates", SheetNumbers.decimal(DamageUnits.inPoints(value) * TickRate.TICKS_PER_SECOND) + "/s");
             case CHILL_RESIST -> resistText("Chill", value);
             case BURN_RESIST -> resistText("Burn", value);
             case FREEZE_RESIST -> resistText("Freeze", value);
             case STEALTH -> new StatText("Stealthed", "");
         };
+    }
+
+    /** What spirit does to debuff timers, in words; empty while it barely changes them. */
+    private static String debuffPaceText(float spirit) {
+        float pace = Math.max(0.25f, 1f + spirit / 100f);
+        if (Math.abs(pace - 1f) < 0.05f) {
+            return "";
+        }
+        return ", debuffs " + SheetNumbers.decimal(pace > 1f ? pace : 1f / pace) + "x "
+                + (pace > 1f ? "faster" : "slower");
     }
 
     private static StatText resilienceText(float value) {
@@ -166,6 +176,12 @@ final class EnemyStatText {
             case POISON -> "Poisoned";
             case SCORCHED -> "Scorched x" + effect.stacks();
             case SICKENED -> "Sickened x" + effect.stacks();
+            case SUNDERED -> "Sundered x" + effect.stacks();
+            case EXPOSED -> "Exposed";
+            case MARKED -> "Marked";
+            case PRIORITY -> "Priority";
+            case RESONATING -> "Resonating x" + effect.stacks();
+            case FRACTURED -> "Fractured x" + effect.stacks();
         };
         String category = effect.kind().category().label();
         if (effect.kind() == EffectKind.CHILL) {
