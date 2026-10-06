@@ -112,7 +112,7 @@ public final class SplashTower extends AbstractTower {
     private List<Blast> blasts = List.of();
 
     public SplashTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.SPLASH, PRICE, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
+        super(TowerFactory.Type.SPLASH, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
         this.spreadRadius = SPREAD_RADIUS_BASE * context.getBoard().scale();
         this.targetSelector = new RandomSelector(context.random());
     }

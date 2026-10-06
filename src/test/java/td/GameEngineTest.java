@@ -25,10 +25,13 @@ import td.stat.DisruptionAura;
 import td.tower.AuraTower;
 import td.tower.MortarTower;
 import td.tower.SniperTower;
+import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerStat;
 import td.tower.TowerStatLine;
+import td.tower.upgrade.StandardBaseSlot;
+import td.tower.upgrade.UpgradeTier;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
 import td.wave.WaveDefinition;
@@ -757,6 +760,64 @@ class GameEngineTest {
     }
 
     @Test
+    void eachCopyOfATowerAlreadyOnTheBoardRaisesTheNextOnesPriceByFifteenPercent() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+
+        placeSniper(engine, 0, 0);
+        placeSniper(engine, 1, 0);
+        placeSniper(engine, 2, 0);
+
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100 - 10 - 12 - 13);
+        assertThat(engine.getGameWorld().towers().priceOf(TowerFactory.Type.SNIPER)).isEqualTo(15);
+        assertThat(engine.getGameWorld().towers().priceOf(TowerFactory.Type.SPLASH)).isEqualTo(SplashTower.PRICE);
+    }
+
+    @Test
+    void sellingATowerRefundsThreeQuartersOfThePriceItWasBoughtFor() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        placeSniper(engine, 0, 0);
+        placeSniper(engine, 1, 0);
+        int creditsAfterBuilds = engine.getGameWorld().economy().getCredits();
+
+        engine.getGameWorld().towers().sell(engine.cells().at(1, 0).getTower());
+
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterBuilds + 9);
+    }
+
+    @Test
+    void sellingTheCheapCopyAndRebuyingItCostsTheRisenPrice() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        placeSniper(engine, 0, 0);
+        placeSniper(engine, 1, 0);
+        engine.getGameWorld().towers().sell(engine.cells().at(0, 0).getTower());
+        int creditsAfterSale = engine.getGameWorld().economy().getCredits();
+
+        placeSniper(engine, 0, 0);
+
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterSale - 12);
+        assertThat(creditsAfterSale).isEqualTo(100 - 10 - 12 + 8);
+    }
+
+    @Test
+    void aLaterCopysUpgradesCostWhatTheFirstCopysDo() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        placeSniper(engine, 0, 0);
+        Tower secondCopy = placeSniper(engine, 1, 0);
+        secondCopy.setSelected(true);
+        int creditsBeforeUpgrade = engine.getGameWorld().economy().getCredits();
+
+        engine.buyUpgradeForSelected(1);
+
+        assertThat(secondCopy.upgrades().owns(StandardBaseSlot.RANGE_ID)).isTrue();
+        assertThat(engine.getGameWorld().economy().getCredits())
+                .isEqualTo(creditsBeforeUpgrade - UpgradeTier.RANGE_1.price(SniperTower.PRICE));
+    }
+
+    @Test
     void reloadingALevelRemovesTowersLeftFromThePreviousLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
@@ -1064,5 +1125,11 @@ class GameEngineTest {
 
         assertThat(engine.outcome()).isEqualTo(LevelOutcome.PLAYING);
         assertThat(engine.nextWave()).isTrue();
+    }
+
+    private static Tower placeSniper(GameEngine engine, int cellX, int cellY) {
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(cellX), BoardFixtures.cellCenter(cellY));
+        return engine.cells().at(cellX, cellY).getTower();
     }
 }

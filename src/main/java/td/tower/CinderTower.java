@@ -88,7 +88,7 @@ public final class CinderTower extends AbstractTower {
     private int coolDown = 0;
 
     public CinderTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.CINDER, PRICE, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
+        super(TowerFactory.Type.CINDER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
     }
 
     @Override

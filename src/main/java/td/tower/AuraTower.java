@@ -69,7 +69,7 @@ public final class AuraTower extends AbstractTower {
 
     /** An aura with a non-default buff strength. */
     public AuraTower(GameWorld context, int x, int y, float power) {
-        super(TowerFactory.Type.AURA, PRICE, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0), context, x, y);
+        super(TowerFactory.Type.AURA, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0), context, x, y);
         this.power = power;
     }
 

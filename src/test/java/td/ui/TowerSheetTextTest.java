@@ -25,9 +25,10 @@ class TowerSheetTextTest {
 
     private final GameWorld world = WorldFixtures.newWorld();
 
-    /** As the toolbar builds it: a tower in a throwaway world, never placed. */
-    private static InfoSheet shopSheet(TowerFactory.Type type) {
-        return TowerSheetText.shop(TowerFactory.createTower(type, new GameWorld(GameHost.noOp()), 0, 0).inspect());
+    /** As the toolbar builds it: a tower in a throwaway world, never placed, at the live price. */
+    private InfoSheet shopSheet(TowerFactory.Type type) {
+        return TowerSheetText.shop(TowerFactory.createTower(type, new GameWorld(GameHost.noOp()), 0, 0).inspect()
+                .withPrice(this.world.towers().priceOf(type)));
     }
 
     private Tower place(TowerFactory.Type type, int x, int y) {
@@ -54,6 +55,16 @@ class TowerSheetTextTest {
 
         assertThat(sheet.lines().getFirst()).isEqualTo(
                 new SheetLine.Title(Glyph.TOWER_BODY, Palette.TOWER_SPLASH_BODY, "Splash tower", "$15"));
+    }
+
+    @Test
+    void theShopShowsWhatTheNextCopyCostsWithTheCopiesAlreadyBuilt() {
+        this.place(TowerFactory.Type.SPLASH, 0, 0);
+        this.place(TowerFactory.Type.SPLASH, 1, 0);
+
+        InfoSheet sheet = this.shopSheet(TowerFactory.Type.SPLASH);
+
+        assertThat(((SheetLine.Title) sheet.lines().getFirst()).value()).isEqualTo("$20");
     }
 
     @Test

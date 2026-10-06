@@ -94,7 +94,7 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
 
     public SonarTower(GameWorld context, int x, int y) {
         // No cooldown: the cadence is the sweep rate.
-        super(TowerFactory.Type.SONAR, PRICE, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0), context, x, y);
+        super(TowerFactory.Type.SONAR, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0), context, x, y);
         this.context.waves().addListener(this);
     }
 
