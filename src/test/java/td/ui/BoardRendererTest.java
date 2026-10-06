@@ -116,6 +116,7 @@ class BoardRendererTest {
         context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(context, 1, 1);
         context.towers().add(tower);
+        tower.earnXp(1_000);
         tower.buyUpgrade(baseNode(tower, StandardBaseSlot.ATTUNE_ID));
         tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).get(0));
         tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).get(1));
@@ -138,6 +139,7 @@ class BoardRendererTest {
         context.towers().add(tower);
         context.towers().add(new SniperTower(context, 0, 0));
         context.towers().add(new SniperTower(context, 2, 2));
+        tower.earnXp(1_000);
         tower.buyUpgrade(baseNode(tower, StandardBaseSlot.ATTUNE_ID));
         tower.buyUpgrade(baseNode(tower, StandardBaseSlot.AWAKEN_ID));
         tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.SPECIAL).get(0));

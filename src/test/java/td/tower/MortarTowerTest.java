@@ -13,7 +13,6 @@ import td.fixtures.FakeEnemyMob;
 import td.fixtures.TowerFixtures;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
 import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -79,7 +78,7 @@ class MortarTowerTest {
     void siegeRoundsIsChoosableOnceAwakenIsBoughtAndAppliesItsDamageBonus() {
         this.context.economy().startEconomy(1000, 5);
         MortarTower tower = towerAt(3, 3);
-        UpgradePaths.awaken(tower);
+        UpgradePaths.awakenVeteran(tower);
         EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 100000, 3, Rank.GRUNT);
         tower.dealDamage(fodder, Damage.physical(16000));
         UpgradeNode siegeRounds = UpgradePaths.named(tower, "Siege Rounds");
@@ -90,18 +89,6 @@ class MortarTowerTest {
         assertThat(tower.damageCurrent()).isGreaterThan(tower.damageBase);
     }
 
-    @Test
-    void fragmentationRoundsIsNotYetChoosableBeforeTwelveKills() {
-        this.context.economy().startEconomy(1000, 5);
-        MortarTower tower = towerAt(3, 3);
-        UpgradePaths.awaken(tower);
-        UpgradeNode fragmentationRounds = UpgradePaths.named(tower, "Fragmentation Rounds");
-
-        boolean chosen = tower.buyUpgrade(fragmentationRounds);
-
-        assertThat(chosen).isFalse();
-        assertThat(tower.upgrades().tip(UpgradeSlot.HEAD)).isEmpty();
-    }
 
     @Test
     void siegeRoundsIiBumpsTheSplashRadiusBeyondTheBase() {

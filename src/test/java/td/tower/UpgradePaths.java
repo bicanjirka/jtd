@@ -1,8 +1,5 @@
 package td.tower;
 
-import td.damage.Damage;
-import td.enemy.EnemyFactory;
-import td.enemy.Rank;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 
@@ -19,22 +16,23 @@ final class UpgradePaths {
                 .orElseThrow(() -> new IllegalArgumentException("No node named '" + displayName + "' on " + tower));
     }
 
-    /** Buys Attune and then Awaken, which opens head levels I to III and the special slot. */
-    static void awaken(Tower tower) {
+    /**
+     * Grants more XP than any node needs, then buys Attune and Awaken, which open head levels I to
+     * III and the special slot.
+     */
+    static void awakenVeteran(Tower tower) {
+        tower.earnXp(1_000);
         tower.buyUpgrade(named(tower, "Attune"));
         tower.buyUpgrade(named(tower, "Awaken"));
     }
 
     /**
-     * Buys Attune and Awaken and then each named node, first clearing every kill and damage gate by killing
-     * fodder. A cluster gate still needs the caller to place neighbours.
+     * Grants XP, buys Attune and Awaken and then each named node. A cluster gate still needs the
+     * caller to place neighbours.
      */
     static void buy(AbstractTower tower, GameWorld world, String... names) {
         world.economy().startEconomy(1_000_000, 5);
-        awaken(tower);
-        for (int i = 0; i < 30; i++) {
-            tower.dealDamage(EnemyFactory.getEnemy("c", world, 0, 2000, 1, Rank.GRUNT), Damage.physical(10_000_000));
-        }
+        awakenVeteran(tower);
         for (String name : names) {
             if (!tower.buyUpgrade(named(tower, name))) {
                 throw new IllegalStateException("could not buy " + name);

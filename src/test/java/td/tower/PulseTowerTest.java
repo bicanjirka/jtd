@@ -10,7 +10,6 @@ import td.enemy.Rank;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
 import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,7 +22,7 @@ class PulseTowerTest {
     void overchargedCoilsIsChoosableOnceAwakenIsBoughtAndAppliesItsDamageBonus() {
         this.context.economy().startEconomy(1000, 5);
         PulseTower tower = new PulseTower(this.context, 0, 0);
-        UpgradePaths.awaken(tower);
+        UpgradePaths.awakenVeteran(tower);
         EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 100000, 3, Rank.GRUNT);
         tower.dealDamage(fodder, Damage.physical(11000));
         UpgradeNode overchargedCoils = UpgradePaths.named(tower, "Overcharged Coils");
@@ -34,24 +33,12 @@ class PulseTowerTest {
         assertThat(tower.damageCurrent()).isGreaterThan(tower.damageBase);
     }
 
-    @Test
-    void resonantFieldIsNotYetChoosableBeforeTenKills() {
-        this.context.economy().startEconomy(1000, 5);
-        PulseTower tower = new PulseTower(this.context, 0, 0);
-        UpgradePaths.awaken(tower);
-        UpgradeNode resonantField = UpgradePaths.named(tower, "Resonant Field");
-
-        boolean chosen = tower.buyUpgrade(resonantField);
-
-        assertThat(chosen).isFalse();
-        assertThat(tower.upgrades().tip(UpgradeSlot.HEAD)).isEmpty();
-    }
 
     @Test
     void resonantFieldFiresEvenWithOnlyAGhostInRange() {
         this.context.economy().startEconomy(1000, 5);
         PulseTower tower = new PulseTower(this.context, 0, 0);
-        UpgradePaths.awaken(tower);
+        UpgradePaths.awakenVeteran(tower);
         EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
         for (int i = 0; i < 10; i++) {
             tower.dealDamage(fodder, Damage.physical(1_000_000));

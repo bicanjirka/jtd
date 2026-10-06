@@ -175,8 +175,9 @@ Every tower's `UpgradeNode`s carry real prices and stat bonuses, but none of the
 against actual waves. Prices start from `UpgradeTier`'s multiples of the tower's list price (the table in
 `docs/features/FEATURE-tower-progression.md`); the stat bonuses still follow the placeholder rule of the
 first trees (an unquantified "+X" in the source doc became +25%, an unquantified crit bonus +10%). The
-`ClusterCondition`/`DamageDealtCondition`/`KillCountCondition` thresholds are unverified guesses at what a
-reasonable mid-level of investment looks like. Feature 7's balance pass sets the final numbers.
+`ClusterCondition` thresholds are unverified guesses, and `UpgradeTier`'s XP table is checked only
+against the bounty arithmetic in `docs/features/FEATURE-xp-and-purpose-gates.md`, not against play.
+Feature 7's balance pass sets the final numbers.
 
 - **Where:** `UpgradeTier`'s price multiples, and the `private static final UpgradeNode` constants in every
   leaf under `td.tower` (`SniperTower`/`SplashTower`/`SonarTower`/`PulseTower`/`MortarTower`/`SeekerTower`/

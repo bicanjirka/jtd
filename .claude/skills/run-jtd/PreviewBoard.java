@@ -218,7 +218,8 @@ public class PreviewBoard {
             System.out.println("OK upgrade " + name);
         } else {
             System.out.println("FAILED upgrade " + name + ": " + (offered
-                    ? node.gate().progress(tower, engine.getGameWorld()) + ", credits " + engine.getGameWorld().economy().getCredits()
+                    ? node.xpProgress(tower) + ", " + node.gate().progress(tower, engine.getGameWorld())
+                            + ", credits " + engine.getGameWorld().economy().getCredits()
                     : "not offered"));
         }
     }

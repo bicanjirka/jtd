@@ -22,16 +22,20 @@ final class UpgradeSheetText {
     private UpgradeSheetText() {
     }
 
-    /** The node's name and price, its gate as a ✔/✘ row unless money alone buys it, then its bonuses. */
+    /**
+     * The node's name and price, a ✔/✘ row for its XP and one for its gate condition (each only
+     * when it has one), then its bonuses.
+     */
     static InfoSheet hover(UpgradeOffer offer) {
         UpgradeNode node = offer.node();
         List<SheetLine> lines = new ArrayList<>();
         lines.add(new SheetLine.Title(Glyph.PIP, TowerSpriteFrameBuilder.slotPaletteFor(node.slot()), node.displayName(),
                 "$" + node.price()));
+        if (node.xp() > 0) {
+            lines.add(gateRow(offer.xpMet(), offer.xpProgress()));
+        }
         if (!node.gate().equals(UpgradeCondition.always())) {
-            lines.add(offer.gateMet()
-                    ? Row.toned(Glyph.CHECK, Palette.UPGRADE_GATE_MET, offer.progress(), "")
-                    : Row.toned(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, offer.progress(), ""));
+            lines.add(gateRow(offer.conditionMet(), offer.conditionProgress()));
         }
         // The rivals get rows of their own: "Locks out" and a long name don't fit one line together.
         if (offer.inChoice() && offer.lastPick()) {
@@ -43,6 +47,12 @@ final class UpgradeSheetText {
         lines.add(new SheetLine.Gap());
         node.bonuses().forEach(bonus -> lines.add(Row.plain(Glyph.DOT, bonus.label(), bonus.value())));
         return new InfoSheet(lines);
+    }
+
+    private static Row gateRow(boolean met, String progress) {
+        return met
+                ? Row.toned(Glyph.CHECK, Palette.UPGRADE_GATE_MET, progress, "")
+                : Row.toned(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, progress, "");
     }
 
     /**

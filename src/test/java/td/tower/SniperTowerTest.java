@@ -12,7 +12,6 @@ import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
@@ -26,7 +25,7 @@ class SniperTowerTest {
     void focusedOpticsIsChoosableOnceAwakenIsBoughtAndAppliesItsDamageBonus() {
         this.context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(this.context, 0, 0);
-        UpgradePaths.awaken(tower);
+        UpgradePaths.awakenVeteran(tower);
         UpgradeNode focusedOptics = UpgradePaths.named(tower, "Focused Optics");
 
         boolean chosen = tower.buyUpgrade(focusedOptics);
@@ -35,29 +34,28 @@ class SniperTowerTest {
         assertThat(tower.damageCurrent()).isGreaterThan(tower.damageBase);
     }
 
+
     @Test
-    void marksmansEyeIsNotYetChoosableBeforeFifteenKills() {
+    void marksmansEyeTwoWaitsForFiftyXpFromTheGateTable() {
         this.context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(this.context, 0, 0);
-        UpgradePaths.awaken(tower);
-        UpgradeNode marksmansEye = UpgradePaths.named(tower, "Marksman's Eye");
+        tower.buyUpgrade(UpgradePaths.named(tower, "Attune"));
+        tower.buyUpgrade(UpgradePaths.named(tower, "Marksman's Eye"));
+        tower.earnXp(49);
+        boolean atFortyNine = tower.buyUpgrade(UpgradePaths.named(tower, "Marksman's Eye II"));
+        tower.earnXp(1);
 
-        boolean chosen = tower.buyUpgrade(marksmansEye);
+        boolean atFifty = tower.buyUpgrade(UpgradePaths.named(tower, "Marksman's Eye II"));
 
-        assertThat(chosen).isFalse();
-        assertThat(tower.upgrades().tip(UpgradeSlot.HEAD)).isEmpty();
+        assertThat(atFortyNine).isFalse();
+        assertThat(atFifty).isTrue();
     }
 
     @Test
-    void marksmansEyeGrantsACritChanceOnceKillCountIsMet() {
+    void marksmansEyeGrantsACritChance() {
         this.context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(this.context, 0, 0);
-        UpgradePaths.awaken(tower);
-        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
-        for (int i = 0; i < 15; i++) {
-            tower.dealDamage(fodder, Damage.physical(1_000_000));
-            fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
-        }
+        UpgradePaths.awakenVeteran(tower);
         UpgradeNode marksmansEye = UpgradePaths.named(tower, "Marksman's Eye");
 
         boolean chosen = tower.buyUpgrade(marksmansEye);
@@ -70,7 +68,7 @@ class SniperTowerTest {
     void buyingAnyHeadRootForeclosesTheOtherHeadRootForever() {
         this.context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(this.context, 0, 0);
-        UpgradePaths.awaken(tower);
+        UpgradePaths.awakenVeteran(tower);
         tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics"));
 
         boolean chosenMarksmansEye = tower.buyUpgrade(UpgradePaths.named(tower, "Marksman's Eye"));
@@ -96,7 +94,7 @@ class SniperTowerTest {
     private static SniperTower awakenedSniper(GameWorld world, int killsEarned) {
         world.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(world, 3, 3);
-        UpgradePaths.awaken(tower);
+        UpgradePaths.awakenVeteran(tower);
         for (int i = 0; i < killsEarned; i++) {
             tower.dealDamage(EnemyFactory.getEnemy("c", world, 0, 1, 1, Rank.GRUNT), Damage.physical(1_000_000));
         }

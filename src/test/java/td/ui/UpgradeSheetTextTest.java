@@ -5,7 +5,6 @@ import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.ExclusiveChoice;
-import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeDecision;
 import td.tower.upgrade.UpgradeNode;
@@ -28,7 +27,7 @@ class UpgradeSheetTextTest {
 
     private static final UpgradeNode VETERAN = UpgradeNode.of("veteran", UpgradeSlot.HEAD, "Veteran", 10)
             .withBuff(TowerBuff.damage(0.2f))
-            .withGate(new KillCountCondition(10));
+            .withXp(10);
     private static final UpgradeNode RANGE = UpgradeNode.of("range", UpgradeSlot.BASE, "Range", 30)
             .withBuff(TowerBuff.range(0.15f));
 
@@ -61,6 +60,7 @@ class UpgradeSheetTextTest {
     private FakeTower choosing(String... names) {
         this.world.economy().startEconomy(1000, 5);
         FakeTower choosing = FakeTower.offering(this.world, 1, 1, CHOICES);
+        choosing.earnXp(1_000);
         for (String name : names) {
             choosing.buyUpgrade(CHOICES.nodes().stream().filter(n -> n.displayName().equals(name)).findFirst().orElseThrow());
         }
@@ -78,9 +78,9 @@ class UpgradeSheetTextTest {
     @Test
     void aGatedButtonShowsItsProgressInsteadOfItsPrice() {
         this.world.economy().startEconomy(100, 5);
-        this.tower.setKillCount(7);
+        this.tower.earnXp(7);
 
-        assertThat(UpgradeSheetText.buttonText(this.offer(VETERAN))).isEqualTo("2  Veteran\t7/10 kills");
+        assertThat(UpgradeSheetText.buttonText(this.offer(VETERAN))).isEqualTo("2  Veteran\tXP 7/10");
         assertThat(this.offer(VETERAN).buyable()).isFalse();
     }
 
@@ -93,13 +93,13 @@ class UpgradeSheetTextTest {
 
     @Test
     void theHoverShowsNameAndPriceInTheSlotColourThenTheGateThenOneRowPerBonus() {
-        this.tower.setKillCount(10);
+        this.tower.earnXp(10);
 
         InfoSheet sheet = UpgradeSheetText.hover(this.offer(VETERAN));
 
         assertThat(sheet.lines()).containsExactly(
                 new SheetLine.Title(Glyph.PIP, Palette.TOWER_UPGRADE_HEAD, "Veteran", "$10"),
-                Row.toned(Glyph.CHECK, Palette.UPGRADE_GATE_MET, "10/10 kills", ""),
+                Row.toned(Glyph.CHECK, Palette.UPGRADE_GATE_MET, "XP 10/10", ""),
                 new SheetLine.Gap(),
                 Row.plain(Glyph.DOT, "Damage", "+20%"));
     }
@@ -109,7 +109,7 @@ class UpgradeSheetTextTest {
         InfoSheet gated = UpgradeSheetText.hover(this.offer(VETERAN));
         InfoSheet free = UpgradeSheetText.hover(this.offer(RANGE));
 
-        assertThat(gated.lines()).contains(Row.toned(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, "0/10 kills", ""));
+        assertThat(gated.lines()).contains(Row.toned(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, "XP 0/10", ""));
         assertThat(free.lines()).noneMatch(line -> line instanceof Row row
                 && (row.glyph() == Glyph.CHECK || row.glyph() == Glyph.CROSS));
     }

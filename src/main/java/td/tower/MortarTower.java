@@ -8,9 +8,7 @@ import td.tower.buff.TowerBuff;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.ClusterCondition;
-import td.tower.upgrade.DamageDealtCondition;
 import td.tower.upgrade.ExclusiveChoice;
-import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
@@ -48,17 +46,14 @@ public final class MortarTower extends AbstractTower {
 
     private static final UpgradeNode SIEGE_ROUNDS_1 = UpgradeTier.HEAD_1.node("mortar.head.siege_rounds.1",
             "Siege Rounds", PRICE)
-            .withBuff(TowerBuff.damage(0.3f))
-            .withGate(new DamageDealtCondition(150));
+            .withBuff(TowerBuff.damage(0.3f));
     private static final UpgradeNode SIEGE_ROUNDS_2 = UpgradeTier.HEAD_2.node("mortar.head.siege_rounds.2",
             "Siege Rounds II", PRICE)
             .withBuff(TowerBuff.damage(0.25f))
             .after(SIEGE_ROUNDS_1)
-            .withGate(new DamageDealtCondition(300))
             .withExtraEffect("+40% splash radius");
     private static final UpgradeNode FRAGMENTATION_ROUNDS_1 = UpgradeTier.HEAD_1.node("mortar.head.fragmentation_rounds.1",
             "Fragmentation Rounds", PRICE)
-            .withGate(new KillCountCondition(12))
             .withExtraEffect("shrapnel deals 25% weapon damage in a wider ring past the main splash");
     private static final UpgradeNode FRAGMENTATION_ROUNDS_2 = UpgradeTier.HEAD_2.node("mortar.head.fragmentation_rounds.2",
             "Fragmentation Rounds II", PRICE)
@@ -67,7 +62,6 @@ public final class MortarTower extends AbstractTower {
             .withExtraEffect("shrapnel also applies this tower's chill, at half duration");
     private static final UpgradeNode CURSED_SHRAPNEL = UpgradeTier.SPECIAL.node("mortar.special.cursed_shrapnel",
             "Cursed Shrapnel", PRICE)
-            .withGate(new KillCountCondition(20))
             .withExtraEffect("every enemy caught in the blast gets a guaranteed Vulnerable stack (cap 3), refreshed on every hit");
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE))

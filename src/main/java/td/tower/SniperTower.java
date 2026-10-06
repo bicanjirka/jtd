@@ -8,9 +8,7 @@ import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.HighestHealthSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.TargetSelector;
-import td.tower.upgrade.DamageDealtCondition;
 import td.tower.upgrade.ExclusiveChoice;
-import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -44,23 +42,18 @@ public final class SniperTower extends AbstractTower {
             .after(FOCUSED_OPTICS_1);
     private static final UpgradeNode MARKSMANS_EYE_1 = UpgradeTier.HEAD_1.node("sniper.head.marksmans_eye.1",
             "Marksman's Eye", PRICE)
-            .withBuff(TowerBuff.critChance(0.15f))
-            .withGate(new KillCountCondition(15));
+            .withBuff(TowerBuff.critChance(0.15f));
     private static final UpgradeNode MARKSMANS_EYE_2 = UpgradeTier.HEAD_2.node("sniper.head.marksmans_eye.2",
             "Marksman's Eye II", PRICE)
             .withBuff(TowerBuff.critChance(0.2f).withArmorPenetration(0.5f))
-            .after(MARKSMANS_EYE_1)
-            .withGate(new DamageDealtCondition(200));
+            .after(MARKSMANS_EYE_1);
     private static final UpgradeNode MARKED_ROUND = UpgradeTier.SPECIAL.node("sniper.special.marked_round",
             "Marked Round", PRICE)
-            .withGate(new KillCountCondition(10))
             .withExtraEffect("crits apply Vulnerable, +15% damage taken, stacks x3");
     private static final UpgradeNode FIFTH_SHOT = UpgradeTier.SPECIAL.node("sniper.special.fifth_shot",
             "Fifth Shot", PRICE)
-            .withGate(new KillCountCondition(15))
             .withExtraEffect("every 5th shot is a guaranteed crit, and its crits deal 250%");
     private static final UpgradeNode MOMENTUM = UpgradeTier.SPECIAL.node("sniper.special.momentum", "Momentum", PRICE)
-            .withGate(new KillCountCondition(20))
             .withExtraEffect("post-crit shot deals 500% and ignores armor and plating; a kill grants +100% fire "
                     + "rate for 5s");
     private static final int FIFTH_SHOT_INTERVAL = 5;

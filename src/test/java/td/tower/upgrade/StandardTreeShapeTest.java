@@ -210,6 +210,19 @@ class StandardTreeShapeTest {
     }
 
     @Test
+    void stepXpFollowsTheGateTableAndNothingBehindTranscendentNeedsMore() {
+        assertThat(A1.xp()).isZero();
+        assertThat(A2.xp()).isEqualTo(50);
+        assertThat(A3.xp()).isEqualTo(150);
+        assertThat(List.of(X1.xp(), X2.xp(), X3.xp())).containsExactly(25, 75, 200);
+        assertThat(S1.xp()).isEqualTo(150);
+        assertThat(base(StandardBaseSlot.TRANSCENDENT_ID).xp()).isEqualTo(300);
+        assertThat(List.of(A4A.xp(), X4.xp(), base(StandardBaseSlot.RANGE_3_ID).xp())).containsOnly(0);
+        assertThat(BASE.stream().filter(n -> !n.id().equals(StandardBaseSlot.TRANSCENDENT_ID)))
+                .allSatisfy(n -> assertThat(n.xp()).as(n.id()).isZero());
+    }
+
+    @Test
     void aChoiceNamingANodeOutsideTheTreeOrAlreadyInAnotherChoiceIsRejected() {
         assertThatThrownBy(() -> UpgradeTree.of(A1).withChoice(ExclusiveChoice.oneOf(A1, B1)))
                 .isInstanceOf(IllegalArgumentException.class);

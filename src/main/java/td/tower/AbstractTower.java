@@ -301,7 +301,7 @@ public abstract class AbstractTower implements Tower {
     }
 
     public boolean buyUpgrade(UpgradeNode node) {
-        if (!this.upgradeTree().offers(node, this, this.context) || !node.gate().isSatisfied(this, this.context)) {
+        if (!this.upgradeTree().offers(node, this, this.context) || !node.gateMet(this, this.context)) {
             return false;
         }
         if (!this.context.economy().doPay(node.price())) {

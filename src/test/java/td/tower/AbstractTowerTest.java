@@ -11,7 +11,6 @@ import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.ExclusiveChoice;
-import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -342,11 +341,11 @@ class AbstractTowerTest {
     }
 
     @Test
-    void buyingANodeWhoseGateIsntSatisfiedIsRejected() {
+    void buyingANodeBeforeTheTowerHasItsXpIsRejectedAndSpendsNothing() {
         context.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("veteran", UpgradeSlot.HEAD, "Veteran", 10)
                 .withBuff(TowerBuff.amplifying(0.2f))
-                .withGate(new KillCountCondition(1000));
+                .withXp(150);
         FakeTower tower = FakeTower.offering(context, 0, 0, UpgradeTree.of(node));
 
         boolean chosen = tower.buyUpgrade(node);
@@ -354,6 +353,21 @@ class AbstractTowerTest {
         assertThat(chosen).isFalse();
         assertThat(context.economy().getCredits()).isEqualTo(100);
         assertThat(tower.upgrades().tip(UpgradeSlot.HEAD)).isEmpty();
+    }
+
+    @Test
+    void aNodeBecomesBuyableTheMomentTheTowerEarnsItsXp() {
+        context.economy().startEconomy(100, 5);
+        UpgradeNode node = UpgradeNode.of("veteran", UpgradeSlot.HEAD, "Veteran", 10).withXp(150);
+        FakeTower tower = FakeTower.offering(context, 0, 0, UpgradeTree.of(node));
+        tower.earnXp(149);
+        boolean atOneShort = tower.buyUpgrade(node);
+        tower.earnXp(1);
+
+        boolean atThreshold = tower.buyUpgrade(node);
+
+        assertThat(atOneShort).isFalse();
+        assertThat(atThreshold).isTrue();
     }
 
     @Test

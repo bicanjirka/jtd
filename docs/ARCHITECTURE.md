@@ -164,9 +164,9 @@ at all — `td.tower.targeting`'s query classes and `BoardRenderer` take an `Ene
 
 `UpgradeCondition.isSatisfied(Tower, GameWorld)` keeps the whole world on purpose. It is a
 strategy interface whose implementations need different slices: `ClusterCondition` reads the
-board geometry *and* the tower roster, while `DamageDealtCondition` and `KillCountCondition`
-read neither. Widening the signature to two or three narrow parameters would make three
-implementations carry arguments they never use, to help one. That is ISP applied as ritual
+board geometry *and* the tower roster, while `TranscendentCondition` reads only the tower's own
+upgrades. Widening the signature to two or three narrow parameters would make every
+implementation carry arguments it never uses, to help one. That is ISP applied as ritual
 rather than as judgement, and the interface is better as it is.
 
 `startWave(Wave)` is the one remaining method that coordinates two collaborators instead of

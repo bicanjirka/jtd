@@ -2,33 +2,40 @@ package td.tower.upgrade;
 
 /**
  * A step of the tree shape every tower shares: which slot it fills, what it costs as a multiple of
- * the tower's list price, and which base node opens it. A node's own line (the level before it)
- * is added with {@link UpgradeNode#after(UpgradeNode)}.
+ * the tower's list price, the XP it needs, and which base node opens it. A node's own line (the
+ * level before it) is added with {@link UpgradeNode#after(UpgradeNode)}. Steps behind
+ * Transcendent need no XP of their own: Transcendent is their gate.
  */
 public enum UpgradeTier {
-    RANGE_1(UpgradeSlot.BASE, 60),
-    RANGE_2(UpgradeSlot.BASE, 120),
-    RANGE_3(UpgradeSlot.BASE, 200),
-    ATTUNE(UpgradeSlot.BASE, 80),
-    AWAKEN(UpgradeSlot.BASE, 100),
-    TRANSCENDENT(UpgradeSlot.BASE, 400),
-    HEAD_1(UpgradeSlot.HEAD, 100),
-    HEAD_2(UpgradeSlot.HEAD, 150),
-    HEAD_3(UpgradeSlot.HEAD, 250),
-    HEAD_4(UpgradeSlot.HEAD, 400),
-    EXTRA_1(UpgradeSlot.HEAD, 80),
-    EXTRA_2(UpgradeSlot.HEAD, 120),
-    EXTRA_3(UpgradeSlot.HEAD, 200),
-    EXTRA_4(UpgradeSlot.HEAD, 300),
-    /** Either special slot: the second is a pick from the same set, at the same price. */
-    SPECIAL(UpgradeSlot.SPECIAL, 400);
+    RANGE_1(UpgradeSlot.BASE, 60, 0),
+    RANGE_2(UpgradeSlot.BASE, 120, 0),
+    RANGE_3(UpgradeSlot.BASE, 200, 0),
+    ATTUNE(UpgradeSlot.BASE, 80, 0),
+    AWAKEN(UpgradeSlot.BASE, 100, 0),
+    TRANSCENDENT(UpgradeSlot.BASE, 400, 300),
+    HEAD_1(UpgradeSlot.HEAD, 100, 0),
+    HEAD_2(UpgradeSlot.HEAD, 150, 50),
+    /** Also the tower's purpose gate, once its own feature gives it a deed. */
+    HEAD_3(UpgradeSlot.HEAD, 250, 150),
+    HEAD_4(UpgradeSlot.HEAD, 400, 0),
+    EXTRA_1(UpgradeSlot.HEAD, 80, 25),
+    EXTRA_2(UpgradeSlot.HEAD, 120, 75),
+    EXTRA_3(UpgradeSlot.HEAD, 200, 200),
+    EXTRA_4(UpgradeSlot.HEAD, 300, 0),
+    /**
+     * Either special slot: the second is a pick from the same set, at the same price, and its XP
+     * is long met by then.
+     */
+    SPECIAL(UpgradeSlot.SPECIAL, 400, 150);
 
     private final UpgradeSlot slot;
     private final int pricePercent;
+    private final int xp;
 
-    UpgradeTier(UpgradeSlot slot, int pricePercent) {
+    UpgradeTier(UpgradeSlot slot, int pricePercent, int xp) {
         this.slot = slot;
         this.pricePercent = pricePercent;
+        this.xp = xp;
     }
 
     public UpgradeSlot slot() {
@@ -40,9 +47,15 @@ public enum UpgradeTier {
         return (listPrice * this.pricePercent + 50) / 100;
     }
 
-    /** A node at this step: its slot, its price and the base node that opens it. */
+    public int xp() {
+        return this.xp;
+    }
+
+    /** A node at this step: its slot, its price, its XP and the base node that opens it. */
     public UpgradeNode node(String id, String displayName, int listPrice) {
-        return UpgradeNode.of(id, this.slot, displayName, this.price(listPrice)).withRequires(this.openedBy());
+        return UpgradeNode.of(id, this.slot, displayName, this.price(listPrice))
+                .withRequires(this.openedBy())
+                .withXp(this.xp);
     }
 
     /** What the base chain must own before a node at this step is offered. */
