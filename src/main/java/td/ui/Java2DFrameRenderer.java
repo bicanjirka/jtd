@@ -97,6 +97,12 @@ public final class Java2DFrameRenderer {
     private static final int TRANSCENDENT_HALO_DASHES = 8;
     private static final int TRANSCENDENT_HALO_ALPHA = 200;
     private static final float TRANSCENDENT_PIP_SCALE = 1.6f;
+    /** Rank pips stack up the body's left side, apart from the slot pips below it. */
+    private static final float RANK_PIP_RADIUS_FRACTION = 0.09f;
+    private static final float RANK_PIP_SPACING_FRACTION = 0.32f;
+    private static final float RANK_PIP_COLUMN_OFFSET_FRACTION = 0.95f;
+    private static final float RANK_UP_GLOW_MAX_RADIUS_FRACTION = 1.9f;
+    private static final float RANK_UP_GLOW_STROKE_WIDTH = 2.5f;
     /** Turret head size relative to a cell. */
     private static final float TOWER_HEAD_SIZE_FRACTION = 0.24f;
 
@@ -396,6 +402,7 @@ public final class Java2DFrameRenderer {
             case TOWER_UPGRADE_HEAD -> new Color(255, 200, 60);
             case TOWER_UPGRADE_SPECIAL -> new Color(200, 100, 255);
             case TOWER_TRANSCENDENT -> new Color(255, 205, 70);
+            case TOWER_RANK -> new Color(205, 215, 235);
             case TOWER_SNIPER_BEAM -> Color.GREEN;
             case TOWER_SPLASH_BEAM -> Color.RED;
             case TOWER_SPLASH_LINE, TOWER_SPLASH_FILL -> withAlpha(Color.RED, 80);
@@ -867,12 +874,43 @@ public final class Java2DFrameRenderer {
         this.paintTowerBody(g2, sprite.palette(), bodySize);
         this.paintSlotPips(g2, sprite.slotMarks(), sprite.transcendent(), bodySize);
         this.paintSlotReadyChevrons(g2, sprite.slotMarks(), bodySize);
+        this.paintRankPips(g2, sprite.rank(), bodySize);
+        if (sprite.rankUpProgress() >= 0f) {
+            this.paintRankUpGlow(g2, sprite.rankUpProgress(), bodySize);
+        }
         g2.setTransform(save);
     }
 
     /**
      * A pulsing circle around a tower with a {@code SPECIAL} upgrade, the same on every body shape.
      */
+    /** One small diamond per rank above Recruit, stacked upward beside the body. */
+    private void paintRankPips(Graphics2D g2, int rank, float bodySize) {
+        if (rank == 0) {
+            return;
+        }
+        g2.setColor(colorFor(Palette.TOWER_RANK));
+        float radius = bodySize * RANK_PIP_RADIUS_FRACTION;
+        float spacing = bodySize * RANK_PIP_SPACING_FRACTION;
+        float x = -bodySize * RANK_PIP_COLUMN_OFFSET_FRACTION;
+        for (int i = 0; i < rank; i++) {
+            AffineTransform save = g2.getTransform();
+            g2.translate(x, (rank - 1) * spacing / 2f - i * spacing);
+            g2.fill(diamondShape(radius * 1.3f));
+            g2.setTransform(save);
+        }
+    }
+
+    /** A ring that widens and fades as {@code progress} runs from 0 to 1. */
+    private void paintRankUpGlow(Graphics2D g2, float progress, float bodySize) {
+        float radius = bodySize * (0.7f + (RANK_UP_GLOW_MAX_RADIUS_FRACTION - 0.7f) * progress);
+        Stroke previousStroke = g2.getStroke();
+        g2.setStroke(new BasicStroke(RANK_UP_GLOW_STROKE_WIDTH));
+        g2.setColor(withAlpha(colorFor(Palette.TOWER_RANK), Math.round(230 * (1f - progress))));
+        g2.draw(new Ellipse2D.Float(-radius, -radius, radius * 2, radius * 2));
+        g2.setStroke(previousStroke);
+    }
+
     /** A ring of gold dashes, turned {@code turn} of the way round. */
     private void paintTranscendentHalo(Graphics2D g2, float turn, float bodySize) {
         float radius = bodySize * TRANSCENDENT_HALO_RADIUS_FRACTION;

@@ -13,6 +13,7 @@ import td.tower.AuraTower;
 import td.tower.CinderTower;
 import td.tower.SniperTower;
 import td.tower.Tower;
+import td.tower.TowerRank;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -150,6 +151,23 @@ class BoardRendererTest {
                 .filter(s -> s.palette() == Palette.TOWER_AURA_BODY)
                 .findFirst().orElseThrow();
         assertThat(sprite.enchantPulse()).isGreaterThan(0f);
+    }
+
+    @Test
+    void aTowerShowsItsRankAndGlowsForAMomentAfterRankingUp() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        SniperTower tower = new SniperTower(context, 1, 1);
+        context.towers().add(tower);
+        tower.beginTick(100);
+        tower.earnXp(160);
+
+        TowerSpriteDraw justRanked = rendererFor(engine, context).buildFrame(110, 0.0, 0.0).towerSprites().getFirst();
+        TowerSpriteDraw later = rendererFor(engine, context).buildFrame(200, 0.0, 0.0).towerSprites().getFirst();
+
+        assertThat(justRanked.rank()).isEqualTo(TowerRank.EXPERT.ordinal());
+        assertThat(justRanked.rankUpProgress()).isBetween(0f, 1f);
+        assertThat(later.rankUpProgress()).isEqualTo(-1f);
     }
 
     @Test

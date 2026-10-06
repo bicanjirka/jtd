@@ -138,6 +138,16 @@ class TowerSheetTextTest {
     }
 
     @Test
+    void theStatusShowsTheTowersXpAndTheRankItOpened() {
+        FakeTower tower = FakeTower.offering(this.world, 0, 0, UpgradeTree.none());
+        tower.earnXp(160);
+
+        InfoSheet sheet = TowerSheetText.status(tower.inspect());
+
+        assertThat(row(sheet, "XP")).isEqualTo(Row.toned(Glyph.FILLED_DIAMOND, Palette.TOWER_RANK, "XP", "160 · Expert"));
+    }
+
+    @Test
     void anUpgradeShowsInTheStatsItRaisesWhileTheUpgradesPanelNamesIt() {
         this.world.economy().startEconomy(1000, 5);
         Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);

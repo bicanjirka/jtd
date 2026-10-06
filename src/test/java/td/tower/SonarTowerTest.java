@@ -214,7 +214,7 @@ class SonarTowerTest {
         SonarTower transcended = this.upgradedTower("Twin Array", "Twin Array II", "Twin Array III", "Mark on Sweep",
                 "Transcendent");
         SonarTower awakened = this.upgradedTower("Twin Array", "Twin Array II", "Twin Array III", "Mark on Sweep");
-        TowerSpriteFrameBuilder sprites = new TowerSpriteFrameBuilder(this.context, 0.0, 0.0);
+        TowerSpriteFrameBuilder sprites = new TowerSpriteFrameBuilder(this.context, 0, 0.0, 0.0);
 
         transcended.accept(sprites);
         awakened.accept(sprites);

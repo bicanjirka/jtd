@@ -26,10 +26,12 @@ import java.awt.event.MouseEvent;
 import java.io.Serial;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.function.Consumer;
 
 /**
- * The selected tower's upgrade tree: per {@link UpgradeSlot}, a header in the slot's colour with
+ * The selected tower's upgrade tree, under its XP bar (with a tick at the next node XP opens):
+ * per {@link UpgradeSlot}, a header in the slot's colour with
  * what the slot holds, a lock row per exclusive choice made there, and a numbered button per
  * offered node saying its price or why it can't be bought yet. Buttons of one exclusive choice are
  * joined by a bracket, with "1 of N" beside the header. Replaces the wave preview while a tower is
@@ -48,11 +50,14 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     /** A chain root's rival and a level IV branch's in the head; two specials passed over. */
     private static final int DECISIONS_PER_SLOT = 2;
     private static final float DECISION_FONT_SIZE = 10f;
+    private static final float XP_FONT_SIZE = 10f;
     private static final UpgradeSlot[] SLOTS = UpgradeSlot.values();
     private static final Color LOCKED_COLOR = new Color(150, 170, 150);
     private static final int PIP_BOX = 11;
     private static final float PIP_SIZE = 4.2f;
 
+    private final JLabel xpLabel = new JLabel("");
+    private final XpBar xpBar = new XpBar();
     private final JLabel[] slotHeaders = new JLabel[SLOTS.length];
     private final JLabel[] choiceLabels = new JLabel[SLOTS.length];
     private final JLabel[][] decisionRows = new JLabel[SLOTS.length][DECISIONS_PER_SLOT];
@@ -140,6 +145,10 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
                 this.onHover.accept(offer);
             }
         }
+        int xp = this.tower.experience().xp();
+        Optional<UpgradeNode> nextXpGate = UpgradeSheetText.nextXpGate(offered, xp);
+        this.xpLabel.setText(UpgradeSheetText.xpLabel(xp, nextXpGate));
+        this.xpBar.show(xp, nextXpGate.map(node -> OptionalInt.of(node.xp())).orElse(OptionalInt.empty()));
         UpgradeState owned = this.tower.upgrades();
         List<UpgradeDecision> decisions = this.tower.upgradeTree().decisions(owned);
         for (UpgradeSlot slot : SLOTS) {
@@ -212,6 +221,23 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         setForeground(new Color(220, 255, 220));
 
         int row = 0;
+        this.xpLabel.setForeground(Hud.FOREGROUND);
+        this.xpLabel.setFont(Hud.LABEL_FONT.deriveFont(XP_FONT_SIZE));
+        GridBagConstraints xpLabelConstraints = new GridBagConstraints();
+        xpLabelConstraints.gridx = 0;
+        xpLabelConstraints.gridy = row++;
+        xpLabelConstraints.gridwidth = 2;
+        xpLabelConstraints.fill = GridBagConstraints.HORIZONTAL;
+        xpLabelConstraints.weightx = 0.01;
+        add(this.xpLabel, xpLabelConstraints);
+        GridBagConstraints xpBarConstraints = new GridBagConstraints();
+        xpBarConstraints.gridx = 0;
+        xpBarConstraints.gridy = row++;
+        xpBarConstraints.gridwidth = 2;
+        xpBarConstraints.fill = GridBagConstraints.HORIZONTAL;
+        xpBarConstraints.weightx = 0.01;
+        xpBarConstraints.insets = new Insets(1, 0, 6, 0);
+        add(this.xpBar, xpBarConstraints);
         for (UpgradeSlot slot : SLOTS) {
             int slotIndex = slot.ordinal();
             JLabel header = new JLabel(SheetNumbers.titleCase(slot));

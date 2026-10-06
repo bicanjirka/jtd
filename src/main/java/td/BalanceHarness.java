@@ -93,7 +93,8 @@ public final class BalanceHarness {
         System.out.println("Per-tower stats:");
         for (Tower tower : this.engine.getTowers()) {
             System.out.println("  " + tower.getType() + " @ (" + tower.getBoardX() + "," + tower.getBoardY() + "): "
-                    + tower.getKillCount() + " kills, " + tower.getDamageDealt() + " damage dealt");
+                    + tower.getKillCount() + " kills, " + tower.getDamageDealt() + " damage dealt, "
+                    + tower.experience().xp() + " XP");
         }
     }
 }
