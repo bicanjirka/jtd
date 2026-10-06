@@ -27,6 +27,8 @@ public enum Palette {
     TOWER_UPGRADE_BASE,
     TOWER_UPGRADE_HEAD,
     TOWER_UPGRADE_SPECIAL,
+    /** A Transcendent tower's halo ring and pip. */
+    TOWER_TRANSCENDENT,
     TOWER_SNIPER_BEAM,
     TOWER_SPLASH_BEAM,
     TOWER_SPLASH_LINE,

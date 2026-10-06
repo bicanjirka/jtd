@@ -76,6 +76,7 @@ EOF
 
 `java -cp "$CP" PreviewBoard` reads commands the same way: `levels`, `level <n>`,
 `credits <n>`, `lives <n>`, `place <tower> <x> <y>` (a `TowerFactory.Type` name, any case),
+`upgrade <x> <y> <node name>` (buys through the real mechanism, so tick a fight to clear its gate first),
 `spawn <id> [rank]`, `effect <kind> [ticks]` (on every enemy), `wave`, `tick <n>`, `kill`, `render <path>`, `state`, `quit`. `tick` advances
 the real `GameEngine`, and `render` paints through the real `BoardRenderer` /
 `Java2DFrameRenderer` pipeline. Two spawns with no `tick` between them land on the same pixel.

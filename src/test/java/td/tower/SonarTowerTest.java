@@ -10,6 +10,8 @@ import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
+import td.ui.TowerSpriteFrameBuilder;
+import td.ui.render.TowerSpriteDraw;
 import td.util.GameWorld;
 
 import java.util.LinkedHashMap;
@@ -216,6 +218,19 @@ class SonarTowerTest {
 
         assertThat(tower.upgrades().inSlot(UpgradeSlot.SPECIAL)).extracting(UpgradeNode::displayName)
                 .containsExactly("Mark on Sweep", "Piercing Tone");
+    }
+
+    @Test
+    void onlyATranscendedSonarWearsTheHaloOnTheBoard() {
+        SonarTower transcended = this.upgradedTower("Twin Array", "Twin Array II", "Twin Array III", "Mark on Sweep",
+                "Transcendent");
+        SonarTower awakened = this.upgradedTower("Twin Array", "Twin Array II", "Twin Array III", "Mark on Sweep");
+        TowerSpriteFrameBuilder sprites = new TowerSpriteFrameBuilder(this.context, 0.0, 0.0);
+
+        transcended.accept(sprites);
+        awakened.accept(sprites);
+
+        assertThat(sprites.build()).extracting(TowerSpriteDraw::transcendent).containsExactly(true, false);
     }
 
     private SonarTower upgradedTower(String... nodes) {
