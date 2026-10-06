@@ -9,6 +9,7 @@ import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.InWedgeTargetQuery;
 import td.tower.targeting.NearestSelector;
+import td.tower.targeting.PreferringSelector;
 import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -103,7 +104,7 @@ public final class CinderTower extends AbstractTower {
     public void doTick(int gameTime) {
         List<EnemyMob> inRange = InRangeTargetQuery.visible(this.centerX, this.centerY, this.rangeReal())
                 .matching(this.context.enemies());
-        new NearestSelector(this.centerX, this.centerY).selectFrom(inRange)
+        PreferringSelector.priority(new NearestSelector(this.centerX, this.centerY)).selectFrom(inRange)
                 .ifPresent(nearest -> this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, nearest.getX(), nearest.getY())));
 
         if (this.coolDown > 0) {

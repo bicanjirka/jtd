@@ -9,6 +9,7 @@ import td.projectile.MissileProjectile;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
+import td.tower.targeting.PreferringSelector;
 import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -93,7 +94,7 @@ public final class SeekerTower extends AbstractTower {
     private EnemyMob findTarget() {
         List<EnemyMob> inRange = InRangeTargetQuery.visible(this.centerX, this.centerY, this.rangeReal())
                 .matching(this.context.enemies());
-        return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
+        return PreferringSelector.priority(new FurthestAlongPathSelector()).selectFrom(inRange).orElse(null);
     }
 
     public void doTick(int gameTime) {

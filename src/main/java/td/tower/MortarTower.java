@@ -7,6 +7,7 @@ import td.projectile.CannonballProjectile;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
+import td.tower.targeting.PreferringSelector;
 import td.tower.upgrade.ClusterCondition;
 import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.StandardBaseSlot;
@@ -96,7 +97,7 @@ public final class MortarTower extends AbstractTower {
     private EnemyMob findTarget() {
         List<EnemyMob> inRange = InRangeTargetQuery.visible(this.centerX, this.centerY, this.rangeReal())
                 .matching(this.context.enemies());
-        return new FurthestAlongPathSelector().selectFrom(inRange).orElse(null);
+        return PreferringSelector.priority(new FurthestAlongPathSelector()).selectFrom(inRange).orElse(null);
     }
 
     public void doTick(int gameTime) {

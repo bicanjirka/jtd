@@ -36,6 +36,9 @@ public interface HitReceiver {
      */
     float critFactorFor(AttackProfile attacker);
 
+    /** Whether an effect of {@code kind} is active. */
+    boolean hasEffect(EffectKind kind);
+
     /** Active effect kinds, in a stable order. */
     Set<EffectKind> activeEffectKinds();
 

@@ -7,6 +7,7 @@ import td.tower.buff.TowerBuff;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.HighestHealthSelector;
 import td.tower.targeting.InRangeTargetQuery;
+import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.TargetSelector;
 import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.StandardBaseSlot;
@@ -70,7 +71,7 @@ public final class SniperTower extends AbstractTower {
 
     private static final int COOLDOWN_MAX = 39;
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
-    private volatile TargetSelector targetSelector = new FurthestAlongPathSelector();
+    private volatile TargetSelector targetSelector = PreferringSelector.priority(new FurthestAlongPathSelector());
     private int coolDown = 0;
     private EnemyMob currentTarget;
     private boolean lastShotCritical;
@@ -93,7 +94,7 @@ public final class SniperTower extends AbstractTower {
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
         if (node.slot() == UpgradeSlot.SPECIAL) {
-            this.targetSelector = new HighestHealthSelector();
+            this.targetSelector = PreferringSelector.priority(new HighestHealthSelector());
         }
     }
 

@@ -5,6 +5,7 @@ import td.effect.Effect;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
+import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.RandomSelector;
 import td.tower.targeting.TargetSelector;
 import td.tower.upgrade.ExclusiveChoice;
@@ -103,7 +104,7 @@ public final class SplashTower extends AbstractTower {
     public SplashTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SPLASH, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
         this.spreadRadius = SPREAD_RADIUS_BASE * context.getBoard().scale();
-        this.targetSelector = new RandomSelector(context.random());
+        this.targetSelector = PreferringSelector.priority(new RandomSelector(context.random()));
     }
 
     @Override

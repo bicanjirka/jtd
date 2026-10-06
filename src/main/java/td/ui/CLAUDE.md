@@ -28,7 +28,9 @@ keeps the seam honest.
 - Exhaustive switches with no `default` (`bodyPaletteFor`, `colorFor`, the sealed draw
   switches): fix a compile error by adding the case, never a `default`. Switching on these
   sealed draw records is fine; switching on `EnemyMob`/`Tower`/`Cell` is not.
-- Status and trait marker rows cap at `MAX_VISIBLE_MARKERS`, then show one overflow marker.
+- Status and trait marker rows cap at `MAX_VISIBLE_MARKERS`, then show one overflow marker. Status
+  markers go one per category once more effects are active than fit, each counting the other kinds
+  of its category.
 - Rank badges and the `SPECIAL` halo are painted upright (not rotated with facing).
 - Tower bodies are one closed `Shape` each. The sonar head is the one exception, with its own
   `paintSonarSweep`. Toolbar icons reuse `towerBodyShape` via `renderTowerIcon`.

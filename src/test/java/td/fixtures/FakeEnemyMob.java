@@ -128,6 +128,11 @@ public final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
+    public boolean hasEffect(EffectKind kind) {
+        return this.activeEffectKinds().contains(kind);
+    }
+
+    @Override
     public float critFactorFor(AttackProfile attacker) {
         return attacker.critMultiplier();
     }
