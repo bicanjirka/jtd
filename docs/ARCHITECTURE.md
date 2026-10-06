@@ -439,9 +439,18 @@ listener uses, verifying success via the cell grid afterward rather than trustin
 value, since `TowerPlacement.mouseClicked` always exits placement mode whether or not it
 actually built anything.
 
-The three debug methods it shares with the `n`/`x`/`c` keybindings live on `GameEngine`, not
+The three debug methods behind the `n`/`x`/`c` keys live on `GameEngine`, not
 `TowerDefense`, per the headless/Swing boundary — they are ordinary engine rules and are unit
 tested the same way every other `GameEngineTest` case is.
+
+The dev panel (`Ctrl+Shift+D`, `td.ui.PanelDev`) is the in-game counterpart of the `run-jtd`
+Driver: one control, with one `Alt` shortcut, per thing a playtester would otherwise script, and
+the `n`/`x`/`c` keys work only while it is open. Its cheats live in the headless
+`td.DevControls`, which queues every change to enemies and towers for the game-loop thread, so
+they work while paused without a second writer. The wave-script box is the one place
+`GameStartupException` is caught outside `Main`: the script is typed, so a bad one is shown, not
+fatal. Its shortcuts go through a `KeyEventDispatcher`, because the frame itself usually holds
+the focus and a `Window` runs no key bindings.
 
 `td.PerformanceHarness` is its timing sibling: it fills every buildable cell of the last
 built-in level with towers, plays the level through once to warm the JIT and five more times

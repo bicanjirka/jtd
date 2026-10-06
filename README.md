@@ -53,9 +53,7 @@ Start each wave yourself when you are ready — waves do not auto-advance.
 | `p`                             | Pause / unpause                                                                                      |
 | `f`                             | Cycle tick speed (normal → fast → super fast → normal)                                               |
 | `m`                             | Back to the level-select menu (asks to confirm mid-level)                                            |
-| `n`                             | Debug: clear the current wave with no penalty and start the next one                                 |
-| `x`                             | Debug: spawn one instance of the next enemy type in the level's catalog, cycling through all of them |
-| `c`                             | Debug: grant a lump sum of credits                                                                   |
+| `Ctrl`+`Shift`+`D`              | Open or close the dev panel (playtesting controls; its **Help** button lists its own keys)           |
 
 Mouse: move to preview placement, click to place or to select a placed tower, or click an
 upgrade-tree button to buy that node. Click a moving enemy (when not placing a tower) to inspect
@@ -63,8 +61,13 @@ it: the side panel shows its live health, stats, effects and traits, updating ev
 and keeps a "Killed" or "Leaked" line after it's gone until your next click. Hovering an enemy in
 the wave preview shows the same stat block for that enemy type.
 
-The `n`/`x`/`c` debug keys are always available, not gated behind a build flag — they exist to
-make manual playtesting cheap (see `docs/features/FEATURE-playtesting-and-balance-tooling.md`). There's also
+The dev panel ships in the jar, hidden behind `Ctrl`+`Shift`+`D` rather than a build flag, to
+make manual playtesting cheap. It sets credits and lives, keeps them topped up, spawns any wave
+script on any path with a live preview, skips, jumps to or restarts waves, steps one tick, kills
+or clears the board, grants XP to or resets the selected tower, lets upgrades ignore their gates,
+and draws the cell grid with the path's cells shaded and the pointed-at cell's coordinates. Every
+control has an `Alt` shortcut, and while the panel is open the bare keys `n` (skip wave), `x`
+(spawn the next catalog enemy) and `c` (grant credits) work too. There's also
 `td.BalanceHarness`, a headless batch simulation: it drives a level to completion with a fixed
 tower loadout and no human input, then prints lives lost, ticks-to-clear per wave, and each
 tower's kills/damage dealt.

@@ -47,6 +47,7 @@ public class PreviewBoard {
 
     private static GameEngine engine;
     private static int gameTime = 0;
+    private static boolean cellGrid = false;
 
     public static void main(String[] args) throws Exception {
         engine = new GameEngine(GameHost.noOp());
@@ -84,6 +85,11 @@ public class PreviewBoard {
             case "tick" -> tick(Integer.parseInt(rest.trim()));
             case "kill" -> killEnemies();
             case "render" -> render(rest.trim());
+            case "grid" -> {
+                cellGrid = !rest.trim().equals("off");
+                System.out.println("OK grid " + (cellGrid ? "on" : "off"));
+            }
+            case "hoverplace" -> hoverPlace(rest.trim());
             case "state" -> state();
             case "quit" -> {
                 return;
@@ -224,6 +230,15 @@ public class PreviewBoard {
         }
     }
 
+    // Starts placing a tower and points at a cell, so the render shows the placement highlight.
+    private static void hoverPlace(String args) {
+        String[] parts = args.split("\s+");
+        int scale = engine.getGameWorld().getBoard().scale();
+        engine.startPlacing(td.tower.TowerFactory.Type.valueOf(parts[0].toUpperCase()), 0f);
+        engine.highlightCell(Integer.parseInt(parts[1]) * scale + scale / 2, Integer.parseInt(parts[2]) * scale + scale / 2);
+        System.out.println("OK hoverplace " + args);
+    }
+
     private static void killEnemies() {
         for (EnemyMob mob : engine.getGameWorld().enemies().getEnemies()) {
             mob.doDamage(Damage.physical(Integer.MAX_VALUE / 2));
@@ -234,6 +249,7 @@ public class PreviewBoard {
     private static void render(String path) throws Exception {
         GameWorld world = engine.getGameWorld();
         BoardRenderer boardRenderer = new BoardRenderer(world);
+        boardRenderer.setCellGridShown(cellGrid);
         double animationSeconds = gameTime / TickRate.TICKS_PER_SECOND;
         // alpha 1.0: this is always a snapshot exactly at gameTime (the last doTick that ran),
         // never mid-interpolation into a tick that hasn't happened.

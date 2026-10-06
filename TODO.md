@@ -42,15 +42,6 @@ Findings from the architecture audits of 2026-09-17, highest-severity first. The
 group and the external audit's critical/high/moderate findings have landed; what remains is
 listed below.
 
-### Hovering the wave preview before its first layout divides by zero
-
-`PanelEnemy.mouseOver` divides the pointer's x by `scale`, which stays 0 until the preview has laid
-out its first wave, so a pointer crossing it early throws `ArithmeticException` on the EDT (seen
-during a `run-jtd` pass right after a level loaded). Harmless beyond the stack trace.
-
-- **Where:** `td.ui.PanelEnemy.mouseOver`.
-- **Approach:** return early while `scale` is 0, or derive the slot from the laid-out width.
-
 ### A command queue would make the simulation a true single writer
 
 Not a defect - an option, recorded with the condition that would make it worth taking.
