@@ -379,6 +379,24 @@ public class GameEngine {
     }
 
     /**
+     * Debug: clears the board with no bounty or score and makes wave {@code number} (1-based,
+     * clamped to the level) the next to start.
+     *
+     * @return the wave that is now next, or 0 if nothing is loaded or the level is over
+     */
+    public int debugJumpToWave(int number) {
+        if (this.outcome.isOver() || !this.gameWorld.level().isLoaded()) {
+            return 0;
+        }
+        int next = Math.max(1, Math.min(number, this.gameWorld.level().waveCount()));
+        this.gameWorld.enemies().clear();
+        this.startWave = false;
+        this.wave = next - 1;
+        this.waveReady = true;
+        return next;
+    }
+
+    /**
      * Debug: spawns the next catalog id at the path start with its base health and price, cycling
      * through the catalog.
      *

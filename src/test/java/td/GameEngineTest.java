@@ -903,6 +903,22 @@ class GameEngineTest {
     }
 
     @Test
+    void jumpingToAWaveClearsTheBoardAndMakesItTheNextToStart() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", Rank.GRUNT),
+                new WaveDefinition("2 c", Rank.GRUNT), new WaveDefinition("3 c", Rank.GRUNT)), 100));
+        engine.nextWave();
+
+        int next = engine.debugJumpToWave(3);
+        boolean started = engine.nextWave();
+
+        assertThat(next).isEqualTo(3);
+        assertThat(started).isTrue();
+        assertThat(engine.getCurrentWaveIndex()).isEqualTo(3);
+        assertThat(engine.getGameWorld().enemies().aliveCount()).isEqualTo(3);
+    }
+
+    @Test
     void reloadingALevelRemovesTowersLeftFromThePreviousLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));

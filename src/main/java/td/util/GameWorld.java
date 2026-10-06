@@ -33,6 +33,7 @@ public class GameWorld {
     private final EnemyRoster enemies;
     private final TowerRoster towers;
     private final ProjectileRoster projectiles = new ProjectileRoster();
+    private final PlaytestRules playtestRules = new PlaytestRules();
     private final WaveAnnouncer waves = new WaveAnnouncer();
     private final DamageTally damageTally = new DamageTally();
     private final DisruptionField disruptions = new DisruptionField();
@@ -49,6 +50,10 @@ public class GameWorld {
         this.enemies = new EnemyRoster();
         this.towers = new TowerRoster(mainApp, this.economy, this::getBoard);
         this.enemies.addWalkEndListener(new ExperienceAwarder(this.towers));
+    }
+
+    public PlaytestRules playtestRules() {
+        return this.playtestRules;
     }
 
     public EconomyLedger economy() {
