@@ -12,7 +12,8 @@ eleven primitives listed under "New primitives" landed as: `EffectKind.VULNERABL
 `AbstractTower`; and per-tower code for the rest (marks, distance scaling, a second beam, shrapnel,
 multi-blast). `FEATURE-tower-progression.md` since moved every node onto the new tree shape:
 Attune now opens the head, Awaken the special slot and level III, Transcendent a second special,
-and prices follow its multiples of the list price. Every effect number is a placeholder, recorded in `TODO.md`'s balance
+and prices follow its multiples of the list price. `FEATURE-xp-and-purpose-gates.md` replaced
+every kill and damage gate below with the XP of the node's level; the layout gates stay. Every effect number is a placeholder, recorded in `TODO.md`'s balance
 entries; the inline numbers below stayed flavour text for the mechanic each node describes.
 
 Choices made where the text was open: Vulnerable is up to 3 stacks at +15% damage taken each, all
