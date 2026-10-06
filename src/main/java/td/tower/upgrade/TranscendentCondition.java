@@ -25,17 +25,18 @@ public record TranscendentCondition(List<String> levelThreeIds) implements Upgra
         return "a special and a level III head";
     }
 
+    /** Short enough to share a button row with the node's name. */
     @Override
     public String progress(Tower tower, GameWorld context) {
         boolean special = ownsSpecial(tower);
         boolean levelThree = this.ownsLevelThree(tower);
         if (special && levelThree) {
-            return this.describe();
+            return "special and head III";
         }
         if (!special && !levelThree) {
-            return "needs " + this.describe();
+            return "needs special, head III";
         }
-        return special ? "needs a level III head" : "needs a special";
+        return special ? "needs head III" : "needs special";
     }
 
     private static boolean ownsSpecial(Tower tower) {

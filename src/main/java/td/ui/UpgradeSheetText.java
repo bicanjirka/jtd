@@ -1,8 +1,11 @@
 package td.ui;
 
+import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeCondition;
+import td.tower.upgrade.UpgradeDecision;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeState;
 import td.ui.render.InfoSheet;
 import td.ui.render.Palette;
 import td.ui.render.SheetLine;
@@ -12,6 +15,7 @@ import td.ui.render.SheetLine.Row;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /** The words for an upgrade node: its hover sheet, its button face and its slot's header. Pure. */
 final class UpgradeSheetText {
@@ -29,6 +33,11 @@ final class UpgradeSheetText {
             lines.add(offer.gateMet()
                     ? Row.toned(Glyph.CHECK, Palette.UPGRADE_GATE_MET, offer.progress(), "")
                     : Row.toned(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, offer.progress(), ""));
+        }
+        if (offer.inChoice() && offer.lastPick()) {
+            offer.rivals().forEach(rival -> lines.add(Row.plain(Glyph.LOCK, "Locks out " + rival.displayName(), "")));
+        } else if (offer.inChoice()) {
+            lines.add(Row.plain(Glyph.LOCK, "The others wait for Transcendent", ""));
         }
         lines.add(new SheetLine.Gap());
         node.bonuses().forEach(bonus -> lines.add(Row.plain(Glyph.DOT, bonus.label(), bonus.value())));
@@ -51,9 +60,35 @@ final class UpgradeSheetText {
         return offer.number() + "  " + offer.node().displayName() + "\t" + state;
     }
 
-    /** "Base: Range" once a node is owned, "Base" while one is offered, else "Special: locked". */
-    static String slotHeader(UpgradeSlot slot, Optional<UpgradeNode> owned, boolean offered) {
+    /**
+     * "Base: Range" for the node last bought in the slot, "Base" while one is offered, or why the
+     * slot is closed: "Head: needs Attune", "Special: needs Awaken", or, once Awaken is owned but
+     * the specials belong to a chain, "Special: choose a chain first".
+     */
+    static String slotHeader(UpgradeSlot slot, UpgradeState owned, boolean offered) {
         String name = SheetNumbers.titleCase(slot);
-        return owned.map(node -> name + ": " + node.displayName()).orElse(offered ? name : name + ": locked");
+        Optional<UpgradeNode> tip = owned.tip(slot);
+        if (tip.isPresent()) {
+            return name + ": " + tip.get().displayName();
+        }
+        if (offered) {
+            return name;
+        }
+        return name + ": " + switch (slot) {
+            case BASE -> "locked";
+            case HEAD -> owned.owns(StandardBaseSlot.ATTUNE_ID) ? "locked" : "needs Attune";
+            case SPECIAL -> owned.owns(StandardBaseSlot.AWAKEN_ID) ? "choose a chain first" : "needs Awaken";
+        };
+    }
+
+    /** Beside a slot's header while an exclusive choice of {@code members} nodes is on offer there. */
+    static String choiceLabel(int members) {
+        return "1 of " + members;
+    }
+
+    /** "Fifth Shot over Marked Round, Momentum": a choice made, beside the lock glyph. */
+    static String decisionText(UpgradeDecision decision) {
+        return decision.chosen().displayName() + " over "
+                + decision.passedOver().stream().map(UpgradeNode::displayName).collect(Collectors.joining(", "));
     }
 }

@@ -3,8 +3,10 @@ package td.ui;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.tower.Tower;
+import td.tower.upgrade.UpgradeDecision;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeState;
 import td.ui.render.Palette;
 import td.ui.render.SheetLine.Glyph;
 import td.util.GameWorld;
@@ -14,6 +16,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -27,8 +30,10 @@ import java.util.function.Consumer;
 
 /**
  * The selected tower's upgrade tree: per {@link UpgradeSlot}, a header in the slot's colour with
- * what the slot holds, and a numbered button per offered node saying its price or why it can't be
- * bought yet. Replaces the wave preview while a tower is selected.
+ * what the slot holds, a lock row per exclusive choice made there, and a numbered button per
+ * offered node saying its price or why it can't be bought yet. Buttons of one exclusive choice are
+ * joined by a bracket, with "1 of N" beside the header. Replaces the wave preview while a tower is
+ * selected.
  * <p>
  * No slot offers more than three nodes at once. Numbering runs across all slots in {@code offered}
  * order, so a button's number is the key that buys it.
@@ -40,12 +45,17 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     private static final long serialVersionUID = 1L;
 
     private static final int BUTTONS_PER_SLOT = 3;
+    /** A chain root and a level IV branch in the head; two specials. */
+    private static final int DECISIONS_PER_SLOT = 2;
     private static final UpgradeSlot[] SLOTS = UpgradeSlot.values();
     private static final Color LOCKED_COLOR = new Color(150, 170, 150);
     private static final int PIP_BOX = 11;
     private static final float PIP_SIZE = 4.2f;
 
     private final JLabel[] slotHeaders = new JLabel[SLOTS.length];
+    private final JLabel[] choiceLabels = new JLabel[SLOTS.length];
+    private final JLabel[][] decisionRows = new JLabel[SLOTS.length][DECISIONS_PER_SLOT];
+    private final ChoiceBracket[][] brackets = new ChoiceBracket[SLOTS.length][BUTTONS_PER_SLOT];
     private final HudButton[][] slotButtons = new HudButton[SLOTS.length][BUTTONS_PER_SLOT];
     private final UpgradeOffer[][] slotOffers = new UpgradeOffer[SLOTS.length][BUTTONS_PER_SLOT];
     private final Java2DFrameRenderer glyphRenderer = new Java2DFrameRenderer();
@@ -114,7 +124,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         List<UpgradeNode> offered = this.tower.offeredUpgrades(this.context);
         int[] used = new int[SLOTS.length];
         for (int i = 0; i < offered.size(); i++) {
-            UpgradeOffer offer = UpgradeOffer.of(offered.get(i), i + 1, this.tower, this.context);
+            UpgradeOffer offer = UpgradeOffer.of(offered, i, this.tower, this.context);
             int slotIndex = offer.node().slot().ordinal();
             int buttonIndex = used[slotIndex]++;
             if (buttonIndex >= BUTTONS_PER_SLOT) {
@@ -129,14 +139,57 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
                 this.onHover.accept(offer);
             }
         }
+        UpgradeState owned = this.tower.upgrades();
+        List<UpgradeDecision> decisions = this.tower.upgradeTree().decisions(owned);
         for (UpgradeSlot slot : SLOTS) {
             boolean reachable = offered.stream().anyMatch(n -> n.slot() == slot);
-            Optional<UpgradeNode> owned = this.tower.upgrades().tip(slot);
             JLabel header = this.slotHeaders[slot.ordinal()];
             header.setText(UpgradeSheetText.slotHeader(slot, owned, reachable));
-            header.setForeground(owned.isPresent() || reachable
+            header.setForeground(owned.countIn(slot) > 0 || reachable
                     ? Java2DFrameRenderer.colorFor(TowerSpriteFrameBuilder.slotPaletteFor(slot))
                     : LOCKED_COLOR);
+            this.refreshChoiceMark(slot);
+            this.refreshDecisionRows(slot, decisions);
+        }
+    }
+
+    /** The bracket joining the slot's buttons that belong to one choice, and its "1 of N". */
+    private void refreshChoiceMark(UpgradeSlot slot) {
+        UpgradeOffer[] offers = this.slotOffers[slot.ordinal()];
+        int first = -1;
+        int last = -1;
+        for (int i = 0; i < BUTTONS_PER_SLOT; i++) {
+            if (offers[i] != null && offers[i].inChoice()) {
+                first = first < 0 ? i : first;
+                last = i;
+            }
+        }
+        for (int i = 0; i < BUTTONS_PER_SLOT; i++) {
+            boolean member = offers[i] != null && offers[i].inChoice();
+            ChoiceBracket.Segment segment;
+            if (first < 0 || i < first || i > last) {
+                segment = ChoiceBracket.Segment.NONE;
+            } else if (!member) {
+                segment = ChoiceBracket.Segment.PASS;
+            } else if (i == first) {
+                segment = ChoiceBracket.Segment.FIRST;
+            } else {
+                segment = i == last ? ChoiceBracket.Segment.LAST : ChoiceBracket.Segment.MIDDLE;
+            }
+            this.brackets[slot.ordinal()][i].setSegment(segment);
+        }
+        this.choiceLabels[slot.ordinal()].setText(
+                first < 0 ? "" : UpgradeSheetText.choiceLabel(offers[first].rivals().size() + 1));
+    }
+
+    private void refreshDecisionRows(UpgradeSlot slot, List<UpgradeDecision> decisions) {
+        List<UpgradeDecision> inSlot = decisions.stream().filter(d -> d.chosen().slot() == slot).toList();
+        for (int i = 0; i < DECISIONS_PER_SLOT; i++) {
+            JLabel row = this.decisionRows[slot.ordinal()][i];
+            row.setVisible(i < inSlot.size());
+            if (i < inSlot.size()) {
+                row.setText(UpgradeSheetText.decisionText(inSlot.get(i)));
+            }
         }
     }
 
@@ -167,14 +220,42 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             header.setIcon(new PaintedIcon(PIP_BOX, PIP_BOX,
                     g2 -> this.glyphRenderer.paintRowGlyph(g2, Glyph.PIP, Optional.of(slotPalette), PIP_SIZE)));
             this.slotHeaders[slotIndex] = header;
+            JLabel choiceLabel = new JLabel("");
+            choiceLabel.setForeground(Hud.FOREGROUND);
+            choiceLabel.setFont(Hud.LABEL_FONT);
+            this.choiceLabels[slotIndex] = choiceLabel;
+            JPanel headerRow = new JPanel(new BorderLayout());
+            headerRow.setOpaque(false);
+            headerRow.add(header, BorderLayout.CENTER);
+            headerRow.add(choiceLabel, BorderLayout.EAST);
             GridBagConstraints headerConstraints = new GridBagConstraints();
             headerConstraints.gridx = 0;
             headerConstraints.gridy = row++;
+            headerConstraints.gridwidth = 2;
             headerConstraints.anchor = GridBagConstraints.WEST;
             headerConstraints.fill = GridBagConstraints.HORIZONTAL;
             headerConstraints.weightx = 0.01;
             headerConstraints.insets = new Insets(slotIndex == 0 ? 0 : 6, 0, 2, 0);
-            add(header, headerConstraints);
+            add(headerRow, headerConstraints);
+
+            for (int i = 0; i < DECISIONS_PER_SLOT; i++) {
+                JLabel decision = new JLabel("");
+                decision.setForeground(Hud.FOREGROUND);
+                decision.setFont(Hud.LABEL_FONT);
+                decision.setIcon(new PaintedIcon(PIP_BOX, PIP_BOX,
+                        g2 -> this.glyphRenderer.paintRowGlyph(g2, Glyph.LOCK, Optional.empty(), PIP_SIZE)));
+                decision.setVisible(false);
+                this.decisionRows[slotIndex][i] = decision;
+                GridBagConstraints decisionConstraints = new GridBagConstraints();
+                decisionConstraints.gridx = 0;
+                decisionConstraints.gridy = row++;
+                decisionConstraints.gridwidth = 2;
+                decisionConstraints.anchor = GridBagConstraints.WEST;
+                decisionConstraints.fill = GridBagConstraints.HORIZONTAL;
+                decisionConstraints.weightx = 0.01;
+                decisionConstraints.insets = new Insets(0, 0, 2, 0);
+                add(decision, decisionConstraints);
+            }
 
             for (int i = 0; i < BUTTONS_PER_SLOT; i++) {
                 HudButton button = new HudButton("");
@@ -204,6 +285,13 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
                 buttonConstraints.anchor = GridBagConstraints.WEST;
                 buttonConstraints.weightx = 0.01;
                 add(button, buttonConstraints);
+                ChoiceBracket bracket = new ChoiceBracket();
+                this.brackets[slotIndex][i] = bracket;
+                GridBagConstraints bracketConstraints = new GridBagConstraints();
+                bracketConstraints.gridx = 1;
+                bracketConstraints.gridy = buttonConstraints.gridy;
+                bracketConstraints.fill = GridBagConstraints.VERTICAL;
+                add(bracket, bracketConstraints);
             }
         }
     }

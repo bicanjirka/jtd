@@ -33,13 +33,17 @@ public record ExclusiveChoice(List<String> nodeIds, int picks) {
 
     /** Whether {@code owned} has used every pick, which locks out the members it doesn't own. */
     boolean isSpent(UpgradeState owned) {
+        return this.picksLeft(owned) <= 0;
+    }
+
+    int picksLeft(UpgradeState owned) {
         int owning = 0;
         for (int i = 0; i < this.nodeIds.size(); i++) {
             if (owned.owns(this.nodeIds.get(i))) {
                 owning++;
             }
         }
-        return owning >= this.picks;
+        return this.picks - owning;
     }
 
     private static List<String> ids(UpgradeNode... members) {

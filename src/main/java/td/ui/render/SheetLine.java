@@ -80,6 +80,8 @@ public sealed interface SheetLine {
         PIP,
         CHECK,
         CROSS,
+        /** An exclusive choice: what a pick locks out, or what a made one was chosen over. */
+        LOCK,
         /** The body shape of the tower whose body palette is the row's tone. */
         TOWER_BODY
     }
