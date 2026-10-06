@@ -128,6 +128,11 @@ public final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
+    public float critFactorFor(AttackProfile attacker) {
+        return attacker.critMultiplier();
+    }
+
+    @Override
     public float reductionAgainst(DamageType type) {
         return type == DamageType.PHYSICAL ? this.physicalReduction : 0f;
     }

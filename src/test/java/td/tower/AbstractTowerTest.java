@@ -461,21 +461,33 @@ class AbstractTowerTest {
     }
 
     @Test
-    void aDamageOverTimeTickCanStillCrit() {
+    void aDamageOverTimeTickNeverCritsEvenWhenEveryRollWouldSucceed() {
         GameWorld alwaysCrits = WorldFixtures.newWorld(() -> 0.0);
         alwaysCrits.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("precision", UpgradeSlot.HEAD, "Precision", 10)
-                .withBuff(TowerBuff.critChance(0.5f));
+                .withBuff(TowerBuff.critChance(1f));
         FakeTower tower = FakeTower.offering(alwaysCrits, 0, 0, UpgradeTree.of(node));
         tower.buyUpgrade(node);
         EnemyMob enemy = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.burn(Damage.magic(1000), 100, d -> tower.dealDamage(enemy, d)));
 
-        enemy.doTick(1);
+        boolean critical = tower.dealPeriodicDamage(enemy, Damage.magic(1000));
 
-        // the first pulse is 1000 * 4.7137 ~= 4713; the burn's first stack has already lowered
-        // resilience by one, widening the crit bonus by 1%
-        assertThat(tower.getDamageDealt()).isEqualTo(Math.round(4713 * (1f + 0.5f * 1.01f)));
+        assertThat(critical).isFalse();
+        assertThat(tower.getDamageDealt()).isEqualTo(1000);
+    }
+
+    @Test
+    void aCriticalHitStartsStrongerDamageOverTimeButAPlainHitDoesNot() {
+        GameWorld world = WorldFixtures.newWorld();
+        world.economy().startEconomy(100, 5);
+        UpgradeNode node = UpgradeNode.of("sharp", UpgradeSlot.HEAD, "Sharp", 10)
+                .withBuff(TowerBuff.critDamage(0.5f));
+        FakeTower tower = FakeTower.offering(world, 0, 0, UpgradeTree.of(node));
+        tower.buyUpgrade(node);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", world, 0, 100000, 3, Rank.GRUNT);
+
+        assertThat(tower.potencyOfHit(enemy, true)).isEqualTo(AttackProfile.DEFAULT_CRIT_MULTIPLIER + 0.5f);
+        assertThat(tower.potencyOfHit(enemy, false)).isEqualTo(1f);
     }
 
     @Test

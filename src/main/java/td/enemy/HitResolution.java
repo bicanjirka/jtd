@@ -3,12 +3,13 @@ package td.enemy;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.damage.Delivery;
 import td.stat.EnemyStat;
 import td.stat.StatView;
 import td.util.RandomSource;
 
 /**
- * The one formula a hit lands by: the crit roll, then penetration, armor or magic resist, plating,
+ * The one formula a hit lands by: the crit roll (hits only), then penetration, armor or magic resist, plating,
  * damage taken, and the cap at remaining health. Computed in float and rounded once.
  */
 public final class HitResolution {
@@ -30,18 +31,35 @@ public final class HitResolution {
             RandomSource random) {
         float amount = incoming.amount();
         boolean critical = incoming.critical();
-        float resilienceKept = 1f - stats.value(EnemyStat.RESILIENCE) / 100f;
-        // Negative resilience never makes a crit likelier, only harder-hitting.
-        float critChance = attacker.critChance() * stats.value(EnemyStat.CRIT_CHANCE_TAKEN) * Math.min(1f, resilienceKept);
-        if (!critical && critChance > 0f && random.nextDouble() < critChance) {
+        float resilience = stats.value(EnemyStat.RESILIENCE);
+        if (!critical && attacker.delivery() == Delivery.HIT && resilience < 100f
+                && rollsCrit(attacker, stats, resilience, random)) {
             critical = true;
-            amount *= 1f + (attacker.critMultiplier() - 1f) * resilienceKept;
+            amount *= critFactor(attacker, stats);
         }
         float mitigation = attacker.penetrate(incoming.type(), stats.value(EnemyStat.mitigationFor(incoming.type())));
         amount *= mitigationMultiplier(mitigation);
         amount = Math.max(0f, amount - attacker.penetratePlating(stats.value(EnemyStat.platingFor(incoming.type()))));
         amount *= stats.value(EnemyStat.damageTakenFor(incoming.type()));
         return new Damage(Math.round(amount), incoming.type(), critical).cappedAt(health);
+    }
+
+    private static boolean rollsCrit(AttackProfile attacker, StatView stats, float resilience, RandomSource random) {
+        if (attacker.guaranteedCrit()) {
+            return true;
+        }
+        // Negative resilience never makes a crit likelier, only harder-hitting.
+        float chance = attacker.critChance() * stats.value(EnemyStat.CRIT_CHANCE_TAKEN)
+                * Math.min(1f, 1f - resilience / 100f);
+        return chance > 0f && random.nextDouble() < chance;
+    }
+
+    /**
+     * What a crit multiplies damage by against {@code stats}: the attacker's bonus, shrunk by
+     * resilience. {@code 1} against a crit-immune target.
+     */
+    public static float critFactor(AttackProfile attacker, StatView stats) {
+        return 1f + (attacker.critMultiplier() - 1f) * (1f - stats.value(EnemyStat.RESILIENCE) / 100f);
     }
 
     /**
@@ -53,14 +71,8 @@ public final class HitResolution {
                 * stats.value(EnemyStat.damageTakenFor(type));
     }
 
-    /**
-     * {@code 100 / (100 + armor)}: each point matters less than the one before. Negative armor
-     * mirrors it, approaching double damage.
-     */
+    /** {@code 100 / (100 + armor)}: each point matters less than the one before. */
     public static float mitigationMultiplier(float armor) {
-        if (armor >= 0f) {
-            return 100f / (100f + armor);
-        }
-        return 2f - 100f / (100f - armor);
+        return 100f / (100f + Math.max(0f, armor));
     }
 }

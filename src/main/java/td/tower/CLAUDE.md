@@ -43,8 +43,8 @@
   `buffFor(this)` plus its own owned nodes' `totalBuff()`. No aura↔client index on either side
   (`AuraTower.buffedTowers()` is also derived). Call `recalculateStats()` on every tower whenever
   the roster or any upgrade changes; `TowerRoster.clear()` needn't.
-- `TowerBuff` axes: damage, range, fireRate, bounty, critChance, armorPenetration,
-  magicPenetration. Build one from a single-axis factory plus `withX`
+- `TowerBuff` axes: damage, range, fireRate, bounty, critChance, critDamage (adds to the tower's
+  crit multiplier), armorPenetration, magicPenetration. Build one from a single-axis factory plus `withX`
   (`TowerBuff.damage(0.3f).withRange(0.1f)`), not from `none()`. `combine` adds every axis except
   fireRate, where each bonus cuts the cooldown that remains (they multiply).
 - Enemy disruption reaches a tower only through `GameWorld.disruptions()`, sampled at the tower's
@@ -56,8 +56,10 @@
   temporary self-buff goes through `grantTimedBuff` and ends in `beginTick`; it never stacks.
 - `dealDamage` sends the hit with `TowerStats.attack()` (crit chance and multiplier, penetration);
   the target rolls the crit. A special shot passes a one-off profile to
-  `dealDamage(enemy, damage, attack)` (a forced crit, extra penetration) instead of adding a
-  hook. Damage that scales with the target's protection asks `HitReceiver.reductionAgainst`.
+  `dealDamage(enemy, damage, attack)` (`withGuaranteedCrit()`, extra penetration) instead of
+  adding a hook.
+- Damage that ticks (a pool's sink, a field's tick) goes through `dealPeriodicDamage`: periodic
+  damage never crits. The hit that starts a pool scales it by `potencyOfHit`. Damage that scales with the target's protection asks `HitReceiver.reductionAgainst`.
 
 ## Experience
 

@@ -84,6 +84,7 @@ public record UpgradeNode(String id, UpgradeSlot slot, String displayName, int p
         addIfNonZero(bonuses, this.statBonus.fireRateBonus(), "Fire rate");
         addIfNonZero(bonuses, this.statBonus.bountyBonus(), "Bounty");
         addIfNonZero(bonuses, this.statBonus.critChanceBonus(), "Crit chance");
+        addIfNonZero(bonuses, this.statBonus.critDamageBonus(), "Crit damage");
         addIfNonZero(bonuses, this.statBonus.armorPenetrationBonus(), "Armor penetration");
         addIfNonZero(bonuses, this.statBonus.magicPenetrationBonus(), "Magic penetration");
         if (!this.extraEffect.isEmpty()) {

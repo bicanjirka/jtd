@@ -121,13 +121,13 @@ final class EnemyStatText {
         if (stat == EnemyStat.PHYSICAL_PLATING) {
             return new StatText("Plating", platingText(value));
         }
-        return new StatText(value >= 0 ? "Resist all" : "Weak to all", mitigationText(value));
+        return new StatText("Resist all", mitigationText(value));
     }
 
     static StatText statText(EnemyStat stat, float value) {
         return switch (stat) {
-            case ARMOR -> new StatText(value >= 0 ? "Resist physical" : "Weak to physical", mitigationText(value));
-            case MAGIC_RESIST -> new StatText(value >= 0 ? "Resist magic" : "Weak to magic", mitigationText(value));
+            case ARMOR -> new StatText("Resist physical", mitigationText(value));
+            case MAGIC_RESIST -> new StatText("Resist magic", mitigationText(value));
             case PHYSICAL_PLATING -> new StatText("Plating, physical", platingText(value));
             case MAGIC_PLATING -> new StatText("Plating, magic", platingText(value));
             case MOVE_SPEED -> new StatText("Speed", SheetNumbers.decimal(value * TickRate.TICKS_PER_SECOND) + " px/s");
@@ -193,7 +193,7 @@ final class EnemyStatText {
         return "-" + SheetNumbers.decimal(DamageUnits.inPoints(value)) + "/hit";
     }
 
-    /** "-50%" for armor that halves a hit, "+25%" for negative armor. */
+    /** "-50%" for armor that halves a hit. */
     private static String mitigationText(float armor) {
         return SheetNumbers.signedPercent(HitResolution.mitigationMultiplier(armor) - 1f);
     }

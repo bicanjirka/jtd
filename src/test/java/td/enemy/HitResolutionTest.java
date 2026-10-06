@@ -9,7 +9,6 @@ import td.stat.EnemyStat;
 import td.stat.StatView;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
 
 class HitResolutionTest {
 
@@ -25,9 +24,8 @@ class HitResolutionTest {
     }
 
     @Test
-    void negativeArmorAmplifiesDamageTowardDouble() {
-        assertThat(HitResolution.mitigationMultiplier(-100f)).isEqualTo(1.5f);
-        assertThat(HitResolution.mitigationMultiplier(-10000f)).isCloseTo(2f, within(0.02f));
+    void armorBelowZeroMitigatesNothingAndNeverAmplifies() {
+        assertThat(HitResolution.mitigationMultiplier(-100f)).isEqualTo(1f);
     }
 
     @Test
@@ -106,16 +104,6 @@ class HitResolutionTest {
     }
 
     @Test
-    void penetrationLeavesNegativeArmorAlone() {
-        StatView shredded = stats(BaseStats.defaults().with(EnemyStat.ARMOR, -100f));
-
-        Damage landed = HitResolution.resolve(Damage.physical(1000), AttackProfile.none().withArmorPenetration(1f, 50f),
-                shredded, 10000, () -> 1.0);
-
-        assertThat(landed).isEqualTo(Damage.physical(1500));
-    }
-
-    @Test
     void negativeResilienceNeverRaisesTheCritChanceButRaisesTheCritBonus() {
         StatView brittle = stats(BaseStats.defaults().with(EnemyStat.RESILIENCE, -100f));
         AttackProfile attacker = AttackProfile.critChance(0.4f).withCritMultiplier(2f);
@@ -126,5 +114,52 @@ class HitResolutionTest {
         // the chance stays 40%, the bonus doubles from +100% to +200%
         assertThat(justInside).isEqualTo(new Damage(3000, DamageType.PHYSICAL, true));
         assertThat(justOutside).isEqualTo(Damage.physical(1000));
+    }
+
+    @Test
+    void periodicDamageNeverCritsEvenWithGuaranteedCritAndFullChance() {
+        StatView plain = stats(BaseStats.defaults());
+        AttackProfile pulse = AttackProfile.critChance(1f).withGuaranteedCrit().asPeriodic();
+
+        Damage landed = HitResolution.resolve(Damage.physical(1000), pulse, plain, 10000, () -> 0.0);
+
+        assertThat(landed).isEqualTo(Damage.physical(1000));
+    }
+
+    @Test
+    void aGuaranteedCritLandsBelowFullResilienceWithoutDrawingAndShrinksWithIt() {
+        StatView resilient = stats(BaseStats.defaults().with(EnemyStat.RESILIENCE, 70f));
+        AttackProfile attacker = AttackProfile.none().withCritMultiplier(2f).withGuaranteedCrit();
+
+        Damage landed = HitResolution.resolve(Damage.physical(1000), attacker, resilient, 10000, () -> {
+            throw new IllegalStateException("drew a random number");
+        });
+
+        assertThat(landed).isEqualTo(new Damage(1300, DamageType.PHYSICAL, true));
+    }
+
+    @Test
+    void aGuaranteedCritNeverLandsOnACritImmuneEnemy() {
+        StatView immune = stats(BaseStats.defaults().with(EnemyStat.RESILIENCE, 100f));
+
+        Damage landed = HitResolution.resolve(Damage.physical(1000), AttackProfile.none().withGuaranteedCrit(), immune,
+                10000, () -> 0.0);
+
+        assertThat(landed).isEqualTo(Damage.physical(1000));
+    }
+
+    @Test
+    void critDamageBonusesAddToTheMultiplierInsteadOfReplacingIt() {
+        AttackProfile sniper = AttackProfile.none().withCritMultiplier(2f).withCritDamageBonus(0.5f);
+
+        assertThat(sniper.critMultiplier()).isEqualTo(2.5f);
+        assertThat(HitResolution.critFactor(sniper, stats(BaseStats.defaults()))).isEqualTo(2.5f);
+    }
+
+    @Test
+    void critFactorAgainstACritImmuneEnemyIsOne() {
+        StatView immune = stats(BaseStats.defaults().with(EnemyStat.RESILIENCE, 100f));
+
+        assertThat(HitResolution.critFactor(AttackProfile.none().withCritMultiplier(3f), immune)).isEqualTo(1f);
     }
 }

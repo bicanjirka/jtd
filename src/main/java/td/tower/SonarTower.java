@@ -135,7 +135,7 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
             this.reveal(enemy, Math.round(WIDE_BAND_REVEAL_SECONDS * TICKS_PER_SECOND));
         }
         boolean wasMarked = this.marked.remove(enemy);
-        AttackProfile attack = wasMarked ? this.stats().attack().withCritChance(1f) : this.stats().attack();
+        AttackProfile attack = wasMarked ? this.stats().attack().withGuaranteedCrit() : this.stats().attack();
         this.dealDamage(enemy, Damage.physical(this.distanceScaled(enemy)), attack);
         this.piercingTone(enemy);
         if (!wasMarked && !enemy.isDead() && this.upgrades().owns(MARK_ON_SWEEP.id())) {

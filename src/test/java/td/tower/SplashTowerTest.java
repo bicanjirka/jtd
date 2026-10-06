@@ -1,6 +1,7 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageUnits;
 import td.effect.EffectKind;
@@ -245,6 +246,22 @@ class SplashTowerTest {
 
         assertThat(primary.appliedEffects()).extracting(td.effect.Effect::kind).containsExactly(EffectKind.POISON);
         assertThat(ghost.appliedEffects()).extracting(td.effect.Effect::kind).containsExactly(EffectKind.POISON);
+    }
+
+    @Test
+    void aCriticalBlastStartsAStrongerPoisonThanAPlainOne() {
+        FakeEnemyMob plain = FakeEnemyMob.at(100, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{plain});
+        upgradedTower("Toxic Bloom").doTick(0);
+        FakeEnemyMob critical = FakeEnemyMob.at(100, 100);
+        critical.landEveryHitCritical();
+        this.context.enemies().setEnemies(new EnemyMob[]{critical});
+        upgradedTower("Toxic Bloom").doTick(0);
+
+        int plainPulse = plain.appliedEffects().getFirst().damagePerTick().amount();
+        int criticalPulse = critical.appliedEffects().getFirst().damagePerTick().amount();
+
+        assertThat(criticalPulse).isEqualTo(Math.round(plainPulse * AttackProfile.DEFAULT_CRIT_MULTIPLIER));
     }
 
     @Test

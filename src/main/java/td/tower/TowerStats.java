@@ -34,7 +34,7 @@ public record TowerStats(int damage, float range, int coolDown, float rangeReal,
         float range = buff.rangeFor(base.range());
         float rangeReal = range * scale;
         AttackProfile attack = AttackProfile.critChance(buff.critChanceFor(base.critChanceBase()))
-                .withCritMultiplier(base.critMultiplier())
+                .withCritMultiplier(base.critMultiplier() + buff.critDamageBonus())
                 .withArmorPenetration(buff.armorPenetrationBonus(), 0f)
                 .withMagicPenetration(buff.magicPenetrationBonus(), 0f);
         return new TowerStats(buff.damageFor(base.damage()), range, buff.fireRateFor(base.coolDownMax()),

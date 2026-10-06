@@ -11,8 +11,8 @@ import td.damage.DamageType;
 public enum EnemyStat {
 
     /** Physical mitigation: a hit is multiplied by {@code 100 / (100 + armor)}. */
-    ARMOR(0f, -Float.MAX_VALUE, Float.MAX_VALUE),
-    MAGIC_RESIST(0f, -Float.MAX_VALUE, Float.MAX_VALUE),
+    ARMOR(0f, 0f, Float.MAX_VALUE),
+    MAGIC_RESIST(0f, 0f, Float.MAX_VALUE),
     PHYSICAL_PLATING(0f, 0f, Float.MAX_VALUE),
     MAGIC_PLATING(0f, 0f, Float.MAX_VALUE),
     /** Pixels per tick; its base is the definition's speed times the spawn multiplier. */

@@ -30,6 +30,12 @@ public interface HitReceiver {
      */
     float reductionAgainst(DamageType type);
 
+    /**
+     * What a crit from {@code attacker} would multiply damage by against this enemy right now,
+     * {@code 1} if it is crit-immune. Lets a hit's crit scale the damage over time it starts.
+     */
+    float critFactorFor(AttackProfile attacker);
+
     /** Active effect kinds, in a stable order. */
     Set<EffectKind> activeEffectKinds();
 

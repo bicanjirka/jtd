@@ -135,8 +135,8 @@ class SniperTowerTest {
 
         fireShots(tower, target, 5);
 
-        assertThat(target.attackers()).extracting(AttackProfile::critChance)
-                .containsExactly(tower.critChance(), tower.critChance(), tower.critChance(), tower.critChance(), 1f);
+        assertThat(target.attackers()).extracting(AttackProfile::guaranteedCrit)
+                .containsExactly(false, false, false, false, true);
         assertThat(target.attackers()).extracting(AttackProfile::critMultiplier).containsOnly(2.5f);
     }
 
