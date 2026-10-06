@@ -2,19 +2,20 @@ package td.tower.buff;
 
 /**
  * Bonuses on each axis as fractions, 0 meaning none. {@link #none()} is the identity for
- * {@link #combine}, which adds, except fire rate: each fire-rate bonus cuts the cooldown that is
+ * {@link #combine}, which adds (crit damage adds to a tower's crit multiplier), except fire rate: each fire-rate bonus cuts the cooldown that is
  * left, so they multiply and no stack of them shortens a cooldown to nothing.
  * <p>
  * Start from the axis you care about ({@code TowerBuff.damage(0.3f).withRange(0.1f)}) rather than a
  * positional literal.
  */
 public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus, float bountyBonus,
-                        float critChanceBonus, float armorPenetrationBonus, float magicPenetrationBonus) {
+                        float critChanceBonus, float armorPenetrationBonus, float magicPenetrationBonus,
+                        float critDamageBonus) {
 
     /** The lowest combined fire-rate or range bonus any mix of penalties can reach. */
     public static final float MIN_BONUS = -0.75f;
 
-    private static final TowerBuff NONE = new TowerBuff(0f, 0f, 0f, 0f, 0f, 0f, 0f);
+    private static final TowerBuff NONE = new TowerBuff(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
 
     /** No crit-chance or penetration bonus. */
     public TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus, float bountyBonus) {
@@ -24,7 +25,7 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
     /** No penetration bonus. */
     public TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus, float bountyBonus,
             float critChanceBonus) {
-        this(damageBonus, rangeBonus, fireRateBonus, bountyBonus, critChanceBonus, 0f, 0f);
+        this(damageBonus, rangeBonus, fireRateBonus, bountyBonus, critChanceBonus, 0f, 0f, 0f);
     }
 
     public static TowerBuff none() {
@@ -56,6 +57,10 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
         return NONE.withCritChance(critChanceBonus);
     }
 
+    public static TowerBuff critDamage(float critDamageBonus) {
+        return NONE.withCritDamage(critDamageBonus);
+    }
+
     public static TowerBuff armorPenetration(float fraction) {
         return NONE.withArmorPenetration(fraction);
     }
@@ -65,31 +70,35 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
     }
 
     public TowerBuff withDamage(float damageBonus) {
-        return new TowerBuff(damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus);
+        return new TowerBuff(damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus);
     }
 
     public TowerBuff withRange(float rangeBonus) {
-        return new TowerBuff(this.damageBonus, rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus);
+        return new TowerBuff(this.damageBonus, rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus);
     }
 
     public TowerBuff withFireRate(float fireRateBonus) {
-        return new TowerBuff(this.damageBonus, this.rangeBonus, fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus);
+        return new TowerBuff(this.damageBonus, this.rangeBonus, fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus);
     }
 
     public TowerBuff withBounty(float bountyBonus) {
-        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus);
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus);
     }
 
     public TowerBuff withCritChance(float critChanceBonus) {
-        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus);
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus);
     }
 
     public TowerBuff withArmorPenetration(float armorPenetrationBonus) {
-        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, armorPenetrationBonus, this.magicPenetrationBonus);
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus);
     }
 
     public TowerBuff withMagicPenetration(float magicPenetrationBonus) {
-        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, magicPenetrationBonus);
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, magicPenetrationBonus, this.critDamageBonus);
+    }
+
+    public TowerBuff withCritDamage(float critDamageBonus) {
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, critDamageBonus);
     }
 
     public TowerBuff combine(TowerBuff other) {
@@ -100,7 +109,8 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
                 this.bountyBonus + other.bountyBonus,
                 this.critChanceBonus + other.critChanceBonus,
                 this.armorPenetrationBonus + other.armorPenetrationBonus,
-                this.magicPenetrationBonus + other.magicPenetrationBonus);
+                this.magicPenetrationBonus + other.magicPenetrationBonus,
+                this.critDamageBonus + other.critDamageBonus);
     }
 
     public int damageFor(int base) {

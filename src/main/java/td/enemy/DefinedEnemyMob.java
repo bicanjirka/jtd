@@ -265,6 +265,10 @@ public final class DefinedEnemyMob implements EnemyMob {
         return HitResolution.reductionAgainst(type, this.stats);
     }
 
+    public float critFactorFor(AttackProfile attacker) {
+        return HitResolution.critFactor(attacker, this.stats);
+    }
+
     /** The kinds an active effect currently keeps out. */
     public Set<EffectKind> blockedEffectKinds() {
         return this.activeEffects.blockedKinds();

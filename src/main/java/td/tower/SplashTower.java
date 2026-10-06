@@ -217,8 +217,10 @@ public final class SplashTower extends AbstractTower {
             enemy.applyEffect(Effect.chill(CHILL_AMOUNT, CHILL_DURATION_TICKS, d -> this.dealDamage(enemy, d)));
         }
         if (this.upgrades().owns(TOXIC_BLOOM.id())) {
-            Damage perTick = Damage.magic(Math.round(this.damageCurrent() * POISON_DAMAGE_SHARE));
-            enemy.applyEffect(Effect.poison(perTick, Math.round(POISON_SECONDS * TICKS_PER_SECOND), d -> this.dealDamage(enemy, d)));
+            Damage perTick = Damage.magic(Math.round(this.damageCurrent() * POISON_DAMAGE_SHARE
+                    * this.potencyOfHit(enemy, critical)));
+            enemy.applyEffect(Effect.poison(perTick, Math.round(POISON_SECONDS * TICKS_PER_SECOND),
+                    d -> this.dealPeriodicDamage(enemy, d)));
         }
         return critical;
     }

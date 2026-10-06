@@ -140,7 +140,8 @@ public final class CinderTower extends AbstractTower {
             for (EnemyMob enemy : caught) {
                 if (wave.alreadyHit.add(enemy)) {
                     boolean wasBurning = enemy.activeEffectKinds().contains(EffectKind.BURN);
-                    enemy.applyEffect(Effect.burn(Damage.magic(this.damageCurrent()), this.burnDurationTicks, d -> this.dealDamage(enemy, d)));
+                    enemy.applyEffect(Effect.burn(Damage.magic(this.damageCurrent()), this.burnDurationTicks,
+                            d -> this.dealPeriodicDamage(enemy, d)));
                     if (!wasBurning && enemy.activeEffectKinds().contains(EffectKind.BURN) && this.upgrades().owns(HEXFLAME.id())) {
                         this.applyVulnerable(enemy, 1);
                     }

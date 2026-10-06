@@ -276,8 +276,8 @@ class SonarTowerTest {
             tower.doTick(tick);
         }
 
-        assertThat(target.attackers()).extracting(td.damage.AttackProfile::critChance)
-                .containsExactly(tower.critChance(), 1f, tower.critChance());
+        assertThat(target.attackers()).extracting(td.damage.AttackProfile::guaranteedCrit)
+                .containsExactly(false, true, false);
     }
 
     @Test

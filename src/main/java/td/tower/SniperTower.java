@@ -130,7 +130,7 @@ public final class SniperTower extends AbstractTower {
         if (this.upgrades().owns(FIFTH_SHOT.id())) {
             attack = attack.withCritMultiplier(FIFTH_SHOT_CRIT_MULTIPLIER);
             if (this.shotsFired % FIFTH_SHOT_INTERVAL == 0) {
-                attack = attack.withCritChance(1f);
+                attack = attack.withGuaranteedCrit();
             }
         }
         if (this.momentumCharged) {

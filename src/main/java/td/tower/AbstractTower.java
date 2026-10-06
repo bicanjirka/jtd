@@ -219,6 +219,24 @@ public abstract class AbstractTower implements Tower {
         }
     }
 
+    /**
+     * Damage that ticks (a burn or poison pulse, a field's tick), credited like a hit but never a
+     * crit: the hit that starts it is the one that can crit.
+     *
+     * @return {@code false} always; periodic damage is never critical
+     */
+    protected boolean dealPeriodicDamage(EnemyMob enemy, Damage damage) {
+        return this.dealDamage(enemy, damage, this.stats.attack().asPeriodic());
+    }
+
+    /**
+     * How much stronger the damage over time a hit starts should be: this tower's crit factor
+     * against {@code target} if the hit was critical, otherwise {@code 1}.
+     */
+    protected float potencyOfHit(EnemyMob target, boolean critical) {
+        return critical ? target.critFactorFor(this.stats.attack()) : 1f;
+    }
+
     /** Adds {@code stacks} of vulnerability to {@code target}; the stacks belong to the enemy, not this tower. */
     protected void applyVulnerable(EnemyMob target, int stacks) {
         target.applyEffect(Effect.vulnerable(stacks, Math.round(VULNERABLE_SECONDS * TICKS_PER_SECOND),

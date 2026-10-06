@@ -83,7 +83,7 @@ public final class PulseTower extends AbstractTower {
         if (triggered) {
             this.fire = true;
             for (EnemyMob enemy : enemies) {
-                this.dealDamage(enemy, Damage.physical(this.damageCurrent()));
+                this.dealPeriodicDamage(enemy, Damage.physical(this.damageCurrent()));
                 this.applyUpgradeEffects(enemy);
             }
         } else {
