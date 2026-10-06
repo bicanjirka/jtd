@@ -128,6 +128,15 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
     }
 
     /**
+     * Whether buying {@code node} uses its choice's last pick, locking out for good the members
+     * still unowned. False for a node in no choice, and for a special while a second slot is left.
+     */
+    public boolean isLastPick(UpgradeNode node, UpgradeState owned) {
+        ExclusiveChoice choice = this.choiceContaining(node);
+        return choice != null && choice.picksLeft(owned) == 1;
+    }
+
+    /**
      * Every owned node that belongs to a choice, in purchase order, with the members of its
      * choice still unowned.
      */

@@ -111,8 +111,8 @@ class StandardTreeShapeTest {
         Tower ready = this.towerOwning(attune, awaken, S1, A1, A2, A3);
 
         assertThat(TREE.offered(awakened, this.context)).contains(transcendent).doesNotContain(awaken);
-        assertThat(transcendent.gate().progress(awakened, this.context)).isEqualTo("needs a special and a level III head");
-        assertThat(transcendent.gate().progress(withSpecial, this.context)).isEqualTo("needs a level III head");
+        assertThat(transcendent.gate().progress(awakened, this.context)).isEqualTo("needs special, head III");
+        assertThat(transcendent.gate().progress(withSpecial, this.context)).isEqualTo("needs head III");
         assertThat(transcendent.gate().isSatisfied(withSpecial, this.context)).isFalse();
         assertThat(transcendent.gate().isSatisfied(ready, this.context)).isTrue();
     }
@@ -183,6 +183,16 @@ class StandardTreeShapeTest {
 
         assertThat(TREE.rivalsOnOffer(A1, offered)).containsExactly(B1);
         assertThat(TREE.rivalsOnOffer(X1, offered)).isEmpty();
+    }
+
+    @Test
+    void onlyAPickThatSpendsItsChoiceLocksItsRivalsOutForGood() {
+        UpgradeState awakened = state(base(StandardBaseSlot.ATTUNE_ID), base(StandardBaseSlot.AWAKEN_ID));
+
+        assertThat(TREE.isLastPick(A1, awakened)).isTrue();
+        assertThat(TREE.isLastPick(S1, awakened)).isFalse();
+        assertThat(TREE.isLastPick(S2, awakened.with(S1))).isTrue();
+        assertThat(TREE.isLastPick(X1, awakened)).isFalse();
     }
 
     @Test

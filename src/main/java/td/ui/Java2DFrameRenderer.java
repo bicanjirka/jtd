@@ -49,6 +49,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -657,6 +658,10 @@ public final class Java2DFrameRenderer {
             case PIP -> g2.fill(circleShape(size * 0.6f));
             case CHECK -> g2.draw(checkShape(size * 0.8f));
             case CROSS -> g2.draw(crossStrokesShape(size * 0.6f));
+            case LOCK -> {
+                g2.fill(lockBodyShape(size * 0.75f));
+                g2.draw(lockShackleShape(size * 0.75f));
+            }
             case TOWER_BODY -> g2.fill(towerBodyShape(tone.orElseThrow(), size));
         }
         g2.setStroke(defaultStroke);
@@ -672,6 +677,22 @@ public final class Java2DFrameRenderer {
     }
 
     /** Two crossing strokes, to be stroked. */
+    /** A padlock's body: the lower part of the glyph box. */
+    private static Shape lockBodyShape(float size) {
+        return new RoundRectangle2D.Float(-size * 0.8f, -size * 0.1f, size * 1.6f, size * 1.1f, size * 0.3f, size * 0.3f);
+    }
+
+    /** A padlock's shackle: an arch standing on the body. */
+    private static Shape lockShackleShape(float size) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(-size * 0.5f, -size * 0.1f);
+        p.lineTo(-size * 0.5f, -size * 0.45f);
+        p.quadTo(-size * 0.5f, -size, 0, -size);
+        p.quadTo(size * 0.5f, -size, size * 0.5f, -size * 0.45f);
+        p.lineTo(size * 0.5f, -size * 0.1f);
+        return p;
+    }
+
     private static Shape crossStrokesShape(float size) {
         GeneralPath p = new GeneralPath();
         p.moveTo(-size, -size);
