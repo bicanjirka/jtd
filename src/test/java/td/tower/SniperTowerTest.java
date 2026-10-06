@@ -139,16 +139,68 @@ class SniperTowerTest {
     }
 
     @Test
-    void marksmansEyeGrantsACritChance() {
-        this.context.economy().startEconomy(1000, 5);
-        SniperTower tower = new SniperTower(this.context, 0, 0);
-        UpgradePaths.awakenVeteran(tower);
-        UpgradeNode marksmansEye = UpgradePaths.named(tower, "Marksman's Eye");
+    void marksmansEyeLetsSteadyAimBuildToThreeStacks() {
+        GameWorld world = boardWorld();
+        SniperTower tower = sniperWith(world, "Marksman's Eye");
+        FakeEnemyMob target = targetFor(world);
 
-        boolean chosen = tower.buyUpgrade(marksmansEye);
+        this.fireShots(tower, target, 6);
 
-        assertThat(chosen).isTrue();
-        assertThat(tower.critChance()).isGreaterThan(SniperTower.CRIT_CHANCE);
+        assertThat(critChances(target).get(4)).isCloseTo(SniperTower.CRIT_CHANCE + 3 * STEADY_AIM_CRIT_BONUS, within(1e-6f));
+        assertThat(critChances(target).get(5)).isCloseTo(SniperTower.CRIT_CHANCE + 3 * STEADY_AIM_CRIT_BONUS, within(1e-6f));
+    }
+
+    @Test
+    void marksmansEyeTwoShootsFasterAndIgnoresThirtyArmor() {
+        GameWorld world = boardWorld();
+        SniperTower tower = sniperWith(world, "Marksman's Eye", "Marksman's Eye II");
+        FakeEnemyMob target = targetFor(world);
+
+        this.fireShots(tower, target, 1);
+
+        assertThat(tower.coolDownCurrent()).isEqualTo(Math.round(49 * 0.75f));
+        assertThat(target.attackers().getFirst().armorPenetrationFlat()).isEqualTo(30f);
+    }
+
+    @Test
+    void cleanShotMakesTheShotsCritsPierceShields() {
+        GameWorld world = boardWorld();
+        SniperTower tower = sniperWith(world, "Marksman's Eye", "Marksman's Eye II", "Marksman's Eye III");
+        FakeEnemyMob target = targetFor(world);
+
+        this.fireShots(tower, target, 1);
+
+        assertThat(target.attackers().getFirst().critsPierceShields()).isTrue();
+    }
+
+    @Test
+    void unbrokenAimBuildsToFiveStacksAndSurvivesAKill() {
+        GameWorld world = boardWorld();
+        SniperTower tower = sniperWith(world, "Marksman's Eye", "Marksman's Eye II", "Marksman's Eye III", "Momentum",
+                "Transcendent", "Unbroken Aim");
+        FakeEnemyMob first = targetFor(world);
+        this.fireShots(tower, first, 5);
+        first.invalidate();
+        FakeEnemyMob next = targetFor(world);
+
+        this.fireShots(tower, next, 1);
+
+        assertThat(critChances(next).getFirst()).isCloseTo(SniperTower.CRIT_CHANCE + 5 * STEADY_AIM_CRIT_BONUS, within(1e-6f));
+    }
+
+    @Test
+    void sunderRoundsSundersAnEnemyOnlyWhenTheShotCrits() {
+        GameWorld world = boardWorld();
+        SniperTower tower = sniperWith(world, "Marksman's Eye", "Marksman's Eye II", "Marksman's Eye III", "Momentum",
+                "Transcendent", "Sunder Rounds");
+        FakeEnemyMob target = targetFor(world);
+        this.fireShots(tower, target, 1);
+        assertThat(target.appliedEffects()).isEmpty();
+
+        target.landEveryHitCritical();
+        this.fireShots(tower, target, 1);
+
+        assertThat(target.appliedEffects()).extracting(Effect::kind).containsExactly(EffectKind.SUNDERED);
     }
 
     @Test

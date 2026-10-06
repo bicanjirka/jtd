@@ -16,4 +16,6 @@ public interface ShotActions {
     boolean execute(EnemyMob target);
 
     void applyVulnerable(EnemyMob target, int stacks);
+
+    void applySundered(EnemyMob target, int stacks);
 }

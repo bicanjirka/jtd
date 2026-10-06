@@ -7,6 +7,10 @@ package td.tower.sniper;
  */
 public interface SniperPerk {
 
+    default AimRules refineAim(AimRules rules) {
+        return rules;
+    }
+
     default SniperShot shape(SniperShot shot, ShotContext context) {
         return shot;
     }

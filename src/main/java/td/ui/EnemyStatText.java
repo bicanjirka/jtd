@@ -78,7 +78,8 @@ final class EnemyStatText {
         rows.add(Row.plain(Glyph.CHEVRON, speed.label(), speed.value()));
         Set<EnemyStat> shown = EnumSet.noneOf(EnemyStat.class);
         for (EnemyStat stat : EnemyStat.values()) {
-            if (stat == EnemyStat.MOVE_SPEED || shown.contains(stat) || !differsFromDefault(inspection, stat)) {
+            if (stat == EnemyStat.MOVE_SPEED || shown.contains(stat) || isShielding(stat)
+                    || !differsFromDefault(inspection, stat)) {
                 continue;
             }
             Optional<EnemyStat> pair = pairedWith(stat).filter(other -> inspection.stat(other) == inspection.stat(stat));
@@ -102,6 +103,11 @@ final class EnemyStatText {
                 .findFirst()
                 .map(trait -> Row.trait(EnemyFrameBuilder.traitMarkerPaletteFor(trait.marker()), text.label(), text.value()))
                 .orElseGet(() -> Row.plain(Glyph.DOT, text.label(), text.value()));
+    }
+
+    /** A shield has its own effect row, so its stat needs none. */
+    private static boolean isShielding(EnemyStat stat) {
+        return stat == EnemyStat.PHYSICAL_SHIELDING || stat == EnemyStat.MAGIC_SHIELDING;
     }
 
     private static boolean differsFromDefault(EnemyInspection inspection, EnemyStat stat) {
@@ -133,6 +139,8 @@ final class EnemyStatText {
             case MOVE_SPEED -> new StatText("Speed", SheetNumbers.decimal(value * TickRate.TICKS_PER_SECOND) + " px/s");
             case PHYSICAL_DAMAGE_TAKEN -> new StatText("Physical taken", SheetNumbers.percent(value));
             case MAGIC_DAMAGE_TAKEN -> new StatText("Magic taken", SheetNumbers.percent(value));
+            case PHYSICAL_SHIELDING -> new StatText("Shielded, physical", SheetNumbers.percent(value));
+            case MAGIC_SHIELDING -> new StatText("Shielded, magic", SheetNumbers.percent(value));
             case RESILIENCE -> resilienceText(value);
             case CRIT_CHANCE_TAKEN -> new StatText("Crit chance taken", "x" + SheetNumbers.decimal(value));
             case SPIRIT -> new StatText("Spirit", SheetNumbers.signedPercent(value / 100f) + " heals" + debuffPaceText(value));

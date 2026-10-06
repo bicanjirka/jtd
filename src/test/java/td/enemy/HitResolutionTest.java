@@ -9,6 +9,7 @@ import td.stat.EnemyStat;
 import td.stat.StatView;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class HitResolutionTest {
 
@@ -174,5 +175,34 @@ class HitResolutionTest {
         assertThat(glancing).isEqualTo(Damage.physical(1000));
         assertThat(crit.critical()).isTrue();
         assertThat(crit.amount()).isEqualTo(Math.round(1000 * 1.5f * 100f / 200f - 300f));
+    }
+
+    @Test
+    void shieldingTakesItsShareOfAHitAfterDamageTaken() {
+        StatView shielded = stats(BaseStats.defaults().with(EnemyStat.PHYSICAL_SHIELDING, 0.4f)
+                .with(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 1.5f));
+
+        assertThat(HitResolution.resolve(Damage.physical(1000), shielded, 10000)).isEqualTo(Damage.physical(900));
+        assertThat(HitResolution.resolve(Damage.magic(1000), shielded, 10000)).isEqualTo(Damage.magic(1000));
+    }
+
+    @Test
+    void aShieldCountsTowardsWhatAnEnemyShrugsOff() {
+        StatView shielded = stats(BaseStats.defaults().with(EnemyStat.PHYSICAL_SHIELDING, 0.4f));
+
+        assertThat(HitResolution.reductionAgainst(DamageType.PHYSICAL, shielded)).isCloseTo(0.4f, within(1e-6f));
+        assertThat(HitResolution.reductionAgainst(DamageType.MAGIC, shielded)).isZero();
+    }
+
+    @Test
+    void aCritFromAnAttackerThatPiercesShieldsGoesStraightToHealth() {
+        StatView shielded = stats(BaseStats.defaults().with(EnemyStat.PHYSICAL_SHIELDING, 0.5f));
+        AttackProfile cleanShot = AttackProfile.critChance(0.5f).withCritsPierceShields();
+
+        Damage crit = HitResolution.resolve(Damage.physical(1000), cleanShot, shielded, 10000, () -> 0.0);
+        Damage plain = HitResolution.resolve(Damage.physical(1000), cleanShot, shielded, 10000, () -> 0.99);
+
+        assertThat(crit.amount()).isEqualTo(1500);
+        assertThat(plain.amount()).isEqualTo(500);
     }
 }

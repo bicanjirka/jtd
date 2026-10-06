@@ -230,12 +230,13 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void aShieldLowersDamageTakenByItsPercent() {
+    void aShieldAddsShieldingEqualToItsPercent() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.shield(0.4f, 5, d -> {
         }));
 
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(0.6f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_SHIELDING)).isCloseTo(0.4f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isEqualTo(1f);
     }
 
     @Test
@@ -278,7 +279,7 @@ class ActiveEffectsTest {
         effects.apply(Effect.shield(0.2f, 10, d -> {
         }));
 
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(0.4f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_SHIELDING)).isCloseTo(0.6f, within(0.001f));
     }
 
     @Test
@@ -287,8 +288,8 @@ class ActiveEffectsTest {
         effects.apply(Effect.shield(0.4f, 5, d -> {
         }).withShieldRestrictedTo(DamageType.PHYSICAL));
 
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(0.6f, within(0.001f));
-        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.0f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_SHIELDING)).isCloseTo(0.4f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.MAGIC_SHIELDING)).isZero();
     }
 
     @Test
@@ -297,8 +298,8 @@ class ActiveEffectsTest {
         effects.apply(Effect.shield(0.4f, 5, d -> {
         }));
 
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(0.6f, within(0.001f));
-        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(0.6f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_SHIELDING)).isCloseTo(0.4f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.MAGIC_SHIELDING)).isCloseTo(0.4f, within(0.001f));
     }
 
     @Test

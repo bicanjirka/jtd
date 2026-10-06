@@ -10,7 +10,7 @@ import td.util.RandomSource;
 
 /**
  * The one formula a hit lands by: the crit roll (hits only), then penetration, armor or magic resist, plating,
- * damage taken, and the cap at remaining health. Computed in float and rounded once.
+ * damage taken, shielding, and the cap at remaining health. Computed in float and rounded once.
  */
 public final class HitResolution {
 
@@ -42,6 +42,9 @@ public final class HitResolution {
         amount *= mitigationMultiplier(mitigation);
         amount = Math.max(0f, amount - attacker.penetratePlating(stats.value(EnemyStat.platingFor(incoming.type())), critical));
         amount *= stats.value(EnemyStat.damageTakenFor(incoming.type()));
+        if (!(critical && attacker.critsPierceShields())) {
+            amount *= 1f - stats.value(EnemyStat.shieldingFor(incoming.type()));
+        }
         return new Damage(Math.round(amount), incoming.type(), critical).cappedAt(health);
     }
 
@@ -64,12 +67,13 @@ public final class HitResolution {
     }
 
     /**
-     * The share of a {@code type} hit that mitigation and damage taken remove, before plating and
-     * with no penetration: {@code 0} for none, negative when the enemy takes extra.
+     * The share of a {@code type} hit that mitigation, damage taken and shielding remove, before
+     * plating and with no penetration: {@code 0} for none, negative when the enemy takes extra.
      */
     public static float reductionAgainst(DamageType type, StatView stats) {
         return 1f - mitigationMultiplier(stats.value(EnemyStat.mitigationFor(type)))
-                * stats.value(EnemyStat.damageTakenFor(type));
+                * stats.value(EnemyStat.damageTakenFor(type))
+                * (1f - stats.value(EnemyStat.shieldingFor(type)));
     }
 
     /** {@code 100 / (100 + armor)}: each point matters less than the one before. */
