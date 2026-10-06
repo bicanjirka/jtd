@@ -132,6 +132,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.motion.walkedWithin(x, y, radius);
     }
 
+    @Override
     public float getHealthFraction() {
         return (float) this.health / this.healthMax;
     }
@@ -145,6 +146,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     /** Inherited by an ability spawn. */
+    @Override
     public Rank getRank() {
         return this.rank;
     }

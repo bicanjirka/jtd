@@ -37,9 +37,10 @@ public final class HitResolution {
             critical = true;
             amount *= critFactor(attacker, stats);
         }
-        float mitigation = attacker.penetrate(incoming.type(), stats.value(EnemyStat.mitigationFor(incoming.type())));
+        float mitigation = attacker.penetrate(incoming.type(), stats.value(EnemyStat.mitigationFor(incoming.type())),
+                critical);
         amount *= mitigationMultiplier(mitigation);
-        amount = Math.max(0f, amount - attacker.penetratePlating(stats.value(EnemyStat.platingFor(incoming.type()))));
+        amount = Math.max(0f, amount - attacker.penetratePlating(stats.value(EnemyStat.platingFor(incoming.type())), critical));
         amount *= stats.value(EnemyStat.damageTakenFor(incoming.type()));
         return new Damage(Math.round(amount), incoming.type(), critical).cappedAt(health);
     }

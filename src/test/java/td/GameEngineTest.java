@@ -24,6 +24,7 @@ import td.projectile.CannonballProjectile;
 import td.stat.DisruptionAura;
 import td.tower.AuraTower;
 import td.tower.MortarTower;
+import td.tower.PulseTower;
 import td.tower.SniperTower;
 import td.tower.SplashTower;
 import td.tower.Tower;
@@ -628,7 +629,7 @@ class GameEngineTest {
                         new WaveDefinition("weakling", Rank.GRUNT)), 100)
                 .withCustomEnemies(List.of(WEAKLING)));
 
-        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.startPlacing(TowerFactory.Type.PULSE, PulseTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
         int scoreBefore = engine.getGameWorld().economy().getScore();
 
@@ -643,7 +644,7 @@ class GameEngineTest {
         assertThat(engine.getGameWorld().economy().getScore()).isGreaterThan(scoreBefore);
         assertThat(engine.isWaveReady()).isFalse();
 
-        for (; t <= 300 && !engine.isWaveReady(); t++) {
+        for (; t <= 600 && !engine.isWaveReady(); t++) {
             engine.doTick(t);
         }
 
@@ -768,8 +769,8 @@ class GameEngineTest {
         placeSniper(engine, 1, 0);
         placeSniper(engine, 2, 0);
 
-        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100 - 10 - 12 - 13);
-        assertThat(engine.getGameWorld().towers().priceOf(TowerFactory.Type.SNIPER)).isEqualTo(15);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100 - 15 - 17 - 20);
+        assertThat(engine.getGameWorld().towers().priceOf(TowerFactory.Type.SNIPER)).isEqualTo(22);
         assertThat(engine.getGameWorld().towers().priceOf(TowerFactory.Type.SPLASH)).isEqualTo(SplashTower.PRICE);
     }
 
@@ -783,7 +784,7 @@ class GameEngineTest {
 
         engine.getGameWorld().towers().sell(engine.cells().at(1, 0).getTower());
 
-        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterBuilds + 9);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterBuilds + 13);
     }
 
     @Test
@@ -797,8 +798,8 @@ class GameEngineTest {
 
         placeSniper(engine, 0, 0);
 
-        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterSale - 12);
-        assertThat(creditsAfterSale).isEqualTo(100 - 10 - 12 + 8);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterSale - 17);
+        assertThat(creditsAfterSale).isEqualTo(100 - 15 - 17 + 11);
     }
 
     @Test

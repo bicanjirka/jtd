@@ -1,4 +1,4 @@
-# `td.tower` (+ `targeting`, `buff`, `upgrade`)
+# `td.tower` (+ `targeting`, `buff`, `upgrade`, `sniper`)
 
 ## Towers
 
@@ -99,6 +99,11 @@
   reference), and the same constant carries a matching `extraEffect` phrase.
 - `buyUpgrade` is the only entry point and is check-and-charge (returns `false` without effect).
   Don't pre-check affordability. It publishes `TowerStats` before `UpgradeState`.
+- Pass `StandardBaseSlot.nodes` a `BaseSlotPerks` for what Attune and Range III add to a tower.
+- A node whose behaviour is more than a `TowerBuff` becomes a perk: `SniperTower` keeps a `SniperPerk`
+  per owned node, registered by node id in `PERKS`, and shapes each shot through them. Perks are
+  pure (no tower, no `GameWorld`); what they may make the tower do is `ShotActions`. A perk with
+  state is built per tower.
 - The UI reads `offeredUpgrades()`/`upgrades()` only; the tower is the source of truth.
 
 ## Adding a tower

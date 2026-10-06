@@ -11,5 +11,10 @@ public interface EnemyMob extends EnemyTarget, HitReceiver, EnemyWalk {
 
     int getHealth();
 
+    /** Health left as a share of the maximum, from {@code 0} to {@code 1}. */
+    float getHealthFraction();
+
+    Rank getRank();
+
     float getSpeed();
 }
