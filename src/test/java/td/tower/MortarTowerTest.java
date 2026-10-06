@@ -37,6 +37,22 @@ class MortarTowerTest {
     }
 
     @Test
+    void aPriorityEnemyInRangeIsAimedAtBeforeTheOneFurthestAlongThePath() {
+        MortarTower tower = towerAt(3, 3);
+        FakeEnemyMob furthest = FakeEnemyMob.at(112, 42).withProgression(900);
+        FakeEnemyMob prioritised = FakeEnemyMob.at(112, 172).withProgression(10);
+        prioritised.applyEffect(td.effect.Effect.priority(100, d -> {
+        }));
+        this.context.enemies().setEnemies(new EnemyMob[]{furthest, prioritised});
+
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(prioritised.hits()).isNotEmpty();
+        assertThat(furthest.hits()).isEmpty();
+    }
+
+    @Test
     void theShellEventuallySplashesDamageAndSlowsTheTarget() {
         MortarTower tower = towerAt(3, 3);
         FakeEnemyMob target = FakeEnemyMob.at(100, 100);

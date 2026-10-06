@@ -266,6 +266,10 @@ public final class DefinedEnemyMob implements EnemyMob {
         return HitResolution.reductionAgainst(type, this.stats);
     }
 
+    public boolean hasEffect(EffectKind kind) {
+        return this.activeEffects.has(kind);
+    }
+
     public float critFactorFor(AttackProfile attacker) {
         return HitResolution.critFactor(attacker, this.stats);
     }

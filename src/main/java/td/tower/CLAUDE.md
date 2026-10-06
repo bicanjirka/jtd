@@ -30,7 +30,9 @@
 - `InRangeTargetQuery` only through `visible` (what a tower may aim at or be triggered by) or
   `everyone` (what an area effect touches, hidden enemies included). Test invisibility nowhere else:
   a tower picks per action, never per tower kind. `NearestSelector` is centred on any point
-  (missiles retarget around themselves). `RandomSelector` takes a `RandomSource`.
+  (missiles retarget around themselves). `RandomSelector` takes a `RandomSource`. A tower that picks
+  one target wraps its selector in `PreferringSelector.priority`, so an enemy under `PRIORITY` wins
+  while in range; the preference is enemy state, never a player choice.
 - `InWedgeTargetQuery` tests the *current* heading from `TurretAim.currentRadians()`, the same
   angle the head is drawn at. It is deliberately not built on `SonarSweep`.
 

@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
@@ -24,7 +25,9 @@ import td.ui.render.StatusMarkerDraw;
 import td.ui.render.TraitMarkerDraw;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -40,6 +43,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     // Fractions of body scale, so the row clears a large body; the glyph size is fixed.
     private static final float MARKER_ROW_OFFSET_FRACTION = 1.6f;
     private static final float MARKER_SPACING_FRACTION = 1.1f;
+    /**
+     * Pixels from a marker that carries a count to the next one: its count is drawn to its right in
+     * a fixed-size font, so the gap can't shrink with the enemy.
+     */
+    static final float COUNTED_MARKER_SPACING = 24f;
     /** Marker glyph size, fixed so a marker reads the same on a small or a huge body. */
     private static final float MARKER_FIXED_SCALE = 4.5f;
     /** The trait row sits below the body, mirroring the effect row above it. */
@@ -293,17 +301,41 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         float markerY = y - scale * MARKER_ROW_OFFSET_FRACTION;
         float markerX = x - scale;
         int shown = 0;
-        Set<EffectKind> active = mob.activeEffectKinds();
-        for (EffectKind kind : active) {
+        List<MarkerGroup> groups = markerGroups(mob.activeEffectKinds());
+        for (MarkerGroup group : groups) {
             if (shown == MAX_VISIBLE_MARKERS) {
                 this.markerDraws.add(new StatusMarkerDraw(Palette.STATUS_MARKER_OVERFLOW, markerX, markerY,
-                        MARKER_FIXED_SCALE, active.size() - MAX_VISIBLE_MARKERS));
+                        MARKER_FIXED_SCALE, groups.size() - MAX_VISIBLE_MARKERS));
                 return;
             }
-            this.markerDraws.add(new StatusMarkerDraw(markerPaletteFor(kind), markerX, markerY, MARKER_FIXED_SCALE));
-            markerX += scale * MARKER_SPACING_FRACTION;
+            this.markerDraws.add(new StatusMarkerDraw(markerPaletteFor(group.first()), markerX, markerY,
+                    MARKER_FIXED_SCALE, group.others()));
+            float spacing = scale * MARKER_SPACING_FRACTION;
+            markerX += group.others() > 0 ? Math.max(spacing, COUNTED_MARKER_SPACING) : spacing;
             shown++;
         }
+    }
+
+    /** What one marker stands for: the first kind of a category, and how many more of it are active. */
+    record MarkerGroup(EffectKind first, int others) {
+    }
+
+    /**
+     * One marker per effect while they fit, else one per category, counting the other kinds of that
+     * category on the enemy.
+     */
+    static List<MarkerGroup> markerGroups(Set<EffectKind> active) {
+        List<MarkerGroup> groups = new ArrayList<>();
+        if (active.size() <= MAX_VISIBLE_MARKERS) {
+            active.forEach(kind -> groups.add(new MarkerGroup(kind, 0)));
+            return groups;
+        }
+        Map<EffectCategory, List<EffectKind>> byCategory = new EnumMap<>(EffectCategory.class);
+        for (EffectKind kind : active) {
+            byCategory.computeIfAbsent(kind.category(), category -> new ArrayList<>()).add(kind);
+        }
+        byCategory.values().forEach(kinds -> groups.add(new MarkerGroup(kinds.getFirst(), kinds.size() - 1)));
+        return groups;
     }
 
     static int fadeDurationTicks(Rank rank) {

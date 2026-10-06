@@ -230,7 +230,34 @@ class EnemyFrameBuilderTest {
 
         assertThat(markers).hasSize(EnemyFrameBuilder.MAX_VISIBLE_MARKERS + 1);
         assertThat(markers.getLast().palette()).isEqualTo(Palette.STATUS_MARKER_OVERFLOW);
-        assertThat(markers.getLast().hiddenCount()).isEqualTo(2);
+        assertThat(markers.getLast().hiddenCount()).isEqualTo(1);
+    }
+
+    @Test
+    void effectsPastTheCapGroupByCategoryAndEachMarkerCountsTheOtherKindsOfItsCategory() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.burn(Damage.magic(10), 50, d -> {
+        }));
+        enemy.applyEffect(Effect.poison(Damage.magic(10), 50, d -> {
+        }));
+        enemy.applyEffect(Effect.exposed(5, d -> {
+        }));
+        enemy.applyEffect(Effect.marked(5, d -> {
+        }));
+
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
+        enemy.accept(builder);
+        List<StatusMarkerDraw> markers = builder.buildMarkers();
+
+        assertThat(markers).extracting(StatusMarkerDraw::palette)
+                .containsExactly(Palette.STATUS_MARKER_BURN, Palette.STATUS_MARKER_SCORCHED,
+                        Palette.STATUS_MARKER_EXPOSED);
+        assertThat(markers).extracting(StatusMarkerDraw::hiddenCount).containsExactly(1, 1, 1);
+        assertThat(markers.get(1).x() - markers.get(0).x()).isGreaterThanOrEqualTo(
+                EnemyFrameBuilder.COUNTED_MARKER_SPACING);
+        assertThat(markers.get(2).x() - markers.get(1).x()).isGreaterThanOrEqualTo(
+                EnemyFrameBuilder.COUNTED_MARKER_SPACING);
     }
 
     @Test
@@ -281,9 +308,9 @@ class EnemyFrameBuilderTest {
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         enemy.applyEffect(Effect.chill(0.5f, 5, d -> {
         }));
-        enemy.applyEffect(Effect.heal(1, 5, d -> {
+        enemy.applyEffect(Effect.vulnerable(1, 5, d -> {
         }));
-        enemy.applyEffect(Effect.heal(1, 5, d -> {
+        enemy.applyEffect(Effect.exposed(5, d -> {
         }));
         enemy.applyEffect(Effect.shield(0.3f, 5, d -> {
         }));

@@ -186,6 +186,10 @@ public final class ActiveEffects {
         this.active.put(incoming.kind(), incoming.withStacks(stacks, remaining));
     }
 
+    public boolean has(EffectKind kind) {
+        return this.active.containsKey(kind);
+    }
+
     /** Ends the active {@code kind} and tells whether there was one, for an effect that one hit spends. */
     public boolean consume(EffectKind kind) {
         return this.active.remove(kind) != null;
