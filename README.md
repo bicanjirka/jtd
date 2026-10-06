@@ -105,7 +105,9 @@ node also needs XP: every tower an enemy reached earns its bounty as XP when its
 killed or leaked (an Aura earns with the towers it buffs), and a few nodes need towers built
 nearby. Every purchase is permanent for that tower. Upgrade prices are multiples of the tower's
 price. Pips on the board show each slot's
-level, and a tower with a special glows. The Aura tower draws a faint line to every tower it's
+level, and a tower with a special glows. Silver diamonds beside a tower show its rank, earned
+with XP: Seasoned at 50, Expert at 150, Hero at 300. The Upgrades panel's XP bar ticks where the
+next node waits. The Aura tower draws a faint line to every tower it's
 currently amplifying.
 
 ### Enemies

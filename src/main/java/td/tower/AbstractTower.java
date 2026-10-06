@@ -428,6 +428,7 @@ public abstract class AbstractTower implements Tower {
                 .withBehaviours(this.behaviours())
                 .withDescription(this.description())
                 .withRecord(this.killCount, this.damageDealt)
+                .withXp(this.experience.xp())
                 .withUpgrades(this.upgrades())
                 .withDisruption(now.disruption())
                 .withAuras(auras);

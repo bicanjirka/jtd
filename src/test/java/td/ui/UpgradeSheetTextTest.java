@@ -35,11 +35,13 @@ class UpgradeSheetTextTest {
     private static final UpgradeNode OPTICS = UpgradeTier.HEAD_1.node("optics", "Focused Optics", LIST_PRICE);
     private static final UpgradeNode EYE = UpgradeTier.HEAD_1.node("eye", "Marksman's Eye", LIST_PRICE);
     private static final UpgradeNode STEADY = UpgradeTier.EXTRA_1.node("steady", "Steady", LIST_PRICE);
+    private static final UpgradeNode STEADY_TWO = UpgradeTier.EXTRA_2.node("steady.2", "Steady II", LIST_PRICE)
+            .after(STEADY);
     private static final UpgradeNode MARKED = UpgradeTier.SPECIAL.node("marked", "Marked Round", LIST_PRICE);
     private static final UpgradeNode FIFTH = UpgradeTier.SPECIAL.node("fifth", "Fifth Shot", LIST_PRICE);
     private static final UpgradeNode MOMENTUM = UpgradeTier.SPECIAL.node("momentum", "Momentum", LIST_PRICE);
     private static final UpgradeTree CHOICES = UpgradeTree.of(StandardBaseSlot.nodes(LIST_PRICE))
-            .with(OPTICS, EYE, STEADY, MARKED, FIFTH, MOMENTUM)
+            .with(OPTICS, EYE, STEADY, STEADY_TWO, MARKED, FIFTH, MOMENTUM)
             .withChoice(ExclusiveChoice.oneOf(OPTICS, EYE))
             .withChoice(ExclusiveChoice.specials(MARKED, FIFTH, MOMENTUM));
 
@@ -185,5 +187,29 @@ class UpgradeSheetTextTest {
 
         assertThat(head).containsExactly("chosen over Focused Optics");
         assertThat(special).containsExactly("chosen over Marked Round", "chosen over Momentum");
+    }
+
+    @Test
+    void theXpLabelCountsTowardTheNextOfferedNodeXpOpens() {
+        this.world.economy().startEconomy(1000, 5);
+        FakeTower tower = FakeTower.offering(this.world, 3, 3, CHOICES);
+        tower.earnXp(40);
+        tower.buyUpgrade(CHOICES.nodes().stream().filter(n -> n.id().equals(StandardBaseSlot.ATTUNE_ID)).findFirst().orElseThrow());
+        tower.buyUpgrade(STEADY);
+
+        assertThat(this.xpLabel(tower)).isEqualTo("XP 40 / 75 to Steady II");
+    }
+
+    @Test
+    void onceNoOfferedNodeWaitsOnXpTheLabelNamesTheRank() {
+        this.tower.earnXp(60);
+
+        assertThat(this.xpLabel(this.tower)).isEqualTo("XP 60 · Seasoned");
+    }
+
+    /** As the panel builds it, from the tower's XP and what it offers. */
+    private String xpLabel(FakeTower tower) {
+        int xp = tower.experience().xp();
+        return UpgradeSheetText.xpLabel(xp, UpgradeSheetText.nextXpGate(tower.offeredUpgrades(this.world), xp));
     }
 }

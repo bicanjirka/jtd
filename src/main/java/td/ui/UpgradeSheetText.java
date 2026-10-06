@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.tower.TowerRank;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeDecision;
@@ -13,6 +14,7 @@ import td.ui.render.SheetLine.Glyph;
 import td.ui.render.SheetLine.Row;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -90,6 +92,20 @@ final class UpgradeSheetText {
             case HEAD -> owned.owns(StandardBaseSlot.ATTUNE_ID) ? "locked" : "needs Attune";
             case SPECIAL -> owned.owns(StandardBaseSlot.AWAKEN_ID) ? "choose a chain first" : "needs Awaken";
         };
+    }
+
+    /**
+     * Above the XP bar: "XP 120 / 150 to Weak Spot" toward the next node waiting on XP, or the rank
+     * once none is: "XP 340 · Hero".
+     */
+    static String xpLabel(int xp, Optional<UpgradeNode> nextXpGate) {
+        return nextXpGate.map(node -> "XP " + xp + " / " + node.xp() + " to " + node.displayName())
+                .orElse("XP " + xp + " · " + SheetNumbers.titleCase(TowerRank.of(xp)));
+    }
+
+    /** The offered node with the least XP still ahead of {@code xp}: the next one XP opens. */
+    static Optional<UpgradeNode> nextXpGate(List<UpgradeNode> offered, int xp) {
+        return offered.stream().filter(node -> node.xp() > xp).min(Comparator.comparingInt(UpgradeNode::xp));
     }
 
     /** Beside a slot's header while an exclusive choice of {@code members} nodes is on offer there. */

@@ -37,15 +37,18 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     private static final float TOWER_AURA_PULSE_MIN_SCALE = 0.8f;
     private static final float TOWER_AURA_PULSE_MAX_SCALE = 1.25f;
     private static final double TRANSCENDENT_HALO_SECONDS_PER_TURN = 12.0;
+    private static final int RANK_UP_GLOW_TICKS = 30;
 
     private final List<TowerSpriteDraw> draws = new ArrayList<>();
     private final List<TurretHeadDraw> headDraws = new ArrayList<>();
     private final GameWorld world;
+    private final int gameTime;
     private final double interpolationAlpha;
     private final double animationSeconds;
 
-    public TowerSpriteFrameBuilder(GameWorld world, double interpolationAlpha, double animationSeconds) {
+    public TowerSpriteFrameBuilder(GameWorld world, int gameTime, double interpolationAlpha, double animationSeconds) {
         this.world = world;
+        this.gameTime = gameTime;
         this.interpolationAlpha = interpolationAlpha;
         this.animationSeconds = animationSeconds;
     }
@@ -113,7 +116,14 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
                 tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(),
                 this.slotMarksFor(tower), this.enchantPulseFor(tower),
                 tower.upgrades().owns(StandardBaseSlot.TRANSCENDENT_ID),
-                (float) (this.animationSeconds / TRANSCENDENT_HALO_SECONDS_PER_TURN % 1.0)));
+                (float) (this.animationSeconds / TRANSCENDENT_HALO_SECONDS_PER_TURN % 1.0),
+                tower.experience().rank().ordinal(), this.rankUpProgressFor(tower)));
+    }
+
+    /** {@code -1} outside the glow that follows a rank-up, else how far through it. */
+    private float rankUpProgressFor(Tower tower) {
+        int ticks = tower.experience().ticksSinceRankUp(this.gameTime);
+        return ticks < 0 || ticks >= RANK_UP_GLOW_TICKS ? -1f : ticks / (float) RANK_UP_GLOW_TICKS;
     }
 
     /** A head of constant size. */

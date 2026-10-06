@@ -4,6 +4,7 @@ import td.damage.DamageUnits;
 import td.effect.EffectKind;
 import td.tower.BehaviourLine;
 import td.tower.TowerInspection;
+import td.tower.TowerRank;
 import td.tower.TowerStat;
 import td.tower.TowerStatLine;
 import td.ui.render.InfoSheet;
@@ -59,6 +60,8 @@ final class TowerSheetText {
         if (tower.auras() > 0) {
             lines.add(Row.toned(Glyph.RING, Palette.TOWER_AURA_RING, "Aura", tower.auras() > 1 ? "x" + tower.auras() : ""));
         }
+        lines.add(Row.toned(Glyph.FILLED_DIAMOND, Palette.TOWER_RANK, "XP",
+                tower.xp() + " · " + SheetNumbers.titleCase(TowerRank.of(tower.xp()))));
         lines.add(Row.plain(Glyph.SKULL, "Kills", tower.kills() + " · " + Math.round(DamageUnits.inPoints(tower.damageDealt())) + " dmg"));
         return new InfoSheet(lines);
     }
