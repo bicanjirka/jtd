@@ -45,8 +45,9 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     private static final long serialVersionUID = 1L;
 
     private static final int BUTTONS_PER_SLOT = 3;
-    /** A chain root and a level IV branch in the head; two specials. */
+    /** A chain root's rival and a level IV branch's in the head; two specials passed over. */
     private static final int DECISIONS_PER_SLOT = 2;
+    private static final float DECISION_FONT_SIZE = 10f;
     private static final UpgradeSlot[] SLOTS = UpgradeSlot.values();
     private static final Color LOCKED_COLOR = new Color(150, 170, 150);
     private static final int PIP_BOX = 11;
@@ -183,12 +184,12 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     }
 
     private void refreshDecisionRows(UpgradeSlot slot, List<UpgradeDecision> decisions) {
-        List<UpgradeDecision> inSlot = decisions.stream().filter(d -> d.chosen().slot() == slot).toList();
+        List<String> rows = UpgradeSheetText.decisionRows(decisions.stream().filter(d -> d.chosen().slot() == slot).toList());
         for (int i = 0; i < DECISIONS_PER_SLOT; i++) {
             JLabel row = this.decisionRows[slot.ordinal()][i];
-            row.setVisible(i < inSlot.size());
-            if (i < inSlot.size()) {
-                row.setText(UpgradeSheetText.decisionText(inSlot.get(i)));
+            row.setVisible(i < rows.size());
+            if (i < rows.size()) {
+                row.setText(rows.get(i));
             }
         }
     }
@@ -241,7 +242,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             for (int i = 0; i < DECISIONS_PER_SLOT; i++) {
                 JLabel decision = new JLabel("");
                 decision.setForeground(Hud.FOREGROUND);
-                decision.setFont(Hud.LABEL_FONT);
+                decision.setFont(Hud.LABEL_FONT.deriveFont(DECISION_FONT_SIZE));
                 decision.setIcon(new PaintedIcon(PIP_BOX, PIP_BOX,
                         g2 -> this.glyphRenderer.paintRowGlyph(g2, Glyph.LOCK, Optional.empty(), PIP_SIZE)));
                 decision.setVisible(false);

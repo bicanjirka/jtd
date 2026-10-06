@@ -10,7 +10,9 @@ tower's own `upgradeTree()` (`td.tower`) with its behaviour wired for real; no s
 eleven primitives listed under "New primitives" landed as: `EffectKind.VULNERABLE`, `REVEALED` and
 `POISON` (`td.effect`); the on-kill hook, timed self-buff, `applyVulnerable` and `reveal` helpers on
 `AbstractTower`; and per-tower code for the rest (marks, distance scaling, a second beam, shrapnel,
-multi-blast). Prices and every effect number are placeholders, recorded in `TODO.md`'s balance
+multi-blast). `FEATURE-tower-progression.md` since moved every node onto the new tree shape:
+Attune now opens the head, Awaken the special slot and level III, Transcendent a second special,
+and prices follow its multiples of the list price. Every effect number is a placeholder, recorded in `TODO.md`'s balance
 entries; the inline numbers below stayed flavour text for the mechanic each node describes.
 
 Choices made where the text was open: Vulnerable is up to 3 stacks at +15% damage taken each, all

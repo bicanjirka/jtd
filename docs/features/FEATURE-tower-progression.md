@@ -1,8 +1,12 @@
 # Feature Request: Tower Progression
 
-**Status: not started.** Feature 1 of 7 in the tower rework (order in `TODO.md`). It replaces
+**Status: implemented.** Feature 1 of 7 in the tower rework (order in `TODO.md`). It replaces
 the never-implemented `FEATURE-tower-upgrades-iteration-2.md` and carries over every answer that
-request left open.
+request left open. The shape is `UpgradeTier` (slot, price multiple, the base node that opens a
+step) plus `ExclusiveChoice` on `UpgradeTree`; Transcendent's gate is `TranscendentCondition`.
+Sonar and Splash, the trees with a level III head, can transcend today; the extra head node and
+level IV exist as mechanism only, proven in `StandardTreeShapeTest`, until features 3 to 7 add
+content.
 
 ## Summary
 
@@ -182,6 +186,18 @@ Transcendent opens head IV, extra IV, Range III and special slot 2.
   in feature 3.
 - Tower display names don't change here; renames happen once, in feature 7.
 
+- **Sell value under per-copy prices:** selling refunds three quarters of what was actually
+  paid (the copy's price when it was built, plus its upgrades). The Sell button stays honest per
+  tower, and selling then rebuying can't dodge the rising price: the next copy's price follows
+  the copies on the board, and every sale loses a quarter.
+- **As built, where play asked for it:** Transcendent's pip is a gold *diamond*, since the head's
+  pips are already gold. A waiting Transcendent's button reads "special, head III" (or "needs
+  special" / "needs head III"), short enough to share the row with its name. The hover names
+  what a pick locks out as a "Locks out" row with each rival on its own row; a first special,
+  whose rivals stay open for the second slot, reads "Next pick: Transcendent" instead. A made
+  choice's lock row reads "chosen over X", one per node locked out, under the slot header that
+  names what was chosen.
+
 ## Open questions
 
-- **Sell value under per-copy prices.** Refund what was actually paid, or the current list price?
+None.

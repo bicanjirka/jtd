@@ -12,8 +12,8 @@ this file is the single place to look for outstanding design/feature gaps.
 
 The tower rework, in this order (each needs the ones before it):
 
-1. `FEATURE-tower-progression.md`: Attune -> Awaken -> Transcendent, level IV, the extra head
-   node, two special slots, the exclusive-choice mark, price rules.
+1. `FEATURE-tower-progression.md` (implemented): Attune -> Awaken -> Transcendent, level IV,
+   the extra head node, two special slots, the exclusive-choice mark, price rules.
 2. `FEATURE-xp-and-purpose-gates.md`: XP from bounty and one purpose gate per tower replace kill
    and damage gates.
 3. `FEATURE-sniper-and-sonar.md`: crit per tower, the hit / periodic rule, the first debuffs and
@@ -41,6 +41,15 @@ Implemented, for reference: `FEATURE-enemy-spawn-types.md`, `FEATURE-multiple-en
 Findings from the architecture audits of 2026-09-17, highest-severity first. The threading
 group and the external audit's critical/high/moderate findings have landed; what remains is
 listed below.
+
+### Hovering the wave preview before its first layout divides by zero
+
+`PanelEnemy.mouseOver` divides the pointer's x by `scale`, which stays 0 until the preview has laid
+out its first wave, so a pointer crossing it early throws `ArithmeticException` on the EDT (seen
+during a `run-jtd` pass right after a level loaded). Harmless beyond the stack trace.
+
+- **Where:** `td.ui.PanelEnemy.mouseOver`.
+- **Approach:** return early while `scale` is 0, or derive the slot from the laid-out width.
 
 ### A command queue would make the simulation a true single writer
 

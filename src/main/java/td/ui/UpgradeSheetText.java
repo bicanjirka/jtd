@@ -15,7 +15,6 @@ import td.ui.render.SheetLine.Row;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /** The words for an upgrade node: its hover sheet, its button face and its slot's header. Pure. */
 final class UpgradeSheetText {
@@ -34,10 +33,12 @@ final class UpgradeSheetText {
                     ? Row.toned(Glyph.CHECK, Palette.UPGRADE_GATE_MET, offer.progress(), "")
                     : Row.toned(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, offer.progress(), ""));
         }
+        // The rivals get rows of their own: "Locks out" and a long name don't fit one line together.
         if (offer.inChoice() && offer.lastPick()) {
-            offer.rivals().forEach(rival -> lines.add(Row.plain(Glyph.LOCK, "Locks out " + rival.displayName(), "")));
+            lines.add(Row.plain(Glyph.LOCK, "Locks out", ""));
+            offer.rivals().forEach(rival -> lines.add(Row.plain(Glyph.DOT, rival.displayName(), "")));
         } else if (offer.inChoice()) {
-            lines.add(Row.plain(Glyph.LOCK, "The others wait for Transcendent", ""));
+            lines.add(Row.plain(Glyph.LOCK, "Next pick", "Transcendent"));
         }
         lines.add(new SheetLine.Gap());
         node.bonuses().forEach(bonus -> lines.add(Row.plain(Glyph.DOT, bonus.label(), bonus.value())));
@@ -86,9 +87,16 @@ final class UpgradeSheetText {
         return "1 of " + members;
     }
 
-    /** "Fifth Shot over Marked Round, Momentum": a choice made, beside the lock glyph. */
-    static String decisionText(UpgradeDecision decision) {
-        return decision.chosen().displayName() + " over "
-                + decision.passedOver().stream().map(UpgradeNode::displayName).collect(Collectors.joining(", "));
+    /**
+     * One row per node the slot's choices locked out, beside the lock glyph: "chosen over Long
+     * Reach". The slot header names what was chosen. A member passed over twice (by both specials)
+     * gets one row.
+     */
+    static List<String> decisionRows(List<UpgradeDecision> decisionsInSlot) {
+        return decisionsInSlot.stream()
+                .flatMap(decision -> decision.passedOver().stream())
+                .map(node -> "chosen over " + node.displayName())
+                .distinct()
+                .toList();
     }
 }
