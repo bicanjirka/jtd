@@ -9,6 +9,7 @@ import td.enemy.EnemyRoster;
 import td.enemy.EnemySelection;
 import td.projectile.ProjectileRoster;
 import td.stat.DisruptionField;
+import td.tower.ExperienceAwarder;
 import td.tower.TowerRoster;
 import td.wave.Path;
 import td.wave.Wave;
@@ -47,6 +48,7 @@ public class GameWorld {
         this.random = random;
         this.enemies = new EnemyRoster();
         this.towers = new TowerRoster(mainApp, this.economy, this::getBoard);
+        this.enemies.addWalkEndListener(new ExperienceAwarder(this.towers));
     }
 
     public EconomyLedger economy() {

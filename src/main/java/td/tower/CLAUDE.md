@@ -59,6 +59,17 @@
   `dealDamage(enemy, damage, attack)` (a forced crit, extra penetration) instead of adding a
   hook. Damage that scales with the target's protection asks `HitReceiver.reductionAgainst`.
 
+## Experience
+
+- XP comes only from `ExperienceAwarder`, once per finished walk (`WalkEndListener`): the bounty
+  to every tower that `reached` the mob, and once to every tower buffing one of those. Never per
+  hit, per kill or per tick.
+- `reached` is decided at walk end, never tracked per tick: the mob went live after the tower was
+  built (`entryOrdinal` against the count the tower recorded) and its walked stretch passed within
+  `TowerStats.reachReal()` (range before disruption). A tower with no reach on the path (the Aura)
+  returns `false` and earns through the towers it buffs.
+- `TowerExperience` publishes XP and the rank-up tick as one snapshot; only the game loop earns.
+
 ## Upgrade tree
 
 - Slots `BASE` (always `StandardBaseSlot.nodes`: the Range line and Attune -> Awaken ->

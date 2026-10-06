@@ -10,6 +10,17 @@ import static org.assertj.core.api.Assertions.within;
 class ArcLengthPathTest {
 
     @Test
+    void onlyTheWalkedStretchCountsAsPassingNearAPoint() {
+        ArcLengthPath path = ArcLengthPath.of(new PathNormal(List.of(new Vec2(0, 0), new Vec2(100, 0), new Vec2(100, 100))))
+                .orElseThrow();
+
+        assertThat(path.passesWithin(30, 10, 15, 0, 100)).isTrue();
+        assertThat(path.passesWithin(30, 10, 15, 60, 200)).isFalse();
+        assertThat(path.passesWithin(110, 80, 15, 150, 200)).isTrue();
+        assertThat(path.passesWithin(110, 80, 15, 0, 150)).isFalse();
+    }
+
+    @Test
     void aPathWithFewerThanTwoPointsHasNoArcLength() {
         PathNormal path = new PathNormal(List.of(new Vec2(5, 5)));
 

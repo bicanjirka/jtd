@@ -1,5 +1,6 @@
 package td.tower;
 
+import td.enemy.EnemyWalk;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
@@ -67,6 +68,17 @@ public interface Tower {
 
     /** Total damage that actually landed. */
     long getDamageDealt();
+
+    TowerExperience experience();
+
+    /** Adds a finished walk's bounty to this tower's XP. */
+    void earnXp(int bounty);
+
+    /**
+     * Whether a finished walk reached this tower: the mob went live after the tower was built and
+     * passed within its range, disruption aside.
+     */
+    boolean reached(EnemyWalk walk);
 
     int getKillCount();
 

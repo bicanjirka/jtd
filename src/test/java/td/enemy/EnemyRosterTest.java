@@ -51,7 +51,7 @@ class EnemyRosterTest {
     void reportingADeathDecrementsTheAliveCount() {
         roster.setCount(3);
 
-        roster.reportDeath();
+        roster.reportDeath(anEnemy());
 
         assertThat(roster.aliveCount()).isEqualTo(2);
     }
