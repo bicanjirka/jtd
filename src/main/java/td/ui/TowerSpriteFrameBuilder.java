@@ -84,7 +84,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
             boolean ready = false;
             for (int i = 0; i < offered.size() && !ready; i++) {
                 UpgradeNode node = offered.get(i);
-                ready = node.slot() == slot && node.gate().isSatisfied(tower, this.world)
+                ready = node.slot() == slot && node.gateMet(tower, this.world)
                         && this.world.economy().canPay(node.price());
             }
             marks.add(new SlotMarkDraw(slotPaletteFor(slot), tower.upgrades().countIn(slot), ready));

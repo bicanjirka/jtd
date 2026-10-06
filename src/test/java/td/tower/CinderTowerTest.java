@@ -1,13 +1,10 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
-import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectKind;
-import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
-import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
@@ -174,15 +171,10 @@ class CinderTowerTest {
     }
 
     @Test
-    void wideNozzleIsChoosableAfterTenKillsAndAppliesItsRangeBonus() {
+    void wideNozzleAppliesItsRangeBonus() {
         this.context.economy().startEconomy(1000, 5);
         CinderTower tower = towerAt(3, 3);
-        UpgradePaths.awaken(tower);
-        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
-        for (int i = 0; i < 10; i++) {
-            tower.dealDamage(fodder, Damage.physical(1_000_000));
-            fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
-        }
+        UpgradePaths.awakenVeteran(tower);
         UpgradeNode wideNozzle = UpgradePaths.named(tower, "Wide Nozzle");
 
         boolean chosen = tower.buyUpgrade(wideNozzle);
@@ -192,7 +184,7 @@ class CinderTowerTest {
     }
 
     @Test
-    void whiteFlameIsNotYetChoosableBeforeAwakenIsBought() {
+    void whiteFlameIsNotYetChoosableBeforeAttuneIsBought() {
         this.context.economy().startEconomy(1000, 5);
         CinderTower tower = towerAt(3, 3);
         UpgradeNode whiteFlame = UpgradePaths.named(tower, "White Flame");

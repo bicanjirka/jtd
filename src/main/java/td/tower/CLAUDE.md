@@ -77,11 +77,11 @@
   set of up to three, or one set per chain). Content per tower comes from
   `docs/features/FEATURE-tower-specialization-abilities.md` and the tower-rework feature requests.
 - Build a node at its step: `UpgradeTier.HEAD_2.node(id, name, PRICE)` sets its slot, its price
-  (a multiple of the list price) and the base node that opens it; `after(previous)` adds its line.
-  Then `withBuff`/`withGate`/`withExtraEffect`. `requires` decides whether a node is offered;
-  `gate` is the condition to clear once offered (`always()`, `KillCountCondition`,
-  `DamageDealtCondition`, `ClusterCondition`, `TranscendentCondition`), and its `progress()` feeds
-  the UI.
+  (a multiple of the list price), its XP (the gate table) and the base node that opens it;
+  `after(previous)` adds its line. Then `withBuff`/`withGate`/`withExtraEffect`. `requires`
+  decides whether a node is offered. Once offered it needs its `xp` and its `gate`, a purpose or
+  layout condition (`always()`, `ClusterCondition`, `TranscendentCondition`) whose `progress()`
+  feeds the UI. `UpgradeNode.gateMet` is the one check for both: never test `gate()` alone.
 - Exclusivity is an `ExclusiveChoice` on the tree (`oneOf` for chain roots and IV-A | IV-B,
   `specials` for a special set), never `slotEmpty` in `requires`: the tree enforces it and the
   panel draws it. Pass `StandardBaseSlot.nodes` a tree's level III heads; without any, the tree

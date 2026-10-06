@@ -7,9 +7,7 @@ import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.ClusterCondition;
-import td.tower.upgrade.DamageDealtCondition;
 import td.tower.upgrade.ExclusiveChoice;
-import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
@@ -42,37 +40,30 @@ public final class SonarTower extends AbstractTower implements WaveStartListener
 
     private static final UpgradeNode TWIN_ARRAY_1 = UpgradeTier.HEAD_1.node("sonar.head.twin_array.1",
             "Twin Array", PRICE)
-            .withBuff(TowerBuff.damage(0.25f))
-            .withGate(new DamageDealtCondition(100));
+            .withBuff(TowerBuff.damage(0.25f));
     private static final UpgradeNode TWIN_ARRAY_2 = UpgradeTier.HEAD_2.node("sonar.head.twin_array.2",
             "Twin Array II", PRICE)
             .withBuff(TowerBuff.damage(0.25f).withCritChance(0.1f))
-            .after(TWIN_ARRAY_1)
-            .withGate(new DamageDealtCondition(200));
+            .after(TWIN_ARRAY_1);
     private static final UpgradeNode TWIN_ARRAY_3 = UpgradeTier.HEAD_3.node("sonar.head.twin_array.3",
             "Twin Array III", PRICE)
             .after(TWIN_ARRAY_2)
-            .withGate(new KillCountCondition(25))
             .withExtraEffect("a second turret, facing the opposite direction");
     private static final UpgradeNode LONG_REACH_1 = UpgradeTier.HEAD_1.node("sonar.head.long_reach.1",
             "Long Reach", PRICE)
-            .withBuff(TowerBuff.critChance(0.15f))
-            .withGate(new KillCountCondition(10));
+            .withBuff(TowerBuff.critChance(0.15f));
     private static final UpgradeNode LONG_REACH_2 = UpgradeTier.HEAD_2.node("sonar.head.long_reach.2",
             "Long Reach II", PRICE)
             .after(LONG_REACH_1)
-            .withGate(new DamageDealtCondition(200))
             .withExtraEffect("damage scales up to +100% at max range");
     private static final UpgradeNode WIDE_BAND = UpgradeTier.SPECIAL.node("sonar.special.wide_band", "Wide Band", PRICE)
             .withGate(new ClusterCondition(2))
             .withExtraEffect("each revolution briefly reveals invisible enemies to every tower");
     private static final UpgradeNode MARK_ON_SWEEP = UpgradeTier.SPECIAL.node("sonar.special.mark_on_sweep",
             "Mark on Sweep", PRICE)
-            .withGate(new KillCountCondition(15))
             .withExtraEffect("a beam hit marks its target; the next hit on it is a guaranteed crit");
     private static final UpgradeNode PIERCING_TONE = UpgradeTier.SPECIAL.node("sonar.special.piercing_tone",
             "Piercing Tone", PRICE)
-            .withGate(new DamageDealtCondition(200))
             .withExtraEffect("bonus magic damage against physically armored/shielded enemies, up to +50%");
     /** Piercing Tone's bonus is the target's physical reduction, as a share of this hit, capped here. */
     private static final float PIERCING_TONE_MAX_BONUS = 0.5f;

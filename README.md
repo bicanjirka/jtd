@@ -100,10 +100,11 @@ wave preview once the tower is selected. `base` holds three Range steps and the 
 Awaken -> Transcendent: Attune opens the first two levels of `head`, Awaken opens level III and
 a special, and Transcendent (once a special and a level III head are owned) opens Range III and a
 second special. `head` offers two chains that exclude each other; `special` offers one to three
-specializations, of which a tower keeps one, or two once Transcendent. A node is gated by its own
-condition (an affordable price alone, a cluster of towers built nearby, the tower having dealt
-enough damage, or having racked up enough kills), and every purchase is permanent for that
-tower. Upgrade prices are multiples of the tower's price. Pips on the board show each slot's
+specializations, of which a tower keeps one, or two once Transcendent. Past the first steps a
+node also needs XP: every tower an enemy reached earns its bounty as XP when its walk ends,
+killed or leaked (an Aura earns with the towers it buffs), and a few nodes need towers built
+nearby. Every purchase is permanent for that tower. Upgrade prices are multiples of the tower's
+price. Pips on the board show each slot's
 level, and a tower with a special glows. The Aura tower draws a faint line to every tower it's
 currently amplifying.
 

@@ -9,9 +9,7 @@ import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.InWedgeTargetQuery;
 import td.tower.targeting.NearestSelector;
-import td.tower.upgrade.DamageDealtCondition;
 import td.tower.upgrade.ExclusiveChoice;
-import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
@@ -54,27 +52,22 @@ public final class CinderTower extends AbstractTower {
 
     private static final UpgradeNode WHITE_FLAME_1 = UpgradeTier.HEAD_1.node("cinder.head.white_flame.1",
             "White Flame", PRICE)
-            .withBuff(TowerBuff.damage(0.3f))
-            .withGate(new DamageDealtCondition(150));
+            .withBuff(TowerBuff.damage(0.3f));
     private static final UpgradeNode WHITE_FLAME_2 = UpgradeTier.HEAD_2.node("cinder.head.white_flame.2",
             "White Flame II", PRICE)
             .withBuff(TowerBuff.damage(0.25f))
             .after(WHITE_FLAME_1)
-            .withGate(new DamageDealtCondition(300))
             .withExtraEffect("+50% burn duration");
     private static final UpgradeNode WIDE_NOZZLE_1 = UpgradeTier.HEAD_1.node("cinder.head.wide_nozzle.1",
             "Wide Nozzle", PRICE)
             .withBuff(TowerBuff.range(0.25f))
-            .withGate(new KillCountCondition(10))
             .withExtraEffect("+30% cone width");
     private static final UpgradeNode WIDE_NOZZLE_2 = UpgradeTier.HEAD_2.node("cinder.head.wide_nozzle.2",
             "Wide Nozzle II", PRICE)
             .withBuff(TowerBuff.range(0.2f).withFireRate(0.2f))
             .after(WIDE_NOZZLE_1)
-            .withGate(new DamageDealtCondition(250))
             .withExtraEffect("+20% cone width, -20% cooldown");
     private static final UpgradeNode HEXFLAME = UpgradeTier.SPECIAL.node("cinder.special.hexflame", "Hexflame", PRICE)
-            .withGate(new KillCountCondition(20))
             .withExtraEffect("each wave that newly ignites an enemy also grants 1 Vulnerable stack (cap 3)");
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE))

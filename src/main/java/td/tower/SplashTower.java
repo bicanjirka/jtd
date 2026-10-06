@@ -7,9 +7,7 @@ import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.RandomSelector;
 import td.tower.targeting.TargetSelector;
-import td.tower.upgrade.DamageDealtCondition;
 import td.tower.upgrade.ExclusiveChoice;
-import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
@@ -53,45 +51,36 @@ public final class SplashTower extends AbstractTower {
 
     private static final UpgradeNode BLAST_ENGINEERING_1 = UpgradeTier.HEAD_1.node("splash.head.blast_engineering.1",
             "Blast Engineering", PRICE)
-            .withGate(new DamageDealtCondition(100))
             .withExtraEffect("+30% splash radius");
     private static final UpgradeNode BLAST_ENGINEERING_2 = UpgradeTier.HEAD_2.node("splash.head.blast_engineering.2",
             "Blast Engineering II", PRICE)
             .withBuff(TowerBuff.damage(0.25f))
             .after(BLAST_ENGINEERING_1)
-            .withGate(new DamageDealtCondition(200))
             .withExtraEffect("flattens the falloff curve");
     private static final UpgradeNode BLAST_ENGINEERING_3 = UpgradeTier.HEAD_3.node("splash.head.blast_engineering.3",
             "Blast Engineering III", PRICE)
             .after(BLAST_ENGINEERING_2)
-            .withGate(new KillCountCondition(20))
             .withExtraEffect("fires 3 projectiles instead of 1");
     private static final UpgradeNode RAPID_BATTERY_1 = UpgradeTier.HEAD_1.node("splash.head.rapid_battery.1",
             "Rapid Battery", PRICE)
-            .withBuff(TowerBuff.fireRate(0.25f))
-            .withGate(new KillCountCondition(8));
+            .withBuff(TowerBuff.fireRate(0.25f));
     private static final UpgradeNode RAPID_BATTERY_2 = UpgradeTier.HEAD_2.node("splash.head.rapid_battery.2",
             "Rapid Battery II", PRICE)
             .withBuff(TowerBuff.damage(0.25f).withCritChance(0.15f))
-            .after(RAPID_BATTERY_1)
-            .withGate(new KillCountCondition(18));
+            .after(RAPID_BATTERY_1);
     private static final UpgradeNode RAPID_BATTERY_3 = UpgradeTier.HEAD_3.node("splash.head.rapid_battery.3",
             "Rapid Battery III", PRICE)
             .after(RAPID_BATTERY_2)
-            .withGate(new DamageDealtCondition(250))
             .withExtraEffect("crits splash 50% bigger");
     private static final UpgradeNode TOXIC_BLOOM = UpgradeTier.SPECIAL.node("splash.special.toxic_bloom",
             "Toxic Bloom", PRICE)
-            .withGate(new DamageDealtCondition(150))
             .withExtraEffect("splash applies poison");
     private static final UpgradeNode CONCUSSIVE_BLAST = UpgradeTier.SPECIAL.node("splash.special.concussive_blast",
             "Concussive Blast", PRICE)
             .withBuff(TowerBuff.fireRate(-0.5f))
-            .withGate(new KillCountCondition(15))
             .withExtraEffect("-50% fire rate, blast applies chill, killed enemies explode");
     private static final UpgradeNode OVERPRESSURE = UpgradeTier.SPECIAL.node("splash.special.overpressure",
             "Overpressure", PRICE)
-            .withGate(new KillCountCondition(25))
             .withExtraEffect("on crit, the next shot fires at every enemy in range");
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BLAST_ENGINEERING_3, RAPID_BATTERY_3))

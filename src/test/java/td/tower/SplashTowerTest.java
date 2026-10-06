@@ -123,15 +123,10 @@ class SplashTowerTest {
     }
 
     @Test
-    void rapidBatteryIsChoosableAfterEightKillsAndAppliesItsFireRateBonus() {
+    void rapidBatteryAppliesItsFireRateBonus() {
         this.context.economy().startEconomy(1000, 5);
         SplashTower tower = towerNear(3, 3);
-        UpgradePaths.awaken(tower);
-        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
-        for (int i = 0; i < 8; i++) {
-            tower.dealDamage(fodder, Damage.physical(1_000_000));
-            fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
-        }
+        UpgradePaths.awakenVeteran(tower);
         UpgradeNode rapidBattery = UpgradePaths.named(tower, "Rapid Battery");
 
         boolean chosen = tower.buyUpgrade(rapidBattery);
@@ -144,7 +139,7 @@ class SplashTowerTest {
     void concussiveBlastAppliesSlowToEverySplashTarget() {
         this.context.economy().startEconomy(1000, 5);
         SplashTower tower = towerNear(3, 3);
-        UpgradePaths.awaken(tower);
+        UpgradePaths.awakenVeteran(tower);
         EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
         for (int i = 0; i < 15; i++) {
             tower.dealDamage(fodder, Damage.physical(1_000_000));

@@ -93,13 +93,15 @@ class UpgradeTreeTest {
     }
 
     @Test
-    void progressReadsLiveProgressTowardAKillCountGate() {
-        UpgradeNode gated = UpgradeNode.of("gated", UpgradeSlot.HEAD, "Gated", 10)
-                .withGate(new KillCountCondition(10));
-        FakeTower tower = FakeTower.owning(context, 0, 0, UpgradeState.none());
-        tower.setKillCount(4);
+    void xpProgressReadsTheTowersLiveXpCappedAtWhatTheNodeNeeds() {
+        UpgradeNode gated = UpgradeNode.of("gated", UpgradeSlot.HEAD, "Gated", 10).withXp(150);
+        FakeTower learning = FakeTower.owning(context, 0, 0, UpgradeState.none());
+        FakeTower seasoned = FakeTower.owning(context, 1, 0, UpgradeState.none());
+        learning.earnXp(40);
+        seasoned.earnXp(400);
 
-        assertThat(gated.gate().progress(tower, context)).isEqualTo("4/10 kills");
+        assertThat(gated.xpProgress(learning)).isEqualTo("XP 40/150");
+        assertThat(gated.xpProgress(seasoned)).isEqualTo("XP 150/150");
     }
 
     /** Awaken owned and {@code slot} still empty, which makes a slot's roots exclude each other. */

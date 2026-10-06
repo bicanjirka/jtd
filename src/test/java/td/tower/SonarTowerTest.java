@@ -168,7 +168,7 @@ class SonarTowerTest {
     void twinArrayIsChoosableOnceAwakenIsBoughtAndAppliesItsDamageBonus() {
         this.context.economy().startEconomy(1000, 5);
         SonarTower tower = tower();
-        UpgradePaths.awaken(tower);
+        UpgradePaths.awakenVeteran(tower);
         EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 100000, 3, Rank.GRUNT);
         tower.dealDamage(fodder, Damage.physical(11000));
         UpgradeNode twinArray = UpgradePaths.named(tower, "Twin Array");
@@ -179,23 +179,12 @@ class SonarTowerTest {
         assertThat(tower.damageCurrent()).isGreaterThan(tower.damageBase);
     }
 
-    @Test
-    void longReachIsNotYetChoosableBeforeTenKills() {
-        this.context.economy().startEconomy(1000, 5);
-        SonarTower tower = tower();
-        UpgradePaths.awaken(tower);
-        UpgradeNode longReach = UpgradePaths.named(tower, "Long Reach");
-
-        boolean chosen = tower.buyUpgrade(longReach);
-
-        assertThat(chosen).isFalse();
-    }
 
     @Test
     void piercingToneAddsMagicDamageInProportionToTheTargetsPhysicalProtectionUpToHalf() {
         this.context.economy().startEconomy(1000, 5);
         SonarTower tower = tower();
-        UpgradePaths.awaken(tower);
+        UpgradePaths.awakenVeteran(tower);
         tower.dealDamage(FakeEnemyMob.at(0, 0), Damage.physical(20_000));
         tower.buyUpgrade(UpgradePaths.named(tower, "Piercing Tone"));
         FakeEnemyMob lightlyArmored = FakeEnemyMob.at(TOWER_X + NEAR, TOWER_Y);

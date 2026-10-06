@@ -9,9 +9,7 @@ import td.projectile.MissileProjectile;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
-import td.tower.upgrade.DamageDealtCondition;
 import td.tower.upgrade.ExclusiveChoice;
-import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
@@ -44,27 +42,22 @@ public final class SeekerTower extends AbstractTower {
 
     private static final UpgradeNode TWIN_WARHEAD_1 = UpgradeTier.HEAD_1.node("seeker.head.twin_warhead.1",
             "Twin Warhead", PRICE)
-            .withBuff(TowerBuff.fireRate(0.3f))
-            .withGate(new KillCountCondition(10));
+            .withBuff(TowerBuff.fireRate(0.3f));
     private static final UpgradeNode TWIN_WARHEAD_2 = UpgradeTier.HEAD_2.node("seeker.head.twin_warhead.2",
             "Twin Warhead II", PRICE)
             .withBuff(TowerBuff.fireRate(0.25f))
             .after(TWIN_WARHEAD_1)
-            .withGate(new DamageDealtCondition(250))
             .withExtraEffect("fires two independently-retargeting missiles instead of one");
     private static final UpgradeNode DEEP_FREEZE_1 = UpgradeTier.HEAD_1.node("seeker.head.deep_freeze.1",
             "Deep Freeze", PRICE)
-            .withBuff(TowerBuff.damage(0.3f))
-            .withGate(new KillCountCondition(12));
+            .withBuff(TowerBuff.damage(0.3f));
     private static final UpgradeNode DEEP_FREEZE_2 = UpgradeTier.HEAD_2.node("seeker.head.deep_freeze.2",
             "Deep Freeze II", PRICE)
             .withBuff(TowerBuff.damage(0.25f))
             .after(DEEP_FREEZE_1)
-            .withGate(new KillCountCondition(25))
             .withExtraEffect("+75% freeze duration, killing a frozen enemy shatters it for 50% weapon damage splash");
     private static final UpgradeNode HOMING_CURSE = UpgradeTier.SPECIAL.node("seeker.special.homing_curse",
             "Homing Curse", PRICE)
-            .withGate(new KillCountCondition(20))
             .withExtraEffect("impact applies 1 Vulnerable stack, or 2 if the target was already frozen or chilled");
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE))

@@ -4,9 +4,7 @@ import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
-import td.tower.upgrade.DamageDealtCondition;
 import td.tower.upgrade.ExclusiveChoice;
-import td.tower.upgrade.KillCountCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
@@ -31,27 +29,22 @@ public final class PulseTower extends AbstractTower {
 
     private static final UpgradeNode OVERCHARGED_COILS_1 = UpgradeTier.HEAD_1.node("pulse.head.overcharged_coils.1",
             "Overcharged Coils", PRICE)
-            .withBuff(TowerBuff.damage(0.3f))
-            .withGate(new DamageDealtCondition(100));
+            .withBuff(TowerBuff.damage(0.3f));
     private static final UpgradeNode OVERCHARGED_COILS_2 = UpgradeTier.HEAD_2.node("pulse.head.overcharged_coils.2",
             "Overcharged Coils II", PRICE)
             .withBuff(TowerBuff.damage(0.25f).withCritChance(0.1f))
-            .after(OVERCHARGED_COILS_1)
-            .withGate(new KillCountCondition(20));
+            .after(OVERCHARGED_COILS_1);
     private static final UpgradeNode RESONANT_FIELD_1 = UpgradeTier.HEAD_1.node("pulse.head.resonant_field.1",
             "Resonant Field", PRICE)
             .withBuff(TowerBuff.range(0.2f))
-            .withGate(new KillCountCondition(10))
             .withExtraEffect("damages invisible enemies every tick, cover no longer required");
     private static final UpgradeNode RESONANT_FIELD_2 = UpgradeTier.HEAD_2.node("pulse.head.resonant_field.2",
             "Resonant Field II", PRICE)
             .withBuff(TowerBuff.range(0.15f))
             .after(RESONANT_FIELD_1)
-            .withGate(new DamageDealtCondition(200))
             .withExtraEffect("any invisible enemy it hits is revealed to every tower for 2s");
     private static final UpgradeNode WARDING_FIELD = UpgradeTier.SPECIAL.node("pulse.special.warding_field",
             "Warding Field", PRICE)
-            .withGate(new KillCountCondition(20))
             .withExtraEffect("each tick, everything hit has a 10% chance to gain 1 Vulnerable stack (cap 3)");
 
     /** Chance per tick that each enemy hit gains a vulnerability stack. */

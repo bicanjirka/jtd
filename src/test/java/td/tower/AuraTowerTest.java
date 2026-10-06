@@ -32,7 +32,7 @@ class AuraTowerTest {
         AuraTower aura = new AuraTower(this.context, 0, 0);
         this.context.towers().add(aura);
         int damageBeforeUpgrade = neighbour.damageCurrent();
-        UpgradePaths.awaken(aura);
+        UpgradePaths.awakenVeteran(aura);
 
         boolean chosen = aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core"));
 
@@ -48,7 +48,7 @@ class AuraTowerTest {
         this.addClusterFiller();
         AuraTower aura = new AuraTower(this.context, 0, 0);
         this.context.towers().add(aura);
-        UpgradePaths.awaken(aura);
+        UpgradePaths.awakenVeteran(aura);
         aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core"));
 
         aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core II"));
@@ -67,7 +67,7 @@ class AuraTowerTest {
 
         assertThat(first.buffFor(second)).isEqualTo(TowerBuff.none());
 
-        UpgradePaths.awaken(first);
+        UpgradePaths.awakenVeteran(first);
         first.buyUpgrade(UpgradePaths.named(first, "Resonance Field"));
         UpgradeNode resonanceFieldTwo = UpgradePaths.named(first, "Resonance Field II");
         first.buyUpgrade(resonanceFieldTwo);
