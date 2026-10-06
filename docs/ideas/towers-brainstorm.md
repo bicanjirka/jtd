@@ -790,7 +790,7 @@ SPECIAL  ❔ per chain (my pick) or one shared set of three, see the gap
 
 - ❔ **The specials.** All five of today's feed on crits, but the panel shows three per slot. Your
   idea from the Splash rework fits here: let the chain decide.
-  - [ ] ⭐ **A set per chain** (Awaken offers the chain's three once its level I is owned; the
+  - [x] ⭐ **A set per chain** (Awaken offers the chain's three once its level I is owned; the
     second special after Transcendent comes from the same three). Every special you ticked keeps a
     home, and each set sharpens its chain's strategy:
     - **Focused Optics** (tempo): **Momentum** (a crit charges a x5 shot that ignores armor and
@@ -807,7 +807,7 @@ SPECIAL  ❔ per chain (my pick) or one shared set of three, see the gap
     Ricochet), but Headhunter and Fifth Shot are cut, and Shatter Shot needs B III as its home.
     - 💬
 - ❔ **How each special aims** (today any special switches to "most health").
-  - [ ] ⭐ Each aims for its own job: Momentum and Headhunter at the highest rank (the burst wants
+  - [x] ⭐ Each aims for its own job: Momentum and Headhunter at the highest rank (the burst wants
     the elite), Ricochet at the enemy with most neighbours within 1.5 cells (so the bounces find
     targets), Marked Round and Fifth Shot at most health (the enemy the team should focus),
     Shatter Shot at a frozen or Dazed enemy first.
@@ -819,21 +819,21 @@ SPECIAL  ❔ per chain (my pick) or one shared set of three, see the gap
 - ❔ **B III** (level III answers what counters the chain: here, crit immunity).
   - [ ] ⭐ **Find the Seam**: against an enemy that can't be crit, each Steady Aim stack gives +15%
     damage and ignores 10 armor instead. Crit immunity still holds, but patience pays anyway.
-    - 💬
+    - 💬 enemy that cant be crit counters this tower and that is ok, come up with something else
   - [ ] alt **Armor Piercer**: every 3rd shot at one target ignores all armor and plating, crit or
     not. A rhythm instead of a conversion; it also helps against plated enemies that can be crit.
     - 💬
   - (Shatter Shot, your other "add it where it fits", is a chain-B special in my pick above; with
     the shared set it moves here instead.)
 - ❔ **B IV-A** (Deadeye is out; IV-B Sunder Rounds is the team version, so IV-A is the selfish one).
-  - [ ] ⭐ **Unbroken Aim**: Steady Aim stacks to 5 (55% crit) and survives a kill; only retargeting
+  - [x] ⭐ **Unbroken Aim**: Steady Aim stacks to 5 (55% crit) and survives a kill; only retargeting
     a living enemy resets it. The crit engine that walks through a line of elites.
     - 💬
   - [ ] alt **Follow-Through**: every crit is followed at once by a free shot at the same target for
     50%; that shot can crit, but its crit starts no further follow-up.
     - 💬
 - ❔ **Quick Scope's home** (you liked it: the first shot at a new target has +50% crit chance).
-  - [ ] ⭐ On A I, beside Steady Aim: Steady Aim covers every shot but the first, Quick Scope covers
+  - [x] ⭐ On A I, beside Steady Aim: Steady Aim covers every shot but the first, Quick Scope covers
     the first. In the tempo chain it feeds Frenzy: a kill, a new target, a likely crit, Frenzy
     again.
     - 💬
@@ -841,13 +841,13 @@ SPECIAL  ❔ per chain (my pick) or one shared set of three, see the gap
     crowd answer gets stronger.
     - 💬
 - ❔ **The extra node's name.**
-  - [ ] ⭐ **Tradecraft**: the assassin's technique (streak), patience at range, special rounds and
+  - [x] ⭐ **Tradecraft**: the assassin's technique (streak), patience at range, special rounds and
     intel.
     - 💬
   - [ ] alt **Long Watch**.
     - 💬
 - ❔ **Frenzy's length.**
-  - [ ] ⭐ Counted: "the next 3 shots come twice as fast". It reads exactly, at any fire rate.
+  - [x] ⭐ Counted: "the next 3 shots come twice as fast". It reads exactly, at any fire rate.
     - 💬
   - [ ] alt Timed: +100% fire rate for 3 s (about 4 shots at A II's rate).
     - 💬
@@ -916,16 +916,16 @@ SPECIAL  Arc: Thunderclap, Static Charge, Thunderstrike
 
 **Base line**
 
-- [ ] ⭐ 🟢 Keep it as it is: physical blast, random target in range, instant, one shot a second,
+- [x] ⭐ 🟢 Keep it as it is: physical blast, random target in range, instant, one shot a second,
   falloff from the centre ("base function is good").
-  - 💬
-- [ ] ⭐ 🟢 Drop the chill from the tower line: the code has none at base, and every slow now
+  - 💬 agree, add visual change - no more lines connecting hit enemies, blast should also look like detonation, bright circle that expands as a ring, changing color from light to dark
+- [x] ⭐ 🟢 Drop the chill from the tower line: the code has none at base, and every slow now
   belongs to a chain (Arc's Dazed, Rime Coven's chill).
   - 💬
 
 **BASE**
 
-- [ ] ⭐ 🟡 Fortify **Fire Control**: your smart aim, plus the passive you asked for.
+- [x] ⭐ 🟡 Fortify **Fire Control**: your smart aim, plus the passive you asked for.
   - **Aims for its purpose.** Unforked: the enemy with most neighbours inside the blast. Arc: where
     blast and arcs together reach most enemies (the head of a column). Hex: the highest-rank enemy
     in the densest group that doesn't carry this tower's rune yet.
@@ -938,8 +938,8 @@ SPECIAL  Arc: Thunderclap, Static Charge, Thunderstrike
   cooldown by 10%, up to 40%. It pays for hitting crowds with fire rate, which both payloads
   multiply; but the chains then have nothing per-enemy to read.
   - 💬
-- [ ] 🟢 Range II +15%; Range III +10% and blast radius +10%.
-  - 💬
+- [x] 🟢 Range II +15%; Range III +10% and blast radius +10%.
+  - 💬 blast radius should affect arc and hex somehow
 
 **The fork.** The two chain roots exclude each other, as today. Level I decides the tower's purpose
 and how Fire Control aims; IV-A and IV-B are two ways to make that purpose overpowered. **Awaken
@@ -949,24 +949,24 @@ level I, so no new rule is needed. 🟢 (The same rule now serves the Sniper, 3.
 
 **HEAD chain A - Arc** (the storm: lines, stuns, crits)
 
-- [ ] ⭐ 🟡 I **Arc**: the blast carries past its edge. From the outermost enemy it caught, an arc
+- [x] ⭐ 🟡 I **Arc**: the blast carries past its edge. From the outermost enemy it caught, an arc
   jumps to the nearest enemy the shot hasn't hit, within 1.5 cells, then on from there: 2 jumps,
   50% of the blast each, as magic. Arcs jump 0.5 cells further from a Saturated enemy per stack.
   The blast owns clumps, the arcs own lines.
-  - 💬
-- [ ] ⭐ 🟢 II **Conductor**: +10% crit chance (Splash's one crit-granting level), arcs can crit,
+  - 💬 make a graphic representation evoking electricity, tower can be recolored to blue, lines are electricity zigzags
+- [x] ⭐ 🟢 II **Conductor**: +10% crit chance (Splash's one crit-granting level), arcs can crit,
   +1 jump.
   - 💬
-- [ ] ⭐ 🟡 III **Overload** (the stun): an arc crit Dazes its target for 0.5 s, on freeze's
+- [x] ⭐ 🟡 III **Overload** (the stun): an arc crit Dazes its target for 0.5 s, on freeze's
   diminishing-returns ladder. Arcs into a fully Saturated enemy get +10% crit chance.
-  - 💬
+  - 💬 daze should build different CC than freeze, slower: freeze has 100% -> 50% -> 25% -> immune, daze has 100% -> 80% -> 60% etc to zero
 - [ ] alt III **Ground Strike** (the answer to a tight clump, where arcs find nobody outside the
   blast): an arc with nowhere to jump strikes the primary again at 50%, once per shot.
-  - 💬
-- [ ] ⭐ 🟡 IV-A **Chain Lightning** (the swarm storm): up to 6 jumps with no loss per jump, and the
+  - 💬 
+- [x] ⭐ 🟡 IV-A **Chain Lightning** (the swarm storm): up to 6 jumps with no loss per jump, and the
   3rd jump forks into two arcs. A column dies in one shot.
   - 💬
-- [ ] ⭐ 🟡 IV-B **Lightning Rod** (the focused storm): an arc that finds no new enemy returns to the
+- [x] ⭐ 🟡 IV-B **Lightning Rod** (the focused storm): an arc that finds no new enemy returns to the
   primary at full strength, up to 3 times; arcs on a Dazed enemy deal +50% crit damage. A boss
   with two escorts takes four strikes a shot.
   - 💬
@@ -977,28 +977,30 @@ One rule keeps hexes rare and readable: **a tower casts one rune.** Its hex is a
 of clauses: Doom from level I, poison from II, a coven from IV, plus its specials. An enemy carries
 at most two runes (from two hex towers), and recasting refreshes. Only a Hex Splash casts runes,
 and the rune's glyphs say what it does.
+💬 I like the idea that buying an upgrade would not override the hex the tower casts, but it adds a castable hex to the tower's pool. So it can cast all hexes that are available to the tower. It casts the one that has the most value. Example: Tower is fully upgraded and high health enemy enters the range, it still starts with the hex of doom, then casting other hexes. It would behave differently if a swarm entered the shooting range. Do this decision algorithm smart so that it stays fast and cheap. If there is just one enemy in the range and it already has 2 hexes from this tower so it can not have more, it simply stops applying hexes and will deal damage only. Also consider removing the 2-hex cap, leave this decision on implementation phase where such assesment can be evaluated (playtest, analysis, algorithm complexity, cost)
+💬 Hex tower should be much slower in casting speed, and I like idea that it either attacks withnout a hex, or curses a target (so the tower would have an ability, basically)
 
-- [ ] ⭐ 🔴 I **Hex of Doom**: the blast hexes its primary target for 4 s, +1 s per Saturation
+- [x] ⭐ 🔴 I **Hex of Doom**: the blast hexes its primary target for 4 s, +1 s per Saturation
   stack. When the hex ends, the enemy takes 30% of all the damage it took while hexed, as one magic
   hit credited to this tower. One big hit is also the witch's answer to plating. The first use of
   the hex framework (2.3).
   - 💬
-- [ ] ⭐ 🟡 II **Witch's Brew**: the rune also poisons (Toxic Bloom's poison, tamed to 4% of weapon
+- [x] ⭐ 🟡 II **Witch's Brew**: the rune also poisons (Toxic Bloom's poison, tamed to 4% of weapon
   damage a tick), and the blast hexes up to 3 enemies: the primary and the two most Saturated.
   Poison's Sickened lowers spirit, and spirit paces every debuff (2.6), so the hex and everything
   else on that enemy lasts longer.
   - 💬
-- [ ] ⭐ 🟡 III **Spreading Curse** (the spread): when a hexed enemy dies, its rune and its debuffs
+- [x] ⭐ 🟡 III **Spreading Curse** (the spread): when a hexed enemy dies, its rune and its debuffs
   (Vulnerable, Sundered, Unraveled, Cracked, Exposed, poison, Scorched) jump to the 2 nearest
   unhexed enemies within 1.5 cells, with their remaining time. A jumped rune can jump once more,
   never a third time: your guard against one curse taking the whole wave. (Contagion, folded into
   the chain.)
   - 💬
-- [ ] ⭐ 🟡 IV-A **Rime Coven** (your Brittleness replacement): the rune chills 30% when cast, and
+- [x] ⭐ 🟡 IV-A **Rime Coven** (your Brittleness replacement): the rune chills 30% when cast, and
   when the enemy freezes, its remaining chill buys twice today's extra freeze time and its burn
   lands at once at 100% (the global row lands 50%). Build it where Seekers freeze.
   - 💬
-- [ ] ⭐ 🟡 IV-B **Ash Coven** (your Kindling replacement): burn and poison pools on the enemy hold
+- [x] ⭐ 🟡 IV-B **Ash Coven** (your Kindling replacement): burn and poison pools on the enemy hold
   twice as much and earn Scorched and Sickened twice as fast, but it can't be frozen and shrugs off
   75% of chill, so no teammate's freeze puts the fire out. Build it where Cinders burn. A Rime rune
   and an Ash rune can't share an enemy: the newer replaces the other.
@@ -1015,33 +1017,33 @@ Small mechanics that serve both chains and push the tower's direction (template 
 level makes the blast reach more enemies, or reach them more often, which is exactly what both
 payloads multiply: more arc starts, more rune hosts, more Saturation.
 
-- [ ] ⭐ 🟢 I **Wide Charge**: +25% blast radius, and the blast's edge deals 25% instead of nothing.
+- [x] ⭐ 🟢 I **Wide Charge**: +25% blast radius, and the blast's edge deals 25% instead of nothing.
   - 💬
-- [ ] ⭐ 🟡 II **Shaped Charge**: enemies in the inner half of the blast gain 2 Saturation stacks
+- [x] ⭐ 🟡 II **Shaped Charge**: enemies in the inner half of the blast gain 2 Saturation stacks
   instead of 1, and Saturation caps at 4.
   - 💬
 - [ ] ⭐ 🟡 III **Aftershock** (your tick): each blast goes off again 1 s later on the same spot at
   50%, catching what walks in. On Arc it arcs; on Hex it refreshes the runes it catches but never
   casts a new one.
-  - 💬
+  - 💬 instead, amplify head chain I (hex of doom or arc)
 - [ ] ⭐ 🟢 IV **Carpet** (your tick): 3 blasts a shot at 60% each, on the three densest groups,
   each carrying the payload. Today's Blast Engineering III, now behind Transcendent.
-  - 💬
+  - 💬 instead, amplify head chain II and III (conductor, overload - increases crit by 10% more and daze lasts 1s; spreading curse - dying enemy leaves cursed cloud for 4s that holds all debuffs the dead enemy had, any enemy entering it gets them applied)
 
 **Specials** (all the same price; the second, after Transcendent, comes from the same three)
 
 Arc (shared trigger: the arc crit):
 
-- [ ] ⭐ 🟢 **Thunderclap** (Overpressure, reborn and tamed): after a crit, the next shot discharges
+- [x] ⭐ 🟢 **Thunderclap** (Overpressure, reborn and tamed): after a crit, the next shot discharges
   into every enemy in range as arcs at 50%, and each one it crits is Dazed. Its own crits don't
   re-arm it. Today's Overpressure code, re-aimed.
   - 💬
-- [ ] ⭐ 🟡 **Static Charge** (the team's conductor): arcs leave enemies Charged for 3 s. The next
+- [x] ⭐ 🟡 **Static Charge** (the team's conductor): arcs leave enemies Charged for 3 s. The next
   hit from another tower discharges it for +30% of that hit as magic, credited to this Splash; a
   crit discharges at double. Field ticks and DoT pulses don't discharge it, so a Pulse can't eat
   the charge. Every Sniper, Mortar and Sonar hit on a Charged crowd becomes a lightning strike.
   - 💬
-- [ ] ⭐ 🟡 **Thunderstrike** (the boss answer): every 6th shot calls lightning onto the enemy with
+- [x] ⭐ 🟡 **Thunderstrike** (the boss answer): every 6th shot calls lightning onto the enemy with
   most health in range: 4x the blast as magic, Dazed 0.5 s, and that shot's arcs start there at
   full damage. Counts as a crit for triggers.
   - 💬
@@ -1054,19 +1056,19 @@ everything in range for Static Charge; Chain Lightning and Lightning Rod multipl
 
 Hex (shared trigger: the rune):
 
-- [ ] ⭐ 🟡 **Hex of Inversion** (control: what helps it hurts it): heals and shields it receives
+- [x] ⭐ 🟡 **Hex of Inversion** (control: what helps it hurts it): heals and shields it receives
   are dealt to it as damage; anything that would speed it up slows it instead; if it would turn
   invisible, it is revealed and takes full Vulnerable (your Exposure idea). Menders become bombs,
   the Warden's reshield hurts it, Frenzied and Reaver crawl, a Ghost's vanish backfires. (2.3's
   Reversal and Inversion, merged into one rule.)
   - 💬
-- [ ] ⭐ 🟡 **Hex of Sympathy** (support: what one suffers, all suffer; your Grief idea): a debuff
+- [x] ⭐ 🟡 **Hex of Sympathy** (support: what one suffers, all suffer; your Grief idea): a debuff
   that lands on a hexed enemy (Vulnerable, Sundered, Unraveled, Cracked, Exposed, chill) is copied
   to every other enemy carrying this tower's rune within 2 cells. A copy never copies again, and
   one enemy shares each debuff kind at most once a second, so one Sniper's Sunder becomes the
   group's without a loop.
   - 💬
-- [ ] ⭐ 🟡 **Hex of Reckoning** (offense): a hexed enemy's death releases the Doom of every enemy
+- [x] ⭐ 🟡 **Hex of Reckoning** (offense): a hexed enemy's death releases the Doom of every enemy
   carrying this tower's rune within 2 cells at once, and their runes restart. Kills chain into
   detonations. (Concussive Blast's "kills explode", rebuilt on hexes.)
   - 💬
@@ -1118,16 +1120,16 @@ lengthens runes; Kinship).
 
 **Pool**
 
-- [ ] 🟢 **The name follows the fork**: Splash unforked, **Stormcaller** on Arc, **Hexer** on Hex.
+- [x] 🟢 **The name follows the fork**: Splash unforked, **Stormcaller** on Arc, **Hexer** on Hex.
   Only the panel title and tooltip change; the internal id stays.
   - 💬
-- [ ] 🔴 **Mines**: a blast leaves a charge on the path that detonates under the next enemy (a
+- [x] 🔴 **Mines**: a blast leaves a charge on the path that detonates under the next enemy (a
   ground zone).
-  - 💬
+  - 💬 do this if zones will be implemented. I think it will.
 - [ ] If the astral and quantum theme is adopted, the witch clashes with its "fantasy words go"
   rule. The mechanics survive renaming: rune -> metastable state, Doom -> Half-life, Sympathy ->
   Entanglement, Spreading Curse -> Chain Decay.
-  - 💬
+  - 💬 astral and quantum will likely not ba adopted
 
 ### 3.3 Sonar - the Spotter
 
@@ -1168,15 +1170,15 @@ SPECIAL  shared: Mark on Sweep, Wide Band, Command Ping
 
 **Base line**
 
-- [ ] 🟢 Settle the base sweep: the tower line says 4 s per turn and range 4.2, the code 2 s and
+- [x] 🟢 Settle the base sweep: the tower line says 4 s per turn and range 4.2, the code 2 s and
   5.2. Fire rate *is* the rotation speed, so this is its DPS dial. ⭐ 3 s and 4.5 (9.2).
   - 💬
-- [ ] 🟢 A faint ping ring each revolution (visual only), so the rhythm reads.
+- [x] 🟢 A faint ping ring each revolution (visual only), so the rhythm reads.
   - 💬
 
 **BASE**
 
-- [ ] ⭐ 🟡 Fortify **Ping** (the signature passive): each revolution Exposes the enemy with most
+- [x] ⭐ 🟡 Fortify **Ping** (the signature passive): each revolution Exposes the enemy with most
   health the beam passes (crit chance taken x2) until the next pass. Crits for everyone, from the
   first base upgrade, and a visible "this one" for the player.
   - 💬
@@ -1184,9 +1186,9 @@ SPECIAL  shared: Mark on Sweep, Wide Band, Command Ping
   up to 3; each stack gives every tower +4% crit chance against it. Slower to build, spread over
   everything the beam keeps touching.
   - 💬
-- [ ] 🟢 Range II +15%, Range III +10%.
+- [x] 🟢 Range II +15%, Range III +10%.
   - 💬
-- [ ] ⭐ 🟡 Range III **Deep Scan**: each revolution reveals invisible enemies in the outer quarter
+- [x] ⭐ 🟡 Range III **Deep Scan**: each revolution reveals invisible enemies in the outer quarter
   of its range for 1 s.
   - 💬
 - [ ] alt Range III **Counter-Jamming**: every tower within the Sonar's range takes half
@@ -1195,38 +1197,38 @@ SPECIAL  shared: Mark on Sweep, Wide Band, Command Ping
 
 **HEAD chain A - Twin Array** (more passes: more hits, more pings, more reveals)
 
-- [ ] ⭐ 🟢 I: +25% damage, and Ping Exposes the two healthiest enemies it passes.
+- [x] ⭐ 🟢 I: +25% damage, and Ping Exposes the two healthiest enemies it passes.
   - 💬
-- [ ] ⭐ 🟢 II: +25% damage, +10% crit (Sonar's crit level); a beam crit refreshes Exposed on its
+- [x] ⭐ 🟢 II: +25% damage, +10% crit (Sonar's crit level); a beam crit refreshes Exposed on its
   target.
   - 💬
-- [ ] ⭐ 🟢 III **Twin Beam**: a second beam, opposite, at 75% damage (9.3 smooths the cliff).
+- [x] ⭐ 🟢 III **Twin Beam**: a second beam, opposite, at 75% damage (9.3 smooths the cliff).
   Answers its counter: a packed fast group now takes two hits a revolution.
-  - 💬
-- [ ] ⭐ 🟢 IV-A **Quad Array**: 4 beams at 70% damage each. Twice the hits, pings, marks and
+  - 💬 no, twin beam not here; this buff should make revolution faster 3s -> 2s
+- [x] ⭐ 🟢 IV-A **Quad Array**: 4 beams at 70% damage each. Twice the hits, pings, marks and
   reveals.
-  - 💬
-- [ ] ⭐ 🟡 IV-B **Phased Array**: stops spinning, locks onto the enemy with most health in range and
+  - 💬 twin beam here instead, opposite beam does 70% damage
+- [x] ⭐ 🟡 IV-B **Phased Array**: stops spinning, locks onto the enemy with most health in range and
   sweeps a 60 degree arc back and forth over it: about 3x the hits on the focus. Boss mode.
-  - 💬
+  - 💬 
 
 **HEAD chain B - Long Reach** (far: the spotter on the hill; level I now delivers reach, 9.4)
 
-- [ ] ⭐ 🟢 I: +20% range, and Ping picks the healthiest enemy past half range, Exposed for two
+- [x] ⭐ 🟢 I: +20% range, and Ping picks the healthiest enemy past half range, Exposed for two
   passes.
   - 💬
-- [ ] ⭐ 🟢 II: damage up to +100% at max range (exists), +10% crit.
+- [x] ⭐ 🟢 II: damage up to +100% at max range (exists), +10% crit.
   - 💬
-- [ ] ⭐ 🟡 III **Resonant Crack** (moved up from IV-B: it is the chain's answer to crit-immune
+- [x] ⭐ 🟡 III **Resonant Crack** (moved up from IV-B: it is the chain's answer to crit-immune
   armor): each beam hit lowers resilience by 10, down to -50, recovering 10 a second. Crit-immune
   enemies open after a few passes, through the one door Decisions leaves.
   - 💬
 - [ ] alt III **Far Echo**: hits beyond half range apply Exposed for 3 s. (Overlaps Ping now.)
   - 💬
-- [ ] ⭐ 🟢 IV-A **Horizon**: +40% range, far bonus up to +150%, but no damage within 1.5 cells. The
+- [x] ⭐ 🟢 IV-A **Horizon**: +40% range, far bonus up to +150%, but no damage within 1.5 cells. The
   selfish version: a second Sniper made of sound.
   - 💬
-- [ ] ⭐ 🟡 IV-B **Fault Line**: Resonant Crack's loss doesn't recover while the enemy is Exposed,
+- [x] ⭐ 🟡 IV-B **Fault Line**: Resonant Crack's loss doesn't recover while the enemy is Exposed,
   and goes down to -100, where every crit's bonus is doubled. The team version: the boss under
   Ping becomes the whole defence's crit target.
   - 💬
@@ -1234,16 +1236,16 @@ SPECIAL  shared: Mark on Sweep, Wide Band, Command Ping
 **Extra head node - Frequency** (the magic opt-in; small mechanics both chains feed, since more
 hits mean more of each)
 
-- [ ] ⭐ 🟡 I **Ultrasound**: 20% of each hit is added as magic damage, up to 50% against armored or
+- [x] ⭐ 🟡 I **Ultrasound**: 20% of each hit is added as magic damage, up to 50% against armored or
   shielded enemies (Piercing Tone, folded in: it was the special that made Sonar matter against
   armor).
   - 💬
-- [ ] ⭐ 🟡 II **Harmonics**: hits apply Resonating (+8% magic damage taken per stack, 3 stacks,
+- [x] ⭐ 🟡 II **Harmonics**: hits apply Resonating (+8% magic damage taken per stack, 3 stacks,
   4 s). Support for Seeker, Cinder, Pulse and the Arc Splash.
   - 💬
-- [ ] ⭐ 🟡 III **Pure Tone**: the beam deals magic instead of physical, +15% magic penetration.
+- [x] ⭐ 🟡 III **Pure Tone**: the beam deals magic instead of physical, +15% magic penetration.
   - 💬
-- [ ] ⭐ 🟡 IV **Shatter Tone**: a hit on a shielded enemy breaks a quarter of the shield; at zero the
+- [x] ⭐ 🟡 IV **Shatter Tone**: a hit on a shielded enemy breaks a quarter of the shield; at zero the
   shield is gone.
   - 💬
 - [ ] alt extra node **Datalink** (detection): I towers within Sonar's range can target invisible
@@ -1253,18 +1255,18 @@ hits mean more of each)
 
 **Specials** (one shared set: each works on either chain, through the pass)
 
-- [ ] ⭐ 🟡 **Mark on Sweep**, reworked: the mark goes on the enemy (the Marked effect), so the next
+- [x] ⭐ 🟡 **Mark on Sweep**, reworked: the mark goes on the enemy (the Marked effect), so the next
   hit from **any** tower is a guaranteed crit. One mark per enemy, renewed each pass. The Spotter
   team's heart: Sonar marks, the Sniper fires.
   - 💬
-- [ ] Against crit-immune enemies the mark can't crit (Decisions). It: [ ] ⭐ waits: an immune hit
+- [ ] Against crit-immune enemies the mark can't crit (Decisions). It: [x] ⭐ waits: an immune hit
   doesn't spend it, so it fires once Scorched or Resonant Crack opens the enemy / [ ] is wasted /
   [ ] turns into 1 Vulnerable.
   - 💬
-- [ ] ⭐ 🟢 **Wide Band** (exists): each revolution reveals invisible enemies it passes. The ghost
+- [x] ⭐ 🟢 **Wide Band** (exists): each revolution reveals invisible enemies it passes. The ghost
   answer.
-  - 💬
-- [ ] ⭐ 🟡 **Command Ping**: each revolution names the pinged enemy the Priority; every tower that
+  - 💬 revealed enemy gets ping for 1s
+- [x] ⭐ 🟡 **Command Ping**: each revolution names the pinged enemy the Priority; every tower that
   can reach it switches to it and deals +15% to it. A built-in focus fire, not a player choice.
   - 💬
 - [ ] alt 🟡 **Echo**: every beam hit repeats 0.5 s later at 40%. Hits fast groups twice.
@@ -1286,7 +1288,7 @@ chosen).
 **Pool**
 
 - [ ] 🟡 Shrouded allies of an Elite Ghost are revealed while inside Sonar's range.
-  - 💬
+  - 💬 they are revealed the same way as any other invisible, shrouded and revealed enemy is targetable, receiving shrould again removes the revealed debuff
 - [ ] 🟡 **Scan**: an enemy the Sonar has hit shows its resistances and weaknesses in the inspector
   ("Scanned").
   - 💬
@@ -1340,13 +1342,13 @@ SPECIAL  shared: Warding Field, Soul Drain, Kill Zone
 - ✅ 🟢 **Magic damage** (decided in 1.3). Physical plating erased its 2-per-tick hits entirely.
 - [ ] 🟢 Range 1.5 -> 1.75, so it covers both sides of a bend.
   - 💬
-- [ ] ⭐ 🟢 Fires without a visible target from the start (it is the ghost hitter); Phase Field I
+- [x] ⭐ 🟢 Fires without a visible target from the start (it is the ghost hitter); Phase Field I
   then pays with Toll instead.
   - 💬
 
 **BASE**
 
-- [ ] ⭐ 🟡 Fortify **Toll** (the signature passive; the old resonance ramp plus your "slower
+- [x] ⭐ 🟡 Fortify **Toll** (the signature passive; the old resonance ramp plus your "slower
   recovery"): each second an enemy spends inside adds a Toll stack, up to 5, fading 1 s after it
   leaves. Each stack: +10% field damage, and every debuff on it wears off 10% slower. The longer it
   lingers, the more it pays: loops, bends and chill are rewarded at once.
@@ -1354,73 +1356,73 @@ SPECIAL  shared: Warding Field, Soul Drain, Kill Zone
 - [ ] alt passive **Grounding**: +25% damage for the first second after it starts firing (a
   capacitor kick). Simpler, but it pays for arrivals, not lingering.
   - 💬
-- [ ] 🟢 Range II +15%, Range III +10%.
+- [x] 🟢 Range II +15%, Range III +10%.
   - 💬
-- [ ] ⭐ 🟡 Range III **Wide Field**: +20% range, and Toll stacks last 1 s longer after leaving.
+- [x] ⭐ 🟡 Range III **Wide Field**: +20% range, and Toll stacks last 1 s longer after leaving.
   - 💬
 
 **HEAD chain A - Overcharged Coils** (the charge: the field bites)
 
-- [ ] ⭐ 🟢 I: +30% damage, and Toll builds twice as fast (a stack every half second).
+- [x] ⭐ 🟢 I: +30% damage, and Toll builds twice as fast (a stack every half second).
   - 💬
-- [ ] ⭐ 🟡 II: +25% damage, and an enemy at full Toll takes +25% from the field.
+- [x] ⭐ 🟡 II: +25% damage, and an enemy at full Toll takes +25% from the field.
   - 💬
-- [ ] ⭐ 🟡 III **Arc Discharge**: once a second a zap hits the enemy inside with most health for 15x
+- [x] ⭐ 🟡 III **Arc Discharge**: once a second a zap hits the enemy inside with most health for 15x
   the tick damage. The zaps carry Pulse's crit (+10%), so crits are visible moments instead of a
   hidden +5% on 20 ticks a second (9.4). A burst that answers its counter: big hits through what
   ticks barely scratch.
-  - 💬
-- [ ] ⭐ 🟡 IV-A **Meltdown**: Toll stacks to 10 instead of 5. Built at a loop, nothing leaves alive.
-  - 💬
-- [ ] ⭐ 🟡 IV-B **Tesla Coil**: the zap chains to 3 more enemies within 1.5 cells, even outside the
+  - 💬 make zap a nice graphical effect, it deals magic damage
+- [x] ⭐ 🟡 IV-A **Meltdown**: Toll stacks to 10 instead of 5. Built at a loop, nothing leaves alive.
+  - 💬 plus zap has a +10% crit chance and toll increases zap damage too (it does not apply on it otherwise, toll increases field damage only)
+- [x] ⭐ 🟡 IV-B **Tesla Coil**: the zap chains to 3 more enemies within 1.5 cells, even outside the
   field. The field reaches out.
-  - 💬
+  - 💬 zap applies daze 0.25s on each, all rules applied to daze are the same here (diminishing return)
 
 **HEAD chain B - Phase Field** (the rules; renamed from Resonant Field so it no longer echoes
 Aura's Resonance Field, 9.5)
 
-- [ ] ⭐ 🟢 I: +20% range, and Toll stays 2 s after an enemy leaves, so loops and second passes carry
+- [x] ⭐ 🟢 I: +20% range, and Toll stays 2 s after an enemy leaves, so loops and second passes carry
   it back in. (If the base keeps needing a visible target, I also lets it hit invisible enemies,
   as today.)
   - 💬
-- [ ] ⭐ 🟢 II (exists): +15% range, and it reveals what it hits for 2 s.
+- [x] ⭐ 🟢 II (exists): +15% range, and it reveals what it hits for 2 s, any enemy can be revealed only once by this
   - 💬
-- [ ] ⭐ 🟡 III **Null Field**: enemies inside are Silenced: no heal or shield pulses, summons,
+- [x] ⭐ 🟡 III **Null Field**: enemies inside are Silenced: no heal or shield pulses, summons,
   shrouds or vanishing while inside; the Jammer's aura keeps running (Decisions).
   - 💬
-- [ ] ⭐ 🟡 IV-A **True Sight**: reveals everything within twice the field's radius; reveals last 4 s.
-  - 💬
-- [ ] ⭐ 🟡 IV-B **Dead Zone**: entering strips shields, and nothing inside can be healed or shielded.
+- [x] ⭐ 🟡 IV-A **True Sight**: reveals everything within twice the field's radius; reveals last 4 s.
+  - 💬 change - revealed enemy is dazed for 2s, reveal lasts 4s, can be revealed again after it left the field's radius, "twice the field radius" does not apply
+- [x] ⭐ 🟡 IV-B **Dead Zone**: entering strips shields, and nothing inside can be healed or shielded.
   Build it where the Warden walks.
-  - 💬
+  - 💬 keep "nothing inside can be healed or shielded - aka immune to heal and shield buffs", remove shield stripping on entering
 
 **Extra head node - Field Shaping** (your crazy ideas, as rules every Pulse can add on either chain)
 
-- [ ] ⭐ 🟡 I **Undertow**: enemies inside are chilled 25%, the chill doesn't fade while they stay (it
+- [X] ⭐ 🟡 I **Undertow**: enemies inside are chilled 25%, the chill doesn't fade while they stay (it
   counts as chill for freezes), and they are Anchored: no speed-ups, speed capped at 75% of base.
   Pulse owns "anchors" (1.2), so Phase Lock lives here.
-  - 💬
-- [ ] ⭐ 🟡 II **Corrosion**: -30 armor while inside; armor stops at 0.
+  - 💬 undertow is strong, put it on lv3, make corrosion lv1 and mirror field lv2
+- [x] ⭐ 🟡 II **Corrosion**: -30 armor while inside; armor stops at 0.
   - 💬
 - [ ] ⭐ 🟡 III **Stasis**: debuffs on enemies inside wear off at a quarter of the speed: Vulnerable,
   marks, Scorched, Sickened, chill, runes.
-  - 💬
-- [ ] ⭐ 🟡 IV **Event Horizon**: each death inside adds +5% field damage until the wave ends (up to
-  +100%), and a dying enemy's debuffs pass to the nearest enemy inside.
+  - 💬 
+- [X] ⭐ 🟡 IV **Event Horizon**: each death inside adds +5% field damage until the wave ends (up to
+  +100%).
   - 💬
 
 **Specials** (one shared set, all about what happens inside)
 
-- [ ] ⭐ 🟡 **Warding Field** (exists; payload decided in 1.4): each tick, a 10% chance to add a stack
+- [x] ⭐ 🟡 **Warding Field** (exists; payload decided in 1.4): each tick, a 10% chance to add a stack
   of Sundered or Exposed. Inside the field that means "fully Sundered or Exposed within 2 s", so
   the node text should say exactly that (9.4). Rename it Rattle Field (9.5).
-  - 💬
-- [ ] ⭐ 🟡 **Soul Drain** (your spirit idea; Pulse owns spirit, 1.2): each second inside costs 5
+  - 💬 each tick only 5% chance to apply
+- [x] ⭐ 🟡 **Soul Drain** (your spirit idea; Pulse owns spirit, 1.2): each second inside costs 5
   spirit (as Sickened stacks), and the field deals +1% damage per point of spirit below zero. At
   -100: double damage, no heals or shields, and stack debuffs never wear off. High-spirit enemies
   (bosses, a future Priest) are drained longest.
-  - 💬
-- [ ] ⭐ 🟡 **Kill Zone**: enemies inside take +25% damage from every *other* tower (its own
+  - 💬 
+- [x] ⭐ 🟡 **Kill Zone**: enemies inside take +25% damage from every *other* tower (its own
   multiplier, outside Vulnerable's cap). The place every other tower should point at.
   - 💬
 - [ ] alt 🔴 **Magnetic Field**: Mortar shells and Seeker missiles landing inside home onto the
@@ -1447,11 +1449,11 @@ one loop).
 - [ ] 🟡 **Capacitor**: charges while idle (up to 5 s) and releases one nova when the first enemy
   enters.
   - 💬
-- [ ] 🟡 **Mirror Field**: damage absorbed by shields inside is reflected back as magic.
-  - 💬
+- [x] 🟡 **Mirror Field**: damage absorbed by shields inside is reflected back as magic.
+  - 💬 add instead of head special slot III Stasis
 - [ ] 🟡 **Tuning Fork** (new): two Pulses whose fields overlap share Toll, and an enemy in the
   overlap gains it twice as fast. Build pairs at a loop.
-  - 💬
+  - 💬 
 - [ ] 🟡 **Dead Air** (new): an enemy that would cast inside the field (if it isn't silenced) takes
   10% of its max health instead, and the cast still fails half the time.
   - 💬
@@ -1490,30 +1492,30 @@ SPECIAL  one slot, shared: Withering Field, Command, Chosen
 
 **Rules**
 
-- [ ] ⭐ 🟢 **Auras never buff Auras.** Drop Resonance Field II's aura-on-aura.
+- [x] ⭐ 🟢 **Auras never buff Auras.** Drop Resonance Field II's aura-on-aura.
   - 💬
 - ✅ 🟡 **"Next to an Aura" as a gate** for Aura nodes (decided in 2.8): two Auras side by side
   unlock each other's top levels without feeding each other's numbers.
 - [ ] 🟢 **Diminishing stacking**: the 2nd aura on a tower gives 75%, the 3rd 50%. Stops aura
   carpets, keeps two worthwhile.
   - 💬
-- [ ] 🟡 **New axes Aura can grant**: crit damage, effect duration, effect potency, penetration,
+- [x] 🟡 **New axes Aura can grant**: crit damage, effect duration, effect potency, penetration,
   projectile speed. A support tower for support towers, not only for damage dealers.
   - 💬
-- [ ] ⭐ Keep the cap at Awaken (no Transcendent, one special).
+- [x] ⭐ Keep the cap at Awaken (no Transcendent, one special).
   - 💬
 - [ ] Or give Aura a Transcendent gated on "next to 2 Auras", unlocking a second special.
   - 💬
 
 **BASE**
 
-- [ ] ⭐ 🟢 Base: towers in range take half disruption (the old Fortify Anchor, moved to the base):
+- [x] ⭐ 🟢 Base: towers in range take half disruption (the old Fortify Anchor, moved to the base):
   jamming is no longer handled by every Fortify, so the Aura is the answer to it, from the start.
   - 💬
-- [ ] ⭐ 🟡 Fortify **Kinship** (the signature passive): the aura's buff grows +5% for each other
+- [x] ⭐ 🟡 Fortify **Kinship** (the signature passive): the aura's buff grows +5% for each other
   tower type in range, up to +20%. It pays Aura for crowning a mixed cluster, and makes combining
   towers a goal of its own.
-  - 💬
+  - 💬 change this - kinship gives +5% XP to all buffed towers for each tower type, not buff strength
 - [ ] alt passive **Mentorship**: buffed towers earn +25% XP. On purpose (the gate helper), but
   invisible in a fight.
   - 💬
@@ -1521,10 +1523,10 @@ SPECIAL  one slot, shared: Withering Field, Command, Chosen
 
 **HEAD chain A - Amplifying Core** (strength: the cluster hits harder)
 
-- [ ] ⭐ 🟢 I (feature doc numbers): +25% range and damage, and Kinship counts double for damage.
-  - 💬
-- [ ] ⭐ 🟢 II (feature doc numbers, 9.3): +30% range and damage, +10% fire rate.
-  - 💬
+- [x] ⭐ 🟢 I (feature doc numbers): +25% range and damage.
+  - 💬 kinship also grants +5% buff strength per tower type
+- [x] ⭐ 🟢 II (feature doc numbers, 9.3): +30% range and damage, +10% fire rate.
+  - 💬 
 - ✅ 🟡 III **Keen Edge** [next to another Aura]: buffed towers +50% crit damage (decided in 2.1:
   Sniper 250%, others 200%).
 - [ ] alt III **Overdrive**: +20% more fire rate, if Keen Edge's gate is too strict.
@@ -1532,45 +1534,45 @@ SPECIAL  one slot, shared: Withering Field, Command, Chosen
 
 **HEAD chain B - Broadcast** (reach: the cluster grows; renamed from Resonance Field, 9.5)
 
-- [ ] ⭐ 🟢 I: +30% range, and Kinship also counts tower types up to 1 cell beyond the aura.
-  - 💬
+- [x] ⭐ 🟢 I: +30% range, and Kinship also counts tower types up to 1 cell beyond the aura.
+  - 💬 agree with kinship, also removes kinship+kind cap at 20%, it can go to all-towers cap (9 towers is 45%)
 - [ ] ⭐ 🟢 II: buffed towers also gain +15% range (replaces aura-on-aura).
-  - 💬
-- [ ] ⭐ 🟡 III **Conduit**: buffed towers' effects last 25% longer and bite 15% harder (chill level,
+  - 💬 change - whenever buffed tower receives a debuff (for example jammed) or a buff (e.g. frenzy) the debuff stays half the amount of time and buff stays twice as long
+- [x] ⭐ 🟡 III **Conduit**: buffed towers' effects last 25% longer and bite 15% harder (chill level,
   burn and poison pool, freeze time, Vulnerable clock, runes). Makes Aura matter to Sonar, Seeker,
   Cinder and the Hex Splash, not only to damage dealers.
   - 💬
 
 **Extra head node - Tutelage** (the gate helper, rebuilt on XP; I to III)
 
-- [ ] ⭐ 🟡 I: buffed towers earn +25% XP.
+- [x] ⭐ 🟡 I: buffed towers earn +10% XP on top of kinship
   - 💬
-- [ ] ⭐ 🟡 II **Shared Lessons**: a kill by a buffed tower gives 25% of its XP to every other buffed
+- [x] ⭐ 🟡 II **Shared Lessons**: a kill by a buffed tower gives the kill XP also to every other tower buffed (only kill xp, not a kill count)
   tower.
   - 💬
 - [ ] ⭐ 🟡 III **Head Start**: a tower built in range starts with a third of the XP of the most
   experienced buffed tower.
-  - 💬
+  - 💬 no, change - tower with least amount of XP is visually marked and gets double the XP from all sources, stacks with kinship
 - [ ] alt extra node **Veterancy**: I a tower built in range starts with 50 XP; II with 150; III it
   also starts with Fortify owned.
   - 💬
 
 **Special** (one slot; three on offer, shared by both chains)
 
-- [ ] ⭐ 🟡 **Withering Field** (exists): enemies within the aura's range +1 cell gain Vulnerable.
+- [x] ⭐ 🟡 **Withering Field** (exists): enemies within the aura's range +1 cell gain Vulnerable.
   Aura owns Vulnerable (1.4); the extra cell is the 9.4 fix (an Aura stands among towers, not on
   the path).
-  - 💬
+  - 💬 yes, but change significantly - each buffed tower has a 10% per shot per second (that means if the tower shoots 20/s, it is 0.5%, if it shoots 0.5/s which is once per two seconds, the chance is 20%) chance to apply vulnerable debuff
 - [ ] ⭐ 🟡 **Command** (your click-to-focus, 2.5): towers this Aura buffs switch to the enemy you
   have selected while it is in their range. One purchase steers a cluster; nothing changes for a
   player who never clicks. The selection is already world state, resolved on the game loop.
   - 💬
-- [ ] ⭐ 🟢 **Chosen**: buffs only the one tower in range with the most damage dealt, at triple
-  strength. For the Transcendent hero; the opposite choice to spreading thin.
+- [x] ⭐ 🟢 **Chosen**: buffs only the one tower in range with the most damage dealt, at triple
+  strength (triple all the buffs this tower gives). For the Transcendent hero; the opposite choice to spreading thin.
   - 💬
-- [ ] alt 🟡 **Rally**: when an Elite or Boss enters a buffed tower's range, every buffed tower gets
+- [x] alt 🟡 **Rally**: when an Elite or Boss enters a buffed tower's range, every buffed tower gets
   +30% fire rate for 5 s.
-  - 💬
+  - 💬 this, but different - aura tower marks (visible on selecting the tower, not highlighted otherwise) a path spot that is closest to the tower. Once the first enemy steps on it, it buffs all buffed towers with +30% fire rate fort 5s, this ability has 10s cooldown
 - [ ] alt 🟡 **Beacon**: buffed towers can target invisible enemies within their own range
   (detection as a buff).
   - 💬
@@ -1632,20 +1634,20 @@ SPECIAL  shared: Plate Cracker (Cracked), Napalm (magic), Tar
 
 - [ ] ⭐ 🟡 **Leads its target**: aims where the enemy will be when the shell lands (predictive aim,
   decided as a primitive in 2.5). At base, so Ballistics II is free for something else.
-  - 💬
-- [ ] 🟢 **Dead zone of 1 cell**: artillery can't hit what's under it. A trade-off for its long
+  - 💬 no, make it balistics II
+- [x] 🟢 **Dead zone of 1 cell**: artillery can't hit what's under it. A trade-off for its long
   range, and a reason to build it back from the path.
-  - 💬
-- [ ] ⭐ Base chill moves to a special (Cryo Shells, pool), so base Mortar is a pure boom and not a
+  - 💬 I prefer dead zone 1.5 cells wide
+- [x] ⭐ Base chill moves to a special (Cryo Shells, pool), so base Mortar is a pure boom and not a
   slower Splash.
-  - 💬
-- [ ] ⭐ 🟢 Slow, visible shells (9.1, 9.2): projectile speed and size are tower stats (decided in
+  - 💬 add a base passive, shells cracks plating
+- [x] ⭐ 🟢 Slow, visible shells (9.1, 9.2): projectile speed and size are tower stats (decided in
   2.5), and fast enemies can dodge.
   - 💬
 
 **BASE**
 
-- [ ] ⭐ 🟡 Fortify **Bracketing** (the signature passive): artillery ranges in. A shell landing
+- [x] ⭐ 🟡 Fortify **Bracketing** (the signature passive): artillery ranges in. A shell landing
   within 1.5 cells of the last one gets +10% damage and radius, up to 3 steps; a shell elsewhere
   resets it. It pays Mortar for holding one chokepoint, and the ranging marker shows the player
   where.
@@ -1655,75 +1657,76 @@ SPECIAL  shared: Plate Cracker (Cracked), Napalm (magic), Tar
   - 💬
 - [ ] alt Fortify **Reinforced Barrel**: shell speed +25%. Plain, if neither passive convinces.
   - 💬
-- [ ] 🟢 Range II +15%, Range III +10%.
+- [x] 🟢 Range II +15%, Range III +10%.
   - 💬
-- [ ] ⭐ 🟡 Range III **Long Battery**: +30% range, dead zone 1.5 cells.
-  - 💬
+- [x] ⭐ 🟡 Range III **Long Battery**: +30% range, dead zone 1.5 cells.
+  - 💬 yes, dead zone 2.5 cells, dead zone is not affected by range buffs
 - [ ] alt Range III **Spotter Call**: +50% range against Marked or Revealed enemies (Sonar, Seeker's
   Tracer).
   - 💬
 
 **HEAD chain A - Siege Rounds** (the big boom: bosses and armor)
 
-- [ ] ⭐ 🟢 I: +30% damage, and each Bracketing step gives +15% instead of +10%.
+- [x] ⭐ 🟢 I: +30% damage, and each Bracketing step gives +15% instead of +10%.
   - 💬
-- [ ] ⭐ 🟢 II: +25% damage, +25% radius (down from +40%, 9.4), +10% crit (Mortar's crit level).
+- [x] ⭐ 🟢 II: +25% damage, +25% radius (down from +40%, 9.4), +10% crit (Mortar's crit level).
   - 💬
-- [ ] ⭐ 🟡 III **Heavy Shell**: +50% damage, -20% fire rate, a bigger, slower shell; enemies within
+- [x] ⭐ 🟡 III **Heavy Shell**: +50% damage, -20% fire rate, a bigger, slower shell; enemies within
   0.5 cells of the impact are Dazed for 0.5 s (Dazed silences, so Mortar is a short-silence carrier
   as 1.2 asks). One big hit is the answer to plating.
   - 💬
-- [ ] ⭐ 🔴 IV-A **Tactical Nuke** (your nuke): every 4th shell deals x4 damage over x2 radius and
-  leaves Fallout for 4 s (spirit drained, regeneration turned into damage).
-  - 💬
-- [ ] ⭐ 🟡 IV-B **Bunker Buster**: the enemy at the centre takes x3 and is Cracked (plating -50%,
+- [x] ⭐ 🔴 IV-A **Tactical Nuke** (your nuke): every 4th shell deals x4 damage over x1.5 radius and
+  leaves Fallout for 4 s (spirit drained, regeneration turned into damage). Fallout radius is x0.8 so ~half the area
+  - 💬 make it a nuke visual, both shell and the explosion
+- [x] ⭐ 🟡 IV-B **Bunker Buster**: the enemy at the centre takes x3 and is Cracked (plating -50%,
   5 s) and Sundered; the splash shrinks 30%. The anti-boss, anti-armor shell.
   - 💬
 
 **HEAD chain B - Fragmentation Rounds** (swarms and lines)
 
-- [ ] ⭐ 🟢 I (exists): a shrapnel ring at 25%, reaching 0.25 cells further per Bracketing step.
+- [x] ⭐ 🟢 I (exists): a shrapnel ring at 25%, reaching 0.25 cells further per Bracketing step.
   - 💬
-- [ ] ⭐ 🟢 II: shrapnel chills 30% (exists) and deals +25%. Gate it on XP, not on two adjacent
+- [x] ⭐ 🟢 II: shrapnel chills 30% (exists) and deals +25%. Gate it on XP, not on two adjacent
   towers (9.4).
-  - 💬
-- [ ] ⭐ 🟡 III **Cluster Shell**: splits into 4 bomblets scattered along the path around the impact
+  - 💬 change - shrapnel does 30% more of what it already does - cracking plating or whatever the nuke, shrapnel or tar/cryo/napalm added to it.
+- [x] ⭐ 🟡 III **Cluster Shell**: splits into 4 bomblets scattered along the path around the impact
   (40% each, 1-cell radius). The answer to its counter: runners that dodge the shell meet a
   bomblet.
   - 💬
-- [ ] ⭐ 🟡 IV-A **Carpet Bombing**: 8 bomblets laid in a line along the path ahead of the impact.
+- [x] ⭐ 🟡 IV-A **Carpet Bombing**: 8 bomblets laid in a line along the path ahead of the impact.
   - 💬
-- [ ] ⭐ 🟡 IV-B **Shrapnel Storm**: shrapnel makes enemies Bleed (damage per cell travelled). The
+- [x] ⭐ 🟡 IV-B **Shrapnel Storm**: shrapnel makes enemies Bleed (damage per cell travelled). The
   faster they run, the more they bleed.
   - 💬
 
 **Extra head node - Ballistics** (your projectile speed, size and look: small mechanics every shell
 uses, on either chain)
 
-- [ ] ⭐ 🟢 I **Rifled Barrel**: shell speed +40%, drawn smaller with a streak.
+- [x] ⭐ 🟢 I **Rifled Barrel**: shell speed +40%, drawn smaller with a streak.
   - 💬
 - [ ] ⭐ 🟡 II **Proximity Fuse** (new, since leading the target moved to the base): a shell that
   passes over 3 or more enemies bursts early, over them. Columns stop dodging.
   - 💬
-- [ ] alt II **Predictive Fire**: leads the target, if it isn't base.
+- [x] alt II **Predictive Fire**: leads the target, if it isn't base.
   - 💬
-- [ ] ⭐ 🟡 III **Airburst**: detonates above the target: +25% radius, no falloff in the inner half.
+- [x] ⭐ 🟡 III **Airburst**: detonates above the target: +25% radius, no falloff in the inner half.
   - 💬
-- [ ] ⭐ 🟡 IV **Twin Barrels**: two shells per shot at the two leading enemies, -15% damage each.
-  - 💬
+- [x] ⭐ 🟡 IV **Twin Barrels**: two shells per shot at the two leading enemies, -15% damage each.
+  - 💬 change - put Barrage here, reaload time is doubled, but it fires 3 shells in a 0.5s succession in full damage
 
 **Specials** (one shared set: everything the impact leaves behind)
+💬 only the zone-based specials, napalm tar and cryo creates an area in which the effect is applied, every third shell carries this effect, the shell looks different and explodes differently visually, each shell has just 1 special effect so e.g. cryo and napalm can not be 1 shell. If the player owns 2 special slots, 2 out of 3 shells carry it's special. Nuke can not be combined with those specials as well. If the tower fires more shells in each round, counting shells applies there - so for example if the tower shoots barrage on 8 shells and tower has cryo and tar, 6 shells in the barrage are - cryo, tar, normal, cryo, tar, normal, cryo, tar. Specials unlocks a shell's detonation type, nuke and other similar upgrades does the same.
 
 - [ ] ⭐ 🟡 **Plate Cracker** (today's Cursed Shrapnel, renamed, 9.5; payload decided in 1.4): the
   blast applies Cracked (plating -50%). Explosions crack plates.
-  - 💬
-- [ ] ⭐ 🔴 **Napalm** (your burning ground; Mortar's magic opt-in, 1.3): the impact leaves burning
+  - 💬 explosion cracking plates moved to the passive
+- [x] ⭐ 🔴 **Napalm** (your burning ground; Mortar's magic opt-in, 1.3): the impact leaves burning
   ground (1-cell radius, 3 s); anything inside burns (a burn pool, earning Scorched like Cinder's).
   - 💬
-- [ ] ⭐ 🔴 **Tar** (your sticky matter; Mortar tars, 1.2): the impact leaves tar (1.2 cells, 4 s):
+- [x] ⭐ 🔴 **Tar** (your sticky matter; Mortar tars, 1.2): the impact leaves tar (1.2 cells, 4 s):
   40% slow and poison; a tarred enemy that catches fire burns at double pool (decided in 2.7).
   - 💬
-- [ ] alt 🔴 **Cryo Shells**: frost ground (3 s); chill builds while inside, and 2 s inside without
+- [x] alt 🔴 **Cryo Shells**: frost ground (3 s); chill builds while inside, and 2 s inside without
   leaving freezes (diminishing returns apply). Frost on fire bursts it, frost on tar hardens it
   (2.4's zone table).
   - 💬
@@ -1744,9 +1747,9 @@ Buster's Cracked plus Sunder Rounds), Splash Arc (bomblets and arcs: lines from 
 **Pool**
 
 - [ ] 🟡 **Delayed Fuse**: the shell lies 1 s before detonating (a mine).
-  - 💬
+  - 💬 
 - [ ] 🟡 **Barrage**: 3 shells in quick succession, then a long reload.
-  - 💬
+  - 💬 I like this one, I have put it into ballistics IV
 - [ ] 🟢 Shell drawn larger as its damage grows, whichever node raised it.
   - 💬
 - [ ] 🟡 **Skip Shell** (new): a shell that hits nobody bounces once, 1.5 cells along the path, and
@@ -1794,32 +1797,32 @@ SPECIAL  shared: Arcane Warhead (Unraveled), Nullifier, Hunter's Mark
 
 **Base line**
 
-- [ ] ⭐ 🟢 **Slower missiles** (35 -> 8 px a tick, 9.2): you can see them hunt, and the nest has
+- [x] ⭐ 🟢 **Slower missiles** (35 -> 8 px a tick, 9.2): you can see them hunt, and the nest has
   time to matter.
   - 💬
 - [ ] ⭐ 🟡 **Sticky targeting**: keeps firing at its current target until it dies or leaves range.
   Fixes the freeze reordering (0.8). A fix, so it is base, not a perk.
-  - 💬
-- [ ] ⭐ 🟡 **Lock-on**: a missile keeps its target through invisibility. The Ghost's first-hit
+  - 💬 no, it targets the fastest enemy instead, changing the target frequently is wanted
+- [x] ⭐ 🟡 **Lock-on**: a missile keeps its target through invisibility. The Ghost's first-hit
   vanish no longer shakes it off.
   - 💬
 
 **BASE**
 
-- [ ] ⭐ 🟡 Fortify **Nest** (the signature passive; your nest, moved here from the base line): the
+- [x] ⭐ 🟡 Fortify **Nest** (the signature passive; your nest, moved here from the base line): the
   cooldown loads a missile into the nest (up to 3) instead of firing; with a target in range,
   stored missiles launch 4 ticks apart. Idle time becomes a burst, and the orbiting missiles show
   how much is banked.
   - 💬
-- [ ] The nest fills between waves too: [ ] ⭐ yes, a free opening salvo / [ ] no, only during
+- [ ] The nest fills between waves too: [x] ⭐ yes, a free opening salvo / [ ] no, only during
   waves.
   - 💬
 - [ ] alt passive **Pursuit**: a missile chasing an enemy faster than base Simple speed hits +50%.
   The faster it runs, the harder it is hit: the anti-rush identity, without a nest.
   - 💬
-- [ ] 🟢 Range II +15%, Range III +10%.
+- [x] 🟢 Range II +15%, Range III +10%.
   - 💬
-- [ ] ⭐ 🟡 Range III **Over the Horizon**: may fire at revealed or marked targets within 1.5x range.
+- [x] ⭐ 🟡 Range III **Over the Horizon**: may fire at revealed or marked targets within 1.5x range.
   - 💬
 - [ ] alt Range III **Last Line** (new): when an enemy enters the last 15% of its path inside the
   Seeker's range, the whole nest fires at it at once, whatever else is in range. Never lets
@@ -1828,49 +1831,49 @@ SPECIAL  shared: Arcane Warhead (Unraveled), Nullifier, Hunter's Mark
 
 **HEAD chain A - Twin Warhead** (more missiles: salvos and swarms)
 
-- [ ] ⭐ 🟢 I: +30% fire rate, and the nest holds one more.
+- [x] ⭐ 🟢 I: +30% fire rate, and the nest holds one more.
   - 💬
-- [ ] ⭐ 🟡 II: two missiles a shot, the second at the next target, not the same one (9.4: today it
+- [x] ⭐ 🟡 II: two missiles a shot, the second at the next target, not the same one (9.4: today it
   overkills and freezes the already frozen).
   - 💬
-- [ ] ⭐ 🟡 III **Hive**: nest of 6; a salvo spreads across different targets. The answer to its
+- [x] ⭐ 🟡 III **Hive**: nest of 6; a salvo spreads across different targets. The answer to its
   counter: swarms.
   - 💬
 - [ ] ⭐ 🟡 IV-A **Swarm**: each missile splits into 3 micro-missiles at launch (35% damage each,
   chill instead of freeze). The anti-swarm Seeker.
-  - 💬
+  - 💬 no, change - a missile hitting a frozen target detonates into 35% magic damage blast, silencing all targets hit and applying magic resist debuff
 - [ ] ⭐ 🟡 IV-B **Relay**: a missile that kills flies on to a new target at 60% damage, up to 3
   kills.
-  - 💬
+  - 💬 no, change - missile that froze it's target spawns a new missile instantly at the tower
 
 **HEAD chain B - Deep Freeze** (control: the boss stands still; I and II swapped so level I freezes,
 9.4)
 
-- [ ] ⭐ 🟢 I: +50% freeze, and the first missile of a salvo freezes for double.
-  - 💬
-- [ ] ⭐ 🟢 II: +30% damage, +10% crit (Seeker's crit level); a frozen kill shatters (exists).
+- [x] ⭐ 🟢 I: +50% freeze, and the first missile of a salvo freezes for double.
+  - 💬 only +50% freeze, no salvo double
+- [x] ⭐ 🟢 II: +30% damage, +10% crit (Seeker's crit level); a frozen kill shatters (exists).
   - 💬
 - ✅ 🟡 III **Brittle** (decided in 2.2 and 2.7): frozen enemies take +30% physical damage. Seeker
   freezes, Sniper and Mortar smash.
 - [ ] ⭐ 🟡 IV-A **Absolute Zero**: the missile freezes everything within 1 cell of the impact;
   shatters deal x2.
-  - 💬
+  - 💬 plus each enemy that was frozen by this tower or if this tower hit them when frozen shatter when freeze ends for the same shatter blast effect
 - [ ] ⭐ 🟡 IV-B **Permafrost**: freeze +100%; a target the freeze can't hold (immune or diminished)
   is chilled 60% instead and takes +25% magic. The boss version: diminishing returns stop being
   the end of the story.
-  - 💬
+  - 💬 no, change - frozen targets take guarantee crit from this tower, if the enemy has diminishing return for freeze, it takes guarantee crit too
 
 **Extra head node - Mixed Payloads** (your "some freeze, some do something else": small mechanics
 on every 3rd missile, on either chain)
 
-- [ ] ⭐ 🟡 I: every 3rd missile is **Arcane**: Unraveled (magic resist down) instead of a freeze.
+- [x] ⭐ 🟡 I: every 3rd missile is **Arcane**: Unraveled (magic resist down) instead of a freeze.
   - 💬
-- [ ] ⭐ 🟡 II: every 3rd missile is **EMP**: strips shields and Silences for 2 s (Seeker is a
+- [x] ⭐ 🟡 II: every 3rd missile is **EMP**: strips shields and Silences for 2 s (Seeker is a
   short-silence carrier, 1.2).
   - 💬
-- [ ] ⭐ 🟡 III: every 3rd missile is a **Tracer**: reveals and Marks (the next hit crits).
+- [x] ⭐ 🟡 III: every 3rd missile is a **Tracer**: reveals and Marks (the next hit crits).
   - 💬
-- [ ] ⭐ 🟡 IV: the nest cycles Cryo, Arcane, EMP, Tracer, each payload +25% stronger. The orbiting
+- [x] ⭐ 🟡 IV: the nest cycles Cryo, Arcane, EMP, Tracer, each payload +25% stronger. The orbiting
   missiles show the order.
   - 💬
 - [ ] alt extra node **Guidance**: I lock-on through invisibility (if not base); II missile speed
@@ -1880,14 +1883,14 @@ on every 3rd missile, on either chain)
 
 **Specials** (one shared set, all on the missile's impact)
 
-- [ ] ⭐ 🟡 **Arcane Warhead** (today's Homing Curse, renamed, 9.5; payload decided in 1.4): the
+- [x] ⭐ 🟡 **Arcane Warhead** (today's Homing Curse, renamed, 9.5; payload decided in 1.4): the
   impact applies Unraveled, 1 stack, 2 on a frozen or chilled target. Seeker becomes the magic
   enabler for Cinder, Pulse, Sonar's Pure Tone and the Arc Splash.
   - 💬
-- [ ] ⭐ 🟡 **Nullifier**: the impact strips shields and heals over time (dispel, decided in 2.5);
+- [x] ⭐ 🟡 **Nullifier**: the impact strips shields and heals over time (dispel, decided in 2.5);
   +50% damage against shielded enemies. The Warden answer.
   - 💬
-- [ ] ⭐ 🟡 **Hunter's Mark**: each consecutive hit on the same target +20% (up to +100%); prefers the
+- [x] ⭐ 🟡 **Hunter's Mark**: each consecutive hit on the same target +20% (up to +100%); prefers the
   highest rank. The boss hunter, and the Seeker's Steady Aim.
   - 💬
 - [ ] alt 🟡 **Heat Seeker**: prefers burning targets; on a burning target the freeze is replaced by
@@ -1920,7 +1923,7 @@ freeze share a ladder), Pulse (Undertow's chill lengthens freezes; Null Field pl
   - 💬
 - [ ] 🟡 **Afterburner**: missiles speed up the longer they fly, and hit harder for it.
   - 💬
-- [ ] 🟡 Fortify alternative: aims at the fastest enemy, built in (the runner hunter).
+- [x] 🟡 Fortify alternative: aims at the fastest enemy, built in (the runner hunter).
   - 💬
 - [ ] 🟡 **Ice Trail** (new): a missile leaves a short chill trail along its flight; a salvo paints
   the path blue.
@@ -1970,92 +1973,92 @@ SPECIAL  shared: Searing Flame (Vulnerable), Wildfire, Thermal Shock
 - ✅ 🟢 **DoT crits** (decided after round 1): a burn pulse never crits, so no crit sparks four
   times a second; the wave that ignites can crit, and a crit ignition starts the pool at the crit
   multiplier.
-- [ ] 🟡 **Burning enemies receive 50% less healing** at base. ⭐ Or only with Fuel II (Cauterize).
+- [x] 🟡 **Burning enemies receive 50% less healing** at base. ⭐ Or only with Fuel II (Cauterize).
   Either way Cinder owns regeneration and heals (agreed after round 1); this is only where.
-  - 💬
+  - 💬 agree with the starred proposal
 - [ ] 🟢 Cone half-width 0.35 -> 0.45 rad (9.2): today the cone covers 1.7 square cells, so an enemy
   crossing it sideways barely burns.
   - 💬
 
 **BASE**
 
-- [ ] ⭐ 🟡 Fortify **Stoke** (the signature passive): each wave that hits an enemy already burning
+- [x] ⭐ 🟡 Fortify **Stoke** (the signature passive): each wave that hits an enemy already burning
   from this Cinder raises its burn +10%, up to 3 times; the stacks go when the burn ends. It pays
   Cinder for being built where the path bends around it.
   - 💬
 - [ ] alt Fortify **Pilot Light**: the first wave at a fresh target burns 50% harder. It pays for
   arrivals instead of staying, which suits a straight.
   - 💬
-- [ ] 🟢 Range II +15%, Range III +10%.
+- [x] 🟢 Range II +15%, Range III +10%.
   - 💬
-- [ ] ⭐ 🟡 Range III **Long Nozzle**: +20% range, and the wave travels twice as fast.
+- [x] ⭐ 🟡 Range III **Long Nozzle**: +20% range, and the wave travels twice as fast.
   - 💬
 
 **HEAD chain A - White Flame** (hot and short: the single enemy melts)
 
-- [ ] ⭐ 🟢 I: +30% damage, and Stoke steps are +15%.
+- [x] ⭐ 🟢 I: +30% damage, and Stoke steps are +15%.
   - 💬
-- [ ] ⭐ 🟢 II: +50% damage, -25% burn duration (instead of today's +50% duration), so this chain
+- [x] ⭐ 🟢 II: +50% damage, -25% burn duration (instead of today's +50% duration), so this chain
   means *hot and short* and chain B means *wide and long*; +10% crit, which counts on ignitions.
   - 💬
-- [ ] ⭐ 🟡 III **Soulfire** (your higher-level burn; decided as an effect in 2.2): a second burn
+- [x] ⭐ 🟡 III **Soulfire** (your higher-level burn; decided as an effect in 2.2): a second burn
   type, blue, in its own pool, so it stacks with ordinary burn; it earns Sickened as well as
   Scorched. It answers the chain's counter: a burn-immune enemy still takes Soulfire.
-  - 💬
-- [ ] ⭐ 🟡 IV-A **Flashpoint**: +20% crit chance; a crit ignition also adds 3 Scorched. The crit
+  - 💬 every odd flame is classic, every even flame is soulfire, Stoke applies to both
+- [x] ⭐ 🟡 IV-A **Flashpoint**: +20% crit chance; a crit ignition also adds 3 Scorched. The crit
   team's furnace: every crit it lands makes everyone else's crits hit harder.
   - 💬
-- [ ] ⭐ 🟡 IV-B **Combustion**: the pool cap doubles; a pool that reaches its cap bursts for half of
+- [x] ⭐ 🟡 IV-B **Combustion**: the pool cap doubles; a pool that reaches its cap bursts for half of
   it onto enemies within 1 cell. The boss melter that also hurts the escort.
   - 💬
 
 **HEAD chain B - Wide Nozzle** (wide and long: the crowd smoulders)
 
-- [ ] ⭐ 🟢 I: +25% range, +30% cone (exists), and an enemy that leaves the cone keeps its Stoke for
+- [x] ⭐ 🟢 I: +25% range, +30% cone (exists), and an enemy that leaves the cone keeps its Stoke for
   2 s.
   - 💬
-- [ ] ⭐ 🟢 II (exists): +20% range, +20% fire rate, +20% cone.
+- [x] ⭐ 🟢 II (exists): +20% range, +20% fire rate, +20% cone.
   - 💬
-- [ ] ⭐ 🔴 III **Lingering Flames**: each wave leaves burning ground on the path it swept for 2 s
+- [x] ⭐ 🔴 III **Lingering Flames**: each wave leaves burning ground on the path it swept for 2 s
   (ground zones, decided in 2.4). The answer to its counter: what walks out of the cone keeps
   walking through fire.
+  - 💬 zones do not stack, multiple burning grounds on top of each other acts like one, same goes for any other active zone effect
+- [x] ⭐ 🟢 IV-A **Inferno Ring**: the cone becomes a full ring at -25% range. A burning Pulse.
   - 💬
-- [ ] ⭐ 🟢 IV-A **Inferno Ring**: the cone becomes a full ring at -25% range. A burning Pulse.
-  - 💬
-- [ ] ⭐ 🟢 IV-B **Dragon's Breath**: x3 fire rate, per-wave damage divided by 2.5, +30% range: a
+- [x] ⭐ 🟢 IV-B **Dragon's Breath**: x3 fire rate, per-wave damage divided by 2.5, +30% range: a
   continuous stream that keeps every pool topped up and Stoke always at full.
   - 💬
 
 **Extra head node - Fuel** (burn chemistry: small mechanics every burn uses, on either chain)
 
-- [ ] ⭐ 🟡 I **Kindling**: burning enemies lose 30% burn resistance and earn Scorched twice as fast.
-  - 💬
-- [ ] ⭐ 🟡 II **Cauterize**: burning enemies receive 50% less healing and shielding. Cinder owns
+- [x] ⭐ 🟡 I **Kindling**: burning enemies lose 30% burn resistance and earn Scorched twice as fast.
+  - 💬 no burn resistance loosing, only the scorch
+- [x] ⭐ 🟡 II **Cauterize**: burning enemies receive 50% less healing and shielding. Cinder owns
   regeneration and heals (agreed after round 1), so this node is how.
   - 💬
-- [ ] ⭐ 🟡 III **Heat**: burning enemies take +10% magic damage (burning reveals is now a global row,
+- [x] ⭐ 🟡 III **Heat**: burning enemies take +10% magic damage (burning reveals is now a global row,
   so III no longer needs Illumination).
   - 💬
-- [ ] ⭐ 🟡 IV **Everburn**: a pool never decays below 25% while its enemy is inside Cinder's range.
+- [x] ⭐ 🟡 IV **Everburn**: a pool never decays below 25% while its enemy is inside Cinder's range.
   - 💬
 
 **Specials** (one shared set, all on the ignition and the pool)
 
-- [ ] ⭐ 🟡 **Searing Flame** (today's Hexflame, renamed: hexes are Splash's now, 9.5): an ignition
+- [x] ⭐ 🟡 **Searing Flame** (today's Hexflame, renamed: hexes are Splash's now, 9.5): an ignition
   grants Vulnerable, and so does every wave that hits a burning enemy, at most one stack a second
   (9.4: today each visit gives one stack). Cinder keeps its share of Vulnerable (1.4).
   - 💬
 - [ ] ⭐ 🔴 **Wildfire**: once a second a burning enemy ignites neighbours within 0.75 cells at 40% of
   its pool; on death the whole pool spreads. The swarm killer.
   - 💬
-- [ ] ⭐ 🟡 **Thermal Shock**: when a burning enemy is frozen by anything, its remaining pool
+- [x] ⭐ 🟡 **Thermal Shock**: when a burning enemy is frozen by anything, its remaining pool
   detonates as one hit at 150% (the decided global row lands 50%) and chills its neighbours. Fire
   and ice become a combo instead of a conflict.
   - 💬
 - [ ] alt 🟡 **Heat Haze**: burning enemies are Exposed (crit chance taken x1.5); the alternative
   carrier of Exposed (1.2).
   - 💬
-- [ ] alt 🟡 **Pyromancer's Mark**: burning enemies take +15% magic damage from every source.
+- [x] alt 🟡 **Pyromancer's Mark**: burning enemies take +15% magic damage from every source.
   - 💬
 - [ ] alt 🔴 **Phoenix Ash**: an enemy that dies burning leaves embers (1 cell, 2 s) that burn
   whatever it spawns: Reaver's split, the Frenzied brood, the Warden's egg.
@@ -2080,8 +2083,8 @@ fields in one loop).
 - [ ] 🔴 **Ember Trail**: a burning enemy drops small embers on the path behind it, so the enemies
   following it catch fire. Strongest against columns and drips.
   - 💬
-- [ ] 🟡 **Bellows** (new): an adjacent Aura's fire-rate buff also widens the cone 10% per +10%.
-  - 💬
+- [x] 🟡 **Bellows** (new): an adjacent Aura's fire-rate buff also widens the cone 10% per +10%.
+  - 💬 this is passive in Awaken upgrade
 
 ---
 
@@ -2090,6 +2093,7 @@ fields in one loop).
 Where the roles above meet. These are not extra content: each falls out of ideas already listed,
 and together they are the reason to build a mixed defence. Tick the ones worth teaching the player
 (tower descriptions, a hint on the level screen).
+💬 I am not going to mark this section. Most of the combos are valid, only those that contains effect or upgrade I did not accept are not. Cross tower combos should not require any hardcoding.
 
 - [ ] ⭐ **Spotter team**: Sonar marks -> the next Sniper shot is a guaranteed crit -> Momentum
   charges. Wide Band + Mark on Sweep makes a revealed Ghost die to one Sniper shot.
@@ -2163,6 +2167,7 @@ and together they are the reason to build a mixed defence. Tick the ones worth t
 ---
 
 ## 5. Enemies that give each tower a job
+💬 same here, I am not going to mark this section. Note those enemies to other idea doc that focuses on enemies that I will review when towers are done.
 
 You want to focus on enemies next. Each of these exists to make one role matter, so a level can
 ask for a tower by what it sends. Stats are existing `EnemyStat`s; abilities use today's triggers
@@ -2220,7 +2225,7 @@ want a request for.
 
 - [ ] 🟡 **Player focus**: the enemy you select in the inspector becomes the priority target of every
   tower that can reach it. Enemy selection already exists; this makes it a tactical input.
-  - 💬
+  - 💬 
   - ↳ For every tower it clashes with "no player-chosen priority"; the bought version is Aura's
     Command (3.5).
 - [ ] 🔴 **Transcendent actives**: a Transcendent tower gains one click-to-cast ability with a
@@ -2228,7 +2233,7 @@ want a request for.
   shells at a clicked spot), Pulse *Overload* (x5 damage for 2 s), Seeker *Salvo* (empty the nest),
   Cinder *Firestorm* (ring of fire), Sonar *Ping* (reveal the whole map for 3 s), Splash *Storm*
   (Arc) or *Hex Nova* (Hex).
-  - 💬
+  - 💬 
 - [ ] 🔴 **Boss rewards**: after each boss wave, pick 1 of 3 global perks for the rest of the level
   (roguelite). Huge replay value, easy to tune per level.
   - 💬
@@ -2262,43 +2267,43 @@ want a request for.
 
 From `FEATURE-tower-upgrades-iteration-2.md`, with the answer I'd pick.
 
-- [ ] ⭐ **Does the extra head node branch?** No. It is the safe, non-exclusive line; branching
+- [x] ⭐ **Does the extra head node branch?** No. It is the safe, non-exclusive line; branching
   would make it a third chain.
   - 💬
-- [ ] ⭐ **Does its level IV need Transcendent?** Yes, like every level 4.
+- [x] ⭐ **Does its level IV need Transcendent?** Yes, like every level 4.
   - 💬
-- [ ] ⭐ **Does its level III count toward Transcendent?** No. Transcendent should need a commitment
+- [x] ⭐ **Does its level III count toward Transcendent?** No. Transcendent should need a commitment
   to one chain, and the extra node commits to nothing.
   - 💬
-- [ ] ⭐ **Its content**: per tower in section 3 (Sniper's silver line, Splash's Blast Engineering,
+- [x] ⭐ **Its content**: per tower in section 3 (Sniper's silver line, Splash's Blast Engineering,
   Frequency, Field Shaping, Tutelage, Ballistics, Mixed Payloads, Fuel).
   - 💬
-- [ ] ⭐ **Second special: free or restricted?** Free among the tower's own specials, with no
+- [x] ⭐ **Second special: free or restricted?** Free among the tower's own specials, with no
   written pairings (Decisions). Splash picks from its chain's three.
   - 💬
-- [ ] ⭐ **Transcendent price**: about 4x the tower's price.
+- [x] ⭐ **Transcendent price**: about 4x the tower's price.
   - 💬
-- [ ] ⭐ **Range II and III**: +15% then +10%; Range III keeps needing Transcendent, as part of the
+- [x] ⭐ **Range II and III**: +15% then +10%; Range III keeps needing Transcendent, as part of the
   spike.
   - 💬
-- [ ] ⭐ **Pairing authorship**: none; specials combo through shared triggers (Decisions).
+- [x] ⭐ **Pairing authorship**: none; specials combo through shared triggers (Decisions).
   - 💬
-- [ ] ⭐ **Single-special towers**: get their second (and third) special in this iteration.
+- [x] ⭐ **Single-special towers**: get their second (and third) special in this iteration.
   - 💬
-- [ ] ⭐ **Visibility until unlocked**: show Transcendent locked, with what's missing ("needs a
+- [x] ⭐ **Visibility until unlocked**: show Transcendent locked, with what's missing ("needs a
   special and a level 3 head"). It is the goal; hiding it hides the game's ceiling.
   - 💬
-- [ ] ⭐ **Anything on top?** No performance gate. The two prerequisites and the price are enough.
-  - 💬
-- [ ] ⭐ **Rollout order and first proving tower**: Sniper first: its rework is designed and mostly
+- [x] ⭐ **Anything on top?** No performance gate. The two prerequisites and the price are enough.
+  - 💬 maybe just XP
+- [x] ⭐ **Rollout order and first proving tower**: Sniper first: its rework is designed and mostly
   🟢/🟡. Splash's rework is now the most new content (arcs, the hex framework), so it comes next,
   Arc chain before Hex. Then Pulse (most in need), then the rest.
   - 💬
-- [ ] ⭐ **Exclusive-choice mark**: a bracket joining the set, a "1 of 2" / "1 of 3" label on it,
+- [x] ⭐ **Exclusive-choice mark**: a bracket joining the set, a "1 of 2" / "1 of 3" label on it,
   and a lock glyph on the alternatives once one is bought. Panel only; the tower's pips stay as
   they are.
   - 💬
-- [ ] ⭐ **Transcendent's own look**: a slow halo ring on the base and a gold pip.
+- [x] ⭐ **Transcendent's own look**: a slow halo ring on the base and a gold pip.
   - 💬
 
 ---
@@ -2307,6 +2312,7 @@ From `FEATURE-tower-upgrades-iteration-2.md`, with the answer I'd pick.
 
 If I could build only these, in roughly this order. Each unlocks or fixes the most for
 its cost.
+💬 I am skipping this section, you can get the answers from the document
 
 1. [ ] **Roles and stat ownership** (1.1, 1.2): decide these first; everything else follows.
    - 💬
@@ -2413,43 +2419,43 @@ What the table says:
 
 One coherent proposal:
 
-- [ ] ⭐ **Sniper** $10 -> $15; damage 30 -> 40, cooldown 39 -> 49 (a shot every 2.5 s), range 4.0.
+- [x] ⭐ **Sniper** $10 -> $15; damage 30 -> 40, cooldown 39 -> 49 (a shot every 2.5 s), range 4.0.
   18 DPS with crit, 1.2 per credit. Bigger, slower hits *are* the identity, and a 40-point hit
   keeps 16 through an Armored Elite instead of 10.
   - 💬
   - ↳ Written before round 1: base crit is now 5%, with Steady Aim from Fortify.
-- [ ] ⭐ **Splash** damage 16 -> 14, blast radius 1.75 -> 1.5, once it aims on purpose (Fire
+- [x] ⭐ **Splash** damage 16 -> 14, blast radius 1.75 -> 1.5, once it aims on purpose (Fire
   Control) and has a falloff floor (Wide Charge): it can afford less.
   - 💬
-- [ ] ⭐ **Sonar** range 4.5, 3 s per turn: 60 per enemy per pass, between the code and the doc.
-  - 💬
+- [x] ⭐ **Sonar** range 4.5, 3 s per turn: 60 per enemy per pass, between the code and the doc.
+  - 💬 and make it rotate counterclockwise
 - [ ] ⭐ **Pulse** magic, range 1.75 (3.4): 175 per pass, and 24 DPS against an Armored Elite
   instead of 0.
-  - 💬
+  - 💬 no, unless it contrasicts what I checked and commented earlier in the tower section
 - [ ] **Aura** $20 -> $25, +20% -> +15%: weaker alone, strong once upgraded, since its upgrades
   multiply.
   - 💬
-- [ ] ⭐ **Mortar** damage 20 -> 32, cooldown 50 -> 69 (a shell every 3.5 s), range 4.5, blast
+- [x] ⭐ **Mortar** damage 20 -> 32, cooldown 50 -> 69 (a shell every 3.5 s), range 4.5, blast
   2.0 -> 1.75, shell speed 40 -> 8 px a tick (0.9 s flight). A big slow boom that fast enemies can
   dodge, and 32 survives plating.
   - 💬
-- [ ] ⭐ **Seeker** $35 -> $30; damage 26 -> 40 magic; missile speed 35 -> 8 px a tick; nest of 3.
+- [x] ⭐ **Seeker** $35 -> $30; damage 26 -> 40 magic; missile speed 35 -> 8 px a tick; nest of 3.
   17 DPS, 0.58 per credit, and you can watch it hunt.
   - 💬
 - [ ] **Cinder** cone half-width 0.35 -> 0.45 rad. Today the cone covers 1.7 square cells, so an
   enemy crossing it sideways barely burns.
-  - 💬
+  - 💬 nno
 
 Rules behind the numbers:
 
-- [ ] ⭐ **Damage-per-credit bands by role**: single-target about 1.2; area towers 0.4-0.6 per enemy
+- [x] ⭐ **Damage-per-credit bands by role**: single-target about 1.2; area towers 0.4-0.6 per enemy
   reached; control and support priced by their effect. Written down, so every later number has a
   reference.
   - 💬
-- [ ] ⭐ 🟢 **Plating is the anti-small-hit stat on purpose.** Keep it, but then every small-hit tower
+- [x] ⭐ 🟢 **Plating is the anti-small-hit stat on purpose.** Keep it, but then every small-hit tower
   needs one answer in its tree (magic, Cracked, a burst); section 3 lists one per tower.
-  - 💬
-- [ ] 🟢 Settle the three doc/code mismatches: Sonar's range and turn, Splash's chill, Cinder's
+  - 💬 it is fine when some tower is weak against some kind of enemy. That is the purpose. Multi-tower combos will deal with that.
+- [x] 🟢 Settle the three doc/code mismatches: Sonar's range and turn, Splash's chill, Cinder's
   damage (the line says 2, the code 1.5).
   - 💬
 
@@ -2473,22 +2479,22 @@ shots, Fifth Shot about +38%, and Toxic Bloom ($30) adds about 30 magic DPS to e
 reaches, nearly triple the blast itself. In the code, Amplifying Core II is the one upgrade that
 beats building: x2.6 output for a whole cluster, for $70 of upgrades.
 
-- [ ] ⭐ 🟡 **Each extra copy of a tower type costs more** (+15% per copy already on the board). The
+- [x] ⭐ 🟡 **Each extra copy of a tower type costs more** (+15% per copy already on the board). The
   classic anti-spam rule: upgrading becomes the efficient path for your fourth Sniper, and it pushes
   mixed defences.
   - 💬
-- [ ] ⭐ **A value rule for stat nodes**: damage gained per credit between 0.7x and 1x of building
+- [x] ⭐ **A value rule for stat nodes**: damage gained per credit between 0.7x and 1x of building
   another copy. Focused Optics I would be +20% for $2-3, or +60% for $8-10; prefer bigger bonuses
   to tiny prices.
   - 💬
-- [ ] ⭐ **Specials cost more than head III** (say 4-6x the tower's price): the most powerful slot
+- [x] ⭐ **Specials cost more than head III** (say 4-6x the tower's price): the most powerful slot
   should not be the cheapest.
-  - 💬
-- [ ] ⭐ **Damage gates x10-15** (1000-5000 damage), so they wait about as long as the kill gates
+  - 💬 
+- [x] ⭐ **Damage gates x10-15** (1000-5000 damage), so they wait about as long as the kill gates
   beside them.
   - 💬
   - ↳ If XP replaces the gate types (2.8), this becomes XP tuning.
-- [ ] ⭐ **Each chain gates on its purpose** (2.8): crit chains on crits landed, freeze chains on
+- [x] ⭐ **Each chain gates on its purpose** (2.8): crit chains on crits landed, freeze chains on
   freezes, reveal chains on reveals.
   - 💬
 - [ ] 🟢 **Smooth the level III cliff**: Blast Engineering III gives 2 blasts (IV-A takes 5); Twin
@@ -2496,9 +2502,10 @@ beats building: x2.6 output for a whole cluster, for $70 of upgrades.
   - 💬
 - [ ] 🟢 **Adopt the feature doc's Amplifying Core numbers** (+25%, then +30% and +10% fire rate).
   The code's x1.5 twice, with a +45% fire rate, is the strongest upgrade in the game.
-  - 💬
+  - 💬 review this and propose me a solution
 
 ### 9.4 Existing upgrades, node by node
+💬 I skip this section
 
 **Sniper**
 
@@ -2621,32 +2628,33 @@ beats building: x2.6 output for a whole cluster, for $70 of upgrades.
 material (Cinder) and plain effects (Splash, Pulse, Aura). An effect name describes what several
 towers do; a name should say what this one *is*.
 
-- [ ] Sniper: ⭐ keep. Alternatives: Marksman, Longshot.
+- [x] Sniper: ⭐ keep. Alternatives: Marksman, Longshot.
   - 💬
-- [ ] Splash: ⭐ rename. Burst (same meaning, but a thing rather than an effect); Hexer or Arcanist
+- [x] Splash: ⭐ rename. Burst (same meaning, but a thing rather than an effect); Hexer or Arcanist
   if it goes the hex way; Arc or Tesla if chain lightning; Blight if poison.
   - 💬
   - ↳ With the fork the name can follow the chain (3.2: Stormcaller, Hexer).
-- [ ] Sonar: ⭐ Radar (a rotating beam is radar; sonar is pings). Or Lighthouse (a sweeping light
+- [x] Sonar: ⭐ Radar (a rotating beam is radar; sonar is pings). Or Lighthouse (a sweeping light
   that reveals the hidden), Scanner, Oracle.
   - 💬
-- [ ] Pulse: ⭐ Obelisk (a magic stone that changes the rules around it). Or Coil if it zaps,
+- [x] Pulse: ⭐ Obelisk (a magic stone that changes the rules around it). Or Coil if it zaps,
   Nexus, Resonator.
   - 💬
-- [ ] Aura: ⭐ Beacon. Or Banner, Shrine, Totem, Relay.
+- [x] Aura: ⭐ Beacon. Or Banner, Shrine, Totem, Relay.
   - 💬
-- [ ] Mortar: ⭐ keep. Alternative: Bombard.
+- [x] Mortar: ⭐ keep. Alternative: Bombard.
   - 💬
-- [ ] Seeker: ⭐ Hive (it nests missiles). Or Launcher, Hunter, Falcon.
+- [x] Seeker: ⭐ Hive (it nests missiles). Or Launcher, Hunter, Falcon.
   - 💬
-- [ ] Cinder: ⭐ Scorcher (it applies Scorched; a cinder is what's left after a fire). Or Brazier,
+- [x] Cinder: ⭐ Scorcher (it applies Scorched; a cinder is what's left after a fire). Or Brazier,
   Pyre, Flamer.
   - 💬
-- [ ] ⭐ Rename display names only; keep internal ids (`sniper.head...`, `TowerFactory.Type`), so
+- [x] ⭐ Rename display names only; keep internal ids (`sniper.head...`, `TowerFactory.Type`), so
   node ids and tests don't churn.
   - 💬
 
 **Upgrade names**
+💬 I mostly agree with all in this section, rename upgrades freely to match their new content, keep names accurately long that they can fit the UI
 
 - [ ] ⭐ Resonant Field (Pulse) and Resonance Field (Aura) are nearly the same name on two towers.
   Pulse: Phase Field or Ghostsight. Aura: Broadcast or Wide Signal.
@@ -2677,14 +2685,15 @@ towers do; a name should say what this one *is*.
   Cinder, at prices 10, 15, 20, 25, 20, 30, 35, 28. Order attackers by price with Aura last, or
   group by role.
   - 💬
-- [ ] `README.md`'s tower section still describes the first upgrade system ("two permanent,
+- [x] `README.md`'s tower section still describes the first upgrade system ("two permanent,
   mutually-exclusive upgrade paths... marked on the board by a coloured ring", "The Aura tower is
   passive and offers none"). It went stale when upgrade trees shipped.
-  - 💬
+  - 💬 update it after all features land in game
 
 ---
 
 ## 10. XP: one progress number
+💬 I agree with everything in this XP section, implement it
 
 **Status:** to review (round 2). Your idea from 2.8: a little XP for a shot, more for doing the
 tower's job (a slow, a freeze, a crit), a lot for a kill; XP is never spent and only climbs. Agreed
