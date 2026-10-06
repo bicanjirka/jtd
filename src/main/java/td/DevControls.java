@@ -143,6 +143,11 @@ public final class DevControls implements EconomyListener {
         return "+" + xp + " XP to " + selected.get().getType();
     }
 
+    /** The installed level's paths, at least one: the spawn box picks among them. */
+    public int pathCount() {
+        return Math.max(1, this.world.level().pathCount());
+    }
+
     public Optional<Tower> selectedTower() {
         return this.world.towers().all().stream().filter(Tower::isSelected).findFirst();
     }
