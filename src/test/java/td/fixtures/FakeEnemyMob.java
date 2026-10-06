@@ -7,6 +7,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyMobVisitor;
+import td.enemy.Rank;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -33,6 +34,8 @@ public final class FakeEnemyMob implements EnemyMob {
     private double x;
     private double y;
     private boolean valid = true;
+    private Rank rank = Rank.GRUNT;
+    private float healthFraction = 1f;
 
     private FakeEnemyMob(double x, double y, int progression, int health, boolean hidden) {
         this.x = x;
@@ -57,6 +60,28 @@ public final class FakeEnemyMob implements EnemyMob {
 
     public FakeEnemyMob withHealth(int health) {
         return new FakeEnemyMob(this.x, this.y, this.progression, health, this.hidden);
+    }
+
+    /** This fake itself, now of {@code rank}. */
+    public FakeEnemyMob ranked(Rank rank) {
+        this.rank = rank;
+        return this;
+    }
+
+    /** This fake itself, now at {@code healthFraction} of its health. */
+    public FakeEnemyMob atHealthFraction(float healthFraction) {
+        this.healthFraction = healthFraction;
+        return this;
+    }
+
+    @Override
+    public Rank getRank() {
+        return this.rank;
+    }
+
+    @Override
+    public float getHealthFraction() {
+        return this.healthFraction;
     }
 
     /** A copy that stealth keeps towers from targeting. */

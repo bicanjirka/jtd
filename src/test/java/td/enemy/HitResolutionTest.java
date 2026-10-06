@@ -162,4 +162,17 @@ class HitResolutionTest {
 
         assertThat(HitResolution.critFactor(AttackProfile.none().withCritMultiplier(3f), immune)).isEqualTo(1f);
     }
+
+    @Test
+    void glancingPenetrationHelpsAShotThatDoesNotCritButNotOneThatDoes() {
+        StatView armored = stats(BaseStats.defaults().with(EnemyStat.ARMOR, 100f).with(EnemyStat.PHYSICAL_PLATING, 300f));
+        AttackProfile weakSpot = AttackProfile.critChance(0.5f).withGlancingPenetration(100f, 1f);
+
+        Damage glancing = HitResolution.resolve(Damage.physical(1000), weakSpot, armored, 10000, () -> 0.9);
+        Damage crit = HitResolution.resolve(Damage.physical(1000), weakSpot, armored, 10000, () -> 0.1);
+
+        assertThat(glancing).isEqualTo(Damage.physical(1000));
+        assertThat(crit.critical()).isTrue();
+        assertThat(crit.amount()).isEqualTo(Math.round(1000 * 1.5f * 100f / 200f - 300f));
+    }
 }

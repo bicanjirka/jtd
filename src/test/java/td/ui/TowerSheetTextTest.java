@@ -87,7 +87,7 @@ class TowerSheetTextTest {
     @Test
     void aSonarShowsARotationAndCritChanceShowsOnlyWhereATowerHasAny() {
         assertThat(labels(shopSheet(TowerFactory.Type.SONAR))).contains("Rotation").doesNotContain("Fire rate", "Crit chance");
-        assertThat(row(shopSheet(TowerFactory.Type.SNIPER), "Crit chance").value()).isEqualTo("15%");
+        assertThat(row(shopSheet(TowerFactory.Type.SNIPER), "Crit chance").value()).isEqualTo("5%");
     }
 
     @Test
@@ -108,7 +108,7 @@ class TowerSheetTextTest {
 
         InfoSheet sheet = TowerSheetText.status(sniper.inspect());
 
-        assertThat(row(sheet, "Physical damage")).extracting(Row::value, Row::trend).containsExactly("30 → 36", Trend.BETTER);
+        assertThat(row(sheet, "Physical damage")).extracting(Row::value, Row::trend).containsExactly("40 → 48", Trend.BETTER);
         assertThat(row(sheet, "Fire rate").trend()).isEqualTo(Trend.NONE);
         assertThat(row(sheet, "Aura")).isEqualTo(Row.toned(Glyph.RING, Palette.TOWER_AURA_RING, "Aura", ""));
     }
@@ -122,8 +122,8 @@ class TowerSheetTextTest {
         InfoSheet sheet = TowerSheetText.status(sniper.inspect());
 
         assertThat(rows(sheet)).contains(Row.effect(Palette.DISRUPTION, "Jammed", ""));
-        assertThat(row(sheet, "Range")).extracting(Row::value, Row::trend).containsExactly("3.8 → 3", Trend.WORSE);
-        assertThat(row(sheet, "Fire rate")).extracting(Row::value, Row::trend).containsExactly("0.5 → 0.4/s", Trend.WORSE);
+        assertThat(row(sheet, "Range")).extracting(Row::value, Row::trend).containsExactly("4 → 3.2", Trend.WORSE);
+        assertThat(row(sheet, "Fire rate")).extracting(Row::value, Row::trend).containsExactly("0.4 → 0.3/s", Trend.WORSE);
         assertThat(row(sheet, "Physical damage").trend()).isEqualTo(Trend.NONE);
     }
 
