@@ -44,7 +44,8 @@ violation. They are not restated here.
 `board` (scale, cell↔pixel math) · `cell` (squares, buildability) · `damage` · `economy` ·
 `effect` (timed status effects) · `enemy` · `level` · `projectile` · `stat` (enemy stat sheet) ·
 `tower` (+ `targeting`, `buff`, `upgrade`, `sniper`, `sonar`, `splash`) · `ui` (+ `render`) ·
-`util` (`GameWorld`, `GameHost`, `Threads`) · `wave` (path geometry, wave scripts). `GameEngine`,
+`util` (`GameWorld`, `GameHost`, `Threads`) · `wave` (path geometry, wave scripts) · `zone` (ground
+zones that keep working after the shot that made them). `GameEngine`,
 `GameLoop`, `TowerDefense` and `Main` sit in `td`.
 
 ## Boundaries
@@ -86,7 +87,7 @@ frame build reads them.
 - `EconomyLedger` computes inside `synchronized (this)` and fires listeners outside it. `doPay`
   is the atomic check-and-charge; never `if (canPay(n)) doPay(n)`.
 - Listener and live-entity lists are `CopyOnWriteArrayList`.
-- `GameEngine.doTick` order is fixed: enemies, projectiles, towers. Falling behind runs one
+- `GameEngine.doTick` order is fixed: enemies, projectiles, zones, towers. Falling behind runs one
   tick and resyncs, never a burst. The tick rate exists only in `TickRate`.
 
 ## Code style

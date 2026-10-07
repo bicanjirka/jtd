@@ -842,6 +842,16 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void aTarredEnemyKeepsSixtyPercentOfItsSpeed() {
+        ActiveEffects effects = new ActiveEffects();
+
+        effects.apply(Effect.tarred(100, d -> {
+        }));
+
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.6f, within(1e-5f));
+    }
+
+    @Test
     void aTarredEnemysFreezeLastsASecondLonger() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.tarred(100, d -> {

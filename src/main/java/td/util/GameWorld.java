@@ -14,6 +14,7 @@ import td.tower.TowerRoster;
 import td.wave.Path;
 import td.wave.Wave;
 import td.wave.WaveAnnouncer;
+import td.zone.ZoneRoster;
 
 import java.util.List;
 
@@ -33,6 +34,7 @@ public class GameWorld {
     private final EnemyRoster enemies;
     private final TowerRoster towers;
     private final ProjectileRoster projectiles = new ProjectileRoster();
+    private final ZoneRoster zones;
     private final PlaytestRules playtestRules = new PlaytestRules();
     private final WaveAnnouncer waves = new WaveAnnouncer();
     private final DamageTally damageTally = new DamageTally();
@@ -48,6 +50,7 @@ public class GameWorld {
     public GameWorld(GameHost mainApp, RandomSource random) {
         this.random = random;
         this.enemies = new EnemyRoster();
+        this.zones = new ZoneRoster(this.enemies);
         this.towers = new TowerRoster(mainApp, this.economy, this::getBoard);
         this.enemies.addWalkEndListener(new ExperienceAwarder(this.towers));
     }
@@ -70,6 +73,11 @@ public class GameWorld {
 
     public ProjectileRoster projectiles() {
         return this.projectiles;
+    }
+
+    /** The patches of ground that keep working after the shot that made them. */
+    public ZoneRoster zones() {
+        return this.zones;
     }
 
     public WaveAnnouncer waves() {

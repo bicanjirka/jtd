@@ -37,6 +37,7 @@ import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TowerStatusDraw;
 import td.ui.render.TraitMarkerDraw;
 import td.ui.render.TurretHeadDraw;
+import td.ui.render.ZoneDraw;
 import td.wave.PathColor;
 
 import java.awt.AlphaComposite;
@@ -129,6 +130,13 @@ public final class Java2DFrameRenderer {
     private static final float RANK_BADGE_OFFSET_FRACTION = 1.7f;
     private static final float RANK_BADGE_CHEVRON_SPACING_FRACTION = 0.55f;
     private static final float PROJECTILE_SIZE = 5f;
+    private static final int ZONE_FILL_ALPHA = 80;
+    private static final int ZONE_EDGE_ALPHA = 170;
+    /** A zone fades over its last quarter of life. */
+    private static final float ZONE_FADE_SHARE_INVERSE = 4f;
+    private static final int ZONE_FLAMES = 6;
+    private static final int ZONE_BUBBLES = 3;
+    private static final int ZONE_CRYSTAL_ARMS = 3;
     /** A banked missile is drawn this share of a missile in flight. */
     private static final float NEST_MISSILE_SCALE = 0.6f;
     private static final Font MARKER_COUNT_FONT = Hud.LABEL_FONT.deriveFont(9f);
@@ -440,6 +448,9 @@ public final class Java2DFrameRenderer {
             case TOWER_PULSE_RIPPLE_NULL -> new Color(180, 110, 255);
             case TOWER_PULSE_RIPPLE_UNDERTOW -> new Color(90, 150, 255);
             case TOWER_PULSE_RIPPLE_CORROSION -> new Color(120, 220, 90);
+            case ZONE_BURNING -> new Color(255, 120, 30);
+            case ZONE_TAR -> new Color(35, 28, 25);
+            case ZONE_FROST -> new Color(170, 225, 255);
             case TOWER_PULSE_ZAP -> new Color(255, 245, 190);
             case TOWER_CINDER_CONE -> new Color(255, 90, 30);
             case PROJECTILE_CANNONBALL -> new Color(139, 90, 43);
@@ -543,6 +554,9 @@ public final class Java2DFrameRenderer {
         for (CellDraw cell : frame.cells()) {
             this.paintCell(g2, cell, frame);
         }
+        for (ZoneDraw zone : frame.zones()) {
+            this.paintZone(g2, zone);
+        }
         for (EnemyDraw enemy : frame.enemies()) {
             this.paintEnemy(g2, enemy);
         }
@@ -566,6 +580,71 @@ public final class Java2DFrameRenderer {
         }
         for (ProjectileDraw projectile : frame.projectiles()) {
             this.paintProjectile(g2, projectile);
+        }
+    }
+
+    /**
+     * A translucent patch with a pattern of its own: flames that flicker, glossy tar with bubbles,
+     * frost with crossed crystal lines. It fades over its last quarter of life.
+     */
+    private void paintZone(Graphics2D g2, ZoneDraw zone) {
+        Color base = colorFor(zone.palette());
+        float fade = Math.min(1f, zone.life() * ZONE_FADE_SHARE_INVERSE);
+        float cx = zone.centerX();
+        float cy = zone.centerY();
+        float r = zone.radius();
+        Ellipse2D disc = new Ellipse2D.Float(cx - r, cy - r, r * 2, r * 2);
+        g2.setColor(withAlpha(base, Math.round(ZONE_FILL_ALPHA * fade)));
+        g2.fill(disc);
+        Stroke defaultStroke = g2.getStroke();
+        g2.setStroke(new BasicStroke(1.5f));
+        g2.setColor(withAlpha(base, Math.round(ZONE_EDGE_ALPHA * fade)));
+        g2.draw(disc);
+        switch (zone.palette()) {
+            case ZONE_BURNING -> this.paintZoneFlames(g2, zone, fade);
+            case ZONE_TAR -> this.paintZoneTarGloss(g2, zone, fade);
+            case ZONE_FROST -> this.paintZoneCrystals(g2, zone, fade);
+            default -> {
+            }
+        }
+        g2.setStroke(defaultStroke);
+    }
+
+    private void paintZoneFlames(Graphics2D g2, ZoneDraw zone, float fade) {
+        for (int i = 0; i < ZONE_FLAMES; i++) {
+            double angle = i * 2 * Math.PI / ZONE_FLAMES + i;
+            float distance = zone.radius() * (0.25f + 0.5f * ((i * 7) % ZONE_FLAMES) / ZONE_FLAMES);
+            float flicker = 0.5f + 0.5f * (float) Math.sin(zone.phase() * 9 + i * 1.7);
+            float size = zone.radius() * (0.12f + 0.12f * flicker);
+            float fx = zone.centerX() + (float) Math.cos(angle) * distance;
+            float fy = zone.centerY() + (float) Math.sin(angle) * distance;
+            g2.setColor(withAlpha(new Color(255, 200, 60), Math.round(200 * flicker * fade)));
+            g2.fill(new Ellipse2D.Float(fx - size, fy - size * 1.4f, size * 2, size * 2.8f));
+        }
+    }
+
+    private void paintZoneTarGloss(Graphics2D g2, ZoneDraw zone, float fade) {
+        float r = zone.radius();
+        g2.setColor(withAlpha(new Color(130, 120, 150), Math.round(90 * fade)));
+        g2.fill(new Ellipse2D.Float(zone.centerX() - r * 0.6f, zone.centerY() - r * 0.65f, r * 0.7f, r * 0.35f));
+        for (int i = 0; i < ZONE_BUBBLES; i++) {
+            float pulse = (zone.phase() * 0.6f + i * 0.37f) % 1f;
+            float bx = zone.centerX() + r * 0.5f * (float) Math.cos(i * 2.4);
+            float by = zone.centerY() + r * 0.5f * (float) Math.sin(i * 2.4);
+            float size = 1.5f + 2.5f * pulse;
+            g2.setColor(withAlpha(new Color(90, 80, 100), Math.round(140 * (1f - pulse) * fade)));
+            g2.draw(new Ellipse2D.Float(bx - size, by - size, size * 2, size * 2));
+        }
+    }
+
+    private void paintZoneCrystals(Graphics2D g2, ZoneDraw zone, float fade) {
+        g2.setColor(withAlpha(new Color(235, 250, 255), Math.round(170 * fade)));
+        float r = zone.radius() * 0.7f;
+        for (int i = 0; i < ZONE_CRYSTAL_ARMS; i++) {
+            double angle = i * Math.PI / ZONE_CRYSTAL_ARMS;
+            float dx = (float) Math.cos(angle) * r;
+            float dy = (float) Math.sin(angle) * r;
+            g2.draw(new Line2D.Float(zone.centerX() - dx, zone.centerY() - dy, zone.centerX() + dx, zone.centerY() + dy));
         }
     }
 

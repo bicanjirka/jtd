@@ -169,7 +169,7 @@ holds more than one effect; selecting it lists every effect with what kind it is
 | Dead zone  | debuff           | No heal or shield takes hold while the enemy is in a Pulse's field; what it already has stays |
 | Kill zone  | debuff           | +25% damage taken from every source while the enemy is in a Pulse's field |
 | Cracked    | debuff           | Plating is halved; one shared 5 s clock any application refreshes |
-| Tarred     | debuff           | A burn it catches starts at double the pool, and a freeze it suffers lasts a second longer |
+| Tarred     | debuff           | Slowed by 40%. A burn it catches starts at double the pool, and a freeze it suffers lasts a second longer |
 | Exposed    | spotted          | Crit chance taken doubles. A revealed enemy counts as Exposed                                       |
 | Marked     | spotted          | The next hit from any tower is a guaranteed crit, and spends the mark. Damage that ticks never spends it, and it waits on a crit-immune enemy |
 | Priority   | spotted          | +15% damage taken from every tower, and every tower that picks one target picks it while it is in range |

@@ -39,6 +39,8 @@ import td.util.GameWorld;
 import td.util.LoadedLevel;
 import td.wave.WaveDefinition;
 import td.wave.WaveProgress;
+import td.zone.Zone;
+import td.zone.ZoneKind;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -1063,6 +1065,33 @@ class GameEngineTest {
         engine.doTick(1);
 
         assertThat(engine.getGameWorld().projectiles().getProjectiles().getFirst().getX()).isEqualTo(10.0);
+    }
+
+    @Test
+    void reloadingALevelClearsTheZonesOfThePreviousLevel() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        engine.getGameWorld().zones().add(new Zone(ZoneKind.TAR, 0, 0, 50, 100, 100, (target, effect) -> {
+        }));
+
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+
+        assertThat(engine.getGameWorld().zones().zones()).isEmpty();
+    }
+
+    @Test
+    void aZoneAgesOnEveryTickOfTheEngine() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        engine.getGameWorld().zones().add(new Zone(ZoneKind.TAR, 0, 0, 50, 2, 100, (target, effect) -> {
+        }));
+
+        engine.doTick(1);
+        int afterOneTick = engine.getGameWorld().zones().zones().size();
+        engine.doTick(2);
+
+        assertThat(afterOneTick).isEqualTo(1);
+        assertThat(engine.getGameWorld().zones().zones()).isEmpty();
     }
 
     @Test

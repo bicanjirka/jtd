@@ -178,6 +178,7 @@ public class GameEngine {
     private void unloadCurrentLevel() {
         this.placement.reset();
         this.gameWorld.projectiles().clear();
+        this.gameWorld.zones().clear();
         this.gameWorld.towers().clear();
         this.gameWorld.enemies().clear();
         this.gameWorld.damageTally().clear();
@@ -255,6 +256,7 @@ public class GameEngine {
             enemy.doTick(time);
         }
         this.gameWorld.projectiles().doTick(time);
+        this.gameWorld.zones().doTick(time);
         for (Tower tower : this.gameWorld.towers().all()) {
             tower.beginTick(time);
             tower.doTick(time);
