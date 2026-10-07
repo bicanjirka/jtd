@@ -320,6 +320,11 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     @Override
+    public float spirit() {
+        return this.stats.value(EnemyStat.SPIRIT);
+    }
+
+    @Override
     public float shieldingFor(DamageType type) {
         return this.stats.value(EnemyStat.shieldingFor(type));
     }

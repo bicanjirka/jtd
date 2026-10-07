@@ -252,10 +252,19 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         double cyclesPerSecond = RIPPLE_CYCLES_PER_SECOND * (1.0 + RIPPLE_SPEEDUP_PER_TOLL * tower.getHighestToll());
         for (int i = 0; i < RIPPLE_RINGS; i++) {
             double phase = (this.animationSeconds * cyclesPerSecond + (double) i / RIPPLE_RINGS) % 1.0;
-            this.draws.add(new RingDraw(Palette.TOWER_PULSE_RIPPLE, tower.getX(), tower.getY(),
+            this.draws.add(new RingDraw(rippleFor(tower.getFieldLook()), tower.getX(), tower.getY(),
                     (float) (phase * tower.getRangeReal()), (float) (1.0 - phase)));
         }
         return null;
+    }
+
+    private static Palette rippleFor(PulseTower.FieldLook look) {
+        return switch (look) {
+            case PLAIN -> Palette.TOWER_PULSE_RIPPLE;
+            case NULL -> Palette.TOWER_PULSE_RIPPLE_NULL;
+            case UNDERTOW -> Palette.TOWER_PULSE_RIPPLE_UNDERTOW;
+            case CORROSION -> Palette.TOWER_PULSE_RIPPLE_CORROSION;
+        };
     }
 
     /** A zap's bolts, bright at first and fading as they age. */

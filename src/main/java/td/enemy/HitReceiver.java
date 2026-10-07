@@ -73,6 +73,9 @@ public interface HitReceiver {
     /** The share of a {@code type} hit its shield takes right now, from {@code 0} to {@code 0.9}. */
     float shieldingFor(DamageType type);
 
+    /** Its spirit now: {@code 0} at neutral, down to {@code -100}. */
+    float spirit();
+
     /** Whether repeated freezing has made its next freeze last less than a full one. */
     boolean freezeDiminished();
 

@@ -38,6 +38,10 @@
 - The Pulse's field touches `Reach.everyone`, never only the visible. Toll is earned by time inside
   (`TollTracker` counts it per enemy) and held by an ordinary `TOLL` effect the field refreshes each
   tick while the enemy is inside, so a visit is exactly the life of that effect.
+- A rule the Pulse holds inside its field (`FieldMode`) is an effect refreshed every tick the enemy is
+  inside, never a flag on the enemy. Event Horizon counts the deaths of enemies that were inside the
+  tick before and resets on the wave announcer; the tower subscribes lazily and unsubscribes in
+  `doCleanup`.
 - A Hexer's hex is an enemy effect in `EffectCategory.HEX`, applied through `applyEffect`, and that
   effect is the hex's only timer (spirit paces it). The Hexer's `HexLedger` only watches it: what
   a hex pays out when it ends or its carrier dies is settled at the start of the Hexer's tick,

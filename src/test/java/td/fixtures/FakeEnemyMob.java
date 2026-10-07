@@ -35,6 +35,7 @@ public final class FakeEnemyMob implements EnemyMob {
     private boolean frozen;
     private boolean freezeDiminished;
     private float shielding;
+    private float spirit;
     private int dispels;
     private float physicalReduction;
     private double x;
@@ -203,6 +204,16 @@ public final class FakeEnemyMob implements EnemyMob {
     @Override
     public float shieldingFor(DamageType type) {
         return this.shielding;
+    }
+
+    /** Reports {@code spirit} as its spirit, without any real sickness. */
+    public void reportSpirit(float spirit) {
+        this.spirit = spirit;
+    }
+
+    @Override
+    public float spirit() {
+        return this.spirit;
     }
 
     /** Reports its freezes as diminished, without any real ladder. */

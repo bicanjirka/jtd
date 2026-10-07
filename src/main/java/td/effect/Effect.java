@@ -36,6 +36,8 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
     static final int STACK_INTERVAL_TICKS = 10;
     /** How deep a Fractured that Fault Line left falls: resilience -100. */
     private static final int FAULT_LINE_STACK_CAP = 10;
+    /** Spirit runs from 0 down to -100, so a hundred stacks of Sickened is all there is to lose. */
+    private static final int SICKENED_STACK_CAP = 100;
 
     /**
      * Slows in proportion to its level: {@code amount} at first (0.5 is half speed), decaying
@@ -102,6 +104,14 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
     static Effect stackDebuff(EffectKind kind, int stacks) {
         return new Effect(kind, 1f, Damage.none(), 0f, 0, d -> {
         }, 0, Optional.empty(), 0, List.of(), 0f, stacks, 0, false, 0, AttackOrigin.none());
+    }
+
+    /**
+     * {@code stacks} more points of lost spirit, which wear off one at a time at the enemy's spirit
+     * pace. Allowed up to a hundred, the whole of spirit.
+     */
+    public static Effect sickened(int stacks) {
+        return stackDebuff(EffectKind.SICKENED, stacks).withStackCap(SICKENED_STACK_CAP);
     }
 
     /** {@code stacks} more hits' worth of extra damage taken, on one shared clock. */

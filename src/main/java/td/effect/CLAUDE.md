@@ -41,6 +41,8 @@
   spirit-paced timer and every stack debuff by a tenth a stack, and is never paced itself.
   `DEAD_ZONE` keeps `HEAL` and `SHIELD` out through `EffectInteractions`' held-off table, which
   unlike a block strips nothing already there. `BRITTLE` counts only while `FREEZE` is active.
+- A pool earns `SICKENED` itself, but a tower can also add it (`Effect.sickened`): the stacks add up
+  to a hundred, the whole of spirit, and wear off one at a time at the enemy's spirit pace.
 - A `HEX` kind carries no stat of its own; the tower that cast it watches it and pays it out.
   `INVERSION` is the one hex the enemy itself reads: `invertedThrough(sink)` turns a heal into
   damage per tick, and `INVISIBLE` is an `EffectInteractions` row it blocks and removes.
