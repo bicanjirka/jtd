@@ -210,6 +210,7 @@ final class EnemyStatText {
             case CORRODED -> "Corroded";
             case UNDERTOW -> "Undertow";
             case DEAD_ZONE -> "Dead zone";
+            case FALLOUT -> "Fallout";
             case KILL_ZONE -> "Kill zone";
             case CRACKED -> "Cracked";
             case TARRED -> "Tarred";

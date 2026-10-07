@@ -117,8 +117,8 @@ public final class ActiveEffects {
             case SHIELD -> effect.shieldPercent();
             // On/off, not gradated - any reapplication is at least as strong as what's already active.
             case INVISIBLE, REVEALED, EXPOSED, MARKED, PRIORITY, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION,
-                    SYMPATHY, RECKONING, SILENCED, ANCHORED, BRITTLE, CORRODED, UNDERTOW, DEAD_ZONE, KILL_ZONE, CRACKED,
-                    TARRED -> 1f;
+                    SYMPATHY, RECKONING, SILENCED, ANCHORED, BRITTLE, CORRODED, UNDERTOW, DEAD_ZONE, FALLOUT, KILL_ZONE,
+                    CRACKED, TARRED -> 1f;
             case HEAL -> Math.max(effect.healPerTick(), effect.damagePerTick().amount());
             case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED, UNRAVELED, TOLL ->
                     effect.stacks();
@@ -375,7 +375,7 @@ public final class ActiveEffects {
                     accumulator.multiply(EnemyStat.MAGIC_PLATING, CRACKED_PLATING_SHARE);
                 }
                 case EXPOSED, MARKED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY,
-                        RECKONING, SILENCED, DEAD_ZONE, TOLL, BLEEDING -> {
+                        RECKONING, SILENCED, DEAD_ZONE, FALLOUT, TOLL, BLEEDING -> {
                 }
                 case TARRED -> accumulator.multiply(EnemyStat.MOVE_SPEED, TARRED_SPEED_SHARE);
                 case BURN, SOULFIRE -> {

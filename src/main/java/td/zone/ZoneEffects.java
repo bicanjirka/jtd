@@ -45,7 +45,7 @@ public final class ZoneEffects {
             }
             case FALLOUT -> {
                 owner.applyEffect(enemy, sink -> Effect.sickened(FALLOUT_SICKENED_STACKS));
-                owner.applyEffect(enemy, sink -> Effect.deadZone(FALLOUT_HOLD_TICKS, sink));
+                owner.applyEffect(enemy, sink -> Effect.fallout(FALLOUT_HOLD_TICKS, sink));
             }
         }
     }

@@ -509,7 +509,7 @@ class MortarTowerTest {
 
         float widenedByTheBracket = MortarTower.SPLASH_RADIUS_BASE * SCALE * 1.25f * 1.3f;
         assertThat(fallout.radius()).isCloseTo(0.8f * 1.5f * widenedByTheBracket, within(0.01f));
-        assertThat(target.activeEffectKinds()).contains(EffectKind.SICKENED, EffectKind.DEAD_ZONE);
+        assertThat(target.activeEffectKinds()).contains(EffectKind.SICKENED, EffectKind.FALLOUT);
     }
 
     @Test

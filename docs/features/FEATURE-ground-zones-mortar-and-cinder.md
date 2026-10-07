@@ -1,7 +1,7 @@
 # Feature Request: Ground Zones, Mortar and Cinder
 
-**Status: implemented**, except for how three things approximate the doc (Fallout also holds shields
-off, the Cinder's Stoke is not drawn, a cursed cloud holds its debuffs: `TODO.md`) and the numbers, which
+**Status: implemented**, except for how two things approximate the doc (the Cinder's Stoke is not
+drawn, a cursed cloud holds its debuffs: `TODO.md`) and the numbers, which
 are placeholders until the balance pass. Feature 6 of 7 in the tower rework (order in `TODO.md`).
 Needs features 1 to 5.
 

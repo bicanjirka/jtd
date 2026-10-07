@@ -144,6 +144,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case CORRODED -> Palette.STATUS_MARKER_CORRODED;
             case UNDERTOW -> Palette.STATUS_MARKER_UNDERTOW;
             case DEAD_ZONE -> Palette.STATUS_MARKER_DEAD_ZONE;
+            case FALLOUT -> Palette.STATUS_MARKER_FALLOUT;
             case KILL_ZONE -> Palette.STATUS_MARKER_KILL_ZONE;
             case CRACKED -> Palette.STATUS_MARKER_CRACKED;
             case TARRED -> Palette.STATUS_MARKER_TARRED;
