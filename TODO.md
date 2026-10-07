@@ -230,28 +230,6 @@ than dropping it.
   the same damage-over-time mechanism? Only then add an `EffectKind.ACID` case and an `Effect.acid(...)` factory,
   mirroring `Effect.burn(...)`.
 
-### Rotating tower sprites
-
-Towers don't rotate their sprite image to visually face their current target (enemy mobs already
-do this — see below). This was a speculative "nice to have," not a committed design.
-
-- **Where:** `td.ui.TowerSpriteFrameBuilder`, `td.ui.render.TowerSpriteDraw`
-- **Approach:** if pursued, note the facing-angle precedent on the enemy side no longer looks the
-  way this entry originally described: mob movement is composed via `MovementBehavior`
-  implementations (`FixedMovement`/`PulseMovement`/`PathDirectionalMovement`/`RotorMovement`,
-  `td.enemy`), and the current facing logic is `DefinedEnemyMob.getFacingRadians()` — a `switch`
-  over `this.definition.movement()`'s sealed type. Towers have no equivalent composed-movement
-  model, so there's no direct mechanism to reuse from there; a tower's facing would instead need
-  to be derived from its own chosen target, per tower. There's no shared targeting hook either -
-  targeting is composed per-tower via `td.tower.targeting` pieces (e.g. the Sniper folds its perks
-  into a `SniperSpec` whose `Reach` and aim pick the target; see `td/tower/CLAUDE.md`'s
-  "Targeting" section) — so
-  this needs new per-tower "facing" state updated wherever each tower's `doTick` calls its
-  selector, exposed as a getter, then threaded through as a new `facingRadians` field on
-  `TowerSpriteDraw` (currently absent — `EnemyBodyDraw`/`EnemyFadeDraw` already carry one) and
-  applied as a rotation in `Java2DFrameRenderer.paintTowerSprite()` alongside rotated sprite art
-  for each tower.
-
 ## Enemy features
 
 ### Enemy traits/abilities numbers are unbalanced placeholders

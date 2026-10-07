@@ -1181,7 +1181,7 @@ public final class Java2DFrameRenderer {
             this.paintTranscendentHalo(g2, sprite.haloTurn(), bodySize);
         }
         this.paintEnchantHalo(g2, sprite.enchantPulse(), bodySize);
-        this.paintTowerBody(g2, sprite.palette(), bodySize);
+        this.paintTowerBody(g2, sprite.palette(), bodySize, sprite.aims() ? sprite.facingRadians() : null);
         this.paintSlotPips(g2, sprite.slotMarks(), sprite.transcendent(), bodySize);
         this.paintSlotReadyChevrons(g2, sprite.slotMarks(), bodySize);
         this.paintRankPips(g2, sprite.rank(), bodySize);
@@ -1316,8 +1316,27 @@ public final class Java2DFrameRenderer {
     }
 
     /** Draws a tower body at the origin; the caller has translated to the tower's centre. */
-    private void paintTowerBody(Graphics2D g2, Palette palette, float size) {
+    /** Which way a body shape points as drawn, or {@code null} for one with no front. */
+    private static Float bodyFrontRadians(Palette palette) {
+        return switch (palette) {
+            case TOWER_SNIPER_BODY, TOWER_CINDER_BODY -> (float) -Math.PI / 2;
+            case TOWER_SEEKER_BODY -> 0f;
+            default -> null;
+        };
+    }
+
+    /**
+     * The body, turned to face {@code facingRadians} if it has a front and the tower aims; a ring or
+     * a diamond looks the same whichever way it faces, so those stay as drawn.
+     */
+    private void paintTowerBody(Graphics2D g2, Palette palette, float size, Float facingRadians) {
         Shape shape = towerBodyShape(palette, size);
+        if (facingRadians != null) {
+            Float front = bodyFrontRadians(palette);
+            if (front != null) {
+                shape = AffineTransform.getRotateInstance(facingRadians - front).createTransformedShape(shape);
+            }
+        }
         Color color = colorFor(palette);
         g2.setColor(withAlpha(color, 130));
         g2.fill(shape);

@@ -37,6 +37,8 @@ keeps the seam honest.
 - Rank badges and the `SPECIAL` halo are painted upright (not rotated with facing).
 - Tower bodies are one closed `Shape` each. The sonar head is the one exception, with its own
   `paintSonarSweep`. Toolbar icons reuse `towerBodyShape` via `renderTowerIcon`.
+- A tower that aims (`TowerSpriteDraw.aims`) turns a body that has a front (`bodyFrontRadians`) to its
+  turret's heading; the rest of its sprite (pips, halos) stays upright.
 
 ## Two clocks
 
