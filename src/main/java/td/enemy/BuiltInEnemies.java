@@ -5,6 +5,7 @@ import td.effect.HealTemplate;
 import td.effect.InvisibleTemplate;
 import td.effect.ShieldTemplate;
 import td.stat.DisruptionAura;
+import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +44,8 @@ final class BuiltInEnemies {
                             + "against whichever damage type has hit hardest this level."))
             .build();
 
+    private static final int ARMORED_REINFORCE_INTERVAL_TICKS = Math.round(3 * TickRate.TICKS_PER_SECOND);
+    private static final int ARMORED_REINFORCE_COUNT = 3;
     static final RankedEnemy ARMORED = RankedEnemy
             .startingAt(EnemyDefinition.of("s", "Armored mob", 80, 3, 1.28f, BodyArchetype.SQUARE)
                     .withDescription("Takes less damage. Immune to critical hits.")
@@ -61,11 +64,22 @@ final class BuiltInEnemies {
                             IdentifiedTrait.named("resist", new PercentResistTrait(0.6f)))))
             .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1280, 125)
                     .withDescription("Takes drastically less damage, and its plating blunts a large flat chunk of "
-                            + "every hit outright. Immune to critical hits.")
+                            + "every hit outright. Immune to critical hits. Calls three armored reinforcements "
+                            + "every three seconds.")
                     .withAdditionalTraits(List.of(
                             IdentifiedTrait.named("flatResist", FlatResistTrait.physicalOnly(10)),
-                            IdentifiedTrait.named("resist", new PercentResistTrait(0.5f)))))
+                            IdentifiedTrait.named("resist", new PercentResistTrait(0.5f))))
+                    .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(
+                            new PeriodicTrigger(ARMORED_REINFORCE_INTERVAL_TICKS),
+                            new SpawnEnemiesAction("sSpawn", AbilitySpawnShape.brood(ARMORED_REINFORCE_COUNT, 1f, 1f),
+                                    false))))))
             .build();
+    // A definition of its own, not the ladder's boss: a boss that reinforces with itself would be a spawn cycle.
+    static final EnemyDefinition S_SPAWN = EnemyDefinition
+            .of("sSpawn", "Armored Reinforcement", 100, 1, 1.28f, BodyArchetype.SQUARE)
+            .withDescription("A reinforcement called by an Armored boss. Takes less damage.")
+            .withMovement(new RotorMovement((float) Math.toRadians(5.0)))
+            .withTraits(List.of(new PercentResistTrait(0.8f)));
 
     private static final float JAMMER_RADIUS = 100f;
     private static final float JAMMER_FIRE_RATE_PENALTY = 0.3f;
@@ -181,6 +195,14 @@ final class BuiltInEnemies {
                                     new TimeSinceLastHitTrigger(MENDER_SELF_HEAL_WINDOW_TICKS),
                                     new ApplyEffectAction(new HealTemplate(0.02f, MENDER_SELF_HEAL_DURATION_TICKS), new SelfTarget()))))))
             .build();
+    // Protection, not health, is what makes a hatch likely: the first egg shrugs off all but the
+    // heaviest hits and each later one gives something up, until the last can simply be shot.
+    private static final float EGG_1_ARMOR_KEPT = 0.2f;
+    private static final float EGG_1_PLATING = 12f;
+    private static final float EGG_2_ARMOR_KEPT = 0.5f;
+    private static final float EGG_2_PLATING = 4f;
+    private static final float EGG_3_ARMOR_KEPT = 0.8f;
+    private static final float EGG_3_PLATING = 1f;
     static final EnemyDefinition WARDEN_EGG_3 = EnemyDefinition
             .of("wardenEgg3", "Warden's Final Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)
             .withDescription("Must be defeated to end the encounter - it will not hatch again. Its shell is cracked: "
@@ -204,14 +226,6 @@ final class BuiltInEnemies {
             .withAbilities(List.of(new Ability(
                     new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden2", 1, true))));
     static final EnemyDefinition WARDEN_EGG_2 = EnemyDefinition
-    // Protection, not health, is what makes a hatch likely: the first egg shrugs off all but the
-    // heaviest hits and each later one gives something up, until the last can simply be shot.
-    private static final float EGG_1_ARMOR_KEPT = 0.2f;
-    private static final float EGG_1_PLATING = 12f;
-    private static final float EGG_2_ARMOR_KEPT = 0.5f;
-    private static final float EGG_2_PLATING = 4f;
-    private static final float EGG_3_ARMOR_KEPT = 0.8f;
-    private static final float EGG_3_PLATING = 1f;
             .of("wardenEgg2", "Warden's Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)
             .withDescription("Hatches into a weaker Warden if not defeated in time. Immune to burn and freeze, "
                     + "and its armor and plating blunt every hit, though less than the first egg's.")

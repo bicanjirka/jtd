@@ -27,6 +27,7 @@ public final class EnemyCatalog {
         EnemyCatalog catalog = new EnemyCatalog();
         catalog.register(BuiltInEnemies.SIMPLE);
         catalog.register(BuiltInEnemies.ARMORED);
+        catalog.register(BuiltInEnemies.S_SPAWN);
         catalog.register(BuiltInEnemies.FRENZIED);
         catalog.register(BuiltInEnemies.T_SPAWN);
         catalog.register(BuiltInEnemies.GHOST);
