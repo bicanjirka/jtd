@@ -156,6 +156,16 @@ stop, timed ones crawl at a quarter pace, less under Toll).
   tower subscribe to it for the enemies inside; for Soul Drain, let a pace of zero stop a timed
   debuff when spirit is at its floor, which needs the README's pace rule changed with it.
 
+### A tower with no cooldown shows its fire rate halved once it has any upgrade
+
+`TowerBuff.fireRateFor` floors a cooldown at 1 tick, so the Pulse (base cooldown 0, a hit every
+tick) recalculates to a cooldown of 1 on its first purchase and its info row reads "20 → 10/s"
+though it still hits every tick.
+
+- **Where:** `td.tower.buff.TowerBuff.fireRateFor`, `AbstractTower.cadence`.
+- **Approach:** return 0 for a base cooldown of 0, or have a tower with no cooldown cadence override
+  `cadence()` to say nothing, as the Sonar does.
+
 ### Enemies inside the Pulse's field don't flicker
 
 The feature doc draws the enemies inside a field flickering; only the field's rings, coloured by
