@@ -2,6 +2,7 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.damage.DamageUnits;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -13,8 +14,11 @@ import td.fixtures.FakeEnemyMob;
 import td.fixtures.TowerFixtures;
 import td.fixtures.WorldFixtures;
 import td.projectile.CannonballProjectile;
+import td.projectile.ShellLook;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
+import td.zone.Zone;
+import td.zone.ZoneKind;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -38,13 +42,22 @@ class MortarTowerTest {
         return tower;
     }
 
+    /** A tower that owns the Siege Rounds chain and Transcendent, with the gates waived. */
+    private MortarTower transcendentTower() {
+        MortarTower tower = this.towerAt(3, 3);
+        this.context.playtestRules().setUpgradeGatesIgnored(true);
+        UpgradePaths.buy(tower, this.context, "Siege Rounds", "Siege Rounds II", "Heavy Shell", "Napalm",
+                "Transcendent");
+        return tower;
+    }
+
     private FakeEnemyMob enemyAt(MortarTower tower, double dx, double dy) {
         return FakeEnemyMob.at(tower.getX() + dx, tower.getY() + dy);
     }
 
     /** Ticks until the tower fires, then flies the shell to where it lands. */
     private void landAShell(MortarTower tower) {
-        for (int i = 0; i < 80 && this.context.projectiles().getProjectiles().isEmpty(); i++) {
+        for (int i = 0; i < 200 && this.context.projectiles().getProjectiles().isEmpty(); i++) {
             tower.doTick(this.tick++);
         }
         TowerFixtures.flyProjectilesToCompletion(this.context);
@@ -329,5 +342,135 @@ class MortarTowerTest {
 
         assertThat(early).isFalse();
         assertThat(UpgradePaths.named(tower, "Heavy Shell").gate().describe()).contains("15 Bracketed shells");
+    }
+
+    private java.util.List<ZoneKind> zoneKinds() {
+        return this.context.zones().zones().stream().map(Zone::kind).toList();
+    }
+
+    @Test
+    void everyThirdShellIsTheSpecialShellAndLeavesItsZoneWhereItLands() {
+        MortarTower tower = this.towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, "Cryo Shells");
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        this.landAShell(tower);
+        this.landAShell(tower);
+        java.util.List<ZoneKind> afterTwo = this.zoneKinds();
+        this.landAShell(tower);
+
+        assertThat(afterTwo).isEmpty();
+        assertThat(this.zoneKinds()).containsExactly(ZoneKind.FROST_GROUND);
+        Zone frost = this.context.zones().zones().getFirst();
+        assertThat(frost.x()).isEqualTo(target.getX());
+        assertThat(frost.radius()).isEqualTo(1.2f * SCALE);
+    }
+
+    @Test
+    void withTwoSpecialsOwnedTheyTakeTurnsAndEveryThirdShellIsPlain() {
+        MortarTower tower = this.transcendentTower();
+        UpgradePaths.buy(tower, this.context, "Cryo Shells");
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
+
+        for (int i = 0; i < 8; i++) {
+            this.landAShell(tower);
+        }
+
+        assertThat(this.zoneKinds()).containsExactly(ZoneKind.BURNING_GROUND, ZoneKind.FROST_GROUND,
+                ZoneKind.BURNING_GROUND, ZoneKind.FROST_GROUND, ZoneKind.BURNING_GROUND, ZoneKind.FROST_GROUND);
+    }
+
+    @Test
+    void aSpecialShellFliesInItsOwnLook() {
+        MortarTower tower = this.towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, "Tar");
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
+        java.util.List<ShellLook> looks = new java.util.ArrayList<>();
+
+        for (int i = 0; i < 3; i++) {
+            for (int t = 0; t < 200 && this.context.projectiles().getProjectiles().isEmpty(); t++) {
+                tower.doTick(this.tick++);
+            }
+            looks.add(((CannonballProjectile) this.context.projectiles().getProjectiles().getFirst()).look());
+            TowerFixtures.flyProjectilesToCompletion(this.context);
+        }
+
+        assertThat(looks).containsExactly(ShellLook.PLAIN, ShellLook.PLAIN, ShellLook.TAR);
+    }
+
+    @Test
+    void aNapalmShellBlastsForMagicAndItsGroundSetsEnemiesAlightCreditedToTheMortar() {
+        MortarTower tower = this.towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, "Napalm");
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+        this.landAShell(tower);
+        this.landAShell(tower);
+
+        this.landAShell(tower);
+        this.context.zones().doTick(1);
+
+        assertThat(target.hits()).extracting(hit -> hit.type()).containsExactly(DamageType.PHYSICAL,
+                DamageType.PHYSICAL, DamageType.MAGIC);
+        assertThat(target.activeEffectKinds()).contains(EffectKind.BURN);
+    }
+
+    @Test
+    void aTarShellsGroundSlowsAndPoisons() {
+        MortarTower tower = this.transcendentTower();
+        UpgradePaths.buy(tower, this.context, "Tar");
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        this.landAShell(tower);
+        this.landAShell(tower);
+        this.context.zones().doTick(1);
+
+        assertThat(target.activeEffectKinds()).contains(EffectKind.TARRED, EffectKind.POISON);
+    }
+
+    @Test
+    void aCryoShellsGroundChillsAndFreezesWhatStays() {
+        MortarTower tower = this.transcendentTower();
+        UpgradePaths.buy(tower, this.context, "Cryo Shells");
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+        this.landAShell(tower);
+        this.landAShell(tower);
+
+        for (int t = 1; t <= 31; t++) {
+            this.context.zones().doTick(t);
+        }
+
+        assertThat(target.activeEffectKinds()).contains(EffectKind.CHILL, EffectKind.FREEZE);
+    }
+
+    @Test
+    void theInfoRowsNameTheSpecialShellPattern() {
+        MortarTower tower = this.towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, "Napalm");
+
+        assertThat(tower.inspect().behaviours()).anySatisfy(line -> {
+            assertThat(line.label()).isEqualTo("Every 3rd shell");
+            assertThat(line.value()).isEqualTo("napalm");
+        });
+    }
+
+    @Test
+    void longBatteryMakesTheDeadZoneTwoAndAHalfCellsAndRangeNeverMovesIt() {
+        MortarTower tower = this.transcendentTower();
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, 2 * SCALE, 0)});
+        tower.doTick(1);
+        boolean shelledBefore = !this.context.projectiles().getProjectiles().isEmpty();
+        this.context.projectiles().clear();
+
+        UpgradePaths.buy(tower, this.context, "Range", "Range II", "Range III");
+        for (int t = 2; t < 200; t++) {
+            tower.doTick(t);
+        }
+
+        assertThat(shelledBefore).isTrue();
+        assertThat(this.context.projectiles().getProjectiles()).isEmpty();
     }
 }

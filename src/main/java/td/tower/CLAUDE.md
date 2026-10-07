@@ -54,6 +54,9 @@
   it. Its dead zone is a fixed distance on the `Reach` that range never moves. Bracketing is read at
   the landing, from the spec as it stands then, and `BracketTracker` is the only memory of where the
   last shell fell. Every shell Cracks plating; a shell's size is a tower stat that follows its damage.
+  A shell's type (`ShellPlan.typeOf` its number) is fixed when it is fired, so it is drawn in its look
+  in flight; a special shell leaves one zone where it lands, owned by the Mortar (`ZoneOwner`), and
+  shrapnel never does.
 - Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
   `AuraTower.buffs`' single "is this an aura" check stays the only role check.
 

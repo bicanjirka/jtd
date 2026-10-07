@@ -455,6 +455,9 @@ public final class Java2DFrameRenderer {
             case TOWER_PULSE_ZAP -> new Color(255, 245, 190);
             case TOWER_CINDER_CONE -> new Color(255, 90, 30);
             case PROJECTILE_CANNONBALL -> new Color(139, 90, 43);
+            case PROJECTILE_NAPALM -> new Color(255, 130, 30);
+            case PROJECTILE_TAR -> new Color(75, 60, 90);
+            case PROJECTILE_FROST -> new Color(170, 225, 255);
             case PROJECTILE_MISSILE -> new Color(80, 180, 255);
             case PROJECTILE_SMOKE -> new Color(190, 200, 210);
             case PROJECTILE_CRYO -> new Color(170, 235, 255);
