@@ -41,6 +41,7 @@ public final class Hud {
     /** Inset and minimum gap of a row-style face's two parts. */
     private static final int ROW_PADDING = 6;
     private static final int ROW_GAP = 8;
+    private static final String ELLIPSIS = "…";
 
     private Hud() {
     }
@@ -119,8 +120,8 @@ public final class Hud {
     }
 
     /**
-     * Centred text, or with a tab, a row like the info pane's: the part before it on the left,
-     * shortened with an ellipsis if the two would meet, and the part after it on the right.
+     * Centred text, or with a tab, a row like the info pane's: the part before it on the left, and the
+     * part after it on the right.
      */
     private static void paintCentredText(Graphics2D g2, AbstractButton button, int width, int height, boolean enabled) {
         String text = button.getText();
@@ -131,16 +132,43 @@ public final class Hud {
         FontMetrics metrics = g2.getFontMetrics();
         int baseline = (height - metrics.getHeight()) / 2 + metrics.getAscent();
         g2.setColor(enabled ? button.getForeground() : TEXT_DISABLED);
-        int tab = text.indexOf('\t');
+        int tab = text.indexOf('	');
         if (tab < 0) {
             g2.drawString(text, (width - metrics.stringWidth(text)) / 2, baseline);
             return;
         }
-        String right = text.substring(tab + 1);
-        int rightX = width - ROW_PADDING - metrics.stringWidth(right);
-        g2.drawString(right, rightX, baseline);
-        String left = fitted(text.substring(0, tab), rightX - ROW_GAP - ROW_PADDING, metrics);
-        g2.drawString(left, ROW_PADDING, baseline);
+        RowFace face = rowFace(text.substring(0, tab), text.substring(tab + 1), width, metrics);
+        g2.drawString(face.right(), width - ROW_PADDING - metrics.stringWidth(face.right()), baseline);
+        g2.drawString(face.left(), ROW_PADDING, baseline);
+    }
+
+    /** The two parts of a row-style face as they are drawn. */
+    record RowFace(String left, String right) {
+    }
+
+    /**
+     * Fits a row-style face into {@code width}. The left part, a name, stays whole; the right part
+     * gives way first, keeping its end, where a progress count sits. Only when the left part does not
+     * fit alone is it shortened, and then the right part is dropped.
+     */
+    static RowFace rowFace(String left, String right, int width, FontMetrics metrics) {
+        int room = width - 2 * ROW_PADDING;
+        int rightRoom = room - metrics.stringWidth(left) - ROW_GAP;
+        if (rightRoom >= metrics.stringWidth(right)) {
+            return new RowFace(left, right);
+        }
+        if (rightRoom > metrics.stringWidth(ELLIPSIS)) {
+            return new RowFace(left, fittedKeepingEnd(right, rightRoom, metrics));
+        }
+        return new RowFace(fitted(left, room, metrics), "");
+    }
+
+    private static String fittedKeepingEnd(String text, int available, FontMetrics metrics) {
+        String shortened = text;
+        while (!shortened.isEmpty() && metrics.stringWidth(ELLIPSIS + shortened) > available) {
+            shortened = shortened.substring(1);
+        }
+        return ELLIPSIS + shortened.stripLeading();
     }
 
     private static String fitted(String text, int available, FontMetrics metrics) {
