@@ -19,7 +19,7 @@ The tower rework, in this order (each needs the ones before it):
 3. `FEATURE-sniper-and-sonar.md` (implemented): crit per tower, the hit / periodic rule, the
    first debuffs and the effect rules every tower follows.
 4. `FEATURE-splash-stormcaller-and-hexer.md` (implemented): Dazed and the hex pool.
-5. `FEATURE-pulse-and-seeker.md`: Silenced, Anchored, Unraveled, Brittle, the nest.
+5. `FEATURE-pulse-and-seeker.md` (implemented): Silenced, Anchored, Unraveled, Brittle, the nest.
 6. `FEATURE-ground-zones-mortar-and-cinder.md`: ground zones and the fire-and-ice rules.
 7. `FEATURE-aura-and-balance-pass.md`: the Aura, harness pricing, display names, the README.
 
@@ -141,6 +141,30 @@ bonus and Mastery's Hexer half only hardens Blight until then.
 - **Approach:** build them on the ground zones of `FEATURE-ground-zones-mortar-and-cinder.md`
   once its zone type exists: a mine is a zone with a one-shot trigger, the cloud a zone left
   where a hexed enemy died. Mines' 10 s lifetime and 3 per Splash are in that doc.
+
+### The Pulse's Mirror Field and Soul Drain only approximate the feature doc
+
+`FEATURE-pulse-and-seeker.md` has Mirror Field return "damage a shield absorbs inside" from every
+source, and Soul Drain at -100 spirit keep "stacked debuffs from ever wearing off". As built,
+Mirror Field mirrors only the Pulse's own ticks, as a second hit the shield takes its share of
+again, and Soul Drain's spirit slows debuff timers to the floor of the spirit pace (stack debuffs
+stop, timed ones crawl at a quarter pace, less under Toll).
+
+- **Where:** `PulseTower.hitWithField` (Mirror Field), `ActiveEffects.tick` and its
+  `MIN_DEBUFF_PACE` (Soul Drain).
+- **Approach:** for Mirror Field, have `HitResolution` report the amount a shield took and let a
+  tower subscribe to it for the enemies inside; for Soul Drain, let a pace of zero stop a timed
+  debuff when spirit is at its floor, which needs the README's pace rule changed with it.
+
+### Enemies inside the Pulse's field don't flicker
+
+The feature doc draws the enemies inside a field flickering; only the field's rings, coloured by
+its rules, are drawn.
+
+- **Where:** `td.ui.EnemyFrameBuilder`, driven by a field effect on the enemy (`CORRODED`, `UNDERTOW`,
+  `SILENCED` or `KILL_ZONE`).
+- **Approach:** add an enemy overlay draw that alternates the body's opacity while one of those
+  effects is active, so it needs no state beyond the effect.
 
 ### A global, buy-once upgrade for a whole tower type doesn't exist
 
