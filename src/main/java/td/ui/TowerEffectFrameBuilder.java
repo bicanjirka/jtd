@@ -15,6 +15,7 @@ import td.tower.TowerVisitor;
 import td.tower.upgrade.StandardBaseSlot;
 import td.ui.render.BeamDraw;
 import td.ui.render.ConeDraw;
+import td.ui.render.FlashDraw;
 import td.ui.render.NestDraw;
 import td.ui.render.Palette;
 import td.ui.render.PulseDraw;
@@ -66,6 +67,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float RANGING_RADIUS_CELLS = 1.5f;
     private static final float RANGING_TIGHTENING_CELLS = 1f;
     private static final float RANGING_ALPHA = 0.7f;
+    private static final float NUKE_FLASH_SHARE = 0.6f;
+    private static final float NUKE_FLASH_ALPHA = 0.8f;
     private static final double NEST_ORBIT_RADIANS_PER_TICK = 0.08;
 
     /** The Pulse's ripples: how many rings, how fast they spread, and how much faster for each Toll stack. */
@@ -305,6 +308,17 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             float radius = this.scale * (RANGING_RADIUS_CELLS - RANGING_TIGHTENING_CELLS * tightness);
             this.draws.add(new RingDraw(Palette.TOWER_MORTAR_RANGING, (float) marker.x(), (float) marker.y(), radius,
                     RANGING_ALPHA));
+        });
+        tower.getNukeFlash().ifPresent(flash -> {
+            float progress = (this.gameTime - flash.startedAtTick() + (float) this.interpolationAlpha)
+                    / MortarTower.NUKE_FLASH_TICKS;
+            if (progress >= 0f && progress < 1f) {
+                float fade = 1f - progress;
+                this.draws.add(new FlashDraw(Palette.TOWER_MORTAR_NUKE_FLASH, (float) flash.x(), (float) flash.y(),
+                        flash.radius() * NUKE_FLASH_SHARE, fade * NUKE_FLASH_ALPHA));
+                this.draws.add(new RingDraw(Palette.TOWER_MORTAR_NUKE_FLASH, (float) flash.x(), (float) flash.y(),
+                        flash.radius() * progress, fade));
+            }
         });
         return null;
     }

@@ -473,4 +473,116 @@ class MortarTowerTest {
         assertThat(shelledBefore).isTrue();
         assertThat(this.context.projectiles().getProjectiles()).isEmpty();
     }
+
+    @Test
+    void everyFourthShellIsANukeThatHitsFourTimesAsHardOverAWiderBlastAndLeavesFallout() {
+        MortarTower tower = this.transcendentTower();
+        UpgradePaths.buy(tower, this.context, "Tactical Nuke");
+        float radius = MortarTower.SPLASH_RADIUS_BASE * SCALE;
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob wide = this.enemyAt(tower, OUT, radius * 1.6f).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{target, wide});
+
+        for (int i = 0; i < 4; i++) {
+            this.landAShell(tower);
+        }
+
+        assertThat(target.hits()).hasSize(4);
+        assertThat(hitAmount(target, 0)).isEqualTo(tower.damageCurrent());
+        assertThat(hitAmount(target, 3)).isGreaterThan(3 * hitAmount(target, 1));
+        assertThat(wide.hits()).hasSize(1);
+        assertThat(this.zoneKinds()).containsExactly(ZoneKind.BURNING_GROUND, ZoneKind.FALLOUT);
+    }
+
+    @Test
+    void aNukesFalloutCoversEightTenthsOfItsBlastAndDrainsSpiritAndKeepsHealsOut() {
+        MortarTower tower = this.transcendentTower();
+        UpgradePaths.buy(tower, this.context, "Tactical Nuke");
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+        for (int i = 0; i < 4; i++) {
+            this.landAShell(tower);
+        }
+
+        Zone fallout = this.context.zones().zones().getLast();
+        this.context.zones().doTick(1);
+
+        float widenedByTheBracket = MortarTower.SPLASH_RADIUS_BASE * SCALE * 1.25f * 1.3f;
+        assertThat(fallout.radius()).isCloseTo(0.8f * 1.5f * widenedByTheBracket, within(0.01f));
+        assertThat(target.activeEffectKinds()).contains(EffectKind.SICKENED, EffectKind.DEAD_ZONE);
+    }
+
+    @Test
+    void aNukeNeverCarriesASpecialAndTheSpecialPatternRunsOnTheOtherShells() {
+        MortarTower tower = this.transcendentTower();
+        UpgradePaths.buy(tower, this.context, "Tactical Nuke");
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
+
+        for (int i = 0; i < 8; i++) {
+            this.landAShell(tower);
+        }
+
+        assertThat(this.zoneKinds()).containsExactly(ZoneKind.BURNING_GROUND, ZoneKind.FALLOUT,
+                ZoneKind.BURNING_GROUND, ZoneKind.FALLOUT);
+    }
+
+    @Test
+    void aNukeShellFliesBiggerAndInItsOwnLook() {
+        MortarTower tower = this.transcendentTower();
+        UpgradePaths.buy(tower, this.context, "Tactical Nuke");
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
+        for (int i = 0; i < 2; i++) {
+            this.landAShell(tower);
+        }
+        float plainSize = ((CannonballProjectile) this.fire(tower)).stats().size();
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        CannonballProjectile nuke = (CannonballProjectile) this.fire(tower);
+
+        assertThat(nuke.look()).isEqualTo(ShellLook.NUKE);
+        assertThat(nuke.stats().size()).isGreaterThan(plainSize);
+    }
+
+    private td.projectile.Projectile fire(MortarTower tower) {
+        for (int t = 0; t < 200 && this.context.projectiles().getProjectiles().isEmpty(); t++) {
+            tower.doTick(this.tick++);
+        }
+        return this.context.projectiles().getProjectiles().getFirst();
+    }
+
+    @Test
+    void bunkerBusterHitsTheEnemyAtTheCentreForTripleAndSundersItButNotThoseAroundIt() {
+        MortarTower tower = this.transcendentTower();
+        UpgradePaths.buy(tower, this.context, "Bunker Buster");
+        FakeEnemyMob centre = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob beside = this.enemyAt(tower, OUT, SCALE * 0.8).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{centre, beside});
+
+        this.landAShell(tower);
+
+        assertThat(centre.onlyHitAmount()).isEqualTo(3 * tower.damageCurrent());
+        assertThat(centre.activeEffectKinds()).contains(EffectKind.SUNDERED);
+        assertThat(beside.onlyHitAmount()).isLessThan(tower.damageCurrent());
+        assertThat(beside.activeEffectKinds()).doesNotContain(EffectKind.SUNDERED);
+    }
+
+    @Test
+    void bunkerBusterShrinksTheBlastByThirty() {
+        MortarTower tower = this.transcendentTower();
+        float before = tower.getSplashRadius();
+
+        UpgradePaths.buy(tower, this.context, "Bunker Buster");
+
+        assertThat(tower.getSplashRadius()).isEqualTo(before * 0.7f);
+    }
+
+    @Test
+    void theTwoFourthLevelNodesExcludeEachOther() {
+        MortarTower tower = this.transcendentTower();
+        UpgradePaths.buy(tower, this.context, "Bunker Buster");
+
+        boolean other = tower.buyUpgrade(UpgradePaths.named(tower, "Tactical Nuke"));
+
+        assertThat(other).isFalse();
+    }
 }

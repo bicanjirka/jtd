@@ -2,6 +2,7 @@ package td.tower;
 
 import td.damage.Damage;
 import td.effect.Effect;
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.CannonballProjectile;
 import td.projectile.ProjectileStats;
@@ -9,12 +10,15 @@ import td.tower.buff.TowerBuff;
 import td.tower.mortar.BracketDamagePerk;
 import td.tower.mortar.BracketTracker;
 import td.tower.mortar.BracketingPerk;
+import td.tower.mortar.BunkerBusterPerk;
 import td.tower.mortar.HeavyShellPerk;
 import td.tower.mortar.LongBatteryPerk;
 import td.tower.mortar.MortarPerk;
 import td.tower.mortar.MortarSpec;
+import td.tower.mortar.NukeFlash;
 import td.tower.mortar.ShellType;
 import td.tower.mortar.ShellTypePerk;
+import td.tower.mortar.TacticalNukePerk;
 import td.tower.mortar.WiderBlastPerk;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
@@ -65,6 +69,9 @@ public final class MortarTower extends AbstractTower {
     /** A shell's drawn size grows with the square root of how much harder than base it hits. */
     private static final float SHELL_SIZE_PER_DAMAGE_ROOT = 1f;
     private static final float MAX_SHELL_SIZE = 2.5f;
+    private static final float NUKE_SHELL_SIZE = 1.5f;
+    /** Ticks a nuke's flash and ring last. */
+    public static final int NUKE_FLASH_TICKS = 10;
 
     private static final String BRACKET_DEED = "Bracketed shells";
     private static final int BRACKETED_SHELLS_NEEDED = 15;
@@ -90,6 +97,17 @@ public final class MortarTower extends AbstractTower {
             .withExtraEffect("a bigger, slower shell; enemies within 0.5 cells of the impact are Dazed 0.5s")
             .after(SIEGE_ROUNDS_2);
 
+    private static final UpgradeNode TACTICAL_NUKE = UpgradeTier.HEAD_4.node("mortar.head.siege_rounds.4a",
+            "Tactical Nuke", PRICE)
+            .withExtraEffect("every 4th shell is a nuke: x4 damage over x1.5 the blast, leaving fallout for 4s over "
+                    + "0.8 of the blast; it never carries a special")
+            .after(HEAVY_SHELL);
+    private static final UpgradeNode BUNKER_BUSTER = UpgradeTier.HEAD_4.node("mortar.head.siege_rounds.4b",
+            "Bunker Buster", PRICE)
+            .withExtraEffect("the enemy at the centre of the blast takes x3 damage and is Sundered; the blast "
+                    + "shrinks 30%")
+            .after(HEAVY_SHELL);
+
     private static final UpgradeNode NAPALM = UpgradeTier.SPECIAL.node("mortar.special.napalm", "Napalm", PRICE)
             .withExtraEffect("every 3rd shell is Napalm: its blast is magic and leaves burning ground, 1 cell wide, for 3s");
     private static final UpgradeNode TAR = UpgradeTier.SPECIAL.node("mortar.special.tar", "Tar", PRICE)
@@ -99,7 +117,8 @@ public final class MortarTower extends AbstractTower {
             .withExtraEffect("every 3rd shell is Cryo: it leaves frost ground, 1.2 cells wide, for 3s");
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, HEAVY_SHELL))
-            .with(SIEGE_ROUNDS_1, SIEGE_ROUNDS_2, HEAVY_SHELL, NAPALM, TAR, CRYO_SHELLS)
+            .with(SIEGE_ROUNDS_1, SIEGE_ROUNDS_2, HEAVY_SHELL, TACTICAL_NUKE, BUNKER_BUSTER, NAPALM, TAR, CRYO_SHELLS)
+            .withChoice(ExclusiveChoice.oneOf(TACTICAL_NUKE, BUNKER_BUSTER))
             .withChoice(ExclusiveChoice.specials(NAPALM, TAR, CRYO_SHELLS));
 
     private static final PerkCatalogue<MortarPerk> PERKS = PerkCatalogue.<MortarPerk>empty()
@@ -108,6 +127,8 @@ public final class MortarTower extends AbstractTower {
             .with(SIEGE_ROUNDS_1.id(), BracketDamagePerk::new)
             .with(SIEGE_ROUNDS_2.id(), WiderBlastPerk::new)
             .with(HEAVY_SHELL.id(), HeavyShellPerk::new)
+            .with(TACTICAL_NUKE.id(), TacticalNukePerk::new)
+            .with(BUNKER_BUSTER.id(), BunkerBusterPerk::new)
             .with(NAPALM.id(), () -> new ShellTypePerk(ShellType.NAPALM))
             .with(TAR.id(), () -> new ShellTypePerk(ShellType.TAR))
             .with(CRYO_SHELLS.id(), () -> new ShellTypePerk(ShellType.CRYO));
@@ -116,7 +137,9 @@ public final class MortarTower extends AbstractTower {
     private final OwnedPerks<MortarPerk> perks = new OwnedPerks<>(PERKS);
     private final BracketTracker bracketing = new BracketTracker();
     private final ZoneOwner zoneOwner = this::applyEffect;
+    private volatile NukeFlash nukeFlash;
     private int shellsFired;
+    private int tickNow;
     private int coolDown = 0;
     private EnemyMob currentTarget;
 
@@ -150,6 +173,7 @@ public final class MortarTower extends AbstractTower {
     }
 
     public void doTick(int gameTime) {
+        this.tickNow = gameTime;
         MortarSpec spec = this.spec(this.perks.all());
         if (this.coolDown > 0) {
             this.coolDown--;
@@ -169,14 +193,15 @@ public final class MortarTower extends AbstractTower {
         this.shellsFired++;
         ShellType type = spec.shells().typeOf(this.shellsFired);
         this.context.projectiles().add(new CannonballProjectile(this.centerX, this.centerY, target.getX(),
-                target.getY(), this.shellStats(spec), type.look(), (x, y) -> this.onImpact(x, y, type)));
+                target.getY(), this.shellStats(spec, type), type.look(), (x, y) -> this.onImpact(x, y, type)));
     }
 
     /** The shell as it flies and is drawn: its speed and size are stats, and its size follows how hard it hits. */
-    private ProjectileStats shellStats(MortarSpec spec) {
+    private ProjectileStats shellStats(MortarSpec spec, ShellType type) {
         float size = Math.min(MAX_SHELL_SIZE, SHELL_SIZE_PER_DAMAGE_ROOT
                 * (float) Math.sqrt((double) this.damageCurrent() / this.damageBase));
-        return ProjectileStats.of(SHELL_SPEED * spec.speedScale()).withSize(size * spec.sizeScale());
+        float typeSize = type == ShellType.NUKE ? NUKE_SHELL_SIZE : 1f;
+        return ProjectileStats.of(SHELL_SPEED * spec.speedScale()).withSize(size * spec.sizeScale() * typeSize);
     }
 
     private float blastRadius(MortarSpec spec, float stepScale) {
@@ -190,16 +215,28 @@ public final class MortarTower extends AbstractTower {
         if (step > 0) {
             this.countDeedOfAttack();
         }
-        float radius = this.blastRadius(spec, 1f + step * spec.bracket().radiusStep());
-        float damage = this.damageCurrent() * (1f + step * spec.bracket().damageStep());
+        boolean nuke = type == ShellType.NUKE;
+        float radius = this.blastRadius(spec, (1f + step * spec.bracket().radiusStep())
+                * (nuke ? spec.nuke().radiusFactor() : 1f));
+        float damage = this.damageCurrent() * (1f + step * spec.bracket().damageStep())
+                * (nuke ? spec.nuke().damageFactor() : 1f);
         List<EnemyMob> hit = InRangeTargetQuery.everyone((int) Math.round(x), (int) Math.round(y), radius)
                 .matching(this.context.enemies());
+        EnemyMob centre = spec.centre().isActive()
+                ? this.enemyAtCentre(hit, x, y, spec.centre().radiusCells() * scale) : null;
         for (EnemyMob enemy : hit) {
             double dx = x - enemy.getX();
             double dy = y - enemy.getY();
             float falloff = 1f - (float) ((dx * dx + dy * dy) / ((double) radius * radius));
-            this.dealDamage(enemy, Damage.of(type.damageType(), Math.round(damage * falloff)));
+            float centreFactor = enemy == centre ? spec.centre().damageFactor() : 1f;
+            this.dealDamage(enemy, Damage.of(type.damageType(), Math.round(damage * falloff * centreFactor)));
             this.applyEffect(enemy, sink -> Effect.cracked(CRACKED_TICKS, sink));
+            if (enemy == centre) {
+                this.applyStacks(enemy, EffectKind.SUNDERED, spec.centre().sunderStacks());
+            }
+        }
+        if (nuke) {
+            this.nukeFlash = new NukeFlash(x, y, radius, this.tickNow + 1);
         }
         if (spec.daze().isActive()) {
             float dazeRadius = spec.daze().radiusCells() * scale;
@@ -212,8 +249,24 @@ public final class MortarTower extends AbstractTower {
             }
         }
         type.zone().ifPresent(zone -> this.context.zones().add(new Zone(zone.kind(), x, y,
-                zone.radiusCells() * scale, zone.lifetimeTicks(),
+                zone.radius(scale, radius), zone.lifetimeTicks(),
                 Math.round(this.damageCurrent() * zone.damageShare()), this.zoneOwner)));
+    }
+
+    /** The enemy closest to where the shell landed, if it is within {@code reach} pixels of it. */
+    private EnemyMob enemyAtCentre(List<EnemyMob> hit, double x, double y, float reach) {
+        EnemyMob closest = null;
+        double closestDistance2 = (double) reach * reach;
+        for (EnemyMob enemy : hit) {
+            double dx = x - enemy.getX();
+            double dy = y - enemy.getY();
+            double distance2 = dx * dx + dy * dy;
+            if (distance2 <= closestDistance2) {
+                closest = enemy;
+                closestDistance2 = distance2;
+            }
+        }
+        return closest;
     }
 
     public EnemyMob getCurrentTarget() {
@@ -234,10 +287,15 @@ public final class MortarTower extends AbstractTower {
         return this.bracketing.marker();
     }
 
+    /** The flash of the last nuke, for the frame build; empty before the first one. */
+    public Optional<NukeFlash> getNukeFlash() {
+        return Optional.ofNullable(this.nukeFlash);
+    }
+
     @Override
     protected List<TowerStatLine> ownStats() {
         MortarSpec spec = this.spec(this.perks.all());
-        ProjectileStats shell = this.shellStats(spec);
+        ProjectileStats shell = this.shellStats(spec, ShellType.PLAIN);
         float cellsPerSecond = shell.speed() * TICKS_PER_SECOND / this.context.getBoard().scale();
         return List.of(new TowerStatLine(TowerStat.SPLASH_RADIUS, SPLASH_RADIUS_BASE, SPLASH_RADIUS_BASE * spec.blastScale()),
                 TowerStatLine.fixed(TowerStat.PROJECTILE_SPEED, cellsPerSecond),
@@ -260,6 +318,14 @@ public final class MortarTower extends AbstractTower {
         if (spec.daze().isActive()) {
             lines.add(new BehaviourLine(BehaviourMarker.DAZE, "Impact dazes",
                     BehaviourLine.seconds(spec.daze().ticks())));
+        }
+        if (spec.nuke().isActive()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Every " + spec.nuke().every() + "th shell",
+                    "nuke: x" + Math.round(spec.nuke().damageFactor()) + " damage, fallout"));
+        }
+        if (spec.centre().isActive()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Blast centre",
+                    "x" + Math.round(spec.centre().damageFactor()) + " damage, sundered"));
         }
         List<ShellType> specials = spec.shells().specials();
         if (!specials.isEmpty()) {

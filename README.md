@@ -189,6 +189,21 @@ holds more than one effect; selecting it lists every effect with what kind it is
 
 Stacks wear off at a pace spirit sets: neutral spirit loses one per second, more spirit is faster, and at -100 they never wear off, so a fully sickened enemy stays sickened. Every other debuff's timer runs at `max(0.25, 1 + spirit / 100)` of normal speed (freeze keeps its own diminishing returns). A frozen enemy cannot burn, and freezing an enemy puts out its burn, landing half of what was left at once, but keeps its Scorched stacks. Hexes bend this: Rimed and Ashen change what a freeze does, and Inverted keeps an enemy from turning invisible. Nothing else cancels anything.
 
+### Ground zones
+
+A tower can leave a patch of ground that keeps working after the shot that made it. A zone pulses
+twice a second on every enemy inside (hidden ones too), credited to the tower that made it, and the
+pulse never crits. Two zones of one kind never stack: an enemy standing in both takes one pulse.
+Zones combine only through what they leave on the enemy, so tar then fire burns at double and a
+freeze in frost bursts a burn.
+
+| Zone           | Made by                    | What it does to enemies inside |
+|----------------|----------------------------|--------------------------------|
+| Burning ground | Mortar's Napalm            | Burns them |
+| Tar            | Mortar's Tar               | Poisons them and leaves them Tarred (slowed 40%; a burn starts at double, a freeze lasts a second longer) |
+| Frost ground   | Mortar's Cryo Shells       | Chills them, and freezes one that stays 2 s |
+| Fallout        | Mortar's Tactical Nuke     | Drains their spirit and keeps heals and shields from taking hold |
+
 Only a hit can crit: a shot, a blast, a beam pass. Damage that ticks (a burn, a poison, a field)
 never does, but a burn or poison started by a crit starts that much stronger. Each tower has its
 own crit multiplier (x1.5, the Sniper x2.0). A guaranteed crit lands whenever the enemy's

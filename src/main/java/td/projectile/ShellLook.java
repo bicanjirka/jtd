@@ -5,5 +5,6 @@ public enum ShellLook {
     PLAIN,
     NAPALM,
     TAR,
-    FROST
+    FROST,
+    NUKE
 }

@@ -12,6 +12,7 @@ import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
+import td.ui.render.FlashDraw;
 import td.ui.render.HexGlyph;
 import td.ui.render.HexRuneDraw;
 import td.ui.render.IceCrystalDraw;
@@ -137,6 +138,7 @@ public final class Java2DFrameRenderer {
     private static final int ZONE_FLAMES = 6;
     private static final int ZONE_BUBBLES = 3;
     private static final int ZONE_CRYSTAL_ARMS = 3;
+    private static final int ZONE_FALLOUT_BLADES = 3;
     /** A banked missile is drawn this share of a missile in flight. */
     private static final float NEST_MISSILE_SCALE = 0.6f;
     private static final Font MARKER_COUNT_FONT = Hud.LABEL_FONT.deriveFont(9f);
@@ -452,12 +454,15 @@ public final class Java2DFrameRenderer {
             case ZONE_BURNING -> new Color(255, 120, 30);
             case ZONE_TAR -> new Color(35, 28, 25);
             case ZONE_FROST -> new Color(170, 225, 255);
+            case ZONE_FALLOUT -> new Color(150, 220, 60);
             case TOWER_PULSE_ZAP -> new Color(255, 245, 190);
             case TOWER_CINDER_CONE -> new Color(255, 90, 30);
             case PROJECTILE_CANNONBALL -> new Color(139, 90, 43);
             case PROJECTILE_NAPALM -> new Color(255, 130, 30);
             case PROJECTILE_TAR -> new Color(75, 60, 90);
             case PROJECTILE_FROST -> new Color(170, 225, 255);
+            case PROJECTILE_NUKE -> new Color(245, 245, 235);
+            case TOWER_MORTAR_NUKE_FLASH -> new Color(255, 255, 240);
             case PROJECTILE_MISSILE -> new Color(80, 180, 255);
             case PROJECTILE_SMOKE -> new Color(190, 200, 210);
             case PROJECTILE_CRYO -> new Color(170, 235, 255);
@@ -608,6 +613,7 @@ public final class Java2DFrameRenderer {
             case ZONE_BURNING -> this.paintZoneFlames(g2, zone, fade);
             case ZONE_TAR -> this.paintZoneTarGloss(g2, zone, fade);
             case ZONE_FROST -> this.paintZoneCrystals(g2, zone, fade);
+            case ZONE_FALLOUT -> this.paintZoneFallout(g2, zone, fade);
             default -> {
             }
         }
@@ -638,6 +644,16 @@ public final class Java2DFrameRenderer {
             float size = 1.5f + 2.5f * pulse;
             g2.setColor(withAlpha(new Color(90, 80, 100), Math.round(140 * (1f - pulse) * fade)));
             g2.draw(new Ellipse2D.Float(bx - size, by - size, size * 2, size * 2));
+        }
+    }
+
+    /** Three fan blades turning slowly: the radiation sign. */
+    private void paintZoneFallout(Graphics2D g2, ZoneDraw zone, float fade) {
+        float r = zone.radius() * 0.7f;
+        g2.setColor(withAlpha(new Color(30, 40, 10), Math.round(150 * fade)));
+        for (int i = 0; i < ZONE_FALLOUT_BLADES; i++) {
+            double start = Math.toDegrees(zone.phase() * 0.8 + i * 2 * Math.PI / ZONE_FALLOUT_BLADES);
+            g2.fill(new Arc2D.Float(zone.centerX() - r, zone.centerY() - r, r * 2, r * 2, (float) start, 60f, Arc2D.PIE));
         }
     }
 
@@ -1310,6 +1326,7 @@ public final class Java2DFrameRenderer {
             case PulseDraw pulse ->
                     this.paintFilledCircle(g2, pulse.palette(), pulse.centerX(), pulse.centerY(), pulse.radius());
             case RingDraw ring -> this.paintRing(g2, ring);
+            case FlashDraw flash -> this.paintFlash(g2, flash);
             case ConeDraw cone -> this.paintCone(g2, cone);
             case NestDraw nest -> this.paintNest(g2, nest);
             case TowerStatusDraw status -> this.paintStatusMarker(g2,
@@ -1345,6 +1362,12 @@ public final class Java2DFrameRenderer {
         float halfWidthDegrees = (float) Math.toDegrees(halfWidthRadians);
         return new Arc2D.Float(-radius, -radius, radius * 2, radius * 2, -halfWidthDegrees, halfWidthDegrees * 2,
                 Arc2D.PIE);
+    }
+
+    private void paintFlash(Graphics2D g2, FlashDraw flash) {
+        g2.setColor(withAlpha(colorFor(flash.palette()), Math.round(flash.alpha() * 255)));
+        g2.fill(new Ellipse2D.Float(flash.centerX() - flash.radius(), flash.centerY() - flash.radius(),
+                flash.radius() * 2, flash.radius() * 2));
     }
 
     private void paintRing(Graphics2D g2, RingDraw ring) {

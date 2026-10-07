@@ -15,9 +15,11 @@ import td.tower.targeting.Viewpoint;
  * @param sizeScale  the shell's drawn size as a multiple of the base
  * @param daze       whom an impact stuns
  * @param shells     which shells carry what
+ * @param nuke       what a nuke does
+ * @param centre     what the centre of a blast suffers
  */
 public record MortarSpec(Reach reach, BracketSpec bracket, float blastScale, float speedScale, float sizeScale,
-                         DazeSpec daze, ShellPlan shells) {
+                         DazeSpec daze, ShellPlan shells, NukeSpec nuke, CentreSpec centre) {
 
     /** Nothing closer than this can be shelled. */
     public static final float BASE_DEAD_ZONE_CELLS = 1.5f;
@@ -25,39 +27,50 @@ public record MortarSpec(Reach reach, BracketSpec bracket, float blastScale, flo
     /** The visible enemies in range beyond the dead zone, no bracketing and only plain shells. */
     public static MortarSpec from(Viewpoint view) {
         return new MortarSpec(Reach.visible(view).withDeadZone(BASE_DEAD_ZONE_CELLS * view.cellSize()),
-                BracketSpec.none(), 1f, 1f, 1f, DazeSpec.none(), ShellPlan.none());
+                BracketSpec.none(), 1f, 1f, 1f, DazeSpec.none(), ShellPlan.none(), NukeSpec.none(),
+                CentreSpec.none());
     }
 
     public MortarSpec withReach(Reach reach) {
         return new MortarSpec(reach, this.bracket, this.blastScale, this.speedScale, this.sizeScale, this.daze,
-                this.shells);
+                this.shells, this.nuke, this.centre);
     }
 
     public MortarSpec withBracket(BracketSpec bracket) {
         return new MortarSpec(this.reach, bracket, this.blastScale, this.speedScale, this.sizeScale, this.daze,
-                this.shells);
+                this.shells, this.nuke, this.centre);
     }
 
     /** This spec with the blast {@code factor} times as wide. */
     public MortarSpec withBlastScaledBy(float factor) {
         return new MortarSpec(this.reach, this.bracket, this.blastScale * factor, this.speedScale, this.sizeScale,
-                this.daze, this.shells);
+                this.daze, this.shells, this.nuke, this.centre);
     }
 
     /** This spec with the shell {@code speed} times as fast and {@code size} times as big. */
     public MortarSpec withShellScaledBy(float speed, float size) {
         return new MortarSpec(this.reach, this.bracket, this.blastScale, this.speedScale * speed,
-                this.sizeScale * size, this.daze, this.shells);
+                this.sizeScale * size, this.daze, this.shells, this.nuke, this.centre);
     }
 
     public MortarSpec withDaze(DazeSpec daze) {
         return new MortarSpec(this.reach, this.bracket, this.blastScale, this.speedScale, this.sizeScale, daze,
-                this.shells);
+                this.shells, this.nuke, this.centre);
     }
 
     public MortarSpec withShells(ShellPlan shells) {
         return new MortarSpec(this.reach, this.bracket, this.blastScale, this.speedScale, this.sizeScale,
-                this.daze, shells);
+                this.daze, shells, this.nuke, this.centre);
+    }
+
+    public MortarSpec withNuke(NukeSpec nuke) {
+        return new MortarSpec(this.reach, this.bracket, this.blastScale, this.speedScale, this.sizeScale,
+                this.daze, this.shells, nuke, this.centre);
+    }
+
+    public MortarSpec withCentre(CentreSpec centre) {
+        return new MortarSpec(this.reach, this.bracket, this.blastScale, this.speedScale, this.sizeScale,
+                this.daze, this.shells, this.nuke, centre);
     }
 
     public Viewpoint view() {

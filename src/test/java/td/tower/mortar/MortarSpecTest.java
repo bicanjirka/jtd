@@ -47,4 +47,24 @@ class MortarSpecTest {
 
         assertThat(new int[]{first, second, third, fourth, fifth, elsewhere}).containsExactly(0, 1, 2, 3, 3, 0);
     }
+
+    @Test
+    void aNukeIsEveryFourthShellAndTheSpecialsRunOnTheOthers() {
+        ShellPlan plan = ShellPlan.none().withSpecial(ShellType.CRYO).withSpecial(ShellType.TAR).withNukeEvery(4);
+
+        assertThat(java.util.stream.IntStream.rangeClosed(1, 9).mapToObj(plan::typeOf).toList()).containsExactly(
+                ShellType.CRYO, ShellType.TAR, ShellType.PLAIN, ShellType.NUKE, ShellType.CRYO, ShellType.TAR,
+                ShellType.PLAIN, ShellType.NUKE, ShellType.CRYO);
+    }
+
+    @Test
+    void withoutSpecialsEveryShellIsPlainAndWithOneEveryThirdIsSpecial() {
+        ShellPlan plain = ShellPlan.none();
+        ShellPlan one = ShellPlan.none().withSpecial(ShellType.NAPALM);
+
+        assertThat(java.util.stream.IntStream.rangeClosed(1, 6).mapToObj(plain::typeOf)).containsOnly(ShellType.PLAIN);
+        assertThat(java.util.stream.IntStream.rangeClosed(1, 6).mapToObj(one::typeOf).toList()).containsExactly(
+                ShellType.PLAIN, ShellType.PLAIN, ShellType.NAPALM, ShellType.PLAIN, ShellType.PLAIN,
+                ShellType.NAPALM);
+    }
 }

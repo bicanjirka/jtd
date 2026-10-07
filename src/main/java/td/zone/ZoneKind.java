@@ -7,5 +7,7 @@ public enum ZoneKind {
     /** Slows and poisons, and leaves an enemy tarred. */
     TAR,
     /** Chills what stands on it, and freezes what stays. */
-    FROST_GROUND
+    FROST_GROUND,
+    /** Drains the spirit of what stands on it and keeps heals and shields from taking hold. */
+    FALLOUT
 }
