@@ -15,5 +15,9 @@ public enum TowerStat {
     /** A fraction in {@code [0, 1]}. */
     CRIT_CHANCE,
     /** In cells. */
-    SPLASH_RADIUS
+    SPLASH_RADIUS,
+    /** In cells a second. */
+    PROJECTILE_SPEED,
+    /** A multiple of the standard projectile's size. */
+    PROJECTILE_SIZE
 }

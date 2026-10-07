@@ -25,6 +25,10 @@
   payload uses (an arc's reach) grows with the same bonus (`BlastSpec.distanceScale()`). The
   blast lands and Saturates first, then the payload runs.
 - A tower whose fork renames it overrides `displayName()`; the id and `TowerFactory.Type` stay.
+- A missile's speed and size are a tower stat (`ProjectileStats`), shown as `TowerStat.PROJECTILE_SPEED`
+  (cells a second, so it holds at any board scale) and `PROJECTILE_SIZE`, and drawn from the same record.
+- The Seeker's nest loads from the cooldown whether or not an enemy is in range, so it fills between
+  waves; stored missiles launch `launchGapTicks` apart, one target pick per missile.
 - A Hexer's hex is an enemy effect in `EffectCategory.HEX`, applied through `applyEffect`, and that
   effect is the hex's only timer (spirit paces it). The Hexer's `HexLedger` only watches it: what
   a hex pays out when it ends or its carrier dies is settled at the start of the Hexer's tick,

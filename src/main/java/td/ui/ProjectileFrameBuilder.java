@@ -7,6 +7,7 @@ import td.ui.render.CannonballDraw;
 import td.ui.render.MissileDraw;
 import td.ui.render.Palette;
 import td.ui.render.ProjectileDraw;
+import td.ui.render.SmokeDraw;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,10 @@ import java.util.List;
  * delta, which is safe because a missile moves many pixels per tick.
  */
 public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
+
+    /** A puff's radius in pixels when fresh, and how opaque it starts. */
+    private static final float SMOKE_RADIUS = 2f;
+    private static final float SMOKE_ALPHA = 0.5f;
 
     private final List<ProjectileDraw> draws = new ArrayList<>();
     private final double interpolationAlpha;
@@ -45,7 +50,14 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         float x = lerp(projectile.getPrevX(), projectile.getX(), this.interpolationAlpha);
         float y = lerp(projectile.getPrevY(), projectile.getY(), this.interpolationAlpha);
         double facingRadians = Math.atan2(projectile.getY() - projectile.getPrevY(), projectile.getX() - projectile.getPrevX());
-        this.draws.add(new MissileDraw(Palette.PROJECTILE_MISSILE, x, y, facingRadians));
+        List<MissileProjectile.TrailPoint> trail = projectile.trail();
+        for (int i = 0; i < trail.size(); i++) {
+            // The oldest puff is the faintest and the widest, as it has had longest to spread.
+            float age = (trail.size() - i) / (float) (trail.size() + 1);
+            this.draws.add(new SmokeDraw(Palette.PROJECTILE_SMOKE, (float) trail.get(i).x(), (float) trail.get(i).y(),
+                    SMOKE_RADIUS * (1f + age) * projectile.stats().size(), SMOKE_ALPHA * (1f - age)));
+        }
+        this.draws.add(new MissileDraw(Palette.PROJECTILE_MISSILE, x, y, facingRadians, projectile.stats().size()));
         return null;
     }
 }

@@ -91,7 +91,7 @@ a different loadout or level, since v1 has no config format for either.
 | Pulse  | 25    | Short range; damages everything in range at once, ghosts included                                                                                   |
 | Aura   | 20    | Passive — boosts the damage and range of nearby towers; several stack                                                                               |
 | Mortar | 30    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path; splashes physical damage and chills everything the blast reaches |
-| Seeker | 35    | Fires a homing missile that re-aims each tick and retargets if its target dies; deals magic damage and freezes whichever mob it actually hits       |
+| Seeker | 30    | Fires a slow homing missile at the fastest enemy in range, which it keeps through invisibility and re-aims at each tick; deals magic damage and freezes whichever mob it actually hits. Attuned, it banks missiles in a nest, between waves too, and launches them as a salvo |
 | Cinder | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included |
 
 The price is the first copy's: each copy of a tower already on the board makes the next one cost

@@ -6,6 +6,7 @@ import td.ui.ProjectileFrameBuilder;
 import td.ui.render.CannonballDraw;
 import td.ui.render.MissileDraw;
 import td.ui.render.ProjectileDraw;
+import td.ui.render.SmokeDraw;
 
 import java.util.List;
 
@@ -34,15 +35,37 @@ class ProjectileFrameBuilderTest {
     void aMissilesFacingMatchesItsDirectionOfTravelThisTick() {
         FakeEnemyMob target = FakeEnemyMob.at(0, 100);
         FakeEnemyRegistry registry = new FakeEnemyRegistry(target);
-        MissileProjectile missile = new MissileProjectile(0, 0, target, registry, 10f, t -> {
+        MissileProjectile missile = new MissileProjectile(0, 0, target, registry, ProjectileStats.of(10f), t -> {
         });
 
         missile.doTick(1); // moves straight toward (0, 100), i.e. facing +Y
 
         ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0);
         missile.accept(builder);
-        MissileDraw draw = (MissileDraw) builder.build().getFirst();
+        MissileDraw draw = (MissileDraw) builder.build().getLast();
 
         assertThat(draw.facingRadians()).isCloseTo(Math.PI / 2, within(0.01));
+    }
+
+    @Test
+    void aMissileIsDrawnAtItsSizeBehindAFadingTrailOfSmoke() {
+        FakeEnemyMob target = FakeEnemyMob.at(0, 1000);
+        FakeEnemyRegistry registry = new FakeEnemyRegistry(target);
+        MissileProjectile missile = new MissileProjectile(0, 0, target, registry,
+                ProjectileStats.of(10f).withSize(2f), t -> {
+                });
+        for (int t = 1; t <= 4; t++) {
+            missile.doTick(t);
+        }
+
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0);
+        missile.accept(builder);
+        List<ProjectileDraw> draws = builder.build();
+
+        assertThat(draws.getLast()).isInstanceOfSatisfying(MissileDraw.class, draw -> assertThat(draw.size()).isEqualTo(2f));
+        List<SmokeDraw> smoke = draws.stream().filter(SmokeDraw.class::isInstance).map(SmokeDraw.class::cast).toList();
+        assertThat(smoke).hasSize(4);
+        assertThat(smoke).extracting(SmokeDraw::alpha).isSorted();
+        assertThat(smoke.getFirst().alpha()).isLessThan(smoke.getLast().alpha());
     }
 }
