@@ -119,6 +119,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case PRIORITY -> Palette.STATUS_MARKER_PRIORITY;
             case RESONATING -> Palette.STATUS_MARKER_RESONATING;
             case FRACTURED -> Palette.STATUS_MARKER_FRACTURED;
+            case DAZED -> Palette.STATUS_MARKER_DAZED;
         };
     }
 

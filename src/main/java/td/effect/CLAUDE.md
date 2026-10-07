@@ -42,8 +42,9 @@
 - Resistance and diminishing returns only shorten an authored duration, never change an effect's
   curve: `duration = authored * (1 - resist[kind]) * freezeStep`, and under one tick is blocked.
   `EffectKind.resistedBy()` names the resisting stat. Every kind in `EffectCategory.HARD_CC`
-  diminishes, on every enemy (`FreezeDiminishing`, per mob, only a fresh application advances a
-  step).
+  diminishes, on every enemy, each on its own ladder (`DiminishingReturns.of(kind)`, per mob, only
+  a fresh application climbs a step): freeze `100/50/25/0`, Dazed `100/80/60/40/20/0`. Dazed
+  stops an enemy like a freeze but has no `EffectInteractions` rows: it keeps burn and chill.
 - `EffectInteractions` is the one table of how an active kind acts on another: what it keeps out (a
   frozen enemy cannot burn) and what applying it consumes (freezing removes a burn, and a chill,
   which also makes the freeze last longer by the chill's level; shrouding removes a reveal). Add a rule there, never a

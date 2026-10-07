@@ -27,8 +27,8 @@ public final class PreferringSelector implements TargetSelector {
     }
 
     /** Aims at a frozen enemy first. */
-    public static PreferringSelector frozenFirst(TargetSelector inner) {
-        return new PreferringSelector(enemy -> enemy.hasEffect(EffectKind.FREEZE), inner);
+    public static PreferringSelector stoppedFirst(TargetSelector inner) {
+        return new PreferringSelector(EnemyMob::isStopped, inner);
     }
 
     @Override

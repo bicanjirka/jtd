@@ -60,9 +60,8 @@ final class EnemyStatText {
         inspection.effects().forEach(effect -> lines.add(effectRow(effect)));
         inspection.blocked().forEach(kind -> lines.add(Row.effect(EnemyFrameBuilder.markerPaletteFor(kind),
                 "Immune to " + kind.name().toLowerCase(Locale.ROOT), "")));
-        if (inspection.freezeStep() > 0) {
-            lines.add(Row.plain(Glyph.DOT, "Freeze DR", "next " + freezeStepText(inspection.freezeStep())));
-        }
+        inspection.diminished().forEach((kind, factor) -> lines.add(Row.plain(Glyph.DOT, diminishingLabel(kind),
+                factor > 0f ? "next " + SheetNumbers.percent(factor) : "next blocked")));
         return new InfoSheet(lines);
     }
 
@@ -190,6 +189,7 @@ final class EnemyStatText {
             case PRIORITY -> "Priority";
             case RESONATING -> "Resonating x" + effect.stacks();
             case FRACTURED -> "Fractured x" + effect.stacks();
+            case DAZED -> "Dazed";
         };
         String category = effect.kind().category().label();
         if (effect.kind() == EffectKind.CHILL) {
@@ -200,13 +200,8 @@ final class EnemyStatText {
         return Row.effect(EnemyFrameBuilder.markerPaletteFor(effect.kind()), name, left);
     }
 
-    private static String freezeStepText(int step) {
-        return switch (step) {
-            case 0 -> "100%";
-            case 1 -> "50%";
-            case 2 -> "25%";
-            default -> "blocked";
-        };
+    private static String diminishingLabel(EffectKind kind) {
+        return kind == EffectKind.DAZED ? "Daze DR" : "Freeze DR";
     }
 
     private static StatText resistText(String kind, float value) {

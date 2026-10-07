@@ -59,12 +59,12 @@ class PreferringSelectorTest {
     }
 
     @Test
-    void frozenFirstPrefersAFrozenEnemyOverWhatTheInnerSelectorWouldPick() {
+    void stoppedFirstPrefersAFrozenEnemyOverWhatTheInnerSelectorWouldPick() {
         FakeEnemyMob strong = FakeEnemyMob.at(0, 0).withHealth(9000);
         FakeEnemyMob frozen = FakeEnemyMob.at(0, 0).withHealth(10);
         frozen.reportFrozen();
 
-        var selected = PreferringSelector.frozenFirst(new HighestHealthSelector()).selectFrom(List.of(strong, frozen));
+        var selected = PreferringSelector.stoppedFirst(new HighestHealthSelector()).selectFrom(List.of(strong, frozen));
 
         assertThat(selected).contains(frozen);
     }

@@ -426,6 +426,7 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_CHILL -> new Color(120, 120, 255);
             case STATUS_MARKER_BURN -> new Color(255, 120, 40);
             case STATUS_MARKER_FREEZE -> new Color(150, 220, 255);
+            case STATUS_MARKER_DAZED -> new Color(255, 235, 120);
             case STATUS_MARKER_SHIELD -> new Color(220, 220, 100);
             case STATUS_MARKER_INVISIBLE -> new Color(180, 180, 180);
             case STATUS_MARKER_HEAL -> new Color(120, 220, 140);

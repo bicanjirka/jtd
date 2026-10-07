@@ -289,7 +289,7 @@ class SniperPerkTest {
         assertThat(new RicochetPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("most neighbours");
         assertThat(new HollowPointPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("most health");
         assertThat(new FifthShotPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("most health");
-        assertThat(new ShatterShotPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("frozen first");
+        assertThat(new ShatterShotPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("frozen or dazed first");
         assertThat(new SteadyAimPerk().refineSpec(SPEC).aim()).isEmpty();
     }
 }

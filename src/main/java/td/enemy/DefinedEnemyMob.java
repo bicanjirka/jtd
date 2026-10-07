@@ -7,11 +7,11 @@ import td.damage.DamageUnits;
 import td.damage.Delivery;
 import td.economy.EconomyDelta;
 import td.effect.ActiveEffects;
+import td.effect.DiminishingReturns;
 import td.effect.Effect;
 import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.effect.EffectTransitions;
-import td.effect.FreezeDiminishing;
 import td.enemy.MobMoments.Moment;
 import td.stat.BaseStats;
 import td.stat.EnemyStat;
@@ -21,7 +21,9 @@ import td.stat.StatView;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
@@ -50,7 +52,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private final EffectTransitions effectTransitions = new EffectTransitions();
     private final PathMotion motion;
     private final MobMoments moments = new MobMoments();
-    private final FreezeDiminishing freezeDiminishing = new FreezeDiminishing();
+    private final Map<EffectKind, DiminishingReturns> diminishing = new EnumMap<>(EffectKind.class);
     private final StatSheet stats;
 
     private int health;
@@ -243,25 +245,40 @@ public final class DefinedEnemyMob implements EnemyMob {
      */
     public void applyEffect(Effect effect) {
         float factor = effect.kind().resistedBy().map(stat -> 1f - this.stats.value(stat)).orElse(1f);
-        boolean diminishing = effect.kind().category() == EffectCategory.HARD_CC;
-        boolean frozen = this.activeEffectKinds().contains(EffectKind.FREEZE);
-        if (diminishing) {
-            factor *= this.freezeDiminishing.factorAt(this.ticksSinceSpawn, frozen);
+        Optional<DiminishingReturns> ladder = this.ladderFor(effect.kind());
+        boolean active = this.activeEffects.has(effect.kind());
+        if (ladder.isPresent()) {
+            factor *= ladder.get().factorAt(this.ticksSinceSpawn, active);
         }
         Effect scaled = factor < 1f ? effect.withDurationScaledBy(factor) : effect;
         if (factor < 1f && scaled.authoredDurationTicks() < 1) {
             return;
         }
-        if (diminishing) {
-            this.freezeDiminishing.recordAt(this.ticksSinceSpawn, frozen);
-        }
+        ladder.ifPresent(steps -> steps.recordAt(this.ticksSinceSpawn, active));
         this.activeEffects.apply(scaled);
         this.stats.invalidate();
     }
 
-    /** Fresh freezes landed in the current diminishing-returns window. */
-    public int freezeDiminishingStep() {
-        return this.freezeDiminishing.stepAt(this.ticksSinceSpawn);
+    /** Hard crowd control climbs its own ladder of diminishing returns; nothing else has one. */
+    private Optional<DiminishingReturns> ladderFor(EffectKind kind) {
+        if (kind.category() != EffectCategory.HARD_CC) {
+            return Optional.empty();
+        }
+        return Optional.of(this.diminishing.computeIfAbsent(kind, DiminishingReturns::of));
+    }
+
+    /**
+     * For each kind whose diminishing returns are running, the share of its duration the next fresh
+     * application would get, in kind order.
+     */
+    public Map<EffectKind, Float> diminishedFactors() {
+        Map<EffectKind, Float> factors = new EnumMap<>(EffectKind.class);
+        this.diminishing.forEach((kind, ladder) -> {
+            if (ladder.stepAt(this.ticksSinceSpawn) > 0) {
+                factors.put(kind, ladder.factorAt(this.ticksSinceSpawn, false));
+            }
+        });
+        return factors;
     }
 
     public float reductionAgainst(DamageType type) {
@@ -506,8 +523,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             case PulseMovement ignored -> {
             }
         }
-        // A frozen mob cannot cast.
-        if (!this.activeEffectKinds().contains(EffectKind.FREEZE)) {
+        if (!this.isStopped()) {
             this.evaluateAbilities(gameTime);
         }
     }
