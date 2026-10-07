@@ -1,5 +1,6 @@
 package td.tower;
 
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.Effect;
@@ -8,7 +9,12 @@ import td.enemy.EnemyMob;
 import td.projectile.MissileProjectile;
 import td.projectile.ProjectileStats;
 import td.tower.buff.TowerBuff;
+import td.tower.seeker.AbsoluteZeroPerk;
+import td.tower.seeker.BrittlePerk;
 import td.tower.seeker.BroodPerk;
+import td.tower.seeker.DeepFreezePerk;
+import td.tower.seeker.FrostbitePerk;
+import td.tower.seeker.FrozenLedger;
 import td.tower.seeker.Impact;
 import td.tower.seeker.NestGrowthPerk;
 import td.tower.seeker.NestPerk;
@@ -20,6 +26,7 @@ import td.tower.seeker.SeekerActions;
 import td.tower.seeker.SeekerNest;
 import td.tower.seeker.SeekerPerk;
 import td.tower.seeker.SeekerSpec;
+import td.tower.seeker.ShatterPerk;
 import td.tower.seeker.ShatterburstPerk;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.PreferringSelector;
@@ -64,7 +71,6 @@ public final class SeekerTower extends AbstractTower {
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
     private static final int FREEZE_DURATION_TICKS_BASE = 30;
-    private static final float DEEP_FREEZE_DURATION_MULTIPLIER = 1.75f;
     /** Share of weapon damage a shattered enemy's neighbours take. */
     private static final float SHATTER_DAMAGE_SHARE = 0.5f;
     private static final float SHATTER_RADIUS_CELLS = 1.5f;
@@ -100,21 +106,36 @@ public final class SeekerTower extends AbstractTower {
             .after(BROOD);
     private static final UpgradeNode DEEP_FREEZE_1 = UpgradeTier.HEAD_1.node("seeker.head.deep_freeze.1",
             "Deep Freeze", PRICE)
-            .withBuff(TowerBuff.damage(0.3f));
+            .withExtraEffect("+50% freeze time");
     private static final UpgradeNode DEEP_FREEZE_2 = UpgradeTier.HEAD_2.node("seeker.head.deep_freeze.2",
             "Deep Freeze II", PRICE)
-            .withBuff(TowerBuff.damage(0.25f))
-            .after(DEEP_FREEZE_1)
-            .withExtraEffect("+75% freeze duration, killing a frozen enemy shatters it for 50% weapon damage splash");
+            .withBuff(TowerBuff.damage(0.3f).withCritChance(0.1f))
+            .withExtraEffect("a frozen enemy this tower kills shatters for 50% of its damage around it")
+            .after(DEEP_FREEZE_1);
+    private static final UpgradeNode BRITTLE = UpgradeTier.HEAD_3.node("seeker.head.deep_freeze.3", "Brittle", PRICE)
+            .withGate(new PurposeCondition(FREEZE_DEED, FREEZES_NEEDED))
+            .withExtraEffect("frozen enemies take +30% physical damage")
+            .after(DEEP_FREEZE_2);
+    private static final UpgradeNode ABSOLUTE_ZERO = UpgradeTier.HEAD_4.node("seeker.head.deep_freeze.4a",
+            "Absolute Zero", PRICE)
+            .withExtraEffect("the missile freezes everything within 1 cell of the impact; shatters deal x2; an "
+                    + "enemy this tower froze shatters when its freeze ends")
+            .after(BRITTLE);
+    private static final UpgradeNode FROSTBITE = UpgradeTier.HEAD_4.node("seeker.head.deep_freeze.4b", "Frostbite",
+            PRICE)
+            .withExtraEffect("this tower's hits on a frozen enemy are guaranteed crits, and so are its hits on an "
+                    + "enemy whose freezes are diminished by repeated freezing")
+            .after(BRITTLE);
     private static final UpgradeNode HOMING_CURSE = UpgradeTier.SPECIAL.node("seeker.special.homing_curse",
             "Homing Curse", PRICE)
             .withExtraEffect("impact applies 1 Vulnerable stack, or 2 if the target was already frozen or chilled");
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, BROOD))
-            .with(TWIN_WARHEAD_1, TWIN_WARHEAD_2, BROOD, SHATTERBURST, REARM, DEEP_FREEZE_1, DEEP_FREEZE_2,
-                    HOMING_CURSE)
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, BROOD, BRITTLE))
+            .with(TWIN_WARHEAD_1, TWIN_WARHEAD_2, BROOD, SHATTERBURST, REARM, DEEP_FREEZE_1, DEEP_FREEZE_2, BRITTLE,
+                    ABSOLUTE_ZERO, FROSTBITE, HOMING_CURSE)
             .withChoice(ExclusiveChoice.oneOf(TWIN_WARHEAD_1, DEEP_FREEZE_1))
-            .withChoice(ExclusiveChoice.oneOf(SHATTERBURST, REARM));
+            .withChoice(ExclusiveChoice.oneOf(SHATTERBURST, REARM))
+            .withChoice(ExclusiveChoice.oneOf(ABSOLUTE_ZERO, FROSTBITE));
 
     private static final PerkCatalogue<SeekerPerk> PERKS = PerkCatalogue.<SeekerPerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, NestPerk::new)
@@ -123,7 +144,12 @@ public final class SeekerTower extends AbstractTower {
             .with(TWIN_WARHEAD_2.id(), SecondMissilePerk::new)
             .with(BROOD.id(), BroodPerk::new)
             .with(SHATTERBURST.id(), ShatterburstPerk::new)
-            .with(REARM.id(), RearmPerk::new);
+            .with(REARM.id(), RearmPerk::new)
+            .with(DEEP_FREEZE_1.id(), DeepFreezePerk::new)
+            .with(DEEP_FREEZE_2.id(), ShatterPerk::new)
+            .with(BRITTLE.id(), BrittlePerk::new)
+            .with(ABSOLUTE_ZERO.id(), AbsoluteZeroPerk::new)
+            .with(FROSTBITE.id(), FrostbitePerk::new);
 
     private static final int COOLDOWN_MAX = 45;
 
@@ -132,7 +158,7 @@ public final class SeekerTower extends AbstractTower {
     private final SeekerNest nest = new SeekerNest();
     private final ProjectileStats missile = ProjectileStats.of(MISSILE_SPEED);
     private final SeekerActions actions = new Actions();
-    private volatile int freezeDurationTicks = FREEZE_DURATION_TICKS_BASE;
+    private final FrozenLedger frozen = new FrozenLedger();
     private int coolDown = 0;
     private EnemyMob currentTarget;
 
@@ -148,9 +174,6 @@ public final class SeekerTower extends AbstractTower {
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
         this.perks.add(node);
-        if (node.equals(DEEP_FREEZE_2)) {
-            this.freezeDurationTicks = Math.round(this.freezeDurationTicks * DEEP_FREEZE_DURATION_MULTIPLIER);
-        }
     }
 
     /** Whom it may fire at, how it picks and what its nest holds, as the perks in {@code owned} make it. */
@@ -199,6 +222,9 @@ public final class SeekerTower extends AbstractTower {
 
     public void doTick(int gameTime) {
         SeekerSpec spec = this.spec(this.perks.all());
+        if (spec.shatter().onThaw()) {
+            this.frozen.settle().forEach(thawed -> this.shatter(thawed, spec));
+        }
         if (spec.nest().isActive()) {
             this.tickNest(spec);
         } else {
@@ -244,11 +270,19 @@ public final class SeekerTower extends AbstractTower {
     }
 
     private void onImpact(EnemyMob target, boolean rearmed) {
+        SeekerSpec spec = this.spec(this.perks.all());
         Set<EffectKind> before = target.activeEffectKinds();
         boolean wasFrozen = before.contains(EffectKind.FREEZE);
         boolean controlled = wasFrozen || before.contains(EffectKind.CHILL);
-        this.dealDamage(target, Damage.magic(this.damageCurrent()));
-        this.applyEffect(target, sink -> Effect.freeze(this.freezeDurationTicks, sink));
+        this.strike(target, Damage.magic(this.damageCurrent()), spec);
+        this.freeze(target, spec);
+        if (spec.freeze().areaCells() > 0f) {
+            float radius = spec.freeze().areaCells() * this.context.getBoard().scale();
+            InRangeTargetQuery.everyone((int) target.getX(), (int) target.getY(), radius)
+                    .matching(this.context.enemies()).stream()
+                    .filter(enemy -> enemy != target)
+                    .forEach(enemy -> this.freeze(enemy, spec));
+        }
         if (target.hasEffect(EffectKind.FREEZE)) {
             this.countDeedOfAttack();
         }
@@ -261,17 +295,57 @@ public final class SeekerTower extends AbstractTower {
         }
     }
 
-    /** Deep Freeze II: a frozen enemy this tower kills shatters, hurting whatever stands near it. */
+    /**
+     * A hit of {@code damage}. With Frostbite, a hit on a frozen enemy, or one whose freezes are
+     * diminished, is a guaranteed crit.
+     */
+    private boolean strike(EnemyMob enemy, Damage damage, SeekerSpec spec) {
+        AttackProfile attack = this.stats().attack();
+        if (spec.frostbite() && (enemy.hasEffect(EffectKind.FREEZE) || enemy.freezeDiminished())) {
+            attack = attack.withGuaranteedCrit();
+        }
+        return this.dealDamage(enemy, damage, attack);
+    }
+
+    private int freezeTicks(SeekerSpec spec) {
+        return Math.round(FREEZE_DURATION_TICKS_BASE * spec.freeze().durationFactor());
+    }
+
+    /** Freezes {@code enemy}, and with Brittle leaves it brittle for as long; with a thaw shatter, watches it. */
+    private void freeze(EnemyMob enemy, SeekerSpec spec) {
+        int ticks = this.freezeTicks(spec);
+        this.applyEffect(enemy, sink -> Effect.freeze(ticks, sink));
+        if (spec.freeze().brittle()) {
+            this.applyEffect(enemy, sink -> Effect.brittle(ticks, sink));
+        }
+        if (spec.shatter().onThaw() && enemy.hasEffect(EffectKind.FREEZE)) {
+            this.frozen.record(enemy);
+        }
+    }
+
+    /** Hits every other enemy within {@code radiusCells} of {@code center} for {@code share} of the damage, as magic. */
+    private List<EnemyMob> burst(EnemyMob center, float share, float radiusCells, SeekerSpec spec) {
+        float radius = radiusCells * this.context.getBoard().scale();
+        Damage damage = Damage.magic(Math.round(this.damageCurrent() * share));
+        List<EnemyMob> hit = InRangeTargetQuery.everyone((int) center.getX(), (int) center.getY(), radius)
+                .matching(this.context.enemies()).stream()
+                .filter(enemy -> enemy != center)
+                .toList();
+        hit.forEach(enemy -> this.strike(enemy, damage, spec));
+        return hit;
+    }
+
+    /** A frozen enemy shatters: whatever stands near it takes a share of the Seeker's damage. */
+    private void shatter(EnemyMob shattered, SeekerSpec spec) {
+        this.burst(shattered, SHATTER_DAMAGE_SHARE * spec.shatter().multiplier(), SHATTER_RADIUS_CELLS, spec);
+    }
+
+    /** Deep Freeze II: a frozen enemy this tower kills shatters. */
     @Override
     protected void onKill(EnemyMob killed) {
-        if (!this.upgrades().owns(DEEP_FREEZE_2.id()) || !killed.activeEffectKinds().contains(EffectKind.FREEZE)) {
-            return;
-        }
-        float radius = SHATTER_RADIUS_CELLS * this.context.getBoard().scale();
-        Damage shatter = Damage.magic(Math.round(this.damageCurrent() * SHATTER_DAMAGE_SHARE));
-        for (EnemyMob nearby : InRangeTargetQuery.everyone((int) killed.getX(), (int) killed.getY(), radius)
-                .matching(this.context.enemies())) {
-            this.dealDamage(nearby, shatter);
+        SeekerSpec spec = this.spec(this.perks.all());
+        if (spec.shatter().onKill() && killed.hasEffect(EffectKind.FREEZE)) {
+            this.shatter(killed, spec);
         }
     }
 
@@ -280,7 +354,7 @@ public final class SeekerTower extends AbstractTower {
     }
 
     int getFreezeDurationTicks() {
-        return this.freezeDurationTicks;
+        return this.freezeTicks(this.spec(this.perks.all()));
     }
 
     public TurretAim getTurretAim() {
@@ -308,7 +382,20 @@ public final class SeekerTower extends AbstractTower {
     protected List<BehaviourLine> behaviours() {
         SeekerSpec spec = this.spec(this.perks.all());
         List<BehaviourLine> lines = new ArrayList<>();
-        lines.add(new BehaviourLine(BehaviourMarker.FREEZE, "Freezes", BehaviourLine.seconds(this.freezeDurationTicks)));
+        lines.add(new BehaviourLine(BehaviourMarker.FREEZE, "Freezes", BehaviourLine.seconds(this.freezeTicks(spec))));
+        if (spec.freeze().areaCells() > 0f) {
+            lines.add(new BehaviourLine(BehaviourMarker.FREEZE, "Freezes around", "1 cell"));
+        }
+        if (spec.freeze().brittle()) {
+            lines.add(new BehaviourLine(BehaviourMarker.FREEZE, "Frozen take", "+30% physical"));
+        }
+        if (spec.shatter().onKill()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Shatters",
+                    spec.shatter().onThaw() ? "on kill and thaw" : "on kill"));
+        }
+        if (spec.frostbite()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Always crits", "frozen enemies"));
+        }
         lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Targets", spec.aim().label()));
         if (spec.nest().isActive()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Nest", this.nest.stored() + "/" + spec.nest().capacity()));
@@ -333,14 +420,7 @@ public final class SeekerTower extends AbstractTower {
 
         @Override
         public List<EnemyMob> burst(EnemyMob center, float share, float radiusCells) {
-            float radius = radiusCells * SeekerTower.this.context.getBoard().scale();
-            Damage damage = Damage.magic(Math.round(SeekerTower.this.damageCurrent() * share));
-            List<EnemyMob> hit = InRangeTargetQuery.everyone((int) center.getX(), (int) center.getY(), radius)
-                    .matching(SeekerTower.this.context.enemies()).stream()
-                    .filter(enemy -> enemy != center)
-                    .toList();
-            hit.forEach(enemy -> SeekerTower.this.dealDamage(enemy, damage));
-            return hit;
+            return SeekerTower.this.burst(center, share, radiusCells, SeekerTower.this.spec(SeekerTower.this.perks.all()));
         }
 
         @Override
