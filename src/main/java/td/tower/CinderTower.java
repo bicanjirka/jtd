@@ -219,9 +219,9 @@ public final class CinderTower extends AbstractTower {
     /** The enemies this tower has set alight and still tracks, by identity. */
     private final Map<EnemyMob, Burning> burning = new IdentityHashMap<>();
     private final ZoneOwner zoneOwner = this::applyEffect;
+    private final FireClock clock = new FireClock(COOLDOWN_MAX);
     private int wavesFired;
     private int tickNow;
-    private int coolDown = 0;
 
     public CinderTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.CINDER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
@@ -279,12 +279,11 @@ public final class CinderTower extends AbstractTower {
         nearest.ifPresent(enemy -> this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(),
                 enemy.getY())));
 
-        if (this.coolDown > 0) {
-            this.coolDown--;
-        } else if (this.hasEnemyAhead(spec)) {
+        if (this.clock.isReady() && this.hasEnemyAhead(spec)) {
             this.fire(spec, nearest.orElse(null), gameTime);
-            this.coolDown = this.coolDownCurrent();
+            this.clock.spend();
         }
+        this.clock.advance(this.fireRateCurrent());
 
         this.advanceWaves(spec, gameTime);
         this.tendBurning(spec);

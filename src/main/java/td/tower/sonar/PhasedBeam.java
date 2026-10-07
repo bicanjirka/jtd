@@ -16,34 +16,38 @@ public final class PhasedBeam implements SonarBeam {
     private static final double HALF_WIDTH_RADIANS = 0.12;
     private static final int HITS_PER_REVOLUTION = 3;
 
+    /** A tick count within this of a whole interval counts as it, which absorbs float error in a rate. */
+    private static final double EPSILON = 1e-6;
+
     private final BeamSpec spec;
-    private final int revolutionTicks;
-    private final int hitIntervalTicks;
+    private final double revolutionTicks;
+    private final double hitIntervalTicks;
     private double heading;
-    private int revolutionTick;
-    private int hitTick;
+    private double revolutionTick;
+    private double hitTick;
     private boolean hitting;
     private boolean completedRevolution;
 
     PhasedBeam(double heading, BeamSpec spec) {
         this.heading = heading;
         this.spec = spec;
-        this.revolutionTicks = Math.max(1, Math.round(spec.secondsPerRevolution() * TickRate.TICKS_PER_SECOND));
-        this.hitIntervalTicks = Math.max(1, this.revolutionTicks / HITS_PER_REVOLUTION);
+        this.revolutionTicks = Math.max(1.0, spec.secondsPerRevolution() * TickRate.TICKS_PER_SECOND);
+        this.hitIntervalTicks = Math.max(1.0, this.revolutionTicks / HITS_PER_REVOLUTION);
     }
 
+    /** The remainder of an interval carries over, so a fire rate that is no whole number of ticks stays exact. */
     @Override
     public void advance(OptionalDouble focusBearing) {
         focusBearing.ifPresent(bearing -> this.heading = bearing);
         this.hitTick++;
-        this.hitting = this.hitTick >= this.hitIntervalTicks;
+        this.hitting = this.hitTick >= this.hitIntervalTicks - EPSILON;
         if (this.hitting) {
-            this.hitTick = 0;
+            this.hitTick -= this.hitIntervalTicks;
         }
         this.revolutionTick++;
-        this.completedRevolution = this.revolutionTick >= this.revolutionTicks;
+        this.completedRevolution = this.revolutionTick >= this.revolutionTicks - EPSILON;
         if (this.completedRevolution) {
-            this.revolutionTick = 0;
+            this.revolutionTick -= this.revolutionTicks;
         }
     }
 

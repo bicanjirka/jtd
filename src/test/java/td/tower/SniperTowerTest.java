@@ -107,7 +107,8 @@ class SniperTowerTest {
         assertThat(SniperTower.PRICE).isEqualTo(15);
         assertThat(tower.damageCurrent()).isEqualTo(DamageUnits.ofPoints(40f));
         assertThat(tower.getRange()).isEqualTo(4.0f);
-        assertThat(tower.coolDownCurrent()).isEqualTo(49);
+        assertThat(tower.coolDownMax).isEqualTo(49);
+        assertThat(tower.fireRateCurrent()).isEqualTo(1.0);
         assertThat(tower.critChance()).isEqualTo(0.05f);
         assertThat(tower.stats().attack().critMultiplier()).isEqualTo(2.0f);
     }
@@ -161,7 +162,7 @@ class SniperTowerTest {
 
         this.fireShots(tower, target, 1);
 
-        assertThat(tower.coolDownCurrent()).isEqualTo(Math.round(49 * 0.75f));
+        assertThat(tower.fireRateCurrent()).isCloseTo(1.0 / 0.75, within(1e-9));
         assertThat(target.attackers().getFirst().armorPenetrationFlat()).isEqualTo(30f);
     }
 
@@ -312,8 +313,13 @@ class SniperTowerTest {
 
         assertThat(critChances(target).get(0)).isCloseTo(SniperTower.CRIT_CHANCE + 0.5f, within(1e-6f));
         assertThat(critChances(target).get(1)).isCloseTo(SniperTower.CRIT_CHANCE + STEADY_AIM_CRIT_BONUS, within(1e-6f));
-        assertThat(gaps(ticks).get(0)).isEqualTo(tower.coolDownCurrent() + 1);
-        assertThat(gaps(ticks).get(1)).isLessThan(tower.coolDownCurrent() + 1);
+        assertThat(gaps(ticks).get(0)).isEqualTo(waitTicks(tower, 1.0));
+        assertThat(gaps(ticks).get(1)).isLessThan(waitTicks(tower, 1.0));
+    }
+
+    /** How many ticks a wait of {@code periods} base periods takes at the tower's fire rate. */
+    private static int waitTicks(SniperTower tower, double periods) {
+        return (int) Math.round((tower.coolDownMax + 1) * periods / tower.fireRateCurrent());
     }
 
     @Test
@@ -504,7 +510,7 @@ class SniperTowerTest {
 
         List<Integer> ticks = this.shotTicks(tower, next, 1);
 
-        assertThat(ticks.getFirst() - killTick).isEqualTo(Math.round(tower.coolDownCurrent() * 0.5f) + 1);
+        assertThat(ticks.getFirst() - killTick).isEqualTo(waitTicks(tower, 0.5));
     }
 
     @Test
@@ -518,7 +524,7 @@ class SniperTowerTest {
 
         List<Integer> ticks = this.shotTicks(tower, next, 1);
 
-        assertThat(ticks.getFirst() - killTick).isEqualTo(tower.coolDownCurrent() + 1);
+        assertThat(ticks.getFirst() - killTick).isEqualTo(waitTicks(tower, 1.0));
     }
 
     @Test

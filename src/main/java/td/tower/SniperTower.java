@@ -224,8 +224,8 @@ public final class SniperTower extends AbstractTower {
     private final SniperTempo tempo = new SniperTempo();
     private final ShotActions actions = new Actions();
     private final OwnedPerks<SniperPerk> perks = new OwnedPerks<>(PERKS);
+    private final FireClock clock = new FireClock(COOLDOWN_MAX);
     private SniperShot shotInFlight;
-    private int coolDown = 0;
     private EnemyMob currentTarget;
     private ShotTrace lastShot;
     private int shotsFired;
@@ -267,9 +267,7 @@ public final class SniperTower extends AbstractTower {
 
     public void doTick(int gameTime) {
         this.currentTick = gameTime;
-        if (this.coolDown > 0) {
-            this.coolDown--;
-        } else {
+        if (this.clock.isReady()) {
             List<SniperPerk> owned = this.perks.all();
             SniperSpec spec = this.spec(owned);
             this.currentTarget = this.findEnemy(spec);
@@ -277,6 +275,7 @@ public final class SniperTower extends AbstractTower {
                 this.fire(this.currentTarget, owned, spec.steadyAim());
             }
         }
+        this.clock.advance(this.fireRateCurrent());
         if (this.currentTarget != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(), this.currentTarget.getY()));
         }
@@ -306,8 +305,8 @@ public final class SniperTower extends AbstractTower {
         }
         float fireRate = shot.fireRateBonus();
         float tempoBonus = this.tempo.takeFireRateBonus(this.currentTick);
-        this.coolDown = TowerBuff.fireRate(fireRate).combine(TowerBuff.fireRate(tempoBonus))
-                .fireRateFor(this.coolDownCurrent());
+        this.clock.spend(1.0 / TowerBuff.fireRate(fireRate).combine(TowerBuff.fireRate(tempoBonus))
+                .fireRateMultiplier());
     }
 
     /** Where the shot went: to its target, or for a piercing shot to the end of its line. */
@@ -402,7 +401,7 @@ public final class SniperTower extends AbstractTower {
     }
 
     public float getCoolDownFraction() {
-        return (float) this.coolDown / this.coolDownCurrent();
+        return this.clock.remaining();
     }
 
     @Override

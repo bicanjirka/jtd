@@ -537,14 +537,14 @@ class CinderTowerTest {
     void dragonsBreathFiresTwiceAsOftenAsThreeTimesTheRateForLessDamageAndKeepsStokeFull() {
         CinderTower tower = this.nozzleTower();
         float damageBefore = tower.damageCurrent();
-        int cooldownBefore = tower.coolDownCurrent();
+        double rateBefore = tower.fireRateCurrent();
         UpgradePaths.buy(tower, this.context, "Dragon's Breath");
         FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + 40, tower.getY());
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tickThrough(tower, 1, 1 + TRAVEL);
 
-        assertThat(tower.coolDownCurrent()).isLessThan(cooldownBefore / 2);
+        assertThat(tower.fireRateCurrent()).isGreaterThan(rateBefore * 2);
         assertThat(tower.damageCurrent()).isLessThan(Math.round(damageBefore * 0.45f));
         assertThat(tower.stokeStepsOf(target)).isEqualTo(3);
         assertThat(burns(target).getFirst().damagePerTick().amount())

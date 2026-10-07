@@ -221,10 +221,10 @@ public final class MortarTower extends AbstractTower {
     private final BracketTracker bracketing = new BracketTracker();
     private final ZoneOwner zoneOwner = this::applyEffect;
     private final List<BlastMark> blastMarks = new ArrayList<>();
+    private final FireClock clock = new FireClock(COOLDOWN_MAX);
     private volatile NukeFlash nukeFlash;
     private int shellsFired;
     private int tickNow;
-    private int coolDown = 0;
     private int salvoLeft = 0;
     private int salvoGap = 0;
     private EnemyMob currentTarget;
@@ -271,17 +271,16 @@ public final class MortarTower extends AbstractTower {
             this.salvoLeft--;
             this.salvoGap = spec.salvo().gapTicks();
         }
-        if (this.coolDown > 0) {
-            this.coolDown--;
-        } else {
+        if (this.clock.isReady()) {
             this.currentTarget = this.findTarget(spec);
             if (this.currentTarget != null) {
                 this.fireAt(this.currentTarget, spec);
-                this.coolDown = Math.round(this.coolDownCurrent() * spec.salvo().reloadFactor());
+                this.clock.spend(spec.salvo().reloadFactor());
                 this.salvoLeft = spec.salvo().shells() - 1;
                 this.salvoGap = spec.salvo().gapTicks();
             }
         }
+        this.clock.advance(this.fireRateCurrent());
         if (this.currentTarget != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(), this.currentTarget.getY()));
         }
@@ -537,7 +536,8 @@ public final class MortarTower extends AbstractTower {
             return super.cadence();
         }
         return Optional.of(new TowerStatLine(TowerStat.FIRE_RATE, TICKS_PER_SECOND / (this.coolDownMax + 1),
-                salvo.shells() * TICKS_PER_SECOND / (this.coolDownCurrent() * salvo.reloadFactor() + 1)));
+                (float) (salvo.shells() * TICKS_PER_SECOND * this.fireRateCurrent()
+                        / ((this.coolDownMax + 1) * salvo.reloadFactor()))));
     }
 
     @Override

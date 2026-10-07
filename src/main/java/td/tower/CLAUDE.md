@@ -14,7 +14,13 @@
 - After `doCleanup` (sell or teardown), `dealDamage` is a no-op, because a burn the tower applied
   keeps ticking. A tower that subscribes to anything unsubscribes in `doCleanup`.
 - Range checks compare squared distances (`rangeReal2()`); no `Math.sqrt` in per-tick scans.
-- A tower with no cooldown cadence passes `coolDownMax = 0` and overrides `cadence()`.
+- A tower that hits every tick passes `coolDownMax = 0`; one whose cadence is not a cooldown (the Sonar's
+  spin) also overrides `cadence()`.
+- Every tower's cadence is its `FireClock` run at `fireRateCurrent()`, never a cooldown counted in whole
+  ticks: the clock keeps the fraction a rate leaves over, so a buff is exact (a 10% faster Pulse hits 22.2
+  times in 20 ticks, a second hit in the tick the remembered tenths reach a whole). A shot that waits
+  longer or shorter than the base spends more or less than one period. The Sonar divides its seconds per
+  revolution by the rate instead, and no counter that carries a fire rate may round to a tick.
 - `SonarTower` hits what its `SonarBeam` crossed this tick: a spinning beam the arc swept since
   last tick (`SonarSweep`, half-open), never the instantaneous angle. Beams are pure geometry
   (bearings, never enemies), and a perk that changes the beam reshapes it from where it is. The
@@ -105,8 +111,10 @@
   fireRate, where each bonus cuts the cooldown that remains (they multiply).
 - Enemy disruption reaches a tower only through `GameWorld.disruptions()`, sampled at the tower's
   centre in the towers phase (`beginTick`). It folds in as a negative `TowerBuff`, and
-  `TowerBuff` floors combined fire-rate and range bonuses at `MIN_BONUS` (-0.75).
-- Cooldown has a base/current split like damage and range (`coolDownMax` vs `coolDownCurrent()`).
+  `TowerBuff` floors combined fire-rate and range bonuses at `MIN_BONUS` (-0.75) and caps fire rate at
+  `MAX_FIRE_RATE_BONUS` (ten times the base).
+- Cadence has a base/current split like damage and range: `coolDownMax` is the base wait and
+  `fireRateCurrent()` the multiplier on it (`TowerBuff.fireRateMultiplier()`, 1 is the base).
 - A kill this tower makes runs `onKill(EnemyMob)` (the mob still carries the effects it died
   under); a kill made from inside the hook, such as an explosion's, triggers nothing. A
   temporary self-buff goes through `grantTimedBuff` and ends in `beginTick`; it never stacks.

@@ -816,7 +816,7 @@ class MortarTowerTest {
         }
 
         assertThat(firstShellAt).isEqualTo(1);
-        assertThat(lastShellAt - firstShellAt).isGreaterThan(2 * tower.coolDownCurrent());
+        assertThat((double) (lastShellAt - firstShellAt)).isGreaterThan(2 * tower.coolDownMax / tower.fireRateCurrent());
         assertThat(shells % 3).isZero();
         assertThat(shells).isGreaterThanOrEqualTo(6);
     }
@@ -849,6 +849,7 @@ class MortarTowerTest {
                 .findFirst().orElseThrow();
 
         assertThat(after.base()).isEqualTo(before.base());
-        assertThat(after.current()).isCloseTo(3 * 20f / (tower.coolDownCurrent() * 2f + 1f), within(1e-3f));
+        assertThat(after.current()).isCloseTo((float) (3 * 20 * tower.fireRateCurrent() / ((tower.coolDownMax + 1) * 2f)),
+                within(1e-3f));
     }
 }

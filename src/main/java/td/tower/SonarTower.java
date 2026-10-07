@@ -227,7 +227,8 @@ public final class SonarTower extends AbstractTower {
         for (SonarPerk perk : owned) {
             spec = perk.refineSpec(spec);
         }
-        return spec;
+        BeamSpec beam = spec.beam();
+        return spec.withBeam(beam.withSecondsPerRevolution((float) (beam.secondsPerRevolution() / this.fireRateCurrent())));
     }
 
     public void doTick(int gameTime) {
