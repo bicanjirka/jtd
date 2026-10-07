@@ -150,6 +150,9 @@ holds more than one effect; selecting it lists every effect with what kind it is
 | Chilled    | soft CC          | Slows in proportion to its level, which adds up (never past 80%) and fades linearly. Every slowing tower chills. It also cuts the damage the enemy takes from burning |
 | Freeze     | hard CC          | Stops the enemy. Every enemy diminishes it: within 10 s of the last one, each fresh freeze lasts half as long as the one before, and a fourth doesn't take hold. Freezing a chilled enemy uses up the chill and lasts longer by its level |
 | Dazed      | hard CC          | Stops the enemy and its abilities like a freeze, but keeps its burn and its chill. It has its own diminishing returns: within 10 s of the last one, each fresh daze lasts 20% less than the one before, and a sixth doesn't take hold |
+| Silenced   | soft CC          | Its abilities don't fire: no heals, shields, summons, shrouds or vanishing. Its death abilities still fire, its aura keeps running and it keeps walking |
+| Anchored   | soft CC          | Can't be sped up: its speed is held to three quarters of its base, hurt-speed included |
+| Undertow   | soft CC          | A quarter slow that doesn't fade while the enemy is in a Pulse's field, and that counts as a chill for a freeze |
 | Burning    | damage over time | Damage that decays as it burns; several towers add to one pool and each is credited its share. It earns a Scorched stack when it starts and another every half second while it lasts |
 | Poisoned   | damage over time | Its own decaying pool, so it stacks with burning. It slows in proportion to the pool (at most 30%, on top of chill) and earns Sickened stacks the same way |
 | Scorched   | debuff           | Burning's lasting mark: each stack lowers resilience by 1 (down to -100; below 0 crits hit harder but no likelier). It outlasts the fire, then loses a stack per second |
@@ -159,6 +162,12 @@ holds more than one effect; selecting it lists every effect with what kind it is
 | Resonating | debuff           | Up to 3 stacks, +8% magic damage taken each; one shared 4 s clock                                  |
 | Fractured  | debuff           | Up to 5 stacks, -10 resilience each, losing a stack a second. A Sonar with Fault Line lets it fall to 10 stacks (-100) and holds it while the enemy is Exposed |
 | Saturated  | debuff           | Up to 3 stacks (a Splash upgrade allows 4), each making a Splash's blast hit it 5% harder; one shared 1.5 s clock any blast that catches it refreshes |
+| Unraveled  | debuff           | Up to 5 stacks, -10 magic resist each (never below 0); one shared 5 s clock |
+| Brittle    | debuff           | While the enemy is frozen it takes +30% physical damage |
+| Toll       | debuff           | Up to 5 stacks (10 with Meltdown) a Pulse's field builds on an enemy that stays inside, one a second: each makes the field hit it 10% harder and every other debuff's timer, and every stack debuff, wear off 10% slower. It fades a second after the enemy leaves |
+| Corroded   | debuff           | -30 armor (never below 0) while the enemy is in a Pulse's field |
+| Dead zone  | debuff           | No heal or shield takes hold while the enemy is in a Pulse's field; what it already has stays |
+| Kill zone  | debuff           | +25% damage taken from every source while the enemy is in a Pulse's field |
 | Exposed    | spotted          | Crit chance taken doubles. A revealed enemy counts as Exposed                                       |
 | Marked     | spotted          | The next hit from any tower is a guaranteed crit, and spends the mark. Damage that ticks never spends it, and it waits on a crit-immune enemy |
 | Priority   | spotted          | +15% damage taken from every tower, and every tower that picks one target picks it while it is in range |
