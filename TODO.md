@@ -154,16 +154,6 @@ look, and the info rows give the steps' size.
 - **Approach:** carry the steps the enemy nearest the wave carries, or the wave's best, on the wave and
   paint a brighter inner band of the cone for each.
 
-### Enemies inside the Pulse's field don't flicker
-
-The feature doc draws the enemies inside a field flickering; only the field's rings, coloured by
-its rules, are drawn.
-
-- **Where:** `td.ui.EnemyFrameBuilder`, driven by a field effect on the enemy (`CORRODED`, `UNDERTOW`,
-  `SILENCED` or `KILL_ZONE`).
-- **Approach:** add an enemy overlay draw that alternates the body's opacity while one of those
-  effects is active, so it needs no state beyond the effect.
-
 ### A global, buy-once upgrade for a whole tower type doesn't exist
 
 `FEATURE-tower-upgrades.md` named a second kind of upgrade alongside the four per-instance ones

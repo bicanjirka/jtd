@@ -1,7 +1,6 @@
 # Feature Request: Pulse and Seeker, the Control Towers
 
-**Status: implemented**, except for how two nodes approximate the doc and the flicker of enemies
-inside a field (`TODO.md`). Feature 5 of 7 in the tower rework (order in `TODO.md`). Needs features
+**Status: implemented**, except for how two nodes approximate the doc (`TODO.md`). Feature 5 of 7 in the tower rework (order in `TODO.md`). Needs features
 1 to 4.
 
 ## Summary

@@ -140,6 +140,8 @@ public final class Java2DFrameRenderer {
     private static final int ZONE_BUBBLES = 3;
     private static final int ZONE_CRYSTAL_ARMS = 3;
     private static final int ZONE_FALLOUT_BLADES = 3;
+    /** How much of its opacity a body loses on the dimmed half of a flicker. */
+    private static final float FLICKER_DIM = 0.5f;
     private static final int ZONE_WISPS = 4;
     /** A banked missile is drawn this share of a missile in flight. */
     private static final float NEST_MISSILE_SCALE = 0.6f;
@@ -820,7 +822,7 @@ public final class Java2DFrameRenderer {
         Shape shape = enemyShape(body.palette(), body.scale());
         // Cloaking is a further alpha reduction on top of the health-fraction one below, not a
         // replacement for it - a badly wounded, cloaked mob still reads as both at once.
-        float visibility = 1f - body.cloakProgress();
+        float visibility = (1f - body.cloakProgress()) * (1f - FLICKER_DIM * body.flicker());
         g2.setColor(scaleAlpha(color, visibility));
         g2.draw(shape);
         g2.setColor(scaleAlpha(healthColor(color, body.healthFraction()), visibility));

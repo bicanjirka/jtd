@@ -67,6 +67,35 @@ class EnemyFrameBuilderTest {
     }
 
     @Test
+    void anEnemyHeldByAFieldEffectFlickersBetweenSteadyAndDimmed() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.corroded(100, d -> {
+        }));
+        int half = EnemyFrameBuilder.FLICKER_HALF_PERIOD_TICKS;
+
+        float first = bodyDrawAt(enemy, 0, 0.0).flicker();
+        float second = bodyDrawAt(enemy, half, 0.0).flicker();
+        float third = bodyDrawAt(enemy, 2 * half, 0.0).flicker();
+
+        assertThat(first).isZero();
+        assertThat(second).isEqualTo(1f);
+        assertThat(third).isZero();
+    }
+
+    @Test
+    void anEnemyWithNoFieldEffectNeverFlickers() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.burn(Damage.magic(10), 100, d -> {
+        }));
+
+        float dimmedHalf = bodyDrawAt(enemy, EnemyFrameBuilder.FLICKER_HALF_PERIOD_TICKS, 0.0).flicker();
+
+        assertThat(dimmedHalf).isZero();
+    }
+
+    @Test
     void alphaZeroReproducesThePreviousTickPosition() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
