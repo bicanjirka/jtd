@@ -193,6 +193,8 @@ final class EnemyStatText {
             case SATURATED -> "Saturated x" + effect.stacks();
             case CHARGED -> "Charged";
             case DOOM -> "Doomed";
+            case BLIGHT -> "Blighted";
+            case CONTAGION -> "Contagious";
         };
         String category = effect.kind().category().label();
         if (effect.kind() == EffectKind.CHILL) {

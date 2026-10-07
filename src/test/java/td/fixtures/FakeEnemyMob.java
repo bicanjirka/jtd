@@ -174,6 +174,11 @@ public final class FakeEnemyMob implements EnemyMob {
         return this.activeEffectKinds().contains(kind);
     }
 
+    @Override
+    public List<Effect> activeEffects() {
+        return List.copyOf(this.appliedEffects);
+    }
+
     /** Every hit it recorded, added up. */
     @Override
     public long damageTaken() {

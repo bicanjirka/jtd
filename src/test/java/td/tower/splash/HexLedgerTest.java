@@ -7,6 +7,8 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.fixtures.FakeEnemyMob;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HexLedgerTest {
@@ -43,14 +45,16 @@ class HexLedgerTest {
     }
 
     @Test
-    void aHexOnAnEnemyThatDiedIsDroppedWithoutAPayout() {
+    void anEnemyThatDiedIsReportedOnceWithEveryHexItCarriedAndTheirJumps() {
         HexLedger ledger = new HexLedger();
         FakeEnemyMob enemy = doomed();
         enemy.dieOnAnyHit();
         ledger.record(enemy, EffectKind.DOOM);
+        ledger.record(enemy, EffectKind.CONTAGION, 1);
         enemy.doDamage(Damage.physical(1), AttackProfile.none());
 
-        assertThat(ledger.settle()).isEmpty();
+        assertThat(ledger.settle()).containsExactly(new HexEvent.Died(enemy, List.of(
+                new HexEvent.CarriedHex(EffectKind.DOOM, 0), new HexEvent.CarriedHex(EffectKind.CONTAGION, 1))));
         assertThat(ledger.isEmpty()).isTrue();
     }
 }

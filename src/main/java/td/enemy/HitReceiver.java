@@ -6,6 +6,7 @@ import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectKind;
 
+import java.util.List;
 import java.util.Set;
 
 /** An enemy as a hit sees it: what lands, what it is already suffering, and whether it died. */
@@ -47,6 +48,9 @@ public interface HitReceiver {
 
     /** All the damage that has landed on it so far, hits and periodic damage alike, in units. */
     long damageTaken();
+
+    /** Every effect active on it now, in kind order; a dead enemy keeps the ones it died under. */
+    List<Effect> activeEffects();
 
     /** Whether an effect that {@link EffectKind#stopsEnemy() stops it} is active. */
     default boolean isStopped() {

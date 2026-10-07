@@ -441,6 +441,8 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_SATURATED -> new Color(255, 150, 90);
             case STATUS_MARKER_CHARGED -> new Color(140, 200, 255);
             case STATUS_MARKER_DOOM -> new Color(190, 90, 255);
+            case STATUS_MARKER_BLIGHT -> new Color(140, 200, 60);
+            case STATUS_MARKER_CONTAGION -> new Color(210, 120, 170);
             case STATUS_MARKER_SHIELD -> new Color(220, 220, 100);
             case STATUS_MARKER_INVISIBLE -> new Color(180, 180, 180);
             case STATUS_MARKER_HEAL -> new Color(120, 220, 140);
@@ -873,6 +875,20 @@ public final class Java2DFrameRenderer {
                 path.lineTo(-s, s);
                 path.lineTo(s, s);
                 path.closePath();
+            }
+            case BLIGHT -> {
+                path.moveTo(0, -s);
+                path.quadTo(s, 0, 0, s);
+                path.quadTo(-s, 0, 0, -s);
+            }
+            case CONTAGION -> {
+                path.moveTo(0, -s);
+                path.lineTo(s, s);
+                path.lineTo(-s, s);
+                path.closePath();
+                path.append(new Ellipse2D.Float(-s * 0.3f, -s * 1.3f, s * 0.6f, s * 0.6f), false);
+                path.append(new Ellipse2D.Float(s * 0.7f, s * 0.7f, s * 0.6f, s * 0.6f), false);
+                path.append(new Ellipse2D.Float(-s * 1.3f, s * 0.7f, s * 0.6f, s * 0.6f), false);
             }
         }
         return path;

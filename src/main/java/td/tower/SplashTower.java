@@ -3,6 +3,7 @@ package td.tower;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.Effect;
+import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
@@ -36,10 +37,12 @@ import td.tower.splash.SplashActions;
 import td.tower.splash.SplashPerk;
 import td.tower.splash.SplashShot;
 import td.tower.splash.SplashSpec;
+import td.tower.splash.SpreadingCursePerk;
 import td.tower.splash.StaticChargePerk;
 import td.tower.splash.ThunderclapPerk;
 import td.tower.splash.ThunderstrikePerk;
 import td.tower.splash.WideChargePerk;
+import td.tower.splash.WitchsBrewPerk;
 import td.tower.targeting.HighestHealthSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.MostNeighboursSelector;
@@ -103,6 +106,9 @@ public final class SplashTower extends AbstractTower {
     private static final int CAST_EVERY = 4;
     /** How far, in cells before the blast radius bonus, a curse spreads or shares. */
     private static final float SPREAD_CELLS = 1.5f;
+    /** How many enemies a Contagion jumps to, and how often a hex may jump at most. */
+    private static final int CONTAGION_TARGETS = 2;
+    private static final int MAX_JUMPS = 2;
     private static final TargetSelector THUNDERSTRIKE_AIM = PreferringSelector.priority(new HighestHealthSelector());
     private static final int SATURATED_BLASTS_NEEDED = 45;
 
@@ -132,7 +138,18 @@ public final class SplashTower extends AbstractTower {
                     + "on a Dazed enemy deal +50% crit damage")
             .after(OVERLOAD);
     private static final UpgradeNode HEX = UpgradeTier.HEAD_1.node("splash.head.hex.1", "Hex", PRICE)
-            .withExtraEffect("casts Hex of Doom");
+            .withExtraEffect("every 4th shot casts a hex instead of blasting; adds Hex of Doom: when it ends, the "
+                    + "enemy takes 30% of all it took meanwhile");
+    private static final UpgradeNode WITCHS_BREW = UpgradeTier.HEAD_2.node("splash.head.hex.2", "Witch's Brew",
+            PRICE)
+            .withExtraEffect("adds Hex of Blight: poisons for the hex's length; a cast curses up to 3 enemies")
+            .after(HEX);
+    private static final UpgradeNode SPREADING_CURSE = UpgradeTier.HEAD_3.node("splash.head.hex.3",
+            "Spreading Curse", PRICE)
+            .withGate(new PurposeCondition(SATURATED_BLAST_DEED, SATURATED_BLASTS_NEEDED))
+            .withExtraEffect("adds Hex of Contagion: when the enemy dies, its hexes and debuffs jump to the 2 nearest "
+                    + "unhexed enemies")
+            .after(WITCHS_BREW);
     private static final UpgradeCondition A_CHAIN = UpgradeCondition.owns(ARC.id()).or(UpgradeCondition.owns(HEX.id()));
     private static final UpgradeNode WIDE_CHARGE = UpgradeTier.EXTRA_1.node("splash.extra.blast_engineering.1",
             "Wide Charge", PRICE)
@@ -144,11 +161,11 @@ public final class SplashTower extends AbstractTower {
     private static final UpgradeNode POTENCY = UpgradeTier.EXTRA_3.node("splash.extra.blast_engineering.3",
             "Potency", PRICE)
             .withRequires(A_CHAIN)
-            .withExtraEffect("Stormcaller: +1 jump, arcs deal 65%")
+            .withExtraEffect("Stormcaller: +1 jump, arcs deal 65%; Hexer: Doom pays out 45%")
             .after(SHAPED_CHARGE);
     private static final UpgradeNode MASTERY = UpgradeTier.EXTRA_4.node("splash.extra.blast_engineering.4",
             "Mastery", PRICE)
-            .withExtraEffect("Stormcaller: arcs +10% crit, Overload's Daze lasts 1s")
+            .withExtraEffect("Stormcaller: arcs +10% crit, Overload's Daze lasts 1s; Hexer: Blight poisons 50% harder")
             .after(POTENCY);
 
     private static final UpgradeNode THUNDERCLAP = UpgradeTier.SPECIAL.node("splash.special.thunderclap",
@@ -167,9 +184,10 @@ public final class SplashTower extends AbstractTower {
                     + "and Dazed 0.5s; the shot's arcs start there at full damage; counts as a crit")
             .after(ARC);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, OVERLOAD))
-            .with(ARC, CONDUCTOR, OVERLOAD, CHAIN_LIGHTNING, LIGHTNING_ROD, HEX, WIDE_CHARGE, SHAPED_CHARGE, POTENCY,
-                    MASTERY, THUNDERCLAP, STATIC_CHARGE, THUNDERSTRIKE)
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, OVERLOAD,
+            SPREADING_CURSE))
+            .with(ARC, CONDUCTOR, OVERLOAD, CHAIN_LIGHTNING, LIGHTNING_ROD, HEX, WITCHS_BREW, SPREADING_CURSE,
+                    WIDE_CHARGE, SHAPED_CHARGE, POTENCY, MASTERY, THUNDERCLAP, STATIC_CHARGE, THUNDERSTRIKE)
             .withChoice(ExclusiveChoice.oneOf(ARC, HEX))
             .withChoice(ExclusiveChoice.oneOf(CHAIN_LIGHTNING, LIGHTNING_ROD))
             .withChoice(ExclusiveChoice.specials(THUNDERCLAP, STATIC_CHARGE, THUNDERSTRIKE));
@@ -189,7 +207,9 @@ public final class SplashTower extends AbstractTower {
             .with(THUNDERCLAP.id(), ThunderclapPerk::new)
             .with(STATIC_CHARGE.id(), StaticChargePerk::new)
             .with(THUNDERSTRIKE.id(), ThunderstrikePerk::new)
-            .with(HEX.id(), HexOfDoomPerk::new);
+            .with(HEX.id(), HexOfDoomPerk::new)
+            .with(WITCHS_BREW.id(), WitchsBrewPerk::new)
+            .with(SPREADING_CURSE.id(), SpreadingCursePerk::new);
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final OwnedPerks<SplashPerk> perks = new OwnedPerks<>(PERKS);
@@ -240,7 +260,7 @@ public final class SplashTower extends AbstractTower {
         this.currentTick = gameTime;
         List<SplashPerk> owned = this.perks.all();
         if (!this.hexLedger.isEmpty()) {
-            this.settleHexes(this.spec(owned).hexes());
+            this.settleHexes(this.spec(owned));
         }
         if (this.coolDown > 0) {
             this.coolDown--;
@@ -304,15 +324,50 @@ public final class SplashTower extends AbstractTower {
         return cursed;
     }
 
-    /** Pays out the hexes that ran out: a Doom lands its share of what the enemy took under it. */
-    private void settleHexes(HexSpec hexes) {
+    /**
+     * Pays out what happened to the hexes: a Doom that ran out lands its share of what the enemy
+     * took under it, and a Contagion carrier that died passes its curses on.
+     */
+    private void settleHexes(SplashSpec spec) {
         for (HexEvent event : this.hexLedger.settle()) {
             switch (event) {
                 case HexEvent.Ended ended -> {
-                    int payout = Math.round(ended.stored() * hexes.doomShare());
+                    int payout = Math.round(ended.stored() * spec.hexes().doomShare());
                     if (ended.kind() == EffectKind.DOOM && payout > 0) {
                         this.dealPeriodicDamage(ended.enemy(), Damage.magic(payout));
                     }
+                }
+                case HexEvent.Died died -> died.carried(EffectKind.CONTAGION)
+                        .filter(contagion -> contagion.generation() < MAX_JUMPS)
+                        .ifPresent(contagion -> this.spread(died, contagion.generation() + 1, spec));
+            }
+        }
+    }
+
+    /**
+     * Contagion: the dead enemy's hexes from this Hexer, and every debuff on it a curse carries,
+     * jump to the nearest enemies that carry no hex, with the time they had left.
+     */
+    private void spread(HexEvent.Died died, int generation, SplashSpec spec) {
+        EnemyMob dead = died.enemy();
+        float distance = SPREAD_CELLS * this.context.getBoard().scale() * spec.blast().distanceScale();
+        List<Effect> carried = dead.activeEffects();
+        List<EnemyMob> next = InRangeTargetQuery.everyone((int) dead.getX(), (int) dead.getY(), distance)
+                .matching(this.context.enemies()).stream()
+                .filter(enemy -> enemy != dead && enemy.activeEffectKinds().stream()
+                        .noneMatch(kind -> kind.category() == EffectCategory.HEX))
+                .sorted(Comparator.comparingDouble(enemy -> Math.hypot(enemy.getX() - dead.getX(),
+                        enemy.getY() - dead.getY())))
+                .limit(CONTAGION_TARGETS)
+                .toList();
+        for (EnemyMob enemy : next) {
+            for (Effect effect : carried) {
+                if (effect.kind().spreadsWithCurse()) {
+                    enemy.applyEffect(effect);
+                } else if (died.carried(effect.kind()).isPresent()) {
+                    int ticks = effect.remainingTicks();
+                    this.applyEffect(enemy, sink -> Effect.hex(effect.kind(), ticks, sink));
+                    this.hexLedger.record(enemy, effect.kind(), generation);
                 }
             }
         }
@@ -548,6 +603,9 @@ public final class SplashTower extends AbstractTower {
         if (spec.arcs().active()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Arcs", spec.arcs().jumps() + " jumps"));
         }
+        if (spec.hexes().isActive()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Casts", spec.hexes().pool().size() + " hexes"));
+        }
         return lines;
     }
 
@@ -576,6 +634,12 @@ public final class SplashTower extends AbstractTower {
         public void curse(EnemyMob target, EffectKind kind, int ticks) {
             SplashTower.this.applyEffect(target, sink -> Effect.hex(kind, ticks, sink));
             SplashTower.this.hexLedger.record(target, kind);
+        }
+
+        @Override
+        public void poison(EnemyMob target, float weaponShare, int ticks) {
+            Damage perTick = Damage.magic(Math.round(SplashTower.this.damageCurrent() * weaponShare));
+            SplashTower.this.applyEffect(target, sink -> Effect.poison(perTick, ticks, sink));
         }
     }
 
