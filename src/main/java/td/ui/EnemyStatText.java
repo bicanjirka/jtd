@@ -211,6 +211,7 @@ final class EnemyStatText {
             case KILL_ZONE -> "Kill zone";
             case CRACKED -> "Cracked";
             case TARRED -> "Tarred";
+            case BLEEDING -> "Bleeding";
         };
         String category = effect.kind().category().label();
         if (effect.kind() == EffectKind.CHILL) {

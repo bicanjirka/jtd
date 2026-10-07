@@ -7,17 +7,26 @@ import td.enemy.EnemyMob;
 import td.projectile.CannonballProjectile;
 import td.projectile.ProjectileStats;
 import td.tower.buff.TowerBuff;
+import td.tower.mortar.BlastMark;
+import td.tower.mortar.BombletSpec;
 import td.tower.mortar.BracketDamagePerk;
 import td.tower.mortar.BracketTracker;
 import td.tower.mortar.BracketingPerk;
 import td.tower.mortar.BunkerBusterPerk;
+import td.tower.mortar.CarpetBombingPerk;
+import td.tower.mortar.ClusterShellPerk;
+import td.tower.mortar.FragmentationPerk;
 import td.tower.mortar.HeavyShellPerk;
 import td.tower.mortar.LongBatteryPerk;
 import td.tower.mortar.MortarPerk;
 import td.tower.mortar.MortarSpec;
 import td.tower.mortar.NukeFlash;
+import td.tower.mortar.PathLine;
 import td.tower.mortar.ShellType;
 import td.tower.mortar.ShellTypePerk;
+import td.tower.mortar.ShrapnelBoostPerk;
+import td.tower.mortar.ShrapnelSpec;
+import td.tower.mortar.ShrapnelStormPerk;
 import td.tower.mortar.TacticalNukePerk;
 import td.tower.mortar.WiderBlastPerk;
 import td.tower.targeting.FurthestAlongPathSelector;
@@ -34,8 +43,12 @@ import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
+import td.util.PathRuntime;
 import td.util.ThreadConfined;
+import td.wave.Path;
+import td.wave.Vec2;
 import td.zone.Zone;
+import td.zone.ZoneEffects;
 import td.zone.ZoneOwner;
 
 import java.util.ArrayList;
@@ -62,6 +75,10 @@ public final class MortarTower extends AbstractTower {
     public static final float SPLASH_RADIUS_BASE = 1.75f;
     /** Pixels a tick: slow enough to watch a shell fly and for a fast enemy to dodge it. */
     public static final float SHELL_SPEED = 8f;
+    /** Ticks a nuke's flash and ring last. */
+    public static final int NUKE_FLASH_TICKS = 10;
+    /** Ticks the mark of any blast stays on the board. */
+    public static final int BLAST_MARK_TICKS = 6;
 
     private static final int COOLDOWN_MAX = 70;
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
@@ -70,8 +87,14 @@ public final class MortarTower extends AbstractTower {
     private static final float SHELL_SIZE_PER_DAMAGE_ROOT = 1f;
     private static final float MAX_SHELL_SIZE = 2.5f;
     private static final float NUKE_SHELL_SIZE = 1.5f;
-    /** Ticks a nuke's flash and ring last. */
-    public static final int NUKE_FLASH_TICKS = 10;
+    /** Shrapnel reaches this far past the main blast, as a multiple of its radius. */
+    private static final float SHRAPNEL_RING_MULTIPLIER = 1.75f;
+    /** What a bleed costs per cell travelled, as a share of the Mortar's damage. */
+    private static final float BLEED_SHARE_PER_CELL = 0.08f;
+    private static final int BLEED_TICKS = 80;
+    /** How far apart bomblets lie along the path, in cells, and how far from the impact the first one is. */
+    private static final float BOMBLET_SPACING_CELLS = 0.8f;
+    private static final float BOMBLET_SCATTER_CELLS = 0.8f;
 
     private static final String BRACKET_DEED = "Bracketed shells";
     private static final int BRACKETED_SHELLS_NEEDED = 15;
@@ -96,7 +119,6 @@ public final class MortarTower extends AbstractTower {
             .withGate(new PurposeCondition(BRACKET_DEED, BRACKETED_SHELLS_NEEDED))
             .withExtraEffect("a bigger, slower shell; enemies within 0.5 cells of the impact are Dazed 0.5s")
             .after(SIEGE_ROUNDS_2);
-
     private static final UpgradeNode TACTICAL_NUKE = UpgradeTier.HEAD_4.node("mortar.head.siege_rounds.4a",
             "Tactical Nuke", PRICE)
             .withExtraEffect("every 4th shell is a nuke: x4 damage over x1.5 the blast, leaving fallout for 4s over "
@@ -108,6 +130,28 @@ public final class MortarTower extends AbstractTower {
                     + "shrinks 30%")
             .after(HEAVY_SHELL);
 
+    private static final UpgradeNode FRAGMENTATION_ROUNDS_1 = UpgradeTier.HEAD_1.node(
+            "mortar.head.fragmentation_rounds.1", "Fragmentation Rounds", PRICE)
+            .withExtraEffect("a ring of shrapnel past the blast for 25% damage, cracking plating, reaching 0.25 "
+                    + "cells further per Bracketing step");
+    private static final UpgradeNode FRAGMENTATION_ROUNDS_2 = UpgradeTier.HEAD_2.node(
+            "mortar.head.fragmentation_rounds.2", "Fragmentation Rounds II", PRICE)
+            .withExtraEffect("shrapnel does 30% more of everything it does, and applies its shell's own effect")
+            .after(FRAGMENTATION_ROUNDS_1);
+    private static final UpgradeNode CLUSTER_SHELL = UpgradeTier.HEAD_3.node("mortar.head.fragmentation_rounds.3",
+            "Cluster Shell", PRICE)
+            .withGate(new PurposeCondition(BRACKET_DEED, BRACKETED_SHELLS_NEEDED))
+            .withExtraEffect("4 bomblets scattered along the path around the impact, 40% damage each over 1 cell")
+            .after(FRAGMENTATION_ROUNDS_2);
+    private static final UpgradeNode CARPET_BOMBING = UpgradeTier.HEAD_4.node("mortar.head.fragmentation_rounds.4a",
+            "Carpet Bombing", PRICE)
+            .withExtraEffect("8 bomblets in a line along the path ahead of the impact instead")
+            .after(CLUSTER_SHELL);
+    private static final UpgradeNode SHRAPNEL_STORM = UpgradeTier.HEAD_4.node("mortar.head.fragmentation_rounds.4b",
+            "Shrapnel Storm", PRICE)
+            .withExtraEffect("what the shrapnel hits bleeds: physical damage for every cell it travels")
+            .after(CLUSTER_SHELL);
+
     private static final UpgradeNode NAPALM = UpgradeTier.SPECIAL.node("mortar.special.napalm", "Napalm", PRICE)
             .withExtraEffect("every 3rd shell is Napalm: its blast is magic and leaves burning ground, 1 cell wide, for 3s");
     private static final UpgradeNode TAR = UpgradeTier.SPECIAL.node("mortar.special.tar", "Tar", PRICE)
@@ -116,9 +160,14 @@ public final class MortarTower extends AbstractTower {
             "Cryo Shells", PRICE)
             .withExtraEffect("every 3rd shell is Cryo: it leaves frost ground, 1.2 cells wide, for 3s");
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, HEAVY_SHELL))
-            .with(SIEGE_ROUNDS_1, SIEGE_ROUNDS_2, HEAVY_SHELL, TACTICAL_NUKE, BUNKER_BUSTER, NAPALM, TAR, CRYO_SHELLS)
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, HEAVY_SHELL,
+                    CLUSTER_SHELL))
+            .with(SIEGE_ROUNDS_1, SIEGE_ROUNDS_2, HEAVY_SHELL, TACTICAL_NUKE, BUNKER_BUSTER,
+                    FRAGMENTATION_ROUNDS_1, FRAGMENTATION_ROUNDS_2, CLUSTER_SHELL, CARPET_BOMBING, SHRAPNEL_STORM,
+                    NAPALM, TAR, CRYO_SHELLS)
+            .withChoice(ExclusiveChoice.oneOf(SIEGE_ROUNDS_1, FRAGMENTATION_ROUNDS_1))
             .withChoice(ExclusiveChoice.oneOf(TACTICAL_NUKE, BUNKER_BUSTER))
+            .withChoice(ExclusiveChoice.oneOf(CARPET_BOMBING, SHRAPNEL_STORM))
             .withChoice(ExclusiveChoice.specials(NAPALM, TAR, CRYO_SHELLS));
 
     private static final PerkCatalogue<MortarPerk> PERKS = PerkCatalogue.<MortarPerk>empty()
@@ -129,6 +178,11 @@ public final class MortarTower extends AbstractTower {
             .with(HEAVY_SHELL.id(), HeavyShellPerk::new)
             .with(TACTICAL_NUKE.id(), TacticalNukePerk::new)
             .with(BUNKER_BUSTER.id(), BunkerBusterPerk::new)
+            .with(FRAGMENTATION_ROUNDS_1.id(), FragmentationPerk::new)
+            .with(FRAGMENTATION_ROUNDS_2.id(), ShrapnelBoostPerk::new)
+            .with(CLUSTER_SHELL.id(), ClusterShellPerk::new)
+            .with(CARPET_BOMBING.id(), CarpetBombingPerk::new)
+            .with(SHRAPNEL_STORM.id(), ShrapnelStormPerk::new)
             .with(NAPALM.id(), () -> new ShellTypePerk(ShellType.NAPALM))
             .with(TAR.id(), () -> new ShellTypePerk(ShellType.TAR))
             .with(CRYO_SHELLS.id(), () -> new ShellTypePerk(ShellType.CRYO));
@@ -137,6 +191,7 @@ public final class MortarTower extends AbstractTower {
     private final OwnedPerks<MortarPerk> perks = new OwnedPerks<>(PERKS);
     private final BracketTracker bracketing = new BracketTracker();
     private final ZoneOwner zoneOwner = this::applyEffect;
+    private final List<BlastMark> blastMarks = new ArrayList<>();
     private volatile NukeFlash nukeFlash;
     private int shellsFired;
     private int tickNow;
@@ -174,6 +229,7 @@ public final class MortarTower extends AbstractTower {
 
     public void doTick(int gameTime) {
         this.tickNow = gameTime;
+        this.blastMarks.removeIf(mark -> gameTime - mark.startedAtTick() >= BLAST_MARK_TICKS);
         MortarSpec spec = this.spec(this.perks.all());
         if (this.coolDown > 0) {
             this.coolDown--;
@@ -208,6 +264,34 @@ public final class MortarTower extends AbstractTower {
         return SPLASH_RADIUS_BASE * this.context.getBoard().scale() * spec.blastScale() * stepScale;
     }
 
+    /** One shell's landing: where, what it carries, and how wide and hard it hits after Bracketing. */
+    private record Landing(Vec2 at, ShellType type, MortarSpec spec, Strength strength) {
+
+        double x() {
+            return this.at.x();
+        }
+
+        double y() {
+            return this.at.y();
+        }
+
+        int step() {
+            return this.strength.step();
+        }
+
+        float radius() {
+            return this.strength.radius();
+        }
+
+        float damage() {
+            return this.strength.damage();
+        }
+    }
+
+    /** How hard and wide a landing hits: its Bracketing step, blast radius in pixels and damage in units. */
+    private record Strength(int step, float radius, float damage) {
+    }
+
     private void onImpact(double x, double y, ShellType type) {
         MortarSpec spec = this.spec(this.perks.all());
         int scale = this.context.getBoard().scale();
@@ -220,37 +304,125 @@ public final class MortarTower extends AbstractTower {
                 * (nuke ? spec.nuke().radiusFactor() : 1f));
         float damage = this.damageCurrent() * (1f + step * spec.bracket().damageStep())
                 * (nuke ? spec.nuke().damageFactor() : 1f);
-        List<EnemyMob> hit = InRangeTargetQuery.everyone((int) Math.round(x), (int) Math.round(y), radius)
-                .matching(this.context.enemies());
+        Landing landing = new Landing(new Vec2(x, y), type, spec, new Strength(step, radius, damage));
+        List<EnemyMob> hit = this.blast(landing);
+        this.dazeAround(landing, hit);
+        if (spec.shrapnel().active()) {
+            this.shrapnel(landing, hit);
+        }
+        if (spec.bomblets().isActive()) {
+            this.bomblets(landing);
+        }
+        if (nuke) {
+            this.nukeFlash = new NukeFlash(x, y, radius, this.tickNow + 1);
+        }
+        this.blastMarks.add(new BlastMark(new Vec2(x, y), radius, this.tickNow + 1, type.look()));
+        type.zone().ifPresent(zone -> this.context.zones().add(new Zone(zone.kind(), x, y,
+                zone.radius(scale, radius), zone.lifetimeTicks(), this.zoneStrength(zone.damageShare(), 1f),
+                this.zoneOwner)));
+    }
+
+    private int zoneStrength(float damageShare, float scale) {
+        return Math.round(this.damageCurrent() * damageShare * scale);
+    }
+
+    /** The main blast: damage with falloff and Cracked on everything inside, the centre hit harder. */
+    private List<EnemyMob> blast(Landing landing) {
+        MortarSpec spec = landing.spec();
+        int scale = this.context.getBoard().scale();
+        List<EnemyMob> hit = InRangeTargetQuery.everyone((int) Math.round(landing.x()), (int) Math.round(landing.y()),
+                landing.radius()).matching(this.context.enemies());
         EnemyMob centre = spec.centre().isActive()
-                ? this.enemyAtCentre(hit, x, y, spec.centre().radiusCells() * scale) : null;
+                ? this.enemyAtCentre(hit, landing.x(), landing.y(), spec.centre().radiusCells() * scale) : null;
         for (EnemyMob enemy : hit) {
-            double dx = x - enemy.getX();
-            double dy = y - enemy.getY();
-            float falloff = 1f - (float) ((dx * dx + dy * dy) / ((double) radius * radius));
+            float falloff = falloff(landing.x(), landing.y(), landing.radius(), enemy);
             float centreFactor = enemy == centre ? spec.centre().damageFactor() : 1f;
-            this.dealDamage(enemy, Damage.of(type.damageType(), Math.round(damage * falloff * centreFactor)));
+            this.dealDamage(enemy, Damage.of(landing.type().damageType(),
+                    Math.round(landing.damage() * falloff * centreFactor)));
             this.applyEffect(enemy, sink -> Effect.cracked(CRACKED_TICKS, sink));
             if (enemy == centre) {
                 this.applyStacks(enemy, EffectKind.SUNDERED, spec.centre().sunderStacks());
             }
         }
-        if (nuke) {
-            this.nukeFlash = new NukeFlash(x, y, radius, this.tickNow + 1);
+        return hit;
+    }
+
+    private static float falloff(double x, double y, float radius, EnemyMob enemy) {
+        double dx = x - enemy.getX();
+        double dy = y - enemy.getY();
+        return 1f - (float) ((dx * dx + dy * dy) / ((double) radius * radius));
+    }
+
+    private void dazeAround(Landing landing, List<EnemyMob> hit) {
+        if (!landing.spec().daze().isActive()) {
+            return;
         }
-        if (spec.daze().isActive()) {
-            float dazeRadius = spec.daze().radiusCells() * scale;
-            for (EnemyMob enemy : hit) {
-                double dx = x - enemy.getX();
-                double dy = y - enemy.getY();
-                if (dx * dx + dy * dy <= (double) dazeRadius * dazeRadius) {
-                    this.applyEffect(enemy, sink -> Effect.dazed(spec.daze().ticks(), sink));
-                }
+        float dazeRadius = landing.spec().daze().radiusCells() * this.context.getBoard().scale();
+        for (EnemyMob enemy : hit) {
+            double dx = landing.x() - enemy.getX();
+            double dy = landing.y() - enemy.getY();
+            if (dx * dx + dy * dy <= (double) dazeRadius * dazeRadius) {
+                this.applyEffect(enemy, sink -> Effect.dazed(landing.spec().daze().ticks(), sink));
             }
         }
-        type.zone().ifPresent(zone -> this.context.zones().add(new Zone(zone.kind(), x, y,
-                zone.radius(scale, radius), zone.lifetimeTicks(),
-                Math.round(this.damageCurrent() * zone.damageShare()), this.zoneOwner)));
+    }
+
+    /**
+     * The ring of shrapnel past the main blast: a share of the shell's damage with no falloff, Cracked,
+     * and, as the perks make it, the shell's own effect and a bleed. A shrapnel piece never leaves a zone.
+     */
+    private void shrapnel(Landing landing, List<EnemyMob> alreadyHit) {
+        ShrapnelSpec shrapnel = landing.spec().shrapnel();
+        int scale = this.context.getBoard().scale();
+        float reach = landing.radius() * SHRAPNEL_RING_MULTIPLIER + shrapnel.reachCellsPerStep() * scale * landing.step();
+        Damage piece = Damage.of(landing.type().damageType(),
+                Math.round(landing.damage() * shrapnel.damageShare() * shrapnel.scale()));
+        int crackedTicks = Math.round(CRACKED_TICKS * shrapnel.scale());
+        for (EnemyMob enemy : InRangeTargetQuery.everyone((int) Math.round(landing.x()), (int) Math.round(landing.y()),
+                reach).matching(this.context.enemies())) {
+            if (alreadyHit.contains(enemy)) {
+                continue;
+            }
+            this.dealDamage(enemy, piece);
+            this.applyEffect(enemy, sink -> Effect.cracked(crackedTicks, sink));
+            if (shrapnel.carriesShell()) {
+                landing.type().zone().ifPresent(zone -> ZoneEffects.touch(zone.kind(),
+                        this.zoneStrength(zone.damageShare(), shrapnel.scale()), this.zoneOwner, enemy));
+            }
+            if (shrapnel.bleeds()) {
+                int perCell = Math.round(this.damageCurrent() * BLEED_SHARE_PER_CELL * shrapnel.scale());
+                this.applyEffect(enemy, sink -> Effect.bleeding(perCell, BLEED_TICKS, sink));
+            }
+        }
+    }
+
+    /** Small blasts along the path: scattered around the impact, or in a line ahead of it. */
+    private void bomblets(Landing landing) {
+        BombletSpec bomblets = landing.spec().bomblets();
+        int scale = this.context.getBoard().scale();
+        double[] offsets = new double[bomblets.count()];
+        for (int i = 0; i < offsets.length; i++) {
+            offsets[i] = bomblets.inLine() ? (i + 1) * BOMBLET_SPACING_CELLS * scale
+                    : scatterOffset(i, offsets.length) * BOMBLET_SCATTER_CELLS * scale;
+        }
+        List<Path> paths = this.context.level().paths().stream().map(PathRuntime::path).toList();
+        float radius = bomblets.radiusCells() * scale;
+        int damage = Math.round(this.damageCurrent() * bomblets.damageShare());
+        for (Vec2 at : PathLine.along(paths, landing.x(), landing.y(), offsets)) {
+            for (EnemyMob enemy : InRangeTargetQuery.everyone((int) Math.round(at.x()), (int) Math.round(at.y()), radius)
+                    .matching(this.context.enemies())) {
+                this.dealDamage(enemy, Damage.of(landing.type().damageType(),
+                        Math.round(damage * falloff(at.x(), at.y(), radius, enemy))));
+                this.applyEffect(enemy, sink -> Effect.cracked(CRACKED_TICKS, sink));
+            }
+            this.blastMarks.add(new BlastMark(at, radius, this.tickNow + 1, landing.type().look()));
+        }
+    }
+
+    /** Bomblet {@code index} of {@code count} scattered either side of the impact: -2, -1, 1, 2 for four. */
+    private static double scatterOffset(int index, int count) {
+        int half = count / 2;
+        return index < half ? index - half : index - half + 1;
     }
 
     /** The enemy closest to where the shell landed, if it is within {@code reach} pixels of it. */
@@ -292,6 +464,11 @@ public final class MortarTower extends AbstractTower {
         return Optional.ofNullable(this.nukeFlash);
     }
 
+    /** Blasts that went off in the last few ticks, for the fading flash the board draws. */
+    public List<BlastMark> getBlastMarks() {
+        return List.copyOf(this.blastMarks);
+    }
+
     @Override
     protected List<TowerStatLine> ownStats() {
         MortarSpec spec = this.spec(this.perks.all());
@@ -326,6 +503,18 @@ public final class MortarTower extends AbstractTower {
         if (spec.centre().isActive()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Blast centre",
                     "x" + Math.round(spec.centre().damageFactor()) + " damage, sundered"));
+        }
+        if (spec.shrapnel().active()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Shrapnel",
+                    BehaviourLine.percent(spec.shrapnel().damageShare() * spec.shrapnel().scale()) + " damage"
+                            + (spec.shrapnel().carriesShell() ? ", with its shell's effect" : "")));
+        }
+        if (spec.shrapnel().bleeds()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Shrapnel makes", "bleed"));
+        }
+        if (spec.bomblets().isActive()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Bomblets", spec.bomblets().count()
+                    + (spec.bomblets().inLine() ? " in a line ahead" : " around the impact")));
         }
         List<ShellType> specials = spec.shells().specials();
         if (!specials.isEmpty()) {

@@ -107,7 +107,7 @@ public final class ActiveEffects {
         return switch (effect.kind()) {
             case FREEZE, DAZED -> 1f - effect.speedMultiplier();
             case CHILL -> effect.fuelLevel();
-            case BURN, POISON -> effect.damagePerTick().amount();
+            case BURN, POISON, BLEEDING -> effect.damagePerTick().amount();
             case SHIELD -> effect.shieldPercent();
             // On/off, not gradated - any reapplication is at least as strong as what's already active.
             case INVISIBLE, REVEALED, EXPOSED, MARKED, PRIORITY, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION,
@@ -355,7 +355,7 @@ public final class ActiveEffects {
                     accumulator.multiply(EnemyStat.MAGIC_PLATING, CRACKED_PLATING_SHARE);
                 }
                 case EXPOSED, MARKED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY,
-                        RECKONING, SILENCED, DEAD_ZONE, TOLL -> {
+                        RECKONING, SILENCED, DEAD_ZONE, TOLL, BLEEDING -> {
                 }
                 case TARRED -> accumulator.multiply(EnemyStat.MOVE_SPEED, TARRED_SPEED_SHARE);
                 case BURN -> {
@@ -387,13 +387,19 @@ public final class ActiveEffects {
         this.tick(1f);
     }
 
+    /** {@link #tick(float, float)} for an enemy that did not move. */
+    public void tick(float spiritFactor) {
+        this.tick(spiritFactor, 0f);
+    }
+
     /**
      * Applies one tick of damage-over-time, then counts every duration down and removes what
      * expired. A decaying level fades instead of counting down. {@code spiritFactor} ({@code 1} at
      * neutral spirit, {@code 0} when spirit is at its floor) sets the pace of the stack debuffs a pool
      * earns; every debuff a tower applies runs at {@code max(MIN_DEBUFF_PACE, spiritFactor)}.
+     * {@code cellsMoved} is how far the enemy walked this tick, which a bleed turns into damage.
      */
-    public void tick(float spiritFactor) {
+    public void tick(float spiritFactor, float cellsMoved) {
         List<EffectKind> expired = new ArrayList<>();
         float burnFactor = 1f - BURN_CHILL_DAMPENING * this.chillLevel() / MAX_CHILL;
         float tollFactor = 1f / (1f + TOLL_SLOWDOWN_PER_STACK * this.stacks(EffectKind.TOLL));
@@ -410,7 +416,9 @@ public final class ActiveEffects {
             } else if (kind.isFuelPool()) {
                 next = this.tickPool(effect, kind == EffectKind.BURN ? burnFactor : 1f);
             } else {
-                if (effect.damagePerTick().amount() > 0) {
+                if (kind == EffectKind.BLEEDING) {
+                    this.bleed(effect, cellsMoved);
+                } else if (effect.damagePerTick().amount() > 0) {
                     effect.sink().apply(effect.damagePerTick());
                 }
                 int steps = kind.isPacedBySpirit() ? this.paceSteps(kind, debuffPace) : 1;
@@ -424,6 +432,17 @@ public final class ActiveEffects {
             }
         }
         expired.forEach(this.active::remove);
+    }
+
+    /** Deals the damage owed for {@code cellsMoved}, keeping the part of a unit that is not yet whole. */
+    private void bleed(Effect bleeding, float cellsMoved) {
+        int slot = EffectKind.BLEEDING.ordinal();
+        float owed = this.progress[slot] + bleeding.damagePerTick().amount() * cellsMoved;
+        int whole = (int) owed;
+        this.progress[slot] = owed - whole;
+        if (whole > 0) {
+            bleeding.sink().apply(new Damage(whole, bleeding.damagePerTick().type()));
+        }
     }
 
     /** The whole ticks a paced timer of {@code kind} runs this tick at {@code pace}, carrying the rest over. */

@@ -225,6 +225,15 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
         return timed(EffectKind.KILL_ZONE, durationTicks, sink);
     }
 
+    /**
+     * Physical damage for every cell the enemy travels while it lasts, {@code damagePerCell} (in
+     * damage units) each. It is carried in {@code damagePerTick}, which a bleed never deals as such.
+     */
+    public static Effect bleeding(int damagePerCell, int durationTicks, DamageSink sink) {
+        return new Effect(EffectKind.BLEEDING, 1f, Damage.physical(damagePerCell), 0f, durationTicks, sink, 0,
+                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none());
+    }
+
     /** Plating halved for {@code durationTicks}. */
     public static Effect cracked(int durationTicks, DamageSink sink) {
         return timed(EffectKind.CRACKED, durationTicks, sink);

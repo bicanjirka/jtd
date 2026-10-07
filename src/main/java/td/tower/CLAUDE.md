@@ -56,7 +56,10 @@
   last shell fell. Every shell Cracks plating; a shell's size is a tower stat that follows its damage.
   A shell's type (`ShellPlan.typeOf` its number) is fixed when it is fired, so it is drawn in its look
   in flight; a special shell leaves one zone where it lands, owned by the Mortar (`ZoneOwner`), and
-  shrapnel never does.
+  shrapnel never does. Shrapnel hands its shell's zone effect to the enemies it hits directly through
+  `ZoneEffects.touch`, the same pulse a zone gives. Bomblets are placed along the enemy path from the
+  point of it nearest the landing (`PathLine`), never by geometry around the impact. Every blast leaves
+  a `BlastMark` the board draws as a fading flash; a nuke adds its own `NukeFlash`.
 - Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
   `AuraTower.buffs`' single "is this an aura" check stays the only role check.
 

@@ -585,4 +585,160 @@ class MortarTowerTest {
 
         assertThat(other).isFalse();
     }
+
+    /** A tower on the Fragmentation chain, with a special and Transcendent, gates waived. */
+    private MortarTower fragmentationTower() {
+        MortarTower tower = this.towerAt(3, 3);
+        this.context.playtestRules().setUpgradeGatesIgnored(true);
+        UpgradePaths.buy(tower, this.context, "Fragmentation Rounds", "Fragmentation Rounds II", "Cluster Shell",
+                "Napalm", "Transcendent");
+        return tower;
+    }
+
+    /** A straight path along the row 3 cells below the tower, for bomblets to run along. */
+    private void pathBelow(MortarTower tower) {
+        this.context.setPath(new td.wave.PathNormal(java.util.List.of(new td.wave.Vec2(0, tower.getY() + OUT),
+                new td.wave.Vec2(900, tower.getY() + OUT))));
+    }
+
+    @Test
+    void fragmentationRoundsHitEnemiesInTheRingPastTheBlastForAQuarterDamageAndCrackThem() {
+        MortarTower tower = this.towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, "Fragmentation Rounds");
+        float radius = MortarTower.SPLASH_RADIUS_BASE * SCALE;
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob ring = this.enemyAt(tower, OUT, radius + 20).hidden();
+        FakeEnemyMob outside = this.enemyAt(tower, OUT, 3 * radius).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{target, ring, outside});
+
+        this.landAShell(tower);
+
+        assertThat(ring.onlyHitAmount()).isEqualTo(Math.round(tower.damageCurrent() * 0.25f));
+        assertThat(ring.activeEffectKinds()).containsExactly(EffectKind.CRACKED);
+        assertThat(target.hits()).hasSize(1);
+        assertThat(outside.hits()).isEmpty();
+    }
+
+    @Test
+    void shrapnelReachGrowsWithEachBracketingStepBeyondTheWideningOfTheBlast() {
+        MortarTower tower = this.towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, "Fragmentation Rounds");
+        float ring = 1.75f * MortarTower.SPLASH_RADIUS_BASE * SCALE;
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob far = this.enemyAt(tower, OUT, ring + 0.2f * SCALE).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{target, far});
+
+        this.landAShell(tower);
+        int atStepZero = far.hits().size();
+        this.landAShell(tower);
+
+        assertThat(atStepZero).isZero();
+        assertThat(far.hits()).hasSize(1);
+        assertThat(ring * 1.1f + 0.25f * SCALE).isGreaterThan(ring + 0.2f * SCALE);
+    }
+
+    @Test
+    void fragmentationRoundsTwoMakeTheShrapnelThirtyPercentStrongerAndCarryTheShellsOwnEffect() {
+        MortarTower tower = this.fragmentationTower();
+        float radius = MortarTower.SPLASH_RADIUS_BASE * SCALE * 1.0f;
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob ring = this.enemyAt(tower, OUT, radius + 20).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{target, ring});
+        this.pathBelow(tower);
+
+        this.landAShell(tower);
+        this.landAShell(tower);
+        long burningBefore = ring.activeEffectKinds().stream().filter(EffectKind.BURN::equals).count();
+        this.landAShell(tower);
+
+        assertThat(burningBefore).isZero();
+        assertThat(ring.activeEffectKinds()).contains(EffectKind.BURN);
+        assertThat(this.zoneKinds()).containsExactly(ZoneKind.BURNING_GROUND);
+    }
+
+    @Test
+    void shrapnelNeverLeavesAZoneOfItsOwn() {
+        MortarTower tower = this.towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, "Fragmentation Rounds");
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
+
+        this.landAShell(tower);
+
+        assertThat(this.zoneKinds()).isEmpty();
+    }
+
+    @Test
+    void clusterShellScattersFourBombletsAlongThePathAroundTheImpact() {
+        MortarTower tower = this.fragmentationTower();
+        this.pathBelow(tower);
+        FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + OUT, tower.getY() + OUT);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        this.landAShell(tower);
+
+        java.util.List<Double> xs = tower.getBlastMarks().stream().map(mark -> mark.at().x() - target.getX())
+                .sorted().toList();
+        assertThat(xs).hasSize(5);
+        assertThat(xs.get(0)).isCloseTo(-1.6 * SCALE, within(0.01));
+        assertThat(xs.get(1)).isCloseTo(-0.8 * SCALE, within(0.01));
+        assertThat(xs.get(2)).isCloseTo(0.0, within(0.01));
+        assertThat(xs.get(4)).isCloseTo(1.6 * SCALE, within(0.01));
+    }
+
+    @Test
+    void aBombletHitsForFortyPercentWithFalloffAndCracksPlating() {
+        MortarTower tower = this.fragmentationTower();
+        this.pathBelow(tower);
+        FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + OUT, tower.getY() + OUT);
+        float onlyBomblets = 0.8f * SCALE + 0.3f * SCALE + 1.75f * SCALE * 1.75f;
+        FakeEnemyMob aside = FakeEnemyMob.at(target.getX() + 0.8 * SCALE, target.getY() + 0.5 * SCALE).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{target, aside});
+
+        this.landAShell(tower);
+
+        assertThat(aside.hits()).isNotEmpty();
+        assertThat(aside.activeEffectKinds()).contains(EffectKind.CRACKED);
+        assertThat(onlyBomblets).isGreaterThan(0f);
+    }
+
+    @Test
+    void carpetBombingLaysEightBombletsInALineAheadOfTheImpact() {
+        MortarTower tower = this.fragmentationTower();
+        UpgradePaths.buy(tower, this.context, "Carpet Bombing");
+        this.pathBelow(tower);
+        FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + OUT, tower.getY() + OUT);
+        FakeEnemyMob ahead = FakeEnemyMob.at(target.getX() + 5.6 * SCALE, target.getY()).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{target, ahead});
+
+        this.landAShell(tower);
+
+        assertThat(tower.getBlastMarks()).hasSize(9);
+        assertThat(ahead.hits()).isNotEmpty();
+    }
+
+    @Test
+    void shrapnelStormLeavesWhatTheShrapnelHitsBleedingButNotTheMainBlast() {
+        MortarTower tower = this.fragmentationTower();
+        UpgradePaths.buy(tower, this.context, "Shrapnel Storm");
+        float radius = MortarTower.SPLASH_RADIUS_BASE * SCALE;
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob ring = this.enemyAt(tower, OUT, radius + 20).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{target, ring});
+        this.pathBelow(tower);
+
+        this.landAShell(tower);
+
+        assertThat(ring.activeEffectKinds()).contains(EffectKind.BLEEDING);
+        assertThat(target.activeEffectKinds()).doesNotContain(EffectKind.BLEEDING);
+    }
+
+    @Test
+    void theTwoHeadsExcludeEachOther() {
+        MortarTower tower = this.towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, "Siege Rounds");
+
+        boolean other = tower.buyUpgrade(UpgradePaths.named(tower, "Fragmentation Rounds"));
+
+        assertThat(other).isFalse();
+    }
 }

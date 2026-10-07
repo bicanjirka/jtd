@@ -665,6 +665,7 @@ public class Driver {
                 case KILL_ZONE -> Effect.killZone(ticks, d -> { });
                 case CRACKED -> Effect.cracked(ticks, d -> { });
                 case TARRED -> Effect.tarred(ticks, d -> { });
+                case BLEEDING -> Effect.bleeding(1, ticks, d -> { });
                 case SCORCHED, SICKENED -> throw new IllegalArgumentException(kind + " is earned by burn and poison");
             };
             mob.applyEffect(effect);

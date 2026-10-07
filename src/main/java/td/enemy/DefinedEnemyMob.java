@@ -572,7 +572,9 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.health = healed;
         if (healthChanged || !this.activeEffects.isEmpty()) {
             // The pace of stack decay is the same scale that spirit puts on heals and shields.
-            this.activeEffects.tick(Math.max(0f, 1f + this.stats.value(EnemyStat.SPIRIT) / 100f));
+            int cellSize = this.gameWorld.getBoard().scale();
+            this.activeEffects.tick(Math.max(0f, 1f + this.stats.value(EnemyStat.SPIRIT) / 100f),
+                    cellSize > 0 ? speed / cellSize : 0f);
             this.stats.invalidate();
         }
         // After tick() so an expiry is seen the tick it happens; before the dead-return so a lethal

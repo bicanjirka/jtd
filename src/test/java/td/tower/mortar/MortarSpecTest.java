@@ -67,4 +67,34 @@ class MortarSpecTest {
                 ShellType.PLAIN, ShellType.PLAIN, ShellType.NAPALM, ShellType.PLAIN, ShellType.PLAIN,
                 ShellType.NAPALM);
     }
+
+    @Test
+    void pathLinePlacesPointsAlongTheNearestPathFromTheImpactBehindAndAhead() {
+        td.wave.Path path = new td.wave.PathNormal(java.util.List.of(new td.wave.Vec2(0, 100),
+                new td.wave.Vec2(500, 100)));
+
+        java.util.List<td.wave.Vec2> points = PathLine.along(java.util.List.of(path), 200, 130, new double[]{-50, 0, 80});
+
+        assertThat(points).extracting(td.wave.Vec2::x).containsExactly(150.0, 200.0, 280.0);
+        assertThat(points).extracting(td.wave.Vec2::y).containsOnly(100.0);
+    }
+
+    @Test
+    void pathLineIsEmptyWithoutAPathOfAnyLength() {
+        assertThat(PathLine.along(java.util.List.of(new td.wave.PathNormal(java.util.List.of())), 0, 0,
+                new double[]{10})).isEmpty();
+    }
+
+    @Test
+    void pathLineChoosesTheNearestOfSeveralPaths() {
+        td.wave.Path far = new td.wave.PathNormal(java.util.List.of(new td.wave.Vec2(0, 500),
+                new td.wave.Vec2(500, 500)));
+        td.wave.Path near = new td.wave.PathNormal(java.util.List.of(new td.wave.Vec2(0, 100),
+                new td.wave.Vec2(500, 100)));
+
+        java.util.List<td.wave.Vec2> points = PathLine.along(java.util.List.of(far, near), 100, 120,
+                new double[]{10});
+
+        assertThat(points).singleElement().satisfies(point -> assertThat(point.y()).isEqualTo(100.0));
+    }
 }
