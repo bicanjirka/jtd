@@ -1,7 +1,20 @@
 # Feature Request: Aura and the Balance Pass
 
-**Status: not started.** Feature 7 of 7 in the tower rework (order in `TODO.md`). Needs features
-1 to 6.
+**Status: implemented, except the repricing.** Feature 7 of 7 in the tower rework (order in `TODO.md`).
+The Aura (shown as the Beacon) is built as described below, the display names are in, and `README.md` is
+rewritten. The balance pass has its tool, `td.PurchaseHarness`, and its first measurements, but no node was
+repriced: how a copy of a tower is limited has to be decided first (the placeholder entries in `TODO.md`
+keep what it did not settle).
+
+As built, where it differs from this request:
+
+- The Range line keeps the shared Range steps (+15%, +10%); the "base range 2.05 / II 3.17" figures of the
+  request were not applied.
+- The Apprentice is marked with a ring on its tower, not a book glyph.
+- Buffs a tower earns XP through, and Withering Field's interval, are axes of `TowerBuff` the Aura sets, so
+  they reach a tower through its published stats like any buff; the XP bonus is asked of every tower when a
+  walk ends (`Tower.xpBonusFor`, `Tower.xpSharedWith`).
+- Display names live on `TowerFactory.Type`; the class-name rule in `td/tower/CLAUDE.md` now says so.
 
 ## Summary
 

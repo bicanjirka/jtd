@@ -22,7 +22,8 @@ The tower rework, in this order (each needs the ones before it):
 5. `FEATURE-pulse-and-seeker.md` (implemented): Silenced, Anchored, Unraveled, Brittle, the nest.
 6. `FEATURE-ground-zones-mortar-and-cinder.md` (implemented): ground zones, the Mortar and the Cinder, and
    the fire-and-ice rules.
-7. `FEATURE-aura-and-balance-pass.md`: the Aura, harness pricing, display names, the README.
+7. `FEATURE-aura-and-balance-pass.md` (implemented, except the repricing): the Aura, harness pricing, display
+   names, the README.
 
 Enemies come after, from `docs/ideas/enemies-brainstorm.md`.
 
