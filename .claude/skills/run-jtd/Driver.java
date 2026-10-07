@@ -662,6 +662,7 @@ public class Driver {
                 case CORRODED -> Effect.corroded(ticks, d -> { });
                 case UNDERTOW -> Effect.undertow(ticks, d -> { });
                 case DEAD_ZONE -> Effect.deadZone(ticks, d -> { });
+                case FALLOUT -> Effect.fallout(ticks, d -> { });
                 case KILL_ZONE -> Effect.killZone(ticks, d -> { });
                 case CRACKED -> Effect.cracked(ticks, d -> { });
                 case TARRED -> Effect.tarred(ticks, d -> { });

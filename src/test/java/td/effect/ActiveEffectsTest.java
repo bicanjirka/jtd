@@ -1113,6 +1113,21 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void falloutKeepsHealsOutButLetsAShieldTakeHold() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.fallout(10, d -> {
+        }));
+
+        effects.apply(Effect.heal(5, 100, d -> {
+        }));
+        effects.apply(Effect.shield(0.3f, 100, d -> {
+        }));
+
+        assertThat(effects.activeKinds()).containsExactlyInAnyOrder(EffectKind.FALLOUT, EffectKind.SHIELD);
+        assertThat(effects.blockedKinds()).containsExactly(EffectKind.HEAL);
+    }
+
+    @Test
     void undertowChillsAQuarterAndBuysAFreezeTheChillsExtraTime() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.undertow(10, d -> {

@@ -16,7 +16,6 @@
   left when the enemy died, so they hold while an enemy stays and run out once it leaves.
 - `ZoneEffects.touch` is one pulse of a kind on one enemy; a zone adds only what depends on how long an
   enemy stays (frost's freeze). Anything else that carries a zone's effect without a zone calls it.
-- Fallout drains spirit through `SICKENED` stacks and holds heals and shields off with `DEAD_ZONE`, so the
-  inspector names it a dead zone.
+- Fallout drains spirit through `SICKENED` stacks and holds heals off, and only heals, with `FALLOUT`.
 - A zone's per-enemy memory (a frost zone's time inside) lives on the zone, is keyed by identity
   and is forgotten the pulse an enemy is not inside.

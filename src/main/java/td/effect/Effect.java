@@ -245,6 +245,11 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
         return timed(EffectKind.DEAD_ZONE, durationTicks, sink);
     }
 
+    /** No heal takes hold for {@code durationTicks}; a shield still can. */
+    public static Effect fallout(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.FALLOUT, durationTicks, sink);
+    }
+
     /** Extra damage taken from every source for {@code durationTicks}. */
     public static Effect killZone(int durationTicks, DamageSink sink) {
         return timed(EffectKind.KILL_ZONE, durationTicks, sink);

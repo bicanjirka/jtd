@@ -31,7 +31,7 @@ final class EffectInteractions {
         CONSUMED_BY.put(EffectKind.RIME, EnumSet.of(EffectKind.ASH));
         CONSUMED_BY.put(EffectKind.ASH, EnumSet.of(EffectKind.RIME));
         BLOCKED_BY.put(EffectKind.INVISIBLE, EnumSet.of(EffectKind.INVERSION));
-        HELD_OFF_BY.put(EffectKind.HEAL, EnumSet.of(EffectKind.DEAD_ZONE));
+        HELD_OFF_BY.put(EffectKind.HEAL, EnumSet.of(EffectKind.DEAD_ZONE, EffectKind.FALLOUT));
         HELD_OFF_BY.put(EffectKind.SHIELD, EnumSet.of(EffectKind.DEAD_ZONE));
     }
 

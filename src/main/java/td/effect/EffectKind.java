@@ -70,6 +70,8 @@ public enum EffectKind {
     UNDERTOW,
     /** Heals and shields can't take hold while the enemy is in the field. */
     DEAD_ZONE,
+    /** Heals can't take hold while the enemy is in the field; a shield still can. */
+    FALLOUT,
     /** Takes extra damage from every source while the enemy is in the field. */
     KILL_ZONE,
     /** Plating is halved. */
@@ -87,7 +89,7 @@ public enum EffectKind {
             case FREEZE, DAZED -> EffectCategory.HARD_CC;
             case BURN, POISON, BLEEDING, SOULFIRE -> EffectCategory.DAMAGE_OVER_TIME;
             case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED, UNRAVELED, BRITTLE, TOLL,
-                    CORRODED, DEAD_ZONE, KILL_ZONE, CRACKED, TARRED -> EffectCategory.DEBUFF;
+                    CORRODED, DEAD_ZONE, FALLOUT, KILL_ZONE, CRACKED, TARRED -> EffectCategory.DEBUFF;
             case EXPOSED, MARKED, PRIORITY, CHARGED -> EffectCategory.SPOTTED;
             case DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY, RECKONING -> EffectCategory.HEX;
             case SHIELD, HEAL -> EffectCategory.RESTORATIVE;
@@ -200,7 +202,7 @@ public enum EffectKind {
             case SHIELD, INVISIBLE, HEAL, VULNERABLE, REVEALED, POISON, SCORCHED, SICKENED, SUNDERED, EXPOSED, MARKED,
                     PRIORITY, RESONATING, FRACTURED, DAZED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION,
                     SYMPATHY, RECKONING, SILENCED, ANCHORED, UNRAVELED, BRITTLE, TOLL, CORRODED, UNDERTOW, DEAD_ZONE,
-                    KILL_ZONE, CRACKED, TARRED, BLEEDING, SOULFIRE -> Optional.empty();
+                    FALLOUT, KILL_ZONE, CRACKED, TARRED, BLEEDING, SOULFIRE -> Optional.empty();
         };
     }
 }

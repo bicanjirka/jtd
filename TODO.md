@@ -145,14 +145,6 @@ stop, timed ones crawl at a quarter pace, less under Toll).
   tower subscribe to it for the enemies inside; for Soul Drain, let a pace of zero stop a timed
   debuff when spirit is at its floor, which needs the README's pace rule changed with it.
 
-### Fallout keeps shields out as well as heals
-
-`FEATURE-ground-zones-mortar-and-cinder.md` has Fallout drain spirit and block healing. As built it holds
-heals *and* shields off, by the Dead Zone's effect, so the inspector names it a dead zone.
-
-- **Where:** `td.zone.ZoneEffects` (the `FALLOUT` case), `td.effect.EffectInteractions`' held-off table.
-- **Approach:** give Fallout an effect kind of its own that holds off `HEAL` only.
-
 ### The Cinder's Stoke is not drawn
 
 The feature doc draws each Stoke step as a brighter core in the flame; only the wave's colour shows its
