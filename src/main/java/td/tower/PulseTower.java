@@ -8,16 +8,21 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.pulse.ArcDischargePerk;
+import td.tower.pulse.DeadZonePerk;
 import td.tower.pulse.FasterTollPerk;
 import td.tower.pulse.FullTollBonusPerk;
+import td.tower.pulse.LingeringTollPerk;
 import td.tower.pulse.MeltdownPerk;
+import td.tower.pulse.NullFieldPerk;
 import td.tower.pulse.PulsePerk;
 import td.tower.pulse.PulseSpec;
+import td.tower.pulse.RevealOnEntryPerk;
 import td.tower.pulse.TeslaCoilPerk;
 import td.tower.pulse.TollPerk;
 import td.tower.pulse.TollSpec;
 import td.tower.pulse.TollTracker;
-import td.tower.pulse.WideFieldPerk;
+import td.tower.pulse.TrueSightPerk;
+import td.tower.pulse.VisitSpec;
 import td.tower.pulse.ZapSpec;
 import td.tower.targeting.HighestHealthSelector;
 import td.tower.targeting.InRangeTargetQuery;
@@ -94,36 +99,59 @@ public final class PulseTower extends AbstractTower {
             .withExtraEffect("the zap chains to 3 more enemies within 1.5 cells, even outside the field; every "
                     + "enemy zapped is Dazed 0.25s")
             .after(ARC_DISCHARGE);
-    private static final UpgradeNode RESONANT_FIELD_1 = UpgradeTier.HEAD_1.node("pulse.head.resonant_field.1",
-            "Resonant Field", PRICE)
-            .withBuff(TowerBuff.range(0.2f));
-    private static final UpgradeNode RESONANT_FIELD_2 = UpgradeTier.HEAD_2.node("pulse.head.resonant_field.2",
-            "Resonant Field II", PRICE)
+    private static final UpgradeNode PHASE_FIELD_1 = UpgradeTier.HEAD_1.node("pulse.head.phase_field.1",
+            "Phase Field", PRICE)
+            .withBuff(TowerBuff.range(0.2f))
+            .withExtraEffect("Toll stays 2s after an enemy leaves");
+    private static final UpgradeNode PHASE_FIELD_2 = UpgradeTier.HEAD_2.node("pulse.head.phase_field.2",
+            "Phase Field II", PRICE)
             .withBuff(TowerBuff.range(0.15f))
-            .after(RESONANT_FIELD_1)
-            .withExtraEffect("any invisible enemy it hits is revealed to every tower for 2s");
+            .withExtraEffect("an enemy is revealed to every tower for 2s when it gains its first Toll stack, once "
+                    + "per visit")
+            .after(PHASE_FIELD_1);
+    private static final UpgradeNode NULL_FIELD = UpgradeTier.HEAD_3.node("pulse.head.phase_field.3", "Null Field",
+            PRICE)
+            .withGate(new PurposeCondition(FULL_TOLL_DEED, FULL_TOLL_SECONDS_NEEDED))
+            .withExtraEffect("enemies inside are Silenced")
+            .after(PHASE_FIELD_2);
+    private static final UpgradeNode TRUE_SIGHT = UpgradeTier.HEAD_4.node("pulse.head.phase_field.4a", "True Sight",
+            PRICE)
+            .withExtraEffect("the visit's reveal lasts 4s and Dazes the enemy for 2s")
+            .after(NULL_FIELD);
+    private static final UpgradeNode DEAD_ZONE = UpgradeTier.HEAD_4.node("pulse.head.phase_field.4b", "Dead Zone",
+            PRICE)
+            .withExtraEffect("nothing inside can be healed or shielded")
+            .after(NULL_FIELD);
     private static final UpgradeNode WARDING_FIELD = UpgradeTier.SPECIAL.node("pulse.special.warding_field",
             "Warding Field", PRICE)
             .withExtraEffect("each tick, everything hit has a 10% chance to gain 1 Vulnerable stack (cap 3)");
 
     /** Chance per tick that each enemy hit gains a vulnerability stack. */
     private static final double WARDING_FIELD_CHANCE = 0.1;
-    private static final float REVEAL_SECONDS = 2f;
+    /** A rule that holds inside the field lasts this long after the last tick an enemy was in it. */
+    private static final int INSIDE_TICKS = 3;
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, ARC_DISCHARGE))
-            .with(OVERCHARGED_COILS_1, OVERCHARGED_COILS_2, ARC_DISCHARGE, MELTDOWN, TESLA_COIL, RESONANT_FIELD_1,
-                    RESONANT_FIELD_2, WARDING_FIELD)
-            .withChoice(ExclusiveChoice.oneOf(OVERCHARGED_COILS_1, RESONANT_FIELD_1))
-            .withChoice(ExclusiveChoice.oneOf(MELTDOWN, TESLA_COIL));
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, ARC_DISCHARGE,
+            NULL_FIELD))
+            .with(OVERCHARGED_COILS_1, OVERCHARGED_COILS_2, ARC_DISCHARGE, MELTDOWN, TESLA_COIL, PHASE_FIELD_1,
+                    PHASE_FIELD_2, NULL_FIELD, TRUE_SIGHT, DEAD_ZONE, WARDING_FIELD)
+            .withChoice(ExclusiveChoice.oneOf(OVERCHARGED_COILS_1, PHASE_FIELD_1))
+            .withChoice(ExclusiveChoice.oneOf(MELTDOWN, TESLA_COIL))
+            .withChoice(ExclusiveChoice.oneOf(TRUE_SIGHT, DEAD_ZONE));
 
     private static final PerkCatalogue<PulsePerk> PERKS = PerkCatalogue.<PulsePerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, TollPerk::new)
-            .with(StandardBaseSlot.RANGE_3_ID, WideFieldPerk::new)
+            .with(StandardBaseSlot.RANGE_3_ID, () -> new LingeringTollPerk(1f))
             .with(OVERCHARGED_COILS_1.id(), FasterTollPerk::new)
             .with(OVERCHARGED_COILS_2.id(), FullTollBonusPerk::new)
             .with(ARC_DISCHARGE.id(), ArcDischargePerk::new)
             .with(MELTDOWN.id(), MeltdownPerk::new)
-            .with(TESLA_COIL.id(), TeslaCoilPerk::new);
+            .with(TESLA_COIL.id(), TeslaCoilPerk::new)
+            .with(PHASE_FIELD_1.id(), () -> new LingeringTollPerk(1f))
+            .with(PHASE_FIELD_2.id(), RevealOnEntryPerk::new)
+            .with(NULL_FIELD.id(), NullFieldPerk::new)
+            .with(TRUE_SIGHT.id(), TrueSightPerk::new)
+            .with(DEAD_ZONE.id(), DeadZonePerk::new);
 
     private final OwnedPerks<PulsePerk> perks = new OwnedPerks<>(PERKS);
     private final TollTracker tollTracker = new TollTracker();
@@ -164,7 +192,12 @@ public final class PulseTower extends AbstractTower {
                 ? this.tollTracker.tick(inside, spec.toll().ticksPerStack()) : List.of();
         int highest = 0;
         for (EnemyMob enemy : inside) {
+            boolean startsVisit = earners.contains(enemy) && !enemy.hasEffect(EffectKind.TOLL);
             this.addToll(enemy, spec.toll(), earners.contains(enemy));
+            if (startsVisit) {
+                this.startVisit(enemy, spec.visit());
+            }
+            this.holdInside(enemy, spec);
             int stacks = enemy.effectStacks(EffectKind.TOLL);
             highest = Math.max(highest, stacks);
             float factor = 1f + TOLL_DAMAGE_PER_STACK * stacks
@@ -228,6 +261,26 @@ public final class PulseTower extends AbstractTower {
         }
     }
 
+    /** An enemy's first Toll stack of a visit: it is revealed, and may be Dazed. */
+    private void startVisit(EnemyMob enemy, VisitSpec visit) {
+        if (visit.revealTicks() > 0) {
+            this.reveal(enemy, visit.revealTicks());
+        }
+        if (visit.dazeTicks() > 0) {
+            this.applyEffect(enemy, sink -> Effect.dazed(visit.dazeTicks(), sink));
+        }
+    }
+
+    /** The rules that hold while an enemy is inside: each lasts a moment, refreshed every tick it stays. */
+    private void holdInside(EnemyMob enemy, PulseSpec spec) {
+        if (spec.modes().silences()) {
+            this.applyEffect(enemy, sink -> Effect.silenced(INSIDE_TICKS, sink));
+        }
+        if (spec.modes().deadZone()) {
+            this.applyEffect(enemy, sink -> Effect.deadZone(INSIDE_TICKS, sink));
+        }
+    }
+
     /** A stack for an enemy that has earned one; for one that holds some, the refresh that keeps them. */
     private void addToll(EnemyMob enemy, TollSpec toll, boolean earned) {
         if (!toll.isActive() || !(earned || enemy.hasEffect(EffectKind.TOLL))) {
@@ -237,13 +290,10 @@ public final class PulseTower extends AbstractTower {
         this.applyEffect(enemy, sink -> Effect.toll(stacks, toll.fadeTicks(), sink).withStackCap(toll.cap()));
     }
 
-    /** Warding Field's chance of a stack, and Resonant Field II's reveal of a hidden enemy it hits. */
+    /** Warding Field's chance of a stack. */
     private void applyUpgradeEffects(EnemyMob enemy) {
         if (this.upgrades().owns(WARDING_FIELD.id()) && this.context.random().nextDouble() < WARDING_FIELD_CHANCE) {
             this.applyStacks(enemy, EffectKind.VULNERABLE, 1);
-        }
-        if (this.upgrades().owns(RESONANT_FIELD_2.id()) && enemy.isHidden()) {
-            this.reveal(enemy, Math.round(REVEAL_SECONDS * TICKS_PER_SECOND));
         }
     }
 
@@ -287,8 +337,19 @@ public final class PulseTower extends AbstractTower {
         if (this.upgrades().owns(WARDING_FIELD.id())) {
             lines.add(new BehaviourLine(BehaviourMarker.VULNERABLE, "Each tick", BehaviourLine.percent((float) WARDING_FIELD_CHANCE) + " vulnerable"));
         }
-        if (this.upgrades().owns(RESONANT_FIELD_2.id())) {
-            lines.add(new BehaviourLine(BehaviourMarker.REVEAL, "Reveals hidden", BehaviourLine.seconds(Math.round(REVEAL_SECONDS * TICKS_PER_SECOND))));
+        if (spec.visit().revealTicks() > 0) {
+            lines.add(new BehaviourLine(BehaviourMarker.REVEAL, "Reveals on Toll",
+                    BehaviourLine.seconds(spec.visit().revealTicks())));
+        }
+        if (spec.visit().dazeTicks() > 0) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Dazes on Toll",
+                    BehaviourLine.seconds(spec.visit().dazeTicks())));
+        }
+        if (spec.modes().silences()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Inside", "silenced"));
+        }
+        if (spec.modes().deadZone()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Inside", "no heals or shields"));
         }
         return lines;
     }

@@ -307,6 +307,96 @@ class PulseTowerTest {
         assertThat(wide.rangeReal()).isGreaterThan(plain.rangeReal());
     }
 
+    private static long revealsOn(FakeEnemyMob enemy) {
+        return enemy.appliedEffects().stream().filter(e -> e.kind() == EffectKind.REVEALED).count();
+    }
+
+    @Test
+    void phaseFieldAddsRangeAndMakesTollStayTwoSecondsAfterAnEnemyLeaves() {
+        PulseTower plain = this.pulseWith();
+        PulseTower phase = this.pulseWith("Phase Field");
+        FakeEnemyMob enemy = FakeEnemyMob.at(phase.getX(), phase.getY());
+        fullToll(enemy, 5);
+        this.board.enemies().setEnemies(new EnemyMob[]{enemy});
+
+        phase.doTick(1);
+
+        assertThat(tollOn(enemy).getLast().remainingTicks()).isEqualTo(40);
+        assertThat(phase.rangeReal()).isGreaterThan(plain.rangeReal());
+    }
+
+    @Test
+    void phaseFieldIiRevealsAnEnemyOnItsFirstTollStackOfAVisitAndAgainOnlyAfterItHasLeftAndComeBack() {
+        PulseTower tower = this.pulseWith("Phase Field", "Phase Field II");
+        FakeEnemyMob enemy = FakeEnemyMob.ghostAt(tower.getX(), tower.getY());
+        this.board.enemies().setEnemies(new EnemyMob[]{enemy});
+        for (int t = 0; t < 19; t++) {
+            tower.doTick(t);
+        }
+        long beforeTheStack = revealsOn(enemy);
+
+        for (int t = 19; t < 100; t++) {
+            tower.doTick(t);
+        }
+        long afterTheFirstVisit = revealsOn(enemy);
+        this.board.enemies().setEnemies(new EnemyMob[]{});
+        tower.doTick(100);
+        enemy.expire(EffectKind.TOLL);
+        this.board.enemies().setEnemies(new EnemyMob[]{enemy});
+        for (int t = 101; t < 200; t++) {
+            tower.doTick(t);
+        }
+
+        assertThat(beforeTheStack).isZero();
+        assertThat(afterTheFirstVisit).isEqualTo(1);
+        assertThat(revealsOn(enemy)).isEqualTo(2);
+        assertThat(enemy.appliedEffects().stream().filter(e -> e.kind() == EffectKind.REVEALED).findFirst()
+                .orElseThrow().remainingTicks()).isEqualTo(40);
+    }
+
+    @Test
+    void nullFieldSilencesEveryEnemyInsideAndOnlyThose() {
+        PulseTower tower = this.pulseWith("Phase Field", "Phase Field II", "Null Field");
+        FakeEnemyMob inside = FakeEnemyMob.at(tower.getX(), tower.getY());
+        FakeEnemyMob outside = FakeEnemyMob.at(tower.getX() + 300, tower.getY());
+        this.board.enemies().setEnemies(new EnemyMob[]{inside, outside});
+
+        tower.doTick(1);
+
+        assertThat(inside.appliedEffects().stream().filter(e -> e.kind() == EffectKind.SILENCED).toList())
+                .singleElement().extracting(Effect::remainingTicks).isEqualTo(3);
+        assertThat(outside.hasEffect(EffectKind.SILENCED)).isFalse();
+    }
+
+    @Test
+    void trueSightRevealsForFourSecondsAndDazesForTwo() {
+        PulseTower tower = this.pulseWith("Phase Field", "Phase Field II", "Null Field", "Transcendent",
+                "True Sight");
+        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
+        this.board.enemies().setEnemies(new EnemyMob[]{enemy});
+
+        for (int t = 0; t < 20; t++) {
+            tower.doTick(t);
+        }
+
+        assertThat(enemy.appliedEffects().stream().filter(e -> e.kind() == EffectKind.REVEALED).toList())
+                .singleElement().extracting(Effect::remainingTicks).isEqualTo(80);
+        assertThat(enemy.appliedEffects().stream().filter(e -> e.kind() == EffectKind.DAZED).toList())
+                .singleElement().extracting(Effect::remainingTicks).isEqualTo(40);
+    }
+
+    @Test
+    void deadZoneKeepsHealsAndShieldsFromTakingHoldInsideTheField() {
+        PulseTower tower = this.pulseWith("Phase Field", "Phase Field II", "Null Field", "Transcendent", "Dead Zone");
+        FakeEnemyMob inside = FakeEnemyMob.at(tower.getX(), tower.getY());
+        this.board.enemies().setEnemies(new EnemyMob[]{inside});
+
+        tower.doTick(1);
+
+        assertThat(inside.appliedEffects().stream().filter(e -> e.kind() == EffectKind.DEAD_ZONE).toList())
+                .singleElement().extracting(Effect::remainingTicks).isEqualTo(3);
+    }
+
     @Test
     void wardingFieldAppliesAVulnerabilityStackToEveryEnemyHitWhenTheChanceRollSucceeds() {
         GameWorld lucky = WorldFixtures.newWorld(() -> 0.0);
@@ -331,20 +421,5 @@ class PulseTowerTest {
         tower.doTick(0);
 
         assertThat(enemy.appliedEffects()).isEmpty();
-    }
-
-    @Test
-    void resonantFieldTwoRevealsAHiddenEnemyItHitsForTwoSeconds() {
-        PulseTower tower = new PulseTower(this.context, 0, 0);
-        UpgradePaths.buy(tower, this.context, "Resonant Field", "Resonant Field II");
-        FakeEnemyMob ghost = FakeEnemyMob.ghostAt(tower.getX(), tower.getY());
-        FakeEnemyMob visible = FakeEnemyMob.at(tower.getX(), tower.getY());
-        this.context.enemies().setEnemies(new EnemyMob[]{ghost, visible});
-
-        tower.doTick(0);
-
-        assertThat(ghost.appliedEffects()).extracting(Effect::kind).containsExactly(EffectKind.REVEALED);
-        assertThat(ghost.appliedEffects().getFirst().remainingTicks()).isEqualTo(40);
-        assertThat(visible.appliedEffects()).isEmpty();
     }
 }
