@@ -3,6 +3,7 @@ package td.enemy;
 import org.junit.jupiter.api.Test;
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.damage.DamageUnits;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -12,6 +13,7 @@ import td.wave.PathNormal;
 import td.wave.Vec2;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -161,6 +163,21 @@ class WardenChainTest {
             default -> throw new IllegalArgumentException(kind.name());
         });
         return !egg.hasEffect(kind);
+    }
+
+    @Test
+    void theWardensPeriodicShieldOnlyTurnsAwayMagic() {
+        GameWorld world = worldWithStraightPath();
+        DefinedEnemyMob warden = (DefinedEnemyMob) world.getEnemyCatalog().spawn("warden1", world, 0, 8000, 100, Rank.GRUNT);
+        world.enemies().add(warden);
+
+        for (int t = 1; t <= 400; t++) {
+            warden.doTick(t);
+        }
+
+        assertThat(warden.activeEffects()).filteredOn(effect -> effect.kind() == EffectKind.SHIELD)
+                .extracting(Effect::shieldRestrictedTo)
+                .containsExactly(Optional.of(DamageType.MAGIC));
     }
 
     @Test
