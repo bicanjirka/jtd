@@ -649,6 +649,7 @@ public class Driver {
                 case PRIORITY -> Effect.priority(ticks, d -> { });
                 case RESONATING -> Effect.resonating(2, ticks, d -> { });
                 case FRACTURED -> Effect.fractured(3, d -> { });
+                case DAZED -> Effect.dazed(ticks, d -> { });
                 case SCORCHED, SICKENED -> throw new IllegalArgumentException(kind + " is earned by burn and poison");
             };
             mob.applyEffect(effect);

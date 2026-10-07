@@ -13,7 +13,7 @@ import java.util.OptionalInt;
 
 /**
  * An immutable snapshot of one enemy for display: identity, health, every resolved stat, active
- * effects, the kinds they keep out, freeze diminishing state, one line per trait, and what became
+ * effects, the kinds they keep out, diminishing returns, one line per trait, and what became
  * of it. Taken on the thread
  * that owns the mob and read anywhere.
  *
@@ -22,18 +22,19 @@ import java.util.OptionalInt;
  * @param stats        every stat's resolved value
  * @param effects      active effects in kind order
  * @param blocked      kinds an active effect keeps out, in kind order
- * @param freezeStep   fresh freezes landed in the current diminishing-returns window
+ * @param diminished   per kind whose diminishing returns run, the share the next one would last
  * @param traitLines   one row per authored trait slot
  */
 public record EnemyInspection(String name, String description, Rank rank, BodyArchetype archetype, int health,
                               int maxHealth, int bounty, Map<EnemyStat, Float> stats, List<EffectState> effects,
                               List<EffectKind> blocked,
-                              int freezeStep, List<TraitLine> traitLines, Fate fate) {
+                              Map<EffectKind, Float> diminished, List<TraitLine> traitLines, Fate fate) {
 
     public EnemyInspection {
         stats = Collections.unmodifiableMap(new EnumMap<>(stats));
         effects = List.copyOf(effects);
         blocked = List.copyOf(blocked);
+        diminished = diminished.isEmpty() ? Map.of() : Collections.unmodifiableMap(new EnumMap<>(diminished));
         traitLines = List.copyOf(traitLines);
     }
 
@@ -51,7 +52,7 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
         List<TraitLine> traitLines = definition.traitSlots().stream().map(slot -> slot.template().describe()).toList();
         return new EnemyInspection(definition.displayName(), definition.description(), mob.getRank(), mob.archetype(),
                 (mob.getHealth() + DamageUnits.PER_POINT - 1) / DamageUnits.PER_POINT, mob.getMaxHealthPoints(), mob.getBounty(), stats, effects, List.copyOf(mob.blockedEffectKinds()),
-                mob.freezeDiminishingStep(), traitLines, mob.fate());
+                mob.diminishedFactors(), traitLines, mob.fate());
     }
 
     public float stat(EnemyStat stat) {

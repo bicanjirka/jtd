@@ -83,7 +83,7 @@ public final class ActiveEffects {
     /** How hard an effect bites, in a unit specific to its kind; only compared within one kind. */
     private static float magnitude(Effect effect) {
         return switch (effect.kind()) {
-            case FREEZE -> 1f - effect.speedMultiplier();
+            case FREEZE, DAZED -> 1f - effect.speedMultiplier();
             case CHILL -> effect.fuelLevel();
             case BURN, POISON -> effect.damagePerTick().amount();
             case SHIELD -> effect.shieldPercent();
@@ -265,7 +265,7 @@ public final class ActiveEffects {
             Effect effect = entry.getValue();
             switch (entry.getKey()) {
                 case CHILL -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - chillLevel(effect));
-                case FREEZE -> accumulator.add(EnemyStat.MOVE_SPEED, FROZEN);
+                case FREEZE, DAZED -> accumulator.add(EnemyStat.MOVE_SPEED, FROZEN);
                 case SHIELD -> {
                     for (DamageType type : DAMAGE_TYPES) {
                         if (effect.shieldRestrictedTo().isEmpty() || effect.shieldRestrictedTo().get() == type) {

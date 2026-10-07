@@ -42,6 +42,16 @@ public interface HitReceiver {
     /** Whether an effect of {@code kind} is active. */
     boolean hasEffect(EffectKind kind);
 
+    /** Whether an effect that {@link EffectKind#stopsEnemy() stops it} is active. */
+    default boolean isStopped() {
+        for (EffectKind kind : EffectKind.stopping()) {
+            if (this.hasEffect(kind)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Active effect kinds, in a stable order. */
     Set<EffectKind> activeEffectKinds();
 

@@ -1,6 +1,5 @@
 package td.tower.sniper;
 
-import td.effect.EffectKind;
 import td.tower.targeting.HighestHealthSelector;
 import td.tower.targeting.PreferringSelector;
 
@@ -11,12 +10,12 @@ public final class ShatterShotPerk implements SniperPerk {
 
     @Override
     public SniperShot shape(SniperShot shot, ShotContext context) {
-        return context.target().hasEffect(EffectKind.FREEZE)
+        return context.target().isStopped()
                 ? shot.withAttack(attack -> attack.withCritDamageBonus(CRIT_DAMAGE_BONUS)) : shot;
     }
 
     @Override
     public SniperSpec refineSpec(SniperSpec spec) {
-        return spec.aimingAt(new SniperAim(PreferringSelector.frozenFirst(new HighestHealthSelector()), "frozen first"));
+        return spec.aimingAt(new SniperAim(PreferringSelector.stoppedFirst(new HighestHealthSelector()), "frozen or dazed first"));
     }
 }

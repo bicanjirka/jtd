@@ -4,9 +4,9 @@ import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageMix;
 import td.damage.DamageUnits;
+import td.effect.DiminishingReturns;
 import td.effect.Effect;
 import td.effect.EffectKind;
-import td.effect.FreezeDiminishing;
 import td.enemy.BodyArchetype;
 import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
@@ -180,6 +180,59 @@ class GameEngineTest {
         assertThat(freezeFor(enemy, 20, clock)).isEqualTo(10);
     }
 
+    /** Dazes {@code enemy} and returns how many ticks it stayed Dazed. */
+    private static int dazeFor(EnemyMob enemy, int durationTicks, int[] clock) {
+        enemy.applyEffect(Effect.dazed(durationTicks, d -> {
+        }));
+        int dazed = 0;
+        while (enemy.activeEffectKinds().contains(EffectKind.DAZED)) {
+            enemy.doTick(++clock[0]);
+            dazed++;
+        }
+        return dazed;
+    }
+
+    @Test
+    void repeatedFreshDazesLastEveryFifthLessUntilTheSixthDoesNotLand() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
+        int[] clock = {0};
+
+        List<Integer> durations = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            durations.add(dazeFor(enemy, 20, clock));
+        }
+
+        assertThat(durations).containsExactly(20, 16, 12, 8, 4, 0);
+    }
+
+    @Test
+    void freezesAndDazesClimbSeparateLadders() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
+        int[] clock = {0};
+        freezeFor(enemy, 20, clock);
+        freezeFor(enemy, 20, clock);
+
+        int dazed = dazeFor(enemy, 20, clock);
+
+        assertThat(dazed).isEqualTo(20);
+        assertThat(freezeFor(enemy, 20, clock)).isEqualTo(5);
+    }
+
+    @Test
+    void aDazedEnemyStopsButKeepsItsBurnAndItsChill() {
+        EnemyMob enemy = spawnOnly(FakeGameHost.newBoundEngine(), WEAKLING);
+        enemy.applyEffect(Effect.burn(Damage.magic(1), 40, d -> {
+        }));
+        enemy.applyEffect(Effect.chill(0.3f, 40, d -> {
+        }));
+
+        enemy.applyEffect(Effect.dazed(20, d -> {
+        }));
+
+        assertThat(enemy.activeEffectKinds()).contains(EffectKind.BURN, EffectKind.CHILL, EffectKind.DAZED);
+        assertThat(enemy.getSpeed()).isZero();
+    }
+
     @Test
     void freezeDiminishingResetsTenSecondsAfterTheLastFreeze() {
         EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
@@ -187,7 +240,7 @@ class GameEngineTest {
         freezeFor(enemy, 20, clock);
         freezeFor(enemy, 20, clock);
 
-        while (clock[0] < FreezeDiminishing.WINDOW_TICKS + 30) {
+        while (clock[0] < DiminishingReturns.WINDOW_TICKS + 30) {
             enemy.doTick(++clock[0]);
         }
 

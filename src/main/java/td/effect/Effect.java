@@ -48,6 +48,12 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
                 Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false);
     }
 
+    /** Stops the enemy for {@code durationTicks}; unlike a freeze, it puts out nothing. */
+    public static Effect dazed(int durationTicks, DamageSink sink) {
+        return new Effect(EffectKind.DAZED, 0f, Damage.none(), 0f, durationTicks, sink, 0,
+                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false);
+    }
+
     /** Damage that decays exponentially; each stack it earns lowers resilience by one for good. */
     public static Effect burn(Damage damagePerTick, int durationTicks, DamageSink sink) {
         return pool(EffectKind.BURN, damagePerTick, durationTicks, sink);

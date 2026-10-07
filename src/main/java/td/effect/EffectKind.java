@@ -2,6 +2,8 @@ package td.effect;
 
 import td.stat.EnemyStat;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 public enum EffectKind {
@@ -29,18 +31,32 @@ public enum EffectKind {
     /** Each stack raises the magic damage taken. */
     RESONATING,
     /** Each stack lowers resilience by ten, and wears off one stack at a time. */
-    FRACTURED;
+    FRACTURED,
+    /** Stops the enemy and its abilities, like a freeze, but keeps its burn and its chill. */
+    DAZED;
 
     public EffectCategory category() {
         return switch (this) {
             case CHILL -> EffectCategory.SOFT_CC;
-            case FREEZE -> EffectCategory.HARD_CC;
+            case FREEZE, DAZED -> EffectCategory.HARD_CC;
             case BURN, POISON -> EffectCategory.DAMAGE_OVER_TIME;
             case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED -> EffectCategory.DEBUFF;
             case EXPOSED, MARKED, PRIORITY -> EffectCategory.SPOTTED;
             case SHIELD, HEAL -> EffectCategory.RESTORATIVE;
             case INVISIBLE, REVEALED -> EffectCategory.STEALTH;
         };
+    }
+
+    private static final List<EffectKind> STOPPING = Arrays.stream(values()).filter(EffectKind::stopsEnemy).toList();
+
+    /** Whether this kind stops the enemy where it stands and keeps it from casting. */
+    public boolean stopsEnemy() {
+        return this == FREEZE || this == DAZED;
+    }
+
+    /** Every kind that {@link #stopsEnemy() stops an enemy}. */
+    public static List<EffectKind> stopping() {
+        return STOPPING;
     }
 
     /**
@@ -109,7 +125,7 @@ public enum EffectKind {
             case BURN -> Optional.of(EnemyStat.BURN_RESIST);
             case FREEZE -> Optional.of(EnemyStat.FREEZE_RESIST);
             case SHIELD, INVISIBLE, HEAL, VULNERABLE, REVEALED, POISON, SCORCHED, SICKENED, SUNDERED, EXPOSED, MARKED,
-                    PRIORITY, RESONATING, FRACTURED -> Optional.empty();
+                    PRIORITY, RESONATING, FRACTURED, DAZED -> Optional.empty();
         };
     }
 }
