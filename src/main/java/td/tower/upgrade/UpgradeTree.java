@@ -6,6 +6,7 @@ import td.util.GameWorld;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -92,6 +93,24 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
     /** Whether {@code node} is one of {@link #offered}: the check a purchase makes. */
     public boolean offers(UpgradeNode node, Tower tower, GameWorld context) {
         return this.nodes.contains(node) && this.isOffered(node, tower, context);
+    }
+
+    /**
+     * {@code target} preceded by every node a tower must own first, in the order to buy them: the chain
+     * before it and the base nodes that open it. Where the base chain gives a choice, the cheaper side.
+     */
+    public List<UpgradeNode> pathTo(UpgradeNode target) {
+        Set<UpgradeNode> path = new LinkedHashSet<>();
+        this.collectPath(target, path);
+        return List.copyOf(path);
+    }
+
+    private void collectPath(UpgradeNode node, Set<UpgradeNode> path) {
+        for (String id : node.requires().requiredNodes().stream().sorted().toList()) {
+            this.nodes.stream().filter(candidate -> candidate.id().equals(id)).findFirst()
+                    .ifPresent(required -> this.collectPath(required, path));
+        }
+        path.add(node);
     }
 
     public Optional<ExclusiveChoice> choiceOf(UpgradeNode node) {

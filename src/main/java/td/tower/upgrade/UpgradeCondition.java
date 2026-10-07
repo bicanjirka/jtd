@@ -3,6 +3,8 @@ package td.tower.upgrade;
 import td.tower.Tower;
 import td.util.GameWorld;
 
+import java.util.Set;
+
 /**
  * Whether a node is available to a tower, evaluated on each call. Independent of price, which is
  * checked separately.
@@ -26,6 +28,15 @@ public interface UpgradeCondition {
     }
 
     boolean isSatisfied(Tower tower, GameWorld context);
+
+    /**
+     * The ids of the nodes a tower must own to meet this condition, taking the cheaper side of an
+     * {@code or}; none for a condition that asks about anything else. It is how a tool prices a node with
+     * everything that leads to it.
+     */
+    default Set<String> requiredNodes() {
+        return Set.of();
+    }
 
     /** A short description of the gate, e.g. {@code "10 kills"}. */
     String describe();

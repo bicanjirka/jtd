@@ -232,6 +232,15 @@ first trees (an unquantified "+X" in the source doc became +25%, an unquantified
 against the bounty arithmetic in `docs/features/FEATURE-xp-and-purpose-gates.md`, not against play.
 Feature 7's balance pass sets the final numbers.
 
+`td.PurchaseHarness` (Twisted Hourglass, 12 seeds, an army of one of each tower) now measures them: lives
+saved per 100 credits. Another copy of a tower is the best buy for every tower but the Aura and the Hive (a
+Sniper copy saves 24 lives per 100 credits for $17), and an upgrade node saves between 0.02x and 0.6x of that
+(Focused Optics III 0.24x, Railgun 0.17x, Spotter Uplink 0.02x). Nodes that act on enemies rather than on
+damage (Hollow Point, Shatter Shot, Fifth Shot) save nothing within the noise of about one life. The harness
+puts no limit on cells, so a copy is never refused for lack of room, which is what the 0.7x to 1x target in
+`FEATURE-aura-and-balance-pass.md` assumes. Do not reprice from these numbers alone: decide first how a copy
+is limited (cells, or the +15% surcharge) and how effect nodes are measured.
+
 - **Where:** `UpgradeTier`'s price multiples, and the `private static final UpgradeNode` constants in every
   leaf under `td.tower` (`SniperTower`/`SplashTower`/`SonarTower`/`PulseTower`/`MortarTower`/`SeekerTower`/
   `CinderTower`/`AuraTower`).
