@@ -131,6 +131,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case DOOM -> Palette.STATUS_MARKER_DOOM;
             case BLIGHT -> Palette.STATUS_MARKER_BLIGHT;
             case CONTAGION -> Palette.STATUS_MARKER_CONTAGION;
+            case RIME -> Palette.STATUS_MARKER_RIME;
+            case ASH -> Palette.STATUS_MARKER_ASH;
         };
     }
 
@@ -347,6 +349,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case DOOM -> Optional.of(HexGlyph.DOOM);
             case BLIGHT -> Optional.of(HexGlyph.BLIGHT);
             case CONTAGION -> Optional.of(HexGlyph.CONTAGION);
+            case RIME -> Optional.of(HexGlyph.RIME);
+            case ASH -> Optional.of(HexGlyph.ASH);
             default -> Optional.empty();
         };
     }

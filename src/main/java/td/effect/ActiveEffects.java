@@ -28,6 +28,12 @@ public final class ActiveEffects {
 
     /** Caps a fuel pool at this multiple of the strongest single application ever taken. */
     private static final float POOL_LMAX_MULTIPLIER = 2f;
+    /** Under Ash, a pool holds this many times as much and earns its stacks this many times as fast. */
+    private static final int ASH_POOL_FACTOR = 2;
+    /** The share of a chill an Ashen enemy still takes. */
+    private static final float ASH_CHILL_TAKEN = 0.25f;
+    /** Under Rime, each point of chill buys a freeze this many times the usual extra time. */
+    private static final float RIME_CHILL_FACTOR = 2f;
     /**
      * Per-tick decay {@code alpha = e^(POOL_DECAY_EXPONENT / authoredDurationTicks)} leaves about
      * 5% of the fuel when the authored duration ends.
@@ -86,7 +92,7 @@ public final class ActiveEffects {
             case BURN, POISON -> effect.damagePerTick().amount();
             case SHIELD -> effect.shieldPercent();
             // On/off, not gradated - any reapplication is at least as strong as what's already active.
-            case INVISIBLE, REVEALED, EXPOSED, MARKED, PRIORITY, CHARGED, DOOM, BLIGHT, CONTAGION -> 1f;
+            case INVISIBLE, REVEALED, EXPOSED, MARKED, PRIORITY, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH -> 1f;
             case HEAL -> effect.healPerTick();
             case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED -> effect.stacks();
         };
@@ -95,16 +101,22 @@ public final class ActiveEffects {
     /**
      * Applies {@code effect} unless an active effect keeps its kind out (see
      * {@link EffectInteractions}); applying it also removes the kinds it consumes, and a freeze
-     * that consumes a chill lasts longer by the chill's level.
+     * that consumes a chill lasts longer by the chill's level, twice that under Rime. Under Rime a
+     * freeze also lands the burn it puts out, all of it at once.
      */
     public void apply(Effect effect) {
         if (EffectInteractions.blocks(this.active.keySet(), effect.kind())) {
             return;
         }
         Effect incoming = effect;
+        boolean rime = this.active.containsKey(EffectKind.RIME);
         Effect chill = this.active.get(EffectKind.CHILL);
         if (effect.kind() == EffectKind.FREEZE && chill != null) {
-            incoming = effect.withDurationScaledBy(1f + chillLevel(chill));
+            incoming = effect.withDurationScaledBy(1f + (rime ? RIME_CHILL_FACTOR : 1f) * chillLevel(chill));
+        }
+        Effect burn = this.active.get(EffectKind.BURN);
+        if (effect.kind() == EffectKind.FREEZE && rime && burn != null) {
+            burstPool(burn);
         }
         EffectInteractions.removedBy(effect.kind()).forEach(this.active::remove);
         switch (incoming.kind()) {
@@ -133,7 +145,9 @@ public final class ActiveEffects {
         if (headroom <= 0f) {
             return;
         }
-        FuelContribution contribution = incoming.fuel().getFirst();
+        FuelContribution authored = incoming.fuel().getFirst();
+        FuelContribution contribution = this.active.containsKey(EffectKind.ASH)
+                ? authored.scaledTo(authored.amount() * ASH_CHILL_TAKEN) : authored;
         FuelContribution added = contribution.amount() <= headroom ? contribution : contribution.scaledTo(headroom);
         if (existing == null) {
             this.active.put(EffectKind.CHILL, incoming.withFuel(List.of(added), 0f));
@@ -160,7 +174,7 @@ public final class ActiveEffects {
         }
         float incomingL0 = incoming.damagePerTick().amount();
         float peakL0 = Math.max(existing.peakL0(), incomingL0);
-        float lmax = POOL_LMAX_MULTIPLIER * peakL0;
+        float lmax = POOL_LMAX_MULTIPLIER * peakL0 * this.ashFactor();
         float deltaL = incomingL0 * (1f - existing.fuelLevel() / lmax);
         List<FuelContribution> fuel = new ArrayList<>(existing.fuel());
         fuel.add(new FuelContribution(incoming.sink(), deltaL));
@@ -293,7 +307,7 @@ public final class ActiveEffects {
                         -ARMOR_LOST_PER_SUNDERED_STACK * effect.stacks());
                 case FRACTURED -> accumulator.addFlat(EnemyStat.RESILIENCE,
                         -RESILIENCE_LOST_PER_FRACTURED_STACK * effect.stacks());
-                case EXPOSED, MARKED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION -> {
+                case EXPOSED, MARKED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH -> {
                 }
                 case BURN -> {
                 }
@@ -437,15 +451,39 @@ public final class ActiveEffects {
         List<FuelContribution> decayed = contributions.stream()
                 .map(c -> c.decayedBy((float) alpha))
                 .toList();
+        // The clock always counts down by one, as pulses ride it; Ash only earns stacks more often.
         int clock = effect.stackClock() - 1;
-        if (clock <= 0) {
+        if (clock % (Effect.STACK_INTERVAL_TICKS / this.ashFactor()) == 0) {
             this.earnStack(effect.kind());
+        }
+        if (clock <= 0) {
             clock = Effect.STACK_INTERVAL_TICKS;
         }
         return Optional.of(effect.withFuel(decayed, effect.peakL0()).withStackClock(clock));
     }
 
     /** The pool's total over one pulse window as a multiple of its level now: {@code 1 + a + a^2 + ...}. */
+    /** How much more a pool holds, and how much faster it earns stacks: twice under Ash. */
+    private int ashFactor() {
+        return this.active.containsKey(EffectKind.ASH) ? ASH_POOL_FACTOR : 1;
+    }
+
+    /** Lands everything {@code pool} would still have dealt, at once, each contributor its share. */
+    private static void burstPool(Effect pool) {
+        float total = pool.fuelLevel();
+        double alpha = Math.exp(POOL_DECAY_EXPONENT / pool.authoredDurationTicks());
+        int damage = (int) Math.round(total / (1.0 - alpha));
+        if (damage <= 0) {
+            return;
+        }
+        int[] shares = apportionPoolDamage(pool.fuel(), total, damage);
+        for (int i = 0; i < pool.fuel().size(); i++) {
+            if (shares[i] > 0) {
+                pool.fuel().get(i).sink().apply(new Damage(shares[i], pool.damagePerTick().type()));
+            }
+        }
+    }
+
     private static double windowFactor(double alpha) {
         double factor = 0;
         double term = 1;

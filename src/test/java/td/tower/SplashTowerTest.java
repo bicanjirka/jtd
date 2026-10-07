@@ -465,6 +465,18 @@ class SplashTowerTest {
     }
 
     @Test
+    void rimeCovenAddsHexOfRimeWhichChillsThirtyPercentAsItIsCast() {
+        SplashTower tower = this.upgradedTower("Hex", "Witch's Brew", "Spreading Curse", "Transcendent", "Rime Coven");
+        FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
+        this.enemies(enemy);
+
+        tickThroughCooldown(tower, 16);
+
+        assertThat(effectsOf(enemy, EffectKind.RIME)).hasSize(1);
+        assertThat(effectsOf(enemy, EffectKind.CHILL)).singleElement().extracting(Effect::fuelLevel).isEqualTo(0.3f);
+    }
+
+    @Test
     void potencyAndMasteryWaitForAChainRoot() {
         SplashTower tower = this.upgradedTower("Wide Charge", "Shaped Charge");
 

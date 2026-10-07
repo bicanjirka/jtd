@@ -195,7 +195,7 @@ public class PreviewBoard {
                 case DAZED -> Effect.dazed(ticks, d -> { });
                 case SATURATED -> Effect.saturated(3, ticks, d -> { });
                 case CHARGED -> Effect.charged(ticks, td.damage.AttackOrigin.none(), d -> { });
-                case DOOM, BLIGHT, CONTAGION -> Effect.hex(kind, ticks, d -> { });
+                case DOOM, BLIGHT, CONTAGION, RIME, ASH -> Effect.hex(kind, ticks, d -> { });
                 case SCORCHED, SICKENED -> throw new IllegalArgumentException(kind + " is earned by burn and poison");
             };
             mob.applyEffect(effect);
