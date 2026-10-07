@@ -43,7 +43,8 @@ public final class StandardBaseSlot {
                 .withExtraEffect(perks.attuneText().isEmpty() ? "unlocks head levels I and II"
                         : perks.attuneText() + "; unlocks head levels I and II");
         UpgradeNode awaken = UpgradeTier.AWAKEN.node(AWAKEN_ID, "Awaken", listPrice)
-                .withExtraEffect(levelThrees.length == 0 ? "unlocks a special" : "unlocks a special and head level III");
+                .withExtraEffect((perks.awakenText().isEmpty() ? "" : perks.awakenText() + "; ")
+                        + (levelThrees.length == 0 ? "unlocks a special" : "unlocks a special and head level III"));
         if (levelThrees.length == 0) {
             return List.of(range1, range2, attune, awaken);
         }
