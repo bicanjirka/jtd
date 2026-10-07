@@ -1210,4 +1210,43 @@ class ActiveEffectsTest {
         assertThat(effects.consume(EffectKind.MARKED)).isTrue();
         assertThat(effects.consume(EffectKind.MARKED)).isFalse();
     }
+
+    @Test
+    void bleedingDealsPhysicalDamageForEveryCellTravelledAndNothingWhileStopped() {
+        ActiveEffects effects = new ActiveEffects();
+        List<Damage> received = new ArrayList<>();
+        effects.apply(Effect.bleeding(100, 100, recordingSink(received)));
+
+        effects.tick(1f, 0.5f);
+        effects.tick(1f, 0f);
+        effects.tick(1f, 0.5f);
+
+        assertThat(received).containsExactly(Damage.physical(50), Damage.physical(50));
+    }
+
+    @Test
+    void bleedingCarriesTheFractionOfAUnitItCouldNotDealYet() {
+        ActiveEffects effects = new ActiveEffects();
+        List<Damage> received = new ArrayList<>();
+        effects.apply(Effect.bleeding(10, 100, recordingSink(received)));
+
+        for (int i = 0; i < 6; i++) {
+            effects.tick(1f, 0.04f);
+        }
+
+        assertThat(received.stream().mapToInt(Damage::amount).sum()).isEqualTo(2);
+    }
+
+    @Test
+    void bleedingEndsWhenItsTimeIsUp() {
+        ActiveEffects effects = new ActiveEffects();
+        List<Damage> received = new ArrayList<>();
+        effects.apply(Effect.bleeding(100, 2, recordingSink(received)));
+
+        effects.tick(1f, 0.5f);
+        effects.tick(1f, 0.5f);
+
+        assertThat(effects.activeKinds()).isEmpty();
+        assertThat(received).hasSize(2);
+    }
 }

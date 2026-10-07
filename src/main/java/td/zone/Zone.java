@@ -1,6 +1,5 @@
 package td.zone;
 
-import td.damage.Damage;
 import td.effect.Effect;
 import td.enemy.EnemyMob;
 import td.util.ThreadConfined;
@@ -18,17 +17,8 @@ import java.util.Map;
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class Zone {
 
-    private static final int BURN_TICKS = 60;
-    private static final int POISON_TICKS = 60;
-    /** Tar lets go of an enemy this long after its last pulse. */
-    private static final int TARRED_TICKS = 2 * ZoneRoster.PULSE_TICKS;
-    private static final float FROST_CHILL = 0.2f;
-    private static final int FROST_CHILL_TICKS = 40;
     /** Pulses in a row inside a frost zone before it freezes what stands there. */
     private static final int FROST_PULSES_TO_FREEZE = 4;
-    /** Sickened stacks fallout adds each pulse: more than spirit wears off in half a second. */
-    private static final int FALLOUT_SICKENED_STACKS = 4;
-    private static final int FALLOUT_HOLD_TICKS = 2 * ZoneRoster.PULSE_TICKS;
     private static final int FROST_FREEZE_TICKS = Math.round(TickRate.TICKS_PER_SECOND * 1.5f);
 
     private final ZoneKind kind;
@@ -91,24 +81,10 @@ public final class Zone {
     /** Puts this pulse's effects on {@code enemy}, which stands inside. */
     void touch(EnemyMob enemy) {
         int pulses = this.pulsesInside.merge(enemy, 1, Integer::sum);
-        switch (this.kind) {
-            case BURNING_GROUND -> this.owner.applyEffect(enemy,
-                    sink -> Effect.burn(Damage.magic(this.strength), BURN_TICKS, sink));
-            case TAR -> {
-                this.owner.applyEffect(enemy, sink -> Effect.tarred(TARRED_TICKS, sink));
-                this.owner.applyEffect(enemy, sink -> Effect.poison(Damage.magic(this.strength), POISON_TICKS, sink));
-            }
-            case FALLOUT -> {
-                this.owner.applyEffect(enemy, sink -> Effect.sickened(FALLOUT_SICKENED_STACKS));
-                this.owner.applyEffect(enemy, sink -> Effect.deadZone(FALLOUT_HOLD_TICKS, sink));
-            }
-            case FROST_GROUND -> {
-                this.owner.applyEffect(enemy, sink -> Effect.chill(FROST_CHILL, FROST_CHILL_TICKS, sink));
-                if (pulses >= FROST_PULSES_TO_FREEZE) {
-                    this.pulsesInside.put(enemy, 0);
-                    this.owner.applyEffect(enemy, sink -> Effect.freeze(FROST_FREEZE_TICKS, sink));
-                }
-            }
+        ZoneEffects.touch(this.kind, this.strength, this.owner, enemy);
+        if (this.kind == ZoneKind.FROST_GROUND && pulses >= FROST_PULSES_TO_FREEZE) {
+            this.pulsesInside.put(enemy, 0);
+            this.owner.applyEffect(enemy, sink -> Effect.freeze(FROST_FREEZE_TICKS, sink));
         }
     }
 

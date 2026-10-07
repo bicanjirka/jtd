@@ -12,6 +12,7 @@ import td.tower.SonarTower;
 import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerVisitor;
+import td.tower.mortar.BlastMark;
 import td.tower.upgrade.StandardBaseSlot;
 import td.ui.render.BeamDraw;
 import td.ui.render.ConeDraw;
@@ -68,6 +69,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float RANGING_TIGHTENING_CELLS = 1f;
     private static final float RANGING_ALPHA = 0.7f;
     private static final float NUKE_FLASH_SHARE = 0.6f;
+    private static final float BLAST_MARK_ALPHA = 0.4f;
     private static final float NUKE_FLASH_ALPHA = 0.8f;
     private static final double NEST_ORBIT_RADIANS_PER_TICK = 0.08;
 
@@ -309,6 +311,14 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             this.draws.add(new RingDraw(Palette.TOWER_MORTAR_RANGING, (float) marker.x(), (float) marker.y(), radius,
                     RANGING_ALPHA));
         });
+        for (BlastMark mark : tower.getBlastMarks()) {
+            float progress = (this.gameTime - mark.startedAtTick() + (float) this.interpolationAlpha)
+                    / MortarTower.BLAST_MARK_TICKS;
+            if (progress >= 0f && progress < 1f) {
+                this.draws.add(new FlashDraw(ProjectileFrameBuilder.paletteFor(mark.look()), (float) mark.at().x(),
+                        (float) mark.at().y(), mark.radius(), (1f - progress) * BLAST_MARK_ALPHA));
+            }
+        }
         tower.getNukeFlash().ifPresent(flash -> {
             float progress = (this.gameTime - flash.startedAtTick() + (float) this.interpolationAlpha)
                     / MortarTower.NUKE_FLASH_TICKS;

@@ -90,7 +90,7 @@ a different loadout or level, since v1 has no config format for either.
 | Sonar  | 20    | Long range; a beam sweeps around it once every 3s, hitting everything it passes; once attuned, each sweep Exposes the healthiest enemy it passed |
 | Pulse  | 25    | Short range; a field that deals magic damage to everything in range every tick, ghosts included and with no visible enemy needed. Attuned, an enemy that stays inside builds Toll: it takes more from the field, and every debuff on it wears off slower |
 | Aura   | 20    | Passive — boosts the damage and range of nearby towers; several stack                                                                               |
-| Mortar | 30    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path, never one within 1.5 cells of it; the blast does physical damage with falloff and cracks the plating of everything it reaches. Attuned, a shell landing near the last one hits harder and wider. Its specials turn every third shell into a Napalm, Tar or Cryo shell that leaves burning, tarred or frozen ground |
+| Mortar | 30    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path, never one within 1.5 cells of it; the blast does physical damage with falloff and cracks the plating of everything it reaches. Attuned, a shell landing near the last one hits harder and wider. One head adds heavier shells and nukes, the other shrapnel and bombs along the path. Its specials turn every third shell into a Napalm, Tar or Cryo shell that leaves burning, tarred or frozen ground |
 | Seeker | 30    | Fires a slow homing missile at the fastest enemy in range, which it keeps through invisibility and re-aims at each tick; deals magic damage and freezes whichever mob it actually hits. Attuned, it banks missiles in a nest, between waves too, and launches them as a salvo |
 | Cinder | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included |
 
@@ -169,6 +169,7 @@ holds more than one effect; selecting it lists every effect with what kind it is
 | Dead zone  | debuff           | No heal or shield takes hold while the enemy is in a Pulse's field; what it already has stays |
 | Kill zone  | debuff           | +25% damage taken from every source while the enemy is in a Pulse's field |
 | Cracked    | debuff           | Plating is halved; one shared 5 s clock any application refreshes |
+| Bleeding   | damage over time | Physical damage for every cell the enemy travels: the faster it runs the more it bleeds, and a stopped enemy bleeds nothing |
 | Tarred     | debuff           | Slowed by 40%. A burn it catches starts at double the pool, and a freeze it suffers lasts a second longer |
 | Exposed    | spotted          | Crit chance taken doubles. A revealed enemy counts as Exposed                                       |
 | Marked     | spotted          | The next hit from any tower is a guaranteed crit, and spends the mark. Damage that ticks never spends it, and it waits on a crit-immune enemy |

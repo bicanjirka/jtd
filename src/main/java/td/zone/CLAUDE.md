@@ -9,6 +9,8 @@
   Zones combine only through the effects they leave on an enemy, never zone against zone.
 - `ZoneRoster.doTick` runs after projectiles and before towers, so a shell that lands this tick
   already pulses. `GameEngine` clears it with the other rosters when a level loads.
+- `ZoneEffects.touch` is one pulse of a kind on one enemy; a zone adds only what depends on how long an
+  enemy stays (frost's freeze). Anything else that carries a zone's effect without a zone calls it.
 - Fallout drains spirit through `SICKENED` stacks and holds heals and shields off with `DEAD_ZONE`, so the
   inspector names it a dead zone.
 - A zone's per-enemy memory (a frost zone's time inside) lives on the zone, is keyed by identity

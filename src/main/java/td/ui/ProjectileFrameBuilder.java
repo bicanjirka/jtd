@@ -45,7 +45,7 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         };
     }
 
-    private static Palette paletteFor(ShellLook look) {
+    static Palette paletteFor(ShellLook look) {
         return switch (look) {
             case PLAIN -> Palette.PROJECTILE_CANNONBALL;
             case NAPALM -> Palette.PROJECTILE_NAPALM;

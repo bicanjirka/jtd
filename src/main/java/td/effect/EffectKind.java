@@ -75,13 +75,15 @@ public enum EffectKind {
     /** Plating is halved. */
     CRACKED,
     /** Stuck in tar: slowed by 40%, a burn it catches starts at double the pool, and a freeze it suffers lasts a second longer. */
-    TARRED;
+    TARRED,
+    /** Takes physical damage for every cell it travels; a stopped enemy takes none. */
+    BLEEDING;
 
     public EffectCategory category() {
         return switch (this) {
             case CHILL, SILENCED, ANCHORED, UNDERTOW -> EffectCategory.SOFT_CC;
             case FREEZE, DAZED -> EffectCategory.HARD_CC;
-            case BURN, POISON -> EffectCategory.DAMAGE_OVER_TIME;
+            case BURN, POISON, BLEEDING -> EffectCategory.DAMAGE_OVER_TIME;
             case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED, UNRAVELED, BRITTLE, TOLL,
                     CORRODED, DEAD_ZONE, KILL_ZONE, CRACKED, TARRED -> EffectCategory.DEBUFF;
             case EXPOSED, MARKED, PRIORITY, CHARGED -> EffectCategory.SPOTTED;
@@ -190,7 +192,7 @@ public enum EffectKind {
             case SHIELD, INVISIBLE, HEAL, VULNERABLE, REVEALED, POISON, SCORCHED, SICKENED, SUNDERED, EXPOSED, MARKED,
                     PRIORITY, RESONATING, FRACTURED, DAZED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION,
                     SYMPATHY, RECKONING, SILENCED, ANCHORED, UNRAVELED, BRITTLE, TOLL, CORRODED, UNDERTOW, DEAD_ZONE,
-                    KILL_ZONE, CRACKED, TARRED -> Optional.empty();
+                    KILL_ZONE, CRACKED, TARRED, BLEEDING -> Optional.empty();
         };
     }
 }

@@ -93,6 +93,35 @@ public final class ArcLengthPath {
         return cx * cx + cy * cy;
     }
 
+    /**
+     * The point on the path closest to ({@code pointX}, {@code pointY}): how far along the path it is,
+     * and how far from the point.
+     */
+    public Nearest nearest(double pointX, double pointY) {
+        double bestAlong = 0.0;
+        double bestDistance2 = Double.MAX_VALUE;
+        for (int i = 0; i < this.cumulative.length - 1; i++) {
+            double ax = this.xs[i];
+            double ay = this.ys[i];
+            double dx = this.xs[i + 1] - ax;
+            double dy = this.ys[i + 1] - ay;
+            double length2 = dx * dx + dy * dy;
+            double t = length2 == 0.0 ? 0.0 : Math.max(0.0, Math.min(1.0, ((pointX - ax) * dx + (pointY - ay) * dy) / length2));
+            double cx = ax + t * dx - pointX;
+            double cy = ay + t * dy - pointY;
+            double distance2 = cx * cx + cy * cy;
+            if (distance2 < bestDistance2) {
+                bestDistance2 = distance2;
+                bestAlong = this.cumulative[i] + t * (this.cumulative[i + 1] - this.cumulative[i]);
+            }
+        }
+        return new Nearest(bestAlong, Math.sqrt(bestDistance2));
+    }
+
+    /** The closest point of a path to somewhere: its distance along the path, and from that somewhere. */
+    public record Nearest(double along, double distance) {
+    }
+
     public PathPose poseAt(double distance) {
         distance = Math.max(0.0, Math.min(distance, this.totalLength));
         int segment = this.cumulative.length - 2;
