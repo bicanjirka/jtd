@@ -397,6 +397,12 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
                 this.faultLine, this.stackCap, this.origin, this.tuning);
     }
 
+    /** This effect with {@code ticks} gone from the time it has left; empty once none is left. */
+    public Optional<Effect> afterTicks(int ticks) {
+        int left = this.remainingTicks - ticks;
+        return left > 0 ? Optional.of(this.withRemainingTicks(left)) : Optional.empty();
+    }
+
     Effect withRemainingTicks(int remainingTicks) {
         return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent, remainingTicks,
                 this.sink, this.healPerTick, this.shieldRestrictedTo, this.authoredDurationTicks,

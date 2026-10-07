@@ -154,15 +154,6 @@ look, and the info rows give the steps' size.
 - **Approach:** carry the steps the enemy nearest the wave carries, or the wave's best, on the wave and
   paint a brighter inner band of the cone for each.
 
-### A cursed cloud holds its debuffs instead of letting them run down
-
-A Hexer's cloud gives what stands in it the debuffs the dead enemy had, with the time they had left when
-it died, on every pulse, so they stay as long as an enemy does and run out only after it leaves.
-
-- **Where:** `td.zone.Zone.touch` and the carried effects of `Zone.cloud`.
-- **Approach:** have the zone count its carried effects' time down with its own age, so a debuff on an
-  enemy that stays still runs out.
-
 ### Enemies inside the Pulse's field don't flicker
 
 The feature doc draws the enemies inside a field flickering; only the field's rings, coloured by

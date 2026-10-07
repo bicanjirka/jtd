@@ -188,6 +188,37 @@ class ZoneRosterTest {
     }
 
     @Test
+    void aCursedCloudCountsTheDebuffsItCarriesDownWithItsOwnAge() {
+        FakeEnemyMob inside = FakeEnemyMob.at(100, 100);
+        this.world.enemies().setEnemies(new EnemyMob[]{inside});
+        this.world.zones().add(Zone.cloud(100, 100, RADIUS, LIFETIME, this.owner,
+                java.util.List.of(Effect.vulnerable(2, 40, d -> {
+                }))));
+
+        this.tick(1, LIFETIME);
+
+        java.util.List<Effect> given = inside.appliedEffects();
+        assertThat(given).isNotEmpty();
+        assertThat(given).allMatch(effect -> effect.remainingTicks() <= 40);
+        assertThat(given.getLast().remainingTicks()).isLessThan(given.getFirst().remainingTicks());
+    }
+
+    @Test
+    void aCursedCloudStopsGivingADebuffOnceItsTimeIsUp() {
+        FakeEnemyMob inside = FakeEnemyMob.at(100, 100);
+        this.world.enemies().setEnemies(new EnemyMob[]{inside});
+        this.world.zones().add(Zone.cloud(100, 100, RADIUS, LIFETIME, this.owner,
+                java.util.List.of(Effect.vulnerable(2, 40, d -> {
+                }))));
+        this.tick(1, 41);
+        int givenWhileItLasted = inside.appliedEffects().size();
+
+        this.tick(41, LIFETIME);
+
+        assertThat(inside.appliedEffects()).hasSize(givenWhileItLasted);
+    }
+
+    @Test
     void aTowerCanTakeAZoneOffTheBoard() {
         Zone zone = this.zone(ZoneKind.TAR);
         this.world.zones().add(zone);
