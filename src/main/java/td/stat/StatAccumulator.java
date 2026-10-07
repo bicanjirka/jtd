@@ -17,6 +17,9 @@ public interface StatAccumulator {
     /** A flat amount the enemy receives, scaled by its spirit (a heal's regeneration). */
     void restoreFlat(EnemyStat stat, float amount);
 
+    /** Holds the stat to at most {@code share} of its base value, whatever else raised it. */
+    void capAtShareOfBase(EnemyStat stat, float share);
+
     /**
      * A fractional reduction the enemy receives, scaled by its spirit (a shield lowering damage
      * taken). Reductions on one stat add up, capped at a full reduction.

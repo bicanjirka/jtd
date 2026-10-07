@@ -62,6 +62,20 @@ public interface HitReceiver {
         return false;
     }
 
+    /** Whether its abilities are kept from firing: it is stopped, or Silenced. */
+    default boolean isSilenced() {
+        return this.isStopped() || this.hasEffect(EffectKind.SILENCED);
+    }
+
+    /** Removes the shield and the heal it has, if any. */
+    void dispelRestoratives();
+
+    /** The share of a {@code type} hit its shield takes right now, from {@code 0} to {@code 0.9}. */
+    float shieldingFor(DamageType type);
+
+    /** Whether repeated freezing has made its next freeze last less than a full one. */
+    boolean freezeDiminished();
+
     /** Active effect kinds, in a stable order. */
     Set<EffectKind> activeEffectKinds();
 

@@ -312,6 +312,23 @@ public final class DefinedEnemyMob implements EnemyMob {
         return HitResolution.reductionAgainst(type, this.stats);
     }
 
+    @Override
+    public void dispelRestoratives() {
+        this.activeEffects.consume(EffectKind.SHIELD);
+        this.activeEffects.consume(EffectKind.HEAL);
+        this.stats.invalidate();
+    }
+
+    @Override
+    public float shieldingFor(DamageType type) {
+        return this.stats.value(EnemyStat.shieldingFor(type));
+    }
+
+    @Override
+    public boolean freezeDiminished() {
+        return this.diminishedFactors().containsKey(EffectKind.FREEZE);
+    }
+
     public void breakShield(float fraction) {
         this.activeEffects.weakenShield(fraction);
         this.stats.invalidate();
@@ -580,7 +597,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             case PulseMovement ignored -> {
             }
         }
-        if (!this.isStopped()) {
+        if (!this.isSilenced()) {
             this.evaluateAbilities(gameTime);
         }
     }

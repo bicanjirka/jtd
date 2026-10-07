@@ -200,6 +200,15 @@ final class EnemyStatText {
             case INVERSION -> "Inverted";
             case SYMPATHY -> "Sympathetic";
             case RECKONING -> "Reckoned";
+            case SILENCED -> "Silenced";
+            case ANCHORED -> "Anchored";
+            case UNRAVELED -> "Unraveled x" + effect.stacks();
+            case BRITTLE -> "Brittle";
+            case TOLL -> "Toll x" + effect.stacks();
+            case CORRODED -> "Corroded";
+            case UNDERTOW -> "Undertow";
+            case DEAD_ZONE -> "Dead zone";
+            case KILL_ZONE -> "Kill zone";
         };
         String category = effect.kind().category().label();
         if (effect.kind() == EffectKind.CHILL) {

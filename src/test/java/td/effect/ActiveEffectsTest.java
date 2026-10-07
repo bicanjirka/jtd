@@ -863,6 +863,160 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void tollSlowsEveryOtherDebuffsTimerByATenthAStack() {
+        ActiveEffects plain = new ActiveEffects();
+        plain.apply(Effect.exposed(100, d -> {
+        }));
+        ActiveEffects tolled = new ActiveEffects();
+        tolled.apply(Effect.exposed(100, d -> {
+        }));
+        tolled.apply(Effect.toll(5, 1000, d -> {
+        }));
+
+        tickTimes(plain, 60);
+        tickTimes(tolled, 60);
+
+        assertThat(plain.remainingTicks(EffectKind.EXPOSED).getAsInt()).isEqualTo(40);
+        assertThat(tolled.remainingTicks(EffectKind.EXPOSED).getAsInt()).isBetween(59, 61);
+    }
+
+    @Test
+    void tollNeverSlowsItself() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.toll(5, 20, d -> {
+        }));
+
+        tickTimes(effects, 20);
+
+        assertThat(effects.has(EffectKind.TOLL)).isFalse();
+    }
+
+    @Test
+    void tollStacksUpToFiveOrTheCapItWasGiven() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.toll(4, 20, d -> {
+        }));
+        effects.apply(Effect.toll(4, 20, d -> {
+        }));
+        ActiveEffects deep = new ActiveEffects();
+        deep.apply(Effect.toll(4, 20, d -> {
+        }).withStackCap(10));
+        deep.apply(Effect.toll(4, 20, d -> {
+        }).withStackCap(10));
+
+        assertThat(effects.stacks(EffectKind.TOLL)).isEqualTo(5);
+        assertThat(deep.stacks(EffectKind.TOLL)).isEqualTo(8);
+    }
+
+    @Test
+    void eachUnraveledStackLowersMagicResistByTenAndNeverBelowZero() {
+        ActiveEffects effects = new ActiveEffects();
+        BaseStats base = BaseStats.defaults().with(EnemyStat.MAGIC_RESIST, 25f);
+
+        effects.apply(Effect.unraveled(2, 100, d -> {
+        }));
+        float two = resolvedOn(base, effects, EnemyStat.MAGIC_RESIST);
+        effects.apply(Effect.unraveled(3, 100, d -> {
+        }));
+        float five = resolvedOn(base, effects, EnemyStat.MAGIC_RESIST);
+
+        assertThat(two).isEqualTo(5f);
+        assertThat(five).isZero();
+    }
+
+    @Test
+    void brittleRaisesPhysicalDamageTakenByAThirdOnlyWhileTheEnemyIsFrozen() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.brittle(100, d -> {
+        }));
+        float thawed = resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN);
+
+        effects.apply(Effect.freeze(10, d -> {
+        }));
+        float frozen = resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN);
+
+        assertThat(thawed).isEqualTo(1f);
+        assertThat(frozen).isCloseTo(1.3f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isEqualTo(1f);
+    }
+
+    @Test
+    void anchoredCapsSpeedAtThreeQuartersOfBaseAndLeavesASlowerEnemyAlone() {
+        ActiveEffects fast = new ActiveEffects();
+        fast.apply(Effect.anchored(100, d -> {
+        }));
+        ActiveEffects slowed = new ActiveEffects();
+        slowed.apply(Effect.anchored(100, d -> {
+        }));
+        slowed.apply(Effect.chill(0.5f, 100, d -> {
+        }));
+        BaseStats base = BaseStats.defaults().with(EnemyStat.MOVE_SPEED, 2f);
+
+        assertThat(resolvedOn(base, fast, EnemyStat.MOVE_SPEED)).isCloseTo(1.5f, within(0.001f));
+        assertThat(resolvedOn(base, slowed, EnemyStat.MOVE_SPEED)).isCloseTo(1f, within(0.001f));
+    }
+
+    @Test
+    void corrosionLowersArmorByThirtyAndNeverBelowZero() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.corroded(10, d -> {
+        }));
+
+        assertThat(resolvedOn(BaseStats.defaults().with(EnemyStat.ARMOR, 50f), effects, EnemyStat.ARMOR))
+                .isEqualTo(20f);
+        assertThat(resolvedOn(BaseStats.defaults().with(EnemyStat.ARMOR, 10f), effects, EnemyStat.ARMOR)).isZero();
+    }
+
+    @Test
+    void killZoneRaisesEveryDamageTakenByAQuarter() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.killZone(10, d -> {
+        }));
+
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.25f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.25f, within(0.001f));
+    }
+
+    @Test
+    void deadZoneKeepsHealsAndShieldsOutButStripsNoneThatAreAlreadyThere() {
+        ActiveEffects holding = new ActiveEffects();
+        holding.apply(Effect.shield(0.3f, 100, d -> {
+        }));
+        ActiveEffects bare = new ActiveEffects();
+
+        holding.apply(Effect.deadZone(10, d -> {
+        }));
+        bare.apply(Effect.deadZone(10, d -> {
+        }));
+        holding.apply(Effect.heal(5, 100, d -> {
+        }));
+        bare.apply(Effect.heal(5, 100, d -> {
+        }));
+        bare.apply(Effect.shield(0.3f, 100, d -> {
+        }));
+
+        assertThat(holding.activeKinds()).containsExactlyInAnyOrder(EffectKind.SHIELD, EffectKind.DEAD_ZONE);
+        assertThat(bare.activeKinds()).containsExactly(EffectKind.DEAD_ZONE);
+        assertThat(bare.blockedKinds()).contains(EffectKind.HEAL, EffectKind.SHIELD);
+    }
+
+    @Test
+    void undertowChillsAQuarterAndBuysAFreezeTheChillsExtraTime() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.undertow(10, d -> {
+        }));
+        BaseStats base = BaseStats.defaults().with(EnemyStat.MOVE_SPEED, 2f);
+
+        float slowed = resolvedOn(base, effects, EnemyStat.MOVE_SPEED);
+        effects.apply(Effect.freeze(40, d -> {
+        }));
+
+        assertThat(slowed).isCloseTo(1.5f, within(0.001f));
+        assertThat(effects.remainingTicks(EffectKind.FREEZE).getAsInt()).isEqualTo(50);
+        assertThat(effects.has(EffectKind.UNDERTOW)).isTrue();
+    }
+
+    @Test
     void aChillFadesInAsManyTicksAsItsSlowestShareTakes() {
         Effect chill = Effect.chill(0.4f, 80, d -> {
         });

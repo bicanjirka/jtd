@@ -35,6 +35,8 @@ public final class SympathyCopier {
                     .map(stacks -> Effect.vulnerable(stacks, source.remainingTicks(), source.sink()));
             case SUNDERED -> missingStacks(source, to)
                     .map(stacks -> Effect.sundered(stacks, source.remainingTicks(), source.sink()));
+            case UNRAVELED -> missingStacks(source, to)
+                    .map(stacks -> Effect.unraveled(stacks, source.remainingTicks(), source.sink()));
             case EXPOSED -> to.hasEffect(EffectKind.EXPOSED) ? Optional.empty()
                     : Optional.of(Effect.exposed(source.remainingTicks(), source.sink()));
             case CHILL -> missingChill(source, to);

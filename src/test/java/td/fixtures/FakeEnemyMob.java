@@ -31,7 +31,11 @@ public final class FakeEnemyMob implements EnemyMob {
     private boolean hitsLandCritical;
     private boolean diesOnHit;
     private boolean appliesEffects;
+    private float speed;
     private boolean frozen;
+    private boolean freezeDiminished;
+    private float shielding;
+    private int dispels;
     private float physicalReduction;
     private double x;
     private double y;
@@ -69,6 +73,13 @@ public final class FakeEnemyMob implements EnemyMob {
         this.rank = other.rank;
         this.healthFraction = other.healthFraction;
         this.appliesEffects = other.appliesEffects;
+        this.speed = other.speed;
+        return this;
+    }
+
+    /** This fake itself, now moving at {@code speed} pixels a tick. */
+    public FakeEnemyMob movingAt(float speed) {
+        this.speed = speed;
         return this;
     }
 
@@ -171,6 +182,37 @@ public final class FakeEnemyMob implements EnemyMob {
      */
     public void reportPhysicalReduction(float reduction) {
         this.physicalReduction = reduction;
+    }
+
+    @Override
+    public void dispelRestoratives() {
+        this.appliedEffects.removeIf(effect -> effect.kind() == EffectKind.SHIELD || effect.kind() == EffectKind.HEAL);
+        this.dispels++;
+    }
+
+    /** How many times a dispel reached it. */
+    public int dispels() {
+        return this.dispels;
+    }
+
+    /** Reports {@code share} of every hit as absorbed by a shield, for towers that read it. */
+    public void reportShielding(float share) {
+        this.shielding = share;
+    }
+
+    @Override
+    public float shieldingFor(DamageType type) {
+        return this.shielding;
+    }
+
+    /** Reports its freezes as diminished, without any real ladder. */
+    public void reportFreezeDiminished() {
+        this.freezeDiminished = true;
+    }
+
+    @Override
+    public boolean freezeDiminished() {
+        return this.freezeDiminished;
     }
 
     @Override
@@ -296,7 +338,7 @@ public final class FakeEnemyMob implements EnemyMob {
 
     @Override
     public float getSpeed() {
-        return 0;
+        return this.speed;
     }
 
     @Override

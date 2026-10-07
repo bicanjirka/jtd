@@ -3,8 +3,9 @@
 - Neutral ground for enemy stats: depends only on `td.damage` (and `td.util` annotations), so
   `effect`, `enemy` and `tower` can all use it without knowing each other.
 - A stat resolves as `(base + Σflat) * (1 + Σpercent) * Πmultiply`, plus spirit-scaled restorative
-  parts, replaced by the lowest set value if any, then clamped to the `EnemyStat`'s range. Spirit
-  resolves first.
+  parts, replaced by the lowest set value if any, held to its lowest `capAtShareOfBase` (a share of
+  the *base* value, so it also holds against anything that raised it), then clamped to the
+  `EnemyStat`'s range. Spirit resolves first.
 - `StatModifier.plus` adds flats and percents, multiplies multipliers and keeps the minimum set
   value; `none()` is the identity (no set value is `+∞`). Stacking rules (caps, refresh) stay with
   the source; the stat sees only the result.

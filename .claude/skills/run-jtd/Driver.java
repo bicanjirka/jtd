@@ -654,6 +654,15 @@ public class Driver {
                 case CHARGED -> Effect.charged(ticks, td.damage.AttackOrigin.none(), d -> { });
                 case DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY, RECKONING ->
                         Effect.hex(kind, ticks, d -> { });
+                case SILENCED -> Effect.silenced(ticks, d -> { });
+                case ANCHORED -> Effect.anchored(ticks, d -> { });
+                case UNRAVELED -> Effect.unraveled(3, ticks, d -> { });
+                case BRITTLE -> Effect.brittle(ticks, d -> { });
+                case TOLL -> Effect.toll(3, ticks, d -> { });
+                case CORRODED -> Effect.corroded(ticks, d -> { });
+                case UNDERTOW -> Effect.undertow(ticks, d -> { });
+                case DEAD_ZONE -> Effect.deadZone(ticks, d -> { });
+                case KILL_ZONE -> Effect.killZone(ticks, d -> { });
                 case SCORCHED, SICKENED -> throw new IllegalArgumentException(kind + " is earned by burn and poison");
             };
             mob.applyEffect(effect);

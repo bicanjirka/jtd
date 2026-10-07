@@ -57,8 +57,8 @@
   fire-once flags) is built in the constructor, parallel to `definition.abilities()`.
 - `ticksSinceLastHit` starts at `0`, so an idle trigger counts from spawn, not "forever".
   `WardenChainTest` covers the ability timing end to end.
-- A mob under an effect that `stopsEnemy()` (frozen or Dazed) doesn't evaluate abilities on live
-  ticks, but still does on its death tick.
+- A mob that `isSilenced()` (frozen, Dazed or `SILENCED`) doesn't evaluate abilities on live
+  ticks, but still does on its death tick; its motion and the aura it carries run regardless.
 - A tower can kill a mob *after* that mob's own `doTick` ran this tick. So death, crit-taken and
   damage-taken moments are marked pending in `MobMoments` and stamped on the next `doTick`, and death-tick abilities fire only when
   `ticksSinceDeath(gameTime) == 0`: exactly once, never during the fade. Until that capture,
