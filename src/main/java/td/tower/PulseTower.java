@@ -1,6 +1,7 @@
 package td.tower;
 
 import td.damage.Damage;
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
@@ -94,7 +95,7 @@ public final class PulseTower extends AbstractTower {
     /** Warding Field's chance of a stack, and Resonant Field II's reveal of a hidden enemy it hits. */
     private void applyUpgradeEffects(EnemyMob enemy) {
         if (this.upgrades().owns(WARDING_FIELD.id()) && this.context.random().nextDouble() < WARDING_FIELD_CHANCE) {
-            this.applyVulnerable(enemy, 1);
+            this.applyStacks(enemy, EffectKind.VULNERABLE, 1);
         }
         if (this.upgrades().owns(RESONANT_FIELD_2.id()) && enemy.isHidden()) {
             this.reveal(enemy, Math.round(REVEAL_SECONDS * TICKS_PER_SECOND));

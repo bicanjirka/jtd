@@ -3,8 +3,6 @@ package td.tower.sniper;
 import td.enemy.Rank;
 import td.tower.targeting.HighestRankSelector;
 
-import java.util.Optional;
-
 /** Headhunter: shots hit an elite or a boss harder. Aims at the highest rank. */
 public final class HeadhunterPerk implements SniperPerk {
 
@@ -17,7 +15,7 @@ public final class HeadhunterPerk implements SniperPerk {
     }
 
     @Override
-    public Optional<SniperAim> aim(Viewpoint view) {
-        return Optional.of(new SniperAim(new HighestRankSelector(), "highest rank"));
+    public SniperSpec refineSpec(SniperSpec spec) {
+        return spec.aimingAt(new SniperAim(new HighestRankSelector(), "highest rank"));
     }
 }

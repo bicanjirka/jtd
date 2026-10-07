@@ -6,7 +6,7 @@ public final class UnbrokenAimPerk implements SniperPerk {
     private static final int STACK_CAP = 5;
 
     @Override
-    public AimRules refineAim(AimRules rules) {
-        return rules.withStackCap(STACK_CAP).thatSurvivesAKill();
+    public SniperSpec refineSpec(SniperSpec spec) {
+        return spec.withSteadyAim(spec.steadyAim().withStackCap(STACK_CAP).thatSurvivesAKill());
     }
 }

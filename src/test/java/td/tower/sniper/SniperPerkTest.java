@@ -2,9 +2,11 @@ package td.tower.sniper;
 
 import org.junit.jupiter.api.Test;
 import td.damage.AttackProfile;
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.FakeEnemyMob;
+import td.tower.targeting.Viewpoint;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -12,6 +14,8 @@ import static org.assertj.core.api.Assertions.within;
 class SniperPerkTest {
 
     private static final SniperShot BASE = SniperShot.of(AttackProfile.critChance(0.05f).withCritMultiplier(2f));
+
+    private static final SniperSpec SPEC = SniperSpec.from(new Viewpoint(0, 0, 100f, 32));
 
     private final RecordingShotActions actions = new RecordingShotActions();
 
@@ -160,15 +164,13 @@ class SniperPerkTest {
         perk.react(new ShotResult(target, false, false), this.actions);
         perk.react(new ShotResult(target, true, false), this.actions);
 
-        assertThat(this.actions.vulnerable).containsExactly(target);
+        assertThat(this.actions.stackedWith(EffectKind.VULNERABLE)).containsExactly(target);
     }
 
     @Test
     void steadyAimStacksAndUnbrokenAimRaiseTheCapAndOnlyUnbrokenAimSurvivesAKill() {
-        AimRules attuned = AimRules.attuned();
-
-        assertThat(new SteadyAimStacksPerk(3).refineAim(attuned)).isEqualTo(new AimRules(3, false));
-        assertThat(new UnbrokenAimPerk().refineAim(attuned)).isEqualTo(new AimRules(5, true));
+        assertThat(new SteadyAimStacksPerk(3).refineSpec(SPEC).steadyAim()).isEqualTo(new AimRules(3, false));
+        assertThat(new UnbrokenAimPerk().refineSpec(SPEC).steadyAim()).isEqualTo(new AimRules(5, true));
     }
 
     @Test
@@ -194,7 +196,7 @@ class SniperPerkTest {
         perk.react(new ShotResult(target, false, false), this.actions);
         perk.react(new ShotResult(target, true, false), this.actions);
 
-        assertThat(this.actions.sundered).containsExactly(target);
+        assertThat(this.actions.stackedWith(EffectKind.SUNDERED)).containsExactly(target);
     }
 
     @Test
@@ -282,14 +284,12 @@ class SniperPerkTest {
 
     @Test
     void eachSpecialSaysWhoItAimsAtAndTheRestSayNothing() {
-        Viewpoint view = new Viewpoint(0, 0, 100f, 32);
-
-        assertThat(new MomentumPerk().aim(view)).map(SniperAim::label).contains("highest rank");
-        assertThat(new HeadhunterPerk().aim(view)).map(SniperAim::label).contains("highest rank");
-        assertThat(new RicochetPerk().aim(view)).map(SniperAim::label).contains("most neighbours");
-        assertThat(new HollowPointPerk().aim(view)).map(SniperAim::label).contains("most health");
-        assertThat(new FifthShotPerk().aim(view)).map(SniperAim::label).contains("most health");
-        assertThat(new ShatterShotPerk().aim(view)).map(SniperAim::label).contains("frozen first");
-        assertThat(new SteadyAimPerk().aim(view)).isEmpty();
+        assertThat(new MomentumPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("highest rank");
+        assertThat(new HeadhunterPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("highest rank");
+        assertThat(new RicochetPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("most neighbours");
+        assertThat(new HollowPointPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("most health");
+        assertThat(new FifthShotPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("most health");
+        assertThat(new ShatterShotPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("frozen first");
+        assertThat(new SteadyAimPerk().refineSpec(SPEC).aim()).isEmpty();
     }
 }

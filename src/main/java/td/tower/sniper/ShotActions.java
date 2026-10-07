@@ -1,5 +1,6 @@
 package td.tower.sniper;
 
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 
 /** What a perk may make the Sniper do beyond shaping its shot. */
@@ -15,9 +16,8 @@ public interface ShotActions {
      */
     boolean execute(EnemyMob target);
 
-    void applyVulnerable(EnemyMob target, int stacks);
-
-    void applySundered(EnemyMob target, int stacks);
+    /** Adds {@code stacks} of the stacking debuff {@code kind} to {@code target}. */
+    void applyStacks(EnemyMob target, EffectKind kind, int stacks);
 
     /**
      * Bounces the shot that just landed from {@code from} to the nearest enemy next to it, up to

@@ -1,7 +1,7 @@
-package td.tower.sniper;
+package td.tower.targeting;
 
 /**
- * Where the Sniper looks from.
+ * Where a tower looks from, for the perks that shape whom it may hit.
  *
  * @param x        its centre, in pixels
  * @param y        its centre, in pixels

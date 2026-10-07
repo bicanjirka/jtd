@@ -5,7 +5,9 @@ import td.damage.Damage;
 import td.damage.DamageType;
 import td.damage.DamageUnits;
 import td.economy.EconomyDelta;
+import td.effect.DamageSink;
 import td.effect.Effect;
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
 import td.stat.DisruptionPenalty;
@@ -21,6 +23,7 @@ import td.util.TickRate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * What every tower shares: position, price, current stats, upgrades, and damage and kill
@@ -238,21 +241,29 @@ public abstract class AbstractTower implements Tower {
         return critical ? target.critFactorFor(this.stats.attack()) : 1f;
     }
 
-    /** Adds {@code stacks} of vulnerability to {@code target}; the stacks belong to the enemy, not this tower. */
-    protected void applyVulnerable(EnemyMob target, int stacks) {
-        target.applyEffect(Effect.vulnerable(stacks, Math.round(VULNERABLE_SECONDS * TICKS_PER_SECOND),
-                d -> this.dealDamage(target, d)));
+    /**
+     * Puts an effect on {@code target}. Whatever damage it deals is credited to this tower as
+     * periodic damage, so it never crits and never spends a mark.
+     */
+    protected void applyEffect(EnemyMob target, Function<DamageSink, Effect> effect) {
+        target.applyEffect(effect.apply(d -> this.dealPeriodicDamage(target, d)));
     }
 
-    /** Adds {@code stacks} of sundered armor to {@code target}; the stacks belong to the enemy, not this tower. */
-    protected void applySundered(EnemyMob target, int stacks) {
-        target.applyEffect(Effect.sundered(stacks, Math.round(SUNDERED_SECONDS * TICKS_PER_SECOND),
-                d -> this.dealPeriodicDamage(target, d)));
+    /**
+     * Adds {@code stacks} of a stacking debuff to {@code target}, on the debuff's own clock; the
+     * stacks belong to the enemy, not this tower.
+     */
+    protected void applyStacks(EnemyMob target, EffectKind kind, int stacks) {
+        this.applyEffect(target, sink -> switch (kind) {
+            case VULNERABLE -> Effect.vulnerable(stacks, Math.round(VULNERABLE_SECONDS * TICKS_PER_SECOND), sink);
+            case SUNDERED -> Effect.sundered(stacks, Math.round(SUNDERED_SECONDS * TICKS_PER_SECOND), sink);
+            default -> throw new IllegalArgumentException(kind + " is not a stacking debuff");
+        });
     }
 
     /** Makes {@code target} targetable by every tower for {@code durationTicks}, even if invisible. */
     protected void reveal(EnemyMob target, int durationTicks) {
-        target.applyEffect(Effect.revealed(durationTicks, d -> this.dealDamage(target, d)));
+        this.applyEffect(target, sink -> Effect.revealed(durationTicks, sink));
     }
 
     /**
