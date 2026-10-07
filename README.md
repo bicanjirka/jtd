@@ -86,7 +86,7 @@ a different loadout or level, since v1 has no config format for either.
 | Tower  | Price | Behaviour                                                                                                                                           |
 |--------|-------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | Sniper | 15    | Single target, hits whichever enemy in range is furthest along the path; the longer it stays on one enemy, the likelier it crits (crits x2.0) |
-| Splash | 15    | Picks a random target in range and deals splash damage falling off with distance                                                                    |
+| Splash | 15    | Instant blast on a random target in range, physical damage falling off with distance; attuned, it aims at the most crowded group and Saturates what it hits. Forks into the Stormcaller (lightning arcs on past the blast) or the Hexer (every 4th shot casts a hex) |
 | Sonar  | 20    | Long range; a beam sweeps around it once every 3s, hitting everything it passes; once attuned, each sweep Exposes the healthiest enemy it passed |
 | Pulse  | 25    | Short range; damages everything in range at once, ghosts included                                                                                   |
 | Aura   | 20    | Passive — boosts the damage and range of nearby towers; several stack                                                                               |
@@ -149,6 +149,7 @@ holds more than one effect; selecting it lists every effect with what kind it is
 |------------|------------------|----------------------------------------------------------------------------------------------------|
 | Chilled    | soft CC          | Slows in proportion to its level, which adds up (never past 80%) and fades linearly. Every slowing tower chills. It also cuts the damage the enemy takes from burning |
 | Freeze     | hard CC          | Stops the enemy. Every enemy diminishes it: within 10 s of the last one, each fresh freeze lasts half as long as the one before, and a fourth doesn't take hold. Freezing a chilled enemy uses up the chill and lasts longer by its level |
+| Dazed      | hard CC          | Stops the enemy and its abilities like a freeze, but keeps its burn and its chill. It has its own diminishing returns: within 10 s of the last one, each fresh daze lasts 20% less than the one before, and a sixth doesn't take hold |
 | Burning    | damage over time | Damage that decays as it burns; several towers add to one pool and each is credited its share. It earns a Scorched stack when it starts and another every half second while it lasts |
 | Poisoned   | damage over time | Its own decaying pool, so it stacks with burning. It slows in proportion to the pool (at most 30%, on top of chill) and earns Sickened stacks the same way |
 | Scorched   | debuff           | Burning's lasting mark: each stack lowers resilience by 1 (down to -100; below 0 crits hit harder but no likelier). It outlasts the fire, then loses a stack per second |
@@ -157,15 +158,25 @@ holds more than one effect; selecting it lists every effect with what kind it is
 | Sundered   | debuff           | Up to 10 stacks, -5 armor each (armor never goes below 0); one shared 5 s clock                    |
 | Resonating | debuff           | Up to 3 stacks, +8% magic damage taken each; one shared 4 s clock                                  |
 | Fractured  | debuff           | Up to 5 stacks, -10 resilience each, losing a stack a second. A Sonar with Fault Line lets it fall to 10 stacks (-100) and holds it while the enemy is Exposed |
+| Saturated  | debuff           | Up to 3 stacks (a Splash upgrade allows 4), each making a Splash's blast hit it 5% harder; one shared 1.5 s clock any blast that catches it refreshes |
 | Exposed    | spotted          | Crit chance taken doubles. A revealed enemy counts as Exposed                                       |
 | Marked     | spotted          | The next hit from any tower is a guaranteed crit, and spends the mark. Damage that ticks never spends it, and it waits on a crit-immune enemy |
 | Priority   | spotted          | +15% damage taken from every tower, and every tower that picks one target picks it while it is in range |
+| Charged    | spotted          | The next hit from another tower than the one that charged it discharges it: +30% of that hit again as magic (x2 on a crit), credited to the charging tower |
+| Doomed     | hex              | When it ends, the enemy takes 30% of all the damage it took meanwhile as one magic hit, credited to the Hexer. Lasts 4 s, +1 s per Saturation stack |
+| Blighted   | hex              | Poisons the enemy for as long as it lasts |
+| Contagious | hex              | When the enemy dies, its hexes and debuffs jump to the 2 nearest unhexed enemies nearby with the time they had left; a jumped hex jumps once more at most |
+| Rimed      | hex              | Chills when cast. Freezing the enemy buys twice the chill's extra freeze time and lands its burn at once instead of putting it out. Replaces Ashen |
+| Ashen      | hex              | Its burn and poison hold twice as much and earn Scorched and Sickened twice as fast; it can't be frozen and takes a quarter of any chill. Replaces Rimed |
+| Inverted   | hex              | Heals it receives are dealt to it as magic damage over their length, shields as one hit of their share of its full health, both credited to the Hexer; it can't turn invisible |
+| Sympathetic | hex             | Once a second, its Vulnerable, Sundered, Exposed and chill are copied, up to what it has, to the Hexer's other hexed enemies within 2 cells |
+| Reckoned   | hex              | When the enemy dies, every Doom of that Hexer within 2 cells pays out at once and starts again |
 | Shield     | restorative      | Absorbs a share of every hit                                                                       |
 | Heal       | restorative      | Restores health every tick                                                                         |
 | Invisible  | stealth          | Towers cannot target the enemy; area damage still reaches it                                       |
 | Revealed   | stealth          | Towers can target the enemy again, even through invisibility; turning invisible again ends it      |
 
-Stacks wear off at a pace spirit sets: neutral spirit loses one per second, more spirit is faster, and at -100 they never wear off, so a fully sickened enemy stays sickened. Every other debuff's timer runs at `max(0.25, 1 + spirit / 100)` of normal speed (freeze keeps its own diminishing returns). A frozen enemy cannot burn, and freezing an enemy puts out its burn but keeps its Scorched stacks. Nothing else cancels anything.
+Stacks wear off at a pace spirit sets: neutral spirit loses one per second, more spirit is faster, and at -100 they never wear off, so a fully sickened enemy stays sickened. Every other debuff's timer runs at `max(0.25, 1 + spirit / 100)` of normal speed (freeze keeps its own diminishing returns). A frozen enemy cannot burn, and freezing an enemy puts out its burn but keeps its Scorched stacks. Only hexes bend this: Rimed and Ashen change what a freeze does, and Inverted keeps an enemy from turning invisible. Nothing else cancels anything.
 
 Only a hit can crit: a shot, a blast, a beam pass. Damage that ticks (a burn, a poison, a field)
 never does, but a burn or poison started by a crit starts that much stronger. Each tower has its
