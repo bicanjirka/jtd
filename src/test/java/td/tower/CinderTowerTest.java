@@ -11,6 +11,7 @@ import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.util.GameWorld;
+import td.util.RandomSource;
 
 import java.util.List;
 
@@ -23,7 +24,10 @@ import static org.assertj.core.api.Assertions.within;
  */
 class CinderTowerTest {
 
-    private final GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+    /** A roll no chance beats, so an ignition's size never depends on a crit. */
+    private static final RandomSource NEVER_CRITS = () -> 0.999;
+
+    private final GameWorld context = WorldFixtures.newWorldOnBoard(NEVER_CRITS, BoardFixtures.SCALE, 20, 20);
 
     private CinderTower towerAt(int cellX, int cellY) {
         return new CinderTower(this.context, cellX, cellY);

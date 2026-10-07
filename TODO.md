@@ -145,17 +145,6 @@ stop, timed ones crawl at a quarter pace, less under Toll).
   tower subscribe to it for the enemies inside; for Soul Drain, let a pace of zero stop a timed
   debuff when spirit is at its floor, which needs the README's pace rule changed with it.
 
-### A Cinder combustion test fails about one run in ten
-
-`CinderTowerTest.combustionBurstsAPoolThatReachesItsCapOntoTheEnemiesWithinACellAndOnlyOnce` fails
-intermittently at its first assertion (the neighbour took no burst), alone and in the full suite, and it
-already did before the fire-rate work (3 failures in 25 runs on the commit before it). That breaks the
-`mvn verify` gate at random.
-
-- **Where:** `CinderTowerTest` (the test and `realEnemyAt`), `CinderTower.ignite` and `combust`.
-- **Approach:** find what varies between runs (a crit roll on ignition from an unseeded `RandomSource` is the
-  first suspect) and seed or fix it in the test's world, so the burst's size does not depend on a roll.
-
 ### Fallout keeps shields out as well as heals
 
 `FEATURE-ground-zones-mortar-and-cinder.md` has Fallout drain spirit and block healing. As built it holds
