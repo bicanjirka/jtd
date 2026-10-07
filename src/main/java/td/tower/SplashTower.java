@@ -21,9 +21,17 @@ import td.tower.splash.OverloadPerk;
 import td.tower.splash.PotencyPerk;
 import td.tower.splash.SaturationRule;
 import td.tower.splash.ShapedChargePerk;
+import td.tower.splash.ShotContext;
+import td.tower.splash.ShotResult;
+import td.tower.splash.SplashActions;
 import td.tower.splash.SplashPerk;
+import td.tower.splash.SplashShot;
 import td.tower.splash.SplashSpec;
+import td.tower.splash.StaticChargePerk;
+import td.tower.splash.ThunderclapPerk;
+import td.tower.splash.ThunderstrikePerk;
 import td.tower.splash.WideChargePerk;
+import td.tower.targeting.HighestHealthSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.MostNeighboursSelector;
 import td.tower.targeting.PreferringSelector;
@@ -75,6 +83,14 @@ public final class SplashTower extends AbstractTower {
     /** Saturation fades this long after the last blast that caught the enemy. */
     private static final float SATURATION_SECONDS = 1.5f;
     private static final String SATURATED_BLAST_DEED = "Saturated blasts";
+    /** How long a Thunderclap or a Thunderstrike Dazes. */
+    private static final float DAZE_SECONDS = 0.5f;
+    private static final float THUNDERCLAP_SHARE = 0.5f;
+    private static final float THUNDERSTRIKE_FACTOR = 4f;
+    /** How far above its target a Thunderstrike's bolt is drawn from. */
+    private static final float THUNDERSTRIKE_HEIGHT_CELLS = 2f;
+    private static final float STATIC_CHARGE_SECONDS = 3f;
+    private static final TargetSelector THUNDERSTRIKE_AIM = PreferringSelector.priority(new HighestHealthSelector());
     private static final int SATURATED_BLASTS_NEEDED = 45;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
@@ -122,11 +138,28 @@ public final class SplashTower extends AbstractTower {
             .withExtraEffect("Stormcaller: arcs +10% crit, Overload's Daze lasts 1s")
             .after(POTENCY);
 
+    private static final UpgradeNode THUNDERCLAP = UpgradeTier.SPECIAL.node("splash.special.thunderclap",
+            "Thunderclap", PRICE)
+            .withExtraEffect("after a crit, the next shot also arcs into every enemy in range at 50%, Dazing each one "
+                    + "it crits")
+            .after(ARC);
+    private static final UpgradeNode STATIC_CHARGE = UpgradeTier.SPECIAL.node("splash.special.static_charge",
+            "Static Charge", PRICE)
+            .withExtraEffect("arcs leave enemies Charged for 3s: another tower's next hit discharges it for +30% of "
+                    + "that hit as magic, credited to this tower; a crit discharges at double")
+            .after(ARC);
+    private static final UpgradeNode THUNDERSTRIKE = UpgradeTier.SPECIAL.node("splash.special.thunderstrike",
+            "Thunderstrike", PRICE)
+            .withExtraEffect("every 6th shot calls lightning onto the healthiest enemy in range: 4x the blast as magic "
+                    + "and Dazed 0.5s; the shot's arcs start there at full damage; counts as a crit")
+            .after(ARC);
+
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, OVERLOAD))
             .with(ARC, CONDUCTOR, OVERLOAD, CHAIN_LIGHTNING, LIGHTNING_ROD, HEX, WIDE_CHARGE, SHAPED_CHARGE, POTENCY,
-                    MASTERY)
+                    MASTERY, THUNDERCLAP, STATIC_CHARGE, THUNDERSTRIKE)
             .withChoice(ExclusiveChoice.oneOf(ARC, HEX))
-            .withChoice(ExclusiveChoice.oneOf(CHAIN_LIGHTNING, LIGHTNING_ROD));
+            .withChoice(ExclusiveChoice.oneOf(CHAIN_LIGHTNING, LIGHTNING_ROD))
+            .withChoice(ExclusiveChoice.specials(THUNDERCLAP, STATIC_CHARGE, THUNDERSTRIKE));
 
     private static final PerkCatalogue<SplashPerk> PERKS = PerkCatalogue.<SplashPerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, FireControlPerk::new)
@@ -139,16 +172,21 @@ public final class SplashTower extends AbstractTower {
             .with(WIDE_CHARGE.id(), WideChargePerk::new)
             .with(SHAPED_CHARGE.id(), ShapedChargePerk::new)
             .with(POTENCY.id(), PotencyPerk::new)
-            .with(MASTERY.id(), MasteryPerk::new);
+            .with(MASTERY.id(), MasteryPerk::new)
+            .with(THUNDERCLAP.id(), ThunderclapPerk::new)
+            .with(STATIC_CHARGE.id(), StaticChargePerk::new)
+            .with(THUNDERSTRIKE.id(), ThunderstrikePerk::new);
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final OwnedPerks<SplashPerk> perks = new OwnedPerks<>(PERKS);
     private final TargetSelector randomAim;
+    private final SplashActions actions = new Actions();
     private int coolDown = 0;
     private List<Blast> blasts = List.of();
     private List<ArcTrace> arcs = List.of();
     private int lastShotTick;
     private int currentTick;
+    private int shotsFired;
 
     public SplashTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SPLASH, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
@@ -184,12 +222,13 @@ public final class SplashTower extends AbstractTower {
         if (this.coolDown > 0) {
             this.coolDown--;
         } else {
-            SplashSpec spec = this.spec(this.perks.all());
+            List<SplashPerk> owned = this.perks.all();
+            SplashSpec spec = this.spec(owned);
             Optional<EnemyMob> primary = this.aimFor(spec).selectFrom(spec.reach().matching(this.context.enemies()));
             if (primary.isEmpty()) {
                 this.blasts = List.of();
             } else {
-                this.fire(primary.get(), spec);
+                this.fire(primary.get(), spec, owned);
                 this.coolDown = this.coolDownCurrent();
             }
         }
@@ -206,15 +245,41 @@ public final class SplashTower extends AbstractTower {
         return PreferringSelector.priority(new MostNeighboursSelector(this.blastRadius(spec.blast())));
     }
 
-    /** One shot: the blast, then the arcs it carries. */
-    private void fire(EnemyMob primary, SplashSpec spec) {
+    /**
+     * One shot, as the perks shape it: a Thunderstrike first if one is due, then the blast, the arcs
+     * it carries, and a Thunderclap's discharge if one is armed. The perks then react to how it
+     * landed.
+     */
+    private void fire(EnemyMob primary, SplashSpec spec, List<SplashPerk> owned) {
         this.lastShotTick = this.currentTick;
+        this.shotsFired++;
+        SplashShot shot = SplashShot.plain();
+        ShotContext context = new ShotContext(this.shotsFired);
+        for (SplashPerk perk : owned) {
+            shot = perk.shape(shot, context);
+        }
         if (spec.blast().saturation().isActive() && primary.hasEffect(EffectKind.SATURATED)) {
             this.countDeedOfAttack();
         }
+        List<ArcTrace> traces = new ArrayList<>();
+        Optional<EnemyMob> struck = shot.thunderstrike() ? this.thunderstrike(spec, traces) : Optional.empty();
         Blast blast = this.blast(primary, spec.blast());
         this.blasts = List.of(blast);
-        this.arcs = spec.arcs().active() ? this.arc(blast, spec) : List.of();
+        List<EnemyMob> arced = new ArrayList<>();
+        boolean critical = struck.isPresent();
+        if (spec.arcs().active()) {
+            EnemyMob start = struck.orElseGet(() -> this.outermost(blast));
+            ArcSpec arcs = struck.isPresent() ? spec.arcs().withShareAtLeast(1f) : spec.arcs();
+            critical |= this.arc(blast, start, spec.withArcs(arcs), traces, arced);
+        }
+        if (shot.thunderclap()) {
+            this.discharge(spec, traces, arced);
+        }
+        this.arcs = List.copyOf(traces);
+        ShotResult result = new ShotResult(critical, arced);
+        for (SplashPerk perk : owned) {
+            perk.react(result, this.actions);
+        }
     }
 
     /**
@@ -246,14 +311,21 @@ public final class SplashTower extends AbstractTower {
         return new Blast(primary, List.copyOf(caught), new Blast.Area(x, y, radius), critical);
     }
 
-    /** The arcs the blast carries, from the enemy it caught furthest out; each lands as a magic hit. */
-    private List<ArcTrace> arc(Blast blast, SplashSpec spec) {
-        ArcSpec arcs = spec.arcs();
-        float cellReach = this.context.getBoard().scale() * spec.blast().distanceScale();
-        EnemyMob start = blast.caught().stream()
+    /** The enemy the blast caught furthest from its centre, where its arcs start. */
+    private EnemyMob outermost(Blast blast) {
+        return blast.caught().stream()
                 .max(Comparator.comparingDouble(enemy -> Math.hypot(enemy.getX() - blast.area().centerX(),
                         enemy.getY() - blast.area().centerY())))
                 .orElse(blast.primary());
+    }
+
+    /**
+     * The arcs the blast carries, from {@code start}; each lands as a magic hit. Records where they
+     * ran and whom they struck, and tells whether one crit.
+     */
+    private boolean arc(Blast blast, EnemyMob start, SplashSpec spec, List<ArcTrace> traces, List<EnemyMob> arced) {
+        ArcSpec arcs = spec.arcs();
+        float cellReach = this.context.getBoard().scale() * spec.blast().distanceScale();
         float bound = blast.area().radius()
                 + arcs.jumps() * ArcSpec.reachCells(spec.blast().saturation().cap()) * cellReach;
         List<EnemyMob> candidates = InRangeTargetQuery.everyone(blast.area().centerX(), blast.area().centerY(), bound)
@@ -262,18 +334,47 @@ public final class SplashTower extends AbstractTower {
         struck.addAll(blast.caught());
         List<ArcStrike> strikes = ArcPlanner.plan(blast.primary(), start, candidates, struck, arcs,
                 from -> ArcSpec.reachCells(from.effectStacks(EffectKind.SATURATED)) * cellReach);
-        List<ArcTrace> traces = new ArrayList<>();
+        boolean critical = false;
         for (ArcStrike strike : strikes) {
             traces.add(new ArcTrace((float) strike.from().getX(), (float) strike.from().getY(),
                     (float) strike.to().getX(), (float) strike.to().getY()));
-            this.strikeWithArc(strike, spec);
+            critical |= this.strikeWithArc(strike.to(), strike.share(), spec, arcs.daze());
+            arced.add(strike.to());
         }
-        return List.copyOf(traces);
+        return critical;
     }
 
-    private void strikeWithArc(ArcStrike strike, SplashSpec spec) {
+    /** Thunderclap: an arc from the tower into every enemy in range; each one it crits is Dazed. */
+    private void discharge(SplashSpec spec, List<ArcTrace> traces, List<EnemyMob> arced) {
+        for (EnemyMob enemy : spec.reach().matching(this.context.enemies())) {
+            traces.add(new ArcTrace(this.centerX, this.centerY, (float) enemy.getX(), (float) enemy.getY()));
+            this.strikeWithArc(enemy, THUNDERCLAP_SHARE, spec, DAZE_SECONDS);
+            arced.add(enemy);
+        }
+    }
+
+    /**
+     * Thunderstrike: lightning from above onto the healthiest enemy in range, the Priority first,
+     * for several times the blast as magic, and a Daze. The enemy it struck, if any.
+     */
+    private Optional<EnemyMob> thunderstrike(SplashSpec spec, List<ArcTrace> traces) {
+        Optional<EnemyMob> target = THUNDERSTRIKE_AIM.selectFrom(spec.reach().matching(this.context.enemies()));
+        target.ifPresent(enemy -> {
+            float x = (float) enemy.getX();
+            float y = (float) enemy.getY();
+            traces.add(new ArcTrace(x, y - THUNDERSTRIKE_HEIGHT_CELLS * this.context.getBoard().scale(), x, y));
+            this.dealDamage(enemy, Damage.magic(Math.round(this.damageCurrent() * THUNDERSTRIKE_FACTOR)));
+            if (!enemy.isDead()) {
+                int ticks = Math.round(DAZE_SECONDS * TICKS_PER_SECOND);
+                this.applyEffect(enemy, sink -> Effect.dazed(ticks, sink));
+            }
+        });
+        return target;
+    }
+
+    /** One arc's hit on {@code target}: magic, with the arc spec's crit rules; a crit Dazes for {@code dazeSeconds}. */
+    private boolean strikeWithArc(EnemyMob target, float share, SplashSpec spec, float dazeSeconds) {
         ArcSpec arcs = spec.arcs();
-        EnemyMob target = strike.to();
         AttackProfile attack = this.stats().attack();
         if (!arcs.canCrit()) {
             attack = attack.withCritChance(0f);
@@ -287,12 +388,12 @@ public final class SplashTower extends AbstractTower {
         if (target.isStopped()) {
             attack = attack.withCritDamageBonus(arcs.stoppedCritDamage());
         }
-        boolean critical = this.dealDamage(target, Damage.magic(Math.round(this.damageCurrent() * strike.share())),
-                attack);
-        if (critical && arcs.daze() > 0f && !target.isDead()) {
-            int ticks = Math.round(arcs.daze() * TICKS_PER_SECOND);
+        boolean critical = this.dealDamage(target, Damage.magic(Math.round(this.damageCurrent() * share)), attack);
+        if (critical && dazeSeconds > 0f && !target.isDead()) {
+            int ticks = Math.round(dazeSeconds * TICKS_PER_SECOND);
             this.applyEffect(target, sink -> Effect.dazed(ticks, sink));
         }
+        return critical;
     }
 
     /** What the fork has made it: the Stormcaller on Arc, the Hexer on Hex. */
@@ -326,7 +427,7 @@ public final class SplashTower extends AbstractTower {
         return this.blasts;
     }
 
-    /** The arcs of the latest shot, in the order they struck. */
+    /** The arcs of the latest shot, a Thunderstrike's bolt among them, in the order they struck. */
     public List<ArcTrace> getArcs() {
         return this.arcs;
     }
@@ -369,6 +470,15 @@ public final class SplashTower extends AbstractTower {
 
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitSplashTower(this);
+    }
+
+    /** What the perks may make this tower do. */
+    private final class Actions implements SplashActions {
+
+        @Override
+        public void charge(EnemyMob target) {
+            SplashTower.this.charge(target, Math.round(STATIC_CHARGE_SECONDS * TICKS_PER_SECOND));
+        }
     }
 
     /** What the fork has made the Splash. */

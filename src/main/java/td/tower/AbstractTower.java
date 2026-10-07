@@ -1,5 +1,6 @@
 package td.tower;
 
+import td.damage.AttackOrigin;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
@@ -55,6 +56,8 @@ public abstract class AbstractTower implements Tower {
     private final TowerFactory.Type type;
     private final int price;
     private final TowerExperience experience = new TowerExperience();
+    /** Who this tower's hits come from, so an effect can tell them from another tower's. */
+    private final AttackOrigin origin = AttackOrigin.fresh();
     /** How many mobs had gone live when this tower was built; only later ones count for its XP. */
     private final long entriesBeforeBuilt;
     // damageDealt is a long read on the EDT; a non-volatile long read may tear.
@@ -192,7 +195,7 @@ public abstract class AbstractTower implements Tower {
             return false;
         }
         boolean wasAlive = !enemy.isDead();
-        Damage landed = enemy.doDamage(damage, attacker);
+        Damage landed = enemy.doDamage(damage, attacker.withOrigin(this.origin));
         if (wasAlive) {
             this.damageDealt += landed.amount();
             if (enemy.isDead()) {
@@ -261,6 +264,14 @@ public abstract class AbstractTower implements Tower {
             case RESONATING -> Effect.resonating(stacks, Math.round(RESONATING_SECONDS * TICKS_PER_SECOND), sink);
             default -> throw new IllegalArgumentException(kind + " is not a stacking debuff");
         });
+    }
+
+    /**
+     * Charges {@code target} for {@code durationTicks}: the next hit from another tower discharges
+     * it, credited to this one.
+     */
+    protected void charge(EnemyMob target, int durationTicks) {
+        this.applyEffect(target, sink -> Effect.charged(durationTicks, this.origin, sink));
     }
 
     /** Makes {@code target} targetable by every tower for {@code durationTicks}, even if invisible. */

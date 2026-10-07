@@ -39,6 +39,9 @@ import java.util.Set;
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class DefinedEnemyMob implements EnemyMob {
 
+    /** A discharged charge lands this share of the hit that discharged it. */
+    private static final float DISCHARGE_SHARE = 0.3f;
+
     private final GameWorld gameWorld;
     private final EnemyDefinition definition;
     private final List<Trait> traits;
@@ -365,6 +368,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     public Damage doDamage(Damage damage, AttackProfile attacker) {
         this.ticksSinceLastHit = 0;
         Damage landed = this.land(damage, attacker);
+        this.discharge(attacker, landed);
         // Health-dependent traits re-derive from the new health.
         this.stats.invalidate();
         return landed;
@@ -395,6 +399,24 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.gameWorld.enemies().reportDeath(this);
         }
         return landed;
+    }
+
+    /**
+     * A hit from another attacker discharges a charge: it lands its share of the hit again as magic,
+     * twice that on a crit, credited to whoever charged it. Periodic damage never discharges one.
+     */
+    private void discharge(AttackProfile attacker, Damage landed) {
+        if (this.isDead() || attacker.delivery() != Delivery.HIT || landed.amount() == 0) {
+            return;
+        }
+        Optional<Effect> charge = this.activeEffects.find(EffectKind.CHARGED);
+        if (charge.isEmpty() || charge.get().origin() == attacker.origin()) {
+            return;
+        }
+        this.activeEffects.consume(EffectKind.CHARGED);
+        this.stats.invalidate();
+        float share = DISCHARGE_SHARE * (landed.critical() ? 2f : 1f);
+        charge.get().sink().apply(Damage.magic(Math.round(landed.amount() * share)));
     }
 
     /**

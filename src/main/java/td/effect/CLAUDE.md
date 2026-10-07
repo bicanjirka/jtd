@@ -34,6 +34,9 @@
   freeze, invisible, shield, heal and the pools keep their own pace.
 - `MARKED` is spent by a hit, never by periodic damage: the mob calls `consume(MARKED)`, and only
   when its resilience is below 100.
+- `CHARGED` is spent by a hit from any attacker but the one in its `origin`, never by periodic
+  damage; the mob pays its share of that hit through the charge's own sink, so the charger is
+  credited.
 - Effects change a mob only through `contributeTo(StatAccumulator)`: chill and poison on
   `MOVE_SPEED` (multiplying), freeze setting it to zero, shield and vulnerable on damage taken, heal
   on `REGENERATION`, invisible and revealed on `STEALTH` (revealed sets it to 0, which beats

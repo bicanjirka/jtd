@@ -1,12 +1,14 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackOrigin;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.Effect;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
+import td.fixtures.FakeEnemyMob;
 import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
 import td.tower.buff.TowerBuff;
@@ -16,6 +18,8 @@ import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -557,5 +561,20 @@ class AbstractTowerTest {
         tower.dealDamage(burning, Damage.physical(1000));
 
         assertThat(tower.getDamageDealt()).isEqualTo(1000);
+    }
+
+    @Test
+    void everyHitATowerDealsCarriesItsOwnOriginAndNoOtherTowersOne() {
+        SniperTower first = new SniperTower(this.context, 1, 1);
+        SniperTower second = new SniperTower(this.context, 2, 2);
+        FakeEnemyMob target = FakeEnemyMob.at(0, 0);
+
+        first.dealDamage(target, Damage.physical(1));
+        first.dealPeriodicDamage(target, Damage.physical(1));
+        second.dealDamage(target, Damage.physical(1));
+
+        List<AttackOrigin> origins = target.attackers().stream().map(AttackProfile::origin).toList();
+        assertThat(origins.get(0)).isSameAs(origins.get(1)).isNotSameAs(AttackOrigin.none());
+        assertThat(origins.get(2)).isNotSameAs(origins.get(0)).isNotSameAs(AttackOrigin.none());
     }
 }

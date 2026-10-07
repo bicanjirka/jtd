@@ -1,5 +1,6 @@
 package td.effect;
 
+import td.damage.AttackOrigin;
 import td.damage.Damage;
 import td.damage.DamageType;
 
@@ -23,12 +24,13 @@ import java.util.Optional;
  * {@link #STACK_INTERVAL_TICKS}; the stacks themselves are a separate debuff that outlasts the pool.
  * {@link #faultLine} marks a Fractured that recovers nothing while the enemy is exposed.
  * {@link #stackCap} is the most stacks a stacking kind may reach, {@code 0} for its kind's own cap.
+ * {@link #origin} is who put it on, for an effect that must tell its applier from other attackers.
  */
 public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTick, float shieldPercent,
                      int remainingTicks, DamageSink sink, int healPerTick,
                      Optional<DamageType> shieldRestrictedTo, int authoredDurationTicks,
                      List<FuelContribution> fuel, float peakL0, int stacks, int stackClock,
-                     boolean faultLine, int stackCap) {
+                     boolean faultLine, int stackCap, AttackOrigin origin) {
 
     /** A burn or poison earns a stack this often while it lasts: one every half second. */
     static final int STACK_INTERVAL_TICKS = 10;
@@ -42,18 +44,18 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
     public static Effect chill(float amount, int durationTicks, DamageSink sink) {
         return new Effect(EffectKind.CHILL, 1f, Damage.none(), 0f, durationTicks, sink, 0,
                 Optional.empty(), durationTicks, List.of(new FuelContribution(sink, amount, amount / durationTicks)),
-                0f, 0, 0, false, 0);
+                0f, 0, 0, false, 0, AttackOrigin.none());
     }
 
     public static Effect freeze(int durationTicks, DamageSink sink) {
         return new Effect(EffectKind.FREEZE, 0f, Damage.none(), 0f, durationTicks, sink, 0,
-                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0);
+                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none());
     }
 
     /** Stops the enemy for {@code durationTicks}; unlike a freeze, it puts out nothing. */
     public static Effect dazed(int durationTicks, DamageSink sink) {
         return new Effect(EffectKind.DAZED, 0f, Damage.none(), 0f, durationTicks, sink, 0,
-                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0);
+                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none());
     }
 
     /** Damage that decays exponentially; each stack it earns lowers resilience by one for good. */
@@ -72,25 +74,25 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
     private static Effect pool(EffectKind kind, Damage damagePerTick, int durationTicks, DamageSink sink) {
         float l0 = damagePerTick.amount();
         return new Effect(kind, 1f, damagePerTick, 0f, durationTicks, sink, 0,
-                Optional.empty(), durationTicks, List.of(new FuelContribution(sink, l0)), l0, 0, STACK_INTERVAL_TICKS, false, 0);
+                Optional.empty(), durationTicks, List.of(new FuelContribution(sink, l0)), l0, 0, STACK_INTERVAL_TICKS, false, 0, AttackOrigin.none());
     }
 
     /** Absorbs a percentage of every hit while active. */
     public static Effect shield(float shieldPercent, int durationTicks, DamageSink sink) {
         return new Effect(EffectKind.SHIELD, 1f, Damage.none(), shieldPercent, durationTicks, sink, 0,
-                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0);
+                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none());
     }
 
     /** Untargetable while active. */
     public static Effect invisible(int durationTicks, DamageSink sink) {
         return new Effect(EffectKind.INVISIBLE, 1f, Damage.none(), 0f, durationTicks, sink, 0,
-                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0);
+                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none());
     }
 
     /** Targetable again while active, even through invisibility. */
     public static Effect revealed(int durationTicks, DamageSink sink) {
         return new Effect(EffectKind.REVEALED, 1f, Damage.none(), 0f, durationTicks, sink, 0,
-                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0);
+                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none());
     }
 
     /**
@@ -99,7 +101,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
      */
     static Effect stackDebuff(EffectKind kind, int stacks) {
         return new Effect(kind, 1f, Damage.none(), 0f, 0, d -> {
-        }, 0, Optional.empty(), 0, List.of(), 0f, stacks, 0, false, 0);
+        }, 0, Optional.empty(), 0, List.of(), 0f, stacks, 0, false, 0, AttackOrigin.none());
     }
 
     /** {@code stacks} more hits' worth of extra damage taken, on one shared clock. */
@@ -127,7 +129,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
         return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
                 this.remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
                 this.authoredDurationTicks, this.fuel, this.peakL0, this.stacks, this.stackClock, true,
-                FAULT_LINE_STACK_CAP);
+                FAULT_LINE_STACK_CAP, this.origin);
     }
 
     /** This stacking effect allowed up to {@code stackCap} stacks instead of its kind's cap. */
@@ -135,7 +137,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
         return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
                 this.remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
                 this.authoredDurationTicks, this.fuel, this.peakL0, this.stacks, this.stackClock, this.faultLine,
-                stackCap);
+                stackCap, this.origin);
     }
 
     /** The most stacks it may reach: its own cap, else its kind's. */
@@ -149,6 +151,15 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
      */
     public static Effect saturated(int stacks, int durationTicks, DamageSink sink) {
         return stacking(EffectKind.SATURATED, stacks, durationTicks, sink);
+    }
+
+    /**
+     * The next hit from any attacker other than {@code origin} discharges it, dealing extra magic
+     * through {@code sink}.
+     */
+    public static Effect charged(int durationTicks, AttackOrigin origin, DamageSink sink) {
+        return new Effect(EffectKind.CHARGED, 1f, Damage.none(), 0f, durationTicks, sink, 0,
+                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, origin);
     }
 
     /** Crit chance taken doubles while it lasts. */
@@ -168,12 +179,12 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
 
     private static Effect stacking(EffectKind kind, int stacks, int durationTicks, DamageSink sink) {
         return new Effect(kind, 1f, Damage.none(), 0f, durationTicks, sink, 0,
-                Optional.empty(), durationTicks, List.of(), 0f, stacks, 0, false, 0);
+                Optional.empty(), durationTicks, List.of(), 0f, stacks, 0, false, 0, AttackOrigin.none());
     }
 
     private static Effect timed(EffectKind kind, int durationTicks, DamageSink sink) {
         return new Effect(kind, 1f, Damage.none(), 0f, durationTicks, sink, 0,
-                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0);
+                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none());
     }
 
     /**
@@ -182,7 +193,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
      */
     public static Effect heal(int healPerTick, int durationTicks, DamageSink sink) {
         return new Effect(EffectKind.HEAL, 1f, Damage.none(), 0f, durationTicks, sink, healPerTick,
-                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0);
+                Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none());
     }
 
     /** The level's current total; {@code 0f} for kinds without one. */
@@ -197,14 +208,14 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
     public Effect withShieldPercent(float shieldPercent) {
         return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, shieldPercent,
                 this.remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
-                this.authoredDurationTicks, this.fuel, this.peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap);
+                this.authoredDurationTicks, this.fuel, this.peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap, this.origin);
     }
 
     /** Narrows a shield to one damage type; the other passes through. */
     public Effect withShieldRestrictedTo(DamageType type) {
         return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
                 this.remainingTicks, this.sink, this.healPerTick, Optional.of(type),
-                this.authoredDurationTicks, this.fuel, this.peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap);
+                this.authoredDurationTicks, this.fuel, this.peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap, this.origin);
     }
 
     /**
@@ -218,33 +229,33 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
                 : this.fuel;
         return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
                 Math.round(this.remainingTicks * factor), this.sink, this.healPerTick, this.shieldRestrictedTo,
-                Math.round(this.authoredDurationTicks * factor), scaled, this.peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap);
+                Math.round(this.authoredDurationTicks * factor), scaled, this.peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap, this.origin);
     }
 
     Effect withRemainingTicks(int remainingTicks) {
         return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent, remainingTicks,
                 this.sink, this.healPerTick, this.shieldRestrictedTo, this.authoredDurationTicks,
-                this.fuel, this.peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap);
+                this.fuel, this.peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap, this.origin);
     }
 
     /** Carries the level forward after decay or a top-up. {@code peakL0} only grows. */
     Effect withFuel(List<FuelContribution> fuel, float peakL0) {
         return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
                 this.remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
-                this.authoredDurationTicks, fuel, peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap);
+                this.authoredDurationTicks, fuel, peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap, this.origin);
     }
 
     /** The same effect with a new stack count and a fresh clock of {@code remainingTicks}. */
     Effect withStacks(int stacks, int remainingTicks) {
         return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
                 remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
-                this.authoredDurationTicks, this.fuel, this.peakL0, stacks, this.stackClock, this.faultLine, this.stackCap);
+                this.authoredDurationTicks, this.fuel, this.peakL0, stacks, this.stackClock, this.faultLine, this.stackCap, this.origin);
     }
 
     /** The same pool with its clock to the next stack set to {@code stackClock}. */
     Effect withStackClock(int stackClock) {
         return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
                 this.remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
-                this.authoredDurationTicks, this.fuel, this.peakL0, this.stacks, stackClock, this.faultLine, this.stackCap);
+                this.authoredDurationTicks, this.fuel, this.peakL0, this.stacks, stackClock, this.faultLine, this.stackCap, this.origin);
     }
 }
