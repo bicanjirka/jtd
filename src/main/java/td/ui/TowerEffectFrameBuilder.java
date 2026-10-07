@@ -385,7 +385,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             float currentProgress = waveProgress(wave, this.gameTime);
             float progress = previousProgress + (currentProgress - previousProgress) * (float) this.interpolationAlpha;
             this.draws.add(new ConeDraw(conePaletteFor(wave), tower.getX(), tower.getY(),
-                    (float) wave.headingRadians(), tower.getRangeReal(), (float) wave.halfWidthRadians(), progress));
+                    (float) wave.headingRadians(), tower.getRangeReal(), (float) wave.halfWidthRadians(), progress,
+                    wave.stokeSteps()));
         }
         return null;
     }

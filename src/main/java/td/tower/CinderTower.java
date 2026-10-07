@@ -29,6 +29,7 @@ import td.tower.cinder.SearingFlamePerk;
 import td.tower.cinder.ShortBurnPerk;
 import td.tower.cinder.SoulfirePerk;
 import td.tower.cinder.StokePerk;
+import td.tower.cinder.StokeSpec;
 import td.tower.cinder.ThermalShockPerk;
 import td.tower.cinder.WhiteFlamePerk;
 import td.tower.cinder.WideNozzlePerk;
@@ -305,14 +306,40 @@ public final class CinderTower extends AbstractTower {
         this.wavesFired++;
         boolean soul = spec.soulfire() && this.wavesFired % 2 == 0;
         int travelTicks = Math.max(1, Math.round(WAVE_TRAVEL_TICKS / spec.waveSpeed()));
-        this.inFlightWaves.add(new FlameWave(this.turretAim.currentRadians(), this.halfWidthRadians(spec), gameTime,
-                travelTicks, soul, spec.look()));
+        double heading = this.turretAim.currentRadians();
+        double halfWidth = this.halfWidthRadians(spec);
+        this.inFlightWaves.add(new FlameWave(heading, halfWidth, gameTime, travelTicks, soul, spec.look(),
+                this.stokeStepsAhead(spec, heading, halfWidth)));
         if (spec.linger().isActive() && target != null) {
             int scale = this.context.getBoard().scale();
             this.context.zones().add(new Zone(ZoneKind.BURNING_GROUND, target.getX(), target.getY(),
                     spec.linger().radiusCells() * scale, this.lengthened(spec.linger().ticks()), this.damageCurrent(),
                     this.zoneOwner));
         }
+    }
+
+    /**
+     * The most steps of Stoke any enemy a wave fired now will reach is about to carry, which the
+     * cone shows as its brighter core.
+     */
+    private int stokeStepsAhead(CinderSpec spec, double heading, double halfWidth) {
+        StokeSpec stoke = spec.stoke();
+        if (!stoke.active()) {
+            return 0;
+        }
+        if (stoke.alwaysFull()) {
+            return stoke.maxSteps();
+        }
+        int best = 0;
+        for (EnemyMob enemy : new InWedgeTargetQuery(this.centerX, this.centerY, heading, halfWidth)
+                .and(InRangeTargetQuery.everyone(this.centerX, this.centerY, this.rangeReal()))
+                .matching(this.context.enemies())) {
+            Burning entry = this.burning.get(enemy);
+            if (entry != null) {
+                best = Math.max(best, Math.min(stoke.maxSteps(), entry.steps + 1));
+            }
+        }
+        return best;
     }
 
     /**
@@ -589,16 +616,23 @@ public final class CinderTower extends AbstractTower {
         private final int travelTicks;
         private final boolean soul;
         private final FlameLook look;
+        private final int stokeSteps;
         private final Set<EnemyMob> alreadyHit = new HashSet<>();
 
         private FlameWave(double headingRadians, double halfWidthRadians, int firedAtTick, int travelTicks,
-                          boolean soul, FlameLook look) {
+                          boolean soul, FlameLook look, int stokeSteps) {
             this.headingRadians = headingRadians;
             this.halfWidthRadians = halfWidthRadians;
             this.firedAtTick = firedAtTick;
             this.travelTicks = travelTicks;
             this.soul = soul;
             this.look = look;
+            this.stokeSteps = stokeSteps;
+        }
+
+        /** The most steps of Stoke an enemy in its path carries once it lands, shown as a brighter core. */
+        public int stokeSteps() {
+            return this.stokeSteps;
         }
 
         public double headingRadians() {

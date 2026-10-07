@@ -125,15 +125,6 @@ of again.
 - **Approach:** have `HitResolution` report the amount a shield took and let a tower subscribe to it
   for the enemies inside.
 
-### The Cinder's Stoke is not drawn
-
-The feature doc draws each Stoke step as a brighter core in the flame; only the wave's colour shows its
-look, and the info rows give the steps' size.
-
-- **Where:** `td.ui.TowerEffectFrameBuilder.visitCinderTower`, `td.ui.render.ConeDraw`.
-- **Approach:** carry the steps the enemy nearest the wave carries, or the wave's best, on the wave and
-  paint a brighter inner band of the cone for each.
-
 ### A global, buy-once upgrade for a whole tower type doesn't exist
 
 `FEATURE-tower-upgrades.md` named a second kind of upgrade alongside the four per-instance ones
