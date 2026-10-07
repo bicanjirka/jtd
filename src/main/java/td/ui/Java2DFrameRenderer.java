@@ -16,6 +16,7 @@ import td.ui.render.HexGlyph;
 import td.ui.render.HexRuneDraw;
 import td.ui.render.IceCrystalDraw;
 import td.ui.render.MissileDraw;
+import td.ui.render.NestDraw;
 import td.ui.render.Palette;
 import td.ui.render.PathMarkerBrightness;
 import td.ui.render.PathMarkerDraw;
@@ -28,6 +29,7 @@ import td.ui.render.RenderFrame;
 import td.ui.render.RingDraw;
 import td.ui.render.SheetLine;
 import td.ui.render.SlotMarkDraw;
+import td.ui.render.SmokeDraw;
 import td.ui.render.SplashDraw;
 import td.ui.render.StatusMarkerDraw;
 import td.ui.render.TowerEffectDraw;
@@ -40,6 +42,7 @@ import td.wave.PathColor;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -126,6 +129,8 @@ public final class Java2DFrameRenderer {
     private static final float RANK_BADGE_OFFSET_FRACTION = 1.7f;
     private static final float RANK_BADGE_CHEVRON_SPACING_FRACTION = 0.55f;
     private static final float PROJECTILE_SIZE = 5f;
+    /** A banked missile is drawn this share of a missile in flight. */
+    private static final float NEST_MISSILE_SCALE = 0.6f;
     private static final Font MARKER_COUNT_FONT = Hud.LABEL_FONT.deriveFont(9f);
     /** Flame wave alpha, the same from launch to burn-out. */
     private static final float CINDER_CONE_ALPHA = 0.45f;
@@ -434,6 +439,7 @@ public final class Java2DFrameRenderer {
             case TOWER_CINDER_CONE -> new Color(255, 90, 30);
             case PROJECTILE_CANNONBALL -> new Color(139, 90, 43);
             case PROJECTILE_MISSILE -> new Color(80, 180, 255);
+            case PROJECTILE_SMOKE -> new Color(190, 200, 210);
             case STATUS_MARKER_CHILL -> new Color(120, 120, 255);
             case STATUS_MARKER_BURN -> new Color(255, 120, 40);
             case STATUS_MARKER_FREEZE -> new Color(150, 220, 255);
@@ -1211,6 +1217,7 @@ public final class Java2DFrameRenderer {
                     this.paintFilledCircle(g2, pulse.palette(), pulse.centerX(), pulse.centerY(), pulse.radius());
             case RingDraw ring -> this.paintRing(g2, ring);
             case ConeDraw cone -> this.paintCone(g2, cone);
+            case NestDraw nest -> this.paintNest(g2, nest);
             case TowerStatusDraw status -> this.paintStatusMarker(g2,
                     new StatusMarkerDraw(status.palette(), status.x(), status.y(), status.scale()));
         }
@@ -1276,6 +1283,7 @@ public final class Java2DFrameRenderer {
             case CannonballDraw shell ->
                     this.paintFilledCircle(g2, shell.palette(), shell.x(), shell.y(), PROJECTILE_SIZE);
             case MissileDraw missile -> this.paintMissile(g2, missile);
+            case SmokeDraw smoke -> this.paintSmoke(g2, smoke);
         }
     }
 
@@ -1284,7 +1292,28 @@ public final class Java2DFrameRenderer {
         g2.translate(missile.x(), missile.y());
         g2.rotate(missile.facingRadians());
         g2.setColor(colorFor(missile.palette()));
-        g2.fill(headArrowShape(PROJECTILE_SIZE));
+        g2.fill(headArrowShape(PROJECTILE_SIZE * missile.size()));
         g2.setTransform(save);
+    }
+
+    private void paintSmoke(Graphics2D g2, SmokeDraw smoke) {
+        Composite save = g2.getComposite();
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.max(0f, Math.min(1f, smoke.alpha()))));
+        this.paintFilledCircle(g2, smoke.palette(), smoke.x(), smoke.y(), smoke.radius());
+        g2.setComposite(save);
+    }
+
+    /** The banked missiles, small and evenly spread, each pointing the way it circles. */
+    private void paintNest(Graphics2D g2, NestDraw nest) {
+        AffineTransform save = g2.getTransform();
+        g2.setColor(colorFor(nest.palette()));
+        for (int i = 0; i < nest.count(); i++) {
+            double angle = nest.phaseRadians() + Math.PI * 2 * i / nest.count();
+            g2.translate(nest.centerX() + Math.cos(angle) * nest.orbitRadius(),
+                    nest.centerY() + Math.sin(angle) * nest.orbitRadius());
+            g2.rotate(angle + Math.PI / 2);
+            g2.fill(headArrowShape(PROJECTILE_SIZE * NEST_MISSILE_SCALE));
+            g2.setTransform(save);
+        }
     }
 }

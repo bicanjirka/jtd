@@ -15,7 +15,7 @@ class MissileProjectileTest {
     void homesOnItsTargetsCurrentPositionEachTickRatherThanWhereItStarted() {
         FakeEnemyMob target = FakeEnemyMob.at(100, 0);
         FakeEnemyRegistry registry = new FakeEnemyRegistry(target);
-        MissileProjectile missile = new MissileProjectile(0, 0, target, registry, 10f, t -> {
+        MissileProjectile missile = new MissileProjectile(0, 0, target, registry, ProjectileStats.of(10f), t -> {
         });
 
         missile.doTick(1); // aims at (100, 0)
@@ -30,7 +30,7 @@ class MissileProjectileTest {
         FakeEnemyMob target = FakeEnemyMob.at(20, 0);
         FakeEnemyRegistry registry = new FakeEnemyRegistry(target);
         List<HitReceiver> impacts = new ArrayList<>();
-        MissileProjectile missile = new MissileProjectile(0, 0, target, registry, 10f, impacts::add);
+        MissileProjectile missile = new MissileProjectile(0, 0, target, registry, ProjectileStats.of(10f), impacts::add);
 
         for (int t = 1; t <= 5 && !missile.isFinished(); t++) {
             missile.doTick(t);
@@ -47,7 +47,7 @@ class MissileProjectileTest {
         FakeEnemyMob further = FakeEnemyMob.at(50, 0);
         FakeEnemyRegistry registry = new FakeEnemyRegistry(original, nearest, further);
         List<HitReceiver> impacts = new ArrayList<>();
-        MissileProjectile missile = new MissileProjectile(0, 0, original, registry, 10f, impacts::add);
+        MissileProjectile missile = new MissileProjectile(0, 0, original, registry, ProjectileStats.of(10f), impacts::add);
 
         original.invalidate();
         for (int t = 1; t <= 5 && !missile.isFinished(); t++) {
@@ -58,11 +58,44 @@ class MissileProjectileTest {
     }
 
     @Test
+    void keepsItsLockOnATargetThatIsHiddenInsteadOfRetargetingToAVisibleOne() {
+        FakeEnemyMob hidden = FakeEnemyMob.ghostAt(20, 0);
+        FakeEnemyMob visible = FakeEnemyMob.at(5, 0);
+        FakeEnemyRegistry registry = new FakeEnemyRegistry(hidden, visible);
+        List<HitReceiver> impacts = new ArrayList<>();
+        MissileProjectile missile = new MissileProjectile(0, 0, hidden, registry, ProjectileStats.of(10f),
+                impacts::add);
+
+        for (int t = 1; t <= 5 && !missile.isFinished(); t++) {
+            missile.doTick(t);
+        }
+
+        assertThat(impacts).containsExactly(hidden);
+    }
+
+    @Test
+    void aSlowMissileTakesTicksInProportionToItsSpeedAndRemembersItsLastPositions() {
+        FakeEnemyMob target = FakeEnemyMob.at(80, 0);
+        FakeEnemyRegistry registry = new FakeEnemyRegistry(target);
+        MissileProjectile missile = new MissileProjectile(0, 0, target, registry, ProjectileStats.of(8f), t -> {
+        });
+
+        int ticks = 0;
+        while (!missile.isFinished()) {
+            missile.doTick(++ticks);
+        }
+
+        assertThat(ticks).isEqualTo(10);
+        assertThat(missile.trail()).hasSize(6);
+        assertThat(missile.trail().getFirst().x()).isLessThan(missile.trail().getLast().x());
+    }
+
+    @Test
     void givesUpWithoutImpactingAnythingWhenNoValidTargetRemainsAnywhere() {
         FakeEnemyMob onlyTarget = FakeEnemyMob.at(20, 0);
         FakeEnemyRegistry registry = new FakeEnemyRegistry(onlyTarget);
         List<HitReceiver> impacts = new ArrayList<>();
-        MissileProjectile missile = new MissileProjectile(0, 0, onlyTarget, registry, 10f, impacts::add);
+        MissileProjectile missile = new MissileProjectile(0, 0, onlyTarget, registry, ProjectileStats.of(10f), impacts::add);
 
         onlyTarget.invalidate();
         missile.doTick(1);

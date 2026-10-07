@@ -68,6 +68,7 @@ public enum Palette {
     TOWER_CINDER_CONE,
     PROJECTILE_CANNONBALL,
     PROJECTILE_MISSILE,
+    PROJECTILE_SMOKE,
     /** Status markers, one per effect kind. */
     STATUS_MARKER_CHILL,
     STATUS_MARKER_BURN,

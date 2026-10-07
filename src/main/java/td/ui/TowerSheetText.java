@@ -78,6 +78,8 @@ final class TowerSheetText {
         String value = (base.equals(current) ? current : base + " → " + current) + switch (stat) {
             case FIRE_RATE -> "/s";
             case ROTATION -> " s/turn";
+            case PROJECTILE_SPEED -> " cells/s";
+            case PROJECTILE_SIZE -> "x";
             case RANGE, PHYSICAL_DAMAGE, MAGIC_DAMAGE, CRIT_CHANCE, SPLASH_RADIUS -> "";
         };
         Row row = switch (stat) {
@@ -88,6 +90,8 @@ final class TowerSheetText {
             case ROTATION -> Row.plain(Glyph.CHEVRON, "Rotation", value);
             case CRIT_CHANCE -> Row.toned(Glyph.SPARK, Palette.CRIT_SPARK, "Crit chance", value);
             case SPLASH_RADIUS -> Row.plain(Glyph.RING, "Splash radius", value);
+            case PROJECTILE_SPEED -> Row.plain(Glyph.CHEVRON, "Projectile speed", value);
+            case PROJECTILE_SIZE -> Row.plain(Glyph.DOT, "Projectile size", value);
         };
         if (base.equals(current)) {
             return row;

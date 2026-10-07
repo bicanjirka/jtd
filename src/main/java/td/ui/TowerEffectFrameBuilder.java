@@ -15,6 +15,7 @@ import td.tower.TowerVisitor;
 import td.tower.upgrade.StandardBaseSlot;
 import td.ui.render.BeamDraw;
 import td.ui.render.ConeDraw;
+import td.ui.render.NestDraw;
 import td.ui.render.Palette;
 import td.ui.render.PulseDraw;
 import td.ui.render.RingDraw;
@@ -58,6 +59,10 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final int ARC_SEGMENTS = 4;
     private static final float ARC_SWING = 0.12f;
     private static final float ARC_MAX_SWING_PIXELS = 6f;
+
+    /** The nest's missiles circle at this fraction of a cell from the tower, a turn every few seconds. */
+    private static final float NEST_ORBIT_FRACTION = 0.7f;
+    private static final double NEST_ORBIT_RADIANS_PER_TICK = 0.08;
 
     private final List<TowerEffectDraw> draws = new ArrayList<>();
     private final int scale;
@@ -257,8 +262,14 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
-    /** Nothing: the missile is drawn as a projectile. */
+    /** The missiles banked in the nest, circling the tower; the missile in flight is a projectile. */
     public Void visitSeekerTower(SeekerTower tower) {
+        int stored = tower.getNestStored();
+        if (stored > 0) {
+            double phase = (this.gameTime + this.interpolationAlpha) * NEST_ORBIT_RADIANS_PER_TICK;
+            this.draws.add(new NestDraw(Palette.PROJECTILE_MISSILE, tower.getX(), tower.getY(),
+                    NEST_ORBIT_FRACTION * this.scale, stored, phase));
+        }
         return null;
     }
 
