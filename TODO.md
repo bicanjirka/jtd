@@ -370,16 +370,6 @@ one cleared 4, its lead copy dealing 194.2k damage for 22 kills against 158.3k f
 - **Approach:** tune in the feature 7 balance pass, with Keen Edge in play. Try Momentum at x3
   first; every number here is a named constant.
 
-### The Warden's description promises a reinforcement its ability doesn't call
-
-Every Warden stage's description says it "calls an extra reinforcement if left unattacked too
-long", but the ability behind that trigger heals the Warden instead.
-
-- **Where:** `BuiltInEnemies.WARDEN_ABILITY_BLURB` and the `TimeSinceLastHitTrigger` entry in
-  `WARDEN_STANDING_ABILITIES`.
-- **Approach:** decide which behaviour is intended, then change either the ability's action or
-  the description so they agree.
-
 ## UI
 
 ### A hatched egg leaves its stale stats in the inspector
