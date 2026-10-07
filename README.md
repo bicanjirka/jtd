@@ -218,7 +218,7 @@ freeze in frost bursts a burn.
 | Frost ground   | Mortar's Cryo Shells       | Chills them, and freezes one that stays 2 s |
 | Fallout        | Mortar's Tactical Nuke     | Drains their spirit and keeps heals from taking hold                    |
 | Mine           | Splash, from Range III     | The first enemy to step on it sets it off as one blast, and it is gone; it lasts 10 s, a Splash keeps 3 |
-| Cursed cloud   | Hexer's Mastery            | Gives every enemy inside the debuffs the hexed enemy that died there carried |
+| Cursed cloud   | Hexer's Mastery            | Gives every enemy inside the debuffs the hexed enemy that died there carried, for as long as they had left |
 
 Only a hit can crit: a shot, a blast, a beam pass. Damage that ticks (a burn, a poison, a field)
 never does, but a burn or poison started by a crit starts that much stronger. Each tower has its

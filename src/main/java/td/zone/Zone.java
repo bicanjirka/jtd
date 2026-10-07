@@ -113,7 +113,7 @@ public final class Zone {
     void touch(EnemyMob enemy) {
         int pulses = this.pulsesInside.merge(enemy, 1, Integer::sum);
         ZoneEffects.touch(this.kind, this.strength, this.owner, enemy);
-        this.carried.forEach(enemy::applyEffect);
+        this.carried.stream().flatMap(effect -> effect.afterTicks(this.ageTicks).stream()).forEach(enemy::applyEffect);
         if (this.kind == ZoneKind.FROST_GROUND && pulses >= FROST_PULSES_TO_FREEZE) {
             this.pulsesInside.put(enemy, 0);
             this.owner.applyEffect(enemy, sink -> Effect.freeze(FROST_FREEZE_TICKS, sink));
