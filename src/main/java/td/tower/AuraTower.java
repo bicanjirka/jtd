@@ -50,6 +50,9 @@ public final class AuraTower extends AbstractTower {
     /** What the aura must buff before its third head level is offered; Keen Edge also needs an aura beside it. */
     private static final int HEAD_THREE_BUFFED_TOWERS = 4;
     private static final float KEEN_EDGE_CRIT_DAMAGE = 0.5f;
+    /** Broadcast II halves the disruption again, so only a quarter of it is left. */
+    private static final float BROADCAST_DISRUPTION_SHIELD = 0.75f;
+    private static final float CONDUIT_EFFECT_LENGTH = 0.3f;
 
     /** Ticks between periodic passes over enemies in range. */
     private static final int WITHERING_FIELD_TICK_INTERVAL = 20;
@@ -69,7 +72,16 @@ public final class AuraTower extends AbstractTower {
             .after(AMPLIFYING_CORE_2);
     private static final UpgradeNode BROADCAST_1 = UpgradeTier.HEAD_1.node("aura.head.broadcast.1",
             "Broadcast", PRICE)
-            .withBuff(TowerBuff.range(0.3f));
+            .withBuff(TowerBuff.range(0.3f))
+            .withExtraEffect("Kinship counts tower types one cell further and loses its cap");
+    private static final UpgradeNode BROADCAST_2 = UpgradeTier.HEAD_2.node("aura.head.broadcast.2",
+            "Broadcast II", PRICE)
+            .after(BROADCAST_1)
+            .withExtraEffect("a timed buff on a buffed tower lasts twice as long; disruption is halved again");
+    private static final UpgradeNode CONDUIT = UpgradeTier.HEAD_3.node("aura.head.broadcast.3", "Conduit", PRICE)
+            .withGate(new BuffedTowersCondition(HEAD_THREE_BUFFED_TOWERS))
+            .withExtraEffect("effects that buffed towers apply last 30% longer")
+            .after(BROADCAST_2);
     private static final UpgradeNode TUTELAGE_1 = UpgradeTier.EXTRA_1.node("aura.extra.tutelage.1", "Tutelage", PRICE)
             .withExtraEffect("buffed towers earn +10% XP, on top of Kinship");
     private static final UpgradeNode SHARED_LESSONS = UpgradeTier.EXTRA_2.node("aura.extra.tutelage.2",
@@ -88,7 +100,7 @@ public final class AuraTower extends AbstractTower {
             + "+5% XP for each other tower type in range, up to +20%");
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS))
-            .with(AMPLIFYING_CORE_1, AMPLIFYING_CORE_2, KEEN_EDGE, BROADCAST_1, TUTELAGE_1, SHARED_LESSONS, APPRENTICE,
+            .with(AMPLIFYING_CORE_1, AMPLIFYING_CORE_2, KEEN_EDGE, BROADCAST_1, BROADCAST_2, CONDUIT, TUTELAGE_1, SHARED_LESSONS, APPRENTICE,
                     WITHERING_FIELD)
             .withChoice(ExclusiveChoice.oneOf(AMPLIFYING_CORE_1, BROADCAST_1));
 
@@ -131,7 +143,15 @@ public final class AuraTower extends AbstractTower {
     }
 
     private TowerBuff buffWithStrength(float strength) {
-        TowerBuff base = TowerBuff.amplifying(strength).withDisruptionShield(DISRUPTION_SHIELD);
+        boolean broadcasting = this.owns(BROADCAST_2);
+        TowerBuff base = TowerBuff.amplifying(strength)
+                .withDisruptionShield(broadcasting ? BROADCAST_DISRUPTION_SHIELD : DISRUPTION_SHIELD);
+        if (broadcasting) {
+            base = base.withTimedBuffBonus(1f);
+        }
+        if (this.owns(CONDUIT)) {
+            base = base.withEffectDurationBonus(CONDUIT_EFFECT_LENGTH);
+        }
         if (this.owns(KEEN_EDGE)) {
             base = base.withCritDamage(KEEN_EDGE_CRIT_DAMAGE);
         }

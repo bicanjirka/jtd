@@ -260,7 +260,19 @@ public abstract class AbstractTower implements Tower {
      * periodic damage, so it never crits and never spends a mark.
      */
     protected void applyEffect(EnemyMob target, Function<DamageSink, Effect> effect) {
-        target.applyEffect(effect.apply(d -> this.dealPeriodicDamage(target, d)));
+        Effect applied = effect.apply(d -> this.dealPeriodicDamage(target, d));
+        float length = this.stats.effectLength();
+        target.applyEffect(length == 1f ? applied : applied.withDurationScaledBy(length));
+    }
+
+    /** {@code ticks} as long as the effects this tower makes last, for what a tower leaves on the ground. */
+    protected int lengthened(int ticks) {
+        return Math.round(ticks * this.stats.effectLength());
+    }
+
+    /** How much longer than authored this tower's own timed buffs last. */
+    protected float timedBuffLength() {
+        return this.stats.timedBuffLength();
     }
 
     /**
@@ -302,7 +314,7 @@ public abstract class AbstractTower implements Tower {
      * stacks; granting again restarts the clock).
      */
     protected void grantTimedBuff(TowerBuff buff, int durationTicks) {
-        this.timedBuffEndsAt = this.currentTick + durationTicks;
+        this.timedBuffEndsAt = this.currentTick + Math.round(durationTicks * this.stats.timedBuffLength());
         this.timedBuff = buff;
         this.publishStats(this.upgrades);
     }

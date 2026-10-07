@@ -119,6 +119,11 @@
 - A kill this tower makes runs `onKill(EnemyMob)` (the mob still carries the effects it died
   under); a kill made from inside the hook, such as an explosion's, triggers nothing. A
   temporary self-buff goes through `grantTimedBuff` and ends in `beginTick`; it never stacks.
+- How long a tower's effects and timed buffs last is derived from its buff like everything else
+  (`TowerStats.effectLength()` and `timedBuffLength()`, from the Conduit and Broadcast II axes). Every
+  effect goes through `applyEffect`, which scales it; what a tower leaves on the ground takes its lifetime
+  through `lengthened(ticks)`, and a timed buff it grants itself through `grantTimedBuff`. A new
+  duration a tower authors goes through one of these three, never raw.
 - `dealDamage` sends the hit with `TowerStats.attack()` (crit chance and multiplier, penetration);
   the target rolls the crit. A special shot passes a one-off profile to
   `dealDamage(enemy, damage, attack)` (`withGuaranteedCrit()`, extra penetration) instead of
