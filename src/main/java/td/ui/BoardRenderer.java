@@ -63,11 +63,12 @@ public final class BoardRenderer {
         }
 
         TowerSpriteFrameBuilder spriteFrameBuilder = new TowerSpriteFrameBuilder(this.world, gameTime, interpolationAlpha, animationSeconds);
-        TowerEffectFrameBuilder effectFrameBuilder = new TowerEffectFrameBuilder(gameTime, interpolationAlpha, animationSeconds);
+        TowerEffectFrameBuilder effectFrameBuilder = new TowerEffectFrameBuilder(level.board().scale(), gameTime,
+                interpolationAlpha, animationSeconds);
         for (Tower tower : this.world.towers().all()) {
             tower.accept(spriteFrameBuilder);
             tower.accept(effectFrameBuilder);
-            effectFrameBuilder.addStatus(tower, level.board().scale());
+            effectFrameBuilder.addStatus(tower);
         }
 
         ProjectileFrameBuilder projectileFrameBuilder = new ProjectileFrameBuilder(interpolationAlpha);

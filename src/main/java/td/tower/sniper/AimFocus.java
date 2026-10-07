@@ -31,4 +31,9 @@ public final class AimFocus {
         this.stacks = Math.min(stackCap, this.stacks + 1);
         return lock;
     }
+
+    /** The stacks the next shot at {@code enemy} would be fired under; none for another enemy. */
+    public int stacksOn(EnemyMob enemy) {
+        return enemy == this.target ? this.stacks : 0;
+    }
 }

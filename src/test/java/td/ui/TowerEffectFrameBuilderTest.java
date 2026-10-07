@@ -1,15 +1,23 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import td.enemy.EnemyMob;
+import td.fixtures.BoardFixtures;
+import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.tower.AuraTower;
 import td.tower.SniperTower;
+import td.tower.SonarTower;
+import td.tower.Tower;
+import td.tower.upgrade.UpgradeNode;
 import td.ui.render.BeamDraw;
 import td.ui.render.Palette;
+import td.ui.render.RingDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerStatusDraw;
 import td.util.GameWorld;
+import td.util.TickRate;
 
 import java.util.List;
 
@@ -29,7 +37,7 @@ class TowerEffectFrameBuilderTest {
         SniperTower far = new SniperTower(context, 100, 100);
         context.towers().add(far);
 
-        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(0, 0.0, 0.0);
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context.getBoard().scale(), 0, 0.0, 0.0);
         aura.accept(builder);
 
         List<BeamDraw> linkBeams = linkBeamsIn(builder.build());
@@ -44,7 +52,7 @@ class TowerEffectFrameBuilderTest {
         AuraTower aura = new AuraTower(context, 0, 0);
         context.towers().add(aura);
 
-        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(0, 0.0, 0.0);
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context.getBoard().scale(), 0, 0.0, 0.0);
         aura.accept(builder);
 
         assertThat(linkBeamsIn(builder.build())).isEmpty();
@@ -59,12 +67,71 @@ class TowerEffectFrameBuilderTest {
         jammed.beginTick(0);
         clear.beginTick(0);
 
-        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(0, 0.0, 0.0);
-        builder.addStatus(jammed, context.getBoard().scale());
-        builder.addStatus(clear, context.getBoard().scale());
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context.getBoard().scale(), 0, 0.0, 0.0);
+        builder.addStatus(jammed);
+        builder.addStatus(clear);
 
         assertThat(builder.build()).singleElement().isInstanceOfSatisfying(TowerStatusDraw.class,
                 marker -> assertThat(marker.palette()).isEqualTo(Palette.DISRUPTION));
+    }
+
+    @Test
+    void anAttunedSnipersAimLaserIsFaintAndBrightensWithItsSteadyAimStack() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SniperTower attuned = new SniperTower(context, 3, 3);
+        attuned.earnXp(1_000);
+        context.economy().startEconomy(1_000, 5);
+        attuned.buyUpgrade(nodeNamed(attuned, "Attune"));
+        SniperTower plain = new SniperTower(context, 3, 3);
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(attuned.getX() + 40, attuned.getY())});
+        attuned.doTick(1);
+        plain.doTick(1);
+
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(BoardFixtures.SCALE, 1, 0.0, 0.0);
+        attuned.accept(builder);
+        plain.accept(builder);
+
+        assertThat(beamsIn(builder.build(), Palette.TOWER_SNIPER_LASER)).singleElement()
+                .extracting(BeamDraw::alpha).isEqualTo(0.2f + 0.15f);
+    }
+
+    @Test
+    void aSonarSendsARingEachRevolutionAndPutsACrosshairOnTheEnemyItPinged() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SonarTower sonar = new SonarTower(context, 3, 3);
+        sonar.earnXp(1_000);
+        context.economy().startEconomy(1_000, 5);
+        sonar.buyUpgrade(nodeNamed(sonar, "Attune"));
+        FakeEnemyMob enemy = FakeEnemyMob.at(sonar.getX() + 40, sonar.getY() - 2);
+        context.enemies().setEnemies(new EnemyMob[]{enemy});
+        int revolution = Math.round(SonarTower.SECONDS_PER_REVOLUTION * TickRate.TICKS_PER_SECOND);
+        for (int tick = 1; tick <= revolution; tick++) {
+            sonar.doTick(tick);
+        }
+
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(BoardFixtures.SCALE, revolution + 6, 0.0, 0.0);
+        sonar.accept(builder);
+
+        List<RingDraw> rings = builder.build().stream().filter(RingDraw.class::isInstance).map(RingDraw.class::cast)
+                .toList();
+        assertThat(rings).extracting(RingDraw::palette)
+                .containsExactlyInAnyOrder(Palette.TOWER_SONAR_PING, Palette.TOWER_SONAR_CROSSHAIR);
+        assertThat(rings).filteredOn(ring -> ring.palette() == Palette.TOWER_SONAR_CROSSHAIR).singleElement()
+                .satisfies(ring -> assertThat(ring.centerX()).isEqualTo((float) enemy.getX()));
+        assertThat(beamsIn(builder.build(), Palette.TOWER_SONAR_CROSSHAIR)).hasSize(2);
+    }
+
+    private static UpgradeNode nodeNamed(Tower tower, String name) {
+        return tower.upgradeTree().nodes().stream().filter(node -> node.displayName().equals(name)).findFirst()
+                .orElseThrow();
+    }
+
+    private static List<BeamDraw> beamsIn(List<TowerEffectDraw> draws, Palette palette) {
+        return draws.stream()
+                .filter(BeamDraw.class::isInstance)
+                .map(BeamDraw.class::cast)
+                .filter(beam -> beam.palette() == palette)
+                .toList();
     }
 
     private static List<BeamDraw> linkBeamsIn(List<TowerEffectDraw> draws) {

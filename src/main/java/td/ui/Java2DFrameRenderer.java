@@ -1,6 +1,5 @@
 package td.ui;
 
-import td.ui.render.AuraDraw;
 import td.ui.render.BeamDraw;
 import td.ui.render.CannonballDraw;
 import td.ui.render.CellDraw;
@@ -24,6 +23,7 @@ import td.ui.render.PulseDirection;
 import td.ui.render.PulseDraw;
 import td.ui.render.RankBadge;
 import td.ui.render.RenderFrame;
+import td.ui.render.RingDraw;
 import td.ui.render.SheetLine;
 import td.ui.render.SlotMarkDraw;
 import td.ui.render.SplashDraw;
@@ -353,7 +353,8 @@ public final class Java2DFrameRenderer {
      */
     private static Shape turretHeadShape(Palette palette, float size) {
         return switch (palette) {
-            case TOWER_SNIPER_BODY -> new Rectangle2D.Float(0, -size * 0.22f, size * 1.3f, size * 0.44f);
+            case TOWER_SNIPER_BODY, TOWER_SNIPER_GOLD_BARREL ->
+                    new Rectangle2D.Float(0, -size * 0.22f, size * 1.3f, size * 0.44f);
             case TOWER_SPLASH_BODY -> new Rectangle2D.Float(0, -size * 0.42f, size * 0.95f, size * 0.84f);
             case TOWER_PULSE_BODY -> {
                 Shape moon = starShape(5, size * 0.9f, size * 0.9f * 0.45f);
@@ -408,9 +409,16 @@ public final class Java2DFrameRenderer {
             case TOWER_TRANSCENDENT -> new Color(255, 205, 70);
             case TOWER_RANK -> new Color(205, 215, 235);
             case TOWER_SNIPER_BEAM -> Color.GREEN;
+            case TOWER_SNIPER_LASER -> new Color(255, 60, 60);
+            case TOWER_SNIPER_SILVER -> new Color(170, 210, 255);
+            case TOWER_SNIPER_TRACER -> Color.WHITE;
+            case TOWER_SNIPER_GOLD_BARREL -> new Color(255, 205, 70);
             case TOWER_SPLASH_BEAM -> Color.RED;
             case TOWER_SPLASH_LINE, TOWER_SPLASH_FILL -> withAlpha(Color.RED, 80);
             case TOWER_SONAR_BEAM -> Color.YELLOW;
+            case TOWER_SONAR_MAGIC_BEAM -> new Color(90, 150, 255);
+            case TOWER_SONAR_PING -> new Color(255, 240, 150);
+            case TOWER_SONAR_CROSSHAIR -> new Color(255, 120, 60);
             case TOWER_PULSE_RING -> withAlpha(Color.ORANGE, 80);
             case TOWER_CINDER_CONE -> new Color(255, 90, 30);
             case PROJECTILE_CANNONBALL -> new Color(139, 90, 43);
@@ -1094,7 +1102,7 @@ public final class Java2DFrameRenderer {
                     this.paintFilledCircle(g2, splash.palette(), splash.centerX(), splash.centerY(), splash.radius());
             case PulseDraw pulse ->
                     this.paintFilledCircle(g2, pulse.palette(), pulse.centerX(), pulse.centerY(), pulse.radius());
-            case AuraDraw aura -> this.paintAura(g2, aura);
+            case RingDraw ring -> this.paintRing(g2, ring);
             case ConeDraw cone -> this.paintCone(g2, cone);
             case TowerStatusDraw status -> this.paintStatusMarker(g2,
                     new StatusMarkerDraw(status.palette(), status.x(), status.y(), status.scale()));
@@ -1131,20 +1139,20 @@ public final class Java2DFrameRenderer {
                 Arc2D.PIE);
     }
 
-    private void paintAura(Graphics2D g2, AuraDraw aura) {
-        if (aura.radius() <= 0) {
+    private void paintRing(Graphics2D g2, RingDraw ring) {
+        if (ring.radius() <= 0) {
             return;
         }
         Stroke defaultStroke = g2.getStroke();
-        g2.setColor(withAlpha(colorFor(aura.palette()), Math.round(aura.alpha() * 255)));
+        g2.setColor(withAlpha(colorFor(ring.palette()), Math.round(ring.alpha() * 255)));
         g2.setStroke(new BasicStroke(2.0f));
-        g2.draw(new Ellipse2D.Float(aura.centerX() - aura.radius(), aura.centerY() - aura.radius(), aura.radius() * 2, aura.radius() * 2));
+        g2.draw(new Ellipse2D.Float(ring.centerX() - ring.radius(), ring.centerY() - ring.radius(), ring.radius() * 2, ring.radius() * 2));
         g2.setStroke(defaultStroke);
     }
 
     private void paintBeam(Graphics2D g2, BeamDraw beam) {
         Stroke defaultStroke = g2.getStroke();
-        g2.setColor(colorFor(beam.palette()));
+        g2.setColor(scaleAlpha(colorFor(beam.palette()), beam.alpha()));
         g2.setStroke(new BasicStroke(beam.strokeWidth(), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL));
         g2.draw(new Line2D.Float(beam.fromX(), beam.fromY(), beam.toX(), beam.toY()));
         g2.setStroke(defaultStroke);
