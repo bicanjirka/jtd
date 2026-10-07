@@ -140,6 +140,8 @@ public final class Java2DFrameRenderer {
     private static final int ZONE_BUBBLES = 3;
     private static final int ZONE_CRYSTAL_ARMS = 3;
     private static final int ZONE_FALLOUT_BLADES = 3;
+    /** How far toward white the innermost Stoke core goes. */
+    private static final float CINDER_CORE_BRIGHTEN = 0.8f;
     /** How much of its opacity a body loses on the dimmed half of a flicker. */
     private static final float FLICKER_DIM = 0.5f;
     private static final int ZONE_WISPS = 4;
@@ -1398,13 +1400,30 @@ public final class Java2DFrameRenderer {
         AffineTransform save = g2.getTransform();
         g2.translate(cone.originX(), cone.originY());
         g2.rotate(cone.headingRadians());
-        g2.setColor(withAlpha(colorFor(cone.palette()), Math.round(CINDER_CONE_ALPHA * 255)));
-        Area band = new Area(wedge(frontRadius, cone.halfWidthRadians()));
-        if (trailingRadius > 0) {
-            band.subtract(new Area(wedge(trailingRadius, cone.halfWidthRadians())));
+        Color flame = colorFor(cone.palette());
+        g2.setColor(withAlpha(flame, Math.round(CINDER_CONE_ALPHA * 255)));
+        g2.fill(coneBand(frontRadius, trailingRadius, cone.halfWidthRadians()));
+        for (int step = 1; step <= cone.stokeSteps(); step++) {
+            float share = step / (cone.stokeSteps() + 1f);
+            g2.setColor(withAlpha(brightened(flame, share * CINDER_CORE_BRIGHTEN), Math.round(CINDER_CONE_ALPHA * 255)));
+            g2.fill(coneBand(frontRadius, trailingRadius, cone.halfWidthRadians() * (1f - share)));
         }
-        g2.fill(band);
         g2.setTransform(save);
+    }
+
+    private static Area coneBand(float frontRadius, float trailingRadius, double halfWidthRadians) {
+        Area band = new Area(wedge(frontRadius, halfWidthRadians));
+        if (trailingRadius > 0) {
+            band.subtract(new Area(wedge(trailingRadius, halfWidthRadians)));
+        }
+        return band;
+    }
+
+    /** {@code color} a share of the way to white. */
+    private static Color brightened(Color color, float share) {
+        return new Color(color.getRed() + Math.round((255 - color.getRed()) * share),
+                color.getGreen() + Math.round((255 - color.getGreen()) * share),
+                color.getBlue() + Math.round((255 - color.getBlue()) * share));
     }
 
     /** A pie slice centred on the origin along the x axis. */

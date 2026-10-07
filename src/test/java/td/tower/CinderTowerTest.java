@@ -273,6 +273,36 @@ class CinderTowerTest {
     }
 
     @Test
+    void aWaveCarriesTheStokeStepsTheEnemiesInItsPathAreAboutToReach() {
+        CinderTower tower = towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context);
+        FakeEnemyMob target = FakeEnemyMob.at(150, 112);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        tower.doTick(1);
+        int first = tower.getInFlightWaves().getLast().stokeSteps();
+        int t = 2;
+        while (tower.getInFlightWaves().stream().noneMatch(wave -> wave.firedAtTick() > 1)) {
+            tower.doTick(t++);
+        }
+        int second = tower.getInFlightWaves().getLast().stokeSteps();
+
+        assertThat(first).isZero();
+        assertThat(second).isEqualTo(1);
+    }
+
+    @Test
+    void aWaveWithoutStokeCarriesNoSteps() {
+        CinderTower tower = towerAt(3, 3);
+        FakeEnemyMob target = FakeEnemyMob.at(150, 112);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        tickThrough(tower, 1, 1 + CYCLE);
+
+        assertThat(tower.getInFlightWaves().getLast().stokeSteps()).isZero();
+    }
+
+    @Test
     void whiteFlameMakesEachStokeStepFifteenPercent() {
         CinderTower tower = towerAt(3, 3);
         UpgradePaths.buy(tower, this.context, "White Flame");
