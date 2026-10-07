@@ -107,6 +107,17 @@ final class PathMotion {
                 this.startDistance, this.distanceIntoLap);
     }
 
+    /** Where this mob stands after walking {@code distance} further, held at the path's end. */
+    Vec2 positionAfter(double distance) {
+        if (this.arcLengthPath.isEmpty()) {
+            return new Vec2(this.x, this.y);
+        }
+        PathPose pose = this.arcLengthPath.get().poseAt(this.distanceIntoLap + distance);
+        BoardGeometry geometry = this.board.get();
+        return new Vec2(clampOntoBoard(pose.position().x(), this.offsetX, geometry.maxX()),
+                clampOntoBoard(pose.position().y(), this.offsetY, geometry.maxY()));
+    }
+
     boolean isOnBoard() {
         BoardGeometry geometry = this.board.get();
         return this.x >= 0 && this.x <= geometry.maxX() && this.y >= 0 && this.y <= geometry.maxY();

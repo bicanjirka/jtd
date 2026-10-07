@@ -741,4 +741,114 @@ class MortarTowerTest {
 
         assertThat(other).isFalse();
     }
+
+    @Test
+    void rifledBarrelMakesTheShellFasterAndSmallerWithAStreakWhileAPlainShellHasNone() {
+        MortarTower plain = this.towerAt(3, 3);
+        MortarTower rifled = this.towerAt(8, 3);
+        UpgradePaths.buy(rifled, this.context, "Fragmentation Rounds", "Rifled Barrel");
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(plain, OUT, 0), this.enemyAt(rifled, OUT, 0)});
+
+        plain.doTick(1);
+        rifled.doTick(1);
+
+        CannonballProjectile slow = (CannonballProjectile) this.context.projectiles().getProjectiles().get(0);
+        CannonballProjectile fast = (CannonballProjectile) this.context.projectiles().getProjectiles().get(1);
+        assertThat(fast.stats().speed()).isCloseTo(MortarTower.SHELL_SPEED * 1.4f, within(1e-4f));
+        assertThat(fast.stats().size()).isLessThan(slow.stats().size());
+        assertThat(fast.stats().streak()).isTrue();
+        assertThat(slow.stats().streak()).isFalse();
+    }
+
+    @Test
+    void predictiveFireAimsWhereAWalkingEnemyWillBeWhenTheShellLands() {
+        MortarTower plain = this.towerAt(3, 3);
+        MortarTower predictive = this.towerAt(12, 3);
+        UpgradePaths.buy(predictive, this.context, "Siege Rounds", "Rifled Barrel", "Predictive Fire");
+        FakeEnemyMob walker = this.enemyAt(plain, OUT, 0).walkingBy(0, 2);
+        FakeEnemyMob walker2 = this.enemyAt(predictive, OUT, 0).walkingBy(0, 2);
+        this.context.enemies().setEnemies(new EnemyMob[]{walker, walker2});
+
+        this.landAShell(plain);
+        this.landAShell(predictive);
+
+        double plainLanding = plain.getBlastMarks().isEmpty() ? Double.NaN : plain.getBlastMarks().getFirst().at().y();
+        double predictiveLanding = predictive.getBlastMarks().getFirst().at().y();
+        assertThat(plainLanding).isEqualTo(walker.getY());
+        assertThat(predictiveLanding).isGreaterThan(walker2.getY());
+    }
+
+    @Test
+    void airburstWidensTheBlastAndGivesFullDamageAcrossItsInnerHalf() {
+        MortarTower tower = this.towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, "Siege Rounds", "Rifled Barrel", "Predictive Fire", "Airburst");
+        float radius = tower.getSplashRadius();
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob inner = this.enemyAt(tower, OUT, radius * 0.45f).hidden();
+        FakeEnemyMob outer = this.enemyAt(tower, OUT, radius * 0.9f).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{target, inner, outer});
+
+        this.landAShell(tower);
+
+        assertThat(radius).isEqualTo(MortarTower.SPLASH_RADIUS_BASE * SCALE * 1.25f);
+        assertThat(inner.onlyHitAmount()).isEqualTo(tower.damageCurrent());
+        assertThat(outer.onlyHitAmount()).isLessThan(tower.damageCurrent());
+    }
+
+    @Test
+    void barrageFiresThreeShellsHalfASecondApartAndReloadsForTwiceAsLong() {
+        MortarTower tower = this.transcendentTower();
+        UpgradePaths.buy(tower, this.context, "Rifled Barrel", "Predictive Fire", "Airburst", "Barrage");
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
+
+        int shells = 0;
+        int firstShellAt = -1;
+        int lastShellAt = -1;
+        for (int t = 1; t <= 400; t++) {
+            int before = this.context.projectiles().getProjectiles().size();
+            tower.doTick(t);
+            this.context.projectiles().doTick(t);
+            if (this.context.projectiles().getProjectiles().size() > before) {
+                shells++;
+                firstShellAt = firstShellAt < 0 ? t : firstShellAt;
+                lastShellAt = t;
+            }
+        }
+
+        assertThat(firstShellAt).isEqualTo(1);
+        assertThat(lastShellAt - firstShellAt).isGreaterThan(2 * tower.coolDownCurrent());
+        assertThat(shells % 3).isZero();
+        assertThat(shells).isGreaterThanOrEqualTo(6);
+    }
+
+    @Test
+    void everyShellOfABarrageHitsAtFullDamage() {
+        MortarTower tower = this.transcendentTower();
+        UpgradePaths.buy(tower, this.context, "Rifled Barrel", "Predictive Fire", "Airburst", "Barrage");
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        for (int t = 1; t <= 40; t++) {
+            tower.doTick(t);
+            this.context.projectiles().doTick(t);
+        }
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(target.hits()).hasSize(3);
+        assertThat(target.hits()).extracting(Damage::amount).allMatch(amount -> amount >= tower.damageCurrent());
+    }
+
+    @Test
+    void aBarrageShowsItsShellsAMinuteOfRateOverTheWholeCycle() {
+        MortarTower tower = this.transcendentTower();
+        TowerStatLine before = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStat.FIRE_RATE)
+                .findFirst().orElseThrow();
+        UpgradePaths.buy(tower, this.context, "Rifled Barrel", "Predictive Fire", "Airburst", "Barrage");
+
+        TowerStatLine after = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStat.FIRE_RATE)
+                .findFirst().orElseThrow();
+
+        assertThat(after.base()).isEqualTo(before.base());
+        assertThat(after.current()).isCloseTo(3 * 20f / (tower.coolDownCurrent() * 2f + 1f), within(1e-3f));
+    }
 }

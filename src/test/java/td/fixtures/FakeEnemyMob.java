@@ -8,6 +8,7 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyMobVisitor;
 import td.enemy.Rank;
+import td.wave.Vec2;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -40,6 +41,8 @@ public final class FakeEnemyMob implements EnemyMob {
     private float physicalReduction;
     private double x;
     private double y;
+    private double velocityX;
+    private double velocityY;
     private boolean valid = true;
     private Rank rank = Rank.GRUNT;
     private float healthFraction = 1f;
@@ -82,6 +85,18 @@ public final class FakeEnemyMob implements EnemyMob {
     public FakeEnemyMob movingAt(float speed) {
         this.speed = speed;
         return this;
+    }
+
+    /** This fake itself, now walking {@code dx}, {@code dy} pixels a tick, as {@link #positionAfter} sees it. */
+    public FakeEnemyMob walkingBy(double dx, double dy) {
+        this.velocityX = dx;
+        this.velocityY = dy;
+        return this;
+    }
+
+    @Override
+    public Vec2 positionAfter(int ticks) {
+        return new Vec2(this.x + this.velocityX * ticks, this.y + this.velocityY * ticks);
     }
 
     /** This fake itself, now an enemy that heals, shields or vanishes. */

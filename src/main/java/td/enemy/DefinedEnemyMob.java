@@ -20,6 +20,7 @@ import td.stat.StatSheet;
 import td.stat.StatView;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
+import td.wave.Vec2;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -233,6 +234,11 @@ public final class DefinedEnemyMob implements EnemyMob {
     /** Resolved {@link EnemyStat#MOVE_SPEED}, after traits and effects. */
     public float getSpeed() {
         return this.stats.value(EnemyStat.MOVE_SPEED);
+    }
+
+    @Override
+    public Vec2 positionAfter(int ticks) {
+        return this.motion.positionAfter(this.getSpeed() * ticks);
     }
 
     /** This mob's resolved stats. */

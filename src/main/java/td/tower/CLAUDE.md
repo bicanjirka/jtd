@@ -59,7 +59,9 @@
   shrapnel never does. Shrapnel hands its shell's zone effect to the enemies it hits directly through
   `ZoneEffects.touch`, the same pulse a zone gives. Bomblets are placed along the enemy path from the
   point of it nearest the landing (`PathLine`), never by geometry around the impact. Every blast leaves
-  a `BlastMark` the board draws as a fading flash; a nuke adds its own `NukeFlash`.
+  a `BlastMark` the board draws as a fading flash; a nuke adds its own `NukeFlash`. Predictive Fire
+  asks the target where it will stand (`EnemyTarget.positionAfter`) and re-aims a few times, since flight
+  time depends on where the shell is going; a Barrage's later shells re-pick their target when they fire.
 - Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
   `AuraTower.buffs`' single "is this an aura" check stays the only role check.
 
