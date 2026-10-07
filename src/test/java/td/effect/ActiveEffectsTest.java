@@ -1166,13 +1166,27 @@ class ActiveEffectsTest {
             fast.tick(2f);
         }
         for (int i = 0; i < 79; i++) {
-            slowest.tick(0f);
+            slowest.tick(0.01f);
         }
 
         assertThat(fast.activeKinds()).isEmpty();
         assertThat(slowest.activeKinds()).containsExactly(EffectKind.EXPOSED);
-        slowest.tick(0f);
+        slowest.tick(0.01f);
         assertThat(slowest.activeKinds()).isEmpty();
+    }
+
+    @Test
+    void aDebuffTimerStopsWhileSpiritIsAtItsFloor() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.exposed(20, d -> {
+        }));
+
+        for (int i = 0; i < 500; i++) {
+            effects.tick(0f);
+        }
+
+        assertThat(effects.activeKinds()).containsExactly(EffectKind.EXPOSED);
+        assertThat(effects.remainingTicks(EffectKind.EXPOSED)).hasValue(20);
     }
 
     @Test

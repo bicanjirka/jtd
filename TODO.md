@@ -131,19 +131,15 @@ implementation. There is no way to add or edit a level without a code change and
 
 ## Tower features
 
-### The Pulse's Mirror Field and Soul Drain only approximate the feature doc
+### The Pulse's Mirror Field only approximates the feature doc
 
 `FEATURE-pulse-and-seeker.md` has Mirror Field return "damage a shield absorbs inside" from every
-source, and Soul Drain at -100 spirit keep "stacked debuffs from ever wearing off". As built,
-Mirror Field mirrors only the Pulse's own ticks, as a second hit the shield takes its share of
-again, and Soul Drain's spirit slows debuff timers to the floor of the spirit pace (stack debuffs
-stop, timed ones crawl at a quarter pace, less under Toll).
+source. As built, it mirrors only the Pulse's own ticks, as a second hit the shield takes its share
+of again.
 
-- **Where:** `PulseTower.hitWithField` (Mirror Field), `ActiveEffects.tick` and its
-  `MIN_DEBUFF_PACE` (Soul Drain).
-- **Approach:** for Mirror Field, have `HitResolution` report the amount a shield took and let a
-  tower subscribe to it for the enemies inside; for Soul Drain, let a pace of zero stop a timed
-  debuff when spirit is at its floor, which needs the README's pace rule changed with it.
+- **Where:** `PulseTower.hitWithField` (Mirror Field).
+- **Approach:** have `HitResolution` report the amount a shield took and let a tower subscribe to it
+  for the enemies inside.
 
 ### The Cinder's Stoke is not drawn
 
