@@ -85,6 +85,7 @@ final class MobAbilityContext implements AbilityContext {
         EnemySpawner roster = this.world.enemies();
         for (DefinedEnemyMob spawned : AbilitySpawnFactory.build(this.world, this.caster, definitionId, shape, this.gameTime)) {
             if (consumesSelf) {
+                this.caster.markHatched();
                 roster.replace(this.caster, spawned);
             } else {
                 roster.add(spawned);

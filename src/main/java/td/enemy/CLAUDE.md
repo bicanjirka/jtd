@@ -129,4 +129,5 @@ adaptive template describes the most it can reach).
   immutable snapshot taken on the thread that owns the mob, never by reading live stats.
 - `EnemySelection` (world-owned) takes requests from any thread but resolves them only on the
   game-loop thread, once per frame build. A killed or leaked selection keeps its snapshot; one
-  that left the roster alive (a hatch) is dropped.
+  that left the roster still alive is dropped. A hatch marks the mob `HATCHED` first, so its
+  snapshot stays like a kill's or a leak's.
