@@ -16,6 +16,8 @@ public enum EffectCategory {
     RESTORATIVE("restorative"),
     /** Marks the target for the towers that follow up on it. */
     SPOTTED("spotted"),
+    /** A curse that waits for something to happen to the target, then pays its caster out. */
+    HEX("hex"),
     /** Changes whether towers can see the target. */
     STEALTH("stealth");
 

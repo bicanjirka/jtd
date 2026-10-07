@@ -1,0 +1,11 @@
+package td.tower.splash;
+
+import td.effect.EffectKind;
+import td.enemy.EnemyMob;
+
+/** What a hex may make the Hexer do as it casts. */
+public interface HexActions {
+
+    /** Puts the hex {@code kind} on {@code target} for {@code ticks}, credited to the Hexer. */
+    void curse(EnemyMob target, EffectKind kind, int ticks);
+}

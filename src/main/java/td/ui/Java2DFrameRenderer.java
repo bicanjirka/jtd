@@ -12,6 +12,8 @@ import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
+import td.ui.render.HexGlyph;
+import td.ui.render.HexRuneDraw;
 import td.ui.render.IceCrystalDraw;
 import td.ui.render.MissileDraw;
 import td.ui.render.Palette;
@@ -49,6 +51,7 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
+import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
@@ -220,7 +223,7 @@ public final class Java2DFrameRenderer {
     private static Shape towerBodyShape(Palette palette, float size) {
         return switch (palette) {
             case TOWER_SNIPER_BODY -> triangleShape(size, true);
-            case TOWER_SPLASH_BODY, TOWER_STORMCALLER_BODY -> ringShape(size, 0.55f);
+            case TOWER_SPLASH_BODY, TOWER_STORMCALLER_BODY, TOWER_HEXER_BODY -> ringShape(size, 0.55f);
             case TOWER_SONAR_BODY -> spiralShape(size);
             case TOWER_PULSE_BODY -> starShape(5, size, size * 0.45f);
             case TOWER_AURA_BODY -> pulsarShape(size);
@@ -355,7 +358,7 @@ public final class Java2DFrameRenderer {
         return switch (palette) {
             case TOWER_SNIPER_BODY, TOWER_SNIPER_GOLD_BARREL ->
                     new Rectangle2D.Float(0, -size * 0.22f, size * 1.3f, size * 0.44f);
-            case TOWER_SPLASH_BODY, TOWER_STORMCALLER_BODY ->
+            case TOWER_SPLASH_BODY, TOWER_STORMCALLER_BODY, TOWER_HEXER_BODY ->
                     new Rectangle2D.Float(0, -size * 0.42f, size * 0.95f, size * 0.84f);
             case TOWER_PULSE_BODY -> {
                 Shape moon = starShape(5, size * 0.9f, size * 0.9f * 0.45f);
@@ -397,6 +400,7 @@ public final class Java2DFrameRenderer {
             case TOWER_SNIPER_BODY -> Color.GREEN;
             case TOWER_SPLASH_BODY -> Color.RED;
             case TOWER_STORMCALLER_BODY -> new Color(80, 150, 255);
+            case TOWER_HEXER_BODY -> new Color(170, 80, 230);
             case TOWER_SONAR_BODY -> Color.YELLOW;
             case TOWER_PULSE_BODY -> Color.ORANGE;
             case TOWER_AURA_BODY -> Color.WHITE;
@@ -420,6 +424,8 @@ public final class Java2DFrameRenderer {
             case TOWER_SPLASH_DETONATION -> new Color(255, 200, 90);
             case TOWER_SPLASH_DETONATION_DARK -> new Color(120, 30, 20);
             case TOWER_SPLASH_ARC -> new Color(170, 210, 255);
+            case TOWER_SPLASH_CAST -> new Color(200, 120, 255);
+            case HEX_RUNE -> new Color(225, 170, 255);
             case TOWER_SONAR_BEAM -> Color.YELLOW;
             case TOWER_SONAR_MAGIC_BEAM -> new Color(90, 150, 255);
             case TOWER_SONAR_PING -> new Color(255, 240, 150);
@@ -434,6 +440,7 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_DAZED -> new Color(255, 235, 120);
             case STATUS_MARKER_SATURATED -> new Color(255, 150, 90);
             case STATUS_MARKER_CHARGED -> new Color(140, 200, 255);
+            case STATUS_MARKER_DOOM -> new Color(190, 90, 255);
             case STATUS_MARKER_SHIELD -> new Color(220, 220, 100);
             case STATUS_MARKER_INVISIBLE -> new Color(180, 180, 180);
             case STATUS_MARKER_HEAL -> new Color(120, 220, 140);
@@ -824,6 +831,7 @@ public final class Java2DFrameRenderer {
             case EffectPulseDraw pulse -> this.paintEffectPulse(g2, pulse);
             case TraitMarkerDraw marker -> this.paintTraitMarker(g2, marker);
             case IceCrystalDraw crystal -> this.paintIceCrystal(g2, crystal);
+            case HexRuneDraw rune -> this.paintHexRune(g2, rune);
         }
     }
 
@@ -842,6 +850,32 @@ public final class Java2DFrameRenderer {
         g2.draw(shape);
         g2.setStroke(defaultStroke);
         g2.setTransform(save);
+    }
+
+    /** A hex's rune: a thin glyph in the rune colour, its shape saying what the hex does. */
+    private void paintHexRune(Graphics2D g2, HexRuneDraw rune) {
+        AffineTransform save = g2.getTransform();
+        Stroke defaultStroke = g2.getStroke();
+        g2.translate(rune.x(), rune.y());
+        g2.setColor(colorFor(Palette.HEX_RUNE));
+        g2.setStroke(new BasicStroke(1.2f));
+        g2.draw(runeShape(rune.glyph(), rune.scale()));
+        g2.setStroke(defaultStroke);
+        g2.setTransform(save);
+    }
+
+    private static Shape runeShape(HexGlyph glyph, float s) {
+        Path2D.Float path = new Path2D.Float();
+        switch (glyph) {
+            case DOOM -> {
+                path.moveTo(-s, -s);
+                path.lineTo(s, -s);
+                path.lineTo(-s, s);
+                path.lineTo(s, s);
+                path.closePath();
+            }
+        }
+        return path;
     }
 
     /** A hollow diamond for a permanent trait; filled diamonds are timed effects. */

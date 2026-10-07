@@ -15,6 +15,15 @@ import td.tower.splash.BlastSpec;
 import td.tower.splash.ChainLightningPerk;
 import td.tower.splash.ConductorPerk;
 import td.tower.splash.FireControlPerk;
+import td.tower.splash.Hex;
+import td.tower.splash.HexActions;
+import td.tower.splash.HexEvent;
+import td.tower.splash.HexLedger;
+import td.tower.splash.HexOfDoomPerk;
+import td.tower.splash.HexPick;
+import td.tower.splash.HexScene;
+import td.tower.splash.HexSpec;
+import td.tower.splash.HexTurn;
 import td.tower.splash.LightningRodPerk;
 import td.tower.splash.MasteryPerk;
 import td.tower.splash.OverloadPerk;
@@ -90,6 +99,10 @@ public final class SplashTower extends AbstractTower {
     /** How far above its target a Thunderstrike's bolt is drawn from. */
     private static final float THUNDERSTRIKE_HEIGHT_CELLS = 2f;
     private static final float STATIC_CHARGE_SECONDS = 3f;
+    /** Every this many shots, a Hexer casts instead of blasting. */
+    private static final int CAST_EVERY = 4;
+    /** How far, in cells before the blast radius bonus, a curse spreads or shares. */
+    private static final float SPREAD_CELLS = 1.5f;
     private static final TargetSelector THUNDERSTRIKE_AIM = PreferringSelector.priority(new HighestHealthSelector());
     private static final int SATURATED_BLASTS_NEEDED = 45;
 
@@ -175,15 +188,21 @@ public final class SplashTower extends AbstractTower {
             .with(MASTERY.id(), MasteryPerk::new)
             .with(THUNDERCLAP.id(), ThunderclapPerk::new)
             .with(STATIC_CHARGE.id(), StaticChargePerk::new)
-            .with(THUNDERSTRIKE.id(), ThunderstrikePerk::new);
+            .with(THUNDERSTRIKE.id(), ThunderstrikePerk::new)
+            .with(HEX.id(), HexOfDoomPerk::new);
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final OwnedPerks<SplashPerk> perks = new OwnedPerks<>(PERKS);
     private final TargetSelector randomAim;
     private final SplashActions actions = new Actions();
+    private final HexActions hexActions = new Hexing();
+    private final HexTurn hexTurn = new HexTurn();
+    private final HexLedger hexLedger = new HexLedger();
     private int coolDown = 0;
     private List<Blast> blasts = List.of();
-    private List<ArcTrace> arcs = List.of();
+    private List<Trace> arcs = List.of();
+    private List<Trace> casts = List.of();
+    private EnemyMob aimedAt;
     private int lastShotTick;
     private int currentTick;
     private int shotsFired;
@@ -219,22 +238,83 @@ public final class SplashTower extends AbstractTower {
 
     public void doTick(int gameTime) {
         this.currentTick = gameTime;
+        List<SplashPerk> owned = this.perks.all();
+        if (!this.hexLedger.isEmpty()) {
+            this.settleHexes(this.spec(owned).hexes());
+        }
         if (this.coolDown > 0) {
             this.coolDown--;
         } else {
-            List<SplashPerk> owned = this.perks.all();
             SplashSpec spec = this.spec(owned);
-            Optional<EnemyMob> primary = this.aimFor(spec).selectFrom(spec.reach().matching(this.context.enemies()));
-            if (primary.isEmpty()) {
+            List<EnemyMob> inReach = spec.reach().matching(this.context.enemies());
+            if (inReach.isEmpty()) {
+                this.hexTurn.restart();
                 this.blasts = List.of();
-            } else {
-                this.fire(primary.get(), spec, owned);
-                this.coolDown = this.coolDownCurrent();
+            } else if (!this.cast(inReach, spec)) {
+                this.aimFor(spec).selectFrom(inReach).ifPresent(primary -> this.fire(primary, spec, owned));
             }
         }
-        if (!this.blasts.isEmpty()) {
-            EnemyMob aimed = this.blasts.getFirst().primary();
-            this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, aimed.getX(), aimed.getY()));
+        if (this.aimedAt != null) {
+            this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.aimedAt.getX(), this.aimedAt.getY()));
+        }
+    }
+
+    /**
+     * A Hexer's every fourth shot is a cast: the next hex in turn that has a target curses it, and
+     * from Witch's Brew on the most Saturated enemies within the blast around it too. Whether it
+     * cast; when no hex has a target, the shot is a blast instead.
+     */
+    private boolean cast(List<EnemyMob> inReach, SplashSpec spec) {
+        HexSpec hexes = spec.hexes();
+        if (!hexes.isActive() || (this.shotsFired + 1) % CAST_EVERY != 0) {
+            return false;
+        }
+        float blastRadius = this.blastRadius(spec.blast());
+        float spread = SPREAD_CELLS * this.context.getBoard().scale() * spec.blast().distanceScale();
+        Optional<HexPick> pick = this.hexTurn.take(hexes.pool(), new HexScene(inReach, blastRadius, spread));
+        if (pick.isEmpty()) {
+            return false;
+        }
+        this.shotsFired++;
+        this.lastShotTick = this.currentTick;
+        this.coolDown = this.coolDownCurrent();
+        Hex hex = pick.get().hex();
+        EnemyMob target = pick.get().target();
+        this.aimedAt = target;
+        this.blasts = List.of();
+        this.arcs = List.of();
+        List<Trace> traces = new ArrayList<>();
+        for (EnemyMob cursed : this.cursedBy(hex, target, hexes.cursesPerCast(), blastRadius)) {
+            traces.add(new Trace(this.centerX, this.centerY, (float) cursed.getX(), (float) cursed.getY()));
+            hex.cast(cursed, hexes, this.hexActions);
+        }
+        this.casts = List.copyOf(traces);
+        return true;
+    }
+
+    /** {@code target}, then the most Saturated enemies within the blast around it that lack the hex. */
+    private List<EnemyMob> cursedBy(Hex hex, EnemyMob target, int curses, float blastRadius) {
+        List<EnemyMob> cursed = new ArrayList<>(List.of(target));
+        InRangeTargetQuery.everyone((int) target.getX(), (int) target.getY(), blastRadius)
+                .matching(this.context.enemies()).stream()
+                .filter(enemy -> enemy != target && !enemy.hasEffect(hex.kind()))
+                .sorted(Comparator.comparingInt((EnemyMob enemy) -> enemy.effectStacks(EffectKind.SATURATED)).reversed())
+                .limit(curses - 1L)
+                .forEach(cursed::add);
+        return cursed;
+    }
+
+    /** Pays out the hexes that ran out: a Doom lands its share of what the enemy took under it. */
+    private void settleHexes(HexSpec hexes) {
+        for (HexEvent event : this.hexLedger.settle()) {
+            switch (event) {
+                case HexEvent.Ended ended -> {
+                    int payout = Math.round(ended.stored() * hexes.doomShare());
+                    if (ended.kind() == EffectKind.DOOM && payout > 0) {
+                        this.dealPeriodicDamage(ended.enemy(), Damage.magic(payout));
+                    }
+                }
+            }
         }
     }
 
@@ -253,6 +333,9 @@ public final class SplashTower extends AbstractTower {
     private void fire(EnemyMob primary, SplashSpec spec, List<SplashPerk> owned) {
         this.lastShotTick = this.currentTick;
         this.shotsFired++;
+        this.coolDown = this.coolDownCurrent();
+        this.aimedAt = primary;
+        this.casts = List.of();
         SplashShot shot = SplashShot.plain();
         ShotContext context = new ShotContext(this.shotsFired);
         for (SplashPerk perk : owned) {
@@ -261,7 +344,7 @@ public final class SplashTower extends AbstractTower {
         if (spec.blast().saturation().isActive() && primary.hasEffect(EffectKind.SATURATED)) {
             this.countDeedOfAttack();
         }
-        List<ArcTrace> traces = new ArrayList<>();
+        List<Trace> traces = new ArrayList<>();
         Optional<EnemyMob> struck = shot.thunderstrike() ? this.thunderstrike(spec, traces) : Optional.empty();
         Blast blast = this.blast(primary, spec.blast());
         this.blasts = List.of(blast);
@@ -323,7 +406,7 @@ public final class SplashTower extends AbstractTower {
      * The arcs the blast carries, from {@code start}; each lands as a magic hit. Records where they
      * ran and whom they struck, and tells whether one crit.
      */
-    private boolean arc(Blast blast, EnemyMob start, SplashSpec spec, List<ArcTrace> traces, List<EnemyMob> arced) {
+    private boolean arc(Blast blast, EnemyMob start, SplashSpec spec, List<Trace> traces, List<EnemyMob> arced) {
         ArcSpec arcs = spec.arcs();
         float cellReach = this.context.getBoard().scale() * spec.blast().distanceScale();
         float bound = blast.area().radius()
@@ -336,7 +419,7 @@ public final class SplashTower extends AbstractTower {
                 from -> ArcSpec.reachCells(from.effectStacks(EffectKind.SATURATED)) * cellReach);
         boolean critical = false;
         for (ArcStrike strike : strikes) {
-            traces.add(new ArcTrace((float) strike.from().getX(), (float) strike.from().getY(),
+            traces.add(new Trace((float) strike.from().getX(), (float) strike.from().getY(),
                     (float) strike.to().getX(), (float) strike.to().getY()));
             critical |= this.strikeWithArc(strike.to(), strike.share(), spec, arcs.daze());
             arced.add(strike.to());
@@ -345,9 +428,9 @@ public final class SplashTower extends AbstractTower {
     }
 
     /** Thunderclap: an arc from the tower into every enemy in range; each one it crits is Dazed. */
-    private void discharge(SplashSpec spec, List<ArcTrace> traces, List<EnemyMob> arced) {
+    private void discharge(SplashSpec spec, List<Trace> traces, List<EnemyMob> arced) {
         for (EnemyMob enemy : spec.reach().matching(this.context.enemies())) {
-            traces.add(new ArcTrace(this.centerX, this.centerY, (float) enemy.getX(), (float) enemy.getY()));
+            traces.add(new Trace(this.centerX, this.centerY, (float) enemy.getX(), (float) enemy.getY()));
             this.strikeWithArc(enemy, THUNDERCLAP_SHARE, spec, DAZE_SECONDS);
             arced.add(enemy);
         }
@@ -357,12 +440,12 @@ public final class SplashTower extends AbstractTower {
      * Thunderstrike: lightning from above onto the healthiest enemy in range, the Priority first,
      * for several times the blast as magic, and a Daze. The enemy it struck, if any.
      */
-    private Optional<EnemyMob> thunderstrike(SplashSpec spec, List<ArcTrace> traces) {
+    private Optional<EnemyMob> thunderstrike(SplashSpec spec, List<Trace> traces) {
         Optional<EnemyMob> target = THUNDERSTRIKE_AIM.selectFrom(spec.reach().matching(this.context.enemies()));
         target.ifPresent(enemy -> {
             float x = (float) enemy.getX();
             float y = (float) enemy.getY();
-            traces.add(new ArcTrace(x, y - THUNDERSTRIKE_HEIGHT_CELLS * this.context.getBoard().scale(), x, y));
+            traces.add(new Trace(x, y - THUNDERSTRIKE_HEIGHT_CELLS * this.context.getBoard().scale(), x, y));
             this.dealDamage(enemy, Damage.magic(Math.round(this.damageCurrent() * THUNDERSTRIKE_FACTOR)));
             if (!enemy.isDead()) {
                 int ticks = Math.round(DAZE_SECONDS * TICKS_PER_SECOND);
@@ -418,6 +501,11 @@ public final class SplashTower extends AbstractTower {
         return this.blasts.isEmpty() ? null : this.blasts.getFirst().primary();
     }
 
+    /** Where the latest shot's curses went, when it was a cast. */
+    public List<Trace> getCasts() {
+        return this.casts;
+    }
+
     public TurretAim getTurretAim() {
         return this.turretAim;
     }
@@ -428,7 +516,7 @@ public final class SplashTower extends AbstractTower {
     }
 
     /** The arcs of the latest shot, a Thunderstrike's bolt among them, in the order they struck. */
-    public List<ArcTrace> getArcs() {
+    public List<Trace> getArcs() {
         return this.arcs;
     }
 
@@ -481,6 +569,16 @@ public final class SplashTower extends AbstractTower {
         }
     }
 
+    /** What the hexes may make this tower do. */
+    private final class Hexing implements HexActions {
+
+        @Override
+        public void curse(EnemyMob target, EffectKind kind, int ticks) {
+            SplashTower.this.applyEffect(target, sink -> Effect.hex(kind, ticks, sink));
+            SplashTower.this.hexLedger.record(target, kind);
+        }
+    }
+
     /** What the fork has made the Splash. */
     public enum Fork {
         NONE,
@@ -501,7 +599,7 @@ public final class SplashTower extends AbstractTower {
         }
     }
 
-    /** Where one arc ran, in board pixels. */
-    public record ArcTrace(float fromX, float fromY, float toX, float toY) {
+    /** Where one arc, bolt or cast ran, in board pixels. */
+    public record Trace(float fromX, float fromY, float toX, float toY) {
     }
 }

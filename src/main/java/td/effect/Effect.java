@@ -162,6 +162,14 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
                 Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, origin);
     }
 
+    /** A hex of {@code kind} for {@code durationTicks}; what it pays out goes through {@code sink}. */
+    public static Effect hex(EffectKind kind, int durationTicks, DamageSink sink) {
+        if (kind.category() != EffectCategory.HEX) {
+            throw new IllegalArgumentException(kind + " is not a hex");
+        }
+        return timed(kind, durationTicks, sink);
+    }
+
     /** Crit chance taken doubles while it lasts. */
     public static Effect exposed(int durationTicks, DamageSink sink) {
         return timed(EffectKind.EXPOSED, durationTicks, sink);
