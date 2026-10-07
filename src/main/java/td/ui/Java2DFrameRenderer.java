@@ -131,6 +131,7 @@ public final class Java2DFrameRenderer {
     private static final float RANK_BADGE_OFFSET_FRACTION = 1.7f;
     private static final float RANK_BADGE_CHEVRON_SPACING_FRACTION = 0.55f;
     private static final float PROJECTILE_SIZE = 5f;
+    private static final float SHELL_STREAK_ALPHA = 0.5f;
     private static final int ZONE_FILL_ALPHA = 80;
     private static final int ZONE_EDGE_ALPHA = 170;
     /** A zone fades over its last quarter of life. */
@@ -1399,10 +1400,22 @@ public final class Java2DFrameRenderer {
     private void paintProjectile(Graphics2D g2, ProjectileDraw projectile) {
         switch (projectile) {
             case CannonballDraw shell ->
-                    this.paintFilledCircle(g2, shell.palette(), shell.x(), shell.y(), PROJECTILE_SIZE * shell.size());
+                    this.paintShell(g2, shell);
             case MissileDraw missile -> this.paintMissile(g2, missile);
             case SmokeDraw smoke -> this.paintSmoke(g2, smoke);
         }
+    }
+
+    private void paintShell(Graphics2D g2, CannonballDraw shell) {
+        float radius = PROJECTILE_SIZE * shell.size();
+        if (shell.tailX() != shell.x() || shell.tailY() != shell.y()) {
+            Stroke defaultStroke = g2.getStroke();
+            g2.setColor(scaleAlpha(colorFor(shell.palette()), SHELL_STREAK_ALPHA));
+            g2.setStroke(new BasicStroke(radius, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2.draw(new Line2D.Float(shell.tailX(), shell.tailY(), shell.x(), shell.y()));
+            g2.setStroke(defaultStroke);
+        }
+        this.paintFilledCircle(g2, shell.palette(), shell.x(), shell.y(), radius);
     }
 
     private void paintMissile(Graphics2D g2, MissileDraw missile) {

@@ -294,4 +294,17 @@ class DefinedEnemyMobTest {
         assertThat(enemy.isDead()).isTrue();
         assertThat(enemy.getX()).isGreaterThan(context.getBoard().maxX());
     }
+
+    @Test
+    void anEnemyOnAPathKnowsWhereItWillStandAFewTicksFromNowAtItsCurrentPace() {
+        td.util.GameWorld context = td.fixtures.WorldFixtures.newWorldOnBoard(1, 1001, 1001);
+        context.setPath(td.fixtures.LevelFixtures.straightPath(1, 0, 500));
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        enemy.doTick(1);
+        double now = enemy.getX();
+
+        td.wave.Vec2 later = enemy.positionAfter(10);
+
+        assertThat(later.x()).isEqualTo(now + 10 * enemy.getSpeed(), org.assertj.core.api.Assertions.within(1e-6));
+    }
 }

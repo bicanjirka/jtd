@@ -7,6 +7,8 @@ import td.enemy.EnemyMob;
 import td.projectile.CannonballProjectile;
 import td.projectile.ProjectileStats;
 import td.tower.buff.TowerBuff;
+import td.tower.mortar.AirburstPerk;
+import td.tower.mortar.BarragePerk;
 import td.tower.mortar.BlastMark;
 import td.tower.mortar.BombletSpec;
 import td.tower.mortar.BracketDamagePerk;
@@ -22,6 +24,9 @@ import td.tower.mortar.MortarPerk;
 import td.tower.mortar.MortarSpec;
 import td.tower.mortar.NukeFlash;
 import td.tower.mortar.PathLine;
+import td.tower.mortar.PredictiveFirePerk;
+import td.tower.mortar.RifledBarrelPerk;
+import td.tower.mortar.SalvoSpec;
 import td.tower.mortar.ShellType;
 import td.tower.mortar.ShellTypePerk;
 import td.tower.mortar.ShrapnelBoostPerk;
@@ -92,6 +97,10 @@ public final class MortarTower extends AbstractTower {
     /** What a bleed costs per cell travelled, as a share of the Mortar's damage. */
     private static final float BLEED_SHARE_PER_CELL = 0.08f;
     private static final int BLEED_TICKS = 80;
+    /** Airburst: inside this share of the radius, squared, a blast takes no falloff: the inner half. */
+    private static final double FLAT_CORE_SHARE = 0.25;
+    /** Flight time depends on where the shell is going, so the aim is refined this many times. */
+    private static final int PREDICTION_PASSES = 3;
     /** How far apart bomblets lie along the path, in cells, and how far from the impact the first one is. */
     private static final float BOMBLET_SPACING_CELLS = 0.8f;
     private static final float BOMBLET_SCATTER_CELLS = 0.8f;
@@ -152,6 +161,22 @@ public final class MortarTower extends AbstractTower {
             .withExtraEffect("what the shrapnel hits bleeds: physical damage for every cell it travels")
             .after(CLUSTER_SHELL);
 
+    private static final UpgradeNode RIFLED_BARREL = UpgradeTier.EXTRA_1.node("mortar.extra.ballistics.1",
+            "Rifled Barrel", PRICE)
+            .withExtraEffect("shell speed +40%, drawn smaller with a streak");
+    private static final UpgradeNode PREDICTIVE_FIRE = UpgradeTier.EXTRA_2.node("mortar.extra.ballistics.2",
+            "Predictive Fire", PRICE)
+            .withExtraEffect("aims where the enemy will be when the shell lands")
+            .after(RIFLED_BARREL);
+    private static final UpgradeNode AIRBURST = UpgradeTier.EXTRA_3.node("mortar.extra.ballistics.3", "Airburst",
+            PRICE)
+            .withExtraEffect("+25% blast radius, and full damage across the inner half of the blast")
+            .after(PREDICTIVE_FIRE);
+    private static final UpgradeNode BARRAGE = UpgradeTier.EXTRA_4.node("mortar.extra.ballistics.4", "Barrage",
+            PRICE)
+            .withExtraEffect("the reload takes twice as long, but each salvo is 3 shells 0.5s apart at full damage")
+            .after(AIRBURST);
+
     private static final UpgradeNode NAPALM = UpgradeTier.SPECIAL.node("mortar.special.napalm", "Napalm", PRICE)
             .withExtraEffect("every 3rd shell is Napalm: its blast is magic and leaves burning ground, 1 cell wide, for 3s");
     private static final UpgradeNode TAR = UpgradeTier.SPECIAL.node("mortar.special.tar", "Tar", PRICE)
@@ -164,7 +189,7 @@ public final class MortarTower extends AbstractTower {
                     CLUSTER_SHELL))
             .with(SIEGE_ROUNDS_1, SIEGE_ROUNDS_2, HEAVY_SHELL, TACTICAL_NUKE, BUNKER_BUSTER,
                     FRAGMENTATION_ROUNDS_1, FRAGMENTATION_ROUNDS_2, CLUSTER_SHELL, CARPET_BOMBING, SHRAPNEL_STORM,
-                    NAPALM, TAR, CRYO_SHELLS)
+                    RIFLED_BARREL, PREDICTIVE_FIRE, AIRBURST, BARRAGE, NAPALM, TAR, CRYO_SHELLS)
             .withChoice(ExclusiveChoice.oneOf(SIEGE_ROUNDS_1, FRAGMENTATION_ROUNDS_1))
             .withChoice(ExclusiveChoice.oneOf(TACTICAL_NUKE, BUNKER_BUSTER))
             .withChoice(ExclusiveChoice.oneOf(CARPET_BOMBING, SHRAPNEL_STORM))
@@ -183,6 +208,10 @@ public final class MortarTower extends AbstractTower {
             .with(CLUSTER_SHELL.id(), ClusterShellPerk::new)
             .with(CARPET_BOMBING.id(), CarpetBombingPerk::new)
             .with(SHRAPNEL_STORM.id(), ShrapnelStormPerk::new)
+            .with(RIFLED_BARREL.id(), RifledBarrelPerk::new)
+            .with(PREDICTIVE_FIRE.id(), PredictiveFirePerk::new)
+            .with(AIRBURST.id(), AirburstPerk::new)
+            .with(BARRAGE.id(), BarragePerk::new)
             .with(NAPALM.id(), () -> new ShellTypePerk(ShellType.NAPALM))
             .with(TAR.id(), () -> new ShellTypePerk(ShellType.TAR))
             .with(CRYO_SHELLS.id(), () -> new ShellTypePerk(ShellType.CRYO));
@@ -196,6 +225,8 @@ public final class MortarTower extends AbstractTower {
     private int shellsFired;
     private int tickNow;
     private int coolDown = 0;
+    private int salvoLeft = 0;
+    private int salvoGap = 0;
     private EnemyMob currentTarget;
 
     public MortarTower(GameWorld context, int x, int y) {
@@ -231,13 +262,24 @@ public final class MortarTower extends AbstractTower {
         this.tickNow = gameTime;
         this.blastMarks.removeIf(mark -> gameTime - mark.startedAtTick() >= BLAST_MARK_TICKS);
         MortarSpec spec = this.spec(this.perks.all());
+        if (this.salvoLeft > 0 && --this.salvoGap <= 0) {
+            EnemyMob next = this.findTarget(spec);
+            if (next != null) {
+                this.currentTarget = next;
+                this.fireAt(next, spec);
+            }
+            this.salvoLeft--;
+            this.salvoGap = spec.salvo().gapTicks();
+        }
         if (this.coolDown > 0) {
             this.coolDown--;
         } else {
             this.currentTarget = this.findTarget(spec);
             if (this.currentTarget != null) {
                 this.fireAt(this.currentTarget, spec);
-                this.coolDown = this.coolDownCurrent();
+                this.coolDown = Math.round(this.coolDownCurrent() * spec.salvo().reloadFactor());
+                this.salvoLeft = spec.salvo().shells() - 1;
+                this.salvoGap = spec.salvo().gapTicks();
             }
         }
         if (this.currentTarget != null) {
@@ -248,8 +290,23 @@ public final class MortarTower extends AbstractTower {
     private void fireAt(EnemyMob target, MortarSpec spec) {
         this.shellsFired++;
         ShellType type = spec.shells().typeOf(this.shellsFired);
-        this.context.projectiles().add(new CannonballProjectile(this.centerX, this.centerY, target.getX(),
-                target.getY(), this.shellStats(spec, type), type.look(), (x, y) -> this.onImpact(x, y, type)));
+        Vec2 aim = this.aimPoint(target, spec);
+        this.context.projectiles().add(new CannonballProjectile(this.centerX, this.centerY, aim.x(), aim.y(),
+                this.shellStats(spec, type), type.look(), (x, y) -> this.onImpact(x, y, type)));
+    }
+
+    /** Where the shell is sent: the enemy where it stands, or with Predictive Fire where it will be on landing. */
+    private Vec2 aimPoint(EnemyMob target, MortarSpec spec) {
+        Vec2 aim = new Vec2(target.getX(), target.getY());
+        if (!spec.leadsTarget()) {
+            return aim;
+        }
+        float speed = SHELL_SPEED * spec.speedScale();
+        for (int i = 0; i < PREDICTION_PASSES; i++) {
+            int flightTicks = (int) Math.ceil(Math.hypot(aim.x() - this.centerX, aim.y() - this.centerY) / speed);
+            aim = target.positionAfter(flightTicks);
+        }
+        return aim;
     }
 
     /** The shell as it flies and is drawn: its speed and size are stats, and its size follows how hard it hits. */
@@ -257,7 +314,8 @@ public final class MortarTower extends AbstractTower {
         float size = Math.min(MAX_SHELL_SIZE, SHELL_SIZE_PER_DAMAGE_ROOT
                 * (float) Math.sqrt((double) this.damageCurrent() / this.damageBase));
         float typeSize = type == ShellType.NUKE ? NUKE_SHELL_SIZE : 1f;
-        return ProjectileStats.of(SHELL_SPEED * spec.speedScale()).withSize(size * spec.sizeScale() * typeSize);
+        return ProjectileStats.of(SHELL_SPEED * spec.speedScale()).withSize(size * spec.sizeScale() * typeSize)
+                .withStreak(spec.speedScale() > 1f);
     }
 
     private float blastRadius(MortarSpec spec, float stepScale) {
@@ -335,7 +393,7 @@ public final class MortarTower extends AbstractTower {
         EnemyMob centre = spec.centre().isActive()
                 ? this.enemyAtCentre(hit, landing.x(), landing.y(), spec.centre().radiusCells() * scale) : null;
         for (EnemyMob enemy : hit) {
-            float falloff = falloff(landing.x(), landing.y(), landing.radius(), enemy);
+            float falloff = falloff(landing.x(), landing.y(), landing.radius(), enemy, spec.flatCore());
             float centreFactor = enemy == centre ? spec.centre().damageFactor() : 1f;
             this.dealDamage(enemy, Damage.of(landing.type().damageType(),
                     Math.round(landing.damage() * falloff * centreFactor)));
@@ -347,10 +405,12 @@ public final class MortarTower extends AbstractTower {
         return hit;
     }
 
-    private static float falloff(double x, double y, float radius, EnemyMob enemy) {
+    /** How much of the damage reaches {@code enemy}: less the further from the centre, none past the radius. */
+    private static float falloff(double x, double y, float radius, EnemyMob enemy, boolean flatCore) {
         double dx = x - enemy.getX();
         double dy = y - enemy.getY();
-        return 1f - (float) ((dx * dx + dy * dy) / ((double) radius * radius));
+        double share = (dx * dx + dy * dy) / ((double) radius * radius);
+        return flatCore && share <= FLAT_CORE_SHARE ? 1f : 1f - (float) share;
     }
 
     private void dazeAround(Landing landing, List<EnemyMob> hit) {
@@ -412,7 +472,7 @@ public final class MortarTower extends AbstractTower {
             for (EnemyMob enemy : InRangeTargetQuery.everyone((int) Math.round(at.x()), (int) Math.round(at.y()), radius)
                     .matching(this.context.enemies())) {
                 this.dealDamage(enemy, Damage.of(landing.type().damageType(),
-                        Math.round(damage * falloff(at.x(), at.y(), radius, enemy))));
+                        Math.round(damage * falloff(at.x(), at.y(), radius, enemy, false))));
                 this.applyEffect(enemy, sink -> Effect.cracked(CRACKED_TICKS, sink));
             }
             this.blastMarks.add(new BlastMark(at, radius, this.tickNow + 1, landing.type().look()));
@@ -469,6 +529,17 @@ public final class MortarTower extends AbstractTower {
         return List.copyOf(this.blastMarks);
     }
 
+    /** A Barrage fires a salvo for a longer reload, so its rate is shells a second over the whole cycle. */
+    @Override
+    protected Optional<TowerStatLine> cadence() {
+        SalvoSpec salvo = this.spec(this.perks.all()).salvo();
+        if (!salvo.isSalvo()) {
+            return super.cadence();
+        }
+        return Optional.of(new TowerStatLine(TowerStat.FIRE_RATE, TICKS_PER_SECOND / (this.coolDownMax + 1),
+                salvo.shells() * TICKS_PER_SECOND / (this.coolDownCurrent() * salvo.reloadFactor() + 1)));
+    }
+
     @Override
     protected List<TowerStatLine> ownStats() {
         MortarSpec spec = this.spec(this.perks.all());
@@ -511,6 +582,13 @@ public final class MortarTower extends AbstractTower {
         }
         if (spec.shrapnel().bleeds()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Shrapnel makes", "bleed"));
+        }
+        if (spec.leadsTarget()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Aims", "where the enemy will be"));
+        }
+        if (spec.salvo().isSalvo()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Salvo", spec.salvo().shells() + " shells, "
+                    + BehaviourLine.seconds(spec.salvo().gapTicks()) + " apart"));
         }
         if (spec.bomblets().isActive()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Bomblets", spec.bomblets().count()
