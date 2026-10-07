@@ -559,9 +559,10 @@ public final class MortarTower extends AbstractTower {
                 Math.round(spec.reach().deadZone() / this.context.getBoard().scale() * 10f) / 10f + " cells"));
         lines.add(new BehaviourLine(BehaviourMarker.CRACKED, "Cracks plating", BehaviourLine.seconds(CRACKED_TICKS)));
         if (spec.bracket().active()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Bracketing",
-                    "+" + Math.round(spec.bracket().damageStep() * 100) + "% damage, +"
-                            + Math.round(spec.bracket().radiusStep() * 100) + "% radius a step"));
+            int damageStep = Math.round(spec.bracket().damageStep() * 100);
+            int radiusStep = Math.round(spec.bracket().radiusStep() * 100);
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Bracketing", damageStep == radiusStep
+                    ? "+" + damageStep + "% a step" : "+" + damageStep + "% dmg, +" + radiusStep + "% radius"));
         }
         if (spec.daze().isActive()) {
             lines.add(new BehaviourLine(BehaviourMarker.DAZE, "Impact dazes",
@@ -569,22 +570,22 @@ public final class MortarTower extends AbstractTower {
         }
         if (spec.nuke().isActive()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Every " + spec.nuke().every() + "th shell",
-                    "nuke: x" + Math.round(spec.nuke().damageFactor()) + " damage, fallout"));
+                    "nuke x" + Math.round(spec.nuke().damageFactor())));
         }
         if (spec.centre().isActive()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Blast centre",
-                    "x" + Math.round(spec.centre().damageFactor()) + " damage, sundered"));
+                    "x" + Math.round(spec.centre().damageFactor()) + ", sundered"));
         }
         if (spec.shrapnel().active()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Shrapnel",
-                    BehaviourLine.percent(spec.shrapnel().damageShare() * spec.shrapnel().scale()) + " damage"
-                            + (spec.shrapnel().carriesShell() ? ", with its shell's effect" : "")));
+                    BehaviourLine.percent(spec.shrapnel().damageShare() * spec.shrapnel().scale())
+                            + (spec.shrapnel().carriesShell() ? ", shell effect" : "")));
         }
         if (spec.shrapnel().bleeds()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Shrapnel makes", "bleed"));
         }
         if (spec.leadsTarget()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Aims", "where the enemy will be"));
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Aims", "ahead of the enemy"));
         }
         if (spec.salvo().isSalvo()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Salvo", spec.salvo().shells() + " shells, "

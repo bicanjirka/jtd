@@ -511,10 +511,10 @@ public final class CinderTower extends AbstractTower {
         lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Aims at", "nearest"));
         if (spec.stoke().active()) {
             lines.add(new BehaviourLine(BehaviourMarker.BURN, "Stoke",
-                    "+" + Math.round(spec.stoke().step() * 100) + "% a wave, up to " + spec.stoke().maxSteps()));
+                    "+" + Math.round(spec.stoke().step() * 100) + "% a wave, x" + spec.stoke().maxSteps()));
         }
         if (spec.bellows()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Bellows", "an Aura's fire rate widens the cone"));
+            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Bellows", "fire rate widens it"));
         }
         if (spec.ring()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Wave", "a full ring"));
@@ -529,10 +529,10 @@ public final class CinderTower extends AbstractTower {
             lines.add(new BehaviourLine(BehaviourMarker.VULNERABLE, "Burns apply", "vulnerable"));
         }
         if (spec.thermalShock()) {
-            lines.add(new BehaviourLine(BehaviourMarker.FREEZE, "A frozen burn", "detonates at 150%, chilling neighbours"));
+            lines.add(new BehaviourLine(BehaviourMarker.FREEZE, "A frozen burn", "150%, chills nearby"));
         }
         if (spec.critScorch() > 0) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "A crit ignition", "adds " + spec.critScorch() + " scorched"));
+            lines.add(new BehaviourLine(BehaviourMarker.BURN, "A crit ignition", "+" + spec.critScorch() + " scorched"));
         }
         CombustionSpec combustion = spec.combustion();
         if (combustion.isActive()) {
@@ -543,16 +543,16 @@ public final class CinderTower extends AbstractTower {
             lines.add(new BehaviourLine(BehaviourMarker.BURN, "Scorches", "x" + tuning.stackRate() + " as fast"));
         }
         if (tuning.cauterizes()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "get half the healing and shielding"));
+            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "heal 50% less"));
         }
         if (tuning.heats()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "take +10% damage over time"));
+            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "+10% over time"));
         }
         if (tuning.marksForMagic()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "take +15% magic damage"));
+            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "+15% magic"));
         }
         if (spec.everburnFloor() > 0f) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "A pool in range", "never decays below 25%"));
+            lines.add(new BehaviourLine(BehaviourMarker.BURN, "A pool in range", "holds at 25%"));
         }
         return lines;
     }

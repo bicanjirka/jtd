@@ -154,6 +154,32 @@ though it still hits every tick.
 - **Approach:** return 0 for a base cooldown of 0, or have a tower with no cooldown cadence override
   `cadence()` to say nothing, as the Sonar does.
 
+### Fallout keeps shields out as well as heals
+
+`FEATURE-ground-zones-mortar-and-cinder.md` has Fallout drain spirit and block healing. As built it holds
+heals *and* shields off, by the Dead Zone's effect, so the inspector names it a dead zone.
+
+- **Where:** `td.zone.ZoneEffects` (the `FALLOUT` case), `td.effect.EffectInteractions`' held-off table.
+- **Approach:** give Fallout an effect kind of its own that holds off `HEAL` only.
+
+### The Cinder's Stoke is not drawn
+
+The feature doc draws each Stoke step as a brighter core in the flame; only the wave's colour shows its
+look, and the info rows give the steps' size.
+
+- **Where:** `td.ui.TowerEffectFrameBuilder.visitCinderTower`, `td.ui.render.ConeDraw`.
+- **Approach:** carry the steps the enemy nearest the wave carries, or the wave's best, on the wave and
+  paint a brighter inner band of the cone for each.
+
+### A cursed cloud holds its debuffs instead of letting them run down
+
+A Hexer's cloud gives what stands in it the debuffs the dead enemy had, with the time they had left when
+it died, on every pulse, so they stay as long as an enemy does and run out only after it leaves.
+
+- **Where:** `td.zone.Zone.touch` and the carried effects of `Zone.cloud`.
+- **Approach:** have the zone count its carried effects' time down with its own age, so a debuff on an
+  enemy that stays still runs out.
+
 ### Enemies inside the Pulse's field don't flicker
 
 The feature doc draws the enemies inside a field flickering; only the field's rings, coloured by
@@ -213,72 +239,23 @@ Feature 7's balance pass sets the final numbers.
   a strictly-better-or-worse one. No code or architecture change needed — every number here is already a named
   constant, not embedded in logic. `td.BalanceHarness` and the `n`/`x`/`c` debug keybindings (see `docs/ARCHITECTURE.md` section 9) now make this cheap to actually do.
 
-### New tower numbers are unbalanced placeholders
+### The Mortar's, Cinder's and zones' numbers are unbalanced placeholders
 
-`MortarTower`, `SeekerTower` and `CinderTower`'s price, damage, range, cooldown, splash radius, and slow/freeze/burn
-magnitudes and durations were chosen to be plausible, not tuned - the same situation the upgrade-tree node numbers
-above were in before their own balance pass. `CinderTower.COOLDOWN_MAX` and `CinderTower.WAVE_TRAVEL_TICKS` (added
-with the cooldown-gated travelling-wave firing model) join this same bucket.
+The Mortar's and Cinder's prices, damage, cooldowns, radii and node bonuses come from
+`FEATURE-ground-zones-mortar-and-cinder.md`, and the numbers that doc leaves open were chosen to be
+plausible, not tuned: a zone's radius, length and pulse (twice a second), tar's 40% slow and poison
+share, frost's chill and the 2 s before it freezes, fallout's Sickened stacks, napalm's and tar's damage
+share of the Mortar, how much shrapnel, bomblets and bleeding do, the nuke's flash, Lingering Flames'
+patch, the burn level above which a fire reveals an invisible enemy, and the Cinder's Thermal Shock
+chill. Nothing has been played against waves, and the Mortar's slow shell is untested against fast
+enemies.
 
-- **Where:** the `public static final` constants and effect-duration fields in `MortarTower`, `SeekerTower`,
-  `CinderTower`.
-- **Approach:** play each of the built-in levels with all three new towers, and adjust values until each feels like
-  a meaningful, roughly-comparable-in-power choice next to the existing four attack towers. No code or architecture
-  change needed - every number here is already a named constant, not embedded in logic. `td.BalanceHarness` and the
-  `n`/`x`/`c` debug keybindings (see `docs/ARCHITECTURE.md` section 9) now make this cheap
-  to actually do.
-- **Evidence gathered, not yet acted on:** a one-tower-vs-one-captive-target comparison (all 7 attack towers, same
-  position/level/2000-tick budget, single very-tanky enemy so none of them run out of target) found raw damage-per-
-  credit-spent of `first` 16000, `second` 6827, `third` 4000, `cinder` 4270, `fourth` 3520, `mortar` 2393, `seeker`
-  1697 - `mortar`/`seeker` are the two weakest of all seven, including both pre-existing splash/AoE towers, even
-  though this single-target setup already under-counts `mortar`'s splash and `cinder`'s ghost-hitting value and
-  over-counts nothing in their favor. Some of that gap is `mortar`'s unguided shell missing a moving target rather
-  than raw output, which this comparison can't separate out - worth a real multi-enemy/formation test before
-  concluding `mortar`'s price or damage needs to move, not just this single-target number on its own.
-- **Formation follow-up, also gathered, also not yet acted on:** ran the multi-enemy test the entry above called
-  for - all 7 attack towers, same solo position/board, but this time a single wave of many ordinary (not tanky)
-  Circles spaced by the wave mini-language's default (no-spacer) spawn delay, which packs them into a dense moving
-  column rather than a lone captive target. Two tick-scale runs at the same density (40 Circles, one straight
-  corridor, one tower defending alone, no other help - a deliberately harsh solo-defense scenario, harsher than any
-  real level's multi-tower setup): at moderate hp (800, comparable to `BuiltInLevelCatalog`'s own mid-game waves)
-  nobody could solo-clear the column in 5000 ticks, but raw damage dealt reordered the field completely - `third`
-  81680, `fourth` 70400, `second` 57290, `first` 35200, `mortar` 30094, `cinder` 29641, `seeker` 2931 (dmg-per-
-  credit, not comparable in magnitude to the captive-target numbers above since the scenario differs, only in
-  relative order). `mortar` climbed from tied-worst to solidly mid-pack once splash actually had neighbors to hit,
-  confirming the captive-target test under-sold it as suspected. `seeker` got dramatically *worse*, not better -
-  roughly 10-30x behind every other tower, including `first`, its closest single-target-only relative. At a lower
-  hp (150) where a solo tower can plausibly clear the whole column, `second`/`third`/`fourth`/`mortar`/`cinder` all
-  fully cleared 40 Circles (`third`/`fourth` fastest at ~2400 ticks, needing the fewest leaks along the way);
-  `first` only managed 7/40 kills and never cleared; `seeker` killed *zero* and never cleared, even when the same
-  test was re-run against a much smaller column of just 10 - ruling out "the group was too big" as the explanation.
-  The likely cause isn't `seeker`'s reliability (it never misses) but its raw throughput: at damage/cooldown =
-  1800/60 = 30 per tick, it is the lowest-DPS attack tower in the game, well below even `first`'s 4000/39 ≈ 103 per
-  tick, and unlike `mortar`, `second`, `third`, `fourth` or `cinder` it has no splash/sweep/continuous-AoE
-  multiplier to make up the gap once more than one target needs killing per unit time - every one of the other six
-  towers has *some* way to hit more than one enemy per action; `seeker` alone does not. (`seeker`'s own freeze
-  effect reordering the "furthest along path" ranking after every hit - each just-hit target instantly falls out of
-  the lead once frozen, so the tower never gets to land a second shot on an already-damaged target - is a plausible
-  compounding factor worth a follow-up ablation, but the plain DPS gap above is already sufficient to explain the
-  result on its own.) Net read: `mortar`'s numbers may not need to move much, since real gameplay routinely bunches
-  same-type enemies (`"10 c"`, dense runs inside `"s t s c g c t c s g t c s g c t s g t c"`, etc.) where its splash
-  already earns its keep; `seeker` looks like the tower that actually needs attention, either a straightforward
-  damage/cooldown buff or - possibly a better fit given it's explicitly the guaranteed-hit, never-misses tower - a
-  narrower intended role (e.g. a single tough priority target, boss-adjacent) rather than a general crowd-clear
-  price point.
-- **`seeker`'s damage/cooldown buffed, its role deliberately left alone:** decided to take the straightforward-buff
-  direction above, not the reroll - `SeekerTower.damage` 1800 -> 2600 and its `coolDownMax` 60 -> 45 (dmg/tick
-  30 -> ~58), keeping guaranteed-hit reliability and freeze CC as its reason to exist rather than adding any
-  splash/multi-target mechanic. Re-ran the same formation test against the buffed numbers: dmg-per-credit in the
-  moderate-hp (800) 40-Circle scenario roughly doubled (2931 -> 5720), and it went from killing nothing at all
-  against a 10-Circle column to landing one confirmed kill - a real improvement, but it's still the clear last place
-  of all seven (`cinder`, the next-lowest, is still ~5x ahead, versus ~17x before the buff), because a pure
-  single-target tower's dmg-per-credit in a *packed-formation* stress test specifically will never match one with
-  any splash/sweep/continuous-AoE mechanic no matter how far its own numbers move - that gap is structural to the
-  scenario, not a sign the buff was sized wrong. The formation test also confirmed the freeze-reordering mechanic
-  flagged above as "plausible, unconfirmed": doubling `seeker`'s output didn't proportionally raise its kill count,
-  because each hit still knocks its target out of the "furthest along path" lead it needs to be re-selected and
-  finished off - only a targeting-behavior change (out of scope here; the ask was numbers only) would fix that, so
-  a future pass could reconsider it if `seeker` still feels weak after this buff lands in real play.
+- **Where:** the `private static final` constants in `MortarTower`, `CinderTower`, `td.zone.Zone`,
+  `td.zone.ZoneEffects`, `td.tower.mortar.ShellType` and the perks under `td.tower.mortar` and
+  `td.tower.cinder`, and `ActiveEffects.BURN_REVEAL_FUEL`.
+- **Approach:** tune through play or `td.BalanceHarness` with the other placeholder entries. Check the
+  per-tick budget (`td.PerformanceHarness`) with a Barrage of Napalm shells and Lingering Flames on every
+  wave, since the zone roster has no cap and the doc leaves one to the implementation.
 
 ### Effect and specialization numbers are unbalanced placeholders
 
