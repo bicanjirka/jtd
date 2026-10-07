@@ -86,7 +86,7 @@ public final class ActiveEffects {
             case BURN, POISON -> effect.damagePerTick().amount();
             case SHIELD -> effect.shieldPercent();
             // On/off, not gradated - any reapplication is at least as strong as what's already active.
-            case INVISIBLE, REVEALED, EXPOSED, MARKED, PRIORITY, CHARGED, DOOM -> 1f;
+            case INVISIBLE, REVEALED, EXPOSED, MARKED, PRIORITY, CHARGED, DOOM, BLIGHT, CONTAGION -> 1f;
             case HEAL -> effect.healPerTick();
             case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED -> effect.stacks();
         };
@@ -207,6 +207,11 @@ public final class ActiveEffects {
     }
 
     /** Ends the active {@code kind} and tells whether there was one, for an effect that one hit spends. */
+    /** Every active effect, in kind order: a copy, so a caller may pass them on. */
+    public List<Effect> effects() {
+        return List.copyOf(this.active.values());
+    }
+
     /** The active effect of {@code kind}; empty when it isn't active. */
     public Optional<Effect> find(EffectKind kind) {
         return Optional.ofNullable(this.active.get(kind));
@@ -288,7 +293,7 @@ public final class ActiveEffects {
                         -ARMOR_LOST_PER_SUNDERED_STACK * effect.stacks());
                 case FRACTURED -> accumulator.addFlat(EnemyStat.RESILIENCE,
                         -RESILIENCE_LOST_PER_FRACTURED_STACK * effect.stacks());
-                case EXPOSED, MARKED, SATURATED, CHARGED, DOOM -> {
+                case EXPOSED, MARKED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION -> {
                 }
                 case BURN -> {
                 }

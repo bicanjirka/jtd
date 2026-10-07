@@ -129,6 +129,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case SATURATED -> Palette.STATUS_MARKER_SATURATED;
             case CHARGED -> Palette.STATUS_MARKER_CHARGED;
             case DOOM -> Palette.STATUS_MARKER_DOOM;
+            case BLIGHT -> Palette.STATUS_MARKER_BLIGHT;
+            case CONTAGION -> Palette.STATUS_MARKER_CONTAGION;
         };
     }
 
@@ -343,6 +345,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     static Optional<HexGlyph> runeFor(EffectKind kind) {
         return switch (kind) {
             case DOOM -> Optional.of(HexGlyph.DOOM);
+            case BLIGHT -> Optional.of(HexGlyph.BLIGHT);
+            case CONTAGION -> Optional.of(HexGlyph.CONTAGION);
             default -> Optional.empty();
         };
     }

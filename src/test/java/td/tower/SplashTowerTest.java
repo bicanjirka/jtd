@@ -382,6 +382,89 @@ class SplashTowerTest {
     }
 
     @Test
+    void withWitchsBrewACastCursesItsTargetAndTheTwoMostSaturatedAroundIt() {
+        SplashTower tower = this.upgradedTower("Hex", "Witch's Brew");
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        List<FakeEnemyMob> around = List.of(FakeEnemyMob.ghostAt(100, 110), FakeEnemyMob.ghostAt(110, 100),
+                FakeEnemyMob.ghostAt(90, 100));
+        this.enemies(target, around.get(0), around.get(1), around.get(2));
+
+        tickThroughCooldown(tower, 4);
+
+        long doomed = around.stream().filter(enemy -> enemy.hasEffect(EffectKind.DOOM)).count();
+        assertThat(target.hasEffect(EffectKind.DOOM)).isTrue();
+        assertThat(doomed).isEqualTo(2);
+    }
+
+    @Test
+    void hexOfBlightPoisonsForTheHexsLength() {
+        SplashTower tower = this.upgradedTower("Hex", "Witch's Brew");
+        FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
+        this.enemies(enemy);
+
+        tickThroughCooldown(tower, 8);
+
+        int hexTicks = Math.round(6f * TickRate.TICKS_PER_SECOND);
+        assertThat(effectsOf(enemy, EffectKind.BLIGHT)).singleElement().extracting(Effect::remainingTicks)
+                .isEqualTo(hexTicks);
+        assertThat(effectsOf(enemy, EffectKind.POISON)).singleElement().satisfies(poison -> {
+            assertThat(poison.damagePerTick()).isEqualTo(Damage.magic(Math.round(FULL * 0.04f)));
+            assertThat(poison.remainingTicks()).isEqualTo(hexTicks);
+        });
+    }
+
+    @Test
+    void whenAContagionCarrierDiesItsCursesAndDebuffsJumpToTheNearestUnhexedEnemiesTwiceAtMost() {
+        SplashTower tower = this.upgradedTower("Hex", "Witch's Brew", "Spreading Curse");
+        FakeEnemyMob weak = FakeEnemyMob.at(100, 100).withHealth(100);
+        FakeEnemyMob strong = FakeEnemyMob.at(130, 100).withHealth(900);
+        this.enemies(weak, strong);
+        tickThroughCooldown(tower, 12);
+        FakeEnemyMob carrier = weak.hasEffect(EffectKind.CONTAGION) ? weak : strong;
+        carrier.applyEffect(Effect.vulnerable(2, 80, d -> {
+        }));
+        FakeEnemyMob first = FakeEnemyMob.ghostAt(carrier.getX(), carrier.getY() + 20);
+        FakeEnemyMob tooFar = FakeEnemyMob.ghostAt(carrier.getX(), carrier.getY() + 300);
+
+        kill(carrier);
+        this.enemies(weak, strong, first, tooFar);
+        tower.doTick(2000);
+        FakeEnemyMob second = FakeEnemyMob.ghostAt(first.getX(), first.getY() + 20);
+        kill(first);
+        this.enemies(weak, strong, first, second, tooFar);
+        tower.doTick(2001);
+        FakeEnemyMob third = FakeEnemyMob.ghostAt(second.getX(), second.getY() + 20);
+        kill(second);
+        this.enemies(weak, strong, first, second, third, tooFar);
+        tower.doTick(2002);
+
+        assertThat(first.activeEffectKinds()).contains(EffectKind.CONTAGION, EffectKind.VULNERABLE);
+        assertThat(second.activeEffectKinds()).contains(EffectKind.CONTAGION, EffectKind.VULNERABLE);
+        assertThat(third.activeEffectKinds()).isEmpty();
+        assertThat(tooFar.activeEffectKinds()).isEmpty();
+    }
+
+    private static void kill(FakeEnemyMob enemy) {
+        enemy.dieOnAnyHit();
+        enemy.doDamage(Damage.physical(1), AttackProfile.none());
+    }
+
+    @Test
+    void onAHexerPotencyRaisesDoomsPayoutToFortyFivePercent() {
+        SplashTower tower = this.upgradedTower("Hex", "Wide Charge", "Shaped Charge", "Potency");
+        FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
+        this.enemies(enemy);
+        tickThroughCooldown(tower, 4);
+        enemy.doDamage(Damage.physical(10_000), AttackProfile.none());
+        int hitsBeforeEnd = enemy.hits().size();
+
+        enemy.expire(EffectKind.DOOM);
+        tower.doTick(1000);
+
+        assertThat(enemy.hits().get(hitsBeforeEnd)).isEqualTo(Damage.magic(4_500));
+    }
+
+    @Test
     void potencyAndMasteryWaitForAChainRoot() {
         SplashTower tower = this.upgradedTower("Wide Charge", "Shaped Charge");
 

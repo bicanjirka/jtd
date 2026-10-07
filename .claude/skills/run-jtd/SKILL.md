@@ -47,7 +47,7 @@ on `quit` or end of input.
 | `clickenemy [n]` | Clicks where the `n`-th alive enemy is now and prints its effects. |
 | `enemies` | One line per enemy: alive index, id, rank, health, board px, effects, fate. |
 | `spawn <id> [rank]` | Spawns a catalog id (a wave token, such as `s` for Armored) at the path start. |
-| `effect <kind> [ticks]` | Puts an effect (`chill`, `burn`, `poison`, `freeze`, `shield`, `invisible`, `heal`, `vulnerable`, `revealed`, `sundered`, `exposed`, `marked`, `priority`, `resonating`, `fractured`, `dazed`, `saturated`, `charged`, `doom`) on every alive enemy. |
+| `effect <kind> [ticks]` | Puts an effect (`chill`, `burn`, `poison`, `freeze`, `shield`, `invisible`, `heal`, `vulnerable`, `revealed`, `sundered`, `exposed`, `marked`, `priority`, `resonating`, `fractured`, `dazed`, `saturated`, `charged`, `doom`, `blight`, `contagion`) on every alive enemy. |
 | `kill` | Deals lethal damage to every enemy through the real hit path, so on-death abilities fire. |
 | `setcredits <n>`, `setlives <n>` | Economy cheats. |
 | `waitfor ticks <n> [ms]` | Waits until the game clock advances `n` ticks (20 per second; pausing stops it). |

@@ -313,6 +313,11 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     @Override
+    public List<Effect> activeEffects() {
+        return this.activeEffects.effects();
+    }
+
+    @Override
     public long damageTaken() {
         return this.damageTaken;
     }

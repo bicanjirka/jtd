@@ -39,7 +39,11 @@ public enum EffectKind {
     /** The next hit from another tower discharges it for extra magic, credited to the tower that charged it. */
     CHARGED,
     /** When it ends, the target takes a share of all the damage it took while it lasted. */
-    DOOM;
+    DOOM,
+    /** The target is poisoned for as long as it lasts. */
+    BLIGHT,
+    /** When the target dies, its hexes and debuffs jump to the enemies nearest it. */
+    CONTAGION;
 
     public EffectCategory category() {
         return switch (this) {
@@ -48,7 +52,7 @@ public enum EffectKind {
             case BURN, POISON -> EffectCategory.DAMAGE_OVER_TIME;
             case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED -> EffectCategory.DEBUFF;
             case EXPOSED, MARKED, PRIORITY, CHARGED -> EffectCategory.SPOTTED;
-            case DOOM -> EffectCategory.HEX;
+            case DOOM, BLIGHT, CONTAGION -> EffectCategory.HEX;
             case SHIELD, HEAL -> EffectCategory.RESTORATIVE;
             case INVISIBLE, REVEALED -> EffectCategory.STEALTH;
         };
@@ -112,7 +116,18 @@ public enum EffectKind {
     public boolean isPacedBySpirit() {
         return switch (this) {
             case CHILL, VULNERABLE, REVEALED, SUNDERED, EXPOSED, MARKED, PRIORITY, RESONATING, CHARGED -> true;
-            case DOOM -> true;
+            case DOOM, BLIGHT, CONTAGION -> true;
+            default -> false;
+        };
+    }
+
+    /**
+     * Whether a curse carries this kind on to the next enemy when its carrier dies: the debuffs
+     * that weaken an enemy, not the marks a tower leaves for itself.
+     */
+    public boolean spreadsWithCurse() {
+        return switch (this) {
+            case VULNERABLE, SUNDERED, EXPOSED, POISON, SCORCHED, SICKENED, RESONATING, FRACTURED -> true;
             default -> false;
         };
     }
@@ -133,7 +148,8 @@ public enum EffectKind {
             case BURN -> Optional.of(EnemyStat.BURN_RESIST);
             case FREEZE -> Optional.of(EnemyStat.FREEZE_RESIST);
             case SHIELD, INVISIBLE, HEAL, VULNERABLE, REVEALED, POISON, SCORCHED, SICKENED, SUNDERED, EXPOSED, MARKED,
-                    PRIORITY, RESONATING, FRACTURED, DAZED, SATURATED, CHARGED, DOOM -> Optional.empty();
+                    PRIORITY, RESONATING, FRACTURED, DAZED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION ->
+                    Optional.empty();
         };
     }
 }
