@@ -10,6 +10,7 @@ import td.tower.AuraTower;
 import td.tower.MortarTower;
 import td.tower.SniperTower;
 import td.tower.SonarTower;
+import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.upgrade.UpgradeNode;
 import td.ui.render.BeamDraw;
@@ -46,6 +47,50 @@ class TowerEffectFrameBuilderTest {
         assertThat(linkBeams).hasSize(1);
         assertThat(linkBeams.getFirst().toX()).isEqualTo((float) near.getX());
         assertThat(linkBeams.getFirst().toY()).isEqualTo((float) near.getY());
+    }
+
+    private static SplashTower splashWith(GameWorld context, String... nodes) {
+        context.economy().startEconomy(1_000_000, 5);
+        context.playtestRules().setUpgradeGatesIgnored(true);
+        SplashTower splash = new SplashTower(context, 3, 3);
+        context.towers().add(splash);
+        splash.earnXp(1_000);
+        for (String name : List.of("Attune", "Awaken")) {
+            splash.buyUpgrade(nodeNamed(splash, name));
+        }
+        for (String name : nodes) {
+            splash.buyUpgrade(nodeNamed(splash, name));
+        }
+        return splash;
+    }
+
+    /** What the Splash draws on the tick it fires at one enemy standing in range. */
+    private static List<TowerEffectDraw> firedBy(GameWorld context, SplashTower splash) {
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(splash.getX() + 30, splash.getY())});
+        splash.doTick(1);
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context.getBoard().scale(), 1, 0.0, 0.0);
+        splash.accept(builder);
+        return builder.build();
+    }
+
+    @Test
+    void aSplashDrawsItsShotAndBlastInTheColourOfItsFork() {
+        GameWorld plainWorld = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        GameWorld stormWorld = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        GameWorld hexWorld = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+
+        List<TowerEffectDraw> plain = firedBy(plainWorld, splashWith(plainWorld));
+        List<TowerEffectDraw> storm = firedBy(stormWorld, splashWith(stormWorld, "Arc"));
+        List<TowerEffectDraw> hex = firedBy(hexWorld, splashWith(hexWorld, "Hex"));
+
+        assertThat(beamsIn(plain, Palette.TOWER_SPLASH_BEAM)).hasSize(1);
+        assertThat(ringsIn(plain, Palette.TOWER_SPLASH_DETONATION)).hasSize(1);
+        assertThat(beamsIn(storm, Palette.TOWER_STORMCALLER_BEAM)).hasSize(1);
+        assertThat(ringsIn(storm, Palette.TOWER_STORMCALLER_DETONATION)).hasSize(1);
+        assertThat(ringsIn(storm, Palette.TOWER_SPLASH_DETONATION)).isEmpty();
+        assertThat(beamsIn(hex, Palette.TOWER_HEXER_BEAM)).hasSize(1);
+        assertThat(ringsIn(hex, Palette.TOWER_HEXER_DETONATION)).hasSize(1);
+        assertThat(ringsIn(hex, Palette.TOWER_SPLASH_DETONATION)).isEmpty();
     }
 
     private static AuraTower auraWith(GameWorld context, String... nodes) {

@@ -447,6 +447,14 @@ public final class Java2DFrameRenderer {
             case TOWER_SPLASH_DETONATION -> new Color(255, 200, 90);
             case TOWER_SPLASH_DETONATION_DARK -> new Color(120, 30, 20);
             case TOWER_SPLASH_ARC -> new Color(170, 210, 255);
+            case TOWER_STORMCALLER_BEAM -> new Color(80, 150, 255);
+            case TOWER_STORMCALLER_FLASH -> withAlpha(new Color(210, 230, 255), 170);
+            case TOWER_STORMCALLER_DETONATION -> new Color(130, 190, 255);
+            case TOWER_STORMCALLER_DETONATION_DARK -> new Color(20, 40, 120);
+            case TOWER_HEXER_BEAM -> new Color(170, 80, 230);
+            case TOWER_HEXER_FLASH -> withAlpha(new Color(240, 215, 255), 170);
+            case TOWER_HEXER_DETONATION -> new Color(200, 130, 255);
+            case TOWER_HEXER_DETONATION_DARK -> new Color(70, 20, 110);
             case TOWER_SPLASH_CAST -> new Color(200, 120, 255);
             case HEX_RUNE -> new Color(225, 170, 255);
             case TOWER_SONAR_BEAM -> Color.YELLOW;

@@ -156,12 +156,13 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
      */
     public Void visitSplashTower(SplashTower tower) {
         float progress = tower.ticksSinceShot(this.gameTime) / DETONATION_TICKS;
+        BlastLook look = BlastLook.of(tower.fork());
         for (SplashTower.Blast blast : tower.getBlasts()) {
             EnemyMob target = blast.primary();
-            this.draws.add(BeamDraw.solid(Palette.TOWER_SPLASH_BEAM, tower.getX(), tower.getY(),
+            this.draws.add(BeamDraw.solid(look.beam(), tower.getX(), tower.getY(),
                     (float) target.getX(), (float) target.getY(), beamWidth(tower.getCoolDownFraction())));
             if (progress < 1f) {
-                this.detonation(blast.area(), progress);
+                this.detonation(blast.area(), progress, look);
             }
         }
         if (progress < 1f) {
@@ -177,16 +178,30 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
-    private void detonation(SplashTower.Blast.Area area, float progress) {
+    private void detonation(SplashTower.Blast.Area area, float progress, BlastLook look) {
         float radius = area.radius() * progress;
         if (progress < FLASH_SHARE) {
-            this.draws.add(new SplashDraw(Palette.TOWER_SPLASH_FLASH, area.centerX(), area.centerY(),
+            this.draws.add(new SplashDraw(look.flash(), area.centerX(), area.centerY(),
                     area.radius() * (FLASH_SHARE + progress)));
         }
-        this.draws.add(new RingDraw(Palette.TOWER_SPLASH_DETONATION, area.centerX(), area.centerY(), radius,
-                1f - progress));
-        this.draws.add(new RingDraw(Palette.TOWER_SPLASH_DETONATION_DARK, area.centerX(), area.centerY(), radius,
+        this.draws.add(new RingDraw(look.detonation(), area.centerX(), area.centerY(), radius, 1f - progress));
+        this.draws.add(new RingDraw(look.detonationDark(), area.centerX(), area.centerY(), radius,
                 DARK_RING_ALPHA * progress * (1f - progress) * 4f));
+    }
+
+    /** The colours of a Splash's shot and blast: the fork it took tints both like its body. */
+    private record BlastLook(Palette beam, Palette flash, Palette detonation, Palette detonationDark) {
+
+        static BlastLook of(SplashTower.Fork fork) {
+            return switch (fork) {
+                case NONE -> new BlastLook(Palette.TOWER_SPLASH_BEAM, Palette.TOWER_SPLASH_FLASH,
+                        Palette.TOWER_SPLASH_DETONATION, Palette.TOWER_SPLASH_DETONATION_DARK);
+                case STORMCALLER -> new BlastLook(Palette.TOWER_STORMCALLER_BEAM, Palette.TOWER_STORMCALLER_FLASH,
+                        Palette.TOWER_STORMCALLER_DETONATION, Palette.TOWER_STORMCALLER_DETONATION_DARK);
+                case HEXER -> new BlastLook(Palette.TOWER_HEXER_BEAM, Palette.TOWER_HEXER_FLASH,
+                        Palette.TOWER_HEXER_DETONATION, Palette.TOWER_HEXER_DETONATION_DARK);
+            };
+        }
     }
 
     /** One arc as a zigzag; which way each segment swings alternates, starting by the arc's order in the shot. */
