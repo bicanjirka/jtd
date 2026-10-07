@@ -1,6 +1,7 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackOrigin;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.Effect;
@@ -10,6 +11,7 @@ import td.fixtures.WorldFixtures;
 import td.stat.EnemyStat;
 import td.util.GameWorld;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -184,6 +186,35 @@ class DefinedEnemyMobEffectTest {
         assertThat(first.critical()).isTrue();
         assertThat(second.critical()).isFalse();
         assertThat(enemy.activeEffectKinds()).doesNotContain(EffectKind.MARKED);
+    }
+
+    @Test
+    void anotherAttackersHitDischargesAChargeForThirtyPercentThroughTheChargersSink() {
+        GameWorld context = WorldFixtures.newWorld(() -> 0.99);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100000, 3, Rank.GRUNT);
+        AttackOrigin charger = AttackOrigin.fresh();
+        List<Damage> paid = new ArrayList<>();
+        enemy.applyEffect(Effect.charged(100, charger, paid::add));
+
+        enemy.doDamage(Damage.physical(1000), AttackProfile.none().withOrigin(charger));
+        enemy.doDamage(Damage.physical(1000), AttackProfile.none().withOrigin(AttackOrigin.fresh()));
+        enemy.doDamage(Damage.physical(1000), AttackProfile.none().withOrigin(AttackOrigin.fresh()));
+
+        assertThat(paid).containsExactly(Damage.magic(300));
+        assertThat(enemy.activeEffectKinds()).doesNotContain(EffectKind.CHARGED);
+    }
+
+    @Test
+    void aCritDischargesAChargeAtDoubleAndPeriodicDamageNeverDischargesOne() {
+        GameWorld context = WorldFixtures.newWorld(() -> 0.0);
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100000, 3, Rank.GRUNT);
+        List<Damage> paid = new ArrayList<>();
+        enemy.applyEffect(Effect.charged(100, AttackOrigin.fresh(), paid::add));
+
+        enemy.doDamage(Damage.physical(1000), AttackProfile.critChance(1f).asPeriodic());
+        Damage crit = enemy.doDamage(Damage.physical(1000), AttackProfile.critChance(1f));
+
+        assertThat(paid).containsExactly(Damage.magic(Math.round(crit.amount() * 0.6f)));
     }
 
     @Test

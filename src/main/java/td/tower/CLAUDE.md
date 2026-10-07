@@ -8,7 +8,9 @@
   adds 15%), so build it after charging that price and before `TowerRoster.add`.
 - A tower's class name and its UI name are the same word and name the behaviour, not the shape.
 - Every hit goes through `AbstractTower.dealDamage`, never `enemy.doDamage`. It accumulates the
-  damage that *landed* (what `doDamage` returns) and won't count a kill on an already-dead mob.
+  damage that *landed* (what `doDamage` returns) and won't count a kill on an already-dead mob,
+  and it stamps the tower's own `AttackOrigin` on the attack, so an effect can tell this tower's
+  hits from another's (`charge`).
 - After `doCleanup` (sell or teardown), `dealDamage` is a no-op, because a burn the tower applied
   keeps ticking. A tower that subscribes to anything unsubscribes in `doCleanup`.
 - Range checks compare squared distances (`rangeReal2()`); no `Math.sqrt` in per-tick scans.

@@ -265,6 +265,73 @@ class SplashTowerTest {
         assertThat(line.get(0).hits()).containsExactly(Damage.magic(Math.round(FULL * 0.65f)));
     }
 
+    private static final String[] STORMCALLER = {"Arc", "Conductor", "Overload"};
+
+    private SplashTower stormcallerWith(String special) {
+        return this.upgradedTower(STORMCALLER[0], STORMCALLER[1], STORMCALLER[2], special);
+    }
+
+    @Test
+    void thunderclapDischargesIntoEveryEnemyInRangeOnTheShotAfterAnArcCritButItsOwnCritsDoNotArmItAgain() {
+        SplashTower tower = this.stormcallerWith("Thunderclap");
+        FakeEnemyMob centre = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob arcTarget = FakeEnemyMob.ghostAt(100, 160);
+        arcTarget.landEveryHitCritical();
+        this.enemies(centre, arcTarget);
+        tickThroughCooldown(tower, 1);
+        this.enemies(centre);
+        centre.landEveryHitCritical();
+
+        tickThroughCooldown(tower, 1);
+        List<Damage> secondShot = List.copyOf(centre.hits().subList(1, centre.hits().size()));
+        tickThroughCooldown(tower, 1);
+        List<Damage> thirdShot = centre.hits().subList(1 + secondShot.size(), centre.hits().size());
+
+        assertThat(secondShot).extracting(Damage::type).containsExactly(DamageType.PHYSICAL, DamageType.MAGIC);
+        assertThat(secondShot.get(1).amount()).isEqualTo(Math.round(FULL * 0.5f));
+        assertThat(effectsOf(centre, EffectKind.DAZED)).isNotEmpty();
+        assertThat(thirdShot).extracting(Damage::type).containsExactly(DamageType.PHYSICAL);
+    }
+
+    @Test
+    void staticChargeChargesWhatTheArcsStrike() {
+        SplashTower tower = this.stormcallerWith("Static Charge");
+        FakeEnemyMob centre = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob arcTarget = FakeEnemyMob.ghostAt(100, 160);
+        this.enemies(centre, arcTarget);
+
+        tower.doTick(0);
+
+        assertThat(effectsOf(arcTarget, EffectKind.CHARGED)).singleElement().extracting(Effect::remainingTicks)
+                .isEqualTo(Math.round(3f * TickRate.TICKS_PER_SECOND));
+        assertThat(effectsOf(centre, EffectKind.CHARGED)).isEmpty();
+    }
+
+    @Test
+    void everySixthShotThunderstrikesTheHealthiestForFourTimesTheBlastAndDazesIt() {
+        SplashTower tower = this.stormcallerWith("Thunderstrike");
+        FakeEnemyMob centre = FakeEnemyMob.at(100, 100).withHealth(100);
+        FakeEnemyMob healthiest = FakeEnemyMob.at(140, 140).withHealth(900);
+        this.enemies(centre, healthiest);
+
+        tickThroughCooldown(tower, 6);
+
+        assertThat(healthiest.hits()).contains(Damage.magic(FULL * 4));
+        assertThat(effectsOf(healthiest, EffectKind.DAZED)).isNotEmpty();
+        assertThat(healthiest.hits().stream().filter(hit -> hit.equals(Damage.magic(FULL * 4)))).hasSize(1);
+    }
+
+    /** Ticks until {@code tower} has fired {@code shots} more shots. */
+    private static void tickThroughCooldown(SplashTower tower, int shots) {
+        int tick = 0;
+        for (int fired = 0; fired < shots; tick++) {
+            if (tower.getCoolDownFraction() == 0f) {
+                fired++;
+            }
+            tower.doTick(tick);
+        }
+    }
+
     @Test
     void potencyAndMasteryWaitForAChainRoot() {
         SplashTower tower = this.upgradedTower("Wide Charge", "Shaped Charge");
