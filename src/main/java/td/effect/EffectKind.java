@@ -53,14 +53,33 @@ public enum EffectKind {
     /** Once a second its Vulnerable, Sundered, Exposed and chill are copied to the Hexer's other hexed enemies nearby. */
     SYMPATHY,
     /** When the target dies, the Hexer's Dooms near it release at once and start again. */
-    RECKONING;
+    RECKONING,
+    /** Its abilities don't fire; death abilities and auras still do. */
+    SILENCED,
+    /** Can't be sped up, and its speed is held to three quarters of its base. */
+    ANCHORED,
+    /** Each stack lowers magic resist by ten. */
+    UNRAVELED,
+    /** A frozen enemy takes extra physical damage. */
+    BRITTLE,
+    /** Each stack makes every other debuff wear off a tenth slower; it fades soon after the enemy leaves the field. */
+    TOLL,
+    /** Lowers armor by thirty while the enemy is in the field. */
+    CORRODED,
+    /** Chilled a quarter that doesn't fade while the enemy is in the field, and counts as a chill for a freeze. */
+    UNDERTOW,
+    /** Heals and shields can't take hold while the enemy is in the field. */
+    DEAD_ZONE,
+    /** Takes extra damage from every source while the enemy is in the field. */
+    KILL_ZONE;
 
     public EffectCategory category() {
         return switch (this) {
-            case CHILL -> EffectCategory.SOFT_CC;
+            case CHILL, SILENCED, ANCHORED, UNDERTOW -> EffectCategory.SOFT_CC;
             case FREEZE, DAZED -> EffectCategory.HARD_CC;
             case BURN, POISON -> EffectCategory.DAMAGE_OVER_TIME;
-            case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED -> EffectCategory.DEBUFF;
+            case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED, UNRAVELED, BRITTLE, TOLL,
+                    CORRODED, DEAD_ZONE, KILL_ZONE -> EffectCategory.DEBUFF;
             case EXPOSED, MARKED, PRIORITY, CHARGED -> EffectCategory.SPOTTED;
             case DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY, RECKONING -> EffectCategory.HEX;
             case SHIELD, HEAL -> EffectCategory.RESTORATIVE;
@@ -112,6 +131,7 @@ public enum EffectKind {
     public int maxStacks() {
         return switch (this) {
             case VULNERABLE, RESONATING, SATURATED -> 3;
+            case UNRAVELED, TOLL -> 5;
             case SUNDERED -> 10;
             case FRACTURED -> 5;
             default -> 0;
@@ -125,7 +145,8 @@ public enum EffectKind {
      */
     public boolean isPacedBySpirit() {
         return switch (this) {
-            case CHILL, VULNERABLE, REVEALED, SUNDERED, EXPOSED, MARKED, PRIORITY, RESONATING, CHARGED -> true;
+            case CHILL, VULNERABLE, REVEALED, SUNDERED, EXPOSED, MARKED, PRIORITY, RESONATING, CHARGED, UNRAVELED,
+                    BRITTLE -> true;
             case DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY, RECKONING -> true;
             default -> false;
         };
@@ -137,14 +158,14 @@ public enum EffectKind {
      */
     public boolean spreadsWithCurse() {
         return switch (this) {
-            case VULNERABLE, SUNDERED, EXPOSED, POISON, SCORCHED, SICKENED, RESONATING, FRACTURED -> true;
+            case VULNERABLE, SUNDERED, EXPOSED, POISON, SCORCHED, SICKENED, RESONATING, FRACTURED, UNRAVELED -> true;
             default -> false;
         };
     }
 
     /** Whether a Sympathy carrier shares this kind with the hexed enemies near it. */
     public boolean sharedBySympathy() {
-        return this == VULNERABLE || this == SUNDERED || this == EXPOSED || this == CHILL;
+        return this == VULNERABLE || this == SUNDERED || this == EXPOSED || this == CHILL || this == UNRAVELED;
     }
 
     /** The stack debuff a burn or poison earns while it lasts; empty for any other kind. */
@@ -164,8 +185,8 @@ public enum EffectKind {
             case FREEZE -> Optional.of(EnemyStat.FREEZE_RESIST);
             case SHIELD, INVISIBLE, HEAL, VULNERABLE, REVEALED, POISON, SCORCHED, SICKENED, SUNDERED, EXPOSED, MARKED,
                     PRIORITY, RESONATING, FRACTURED, DAZED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION,
-                    SYMPATHY, RECKONING ->
-                    Optional.empty();
+                    SYMPATHY, RECKONING, SILENCED, ANCHORED, UNRAVELED, BRITTLE, TOLL, CORRODED, UNDERTOW, DEAD_ZONE,
+                    KILL_ZONE -> Optional.empty();
         };
     }
 }

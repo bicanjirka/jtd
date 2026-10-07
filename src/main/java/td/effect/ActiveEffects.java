@@ -58,6 +58,15 @@ public final class ActiveEffects {
     /** The slowest a spirit-paced timer runs, however low the enemy's spirit. */
     private static final float MIN_DEBUFF_PACE = 0.25f;
 
+    /** Each Toll stack makes every other debuff's timer run this much slower. */
+    private static final float TOLL_SLOWDOWN_PER_STACK = 0.1f;
+    /** How much Undertow chills, for the speed it takes and the freeze it buys. */
+    private static final float UNDERTOW_CHILL = 0.25f;
+    private static final float ANCHORED_SPEED_SHARE = 0.75f;
+    private static final float MAGIC_RESIST_LOST_PER_UNRAVELED_STACK = 10f;
+    private static final float CORROSION_ARMOR_LOST = 30f;
+    private static final float BRITTLE_PHYSICAL_DAMAGE_TAKEN = 1.3f;
+    private static final float KILL_ZONE_DAMAGE_TAKEN = 1.25f;
     /** Extra damage taken per vulnerable stack, of every damage type. */
     private static final float VULNERABLE_PER_STACK = 0.15f;
     /** Damage taken while a priority lasts, of every damage type. */
@@ -93,9 +102,10 @@ public final class ActiveEffects {
             case SHIELD -> effect.shieldPercent();
             // On/off, not gradated - any reapplication is at least as strong as what's already active.
             case INVISIBLE, REVEALED, EXPOSED, MARKED, PRIORITY, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION,
-                    SYMPATHY, RECKONING -> 1f;
+                    SYMPATHY, RECKONING, SILENCED, ANCHORED, BRITTLE, CORRODED, UNDERTOW, DEAD_ZONE, KILL_ZONE -> 1f;
             case HEAL -> Math.max(effect.healPerTick(), effect.damagePerTick().amount());
-            case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED -> effect.stacks();
+            case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED, UNRAVELED, TOLL ->
+                    effect.stacks();
         };
     }
 
@@ -112,8 +122,10 @@ public final class ActiveEffects {
         Effect incoming = effect;
         boolean rime = this.active.containsKey(EffectKind.RIME);
         Effect chill = this.active.get(EffectKind.CHILL);
-        if (effect.kind() == EffectKind.FREEZE && chill != null) {
-            incoming = effect.withDurationScaledBy(1f + (rime ? RIME_CHILL_FACTOR : 1f) * chillLevel(chill));
+        float chilled = (chill == null ? 0f : chillLevel(chill))
+                + (this.active.containsKey(EffectKind.UNDERTOW) ? UNDERTOW_CHILL : 0f);
+        if (effect.kind() == EffectKind.FREEZE && chilled > 0f) {
+            incoming = effect.withDurationScaledBy(1f + (rime ? RIME_CHILL_FACTOR : 1f) * chilled);
         }
         Effect burn = this.active.get(EffectKind.BURN);
         if (effect.kind() == EffectKind.FREEZE && rime && burn != null) {
@@ -123,7 +135,7 @@ public final class ActiveEffects {
         switch (incoming.kind()) {
             case CHILL -> this.applyChill(incoming);
             case BURN, POISON -> this.applyPool(incoming);
-            case VULNERABLE, SUNDERED, RESONATING, FRACTURED, SATURATED -> this.applyStacks(incoming);
+            case VULNERABLE, SUNDERED, RESONATING, FRACTURED, SATURATED, UNRAVELED, TOLL -> this.applyStacks(incoming);
             default -> {
                 Effect existing = this.active.get(incoming.kind());
                 this.active.put(incoming.kind(), existing == null ? incoming : strongerOf(existing, incoming));
@@ -308,8 +320,19 @@ public final class ActiveEffects {
                         -ARMOR_LOST_PER_SUNDERED_STACK * effect.stacks());
                 case FRACTURED -> accumulator.addFlat(EnemyStat.RESILIENCE,
                         -RESILIENCE_LOST_PER_FRACTURED_STACK * effect.stacks());
+                case ANCHORED -> accumulator.capAtShareOfBase(EnemyStat.MOVE_SPEED, ANCHORED_SPEED_SHARE);
+                case UNRAVELED -> accumulator.addFlat(EnemyStat.MAGIC_RESIST,
+                        -MAGIC_RESIST_LOST_PER_UNRAVELED_STACK * effect.stacks());
+                case BRITTLE -> {
+                    if (this.active.containsKey(EffectKind.FREEZE)) {
+                        accumulator.multiply(EnemyStat.PHYSICAL_DAMAGE_TAKEN, BRITTLE_PHYSICAL_DAMAGE_TAKEN);
+                    }
+                }
+                case CORRODED -> accumulator.addFlat(EnemyStat.ARMOR, -CORROSION_ARMOR_LOST);
+                case UNDERTOW -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - UNDERTOW_CHILL);
+                case KILL_ZONE -> multiplyDamageTaken(accumulator, KILL_ZONE_DAMAGE_TAKEN);
                 case EXPOSED, MARKED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY,
-                        RECKONING -> {
+                        RECKONING, SILENCED, DEAD_ZONE, TOLL -> {
                 }
                 case BURN -> {
                 }
@@ -346,13 +369,15 @@ public final class ActiveEffects {
     public void tick(float spiritFactor) {
         List<EffectKind> expired = new ArrayList<>();
         float burnFactor = 1f - BURN_CHILL_DAMPENING * this.chillLevel() / MAX_CHILL;
-        float debuffPace = Math.max(MIN_DEBUFF_PACE, spiritFactor);
+        float tollFactor = 1f / (1f + TOLL_SLOWDOWN_PER_STACK * this.stacks(EffectKind.TOLL));
+        float pace = spiritFactor * tollFactor;
+        float debuffPace = Math.max(MIN_DEBUFF_PACE * tollFactor, pace);
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
             EffectKind kind = entry.getKey();
             Effect effect = entry.getValue();
             Optional<Effect> next;
             if (kind.isStackDebuff()) {
-                next = this.decayStacks(effect, kind == EffectKind.FRACTURED ? debuffPace : spiritFactor);
+                next = this.decayStacks(effect, kind == EffectKind.FRACTURED ? debuffPace : pace);
             } else if (kind == EffectKind.CHILL) {
                 next = this.tickChill(effect, this.paceSteps(kind, debuffPace));
             } else if (kind.isFuelPool()) {

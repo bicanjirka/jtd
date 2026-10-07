@@ -136,6 +136,15 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case INVERSION -> Palette.STATUS_MARKER_INVERSION;
             case SYMPATHY -> Palette.STATUS_MARKER_SYMPATHY;
             case RECKONING -> Palette.STATUS_MARKER_RECKONING;
+            case SILENCED -> Palette.STATUS_MARKER_SILENCED;
+            case ANCHORED -> Palette.STATUS_MARKER_ANCHORED;
+            case UNRAVELED -> Palette.STATUS_MARKER_UNRAVELED;
+            case BRITTLE -> Palette.STATUS_MARKER_BRITTLE;
+            case TOLL -> Palette.STATUS_MARKER_TOLL;
+            case CORRODED -> Palette.STATUS_MARKER_CORRODED;
+            case UNDERTOW -> Palette.STATUS_MARKER_UNDERTOW;
+            case DEAD_ZONE -> Palette.STATUS_MARKER_DEAD_ZONE;
+            case KILL_ZONE -> Palette.STATUS_MARKER_KILL_ZONE;
         };
     }
 

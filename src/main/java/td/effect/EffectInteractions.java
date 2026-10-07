@@ -19,6 +19,9 @@ final class EffectInteractions {
     /** Consumed kind to the kinds that consume it: freezing a chilled enemy removes the chill, and shrouding a revealed one hides it again. */
     private static final Map<EffectKind, Set<EffectKind>> CONSUMED_BY = new EnumMap<>(EffectKind.class);
 
+    /** Blocked kind to the kinds that only keep it out: they never remove one that is already there. */
+    private static final Map<EffectKind, Set<EffectKind>> HELD_OFF_BY = new EnumMap<>(EffectKind.class);
+
     static {
         BLOCKED_BY.put(EffectKind.BURN, EnumSet.of(EffectKind.FREEZE));
         CONSUMED_BY.put(EffectKind.CHILL, EnumSet.of(EffectKind.FREEZE));
@@ -27,6 +30,8 @@ final class EffectInteractions {
         CONSUMED_BY.put(EffectKind.RIME, EnumSet.of(EffectKind.ASH));
         CONSUMED_BY.put(EffectKind.ASH, EnumSet.of(EffectKind.RIME));
         BLOCKED_BY.put(EffectKind.INVISIBLE, EnumSet.of(EffectKind.INVERSION));
+        HELD_OFF_BY.put(EffectKind.HEAL, EnumSet.of(EffectKind.DEAD_ZONE));
+        HELD_OFF_BY.put(EffectKind.SHIELD, EnumSet.of(EffectKind.DEAD_ZONE));
     }
 
     private EffectInteractions() {
@@ -34,7 +39,8 @@ final class EffectInteractions {
 
     /** Whether one of the {@code active} kinds keeps {@code incoming} out. */
     static boolean blocks(Set<EffectKind> active, EffectKind incoming) {
-        return BLOCKED_BY.getOrDefault(incoming, Set.of()).stream().anyMatch(active::contains);
+        return BLOCKED_BY.getOrDefault(incoming, Set.of()).stream().anyMatch(active::contains)
+                || HELD_OFF_BY.getOrDefault(incoming, Set.of()).stream().anyMatch(active::contains);
     }
 
     /** The kinds that applying {@code incoming} removes, whether it then keeps them out or not. */
@@ -57,6 +63,11 @@ final class EffectInteractions {
     static Set<EffectKind> blockedBy(Set<EffectKind> active) {
         Set<EffectKind> blocked = EnumSet.noneOf(EffectKind.class);
         BLOCKED_BY.forEach((kind, blockers) -> {
+            if (blockers.stream().anyMatch(active::contains)) {
+                blocked.add(kind);
+            }
+        });
+        HELD_OFF_BY.forEach((kind, blockers) -> {
             if (blockers.stream().anyMatch(active::contains)) {
                 blocked.add(kind);
             }

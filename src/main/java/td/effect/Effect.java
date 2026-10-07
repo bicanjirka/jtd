@@ -170,6 +170,51 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
         return timed(kind, durationTicks, sink);
     }
 
+    /** Its abilities don't fire for {@code durationTicks}. */
+    public static Effect silenced(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.SILENCED, durationTicks, sink);
+    }
+
+    /** Can't be sped up and is held to three quarters of its base speed for {@code durationTicks}. */
+    public static Effect anchored(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.ANCHORED, durationTicks, sink);
+    }
+
+    /** {@code stacks} more steps of lost magic resist, on one shared clock. */
+    public static Effect unraveled(int stacks, int durationTicks, DamageSink sink) {
+        return stacking(EffectKind.UNRAVELED, stacks, durationTicks, sink);
+    }
+
+    /** A frozen enemy takes extra physical damage while it lasts. */
+    public static Effect brittle(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.BRITTLE, durationTicks, sink);
+    }
+
+    /** {@code stacks} more Toll; the clock is how long it lasts after the last refresh. */
+    public static Effect toll(int stacks, int durationTicks, DamageSink sink) {
+        return stacking(EffectKind.TOLL, stacks, durationTicks, sink);
+    }
+
+    /** Armor lowered for {@code durationTicks}: the field's Corrosion. */
+    public static Effect corroded(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.CORRODED, durationTicks, sink);
+    }
+
+    /** A held quarter chill for {@code durationTicks}: the field's Undertow. */
+    public static Effect undertow(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.UNDERTOW, durationTicks, sink);
+    }
+
+    /** No heal or shield takes hold for {@code durationTicks}. */
+    public static Effect deadZone(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.DEAD_ZONE, durationTicks, sink);
+    }
+
+    /** Extra damage taken from every source for {@code durationTicks}. */
+    public static Effect killZone(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.KILL_ZONE, durationTicks, sink);
+    }
+
     /** Crit chance taken doubles while it lasts. */
     public static Effect exposed(int durationTicks, DamageSink sink) {
         return timed(EffectKind.EXPOSED, durationTicks, sink);

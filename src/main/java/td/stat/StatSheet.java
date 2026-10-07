@@ -25,6 +25,7 @@ public final class StatSheet implements StatView {
     private final float[] percent = new float[STAT_COUNT];
     private final float[] multiply = new float[STAT_COUNT];
     private final float[] setTo = new float[STAT_COUNT];
+    private final float[] capShare = new float[STAT_COUNT];
     private final float[] restoreFlat = new float[STAT_COUNT];
     private final float[] restoreReduction = new float[STAT_COUNT];
     private final float[] resolved = new float[STAT_COUNT];
@@ -56,6 +57,7 @@ public final class StatSheet implements StatView {
         Arrays.fill(this.percent, 0f);
         Arrays.fill(this.multiply, 1f);
         Arrays.fill(this.setTo, Float.POSITIVE_INFINITY);
+        Arrays.fill(this.capShare, Float.POSITIVE_INFINITY);
         Arrays.fill(this.restoreFlat, 0f);
         Arrays.fill(this.restoreReduction, 0f);
         this.contributor.contributeTo(this.accumulator);
@@ -74,6 +76,9 @@ public final class StatSheet implements StatView {
         float value = (this.base.value(stat) + this.flat[i]) * (1f + this.percent[i]) * this.multiply[i];
         value += this.restoreFlat[i] * spiritFactor;
         value *= 1f - Math.min(1f, this.restoreReduction[i] * spiritFactor);
+        if (this.capShare[i] != Float.POSITIVE_INFINITY) {
+            value = Math.min(value, this.base.value(stat) * this.capShare[i]);
+        }
         return stat.clamp(value);
     }
 
@@ -96,6 +101,12 @@ public final class StatSheet implements StatView {
         @Override
         public void addFlat(EnemyStat stat, float amount) {
             StatSheet.this.flat[stat.ordinal()] += amount;
+        }
+
+        @Override
+        public void capAtShareOfBase(EnemyStat stat, float share) {
+            int i = stat.ordinal();
+            StatSheet.this.capShare[i] = Math.min(StatSheet.this.capShare[i], share);
         }
 
         @Override

@@ -34,6 +34,13 @@
   freeze, invisible, shield, heal and the pools keep their own pace.
 - `MARKED` is spent by a hit, never by periodic damage: the mob calls `consume(MARKED)`, and only
   when its resilience is below 100.
+- A field effect (`SILENCED`, `ANCHORED`, `CORRODED`, `UNDERTOW`, `DEAD_ZONE`, `KILL_ZONE`) is an
+  ordinary timed effect the tower that holds the field refreshes every tick, so it ends a moment
+  after the enemy leaves; none is paced by spirit, so that moment is exact. `TOLL` is a stack
+  debuff on one shared clock (every stack goes when it runs out) that slows every *other*
+  spirit-paced timer and every stack debuff by a tenth a stack, and is never paced itself.
+  `DEAD_ZONE` keeps `HEAL` and `SHIELD` out through `EffectInteractions`' held-off table, which
+  unlike a block strips nothing already there. `BRITTLE` counts only while `FREEZE` is active.
 - A `HEX` kind carries no stat of its own; the tower that cast it watches it and pays it out.
   `INVERSION` is the one hex the enemy itself reads: `invertedThrough(sink)` turns a heal into
   damage per tick, and `INVISIBLE` is an `EffectInteractions` row it blocks and removes.

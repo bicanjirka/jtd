@@ -448,6 +448,15 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_INVERSION -> new Color(255, 70, 120);
             case STATUS_MARKER_SYMPATHY -> new Color(120, 150, 255);
             case STATUS_MARKER_RECKONING -> new Color(255, 200, 60);
+            case STATUS_MARKER_SILENCED -> new Color(170, 120, 255);
+            case STATUS_MARKER_ANCHORED -> new Color(150, 150, 170);
+            case STATUS_MARKER_UNRAVELED -> new Color(220, 120, 255);
+            case STATUS_MARKER_BRITTLE -> new Color(200, 240, 255);
+            case STATUS_MARKER_TOLL -> new Color(255, 170, 70);
+            case STATUS_MARKER_CORRODED -> new Color(120, 220, 90);
+            case STATUS_MARKER_UNDERTOW -> new Color(80, 130, 255);
+            case STATUS_MARKER_DEAD_ZONE -> new Color(130, 130, 130);
+            case STATUS_MARKER_KILL_ZONE -> new Color(255, 80, 80);
             case STATUS_MARKER_SHIELD -> new Color(220, 220, 100);
             case STATUS_MARKER_INVISIBLE -> new Color(180, 180, 180);
             case STATUS_MARKER_HEAL -> new Color(120, 220, 140);
