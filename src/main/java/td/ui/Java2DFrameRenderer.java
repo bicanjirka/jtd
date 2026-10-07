@@ -426,6 +426,10 @@ public final class Java2DFrameRenderer {
             case TOWER_CINDER_BODY -> new Color(255, 90, 30);
             case TOWER_AURA_RING -> Color.WHITE;
             case TOWER_AURA_LINK -> withAlpha(Color.WHITE, 60);
+            case TOWER_AURA_LINK_REACH -> withAlpha(new Color(120, 200, 255), 80);
+            case TOWER_AURA_LINK_CHOSEN -> withAlpha(new Color(255, 215, 90), 110);
+            case TOWER_AURA_RALLY -> new Color(255, 170, 60);
+            case TOWER_AURA_MENTEE -> new Color(255, 215, 90);
             case TOWER_UPGRADE_BASE -> new Color(140, 255, 140);
             case TOWER_UPGRADE_HEAD -> new Color(255, 200, 60);
             case TOWER_UPGRADE_SPECIAL -> new Color(200, 100, 255);

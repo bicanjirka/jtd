@@ -187,6 +187,24 @@ public final class AuraTower extends AbstractTower {
         return (dx * dx + dy * dy) < this.rangeReal2();
     }
 
+    /** What the glow lines to the buffed towers say the aura is: its reach, its chosen hero, or its strength. */
+    public GrantLook grantLook() {
+        if (this.owns(CHOSEN)) {
+            return GrantLook.CHOSEN;
+        }
+        return this.owns(BROADCAST_1) ? GrantLook.REACH : GrantLook.PLAIN;
+    }
+
+    /** Whether this aura marks the buffed tower with the least XP; the mark is {@link #apprentice()}. */
+    public boolean mentorsApprentice() {
+        return this.owns(APPRENTICE);
+    }
+
+    /** How the aura draws its links. */
+    public enum GrantLook {
+        PLAIN, REACH, CHOSEN
+    }
+
     /** A tower in range, or with Chosen only the most experienced one. */
     private boolean buffs(Tower other) {
         return this.inRange(other) && (!this.owns(CHOSEN) || other == this.chosen());

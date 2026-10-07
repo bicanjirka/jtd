@@ -6,7 +6,8 @@
   and their constructor just calls `super(...)` (derived board fields are already `final`).
 - A tower records its price from `TowerRoster.priceOf` in its constructor (each copy on the board
   adds 15%), so build it after charging that price and before `TowerRoster.add`.
-- A tower's class name and its UI name are the same word and name the behaviour, not the shape.
+- A tower's class name names the behaviour, not the shape. Its UI name is `TowerFactory.Type.displayName()`, chosen
+  separately and display only: the constant, the class, the node ids and the hotkey keep the class's word.
 - Every hit goes through `AbstractTower.dealDamage`, never `enemy.doDamage`. It accumulates the
   damage that *landed* (what `doDamage` returns) and won't count a kill on an already-dead mob,
   and it stamps the tower's own `AttackOrigin` on the attack, so an effect can tell this tower's

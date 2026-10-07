@@ -27,6 +27,10 @@ public enum Palette {
     TOWER_AURA_RING,
     /** A faint line from an aura to a tower it buffs. */
     TOWER_AURA_LINK,
+    TOWER_AURA_LINK_REACH,
+    TOWER_AURA_LINK_CHOSEN,
+    TOWER_AURA_RALLY,
+    TOWER_AURA_MENTEE,
     /** Slot marks, one role per upgrade slot. */
     TOWER_UPGRADE_BASE,
     TOWER_UPGRADE_HEAD,
