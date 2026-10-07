@@ -1,4 +1,4 @@
-# `td.tower` (+ `targeting`, `buff`, `upgrade`, `sniper`, `sonar`)
+# `td.tower` (+ `targeting`, `buff`, `upgrade`, `sniper`, `sonar`, `splash`)
 
 ## Towers
 
@@ -18,8 +18,11 @@
   (bearings, never enemies), and a perk that changes the beam reshapes it from where it is. The
   head is drawn from `sweepRadiansAt`, the same angle that decides hits. Whatever the beam renews
   each pass lasts `SonarSpec.untilNextPass()`.
-- `SplashTower` falloff is `1 - (d/spreadRadius)²` from the hit mob. `spreadRadius` isn't
-  buffed; only its own upgrade node changes it.
+- `SplashTower` falloff is `1 - (d/radius)²` from the primary, floored by `BlastSpec.edgeFloor`.
+  The blast radius isn't buffed by range; only its own nodes change it, and every distance the
+  payload uses (an arc's reach) grows with the same bonus (`BlastSpec.distanceScale()`). The
+  blast lands and Saturates first, then the payload runs.
+- A tower whose fork renames it overrides `displayName()`; the id and `TowerFactory.Type` stay.
 - Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
   `AuraTower.buffs`' single "is this an aura" check stays the only role check.
 
@@ -105,7 +108,7 @@
   Don't pre-check affordability. It publishes `TowerStats` before `UpgradeState`.
 - Pass `StandardBaseSlot.nodes` a `BaseSlotPerks` for what Attune and Range III add to a tower.
 - A node whose behaviour is more than a `TowerBuff` becomes a perk, in the tower's own package
-  (`sniper`, `sonar`). A static `PerkCatalogue` says which perks each node brings (several may),
+  (`sniper`, `sonar`, `splash`). A static `PerkCatalogue` says which perks each node brings (several may),
   and the tower's `OwnedPerks` builds its own, as some carry state. Perks run in purchase order:
   first `refineSpec` (whom the tower may hit, how it picks, its rhythm), then per hit. Perks are
   pure (no tower, no `GameWorld`); what they may make the tower do is the tower's actions

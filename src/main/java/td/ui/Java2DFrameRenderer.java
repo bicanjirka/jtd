@@ -220,7 +220,7 @@ public final class Java2DFrameRenderer {
     private static Shape towerBodyShape(Palette palette, float size) {
         return switch (palette) {
             case TOWER_SNIPER_BODY -> triangleShape(size, true);
-            case TOWER_SPLASH_BODY -> ringShape(size, 0.55f);
+            case TOWER_SPLASH_BODY, TOWER_STORMCALLER_BODY -> ringShape(size, 0.55f);
             case TOWER_SONAR_BODY -> spiralShape(size);
             case TOWER_PULSE_BODY -> starShape(5, size, size * 0.45f);
             case TOWER_AURA_BODY -> pulsarShape(size);
@@ -355,7 +355,8 @@ public final class Java2DFrameRenderer {
         return switch (palette) {
             case TOWER_SNIPER_BODY, TOWER_SNIPER_GOLD_BARREL ->
                     new Rectangle2D.Float(0, -size * 0.22f, size * 1.3f, size * 0.44f);
-            case TOWER_SPLASH_BODY -> new Rectangle2D.Float(0, -size * 0.42f, size * 0.95f, size * 0.84f);
+            case TOWER_SPLASH_BODY, TOWER_STORMCALLER_BODY ->
+                    new Rectangle2D.Float(0, -size * 0.42f, size * 0.95f, size * 0.84f);
             case TOWER_PULSE_BODY -> {
                 Shape moon = starShape(5, size * 0.9f, size * 0.9f * 0.45f);
                 yield AffineTransform.getTranslateInstance(size * 2.0, 0).createTransformedShape(moon);
@@ -395,6 +396,7 @@ public final class Java2DFrameRenderer {
             case ENEMY_MENDER -> new Color(120, 220, 150);
             case TOWER_SNIPER_BODY -> Color.GREEN;
             case TOWER_SPLASH_BODY -> Color.RED;
+            case TOWER_STORMCALLER_BODY -> new Color(80, 150, 255);
             case TOWER_SONAR_BODY -> Color.YELLOW;
             case TOWER_PULSE_BODY -> Color.ORANGE;
             case TOWER_AURA_BODY -> Color.WHITE;
@@ -414,7 +416,10 @@ public final class Java2DFrameRenderer {
             case TOWER_SNIPER_TRACER -> Color.WHITE;
             case TOWER_SNIPER_GOLD_BARREL -> new Color(255, 205, 70);
             case TOWER_SPLASH_BEAM -> Color.RED;
-            case TOWER_SPLASH_LINE, TOWER_SPLASH_FILL -> withAlpha(Color.RED, 80);
+            case TOWER_SPLASH_FLASH -> withAlpha(new Color(255, 245, 210), 170);
+            case TOWER_SPLASH_DETONATION -> new Color(255, 200, 90);
+            case TOWER_SPLASH_DETONATION_DARK -> new Color(120, 30, 20);
+            case TOWER_SPLASH_ARC -> new Color(170, 210, 255);
             case TOWER_SONAR_BEAM -> Color.YELLOW;
             case TOWER_SONAR_MAGIC_BEAM -> new Color(90, 150, 255);
             case TOWER_SONAR_PING -> new Color(255, 240, 150);
@@ -427,6 +432,7 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_BURN -> new Color(255, 120, 40);
             case STATUS_MARKER_FREEZE -> new Color(150, 220, 255);
             case STATUS_MARKER_DAZED -> new Color(255, 235, 120);
+            case STATUS_MARKER_SATURATED -> new Color(255, 150, 90);
             case STATUS_MARKER_SHIELD -> new Color(220, 220, 100);
             case STATUS_MARKER_INVISIBLE -> new Color(180, 180, 180);
             case STATUS_MARKER_HEAL -> new Color(120, 220, 140);

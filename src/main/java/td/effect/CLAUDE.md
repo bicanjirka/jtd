@@ -24,10 +24,11 @@
   (a freeze puts out the burn, not its mark) and lose a stack every `STACK_DECAY_INTERVAL_TICKS`
   scaled by the enemy's spirit factor (`tick(spiritFactor)`; `0` at spirit -100 means never).
 - A kind with `EffectKind.maxStacks()` above 0 (`VULNERABLE`, `SUNDERED`, `RESONATING`,
-  `FRACTURED`) stacks on the enemy, whichever tower applied them, on one shared clock that any
-  application refreshes; a full stack only refreshes. `FRACTURED` has no clock: it loses a stack at
+  `FRACTURED`, `SATURATED`) stacks on the enemy, whichever tower applied them, on one shared clock
+  that any application refreshes; a full stack only refreshes. An application may raise the cap
+  (`Effect.withStackCap`), and the stack keeps the highest cap any application brought. `FRACTURED` has no clock: it loses a stack at
   a time like `SCORCHED`, at the spirit pace floored at `MIN_DEBUFF_PACE`. A `faultLine` Fractured
-  holds twice the stacks and loses none while the enemy is exposed (or revealed); one such
+  (cap 10) loses none while the enemy is exposed (or revealed); one such
   application makes the whole effect so until it wears off.
 - A kind with `isPacedBySpirit()` counts its timer down at `max(MIN_DEBUFF_PACE, spiritFactor)`;
   freeze, invisible, shield, heal and the pools keep their own pace.

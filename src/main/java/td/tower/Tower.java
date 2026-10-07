@@ -18,6 +18,11 @@ import java.util.List;
 public interface Tower {
     TowerFactory.Type getType();
 
+    /** What this tower is called: its type's name, unless what it has become renames it. */
+    default String displayName() {
+        return this.getType().displayName();
+    }
+
     void doTick(int gameTime);
 
     /** Start of the tower's turn: expires a timed buff and re-reads its disruption, republishing stats only on a change. */

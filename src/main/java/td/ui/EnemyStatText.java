@@ -190,6 +190,7 @@ final class EnemyStatText {
             case RESONATING -> "Resonating x" + effect.stacks();
             case FRACTURED -> "Fractured x" + effect.stacks();
             case DAZED -> "Dazed";
+            case SATURATED -> "Saturated x" + effect.stacks();
         };
         String category = effect.kind().category().label();
         if (effect.kind() == EffectKind.CHILL) {

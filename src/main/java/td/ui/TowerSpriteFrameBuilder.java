@@ -112,7 +112,11 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     private void sprite(Tower tower) {
-        this.draws.add(new TowerSpriteDraw(bodyPaletteFor(tower.getType()), tower.getBoardX(), tower.getBoardY(),
+        this.sprite(tower, bodyPaletteFor(tower.getType()));
+    }
+
+    private void sprite(Tower tower, Palette body) {
+        this.draws.add(new TowerSpriteDraw(body, tower.getBoardX(), tower.getBoardY(),
                 tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(),
                 this.slotMarksFor(tower), this.enchantPulseFor(tower),
                 tower.upgrades().owns(StandardBaseSlot.TRANSCENDENT_ID),
@@ -146,9 +150,15 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
+    /** The body takes the colour of what the fork made it. */
     public Void visitSplashTower(SplashTower tower) {
-        this.sprite(tower);
-        this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
+        Palette body = switch (tower.fork()) {
+            case NONE, HEXER -> Palette.TOWER_SPLASH_BODY;
+            case STORMCALLER -> Palette.TOWER_STORMCALLER_BODY;
+        };
+        this.sprite(tower, body);
+        this.headDraws.add(new TurretHeadDraw(body, tower.getX(), tower.getY(),
+                (float) tower.getTurretAim().radiansAt(this.interpolationAlpha), 1f));
         return null;
     }
 

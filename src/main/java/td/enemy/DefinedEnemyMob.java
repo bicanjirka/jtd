@@ -308,7 +308,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         return kind == EffectKind.CHILL ? this.activeEffects.chillLevel() : 0f;
     }
 
-    /** Stacks of the active {@code kind}; {@code 0} when inactive or the kind does not stack. */
+    @Override
     public int effectStacks(EffectKind kind) {
         return this.activeEffects.stacks(kind);
     }
