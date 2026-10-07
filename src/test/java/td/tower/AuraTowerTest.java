@@ -107,6 +107,50 @@ class AuraTowerTest {
         assertThat(aura.buffFor(sniper).damageBonus()).isCloseTo(0.3f + 2 * 0.05f, within(1e-6f));
     }
 
+    private AuraTower coreAuraBuffing(int towers) {
+        this.context.economy().startEconomy(100_000, 5);
+        AuraTower aura = new AuraTower(this.context, 0, 0);
+        this.context.towers().add(aura);
+        for (int i = 0; i < towers; i++) {
+            this.context.towers().add(new SniperTower(this.context, 0, 0));
+        }
+        UpgradePaths.buy(aura, this.context, "Amplifying Core", "Amplifying Core II");
+        return aura;
+    }
+
+    @Test
+    void keenEdgeWaitsForFourBuffedTowersAndAnotherAuraBeside() {
+        AuraTower aura = this.coreAuraBuffing(3);
+        UpgradeNode keenEdge = UpgradePaths.named(aura, "Keen Edge");
+        this.context.towers().add(new AuraTower(this.context, 0, 0));
+
+        boolean withThree = aura.buyUpgrade(keenEdge);
+        this.context.towers().add(new SniperTower(this.context, 0, 0));
+        boolean withFour = aura.buyUpgrade(keenEdge);
+
+        assertThat(withThree).isFalse();
+        assertThat(withFour).isTrue();
+    }
+
+    @Test
+    void keenEdgeNeedsAnotherAuraBesideEvenWithFourBuffedTowers() {
+        AuraTower aura = this.coreAuraBuffing(4);
+
+        assertThat(aura.buyUpgrade(UpgradePaths.named(aura, "Keen Edge"))).isFalse();
+    }
+
+    @Test
+    void keenEdgeGivesBuffedTowersHalfAgainTheirCritDamage() {
+        AuraTower aura = this.coreAuraBuffing(4);
+        this.context.towers().add(new AuraTower(this.context, 0, 0));
+        SniperTower buffed = (SniperTower) aura.buffedTowers().getFirst();
+        float before = buffed.stats().attack().critMultiplier();
+
+        aura.buyUpgrade(UpgradePaths.named(aura, "Keen Edge"));
+
+        assertThat(buffed.stats().attack().critMultiplier()).isCloseTo(before + 0.5f, within(1e-6f));
+    }
+
     @Test
     void broadcastAddsThirtyPercentRangeToTheAurasOwnReach() {
         this.context.economy().startEconomy(1000, 5);

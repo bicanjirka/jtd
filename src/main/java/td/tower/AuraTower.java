@@ -6,7 +6,9 @@ import td.enemy.EnemyWalk;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.BaseSlotPerks;
+import td.tower.upgrade.BuffedTowersCondition;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.NeighbourOfTypeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
@@ -45,6 +47,10 @@ public final class AuraTower extends AbstractTower {
     private static final float TUTELAGE_XP = 0.1f;
     private static final float APPRENTICE_XP = 1f;
 
+    /** What the aura must buff before its third head level is offered; Keen Edge also needs an aura beside it. */
+    private static final int HEAD_THREE_BUFFED_TOWERS = 4;
+    private static final float KEEN_EDGE_CRIT_DAMAGE = 0.5f;
+
     /** Ticks between periodic passes over enemies in range. */
     private static final int WITHERING_FIELD_TICK_INTERVAL = 20;
 
@@ -55,6 +61,12 @@ public final class AuraTower extends AbstractTower {
             "Amplifying Core II", PRICE)
             .after(AMPLIFYING_CORE_1)
             .withExtraEffect("+10% more buff strength, and the aura also grants +10% fire rate");
+    private static final UpgradeNode KEEN_EDGE = UpgradeTier.HEAD_3.node("aura.head.amplifying_core.3", "Keen Edge",
+            PRICE)
+            .withGate(new BuffedTowersCondition(HEAD_THREE_BUFFED_TOWERS)
+                    .and(new NeighbourOfTypeCondition(TowerFactory.Type.AURA)))
+            .withExtraEffect("buffed towers deal +50% crit damage")
+            .after(AMPLIFYING_CORE_2);
     private static final UpgradeNode BROADCAST_1 = UpgradeTier.HEAD_1.node("aura.head.broadcast.1",
             "Broadcast", PRICE)
             .withBuff(TowerBuff.range(0.3f));
@@ -76,7 +88,7 @@ public final class AuraTower extends AbstractTower {
             + "+5% XP for each other tower type in range, up to +20%");
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS))
-            .with(AMPLIFYING_CORE_1, AMPLIFYING_CORE_2, BROADCAST_1, TUTELAGE_1, SHARED_LESSONS, APPRENTICE,
+            .with(AMPLIFYING_CORE_1, AMPLIFYING_CORE_2, KEEN_EDGE, BROADCAST_1, TUTELAGE_1, SHARED_LESSONS, APPRENTICE,
                     WITHERING_FIELD)
             .withChoice(ExclusiveChoice.oneOf(AMPLIFYING_CORE_1, BROADCAST_1));
 
@@ -120,6 +132,9 @@ public final class AuraTower extends AbstractTower {
 
     private TowerBuff buffWithStrength(float strength) {
         TowerBuff base = TowerBuff.amplifying(strength).withDisruptionShield(DISRUPTION_SHIELD);
+        if (this.owns(KEEN_EDGE)) {
+            base = base.withCritDamage(KEEN_EDGE_CRIT_DAMAGE);
+        }
         return this.grantsFireRate ? base.withFireRate(CORE_FIRE_RATE) : base;
     }
 
