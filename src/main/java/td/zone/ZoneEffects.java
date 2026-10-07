@@ -41,6 +41,8 @@ public final class ZoneEffects {
                 owner.applyEffect(enemy, sink -> Effect.poison(Damage.magic(strength), POISON_TICKS, sink));
             }
             case FROST_GROUND -> owner.applyEffect(enemy, sink -> Effect.chill(FROST_CHILL, FROST_CHILL_TICKS, sink));
+            case MINE, CURSED_CLOUD -> {
+            }
             case FALLOUT -> {
                 owner.applyEffect(enemy, sink -> Effect.sickened(FALLOUT_SICKENED_STACKS));
                 owner.applyEffect(enemy, sink -> Effect.deadZone(FALLOUT_HOLD_TICKS, sink));

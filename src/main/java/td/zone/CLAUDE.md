@@ -9,6 +9,11 @@
   Zones combine only through the effects they leave on an enemy, never zone against zone.
 - `ZoneRoster.doTick` runs after projectiles and before towers, so a shell that lands this tick
   already pulses. `GameEngine` clears it with the other rosters when a level loads.
+- A mine is looked at every tick, not on a pulse, so nothing walks across it between two; the first enemy
+  inside sets it off through its `ZoneTrigger` and it is spent. A tower that lays mines keeps its own list
+  to replace the oldest and to take them off the board (`ZoneRoster.remove`) when it is sold.
+- A cursed cloud carries the effects it re-applies to everything inside each pulse, with the time they had
+  left when the enemy died, so they hold while an enemy stays and run out once it leaves.
 - `ZoneEffects.touch` is one pulse of a kind on one enemy; a zone adds only what depends on how long an
   enemy stays (frost's freeze). Anything else that carries a zone's effect without a zone calls it.
 - Fallout drains spirit through `SICKENED` stacks and holds heals and shields off with `DEAD_ZONE`, so the

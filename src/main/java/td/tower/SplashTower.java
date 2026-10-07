@@ -32,6 +32,8 @@ import td.tower.splash.HexTurn;
 import td.tower.splash.InversionHex;
 import td.tower.splash.LightningRodPerk;
 import td.tower.splash.MasteryPerk;
+import td.tower.splash.MineSpec;
+import td.tower.splash.MinesPerk;
 import td.tower.splash.OverloadPerk;
 import td.tower.splash.PotencyPerk;
 import td.tower.splash.ReckoningHex;
@@ -68,6 +70,7 @@ import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
+import td.zone.Zone;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -119,11 +122,14 @@ public final class SplashTower extends AbstractTower {
     private static final int MAX_JUMPS = 2;
     private static final TargetSelector THUNDERSTRIKE_AIM = PreferringSelector.priority(new HighestHealthSelector());
     private static final int SATURATED_BLASTS_NEEDED = 45;
+    private static final float CLOUD_RADIUS_CELLS = 1.5f;
+    private static final int CLOUD_TICKS = 80;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
             .withAttune("Fire Control: aims at the enemy with most neighbours in the blast; Saturation: +5% blast "
                     + "damage a stack, 3 stacks")
-            .withRangeThree(0.1f, "blast radius +10%");
+            .withRangeThree(0.1f, "blast radius +10%; Mines: every 4th blast leaves a mine on the path for 10s, up to "
+                    + "3, that the next enemy to step on it sets off as one blast");
 
     private static final UpgradeNode ARC = UpgradeTier.HEAD_1.node("splash.head.arc.1", "Arc", PRICE)
             .withExtraEffect("the blast carries past its edge: 2 jumps at 50% as magic, further from Saturated "
@@ -197,7 +203,7 @@ public final class SplashTower extends AbstractTower {
             .after(SHAPED_CHARGE);
     private static final UpgradeNode MASTERY = UpgradeTier.EXTRA_4.node("splash.extra.blast_engineering.4",
             "Mastery", PRICE)
-            .withExtraEffect("Stormcaller: arcs +10% crit, Overload's Daze lasts 1s; Hexer: Blight poisons 50% harder")
+            .withExtraEffect("Stormcaller: arcs +10% crit, Overload's Daze lasts 1s; Hexer: Blight poisons 50% harder, and a hexed enemy that dies leaves a cursed cloud")
             .after(POTENCY);
 
     private static final UpgradeNode THUNDERCLAP = UpgradeTier.SPECIAL.node("splash.special.thunderclap",
@@ -230,6 +236,7 @@ public final class SplashTower extends AbstractTower {
     private static final PerkCatalogue<SplashPerk> PERKS = PerkCatalogue.<SplashPerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, FireControlPerk::new)
             .with(StandardBaseSlot.RANGE_3_ID, () -> new BlastRadiusPerk(0.1f))
+            .with(StandardBaseSlot.RANGE_3_ID, MinesPerk::new)
             .with(ARC.id(), ArcPerk::new)
             .with(CONDUCTOR.id(), ConductorPerk::new)
             .with(OVERLOAD.id(), OverloadPerk::new)
@@ -266,6 +273,7 @@ public final class SplashTower extends AbstractTower {
     private int lastShotTick;
     private int currentTick;
     private int shotsFired;
+    private final List<Zone> mines = new ArrayList<>();
 
     public SplashTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SPLASH, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
@@ -391,6 +399,9 @@ public final class SplashTower extends AbstractTower {
                     }
                 }
                 case HexEvent.Died died -> {
+                    if (spec.hexes().cursedCloud()) {
+                        this.leaveCloud(died.enemy());
+                    }
                     if (died.carried(EffectKind.RECKONING).isPresent()) {
                         this.reckon(died.enemy(), spec);
                     }
@@ -400,6 +411,16 @@ public final class SplashTower extends AbstractTower {
                 }
             }
         }
+    }
+
+    /** Mastery: a hexed enemy that died leaves a cloud that gives what stands in it the debuffs it carried. */
+    private void leaveCloud(EnemyMob dead) {
+        List<Effect> carried = dead.activeEffects().stream().filter(effect -> effect.kind().spreadsWithCurse()).toList();
+        if (carried.isEmpty()) {
+            return;
+        }
+        this.context.zones().add(Zone.cloud(dead.getX(), dead.getY(),
+                CLOUD_RADIUS_CELLS * this.context.getBoard().scale(), CLOUD_TICKS, this::applyEffect, carried));
     }
 
     /** Doom's payout: its share of the {@code stored} damage, as one magic hit that never crits. */
@@ -506,8 +527,11 @@ public final class SplashTower extends AbstractTower {
         }
         List<Trace> traces = new ArrayList<>();
         Optional<EnemyMob> struck = shot.thunderstrike() ? this.thunderstrike(spec, traces) : Optional.empty();
-        Blast blast = this.blast(primary, spec.blast());
+        Blast blast = this.blast(primary, (int) primary.getX(), (int) primary.getY(), spec.blast());
         this.blasts = List.of(blast);
+        if (spec.mines().isActive() && this.shotsFired % spec.mines().every() == 0) {
+            this.leaveMine(primary.getX(), primary.getY(), spec);
+        }
         List<EnemyMob> arced = new ArrayList<>();
         boolean critical = struck.isPresent();
         if (spec.arcs().active()) {
@@ -529,9 +553,7 @@ public final class SplashTower extends AbstractTower {
      * Hits the primary first, then everything else within the blast, each for its share of the
      * damage at its distance, harder the more Saturated it is; then Saturates them all.
      */
-    private Blast blast(EnemyMob primary, BlastSpec spec) {
-        int x = (int) primary.getX();
-        int y = (int) primary.getY();
+    private Blast blast(EnemyMob primary, int x, int y, BlastSpec spec) {
         float radius = this.blastRadius(spec);
         List<EnemyMob> caught = new ArrayList<>(InRangeTargetQuery.everyone(x, y, radius).matching(this.context.enemies()));
         caught.remove(primary);
@@ -552,6 +574,32 @@ public final class SplashTower extends AbstractTower {
             }
         }
         return new Blast(primary, List.copyOf(caught), new Blast.Area(x, y, radius), critical);
+    }
+
+    /** A sold Splash takes its mines with it. */
+    @Override
+    public void doCleanup() {
+        super.doCleanup();
+        this.mines.forEach(this.context.zones()::remove);
+        this.mines.clear();
+    }
+
+    /** Leaves a mine where the blast landed, replacing the oldest when it already keeps its most. */
+    private void leaveMine(double x, double y, SplashSpec spec) {
+        MineSpec mine = spec.mines();
+        while (this.mines.size() >= mine.max()) {
+            this.context.zones().remove(this.mines.removeFirst());
+        }
+        Zone laid = Zone.mine(x, y, mine.radiusCells() * this.context.getBoard().scale(), mine.lifetimeTicks(),
+                this::applyEffect, this::explode);
+        this.mines.add(laid);
+        this.context.zones().add(laid);
+    }
+
+    /** A mine went off under {@code by}: one blast where it lay. */
+    private void explode(Zone mine, EnemyMob by) {
+        this.mines.remove(mine);
+        this.blast(by, (int) mine.x(), (int) mine.y(), this.spec(this.perks.all()).blast());
     }
 
     /** The enemy the blast caught furthest from its centre, where its arcs start. */

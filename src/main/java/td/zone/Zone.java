@@ -28,14 +28,23 @@ public final class Zone {
     private final int lifetimeTicks;
     private final int strength;
     private final ZoneOwner owner;
+    private final ZoneTrigger trigger;
+    private final List<Effect> carried;
     private final Map<EnemyMob, Integer> pulsesInside = new IdentityHashMap<>();
     private int ageTicks;
+    private boolean triggered;
 
     /**
      * @param radius   pixels
      * @param strength a burn's or poison's damage a tick, in damage units; unused by the kinds with none
      */
     public Zone(ZoneKind kind, double x, double y, float radius, int lifetimeTicks, int strength, ZoneOwner owner) {
+        this(kind, x, y, radius, lifetimeTicks, strength, owner, (mine, by) -> {
+        }, List.of());
+    }
+
+    private Zone(ZoneKind kind, double x, double y, float radius, int lifetimeTicks, int strength, ZoneOwner owner,
+                 ZoneTrigger trigger, List<Effect> carried) {
         this.kind = kind;
         this.x = x;
         this.y = y;
@@ -43,6 +52,20 @@ public final class Zone {
         this.lifetimeTicks = lifetimeTicks;
         this.strength = strength;
         this.owner = owner;
+        this.trigger = trigger;
+        this.carried = List.copyOf(carried);
+    }
+
+    /** A mine that {@code trigger} goes off the first time an enemy steps within {@code radius} of it. */
+    public static Zone mine(double x, double y, float radius, int lifetimeTicks, ZoneOwner owner, ZoneTrigger trigger) {
+        return new Zone(ZoneKind.MINE, x, y, radius, lifetimeTicks, 0, owner, trigger, List.of());
+    }
+
+    /** A cloud that gives every enemy inside the {@code carried} effects. */
+    public static Zone cloud(double x, double y, float radius, int lifetimeTicks, ZoneOwner owner,
+                             List<Effect> carried) {
+        return new Zone(ZoneKind.CURSED_CLOUD, x, y, radius, lifetimeTicks, 0, owner, (mine, by) -> {
+        }, carried);
     }
 
     public ZoneKind kind() {
@@ -75,13 +98,22 @@ public final class Zone {
     }
 
     boolean isExpired() {
-        return this.ageTicks >= this.lifetimeTicks;
+        return this.triggered || this.ageTicks >= this.lifetimeTicks;
+    }
+
+    /** A mine goes off for {@code by}, once, and is spent. */
+    void detonate(EnemyMob by) {
+        if (!this.triggered) {
+            this.triggered = true;
+            this.trigger.triggered(this, by);
+        }
     }
 
     /** Puts this pulse's effects on {@code enemy}, which stands inside. */
     void touch(EnemyMob enemy) {
         int pulses = this.pulsesInside.merge(enemy, 1, Integer::sum);
         ZoneEffects.touch(this.kind, this.strength, this.owner, enemy);
+        this.carried.forEach(enemy::applyEffect);
         if (this.kind == ZoneKind.FROST_GROUND && pulses >= FROST_PULSES_TO_FREEZE) {
             this.pulsesInside.put(enemy, 0);
             this.owner.applyEffect(enemy, sink -> Effect.freeze(FROST_FREEZE_TICKS, sink));

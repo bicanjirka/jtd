@@ -140,6 +140,7 @@ public final class Java2DFrameRenderer {
     private static final int ZONE_BUBBLES = 3;
     private static final int ZONE_CRYSTAL_ARMS = 3;
     private static final int ZONE_FALLOUT_BLADES = 3;
+    private static final int ZONE_WISPS = 4;
     /** A banked missile is drawn this share of a missile in flight. */
     private static final float NEST_MISSILE_SCALE = 0.6f;
     private static final Font MARKER_COUNT_FONT = Hud.LABEL_FONT.deriveFont(9f);
@@ -456,6 +457,8 @@ public final class Java2DFrameRenderer {
             case ZONE_TAR -> new Color(35, 28, 25);
             case ZONE_FROST -> new Color(170, 225, 255);
             case ZONE_FALLOUT -> new Color(150, 220, 60);
+            case ZONE_MINE -> new Color(255, 60, 60);
+            case ZONE_CLOUD -> new Color(170, 80, 230);
             case TOWER_PULSE_ZAP -> new Color(255, 245, 190);
             case TOWER_CINDER_CONE -> new Color(255, 90, 30);
             case TOWER_CINDER_CONE_WHITE -> new Color(255, 245, 225);
@@ -620,6 +623,8 @@ public final class Java2DFrameRenderer {
             case ZONE_TAR -> this.paintZoneTarGloss(g2, zone, fade);
             case ZONE_FROST -> this.paintZoneCrystals(g2, zone, fade);
             case ZONE_FALLOUT -> this.paintZoneFallout(g2, zone, fade);
+            case ZONE_MINE -> this.paintZoneMine(g2, zone, fade);
+            case ZONE_CLOUD -> this.paintZoneCloud(g2, zone, fade);
             default -> {
             }
         }
@@ -660,6 +665,30 @@ public final class Java2DFrameRenderer {
         for (int i = 0; i < ZONE_FALLOUT_BLADES; i++) {
             double start = Math.toDegrees(zone.phase() * 0.8 + i * 2 * Math.PI / ZONE_FALLOUT_BLADES);
             g2.fill(new Arc2D.Float(zone.centerX() - r, zone.centerY() - r, r * 2, r * 2, (float) start, 60f, Arc2D.PIE));
+        }
+    }
+
+    /** A dark casing with a red light that blinks. */
+    private void paintZoneMine(Graphics2D g2, ZoneDraw zone, float fade) {
+        float r = zone.radius() * 0.45f;
+        g2.setColor(withAlpha(new Color(40, 40, 50), Math.round(230 * fade)));
+        g2.fill(new Ellipse2D.Float(zone.centerX() - r, zone.centerY() - r, r * 2, r * 2));
+        boolean lit = Math.sin(zone.phase() * 8) > 0;
+        float light = r * 0.4f;
+        g2.setColor(withAlpha(lit ? new Color(255, 70, 70) : new Color(110, 30, 30), Math.round(255 * fade)));
+        g2.fill(new Ellipse2D.Float(zone.centerX() - light, zone.centerY() - light, light * 2, light * 2));
+    }
+
+    /** Wisps that drift round the middle. */
+    private void paintZoneCloud(Graphics2D g2, ZoneDraw zone, float fade) {
+        for (int i = 0; i < ZONE_WISPS; i++) {
+            double angle = zone.phase() * 0.7 + i * 2 * Math.PI / ZONE_WISPS;
+            float distance = zone.radius() * 0.45f;
+            float size = zone.radius() * 0.28f;
+            float wx = zone.centerX() + (float) Math.cos(angle) * distance;
+            float wy = zone.centerY() + (float) Math.sin(angle) * distance;
+            g2.setColor(withAlpha(new Color(210, 150, 255), Math.round(110 * fade)));
+            g2.fill(new Ellipse2D.Float(wx - size, wy - size, size * 2, size * 2));
         }
     }
 
