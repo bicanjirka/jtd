@@ -17,4 +17,7 @@ public interface EnemyMob extends EnemyTarget, HitReceiver, EnemyWalk {
     Rank getRank();
 
     float getSpeed();
+
+    /** Whether one of its abilities puts an effect on itself or on others: a heal, a shield, a vanishing. */
+    boolean appliesEffects();
 }

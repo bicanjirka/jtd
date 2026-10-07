@@ -204,6 +204,30 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
                 Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none());
     }
 
+    /**
+     * This heal as damage: every tick it would have healed, it deals that much magic instead,
+     * through {@code sink}. Any other kind is returned as it is.
+     */
+    public Effect invertedThrough(DamageSink sink) {
+        if (this.kind != EffectKind.HEAL) {
+            return this;
+        }
+        return new Effect(this.kind, this.speedMultiplier, Damage.magic(this.healPerTick), this.shieldPercent,
+                this.remainingTicks, sink, 0, this.shieldRestrictedTo, this.authoredDurationTicks, this.fuel,
+                this.peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap, this.origin);
+    }
+
+    /** How many ticks a chill lasts before its last share has faded; {@code 0} for any other kind. */
+    public int ticksToFade() {
+        int ticks = 0;
+        for (FuelContribution contribution : this.fuel) {
+            if (this.kind == EffectKind.CHILL && contribution.decayPerTick() > 0f) {
+                ticks = Math.max(ticks, (int) Math.ceil(contribution.amount() / contribution.decayPerTick()));
+            }
+        }
+        return ticks;
+    }
+
     /** The level's current total; {@code 0f} for kinds without one. */
     public float fuelLevel() {
         float total = 0f;

@@ -3,7 +3,6 @@ package td.tower.splash;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.targeting.HighestHealthSelector;
-import td.util.TickRate;
 
 import java.util.Optional;
 
@@ -45,7 +44,7 @@ public final class CovenHex implements Hex {
 
     @Override
     public void cast(EnemyMob target, HexSpec spec, HexActions actions) {
-        int ticks = Math.round(HexSpec.HEX_SECONDS * TickRate.TICKS_PER_SECOND);
+        int ticks = this.ticksOn(target);
         actions.curse(target, this.kind, ticks);
         if (this.kind == EffectKind.RIME) {
             actions.chill(target, RIME_CHILL, ticks);

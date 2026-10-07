@@ -445,6 +445,9 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_CONTAGION -> new Color(210, 120, 170);
             case STATUS_MARKER_RIME -> new Color(170, 230, 255);
             case STATUS_MARKER_ASH -> new Color(255, 120, 40);
+            case STATUS_MARKER_INVERSION -> new Color(255, 70, 120);
+            case STATUS_MARKER_SYMPATHY -> new Color(120, 150, 255);
+            case STATUS_MARKER_RECKONING -> new Color(255, 200, 60);
             case STATUS_MARKER_SHIELD -> new Color(220, 220, 100);
             case STATUS_MARKER_INVISIBLE -> new Color(180, 180, 180);
             case STATUS_MARKER_HEAL -> new Color(120, 220, 140);
@@ -906,6 +909,26 @@ public final class Java2DFrameRenderer {
                 path.quadTo(s, 0, s * 0.5f, s);
                 path.lineTo(-s * 0.5f, s);
                 path.quadTo(-s, 0, 0, -s);
+            }
+            case INVERSION -> {
+                path.moveTo(-s, -s);
+                path.lineTo(s, -s);
+                path.lineTo(0, s);
+                path.closePath();
+            }
+            case SYMPATHY -> {
+                path.append(new Ellipse2D.Float(-s * 1.2f, -s * 0.6f, s * 1.2f, s * 1.2f), false);
+                path.append(new Ellipse2D.Float(0, -s * 0.6f, s * 1.2f, s * 1.2f), false);
+            }
+            case RECKONING -> {
+                path.append(new Ellipse2D.Float(-s * 0.4f, -s * 0.4f, s * 0.8f, s * 0.8f), false);
+                for (int i = 0; i < 4; i++) {
+                    double angle = Math.PI / 4 + Math.PI / 2 * i;
+                    float dx = (float) Math.cos(angle);
+                    float dy = (float) Math.sin(angle);
+                    path.moveTo(dx * s * 0.6f, dy * s * 0.6f);
+                    path.lineTo(dx * s * 1.3f, dy * s * 1.3f);
+                }
             }
         }
         return path;

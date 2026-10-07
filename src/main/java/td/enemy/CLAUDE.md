@@ -47,7 +47,9 @@
   `HurtSpeedTrait`, `CriticalImmunityTrait` (full resilience), `EffectResistTrait` (`immuneTo`
   at 1). Every enemy diminishes hard-CC durations; there is no opt-in.
 - `DefinedEnemyMob.applyEffect` shortens the effect by its resistance and freeze diminishing
-  returns before `ActiveEffects` sees it; there is no separate immunity check.
+  returns before `ActiveEffects` sees it; there is no separate immunity check. The one exception
+  is `INVERSION`: it turns a heal into damage and a shield into one hit, credited to its caster,
+  before anything else.
 - `AbilityEvaluator` decides when a trigger fires; actions execute through
   `MobAbilityContext` (one per caster per tick), which reaches the world through
   `GameWorld.enemies()` (`EnemySpawner.add`/`replace`); spawned mobs are built by

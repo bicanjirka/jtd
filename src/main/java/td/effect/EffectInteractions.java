@@ -26,6 +26,7 @@ final class EffectInteractions {
         BLOCKED_BY.put(EffectKind.FREEZE, EnumSet.of(EffectKind.ASH));
         CONSUMED_BY.put(EffectKind.RIME, EnumSet.of(EffectKind.ASH));
         CONSUMED_BY.put(EffectKind.ASH, EnumSet.of(EffectKind.RIME));
+        BLOCKED_BY.put(EffectKind.INVISIBLE, EnumSet.of(EffectKind.INVERSION));
     }
 
     private EffectInteractions() {

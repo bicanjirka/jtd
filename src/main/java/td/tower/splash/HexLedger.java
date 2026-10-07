@@ -33,6 +33,40 @@ public final class HexLedger {
         return this.entries.isEmpty();
     }
 
+    /** The living enemies carrying a hex of {@code kind}, in the order they were cursed. */
+    public List<EnemyMob> carriers(EffectKind kind) {
+        return this.entries.stream()
+                .filter(entry -> entry.kind() == kind && !entry.enemy().isDead())
+                .map(Entry::enemy)
+                .toList();
+    }
+
+    /** The living enemies carrying any hex, each once, in the order they were first cursed. */
+    public List<EnemyMob> hexed() {
+        return this.entries.stream()
+                .map(Entry::enemy)
+                .filter(enemy -> !enemy.isDead())
+                .distinct()
+                .toList();
+    }
+
+    /**
+     * Starts the watched hex of {@code kind} on {@code enemy} over: what it stored so far is counted
+     * out, and the next count starts now.
+     *
+     * @return the damage the enemy took since the hex was cast, in units; {@code 0} if it carries none
+     */
+    public long restart(EnemyMob enemy, EffectKind kind) {
+        for (int i = 0; i < this.entries.size(); i++) {
+            Entry entry = this.entries.get(i);
+            if (entry.enemy() == enemy && entry.kind() == kind) {
+                this.entries.set(i, new Entry(enemy, kind, enemy.damageTaken(), entry.generation()));
+                return enemy.damageTaken() - entry.damageTakenAtCast();
+            }
+        }
+        return 0L;
+    }
+
     /**
      * What happened to the hexes since the last call: each one that ran out on a living enemy, and
      * each enemy that died carrying some, once with all of them. Either way they are no longer

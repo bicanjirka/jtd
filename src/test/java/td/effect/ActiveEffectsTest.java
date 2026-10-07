@@ -831,6 +831,48 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void anInvertedEnemyCannotTurnInvisibleAndTheInversionRemovesAnInvisibilityItHad() {
+        ActiveEffects hidden = new ActiveEffects();
+        hidden.apply(Effect.invisible(100, d -> {
+        }));
+        ActiveEffects inverted = new ActiveEffects();
+        inverted.apply(Effect.hex(EffectKind.INVERSION, 100, d -> {
+        }));
+
+        hidden.apply(Effect.hex(EffectKind.INVERSION, 100, d -> {
+        }));
+        inverted.apply(Effect.invisible(100, d -> {
+        }));
+
+        assertThat(hidden.activeKinds()).containsExactly(EffectKind.INVERSION);
+        assertThat(inverted.activeKinds()).containsExactly(EffectKind.INVERSION);
+        assertThat(inverted.blockedKinds()).contains(EffectKind.INVISIBLE);
+    }
+
+    @Test
+    void aHealThatBecameDamageIsPaidEveryTickThroughItsSinkAndRestoresNothing() {
+        List<Damage> paid = new ArrayList<>();
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.heal(40, 3, d -> {
+        }).invertedThrough(recordingSink(paid)));
+
+        tickTimes(effects, 3);
+
+        assertThat(paid).containsExactly(Damage.magic(40), Damage.magic(40), Damage.magic(40));
+        assertThat(resolved(effects, EnemyStat.REGENERATION)).isZero();
+    }
+
+    @Test
+    void aChillFadesInAsManyTicksAsItsSlowestShareTakes() {
+        Effect chill = Effect.chill(0.4f, 80, d -> {
+        });
+
+        assertThat(chill.ticksToFade()).isEqualTo(80);
+        assertThat(Effect.freeze(80, d -> {
+        }).ticksToFade()).isZero();
+    }
+
+    @Test
     void aDebuffTimerRunsAtTheSpiritPaceButNeverBelowAQuarter() {
         ActiveEffects fast = new ActiveEffects();
         fast.apply(Effect.exposed(20, d -> {

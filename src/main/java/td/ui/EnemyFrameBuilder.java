@@ -133,6 +133,9 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case CONTAGION -> Palette.STATUS_MARKER_CONTAGION;
             case RIME -> Palette.STATUS_MARKER_RIME;
             case ASH -> Palette.STATUS_MARKER_ASH;
+            case INVERSION -> Palette.STATUS_MARKER_INVERSION;
+            case SYMPATHY -> Palette.STATUS_MARKER_SYMPATHY;
+            case RECKONING -> Palette.STATUS_MARKER_RECKONING;
         };
     }
 
@@ -351,6 +354,9 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case CONTAGION -> Optional.of(HexGlyph.CONTAGION);
             case RIME -> Optional.of(HexGlyph.RIME);
             case ASH -> Optional.of(HexGlyph.ASH);
+            case INVERSION -> Optional.of(HexGlyph.INVERSION);
+            case SYMPATHY -> Optional.of(HexGlyph.SYMPATHY);
+            case RECKONING -> Optional.of(HexGlyph.RECKONING);
             default -> Optional.empty();
         };
     }

@@ -13,4 +13,9 @@ public record SpawnEnemiesAction(String definitionId, AbilitySpawnShape shape, b
     public SpawnEnemiesAction(String definitionId, int count, boolean consumesSelf) {
         this(definitionId, new AbilitySpawnShape(count, 1f, 1f, 1f, 0.0, Optional.empty()), consumesSelf);
     }
+
+    @Override
+    public boolean appliesEffects() {
+        return false;
+    }
 }

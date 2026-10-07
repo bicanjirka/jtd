@@ -3,7 +3,6 @@ package td.tower.splash;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.targeting.LowestHealthSelector;
-import td.util.TickRate;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +34,6 @@ public final class ContagionHex implements Hex {
 
     @Override
     public void cast(EnemyMob target, HexSpec spec, HexActions actions) {
-        actions.curse(target, EffectKind.CONTAGION, Math.round(HexSpec.HEX_SECONDS * TickRate.TICKS_PER_SECOND));
+        actions.curse(target, EffectKind.CONTAGION, this.ticksOn(target));
     }
 }

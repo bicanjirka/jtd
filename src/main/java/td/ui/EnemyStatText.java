@@ -197,6 +197,9 @@ final class EnemyStatText {
             case CONTAGION -> "Contagious";
             case RIME -> "Rimed";
             case ASH -> "Ashen";
+            case INVERSION -> "Inverted";
+            case SYMPATHY -> "Sympathetic";
+            case RECKONING -> "Reckoned";
         };
         String category = effect.kind().category().label();
         if (effect.kind() == EffectKind.CHILL) {

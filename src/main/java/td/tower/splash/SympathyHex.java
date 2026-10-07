@@ -6,25 +6,25 @@ import td.tower.targeting.MostNeighboursSelector;
 
 import java.util.Optional;
 
-/** Hex of Blight: poisons the enemy for as long as the hex lasts. Picks the most crowded enemy without Blight. */
-public final class BlightHex implements Hex {
+/**
+ * Hex of Sympathy: what one suffers, all suffer. Picks the most crowded enemy without Sympathy.
+ */
+public final class SympathyHex implements Hex {
 
     @Override
     public EffectKind kind() {
-        return EffectKind.BLIGHT;
+        return EffectKind.SYMPATHY;
     }
 
     @Override
     public Optional<EnemyMob> target(HexScene scene) {
         return new MostNeighboursSelector(scene.blastRadius()).selectFrom(scene.candidates().stream()
-                .filter(enemy -> !enemy.hasEffect(EffectKind.BLIGHT))
+                .filter(enemy -> !enemy.hasEffect(EffectKind.SYMPATHY))
                 .toList());
     }
 
     @Override
     public void cast(EnemyMob target, HexSpec spec, HexActions actions) {
-        int ticks = this.ticksOn(target);
-        actions.curse(target, EffectKind.BLIGHT, ticks);
-        actions.poison(target, spec.blightShare(), ticks);
+        actions.curse(target, EffectKind.SYMPATHY, this.ticksOn(target));
     }
 }

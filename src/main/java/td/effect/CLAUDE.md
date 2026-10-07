@@ -35,6 +35,8 @@
 - `MARKED` is spent by a hit, never by periodic damage: the mob calls `consume(MARKED)`, and only
   when its resilience is below 100.
 - A `HEX` kind carries no stat of its own; the tower that cast it watches it and pays it out.
+  `INVERSION` is the one hex the enemy itself reads: `invertedThrough(sink)` turns a heal into
+  damage per tick, and `INVISIBLE` is an `EffectInteractions` row it blocks and removes.
 - Two hexes bend fire and ice inside `ActiveEffects`, keyed only on their kind being active: under
   `RIME` a freeze buys twice the chill's extra time and lands the burn it puts out at once (its
   whole remaining pool, `fuel / (1 - alpha)`); under `ASH` pools hold twice as much and earn
