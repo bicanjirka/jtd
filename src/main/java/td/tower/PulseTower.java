@@ -6,6 +6,7 @@ import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.enemy.ShieldListener;
 import td.tower.buff.TowerBuff;
 import td.tower.pulse.ArcDischargePerk;
 import td.tower.pulse.EventHorizonPerk;
@@ -207,6 +208,9 @@ public final class PulseTower extends AbstractTower {
     private int deathsThisWave;
     private boolean watchingWaves;
     private final WaveStartListener waveListener = () -> this.deathsThisWave = 0;
+    private boolean watchingShields;
+    private boolean mirroring;
+    private final ShieldListener shieldListener = this::mirrorShield;
 
     public PulseTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.PULSE, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0), context, x, y);
@@ -238,6 +242,7 @@ public final class PulseTower extends AbstractTower {
         this.fire = !inside.isEmpty();
         int shots = inside.isEmpty() ? 0 : this.clock.shotsDue();
         this.countDeaths(spec, inside);
+        this.watchShields(spec);
         boolean beat = gameTime % TICKS_PER_SECOND == 0;
         List<EnemyMob> earners = spec.toll().isActive()
                 ? this.tollTracker.tick(inside, spec.toll().ticksPerStack()) : List.of();
@@ -256,7 +261,7 @@ public final class PulseTower extends AbstractTower {
                     + Math.min(MAX_DEATH_BONUS, spec.field().perDeathBonus() * this.deathsThisWave)
                     + (spec.modes().has(FieldMode.SOUL_DRAIN) ? SOUL_DRAIN_DAMAGE_PER_POINT * Math.max(0f, -enemy.spirit()) : 0f);
             for (int hit = 0; hit < shots && !enemy.isDead(); hit++) {
-                this.hitWithField(enemy, Math.round(this.damageCurrent() * factor), spec);
+                this.dealPeriodicDamage(enemy, Damage.magic(Math.round(this.damageCurrent() * factor)));
                 this.rattle(enemy, spec);
             }
         }
@@ -288,12 +293,27 @@ public final class PulseTower extends AbstractTower {
         this.previouslyInside = inside;
     }
 
-    /** One field tick: a periodic magic hit, and with Mirror Field what a shield took of it dealt back. */
-    private void hitWithField(EnemyMob enemy, int amount, PulseSpec spec) {
-        float absorbed = spec.modes().has(FieldMode.MIRROR) ? enemy.shieldingFor(DamageType.MAGIC) : 0f;
-        this.dealPeriodicDamage(enemy, Damage.magic(amount));
-        if (absorbed > 0f) {
-            this.dealPeriodicDamage(enemy, Damage.magic(Math.round(amount * absorbed)));
+    /** Mirror Field: listens for shields taking damage, from the first tick that has the rule. */
+    private void watchShields(PulseSpec spec) {
+        if (spec.modes().has(FieldMode.MIRROR) && !this.watchingShields) {
+            this.context.enemies().addShieldListener(this.shieldListener);
+            this.watchingShields = true;
+        }
+    }
+
+    /**
+     * Mirror Field: what a shield takes of any hit on an enemy in the field comes back as damage no
+     * shield takes a share of. What it deals itself is never mirrored again.
+     */
+    private void mirrorShield(EnemyMob enemy, Damage absorbed) {
+        if (this.mirroring || enemy.isDead() || !this.previouslyInside.contains(enemy)) {
+            return;
+        }
+        this.mirroring = true;
+        try {
+            this.dealDamage(enemy, Damage.magic(absorbed.amount()), this.stats().attack().asPeriodic().withIgnoredShields());
+        } finally {
+            this.mirroring = false;
         }
     }
 
@@ -426,6 +446,7 @@ public final class PulseTower extends AbstractTower {
     public void doCleanup() {
         super.doCleanup();
         this.context.waves().removeListener(this.waveListener);
+        this.context.enemies().removeShieldListener(this.shieldListener);
     }
 
     /** What the field's colour says about its rules: Null Field violet, Undertow blue, Corrosion green. */

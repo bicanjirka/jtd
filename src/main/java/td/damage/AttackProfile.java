@@ -25,11 +25,12 @@ public record AttackProfile(float critChance, float critMultiplier, float armorP
                             float armorPenetrationFlat, float magicPenetration, float magicPenetrationFlat,
                             float platingPenetration, Delivery delivery, boolean guaranteedCrit,
                             float glancingArmorPenetrationFlat, float glancingPlatingPenetration,
-                            boolean critsPierceShields, AttackOrigin origin) {
+                            boolean critsPierceShields, AttackOrigin origin,
+                            boolean ignoresShields) {
 
     public static final float DEFAULT_CRIT_MULTIPLIER = 1.5f;
 
-    private static final AttackProfile NONE = new AttackProfile(0f, DEFAULT_CRIT_MULTIPLIER, 0f, 0f, 0f, 0f, 0f, Delivery.HIT, false, 0f, 0f, false, AttackOrigin.none());
+    private static final AttackProfile NONE = new AttackProfile(0f, DEFAULT_CRIT_MULTIPLIER, 0f, 0f, 0f, 0f, 0f, Delivery.HIT, false, 0f, 0f, false, AttackOrigin.none(), false);
 
     /** Never crits and penetrates nothing. */
     public static AttackProfile none() {
@@ -43,45 +44,45 @@ public record AttackProfile(float critChance, float critMultiplier, float armorP
     public AttackProfile withCritChance(float critChance) {
         return new AttackProfile(critChance, this.critMultiplier, this.armorPenetration, this.armorPenetrationFlat,
                 this.magicPenetration, this.magicPenetrationFlat, this.platingPenetration, this.delivery, this.guaranteedCrit,
-                this.glancingArmorPenetrationFlat, this.glancingPlatingPenetration, this.critsPierceShields, this.origin);
+                this.glancingArmorPenetrationFlat, this.glancingPlatingPenetration, this.critsPierceShields, this.origin, this.ignoresShields);
     }
 
     public AttackProfile withCritMultiplier(float critMultiplier) {
         return new AttackProfile(this.critChance, critMultiplier, this.armorPenetration, this.armorPenetrationFlat,
                 this.magicPenetration, this.magicPenetrationFlat, this.platingPenetration, this.delivery, this.guaranteedCrit,
-                this.glancingArmorPenetrationFlat, this.glancingPlatingPenetration, this.critsPierceShields, this.origin);
+                this.glancingArmorPenetrationFlat, this.glancingPlatingPenetration, this.critsPierceShields, this.origin, this.ignoresShields);
     }
 
     public AttackProfile withArmorPenetration(float fraction, float flat) {
         return new AttackProfile(this.critChance, this.critMultiplier, fraction, flat, this.magicPenetration,
                 this.magicPenetrationFlat, this.platingPenetration, this.delivery, this.guaranteedCrit,
-                this.glancingArmorPenetrationFlat, this.glancingPlatingPenetration, this.critsPierceShields, this.origin);
+                this.glancingArmorPenetrationFlat, this.glancingPlatingPenetration, this.critsPierceShields, this.origin, this.ignoresShields);
     }
 
     public AttackProfile withMagicPenetration(float fraction, float flat) {
         return new AttackProfile(this.critChance, this.critMultiplier, this.armorPenetration,
                 this.armorPenetrationFlat, fraction, flat, this.platingPenetration, this.delivery, this.guaranteedCrit,
-                this.glancingArmorPenetrationFlat, this.glancingPlatingPenetration, this.critsPierceShields, this.origin);
+                this.glancingArmorPenetrationFlat, this.glancingPlatingPenetration, this.critsPierceShields, this.origin, this.ignoresShields);
     }
 
     public AttackProfile withPlatingPenetration(float fraction) {
         return new AttackProfile(this.critChance, this.critMultiplier, this.armorPenetration,
                 this.armorPenetrationFlat, this.magicPenetration, this.magicPenetrationFlat, fraction, this.delivery, this.guaranteedCrit,
-                this.glancingArmorPenetrationFlat, this.glancingPlatingPenetration, this.critsPierceShields, this.origin);
+                this.glancingArmorPenetrationFlat, this.glancingPlatingPenetration, this.critsPierceShields, this.origin, this.ignoresShields);
     }
 
     /** The same attack as periodic damage: it never crits. */
     public AttackProfile asPeriodic() {
         return new AttackProfile(this.critChance, this.critMultiplier, this.armorPenetration,
                 this.armorPenetrationFlat, this.magicPenetration, this.magicPenetrationFlat, this.platingPenetration,
-                Delivery.PERIODIC, this.guaranteedCrit, this.glancingArmorPenetrationFlat, this.glancingPlatingPenetration, this.critsPierceShields, this.origin);
+                Delivery.PERIODIC, this.guaranteedCrit, this.glancingArmorPenetrationFlat, this.glancingPlatingPenetration, this.critsPierceShields, this.origin, this.ignoresShields);
     }
 
     /** A hit that crits whenever the target is not crit-immune; its size still shrinks with resilience. */
     public AttackProfile withGuaranteedCrit() {
         return new AttackProfile(this.critChance, this.critMultiplier, this.armorPenetration,
                 this.armorPenetrationFlat, this.magicPenetration, this.magicPenetrationFlat, this.platingPenetration,
-                this.delivery, true, this.glancingArmorPenetrationFlat, this.glancingPlatingPenetration, this.critsPierceShields, this.origin);
+                this.delivery, true, this.glancingArmorPenetrationFlat, this.glancingPlatingPenetration, this.critsPierceShields, this.origin, this.ignoresShields);
     }
 
     /** Adds {@code bonus} to the crit multiplier, so several sources stack instead of overwriting. */
@@ -96,7 +97,7 @@ public record AttackProfile(float critChance, float critMultiplier, float armorP
     public AttackProfile withGlancingPenetration(float armorFlat, float platingFraction) {
         return new AttackProfile(this.critChance, this.critMultiplier, this.armorPenetration,
                 this.armorPenetrationFlat, this.magicPenetration, this.magicPenetrationFlat, this.platingPenetration,
-                this.delivery, this.guaranteedCrit, armorFlat, platingFraction, this.critsPierceShields, this.origin);
+                this.delivery, this.guaranteedCrit, armorFlat, platingFraction, this.critsPierceShields, this.origin, this.ignoresShields);
     }
 
     /** The same attack, from {@code origin}. */
@@ -104,7 +105,7 @@ public record AttackProfile(float critChance, float critMultiplier, float armorP
         return new AttackProfile(this.critChance, this.critMultiplier, this.armorPenetration,
                 this.armorPenetrationFlat, this.magicPenetration, this.magicPenetrationFlat, this.platingPenetration,
                 this.delivery, this.guaranteedCrit, this.glancingArmorPenetrationFlat,
-                this.glancingPlatingPenetration, this.critsPierceShields, origin);
+                this.glancingPlatingPenetration, this.critsPierceShields, origin, this.ignoresShields);
     }
 
     /** A critical hit from this attack goes through a shield to health. */
@@ -112,7 +113,15 @@ public record AttackProfile(float critChance, float critMultiplier, float armorP
         return new AttackProfile(this.critChance, this.critMultiplier, this.armorPenetration,
                 this.armorPenetrationFlat, this.magicPenetration, this.magicPenetrationFlat, this.platingPenetration,
                 this.delivery, this.guaranteedCrit, this.glancingArmorPenetrationFlat,
-                this.glancingPlatingPenetration, true, this.origin);
+                this.glancingPlatingPenetration, true, this.origin, this.ignoresShields);
+    }
+
+    /** A hit that no shield takes a share of. */
+    public AttackProfile withIgnoredShields() {
+        return new AttackProfile(this.critChance, this.critMultiplier, this.armorPenetration,
+                this.armorPenetrationFlat, this.magicPenetration, this.magicPenetrationFlat, this.platingPenetration,
+                this.delivery, this.guaranteedCrit, this.glancingArmorPenetrationFlat,
+                this.glancingPlatingPenetration, this.critsPierceShields, this.origin, true);
     }
 
     /** {@code mitigation} after this attacker's penetration for {@code type}. */

@@ -1,5 +1,7 @@
 package td.enemy;
 
+import td.damage.Damage;
+
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,6 +17,7 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
     private final AtomicInteger count = new AtomicInteger();
     private final AtomicLong entries = new AtomicLong();
     private final List<WalkEndListener> walkEndListeners = new CopyOnWriteArrayList<>();
+    private final List<ShieldListener> shieldListeners = new CopyOnWriteArrayList<>();
     // Swapped whole in one write, so a reader never sees a half-filled roster.
     private volatile List<EnemyMob> enemies = new CopyOnWriteArrayList<>();
 
@@ -50,6 +53,21 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
 
     public void addWalkEndListener(WalkEndListener listener) {
         this.walkEndListeners.add(listener);
+    }
+
+    /** A shield on {@code enemy} took {@code absorbed} of a hit. */
+    public void reportShielded(EnemyMob enemy, Damage absorbed) {
+        for (ShieldListener listener : this.shieldListeners) {
+            listener.shieldTook(enemy, absorbed);
+        }
+    }
+
+    public void addShieldListener(ShieldListener listener) {
+        this.shieldListeners.add(listener);
+    }
+
+    public void removeShieldListener(ShieldListener listener) {
+        this.shieldListeners.remove(listener);
     }
 
     /** A mob going live takes the next place in the entry order. */
