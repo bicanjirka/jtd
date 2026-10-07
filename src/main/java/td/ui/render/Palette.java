@@ -71,6 +71,8 @@ public enum Palette {
     TOWER_PULSE_RIPPLE_CORROSION,
     TOWER_PULSE_ZAP,
     TOWER_CINDER_CONE,
+    /** The ring a Mortar draws on the spot it is ranging in on. */
+    TOWER_MORTAR_RANGING,
     ZONE_BURNING,
     ZONE_TAR,
     ZONE_FROST,

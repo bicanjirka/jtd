@@ -10,6 +10,8 @@ public enum BehaviourMarker {
     VULNERABLE,
     REVEAL,
     POISON,
+    CRACKED,
+    DAZE,
     /** A bonus the tower gives others. */
     BUFF
 }

@@ -110,6 +110,8 @@ final class TowerSheetText {
             case VULNERABLE -> Row.effect(EnemyFrameBuilder.markerPaletteFor(EffectKind.VULNERABLE), behaviour.label(), behaviour.value());
             case REVEAL -> Row.effect(EnemyFrameBuilder.markerPaletteFor(EffectKind.REVEALED), behaviour.label(), behaviour.value());
             case POISON -> Row.effect(EnemyFrameBuilder.markerPaletteFor(EffectKind.POISON), behaviour.label(), behaviour.value());
+            case CRACKED -> Row.effect(EnemyFrameBuilder.markerPaletteFor(EffectKind.CRACKED), behaviour.label(), behaviour.value());
+            case DAZE -> Row.effect(EnemyFrameBuilder.markerPaletteFor(EffectKind.DAZED), behaviour.label(), behaviour.value());
             case BUFF -> Row.toned(Glyph.RING, Palette.TOWER_AURA_RING, behaviour.label(), behaviour.value());
         };
     }

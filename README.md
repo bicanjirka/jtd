@@ -90,7 +90,7 @@ a different loadout or level, since v1 has no config format for either.
 | Sonar  | 20    | Long range; a beam sweeps around it once every 3s, hitting everything it passes; once attuned, each sweep Exposes the healthiest enemy it passed |
 | Pulse  | 25    | Short range; a field that deals magic damage to everything in range every tick, ghosts included and with no visible enemy needed. Attuned, an enemy that stays inside builds Toll: it takes more from the field, and every debuff on it wears off slower |
 | Aura   | 20    | Passive — boosts the damage and range of nearby towers; several stack                                                                               |
-| Mortar | 30    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path; splashes physical damage and chills everything the blast reaches |
+| Mortar | 30    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path, never one within 1.5 cells of it; the blast does physical damage with falloff and cracks the plating of everything it reaches. Attuned, a shell landing near the last one hits harder and wider |
 | Seeker | 30    | Fires a slow homing missile at the fastest enemy in range, which it keeps through invisibility and re-aims at each tick; deals magic damage and freezes whichever mob it actually hits. Attuned, it banks missiles in a nest, between waves too, and launches them as a salvo |
 | Cinder | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included |
 
