@@ -606,7 +606,7 @@ class SplashTowerTest {
         SplashTower stormcaller = this.upgradedTower("Arc");
         SplashTower hexer = this.upgradedTower("Hex");
 
-        assertThat(plain.inspect().name()).isEqualTo("Splash");
+        assertThat(plain.inspect().name()).isEqualTo("Burst");
         assertThat(stormcaller.inspect().name()).isEqualTo("Stormcaller");
         assertThat(hexer.inspect().name()).isEqualTo("Hexer");
     }

@@ -48,6 +48,87 @@ class TowerEffectFrameBuilderTest {
         assertThat(linkBeams.getFirst().toY()).isEqualTo((float) near.getY());
     }
 
+    private static AuraTower auraWith(GameWorld context, String... nodes) {
+        context.economy().startEconomy(1_000_000, 5);
+        context.playtestRules().setUpgradeGatesIgnored(true);
+        AuraTower aura = new AuraTower(context, 0, 0);
+        context.towers().add(aura);
+        aura.earnXp(1_000);
+        for (String name : List.of("Attune", "Awaken")) {
+            aura.buyUpgrade(nodeNamed(aura, name));
+        }
+        for (String name : nodes) {
+            aura.buyUpgrade(nodeNamed(aura, name));
+        }
+        return aura;
+    }
+
+    private static List<TowerEffectDraw> drawnBy(GameWorld context, AuraTower aura) {
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context.getBoard().scale(), 0, 0.0, 0.0);
+        aura.accept(builder);
+        return builder.build();
+    }
+
+    private static List<RingDraw> ringsIn(List<TowerEffectDraw> draws, Palette palette) {
+        return draws.stream().filter(RingDraw.class::isInstance).map(RingDraw.class::cast)
+                .filter(ring -> ring.palette() == palette).toList();
+    }
+
+    @Test
+    void anAuraWithBroadcastDrawsItsLinksInTheReachColour() {
+        GameWorld context = WorldFixtures.newWorld();
+        AuraTower aura = auraWith(context, "Broadcast");
+        context.towers().add(new SniperTower(context, 0, 0));
+
+        List<TowerEffectDraw> draws = drawnBy(context, aura);
+
+        assertThat(beamsIn(draws, Palette.TOWER_AURA_LINK_REACH)).hasSize(1);
+        assertThat(beamsIn(draws, Palette.TOWER_AURA_LINK)).isEmpty();
+    }
+
+    @Test
+    void anAuraWithChosenDrawsItsLinkInTheChosenColour() {
+        GameWorld context = WorldFixtures.newWorld();
+        AuraTower aura = auraWith(context, "Chosen");
+        context.towers().add(new SniperTower(context, 0, 0));
+        context.towers().add(new SniperTower(context, 0, 0));
+        context.towers().all().get(1).earnXp(50);
+
+        List<TowerEffectDraw> draws = drawnBy(context, aura);
+
+        assertThat(beamsIn(draws, Palette.TOWER_AURA_LINK_CHOSEN)).hasSize(1);
+    }
+
+    @Test
+    void theApprenticeWearsAMentoringRing() {
+        GameWorld context = WorldFixtures.newWorld();
+        AuraTower aura = auraWith(context, "Tutelage", "Shared Lessons", "Apprentice");
+        SniperTower veteran = new SniperTower(context, 0, 0);
+        SniperTower novice = new SniperTower(context, 0, 0);
+        context.towers().add(veteran);
+        context.towers().add(novice);
+        veteran.earnXp(500);
+
+        List<RingDraw> marks = ringsIn(drawnBy(context, aura), Palette.TOWER_AURA_MENTEE);
+
+        assertThat(marks).hasSize(1);
+        assertThat(marks.getFirst().centerX()).isEqualTo((float) novice.getX());
+    }
+
+    @Test
+    void ralliesSpotIsMarkedOnlyWhileTheAuraIsSelected() {
+        GameWorld context = WorldFixtures.newWorld();
+        context.setPath(new td.wave.PathNormal(List.of(new td.wave.Vec2(0, 0), new td.wave.Vec2(900, 0))));
+        AuraTower aura = auraWith(context, "Rally");
+
+        int unselected = ringsIn(drawnBy(context, aura), Palette.TOWER_AURA_RALLY).size();
+        aura.setSelected(true);
+        int selected = ringsIn(drawnBy(context, aura), Palette.TOWER_AURA_RALLY).size();
+
+        assertThat(unselected).isZero();
+        assertThat(selected).isEqualTo(1);
+    }
+
     @Test
     void anAuraTowerWithNothingInRangeDrawsNoLinkBeams() {
         GameWorld context = WorldFixtures.newWorld();

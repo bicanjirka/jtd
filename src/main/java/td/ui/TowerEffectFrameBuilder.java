@@ -66,6 +66,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float NEST_ORBIT_FRACTION = 0.7f;
     /** A Mortar's ranging ring, in cells: wide at the first shell and drawing in with each step. */
     private static final float RANGING_RADIUS_CELLS = 1.5f;
+    private static final float APPRENTICE_MARK_CELLS = 0.55f;
+    private static final float RALLY_SPOT_CELLS = 1f;
     private static final float RANGING_TIGHTENING_CELLS = 1f;
     private static final float RANGING_ALPHA = 0.7f;
     private static final float NUKE_FLASH_SHARE = 0.6f;
@@ -289,6 +291,14 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
     }
 
+    private static Palette linkFor(AuraTower.GrantLook look) {
+        return switch (look) {
+            case PLAIN -> Palette.TOWER_AURA_LINK;
+            case REACH -> Palette.TOWER_AURA_LINK_REACH;
+            case CHOSEN -> Palette.TOWER_AURA_LINK_CHOSEN;
+        };
+    }
+
     public Void visitAuraTower(AuraTower tower) {
         float maxRadius = tower.getRangeReal();
         for (double phaseOffset : AURA_PHASE_OFFSETS) {
@@ -296,9 +306,18 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             this.draws.add(new RingDraw(Palette.TOWER_AURA_RING, tower.getX(), tower.getY(),
                     (float) (phase * maxRadius), (float) (1.0 - phase)));
         }
+        Palette link = linkFor(tower.grantLook());
         for (Tower buffed : tower.buffedTowers()) {
-            this.draws.add(BeamDraw.solid(Palette.TOWER_AURA_LINK, tower.getX(), tower.getY(),
-                    buffed.getX(), buffed.getY(), 1.0f));
+            this.draws.add(BeamDraw.solid(link, tower.getX(), tower.getY(), buffed.getX(), buffed.getY(), 1.0f));
+        }
+        if (tower.mentorsApprentice() && tower.apprentice() != null) {
+            Tower apprentice = tower.apprentice();
+            this.draws.add(new RingDraw(Palette.TOWER_AURA_MENTEE, apprentice.getX(), apprentice.getY(),
+                    this.scale * APPRENTICE_MARK_CELLS, 1f));
+        }
+        if (tower.isSelected()) {
+            tower.rallySpot().ifPresent(spot -> this.draws.add(new RingDraw(Palette.TOWER_AURA_RALLY,
+                    (float) spot.x(), (float) spot.y(), this.scale * RALLY_SPOT_CELLS, 0.9f)));
         }
         return null;
     }

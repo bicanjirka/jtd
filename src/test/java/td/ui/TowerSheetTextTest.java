@@ -54,7 +54,7 @@ class TowerSheetTextTest {
         InfoSheet sheet = shopSheet(TowerFactory.Type.SPLASH);
 
         assertThat(sheet.lines().getFirst()).isEqualTo(
-                new SheetLine.Title(Glyph.TOWER_BODY, Palette.TOWER_SPLASH_BODY, "Splash tower", "$15"));
+                new SheetLine.Title(Glyph.TOWER_BODY, Palette.TOWER_SPLASH_BODY, "Burst tower", "$15"));
     }
 
     @Test
