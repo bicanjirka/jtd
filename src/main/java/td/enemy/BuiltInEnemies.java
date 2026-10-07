@@ -238,13 +238,14 @@ final class BuiltInEnemies {
                     new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden3", 1, true))));
     // High enough that an un-upgraded weak tower does nothing; later stages weaken it.
     private static final float WARDEN_FLAT_RESIST = 10f;
-    private static final String WARDEN_ABILITY_BLURB = " Periodically calls a reinforcement and re-shields itself; "
+    private static final String WARDEN_ABILITY_BLURB = " Periodically calls a reinforcement and shields itself against magic; "
             + "shields every nearby ally once below half health; heals itself if left unattacked "
             + "too long; gains a shield whenever it survives a critical hit; and leaves behind an egg on death.";
     private static final List<IdentifiedAbility> WARDEN_STANDING_ABILITIES = List.of(
             IdentifiedAbility.anonymous(new Ability(new PeriodicTrigger(300), new SpawnEnemiesAction("c", 1, false))),
+            // Its plating only answers physical hits, so its own shield covers the other type.
             IdentifiedAbility.anonymous(new Ability(new PeriodicTrigger(400),
-                    new ApplyEffectAction(new ShieldTemplate(0.5f, 100), new SelfTarget()))),
+                    new ApplyEffectAction(ShieldTemplate.magicOnly(0.5f, 100), new SelfTarget()))),
             IdentifiedAbility.anonymous(new Ability(new HealthThresholdTrigger(0.5f),
                     new ApplyEffectAction(new ShieldTemplate(0.3f, 150), new RadiusTarget(150f)))),
             // Re-arms after each hit, so it fires every time it is left alone, not just once.
