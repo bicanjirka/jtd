@@ -4,6 +4,7 @@ import td.projectile.CannonballProjectile;
 import td.projectile.MissileLook;
 import td.projectile.MissileProjectile;
 import td.projectile.ProjectileVisitor;
+import td.projectile.ShellLook;
 import td.ui.render.CannonballDraw;
 import td.ui.render.MissileDraw;
 import td.ui.render.Palette;
@@ -44,6 +45,15 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         };
     }
 
+    private static Palette paletteFor(ShellLook look) {
+        return switch (look) {
+            case PLAIN -> Palette.PROJECTILE_CANNONBALL;
+            case NAPALM -> Palette.PROJECTILE_NAPALM;
+            case TAR -> Palette.PROJECTILE_TAR;
+            case FROST -> Palette.PROJECTILE_FROST;
+        };
+    }
+
     public List<ProjectileDraw> build() {
         return this.draws;
     }
@@ -52,7 +62,7 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
     public Void visitCannonball(CannonballProjectile projectile) {
         float x = lerp(projectile.getPrevX(), projectile.getX(), this.interpolationAlpha);
         float y = lerp(projectile.getPrevY(), projectile.getY(), this.interpolationAlpha);
-        this.draws.add(new CannonballDraw(Palette.PROJECTILE_CANNONBALL, x, y, projectile.stats().size()));
+        this.draws.add(new CannonballDraw(paletteFor(projectile.look()), x, y, projectile.stats().size()));
         return null;
     }
 

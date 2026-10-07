@@ -13,12 +13,15 @@ import td.tower.mortar.HeavyShellPerk;
 import td.tower.mortar.LongBatteryPerk;
 import td.tower.mortar.MortarPerk;
 import td.tower.mortar.MortarSpec;
+import td.tower.mortar.ShellType;
+import td.tower.mortar.ShellTypePerk;
 import td.tower.mortar.WiderBlastPerk;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.BaseSlotPerks;
+import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
 import td.tower.upgrade.PurposeCondition;
@@ -28,10 +31,13 @@ import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
+import td.zone.Zone;
+import td.zone.ZoneOwner;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * The Artillery: lobs a slow, unguided shell at the visible enemy furthest along the path, beyond a
@@ -84,19 +90,33 @@ public final class MortarTower extends AbstractTower {
             .withExtraEffect("a bigger, slower shell; enemies within 0.5 cells of the impact are Dazed 0.5s")
             .after(SIEGE_ROUNDS_2);
 
+    private static final UpgradeNode NAPALM = UpgradeTier.SPECIAL.node("mortar.special.napalm", "Napalm", PRICE)
+            .withExtraEffect("every 3rd shell is Napalm: its blast is magic and leaves burning ground, 1 cell wide, for 3s");
+    private static final UpgradeNode TAR = UpgradeTier.SPECIAL.node("mortar.special.tar", "Tar", PRICE)
+            .withExtraEffect("every 3rd shell is Tar: it leaves tar, 1.2 cells wide, for 4s");
+    private static final UpgradeNode CRYO_SHELLS = UpgradeTier.SPECIAL.node("mortar.special.cryo_shells",
+            "Cryo Shells", PRICE)
+            .withExtraEffect("every 3rd shell is Cryo: it leaves frost ground, 1.2 cells wide, for 3s");
+
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, HEAVY_SHELL))
-            .with(SIEGE_ROUNDS_1, SIEGE_ROUNDS_2, HEAVY_SHELL);
+            .with(SIEGE_ROUNDS_1, SIEGE_ROUNDS_2, HEAVY_SHELL, NAPALM, TAR, CRYO_SHELLS)
+            .withChoice(ExclusiveChoice.specials(NAPALM, TAR, CRYO_SHELLS));
 
     private static final PerkCatalogue<MortarPerk> PERKS = PerkCatalogue.<MortarPerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, BracketingPerk::new)
             .with(StandardBaseSlot.RANGE_3_ID, LongBatteryPerk::new)
             .with(SIEGE_ROUNDS_1.id(), BracketDamagePerk::new)
             .with(SIEGE_ROUNDS_2.id(), WiderBlastPerk::new)
-            .with(HEAVY_SHELL.id(), HeavyShellPerk::new);
+            .with(HEAVY_SHELL.id(), HeavyShellPerk::new)
+            .with(NAPALM.id(), () -> new ShellTypePerk(ShellType.NAPALM))
+            .with(TAR.id(), () -> new ShellTypePerk(ShellType.TAR))
+            .with(CRYO_SHELLS.id(), () -> new ShellTypePerk(ShellType.CRYO));
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final OwnedPerks<MortarPerk> perks = new OwnedPerks<>(PERKS);
     private final BracketTracker bracketing = new BracketTracker();
+    private final ZoneOwner zoneOwner = this::applyEffect;
+    private int shellsFired;
     private int coolDown = 0;
     private EnemyMob currentTarget;
 
@@ -146,8 +166,10 @@ public final class MortarTower extends AbstractTower {
     }
 
     private void fireAt(EnemyMob target, MortarSpec spec) {
+        this.shellsFired++;
+        ShellType type = spec.shells().typeOf(this.shellsFired);
         this.context.projectiles().add(new CannonballProjectile(this.centerX, this.centerY, target.getX(),
-                target.getY(), this.shellStats(spec), this::onImpact));
+                target.getY(), this.shellStats(spec), type.look(), (x, y) -> this.onImpact(x, y, type)));
     }
 
     /** The shell as it flies and is drawn: its speed and size are stats, and its size follows how hard it hits. */
@@ -161,7 +183,7 @@ public final class MortarTower extends AbstractTower {
         return SPLASH_RADIUS_BASE * this.context.getBoard().scale() * spec.blastScale() * stepScale;
     }
 
-    private void onImpact(double x, double y) {
+    private void onImpact(double x, double y, ShellType type) {
         MortarSpec spec = this.spec(this.perks.all());
         int scale = this.context.getBoard().scale();
         int step = this.bracketing.land(x, y, spec.bracket(), scale);
@@ -176,7 +198,7 @@ public final class MortarTower extends AbstractTower {
             double dx = x - enemy.getX();
             double dy = y - enemy.getY();
             float falloff = 1f - (float) ((dx * dx + dy * dy) / ((double) radius * radius));
-            this.dealDamage(enemy, Damage.physical(Math.round(damage * falloff)));
+            this.dealDamage(enemy, Damage.of(type.damageType(), Math.round(damage * falloff)));
             this.applyEffect(enemy, sink -> Effect.cracked(CRACKED_TICKS, sink));
         }
         if (spec.daze().isActive()) {
@@ -189,6 +211,9 @@ public final class MortarTower extends AbstractTower {
                 }
             }
         }
+        type.zone().ifPresent(zone -> this.context.zones().add(new Zone(zone.kind(), x, y,
+                zone.radiusCells() * scale, zone.lifetimeTicks(),
+                Math.round(this.damageCurrent() * zone.damageShare()), this.zoneOwner)));
     }
 
     public EnemyMob getCurrentTarget() {
@@ -235,6 +260,13 @@ public final class MortarTower extends AbstractTower {
         if (spec.daze().isActive()) {
             lines.add(new BehaviourLine(BehaviourMarker.DAZE, "Impact dazes",
                     BehaviourLine.seconds(spec.daze().ticks())));
+        }
+        List<ShellType> specials = spec.shells().specials();
+        if (!specials.isEmpty()) {
+            String pattern = specials.size() == 1 ? specials.getFirst().label()
+                    : specials.stream().map(ShellType::label).collect(Collectors.joining(", ")) + ", plain";
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING,
+                    specials.size() == 1 ? "Every 3rd shell" : "Shells in turn", pattern));
         }
         return lines;
     }

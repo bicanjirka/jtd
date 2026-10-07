@@ -5,6 +5,7 @@ import td.fixtures.FakeEnemyMob;
 import td.ui.ProjectileFrameBuilder;
 import td.ui.render.CannonballDraw;
 import td.ui.render.MissileDraw;
+import td.ui.render.Palette;
 import td.ui.render.ProjectileDraw;
 import td.ui.render.SmokeDraw;
 
@@ -29,6 +30,20 @@ class ProjectileFrameBuilderTest {
         CannonballDraw draw = (CannonballDraw) draws.getFirst();
         assertThat(draw.x()).isCloseTo(5f, within(0.01f));
         assertThat(draw.y()).isEqualTo(0f);
+    }
+
+    @Test
+    void aSpecialShellIsDrawnInItsLookAtItsSize() {
+        CannonballProjectile shell = new CannonballProjectile(0, 0, 100, 0, ProjectileStats.of(10f).withSize(2f),
+                ShellLook.FROST, (x, y) -> {
+                });
+
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0);
+        shell.accept(builder);
+
+        CannonballDraw draw = (CannonballDraw) builder.build().getFirst();
+        assertThat(draw.palette()).isEqualTo(Palette.PROJECTILE_FROST);
+        assertThat(draw.size()).isEqualTo(2f);
     }
 
     @Test
