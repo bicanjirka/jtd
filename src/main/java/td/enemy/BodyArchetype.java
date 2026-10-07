@@ -12,5 +12,11 @@ public enum BodyArchetype {
     GHOST,
     WARDEN,
     WARDEN_EGG,
-    MENDER
+    MENDER,
+    JUGGERNAUT,
+    MITE,
+    COURIER,
+    SHIELDBEARER,
+    SALAMANDER,
+    YETI
 }

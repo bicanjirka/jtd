@@ -31,33 +31,33 @@ These were decided in the tower rounds, but only an enemy makes them matter.
 Each exists to make one role matter, so a level can ask for a tower by what it sends. Stats are
 existing `EnemyStat`s; abilities use today's triggers unless tagged.
 
-- [ ] ⭐ 🟢 **Juggernaut**: huge physical plating, slow. Needs magic, Cracked or Sundered (the
+- [x] ⭐ 🟢 **Juggernaut**: huge physical plating, slow. Needs magic, Cracked or Sundered (the
   Pulse, the Seeker, every Mortar shell).
-  - 💬
+  - 💬 Built: `JuggernautEnemy`, on existing primitives; not in any level yet.
 - [ ] ⭐ 🟡 **Priest**: high spirit, cleanses allies' debuffs every 5 s. Needs Silence, Soul Drain,
   or hexes that punish cleansing (the Pulse, the Hexer).
   - 💬
 - [ ] ⭐ 🟡 **Blinker**: teleports 1.5 cells forward when hit (3 s cooldown). Needs lock-on, freeze
   or Null Field (the Seeker, the Pulse).
   - 💬
-- [ ] ⭐ 🟢 **Mites**: a swarm of 12 tiny enemies that die to one hit each. Needs area (the Pulse,
+- [x] ⭐ 🟢 **Mites**: a swarm of 12 tiny enemies that die to one hit each. Needs area (the Pulse,
   the Mortar's Cluster Shell, the Stormcaller's Chain Lightning).
-  - 💬
-- [ ] 🟢 **Courier**: very fast, fragile, high bounty; worth hunting (the Seeker, chill, the
+  - 💬 Built: `MiteEnemy`, on existing primitives; not in any level yet.
+- [x] 🟢 **Courier**: very fast, fragile, high bounty; worth hunting (the Seeker, chill, the
   Sniper).
-  - 💬
-- [ ] ⭐ 🟢 **Shieldbearer**: periodically gives nearby allies a *physical-only* shield. The typed
+  - 💬 Built: `CourierEnemy`, on existing primitives; not in any level yet.
+- [x] ⭐ 🟢 **Shieldbearer**: periodically gives nearby allies a *physical-only* shield. The typed
   shield's first user; asks for magic or the Nullifier.
-  - 💬
+  - 💬 Built: `ShieldbearerEnemy`, on existing primitives; not in any level yet.
 - [ ] 🟡 **Drummer**: a haste aura for allies. Needs Anchored or Hex of Inversion (the Pulse, the
   Hexer).
   - 💬
-- [ ] 🟢 **Salamander**: burn-immune, fire-coloured. Punishes a Cinder-only defence; Soulfire
+- [x] 🟢 **Salamander**: burn-immune, fire-coloured. Punishes a Cinder-only defence; Soulfire
   answers.
-  - 💬
-- [ ] 🟢 **Yeti**: freeze-immune, 50% chill resist. Punishes a Seeker-only defence; Dazed (its own
+  - 💬 Built: `SalamanderEnemy`, on existing primitives; not in any level yet.
+- [x] 🟢 **Yeti**: freeze-immune, 50% chill resist. Punishes a Seeker-only defence; Dazed (its own
   ladder) still stops it.
-  - 💬
+  - 💬 Built: `YetiEnemy`, on existing primitives; not in any level yet.
 - [ ] 🟡 **Thornback**: each crit taken gives it +20 armor for 3 s. Punishes crit spam; Sundered
   and magic answer it.
   - 💬

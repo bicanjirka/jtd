@@ -12,6 +12,12 @@ public enum Palette {
     ENEMY_WARDEN,
     ENEMY_WARDEN_EGG,
     ENEMY_MENDER,
+    ENEMY_JUGGERNAUT,
+    ENEMY_MITE,
+    ENEMY_COURIER,
+    ENEMY_SHIELDBEARER,
+    ENEMY_SALAMANDER,
+    ENEMY_YETI,
     TOWER_SNIPER_BODY,
     TOWER_SPLASH_BODY,
     /** A Splash forked to Arc. */

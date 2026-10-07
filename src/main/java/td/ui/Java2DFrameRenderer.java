@@ -193,12 +193,12 @@ public final class Java2DFrameRenderer {
 
     private static Shape enemyShape(Palette palette, float scale) {
         return switch (palette) {
-            case ENEMY_CIRCLE, ENEMY_GHOST -> circleShape(scale);
-            case ENEMY_SQUARE -> new Rectangle2D.Float(-scale, -scale, scale * 2, scale * 2);
-            case ENEMY_TRIANGLE -> triangleShape(scale, true);
+            case ENEMY_CIRCLE, ENEMY_GHOST, ENEMY_MITE, ENEMY_SALAMANDER, ENEMY_YETI -> circleShape(scale);
+            case ENEMY_SQUARE, ENEMY_JUGGERNAUT -> new Rectangle2D.Float(-scale, -scale, scale * 2, scale * 2);
+            case ENEMY_TRIANGLE, ENEMY_COURIER -> triangleShape(scale, true);
             case ENEMY_WARDEN -> starShape(8, scale, scale * 0.55f);
             case ENEMY_WARDEN_EGG -> wardenEggShape(scale);
-            case ENEMY_MENDER -> crossShape(scale);
+            case ENEMY_MENDER, ENEMY_SHIELDBEARER -> crossShape(scale);
             default -> throw new IllegalStateException("Not an enemy palette: " + palette);
         };
     }
@@ -418,6 +418,12 @@ public final class Java2DFrameRenderer {
             case ENEMY_TRIANGLE -> Color.YELLOW;
             case ENEMY_WARDEN, ENEMY_WARDEN_EGG -> new Color(139, 0, 0);
             case ENEMY_MENDER -> new Color(120, 220, 150);
+            case ENEMY_JUGGERNAUT -> new Color(120, 135, 160);
+            case ENEMY_MITE -> new Color(190, 140, 80);
+            case ENEMY_COURIER -> new Color(170, 255, 80);
+            case ENEMY_SHIELDBEARER -> new Color(90, 150, 255);
+            case ENEMY_SALAMANDER -> new Color(255, 120, 30);
+            case ENEMY_YETI -> new Color(200, 235, 255);
             case TOWER_SNIPER_BODY -> Color.GREEN;
             case TOWER_SPLASH_BODY -> Color.RED;
             case TOWER_STORMCALLER_BODY -> new Color(80, 150, 255);
@@ -966,18 +972,18 @@ public final class Java2DFrameRenderer {
         g2.setColor(color);
         float grownScale = fade.scale() + fade.growth();
         switch (fade.palette()) {
-            case ENEMY_CIRCLE, ENEMY_GHOST -> g2.draw(circleShape(grownScale));
-            case ENEMY_SQUARE -> {
+            case ENEMY_CIRCLE, ENEMY_GHOST, ENEMY_MITE, ENEMY_SALAMANDER, ENEMY_YETI -> g2.draw(circleShape(grownScale));
+            case ENEMY_SQUARE, ENEMY_JUGGERNAUT -> {
                 g2.draw(new Rectangle2D.Float(-grownScale, -fade.scale(), grownScale * 2, fade.scale() * 2));
                 g2.draw(new Rectangle2D.Float(-fade.scale(), -grownScale, fade.scale() * 2, grownScale * 2));
             }
-            case ENEMY_TRIANGLE -> {
+            case ENEMY_TRIANGLE, ENEMY_COURIER -> {
                 g2.draw(triangleShape(grownScale, false));
                 g2.draw(triangleShape(grownScale, true));
             }
             case ENEMY_WARDEN -> g2.draw(starShape(8, grownScale, grownScale * 0.55f));
             case ENEMY_WARDEN_EGG -> g2.draw(wardenEggShape(grownScale));
-            case ENEMY_MENDER -> g2.draw(crossShape(grownScale));
+            case ENEMY_MENDER, ENEMY_SHIELDBEARER -> g2.draw(crossShape(grownScale));
             default -> throw new IllegalStateException("Not an enemy palette: " + fade.palette());
         }
         g2.setTransform(save);
