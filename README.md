@@ -88,7 +88,7 @@ a different loadout or level, since v1 has no config format for either.
 | Sniper | 15    | Single target, hits whichever enemy in range is furthest along the path; the longer it stays on one enemy, the likelier it crits (crits x2.0) |
 | Splash | 15    | Instant blast on a random target in range, physical damage falling off with distance; attuned, it aims at the most crowded group and Saturates what it hits. Forks into the Stormcaller (lightning arcs on past the blast) or the Hexer (every 4th shot casts a hex) |
 | Sonar  | 20    | Long range; a beam sweeps around it once every 3s, hitting everything it passes; once attuned, each sweep Exposes the healthiest enemy it passed |
-| Pulse  | 25    | Short range; damages everything in range at once, ghosts included                                                                                   |
+| Pulse  | 25    | Short range; a field that deals magic damage to everything in range every tick, ghosts included and with no visible enemy needed. Attuned, an enemy that stays inside builds Toll: it takes more from the field, and every debuff on it wears off slower |
 | Aura   | 20    | Passive — boosts the damage and range of nearby towers; several stack                                                                               |
 | Mortar | 30    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path; splashes physical damage and chills everything the blast reaches |
 | Seeker | 30    | Fires a slow homing missile at the fastest enemy in range, which it keeps through invisibility and re-aims at each tick; deals magic damage and freezes whichever mob it actually hits. Attuned, it banks missiles in a nest, between waves too, and launches them as a salvo |
