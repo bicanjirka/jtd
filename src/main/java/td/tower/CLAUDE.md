@@ -138,6 +138,10 @@
   built (`entryOrdinal` against the count the tower recorded) and its walked stretch passed within
   `TowerStats.reachReal()` (range before disruption). A tower with no reach on the path (the Aura)
   returns `false` and earns through the towers it buffs.
+- What a tower adds to another's XP is derived like a buff: `Tower.xpBonusFor(earner)` summed over every
+  tower at award time (Kinship, Tutelage, the Apprentice mark), and `Tower.sharesXp(recipient, earner)` makes
+  a tower earn what another did (Shared Lessons). The fraction XP cannot hold carries in the earner
+  (`earnXp(bounty, bonus)`), so a small bonus is never rounded away.
 - `TowerExperience` publishes XP and the rank-up tick as one snapshot; only the game loop earns.
 - A tower's deed (the moment it does its job, which its `PurposeCondition` on head III counts) goes
   through `countDeedOfAttack()` (one per attack, however many enemies it hit) or

@@ -79,6 +79,22 @@ public interface Tower {
     /** Adds a finished walk's bounty to this tower's XP. */
     void earnXp(int bounty);
 
+    /** Adds the bounty plus {@code bonus} of it to this tower's XP; the fraction XP cannot hold carries to the next. */
+    void earnXp(int bounty, float bonus);
+
+    /**
+     * The share of a bounty this tower adds to the XP {@code earner} earns from it, derived from where
+     * towers stand like a buff. Nothing by default.
+     */
+    default float xpBonusFor(Tower earner) {
+        return 0f;
+    }
+
+    /** Whether this tower makes {@code recipient} earn the XP {@code earner} earns. Never by default. */
+    default boolean sharesXp(Tower recipient, Tower earner) {
+        return false;
+    }
+
     /**
      * Whether a finished walk reached this tower: the mob went live after the tower was built and
      * passed within its range, disruption aside.

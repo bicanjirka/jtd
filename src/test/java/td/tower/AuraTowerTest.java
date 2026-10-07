@@ -92,6 +92,22 @@ class AuraTowerTest {
     }
 
     @Test
+    void onAmplifyingCoreKinshipAddsFivePercentBuffStrengthPerOtherTowerType() {
+        this.context.economy().startEconomy(1000, 5);
+        AuraTower aura = new AuraTower(this.context, 0, 0);
+        this.context.towers().add(aura);
+        SniperTower sniper = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(sniper);
+        this.context.towers().add(new SplashTower(this.context, 0, 0));
+        this.context.towers().add(new MortarTower(this.context, 0, 0));
+        UpgradePaths.awakenVeteran(aura);
+
+        aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core"));
+
+        assertThat(aura.buffFor(sniper).damageBonus()).isCloseTo(0.3f + 2 * 0.05f, within(1e-6f));
+    }
+
+    @Test
     void broadcastAddsThirtyPercentRangeToTheAurasOwnReach() {
         this.context.economy().startEconomy(1000, 5);
         AuraTower aura = new AuraTower(this.context, 0, 0);
