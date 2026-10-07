@@ -2,6 +2,7 @@ package td.tower;
 
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
@@ -59,6 +60,7 @@ import td.util.ThreadConfined;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * The patient single-target tower: it gets better the longer it stays on one enemy. It fires at the
@@ -225,7 +227,7 @@ public final class SniperTower extends AbstractTower {
     private SniperShot shotInFlight;
     private int coolDown = 0;
     private EnemyMob currentTarget;
-    private boolean lastShotCritical;
+    private ShotTrace lastShot;
     private int shotsFired;
     private int currentTick;
 
@@ -295,10 +297,10 @@ public final class SniperTower extends AbstractTower {
         for (SniperPerk perk : owned) {
             result = perk.settle(result, this.actions);
         }
+        this.lastShot = this.traceOf(shot, target, result.critical());
         for (SniperPerk perk : owned) {
             perk.react(result, this.actions);
         }
-        this.lastShotCritical = result.critical();
         if (lock.stacks() > 0) {
             this.countDeedOfAttack();
         }
@@ -306,6 +308,21 @@ public final class SniperTower extends AbstractTower {
         float tempoBonus = this.tempo.takeFireRateBonus(this.currentTick);
         this.coolDown = TowerBuff.fireRate(fireRate).combine(TowerBuff.fireRate(tempoBonus))
                 .fireRateFor(this.coolDownCurrent());
+    }
+
+    /** Where the shot went: to its target, or for a piercing shot to the end of its line. */
+    private ShotTrace traceOf(SniperShot shot, EnemyMob target, boolean critical) {
+        if (!shot.piercing()) {
+            return new ShotTrace((float) target.getX(), (float) target.getY(), critical, shot.type());
+        }
+        double heading = TurretAim.angleTo(this.centerX, this.centerY, target.getX(), target.getY());
+        double reach = this.railReach();
+        return new ShotTrace((float) (this.centerX + Math.cos(heading) * reach),
+                (float) (this.centerY + Math.sin(heading) * reach), critical, shot.type());
+    }
+
+    private double railReach() {
+        return this.rangeReal() + RAILGUN_EXTRA_REACH_CELLS * this.context.getBoard().scale();
     }
 
     private float rangeShareOf(EnemyMob target) {
@@ -325,7 +342,7 @@ public final class SniperTower extends AbstractTower {
     private boolean pierce(SniperShot shot, EnemyMob target) {
         float scale = this.context.getBoard().scale();
         double heading = TurretAim.angleTo(this.centerX, this.centerY, target.getX(), target.getY());
-        double reach = this.rangeReal() + RAILGUN_EXTRA_REACH_CELLS * scale;
+        double reach = this.railReach();
         List<EnemyMob> line = new OnSegmentTargetQuery(this.centerX, this.centerY,
                 this.centerX + Math.cos(heading) * reach, this.centerY + Math.sin(heading) * reach,
                 RAILGUN_HALF_WIDTH_CELLS * scale).matching(this.context.enemies());
@@ -364,7 +381,20 @@ public final class SniperTower extends AbstractTower {
     }
 
     public boolean wasLastShotCritical() {
-        return this.lastShotCritical;
+        return this.lastShot != null && this.lastShot.critical();
+    }
+
+    /** The last shot fired, for drawing its trace; empty before the first. */
+    public Optional<ShotTrace> lastShot() {
+        return Optional.ofNullable(this.lastShot);
+    }
+
+    /** How many Steady Aim stacks the next shot at the current target has; empty without Attune. */
+    public OptionalInt steadyAimStacks() {
+        if (this.currentTarget == null || !this.upgrades().owns(StandardBaseSlot.ATTUNE_ID)) {
+            return OptionalInt.empty();
+        }
+        return OptionalInt.of(this.focus.stacksOn(this.currentTarget));
     }
 
     public TurretAim getTurretAim() {
@@ -386,6 +416,17 @@ public final class SniperTower extends AbstractTower {
 
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitSniperTower(this);
+    }
+
+    /**
+     * Where a shot went and what it was.
+     *
+     * @param toX      where its line ends, in pixels
+     * @param toY      where its line ends, in pixels
+     * @param critical whether it crit its target
+     * @param type     what damage it dealt
+     */
+    public record ShotTrace(float toX, float toY, boolean critical, DamageType type) {
     }
 
     /** What the perks may make this tower do. */

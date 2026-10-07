@@ -136,9 +136,13 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
                 (float) headingRadians, scale));
     }
 
+    /** A Transcendent Sniper's barrel turns gold. */
     public Void visitSniperTower(SniperTower tower) {
         this.sprite(tower);
-        this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
+        Palette barrel = tower.upgrades().owns(StandardBaseSlot.TRANSCENDENT_ID) ? Palette.TOWER_SNIPER_GOLD_BARREL
+                : bodyPaletteFor(tower.getType());
+        this.headDraws.add(new TurretHeadDraw(barrel, tower.getX(), tower.getY(),
+                (float) tower.getTurretAim().radiansAt(this.interpolationAlpha), 1f));
         return null;
     }
 
@@ -154,8 +158,9 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         // to shoot enemies it is not facing.
         double heading = tower.sweepRadiansAt(this.interpolationAlpha);
         this.head(tower, heading);
-        if (tower.hasTwinBeam()) {
-            this.head(tower, heading + Math.PI);
+        if (tower.twinBeamShare() > 0f) {
+            // The second head is as much smaller as its beam is weaker.
+            this.headWithScale(tower, heading + Math.PI, tower.twinBeamShare());
         }
         return null;
     }

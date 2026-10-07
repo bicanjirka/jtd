@@ -47,7 +47,7 @@ on `quit` or end of input.
 | `clickenemy [n]` | Clicks where the `n`-th alive enemy is now and prints its effects. |
 | `enemies` | One line per enemy: alive index, id, rank, health, board px, effects, fate. |
 | `spawn <id> [rank]` | Spawns a catalog id (a wave token, such as `s` for Armored) at the path start. |
-| `effect <kind> [ticks]` | Puts an effect (`chill`, `burn`, `poison`, `freeze`, `shield`, `invisible`, `heal`, `vulnerable`, `revealed`) on every alive enemy. |
+| `effect <kind> [ticks]` | Puts an effect (`chill`, `burn`, `poison`, `freeze`, `shield`, `invisible`, `heal`, `vulnerable`, `revealed`, `sundered`, `exposed`, `marked`, `priority`, `resonating`, `fractured`) on every alive enemy. |
 | `kill` | Deals lethal damage to every enemy through the real hit path, so on-death abilities fire. |
 | `setcredits <n>`, `setlives <n>` | Economy cheats. |
 | `waitfor ticks <n> [ms]` | Waits until the game clock advances `n` ticks (20 per second; pausing stops it). |
@@ -78,7 +78,8 @@ EOF
 
 `java -cp "$CP" PreviewBoard` reads commands the same way: `levels`, `level <n>`,
 `credits <n>`, `lives <n>`, `place <tower> <x> <y>` (a `TowerFactory.Type` name, any case),
-`upgrade <x> <y> <node name>` (buys through the real mechanism, so tick a fight to clear its gate first),
+`upgrade <x> <y> <node name>` (buys through the real mechanism, so tick a fight to clear its gate first,
+or `gates off` to waive every XP and purpose gate as the dev panel does),
 `spawn <id> [rank]`, `effect <kind> [ticks]` (on every enemy), `wave`, `tick <n>`, `kill`,
 `grid [off]` (the dev cell grid), `hoverplace <tower> <x> <y>` (the placement highlight on a cell),
 `render <path>`, `state`, `quit`. `tick` advances

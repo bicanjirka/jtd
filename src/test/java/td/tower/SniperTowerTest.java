@@ -16,6 +16,9 @@ import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
+import td.ui.TowerSpriteFrameBuilder;
+import td.ui.render.Palette;
+import td.ui.render.TurretHeadDraw;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 
@@ -389,6 +392,41 @@ class SniperTowerTest {
         assertThat(aimed.onlyHitAmount()).isEqualTo(Math.round(full * 0.75f));
         assertThat(pastRange.onlyHitAmount()).isEqualTo(Math.round(full * 0.75f * 0.75f));
         assertThat(beside.hits()).isEmpty();
+    }
+
+    @Test
+    void aRailgunShotsTraceRunsTwoCellsPastRangeWhereAPlainShotsEndsAtItsTarget() {
+        GameWorld world = boardWorld();
+        SniperTower railgun = sniperWith(world, "Focused Optics", "Focused Optics II", "Focused Optics III", "Momentum",
+                "Transcendent", "Railgun");
+        SniperTower plain = sniperWith(world);
+        FakeEnemyMob target = FakeEnemyMob.at(railgun.getX() + 60, railgun.getY());
+        world.enemies().setEnemies(new EnemyMob[]{target});
+
+        railgun.doTick(1);
+        plain.doTick(1);
+
+        float reach = railgun.getRangeReal() + 2 * BoardFixtures.SCALE;
+        assertThat(railgun.lastShot()).hasValueSatisfying(trace -> {
+            assertThat(trace.toX()).isCloseTo(railgun.getX() + reach, within(0.5f));
+            assertThat(trace.toY()).isCloseTo(railgun.getY(), within(0.5f));
+        });
+        assertThat(plain.lastShot()).hasValueSatisfying(trace -> assertThat(trace.toX()).isEqualTo((float) target.getX()));
+    }
+
+    @Test
+    void aTranscendedSnipersBarrelTurnsGold() {
+        GameWorld world = boardWorld();
+        SniperTower transcended = sniperWith(world, "Focused Optics", "Focused Optics II", "Focused Optics III",
+                "Momentum", "Transcendent");
+        SniperTower awakened = sniperWith(world, "Focused Optics");
+        TowerSpriteFrameBuilder sprites = new TowerSpriteFrameBuilder(world, 0, 0.0, 0.0);
+
+        transcended.accept(sprites);
+        awakened.accept(sprites);
+
+        assertThat(sprites.buildHeads()).extracting(TurretHeadDraw::palette)
+                .containsExactly(Palette.TOWER_SNIPER_GOLD_BARREL, Palette.TOWER_SNIPER_BODY);
     }
 
     @Test

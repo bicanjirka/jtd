@@ -89,6 +89,11 @@ public class PreviewBoard {
                 cellGrid = !rest.trim().equals("off");
                 System.out.println("OK grid " + (cellGrid ? "on" : "off"));
             }
+            case "gates" -> {
+                boolean waived = rest.trim().equals("off");
+                engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(waived);
+                System.out.println("OK gates " + (waived ? "off" : "on"));
+            }
             case "hoverplace" -> hoverPlace(rest.trim());
             case "state" -> state();
             case "quit" -> {
@@ -181,6 +186,12 @@ public class PreviewBoard {
                 case HEAL -> Effect.heal(1, ticks, d -> { });
                 case VULNERABLE -> Effect.vulnerable(2, ticks, d -> { });
                 case REVEALED -> Effect.revealed(ticks, d -> { });
+                case SUNDERED -> Effect.sundered(3, ticks, d -> { });
+                case EXPOSED -> Effect.exposed(ticks, d -> { });
+                case MARKED -> Effect.marked(ticks, d -> { });
+                case PRIORITY -> Effect.priority(ticks, d -> { });
+                case RESONATING -> Effect.resonating(2, ticks, d -> { });
+                case FRACTURED -> Effect.fractured(3, d -> { });
                 case SCORCHED, SICKENED -> throw new IllegalArgumentException(kind + " is earned by burn and poison");
             };
             mob.applyEffect(effect);

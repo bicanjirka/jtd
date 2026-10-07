@@ -32,10 +32,24 @@ public enum Palette {
     /** A tower's rank pips, its rank-up glow and its XP row. */
     TOWER_RANK,
     TOWER_SNIPER_BEAM,
+    /** The Sniper's aim line, brighter with each Steady Aim stack. */
+    TOWER_SNIPER_LASER,
+    /** A Silver Rounds shot. */
+    TOWER_SNIPER_SILVER,
+    /** A Transcendent Sniper's tracer. */
+    TOWER_SNIPER_TRACER,
+    /** A Transcendent Sniper's barrel. */
+    TOWER_SNIPER_GOLD_BARREL,
     TOWER_SPLASH_BEAM,
     TOWER_SPLASH_LINE,
     TOWER_SPLASH_FILL,
     TOWER_SONAR_BEAM,
+    /** A Sonar hit once its beam deals magic. */
+    TOWER_SONAR_MAGIC_BEAM,
+    /** The ring a Sonar sends out each revolution. */
+    TOWER_SONAR_PING,
+    /** The crosshair over the enemies a Sonar pinged. */
+    TOWER_SONAR_CROSSHAIR,
     TOWER_PULSE_RING,
     TOWER_CINDER_CONE,
     PROJECTILE_CANNONBALL,

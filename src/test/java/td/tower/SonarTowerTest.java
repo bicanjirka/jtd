@@ -13,6 +13,7 @@ import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.ui.TowerSpriteFrameBuilder;
 import td.ui.render.TowerSpriteDraw;
+import td.ui.render.TurretHeadDraw;
 import td.util.GameWorld;
 import td.util.TickRate;
 
@@ -354,7 +355,7 @@ class SonarTowerTest {
 
         int weapon = twin.damageCurrent();
         assertThat(enemy.hits()).extracting(Damage::amount).containsExactly(weapon, Math.round(weapon * 0.7f));
-        assertThat(twin.hasTwinBeam()).isTrue();
+        assertThat(twin.twinBeamShare()).isEqualTo(0.7f);
     }
 
     @Test
@@ -492,6 +493,18 @@ class SonarTowerTest {
 
         assertThat(tower.upgrades().inSlot(UpgradeSlot.SPECIAL)).extracting(UpgradeNode::displayName)
                 .containsExactly("Mark on Sweep", "Command Ping");
+    }
+
+    @Test
+    void twinBeamsSecondHeadIsDrawnOppositeAtItsShareOfTheDamage() {
+        SonarTower twin = this.transcendedTower("Twin Beam");
+        this.enemies();
+        twin.doTick(1);
+        TowerSpriteFrameBuilder sprites = new TowerSpriteFrameBuilder(this.context, 0, 0.0, 0.0);
+
+        twin.accept(sprites);
+
+        assertThat(sprites.buildHeads()).extracting(TurretHeadDraw::scale).containsExactly(1f, 0.7f);
     }
 
     @Test

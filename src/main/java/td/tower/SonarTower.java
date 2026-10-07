@@ -1,6 +1,7 @@
 package td.tower;
 
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -80,6 +81,8 @@ public final class SonarTower extends AbstractTower {
 
     /** How long a hit stays drawn. */
     private static final int HIT_FLASH_TICKS = 8;
+    /** How long the ring a revolution sends out stays drawn. */
+    private static final int PING_RING_TICKS = 12;
     private static final String PING_DEED = "Pings";
     private static final int PING_DEEDS_NEEDED = 25;
 
@@ -199,6 +202,8 @@ public final class SonarTower extends AbstractTower {
     private final List<SonarHit> recentHits = new ArrayList<>();
     private SonarBeam beam = SpinningBeam.of(BASE_BEAM);
     private BeamSpec beamSpec = BASE_BEAM;
+    private List<EnemyMob> pinged = List.of();
+    private int lastRevolutionAt = Integer.MIN_VALUE;
 
     public SonarTower(GameWorld context, int x, int y) {
         // No cooldown: the cadence is the sweep rate.
@@ -241,7 +246,7 @@ public final class SonarTower extends AbstractTower {
             }
         }
         if (this.beam.completedRevolution()) {
-            this.completeRevolution(spec, owned);
+            this.completeRevolution(spec, owned, gameTime);
         }
     }
 
@@ -278,7 +283,7 @@ public final class SonarTower extends AbstractTower {
         for (SonarPerk perk : owned) {
             perk.react(result, this.actions);
         }
-        this.recentHits.add(new SonarHit((float) enemy.getX(), (float) enemy.getY(), gameTime));
+        this.recentHits.add(new SonarHit((float) enemy.getX(), (float) enemy.getY(), gameTime, strike.type()));
     }
 
     private float rangeShareOf(EnemyMob enemy) {
@@ -287,8 +292,10 @@ public final class SonarTower extends AbstractTower {
     }
 
     /** The ping Exposes the healthiest enemies passed, which is the Sonar's deed, then the perks react. */
-    private void completeRevolution(SonarSpec spec, List<SonarPerk> owned) {
+    private void completeRevolution(SonarSpec spec, List<SonarPerk> owned, int gameTime) {
         List<EnemyMob> pinged = this.pings.pick(spec.ping(), spec.view());
+        this.pinged = pinged;
+        this.lastRevolutionAt = gameTime;
         for (EnemyMob enemy : pinged) {
             this.applyEffect(enemy, sink -> Effect.exposed(spec.pingTicks(), sink));
         }
@@ -301,9 +308,25 @@ public final class SonarTower extends AbstractTower {
         }
     }
 
-    /** Whether a second beam sweeps half a turn opposite the first. */
-    public boolean hasTwinBeam() {
-        return this.beamSpec.hasTwinBeam();
+    /** The damage share of a second beam half a turn opposite the first; {@code 0} for none. */
+    public float twinBeamShare() {
+        return this.beamSpec.twinShare();
+    }
+
+    /** Whether the beam has stopped spinning and holds on one enemy. */
+    public boolean holdsBeam() {
+        return this.beamSpec.phased();
+    }
+
+    /** The enemies the last revolution pinged, healthiest first; some may have died since. */
+    public List<EnemyMob> pinged() {
+        return this.pinged;
+    }
+
+    /** How far through its ring the last revolution's ping is, from 0 to 1; {@code -1} once it has faded. */
+    public float pingRingProgress(int gameTime) {
+        long age = (long) gameTime - this.lastRevolutionAt;
+        return age < PING_RING_TICKS ? age / (float) PING_RING_TICKS : -1f;
     }
 
     /** The beam's heading between two ticks; the turret head uses it too. */
@@ -388,7 +411,7 @@ public final class SonarTower extends AbstractTower {
         }
     }
 
-    /** Where and when the beam caught an enemy. */
-    public record SonarHit(float x, float y, int tick) {
+    /** Where and when the beam caught an enemy, and with what damage. */
+    public record SonarHit(float x, float y, int tick, DamageType type) {
     }
 }
