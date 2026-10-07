@@ -103,12 +103,15 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     private static float bodyScaleFor(BodyArchetype archetype, int scale, Rank rank) {
         return switch (archetype) {
-            case CIRCLE -> scale / 6f;
-            case SQUARE, TRIANGLE, GHOST -> scale / (float) (7 - rank.ordinal());
+            case CIRCLE, SALAMANDER -> scale / 6f;
+            case SQUARE, TRIANGLE, GHOST, COURIER -> scale / (float) (7 - rank.ordinal());
+            case MITE -> scale / 10f;
+            case YETI -> scale / 5f;
+            case JUGGERNAUT -> scale / (float) (6 - rank.ordinal());
             // Fixed, so it always reads as the biggest thing on the board.
             case WARDEN -> scale / 1.5f;
             case WARDEN_EGG -> scale / 3f;
-            case MENDER -> scale / (float) (7 - rank.ordinal());
+            case MENDER, SHIELDBEARER -> scale / (float) (7 - rank.ordinal());
         };
     }
 

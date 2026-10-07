@@ -32,6 +32,12 @@ public final class EnemyCatalog {
         MenderEnemy.registerIn(catalog);
         JammerEnemy.registerIn(catalog);
         WardenEnemy.registerIn(catalog);
+        JuggernautEnemy.registerIn(catalog);
+        MiteEnemy.registerIn(catalog);
+        CourierEnemy.registerIn(catalog);
+        ShieldbearerEnemy.registerIn(catalog);
+        SalamanderEnemy.registerIn(catalog);
+        YetiEnemy.registerIn(catalog);
         return catalog;
     }
 

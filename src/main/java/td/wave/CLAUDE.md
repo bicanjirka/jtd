@@ -34,6 +34,12 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 | `j`       | Jammer (weakens nearby towers; in no wave yet)           |
 | `e`       | spacer: takes a spawn slot, spawns nothing               |
 | `warden1` | the Warden boss chain                                    |
+| `juggernaut` | Juggernaut (slow, huge physical plating)              |
+| `mite`    | Mite (tiny, one hit; send in a `swarm`)                  |
+| `courier` | Courier (very fast, fragile, high bounty)                |
+| `shieldbearer` | Shieldbearer (physical-only shield for allies)      |
+| `salamander` | Salamander (burn-immune)                              |
+| `yeti`    | Yeti (freeze-immune, half chill)                         |
 
 - A leading `w<number>` (`w30 3 c`) sets the ticks one slot of spacing is worth, default
   `SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`; it carries on `WaveContent`. It must be the first token and
