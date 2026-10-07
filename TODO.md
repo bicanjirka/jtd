@@ -16,8 +16,8 @@ The tower rework, in this order (each needs the ones before it):
    the extra head node, two special slots, the exclusive-choice mark, price rules.
 2. `FEATURE-xp-and-purpose-gates.md` (implemented): XP from bounty and one purpose gate per tower
    replace kill and damage gates.
-3. `FEATURE-sniper-and-sonar.md`: crit per tower, the hit / periodic rule, the first debuffs and
-   the effect rules every tower follows.
+3. `FEATURE-sniper-and-sonar.md` (implemented): crit per tower, the hit / periodic rule, the
+   first debuffs and the effect rules every tower follows.
 4. `FEATURE-splash-stormcaller-and-hexer.md`: Dazed and the hex pool.
 5. `FEATURE-pulse-and-seeker.md`: Silenced, Anchored, Unraveled, Brittle, the nest.
 6. `FEATURE-ground-zones-mortar-and-cinder.md`: ground zones and the fire-and-ice rules.
@@ -309,10 +309,10 @@ do this — see below). This was a speculative "nice to have," not a committed d
   `td.enemy`), and the current facing logic is `DefinedEnemyMob.getFacingRadians()` — a `switch`
   over `this.definition.movement()`'s sealed type. Towers have no equivalent composed-movement
   model, so there's no direct mechanism to reuse from there; a tower's facing would instead need
-  to be derived from its own chosen target, per tower. There's also no `findEnemy()` method to
-  hook today — targeting is composed per-tower inside `doTick` via `td.tower.targeting` pieces
-  (e.g. `SniperTower.doTick` builds candidates through `InRangeTargetQuery.visible(...)` then a
-  `TargetSelector`; see `td/tower/CLAUDE.md`'s "Targeting" section) — so
+  to be derived from its own chosen target, per tower. There's no shared targeting hook either -
+  targeting is composed per-tower via `td.tower.targeting` pieces (e.g. the Sniper folds its perks
+  into a `SniperSpec` whose `Reach` and aim pick the target; see `td/tower/CLAUDE.md`'s
+  "Targeting" section) — so
   this needs new per-tower "facing" state updated wherever each tower's `doTick` calls its
   selector, exposed as a getter, then threaded through as a new `facingRadians` field on
   `TowerSpriteDraw` (currently absent — `EnemyBodyDraw`/`EnemyFadeDraw` already carry one) and
@@ -344,18 +344,19 @@ single hit), making the Warden's armor mechanically inert regardless of which to
 
 ### Critical-damage numbers are unbalanced placeholders
 
-`FEATURE-critical-damage.md` shipped the default crit multiplier (1.5x, now
-`AttackProfile.DEFAULT_CRIT_MULTIPLIER`), `SniperTower.VETERAN`'s crit-chance bonus (15%), the
-Warden's new on-crit-survived shield (30% for 100 ticks) as illustrative
-placeholders, the same situation every other feature's first-pass numbers were in before their
-own balance passes.
+Every tower crits for x1.5 (`AttackProfile.DEFAULT_CRIT_MULTIPLIER`) except the Sniper, born with
+5% at x2.0. Crit damage bonuses add to the multiplier, so the Sniper's crit reaches about x3.0
+(Tradecraft's streak +0.5, the Aura's Keen Edge +0.5 once feature 7 lands), and Momentum
+multiplies a charged shot by 5 on top: about x15 in one hit. The Warden's on-crit-survived shield
+(30% for 100 ticks) is from the first crit pass. On `td.BalanceHarness`'s default loadout (two
+Snipers and a Splash on Curly Path, 5000 ticks) the reworked Sniper clears 5 waves where the old
+one cleared 4, its lead copy dealing 194.2k damage for 22 kills against 158.3k for 20.
 
-- **Where:** `td.damage.AttackProfile.DEFAULT_CRIT_MULTIPLIER`, `SniperTower.VETERAN`'s
-  `TowerBuff`, `BuiltInEnemies.WARDEN_STANDING_ABILITIES`'s new `OnCriticalHitTakenTrigger`
-  ability.
-- **Approach:** tune via actual play (or `td.BalanceHarness`) once the other placeholder-number
-  entries in this file get their own pass - no code or architecture change needed, every number
-  here is already a named constant or a `TowerBuff` literal.
+- **Where:** `AttackProfile.DEFAULT_CRIT_MULTIPLIER`, `SniperTower.CRIT_CHANCE` and
+  `CRIT_MULTIPLIER`, `MomentumPerk.DAMAGE_FACTOR`, `CritStreakPerk`, and
+  `BuiltInEnemies.WARDEN_STANDING_ABILITIES`'s `OnCriticalHitTakenTrigger` ability.
+- **Approach:** tune in the feature 7 balance pass, with Keen Edge in play. Try Momentum at x3
+  first; every number here is a named constant.
 
 ### The Warden's description promises a reinforcement its ability doesn't call
 
@@ -377,3 +378,13 @@ egg's last stats with no status line, unlike a kill (`Killed`) or a leak (`Leake
 - **Where:** `td.enemy.EnemyInspection.Fate`, the hatch path in `SpawnEnemiesAction`.
 - **Approach:** give a mob replaced by its own spawn a fate (e.g. `Hatched`) so the inspector
   says why it stopped updating.
+
+### A gated node's name is cut short by its gate's progress
+
+An offered node that waits on a purpose gate shows the gate's progress where its price goes
+("Steady Aim shots 0/20"), and at the panel's default width that text crowds the node's own name
+down to "Focu…". Short gates ("Pings 0/25", "0/2 nearby towers") fit.
+
+- **Where:** `td.ui.PanelUpgradeTree`'s offer buttons, `UpgradeSheetText`'s gate label.
+- **Approach:** keep the name whole and let the right-hand text give way first (truncate or
+  wrap it onto a second line), or shorten long deed names to fit.
