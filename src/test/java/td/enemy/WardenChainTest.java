@@ -3,6 +3,8 @@ package td.enemy;
 import org.junit.jupiter.api.Test;
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.damage.DamageUnits;
+import td.effect.Effect;
 import td.effect.EffectKind;
 import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
@@ -118,6 +120,47 @@ class WardenChainTest {
         EnemyDefinition finalEgg = EnemyCatalog.builtIn().get("wardenEgg3");
 
         assertThat(finalEgg.abilities()).isEmpty();
+    }
+
+    @Test
+    void eachEggTakesMoreOfTheSameHitThanTheOneBeforeAndTheFirstTakesNone() {
+        GameWorld world = worldWithStraightPath();
+        Damage sniperShot = Damage.physical(DamageUnits.ofPoints(40));
+
+        int first = landedAgainst(world, "wardenEgg1", sniperShot);
+        int second = landedAgainst(world, "wardenEgg2", sniperShot);
+        int third = landedAgainst(world, "wardenEgg3", sniperShot);
+
+        assertThat(first).isZero();
+        assertThat(second).isGreaterThan(first);
+        assertThat(third).isGreaterThan(second);
+    }
+
+    @Test
+    void onlyTheFirstEggIsImmuneToChillAndOnlyTheLastCanBeBurned() {
+        GameWorld world = worldWithStraightPath();
+
+        assertThat(blocksAgainst(world, "wardenEgg1", EffectKind.CHILL)).isTrue();
+        assertThat(blocksAgainst(world, "wardenEgg2", EffectKind.CHILL)).isFalse();
+        assertThat(blocksAgainst(world, "wardenEgg2", EffectKind.BURN)).isTrue();
+        assertThat(blocksAgainst(world, "wardenEgg3", EffectKind.BURN)).isFalse();
+    }
+
+    private static int landedAgainst(GameWorld world, String eggId, Damage hit) {
+        DefinedEnemyMob egg = (DefinedEnemyMob) world.getEnemyCatalog().spawn(eggId, world, 0, 1500, 20, Rank.GRUNT);
+        return egg.doDamage(hit).amount();
+    }
+
+    private static boolean blocksAgainst(GameWorld world, String eggId, EffectKind kind) {
+        DefinedEnemyMob egg = (DefinedEnemyMob) world.getEnemyCatalog().spawn(eggId, world, 0, 1500, 20, Rank.GRUNT);
+        egg.applyEffect(switch (kind) {
+            case CHILL -> Effect.chill(0.5f, 100, d -> {
+            });
+            case BURN -> Effect.burn(Damage.magic(10), 100, d -> {
+            });
+            default -> throw new IllegalArgumentException(kind.name());
+        });
+        return !egg.hasEffect(kind);
     }
 
     @Test

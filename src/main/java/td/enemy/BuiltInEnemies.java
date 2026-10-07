@@ -183,25 +183,43 @@ final class BuiltInEnemies {
             .build();
     static final EnemyDefinition WARDEN_EGG_3 = EnemyDefinition
             .of("wardenEgg3", "Warden's Final Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)
-            .withDescription("Must be defeated to end the encounter - it will not hatch again.");
+            .withDescription("Must be defeated to end the encounter - it will not hatch again. Its shell is cracked: "
+                    + "only light armor and plating are left.")
+            .withIdentifiedTraits(List.of(
+                    IdentifiedTrait.named("armor", new PercentResistTrait(EGG_3_ARMOR_KEPT)),
+                    IdentifiedTrait.named("plating", new FlatResistTrait(EGG_3_PLATING))));
     private static final int EGG_HATCH_DELAY_TICKS = 160;
     static final EnemyDefinition WARDEN_EGG_1 = EnemyDefinition
             .of("wardenEgg1", "Warden's Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)
-            .withDescription("Hatches into a weaker Warden if not defeated in time. Immune to critical hits, and "
-                    + "its armor blunts part of every hit.")
+            .withDescription("Hatches into a weaker Warden if not defeated in time. Almost immune: it ignores critical "
+                    + "hits, burn, freeze and chill, its armor stops most of every hit, and its plating blunts what "
+                    + "is left.")
             .withIdentifiedTraits(List.of(
                     IdentifiedTrait.anonymous(new CriticalImmunityTrait()),
-                    IdentifiedTrait.named("armor", new PercentResistTrait(0.6f))))
+                    IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
+                    IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
+                    IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.CHILL)),
+                    IdentifiedTrait.named("armor", new PercentResistTrait(EGG_1_ARMOR_KEPT)),
+                    IdentifiedTrait.named("plating", new FlatResistTrait(EGG_1_PLATING))))
             .withAbilities(List.of(new Ability(
                     new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden2", 1, true))));
     static final EnemyDefinition WARDEN_EGG_2 = EnemyDefinition
+    // Protection, not health, is what makes a hatch likely: the first egg shrugs off all but the
+    // heaviest hits and each later one gives something up, until the last can simply be shot.
+    private static final float EGG_1_ARMOR_KEPT = 0.2f;
+    private static final float EGG_1_PLATING = 12f;
+    private static final float EGG_2_ARMOR_KEPT = 0.5f;
+    private static final float EGG_2_PLATING = 4f;
+    private static final float EGG_3_ARMOR_KEPT = 0.8f;
+    private static final float EGG_3_PLATING = 1f;
             .of("wardenEgg2", "Warden's Egg", 1500, 20, 0f, BodyArchetype.WARDEN_EGG)
             .withDescription("Hatches into a weaker Warden if not defeated in time. Immune to burn and freeze, "
-                    + "and its plating blunts a flat chunk of every hit.")
+                    + "and its armor and plating blunt every hit, though less than the first egg's.")
             .withIdentifiedTraits(List.of(
                     IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
                     IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
-                    IdentifiedTrait.named("armor", new FlatResistTrait(1))))
+                    IdentifiedTrait.named("armor", new PercentResistTrait(EGG_2_ARMOR_KEPT)),
+                    IdentifiedTrait.named("plating", new FlatResistTrait(EGG_2_PLATING))))
             .withAbilities(List.of(new Ability(
                     new OnceTrigger(EGG_HATCH_DELAY_TICKS), new SpawnEnemiesAction("warden3", 1, true))));
     // High enough that an un-upgraded weak tower does nothing; later stages weaken it.
