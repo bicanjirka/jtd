@@ -10,8 +10,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * {@link #requestClear}); the game-loop thread resolves it at the start of each frame build
  * ({@link #resolve}), so a live mob is only ever read by its owner.
  * <p>
- * A selection outlives the mob's death or leak, keeping its last snapshot with that fate until
- * the next request. A mob that leaves the roster alive (a hatch) is dropped.
+ * A selection outlives the mob's death, leak or hatch, keeping its last snapshot with that fate
+ * until the next request. A mob that leaves the roster still alive is dropped.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class EnemySelection {
@@ -59,7 +59,7 @@ public final class EnemySelection {
 
     /** The selected mob while it is still alive, for the selection ring. */
     public Optional<EnemyMob> selectedAlive() {
-        if (this.selected == null || this.selected.isDead()) {
+        if (this.selected == null || this.selected.isDead() || this.selected.fate() != EnemyInspection.Fate.ALIVE) {
             return Optional.empty();
         }
         return Optional.of(this.selected);

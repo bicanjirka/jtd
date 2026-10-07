@@ -54,6 +54,7 @@ final class EnemyStatText {
             case ALIVE -> new SheetLine.HealthBar(inspection.health(), inspection.maxHealth(), "$" + inspection.bounty(), false);
             case KILLED -> new SheetLine.HealthBar(inspection.health(), inspection.maxHealth(), "Killed", true);
             case LEAKED -> new SheetLine.HealthBar(inspection.health(), inspection.maxHealth(), "Leaked", true);
+            case HATCHED -> new SheetLine.HealthBar(inspection.health(), inspection.maxHealth(), "Hatched", true);
         });
         lines.add(new SheetLine.Gap());
         lines.addAll(statAndTraitRows(inspection));

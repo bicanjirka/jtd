@@ -70,6 +70,25 @@ class WardenChainTest {
     }
 
     @Test
+    void aSelectedEggThatHatchesKeepsItsSnapshotMarkedHatched() {
+        GameWorld world = worldWithStraightPath();
+        EnemyMob egg = world.getEnemyCatalog().spawn("wardenEgg1", world, 0, 1500, 20, Rank.GRUNT);
+        world.enemies().add(egg);
+        EnemySelection selection = new EnemySelection();
+        selection.requestAt((int) egg.getX(), (int) egg.getY());
+        selection.resolve(world.enemies());
+
+        for (int t = 1; t <= 165; t++) {
+            for (EnemyMob e : world.enemies().getEnemies()) {
+                e.doTick(t);
+            }
+        }
+
+        assertThat(selection.resolve(world.enemies())).map(EnemyInspection::fate).contains(EnemyInspection.Fate.HATCHED);
+        assertThat(selection.selectedAlive()).isEmpty();
+    }
+
+    @Test
     void anEggKilledBeforeItsDelayNeverHatches() {
         GameWorld world = worldWithStraightPath();
         DefinedEnemyMob egg = (DefinedEnemyMob) world.getEnemyCatalog().spawn("wardenEgg1", world, 0, 1500, 20, Rank.GRUNT);

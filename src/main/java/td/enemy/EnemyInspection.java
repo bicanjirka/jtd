@@ -63,7 +63,8 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
     public enum Fate {
         ALIVE,
         KILLED,
-        LEAKED
+        LEAKED,
+        HATCHED
     }
 
     /**

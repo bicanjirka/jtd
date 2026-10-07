@@ -392,6 +392,11 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.fate;
     }
 
+    /** This mob was replaced by its own spawn: it is gone, but neither killed nor leaked. */
+    void markHatched() {
+        this.fate = EnemyInspection.Fate.HATCHED;
+    }
+
     /** A snapshot of this mob for display. */
     public EnemyInspection inspect() {
         return EnemyInspection.of(this);

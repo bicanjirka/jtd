@@ -372,15 +372,6 @@ one cleared 4, its lead copy dealing 194.2k damage for 22 kills against 158.3k f
 
 ## UI
 
-### A hatched egg leaves its stale stats in the inspector
-
-Selecting a Warden egg and letting it hatch clears the selection ring, but the panel keeps the
-egg's last stats with no status line, unlike a kill (`Killed`) or a leak (`Leaked`).
-
-- **Where:** `td.enemy.EnemyInspection.Fate`, the hatch path in `SpawnEnemiesAction`.
-- **Approach:** give a mob replaced by its own spawn a fate (e.g. `Hatched`) so the inspector
-  says why it stopped updating.
-
 ### A gated node's name is cut short by its gate's progress
 
 An offered node that waits on a purpose gate shows the gate's progress where its price goes
