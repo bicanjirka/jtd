@@ -110,7 +110,8 @@
   (`TowerBuff.damage(0.3f).withRange(0.1f)`), not from `none()`. `combine` adds every axis except
   fireRate, where each bonus cuts the cooldown that remains (they multiply).
 - Enemy disruption reaches a tower only through `GameWorld.disruptions()`, sampled at the tower's
-  centre in the towers phase (`beginTick`). It folds in as a negative `TowerBuff`, and
+  centre in the towers phase (`beginTick`). It folds in as a negative `TowerBuff` scaled by what the
+  tower's buff leaves of it (`disruptionShield`: an Aura's half, multiplying across Auras), and
   `TowerBuff` floors combined fire-rate and range bonuses at `MIN_BONUS` (-0.75) and caps fire rate at
   `MAX_FIRE_RATE_BONUS` (ten times the base).
 - Cadence has a base/current split like damage and range: `coolDownMax` is the base wait and

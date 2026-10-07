@@ -6,13 +6,14 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
+import td.stat.DisruptionAura;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
-/** Every tower here shares one cell, which satisfies the cluster gates. */
 class AuraTowerTest {
 
     private final GameWorld context = WorldFixtures.newWorld();
@@ -57,22 +58,87 @@ class AuraTowerTest {
     }
 
     @Test
-    void anAuraDoesNotBuffAnotherAuraUntilResonanceFieldIiIsBought() {
+    void anAuraNeverBuffsAnotherAuraEvenWithBroadcast() {
         this.context.economy().startEconomy(1000, 5);
         AuraTower first = new AuraTower(this.context, 0, 0);
         this.context.towers().add(first);
         AuraTower second = new AuraTower(this.context, 0, 0);
         this.context.towers().add(second);
-        this.addClusterFiller();
+        UpgradePaths.awakenVeteran(first);
+        first.buyUpgrade(UpgradePaths.named(first, "Broadcast"));
 
         assertThat(first.buffFor(second)).isEqualTo(TowerBuff.none());
+    }
 
-        UpgradePaths.awakenVeteran(first);
-        first.buyUpgrade(UpgradePaths.named(first, "Resonance Field"));
-        UpgradeNode resonanceFieldTwo = UpgradePaths.named(first, "Resonance Field II");
-        first.buyUpgrade(resonanceFieldTwo);
+    @Test
+    void amplifyingCoreAddsATenthToTheBuffPerLevelAndTheSecondAddsTenPercentFireRate() {
+        this.context.economy().startEconomy(1000, 5);
+        AuraTower aura = new AuraTower(this.context, 0, 0);
+        this.context.towers().add(aura);
+        SniperTower neighbour = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(neighbour);
+        UpgradePaths.awakenVeteran(aura);
 
-        assertThat(first.buffFor(second)).isNotEqualTo(TowerBuff.none());
+        aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core"));
+        TowerBuff first = aura.buffFor(neighbour);
+        aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core II"));
+        TowerBuff second = aura.buffFor(neighbour);
+
+        assertThat(first.damageBonus()).isCloseTo(0.3f, within(1e-6f));
+        assertThat(first.rangeBonus()).isCloseTo(0.3f, within(1e-6f));
+        assertThat(first.fireRateBonus()).isZero();
+        assertThat(second.damageBonus()).isCloseTo(0.4f, within(1e-6f));
+        assertThat(second.fireRateBonus()).isCloseTo(0.1f, within(1e-6f));
+    }
+
+    @Test
+    void broadcastAddsThirtyPercentRangeToTheAurasOwnReach() {
+        this.context.economy().startEconomy(1000, 5);
+        AuraTower aura = new AuraTower(this.context, 0, 0);
+        this.context.towers().add(aura);
+        UpgradePaths.awakenVeteran(aura);
+        float before = aura.getRangeReal();
+
+        aura.buyUpgrade(UpgradePaths.named(aura, "Broadcast"));
+
+        assertThat(aura.getRangeReal()).isCloseTo(before * 1.3f / 1f, within(before * 0.01f));
+    }
+
+    @Test
+    void theHeadChainsOfTheAuraExcludeEachOther() {
+        this.context.economy().startEconomy(1000, 5);
+        AuraTower aura = new AuraTower(this.context, 0, 0);
+        this.context.towers().add(aura);
+        UpgradePaths.awakenVeteran(aura);
+        aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core"));
+
+        assertThat(aura.offeredUpgrades(this.context)).extracting(UpgradeNode::displayName).doesNotContain("Broadcast");
+    }
+
+    @Test
+    void towersInRangeOfAnAuraTakeHalfTheDisruptionFromTheStart() {
+        AuraTower aura = new AuraTower(this.context, 0, 0);
+        this.context.towers().add(aura);
+        SniperTower shielded = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(shielded);
+        this.context.disruptions().add(shielded.getX(), shielded.getY(), new DisruptionAura(20f, 0.4f, 0.2f));
+
+        shielded.beginTick(1);
+
+        assertThat(shielded.fireRateCurrent()).isCloseTo(1.0 / 1.2, within(1e-6));
+    }
+
+    @Test
+    void twoAurasLeaveAQuarterOfTheDisruption() {
+        this.context.towers().add(new AuraTower(this.context, 0, 0));
+        this.context.towers().add(new AuraTower(this.context, 0, 0));
+        SniperTower shielded = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(shielded);
+        this.context.disruptions().add(shielded.getX(), shielded.getY(), new DisruptionAura(20f, 0.4f, 0.2f));
+
+        shielded.beginTick(1);
+
+        assertThat(shielded.fireRateCurrent()).isCloseTo(1.0 / 1.1, within(1e-6));
     }
 
     @Test
