@@ -538,7 +538,7 @@ The fix landed in three commits, one per phase, each independently green:
 
 1. Gave `EnemyDefinition`, `TowerBuff` and `LevelDefinition` the same narrow-factory-plus-`withX`
    shape `PathDefinition` already had, and rewrote their production call sites
-   (`BuiltInEnemies`, the tower leaves, `BuiltInLevelCatalog`) through it.
+   (the enemy classes, the tower leaves, `BuiltInLevelCatalog`) through it.
 2. Added `td.fixtures` (`WorldFixtures`, `BoardFixtures`, `LevelFixtures`, `TowerFixtures`,
    `EnemyFixtures`) and migrated roughly thirty affected test files onto it, deleting each local
    duplicate.

@@ -239,12 +239,12 @@ Every number introduced by the data-driven enemy model - `PercentResistTrait`/
 ability intervals, shield percentages/radii and `EGG_HATCH_DELAY_TICKS` - was chosen to be
 plausible, not tuned, the same situation the tower-upgrade and new-tower-numbers entries above
 were in before their own balance passes. **One exception:** the Warden's `FlatResistTrait`
-value has been tuned (15 -> `BuiltInEnemies.WARDEN_FLAT_RESIST` = 200) against the actual
+value has been tuned (15 -> 200) against the actual
 per-hit/per-tick damage scale every attack tower deals (150-4000, see the head-to-head data in
 the new-tower-numbers entry above) - 15 was negligible against any of them (0.375%-10% of a
 single hit), making the Warden's armor mechanically inert regardless of which tower fought it.
 
-- **Where:** `BuiltInEnemies` (all trait/ability constants), `PercentResistTrait`,
+- **Where:** the enemy classes (`WardenEnemy` and the others in `td.enemy`), `PercentResistTrait`,
   `HurtSpeedTrait`, `FlatResistTrait`.
 - **Approach:** play Curly Path through to the Warden encounter (and the other two levels,
   once they get their own late-game content) repeatedly, adjusting values until the chain and
@@ -265,6 +265,6 @@ one cleared 4, its lead copy dealing 194.2k damage for 22 kills against 158.3k f
 
 - **Where:** `AttackProfile.DEFAULT_CRIT_MULTIPLIER`, `SniperTower.CRIT_CHANCE` and
   `CRIT_MULTIPLIER`, `MomentumPerk.DAMAGE_FACTOR`, `CritStreakPerk`, and
-  `BuiltInEnemies.WARDEN_STANDING_ABILITIES`'s `OnCriticalHitTakenTrigger` ability.
+  `WardenEnemy`'s `OnCriticalHitTakenTrigger` ability.
 - **Approach:** tune in the feature 7 balance pass, with Keen Edge in play. Try Momentum at x3
   first; every number here is a named constant.
