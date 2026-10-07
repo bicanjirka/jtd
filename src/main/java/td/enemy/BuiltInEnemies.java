@@ -207,7 +207,7 @@ final class BuiltInEnemies {
     // High enough that an un-upgraded weak tower does nothing; later stages weaken it.
     private static final float WARDEN_FLAT_RESIST = 10f;
     private static final String WARDEN_ABILITY_BLURB = " Periodically calls a reinforcement and re-shields itself; "
-            + "shields every nearby ally once below half health; calls an extra reinforcement if left unattacked "
+            + "shields every nearby ally once below half health; heals itself if left unattacked "
             + "too long; gains a shield whenever it survives a critical hit; and leaves behind an egg on death.";
     private static final List<IdentifiedAbility> WARDEN_STANDING_ABILITIES = List.of(
             IdentifiedAbility.anonymous(new Ability(new PeriodicTrigger(300), new SpawnEnemiesAction("c", 1, false))),
