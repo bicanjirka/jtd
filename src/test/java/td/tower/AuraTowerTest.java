@@ -10,6 +10,10 @@ import td.stat.DisruptionAura;
 import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
+import td.wave.PathNormal;
+import td.wave.Vec2;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -276,25 +280,118 @@ class AuraTowerTest {
     }
 
     @Test
-    void witheringFieldGivesEveryEnemyInsideTheAuraAVulnerabilityStackEveryInterval() {
-        this.addClusterFiller();
-        AuraTower aura = new AuraTower(this.context, 0, 0);
-        this.context.towers().add(aura);
-        UpgradePaths.buy(aura, this.context, "Withering Field");
-        FakeEnemyMob inside = FakeEnemyMob.at(aura.getX(), aura.getY());
-        FakeEnemyMob hidden = FakeEnemyMob.ghostAt(aura.getX(), aura.getY());
-        FakeEnemyMob outside = FakeEnemyMob.at(10_000, 10_000);
-        this.context.enemies().setEnemies(new EnemyMob[]{inside, hidden, outside});
+    void witheringFieldMakesABuffedTowersNextHitApplyVulnerableOnlyOnceEveryTenSeconds() {
+        AuraTower aura = this.broadcastAura("Withering Field");
+        SniperTower sniper = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(sniper);
+        FakeEnemyMob target = FakeEnemyMob.at(sniper.getX(), sniper.getY());
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
 
-        for (int t = 1; t < 20; t++) {
-            aura.doTick(t);
+        for (int t = 1; t <= 260; t++) {
+            sniper.beginTick(t);
+            sniper.doTick(t);
         }
-        assertThat(inside.appliedEffects()).isEmpty();
-        aura.doTick(20);
 
-        assertThat(inside.appliedEffects()).extracting(Effect::kind).containsExactly(EffectKind.VULNERABLE);
-        assertThat(hidden.appliedEffects()).extracting(Effect::kind).containsExactly(EffectKind.VULNERABLE);
-        assertThat(outside.appliedEffects()).isEmpty();
+        assertThat(aura).isNotNull();
+        assertThat(target.hits().size()).isGreaterThan(4);
+        assertThat(target.appliedEffects()).extracting(Effect::kind)
+                .containsExactly(EffectKind.VULNERABLE, EffectKind.VULNERABLE);
+    }
+
+    @Test
+    void aTowerNoAuraBuffsNeverWithers() {
+        SniperTower alone = new SniperTower(this.context, 30, 30);
+        this.context.towers().add(alone);
+        FakeEnemyMob target = FakeEnemyMob.at(alone.getX(), alone.getY());
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        for (int t = 1; t <= 60; t++) {
+            alone.beginTick(t);
+            alone.doTick(t);
+        }
+
+        assertThat(target.appliedEffects()).isEmpty();
+    }
+
+    @Test
+    void chosenBuffsOnlyTheMostExperiencedTowerInRangeAtTripleStrength() {
+        AuraTower aura = this.broadcastAura("Chosen");
+        SniperTower veteran = new SniperTower(this.context, 0, 0);
+        SniperTower novice = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(veteran);
+        this.context.towers().add(novice);
+        veteran.earnXp(500);
+
+        assertThat(aura.buffFor(veteran).damageBonus()).isCloseTo(0.6f, within(1e-6f));
+        assertThat(aura.buffFor(novice)).isEqualTo(TowerBuff.none());
+        assertThat(aura.buffedTowers()).containsExactly(veteran);
+    }
+
+    @Test
+    void chosenFollowsTheTowerThatOvertakesTheHero() {
+        AuraTower aura = this.broadcastAura("Chosen");
+        SniperTower first = new SniperTower(this.context, 0, 0);
+        SniperTower second = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(first);
+        this.context.towers().add(second);
+        first.earnXp(100);
+        aura.doTick(1);
+        int firstBuffed = first.damageCurrent();
+
+        second.earnXp(500);
+        aura.doTick(2);
+
+        assertThat(firstBuffed).isGreaterThan(first.damageBase);
+        assertThat(first.damageCurrent()).isEqualTo(first.damageBase);
+        assertThat(second.damageCurrent()).isGreaterThan(second.damageBase);
+    }
+
+    private AuraTower rallyAura() {
+        this.context.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(900, 0))));
+        return this.broadcastAura("Rally");
+    }
+
+    @Test
+    void rallyMarksThePathSpotNearestTheAura() {
+        AuraTower aura = this.rallyAura();
+
+        assertThat(aura.rallySpot()).hasValueSatisfying(spot -> {
+            assertThat(spot.x()).isCloseTo(aura.getX(), within(1.0));
+            assertThat(spot.y()).isCloseTo(0.0, within(1.0));
+        });
+    }
+
+    @Test
+    void anEnemyOnTheRallySpotGivesBuffedTowersMoreFireRateForFiveSecondsThenTenSecondsOfCooldown() {
+        AuraTower aura = this.rallyAura();
+        SniperTower sniper = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(sniper);
+        this.context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(aura.getX(), 0)});
+
+        aura.doTick(1);
+        double during = sniper.fireRateCurrent();
+        sniper.beginTick(101);
+        aura.doTick(101);
+        double afterBuff = sniper.fireRateCurrent();
+        sniper.beginTick(201);
+        aura.doTick(201);
+        double secondRally = sniper.fireRateCurrent();
+
+        assertThat(during).isGreaterThan(1.4);
+        assertThat(afterBuff).isEqualTo(1.0);
+        assertThat(secondRally).isGreaterThan(1.4);
+    }
+
+    @Test
+    void rallyDoesNothingWithoutAnEnemyOnTheSpot() {
+        AuraTower aura = this.rallyAura();
+        SniperTower sniper = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(sniper);
+        this.context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(aura.getX(), 500)});
+
+        aura.doTick(1);
+
+        assertThat(sniper.fireRateCurrent()).isEqualTo(1.0);
     }
 
     @Test

@@ -1,9 +1,8 @@
 package td.tower;
 
-import td.effect.EffectKind;
-import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
 import td.tower.buff.TowerBuff;
+import td.tower.mortar.PathLine;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.BaseSlotPerks;
 import td.tower.upgrade.BuffedTowersCondition;
@@ -14,11 +13,14 @@ import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
+import td.util.PathRuntime;
 import td.util.ThreadConfined;
+import td.wave.Vec2;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -54,8 +56,14 @@ public final class AuraTower extends AbstractTower {
     private static final float BROADCAST_DISRUPTION_SHIELD = 0.75f;
     private static final float CONDUIT_EFFECT_LENGTH = 0.3f;
 
-    /** Ticks between periodic passes over enemies in range. */
-    private static final int WITHERING_FIELD_TICK_INTERVAL = 20;
+    /** Withering Field: how long a buffed tower waits between the hits that apply Vulnerable. */
+    private static final int WITHERING_FIELD_TICKS = Math.round(10f * TICKS_PER_SECOND);
+    private static final float CHOSEN_STRENGTH = 3f;
+    /** Rally: the spot's size, what stepping on it gives, for how long, and how soon it can be used again. */
+    private static final float RALLY_SPOT_CELLS = 1f;
+    private static final float RALLY_FIRE_RATE = 0.3f;
+    private static final int RALLY_TICKS = Math.round(5f * TICKS_PER_SECOND);
+    private static final int RALLY_COOLDOWN_TICKS = Math.round(10f * TICKS_PER_SECOND);
 
     private static final UpgradeNode AMPLIFYING_CORE_1 = UpgradeTier.HEAD_1.node("aura.head.amplifying_core.1",
             "Amplifying Core", PRICE)
@@ -94,19 +102,27 @@ public final class AuraTower extends AbstractTower {
             .after(SHARED_LESSONS);
     private static final UpgradeNode WITHERING_FIELD = UpgradeTier.SPECIAL.node("aura.special.withering_field",
             "Withering Field", PRICE)
-            .withExtraEffect("every few ticks, every enemy inside the aura's range gains 1 Vulnerable stack (cap 3)");
+            .withExtraEffect("every buffed tower applies a stack of Vulnerable with its next hit, once every 10s");
+    private static final UpgradeNode CHOSEN = UpgradeTier.SPECIAL.node("aura.special.chosen", "Chosen", PRICE)
+            .withExtraEffect("buffs only the most experienced tower in range, at triple strength");
+    private static final UpgradeNode RALLY = UpgradeTier.SPECIAL.node("aura.special.rally", "Rally", PRICE)
+            .withExtraEffect("marks the path spot nearest the aura: when an enemy steps on it, every buffed tower "
+                    + "gets +30% fire rate for 5s, then a 10s cooldown");
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none().withAttune("Kinship: buffed towers earn "
             + "+5% XP for each other tower type in range, up to +20%");
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS))
             .with(AMPLIFYING_CORE_1, AMPLIFYING_CORE_2, KEEN_EDGE, BROADCAST_1, BROADCAST_2, CONDUIT, TUTELAGE_1, SHARED_LESSONS, APPRENTICE,
-                    WITHERING_FIELD)
-            .withChoice(ExclusiveChoice.oneOf(AMPLIFYING_CORE_1, BROADCAST_1));
+                    WITHERING_FIELD, CHOSEN, RALLY)
+            .withChoice(ExclusiveChoice.oneOf(AMPLIFYING_CORE_1, BROADCAST_1))
+            .withChoice(ExclusiveChoice.oneOf(WITHERING_FIELD, CHOSEN, RALLY));
 
     private volatile float power;
     private volatile boolean grantsFireRate = false;
-    private int tickCounter = 0;
+    private Tower lastChosen;
+    private int rallyReadyAt;
+    private Vec2 rallySpot;
 
     public AuraTower(GameWorld context, int x, int y) {
         this(context, x, y, DEFAULT_POWER);
@@ -155,22 +171,36 @@ public final class AuraTower extends AbstractTower {
         if (this.owns(KEEN_EDGE)) {
             base = base.withCritDamage(KEEN_EDGE_CRIT_DAMAGE);
         }
+        if (this.owns(WITHERING_FIELD)) {
+            base = base.withWitherTicks(WITHERING_FIELD_TICKS);
+        }
         return this.grantsFireRate ? base.withFireRate(CORE_FIRE_RATE) : base;
     }
 
-    /**
-     * Another tower within range. Never itself, and never another aura.
-     */
-    private boolean buffs(Tower other) {
-        if (other == this) {
-            return false;
-        }
-        if (other.getType() == TowerFactory.Type.AURA) {
+    /** Another tower within range. Never itself, and never another aura. */
+    private boolean inRange(Tower other) {
+        if (other == this || other.getType() == TowerFactory.Type.AURA) {
             return false;
         }
         int dx = this.centerX - other.getX();
         int dy = this.centerY - other.getY();
         return (dx * dx + dy * dy) < this.rangeReal2();
+    }
+
+    /** A tower in range, or with Chosen only the most experienced one. */
+    private boolean buffs(Tower other) {
+        return this.inRange(other) && (!this.owns(CHOSEN) || other == this.chosen());
+    }
+
+    /** The tower in range with the most XP, the earliest built on a tie; null when none is in range. */
+    public Tower chosen() {
+        Tower most = null;
+        for (Tower tower : this.context.towers().all()) {
+            if (this.inRange(tower) && (most == null || tower.experience().xp() > most.experience().xp())) {
+                most = tower;
+            }
+        }
+        return most;
     }
 
     /** An aura has no reach on the path: it earns through the towers it buffs. */
@@ -184,7 +214,8 @@ public final class AuraTower extends AbstractTower {
         if (!this.buffs(other)) {
             return TowerBuff.none();
         }
-        return this.buffWithStrength(this.power + this.kinshipStrengthFor(other));
+        TowerBuff buff = this.buffWithStrength(this.power + this.kinshipStrengthFor(other));
+        return this.owns(CHOSEN) ? buff.scaledBy(CHOSEN_STRENGTH) : buff;
     }
 
     private boolean owns(UpgradeNode node) {
@@ -245,8 +276,11 @@ public final class AuraTower extends AbstractTower {
     }
 
     @Override
-    public boolean sharesXp(Tower recipient, Tower earner) {
-        return this.owns(SHARED_LESSONS) && this.buffs(recipient) && this.buffs(earner);
+    public List<Tower> xpSharedWith(List<Tower> earners) {
+        if (!this.owns(SHARED_LESSONS) || earners.stream().noneMatch(this::buffs)) {
+            return List.of();
+        }
+        return this.buffedTowers();
     }
 
     /** The buffed tower with the least XP, the earliest built on a tie; null when this aura buffs none. */
@@ -265,19 +299,44 @@ public final class AuraTower extends AbstractTower {
         return this.context.towers().all().stream().filter(this::buffs).toList();
     }
 
-    /** Withering Field: every interval, each enemy inside the aura, hidden or not, gains a vulnerability stack. */
+    /**
+     * Chosen follows whoever has the most XP, and the buffs are derived, so a change of hero republishes
+     * the stats; Rally watches its spot.
+     */
     public void doTick(int gameTime) {
-        this.tickCounter++;
-        if (this.tickCounter < WITHERING_FIELD_TICK_INTERVAL) {
-            return;
-        }
-        this.tickCounter = 0;
-        if (this.upgrades().owns(WITHERING_FIELD.id())) {
-            for (EnemyMob enemy : InRangeTargetQuery.everyone(this.centerX, this.centerY, this.rangeReal())
-                    .matching(this.context.enemies())) {
-                this.applyStacks(enemy, EffectKind.VULNERABLE, 1);
+        if (this.owns(CHOSEN)) {
+            Tower chosen = this.chosen();
+            if (chosen != this.lastChosen) {
+                this.lastChosen = chosen;
+                this.context.towers().all().forEach(Tower::recalculateStats);
             }
         }
+        if (this.owns(RALLY) && gameTime >= this.rallyReadyAt && this.enemyOnRallySpot()) {
+            this.rallyReadyAt = gameTime + RALLY_COOLDOWN_TICKS;
+            for (Tower buffed : this.buffedTowers()) {
+                buffed.receiveTimedBuff(TowerBuff.fireRate(RALLY_FIRE_RATE), RALLY_TICKS);
+            }
+        }
+    }
+
+    private boolean enemyOnRallySpot() {
+        Optional<Vec2> spot = this.rallySpot();
+        if (spot.isEmpty()) {
+            return false;
+        }
+        float radius = RALLY_SPOT_CELLS * this.context.getBoard().scale();
+        return InRangeTargetQuery.everyone((int) Math.round(spot.get().x()), (int) Math.round(spot.get().y()), radius)
+                .matching(this.context.enemies()).stream().anyMatch(enemy -> !enemy.isDead());
+    }
+
+    /** Rally's spot: the point of the path nearest the aura, found once; empty when the level has no path. */
+    public Optional<Vec2> rallySpot() {
+        if (this.rallySpot == null) {
+            List<td.wave.Path> paths = this.context.level().paths().stream().map(PathRuntime::path).toList();
+            this.rallySpot = PathLine.along(paths, this.centerX, this.centerY, new double[]{0.0}).stream()
+                    .findFirst().orElse(null);
+        }
+        return Optional.ofNullable(this.rallySpot);
     }
 
     @Override
@@ -290,8 +349,14 @@ public final class AuraTower extends AbstractTower {
         if (this.grantsFireRate) {
             lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby fire rate", "+" + BehaviourLine.percent(CORE_FIRE_RATE)));
         }
-        if (this.upgrades().owns(WITHERING_FIELD.id())) {
-            lines.add(new BehaviourLine(BehaviourMarker.VULNERABLE, "Enemies inside", "vulnerable"));
+        if (this.owns(WITHERING_FIELD)) {
+            lines.add(new BehaviourLine(BehaviourMarker.VULNERABLE, "Buffed hits", "vulnerable every 10s"));
+        }
+        if (this.owns(CHOSEN)) {
+            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Chosen", "x3, the most experienced only"));
+        }
+        if (this.owns(RALLY)) {
+            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Rally", "+30% fire rate for 5s"));
         }
         if (this.isPlaced()) {
             lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Buffing", this.buffedTowers().size() + " towers"));

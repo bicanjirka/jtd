@@ -17,10 +17,11 @@ import td.tower.buff.TowerBuff;
  * @param disruption the enemy disruption these stats already include
  * @param timedBuffLength the factor on how long the tower's own timed buffs last
  * @param effectLength the factor on how long the effects it puts on enemies last
+ * @param witherTicks ticks between the hits that apply Vulnerable; {@code 0} for none
  */
 public record TowerStats(int damage, float range, double fireRate, float rangeReal, float rangeReal2,
                          AttackProfile attack, DisruptionPenalty disruption, float reachReal, float timedBuffLength,
-                         float effectLength) {
+                         float effectLength, int witherTicks) {
 
     /**
      * Folds base stats and the total buff into one set; {@code scale} converts range from cells to
@@ -44,7 +45,7 @@ public record TowerStats(int damage, float range, double fireRate, float rangeRe
                 .withMagicPenetration(buff.magicPenetrationBonus(), 0f);
         return new TowerStats(buff.damageFor(base.damage()), range, buff.fireRateMultiplier(),
                 rangeReal, rangeReal * rangeReal, attack, disruption, reachReal, buff.timedBuffLength(),
-                buff.effectLength());
+                buff.effectLength(), Math.round(buff.witherTicks()));
     }
 
     /** Chance in {@code [0, 1]} that a hit is critical, before the target's own stats. */

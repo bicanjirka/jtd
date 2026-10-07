@@ -62,6 +62,9 @@ public interface Tower {
      */
     TowerBuff buffFor(Tower other);
 
+    /** Buffs this tower for {@code durationTicks} from now, as it would itself; it never stacks. */
+    void receiveTimedBuff(TowerBuff buff, int durationTicks);
+
     /** Recomputes current stats from the towers on the board and this tower's upgrades. */
     void recalculateStats();
 
@@ -90,9 +93,9 @@ public interface Tower {
         return 0f;
     }
 
-    /** Whether this tower makes {@code recipient} earn the XP {@code earner} earns. Never by default. */
-    default boolean sharesXp(Tower recipient, Tower earner) {
-        return false;
+    /** The towers this one makes earn what {@code earners} earn, besides them. None by default. */
+    default List<Tower> xpSharedWith(List<Tower> earners) {
+        return List.of();
     }
 
     /**

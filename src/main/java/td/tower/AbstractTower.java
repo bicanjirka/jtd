@@ -5,6 +5,7 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.damage.DamageUnits;
+import td.damage.Delivery;
 import td.economy.EconomyDelta;
 import td.effect.DamageSink;
 import td.effect.Effect;
@@ -75,6 +76,7 @@ public abstract class AbstractTower implements Tower {
     private int timedBuffEndsAt;
     private int currentTick;
     private float xpRemainder;
+    private int lastWitherTick = Integer.MIN_VALUE;
     private boolean inKillHook;
 
     /**
@@ -198,6 +200,7 @@ public abstract class AbstractTower implements Tower {
         }
         boolean wasAlive = !enemy.isDead();
         Damage landed = enemy.doDamage(damage, attacker.withOrigin(this.origin));
+        this.wither(enemy, attacker);
         if (wasAlive) {
             this.damageDealt += landed.amount();
             if (enemy.isDead()) {
@@ -211,6 +214,16 @@ public abstract class AbstractTower implements Tower {
             }
         }
         return landed.critical();
+    }
+
+    /** Withering Field: the first hit in every interval applies a stack of Vulnerable; periodic damage is no hit. */
+    private void wither(EnemyMob enemy, AttackProfile attacker) {
+        int every = this.stats.witherTicks();
+        if (every > 0 && attacker.delivery() == Delivery.HIT && !enemy.isDead()
+                && (long) this.currentTick - this.lastWitherTick >= every) {
+            this.lastWitherTick = this.currentTick;
+            this.applyStacks(enemy, EffectKind.VULNERABLE, 1);
+        }
     }
 
     /**
@@ -313,6 +326,11 @@ public abstract class AbstractTower implements Tower {
      * Buffs this tower for {@code durationTicks} from now, replacing any timed buff (it never
      * stacks; granting again restarts the clock).
      */
+    @Override
+    public void receiveTimedBuff(TowerBuff buff, int durationTicks) {
+        this.grantTimedBuff(buff, durationTicks);
+    }
+
     protected void grantTimedBuff(TowerBuff buff, int durationTicks) {
         this.timedBuffEndsAt = this.currentTick + Math.round(durationTicks * this.stats.timedBuffLength());
         this.timedBuff = buff;

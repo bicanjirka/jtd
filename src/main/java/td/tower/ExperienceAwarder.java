@@ -4,7 +4,10 @@ import td.enemy.EnemyWalk;
 import td.enemy.WalkEndListener;
 import td.tower.buff.TowerBuff;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Pays each finished walk's bounty as XP to every tower the mob reached, and once to every tower
@@ -27,8 +30,10 @@ public final class ExperienceAwarder implements WalkEndListener {
         if (reached.isEmpty()) {
             return;
         }
+        Set<Tower> shared = Collections.newSetFromMap(new IdentityHashMap<>());
+        all.forEach(tower -> shared.addAll(tower.xpSharedWith(reached)));
         for (Tower tower : all) {
-            if (reached.contains(tower) || buffsAny(tower, reached) || sharedWithAny(all, tower, reached)) {
+            if (reached.contains(tower) || buffsAny(tower, reached) || shared.contains(tower)) {
                 tower.earnXp(walk.getBounty(), bonusFor(all, tower));
             }
         }
@@ -39,9 +44,6 @@ public final class ExperienceAwarder implements WalkEndListener {
         return (float) all.stream().mapToDouble(tower -> tower.xpBonusFor(earner)).sum();
     }
 
-    private static boolean sharedWithAny(List<Tower> all, Tower recipient, List<Tower> earners) {
-        return earners.stream().anyMatch(earner -> all.stream().anyMatch(tower -> tower.sharesXp(recipient, earner)));
-    }
 
     private static boolean buffsAny(Tower tower, List<Tower> earners) {
         return earners.stream().anyMatch(earner -> !tower.buffFor(earner).equals(TowerBuff.none()));
