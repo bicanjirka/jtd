@@ -11,5 +11,11 @@ public enum HexGlyph {
     /** A snowflake: frost. */
     RIME,
     /** A flame: fire. */
-    ASH
+    ASH,
+    /** A triangle turned on its head: what helps it hurts it. */
+    INVERSION,
+    /** Two linked rings: what one suffers, all suffer. */
+    SYMPATHY,
+    /** A ring with spokes: a burst when it dies. */
+    RECKONING
 }

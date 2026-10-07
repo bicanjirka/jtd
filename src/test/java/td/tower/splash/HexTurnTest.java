@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HexTurnTest {
 
-    private static final HexScene SCENE = new HexScene(List.of(FakeEnemyMob.at(0, 0)), 48f, 48f);
+    private static final HexScene SCENE = new HexScene(List.of(FakeEnemyMob.at(0, 0)), 48f, 48f, 64f);
 
     /** A hex that picks the first candidate, or nobody. */
     private record StubHex(EffectKind kind, boolean finds) implements Hex {

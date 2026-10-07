@@ -29,6 +29,10 @@
   effect is the hex's only timer (spirit paces it). The Hexer's `HexLedger` only watches it: what
   a hex pays out when it ends or its carrier dies is settled at the start of the Hexer's tick,
   never by the enemy. Each hex picks its own target in one pass per cast, never per tick.
+- What a hex shares or releases in range (Sympathy, Reckoning) reaches `SHARE_CELLS` grown by the
+  blast radius bonus, and only enemies the ledger still watches. A share tops the receiver up to
+  what the carrier has and never adds on top, so two carriers sharing back and forth settle
+  instead of climbing.
 - Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
   `AuraTower.buffs`' single "is this an aura" check stays the only role check.
 

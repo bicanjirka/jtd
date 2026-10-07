@@ -157,6 +157,11 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.rank;
     }
 
+    @Override
+    public boolean appliesEffects() {
+        return this.definition.abilities().stream().anyMatch(ability -> ability.action().appliesEffects());
+    }
+
     public EnemyDefinition definition() {
         return this.definition;
     }
@@ -245,9 +250,27 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     /**
      * Applies the effect with its duration shortened by this mob's resistance to its kind and, for
-     * hard crowd control, by diminishing returns. One that would last under a tick is blocked.
+     * hard crowd control, by diminishing returns. One that would last under a tick is blocked. Under
+     * Inversion a heal comes in as damage and a shield as one hit.
      */
     public void applyEffect(Effect effect) {
+        Optional<Effect> inversion = this.activeEffects.find(EffectKind.INVERSION);
+        if (inversion.isPresent() && effect.kind() == EffectKind.SHIELD) {
+            this.strikeInsteadOfShielding(effect, inversion.get());
+            return;
+        }
+        this.applyResisted(inversion.map(hex -> effect.invertedThrough(hex.sink())).orElse(effect));
+    }
+
+    /**
+     * An Inverted enemy takes a shield as one hit of its percent of full health, credited to whoever
+     * cast the inversion; the shield itself never goes on.
+     */
+    private void strikeInsteadOfShielding(Effect shield, Effect inversion) {
+        inversion.sink().apply(Damage.magic(Math.round(shield.shieldPercent() * this.healthMax)));
+    }
+
+    private void applyResisted(Effect effect) {
         float factor = effect.kind().resistedBy().map(stat -> 1f - this.stats.value(stat)).orElse(1f);
         Optional<DiminishingReturns> ladder = this.ladderFor(effect.kind());
         boolean active = this.activeEffects.has(effect.kind());

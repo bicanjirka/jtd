@@ -476,6 +476,122 @@ class SplashTowerTest {
         assertThat(effectsOf(enemy, EffectKind.CHILL)).singleElement().extracting(Effect::fuelLevel).isEqualTo(0.3f);
     }
 
+    private SplashTower hexerWith(String special) {
+        return this.upgradedTower("Hex", special);
+    }
+
+    @Test
+    void hexOfInversionTargetsAnEnemyThatHealsShieldsOrVanishesAndNoOtherEnemy() {
+        SplashTower tower = this.hexerWith("Hex of Inversion");
+        FakeEnemyMob plain = FakeEnemyMob.at(100, 100).withHealth(900);
+        FakeEnemyMob mender = FakeEnemyMob.at(100, 130).withHealth(100).thatAppliesEffects();
+        this.enemies(plain, mender);
+
+        tickThroughCooldown(tower, 8);
+
+        assertThat(plain.hasEffect(EffectKind.DOOM)).isTrue();
+        assertThat(plain.hasEffect(EffectKind.INVERSION)).isFalse();
+        assertThat(effectsOf(mender, EffectKind.INVERSION)).singleElement().extracting(Effect::remainingTicks)
+                .isEqualTo(Math.round(6f * TickRate.TICKS_PER_SECOND));
+    }
+
+    @Test
+    void withNoEnemyThatAppliesEffectsHexOfInversionIsSkipped() {
+        SplashTower tower = this.hexerWith("Hex of Inversion");
+        FakeEnemyMob plain = FakeEnemyMob.at(100, 100);
+        this.enemies(plain);
+
+        tickThroughCooldown(tower, 12);
+
+        assertThat(plain.hasEffect(EffectKind.INVERSION)).isFalse();
+    }
+
+    @Test
+    void hexOfSympathyCopiesTheCarriersDebuffsToTheOtherHexedEnemiesNearbyOnceASecond() {
+        SplashTower tower = this.hexerWith("Hex of Sympathy");
+        FakeEnemyMob strong = FakeEnemyMob.at(100, 100).withHealth(900);
+        FakeEnemyMob carrier = FakeEnemyMob.at(100, 140).withHealth(100).withProgression(5);
+        FakeEnemyMob unhexed = FakeEnemyMob.ghostAt(100, 120);
+        this.enemies(strong, carrier);
+        tickThroughCooldown(tower, 8);
+        this.enemies(strong, carrier, unhexed);
+        carrier.applyEffect(Effect.sundered(2, 100, d -> {
+        }));
+
+        tower.doTick(2001);
+        int beforeTheSecond = strong.effectStacks(EffectKind.SUNDERED);
+        tower.doTick(2000);
+
+        assertThat(carrier.hasEffect(EffectKind.SYMPATHY)).isTrue();
+        assertThat(beforeTheSecond).isZero();
+        assertThat(strong.effectStacks(EffectKind.SUNDERED)).isEqualTo(2);
+        assertThat(unhexed.hasEffect(EffectKind.SUNDERED)).isFalse();
+    }
+
+    @Test
+    void hexOfSympathyDoesNotAddAgainWhatTheOtherAlreadyHas() {
+        SplashTower tower = this.hexerWith("Hex of Sympathy");
+        FakeEnemyMob strong = FakeEnemyMob.at(100, 100).withHealth(900);
+        FakeEnemyMob carrier = FakeEnemyMob.at(100, 140).withHealth(100).withProgression(5);
+        this.enemies(strong, carrier);
+        tickThroughCooldown(tower, 8);
+        carrier.applyEffect(Effect.sundered(2, 100, d -> {
+        }));
+
+        tower.doTick(2000);
+        tower.doTick(2020);
+        tower.doTick(2040);
+
+        assertThat(strong.effectStacks(EffectKind.SUNDERED)).isEqualTo(2);
+        assertThat(carrier.effectStacks(EffectKind.SUNDERED)).isEqualTo(2);
+    }
+
+    @Test
+    void whenAReckoningCarrierDiesTheDoomsNearItPayOutAtOnceAndStartAgain() {
+        SplashTower tower = this.hexerWith("Hex of Reckoning");
+        FakeEnemyMob doomed = FakeEnemyMob.at(100, 100).withHealth(900);
+        FakeEnemyMob carrier = FakeEnemyMob.at(100, 140).withHealth(100).withProgression(5);
+        this.enemies(doomed, carrier);
+        tickThroughCooldown(tower, 8);
+        doomed.doDamage(Damage.physical(10_000), AttackProfile.none());
+        int hitsBefore = doomed.hits().size();
+
+        kill(carrier);
+        tower.doTick(2000);
+        tower.doTick(2001);
+
+        assertThat(carrier.hasEffect(EffectKind.RECKONING)).isTrue();
+        List<Damage> payouts = doomed.hits().subList(hitsBefore, doomed.hits().size());
+        assertThat(payouts).singleElement().satisfies(payout -> {
+            assertThat(payout.type()).isEqualTo(DamageType.MAGIC);
+            assertThat(payout.amount()).isGreaterThanOrEqualTo(3_000);
+        });
+        assertThat(effectsOf(doomed, EffectKind.DOOM)).hasSize(2);
+    }
+
+    @Test
+    void aKillByReckoningsPayoutChainsToTheNextDoom() {
+        SplashTower tower = this.hexerWith("Hex of Reckoning");
+        FakeEnemyMob first = FakeEnemyMob.at(100, 100).withHealth(900);
+        FakeEnemyMob second = FakeEnemyMob.at(100, 130).withHealth(500).withProgression(1);
+        FakeEnemyMob third = FakeEnemyMob.at(100, 160).withHealth(100).withProgression(2);
+        this.enemies(first, second, third);
+        tickThroughCooldown(tower, 16);
+        assertThat(first.hasEffect(EffectKind.DOOM)).isTrue();
+        assertThat(second.hasEffect(EffectKind.DOOM)).isTrue();
+        assertThat(third.hasEffect(EffectKind.RECKONING)).isTrue();
+        FakeEnemyMob link = second.hasEffect(EffectKind.RECKONING) ? second : first;
+        FakeEnemyMob end = link == second ? first : second;
+        link.dieOnAnyHit();
+
+        kill(third);
+        tower.doTick(2000);
+        tower.doTick(2001);
+
+        assertThat(link.isDead()).isTrue();
+        assertThat(end.hits().stream().filter(hit -> hit.type() == DamageType.MAGIC)).hasSize(2);
+    }
+
     @Test
     void potencyAndMasteryWaitForAChainRoot() {
         SplashTower tower = this.upgradedTower("Wide Charge", "Shaped Charge");

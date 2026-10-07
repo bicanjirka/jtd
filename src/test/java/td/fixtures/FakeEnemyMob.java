@@ -30,6 +30,7 @@ public final class FakeEnemyMob implements EnemyMob {
     private final List<Float> shieldBreaks = new ArrayList<>();
     private boolean hitsLandCritical;
     private boolean diesOnHit;
+    private boolean appliesEffects;
     private boolean frozen;
     private float physicalReduction;
     private double x;
@@ -63,11 +64,23 @@ public final class FakeEnemyMob implements EnemyMob {
         return new FakeEnemyMob(this.x, this.y, this.progression, health, this.hidden).likeThis(this);
     }
 
-    /** This fake itself, with the rank and health fraction of {@code other}. */
+    /** This fake itself, with the rank, health fraction and abilities of {@code other}. */
     private FakeEnemyMob likeThis(FakeEnemyMob other) {
         this.rank = other.rank;
         this.healthFraction = other.healthFraction;
+        this.appliesEffects = other.appliesEffects;
         return this;
+    }
+
+    /** This fake itself, now an enemy that heals, shields or vanishes. */
+    public FakeEnemyMob thatAppliesEffects() {
+        this.appliesEffects = true;
+        return this;
+    }
+
+    @Override
+    public boolean appliesEffects() {
+        return this.appliesEffects;
     }
 
     /** This fake itself, now of {@code rank}. */

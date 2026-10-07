@@ -1,7 +1,10 @@
 package td.tower.splash;
 
+import td.effect.EffectKind;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The Hexer's hexes and how hard they bite. Each {@code withX} is a copy, and every change holds
@@ -30,6 +33,11 @@ public record HexSpec(List<Hex> pool, int cursesPerCast, float doomShare, float 
 
     public boolean isActive() {
         return !this.pool.isEmpty();
+    }
+
+    /** The hex in the pool that marks an enemy with {@code kind}; empty when it owns none. */
+    public Optional<Hex> hexOf(EffectKind kind) {
+        return this.pool.stream().filter(hex -> hex.kind() == kind).findFirst();
     }
 
     /** The pool with {@code hex} added after the others. */

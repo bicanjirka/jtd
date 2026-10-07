@@ -13,23 +13,28 @@ import td.tower.splash.ArcSpec;
 import td.tower.splash.ArcStrike;
 import td.tower.splash.BlastRadiusPerk;
 import td.tower.splash.BlastSpec;
+import td.tower.splash.BlightHex;
 import td.tower.splash.ChainLightningPerk;
 import td.tower.splash.ConductorPerk;
-import td.tower.splash.CovenPerk;
+import td.tower.splash.ContagionHex;
+import td.tower.splash.CovenHex;
+import td.tower.splash.DoomHex;
 import td.tower.splash.FireControlPerk;
 import td.tower.splash.Hex;
 import td.tower.splash.HexActions;
 import td.tower.splash.HexEvent;
 import td.tower.splash.HexLedger;
-import td.tower.splash.HexOfDoomPerk;
+import td.tower.splash.HexPerk;
 import td.tower.splash.HexPick;
 import td.tower.splash.HexScene;
 import td.tower.splash.HexSpec;
 import td.tower.splash.HexTurn;
+import td.tower.splash.InversionHex;
 import td.tower.splash.LightningRodPerk;
 import td.tower.splash.MasteryPerk;
 import td.tower.splash.OverloadPerk;
 import td.tower.splash.PotencyPerk;
+import td.tower.splash.ReckoningHex;
 import td.tower.splash.SaturationRule;
 import td.tower.splash.ShapedChargePerk;
 import td.tower.splash.ShotContext;
@@ -38,12 +43,12 @@ import td.tower.splash.SplashActions;
 import td.tower.splash.SplashPerk;
 import td.tower.splash.SplashShot;
 import td.tower.splash.SplashSpec;
-import td.tower.splash.SpreadingCursePerk;
 import td.tower.splash.StaticChargePerk;
+import td.tower.splash.SympathyCopier;
+import td.tower.splash.SympathyHex;
 import td.tower.splash.ThunderclapPerk;
 import td.tower.splash.ThunderstrikePerk;
 import td.tower.splash.WideChargePerk;
-import td.tower.splash.WitchsBrewPerk;
 import td.tower.targeting.HighestHealthSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.MostNeighboursSelector;
@@ -107,6 +112,8 @@ public final class SplashTower extends AbstractTower {
     private static final int CAST_EVERY = 4;
     /** How far, in cells before the blast radius bonus, a curse spreads or shares. */
     private static final float SPREAD_CELLS = 1.5f;
+    /** How far, in cells before the blast radius bonus, Sympathy shares and Reckoning releases. */
+    private static final float SHARE_CELLS = 2f;
     /** How many enemies a Contagion jumps to, and how often a hex may jump at most. */
     private static final int CONTAGION_TARGETS = 2;
     private static final int MAX_JUMPS = 2;
@@ -160,6 +167,21 @@ public final class SplashTower extends AbstractTower {
             .withExtraEffect("adds Hex of Ash: the enemy's burn and poison hold twice as much and mark it twice as "
                     + "fast; it can't be frozen and shrugs off 75% of chill")
             .after(SPREADING_CURSE);
+    private static final UpgradeNode INVERSION = UpgradeTier.SPECIAL.node("splash.special.inversion",
+            "Hex of Inversion", PRICE)
+            .withExtraEffect("adds Hex of Inversion: heals and shields the enemy receives are dealt to it as magic "
+                    + "damage instead, and it can't turn invisible")
+            .after(HEX);
+    private static final UpgradeNode SYMPATHY = UpgradeTier.SPECIAL.node("splash.special.sympathy",
+            "Hex of Sympathy", PRICE)
+            .withExtraEffect("adds Hex of Sympathy: once a second, its Vulnerable, Sundered, Exposed and chill are "
+                    + "copied to the other enemies within 2 cells that carry any of this tower's hexes")
+            .after(HEX);
+    private static final UpgradeNode RECKONING = UpgradeTier.SPECIAL.node("splash.special.reckoning",
+            "Hex of Reckoning", PRICE)
+            .withExtraEffect("adds Hex of Reckoning: when the enemy dies, this tower's Dooms within 2 cells release "
+                    + "at once and start again")
+            .after(HEX);
     private static final UpgradeCondition A_CHAIN = UpgradeCondition.owns(ARC.id()).or(UpgradeCondition.owns(HEX.id()));
     private static final UpgradeNode WIDE_CHARGE = UpgradeTier.EXTRA_1.node("splash.extra.blast_engineering.1",
             "Wide Charge", PRICE)
@@ -198,11 +220,12 @@ public final class SplashTower extends AbstractTower {
             SPREADING_CURSE))
             .with(ARC, CONDUCTOR, OVERLOAD, CHAIN_LIGHTNING, LIGHTNING_ROD, HEX, WITCHS_BREW, SPREADING_CURSE,
                     RIME_COVEN, ASH_COVEN, WIDE_CHARGE, SHAPED_CHARGE, POTENCY, MASTERY, THUNDERCLAP, STATIC_CHARGE,
-                    THUNDERSTRIKE)
+                    THUNDERSTRIKE, INVERSION, SYMPATHY, RECKONING)
             .withChoice(ExclusiveChoice.oneOf(ARC, HEX))
             .withChoice(ExclusiveChoice.oneOf(CHAIN_LIGHTNING, LIGHTNING_ROD))
             .withChoice(ExclusiveChoice.oneOf(RIME_COVEN, ASH_COVEN))
-            .withChoice(ExclusiveChoice.specials(THUNDERCLAP, STATIC_CHARGE, THUNDERSTRIKE));
+            .withChoice(ExclusiveChoice.specials(THUNDERCLAP, STATIC_CHARGE, THUNDERSTRIKE))
+            .withChoice(ExclusiveChoice.specials(INVERSION, SYMPATHY, RECKONING));
 
     private static final PerkCatalogue<SplashPerk> PERKS = PerkCatalogue.<SplashPerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, FireControlPerk::new)
@@ -219,11 +242,14 @@ public final class SplashTower extends AbstractTower {
             .with(THUNDERCLAP.id(), ThunderclapPerk::new)
             .with(STATIC_CHARGE.id(), StaticChargePerk::new)
             .with(THUNDERSTRIKE.id(), ThunderstrikePerk::new)
-            .with(HEX.id(), HexOfDoomPerk::new)
-            .with(WITCHS_BREW.id(), WitchsBrewPerk::new)
-            .with(SPREADING_CURSE.id(), SpreadingCursePerk::new)
-            .with(RIME_COVEN.id(), CovenPerk::rime)
-            .with(ASH_COVEN.id(), CovenPerk::ash);
+            .with(HEX.id(), () -> HexPerk.adding(new DoomHex()))
+            .with(WITCHS_BREW.id(), () -> HexPerk.adding(new BlightHex()).andCursing(3))
+            .with(SPREADING_CURSE.id(), () -> HexPerk.adding(new ContagionHex()))
+            .with(RIME_COVEN.id(), () -> HexPerk.adding(CovenHex.rime()))
+            .with(ASH_COVEN.id(), () -> HexPerk.adding(CovenHex.ash()))
+            .with(INVERSION.id(), () -> HexPerk.adding(new InversionHex()))
+            .with(SYMPATHY.id(), () -> HexPerk.adding(new SympathyHex()))
+            .with(RECKONING.id(), () -> HexPerk.adding(new ReckoningHex()));
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final OwnedPerks<SplashPerk> perks = new OwnedPerks<>(PERKS);
@@ -274,7 +300,11 @@ public final class SplashTower extends AbstractTower {
         this.currentTick = gameTime;
         List<SplashPerk> owned = this.perks.all();
         if (!this.hexLedger.isEmpty()) {
-            this.settleHexes(this.spec(owned));
+            SplashSpec spec = this.spec(owned);
+            this.settleHexes(spec);
+            if (gameTime % TICKS_PER_SECOND == 0) {
+                this.sympathize(spec);
+            }
         }
         if (this.coolDown > 0) {
             this.coolDown--;
@@ -304,8 +334,8 @@ public final class SplashTower extends AbstractTower {
             return false;
         }
         float blastRadius = this.blastRadius(spec.blast());
-        float spread = SPREAD_CELLS * this.context.getBoard().scale() * spec.blast().distanceScale();
-        Optional<HexPick> pick = this.hexTurn.take(hexes.pool(), new HexScene(inReach, blastRadius, spread));
+        Optional<HexPick> pick = this.hexTurn.take(hexes.pool(), new HexScene(inReach, blastRadius,
+                this.distance(SPREAD_CELLS, spec), this.distance(SHARE_CELLS, spec)));
         if (pick.isEmpty()) {
             return false;
         }
@@ -338,22 +368,83 @@ public final class SplashTower extends AbstractTower {
         return cursed;
     }
 
+    /** {@code cells} grown by the blast radius bonus, in pixels: how far a hex's payload reaches. */
+    private float distance(float cells, SplashSpec spec) {
+        return cells * this.context.getBoard().scale() * spec.blast().distanceScale();
+    }
+
+    private static boolean near(EnemyMob a, EnemyMob b, float distance) {
+        return Math.hypot(a.getX() - b.getX(), a.getY() - b.getY()) <= distance;
+    }
+
     /**
      * Pays out what happened to the hexes: a Doom that ran out lands its share of what the enemy
-     * took under it, and a Contagion carrier that died passes its curses on.
+     * took under it, a Reckoning carrier that died releases the Dooms near it, and a Contagion
+     * carrier that died passes its curses on.
      */
     private void settleHexes(SplashSpec spec) {
         for (HexEvent event : this.hexLedger.settle()) {
             switch (event) {
                 case HexEvent.Ended ended -> {
-                    int payout = Math.round(ended.stored() * spec.hexes().doomShare());
-                    if (ended.kind() == EffectKind.DOOM && payout > 0) {
-                        this.dealPeriodicDamage(ended.enemy(), Damage.magic(payout));
+                    if (ended.kind() == EffectKind.DOOM) {
+                        this.payDoom(ended.enemy(), ended.stored(), spec);
                     }
                 }
-                case HexEvent.Died died -> died.carried(EffectKind.CONTAGION)
-                        .filter(contagion -> contagion.generation() < MAX_JUMPS)
-                        .ifPresent(contagion -> this.spread(died, contagion.generation() + 1, spec));
+                case HexEvent.Died died -> {
+                    if (died.carried(EffectKind.RECKONING).isPresent()) {
+                        this.reckon(died.enemy(), spec);
+                    }
+                    died.carried(EffectKind.CONTAGION)
+                            .filter(contagion -> contagion.generation() < MAX_JUMPS)
+                            .ifPresent(contagion -> this.spread(died, contagion.generation() + 1, spec));
+                }
+            }
+        }
+    }
+
+    /** Doom's payout: its share of the {@code stored} damage, as one magic hit that never crits. */
+    private void payDoom(EnemyMob enemy, long stored, SplashSpec spec) {
+        int payout = Math.round(stored * spec.hexes().doomShare());
+        if (payout > 0) {
+            this.dealPeriodicDamage(enemy, Damage.magic(payout));
+        }
+    }
+
+    /**
+     * Reckoning: every Doom of this Hexer's within reach of the enemy that died pays out now, and
+     * starts again at its full length.
+     */
+    private void reckon(EnemyMob dead, SplashSpec spec) {
+        Optional<Hex> doom = spec.hexes().hexOf(EffectKind.DOOM);
+        float distance = this.distance(SHARE_CELLS, spec);
+        for (EnemyMob enemy : this.hexLedger.carriers(EffectKind.DOOM)) {
+            if (doom.isEmpty() || enemy == dead || !near(enemy, dead, distance)) {
+                continue;
+            }
+            this.payDoom(enemy, this.hexLedger.restart(enemy, EffectKind.DOOM), spec);
+            if (!enemy.isDead()) {
+                int ticks = doom.get().ticksOn(enemy);
+                this.applyEffect(enemy, sink -> Effect.hex(EffectKind.DOOM, ticks, sink));
+            }
+        }
+    }
+
+    /**
+     * Sympathy: each carrier tops up the other enemies that carry any of this Hexer's hexes, within
+     * reach of it, to the debuffs it has itself.
+     */
+    private void sympathize(SplashSpec spec) {
+        List<EnemyMob> carriers = this.hexLedger.carriers(EffectKind.SYMPATHY);
+        if (carriers.isEmpty()) {
+            return;
+        }
+        float distance = this.distance(SHARE_CELLS, spec);
+        List<EnemyMob> hexed = this.hexLedger.hexed();
+        for (EnemyMob carrier : carriers) {
+            for (EnemyMob other : hexed) {
+                if (other != carrier && near(other, carrier, distance)) {
+                    SympathyCopier.missingFrom(carrier, other).forEach(other::applyEffect);
+                }
             }
         }
     }
@@ -364,7 +455,7 @@ public final class SplashTower extends AbstractTower {
      */
     private void spread(HexEvent.Died died, int generation, SplashSpec spec) {
         EnemyMob dead = died.enemy();
-        float distance = SPREAD_CELLS * this.context.getBoard().scale() * spec.blast().distanceScale();
+        float distance = this.distance(SPREAD_CELLS, spec);
         List<Effect> carried = dead.activeEffects();
         List<EnemyMob> next = InRangeTargetQuery.everyone((int) dead.getX(), (int) dead.getY(), distance)
                 .matching(this.context.enemies()).stream()

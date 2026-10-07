@@ -3,7 +3,6 @@ package td.tower.splash;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.targeting.MostNeighboursSelector;
-import td.util.TickRate;
 
 import java.util.Optional;
 
@@ -24,7 +23,7 @@ public final class BlightHex implements Hex {
 
     @Override
     public void cast(EnemyMob target, HexSpec spec, HexActions actions) {
-        int ticks = Math.round(HexSpec.HEX_SECONDS * TickRate.TICKS_PER_SECOND);
+        int ticks = this.ticksOn(target);
         actions.curse(target, EffectKind.BLIGHT, ticks);
         actions.poison(target, spec.blightShare(), ticks);
     }

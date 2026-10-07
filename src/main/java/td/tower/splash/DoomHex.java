@@ -30,7 +30,12 @@ public final class DoomHex implements Hex {
 
     @Override
     public void cast(EnemyMob target, HexSpec spec, HexActions actions) {
+        actions.curse(target, EffectKind.DOOM, this.ticksOn(target));
+    }
+
+    @Override
+    public int ticksOn(EnemyMob target) {
         float seconds = SECONDS + SECONDS_PER_SATURATION_STACK * target.effectStacks(EffectKind.SATURATED);
-        actions.curse(target, EffectKind.DOOM, Math.round(seconds * TickRate.TICKS_PER_SECOND));
+        return Math.round(seconds * TickRate.TICKS_PER_SECOND);
     }
 }
