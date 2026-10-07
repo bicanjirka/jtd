@@ -318,6 +318,136 @@ class SeekerTowerTest {
         assertThat(tower.experience().deeds()).isEqualTo(1);
     }
 
+    private SeekerTower seekerWith(String... nodes) {
+        this.context.playtestRules().setUpgradeGatesIgnored(true);
+        SeekerTower tower = towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, nodes);
+        return tower;
+    }
+
+    @Test
+    void twinWarheadMakesTheNestHoldOneMore() {
+        SeekerTower tower = this.seekerWith("Twin Warhead");
+        this.context.enemies().setEnemies(new EnemyMob[]{});
+
+        tickUntilNestHolds(tower, 1, 4);
+        for (int t = 1000; t < 1300; t++) {
+            tower.doTick(t);
+        }
+
+        assertThat(tower.getNestStored()).isEqualTo(4);
+    }
+
+    @Test
+    void twinWarheadIiSendsTwoMissilesAtTwoDifferentEnemiesAndOneEnemyGetsBoth() {
+        SeekerTower tower = this.seekerWith("Twin Warhead", "Twin Warhead II");
+        FakeEnemyMob quick = FakeEnemyMob.at(100, 100).movingAt(3f);
+        FakeEnemyMob slow = FakeEnemyMob.at(110, 100).movingAt(1f);
+        this.context.enemies().setEnemies(new EnemyMob[]{quick, slow});
+
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(quick.hits()).hasSize(1);
+        assertThat(slow.hits()).hasSize(1);
+    }
+
+    @Test
+    void broodMakesTheNestHoldSixAndASalvoSpreadsAcrossDifferentTargets() {
+        SeekerTower tower = this.seekerWith("Twin Warhead", "Twin Warhead II", "Brood");
+        this.context.enemies().setEnemies(new EnemyMob[]{});
+        int tick = tickUntilNestHolds(tower, 1, 6);
+        FakeEnemyMob first = FakeEnemyMob.at(100, 100).movingAt(3f);
+        FakeEnemyMob second = FakeEnemyMob.at(110, 100).movingAt(2f);
+        FakeEnemyMob third = FakeEnemyMob.at(120, 100).movingAt(1f);
+        this.context.enemies().setEnemies(new EnemyMob[]{first, second, third});
+
+        for (int t = tick; t < tick + 6; t++) {
+            tower.doTick(t);
+        }
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(first.hits()).isNotEmpty();
+        assertThat(second.hits()).isNotEmpty();
+        assertThat(third.hits()).isNotEmpty();
+    }
+
+    @Test
+    void shatterburstBurstsAroundAFrozenEnemyItHitsAndSilencesAndUnravelsWhatItCatches() {
+        SeekerTower tower = this.seekerWith("Twin Warhead", "Twin Warhead II", "Brood", "Transcendent", "Shatterburst");
+        FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
+        frozen.reportFrozen();
+        FakeEnemyMob neighbour = FakeEnemyMob.ghostAt(120, 100);
+        FakeEnemyMob far = FakeEnemyMob.ghostAt(400, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{frozen, neighbour, far});
+
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        // Twin Warhead II sent two missiles, each of which hit the frozen enemy and burst.
+        assertThat(neighbour.hits()).containsExactly(Damage.magic(Math.round(tower.damageCurrent() * 0.35f)),
+                Damage.magic(Math.round(tower.damageCurrent() * 0.35f)));
+        assertThat(neighbour.hasEffect(EffectKind.SILENCED)).isTrue();
+        assertThat(neighbour.effectStacks(EffectKind.UNRAVELED)).isEqualTo(2);
+        assertThat(far.hits()).isEmpty();
+    }
+
+    @Test
+    void shatterburstBurstsOnlyFromTheMissileThatHitAnEnemyAlreadyFrozen() {
+        SeekerTower tower = this.seekerWith("Twin Warhead", "Twin Warhead II", "Brood", "Transcendent", "Shatterburst");
+        FakeEnemyMob fresh = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob neighbour = FakeEnemyMob.ghostAt(120, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{fresh, neighbour});
+
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        // Only the second of the two missiles found the enemy already frozen by the first.
+        assertThat(neighbour.hits()).hasSize(1);
+    }
+
+    @Test
+    void rearmLaunchesOneMoreMissileFromAFreshFreezeAndTheRearmedOneLaunchesNoMore() {
+        SeekerTower rearming = this.seekerWith("Twin Warhead", "Twin Warhead II", "Brood", "Transcendent", "Rearm");
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        rearming.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        // Two missiles from Twin Warhead II, one rearm from the fresh freeze, and no more.
+        assertThat(target.hits()).hasSize(3);
+    }
+
+    @Test
+    void overTheHorizonLetsItFireAtAMarkedEnemyFromOneAndAHalfTimesItsRangeAndNoOther() {
+        SeekerTower tower = this.seekerWith("Twin Warhead", "Twin Warhead II", "Brood", "Transcendent", "Range",
+                "Range II", "Range III");
+        float reach = tower.rangeReal();
+        FakeEnemyMob marked = FakeEnemyMob.at(112 + reach * 1.3, 112);
+        marked.applyEffect(td.effect.Effect.marked(100, d -> {
+        }));
+        FakeEnemyMob plain = FakeEnemyMob.at(112 + reach * 1.3, 140);
+        this.context.enemies().setEnemies(new EnemyMob[]{plain, marked});
+
+        tower.doTick(1);
+
+        assertThat(tower.getCurrentTarget()).isSameAs(marked);
+    }
+
+    @Test
+    void withoutOverTheHorizonAMarkedEnemyBeyondRangeIsLeftAlone() {
+        SeekerTower tower = this.seekerWith();
+        FakeEnemyMob marked = FakeEnemyMob.at(112 + tower.rangeReal() * 1.3, 112);
+        marked.applyEffect(td.effect.Effect.marked(100, d -> {
+        }));
+        this.context.enemies().setEnemies(new EnemyMob[]{marked});
+
+        tower.doTick(1);
+
+        assertThat(tower.getCurrentTarget()).isNull();
+    }
+
     @Test
     void homingCurseAppliesOneStackToAFreshTargetAndTwoToOneAlreadyFrozen() {
         SeekerTower tower = towerAt(3, 3);
