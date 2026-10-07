@@ -310,7 +310,7 @@ public final class CinderTower extends AbstractTower {
         if (spec.linger().isActive() && target != null) {
             int scale = this.context.getBoard().scale();
             this.context.zones().add(new Zone(ZoneKind.BURNING_GROUND, target.getX(), target.getY(),
-                    spec.linger().radiusCells() * scale, spec.linger().ticks(), this.damageCurrent(),
+                    spec.linger().radiusCells() * scale, this.lengthened(spec.linger().ticks()), this.damageCurrent(),
                     this.zoneOwner));
         }
     }

@@ -151,6 +151,80 @@ class AuraTowerTest {
         assertThat(buffed.stats().attack().critMultiplier()).isCloseTo(before + 0.5f, within(1e-6f));
     }
 
+    private AuraTower broadcastAura(String... nodes) {
+        this.context.economy().startEconomy(100_000, 5);
+        AuraTower aura = new AuraTower(this.context, 0, 0);
+        this.context.towers().add(aura);
+        UpgradePaths.buy(aura, this.context, nodes);
+        return aura;
+    }
+
+    @Test
+    void broadcastIiHalvesTheDisruptionAgainSoAQuarterIsLeft() {
+        this.broadcastAura("Broadcast", "Broadcast II");
+        SniperTower shielded = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(shielded);
+        this.context.disruptions().add(shielded.getX(), shielded.getY(), new DisruptionAura(20f, 0.4f, 0.2f));
+
+        shielded.beginTick(1);
+
+        assertThat(shielded.fireRateCurrent()).isCloseTo(1.0 / 1.1, within(1e-6));
+    }
+
+    @Test
+    void broadcastIiMakesATimedBuffOnABuffedTowerLastTwiceAsLong() {
+        this.broadcastAura("Broadcast", "Broadcast II");
+        SniperTower buffed = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(buffed);
+        SniperTower alone = new SniperTower(this.context, 30, 30);
+        this.context.towers().add(alone);
+        TowerBuff burst = TowerBuff.fireRate(0.5f);
+
+        buffed.grantTimedBuff(burst, 100);
+        alone.grantTimedBuff(burst, 100);
+        buffed.beginTick(150);
+        alone.beginTick(150);
+
+        assertThat(buffed.fireRateCurrent()).isGreaterThan(1.9);
+        assertThat(alone.fireRateCurrent()).isEqualTo(1.0);
+    }
+
+    @Test
+    void conduitWaitsForFourBuffedTowers() {
+        AuraTower aura = this.broadcastAura("Broadcast", "Broadcast II");
+        UpgradeNode conduit = UpgradePaths.named(aura, "Conduit");
+        for (int i = 0; i < 3; i++) {
+            this.context.towers().add(new SniperTower(this.context, 0, 0));
+        }
+
+        boolean withThree = aura.buyUpgrade(conduit);
+        this.context.towers().add(new SniperTower(this.context, 0, 0));
+        boolean withFour = aura.buyUpgrade(conduit);
+
+        assertThat(withThree).isFalse();
+        assertThat(withFour).isTrue();
+    }
+
+    @Test
+    void conduitLengthensWhatBuffedTowersPutOnEnemiesByThirtyPercent() {
+        AuraTower aura = this.broadcastAura("Broadcast", "Broadcast II");
+        SniperTower buffed = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(buffed);
+        for (int i = 0; i < 3; i++) {
+            this.context.towers().add(new SniperTower(this.context, 0, 0));
+        }
+        FakeEnemyMob plainTarget = FakeEnemyMob.at(0, 0);
+        FakeEnemyMob lengthenedTarget = FakeEnemyMob.at(0, 0);
+        buffed.applyStacks(plainTarget, EffectKind.VULNERABLE, 1);
+
+        aura.buyUpgrade(UpgradePaths.named(aura, "Conduit"));
+        buffed.applyStacks(lengthenedTarget, EffectKind.VULNERABLE, 1);
+
+        int plain = plainTarget.appliedEffects().getFirst().remainingTicks();
+        int lengthened = lengthenedTarget.appliedEffects().getFirst().remainingTicks();
+        assertThat(lengthened).isEqualTo(Math.round(plain * 1.3f));
+    }
+
     @Test
     void broadcastAddsThirtyPercentRangeToTheAurasOwnReach() {
         this.context.economy().startEconomy(1000, 5);

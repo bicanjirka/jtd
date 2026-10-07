@@ -24,6 +24,16 @@ class SniperTempoTest {
     }
 
     @Test
+    void aFrenzyOfTwiceTheLengthHalvesTheNextSixWaits() {
+        this.tempo.startFrenzy(0, 2f);
+
+        for (int tick = 1; tick <= 6; tick++) {
+            assertThat(this.tempo.takeFireRateBonus(tick)).isEqualTo(0.5f);
+        }
+        assertThat(this.tempo.takeFireRateBonus(7)).isZero();
+    }
+
+    @Test
     void aFrenzyStartedWhileOneRunsDoesNotRestartIt() {
         this.tempo.startFrenzy(0);
         this.tempo.takeFireRateBonus(1);

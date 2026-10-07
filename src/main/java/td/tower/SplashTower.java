@@ -419,7 +419,8 @@ public final class SplashTower extends AbstractTower {
             return;
         }
         this.context.zones().add(Zone.cloud(dead.getX(), dead.getY(),
-                CLOUD_RADIUS_CELLS * this.context.getBoard().scale(), CLOUD_TICKS, this::applyEffect, carried));
+                CLOUD_RADIUS_CELLS * this.context.getBoard().scale(), this.lengthened(CLOUD_TICKS), this::applyEffect,
+                carried));
     }
 
     /** Doom's payout: its share of the {@code stored} damage, as one magic hit that never crits. */
@@ -589,7 +590,7 @@ public final class SplashTower extends AbstractTower {
         while (this.mines.size() >= mine.max()) {
             this.context.zones().remove(this.mines.removeFirst());
         }
-        Zone laid = Zone.mine(x, y, mine.radiusCells() * this.context.getBoard().scale(), mine.lifetimeTicks(),
+        Zone laid = Zone.mine(x, y, mine.radiusCells() * this.context.getBoard().scale(), this.lengthened(mine.lifetimeTicks()),
                 this::applyEffect, this::explode);
         this.mines.add(laid);
         this.context.zones().add(laid);

@@ -433,13 +433,14 @@ public final class SniperTower extends AbstractTower {
 
         @Override
         public void startFrenzy() {
-            SniperTower.this.tempo.startFrenzy(SniperTower.this.currentTick);
+            SniperTower.this.tempo.startFrenzy(SniperTower.this.currentTick, SniperTower.this.timedBuffLength());
         }
 
         @Override
         public void startBurst() {
             SniperTower.this.tempo.startBurst(
-                    SniperTower.this.currentTick + Math.round(MOMENTUM_BURST_SECONDS * TICKS_PER_SECOND));
+                    SniperTower.this.currentTick
+                            + Math.round(MOMENTUM_BURST_SECONDS * TICKS_PER_SECOND * SniperTower.this.timedBuffLength()));
         }
 
         @Override

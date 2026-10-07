@@ -17,10 +17,15 @@ public final class SniperTempo {
     private int frenzyWaitsLeft;
     private int burstEndsAt = -1;
 
-    /** Starts a Frenzy unless one is running or a burst is. */
+    /** Starts a Frenzy of its usual waits unless one is running or a burst is. */
     public void startFrenzy(int tick) {
+        this.startFrenzy(tick, 1f);
+    }
+
+    /** Starts a Frenzy of {@code length} times its usual waits unless one is running or a burst is. */
+    public void startFrenzy(int tick, float length) {
         if (this.frenzyWaitsLeft == 0 && tick >= this.burstEndsAt) {
-            this.frenzyWaitsLeft = FRENZY_WAITS;
+            this.frenzyWaitsLeft = Math.round(FRENZY_WAITS * length);
         }
     }
 

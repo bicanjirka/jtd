@@ -375,7 +375,7 @@ public final class MortarTower extends AbstractTower {
         }
         this.blastMarks.add(new BlastMark(new Vec2(x, y), radius, this.tickNow + 1, type.look()));
         type.zone().ifPresent(zone -> this.context.zones().add(new Zone(zone.kind(), x, y,
-                zone.radius(scale, radius), zone.lifetimeTicks(), this.zoneStrength(zone.damageShare(), 1f),
+                zone.radius(scale, radius), this.lengthened(zone.lifetimeTicks()), this.zoneStrength(zone.damageShare(), 1f),
                 this.zoneOwner)));
     }
 
