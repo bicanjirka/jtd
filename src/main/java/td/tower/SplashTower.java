@@ -15,6 +15,7 @@ import td.tower.splash.BlastRadiusPerk;
 import td.tower.splash.BlastSpec;
 import td.tower.splash.ChainLightningPerk;
 import td.tower.splash.ConductorPerk;
+import td.tower.splash.CovenPerk;
 import td.tower.splash.FireControlPerk;
 import td.tower.splash.Hex;
 import td.tower.splash.HexActions;
@@ -150,6 +151,15 @@ public final class SplashTower extends AbstractTower {
             .withExtraEffect("adds Hex of Contagion: when the enemy dies, its hexes and debuffs jump to the 2 nearest "
                     + "unhexed enemies")
             .after(WITCHS_BREW);
+    private static final UpgradeNode RIME_COVEN = UpgradeTier.HEAD_4.node("splash.head.hex.4a", "Rime Coven",
+            PRICE)
+            .withExtraEffect("adds Hex of Rime: chills 30% when cast; freezing the enemy buys twice the chill's extra "
+                    + "time, and its burn lands at once instead of going out")
+            .after(SPREADING_CURSE);
+    private static final UpgradeNode ASH_COVEN = UpgradeTier.HEAD_4.node("splash.head.hex.4b", "Ash Coven", PRICE)
+            .withExtraEffect("adds Hex of Ash: the enemy's burn and poison hold twice as much and mark it twice as "
+                    + "fast; it can't be frozen and shrugs off 75% of chill")
+            .after(SPREADING_CURSE);
     private static final UpgradeCondition A_CHAIN = UpgradeCondition.owns(ARC.id()).or(UpgradeCondition.owns(HEX.id()));
     private static final UpgradeNode WIDE_CHARGE = UpgradeTier.EXTRA_1.node("splash.extra.blast_engineering.1",
             "Wide Charge", PRICE)
@@ -187,9 +197,11 @@ public final class SplashTower extends AbstractTower {
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, OVERLOAD,
             SPREADING_CURSE))
             .with(ARC, CONDUCTOR, OVERLOAD, CHAIN_LIGHTNING, LIGHTNING_ROD, HEX, WITCHS_BREW, SPREADING_CURSE,
-                    WIDE_CHARGE, SHAPED_CHARGE, POTENCY, MASTERY, THUNDERCLAP, STATIC_CHARGE, THUNDERSTRIKE)
+                    RIME_COVEN, ASH_COVEN, WIDE_CHARGE, SHAPED_CHARGE, POTENCY, MASTERY, THUNDERCLAP, STATIC_CHARGE,
+                    THUNDERSTRIKE)
             .withChoice(ExclusiveChoice.oneOf(ARC, HEX))
             .withChoice(ExclusiveChoice.oneOf(CHAIN_LIGHTNING, LIGHTNING_ROD))
+            .withChoice(ExclusiveChoice.oneOf(RIME_COVEN, ASH_COVEN))
             .withChoice(ExclusiveChoice.specials(THUNDERCLAP, STATIC_CHARGE, THUNDERSTRIKE));
 
     private static final PerkCatalogue<SplashPerk> PERKS = PerkCatalogue.<SplashPerk>empty()
@@ -209,7 +221,9 @@ public final class SplashTower extends AbstractTower {
             .with(THUNDERSTRIKE.id(), ThunderstrikePerk::new)
             .with(HEX.id(), HexOfDoomPerk::new)
             .with(WITCHS_BREW.id(), WitchsBrewPerk::new)
-            .with(SPREADING_CURSE.id(), SpreadingCursePerk::new);
+            .with(SPREADING_CURSE.id(), SpreadingCursePerk::new)
+            .with(RIME_COVEN.id(), CovenPerk::rime)
+            .with(ASH_COVEN.id(), CovenPerk::ash);
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final OwnedPerks<SplashPerk> perks = new OwnedPerks<>(PERKS);
@@ -640,6 +654,11 @@ public final class SplashTower extends AbstractTower {
         public void poison(EnemyMob target, float weaponShare, int ticks) {
             Damage perTick = Damage.magic(Math.round(SplashTower.this.damageCurrent() * weaponShare));
             SplashTower.this.applyEffect(target, sink -> Effect.poison(perTick, ticks, sink));
+        }
+
+        @Override
+        public void chill(EnemyMob target, float amount, int ticks) {
+            SplashTower.this.applyEffect(target, sink -> Effect.chill(amount, ticks, sink));
         }
     }
 

@@ -43,7 +43,11 @@ public enum EffectKind {
     /** The target is poisoned for as long as it lasts. */
     BLIGHT,
     /** When the target dies, its hexes and debuffs jump to the enemies nearest it. */
-    CONTAGION;
+    CONTAGION,
+    /** Freezing the target buys twice the chill's extra time, and lands its burn at once instead of putting it out. */
+    RIME,
+    /** The target's burn and poison hold twice as much and mark it twice as fast; it can't be frozen and shrugs off chill. */
+    ASH;
 
     public EffectCategory category() {
         return switch (this) {
@@ -52,7 +56,7 @@ public enum EffectKind {
             case BURN, POISON -> EffectCategory.DAMAGE_OVER_TIME;
             case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED -> EffectCategory.DEBUFF;
             case EXPOSED, MARKED, PRIORITY, CHARGED -> EffectCategory.SPOTTED;
-            case DOOM, BLIGHT, CONTAGION -> EffectCategory.HEX;
+            case DOOM, BLIGHT, CONTAGION, RIME, ASH -> EffectCategory.HEX;
             case SHIELD, HEAL -> EffectCategory.RESTORATIVE;
             case INVISIBLE, REVEALED -> EffectCategory.STEALTH;
         };
@@ -116,7 +120,7 @@ public enum EffectKind {
     public boolean isPacedBySpirit() {
         return switch (this) {
             case CHILL, VULNERABLE, REVEALED, SUNDERED, EXPOSED, MARKED, PRIORITY, RESONATING, CHARGED -> true;
-            case DOOM, BLIGHT, CONTAGION -> true;
+            case DOOM, BLIGHT, CONTAGION, RIME, ASH -> true;
             default -> false;
         };
     }
@@ -148,7 +152,7 @@ public enum EffectKind {
             case BURN -> Optional.of(EnemyStat.BURN_RESIST);
             case FREEZE -> Optional.of(EnemyStat.FREEZE_RESIST);
             case SHIELD, INVISIBLE, HEAL, VULNERABLE, REVEALED, POISON, SCORCHED, SICKENED, SUNDERED, EXPOSED, MARKED,
-                    PRIORITY, RESONATING, FRACTURED, DAZED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION ->
+                    PRIORITY, RESONATING, FRACTURED, DAZED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH ->
                     Optional.empty();
         };
     }

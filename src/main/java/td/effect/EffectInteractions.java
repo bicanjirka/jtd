@@ -23,6 +23,9 @@ final class EffectInteractions {
         BLOCKED_BY.put(EffectKind.BURN, EnumSet.of(EffectKind.FREEZE));
         CONSUMED_BY.put(EffectKind.CHILL, EnumSet.of(EffectKind.FREEZE));
         CONSUMED_BY.put(EffectKind.REVEALED, EnumSet.of(EffectKind.INVISIBLE));
+        BLOCKED_BY.put(EffectKind.FREEZE, EnumSet.of(EffectKind.ASH));
+        CONSUMED_BY.put(EffectKind.RIME, EnumSet.of(EffectKind.ASH));
+        CONSUMED_BY.put(EffectKind.ASH, EnumSet.of(EffectKind.RIME));
     }
 
     private EffectInteractions() {

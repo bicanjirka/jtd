@@ -443,6 +443,8 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_DOOM -> new Color(190, 90, 255);
             case STATUS_MARKER_BLIGHT -> new Color(140, 200, 60);
             case STATUS_MARKER_CONTAGION -> new Color(210, 120, 170);
+            case STATUS_MARKER_RIME -> new Color(170, 230, 255);
+            case STATUS_MARKER_ASH -> new Color(255, 120, 40);
             case STATUS_MARKER_SHIELD -> new Color(220, 220, 100);
             case STATUS_MARKER_INVISIBLE -> new Color(180, 180, 180);
             case STATUS_MARKER_HEAL -> new Color(120, 220, 140);
@@ -889,6 +891,21 @@ public final class Java2DFrameRenderer {
                 path.append(new Ellipse2D.Float(-s * 0.3f, -s * 1.3f, s * 0.6f, s * 0.6f), false);
                 path.append(new Ellipse2D.Float(s * 0.7f, s * 0.7f, s * 0.6f, s * 0.6f), false);
                 path.append(new Ellipse2D.Float(-s * 1.3f, s * 0.7f, s * 0.6f, s * 0.6f), false);
+            }
+            case RIME -> {
+                for (int i = 0; i < 3; i++) {
+                    double angle = Math.PI / 3 * i;
+                    float dx = (float) Math.cos(angle) * s;
+                    float dy = (float) Math.sin(angle) * s;
+                    path.moveTo(-dx, -dy);
+                    path.lineTo(dx, dy);
+                }
+            }
+            case ASH -> {
+                path.moveTo(0, -s);
+                path.quadTo(s, 0, s * 0.5f, s);
+                path.lineTo(-s * 0.5f, s);
+                path.quadTo(-s, 0, 0, -s);
             }
         }
         return path;

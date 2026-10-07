@@ -755,6 +755,81 @@ class ActiveEffectsTest {
         assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-90f);
     }
 
+    private static float fuelOf(ActiveEffects effects, EffectKind pool) {
+        return effects.effects().stream().filter(effect -> effect.kind() == pool).findFirst()
+                .map(Effect::fuelLevel).orElse(0f);
+    }
+
+    @Test
+    void freezingARimedEnemyLandsItsWholeBurnAtOnceAndBuysTwiceTheChillsExtraTime() {
+        ActiveEffects rimed = new ActiveEffects();
+        List<Damage> burnt = new ArrayList<>();
+        rimed.apply(Effect.burn(Damage.magic(100), 40, burnt::add));
+        rimed.apply(Effect.chill(0.4f, 40, d -> {
+        }));
+        rimed.apply(Effect.hex(EffectKind.RIME, 100, d -> {
+        }));
+        float burnLeft = fuelOf(rimed, EffectKind.BURN);
+
+        rimed.apply(Effect.freeze(20, d -> {
+        }));
+
+        assertThat(burnt).singleElement().extracting(Damage::amount)
+                .isEqualTo((int) Math.round(burnLeft / (1.0 - Math.exp(-3.0 / 40))));
+        assertThat(rimed.activeKinds()).doesNotContain(EffectKind.BURN);
+        assertThat(rimed.remainingTicks(EffectKind.FREEZE).getAsInt()).isEqualTo(Math.round(20 * (1f + 2 * 0.4f)));
+    }
+
+    @Test
+    void anAshenEnemyCannotBeFrozenAndShrugsOffThreeQuartersOfAChill() {
+        ActiveEffects ashen = new ActiveEffects();
+        ashen.apply(Effect.hex(EffectKind.ASH, 100, d -> {
+        }));
+
+        ashen.apply(Effect.freeze(20, d -> {
+        }));
+        ashen.apply(Effect.chill(0.4f, 40, d -> {
+        }));
+
+        assertThat(ashen.activeKinds()).doesNotContain(EffectKind.FREEZE);
+        assertThat(ashen.chillLevel()).isCloseTo(0.1f, within(1e-5f));
+    }
+
+    @Test
+    void underAshAPoolHoldsTwiceAsMuchAndEarnsItsStacksTwiceAsFast() {
+        ActiveEffects plain = new ActiveEffects();
+        ActiveEffects ashen = new ActiveEffects();
+        ashen.apply(Effect.hex(EffectKind.ASH, 1000, d -> {
+        }));
+        for (ActiveEffects effects : List.of(plain, ashen)) {
+            effects.apply(Effect.burn(Damage.magic(100), 200, d -> {
+            }));
+            effects.apply(Effect.burn(Damage.magic(100), 200, d -> {
+            }));
+        }
+
+        tickTimes(plain, 10);
+        tickTimes(ashen, 10);
+
+        assertThat(fuelOf(ashen, EffectKind.BURN)).isGreaterThan(fuelOf(plain, EffectKind.BURN));
+        assertThat(ashen.stacks(EffectKind.SCORCHED)).isEqualTo(plain.stacks(EffectKind.SCORCHED) + 1);
+    }
+
+    @Test
+    void rimeAndAshEachReplaceTheOther() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.hex(EffectKind.RIME, 100, d -> {
+        }));
+
+        effects.apply(Effect.hex(EffectKind.ASH, 100, d -> {
+        }));
+
+        assertThat(effects.activeKinds()).containsExactly(EffectKind.ASH);
+        effects.apply(Effect.hex(EffectKind.RIME, 100, d -> {
+        }));
+        assertThat(effects.activeKinds()).containsExactly(EffectKind.RIME);
+    }
+
     @Test
     void aDebuffTimerRunsAtTheSpiritPaceButNeverBelowAQuarter() {
         ActiveEffects fast = new ActiveEffects();

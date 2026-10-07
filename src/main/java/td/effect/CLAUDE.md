@@ -35,6 +35,12 @@
 - `MARKED` is spent by a hit, never by periodic damage: the mob calls `consume(MARKED)`, and only
   when its resilience is below 100.
 - A `HEX` kind carries no stat of its own; the tower that cast it watches it and pays it out.
+- Two hexes bend fire and ice inside `ActiveEffects`, keyed only on their kind being active: under
+  `RIME` a freeze buys twice the chill's extra time and lands the burn it puts out at once (its
+  whole remaining pool, `fuel / (1 - alpha)`); under `ASH` pools hold twice as much and earn
+  stacks twice as often (the pool clock still counts down by one, since pulses ride it), and a
+  chill lands at a quarter. `ASH` keeping out `FREEZE`, and `RIME`/`ASH` replacing each other, are
+  `EffectInteractions` rows.
 - What a curse carries on from a dead enemy is `EffectKind.spreadsWithCurse()`: the debuffs that
   weaken an enemy, copied with their own sink and time left, never the marks a tower leaves for
   itself.

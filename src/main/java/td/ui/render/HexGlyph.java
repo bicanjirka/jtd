@@ -7,5 +7,9 @@ public enum HexGlyph {
     /** A drop: poison. */
     BLIGHT,
     /** Three linked dots: it spreads to its neighbours. */
-    CONTAGION
+    CONTAGION,
+    /** A snowflake: frost. */
+    RIME,
+    /** A flame: fire. */
+    ASH
 }
