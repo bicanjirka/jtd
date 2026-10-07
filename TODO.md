@@ -361,15 +361,3 @@ one cleared 4, its lead copy dealing 194.2k damage for 22 kills against 158.3k f
   `BuiltInEnemies.WARDEN_STANDING_ABILITIES`'s `OnCriticalHitTakenTrigger` ability.
 - **Approach:** tune in the feature 7 balance pass, with Keen Edge in play. Try Momentum at x3
   first; every number here is a named constant.
-
-## UI
-
-### A gated node's name is cut short by its gate's progress
-
-An offered node that waits on a purpose gate shows the gate's progress where its price goes
-("Steady Aim shots 0/20"), and at the panel's default width that text crowds the node's own name
-down to "Focu…". Short gates ("Pings 0/25", "0/2 nearby towers") fit.
-
-- **Where:** `td.ui.PanelUpgradeTree`'s offer buttons, `UpgradeSheetText`'s gate label.
-- **Approach:** keep the name whole and let the right-hand text give way first (truncate or
-  wrap it onto a second line), or shorten long deed names to fit.
