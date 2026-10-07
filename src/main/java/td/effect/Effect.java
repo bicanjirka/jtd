@@ -327,6 +327,17 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
         return ticks;
     }
 
+    /**
+     * What a pool would still deal if it ran to its end: its level over one minus the per-tick decay.
+     * {@code 0f} for a kind that is no pool.
+     */
+    public float remainingPoolDamage() {
+        if (!this.kind.isFuelPool() || this.authoredDurationTicks <= 0) {
+            return 0f;
+        }
+        return (float) (this.fuelLevel() / (1.0 - Math.exp(-3.0 / this.authoredDurationTicks)));
+    }
+
     /** The level's current total; {@code 0f} for kinds without one. */
     public float fuelLevel() {
         float total = 0f;

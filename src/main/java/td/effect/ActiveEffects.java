@@ -577,8 +577,7 @@ public final class ActiveEffects {
     /** Lands {@code share} of everything {@code pool} would still have dealt, at once, each contributor its part. */
     private static void burstPool(Effect pool, float share) {
         float total = pool.fuelLevel();
-        double alpha = Math.exp(POOL_DECAY_EXPONENT / pool.authoredDurationTicks());
-        int damage = (int) Math.round(share * total / (1.0 - alpha));
+        int damage = Math.round(share * pool.remainingPoolDamage());
         if (damage <= 0) {
             return;
         }

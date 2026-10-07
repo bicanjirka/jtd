@@ -62,6 +62,14 @@
   a `BlastMark` the board draws as a fading flash; a nuke adds its own `NukeFlash`. Predictive Fire
   asks the target where it will stand (`EnemyTarget.positionAfter`) and re-aims a few times, since flight
   time depends on where the shell is going; a Barrage's later shells re-pick their target when they fire.
+- The Cinder never deals direct damage: each wave sets an enemy alight once, and `ignite` is the one place
+  that decides how strong the pool starts (Stoke steps, then a crit ignition's factor, which it rolls with
+  `HitReceiver.rollsCrit` since an ignition is no hit). The `Burning` ledger is the only memory of whom it
+  has set alight: Stoke steps live there and go when the burn has been out longer than the grace. What its
+  pools do to an enemy (hold more, mark faster, cauterize, heat, mark for magic, burst at a freeze) is a
+  `PoolTuning` the pool carries, never state the Cinder keeps on the enemy; a Thermal Shock's chill and an
+  Everburn top-up are the Cinder's own work in `tendBurning`. Bellows reads what other towers' buffs add to
+  its fire rate (`buffFor`), so it needs no Aura-specific code.
 - Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
   `AuraTower.buffs`' single "is this an aura" check stays the only role check.
 

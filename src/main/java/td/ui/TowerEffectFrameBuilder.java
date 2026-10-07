@@ -350,14 +350,25 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             float previousProgress = waveProgress(wave, this.gameTime - 1);
             float currentProgress = waveProgress(wave, this.gameTime);
             float progress = previousProgress + (currentProgress - previousProgress) * (float) this.interpolationAlpha;
-            this.draws.add(new ConeDraw(Palette.TOWER_CINDER_CONE, tower.getX(), tower.getY(),
+            this.draws.add(new ConeDraw(conePaletteFor(wave), tower.getX(), tower.getY(),
                     (float) wave.headingRadians(), tower.getRangeReal(), (float) wave.halfWidthRadians(), progress));
         }
         return null;
     }
 
+    private static Palette conePaletteFor(CinderTower.FlameWave wave) {
+        if (wave.isSoulfire()) {
+            return Palette.TOWER_CINDER_CONE_SOUL;
+        }
+        return switch (wave.look()) {
+            case ORANGE -> Palette.TOWER_CINDER_CONE;
+            case WHITE -> Palette.TOWER_CINDER_CONE_WHITE;
+            case SEARING -> Palette.TOWER_CINDER_CONE_SEARING;
+        };
+    }
+
     private static float waveProgress(CinderTower.FlameWave wave, int atTick) {
-        float travelled = (float) (atTick - wave.firedAtTick()) / CinderTower.WAVE_TRAVEL_TICKS;
+        float travelled = (float) (atTick - wave.firedAtTick()) / wave.travelTicks();
         return Math.max(0f, Math.min(1f, travelled));
     }
 }
