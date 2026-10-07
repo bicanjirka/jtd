@@ -46,9 +46,12 @@
 - A `HEX` kind carries no stat of its own; the tower that cast it watches it and pays it out.
   `INVERSION` is the one hex the enemy itself reads: `invertedThrough(sink)` turns a heal into
   damage per tick, and `INVISIBLE` is an `EffectInteractions` row it blocks and removes.
+- A freeze always lands half of the burn it puts out at once (`burstPool`, its remaining pool
+  `fuel / (1 - alpha)`); a burn pool above `BURN_REVEAL_FUEL` sets `STEALTH` to 0 like a reveal, without
+  exposing the enemy. `TARRED` makes the burn it catches start at double the pool and a freeze it
+  suffers last a second longer, both read at `apply`. `CRACKED` halves both platings.
 - Two hexes bend fire and ice inside `ActiveEffects`, keyed only on their kind being active: under
-  `RIME` a freeze buys twice the chill's extra time and lands the burn it puts out at once (its
-  whole remaining pool, `fuel / (1 - alpha)`); under `ASH` pools hold twice as much and earn
+  `RIME` a freeze buys twice the chill's extra time and lands all of the burn it puts out; under `ASH` pools hold twice as much and earn
   stacks twice as often (the pool clock still counts down by one, since pulses ride it), and a
   chill lands at a quarter. `ASH` keeping out `FREEZE`, and `RIME`/`ASH` replacing each other, are
   `EffectInteractions` rows.
