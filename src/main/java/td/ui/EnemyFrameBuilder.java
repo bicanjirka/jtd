@@ -58,6 +58,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     /** Fixed, so a crit looks the same on every enemy. */
     private static final float CRIT_SPARK_FIXED_SCALE = 12f;
     static final int CLOAK_FADE_DURATION_TICKS = 8;
+    static final int FLICKER_HALF_PERIOD_TICKS = 3;
     /**
      * Shield bubble size relative to the body, drawn at a faint fixed alpha since it marks a
      * lasting state.
@@ -217,7 +218,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             float x = lerp(mob.getPrevX(), mob.getX(), this.interpolationAlpha);
             float y = lerp(mob.getPrevY(), mob.getY(), this.interpolationAlpha);
             this.draws.add(new EnemyBodyDraw(palette, x, y, facingRadians, scale, mob.getHealthFraction(),
-                    badgeFor(mob.getRank()), this.cloakProgress(mob)));
+                    badgeFor(mob.getRank()), this.cloakProgress(mob), this.flicker(mob)));
             this.markers(mob, x, y, scale);
             this.critSpark(mob, x, y);
             this.overlays(mob, x, y, scale, supportAura);
@@ -327,6 +328,12 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             return 0f;
         }
         return 1f - (float) ticksSinceLost / CLOAK_FADE_DURATION_TICKS;
+    }
+
+    /** 1 on the dimmed half of a flicker while a tower's field holds an effect on the enemy, else 0. */
+    private float flicker(DefinedEnemyMob mob) {
+        boolean held = mob.activeEffectKinds().stream().anyMatch(EffectKind::isFieldEffect);
+        return held && this.gameTime / FLICKER_HALF_PERIOD_TICKS % 2 == 1 ? 1f : 0f;
     }
 
     private void markers(DefinedEnemyMob mob, float x, float y, float scale) {

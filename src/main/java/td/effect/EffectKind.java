@@ -193,6 +193,14 @@ public enum EffectKind {
         };
     }
 
+    /** Whether a tower's field holds this kind on the enemies inside it, refreshing it every tick. */
+    public boolean isFieldEffect() {
+        return switch (this) {
+            case SILENCED, ANCHORED, CORRODED, UNDERTOW, DEAD_ZONE, KILL_ZONE -> true;
+            default -> false;
+        };
+    }
+
     /** The resistance that shortens this kind; empty for kinds an enemy cannot resist. */
     public Optional<EnemyStat> resistedBy() {
         return switch (this) {
