@@ -241,6 +241,10 @@ the shapes that take one (`swarm 4 c`):
 | Column  | `column` | *N* enemies in a tight single file, closer together than *N* separate spawns |
 | Drip    | `drip`   | *N* enemies stretched over more time than *N* separate spawns           |
 
+A wave's script can also open with `w<number>` (`w30 8 c`), which sets how many ticks one
+slot of spacing is worth. The default is 22.4; a bigger number spreads the wave out, a smaller one
+packs it tighter.
+
 ### Levels
 
 Three levels ship with the game: **Curly Path** (a 20×13 board whose single lane spirals

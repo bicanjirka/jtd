@@ -251,6 +251,15 @@ class EnemyCatalogTest {
     }
 
     @Test
+    void registeringAnIdShapedLikeASpacingTokenFails() {
+        EnemyCatalog catalog = new EnemyCatalog();
+
+        assertThatThrownBy(() -> catalog.register(EnemyFixtures.simpleDefinition("w30")))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("w30");
+    }
+
+    @Test
     void registeringAnIdThatCollidesWithAReservedWaveScriptTokenFails() {
         EnemyCatalog catalog = new EnemyCatalog();
 

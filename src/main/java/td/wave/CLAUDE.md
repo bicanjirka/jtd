@@ -35,6 +35,9 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 | `e`       | spacer: takes a spawn slot, spawns nothing               |
 | `warden1` | the Warden boss chain                                    |
 
+- A leading `w<number>` (`w30 3 c`) sets the ticks one slot of spacing is worth, default
+  `SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`; it carries on `WaveContent`. It must be the first token and
+  positive, and no enemy id may look like it.
 - **Rank keywords** `grunt soldier veteran elite boss` go before the enemy or shape they rank and
   override the wave's default rank for that slot.
 - **Shape keywords** go before the enemy: `armored` (1 member, stacks a physical-only adaptive
