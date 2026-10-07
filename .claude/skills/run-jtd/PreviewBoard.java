@@ -19,6 +19,8 @@ import td.ui.render.RenderFrame;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.TickRate;
+import td.zone.Zone;
+import td.zone.ZoneKind;
 
 import javax.imageio.ImageIO;
 import java.awt.Graphics2D;
@@ -81,6 +83,7 @@ public class PreviewBoard {
             case "upgrade" -> upgradeTower(rest.trim());
             case "spawn" -> spawnEnemy(rest.trim());
             case "effect" -> applyEffect(rest.trim());
+            case "zone" -> addZone(rest.trim());
             case "wave" -> startWave();
             case "tick" -> tick(Integer.parseInt(rest.trim()));
             case "kill" -> killEnemies();
@@ -206,11 +209,27 @@ public class PreviewBoard {
                 case UNDERTOW -> Effect.undertow(ticks, d -> { });
                 case DEAD_ZONE -> Effect.deadZone(ticks, d -> { });
                 case KILL_ZONE -> Effect.killZone(ticks, d -> { });
+                case CRACKED -> Effect.cracked(ticks, d -> { });
+                case TARRED -> Effect.tarred(ticks, d -> { });
                 case SCORCHED, SICKENED -> throw new IllegalArgumentException(kind + " is earned by burn and poison");
             };
             mob.applyEffect(effect);
         }
         System.out.println("OK effect " + kind);
+    }
+
+    /** {@code zone <kind> <cellX> <cellY> [radiusCells=1] [ticks=200]}: a ground zone no tower owns. */
+    private static void addZone(String args) {
+        String[] parts = args.split("\s+");
+        ZoneKind kind = ZoneKind.valueOf(parts[0].toUpperCase());
+        int scale = engine.getGameWorld().getBoard().scale();
+        double x = Integer.parseInt(parts[1]) * scale + scale / 2.0;
+        double y = Integer.parseInt(parts[2]) * scale + scale / 2.0;
+        float radius = (parts.length > 3 ? Float.parseFloat(parts[3]) : 1f) * scale;
+        int ticks = parts.length > 4 ? Integer.parseInt(parts[4]) : 200;
+        engine.getGameWorld().zones().add(new Zone(kind, x, y, radius, ticks, 100,
+                (target, effect) -> target.applyEffect(effect.apply(d -> { }))));
+        System.out.println("OK zone " + kind);
     }
 
     private static void startWave() {

@@ -74,7 +74,7 @@ public enum EffectKind {
     KILL_ZONE,
     /** Plating is halved. */
     CRACKED,
-    /** Stuck in tar: a burn it catches starts at double the pool, and a freeze it suffers lasts a second longer. */
+    /** Stuck in tar: slowed by 40%, a burn it catches starts at double the pool, and a freeze it suffers lasts a second longer. */
     TARRED;
 
     public EffectCategory category() {

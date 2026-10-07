@@ -10,6 +10,7 @@ import java.util.Optional;
  */
 public record RenderFrame(int scale, int maxX, int maxY,
                           List<CellDraw> cells,
+                          List<ZoneDraw> zones,
                           List<EnemyDraw> enemies,
                           List<StatusMarkerDraw> statusMarkers,
                           List<CritSparkDraw> critSparks,

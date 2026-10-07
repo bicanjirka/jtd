@@ -73,6 +73,8 @@ public final class ActiveEffects {
     /** A burn pool reveals an invisible enemy while it holds more than this, in damage units a tick. */
     private static final float BURN_REVEAL_FUEL = 30f;
     private static final float TAR_BURN_FACTOR = 2f;
+    /** The share of its speed a tarred enemy keeps. */
+    private static final float TARRED_SPEED_SHARE = 0.6f;
     private static final int TAR_FREEZE_EXTRA_TICKS = 20;
     /** Extra damage taken per vulnerable stack, of every damage type. */
     private static final float VULNERABLE_PER_STACK = 0.15f;
@@ -353,8 +355,9 @@ public final class ActiveEffects {
                     accumulator.multiply(EnemyStat.MAGIC_PLATING, CRACKED_PLATING_SHARE);
                 }
                 case EXPOSED, MARKED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY,
-                        RECKONING, SILENCED, DEAD_ZONE, TOLL, TARRED -> {
+                        RECKONING, SILENCED, DEAD_ZONE, TOLL -> {
                 }
+                case TARRED -> accumulator.multiply(EnemyStat.MOVE_SPEED, TARRED_SPEED_SHARE);
                 case BURN -> {
                     if (effect.fuelLevel() > BURN_REVEAL_FUEL) {
                         accumulator.add(EnemyStat.STEALTH, REVEALED);

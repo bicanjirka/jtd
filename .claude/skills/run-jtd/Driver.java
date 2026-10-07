@@ -663,6 +663,8 @@ public class Driver {
                 case UNDERTOW -> Effect.undertow(ticks, d -> { });
                 case DEAD_ZONE -> Effect.deadZone(ticks, d -> { });
                 case KILL_ZONE -> Effect.killZone(ticks, d -> { });
+                case CRACKED -> Effect.cracked(ticks, d -> { });
+                case TARRED -> Effect.tarred(ticks, d -> { });
                 case SCORCHED, SICKENED -> throw new IllegalArgumentException(kind + " is earned by burn and poison");
             };
             mob.applyEffect(effect);

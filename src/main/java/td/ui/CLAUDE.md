@@ -14,6 +14,8 @@ keeps the seam honest.
 - One frame builder per domain type, dispatching through that type's visitor (`EnemyFrameBuilder`,
   `TowerSpriteFrameBuilder`, `TowerEffectFrameBuilder`, `ProjectileFrameBuilder`, ...). Builders
   return `null` for "nothing to draw".
+- Ground zones are the one board list drawn under the enemies (`ZoneFrameBuilder`, `RenderFrame.zones`):
+  a zone is a patch, not an enemy overlay or a tower effect.
 - Every colour, shape and stroke for board content lives in `Java2DFrameRenderer`, keyed by a
   `Palette` role, never by domain type. There are no image assets; all art is vector.
 - A new enemy-centred visual goes into the existing sealed `EnemyOverlayDraw` hierarchy (rings,
