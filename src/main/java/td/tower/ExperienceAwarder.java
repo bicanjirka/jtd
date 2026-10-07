@@ -8,8 +8,9 @@ import java.util.List;
 
 /**
  * Pays each finished walk's bounty as XP to every tower the mob reached, and once to every tower
- * buffing one of those, so an aura earns with the towers it serves. Kill or leak pays the same,
- * and nobody needs the kill.
+ * buffing one of those, so an aura earns with the towers it serves, and to the towers an aura makes
+ * share with those. Towers add to what a tower earns ({@link Tower#xpBonusFor}). Kill or leak pays
+ * the same, and nobody needs the kill.
  */
 public final class ExperienceAwarder implements WalkEndListener {
 
@@ -27,10 +28,19 @@ public final class ExperienceAwarder implements WalkEndListener {
             return;
         }
         for (Tower tower : all) {
-            if (reached.contains(tower) || buffsAny(tower, reached)) {
-                tower.earnXp(walk.getBounty());
+            if (reached.contains(tower) || buffsAny(tower, reached) || sharedWithAny(all, tower, reached)) {
+                tower.earnXp(walk.getBounty(), bonusFor(all, tower));
             }
         }
+    }
+
+    /** What every tower adds to the XP {@code earner} gets from a bounty. */
+    private static float bonusFor(List<Tower> all, Tower earner) {
+        return (float) all.stream().mapToDouble(tower -> tower.xpBonusFor(earner)).sum();
+    }
+
+    private static boolean sharedWithAny(List<Tower> all, Tower recipient, List<Tower> earners) {
+        return earners.stream().anyMatch(earner -> all.stream().anyMatch(tower -> tower.sharesXp(recipient, earner)));
     }
 
     private static boolean buffsAny(Tower tower, List<Tower> earners) {

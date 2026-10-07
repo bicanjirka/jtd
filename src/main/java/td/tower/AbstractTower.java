@@ -74,6 +74,7 @@ public abstract class AbstractTower implements Tower {
     private volatile TowerBuff timedBuff = TowerBuff.none();
     private int timedBuffEndsAt;
     private int currentTick;
+    private float xpRemainder;
     private boolean inKillHook;
 
     /**
@@ -339,7 +340,15 @@ public abstract class AbstractTower implements Tower {
 
     /** Runs on the game-loop thread, so the rank-up is stamped with this tower's own tick. */
     public void earnXp(int bounty) {
-        this.experience.earn(bounty, this.currentTick);
+        this.earnXp(bounty, 0f);
+    }
+
+    @Override
+    public void earnXp(int bounty, float bonus) {
+        float exact = bounty * (1f + bonus) + this.xpRemainder;
+        int whole = (int) Math.floor(exact + 1e-4f);
+        this.xpRemainder = Math.max(0f, exact - whole);
+        this.experience.earn(whole, this.currentTick);
     }
 
     /**

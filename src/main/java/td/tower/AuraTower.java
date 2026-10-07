@@ -5,6 +5,7 @@ import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
+import td.tower.upgrade.BaseSlotPerks;
 import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -14,7 +15,9 @@ import td.util.GameWorld;
 import td.util.ThreadConfined;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Never attacks; contributes a {@link TowerBuff} to other towers whose centre is within its range.
@@ -34,6 +37,14 @@ public final class AuraTower extends AbstractTower {
     private static final float CORE_STEP = 0.1f;
     private static final float CORE_FIRE_RATE = 0.1f;
 
+    /** What each other tower type in reach adds to a buffed tower's XP, and the most it adds without Broadcast. */
+    private static final float KINSHIP_XP_PER_TYPE = 0.05f;
+    private static final int KINSHIP_XP_TYPE_CAP = 4;
+    /** What Kinship adds to the buff's strength per other tower type on the Amplifying Core chain, capped alike. */
+    private static final float KINSHIP_STRENGTH_PER_TYPE = 0.05f;
+    private static final float TUTELAGE_XP = 0.1f;
+    private static final float APPRENTICE_XP = 1f;
+
     /** Ticks between periodic passes over enemies in range. */
     private static final int WITHERING_FIELD_TICK_INTERVAL = 20;
 
@@ -47,12 +58,26 @@ public final class AuraTower extends AbstractTower {
     private static final UpgradeNode BROADCAST_1 = UpgradeTier.HEAD_1.node("aura.head.broadcast.1",
             "Broadcast", PRICE)
             .withBuff(TowerBuff.range(0.3f));
+    private static final UpgradeNode TUTELAGE_1 = UpgradeTier.EXTRA_1.node("aura.extra.tutelage.1", "Tutelage", PRICE)
+            .withExtraEffect("buffed towers earn +10% XP, on top of Kinship");
+    private static final UpgradeNode SHARED_LESSONS = UpgradeTier.EXTRA_2.node("aura.extra.tutelage.2",
+            "Shared Lessons", PRICE)
+            .withExtraEffect("buffed towers share what they see: each earns the XP of every enemy any of them reached")
+            .after(TUTELAGE_1);
+    private static final UpgradeNode APPRENTICE = UpgradeTier.EXTRA_3.node("aura.extra.tutelage.3", "Apprentice",
+            PRICE)
+            .withExtraEffect("the buffed tower with the least XP earns double XP from every source")
+            .after(SHARED_LESSONS);
     private static final UpgradeNode WITHERING_FIELD = UpgradeTier.SPECIAL.node("aura.special.withering_field",
             "Withering Field", PRICE)
             .withExtraEffect("every few ticks, every enemy inside the aura's range gains 1 Vulnerable stack (cap 3)");
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE))
-            .with(AMPLIFYING_CORE_1, AMPLIFYING_CORE_2, BROADCAST_1, WITHERING_FIELD)
+    private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none().withAttune("Kinship: buffed towers earn "
+            + "+5% XP for each other tower type in range, up to +20%");
+
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS))
+            .with(AMPLIFYING_CORE_1, AMPLIFYING_CORE_2, BROADCAST_1, TUTELAGE_1, SHARED_LESSONS, APPRENTICE,
+                    WITHERING_FIELD)
             .withChoice(ExclusiveChoice.oneOf(AMPLIFYING_CORE_1, BROADCAST_1));
 
     private volatile float power;
@@ -90,7 +115,11 @@ public final class AuraTower extends AbstractTower {
     }
 
     public TowerBuff buff() {
-        TowerBuff base = TowerBuff.amplifying(this.power).withDisruptionShield(DISRUPTION_SHIELD);
+        return this.buffWithStrength(this.power);
+    }
+
+    private TowerBuff buffWithStrength(float strength) {
+        TowerBuff base = TowerBuff.amplifying(strength).withDisruptionShield(DISRUPTION_SHIELD);
         return this.grantsFireRate ? base.withFireRate(CORE_FIRE_RATE) : base;
     }
 
@@ -117,7 +146,83 @@ public final class AuraTower extends AbstractTower {
 
     @Override
     public TowerBuff buffFor(Tower other) {
-        return this.buffs(other) ? this.buff() : TowerBuff.none();
+        if (!this.buffs(other)) {
+            return TowerBuff.none();
+        }
+        return this.buffWithStrength(this.power + this.kinshipStrengthFor(other));
+    }
+
+    private boolean owns(UpgradeNode node) {
+        return this.upgrades().owns(node.id());
+    }
+
+    private boolean isAttuned() {
+        return this.upgrades().owns(StandardBaseSlot.ATTUNE_ID);
+    }
+
+    /** The other tower types Kinship counts for {@code other}: not its own, not an aura, within reach. */
+    private int kinshipTypesFor(Tower other) {
+        Set<TowerFactory.Type> types = this.typesInReach();
+        types.remove(other.getType());
+        return types.size();
+    }
+
+    /** Kinship's reach is the aura's range, or with Broadcast one cell further. */
+    private Set<TowerFactory.Type> typesInReach() {
+        Set<TowerFactory.Type> types = EnumSet.noneOf(TowerFactory.Type.class);
+        double reach = this.rangeReal() + (this.owns(BROADCAST_1) ? this.context.getBoard().scale() : 0);
+        for (Tower tower : this.context.towers().all()) {
+            double dx = this.centerX - tower.getX();
+            double dy = this.centerY - tower.getY();
+            if (tower != this && tower.getType() != TowerFactory.Type.AURA && dx * dx + dy * dy < reach * reach) {
+                types.add(tower.getType());
+            }
+        }
+        return types;
+    }
+
+    /** On the Amplifying Core chain Kinship also strengthens the buff, up to the same four types. */
+    private float kinshipStrengthFor(Tower other) {
+        if (!this.isAttuned() || !this.owns(AMPLIFYING_CORE_1)) {
+            return 0f;
+        }
+        return KINSHIP_STRENGTH_PER_TYPE * Math.min(KINSHIP_XP_TYPE_CAP, this.kinshipTypesFor(other));
+    }
+
+    /** Kinship, Tutelage and the Apprentice mark, added together; nothing for a tower this aura does not buff. */
+    @Override
+    public float xpBonusFor(Tower earner) {
+        if (!this.buffs(earner)) {
+            return 0f;
+        }
+        float bonus = 0f;
+        if (this.isAttuned()) {
+            int types = this.kinshipTypesFor(earner);
+            bonus += KINSHIP_XP_PER_TYPE * (this.owns(BROADCAST_1) ? types : Math.min(KINSHIP_XP_TYPE_CAP, types));
+        }
+        if (this.owns(TUTELAGE_1)) {
+            bonus += TUTELAGE_XP;
+        }
+        if (this.owns(APPRENTICE) && earner == this.apprentice()) {
+            bonus += APPRENTICE_XP;
+        }
+        return bonus;
+    }
+
+    @Override
+    public boolean sharesXp(Tower recipient, Tower earner) {
+        return this.owns(SHARED_LESSONS) && this.buffs(recipient) && this.buffs(earner);
+    }
+
+    /** The buffed tower with the least XP, the earliest built on a tie; null when this aura buffs none. */
+    public Tower apprentice() {
+        Tower least = null;
+        for (Tower tower : this.buffedTowers()) {
+            if (least == null || tower.experience().xp() < least.experience().xp()) {
+                least = tower;
+            }
+        }
+        return least;
     }
 
     /** The towers this aura buffs, derived on each call rather than tracked. */
@@ -155,6 +260,9 @@ public final class AuraTower extends AbstractTower {
         }
         if (this.isPlaced()) {
             lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Buffing", this.buffedTowers().size() + " towers"));
+            if (this.isAttuned()) {
+                lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Kinship", this.typesInReach().size() + " tower types"));
+            }
         }
         return lines;
     }
