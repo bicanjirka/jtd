@@ -57,6 +57,16 @@ public enum Palette {
     TOWER_SPLASH_DETONATION_DARK,
     /** The Stormcaller's arcs. */
     TOWER_SPLASH_ARC,
+    /** The Stormcaller's shot, in the colour of its body... */
+    TOWER_STORMCALLER_BEAM,
+    TOWER_STORMCALLER_FLASH,
+    TOWER_STORMCALLER_DETONATION,
+    TOWER_STORMCALLER_DETONATION_DARK,
+    /** ...and the Hexer's. */
+    TOWER_HEXER_BEAM,
+    TOWER_HEXER_FLASH,
+    TOWER_HEXER_DETONATION,
+    TOWER_HEXER_DETONATION_DARK,
     /** A Hexer's cast, from the tower to each enemy it curses. */
     TOWER_SPLASH_CAST,
     /** The rune over an enemy carrying a hex. */
