@@ -67,6 +67,13 @@ public final class ActiveEffects {
     private static final float CORROSION_ARMOR_LOST = 30f;
     private static final float BRITTLE_PHYSICAL_DAMAGE_TAKEN = 1.3f;
     private static final float KILL_ZONE_DAMAGE_TAKEN = 1.25f;
+    private static final float CRACKED_PLATING_SHARE = 0.5f;
+    /** The share of a burn's remaining pool that lands at once when a freeze puts it out. */
+    private static final float FREEZE_BURST_SHARE = 0.5f;
+    /** A burn pool reveals an invisible enemy while it holds more than this, in damage units a tick. */
+    private static final float BURN_REVEAL_FUEL = 30f;
+    private static final float TAR_BURN_FACTOR = 2f;
+    private static final int TAR_FREEZE_EXTRA_TICKS = 20;
     /** Extra damage taken per vulnerable stack, of every damage type. */
     private static final float VULNERABLE_PER_STACK = 0.15f;
     /** Damage taken while a priority lasts, of every damage type. */
@@ -102,7 +109,8 @@ public final class ActiveEffects {
             case SHIELD -> effect.shieldPercent();
             // On/off, not gradated - any reapplication is at least as strong as what's already active.
             case INVISIBLE, REVEALED, EXPOSED, MARKED, PRIORITY, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION,
-                    SYMPATHY, RECKONING, SILENCED, ANCHORED, BRITTLE, CORRODED, UNDERTOW, DEAD_ZONE, KILL_ZONE -> 1f;
+                    SYMPATHY, RECKONING, SILENCED, ANCHORED, BRITTLE, CORRODED, UNDERTOW, DEAD_ZONE, KILL_ZONE, CRACKED,
+                    TARRED -> 1f;
             case HEAL -> Math.max(effect.healPerTick(), effect.damagePerTick().amount());
             case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED, UNRAVELED, TOLL ->
                     effect.stacks();
@@ -112,8 +120,9 @@ public final class ActiveEffects {
     /**
      * Applies {@code effect} unless an active effect keeps its kind out (see
      * {@link EffectInteractions}); applying it also removes the kinds it consumes, and a freeze
-     * that consumes a chill lasts longer by the chill's level, twice that under Rime. Under Rime a
-     * freeze also lands the burn it puts out, all of it at once.
+     * that consumes a chill lasts longer by the chill's level, twice that under Rime. A freeze also
+     * lands the burn it puts out at once, half of what was left, all of it under Rime. A tarred
+     * enemy's freeze lasts a second longer, and a burn it catches starts at double the pool.
      */
     public void apply(Effect effect) {
         if (EffectInteractions.blocks(this.active.keySet(), effect.kind())) {
@@ -127,9 +136,16 @@ public final class ActiveEffects {
         if (effect.kind() == EffectKind.FREEZE && chilled > 0f) {
             incoming = effect.withDurationScaledBy(1f + (rime ? RIME_CHILL_FACTOR : 1f) * chilled);
         }
+        if (effect.kind() == EffectKind.FREEZE && this.active.containsKey(EffectKind.TARRED)) {
+            incoming = incoming.withExtraTicks(TAR_FREEZE_EXTRA_TICKS);
+        }
+        if (effect.kind() == EffectKind.BURN && this.active.containsKey(EffectKind.TARRED)
+                && !this.active.containsKey(EffectKind.BURN)) {
+            incoming = incoming.withPoolScaledBy(TAR_BURN_FACTOR);
+        }
         Effect burn = this.active.get(EffectKind.BURN);
-        if (effect.kind() == EffectKind.FREEZE && rime && burn != null) {
-            burstPool(burn);
+        if (effect.kind() == EffectKind.FREEZE && burn != null) {
+            burstPool(burn, rime ? 1f : FREEZE_BURST_SHARE);
         }
         EffectInteractions.removedBy(effect.kind()).forEach(this.active::remove);
         switch (incoming.kind()) {
@@ -332,10 +348,17 @@ public final class ActiveEffects {
                 case CORRODED -> accumulator.addFlat(EnemyStat.ARMOR, -CORROSION_ARMOR_LOST);
                 case UNDERTOW -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - UNDERTOW_CHILL);
                 case KILL_ZONE -> multiplyDamageTaken(accumulator, KILL_ZONE_DAMAGE_TAKEN);
+                case CRACKED -> {
+                    accumulator.multiply(EnemyStat.PHYSICAL_PLATING, CRACKED_PLATING_SHARE);
+                    accumulator.multiply(EnemyStat.MAGIC_PLATING, CRACKED_PLATING_SHARE);
+                }
                 case EXPOSED, MARKED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY,
-                        RECKONING, SILENCED, DEAD_ZONE, TOLL -> {
+                        RECKONING, SILENCED, DEAD_ZONE, TOLL, TARRED -> {
                 }
                 case BURN -> {
+                    if (effect.fuelLevel() > BURN_REVEAL_FUEL) {
+                        accumulator.add(EnemyStat.STEALTH, REVEALED);
+                    }
                 }
                 case SCORCHED -> accumulator.addFlat(EnemyStat.RESILIENCE, -effect.stacks());
                 case SICKENED -> accumulator.addFlat(EnemyStat.SPIRIT, -effect.stacks());
@@ -496,11 +519,11 @@ public final class ActiveEffects {
         return this.active.containsKey(EffectKind.ASH) ? ASH_POOL_FACTOR : 1;
     }
 
-    /** Lands everything {@code pool} would still have dealt, at once, each contributor its share. */
-    private static void burstPool(Effect pool) {
+    /** Lands {@code share} of everything {@code pool} would still have dealt, at once, each contributor its part. */
+    private static void burstPool(Effect pool, float share) {
         float total = pool.fuelLevel();
         double alpha = Math.exp(POOL_DECAY_EXPONENT / pool.authoredDurationTicks());
-        int damage = (int) Math.round(total / (1.0 - alpha));
+        int damage = (int) Math.round(share * total / (1.0 - alpha));
         if (damage <= 0) {
             return;
         }

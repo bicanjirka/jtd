@@ -225,6 +225,16 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
         return timed(EffectKind.KILL_ZONE, durationTicks, sink);
     }
 
+    /** Plating halved for {@code durationTicks}. */
+    public static Effect cracked(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.CRACKED, durationTicks, sink);
+    }
+
+    /** Stuck in tar for {@code durationTicks}. */
+    public static Effect tarred(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.TARRED, durationTicks, sink);
+    }
+
     /** Crit chance taken doubles while it lasts. */
     public static Effect exposed(int durationTicks, DamageSink sink) {
         return timed(EffectKind.EXPOSED, durationTicks, sink);
@@ -317,6 +327,24 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
         return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
                 Math.round(this.remainingTicks * factor), this.sink, this.healPerTick, this.shieldRestrictedTo,
                 Math.round(this.authoredDurationTicks * factor), scaled, this.peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap, this.origin);
+    }
+
+    /** This pool at {@code factor} times its strength: its damage and everything already in it. */
+    Effect withPoolScaledBy(float factor) {
+        List<FuelContribution> scaled = this.fuel.stream()
+                .map(c -> c.scaledTo(c.amount() * factor)).toList();
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick.scaledBy(factor), this.shieldPercent,
+                this.remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
+                this.authoredDurationTicks, scaled, this.peakL0 * factor, this.stacks, this.stackClock, this.faultLine,
+                this.stackCap, this.origin);
+    }
+
+    /** The same effect lasting {@code ticks} longer, authored time included. */
+    Effect withExtraTicks(int ticks) {
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
+                this.remainingTicks + ticks, this.sink, this.healPerTick, this.shieldRestrictedTo,
+                this.authoredDurationTicks + ticks, this.fuel, this.peakL0, this.stacks, this.stackClock,
+                this.faultLine, this.stackCap, this.origin);
     }
 
     Effect withRemainingTicks(int remainingTicks) {

@@ -781,6 +781,92 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void freezingABurningEnemyLandsHalfOfItsRemainingPoolAtOnce() {
+        ActiveEffects effects = new ActiveEffects();
+        List<Damage> burnt = new ArrayList<>();
+        effects.apply(Effect.burn(Damage.magic(100), 40, burnt::add));
+        float burnLeft = fuelOf(effects, EffectKind.BURN);
+
+        effects.apply(Effect.freeze(20, d -> {
+        }));
+
+        assertThat(burnt).singleElement().extracting(Damage::amount)
+                .isEqualTo((int) Math.round(0.5 * burnLeft / (1.0 - Math.exp(-3.0 / 40))));
+        assertThat(effects.activeKinds()).doesNotContain(EffectKind.BURN);
+    }
+
+    @Test
+    void aBurningInvisibleEnemyIsVisibleUntilItsPoolDecaysBelowTheFuelLevel() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.invisible(1000, d -> {
+        }));
+        effects.apply(Effect.burn(Damage.magic(100), 60, d -> {
+        }));
+        assertThat(resolved(effects, EnemyStat.STEALTH)).isEqualTo(0f);
+
+        tickTimes(effects, 40);
+
+        assertThat(effects.activeKinds()).contains(EffectKind.BURN);
+        assertThat(resolved(effects, EnemyStat.STEALTH)).isEqualTo(1f);
+    }
+
+    @Test
+    void aSmallBurnDoesNotRevealAnInvisibleEnemy() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.invisible(1000, d -> {
+        }));
+
+        effects.apply(Effect.burn(Damage.magic(20), 60, d -> {
+        }));
+
+        assertThat(resolved(effects, EnemyStat.STEALTH)).isEqualTo(1f);
+    }
+
+    @Test
+    void aTarredEnemysBurnStartsAtDoubleThePoolButATopUpDoesNotDoubleAgain() {
+        ActiveEffects plain = new ActiveEffects();
+        ActiveEffects tarred = new ActiveEffects();
+        tarred.apply(Effect.tarred(100, d -> {
+        }));
+        for (ActiveEffects effects : List.of(plain, tarred)) {
+            effects.apply(Effect.burn(Damage.magic(100), 60, d -> {
+            }));
+        }
+        assertThat(fuelOf(tarred, EffectKind.BURN)).isEqualTo(2 * fuelOf(plain, EffectKind.BURN));
+
+        float before = fuelOf(tarred, EffectKind.BURN);
+        tarred.apply(Effect.burn(Damage.magic(100), 60, d -> {
+        }));
+
+        assertThat(fuelOf(tarred, EffectKind.BURN) - before).isLessThan(100f);
+    }
+
+    @Test
+    void aTarredEnemysFreezeLastsASecondLonger() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.tarred(100, d -> {
+        }));
+
+        effects.apply(Effect.freeze(20, d -> {
+        }));
+
+        assertThat(effects.remainingTicks(EffectKind.FREEZE).getAsInt()).isEqualTo(40);
+    }
+
+    @Test
+    void crackedHalvesBothKindsOfPlating() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.cracked(100, d -> {
+        }));
+        BaseStats plated = BaseStats.defaults().with(EnemyStat.PHYSICAL_PLATING, 400f).with(EnemyStat.MAGIC_PLATING, 400f);
+
+        StatSheet sheet = new StatSheet(plated, effects::contributeTo);
+
+        assertThat(sheet.value(EnemyStat.PHYSICAL_PLATING)).isEqualTo(200f);
+        assertThat(sheet.value(EnemyStat.MAGIC_PLATING)).isEqualTo(200f);
+    }
+
+    @Test
     void anAshenEnemyCannotBeFrozenAndShrugsOffThreeQuartersOfAChill() {
         ActiveEffects ashen = new ActiveEffects();
         ashen.apply(Effect.hex(EffectKind.ASH, 100, d -> {

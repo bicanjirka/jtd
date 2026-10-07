@@ -148,12 +148,12 @@ holds more than one effect; selecting it lists every effect with what kind it is
 | Effect     | Kind             | What it does                                                                                       |
 |------------|------------------|----------------------------------------------------------------------------------------------------|
 | Chilled    | soft CC          | Slows in proportion to its level, which adds up (never past 80%) and fades linearly. Every slowing tower chills. It also cuts the damage the enemy takes from burning |
-| Freeze     | hard CC          | Stops the enemy. Every enemy diminishes it: within 10 s of the last one, each fresh freeze lasts half as long as the one before, and a fourth doesn't take hold. Freezing a chilled enemy uses up the chill and lasts longer by its level |
+| Freeze     | hard CC          | Stops the enemy. Every enemy diminishes it: within 10 s of the last one, each fresh freeze lasts half as long as the one before, and a fourth doesn't take hold. Freezing a chilled enemy uses up the chill and lasts longer by its level; freezing a burning one puts the burn out and lands half of what was left at once |
 | Dazed      | hard CC          | Stops the enemy and its abilities like a freeze, but keeps its burn and its chill. It has its own diminishing returns: within 10 s of the last one, each fresh daze lasts 20% less than the one before, and a sixth doesn't take hold |
 | Silenced   | soft CC          | Its abilities don't fire: no heals, shields, summons, shrouds or vanishing. Its death abilities still fire, its aura keeps running and it keeps walking |
 | Anchored   | soft CC          | Can't be sped up: its speed is held to three quarters of its base, hurt-speed included |
 | Undertow   | soft CC          | A quarter slow that doesn't fade while the enemy is in a Pulse's field, and that counts as a chill for a freeze |
-| Burning    | damage over time | Damage that decays as it burns; several towers add to one pool and each is credited its share. It earns a Scorched stack when it starts and another every half second while it lasts |
+| Burning    | damage over time | Damage that decays as it burns; several towers add to one pool and each is credited its share. It earns a Scorched stack when it starts and another every half second while it lasts. An invisible enemy is visible while its pool is strong |
 | Poisoned   | damage over time | Its own decaying pool, so it stacks with burning. It slows in proportion to the pool (at most 30%, on top of chill) and earns Sickened stacks the same way |
 | Scorched   | debuff           | Burning's lasting mark: each stack lowers resilience by 1 (down to -100; below 0 crits hit harder but no likelier). It outlasts the fire, then loses a stack per second |
 | Sickened   | debuff           | Poison's lasting mark: each stack lowers spirit by 1 (down to -100), so heals and shields shrink and vanish at the floor. Loses a stack per second |
@@ -168,6 +168,8 @@ holds more than one effect; selecting it lists every effect with what kind it is
 | Corroded   | debuff           | -30 armor (never below 0) while the enemy is in a Pulse's field |
 | Dead zone  | debuff           | No heal or shield takes hold while the enemy is in a Pulse's field; what it already has stays |
 | Kill zone  | debuff           | +25% damage taken from every source while the enemy is in a Pulse's field |
+| Cracked    | debuff           | Plating is halved; one shared 5 s clock any application refreshes |
+| Tarred     | debuff           | A burn it catches starts at double the pool, and a freeze it suffers lasts a second longer |
 | Exposed    | spotted          | Crit chance taken doubles. A revealed enemy counts as Exposed                                       |
 | Marked     | spotted          | The next hit from any tower is a guaranteed crit, and spends the mark. Damage that ticks never spends it, and it waits on a crit-immune enemy |
 | Priority   | spotted          | +15% damage taken from every tower, and every tower that picks one target picks it while it is in range |
@@ -175,7 +177,7 @@ holds more than one effect; selecting it lists every effect with what kind it is
 | Doomed     | hex              | When it ends, the enemy takes 30% of all the damage it took meanwhile as one magic hit, credited to the Hexer. Lasts 4 s, +1 s per Saturation stack |
 | Blighted   | hex              | Poisons the enemy for as long as it lasts |
 | Contagious | hex              | When the enemy dies, its hexes and debuffs jump to the 2 nearest unhexed enemies nearby with the time they had left; a jumped hex jumps once more at most |
-| Rimed      | hex              | Chills when cast. Freezing the enemy buys twice the chill's extra freeze time and lands its burn at once instead of putting it out. Replaces Ashen |
+| Rimed      | hex              | Chills when cast. Freezing the enemy buys twice the chill's extra freeze time and lands all of its burn at once instead of half. Replaces Ashen |
 | Ashen      | hex              | Its burn and poison hold twice as much and earn Scorched and Sickened twice as fast; it can't be frozen and takes a quarter of any chill. Replaces Rimed |
 | Inverted   | hex              | Heals it receives are dealt to it as magic damage over their length, shields as one hit of their share of its full health, both credited to the Hexer; it can't turn invisible |
 | Sympathetic | hex             | Once a second, its Vulnerable, Sundered, Exposed and chill are copied, up to what it has, to the Hexer's other hexed enemies within 2 cells |
@@ -185,7 +187,7 @@ holds more than one effect; selecting it lists every effect with what kind it is
 | Invisible  | stealth          | Towers cannot target the enemy; area damage still reaches it                                       |
 | Revealed   | stealth          | Towers can target the enemy again, even through invisibility; turning invisible again ends it      |
 
-Stacks wear off at a pace spirit sets: neutral spirit loses one per second, more spirit is faster, and at -100 they never wear off, so a fully sickened enemy stays sickened. Every other debuff's timer runs at `max(0.25, 1 + spirit / 100)` of normal speed (freeze keeps its own diminishing returns). A frozen enemy cannot burn, and freezing an enemy puts out its burn but keeps its Scorched stacks. Only hexes bend this: Rimed and Ashen change what a freeze does, and Inverted keeps an enemy from turning invisible. Nothing else cancels anything.
+Stacks wear off at a pace spirit sets: neutral spirit loses one per second, more spirit is faster, and at -100 they never wear off, so a fully sickened enemy stays sickened. Every other debuff's timer runs at `max(0.25, 1 + spirit / 100)` of normal speed (freeze keeps its own diminishing returns). A frozen enemy cannot burn, and freezing an enemy puts out its burn, landing half of what was left at once, but keeps its Scorched stacks. Hexes bend this: Rimed and Ashen change what a freeze does, and Inverted keeps an enemy from turning invisible. Nothing else cancels anything.
 
 Only a hit can crit: a shot, a blast, a beam pass. Damage that ticks (a burn, a poison, a field)
 never does, but a burn or poison started by a crit starts that much stronger. Each tower has its
