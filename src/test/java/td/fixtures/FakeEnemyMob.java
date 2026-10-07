@@ -286,6 +286,11 @@ public final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
+    public boolean rollsCrit(AttackProfile attacker) {
+        return this.hitsLandCritical;
+    }
+
+    @Override
     public float critFactorFor(AttackProfile attacker) {
         return attacker.critMultiplier();
     }

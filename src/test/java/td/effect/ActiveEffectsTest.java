@@ -515,7 +515,7 @@ class ActiveEffectsTest {
         effects.tick();
 
         assertThat(effects.activeKinds()).containsExactly(EffectKind.FREEZE);
-        assertThat(effects.blockedKinds()).containsExactly(EffectKind.BURN);
+        assertThat(effects.blockedKinds()).containsExactly(EffectKind.BURN, EffectKind.SOULFIRE);
         assertThat(received).isEmpty();
     }
 
@@ -546,7 +546,7 @@ class ActiveEffectsTest {
 
         assertThat(effects.activeKinds()).containsExactlyInAnyOrder(EffectKind.POISON, EffectKind.SICKENED, EffectKind.FREEZE);
         assertThat(effects.remainingTicks(EffectKind.FREEZE).getAsInt()).isEqualTo(30);
-        assertThat(effects.blockedKinds()).containsExactly(EffectKind.BURN);
+        assertThat(effects.blockedKinds()).containsExactly(EffectKind.BURN, EffectKind.SOULFIRE);
     }
 
     @Test
@@ -1248,5 +1248,126 @@ class ActiveEffectsTest {
 
         assertThat(effects.activeKinds()).isEmpty();
         assertThat(received).hasSize(2);
+    }
+
+    @Test
+    void soulfireIsAPoolOfItsOwnThatStacksWithBurnAndEarnsBothScorchedAndSickened() {
+        ActiveEffects effects = new ActiveEffects();
+        List<Damage> burn = new ArrayList<>();
+        List<Damage> soul = new ArrayList<>();
+        effects.apply(Effect.burn(Damage.magic(100), 60, recordingSink(burn)));
+        effects.apply(Effect.soulfire(Damage.magic(100), 60, recordingSink(soul)));
+
+        effects.tick();
+
+        assertThat(effects.activeKinds()).contains(EffectKind.BURN, EffectKind.SOULFIRE, EffectKind.SCORCHED,
+                EffectKind.SICKENED);
+        assertThat(burn).isNotEmpty();
+        assertThat(soul).isNotEmpty();
+        assertThat(effects.stacks(EffectKind.SICKENED)).isEqualTo(1);
+    }
+
+    @Test
+    void aFreezePutsOutSoulfireAndLandsHalfOfItToo() {
+        ActiveEffects effects = new ActiveEffects();
+        List<Damage> soul = new ArrayList<>();
+        effects.apply(Effect.soulfire(Damage.magic(100), 40, recordingSink(soul)));
+
+        effects.apply(Effect.freeze(20, d -> {
+        }));
+
+        assertThat(soul).hasSize(1);
+        assertThat(effects.activeKinds()).doesNotContain(EffectKind.SOULFIRE);
+    }
+
+    @Test
+    void aPoolTunedToHoldMoreFillsFurtherBeforeItStopsTakingTopUps() {
+        ActiveEffects plain = new ActiveEffects();
+        ActiveEffects deep = new ActiveEffects();
+        Effect tuned = Effect.burn(Damage.magic(100), 200, d -> {
+        }).withTuning(PoolTuning.standard().withCapFactor(4f));
+        for (int i = 0; i < 12; i++) {
+            plain.apply(Effect.burn(Damage.magic(100), 200, d -> {
+            }));
+            deep.apply(tuned);
+        }
+
+        assertThat(fuelOf(deep, EffectKind.BURN)).isGreaterThan(fuelOf(plain, EffectKind.BURN) * 1.5f);
+    }
+
+    @Test
+    void aPoolTunedToMarkFasterEarnsScorchedTwiceAsOften() {
+        ActiveEffects plain = new ActiveEffects();
+        ActiveEffects fast = new ActiveEffects();
+        plain.apply(Effect.burn(Damage.magic(100), 200, d -> {
+        }));
+        fast.apply(Effect.burn(Damage.magic(100), 200, d -> {
+        }).withTuning(PoolTuning.standard().withStackRate(2)));
+
+        tickTimes(plain, 20);
+        tickTimes(fast, 20);
+
+        assertThat(fast.stacks(EffectKind.SCORCHED)).isGreaterThan(plain.stacks(EffectKind.SCORCHED) + 1);
+    }
+
+    @Test
+    void aTunedPoolLandsMoreWhenAFreezePutsItOut() {
+        List<Damage> plain = new ArrayList<>();
+        List<Damage> shocked = new ArrayList<>();
+        ActiveEffects a = new ActiveEffects();
+        ActiveEffects b = new ActiveEffects();
+        a.apply(Effect.burn(Damage.magic(100), 40, plain::add));
+        b.apply(Effect.burn(Damage.magic(100), 40, shocked::add).withTuning(PoolTuning.standard().withFreezeBurstShare(1.5f)));
+
+        a.apply(Effect.freeze(20, d -> {
+        }));
+        b.apply(Effect.freeze(20, d -> {
+        }));
+
+        assertThat(shocked.getFirst().amount()).isCloseTo(3 * plain.getFirst().amount(), within(2));
+    }
+
+    @Test
+    void cauterizeHalvesTheHealingAndShieldingOfABurningEnemy() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.heal(10, 100, d -> {
+        }));
+        effects.apply(Effect.shield(0.4f, 100, d -> {
+        }));
+        float healBefore = resolved(effects, EnemyStat.REGENERATION);
+        float shieldBefore = resolved(effects, EnemyStat.PHYSICAL_SHIELDING);
+
+        effects.apply(Effect.burn(Damage.magic(100), 60, d -> {
+        }).withTuning(PoolTuning.standard().cauterizing()));
+
+        assertThat(resolved(effects, EnemyStat.REGENERATION)).isCloseTo(healBefore / 2, within(1e-4f));
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_SHIELDING)).isCloseTo(shieldBefore / 2, within(1e-4f));
+    }
+
+    @Test
+    void heatAndThePyromancersMarkWorkOnlyWhileTheTunedPoolBurns() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.burn(Damage.magic(100), 20, d -> {
+        }).withTuning(PoolTuning.standard().heating().marking()));
+
+        float whileBurning = resolved(effects, EnemyStat.PERIODIC_DAMAGE_TAKEN);
+        float magicWhileBurning = resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN);
+        tickTimes(effects, 400);
+
+        assertThat(whileBurning).isCloseTo(1.1f, within(1e-5f));
+        assertThat(magicWhileBurning).isCloseTo(1.15f, within(1e-5f));
+        assertThat(resolved(effects, EnemyStat.PERIODIC_DAMAGE_TAKEN)).isEqualTo(1f);
+        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isEqualTo(1f);
+    }
+
+    @Test
+    void aTowerCanAddScorchedStacksDirectlyAndTheyWearOffLikeAnyOther() {
+        ActiveEffects effects = new ActiveEffects();
+
+        effects.apply(Effect.scorched(3));
+        effects.apply(Effect.scorched(2));
+
+        assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(5);
+        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-5f);
     }
 }

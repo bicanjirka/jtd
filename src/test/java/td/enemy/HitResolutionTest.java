@@ -205,4 +205,19 @@ class HitResolutionTest {
         assertThat(crit.amount()).isEqualTo(1500);
         assertThat(plain.amount()).isEqualTo(500);
     }
+
+    @Test
+    void damageThatTicksTakesTheOverTimeMultiplierAndAHitDoesNot() {
+        td.stat.BaseStats stats = td.stat.BaseStats.defaults().with(td.stat.EnemyStat.PERIODIC_DAMAGE_TAKEN, 1.5f);
+        td.stat.StatView view = new td.stat.StatSheet(stats, accumulator -> {
+        });
+
+        td.damage.Damage ticking = HitResolution.resolve(td.damage.Damage.magic(1000),
+                td.damage.AttackProfile.none().asPeriodic(), view, 100000, () -> 1.0);
+        td.damage.Damage hit = HitResolution.resolve(td.damage.Damage.magic(1000), td.damage.AttackProfile.none(),
+                view, 100000, () -> 1.0);
+
+        org.assertj.core.api.Assertions.assertThat(ticking.amount()).isEqualTo(1500);
+        org.assertj.core.api.Assertions.assertThat(hit.amount()).isEqualTo(1000);
+    }
 }

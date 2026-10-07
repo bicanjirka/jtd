@@ -42,10 +42,19 @@ public final class HitResolution {
         amount *= mitigationMultiplier(mitigation);
         amount = Math.max(0f, amount - attacker.penetratePlating(stats.value(EnemyStat.platingFor(incoming.type())), critical));
         amount *= stats.value(EnemyStat.damageTakenFor(incoming.type()));
+        if (attacker.delivery() == Delivery.PERIODIC) {
+            amount *= stats.value(EnemyStat.PERIODIC_DAMAGE_TAKEN);
+        }
         if (!(critical && attacker.critsPierceShields())) {
             amount *= 1f - stats.value(EnemyStat.shieldingFor(incoming.type()));
         }
         return new Damage(Math.round(amount), incoming.type(), critical).cappedAt(health);
+    }
+
+    /** Whether a hit from {@code attacker} would roll a critical against {@code stats}. */
+    public static boolean rollsCrit(AttackProfile attacker, StatView stats, RandomSource random) {
+        float resilience = stats.value(EnemyStat.RESILIENCE);
+        return resilience < 100f && rollsCrit(attacker, stats, resilience, random);
     }
 
     private static boolean rollsCrit(AttackProfile attacker, StatView stats, float resilience, RandomSource random) {

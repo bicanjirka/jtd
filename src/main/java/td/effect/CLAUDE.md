@@ -46,6 +46,13 @@
 - A `HEX` kind carries no stat of its own; the tower that cast it watches it and pays it out.
   `INVERSION` is the one hex the enemy itself reads: `invertedThrough(sink)` turns a heal into
   damage per tick, and `INVISIBLE` is an `EffectInteractions` row it blocks and removes.
+- `SOULFIRE` is a third fuel pool beside burn and poison (`EffectKind.isBurning()` covers it and burn): a
+  freeze puts it out and lands part of it, a chill cools it, and it earns `SCORCHED` and `SICKENED` both.
+  Nothing resists it, so it burns what is burn-immune.
+- A tower tunes the pool it feeds through `PoolTuning`, carried by the pool: how much it holds, how fast it
+  marks, how much of it a freeze lands, and whether it cauterizes (half the healing and shielding), heats
+  (`PERIODIC_DAMAGE_TAKEN`, damage that ticks) or marks for magic. Two towers on one pool leave it the
+  stronger of each setting, and the flags only last while the pool does.
 - A freeze always lands half of the burn it puts out at once (`burstPool`, its remaining pool
   `fuel / (1 - alpha)`); a burn pool above `BURN_REVEAL_FUEL` sets `STEALTH` to 0 like a reveal, without
   exposing the enemy. `TARRED` makes the burn it catches start at double the pool and a freeze it

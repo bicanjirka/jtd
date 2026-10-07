@@ -1370,4 +1370,18 @@ class GameEngineTest {
         }
         assertThat(engine.getGameWorld().enemies().aliveCount()).as("enemies still walking").isZero();
     }
+
+    @Test
+    void soulfireBurnsAnEnemyThatIsImmuneToBurn() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, EffectResistTrait.immuneTo(EffectKind.BURN));
+
+        enemy.applyEffect(Effect.burn(Damage.magic(100), 60, d -> {
+        }));
+        boolean burned = enemy.activeEffectKinds().contains(EffectKind.BURN);
+        enemy.applyEffect(Effect.soulfire(Damage.magic(100), 60, d -> {
+        }));
+
+        assertThat(burned).isFalse();
+        assertThat(enemy.activeEffectKinds()).contains(EffectKind.SOULFIRE);
+    }
 }

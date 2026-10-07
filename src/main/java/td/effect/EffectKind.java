@@ -77,13 +77,15 @@ public enum EffectKind {
     /** Stuck in tar: slowed by 40%, a burn it catches starts at double the pool, and a freeze it suffers lasts a second longer. */
     TARRED,
     /** Takes physical damage for every cell it travels; a stopped enemy takes none. */
-    BLEEDING;
+    BLEEDING,
+    /** A third fuel pool: it stacks with burn and poison, burns what is immune to fire and marks resilience and spirit. */
+    SOULFIRE;
 
     public EffectCategory category() {
         return switch (this) {
             case CHILL, SILENCED, ANCHORED, UNDERTOW -> EffectCategory.SOFT_CC;
             case FREEZE, DAZED -> EffectCategory.HARD_CC;
-            case BURN, POISON, BLEEDING -> EffectCategory.DAMAGE_OVER_TIME;
+            case BURN, POISON, BLEEDING, SOULFIRE -> EffectCategory.DAMAGE_OVER_TIME;
             case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED, UNRAVELED, BRITTLE, TOLL,
                     CORRODED, DEAD_ZONE, KILL_ZONE, CRACKED, TARRED -> EffectCategory.DEBUFF;
             case EXPOSED, MARKED, PRIORITY, CHARGED -> EffectCategory.SPOTTED;
@@ -118,7 +120,12 @@ public enum EffectKind {
      * stack every {@code Effect.STACK_INTERVAL_TICKS} while it lasts.
      */
     public boolean isFuelPool() {
-        return this == BURN || this == POISON;
+        return this == BURN || this == POISON || this == SOULFIRE;
+    }
+
+    /** Whether this kind is a fire: the pools a freeze puts out and a chill cools. */
+    public boolean isBurning() {
+        return this == BURN || this == SOULFIRE;
     }
 
     /**
@@ -174,12 +181,13 @@ public enum EffectKind {
         return this == VULNERABLE || this == SUNDERED || this == EXPOSED || this == CHILL || this == UNRAVELED;
     }
 
-    /** The stack debuff a burn or poison earns while it lasts; empty for any other kind. */
-    public Optional<EffectKind> debuffEarned() {
+    /** The stack debuffs a pool earns while it lasts; none for any other kind. */
+    public List<EffectKind> debuffsEarned() {
         return switch (this) {
-            case BURN -> Optional.of(SCORCHED);
-            case POISON -> Optional.of(SICKENED);
-            default -> Optional.empty();
+            case BURN -> List.of(SCORCHED);
+            case POISON -> List.of(SICKENED);
+            case SOULFIRE -> List.of(SCORCHED, SICKENED);
+            default -> List.of();
         };
     }
 
@@ -192,7 +200,7 @@ public enum EffectKind {
             case SHIELD, INVISIBLE, HEAL, VULNERABLE, REVEALED, POISON, SCORCHED, SICKENED, SUNDERED, EXPOSED, MARKED,
                     PRIORITY, RESONATING, FRACTURED, DAZED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION,
                     SYMPATHY, RECKONING, SILENCED, ANCHORED, UNRAVELED, BRITTLE, TOLL, CORRODED, UNDERTOW, DEAD_ZONE,
-                    KILL_ZONE, CRACKED, TARRED, BLEEDING -> Optional.empty();
+                    KILL_ZONE, CRACKED, TARRED, BLEEDING, SOULFIRE -> Optional.empty();
         };
     }
 }

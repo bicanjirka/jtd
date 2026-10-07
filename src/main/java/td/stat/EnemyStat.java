@@ -32,6 +32,8 @@ public enum EnemyStat {
      */
     RESILIENCE(0f, -100f, 100f),
     CRIT_CHANCE_TAKEN(1f, 0f, Float.MAX_VALUE),
+    /** Multiplies damage that ticks (a burn, a poison, a field), whatever its type. */
+    PERIODIC_DAMAGE_TAKEN(1f, 0.1f, Float.MAX_VALUE),
     /** Heals and shields the enemy receives are scaled by {@code max(0, 1 + spirit / 100)}. */
     SPIRIT(0f, -100f, Float.MAX_VALUE),
     REGENERATION(0f, 0f, Float.MAX_VALUE),
