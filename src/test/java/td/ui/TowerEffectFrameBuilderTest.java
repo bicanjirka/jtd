@@ -182,4 +182,34 @@ class TowerEffectFrameBuilderTest {
                 .filter(beam -> beam.palette() == Palette.TOWER_AURA_LINK)
                 .toList();
     }
+
+    @Test
+    void aNukeLandsInAWhiteFlashAndAnExpandingRingThatEndAfterTenTicks() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        MortarTower mortar = new MortarTower(context, 3, 3);
+        context.economy().startEconomy(1_000_000, 5);
+        context.playtestRules().setUpgradeGatesIgnored(true);
+        for (String name : List.of("Attune", "Awaken", "Siege Rounds", "Siege Rounds II", "Heavy Shell", "Napalm",
+                "Transcendent", "Tactical Nuke")) {
+            mortar.buyUpgrade(nodeNamed(mortar, name));
+        }
+        FakeEnemyMob target = FakeEnemyMob.at(mortar.getX() + 3 * BoardFixtures.SCALE, mortar.getY());
+        context.enemies().setEnemies(new EnemyMob[]{target});
+        int landedAt = 0;
+        for (int t = 1; t < 2000 && landedAt == 0; t++) {
+            mortar.doTick(t);
+            context.projectiles().doTick(t);
+            if (mortar.getNukeFlash().isPresent()) {
+                landedAt = t;
+            }
+        }
+
+        TowerEffectFrameBuilder during = new TowerEffectFrameBuilder(BoardFixtures.SCALE, landedAt + 2, 0.0, 0.0);
+        mortar.accept(during);
+        TowerEffectFrameBuilder after = new TowerEffectFrameBuilder(BoardFixtures.SCALE, landedAt + 12, 0.0, 0.0);
+        mortar.accept(after);
+
+        assertThat(during.build()).extracting(draw -> draw.getClass().getSimpleName()).contains("FlashDraw", "RingDraw");
+        assertThat(after.build()).extracting(draw -> draw.getClass().getSimpleName()).doesNotContain("FlashDraw");
+    }
 }

@@ -28,6 +28,7 @@ final class ZoneFrameBuilder {
             case BURNING_GROUND -> Palette.ZONE_BURNING;
             case TAR -> Palette.ZONE_TAR;
             case FROST_GROUND -> Palette.ZONE_FROST;
+            case FALLOUT -> Palette.ZONE_FALLOUT;
         };
     }
 }

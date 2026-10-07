@@ -51,6 +51,7 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
             case NAPALM -> Palette.PROJECTILE_NAPALM;
             case TAR -> Palette.PROJECTILE_TAR;
             case FROST -> Palette.PROJECTILE_FROST;
+            case NUKE -> Palette.PROJECTILE_NUKE;
         };
     }
 

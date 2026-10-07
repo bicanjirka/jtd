@@ -81,7 +81,7 @@ EOF
 `upgrade <x> <y> <node name>` (buys through the real mechanism, so tick a fight to clear its gate first,
 or `gates off` to waive every XP and purpose gate as the dev panel does),
 `spawn <id> [rank]`, `effect <kind> [ticks]` (on every enemy), `zone <kind> <x> <y> [radiusCells] [ticks]`
-(a ground zone no tower owns: `burning_ground`, `tar`, `frost_ground`), `wave`, `tick <n>`, `kill`,
+(a ground zone no tower owns: `burning_ground`, `tar`, `frost_ground`, `fallout`), `wave`, `tick <n>`, `kill`,
 `grid [off]` (the dev cell grid), `hoverplace <tower> <x> <y>` (the placement highlight on a cell),
 `render <path>`, `state`, `quit`. `tick` advances
 the real `GameEngine`, and `render` paints through the real `BoardRenderer` /
