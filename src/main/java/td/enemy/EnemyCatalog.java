@@ -25,20 +25,13 @@ public final class EnemyCatalog {
     /** A fresh catalog, never shared, so one level's registrations never leak into the next. */
     public static EnemyCatalog builtIn() {
         EnemyCatalog catalog = new EnemyCatalog();
-        catalog.register(BuiltInEnemies.SIMPLE);
-        catalog.register(BuiltInEnemies.ARMORED);
-        catalog.register(BuiltInEnemies.S_SPAWN);
-        catalog.register(BuiltInEnemies.FRENZIED);
-        catalog.register(BuiltInEnemies.T_SPAWN);
-        catalog.register(BuiltInEnemies.GHOST);
-        catalog.register(BuiltInEnemies.MENDER);
-        catalog.register(BuiltInEnemies.JAMMER);
-        catalog.register(BuiltInEnemies.WARDEN_EGG_3);
-        catalog.register(BuiltInEnemies.WARDEN_3);
-        catalog.register(BuiltInEnemies.WARDEN_EGG_2);
-        catalog.register(BuiltInEnemies.WARDEN_2);
-        catalog.register(BuiltInEnemies.WARDEN_EGG_1);
-        catalog.register(BuiltInEnemies.WARDEN_1);
+        SimpleEnemy.registerIn(catalog);
+        ArmoredEnemy.registerIn(catalog);
+        FrenziedEnemy.registerIn(catalog);
+        GhostEnemy.registerIn(catalog);
+        MenderEnemy.registerIn(catalog);
+        JammerEnemy.registerIn(catalog);
+        WardenEnemy.registerIn(catalog);
         return catalog;
     }
 

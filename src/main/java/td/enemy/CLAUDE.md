@@ -5,13 +5,16 @@
 - `DefinedEnemyMob` is the only concrete `EnemyMob`. Everything about an enemy comes from its
   `EnemyDefinition` (stats, `BodyArchetype`, `MovementBehavior`, `Trait`s, `Ability`s), never
   from a Java override. Build one with `EnemyDefinition.of(...)` plus `withX` copies.
-- A new enemy is a new definition, not a class: global content in `BuiltInEnemies` (registered in
-  `EnemyCatalog.builtIn()`), one-level content in `LevelDefinition.customEnemies()` /
-  `customRankedEnemies()`.
+- A new enemy is a new definition, not a mob class: global content is one `XxxEnemy` class holding
+  everything it needs (its ladder, its spawnlings, its eggs), with a `registerIn(EnemyCatalog)` that
+  `EnemyCatalog.builtIn()` calls in id order; one-level content goes in `LevelDefinition.customEnemies()` /
+  `customRankedEnemies()`. Write values straight into the factory calls; a private helper method (`MenderEnemy.heal`,
+  `WardenEnemy.warden`) takes the place of a constant that several steps share. An enemy a boss spawns is a
+  definition of its own, never the boss's ladder, which would be a spawn cycle.
 - `RankedEnemy` ladders are authored contiguously upward from `Rank.GRUNT`
   (`startingAt(...).thenAt(...)`); each step receives the previous rank's definition (typically
   `withHealthAndPrice`). A gap or a backward step is a `GameStartupException`. Asking for an
-  unauthored rank falls back to the highest authored one. `BuiltInEnemies.SIMPLE` is the
+  unauthored rank falls back to the highest authored one. `SimpleEnemy` is the
   reference ladder.
 - Single-rank enemy: `EnemyCatalog.register(EnemyDefinition)`. A variant of an existing one:
   `EnemyCatalog.cloneAndAdjust(baseId, newId, adjust)`, which clones every rank from the
