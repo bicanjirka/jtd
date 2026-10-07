@@ -21,6 +21,11 @@ public record Reach(Viewpoint view, TargetQuery query, float deadZone) implement
         return new Reach(view, InRangeTargetQuery.visible(view.x(), view.y(), view.range()), 0f);
     }
 
+    /** Every enemy in range, hidden ones included, with no dead zone. */
+    public static Reach everyone(Viewpoint view) {
+        return new Reach(view, InRangeTargetQuery.everyone(view.x(), view.y(), view.range()), 0f);
+    }
+
     public Reach withQuery(TargetQuery query) {
         return new Reach(this.view, query, this.deadZone);
     }

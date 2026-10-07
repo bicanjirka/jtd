@@ -65,6 +65,7 @@ public enum Palette {
     /** The crosshair over the enemies a Sonar pinged. */
     TOWER_SONAR_CROSSHAIR,
     TOWER_PULSE_RING,
+    TOWER_PULSE_RIPPLE,
     TOWER_CINDER_CONE,
     PROJECTILE_CANNONBALL,
     PROJECTILE_MISSILE,

@@ -64,6 +64,11 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float NEST_ORBIT_FRACTION = 0.7f;
     private static final double NEST_ORBIT_RADIANS_PER_TICK = 0.08;
 
+    /** The Pulse's ripples: how many rings, how fast they spread, and how much faster for each Toll stack. */
+    private static final int RIPPLE_RINGS = 3;
+    private static final double RIPPLE_CYCLES_PER_SECOND = 0.6;
+    private static final double RIPPLE_SPEEDUP_PER_TOLL = 0.4;
+
     private final List<TowerEffectDraw> draws = new ArrayList<>();
     private final int scale;
     private final int gameTime;
@@ -236,9 +241,17 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         this.draws.add(new BeamDraw(Palette.TOWER_SONAR_CROSSHAIR, x, y - arm, x, y + arm, 1f, CROSSHAIR_ALPHA));
     }
 
+    /** The field's faint disc, and rings rippling out of the tower faster the more Toll its enemies hold. */
     public Void visitPulseTower(PulseTower tower) {
-        if (tower.isFiring()) {
-            this.draws.add(new PulseDraw(Palette.TOWER_PULSE_RING, tower.getX(), tower.getY(), tower.getRangeReal()));
+        if (!tower.isFiring()) {
+            return null;
+        }
+        this.draws.add(new PulseDraw(Palette.TOWER_PULSE_RING, tower.getX(), tower.getY(), tower.getRangeReal()));
+        double cyclesPerSecond = RIPPLE_CYCLES_PER_SECOND * (1.0 + RIPPLE_SPEEDUP_PER_TOLL * tower.getHighestToll());
+        for (int i = 0; i < RIPPLE_RINGS; i++) {
+            double phase = (this.animationSeconds * cyclesPerSecond + (double) i / RIPPLE_RINGS) % 1.0;
+            this.draws.add(new RingDraw(Palette.TOWER_PULSE_RIPPLE, tower.getX(), tower.getY(),
+                    (float) (phase * tower.getRangeReal()), (float) (1.0 - phase)));
         }
         return null;
     }

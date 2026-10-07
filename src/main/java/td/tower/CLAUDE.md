@@ -35,6 +35,9 @@
   `FrozenLedger` only watches the enemies the Seeker froze for the tick their freeze ends. A missile's
   payload is decided when it is launched (`PayloadPlan.loadFor` its number), so it is drawn in its
   colour in flight; a plain missile freezes, a payload missile does only what its payload does.
+- The Pulse's field touches `Reach.everyone`, never only the visible. Toll is earned by time inside
+  (`TollTracker` counts it per enemy) and held by an ordinary `TOLL` effect the field refreshes each
+  tick while the enemy is inside, so a visit is exactly the life of that effect.
 - A Hexer's hex is an enemy effect in `EffectCategory.HEX`, applied through `applyEffect`, and that
   effect is the hex's only timer (spirit paces it). The Hexer's `HexLedger` only watches it: what
   a hex pays out when it ends or its carrier dies is settled at the start of the Hexer's tick,
