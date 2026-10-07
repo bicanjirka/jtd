@@ -1,7 +1,7 @@
 # Feature Request: Ground Zones, Mortar and Cinder
 
 **Status: in progress.** Done: Cracked and Tarred, the fire-and-ice rules, the zone system with
-burning ground, tar and frost, the Mortar's base, Bracketing and Siege Rounds I to III, the Mortar's shell-type specials, Tactical Nuke and Bunker Buster, the Fragmentation head with Bleeding and the Ballistics line. The Mortar is done; the Cinder, the Splash's Mines and the Hexer's cloud are left. Feature 6 of
+burning ground, tar and frost, the Mortar's base, Bracketing and Siege Rounds I to III, the Mortar's shell-type specials, Tactical Nuke and Bunker Buster, the Fragmentation head with Bleeding and the Ballistics line. Soulfire and pool tuning are in. The Mortar is done; the Cinder, the Splash's Mines and the Hexer's cloud are left. Feature 6 of
 7 in the tower rework (order in `TODO.md`). Needs features 1 to 5.
 
 ## Summary

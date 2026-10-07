@@ -24,6 +24,7 @@ final class EffectInteractions {
 
     static {
         BLOCKED_BY.put(EffectKind.BURN, EnumSet.of(EffectKind.FREEZE));
+        BLOCKED_BY.put(EffectKind.SOULFIRE, EnumSet.of(EffectKind.FREEZE));
         CONSUMED_BY.put(EffectKind.CHILL, EnumSet.of(EffectKind.FREEZE));
         CONSUMED_BY.put(EffectKind.REVEALED, EnumSet.of(EffectKind.INVISIBLE));
         BLOCKED_BY.put(EffectKind.FREEZE, EnumSet.of(EffectKind.ASH));

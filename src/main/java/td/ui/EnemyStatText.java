@@ -142,6 +142,7 @@ final class EnemyStatText {
             case MAGIC_SHIELDING -> new StatText("Shielded, magic", SheetNumbers.percent(value));
             case RESILIENCE -> resilienceText(value);
             case CRIT_CHANCE_TAKEN -> new StatText("Crit chance taken", "x" + SheetNumbers.decimal(value));
+            case PERIODIC_DAMAGE_TAKEN -> new StatText("Over time taken", SheetNumbers.percent(value));
             case SPIRIT -> new StatText("Spirit", SheetNumbers.signedPercent(value / 100f) + " heals" + debuffPaceText(value));
             case REGENERATION -> new StatText("Regenerates", SheetNumbers.decimal(DamageUnits.inPoints(value) * TickRate.TICKS_PER_SECOND) + "/s");
             case CHILL_RESIST -> resistText("Chill", value);
@@ -212,6 +213,7 @@ final class EnemyStatText {
             case CRACKED -> "Cracked";
             case TARRED -> "Tarred";
             case BLEEDING -> "Bleeding";
+            case SOULFIRE -> "Soulfire";
         };
         String category = effect.kind().category().label();
         if (effect.kind() == EffectKind.CHILL) {

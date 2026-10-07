@@ -349,6 +349,11 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.activeEffects.has(kind);
     }
 
+    public boolean rollsCrit(AttackProfile attacker) {
+        return attacker.delivery() == Delivery.HIT
+                && HitResolution.rollsCrit(attacker, this.stats, this.gameWorld.random());
+    }
+
     public float critFactorFor(AttackProfile attacker) {
         return HitResolution.critFactor(attacker, this.stats);
     }

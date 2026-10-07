@@ -37,6 +37,12 @@ public interface HitReceiver {
      */
     float critFactorFor(AttackProfile attacker);
 
+    /**
+     * Rolls whether a hit from {@code attacker} would be critical against this enemy, drawing from
+     * the world's random source as a hit would. For damage over time that a crit starts stronger.
+     */
+    boolean rollsCrit(AttackProfile attacker);
+
     /** Takes {@code fraction} of the shield this enemy has now; none if it has no shield. */
     void breakShield(float fraction);
 
