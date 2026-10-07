@@ -70,7 +70,10 @@ control has an `Alt` shortcut, and while the panel is open the bare keys `n` (sk
 (spawn the next catalog enemy) and `c` (grant credits) work too. There's also
 `td.BalanceHarness`, a headless batch simulation: it drives a level to completion with a fixed
 tower loadout and no human input, then prints lives lost, ticks-to-clear per wave, and each
-tower's kills/damage dealt.
+tower's kills/damage dealt. `td.PurchaseHarness` compares purchases instead: on a level, with an army of
+one tower of every type, it reports the lives saved per 100 credits by another copy of a tower and by each
+upgrade node, over many seeded runs (`mvn -q compile exec:java -Dexec.mainClass=td.PurchaseHarness
+-Dexec.args="2 12 sniper"`: level, seeds, tower).
 
 ```bash
 mvn -q package -DskipTests
@@ -86,13 +89,21 @@ a different loadout or level, since v1 has no config format for either.
 | Tower  | Price | Behaviour                                                                                                                                           |
 |--------|-------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | Sniper | 15    | Single target, hits whichever enemy in range is furthest along the path; the longer it stays on one enemy, the likelier it crits (crits x2.0) |
-| Splash | 15    | Instant blast on a random target in range, physical damage falling off with distance; attuned, it aims at the most crowded group and Saturates what it hits. Forks into the Stormcaller (lightning arcs on past the blast) or the Hexer (every 4th shot casts a hex) |
-| Sonar  | 20    | Long range; a beam sweeps around it once every 3s, hitting everything it passes; once attuned, each sweep Exposes the healthiest enemy it passed |
-| Pulse  | 25    | Short range; a field that deals magic damage to everything in range every tick, ghosts included and with no visible enemy needed. Attuned, an enemy that stays inside builds Toll: it takes more from the field, and every debuff on it wears off slower |
-| Aura   | 20    | Passive — boosts the damage and range of nearby towers; several stack                                                                               |
+| Burst  | 15    | Instant blast on a random target in range, physical damage falling off with distance; attuned, it aims at the most crowded group and Saturates what it hits. Forks into the Stormcaller (lightning arcs on past the blast) or the Hexer (every 4th shot casts a hex) |
+| Radar  | 20    | Long range; a beam sweeps around it once every 3s, hitting everything it passes; once attuned, each sweep Exposes the healthiest enemy it passed |
+| Obelisk | 25    | Short range; a field that deals magic damage to everything in range every tick, ghosts included and with no visible enemy needed. Attuned, an enemy that stays inside builds Toll: it takes more from the field, and every debuff on it wears off slower |
+| Beacon | 20    | Passive: buffs the damage and range of the towers in its range (+20%) and halves the disruption they take; it never buffs another Beacon, and several stack. Attuned, the towers it buffs earn more XP for each other tower type in its range (Kinship). One head strengthens the buff, then adds fire rate and crit damage; the other widens its reach, then lengthens buffs and the effects the towers apply. An extra line mentors XP, and a special makes it wither enemies, buff only its best tower, or rally the towers when an enemy reaches a spot on the path |
 | Mortar | 30    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path, never one within 1.5 cells of it; the blast does physical damage with falloff and cracks the plating of everything it reaches. Attuned, a shell landing near the last one hits harder and wider. One head adds heavier shells and nukes, the other shrapnel and bombs along the path, and a ballistics line speeds the shell up, leads the target, widens the blast and fires salvos. Its specials turn every third shell into a Napalm, Tar or Cryo shell that leaves burning, tarred or frozen ground |
-| Seeker | 30    | Fires a slow homing missile at the fastest enemy in range, which it keeps through invisibility and re-aims at each tick; deals magic damage and freezes whichever mob it actually hits. Attuned, it banks missiles in a nest, between waves too, and launches them as a salvo |
-| Cinder | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included. A burn never crits but an ignition can, which starts the pool stronger. Attuned, each wave on an enemy it is already burning raises that burn. Forks into hot, short White Flame with Soulfire, or the wide Wide Nozzle that leaves burning ground; a fuel line makes burning enemies heal less, take more and scorch faster |
+| Hive   | 30    | Fires a slow homing missile at the fastest enemy in range, which it keeps through invisibility and re-aims at each tick; deals magic damage and freezes whichever mob it actually hits. Attuned, it banks missiles in a nest, between waves too, and launches them as a salvo |
+| Scorcher | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included. A burn never crits but an ignition can, which starts the pool stronger. Attuned, each wave on an enemy it is already burning raises that burn. Forks into hot, short White Flame with Soulfire, or the wide Wide Nozzle that leaves burning ground; a fuel line makes burning enemies heal less, take more and scorch faster |
+
+The shop and the board call the towers Sniper, Burst, Radar, Obelisk, Beacon, Mortar, Hive and Scorcher
+(keys `q` `w` `e` `r` `t` `y` `u` `i`, in that order). A Burst that forks is called a Stormcaller or a Hexer.
+
+A fire-rate bonus cuts the wait between shots by that share, so +50% is twice as fast and a penalty from a
+Jammer lengthens the wait. The rate need not be a whole number of ticks: a tower remembers what is left over,
+so +10% on the Obelisk, which hits every tick, gives 22.2 hits in 20 ticks and a second hit in the tick the
+fractions add up. The Radar spins faster instead. No tower runs more than ten times faster than its base.
 
 The price is the first copy's: each copy of a tower already on the board makes the next one cost
 15% more, and the shop shows the current price. Selling refunds three quarters of what the tower
@@ -110,8 +121,9 @@ nearby. Every purchase is permanent for that tower. Upgrade prices are multiples
 price. Pips on the board show each slot's
 level, and a tower with a special glows. Silver diamonds beside a tower show its rank, earned
 with XP: Seasoned at 50, Expert at 150, Hero at 300. The Upgrades panel's XP bar ticks where the
-next node waits. The Aura tower draws a faint line to every tower it's
-currently amplifying.
+next node waits. The Beacon draws a faint line to every tower it's
+currently amplifying, coloured for its reach or its chosen hero, a ring on the tower it mentors, and
+(while it is selected) the path spot its Rally watches.
 
 ### Enemies
 
@@ -122,7 +134,7 @@ currently amplifying.
 | Frenzied   | triangle      | Speeds up as it loses health                                                                                                                                                                                                                                                                                      |
 | Ghost      | tinted circle | Turns invisible to single-target towers for ~10s the first time it's hit (area damage still reaches it); at Elite and Boss rank, also permanently shrouds every other ally near it                                                                                                                              |
 | Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it                                                                                                                                                                                                                             |
-| Jammer     | square        | Jams every tower near it: they fire more slowly and see less far while it's in range (drawn as a pink ring; affected towers show a pink marker). Not in any level's waves yet.                                                                                                                                  |
+| Jammer     | square        | Jams every tower near it: they fire more slowly and see less far while it's in range (drawn as a pink ring; affected towers show a pink marker). A tower in a Beacon's range takes half of it. Not in any level's waves yet.                                                                                                                                  |
 | Empty      | —             | Not a real enemy — a spacer that opens a timing gap inside a wave                                                                                                                                                                                                                                                 |
 | The Warden | large spiked crest | A boss: armored, periodically summons reinforcements and shields itself and nearby allies, and shields itself again whenever it survives a critical hit. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. Appears as the final wave of Curly Path. |
 | Reaver     | triangle, path-facing | Speeds up as it's hurt, shrugs off a flat amount of every hit, shields itself once badly wounded, and splits into two Simple mobs on death. Appears in Twisted Hourglass's first wave — a level-authored enemy, registered only for that level rather than globally (see `td.level.LevelDefinition.customEnemies`). |
