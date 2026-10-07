@@ -1,7 +1,7 @@
 # Feature Request: Splash, Stormcaller and Hexer
 
-**Status: not started.** Feature 4 of 7 in the tower rework (order in `TODO.md`). Needs features
-1 to 3.
+**Status: implemented**, except Mines and the cursed cloud, which wait for ground zones (`TODO.md`).
+Feature 4 of 7 in the tower rework (order in `TODO.md`). Needs features 1 to 3.
 
 ## Summary
 
