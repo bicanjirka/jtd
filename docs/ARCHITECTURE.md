@@ -457,6 +457,14 @@ built-in level with towers, plays the level through once to warm the JIT and fiv
 measured, and reports p50/p99/max tick time, frame-build time (`BoardRenderer.buildFrame`, which
 is AWT-free and so runs headless) and bytes allocated per frame build.
 
+`td.PurchaseHarness` compares purchases rather than playing one loadout. It builds an army of one tower of
+every type on the cells with the most path in reach, then for each candidate (another copy of a tower, or an
+upgrade node with everything that leads to it, from `UpgradeTree.pathTo`) plays the level to its end on
+many seeds with unlimited lives, and reports the lives it saved per 100 credits against the army alone and
+against a copy of the same tower. It exists to price nodes by the result on the level, so support and effects
+are measured like damage. It takes about 15 seconds per tower type at 12 seeds, and an effect worth less than
+about a life is lost in its noise.
+
 For visual work, the `run-jtd` Claude Code skill also offers `PreviewBoard`/`PreviewEnemy` —
 headless dev tools that compose a board or a single enemy scene and render it straight to a PNG,
 without opening a window or driving the real UI. They exist so an agent can check a rendering
