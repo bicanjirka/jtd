@@ -35,6 +35,10 @@ public record Damage(int amount, DamageType type, boolean critical) {
         return new Damage(amount, DamageType.MAGIC);
     }
 
+    public static Damage of(DamageType type, int amount) {
+        return new Damage(amount, type);
+    }
+
     /**
      * @throws IllegalArgumentException if both sides are non-zero and their types differ
      */

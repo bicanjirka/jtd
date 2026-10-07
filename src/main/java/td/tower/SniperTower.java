@@ -2,7 +2,6 @@ package td.tower;
 
 import td.damage.AttackProfile;
 import td.damage.Damage;
-import td.damage.DamageType;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
@@ -316,8 +315,7 @@ public final class SniperTower extends AbstractTower {
     /** Lands {@code shot} on {@code target} at {@code share} of its damage; whether it crit. */
     private boolean land(SniperShot shot, EnemyMob target, float share) {
         int amount = Math.round(this.damageCurrent() * shot.damageFactor() * share);
-        Damage damage = shot.type() == DamageType.MAGIC ? Damage.magic(amount) : Damage.physical(amount);
-        return this.dealDamage(target, damage, shot.attack());
+        return this.dealDamage(target, Damage.of(shot.type(), amount), shot.attack());
     }
 
     /**

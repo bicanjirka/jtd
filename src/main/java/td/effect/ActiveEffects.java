@@ -59,6 +59,8 @@ public final class ActiveEffects {
     private static final float ARMOR_LOST_PER_SUNDERED_STACK = 5f;
     private static final float MAGIC_DAMAGE_TAKEN_PER_RESONATING_STACK = 0.08f;
     private static final float RESILIENCE_LOST_PER_FRACTURED_STACK = 10f;
+    /** How deep a Fractured that Fault Line left falls: resilience -100. */
+    private static final int FAULT_LINE_MAX_FRACTURED_STACKS = 10;
     /** What an exposed or revealed enemy multiplies the crit chance taken by. */
     private static final float EXPOSED_CRIT_CHANCE_TAKEN = 2f;
     private static final StatModifier FROZEN = StatModifier.setTo(0f);
@@ -176,14 +178,29 @@ public final class ActiveEffects {
 
     /**
      * A stacking kind adds up to {@link EffectKind#maxStacks()} on the enemy, whichever tower applied
-     * them, on one clock that every application refreshes. A full stack only refreshes.
+     * them, on one clock that every application refreshes. A full stack only refreshes. Once Fault
+     * Line has touched a Fractured, it stays that way until it wears off.
      */
     private void applyStacks(Effect incoming) {
         Effect existing = this.active.get(incoming.kind());
-        int stacks = Math.min(incoming.kind().maxStacks(),
-                (existing == null ? 0 : existing.stacks()) + incoming.stacks());
+        Effect next = existing != null && existing.faultLine() ? incoming.withFaultLine() : incoming;
+        int cap = next.faultLine() ? FAULT_LINE_MAX_FRACTURED_STACKS : next.kind().maxStacks();
+        int stacks = Math.min(cap, (existing == null ? 0 : existing.stacks()) + incoming.stacks());
         int remaining = Math.max(existing == null ? 0 : existing.remainingTicks(), incoming.remainingTicks());
-        this.active.put(incoming.kind(), incoming.withStacks(stacks, remaining));
+        this.active.put(incoming.kind(), next.withStacks(stacks, remaining));
+    }
+
+    /** Takes {@code fraction} of the shield's strength; a shield that is gone stays gone. */
+    public void weakenShield(float fraction) {
+        Effect shield = this.active.get(EffectKind.SHIELD);
+        if (shield != null) {
+            this.active.put(EffectKind.SHIELD, shield.withShieldPercent(shield.shieldPercent() * (1f - fraction)));
+        }
+    }
+
+    /** Whether crits find this enemy more often: it is exposed, or revealed, which exposes it. */
+    private boolean isExposed() {
+        return this.active.containsKey(EffectKind.EXPOSED) || this.active.containsKey(EffectKind.REVEALED);
     }
 
     public boolean has(EffectKind kind) {
@@ -279,7 +296,7 @@ public final class ActiveEffects {
                 }
             }
         }
-        if (this.active.containsKey(EffectKind.EXPOSED) || this.active.containsKey(EffectKind.REVEALED)) {
+        if (this.isExposed()) {
             accumulator.multiply(EnemyStat.CRIT_CHANCE_TAKEN, EXPOSED_CRIT_CHANCE_TAKEN);
         }
     }
@@ -340,8 +357,14 @@ public final class ActiveEffects {
         return steps;
     }
 
-    /** Lets a stack debuff fall one stack each time its spirit-scaled progress fills; ends at no stacks. */
+    /**
+     * Lets a stack debuff fall one stack each time its spirit-scaled progress fills; ends at no
+     * stacks. A Fault Line Fractured holds while the enemy is exposed.
+     */
     private Optional<Effect> decayStacks(Effect debuff, float pace) {
+        if (debuff.faultLine() && this.isExposed()) {
+            return Optional.of(debuff);
+        }
         int slot = debuff.kind().ordinal();
         float gathered = this.progress[slot] + pace;
         int stacks = debuff.stacks();
@@ -354,7 +377,7 @@ public final class ActiveEffects {
             return Optional.empty();
         }
         this.progress[slot] = gathered;
-        return Optional.of(Effect.stackDebuff(debuff.kind(), stacks));
+        return Optional.of(debuff.withStacks(stacks, debuff.remainingTicks()));
     }
 
     /** {@code steps} ticks of linear decay on every contribution; ends when all of them have run out. */

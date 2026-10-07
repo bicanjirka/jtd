@@ -1,4 +1,4 @@
-package td.tower;
+package td.tower.sonar;
 
 
 import td.util.ThreadConfined;
@@ -19,11 +19,17 @@ public final class SonarSweep {
     private static final double TWO_PI = Math.PI * 2;
 
     private final double radiansPerTick;
-    private double previousRadians = 0;
-    private double currentRadians = 0;
+    private double previousRadians;
+    private double currentRadians;
+    /** How far round the current revolution the beam is, in {@code [0, 2PI)}. */
+    private double swept;
+    private boolean completedRevolution;
 
-    private SonarSweep(double radiansPerTick) {
+    private SonarSweep(double radiansPerTick, double previousRadians, double currentRadians, double swept) {
         this.radiansPerTick = radiansPerTick;
+        this.previousRadians = previousRadians;
+        this.currentRadians = currentRadians;
+        this.swept = swept;
     }
 
     /** One revolution every {@code secondsPerRevolution} of simulation time. */
@@ -34,7 +40,16 @@ public final class SonarSweep {
         if (ticksPerSecond <= 0) {
             throw new IllegalArgumentException("ticksPerSecond must be positive: " + ticksPerSecond);
         }
-        return new SonarSweep(TWO_PI / (secondsPerRevolution * ticksPerSecond));
+        return new SonarSweep(TWO_PI / (secondsPerRevolution * ticksPerSecond), 0, 0, 0);
+    }
+
+    /**
+     * A sweep at another speed that carries on from where this one points, mid-revolution; its next
+     * {@link #advance()} sweeps on from there.
+     */
+    public SonarSweep retimed(double secondsPerRevolution, double ticksPerSecond) {
+        SonarSweep faster = perRevolution(secondsPerRevolution, ticksPerSecond);
+        return new SonarSweep(faster.radiansPerTick, this.currentRadians, this.currentRadians, this.swept);
     }
 
     /** Wraps to {@code [0, 2PI)}. */
@@ -57,6 +72,16 @@ public final class SonarSweep {
     public void advance() {
         this.previousRadians = this.currentRadians;
         this.currentRadians = normalizeSigned(this.currentRadians - this.radiansPerTick);
+        this.swept += this.radiansPerTick;
+        this.completedRevolution = this.swept >= TWO_PI - 1e-9;
+        if (this.completedRevolution) {
+            this.swept -= TWO_PI;
+        }
+    }
+
+    /** Whether the last {@link #advance()} finished a full turn. */
+    public boolean completedRevolution() {
+        return this.completedRevolution;
     }
 
     /**

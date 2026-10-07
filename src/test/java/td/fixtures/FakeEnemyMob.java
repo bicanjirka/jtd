@@ -27,6 +27,7 @@ public final class FakeEnemyMob implements EnemyMob {
     private final List<Damage> hits = new ArrayList<>();
     private final List<Effect> appliedEffects = new ArrayList<>();
     private final List<AttackProfile> attackers = new ArrayList<>();
+    private final List<Float> shieldBreaks = new ArrayList<>();
     private boolean hitsLandCritical;
     private boolean diesOnHit;
     private boolean frozen;
@@ -157,6 +158,15 @@ public final class FakeEnemyMob implements EnemyMob {
      */
     public void reportPhysicalReduction(float reduction) {
         this.physicalReduction = reduction;
+    }
+
+    @Override
+    public void breakShield(float fraction) {
+        this.shieldBreaks.add(fraction);
+    }
+
+    public List<Float> shieldBreaks() {
+        return List.copyOf(this.shieldBreaks);
     }
 
     @Override

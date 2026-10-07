@@ -268,6 +268,11 @@ public final class DefinedEnemyMob implements EnemyMob {
         return HitResolution.reductionAgainst(type, this.stats);
     }
 
+    public void breakShield(float fraction) {
+        this.activeEffects.weakenShield(fraction);
+        this.stats.invalidate();
+    }
+
     public boolean hasEffect(EffectKind kind) {
         return this.activeEffects.has(kind);
     }

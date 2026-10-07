@@ -26,7 +26,9 @@
 - A kind with `EffectKind.maxStacks()` above 0 (`VULNERABLE`, `SUNDERED`, `RESONATING`,
   `FRACTURED`) stacks on the enemy, whichever tower applied them, on one shared clock that any
   application refreshes; a full stack only refreshes. `FRACTURED` has no clock: it loses a stack at
-  a time like `SCORCHED`, at the spirit pace floored at `MIN_DEBUFF_PACE`.
+  a time like `SCORCHED`, at the spirit pace floored at `MIN_DEBUFF_PACE`. A `faultLine` Fractured
+  holds twice the stacks and loses none while the enemy is exposed (or revealed); one such
+  application makes the whole effect so until it wears off.
 - A kind with `isPacedBySpirit()` counts its timer down at `max(MIN_DEBUFF_PACE, spiritFactor)`;
   freeze, invisible, shield, heal and the pools keep their own pace.
 - `MARKED` is spent by a hit, never by periodic damage: the mob calls `consume(MARKED)`, and only

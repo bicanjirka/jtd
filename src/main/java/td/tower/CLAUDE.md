@@ -1,4 +1,4 @@
-# `td.tower` (+ `targeting`, `buff`, `upgrade`, `sniper`)
+# `td.tower` (+ `targeting`, `buff`, `upgrade`, `sniper`, `sonar`)
 
 ## Towers
 
@@ -10,13 +10,14 @@
 - Every hit goes through `AbstractTower.dealDamage`, never `enemy.doDamage`. It accumulates the
   damage that *landed* (what `doDamage` returns) and won't count a kill on an already-dead mob.
 - After `doCleanup` (sell or teardown), `dealDamage` is a no-op, because a burn the tower applied
-  keeps ticking. A tower that subscribes to anything (e.g. `SonarTower` as a
-  `WaveStartListener`) unsubscribes in `doCleanup`.
+  keeps ticking. A tower that subscribes to anything unsubscribes in `doCleanup`.
 - Range checks compare squared distances (`rangeReal2()`); no `Math.sqrt` in per-tick scans.
 - A tower with no cooldown cadence passes `coolDownMax = 0` and overrides `cadence()`.
-- `SonarTower` hits what lies in the arc swept since last tick (`SonarSweep`, half-open), never
-  the instantaneous beam angle. Its head is drawn from `sweepRadiansAt`, the same angle that
-  decides hits.
+- `SonarTower` hits what its `SonarBeam` crossed this tick: a spinning beam the arc swept since
+  last tick (`SonarSweep`, half-open), never the instantaneous angle. Beams are pure geometry
+  (bearings, never enemies), and a perk that changes the beam reshapes it from where it is. The
+  head is drawn from `sweepRadiansAt`, the same angle that decides hits. Whatever the beam renews
+  each pass lasts `SonarSpec.untilNextPass()`.
 - `SplashTower` falloff is `1 - (d/spreadRadius)²` from the hit mob. `spreadRadius` isn't
   buffed; only its own upgrade node changes it.
 - Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
@@ -104,10 +105,11 @@
   Don't pre-check affordability. It publishes `TowerStats` before `UpgradeState`.
 - Pass `StandardBaseSlot.nodes` a `BaseSlotPerks` for what Attune and Range III add to a tower.
 - A node whose behaviour is more than a `TowerBuff` becomes a perk, in the tower's own package
-  (`sniper`). A static `PerkCatalogue` says which perks each node brings (several may), and the
-  tower's `OwnedPerks` builds its own, as some carry state. Perks run in purchase order: first
-  `refineSpec` (whom the tower may hit, how it picks, its rhythm), then per hit. Perks are pure
-  (no tower, no `GameWorld`); what they may make the tower do is the tower's actions interface.
+  (`sniper`, `sonar`). A static `PerkCatalogue` says which perks each node brings (several may),
+  and the tower's `OwnedPerks` builds its own, as some carry state. Perks run in purchase order:
+  first `refineSpec` (whom the tower may hit, how it picks, its rhythm), then per hit. Perks are
+  pure (no tower, no `GameWorld`); what they may make the tower do is the tower's actions
+  interface.
 - Perks widen or narrow whom a tower may hit through its `Reach`. A dead zone goes on the `Reach`
   (`withDeadZone`), which applies it last, so it holds whatever order the perks were bought in;
   never `and` one onto the query.
