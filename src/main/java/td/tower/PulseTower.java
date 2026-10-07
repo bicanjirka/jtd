@@ -1,21 +1,33 @@
 package td.tower;
 
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
+import td.tower.pulse.ArcDischargePerk;
+import td.tower.pulse.FasterTollPerk;
+import td.tower.pulse.FullTollBonusPerk;
+import td.tower.pulse.MeltdownPerk;
 import td.tower.pulse.PulsePerk;
 import td.tower.pulse.PulseSpec;
+import td.tower.pulse.TeslaCoilPerk;
 import td.tower.pulse.TollPerk;
 import td.tower.pulse.TollSpec;
 import td.tower.pulse.TollTracker;
+import td.tower.pulse.WideFieldPerk;
+import td.tower.pulse.ZapSpec;
+import td.tower.targeting.HighestHealthSelector;
+import td.tower.targeting.InRangeTargetQuery;
+import td.tower.targeting.NearestSelector;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.BaseSlotPerks;
 import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
+import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
@@ -24,7 +36,11 @@ import td.util.GameWorld;
 import td.util.ThreadConfined;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * The field: short range, no cooldown, magic damage to every enemy inside every tick, invisible
@@ -43,17 +59,41 @@ public final class PulseTower extends AbstractTower {
     /** Each Toll stack makes the field hit its enemy this much harder. */
     public static final float TOLL_DAMAGE_PER_STACK = 0.1f;
 
+    /** How long a zap's bolt stays drawn. */
+    private static final int ZAP_FLASH_TICKS = 8;
+    private static final String FULL_TOLL_DEED = "Seconds at full Toll";
+    private static final int FULL_TOLL_SECONDS_NEEDED = 30;
+
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
             .withAttune("Toll: each second an enemy stays inside adds a stack (up to 5), fading 1s after it leaves; "
-                    + "each stack: +10% field damage, and every debuff on it wears off 10% slower");
+                    + "each stack: +10% field damage, and every debuff on it wears off 10% slower")
+            .withRangeThree(0.2f, "Wide Field: Toll lasts 1s longer after an enemy leaves");
 
     private static final UpgradeNode OVERCHARGED_COILS_1 = UpgradeTier.HEAD_1.node("pulse.head.overcharged_coils.1",
             "Overcharged Coils", PRICE)
-            .withBuff(TowerBuff.damage(0.3f));
+            .withBuff(TowerBuff.damage(0.3f))
+            .withExtraEffect("Toll builds twice as fast");
     private static final UpgradeNode OVERCHARGED_COILS_2 = UpgradeTier.HEAD_2.node("pulse.head.overcharged_coils.2",
             "Overcharged Coils II", PRICE)
-            .withBuff(TowerBuff.damage(0.25f).withCritChance(0.1f))
+            .withBuff(TowerBuff.damage(0.25f))
+            .withExtraEffect("an enemy at full Toll takes +25% from the field")
             .after(OVERCHARGED_COILS_1);
+    private static final UpgradeNode ARC_DISCHARGE = UpgradeTier.HEAD_3.node("pulse.head.overcharged_coils.3",
+            "Arc Discharge", PRICE)
+            .withBuff(TowerBuff.critChance(0.1f))
+            .withGate(new PurposeCondition(FULL_TOLL_DEED, FULL_TOLL_SECONDS_NEEDED))
+            .withExtraEffect("once a second a zap hits the healthiest enemy inside for 15x the tick damage, magic, "
+                    + "and can crit")
+            .after(OVERCHARGED_COILS_2);
+    private static final UpgradeNode MELTDOWN = UpgradeTier.HEAD_4.node("pulse.head.overcharged_coils.4a", "Meltdown",
+            PRICE)
+            .withExtraEffect("Toll stacks to 10; the zap gets +10% crit, and Toll raises the zap's damage too")
+            .after(ARC_DISCHARGE);
+    private static final UpgradeNode TESLA_COIL = UpgradeTier.HEAD_4.node("pulse.head.overcharged_coils.4b",
+            "Tesla Coil", PRICE)
+            .withExtraEffect("the zap chains to 3 more enemies within 1.5 cells, even outside the field; every "
+                    + "enemy zapped is Dazed 0.25s")
+            .after(ARC_DISCHARGE);
     private static final UpgradeNode RESONANT_FIELD_1 = UpgradeTier.HEAD_1.node("pulse.head.resonant_field.1",
             "Resonant Field", PRICE)
             .withBuff(TowerBuff.range(0.2f));
@@ -70,17 +110,27 @@ public final class PulseTower extends AbstractTower {
     private static final double WARDING_FIELD_CHANCE = 0.1;
     private static final float REVEAL_SECONDS = 2f;
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS))
-            .with(OVERCHARGED_COILS_1, OVERCHARGED_COILS_2, RESONANT_FIELD_1, RESONANT_FIELD_2, WARDING_FIELD)
-            .withChoice(ExclusiveChoice.oneOf(OVERCHARGED_COILS_1, RESONANT_FIELD_1));
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, ARC_DISCHARGE))
+            .with(OVERCHARGED_COILS_1, OVERCHARGED_COILS_2, ARC_DISCHARGE, MELTDOWN, TESLA_COIL, RESONANT_FIELD_1,
+                    RESONANT_FIELD_2, WARDING_FIELD)
+            .withChoice(ExclusiveChoice.oneOf(OVERCHARGED_COILS_1, RESONANT_FIELD_1))
+            .withChoice(ExclusiveChoice.oneOf(MELTDOWN, TESLA_COIL));
 
     private static final PerkCatalogue<PulsePerk> PERKS = PerkCatalogue.<PulsePerk>empty()
-            .with(StandardBaseSlot.ATTUNE_ID, TollPerk::new);
+            .with(StandardBaseSlot.ATTUNE_ID, TollPerk::new)
+            .with(StandardBaseSlot.RANGE_3_ID, WideFieldPerk::new)
+            .with(OVERCHARGED_COILS_1.id(), FasterTollPerk::new)
+            .with(OVERCHARGED_COILS_2.id(), FullTollBonusPerk::new)
+            .with(ARC_DISCHARGE.id(), ArcDischargePerk::new)
+            .with(MELTDOWN.id(), MeltdownPerk::new)
+            .with(TESLA_COIL.id(), TeslaCoilPerk::new);
 
     private final OwnedPerks<PulsePerk> perks = new OwnedPerks<>(PERKS);
     private final TollTracker tollTracker = new TollTracker();
     private boolean fire = false;
     private int highestToll;
+    private List<Zap> zaps = List.of();
+    private int lastZapTick = Integer.MIN_VALUE;
 
     public PulseTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.PULSE, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0), context, x, y);
@@ -117,13 +167,64 @@ public final class PulseTower extends AbstractTower {
             this.addToll(enemy, spec.toll(), earners.contains(enemy));
             int stacks = enemy.effectStacks(EffectKind.TOLL);
             highest = Math.max(highest, stacks);
-            float factor = 1f + TOLL_DAMAGE_PER_STACK * stacks;
+            float factor = 1f + TOLL_DAMAGE_PER_STACK * stacks
+                    + (stacks >= spec.toll().cap() ? spec.field().fullTollBonus() : 0f);
             this.dealPeriodicDamage(enemy, Damage.magic(Math.round(this.damageCurrent() * factor)));
             this.applyUpgradeEffects(enemy);
         }
         this.highestToll = highest;
         if (spec.toll().isActive() && highest >= spec.toll().cap()) {
             this.countDeedOfSecond();
+        }
+        if (spec.zap().isActive() && gameTime % TICKS_PER_SECOND == 0 && !inside.isEmpty()) {
+            this.zap(spec.zap(), inside, gameTime);
+        }
+    }
+
+    /**
+     * The zap: the healthiest enemy in the field, and with a chain the nearest enemies not yet
+     * struck, each within reach of the last, even outside the field. Each is hit as a magic hit
+     * that can crit, and Dazed.
+     */
+    private void zap(ZapSpec zap, List<EnemyMob> inside, int gameTime) {
+        Optional<EnemyMob> first = new HighestHealthSelector().selectFrom(inside);
+        if (first.isEmpty()) {
+            return;
+        }
+        Set<EnemyMob> struck = Collections.newSetFromMap(new IdentityHashMap<>());
+        List<Zap> bolts = new ArrayList<>();
+        float fromX = this.centerX;
+        float fromY = this.centerY;
+        EnemyMob target = first.get();
+        for (int hop = 0; hop <= zap.chains() && target != null; hop++) {
+            bolts.add(new Zap(fromX, fromY, (float) target.getX(), (float) target.getY()));
+            this.strikeWithZap(target, zap);
+            struck.add(target);
+            fromX = (float) target.getX();
+            fromY = (float) target.getY();
+            target = hop < zap.chains() ? this.nextInChain(target, zap, struck) : null;
+        }
+        this.zaps = List.copyOf(bolts);
+        this.lastZapTick = gameTime;
+    }
+
+    private EnemyMob nextInChain(EnemyMob from, ZapSpec zap, Set<EnemyMob> struck) {
+        float reach = zap.chainCells() * this.context.getBoard().scale();
+        List<EnemyMob> beside = InRangeTargetQuery.everyone((int) from.getX(), (int) from.getY(), reach)
+                .matching(this.context.enemies());
+        beside.removeIf(struck::contains);
+        return new NearestSelector(from.getX(), from.getY()).selectFrom(beside).orElse(null);
+    }
+
+    private void strikeWithZap(EnemyMob target, ZapSpec zap) {
+        float tollRaise = zap.tollRaises() ? TOLL_DAMAGE_PER_STACK * target.effectStacks(EffectKind.TOLL) : 0f;
+        Damage damage = Damage.magic(Math.round(this.damageCurrent() * zap.damageFactor() * (1f + tollRaise)));
+        AttackProfile attack = this.stats().attack();
+        attack = attack.withCritChance(Math.min(1f, attack.critChance() + zap.critBonus()));
+        this.dealDamage(target, damage, attack);
+        if (zap.dazeSeconds() > 0f && !target.isDead()) {
+            int ticks = Math.round(zap.dazeSeconds() * TICKS_PER_SECOND);
+            this.applyEffect(target, sink -> Effect.dazed(ticks, sink));
         }
     }
 
@@ -148,6 +249,21 @@ public final class PulseTower extends AbstractTower {
 
     public boolean isFiring() {
         return this.fire;
+    }
+
+    /** The bolts of the latest zap, from the tower to its first target and on along its chain. */
+    public List<Zap> getZaps() {
+        return this.zaps;
+    }
+
+    /** How many ticks ago it last zapped; a large number before the first. */
+    public int ticksSinceZap(int gameTime) {
+        return this.lastZapTick == Integer.MIN_VALUE ? Integer.MAX_VALUE : gameTime - this.lastZapTick;
+    }
+
+    /** How many ticks a zap's bolt stays drawn. */
+    public int zapFlashTicks() {
+        return ZAP_FLASH_TICKS;
     }
 
     /** The most Toll stacks any enemy in the field held at the last tick. */
@@ -179,5 +295,9 @@ public final class PulseTower extends AbstractTower {
 
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitPulseTower(this);
+    }
+
+    /** One bolt of a zap, in board pixels. */
+    public record Zap(float fromX, float fromY, float toX, float toY) {
     }
 }

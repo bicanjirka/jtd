@@ -65,6 +65,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final double NEST_ORBIT_RADIANS_PER_TICK = 0.08;
 
     /** The Pulse's ripples: how many rings, how fast they spread, and how much faster for each Toll stack. */
+    private static final float ZAP_STROKE = 2.5f;
     private static final int RIPPLE_RINGS = 3;
     private static final double RIPPLE_CYCLES_PER_SECOND = 0.6;
     private static final double RIPPLE_SPEEDUP_PER_TOLL = 0.4;
@@ -243,6 +244,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
     /** The field's faint disc, and rings rippling out of the tower faster the more Toll its enemies hold. */
     public Void visitPulseTower(PulseTower tower) {
+        this.addZap(tower);
         if (!tower.isFiring()) {
             return null;
         }
@@ -254,6 +256,19 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                     (float) (phase * tower.getRangeReal()), (float) (1.0 - phase)));
         }
         return null;
+    }
+
+    /** A zap's bolts, bright at first and fading as they age. */
+    private void addZap(PulseTower tower) {
+        int age = tower.ticksSinceZap(this.gameTime);
+        if (age >= tower.zapFlashTicks()) {
+            return;
+        }
+        float alpha = 1f - (float) age / tower.zapFlashTicks();
+        for (PulseTower.Zap bolt : tower.getZaps()) {
+            this.draws.add(new BeamDraw(Palette.TOWER_PULSE_ZAP, bolt.fromX(), bolt.fromY(), bolt.toX(), bolt.toY(),
+                    ZAP_STROKE, alpha));
+        }
     }
 
     public Void visitAuraTower(AuraTower tower) {
