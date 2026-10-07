@@ -198,6 +198,7 @@ public final class PulseTower extends AbstractTower {
 
     private final OwnedPerks<PulsePerk> perks = new OwnedPerks<>(PERKS);
     private final TollTracker tollTracker = new TollTracker();
+    private final FireClock clock = new FireClock(0);
     private boolean fire = false;
     private int highestToll;
     private List<Zap> zaps = List.of();
@@ -235,6 +236,7 @@ public final class PulseTower extends AbstractTower {
         PulseSpec spec = this.spec(this.perks.all());
         List<EnemyMob> inside = spec.reach().matching(this.context.enemies());
         this.fire = !inside.isEmpty();
+        int shots = inside.isEmpty() ? 0 : this.clock.shotsDue();
         this.countDeaths(spec, inside);
         boolean beat = gameTime % TICKS_PER_SECOND == 0;
         List<EnemyMob> earners = spec.toll().isActive()
@@ -253,9 +255,15 @@ public final class PulseTower extends AbstractTower {
                     + (stacks >= spec.toll().cap() ? spec.field().fullTollBonus() : 0f)
                     + Math.min(MAX_DEATH_BONUS, spec.field().perDeathBonus() * this.deathsThisWave)
                     + (spec.modes().has(FieldMode.SOUL_DRAIN) ? SOUL_DRAIN_DAMAGE_PER_POINT * Math.max(0f, -enemy.spirit()) : 0f);
-            this.hitWithField(enemy, Math.round(this.damageCurrent() * factor), spec);
-            this.rattle(enemy, spec);
+            for (int hit = 0; hit < shots && !enemy.isDead(); hit++) {
+                this.hitWithField(enemy, Math.round(this.damageCurrent() * factor), spec);
+                this.rattle(enemy, spec);
+            }
         }
+        for (int hit = 0; hit < shots; hit++) {
+            this.clock.spend();
+        }
+        this.clock.advance(this.fireRateCurrent());
         this.highestToll = highest;
         if (spec.toll().isActive() && highest >= spec.toll().cap()) {
             this.countDeedOfSecond();

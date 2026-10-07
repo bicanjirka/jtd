@@ -10,13 +10,13 @@ import td.tower.buff.TowerBuff;
  *
  * @param damage     damage per hit, in hundredths
  * @param range      range in cells, for display
- * @param coolDown   ticks between shots
+ * @param fireRate   how many times faster than its base cadence the tower runs; {@code 1} is the base
  * @param rangeReal  range in pixels
  * @param rangeReal2 {@code rangeReal} squared
  * @param attack     what every hit carries: crit chance and multiplier, penetration
  * @param disruption the enemy disruption these stats already include
  */
-public record TowerStats(int damage, float range, int coolDown, float rangeReal, float rangeReal2,
+public record TowerStats(int damage, float range, double fireRate, float rangeReal, float rangeReal2,
                          AttackProfile attack, DisruptionPenalty disruption, float reachReal) {
 
     /**
@@ -37,7 +37,7 @@ public record TowerStats(int damage, float range, int coolDown, float rangeReal,
                 .withCritMultiplier(base.critMultiplier() + buff.critDamageBonus())
                 .withArmorPenetration(buff.armorPenetrationBonus(), 0f)
                 .withMagicPenetration(buff.magicPenetrationBonus(), 0f);
-        return new TowerStats(buff.damageFor(base.damage()), range, buff.fireRateFor(base.coolDownMax()),
+        return new TowerStats(buff.damageFor(base.damage()), range, buff.fireRateMultiplier(),
                 rangeReal, rangeReal * rangeReal, attack, disruption, reachReal);
     }
 

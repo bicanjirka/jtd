@@ -202,8 +202,8 @@ public final class SeekerTower extends AbstractTower {
     private final ProjectileStats missile = ProjectileStats.of(MISSILE_SPEED);
     private final SeekerActions actions = new Actions();
     private final FrozenLedger frozen = new FrozenLedger();
+    private final FireClock clock = new FireClock(COOLDOWN_MAX);
     private int missilesLaunched;
-    private int coolDown = 0;
     private EnemyMob currentTarget;
 
     public SeekerTower(GameWorld context, int x, int y) {
@@ -274,6 +274,7 @@ public final class SeekerTower extends AbstractTower {
         } else {
             this.tickDirect(spec);
         }
+        this.clock.advance(this.fireRateCurrent());
         if (this.currentTarget != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(), this.currentTarget.getY()));
         }
@@ -281,12 +282,8 @@ public final class SeekerTower extends AbstractTower {
 
     /** No nest: a missile leaves as the cooldown ends, if there is anything to fire at. */
     private void tickDirect(SeekerSpec spec) {
-        if (this.coolDown > 0) {
-            this.coolDown--;
-            return;
-        }
-        if (this.launchShot(spec)) {
-            this.coolDown = this.coolDownCurrent();
+        if (this.clock.isReady() && this.launchShot(spec)) {
+            this.clock.spend();
         }
     }
 
@@ -295,11 +292,9 @@ public final class SeekerTower extends AbstractTower {
      * missile launches at the fastest enemy in reach once the gap since the last has passed.
      */
     private void tickNest(SeekerSpec spec) {
-        if (this.coolDown > 0) {
-            this.coolDown--;
-        } else if (this.nest.hasRoom(spec.nest())) {
+        if (this.clock.isReady() && this.nest.hasRoom(spec.nest())) {
             this.nest.load();
-            this.coolDown = this.coolDownCurrent();
+            this.clock.spend();
         }
         this.nest.tick(spec.nest());
         if (this.nest.readyToLaunch() && this.launchShot(spec)) {

@@ -92,7 +92,7 @@ class SeekerTowerTest {
         boolean chosen = tower.buyUpgrade(twinWarhead);
 
         assertThat(chosen).isTrue();
-        assertThat(tower.coolDownCurrent()).isLessThan(tower.coolDownMax);
+        assertThat(tower.fireRateCurrent()).isGreaterThan(1.0);
     }
 
     @Test
@@ -694,7 +694,8 @@ class SeekerTowerTest {
         FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
         frozen.reportFrozen();
         this.context.enemies().setEnemies(new EnemyMob[]{frozen});
-        for (int t = 2; t <= tower.coolDownCurrent() + 2; t++) {
+        int wait = (int) Math.ceil((tower.coolDownMax + 1) / tower.fireRateCurrent());
+        for (int t = 2; t <= wait + 2; t++) {
             tower.doTick(t);
         }
         TowerFixtures.flyProjectilesToCompletion(this.context);

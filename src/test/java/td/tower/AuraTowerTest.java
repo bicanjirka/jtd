@@ -53,7 +53,7 @@ class AuraTowerTest {
 
         aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core II"));
 
-        assertThat(neighbour.coolDownCurrent()).isLessThan(neighbour.coolDownMax);
+        assertThat(neighbour.fireRateCurrent()).isGreaterThan(1.0);
     }
 
     @Test

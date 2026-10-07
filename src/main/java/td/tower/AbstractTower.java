@@ -77,8 +77,8 @@ public abstract class AbstractTower implements Tower {
     private boolean inKillHook;
 
     /**
-     * Converts the cell coordinates to the pixel centre and range. A tower with no cooldown passes
-     * {@code 0} and overrides {@link #cadence()}.
+     * Converts the cell coordinates to the pixel centre and range. A tower that hits every tick
+     * passes {@code 0}; one whose cadence is not a cooldown also overrides {@link #cadence()}.
      */
     protected AbstractTower(TowerFactory.Type t, TowerBaseStats base, GameWorld context, int cellX, int cellY) {
         // Built after its price is charged and before it joins the roster, so this is what was paid.
@@ -109,9 +109,9 @@ public abstract class AbstractTower implements Tower {
         return this.stats.damage();
     }
 
-    /** Ticks between shots. */
-    protected int coolDownCurrent() {
-        return this.stats.coolDown();
+    /** How many times faster than its base cadence the tower runs now; {@code 1} is the base. */
+    protected double fireRateCurrent() {
+        return this.stats.fireRate();
     }
 
     /** Range in pixels. */
@@ -438,8 +438,8 @@ public abstract class AbstractTower implements Tower {
         if (this.isPassive()) {
             return Optional.empty();
         }
-        return Optional.of(new TowerStatLine(TowerStat.FIRE_RATE, TICKS_PER_SECOND / (this.coolDownMax + 1),
-                TICKS_PER_SECOND / (this.stats.coolDown() + 1)));
+        float base = TICKS_PER_SECOND / (this.coolDownMax + 1);
+        return Optional.of(new TowerStatLine(TowerStat.FIRE_RATE, base, (float) (base * this.stats.fireRate())));
     }
 
     /** Physical by default. */

@@ -31,7 +31,7 @@ class TowerBuffTest {
     }
 
     @Test
-void combineIsAdditiveOnBountyToo() {        TowerBuff a = new TowerBuff(0f, 0f, 0f, 0.2f);        TowerBuff b = new TowerBuff(0f, 0f, 0f, 0.1f);        assertThat(a.combine(b).bountyBonus()).isCloseTo(0.3f, org.assertj.core.data.Offset.offset(1e-6f));    }    @Test    void fireRateBonusesEachCutWhatIsLeftOfTheCooldown() {        TowerBuff a = TowerBuff.fireRate(0.3f);        TowerBuff b = TowerBuff.fireRate(0.25f);        TowerBuff combined = a.combine(b);        assertThat(combined.fireRateBonus()).isCloseTo(1f - 0.7f * 0.75f, org.assertj.core.data.Offset.offset(1e-6f));        assertThat(combined.fireRateFor(100)).isBetween(52, 53);    }    @Test    void manyStackedFireRateBonusesNeverShortenACooldownToOneTick() {        TowerBuff stacked = List.of(TowerBuff.fireRate(0.55f), TowerBuff.fireRate(0.45f), TowerBuff.fireRate(0.45f))                .stream().reduce(TowerBuff.none(), TowerBuff::combine);        assertThat(stacked.fireRateFor(45)).isGreaterThan(5);    }
+void combineIsAdditiveOnBountyToo() {        TowerBuff a = new TowerBuff(0f, 0f, 0f, 0.2f);        TowerBuff b = new TowerBuff(0f, 0f, 0f, 0.1f);        assertThat(a.combine(b).bountyBonus()).isCloseTo(0.3f, org.assertj.core.data.Offset.offset(1e-6f));    }    @Test    void fireRateBonusesEachCutWhatIsLeftOfTheCooldown() {        TowerBuff a = TowerBuff.fireRate(0.3f);        TowerBuff b = TowerBuff.fireRate(0.25f);        TowerBuff combined = a.combine(b);        assertThat(combined.fireRateBonus()).isCloseTo(1f - 0.7f * 0.75f, org.assertj.core.data.Offset.offset(1e-6f));        assertThat(combined.fireRateMultiplier()).isCloseTo(1.0 / (0.7 * 0.75), org.assertj.core.data.Offset.offset(1e-5));    }    @Test    void manyStackedFireRateBonusesNeverRunPastTenTimesTheBaseRate() {        TowerBuff stacked = List.of(TowerBuff.fireRate(0.55f), TowerBuff.fireRate(0.45f), TowerBuff.fireRate(0.45f))                .stream().reduce(TowerBuff.none(), TowerBuff::combine);        assertThat(stacked.fireRateMultiplier()).isGreaterThan(5.0);        assertThat(stacked.combine(TowerBuff.fireRate(0.9f)).fireRateMultiplier()).isCloseTo(10.0, org.assertj.core.data.Offset.offset(1e-4));    }
 
     @Test
     void amplifyingOnlyTouchesDamageAndRange() {
@@ -74,22 +74,22 @@ void combineIsAdditiveOnBountyToo() {        TowerBuff a = new TowerBuff(0f, 0f,
     }
 
     @Test
-    void fireRateForShortensTheCooldownByTheBonusFraction() {
+    void fireRateMultiplierCutsTheWaitByTheBonusFraction() {
         TowerBuff buff = new TowerBuff(0f, 0f, 0.5f, 0f);
 
-        assertThat(buff.fireRateFor(20)).isEqualTo(10);
+        assertThat(buff.fireRateMultiplier()).isEqualTo(2.0);
     }
 
     @Test
-    void fireRateForNeverGoesBelowOneTick() {
+    void fireRateMultiplierNeverGoesPastTenTimesTheBase() {
         TowerBuff buff = new TowerBuff(0f, 0f, 0.99f, 0f);
 
-        assertThat(buff.fireRateFor(1)).isEqualTo(1);
+        assertThat(buff.fireRateMultiplier()).isCloseTo(10.0, org.assertj.core.data.Offset.offset(1e-4));
     }
 
     @Test
-    void noBuffLeavesTheCooldownUnchanged() {
-        assertThat(TowerBuff.none().fireRateFor(20)).isEqualTo(20);
+    void noBuffLeavesTheFireRateUnchanged() {
+        assertThat(TowerBuff.none().fireRateMultiplier()).isEqualTo(1.0);
     }
 
     @Test
@@ -125,7 +125,7 @@ void combineIsAdditiveOnBountyToo() {        TowerBuff a = new TowerBuff(0f, 0f,
     void stackedPenaltiesNeverTakeFireRateOrRangeBelowAQuarter() {
         TowerBuff crushed = TowerBuff.fireRate(-2f).withRange(-2f);
 
-        assertThat(crushed.fireRateFor(20)).isEqualTo(35);
+        assertThat(crushed.fireRateMultiplier()).isCloseTo(1.0 / 1.75, org.assertj.core.data.Offset.offset(1e-9));
         assertThat(crushed.rangeFor(4f)).isEqualTo(1f);
     }
 
@@ -135,7 +135,7 @@ void combineIsAdditiveOnBountyToo() {        TowerBuff a = new TowerBuff(0f, 0f,
                 new DisruptionPenalty(0.25f, 0.2f), 10);
 
         assertThat(stats.range()).isCloseTo(2f * 1.3f, org.assertj.core.data.Offset.offset(1e-5f));
-        assertThat(stats.coolDown()).isEqualTo(25);
+        assertThat(stats.fireRate()).isCloseTo(1.0 / 1.25, org.assertj.core.data.Offset.offset(1e-9));
     }
 
     @Test

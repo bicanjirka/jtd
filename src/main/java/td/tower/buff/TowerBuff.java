@@ -15,6 +15,9 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
     /** The lowest combined fire-rate or range bonus any mix of penalties can reach. */
     public static final float MIN_BONUS = -0.75f;
 
+    /** The highest fire-rate bonus: a tower never runs more than ten times faster than its base. */
+    public static final float MAX_FIRE_RATE_BONUS = 0.9f;
+
     private static final TowerBuff NONE = new TowerBuff(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
 
     /** No crit-chance or penetration bonus. */
@@ -123,11 +126,13 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
     }
 
     /**
-     * The cooldown shortened by the fire-rate bonus, never below one tick. The bonus never goes
-     * below {@link #MIN_BONUS}, so no stack of penalties stalls a tower completely.
+     * How many times faster than its base cadence a tower runs: the fire-rate bonus cuts the time
+     * between shots by that fraction, so {@code 0.5} is twice as fast. The bonus is clamped to
+     * {@link #MIN_BONUS} (no stack of penalties stalls a tower) and {@link #MAX_FIRE_RATE_BONUS}.
      */
-    public int fireRateFor(int baseCoolDown) {
-        return Math.max(1, Math.round(baseCoolDown * (1f - Math.max(MIN_BONUS, this.fireRateBonus))));
+    public double fireRateMultiplier() {
+        double bonus = Math.min(MAX_FIRE_RATE_BONUS, Math.max(MIN_BONUS, this.fireRateBonus));
+        return 1.0 / (1.0 - bonus);
     }
 
     /** {@code base} plus the crit bonus, clamped to a probability. */

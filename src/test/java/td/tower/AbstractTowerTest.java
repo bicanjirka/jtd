@@ -333,7 +333,7 @@ class AbstractTowerTest {
     }
 
     @Test
-    void aBoughtNodesFireRateBonusReducesCoolDownCurrent() {
+    void aBoughtNodesFireRateBonusRaisesTheFireRate() {
         context.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("overclock", UpgradeSlot.HEAD, "Overclock", 10)
                 .withBuff(new TowerBuff(0f, 0f, 0.5f, 0f));
@@ -341,7 +341,7 @@ class AbstractTowerTest {
 
         tower.buyUpgrade(node);
 
-        assertThat(tower.coolDownCurrent()).isEqualTo(Math.round(tower.coolDownMax * 0.5f));
+        assertThat(tower.fireRateCurrent()).isEqualTo(2.0);
     }
 
     @Test

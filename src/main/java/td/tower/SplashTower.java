@@ -265,7 +265,7 @@ public final class SplashTower extends AbstractTower {
     private final HexActions hexActions = new Hexing();
     private final HexTurn hexTurn = new HexTurn();
     private final HexLedger hexLedger = new HexLedger();
-    private int coolDown = 0;
+    private final FireClock clock = new FireClock(COOLDOWN_MAX);
     private List<Blast> blasts = List.of();
     private List<Trace> arcs = List.of();
     private List<Trace> casts = List.of();
@@ -314,9 +314,7 @@ public final class SplashTower extends AbstractTower {
                 this.sympathize(spec);
             }
         }
-        if (this.coolDown > 0) {
-            this.coolDown--;
-        } else {
+        if (this.clock.isReady()) {
             SplashSpec spec = this.spec(owned);
             List<EnemyMob> inReach = spec.reach().matching(this.context.enemies());
             if (inReach.isEmpty()) {
@@ -326,6 +324,7 @@ public final class SplashTower extends AbstractTower {
                 this.aimFor(spec).selectFrom(inReach).ifPresent(primary -> this.fire(primary, spec, owned));
             }
         }
+        this.clock.advance(this.fireRateCurrent());
         if (this.aimedAt != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.aimedAt.getX(), this.aimedAt.getY()));
         }
@@ -349,7 +348,7 @@ public final class SplashTower extends AbstractTower {
         }
         this.shotsFired++;
         this.lastShotTick = this.currentTick;
-        this.coolDown = this.coolDownCurrent();
+        this.clock.spend();
         Hex hex = pick.get().hex();
         EnemyMob target = pick.get().target();
         this.aimedAt = target;
@@ -514,7 +513,7 @@ public final class SplashTower extends AbstractTower {
     private void fire(EnemyMob primary, SplashSpec spec, List<SplashPerk> owned) {
         this.lastShotTick = this.currentTick;
         this.shotsFired++;
-        this.coolDown = this.coolDownCurrent();
+        this.clock.spend();
         this.aimedAt = primary;
         this.casts = List.of();
         SplashShot shot = SplashShot.plain();
@@ -734,7 +733,7 @@ public final class SplashTower extends AbstractTower {
     }
 
     public float getCoolDownFraction() {
-        return (float) this.coolDown / this.coolDownCurrent();
+        return this.clock.remaining();
     }
 
     @Override
