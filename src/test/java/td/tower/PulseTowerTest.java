@@ -339,19 +339,56 @@ class PulseTowerTest {
         assertThat(has(outside, EffectKind.CORRODED)).isFalse();
     }
 
+    /** A real enemy standing at {@code tower}, which nothing ticks, wearing a half shield. */
+    private td.enemy.EnemyMob shieldedEnemyAt(PulseTower tower) {
+        this.board.setPath(new td.wave.PathNormal(List.of(new td.wave.Vec2(tower.getX(), tower.getY()),
+                new td.wave.Vec2(tower.getX() + 900, tower.getY()))));
+        td.enemy.EnemyMob enemy = EnemyFactory.getEnemy("c", this.board, 0, 1_000_000, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.shield(0.5f, 10_000, d -> {
+        }));
+        return enemy;
+    }
+
     @Test
-    void mirrorFieldDealsBackWhatAShieldTookOfTheFieldsHit() {
+    void mirrorFieldReturnsTheWholeOfWhatAShieldTookOfTheFieldsOwnHit() {
         PulseTower tower = this.shapedPulse("Corrosion", "Mirror Field");
-        FakeEnemyMob shielded = FakeEnemyMob.at(tower.getX(), tower.getY());
-        shielded.reportShielding(0.5f);
-        FakeEnemyMob bare = FakeEnemyMob.at(tower.getX(), tower.getY() + 5);
-        this.board.enemies().setEnemies(new EnemyMob[]{shielded, bare});
+        td.enemy.EnemyMob shielded = this.shieldedEnemyAt(tower);
+        this.board.enemies().setEnemies(new EnemyMob[]{shielded});
+        int before = shielded.getHealth();
 
         tower.doTick(1);
 
-        int tick = tower.damageCurrent();
-        assertThat(shielded.hits()).containsExactly(Damage.magic(tick), Damage.magic(Math.round(tick * 0.5f)));
-        assertThat(bare.hits()).containsExactly(Damage.magic(tick));
+        assertThat(before - shielded.getHealth()).isCloseTo(tower.damageCurrent(), org.assertj.core.api.Assertions.within(1));
+    }
+
+    @Test
+    void mirrorFieldReturnsWhatAShieldTookOfAnotherSourcesHitOnAnEnemyInsideAndNoOther() {
+        PulseTower tower = this.shapedPulse("Corrosion", "Mirror Field");
+        td.enemy.EnemyMob inside = this.shieldedEnemyAt(tower);
+        this.board.enemies().setEnemies(new EnemyMob[]{inside});
+        tower.doTick(1);
+        int before = inside.getHealth();
+        int hit = td.damage.DamageUnits.ofPoints(100);
+
+        inside.doDamage(Damage.magic(hit));
+
+        assertThat(before - inside.getHealth()).isCloseTo(hit, org.assertj.core.api.Assertions.within(1));
+    }
+
+    @Test
+    void mirrorFieldLeavesAShieldedEnemyOutsideTheFieldAlone() {
+        PulseTower tower = this.shapedPulse("Corrosion", "Mirror Field");
+        td.enemy.EnemyMob inside = this.shieldedEnemyAt(tower);
+        this.board.enemies().setEnemies(new EnemyMob[]{inside});
+        tower.doTick(1);
+        this.board.enemies().setEnemies(new EnemyMob[]{});
+        tower.doTick(2);
+        int before = inside.getHealth();
+        int hit = td.damage.DamageUnits.ofPoints(100);
+
+        inside.doDamage(Damage.magic(hit));
+
+        assertThat(before - inside.getHealth()).isCloseTo(hit / 2, org.assertj.core.api.Assertions.within(1));
     }
 
     @Test

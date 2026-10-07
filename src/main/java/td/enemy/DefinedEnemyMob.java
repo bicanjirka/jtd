@@ -452,8 +452,12 @@ public final class DefinedEnemyMob implements EnemyMob {
         }
         Damage landed = Damage.none();
         if (this.validTarget()) {
-            landed = HitResolution.resolve(damage, this.spendMark(attacker), this.stats, this.health,
-                    this.gameWorld.random());
+            HitResolution.Outcome outcome = HitResolution.resolveWithShield(damage, this.spendMark(attacker),
+                    this.stats, this.health, this.gameWorld.random());
+            landed = outcome.landed();
+            if (outcome.shielded() > 0) {
+                this.gameWorld.enemies().reportShielded(this, Damage.of(damage.type(), outcome.shielded()));
+            }
             this.health -= landed.amount();
             this.damageTaken += landed.amount();
             this.gameWorld.damageTally().record(landed);

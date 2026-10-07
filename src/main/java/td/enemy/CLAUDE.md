@@ -103,6 +103,9 @@
 - `reportDeath(walk)` decrements the alive count and tells every `WalkEndListener` the walk
   ended (towers earn XP from it); `replace()` (a hatch) does neither, so a hatch earns no bounty
   and does not shorten the wave.
+- `reportShielded` tells every `ShieldListener` the part of a hit a shield took (from
+  `HitResolution.resolveWithShield`), so a tower can answer a shield without the enemy knowing it. A
+  listener that deals damage back must not be told about its own damage.
 - A mob takes its `entryOrdinal` from `recordEntry()` the moment it goes live (after its spawn
   delay), not when it is built. `walkedWithin` covers only the path walked since it appeared.
 - Dead mobs stay in the list for their fade: use `aliveCount()` for "is the wave over".

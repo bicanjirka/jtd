@@ -45,6 +45,9 @@
 - The Pulse's field touches `Reach.everyone`, never only the visible. Toll is earned by time inside
   (`TollTracker` counts it per enemy) and held by an ordinary `TOLL` effect the field refreshes each
   tick while the enemy is inside, so a visit is exactly the life of that effect.
+- Mirror Field listens to the roster's `ShieldListener` while the rule is owned (and drops it in
+  `doCleanup`): what a shield takes of any hit on an enemy that was inside the field's last tick comes back
+  as periodic damage that goes through shields (`AttackProfile.withIgnoredShields`), and is never mirrored again.
 - A rule the Pulse holds inside its field (`FieldMode`) is an effect refreshed every tick the enemy is
   inside, never a flag on the enemy. Event Horizon counts the deaths of enemies that were inside the
   tick before and resets on the wave announcer; the tower subscribes lazily and unsubscribes in

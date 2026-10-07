@@ -17,6 +17,10 @@ public final class HitResolution {
     private HitResolution() {
     }
 
+    /** What a hit landed, and the part of it a shield took before it reached health. */
+    public record Outcome(Damage landed, int shielded) {
+    }
+
     /** A hit from nobody in particular: no crit roll, no penetration. */
     public static Damage resolve(Damage incoming, StatView stats, int health) {
         return resolve(incoming, AttackProfile.none(), stats, health, () -> 1.0);
@@ -28,6 +32,12 @@ public final class HitResolution {
      * chance is above zero, so attackers without crit leave the sequence untouched.
      */
     public static Damage resolve(Damage incoming, AttackProfile attacker, StatView stats, int health,
+            RandomSource random) {
+        return resolveWithShield(incoming, attacker, stats, health, random).landed();
+    }
+
+    /** {@link #resolve} that also reports how much a shield took, in the same units as the hit. */
+    public static Outcome resolveWithShield(Damage incoming, AttackProfile attacker, StatView stats, int health,
             RandomSource random) {
         float amount = incoming.amount();
         boolean critical = incoming.critical();
@@ -45,10 +55,14 @@ public final class HitResolution {
         if (attacker.delivery() == Delivery.PERIODIC) {
             amount *= stats.value(EnemyStat.PERIODIC_DAMAGE_TAKEN);
         }
-        if (!(critical && attacker.critsPierceShields())) {
+        float shielded = 0f;
+        if (!(critical && attacker.critsPierceShields()) && !attacker.ignoresShields()) {
+            float unshielded = amount;
             amount *= 1f - stats.value(EnemyStat.shieldingFor(incoming.type()));
+            shielded = unshielded - amount;
         }
-        return new Damage(Math.round(amount), incoming.type(), critical).cappedAt(health);
+        return new Outcome(new Damage(Math.round(amount), incoming.type(), critical).cappedAt(health),
+                Math.round(shielded));
     }
 
     /** Whether a hit from {@code attacker} would roll a critical against {@code stats}. */

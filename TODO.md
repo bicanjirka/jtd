@@ -115,16 +115,6 @@ implementation. There is no way to add or edit a level without a code change and
 
 ## Tower features
 
-### The Pulse's Mirror Field only approximates the feature doc
-
-`FEATURE-pulse-and-seeker.md` has Mirror Field return "damage a shield absorbs inside" from every
-source. As built, it mirrors only the Pulse's own ticks, as a second hit the shield takes its share
-of again.
-
-- **Where:** `PulseTower.hitWithField` (Mirror Field).
-- **Approach:** have `HitResolution` report the amount a shield took and let a tower subscribe to it
-  for the enemies inside.
-
 ### A global, buy-once upgrade for a whole tower type doesn't exist
 
 `FEATURE-tower-upgrades.md` named a second kind of upgrade alongside the four per-instance ones

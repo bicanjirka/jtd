@@ -187,6 +187,22 @@ class HitResolutionTest {
     }
 
     @Test
+    void theShieldsShareOfAHitIsReportedAndAnAttackThatIgnoresShieldsTakesNoneOfIt() {
+        StatView shielded = stats(BaseStats.defaults().with(EnemyStat.PHYSICAL_SHIELDING, 0.4f));
+        td.util.RandomSource random = () -> 1.0;
+
+        HitResolution.Outcome ordinary = HitResolution.resolveWithShield(Damage.physical(1000), AttackProfile.none(),
+                shielded, 10000, random);
+        HitResolution.Outcome ignoring = HitResolution.resolveWithShield(Damage.physical(1000),
+                AttackProfile.none().withIgnoredShields(), shielded, 10000, random);
+
+        assertThat(ordinary.landed()).isEqualTo(Damage.physical(600));
+        assertThat(ordinary.shielded()).isEqualTo(400);
+        assertThat(ignoring.landed()).isEqualTo(Damage.physical(1000));
+        assertThat(ignoring.shielded()).isZero();
+    }
+
+    @Test
     void aShieldCountsTowardsWhatAnEnemyShrugsOff() {
         StatView shielded = stats(BaseStats.defaults().with(EnemyStat.PHYSICAL_SHIELDING, 0.4f));
 
