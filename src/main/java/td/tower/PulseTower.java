@@ -8,12 +8,14 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.pulse.ArcDischargePerk;
-import td.tower.pulse.DeadZonePerk;
+import td.tower.pulse.EventHorizonPerk;
 import td.tower.pulse.FasterTollPerk;
+import td.tower.pulse.FieldMode;
 import td.tower.pulse.FullTollBonusPerk;
 import td.tower.pulse.LingeringTollPerk;
 import td.tower.pulse.MeltdownPerk;
-import td.tower.pulse.NullFieldPerk;
+import td.tower.pulse.ModePerk;
+import td.tower.pulse.ModeSpec;
 import td.tower.pulse.PulsePerk;
 import td.tower.pulse.PulseSpec;
 import td.tower.pulse.RevealOnEntryPerk;
@@ -39,6 +41,7 @@ import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
+import td.wave.WaveStartListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -122,22 +125,55 @@ public final class PulseTower extends AbstractTower {
             PRICE)
             .withExtraEffect("nothing inside can be healed or shielded")
             .after(NULL_FIELD);
-    private static final UpgradeNode WARDING_FIELD = UpgradeTier.SPECIAL.node("pulse.special.warding_field",
-            "Warding Field", PRICE)
-            .withExtraEffect("each tick, everything hit has a 10% chance to gain 1 Vulnerable stack (cap 3)");
+    private static final UpgradeNode CORROSION = UpgradeTier.EXTRA_1.node("pulse.extra.field_shaping.1", "Corrosion",
+            PRICE)
+            .withExtraEffect("-30 armor while inside, armor stopping at 0");
+    private static final UpgradeNode MIRROR_FIELD = UpgradeTier.EXTRA_2.node("pulse.extra.field_shaping.2",
+            "Mirror Field", PRICE)
+            .withExtraEffect("what a shield absorbs of the field's hits is dealt back to its enemy as magic")
+            .after(CORROSION);
+    private static final UpgradeNode UNDERTOW = UpgradeTier.EXTRA_3.node("pulse.extra.field_shaping.3", "Undertow",
+            PRICE)
+            .withExtraEffect("inside, enemies are chilled 25% and the chill doesn't fade while they stay, it counts "
+                    + "for freezes, and they are Anchored")
+            .after(MIRROR_FIELD);
+    private static final UpgradeNode EVENT_HORIZON = UpgradeTier.EXTRA_4.node("pulse.extra.field_shaping.4",
+            "Event Horizon", PRICE)
+            .withExtraEffect("each death inside adds +5% field damage until the wave ends, up to +100%")
+            .after(UNDERTOW);
+    private static final UpgradeNode RATTLE_FIELD = UpgradeTier.SPECIAL.node("pulse.special.rattle_field",
+            "Rattle Field", PRICE)
+            .withExtraEffect("each tick, a 5% chance to add a stack of Sundered or Exposed: about one a second");
+    private static final UpgradeNode SOUL_DRAIN = UpgradeTier.SPECIAL.node("pulse.special.soul_drain", "Soul Drain",
+            PRICE)
+            .withExtraEffect("each second inside costs 5 spirit, and the field deals +1% damage per point of spirit "
+                    + "below zero; at -100 double damage and no heals or shields");
+    private static final UpgradeNode KILL_ZONE = UpgradeTier.SPECIAL.node("pulse.special.kill_zone", "Kill Zone",
+            PRICE)
+            .withExtraEffect("enemies inside take +25% damage from every source");
 
-    /** Chance per tick that each enemy hit gains a vulnerability stack. */
-    private static final double WARDING_FIELD_CHANCE = 0.1;
+    /** Chance per tick that Rattle Field adds a stack, and one in this many being Exposed rather than Sundered. */
+    private static final double RATTLE_CHANCE = 0.05;
+    private static final float EXPOSED_SECONDS = 4f;
+    /** Soul Drain's cost each second, and the spirit at which it has taken everything. */
+    private static final int SOUL_DRAIN_SPIRIT_PER_SECOND = 5;
+    private static final float SPIRIT_FLOOR = -100f;
+    /** Each point of spirit below zero makes the field hit this much harder under Soul Drain. */
+    private static final float SOUL_DRAIN_DAMAGE_PER_POINT = 0.01f;
+    /** Event Horizon stops adding at this much. */
+    private static final float MAX_DEATH_BONUS = 1f;
     /** A rule that holds inside the field lasts this long after the last tick an enemy was in it. */
     private static final int INSIDE_TICKS = 3;
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, ARC_DISCHARGE,
             NULL_FIELD))
             .with(OVERCHARGED_COILS_1, OVERCHARGED_COILS_2, ARC_DISCHARGE, MELTDOWN, TESLA_COIL, PHASE_FIELD_1,
-                    PHASE_FIELD_2, NULL_FIELD, TRUE_SIGHT, DEAD_ZONE, WARDING_FIELD)
+                    PHASE_FIELD_2, NULL_FIELD, TRUE_SIGHT, DEAD_ZONE, CORROSION, MIRROR_FIELD, UNDERTOW,
+                    EVENT_HORIZON, RATTLE_FIELD, SOUL_DRAIN, KILL_ZONE)
             .withChoice(ExclusiveChoice.oneOf(OVERCHARGED_COILS_1, PHASE_FIELD_1))
             .withChoice(ExclusiveChoice.oneOf(MELTDOWN, TESLA_COIL))
-            .withChoice(ExclusiveChoice.oneOf(TRUE_SIGHT, DEAD_ZONE));
+            .withChoice(ExclusiveChoice.oneOf(TRUE_SIGHT, DEAD_ZONE))
+            .withChoice(ExclusiveChoice.specials(RATTLE_FIELD, SOUL_DRAIN, KILL_ZONE));
 
     private static final PerkCatalogue<PulsePerk> PERKS = PerkCatalogue.<PulsePerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, TollPerk::new)
@@ -149,9 +185,16 @@ public final class PulseTower extends AbstractTower {
             .with(TESLA_COIL.id(), TeslaCoilPerk::new)
             .with(PHASE_FIELD_1.id(), () -> new LingeringTollPerk(1f))
             .with(PHASE_FIELD_2.id(), RevealOnEntryPerk::new)
-            .with(NULL_FIELD.id(), NullFieldPerk::new)
+            .with(NULL_FIELD.id(), () -> new ModePerk(FieldMode.SILENCE))
             .with(TRUE_SIGHT.id(), TrueSightPerk::new)
-            .with(DEAD_ZONE.id(), DeadZonePerk::new);
+            .with(DEAD_ZONE.id(), () -> new ModePerk(FieldMode.DEAD_ZONE))
+            .with(CORROSION.id(), () -> new ModePerk(FieldMode.CORROSION))
+            .with(MIRROR_FIELD.id(), () -> new ModePerk(FieldMode.MIRROR))
+            .with(UNDERTOW.id(), () -> new ModePerk(FieldMode.UNDERTOW))
+            .with(EVENT_HORIZON.id(), EventHorizonPerk::new)
+            .with(RATTLE_FIELD.id(), () -> new ModePerk(FieldMode.RATTLE))
+            .with(SOUL_DRAIN.id(), () -> new ModePerk(FieldMode.SOUL_DRAIN))
+            .with(KILL_ZONE.id(), () -> new ModePerk(FieldMode.KILL_ZONE));
 
     private final OwnedPerks<PulsePerk> perks = new OwnedPerks<>(PERKS);
     private final TollTracker tollTracker = new TollTracker();
@@ -159,6 +202,10 @@ public final class PulseTower extends AbstractTower {
     private int highestToll;
     private List<Zap> zaps = List.of();
     private int lastZapTick = Integer.MIN_VALUE;
+    private List<EnemyMob> previouslyInside = List.of();
+    private int deathsThisWave;
+    private boolean watchingWaves;
+    private final WaveStartListener waveListener = () -> this.deathsThisWave = 0;
 
     public PulseTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.PULSE, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0), context, x, y);
@@ -188,6 +235,8 @@ public final class PulseTower extends AbstractTower {
         PulseSpec spec = this.spec(this.perks.all());
         List<EnemyMob> inside = spec.reach().matching(this.context.enemies());
         this.fire = !inside.isEmpty();
+        this.countDeaths(spec, inside);
+        boolean beat = gameTime % TICKS_PER_SECOND == 0;
         List<EnemyMob> earners = spec.toll().isActive()
                 ? this.tollTracker.tick(inside, spec.toll().ticksPerStack()) : List.of();
         int highest = 0;
@@ -197,20 +246,46 @@ public final class PulseTower extends AbstractTower {
             if (startsVisit) {
                 this.startVisit(enemy, spec.visit());
             }
-            this.holdInside(enemy, spec);
+            this.holdInside(enemy, spec, beat);
             int stacks = enemy.effectStacks(EffectKind.TOLL);
             highest = Math.max(highest, stacks);
             float factor = 1f + TOLL_DAMAGE_PER_STACK * stacks
-                    + (stacks >= spec.toll().cap() ? spec.field().fullTollBonus() : 0f);
-            this.dealPeriodicDamage(enemy, Damage.magic(Math.round(this.damageCurrent() * factor)));
-            this.applyUpgradeEffects(enemy);
+                    + (stacks >= spec.toll().cap() ? spec.field().fullTollBonus() : 0f)
+                    + Math.min(MAX_DEATH_BONUS, spec.field().perDeathBonus() * this.deathsThisWave)
+                    + (spec.modes().has(FieldMode.SOUL_DRAIN) ? SOUL_DRAIN_DAMAGE_PER_POINT * Math.max(0f, -enemy.spirit()) : 0f);
+            this.hitWithField(enemy, Math.round(this.damageCurrent() * factor), spec);
+            this.rattle(enemy, spec);
         }
         this.highestToll = highest;
         if (spec.toll().isActive() && highest >= spec.toll().cap()) {
             this.countDeedOfSecond();
         }
-        if (spec.zap().isActive() && gameTime % TICKS_PER_SECOND == 0 && !inside.isEmpty()) {
+        if (spec.zap().isActive() && beat && !inside.isEmpty()) {
             this.zap(spec.zap(), inside, gameTime);
+        }
+    }
+
+    /**
+     * Event Horizon: every enemy that was in the field last tick and has died since adds to the
+     * field until the next wave starts.
+     */
+    private void countDeaths(PulseSpec spec, List<EnemyMob> inside) {
+        if (spec.field().perDeathBonus() > 0f) {
+            if (!this.watchingWaves) {
+                this.context.waves().addListener(this.waveListener);
+                this.watchingWaves = true;
+            }
+            this.deathsThisWave += (int) this.previouslyInside.stream().filter(EnemyMob::isDead).count();
+        }
+        this.previouslyInside = inside;
+    }
+
+    /** One field tick: a periodic magic hit, and with Mirror Field what a shield took of it dealt back. */
+    private void hitWithField(EnemyMob enemy, int amount, PulseSpec spec) {
+        float absorbed = spec.modes().has(FieldMode.MIRROR) ? enemy.shieldingFor(DamageType.MAGIC) : 0f;
+        this.dealPeriodicDamage(enemy, Damage.magic(amount));
+        if (absorbed > 0f) {
+            this.dealPeriodicDamage(enemy, Damage.magic(Math.round(amount * absorbed)));
         }
     }
 
@@ -271,13 +346,31 @@ public final class PulseTower extends AbstractTower {
         }
     }
 
-    /** The rules that hold while an enemy is inside: each lasts a moment, refreshed every tick it stays. */
-    private void holdInside(EnemyMob enemy, PulseSpec spec) {
-        if (spec.modes().silences()) {
+    /**
+     * The rules that hold while an enemy is inside: each lasts a moment, refreshed every tick it
+     * stays. Soul Drain also takes some spirit each second, and at none left, heals and shields too.
+     */
+    private void holdInside(EnemyMob enemy, PulseSpec spec, boolean beat) {
+        ModeSpec modes = spec.modes();
+        if (modes.has(FieldMode.SILENCE)) {
             this.applyEffect(enemy, sink -> Effect.silenced(INSIDE_TICKS, sink));
         }
-        if (spec.modes().deadZone()) {
+        if (modes.has(FieldMode.DEAD_ZONE)
+                || modes.has(FieldMode.SOUL_DRAIN) && enemy.spirit() <= SPIRIT_FLOOR) {
             this.applyEffect(enemy, sink -> Effect.deadZone(INSIDE_TICKS, sink));
+        }
+        if (modes.has(FieldMode.CORROSION)) {
+            this.applyEffect(enemy, sink -> Effect.corroded(INSIDE_TICKS, sink));
+        }
+        if (modes.has(FieldMode.UNDERTOW)) {
+            this.applyEffect(enemy, sink -> Effect.undertow(INSIDE_TICKS, sink));
+            this.applyEffect(enemy, sink -> Effect.anchored(INSIDE_TICKS, sink));
+        }
+        if (modes.has(FieldMode.KILL_ZONE)) {
+            this.applyEffect(enemy, sink -> Effect.killZone(INSIDE_TICKS, sink));
+        }
+        if (beat && modes.has(FieldMode.SOUL_DRAIN)) {
+            this.applyEffect(enemy, sink -> Effect.sickened(SOUL_DRAIN_SPIRIT_PER_SECOND));
         }
     }
 
@@ -290,10 +383,15 @@ public final class PulseTower extends AbstractTower {
         this.applyEffect(enemy, sink -> Effect.toll(stacks, toll.fadeTicks(), sink).withStackCap(toll.cap()));
     }
 
-    /** Warding Field's chance of a stack. */
-    private void applyUpgradeEffects(EnemyMob enemy) {
-        if (this.upgrades().owns(WARDING_FIELD.id()) && this.context.random().nextDouble() < WARDING_FIELD_CHANCE) {
-            this.applyStacks(enemy, EffectKind.VULNERABLE, 1);
+    /** Rattle Field: now and then a stack of Sundered or of Exposed, whichever the coin says. */
+    private void rattle(EnemyMob enemy, PulseSpec spec) {
+        if (!spec.modes().has(FieldMode.RATTLE) || this.context.random().nextDouble() >= RATTLE_CHANCE) {
+            return;
+        }
+        if (this.context.random().nextIndex(2) == 0) {
+            this.applyStacks(enemy, EffectKind.SUNDERED, 1);
+        } else {
+            this.applyEffect(enemy, sink -> Effect.exposed(Math.round(EXPOSED_SECONDS * TICKS_PER_SECOND), sink));
         }
     }
 
@@ -316,6 +414,24 @@ public final class PulseTower extends AbstractTower {
         return ZAP_FLASH_TICKS;
     }
 
+    @Override
+    public void doCleanup() {
+        super.doCleanup();
+        this.context.waves().removeListener(this.waveListener);
+    }
+
+    /** What the field's colour says about its rules: Null Field violet, Undertow blue, Corrosion green. */
+    public FieldLook getFieldLook() {
+        PulseSpec spec = this.spec(this.perks.all());
+        if (spec.modes().has(FieldMode.SILENCE)) {
+            return FieldLook.NULL;
+        }
+        if (spec.modes().has(FieldMode.UNDERTOW)) {
+            return FieldLook.UNDERTOW;
+        }
+        return spec.modes().has(FieldMode.CORROSION) ? FieldLook.CORROSION : FieldLook.PLAIN;
+    }
+
     /** The most Toll stacks any enemy in the field held at the last tick. */
     public int getHighestToll() {
         return this.highestToll;
@@ -334,9 +450,6 @@ public final class PulseTower extends AbstractTower {
         if (spec.toll().isActive()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Toll", "up to " + spec.toll().cap() + ", +10% each"));
         }
-        if (this.upgrades().owns(WARDING_FIELD.id())) {
-            lines.add(new BehaviourLine(BehaviourMarker.VULNERABLE, "Each tick", BehaviourLine.percent((float) WARDING_FIELD_CHANCE) + " vulnerable"));
-        }
         if (spec.visit().revealTicks() > 0) {
             lines.add(new BehaviourLine(BehaviourMarker.REVEAL, "Reveals on Toll",
                     BehaviourLine.seconds(spec.visit().revealTicks())));
@@ -345,17 +458,40 @@ public final class PulseTower extends AbstractTower {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Dazes on Toll",
                     BehaviourLine.seconds(spec.visit().dazeTicks())));
         }
-        if (spec.modes().silences()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Inside", "silenced"));
+        for (FieldMode mode : FieldMode.values()) {
+            if (spec.modes().has(mode)) {
+                lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Inside", insideText(mode)));
+            }
         }
-        if (spec.modes().deadZone()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Inside", "no heals or shields"));
+        if (spec.field().perDeathBonus() > 0f) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Deaths this wave", String.valueOf(this.deathsThisWave)));
         }
         return lines;
     }
 
+    private static String insideText(FieldMode mode) {
+        return switch (mode) {
+            case SILENCE -> "silenced";
+            case DEAD_ZONE -> "no heals or shields";
+            case CORROSION -> "-30 armor";
+            case MIRROR -> "shields reflect";
+            case UNDERTOW -> "chilled 25%, anchored";
+            case KILL_ZONE -> "+25% damage taken";
+            case SOUL_DRAIN -> "spirit drained";
+            case RATTLE -> "sundered or exposed";
+        };
+    }
+
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitPulseTower(this);
+    }
+
+    /** What the field's colour says about its rules. */
+    public enum FieldLook {
+        PLAIN,
+        NULL,
+        UNDERTOW,
+        CORROSION
     }
 
     /** One bolt of a zap, in board pixels. */

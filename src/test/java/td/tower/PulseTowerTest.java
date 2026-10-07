@@ -311,6 +311,202 @@ class PulseTowerTest {
         return enemy.appliedEffects().stream().filter(e -> e.kind() == EffectKind.REVEALED).count();
     }
 
+    /** The overcharged path to Transcendent, which opens the extra node's later levels. */
+    private static final String[] COILS = {"Overcharged Coils", "Overcharged Coils II", "Arc Discharge",
+        "Transcendent"};
+
+    private PulseTower shapedPulse(String... more) {
+        String[] nodes = java.util.stream.Stream.concat(java.util.Arrays.stream(COILS), java.util.Arrays.stream(more))
+                .toArray(String[]::new);
+        return this.pulseWith(nodes);
+    }
+
+    private static boolean has(FakeEnemyMob enemy, EffectKind kind) {
+        return enemy.hasEffect(kind);
+    }
+
+    @Test
+    void corrosionLowersArmorOnlyOnEnemiesInsideTheField() {
+        PulseTower tower = this.shapedPulse("Corrosion");
+        FakeEnemyMob inside = FakeEnemyMob.at(tower.getX(), tower.getY());
+        FakeEnemyMob outside = FakeEnemyMob.at(tower.getX() + 300, tower.getY());
+        this.board.enemies().setEnemies(new EnemyMob[]{inside, outside});
+
+        tower.doTick(1);
+
+        assertThat(inside.appliedEffects().stream().filter(e -> e.kind() == EffectKind.CORRODED).toList())
+                .singleElement().extracting(Effect::remainingTicks).isEqualTo(3);
+        assertThat(has(outside, EffectKind.CORRODED)).isFalse();
+    }
+
+    @Test
+    void mirrorFieldDealsBackWhatAShieldTookOfTheFieldsHit() {
+        PulseTower tower = this.shapedPulse("Corrosion", "Mirror Field");
+        FakeEnemyMob shielded = FakeEnemyMob.at(tower.getX(), tower.getY());
+        shielded.reportShielding(0.5f);
+        FakeEnemyMob bare = FakeEnemyMob.at(tower.getX(), tower.getY() + 5);
+        this.board.enemies().setEnemies(new EnemyMob[]{shielded, bare});
+
+        tower.doTick(1);
+
+        int tick = tower.damageCurrent();
+        assertThat(shielded.hits()).containsExactly(Damage.magic(tick), Damage.magic(Math.round(tick * 0.5f)));
+        assertThat(bare.hits()).containsExactly(Damage.magic(tick));
+    }
+
+    @Test
+    void undertowChillsAndAnchorsEveryEnemyInside() {
+        PulseTower tower = this.shapedPulse("Corrosion", "Mirror Field", "Undertow");
+        FakeEnemyMob inside = FakeEnemyMob.at(tower.getX(), tower.getY());
+        this.board.enemies().setEnemies(new EnemyMob[]{inside});
+
+        tower.doTick(1);
+
+        assertThat(has(inside, EffectKind.UNDERTOW)).isTrue();
+        assertThat(has(inside, EffectKind.ANCHORED)).isTrue();
+    }
+
+    @Test
+    void eventHorizonAddsFivePercentForEveryDeathInsideUntilTheNextWaveStarts() {
+        PulseTower tower = this.shapedPulse("Corrosion", "Mirror Field", "Undertow", "Event Horizon");
+        FakeEnemyMob doomed = FakeEnemyMob.at(tower.getX(), tower.getY());
+        FakeEnemyMob survivor = FakeEnemyMob.at(tower.getX(), tower.getY() + 5);
+        this.board.enemies().setEnemies(new EnemyMob[]{doomed, survivor});
+        tower.doTick(1);
+        doomed.invalidate();
+
+        tower.doTick(2);
+        this.board.waves().announce();
+        tower.doTick(3);
+
+        int tick = tower.damageCurrent();
+        assertThat(survivor.hits().get(0)).isEqualTo(Damage.magic(tick));
+        assertThat(survivor.hits().get(1)).isEqualTo(Damage.magic(Math.round(tick * 1.05f)));
+        assertThat(survivor.hits().get(2)).isEqualTo(Damage.magic(tick));
+    }
+
+    @Test
+    void eventHorizonStopsAddingAtDoubleDamage() {
+        PulseTower tower = this.shapedPulse("Corrosion", "Mirror Field", "Undertow", "Event Horizon");
+        List<FakeEnemyMob> crowd = new java.util.ArrayList<>();
+        for (int i = 0; i < 30; i++) {
+            crowd.add(FakeEnemyMob.at(tower.getX(), tower.getY()));
+        }
+        FakeEnemyMob survivor = FakeEnemyMob.at(tower.getX(), tower.getY() + 5);
+        crowd.add(survivor);
+        this.board.enemies().setEnemies(crowd.toArray(new EnemyMob[0]));
+        tower.doTick(1);
+        crowd.stream().filter(enemy -> enemy != survivor).forEach(FakeEnemyMob::invalidate);
+
+        tower.doTick(2);
+
+        assertThat(survivor.hits().getLast()).isEqualTo(Damage.magic(tower.damageCurrent() * 2));
+    }
+
+    private GameWorld rolledBoard(double... rolls) {
+        int[] next = {0};
+        GameWorld world = WorldFixtures.newWorld(() -> rolls[Math.min(next[0]++, rolls.length - 1)]);
+        world.setBoard(td.board.BoardGeometry.of(BoardFixtures.SCALE, 20, 20));
+        return world;
+    }
+
+    private PulseTower rattlingPulse(GameWorld world) {
+        world.playtestRules().setUpgradeGatesIgnored(true);
+        PulseTower tower = new PulseTower(world, 3, 3);
+        UpgradePaths.buy(tower, world, "Rattle Field");
+        return tower;
+    }
+
+    @Test
+    void rattleFieldAddsASunderedStackOnASuccessfulRollAndAHeadsFlip() {
+        GameWorld world = this.rolledBoard(0.0, 0.0);
+        PulseTower tower = this.rattlingPulse(world);
+        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
+        world.enemies().setEnemies(new EnemyMob[]{enemy});
+
+        tower.doTick(1);
+
+        assertThat(enemy.effectStacks(EffectKind.SUNDERED)).isEqualTo(1);
+        assertThat(has(enemy, EffectKind.EXPOSED)).isFalse();
+    }
+
+    @Test
+    void rattleFieldAddsExposedOnATailsFlip() {
+        GameWorld world = this.rolledBoard(0.0, 0.9);
+        PulseTower tower = this.rattlingPulse(world);
+        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
+        world.enemies().setEnemies(new EnemyMob[]{enemy});
+
+        tower.doTick(1);
+
+        assertThat(has(enemy, EffectKind.EXPOSED)).isTrue();
+        assertThat(enemy.effectStacks(EffectKind.SUNDERED)).isZero();
+    }
+
+    @Test
+    void rattleFieldAddsNothingWhenTheRollFails() {
+        GameWorld world = this.rolledBoard(0.5);
+        PulseTower tower = this.rattlingPulse(world);
+        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
+        world.enemies().setEnemies(new EnemyMob[]{enemy});
+
+        tower.doTick(1);
+
+        assertThat(enemy.appliedEffects()).isEmpty();
+    }
+
+    @Test
+    void soulDrainCostsFiveSpiritEachSecondAndTheFieldHitsOnePercentHarderPerPointLost() {
+        PulseTower tower = this.pulseWith("Soul Drain");
+        FakeEnemyMob drained = FakeEnemyMob.at(tower.getX(), tower.getY());
+        drained.reportSpirit(-50f);
+        this.board.enemies().setEnemies(new EnemyMob[]{drained});
+
+        tower.doTick(19);
+        tower.doTick(20);
+
+        int tick = tower.damageCurrent();
+        assertThat(drained.hits().getFirst()).isEqualTo(Damage.magic(Math.round(tick * 1.5f)));
+        assertThat(drained.appliedEffects().stream().filter(e -> e.kind() == EffectKind.SICKENED).toList())
+                .singleElement().extracting(Effect::stacks).isEqualTo(5);
+    }
+
+    @Test
+    void atNoSpiritLeftSoulDrainDoublesTheFieldAndKeepsHealsAndShieldsOut() {
+        PulseTower tower = this.pulseWith("Soul Drain");
+        FakeEnemyMob hollow = FakeEnemyMob.at(tower.getX(), tower.getY());
+        hollow.reportSpirit(-100f);
+        FakeEnemyMob hardy = FakeEnemyMob.at(tower.getX(), tower.getY() + 5);
+        this.board.enemies().setEnemies(new EnemyMob[]{hollow, hardy});
+
+        tower.doTick(1);
+
+        assertThat(hollow.hits().getFirst()).isEqualTo(Damage.magic(tower.damageCurrent() * 2));
+        assertThat(has(hollow, EffectKind.DEAD_ZONE)).isTrue();
+        assertThat(has(hardy, EffectKind.DEAD_ZONE)).isFalse();
+    }
+
+    @Test
+    void killZoneMakesEveryEnemyInsideTakeMoreFromEverySource() {
+        PulseTower tower = this.pulseWith("Kill Zone");
+        FakeEnemyMob inside = FakeEnemyMob.at(tower.getX(), tower.getY());
+        this.board.enemies().setEnemies(new EnemyMob[]{inside});
+
+        tower.doTick(1);
+
+        assertThat(has(inside, EffectKind.KILL_ZONE)).isTrue();
+    }
+
+    @Test
+    void theFieldIsColouredByItsRules() {
+        assertThat(this.pulseWith().getFieldLook()).isEqualTo(PulseTower.FieldLook.PLAIN);
+        assertThat(this.shapedPulse("Corrosion").getFieldLook()).isEqualTo(PulseTower.FieldLook.CORROSION);
+        assertThat(this.shapedPulse("Corrosion", "Mirror Field", "Undertow").getFieldLook())
+                .isEqualTo(PulseTower.FieldLook.UNDERTOW);
+        assertThat(this.pulseWith("Phase Field", "Phase Field II", "Null Field").getFieldLook())
+                .isEqualTo(PulseTower.FieldLook.NULL);
+    }
+
     @Test
     void phaseFieldAddsRangeAndMakesTollStayTwoSecondsAfterAnEnemyLeaves() {
         PulseTower plain = this.pulseWith();
@@ -395,31 +591,5 @@ class PulseTowerTest {
 
         assertThat(inside.appliedEffects().stream().filter(e -> e.kind() == EffectKind.DEAD_ZONE).toList())
                 .singleElement().extracting(Effect::remainingTicks).isEqualTo(3);
-    }
-
-    @Test
-    void wardingFieldAppliesAVulnerabilityStackToEveryEnemyHitWhenTheChanceRollSucceeds() {
-        GameWorld lucky = WorldFixtures.newWorld(() -> 0.0);
-        PulseTower tower = new PulseTower(lucky, 0, 0);
-        UpgradePaths.buy(tower, lucky, "Warding Field");
-        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
-        lucky.enemies().setEnemies(new EnemyMob[]{enemy});
-
-        tower.doTick(0);
-
-        assertThat(enemy.appliedEffects()).extracting(Effect::kind).containsExactly(EffectKind.VULNERABLE);
-    }
-
-    @Test
-    void wardingFieldAppliesNothingWhenTheChanceRollFails() {
-        GameWorld unlucky = WorldFixtures.newWorld(() -> 0.5);
-        PulseTower tower = new PulseTower(unlucky, 0, 0);
-        UpgradePaths.buy(tower, unlucky, "Warding Field");
-        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
-        unlucky.enemies().setEnemies(new EnemyMob[]{enemy});
-
-        tower.doTick(0);
-
-        assertThat(enemy.appliedEffects()).isEmpty();
     }
 }

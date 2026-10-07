@@ -1,23 +1,33 @@
 package td.tower.pulse;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
  * The rules that hold while an enemy is inside the field.
  *
- * @param silences whether every enemy inside is Silenced
- * @param deadZone whether nothing inside can be healed or shielded
+ * @param active which of them hold
  */
-public record ModeSpec(boolean silences, boolean deadZone) {
+public record ModeSpec(Set<FieldMode> active) {
+
+    public ModeSpec {
+        active = Set.copyOf(active);
+    }
 
     /** No rules beyond the damage. */
     public static ModeSpec none() {
-        return new ModeSpec(false, false);
+        return new ModeSpec(Set.of());
     }
 
-    public ModeSpec silencing() {
-        return new ModeSpec(true, this.deadZone);
+    /** These rules, and {@code mode} too. */
+    public ModeSpec with(FieldMode mode) {
+        Set<FieldMode> grown = EnumSet.noneOf(FieldMode.class);
+        grown.addAll(this.active);
+        grown.add(mode);
+        return new ModeSpec(grown);
     }
 
-    public ModeSpec withDeadZone() {
-        return new ModeSpec(this.silences, true);
+    public boolean has(FieldMode mode) {
+        return this.active.contains(mode);
     }
 }

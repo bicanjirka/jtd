@@ -968,6 +968,22 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void appliedSickenedStacksAddUpLowerSpiritByOneEachAndStopAtAHundred() {
+        ActiveEffects effects = new ActiveEffects();
+
+        effects.apply(Effect.sickened(5));
+        effects.apply(Effect.sickened(5));
+        float ten = resolved(effects, EnemyStat.SPIRIT);
+        for (int i = 0; i < 30; i++) {
+            effects.apply(Effect.sickened(5));
+        }
+
+        assertThat(ten).isEqualTo(-10f);
+        assertThat(effects.stacks(EffectKind.SICKENED)).isEqualTo(100);
+        assertThat(resolved(effects, EnemyStat.SPIRIT)).isEqualTo(-100f);
+    }
+
+    @Test
     void killZoneRaisesEveryDamageTakenByAQuarter() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.killZone(10, d -> {

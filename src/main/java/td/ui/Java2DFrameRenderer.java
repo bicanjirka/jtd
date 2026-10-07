@@ -437,6 +437,9 @@ public final class Java2DFrameRenderer {
             case TOWER_SONAR_CROSSHAIR -> new Color(255, 120, 60);
             case TOWER_PULSE_RING -> withAlpha(Color.ORANGE, 80);
             case TOWER_PULSE_RIPPLE -> new Color(255, 190, 90);
+            case TOWER_PULSE_RIPPLE_NULL -> new Color(180, 110, 255);
+            case TOWER_PULSE_RIPPLE_UNDERTOW -> new Color(90, 150, 255);
+            case TOWER_PULSE_RIPPLE_CORROSION -> new Color(120, 220, 90);
             case TOWER_PULSE_ZAP -> new Color(255, 245, 190);
             case TOWER_CINDER_CONE -> new Color(255, 90, 30);
             case PROJECTILE_CANNONBALL -> new Color(139, 90, 43);

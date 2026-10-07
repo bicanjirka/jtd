@@ -135,7 +135,8 @@ public final class ActiveEffects {
         switch (incoming.kind()) {
             case CHILL -> this.applyChill(incoming);
             case BURN, POISON -> this.applyPool(incoming);
-            case VULNERABLE, SUNDERED, RESONATING, FRACTURED, SATURATED, UNRAVELED, TOLL -> this.applyStacks(incoming);
+            case VULNERABLE, SUNDERED, RESONATING, FRACTURED, SATURATED, UNRAVELED, TOLL, SICKENED ->
+                    this.applyStacks(incoming);
             default -> {
                 Effect existing = this.active.get(incoming.kind());
                 this.active.put(incoming.kind(), existing == null ? incoming : strongerOf(existing, incoming));
