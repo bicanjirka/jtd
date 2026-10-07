@@ -69,6 +69,10 @@ public enum Palette {
     PROJECTILE_CANNONBALL,
     PROJECTILE_MISSILE,
     PROJECTILE_SMOKE,
+    PROJECTILE_CRYO,
+    PROJECTILE_ARCANE,
+    PROJECTILE_EMP,
+    PROJECTILE_TRACER,
     /** Status markers, one per effect kind. */
     STATUS_MARKER_CHILL,
     STATUS_MARKER_BURN,

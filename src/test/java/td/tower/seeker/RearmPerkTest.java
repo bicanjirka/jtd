@@ -32,10 +32,22 @@ class RearmPerkTest {
         public void rearm() {
             this.rearms++;
         }
+
+        @Override
+        public void freeze(EnemyMob target, float strength) {
+        }
+
+        @Override
+        public void dispel(EnemyMob target) {
+        }
+
+        @Override
+        public void spot(EnemyMob target, int ticks) {
+        }
     }
 
     private static Impact impact(boolean froze, boolean rearmed) {
-        return new Impact(FakeEnemyMob.at(0, 0), false, froze, rearmed);
+        return new Impact(FakeEnemyMob.at(0, 0), Impact.Before.NOTHING, froze, rearmed);
     }
 
     @Test

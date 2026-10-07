@@ -1,6 +1,7 @@
 package td.ui;
 
 import td.projectile.CannonballProjectile;
+import td.projectile.MissileLook;
 import td.projectile.MissileProjectile;
 import td.projectile.ProjectileVisitor;
 import td.ui.render.CannonballDraw;
@@ -33,6 +34,16 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         return (float) (from + (to - from) * alpha);
     }
 
+    private static Palette paletteFor(MissileLook look) {
+        return switch (look) {
+            case STANDARD -> Palette.PROJECTILE_MISSILE;
+            case CRYO -> Palette.PROJECTILE_CRYO;
+            case ARCANE -> Palette.PROJECTILE_ARCANE;
+            case EMP -> Palette.PROJECTILE_EMP;
+            case TRACER -> Palette.PROJECTILE_TRACER;
+        };
+    }
+
     public List<ProjectileDraw> build() {
         return this.draws;
     }
@@ -57,7 +68,8 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
             this.draws.add(new SmokeDraw(Palette.PROJECTILE_SMOKE, (float) trail.get(i).x(), (float) trail.get(i).y(),
                     SMOKE_RADIUS * (1f + age) * projectile.stats().size(), SMOKE_ALPHA * (1f - age)));
         }
-        this.draws.add(new MissileDraw(Palette.PROJECTILE_MISSILE, x, y, facingRadians, projectile.stats().size()));
+        this.draws.add(new MissileDraw(paletteFor(projectile.stats().look()), x, y, facingRadians,
+                projectile.stats().size()));
         return null;
     }
 }

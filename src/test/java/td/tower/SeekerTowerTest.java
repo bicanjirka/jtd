@@ -143,6 +143,125 @@ class SeekerTowerTest {
                 .singleElement().extracting(td.effect.Effect::remainingTicks).isEqualTo(45);
     }
 
+    /** Ticks {@code tower} until it has launched {@code missiles}, then flies them all. */
+    private void fireAndFly(SeekerTower tower, int missiles) {
+        int launched = 0;
+        for (int t = 1; launched < missiles && t < 5000; t++) {
+            int before = this.context.projectiles().getProjectiles().size();
+            tower.doTick(t);
+            launched += this.context.projectiles().getProjectiles().size() - before;
+        }
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+    }
+
+    private static long freezesOn(FakeEnemyMob mob) {
+        return mob.appliedEffects().stream().filter(e -> e.kind() == EffectKind.FREEZE).count();
+    }
+
+    @Test
+    void arcanePayloadMakesEveryThirdMissileUnravelInsteadOfFreezing() {
+        SeekerTower tower = this.seekerWith("Arcane Payload");
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        this.fireAndFly(tower, 3);
+
+        assertThat(freezesOn(target)).isEqualTo(2);
+        assertThat(target.effectStacks(EffectKind.UNRAVELED)).isEqualTo(1);
+        assertThat(target.hits()).hasSize(3);
+    }
+
+    @Test
+    void empPayloadStripsShieldsAndHealsAndSilencesTwoSecondsOnItsTurn() {
+        SeekerTower tower = this.seekerWith("Arcane Payload", "EMP Payload");
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        this.fireAndFly(tower, 6);
+
+        assertThat(target.dispels()).isEqualTo(1);
+        assertThat(target.appliedEffects().stream().filter(e -> e.kind() == EffectKind.SILENCED).toList())
+                .singleElement().extracting(td.effect.Effect::remainingTicks).isEqualTo(40);
+        assertThat(target.effectStacks(EffectKind.UNRAVELED)).isEqualTo(1);
+    }
+
+    @Test
+    void tracerPayloadRevealsAndMarksForFourSeconds() {
+        SeekerTower tower = this.seekerWith("Arcane Payload", "EMP Payload", "Tracer Payload");
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        this.fireAndFly(tower, 9);
+
+        assertThat(target.appliedEffects().stream().filter(e -> e.kind() == EffectKind.MARKED).toList())
+                .singleElement().extracting(td.effect.Effect::remainingTicks).isEqualTo(80);
+        assertThat(target.hasEffect(EffectKind.REVEALED)).isTrue();
+    }
+
+    @Test
+    void aFullRackCarriesCryoArcaneEmpAndTracerInTurnEachAQuarterStronger() {
+        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle", "Transcendent", "Arcane Payload",
+                "EMP Payload", "Tracer Payload", "Full Rack");
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        this.fireAndFly(tower, 4);
+
+        assertThat(target.appliedEffects().stream().filter(e -> e.kind() == EffectKind.FREEZE).toList())
+                .singleElement().extracting(td.effect.Effect::remainingTicks).isEqualTo(56);
+        assertThat(target.effectStacks(EffectKind.UNRAVELED)).isEqualTo(2);
+        assertThat(target.appliedEffects().stream().filter(e -> e.kind() == EffectKind.SILENCED).toList())
+                .singleElement().extracting(td.effect.Effect::remainingTicks).isEqualTo(50);
+        assertThat(target.appliedEffects().stream().filter(e -> e.kind() == EffectKind.MARKED).toList())
+                .singleElement().extracting(td.effect.Effect::remainingTicks).isEqualTo(100);
+    }
+
+    @Test
+    void aMissileIsDrawnInTheColourOfWhatItCarries() {
+        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle", "Transcendent", "Arcane Payload",
+                "EMP Payload", "Tracer Payload", "Full Rack");
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        for (int t = 1; t <= 120; t++) {
+            tower.doTick(t);
+        }
+
+        assertThat(this.context.projectiles().getProjectiles()).hasSize(3)
+                .allSatisfy(projectile -> assertThat(projectile).isInstanceOf(td.projectile.MissileProjectile.class));
+        assertThat(this.context.projectiles().getProjectiles().stream()
+                .map(p -> ((td.projectile.MissileProjectile) p).stats().look()).toList())
+                .containsExactly(td.projectile.MissileLook.CRYO, td.projectile.MissileLook.ARCANE,
+                        td.projectile.MissileLook.EMP);
+    }
+
+    @Test
+    void nullifierHitsAShieldedEnemyHalfAgainAsHardAndStripsItsShield() {
+        SeekerTower tower = this.seekerWith("Nullifier");
+        FakeEnemyMob shielded = FakeEnemyMob.at(100, 100);
+        shielded.applyEffect(td.effect.Effect.shield(0.5f, 100, d -> {
+        }));
+        this.context.enemies().setEnemies(new EnemyMob[]{shielded});
+
+        this.fireAndFly(tower, 1);
+
+        assertThat(shielded.hits().getFirst()).isEqualTo(Damage.magic(Math.round(tower.damageCurrent() * 1.5f)));
+        assertThat(shielded.hasEffect(EffectKind.SHIELD)).isFalse();
+        assertThat(shielded.dispels()).isEqualTo(1);
+    }
+
+    @Test
+    void huntersMarkAimsAtTheHighestRankInsteadOfTheFastest() {
+        SeekerTower tower = this.seekerWith("Hunter's Mark");
+        FakeEnemyMob runner = FakeEnemyMob.at(100, 100).movingAt(3f);
+        FakeEnemyMob boss = FakeEnemyMob.at(110, 100).movingAt(1f).ranked(Rank.BOSS);
+        this.context.enemies().setEnemies(new EnemyMob[]{runner, boss});
+
+        tower.doTick(1);
+
+        assertThat(tower.getCurrentTarget()).isSameAs(boss);
+    }
+
     @Test
     void absoluteZeroFreezesEverythingWithinACellOfTheImpactAndNothingFurther() {
         SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle", "Transcendent",
@@ -565,9 +684,9 @@ class SeekerTowerTest {
     }
 
     @Test
-    void homingCurseAppliesOneStackToAFreshTargetAndTwoToOneAlreadyFrozen() {
+    void arcaneWarheadAppliesOneStackToAFreshTargetAndTwoToOneAlreadyFrozen() {
         SeekerTower tower = towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context, "Homing Curse");
+        UpgradePaths.buy(tower, this.context, "Arcane Warhead");
         FakeEnemyMob fresh = FakeEnemyMob.at(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{fresh});
         tower.doTick(1);
@@ -585,7 +704,7 @@ class SeekerTowerTest {
     }
 
     private static int stacksApplied(FakeEnemyMob mob) {
-        return mob.appliedEffects().stream().filter(e -> e.kind() == EffectKind.VULNERABLE)
+        return mob.appliedEffects().stream().filter(e -> e.kind() == EffectKind.UNRAVELED)
                 .mapToInt(td.effect.Effect::stacks).sum();
     }
 }
