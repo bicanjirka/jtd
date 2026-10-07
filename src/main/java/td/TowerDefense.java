@@ -56,6 +56,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serial;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -102,24 +103,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private final AsciiBoardRenderer asciiBoardRenderer = new AsciiBoardRenderer();
     private final PanelGameConsole gameConsole = new PanelGameConsole(NAME + " v" + VERSION);
     private final BoardOverlays boardOverlays = new BoardOverlays();
-    private final String statusMessage = """
-            Welcome to Tower Defense
-            Shortcuts:
-
-            q - build sniper
-            w - build splash
-            e - build sonar
-            r - build pulse
-            t - build aura
-            y - build mortar
-            u - build seeker
-            i - build cinder
-            esc - cancel placing
-            p - pause
-            f - cycle speed
-            s - start wave
-            m - back to menu
-            ctrl+shift+d - dev panel""";
+    private final String statusMessage = welcomeText();
 
     private final GameLoop gameLoop = new GameLoop(this::doGameTick, this::buildAndPublishFrame);
     /**
@@ -229,6 +213,17 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      * One logic tick, on the game-loop thread. Also called on the EDT to single-step while paused,
      * when the loop is not ticking.
      */
+    /** The welcome text: a line per tower from the types themselves, so a shop name never drifts from its key. */
+    static String welcomeText() {
+        StringBuilder text = new StringBuilder("Welcome to Tower Defense\nShortcuts:\n\n");
+        for (TowerFactory.Type type : TowerFactory.Type.values()) {
+            text.append(type.placementKey).append(" - build ").append(type.displayName().toLowerCase(Locale.ROOT))
+                    .append('\n');
+        }
+        return text.append("esc - cancel placing\np - pause\nf - cycle speed\ns - start wave\nm - back to menu\n"
+                + "ctrl+shift+d - dev panel").toString();
+    }
+
     private void doGameTick() {
         if (this.engine.outcome().isOver()) {
             return;
