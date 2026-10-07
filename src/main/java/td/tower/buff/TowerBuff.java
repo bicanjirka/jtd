@@ -12,7 +12,7 @@ package td.tower.buff;
 public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus, float bountyBonus,
                         float critChanceBonus, float armorPenetrationBonus, float magicPenetrationBonus,
                         float critDamageBonus, float disruptionShield, float timedBuffBonus,
-                        float effectDurationBonus) {
+                        float effectDurationBonus, float witherTicks) {
 
     /** The lowest combined fire-rate or range bonus any mix of penalties can reach. */
     public static final float MIN_BONUS = -0.75f;
@@ -20,7 +20,7 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
     /** The highest fire-rate bonus: a tower never runs more than ten times faster than its base. */
     public static final float MAX_FIRE_RATE_BONUS = 0.9f;
 
-    private static final TowerBuff NONE = new TowerBuff(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
+    private static final TowerBuff NONE = new TowerBuff(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
 
     /** No crit-chance or penetration bonus. */
     public TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus, float bountyBonus) {
@@ -30,7 +30,7 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
     /** No penetration bonus. */
     public TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus, float bountyBonus,
             float critChanceBonus) {
-        this(damageBonus, rangeBonus, fireRateBonus, bountyBonus, critChanceBonus, 0f, 0f, 0f, 0f, 0f, 0f);
+        this(damageBonus, rangeBonus, fireRateBonus, bountyBonus, critChanceBonus, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
     }
 
     public static TowerBuff none() {
@@ -75,49 +75,62 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
     }
 
     public TowerBuff withDamage(float damageBonus) {
-        return new TowerBuff(damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus);
+        return new TowerBuff(damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus, this.witherTicks);
     }
 
     public TowerBuff withRange(float rangeBonus) {
-        return new TowerBuff(this.damageBonus, rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus);
+        return new TowerBuff(this.damageBonus, rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus, this.witherTicks);
     }
 
     public TowerBuff withFireRate(float fireRateBonus) {
-        return new TowerBuff(this.damageBonus, this.rangeBonus, fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus);
+        return new TowerBuff(this.damageBonus, this.rangeBonus, fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus, this.witherTicks);
     }
 
     public TowerBuff withBounty(float bountyBonus) {
-        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus);
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus, this.witherTicks);
     }
 
     public TowerBuff withCritChance(float critChanceBonus) {
-        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus);
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus, this.witherTicks);
     }
 
     public TowerBuff withArmorPenetration(float armorPenetrationBonus) {
-        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus);
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus, this.witherTicks);
     }
 
     public TowerBuff withMagicPenetration(float magicPenetrationBonus) {
-        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus);
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus, this.witherTicks);
     }
 
     public TowerBuff withCritDamage(float critDamageBonus) {
-        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus);
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus, this.witherTicks);
     }
 
     public TowerBuff withDisruptionShield(float disruptionShield) {
-        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, disruptionShield, this.timedBuffBonus, this.effectDurationBonus);
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, disruptionShield, this.timedBuffBonus, this.effectDurationBonus, this.witherTicks);
     }
 
     /** How much longer the tower's own timed buffs last: {@code 1} doubles them. */
     public TowerBuff withTimedBuffBonus(float timedBuffBonus) {
-        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, timedBuffBonus, this.effectDurationBonus);
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, timedBuffBonus, this.effectDurationBonus, this.witherTicks);
     }
 
     /** How much longer the effects the tower puts on enemies last. */
     public TowerBuff withEffectDurationBonus(float effectDurationBonus) {
-        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, effectDurationBonus);
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, effectDurationBonus, this.witherTicks);
+    }
+
+    /** Every {@code ticks} ticks the tower's next hit applies a stack of Vulnerable; {@code 0} for never. */
+    public TowerBuff withWitherTicks(float witherTicks) {
+        return new TowerBuff(this.damageBonus, this.rangeBonus, this.fireRateBonus, this.bountyBonus, this.critChanceBonus, this.armorPenetrationBonus, this.magicPenetrationBonus, this.critDamageBonus, this.disruptionShield, this.timedBuffBonus, this.effectDurationBonus, witherTicks);
+    }
+
+    /** Every bonus {@code factor} times as big; the shield and the wither interval are not amounts and stay. */
+    public TowerBuff scaledBy(float factor) {
+        return new TowerBuff(this.damageBonus * factor, this.rangeBonus * factor, this.fireRateBonus * factor,
+                this.bountyBonus * factor, this.critChanceBonus * factor, this.armorPenetrationBonus * factor,
+                this.magicPenetrationBonus * factor, this.critDamageBonus * factor, this.disruptionShield,
+                this.timedBuffBonus * factor, this.effectDurationBonus * factor, this.witherTicks);
     }
 
     public static TowerBuff disruptionShield(float fraction) {
@@ -136,7 +149,9 @@ public record TowerBuff(float damageBonus, float rangeBonus, float fireRateBonus
                 this.critDamageBonus + other.critDamageBonus,
                 1f - (1f - this.disruptionShield) * (1f - other.disruptionShield),
                 this.timedBuffBonus + other.timedBuffBonus,
-                this.effectDurationBonus + other.effectDurationBonus);
+                this.effectDurationBonus + other.effectDurationBonus,
+                this.witherTicks == 0f ? other.witherTicks
+                        : other.witherTicks == 0f ? this.witherTicks : Math.min(this.witherTicks, other.witherTicks));
     }
 
     /** The share of a disruption that still reaches the tower: {@code 0.5} after one half-shield, a quarter after two. */

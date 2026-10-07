@@ -79,6 +79,10 @@
 - A Splash's mines and a Hexer's cursed clouds are zones it makes (`Zone.mine`, `Zone.cloud`); a mine
   blasts through the same `blast` a shot does, centred where it lay, with the enemy that stepped on it as
   the primary, and the Splash keeps its own list of mines to replace the oldest and to take them off with it.
+- The Aura never reaches into another tower's state except through `Tower.receiveTimedBuff` (Rally). Withering
+  Field is an interval in the buff (`witherTicks`) that each tower spends on its own first hit after it, never on
+  periodic damage. Chosen's hero is derived from XP on every call, so `AuraTower.doTick` republishes every tower's
+  stats when the hero changes. Rally's spot is the path point nearest the Aura, found once.
 - Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
   `AuraTower.buffs`' single "is this an aura" check stays the only role check.
 
@@ -144,9 +148,11 @@
   `TowerStats.reachReal()` (range before disruption). A tower with no reach on the path (the Aura)
   returns `false` and earns through the towers it buffs.
 - What a tower adds to another's XP is derived like a buff: `Tower.xpBonusFor(earner)` summed over every
-  tower at award time (Kinship, Tutelage, the Apprentice mark), and `Tower.sharesXp(recipient, earner)` makes
-  a tower earn what another did (Shared Lessons). The fraction XP cannot hold carries in the earner
+  tower at award time (Kinship, Tutelage, the Apprentice mark), and `Tower.xpSharedWith(earners)` names the towers a
+  tower makes earn what those did (Shared Lessons). The fraction XP cannot hold carries in the earner
   (`earnXp(bounty, bonus)`), so a small bonus is never rounded away.
+- `ExperienceAwarder` runs on a tick for every finished walk, so it stays a pass or two over the towers, never
+  a pass over towers inside a pass over towers inside a pass over the reached ones.
 - `TowerExperience` publishes XP and the rank-up tick as one snapshot; only the game loop earns.
 - A tower's deed (the moment it does its job, which its `PurposeCondition` on head III counts) goes
   through `countDeedOfAttack()` (one per attack, however many enemies it hit) or

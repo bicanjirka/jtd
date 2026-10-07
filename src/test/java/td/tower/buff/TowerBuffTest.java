@@ -20,6 +20,46 @@ class TowerBuffTest {
     }
 
     @Test
+    void noneStaysTheIdentityForEveryAxisTheAurasUse() {
+        TowerBuff buff = TowerBuff.amplifying(0.2f).withDisruptionShield(0.5f).withTimedBuffBonus(1f)
+                .withEffectDurationBonus(0.3f).withWitherTicks(200f).withCritDamage(0.5f);
+
+        assertThat(TowerBuff.none().combine(buff)).isEqualTo(buff);
+        assertThat(buff.combine(TowerBuff.none())).isEqualTo(buff);
+    }
+
+    @Test
+    void combineKeepsTheShorterWitherInterval() {
+        TowerBuff slow = TowerBuff.none().withWitherTicks(200f);
+        TowerBuff quick = TowerBuff.none().withWitherTicks(100f);
+
+        assertThat(slow.combine(quick).witherTicks()).isEqualTo(100f);
+        assertThat(quick.combine(slow).witherTicks()).isEqualTo(100f);
+    }
+
+    @Test
+    void disruptionShieldsMultiplyWhatIsLeftAndDurationBonusesAdd() {
+        TowerBuff a = TowerBuff.disruptionShield(0.5f).withEffectDurationBonus(0.3f);
+        TowerBuff b = TowerBuff.disruptionShield(0.5f).withEffectDurationBonus(0.3f);
+
+        TowerBuff combined = a.combine(b);
+
+        assertThat(combined.disruptionLeft()).isEqualTo(0.25f);
+        assertThat(combined.effectLength()).isEqualTo(1.6f);
+    }
+
+    @Test
+    void scaledByMultipliesEveryAmountButNotTheShieldOrTheInterval() {
+        TowerBuff tripled = TowerBuff.amplifying(0.2f).withFireRate(0.1f).withDisruptionShield(0.5f)
+                .withWitherTicks(200f).scaledBy(3f);
+
+        assertThat(tripled.damageBonus()).isEqualTo(0.6f);
+        assertThat(tripled.fireRateBonus()).isEqualTo(0.3f);
+        assertThat(tripled.disruptionLeft()).isEqualTo(0.5f);
+        assertThat(tripled.witherTicks()).isEqualTo(200f);
+    }
+
+    @Test
     void combineIsAdditive() {
         TowerBuff a = TowerBuff.amplifying(0.1f);
         TowerBuff b = TowerBuff.amplifying(0.3f);
