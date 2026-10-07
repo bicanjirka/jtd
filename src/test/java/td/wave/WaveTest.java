@@ -268,6 +268,18 @@ class WaveTest {
         }
     }
 
+    @Test
+    void aLeadingSpacingTokenScalesTheDelayBetweenSlots() {
+        this.setStraightHorizontalPath();
+
+        int[] normal = activationTicks(wave("c c").spawn());
+        int[] doubled = activationTicks(wave("w44.8 c c").spawn());
+
+        assertThat(normal[0]).isZero();
+        assertThat(normal[1]).isGreaterThan(0);
+        assertThat(doubled[1]).isCloseTo(normal[1] * 2, within(1));
+    }
+
     /**
      * The tick each mob becomes targetable (0 if already), measuring the private spawn delay from
      * outside.

@@ -99,22 +99,6 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
 - **Approach:** only if the fakes go away first (tests built on real mobs/towers from
   `td.fixtures`). `Projectile` has no fakes but alone would leave two dispatch styles.
 
-## Movement / pathing
-
-### Wave-entry spawn delay is a hardcoded constant
-
-`SpawnParameters.DELAY_TICKS_PER_SLOT` (a `private static final float`, consumed inside
-`SpawnParameters.atSlot(...)`/`.of(...)`) converts an enemy's slot position within a wave to a
-tick-count countdown via `Math.round(DELAY_TICKS_PER_SLOT * slotPosition / speed)`. The `22.4f`
-value is a magic constant with no way to override it per-wave.
-
-- **Where:** `td.enemy.SpawnParameters`
-- **Approach:** add a `delay`-scaling field to `WaveDefinition` (or `Wave`) that defaults to `22.4f`, and extend the
-  wave
-  mini-language (see `WaveScript.parse`'s spawn-shape/spacer token grammar — `td/wave/CLAUDE.md`) with a token — e.g. a
-  `w<number>` prefix — that
-  lets a wave definition override the spacing between spawns before listing enemies.
-
 ## Levels
 
 ### Only a Java-code level catalog exists

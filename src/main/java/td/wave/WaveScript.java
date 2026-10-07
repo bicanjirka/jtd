@@ -4,11 +4,13 @@ import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.Rank;
 import td.enemy.RankedEnemy;
+import td.enemy.SpawnParameters;
 import td.util.GameStartupException;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Parses a wave's token string into {@link WaveContent} against an {@link EnemyCatalog}, so
@@ -20,6 +22,10 @@ import java.util.Set;
  * repeats the slot; before a rank or shape keyword it repeats the whole slot. After a shape keyword
  * it sets that slot's member count: required for {@code swarm}, {@code line}, {@code column} and
  * {@code drip}, rejected for {@code armored} and {@code flank}.
+ * <p>
+ * A leading {@code w<number>} (such as {@code w30}) sets how many ticks one slot of spacing is
+ * worth, in place of {@link SpawnParameters#DEFAULT_DELAY_TICKS_PER_SLOT}. It may only be the first
+ * token.
  */
 public final class WaveScript {
 
@@ -36,6 +42,8 @@ public final class WaveScript {
     private static final String VETERAN_TOKEN = "veteran";
     private static final String ELITE_TOKEN = "elite";
     private static final String BOSS_TOKEN = "boss";
+    private static final String SPACING_PREFIX = "w";
+    private static final Pattern SPACING_TOKEN = Pattern.compile("w\\d+(\\.\\d+)?");
 
     /**
      * Tokens recognized before any catalog lookup; the catalog rejects ids that collide with them.
@@ -45,6 +53,11 @@ public final class WaveScript {
             GRUNT_TOKEN, SOLDIER_TOKEN, VETERAN_TOKEN, ELITE_TOKEN, BOSS_TOKEN);
 
     private WaveScript() {
+    }
+
+    /** Whether {@code id} is a reserved keyword or has the shape of a spacing token, so no enemy may take it. */
+    public static boolean isReserved(String id) {
+        return RESERVED_TOKENS.contains(id) || SPACING_TOKEN.matcher(id).matches();
     }
 
     public static WaveContent parse(String tokens, Rank defaultRank, EnemyCatalog catalog) {
@@ -59,13 +72,25 @@ public final class WaveScript {
         int pendingShapeSlotRepeat = 1;
         Rank pendingRank = null;
         int pendingRankSlotRepeat = 1;
+        float delayTicksPerSlot = SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT;
+        boolean firstToken = true;
 
         for (String token : tokens) {
             // "".split(" ") yields a blank, as does a run of spaces.
             if (token.isBlank()) {
                 continue;
             }
-            if (isRankToken(token)) {
+            boolean leading = firstToken;
+            firstToken = false;
+            if (SPACING_TOKEN.matcher(token).matches()) {
+                if (!leading) {
+                    throw new GameStartupException("Spacing token '" + token + "' must be the first token of the wave");
+                }
+                delayTicksPerSlot = Float.parseFloat(token.substring(SPACING_PREFIX.length()));
+                if (delayTicksPerSlot <= 0f) {
+                    throw new GameStartupException("Spacing token '" + token + "' must be greater than zero");
+                }
+            } else if (isRankToken(token)) {
                 if (pendingRank != null) {
                     throw new GameStartupException(
                             "Rank token '" + token + "' follows another rank token with no id between them");
@@ -141,7 +166,7 @@ public final class WaveScript {
         if (pendingRank != null) {
             throw new GameStartupException("Wave ends with rank token '" + pendingRank + "' and no enemy id");
         }
-        return new WaveContent(spawnSequence);
+        return new WaveContent(spawnSequence, delayTicksPerSlot);
     }
 
     /**

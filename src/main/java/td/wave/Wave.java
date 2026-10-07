@@ -51,16 +51,18 @@ public class Wave {
         List<EnemyMob> enemies = new ArrayList<>();
         int delay = 0;
         for (WaveSlot slot : content.spawnSequence()) {
-            enemies.addAll(spawnSlot(slot, gameWorld, delay, scatterSeed, pathIndex, speedMultiplier));
+            enemies.addAll(spawnSlot(slot, gameWorld, delay, content.delayTicksPerSlot(), scatterSeed, pathIndex,
+                    speedMultiplier));
             delay++;
         }
         return List.copyOf(enemies);
     }
 
-    private static List<EnemyMob> spawnSlot(WaveSlot slot, GameWorld gameWorld, int delay, long scatterSeed,
-                                              int pathIndex, float speedMultiplier) {
+    private static List<EnemyMob> spawnSlot(WaveSlot slot, GameWorld gameWorld, int delay, float delayTicksPerSlot,
+                                              long scatterSeed, int pathIndex, float speedMultiplier) {
         return switch (slot) {
-            case EnemySlot s -> spawnShaped(s, gameWorld, delay, scatterSeed, pathIndex, speedMultiplier);
+            case EnemySlot s -> spawnShaped(s, gameWorld, delay, delayTicksPerSlot, scatterSeed, pathIndex,
+                    speedMultiplier);
             case EmptySlot ignored -> List.of();
         };
     }
@@ -73,8 +75,9 @@ public class Wave {
      * Formation offsets draw from a random source seeded by the wave and slot, not the world's,
      * which tower targeting also uses - otherwise a formation would depend on firing order.
      */
-    private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int delay, long scatterSeed,
-                                                int pathIndex, float speedMultiplier) {
+    private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int delay,
+                                                float delayTicksPerSlot, long scatterSeed, int pathIndex,
+                                                float speedMultiplier) {
         EnemyDefinition definition = enemySlot.shape().traitOverride()
                 .map(trait -> enemySlot.definition().withAdditionalTraits(List.of(trait)))
                 .orElse(enemySlot.definition());
@@ -88,9 +91,9 @@ public class Wave {
         for (int i = 0; i < shape.members(); i++) {
             double slotPosition = delay + i * shape.delaySpacingSlots();
             Vec2 localOffset = shape.spread().offsetFor(i, shape.members(), maxRadius, scatter);
-            SpawnParameters spawnParameters = SpawnParameters.of(slotPosition, definition.baseSpeed(), health,
-                    bountyShares[i], shape.sizeMultiplier(), shape.speedMultiplier() * speedMultiplier, localOffset,
-                    pathIndex);
+            SpawnParameters spawnParameters = SpawnParameters.of(slotPosition, delayTicksPerSlot,
+                    definition.baseSpeed(), health, bountyShares[i], shape.sizeMultiplier(),
+                    shape.speedMultiplier() * speedMultiplier, localOffset, pathIndex);
             members.add(new DefinedEnemyMob(definition, gameWorld, spawnParameters, rank));
         }
         return List.copyOf(members);

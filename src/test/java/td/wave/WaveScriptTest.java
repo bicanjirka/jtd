@@ -18,6 +18,35 @@ class WaveScriptTest {
     private final EnemyDefinition ghost = this.catalog.get("g");
 
     @Test
+    void aLeadingSpacingTokenSetsTheWavesSpacingAndSpawnsNothing() {
+        WaveContent content = WaveScript.parse("w30 2 c", Rank.GRUNT, this.catalog);
+
+        assertThat(content.delayTicksPerSlot()).isEqualTo(30f);
+        assertThat(content.enemyCount()).isEqualTo(2);
+    }
+
+    @Test
+    void aWaveWithNoSpacingTokenUsesTheDefaultSpacing() {
+        WaveContent content = WaveScript.parse("2 c", Rank.GRUNT, this.catalog);
+
+        assertThat(content.delayTicksPerSlot()).isEqualTo(td.enemy.SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT);
+    }
+
+    @Test
+    void aSpacingTokenAfterAnyOtherTokenIsRejected() {
+        assertThatThrownBy(() -> WaveScript.parse("c w30 c", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("first token");
+    }
+
+    @Test
+    void aSpacingOfZeroIsRejected() {
+        assertThatThrownBy(() -> WaveScript.parse("w0 c", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("greater than zero");
+    }
+
+    @Test
     void plainTokensCountAsOneEnemyEach() {
         WaveContent content = WaveScript.parse("c e c", Rank.GRUNT, this.catalog);
 

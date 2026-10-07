@@ -2,19 +2,30 @@ package td.wave;
 
 import td.enemy.EnemyDefinition;
 import td.enemy.Rank;
+import td.enemy.SpawnParameters;
+import td.util.GameStartupException;
 
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * A parsed wave: one {@link WaveSlot} per spawn slot, in order, repeats expanded. World-free;
- * {@link Wave} makes it live.
+ * A parsed wave: one {@link WaveSlot} per spawn slot, in order, repeats expanded, and the spawn
+ * delay one slot of spacing is worth. World-free; {@link Wave} makes it live.
  */
-public record WaveContent(List<WaveSlot> spawnSequence) {
+public record WaveContent(List<WaveSlot> spawnSequence, float delayTicksPerSlot) {
 
     public WaveContent {
         spawnSequence = List.copyOf(spawnSequence);
+        if (!(delayTicksPerSlot > 0f) || Float.isInfinite(delayTicksPerSlot)) {
+            throw new GameStartupException(
+                    "A wave's spawn spacing must be a positive number of ticks, was " + delayTicksPerSlot);
+        }
+    }
+
+    /** At the default spacing. */
+    public WaveContent(List<WaveSlot> spawnSequence) {
+        this(spawnSequence, SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT);
     }
 
     /** Distinct enemy definitions in first-seen order, without the spacer. */

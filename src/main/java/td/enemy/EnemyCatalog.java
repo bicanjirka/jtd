@@ -55,9 +55,10 @@ public final class EnemyCatalog {
      */
     public void register(RankedEnemy rankedEnemy) {
         String id = rankedEnemy.id();
-        if (WaveScript.RESERVED_TOKENS.contains(id)) {
+        if (WaveScript.isReserved(id)) {
             throw new GameStartupException(
-                    "Enemy id '" + id + "' collides with a reserved wave-script token " + WaveScript.RESERVED_TOKENS);
+                    "Enemy id '" + id + "' collides with a reserved wave-script token " + WaveScript.RESERVED_TOKENS
+                            + " or the w<number> spacing token");
         }
         if (this.rankedEnemies.containsKey(id)) {
             throw new GameStartupException("Duplicate enemy definition id '" + id + "'");
