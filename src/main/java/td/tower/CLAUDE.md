@@ -30,7 +30,9 @@
 - The Seeker's nest loads from the cooldown whether or not an enemy is in range, so it fills between
   waves; stored missiles launch `launchGapTicks` apart, one target pick per missile. A spread salvo
   (`SalvoPlanner`) avoids the enemies the salvo in progress has fired at, and a perk reacts to a
-  landed missile through `Impact`; a rearmed missile is flagged so its freeze rearms nothing.
+  landed missile through `Impact`; a rearmed missile is flagged so its freeze rearms nothing. How a
+  missile freezes, shatters and crits is spec data (`FreezeSpec`, `ShatterSpec`), not a hook; the
+  `FrozenLedger` only watches the enemies the Seeker froze for the tick their freeze ends.
 - A Hexer's hex is an enemy effect in `EffectCategory.HEX`, applied through `applyEffect`, and that
   effect is the hex's only timer (spirit paces it). The Hexer's `HexLedger` only watches it: what
   a hex pays out when it ends or its carrier dies is settled at the start of the Hexer's tick,

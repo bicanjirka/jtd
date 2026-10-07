@@ -108,14 +108,130 @@ class SeekerTowerTest {
     }
 
     @Test
-    void deepFreezeIiBumpsTheFreezeDurationBeyondTheBase() {
-        SeekerTower tower = towerAt(3, 3);
-        UpgradeNode deepFreezeTwo = UpgradePaths.named(tower, "Deep Freeze II");
-        int durationBeforeChoosing = tower.getFreezeDurationTicks();
+    void deepFreezeMakesEveryFreezeHalfAgainAsLong() {
+        SeekerTower tower = this.seekerWith("Deep Freeze");
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
 
-        tower.onUpgradeBought(deepFreezeTwo);
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
 
-        assertThat(tower.getFreezeDurationTicks()).isGreaterThan(durationBeforeChoosing);
+        assertThat(tower.getFreezeDurationTicks()).isEqualTo(45);
+        assertThat(target.appliedEffects().stream().filter(e -> e.kind() == EffectKind.FREEZE).findFirst().orElseThrow()
+                .remainingTicks()).isEqualTo(45);
+    }
+
+    @Test
+    void deepFreezeIiAddsThirtyPercentDamageAndTenPercentCrit() {
+        SeekerTower plain = towerAt(3, 3);
+        SeekerTower deep = this.seekerWith("Deep Freeze", "Deep Freeze II");
+
+        assertThat(deep.damageCurrent()).isEqualTo(Math.round(plain.damageCurrent() * 1.3f));
+        assertThat(deep.critChance()).isEqualTo(0.1f);
+    }
+
+    @Test
+    void brittleLeavesWhateverItFreezesBrittleForAsLongAsTheFreeze() {
+        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle");
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(target.appliedEffects().stream().filter(e -> e.kind() == EffectKind.BRITTLE).toList())
+                .singleElement().extracting(td.effect.Effect::remainingTicks).isEqualTo(45);
+    }
+
+    @Test
+    void absoluteZeroFreezesEverythingWithinACellOfTheImpactAndNothingFurther() {
+        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle", "Transcendent",
+                "Absolute Zero");
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob near = FakeEnemyMob.ghostAt(120, 100);
+        FakeEnemyMob outside = FakeEnemyMob.ghostAt(140, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{target, near, outside});
+
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(target.hasEffect(EffectKind.FREEZE)).isTrue();
+        assertThat(near.hasEffect(EffectKind.FREEZE)).isTrue();
+        assertThat(outside.hasEffect(EffectKind.FREEZE)).isFalse();
+    }
+
+    @Test
+    void absoluteZeroShattersAnEnemyItFrozeWhenItsFreezeEnds() {
+        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle", "Transcendent",
+                "Absolute Zero");
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob bystander = FakeEnemyMob.ghostAt(100, 145);
+        this.context.enemies().setEnemies(new EnemyMob[]{target, bystander});
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+        int hitsBefore = bystander.hits().size();
+
+        target.expire(EffectKind.FREEZE);
+        tower.doTick(2);
+
+        assertThat(bystander.hits()).hasSize(hitsBefore + 1);
+        assertThat(bystander.hits().getLast()).isEqualTo(Damage.magic(Math.round(tower.damageCurrent() * 0.5f * 2f)));
+    }
+
+    @Test
+    void absoluteZeroShattersTwiceAsHardWhenItKillsAFrozenEnemy() {
+        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle", "Transcendent",
+                "Absolute Zero");
+        FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
+        frozen.reportFrozen();
+        frozen.dieOnAnyHit();
+        FakeEnemyMob neighbour = FakeEnemyMob.at(140, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{frozen, neighbour});
+
+        tower.dealDamage(frozen, Damage.magic(1));
+
+        assertThat(neighbour.onlyHitAmount()).isEqualTo(Math.round(tower.damageCurrent() * 0.5f * 2f));
+    }
+
+    @Test
+    void anEnemyThatThawsIsShatteredOnceNotEveryTick() {
+        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle", "Transcendent",
+                "Absolute Zero");
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob bystander = FakeEnemyMob.ghostAt(100, 145);
+        this.context.enemies().setEnemies(new EnemyMob[]{target, bystander});
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+        target.expire(EffectKind.FREEZE);
+        tower.doTick(2);
+        int afterThaw = bystander.hits().size();
+
+        tower.doTick(3);
+        tower.doTick(4);
+
+        assertThat(bystander.hits()).hasSize(afterThaw);
+    }
+
+    @Test
+    void frostbiteMakesHitsOnAFrozenOrFreezeDiminishedEnemyGuaranteedCritsAndNoOther() {
+        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle", "Transcendent", "Frostbite");
+        FakeEnemyMob fresh = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
+        frozen.reportFrozen();
+        FakeEnemyMob worn = FakeEnemyMob.at(100, 100);
+        worn.reportFreezeDiminished();
+
+        for (FakeEnemyMob enemy : new FakeEnemyMob[]{fresh, frozen, worn}) {
+            this.context.enemies().setEnemies(new EnemyMob[]{enemy});
+            for (int t = 1; t <= 50; t++) {
+                tower.doTick(t);
+            }
+            TowerFixtures.flyProjectilesToCompletion(this.context);
+        }
+
+        assertThat(fresh.attackers().getFirst().guaranteedCrit()).isFalse();
+        assertThat(frozen.attackers().getFirst().guaranteedCrit()).isTrue();
+        assertThat(worn.attackers().getFirst().guaranteedCrit()).isTrue();
     }
 
     @Test
