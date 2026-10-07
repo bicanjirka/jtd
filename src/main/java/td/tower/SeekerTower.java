@@ -10,15 +10,24 @@ import td.projectile.MissileProjectile;
 import td.projectile.ProjectileStats;
 import td.tower.buff.TowerBuff;
 import td.tower.seeker.AbsoluteZeroPerk;
+import td.tower.seeker.ArcanePayload;
+import td.tower.seeker.ArcaneWarheadPerk;
 import td.tower.seeker.BrittlePerk;
 import td.tower.seeker.BroodPerk;
 import td.tower.seeker.DeepFreezePerk;
+import td.tower.seeker.EmpPayload;
 import td.tower.seeker.FrostbitePerk;
 import td.tower.seeker.FrozenLedger;
+import td.tower.seeker.FullRackPerk;
+import td.tower.seeker.HuntersMarkPerk;
 import td.tower.seeker.Impact;
 import td.tower.seeker.NestGrowthPerk;
 import td.tower.seeker.NestPerk;
+import td.tower.seeker.NullifierPerk;
 import td.tower.seeker.OverTheHorizonPerk;
+import td.tower.seeker.Payload;
+import td.tower.seeker.PayloadLoad;
+import td.tower.seeker.PayloadPerk;
 import td.tower.seeker.RearmPerk;
 import td.tower.seeker.SalvoPlanner;
 import td.tower.seeker.SecondMissilePerk;
@@ -28,6 +37,7 @@ import td.tower.seeker.SeekerPerk;
 import td.tower.seeker.SeekerSpec;
 import td.tower.seeker.ShatterPerk;
 import td.tower.seeker.ShatterburstPerk;
+import td.tower.seeker.TracerPayload;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.Viewpoint;
@@ -48,6 +58,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The hunter: a slow homing missile at the fastest visible enemy in range, which it never loses
@@ -126,16 +137,41 @@ public final class SeekerTower extends AbstractTower {
             .withExtraEffect("this tower's hits on a frozen enemy are guaranteed crits, and so are its hits on an "
                     + "enemy whose freezes are diminished by repeated freezing")
             .after(BRITTLE);
-    private static final UpgradeNode HOMING_CURSE = UpgradeTier.SPECIAL.node("seeker.special.homing_curse",
-            "Homing Curse", PRICE)
-            .withExtraEffect("impact applies 1 Vulnerable stack, or 2 if the target was already frozen or chilled");
+    private static final UpgradeNode ARCANE_PAYLOAD = UpgradeTier.EXTRA_1.node("seeker.extra.mixed_payloads.1",
+            "Arcane Payload", PRICE)
+            .withExtraEffect("every 3rd missile Unravels its target instead of freezing it");
+    private static final UpgradeNode EMP_PAYLOAD = UpgradeTier.EXTRA_2.node("seeker.extra.mixed_payloads.2",
+            "EMP Payload", PRICE)
+            .withExtraEffect("the payload missiles also carry EMP in turn: it strips shields and heals and Silences "
+                    + "2s")
+            .after(ARCANE_PAYLOAD);
+    private static final UpgradeNode TRACER_PAYLOAD = UpgradeTier.EXTRA_3.node("seeker.extra.mixed_payloads.3",
+            "Tracer Payload", PRICE)
+            .withExtraEffect("the payload missiles also carry Tracer in turn: it reveals and Marks 4s")
+            .after(EMP_PAYLOAD);
+    private static final UpgradeNode FULL_RACK = UpgradeTier.EXTRA_4.node("seeker.extra.mixed_payloads.4",
+            "Full Rack", PRICE)
+            .withExtraEffect("every missile carries a payload, cycling Cryo, Arcane, EMP, Tracer, each 25% stronger")
+            .after(TRACER_PAYLOAD);
+    private static final UpgradeNode ARCANE_WARHEAD = UpgradeTier.SPECIAL.node("seeker.special.arcane_warhead",
+            "Arcane Warhead", PRICE)
+            .withExtraEffect("every impact applies Unraveled, 2 stacks if the target was frozen or chilled");
+    private static final UpgradeNode NULLIFIER = UpgradeTier.SPECIAL.node("seeker.special.nullifier", "Nullifier",
+            PRICE)
+            .withExtraEffect("every impact strips the target's shield and heal; +50% damage against a shielded "
+                    + "enemy");
+    private static final UpgradeNode HUNTERS_MARK = UpgradeTier.SPECIAL.node("seeker.special.hunters_mark",
+            "Hunter's Mark", PRICE)
+            .withExtraEffect("each consecutive hit on the same target +20%, up to +100%; aims at the highest rank");
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, BROOD, BRITTLE))
             .with(TWIN_WARHEAD_1, TWIN_WARHEAD_2, BROOD, SHATTERBURST, REARM, DEEP_FREEZE_1, DEEP_FREEZE_2, BRITTLE,
-                    ABSOLUTE_ZERO, FROSTBITE, HOMING_CURSE)
+                    ABSOLUTE_ZERO, FROSTBITE, ARCANE_PAYLOAD, EMP_PAYLOAD, TRACER_PAYLOAD, FULL_RACK,
+                    ARCANE_WARHEAD, NULLIFIER, HUNTERS_MARK)
             .withChoice(ExclusiveChoice.oneOf(TWIN_WARHEAD_1, DEEP_FREEZE_1))
             .withChoice(ExclusiveChoice.oneOf(SHATTERBURST, REARM))
-            .withChoice(ExclusiveChoice.oneOf(ABSOLUTE_ZERO, FROSTBITE));
+            .withChoice(ExclusiveChoice.oneOf(ABSOLUTE_ZERO, FROSTBITE))
+            .withChoice(ExclusiveChoice.specials(ARCANE_WARHEAD, NULLIFIER, HUNTERS_MARK));
 
     private static final PerkCatalogue<SeekerPerk> PERKS = PerkCatalogue.<SeekerPerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, NestPerk::new)
@@ -149,7 +185,14 @@ public final class SeekerTower extends AbstractTower {
             .with(DEEP_FREEZE_2.id(), ShatterPerk::new)
             .with(BRITTLE.id(), BrittlePerk::new)
             .with(ABSOLUTE_ZERO.id(), AbsoluteZeroPerk::new)
-            .with(FROSTBITE.id(), FrostbitePerk::new);
+            .with(FROSTBITE.id(), FrostbitePerk::new)
+            .with(ARCANE_PAYLOAD.id(), () -> new PayloadPerk(new ArcanePayload()))
+            .with(EMP_PAYLOAD.id(), () -> new PayloadPerk(new EmpPayload()))
+            .with(TRACER_PAYLOAD.id(), () -> new PayloadPerk(new TracerPayload()))
+            .with(FULL_RACK.id(), FullRackPerk::new)
+            .with(ARCANE_WARHEAD.id(), ArcaneWarheadPerk::new)
+            .with(NULLIFIER.id(), NullifierPerk::new)
+            .with(HUNTERS_MARK.id(), HuntersMarkPerk::new);
 
     private static final int COOLDOWN_MAX = 45;
 
@@ -159,6 +202,7 @@ public final class SeekerTower extends AbstractTower {
     private final ProjectileStats missile = ProjectileStats.of(MISSILE_SPEED);
     private final SeekerActions actions = new Actions();
     private final FrozenLedger frozen = new FrozenLedger();
+    private int missilesLaunched;
     private int coolDown = 0;
     private EnemyMob currentTarget;
 
@@ -263,33 +307,41 @@ public final class SeekerTower extends AbstractTower {
         }
     }
 
-    /** A missile at {@code target}; a rearmed one's freeze rearms nothing. */
+    /** A missile at {@code target}, carrying what the plan says its number carries; a rearmed one's freeze rearms nothing. */
     private MissileProjectile newMissile(EnemyMob target, boolean rearmed) {
-        return new MissileProjectile(this.centerX, this.centerY, target, this.context.enemies(), this.missile,
-                hit -> this.onImpact(hit, rearmed));
+        this.missilesLaunched++;
+        Optional<PayloadLoad> load = this.spec(this.perks.all()).payloads().loadFor(this.missilesLaunched);
+        ProjectileStats stats = load.map(carried -> this.missile.withLook(carried.payload().look())).orElse(this.missile);
+        return new MissileProjectile(this.centerX, this.centerY, target, this.context.enemies(), stats,
+                hit -> this.onImpact(hit, rearmed, load));
     }
 
-    private void onImpact(EnemyMob target, boolean rearmed) {
+    /**
+     * A missile lands: the hit, scaled by what the perks make of it, then what it carries (a plain
+     * missile freezes), then the perks' reactions.
+     */
+    private void onImpact(EnemyMob target, boolean rearmed, Optional<PayloadLoad> load) {
         SeekerSpec spec = this.spec(this.perks.all());
         Set<EffectKind> before = target.activeEffectKinds();
         boolean wasFrozen = before.contains(EffectKind.FREEZE);
-        boolean controlled = wasFrozen || before.contains(EffectKind.CHILL);
-        this.strike(target, Damage.magic(this.damageCurrent()), spec);
-        this.freeze(target, spec);
-        if (spec.freeze().areaCells() > 0f) {
-            float radius = spec.freeze().areaCells() * this.context.getBoard().scale();
-            InRangeTargetQuery.everyone((int) target.getX(), (int) target.getY(), radius)
-                    .matching(this.context.enemies()).stream()
-                    .filter(enemy -> enemy != target)
-                    .forEach(enemy -> this.freeze(enemy, spec));
+        Impact.Before suffering = wasFrozen ? Impact.Before.FROZEN
+                : before.contains(EffectKind.CHILL) ? Impact.Before.CHILLED : Impact.Before.NOTHING;
+        float factor = 1f;
+        for (SeekerPerk perk : this.perks.all()) {
+            factor *= perk.damageFactor(target);
         }
-        if (target.hasEffect(EffectKind.FREEZE)) {
+        this.strike(target, Damage.magic(Math.round(this.damageCurrent() * factor)), spec);
+        boolean freezes = load.isEmpty() || load.get().payload().freezes();
+        if (load.isEmpty()) {
+            this.freezeAround(target, 1f, spec);
+        } else {
+            load.get().payload().deliver(target, load.get().strength(), this.actions);
+        }
+        boolean frozenNow = freezes && target.hasEffect(EffectKind.FREEZE);
+        if (frozenNow) {
             this.countDeedOfAttack();
         }
-        if (this.upgrades().owns(HOMING_CURSE.id())) {
-            this.applyStacks(target, EffectKind.VULNERABLE, controlled ? 2 : 1);
-        }
-        Impact impact = new Impact(target, wasFrozen, !wasFrozen && target.hasEffect(EffectKind.FREEZE), rearmed);
+        Impact impact = new Impact(target, suffering, frozenNow && !wasFrozen, rearmed);
         for (SeekerPerk perk : this.perks.all()) {
             perk.react(impact, this.actions);
         }
@@ -311,9 +363,24 @@ public final class SeekerTower extends AbstractTower {
         return Math.round(FREEZE_DURATION_TICKS_BASE * spec.freeze().durationFactor());
     }
 
-    /** Freezes {@code enemy}, and with Brittle leaves it brittle for as long; with a thaw shatter, watches it. */
-    private void freeze(EnemyMob enemy, SeekerSpec spec) {
-        int ticks = this.freezeTicks(spec);
+    /** Freezes the enemy a missile reached, and with Absolute Zero everything within a cell of it. */
+    private void freezeAround(EnemyMob target, float strength, SeekerSpec spec) {
+        this.freeze(target, strength, spec);
+        if (spec.freeze().areaCells() > 0f) {
+            float radius = spec.freeze().areaCells() * this.context.getBoard().scale();
+            InRangeTargetQuery.everyone((int) target.getX(), (int) target.getY(), radius)
+                    .matching(this.context.enemies()).stream()
+                    .filter(enemy -> enemy != target)
+                    .forEach(enemy -> this.freeze(enemy, strength, spec));
+        }
+    }
+
+    /**
+     * Freezes {@code enemy} for {@code strength} times the freeze time, and with Brittle leaves it
+     * brittle for as long; with a thaw shatter, watches it.
+     */
+    private void freeze(EnemyMob enemy, float strength, SeekerSpec spec) {
+        int ticks = Math.round(this.freezeTicks(spec) * strength);
         this.applyEffect(enemy, sink -> Effect.freeze(ticks, sink));
         if (spec.freeze().brittle()) {
             this.applyEffect(enemy, sink -> Effect.brittle(ticks, sink));
@@ -400,8 +467,20 @@ public final class SeekerTower extends AbstractTower {
         if (spec.nest().isActive()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Nest", this.nest.stored() + "/" + spec.nest().capacity()));
         }
-        if (this.upgrades().owns(HOMING_CURSE.id())) {
-            lines.add(new BehaviourLine(BehaviourMarker.VULNERABLE, "Impact applies", "1 vulnerable, 2 if chilled"));
+        if (!spec.payloads().owned().isEmpty() || spec.payloads().everyMissile()) {
+            String carried = spec.payloads().everyMissile() ? "cryo, arcane, emp, tracer" : spec.payloads().owned()
+                    .stream().map(Payload::label).collect(Collectors.joining(", "));
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, spec.payloads().everyMissile() ? "Every missile"
+                    : "Every 3rd missile", carried));
+        }
+        if (this.upgrades().owns(ARCANE_WARHEAD.id())) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Impact applies", "unraveled, x2 if frozen or chilled"));
+        }
+        if (this.upgrades().owns(NULLIFIER.id())) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Impact strips", "shields and heals"));
+        }
+        if (this.upgrades().owns(HUNTERS_MARK.id())) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Consecutive hits", "+20% each, up to +100%"));
         }
         return lines;
     }
@@ -421,6 +500,22 @@ public final class SeekerTower extends AbstractTower {
         @Override
         public List<EnemyMob> burst(EnemyMob center, float share, float radiusCells) {
             return SeekerTower.this.burst(center, share, radiusCells, SeekerTower.this.spec(SeekerTower.this.perks.all()));
+        }
+
+        @Override
+        public void freeze(EnemyMob target, float strength) {
+            SeekerTower.this.freezeAround(target, strength, SeekerTower.this.spec(SeekerTower.this.perks.all()));
+        }
+
+        @Override
+        public void dispel(EnemyMob target) {
+            target.dispelRestoratives();
+        }
+
+        @Override
+        public void spot(EnemyMob target, int ticks) {
+            SeekerTower.this.reveal(target, ticks);
+            SeekerTower.this.applyEffect(target, sink -> Effect.marked(ticks, sink));
         }
 
         @Override
