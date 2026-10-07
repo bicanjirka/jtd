@@ -33,14 +33,16 @@ public enum EffectKind {
     /** Each stack lowers resilience by ten, and wears off one stack at a time. */
     FRACTURED,
     /** Stops the enemy and its abilities, like a freeze, but keeps its burn and its chill. */
-    DAZED;
+    DAZED,
+    /** Each stack makes the Splash's blasts hit it harder; it is the Splash's own rhythm, not a stat. */
+    SATURATED;
 
     public EffectCategory category() {
         return switch (this) {
             case CHILL -> EffectCategory.SOFT_CC;
             case FREEZE, DAZED -> EffectCategory.HARD_CC;
             case BURN, POISON -> EffectCategory.DAMAGE_OVER_TIME;
-            case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED -> EffectCategory.DEBUFF;
+            case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED -> EffectCategory.DEBUFF;
             case EXPOSED, MARKED, PRIORITY -> EffectCategory.SPOTTED;
             case SHIELD, HEAL -> EffectCategory.RESTORATIVE;
             case INVISIBLE, REVEALED -> EffectCategory.STEALTH;
@@ -90,7 +92,7 @@ public enum EffectKind {
      */
     public int maxStacks() {
         return switch (this) {
-            case VULNERABLE, RESONATING -> 3;
+            case VULNERABLE, RESONATING, SATURATED -> 3;
             case SUNDERED -> 10;
             case FRACTURED -> 5;
             default -> 0;
@@ -125,7 +127,7 @@ public enum EffectKind {
             case BURN -> Optional.of(EnemyStat.BURN_RESIST);
             case FREEZE -> Optional.of(EnemyStat.FREEZE_RESIST);
             case SHIELD, INVISIBLE, HEAL, VULNERABLE, REVEALED, POISON, SCORCHED, SICKENED, SUNDERED, EXPOSED, MARKED,
-                    PRIORITY, RESONATING, FRACTURED, DAZED -> Optional.empty();
+                    PRIORITY, RESONATING, FRACTURED, DAZED, SATURATED -> Optional.empty();
         };
     }
 }

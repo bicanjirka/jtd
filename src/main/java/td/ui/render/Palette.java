@@ -14,6 +14,8 @@ public enum Palette {
     ENEMY_MENDER,
     TOWER_SNIPER_BODY,
     TOWER_SPLASH_BODY,
+    /** A Splash forked to Arc. */
+    TOWER_STORMCALLER_BODY,
     TOWER_SONAR_BODY,
     TOWER_PULSE_BODY,
     TOWER_AURA_BODY,
@@ -41,8 +43,14 @@ public enum Palette {
     /** A Transcendent Sniper's barrel. */
     TOWER_SNIPER_GOLD_BARREL,
     TOWER_SPLASH_BEAM,
-    TOWER_SPLASH_LINE,
-    TOWER_SPLASH_FILL,
+    /** A blast's first flash. */
+    TOWER_SPLASH_FLASH,
+    /** A blast's ring as it spreads, bright... */
+    TOWER_SPLASH_DETONATION,
+    /** ...and darkening as it grows. */
+    TOWER_SPLASH_DETONATION_DARK,
+    /** The Stormcaller's arcs. */
+    TOWER_SPLASH_ARC,
     TOWER_SONAR_BEAM,
     /** A Sonar hit once its beam deals magic. */
     TOWER_SONAR_MAGIC_BEAM,
@@ -59,6 +67,7 @@ public enum Palette {
     STATUS_MARKER_BURN,
     STATUS_MARKER_FREEZE,
     STATUS_MARKER_DAZED,
+    STATUS_MARKER_SATURATED,
     STATUS_MARKER_SHIELD,
     STATUS_MARKER_INVISIBLE,
     STATUS_MARKER_HEAL,

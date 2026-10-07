@@ -2,6 +2,8 @@ package td.tower;
 
 import td.util.GameWorld;
 
+import java.util.Locale;
+
 /**
  * Builds towers from their {@link Type}. The {@code createTower} switch has no {@code default}, so
  * a new constant without its class does not compile.
@@ -40,6 +42,11 @@ public class TowerFactory {
         Type(int price, char placementKey) {
             this.price = price;
             this.placementKey = placementKey;
+        }
+
+        /** What the shop calls it: {@code Sniper}, {@code Splash}. */
+        public String displayName() {
+            return this.name().charAt(0) + this.name().substring(1).toLowerCase(Locale.ROOT);
         }
 
         /** The price with {@code copiesOnBoard} of this type already built: +15% each, rounded half up. */

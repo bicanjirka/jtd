@@ -43,8 +43,8 @@ violation. They are not restated here.
 
 `board` (scale, cell↔pixel math) · `cell` (squares, buildability) · `damage` · `economy` ·
 `effect` (timed status effects) · `enemy` · `level` · `projectile` · `stat` (enemy stat sheet) ·
-`tower` (+ `targeting`, `buff`, `upgrade`, `sniper`, `sonar`) · `ui` (+ `render`) · `util`
-(`GameWorld`, `GameHost`, `Threads`) · `wave` (path geometry, wave scripts). `GameEngine`,
+`tower` (+ `targeting`, `buff`, `upgrade`, `sniper`, `sonar`, `splash`) · `ui` (+ `render`) ·
+`util` (`GameWorld`, `GameHost`, `Threads`) · `wave` (path geometry, wave scripts). `GameEngine`,
 `GameLoop`, `TowerDefense` and `Main` sit in `td`.
 
 ## Boundaries

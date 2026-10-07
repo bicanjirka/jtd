@@ -463,6 +463,7 @@ public abstract class AbstractTower implements Tower {
                 .filter(other -> !other.buffFor(this).equals(TowerBuff.none()))
                 .count();
         return TowerInspection.of(this.type, this.price, lines)
+                .withName(this.displayName())
                 .withBehaviours(this.behaviours())
                 .withDescription(this.description())
                 .withRecord(this.killCount, this.damageDealt)

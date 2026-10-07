@@ -49,6 +49,15 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float CROSSHAIR_RADIUS_FRACTION = 0.45f;
     private static final float CROSSHAIR_ARM_FRACTION = 0.65f;
     private static final float CROSSHAIR_ALPHA = 0.8f;
+    /** How long a blast's detonation and its arcs stay drawn. */
+    private static final float DETONATION_TICKS = 8f;
+    /** The detonation's first flash lasts this share of it. */
+    private static final float FLASH_SHARE = 0.25f;
+    private static final float DARK_RING_ALPHA = 0.8f;
+    /** An arc is drawn as this many zigzag segments, swinging out this share of its length. */
+    private static final int ARC_SEGMENTS = 4;
+    private static final float ARC_SWING = 0.12f;
+    private static final float ARC_MAX_SWING_PIXELS = 6f;
 
     private final List<TowerEffectDraw> draws = new ArrayList<>();
     private final int scale;
@@ -119,20 +128,63 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                 : Palette.TOWER_SNIPER_BEAM;
     }
 
+    /**
+     * The shot to its target, the blast as a detonation that spreads as a ring and darkens as it
+     * grows, and the arcs it carried as jagged lightning.
+     */
     public Void visitSplashTower(SplashTower tower) {
+        float progress = tower.ticksSinceShot(this.gameTime) / DETONATION_TICKS;
         for (SplashTower.Blast blast : tower.getBlasts()) {
             EnemyMob target = blast.primary();
             this.draws.add(BeamDraw.solid(Palette.TOWER_SPLASH_BEAM, tower.getX(), tower.getY(),
                     (float) target.getX(), (float) target.getY(), beamWidth(tower.getCoolDownFraction())));
-            for (EnemyMob splashTarget : blast.caught()) {
-                this.draws.add(BeamDraw.solid(Palette.TOWER_SPLASH_LINE, (float) target.getX(), (float) target.getY(),
-                        (float) splashTarget.getX(), (float) splashTarget.getY(), 1.0f));
+            if (progress < 1f) {
+                this.detonation(blast.area(), progress);
             }
-            if (tower.isSplashVisible()) {
-                this.draws.add(new SplashDraw(Palette.TOWER_SPLASH_FILL, blast.area().centerX(), blast.area().centerY(), blast.area().radius()));
+        }
+        if (progress < 1f) {
+            List<SplashTower.ArcTrace> arcs = tower.getArcs();
+            for (int i = 0; i < arcs.size(); i++) {
+                this.lightning(arcs.get(i), i, 1f - progress);
             }
         }
         return null;
+    }
+
+    private void detonation(SplashTower.Blast.Area area, float progress) {
+        float radius = area.radius() * progress;
+        if (progress < FLASH_SHARE) {
+            this.draws.add(new SplashDraw(Palette.TOWER_SPLASH_FLASH, area.centerX(), area.centerY(),
+                    area.radius() * (FLASH_SHARE + progress)));
+        }
+        this.draws.add(new RingDraw(Palette.TOWER_SPLASH_DETONATION, area.centerX(), area.centerY(), radius,
+                1f - progress));
+        this.draws.add(new RingDraw(Palette.TOWER_SPLASH_DETONATION_DARK, area.centerX(), area.centerY(), radius,
+                DARK_RING_ALPHA * progress * (1f - progress) * 4f));
+    }
+
+    /** One arc as a zigzag; which way each segment swings alternates, starting by the arc's order in the shot. */
+    private void lightning(SplashTower.ArcTrace arc, int order, float alpha) {
+        float dx = arc.toX() - arc.fromX();
+        float dy = arc.toY() - arc.fromY();
+        float length = (float) Math.hypot(dx, dy);
+        if (length == 0f) {
+            return;
+        }
+        float swing = Math.min(ARC_MAX_SWING_PIXELS, length * ARC_SWING);
+        float normalX = -dy / length * swing;
+        float normalY = dx / length * swing;
+        float x = arc.fromX();
+        float y = arc.fromY();
+        for (int i = 1; i <= ARC_SEGMENTS; i++) {
+            float t = (float) i / ARC_SEGMENTS;
+            float side = i == ARC_SEGMENTS ? 0f : ((i + order) % 2 == 0 ? 1f : -1f);
+            float nextX = arc.fromX() + dx * t + normalX * side;
+            float nextY = arc.fromY() + dy * t + normalY * side;
+            this.draws.add(new BeamDraw(Palette.TOWER_SPLASH_ARC, x, y, nextX, nextY, 2f, alpha));
+            x = nextX;
+            y = nextY;
+        }
     }
 
     /**

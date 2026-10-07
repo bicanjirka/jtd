@@ -42,6 +42,9 @@ public interface HitReceiver {
     /** Whether an effect of {@code kind} is active. */
     boolean hasEffect(EffectKind kind);
 
+    /** Stacks of the active {@code kind}; {@code 0} when inactive or the kind does not stack. */
+    int effectStacks(EffectKind kind);
+
     /** Whether an effect that {@link EffectKind#stopsEnemy() stops it} is active. */
     default boolean isStopped() {
         for (EffectKind kind : EffectKind.stopping()) {

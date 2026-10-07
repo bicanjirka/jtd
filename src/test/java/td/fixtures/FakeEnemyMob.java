@@ -174,6 +174,20 @@ public final class FakeEnemyMob implements EnemyMob {
         return this.activeEffectKinds().contains(kind);
     }
 
+    /** The stacks every effect of {@code kind} put on it, added up to the highest cap among them. */
+    @Override
+    public int effectStacks(EffectKind kind) {
+        int stacks = 0;
+        int cap = 0;
+        for (Effect effect : this.appliedEffects) {
+            if (effect.kind() == kind) {
+                stacks += effect.stacks();
+                cap = Math.max(cap, effect.effectiveStackCap());
+            }
+        }
+        return Math.min(stacks, cap);
+    }
+
     @Override
     public float critFactorFor(AttackProfile attacker) {
         return attacker.critMultiplier();

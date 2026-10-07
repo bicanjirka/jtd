@@ -68,7 +68,7 @@ final class TowerSheetText {
 
     private static SheetLine.Title title(TowerInspection tower, String value) {
         return new SheetLine.Title(Glyph.TOWER_BODY, TowerSpriteFrameBuilder.bodyPaletteFor(tower.type()),
-                SheetNumbers.titleCase(tower.type()) + " tower", value);
+                tower.name() + " tower", value);
     }
 
     private static Row statRow(TowerStat stat, TowerStatLine line) {

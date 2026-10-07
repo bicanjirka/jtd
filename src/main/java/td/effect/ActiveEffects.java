@@ -59,8 +59,6 @@ public final class ActiveEffects {
     private static final float ARMOR_LOST_PER_SUNDERED_STACK = 5f;
     private static final float MAGIC_DAMAGE_TAKEN_PER_RESONATING_STACK = 0.08f;
     private static final float RESILIENCE_LOST_PER_FRACTURED_STACK = 10f;
-    /** How deep a Fractured that Fault Line left falls: resilience -100. */
-    private static final int FAULT_LINE_MAX_FRACTURED_STACKS = 10;
     /** What an exposed or revealed enemy multiplies the crit chance taken by. */
     private static final float EXPOSED_CRIT_CHANCE_TAKEN = 2f;
     private static final StatModifier FROZEN = StatModifier.setTo(0f);
@@ -90,7 +88,7 @@ public final class ActiveEffects {
             // On/off, not gradated - any reapplication is at least as strong as what's already active.
             case INVISIBLE, REVEALED, EXPOSED, MARKED, PRIORITY -> 1f;
             case HEAL -> effect.healPerTick();
-            case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED -> effect.stacks();
+            case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED -> effect.stacks();
         };
     }
 
@@ -112,7 +110,7 @@ public final class ActiveEffects {
         switch (incoming.kind()) {
             case CHILL -> this.applyChill(incoming);
             case BURN, POISON -> this.applyPool(incoming);
-            case VULNERABLE, SUNDERED, RESONATING, FRACTURED -> this.applyStacks(incoming);
+            case VULNERABLE, SUNDERED, RESONATING, FRACTURED, SATURATED -> this.applyStacks(incoming);
             default -> {
                 Effect existing = this.active.get(incoming.kind());
                 this.active.put(incoming.kind(), existing == null ? incoming : strongerOf(existing, incoming));
@@ -178,16 +176,17 @@ public final class ActiveEffects {
 
     /**
      * A stacking kind adds up to {@link EffectKind#maxStacks()} on the enemy, whichever tower applied
-     * them, on one clock that every application refreshes. A full stack only refreshes. Once Fault
-     * Line has touched a Fractured, it stays that way until it wears off.
+     * them, on one clock that every application refreshes. A full stack only refreshes. An effect
+     * allowed more stacks keeps that cap, and once Fault Line has touched a Fractured, it stays that
+     * way, until it wears off.
      */
     private void applyStacks(Effect incoming) {
         Effect existing = this.active.get(incoming.kind());
         Effect next = existing != null && existing.faultLine() ? incoming.withFaultLine() : incoming;
-        int cap = next.faultLine() ? FAULT_LINE_MAX_FRACTURED_STACKS : next.kind().maxStacks();
+        int cap = Math.max(next.effectiveStackCap(), existing == null ? 0 : existing.effectiveStackCap());
         int stacks = Math.min(cap, (existing == null ? 0 : existing.stacks()) + incoming.stacks());
         int remaining = Math.max(existing == null ? 0 : existing.remainingTicks(), incoming.remainingTicks());
-        this.active.put(incoming.kind(), next.withStacks(stacks, remaining));
+        this.active.put(incoming.kind(), next.withStackCap(cap).withStacks(stacks, remaining));
     }
 
     /** Takes {@code fraction} of the shield's strength; a shield that is gone stays gone. */
@@ -284,7 +283,7 @@ public final class ActiveEffects {
                         -ARMOR_LOST_PER_SUNDERED_STACK * effect.stacks());
                 case FRACTURED -> accumulator.addFlat(EnemyStat.RESILIENCE,
                         -RESILIENCE_LOST_PER_FRACTURED_STACK * effect.stacks());
-                case EXPOSED, MARKED -> {
+                case EXPOSED, MARKED, SATURATED -> {
                 }
                 case BURN -> {
                 }
