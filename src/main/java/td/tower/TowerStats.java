@@ -24,7 +24,9 @@ public record TowerStats(int damage, float range, double fireRate, float rangeRe
      * pixels.
      */
     public static TowerStats of(TowerBaseStats base, TowerBuff buff, DisruptionPenalty disruption, int scale) {
-        TowerBuff total = buff.combine(TowerBuff.fireRate(-disruption.fireRate()).withRange(-disruption.range()));
+        float left = buff.disruptionLeft();
+        TowerBuff total = buff.combine(TowerBuff.fireRate(-disruption.fireRate() * left)
+                .withRange(-disruption.range() * left));
         return of(base, total, scale, disruption, buff.rangeFor(base.range()) * scale);
     }
 

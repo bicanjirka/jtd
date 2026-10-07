@@ -5,7 +5,6 @@ import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
 import td.tower.buff.TowerBuff;
 import td.tower.targeting.InRangeTargetQuery;
-import td.tower.upgrade.ClusterCondition;
 import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -29,40 +28,35 @@ public final class AuraTower extends AbstractTower {
     public static final float RANGE = 1.5f;
     public static final float DEFAULT_POWER = 0.2f;
 
+    /** How much of a jammer's effect a tower in range is spared. */
+    private static final float DISRUPTION_SHIELD = 0.5f;
+    /** What each Amplifying Core level adds to the buff, and the fire rate the second level grants. */
+    private static final float CORE_STEP = 0.1f;
+    private static final float CORE_FIRE_RATE = 0.1f;
+
     /** Ticks between periodic passes over enemies in range. */
     private static final int WITHERING_FIELD_TICK_INTERVAL = 20;
 
     private static final UpgradeNode AMPLIFYING_CORE_1 = UpgradeTier.HEAD_1.node("aura.head.amplifying_core.1",
             "Amplifying Core", PRICE)
-            .withGate(new ClusterCondition(2))
-            .withExtraEffect("+50% buff strength");
+            .withExtraEffect("+10% buff strength");
     private static final UpgradeNode AMPLIFYING_CORE_2 = UpgradeTier.HEAD_2.node("aura.head.amplifying_core.2",
             "Amplifying Core II", PRICE)
             .after(AMPLIFYING_CORE_1)
-            .withGate(new ClusterCondition(3))
-            .withExtraEffect("+50% more buff strength, and the aura now also grants a fire-rate bonus");
-    private static final UpgradeNode RESONANCE_FIELD_1 = UpgradeTier.HEAD_1.node("aura.head.resonance_field.1",
-            "Resonance Field", PRICE)
-            .withBuff(TowerBuff.range(0.3f))
-            .withGate(new ClusterCondition(2));
-    private static final UpgradeNode RESONANCE_FIELD_2 = UpgradeTier.HEAD_2.node("aura.head.resonance_field.2",
-            "Resonance Field II", PRICE)
-            .withBuff(TowerBuff.range(0.25f))
-            .after(RESONANCE_FIELD_1)
-            .withGate(new ClusterCondition(3))
-            .withExtraEffect("the aura no longer refuses to buff other Aura towers");
+            .withExtraEffect("+10% more buff strength, and the aura also grants +10% fire rate");
+    private static final UpgradeNode BROADCAST_1 = UpgradeTier.HEAD_1.node("aura.head.broadcast.1",
+            "Broadcast", PRICE)
+            .withBuff(TowerBuff.range(0.3f));
     private static final UpgradeNode WITHERING_FIELD = UpgradeTier.SPECIAL.node("aura.special.withering_field",
             "Withering Field", PRICE)
-            .withGate(new ClusterCondition(2))
             .withExtraEffect("every few ticks, every enemy inside the aura's range gains 1 Vulnerable stack (cap 3)");
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE))
-            .with(AMPLIFYING_CORE_1, AMPLIFYING_CORE_2, RESONANCE_FIELD_1, RESONANCE_FIELD_2, WITHERING_FIELD)
-            .withChoice(ExclusiveChoice.oneOf(AMPLIFYING_CORE_1, RESONANCE_FIELD_1));
+            .with(AMPLIFYING_CORE_1, AMPLIFYING_CORE_2, BROADCAST_1, WITHERING_FIELD)
+            .withChoice(ExclusiveChoice.oneOf(AMPLIFYING_CORE_1, BROADCAST_1));
 
     private volatile float power;
     private volatile boolean grantsFireRate = false;
-    private volatile boolean buffsAuras = false;
     private int tickCounter = 0;
 
     public AuraTower(GameWorld context, int x, int y) {
@@ -83,12 +77,10 @@ public final class AuraTower extends AbstractTower {
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
         if (node.equals(AMPLIFYING_CORE_1) || node.equals(AMPLIFYING_CORE_2)) {
-            this.power *= 1.5f;
+            this.power += CORE_STEP;
             if (node.equals(AMPLIFYING_CORE_2)) {
                 this.grantsFireRate = true;
             }
-        } else if (node.equals(RESONANCE_FIELD_2)) {
-            this.buffsAuras = true;
         }
     }
 
@@ -98,18 +90,18 @@ public final class AuraTower extends AbstractTower {
     }
 
     public TowerBuff buff() {
-        TowerBuff base = TowerBuff.amplifying(this.power);
-        return this.grantsFireRate ? base.withFireRate(this.power) : base;
+        TowerBuff base = TowerBuff.amplifying(this.power).withDisruptionShield(DISRUPTION_SHIELD);
+        return this.grantsFireRate ? base.withFireRate(CORE_FIRE_RATE) : base;
     }
 
     /**
-     * Another tower within range; auras only once the upgrade allowing it is owned. Never itself.
+     * Another tower within range. Never itself, and never another aura.
      */
     private boolean buffs(Tower other) {
         if (other == this) {
             return false;
         }
-        if (!this.buffsAuras && other.getType() == TowerFactory.Type.AURA) {
+        if (other.getType() == TowerFactory.Type.AURA) {
             return false;
         }
         int dx = this.centerX - other.getX();
@@ -154,8 +146,9 @@ public final class AuraTower extends AbstractTower {
         List<BehaviourLine> lines = new ArrayList<>();
         lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby damage", bonus));
         lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby range", bonus));
+        lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby disruption", "-" + BehaviourLine.percent(DISRUPTION_SHIELD)));
         if (this.grantsFireRate) {
-            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby fire rate", bonus));
+            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby fire rate", "+" + BehaviourLine.percent(CORE_FIRE_RATE)));
         }
         if (this.upgrades().owns(WITHERING_FIELD.id())) {
             lines.add(new BehaviourLine(BehaviourMarker.VULNERABLE, "Enemies inside", "vulnerable"));
@@ -168,7 +161,7 @@ public final class AuraTower extends AbstractTower {
 
     @Override
     protected String description() {
-        return "Never attacks. Several auras stack.";
+        return "Never attacks. Several auras stack, but an aura never buffs another aura.";
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
