@@ -2,8 +2,6 @@ package td.tower.sniper;
 
 import td.tower.targeting.MostNeighboursSelector;
 
-import java.util.Optional;
-
 /** Ricochet: a crit bounces on to the enemies beside the target. Aims where a bounce finds the most. */
 public final class RicochetPerk implements SniperPerk {
 
@@ -12,8 +10,8 @@ public final class RicochetPerk implements SniperPerk {
     private static final float SHARE = 0.6f;
 
     @Override
-    public Optional<SniperAim> aim(Viewpoint view) {
-        return Optional.of(new SniperAim(new MostNeighboursSelector(BOUNCE_RADIUS_CELLS * view.cellSize()),
+    public SniperSpec refineSpec(SniperSpec spec) {
+        return spec.aimingAt(new SniperAim(new MostNeighboursSelector(BOUNCE_RADIUS_CELLS * spec.view().cellSize()),
                 "most neighbours"));
     }
 

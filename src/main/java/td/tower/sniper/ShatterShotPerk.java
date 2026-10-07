@@ -4,8 +4,6 @@ import td.effect.EffectKind;
 import td.tower.targeting.HighestHealthSelector;
 import td.tower.targeting.PreferringSelector;
 
-import java.util.Optional;
-
 /** Shatter Shot: a crit on a frozen enemy hits harder. Aims at a frozen enemy first. */
 public final class ShatterShotPerk implements SniperPerk {
 
@@ -18,7 +16,7 @@ public final class ShatterShotPerk implements SniperPerk {
     }
 
     @Override
-    public Optional<SniperAim> aim(Viewpoint view) {
-        return Optional.of(new SniperAim(PreferringSelector.frozenFirst(new HighestHealthSelector()), "frozen first"));
+    public SniperSpec refineSpec(SniperSpec spec) {
+        return spec.aimingAt(new SniperAim(PreferringSelector.frozenFirst(new HighestHealthSelector()), "frozen first"));
     }
 }

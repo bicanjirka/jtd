@@ -126,9 +126,9 @@ public final class SeekerTower extends AbstractTower {
         Set<EffectKind> before = target.activeEffectKinds();
         boolean controlled = before.contains(EffectKind.FREEZE) || before.contains(EffectKind.CHILL);
         this.dealDamage(target, Damage.magic(this.damageCurrent()));
-        target.applyEffect(Effect.freeze(this.freezeDurationTicks, d -> this.dealDamage(target, d)));
+        this.applyEffect(target, sink -> Effect.freeze(this.freezeDurationTicks, sink));
         if (this.upgrades().owns(HOMING_CURSE.id())) {
-            this.applyVulnerable(target, controlled ? 2 : 1);
+            this.applyStacks(target, EffectKind.VULNERABLE, controlled ? 2 : 1);
         }
     }
 

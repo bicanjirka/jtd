@@ -61,7 +61,10 @@
   `dealDamage(enemy, damage, attack)` (`withGuaranteedCrit()`, extra penetration) instead of
   adding a hook.
 - Damage that ticks (a pool's sink, a field's tick) goes through `dealPeriodicDamage`: periodic
-  damage never crits. The hit that starts a pool scales it by `potencyOfHit`. Damage that scales with the target's protection asks `HitReceiver.reductionAgainst`.
+  damage never crits. Every effect goes on through `applyEffect`, which binds that sink, and a
+  stacking debuff through `applyStacks(kind)`, which owns its clock. The hit that starts a pool
+  scales it by `potencyOfHit`. Damage that scales with the target's protection asks
+  `HitReceiver.reductionAgainst`.
 
 ## Experience
 
@@ -100,10 +103,14 @@
 - `buyUpgrade` is the only entry point and is check-and-charge (returns `false` without effect).
   Don't pre-check affordability. It publishes `TowerStats` before `UpgradeState`.
 - Pass `StandardBaseSlot.nodes` a `BaseSlotPerks` for what Attune and Range III add to a tower.
-- A node whose behaviour is more than a `TowerBuff` becomes a perk: `SniperTower` keeps a `SniperPerk`
-  per owned node, registered by node id in `PERKS`, and shapes each shot through them. Perks are
-  pure (no tower, no `GameWorld`); what they may make the tower do is `ShotActions`. A perk with
-  state is built per tower.
+- A node whose behaviour is more than a `TowerBuff` becomes a perk, in the tower's own package
+  (`sniper`). A static `PerkCatalogue` says which perks each node brings (several may), and the
+  tower's `OwnedPerks` builds its own, as some carry state. Perks run in purchase order: first
+  `refineSpec` (whom the tower may hit, how it picks, its rhythm), then per hit. Perks are pure
+  (no tower, no `GameWorld`); what they may make the tower do is the tower's actions interface.
+- Perks widen or narrow whom a tower may hit through its `Reach`. A dead zone goes on the `Reach`
+  (`withDeadZone`), which applies it last, so it holds whatever order the perks were bought in;
+  never `and` one onto the query.
 - The UI reads `offeredUpgrades()`/`upgrades()` only; the tower is the source of truth.
 
 ## Adding a tower

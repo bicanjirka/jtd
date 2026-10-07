@@ -3,8 +3,6 @@ package td.tower.sniper;
 import td.tower.targeting.HighestRankSelector;
 import td.util.ThreadConfined;
 
-import java.util.Optional;
-
 /**
  * Momentum: the shot after a crit hits five times as hard and ignores armor and plating, and a kill
  * speeds the Sniper up for a few seconds. Aims at the highest rank.
@@ -26,8 +24,8 @@ public final class MomentumPerk implements SniperPerk {
     }
 
     @Override
-    public Optional<SniperAim> aim(Viewpoint view) {
-        return Optional.of(new SniperAim(new HighestRankSelector(), "highest rank"));
+    public SniperSpec refineSpec(SniperSpec spec) {
+        return spec.aimingAt(new SniperAim(new HighestRankSelector(), "highest rank"));
     }
 
     @Override

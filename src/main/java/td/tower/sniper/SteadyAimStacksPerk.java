@@ -10,7 +10,7 @@ public final class SteadyAimStacksPerk implements SniperPerk {
     }
 
     @Override
-    public AimRules refineAim(AimRules rules) {
-        return rules.withStackCap(this.stackCap);
+    public SniperSpec refineSpec(SniperSpec spec) {
+        return spec.withSteadyAim(spec.steadyAim().withStackCap(this.stackCap));
     }
 }

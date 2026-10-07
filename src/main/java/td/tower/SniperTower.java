@@ -3,6 +3,7 @@ package td.tower;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.buff.TowerBuff;
 import td.tower.sniper.AimFocus;
@@ -18,6 +19,7 @@ import td.tower.sniper.HeadhunterPerk;
 import td.tower.sniper.HollowPointPerk;
 import td.tower.sniper.LongShotPerk;
 import td.tower.sniper.MomentumPerk;
+import td.tower.sniper.OverwatchPerk;
 import td.tower.sniper.QuickScopePerk;
 import td.tower.sniper.RailgunPerk;
 import td.tower.sniper.RicochetPerk;
@@ -26,9 +28,9 @@ import td.tower.sniper.ShotActions;
 import td.tower.sniper.ShotContext;
 import td.tower.sniper.ShotResult;
 import td.tower.sniper.SilverRoundsPerk;
-import td.tower.sniper.SniperAim;
 import td.tower.sniper.SniperPerk;
 import td.tower.sniper.SniperShot;
+import td.tower.sniper.SniperSpec;
 import td.tower.sniper.SniperTempo;
 import td.tower.sniper.SpotterUplinkPerk;
 import td.tower.sniper.SteadyAimPerk;
@@ -36,18 +38,17 @@ import td.tower.sniper.SteadyAimStacksPerk;
 import td.tower.sniper.SteadyTempoPerk;
 import td.tower.sniper.SunderRoundsPerk;
 import td.tower.sniper.UnbrokenAimPerk;
-import td.tower.sniper.Viewpoint;
 import td.tower.sniper.WeakSpotPerk;
-import td.tower.targeting.BeyondRadiusTargetQuery;
-import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.NearestSelector;
 import td.tower.targeting.OnSegmentTargetQuery;
 import td.tower.targeting.PreferringSelector;
-import td.tower.targeting.TargetQuery;
 import td.tower.targeting.TargetSelector;
+import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.BaseSlotPerks;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.OwnedPerks;
+import td.tower.upgrade.PerkCatalogue;
 import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -58,9 +59,7 @@ import td.util.ThreadConfined;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 /**
  * The patient single-target tower: it gets better the longer it stays on one enemy. It fires at the
@@ -82,8 +81,6 @@ public final class SniperTower extends AbstractTower {
     /** A shot every 2.5 s. */
     private static final int COOLDOWN_MAX = 49;
 
-    /** Overwatch: it can't shoot at what is this close, however far its range grows. */
-    private static final float DEAD_ZONE_CELLS = 2f;
     private static final float OVERWATCH_RANGE_BONUS = 0.35f;
     /** Railgun reaches this far past the Sniper's range, and every enemy it pierces after the first takes less. */
     private static final float RAILGUN_EXTRA_REACH_CELLS = 2f;
@@ -196,35 +193,36 @@ public final class SniperTower extends AbstractTower {
             .withChoice(ExclusiveChoice.specials(MOMENTUM, RICOCHET, HEADHUNTER, HOLLOW_POINT, FIFTH_SHOT,
                     SHATTER_SHOT));
 
-    /** The perk each node brings, by node id: a new one for every tower, as some carry state. */
-    private static final Map<String, Supplier<SniperPerk>> PERKS = Map.ofEntries(
-            Map.entry(StandardBaseSlot.ATTUNE_ID, SteadyAimPerk::new),
-            Map.entry(FOCUSED_OPTICS_1.id(), () -> new Both(new QuickScopePerk(), new SteadyTempoPerk())),
-            Map.entry(FOCUSED_OPTICS_2.id(), FrenzyPerk::new),
-            Map.entry(FOCUSED_OPTICS_3.id(), WeakSpotPerk::new),
-            Map.entry(RAILGUN.id(), RailgunPerk::new),
-            Map.entry(EXECUTIONER.id(), ExecutionerPerk::new),
-            Map.entry(MARKSMANS_EYE_1.id(), () -> new SteadyAimStacksPerk(3)),
-            Map.entry(MARKSMANS_EYE_2.id(), () -> new ArmorPiercePerk(30f)),
-            Map.entry(MARKSMANS_EYE_3.id(), CleanShotPerk::new),
-            Map.entry(UNBROKEN_AIM.id(), UnbrokenAimPerk::new),
-            Map.entry(SUNDER_ROUNDS.id(), SunderRoundsPerk::new),
-            Map.entry(TRADECRAFT_1.id(), CritStreakPerk::new),
-            Map.entry(TRADECRAFT_2.id(), LongShotPerk::new),
-            Map.entry(SILVER_ROUNDS.id(), SilverRoundsPerk::new),
-            Map.entry(SPOTTER_UPLINK.id(), SpotterUplinkPerk::new),
-            Map.entry(MOMENTUM.id(), MomentumPerk::new),
-            Map.entry(RICOCHET.id(), RicochetPerk::new),
-            Map.entry(HEADHUNTER.id(), HeadhunterPerk::new),
-            Map.entry(HOLLOW_POINT.id(), HollowPointPerk::new),
-            Map.entry(FIFTH_SHOT.id(), FifthShotPerk::new),
-            Map.entry(SHATTER_SHOT.id(), ShatterShotPerk::new));
+    private static final PerkCatalogue<SniperPerk> PERKS = PerkCatalogue.<SniperPerk>empty()
+            .with(StandardBaseSlot.ATTUNE_ID, SteadyAimPerk::new)
+            .with(StandardBaseSlot.RANGE_3_ID, OverwatchPerk::new)
+            .with(FOCUSED_OPTICS_1.id(), QuickScopePerk::new)
+            .with(FOCUSED_OPTICS_1.id(), SteadyTempoPerk::new)
+            .with(FOCUSED_OPTICS_2.id(), FrenzyPerk::new)
+            .with(FOCUSED_OPTICS_3.id(), WeakSpotPerk::new)
+            .with(RAILGUN.id(), RailgunPerk::new)
+            .with(EXECUTIONER.id(), ExecutionerPerk::new)
+            .with(MARKSMANS_EYE_1.id(), () -> new SteadyAimStacksPerk(3))
+            .with(MARKSMANS_EYE_2.id(), () -> new ArmorPiercePerk(30f))
+            .with(MARKSMANS_EYE_3.id(), CleanShotPerk::new)
+            .with(UNBROKEN_AIM.id(), UnbrokenAimPerk::new)
+            .with(SUNDER_ROUNDS.id(), SunderRoundsPerk::new)
+            .with(TRADECRAFT_1.id(), CritStreakPerk::new)
+            .with(TRADECRAFT_2.id(), LongShotPerk::new)
+            .with(SILVER_ROUNDS.id(), SilverRoundsPerk::new)
+            .with(SPOTTER_UPLINK.id(), SpotterUplinkPerk::new)
+            .with(MOMENTUM.id(), MomentumPerk::new)
+            .with(RICOCHET.id(), RicochetPerk::new)
+            .with(HEADHUNTER.id(), HeadhunterPerk::new)
+            .with(HOLLOW_POINT.id(), HollowPointPerk::new)
+            .with(FIFTH_SHOT.id(), FifthShotPerk::new)
+            .with(SHATTER_SHOT.id(), ShatterShotPerk::new);
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final AimFocus focus = new AimFocus();
     private final SniperTempo tempo = new SniperTempo();
     private final ShotActions actions = new Actions();
-    private volatile List<SniperPerk> perks = List.of();
+    private final OwnedPerks<SniperPerk> perks = new OwnedPerks<>(PERKS);
     private SniperShot shotInFlight;
     private int coolDown = 0;
     private EnemyMob currentTarget;
@@ -244,41 +242,26 @@ public final class SniperTower extends AbstractTower {
 
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
-        Supplier<SniperPerk> perk = PERKS.get(node.id());
-        if (perk != null) {
-            List<SniperPerk> next = new ArrayList<>(this.perks);
-            next.add(perk.get());
-            this.perks = List.copyOf(next);
-        }
+        this.perks.add(node);
     }
 
     private Viewpoint viewpoint() {
         return new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
     }
 
-    /** The aim of the first special owned, else the enemy furthest along the path. */
-    private SniperAim aim(Viewpoint view) {
-        for (SniperPerk perk : this.perks) {
-            Optional<SniperAim> aim = perk.aim(view);
-            if (aim.isPresent()) {
-                return aim.get();
-            }
+    /** Whom it may shoot and how it picks, as the perks in {@code owned} make it. */
+    private SniperSpec spec(List<SniperPerk> owned) {
+        Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
+        SniperSpec spec = SniperSpec.from(view);
+        for (SniperPerk perk : owned) {
+            spec = perk.refineSpec(spec);
         }
-        return new SniperAim(new FurthestAlongPathSelector(), "first");
+        return spec;
     }
 
-    private EnemyMob findEnemy() {
-        Viewpoint view = this.viewpoint();
-        TargetQuery query = InRangeTargetQuery.visible(this.centerX, this.centerY, this.rangeReal());
-        for (SniperPerk perk : this.perks) {
-            query = perk.widen(query, view);
-        }
-        if (this.upgrades().owns(StandardBaseSlot.RANGE_3_ID)) {
-            float deadZone = DEAD_ZONE_CELLS * view.cellSize();
-            query = query.and(new BeyondRadiusTargetQuery(this.centerX, this.centerY, deadZone));
-        }
-        TargetSelector selector = PreferringSelector.priority(this.aim(view).selector());
-        return selector.selectFrom(query.matching(this.context.enemies())).orElse(null);
+    private EnemyMob findEnemy(SniperSpec spec) {
+        TargetSelector selector = PreferringSelector.priority(spec.chosenAim().selector());
+        return selector.selectFrom(spec.reach().matching(this.context.enemies())).orElse(null);
     }
 
     public void doTick(int gameTime) {
@@ -286,9 +269,11 @@ public final class SniperTower extends AbstractTower {
         if (this.coolDown > 0) {
             this.coolDown--;
         } else {
-            this.currentTarget = this.findEnemy();
+            List<SniperPerk> owned = this.perks.all();
+            SniperSpec spec = this.spec(owned);
+            this.currentTarget = this.findEnemy(spec);
             if (this.currentTarget != null) {
-                this.fire(this.currentTarget);
+                this.fire(this.currentTarget, owned, spec.steadyAim());
             }
         }
         if (this.currentTarget != null) {
@@ -297,14 +282,9 @@ public final class SniperTower extends AbstractTower {
     }
 
     /** One shot: shaped by the owned perks, landed, settled and reacted to, and the wait that follows. */
-    private void fire(EnemyMob target) {
+    private void fire(EnemyMob target, List<SniperPerk> owned, AimRules steadyAim) {
         this.shotsFired++;
-        List<SniperPerk> owned = this.perks;
-        AimRules aim = AimRules.attuned();
-        for (SniperPerk perk : owned) {
-            aim = perk.refineAim(aim);
-        }
-        AimLock lock = this.focus.lock(target, aim.stackCap(), aim.survivesKill());
+        AimLock lock = this.focus.lock(target, steadyAim.stackCap(), steadyAim.survivesKill());
         ShotContext context = new ShotContext(target, lock, this.shotsFired, this.rangeShareOf(target));
         SniperShot shot = SniperShot.of(this.stats().attack());
         for (SniperPerk perk : owned) {
@@ -399,7 +379,7 @@ public final class SniperTower extends AbstractTower {
 
     @Override
     protected List<BehaviourLine> behaviours() {
-        BehaviourLine targets = new BehaviourLine(BehaviourMarker.TARGETING, "Targets", this.aim(this.viewpoint()).label());
+        BehaviourLine targets = new BehaviourLine(BehaviourMarker.TARGETING, "Targets", this.spec(this.perks.all()).chosenAim().label());
         if (!this.upgrades().owns(HOLLOW_POINT.id())) {
             return List.of(targets);
         }
@@ -433,27 +413,13 @@ public final class SniperTower extends AbstractTower {
         }
 
         @Override
-        public void applyVulnerable(EnemyMob target, int stacks) {
-            SniperTower.this.applyVulnerable(target, stacks);
-        }
-
-        @Override
-        public void applySundered(EnemyMob target, int stacks) {
-            SniperTower.this.applySundered(target, stacks);
+        public void applyStacks(EnemyMob target, EffectKind kind, int stacks) {
+            SniperTower.this.applyStacks(target, kind, stacks);
         }
 
         @Override
         public void ricochet(EnemyMob from, int bounces, float share, float reachCells) {
             SniperTower.this.ricochet(from, bounces, share, reachCells);
-        }
-    }
-
-    /** Two perks that one node brings. */
-    private record Both(SniperPerk first, SniperPerk second) implements SniperPerk {
-
-        @Override
-        public SniperShot shape(SniperShot shot, ShotContext context) {
-            return this.second.shape(this.first.shape(shot, context), context);
         }
     }
 }

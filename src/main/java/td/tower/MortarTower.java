@@ -2,6 +2,7 @@ package td.tower;
 
 import td.damage.Damage;
 import td.effect.Effect;
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.CannonballProjectile;
 import td.tower.buff.TowerBuff;
@@ -129,9 +130,9 @@ public final class MortarTower extends AbstractTower {
             float r2 = (float) (dx * dx + dy * dy);
             int amount = Math.round(this.damageCurrent() * (1 - r2 / (this.splashRadius * this.splashRadius)));
             this.dealDamage(enemy, Damage.physical(amount));
-            enemy.applyEffect(Effect.chill(this.chillAmount, this.chillDurationTicks, d -> this.dealDamage(enemy, d)));
+            this.applyEffect(enemy, sink -> Effect.chill(this.chillAmount, this.chillDurationTicks, sink));
             if (this.upgrades().owns(CURSED_SHRAPNEL.id())) {
-                this.applyVulnerable(enemy, 1);
+                this.applyStacks(enemy, EffectKind.VULNERABLE, 1);
             }
         }
         if (this.upgrades().owns(FRAGMENTATION_ROUNDS_1.id())) {
@@ -153,7 +154,7 @@ public final class MortarTower extends AbstractTower {
             }
             this.dealDamage(enemy, shard);
             if (this.upgrades().owns(FRAGMENTATION_ROUNDS_2.id())) {
-                enemy.applyEffect(Effect.chill(this.chillAmount, chillTicks, d -> this.dealDamage(enemy, d)));
+                this.applyEffect(enemy, sink -> Effect.chill(this.chillAmount, chillTicks, sink));
             }
         }
     }

@@ -2,8 +2,6 @@ package td.tower.sniper;
 
 import td.tower.targeting.HighestHealthSelector;
 
-import java.util.Optional;
-
 /** Fifth Shot: every fifth shot is a guaranteed crit that hits harder; aims at the most health. */
 public final class FifthShotPerk implements SniperPerk {
 
@@ -19,7 +17,7 @@ public final class FifthShotPerk implements SniperPerk {
     }
 
     @Override
-    public Optional<SniperAim> aim(Viewpoint view) {
-        return Optional.of(new SniperAim(new HighestHealthSelector(), "most health"));
+    public SniperSpec refineSpec(SniperSpec spec) {
+        return spec.aimingAt(new SniperAim(new HighestHealthSelector(), "most health"));
     }
 }

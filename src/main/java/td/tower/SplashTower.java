@@ -215,13 +215,13 @@ public final class SplashTower extends AbstractTower {
         int damage = Math.round(this.damageCurrent() * (1 - (r2 * this.falloffSoftening) / (radius * radius)));
         boolean critical = this.dealDamage(enemy, Damage.physical(damage));
         if (this.concussiveBlast) {
-            enemy.applyEffect(Effect.chill(CHILL_AMOUNT, CHILL_DURATION_TICKS, d -> this.dealDamage(enemy, d)));
+            this.applyEffect(enemy, sink -> Effect.chill(CHILL_AMOUNT, CHILL_DURATION_TICKS, sink));
         }
         if (this.upgrades().owns(TOXIC_BLOOM.id())) {
             Damage perTick = Damage.magic(Math.round(this.damageCurrent() * POISON_DAMAGE_SHARE
                     * this.potencyOfHit(enemy, critical)));
-            enemy.applyEffect(Effect.poison(perTick, Math.round(POISON_SECONDS * TICKS_PER_SECOND),
-                    d -> this.dealPeriodicDamage(enemy, d)));
+            this.applyEffect(enemy, sink -> Effect.poison(perTick, Math.round(POISON_SECONDS * TICKS_PER_SECOND),
+                    sink));
         }
         return critical;
     }

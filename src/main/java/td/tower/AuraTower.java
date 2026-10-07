@@ -1,5 +1,6 @@
 package td.tower;
 
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
 import td.tower.buff.TowerBuff;
@@ -142,7 +143,7 @@ public final class AuraTower extends AbstractTower {
         if (this.upgrades().owns(WITHERING_FIELD.id())) {
             for (EnemyMob enemy : InRangeTargetQuery.everyone(this.centerX, this.centerY, this.rangeReal())
                     .matching(this.context.enemies())) {
-                this.applyVulnerable(enemy, 1);
+                this.applyStacks(enemy, EffectKind.VULNERABLE, 1);
             }
         }
     }
