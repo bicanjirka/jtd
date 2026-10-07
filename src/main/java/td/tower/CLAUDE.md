@@ -70,6 +70,9 @@
   `PoolTuning` the pool carries, never state the Cinder keeps on the enemy; a Thermal Shock's chill and an
   Everburn top-up are the Cinder's own work in `tendBurning`. Bellows reads what other towers' buffs add to
   its fire rate (`buffFor`), so it needs no Aura-specific code.
+- A Splash's mines and a Hexer's cursed clouds are zones it makes (`Zone.mine`, `Zone.cloud`); a mine
+  blasts through the same `blast` a shot does, centred where it lay, with the enemy that stepped on it as
+  the primary, and the Splash keeps its own list of mines to replace the oldest and to take them off with it.
 - Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
   `AuraTower.buffs`' single "is this an aura" check stays the only role check.
 

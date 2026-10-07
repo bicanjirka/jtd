@@ -140,4 +140,60 @@ class ZoneRosterTest {
 
         assertThat(this.applied(enemy, EffectKind.FREEZE)).isZero();
     }
+
+    @Test
+    void aMineGoesOffTheTickTheFirstEnemyStepsWithinItAndIsThenSpent() {
+        FakeEnemyMob first = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob second = FakeEnemyMob.at(105, 100);
+        java.util.List<EnemyMob> by = new java.util.ArrayList<>();
+        this.world.zones().add(Zone.mine(100, 100, 10, LIFETIME, this.owner, (mine, enemy) -> by.add(enemy)));
+        this.world.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(500, 500)});
+        this.tick(1, 4);
+        this.world.enemies().setEnemies(new EnemyMob[]{first, second});
+
+        this.tick(4, 5);
+        this.tick(5, 20);
+
+        assertThat(by).containsExactly(first);
+        assertThat(this.world.zones().zones()).isEmpty();
+    }
+
+    @Test
+    void aMineIsLookedAtEveryTickNotOnlyOnAPulse() {
+        FakeEnemyMob walker = FakeEnemyMob.at(500, 500);
+        int[] goneOff = {0};
+        this.world.zones().add(Zone.mine(100, 100, 10, LIFETIME, this.owner, (mine, enemy) -> goneOff[0]++));
+        this.world.enemies().setEnemies(new EnemyMob[]{walker});
+        this.tick(1, 3);
+
+        walker.moveTo(100, 100);
+        this.tick(3, 4);
+
+        assertThat(goneOff[0]).isEqualTo(1);
+    }
+
+    @Test
+    void aCursedCloudGivesEveryEnemyInsideTheEffectsItCarries() {
+        FakeEnemyMob inside = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob outside = FakeEnemyMob.at(100 + 5 * RADIUS, 100);
+        this.world.enemies().setEnemies(new EnemyMob[]{inside, outside});
+        this.world.zones().add(Zone.cloud(100, 100, RADIUS, LIFETIME, this.owner,
+                java.util.List.of(Effect.vulnerable(2, 80, d -> {
+                }))));
+
+        this.tick(1, 2);
+
+        assertThat(inside.activeEffectKinds()).contains(EffectKind.VULNERABLE);
+        assertThat(outside.activeEffectKinds()).isEmpty();
+    }
+
+    @Test
+    void aTowerCanTakeAZoneOffTheBoard() {
+        Zone zone = this.zone(ZoneKind.TAR);
+        this.world.zones().add(zone);
+
+        this.world.zones().remove(zone);
+
+        assertThat(this.world.zones().zones()).isEmpty();
+    }
 }

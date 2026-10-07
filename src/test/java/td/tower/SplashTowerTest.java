@@ -610,4 +610,136 @@ class SplashTowerTest {
         assertThat(stormcaller.inspect().name()).isEqualTo("Stormcaller");
         assertThat(hexer.inspect().name()).isEqualTo("Hexer");
     }
+
+    private SplashTower mineLayer() {
+        return this.upgradedTower("Arc", "Conductor", "Overload", "Transcendent", "Range", "Range II", "Range III");
+    }
+
+    private List<td.zone.Zone> mines() {
+        return this.context.zones().zones().stream().filter(zone -> zone.kind() == td.zone.ZoneKind.MINE).toList();
+    }
+
+    @Test
+    void everyFourthBlastLeavesAMineOnThePathWhereItLandedOnceRangeThreeIsOwned() {
+        SplashTower tower = this.mineLayer();
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        this.enemies(target);
+
+        tickThroughCooldown(tower, 3);
+        int afterThree = this.mines().size();
+        tickThroughCooldown(tower, 1);
+
+        assertThat(afterThree).isZero();
+        assertThat(this.mines()).singleElement().satisfies(mine -> {
+            assertThat(mine.x()).isEqualTo(100.0);
+            assertThat(mine.y()).isEqualTo(100.0);
+        });
+    }
+
+    @Test
+    void withoutRangeThreeABlastLeavesNoMine() {
+        SplashTower tower = this.upgradedTower("Arc", "Conductor", "Overload", "Transcendent");
+        this.enemies(FakeEnemyMob.at(100, 100));
+
+        tickThroughCooldown(tower, 8);
+
+        assertThat(this.mines()).isEmpty();
+    }
+
+    @Test
+    void theNextEnemyToStepOnAMineSetsItOffAsOneBlastAndTheMineIsGone() {
+        SplashTower tower = this.mineLayer();
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        this.enemies(target);
+        tickThroughCooldown(tower, 4);
+        target.moveTo(2000, 2000);
+        FakeEnemyMob walker = FakeEnemyMob.ghostAt(100, 105);
+        FakeEnemyMob bystander = FakeEnemyMob.ghostAt(100, 130);
+        this.enemies(target, walker, bystander);
+
+        this.context.zones().doTick(1);
+
+        assertThat(walker.hits()).isNotEmpty();
+        assertThat(bystander.hits()).isNotEmpty();
+        assertThat(this.mines()).isEmpty();
+    }
+
+    @Test
+    void aMineNobodyStepsOnEndsAfterTenSeconds() {
+        SplashTower tower = this.mineLayer();
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        this.enemies(target);
+        tickThroughCooldown(tower, 4);
+        target.moveTo(2000, 2000);
+
+        for (int t = 1; t < 199; t++) {
+            this.context.zones().doTick(t);
+        }
+        int stillThere = this.mines().size();
+        this.context.zones().doTick(199);
+        this.context.zones().doTick(200);
+
+        assertThat(stillThere).isEqualTo(1);
+        assertThat(this.mines()).isEmpty();
+    }
+
+    @Test
+    void aSplashKeepsAtMostThreeMinesAndAFourthReplacesTheOldest() {
+        SplashTower tower = this.mineLayer();
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        this.enemies(target);
+
+        for (int laid = 0; laid < 4; laid++) {
+            target.moveTo(70 + 40 * laid, 100);
+            tickThroughCooldown(tower, 4);
+        }
+
+        assertThat(this.mines()).extracting(mine -> mine.x()).containsExactly(110.0, 150.0, 190.0);
+    }
+
+    @Test
+    void aSoldSplashTakesItsMinesWithIt() {
+        SplashTower tower = this.mineLayer();
+        this.enemies(FakeEnemyMob.at(100, 100));
+        tickThroughCooldown(tower, 4);
+
+        tower.doCleanup();
+
+        assertThat(this.mines()).isEmpty();
+    }
+
+    @Test
+    void masteryMakesAHexedEnemyThatDiesLeaveACloudThatCursesWhatStandsInIt() {
+        SplashTower tower = this.upgradedTower("Hex", "Witch's Brew", "Spreading Curse", "Transcendent", "Wide Charge",
+                "Shaped Charge", "Potency", "Mastery");
+        FakeEnemyMob carrier = FakeEnemyMob.at(100, 100);
+        this.enemies(carrier);
+        tickThroughCooldown(tower, 4);
+        carrier.applyEffect(Effect.vulnerable(2, 80, d -> {
+        }));
+        FakeEnemyMob bystander = FakeEnemyMob.ghostAt(100, 120);
+
+        kill(carrier);
+        this.enemies(carrier, bystander);
+        tower.doTick(3000);
+        this.context.zones().doTick(1);
+
+        assertThat(this.context.zones().zones()).extracting(td.zone.Zone::kind).contains(td.zone.ZoneKind.CURSED_CLOUD);
+        assertThat(bystander.activeEffectKinds()).contains(EffectKind.VULNERABLE);
+    }
+
+    @Test
+    void withoutMasteryAHexedEnemyThatDiesLeavesNoCloud() {
+        SplashTower tower = this.upgradedTower("Hex", "Witch's Brew", "Spreading Curse");
+        FakeEnemyMob carrier = FakeEnemyMob.at(100, 100);
+        this.enemies(carrier);
+        tickThroughCooldown(tower, 4);
+        carrier.applyEffect(Effect.vulnerable(2, 80, d -> {
+        }));
+
+        kill(carrier);
+        tower.doTick(3000);
+
+        assertThat(this.context.zones().zones()).isEmpty();
+    }
 }

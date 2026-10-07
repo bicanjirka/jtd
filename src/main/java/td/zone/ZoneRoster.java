@@ -40,6 +40,11 @@ public final class ZoneRoster {
         return Collections.unmodifiableList(this.zones);
     }
 
+    /** Takes {@code zone} off the board, as a tower does with a mine it replaces. */
+    public void remove(Zone zone) {
+        this.zones.remove(zone);
+    }
+
     public void clear() {
         this.zones.clear();
     }
@@ -52,7 +57,9 @@ public final class ZoneRoster {
         Map<EnemyMob, Set<ZoneKind>> touched = new IdentityHashMap<>();
         List<Zone> ended = new ArrayList<>();
         for (Zone zone : this.zones) {
-            if (zone.ageTicks() == 0 || gameTime % PULSE_TICKS == 0) {
+            if (zone.kind() == ZoneKind.MINE) {
+                this.stepOn(zone);
+            } else if (zone.ageTicks() == 0 || gameTime % PULSE_TICKS == 0) {
                 this.pulse(zone, touched);
             }
             zone.age();
@@ -61,6 +68,15 @@ public final class ZoneRoster {
             }
         }
         this.zones.removeAll(ended);
+    }
+
+    /** A mine is looked at every tick, so nothing walks across it between two pulses. */
+    private void stepOn(Zone zone) {
+        List<EnemyMob> inside = InRangeTargetQuery.everyone((int) Math.round(zone.x()), (int) Math.round(zone.y()),
+                zone.radius()).matching(this.enemies);
+        if (!inside.isEmpty()) {
+            zone.detonate(inside.getFirst());
+        }
     }
 
     private void pulse(Zone zone, Map<EnemyMob, Set<ZoneKind>> touched) {

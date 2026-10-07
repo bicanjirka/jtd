@@ -2,7 +2,7 @@ package td.tower.splash;
 
 /**
  * Mastery: strengthens the chain's levels II and III. On Arc, arcs crit more and Daze longer; on
- * Hex, Blight poisons half as hard again.
+ * Hex, Blight poisons half as hard again and a hexed enemy that dies leaves a cursed cloud.
  */
 public final class MasteryPerk implements SplashPerk {
 
@@ -15,7 +15,7 @@ public final class MasteryPerk implements SplashPerk {
             return spec.withArcs(spec.arcs().withCritBonus(ARC_CRIT_BONUS).withLongDaze());
         }
         if (spec.hexes().isActive()) {
-            return spec.withHexes(spec.hexes().withBlightShareAtLeast(BLIGHT_SHARE));
+            return spec.withHexes(spec.hexes().withBlightShareAtLeast(BLIGHT_SHARE).withCursedCloud());
         }
         return spec;
     }

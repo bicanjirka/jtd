@@ -20,7 +20,8 @@ The tower rework, in this order (each needs the ones before it):
    first debuffs and the effect rules every tower follows.
 4. `FEATURE-splash-stormcaller-and-hexer.md` (implemented): Dazed and the hex pool.
 5. `FEATURE-pulse-and-seeker.md` (implemented): Silenced, Anchored, Unraveled, Brittle, the nest.
-6. `FEATURE-ground-zones-mortar-and-cinder.md`: ground zones and the fire-and-ice rules.
+6. `FEATURE-ground-zones-mortar-and-cinder.md` (implemented): ground zones, the Mortar and the Cinder, and
+   the fire-and-ice rules.
 7. `FEATURE-aura-and-balance-pass.md`: the Aura, harness pricing, display names, the README.
 
 Enemies come after, from `docs/ideas/enemies-brainstorm.md`.
@@ -128,19 +129,6 @@ implementation. There is no way to add or edit a level without a code change and
   fatal-startup boundary, rather than adding a second error-handling path.
 
 ## Tower features
-
-### The Splash's Mines and the Hexer's cursed cloud wait for ground zones
-
-`FEATURE-splash-stormcaller-and-hexer.md` shipped without two pieces that are ground zones: the
-Splash's Range III Mines (every 4th blast leaves a charge on the path that the next enemy to
-step on sets off) and the Hexer's Mastery cursed cloud. Range III gives only its blast radius
-bonus and Mastery's Hexer half only hardens Blight until then.
-
-- **Where:** `td.tower.splash` (`SplashTower`, `MasteryPerk`, a Range III perk beside
-  `BlastRadiusPerk`) and whatever zone type feature 6 adds.
-- **Approach:** build them on the ground zones of `FEATURE-ground-zones-mortar-and-cinder.md`
-  once its zone type exists: a mine is a zone with a one-shot trigger, the cloud a zone left
-  where a hexed enemy died. Mines' 10 s lifetime and 3 per Splash are in that doc.
 
 ### The Pulse's Mirror Field and Soul Drain only approximate the feature doc
 

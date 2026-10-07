@@ -14,8 +14,9 @@ import java.util.Optional;
  * @param cursesPerCast how many enemies one cast curses
  * @param doomShare     the share of the damage taken under Doom it pays out
  * @param blightShare   Blight's poison each tick, a share of the Hexer's damage
+ * @param cursedCloud   whether a hexed enemy that dies leaves a cloud that curses what stands in it
  */
-public record HexSpec(List<Hex> pool, int cursesPerCast, float doomShare, float blightShare) {
+public record HexSpec(List<Hex> pool, int cursesPerCast, float doomShare, float blightShare, boolean cursedCloud) {
 
     /** How long a hex lasts unless it says otherwise. */
     public static final float HEX_SECONDS = 6f;
@@ -28,7 +29,7 @@ public record HexSpec(List<Hex> pool, int cursesPerCast, float doomShare, float 
 
     /** No hexes: the Splash isn't a Hexer. */
     public static HexSpec none() {
-        return new HexSpec(List.of(), 1, DOOM_SHARE, BLIGHT_SHARE);
+        return new HexSpec(List.of(), 1, DOOM_SHARE, BLIGHT_SHARE, false);
     }
 
     public boolean isActive() {
@@ -44,18 +45,25 @@ public record HexSpec(List<Hex> pool, int cursesPerCast, float doomShare, float 
     public HexSpec withHex(Hex hex) {
         List<Hex> grown = new ArrayList<>(this.pool);
         grown.add(hex);
-        return new HexSpec(grown, this.cursesPerCast, this.doomShare, this.blightShare);
+        return new HexSpec(grown, this.cursesPerCast, this.doomShare, this.blightShare, this.cursedCloud);
     }
 
     public HexSpec withCursesPerCast(int cursesPerCast) {
-        return new HexSpec(this.pool, Math.max(this.cursesPerCast, cursesPerCast), this.doomShare, this.blightShare);
+        return new HexSpec(this.pool, Math.max(this.cursesPerCast, cursesPerCast), this.doomShare, this.blightShare,
+                this.cursedCloud);
     }
 
     public HexSpec withDoomShareAtLeast(float doomShare) {
-        return new HexSpec(this.pool, this.cursesPerCast, Math.max(this.doomShare, doomShare), this.blightShare);
+        return new HexSpec(this.pool, this.cursesPerCast, Math.max(this.doomShare, doomShare), this.blightShare,
+                this.cursedCloud);
     }
 
     public HexSpec withBlightShareAtLeast(float blightShare) {
-        return new HexSpec(this.pool, this.cursesPerCast, this.doomShare, Math.max(this.blightShare, blightShare));
+        return new HexSpec(this.pool, this.cursesPerCast, this.doomShare, Math.max(this.blightShare, blightShare),
+                this.cursedCloud);
+    }
+
+    public HexSpec withCursedCloud() {
+        return new HexSpec(this.pool, this.cursesPerCast, this.doomShare, this.blightShare, true);
     }
 }
