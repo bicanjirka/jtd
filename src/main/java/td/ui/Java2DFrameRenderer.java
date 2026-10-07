@@ -448,6 +448,7 @@ public final class Java2DFrameRenderer {
             case TOWER_PULSE_RIPPLE_NULL -> new Color(180, 110, 255);
             case TOWER_PULSE_RIPPLE_UNDERTOW -> new Color(90, 150, 255);
             case TOWER_PULSE_RIPPLE_CORROSION -> new Color(120, 220, 90);
+            case TOWER_MORTAR_RANGING -> new Color(255, 190, 90);
             case ZONE_BURNING -> new Color(255, 120, 30);
             case ZONE_TAR -> new Color(35, 28, 25);
             case ZONE_FROST -> new Color(170, 225, 255);
@@ -1371,7 +1372,7 @@ public final class Java2DFrameRenderer {
     private void paintProjectile(Graphics2D g2, ProjectileDraw projectile) {
         switch (projectile) {
             case CannonballDraw shell ->
-                    this.paintFilledCircle(g2, shell.palette(), shell.x(), shell.y(), PROJECTILE_SIZE);
+                    this.paintFilledCircle(g2, shell.palette(), shell.x(), shell.y(), PROJECTILE_SIZE * shell.size());
             case MissileDraw missile -> this.paintMissile(g2, missile);
             case SmokeDraw smoke -> this.paintSmoke(g2, smoke);
         }

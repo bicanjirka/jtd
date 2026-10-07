@@ -52,7 +52,7 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
     public Void visitCannonball(CannonballProjectile projectile) {
         float x = lerp(projectile.getPrevX(), projectile.getX(), this.interpolationAlpha);
         float y = lerp(projectile.getPrevY(), projectile.getY(), this.interpolationAlpha);
-        this.draws.add(new CannonballDraw(Palette.PROJECTILE_CANNONBALL, x, y));
+        this.draws.add(new CannonballDraw(Palette.PROJECTILE_CANNONBALL, x, y, projectile.stats().size()));
         return null;
     }
 

@@ -50,6 +50,10 @@
   blast radius bonus, and only enemies the ledger still watches. A share tops the receiver up to
   what the carrier has and never adds on top, so two carriers sharing back and forth settle
   instead of climbing.
+- The Mortar's shell is slow and unguided: it flies to where its target stood, so a fast enemy dodges
+  it. Its dead zone is a fixed distance on the `Reach` that range never moves. Bracketing is read at
+  the landing, from the spec as it stands then, and `BracketTracker` is the only memory of where the
+  last shell fell. Every shell Cracks plating; a shell's size is a tower stat that follows its damage.
 - Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
   `AuraTower.buffs`' single "is this an aura" check stays the only role check.
 

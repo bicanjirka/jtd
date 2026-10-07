@@ -71,8 +71,9 @@ class TowerSheetTextTest {
     void theShopListsStatsThenBehavioursOneRowEachThenWhatNoRowSays() {
         InfoSheet sheet = shopSheet(TowerFactory.Type.MORTAR);
 
-        assertThat(labels(sheet)).containsExactly("Range", "Physical damage", "Fire rate", "Splash radius", "Chills", "Targets");
-        assertThat(row(sheet, "Chills")).isEqualTo(Row.effect(Palette.STATUS_MARKER_CHILL, "Chills", "50%, 2 s"));
+        assertThat(labels(sheet)).containsExactly("Range", "Physical damage", "Fire rate", "Splash radius",
+                "Projectile speed", "Projectile size", "Targets", "Dead zone", "Cracks plating");
+        assertThat(row(sheet, "Cracks plating")).isEqualTo(Row.effect(Palette.STATUS_MARKER_CRACKED, "Cracks plating", "5 s"));
         assertThat(sheet.lines().getLast()).isEqualTo(new SheetLine.Prose("Lobs a slow, unguided shell."));
     }
 

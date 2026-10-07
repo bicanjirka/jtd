@@ -62,6 +62,10 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
     /** The nest's missiles circle at this fraction of a cell from the tower, a turn every few seconds. */
     private static final float NEST_ORBIT_FRACTION = 0.7f;
+    /** A Mortar's ranging ring, in cells: wide at the first shell and drawing in with each step. */
+    private static final float RANGING_RADIUS_CELLS = 1.5f;
+    private static final float RANGING_TIGHTENING_CELLS = 1f;
+    private static final float RANGING_ALPHA = 0.7f;
     private static final double NEST_ORBIT_RADIANS_PER_TICK = 0.08;
 
     /** The Pulse's ripples: how many rings, how fast they spread, and how much faster for each Toll stack. */
@@ -294,8 +298,14 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
-    /** Nothing: the shell is drawn as a projectile. */
+    /** The ranging marker where its shells have been landing, tightening with each step; the shell is a projectile. */
     public Void visitMortarTower(MortarTower tower) {
+        tower.getRangingMarker().ifPresent(marker -> {
+            float tightness = marker.maxSteps() == 0 ? 0f : (float) marker.step() / marker.maxSteps();
+            float radius = this.scale * (RANGING_RADIUS_CELLS - RANGING_TIGHTENING_CELLS * tightness);
+            this.draws.add(new RingDraw(Palette.TOWER_MORTAR_RANGING, (float) marker.x(), (float) marker.y(), radius,
+                    RANGING_ALPHA));
+        });
         return null;
     }
 

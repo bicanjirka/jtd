@@ -1,7 +1,8 @@
 # Feature Request: Ground Zones, Mortar and Cinder
 
-**Status: not started.** Feature 6 of 7 in the tower rework (order in `TODO.md`). Needs features
-1 to 5.
+**Status: in progress.** Done: Cracked and Tarred, the fire-and-ice rules, the zone system with
+burning ground, tar and frost, the Mortar's base, Bracketing and Siege Rounds I to III. Feature 6 of
+7 in the tower rework (order in `TODO.md`). Needs features 1 to 5.
 
 ## Summary
 
