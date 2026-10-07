@@ -1,4 +1,4 @@
-package td.tower;
+package td.tower.sonar;
 
 import org.junit.jupiter.api.Test;
 
@@ -116,5 +116,39 @@ class SonarSweepTest {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> SonarSweep.perRevolution(2, 0))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void aRevolutionCompletesOnItsLastTickAndOnlyThen() {
+        SonarSweep sweep = SonarSweep.perRevolution(2, 20);
+        int completions = 0;
+        int lastCompletedAt = 0;
+
+        for (int tick = 1; tick <= 80; tick++) {
+            sweep.advance();
+            if (sweep.completedRevolution()) {
+                completions++;
+                lastCompletedAt = tick;
+            }
+        }
+
+        assertThat(completions).isEqualTo(2);
+        assertThat(lastCompletedAt).isEqualTo(80);
+    }
+
+    @Test
+    void aRetimedSweepCarriesOnFromTheSameHeadingAtItsNewSpeed() {
+        SonarSweep slow = SonarSweep.perRevolution(3, 20);
+        for (int tick = 0; tick < 15; tick++) {
+            slow.advance();
+        }
+
+        double heading = slow.radiansAt(1);
+
+        SonarSweep fast = slow.retimed(2, 20);
+        fast.advance();
+
+        assertThat(fast.radiansAt(0)).isCloseTo(heading, within(1e-9));
+        assertThat(fast.radiansAt(0) - fast.radiansAt(1)).isCloseTo(TWO_PI / 40, within(1e-12));
     }
 }

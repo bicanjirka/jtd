@@ -3,6 +3,7 @@ package td;
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageMix;
+import td.damage.DamageUnits;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.FreezeDiminishing;
@@ -26,6 +27,7 @@ import td.tower.AuraTower;
 import td.tower.MortarTower;
 import td.tower.PulseTower;
 import td.tower.SniperTower;
+import td.tower.SonarTower;
 import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
@@ -243,6 +245,46 @@ class GameEngineTest {
         assertThat(disruptedRange).isCloseTo(fullRange * 0.8f, within(0.01f));
         assertThat(tower.isDisrupted()).isFalse();
         assertThat(tower.getRangeReal()).isEqualTo(fullRange);
+    }
+
+    @Test
+    void onceASonarHasMarkedAnEnemyTheSnipersNextShotIsAGuaranteedCrit() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyDefinition dummy = EnemyDefinition.of("dummy", "Dummy", 1_000_000, 1, 0f, BodyArchetype.CIRCLE);
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("dummy", Rank.GRUNT)), 100_000)
+                .withCustomEnemies(List.of(dummy)));
+        engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
+        engine.startPlacing(TowerFactory.Type.SONAR, SonarTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(1));
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(3));
+        Tower sonar = towerOfType(engine, TowerFactory.Type.SONAR);
+        Tower sniper = towerOfType(engine, TowerFactory.Type.SNIPER);
+        sonar.earnXp(1_000_000);
+        for (String node : List.of("Attune", "Awaken", "Mark on Sweep")) {
+            sonar.buyUpgrade(sonar.upgradeTree().nodes().stream()
+                    .filter(n -> n.displayName().equals(node)).findFirst().orElseThrow());
+        }
+        engine.nextWave();
+        int tick = 0;
+        EnemyMob enemy;
+        do {
+            engine.doTick(++tick);
+            enemy = engine.getGameWorld().enemies().getEnemies()[0];
+        } while (!enemy.hasEffect(EffectKind.MARKED));
+        long before = sniper.getDamageDealt();
+
+        while (sniper.getDamageDealt() == before) {
+            engine.doTick(++tick);
+        }
+
+        assertThat(sniper.getDamageDealt() - before)
+                .isEqualTo(DamageUnits.ofPoints(SniperTower.DAMAGE_POINTS * SniperTower.CRIT_MULTIPLIER));
+    }
+
+    private static Tower towerOfType(GameEngine engine, TowerFactory.Type type) {
+        return engine.getGameWorld().towers().all().stream()
+                .filter(tower -> tower.getType() == type).findFirst().orElseThrow();
     }
 
     @Test

@@ -40,6 +40,7 @@ public abstract class AbstractTower implements Tower {
     /** How long a vulnerability lasts from its latest application. */
     private static final float VULNERABLE_SECONDS = 4f;
     private static final float SUNDERED_SECONDS = 5f;
+    private static final float RESONATING_SECONDS = 4f;
 
     protected final GameWorld context;
     protected final int boardX;
@@ -257,6 +258,7 @@ public abstract class AbstractTower implements Tower {
         this.applyEffect(target, sink -> switch (kind) {
             case VULNERABLE -> Effect.vulnerable(stacks, Math.round(VULNERABLE_SECONDS * TICKS_PER_SECOND), sink);
             case SUNDERED -> Effect.sundered(stacks, Math.round(SUNDERED_SECONDS * TICKS_PER_SECOND), sink);
+            case RESONATING -> Effect.resonating(stacks, Math.round(RESONATING_SECONDS * TICKS_PER_SECOND), sink);
             default -> throw new IllegalArgumentException(kind + " is not a stacking debuff");
         });
     }

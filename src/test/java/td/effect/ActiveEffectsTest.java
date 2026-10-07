@@ -737,6 +737,25 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void faultLineLetsFracturedFallToMinusAHundredAndHoldWhileExposed() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.fractured(4, d -> {
+        }));
+        effects.apply(Effect.fractured(1, d -> {
+        }).withFaultLine());
+        effects.apply(Effect.fractured(9, d -> {
+        }));
+        effects.apply(Effect.exposed(30, d -> {
+        }));
+
+        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-100f);
+        tickTimes(effects, 25);
+        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-100f);
+        tickTimes(effects, 25);
+        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-90f);
+    }
+
+    @Test
     void aDebuffTimerRunsAtTheSpiritPaceButNeverBelowAQuarter() {
         ActiveEffects fast = new ActiveEffects();
         fast.apply(Effect.exposed(20, d -> {

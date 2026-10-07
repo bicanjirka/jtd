@@ -36,6 +36,9 @@ public interface HitReceiver {
      */
     float critFactorFor(AttackProfile attacker);
 
+    /** Takes {@code fraction} of the shield this enemy has now; none if it has no shield. */
+    void breakShield(float fraction);
+
     /** Whether an effect of {@code kind} is active. */
     boolean hasEffect(EffectKind kind);
 
