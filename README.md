@@ -85,9 +85,9 @@ a different loadout or level, since v1 has no config format for either.
 
 | Tower  | Price | Behaviour                                                                                                                                           |
 |--------|-------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| Sniper | 10    | Single target, hits whichever enemy in range is furthest along the path                                                                             |
+| Sniper | 15    | Single target, hits whichever enemy in range is furthest along the path; the longer it stays on one enemy, the likelier it crits (crits x2.0) |
 | Splash | 15    | Picks a random target in range and deals splash damage falling off with distance                                                                    |
-| Sonar  | 20    | Long range; a beam sweeps around it once every 2s, hitting everything it passes                                                                     |
+| Sonar  | 20    | Long range; a beam sweeps around it once every 3s, hitting everything it passes; once attuned, each sweep Exposes the healthiest enemy it passed |
 | Pulse  | 25    | Short range; damages everything in range at once, ghosts included                                                                                   |
 | Aura   | 20    | Passive — boosts the damage and range of nearby towers; several stack                                                                               |
 | Mortar | 30    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path; splashes physical damage and chills everything the blast reaches |
@@ -141,8 +141,9 @@ at all at an even split up to full strength against a one-type defence.
 
 ### Status effects
 
-Towers and enemy abilities put timed effects on enemies. An enemy shows up to three as markers and
-the rest as a "+N"; selecting it lists every effect with what kind it is and the time left.
+Towers and enemy abilities put timed effects on enemies. An enemy shows one marker per kind of
+effect it carries (control, damage over time, debuff, spotted, ...), with a count when that kind
+holds more than one effect; selecting it lists every effect with what kind it is and the time left.
 
 | Effect     | Kind             | What it does                                                                                       |
 |------------|------------------|----------------------------------------------------------------------------------------------------|
@@ -153,12 +154,23 @@ the rest as a "+N"; selecting it lists every effect with what kind it is and the
 | Scorched   | debuff           | Burning's lasting mark: each stack lowers resilience by 1 (down to -100; below 0 crits hit harder but no likelier). It outlasts the fire, then loses a stack per second |
 | Sickened   | debuff           | Poison's lasting mark: each stack lowers spirit by 1 (down to -100), so heals and shields shrink and vanish at the floor. Loses a stack per second |
 | Vulnerable | debuff           | Up to 3 stacks, +15% damage taken each, from any tower; one shared 4 s clock any application refreshes |
+| Sundered   | debuff           | Up to 10 stacks, -5 armor each (armor never goes below 0); one shared 5 s clock                    |
+| Resonating | debuff           | Up to 3 stacks, +8% magic damage taken each; one shared 4 s clock                                  |
+| Fractured  | debuff           | Up to 5 stacks, -10 resilience each, losing a stack a second. A Sonar with Fault Line lets it fall to 10 stacks (-100) and holds it while the enemy is Exposed |
+| Exposed    | spotted          | Crit chance taken doubles. A revealed enemy counts as Exposed                                       |
+| Marked     | spotted          | The next hit from any tower is a guaranteed crit, and spends the mark. Damage that ticks never spends it, and it waits on a crit-immune enemy |
+| Priority   | spotted          | +15% damage taken from every tower, and every tower that picks one target picks it while it is in range |
 | Shield     | restorative      | Absorbs a share of every hit                                                                       |
 | Heal       | restorative      | Restores health every tick                                                                         |
 | Invisible  | stealth          | Towers cannot target the enemy; area damage still reaches it                                       |
-| Revealed   | stealth          | Towers can target the enemy again, even through invisibility                                       |
+| Revealed   | stealth          | Towers can target the enemy again, even through invisibility; turning invisible again ends it      |
 
-Stacks wear off at a pace spirit sets: neutral spirit loses one per second, more spirit is faster, and at -100 they never wear off, so a fully sickened enemy stays sickened. A frozen enemy cannot burn, and freezing an enemy puts out its burn but keeps its Scorched stacks. Nothing else cancels anything.
+Stacks wear off at a pace spirit sets: neutral spirit loses one per second, more spirit is faster, and at -100 they never wear off, so a fully sickened enemy stays sickened. Every other debuff's timer runs at `max(0.25, 1 + spirit / 100)` of normal speed (freeze keeps its own diminishing returns). A frozen enemy cannot burn, and freezing an enemy puts out its burn but keeps its Scorched stacks. Nothing else cancels anything.
+
+Only a hit can crit: a shot, a blast, a beam pass. Damage that ticks (a burn, a poison, a field)
+never does, but a burn or poison started by a crit starts that much stronger. Each tower has its
+own crit multiplier (x1.5, the Sniper x2.0). A guaranteed crit lands whenever the enemy's
+resilience is below 100; at 100 nothing crits. Armor and magic resist never go below 0.
 
 ### Spawn shapes
 

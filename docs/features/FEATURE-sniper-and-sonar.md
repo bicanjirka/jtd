@@ -1,6 +1,6 @@
 # Feature Request: Sniper and Sonar, the Crit Team
 
-**Status: not started.** Feature 3 of 7 in the tower rework (order in `TODO.md`). Needs features
+**Status: implemented.** Feature 3 of 7 in the tower rework (order in `TODO.md`). Needs features
 1 and 2 (`FEATURE-tower-progression.md`, `FEATURE-xp-and-purpose-gates.md`).
 
 ## Summary
