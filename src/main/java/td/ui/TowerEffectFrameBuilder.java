@@ -130,7 +130,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
     /**
      * The shot to its target, the blast as a detonation that spreads as a ring and darkens as it
-     * grows, and the arcs it carried as jagged lightning.
+     * grows, the arcs it carried as jagged lightning, and a cast as a beam to each enemy it cursed.
      */
     public Void visitSplashTower(SplashTower tower) {
         float progress = tower.ticksSinceShot(this.gameTime) / DETONATION_TICKS;
@@ -143,9 +143,13 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             }
         }
         if (progress < 1f) {
-            List<SplashTower.ArcTrace> arcs = tower.getArcs();
+            List<SplashTower.Trace> arcs = tower.getArcs();
             for (int i = 0; i < arcs.size(); i++) {
                 this.lightning(arcs.get(i), i, 1f - progress);
+            }
+            for (SplashTower.Trace cast : tower.getCasts()) {
+                this.draws.add(new BeamDraw(Palette.TOWER_SPLASH_CAST, cast.fromX(), cast.fromY(), cast.toX(), cast.toY(),
+                        2f, 1f - progress));
             }
         }
         return null;
@@ -164,7 +168,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /** One arc as a zigzag; which way each segment swings alternates, starting by the arc's order in the shot. */
-    private void lightning(SplashTower.ArcTrace arc, int order, float alpha) {
+    private void lightning(SplashTower.Trace arc, int order, float alpha) {
         float dx = arc.toX() - arc.fromX();
         float dy = arc.toY() - arc.fromY();
         float length = (float) Math.hypot(dx, dy);

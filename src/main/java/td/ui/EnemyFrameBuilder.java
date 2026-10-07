@@ -17,6 +17,8 @@ import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
+import td.ui.render.HexGlyph;
+import td.ui.render.HexRuneDraw;
 import td.ui.render.IceCrystalDraw;
 import td.ui.render.Palette;
 import td.ui.render.PulseDirection;
@@ -73,6 +75,10 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     // Stronger than a support aura: it threatens the player's towers rather than helping allies.
     private static final float DISRUPTION_RING_ALPHA = 0.35f;
     static final int EFFECT_PULSE_DURATION_TICKS = 8;
+    /** Runes sit in a row over the body, below the markers; their size is fixed, like a marker's. */
+    private static final float RUNE_ROW_OFFSET_FRACTION = 0.6f;
+    private static final float RUNE_FIXED_SCALE = 4f;
+    private static final float RUNE_SPACING = 11f;
     /** Pulse ring size relative to the body. */
     private static final float GAIN_LOSS_PULSE_RADIUS_FRACTION = 1.6f;
     /** Larger than a status pulse: it marks a new mob, not a change on an existing one. */
@@ -122,6 +128,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case DAZED -> Palette.STATUS_MARKER_DAZED;
             case SATURATED -> Palette.STATUS_MARKER_SATURATED;
             case CHARGED -> Palette.STATUS_MARKER_CHARGED;
+            case DOOM -> Palette.STATUS_MARKER_DOOM;
         };
     }
 
@@ -227,6 +234,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             this.overlayDraws.add(new EnemyRingDraw(Palette.SELECTION, x, y, scale * SELECTION_RING_SCALE_FRACTION,
                     SELECTION_RING_ALPHA));
         }
+        this.runes(mob, x, y - scale * RUNE_ROW_OFFSET_FRACTION);
         supportAura.ifPresent(aura -> this.overlayDraws.add(
                 new EnemyRingDraw(markerPaletteFor(aura.kind()), x, y, aura.radius(), SUPPORT_AURA_RING_ALPHA)));
         mob.definition().disruption().ifPresent(aura -> this.overlayDraws.add(
@@ -317,6 +325,26 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             markerX += group.others() > 0 ? Math.max(spacing, COUNTED_MARKER_SPACING) : spacing;
             shown++;
         }
+    }
+
+    /** A rune for each hex on {@code mob}, in a row centred on {@code (x, y)}. */
+    private void runes(DefinedEnemyMob mob, float x, float y) {
+        List<HexGlyph> glyphs = mob.activeEffectKinds().stream()
+                .map(EnemyFrameBuilder::runeFor)
+                .flatMap(Optional::stream)
+                .toList();
+        float left = x - RUNE_SPACING * (glyphs.size() - 1) / 2f;
+        for (int i = 0; i < glyphs.size(); i++) {
+            this.overlayDraws.add(new HexRuneDraw(glyphs.get(i), left + RUNE_SPACING * i, y, RUNE_FIXED_SCALE));
+        }
+    }
+
+    /** The rune a hex is drawn as; empty for every other kind. */
+    static Optional<HexGlyph> runeFor(EffectKind kind) {
+        return switch (kind) {
+            case DOOM -> Optional.of(HexGlyph.DOOM);
+            default -> Optional.empty();
+        };
     }
 
     /** What one marker stands for: the first kind of a category, and how many more of it are active. */

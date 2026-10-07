@@ -174,6 +174,17 @@ public final class FakeEnemyMob implements EnemyMob {
         return this.activeEffectKinds().contains(kind);
     }
 
+    /** Every hit it recorded, added up. */
+    @Override
+    public long damageTaken() {
+        return this.hits.stream().mapToLong(Damage::amount).sum();
+    }
+
+    /** Ends every effect of {@code kind} on it, as if it had run out. */
+    public void expire(EffectKind kind) {
+        this.appliedEffects.removeIf(effect -> effect.kind() == kind);
+    }
+
     /** The stacks every effect of {@code kind} put on it, added up to the highest cap among them. */
     @Override
     public int effectStacks(EffectKind kind) {

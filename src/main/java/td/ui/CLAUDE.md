@@ -17,7 +17,7 @@ keeps the seam honest.
 - Every colour, shape and stroke for board content lives in `Java2DFrameRenderer`, keyed by a
   `Palette` role, never by domain type. There are no image assets; all art is vector.
 - A new enemy-centred visual goes into the existing sealed `EnemyOverlayDraw` hierarchy (rings,
-  pulses, trait markers, ice crystal), not a new `RenderFrame` list. Tower transients likewise go
+  pulses, trait markers, ice crystal, hex runes), not a new `RenderFrame` list. Tower transients likewise go
   into `TowerEffectDraw`. Invisibility fades the body itself (`EnemyBodyDraw.cloakProgress`).
 - Timed visuals follow one idiom: the entity records the tick something happened
   (`ticksSinceDeath`, `ticksSinceCriticalHit`, `ticksSinceEffectGained`/`Lost`), and the frame

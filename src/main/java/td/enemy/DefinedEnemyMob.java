@@ -59,6 +59,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private final StatSheet stats;
 
     private int health;
+    private long damageTaken;
     private EnemyInspection.Fate fate = EnemyInspection.Fate.ALIVE;
     private LifeStage stage;
     // Only meaningful while LIVE: off-board mobs walk in from and out to off-screen untargetable.
@@ -312,6 +313,11 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     @Override
+    public long damageTaken() {
+        return this.damageTaken;
+    }
+
+    @Override
     public int effectStacks(EffectKind kind) {
         return this.activeEffects.stacks(kind);
     }
@@ -383,6 +389,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             landed = HitResolution.resolve(damage, this.spendMark(attacker), this.stats, this.health,
                     this.gameWorld.random());
             this.health -= landed.amount();
+            this.damageTaken += landed.amount();
             this.gameWorld.damageTally().record(landed);
             if (landed.amount() > 0) {
                 this.moments.markPending(Moment.DAMAGE_TAKEN);

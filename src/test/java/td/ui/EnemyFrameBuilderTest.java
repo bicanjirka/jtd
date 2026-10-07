@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.Effect;
+import td.effect.EffectKind;
 import td.enemy.BodyArchetype;
 import td.enemy.CriticalImmunityTrait;
 import td.enemy.DefinedEnemyMob;
@@ -22,6 +23,8 @@ import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
+import td.ui.render.HexGlyph;
+import td.ui.render.HexRuneDraw;
 import td.ui.render.IceCrystalDraw;
 import td.ui.render.Palette;
 import td.ui.render.PulseDirection;
@@ -258,6 +261,22 @@ class EnemyFrameBuilderTest {
                 EnemyFrameBuilder.COUNTED_MARKER_SPACING);
         assertThat(markers.get(2).x() - markers.get(1).x()).isGreaterThanOrEqualTo(
                 EnemyFrameBuilder.COUNTED_MARKER_SPACING);
+    }
+
+    @Test
+    void aHexedEnemyWearsItsHexsRuneAndAPlainOneNone() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob doomed = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        doomed.applyEffect(Effect.hex(EffectKind.DOOM, 80, d -> {
+        }));
+        EnemyMob plain = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
+        doomed.accept(builder);
+        plain.accept(builder);
+
+        assertThat(builder.buildOverlays()).filteredOn(HexRuneDraw.class::isInstance)
+                .singleElement().extracting(draw -> ((HexRuneDraw) draw).glyph()).isEqualTo(HexGlyph.DOOM);
     }
 
     @Test

@@ -333,6 +333,55 @@ class SplashTowerTest {
     }
 
     @Test
+    void aHexerCastsDoomOnTheHealthiestEnemyEveryFourthShotInsteadOfBlasting() {
+        SplashTower tower = this.upgradedTower("Hex");
+        FakeEnemyMob weak = FakeEnemyMob.at(100, 100).withHealth(100);
+        FakeEnemyMob strong = FakeEnemyMob.at(70, 130).withHealth(900);
+        this.enemies(weak, strong);
+
+        tickThroughCooldown(tower, 3);
+        int hitsBefore = strong.hits().size() + weak.hits().size();
+        tickThroughCooldown(tower, 1);
+
+        assertThat(effectsOf(strong, EffectKind.DOOM)).singleElement().extracting(Effect::remainingTicks)
+                .isEqualTo(Math.round(4f * TickRate.TICKS_PER_SECOND)
+                        + Math.round(strong.effectStacks(EffectKind.SATURATED) * TickRate.TICKS_PER_SECOND));
+        assertThat(strong.hits().size() + weak.hits().size()).isEqualTo(hitsBefore);
+        assertThat(tower.getCasts()).hasSize(1);
+    }
+
+    @Test
+    void whenEveryEnemyAlreadyCarriesDoomTheCastIsAPlainBlast() {
+        SplashTower tower = this.upgradedTower("Hex");
+        FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
+        enemy.applyEffect(Effect.hex(EffectKind.DOOM, 1000, d -> {
+        }));
+        this.enemies(enemy);
+
+        tickThroughCooldown(tower, 4);
+
+        assertThat(enemy.hits()).hasSize(4);
+        assertThat(tower.getCasts()).isEmpty();
+    }
+
+    @Test
+    void whenDoomRunsOutTheEnemyTakesThirtyPercentOfWhatItTookUnderItAsPeriodicMagic() {
+        SplashTower tower = this.upgradedTower("Hex");
+        FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
+        this.enemies(enemy);
+        tickThroughCooldown(tower, 4);
+        enemy.doDamage(Damage.physical(10_000), AttackProfile.none());
+        int hitsBeforeEnd = enemy.hits().size();
+
+        enemy.expire(EffectKind.DOOM);
+        tower.doTick(1000);
+
+        Damage payout = enemy.hits().get(hitsBeforeEnd);
+        assertThat(payout).isEqualTo(Damage.magic(3_000));
+        assertThat(enemy.attackers().get(hitsBeforeEnd).delivery().name()).isEqualTo("PERIODIC");
+    }
+
+    @Test
     void potencyAndMasteryWaitForAChainRoot() {
         SplashTower tower = this.upgradedTower("Wide Charge", "Shaped Charge");
 

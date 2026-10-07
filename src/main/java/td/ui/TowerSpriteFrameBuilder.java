@@ -153,8 +153,9 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     /** The body takes the colour of what the fork made it. */
     public Void visitSplashTower(SplashTower tower) {
         Palette body = switch (tower.fork()) {
-            case NONE, HEXER -> Palette.TOWER_SPLASH_BODY;
+            case NONE -> Palette.TOWER_SPLASH_BODY;
             case STORMCALLER -> Palette.TOWER_STORMCALLER_BODY;
+            case HEXER -> Palette.TOWER_HEXER_BODY;
         };
         this.sprite(tower, body);
         this.headDraws.add(new TurretHeadDraw(body, tower.getX(), tower.getY(),

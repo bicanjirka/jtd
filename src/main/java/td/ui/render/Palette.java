@@ -16,6 +16,8 @@ public enum Palette {
     TOWER_SPLASH_BODY,
     /** A Splash forked to Arc. */
     TOWER_STORMCALLER_BODY,
+    /** A Splash forked to Hex. */
+    TOWER_HEXER_BODY,
     TOWER_SONAR_BODY,
     TOWER_PULSE_BODY,
     TOWER_AURA_BODY,
@@ -51,6 +53,10 @@ public enum Palette {
     TOWER_SPLASH_DETONATION_DARK,
     /** The Stormcaller's arcs. */
     TOWER_SPLASH_ARC,
+    /** A Hexer's cast, from the tower to each enemy it curses. */
+    TOWER_SPLASH_CAST,
+    /** The rune over an enemy carrying a hex. */
+    HEX_RUNE,
     TOWER_SONAR_BEAM,
     /** A Sonar hit once its beam deals magic. */
     TOWER_SONAR_MAGIC_BEAM,
@@ -69,6 +75,7 @@ public enum Palette {
     STATUS_MARKER_DAZED,
     STATUS_MARKER_SATURATED,
     STATUS_MARKER_CHARGED,
+    STATUS_MARKER_DOOM,
     STATUS_MARKER_SHIELD,
     STATUS_MARKER_INVISIBLE,
     STATUS_MARKER_HEAL,

@@ -45,6 +45,9 @@ public interface HitReceiver {
     /** Stacks of the active {@code kind}; {@code 0} when inactive or the kind does not stack. */
     int effectStacks(EffectKind kind);
 
+    /** All the damage that has landed on it so far, hits and periodic damage alike, in units. */
+    long damageTaken();
+
     /** Whether an effect that {@link EffectKind#stopsEnemy() stops it} is active. */
     default boolean isStopped() {
         for (EffectKind kind : EffectKind.stopping()) {
