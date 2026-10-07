@@ -428,7 +428,8 @@ public final class ActiveEffects {
      * Applies one tick of damage-over-time, then counts every duration down and removes what
      * expired. A decaying level fades instead of counting down. {@code spiritFactor} ({@code 1} at
      * neutral spirit, {@code 0} when spirit is at its floor) sets the pace of the stack debuffs a pool
-     * earns; every debuff a tower applies runs at {@code max(MIN_DEBUFF_PACE, spiritFactor)}.
+     * earns; every debuff a tower applies runs at {@code max(MIN_DEBUFF_PACE, spiritFactor)}, and not at
+     * all while spirit is at its floor.
      * {@code cellsMoved} is how far the enemy walked this tick, which a bleed turns into damage.
      */
     public void tick(float spiritFactor, float cellsMoved) {
@@ -436,7 +437,7 @@ public final class ActiveEffects {
         float burnFactor = 1f - BURN_CHILL_DAMPENING * this.chillLevel() / MAX_CHILL;
         float tollFactor = 1f / (1f + TOLL_SLOWDOWN_PER_STACK * this.stacks(EffectKind.TOLL));
         float pace = spiritFactor * tollFactor;
-        float debuffPace = Math.max(MIN_DEBUFF_PACE * tollFactor, pace);
+        float debuffPace = spiritFactor <= 0f ? 0f : Math.max(MIN_DEBUFF_PACE * tollFactor, pace);
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
             EffectKind kind = entry.getKey();
             Effect effect = entry.getValue();

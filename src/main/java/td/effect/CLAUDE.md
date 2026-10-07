@@ -30,7 +30,7 @@
   a time like `SCORCHED`, at the spirit pace floored at `MIN_DEBUFF_PACE`. A `faultLine` Fractured
   (cap 10) loses none while the enemy is exposed (or revealed); one such
   application makes the whole effect so until it wears off.
-- A kind with `isPacedBySpirit()` counts its timer down at `max(MIN_DEBUFF_PACE, spiritFactor)`;
+- A kind with `isPacedBySpirit()` counts its timer down at `max(MIN_DEBUFF_PACE, spiritFactor)`, and not at all at spirit -100;
   freeze, invisible, shield, heal and the pools keep their own pace.
 - `MARKED` is spent by a hit, never by periodic damage: the mob calls `consume(MARKED)`, and only
   when its resilience is below 100.
