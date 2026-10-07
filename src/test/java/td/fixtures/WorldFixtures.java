@@ -34,6 +34,13 @@ public final class WorldFixtures {
         return world;
     }
 
+    /** A world with a board installed, for a test that controls a roll. */
+    public static GameWorld newWorldOnBoard(RandomSource random, int scale, int width, int height) {
+        GameWorld world = newWorld(random);
+        world.setBoard(BoardGeometry.of(scale, width, height));
+        return world;
+    }
+
     /** A world with a board installed, on the caller's host. */
     public static GameWorld newWorldOnBoard(RecordingGameHost host, int scale, int width, int height) {
         GameWorld world = newWorld(host);
