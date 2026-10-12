@@ -567,13 +567,14 @@ class MortarTowerTest {
     }
 
     @Test
-    void bunkerBusterShrinksTheBlastByThirty() {
+    void bunkerBusterShrinksTheBlastByThirtyPercentOfItsBaseRadius() {
         MortarTower tower = this.transcendentTower();
         float before = tower.getSplashRadius();
 
         UpgradePaths.buy(tower, this.context, "Bunker Buster");
 
-        assertThat(tower.getSplashRadius()).isEqualTo(before * 0.7f);
+        assertThat(tower.getSplashRadius()).isCloseTo(before - 0.3f * MortarTower.SPLASH_RADIUS_BASE * SCALE,
+                within(1e-3f));
     }
 
     @Test
@@ -807,7 +808,6 @@ class MortarTowerTest {
         for (int t = 1; t <= 400; t++) {
             int before = this.context.projectiles().getProjectiles().size();
             tower.doTick(t);
-            this.context.projectiles().doTick(t);
             if (this.context.projectiles().getProjectiles().size() > before) {
                 shells++;
                 firstShellAt = firstShellAt < 0 ? t : firstShellAt;

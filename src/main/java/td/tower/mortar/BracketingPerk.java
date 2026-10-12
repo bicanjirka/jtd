@@ -1,6 +1,6 @@
 package td.tower.mortar;
 
-/** Attune's Bracketing: a shell landing near the last one hits 10% harder and wider, up to three steps. */
+/** Attune's Bracketing: a shell landing near the last one hits harder and 10% wider, up to three steps. */
 public final class BracketingPerk implements MortarPerk {
 
     private static final float RADIUS_CELLS = 1.5f;
@@ -9,6 +9,6 @@ public final class BracketingPerk implements MortarPerk {
 
     @Override
     public MortarSpec refineSpec(MortarSpec spec) {
-        return spec.withBracket(BracketSpec.of(RADIUS_CELLS, MAX_STEPS, STEP, STEP));
+        return spec.withBracket(BracketSpec.of(RADIUS_CELLS, MAX_STEPS, STEP));
     }
 }
