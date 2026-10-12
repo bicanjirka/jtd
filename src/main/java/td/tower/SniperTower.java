@@ -5,41 +5,37 @@ import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitBonus;
+import td.tower.proc.HitCondition;
 import td.tower.proc.HitKind;
+import td.tower.proc.HitScaling;
+import td.tower.proc.Proc;
+import td.tower.proc.ProcCondition;
+import td.tower.proc.ProcPayload;
 import td.tower.sniper.AimFocus;
 import td.tower.sniper.AimLock;
 import td.tower.sniper.AimRules;
-import td.tower.sniper.CleanShotPerk;
 import td.tower.sniper.CritStreakPerk;
 import td.tower.sniper.ExecutionerPerk;
-import td.tower.sniper.FifthShotPerk;
-import td.tower.sniper.FrenzyPerk;
-import td.tower.sniper.HeadhunterPerk;
-import td.tower.sniper.HollowPointPerk;
-import td.tower.sniper.LongShotPerk;
-import td.tower.sniper.MomentumPerk;
-import td.tower.sniper.QuickScopePerk;
 import td.tower.sniper.RailgunPerk;
 import td.tower.sniper.RicochetPerk;
-import td.tower.sniper.ShatterShotPerk;
 import td.tower.sniper.ShotActions;
 import td.tower.sniper.ShotContext;
 import td.tower.sniper.ShotResult;
-import td.tower.sniper.SilverRoundsPerk;
+import td.tower.sniper.SniperAim;
 import td.tower.sniper.SniperPerk;
 import td.tower.sniper.SniperShot;
 import td.tower.sniper.SniperSpec;
 import td.tower.sniper.SpotterUplinkPerk;
-import td.tower.sniper.SteadyAimPerk;
-import td.tower.sniper.SteadyTempoPerk;
-import td.tower.sniper.SunderRoundsPerk;
 import td.tower.sniper.UnbrokenAimPerk;
 import td.tower.sniper.WeakSpotPerk;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.NearestSelector;
 import td.tower.targeting.OnSegmentTargetQuery;
 import td.tower.targeting.PreferringSelector;
+import td.tower.targeting.TargetPriority;
 import td.tower.targeting.TargetSelector;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.BaseSlotPerks;
@@ -59,6 +55,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 
 /**
  * The patient single-target tower: it gets better the longer it stays on one enemy. It fires at the
@@ -87,25 +84,22 @@ public final class SniperTower extends AbstractTower {
     private static final float RAILGUN_HALF_WIDTH_CELLS = 0.35f;
     /** Enough to kill anything, so that an execution takes exactly what health is left. */
     private static final int EXECUTION_DAMAGE = 1_000_000_000;
-    private static final float MOMENTUM_BURST_SECONDS = 5f;
-    /** Frenzy and Momentum's haste each make the Sniper twice as fast; they are different statuses, so they stack. */
-    private static final float HASTE = 1f;
-    private static final int FRENZY_SHOTS = 3;
-    private static final String FRENZY_ID = "sniper.frenzy";
-    private static final String MOMENTUM_HASTE_ID = "sniper.momentum.haste";
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
-            .withAttune(NodeEffects.none().withNote("Steady Aim: +10% crit chance on every shot after the first at one target"))
+            .withAttune(NodeEffects.none()
+                    .withHitBonus(HitBonus.per(new HitScaling.PerFocus(0), HitAdjustment.critChance(0.1f)))
+                    .withNote("Steady Aim"))
             .withRangeThree(OVERWATCH_RANGE_BONUS, NodeEffects.none().withModifiers(TowerModifiers.deadZone(2f)));
 
     private static final UpgradeNode FOCUSED_OPTICS_1 = UpgradeTier.HEAD_1.node("sniper.head.focused_optics.1",
             "Focused Optics", PRICE)
-            .withNote("Steady Aim also gives +25% fire rate; Quick Scope: the first shot at a new target has "
-                    + "+50% crit chance");
+            .withHitBonus(HitBonus.when(new HitCondition.FreshTarget(), HitAdjustment.critChance(0.5f)))
+            .withHitBonus(HitBonus.when(new HitCondition.FocusAtLeast(1), HitAdjustment.attackSpeed(0.25f)));
     private static final UpgradeNode FOCUSED_OPTICS_2 = UpgradeTier.HEAD_2.node("sniper.head.focused_optics.2",
             "Focused Optics II", PRICE)
             .withModifiers(TowerModifiers.damage(16f))
-            .withNote("a crit starts Frenzy: the next 3 shots come twice as fast")
+            .withProc(Proc.onCrit(new ProcPayload.GrantStatus(TowerStatus.nextShots("sniper.frenzy", 3,
+                    TowerModifiers.attackSpeed(1f)).keepingARunningOne().lengthenedByBuffs())))
             .after(FOCUSED_OPTICS_1);
     private static final UpgradeNode FOCUSED_OPTICS_3 = UpgradeTier.HEAD_3.node("sniper.head.focused_optics.3",
             "Focused Optics III", PRICE)
@@ -120,8 +114,9 @@ public final class SniperTower extends AbstractTower {
             .after(FOCUSED_OPTICS_3);
     private static final UpgradeNode EXECUTIONER = UpgradeTier.HEAD_4.node("sniper.head.focused_optics.4b",
             "Executioner", PRICE)
-            .withNote("a non-boss enemy left under 15% health by a shot dies; a boss under 25% takes +50%; "
-                    + "executions count as crits")
+            .withHitBonus(HitBonus.when(new HitCondition.All(List.of(new HitCondition.TargetRankAtLeast(Rank.BOSS),
+                    new HitCondition.TargetHealthBelow(0.25f))), HitAdjustment.damage(0.5f)))
+            .withNote("a non-boss enemy left under 15% health by a shot dies; executions count as crits")
             .after(FOCUSED_OPTICS_3);
     private static final UpgradeNode MARKSMANS_EYE_1 = UpgradeTier.HEAD_1.node("sniper.head.marksmans_eye.1",
             "Marksman's Eye", PRICE)
@@ -133,7 +128,7 @@ public final class SniperTower extends AbstractTower {
     private static final UpgradeNode MARKSMANS_EYE_3 = UpgradeTier.HEAD_3.node("sniper.head.marksmans_eye.3",
             "Marksman's Eye III", PRICE)
             .withGate(new PurposeCondition("Steady Aim shots", 20))
-            .withNote("Clean Shot: crits go through shields straight to health")
+            .withCapability(TowerCapability.CRITS_PIERCE_SHIELDS)
             .after(MARKSMANS_EYE_2);
     private static final UpgradeNode UNBROKEN_AIM = UpgradeTier.HEAD_4.node("sniper.head.marksmans_eye.4a",
             "Unbroken Aim", PRICE)
@@ -142,46 +137,56 @@ public final class SniperTower extends AbstractTower {
             .after(MARKSMANS_EYE_3);
     private static final UpgradeNode SUNDER_ROUNDS = UpgradeTier.HEAD_4.node("sniper.head.marksmans_eye.4b",
             "Sunder Rounds", PRICE)
-            .withNote("every crit adds 1 Sundered")
+            .withProc(Proc.onCrit(new ProcPayload.ApplyStacks(EffectKind.SUNDERED, 1)).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
             .after(MARKSMANS_EYE_3);
     private static final UpgradeNode TRADECRAFT_1 = UpgradeTier.EXTRA_1.node("sniper.extra.tradecraft.1",
             "Tradecraft", PRICE)
             .withNote("a crit makes the next crit deal +25% crit damage, two in a row +50%, no further");
     private static final UpgradeNode TRADECRAFT_2 = UpgradeTier.EXTRA_2.node("sniper.extra.tradecraft.2",
             "Tradecraft II", PRICE)
-            .withNote("+25% damage against targets past two thirds of its range")
+            .withHitBonus(HitBonus.when(new HitCondition.BeyondRangeShare(2f / 3f), HitAdjustment.damage(0.25f)))
             .after(TRADECRAFT_1);
     private static final UpgradeNode SILVER_ROUNDS = UpgradeTier.EXTRA_3.node("sniper.extra.tradecraft.3",
             "Silver Rounds", PRICE)
-            .withNote("every 3rd shot is magic with +25% magic penetration; it keeps the crit streak")
+            .withProc(Proc.everyNthShot(3, new ProcPayload.GrantStatus(TowerStatus.nextShots("sniper.silver", 1,
+                    TowerModifiers.magicPenetration(0.25f)).withCapability(TowerCapability.MAGIC_DAMAGE))))
             .after(TRADECRAFT_2);
     private static final UpgradeNode SPOTTER_UPLINK = UpgradeTier.EXTRA_4.node("sniper.extra.tradecraft.4",
             "Spotter Uplink", PRICE)
             .withNote("may shoot Marked or Revealed enemies within twice its range")
             .after(SILVER_ROUNDS);
     private static final UpgradeNode MOMENTUM = UpgradeTier.SPECIAL.node("sniper.special.momentum", "Momentum", PRICE)
-            .withNote("a crit charges the next shot to x5 damage that ignores armor and plating; a kill grants "
-                    + "+100% fire rate for 5s; aims at the highest rank")
+            .withTargeting(TargetPriority.HIGHEST_RANK)
+            .withProc(Proc.onCrit(new ProcPayload.GrantStatus(TowerStatus.nextShots("sniper.momentum.charge", 1,
+                    TowerModifiers.damageTimes(5f).plus(TowerModifiers.armorPenetration(1f))
+                            .plus(TowerModifiers.platingPenetration(1f))))).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
+            .withProc(Proc.onKill(new ProcPayload.GrantStatus(TowerStatus.timed("sniper.momentum.haste",
+                    TowerModifiers.attackSpeed(1f), 100))).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
             .after(FOCUSED_OPTICS_1);
     private static final UpgradeNode RICOCHET = UpgradeTier.SPECIAL.node("sniper.special.ricochet", "Ricochet", PRICE)
-            .withNote("a crit bounces to the nearest enemy within 1.5 cells for 60%, up to 3 bounces, each "
-                    + "can crit; aims at the enemy with most neighbours")
+            .withTargeting(TargetPriority.MOST_NEIGHBOURS)
+            .withNote("a crit bounces to the nearest enemy within 1.5 cells for 60%, up to 3 bounces, each can crit")
             .after(FOCUSED_OPTICS_1);
     private static final UpgradeNode HEADHUNTER = UpgradeTier.SPECIAL.node("sniper.special.headhunter", "Headhunter",
             PRICE)
-            .withNote("+40% damage against Elite and Boss rank; aims at the highest rank")
+            .withTargeting(TargetPriority.HIGHEST_RANK)
+            .withHitBonus(HitBonus.when(new HitCondition.TargetRankAtLeast(Rank.ELITE), HitAdjustment.damage(0.4f)))
             .after(FOCUSED_OPTICS_1);
     private static final UpgradeNode HOLLOW_POINT = UpgradeTier.SPECIAL.node("sniper.special.hollow_point",
             "Hollow Point", PRICE)
-            .withNote("crits apply Vulnerable, +15% damage taken, stacks x3; aims at the most health")
+            .withTargeting(TargetPriority.MOST_HEALTH)
+            .withProc(Proc.onCrit(new ProcPayload.ApplyStacks(EffectKind.VULNERABLE, 1)).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
             .after(MARKSMANS_EYE_1);
     private static final UpgradeNode FIFTH_SHOT = UpgradeTier.SPECIAL.node("sniper.special.fifth_shot",
             "Fifth Shot", PRICE)
-            .withNote("every 5th shot is a guaranteed crit with +50% crit damage; aims at the most health")
+            .withTargeting(TargetPriority.MOST_HEALTH)
+            .withProc(Proc.everyNthShot(5, new ProcPayload.GrantStatus(TowerStatus.nextShots("sniper.fifth", 1,
+                    TowerModifiers.critMultiplier(0.5f)).withCapability(TowerCapability.GUARANTEED_CRIT))))
             .after(MARKSMANS_EYE_1);
     private static final UpgradeNode SHATTER_SHOT = UpgradeTier.SPECIAL.node("sniper.special.shatter_shot",
             "Shatter Shot", PRICE)
-            .withNote("crits on a frozen enemy deal +50% crit damage; aims at a frozen enemy first")
+            .withTargeting(TargetPriority.STOPPED_FIRST)
+            .withHitBonus(HitBonus.when(new HitCondition.TargetStopped(), HitAdjustment.critMultiplier(0.5f)))
             .after(MARKSMANS_EYE_1);
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, FOCUSED_OPTICS_3,
@@ -197,26 +202,13 @@ public final class SniperTower extends AbstractTower {
                     SHATTER_SHOT));
 
     private static final PerkCatalogue<SniperPerk> PERKS = PerkCatalogue.<SniperPerk>empty()
-            .with(StandardBaseSlot.ATTUNE_ID, SteadyAimPerk::new)
-            .with(FOCUSED_OPTICS_1.id(), QuickScopePerk::new)
-            .with(FOCUSED_OPTICS_1.id(), SteadyTempoPerk::new)
-            .with(FOCUSED_OPTICS_2.id(), FrenzyPerk::new)
             .with(FOCUSED_OPTICS_3.id(), WeakSpotPerk::new)
             .with(RAILGUN.id(), RailgunPerk::new)
             .with(EXECUTIONER.id(), ExecutionerPerk::new)
-            .with(MARKSMANS_EYE_3.id(), CleanShotPerk::new)
             .with(UNBROKEN_AIM.id(), UnbrokenAimPerk::new)
-            .with(SUNDER_ROUNDS.id(), SunderRoundsPerk::new)
             .with(TRADECRAFT_1.id(), CritStreakPerk::new)
-            .with(TRADECRAFT_2.id(), LongShotPerk::new)
-            .with(SILVER_ROUNDS.id(), SilverRoundsPerk::new)
             .with(SPOTTER_UPLINK.id(), SpotterUplinkPerk::new)
-            .with(MOMENTUM.id(), MomentumPerk::new)
-            .with(RICOCHET.id(), RicochetPerk::new)
-            .with(HEADHUNTER.id(), HeadhunterPerk::new)
-            .with(HOLLOW_POINT.id(), HollowPointPerk::new)
-            .with(FIFTH_SHOT.id(), FifthShotPerk::new)
-            .with(SHATTER_SHOT.id(), ShatterShotPerk::new);
+            .with(RICOCHET.id(), RicochetPerk::new);
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final AimFocus focus = new AimFocus();
@@ -227,7 +219,6 @@ public final class SniperTower extends AbstractTower {
     private TowerStats statsInFlight;
     private EnemyMob currentTarget;
     private ShotTrace lastShot;
-    private int shotsFired;
     private int currentTick;
 
     public SniperTower(GameWorld context, int x, int y) {
@@ -254,6 +245,10 @@ public final class SniperTower extends AbstractTower {
     private SniperSpec spec(List<SniperPerk> owned) {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
         SniperSpec spec = SniperSpec.from(view);
+        Optional<TargetPriority> priority = this.upgrades().targeting();
+        if (priority.isPresent()) {
+            spec = spec.aimingAt(new SniperAim(priority.get().selector(view.cellSize()), priority.get().label()));
+        }
         for (SniperPerk perk : owned) {
             spec = perk.refineSpec(spec);
         }
@@ -288,14 +283,16 @@ public final class SniperTower extends AbstractTower {
     /** One shot: shaped by the owned perks, landed, settled and reacted to, and the wait that follows. */
     private void fire(EnemyMob target, List<SniperPerk> owned, AimRules steadyAim) {
         TowerStats stats = this.beginShot();
-        this.shotsFired++;
         AimLock lock = this.focus.lock(target, Math.round(this.stats().value(TowerStat.AIM_STACKS)),
                 steadyAim.survivesKill());
-        ShotContext context = new ShotContext(target, lock, this.shotsFired, this.rangeShareOf(target));
+        ShotContext context = new ShotContext(target, lock, this.shotNumber(), this.rangeShareOf(target));
         HitAdjustment adjustment = this.hitAdjustment(target, HitKind.DIRECT, context.rangeShare(), stats, lock.stacks(),
                 lock.fresh());
         SniperShot shot = SniperShot.of(adjustment.applyTo(stats.attack())).scaledBy(adjustment.damageFactor())
                 .withAttackSpeedBonus(adjustment.attackSpeed());
+        if (stats.has(TowerCapability.MAGIC_DAMAGE)) {
+            shot = shot.withType(DamageType.MAGIC);
+        }
         for (SniperPerk perk : owned) {
             shot = perk.shape(shot, context);
         }
@@ -415,11 +412,7 @@ public final class SniperTower extends AbstractTower {
 
     @Override
     protected List<BehaviourLine> behaviours() {
-        BehaviourLine targets = new BehaviourLine(BehaviourMarker.TARGETING, "Targets", this.spec(this.perks.all()).chosenAim().label());
-        if (!this.upgrades().owns(HOLLOW_POINT.id())) {
-            return List.of(targets);
-        }
-        return List.of(targets, new BehaviourLine(BehaviourMarker.VULNERABLE, "Crits apply", "vulnerable"));
+        return List.of(new BehaviourLine(BehaviourMarker.TARGETING, "Targets", this.spec(this.perks.all()).chosenAim().label()));
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
@@ -441,28 +434,11 @@ public final class SniperTower extends AbstractTower {
     private final class Actions implements ShotActions {
 
         @Override
-        public void startFrenzy() {
-            SniperTower.this.grantStatus(TowerStatus.nextShots(FRENZY_ID, FRENZY_SHOTS,
-                    TowerModifiers.attackSpeed(HASTE)).keepingARunningOne().lengthenedByBuffs());
-        }
-
-        @Override
-        public void startBurst() {
-            SniperTower.this.grantStatus(TowerStatus.timed(MOMENTUM_HASTE_ID, TowerModifiers.attackSpeed(HASTE),
-                    Math.round(MOMENTUM_BURST_SECONDS * TICKS_PER_SECOND)));
-        }
-
-        @Override
         public boolean execute(EnemyMob target) {
             AttackProfile finisher = AttackProfile.none().withArmorPenetration(1f, 0f)
                     .withPlatingPenetration(1f).asPeriodic();
             SniperTower.this.dealDamage(target, Damage.physical(EXECUTION_DAMAGE), finisher);
             return target.isDead();
-        }
-
-        @Override
-        public void applyStacks(EnemyMob target, EffectKind kind, int stacks) {
-            SniperTower.this.applyStacks(target, kind, stacks);
         }
 
         @Override

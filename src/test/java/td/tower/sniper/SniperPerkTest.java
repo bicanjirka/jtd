@@ -2,14 +2,12 @@ package td.tower.sniper;
 
 import org.junit.jupiter.api.Test;
 import td.damage.AttackProfile;
-import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.FakeEnemyMob;
 import td.tower.targeting.Viewpoint;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
 
 class SniperPerkTest {
 
@@ -25,42 +23,6 @@ class SniperPerkTest {
 
     private static ShotContext against(EnemyMob target) {
         return new ShotContext(target, new AimLock(0, true), 1);
-    }
-
-    @Test
-    void steadyAimAddsTenPercentCritChanceForEveryStack() {
-        SniperShot shot = new SteadyAimPerk().shape(BASE, context(3, false, 4));
-
-        assertThat(shot.attack().critChance()).isCloseTo(0.35f, within(1e-6f));
-    }
-
-    @Test
-    void steadyAimDoesNothingOnTheFirstShotAtATarget() {
-        assertThat(new SteadyAimPerk().shape(BASE, context(0, true, 1))).isEqualTo(BASE);
-    }
-
-    @Test
-    void quickScopeOnlyHelpsTheFirstShotAtANewTarget() {
-        assertThat(new QuickScopePerk().shape(BASE, context(0, true, 1)).attack().critChance())
-                .isCloseTo(0.55f, within(1e-6f));
-        assertThat(new QuickScopePerk().shape(BASE, context(1, false, 2))).isEqualTo(BASE);
-    }
-
-    @Test
-    void steadyTempoSpeedsUpEveryShotAfterTheFirstAtOneTarget() {
-        assertThat(new SteadyTempoPerk().shape(BASE, context(1, false, 2)).attackSpeedBonus()).isEqualTo(0.25f);
-        assertThat(new SteadyTempoPerk().shape(BASE, context(0, true, 1)).attackSpeedBonus()).isZero();
-    }
-
-    @Test
-    void frenzyStartsOnACritAndNotOtherwise() {
-        FrenzyPerk perk = new FrenzyPerk();
-        EnemyMob target = FakeEnemyMob.at(0, 0);
-
-        perk.react(new ShotResult(target, false, false), this.actions);
-        perk.react(new ShotResult(target, true, false), this.actions);
-
-        assertThat(this.actions.frenzies).isEqualTo(1);
     }
 
     @Test
@@ -112,81 +74,9 @@ class SniperPerkTest {
     }
 
     @Test
-    void executionerMakesAWoundedBossTakeFiftyPercentMore() {
-        EnemyMob woundedBoss = FakeEnemyMob.at(0, 0).ranked(Rank.BOSS).atHealthFraction(0.2f);
-        EnemyMob healthyBoss = FakeEnemyMob.at(0, 0).ranked(Rank.BOSS).atHealthFraction(0.5f);
-
-        assertThat(new ExecutionerPerk().shape(BASE, against(woundedBoss)).damageFactor()).isEqualTo(1.5f);
-        assertThat(new ExecutionerPerk().shape(BASE, against(healthyBoss)).damageFactor()).isEqualTo(1f);
-    }
-
-    @Test
-    void fifthShotGuaranteesEveryFifthCritAndOnlyThatOneHitsHarder() {
-        FifthShotPerk perk = new FifthShotPerk();
-
-        SniperShot fourth = perk.shape(BASE, context(0, true, 4));
-        SniperShot fifth = perk.shape(BASE, context(0, true, 5));
-
-        assertThat(fourth.attack().guaranteedCrit()).isFalse();
-        assertThat(fifth.attack().guaranteedCrit()).isTrue();
-        assertThat(fourth.attack().critMultiplier()).isEqualTo(2f);
-        assertThat(fifth.attack().critMultiplier()).isEqualTo(2.5f);
-    }
-
-    @Test
-    void momentumChargesAfterACritThenHitsFivefoldIgnoringArmorAndPlating() {
-        MomentumPerk perk = new MomentumPerk();
-        EnemyMob target = FakeEnemyMob.at(0, 0);
-        assertThat(perk.shape(BASE, context(0, true, 1))).isEqualTo(BASE);
-
-        perk.react(new ShotResult(target, true, false), this.actions);
-        SniperShot charged = perk.shape(BASE, context(0, true, 2));
-        perk.react(new ShotResult(target, false, false), this.actions);
-
-        assertThat(charged.damageFactor()).isEqualTo(5f);
-        assertThat(charged.attack().armorPenetration()).isEqualTo(1f);
-        assertThat(charged.attack().platingPenetration()).isEqualTo(1f);
-        assertThat(perk.shape(BASE, context(0, true, 3))).isEqualTo(BASE);
-    }
-
-    @Test
-    void momentumStartsABurstOnAKill() {
-        new MomentumPerk().react(new ShotResult(FakeEnemyMob.at(0, 0), false, true), this.actions);
-
-        assertThat(this.actions.bursts).isEqualTo(1);
-    }
-
-    @Test
-    void hollowPointMakesAnEnemyVulnerableOnlyOnACrit() {
-        HollowPointPerk perk = new HollowPointPerk();
-        EnemyMob target = FakeEnemyMob.at(0, 0);
-
-        perk.react(new ShotResult(target, false, false), this.actions);
-        perk.react(new ShotResult(target, true, false), this.actions);
-
-        assertThat(this.actions.stackedWith(EffectKind.VULNERABLE)).containsExactly(target);
-    }
-
-    @Test
     void onlyUnbrokenAimLetsSteadyAimSurviveAKill() {
         assertThat(SPEC.steadyAim()).isEqualTo(new AimRules(false));
         assertThat(new UnbrokenAimPerk().refineSpec(SPEC).steadyAim()).isEqualTo(new AimRules(true));
-    }
-
-    @Test
-    void cleanShotMakesCritsPierceShields() {
-        assertThat(new CleanShotPerk().shape(BASE, context(0, true, 1)).attack().critsPierceShields()).isTrue();
-    }
-
-    @Test
-    void sunderRoundsSundersOnlyOnACrit() {
-        SunderRoundsPerk perk = new SunderRoundsPerk();
-        EnemyMob target = FakeEnemyMob.at(0, 0);
-
-        perk.react(new ShotResult(target, false, false), this.actions);
-        perk.react(new ShotResult(target, true, false), this.actions);
-
-        assertThat(this.actions.stackedWith(EffectKind.SUNDERED)).containsExactly(target);
     }
 
     @Test
@@ -221,47 +111,6 @@ class SniperPerkTest {
     }
 
     @Test
-    void longShotBoostsOnlyTargetsPastTwoThirdsOfTheRange() {
-        LongShotPerk perk = new LongShotPerk();
-        ShotContext far = new ShotContext(FakeEnemyMob.at(0, 0), new AimLock(0, true), 1, 0.7f);
-        ShotContext near = new ShotContext(FakeEnemyMob.at(0, 0), new AimLock(0, true), 1, 0.6f);
-
-        assertThat(perk.shape(BASE, far).damageFactor()).isEqualTo(1.25f);
-        assertThat(perk.shape(BASE, near).damageFactor()).isEqualTo(1f);
-    }
-
-    @Test
-    void silverRoundsMakeEveryThirdShotMagicWithMagicPenetration() {
-        SilverRoundsPerk perk = new SilverRoundsPerk();
-
-        SniperShot second = perk.shape(BASE, context(0, true, 2));
-        SniperShot third = perk.shape(BASE, context(0, true, 3));
-
-        assertThat(second.type()).isEqualTo(td.damage.DamageType.PHYSICAL);
-        assertThat(third.type()).isEqualTo(td.damage.DamageType.MAGIC);
-        assertThat(third.attack().magicPenetration()).isEqualTo(0.25f);
-    }
-
-    @Test
-    void headhunterBoostsOnlyEliteAndBossTargets() {
-        HeadhunterPerk perk = new HeadhunterPerk();
-
-        assertThat(perk.shape(BASE, against(FakeEnemyMob.at(0, 0).ranked(Rank.VETERAN))).damageFactor()).isEqualTo(1f);
-        assertThat(perk.shape(BASE, against(FakeEnemyMob.at(0, 0).ranked(Rank.ELITE))).damageFactor()).isEqualTo(1.4f);
-        assertThat(perk.shape(BASE, against(FakeEnemyMob.at(0, 0).ranked(Rank.BOSS))).damageFactor()).isEqualTo(1.4f);
-    }
-
-    @Test
-    void shatterShotMakesCritsOnAFrozenEnemyHitHarder() {
-        FakeEnemyMob frozen = FakeEnemyMob.at(0, 0);
-        frozen.reportFrozen();
-
-        assertThat(new ShatterShotPerk().shape(BASE, against(frozen)).attack().critMultiplier()).isEqualTo(2.5f);
-        assertThat(new ShatterShotPerk().shape(BASE, against(FakeEnemyMob.at(0, 0))).attack().critMultiplier())
-                .isEqualTo(2f);
-    }
-
-    @Test
     void ricochetBouncesOnlyOnACrit() {
         RicochetPerk perk = new RicochetPerk();
         EnemyMob target = FakeEnemyMob.at(0, 0);
@@ -272,14 +121,4 @@ class SniperPerkTest {
         assertThat(this.actions.ricochets).containsExactly(target);
     }
 
-    @Test
-    void eachSpecialSaysWhoItAimsAtAndTheRestSayNothing() {
-        assertThat(new MomentumPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("highest rank");
-        assertThat(new HeadhunterPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("highest rank");
-        assertThat(new RicochetPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("most neighbours");
-        assertThat(new HollowPointPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("most health");
-        assertThat(new FifthShotPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("most health");
-        assertThat(new ShatterShotPerk().refineSpec(SPEC).aim()).map(SniperAim::label).contains("frozen or dazed first");
-        assertThat(new SteadyAimPerk().refineSpec(SPEC).aim()).isEmpty();
-    }
 }
