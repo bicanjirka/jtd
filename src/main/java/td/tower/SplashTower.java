@@ -359,6 +359,7 @@ public final class SplashTower extends AbstractTower {
         if (pick.isEmpty()) {
             return false;
         }
+        this.beginShot();
         this.shotsFired++;
         this.lastShotTick = this.currentTick;
         this.clock.spend();
@@ -525,6 +526,7 @@ public final class SplashTower extends AbstractTower {
      * landed.
      */
     private void fire(EnemyMob primary, SplashSpec spec, List<SplashPerk> owned) {
+        this.beginShot();
         this.lastShotTick = this.currentTick;
         this.shotsFired++;
         this.clock.spend();

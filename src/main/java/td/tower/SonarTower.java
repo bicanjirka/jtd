@@ -255,6 +255,7 @@ public final class SonarTower extends AbstractTower {
             }
         }
         if (this.beam.completedRevolution()) {
+            this.beginShot();
             this.completeRevolution(spec, owned, gameTime);
         }
     }

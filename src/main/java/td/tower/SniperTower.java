@@ -28,7 +28,6 @@ import td.tower.sniper.SilverRoundsPerk;
 import td.tower.sniper.SniperPerk;
 import td.tower.sniper.SniperShot;
 import td.tower.sniper.SniperSpec;
-import td.tower.sniper.SniperTempo;
 import td.tower.sniper.SpotterUplinkPerk;
 import td.tower.sniper.SteadyAimPerk;
 import td.tower.sniper.SteadyTempoPerk;
@@ -87,6 +86,11 @@ public final class SniperTower extends AbstractTower {
     /** Enough to kill anything, so that an execution takes exactly what health is left. */
     private static final int EXECUTION_DAMAGE = 1_000_000_000;
     private static final float MOMENTUM_BURST_SECONDS = 5f;
+    /** Frenzy and Momentum's haste each make the Sniper twice as fast; they are different statuses, so they stack. */
+    private static final float HASTE = 1f;
+    private static final int FRENZY_SHOTS = 3;
+    private static final String FRENZY_ID = "sniper.frenzy";
+    private static final String MOMENTUM_HASTE_ID = "sniper.momentum.haste";
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
             .withAttune(NodeEffects.none().withNote("Steady Aim: +10% crit chance on every shot after the first at one target"))
@@ -214,11 +218,11 @@ public final class SniperTower extends AbstractTower {
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final AimFocus focus = new AimFocus();
-    private final SniperTempo tempo = new SniperTempo();
     private final ShotActions actions = new Actions();
     private final OwnedPerks<SniperPerk> perks = new OwnedPerks<>(PERKS);
     private final FireClock clock = new FireClock(COOLDOWN_MAX);
     private SniperShot shotInFlight;
+    private TowerStats statsInFlight;
     private EnemyMob currentTarget;
     private ShotTrace lastShot;
     private int shotsFired;
@@ -281,16 +285,18 @@ public final class SniperTower extends AbstractTower {
 
     /** One shot: shaped by the owned perks, landed, settled and reacted to, and the wait that follows. */
     private void fire(EnemyMob target, List<SniperPerk> owned, AimRules steadyAim) {
+        TowerStats stats = this.beginShot();
         this.shotsFired++;
         AimLock lock = this.focus.lock(target, Math.round(this.stats().value(TowerStat.AIM_STACKS)),
                 steadyAim.survivesKill());
         ShotContext context = new ShotContext(target, lock, this.shotsFired, this.rangeShareOf(target));
-        SniperShot shot = SniperShot.of(this.stats().attack());
+        SniperShot shot = SniperShot.of(stats.attack());
         for (SniperPerk perk : owned) {
             shot = perk.shape(shot, context);
         }
         this.shotInFlight = shot;
-        boolean critical = shot.piercing() ? this.pierce(shot, target) : this.land(shot, target, 1f);
+        this.statsInFlight = stats;
+        boolean critical = shot.piercing() ? this.pierce(shot, target, stats) : this.land(shot, target, 1f, stats);
         ShotResult result = new ShotResult(target, critical, target.isDead());
         for (SniperPerk perk : owned) {
             result = perk.settle(result, this.actions);
@@ -303,8 +309,7 @@ public final class SniperTower extends AbstractTower {
             this.countDeedOfAttack();
         }
         double rate = this.attackRate();
-        double bonus = shot.attackSpeedBonus() + this.tempo.takeAttackSpeedBonus(this.currentTick);
-        this.clock.spend(rate / (rate + bonus));
+        this.clock.spend(rate / (rate + shot.attackSpeedBonus()));
     }
 
     /** Where the shot went: to its target, or for a piercing shot to the end of its line. */
@@ -327,8 +332,8 @@ public final class SniperTower extends AbstractTower {
     }
 
     /** Lands {@code shot} on {@code target} at {@code share} of its damage; whether it crit. */
-    private boolean land(SniperShot shot, EnemyMob target, float share) {
-        int amount = Math.round(this.damageCurrent() * shot.damageFactor() * share);
+    private boolean land(SniperShot shot, EnemyMob target, float share, TowerStats stats) {
+        int amount = Math.round(stats.damage() * shot.damageFactor() * share);
         return this.dealDamage(target, Damage.of(shot.type(), amount), shot.attack());
     }
 
@@ -336,7 +341,7 @@ public final class SniperTower extends AbstractTower {
      * A shot through everything on the line from the Sniper past {@code target}; each enemy after
      * the first it passes takes less. Whether the aimed enemy's hit crit.
      */
-    private boolean pierce(SniperShot shot, EnemyMob target) {
+    private boolean pierce(SniperShot shot, EnemyMob target, TowerStats stats) {
         float scale = this.context.getBoard().scale();
         double heading = TurretAim.angleTo(this.centerX, this.centerY, target.getX(), target.getY());
         double reach = this.railReach();
@@ -346,7 +351,7 @@ public final class SniperTower extends AbstractTower {
         boolean critical = false;
         float share = 1f;
         for (EnemyMob enemy : line) {
-            boolean crit = this.land(shot, enemy, share);
+            boolean crit = this.land(shot, enemy, share, stats);
             critical |= enemy == target && crit;
             share *= RAILGUN_FALLOFF;
         }
@@ -367,7 +372,7 @@ public final class SniperTower extends AbstractTower {
             if (next.isEmpty()) {
                 return;
             }
-            this.land(bounce, next.get(), 1f);
+            this.land(bounce, next.get(), 1f, this.statsInFlight);
             struck.add(next.get());
             last = next.get();
         }
@@ -431,14 +436,14 @@ public final class SniperTower extends AbstractTower {
 
         @Override
         public void startFrenzy() {
-            SniperTower.this.tempo.startFrenzy(SniperTower.this.currentTick, SniperTower.this.timedBuffLength());
+            SniperTower.this.grantStatus(TowerStatus.nextShots(FRENZY_ID, FRENZY_SHOTS,
+                    TowerModifiers.attackSpeed(HASTE)).keepingARunningOne().lengthenedByBuffs());
         }
 
         @Override
         public void startBurst() {
-            SniperTower.this.tempo.startBurst(
-                    SniperTower.this.currentTick
-                            + Math.round(MOMENTUM_BURST_SECONDS * TICKS_PER_SECOND * SniperTower.this.timedBuffLength()));
+            SniperTower.this.grantStatus(TowerStatus.timed(MOMENTUM_HASTE_ID, TowerModifiers.attackSpeed(HASTE),
+                    Math.round(MOMENTUM_BURST_SECONDS * TICKS_PER_SECOND)));
         }
 
         @Override

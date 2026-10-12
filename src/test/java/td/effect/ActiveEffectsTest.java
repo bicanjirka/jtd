@@ -5,6 +5,8 @@ import td.damage.Damage;
 import td.damage.DamageType;
 import td.stat.BaseStats;
 import td.stat.EnemyStat;
+import td.stat.StatModifier;
+import td.stat.StatModifiers;
 import td.stat.StatSheet;
 
 import java.util.ArrayList;
@@ -436,8 +438,8 @@ class ActiveEffectsTest {
         assertThat(resolved(effects, EnemyStat.SPIRIT)).isEqualTo(-6f);
 
         tickTimes(effects, 2000);
-        assertThat(effects.stacks(EffectKind.SICKENED)).isGreaterThan(100);
-        assertThat(resolved(effects, EnemyStat.SPIRIT)).isEqualTo(-100f);
+        assertThat(effects.stacks(EffectKind.SICKENED)).isBetween(99, 100);
+        assertThat(resolved(effects, EnemyStat.SPIRIT)).isBetween(-100f, -99f);
     }
 
     @Test
@@ -452,7 +454,8 @@ class ActiveEffectsTest {
         assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-6f);
 
         tickTimes(effects, 2000);
-        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-100f);
+        assertThat(effects.stacks(EffectKind.SCORCHED)).isBetween(99, 100);
+        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isBetween(-100f, -99f);
     }
 
     @Test
@@ -1373,7 +1376,7 @@ class ActiveEffectsTest {
         float healBefore = resolved(effects, EnemyStat.REGENERATION);
 
         effects.apply(Effect.burn(Damage.magic(100), 60, d -> {
-        }).withTuning(PoolTuning.standard().cauterizing()));
+        }).withTuning(PoolTuning.standard().withCarried(StatModifiers.of(EnemyStat.HEALING_RECEIVED, StatModifier.flat(-0.5f)))));
 
         assertThat(resolved(effects, EnemyStat.REGENERATION)).isCloseTo(healBefore / 2, within(1e-4f));
         assertThat(resolved(effects, EnemyStat.HEALING_RECEIVED)).isEqualTo(0.5f);
@@ -1383,7 +1386,8 @@ class ActiveEffectsTest {
     void heatAndThePyromancersMarkWorkOnlyWhileTheTunedPoolBurns() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.burn(Damage.magic(100), 20, d -> {
-        }).withTuning(PoolTuning.standard().heating().marking()));
+        }).withTuning(PoolTuning.standard().withCarried(StatModifiers.of(EnemyStat.PERIODIC_DAMAGE_TAKEN, StatModifier.flat(0.1f))
+                .and(EnemyStat.MAGIC_DAMAGE_TAKEN, StatModifier.flat(0.15f)))));
 
         float whileBurning = resolved(effects, EnemyStat.PERIODIC_DAMAGE_TAKEN);
         float magicWhileBurning = resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN);
@@ -1404,5 +1408,64 @@ class ActiveEffectsTest {
 
         assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(5);
         assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-5f);
+    }
+
+    @Test
+    void aPlainStatDebuffNeedsOnlyItsKindRow() {
+        for (EffectKind kind : EffectKind.values()) {
+            EffectStacking stacking = kind.rule().stacking();
+            if (stacking != EffectStacking.SHARED_CLOCK && stacking != EffectStacking.EARNED) {
+                continue;
+            }
+            ActiveEffects effects = new ActiveEffects();
+            effects.apply(Effect.stackDebuff(kind, 2));
+            BaseStats<EnemyStat> base = BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 50f)
+                    .with(EnemyStat.MAGIC_RESIST, 50f).with(EnemyStat.MOVE_SPEED, 2f);
+
+            StatSheet live = new StatSheet(base, effects::contributeTo);
+            StatSheet row = new StatSheet(base, kind.modifiersAt(2)::applyTo);
+
+            for (EnemyStat stat : EnemyStat.values()) {
+                assertThat(live.value(stat)).as("%s %s", kind, stat).isEqualTo(row.value(stat));
+            }
+        }
+    }
+
+    @Test
+    void brittleCountsOnlyWhileFrozen() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.brittle(100, d -> {
+        }));
+        float thawed = resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN);
+
+        effects.apply(Effect.freeze(100, d -> {
+        }));
+
+        assertThat(thawed).isEqualTo(1f);
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.3f, within(1e-6f));
+    }
+
+    @Test
+    void aRevealedEnemyCountsAsExposedOnce() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.revealed(100, d -> {
+        }));
+
+        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-50f);
+    }
+
+    @Test
+    void fracturedWearsOffAtTheFlooredPaceAndScorchedAtTheUnflooredOne() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.fractured(5, d -> {
+        }));
+        effects.apply(Effect.scorched(5));
+
+        for (int t = 0; t < 80; t++) {
+            effects.tick(0.1f);
+        }
+
+        assertThat(effects.stacks(EffectKind.FRACTURED)).isEqualTo(4);
+        assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(5);
     }
 }

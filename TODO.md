@@ -168,6 +168,8 @@ puts no limit on cells, so a copy is never refused for lack of room, which is wh
 `FEATURE-aura-and-balance-pass.md` assumes. Do not reprice from these numbers alone: decide first how a copy
 is limited (cells, or the +15% surcharge) and how effect nodes are measured.
 
+- Frenzy and Momentum's haste stack since the stat-driven plan (up to +200% attack speed); check the
+  Focused Optics chain with Momentum.
 - **Where:** `UpgradeTier`'s price multiples, and the `private static final UpgradeNode` constants in every
   leaf under `td.tower` (`SniperTower`/`SplashTower`/`SonarTower`/`PulseTower`/`MortarTower`/`SeekerTower`/
   `CinderTower`/`AuraTower`).
@@ -214,7 +216,7 @@ wanted here is still to be settled: for example decay paused while the pool is a
 ended, or a different rate. Sickened lowering spirit, which slows the decay of its own stacks and of Scorched,
 interacts with whichever is chosen.
 
-- Cracked takes a flat 5 plating points (`ActiveEffects.CRACKED_PLATING_POINTS`), a starting value.
+- Cracked takes a flat 5 plating points (its `EffectKind.CRACKED` row), a starting value.
 - **Where:** the named constants in `td.effect.ActiveEffects`, `AbstractTower` and each tower.
 - **Approach:** tune through play or `td.BalanceHarness` with the other placeholder entries; decide
   whether a long burn's resilience loss (crit damage up to double at the floor) is too strong.

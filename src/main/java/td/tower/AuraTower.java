@@ -337,7 +337,7 @@ public final class AuraTower extends AbstractTower {
         if (spec.rally() && gameTime >= this.rallyReadyAt && this.enemyOnRallySpot()) {
             this.rallyReadyAt = gameTime + RALLY_COOLDOWN_TICKS;
             for (Tower buffed : this.buffedTowers()) {
-                buffed.receiveTimedModifiers(TowerModifiers.attackSpeed(RALLY_FIRE_RATE), RALLY_TICKS);
+                buffed.receiveStatus(TowerStatus.timed("aura.rally", TowerModifiers.attackSpeed(RALLY_FIRE_RATE), RALLY_TICKS));
             }
         }
     }

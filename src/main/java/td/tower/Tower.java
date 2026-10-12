@@ -26,7 +26,7 @@ public interface Tower {
     void doTick(int gameTime);
 
     /**
-     * Start of the tower's turn: expires a timed buff and re-reads its disruption, republishing stats only on a
+     * Start of the tower's turn: expires its timed statuses and re-reads its disruption, republishing stats only on a
      * change.
      *
      * @return whether this tower republished its stats
@@ -75,8 +75,8 @@ public interface Tower {
         return false;
     }
 
-    /** Buffs this tower for {@code durationTicks} from now, as it would itself; it never stacks. */
-    void receiveTimedModifiers(StatModifiers<TowerStat> modifiers, int durationTicks);
+    /** Grants this tower {@code status}, as it would grant it to itself. */
+    void receiveStatus(TowerStatus status);
 
     /** Recomputes current stats from the towers on the board and this tower's upgrades. */
     void recalculateStats();

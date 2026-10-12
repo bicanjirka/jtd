@@ -269,6 +269,7 @@ public final class PulseTower extends AbstractTower {
             }
         }
         for (int hit = 0; hit < shots; hit++) {
+            this.beginShot();
             this.clock.spend();
         }
         this.clock.advance(this.attackRate());

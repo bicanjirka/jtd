@@ -122,7 +122,8 @@ class DefinedEnemyMobTest {
         GameWorld context = newContext();
         DefinedEnemyMob enemy = (DefinedEnemyMob) EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         enemy.applyEffect(Effect.burn(Damage.magic(100), 60, d -> {
-        }).withTuning(td.effect.PoolTuning.standard().cauterizing()));
+        }).withTuning(td.effect.PoolTuning.standard().withCarried(td.stat.StatModifiers.of(td.stat.EnemyStat.HEALING_RECEIVED,
+                td.stat.StatModifier.flat(-0.5f)))));
 
         enemy.applyEffect(Effect.shield(400f, 100, d -> {
         }));

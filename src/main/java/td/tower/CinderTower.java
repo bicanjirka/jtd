@@ -7,6 +7,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.PoolTuning;
 import td.enemy.EnemyMob;
+import td.stat.EnemyStat;
 import td.tower.cinder.BellowsPerk;
 import td.tower.cinder.CauterizePerk;
 import td.tower.cinder.CinderPerk;
@@ -293,6 +294,7 @@ public final class CinderTower extends AbstractTower {
     }
 
     private void fire(CinderSpec spec, EnemyMob target, int gameTime) {
+        this.beginShot();
         this.wavesFired++;
         boolean soul = spec.soulfire() && this.wavesFired % 2 == 0;
         int travelTicks = Math.max(1, Math.round(WAVE_TRAVEL_TICKS / this.stats().value(TowerStat.WAVE_SPEED)));
@@ -558,14 +560,17 @@ public final class CinderTower extends AbstractTower {
         if (tuning.stackRate() > 1) {
             lines.add(new BehaviourLine(BehaviourMarker.BURN, "Scorches", "x" + tuning.stackRate() + " as fast"));
         }
-        if (tuning.cauterizes()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "heal 50% less"));
+        float healingLost = -tuning.carried().flat(EnemyStat.HEALING_RECEIVED);
+        if (healingLost > 0f) {
+            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "heal " + BehaviourLine.percent(healingLost) + " less"));
         }
-        if (tuning.heats()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "+10% over time"));
+        float overTime = tuning.carried().flat(EnemyStat.PERIODIC_DAMAGE_TAKEN);
+        if (overTime > 0f) {
+            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "+" + BehaviourLine.percent(overTime) + " over time"));
         }
-        if (tuning.marksForMagic()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "+15% magic"));
+        float magic = tuning.carried().flat(EnemyStat.MAGIC_DAMAGE_TAKEN);
+        if (magic > 0f) {
+            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "+" + BehaviourLine.percent(magic) + " magic"));
         }
         if (spec.everburnFloor() > 0f) {
             lines.add(new BehaviourLine(BehaviourMarker.BURN, "A pool in range", "holds at 25%"));

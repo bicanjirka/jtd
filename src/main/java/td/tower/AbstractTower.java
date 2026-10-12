@@ -72,9 +72,9 @@ public abstract class AbstractTower implements Tower {
     private volatile boolean removed = false;
     // Sampled by the tick thread; also read when the EDT republishes stats after a purchase.
     private volatile DisruptionPenalty disruption = DisruptionPenalty.none();
-    // A temporary buff a tower grants itself; published like an upgrade's buff, expired on the tick thread.
-    private volatile StatModifiers<TowerStat> timedModifiers = StatModifiers.none();
-    private int timedBuffEndsAt;
+    private final ActiveTowerStatuses statuses = new ActiveTowerStatuses();
+    // What the statuses add, published for the EDT's republish; the live list stays on the tick thread.
+    private volatile StatusLayer statusLayer = StatusLayer.NONE;
     private int currentTick;
     private float xpRemainder;
     private int lastWitherTick = Integer.MIN_VALUE;
@@ -181,7 +181,7 @@ public abstract class AbstractTower implements Tower {
         StatModifiers<TowerStat> received = this.context.towers().all().stream()
                 .map(t -> t.buffFor(this))
                 .reduce(StatModifiers.none(), StatModifiers::plus);
-        StatModifiers<TowerStat> own = upgrades.totalModifiers().plus(this.timedModifiers);
+        StatModifiers<TowerStat> own = upgrades.totalModifiers().plus(this.statusLayer.modifiers());
         this.stats = TowerStats.of(this.baseStats, own, received, this.disruption, this.context.getBoard().scale());
     }
 
@@ -328,23 +328,41 @@ public abstract class AbstractTower implements Tower {
     protected void onKill(EnemyMob killed) {
     }
 
-    /**
-     * Buffs this tower for {@code durationTicks} from now, replacing any timed buff (it never
-     * stacks; granting again restarts the clock).
-     */
+    /** Grants {@code status} to this tower as it would grant it to itself. */
     @Override
-    public void receiveTimedModifiers(StatModifiers<TowerStat> modifiers, int durationTicks) {
-        this.grantTimedModifiers(modifiers, durationTicks);
+    public void receiveStatus(TowerStatus status) {
+        this.grantStatus(status);
     }
 
-    protected void grantTimedModifiers(StatModifiers<TowerStat> modifiers, int durationTicks) {
-        this.timedBuffEndsAt = this.currentTick + Math.round(durationTicks * this.stats.timedBuffLength());
-        this.timedModifiers = modifiers;
+    /**
+     * Grants {@code status} now: the same id restarts unless it keeps a running copy, and different ids
+     * stack. A timed status, and a shot status that says so, lasts longer with the buff duration.
+     */
+    protected final void grantStatus(TowerStatus status) {
+        this.statuses.grant(status, this.currentTick, this.stats.timedBuffLength());
+        this.refreshStatusLayer();
+    }
+
+    /**
+     * Starts one attack: spends a shot of every shot status and returns the stats the attack uses. Call it
+     * once per attack, before the attack, and use what it returns for that attack's damage and attack
+     * profile: afterwards {@code stats()} may already be the next shot's.
+     */
+    protected final TowerStats beginShot() {
+        TowerStats shot = this.stats;
+        if (this.statuses.spendShot()) {
+            this.refreshStatusLayer();
+        }
+        return shot;
+    }
+
+    private void refreshStatusLayer() {
+        this.statusLayer = new StatusLayer(this.statuses.modifiers());
         this.publishStats(this.upgrades);
     }
 
     /**
-     * Start of this tower's turn: ends a timed buff that has run out, and re-reads the disruption at
+     * Start of this tower's turn: ends the timed statuses that have run out, and re-reads the disruption at
      * its centre. Stats are republished only when one of them changed; compared against the
      * published stats rather than the last sample, so a republish from the EDT racing this one is
      * corrected on the next tick.
@@ -353,9 +371,8 @@ public abstract class AbstractTower implements Tower {
     public boolean beginTick(int gameTime) {
         this.currentTick = gameTime;
         boolean republished = false;
-        if (!this.timedModifiers.isNone() && gameTime >= this.timedBuffEndsAt) {
-            this.timedModifiers = StatModifiers.none();
-            this.publishStats(this.upgrades);
+        if (this.statuses.expire(gameTime)) {
+            this.refreshStatusLayer();
             republished = true;
         }
         DisruptionPenalty sampled = this.context.disruptions().penaltyAt(this.centerX, this.centerY);
@@ -548,6 +565,12 @@ public abstract class AbstractTower implements Tower {
     @Override
     public StatModifiers<TowerStat> buffFor(Tower other) {
         return StatModifiers.none();
+    }
+
+    /** What the statuses held now add to the tower's own layer, as one published value. */
+    private record StatusLayer(StatModifiers<TowerStat> modifiers) {
+
+        private static final StatusLayer NONE = new StatusLayer(StatModifiers.none());
     }
 
     /** Marks this tower gone, so effects it applied stop crediting it after the refund. */

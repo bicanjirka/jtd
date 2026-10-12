@@ -30,7 +30,7 @@ class FireRateTest {
     private static int pulseHits(float bonus) {
         GameWorld world = board();
         PulseTower tower = new PulseTower(world, 3, 3);
-        tower.grantTimedModifiers(TowerModifiers.attackSpeed(bonus), Integer.MAX_VALUE / 2);
+        tower.grantStatus(TowerStatus.timed("test", TowerModifiers.attackSpeed(bonus), Integer.MAX_VALUE / 2));
         FakeEnemyMob target = FakeEnemyMob.at(tower.getX(), tower.getY());
         world.enemies().setEnemies(new EnemyMob[]{target});
         for (int t = 0; t < TICKS; t++) {
@@ -53,7 +53,7 @@ class FireRateTest {
     void aBuffedPulseHitsTwiceInATickOnceTheRememberedFractionsAddUp() {
         GameWorld world = board();
         PulseTower tower = new PulseTower(world, 3, 3);
-        tower.grantTimedModifiers(TowerModifiers.attackSpeed(1f), Integer.MAX_VALUE / 2);
+        tower.grantStatus(TowerStatus.timed("test", TowerModifiers.attackSpeed(1f), Integer.MAX_VALUE / 2));
         FakeEnemyMob target = FakeEnemyMob.at(tower.getX(), tower.getY());
         world.enemies().setEnemies(new EnemyMob[]{target});
 
@@ -72,7 +72,7 @@ class FireRateTest {
     void aPulseBuffShowsItsExactRateOnTheInfoRow() {
         GameWorld world = board();
         PulseTower tower = new PulseTower(world, 3, 3);
-        tower.grantTimedModifiers(TowerModifiers.attackSpeed(0.1f), Integer.MAX_VALUE / 2);
+        tower.grantStatus(TowerStatus.timed("test", TowerModifiers.attackSpeed(0.1f), Integer.MAX_VALUE / 2));
 
         TowerStatLine row = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.FIRE_RATE)
                 .findFirst().orElseThrow();
@@ -87,7 +87,7 @@ class FireRateTest {
     private static Run sniperShots(float bonus) {
         GameWorld world = board();
         SniperTower tower = new SniperTower(world, 3, 3);
-        tower.grantTimedModifiers(TowerModifiers.attackSpeed(bonus), Integer.MAX_VALUE / 2);
+        tower.grantStatus(TowerStatus.timed("test", TowerModifiers.attackSpeed(bonus), Integer.MAX_VALUE / 2));
         FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + 10, tower.getY());
         world.enemies().setEnemies(new EnemyMob[]{target});
         for (int t = 1; t <= TICKS; t++) {
@@ -108,7 +108,7 @@ class FireRateTest {
     private static Run splashShots(float bonus) {
         GameWorld world = board();
         SplashTower tower = new SplashTower(world, 3, 3);
-        tower.grantTimedModifiers(TowerModifiers.attackSpeed(bonus), Integer.MAX_VALUE / 2);
+        tower.grantStatus(TowerStatus.timed("test", TowerModifiers.attackSpeed(bonus), Integer.MAX_VALUE / 2));
         FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + 10, tower.getY());
         world.enemies().setEnemies(new EnemyMob[]{target});
         for (int t = 1; t <= TICKS; t++) {
@@ -129,7 +129,7 @@ class FireRateTest {
     private static long sonarPasses(float bonus) {
         GameWorld world = board();
         SonarTower tower = new SonarTower(world, 3, 3);
-        tower.grantTimedModifiers(TowerModifiers.attackSpeed(bonus), Integer.MAX_VALUE / 2);
+        tower.grantStatus(TowerStatus.timed("test", TowerModifiers.attackSpeed(bonus), Integer.MAX_VALUE / 2));
         FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + 10, tower.getY() + 10);
         world.enemies().setEnemies(new EnemyMob[]{target});
         for (int t = 1; t <= TICKS; t++) {

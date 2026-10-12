@@ -37,8 +37,22 @@ class StatModifiersTest {
 
         StatModifiers<EnemyStat> tripled = bundle.scaledBy(3f);
 
-        assertThat(tripled.get(EnemyStat.ARMOR)).isEqualTo(new StatModifier(30f, 0.6f, 1f, Float.POSITIVE_INFINITY));
+        assertThat(tripled.get(EnemyStat.ARMOR)).isEqualTo(new StatModifier(30f, 0.6f, 1f, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY));
         assertThat(tripled.get(EnemyStat.SPIRIT)).isEqualTo(StatModifier.times(0.5f));
         assertThat(tripled.get(EnemyStat.STEALTH)).isEqualTo(StatModifier.setTo(1f));
+    }
+
+    @Test
+    void timesRepeatsAFlatAndPowersAMultiplier() {
+        StatModifiers<EnemyStat> bundle = StatModifiers.of(EnemyStat.ARMOR, StatModifier.flat(-5f))
+                .and(EnemyStat.MOVE_SPEED, StatModifier.times(0.5f))
+                .and(EnemyStat.STEALTH, StatModifier.setTo(0f));
+
+        StatModifiers<EnemyStat> thrice = bundle.times(3);
+
+        assertThat(thrice.get(EnemyStat.ARMOR)).isEqualTo(StatModifier.flat(-15f));
+        assertThat(thrice.get(EnemyStat.MOVE_SPEED)).isEqualTo(StatModifier.times(0.125f));
+        assertThat(thrice.get(EnemyStat.STEALTH)).isEqualTo(StatModifier.setTo(0f));
+        assertThat(bundle.times(0).isNone()).isTrue();
     }
 }

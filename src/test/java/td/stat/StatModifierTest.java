@@ -9,7 +9,7 @@ class StatModifierTest {
 
     @Test
     void noneIsTheIdentityOfPlus() {
-        StatModifier modifier = new StatModifier(3f, 0.2f, 0.5f, 7f);
+        StatModifier modifier = new StatModifier(3f, 0.2f, 0.5f, 7f, 0.9f);
 
         assertThat(modifier.plus(StatModifier.none())).isEqualTo(modifier);
         assertThat(StatModifier.none().plus(modifier)).isEqualTo(modifier);
@@ -50,5 +50,14 @@ class StatModifierTest {
         assertThat(combined.get(EnemyStat.SPIRIT)).isEqualTo(StatModifier.flat(20f));
         assertThat(combined.get(EnemyStat.MOVE_SPEED)).isEqualTo(StatModifier.none());
         assertThat(combined.plus(StatModifiers.none())).isEqualTo(combined);
+    }
+
+    @Test
+    void aCapHoldsTheValueToAShareOfItsBase() {
+        StatModifier capped = StatModifier.flat(10f).plus(StatModifier.capAtShareOfBase(0.75f))
+                .plus(StatModifier.capAtShareOfBase(0.9f));
+
+        assertThat(capped.applyTo(4f)).isEqualTo(3f);
+        assertThat(StatModifier.flat(-3f).plus(StatModifier.capAtShareOfBase(0.75f)).applyTo(4f)).isEqualTo(1f);
     }
 }

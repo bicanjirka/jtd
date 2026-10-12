@@ -3,10 +3,11 @@
 - `Effect` is one record for every `EffectKind`, with no per-kind subclass; every field has an
   identity value for every kind. This package never depends on `td.enemy`: the producer binds a
   `DamageSink` when it creates the effect.
-- `ActiveEffects` keeps one live effect per kind, so reapplying refreshes rather than stacks. The
-  exceptions are the decaying kinds (`EffectKind.isDecaying()`: `CHILL`, `BURN`, `POISON`), which
-  add up as a level, and `VULNERABLE`, which stacks. `ActiveEffects` exposes queries only, never
-  its map.
+- Each `EffectKind` is one row holding its `EffectRule`: category, resistance, stacking
+  (`EffectStacking`), stack cap, pacing (`EffectPacing`), what each stack does to stats, and tags.
+  Every classification method reads the rule. `ActiveEffects` keeps one live effect per kind and
+  combines applications by the rule's stacking: a refresh keeps the stronger and the longer, a level
+  or a pool adds up, stacks add to their cap. `ActiveEffects` exposes queries only, never its map.
 - `CHILL` is a level (the share of speed lost, capped at 0.8) made of one `FuelContribution` per
   application, each fading linearly on its own slope. An application only adds what fits under the
   cap. It also cuts a burn's damage by up to half at the cap. `FREEZE` is a hard stop.
@@ -17,8 +18,8 @@
   stack clock, so `STACK_INTERVAL_TICKS` must stay a multiple of the pulse interval. A top-up adds
   `L0 * (1 - fuel / lmax)`. A pool ends when a tick would round to zero. The two kinds are separate
   pools, so they stack with each other. A pool earns a stack of its lasting mark (`SCORCHED` for
-  burn, `SICKENED` for poison, `EffectKind.debuffEarned()`) when it starts and another every
-  `STACK_INTERVAL_TICKS` while it lasts; a top-up earns none.
+  burn, `SICKENED` for poison, `EffectInteractions.earnedBy`) when it starts and another every
+  `STACK_INTERVAL_TICKS` while it lasts, up to their cap of a hundred; a top-up earns none.
 - `SCORCHED` and `SICKENED` are real effects that only `ActiveEffects` creates. Each stack lowers
   `RESILIENCE` or `SPIRIT` by one. They outlast the pool, are never cleared by another effect
   (a freeze puts out the burn, not its mark) and lose a stack every `STACK_DECAY_INTERVAL_TICKS`
@@ -40,7 +41,8 @@
   debuff on one shared clock (every stack goes when it runs out) that slows every *other*
   spirit-paced timer and every stack debuff by a tenth a stack, and is never paced itself.
   `DEAD_ZONE` keeps `HEAL` and `SHIELD` out, and `FALLOUT` (a ground zone's) only `HEAL`, through
-  `EffectInteractions`' held-off table, which unlike a block strips nothing already there. `BRITTLE` counts only while `FREEZE` is active.
+  `EffectInteractions`' held-off table, which unlike a block strips nothing already there. `BRITTLE` counts
+  only while `FREEZE` is active (`EffectInteractions`' requires table).
 - A pool earns `SICKENED` itself, but a tower can also add it (`Effect.sickened`): the stacks add up
   to a hundred, the whole of spirit, and wear off one at a time at the enemy's spirit pace.
 - A `HEX` kind carries no stat of its own; the tower that cast it watches it and pays it out.
@@ -50,30 +52,30 @@
   freeze puts it out and lands part of it, a chill cools it, and it earns `SCORCHED` and `SICKENED` both.
   Nothing resists it, so it burns what is burn-immune.
 - A tower tunes the pool it feeds through `PoolTuning`, carried by the pool: how much it holds, how fast it
-  marks, how much of it a freeze lands, and whether it cauterizes (half the healing and shielding), heats
-  (`PERIODIC_DAMAGE_TAKEN`, damage that ticks) or marks for magic. Two towers on one pool leave it the
-  stronger of each setting, and the flags only last while the pool does.
+  marks, how much of it a freeze lands, and the stat modifiers it carries while it burns (Cauterize, Heat
+  and the magic mark are such modifiers). Two towers on one pool leave it the stronger of each setting,
+  and what it carries only lasts while the pool does.
 - A freeze always lands half of the burn it puts out at once (`burstPool`, its remaining pool
   `fuel / (1 - alpha)`); a burn pool above `BURN_REVEAL_FUEL` sets `STEALTH` to 0 like a reveal, without
   exposing the enemy. `TARRED` makes the burn it catches start at double the pool and a freeze it
-  suffers last a second longer, both read at `apply`. `CRACKED` takes 5 plating points from both platings.
-- Two hexes bend fire and ice inside `ActiveEffects`, keyed only on their kind being active: under
-  `RIME` a freeze buys twice the chill's extra time and lands all of the burn it puts out; under `ASH` pools hold twice as much and earn
-  stacks twice as often (the pool clock still counts down by one, since pulses ride it), and a
-  chill lands at a quarter. `ASH` keeping out `FREEZE`, and `RIME`/`ASH` replacing each other, are
-  `EffectInteractions` rows.
+  suffers last a second longer, both read at `apply` from `EffectInteractions`' tables. `CRACKED` takes 5
+  plating points from both platings.
+- Two hexes bend fire and ice, each a row in one of `EffectInteractions`' tables keyed only on the
+  kind being active: under `RIME` a freeze buys twice the chill's extra time and lands all of the burn
+  it puts out; under `ASH` pools hold twice as much and earn stacks twice as often (the pool clock still
+  counts down by one, since pulses ride it), and a chill lands at a quarter. An `UNDERTOW` counts as a
+  quarter chill for a freeze. `ASH` keeping out `FREEZE`, and `RIME`/`ASH` replacing each other, are
+  `EffectInteractions` rows too.
 - What a curse carries on from a dead enemy is `EffectKind.spreadsWithCurse()`: the debuffs that
   weaken an enemy, copied with their own sink and time left, never the marks a tower leaves for
   itself.
 - `CHARGED` is spent by a hit from any attacker but the one in its `origin`, never by periodic
   damage; the mob pays its share of that hit through the charge's own sink, so the charger is
   credited.
-- Effects change a mob only through `contributeTo(StatAccumulator)`: chill and poison on
-  `MOVE_SPEED` (multiplying), freeze setting it to zero; vulnerable,
-  priority, kill zone, resonating and brittle **add** to damage taken; heal on `REGENERATION`,
-  invisible and revealed on `STEALTH` (revealed sets it to 0, which beats invisibility's 1; exposed
-  or revealed take 50 `RESILIENCE` once), scorched stacks on `RESILIENCE` (-1 each) and sickened stacks on `SPIRIT` (-1 each), both floored
-  by the stat's range. Heal goes in as restorative, so spirit and `HEALING_RECEIVED` scale it. A
+- Effects change a mob only through `contributeTo(StatAccumulator)`, which applies each kind's
+  `modifiersAt(stacks)`, the chill level, the pools' rules and what burning pools carry. Damage-taken
+  rows **add**; revealed sets `STEALTH` to 0, which beats invisibility's 1; exposed or revealed take 50
+  `RESILIENCE` once; every stat is floored by its range. Heal goes in as restorative, so spirit and `HEALING_RECEIVED` scale it. A
   shield is an absorb pool (`ActiveEffects.absorb`), applied after armor and plating, scaled once when
   applied by spirit and `HEALING_RECEIVED`; reapplying keeps the larger pool. Cauterize lowers
   `HEALING_RECEIVED`.
@@ -106,9 +108,10 @@
 
 ## Adding a kind
 
-1. `EffectKind` constant, and its cases in `category()` and `resistedBy()`.
-2. A named `Effect` factory, plus its cases in `ActiveEffects.magnitude` and `contributeTo` (the
-   compiler forces them).
-3. An `EffectTemplate` if abilities should author it.
-4. A `Palette.STATUS_MARKER_*` role and its cases in `EnemyFrameBuilder.markerPaletteFor`,
-   `Java2DFrameRenderer.colorFor` and `EnemyStatText.effectRow` (the compiler forces these).
+1. An `EffectKind` row with its `EffectRule`.
+2. A named `Effect` factory if towers or abilities apply it.
+3. An `EffectTemplate` if abilities author it.
+4. The palette cases the compiler forces (`EnemyFrameBuilder.markerPaletteFor`,
+   `Java2DFrameRenderer.colorFor`, `EnemyStatText.effectRow`, `ActiveEffects.magnitude`).
+
+A plain stat debuff needs no other code; a rule between kinds is a row in `EffectInteractions`.
