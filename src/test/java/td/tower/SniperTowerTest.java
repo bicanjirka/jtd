@@ -108,7 +108,7 @@ class SniperTowerTest {
         assertThat(tower.damageCurrent()).isEqualTo(DamageUnits.ofPoints(40f));
         assertThat(tower.getRange()).isEqualTo(4.0f);
         assertThat(tower.coolDownMax).isEqualTo(49);
-        assertThat(tower.fireRateCurrent()).isEqualTo(1.0);
+        assertThat(tower.attackRate()).isEqualTo(1.0);
         assertThat(tower.critChance()).isEqualTo(0.05f);
         assertThat(tower.stats().attack().critMultiplier()).isEqualTo(2.0f);
     }
@@ -162,7 +162,7 @@ class SniperTowerTest {
 
         this.fireShots(tower, target, 1);
 
-        assertThat(tower.fireRateCurrent()).isCloseTo(1.0 / 0.75, within(1e-9));
+        assertThat(tower.attackRate()).isCloseTo(1.25, within(1e-9));
         assertThat(target.attackers().getFirst().armorPenetrationFlat()).isEqualTo(30f);
     }
 
@@ -319,7 +319,7 @@ class SniperTowerTest {
 
     /** How many ticks a wait of {@code periods} base periods takes at the tower's fire rate. */
     private static int waitTicks(SniperTower tower, double periods) {
-        return (int) Math.round((tower.coolDownMax + 1) * periods / tower.fireRateCurrent());
+        return (int) Math.round((tower.coolDownMax + 1) * periods / tower.attackRate());
     }
 
     @Test

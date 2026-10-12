@@ -11,8 +11,8 @@ import td.util.ThreadConfined;
 public final class SniperTempo {
 
     private static final int FRENZY_WAITS = 3;
-    /** The share of a wait that twice as fast takes away. */
-    private static final float DOUBLE_SPEED = 0.5f;
+    /** The attack speed that makes a wait twice as fast. */
+    private static final float HASTE = 1f;
 
     private int frenzyWaitsLeft;
     private int burstEndsAt = -1;
@@ -36,16 +36,16 @@ public final class SniperTempo {
     }
 
     /**
-     * The extra fire rate for the wait that starts at {@code tick}. A Frenzy wait is used up by
+     * The extra attack speed for the wait that starts at {@code tick}. A Frenzy wait is used up by
      * asking.
      */
-    public float takeFireRateBonus(int tick) {
+    public float takeAttackSpeedBonus(int tick) {
         if (tick < this.burstEndsAt) {
-            return DOUBLE_SPEED;
+            return HASTE;
         }
         if (this.frenzyWaitsLeft > 0) {
             this.frenzyWaitsLeft--;
-            return DOUBLE_SPEED;
+            return HASTE;
         }
         return 0f;
     }

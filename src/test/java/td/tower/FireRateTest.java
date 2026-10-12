@@ -5,7 +5,6 @@ import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
-import td.tower.buff.TowerBuff;
 import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,13 +24,13 @@ class FireRateTest {
     }
 
     private static double rateOf(float bonus) {
-        return TowerBuff.fireRate(bonus).fireRateMultiplier();
+        return 1.0 + bonus;
     }
 
     private static int pulseHits(float bonus) {
         GameWorld world = board();
         PulseTower tower = new PulseTower(world, 3, 3);
-        tower.grantTimedBuff(TowerBuff.fireRate(bonus), Integer.MAX_VALUE / 2);
+        tower.grantTimedModifiers(TowerModifiers.attackSpeed(bonus), Integer.MAX_VALUE / 2);
         FakeEnemyMob target = FakeEnemyMob.at(tower.getX(), tower.getY());
         world.enemies().setEnemies(new EnemyMob[]{target});
         for (int t = 0; t < TICKS; t++) {
@@ -46,7 +45,7 @@ class FireRateTest {
     }
 
     @Test
-    void aTenPercentBuffedPulseHitsTwentyTwoPointTwoTimesPerTwentyTicks() {
+    void aTenPercentFasterPulseHitsTwentyTwoTimesPerTwentyTicks() {
         assertThat((long) pulseHits(0.1f)).isEqualTo(expectedShots(TICKS, rateOf(0.1f), 1));
     }
 
@@ -54,7 +53,7 @@ class FireRateTest {
     void aBuffedPulseHitsTwiceInATickOnceTheRememberedFractionsAddUp() {
         GameWorld world = board();
         PulseTower tower = new PulseTower(world, 3, 3);
-        tower.grantTimedBuff(TowerBuff.fireRate(0.5f), Integer.MAX_VALUE / 2);
+        tower.grantTimedModifiers(TowerModifiers.attackSpeed(1f), Integer.MAX_VALUE / 2);
         FakeEnemyMob target = FakeEnemyMob.at(tower.getX(), tower.getY());
         world.enemies().setEnemies(new EnemyMob[]{target});
 
@@ -73,9 +72,9 @@ class FireRateTest {
     void aPulseBuffShowsItsExactRateOnTheInfoRow() {
         GameWorld world = board();
         PulseTower tower = new PulseTower(world, 3, 3);
-        tower.grantTimedBuff(TowerBuff.fireRate(0.1f), Integer.MAX_VALUE / 2);
+        tower.grantTimedModifiers(TowerModifiers.attackSpeed(0.1f), Integer.MAX_VALUE / 2);
 
-        TowerStatLine row = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStat.FIRE_RATE)
+        TowerStatLine row = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.FIRE_RATE)
                 .findFirst().orElseThrow();
 
         assertThat(row.base()).isEqualTo(20f);
@@ -88,7 +87,7 @@ class FireRateTest {
     private static Run sniperShots(float bonus) {
         GameWorld world = board();
         SniperTower tower = new SniperTower(world, 3, 3);
-        tower.grantTimedBuff(TowerBuff.fireRate(bonus), Integer.MAX_VALUE / 2);
+        tower.grantTimedModifiers(TowerModifiers.attackSpeed(bonus), Integer.MAX_VALUE / 2);
         FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + 10, tower.getY());
         world.enemies().setEnemies(new EnemyMob[]{target});
         for (int t = 1; t <= TICKS; t++) {
@@ -109,7 +108,7 @@ class FireRateTest {
     private static Run splashShots(float bonus) {
         GameWorld world = board();
         SplashTower tower = new SplashTower(world, 3, 3);
-        tower.grantTimedBuff(TowerBuff.fireRate(bonus), Integer.MAX_VALUE / 2);
+        tower.grantTimedModifiers(TowerModifiers.attackSpeed(bonus), Integer.MAX_VALUE / 2);
         FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + 10, tower.getY());
         world.enemies().setEnemies(new EnemyMob[]{target});
         for (int t = 1; t <= TICKS; t++) {
@@ -130,7 +129,7 @@ class FireRateTest {
     private static long sonarPasses(float bonus) {
         GameWorld world = board();
         SonarTower tower = new SonarTower(world, 3, 3);
-        tower.grantTimedBuff(TowerBuff.fireRate(bonus), Integer.MAX_VALUE / 2);
+        tower.grantTimedModifiers(TowerModifiers.attackSpeed(bonus), Integer.MAX_VALUE / 2);
         FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + 10, tower.getY() + 10);
         world.enemies().setEnemies(new EnemyMob[]{target});
         for (int t = 1; t <= TICKS; t++) {
@@ -140,9 +139,9 @@ class FireRateTest {
     }
 
     @Test
-    void aSonarSpinsFasterByTheFireRateBuff() {
+    void aSonarSpinsFasterByItsAttackSpeed() {
         long base = sonarPasses(0f);
-        long buffed = sonarPasses(0.5f);
+        long buffed = sonarPasses(1f);
 
         assertThat(base).isBetween(19L, 21L);
         assertThat(buffed).isBetween(39L, 41L);

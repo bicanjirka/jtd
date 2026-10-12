@@ -92,7 +92,7 @@ class SeekerTowerTest {
         boolean chosen = tower.buyUpgrade(twinWarhead);
 
         assertThat(chosen).isTrue();
-        assertThat(tower.fireRateCurrent()).isGreaterThan(1.0);
+        assertThat(tower.attackRate()).isGreaterThan(1.0);
     }
 
     @Test
@@ -471,9 +471,9 @@ class SeekerTowerTest {
 
         assertThat(SeekerTower.MISSILE_SPEED).isEqualTo(8f);
         assertThat(tower.inspect().stats()).extracting(TowerStatLine::stat)
-                .contains(TowerStat.PROJECTILE_SPEED, TowerStat.PROJECTILE_SIZE);
+                .contains(TowerStatRow.PROJECTILE_SPEED, TowerStatRow.PROJECTILE_SIZE);
         TowerStatLine speed = tower.inspect().stats().stream()
-                .filter(line -> line.stat() == TowerStat.PROJECTILE_SPEED).findFirst().orElseThrow();
+                .filter(line -> line.stat() == TowerStatRow.PROJECTILE_SPEED).findFirst().orElseThrow();
         assertThat(speed.current()).isEqualTo(8f * TickRate.TICKS_PER_SECOND / BoardFixtures.SCALE);
     }
 
@@ -694,7 +694,7 @@ class SeekerTowerTest {
         FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
         frozen.reportFrozen();
         this.context.enemies().setEnemies(new EnemyMob[]{frozen});
-        int wait = (int) Math.ceil((tower.coolDownMax + 1) / tower.fireRateCurrent());
+        int wait = (int) Math.ceil((tower.coolDownMax + 1) / tower.attackRate());
         for (int t = 2; t <= wait + 2; t++) {
             tower.doTick(t);
         }

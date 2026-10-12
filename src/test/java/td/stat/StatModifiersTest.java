@@ -27,4 +27,18 @@ class StatModifiersTest {
         assertThat(StatModifiers.<EnemyStat>none().plus(bundle)).isEqualTo(bundle);
         assertThat(StatModifiers.<EnemyStat>none().isNone()).isTrue();
     }
+
+    @Test
+    void scaledByMultipliesAmountsButNotFactorsOrSetValues() {
+        StatModifiers<EnemyStat> bundle = StatModifiers.of(EnemyStat.ARMOR, StatModifier.flat(10f))
+                .and(EnemyStat.ARMOR, StatModifier.percent(0.2f))
+                .and(EnemyStat.SPIRIT, StatModifier.times(0.5f))
+                .and(EnemyStat.STEALTH, StatModifier.setTo(1f));
+
+        StatModifiers<EnemyStat> tripled = bundle.scaledBy(3f);
+
+        assertThat(tripled.get(EnemyStat.ARMOR)).isEqualTo(new StatModifier(30f, 0.6f, 1f, Float.POSITIVE_INFINITY));
+        assertThat(tripled.get(EnemyStat.SPIRIT)).isEqualTo(StatModifier.times(0.5f));
+        assertThat(tripled.get(EnemyStat.STEALTH)).isEqualTo(StatModifier.setTo(1f));
+    }
 }

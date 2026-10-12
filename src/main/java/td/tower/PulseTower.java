@@ -7,7 +7,6 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.ShieldListener;
-import td.tower.buff.TowerBuff;
 import td.tower.pulse.ArcDischargePerk;
 import td.tower.pulse.EventHorizonPerk;
 import td.tower.pulse.FasterTollPerk;
@@ -80,78 +79,78 @@ public final class PulseTower extends AbstractTower {
 
     private static final UpgradeNode OVERCHARGED_COILS_1 = UpgradeTier.HEAD_1.node("pulse.head.overcharged_coils.1",
             "Overcharged Coils", PRICE)
-            .withBuff(TowerBuff.damage(0.3f))
-            .withExtraEffect("Toll builds twice as fast");
+            .withModifiers(TowerModifiers.damagePercent(0.3f))
+            .withNote("Toll builds twice as fast");
     private static final UpgradeNode OVERCHARGED_COILS_2 = UpgradeTier.HEAD_2.node("pulse.head.overcharged_coils.2",
             "Overcharged Coils II", PRICE)
-            .withBuff(TowerBuff.damage(0.25f))
-            .withExtraEffect("an enemy at full Toll takes +25% from the field")
+            .withModifiers(TowerModifiers.damagePercent(0.25f))
+            .withNote("an enemy at full Toll takes +25% from the field")
             .after(OVERCHARGED_COILS_1);
     private static final UpgradeNode ARC_DISCHARGE = UpgradeTier.HEAD_3.node("pulse.head.overcharged_coils.3",
             "Arc Discharge", PRICE)
-            .withBuff(TowerBuff.critChance(0.1f))
+            .withModifiers(TowerModifiers.critChance(0.1f))
             .withGate(new PurposeCondition(FULL_TOLL_DEED, FULL_TOLL_SECONDS_NEEDED))
-            .withExtraEffect("once a second a zap hits the healthiest enemy inside for 15x the tick damage, magic, "
+            .withNote("once a second a zap hits the healthiest enemy inside for 15x the tick damage, magic, "
                     + "and can crit")
             .after(OVERCHARGED_COILS_2);
     private static final UpgradeNode MELTDOWN = UpgradeTier.HEAD_4.node("pulse.head.overcharged_coils.4a", "Meltdown",
             PRICE)
-            .withExtraEffect("Toll stacks to 10; the zap gets +10% crit, and Toll raises the zap's damage too")
+            .withNote("Toll stacks to 10; the zap gets +10% crit, and Toll raises the zap's damage too")
             .after(ARC_DISCHARGE);
     private static final UpgradeNode TESLA_COIL = UpgradeTier.HEAD_4.node("pulse.head.overcharged_coils.4b",
             "Tesla Coil", PRICE)
-            .withExtraEffect("the zap chains to 3 more enemies within 1.5 cells, even outside the field; every "
+            .withNote("the zap chains to 3 more enemies within 1.5 cells, even outside the field; every "
                     + "enemy zapped is Dazed 0.25s")
             .after(ARC_DISCHARGE);
     private static final UpgradeNode PHASE_FIELD_1 = UpgradeTier.HEAD_1.node("pulse.head.phase_field.1",
             "Phase Field", PRICE)
-            .withBuff(TowerBuff.range(0.2f))
-            .withExtraEffect("Toll stays 2s after an enemy leaves");
+            .withModifiers(TowerModifiers.rangePercent(0.2f))
+            .withNote("Toll stays 2s after an enemy leaves");
     private static final UpgradeNode PHASE_FIELD_2 = UpgradeTier.HEAD_2.node("pulse.head.phase_field.2",
             "Phase Field II", PRICE)
-            .withBuff(TowerBuff.range(0.15f))
-            .withExtraEffect("an enemy is revealed to every tower for 2s when it gains its first Toll stack, once "
+            .withModifiers(TowerModifiers.rangePercent(0.15f))
+            .withNote("an enemy is revealed to every tower for 2s when it gains its first Toll stack, once "
                     + "per visit")
             .after(PHASE_FIELD_1);
     private static final UpgradeNode NULL_FIELD = UpgradeTier.HEAD_3.node("pulse.head.phase_field.3", "Null Field",
             PRICE)
             .withGate(new PurposeCondition(FULL_TOLL_DEED, FULL_TOLL_SECONDS_NEEDED))
-            .withExtraEffect("enemies inside are Silenced")
+            .withNote("enemies inside are Silenced")
             .after(PHASE_FIELD_2);
     private static final UpgradeNode TRUE_SIGHT = UpgradeTier.HEAD_4.node("pulse.head.phase_field.4a", "True Sight",
             PRICE)
-            .withExtraEffect("the visit's reveal lasts 4s and Dazes the enemy for 2s")
+            .withNote("the visit's reveal lasts 4s and Dazes the enemy for 2s")
             .after(NULL_FIELD);
     private static final UpgradeNode DEAD_ZONE = UpgradeTier.HEAD_4.node("pulse.head.phase_field.4b", "Dead Zone",
             PRICE)
-            .withExtraEffect("nothing inside can be healed or shielded")
+            .withNote("nothing inside can be healed or shielded")
             .after(NULL_FIELD);
     private static final UpgradeNode CORROSION = UpgradeTier.EXTRA_1.node("pulse.extra.field_shaping.1", "Corrosion",
             PRICE)
-            .withExtraEffect("-30 armor while inside, armor stopping at 0");
+            .withNote("-30 armor while inside, armor stopping at 0");
     private static final UpgradeNode MIRROR_FIELD = UpgradeTier.EXTRA_2.node("pulse.extra.field_shaping.2",
             "Mirror Field", PRICE)
-            .withExtraEffect("what a shield absorbs of the field's hits is dealt back to its enemy as magic")
+            .withNote("what a shield absorbs of the field's hits is dealt back to its enemy as magic")
             .after(CORROSION);
     private static final UpgradeNode UNDERTOW = UpgradeTier.EXTRA_3.node("pulse.extra.field_shaping.3", "Undertow",
             PRICE)
-            .withExtraEffect("inside, enemies are chilled 25% and the chill doesn't fade while they stay, it counts "
+            .withNote("inside, enemies are chilled 25% and the chill doesn't fade while they stay, it counts "
                     + "for freezes, and they are Anchored")
             .after(MIRROR_FIELD);
     private static final UpgradeNode EVENT_HORIZON = UpgradeTier.EXTRA_4.node("pulse.extra.field_shaping.4",
             "Event Horizon", PRICE)
-            .withExtraEffect("each death inside adds +5% field damage until the wave ends, up to +100%")
+            .withNote("each death inside adds +5% field damage until the wave ends, up to +100%")
             .after(UNDERTOW);
     private static final UpgradeNode RATTLE_FIELD = UpgradeTier.SPECIAL.node("pulse.special.rattle_field",
             "Rattle Field", PRICE)
-            .withExtraEffect("each tick, a 5% chance to add a stack of Sundered or Exposed: about one a second");
+            .withNote("each tick, a 5% chance to add a stack of Sundered or Exposed: about one a second");
     private static final UpgradeNode SOUL_DRAIN = UpgradeTier.SPECIAL.node("pulse.special.soul_drain", "Soul Drain",
             PRICE)
-            .withExtraEffect("each second inside costs 5 spirit, and the field deals +1% damage per point of spirit "
+            .withNote("each second inside costs 5 spirit, and the field deals +1% damage per point of spirit "
                     + "below zero; at -100 double damage and no heals or shields");
     private static final UpgradeNode KILL_ZONE = UpgradeTier.SPECIAL.node("pulse.special.kill_zone", "Kill Zone",
             PRICE)
-            .withExtraEffect("enemies inside take +25% damage from every source");
+            .withNote("enemies inside take +25% damage from every source");
 
     /** Chance per tick that Rattle Field adds a stack, and one in this many being Exposed rather than Sundered. */
     private static final double RATTLE_CHANCE = 0.05;
@@ -268,7 +267,7 @@ public final class PulseTower extends AbstractTower {
         for (int hit = 0; hit < shots; hit++) {
             this.clock.spend();
         }
-        this.clock.advance(this.fireRateCurrent());
+        this.clock.advance(this.attackRate());
         this.highestToll = highest;
         if (spec.toll().isActive() && highest >= spec.toll().cap()) {
             this.countDeedOfSecond();

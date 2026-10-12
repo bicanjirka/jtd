@@ -1,7 +1,7 @@
 package td.tower;
 
 import td.enemy.EnemyWalk;
-import td.tower.buff.TowerBuff;
+import td.stat.StatModifiers;
 import td.tower.mortar.PathLine;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.BaseSlotPerks;
@@ -24,7 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Never attacks; contributes a {@link TowerBuff} to other towers whose centre is within its range.
+ * Never attacks; contributes stat modifiers to other towers whose centre is within its range.
  * Several auras stack additively.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
@@ -35,8 +35,8 @@ public final class AuraTower extends AbstractTower {
     public static final float RANGE = 1.5f;
     public static final float DEFAULT_POWER = 0.2f;
 
-    /** How much of a jammer's effect a tower in range is spared. */
-    private static final float DISRUPTION_SHIELD = 0.5f;
+    /** The share of a jammer's effect that still reaches a tower in range. */
+    private static final float DISRUPTION_LEFT = 0.5f;
     /** What each Amplifying Core level adds to the buff, and the fire rate the second level grants. */
     private static final float CORE_STEP = 0.1f;
     private static final float CORE_FIRE_RATE = 0.1f;
@@ -53,7 +53,7 @@ public final class AuraTower extends AbstractTower {
     private static final int HEAD_THREE_BUFFED_TOWERS = 4;
     private static final float KEEN_EDGE_CRIT_DAMAGE = 0.5f;
     /** Broadcast II halves the disruption again, so only a quarter of it is left. */
-    private static final float BROADCAST_DISRUPTION_SHIELD = 0.75f;
+    private static final float BROADCAST_DISRUPTION_LEFT = 0.5f;
     private static final float CONDUIT_EFFECT_LENGTH = 0.3f;
 
     /** Withering Field: how long a buffed tower waits between the hits that apply Vulnerable. */
@@ -67,46 +67,46 @@ public final class AuraTower extends AbstractTower {
 
     private static final UpgradeNode AMPLIFYING_CORE_1 = UpgradeTier.HEAD_1.node("aura.head.amplifying_core.1",
             "Amplifying Core", PRICE)
-            .withExtraEffect("+10% buff strength");
+            .withNote("+10% buff strength");
     private static final UpgradeNode AMPLIFYING_CORE_2 = UpgradeTier.HEAD_2.node("aura.head.amplifying_core.2",
             "Amplifying Core II", PRICE)
             .after(AMPLIFYING_CORE_1)
-            .withExtraEffect("+10% more buff strength, and the aura also grants +10% fire rate");
+            .withNote("+10% more buff strength, and the aura also grants +10% fire rate");
     private static final UpgradeNode KEEN_EDGE = UpgradeTier.HEAD_3.node("aura.head.amplifying_core.3", "Keen Edge",
             PRICE)
             .withGate(new BuffedTowersCondition(HEAD_THREE_BUFFED_TOWERS)
                     .and(new NeighbourOfTypeCondition(TowerFactory.Type.AURA)))
-            .withExtraEffect("buffed towers deal +50% crit damage")
+            .withNote("buffed towers deal +50% crit damage")
             .after(AMPLIFYING_CORE_2);
     private static final UpgradeNode BROADCAST_1 = UpgradeTier.HEAD_1.node("aura.head.broadcast.1",
             "Broadcast", PRICE)
-            .withBuff(TowerBuff.range(0.3f))
-            .withExtraEffect("Kinship counts tower types one cell further and loses its cap");
+            .withModifiers(TowerModifiers.rangePercent(0.3f))
+            .withNote("Kinship counts tower types one cell further and loses its cap");
     private static final UpgradeNode BROADCAST_2 = UpgradeTier.HEAD_2.node("aura.head.broadcast.2",
             "Broadcast II", PRICE)
             .after(BROADCAST_1)
-            .withExtraEffect("a timed buff on a buffed tower lasts twice as long; disruption is halved again");
+            .withNote("a timed buff on a buffed tower lasts twice as long; disruption is halved again");
     private static final UpgradeNode CONDUIT = UpgradeTier.HEAD_3.node("aura.head.broadcast.3", "Conduit", PRICE)
             .withGate(new BuffedTowersCondition(HEAD_THREE_BUFFED_TOWERS))
-            .withExtraEffect("effects that buffed towers apply last 30% longer")
+            .withNote("effects that buffed towers apply last 30% longer")
             .after(BROADCAST_2);
     private static final UpgradeNode TUTELAGE_1 = UpgradeTier.EXTRA_1.node("aura.extra.tutelage.1", "Tutelage", PRICE)
-            .withExtraEffect("buffed towers earn +10% XP, on top of Kinship");
+            .withNote("buffed towers earn +10% XP, on top of Kinship");
     private static final UpgradeNode SHARED_LESSONS = UpgradeTier.EXTRA_2.node("aura.extra.tutelage.2",
             "Shared Lessons", PRICE)
-            .withExtraEffect("buffed towers share what they see: each earns the XP of every enemy any of them reached")
+            .withNote("buffed towers share what they see: each earns the XP of every enemy any of them reached")
             .after(TUTELAGE_1);
     private static final UpgradeNode APPRENTICE = UpgradeTier.EXTRA_3.node("aura.extra.tutelage.3", "Apprentice",
             PRICE)
-            .withExtraEffect("the buffed tower with the least XP earns double XP from every source")
+            .withNote("the buffed tower with the least XP earns double XP from every source")
             .after(SHARED_LESSONS);
     private static final UpgradeNode WITHERING_FIELD = UpgradeTier.SPECIAL.node("aura.special.withering_field",
             "Withering Field", PRICE)
-            .withExtraEffect("every buffed tower applies a stack of Vulnerable with its next hit, once every 10s");
+            .withNote("every buffed tower applies a stack of Vulnerable with its next hit, once every 10s");
     private static final UpgradeNode CHOSEN = UpgradeTier.SPECIAL.node("aura.special.chosen", "Chosen", PRICE)
-            .withExtraEffect("buffs only the most experienced tower in range, at triple strength");
+            .withNote("buffs only the most experienced tower in range, at triple strength");
     private static final UpgradeNode RALLY = UpgradeTier.SPECIAL.node("aura.special.rally", "Rally", PRICE)
-            .withExtraEffect("marks the path spot nearest the aura: when an enemy steps on it, every buffed tower "
+            .withNote("marks the path spot nearest the aura: when an enemy steps on it, every buffed tower "
                     + "gets +30% fire rate for 5s, then a 10s cooldown");
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none().withAttune("Kinship: buffed towers earn "
@@ -150,31 +150,37 @@ public final class AuraTower extends AbstractTower {
     }
 
     @Override
+    public boolean emitsBuffs() {
+        return true;
+    }
+
+    @Override
     protected boolean isPassive() {
         return true;
     }
 
-    public TowerBuff buff() {
+    public StatModifiers<TowerStat> buff() {
         return this.buffWithStrength(this.power);
     }
 
-    private TowerBuff buffWithStrength(float strength) {
-        boolean broadcasting = this.owns(BROADCAST_2);
-        TowerBuff base = TowerBuff.amplifying(strength)
-                .withDisruptionShield(broadcasting ? BROADCAST_DISRUPTION_SHIELD : DISRUPTION_SHIELD);
-        if (broadcasting) {
-            base = base.withTimedBuffBonus(1f);
+    private StatModifiers<TowerStat> buffWithStrength(float strength) {
+        StatModifiers<TowerStat> buff = TowerModifiers.damagePercent(strength)
+                .plus(TowerModifiers.rangePercent(strength))
+                .plus(TowerModifiers.disruptionTaken(DISRUPTION_LEFT));
+        if (this.owns(BROADCAST_2)) {
+            buff = buff.plus(TowerModifiers.disruptionTaken(BROADCAST_DISRUPTION_LEFT))
+                    .plus(TowerModifiers.buffDuration(1f));
         }
         if (this.owns(CONDUIT)) {
-            base = base.withEffectDurationBonus(CONDUIT_EFFECT_LENGTH);
+            buff = buff.plus(TowerModifiers.effectDuration(CONDUIT_EFFECT_LENGTH));
         }
         if (this.owns(KEEN_EDGE)) {
-            base = base.withCritDamage(KEEN_EDGE_CRIT_DAMAGE);
+            buff = buff.plus(TowerModifiers.critMultiplier(KEEN_EDGE_CRIT_DAMAGE));
         }
         if (this.owns(WITHERING_FIELD)) {
-            base = base.withWitherTicks(WITHERING_FIELD_TICKS);
+            buff = buff.plus(TowerModifiers.witherEvery(WITHERING_FIELD_TICKS));
         }
-        return this.grantsFireRate ? base.withFireRate(CORE_FIRE_RATE) : base;
+        return this.grantsFireRate ? buff.plus(TowerModifiers.attackSpeed(CORE_FIRE_RATE)) : buff;
     }
 
     /** Another tower within range. Never itself, and never another aura. */
@@ -228,11 +234,11 @@ public final class AuraTower extends AbstractTower {
     }
 
     @Override
-    public TowerBuff buffFor(Tower other) {
+    public StatModifiers<TowerStat> buffFor(Tower other) {
         if (!this.buffs(other)) {
-            return TowerBuff.none();
+            return StatModifiers.none();
         }
-        TowerBuff buff = this.buffWithStrength(this.power + this.kinshipStrengthFor(other));
+        StatModifiers<TowerStat> buff = this.buffWithStrength(this.power + this.kinshipStrengthFor(other));
         return this.owns(CHOSEN) ? buff.scaledBy(CHOSEN_STRENGTH) : buff;
     }
 
@@ -332,7 +338,7 @@ public final class AuraTower extends AbstractTower {
         if (this.owns(RALLY) && gameTime >= this.rallyReadyAt && this.enemyOnRallySpot()) {
             this.rallyReadyAt = gameTime + RALLY_COOLDOWN_TICKS;
             for (Tower buffed : this.buffedTowers()) {
-                buffed.receiveTimedBuff(TowerBuff.fireRate(RALLY_FIRE_RATE), RALLY_TICKS);
+                buffed.receiveTimedModifiers(TowerModifiers.attackSpeed(RALLY_FIRE_RATE), RALLY_TICKS);
             }
         }
     }
@@ -363,9 +369,9 @@ public final class AuraTower extends AbstractTower {
         List<BehaviourLine> lines = new ArrayList<>();
         lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby damage", bonus));
         lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby range", bonus));
-        lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby disruption", "-" + BehaviourLine.percent(DISRUPTION_SHIELD)));
+        lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby disruption", "-" + BehaviourLine.percent(1f - DISRUPTION_LEFT)));
         if (this.grantsFireRate) {
-            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby fire rate", "+" + BehaviourLine.percent(CORE_FIRE_RATE)));
+            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby attack speed", "+" + BehaviourLine.percent(CORE_FIRE_RATE)));
         }
         if (this.owns(WITHERING_FIELD)) {
             lines.add(new BehaviourLine(BehaviourMarker.VULNERABLE, "Buffed hits", "vulnerable every 10s"));

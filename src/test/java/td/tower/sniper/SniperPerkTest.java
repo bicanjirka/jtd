@@ -48,8 +48,8 @@ class SniperPerkTest {
 
     @Test
     void steadyTempoSpeedsUpEveryShotAfterTheFirstAtOneTarget() {
-        assertThat(new SteadyTempoPerk().shape(BASE, context(1, false, 2)).fireRateBonus()).isEqualTo(0.25f);
-        assertThat(new SteadyTempoPerk().shape(BASE, context(0, true, 1)).fireRateBonus()).isZero();
+        assertThat(new SteadyTempoPerk().shape(BASE, context(1, false, 2)).attackSpeedBonus()).isEqualTo(0.25f);
+        assertThat(new SteadyTempoPerk().shape(BASE, context(0, true, 1)).attackSpeedBonus()).isZero();
     }
 
     @Test

@@ -257,8 +257,15 @@ public class GameEngine {
         }
         this.gameWorld.projectiles().doTick(time);
         this.gameWorld.zones().doTick(time);
-        for (Tower tower : this.gameWorld.towers().all()) {
-            tower.beginTick(time);
+        List<Tower> towers = this.gameWorld.towers().all();
+        boolean emissionChanged = false;
+        for (Tower tower : towers) {
+            emissionChanged |= tower.beginTick(time) && tower.emitsBuffs();
+        }
+        if (emissionChanged) {
+            towers.forEach(Tower::recalculateStats);
+        }
+        for (Tower tower : towers) {
             tower.doTick(time);
         }
         this.settleDeaths(time);

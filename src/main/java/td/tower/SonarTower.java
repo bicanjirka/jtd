@@ -6,7 +6,6 @@ import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
-import td.tower.buff.TowerBuff;
 import td.tower.sonar.BeamSpec;
 import td.tower.sonar.CommandPingPerk;
 import td.tower.sonar.CritRefreshPerk;
@@ -93,73 +92,73 @@ public final class SonarTower extends AbstractTower {
 
     private static final UpgradeNode RAPID_ARRAY_1 = UpgradeTier.HEAD_1.node("sonar.head.rapid_array.1",
             "Rapid Array", PRICE)
-            .withBuff(TowerBuff.damage(0.25f))
-            .withExtraEffect("Ping Exposes the two healthiest enemies it passes");
+            .withModifiers(TowerModifiers.damagePercent(0.25f))
+            .withNote("Ping Exposes the two healthiest enemies it passes");
     private static final UpgradeNode RAPID_ARRAY_2 = UpgradeTier.HEAD_2.node("sonar.head.rapid_array.2",
             "Rapid Array II", PRICE)
-            .withBuff(TowerBuff.damage(0.25f).withCritChance(0.1f))
-            .withExtraEffect("a beam crit refreshes Exposed on its target")
+            .withModifiers(TowerModifiers.damagePercent(0.25f).plus(TowerModifiers.critChance(0.1f)))
+            .withNote("a beam crit refreshes Exposed on its target")
             .after(RAPID_ARRAY_1);
     private static final UpgradeNode SPIN_UP = UpgradeTier.HEAD_3.node("sonar.head.rapid_array.3", "Spin-Up", PRICE)
             .withGate(new PurposeCondition(PING_DEED, PING_DEEDS_NEEDED))
-            .withExtraEffect("a revolution every 2s instead of 3s")
+            .withNote("a revolution every 2s instead of 3s")
             .after(RAPID_ARRAY_2);
     private static final UpgradeNode TWIN_BEAM = UpgradeTier.HEAD_4.node("sonar.head.rapid_array.4a", "Twin Beam",
             PRICE)
-            .withExtraEffect("a second beam, opposite, at 70% damage")
+            .withNote("a second beam, opposite, at 70% damage")
             .after(SPIN_UP);
     private static final UpgradeNode PHASED_ARRAY = UpgradeTier.HEAD_4.node("sonar.head.rapid_array.4b",
             "Phased Array", PRICE)
-            .withExtraEffect("stops spinning and holds the beam on the enemy with most health, hitting everything "
+            .withNote("stops spinning and holds the beam on the enemy with most health, hitting everything "
                     + "on it three times a revolution")
             .after(SPIN_UP);
     private static final UpgradeNode LONG_REACH_1 = UpgradeTier.HEAD_1.node("sonar.head.long_reach.1",
             "Long Reach", PRICE)
-            .withBuff(TowerBuff.range(0.2f))
-            .withExtraEffect("Ping picks the healthiest enemy past half range, Exposed for two passes");
+            .withModifiers(TowerModifiers.rangePercent(0.2f))
+            .withNote("Ping picks the healthiest enemy past half range, Exposed for two passes");
     private static final UpgradeNode LONG_REACH_2 = UpgradeTier.HEAD_2.node("sonar.head.long_reach.2",
             "Long Reach II", PRICE)
-            .withBuff(TowerBuff.critChance(0.1f))
-            .withExtraEffect("damage up to +100% at max range")
+            .withModifiers(TowerModifiers.critChance(0.1f))
+            .withNote("damage up to +100% at max range")
             .after(LONG_REACH_1);
     private static final UpgradeNode RESONANT_CRACK = UpgradeTier.HEAD_3.node("sonar.head.long_reach.3",
             "Resonant Crack", PRICE)
             .withGate(new PurposeCondition(PING_DEED, PING_DEEDS_NEEDED))
-            .withExtraEffect("each beam hit takes 10 resilience, down to -50, back 10 a second")
+            .withNote("each beam hit takes 10 resilience, down to -50, back 10 a second")
             .after(LONG_REACH_2);
     private static final UpgradeNode HORIZON = UpgradeTier.HEAD_4.node("sonar.head.long_reach.4a", "Horizon", PRICE)
-            .withBuff(TowerBuff.range(0.4f))
-            .withExtraEffect("far bonus up to +150%, but no damage within 1.5 cells")
+            .withModifiers(TowerModifiers.rangePercent(0.4f))
+            .withNote("far bonus up to +150%, but no damage within 1.5 cells")
             .after(RESONANT_CRACK);
     private static final UpgradeNode FAULT_LINE = UpgradeTier.HEAD_4.node("sonar.head.long_reach.4b", "Fault Line",
             PRICE)
-            .withExtraEffect("Resonant Crack's loss doesn't recover while Exposed, and falls to -100")
+            .withNote("Resonant Crack's loss doesn't recover while Exposed, and falls to -100")
             .after(RESONANT_CRACK);
     private static final UpgradeNode ULTRASOUND = UpgradeTier.EXTRA_1.node("sonar.extra.frequency.1", "Ultrasound",
             PRICE)
-            .withExtraEffect("20% of each hit is added as magic, up to 50% against armored or shielded enemies");
+            .withNote("20% of each hit is added as magic, up to 50% against armored or shielded enemies");
     private static final UpgradeNode HARMONICS = UpgradeTier.EXTRA_2.node("sonar.extra.frequency.2", "Harmonics",
             PRICE)
-            .withExtraEffect("hits apply Resonating, +8% magic damage taken, stacks x3")
+            .withNote("hits apply Resonating, +8% magic damage taken, stacks x3")
             .after(ULTRASOUND);
     private static final UpgradeNode PURE_TONE = UpgradeTier.EXTRA_3.node("sonar.extra.frequency.3", "Pure Tone",
             PRICE)
-            .withExtraEffect("the beam deals magic instead of physical, +15% magic penetration")
+            .withNote("the beam deals magic instead of physical, +15% magic penetration")
             .after(HARMONICS);
     private static final UpgradeNode SHATTER_TONE = UpgradeTier.EXTRA_4.node("sonar.extra.frequency.4",
             "Shatter Tone", PRICE)
-            .withExtraEffect("a hit on a shielded enemy breaks a quarter of the shield")
+            .withNote("a hit on a shielded enemy breaks a quarter of the shield")
             .after(PURE_TONE);
     private static final UpgradeNode MARK_ON_SWEEP = UpgradeTier.SPECIAL.node("sonar.special.mark_on_sweep",
             "Mark on Sweep", PRICE)
-            .withExtraEffect("marks every enemy the beam hits: the next hit on it from any tower is a guaranteed "
+            .withNote("marks every enemy the beam hits: the next hit on it from any tower is a guaranteed "
                     + "crit");
     private static final UpgradeNode WIDE_BAND = UpgradeTier.SPECIAL.node("sonar.special.wide_band", "Wide Band", PRICE)
             .withGate(new ClusterCondition(2))
-            .withExtraEffect("the beam reveals invisible enemies it passes to every tower, Exposed for 1s");
+            .withNote("the beam reveals invisible enemies it passes to every tower, Exposed for 1s");
     private static final UpgradeNode COMMAND_PING = UpgradeTier.SPECIAL.node("sonar.special.command_ping",
             "Command Ping", PRICE)
-            .withExtraEffect("the pinged enemy is the Priority until the next pass: +15% damage taken, and towers "
+            .withNote("the pinged enemy is the Priority until the next pass: +15% damage taken, and towers "
                     + "that pick one target pick it");
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, SPIN_UP,
@@ -228,7 +227,7 @@ public final class SonarTower extends AbstractTower {
             spec = perk.refineSpec(spec);
         }
         BeamSpec beam = spec.beam();
-        return spec.withBeam(beam.withSecondsPerRevolution((float) (beam.secondsPerRevolution() / this.fireRateCurrent())));
+        return spec.withBeam(beam.withSecondsPerRevolution((float) (beam.secondsPerRevolution() / this.attackRate())));
     }
 
     public void doTick(int gameTime) {
@@ -349,7 +348,7 @@ public final class SonarTower extends AbstractTower {
     @Override
     protected Optional<TowerStatLine> cadence() {
         float seconds = this.spec(this.perks.all()).beam().secondsPerRevolution();
-        return Optional.of(new TowerStatLine(TowerStat.ROTATION, SECONDS_PER_REVOLUTION, seconds));
+        return Optional.of(new TowerStatLine(TowerStatRow.ROTATION, SECONDS_PER_REVOLUTION, seconds));
     }
 
     @Override

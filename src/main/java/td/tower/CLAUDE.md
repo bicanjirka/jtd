@@ -1,4 +1,4 @@
-# `td.tower` (+ `targeting`, `buff`, `upgrade`, `sniper`, `sonar`, `splash`)
+# `td.tower` (+ `targeting`, `upgrade`, `sniper`, `sonar`, `splash`)
 
 ## Towers
 
@@ -17,11 +17,11 @@
 - Range checks compare squared distances (`rangeReal2()`); no `Math.sqrt` in per-tick scans.
 - A tower that hits every tick passes `coolDownMax = 0`; one whose cadence is not a cooldown (the Sonar's
   spin) also overrides `cadence()`.
-- Every tower's cadence is its `FireClock` run at `fireRateCurrent()`, never a cooldown counted in whole
-  ticks: the clock keeps the fraction a rate leaves over, so a buff is exact (a 10% faster Pulse hits 22.2
+- Every tower's cadence is its `FireClock` run at `attackRate()`, never a cooldown counted in whole
+  ticks: the clock keeps the fraction a rate leaves over, so a buff is exact (a 10% faster Pulse hits 22
   times in 20 ticks, a second hit in the tick the remembered tenths reach a whole). A shot that waits
   longer or shorter than the base spends more or less than one period. The Sonar divides its seconds per
-  revolution by the rate instead, and no counter that carries a fire rate may round to a tick.
+  revolution by the rate instead, and no counter that carries an attack rate may round to a tick.
 - `SonarTower` hits what its `SonarBeam` crossed this tick: a spinning beam the arc swept since
   last tick (`SonarSweep`, half-open), never the instantaneous angle. Beams are pure geometry
   (bearings, never enemies), and a perk that changes the beam reshapes it from where it is. The
@@ -78,15 +78,16 @@
   has set alight: Stoke steps live there and go when the burn has been out longer than the grace. What its
   pools do to an enemy (hold more, mark faster, cauterize, heat, mark for magic, burst at a freeze) is a
   `PoolTuning` the pool carries, never state the Cinder keeps on the enemy; a Thermal Shock's chill and an
-  Everburn top-up are the Cinder's own work in `tendBurning`. Bellows reads what other towers' buffs add to
-  its fire rate (`buffFor`), so it needs no Aura-specific code.
+  Everburn top-up are the Cinder's own work in `tendBurning`. Bellows reads the attack speed in what the tower
+  receives (`TowerStats.received()`), so it needs no Aura-specific code.
 - A Splash's mines and a Hexer's cursed clouds are zones it makes (`Zone.mine`, `Zone.cloud`); a mine
   blasts through the same `blast` a shot does, centred where it lay, with the enemy that stepped on it as
   the primary, and the Splash keeps its own list of mines to replace the oldest and to take them off with it.
-- The Aura never reaches into another tower's state except through `Tower.receiveTimedBuff` (Rally). Withering
-  Field is an interval in the buff (`witherTicks`) that each tower spends on its own first hit after it, never on
-  periodic damage. Chosen's hero is derived from XP on every call, so `AuraTower.doTick` republishes every tower's
-  stats when the hero changes. Rally's spot is the path point nearest the Aura, found once.
+- The Aura never reaches into another tower's state except through `Tower.receiveTimedModifiers` (Rally).
+  Withering Field is an interval in the buff (`WITHER_INTERVAL`) that each tower spends on its own first
+  hit after it, never on periodic damage. Chosen's hero is derived from XP on every call, so
+  `AuraTower.doTick` republishes every tower's stats when the hero changes. Rally's spot is the path point
+  nearest the Aura, found once.
 - Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
   `AuraTower.buffs`' single "is this an aura" check stays the only role check.
 
@@ -106,41 +107,28 @@
 
 ## Stats and buffs
 
-- `recalculateStats()` publishes one immutable `TowerStats` (correlated fields, read by the tick
-  thread). Read it through `damageCurrent()`/`coolDownCurrent()`/`rangeReal()`/`rangeReal2()` or
-  `stats()`.
-- The buff a tower receives is **derived, never stored**: a fold of every tower's
-  `buffFor(this)` plus its own owned nodes' `totalBuff()`. No aura↔client index on either side
-  (`AuraTower.buffedTowers()` is also derived). Call `recalculateStats()` on every tower whenever
-  the roster or any upgrade changes; `TowerRoster.clear()` needn't.
-- `TowerBuff` axes: damage, range, fireRate, bounty, critChance, critDamage (adds to the tower's
-  crit multiplier), armorPenetration, magicPenetration. Build one from a single-axis factory plus `withX`
-  (`TowerBuff.damage(0.3f).withRange(0.1f)`), not from `none()`. `combine` adds every axis except
-  fireRate, where each bonus cuts the cooldown that remains (they multiply).
-- Enemy disruption reaches a tower only through `GameWorld.disruptions()`, sampled at the tower's
-  centre in the towers phase (`beginTick`). It folds in as a negative `TowerBuff` scaled by what the
-  tower's buff leaves of it (`disruptionShield`: an Aura's half, multiplying across Auras), and
-  `TowerBuff` floors combined fire-rate and range bonuses at `MIN_BONUS` (-0.75) and caps fire rate at
-  `MAX_FIRE_RATE_BONUS` (ten times the base).
-- Cadence has a base/current split like damage and range: `coolDownMax` is the base wait and
-  `fireRateCurrent()` the multiplier on it (`TowerBuff.fireRateMultiplier()`, 1 is the base).
+- A tower's stats are `TowerStat` keys resolved by the shared `td.stat` formula into one immutable
+  `TowerStats` (correlated fields, read by the tick thread). Read them through `stats()` or the
+  conveniences (`damageCurrent()`, `rangeReal()`, `rangeReal2()`, `attackRate()`).
+- Layers: base, owned nodes (`UpgradeState.totalModifiers`), timed modifiers, then received
+  emissions (`buffFor`), then disruption × `DISRUPTION_TAKEN`. An aura never receives an emission.
+- What a tower receives is **derived, never stored**: a fold of every tower's `buffFor(this)`.
+  `recalculateStats()` runs on every tower whenever the roster or any upgrade changes, and in the
+  towers phase whenever a tower that `emitsBuffs()` republished in `beginTick`.
+- Author bonuses with `TowerModifiers`. Attack speed is a fraction that adds: `rate = 1 + Σ`, held
+  to `[-0.75, 9]`. Every tower's cadence is its `FireClock` advanced by `attackRate()`; the Sonar
+  divides its seconds per revolution by it.
+- Enemy disruption reaches a tower only through `GameWorld.disruptions()`, sampled at its centre in
+  `beginTick`, and folds in as negative attack speed and range in cells, times `DISRUPTION_TAKEN`.
 - A kill this tower makes runs `onKill(EnemyMob)` (the mob still carries the effects it died
-  under); a kill made from inside the hook, such as an explosion's, triggers nothing. A
-  temporary self-buff goes through `grantTimedBuff` and ends in `beginTick`; it never stacks.
-- How long a tower's effects and timed buffs last is derived from its buff like everything else
-  (`TowerStats.effectLength()` and `timedBuffLength()`, from the Conduit and Broadcast II axes). Every
-  effect goes through `applyEffect`, which scales it; what a tower leaves on the ground takes its lifetime
-  through `lengthened(ticks)`, and a timed buff it grants itself through `grantTimedBuff`. A new
-  duration a tower authors goes through one of these three, never raw.
-- `dealDamage` sends the hit with `TowerStats.attack()` (crit chance and multiplier, penetration);
-  the target rolls the crit. A special shot passes a one-off profile to
-  `dealDamage(enemy, damage, attack)` (`withGuaranteedCrit()`, extra penetration) instead of
-  adding a hook.
-- Damage that ticks (a pool's sink, a field's tick) goes through `dealPeriodicDamage`: periodic
-  damage never crits. Every effect goes on through `applyEffect`, which binds that sink, and a
-  stacking debuff through `applyStacks(kind)`, which owns its clock. The hit that starts a pool
-  scales it by `potencyOfHit`. Damage that scales with the target's protection asks
-  `HitReceiver.reductionAgainst`.
+  under); a kill made from inside the hook triggers nothing. A temporary self-buff goes through
+  `grantTimedModifiers` and ends in `beginTick`; it never stacks.
+- How long a tower's effects and timed buffs last is a stat (`EFFECT_DURATION`, `BUFF_DURATION`).
+  Every effect goes through `applyEffect`, which scales it; what a tower leaves on the ground takes
+  its lifetime through `lengthened(ticks)`.
+- `dealDamage` sends the hit with `TowerStats.attack()`; a special shot passes a one-off profile.
+  Damage that ticks goes through `dealPeriodicDamage` and never crits. The hit that starts a pool
+  scales it by `potencyOfHit`.
 
 ## Experience
 
@@ -170,7 +158,7 @@
   `docs/features/FEATURE-tower-specialization-abilities.md` and the tower-rework feature requests.
 - Build a node at its step: `UpgradeTier.HEAD_2.node(id, name, PRICE)` sets its slot, its price
   (a multiple of the list price), its XP (the gate table) and the base node that opens it;
-  `after(previous)` adds its line. Then `withBuff`/`withGate`/`withExtraEffect`. `requires`
+  `after(previous)` adds its line. Then `withModifiers`/`withGate`/`withNote`. `requires`
   decides whether a node is offered. Once offered it needs its `xp` and its `gate`, a purpose or
   layout condition (`always()`, `ClusterCondition`, `TranscendentCondition`) whose `progress()`
   feeds the UI. `UpgradeNode.gateMet` is the one check for both: never test `gate()` alone.
@@ -180,12 +168,12 @@
   has no Transcendent and no Range III.
 - Never hand-write a node's bonus into a tower's description: `UpgradeNode.bonuses()` derives it
   and the Upgrades panel lists offered nodes.
-- A bonus outside `TowerBuff`'s axes goes in `onUpgradeBought`, matching the node by `equals` (not
-  reference), and the same constant carries a matching `extraEffect` phrase.
+- A bonus outside the `TowerStat`s goes in `onUpgradeBought`, matching the node by `equals` (not
+  reference), and the same constant carries a matching note.
 - `buyUpgrade` is the only entry point and is check-and-charge (returns `false` without effect).
   Don't pre-check affordability. It publishes `TowerStats` before `UpgradeState`.
 - Pass `StandardBaseSlot.nodes` a `BaseSlotPerks` for what Attune and Range III add to a tower.
-- A node whose behaviour is more than a `TowerBuff` becomes a perk, in the tower's own package
+- A node whose behaviour is more than its stat modifiers becomes a perk, in the tower's own package
   (`sniper`, `sonar`, `splash`). A static `PerkCatalogue` says which perks each node brings (several may),
   and the tower's `OwnedPerks` builds its own, as some carry state. Perks run in purchase order:
   first `refineSpec` (whom the tower may hit, how it picks, its rhythm), then per hit. Perks are

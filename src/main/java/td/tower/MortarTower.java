@@ -6,7 +6,6 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.CannonballProjectile;
 import td.projectile.ProjectileStats;
-import td.tower.buff.TowerBuff;
 import td.tower.mortar.AirburstPerk;
 import td.tower.mortar.BarragePerk;
 import td.tower.mortar.BlastMark;
@@ -115,75 +114,75 @@ public final class MortarTower extends AbstractTower {
 
     private static final UpgradeNode SIEGE_ROUNDS_1 = UpgradeTier.HEAD_1.node("mortar.head.siege_rounds.1",
             "Siege Rounds", PRICE)
-            .withBuff(TowerBuff.damage(0.3f))
-            .withExtraEffect("each Bracketing step gives +15% instead of +10%");
+            .withModifiers(TowerModifiers.damagePercent(0.3f))
+            .withNote("each Bracketing step gives +15% instead of +10%");
     private static final UpgradeNode SIEGE_ROUNDS_2 = UpgradeTier.HEAD_2.node("mortar.head.siege_rounds.2",
             "Siege Rounds II", PRICE)
-            .withBuff(TowerBuff.damage(0.25f).withCritChance(0.1f))
-            .withExtraEffect("+25% blast radius")
+            .withModifiers(TowerModifiers.damagePercent(0.25f).plus(TowerModifiers.critChance(0.1f)))
+            .withNote("+25% blast radius")
             .after(SIEGE_ROUNDS_1);
     private static final UpgradeNode HEAVY_SHELL = UpgradeTier.HEAD_3.node("mortar.head.siege_rounds.3",
             "Heavy Shell", PRICE)
-            .withBuff(TowerBuff.damage(0.5f).withFireRate(-0.2f))
+            .withModifiers(TowerModifiers.damagePercent(0.5f).plus(TowerModifiers.attackSpeed(-0.2f)))
             .withGate(new PurposeCondition(BRACKET_DEED, BRACKETED_SHELLS_NEEDED))
-            .withExtraEffect("a bigger, slower shell; enemies within 0.5 cells of the impact are Dazed 0.5s")
+            .withNote("a bigger, slower shell; enemies within 0.5 cells of the impact are Dazed 0.5s")
             .after(SIEGE_ROUNDS_2);
     private static final UpgradeNode TACTICAL_NUKE = UpgradeTier.HEAD_4.node("mortar.head.siege_rounds.4a",
             "Tactical Nuke", PRICE)
-            .withExtraEffect("every 4th shell is a nuke: x4 damage over x1.5 the blast, leaving fallout for 4s over "
+            .withNote("every 4th shell is a nuke: x4 damage over x1.5 the blast, leaving fallout for 4s over "
                     + "0.8 of the blast; it never carries a special")
             .after(HEAVY_SHELL);
     private static final UpgradeNode BUNKER_BUSTER = UpgradeTier.HEAD_4.node("mortar.head.siege_rounds.4b",
             "Bunker Buster", PRICE)
-            .withExtraEffect("the enemy at the centre of the blast takes x3 damage and is Sundered; the blast "
+            .withNote("the enemy at the centre of the blast takes x3 damage and is Sundered; the blast "
                     + "shrinks 30%")
             .after(HEAVY_SHELL);
 
     private static final UpgradeNode FRAGMENTATION_ROUNDS_1 = UpgradeTier.HEAD_1.node(
             "mortar.head.fragmentation_rounds.1", "Fragmentation Rounds", PRICE)
-            .withExtraEffect("a ring of shrapnel past the blast for 25% damage, cracking plating, reaching 0.25 "
+            .withNote("a ring of shrapnel past the blast for 25% damage, cracking plating, reaching 0.25 "
                     + "cells further per Bracketing step");
     private static final UpgradeNode FRAGMENTATION_ROUNDS_2 = UpgradeTier.HEAD_2.node(
             "mortar.head.fragmentation_rounds.2", "Fragmentation Rounds II", PRICE)
-            .withExtraEffect("shrapnel does 30% more of everything it does, and applies its shell's own effect")
+            .withNote("shrapnel does 30% more of everything it does, and applies its shell's own effect")
             .after(FRAGMENTATION_ROUNDS_1);
     private static final UpgradeNode CLUSTER_SHELL = UpgradeTier.HEAD_3.node("mortar.head.fragmentation_rounds.3",
             "Cluster Shell", PRICE)
             .withGate(new PurposeCondition(BRACKET_DEED, BRACKETED_SHELLS_NEEDED))
-            .withExtraEffect("4 bomblets scattered along the path around the impact, 40% damage each over 1 cell")
+            .withNote("4 bomblets scattered along the path around the impact, 40% damage each over 1 cell")
             .after(FRAGMENTATION_ROUNDS_2);
     private static final UpgradeNode CARPET_BOMBING = UpgradeTier.HEAD_4.node("mortar.head.fragmentation_rounds.4a",
             "Carpet Bombing", PRICE)
-            .withExtraEffect("8 bomblets in a line along the path ahead of the impact instead")
+            .withNote("8 bomblets in a line along the path ahead of the impact instead")
             .after(CLUSTER_SHELL);
     private static final UpgradeNode SHRAPNEL_STORM = UpgradeTier.HEAD_4.node("mortar.head.fragmentation_rounds.4b",
             "Shrapnel Storm", PRICE)
-            .withExtraEffect("what the shrapnel hits bleeds: physical damage for every cell it travels")
+            .withNote("what the shrapnel hits bleeds: physical damage for every cell it travels")
             .after(CLUSTER_SHELL);
 
     private static final UpgradeNode RIFLED_BARREL = UpgradeTier.EXTRA_1.node("mortar.extra.ballistics.1",
             "Rifled Barrel", PRICE)
-            .withExtraEffect("shell speed +40%, drawn smaller with a streak");
+            .withNote("shell speed +40%, drawn smaller with a streak");
     private static final UpgradeNode PREDICTIVE_FIRE = UpgradeTier.EXTRA_2.node("mortar.extra.ballistics.2",
             "Predictive Fire", PRICE)
-            .withExtraEffect("aims where the enemy will be when the shell lands")
+            .withNote("aims where the enemy will be when the shell lands")
             .after(RIFLED_BARREL);
     private static final UpgradeNode AIRBURST = UpgradeTier.EXTRA_3.node("mortar.extra.ballistics.3", "Airburst",
             PRICE)
-            .withExtraEffect("+25% blast radius, and full damage across the inner half of the blast")
+            .withNote("+25% blast radius, and full damage across the inner half of the blast")
             .after(PREDICTIVE_FIRE);
     private static final UpgradeNode BARRAGE = UpgradeTier.EXTRA_4.node("mortar.extra.ballistics.4", "Barrage",
             PRICE)
-            .withExtraEffect("the reload takes twice as long, but each salvo is 3 shells 0.5s apart at full damage")
+            .withNote("the reload takes twice as long, but each salvo is 3 shells 0.5s apart at full damage")
             .after(AIRBURST);
 
     private static final UpgradeNode NAPALM = UpgradeTier.SPECIAL.node("mortar.special.napalm", "Napalm", PRICE)
-            .withExtraEffect("every 3rd shell is Napalm: its blast is magic and leaves burning ground, 1 cell wide, for 3s");
+            .withNote("every 3rd shell is Napalm: its blast is magic and leaves burning ground, 1 cell wide, for 3s");
     private static final UpgradeNode TAR = UpgradeTier.SPECIAL.node("mortar.special.tar", "Tar", PRICE)
-            .withExtraEffect("every 3rd shell is Tar: it leaves tar, 1.2 cells wide, for 4s");
+            .withNote("every 3rd shell is Tar: it leaves tar, 1.2 cells wide, for 4s");
     private static final UpgradeNode CRYO_SHELLS = UpgradeTier.SPECIAL.node("mortar.special.cryo_shells",
             "Cryo Shells", PRICE)
-            .withExtraEffect("every 3rd shell is Cryo: it leaves frost ground, 1.2 cells wide, for 3s");
+            .withNote("every 3rd shell is Cryo: it leaves frost ground, 1.2 cells wide, for 3s");
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, HEAVY_SHELL,
                     CLUSTER_SHELL))
@@ -280,7 +279,7 @@ public final class MortarTower extends AbstractTower {
                 this.salvoGap = spec.salvo().gapTicks();
             }
         }
-        this.clock.advance(this.fireRateCurrent());
+        this.clock.advance(this.attackRate());
         if (this.currentTarget != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(), this.currentTarget.getY()));
         }
@@ -535,8 +534,8 @@ public final class MortarTower extends AbstractTower {
         if (!salvo.isSalvo()) {
             return super.cadence();
         }
-        return Optional.of(new TowerStatLine(TowerStat.FIRE_RATE, TICKS_PER_SECOND / (this.coolDownMax + 1),
-                (float) (salvo.shells() * TICKS_PER_SECOND * this.fireRateCurrent()
+        return Optional.of(new TowerStatLine(TowerStatRow.FIRE_RATE, TICKS_PER_SECOND / (this.coolDownMax + 1),
+                (float) (salvo.shells() * TICKS_PER_SECOND * this.attackRate()
                         / ((this.coolDownMax + 1) * salvo.reloadFactor()))));
     }
 
@@ -545,9 +544,9 @@ public final class MortarTower extends AbstractTower {
         MortarSpec spec = this.spec(this.perks.all());
         ProjectileStats shell = this.shellStats(spec, ShellType.PLAIN);
         float cellsPerSecond = shell.speed() * TICKS_PER_SECOND / this.context.getBoard().scale();
-        return List.of(new TowerStatLine(TowerStat.SPLASH_RADIUS, SPLASH_RADIUS_BASE, SPLASH_RADIUS_BASE * spec.blastScale()),
-                TowerStatLine.fixed(TowerStat.PROJECTILE_SPEED, cellsPerSecond),
-                TowerStatLine.fixed(TowerStat.PROJECTILE_SIZE, shell.size()));
+        return List.of(new TowerStatLine(TowerStatRow.SPLASH_RADIUS, SPLASH_RADIUS_BASE, SPLASH_RADIUS_BASE * spec.blastScale()),
+                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, cellsPerSecond),
+                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, shell.size()));
     }
 
     @Override

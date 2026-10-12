@@ -5,7 +5,6 @@ import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
-import td.tower.buff.TowerBuff;
 import td.tower.sniper.AimFocus;
 import td.tower.sniper.AimLock;
 import td.tower.sniper.AimRules;
@@ -97,89 +96,89 @@ public final class SniperTower extends AbstractTower {
 
     private static final UpgradeNode FOCUSED_OPTICS_1 = UpgradeTier.HEAD_1.node("sniper.head.focused_optics.1",
             "Focused Optics", PRICE)
-            .withExtraEffect("Steady Aim also gives +25% fire rate; Quick Scope: the first shot at a new target has "
+            .withNote("Steady Aim also gives +25% fire rate; Quick Scope: the first shot at a new target has "
                     + "+50% crit chance");
     private static final UpgradeNode FOCUSED_OPTICS_2 = UpgradeTier.HEAD_2.node("sniper.head.focused_optics.2",
             "Focused Optics II", PRICE)
-            .withBuff(TowerBuff.damage(0.4f))
-            .withExtraEffect("a crit starts Frenzy: the next 3 shots come twice as fast")
+            .withModifiers(TowerModifiers.damagePercent(0.4f))
+            .withNote("a crit starts Frenzy: the next 3 shots come twice as fast")
             .after(FOCUSED_OPTICS_1);
     private static final UpgradeNode FOCUSED_OPTICS_3 = UpgradeTier.HEAD_3.node("sniper.head.focused_optics.3",
             "Focused Optics III", PRICE)
-            .withBuff(TowerBuff.damage(0.3f))
+            .withModifiers(TowerModifiers.damagePercent(0.3f))
             .withGate(new PurposeCondition("Steady Aim shots", 20))
-            .withExtraEffect("Weak Spot: non-crit shots ignore plating and 50 armor")
+            .withNote("Weak Spot: non-crit shots ignore plating and 50 armor")
             .after(FOCUSED_OPTICS_2);
     private static final UpgradeNode RAILGUN = UpgradeTier.HEAD_4.node("sniper.head.focused_optics.4a", "Railgun",
             PRICE)
-            .withExtraEffect("the shot pierces every enemy on the line through its target, 2 cells past max "
+            .withNote("the shot pierces every enemy on the line through its target, 2 cells past max "
                     + "range; each one after the first takes 25% less")
             .after(FOCUSED_OPTICS_3);
     private static final UpgradeNode EXECUTIONER = UpgradeTier.HEAD_4.node("sniper.head.focused_optics.4b",
             "Executioner", PRICE)
-            .withExtraEffect("a non-boss enemy left under 15% health by a shot dies; a boss under 25% takes +50%; "
+            .withNote("a non-boss enemy left under 15% health by a shot dies; a boss under 25% takes +50%; "
                     + "executions count as crits")
             .after(FOCUSED_OPTICS_3);
     private static final UpgradeNode MARKSMANS_EYE_1 = UpgradeTier.HEAD_1.node("sniper.head.marksmans_eye.1",
             "Marksman's Eye", PRICE)
-            .withExtraEffect("Steady Aim stacks to 3 (+30%: 35% crit from the 4th shot)");
+            .withNote("Steady Aim stacks to 3 (+30%: 35% crit from the 4th shot)");
     private static final UpgradeNode MARKSMANS_EYE_2 = UpgradeTier.HEAD_2.node("sniper.head.marksmans_eye.2",
             "Marksman's Eye II", PRICE)
-            .withBuff(TowerBuff.fireRate(0.25f))
-            .withExtraEffect("ignores 30 armor")
+            .withModifiers(TowerModifiers.attackSpeed(0.25f))
+            .withNote("ignores 30 armor")
             .after(MARKSMANS_EYE_1);
     private static final UpgradeNode MARKSMANS_EYE_3 = UpgradeTier.HEAD_3.node("sniper.head.marksmans_eye.3",
             "Marksman's Eye III", PRICE)
             .withGate(new PurposeCondition("Steady Aim shots", 20))
-            .withExtraEffect("Clean Shot: crits go through shields straight to health")
+            .withNote("Clean Shot: crits go through shields straight to health")
             .after(MARKSMANS_EYE_2);
     private static final UpgradeNode UNBROKEN_AIM = UpgradeTier.HEAD_4.node("sniper.head.marksmans_eye.4a",
             "Unbroken Aim", PRICE)
-            .withExtraEffect("Steady Aim stacks to 5 (55% crit) and survives a kill; only retargeting a living "
+            .withNote("Steady Aim stacks to 5 (55% crit) and survives a kill; only retargeting a living "
                     + "enemy resets it")
             .after(MARKSMANS_EYE_3);
     private static final UpgradeNode SUNDER_ROUNDS = UpgradeTier.HEAD_4.node("sniper.head.marksmans_eye.4b",
             "Sunder Rounds", PRICE)
-            .withExtraEffect("every crit adds 1 Sundered")
+            .withNote("every crit adds 1 Sundered")
             .after(MARKSMANS_EYE_3);
     private static final UpgradeNode TRADECRAFT_1 = UpgradeTier.EXTRA_1.node("sniper.extra.tradecraft.1",
             "Tradecraft", PRICE)
-            .withExtraEffect("a crit makes the next crit deal +25% crit damage, two in a row +50%, no further");
+            .withNote("a crit makes the next crit deal +25% crit damage, two in a row +50%, no further");
     private static final UpgradeNode TRADECRAFT_2 = UpgradeTier.EXTRA_2.node("sniper.extra.tradecraft.2",
             "Tradecraft II", PRICE)
-            .withExtraEffect("+25% damage against targets past two thirds of its range")
+            .withNote("+25% damage against targets past two thirds of its range")
             .after(TRADECRAFT_1);
     private static final UpgradeNode SILVER_ROUNDS = UpgradeTier.EXTRA_3.node("sniper.extra.tradecraft.3",
             "Silver Rounds", PRICE)
-            .withExtraEffect("every 3rd shot is magic with +25% magic penetration; it keeps the crit streak")
+            .withNote("every 3rd shot is magic with +25% magic penetration; it keeps the crit streak")
             .after(TRADECRAFT_2);
     private static final UpgradeNode SPOTTER_UPLINK = UpgradeTier.EXTRA_4.node("sniper.extra.tradecraft.4",
             "Spotter Uplink", PRICE)
-            .withExtraEffect("may shoot Marked or Revealed enemies within twice its range")
+            .withNote("may shoot Marked or Revealed enemies within twice its range")
             .after(SILVER_ROUNDS);
     private static final UpgradeNode MOMENTUM = UpgradeTier.SPECIAL.node("sniper.special.momentum", "Momentum", PRICE)
-            .withExtraEffect("a crit charges the next shot to x5 damage that ignores armor and plating; a kill grants "
+            .withNote("a crit charges the next shot to x5 damage that ignores armor and plating; a kill grants "
                     + "+100% fire rate for 5s; aims at the highest rank")
             .after(FOCUSED_OPTICS_1);
     private static final UpgradeNode RICOCHET = UpgradeTier.SPECIAL.node("sniper.special.ricochet", "Ricochet", PRICE)
-            .withExtraEffect("a crit bounces to the nearest enemy within 1.5 cells for 60%, up to 3 bounces, each "
+            .withNote("a crit bounces to the nearest enemy within 1.5 cells for 60%, up to 3 bounces, each "
                     + "can crit; aims at the enemy with most neighbours")
             .after(FOCUSED_OPTICS_1);
     private static final UpgradeNode HEADHUNTER = UpgradeTier.SPECIAL.node("sniper.special.headhunter", "Headhunter",
             PRICE)
-            .withExtraEffect("+40% damage against Elite and Boss rank; aims at the highest rank")
+            .withNote("+40% damage against Elite and Boss rank; aims at the highest rank")
             .after(FOCUSED_OPTICS_1);
     private static final UpgradeNode HOLLOW_POINT = UpgradeTier.SPECIAL.node("sniper.special.hollow_point",
             "Hollow Point", PRICE)
-            .withExtraEffect("crits apply Vulnerable, +15% damage taken, stacks x3; aims at the most health")
+            .withNote("crits apply Vulnerable, +15% damage taken, stacks x3; aims at the most health")
             .after(MARKSMANS_EYE_1);
     private static final UpgradeNode FIFTH_SHOT = UpgradeTier.SPECIAL.node("sniper.special.fifth_shot",
             "Fifth Shot", PRICE)
-            .withExtraEffect("every 5th shot is a guaranteed crit with +50% crit damage; aims at the most health")
+            .withNote("every 5th shot is a guaranteed crit with +50% crit damage; aims at the most health")
             .after(MARKSMANS_EYE_1);
     private static final UpgradeNode SHATTER_SHOT = UpgradeTier.SPECIAL.node("sniper.special.shatter_shot",
             "Shatter Shot", PRICE)
-            .withExtraEffect("crits on a frozen enemy deal +50% crit damage; aims at a frozen enemy first")
+            .withNote("crits on a frozen enemy deal +50% crit damage; aims at a frozen enemy first")
             .after(MARKSMANS_EYE_1);
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, FOCUSED_OPTICS_3,
@@ -275,7 +274,7 @@ public final class SniperTower extends AbstractTower {
                 this.fire(this.currentTarget, owned, spec.steadyAim());
             }
         }
-        this.clock.advance(this.fireRateCurrent());
+        this.clock.advance(this.attackRate());
         if (this.currentTarget != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(), this.currentTarget.getY()));
         }
@@ -303,10 +302,9 @@ public final class SniperTower extends AbstractTower {
         if (lock.stacks() > 0) {
             this.countDeedOfAttack();
         }
-        float fireRate = shot.fireRateBonus();
-        float tempoBonus = this.tempo.takeFireRateBonus(this.currentTick);
-        this.clock.spend(1.0 / TowerBuff.fireRate(fireRate).combine(TowerBuff.fireRate(tempoBonus))
-                .fireRateMultiplier());
+        double rate = this.attackRate();
+        double bonus = shot.attackSpeedBonus() + this.tempo.takeAttackSpeedBonus(this.currentTick);
+        this.clock.spend(rate / (rate + bonus));
     }
 
     /** Where the shot went: to its target, or for a piercing shot to the end of its line. */

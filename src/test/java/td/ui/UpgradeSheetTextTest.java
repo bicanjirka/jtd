@@ -3,7 +3,7 @@ package td.ui;
 import org.junit.jupiter.api.Test;
 import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
-import td.tower.buff.TowerBuff;
+import td.tower.TowerModifiers;
 import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeDecision;
@@ -26,10 +26,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class UpgradeSheetTextTest {
 
     private static final UpgradeNode VETERAN = UpgradeNode.of("veteran", UpgradeSlot.HEAD, "Veteran", 10)
-            .withBuff(TowerBuff.damage(0.2f))
+            .withModifiers(TowerModifiers.damagePercent(0.2f))
             .withXp(10);
     private static final UpgradeNode RANGE = UpgradeNode.of("range", UpgradeSlot.BASE, "Range", 30)
-            .withBuff(TowerBuff.range(0.15f));
+            .withModifiers(TowerModifiers.rangePercent(0.15f));
 
     private static final int LIST_PRICE = 10;
     private static final UpgradeNode OPTICS = UpgradeTier.HEAD_1.node("optics", "Focused Optics", LIST_PRICE);

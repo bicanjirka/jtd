@@ -8,7 +8,6 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.MissileProjectile;
 import td.projectile.ProjectileStats;
-import td.tower.buff.TowerBuff;
 import td.tower.seeker.AbsoluteZeroPerk;
 import td.tower.seeker.ArcanePayload;
 import td.tower.seeker.ArcaneWarheadPerk;
@@ -96,73 +95,73 @@ public final class SeekerTower extends AbstractTower {
 
     private static final UpgradeNode TWIN_WARHEAD_1 = UpgradeTier.HEAD_1.node("seeker.head.twin_warhead.1",
             "Twin Warhead", PRICE)
-            .withBuff(TowerBuff.fireRate(0.3f))
-            .withExtraEffect("the nest holds one more missile");
+            .withModifiers(TowerModifiers.attackSpeed(0.3f))
+            .withNote("the nest holds one more missile");
     private static final UpgradeNode TWIN_WARHEAD_2 = UpgradeTier.HEAD_2.node("seeker.head.twin_warhead.2",
             "Twin Warhead II", PRICE)
-            .withExtraEffect("two missiles a shot, the second at the next target")
+            .withNote("two missiles a shot, the second at the next target")
             .after(TWIN_WARHEAD_1);
     private static final UpgradeNode BROOD = UpgradeTier.HEAD_3.node("seeker.head.twin_warhead.3", "Brood", PRICE)
             .withGate(new PurposeCondition(FREEZE_DEED, FREEZES_NEEDED))
-            .withExtraEffect("the nest holds 6; a salvo spreads across different targets")
+            .withNote("the nest holds 6; a salvo spreads across different targets")
             .after(TWIN_WARHEAD_2);
     private static final UpgradeNode SHATTERBURST = UpgradeTier.HEAD_4.node("seeker.head.twin_warhead.4a",
             "Shatterburst", PRICE)
-            .withExtraEffect("a missile that hits a frozen enemy bursts for 35% magic damage around it; every enemy "
+            .withNote("a missile that hits a frozen enemy bursts for 35% magic damage around it; every enemy "
                     + "the burst hits is Silenced 2s and gains Unraveled")
             .after(BROOD);
     private static final UpgradeNode REARM = UpgradeTier.HEAD_4.node("seeker.head.twin_warhead.4b", "Rearm", PRICE)
-            .withExtraEffect("a missile that freezes its target launches a new missile from the tower at once; a "
+            .withNote("a missile that freezes its target launches a new missile from the tower at once; a "
                     + "rearmed missile's freeze rearms nothing")
             .after(BROOD);
     private static final UpgradeNode DEEP_FREEZE_1 = UpgradeTier.HEAD_1.node("seeker.head.deep_freeze.1",
             "Deep Freeze", PRICE)
-            .withExtraEffect("+50% freeze time");
+            .withNote("+50% freeze time");
     private static final UpgradeNode DEEP_FREEZE_2 = UpgradeTier.HEAD_2.node("seeker.head.deep_freeze.2",
             "Deep Freeze II", PRICE)
-            .withBuff(TowerBuff.damage(0.3f).withCritChance(0.1f))
-            .withExtraEffect("a frozen enemy this tower kills shatters for 50% of its damage around it")
+            .withModifiers(TowerModifiers.damagePercent(0.3f).plus(TowerModifiers.critChance(0.1f)))
+            .withNote("a frozen enemy this tower kills shatters for 50% of its damage around it")
             .after(DEEP_FREEZE_1);
     private static final UpgradeNode BRITTLE = UpgradeTier.HEAD_3.node("seeker.head.deep_freeze.3", "Brittle", PRICE)
             .withGate(new PurposeCondition(FREEZE_DEED, FREEZES_NEEDED))
-            .withExtraEffect("frozen enemies take +30% physical damage")
+            .withNote("frozen enemies take +30% physical damage")
             .after(DEEP_FREEZE_2);
     private static final UpgradeNode ABSOLUTE_ZERO = UpgradeTier.HEAD_4.node("seeker.head.deep_freeze.4a",
             "Absolute Zero", PRICE)
-            .withExtraEffect("the missile freezes everything within 1 cell of the impact; shatters deal x2; an "
+            .withNote("the missile freezes everything within 1 cell of the impact; shatters deal x2; an "
                     + "enemy this tower froze shatters when its freeze ends")
             .after(BRITTLE);
     private static final UpgradeNode FROSTBITE = UpgradeTier.HEAD_4.node("seeker.head.deep_freeze.4b", "Frostbite",
             PRICE)
-            .withExtraEffect("this tower's hits on a frozen enemy are guaranteed crits, and so are its hits on an "
+            .withNote("this tower's hits on a frozen enemy are guaranteed crits, and so are its hits on an "
                     + "enemy whose freezes are diminished by repeated freezing")
             .after(BRITTLE);
     private static final UpgradeNode ARCANE_PAYLOAD = UpgradeTier.EXTRA_1.node("seeker.extra.mixed_payloads.1",
             "Arcane Payload", PRICE)
-            .withExtraEffect("every 3rd missile Unravels its target instead of freezing it");
+            .withNote("every 3rd missile Unravels its target instead of freezing it");
     private static final UpgradeNode EMP_PAYLOAD = UpgradeTier.EXTRA_2.node("seeker.extra.mixed_payloads.2",
             "EMP Payload", PRICE)
-            .withExtraEffect("the payload missiles also carry EMP in turn: it strips shields and heals and Silences "
+            .withNote("the payload missiles also carry EMP in turn: it strips shields and heals and Silences "
                     + "2s")
             .after(ARCANE_PAYLOAD);
     private static final UpgradeNode TRACER_PAYLOAD = UpgradeTier.EXTRA_3.node("seeker.extra.mixed_payloads.3",
             "Tracer Payload", PRICE)
-            .withExtraEffect("the payload missiles also carry Tracer in turn: it reveals and Marks 4s")
+            .withNote("the payload missiles also carry Tracer in turn: it reveals and Marks 4s")
             .after(EMP_PAYLOAD);
     private static final UpgradeNode FULL_RACK = UpgradeTier.EXTRA_4.node("seeker.extra.mixed_payloads.4",
             "Full Rack", PRICE)
-            .withExtraEffect("every missile carries a payload, cycling Cryo, Arcane, EMP, Tracer, each 25% stronger")
+            .withNote("every missile carries a payload, cycling Cryo, Arcane, EMP, Tracer, each 25% stronger")
             .after(TRACER_PAYLOAD);
     private static final UpgradeNode ARCANE_WARHEAD = UpgradeTier.SPECIAL.node("seeker.special.arcane_warhead",
             "Arcane Warhead", PRICE)
-            .withExtraEffect("every impact applies Unraveled, 2 stacks if the target was frozen or chilled");
+            .withNote("every impact applies Unraveled, 2 stacks if the target was frozen or chilled");
     private static final UpgradeNode NULLIFIER = UpgradeTier.SPECIAL.node("seeker.special.nullifier", "Nullifier",
             PRICE)
-            .withExtraEffect("every impact strips the target's shield and heal; +50% damage against a shielded "
+            .withNote("every impact strips the target's shield and heal; +50% damage against a shielded "
                     + "enemy");
     private static final UpgradeNode HUNTERS_MARK = UpgradeTier.SPECIAL.node("seeker.special.hunters_mark",
             "Hunter's Mark", PRICE)
-            .withExtraEffect("each consecutive hit on the same target +20%, up to +100%; aims at the highest rank");
+            .withNote("each consecutive hit on the same target +20%, up to +100%; aims at the highest rank");
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, BROOD, BRITTLE))
             .with(TWIN_WARHEAD_1, TWIN_WARHEAD_2, BROOD, SHATTERBURST, REARM, DEEP_FREEZE_1, DEEP_FREEZE_2, BRITTLE,
@@ -274,7 +273,7 @@ public final class SeekerTower extends AbstractTower {
         } else {
             this.tickDirect(spec);
         }
-        this.clock.advance(this.fireRateCurrent());
+        this.clock.advance(this.attackRate());
         if (this.currentTarget != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(), this.currentTarget.getY()));
         }
@@ -436,8 +435,8 @@ public final class SeekerTower extends AbstractTower {
     @Override
     protected List<TowerStatLine> ownStats() {
         float cellsPerSecond = this.missile.speed() * TICKS_PER_SECOND / this.context.getBoard().scale();
-        return List.of(TowerStatLine.fixed(TowerStat.PROJECTILE_SPEED, cellsPerSecond),
-                TowerStatLine.fixed(TowerStat.PROJECTILE_SIZE, this.missile.size()));
+        return List.of(TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, cellsPerSecond),
+                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, this.missile.size()));
     }
 
     @Override

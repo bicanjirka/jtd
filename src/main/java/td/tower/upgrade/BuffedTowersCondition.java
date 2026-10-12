@@ -1,7 +1,6 @@
 package td.tower.upgrade;
 
 import td.tower.Tower;
-import td.tower.buff.TowerBuff;
 import td.util.GameWorld;
 
 /** Satisfied once the tower buffs at least {@code required} other towers, as it stands on the board now. */
@@ -24,7 +23,7 @@ public record BuffedTowersCondition(int required) implements UpgradeCondition {
 
     private static long buffed(Tower tower, GameWorld context) {
         return context.towers().all().stream()
-                .filter(other -> other != tower && !tower.buffFor(other).equals(TowerBuff.none()))
+                .filter(other -> other != tower && !tower.buffFor(other).isNone())
                 .count();
     }
 }

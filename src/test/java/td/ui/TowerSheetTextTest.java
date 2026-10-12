@@ -123,7 +123,7 @@ class TowerSheetTextTest {
         InfoSheet sheet = TowerSheetText.status(sniper.inspect());
 
         assertThat(rows(sheet)).contains(Row.effect(Palette.DISRUPTION, "Jammed", ""));
-        assertThat(row(sheet, "Range")).extracting(Row::value, Row::trend).containsExactly("4 → 3.2", Trend.WORSE);
+        assertThat(row(sheet, "Range")).extracting(Row::value, Row::trend).containsExactly("4 → 3.8", Trend.WORSE);
         assertThat(row(sheet, "Fire rate")).extracting(Row::value, Row::trend).containsExactly("0.4 → 0.3/s", Trend.WORSE);
         assertThat(row(sheet, "Physical damage").trend()).isEqualTo(Trend.NONE);
     }

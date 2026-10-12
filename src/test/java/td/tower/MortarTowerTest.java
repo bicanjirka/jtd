@@ -816,7 +816,7 @@ class MortarTowerTest {
         }
 
         assertThat(firstShellAt).isEqualTo(1);
-        assertThat((double) (lastShellAt - firstShellAt)).isGreaterThan(2 * tower.coolDownMax / tower.fireRateCurrent());
+        assertThat((double) (lastShellAt - firstShellAt)).isGreaterThan(2 * tower.coolDownMax / tower.attackRate());
         assertThat(shells % 3).isZero();
         assertThat(shells).isGreaterThanOrEqualTo(6);
     }
@@ -841,15 +841,15 @@ class MortarTowerTest {
     @Test
     void aBarrageShowsItsShellsAMinuteOfRateOverTheWholeCycle() {
         MortarTower tower = this.transcendentTower();
-        TowerStatLine before = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStat.FIRE_RATE)
+        TowerStatLine before = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.FIRE_RATE)
                 .findFirst().orElseThrow();
         UpgradePaths.buy(tower, this.context, "Rifled Barrel", "Predictive Fire", "Airburst", "Barrage");
 
-        TowerStatLine after = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStat.FIRE_RATE)
+        TowerStatLine after = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.FIRE_RATE)
                 .findFirst().orElseThrow();
 
         assertThat(after.base()).isEqualTo(before.base());
-        assertThat(after.current()).isCloseTo((float) (3 * 20 * tower.fireRateCurrent() / ((tower.coolDownMax + 1) * 2f)),
+        assertThat(after.current()).isCloseTo((float) (3 * 20 * tower.attackRate() / ((tower.coolDownMax + 1) * 2f)),
                 within(1e-3f));
     }
 }

@@ -5,8 +5,8 @@ import td.effect.EffectKind;
 import td.tower.BehaviourLine;
 import td.tower.TowerInspection;
 import td.tower.TowerRank;
-import td.tower.TowerStat;
 import td.tower.TowerStatLine;
+import td.tower.TowerStatRow;
 import td.ui.render.InfoSheet;
 import td.ui.render.Palette;
 import td.ui.render.SheetLine;
@@ -71,8 +71,8 @@ final class TowerSheetText {
                 tower.name() + " tower", value);
     }
 
-    private static Row statRow(TowerStat stat, TowerStatLine line) {
-        NumberText text = stat == TowerStat.CRIT_CHANCE ? SheetNumbers::percent : SheetNumbers::decimal;
+    private static Row statRow(TowerStatRow stat, TowerStatLine line) {
+        NumberText text = stat == TowerStatRow.CRIT_CHANCE ? SheetNumbers::percent : SheetNumbers::decimal;
         String base = text.of(line.base());
         String current = text.of(line.current());
         String value = (base.equals(current) ? current : base + " → " + current) + switch (stat) {
@@ -97,7 +97,7 @@ final class TowerSheetText {
             return row;
         }
         // A slower rotation is the one stat that is worse higher.
-        boolean better = (line.current() > line.base()) == (stat != TowerStat.ROTATION);
+        boolean better = (line.current() > line.base()) == (stat != TowerStatRow.ROTATION);
         return row.withTrend(better ? Trend.BETTER : Trend.WORSE);
     }
 

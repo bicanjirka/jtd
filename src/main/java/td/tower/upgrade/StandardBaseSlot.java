@@ -1,6 +1,6 @@
 package td.tower.upgrade;
 
-import td.tower.buff.TowerBuff;
+import td.tower.TowerModifiers;
 
 import java.util.Arrays;
 import java.util.List;
@@ -35,26 +35,26 @@ public final class StandardBaseSlot {
     /** {@link #nodes(int, UpgradeNode...)} with what the tower adds to Attune and Range III. */
     public static List<UpgradeNode> nodes(int listPrice, BaseSlotPerks perks, UpgradeNode... levelThrees) {
         UpgradeNode range1 = UpgradeTier.RANGE_1.node(RANGE_ID, "Range", listPrice)
-                .withBuff(TowerBuff.range(RANGE_BONUS));
+                .withModifiers(TowerModifiers.rangePercent(RANGE_BONUS));
         UpgradeNode range2 = UpgradeTier.RANGE_2.node(RANGE_2_ID, "Range II", listPrice)
-                .withBuff(TowerBuff.range(RANGE_STEP_BONUS))
+                .withModifiers(TowerModifiers.rangePercent(RANGE_STEP_BONUS))
                 .after(range1);
         UpgradeNode attune = UpgradeTier.ATTUNE.node(ATTUNE_ID, "Attune", listPrice)
-                .withExtraEffect(perks.attuneText().isEmpty() ? "unlocks head levels I and II"
+                .withNote(perks.attuneText().isEmpty() ? "unlocks head levels I and II"
                         : perks.attuneText() + "; unlocks head levels I and II");
         UpgradeNode awaken = UpgradeTier.AWAKEN.node(AWAKEN_ID, "Awaken", listPrice)
-                .withExtraEffect((perks.awakenText().isEmpty() ? "" : perks.awakenText() + "; ")
+                .withNote((perks.awakenText().isEmpty() ? "" : perks.awakenText() + "; ")
                         + (levelThrees.length == 0 ? "unlocks a special" : "unlocks a special and head level III"));
         if (levelThrees.length == 0) {
             return List.of(range1, range2, attune, awaken);
         }
         UpgradeNode range3 = UpgradeTier.RANGE_3.node(RANGE_3_ID, "Range III", listPrice)
-                .withBuff(TowerBuff.range(perks.rangeThreeBonus()))
-                .withExtraEffect(perks.rangeThreeText())
+                .withModifiers(TowerModifiers.rangePercent(perks.rangeThreeBonus()))
+                .withNote(perks.rangeThreeText())
                 .after(range2);
         UpgradeNode transcendent = UpgradeTier.TRANSCENDENT.node(TRANSCENDENT_ID, "Transcendent", listPrice)
                 .withGate(new TranscendentCondition(Arrays.stream(levelThrees).map(UpgradeNode::id).toList()))
-                .withExtraEffect("unlocks a second special and Range III");
+                .withNote("unlocks a second special and Range III");
         return List.of(range1, range2, range3, attune, awaken, transcendent);
     }
 }

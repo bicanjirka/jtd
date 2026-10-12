@@ -13,7 +13,7 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
 import td.stat.DisruptionPenalty;
-import td.tower.buff.TowerBuff;
+import td.stat.StatModifiers;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
@@ -72,7 +72,7 @@ public abstract class AbstractTower implements Tower {
     // Sampled by the tick thread; also read when the EDT republishes stats after a purchase.
     private volatile DisruptionPenalty disruption = DisruptionPenalty.none();
     // A temporary buff a tower grants itself; published like an upgrade's buff, expired on the tick thread.
-    private volatile TowerBuff timedBuff = TowerBuff.none();
+    private volatile StatModifiers<TowerStat> timedModifiers = StatModifiers.none();
     private int timedBuffEndsAt;
     private int currentTick;
     private float xpRemainder;
@@ -99,7 +99,7 @@ public abstract class AbstractTower implements Tower {
         this.boardY = cellY * scale;
         this.centerX = this.boardX + scale / 2;
         this.centerY = this.boardY + scale / 2;
-        this.stats = TowerStats.of(base, TowerBuff.none(), DisruptionPenalty.none(), scale);
+        this.stats = TowerStats.of(base, StatModifiers.none(), StatModifiers.none(), DisruptionPenalty.none(), scale);
     }
 
     /** Current stats as one snapshot. Never null. */
@@ -112,9 +112,9 @@ public abstract class AbstractTower implements Tower {
         return this.stats.damage();
     }
 
-    /** How many times faster than its base cadence the tower runs now; {@code 1} is the base. */
-    protected double fireRateCurrent() {
-        return this.stats.fireRate();
+    /** How many times its base rate the tower attacks now; {@code 1} is the base. */
+    protected double attackRate() {
+        return this.stats.attackRate();
     }
 
     /** Range in pixels. */
@@ -172,11 +172,11 @@ public abstract class AbstractTower implements Tower {
      * a kill made at the old damage.
      */
     private void publishStats(UpgradeState upgrades) {
-        TowerBuff externalBuff = this.context.towers().all().stream()
+        StatModifiers<TowerStat> received = this.context.towers().all().stream()
                 .map(t -> t.buffFor(this))
-                .reduce(TowerBuff.none(), TowerBuff::combine);
-        TowerBuff totalBuff = externalBuff.combine(upgrades.totalBuff()).combine(this.timedBuff);
-        this.stats = TowerStats.of(this.baseStats, totalBuff, this.disruption, this.context.getBoard().scale());
+                .reduce(StatModifiers.none(), StatModifiers::plus);
+        StatModifiers<TowerStat> own = upgrades.totalModifiers().plus(this.timedModifiers);
+        this.stats = TowerStats.of(this.baseStats, own, received, this.disruption, this.context.getBoard().scale());
     }
 
     /**
@@ -205,7 +205,7 @@ public abstract class AbstractTower implements Tower {
             this.damageDealt += landed.amount();
             if (enemy.isDead()) {
                 this.killCount++;
-                float bountyBonus = this.upgrades.totalBuff().bountyBonus();
+                float bountyBonus = this.stats.bountyBonus();
                 if (bountyBonus != 0f) {
                     this.context.economy().apply(EconomyDelta.credits(
                             Math.round(enemy.getBounty() * bountyBonus)));
@@ -327,13 +327,13 @@ public abstract class AbstractTower implements Tower {
      * stacks; granting again restarts the clock).
      */
     @Override
-    public void receiveTimedBuff(TowerBuff buff, int durationTicks) {
-        this.grantTimedBuff(buff, durationTicks);
+    public void receiveTimedModifiers(StatModifiers<TowerStat> modifiers, int durationTicks) {
+        this.grantTimedModifiers(modifiers, durationTicks);
     }
 
-    protected void grantTimedBuff(TowerBuff buff, int durationTicks) {
+    protected void grantTimedModifiers(StatModifiers<TowerStat> modifiers, int durationTicks) {
         this.timedBuffEndsAt = this.currentTick + Math.round(durationTicks * this.stats.timedBuffLength());
-        this.timedBuff = buff;
+        this.timedModifiers = modifiers;
         this.publishStats(this.upgrades);
     }
 
@@ -343,17 +343,22 @@ public abstract class AbstractTower implements Tower {
      * published stats rather than the last sample, so a republish from the EDT racing this one is
      * corrected on the next tick.
      */
-    public void beginTick(int gameTime) {
+    @Override
+    public boolean beginTick(int gameTime) {
         this.currentTick = gameTime;
-        if (this.timedBuff != TowerBuff.none() && gameTime >= this.timedBuffEndsAt) {
-            this.timedBuff = TowerBuff.none();
+        boolean republished = false;
+        if (!this.timedModifiers.isNone() && gameTime >= this.timedBuffEndsAt) {
+            this.timedModifiers = StatModifiers.none();
             this.publishStats(this.upgrades);
+            republished = true;
         }
         DisruptionPenalty sampled = this.context.disruptions().penaltyAt(this.centerX, this.centerY);
         this.disruption = sampled;
         if (!sampled.equals(this.stats.disruption())) {
             this.publishStats(this.upgrades);
+            republished = true;
         }
+        return republished;
     }
 
     public boolean isDisrupted() {
@@ -435,7 +440,7 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * Hook for an upgrade effect that no {@link TowerBuff} axis expresses; a no-op by default.
+     * Hook for an upgrade effect that no stat expresses; a no-op by default.
      * Compare {@code node} by equality, not reference.
      */
     protected void onUpgradeBought(UpgradeNode node) {
@@ -478,7 +483,7 @@ public abstract class AbstractTower implements Tower {
             return Optional.empty();
         }
         float base = TICKS_PER_SECOND / (this.coolDownMax + 1);
-        return Optional.of(new TowerStatLine(TowerStat.FIRE_RATE, base, (float) (base * this.stats.fireRate())));
+        return Optional.of(new TowerStatLine(TowerStatRow.FIRE_RATE, base, (float) (base * this.attackRate())));
     }
 
     /** Physical by default. */
@@ -509,18 +514,18 @@ public abstract class AbstractTower implements Tower {
     public TowerInspection inspect() {
         TowerStats now = this.stats;
         List<TowerStatLine> lines = new ArrayList<>();
-        lines.add(new TowerStatLine(TowerStat.RANGE, this.rangeBase, now.range()));
+        lines.add(new TowerStatLine(TowerStatRow.RANGE, this.rangeBase, now.range()));
         if (!this.isPassive()) {
-            TowerStat damage = this.damageType() == DamageType.MAGIC ? TowerStat.MAGIC_DAMAGE : TowerStat.PHYSICAL_DAMAGE;
+            TowerStatRow damage = this.damageType() == DamageType.MAGIC ? TowerStatRow.MAGIC_DAMAGE : TowerStatRow.PHYSICAL_DAMAGE;
             lines.add(new TowerStatLine(damage, DamageUnits.inPoints(this.damageBase), DamageUnits.inPoints(now.damage())));
             this.cadence().ifPresent(lines::add);
             if (this.critChanceBase > 0f || now.critChance() > 0f) {
-                lines.add(new TowerStatLine(TowerStat.CRIT_CHANCE, this.critChanceBase, now.critChance()));
+                lines.add(new TowerStatLine(TowerStatRow.CRIT_CHANCE, this.critChanceBase, now.critChance()));
             }
         }
         lines.addAll(this.ownStats());
         int auras = (int) this.context.towers().all().stream()
-                .filter(other -> !other.buffFor(this).equals(TowerBuff.none()))
+                .filter(other -> !other.buffFor(this).isNone())
                 .count();
         return TowerInspection.of(this.type, this.price, lines)
                 .withName(this.displayName())
@@ -534,8 +539,9 @@ public abstract class AbstractTower implements Tower {
     }
 
     /** Contributes nothing by default. */
-    public TowerBuff buffFor(Tower other) {
-        return TowerBuff.none();
+    @Override
+    public StatModifiers<TowerStat> buffFor(Tower other) {
+        return StatModifiers.none();
     }
 
     /** Marks this tower gone, so effects it applied stop crediting it after the refund. */

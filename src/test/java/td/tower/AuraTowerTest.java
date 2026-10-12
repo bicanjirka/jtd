@@ -7,7 +7,7 @@ import td.enemy.EnemyMob;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
-import td.tower.buff.TowerBuff;
+import td.stat.StatModifiers;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 import td.wave.PathNormal;
@@ -46,7 +46,7 @@ class AuraTowerTest {
     }
 
     @Test
-    void amplifyingCoreIiAlsoGrantsAFireRateBonus() {
+    void amplifyingCoreIiAlsoGrantsAnAttackSpeedBonus() {
         this.context.economy().startEconomy(1000, 5);
         SniperTower neighbour = new SniperTower(this.context, 0, 0);
         this.context.towers().add(neighbour);
@@ -58,7 +58,7 @@ class AuraTowerTest {
 
         aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core II"));
 
-        assertThat(neighbour.fireRateCurrent()).isGreaterThan(1.0);
+        assertThat(neighbour.attackRate()).isGreaterThan(1.0);
     }
 
     @Test
@@ -71,11 +71,11 @@ class AuraTowerTest {
         UpgradePaths.awakenVeteran(first);
         first.buyUpgrade(UpgradePaths.named(first, "Broadcast"));
 
-        assertThat(first.buffFor(second)).isEqualTo(TowerBuff.none());
+        assertThat(first.buffFor(second)).isEqualTo(StatModifiers.none());
     }
 
     @Test
-    void amplifyingCoreAddsATenthToTheBuffPerLevelAndTheSecondAddsTenPercentFireRate() {
+    void amplifyingCoreAddsATenthToTheBuffPerLevelAndTheSecondAddsTenPercentAttackSpeed() {
         this.context.economy().startEconomy(1000, 5);
         AuraTower aura = new AuraTower(this.context, 0, 0);
         this.context.towers().add(aura);
@@ -84,15 +84,15 @@ class AuraTowerTest {
         UpgradePaths.awakenVeteran(aura);
 
         aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core"));
-        TowerBuff first = aura.buffFor(neighbour);
+        StatModifiers<TowerStat> first = aura.buffFor(neighbour);
         aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core II"));
-        TowerBuff second = aura.buffFor(neighbour);
+        StatModifiers<TowerStat> second = aura.buffFor(neighbour);
 
-        assertThat(first.damageBonus()).isCloseTo(0.3f, within(1e-6f));
-        assertThat(first.rangeBonus()).isCloseTo(0.3f, within(1e-6f));
-        assertThat(first.fireRateBonus()).isZero();
-        assertThat(second.damageBonus()).isCloseTo(0.4f, within(1e-6f));
-        assertThat(second.fireRateBonus()).isCloseTo(0.1f, within(1e-6f));
+        assertThat(first.get(TowerStat.DAMAGE).percentAdd()).isCloseTo(0.3f, within(1e-6f));
+        assertThat(first.get(TowerStat.RANGE).percentAdd()).isCloseTo(0.3f, within(1e-6f));
+        assertThat(first.flat(TowerStat.ATTACK_SPEED)).isZero();
+        assertThat(second.get(TowerStat.DAMAGE).percentAdd()).isCloseTo(0.4f, within(1e-6f));
+        assertThat(second.flat(TowerStat.ATTACK_SPEED)).isCloseTo(0.1f, within(1e-6f));
     }
 
     @Test
@@ -108,7 +108,7 @@ class AuraTowerTest {
 
         aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core"));
 
-        assertThat(aura.buffFor(sniper).damageBonus()).isCloseTo(0.3f + 2 * 0.05f, within(1e-6f));
+        assertThat(aura.buffFor(sniper).get(TowerStat.DAMAGE).percentAdd()).isCloseTo(0.3f + 2 * 0.05f, within(1e-6f));
     }
 
     private AuraTower coreAuraBuffing(int towers) {
@@ -172,7 +172,7 @@ class AuraTowerTest {
 
         shielded.beginTick(1);
 
-        assertThat(shielded.fireRateCurrent()).isCloseTo(1.0 / 1.1, within(1e-6));
+        assertThat(shielded.attackRate()).isCloseTo(0.9, within(1e-6));
     }
 
     @Test
@@ -182,15 +182,15 @@ class AuraTowerTest {
         this.context.towers().add(buffed);
         SniperTower alone = new SniperTower(this.context, 30, 30);
         this.context.towers().add(alone);
-        TowerBuff burst = TowerBuff.fireRate(0.5f);
+        StatModifiers<TowerStat> burst = TowerModifiers.attackSpeed(1f);
 
-        buffed.grantTimedBuff(burst, 100);
-        alone.grantTimedBuff(burst, 100);
+        buffed.grantTimedModifiers(burst, 100);
+        alone.grantTimedModifiers(burst, 100);
         buffed.beginTick(150);
         alone.beginTick(150);
 
-        assertThat(buffed.fireRateCurrent()).isGreaterThan(1.9);
-        assertThat(alone.fireRateCurrent()).isEqualTo(1.0);
+        assertThat(buffed.attackRate()).isGreaterThan(1.9);
+        assertThat(alone.attackRate()).isEqualTo(1.0);
     }
 
     @Test
@@ -263,7 +263,7 @@ class AuraTowerTest {
 
         shielded.beginTick(1);
 
-        assertThat(shielded.fireRateCurrent()).isCloseTo(1.0 / 1.2, within(1e-6));
+        assertThat(shielded.attackRate()).isCloseTo(0.8, within(1e-6));
     }
 
     @Test
@@ -276,7 +276,7 @@ class AuraTowerTest {
 
         shielded.beginTick(1);
 
-        assertThat(shielded.fireRateCurrent()).isCloseTo(1.0 / 1.1, within(1e-6));
+        assertThat(shielded.attackRate()).isCloseTo(0.9, within(1e-6));
     }
 
     @Test
@@ -322,8 +322,8 @@ class AuraTowerTest {
         this.context.towers().add(novice);
         veteran.earnXp(500);
 
-        assertThat(aura.buffFor(veteran).damageBonus()).isCloseTo(0.6f, within(1e-6f));
-        assertThat(aura.buffFor(novice)).isEqualTo(TowerBuff.none());
+        assertThat(aura.buffFor(veteran).get(TowerStat.DAMAGE).percentAdd()).isCloseTo(0.6f, within(1e-6f));
+        assertThat(aura.buffFor(novice)).isEqualTo(StatModifiers.none());
         assertThat(aura.buffedTowers()).containsExactly(veteran);
     }
 
@@ -362,24 +362,24 @@ class AuraTowerTest {
     }
 
     @Test
-    void anEnemyOnTheRallySpotGivesBuffedTowersMoreFireRateForFiveSecondsThenTenSecondsOfCooldown() {
+    void anEnemyOnTheRallySpotGivesBuffedTowersMoreAttackSpeedForFiveSecondsThenTenSecondsOfCooldown() {
         AuraTower aura = this.rallyAura();
         SniperTower sniper = new SniperTower(this.context, 0, 0);
         this.context.towers().add(sniper);
         this.context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(aura.getX(), 0)});
 
         aura.doTick(1);
-        double during = sniper.fireRateCurrent();
+        double during = sniper.attackRate();
         sniper.beginTick(101);
         aura.doTick(101);
-        double afterBuff = sniper.fireRateCurrent();
+        double afterBuff = sniper.attackRate();
         sniper.beginTick(201);
         aura.doTick(201);
-        double secondRally = sniper.fireRateCurrent();
+        double secondRally = sniper.attackRate();
 
-        assertThat(during).isGreaterThan(1.4);
+        assertThat(during).isCloseTo(1.3, within(1e-6));
         assertThat(afterBuff).isEqualTo(1.0);
-        assertThat(secondRally).isGreaterThan(1.4);
+        assertThat(secondRally).isCloseTo(1.3, within(1e-6));
     }
 
     @Test
@@ -391,7 +391,7 @@ class AuraTowerTest {
 
         aura.doTick(1);
 
-        assertThat(sniper.fireRateCurrent()).isEqualTo(1.0);
+        assertThat(sniper.attackRate()).isEqualTo(1.0);
     }
 
     @Test
