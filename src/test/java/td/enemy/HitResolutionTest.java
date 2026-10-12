@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.within;
 
 class HitResolutionTest {
 
-    private static StatView stats(BaseStats base) {
+    private static StatView stats(BaseStats<EnemyStat> base) {
         return base::value;
     }
 
@@ -31,7 +31,7 @@ class HitResolutionTest {
 
     @Test
     void armorOnlyMitigatesPhysicalAndMagicResistOnlyMagic() {
-        StatView armored = stats(BaseStats.defaults().with(EnemyStat.ARMOR, 100f));
+        StatView armored = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f));
 
         assertThat(HitResolution.resolve(Damage.physical(1000), armored, 10000)).isEqualTo(Damage.physical(500));
         assertThat(HitResolution.resolve(Damage.magic(1000), armored, 10000)).isEqualTo(Damage.magic(1000));
@@ -39,7 +39,7 @@ class HitResolutionTest {
 
     @Test
     void platingComesOffAfterArmorAndNeverBelowZero() {
-        StatView plated = stats(BaseStats.defaults().with(EnemyStat.ARMOR, 100f).with(EnemyStat.PHYSICAL_PLATING, 300f));
+        StatView plated = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f).with(EnemyStat.PHYSICAL_PLATING, 300f));
 
         assertThat(HitResolution.resolve(Damage.physical(1000), plated, 10000)).isEqualTo(Damage.physical(200));
         assertThat(HitResolution.resolve(Damage.physical(500), plated, 10000)).isEqualTo(Damage.physical(0));
@@ -47,7 +47,7 @@ class HitResolutionTest {
 
     @Test
     void damageTakenMultipliesLastAndTheLandedHitIsCappedAtHealth() {
-        StatView vulnerable = stats(BaseStats.defaults().with(EnemyStat.MAGIC_DAMAGE_TAKEN, 1.5f));
+        StatView vulnerable = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.MAGIC_DAMAGE_TAKEN, 1.5f));
 
         assertThat(HitResolution.resolve(Damage.magic(100), vulnerable, 10000)).isEqualTo(Damage.magic(150));
         assertThat(HitResolution.resolve(Damage.magic(100), vulnerable, 40)).isEqualTo(Damage.magic(40));
@@ -55,14 +55,14 @@ class HitResolutionTest {
 
     @Test
     void aCriticalHitStaysCriticalThroughMitigation() {
-        StatView armored = stats(BaseStats.defaults().with(EnemyStat.ARMOR, 100f));
+        StatView armored = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f));
 
         assertThat(HitResolution.resolve(new Damage(1000, DamageType.PHYSICAL, true), armored, 10000).critical())
                 .isTrue();
     }
     @Test
     void fullResilienceNeverLetsACritLand() {
-        StatView resilient = stats(BaseStats.defaults().with(EnemyStat.RESILIENCE, 100f));
+        StatView resilient = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, 100f));
 
         Damage landed = HitResolution.resolve(Damage.physical(1000), AttackProfile.critChance(1f), resilient, 10000,
                 () -> 0.0);
@@ -72,7 +72,7 @@ class HitResolutionTest {
 
     @Test
     void halfResilienceHalvesBothTheCritChanceAndTheCritBonus() {
-        StatView halfResilient = stats(BaseStats.defaults().with(EnemyStat.RESILIENCE, 50f));
+        StatView halfResilient = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, 50f));
         AttackProfile attacker = AttackProfile.critChance(0.8f).withCritMultiplier(3f);
 
         Damage justInside = HitResolution.resolve(Damage.physical(1000), attacker, halfResilient, 10000, () -> 0.39);
@@ -84,7 +84,7 @@ class HitResolutionTest {
 
     @Test
     void anAttackerWithoutCritChanceNeverDrawsFromTheRandomSource() {
-        StatView plain = stats(BaseStats.defaults());
+        StatView plain = stats(BaseStats.defaults(EnemyStat.class));
 
         HitResolution.resolve(Damage.physical(1000), AttackProfile.none(), plain, 10000, () -> {
             throw new IllegalStateException("drew a random number");
@@ -93,7 +93,7 @@ class HitResolutionTest {
 
     @Test
     void penetrationLowersArmorButNeverBelowZero() {
-        StatView armored = stats(BaseStats.defaults().with(EnemyStat.ARMOR, 100f));
+        StatView armored = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f));
 
         Damage halfPierced = HitResolution.resolve(Damage.physical(1000),
                 AttackProfile.none().withArmorPenetration(0.5f, 0f), armored, 10000, () -> 1.0);
@@ -106,7 +106,7 @@ class HitResolutionTest {
 
     @Test
     void negativeResilienceNeverRaisesTheCritChanceButRaisesTheCritBonus() {
-        StatView brittle = stats(BaseStats.defaults().with(EnemyStat.RESILIENCE, -100f));
+        StatView brittle = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, -100f));
         AttackProfile attacker = AttackProfile.critChance(0.4f).withCritMultiplier(2f);
 
         Damage justInside = HitResolution.resolve(Damage.physical(1000), attacker, brittle, 10000, () -> 0.39);
@@ -119,7 +119,7 @@ class HitResolutionTest {
 
     @Test
     void periodicDamageNeverCritsEvenWithGuaranteedCritAndFullChance() {
-        StatView plain = stats(BaseStats.defaults());
+        StatView plain = stats(BaseStats.defaults(EnemyStat.class));
         AttackProfile pulse = AttackProfile.critChance(1f).withGuaranteedCrit().asPeriodic();
 
         Damage landed = HitResolution.resolve(Damage.physical(1000), pulse, plain, 10000, () -> 0.0);
@@ -129,7 +129,7 @@ class HitResolutionTest {
 
     @Test
     void aGuaranteedCritLandsBelowFullResilienceWithoutDrawingAndShrinksWithIt() {
-        StatView resilient = stats(BaseStats.defaults().with(EnemyStat.RESILIENCE, 70f));
+        StatView resilient = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, 70f));
         AttackProfile attacker = AttackProfile.none().withCritMultiplier(2f).withGuaranteedCrit();
 
         Damage landed = HitResolution.resolve(Damage.physical(1000), attacker, resilient, 10000, () -> {
@@ -141,7 +141,7 @@ class HitResolutionTest {
 
     @Test
     void aGuaranteedCritNeverLandsOnACritImmuneEnemy() {
-        StatView immune = stats(BaseStats.defaults().with(EnemyStat.RESILIENCE, 100f));
+        StatView immune = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, 100f));
 
         Damage landed = HitResolution.resolve(Damage.physical(1000), AttackProfile.none().withGuaranteedCrit(), immune,
                 10000, () -> 0.0);
@@ -154,19 +154,19 @@ class HitResolutionTest {
         AttackProfile sniper = AttackProfile.none().withCritMultiplier(2f).withCritDamageBonus(0.5f);
 
         assertThat(sniper.critMultiplier()).isEqualTo(2.5f);
-        assertThat(HitResolution.critFactor(sniper, stats(BaseStats.defaults()))).isEqualTo(2.5f);
+        assertThat(HitResolution.critFactor(sniper, stats(BaseStats.defaults(EnemyStat.class)))).isEqualTo(2.5f);
     }
 
     @Test
     void critFactorAgainstACritImmuneEnemyIsOne() {
-        StatView immune = stats(BaseStats.defaults().with(EnemyStat.RESILIENCE, 100f));
+        StatView immune = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, 100f));
 
         assertThat(HitResolution.critFactor(AttackProfile.none().withCritMultiplier(3f), immune)).isEqualTo(1f);
     }
 
     @Test
     void glancingPenetrationHelpsAShotThatDoesNotCritButNotOneThatDoes() {
-        StatView armored = stats(BaseStats.defaults().with(EnemyStat.ARMOR, 100f).with(EnemyStat.PHYSICAL_PLATING, 300f));
+        StatView armored = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f).with(EnemyStat.PHYSICAL_PLATING, 300f));
         AttackProfile weakSpot = AttackProfile.critChance(0.5f).withGlancingPenetration(100f, 1f);
 
         Damage glancing = HitResolution.resolve(Damage.physical(1000), weakSpot, armored, 10000, () -> 0.9);
@@ -179,7 +179,7 @@ class HitResolutionTest {
 
     @Test
     void shieldingTakesItsShareOfAHitAfterDamageTaken() {
-        StatView shielded = stats(BaseStats.defaults().with(EnemyStat.PHYSICAL_SHIELDING, 0.4f)
+        StatView shielded = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.PHYSICAL_SHIELDING, 0.4f)
                 .with(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 1.5f));
 
         assertThat(HitResolution.resolve(Damage.physical(1000), shielded, 10000)).isEqualTo(Damage.physical(900));
@@ -188,7 +188,7 @@ class HitResolutionTest {
 
     @Test
     void theShieldsShareOfAHitIsReportedAndAnAttackThatIgnoresShieldsTakesNoneOfIt() {
-        StatView shielded = stats(BaseStats.defaults().with(EnemyStat.PHYSICAL_SHIELDING, 0.4f));
+        StatView shielded = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.PHYSICAL_SHIELDING, 0.4f));
         td.util.RandomSource random = () -> 1.0;
 
         HitResolution.Outcome ordinary = HitResolution.resolveWithShield(Damage.physical(1000), AttackProfile.none(),
@@ -204,7 +204,7 @@ class HitResolutionTest {
 
     @Test
     void aShieldCountsTowardsWhatAnEnemyShrugsOff() {
-        StatView shielded = stats(BaseStats.defaults().with(EnemyStat.PHYSICAL_SHIELDING, 0.4f));
+        StatView shielded = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.PHYSICAL_SHIELDING, 0.4f));
 
         assertThat(HitResolution.reductionAgainst(DamageType.PHYSICAL, shielded)).isCloseTo(0.4f, within(1e-6f));
         assertThat(HitResolution.reductionAgainst(DamageType.MAGIC, shielded)).isZero();
@@ -212,7 +212,7 @@ class HitResolutionTest {
 
     @Test
     void aCritFromAnAttackerThatPiercesShieldsGoesStraightToHealth() {
-        StatView shielded = stats(BaseStats.defaults().with(EnemyStat.PHYSICAL_SHIELDING, 0.5f));
+        StatView shielded = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.PHYSICAL_SHIELDING, 0.5f));
         AttackProfile cleanShot = AttackProfile.critChance(0.5f).withCritsPierceShields();
 
         Damage crit = HitResolution.resolve(Damage.physical(1000), cleanShot, shielded, 10000, () -> 0.0);
@@ -224,7 +224,7 @@ class HitResolutionTest {
 
     @Test
     void damageThatTicksTakesTheOverTimeMultiplierAndAHitDoesNot() {
-        td.stat.BaseStats stats = td.stat.BaseStats.defaults().with(td.stat.EnemyStat.PERIODIC_DAMAGE_TAKEN, 1.5f);
+        td.stat.BaseStats<EnemyStat> stats = td.stat.BaseStats.defaults(td.stat.EnemyStat.class).with(td.stat.EnemyStat.PERIODIC_DAMAGE_TAKEN, 1.5f);
         td.stat.StatView view = new td.stat.StatSheet(stats, accumulator -> {
         });
 

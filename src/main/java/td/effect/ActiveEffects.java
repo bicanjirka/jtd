@@ -327,7 +327,7 @@ public final class ActiveEffects {
      * lowers spirit by one. Shields and heals go in as restorative, so the enemy's spirit scales them.
      * Being exposed or revealed doubles the crit chance taken, once however many apply.
      */
-    public void contributeTo(StatAccumulator accumulator) {
+    public void contributeTo(StatAccumulator<EnemyStat> accumulator) {
         PoolTuning burning = this.burningTuning();
         float received = burning.cauterizes() ? CAUTERIZED_SHARE : 1f;
         if (burning.heats()) {
@@ -408,7 +408,7 @@ public final class ActiveEffects {
         return tuning == null ? NO_TUNING : tuning;
     }
 
-    private static void multiplyDamageTaken(StatAccumulator accumulator, float taken) {
+    private static void multiplyDamageTaken(StatAccumulator<EnemyStat> accumulator, float taken) {
         for (DamageType type : DAMAGE_TYPES) {
             accumulator.multiply(EnemyStat.damageTakenFor(type), taken);
         }

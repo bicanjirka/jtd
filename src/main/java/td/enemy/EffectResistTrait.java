@@ -27,7 +27,7 @@ public record EffectResistTrait(EnemyStat stat, float amount) implements Trait {
     }
 
     @Override
-    public StatModifiers modifiers(TraitContext context) {
+    public StatModifiers<EnemyStat> modifiers(TraitContext context) {
         return StatModifiers.of(this.stat, StatModifier.flat(this.amount));
     }
 

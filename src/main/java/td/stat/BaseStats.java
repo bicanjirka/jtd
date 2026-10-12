@@ -2,44 +2,48 @@ package td.stat;
 
 import java.util.Arrays;
 
-/** An immutable base value per {@link EnemyStat}; unset stats keep their default. */
-public final class BaseStats {
-
-    private static final BaseStats DEFAULTS = new BaseStats(defaultValues());
+/** An immutable base value per stat; unset stats keep their default. */
+public final class BaseStats<S extends Enum<S> & StatKey> {
 
     private final float[] values;
+    private final boolean[] set;
 
-    private BaseStats(float[] values) {
+    private BaseStats(float[] values, boolean[] set) {
         this.values = values;
+        this.set = set;
     }
 
-    public static BaseStats defaults() {
-        return DEFAULTS;
-    }
-
-    private static float[] defaultValues() {
-        EnemyStat[] stats = EnemyStat.values();
+    public static <S extends Enum<S> & StatKey> BaseStats<S> defaults(Class<S> type) {
+        S[] stats = type.getEnumConstants();
         float[] values = new float[stats.length];
-        for (EnemyStat stat : stats) {
+        for (S stat : stats) {
             values[stat.ordinal()] = stat.defaultBase();
         }
-        return values;
+        return new BaseStats<>(values, new boolean[stats.length]);
     }
 
-    public BaseStats with(EnemyStat stat, float value) {
-        float[] copy = this.values.clone();
-        copy[stat.ordinal()] = value;
-        return new BaseStats(copy);
+    public BaseStats<S> with(S stat, float value) {
+        float[] values = this.values.clone();
+        boolean[] set = this.set.clone();
+        values[stat.ordinal()] = value;
+        set[stat.ordinal()] = true;
+        return new BaseStats<>(values, set);
     }
 
-    public float value(EnemyStat stat) {
+    public float value(S stat) {
         return this.values[stat.ordinal()];
+    }
+
+    /** Whether content authored this stat, even at its default. */
+    public boolean isSet(S stat) {
+        return this.set[stat.ordinal()];
     }
 
     @Override
     public boolean equals(Object other) {
         return other == this || (other != null && other.getClass() == BaseStats.class
-                && Arrays.equals(this.values, ((BaseStats) other).values));
+                && Arrays.equals(this.values, ((BaseStats<?>) other).values)
+                && Arrays.equals(this.set, ((BaseStats<?>) other).set));
     }
 
     @Override

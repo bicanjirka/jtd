@@ -40,11 +40,11 @@ class StatModifierTest {
 
     @Test
     void bundlesCombineStatByStat() {
-        StatModifiers a = StatModifiers.of(EnemyStat.ARMOR, StatModifier.flat(10f));
-        StatModifiers b = StatModifiers.of(EnemyStat.ARMOR, StatModifier.flat(5f))
+        StatModifiers<EnemyStat> a = StatModifiers.of(EnemyStat.ARMOR, StatModifier.flat(10f));
+        StatModifiers<EnemyStat> b = StatModifiers.of(EnemyStat.ARMOR, StatModifier.flat(5f))
                 .and(EnemyStat.SPIRIT, StatModifier.flat(20f));
 
-        StatModifiers combined = a.plus(b);
+        StatModifiers<EnemyStat> combined = a.plus(b);
 
         assertThat(combined.get(EnemyStat.ARMOR)).isEqualTo(StatModifier.flat(15f));
         assertThat(combined.get(EnemyStat.SPIRIT)).isEqualTo(StatModifier.flat(20f));

@@ -11,6 +11,7 @@ import td.enemy.SpawnEnemiesAction;
 import td.enemy.Trait;
 import td.enemy.TraitContext;
 import td.stat.BaseStats;
+import td.stat.EnemyStat;
 import td.stat.StatSheet;
 import td.util.GameWorld;
 
@@ -34,7 +35,7 @@ public final class EnemyFixtures {
 
     /** What {@code damage} lands for against an otherwise plain enemy carrying only {@code trait}. */
     public static Damage landedThrough(Trait trait, Damage damage) {
-        StatSheet sheet = new StatSheet(BaseStats.defaults(),
+        StatSheet sheet = new StatSheet(BaseStats.defaults(EnemyStat.class),
                 accumulator -> trait.modifiers(new TraitContext(1f)).applyTo(accumulator));
         return HitResolution.resolve(damage, sheet, Integer.MAX_VALUE);
     }

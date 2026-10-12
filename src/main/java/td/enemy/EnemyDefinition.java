@@ -40,7 +40,7 @@ public record EnemyDefinition(
         MovementBehavior movement,
         List<IdentifiedTrait> traitSlots,
         List<IdentifiedAbility> abilitySlots,
-        BaseStats baseStats,
+        BaseStats<EnemyStat> baseStats,
         Optional<DisruptionAura> disruption) {
 
     public EnemyDefinition {
@@ -55,7 +55,7 @@ public record EnemyDefinition(
     public static EnemyDefinition of(String id, String displayName, int baseHealth, int price, float baseSpeed,
             BodyArchetype archetype) {
         return new EnemyDefinition(id, displayName, "", baseHealth, price, baseSpeed, 1f,
-                archetype, new FixedMovement(), List.of(), List.of(), BaseStats.defaults(), Optional.empty());
+                archetype, new FixedMovement(), List.of(), List.of(), BaseStats.defaults(EnemyStat.class), Optional.empty());
     }
 
     /** The traits one mob spawned against {@code mix} carries, each slot resolved once. */

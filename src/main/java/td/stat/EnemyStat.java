@@ -8,7 +8,7 @@ import td.damage.DamageType;
  * <p>
  * Plating and regeneration are in the hundredths of a point that health and damage use.
  */
-public enum EnemyStat {
+public enum EnemyStat implements StatKey {
 
     /** Physical mitigation: a hit is multiplied by {@code 100 / (100 + armor)}. */
     ARMOR(0f, 0f, Float.MAX_VALUE),
@@ -81,10 +81,12 @@ public enum EnemyStat {
         };
     }
 
+    @Override
     public float defaultBase() {
         return this.defaultBase;
     }
 
+    @Override
     public float clamp(float value) {
         return Math.max(this.min, Math.min(this.max, value));
     }

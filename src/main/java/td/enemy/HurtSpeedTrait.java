@@ -11,7 +11,7 @@ import td.stat.StatModifiers;
 public record HurtSpeedTrait(float maxMultiplier) implements Trait {
 
     @Override
-    public StatModifiers modifiers(TraitContext context) {
+    public StatModifiers<EnemyStat> modifiers(TraitContext context) {
         float factor = 1f + (this.maxMultiplier - 1f) * (1f - context.healthFraction());
         return StatModifiers.of(EnemyStat.MOVE_SPEED, StatModifier.times(factor));
     }

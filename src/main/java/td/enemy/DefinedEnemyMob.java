@@ -87,7 +87,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.health = DamageUnits.ofPoints(healthPoints);
         this.healthMax = DamageUnits.ofPoints(healthPoints);
         this.pathIndex = spawnParameters.pathIndex();
-        BaseStats base = definition.baseStats()
+        BaseStats<EnemyStat> base = definition.baseStats()
                 .with(EnemyStat.MOVE_SPEED, definition.baseSpeed() * spawnParameters.speedMultiplier());
         this.stats = new StatSheet(base, this::contributeStats);
         this.bodyScale = bodyScaleFor(definition.archetype(), gameWorld.getBoard().scale(), rank) * spawnParameters.sizeMultiplier();
@@ -249,7 +249,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.stats;
     }
 
-    private void contributeStats(StatAccumulator accumulator) {
+    private void contributeStats(StatAccumulator<EnemyStat> accumulator) {
         TraitContext context = this.traitContext();
         for (Trait trait : this.traits) {
             trait.modifiers(context).applyTo(accumulator);

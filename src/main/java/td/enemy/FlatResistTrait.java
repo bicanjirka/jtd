@@ -27,7 +27,7 @@ public record FlatResistTrait(float points, Optional<DamageType> restrictedTo) i
     }
 
     @Override
-    public StatModifiers modifiers(TraitContext context) {
+    public StatModifiers<EnemyStat> modifiers(TraitContext context) {
         StatModifier plating = StatModifier.flat(DamageUnits.ofPoints(this.points));
         return this.restrictedTo
                 .map(type -> StatModifiers.of(EnemyStat.platingFor(type), plating))

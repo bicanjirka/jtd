@@ -82,7 +82,7 @@ class GhostInvisibilityTest {
     /** Stands in for a reveal: sets stealth to zero, which beats invisibility's one. */
     private record RevealTrait() implements Trait {
         @Override
-        public StatModifiers modifiers(TraitContext context) {
+        public StatModifiers<EnemyStat> modifiers(TraitContext context) {
             return StatModifiers.of(EnemyStat.STEALTH, StatModifier.setTo(0f));
         }
 
