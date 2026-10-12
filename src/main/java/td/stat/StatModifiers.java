@@ -62,6 +62,24 @@ public final class StatModifiers<S extends Enum<S> & StatKey> {
         return from(byStat);
     }
 
+    /** Every flat and percent amount {@code factor} times as big; multipliers and set values stay. */
+    public StatModifiers<S> scaledBy(float factor) {
+        if (this.isNone()) {
+            return this;
+        }
+        StatModifier[] scaled = new StatModifier[this.modifiers.length];
+        for (int i = 0; i < scaled.length; i++) {
+            StatModifier m = this.modifiers[i];
+            scaled[i] = new StatModifier(m.flat() * factor, m.percentAdd() * factor, m.multiply(), m.setTo());
+        }
+        return new StatModifiers<>(this.stats, scaled);
+    }
+
+    /** The flat amount on {@code stat}, 0 when this bundle leaves it alone. */
+    public float flat(S stat) {
+        return this.get(stat).flat();
+    }
+
     /** The stats this bundle changes, in ascending ordinal order. */
     public List<S> stats() {
         return this.stats;

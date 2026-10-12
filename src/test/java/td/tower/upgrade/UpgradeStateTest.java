@@ -1,17 +1,18 @@
 package td.tower.upgrade;
 
 import org.junit.jupiter.api.Test;
-import td.tower.buff.TowerBuff;
+import td.stat.StatModifiers;
+import td.tower.TowerModifiers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class UpgradeStateTest {
 
-    private static final UpgradeNode RANGE = UpgradeNode.of("range", UpgradeSlot.BASE, "Range", 10).withBuff(TowerBuff.range(0.15f));
+    private static final UpgradeNode RANGE = UpgradeNode.of("range", UpgradeSlot.BASE, "Range", 10).withModifiers(TowerModifiers.rangePercent(0.15f));
     private static final UpgradeNode HEAD_LV1 = UpgradeNode.of("head.a.1", UpgradeSlot.HEAD, "A1", 10)
-            .withBuff(TowerBuff.damage(0.25f));
+            .withModifiers(TowerModifiers.damagePercent(0.25f));
     private static final UpgradeNode HEAD_LV2 = UpgradeNode.of("head.a.2", UpgradeSlot.HEAD, "A2", 20)
-            .withBuff(TowerBuff.damage(0.25f));
+            .withModifiers(TowerModifiers.damagePercent(0.25f));
 
     @Test
     void noneOwnsNothingAndHasNoTipInAnySlot() {
@@ -19,7 +20,7 @@ class UpgradeStateTest {
 
         assertThat(state.owns(RANGE.id())).isFalse();
         assertThat(state.tip(UpgradeSlot.BASE)).isEmpty();
-        assertThat(state.totalBuff()).isEqualTo(TowerBuff.none());
+        assertThat(state.totalModifiers()).isEqualTo(StatModifiers.none());
     }
 
     @Test
@@ -50,6 +51,6 @@ class UpgradeStateTest {
     void totalBuffCombinesEveryOwnedNodesStatBonusAdditively() {
         UpgradeState state = UpgradeState.none().with(HEAD_LV1).with(HEAD_LV2);
 
-        assertThat(state.totalBuff()).isEqualTo(TowerBuff.damage(0.5f));
+        assertThat(state.totalModifiers()).isEqualTo(TowerModifiers.damagePercent(0.5f));
     }
 }

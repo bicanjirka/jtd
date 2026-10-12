@@ -2,7 +2,6 @@ package td.tower;
 
 import td.enemy.EnemyWalk;
 import td.enemy.WalkEndListener;
-import td.tower.buff.TowerBuff;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -46,6 +45,6 @@ public final class ExperienceAwarder implements WalkEndListener {
 
 
     private static boolean buffsAny(Tower tower, List<Tower> earners) {
-        return earners.stream().anyMatch(earner -> !tower.buffFor(earner).equals(TowerBuff.none()));
+        return earners.stream().anyMatch(earner -> !tower.buffFor(earner).isNone());
     }
 }

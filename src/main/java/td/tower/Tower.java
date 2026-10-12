@@ -1,7 +1,7 @@
 package td.tower;
 
 import td.enemy.EnemyWalk;
-import td.tower.buff.TowerBuff;
+import td.stat.StatModifiers;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
@@ -25,8 +25,13 @@ public interface Tower {
 
     void doTick(int gameTime);
 
-    /** Start of the tower's turn: expires a timed buff and re-reads its disruption, republishing stats only on a change. */
-    void beginTick(int gameTime);
+    /**
+     * Start of the tower's turn: expires a timed buff and re-reads its disruption, republishing stats only on a
+     * change.
+     *
+     * @return whether this tower republished its stats
+     */
+    boolean beginTick(int gameTime);
 
     /** Whether an enemy's disruption weakens this tower right now. */
     boolean isDisrupted();
@@ -57,13 +62,21 @@ public interface Tower {
     int getBoardY();
 
     /**
-     * The buff this tower gives {@code other}, or {@link TowerBuff#none()}. Buffs are computed from
+     * What this tower gives {@code other}, or {@link StatModifiers#none()}. Buffs are computed from
      * where towers stand, never stored.
      */
-    TowerBuff buffFor(Tower other);
+    StatModifiers<TowerStat> buffFor(Tower other);
+
+    /**
+     * Whether {@link #buffFor} can give anything, so a change to this tower's own stats can change what
+     * others receive.
+     */
+    default boolean emitsBuffs() {
+        return false;
+    }
 
     /** Buffs this tower for {@code durationTicks} from now, as it would itself; it never stacks. */
-    void receiveTimedBuff(TowerBuff buff, int durationTicks);
+    void receiveTimedModifiers(StatModifiers<TowerStat> modifiers, int durationTicks);
 
     /** Recomputes current stats from the towers on the board and this tower's upgrades. */
     void recalculateStats();

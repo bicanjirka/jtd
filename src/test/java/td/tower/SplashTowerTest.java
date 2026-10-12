@@ -134,7 +134,7 @@ class SplashTowerTest {
         tower.doTick(0);
 
         assertThat(edge.onlyHitAmount()).isEqualTo(Math.round(FULL * 0.25f));
-        assertThat(tower.inspect().stats()).filteredOn(line -> line.stat() == TowerStat.SPLASH_RADIUS)
+        assertThat(tower.inspect().stats()).filteredOn(line -> line.stat() == TowerStatRow.SPLASH_RADIUS)
                 .singleElement().extracting(TowerStatLine::current).isEqualTo(SplashTower.BLAST_RADIUS_CELLS * 1.25f);
     }
 

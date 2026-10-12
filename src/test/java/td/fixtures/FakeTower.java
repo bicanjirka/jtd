@@ -1,11 +1,12 @@
 package td.fixtures;
 
+import td.stat.StatModifiers;
 import td.tower.AbstractTower;
 import td.tower.Tower;
 import td.tower.TowerBaseStats;
 import td.tower.TowerFactory;
+import td.tower.TowerStat;
 import td.tower.TowerVisitor;
-import td.tower.buff.TowerBuff;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
@@ -17,7 +18,8 @@ public final class FakeTower extends AbstractTower {
 
     private final UpgradeTree tree;
     private final Optional<UpgradeState> ownedUpgrades;
-    private TowerBuff given = TowerBuff.none();
+    private StatModifiers<TowerStat> given = StatModifiers.none();
+    private int recalculations;
 
     private FakeTower(GameWorld context, int x, int y, UpgradeTree tree, Optional<UpgradeState> ownedUpgrades) {
         super(TowerFactory.Type.SNIPER, new TowerBaseStats(10, 3f, 20), context, x, y);
@@ -46,14 +48,25 @@ public final class FakeTower extends AbstractTower {
     }
 
     /** This tower itself, now giving every other tower {@code buff}, as an Aura would. */
-    public FakeTower giving(TowerBuff buff) {
+    public FakeTower giving(StatModifiers<TowerStat> buff) {
         this.given = buff;
         return this;
     }
 
     @Override
-    public TowerBuff buffFor(Tower other) {
-        return other == this ? TowerBuff.none() : this.given;
+    public StatModifiers<TowerStat> buffFor(Tower other) {
+        return other == this ? StatModifiers.none() : this.given;
+    }
+
+    /** How many times {@link #recalculateStats()} has run. */
+    public int recalculations() {
+        return this.recalculations;
+    }
+
+    @Override
+    public void recalculateStats() {
+        this.recalculations++;
+        super.recalculateStats();
     }
 
     /** Sets the kill count directly, skipping real damage. */

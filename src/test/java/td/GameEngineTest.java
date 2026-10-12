@@ -18,6 +18,7 @@ import td.enemy.Rank;
 import td.enemy.Trait;
 import td.fixtures.BoardFixtures;
 import td.fixtures.EnemyFixtures;
+import td.fixtures.FakeTower;
 import td.fixtures.LevelFixtures;
 import td.level.LevelDefinition;
 import td.level.LevelOutcome;
@@ -31,10 +32,11 @@ import td.tower.SonarTower;
 import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
-import td.tower.TowerStat;
 import td.tower.TowerStatLine;
+import td.tower.TowerStatRow;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeTier;
+import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
 import td.wave.WaveDefinition;
@@ -297,7 +299,7 @@ class GameEngineTest {
         engine.doTick(2);
 
         assertThat(disruptedWhileAlive).isTrue();
-        assertThat(disruptedRange).isCloseTo(fullRange * 0.8f, within(0.01f));
+        assertThat(disruptedRange).isCloseTo(fullRange * (AuraTower.RANGE - 0.2f) / AuraTower.RANGE, within(0.01f));
         assertThat(tower.isDisrupted()).isFalse();
         assertThat(tower.getRangeReal()).isEqualTo(fullRange);
     }
@@ -359,13 +361,79 @@ class GameEngineTest {
         engine.getGameWorld().enemies().getEnemies()[0].doDamage(Damage.physical(1_000_000));
         engine.doTick(2);
 
-        // A fire-rate penalty lengthens the cooldown by that fraction, so 30% leaves 1/1.3 of the shots.
-        assertThat(jammedRate.current() / jammedRate.base()).isCloseTo(1f / 1.3f, within(0.02f));
+        // An attack-speed penalty subtracts from the rate, so 30% leaves 70% of the shots.
+        assertThat(jammedRate.current() / jammedRate.base()).isCloseTo(0.7f, within(0.02f));
         assertThat(fireRate(tower).current()).isEqualTo(fireRate(tower).base());
     }
 
+    @Test
+    void aDisruptedAuraStopsBuffingATowerItNoLongerReachesInTheSameTick() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyDefinition jammer = EnemyDefinition.of("jam", "Jam", 100, 1, 0f, BodyArchetype.SQUARE)
+                .withDisruption(new DisruptionAura(1000f, 0.3f, 0.6f));
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("jam", Rank.GRUNT)), 1000)
+                .withCustomEnemies(List.of(jammer)));
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(6), BoardFixtures.cellCenter(5));
+        engine.startPlacing(TowerFactory.Type.AURA, AuraTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(5), BoardFixtures.cellCenter(5));
+        Tower sniper = towerOfType(engine, TowerFactory.Type.SNIPER);
+        TowerStatLine buffed = damage(sniper);
+        engine.nextWave();
+
+        engine.doTick(1);
+
+        assertThat(buffed.current()).isGreaterThan(buffed.base());
+        assertThat(damage(sniper).current()).isEqualTo(damage(sniper).base());
+    }
+
+    @Test
+    void aJammerSlowsAPulsesHitsByThirtyPercent() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyDefinition jammer = EnemyDefinition.of("jam", "Jam", 100, 1, 0f, BodyArchetype.SQUARE)
+                .withDisruption(new DisruptionAura(1000f, 0.3f, 0.6f));
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("jam", Rank.GRUNT)), 1000)
+                .withCustomEnemies(List.of(jammer)));
+        engine.startPlacing(TowerFactory.Type.PULSE, PulseTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(5), BoardFixtures.cellCenter(5));
+        Tower pulse = towerOfType(engine, TowerFactory.Type.PULSE);
+        engine.nextWave();
+
+        engine.doTick(1);
+
+        assertThat(fireRate(pulse).current() / fireRate(pulse).base()).isCloseTo(0.7f, within(1e-5f));
+    }
+
+    @Test
+    void aDisruptedNonAuraTowerRecomputesOnlyItself() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyDefinition jammer = EnemyDefinition.of("jam", "Jam", 100, 1, 0f, BodyArchetype.SQUARE)
+                .withDisruption(new DisruptionAura(50f, 0.3f, 0.6f));
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("jam", Rank.GRUNT)), 1000)
+                .withCustomEnemies(List.of(jammer)));
+        GameWorld world = engine.getGameWorld();
+        FakeTower near = FakeTower.offering(world, 0, 1, UpgradeTree.none());
+        FakeTower far = FakeTower.offering(world, 12, 12, UpgradeTree.none());
+        world.towers().add(near);
+        world.towers().add(far);
+        int nearBefore = near.recalculations();
+        int farBefore = far.recalculations();
+        engine.nextWave();
+
+        engine.doTick(1);
+
+        assertThat(near.isDisrupted()).isTrue();
+        assertThat(near.recalculations()).isEqualTo(nearBefore);
+        assertThat(far.recalculations()).isEqualTo(farBefore);
+    }
+
+    private static TowerStatLine damage(Tower tower) {
+        return tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.PHYSICAL_DAMAGE)
+                .findFirst().orElseThrow();
+    }
+
     private static TowerStatLine fireRate(Tower tower) {
-        return tower.inspect().stats().stream().filter(line -> line.stat() == TowerStat.FIRE_RATE).findFirst().orElseThrow();
+        return tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.FIRE_RATE).findFirst().orElseThrow();
     }
 
     private static final EnemyDefinition WALKER_A = EnemyDefinition.of("walkerA", "Walker A", 100, 1, 2f,

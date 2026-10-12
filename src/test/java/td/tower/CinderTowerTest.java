@@ -383,7 +383,7 @@ class CinderTowerTest {
     void bellowsWidensTheConeByTheFireRateAnAuraGivesItOnlyOnceAwakened() {
         CinderTower tower = towerAt(3, 3);
         this.context.towers().add(td.fixtures.FakeTower.offering(this.context, 3, 4, td.tower.upgrade.UpgradeTree.none())
-                .giving(td.tower.buff.TowerBuff.fireRate(0.2f)));
+                .giving(TowerModifiers.attackSpeed(0.2f)));
         double base = tower.getHalfWidthRadians();
 
         this.context.economy().startEconomy(1_000_000, 5);
@@ -571,14 +571,14 @@ class CinderTowerTest {
     void dragonsBreathFiresTwiceAsOftenAsThreeTimesTheRateForLessDamageAndKeepsStokeFull() {
         CinderTower tower = this.nozzleTower();
         float damageBefore = tower.damageCurrent();
-        double rateBefore = tower.fireRateCurrent();
+        double rateBefore = tower.attackRate();
         UpgradePaths.buy(tower, this.context, "Dragon's Breath");
         FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + 40, tower.getY());
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tickThrough(tower, 1, 1 + TRAVEL);
 
-        assertThat(tower.fireRateCurrent()).isGreaterThan(rateBefore * 2);
+        assertThat(tower.attackRate()).isGreaterThan(rateBefore * 2);
         assertThat(tower.damageCurrent()).isLessThan(Math.round(damageBefore * 0.45f));
         assertThat(tower.stokeStepsOf(target)).isEqualTo(3);
         assertThat(burns(target).getFirst().damagePerTick().amount())

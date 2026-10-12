@@ -6,10 +6,10 @@ package td.tower;
  * @param base    the tower's own value, before anything changed it
  * @param current the value it attacks with
  */
-public record TowerStatLine(TowerStat stat, float base, float current) {
+public record TowerStatLine(TowerStatRow stat, float base, float current) {
 
     /** A stat nothing changes. */
-    public static TowerStatLine fixed(TowerStat stat, float value) {
+    public static TowerStatLine fixed(TowerStatRow stat, float value) {
         return new TowerStatLine(stat, value, value);
     }
 }

@@ -7,7 +7,6 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.PoolTuning;
 import td.enemy.EnemyMob;
-import td.tower.buff.TowerBuff;
 import td.tower.cinder.BellowsPerk;
 import td.tower.cinder.CauterizePerk;
 import td.tower.cinder.CinderPerk;
@@ -108,78 +107,78 @@ public final class CinderTower extends AbstractTower {
 
     private static final UpgradeNode WHITE_FLAME_1 = UpgradeTier.HEAD_1.node("cinder.head.white_flame.1",
             "White Flame", PRICE)
-            .withBuff(TowerBuff.damage(0.3f))
-            .withExtraEffect("Stoke steps +15%");
+            .withModifiers(TowerModifiers.damagePercent(0.3f))
+            .withNote("Stoke steps +15%");
     private static final UpgradeNode WHITE_FLAME_2 = UpgradeTier.HEAD_2.node("cinder.head.white_flame.2",
             "White Flame II", PRICE)
-            .withBuff(TowerBuff.damage(0.5f).withCritChance(0.1f))
-            .withExtraEffect("-25% burn duration; the crit chance is for ignitions")
+            .withModifiers(TowerModifiers.damagePercent(0.5f).plus(TowerModifiers.critChance(0.1f)))
+            .withNote("-25% burn duration; the crit chance is for ignitions")
             .after(WHITE_FLAME_1);
     private static final UpgradeNode SOULFIRE = UpgradeTier.HEAD_3.node("cinder.head.white_flame.3", "Soulfire",
             PRICE)
             .withGate(new PurposeCondition(STOKE_DEED, STOKES_NEEDED))
-            .withExtraEffect("every other wave is Soulfire: a blue burn in its own pool that stacks with ordinary "
+            .withNote("every other wave is Soulfire: a blue burn in its own pool that stacks with ordinary "
                     + "burn, earns Sickened as well as Scorched and burns the burn-immune; Stoke applies to both")
             .after(WHITE_FLAME_2);
     private static final UpgradeNode FLASHPOINT = UpgradeTier.HEAD_4.node("cinder.head.white_flame.4a",
             "Flashpoint", PRICE)
-            .withBuff(TowerBuff.critChance(0.2f))
-            .withExtraEffect("a critical ignition also adds 3 Scorched")
+            .withModifiers(TowerModifiers.critChance(0.2f))
+            .withNote("a critical ignition also adds 3 Scorched")
             .after(SOULFIRE);
     private static final UpgradeNode COMBUSTION = UpgradeTier.HEAD_4.node("cinder.head.white_flame.4b",
             "Combustion", PRICE)
-            .withExtraEffect("the pool cap doubles; a pool that reaches its cap bursts for half of it onto enemies "
+            .withNote("the pool cap doubles; a pool that reaches its cap bursts for half of it onto enemies "
                     + "within 1 cell")
             .after(SOULFIRE);
 
     private static final UpgradeNode WIDE_NOZZLE_1 = UpgradeTier.HEAD_1.node("cinder.head.wide_nozzle.1",
             "Wide Nozzle", PRICE)
-            .withBuff(TowerBuff.range(0.25f))
-            .withExtraEffect("+30% cone width; an enemy that leaves the cone keeps its Stoke for 2s");
+            .withModifiers(TowerModifiers.rangePercent(0.25f))
+            .withNote("+30% cone width; an enemy that leaves the cone keeps its Stoke for 2s");
     private static final UpgradeNode WIDE_NOZZLE_2 = UpgradeTier.HEAD_2.node("cinder.head.wide_nozzle.2",
             "Wide Nozzle II", PRICE)
-            .withBuff(TowerBuff.range(0.2f).withFireRate(0.2f))
-            .withExtraEffect("+20% cone width")
+            .withModifiers(TowerModifiers.rangePercent(0.2f).plus(TowerModifiers.attackSpeed(0.2f)))
+            .withNote("+20% cone width")
             .after(WIDE_NOZZLE_1);
     private static final UpgradeNode LINGERING_FLAMES = UpgradeTier.HEAD_3.node("cinder.head.wide_nozzle.3",
             "Lingering Flames", PRICE)
             .withGate(new PurposeCondition(STOKE_DEED, STOKES_NEEDED))
-            .withExtraEffect("each wave leaves a patch of burning ground where its target stands, for 2s")
+            .withNote("each wave leaves a patch of burning ground where its target stands, for 2s")
             .after(WIDE_NOZZLE_2);
     private static final UpgradeNode INFERNO_RING = UpgradeTier.HEAD_4.node("cinder.head.wide_nozzle.4a",
             "Inferno Ring", PRICE)
-            .withBuff(TowerBuff.range(-0.25f))
-            .withExtraEffect("the cone becomes a full ring")
+            .withModifiers(TowerModifiers.rangePercent(-0.25f))
+            .withNote("the cone becomes a full ring")
             .after(LINGERING_FLAMES);
     private static final UpgradeNode DRAGONS_BREATH = UpgradeTier.HEAD_4.node("cinder.head.wide_nozzle.4b",
             "Dragon's Breath", PRICE)
-            .withBuff(TowerBuff.range(0.3f).withFireRate(2f / 3f).withDamage(-0.6f))
-            .withExtraEffect("a continuous stream that keeps every pool topped up and Stoke always full")
+            .withModifiers(TowerModifiers.rangePercent(0.3f).plus(TowerModifiers.attackSpeed(2f)).plus(TowerModifiers.damagePercent(-0.6f)))
+            .withNote("a continuous stream that keeps every pool topped up and Stoke always full")
             .after(LINGERING_FLAMES);
 
     private static final UpgradeNode KINDLING = UpgradeTier.EXTRA_1.node("cinder.extra.fuel.1", "Kindling", PRICE)
-            .withExtraEffect("burning enemies earn Scorched twice as fast");
+            .withNote("burning enemies earn Scorched twice as fast");
     private static final UpgradeNode CAUTERIZE = UpgradeTier.EXTRA_2.node("cinder.extra.fuel.2", "Cauterize", PRICE)
-            .withExtraEffect("burning enemies receive 50% less healing and shielding")
+            .withNote("burning enemies receive 50% less healing and shielding")
             .after(KINDLING);
     private static final UpgradeNode HEAT = UpgradeTier.EXTRA_3.node("cinder.extra.fuel.3", "Heat", PRICE)
-            .withExtraEffect("burning enemies take +10% damage over time from every source")
+            .withNote("burning enemies take +10% damage over time from every source")
             .after(CAUTERIZE);
     private static final UpgradeNode EVERBURN = UpgradeTier.EXTRA_4.node("cinder.extra.fuel.4", "Everburn", PRICE)
-            .withExtraEffect("a pool never decays below 25% while its enemy is in this tower's range")
+            .withNote("a pool never decays below 25% while its enemy is in this tower's range")
             .after(HEAT);
 
     private static final UpgradeNode SEARING_FLAME = UpgradeTier.SPECIAL.node("cinder.special.searing_flame",
             "Searing Flame", PRICE)
-            .withExtraEffect("an ignition grants Vulnerable, and so does every wave that hits a burning enemy, at "
+            .withNote("an ignition grants Vulnerable, and so does every wave that hits a burning enemy, at "
                     + "most one stack a second");
     private static final UpgradeNode THERMAL_SHOCK = UpgradeTier.SPECIAL.node("cinder.special.thermal_shock",
             "Thermal Shock", PRICE)
-            .withExtraEffect("when a burning enemy is frozen by anything, its remaining pool detonates at 150% "
+            .withNote("when a burning enemy is frozen by anything, its remaining pool detonates at 150% "
                     + "instead of 50% and chills its neighbours");
     private static final UpgradeNode PYROMANCERS_MARK = UpgradeTier.SPECIAL.node("cinder.special.pyromancers_mark",
             "Pyromancer's Mark", PRICE)
-            .withExtraEffect("burning enemies take +15% magic damage from every source");
+            .withNote("burning enemies take +15% magic damage from every source");
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, SOULFIRE,
                     LINGERING_FLAMES))
@@ -248,15 +247,9 @@ public final class CinderTower extends AbstractTower {
         return spec;
     }
 
-    /** What every Aura beside this tower adds to its fire rate. */
+    /** What every Aura beside this tower adds to its attack speed. */
     private float fireRateFromAuras() {
-        float bonus = 0f;
-        for (Tower other : this.context.towers().all()) {
-            if (other != this) {
-                bonus += other.buffFor(this).fireRateBonus();
-            }
-        }
-        return Math.max(0f, bonus);
+        return Math.max(0f, this.stats().received().flat(TowerStat.ATTACK_SPEED));
     }
 
     private double halfWidthRadians(CinderSpec spec) {
@@ -284,7 +277,7 @@ public final class CinderTower extends AbstractTower {
             this.fire(spec, nearest.orElse(null), gameTime);
             this.clock.spend();
         }
-        this.clock.advance(this.fireRateCurrent());
+        this.clock.advance(this.attackRate());
 
         this.advanceWaves(spec, gameTime);
         this.tendBurning(spec);

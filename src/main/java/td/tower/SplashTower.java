@@ -6,7 +6,6 @@ import td.effect.Effect;
 import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
-import td.tower.buff.TowerBuff;
 import td.tower.splash.ArcPerk;
 import td.tower.splash.ArcPlanner;
 import td.tower.splash.ArcSpec;
@@ -132,93 +131,93 @@ public final class SplashTower extends AbstractTower {
                     + "3, that the next enemy to step on it sets off as one blast");
 
     private static final UpgradeNode ARC = UpgradeTier.HEAD_1.node("splash.head.arc.1", "Arc", PRICE)
-            .withExtraEffect("the blast carries past its edge: 2 jumps at 50% as magic, further from Saturated "
+            .withNote("the blast carries past its edge: 2 jumps at 50% as magic, further from Saturated "
                     + "enemies");
     private static final UpgradeNode CONDUCTOR = UpgradeTier.HEAD_2.node("splash.head.arc.2", "Conductor", PRICE)
-            .withBuff(TowerBuff.critChance(0.1f))
-            .withExtraEffect("arcs can crit, +1 jump")
+            .withModifiers(TowerModifiers.critChance(0.1f))
+            .withNote("arcs can crit, +1 jump")
             .after(ARC);
     private static final UpgradeNode OVERLOAD = UpgradeTier.HEAD_3.node("splash.head.arc.3", "Overload", PRICE)
             .withGate(new PurposeCondition(SATURATED_BLAST_DEED, SATURATED_BLASTS_NEEDED))
-            .withExtraEffect("an arc crit Dazes its target 0.5s; arcs into a fully Saturated enemy +10% crit")
+            .withNote("an arc crit Dazes its target 0.5s; arcs into a fully Saturated enemy +10% crit")
             .after(CONDUCTOR);
     private static final UpgradeNode CHAIN_LIGHTNING = UpgradeTier.HEAD_4.node("splash.head.arc.4a",
             "Chain Lightning", PRICE)
-            .withExtraEffect("up to 6 jumps at the blast's full damage; the 3rd jump forks")
+            .withNote("up to 6 jumps at the blast's full damage; the 3rd jump forks")
             .after(OVERLOAD);
     private static final UpgradeNode LIGHTNING_ROD = UpgradeTier.HEAD_4.node("splash.head.arc.4b", "Lightning Rod",
             PRICE)
-            .withExtraEffect("an arc with nowhere to go returns to the primary at full strength, up to 3 times; arcs "
+            .withNote("an arc with nowhere to go returns to the primary at full strength, up to 3 times; arcs "
                     + "on a Dazed enemy deal +50% crit damage")
             .after(OVERLOAD);
     private static final UpgradeNode HEX = UpgradeTier.HEAD_1.node("splash.head.hex.1", "Hex", PRICE)
-            .withExtraEffect("every 4th shot casts a hex instead of blasting; adds Hex of Doom: when it ends, the "
+            .withNote("every 4th shot casts a hex instead of blasting; adds Hex of Doom: when it ends, the "
                     + "enemy takes 30% of all it took meanwhile");
     private static final UpgradeNode WITCHS_BREW = UpgradeTier.HEAD_2.node("splash.head.hex.2", "Witch's Brew",
             PRICE)
-            .withExtraEffect("adds Hex of Blight: poisons for the hex's length; a cast curses up to 3 enemies")
+            .withNote("adds Hex of Blight: poisons for the hex's length; a cast curses up to 3 enemies")
             .after(HEX);
     private static final UpgradeNode SPREADING_CURSE = UpgradeTier.HEAD_3.node("splash.head.hex.3",
             "Spreading Curse", PRICE)
             .withGate(new PurposeCondition(SATURATED_BLAST_DEED, SATURATED_BLASTS_NEEDED))
-            .withExtraEffect("adds Hex of Contagion: when the enemy dies, its hexes and debuffs jump to the 2 nearest "
+            .withNote("adds Hex of Contagion: when the enemy dies, its hexes and debuffs jump to the 2 nearest "
                     + "unhexed enemies")
             .after(WITCHS_BREW);
     private static final UpgradeNode RIME_COVEN = UpgradeTier.HEAD_4.node("splash.head.hex.4a", "Rime Coven",
             PRICE)
-            .withExtraEffect("adds Hex of Rime: chills 30% when cast; freezing the enemy buys twice the chill's extra "
+            .withNote("adds Hex of Rime: chills 30% when cast; freezing the enemy buys twice the chill's extra "
                     + "time, and its burn lands at once instead of going out")
             .after(SPREADING_CURSE);
     private static final UpgradeNode ASH_COVEN = UpgradeTier.HEAD_4.node("splash.head.hex.4b", "Ash Coven", PRICE)
-            .withExtraEffect("adds Hex of Ash: the enemy's burn and poison hold twice as much and mark it twice as "
+            .withNote("adds Hex of Ash: the enemy's burn and poison hold twice as much and mark it twice as "
                     + "fast; it can't be frozen and shrugs off 75% of chill")
             .after(SPREADING_CURSE);
     private static final UpgradeNode INVERSION = UpgradeTier.SPECIAL.node("splash.special.inversion",
             "Hex of Inversion", PRICE)
-            .withExtraEffect("adds Hex of Inversion: heals and shields the enemy receives are dealt to it as magic "
+            .withNote("adds Hex of Inversion: heals and shields the enemy receives are dealt to it as magic "
                     + "damage instead, and it can't turn invisible")
             .after(HEX);
     private static final UpgradeNode SYMPATHY = UpgradeTier.SPECIAL.node("splash.special.sympathy",
             "Hex of Sympathy", PRICE)
-            .withExtraEffect("adds Hex of Sympathy: once a second, its Vulnerable, Sundered, Exposed and chill are "
+            .withNote("adds Hex of Sympathy: once a second, its Vulnerable, Sundered, Exposed and chill are "
                     + "copied to the other enemies within 2 cells that carry any of this tower's hexes")
             .after(HEX);
     private static final UpgradeNode RECKONING = UpgradeTier.SPECIAL.node("splash.special.reckoning",
             "Hex of Reckoning", PRICE)
-            .withExtraEffect("adds Hex of Reckoning: when the enemy dies, this tower's Dooms within 2 cells release "
+            .withNote("adds Hex of Reckoning: when the enemy dies, this tower's Dooms within 2 cells release "
                     + "at once and start again")
             .after(HEX);
     private static final UpgradeCondition A_CHAIN = UpgradeCondition.owns(ARC.id()).or(UpgradeCondition.owns(HEX.id()));
     private static final UpgradeNode WIDE_CHARGE = UpgradeTier.EXTRA_1.node("splash.extra.blast_engineering.1",
             "Wide Charge", PRICE)
-            .withExtraEffect("+25% blast radius; the blast's edge deals 25% instead of nothing");
+            .withNote("+25% blast radius; the blast's edge deals 25% instead of nothing");
     private static final UpgradeNode SHAPED_CHARGE = UpgradeTier.EXTRA_2.node("splash.extra.blast_engineering.2",
             "Shaped Charge", PRICE)
-            .withExtraEffect("enemies in the inner half gain 2 Saturation instead of 1; Saturation caps at 4")
+            .withNote("enemies in the inner half gain 2 Saturation instead of 1; Saturation caps at 4")
             .after(WIDE_CHARGE);
     private static final UpgradeNode POTENCY = UpgradeTier.EXTRA_3.node("splash.extra.blast_engineering.3",
             "Potency", PRICE)
             .withRequires(A_CHAIN)
-            .withExtraEffect("Stormcaller: +1 jump, arcs deal 65%; Hexer: Doom pays out 45%")
+            .withNote("Stormcaller: +1 jump, arcs deal 65%; Hexer: Doom pays out 45%")
             .after(SHAPED_CHARGE);
     private static final UpgradeNode MASTERY = UpgradeTier.EXTRA_4.node("splash.extra.blast_engineering.4",
             "Mastery", PRICE)
-            .withExtraEffect("Stormcaller: arcs +10% crit, Overload's Daze lasts 1s; Hexer: Blight poisons 50% harder, and a hexed enemy that dies leaves a cursed cloud")
+            .withNote("Stormcaller: arcs +10% crit, Overload's Daze lasts 1s; Hexer: Blight poisons 50% harder, and a hexed enemy that dies leaves a cursed cloud")
             .after(POTENCY);
 
     private static final UpgradeNode THUNDERCLAP = UpgradeTier.SPECIAL.node("splash.special.thunderclap",
             "Thunderclap", PRICE)
-            .withExtraEffect("after a crit, the next shot also arcs into every enemy in range at 50%, Dazing each one "
+            .withNote("after a crit, the next shot also arcs into every enemy in range at 50%, Dazing each one "
                     + "it crits")
             .after(ARC);
     private static final UpgradeNode STATIC_CHARGE = UpgradeTier.SPECIAL.node("splash.special.static_charge",
             "Static Charge", PRICE)
-            .withExtraEffect("arcs leave enemies Charged for 3s: another tower's next hit discharges it for +30% of "
+            .withNote("arcs leave enemies Charged for 3s: another tower's next hit discharges it for +30% of "
                     + "that hit as magic, credited to this tower; a crit discharges at double")
             .after(ARC);
     private static final UpgradeNode THUNDERSTRIKE = UpgradeTier.SPECIAL.node("splash.special.thunderstrike",
             "Thunderstrike", PRICE)
-            .withExtraEffect("every 6th shot calls lightning onto the healthiest enemy in range: 4x the blast as magic "
+            .withNote("every 6th shot calls lightning onto the healthiest enemy in range: 4x the blast as magic "
                     + "and Dazed 0.5s; the shot's arcs start there at full damage; counts as a crit")
             .after(ARC);
 
@@ -324,7 +323,7 @@ public final class SplashTower extends AbstractTower {
                 this.aimFor(spec).selectFrom(inReach).ifPresent(primary -> this.fire(primary, spec, owned));
             }
         }
-        this.clock.advance(this.fireRateCurrent());
+        this.clock.advance(this.attackRate());
         if (this.aimedAt != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.aimedAt.getX(), this.aimedAt.getY()));
         }
@@ -740,7 +739,7 @@ public final class SplashTower extends AbstractTower {
     @Override
     protected List<TowerStatLine> ownStats() {
         BlastSpec blast = this.spec(this.perks.all()).blast();
-        return List.of(new TowerStatLine(TowerStat.SPLASH_RADIUS, BLAST_RADIUS_CELLS,
+        return List.of(new TowerStatLine(TowerStatRow.SPLASH_RADIUS, BLAST_RADIUS_CELLS,
                 BLAST_RADIUS_CELLS * blast.distanceScale()));
     }
 

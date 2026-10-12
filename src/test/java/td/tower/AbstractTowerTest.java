@@ -11,7 +11,7 @@ import td.enemy.Rank;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
-import td.tower.buff.TowerBuff;
+import td.stat.StatModifiers;
 import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
@@ -80,8 +80,8 @@ class AbstractTowerTest {
         AuraTower second = new AuraTower(context, 0, 0);
         context.towers().add(second);
 
-        assertThat(first.buffFor(second)).isEqualTo(TowerBuff.none());
-        assertThat(first.buffFor(first)).isEqualTo(TowerBuff.none());
+        assertThat(first.buffFor(second)).isEqualTo(StatModifiers.none());
+        assertThat(first.buffFor(first)).isEqualTo(StatModifiers.none());
     }
 
     @Test
@@ -244,7 +244,7 @@ class AbstractTowerTest {
     void choosingAnOfferedNodeSpendsItsPriceAndAppliesItsStatBonus() {
         context.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("veteran", UpgradeSlot.HEAD, "Veteran", 40)
-                .withBuff(new TowerBuff(0.5f, 0.25f, 0f, 0f));
+                .withModifiers(TowerModifiers.damagePercent(0.5f).plus(TowerModifiers.rangePercent(0.25f)));
         FakeTower tower = FakeTower.offering(context, 0, 0, UpgradeTree.of(node));
 
         boolean chosen = tower.buyUpgrade(node);
@@ -259,10 +259,10 @@ class AbstractTowerTest {
     void buyingANodeTwiceIsRejected() {
         context.economy().startEconomy(100, 5);
         UpgradeNode first = UpgradeNode.of("first", UpgradeSlot.HEAD, "Veteran", 10)
-                .withBuff(TowerBuff.amplifying(0.2f))
+                .withModifiers(TowerModifiers.damagePercent(0.2f).plus(TowerModifiers.rangePercent(0.2f)))
                 .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD));
         UpgradeNode second = UpgradeNode.of("second", UpgradeSlot.HEAD, "Overclock", 10)
-                .withBuff(TowerBuff.amplifying(0.1f))
+                .withModifiers(TowerModifiers.damagePercent(0.1f).plus(TowerModifiers.rangePercent(0.1f)))
                 .withRequires(UpgradeCondition.slotEmpty(UpgradeSlot.HEAD));
         FakeTower tower = FakeTower.offering(context, 0, 0, UpgradeTree.of(first, second));
         tower.buyUpgrade(first);
@@ -292,9 +292,9 @@ class AbstractTowerTest {
     void buyingANodeNotInThisTowersOwnTreeIsRejected() {
         context.economy().startEconomy(100, 5);
         UpgradeNode offered = UpgradeNode.of("offered", UpgradeSlot.HEAD, "Veteran", 10)
-                .withBuff(TowerBuff.amplifying(0.2f));
+                .withModifiers(TowerModifiers.damagePercent(0.2f).plus(TowerModifiers.rangePercent(0.2f)));
         UpgradeNode foreign = UpgradeNode.of("foreign", UpgradeSlot.HEAD, "Not mine", 10)
-                .withBuff(TowerBuff.amplifying(0.2f));
+                .withModifiers(TowerModifiers.damagePercent(0.2f).plus(TowerModifiers.rangePercent(0.2f)));
         FakeTower tower = FakeTower.offering(context, 0, 0, UpgradeTree.of(offered));
 
         boolean chosen = tower.buyUpgrade(foreign);
@@ -307,7 +307,7 @@ class AbstractTowerTest {
     void buyingAnUnaffordableNodeIsRejectedAndSpendsNothing() {
         context.economy().startEconomy(5, 5);
         UpgradeNode node = UpgradeNode.of("veteran", UpgradeSlot.HEAD, "Veteran", 40)
-                .withBuff(TowerBuff.amplifying(0.2f));
+                .withModifiers(TowerModifiers.damagePercent(0.2f).plus(TowerModifiers.rangePercent(0.2f)));
         FakeTower tower = FakeTower.offering(context, 0, 0, UpgradeTree.of(node));
 
         boolean chosen = tower.buyUpgrade(node);
@@ -321,7 +321,7 @@ class AbstractTowerTest {
     void aBoughtNodeComposesWithANearbyAuraTowersBuff() {
         context.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("veteran", UpgradeSlot.HEAD, "Veteran", 10)
-                .withBuff(TowerBuff.amplifying(0.2f));
+                .withModifiers(TowerModifiers.damagePercent(0.2f).plus(TowerModifiers.rangePercent(0.2f)));
         FakeTower tower = FakeTower.offering(context, 0, 0, UpgradeTree.of(node));
         context.towers().add(tower);
         context.towers().add(new AuraTower(context, 0, 0));
@@ -333,22 +333,22 @@ class AbstractTowerTest {
     }
 
     @Test
-    void aBoughtNodesFireRateBonusRaisesTheFireRate() {
+    void aBoughtNodesAttackSpeedRaisesTheRate() {
         context.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("overclock", UpgradeSlot.HEAD, "Overclock", 10)
-                .withBuff(new TowerBuff(0f, 0f, 0.5f, 0f));
+                .withModifiers(TowerModifiers.attackSpeed(0.5f));
         FakeTower tower = FakeTower.offering(context, 0, 0, UpgradeTree.of(node));
 
         tower.buyUpgrade(node);
 
-        assertThat(tower.fireRateCurrent()).isEqualTo(2.0);
+        assertThat(tower.attackRate()).isEqualTo(1.5);
     }
 
     @Test
     void buyingANodeBeforeTheTowerHasItsXpIsRejectedAndSpendsNothing() {
         context.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("veteran", UpgradeSlot.HEAD, "Veteran", 10)
-                .withBuff(TowerBuff.amplifying(0.2f))
+                .withModifiers(TowerModifiers.damagePercent(0.2f).plus(TowerModifiers.rangePercent(0.2f)))
                 .withXp(150);
         FakeTower tower = FakeTower.offering(context, 0, 0, UpgradeTree.of(node));
 
@@ -391,7 +391,7 @@ class AbstractTowerTest {
     void aBountyBonusNodeToppedUpCreditsWithoutDoublingScoreOnAKill() {
         context.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("veteran", UpgradeSlot.HEAD, "Veteran", 10)
-                .withBuff(new TowerBuff(0f, 0f, 0f, 0.5f));
+                .withModifiers(TowerModifiers.bounty(0.5f));
         FakeTower tower = FakeTower.offering(context, 0, 0, UpgradeTree.of(node));
         tower.buyUpgrade(node);
         int creditsAfterBuying = context.economy().getCredits();
@@ -410,7 +410,7 @@ class AbstractTowerTest {
         GameWorld alwaysCrits = WorldFixtures.newWorld(() -> 0.0);
         alwaysCrits.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("precision", UpgradeSlot.HEAD, "Precision", 10)
-                .withBuff(TowerBuff.critChance(0.5f));
+                .withModifiers(TowerModifiers.critChance(0.5f));
         FakeTower tower = FakeTower.offering(alwaysCrits, 0, 0, UpgradeTree.of(node));
         tower.buyUpgrade(node);
         EnemyMob enemy = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, Rank.GRUNT);
@@ -425,7 +425,7 @@ class AbstractTowerTest {
         GameWorld neverCrits = WorldFixtures.newWorld(() -> 0.99);
         neverCrits.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("precision", UpgradeSlot.HEAD, "Precision", 10)
-                .withBuff(TowerBuff.critChance(0.5f));
+                .withModifiers(TowerModifiers.critChance(0.5f));
         FakeTower tower = FakeTower.offering(neverCrits, 0, 0, UpgradeTree.of(node));
         tower.buyUpgrade(node);
         EnemyMob enemy = EnemyFactory.getEnemy("c", neverCrits, 0, 100000, 3, Rank.GRUNT);
@@ -452,7 +452,7 @@ class AbstractTowerTest {
         GameWorld world = WorldFixtures.newWorld(() -> 0.3);
         world.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("precision", UpgradeSlot.HEAD, "Precision", 10)
-                .withBuff(TowerBuff.critChance(0.2f));
+                .withModifiers(TowerModifiers.critChance(0.2f));
         FakeTower tower = FakeTower.offering(world, 0, 0, UpgradeTree.of(node));
         tower.buyUpgrade(node);
         EnemyMob burning = EnemyFactory.getEnemy("c", world, 0, 100000, 3, Rank.GRUNT);
@@ -469,7 +469,7 @@ class AbstractTowerTest {
         GameWorld alwaysCrits = WorldFixtures.newWorld(() -> 0.0);
         alwaysCrits.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("precision", UpgradeSlot.HEAD, "Precision", 10)
-                .withBuff(TowerBuff.critChance(1f));
+                .withModifiers(TowerModifiers.critChance(1f));
         FakeTower tower = FakeTower.offering(alwaysCrits, 0, 0, UpgradeTree.of(node));
         tower.buyUpgrade(node);
         EnemyMob enemy = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, Rank.GRUNT);
@@ -485,7 +485,7 @@ class AbstractTowerTest {
         GameWorld world = WorldFixtures.newWorld();
         world.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("sharp", UpgradeSlot.HEAD, "Sharp", 10)
-                .withBuff(TowerBuff.critDamage(0.5f));
+                .withModifiers(TowerModifiers.critMultiplier(0.5f));
         FakeTower tower = FakeTower.offering(world, 0, 0, UpgradeTree.of(node));
         tower.buyUpgrade(node);
         EnemyMob enemy = EnemyFactory.getEnemy("c", world, 0, 100000, 3, Rank.GRUNT);
@@ -503,7 +503,7 @@ class AbstractTowerTest {
 
         TowerInspection inspection = tower.inspect();
         assertThat(inspection.stats()).first().isEqualTo(
-                new TowerStatLine(TowerStat.RANGE, SniperTower.RANGE, tower.stats().range()));
+                new TowerStatLine(TowerStatRow.RANGE, SniperTower.RANGE, tower.stats().range()));
         assertThat(tower.stats().range()).isGreaterThan(SniperTower.RANGE);
         assertThat(inspection.auras()).isEqualTo(1);
     }
@@ -522,7 +522,7 @@ class AbstractTowerTest {
     void aPassiveTowerReportsNoDamageNoCadenceAndNoCritChance() {
         AuraTower aura = new AuraTower(this.context, 0, 0);
 
-        assertThat(aura.inspect().stats()).extracting(TowerStatLine::stat).containsExactly(TowerStat.RANGE);
+        assertThat(aura.inspect().stats()).extracting(TowerStatLine::stat).containsExactly(TowerStatRow.RANGE);
     }
 
     @Test
@@ -530,7 +530,7 @@ class AbstractTowerTest {
         GameWorld alwaysCrits = WorldFixtures.newWorld(() -> 0.0);
         alwaysCrits.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("precision", UpgradeSlot.HEAD, "Precision", 10)
-                .withBuff(TowerBuff.critChance(0.5f));
+                .withModifiers(TowerModifiers.critChance(0.5f));
         FakeTower crittingTower = FakeTower.offering(alwaysCrits, 0, 0, UpgradeTree.of(node));
         crittingTower.buyUpgrade(node);
         EnemyMob crittingTarget = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, Rank.GRUNT);

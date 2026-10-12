@@ -1,6 +1,7 @@
 package td.tower.upgrade;
 
-import td.tower.buff.TowerBuff;
+import td.stat.StatModifiers;
+import td.tower.TowerStat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,8 +59,8 @@ public record UpgradeState(List<UpgradeNode> owned) {
         return inSlot.isEmpty() ? Optional.empty() : Optional.of(inSlot.get(inSlot.size() - 1));
     }
 
-    /** Every owned node's bonus, combined. */
-    public TowerBuff totalBuff() {
-        return this.owned.stream().map(UpgradeNode::statBonus).reduce(TowerBuff.none(), TowerBuff::combine);
+    /** Every owned node's stat modifiers, combined. */
+    public StatModifiers<TowerStat> totalModifiers() {
+        return this.owned.stream().map(n -> n.effects().modifiers()).reduce(StatModifiers.none(), StatModifiers::plus);
     }
 }

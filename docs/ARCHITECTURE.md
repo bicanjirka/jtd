@@ -386,10 +386,9 @@ across several mutations.
   `plus`/`after` and an identity `none()`. `EconomyLedger.apply(EconomyDelta)` fires exactly
   one `economyChanged` notification per event, where the old `addScore`/`doReceive`/
   `removeLife` trio fired up to two and left score with no notification at all.
-- **`td.tower.buff.TowerBuff`** replaces `AbstractTower`'s
-  `1f + power * upgTowers.size()` with a `reduce` over each nearby aura tower's own `buff()`,
-  so aura towers of different strengths can finally stack — `power` used to be a single
-  `static final` shared by every `TowerAura`.
+- **`td.stat.StatModifiers`** is the bonus algebra on both sides: `plus`, identity `none()`, and
+  `scaledBy`. A tower's bonuses are `StatModifiers<TowerStat>` bundles; each aura's emission is its
+  own bundle, so auras of different strengths stack.
 - **`td.tower.targeting.TargetQuery`** has a default `and` combinator plus `all()` (the
   identity — `all().and(x)` matches exactly what `x` matches) and `none()` (the absorber — it
   overrides `and` to return itself without ever evaluating the other side).

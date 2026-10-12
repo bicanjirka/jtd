@@ -19,7 +19,7 @@ class SniperShotTest {
 
         assertThat(shot.type()).isEqualTo(DamageType.PHYSICAL);
         assertThat(shot.damageFactor()).isEqualTo(1f);
-        assertThat(shot.fireRateBonus()).isZero();
+        assertThat(shot.attackSpeedBonus()).isZero();
         assertThat(shot.piercing()).isFalse();
     }
 
@@ -35,9 +35,9 @@ class SniperShotTest {
     }
 
     @Test
-    void fireRateBonusesEachCutWhatIsLeftOfTheCooldown() {
-        float combined = plain().withFireRateBonus(0.25f).withFireRateBonus(0.5f).fireRateBonus();
+    void attackSpeedBonusesAdd() {
+        float combined = plain().withAttackSpeedBonus(0.25f).withAttackSpeedBonus(0.5f).attackSpeedBonus();
 
-        assertThat(combined).isCloseTo(1f - 0.75f * 0.5f, within(1e-6f));
+        assertThat(combined).isCloseTo(0.75f, within(1e-6f));
     }
 }

@@ -194,7 +194,7 @@ class SonarTowerTest {
         SonarTower spunUp = this.upgradedTower("Rapid Array", "Rapid Array II", "Spin-Up");
 
         assertThat(plain.inspect().stats()).extracting(TowerStatLine::stat)
-                .contains(TowerStat.ROTATION).doesNotContain(TowerStat.FIRE_RATE);
+                .contains(TowerStatRow.ROTATION).doesNotContain(TowerStatRow.FIRE_RATE);
         assertThat(plain.cadence()).map(TowerStatLine::current).contains(3f);
         assertThat(spunUp.cadence()).map(TowerStatLine::current).contains(2f);
     }

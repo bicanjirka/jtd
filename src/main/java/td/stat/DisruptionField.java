@@ -29,7 +29,8 @@ public final class DisruptionField {
             double dx = zone.x() - x;
             double dy = zone.y() - y;
             if (dx * dx + dy * dy <= zone.aura().radius2()) {
-                total = total.plus(new DisruptionPenalty(zone.aura().fireRatePenalty(), zone.aura().rangePenalty()));
+                total = total.plus(new DisruptionPenalty(zone.aura().attackSpeedPenalty(),
+                        zone.aura().rangePenaltyCells()));
             }
         }
         return total;
