@@ -10,7 +10,6 @@ import td.tower.mortar.AirburstPerk;
 import td.tower.mortar.BarragePerk;
 import td.tower.mortar.BlastMark;
 import td.tower.mortar.BombletSpec;
-import td.tower.mortar.BracketDamagePerk;
 import td.tower.mortar.BracketTracker;
 import td.tower.mortar.BracketingPerk;
 import td.tower.mortar.BunkerBusterPerk;
@@ -18,13 +17,11 @@ import td.tower.mortar.CarpetBombingPerk;
 import td.tower.mortar.ClusterShellPerk;
 import td.tower.mortar.FragmentationPerk;
 import td.tower.mortar.HeavyShellPerk;
-import td.tower.mortar.LongBatteryPerk;
 import td.tower.mortar.MortarPerk;
 import td.tower.mortar.MortarSpec;
 import td.tower.mortar.NukeFlash;
 import td.tower.mortar.PathLine;
 import td.tower.mortar.PredictiveFirePerk;
-import td.tower.mortar.RifledBarrelPerk;
 import td.tower.mortar.SalvoSpec;
 import td.tower.mortar.ShellType;
 import td.tower.mortar.ShellTypePerk;
@@ -32,7 +29,6 @@ import td.tower.mortar.ShrapnelBoostPerk;
 import td.tower.mortar.ShrapnelSpec;
 import td.tower.mortar.ShrapnelStormPerk;
 import td.tower.mortar.TacticalNukePerk;
-import td.tower.mortar.WiderBlastPerk;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.PreferringSelector;
@@ -78,6 +74,8 @@ public final class MortarTower extends AbstractTower {
     public static final float DAMAGE_POINTS = 32f;
     public static final float RANGE = 4.5f;
     public static final float SPLASH_RADIUS_BASE = 1.75f;
+    /** Nothing closer than this can be shelled. */
+    private static final float BASE_DEAD_ZONE_CELLS = 1.5f;
     /** Pixels a tick: slow enough to watch a shell fly and for a fast enemy to dodge it. */
     public static final float SHELL_SPEED = 8f;
     /** Ticks a nuke's flash and ring last. */
@@ -111,22 +109,22 @@ public final class MortarTower extends AbstractTower {
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
             .withAttune(NodeEffects.none().withNote("Bracketing: a shell landing within 1.5 cells of the last gets +10% damage and radius, "
                     + "up to 3 steps; a shell elsewhere resets it"))
-            .withRangeThree(0.3f, NodeEffects.none().withNote("Long Battery: the dead zone grows to 2.5 cells"));
+            .withRangeThree(0.3f, NodeEffects.none().withModifiers(TowerModifiers.deadZone(1f)));
 
     private static final UpgradeNode SIEGE_ROUNDS_1 = UpgradeTier.HEAD_1.node("mortar.head.siege_rounds.1",
             "Siege Rounds", PRICE)
-            .withModifiers(TowerModifiers.damagePercent(0.3f))
-            .withNote("each Bracketing step gives +15% instead of +10%");
+            .withModifiers(TowerModifiers.damage(9.6f).plus(TowerModifiers.bracketDamageStep(0.05f)));
     private static final UpgradeNode SIEGE_ROUNDS_2 = UpgradeTier.HEAD_2.node("mortar.head.siege_rounds.2",
             "Siege Rounds II", PRICE)
-            .withModifiers(TowerModifiers.damagePercent(0.25f).plus(TowerModifiers.critChance(0.1f)))
-            .withNote("+25% blast radius")
+            .withModifiers(TowerModifiers.damage(8f).plus(TowerModifiers.critChance(0.1f))
+                    .plus(TowerModifiers.areaRadius(0.4375f)))
             .after(SIEGE_ROUNDS_1);
     private static final UpgradeNode HEAVY_SHELL = UpgradeTier.HEAD_3.node("mortar.head.siege_rounds.3",
             "Heavy Shell", PRICE)
-            .withModifiers(TowerModifiers.damagePercent(0.5f).plus(TowerModifiers.attackSpeed(-0.2f)))
+            .withModifiers(TowerModifiers.damage(16f).plus(TowerModifiers.attackSpeed(-0.2f))
+                    .plus(TowerModifiers.projectileSpeed(-0.25f)).plus(TowerModifiers.projectileSize(0.3f)))
             .withGate(new PurposeCondition(BRACKET_DEED, BRACKETED_SHELLS_NEEDED))
-            .withNote("a bigger, slower shell; enemies within 0.5 cells of the impact are Dazed 0.5s")
+            .withNote("enemies within 0.5 cells of the impact are Dazed 0.5s")
             .after(SIEGE_ROUNDS_2);
     private static final UpgradeNode TACTICAL_NUKE = UpgradeTier.HEAD_4.node("mortar.head.siege_rounds.4a",
             "Tactical Nuke", PRICE)
@@ -135,8 +133,8 @@ public final class MortarTower extends AbstractTower {
             .after(HEAVY_SHELL);
     private static final UpgradeNode BUNKER_BUSTER = UpgradeTier.HEAD_4.node("mortar.head.siege_rounds.4b",
             "Bunker Buster", PRICE)
-            .withNote("the enemy at the centre of the blast takes x3 damage and is Sundered; the blast "
-                    + "shrinks 30%")
+            .withModifiers(TowerModifiers.areaRadius(-0.525f))
+            .withNote("the enemy at the centre of the blast takes x3 damage and is Sundered")
             .after(HEAVY_SHELL);
 
     private static final UpgradeNode FRAGMENTATION_ROUNDS_1 = UpgradeTier.HEAD_1.node(
@@ -163,14 +161,15 @@ public final class MortarTower extends AbstractTower {
 
     private static final UpgradeNode RIFLED_BARREL = UpgradeTier.EXTRA_1.node("mortar.extra.ballistics.1",
             "Rifled Barrel", PRICE)
-            .withNote("shell speed +40%, drawn smaller with a streak");
+            .withModifiers(TowerModifiers.projectileSpeed(0.4f).plus(TowerModifiers.projectileSize(-0.3f)));
     private static final UpgradeNode PREDICTIVE_FIRE = UpgradeTier.EXTRA_2.node("mortar.extra.ballistics.2",
             "Predictive Fire", PRICE)
             .withNote("aims where the enemy will be when the shell lands")
             .after(RIFLED_BARREL);
     private static final UpgradeNode AIRBURST = UpgradeTier.EXTRA_3.node("mortar.extra.ballistics.3", "Airburst",
             PRICE)
-            .withNote("+25% blast radius, and full damage across the inner half of the blast")
+            .withModifiers(TowerModifiers.areaRadius(0.4375f))
+            .withNote("full damage across the inner half of the blast")
             .after(PREDICTIVE_FIRE);
     private static final UpgradeNode BARRAGE = UpgradeTier.EXTRA_4.node("mortar.extra.ballistics.4", "Barrage",
             PRICE)
@@ -197,9 +196,6 @@ public final class MortarTower extends AbstractTower {
 
     private static final PerkCatalogue<MortarPerk> PERKS = PerkCatalogue.<MortarPerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, BracketingPerk::new)
-            .with(StandardBaseSlot.RANGE_3_ID, LongBatteryPerk::new)
-            .with(SIEGE_ROUNDS_1.id(), BracketDamagePerk::new)
-            .with(SIEGE_ROUNDS_2.id(), WiderBlastPerk::new)
             .with(HEAVY_SHELL.id(), HeavyShellPerk::new)
             .with(TACTICAL_NUKE.id(), TacticalNukePerk::new)
             .with(BUNKER_BUSTER.id(), BunkerBusterPerk::new)
@@ -208,7 +204,6 @@ public final class MortarTower extends AbstractTower {
             .with(CLUSTER_SHELL.id(), ClusterShellPerk::new)
             .with(CARPET_BOMBING.id(), CarpetBombingPerk::new)
             .with(SHRAPNEL_STORM.id(), ShrapnelStormPerk::new)
-            .with(RIFLED_BARREL.id(), RifledBarrelPerk::new)
             .with(PREDICTIVE_FIRE.id(), PredictiveFirePerk::new)
             .with(AIRBURST.id(), AirburstPerk::new)
             .with(BARRAGE.id(), BarragePerk::new)
@@ -230,7 +225,10 @@ public final class MortarTower extends AbstractTower {
     private EnemyMob currentTarget;
 
     public MortarTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.MORTAR, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
+        super(TowerFactory.Type.MORTAR, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
+                .with(TowerStat.AREA_RADIUS, SPLASH_RADIUS_BASE).with(TowerStat.PROJECTILE_SPEED, 1f)
+                .with(TowerStat.PROJECTILE_SIZE, 1f).with(TowerStat.DEAD_ZONE, BASE_DEAD_ZONE_CELLS)
+                .with(TowerStat.BRACKET_DAMAGE_STEP, 0.1f), context, x, y);
     }
 
     @Override
@@ -250,7 +248,7 @@ public final class MortarTower extends AbstractTower {
         for (MortarPerk perk : owned) {
             spec = perk.refineSpec(spec);
         }
-        return spec;
+        return spec.withReach(spec.reach().withDeadZone(this.stats().value(TowerStat.DEAD_ZONE) * view.cellSize()));
     }
 
     private EnemyMob findTarget(MortarSpec spec) {
@@ -300,7 +298,7 @@ public final class MortarTower extends AbstractTower {
         if (!spec.leadsTarget()) {
             return aim;
         }
-        float speed = SHELL_SPEED * spec.speedScale();
+        float speed = SHELL_SPEED * this.stats().value(TowerStat.PROJECTILE_SPEED);
         for (int i = 0; i < PREDICTION_PASSES; i++) {
             int flightTicks = (int) Math.ceil(Math.hypot(aim.x() - this.centerX, aim.y() - this.centerY) / speed);
             aim = target.positionAfter(flightTicks);
@@ -313,12 +311,14 @@ public final class MortarTower extends AbstractTower {
         float size = Math.min(MAX_SHELL_SIZE, SHELL_SIZE_PER_DAMAGE_ROOT
                 * (float) Math.sqrt((double) this.damageCurrent() / this.damageBase));
         float typeSize = type == ShellType.NUKE ? NUKE_SHELL_SIZE : 1f;
-        return ProjectileStats.of(SHELL_SPEED * spec.speedScale()).withSize(size * spec.sizeScale() * typeSize)
-                .withStreak(spec.speedScale() > 1f);
+        float speedScale = this.stats().value(TowerStat.PROJECTILE_SPEED);
+        return ProjectileStats.of(SHELL_SPEED * speedScale)
+                .withSize(size * this.stats().value(TowerStat.PROJECTILE_SIZE) * typeSize)
+                .withStreak(speedScale > 1f);
     }
 
-    private float blastRadius(MortarSpec spec, float stepScale) {
-        return SPLASH_RADIUS_BASE * this.context.getBoard().scale() * spec.blastScale() * stepScale;
+    private float blastRadius(float stepScale) {
+        return this.stats().value(TowerStat.AREA_RADIUS) * this.context.getBoard().scale() * stepScale;
     }
 
     /** One shell's landing: where, what it carries, and how wide and hard it hits after Bracketing. */
@@ -357,9 +357,9 @@ public final class MortarTower extends AbstractTower {
             this.countDeedOfAttack();
         }
         boolean nuke = type == ShellType.NUKE;
-        float radius = this.blastRadius(spec, (1f + step * spec.bracket().radiusStep())
+        float radius = this.blastRadius((1f + step * spec.bracket().radiusStep())
                 * (nuke ? spec.nuke().radiusFactor() : 1f));
-        float damage = this.damageCurrent() * (1f + step * spec.bracket().damageStep())
+        float damage = this.damageCurrent() * (1f + step * this.stats().value(TowerStat.BRACKET_DAMAGE_STEP))
                 * (nuke ? spec.nuke().damageFactor() : 1f);
         Landing landing = new Landing(new Vec2(x, y), type, spec, new Strength(step, radius, damage));
         List<EnemyMob> hit = this.blast(landing);
@@ -506,7 +506,7 @@ public final class MortarTower extends AbstractTower {
 
     /** The blast's radius in pixels before Bracketing. */
     float getSplashRadius() {
-        return this.blastRadius(this.spec(this.perks.all()), 1f);
+        return this.blastRadius(1f);
     }
 
     public TurretAim getTurretAim() {
@@ -545,7 +545,8 @@ public final class MortarTower extends AbstractTower {
         MortarSpec spec = this.spec(this.perks.all());
         ProjectileStats shell = this.shellStats(spec, ShellType.PLAIN);
         float cellsPerSecond = shell.speed() * TICKS_PER_SECOND / this.context.getBoard().scale();
-        return List.of(new TowerStatLine(TowerStatRow.SPLASH_RADIUS, SPLASH_RADIUS_BASE, SPLASH_RADIUS_BASE * spec.blastScale()),
+        return List.of(new TowerStatLine(TowerStatRow.SPLASH_RADIUS, SPLASH_RADIUS_BASE,
+                this.stats().value(TowerStat.AREA_RADIUS)),
                 TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, cellsPerSecond),
                 TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, shell.size()));
     }
@@ -559,7 +560,7 @@ public final class MortarTower extends AbstractTower {
                 Math.round(spec.reach().deadZone() / this.context.getBoard().scale() * 10f) / 10f + " cells"));
         lines.add(new BehaviourLine(BehaviourMarker.CRACKED, "Cracks plating", BehaviourLine.seconds(CRACKED_TICKS)));
         if (spec.bracket().active()) {
-            int damageStep = Math.round(spec.bracket().damageStep() * 100);
+            int damageStep = Math.round(this.stats().value(TowerStat.BRACKET_DAMAGE_STEP) * 100);
             int radiusStep = Math.round(spec.bracket().radiusStep() * 100);
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Bracketing", damageStep == radiusStep
                     ? "+" + damageStep + "% a step" : "+" + damageStep + "% dmg, +" + radiusStep + "% radius"));
