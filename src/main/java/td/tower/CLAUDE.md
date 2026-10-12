@@ -1,4 +1,4 @@
-# `td.tower` (+ `targeting`, `upgrade`, `sniper`, `sonar`, `splash`)
+# `td.tower` (+ `targeting`, `upgrade`, `aura`, `sniper`, `sonar`, `splash`)
 
 ## Towers
 
@@ -27,12 +27,12 @@
   (bearings, never enemies), and a perk that changes the beam reshapes it from where it is. The
   head is drawn from `sweepRadiansAt`, the same angle that decides hits. Whatever the beam renews
   each pass lasts `SonarSpec.untilNextPass()`.
-- `SplashTower` falloff is `1 - (d/radius)²` from the primary, floored by `BlastSpec.edgeFloor`.
-  The blast radius isn't buffed by range; only its own nodes change it, and every distance the
-  payload uses (an arc's reach) grows with the same bonus (`BlastSpec.distanceScale()`). The
-  blast lands and Saturates first, then the payload runs.
+- `SplashTower` falloff is `1 - (d/radius)²` from the primary, floored by `BLAST_EDGE`. The blast
+  radius is `AREA_RADIUS`: range doesn't move it, auras never emit it, only its own nodes change it,
+  and every distance the payload uses (an arc's reach) grows with it. The blast lands and Saturates
+  first, then the payload runs.
 - A tower whose fork renames it overrides `displayName()`; the id and `TowerFactory.Type` stay.
-- A missile's speed and size are a tower stat (`ProjectileStats`), shown as `TowerStat.PROJECTILE_SPEED`
+- A missile's speed and size are a tower stat (`ProjectileStats`), shown as `TowerStatRow.PROJECTILE_SPEED`
   (cells a second, so it holds at any board scale) and `PROJECTILE_SIZE`, and drawn from the same record.
 - The Seeker's nest loads from the cooldown whether or not an enemy is in range, so it fills between
   waves; stored missiles launch `launchGapTicks` apart, one target pick per missile. A spread salvo
@@ -61,7 +61,7 @@
   what the carrier has and never adds on top, so two carriers sharing back and forth settle
   instead of climbing.
 - The Mortar's shell is slow and unguided: it flies to where its target stood, so a fast enemy dodges
-  it. Its dead zone is a fixed distance on the `Reach` that range never moves. Bracketing is read at
+  it. Its dead zone is `DEAD_ZONE`, a fixed distance on the `Reach` that range never moves. Bracketing is read at
   the landing, from the spec as it stands then, and `BracketTracker` is the only memory of where the
   last shell fell. Every shell Cracks plating; a shell's size is a tower stat that follows its damage.
   A shell's type (`ShellPlan.typeOf` its number) is fixed when it is fired, so it is drawn in its look
@@ -83,6 +83,9 @@
 - A Splash's mines and a Hexer's cursed clouds are zones it makes (`Zone.mine`, `Zone.cloud`); a mine
   blasts through the same `blast` a shot does, centred where it lay, with the enemy that stepped on it as
   the primary, and the Splash keeps its own list of mines to replace the oldest and to take them off with it.
+- The Aura gives `buffFor`: damage and range at `AURA_POWER` (plus Kinship), half the disruption, and
+  every owned node's emission; Chosen scales it all ×3. Its mechanics (Kinship, the XP mentoring,
+  Chosen, Rally) are `AuraPerk`s over an `AuraSpec`.
 - The Aura never reaches into another tower's state except through `Tower.receiveTimedModifiers` (Rally).
   Withering Field is an interval in the buff (`WITHER_INTERVAL`) that each tower spends on its own first
   hit after it, never on periodic damage. Chosen's hero is derived from XP on every call, so
@@ -189,8 +192,9 @@
 
 ## Adding a tower
 
-1. A `final` leaf composing `td.tower.targeting` pieces, passing a `TowerBaseStats` to
-   `super(...)` (`withCritChance`/`withCritMultiplier` for innate crit). A passive tower
+1. A `final` leaf composing `td.tower.targeting` pieces, passing a `TowerBaseStats` that sets every
+   non-universal stat the tower reads to `super(...)` (`withCritChance`/`withCritMultiplier` for
+   innate crit). A passive tower
    overrides `isPassive()`.
 2. A `TowerFactory.Type` constant and its `createTower` branch.
 3. A `TowerVisitor` method; the compiler then leads to `TowerSpriteFrameBuilder` and
