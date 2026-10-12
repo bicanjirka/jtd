@@ -9,7 +9,7 @@ class StatSheetTest {
 
     @Test
     void anUnmodifiedStatResolvesToItsBase() {
-        StatSheet sheet = new StatSheet(BaseStats.defaults().with(EnemyStat.ARMOR, 25f), accumulator -> {
+        StatSheet sheet = new StatSheet(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 25f), accumulator -> {
         });
 
         assertThat(sheet.value(EnemyStat.ARMOR)).isEqualTo(25f);
@@ -18,7 +18,7 @@ class StatSheetTest {
 
     @Test
     void aResolvedValueIsClampedToItsStatsRange() {
-        StatSheet sheet = new StatSheet(BaseStats.defaults(), accumulator -> {
+        StatSheet sheet = new StatSheet(BaseStats.defaults(EnemyStat.class), accumulator -> {
             accumulator.multiply(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0f);
             accumulator.add(EnemyStat.RESILIENCE, StatModifier.flat(500f));
         });
@@ -29,7 +29,7 @@ class StatSheetTest {
 
     @Test
     void spiritScalesRestorativeContributions() {
-        StatSheet sheet = new StatSheet(BaseStats.defaults().with(EnemyStat.SPIRIT, 50f), accumulator -> {
+        StatSheet sheet = new StatSheet(BaseStats.defaults(EnemyStat.class).with(EnemyStat.SPIRIT, 50f), accumulator -> {
             accumulator.restoreFlat(EnemyStat.REGENERATION, 10f);
             accumulator.restoreReduction(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.4f);
         });
@@ -41,7 +41,7 @@ class StatSheetTest {
     @Test
     void valuesStayCachedUntilInvalidated() {
         float[] armor = {10f};
-        StatSheet sheet = new StatSheet(BaseStats.defaults(),
+        StatSheet sheet = new StatSheet(BaseStats.defaults(EnemyStat.class),
                 accumulator -> accumulator.add(EnemyStat.ARMOR, StatModifier.flat(armor[0])));
         assertThat(sheet.value(EnemyStat.ARMOR)).isEqualTo(10f);
 

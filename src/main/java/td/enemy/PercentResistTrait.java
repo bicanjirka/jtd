@@ -35,7 +35,7 @@ public record PercentResistTrait(float fraction, Optional<DamageType> restricted
     }
 
     @Override
-    public StatModifiers modifiers(TraitContext context) {
+    public StatModifiers<EnemyStat> modifiers(TraitContext context) {
         StatModifier armor = StatModifier.flat(armorKeeping(this.fraction));
         return this.restrictedTo
                 .map(type -> StatModifiers.of(EnemyStat.mitigationFor(type), armor))

@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.within;
 class ActiveEffectsTest {
 
     private static float resolved(ActiveEffects effects, EnemyStat stat) {
-        return new StatSheet(BaseStats.defaults().with(EnemyStat.MOVE_SPEED, 1f), effects::contributeTo).value(stat);
+        return new StatSheet(BaseStats.defaults(EnemyStat.class).with(EnemyStat.MOVE_SPEED, 1f), effects::contributeTo).value(stat);
     }
 
     private static DamageSink recordingSink(List<Damage> received) {
@@ -658,14 +658,14 @@ class ActiveEffectsTest {
         assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(stacks - 1);
     }
 
-    private static float resolvedOn(BaseStats base, ActiveEffects effects, EnemyStat stat) {
+    private static float resolvedOn(BaseStats<EnemyStat> base, ActiveEffects effects, EnemyStat stat) {
         return new StatSheet(base, effects::contributeTo).value(stat);
     }
 
     @Test
     void sunderedStacksEachTakeFiveArmorAndStopAtTenOnOneClock() {
         ActiveEffects effects = new ActiveEffects();
-        BaseStats armored = BaseStats.defaults().with(EnemyStat.ARMOR, 80f);
+        BaseStats<EnemyStat> armored = BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 80f);
 
         effects.apply(Effect.sundered(4, 100, d -> {
         }));
@@ -683,7 +683,7 @@ class ActiveEffectsTest {
         effects.apply(Effect.sundered(10, 100, d -> {
         }));
 
-        assertThat(resolvedOn(BaseStats.defaults().with(EnemyStat.ARMOR, 20f), effects, EnemyStat.ARMOR)).isEqualTo(0f);
+        assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 20f), effects, EnemyStat.ARMOR)).isEqualTo(0f);
     }
 
     @Test
@@ -868,7 +868,7 @@ class ActiveEffectsTest {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.cracked(100, d -> {
         }));
-        BaseStats plated = BaseStats.defaults().with(EnemyStat.PHYSICAL_PLATING, 400f).with(EnemyStat.MAGIC_PLATING, 400f);
+        BaseStats<EnemyStat> plated = BaseStats.defaults(EnemyStat.class).with(EnemyStat.PHYSICAL_PLATING, 400f).with(EnemyStat.MAGIC_PLATING, 400f);
 
         StatSheet sheet = new StatSheet(plated, effects::contributeTo);
 
@@ -1007,7 +1007,7 @@ class ActiveEffectsTest {
     @Test
     void eachUnraveledStackLowersMagicResistByTenAndNeverBelowZero() {
         ActiveEffects effects = new ActiveEffects();
-        BaseStats base = BaseStats.defaults().with(EnemyStat.MAGIC_RESIST, 25f);
+        BaseStats<EnemyStat> base = BaseStats.defaults(EnemyStat.class).with(EnemyStat.MAGIC_RESIST, 25f);
 
         effects.apply(Effect.unraveled(2, 100, d -> {
         }));
@@ -1046,7 +1046,7 @@ class ActiveEffectsTest {
         }));
         slowed.apply(Effect.chill(0.5f, 100, d -> {
         }));
-        BaseStats base = BaseStats.defaults().with(EnemyStat.MOVE_SPEED, 2f);
+        BaseStats<EnemyStat> base = BaseStats.defaults(EnemyStat.class).with(EnemyStat.MOVE_SPEED, 2f);
 
         assertThat(resolvedOn(base, fast, EnemyStat.MOVE_SPEED)).isCloseTo(1.5f, within(0.001f));
         assertThat(resolvedOn(base, slowed, EnemyStat.MOVE_SPEED)).isCloseTo(1f, within(0.001f));
@@ -1058,9 +1058,9 @@ class ActiveEffectsTest {
         effects.apply(Effect.corroded(10, d -> {
         }));
 
-        assertThat(resolvedOn(BaseStats.defaults().with(EnemyStat.ARMOR, 50f), effects, EnemyStat.ARMOR))
+        assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 50f), effects, EnemyStat.ARMOR))
                 .isEqualTo(20f);
-        assertThat(resolvedOn(BaseStats.defaults().with(EnemyStat.ARMOR, 10f), effects, EnemyStat.ARMOR)).isZero();
+        assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 10f), effects, EnemyStat.ARMOR)).isZero();
     }
 
     @Test
@@ -1132,7 +1132,7 @@ class ActiveEffectsTest {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.undertow(10, d -> {
         }));
-        BaseStats base = BaseStats.defaults().with(EnemyStat.MOVE_SPEED, 2f);
+        BaseStats<EnemyStat> base = BaseStats.defaults(EnemyStat.class).with(EnemyStat.MOVE_SPEED, 2f);
 
         float slowed = resolvedOn(base, effects, EnemyStat.MOVE_SPEED);
         effects.apply(Effect.freeze(40, d -> {

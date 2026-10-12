@@ -19,8 +19,8 @@ public final class StatSheet implements StatView {
     private static final int STAT_COUNT = EnemyStat.values().length;
     private static final EnemyStat[] STATS = EnemyStat.values();
 
-    private final BaseStats base;
-    private final StatContributor contributor;
+    private final BaseStats<EnemyStat> base;
+    private final StatContributor<EnemyStat> contributor;
     private final float[] flat = new float[STAT_COUNT];
     private final float[] percent = new float[STAT_COUNT];
     private final float[] multiply = new float[STAT_COUNT];
@@ -29,11 +29,11 @@ public final class StatSheet implements StatView {
     private final float[] restoreFlat = new float[STAT_COUNT];
     private final float[] restoreReduction = new float[STAT_COUNT];
     private final float[] resolved = new float[STAT_COUNT];
-    private final StatAccumulator accumulator = new SheetAccumulator();
+    private final StatAccumulator<EnemyStat> accumulator = new SheetAccumulator();
 
     private boolean dirty = true;
 
-    public StatSheet(BaseStats base, StatContributor contributor) {
+    public StatSheet(BaseStats<EnemyStat> base, StatContributor<EnemyStat> contributor) {
         this.base = base;
         this.contributor = contributor;
     }
@@ -82,7 +82,7 @@ public final class StatSheet implements StatView {
         return stat.clamp(value);
     }
 
-    private final class SheetAccumulator implements StatAccumulator {
+    private final class SheetAccumulator implements StatAccumulator<EnemyStat> {
 
         @Override
         public void add(EnemyStat stat, StatModifier modifier) {

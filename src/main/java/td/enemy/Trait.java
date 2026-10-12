@@ -1,6 +1,7 @@
 package td.enemy;
 
 import td.damage.DamageMix;
+import td.stat.EnemyStat;
 import td.stat.StatModifiers;
 
 import java.util.Optional;
@@ -22,7 +23,7 @@ public interface Trait extends TraitTemplate {
     }
 
     /** What this trait adds to the mob's stat sheet; re-read whenever the sheet resolves. */
-    default StatModifiers modifiers(TraitContext context) {
+    default StatModifiers<EnemyStat> modifiers(TraitContext context) {
         return StatModifiers.none();
     }
 

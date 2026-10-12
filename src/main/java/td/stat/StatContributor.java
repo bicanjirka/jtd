@@ -1,8 +1,8 @@
 package td.stat;
 
-/** Whatever modifies a {@link StatSheet}: it re-adds every current modifier when asked. */
+/** Whatever modifies a stat sheet: it re-adds every current modifier when asked. */
 @FunctionalInterface
-public interface StatContributor {
+public interface StatContributor<S extends Enum<S> & StatKey> {
 
-    void contributeTo(StatAccumulator accumulator);
+    void contributeTo(StatAccumulator<S> accumulator);
 }
