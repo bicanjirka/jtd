@@ -368,6 +368,27 @@ class SniperTowerTest {
     }
 
     @Test
+    void overwatchKeepsItsDeadZoneWhicheverWayRoundTheReachWasWidened() {
+        String[] overwatch = {"Range", "Range II", "Range III"};
+        String[] uplink = {"Tradecraft", "Tradecraft II", "Silver Rounds", "Spotter Uplink"};
+        for (String[][] order : new String[][][]{{overwatch, uplink}, {uplink, overwatch}}) {
+            GameWorld world = boardWorld();
+            SniperTower tower = sniperWith(world, "Focused Optics", "Focused Optics II", "Focused Optics III",
+                    "Momentum", "Transcendent");
+            UpgradePaths.buy(tower, world, order[0]);
+            UpgradePaths.buy(tower, world, order[1]);
+            FakeEnemyMob close = FakeEnemyMob.at(tower.getX() + 40, tower.getY()).withProgression(50);
+            close.applyEffect(Effect.marked(100, d -> {
+            }));
+            world.enemies().setEnemies(new EnemyMob[]{close});
+
+            tower.doTick(1);
+
+            assertThat(close.hits()).isEmpty();
+        }
+    }
+
+    @Test
     void withoutOverwatchTheTowerShootsWhatIsClose() {
         GameWorld world = boardWorld();
         SniperTower tower = sniperWith(world, "Range");

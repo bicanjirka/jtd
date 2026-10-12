@@ -8,7 +8,6 @@ import td.enemy.EnemyMob;
 import td.tower.sniper.AimFocus;
 import td.tower.sniper.AimLock;
 import td.tower.sniper.AimRules;
-import td.tower.sniper.ArmorPiercePerk;
 import td.tower.sniper.CleanShotPerk;
 import td.tower.sniper.CritStreakPerk;
 import td.tower.sniper.ExecutionerPerk;
@@ -18,7 +17,6 @@ import td.tower.sniper.HeadhunterPerk;
 import td.tower.sniper.HollowPointPerk;
 import td.tower.sniper.LongShotPerk;
 import td.tower.sniper.MomentumPerk;
-import td.tower.sniper.OverwatchPerk;
 import td.tower.sniper.QuickScopePerk;
 import td.tower.sniper.RailgunPerk;
 import td.tower.sniper.RicochetPerk;
@@ -33,7 +31,6 @@ import td.tower.sniper.SniperSpec;
 import td.tower.sniper.SniperTempo;
 import td.tower.sniper.SpotterUplinkPerk;
 import td.tower.sniper.SteadyAimPerk;
-import td.tower.sniper.SteadyAimStacksPerk;
 import td.tower.sniper.SteadyTempoPerk;
 import td.tower.sniper.SunderRoundsPerk;
 import td.tower.sniper.UnbrokenAimPerk;
@@ -93,7 +90,7 @@ public final class SniperTower extends AbstractTower {
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
             .withAttune(NodeEffects.none().withNote("Steady Aim: +10% crit chance on every shot after the first at one target"))
-            .withRangeThree(OVERWATCH_RANGE_BONUS, NodeEffects.none().withNote("Overwatch: can't shoot within 2 cells"));
+            .withRangeThree(OVERWATCH_RANGE_BONUS, NodeEffects.none().withModifiers(TowerModifiers.deadZone(2f)));
 
     private static final UpgradeNode FOCUSED_OPTICS_1 = UpgradeTier.HEAD_1.node("sniper.head.focused_optics.1",
             "Focused Optics", PRICE)
@@ -101,12 +98,12 @@ public final class SniperTower extends AbstractTower {
                     + "+50% crit chance");
     private static final UpgradeNode FOCUSED_OPTICS_2 = UpgradeTier.HEAD_2.node("sniper.head.focused_optics.2",
             "Focused Optics II", PRICE)
-            .withModifiers(TowerModifiers.damagePercent(0.4f))
+            .withModifiers(TowerModifiers.damage(16f))
             .withNote("a crit starts Frenzy: the next 3 shots come twice as fast")
             .after(FOCUSED_OPTICS_1);
     private static final UpgradeNode FOCUSED_OPTICS_3 = UpgradeTier.HEAD_3.node("sniper.head.focused_optics.3",
             "Focused Optics III", PRICE)
-            .withModifiers(TowerModifiers.damagePercent(0.3f))
+            .withModifiers(TowerModifiers.damage(12f))
             .withGate(new PurposeCondition("Steady Aim shots", 20))
             .withNote("Weak Spot: non-crit shots ignore plating and 50 armor")
             .after(FOCUSED_OPTICS_2);
@@ -122,11 +119,10 @@ public final class SniperTower extends AbstractTower {
             .after(FOCUSED_OPTICS_3);
     private static final UpgradeNode MARKSMANS_EYE_1 = UpgradeTier.HEAD_1.node("sniper.head.marksmans_eye.1",
             "Marksman's Eye", PRICE)
-            .withNote("Steady Aim stacks to 3 (+30%: 35% crit from the 4th shot)");
+            .withModifiers(TowerModifiers.aimStacks(2));
     private static final UpgradeNode MARKSMANS_EYE_2 = UpgradeTier.HEAD_2.node("sniper.head.marksmans_eye.2",
             "Marksman's Eye II", PRICE)
-            .withModifiers(TowerModifiers.attackSpeed(0.25f))
-            .withNote("ignores 30 armor")
+            .withModifiers(TowerModifiers.attackSpeed(0.25f).plus(TowerModifiers.armorPenetrationFlat(30f)))
             .after(MARKSMANS_EYE_1);
     private static final UpgradeNode MARKSMANS_EYE_3 = UpgradeTier.HEAD_3.node("sniper.head.marksmans_eye.3",
             "Marksman's Eye III", PRICE)
@@ -135,8 +131,8 @@ public final class SniperTower extends AbstractTower {
             .after(MARKSMANS_EYE_2);
     private static final UpgradeNode UNBROKEN_AIM = UpgradeTier.HEAD_4.node("sniper.head.marksmans_eye.4a",
             "Unbroken Aim", PRICE)
-            .withNote("Steady Aim stacks to 5 (55% crit) and survives a kill; only retargeting a living "
-                    + "enemy resets it")
+            .withModifiers(TowerModifiers.aimStacks(2))
+            .withNote("Steady Aim survives a kill; only retargeting a living enemy resets it")
             .after(MARKSMANS_EYE_3);
     private static final UpgradeNode SUNDER_ROUNDS = UpgradeTier.HEAD_4.node("sniper.head.marksmans_eye.4b",
             "Sunder Rounds", PRICE)
@@ -196,15 +192,12 @@ public final class SniperTower extends AbstractTower {
 
     private static final PerkCatalogue<SniperPerk> PERKS = PerkCatalogue.<SniperPerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, SteadyAimPerk::new)
-            .with(StandardBaseSlot.RANGE_3_ID, OverwatchPerk::new)
             .with(FOCUSED_OPTICS_1.id(), QuickScopePerk::new)
             .with(FOCUSED_OPTICS_1.id(), SteadyTempoPerk::new)
             .with(FOCUSED_OPTICS_2.id(), FrenzyPerk::new)
             .with(FOCUSED_OPTICS_3.id(), WeakSpotPerk::new)
             .with(RAILGUN.id(), RailgunPerk::new)
             .with(EXECUTIONER.id(), ExecutionerPerk::new)
-            .with(MARKSMANS_EYE_1.id(), () -> new SteadyAimStacksPerk(3))
-            .with(MARKSMANS_EYE_2.id(), () -> new ArmorPiercePerk(30f))
             .with(MARKSMANS_EYE_3.id(), CleanShotPerk::new)
             .with(UNBROKEN_AIM.id(), UnbrokenAimPerk::new)
             .with(SUNDER_ROUNDS.id(), SunderRoundsPerk::new)
@@ -233,7 +226,8 @@ public final class SniperTower extends AbstractTower {
 
     public SniperTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SNIPER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
-                .withCritChance(CRIT_CHANCE).withCritMultiplier(CRIT_MULTIPLIER), context, x, y);
+                .withCritChance(CRIT_CHANCE).withCritMultiplier(CRIT_MULTIPLIER)
+                .with(TowerStat.DEAD_ZONE, 0f).with(TowerStat.AIM_STACKS, 1f), context, x, y);
     }
 
     @Override
@@ -256,6 +250,10 @@ public final class SniperTower extends AbstractTower {
         SniperSpec spec = SniperSpec.from(view);
         for (SniperPerk perk : owned) {
             spec = perk.refineSpec(spec);
+        }
+        float deadZone = this.stats().value(TowerStat.DEAD_ZONE);
+        if (deadZone > 0f) {
+            spec = spec.withReach(spec.reach().withDeadZone(deadZone * view.cellSize()));
         }
         return spec;
     }
@@ -284,7 +282,8 @@ public final class SniperTower extends AbstractTower {
     /** One shot: shaped by the owned perks, landed, settled and reacted to, and the wait that follows. */
     private void fire(EnemyMob target, List<SniperPerk> owned, AimRules steadyAim) {
         this.shotsFired++;
-        AimLock lock = this.focus.lock(target, steadyAim.stackCap(), steadyAim.survivesKill());
+        AimLock lock = this.focus.lock(target, Math.round(this.stats().value(TowerStat.AIM_STACKS)),
+                steadyAim.survivesKill());
         ShotContext context = new ShotContext(target, lock, this.shotsFired, this.rangeShareOf(target));
         SniperShot shot = SniperShot.of(this.stats().attack());
         for (SniperPerk perk : owned) {

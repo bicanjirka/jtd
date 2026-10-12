@@ -168,19 +168,9 @@ class SniperPerkTest {
     }
 
     @Test
-    void steadyAimStacksAndUnbrokenAimRaiseTheCapAndOnlyUnbrokenAimSurvivesAKill() {
-        assertThat(new SteadyAimStacksPerk(3).refineSpec(SPEC).steadyAim()).isEqualTo(new AimRules(3, false));
-        assertThat(new UnbrokenAimPerk().refineSpec(SPEC).steadyAim()).isEqualTo(new AimRules(5, true));
-    }
-
-    @Test
-    void armorPierceAddsToWhatTheShotAlreadyIgnores() {
-        SniperShot shot = BASE.withAttack(attack -> attack.withArmorPenetration(0.2f, 10f));
-
-        AttackProfile attack = new ArmorPiercePerk(30f).shape(shot, context(0, true, 1)).attack();
-
-        assertThat(attack.armorPenetration()).isEqualTo(0.2f);
-        assertThat(attack.armorPenetrationFlat()).isEqualTo(40f);
+    void onlyUnbrokenAimLetsSteadyAimSurviveAKill() {
+        assertThat(SPEC.steadyAim()).isEqualTo(new AimRules(false));
+        assertThat(new UnbrokenAimPerk().refineSpec(SPEC).steadyAim()).isEqualTo(new AimRules(true));
     }
 
     @Test
