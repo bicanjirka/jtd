@@ -19,19 +19,14 @@ import td.tower.cinder.FlameLook;
 import td.tower.cinder.FlashpointPerk;
 import td.tower.cinder.HeatPerk;
 import td.tower.cinder.InfernoRingPerk;
-import td.tower.cinder.KindlingPerk;
 import td.tower.cinder.LingeringFlamesPerk;
-import td.tower.cinder.LongNozzlePerk;
-import td.tower.cinder.NozzleWidthPerk;
 import td.tower.cinder.PyromancersMarkPerk;
 import td.tower.cinder.SearingFlamePerk;
-import td.tower.cinder.ShortBurnPerk;
 import td.tower.cinder.SoulfirePerk;
 import td.tower.cinder.StokePerk;
 import td.tower.cinder.StokeSpec;
 import td.tower.cinder.ThermalShockPerk;
 import td.tower.cinder.WhiteFlamePerk;
-import td.tower.cinder.WideNozzlePerk;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.InWedgeTargetQuery;
 import td.tower.targeting.NearestSelector;
@@ -85,8 +80,6 @@ public final class CinderTower extends AbstractTower {
     public static final int WAVE_TRAVEL_TICKS = 10;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.15;
-    private static final double HALF_WIDTH_RADIANS_BASE = 0.35;
-    private static final int BURN_DURATION_TICKS_BASE = 60;
     /** Searing Flame makes an enemy Vulnerable at most this often, in ticks. */
     private static final int SEARING_INTERVAL_TICKS = 20;
     private static final float THERMAL_SHOCK_RADIUS_CELLS = 1.5f;
@@ -104,16 +97,15 @@ public final class CinderTower extends AbstractTower {
             .withAttune(NodeEffects.none().withNote("Stoke: a wave on an enemy already burning from this tower raises its burn 10%, up to 3 "
                     + "times; the stacks go when the burn ends"))
             .withAwaken(NodeEffects.none().withNote("Bellows: an Aura's attack-speed buff on this tower also widens its cone 10% per +10%"))
-            .withRangeThree(0.2f, NodeEffects.none().withNote("Long Nozzle: the wave travels twice as fast"));
+            .withRangeThree(0.2f, NodeEffects.none().withModifiers(TowerModifiers.waveSpeed(1f)));
 
     private static final UpgradeNode WHITE_FLAME_1 = UpgradeTier.HEAD_1.node("cinder.head.white_flame.1",
             "White Flame", PRICE)
-            .withModifiers(TowerModifiers.damagePercent(0.3f))
-            .withNote("Stoke steps +15%");
+            .withModifiers(TowerModifiers.damage(0.45f).plus(TowerModifiers.stokeStep(0.05f)));
     private static final UpgradeNode WHITE_FLAME_2 = UpgradeTier.HEAD_2.node("cinder.head.white_flame.2",
             "White Flame II", PRICE)
-            .withModifiers(TowerModifiers.damagePercent(0.5f).plus(TowerModifiers.critChance(0.1f)))
-            .withNote("-25% burn duration; the crit chance is for ignitions")
+            .withModifiers(TowerModifiers.damage(0.75f).plus(TowerModifiers.critChance(0.1f))
+                    .plus(TowerModifiers.burnDuration(-15)))
             .after(WHITE_FLAME_1);
     private static final UpgradeNode SOULFIRE = UpgradeTier.HEAD_3.node("cinder.head.white_flame.3", "Soulfire",
             PRICE)
@@ -128,18 +120,18 @@ public final class CinderTower extends AbstractTower {
             .after(SOULFIRE);
     private static final UpgradeNode COMBUSTION = UpgradeTier.HEAD_4.node("cinder.head.white_flame.4b",
             "Combustion", PRICE)
-            .withNote("the pool cap doubles; a pool that reaches its cap bursts for half of it onto enemies "
-                    + "within 1 cell")
+            .withModifiers(TowerModifiers.burnPoolCap(2f))
+            .withNote("a pool that reaches its cap bursts for half of it onto enemies within 1 cell")
             .after(SOULFIRE);
 
     private static final UpgradeNode WIDE_NOZZLE_1 = UpgradeTier.HEAD_1.node("cinder.head.wide_nozzle.1",
             "Wide Nozzle", PRICE)
-            .withModifiers(TowerModifiers.rangePercent(0.25f))
-            .withNote("+30% cone width; an enemy that leaves the cone keeps its Stoke for 2s");
+            .withModifiers(TowerModifiers.range(0.55f).plus(TowerModifiers.coneWidth(0.21f))
+                    .plus(TowerModifiers.stokeGrace(40)));
     private static final UpgradeNode WIDE_NOZZLE_2 = UpgradeTier.HEAD_2.node("cinder.head.wide_nozzle.2",
             "Wide Nozzle II", PRICE)
-            .withModifiers(TowerModifiers.rangePercent(0.2f).plus(TowerModifiers.attackSpeed(0.2f)))
-            .withNote("+20% cone width")
+            .withModifiers(TowerModifiers.range(0.44f).plus(TowerModifiers.attackSpeed(0.2f))
+                    .plus(TowerModifiers.coneWidth(0.182f)))
             .after(WIDE_NOZZLE_1);
     private static final UpgradeNode LINGERING_FLAMES = UpgradeTier.HEAD_3.node("cinder.head.wide_nozzle.3",
             "Lingering Flames", PRICE)
@@ -148,17 +140,17 @@ public final class CinderTower extends AbstractTower {
             .after(WIDE_NOZZLE_2);
     private static final UpgradeNode INFERNO_RING = UpgradeTier.HEAD_4.node("cinder.head.wide_nozzle.4a",
             "Inferno Ring", PRICE)
-            .withModifiers(TowerModifiers.rangePercent(-0.25f))
+            .withModifiers(TowerModifiers.range(-0.55f))
             .withNote("the cone becomes a full ring")
             .after(LINGERING_FLAMES);
     private static final UpgradeNode DRAGONS_BREATH = UpgradeTier.HEAD_4.node("cinder.head.wide_nozzle.4b",
             "Dragon's Breath", PRICE)
-            .withModifiers(TowerModifiers.rangePercent(0.3f).plus(TowerModifiers.attackSpeed(2f)).plus(TowerModifiers.damagePercent(-0.6f)))
+            .withModifiers(TowerModifiers.range(0.66f).plus(TowerModifiers.attackSpeed(2f)).plus(TowerModifiers.damage(-0.9f)))
             .withNote("a continuous stream that keeps every pool topped up and Stoke always full")
             .after(LINGERING_FLAMES);
 
     private static final UpgradeNode KINDLING = UpgradeTier.EXTRA_1.node("cinder.extra.fuel.1", "Kindling", PRICE)
-            .withNote("burning enemies earn Scorched twice as fast");
+            .withModifiers(TowerModifiers.burnMarkRate(1f));
     private static final UpgradeNode CAUTERIZE = UpgradeTier.EXTRA_2.node("cinder.extra.fuel.2", "Cauterize", PRICE)
             .withNote("burning enemies receive 50% less healing and shielding")
             .after(KINDLING);
@@ -195,18 +187,13 @@ public final class CinderTower extends AbstractTower {
     private static final PerkCatalogue<CinderPerk> PERKS = PerkCatalogue.<CinderPerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, StokePerk::new)
             .with(StandardBaseSlot.AWAKEN_ID, BellowsPerk::new)
-            .with(StandardBaseSlot.RANGE_3_ID, LongNozzlePerk::new)
             .with(WHITE_FLAME_1.id(), WhiteFlamePerk::new)
-            .with(WHITE_FLAME_2.id(), ShortBurnPerk::new)
             .with(SOULFIRE.id(), SoulfirePerk::new)
             .with(FLASHPOINT.id(), FlashpointPerk::new)
             .with(COMBUSTION.id(), CombustionPerk::new)
-            .with(WIDE_NOZZLE_1.id(), WideNozzlePerk::new)
-            .with(WIDE_NOZZLE_2.id(), NozzleWidthPerk::new)
             .with(LINGERING_FLAMES.id(), LingeringFlamesPerk::new)
             .with(INFERNO_RING.id(), InfernoRingPerk::new)
             .with(DRAGONS_BREATH.id(), DragonsBreathPerk::new)
-            .with(KINDLING.id(), KindlingPerk::new)
             .with(CAUTERIZE.id(), CauterizePerk::new)
             .with(HEAT.id(), HeatPerk::new)
             .with(EVERBURN.id(), EverburnPerk::new)
@@ -225,7 +212,10 @@ public final class CinderTower extends AbstractTower {
     private int tickNow;
 
     public CinderTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.CINDER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
+        super(TowerFactory.Type.CINDER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
+                .with(TowerStat.CONE_WIDTH, 0.7f).with(TowerStat.WAVE_SPEED, 1f).with(TowerStat.BURN_DURATION, 60f)
+                .with(TowerStat.STOKE_STEP, 0.1f).with(TowerStat.STOKE_GRACE, 0f).with(TowerStat.BURN_POOL_CAP, 2f)
+                .with(TowerStat.BURN_MARK_RATE, 1f), context, x, y);
     }
 
     @Override
@@ -258,11 +248,17 @@ public final class CinderTower extends AbstractTower {
             return Math.PI;
         }
         double bellows = spec.bellows() ? 1.0 + this.fireRateFromAuras() : 1.0;
-        return HALF_WIDTH_RADIANS_BASE * spec.coneScale() * bellows;
+        return this.stats().value(TowerStat.CONE_WIDTH) / 2 * bellows;
     }
 
-    private int burnDuration(CinderSpec spec) {
-        return Math.max(1, Math.round(BURN_DURATION_TICKS_BASE * spec.burnScale()));
+    private int burnDuration() {
+        return Math.max(1, Math.round(this.stats().value(TowerStat.BURN_DURATION)));
+    }
+
+    /** What this Cinder's pools carry, with the cap and the Scorched rate its stats give them. */
+    private PoolTuning tuning(CinderSpec spec) {
+        return spec.tuning().withCapFactor(this.stats().value(TowerStat.BURN_POOL_CAP))
+                .withStackRate(Math.round(this.stats().value(TowerStat.BURN_MARK_RATE)));
     }
 
     public void doTick(int gameTime) {
@@ -299,7 +295,7 @@ public final class CinderTower extends AbstractTower {
     private void fire(CinderSpec spec, EnemyMob target, int gameTime) {
         this.wavesFired++;
         boolean soul = spec.soulfire() && this.wavesFired % 2 == 0;
-        int travelTicks = Math.max(1, Math.round(WAVE_TRAVEL_TICKS / spec.waveSpeed()));
+        int travelTicks = Math.max(1, Math.round(WAVE_TRAVEL_TICKS / this.stats().value(TowerStat.WAVE_SPEED)));
         double heading = this.turretAim.currentRadians();
         double halfWidth = this.halfWidthRadians(spec);
         this.inFlightWaves.add(new FlameWave(heading, halfWidth, gameTime, travelTicks, soul, spec.look(),
@@ -380,11 +376,11 @@ public final class CinderTower extends AbstractTower {
         }
         AttackProfile attack = this.stats().attack();
         boolean critical = enemy.rollsCrit(attack);
-        float potency = (1f + (spec.stoke().active() ? spec.stoke().step() * entry.steps : 0f))
+        float potency = (1f + (spec.stoke().active() ? this.stats().value(TowerStat.STOKE_STEP) * entry.steps : 0f))
                 * (critical ? enemy.critFactorFor(attack) : 1f);
         Damage level = Damage.magic(Math.round(this.damageCurrent() * potency));
-        int duration = this.burnDuration(spec);
-        PoolTuning tuning = spec.tuning();
+        int duration = this.burnDuration();
+        PoolTuning tuning = this.tuning(spec);
         if (wave.soul) {
             this.applyEffect(enemy, sink -> Effect.soulfire(level, duration, sink).withTuning(tuning));
         } else {
@@ -458,7 +454,7 @@ public final class CinderTower extends AbstractTower {
                 this.chillAround(enemy);
             }
             entry.wasBurning = false;
-            if (this.tickNow - entry.lastBurningTick > spec.stoke().graceTicks()) {
+            if (this.tickNow - entry.lastBurningTick > this.stats().value(TowerStat.STOKE_GRACE)) {
                 entries.remove();
             }
         }
@@ -527,14 +523,14 @@ public final class CinderTower extends AbstractTower {
     protected List<BehaviourLine> behaviours() {
         CinderSpec spec = this.spec(this.perks.all());
         List<BehaviourLine> lines = new ArrayList<>();
-        lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burns", BehaviourLine.seconds(this.burnDuration(spec))));
+        lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burns", BehaviourLine.seconds(this.burnDuration())));
         lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Aims at", "nearest"));
         if (spec.stoke().active()) {
             lines.add(new BehaviourLine(BehaviourMarker.BURN, "Stoke",
-                    "+" + Math.round(spec.stoke().step() * 100) + "% a wave, x" + spec.stoke().maxSteps()));
+                    "+" + Math.round(this.stats().value(TowerStat.STOKE_STEP) * 100) + "% a wave, x" + spec.stoke().maxSteps()));
         }
         if (spec.bellows()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Bellows", "fire rate widens it"));
+            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Bellows", "attack speed widens it"));
         }
         if (spec.ring()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Wave", "a full ring"));
@@ -558,7 +554,7 @@ public final class CinderTower extends AbstractTower {
         if (combustion.isActive()) {
             lines.add(new BehaviourLine(BehaviourMarker.BURN, "A full pool", "bursts for " + BehaviourLine.percent(combustion.share())));
         }
-        PoolTuning tuning = spec.tuning();
+        PoolTuning tuning = this.tuning(spec);
         if (tuning.stackRate() > 1) {
             lines.add(new BehaviourLine(BehaviourMarker.BURN, "Scorches", "x" + tuning.stackRate() + " as fast"));
         }

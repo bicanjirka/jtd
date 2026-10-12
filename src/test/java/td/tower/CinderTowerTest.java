@@ -205,10 +205,10 @@ class CinderTowerTest {
     @Test
     void wideNozzleBumpsTheHalfWidthRadiansBeyondTheBase() {
         CinderTower tower = towerAt(3, 3);
-        UpgradeNode wideNozzle = UpgradePaths.named(tower, "Wide Nozzle");
+        this.context.playtestRules().setUpgradeGatesIgnored(true);
         double halfWidthBeforeChoosing = tower.getHalfWidthRadians();
 
-        tower.onUpgradeBought(wideNozzle);
+        UpgradePaths.buy(tower, this.context, "Wide Nozzle");
 
         assertThat(tower.getHalfWidthRadians()).isGreaterThan(halfWidthBeforeChoosing);
     }
