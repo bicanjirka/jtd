@@ -40,7 +40,7 @@ class UpgradeSheetTextTest {
     private static final UpgradeNode MARKED = UpgradeTier.SPECIAL.node("marked", "Marked Round", LIST_PRICE);
     private static final UpgradeNode FIFTH = UpgradeTier.SPECIAL.node("fifth", "Fifth Shot", LIST_PRICE);
     private static final UpgradeNode MOMENTUM = UpgradeTier.SPECIAL.node("momentum", "Momentum", LIST_PRICE);
-    private static final UpgradeTree CHOICES = UpgradeTree.of(StandardBaseSlot.nodes(LIST_PRICE))
+    private static final UpgradeTree CHOICES = UpgradeTree.of(StandardBaseSlot.nodes(LIST_PRICE, 4f))
             .with(OPTICS, EYE, STEADY, STEADY_TWO, MARKED, FIFTH, MOMENTUM)
             .withChoice(ExclusiveChoice.oneOf(OPTICS, EYE))
             .withChoice(ExclusiveChoice.specials(MARKED, FIFTH, MOMENTUM));
@@ -127,7 +127,7 @@ class UpgradeSheetTextTest {
     @Test
     void aClosedSlotsHeaderSaysWhatOpensIt() {
         UpgradeNode forOptics = UpgradeTier.SPECIAL.node("for.optics", "Lens Flare", LIST_PRICE).after(OPTICS);
-        UpgradeTree perChain = UpgradeTree.of(StandardBaseSlot.nodes(LIST_PRICE)).with(OPTICS, EYE, forOptics)
+        UpgradeTree perChain = UpgradeTree.of(StandardBaseSlot.nodes(LIST_PRICE, 4f)).with(OPTICS, EYE, forOptics)
                 .withChoice(ExclusiveChoice.oneOf(OPTICS, EYE));
         FakeTower fresh = this.choosing();
         FakeTower awakened = FakeTower.offering(this.world, 2, 2, perChain);

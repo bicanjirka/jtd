@@ -168,17 +168,20 @@
   has no Transcendent and no Range III.
 - Never hand-write a node's bonus into a tower's description: `UpgradeNode.bonuses()` derives it
   and the Upgrades panel lists offered nodes.
-- A bonus outside the `TowerStat`s goes in `onUpgradeBought`, matching the node by `equals` (not
-  reference), and the same constant carries a matching note.
 - `buyUpgrade` is the only entry point and is check-and-charge (returns `false` without effect).
   Don't pre-check affordability. It publishes `TowerStats` before `UpgradeState`.
-- Pass `StandardBaseSlot.nodes` a `BaseSlotPerks` for what Attune and Range III add to a tower.
-- A node whose behaviour is more than its stat modifiers becomes a perk, in the tower's own package
-  (`sniper`, `sonar`, `splash`). A static `PerkCatalogue` says which perks each node brings (several may),
-  and the tower's `OwnedPerks` builds its own, as some carry state. Perks run in purchase order:
-  first `refineSpec` (whom the tower may hit, how it picks, its rhythm), then per hit. Perks are
-  pure (no tower, no `GameWorld`); what they may make the tower do is the tower's actions
-  interface.
+- Pass `StandardBaseSlot.nodes` the tower's base range (Range nodes add a share of it, in cells) and a
+  `BaseSlotPerks` for what Attune, Awaken and Range III add to a tower.
+- A node is data: `withModifiers` (its own stats, flat, through `TowerModifiers`), `withEmission`
+  (what an aura gives), `withNote` (words only for what a perk does). A number a node changes is a
+  `TowerStat` when the tower has it from the start or it belongs to the Attune mechanic; any other
+  number belongs to the mechanic a node adds, in that mechanic's spec, set by its perk. Never add a
+  field a node mutates. `TowerStatCatalogueTest` rejects a node that changes a stat its tower
+  doesn't set.
+- A node that adds a mechanic brings a perk, in the tower's own package. A static `PerkCatalogue`
+  says which perks each node brings, and the tower's `OwnedPerks` builds its own. Perks run in
+  purchase order through `refineSpec` (and the tower's per-hit hooks); they are pure (no tower, no
+  `GameWorld`).
 - Perks widen or narrow whom a tower may hit through its `Reach`. A dead zone goes on the `Reach`
   (`withDeadZone`), which applies it last, so it holds whatever order the perks were bought in;
   never `and` one onto the query.
@@ -194,7 +197,7 @@
    `TowerEffectFrameBuilder`.
 4. `Palette` constants plus cases in `TowerSpriteFrameBuilder.bodyPaletteFor` and
    `Java2DFrameRenderer`'s `towerBodyShape`/`turretHeadShape`/`colorFor`.
-5. `upgradeTree()`: `UpgradeTree.of(StandardBaseSlot.nodes(PRICE, levelThrees...))` with two
+5. `upgradeTree()`: `UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, levelThrees...))` with two
    `HEAD` chains built from `UpgradeTier` steps and 1-3 `UpgradeTier.SPECIAL` nodes, plus an
    `ExclusiveChoice` per choice.
 6. `behaviours()` (one short row each: targeting, effects applied) and, for the shop only, a

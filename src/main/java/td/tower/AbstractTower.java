@@ -102,6 +102,11 @@ public abstract class AbstractTower implements Tower {
         this.stats = TowerStats.of(base, StatModifiers.none(), StatModifiers.none(), DisruptionPenalty.none(), scale);
     }
 
+    /** The stats as authored, before any upgrade or buff. */
+    TowerBaseStats baseStats() {
+        return this.baseStats;
+    }
+
     /** Current stats as one snapshot. Never null. */
     protected TowerStats stats() {
         return this.stats;

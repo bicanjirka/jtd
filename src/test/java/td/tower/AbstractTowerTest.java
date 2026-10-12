@@ -22,6 +22,7 @@ import td.util.GameWorld;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /** In {@code AbstractTower}'s package so it can read protected stats directly. */
 class AbstractTowerTest {
@@ -60,6 +61,18 @@ class AbstractTowerTest {
         float expectedMultiplier = 1f + AuraTower.DEFAULT_POWER;
         assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
         assertThat(tower.damageCurrent()).isNotEqualTo(tower.damageBase);
+    }
+
+    @Test
+    void aFlatRangeNodeIsAmplifiedByANearbyAura() {
+        this.context.economy().startEconomy(1000, 5);
+        SniperTower tower = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(tower);
+        this.context.towers().add(new AuraTower(this.context, 0, 0));
+
+        tower.buyUpgrade(UpgradePaths.named(tower, "Range"));
+
+        assertThat(tower.stats().range()).isCloseTo((4.0f + 0.6f) * (1f + AuraTower.DEFAULT_POWER), within(1e-5f));
     }
 
     @Test

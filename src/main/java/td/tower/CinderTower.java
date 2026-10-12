@@ -39,6 +39,7 @@ import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.BaseSlotPerks;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
 import td.tower.upgrade.PurposeCondition;
@@ -100,10 +101,10 @@ public final class CinderTower extends AbstractTower {
     private static final int STOKES_NEEDED = 45;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
-            .withAttune("Stoke: a wave on an enemy already burning from this tower raises its burn 10%, up to 3 "
-                    + "times; the stacks go when the burn ends")
-            .withAwaken("Bellows: an Aura's fire-rate buff on this tower also widens its cone 10% per +10%")
-            .withRangeThree(0.2f, "Long Nozzle: the wave travels twice as fast");
+            .withAttune(NodeEffects.none().withNote("Stoke: a wave on an enemy already burning from this tower raises its burn 10%, up to 3 "
+                    + "times; the stacks go when the burn ends"))
+            .withAwaken(NodeEffects.none().withNote("Bellows: an Aura's attack-speed buff on this tower also widens its cone 10% per +10%"))
+            .withRangeThree(0.2f, NodeEffects.none().withNote("Long Nozzle: the wave travels twice as fast"));
 
     private static final UpgradeNode WHITE_FLAME_1 = UpgradeTier.HEAD_1.node("cinder.head.white_flame.1",
             "White Flame", PRICE)
@@ -180,7 +181,7 @@ public final class CinderTower extends AbstractTower {
             "Pyromancer's Mark", PRICE)
             .withNote("burning enemies take +15% magic damage from every source");
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, SOULFIRE,
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, SOULFIRE,
                     LINGERING_FLAMES))
             .with(WHITE_FLAME_1, WHITE_FLAME_2, SOULFIRE, FLASHPOINT, COMBUSTION,
                     WIDE_NOZZLE_1, WIDE_NOZZLE_2, LINGERING_FLAMES, INFERNO_RING, DRAGONS_BREATH,

@@ -59,6 +59,7 @@ import td.tower.targeting.TargetSelector;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.BaseSlotPerks;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
 import td.tower.upgrade.PurposeCondition;
@@ -125,10 +126,10 @@ public final class SplashTower extends AbstractTower {
     private static final int CLOUD_TICKS = 80;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
-            .withAttune("Fire Control: aims at the enemy with most neighbours in the blast; Saturation: +5% blast "
-                    + "damage a stack, 3 stacks")
-            .withRangeThree(0.1f, "blast radius +10%; Mines: every 4th blast leaves a mine on the path for 10s, up to "
-                    + "3, that the next enemy to step on it sets off as one blast");
+            .withAttune(NodeEffects.none().withNote("Fire Control: aims at the enemy with most neighbours in the blast; Saturation: +5% blast "
+                    + "damage a stack, 3 stacks"))
+            .withRangeThree(0.1f, NodeEffects.none().withNote("blast radius +10%; Mines: every 4th blast leaves a mine on the path for 10s, up to "
+                    + "3, that the next enemy to step on it sets off as one blast"));
 
     private static final UpgradeNode ARC = UpgradeTier.HEAD_1.node("splash.head.arc.1", "Arc", PRICE)
             .withNote("the blast carries past its edge: 2 jumps at 50% as magic, further from Saturated "
@@ -221,7 +222,7 @@ public final class SplashTower extends AbstractTower {
                     + "and Dazed 0.5s; the shot's arcs start there at full damage; counts as a crit")
             .after(ARC);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, OVERLOAD,
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, OVERLOAD,
             SPREADING_CURSE))
             .with(ARC, CONDUCTOR, OVERLOAD, CHAIN_LIGHTNING, LIGHTNING_ROD, HEX, WITCHS_BREW, SPREADING_CURSE,
                     RIME_COVEN, ASH_COVEN, WIDE_CHARGE, SHAPED_CHARGE, POTENCY, MASTERY, THUNDERCLAP, STATIC_CHARGE,

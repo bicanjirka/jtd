@@ -46,6 +46,7 @@ import td.tower.targeting.TargetSelector;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.BaseSlotPerks;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
 import td.tower.upgrade.PurposeCondition;
@@ -91,8 +92,8 @@ public final class SniperTower extends AbstractTower {
     private static final float MOMENTUM_BURST_SECONDS = 5f;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
-            .withAttune("Steady Aim: +10% crit chance on every shot after the first at one target")
-            .withRangeThree(OVERWATCH_RANGE_BONUS, "Overwatch: can't shoot within 2 cells");
+            .withAttune(NodeEffects.none().withNote("Steady Aim: +10% crit chance on every shot after the first at one target"))
+            .withRangeThree(OVERWATCH_RANGE_BONUS, NodeEffects.none().withNote("Overwatch: can't shoot within 2 cells"));
 
     private static final UpgradeNode FOCUSED_OPTICS_1 = UpgradeTier.HEAD_1.node("sniper.head.focused_optics.1",
             "Focused Optics", PRICE)
@@ -181,7 +182,7 @@ public final class SniperTower extends AbstractTower {
             .withNote("crits on a frozen enemy deal +50% crit damage; aims at a frozen enemy first")
             .after(MARKSMANS_EYE_1);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, FOCUSED_OPTICS_3,
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, FOCUSED_OPTICS_3,
             MARKSMANS_EYE_3))
             .with(FOCUSED_OPTICS_1, FOCUSED_OPTICS_2, FOCUSED_OPTICS_3, RAILGUN, EXECUTIONER, MARKSMANS_EYE_1,
                     MARKSMANS_EYE_2, MARKSMANS_EYE_3, UNBROKEN_AIM, SUNDER_ROUNDS, TRADECRAFT_1, TRADECRAFT_2,

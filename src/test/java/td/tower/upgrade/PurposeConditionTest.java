@@ -14,7 +14,7 @@ class PurposeConditionTest {
     private static final UpgradeNode HEAD_ONE = UpgradeTier.HEAD_1.node("a.1", "A", LIST_PRICE);
     private static final UpgradeNode HEAD_THREE = UpgradeTier.HEAD_3.node("a.3", "A III", LIST_PRICE)
             .withGate(STEADY_AIM);
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(LIST_PRICE)).with(HEAD_ONE, HEAD_THREE);
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(LIST_PRICE, 4f)).with(HEAD_ONE, HEAD_THREE);
 
     private final GameWorld world = WorldFixtures.newWorld();
 

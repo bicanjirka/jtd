@@ -8,6 +8,7 @@ import td.tower.upgrade.BaseSlotPerks;
 import td.tower.upgrade.BuffedTowersCondition;
 import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.NeighbourOfTypeCondition;
+import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
@@ -109,10 +110,10 @@ public final class AuraTower extends AbstractTower {
             .withNote("marks the path spot nearest the aura: when an enemy steps on it, every buffed tower "
                     + "gets +30% fire rate for 5s, then a 10s cooldown");
 
-    private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none().withAttune("Kinship: buffed towers earn "
-            + "+5% XP for each other tower type in range, up to +20%");
+    private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none().withAttune(NodeEffects.none().withNote("Kinship: buffed towers earn "
+            + "+5% XP for each other tower type in range, up to +20%"));
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS))
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS))
             .with(AMPLIFYING_CORE_1, AMPLIFYING_CORE_2, KEEN_EDGE, BROADCAST_1, BROADCAST_2, CONDUIT, TUTELAGE_1, SHARED_LESSONS, APPRENTICE,
                     WITHERING_FIELD, CHOSEN, RALLY)
             .withChoice(ExclusiveChoice.oneOf(AMPLIFYING_CORE_1, BROADCAST_1))

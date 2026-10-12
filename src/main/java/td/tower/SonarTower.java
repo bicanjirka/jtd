@@ -45,6 +45,7 @@ import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.BaseSlotPerks;
 import td.tower.upgrade.ClusterCondition;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
 import td.tower.upgrade.PurposeCondition;
@@ -86,9 +87,9 @@ public final class SonarTower extends AbstractTower {
     private static final int PING_DEEDS_NEEDED = 25;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
-            .withAttune("Ping: each revolution Exposes the healthiest enemy the beam passes, until the next pass")
-            .withRangeThree(0.1f, "Deep Scan: each revolution reveals invisible enemies in the outer quarter of its "
-                    + "range for 1s");
+            .withAttune(NodeEffects.none().withNote("Ping: each revolution Exposes the healthiest enemy the beam passes, until the next pass"))
+            .withRangeThree(0.1f, NodeEffects.none().withNote("Deep Scan: each revolution reveals invisible enemies in the outer quarter of its "
+                    + "range for 1s"));
 
     private static final UpgradeNode RAPID_ARRAY_1 = UpgradeTier.HEAD_1.node("sonar.head.rapid_array.1",
             "Rapid Array", PRICE)
@@ -161,7 +162,7 @@ public final class SonarTower extends AbstractTower {
             .withNote("the pinged enemy is the Priority until the next pass: +15% damage taken, and towers "
                     + "that pick one target pick it");
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, SPIN_UP,
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, SPIN_UP,
             RESONANT_CRACK))
             .with(RAPID_ARRAY_1, RAPID_ARRAY_2, SPIN_UP, TWIN_BEAM, PHASED_ARRAY, LONG_REACH_1, LONG_REACH_2,
                     RESONANT_CRACK, HORIZON, FAULT_LINE, ULTRASOUND, HARMONICS, PURE_TONE, SHATTER_TONE,

@@ -31,7 +31,7 @@ class StandardTreeShapeTest {
     private static final UpgradeNode S1 = UpgradeTier.SPECIAL.node("s.1", "S1", LIST_PRICE);
     private static final UpgradeNode S2 = UpgradeTier.SPECIAL.node("s.2", "S2", LIST_PRICE);
     private static final UpgradeNode S3 = UpgradeTier.SPECIAL.node("s.3", "S3", LIST_PRICE);
-    private static final List<UpgradeNode> BASE = StandardBaseSlot.nodes(LIST_PRICE, A3);
+    private static final List<UpgradeNode> BASE = StandardBaseSlot.nodes(LIST_PRICE, 4f, A3);
 
     private static final UpgradeTree TREE = UpgradeTree.of(BASE)
             .with(A1, A2, A3, A4A, A4B, B1, B2, X1, X2, X3, X4, S1, S2, S3)
@@ -158,7 +158,7 @@ class StandardTreeShapeTest {
 
     @Test
     void aTreeWithNoLevelThreeHeadHasNoTranscendentAndNoRangeThree() {
-        assertThat(StandardBaseSlot.nodes(LIST_PRICE)).extracting(UpgradeNode::id)
+        assertThat(StandardBaseSlot.nodes(LIST_PRICE, 4f)).extracting(UpgradeNode::id)
                 .doesNotContain(StandardBaseSlot.TRANSCENDENT_ID, StandardBaseSlot.RANGE_3_ID);
     }
 

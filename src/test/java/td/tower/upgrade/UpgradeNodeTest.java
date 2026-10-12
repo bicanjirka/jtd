@@ -46,4 +46,19 @@ class UpgradeNodeTest {
         assertThat(node.bonuses()).containsExactly(new UpgradeBonus("Attack speed", "-50%"),
                 new UpgradeBonus("Blast applies slow", ""));
     }
+
+    @Test
+    void aRangeNodeReadsInCells() {
+        UpgradeNode range = StandardBaseSlot.nodes(10, 4.0f).getFirst();
+
+        assertThat(range.bonuses()).containsExactly(new UpgradeBonus("Range", "+0.6"));
+    }
+
+    @Test
+    void anEmissionRowSaysWhatNearbyTowersGet() {
+        UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.HEAD, "Keen Edge", 10)
+                .withEmission(TowerModifiers.critMultiplier(0.5f));
+
+        assertThat(node.bonuses()).containsExactly(new UpgradeBonus("Nearby crit damage", "+50%"));
+    }
 }

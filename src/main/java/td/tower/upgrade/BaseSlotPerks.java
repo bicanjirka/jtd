@@ -1,29 +1,30 @@
 package td.tower.upgrade;
 
 /**
- * What a tower adds to the shared base nodes: a passive that comes with Attune, a perk that comes with
- * Awaken, and the bonus and perk of Range III.
+ * What a tower adds to the shared base nodes: what comes with Attune, what comes with Awaken, and the
+ * range bonus and effects of Range III.
  *
- * @param attuneText      what Attune does for this tower, empty for nothing
- * @param awakenText      what Awaken does for this tower, empty for nothing
- * @param rangeThreeBonus the range bonus of Range III
- * @param rangeThreeText  what else Range III does for this tower, empty for nothing
+ * @param attune          what Attune does for this tower
+ * @param awaken          what Awaken does for this tower
+ * @param rangeThreeBonus the range bonus of Range III, a share of the base range
+ * @param rangeThree      what else Range III does for this tower
  */
-public record BaseSlotPerks(String attuneText, String awakenText, float rangeThreeBonus, String rangeThreeText) {
+public record BaseSlotPerks(NodeEffects attune, NodeEffects awaken, float rangeThreeBonus, NodeEffects rangeThree) {
 
     public static BaseSlotPerks none() {
-        return new BaseSlotPerks("", "", StandardBaseSlot.RANGE_STEP_BONUS, "");
+        return new BaseSlotPerks(NodeEffects.none(), NodeEffects.none(), StandardBaseSlot.RANGE_STEP_BONUS,
+                NodeEffects.none());
     }
 
-    public BaseSlotPerks withAttune(String attuneText) {
-        return new BaseSlotPerks(attuneText, this.awakenText, this.rangeThreeBonus, this.rangeThreeText);
+    public BaseSlotPerks withAttune(NodeEffects attune) {
+        return new BaseSlotPerks(attune, this.awaken, this.rangeThreeBonus, this.rangeThree);
     }
 
-    public BaseSlotPerks withAwaken(String awakenText) {
-        return new BaseSlotPerks(this.attuneText, awakenText, this.rangeThreeBonus, this.rangeThreeText);
+    public BaseSlotPerks withAwaken(NodeEffects awaken) {
+        return new BaseSlotPerks(this.attune, awaken, this.rangeThreeBonus, this.rangeThree);
     }
 
-    public BaseSlotPerks withRangeThree(float rangeThreeBonus, String rangeThreeText) {
-        return new BaseSlotPerks(this.attuneText, this.awakenText, rangeThreeBonus, rangeThreeText);
+    public BaseSlotPerks withRangeThree(float rangeThreeBonus, NodeEffects rangeThree) {
+        return new BaseSlotPerks(this.attune, this.awaken, rangeThreeBonus, rangeThree);
     }
 }
