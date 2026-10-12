@@ -13,15 +13,14 @@ import td.tower.seeker.ArcanePayload;
 import td.tower.seeker.ArcaneWarheadPerk;
 import td.tower.seeker.BrittlePerk;
 import td.tower.seeker.BroodPerk;
-import td.tower.seeker.DeepFreezePerk;
 import td.tower.seeker.EmpPayload;
 import td.tower.seeker.FrostbitePerk;
 import td.tower.seeker.FrozenLedger;
 import td.tower.seeker.FullRackPerk;
 import td.tower.seeker.HuntersMarkPerk;
 import td.tower.seeker.Impact;
-import td.tower.seeker.NestGrowthPerk;
 import td.tower.seeker.NestPerk;
+import td.tower.seeker.NestSpec;
 import td.tower.seeker.NullifierPerk;
 import td.tower.seeker.OverTheHorizonPerk;
 import td.tower.seeker.Payload;
@@ -29,7 +28,6 @@ import td.tower.seeker.PayloadLoad;
 import td.tower.seeker.PayloadPerk;
 import td.tower.seeker.RearmPerk;
 import td.tower.seeker.SalvoPlanner;
-import td.tower.seeker.SecondMissilePerk;
 import td.tower.seeker.SeekerActions;
 import td.tower.seeker.SeekerNest;
 import td.tower.seeker.SeekerPerk;
@@ -81,7 +79,6 @@ public final class SeekerTower extends AbstractTower {
     public static final float MISSILE_SPEED = 8f;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
-    private static final int FREEZE_DURATION_TICKS_BASE = 30;
     /** Share of weapon damage a shattered enemy's neighbours take. */
     private static final float SHATTER_DAMAGE_SHARE = 0.5f;
     private static final float SHATTER_RADIUS_CELLS = 1.5f;
@@ -96,15 +93,16 @@ public final class SeekerTower extends AbstractTower {
 
     private static final UpgradeNode TWIN_WARHEAD_1 = UpgradeTier.HEAD_1.node("seeker.head.twin_warhead.1",
             "Twin Warhead", PRICE)
-            .withModifiers(TowerModifiers.attackSpeed(0.3f))
-            .withNote("the nest holds one more missile");
+            .withModifiers(TowerModifiers.attackSpeed(0.3f).plus(TowerModifiers.nestCapacity(1)));
     private static final UpgradeNode TWIN_WARHEAD_2 = UpgradeTier.HEAD_2.node("seeker.head.twin_warhead.2",
             "Twin Warhead II", PRICE)
-            .withNote("two missiles a shot, the second at the next target")
+            .withModifiers(TowerModifiers.missilesPerLaunch(1))
+            .withNote("the second missile goes to the next target")
             .after(TWIN_WARHEAD_1);
     private static final UpgradeNode BROOD = UpgradeTier.HEAD_3.node("seeker.head.twin_warhead.3", "Brood", PRICE)
             .withGate(new PurposeCondition(FREEZE_DEED, FREEZES_NEEDED))
-            .withNote("the nest holds 6; a salvo spreads across different targets")
+            .withModifiers(TowerModifiers.nestCapacity(2))
+            .withNote("a salvo spreads across different targets")
             .after(TWIN_WARHEAD_2);
     private static final UpgradeNode SHATTERBURST = UpgradeTier.HEAD_4.node("seeker.head.twin_warhead.4a",
             "Shatterburst", PRICE)
@@ -117,10 +115,10 @@ public final class SeekerTower extends AbstractTower {
             .after(BROOD);
     private static final UpgradeNode DEEP_FREEZE_1 = UpgradeTier.HEAD_1.node("seeker.head.deep_freeze.1",
             "Deep Freeze", PRICE)
-            .withNote("+50% freeze time");
+            .withModifiers(TowerModifiers.freezeDuration(15));
     private static final UpgradeNode DEEP_FREEZE_2 = UpgradeTier.HEAD_2.node("seeker.head.deep_freeze.2",
             "Deep Freeze II", PRICE)
-            .withModifiers(TowerModifiers.damagePercent(0.3f).plus(TowerModifiers.critChance(0.1f)))
+            .withModifiers(TowerModifiers.damage(12f).plus(TowerModifiers.critChance(0.1f)))
             .withNote("a frozen enemy this tower kills shatters for 50% of its damage around it")
             .after(DEEP_FREEZE_1);
     private static final UpgradeNode BRITTLE = UpgradeTier.HEAD_3.node("seeker.head.deep_freeze.3", "Brittle", PRICE)
@@ -176,12 +174,9 @@ public final class SeekerTower extends AbstractTower {
     private static final PerkCatalogue<SeekerPerk> PERKS = PerkCatalogue.<SeekerPerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, NestPerk::new)
             .with(StandardBaseSlot.RANGE_3_ID, OverTheHorizonPerk::new)
-            .with(TWIN_WARHEAD_1.id(), () -> new NestGrowthPerk(1))
-            .with(TWIN_WARHEAD_2.id(), SecondMissilePerk::new)
             .with(BROOD.id(), BroodPerk::new)
             .with(SHATTERBURST.id(), ShatterburstPerk::new)
             .with(REARM.id(), RearmPerk::new)
-            .with(DEEP_FREEZE_1.id(), DeepFreezePerk::new)
             .with(DEEP_FREEZE_2.id(), ShatterPerk::new)
             .with(BRITTLE.id(), BrittlePerk::new)
             .with(ABSOLUTE_ZERO.id(), AbsoluteZeroPerk::new)
@@ -207,7 +202,9 @@ public final class SeekerTower extends AbstractTower {
     private EnemyMob currentTarget;
 
     public SeekerTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.SEEKER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
+        super(TowerFactory.Type.SEEKER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
+                .with(TowerStat.FREEZE_DURATION, 30f).with(TowerStat.NEST_CAPACITY, 3f)
+                .with(TowerStat.MISSILES_PER_LAUNCH, 1f), context, x, y);
     }
 
     @Override
@@ -243,7 +240,8 @@ public final class SeekerTower extends AbstractTower {
     private boolean launchShot(SeekerSpec spec) {
         List<EnemyMob> inReach = spec.reach().matching(this.context.enemies());
         Set<EnemyMob> avoided = new HashSet<>(spec.spreadsSalvo() ? this.nest.salvoTargets() : Set.of());
-        for (int i = 0; i < spec.missilesPerShot(); i++) {
+        int missiles = Math.round(this.stats().value(TowerStat.MISSILES_PER_LAUNCH));
+        for (int i = 0; i < missiles; i++) {
             Optional<EnemyMob> target = SalvoPlanner.pick(PreferringSelector.priority(spec.aim().selector()), inReach,
                     avoided);
             if (target.isEmpty()) {
@@ -256,7 +254,7 @@ public final class SeekerTower extends AbstractTower {
                 this.currentTarget = target.get();
             }
             this.context.projectiles().add(this.newMissile(target.get(), false));
-            if (spec.nest().isActive()) {
+            if (this.nest(spec).isActive()) {
                 this.nest.recordTarget(target.get());
             }
             avoided.add(target.get());
@@ -269,7 +267,7 @@ public final class SeekerTower extends AbstractTower {
         if (spec.shatter().onThaw()) {
             this.frozen.settle().forEach(thawed -> this.shatter(thawed, spec));
         }
-        if (spec.nest().isActive()) {
+        if (this.nest(spec).isActive()) {
             this.tickNest(spec);
         } else {
             this.tickDirect(spec);
@@ -292,13 +290,14 @@ public final class SeekerTower extends AbstractTower {
      * missile launches at the fastest enemy in reach once the gap since the last has passed.
      */
     private void tickNest(SeekerSpec spec) {
-        if (this.clock.isReady() && this.nest.hasRoom(spec.nest())) {
+        NestSpec nest = this.nest(spec);
+        if (this.clock.isReady() && this.nest.hasRoom(nest)) {
             this.nest.load();
             this.clock.spend();
         }
-        this.nest.tick(spec.nest());
+        this.nest.tick(nest);
         if (this.nest.readyToLaunch() && this.launchShot(spec)) {
-            this.nest.launch(spec.nest());
+            this.nest.launch(nest);
         }
     }
 
@@ -354,8 +353,14 @@ public final class SeekerTower extends AbstractTower {
         return this.dealDamage(enemy, damage, attack);
     }
 
-    private int freezeTicks(SeekerSpec spec) {
-        return Math.round(FREEZE_DURATION_TICKS_BASE * spec.freeze().durationFactor());
+    private int freezeTicks() {
+        return Math.round(this.stats().value(TowerStat.FREEZE_DURATION));
+    }
+
+    private NestSpec nest(SeekerSpec spec) {
+        return spec.launchGapTicks() > 0
+                ? NestSpec.of(Math.round(this.stats().value(TowerStat.NEST_CAPACITY)), spec.launchGapTicks())
+                : NestSpec.none();
     }
 
     /** Freezes the enemy a missile reached, and with Absolute Zero everything within a cell of it. */
@@ -375,7 +380,7 @@ public final class SeekerTower extends AbstractTower {
      * brittle for as long; with a thaw shatter, watches it.
      */
     private void freeze(EnemyMob enemy, float strength, SeekerSpec spec) {
-        int ticks = Math.round(this.freezeTicks(spec) * strength);
+        int ticks = Math.round(this.freezeTicks() * strength);
         this.applyEffect(enemy, sink -> Effect.freeze(ticks, sink));
         if (spec.freeze().brittle()) {
             this.applyEffect(enemy, sink -> Effect.brittle(ticks, sink));
@@ -416,7 +421,7 @@ public final class SeekerTower extends AbstractTower {
     }
 
     int getFreezeDurationTicks() {
-        return this.freezeTicks(this.spec(this.perks.all()));
+        return this.freezeTicks();
     }
 
     public TurretAim getTurretAim() {
@@ -444,7 +449,7 @@ public final class SeekerTower extends AbstractTower {
     protected List<BehaviourLine> behaviours() {
         SeekerSpec spec = this.spec(this.perks.all());
         List<BehaviourLine> lines = new ArrayList<>();
-        lines.add(new BehaviourLine(BehaviourMarker.FREEZE, "Freezes", BehaviourLine.seconds(this.freezeTicks(spec))));
+        lines.add(new BehaviourLine(BehaviourMarker.FREEZE, "Freezes", BehaviourLine.seconds(this.freezeTicks())));
         if (spec.freeze().areaCells() > 0f) {
             lines.add(new BehaviourLine(BehaviourMarker.FREEZE, "Freezes around", "1 cell"));
         }
@@ -459,8 +464,9 @@ public final class SeekerTower extends AbstractTower {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Always crits", "frozen enemies"));
         }
         lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Targets", spec.aim().label()));
-        if (spec.nest().isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Nest", this.nest.stored() + "/" + spec.nest().capacity()));
+        NestSpec nest = this.nest(spec);
+        if (nest.isActive()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Nest", this.nest.stored() + "/" + nest.capacity()));
         }
         if (!spec.payloads().owned().isEmpty() || spec.payloads().everyMissile()) {
             String carried = spec.payloads().everyMissile() ? "cryo, arcane, emp, tracer" : spec.payloads().owned()

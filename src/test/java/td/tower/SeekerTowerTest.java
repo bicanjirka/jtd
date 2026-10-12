@@ -78,7 +78,7 @@ class SeekerTowerTest {
     }
 
     @Test
-    void twinWarheadIsChoosableOnceAwakenIsBoughtAndAppliesItsFireRateBonus() {
+    void twinWarheadIsChoosableOnceAwakenIsBoughtAndAppliesItsAttackSpeedBonus() {
         this.context.economy().startEconomy(1000, 5);
         SeekerTower tower = towerAt(3, 3);
         UpgradePaths.awakenVeteran(tower);
@@ -356,7 +356,8 @@ class SeekerTowerTest {
     @Test
     void twinWarheadIiFiresTwoMissilesInsteadOfOne() {
         SeekerTower tower = towerAt(3, 3);
-        tower.onUpgradeBought(UpgradePaths.named(tower, "Twin Warhead II"));
+        this.context.playtestRules().setUpgradeGatesIgnored(true);
+        UpgradePaths.buy(tower, this.context, "Twin Warhead", "Twin Warhead II");
         FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
