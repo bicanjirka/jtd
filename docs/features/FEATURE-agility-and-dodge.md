@@ -89,6 +89,7 @@ surely and hitting everything.
   - Exposed lowers agility as well as resilience.
 - Tower upgrade effects that react to a miss:
   - Sniper "Patience": after a dodged shot, the next shot is a guaranteed crit;
+  - Sniper Frenzy (Focused Optics II) also starts on a dodged shot, its crit trigger kept;
   - Sniper Steady Aim stacks also add accuracy;
   - Sonar "Echo": a dodged beam hit marks the target;
   - Aura: accuracy in what it gives nearby towers.
