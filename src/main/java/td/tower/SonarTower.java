@@ -18,6 +18,7 @@ import td.tower.sonar.HorizonPerk;
 import td.tower.sonar.MarkOnSweepPerk;
 import td.tower.sonar.PhasedArrayPerk;
 import td.tower.sonar.PingPerk;
+import td.tower.sonar.PingRule;
 import td.tower.sonar.PingTracker;
 import td.tower.sonar.PureTonePerk;
 import td.tower.sonar.ResonantCrackPerk;
@@ -28,12 +29,10 @@ import td.tower.sonar.SonarBeam;
 import td.tower.sonar.SonarPerk;
 import td.tower.sonar.SonarSpec;
 import td.tower.sonar.SonarStrike;
-import td.tower.sonar.SpinUpPerk;
 import td.tower.sonar.SpinningBeam;
 import td.tower.sonar.StrikeContext;
 import td.tower.sonar.StrikeResult;
 import td.tower.sonar.TwinBeamPerk;
-import td.tower.sonar.TwoPingsPerk;
 import td.tower.sonar.UltrasoundPerk;
 import td.tower.sonar.WideBandPerk;
 import td.tower.targeting.BeyondRadiusTargetQuery;
@@ -93,16 +92,15 @@ public final class SonarTower extends AbstractTower {
 
     private static final UpgradeNode RAPID_ARRAY_1 = UpgradeTier.HEAD_1.node("sonar.head.rapid_array.1",
             "Rapid Array", PRICE)
-            .withModifiers(TowerModifiers.damagePercent(0.25f))
-            .withNote("Ping Exposes the two healthiest enemies it passes");
+            .withModifiers(TowerModifiers.damage(4f).plus(TowerModifiers.pingCount(1)));
     private static final UpgradeNode RAPID_ARRAY_2 = UpgradeTier.HEAD_2.node("sonar.head.rapid_array.2",
             "Rapid Array II", PRICE)
-            .withModifiers(TowerModifiers.damagePercent(0.25f).plus(TowerModifiers.critChance(0.1f)))
+            .withModifiers(TowerModifiers.damage(4f).plus(TowerModifiers.critChance(0.1f)))
             .withNote("a beam crit refreshes Exposed on its target")
             .after(RAPID_ARRAY_1);
     private static final UpgradeNode SPIN_UP = UpgradeTier.HEAD_3.node("sonar.head.rapid_array.3", "Spin-Up", PRICE)
             .withGate(new PurposeCondition(PING_DEED, PING_DEEDS_NEEDED))
-            .withNote("a revolution every 2s instead of 3s")
+            .withModifiers(TowerModifiers.attackSpeed(0.5f))
             .after(RAPID_ARRAY_2);
     private static final UpgradeNode TWIN_BEAM = UpgradeTier.HEAD_4.node("sonar.head.rapid_array.4a", "Twin Beam",
             PRICE)
@@ -115,7 +113,7 @@ public final class SonarTower extends AbstractTower {
             .after(SPIN_UP);
     private static final UpgradeNode LONG_REACH_1 = UpgradeTier.HEAD_1.node("sonar.head.long_reach.1",
             "Long Reach", PRICE)
-            .withModifiers(TowerModifiers.rangePercent(0.2f))
+            .withModifiers(TowerModifiers.range(0.9f))
             .withNote("Ping picks the healthiest enemy past half range, Exposed for two passes");
     private static final UpgradeNode LONG_REACH_2 = UpgradeTier.HEAD_2.node("sonar.head.long_reach.2",
             "Long Reach II", PRICE)
@@ -128,8 +126,8 @@ public final class SonarTower extends AbstractTower {
             .withNote("each beam hit takes 10 resilience, down to -50, back 10 a second")
             .after(LONG_REACH_2);
     private static final UpgradeNode HORIZON = UpgradeTier.HEAD_4.node("sonar.head.long_reach.4a", "Horizon", PRICE)
-            .withModifiers(TowerModifiers.rangePercent(0.4f))
-            .withNote("far bonus up to +150%, but no damage within 1.5 cells")
+            .withModifiers(TowerModifiers.range(1.8f).plus(TowerModifiers.deadZone(1.5f)))
+            .withNote("far bonus up to +150%")
             .after(RESONANT_CRACK);
     private static final UpgradeNode FAULT_LINE = UpgradeTier.HEAD_4.node("sonar.head.long_reach.4b", "Fault Line",
             PRICE)
@@ -144,7 +142,8 @@ public final class SonarTower extends AbstractTower {
             .after(ULTRASOUND);
     private static final UpgradeNode PURE_TONE = UpgradeTier.EXTRA_3.node("sonar.extra.frequency.3", "Pure Tone",
             PRICE)
-            .withNote("the beam deals magic instead of physical, +15% magic penetration")
+            .withModifiers(TowerModifiers.magicPenetration(0.15f))
+            .withNote("the beam deals magic instead of physical")
             .after(HARMONICS);
     private static final UpgradeNode SHATTER_TONE = UpgradeTier.EXTRA_4.node("sonar.extra.frequency.4",
             "Shatter Tone", PRICE)
@@ -175,9 +174,7 @@ public final class SonarTower extends AbstractTower {
     private static final PerkCatalogue<SonarPerk> PERKS = PerkCatalogue.<SonarPerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, PingPerk::new)
             .with(StandardBaseSlot.RANGE_3_ID, DeepScanPerk::new)
-            .with(RAPID_ARRAY_1.id(), TwoPingsPerk::new)
             .with(RAPID_ARRAY_2.id(), CritRefreshPerk::new)
-            .with(SPIN_UP.id(), SpinUpPerk::new)
             .with(TWIN_BEAM.id(), TwinBeamPerk::new)
             .with(PHASED_ARRAY.id(), PhasedArrayPerk::new)
             .with(LONG_REACH_1.id(), FarPingPerk::new)
@@ -207,7 +204,8 @@ public final class SonarTower extends AbstractTower {
 
     public SonarTower(GameWorld context, int x, int y) {
         // No cooldown: the cadence is the sweep rate.
-        super(TowerFactory.Type.SONAR, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0), context, x, y);
+        super(TowerFactory.Type.SONAR, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0)
+                .with(TowerStat.PING_COUNT, 1f).with(TowerStat.DEAD_ZONE, 0f), context, x, y);
     }
 
     @Override
@@ -227,8 +225,18 @@ public final class SonarTower extends AbstractTower {
         for (SonarPerk perk : owned) {
             spec = perk.refineSpec(spec);
         }
+        float deadZone = this.stats().value(TowerStat.DEAD_ZONE);
+        if (deadZone > 0f) {
+            spec = spec.withReach(spec.reach().withDeadZone(deadZone * view.cellSize()));
+        }
         BeamSpec beam = spec.beam();
         return spec.withBeam(beam.withSecondsPerRevolution((float) (beam.secondsPerRevolution() / this.attackRate())));
+    }
+
+    private PingRule ping(SonarSpec spec) {
+        return spec.ping().isActive()
+                ? spec.ping().withCount(Math.round(this.stats().value(TowerStat.PING_COUNT)))
+                : spec.ping();
     }
 
     public void doTick(int gameTime) {
@@ -294,7 +302,7 @@ public final class SonarTower extends AbstractTower {
 
     /** The ping Exposes the healthiest enemies passed, which is the Sonar's deed, then the perks react. */
     private void completeRevolution(SonarSpec spec, List<SonarPerk> owned, int gameTime) {
-        List<EnemyMob> pinged = this.pings.pick(spec.ping(), spec.view());
+        List<EnemyMob> pinged = this.pings.pick(this.ping(spec), spec.view());
         this.pinged = pinged;
         this.lastRevolutionAt = gameTime;
         for (EnemyMob enemy : pinged) {
@@ -362,9 +370,10 @@ public final class SonarTower extends AbstractTower {
         if (spec.beam().hasTwinBeam()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Beams", "2"));
         }
-        if (spec.ping().isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Pings", spec.ping().count() == 1
-                    ? "the healthiest" : spec.ping().count() + " healthiest"));
+        PingRule ping = this.ping(spec);
+        if (ping.isActive()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Pings", ping.count() == 1
+                    ? "the healthiest" : ping.count() + " healthiest"));
         }
         if (this.upgrades().owns(WIDE_BAND.id())) {
             lines.add(new BehaviourLine(BehaviourMarker.REVEAL, "Reveals", "hidden it passes"));
