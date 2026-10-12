@@ -214,6 +214,7 @@ wanted here is still to be settled: for example decay paused while the pool is a
 ended, or a different rate. Sickened lowering spirit, which slows the decay of its own stacks and of Scorched,
 interacts with whichever is chosen.
 
+- Cracked takes a flat 5 plating points (`ActiveEffects.CRACKED_PLATING_POINTS`), a starting value.
 - **Where:** the named constants in `td.effect.ActiveEffects`, `AbstractTower` and each tower.
 - **Approach:** tune through play or `td.BalanceHarness` with the other placeholder entries; decide
   whether a long burn's resilience loss (crit damage up to double at the floor) is too strong.
@@ -237,7 +238,7 @@ than dropping it.
 
 ### Enemy traits/abilities numbers are unbalanced placeholders
 
-Every number introduced by the data-driven enemy model - `PercentResistTrait`/
+Every number introduced by the data-driven enemy model - `ArmorTrait`/
 `HurtSpeedTrait`'s migrated Square/Triangle factors, and the Warden/egg chain's health, price,
 ability intervals, shield percentages/radii and `EGG_HATCH_DELAY_TICKS` - was chosen to be
 plausible, not tuned, the same situation the tower-upgrade and new-tower-numbers entries above
@@ -247,7 +248,11 @@ per-hit/per-tick damage scale every attack tower deals (150-4000, see the head-t
 the new-tower-numbers entry above) - 15 was negligible against any of them (0.375%-10% of a
 single hit), making the Warden's armor mechanically inert regardless of which tower fought it.
 
-- **Where:** the enemy classes (`WardenEnemy` and the others in `td.enemy`), `PercentResistTrait`,
+- Heals are starting values from the stat-driven plan, meant to be visibly significant: the Mender's ally
+  heal (0.125 to 2 points a tick by rank) and self-heal (0.35 to 1.4), the Warden's neglect heal (15% of the
+  stage's health over 5 s), the Frenzied boss's threshold heal (1 a tick for 10 s) and the Frenzy
+  Spawnling's death heal (0.5 a tick for 2 s).
+- **Where:** the enemy classes (`WardenEnemy` and the others in `td.enemy`), `ArmorTrait`,
   `HurtSpeedTrait`, `FlatResistTrait`.
 - **Approach:** play Curly Path through to the Warden encounter (and the other two levels,
   once they get their own late-game content) repeatedly, adjusting values until the chain and

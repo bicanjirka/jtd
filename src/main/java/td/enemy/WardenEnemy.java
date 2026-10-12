@@ -23,7 +23,7 @@ final class WardenEnemy {
         catalog.register(egg("wardenEgg3", "Warden's Final Egg",
                 "Must be defeated to end the encounter - it will not hatch again. Its shell is cracked: "
                         + "only light armor and plating are left.",
-                List.of(IdentifiedTrait.named("armor", new PercentResistTrait(0.8f)),
+                List.of(IdentifiedTrait.named("armor", ArmorTrait.both(25f)),
                         IdentifiedTrait.named("plating", new FlatResistTrait(1f)))));
         // High enough that an un-upgraded weak tower does nothing; later stages weaken it.
         catalog.register(warden("warden3", "The Exhausted Warden", 3000, "hulking armored sentinel, barely standing", 2.5f, "wardenEgg3"));
@@ -32,7 +32,7 @@ final class WardenEnemy {
                         + "and its armor and plating blunt every hit, though less than the first egg's.",
                 List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
-                        IdentifiedTrait.named("armor", new PercentResistTrait(0.5f)),
+                        IdentifiedTrait.named("armor", ArmorTrait.both(100f)),
                         IdentifiedTrait.named("plating", new FlatResistTrait(4f))))
                 .withAbilities(hatchInto("warden3")));
         catalog.register(warden("warden2", "The Weakened Warden", 5000, "hulking armored sentinel, worn down from its last hatching", 5f,
@@ -45,7 +45,7 @@ final class WardenEnemy {
                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.CHILL)),
-                        IdentifiedTrait.named("armor", new PercentResistTrait(0.2f)),
+                        IdentifiedTrait.named("armor", ArmorTrait.both(400f)),
                         IdentifiedTrait.named("plating", new FlatResistTrait(12f))))
                 .withAbilities(hatchInto("warden2")));
         catalog.register(warden("warden1", "The Warden", 8000, "hulking armored sentinel", 10f, "wardenEgg1"));
@@ -73,7 +73,7 @@ final class WardenEnemy {
                         new ApplyEffectAction(new ShieldTemplate(0.3f, 150), new RadiusTarget(150f)))),
                 // Re-arms after each hit, so it fires every time it is left alone, not just once.
                 IdentifiedAbility.anonymous(new Ability(new TimeSinceLastHitTrigger(200),
-                        new ApplyEffectAction(new HealTemplate(0.04f, 40), new SelfTarget()))),
+                        new ApplyEffectAction(new HealTemplate(health * 0.0015f, 100), new SelfTarget()))),
                 IdentifiedAbility.anonymous(new Ability(new OnCriticalHitTakenTrigger(),
                         new ApplyEffectAction(new ShieldTemplate(0.3f, 30), new SelfTarget())))));
         abilities.add(IdentifiedAbility.anonymous(new Ability(new OnDeathTrigger(),

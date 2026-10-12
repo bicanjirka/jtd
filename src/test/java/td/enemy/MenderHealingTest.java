@@ -38,6 +38,24 @@ class MenderHealingTest {
     }
 
     @Test
+    void aMenderVisiblyRefillsAnAlly() {
+        GameWorld world = worldWithStraightPath();
+        DefinedEnemyMob mender = (DefinedEnemyMob) world.getEnemyCatalog().spawn("m", world, 0, 60, 3, Rank.GRUNT);
+        DefinedEnemyMob ally = (DefinedEnemyMob) world.getEnemyCatalog().spawn("c", world, 0, 50, 2, Rank.GRUNT);
+        world.enemies().add(mender);
+        world.enemies().add(ally);
+        ally.doDamage(Damage.physical(2500)); // half of 5000
+        int woundedHealth = ally.getHealth();
+
+        for (int t = 1; t <= 100; t++) { // five seconds
+            mender.doTick(t);
+            ally.doTick(t);
+        }
+
+        assertThat(ally.getHealth() - woundedHealth).isGreaterThanOrEqualTo(5000 / 5);
+    }
+
+    @Test
     void aMenderNeverHealsItself() {
         GameWorld world = worldWithStraightPath();
         DefinedEnemyMob mender = (DefinedEnemyMob) world.getEnemyCatalog().spawn("m", world, 0, 60, 3, Rank.GRUNT);

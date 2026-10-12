@@ -1,19 +1,21 @@
 package td;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageMix;
 import td.damage.DamageUnits;
 import td.effect.DiminishingReturns;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.enemy.ArmorTrait;
 import td.enemy.BodyArchetype;
+import td.enemy.CriticalImmunityTrait;
 import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyInspection;
 import td.enemy.EnemyMob;
 import td.enemy.HurtSpeedTrait;
-import td.enemy.PercentResistTrait;
 import td.enemy.Rank;
 import td.enemy.Trait;
 import td.fixtures.BoardFixtures;
@@ -74,11 +76,53 @@ class GameEngineTest {
         return engine.getGameWorld().enemies().getEnemies()[0];
     }
 
+    private static int critsIn(EnemyMob enemy, int hits) {
+        AttackProfile twentyPercent = AttackProfile.critChance(0.2f);
+        int crits = 0;
+        for (int i = 0; i < hits; i++) {
+            if (enemy.doDamage(Damage.physical(1), twentyPercent).critical()) {
+                crits++;
+            }
+        }
+        return crits;
+    }
+
+    @Test
+    void anExposedEnemyIsCritMoreOften() {
+        EnemyDefinition dummy = EnemyDefinition.of("dummy", "Dummy", 1_000_000, 1, 0f, BodyArchetype.CIRCLE);
+        EnemyMob plain = spawnOnly(FakeGameHost.newBoundEngine(), dummy);
+        EnemyMob exposed = spawnOnly(FakeGameHost.newBoundEngine(), dummy);
+        exposed.applyEffect(Effect.exposed(1_000_000, d -> {
+        }));
+
+        int plainCrits = critsIn(plain, 2000);
+        int exposedCrits = critsIn(exposed, 2000);
+
+        assertThat(plainCrits).isBetween(320, 480);
+        assertThat(exposedCrits).isBetween(520, 680);
+    }
+
+    @Test
+    void anExposedCritImmuneEnemyCanBeCrittedAtHalfChance() {
+        EnemyDefinition immune = EnemyDefinition.of("immune", "Immune", 1_000_000, 1, 0f, BodyArchetype.CIRCLE)
+                .withTraits(List.of(new CriticalImmunityTrait()));
+        EnemyMob plain = spawnOnly(FakeGameHost.newBoundEngine(), immune);
+        EnemyMob exposed = spawnOnly(FakeGameHost.newBoundEngine(), immune);
+        exposed.applyEffect(Effect.exposed(1_000_000, d -> {
+        }));
+
+        int plainCrits = critsIn(plain, 2000);
+        int exposedCrits = critsIn(exposed, 2000);
+
+        assertThat(plainCrits).isZero();
+        assertThat(exposedCrits).isBetween(120, 280);
+    }
+
     @Test
     void aHalfPhysicalResistEnemyTakesHalfOfAPhysicalHitAndAllOfAMagicOne() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyMob enemy = spawnOnly(engine, EnemyDefinition.of("resist", "Resist", 100, 1, 1f, BodyArchetype.SQUARE)
-                .withTraits(List.of(PercentResistTrait.physicalOnly(0.5f))));
+                .withTraits(List.of(ArmorTrait.physicalOnly(100f))));
 
         Damage physical = enemy.doDamage(Damage.physical(1000));
         Damage magic = enemy.doDamage(Damage.magic(1000));
@@ -91,7 +135,7 @@ class GameEngineTest {
     void aShieldMultipliesWithArmorRatherThanAddingToIt() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyMob enemy = spawnOnly(engine, EnemyDefinition.of("resist", "Resist", 100, 1, 1f, BodyArchetype.SQUARE)
-                .withTraits(List.of(PercentResistTrait.physicalOnly(0.5f))));
+                .withTraits(List.of(ArmorTrait.physicalOnly(100f))));
         enemy.applyEffect(Effect.shield(0.5f, 100, d -> {
         }));
 

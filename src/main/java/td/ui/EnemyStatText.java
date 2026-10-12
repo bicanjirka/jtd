@@ -3,7 +3,6 @@ package td.ui;
 import td.damage.DamageUnits;
 import td.effect.EffectKind;
 import td.enemy.EnemyInspection;
-import td.enemy.HitResolution;
 import td.enemy.TraitLine;
 import td.stat.EnemyStat;
 import td.ui.render.InfoSheet;
@@ -127,13 +126,13 @@ final class EnemyStatText {
         if (stat == EnemyStat.PHYSICAL_PLATING) {
             return new StatText("Plating", platingText(value));
         }
-        return new StatText("Resist all", mitigationText(value));
+        return new StatText("Armor, magic resist", Integer.toString(Math.round(value)));
     }
 
     static StatText statText(EnemyStat stat, float value) {
         return switch (stat) {
-            case ARMOR -> new StatText("Resist physical", mitigationText(value));
-            case MAGIC_RESIST -> new StatText("Resist magic", mitigationText(value));
+            case ARMOR -> new StatText("Armor", Integer.toString(Math.round(value)));
+            case MAGIC_RESIST -> new StatText("Magic resist", Integer.toString(Math.round(value)));
             case PHYSICAL_PLATING -> new StatText("Plating, physical", platingText(value));
             case MAGIC_PLATING -> new StatText("Plating, magic", platingText(value));
             case MOVE_SPEED -> new StatText("Speed", SheetNumbers.decimal(value * TickRate.TICKS_PER_SECOND) + " px/s");
@@ -142,7 +141,6 @@ final class EnemyStatText {
             case PHYSICAL_SHIELDING -> new StatText("Shielded, physical", SheetNumbers.percent(value));
             case MAGIC_SHIELDING -> new StatText("Shielded, magic", SheetNumbers.percent(value));
             case RESILIENCE -> resilienceText(value);
-            case CRIT_CHANCE_TAKEN -> new StatText("Crit chance taken", "x" + SheetNumbers.decimal(value));
             case PERIODIC_DAMAGE_TAKEN -> new StatText("Over time taken", SheetNumbers.percent(value));
             case SPIRIT -> new StatText("Spirit", SheetNumbers.signedPercent(value / 100f) + " heals" + debuffPaceText(value));
             case REGENERATION -> new StatText("Regenerates", SheetNumbers.decimal(DamageUnits.inPoints(value) * TickRate.TICKS_PER_SECOND) + "/s");
@@ -168,7 +166,7 @@ final class EnemyStatText {
             return new StatText("Crit immune", "");
         }
         return value < 0f
-                ? new StatText("Resilience", "+" + SheetNumbers.percent(-value / 100f) + " crit damage")
+                ? new StatText("Resilience", "+" + SheetNumbers.percent(-value / 100f) + " crits")
                 : new StatText("Resilience", "-" + SheetNumbers.percent(value / 100f) + " crits");
     }
 
@@ -238,10 +236,6 @@ final class EnemyStatText {
         return "-" + SheetNumbers.decimal(DamageUnits.inPoints(value)) + "/hit";
     }
 
-    /** "-50%" for armor that halves a hit. */
-    private static String mitigationText(float armor) {
-        return SheetNumbers.signedPercent(HitResolution.mitigationMultiplier(armor) - 1f);
-    }
 
     /** A stat row's words before its colour is known. */
     record StatText(String label, String value) {

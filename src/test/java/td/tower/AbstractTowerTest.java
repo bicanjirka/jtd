@@ -460,7 +460,7 @@ class AbstractTowerTest {
     }
 
     @Test
-    void aBurningTargetDoesNotRaiseTheCritChanceTakenFromAnyTower() {
+    void burningAloneDoesNotDoubleTheCritChance() {
         // roll lands strictly between the tower's 20% chance and a doubled 40%
         GameWorld world = WorldFixtures.newWorld(() -> 0.3);
         world.economy().startEconomy(100, 5);

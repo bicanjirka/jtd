@@ -8,22 +8,22 @@ import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class PercentResistTraitTest {
+class ArmorTraitTest {
 
     private final GameWorld context = WorldFixtures.newWorld();
 
     @Test
-    void damageTakenIsReducedByTheArmoredMobsResistance() {
+    void twentyFiveArmorKeepsFourFifthsOfAHit() {
         EnemyMob armored = EnemyFactory.getEnemy("s", context, 0, 100, 5, Rank.GRUNT);
-        // healthMax = 100*100 = 10000; the fraction is 0.8, so 1000 raw damage becomes 800 applied
+        // healthMax = 100*100 = 10000; 25 armor keeps 100/125 of a hit, so 1000 raw damage becomes 800 applied
         armored.doDamage(Damage.physical(1000));
 
         assertThat(armored.getHealth()).isEqualTo(10000 - 800);
     }
 
     @Test
-    void aPhysicalOnlyResistanceReducesPhysicalDamageButLeavesMagicUntouched() {
-        PercentResistTrait resist = PercentResistTrait.physicalOnly(0.5f);
+    void aPhysicalOnlyArmorLeavesMagicUntouched() {
+        ArmorTrait resist = ArmorTrait.physicalOnly(100f);
 
         assertThat(EnemyFixtures.landedThrough(resist, Damage.physical(1000))).isEqualTo(Damage.physical(500));
         assertThat(EnemyFixtures.landedThrough(resist, Damage.magic(1000))).isEqualTo(Damage.magic(1000));

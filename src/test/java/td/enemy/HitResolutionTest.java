@@ -105,15 +105,15 @@ class HitResolutionTest {
     }
 
     @Test
-    void negativeResilienceNeverRaisesTheCritChanceButRaisesTheCritBonus() {
-        StatView brittle = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, -100f));
-        AttackProfile attacker = AttackProfile.critChance(0.4f).withCritMultiplier(2f);
+    void negativeResilienceRaisesBothTheCritChanceAndTheCritBonus() {
+        StatView brittle = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, -50f));
+        AttackProfile attacker = AttackProfile.critChance(0.2f).withCritMultiplier(2f);
 
-        Damage justInside = HitResolution.resolve(Damage.physical(1000), attacker, brittle, 10000, () -> 0.39);
-        Damage justOutside = HitResolution.resolve(Damage.physical(1000), attacker, brittle, 10000, () -> 0.41);
+        Damage justInside = HitResolution.resolve(Damage.physical(1000), attacker, brittle, 10000, () -> 0.29);
+        Damage justOutside = HitResolution.resolve(Damage.physical(1000), attacker, brittle, 10000, () -> 0.31);
 
-        // the chance stays 40%, the bonus doubles from +100% to +200%
-        assertThat(justInside).isEqualTo(new Damage(3000, DamageType.PHYSICAL, true));
+        // the chance rises from 20% to 30%, the bonus from +100% to +150%
+        assertThat(justInside).isEqualTo(new Damage(2500, DamageType.PHYSICAL, true));
         assertThat(justOutside).isEqualTo(Damage.physical(1000));
     }
 

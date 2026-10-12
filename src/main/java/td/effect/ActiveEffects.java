@@ -2,6 +2,7 @@ package td.effect;
 
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.damage.DamageUnits;
 import td.stat.EnemyStat;
 import td.stat.StatAccumulator;
 import td.stat.StatModifier;
@@ -65,9 +66,9 @@ public final class ActiveEffects {
     private static final float ANCHORED_SPEED_SHARE = 0.75f;
     private static final float MAGIC_RESIST_LOST_PER_UNRAVELED_STACK = 10f;
     private static final float CORROSION_ARMOR_LOST = 30f;
-    private static final float BRITTLE_PHYSICAL_DAMAGE_TAKEN = 1.3f;
-    private static final float KILL_ZONE_DAMAGE_TAKEN = 1.25f;
-    private static final float CRACKED_PLATING_SHARE = 0.5f;
+    private static final float BRITTLE_PHYSICAL_DAMAGE_TAKEN = 0.3f;
+    private static final float KILL_ZONE_DAMAGE_TAKEN = 0.25f;
+    private static final float CRACKED_PLATING_POINTS = 5f;
     /** The share of a burn's remaining pool that lands at once when a freeze puts it out. */
     private static final float FREEZE_BURST_SHARE = 0.5f;
     /** A burn pool reveals an invisible enemy while it holds more than this, in damage units a tick. */
@@ -75,8 +76,8 @@ public final class ActiveEffects {
     private static final float TAR_BURN_FACTOR = 2f;
     /** The share of healing and shielding an enemy burning under Cauterize receives. */
     private static final float CAUTERIZED_SHARE = 0.5f;
-    private static final float HEATED_PERIODIC_DAMAGE_TAKEN = 1.1f;
-    private static final float MARKED_MAGIC_DAMAGE_TAKEN = 1.15f;
+    private static final float HEATED_PERIODIC_DAMAGE_TAKEN = 0.1f;
+    private static final float MARKED_MAGIC_DAMAGE_TAKEN = 0.15f;
     private static final EffectKind[] BURNING_KINDS = {EffectKind.BURN, EffectKind.SOULFIRE};
     private static final PoolTuning NO_TUNING = PoolTuning.standard();
     /** The share of its speed a tarred enemy keeps. */
@@ -84,13 +85,13 @@ public final class ActiveEffects {
     private static final int TAR_FREEZE_EXTRA_TICKS = 20;
     /** Extra damage taken per vulnerable stack, of every damage type. */
     private static final float VULNERABLE_PER_STACK = 0.15f;
-    /** Damage taken while a priority lasts, of every damage type. */
-    private static final float PRIORITY_DAMAGE_TAKEN = 1.15f;
+    /** Damage taken a priority adds while it lasts, of every damage type. */
+    private static final float PRIORITY_DAMAGE_TAKEN = 0.15f;
     private static final float ARMOR_LOST_PER_SUNDERED_STACK = 5f;
     private static final float MAGIC_DAMAGE_TAKEN_PER_RESONATING_STACK = 0.08f;
     private static final float RESILIENCE_LOST_PER_FRACTURED_STACK = 10f;
-    /** What an exposed or revealed enemy multiplies the crit chance taken by. */
-    private static final float EXPOSED_CRIT_CHANCE_TAKEN = 2f;
+    /** The resilience an exposed or revealed enemy loses. */
+    private static final float EXPOSED_RESILIENCE = 50f;
     private static final StatModifier FROZEN = StatModifier.setTo(0f);
     private static final StatModifier HIDDEN = StatModifier.setTo(1f);
     private static final StatModifier REVEALED = StatModifier.setTo(0f);
@@ -322,19 +323,19 @@ public final class ActiveEffects {
      * Adds every active effect's stat modifiers: a chill multiplies speed by what is left of its
      * level and a poison by what is left of its pool, a freeze sets it to zero, a shield adds
      * shielding for the types it covers, a heal adds regeneration, invisibility sets stealth to
-     * one and a reveal sets it to zero (the lowest set value wins), a vulnerability multiplies damage
+     * one and a reveal sets it to zero (the lowest set value wins), a vulnerability adds to damage
      * taken by its stacks, each scorched stack lowers resilience by one and each sickened stack
      * lowers spirit by one. Shields and heals go in as restorative, so the enemy's spirit scales them.
-     * Being exposed or revealed doubles the crit chance taken, once however many apply.
+     * Being exposed or revealed takes 50 resilience, once however many apply.
      */
     public void contributeTo(StatAccumulator<EnemyStat> accumulator) {
         PoolTuning burning = this.burningTuning();
         float received = burning.cauterizes() ? CAUTERIZED_SHARE : 1f;
         if (burning.heats()) {
-            accumulator.multiply(EnemyStat.PERIODIC_DAMAGE_TAKEN, HEATED_PERIODIC_DAMAGE_TAKEN);
+            accumulator.addFlat(EnemyStat.PERIODIC_DAMAGE_TAKEN, HEATED_PERIODIC_DAMAGE_TAKEN);
         }
         if (burning.marksForMagic()) {
-            accumulator.multiply(EnemyStat.MAGIC_DAMAGE_TAKEN, MARKED_MAGIC_DAMAGE_TAKEN);
+            accumulator.addFlat(EnemyStat.MAGIC_DAMAGE_TAKEN, MARKED_MAGIC_DAMAGE_TAKEN);
         }
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
             Effect effect = entry.getValue();
@@ -351,10 +352,10 @@ public final class ActiveEffects {
                 case HEAL -> accumulator.restoreFlat(EnemyStat.REGENERATION, effect.healPerTick() * received);
                 case INVISIBLE -> accumulator.add(EnemyStat.STEALTH, HIDDEN);
                 case REVEALED -> accumulator.add(EnemyStat.STEALTH, REVEALED);
-                case VULNERABLE -> multiplyDamageTaken(accumulator, 1f + VULNERABLE_PER_STACK * effect.stacks());
-                case PRIORITY -> multiplyDamageTaken(accumulator, PRIORITY_DAMAGE_TAKEN);
-                case RESONATING -> accumulator.multiply(EnemyStat.MAGIC_DAMAGE_TAKEN,
-                        1f + MAGIC_DAMAGE_TAKEN_PER_RESONATING_STACK * effect.stacks());
+                case VULNERABLE -> addDamageTaken(accumulator, VULNERABLE_PER_STACK * effect.stacks());
+                case PRIORITY -> addDamageTaken(accumulator, PRIORITY_DAMAGE_TAKEN);
+                case RESONATING -> accumulator.addFlat(EnemyStat.MAGIC_DAMAGE_TAKEN,
+                        MAGIC_DAMAGE_TAKEN_PER_RESONATING_STACK * effect.stacks());
                 case SUNDERED -> accumulator.addFlat(EnemyStat.ARMOR,
                         -ARMOR_LOST_PER_SUNDERED_STACK * effect.stacks());
                 case FRACTURED -> accumulator.addFlat(EnemyStat.RESILIENCE,
@@ -364,15 +365,15 @@ public final class ActiveEffects {
                         -MAGIC_RESIST_LOST_PER_UNRAVELED_STACK * effect.stacks());
                 case BRITTLE -> {
                     if (this.active.containsKey(EffectKind.FREEZE)) {
-                        accumulator.multiply(EnemyStat.PHYSICAL_DAMAGE_TAKEN, BRITTLE_PHYSICAL_DAMAGE_TAKEN);
+                        accumulator.addFlat(EnemyStat.PHYSICAL_DAMAGE_TAKEN, BRITTLE_PHYSICAL_DAMAGE_TAKEN);
                     }
                 }
                 case CORRODED -> accumulator.addFlat(EnemyStat.ARMOR, -CORROSION_ARMOR_LOST);
                 case UNDERTOW -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - UNDERTOW_CHILL);
-                case KILL_ZONE -> multiplyDamageTaken(accumulator, KILL_ZONE_DAMAGE_TAKEN);
+                case KILL_ZONE -> addDamageTaken(accumulator, KILL_ZONE_DAMAGE_TAKEN);
                 case CRACKED -> {
-                    accumulator.multiply(EnemyStat.PHYSICAL_PLATING, CRACKED_PLATING_SHARE);
-                    accumulator.multiply(EnemyStat.MAGIC_PLATING, CRACKED_PLATING_SHARE);
+                    accumulator.addFlat(EnemyStat.PHYSICAL_PLATING, -DamageUnits.ofPoints(CRACKED_PLATING_POINTS));
+                    accumulator.addFlat(EnemyStat.MAGIC_PLATING, -DamageUnits.ofPoints(CRACKED_PLATING_POINTS));
                 }
                 case EXPOSED, MARKED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY,
                         RECKONING, SILENCED, DEAD_ZONE, FALLOUT, TOLL, BLEEDING -> {
@@ -392,7 +393,7 @@ public final class ActiveEffects {
             }
         }
         if (this.isExposed()) {
-            accumulator.multiply(EnemyStat.CRIT_CHANCE_TAKEN, EXPOSED_CRIT_CHANCE_TAKEN);
+            accumulator.addFlat(EnemyStat.RESILIENCE, -EXPOSED_RESILIENCE);
         }
     }
 
@@ -408,9 +409,9 @@ public final class ActiveEffects {
         return tuning == null ? NO_TUNING : tuning;
     }
 
-    private static void multiplyDamageTaken(StatAccumulator<EnemyStat> accumulator, float taken) {
+    private static void addDamageTaken(StatAccumulator<EnemyStat> accumulator, float taken) {
         for (DamageType type : DAMAGE_TYPES) {
-            accumulator.multiply(EnemyStat.damageTakenFor(type), taken);
+            accumulator.addFlat(EnemyStat.damageTakenFor(type), taken);
         }
     }
 

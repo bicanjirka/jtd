@@ -484,15 +484,6 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void aBurnNoLongerChangesCritChanceTaken() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(10), 60, d -> {
-        }));
-
-        assertThat(resolved(effects, EnemyStat.CRIT_CHANCE_TAKEN)).isEqualTo(1f);
-    }
-
-    @Test
     void freezingAnEnemyRemovesItsBurn() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.burn(Damage.magic(10), 60, d -> {
@@ -687,7 +678,7 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void exposedAndRevealedEachDoubleTheCritChanceTakenButNeverQuadrupleIt() {
+    void anExposedEnemyLosesFiftyResilienceOnceEvenWhenAlsoRevealed() {
         ActiveEffects exposed = new ActiveEffects();
         exposed.apply(Effect.exposed(100, d -> {
         }));
@@ -700,23 +691,23 @@ class ActiveEffectsTest {
         revealed.apply(Effect.revealed(100, d -> {
         }));
 
-        assertThat(resolved(exposed, EnemyStat.CRIT_CHANCE_TAKEN)).isEqualTo(2f);
-        assertThat(resolved(revealed, EnemyStat.CRIT_CHANCE_TAKEN)).isEqualTo(2f);
-        assertThat(resolved(both, EnemyStat.CRIT_CHANCE_TAKEN)).isEqualTo(2f);
+        assertThat(resolved(exposed, EnemyStat.RESILIENCE)).isEqualTo(-50f);
+        assertThat(resolved(revealed, EnemyStat.RESILIENCE)).isEqualTo(-50f);
+        assertThat(resolved(both, EnemyStat.RESILIENCE)).isEqualTo(-50f);
     }
 
     @Test
-    void priorityAndVulnerableMultiplyEachOtherAndResonatingOnlyRaisesMagicTaken() {
+    void vulnerableAndPriorityAddTheirDamageTakenRatherThanMultiply() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.priority(100, d -> {
         }));
-        effects.apply(Effect.vulnerable(1, 100, d -> {
+        effects.apply(Effect.vulnerable(3, 100, d -> {
         }));
         effects.apply(Effect.resonating(2, 100, d -> {
         }));
 
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.15f * 1.15f, within(1e-5f));
-        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.15f * 1.15f * 1.16f, within(1e-5f));
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.60f, within(1e-5f));
+        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.60f + 0.16f, within(1e-5f));
     }
 
     @Test
@@ -864,16 +855,16 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void crackedHalvesBothKindsOfPlating() {
+    void crackedTakesFivePlatingAndNeverBelowZero() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.cracked(100, d -> {
         }));
-        BaseStats<EnemyStat> plated = BaseStats.defaults(EnemyStat.class).with(EnemyStat.PHYSICAL_PLATING, 400f).with(EnemyStat.MAGIC_PLATING, 400f);
+        BaseStats<EnemyStat> plated = BaseStats.defaults(EnemyStat.class).with(EnemyStat.PHYSICAL_PLATING, 800f).with(EnemyStat.MAGIC_PLATING, 400f);
 
         StatSheet sheet = new StatSheet(plated, effects::contributeTo);
 
-        assertThat(sheet.value(EnemyStat.PHYSICAL_PLATING)).isEqualTo(200f);
-        assertThat(sheet.value(EnemyStat.MAGIC_PLATING)).isEqualTo(200f);
+        assertThat(sheet.value(EnemyStat.PHYSICAL_PLATING)).isEqualTo(300f);
+        assertThat(sheet.value(EnemyStat.MAGIC_PLATING)).isZero();
     }
 
     @Test

@@ -3,10 +3,10 @@ package td.wave;
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageMix;
+import td.enemy.ArmorTrait;
 import td.enemy.BodyArchetype;
 import td.enemy.EnemyDefinition;
 import td.enemy.IdentifiedTrait;
-import td.enemy.PercentResistTrait;
 import td.enemy.Trait;
 import td.enemy.TraitTemplate;
 import td.fixtures.EnemyFixtures;
@@ -48,7 +48,7 @@ class SpawnShapeTest {
     @Test
     void armoredStacksWithAnArmorTraitTheEnemyAlreadyHas() {
         EnemyDefinition plated = EnemyDefinition.of("plated", "Plated", 10, 1, 1f, BodyArchetype.SQUARE)
-                .withIdentifiedTraits(List.of(IdentifiedTrait.named("armor", new PercentResistTrait(0.5f))));
+                .withIdentifiedTraits(List.of(IdentifiedTrait.named("armor", ArmorTrait.both(100f))));
 
         EnemyDefinition armored = plated.withAdditionalTraits(List.of(SpawnShape.armored().traitOverride().orElseThrow()));
 

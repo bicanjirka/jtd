@@ -75,9 +75,7 @@ public final class HitResolution {
         if (attacker.guaranteedCrit()) {
             return true;
         }
-        // Negative resilience never makes a crit likelier, only harder-hitting.
-        float chance = attacker.critChance() * stats.value(EnemyStat.CRIT_CHANCE_TAKEN)
-                * Math.min(1f, 1f - resilience / 100f);
+        float chance = attacker.critChance() * (1f - resilience / 100f);
         return chance > 0f && random.nextDouble() < chance;
     }
 

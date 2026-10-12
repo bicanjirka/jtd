@@ -56,7 +56,7 @@
 - A freeze always lands half of the burn it puts out at once (`burstPool`, its remaining pool
   `fuel / (1 - alpha)`); a burn pool above `BURN_REVEAL_FUEL` sets `STEALTH` to 0 like a reveal, without
   exposing the enemy. `TARRED` makes the burn it catches start at double the pool and a freeze it
-  suffers last a second longer, both read at `apply`. `CRACKED` halves both platings.
+  suffers last a second longer, both read at `apply`. `CRACKED` takes 5 plating points from both platings.
 - Two hexes bend fire and ice inside `ActiveEffects`, keyed only on their kind being active: under
   `RIME` a freeze buys twice the chill's extra time and lands all of the burn it puts out; under `ASH` pools hold twice as much and earn
   stacks twice as often (the pool clock still counts down by one, since pulses ride it), and a
@@ -69,9 +69,10 @@
   damage; the mob pays its share of that hit through the charge's own sink, so the charger is
   credited.
 - Effects change a mob only through `contributeTo(StatAccumulator)`: chill and poison on
-  `MOVE_SPEED` (multiplying), freeze setting it to zero, shield and vulnerable on damage taken, heal
-  on `REGENERATION`, invisible and revealed on `STEALTH` (revealed sets it to 0, which beats
-  invisibility's 1; exposed or revealed doubles `CRIT_CHANCE_TAKEN` once), scorched stacks on `RESILIENCE` (-1 each) and sickened stacks on `SPIRIT` (-1 each), both floored
+  `MOVE_SPEED` (multiplying), freeze setting it to zero, shield on damage taken; vulnerable,
+  priority, kill zone, resonating and brittle **add** to damage taken; heal on `REGENERATION`,
+  invisible and revealed on `STEALTH` (revealed sets it to 0, which beats invisibility's 1; exposed
+  or revealed take 50 `RESILIENCE` once), scorched stacks on `RESILIENCE` (-1 each) and sickened stacks on `SPIRIT` (-1 each), both floored
   by the stat's range. Shield and heal go in as restorative, so spirit scales them.
   The mob applies regeneration to itself, capped at max health; `Damage` can't be negative.
 - Resistance and diminishing returns only shorten an authored duration, never change an effect's
