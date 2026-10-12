@@ -13,10 +13,15 @@ import java.util.Set;
 public interface HitReceiver {
 
     /**
-     * Applies a hit from {@code attacker} and returns what actually landed, which may be less,
-     * more (a crit) or nothing. Report the return value, not the argument.
+     * Applies a hit from {@code attacker}: what reached health, which may be less, more (a crit) or
+     * nothing, and what a shield absorbed of it. Credit {@link HitResult#credited()}, not the argument.
      */
-    Damage doDamage(Damage damage, AttackProfile attacker);
+    HitResult takeHit(Damage damage, AttackProfile attacker);
+
+    /** {@link #takeHit} for a caller that only needs what reached health. */
+    default Damage doDamage(Damage damage, AttackProfile attacker) {
+        return this.takeHit(damage, attacker).landed();
+    }
 
     /** A hit from an attacker with no crit or penetration. */
     default Damage doDamage(Damage damage) {
@@ -75,9 +80,6 @@ public interface HitReceiver {
 
     /** Removes the shield and the heal it has, if any. */
     void dispelRestoratives();
-
-    /** The share of a {@code type} hit its shield takes right now, from {@code 0} to {@code 0.9}. */
-    float shieldingFor(DamageType type);
 
     /** Its spirit now: {@code 0} at neutral, down to {@code -100}. */
     float spirit();

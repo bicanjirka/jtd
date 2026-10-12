@@ -12,6 +12,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
+import td.enemy.HitResult;
 import td.stat.DisruptionPenalty;
 import td.stat.StatModifiers;
 import td.tower.upgrade.StandardBaseSlot;
@@ -188,7 +189,7 @@ public abstract class AbstractTower implements Tower {
      * Every hit goes through here, so accounting is right whichever subclass fires. The hit carries
      * this tower's current {@link AttackProfile}; the target rolls the crit.
      * <p>
-     * Counts the damage that actually landed, not the damage fired. A kill adds the upgrades'
+     * Counts the damage that actually landed, and what a shield absorbed of it, not the damage fired. A kill adds the upgrades'
      * bounty bonus in credits, not score. A hit on a mob already killed this tick is not a second
      * kill. A no-op once the tower is sold, so a lingering burn stops crediting it.
      *
@@ -204,10 +205,10 @@ public abstract class AbstractTower implements Tower {
             return false;
         }
         boolean wasAlive = !enemy.isDead();
-        Damage landed = enemy.doDamage(damage, attacker.withOrigin(this.origin));
+        HitResult result = enemy.takeHit(damage, attacker.withOrigin(this.origin));
         this.wither(enemy, attacker);
         if (wasAlive) {
-            this.damageDealt += landed.amount();
+            this.damageDealt += result.credited();
             if (enemy.isDead()) {
                 this.killCount++;
                 float bountyBonus = this.stats.bountyBonus();
@@ -218,7 +219,7 @@ public abstract class AbstractTower implements Tower {
                 this.runKillHook(enemy);
             }
         }
-        return landed.critical();
+        return result.critical();
     }
 
     /** Withering Field: the first hit in every interval applies a stack of Vulnerable; periodic damage is no hit. */

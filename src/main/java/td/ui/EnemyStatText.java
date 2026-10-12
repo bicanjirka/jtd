@@ -77,8 +77,7 @@ final class EnemyStatText {
         rows.add(Row.plain(Glyph.CHEVRON, speed.label(), speed.value()));
         Set<EnemyStat> shown = EnumSet.noneOf(EnemyStat.class);
         for (EnemyStat stat : EnemyStat.values()) {
-            if (stat == EnemyStat.MOVE_SPEED || shown.contains(stat) || isShielding(stat)
-                    || !differsFromDefault(inspection, stat)) {
+            if (stat == EnemyStat.MOVE_SPEED || shown.contains(stat) || !differsFromDefault(inspection, stat)) {
                 continue;
             }
             Optional<EnemyStat> pair = pairedWith(stat).filter(other -> inspection.stat(other) == inspection.stat(stat));
@@ -102,11 +101,6 @@ final class EnemyStatText {
                 .findFirst()
                 .map(trait -> Row.trait(EnemyFrameBuilder.traitMarkerPaletteFor(trait.marker()), text.label(), text.value()))
                 .orElseGet(() -> Row.plain(Glyph.DOT, text.label(), text.value()));
-    }
-
-    /** A shield has its own effect row, so its stat needs none. */
-    private static boolean isShielding(EnemyStat stat) {
-        return stat == EnemyStat.PHYSICAL_SHIELDING || stat == EnemyStat.MAGIC_SHIELDING;
     }
 
     private static boolean differsFromDefault(EnemyInspection inspection, EnemyStat stat) {
@@ -138,10 +132,9 @@ final class EnemyStatText {
             case MOVE_SPEED -> new StatText("Speed", SheetNumbers.decimal(value * TickRate.TICKS_PER_SECOND) + " px/s");
             case PHYSICAL_DAMAGE_TAKEN -> new StatText("Physical taken", SheetNumbers.percent(value));
             case MAGIC_DAMAGE_TAKEN -> new StatText("Magic taken", SheetNumbers.percent(value));
-            case PHYSICAL_SHIELDING -> new StatText("Shielded, physical", SheetNumbers.percent(value));
-            case MAGIC_SHIELDING -> new StatText("Shielded, magic", SheetNumbers.percent(value));
             case RESILIENCE -> resilienceText(value);
             case PERIODIC_DAMAGE_TAKEN -> new StatText("Over time taken", SheetNumbers.percent(value));
+            case HEALING_RECEIVED -> new StatText("Heals received", SheetNumbers.percent(value));
             case SPIRIT -> new StatText("Spirit", SheetNumbers.signedPercent(value / 100f) + " heals" + debuffPaceText(value));
             case REGENERATION -> new StatText("Regenerates", SheetNumbers.decimal(DamageUnits.inPoints(value) * TickRate.TICKS_PER_SECOND) + "/s");
             case CHILL_RESIST -> resistText("Chill", value);
@@ -218,6 +211,9 @@ final class EnemyStatText {
         String category = effect.kind().category().label();
         if (effect.kind() == EffectKind.CHILL) {
             category += " " + SheetNumbers.percent(effect.level());
+        }
+        if (effect.kind() == EffectKind.SHIELD) {
+            category += " " + Math.round(effect.shield().remaining()) + "/" + Math.round(effect.shield().max());
         }
         String left = effect.remainingTicks().isEmpty() ? category
                 : category + " " + String.format(Locale.ROOT, "%.1f s", effect.remainingTicks().getAsInt() / TickRate.TICKS_PER_SECOND);

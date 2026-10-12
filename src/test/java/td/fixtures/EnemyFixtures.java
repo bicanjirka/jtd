@@ -37,7 +37,7 @@ public final class EnemyFixtures {
     public static Damage landedThrough(Trait trait, Damage damage) {
         StatSheet sheet = new StatSheet(BaseStats.defaults(EnemyStat.class),
                 accumulator -> trait.modifiers(new TraitContext(1f)).applyTo(accumulator));
-        return HitResolution.resolve(damage, sheet, Integer.MAX_VALUE);
+        return HitResolution.resolve(damage, sheet);
     }
 
     /** Replaces a world's live enemies with exactly these mobs. */

@@ -15,6 +15,7 @@ import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyInspection;
 import td.enemy.EnemyMob;
+import td.enemy.HitResult;
 import td.enemy.HurtSpeedTrait;
 import td.enemy.Rank;
 import td.enemy.Trait;
@@ -132,16 +133,17 @@ class GameEngineTest {
     }
 
     @Test
-    void aShieldMultipliesWithArmorRatherThanAddingToIt() {
+    void armorReducesAHitBeforeTheShieldAbsorbsIt() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyMob enemy = spawnOnly(engine, EnemyDefinition.of("resist", "Resist", 100, 1, 1f, BodyArchetype.SQUARE)
                 .withTraits(List.of(ArmorTrait.physicalOnly(100f))));
-        enemy.applyEffect(Effect.shield(0.5f, 100, d -> {
+        enemy.applyEffect(Effect.shield(300f, 100, d -> {
         }));
 
-        Damage landed = enemy.doDamage(Damage.physical(1000));
+        HitResult result = enemy.takeHit(Damage.physical(1000), AttackProfile.none());
 
-        assertThat(landed).isEqualTo(Damage.physical(250));
+        assertThat(result.absorbed()).isEqualTo(300);
+        assertThat(result.landed()).isEqualTo(Damage.physical(200));
     }
 
     @Test
@@ -149,11 +151,11 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyMob enemy = spawnOnly(engine, EnemyDefinition.of("hurry", "Hurry", 100, 1, 1f, BodyArchetype.TRIANGLE)
                 .withTraits(List.of(new HurtSpeedTrait(2f))));
-        enemy.applyEffect(Effect.shield(0.5f, 100, d -> {
+        enemy.applyEffect(Effect.shield(2000f, 100, d -> {
         }));
         float before = enemy.getSpeed();
 
-        enemy.doDamage(Damage.physical(10000));
+        enemy.doDamage(Damage.physical(7000));
 
         // Half of the 100-point pool is gone, so the multiplier is 1 + (2 - 1) * 0.5.
         assertThat(enemy.getSpeed()).isCloseTo(before * 1.5f, within(0.001f));

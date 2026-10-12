@@ -7,6 +7,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyMobVisitor;
+import td.enemy.HitResult;
 import td.enemy.Rank;
 import td.wave.Vec2;
 
@@ -35,7 +36,6 @@ public final class FakeEnemyMob implements EnemyMob {
     private float speed;
     private boolean frozen;
     private boolean freezeDiminished;
-    private float shielding;
     private float spirit;
     private int dispels;
     private float physicalReduction;
@@ -183,13 +183,13 @@ public final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
-    public Damage doDamage(Damage damage, AttackProfile attacker) {
+    public HitResult takeHit(Damage damage, AttackProfile attacker) {
         this.hits.add(damage);
         this.attackers.add(attacker);
         if (this.diesOnHit) {
             this.valid = false;
         }
-        return this.hitsLandCritical ? new Damage(damage.amount(), damage.type(), true) : damage;
+        return new HitResult(this.hitsLandCritical ? new Damage(damage.amount(), damage.type(), true) : damage, 0);
     }
 
     /**
@@ -209,16 +209,6 @@ public final class FakeEnemyMob implements EnemyMob {
     /** How many times a dispel reached it. */
     public int dispels() {
         return this.dispels;
-    }
-
-    /** Reports {@code share} of every hit as absorbed by a shield, for towers that read it. */
-    public void reportShielding(float share) {
-        this.shielding = share;
-    }
-
-    @Override
-    public float shieldingFor(DamageType type) {
-        return this.shielding;
     }
 
     /** Reports {@code spirit} as its spirit, without any real sickness. */

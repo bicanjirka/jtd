@@ -12,6 +12,7 @@ import td.effect.Effect;
 import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.effect.EffectTransitions;
+import td.effect.ShieldGauge;
 import td.enemy.MobMoments.Moment;
 import td.stat.BaseStats;
 import td.stat.EnemyStat;
@@ -260,7 +261,8 @@ public final class DefinedEnemyMob implements EnemyMob {
     /**
      * Applies the effect with its duration shortened by this mob's resistance to its kind and, for
      * hard crowd control, by diminishing returns. One that would last under a tick is blocked. Under
-     * Inversion a heal comes in as damage and a shield as one hit.
+     * Inversion a heal comes in as damage and a shield as one hit. A shield's pool is scaled once, as
+     * it is applied, by spirit and healing received.
      */
     public void applyEffect(Effect effect) {
         Optional<Effect> inversion = this.activeEffects.find(EffectKind.INVERSION);
@@ -268,15 +270,19 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.strikeInsteadOfShielding(effect, inversion.get());
             return;
         }
-        this.applyResisted(inversion.map(hex -> effect.invertedThrough(hex.sink())).orElse(effect));
+        Effect received = effect.kind() == EffectKind.SHIELD
+                ? effect.withShieldScaledBy(Math.max(0f, 1f + this.stats.value(EnemyStat.SPIRIT) / 100f)
+                        * this.stats.value(EnemyStat.HEALING_RECEIVED))
+                : effect;
+        this.applyResisted(inversion.map(hex -> received.invertedThrough(hex.sink())).orElse(received));
     }
 
     /**
-     * An Inverted enemy takes a shield as one hit of its percent of full health, credited to whoever
-     * cast the inversion; the shield itself never goes on.
+     * An Inverted enemy takes a shield as one hit of its authored pool, credited to whoever cast the
+     * inversion; the shield itself never goes on.
      */
     private void strikeInsteadOfShielding(Effect shield, Effect inversion) {
-        inversion.sink().apply(Damage.magic(Math.round(shield.shieldPercent() * this.healthMax)));
+        inversion.sink().apply(Damage.magic(Math.round(shield.shieldRemaining())));
     }
 
     private void applyResisted(Effect effect) {
@@ -334,11 +340,6 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     @Override
-    public float shieldingFor(DamageType type) {
-        return this.stats.value(EnemyStat.shieldingFor(type));
-    }
-
-    @Override
     public boolean freezeDiminished() {
         return this.diminishedFactors().containsKey(EffectKind.FREEZE);
     }
@@ -364,6 +365,17 @@ public final class DefinedEnemyMob implements EnemyMob {
     /** The kinds an active effect currently keeps out. */
     public Set<EffectKind> blockedEffectKinds() {
         return this.activeEffects.blockedKinds();
+    }
+
+    /** The active shield's pool, in points. */
+    public ShieldGauge shieldGauge() {
+        return this.activeEffects.shieldGauge();
+    }
+
+    /** The share of its pool the active shield has left; {@code 0} without one. */
+    public float shieldFraction() {
+        ShieldGauge gauge = this.activeEffects.shieldGauge();
+        return gauge.max() > 0f ? gauge.remaining() / gauge.max() : 0f;
     }
 
     /** How much speed the active chill takes away; {@code 0} for any other kind or when inactive. */
@@ -437,34 +449,39 @@ public final class DefinedEnemyMob implements EnemyMob {
      * Applies a hit through {@link HitResolution}, paying the bounty if it kills. A no-op on a dead
      * mob, so only the first of several same-tick hits counts as the kill.
      *
-     * @return the damage that landed, capped at remaining health so overkill is not credited, and
-     * {@link Damage#none()} if the mob is dead or untargetable
+     * @return what reached health, capped at remaining health so overkill is not credited, and what a
+     * shield absorbed; {@link HitResult#none()} if the mob is dead or untargetable
      */
-    public Damage doDamage(Damage damage, AttackProfile attacker) {
+    @Override
+    public HitResult takeHit(Damage damage, AttackProfile attacker) {
         this.ticksSinceLastHit = 0;
-        Damage landed = this.land(damage, attacker);
-        this.discharge(attacker, landed);
+        HitResult result = this.land(damage, attacker);
+        this.discharge(attacker, result.landed());
         // Health-dependent traits re-derive from the new health.
         this.stats.invalidate();
-        return landed;
+        return result;
     }
 
-    private Damage land(Damage damage, AttackProfile attacker) {
+    /** Armor and the rest of the hit formula first, then the shield's pool, then the cap at health. */
+    private HitResult land(Damage damage, AttackProfile attacker) {
         if (this.isDead()) {
-            return Damage.none();
+            return HitResult.none();
         }
-        Damage landed = Damage.none();
+        HitResult result = HitResult.none();
         if (this.validTarget()) {
-            HitResolution.Outcome outcome = HitResolution.resolveWithShield(damage, this.spendMark(attacker),
-                    this.stats, this.health, this.gameWorld.random());
-            landed = outcome.landed();
-            if (outcome.shielded() > 0) {
-                this.gameWorld.enemies().reportShielded(this, Damage.of(damage.type(), outcome.shielded()));
+            Damage mitigated = HitResolution.resolve(damage, this.spendMark(attacker), this.stats, this.gameWorld.random());
+            boolean bypasses = attacker.ignoresShields() || (mitigated.critical() && attacker.critsPierceShields());
+            int absorbed = bypasses ? 0 : this.activeEffects.absorb(mitigated.type(), mitigated.amount());
+            if (absorbed > 0) {
+                this.gameWorld.enemies().reportShielded(this, Damage.of(mitigated.type(), absorbed));
             }
+            Damage landed = new Damage(mitigated.amount() - absorbed, mitigated.type(), mitigated.critical())
+                    .cappedAt(this.health);
+            result = new HitResult(landed, absorbed);
             this.health -= landed.amount();
             this.damageTaken += landed.amount();
-            this.gameWorld.damageTally().record(landed);
-            if (landed.amount() > 0) {
+            this.gameWorld.damageTally().record(Damage.of(mitigated.type(), result.credited()));
+            if (result.credited() > 0) {
                 this.moments.markPending(Moment.DAMAGE_TAKEN);
             }
             if (landed.critical()) {
@@ -478,7 +495,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.gameWorld.economy().apply(EconomyDelta.kill(this.price, score));
             this.gameWorld.enemies().reportDeath(this);
         }
-        return landed;
+        return result;
     }
 
     /**

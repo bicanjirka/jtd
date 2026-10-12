@@ -74,8 +74,8 @@ public final class ActiveEffects {
     /** A burn pool reveals an invisible enemy while it holds more than this, in damage units a tick. */
     private static final float BURN_REVEAL_FUEL = 30f;
     private static final float TAR_BURN_FACTOR = 2f;
-    /** The share of healing and shielding an enemy burning under Cauterize receives. */
-    private static final float CAUTERIZED_SHARE = 0.5f;
+    /** The share of healing and shielding an enemy burning under Cauterize no longer receives. */
+    private static final float CAUTERIZED_LOSS = 0.5f;
     private static final float HEATED_PERIODIC_DAMAGE_TAKEN = 0.1f;
     private static final float MARKED_MAGIC_DAMAGE_TAKEN = 0.15f;
     private static final EffectKind[] BURNING_KINDS = {EffectKind.BURN, EffectKind.SOULFIRE};
@@ -115,7 +115,7 @@ public final class ActiveEffects {
             case FREEZE, DAZED -> 1f - effect.speedMultiplier();
             case CHILL -> effect.fuelLevel();
             case BURN, POISON, BLEEDING, SOULFIRE -> effect.damagePerTick().amount();
-            case SHIELD -> effect.shieldPercent();
+            case SHIELD -> effect.shieldRemaining();
             // On/off, not gradated - any reapplication is at least as strong as what's already active.
             case INVISIBLE, REVEALED, EXPOSED, MARKED, PRIORITY, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION,
                     SYMPATHY, RECKONING, SILENCED, ANCHORED, BRITTLE, CORRODED, UNDERTOW, DEAD_ZONE, FALLOUT, KILL_ZONE,
@@ -248,12 +248,39 @@ public final class ActiveEffects {
         this.active.put(incoming.kind(), next.withStackCap(cap).withStacks(stacks, remaining));
     }
 
-    /** Takes {@code fraction} of the shield's strength; a shield that is gone stays gone. */
+    /** Takes {@code fraction} of what the shield has left; a shield that is gone stays gone. */
     public void weakenShield(float fraction) {
         Effect shield = this.active.get(EffectKind.SHIELD);
         if (shield != null) {
-            this.active.put(EffectKind.SHIELD, shield.withShieldPercent(shield.shieldPercent() * (1f - fraction)));
+            this.active.put(EffectKind.SHIELD, shield.withShieldRemaining(shield.shieldRemaining() * (1f - fraction)));
         }
+    }
+
+    /**
+     * Takes what the active shield can absorb of {@code amount} units of {@code type} and returns it;
+     * a shield limited to the other type absorbs nothing. A shield with less than a unit left breaks.
+     */
+    public int absorb(DamageType type, int amount) {
+        Effect shield = this.active.get(EffectKind.SHIELD);
+        if (shield == null || amount <= 0
+                || (shield.shieldRestrictedTo().isPresent() && shield.shieldRestrictedTo().get() != type)) {
+            return 0;
+        }
+        int absorbed = Math.min(amount, (int) shield.shieldRemaining());
+        float left = shield.shieldRemaining() - absorbed;
+        if (left < 1f) {
+            this.active.remove(EffectKind.SHIELD);
+        } else {
+            this.active.put(EffectKind.SHIELD, shield.withShieldRemaining(left));
+        }
+        return absorbed;
+    }
+
+    /** The active shield's pool, in points; {@link ShieldGauge#none()} without one. */
+    public ShieldGauge shieldGauge() {
+        Effect shield = this.active.get(EffectKind.SHIELD);
+        return shield == null ? ShieldGauge.none()
+                : new ShieldGauge(DamageUnits.inPoints(shield.shieldRemaining()), DamageUnits.inPoints(shield.shieldMax()));
     }
 
     /** Whether crits find this enemy more often: it is exposed, or revealed, which exposes it. */
@@ -321,16 +348,18 @@ public final class ActiveEffects {
 
     /**
      * Adds every active effect's stat modifiers: a chill multiplies speed by what is left of its
-     * level and a poison by what is left of its pool, a freeze sets it to zero, a shield adds
-     * shielding for the types it covers, a heal adds regeneration, invisibility sets stealth to
+     * level and a poison by what is left of its pool, a freeze sets it to zero, a heal adds
+     * regeneration, invisibility sets stealth to
      * one and a reveal sets it to zero (the lowest set value wins), a vulnerability adds to damage
      * taken by its stacks, each scorched stack lowers resilience by one and each sickened stack
-     * lowers spirit by one. Shields and heals go in as restorative, so the enemy's spirit scales them.
+     * lowers spirit by one. Heals go in as restorative, so the enemy's spirit and healing received scale them.
      * Being exposed or revealed takes 50 resilience, once however many apply.
      */
     public void contributeTo(StatAccumulator<EnemyStat> accumulator) {
         PoolTuning burning = this.burningTuning();
-        float received = burning.cauterizes() ? CAUTERIZED_SHARE : 1f;
+        if (burning.cauterizes()) {
+            accumulator.addFlat(EnemyStat.HEALING_RECEIVED, -CAUTERIZED_LOSS);
+        }
         if (burning.heats()) {
             accumulator.addFlat(EnemyStat.PERIODIC_DAMAGE_TAKEN, HEATED_PERIODIC_DAMAGE_TAKEN);
         }
@@ -342,14 +371,7 @@ public final class ActiveEffects {
             switch (entry.getKey()) {
                 case CHILL -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - chillLevel(effect));
                 case FREEZE, DAZED -> accumulator.add(EnemyStat.MOVE_SPEED, FROZEN);
-                case SHIELD -> {
-                    for (DamageType type : DAMAGE_TYPES) {
-                        if (effect.shieldRestrictedTo().isEmpty() || effect.shieldRestrictedTo().get() == type) {
-                            accumulator.restoreFlat(EnemyStat.shieldingFor(type), effect.shieldPercent() * received);
-                        }
-                    }
-                }
-                case HEAL -> accumulator.restoreFlat(EnemyStat.REGENERATION, effect.healPerTick() * received);
+                case HEAL -> accumulator.restoreFlat(EnemyStat.REGENERATION, effect.healPerTick());
                 case INVISIBLE -> accumulator.add(EnemyStat.STEALTH, HIDDEN);
                 case REVEALED -> accumulator.add(EnemyStat.STEALTH, REVEALED);
                 case VULNERABLE -> addDamageTaken(accumulator, VULNERABLE_PER_STACK * effect.stacks());
@@ -375,7 +397,7 @@ public final class ActiveEffects {
                     accumulator.addFlat(EnemyStat.PHYSICAL_PLATING, -DamageUnits.ofPoints(CRACKED_PLATING_POINTS));
                     accumulator.addFlat(EnemyStat.MAGIC_PLATING, -DamageUnits.ofPoints(CRACKED_PLATING_POINTS));
                 }
-                case EXPOSED, MARKED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY,
+                case SHIELD, EXPOSED, MARKED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY,
                         RECKONING, SILENCED, DEAD_ZONE, FALLOUT, TOLL, BLEEDING -> {
                 }
                 case TARRED -> accumulator.multiply(EnemyStat.MOVE_SPEED, TARRED_SPEED_SHARE);

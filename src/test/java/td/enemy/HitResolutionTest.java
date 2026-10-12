@@ -9,7 +9,6 @@ import td.stat.EnemyStat;
 import td.stat.StatView;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
 
 class HitResolutionTest {
 
@@ -33,38 +32,37 @@ class HitResolutionTest {
     void armorOnlyMitigatesPhysicalAndMagicResistOnlyMagic() {
         StatView armored = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f));
 
-        assertThat(HitResolution.resolve(Damage.physical(1000), armored, 10000)).isEqualTo(Damage.physical(500));
-        assertThat(HitResolution.resolve(Damage.magic(1000), armored, 10000)).isEqualTo(Damage.magic(1000));
+        assertThat(HitResolution.resolve(Damage.physical(1000), armored)).isEqualTo(Damage.physical(500));
+        assertThat(HitResolution.resolve(Damage.magic(1000), armored)).isEqualTo(Damage.magic(1000));
     }
 
     @Test
     void platingComesOffAfterArmorAndNeverBelowZero() {
         StatView plated = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f).with(EnemyStat.PHYSICAL_PLATING, 300f));
 
-        assertThat(HitResolution.resolve(Damage.physical(1000), plated, 10000)).isEqualTo(Damage.physical(200));
-        assertThat(HitResolution.resolve(Damage.physical(500), plated, 10000)).isEqualTo(Damage.physical(0));
+        assertThat(HitResolution.resolve(Damage.physical(1000), plated)).isEqualTo(Damage.physical(200));
+        assertThat(HitResolution.resolve(Damage.physical(500), plated)).isEqualTo(Damage.physical(0));
     }
 
     @Test
-    void damageTakenMultipliesLastAndTheLandedHitIsCappedAtHealth() {
+    void damageTakenMultipliesLast() {
         StatView vulnerable = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.MAGIC_DAMAGE_TAKEN, 1.5f));
 
-        assertThat(HitResolution.resolve(Damage.magic(100), vulnerable, 10000)).isEqualTo(Damage.magic(150));
-        assertThat(HitResolution.resolve(Damage.magic(100), vulnerable, 40)).isEqualTo(Damage.magic(40));
+        assertThat(HitResolution.resolve(Damage.magic(100), vulnerable)).isEqualTo(Damage.magic(150));
     }
 
     @Test
     void aCriticalHitStaysCriticalThroughMitigation() {
         StatView armored = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f));
 
-        assertThat(HitResolution.resolve(new Damage(1000, DamageType.PHYSICAL, true), armored, 10000).critical())
+        assertThat(HitResolution.resolve(new Damage(1000, DamageType.PHYSICAL, true), armored).critical())
                 .isTrue();
     }
     @Test
     void fullResilienceNeverLetsACritLand() {
         StatView resilient = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, 100f));
 
-        Damage landed = HitResolution.resolve(Damage.physical(1000), AttackProfile.critChance(1f), resilient, 10000,
+        Damage landed = HitResolution.resolve(Damage.physical(1000), AttackProfile.critChance(1f), resilient,
                 () -> 0.0);
 
         assertThat(landed).isEqualTo(Damage.physical(1000));
@@ -75,8 +73,8 @@ class HitResolutionTest {
         StatView halfResilient = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, 50f));
         AttackProfile attacker = AttackProfile.critChance(0.8f).withCritMultiplier(3f);
 
-        Damage justInside = HitResolution.resolve(Damage.physical(1000), attacker, halfResilient, 10000, () -> 0.39);
-        Damage justOutside = HitResolution.resolve(Damage.physical(1000), attacker, halfResilient, 10000, () -> 0.41);
+        Damage justInside = HitResolution.resolve(Damage.physical(1000), attacker, halfResilient, () -> 0.39);
+        Damage justOutside = HitResolution.resolve(Damage.physical(1000), attacker, halfResilient, () -> 0.41);
 
         assertThat(justInside).isEqualTo(new Damage(2000, DamageType.PHYSICAL, true));
         assertThat(justOutside).isEqualTo(Damage.physical(1000));
@@ -86,7 +84,7 @@ class HitResolutionTest {
     void anAttackerWithoutCritChanceNeverDrawsFromTheRandomSource() {
         StatView plain = stats(BaseStats.defaults(EnemyStat.class));
 
-        HitResolution.resolve(Damage.physical(1000), AttackProfile.none(), plain, 10000, () -> {
+        HitResolution.resolve(Damage.physical(1000), AttackProfile.none(), plain, () -> {
             throw new IllegalStateException("drew a random number");
         });
     }
@@ -96,9 +94,9 @@ class HitResolutionTest {
         StatView armored = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f));
 
         Damage halfPierced = HitResolution.resolve(Damage.physical(1000),
-                AttackProfile.none().withArmorPenetration(0.5f, 0f), armored, 10000, () -> 1.0);
+                AttackProfile.none().withArmorPenetration(0.5f, 0f), armored, () -> 1.0);
         Damage overPierced = HitResolution.resolve(Damage.physical(1000),
-                AttackProfile.none().withArmorPenetration(0.5f, 500f), armored, 10000, () -> 1.0);
+                AttackProfile.none().withArmorPenetration(0.5f, 500f), armored, () -> 1.0);
 
         assertThat(halfPierced.amount()).isEqualTo(Math.round(1000 * 100f / 150f));
         assertThat(overPierced).isEqualTo(Damage.physical(1000));
@@ -109,8 +107,8 @@ class HitResolutionTest {
         StatView brittle = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, -50f));
         AttackProfile attacker = AttackProfile.critChance(0.2f).withCritMultiplier(2f);
 
-        Damage justInside = HitResolution.resolve(Damage.physical(1000), attacker, brittle, 10000, () -> 0.29);
-        Damage justOutside = HitResolution.resolve(Damage.physical(1000), attacker, brittle, 10000, () -> 0.31);
+        Damage justInside = HitResolution.resolve(Damage.physical(1000), attacker, brittle, () -> 0.29);
+        Damage justOutside = HitResolution.resolve(Damage.physical(1000), attacker, brittle, () -> 0.31);
 
         // the chance rises from 20% to 30%, the bonus from +100% to +150%
         assertThat(justInside).isEqualTo(new Damage(2500, DamageType.PHYSICAL, true));
@@ -122,7 +120,7 @@ class HitResolutionTest {
         StatView plain = stats(BaseStats.defaults(EnemyStat.class));
         AttackProfile pulse = AttackProfile.critChance(1f).withGuaranteedCrit().asPeriodic();
 
-        Damage landed = HitResolution.resolve(Damage.physical(1000), pulse, plain, 10000, () -> 0.0);
+        Damage landed = HitResolution.resolve(Damage.physical(1000), pulse, plain, () -> 0.0);
 
         assertThat(landed).isEqualTo(Damage.physical(1000));
     }
@@ -132,7 +130,7 @@ class HitResolutionTest {
         StatView resilient = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, 70f));
         AttackProfile attacker = AttackProfile.none().withCritMultiplier(2f).withGuaranteedCrit();
 
-        Damage landed = HitResolution.resolve(Damage.physical(1000), attacker, resilient, 10000, () -> {
+        Damage landed = HitResolution.resolve(Damage.physical(1000), attacker, resilient, () -> {
             throw new IllegalStateException("drew a random number");
         });
 
@@ -143,8 +141,7 @@ class HitResolutionTest {
     void aGuaranteedCritNeverLandsOnACritImmuneEnemy() {
         StatView immune = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, 100f));
 
-        Damage landed = HitResolution.resolve(Damage.physical(1000), AttackProfile.none().withGuaranteedCrit(), immune,
-                10000, () -> 0.0);
+        Damage landed = HitResolution.resolve(Damage.physical(1000), AttackProfile.none().withGuaranteedCrit(), immune, () -> 0.0);
 
         assertThat(landed).isEqualTo(Damage.physical(1000));
     }
@@ -169,57 +166,12 @@ class HitResolutionTest {
         StatView armored = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f).with(EnemyStat.PHYSICAL_PLATING, 300f));
         AttackProfile weakSpot = AttackProfile.critChance(0.5f).withGlancingPenetration(100f, 1f);
 
-        Damage glancing = HitResolution.resolve(Damage.physical(1000), weakSpot, armored, 10000, () -> 0.9);
-        Damage crit = HitResolution.resolve(Damage.physical(1000), weakSpot, armored, 10000, () -> 0.1);
+        Damage glancing = HitResolution.resolve(Damage.physical(1000), weakSpot, armored, () -> 0.9);
+        Damage crit = HitResolution.resolve(Damage.physical(1000), weakSpot, armored, () -> 0.1);
 
         assertThat(glancing).isEqualTo(Damage.physical(1000));
         assertThat(crit.critical()).isTrue();
         assertThat(crit.amount()).isEqualTo(Math.round(1000 * 1.5f * 100f / 200f - 300f));
-    }
-
-    @Test
-    void shieldingTakesItsShareOfAHitAfterDamageTaken() {
-        StatView shielded = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.PHYSICAL_SHIELDING, 0.4f)
-                .with(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 1.5f));
-
-        assertThat(HitResolution.resolve(Damage.physical(1000), shielded, 10000)).isEqualTo(Damage.physical(900));
-        assertThat(HitResolution.resolve(Damage.magic(1000), shielded, 10000)).isEqualTo(Damage.magic(1000));
-    }
-
-    @Test
-    void theShieldsShareOfAHitIsReportedAndAnAttackThatIgnoresShieldsTakesNoneOfIt() {
-        StatView shielded = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.PHYSICAL_SHIELDING, 0.4f));
-        td.util.RandomSource random = () -> 1.0;
-
-        HitResolution.Outcome ordinary = HitResolution.resolveWithShield(Damage.physical(1000), AttackProfile.none(),
-                shielded, 10000, random);
-        HitResolution.Outcome ignoring = HitResolution.resolveWithShield(Damage.physical(1000),
-                AttackProfile.none().withIgnoredShields(), shielded, 10000, random);
-
-        assertThat(ordinary.landed()).isEqualTo(Damage.physical(600));
-        assertThat(ordinary.shielded()).isEqualTo(400);
-        assertThat(ignoring.landed()).isEqualTo(Damage.physical(1000));
-        assertThat(ignoring.shielded()).isZero();
-    }
-
-    @Test
-    void aShieldCountsTowardsWhatAnEnemyShrugsOff() {
-        StatView shielded = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.PHYSICAL_SHIELDING, 0.4f));
-
-        assertThat(HitResolution.reductionAgainst(DamageType.PHYSICAL, shielded)).isCloseTo(0.4f, within(1e-6f));
-        assertThat(HitResolution.reductionAgainst(DamageType.MAGIC, shielded)).isZero();
-    }
-
-    @Test
-    void aCritFromAnAttackerThatPiercesShieldsGoesStraightToHealth() {
-        StatView shielded = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.PHYSICAL_SHIELDING, 0.5f));
-        AttackProfile cleanShot = AttackProfile.critChance(0.5f).withCritsPierceShields();
-
-        Damage crit = HitResolution.resolve(Damage.physical(1000), cleanShot, shielded, 10000, () -> 0.0);
-        Damage plain = HitResolution.resolve(Damage.physical(1000), cleanShot, shielded, 10000, () -> 0.99);
-
-        assertThat(crit.amount()).isEqualTo(1500);
-        assertThat(plain.amount()).isEqualTo(500);
     }
 
     @Test
@@ -229,9 +181,9 @@ class HitResolutionTest {
         });
 
         td.damage.Damage ticking = HitResolution.resolve(td.damage.Damage.magic(1000),
-                td.damage.AttackProfile.none().asPeriodic(), view, 100000, () -> 1.0);
+                td.damage.AttackProfile.none().asPeriodic(), view, () -> 1.0);
         td.damage.Damage hit = HitResolution.resolve(td.damage.Damage.magic(1000), td.damage.AttackProfile.none(),
-                view, 100000, () -> 1.0);
+                view, () -> 1.0);
 
         org.assertj.core.api.Assertions.assertThat(ticking.amount()).isEqualTo(1500);
         org.assertj.core.api.Assertions.assertThat(hit.amount()).isEqualTo(1000);

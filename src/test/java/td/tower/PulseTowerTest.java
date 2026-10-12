@@ -339,12 +339,12 @@ class PulseTowerTest {
         assertThat(has(outside, EffectKind.CORRODED)).isFalse();
     }
 
-    /** A real enemy standing at {@code tower}, which nothing ticks, wearing a half shield. */
+    /** A real enemy standing at {@code tower}, which nothing ticks, wearing a shield no test breaks. */
     private td.enemy.EnemyMob shieldedEnemyAt(PulseTower tower) {
         this.board.setPath(new td.wave.PathNormal(List.of(new td.wave.Vec2(tower.getX(), tower.getY()),
                 new td.wave.Vec2(tower.getX() + 900, tower.getY()))));
         td.enemy.EnemyMob enemy = EnemyFactory.getEnemy("c", this.board, 0, 1_000_000, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.shield(0.5f, 10_000, d -> {
+        enemy.applyEffect(Effect.shield(1_000_000f, 10_000, d -> {
         }));
         return enemy;
     }
@@ -388,7 +388,7 @@ class PulseTowerTest {
 
         inside.doDamage(Damage.magic(hit));
 
-        assertThat(before - inside.getHealth()).isCloseTo(hit / 2, org.assertj.core.api.Assertions.within(1));
+        assertThat(before - inside.getHealth()).isZero();
     }
 
     @Test

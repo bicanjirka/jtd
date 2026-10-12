@@ -68,14 +68,14 @@ final class WardenEnemy {
                 IdentifiedAbility.anonymous(new Ability(new PeriodicTrigger(300), new SpawnEnemiesAction("c", 1, false))),
                 // Its plating only answers physical hits, so its own shield covers the other type.
                 IdentifiedAbility.anonymous(new Ability(new PeriodicTrigger(400),
-                        new ApplyEffectAction(ShieldTemplate.magicOnly(0.5f, 100), new SelfTarget()))),
+                        new ApplyEffectAction(ShieldTemplate.magicOnly(health * 0.1f, 100), new SelfTarget()))),
                 IdentifiedAbility.anonymous(new Ability(new HealthThresholdTrigger(0.5f),
-                        new ApplyEffectAction(new ShieldTemplate(0.3f, 150), new RadiusTarget(150f)))),
+                        new ApplyEffectAction(new ShieldTemplate(60f, 150), new RadiusTarget(150f)))),
                 // Re-arms after each hit, so it fires every time it is left alone, not just once.
                 IdentifiedAbility.anonymous(new Ability(new TimeSinceLastHitTrigger(200),
                         new ApplyEffectAction(new HealTemplate(health * 0.0015f, 100), new SelfTarget()))),
                 IdentifiedAbility.anonymous(new Ability(new OnCriticalHitTakenTrigger(),
-                        new ApplyEffectAction(new ShieldTemplate(0.3f, 30), new SelfTarget())))));
+                        new ApplyEffectAction(new ShieldTemplate(health * 0.03f, 30), new SelfTarget())))));
         abilities.add(IdentifiedAbility.anonymous(new Ability(new OnDeathTrigger(),
                 new SpawnEnemiesAction(eggId, 1, false))));
         return EnemyDefinition.of(id, name, health, 100, 0.8f, BodyArchetype.WARDEN)

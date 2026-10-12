@@ -21,12 +21,6 @@ public enum EnemyStat implements StatKey {
     PHYSICAL_DAMAGE_TAKEN(1f, 0.1f, Float.MAX_VALUE),
     MAGIC_DAMAGE_TAKEN(1f, 0.1f, Float.MAX_VALUE),
     /**
-     * The share of a hit a shield takes, after damage taken; a critical hit from an attacker that
-     * pierces shields goes past it. Scaled by spirit like every restorative.
-     */
-    PHYSICAL_SHIELDING(0f, 0f, 0.9f),
-    MAGIC_SHIELDING(0f, 0f, 0.9f),
-    /**
      * Each point removes 1% of an attacker's crit chance and crit bonus; below zero each point adds
      * 1% to both; 100 is crit-immune.
      */
@@ -35,6 +29,8 @@ public enum EnemyStat implements StatKey {
     PERIODIC_DAMAGE_TAKEN(1f, 0.1f, Float.MAX_VALUE),
     /** Heals and shields the enemy receives are scaled by {@code max(0, 1 + spirit / 100)}. */
     SPIRIT(0f, -100f, Float.MAX_VALUE),
+    /** The share of heals and shields the enemy receives. */
+    HEALING_RECEIVED(1f, 0f, Float.MAX_VALUE),
     REGENERATION(0f, 0f, Float.MAX_VALUE),
     CHILL_RESIST(0f, 0f, 1f),
     BURN_RESIST(0f, 0f, 1f),
@@ -73,12 +69,6 @@ public enum EnemyStat implements StatKey {
         };
     }
 
-    public static EnemyStat shieldingFor(DamageType type) {
-        return switch (type) {
-            case PHYSICAL -> PHYSICAL_SHIELDING;
-            case MAGIC -> MAGIC_SHIELDING;
-        };
-    }
 
     @Override
     public float defaultBase() {

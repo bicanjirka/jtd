@@ -91,17 +91,78 @@ class DefinedEnemyMobTest {
     }
 
     @Test
-    void anActiveShieldReducesLandedDamageByItsPercent() {
+    void aBrokenShieldLetsTheRestOfTheHitThrough() {
         GameWorld context = newContext();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         assertThat(enemy.getHealth()).isEqualTo(5000);
-        enemy.applyEffect(Effect.shield(0.4f, 5, d -> {
+        enemy.applyEffect(Effect.shield(400f, 5, d -> {
         }));
 
         Damage landed = enemy.doDamage(Damage.physical(1000));
 
         assertThat(landed).isEqualTo(Damage.physical(600));
         assertThat(enemy.getHealth()).isEqualTo(4400);
+        assertThat(enemy.hasEffect(td.effect.EffectKind.SHIELD)).isFalse();
+    }
+
+    @Test
+    void spiritScalesAShieldWhenItIsApplied() {
+        GameWorld context = newContext();
+        DefinedEnemyMob enemy = (DefinedEnemyMob) EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.sickened(50));
+
+        enemy.applyEffect(Effect.shield(400f, 100, d -> {
+        }));
+
+        assertThat(enemy.shieldGauge().max()).isCloseTo(2f, within(1e-4f));
+    }
+
+    @Test
+    void aCauterizedEnemyReceivesHalfAShield() {
+        GameWorld context = newContext();
+        DefinedEnemyMob enemy = (DefinedEnemyMob) EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.burn(Damage.magic(100), 60, d -> {
+        }).withTuning(td.effect.PoolTuning.standard().cauterizing()));
+
+        enemy.applyEffect(Effect.shield(400f, 100, d -> {
+        }));
+
+        assertThat(enemy.shieldGauge().max()).isCloseTo(2f, within(1e-4f));
+    }
+
+    @Test
+    void aCritFromAnAttackerThatPiercesShieldsGoesStraightToHealth() {
+        GameWorld context = newContext();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        enemy.applyEffect(Effect.shield(5000f, 100, d -> {
+        }));
+        AttackProfile cleanShot = AttackProfile.critChance(1f).withCritsPierceShields();
+
+        HitResult crit = enemy.takeHit(Damage.physical(1000), cleanShot);
+        HitResult plain = enemy.takeHit(Damage.physical(1000), AttackProfile.none().withCritsPierceShields());
+
+        assertThat(crit.absorbed()).isZero();
+        assertThat(crit.landed().critical()).isTrue();
+        assertThat(plain.absorbed()).isEqualTo(1000);
+        assertThat(plain.landed().amount()).isZero();
+    }
+
+    @Test
+    void whatAShieldTookIsReportedAndAnAttackThatIgnoresShieldsTakesNoneOfIt() {
+        GameWorld context = newContext();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        java.util.List<Damage> reported = new java.util.ArrayList<>();
+        context.enemies().addShieldListener((mob, absorbed) -> reported.add(absorbed));
+        enemy.applyEffect(Effect.shield(400f, 100, d -> {
+        }));
+
+        HitResult ordinary = enemy.takeHit(Damage.physical(300), AttackProfile.none());
+        HitResult ignoring = enemy.takeHit(Damage.physical(300), AttackProfile.none().withIgnoredShields());
+
+        assertThat(ordinary.absorbed()).isEqualTo(300);
+        assertThat(ignoring.absorbed()).isZero();
+        assertThat(ignoring.landed()).isEqualTo(Damage.physical(300));
+        assertThat(reported).containsExactly(Damage.physical(300));
     }
 
     @Test

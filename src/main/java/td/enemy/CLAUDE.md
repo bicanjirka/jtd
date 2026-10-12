@@ -85,10 +85,11 @@
   `baseSpeed` × spawn multiplier. The sheet is invalidated on a hit, on applying an effect, and
   after a tick that ticked effects or changed health. `doTick` reads speed and regeneration
   *before* `ActiveEffects.tick()`, and returns early if a damage-over-time tick killed the mob.
-- `doDamage(damage, attacker)` lands a hit through `HitResolution` (a crit roll for hits only, and
+- `takeHit(damage, attacker)` lands a hit through `HitResolution` (a crit roll for hits only, and
   none at resilience 100; a guaranteed crit skips the roll, otherwise it rolls against resilience,
-  which scales crit chance and crit bonus both ways; penetration, mitigation, plating, damage taken, cap at health) and
-  returns what landed. Callers report that return value, not the input.
+  which scales crit chance and crit bonus both ways; then penetration, mitigation, plating, damage
+  taken), then a shield pool absorbs what it can, then the cap at health; it returns a `HitResult`
+  (health lost, absorbed). Callers credit `credited()`. `doDamage` is its `landed()`.
 - A spawn shape's trait override is composed into the definition before the mob is built. There
   is no separate multiplier mechanism.
 - Spawn delay: the mob starts inactive iff its *converted* tick delay is > 0.
@@ -105,8 +106,7 @@
 - `reportDeath(walk)` decrements the alive count and tells every `WalkEndListener` the walk
   ended (towers earn XP from it); `replace()` (a hatch) does neither, so a hatch earns no bounty
   and does not shorten the wave.
-- `reportShielded` tells every `ShieldListener` the part of a hit a shield took (from
-  `HitResolution.resolveWithShield`), so a tower can answer a shield without the enemy knowing it. A
+- `reportShielded` tells every `ShieldListener` the part of a hit a shield took from the pool, so a tower can answer a shield without the enemy knowing it. A
   listener that deals damage back must not be told about its own damage.
 - A mob takes its `entryOrdinal` from `recordEntry()` the moment it goes live (after its spawn
   delay), not when it is built. `walkedWithin` covers only the path walked since it appeared.

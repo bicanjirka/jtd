@@ -75,16 +75,16 @@ class InversionTest {
     }
 
     @Test
-    void aShieldOnAnInvertedEnemyIsOneHitOfItsPercentOfFullHealthAndNeverGoesOn() {
+    void aShieldOnAnInvertedEnemyIsOneHitOfItsPointsAndNeverGoesOn() {
         GameWorld world = worldWithStraightPath();
         DefinedEnemyMob enemy = spawn(world, "c", 4);
         List<Damage> credited = new ArrayList<>();
         invert(enemy, credited);
 
-        enemy.applyEffect(Effect.shield(0.3f, 100, damage -> {
+        enemy.applyEffect(Effect.shield(1500f, 100, damage -> {
         }));
 
-        assertThat(credited).containsExactly(Damage.magic(Math.round(0.3f * enemy.getMaxHealthPoints() * 100)));
+        assertThat(credited).containsExactly(Damage.magic(1500));
         assertThat(enemy.hasEffect(EffectKind.SHIELD)).isFalse();
     }
 
