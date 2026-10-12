@@ -7,10 +7,13 @@ import td.tower.TowerBaseStats;
 import td.tower.TowerFactory;
 import td.tower.TowerStat;
 import td.tower.TowerVisitor;
+import td.tower.proc.HitBonus;
+import td.tower.proc.Proc;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 
+import java.util.List;
 import java.util.Optional;
 
 /** A tower with test-supplied upgrades, for testing the upgrade mechanism apart from real content. */
@@ -20,6 +23,8 @@ public final class FakeTower extends AbstractTower {
     private final Optional<UpgradeState> ownedUpgrades;
     private StatModifiers<TowerStat> given = StatModifiers.none();
     private int recalculations;
+    private List<Proc> baseProcs = List.of();
+    private List<HitBonus> baseHitBonuses = List.of();
 
     private FakeTower(GameWorld context, int x, int y, UpgradeTree tree, Optional<UpgradeState> ownedUpgrades) {
         super(TowerFactory.Type.SNIPER, new TowerBaseStats(10, 3f, 20), context, x, y);
@@ -56,6 +61,28 @@ public final class FakeTower extends AbstractTower {
     @Override
     public StatModifiers<TowerStat> buffFor(Tower other) {
         return other == this ? StatModifiers.none() : this.given;
+    }
+
+    /** This tower, now with {@code procs} of its own, as if born with them. Set it before it attacks. */
+    public FakeTower withBaseProcs(List<Proc> procs) {
+        this.baseProcs = List.copyOf(procs);
+        return this;
+    }
+
+    /** This tower, now with {@code bonuses} of its own, as if born with them. Set it before it attacks. */
+    public FakeTower withBaseHitBonuses(List<HitBonus> bonuses) {
+        this.baseHitBonuses = List.copyOf(bonuses);
+        return this;
+    }
+
+    @Override
+    protected List<Proc> baseProcs() {
+        return this.baseProcs;
+    }
+
+    @Override
+    protected List<HitBonus> baseHitBonuses() {
+        return this.baseHitBonuses;
     }
 
     /** How many times {@link #recalculateStats()} has run. */

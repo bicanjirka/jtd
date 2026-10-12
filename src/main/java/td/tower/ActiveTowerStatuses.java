@@ -4,7 +4,9 @@ import td.stat.StatModifiers;
 import td.util.ThreadConfined;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /** The statuses one tower holds now, each with what is left of it: an end tick or a count of shots. */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
@@ -62,6 +64,15 @@ final class ActiveTowerStatuses {
             total = total.plus(h.status().modifiers());
         }
         return total;
+    }
+
+    /** What every held status lets the tower do together. */
+    Set<TowerCapability> capabilities() {
+        Set<TowerCapability> all = EnumSet.noneOf(TowerCapability.class);
+        for (Held h : this.held) {
+            all.addAll(h.status().capabilities());
+        }
+        return all;
     }
 
     private int indexOf(String id) {

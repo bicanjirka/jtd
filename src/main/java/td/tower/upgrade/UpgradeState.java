@@ -1,11 +1,17 @@
 package td.tower.upgrade;
 
 import td.stat.StatModifiers;
+import td.tower.TowerCapability;
 import td.tower.TowerStat;
+import td.tower.proc.HitBonus;
+import td.tower.proc.Proc;
+import td.tower.targeting.TargetPriority;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * A tower's owned nodes in purchase order, as one immutable snapshot. A slot's current node is
@@ -57,6 +63,43 @@ public record UpgradeState(List<UpgradeNode> owned) {
     public Optional<UpgradeNode> tip(UpgradeSlot slot) {
         List<UpgradeNode> inSlot = this.inSlot(slot);
         return inSlot.isEmpty() ? Optional.empty() : Optional.of(inSlot.get(inSlot.size() - 1));
+    }
+
+    /** What every owned node lets the tower do. */
+    public Set<TowerCapability> capabilities() {
+        Set<TowerCapability> all = EnumSet.noneOf(TowerCapability.class);
+        for (UpgradeNode node : this.owned) {
+            all.addAll(node.effects().capabilities());
+        }
+        return all;
+    }
+
+    /** Whom the first owned node that picks a target makes the tower aim at. */
+    public Optional<TargetPriority> targeting() {
+        for (UpgradeNode node : this.owned) {
+            if (node.effects().targeting().isPresent()) {
+                return node.effects().targeting();
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** Every owned node's hit bonuses, in purchase order. */
+    public List<HitBonus> hitBonuses() {
+        List<HitBonus> all = new ArrayList<>();
+        for (UpgradeNode node : this.owned) {
+            all.addAll(node.effects().hitBonuses());
+        }
+        return all;
+    }
+
+    /** Every owned node's procs, in purchase order. */
+    public List<Proc> procs() {
+        List<Proc> all = new ArrayList<>();
+        for (UpgradeNode node : this.owned) {
+            all.addAll(node.effects().procs());
+        }
+        return all;
     }
 
     /** Every owned node's emission, combined. */

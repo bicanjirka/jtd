@@ -28,6 +28,8 @@ import td.tower.cinder.StokePerk;
 import td.tower.cinder.StokeSpec;
 import td.tower.cinder.ThermalShockPerk;
 import td.tower.cinder.WhiteFlamePerk;
+import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitKind;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.InWedgeTargetQuery;
 import td.tower.targeting.NearestSelector;
@@ -376,10 +378,12 @@ public final class CinderTower extends AbstractTower {
             entry.steps = spec.stoke().alwaysFull() ? spec.stoke().maxSteps()
                     : Math.min(spec.stoke().maxSteps(), entry.steps + (stoked ? 1 : 0));
         }
-        AttackProfile attack = this.stats().attack();
+        HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.WAVE, 0f, this.stats());
+        AttackProfile attack = adjustment.applyTo(this.stats().attack());
         boolean critical = enemy.rollsCrit(attack);
         float potency = (1f + (spec.stoke().active() ? this.stats().value(TowerStat.STOKE_STEP) * entry.steps : 0f))
-                * (critical ? enemy.critFactorFor(attack) : 1f);
+                * (critical ? enemy.critFactorFor(attack) : 1f) * adjustment.damageFactor();
+        this.report(enemy, HitKind.WAVE, critical, false);
         Damage level = Damage.magic(Math.round(this.damageCurrent() * potency));
         int duration = this.burnDuration();
         PoolTuning tuning = this.tuning(spec);

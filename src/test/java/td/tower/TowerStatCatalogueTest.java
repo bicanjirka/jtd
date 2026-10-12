@@ -55,6 +55,19 @@ class TowerStatCatalogueTest {
         }
     }
 
+    @Test
+    void aPassiveTowersNodesCarryNoProcsOrHitBonuses() {
+        for (AbstractTower tower : this.everyTower()) {
+            if (!tower.isPassive()) {
+                continue;
+            }
+            for (UpgradeNode node : tower.upgradeTree().nodes()) {
+                assertThat(node.effects().procs()).as("%s's %s", tower.getType(), node.displayName()).isEmpty();
+                assertThat(node.effects().hitBonuses()).as("%s's %s", tower.getType(), node.displayName()).isEmpty();
+            }
+        }
+    }
+
     private static final class AsAbstractTower implements TowerVisitor<AbstractTower> {
 
         @Override

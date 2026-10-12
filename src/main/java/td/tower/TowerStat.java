@@ -3,9 +3,12 @@ package td.tower;
 import td.damage.AttackProfile;
 import td.damage.DamageUnits;
 import td.stat.StatKey;
+import td.stat.StatModifier;
 import td.util.TickRate;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 /** One number on a tower's stat sheet, with its default, its clamp, and how a bonus to it reads. */
 public enum TowerStat implements StatKey {
@@ -92,6 +95,31 @@ public enum TowerStat implements StatKey {
     /** Whether every tower has this stat, so an aura or a status may change it on any tower. */
     public boolean universal() {
         return this.universal;
+    }
+
+    /**
+     * How {@code modifier} reads as a bonus to this stat: a set value plainly, otherwise its flat in this
+     * stat's unit, its percent and its multiplier as signed percentages, joined with ", ".
+     */
+    public String describe(StatModifier modifier) {
+        if (modifier.hasSetValue()) {
+            return this.unit.plain(modifier.setTo());
+        }
+        List<String> parts = new ArrayList<>();
+        if (modifier.flat() != 0f) {
+            parts.add(this.unit.signed(modifier.flat()));
+        }
+        if (modifier.percentAdd() != 0f) {
+            parts.add(signedPercent(modifier.percentAdd()));
+        }
+        if (modifier.multiply() != 1f) {
+            parts.add(signedPercent(modifier.multiply() - 1f));
+        }
+        return String.join(", ", parts);
+    }
+
+    private static String signedPercent(float fraction) {
+        return (fraction < 0f ? "-" : "+") + Math.round(Math.abs(fraction) * 100) + "%";
     }
 
     /** How a stat's numbers read in a bonus row. */

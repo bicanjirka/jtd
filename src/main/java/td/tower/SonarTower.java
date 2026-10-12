@@ -6,6 +6,8 @@ import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitKind;
 import td.tower.sonar.BeamSpec;
 import td.tower.sonar.CommandPingPerk;
 import td.tower.sonar.CritRefreshPerk;
@@ -278,11 +280,13 @@ public final class SonarTower extends AbstractTower {
      */
     private void strike(EnemyMob enemy, float share, SonarSpec spec, List<SonarPerk> owned, int gameTime) {
         StrikeContext context = new StrikeContext(enemy, this.rangeShareOf(enemy));
-        SonarStrike strike = SonarStrike.of(this.stats().attack(), share);
+        HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.BEAM, context.rangeShare(), this.stats());
+        SonarStrike strike = SonarStrike.of(adjustment.applyTo(this.stats().attack()), share);
         for (SonarPerk perk : owned) {
             strike = perk.shape(strike, context);
         }
-        float amount = this.damageCurrent() * strike.damageFactor() * (1f + strike.farBonus() * context.rangeShare());
+        float amount = this.damageCurrent() * strike.damageFactor() * (1f + strike.farBonus() * context.rangeShare())
+                * adjustment.damageFactor();
         boolean critical = this.dealDamage(enemy, Damage.of(strike.type(), Math.round(amount)), strike.attack());
         if (strike.magicShare() > 0f && !enemy.isDead()) {
             float riding = amount * strike.magicShare() * this.potencyOfHit(enemy, critical);
@@ -293,6 +297,7 @@ public final class SonarTower extends AbstractTower {
         for (SonarPerk perk : owned) {
             perk.react(result, this.actions);
         }
+        this.report(enemy, HitKind.BEAM, critical, enemy.isDead());
         this.recentHits.add(new SonarHit((float) enemy.getX(), (float) enemy.getY(), gameTime, strike.type()));
     }
 

@@ -5,6 +5,8 @@ import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitKind;
 import td.tower.sniper.AimFocus;
 import td.tower.sniper.AimLock;
 import td.tower.sniper.AimRules;
@@ -290,7 +292,10 @@ public final class SniperTower extends AbstractTower {
         AimLock lock = this.focus.lock(target, Math.round(this.stats().value(TowerStat.AIM_STACKS)),
                 steadyAim.survivesKill());
         ShotContext context = new ShotContext(target, lock, this.shotsFired, this.rangeShareOf(target));
-        SniperShot shot = SniperShot.of(stats.attack());
+        HitAdjustment adjustment = this.hitAdjustment(target, HitKind.DIRECT, context.rangeShare(), stats, lock.stacks(),
+                lock.fresh());
+        SniperShot shot = SniperShot.of(adjustment.applyTo(stats.attack())).scaledBy(adjustment.damageFactor())
+                .withAttackSpeedBonus(adjustment.attackSpeed());
         for (SniperPerk perk : owned) {
             shot = perk.shape(shot, context);
         }
@@ -301,6 +306,7 @@ public final class SniperTower extends AbstractTower {
         for (SniperPerk perk : owned) {
             result = perk.settle(result, this.actions);
         }
+        this.report(target, HitKind.DIRECT, result.critical(), result.killed());
         this.lastShot = this.traceOf(shot, target, result.critical());
         for (SniperPerk perk : owned) {
             perk.react(result, this.actions);
