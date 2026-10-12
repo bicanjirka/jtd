@@ -59,6 +59,11 @@ public record UpgradeState(List<UpgradeNode> owned) {
         return inSlot.isEmpty() ? Optional.empty() : Optional.of(inSlot.get(inSlot.size() - 1));
     }
 
+    /** Every owned node's emission, combined. */
+    public StatModifiers<TowerStat> totalEmission() {
+        return this.owned.stream().map(n -> n.effects().emission()).reduce(StatModifiers.none(), StatModifiers::plus);
+    }
+
     /** Every owned node's stat modifiers, combined. */
     public StatModifiers<TowerStat> totalModifiers() {
         return this.owned.stream().map(n -> n.effects().modifiers()).reduce(StatModifiers.none(), StatModifiers::plus);

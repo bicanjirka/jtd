@@ -32,6 +32,7 @@ import td.tower.targeting.NearestSelector;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.BaseSlotPerks;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
 import td.tower.upgrade.PurposeCondition;
@@ -73,9 +74,9 @@ public final class PulseTower extends AbstractTower {
     private static final int FULL_TOLL_SECONDS_NEEDED = 30;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
-            .withAttune("Toll: each second an enemy stays inside adds a stack (up to 5), fading 1s after it leaves; "
-                    + "each stack: +10% field damage, and every debuff on it wears off 10% slower")
-            .withRangeThree(0.2f, "Wide Field: Toll lasts 1s longer after an enemy leaves");
+            .withAttune(NodeEffects.none().withNote("Toll: each second an enemy stays inside adds a stack (up to 5), fading 1s after it leaves; "
+                    + "each stack: +10% field damage, and every debuff on it wears off 10% slower"))
+            .withRangeThree(0.2f, NodeEffects.none().withNote("Wide Field: Toll lasts 1s longer after an enemy leaves"));
 
     private static final UpgradeNode OVERCHARGED_COILS_1 = UpgradeTier.HEAD_1.node("pulse.head.overcharged_coils.1",
             "Overcharged Coils", PRICE)
@@ -165,7 +166,7 @@ public final class PulseTower extends AbstractTower {
     /** A rule that holds inside the field lasts this long after the last tick an enemy was in it. */
     private static final int INSIDE_TICKS = 3;
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, ARC_DISCHARGE,
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, ARC_DISCHARGE,
             NULL_FIELD))
             .with(OVERCHARGED_COILS_1, OVERCHARGED_COILS_2, ARC_DISCHARGE, MELTDOWN, TESLA_COIL, PHASE_FIELD_1,
                     PHASE_FIELD_2, NULL_FIELD, TRUE_SIGHT, DEAD_ZONE, CORROSION, MIRROR_FIELD, UNDERTOW,

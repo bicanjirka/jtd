@@ -42,6 +42,7 @@ import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.BaseSlotPerks;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
 import td.tower.upgrade.PurposeCondition;
@@ -89,9 +90,9 @@ public final class SeekerTower extends AbstractTower {
     private static final int FREEZES_NEEDED = 25;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
-            .withAttune("Nest: the cooldown loads a missile into the nest (up to 3) instead of firing; with a "
-                    + "target in range, stored missiles launch 4 ticks apart")
-            .withRangeThree(0.1f, "Over the Horizon: may fire at Revealed or Marked enemies within 1.5x its range");
+            .withAttune(NodeEffects.none().withNote("Nest: the cooldown loads a missile into the nest (up to 3) instead of firing; with a "
+                    + "target in range, stored missiles launch 4 ticks apart"))
+            .withRangeThree(0.1f, NodeEffects.none().withNote("Over the Horizon: may fire at Revealed or Marked enemies within 1.5x its range"));
 
     private static final UpgradeNode TWIN_WARHEAD_1 = UpgradeTier.HEAD_1.node("seeker.head.twin_warhead.1",
             "Twin Warhead", PRICE)
@@ -163,7 +164,7 @@ public final class SeekerTower extends AbstractTower {
             "Hunter's Mark", PRICE)
             .withNote("each consecutive hit on the same target +20%, up to +100%; aims at the highest rank");
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, BROOD, BRITTLE))
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, BROOD, BRITTLE))
             .with(TWIN_WARHEAD_1, TWIN_WARHEAD_2, BROOD, SHATTERBURST, REARM, DEEP_FREEZE_1, DEEP_FREEZE_2, BRITTLE,
                     ABSOLUTE_ZERO, FROSTBITE, ARCANE_PAYLOAD, EMP_PAYLOAD, TRACER_PAYLOAD, FULL_RACK,
                     ARCANE_WARHEAD, NULLIFIER, HUNTERS_MARK)

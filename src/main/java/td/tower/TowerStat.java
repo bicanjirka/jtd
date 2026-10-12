@@ -27,7 +27,33 @@ public enum TowerStat implements StatKey {
     /** The share of an enemy's disruption that reaches the tower. */
     DISRUPTION_TAKEN(1f, 0f, 1f, Unit.PERCENT, "Disruption taken", true),
     /** Only ever set, so two sources keep the shorter interval; 0 is never. */
-    WITHER_INTERVAL(0f, 0f, Float.MAX_VALUE, Unit.TICKS, "Hits apply Vulnerable every", true);
+    WITHER_INTERVAL(0f, 0f, Float.MAX_VALUE, Unit.TICKS, "Hits apply Vulnerable every", true),
+    // The rest belong to one tower each; a tower that reads one sets it in its base stats.
+    DEAD_ZONE(0f, 0f, Float.MAX_VALUE, Unit.CELLS, "Dead zone", false),
+    AREA_RADIUS(0f, 0f, Float.MAX_VALUE, Unit.CELLS, "Blast radius", false),
+    BLAST_EDGE(0f, 0f, 1f, Unit.PERCENT, "Blast edge damage", false),
+    SATURATION_CAP(0f, 0f, Float.MAX_VALUE, Unit.COUNT, "Saturation cap", false),
+    SATURATION_INNER_STACKS(0f, 0f, Float.MAX_VALUE, Unit.COUNT, "Saturation in the inner half", false),
+    PROJECTILE_SPEED(1f, 0.1f, Float.MAX_VALUE, Unit.PERCENT, "Shell speed", false),
+    PROJECTILE_SIZE(1f, 0.1f, Float.MAX_VALUE, Unit.PERCENT, "Shell size", false),
+    BRACKET_DAMAGE_STEP(0f, 0f, Float.MAX_VALUE, Unit.PERCENT, "Bracketing step", false),
+    /** The cone's full width. */
+    CONE_WIDTH(0f, 0f, (float) (2 * Math.PI), Unit.RADIANS, "Cone width", false),
+    WAVE_SPEED(1f, 0.1f, Float.MAX_VALUE, Unit.PERCENT, "Wave speed", false),
+    BURN_DURATION(0f, 1f, Float.MAX_VALUE, Unit.TICKS, "Burn duration", false),
+    STOKE_STEP(0f, 0f, Float.MAX_VALUE, Unit.PERCENT, "Stoke step", false),
+    STOKE_GRACE(0f, 0f, Float.MAX_VALUE, Unit.TICKS, "Stoke kept after leaving", false),
+    BURN_POOL_CAP(0f, 1f, Float.MAX_VALUE, Unit.MULTIPLE, "Burn pool cap", false),
+    BURN_MARK_RATE(1f, 1f, Float.MAX_VALUE, Unit.PERCENT, "Scorched rate", false),
+    TOLL_CAP(0f, 0f, Float.MAX_VALUE, Unit.COUNT, "Toll cap", false),
+    TOLL_RATE(0f, 0f, Float.MAX_VALUE, Unit.DECIMAL, "Toll a second", false),
+    TOLL_LINGER(0f, 0f, Float.MAX_VALUE, Unit.TICKS, "Toll lingers", false),
+    FREEZE_DURATION(0f, 0f, Float.MAX_VALUE, Unit.TICKS, "Freeze duration", false),
+    NEST_CAPACITY(0f, 0f, Float.MAX_VALUE, Unit.COUNT, "Nest", false),
+    MISSILES_PER_LAUNCH(1f, 1f, Float.MAX_VALUE, Unit.COUNT, "Missiles a shot", false),
+    PING_COUNT(0f, 0f, Float.MAX_VALUE, Unit.COUNT, "Pings", false),
+    AIM_STACKS(0f, 0f, Float.MAX_VALUE, Unit.COUNT, "Steady Aim stacks", false),
+    AURA_POWER(0f, 0f, Float.MAX_VALUE, Unit.PERCENT, "Buff strength", false);
 
     private final float defaultBase;
     private final float min;

@@ -8,9 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** What an upgrade node does when bought, as data, and the one row of words for what data can't say. */
-public record NodeEffects(StatModifiers<TowerStat> modifiers, String note) {
+public record NodeEffects(StatModifiers<TowerStat> modifiers, StatModifiers<TowerStat> emission, String note) {
 
-    private static final NodeEffects NONE = new NodeEffects(StatModifiers.none(), "");
+    private static final NodeEffects NONE = new NodeEffects(StatModifiers.none(), StatModifiers.none(), "");
 
     public static NodeEffects none() {
         return NONE;
@@ -18,18 +18,27 @@ public record NodeEffects(StatModifiers<TowerStat> modifiers, String note) {
 
     /** This, plus {@code more}: modifiers add up. */
     public NodeEffects withModifiers(StatModifiers<TowerStat> more) {
-        return new NodeEffects(this.modifiers.plus(more), this.note);
+        return new NodeEffects(this.modifiers.plus(more), this.emission, this.note);
+    }
+
+    /** This, plus {@code more} given to the towers an aura buffs: emissions add up. */
+    public NodeEffects withEmission(StatModifiers<TowerStat> more) {
+        return new NodeEffects(this.modifiers, this.emission.plus(more), this.note);
     }
 
     public NodeEffects withNote(String note) {
-        return new NodeEffects(this.modifiers, note);
+        return new NodeEffects(this.modifiers, this.emission, note);
     }
 
-    /** Every row this node shows in the Upgrades panel: one per stat changed, then the note. */
+    /** Every row this node shows in the Upgrades panel: one per stat changed, one per stat emitted, then the note. */
     public List<UpgradeBonus> bonuses() {
         List<UpgradeBonus> bonuses = new ArrayList<>();
         for (TowerStat stat : this.modifiers.stats()) {
             bonuses.add(new UpgradeBonus(stat.label(), valueOf(stat, this.modifiers.get(stat))));
+        }
+        for (TowerStat stat : this.emission.stats()) {
+            String label = "Nearby " + Character.toLowerCase(stat.label().charAt(0)) + stat.label().substring(1);
+            bonuses.add(new UpgradeBonus(label, valueOf(stat, this.emission.get(stat))));
         }
         if (!this.note.isEmpty()) {
             bonuses.add(new UpgradeBonus(Character.toUpperCase(this.note.charAt(0)) + this.note.substring(1), ""));

@@ -25,32 +25,36 @@ public final class StandardBaseSlot {
     }
 
     /**
-     * The base slot of a tower listed at {@code listPrice}: Range I and II, Attune and Awaken, and
-     * Range III and Transcendent once the tree has a level III head for Transcendent to need.
+     * The base slot of a tower listed at {@code listPrice} with {@code baseRange} cells of range: Range I
+     * and II, Attune and Awaken, and Range III and Transcendent once the tree has a level III head for
+     * Transcendent to need.
      */
-    public static List<UpgradeNode> nodes(int listPrice, UpgradeNode... levelThrees) {
-        return nodes(listPrice, BaseSlotPerks.none(), levelThrees);
+    public static List<UpgradeNode> nodes(int listPrice, float baseRange, UpgradeNode... levelThrees) {
+        return nodes(listPrice, baseRange, BaseSlotPerks.none(), levelThrees);
     }
 
-    /** {@link #nodes(int, UpgradeNode...)} with what the tower adds to Attune and Range III. */
-    public static List<UpgradeNode> nodes(int listPrice, BaseSlotPerks perks, UpgradeNode... levelThrees) {
+    /** {@link #nodes(int, float, UpgradeNode...)} with what the tower adds to Attune, Awaken and Range III. */
+    public static List<UpgradeNode> nodes(int listPrice, float baseRange, BaseSlotPerks perks,
+                                          UpgradeNode... levelThrees) {
         UpgradeNode range1 = UpgradeTier.RANGE_1.node(RANGE_ID, "Range", listPrice)
-                .withModifiers(TowerModifiers.rangePercent(RANGE_BONUS));
+                .withModifiers(TowerModifiers.range(RANGE_BONUS * baseRange));
         UpgradeNode range2 = UpgradeTier.RANGE_2.node(RANGE_2_ID, "Range II", listPrice)
-                .withModifiers(TowerModifiers.rangePercent(RANGE_STEP_BONUS))
+                .withModifiers(TowerModifiers.range(RANGE_STEP_BONUS * baseRange))
                 .after(range1);
+        String attuneText = perks.attune().note();
         UpgradeNode attune = UpgradeTier.ATTUNE.node(ATTUNE_ID, "Attune", listPrice)
-                .withNote(perks.attuneText().isEmpty() ? "unlocks head levels I and II"
-                        : perks.attuneText() + "; unlocks head levels I and II");
+                .withEffects(perks.attune().withNote(attuneText.isEmpty() ? "unlocks head levels I and II"
+                        : attuneText + "; unlocks head levels I and II"));
+        String awakenText = perks.awaken().note();
         UpgradeNode awaken = UpgradeTier.AWAKEN.node(AWAKEN_ID, "Awaken", listPrice)
-                .withNote((perks.awakenText().isEmpty() ? "" : perks.awakenText() + "; ")
-                        + (levelThrees.length == 0 ? "unlocks a special" : "unlocks a special and head level III"));
+                .withEffects(perks.awaken().withNote((awakenText.isEmpty() ? "" : awakenText + "; ")
+                        + (levelThrees.length == 0 ? "unlocks a special" : "unlocks a special and head level III")));
         if (levelThrees.length == 0) {
             return List.of(range1, range2, attune, awaken);
         }
         UpgradeNode range3 = UpgradeTier.RANGE_3.node(RANGE_3_ID, "Range III", listPrice)
-                .withModifiers(TowerModifiers.rangePercent(perks.rangeThreeBonus()))
-                .withNote(perks.rangeThreeText())
+                .withEffects(perks.rangeThree()
+                        .withModifiers(TowerModifiers.range(perks.rangeThreeBonus() * baseRange)))
                 .after(range2);
         UpgradeNode transcendent = UpgradeTier.TRANSCENDENT.node(TRANSCENDENT_ID, "Transcendent", listPrice)
                 .withGate(new TranscendentCondition(Arrays.stream(levelThrees).map(UpgradeNode::id).toList()))

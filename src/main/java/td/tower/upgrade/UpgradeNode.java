@@ -29,6 +29,11 @@ public record UpgradeNode(String id, UpgradeSlot slot, String displayName, int p
         return this.withEffects(this.effects.withModifiers(modifiers));
     }
 
+    /** This node with {@code emission} added to what it gives the towers an aura buffs. */
+    public UpgradeNode withEmission(StatModifiers<TowerStat> emission) {
+        return this.withEffects(this.effects.withEmission(emission));
+    }
+
     /** This node with {@code effects} as everything it does. */
     public UpgradeNode withEffects(NodeEffects effects) {
         return new UpgradeNode(this.id, this.slot, this.displayName, this.price, effects, this.requires,

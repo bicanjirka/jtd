@@ -39,6 +39,7 @@ import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.BaseSlotPerks;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
 import td.tower.upgrade.PurposeCondition;
@@ -108,9 +109,9 @@ public final class MortarTower extends AbstractTower {
     private static final int BRACKETED_SHELLS_NEEDED = 15;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
-            .withAttune("Bracketing: a shell landing within 1.5 cells of the last gets +10% damage and radius, "
-                    + "up to 3 steps; a shell elsewhere resets it")
-            .withRangeThree(0.3f, "Long Battery: the dead zone grows to 2.5 cells");
+            .withAttune(NodeEffects.none().withNote("Bracketing: a shell landing within 1.5 cells of the last gets +10% damage and radius, "
+                    + "up to 3 steps; a shell elsewhere resets it"))
+            .withRangeThree(0.3f, NodeEffects.none().withNote("Long Battery: the dead zone grows to 2.5 cells"));
 
     private static final UpgradeNode SIEGE_ROUNDS_1 = UpgradeTier.HEAD_1.node("mortar.head.siege_rounds.1",
             "Siege Rounds", PRICE)
@@ -184,7 +185,7 @@ public final class MortarTower extends AbstractTower {
             "Cryo Shells", PRICE)
             .withNote("every 3rd shell is Cryo: it leaves frost ground, 1.2 cells wide, for 3s");
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, BASE_PERKS, HEAVY_SHELL,
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, HEAVY_SHELL,
                     CLUSTER_SHELL))
             .with(SIEGE_ROUNDS_1, SIEGE_ROUNDS_2, HEAVY_SHELL, TACTICAL_NUKE, BUNKER_BUSTER,
                     FRAGMENTATION_ROUNDS_1, FRAGMENTATION_ROUNDS_2, CLUSTER_SHELL, CARPET_BOMBING, SHRAPNEL_STORM,
