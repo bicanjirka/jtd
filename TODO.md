@@ -27,6 +27,9 @@ The tower rework, in this order (each needs the ones before it):
 
 Enemies come after, from `docs/ideas/enemies-brainstorm.md`.
 
+Next, in order: `docs/plans/stat-driven-buffs.md` (stat-driven buffs, upgrades, statuses and procs;
+seven phases), then `FEATURE-agility-and-dodge.md`, which waits on it.
+
 Every earlier feature request has shipped (see each doc's own status line) except the draft
 `FEATURE-effect-interactions.md`, whose scope has landed in part (vulnerable, poison, revealed,
 freeze-burn, universal freeze diminishing returns) and is closed out in its own status line.
