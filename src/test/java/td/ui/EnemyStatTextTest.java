@@ -57,9 +57,9 @@ class EnemyStatTextTest {
     void aTraitAndTheStatsItSetsShowAsOneRowInTheTraitsBoardColour() {
         InfoSheet sheet = this.hoverSheet("s", Rank.GRUNT);
 
-        assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_PERCENT_RESIST, "Resist all", "-20%"),
+        assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_PERCENT_RESIST, "Armor, magic resist", "25"),
                 Row.trait(Palette.TRAIT_MARKER_CRITICAL_IMMUNE, "Crit immune", ""));
-        assertThat(labels(sheet)).containsExactly("Speed", "Resist all", "Crit immune");
+        assertThat(labels(sheet)).containsExactly("Speed", "Armor, magic resist", "Crit immune");
     }
 
     @Test
@@ -67,7 +67,7 @@ class EnemyStatTextTest {
         InfoSheet sheet = this.hoverSheet("s", Rank.ELITE);
 
         assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_FLAT_RESIST, "Plating, physical", "-8/hit"),
-                Row.trait(Palette.TRAIT_MARKER_PERCENT_RESIST, "Resist all", "-40%"));
+                Row.trait(Palette.TRAIT_MARKER_PERCENT_RESIST, "Armor, magic resist", "67"));
     }
 
     @Test
@@ -86,7 +86,7 @@ class EnemyStatTextTest {
     void anAdaptiveTraitIsShownAsTheMostItCanReach() {
         InfoSheet sheet = this.hoverSheet("c", Rank.ELITE);
 
-        assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_PERCENT_RESIST, "Adaptive resist", "up to -40%"));
+        assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_PERCENT_RESIST, "Adaptive resist", "up to +67"));
     }
 
     @Test
@@ -113,6 +113,24 @@ class EnemyStatTextTest {
     }
 
     @Test
+    void armorAndMagicResistReadAsPoints() {
+        assertThat(EnemyStatText.statText(td.stat.EnemyStat.ARMOR, 25f))
+                .isEqualTo(new EnemyStatText.StatText("Armor", "25"));
+        assertThat(EnemyStatText.statText(td.stat.EnemyStat.MAGIC_RESIST, 67f))
+                .isEqualTo(new EnemyStatText.StatText("Magic resist", "67"));
+    }
+
+    @Test
+    void resilienceReadsAsCritsGainedOrLostAndAHundredIsCritImmune() {
+        assertThat(EnemyStatText.statText(td.stat.EnemyStat.RESILIENCE, -50f))
+                .isEqualTo(new EnemyStatText.StatText("Resilience", "+50% crits"));
+        assertThat(EnemyStatText.statText(td.stat.EnemyStat.RESILIENCE, 30f))
+                .isEqualTo(new EnemyStatText.StatText("Resilience", "-30% crits"));
+        assertThat(EnemyStatText.statText(td.stat.EnemyStat.RESILIENCE, 100f))
+                .isEqualTo(new EnemyStatText.StatText("Crit immune", ""));
+    }
+
+    @Test
     void aBurningEnemyShowsItsScorchedStacksAndTheResilienceTheyCost() {
         DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
         mob.applyEffect(Effect.burn(Damage.magic(100), 100, d -> {
@@ -123,7 +141,7 @@ class EnemyStatTextTest {
         assertThat(sheet.lines()).contains(
                 Row.effect(Palette.STATUS_MARKER_BURN, "Burning", "damage over time"),
                 Row.effect(Palette.STATUS_MARKER_SCORCHED, "Scorched x1", "debuff"),
-                Row.plain(Glyph.DOT, "Resilience", "+1% crit damage"));
+                Row.plain(Glyph.DOT, "Resilience", "+1% crits"));
     }
 
     @Test

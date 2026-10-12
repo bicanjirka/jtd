@@ -5,6 +5,7 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.enemy.ArmorTrait;
 import td.enemy.BodyArchetype;
 import td.enemy.CriticalImmunityTrait;
 import td.enemy.DefinedEnemyMob;
@@ -13,7 +14,6 @@ import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.FlatResistTrait;
 import td.enemy.HurtSpeedTrait;
-import td.enemy.PercentResistTrait;
 import td.enemy.Rank;
 import td.fixtures.WorldFixtures;
 import td.ui.render.CritSparkDraw;
@@ -617,7 +617,7 @@ class EnemyFrameBuilderTest {
     void aFourthSimultaneousTraitCollapsesIntoOneOverflowMarkerInsteadOfGrowingTheRow() {
         GameWorld context = contextWithStraightPath();
         EnemyDefinition heavilyTraited = EnemyDefinition.of("heavy", "Heavy", 100, 5, 1.28f, BodyArchetype.CIRCLE)
-                .withTraits(List.of(new PercentResistTrait(0.8f), new FlatResistTrait(5),
+                .withTraits(List.of(ArmorTrait.both(25f), new FlatResistTrait(5),
                         new CriticalImmunityTrait(), new HurtSpeedTrait(1.2f)));
         context.getEnemyCatalog().register(heavilyTraited);
         EnemyMob enemy = context.getEnemyCatalog().spawn("heavy", context, 0, 100, 5, Rank.GRUNT);

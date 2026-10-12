@@ -19,7 +19,7 @@ final class SimpleEnemy {
                 .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(400, 33)
                         .withDescription("No special abilities, but a layer of armor has formed, "
                                 + "hardened against whichever damage type has hit hardest this level.")
-                        .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(0.6f)))))
+                        .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(67f)))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(800, 83)
                         .withDescription("No special abilities, but twice an elite's bulk under the same armor, hardened "
                                 + "against whichever damage type has hit hardest this level."))

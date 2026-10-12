@@ -17,7 +17,7 @@ class EnemyDefinitionTest {
 
     @Test
     void twoAnonymousAdditionsBothStackEvenWhenStructurallyEqual() {
-        Trait resist = new PercentResistTrait(0.8f);
+        Trait resist = ArmorTrait.both(25f);
         EnemyDefinition withOne = this.base.withAdditionalTraits(List.of(IdentifiedTrait.anonymous(resist)));
         EnemyDefinition withTwo = withOne.withAdditionalTraits(List.of(IdentifiedTrait.anonymous(resist)));
 
@@ -26,7 +26,7 @@ class EnemyDefinitionTest {
 
     @Test
     void aNamedAdditionWithNoExistingMatchIsAppended() {
-        Trait resist = new PercentResistTrait(0.8f);
+        Trait resist = ArmorTrait.both(25f);
         EnemyDefinition result = this.base.withAdditionalTraits(List.of(IdentifiedTrait.named("shield", resist)));
 
         assertThat(result.traitsFor(DamageMix.none())).containsExactly(resist);
@@ -34,8 +34,8 @@ class EnemyDefinitionTest {
 
     @Test
     void aNamedAdditionReplacesTheEarlierEntryWithTheSameIdInPlace() {
-        Trait weakShield = new PercentResistTrait(0.8f);
-        Trait strongShield = new PercentResistTrait(0.5f);
+        Trait weakShield = ArmorTrait.both(25f);
+        Trait strongShield = ArmorTrait.both(100f);
         Trait unrelated = new CriticalImmunityTrait();
         EnemyDefinition rankOne = this.base.withAdditionalTraits(
                 List.of(IdentifiedTrait.named("shield", weakShield), IdentifiedTrait.anonymous(unrelated)));

@@ -24,11 +24,11 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
 
     private static final double COLUMN_SPACING_SLOTS = 0.3;
     private static final double DRIP_SPACING_SLOTS = 2.0;
-    private static final float ARMORED_EVEN_FRACTION = 0.8f;
-    private static final float ARMORED_FULL_FRACTION = 0.2f;
+    private static final float ARMORED_EVEN_ARMOR = 25f;
+    private static final float ARMORED_FULL_ARMOR = 400f;
     // Anonymous, so it always stacks with whatever armor the enemy already has.
     private static final IdentifiedTrait ARMORED_TRAIT = IdentifiedTrait.anonymous(
-            AdaptiveResist.against(DamageType.PHYSICAL, ARMORED_EVEN_FRACTION, ARMORED_FULL_FRACTION));
+            AdaptiveResist.against(DamageType.PHYSICAL, ARMORED_EVEN_ARMOR, ARMORED_FULL_ARMOR));
 
     private static final SpawnShape NORMAL =
             new SpawnShape(1, 1f, 1f, 1f, 1f, Optional.empty(), SpawnSpread.NONE, 0.0);

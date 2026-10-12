@@ -101,9 +101,9 @@ class EnemyCatalogTest {
         assertThat(toughCircle.definitionFor(Rank.SOLDIER).traitsFor(DamageMix.none())).isEmpty();
         DamageMix allPhysical = DamageMix.of(Damage.physical(10));
         assertThat(toughCircle.definitionFor(Rank.ELITE).traitsFor(allPhysical))
-                .containsExactly(PercentResistTrait.physicalOnly(0.6f));
+                .containsExactly(ArmorTrait.physicalOnly(67f));
         assertThat(toughCircle.definitionFor(Rank.BOSS).traitsFor(allPhysical))
-                .containsExactly(PercentResistTrait.physicalOnly(0.6f));
+                .containsExactly(ArmorTrait.physicalOnly(67f));
     }
 
     @Test
@@ -115,10 +115,10 @@ class EnemyCatalogTest {
             case GRUNT -> d.withHealthAndPrice(1000, 100);
             case SOLDIER -> d;
             case VETERAN -> d.withAdditionalTraits(
-                    List.of(IdentifiedTrait.named("goldShield", new PercentResistTrait(0.5f))));
+                    List.of(IdentifiedTrait.named("goldShield", ArmorTrait.both(100f))));
             // replaces "resist" under the same id; other traits stay
             case ELITE -> d.withAdditionalTraits(
-                    List.of(IdentifiedTrait.named("resist", new PercentResistTrait(0.3f))));
+                    List.of(IdentifiedTrait.named("resist", ArmorTrait.both(233f))));
             case BOSS -> d;
         });
 
@@ -127,18 +127,18 @@ class EnemyCatalogTest {
         assertThat(grunt.price()).isEqualTo(100);
 
         EnemyDefinition soldier = toughenedSquare.definitionFor(Rank.SOLDIER);
-        assertThat(traitNamed(soldier, "resist")).contains(new PercentResistTrait(0.75f));
+        assertThat(traitNamed(soldier, "resist")).contains(ArmorTrait.both(33f));
         assertThat(traitNamed(soldier, "criticalImmune")).contains(new CriticalImmunityTrait());
 
         EnemyDefinition veteran = toughenedSquare.definitionFor(Rank.VETERAN);
         assertThat(veteran.traitSlots()).hasSize(3);
-        assertThat(traitNamed(veteran, "resist")).contains(new PercentResistTrait(0.7f));
+        assertThat(traitNamed(veteran, "resist")).contains(ArmorTrait.both(43f));
         assertThat(traitNamed(veteran, "criticalImmune")).contains(new CriticalImmunityTrait());
-        assertThat(traitNamed(veteran, "goldShield")).contains(new PercentResistTrait(0.5f));
+        assertThat(traitNamed(veteran, "goldShield")).contains(ArmorTrait.both(100f));
 
         EnemyDefinition elite = toughenedSquare.definitionFor(Rank.ELITE);
         assertThat(elite.traitSlots()).hasSize(3);
-        assertThat(traitNamed(elite, "resist")).contains(new PercentResistTrait(0.3f));
+        assertThat(traitNamed(elite, "resist")).contains(ArmorTrait.both(233f));
         assertThat(traitNamed(elite, "criticalImmune")).contains(new CriticalImmunityTrait());
         assertThat(traitNamed(elite, "flatResist")).contains(FlatResistTrait.physicalOnly(8));
     }

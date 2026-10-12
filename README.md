@@ -131,7 +131,7 @@ currently amplifying, coloured for its reach or its chosen hero, a ring on the t
 | Enemy      | Looks like    | Behaviour                                                                                                                                                                                                                                                                                                         |
 |------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Simple     | circle        | Plain mob, no special ability                                                                                                                                                                                                                                                                                     |
-| Armored    | square        | Absorbs part of every hit; immune to critical hits; at Boss rank, calls three armored reinforcements every three seconds                                                                                                                                                                                          |
+| Armored    | square        | +25 armor and magic resist, rising with rank; immune to critical hits; at Boss rank, calls three armored reinforcements every three seconds                                                                                                                                                                                          |
 | Frenzied   | triangle      | Speeds up as it loses health                                                                                                                                                                                                                                                                                      |
 | Ghost      | tinted circle | Turns invisible to single-target towers for ~10s the first time it's hit (area damage still reaches it); at Elite and Boss rank, also permanently shrouds every other ally near it                                                                                                                              |
 | Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it                                                                                                                                                                                                                             |
@@ -175,9 +175,9 @@ holds more than one effect; selecting it lists every effect with what kind it is
 | Burning    | damage over time | Damage that decays as it burns; several towers add to one pool and each is credited its share. It earns a Scorched stack when it starts and another every half second while it lasts. An invisible enemy is visible while its pool is strong |
 | Soulfire   | damage over time | A third pool of its own beside burning and poisoning, so it stacks with both. It burns enemies that are immune to fire, and earns Scorched and Sickened both |
 | Poisoned   | damage over time | Its own decaying pool, so it stacks with burning. It slows in proportion to the pool (at most 30%, on top of chill) and earns Sickened stacks the same way |
-| Scorched   | debuff           | Burning's lasting mark: each stack lowers resilience by 1 (down to -100; below 0 crits hit harder but no likelier). It outlasts the fire, then loses a stack per second |
+| Scorched   | debuff           | Burning's lasting mark: each stack lowers resilience by 1 (down to -100; below 0 crits come more often and hit harder). It outlasts the fire, then loses a stack per second |
 | Sickened   | debuff           | Poison's lasting mark: each stack lowers spirit by 1 (down to -100), so heals and shields shrink and vanish at the floor. Loses a stack per second |
-| Vulnerable | debuff           | Up to 3 stacks, +15% damage taken each, from any tower; one shared 4 s clock any application refreshes |
+| Vulnerable | debuff           | Up to 3 stacks, +15% damage taken each, added, from any tower; one shared 4 s clock any application refreshes |
 | Sundered   | debuff           | Up to 10 stacks, -5 armor each (armor never goes below 0); one shared 5 s clock                    |
 | Resonating | debuff           | Up to 3 stacks, +8% magic damage taken each; one shared 4 s clock                                  |
 | Fractured  | debuff           | Up to 5 stacks, -10 resilience each, losing a stack a second. A Sonar with Fault Line lets it fall to 10 stacks (-100) and holds it while the enemy is Exposed |
@@ -188,10 +188,10 @@ holds more than one effect; selecting it lists every effect with what kind it is
 | Corroded   | debuff           | -30 armor (never below 0) while the enemy is in a Pulse's field |
 | Dead zone  | debuff           | No heal or shield takes hold while the enemy is in a Pulse's field; what it already has stays |
 | Kill zone  | debuff           | +25% damage taken from every source while the enemy is in a Pulse's field |
-| Cracked    | debuff           | Plating is halved; one shared 5 s clock any application refreshes |
+| Cracked    | debuff           | -5 plating; one shared 5 s clock any application refreshes |
 | Bleeding   | damage over time | Physical damage for every cell the enemy travels: the faster it runs the more it bleeds, and a stopped enemy bleeds nothing |
 | Tarred     | debuff           | Slowed by 40%. A burn it catches starts at double the pool, and a freeze it suffers lasts a second longer |
-| Exposed    | spotted          | Crit chance taken doubles. A revealed enemy counts as Exposed                                       |
+| Exposed    | spotted          | -50 resilience: crits come more often and hit harder. A revealed enemy counts as Exposed           |
 | Marked     | spotted          | The next hit from any tower is a guaranteed crit, and spends the mark. Damage that ticks never spends it, and it waits on a crit-immune enemy |
 | Priority   | spotted          | +15% damage taken from every tower, and every tower that picks one target picks it while it is in range |
 | Charged    | spotted          | The next hit from another tower than the one that charged it discharges it: +30% of that hit again as magic (x2 on a crit), credited to the charging tower |
@@ -230,7 +230,8 @@ freeze in frost bursts a burn.
 Only a hit can crit: a shot, a blast, a beam pass. Damage that ticks (a burn, a poison, a field)
 never does, but a burn or poison started by a crit starts that much stronger. Each tower has its
 own crit multiplier (x1.5, the Sniper x2.0). A guaranteed crit lands whenever the enemy's
-resilience is below 100; at 100 nothing crits. Armor and magic resist never go below 0.
+resilience is below 100; at 100 nothing crits. Negative resilience makes crits likelier and harder;
+Exposed and Revealed take 50 resilience. Armor and magic resist never go below 0.
 
 ### Spawn shapes
 
@@ -241,7 +242,7 @@ the shapes that take one (`swarm 4 c`):
 | Shape   | Keyword  | What one slot produces                                                |
 |---------|----------|-------------------------------------------------------------------------|
 | Normal  | (none)   | One enemy on the path centre                                            |
-| Armored | `armored`| One enemy with extra physical-only armor, on top of any armor it already has: it blocks 20% of physical damage, rising to 80% as the level's landed damage leans fully physical — no size, speed, health or bounty change |
+| Armored | `armored`| One enemy with extra physical-only armor, on top of any armor it already has: from +25 armor rising to +400 armor as the level's landed damage leans fully physical — no size, speed, health or bounty change |
 | Swarm   | `swarm`  | *N* enemies at 50% size, scattered off-path, sharing one spawn's bounty and health |
 | Line    | `line`   | *N* enemies spread evenly across the path's width, abreast              |
 | Flank   | `flank`  | Two enemies hugging opposite edges of the path                          |

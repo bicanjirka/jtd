@@ -45,8 +45,7 @@
 - `withAdditionalTraits`/`withAdditionalAbilities` replace an entry with the same
   `TraitId.named(...)` id and stack anonymous ones. Name an entry only when a later step replaces
   it (e.g. `"armor"`, which a later rank step replaces).
-- Built-in traits include `PercentResistTrait` (armor or magic resist, authored as the fraction
-  kept), `FlatResistTrait` (plating), both scopable with `physicalOnly`/`magicOnly`,
+- Built-in traits include `ArmorTrait` (armor or magic resist points), `FlatResistTrait` (plating), both scopable with `physicalOnly`/`magicOnly`,
   `HurtSpeedTrait`, `CriticalImmunityTrait` (full resilience), `EffectResistTrait` (`immuneTo`
   at 1). Every enemy diminishes hard-CC durations; there is no opt-in.
 - `DefinedEnemyMob.applyEffect` shortens the effect by its resistance and freeze diminishing
@@ -87,8 +86,8 @@
   after a tick that ticked effects or changed health. `doTick` reads speed and regeneration
   *before* `ActiveEffects.tick()`, and returns early if a damage-over-time tick killed the mob.
 - `doDamage(damage, attacker)` lands a hit through `HitResolution` (a crit roll for hits only, and
-  none at resilience 100; a guaranteed crit skips the roll, otherwise it rolls against resilience
-  and crit chance taken; penetration, mitigation, plating, damage taken, cap at health) and
+  none at resilience 100; a guaranteed crit skips the roll, otherwise it rolls against resilience,
+  which scales crit chance and crit bonus both ways; penetration, mitigation, plating, damage taken, cap at health) and
   returns what landed. Callers report that return value, not the input.
 - A spawn shape's trait override is composed into the definition before the mob is built. There
   is no separate multiplier mechanism.

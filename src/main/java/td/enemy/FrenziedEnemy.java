@@ -36,13 +36,13 @@ final class FrenziedEnemy {
                                 IdentifiedAbility.anonymous(new Ability(new HealthThresholdTrigger(0.5f),
                                         new SpawnEnemiesAction("tSpawn", AbilitySpawnShape.brood(3, 1f, 1f), false))),
                                 IdentifiedAbility.anonymous(new Ability(new TimeSinceLastHitTrigger(200),
-                                        new ApplyEffectAction(new HealTemplate(0.02f, 200), new SelfTarget()))))))
+                                        new ApplyEffectAction(new HealTemplate(1f, 200), new SelfTarget()))))))
                 .build());
         catalog.register(EnemyDefinition.of("tSpawn", "Frenzy Spawnling", 140, 2, 1.28f, BodyArchetype.TRIANGLE)
                 .withDescription("A spawnling of an enraged Frenzied boss. Speeds up as it is hurt, and heals nearby "
                         + "allies with its dying breath.")
                 .withTraits(List.of(new HurtSpeedTrait(1.4f)))
                 .withAbilities(List.of(new Ability(new OnDeathTrigger(),
-                        new ApplyEffectAction(new HealTemplate(0.04f, 40), new RadiusTarget(150f))))));
+                        new ApplyEffectAction(new HealTemplate(0.5f, 40), new RadiusTarget(150f))))));
     }
 }

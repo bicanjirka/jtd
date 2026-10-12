@@ -37,7 +37,7 @@ public record FlatResistTrait(float points, Optional<DamageType> restrictedTo) i
 
     @Override
     public TraitLine describe() {
-        String label = this.restrictedTo.map(type -> "Plating, " + PercentResistTrait.damageName(type)).orElse("Plating");
+        String label = this.restrictedTo.map(type -> "Plating, " + ArmorTrait.damageName(type)).orElse("Plating");
         return new TraitLine(this.marker(), label, "-" + TraitText.decimal(this.points) + "/hit");
     }
 
