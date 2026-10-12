@@ -19,8 +19,9 @@ class SniperSpecTest {
     }
 
     @Test
-    void theFirstSpecialBoughtDecidesTheAim() {
-        SniperSpec spec = new RicochetPerk().refineSpec(new MomentumPerk().refineSpec(SPEC));
+    void theFirstAimSetDecidesTheAim() {
+        SniperSpec spec = SPEC.aimingAt(new SniperAim(new td.tower.targeting.HighestRankSelector(), "highest rank"))
+                .aimingAt(new SniperAim(new td.tower.targeting.HighestHealthSelector(), "most health"));
 
         assertThat(spec.chosenAim().label()).isEqualTo("highest rank");
     }

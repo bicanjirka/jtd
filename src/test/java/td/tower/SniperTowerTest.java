@@ -749,4 +749,30 @@ class SniperTowerTest {
         assertThat(tower.attackRate()).isEqualTo(2.0);
         assertThat(tower.critChance()).isEqualTo(SniperTower.CRIT_CHANCE);
     }
+
+    @Test
+    void headhunterAndTheExecutionersWoundedBossBonusAdd() {
+        GameWorld world = boardWorld();
+        SniperTower tower = sniperWith(world, "Focused Optics", "Focused Optics II", "Focused Optics III", "Headhunter",
+                "Transcendent", "Executioner");
+        FakeEnemyMob woundedBoss = FakeEnemyMob.at(100, 100).ranked(Rank.BOSS).atHealthFraction(0.2f);
+        world.enemies().setEnemies(new EnemyMob[]{woundedBoss});
+
+        tower.doTick(1);
+
+        assertThat(woundedBoss.hits().getFirst().amount()).isEqualTo(Math.round(tower.damageCurrent() * 1.9f));
+    }
+
+    @Test
+    void shatterShotMakesCritsOnAFrozenEnemyHitHarder() {
+        GameWorld world = boardWorld();
+        SniperTower tower = sniperWith(world, "Marksman's Eye", "Shatter Shot");
+        FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
+        frozen.reportFrozen();
+        world.enemies().setEnemies(new EnemyMob[]{frozen});
+
+        tower.doTick(1);
+
+        assertThat(frozen.attackers().getFirst().critMultiplier()).isEqualTo(SniperTower.CRIT_MULTIPLIER + 0.5f);
+    }
 }

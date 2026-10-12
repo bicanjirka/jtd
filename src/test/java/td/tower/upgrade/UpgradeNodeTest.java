@@ -61,4 +61,22 @@ class UpgradeNodeTest {
 
         assertThat(node.bonuses()).containsExactly(new UpgradeBonus("Nearby crit damage", "+50%"));
     }
+
+    private static UpgradeNode sniperNode(String name) {
+        return new td.tower.SniperTower(td.fixtures.WorldFixtures.newWorld(), 0, 0).upgradeTree().nodes().stream()
+                .filter(node -> node.displayName().equals(name)).findFirst().orElseThrow();
+    }
+
+    @Test
+    void momentumSaysWhomItAimsAtAndWhatACritAndAKillGrant() {
+        assertThat(sniperNode("Momentum").bonuses()).containsExactly(new UpgradeBonus("Targets", "highest rank"),
+                new UpgradeBonus("On crit, shots", "next shot: Damage +400%, Armor penetration +100%, Plating penetration +100%"),
+                new UpgradeBonus("On kill, shots", "5 s: Attack speed +100%"));
+    }
+
+    @Test
+    void headhunterSaysWhomItAimsAtAndWhomItHitsHarder() {
+        assertThat(sniperNode("Headhunter").bonuses()).containsExactly(new UpgradeBonus("Targets", "highest rank"),
+                new UpgradeBonus("Vs Elite and Boss", "Damage +40%"));
+    }
 }

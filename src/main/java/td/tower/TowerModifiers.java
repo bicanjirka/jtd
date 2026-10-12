@@ -14,6 +14,11 @@ public final class TowerModifiers {
         return StatModifiers.of(TowerStat.DAMAGE, StatModifier.percent(fraction));
     }
 
+    /** The damage {@code factor} times as big, after every flat and percent bonus. */
+    public static StatModifiers<TowerStat> damageTimes(float factor) {
+        return StatModifiers.of(TowerStat.DAMAGE, StatModifier.times(factor));
+    }
+
     public static StatModifiers<TowerStat> rangePercent(float fraction) {
         return StatModifiers.of(TowerStat.RANGE, StatModifier.percent(fraction));
     }
