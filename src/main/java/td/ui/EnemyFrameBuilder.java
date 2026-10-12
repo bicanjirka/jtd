@@ -253,7 +253,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     /** Static overlays for ongoing states: shield bubble, ice crystals, support-aura and disruption rings. */
     private void overlays(DefinedEnemyMob mob, float x, float y, float scale, Optional<SupportAura> supportAura) {
         if (mob.activeEffectKinds().contains(EffectKind.SHIELD)) {
-            this.overlayDraws.add(new EnemyRingDraw(Palette.STATUS_MARKER_SHIELD, x, y, scale * SHIELD_BUBBLE_SCALE_FRACTION, SHIELD_BUBBLE_ALPHA));
+            this.overlayDraws.add(new EnemyRingDraw(Palette.STATUS_MARKER_SHIELD, x, y, scale * SHIELD_BUBBLE_SCALE_FRACTION,
+                    SHIELD_BUBBLE_ALPHA * (0.3f + 0.7f * mob.shieldFraction())));
         }
         if (mob.activeEffectKinds().contains(EffectKind.FREEZE)) {
             this.overlayDraws.add(new IceCrystalDraw(Palette.FREEZE_CRYSTAL, x, y, scale * FREEZE_CRYSTAL_SCALE_FRACTION));

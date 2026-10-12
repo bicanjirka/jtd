@@ -16,12 +16,17 @@ final class ShieldbearerEnemy {
                         // "other" is load-bearing: a radius target excludes the caster.
                         .withDescription("Periodically shields every other ally near it against physical damage. "
                                 + "Magic goes straight through.")
-                        .withAbilities(List.of(new Ability(new PeriodicTrigger(100),
-                                new ApplyEffectAction(ShieldTemplate.physicalOnly(0.5f, 60), new RadiusTarget(100f))))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(140, 15))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(280, 38))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(560, 94))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1120, 235))
+                        .withIdentifiedAbilities(List.of(shield(20f))))
+                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(140, 15).withAdditionalAbilities(List.of(shield(40f))))
+                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(280, 38).withAdditionalAbilities(List.of(shield(80f))))
+                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(560, 94).withAdditionalAbilities(List.of(shield(160f))))
+                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1120, 235).withAdditionalAbilities(List.of(shield(320f))))
                 .build());
+    }
+
+    /** The physical-only shield of {@code points} every other ally within reach gets. */
+    private static IdentifiedAbility shield(float points) {
+        return IdentifiedAbility.named("shield", new Ability(new PeriodicTrigger(100),
+                new ApplyEffectAction(ShieldTemplate.physicalOnly(points, 60), new RadiusTarget(100f))));
     }
 }

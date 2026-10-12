@@ -1,6 +1,7 @@
 package td.tower.sonar;
 
 import td.damage.DamageType;
+import td.effect.EffectKind;
 
 /**
  * Ultrasound: part of every physical hit is added on as magic, more against an enemy that shrugs
@@ -16,7 +17,8 @@ public final class UltrasoundPerk implements SonarPerk {
         if (strike.type() != DamageType.PHYSICAL) {
             return strike;
         }
-        float protection = context.target().reductionAgainst(DamageType.PHYSICAL);
+        float protection = context.target().hasEffect(EffectKind.SHIELD) ? MAX_SHARE
+                : context.target().reductionAgainst(DamageType.PHYSICAL);
         return strike.withMagicShare(Math.max(BASE_SHARE, Math.min(MAX_SHARE, protection)));
     }
 }

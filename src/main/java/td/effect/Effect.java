@@ -12,9 +12,10 @@ import java.util.Optional;
  * <p>
  * Every field has an identity value for the kinds that don't use it, so resolving effects needs no
  * per-kind branching: speed multiplies, damage-over-time goes through {@link #sink}, shields absorb
- * and heals restore. Freeze is a speed of {@code 0f}, not a separate stun.
+ * from a pool and heals restore. Freeze is a speed of {@code 0f}, not a separate stun.
  * <p>
  * {@link #kind} is only for UI markers and for matching a reapplication.
+ * {@link #shieldRemaining} is what a shield's pool has left of {@link #shieldMax}, in damage units.
  * {@link #shieldRestrictedTo} applies to shields only; empty absorbs both damage types.
  * {@link #authoredDurationTicks} never counts down, so progress through the effect's life can be
  * computed. {@link #fuel} is a decaying level (chill, burn or poison): one contribution per tower.
@@ -27,7 +28,8 @@ import java.util.Optional;
  * {@link #origin} is who put it on, for an effect that must tell its applier from other attackers.
  * {@link #tuning} is what the tower feeding a burn or poison pool has made of it.
  */
-public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTick, float shieldPercent,
+public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTick, float shieldRemaining,
+                     float shieldMax,
                      int remainingTicks, DamageSink sink, int healPerTick,
                      Optional<DamageType> shieldRestrictedTo, int authoredDurationTicks,
                      List<FuelContribution> fuel, float peakL0, int stacks, int stackClock,
@@ -45,19 +47,19 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
      * linearly to nothing over {@code durationTicks}.
      */
     public static Effect chill(float amount, int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.CHILL, 1f, Damage.none(), 0f, durationTicks, sink, 0,
+        return new Effect(EffectKind.CHILL, 1f, Damage.none(), 0f, 0f, durationTicks, sink, 0,
                 Optional.empty(), durationTicks, List.of(new FuelContribution(sink, amount, amount / durationTicks)),
                 0f, 0, 0, false, 0, AttackOrigin.none(), PoolTuning.standard());
     }
 
     public static Effect freeze(int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.FREEZE, 0f, Damage.none(), 0f, durationTicks, sink, 0,
+        return new Effect(EffectKind.FREEZE, 0f, Damage.none(), 0f, 0f, durationTicks, sink, 0,
                 Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none(), PoolTuning.standard());
     }
 
     /** Stops the enemy for {@code durationTicks}; unlike a freeze, it puts out nothing. */
     public static Effect dazed(int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.DAZED, 0f, Damage.none(), 0f, durationTicks, sink, 0,
+        return new Effect(EffectKind.DAZED, 0f, Damage.none(), 0f, 0f, durationTicks, sink, 0,
                 Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none(), PoolTuning.standard());
     }
 
@@ -84,25 +86,25 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
 
     private static Effect pool(EffectKind kind, Damage damagePerTick, int durationTicks, DamageSink sink) {
         float l0 = damagePerTick.amount();
-        return new Effect(kind, 1f, damagePerTick, 0f, durationTicks, sink, 0,
+        return new Effect(kind, 1f, damagePerTick, 0f, 0f, durationTicks, sink, 0,
                 Optional.empty(), durationTicks, List.of(new FuelContribution(sink, l0)), l0, 0, STACK_INTERVAL_TICKS, false, 0, AttackOrigin.none(), PoolTuning.standard());
     }
 
-    /** Absorbs a percentage of every hit while active. */
-    public static Effect shield(float shieldPercent, int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.SHIELD, 1f, Damage.none(), shieldPercent, durationTicks, sink, 0,
+    /** Absorbs up to {@code units} of damage while active, then breaks. */
+    public static Effect shield(float units, int durationTicks, DamageSink sink) {
+        return new Effect(EffectKind.SHIELD, 1f, Damage.none(), units, units, durationTicks, sink, 0,
                 Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none(), PoolTuning.standard());
     }
 
     /** Untargetable while active. */
     public static Effect invisible(int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.INVISIBLE, 1f, Damage.none(), 0f, durationTicks, sink, 0,
+        return new Effect(EffectKind.INVISIBLE, 1f, Damage.none(), 0f, 0f, durationTicks, sink, 0,
                 Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none(), PoolTuning.standard());
     }
 
     /** Targetable again while active, even through invisibility. */
     public static Effect revealed(int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.REVEALED, 1f, Damage.none(), 0f, durationTicks, sink, 0,
+        return new Effect(EffectKind.REVEALED, 1f, Damage.none(), 0f, 0f, durationTicks, sink, 0,
                 Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none(), PoolTuning.standard());
     }
 
@@ -111,7 +113,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
      * stacks. Made by {@code ActiveEffects} as a pool earns them, never by a tower.
      */
     static Effect stackDebuff(EffectKind kind, int stacks) {
-        return new Effect(kind, 1f, Damage.none(), 0f, 0, d -> {
+        return new Effect(kind, 1f, Damage.none(), 0f, 0f, 0, d -> {
         }, 0, Optional.empty(), 0, List.of(), 0f, stacks, 0, false, 0, AttackOrigin.none(), PoolTuning.standard());
     }
 
@@ -153,7 +155,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
 
     /** This Fractured as Fault Line leaves it: it falls twice as far, and holds while the enemy is exposed. */
     public Effect withFaultLine() {
-        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldRemaining, this.shieldMax,
                 this.remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
                 this.authoredDurationTicks, this.fuel, this.peakL0, this.stacks, this.stackClock, true,
                 FAULT_LINE_STACK_CAP, this.origin, this.tuning);
@@ -161,7 +163,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
 
     /** This stacking effect allowed up to {@code stackCap} stacks instead of its kind's cap. */
     public Effect withStackCap(int stackCap) {
-        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldRemaining, this.shieldMax,
                 this.remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
                 this.authoredDurationTicks, this.fuel, this.peakL0, this.stacks, this.stackClock, this.faultLine,
                 stackCap, this.origin, this.tuning);
@@ -169,7 +171,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
 
     /** This pool as {@code tuning} has made it. */
     public Effect withTuning(PoolTuning tuning) {
-        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldRemaining, this.shieldMax,
                 this.remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
                 this.authoredDurationTicks, this.fuel, this.peakL0, this.stacks, this.stackClock, this.faultLine,
                 this.stackCap, this.origin, tuning);
@@ -193,7 +195,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
      * through {@code sink}.
      */
     public static Effect charged(int durationTicks, AttackOrigin origin, DamageSink sink) {
-        return new Effect(EffectKind.CHARGED, 1f, Damage.none(), 0f, durationTicks, sink, 0,
+        return new Effect(EffectKind.CHARGED, 1f, Damage.none(), 0f, 0f, durationTicks, sink, 0,
                 Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, origin, PoolTuning.standard());
     }
 
@@ -260,7 +262,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
      * damage units) each. It is carried in {@code damagePerTick}, which a bleed never deals as such.
      */
     public static Effect bleeding(int damagePerCell, int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.BLEEDING, 1f, Damage.physical(damagePerCell), 0f, durationTicks, sink, 0,
+        return new Effect(EffectKind.BLEEDING, 1f, Damage.physical(damagePerCell), 0f, 0f, durationTicks, sink, 0,
                 Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none(), PoolTuning.standard());
     }
 
@@ -290,12 +292,12 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
     }
 
     private static Effect stacking(EffectKind kind, int stacks, int durationTicks, DamageSink sink) {
-        return new Effect(kind, 1f, Damage.none(), 0f, durationTicks, sink, 0,
+        return new Effect(kind, 1f, Damage.none(), 0f, 0f, durationTicks, sink, 0,
                 Optional.empty(), durationTicks, List.of(), 0f, stacks, 0, false, 0, AttackOrigin.none(), PoolTuning.standard());
     }
 
     private static Effect timed(EffectKind kind, int durationTicks, DamageSink sink) {
-        return new Effect(kind, 1f, Damage.none(), 0f, durationTicks, sink, 0,
+        return new Effect(kind, 1f, Damage.none(), 0f, 0f, durationTicks, sink, 0,
                 Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none(), PoolTuning.standard());
     }
 
@@ -304,7 +306,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
      * at zero, and a heal credits nobody.
      */
     public static Effect heal(int healPerTick, int durationTicks, DamageSink sink) {
-        return new Effect(EffectKind.HEAL, 1f, Damage.none(), 0f, durationTicks, sink, healPerTick,
+        return new Effect(EffectKind.HEAL, 1f, Damage.none(), 0f, 0f, durationTicks, sink, healPerTick,
                 Optional.empty(), durationTicks, List.of(), 0f, 0, 0, false, 0, AttackOrigin.none(), PoolTuning.standard());
     }
 
@@ -316,7 +318,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
         if (this.kind != EffectKind.HEAL) {
             return this;
         }
-        return new Effect(this.kind, this.speedMultiplier, Damage.magic(this.healPerTick), this.shieldPercent,
+        return new Effect(this.kind, this.speedMultiplier, Damage.magic(this.healPerTick), this.shieldRemaining, this.shieldMax,
                 this.remainingTicks, sink, 0, this.shieldRestrictedTo, this.authoredDurationTicks, this.fuel,
                 this.peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap, this.origin, this.tuning);
     }
@@ -352,15 +354,24 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
         return total;
     }
 
-    public Effect withShieldPercent(float shieldPercent) {
-        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, shieldPercent,
+    /** This shield with {@code units} left of its pool. */
+    public Effect withShieldRemaining(float units) {
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, units, this.shieldMax,
                 this.remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
                 this.authoredDurationTicks, this.fuel, this.peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap, this.origin, this.tuning);
     }
 
+    /** This shield with its pool and its full size {@code factor} times as big. */
+    public Effect withShieldScaledBy(float factor) {
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldRemaining * factor,
+                this.shieldMax * factor, this.remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
+                this.authoredDurationTicks, this.fuel, this.peakL0, this.stacks, this.stackClock, this.faultLine,
+                this.stackCap, this.origin, this.tuning);
+    }
+
     /** Narrows a shield to one damage type; the other passes through. */
     public Effect withShieldRestrictedTo(DamageType type) {
-        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldRemaining, this.shieldMax,
                 this.remainingTicks, this.sink, this.healPerTick, Optional.of(type),
                 this.authoredDurationTicks, this.fuel, this.peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap, this.origin, this.tuning);
     }
@@ -374,7 +385,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
         List<FuelContribution> scaled = this.kind == EffectKind.CHILL
                 ? this.fuel.stream().map(c -> new FuelContribution(c.sink(), c.amount(), c.decayPerTick() / factor)).toList()
                 : this.fuel;
-        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldRemaining, this.shieldMax,
                 Math.round(this.remainingTicks * factor), this.sink, this.healPerTick, this.shieldRestrictedTo,
                 Math.round(this.authoredDurationTicks * factor), scaled, this.peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap, this.origin, this.tuning);
     }
@@ -383,7 +394,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
     Effect withPoolScaledBy(float factor) {
         List<FuelContribution> scaled = this.fuel.stream()
                 .map(c -> c.scaledTo(c.amount() * factor)).toList();
-        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick.scaledBy(factor), this.shieldPercent,
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick.scaledBy(factor), this.shieldRemaining, this.shieldMax,
                 this.remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
                 this.authoredDurationTicks, scaled, this.peakL0 * factor, this.stacks, this.stackClock, this.faultLine,
                 this.stackCap, this.origin, this.tuning);
@@ -391,7 +402,7 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
 
     /** The same effect lasting {@code ticks} longer, authored time included. */
     Effect withExtraTicks(int ticks) {
-        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldRemaining, this.shieldMax,
                 this.remainingTicks + ticks, this.sink, this.healPerTick, this.shieldRestrictedTo,
                 this.authoredDurationTicks + ticks, this.fuel, this.peakL0, this.stacks, this.stackClock,
                 this.faultLine, this.stackCap, this.origin, this.tuning);
@@ -404,28 +415,28 @@ public record Effect(EffectKind kind, float speedMultiplier, Damage damagePerTic
     }
 
     Effect withRemainingTicks(int remainingTicks) {
-        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent, remainingTicks,
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldRemaining, this.shieldMax, remainingTicks,
                 this.sink, this.healPerTick, this.shieldRestrictedTo, this.authoredDurationTicks,
                 this.fuel, this.peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap, this.origin, this.tuning);
     }
 
     /** Carries the level forward after decay or a top-up. {@code peakL0} only grows. */
     Effect withFuel(List<FuelContribution> fuel, float peakL0) {
-        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldRemaining, this.shieldMax,
                 this.remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
                 this.authoredDurationTicks, fuel, peakL0, this.stacks, this.stackClock, this.faultLine, this.stackCap, this.origin, this.tuning);
     }
 
     /** The same effect with a new stack count and a fresh clock of {@code remainingTicks}. */
     Effect withStacks(int stacks, int remainingTicks) {
-        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldRemaining, this.shieldMax,
                 remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
                 this.authoredDurationTicks, this.fuel, this.peakL0, stacks, this.stackClock, this.faultLine, this.stackCap, this.origin, this.tuning);
     }
 
     /** The same pool with its clock to the next stack set to {@code stackClock}. */
     Effect withStackClock(int stackClock) {
-        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldPercent,
+        return new Effect(this.kind, this.speedMultiplier, this.damagePerTick, this.shieldRemaining, this.shieldMax,
                 this.remainingTicks, this.sink, this.healPerTick, this.shieldRestrictedTo,
                 this.authoredDurationTicks, this.fuel, this.peakL0, this.stacks, stackClock, this.faultLine, this.stackCap, this.origin, this.tuning);
     }

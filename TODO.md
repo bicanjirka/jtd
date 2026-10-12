@@ -252,6 +252,9 @@ single hit), making the Warden's armor mechanically inert regardless of which to
   heal (0.125 to 2 points a tick by rank) and self-heal (0.35 to 1.4), the Warden's neglect heal (15% of the
   stage's health over 5 s), the Frenzied boss's threshold heal (1 a tick for 10 s) and the Frenzy
   Spawnling's death heal (0.5 a tick for 2 s).
+- Shields are absorb pools with starting values: the Warden's magic self-shield (10% of the stage's
+  health), its half-health ally shield (60 points) and crit-survived shield (3% of the stage's health), the
+  Shieldbearer's ally shield (20 to 320 points by rank) and the Reaver's panic shield (10% of its health).
 - **Where:** the enemy classes (`WardenEnemy` and the others in `td.enemy`), `ArmorTrait`,
   `HurtSpeedTrait`, `FlatResistTrait`.
 - **Approach:** play Curly Path through to the Warden encounter (and the other two levels,

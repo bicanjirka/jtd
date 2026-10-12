@@ -9,36 +9,26 @@ import td.stat.StatView;
 import td.util.RandomSource;
 
 /**
- * The one formula a hit lands by: the crit roll (hits only), then penetration, armor or magic resist, plating,
- * damage taken, shielding, and the cap at remaining health. Computed in float and rounded once.
+ * The one formula a hit lands by: the crit roll (hits only), then penetration, armor or magic resist, plating
+ * and damage taken. Computed in float and rounded once; a shield and the cap at health come after, on the mob.
  */
 public final class HitResolution {
 
     private HitResolution() {
     }
 
-    /** What a hit landed, and the part of it a shield took before it reached health. */
-    public record Outcome(Damage landed, int shielded) {
-    }
-
     /** A hit from nobody in particular: no crit roll, no penetration. */
-    public static Damage resolve(Damage incoming, StatView stats, int health) {
-        return resolve(incoming, AttackProfile.none(), stats, health, () -> 1.0);
+    public static Damage resolve(Damage incoming, StatView stats) {
+        return resolve(incoming, AttackProfile.none(), stats, () -> 1.0);
     }
 
     /**
-     * What {@code incoming} lands for against {@code stats}; its type is kept, and it is critical if
-     * it arrived critical or the roll succeeds. The random source is only drawn from when the crit
-     * chance is above zero, so attackers without crit leave the sequence untouched.
+     * What {@code incoming} lands for against {@code stats}, before any shield and uncapped; its type
+     * is kept, and it is critical if it arrived critical or the roll succeeds. The random source is
+     * only drawn from when the crit chance is above zero, so attackers without crit leave the sequence
+     * untouched.
      */
-    public static Damage resolve(Damage incoming, AttackProfile attacker, StatView stats, int health,
-            RandomSource random) {
-        return resolveWithShield(incoming, attacker, stats, health, random).landed();
-    }
-
-    /** {@link #resolve} that also reports how much a shield took, in the same units as the hit. */
-    public static Outcome resolveWithShield(Damage incoming, AttackProfile attacker, StatView stats, int health,
-            RandomSource random) {
+    public static Damage resolve(Damage incoming, AttackProfile attacker, StatView stats, RandomSource random) {
         float amount = incoming.amount();
         boolean critical = incoming.critical();
         float resilience = stats.value(EnemyStat.RESILIENCE);
@@ -55,14 +45,7 @@ public final class HitResolution {
         if (attacker.delivery() == Delivery.PERIODIC) {
             amount *= stats.value(EnemyStat.PERIODIC_DAMAGE_TAKEN);
         }
-        float shielded = 0f;
-        if (!(critical && attacker.critsPierceShields()) && !attacker.ignoresShields()) {
-            float unshielded = amount;
-            amount *= 1f - stats.value(EnemyStat.shieldingFor(incoming.type()));
-            shielded = unshielded - amount;
-        }
-        return new Outcome(new Damage(Math.round(amount), incoming.type(), critical).cappedAt(health),
-                Math.round(shielded));
+        return new Damage(Math.round(amount), incoming.type(), critical);
     }
 
     /** Whether a hit from {@code attacker} would roll a critical against {@code stats}. */
@@ -88,13 +71,12 @@ public final class HitResolution {
     }
 
     /**
-     * The share of a {@code type} hit that mitigation, damage taken and shielding remove, before
-     * plating and with no penetration: {@code 0} for none, negative when the enemy takes extra.
+     * The share of a {@code type} hit that mitigation and damage taken remove, before plating and with
+     * no penetration: {@code 0} for none, negative when the enemy takes extra.
      */
     public static float reductionAgainst(DamageType type, StatView stats) {
         return 1f - mitigationMultiplier(stats.value(EnemyStat.mitigationFor(type)))
-                * stats.value(EnemyStat.damageTakenFor(type))
-                * (1f - stats.value(EnemyStat.shieldingFor(type)));
+                * stats.value(EnemyStat.damageTakenFor(type));
     }
 
     /** {@code 100 / (100 + armor)}: each point matters less than the one before. */

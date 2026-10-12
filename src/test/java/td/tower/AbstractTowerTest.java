@@ -590,4 +590,18 @@ class AbstractTowerTest {
         assertThat(origins.get(0)).isSameAs(origins.get(1)).isNotSameAs(AttackOrigin.none());
         assertThat(origins.get(2)).isNotSameAs(origins.get(0)).isNotSameAs(AttackOrigin.none());
     }
+
+    @Test
+    void damageAbsorbedByAShieldCountsTowardDamageDealtButNotAKill() {
+        SniperTower tower = new SniperTower(this.context, 0, 0);
+        td.enemy.EnemyMob enemy = td.enemy.EnemyFactory.getEnemy("c", this.context, 0, 50, 3, td.enemy.Rank.GRUNT);
+        enemy.applyEffect(td.effect.Effect.shield(5000f, 100, d -> {
+        }));
+
+        tower.dealDamage(enemy, td.damage.Damage.physical(3000));
+
+        assertThat(tower.getDamageDealt()).isEqualTo(3000);
+        assertThat(tower.getKillCount()).isZero();
+        assertThat(enemy.getHealth()).isEqualTo(5000);
+    }
 }

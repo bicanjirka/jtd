@@ -2,6 +2,7 @@ package td.enemy;
 
 import td.damage.DamageUnits;
 import td.effect.EffectKind;
+import td.effect.ShieldGauge;
 import td.stat.EnemyStat;
 
 import java.util.ArrayList;
@@ -47,7 +48,9 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
         }
         List<EffectState> effects = new ArrayList<>();
         for (EffectKind kind : mob.activeEffectKinds()) {
-            effects.add(new EffectState(kind, mob.effectRemainingTicks(kind), mob.effectStacks(kind), mob.effectLevel(kind)));
+            effects.add(EffectState.of(kind, mob.effectRemainingTicks(kind)).withStacks(mob.effectStacks(kind))
+                    .withLevel(mob.effectLevel(kind))
+                    .withShield(kind == EffectKind.SHIELD ? mob.shieldGauge() : ShieldGauge.none()));
         }
         List<TraitLine> traitLines = definition.traitSlots().stream().map(slot -> slot.template().describe()).toList();
         return new EnemyInspection(definition.displayName(), definition.description(), mob.getRank(), mob.archetype(),
@@ -73,7 +76,25 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
      * @param remainingTicks ticks left; empty for a fuel pool, which decays rather than counting down
      * @param stacks         a vulnerability's, burn's or poison's stack count; {@code 0} for other kinds
      * @param level          how much speed a chill takes away, from {@code 0} to {@code 1}; {@code 0} for other kinds
+     * @param shield         a shield's pool, in points; {@link ShieldGauge#none()} for other kinds
      */
-    public record EffectState(EffectKind kind, OptionalInt remainingTicks, int stacks, float level) {
+    public record EffectState(EffectKind kind, OptionalInt remainingTicks, int stacks, float level, ShieldGauge shield) {
+
+        /** An effect with no stacks, level or shield; add them with the {@code withX} copies. */
+        public static EffectState of(EffectKind kind, OptionalInt remainingTicks) {
+            return new EffectState(kind, remainingTicks, 0, 0f, ShieldGauge.none());
+        }
+
+        public EffectState withStacks(int stacks) {
+            return new EffectState(this.kind, this.remainingTicks, stacks, this.level, this.shield);
+        }
+
+        public EffectState withLevel(float level) {
+            return new EffectState(this.kind, this.remainingTicks, this.stacks, level, this.shield);
+        }
+
+        public EffectState withShield(ShieldGauge shield) {
+            return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level, shield);
+        }
     }
 }

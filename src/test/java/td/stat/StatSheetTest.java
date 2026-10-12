@@ -31,11 +31,9 @@ class StatSheetTest {
     void spiritScalesRestorativeContributions() {
         StatSheet sheet = new StatSheet(BaseStats.defaults(EnemyStat.class).with(EnemyStat.SPIRIT, 50f), accumulator -> {
             accumulator.restoreFlat(EnemyStat.REGENERATION, 10f);
-            accumulator.restoreReduction(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.4f);
         });
 
         assertThat(sheet.value(EnemyStat.REGENERATION)).isCloseTo(15f, within(0.001f));
-        assertThat(sheet.value(EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(0.4f, within(0.001f));
     }
 
     @Test

@@ -230,24 +230,29 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void aShieldAddsShieldingEqualToItsPercent() {
+    void aShieldAbsorbsUntilItsPoolRunsOut() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.shield(0.4f, 5, d -> {
+        effects.apply(Effect.shield(500f, 100, d -> {
         }));
 
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_SHIELDING)).isCloseTo(0.4f, within(0.001f));
+        int first = effects.absorb(DamageType.PHYSICAL, 300);
+        int second = effects.absorb(DamageType.PHYSICAL, 300);
+
+        assertThat(first).isEqualTo(300);
+        assertThat(second).isEqualTo(200);
+        assertThat(effects.has(EffectKind.SHIELD)).isFalse();
         assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isEqualTo(1f);
     }
 
     @Test
-    void aShieldStopsReducingDamageOnceItExpires() {
+    void aShieldAbsorbsNothingOnceItExpires() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.shield(0.4f, 1, d -> {
+        effects.apply(Effect.shield(500f, 1, d -> {
         }));
 
         effects.tick();
 
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.0f, within(0.001f));
+        assertThat(effects.absorb(DamageType.PHYSICAL, 300)).isZero();
     }
 
     @Test
@@ -271,35 +276,48 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void reapplyingShieldAtALowerPercentKeepsTheStrongerOne() {
+    void aReappliedShieldKeepsTheLargerPoolAndTheLongerTime() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.shield(0.6f, 5, d -> {
+        effects.apply(Effect.shield(600f, 5, d -> {
         }));
 
-        effects.apply(Effect.shield(0.2f, 10, d -> {
+        effects.apply(Effect.shield(200f, 10, d -> {
         }));
 
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_SHIELDING)).isCloseTo(0.6f, within(0.001f));
+        assertThat(effects.shieldGauge()).isEqualTo(new ShieldGauge(6f, 6f));
+        assertThat(effects.remainingTicks(EffectKind.SHIELD)).hasValue(10);
     }
 
     @Test
-    void aPhysicalOnlyShieldReducesPhysicalDamageButLeavesMagicUntouched() {
+    void aPhysicalShieldLetsMagicThrough() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.shield(0.4f, 5, d -> {
+        effects.apply(Effect.shield(400f, 5, d -> {
         }).withShieldRestrictedTo(DamageType.PHYSICAL));
 
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_SHIELDING)).isCloseTo(0.4f, within(0.001f));
-        assertThat(resolved(effects, EnemyStat.MAGIC_SHIELDING)).isZero();
+        assertThat(effects.absorb(DamageType.MAGIC, 100)).isZero();
+        assertThat(effects.absorb(DamageType.PHYSICAL, 100)).isEqualTo(100);
     }
 
     @Test
     void anUnrestrictedShieldStillAbsorbsBothDamageKinds() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.shield(0.4f, 5, d -> {
+        effects.apply(Effect.shield(400f, 5, d -> {
         }));
 
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_SHIELDING)).isCloseTo(0.4f, within(0.001f));
-        assertThat(resolved(effects, EnemyStat.MAGIC_SHIELDING)).isCloseTo(0.4f, within(0.001f));
+        assertThat(effects.absorb(DamageType.MAGIC, 100)).isEqualTo(100);
+        assertThat(effects.absorb(DamageType.PHYSICAL, 100)).isEqualTo(100);
+    }
+
+    @Test
+    void shatterToneTakesAQuarterOfWhatRemains() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.shield(400f, 100, d -> {
+        }));
+        effects.absorb(DamageType.PHYSICAL, 200);
+
+        effects.weakenShield(0.25f);
+
+        assertThat(effects.shieldGauge().remaining()).isEqualTo(1.5f);
     }
 
     @Test
@@ -1352,16 +1370,13 @@ class ActiveEffectsTest {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.heal(10, 100, d -> {
         }));
-        effects.apply(Effect.shield(0.4f, 100, d -> {
-        }));
         float healBefore = resolved(effects, EnemyStat.REGENERATION);
-        float shieldBefore = resolved(effects, EnemyStat.PHYSICAL_SHIELDING);
 
         effects.apply(Effect.burn(Damage.magic(100), 60, d -> {
         }).withTuning(PoolTuning.standard().cauterizing()));
 
         assertThat(resolved(effects, EnemyStat.REGENERATION)).isCloseTo(healBefore / 2, within(1e-4f));
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_SHIELDING)).isCloseTo(shieldBefore / 2, within(1e-4f));
+        assertThat(resolved(effects, EnemyStat.HEALING_RECEIVED)).isEqualTo(0.5f);
     }
 
     @Test

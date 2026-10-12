@@ -200,10 +200,10 @@ holds more than one effect; selecting it lists every effect with what kind it is
 | Contagious | hex              | When the enemy dies, its hexes and debuffs jump to the 2 nearest unhexed enemies nearby with the time they had left; a jumped hex jumps once more at most |
 | Rimed      | hex              | Chills when cast. Freezing the enemy buys twice the chill's extra freeze time and lands all of its burn at once instead of half. Replaces Ashen |
 | Ashen      | hex              | Its burn and poison hold twice as much and earn Scorched and Sickened twice as fast; it can't be frozen and takes a quarter of any chill. Replaces Rimed |
-| Inverted   | hex              | Heals it receives are dealt to it as magic damage over their length, shields as one hit of their share of its full health, both credited to the Hexer; it can't turn invisible |
+| Inverted   | hex              | Heals it receives are dealt to it as magic damage over their length, shields as one hit of their points, both credited to the Hexer; it can't turn invisible |
 | Sympathetic | hex             | Once a second, its Vulnerable, Sundered, Exposed and chill are copied, up to what it has, to the Hexer's other hexed enemies within 2 cells |
 | Reckoned   | hex              | When the enemy dies, every Doom of that Hexer within 2 cells pays out at once and starts again |
-| Shield     | restorative      | Absorbs a share of every hit                                                                       |
+| Shield     | restorative      | Absorbs damage up to its points, after armor and plating, then breaks                              |
 | Heal       | restorative      | Restores health every tick                                                                         |
 | Invisible  | stealth          | Towers cannot target the enemy; area damage still reaches it                                       |
 | Revealed   | stealth          | Towers can target the enemy again, even through invisibility; turning invisible again ends it      |

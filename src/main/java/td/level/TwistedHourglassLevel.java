@@ -32,6 +32,12 @@ final class TwistedHourglassLevel {
     private static final int STARTING_CREDITS = 100;
     private static final int STARTING_LIVES = 4;
 
+    /** A tenth of the rank's health, once it is badly wounded. */
+    private static IdentifiedAbility panicShield(float points) {
+        return IdentifiedAbility.named("panicShield", new Ability(new HealthThresholdTrigger(0.5f),
+                new ApplyEffectAction(new ShieldTemplate(points, 100), new SelfTarget())));
+    }
+
     private static final RankedEnemy REAVER = RankedEnemy
             .startingAt(EnemyDefinition.of("reaver", "Reaver", 500, 12, 1.28f, BodyArchetype.TRIANGLE)
                     .withDescription("Speeds up as it's hurt, shrugs off a flat amount of every hit, panics into a "
@@ -41,14 +47,13 @@ final class TwistedHourglassLevel {
                     .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.3f)),
                             IdentifiedTrait.named("armor", new FlatResistTrait(0.1f))))
                     .withIdentifiedAbilities(List.of(
-                            IdentifiedAbility.named("panicShield", new Ability(new HealthThresholdTrigger(0.5f),
-                                    new ApplyEffectAction(new ShieldTemplate(0.25f, 100), new SelfTarget()))),
+                            panicShield(50f),
                             IdentifiedAbility.named("splitOnDeath",
                                     new Ability(new OnDeathTrigger(), new SpawnEnemiesAction("c", 2, false))))))
-            .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(1000, 20))
-            .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(2000, 32))
-            .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(4000, 50))
-            .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(8000, 80))
+            .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(1000, 20).withAdditionalAbilities(List.of(panicShield(100f))))
+            .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(2000, 32).withAdditionalAbilities(List.of(panicShield(200f))))
+            .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(4000, 50).withAdditionalAbilities(List.of(panicShield(400f))))
+            .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(8000, 80).withAdditionalAbilities(List.of(panicShield(800f))))
             .build();
 
     private static final QuadraticBezierSmoothing SMOOTHING = new QuadraticBezierSmoothing(0.28, 12);

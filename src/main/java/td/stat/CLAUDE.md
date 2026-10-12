@@ -5,10 +5,10 @@
   `StatKey` enum (`EnemyStat`, `TowerStat`): `StatModifier(s)`, `BaseStats`, `StatAccumulator`.
   `StatSheet`/`StatView` stay enemy-only, cached and allocation-free; `ResolvedStats` is the
   immutable form for snapshots.
-- A stat resolves as `(base + Σflat) * (1 + Σpercent) * Πmultiply`, plus spirit-scaled restorative
-  parts, replaced by the lowest set value if any, held to its lowest `capAtShareOfBase` (a share of
+- A stat resolves as `(base + Σflat) * (1 + Σpercent) * Πmultiply`, plus restorative parts scaled
+  by spirit and `HEALING_RECEIVED`, replaced by the lowest set value if any, held to its lowest `capAtShareOfBase` (a share of
   the *base* value, so it also holds against anything that raised it), then clamped to the
-  `EnemyStat`'s range. Spirit resolves first.
+  `EnemyStat`'s range. Spirit and healing received resolve first.
 - `StatModifier.plus` adds flats and percents, multiplies multipliers and keeps the minimum set
   value; `none()` is the identity (no set value is `+∞`). Stacking rules (caps, refresh) stay with
   the source; the stat sees only the result.

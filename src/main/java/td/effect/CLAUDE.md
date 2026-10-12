@@ -69,11 +69,14 @@
   damage; the mob pays its share of that hit through the charge's own sink, so the charger is
   credited.
 - Effects change a mob only through `contributeTo(StatAccumulator)`: chill and poison on
-  `MOVE_SPEED` (multiplying), freeze setting it to zero, shield on damage taken; vulnerable,
+  `MOVE_SPEED` (multiplying), freeze setting it to zero; vulnerable,
   priority, kill zone, resonating and brittle **add** to damage taken; heal on `REGENERATION`,
   invisible and revealed on `STEALTH` (revealed sets it to 0, which beats invisibility's 1; exposed
   or revealed take 50 `RESILIENCE` once), scorched stacks on `RESILIENCE` (-1 each) and sickened stacks on `SPIRIT` (-1 each), both floored
-  by the stat's range. Shield and heal go in as restorative, so spirit scales them.
+  by the stat's range. Heal goes in as restorative, so spirit and `HEALING_RECEIVED` scale it. A
+  shield is an absorb pool (`ActiveEffects.absorb`), applied after armor and plating, scaled once when
+  applied by spirit and `HEALING_RECEIVED`; reapplying keeps the larger pool. Cauterize lowers
+  `HEALING_RECEIVED`.
   The mob applies regeneration to itself, capped at max health; `Damage` can't be negative.
 - Resistance and diminishing returns only shorten an authored duration, never change an effect's
   curve: `duration = authored * (1 - resist[kind]) * freezeStep`, and under one tick is blocked.
