@@ -8,6 +8,6 @@ public final class FireControlPerk implements SplashPerk {
 
     @Override
     public SplashSpec refineSpec(SplashSpec spec) {
-        return spec.withBlast(spec.blast().aimingAtCrowds().withSaturation(SaturationRule.attuned()));
+        return spec.withBlast(spec.blast().aimingAtCrowds().saturating());
     }
 }

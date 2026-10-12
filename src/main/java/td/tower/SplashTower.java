@@ -10,8 +10,6 @@ import td.tower.splash.ArcPerk;
 import td.tower.splash.ArcPlanner;
 import td.tower.splash.ArcSpec;
 import td.tower.splash.ArcStrike;
-import td.tower.splash.BlastRadiusPerk;
-import td.tower.splash.BlastSpec;
 import td.tower.splash.BlightHex;
 import td.tower.splash.ChainLightningPerk;
 import td.tower.splash.ConductorPerk;
@@ -37,7 +35,6 @@ import td.tower.splash.OverloadPerk;
 import td.tower.splash.PotencyPerk;
 import td.tower.splash.ReckoningHex;
 import td.tower.splash.SaturationRule;
-import td.tower.splash.ShapedChargePerk;
 import td.tower.splash.ShotContext;
 import td.tower.splash.ShotResult;
 import td.tower.splash.SplashActions;
@@ -49,7 +46,6 @@ import td.tower.splash.SympathyCopier;
 import td.tower.splash.SympathyHex;
 import td.tower.splash.ThunderclapPerk;
 import td.tower.splash.ThunderstrikePerk;
-import td.tower.splash.WideChargePerk;
 import td.tower.targeting.HighestHealthSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.MostNeighboursSelector;
@@ -128,8 +124,9 @@ public final class SplashTower extends AbstractTower {
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
             .withAttune(NodeEffects.none().withNote("Fire Control: aims at the enemy with most neighbours in the blast; Saturation: +5% blast "
                     + "damage a stack, 3 stacks"))
-            .withRangeThree(0.1f, NodeEffects.none().withNote("blast radius +10%; Mines: every 4th blast leaves a mine on the path for 10s, up to "
-                    + "3, that the next enemy to step on it sets off as one blast"));
+            .withRangeThree(0.1f, NodeEffects.none().withModifiers(TowerModifiers.areaRadius(0.15f))
+                    .withNote("Mines: every 4th blast leaves a mine on the path for 10s, up to 3, that the next enemy "
+                            + "to step on it sets off as one blast"));
 
     private static final UpgradeNode ARC = UpgradeTier.HEAD_1.node("splash.head.arc.1", "Arc", PRICE)
             .withNote("the blast carries past its edge: 2 jumps at 50% as magic, further from Saturated "
@@ -191,10 +188,10 @@ public final class SplashTower extends AbstractTower {
     private static final UpgradeCondition A_CHAIN = UpgradeCondition.owns(ARC.id()).or(UpgradeCondition.owns(HEX.id()));
     private static final UpgradeNode WIDE_CHARGE = UpgradeTier.EXTRA_1.node("splash.extra.blast_engineering.1",
             "Wide Charge", PRICE)
-            .withNote("+25% blast radius; the blast's edge deals 25% instead of nothing");
+            .withModifiers(TowerModifiers.areaRadius(0.375f).plus(TowerModifiers.blastEdge(0.25f)));
     private static final UpgradeNode SHAPED_CHARGE = UpgradeTier.EXTRA_2.node("splash.extra.blast_engineering.2",
             "Shaped Charge", PRICE)
-            .withNote("enemies in the inner half gain 2 Saturation instead of 1; Saturation caps at 4")
+            .withModifiers(TowerModifiers.saturationInnerStacks(1).plus(TowerModifiers.saturationCap(1)))
             .after(WIDE_CHARGE);
     private static final UpgradeNode POTENCY = UpgradeTier.EXTRA_3.node("splash.extra.blast_engineering.3",
             "Potency", PRICE)
@@ -235,15 +232,12 @@ public final class SplashTower extends AbstractTower {
 
     private static final PerkCatalogue<SplashPerk> PERKS = PerkCatalogue.<SplashPerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, FireControlPerk::new)
-            .with(StandardBaseSlot.RANGE_3_ID, () -> new BlastRadiusPerk(0.1f))
             .with(StandardBaseSlot.RANGE_3_ID, MinesPerk::new)
             .with(ARC.id(), ArcPerk::new)
             .with(CONDUCTOR.id(), ConductorPerk::new)
             .with(OVERLOAD.id(), OverloadPerk::new)
             .with(CHAIN_LIGHTNING.id(), ChainLightningPerk::new)
             .with(LIGHTNING_ROD.id(), LightningRodPerk::new)
-            .with(WIDE_CHARGE.id(), WideChargePerk::new)
-            .with(SHAPED_CHARGE.id(), ShapedChargePerk::new)
             .with(POTENCY.id(), PotencyPerk::new)
             .with(MASTERY.id(), MasteryPerk::new)
             .with(THUNDERCLAP.id(), ThunderclapPerk::new)
@@ -276,7 +270,9 @@ public final class SplashTower extends AbstractTower {
     private final List<Zone> mines = new ArrayList<>();
 
     public SplashTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.SPLASH, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX), context, x, y);
+        super(TowerFactory.Type.SPLASH, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
+                .with(TowerStat.AREA_RADIUS, BLAST_RADIUS_CELLS).with(TowerStat.BLAST_EDGE, 0f)
+                .with(TowerStat.SATURATION_CAP, 3f).with(TowerStat.SATURATION_INNER_STACKS, 1f), context, x, y);
         this.randomAim = PreferringSelector.priority(new RandomSelector(context.random()));
     }
 
@@ -300,8 +296,25 @@ public final class SplashTower extends AbstractTower {
         return spec;
     }
 
-    private float blastRadius(BlastSpec blast) {
-        return BLAST_RADIUS_CELLS * this.context.getBoard().scale() * blast.distanceScale();
+    private float blastRadius() {
+        return this.stats().value(TowerStat.AREA_RADIUS) * this.context.getBoard().scale();
+    }
+
+    /** How far every blast distance reaches compared with the base blast. */
+    private float distanceScale() {
+        return this.stats().value(TowerStat.AREA_RADIUS) / BLAST_RADIUS_CELLS;
+    }
+
+    private SaturationRule saturation(SplashSpec spec) {
+        return spec.blast().saturates()
+                ? new SaturationRule(1, Math.round(this.stats().value(TowerStat.SATURATION_INNER_STACKS)),
+                        Math.round(this.stats().value(TowerStat.SATURATION_CAP)))
+                : SaturationRule.none();
+    }
+
+    /** The share of damage a blast deals at {@code share} of its radius out, floored by its edge. */
+    private float falloff(float share) {
+        return Math.max(this.stats().value(TowerStat.BLAST_EDGE), 1f - share * share);
     }
 
     public void doTick(int gameTime) {
@@ -340,7 +353,7 @@ public final class SplashTower extends AbstractTower {
         if (!hexes.isActive() || (this.shotsFired + 1) % CAST_EVERY != 0) {
             return false;
         }
-        float blastRadius = this.blastRadius(spec.blast());
+        float blastRadius = this.blastRadius();
         Optional<HexPick> pick = this.hexTurn.take(hexes.pool(), new HexScene(inReach, blastRadius,
                 this.distance(SPREAD_CELLS, spec), this.distance(SHARE_CELLS, spec)));
         if (pick.isEmpty()) {
@@ -377,7 +390,7 @@ public final class SplashTower extends AbstractTower {
 
     /** {@code cells} grown by the blast radius bonus, in pixels: how far a hex's payload reaches. */
     private float distance(float cells, SplashSpec spec) {
-        return cells * this.context.getBoard().scale() * spec.blast().distanceScale();
+        return cells * this.context.getBoard().scale() * this.distanceScale();
     }
 
     private static boolean near(EnemyMob a, EnemyMob b, float distance) {
@@ -503,7 +516,7 @@ public final class SplashTower extends AbstractTower {
         if (!spec.blast().aimsAtCrowds()) {
             return this.randomAim;
         }
-        return PreferringSelector.priority(new MostNeighboursSelector(this.blastRadius(spec.blast())));
+        return PreferringSelector.priority(new MostNeighboursSelector(this.blastRadius()));
     }
 
     /**
@@ -522,12 +535,12 @@ public final class SplashTower extends AbstractTower {
         for (SplashPerk perk : owned) {
             shot = perk.shape(shot, context);
         }
-        if (spec.blast().saturation().isActive() && primary.hasEffect(EffectKind.SATURATED)) {
+        if (this.saturation(spec).isActive() && primary.hasEffect(EffectKind.SATURATED)) {
             this.countDeedOfAttack();
         }
         List<Trace> traces = new ArrayList<>();
         Optional<EnemyMob> struck = shot.thunderstrike() ? this.thunderstrike(spec, traces) : Optional.empty();
-        Blast blast = this.blast(primary, (int) primary.getX(), (int) primary.getY(), spec.blast());
+        Blast blast = this.blast(primary, (int) primary.getX(), (int) primary.getY(), spec);
         this.blasts = List.of(blast);
         if (spec.mines().isActive() && this.shotsFired % spec.mines().every() == 0) {
             this.leaveMine(primary.getX(), primary.getY(), spec);
@@ -553,18 +566,18 @@ public final class SplashTower extends AbstractTower {
      * Hits the primary first, then everything else within the blast, each for its share of the
      * damage at its distance, harder the more Saturated it is; then Saturates them all.
      */
-    private Blast blast(EnemyMob primary, int x, int y, BlastSpec spec) {
-        float radius = this.blastRadius(spec);
+    private Blast blast(EnemyMob primary, int x, int y, SplashSpec spec) {
+        float radius = this.blastRadius();
         List<EnemyMob> caught = new ArrayList<>(InRangeTargetQuery.everyone(x, y, radius).matching(this.context.enemies()));
         caught.remove(primary);
         caught.addFirst(primary);
-        SaturationRule saturation = spec.saturation();
+        SaturationRule saturation = this.saturation(spec);
         boolean critical = false;
         for (EnemyMob enemy : caught) {
             float distanceShare = (float) (Math.hypot(enemy.getX() - x, enemy.getY() - y) / radius);
             float saturated = saturation.isActive()
                     ? 1f + SATURATION_DAMAGE_PER_STACK * enemy.effectStacks(EffectKind.SATURATED) : 1f;
-            int amount = Math.round(this.damageCurrent() * spec.damageShareAt(distanceShare) * saturated);
+            int amount = Math.round(this.damageCurrent() * this.falloff(Math.min(1f, distanceShare)) * saturated);
             boolean crit = this.dealDamage(enemy, Damage.physical(amount));
             critical |= enemy == primary && crit;
             if (saturation.isActive() && !enemy.isDead()) {
@@ -599,7 +612,7 @@ public final class SplashTower extends AbstractTower {
     /** A mine went off under {@code by}: one blast where it lay. */
     private void explode(Zone mine, EnemyMob by) {
         this.mines.remove(mine);
-        this.blast(by, (int) mine.x(), (int) mine.y(), this.spec(this.perks.all()).blast());
+        this.blast(by, (int) mine.x(), (int) mine.y(), this.spec(this.perks.all()));
     }
 
     /** The enemy the blast caught furthest from its centre, where its arcs start. */
@@ -616,9 +629,9 @@ public final class SplashTower extends AbstractTower {
      */
     private boolean arc(Blast blast, EnemyMob start, SplashSpec spec, List<Trace> traces, List<EnemyMob> arced) {
         ArcSpec arcs = spec.arcs();
-        float cellReach = this.context.getBoard().scale() * spec.blast().distanceScale();
+        float cellReach = this.context.getBoard().scale() * this.distanceScale();
         float bound = blast.area().radius()
-                + arcs.jumps() * ArcSpec.reachCells(spec.blast().saturation().cap()) * cellReach;
+                + arcs.jumps() * ArcSpec.reachCells(this.saturation(spec).cap()) * cellReach;
         List<EnemyMob> candidates = InRangeTargetQuery.everyone(blast.area().centerX(), blast.area().centerY(), bound)
                 .matching(this.context.enemies());
         Set<EnemyMob> struck = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -670,7 +683,7 @@ public final class SplashTower extends AbstractTower {
         if (!arcs.canCrit()) {
             attack = attack.withCritChance(0f);
         } else {
-            SaturationRule saturation = spec.blast().saturation();
+            SaturationRule saturation = this.saturation(spec);
             boolean fullySaturated = saturation.isActive()
                     && target.effectStacks(EffectKind.SATURATED) >= saturation.cap();
             float bonus = arcs.critBonus() + (fullySaturated ? arcs.saturatedCritBonus() : 0f);
@@ -739,9 +752,8 @@ public final class SplashTower extends AbstractTower {
 
     @Override
     protected List<TowerStatLine> ownStats() {
-        BlastSpec blast = this.spec(this.perks.all()).blast();
         return List.of(new TowerStatLine(TowerStatRow.SPLASH_RADIUS, BLAST_RADIUS_CELLS,
-                BLAST_RADIUS_CELLS * blast.distanceScale()));
+                this.stats().value(TowerStat.AREA_RADIUS)));
     }
 
     @Override
@@ -750,8 +762,8 @@ public final class SplashTower extends AbstractTower {
         List<BehaviourLine> lines = new ArrayList<>();
         lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Targets",
                 spec.blast().aimsAtCrowds() ? "most crowded" : "random"));
-        if (spec.blast().saturation().isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Saturates", "up to x" + spec.blast().saturation().cap()));
+        if (this.saturation(spec).isActive()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Saturates", "up to x" + this.saturation(spec).cap()));
         }
         if (spec.arcs().active()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Arcs", spec.arcs().jumps() + " jumps"));

@@ -17,7 +17,7 @@ public record SplashSpec(Reach reach, BlastSpec blast, ArcSpec arcs, HexSpec hex
 
     /** The visible enemies in range, a plain blast and nothing it carries. */
     public static SplashSpec from(Viewpoint view) {
-        return new SplashSpec(Reach.visible(view), BlastSpec.base(), ArcSpec.none(), HexSpec.none(),
+        return new SplashSpec(Reach.visible(view), BlastSpec.none(), ArcSpec.none(), HexSpec.none(),
                 MineSpec.none());
     }
 
