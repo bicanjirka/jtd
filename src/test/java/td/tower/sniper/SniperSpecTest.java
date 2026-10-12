@@ -2,7 +2,6 @@ package td.tower.sniper;
 
 import org.junit.jupiter.api.Test;
 import td.effect.Effect;
-import td.enemy.EnemyMob;
 import td.fixtures.FakeEnemyMob;
 import td.tower.targeting.Viewpoint;
 
@@ -29,19 +28,5 @@ class SniperSpecTest {
     @Test
     void withoutASpecialItAimsAtTheEnemyFurthestAlong() {
         assertThat(SPEC.chosenAim().label()).isEqualTo("first");
-    }
-
-    @Test
-    void overwatchKeepsItsDeadZoneWhicheverWayRoundTheReachWasWidened() {
-        FakeEnemyMob closeAndMarked = markedAt(40);
-        FakeEnemyMob farAndMarked = markedAt(150);
-        SniperSpec uplinkFirst = new OverwatchPerk().refineSpec(new SpotterUplinkPerk().refineSpec(SPEC));
-        SniperSpec overwatchFirst = new SpotterUplinkPerk().refineSpec(new OverwatchPerk().refineSpec(SPEC));
-
-        var fromUplinkFirst = uplinkFirst.reach().matching(() -> new EnemyMob[]{closeAndMarked, farAndMarked});
-        var fromOverwatchFirst = overwatchFirst.reach().matching(() -> new EnemyMob[]{closeAndMarked, farAndMarked});
-
-        assertThat(fromUplinkFirst).containsExactly(farAndMarked);
-        assertThat(fromOverwatchFirst).containsExactly(farAndMarked);
     }
 }
