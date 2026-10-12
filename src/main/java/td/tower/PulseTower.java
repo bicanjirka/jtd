@@ -9,10 +9,8 @@ import td.enemy.EnemyMob;
 import td.enemy.ShieldListener;
 import td.tower.pulse.ArcDischargePerk;
 import td.tower.pulse.EventHorizonPerk;
-import td.tower.pulse.FasterTollPerk;
 import td.tower.pulse.FieldMode;
 import td.tower.pulse.FullTollBonusPerk;
-import td.tower.pulse.LingeringTollPerk;
 import td.tower.pulse.MeltdownPerk;
 import td.tower.pulse.ModePerk;
 import td.tower.pulse.ModeSpec;
@@ -76,15 +74,14 @@ public final class PulseTower extends AbstractTower {
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
             .withAttune(NodeEffects.none().withNote("Toll: each second an enemy stays inside adds a stack (up to 5), fading 1s after it leaves; "
                     + "each stack: +10% field damage, and every debuff on it wears off 10% slower"))
-            .withRangeThree(0.2f, NodeEffects.none().withNote("Wide Field: Toll lasts 1s longer after an enemy leaves"));
+            .withRangeThree(0.2f, NodeEffects.none().withModifiers(TowerModifiers.tollLinger(20)));
 
     private static final UpgradeNode OVERCHARGED_COILS_1 = UpgradeTier.HEAD_1.node("pulse.head.overcharged_coils.1",
             "Overcharged Coils", PRICE)
-            .withModifiers(TowerModifiers.damagePercent(0.3f))
-            .withNote("Toll builds twice as fast");
+            .withModifiers(TowerModifiers.damage(0.6f).plus(TowerModifiers.tollRate(1f)));
     private static final UpgradeNode OVERCHARGED_COILS_2 = UpgradeTier.HEAD_2.node("pulse.head.overcharged_coils.2",
             "Overcharged Coils II", PRICE)
-            .withModifiers(TowerModifiers.damagePercent(0.25f))
+            .withModifiers(TowerModifiers.damage(0.5f))
             .withNote("an enemy at full Toll takes +25% from the field")
             .after(OVERCHARGED_COILS_1);
     private static final UpgradeNode ARC_DISCHARGE = UpgradeTier.HEAD_3.node("pulse.head.overcharged_coils.3",
@@ -96,7 +93,8 @@ public final class PulseTower extends AbstractTower {
             .after(OVERCHARGED_COILS_2);
     private static final UpgradeNode MELTDOWN = UpgradeTier.HEAD_4.node("pulse.head.overcharged_coils.4a", "Meltdown",
             PRICE)
-            .withNote("Toll stacks to 10; the zap gets +10% crit, and Toll raises the zap's damage too")
+            .withModifiers(TowerModifiers.tollCap(5))
+            .withNote("the zap gets +10% crit, and Toll raises the zap's damage too")
             .after(ARC_DISCHARGE);
     private static final UpgradeNode TESLA_COIL = UpgradeTier.HEAD_4.node("pulse.head.overcharged_coils.4b",
             "Tesla Coil", PRICE)
@@ -105,11 +103,10 @@ public final class PulseTower extends AbstractTower {
             .after(ARC_DISCHARGE);
     private static final UpgradeNode PHASE_FIELD_1 = UpgradeTier.HEAD_1.node("pulse.head.phase_field.1",
             "Phase Field", PRICE)
-            .withModifiers(TowerModifiers.rangePercent(0.2f))
-            .withNote("Toll stays 2s after an enemy leaves");
+            .withModifiers(TowerModifiers.range(0.3f).plus(TowerModifiers.tollLinger(20)));
     private static final UpgradeNode PHASE_FIELD_2 = UpgradeTier.HEAD_2.node("pulse.head.phase_field.2",
             "Phase Field II", PRICE)
-            .withModifiers(TowerModifiers.rangePercent(0.15f))
+            .withModifiers(TowerModifiers.range(0.225f))
             .withNote("an enemy is revealed to every tower for 2s when it gains its first Toll stack, once "
                     + "per visit")
             .after(PHASE_FIELD_1);
@@ -178,13 +175,10 @@ public final class PulseTower extends AbstractTower {
 
     private static final PerkCatalogue<PulsePerk> PERKS = PerkCatalogue.<PulsePerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, TollPerk::new)
-            .with(StandardBaseSlot.RANGE_3_ID, () -> new LingeringTollPerk(1f))
-            .with(OVERCHARGED_COILS_1.id(), FasterTollPerk::new)
             .with(OVERCHARGED_COILS_2.id(), FullTollBonusPerk::new)
             .with(ARC_DISCHARGE.id(), ArcDischargePerk::new)
             .with(MELTDOWN.id(), MeltdownPerk::new)
             .with(TESLA_COIL.id(), TeslaCoilPerk::new)
-            .with(PHASE_FIELD_1.id(), () -> new LingeringTollPerk(1f))
             .with(PHASE_FIELD_2.id(), RevealOnEntryPerk::new)
             .with(NULL_FIELD.id(), () -> new ModePerk(FieldMode.SILENCE))
             .with(TRUE_SIGHT.id(), TrueSightPerk::new)
@@ -213,7 +207,16 @@ public final class PulseTower extends AbstractTower {
     private final ShieldListener shieldListener = this::mirrorShield;
 
     public PulseTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.PULSE, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0), context, x, y);
+        super(TowerFactory.Type.PULSE, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0)
+                .with(TowerStat.TOLL_CAP, 5f).with(TowerStat.TOLL_RATE, 1f).with(TowerStat.TOLL_LINGER, 20f),
+                context, x, y);
+    }
+
+    private TollSpec toll(PulseSpec spec) {
+        return spec.tolls()
+                ? new TollSpec(Math.round(this.stats().value(TowerStat.TOLL_CAP)), this.stats().value(TowerStat.TOLL_RATE),
+                        Math.round(this.stats().value(TowerStat.TOLL_LINGER)))
+                : TollSpec.none();
     }
 
     @Override
@@ -244,12 +247,12 @@ public final class PulseTower extends AbstractTower {
         this.countDeaths(spec, inside);
         this.watchShields(spec);
         boolean beat = gameTime % TICKS_PER_SECOND == 0;
-        List<EnemyMob> earners = spec.toll().isActive()
-                ? this.tollTracker.tick(inside, spec.toll().ticksPerStack()) : List.of();
+        TollSpec toll = this.toll(spec);
+        List<EnemyMob> earners = toll.isActive() ? this.tollTracker.tick(inside, toll.ticksPerStack()) : List.of();
         int highest = 0;
         for (EnemyMob enemy : inside) {
             boolean startsVisit = earners.contains(enemy) && !enemy.hasEffect(EffectKind.TOLL);
-            this.addToll(enemy, spec.toll(), earners.contains(enemy));
+            this.addToll(enemy, toll, earners.contains(enemy));
             if (startsVisit) {
                 this.startVisit(enemy, spec.visit());
             }
@@ -257,7 +260,7 @@ public final class PulseTower extends AbstractTower {
             int stacks = enemy.effectStacks(EffectKind.TOLL);
             highest = Math.max(highest, stacks);
             float factor = 1f + TOLL_DAMAGE_PER_STACK * stacks
-                    + (stacks >= spec.toll().cap() ? spec.field().fullTollBonus() : 0f)
+                    + (stacks >= toll.cap() ? spec.field().fullTollBonus() : 0f)
                     + Math.min(MAX_DEATH_BONUS, spec.field().perDeathBonus() * this.deathsThisWave)
                     + (spec.modes().has(FieldMode.SOUL_DRAIN) ? SOUL_DRAIN_DAMAGE_PER_POINT * Math.max(0f, -enemy.spirit()) : 0f);
             for (int hit = 0; hit < shots && !enemy.isDead(); hit++) {
@@ -270,7 +273,7 @@ public final class PulseTower extends AbstractTower {
         }
         this.clock.advance(this.attackRate());
         this.highestToll = highest;
-        if (spec.toll().isActive() && highest >= spec.toll().cap()) {
+        if (toll.isActive() && highest >= toll.cap()) {
             this.countDeedOfSecond();
         }
         if (spec.zap().isActive() && beat && !inside.isEmpty()) {
@@ -476,8 +479,9 @@ public final class PulseTower extends AbstractTower {
         PulseSpec spec = this.spec(this.perks.all());
         List<BehaviourLine> lines = new ArrayList<>();
         lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Hits", "all in range"));
-        if (spec.toll().isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Toll", "up to " + spec.toll().cap() + ", +10% each"));
+        TollSpec toll = this.toll(spec);
+        if (toll.isActive()) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Toll", "up to " + toll.cap() + ", +10% each"));
         }
         if (spec.visit().revealTicks() > 0) {
             lines.add(new BehaviourLine(BehaviourMarker.REVEAL, "Reveals on Toll",

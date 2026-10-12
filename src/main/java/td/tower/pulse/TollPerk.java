@@ -5,6 +5,6 @@ public final class TollPerk implements PulsePerk {
 
     @Override
     public PulseSpec refineSpec(PulseSpec spec) {
-        return spec.withToll(TollSpec.attuned());
+        return spec.tolling();
     }
 }
