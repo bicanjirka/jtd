@@ -1,6 +1,7 @@
 package td.tower;
 
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
@@ -29,6 +30,8 @@ import td.tower.mortar.ShrapnelBoostPerk;
 import td.tower.mortar.ShrapnelSpec;
 import td.tower.mortar.ShrapnelStormPerk;
 import td.tower.mortar.TacticalNukePerk;
+import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitKind;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.PreferringSelector;
@@ -395,14 +398,21 @@ public final class MortarTower extends AbstractTower {
         for (EnemyMob enemy : hit) {
             float falloff = falloff(landing.x(), landing.y(), landing.radius(), enemy, spec.flatCore());
             float centreFactor = enemy == centre ? spec.centre().damageFactor() : 1f;
-            this.dealDamage(enemy, Damage.of(landing.type().damageType(),
-                    Math.round(landing.damage() * falloff * centreFactor)));
+            this.hit(enemy, landing.type().damageType(), landing.damage() * falloff * centreFactor, HitKind.BLAST);
             this.applyEffect(enemy, sink -> Effect.cracked(CRACKED_TICKS, sink));
             if (enemy == centre) {
                 this.applyStacks(enemy, EffectKind.SUNDERED, spec.centre().sunderStacks());
             }
         }
         return hit;
+    }
+
+    /** One hit of {@code amount} on {@code enemy}, with the hit bonuses for its kind, reported to the procs. */
+    private void hit(EnemyMob enemy, DamageType type, float amount, HitKind kind) {
+        HitAdjustment adjustment = this.hitAdjustment(enemy, kind, 0f, this.stats());
+        boolean critical = this.dealDamage(enemy, Damage.of(type, Math.round(amount * adjustment.damageFactor())),
+                adjustment.applyTo(this.stats().attack()));
+        this.report(enemy, kind, critical, enemy.isDead());
     }
 
     /** How much of the damage reaches {@code enemy}: less the further from the centre, none past the radius. */
@@ -435,15 +445,14 @@ public final class MortarTower extends AbstractTower {
         ShrapnelSpec shrapnel = landing.spec().shrapnel();
         int scale = this.context.getBoard().scale();
         float reach = landing.radius() * SHRAPNEL_RING_MULTIPLIER + shrapnel.reachCellsPerStep() * scale * landing.step();
-        Damage piece = Damage.of(landing.type().damageType(),
-                Math.round(landing.damage() * shrapnel.damageShare() * shrapnel.scale()));
+        float piece = landing.damage() * shrapnel.damageShare() * shrapnel.scale();
         int crackedTicks = Math.round(CRACKED_TICKS * shrapnel.scale());
         for (EnemyMob enemy : InRangeTargetQuery.everyone((int) Math.round(landing.x()), (int) Math.round(landing.y()),
                 reach).matching(this.context.enemies())) {
             if (alreadyHit.contains(enemy)) {
                 continue;
             }
-            this.dealDamage(enemy, piece);
+            this.hit(enemy, landing.type().damageType(), piece, HitKind.SHRAPNEL);
             this.applyEffect(enemy, sink -> Effect.cracked(crackedTicks, sink));
             if (shrapnel.carriesShell()) {
                 landing.type().zone().ifPresent(zone -> ZoneEffects.touch(zone.kind(),
@@ -467,12 +476,12 @@ public final class MortarTower extends AbstractTower {
         }
         List<Path> paths = this.context.level().paths().stream().map(PathRuntime::path).toList();
         float radius = bomblets.radiusCells() * scale;
-        int damage = Math.round(this.damageCurrent() * bomblets.damageShare());
+        float damage = Math.round(this.damageCurrent() * bomblets.damageShare());
         for (Vec2 at : PathLine.along(paths, landing.x(), landing.y(), offsets)) {
             for (EnemyMob enemy : InRangeTargetQuery.everyone((int) Math.round(at.x()), (int) Math.round(at.y()), radius)
                     .matching(this.context.enemies())) {
-                this.dealDamage(enemy, Damage.of(landing.type().damageType(),
-                        Math.round(damage * falloff(at.x(), at.y(), radius, enemy, false))));
+                this.hit(enemy, landing.type().damageType(), damage * falloff(at.x(), at.y(), radius, enemy, false),
+                        HitKind.BLAST);
                 this.applyEffect(enemy, sink -> Effect.cracked(CRACKED_TICKS, sink));
             }
             this.blastMarks.add(new BlastMark(at, radius, this.tickNow + 1, landing.type().look()));

@@ -6,6 +6,8 @@ import td.effect.Effect;
 import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitKind;
 import td.tower.splash.ArcPerk;
 import td.tower.splash.ArcPlanner;
 import td.tower.splash.ArcSpec;
@@ -579,8 +581,11 @@ public final class SplashTower extends AbstractTower {
             float distanceShare = (float) (Math.hypot(enemy.getX() - x, enemy.getY() - y) / radius);
             float saturated = saturation.isActive()
                     ? 1f + SATURATION_DAMAGE_PER_STACK * enemy.effectStacks(EffectKind.SATURATED) : 1f;
-            int amount = Math.round(this.damageCurrent() * this.falloff(Math.min(1f, distanceShare)) * saturated);
-            boolean crit = this.dealDamage(enemy, Damage.physical(amount));
+            HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.BLAST, 0f, this.stats());
+            int amount = Math.round(this.damageCurrent() * this.falloff(Math.min(1f, distanceShare)) * saturated
+                    * adjustment.damageFactor());
+            boolean crit = this.dealDamage(enemy, Damage.physical(amount), adjustment.applyTo(this.stats().attack()));
+            this.report(enemy, HitKind.BLAST, crit, enemy.isDead());
             critical |= enemy == primary && crit;
             if (saturation.isActive() && !enemy.isDead()) {
                 int stacks = saturation.stacksAt(distanceShare);
@@ -694,7 +699,10 @@ public final class SplashTower extends AbstractTower {
         if (target.isStopped()) {
             attack = attack.withCritDamageBonus(arcs.stoppedCritDamage());
         }
-        boolean critical = this.dealDamage(target, Damage.magic(Math.round(this.damageCurrent() * share)), attack);
+        HitAdjustment adjustment = this.hitAdjustment(target, HitKind.ARC, 0f, this.stats());
+        boolean critical = this.dealDamage(target,
+                Damage.magic(Math.round(this.damageCurrent() * share * adjustment.damageFactor())), adjustment.applyTo(attack));
+        this.report(target, HitKind.ARC, critical, target.isDead());
         if (critical && dazeSeconds > 0f && !target.isDead()) {
             int ticks = Math.round(dazeSeconds * TICKS_PER_SECOND);
             this.applyEffect(target, sink -> Effect.dazed(ticks, sink));

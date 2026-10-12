@@ -12,7 +12,7 @@ class TowerStatsTest {
     private static final TowerBaseStats BASE = new TowerBaseStats(1, 2f, 20);
 
     private static TowerStats of(StatModifiers<TowerStat> own, DisruptionPenalty disruption) {
-        return TowerStats.of(BASE, own, StatModifiers.none(), disruption, 10);
+        return TowerStats.of(BASE, own, StatModifiers.none(), disruption, 10, java.util.Set.of());
     }
 
     @Test
@@ -65,7 +65,7 @@ class TowerStatsTest {
     @Test
     void anAuraBuffAndADisruptionPenaltyAddUp() {
         TowerStats stats = TowerStats.of(BASE, StatModifiers.none(), TowerModifiers.rangePercent(0.5f),
-                new DisruptionPenalty(0.25f, 0.2f), 10);
+                new DisruptionPenalty(0.25f, 0.2f), 10, java.util.Set.of());
 
         assertThat(stats.range()).isCloseTo((2f - 0.2f) * 1.5f, within(1e-5f));
         assertThat(stats.attackRate()).isCloseTo(0.75, within(1e-6));
@@ -74,7 +74,7 @@ class TowerStatsTest {
     @Test
     void reachForXpKeepsTheBuffedRangeAndIgnoresTheDisruption() {
         TowerStats stats = TowerStats.of(BASE, StatModifiers.none(), TowerModifiers.rangePercent(0.5f),
-                new DisruptionPenalty(0.25f, 0.2f), 10);
+                new DisruptionPenalty(0.25f, 0.2f), 10, java.util.Set.of());
 
         assertThat(stats.reachReal()).isCloseTo(2f * 1.5f * 10, within(1e-4f));
     }

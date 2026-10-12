@@ -1,0 +1,68 @@
+package td.tower.proc;
+
+/** What sets a proc off; each record says when it fires and how it reads. */
+public sealed interface ProcTrigger {
+
+    default boolean firesOn(AttackOutcome outcome) {
+        return false;
+    }
+
+    default boolean firesOnShot(int shotNumber) {
+        return false;
+    }
+
+    /** "On hit", "On crit", "On kill", "Every 3rd shot". */
+    String describe();
+
+    /** Every landed attack. */
+    record OnHit() implements ProcTrigger {
+        @Override
+        public boolean firesOn(AttackOutcome outcome) {
+            return true;
+        }
+
+        @Override
+        public String describe() {
+            return "On hit";
+        }
+    }
+
+    /** A critical attack. */
+    record OnCrit() implements ProcTrigger {
+        @Override
+        public boolean firesOn(AttackOutcome outcome) {
+            return outcome.critical();
+        }
+
+        @Override
+        public String describe() {
+            return "On crit";
+        }
+    }
+
+    /** An attack that kills. */
+    record OnKill() implements ProcTrigger {
+        @Override
+        public boolean firesOn(AttackOutcome outcome) {
+            return outcome.killed();
+        }
+
+        @Override
+        public String describe() {
+            return "On kill";
+        }
+    }
+
+    /** Every {@code n}th attack the tower begins. */
+    record EveryNthShot(int n) implements ProcTrigger {
+        @Override
+        public boolean firesOnShot(int shotNumber) {
+            return this.n > 0 && shotNumber % this.n == 0;
+        }
+
+        @Override
+        public String describe() {
+            return "Every " + Words.ordinal(this.n) + " shot";
+        }
+    }
+}

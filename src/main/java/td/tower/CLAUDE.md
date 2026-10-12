@@ -1,4 +1,4 @@
-# `td.tower` (+ `targeting`, `upgrade`, `aura`, `sniper`, `sonar`, `splash`)
+# `td.tower` (+ `targeting`, `upgrade`, `aura`, `proc`, `sniper`, `sonar`, `splash`)
 
 ## Towers
 
@@ -184,6 +184,11 @@
   number belongs to the mechanic a node adds, in that mechanic's spec, set by its perk. Never add a
   field a node mutates. `TowerStatCatalogueTest` rejects a node that changes a stat its tower
   doesn't set.
+- An upgrade that applies a generic effect, grants a status, changes a hit conditionally, picks a target
+  or flips a capability is data on its node: `withProc`, `withHitBonus`, `withTargeting` (the first
+  owned node that sets one decides), `withCapability`. Every attacking tower applies
+  `hitAdjustment(...)` to each hit it computes and reports each landed attack with `report(...)` after
+  its perks settled it; hit bonuses add.
 - A node that adds a mechanic brings a perk, in the tower's own package. A static `PerkCatalogue`
   says which perks each node brings, and the tower's `OwnedPerks` builds its own. Perks run in
   purchase order through `refineSpec` (and the tower's per-hit hooks); they are pure (no tower, no

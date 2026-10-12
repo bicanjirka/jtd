@@ -5,6 +5,10 @@ import td.stat.DisruptionPenalty;
 import td.stat.ResolvedStats;
 import td.stat.StatModifiers;
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
  * A tower's current stats as one immutable value. They are correlated and recomputed on the EDT
  * while tick code reads them, so they are swapped as a whole through one volatile field.
@@ -16,16 +20,22 @@ import td.stat.StatModifiers;
  * @param disruption the enemy disruption these stats already include
  * @param reachReal  range in pixels before disruption: how far a tower sees for XP
  * @param received   what other towers' emissions give this one
+ * @param capabilities what its nodes and statuses let it do
  */
 public record TowerStats(ResolvedStats<TowerStat> values, float rangeReal, float rangeReal2, AttackProfile attack,
-                         DisruptionPenalty disruption, float reachReal, StatModifiers<TowerStat> received) {
+                         DisruptionPenalty disruption, float reachReal, StatModifiers<TowerStat> received,
+                         Set<TowerCapability> capabilities) {
+
+    public TowerStats {
+        capabilities = capabilities.isEmpty() ? Set.of() : Collections.unmodifiableSet(EnumSet.copyOf(capabilities));
+    }
 
     /**
      * Resolves the base with the tower's own modifiers, what it receives, and the disruption scaled by
      * what reaches it; {@code scale} converts range from cells to pixels.
      */
     public static TowerStats of(TowerBaseStats base, StatModifiers<TowerStat> own, StatModifiers<TowerStat> received,
-                                DisruptionPenalty disruption, int scale) {
+                                DisruptionPenalty disruption, int scale, Set<TowerCapability> capabilities) {
         StatModifiers<TowerStat> buffs = own.plus(received);
         ResolvedStats<TowerStat> undisrupted = ResolvedStats.resolve(base.stats(), buffs, TowerStat.class);
         ResolvedStats<TowerStat> values = undisrupted;
@@ -42,8 +52,18 @@ public record TowerStats(ResolvedStats<TowerStat> values, float rangeReal, float
                         values.value(TowerStat.ARMOR_PENETRATION_FLAT))
                 .withMagicPenetration(values.value(TowerStat.MAGIC_PENETRATION), 0f)
                 .withPlatingPenetration(values.value(TowerStat.PLATING_PENETRATION));
+        if (capabilities.contains(TowerCapability.GUARANTEED_CRIT)) {
+            attack = attack.withGuaranteedCrit();
+        }
+        if (capabilities.contains(TowerCapability.CRITS_PIERCE_SHIELDS)) {
+            attack = attack.withCritsPierceShields();
+        }
         return new TowerStats(values, rangeReal, rangeReal * rangeReal, attack, disruption,
-                undisrupted.value(TowerStat.RANGE) * scale, received);
+                undisrupted.value(TowerStat.RANGE) * scale, received, capabilities);
+    }
+
+    public boolean has(TowerCapability capability) {
+        return this.capabilities.contains(capability);
     }
 
     public float value(TowerStat stat) {

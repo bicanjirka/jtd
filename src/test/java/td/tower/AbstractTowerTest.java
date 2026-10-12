@@ -604,4 +604,28 @@ class AbstractTowerTest {
         assertThat(tower.getKillCount()).isZero();
         assertThat(enemy.getHealth()).isEqualTo(5000);
     }
+
+    @Test
+    void aStatusAnEveryNthShotProcGrantsIsInThatShotsStats() {
+        td.tower.proc.Proc everySecond = td.tower.proc.Proc.everyNthShot(2, new td.tower.proc.ProcPayload.GrantStatus(
+                TowerStatus.nextShots("sharp", 1, TowerModifiers.critChance(0.5f))));
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.none()).withBaseProcs(List.of(everySecond));
+
+        TowerStats first = tower.beginShot();
+        TowerStats second = tower.beginShot();
+
+        assertThat(first.critChance()).isZero();
+        assertThat(second.critChance()).isEqualTo(0.5f);
+        assertThat(tower.stats().critChance()).isZero();
+    }
+
+    @Test
+    void aTowerWithNoBonusesAdjustsNothing() {
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.none());
+
+        td.tower.proc.HitAdjustment adjustment = tower.hitAdjustment(td.fixtures.FakeEnemyMob.at(0, 0),
+                td.tower.proc.HitKind.DIRECT, 0.5f, tower.stats());
+
+        assertThat(adjustment).isSameAs(td.tower.proc.HitAdjustment.none());
+    }
 }

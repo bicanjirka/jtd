@@ -2,7 +2,11 @@ package td.tower.upgrade;
 
 import td.stat.StatModifiers;
 import td.tower.Tower;
+import td.tower.TowerCapability;
 import td.tower.TowerStat;
+import td.tower.proc.HitBonus;
+import td.tower.proc.Proc;
+import td.tower.targeting.TargetPriority;
 import td.util.GameWorld;
 
 import java.util.List;
@@ -32,6 +36,22 @@ public record UpgradeNode(String id, UpgradeSlot slot, String displayName, int p
     /** This node with {@code emission} added to what it gives the towers an aura buffs. */
     public UpgradeNode withEmission(StatModifiers<TowerStat> emission) {
         return this.withEffects(this.effects.withEmission(emission));
+    }
+
+    public UpgradeNode withCapability(TowerCapability capability) {
+        return this.withEffects(this.effects.withCapability(capability));
+    }
+
+    public UpgradeNode withTargeting(TargetPriority priority) {
+        return this.withEffects(this.effects.withTargeting(priority));
+    }
+
+    public UpgradeNode withHitBonus(HitBonus bonus) {
+        return this.withEffects(this.effects.withHitBonus(bonus));
+    }
+
+    public UpgradeNode withProc(Proc proc) {
+        return this.withEffects(this.effects.withProc(proc));
     }
 
     /** This node with {@code effects} as everything it does. */

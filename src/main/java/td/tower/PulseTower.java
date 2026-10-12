@@ -7,6 +7,8 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.ShieldListener;
+import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitKind;
 import td.tower.pulse.ArcDischargePerk;
 import td.tower.pulse.EventHorizonPerk;
 import td.tower.pulse.FieldMode;
@@ -263,8 +265,10 @@ public final class PulseTower extends AbstractTower {
                     + (stacks >= toll.cap() ? spec.field().fullTollBonus() : 0f)
                     + Math.min(MAX_DEATH_BONUS, spec.field().perDeathBonus() * this.deathsThisWave)
                     + (spec.modes().has(FieldMode.SOUL_DRAIN) ? SOUL_DRAIN_DAMAGE_PER_POINT * Math.max(0f, -enemy.spirit()) : 0f);
+            HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.FIELD, 0f, this.stats());
             for (int hit = 0; hit < shots && !enemy.isDead(); hit++) {
-                this.dealPeriodicDamage(enemy, Damage.magic(Math.round(this.damageCurrent() * factor)));
+                this.dealPeriodicDamage(enemy,
+                        Damage.magic(Math.round(this.damageCurrent() * factor * adjustment.damageFactor())));
                 this.rattle(enemy, spec);
             }
         }
@@ -358,10 +362,13 @@ public final class PulseTower extends AbstractTower {
 
     private void strikeWithZap(EnemyMob target, ZapSpec zap) {
         float tollRaise = zap.tollRaises() ? TOLL_DAMAGE_PER_STACK * target.effectStacks(EffectKind.TOLL) : 0f;
-        Damage damage = Damage.magic(Math.round(this.damageCurrent() * zap.damageFactor() * (1f + tollRaise)));
+        HitAdjustment adjustment = this.hitAdjustment(target, HitKind.ZAP, 0f, this.stats());
+        Damage damage = Damage.magic(Math.round(this.damageCurrent() * zap.damageFactor() * (1f + tollRaise)
+                * adjustment.damageFactor()));
         AttackProfile attack = this.stats().attack();
-        attack = attack.withCritChance(Math.min(1f, attack.critChance() + zap.critBonus()));
-        this.dealDamage(target, damage, attack);
+        attack = adjustment.applyTo(attack.withCritChance(Math.min(1f, attack.critChance() + zap.critBonus())));
+        boolean critical = this.dealDamage(target, damage, attack);
+        this.report(target, HitKind.ZAP, critical, target.isDead());
         if (zap.dazeSeconds() > 0f && !target.isDead()) {
             int ticks = Math.round(zap.dazeSeconds() * TICKS_PER_SECOND);
             this.applyEffect(target, sink -> Effect.dazed(ticks, sink));

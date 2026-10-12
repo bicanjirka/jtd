@@ -15,6 +15,15 @@ import td.enemy.EnemyWalk;
 import td.enemy.HitResult;
 import td.stat.DisruptionPenalty;
 import td.stat.StatModifiers;
+import td.tower.proc.AttackOutcome;
+import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitBonus;
+import td.tower.proc.HitBonuses;
+import td.tower.proc.HitContext;
+import td.tower.proc.HitKind;
+import td.tower.proc.Proc;
+import td.tower.proc.ProcActions;
+import td.tower.proc.ProcRunner;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
@@ -24,8 +33,10 @@ import td.util.ThreadConfined;
 import td.util.TickRate;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -73,9 +84,15 @@ public abstract class AbstractTower implements Tower {
     // Sampled by the tick thread; also read when the EDT republishes stats after a purchase.
     private volatile DisruptionPenalty disruption = DisruptionPenalty.none();
     private final ActiveTowerStatuses statuses = new ActiveTowerStatuses();
+    private final ProcActions procActions = new TowerProcActions();
     // What the statuses add, published for the EDT's republish; the live list stays on the tick thread.
     private volatile StatusLayer statusLayer = StatusLayer.NONE;
     private int currentTick;
+    private int shotsBegun;
+    // The bonuses and procs of the upgrades last seen, so a hit with none allocates nothing.
+    private UpgradeState armedFrom;
+    private List<HitBonus> armedBonuses = List.of();
+    private List<Proc> armedProcs = List.of();
     private float xpRemainder;
     private int lastWitherTick = Integer.MIN_VALUE;
     private boolean inKillHook;
@@ -100,7 +117,8 @@ public abstract class AbstractTower implements Tower {
         this.boardY = cellY * scale;
         this.centerX = this.boardX + scale / 2;
         this.centerY = this.boardY + scale / 2;
-        this.stats = TowerStats.of(base, StatModifiers.none(), StatModifiers.none(), DisruptionPenalty.none(), scale);
+        this.stats = TowerStats.of(base, StatModifiers.none(), StatModifiers.none(), DisruptionPenalty.none(), scale,
+                Set.of());
     }
 
     /** The stats as authored, before any upgrade or buff. */
@@ -181,8 +199,13 @@ public abstract class AbstractTower implements Tower {
         StatModifiers<TowerStat> received = this.context.towers().all().stream()
                 .map(t -> t.buffFor(this))
                 .reduce(StatModifiers.none(), StatModifiers::plus);
-        StatModifiers<TowerStat> own = upgrades.totalModifiers().plus(this.statusLayer.modifiers());
-        this.stats = TowerStats.of(this.baseStats, own, received, this.disruption, this.context.getBoard().scale());
+        StatusLayer layer = this.statusLayer;
+        StatModifiers<TowerStat> own = upgrades.totalModifiers().plus(layer.modifiers());
+        Set<TowerCapability> capabilities = EnumSet.noneOf(TowerCapability.class);
+        capabilities.addAll(upgrades.capabilities());
+        capabilities.addAll(layer.capabilities());
+        this.stats = TowerStats.of(this.baseStats, own, received, this.disruption, this.context.getBoard().scale(),
+                capabilities);
     }
 
     /**
@@ -349,6 +372,11 @@ public abstract class AbstractTower implements Tower {
      * profile: afterwards {@code stats()} may already be the next shot's.
      */
     protected final TowerStats beginShot() {
+        this.shotsBegun++;
+        List<Proc> procs = this.procs();
+        if (!procs.isEmpty()) {
+            ProcRunner.onShot(procs, this.shotsBegun, this.procActions);
+        }
         TowerStats shot = this.stats;
         if (this.statuses.spendShot()) {
             this.refreshStatusLayer();
@@ -357,8 +385,82 @@ public abstract class AbstractTower implements Tower {
     }
 
     private void refreshStatusLayer() {
-        this.statusLayer = new StatusLayer(this.statuses.modifiers());
+        this.statusLayer = new StatusLayer(this.statuses.modifiers(), this.statuses.capabilities());
         this.publishStats(this.upgrades);
+    }
+
+    /** How many attacks this tower has begun, the one beginning now included. */
+    protected final int shotNumber() {
+        return this.shotsBegun;
+    }
+
+    /** Hit bonuses the tower has without any node; none by default. */
+    protected List<HitBonus> baseHitBonuses() {
+        return List.of();
+    }
+
+    /** Procs the tower has without any node; none by default. */
+    protected List<Proc> baseProcs() {
+        return List.of();
+    }
+
+    /** What the hit bonuses add to a hit on {@code target} at {@code rangeShare} of range, with no focus. */
+    protected final HitAdjustment hitAdjustment(EnemyMob target, HitKind kind, float rangeShare, TowerStats shot) {
+        return this.hitAdjustment(target, kind, rangeShare, shot, 0, false);
+    }
+
+    /**
+     * What the hit bonuses add to a hit on {@code target}: {@code focus} attacks in a row on it, and
+     * whether this is the first at it. Nothing to fold returns {@link HitAdjustment#none()} at once.
+     */
+    protected final HitAdjustment hitAdjustment(EnemyMob target, HitKind kind, float rangeShare, TowerStats shot,
+                                                int focus, boolean freshTarget) {
+        List<HitBonus> bonuses = this.hitBonuses();
+        if (bonuses.isEmpty()) {
+            return HitAdjustment.none();
+        }
+        return HitBonuses.fold(bonuses, HitContext.of(target, kind, rangeShare, shot).withFocus(focus, freshTarget));
+    }
+
+    /** Tells the procs how a landed attack went, after the tower's own perks settled it. */
+    protected final void report(EnemyMob target, HitKind kind, boolean critical, boolean killed) {
+        List<Proc> procs = this.procs();
+        if (procs.isEmpty()) {
+            return;
+        }
+        ProcRunner.onOutcome(procs, new AttackOutcome(target, kind, critical, killed), this.procActions);
+    }
+
+    private List<HitBonus> hitBonuses() {
+        this.arm();
+        return this.armedBonuses;
+    }
+
+    private List<Proc> procs() {
+        this.arm();
+        return this.armedProcs;
+    }
+
+    private void arm() {
+        UpgradeState upgrades = this.upgrades;
+        if (upgrades == this.armedFrom) {
+            return;
+        }
+        this.armedBonuses = concatenated(this.baseHitBonuses(), upgrades.hitBonuses());
+        this.armedProcs = concatenated(this.baseProcs(), upgrades.procs());
+        this.armedFrom = upgrades;
+    }
+
+    private static <T> List<T> concatenated(List<T> first, List<T> second) {
+        if (second.isEmpty()) {
+            return List.copyOf(first);
+        }
+        if (first.isEmpty()) {
+            return List.copyOf(second);
+        }
+        List<T> all = new ArrayList<>(first);
+        all.addAll(second);
+        return List.copyOf(all);
     }
 
     /**
@@ -539,7 +641,8 @@ public abstract class AbstractTower implements Tower {
         List<TowerStatLine> lines = new ArrayList<>();
         lines.add(new TowerStatLine(TowerStatRow.RANGE, this.rangeBase, now.range()));
         if (!this.isPassive()) {
-            TowerStatRow damage = this.damageType() == DamageType.MAGIC ? TowerStatRow.MAGIC_DAMAGE : TowerStatRow.PHYSICAL_DAMAGE;
+            DamageType type = now.has(TowerCapability.MAGIC_DAMAGE) ? DamageType.MAGIC : this.damageType();
+            TowerStatRow damage = type == DamageType.MAGIC ? TowerStatRow.MAGIC_DAMAGE : TowerStatRow.PHYSICAL_DAMAGE;
             lines.add(new TowerStatLine(damage, DamageUnits.inPoints(this.damageBase), DamageUnits.inPoints(now.damage())));
             this.cadence().ifPresent(lines::add);
             if (this.critChanceBase > 0f || now.critChance() > 0f) {
@@ -568,9 +671,28 @@ public abstract class AbstractTower implements Tower {
     }
 
     /** What the statuses held now add to the tower's own layer, as one published value. */
-    private record StatusLayer(StatModifiers<TowerStat> modifiers) {
+    private record StatusLayer(StatModifiers<TowerStat> modifiers, Set<TowerCapability> capabilities) {
 
-        private static final StatusLayer NONE = new StatusLayer(StatModifiers.none());
+        private static final StatusLayer NONE = new StatusLayer(StatModifiers.none(), Set.of());
+    }
+
+    /** What a proc may make this tower do. */
+    private final class TowerProcActions implements ProcActions {
+
+        @Override
+        public void applyStacks(EnemyMob target, EffectKind kind, int stacks) {
+            AbstractTower.this.applyStacks(target, kind, stacks);
+        }
+
+        @Override
+        public void charge(EnemyMob target, int ticks) {
+            AbstractTower.this.charge(target, ticks);
+        }
+
+        @Override
+        public void grantStatus(TowerStatus status) {
+            AbstractTower.this.grantStatus(status);
+        }
     }
 
     /** Marks this tower gone, so effects it applied stop crediting it after the refund. */

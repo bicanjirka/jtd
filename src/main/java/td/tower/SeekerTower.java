@@ -8,6 +8,8 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.MissileProjectile;
 import td.projectile.ProjectileStats;
+import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitKind;
 import td.tower.seeker.AbsoluteZeroPerk;
 import td.tower.seeker.ArcanePayload;
 import td.tower.seeker.ArcaneWarheadPerk;
@@ -321,11 +323,12 @@ public final class SeekerTower extends AbstractTower {
         boolean wasFrozen = before.contains(EffectKind.FREEZE);
         Impact.Before suffering = wasFrozen ? Impact.Before.FROZEN
                 : before.contains(EffectKind.CHILL) ? Impact.Before.CHILLED : Impact.Before.NOTHING;
-        float factor = 1f;
+        HitAdjustment adjustment = this.hitAdjustment(target, HitKind.MISSILE, 0f, this.stats());
+        float factor = adjustment.damageFactor();
         for (SeekerPerk perk : this.perks.all()) {
             factor *= perk.damageFactor(target);
         }
-        this.strike(target, Damage.magic(Math.round(this.damageCurrent() * factor)), spec);
+        boolean critical = this.strike(target, Damage.magic(Math.round(this.damageCurrent() * factor)), spec, adjustment);
         boolean freezes = load.isEmpty() || load.get().payload().freezes();
         if (load.isEmpty()) {
             this.freezeAround(target, 1f, spec);
@@ -336,6 +339,7 @@ public final class SeekerTower extends AbstractTower {
         if (frozenNow) {
             this.countDeedOfAttack();
         }
+        this.report(target, HitKind.MISSILE, critical, target.isDead());
         Impact impact = new Impact(target, suffering, frozenNow && !wasFrozen, rearmed);
         for (SeekerPerk perk : this.perks.all()) {
             perk.react(impact, this.actions);
@@ -347,7 +351,11 @@ public final class SeekerTower extends AbstractTower {
      * diminished, is a guaranteed crit.
      */
     private boolean strike(EnemyMob enemy, Damage damage, SeekerSpec spec) {
-        AttackProfile attack = this.stats().attack();
+        return this.strike(enemy, damage, spec, HitAdjustment.none());
+    }
+
+    private boolean strike(EnemyMob enemy, Damage damage, SeekerSpec spec, HitAdjustment adjustment) {
+        AttackProfile attack = adjustment.applyTo(this.stats().attack());
         if (spec.frostbite() && (enemy.hasEffect(EffectKind.FREEZE) || enemy.freezeDiminished())) {
             attack = attack.withGuaranteedCrit();
         }
