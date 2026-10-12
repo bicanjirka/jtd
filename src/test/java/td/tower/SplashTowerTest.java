@@ -139,6 +139,15 @@ class SplashTowerTest {
     }
 
     @Test
+    void wideChargeAndRangeThreeWidenTheBlastByTheirCells() {
+        SplashTower tower = this.upgradedTower("Wide Charge", "Arc", "Conductor", "Overload", "Transcendent", "Range",
+                "Range II", "Range III");
+
+        assertThat(tower.inspect().stats()).filteredOn(line -> line.stat() == TowerStatRow.SPLASH_RADIUS)
+                .singleElement().extracting(TowerStatLine::current).isEqualTo(1.5f + 0.15f + 0.375f);
+    }
+
+    @Test
     void shapedChargeGivesTheInnerHalfTwoStacksAndRaisesTheCapToFour() {
         SplashTower tower = this.upgradedTower("Wide Charge", "Shaped Charge");
         FakeEnemyMob centre = FakeEnemyMob.at(100, 100);

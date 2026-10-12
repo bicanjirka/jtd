@@ -15,21 +15,8 @@ public record SaturationRule(int perHit, int innerPerHit, int cap) {
         return new SaturationRule(0, 0, 0);
     }
 
-    /** Attune's Saturation: a stack a blast, up to 3. */
-    public static SaturationRule attuned() {
-        return new SaturationRule(1, 1, 3);
-    }
-
     public boolean isActive() {
         return this.cap > 0;
-    }
-
-    public SaturationRule withInnerPerHit(int innerPerHit) {
-        return new SaturationRule(this.perHit, innerPerHit, this.cap);
-    }
-
-    public SaturationRule withCap(int cap) {
-        return new SaturationRule(this.perHit, this.innerPerHit, cap);
     }
 
     /** The stacks an enemy {@code distanceShare} of the blast radius from its centre gains. */
