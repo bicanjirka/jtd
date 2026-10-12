@@ -9,7 +9,13 @@ import td.enemy.EnemyMob;
 import td.projectile.MissileProjectile;
 import td.projectile.ProjectileStats;
 import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitBonus;
+import td.tower.proc.HitCondition;
 import td.tower.proc.HitKind;
+import td.tower.proc.HitScaling;
+import td.tower.proc.Proc;
+import td.tower.proc.ProcCondition;
+import td.tower.proc.ProcPayload;
 import td.tower.seeker.AbsoluteZeroPerk;
 import td.tower.seeker.ArcanePayload;
 import td.tower.seeker.ArcaneWarheadPerk;
@@ -19,11 +25,9 @@ import td.tower.seeker.EmpPayload;
 import td.tower.seeker.FrostbitePerk;
 import td.tower.seeker.FrozenLedger;
 import td.tower.seeker.FullRackPerk;
-import td.tower.seeker.HuntersMarkPerk;
 import td.tower.seeker.Impact;
 import td.tower.seeker.NestPerk;
 import td.tower.seeker.NestSpec;
-import td.tower.seeker.NullifierPerk;
 import td.tower.seeker.OverTheHorizonPerk;
 import td.tower.seeker.Payload;
 import td.tower.seeker.PayloadLoad;
@@ -31,14 +35,17 @@ import td.tower.seeker.PayloadPerk;
 import td.tower.seeker.RearmPerk;
 import td.tower.seeker.SalvoPlanner;
 import td.tower.seeker.SeekerActions;
+import td.tower.seeker.SeekerAim;
 import td.tower.seeker.SeekerNest;
 import td.tower.seeker.SeekerPerk;
 import td.tower.seeker.SeekerSpec;
 import td.tower.seeker.ShatterPerk;
 import td.tower.seeker.ShatterburstPerk;
+import td.tower.seeker.TargetStreak;
 import td.tower.seeker.TracerPayload;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.PreferringSelector;
+import td.tower.targeting.TargetPriority;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.BaseSlotPerks;
 import td.tower.upgrade.ExclusiveChoice;
@@ -158,11 +165,13 @@ public final class SeekerTower extends AbstractTower {
             .withNote("every impact applies Unraveled, 2 stacks if the target was frozen or chilled");
     private static final UpgradeNode NULLIFIER = UpgradeTier.SPECIAL.node("seeker.special.nullifier", "Nullifier",
             PRICE)
-            .withNote("every impact strips the target's shield and heal; +50% damage against a shielded "
-                    + "enemy");
+            .withHitBonus(HitBonus.when(new HitCondition.TargetHasAnyOf(Set.of(EffectKind.SHIELD)),
+                    HitAdjustment.damage(0.5f)))
+            .withProc(Proc.onHit(new ProcPayload.Dispel()).when(new ProcCondition.HitKindIn(Set.of(HitKind.MISSILE))));
     private static final UpgradeNode HUNTERS_MARK = UpgradeTier.SPECIAL.node("seeker.special.hunters_mark",
             "Hunter's Mark", PRICE)
-            .withNote("each consecutive hit on the same target +20%, up to +100%; aims at the highest rank");
+            .withTargeting(TargetPriority.HIGHEST_RANK)
+            .withHitBonus(HitBonus.per(new HitScaling.PerFocus(5), HitAdjustment.damage(0.2f)));
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, BROOD, BRITTLE))
             .with(TWIN_WARHEAD_1, TWIN_WARHEAD_2, BROOD, SHATTERBURST, REARM, DEEP_FREEZE_1, DEEP_FREEZE_2, BRITTLE,
@@ -187,14 +196,13 @@ public final class SeekerTower extends AbstractTower {
             .with(EMP_PAYLOAD.id(), () -> new PayloadPerk(new EmpPayload()))
             .with(TRACER_PAYLOAD.id(), () -> new PayloadPerk(new TracerPayload()))
             .with(FULL_RACK.id(), FullRackPerk::new)
-            .with(ARCANE_WARHEAD.id(), ArcaneWarheadPerk::new)
-            .with(NULLIFIER.id(), NullifierPerk::new)
-            .with(HUNTERS_MARK.id(), HuntersMarkPerk::new);
+            .with(ARCANE_WARHEAD.id(), ArcaneWarheadPerk::new);
 
     private static final int COOLDOWN_MAX = 45;
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final OwnedPerks<SeekerPerk> perks = new OwnedPerks<>(PERKS);
+    private final TargetStreak streak = new TargetStreak();
     private final SeekerNest nest = new SeekerNest();
     private final ProjectileStats missile = ProjectileStats.of(MISSILE_SPEED);
     private final SeekerActions actions = new Actions();
@@ -223,6 +231,10 @@ public final class SeekerTower extends AbstractTower {
     private SeekerSpec spec(List<SeekerPerk> owned) {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
         SeekerSpec spec = SeekerSpec.from(view);
+        Optional<TargetPriority> priority = this.upgrades().targeting();
+        if (priority.isPresent()) {
+            spec = spec.withAim(new SeekerAim(priority.get().selector(view.cellSize()), priority.get().label()));
+        }
         for (SeekerPerk perk : owned) {
             spec = perk.refineSpec(spec);
         }
@@ -323,7 +335,8 @@ public final class SeekerTower extends AbstractTower {
         boolean wasFrozen = before.contains(EffectKind.FREEZE);
         Impact.Before suffering = wasFrozen ? Impact.Before.FROZEN
                 : before.contains(EffectKind.CHILL) ? Impact.Before.CHILLED : Impact.Before.NOTHING;
-        HitAdjustment adjustment = this.hitAdjustment(target, HitKind.MISSILE, 0f, this.stats());
+        HitAdjustment adjustment = this.hitAdjustment(target, HitKind.MISSILE, 0f, this.stats(), this.streak.on(target),
+                false);
         float factor = adjustment.damageFactor();
         for (SeekerPerk perk : this.perks.all()) {
             factor *= perk.damageFactor(target);
@@ -339,6 +352,7 @@ public final class SeekerTower extends AbstractTower {
         if (frozenNow) {
             this.countDeedOfAttack();
         }
+        this.streak.landed(target);
         this.report(target, HitKind.MISSILE, critical, target.isDead());
         Impact impact = new Impact(target, suffering, frozenNow && !wasFrozen, rearmed);
         for (SeekerPerk perk : this.perks.all()) {

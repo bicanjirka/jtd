@@ -7,25 +7,25 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitBonus;
 import td.tower.proc.HitKind;
+import td.tower.proc.HitScaling;
+import td.tower.proc.Proc;
+import td.tower.proc.ProcCondition;
+import td.tower.proc.ProcPayload;
 import td.tower.sonar.BeamSpec;
 import td.tower.sonar.CommandPingPerk;
 import td.tower.sonar.CritRefreshPerk;
 import td.tower.sonar.DeepScanPerk;
-import td.tower.sonar.FarDamagePerk;
 import td.tower.sonar.FarPingPerk;
 import td.tower.sonar.FaultLinePerk;
-import td.tower.sonar.HarmonicsPerk;
-import td.tower.sonar.HorizonPerk;
 import td.tower.sonar.MarkOnSweepPerk;
 import td.tower.sonar.PhasedArrayPerk;
 import td.tower.sonar.PingPerk;
 import td.tower.sonar.PingRule;
 import td.tower.sonar.PingTracker;
-import td.tower.sonar.PureTonePerk;
 import td.tower.sonar.ResonantCrackPerk;
 import td.tower.sonar.Revolution;
-import td.tower.sonar.ShatterTonePerk;
 import td.tower.sonar.SonarActions;
 import td.tower.sonar.SonarBeam;
 import td.tower.sonar.SonarPerk;
@@ -61,6 +61,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -120,7 +121,7 @@ public final class SonarTower extends AbstractTower {
     private static final UpgradeNode LONG_REACH_2 = UpgradeTier.HEAD_2.node("sonar.head.long_reach.2",
             "Long Reach II", PRICE)
             .withModifiers(TowerModifiers.critChance(0.1f))
-            .withNote("damage up to +100% at max range")
+            .withHitBonus(HitBonus.per(new HitScaling.PerRangeShare(), HitAdjustment.damage(1f)))
             .after(LONG_REACH_1);
     private static final UpgradeNode RESONANT_CRACK = UpgradeTier.HEAD_3.node("sonar.head.long_reach.3",
             "Resonant Crack", PRICE)
@@ -129,7 +130,7 @@ public final class SonarTower extends AbstractTower {
             .after(LONG_REACH_2);
     private static final UpgradeNode HORIZON = UpgradeTier.HEAD_4.node("sonar.head.long_reach.4a", "Horizon", PRICE)
             .withModifiers(TowerModifiers.range(1.8f).plus(TowerModifiers.deadZone(1.5f)))
-            .withNote("far bonus up to +150%")
+            .withHitBonus(HitBonus.per(new HitScaling.PerRangeShare(), HitAdjustment.damage(0.5f)))
             .after(RESONANT_CRACK);
     private static final UpgradeNode FAULT_LINE = UpgradeTier.HEAD_4.node("sonar.head.long_reach.4b", "Fault Line",
             PRICE)
@@ -140,16 +141,18 @@ public final class SonarTower extends AbstractTower {
             .withNote("20% of each hit is added as magic, up to 50% against armored or shielded enemies");
     private static final UpgradeNode HARMONICS = UpgradeTier.EXTRA_2.node("sonar.extra.frequency.2", "Harmonics",
             PRICE)
-            .withNote("hits apply Resonating, +8% magic damage taken, stacks x3")
+            .withProc(Proc.onHit(new ProcPayload.ApplyStacks(EffectKind.RESONATING, 1))
+                    .when(new ProcCondition.HitKindIn(Set.of(HitKind.BEAM))))
             .after(ULTRASOUND);
     private static final UpgradeNode PURE_TONE = UpgradeTier.EXTRA_3.node("sonar.extra.frequency.3", "Pure Tone",
             PRICE)
             .withModifiers(TowerModifiers.magicPenetration(0.15f))
-            .withNote("the beam deals magic instead of physical")
+            .withCapability(TowerCapability.MAGIC_DAMAGE)
             .after(HARMONICS);
     private static final UpgradeNode SHATTER_TONE = UpgradeTier.EXTRA_4.node("sonar.extra.frequency.4",
             "Shatter Tone", PRICE)
-            .withNote("a hit on a shielded enemy breaks a quarter of the shield")
+            .withProc(Proc.onHit(new ProcPayload.BreakShield(0.25f))
+                    .when(new ProcCondition.TargetHasAnyOf(Set.of(EffectKind.SHIELD))))
             .after(PURE_TONE);
     private static final UpgradeNode MARK_ON_SWEEP = UpgradeTier.SPECIAL.node("sonar.special.mark_on_sweep",
             "Mark on Sweep", PRICE)
@@ -180,14 +183,9 @@ public final class SonarTower extends AbstractTower {
             .with(TWIN_BEAM.id(), TwinBeamPerk::new)
             .with(PHASED_ARRAY.id(), PhasedArrayPerk::new)
             .with(LONG_REACH_1.id(), FarPingPerk::new)
-            .with(LONG_REACH_2.id(), () -> new FarDamagePerk(1f))
             .with(RESONANT_CRACK.id(), ResonantCrackPerk::new)
-            .with(HORIZON.id(), HorizonPerk::new)
             .with(FAULT_LINE.id(), FaultLinePerk::new)
             .with(ULTRASOUND.id(), UltrasoundPerk::new)
-            .with(HARMONICS.id(), HarmonicsPerk::new)
-            .with(PURE_TONE.id(), PureTonePerk::new)
-            .with(SHATTER_TONE.id(), ShatterTonePerk::new)
             .with(MARK_ON_SWEEP.id(), MarkOnSweepPerk::new)
             .with(WIDE_BAND.id(), WideBandPerk::new)
             .with(COMMAND_PING.id(), CommandPingPerk::new);
@@ -282,11 +280,13 @@ public final class SonarTower extends AbstractTower {
         StrikeContext context = new StrikeContext(enemy, this.rangeShareOf(enemy));
         HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.BEAM, context.rangeShare(), this.stats());
         SonarStrike strike = SonarStrike.of(adjustment.applyTo(this.stats().attack()), share);
+        if (this.stats().has(TowerCapability.MAGIC_DAMAGE)) {
+            strike = strike.withType(DamageType.MAGIC);
+        }
         for (SonarPerk perk : owned) {
             strike = perk.shape(strike, context);
         }
-        float amount = this.damageCurrent() * strike.damageFactor() * (1f + strike.farBonus() * context.rangeShare())
-                * adjustment.damageFactor();
+        float amount = this.damageCurrent() * strike.damageFactor() * adjustment.damageFactor();
         boolean critical = this.dealDamage(enemy, Damage.of(strike.type(), Math.round(amount)), strike.attack());
         if (strike.magicShare() > 0f && !enemy.isDead()) {
             float riding = amount * strike.magicShare() * this.potencyOfHit(enemy, critical);
@@ -403,16 +403,6 @@ public final class SonarTower extends AbstractTower {
         @Override
         public void apply(EnemyMob target, Function<DamageSink, Effect> effect) {
             SonarTower.this.applyEffect(target, effect);
-        }
-
-        @Override
-        public void applyStacks(EnemyMob target, EffectKind kind, int stacks) {
-            SonarTower.this.applyStacks(target, kind, stacks);
-        }
-
-        @Override
-        public void breakShield(EnemyMob target, float fraction) {
-            target.breakShield(fraction);
         }
 
         @Override

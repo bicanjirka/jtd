@@ -13,31 +13,22 @@ import java.util.function.UnaryOperator;
  * @param damageFactor a multiple of the Sonar's current damage, the beam's share included
  * @param attack       what the hit carries: crit, penetration
  * @param magicShare   a share of the hit that is added on as magic damage
- * @param farBonus     how much more it deals at the edge of the range, growing with distance
  */
-public record SonarStrike(DamageType type, float damageFactor, AttackProfile attack, float magicShare,
-                          float farBonus) {
+public record SonarStrike(DamageType type, float damageFactor, AttackProfile attack, float magicShare) {
 
     public static SonarStrike of(AttackProfile attack, float beamShare) {
-        return new SonarStrike(DamageType.PHYSICAL, beamShare, attack, 0f, 0f);
+        return new SonarStrike(DamageType.PHYSICAL, beamShare, attack, 0f);
     }
 
     public SonarStrike withType(DamageType type) {
-        return new SonarStrike(type, this.damageFactor, this.attack, this.magicShare, this.farBonus);
+        return new SonarStrike(type, this.damageFactor, this.attack, this.magicShare);
     }
 
     public SonarStrike withAttack(UnaryOperator<AttackProfile> change) {
-        return new SonarStrike(this.type, this.damageFactor, change.apply(this.attack), this.magicShare,
-                this.farBonus);
+        return new SonarStrike(this.type, this.damageFactor, change.apply(this.attack), this.magicShare);
     }
 
     public SonarStrike withMagicShare(float magicShare) {
-        return new SonarStrike(this.type, this.damageFactor, this.attack, magicShare, this.farBonus);
-    }
-
-    /** The bonus at the edge of the range; a perk that gives more replaces one that gives less. */
-    public SonarStrike withFarBonus(float farBonus) {
-        return new SonarStrike(this.type, this.damageFactor, this.attack, this.magicShare,
-                Math.max(this.farBonus, farBonus));
+        return new SonarStrike(this.type, this.damageFactor, this.attack, magicShare);
     }
 }
