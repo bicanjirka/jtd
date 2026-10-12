@@ -252,6 +252,7 @@ public final class SeekerTower extends AbstractTower {
             }
             if (i == 0) {
                 this.currentTarget = target.get();
+                this.beginShot();
             }
             this.context.projectiles().add(this.newMissile(target.get(), false));
             if (this.nest(spec).isActive()) {

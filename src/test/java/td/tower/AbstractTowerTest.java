@@ -598,7 +598,7 @@ class AbstractTowerTest {
         enemy.applyEffect(td.effect.Effect.shield(5000f, 100, d -> {
         }));
 
-        tower.dealDamage(enemy, td.damage.Damage.physical(3000));
+        tower.dealDamage(enemy, td.damage.Damage.physical(3000), td.damage.AttackProfile.none());
 
         assertThat(tower.getDamageDealt()).isEqualTo(3000);
         assertThat(tower.getKillCount()).isZero();

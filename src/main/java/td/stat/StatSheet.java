@@ -93,6 +93,7 @@ public final class StatSheet implements StatView {
             StatSheet.this.percent[i] += modifier.percentAdd();
             StatSheet.this.multiply[i] *= modifier.multiply();
             StatSheet.this.setTo[i] = Math.min(StatSheet.this.setTo[i], modifier.setTo());
+            StatSheet.this.capShare[i] = Math.min(StatSheet.this.capShare[i], modifier.capShareOfBase());
         }
 
         @Override

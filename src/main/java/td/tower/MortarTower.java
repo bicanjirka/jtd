@@ -285,6 +285,7 @@ public final class MortarTower extends AbstractTower {
     }
 
     private void fireAt(EnemyMob target, MortarSpec spec) {
+        this.beginShot();
         this.shellsFired++;
         ShellType type = spec.shells().typeOf(this.shellsFired);
         Vec2 aim = this.aimPoint(target, spec);

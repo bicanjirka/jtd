@@ -86,7 +86,7 @@
 - The Aura gives `buffFor`: damage and range at `AURA_POWER` (plus Kinship), half the disruption, and
   every owned node's emission; Chosen scales it all ×3. Its mechanics (Kinship, the XP mentoring,
   Chosen, Rally) are `AuraPerk`s over an `AuraSpec`.
-- The Aura never reaches into another tower's state except through `Tower.receiveTimedModifiers` (Rally).
+- The Aura never reaches into another tower's state except through `Tower.receiveStatus` (Rally).
   Withering Field is an interval in the buff (`WITHER_INTERVAL`) that each tower spends on its own first
   hit after it, never on periodic damage. Chosen's hero is derived from XP on every call, so
   `AuraTower.doTick` republishes every tower's stats when the hero changes. Rally's spot is the path point
@@ -113,7 +113,7 @@
 - A tower's stats are `TowerStat` keys resolved by the shared `td.stat` formula into one immutable
   `TowerStats` (correlated fields, read by the tick thread). Read them through `stats()` or the
   conveniences (`damageCurrent()`, `rangeReal()`, `rangeReal2()`, `attackRate()`).
-- Layers: base, owned nodes (`UpgradeState.totalModifiers`), timed modifiers, then received
+- Layers: base, owned nodes (`UpgradeState.totalModifiers`), held statuses, then received
   emissions (`buffFor`), then disruption × `DISRUPTION_TAKEN`. An aura never receives an emission.
 - What a tower receives is **derived, never stored**: a fold of every tower's `buffFor(this)`.
   `recalculateStats()` runs on every tower whenever the roster or any upgrade changes, and in the
@@ -124,8 +124,11 @@
 - Enemy disruption reaches a tower only through `GameWorld.disruptions()`, sampled at its centre in
   `beginTick`, and folds in as negative attack speed and range in cells, times `DISRUPTION_TAKEN`.
 - A kill this tower makes runs `onKill(EnemyMob)` (the mob still carries the effects it died
-  under); a kill made from inside the hook triggers nothing. A temporary self-buff goes through
-  `grantTimedModifiers` and ends in `beginTick`; it never stacks.
+  under); a kill made from inside the hook triggers nothing.
+- A temporary or next-shot self-buff is a `TowerStatus` granted with `grantStatus` (another tower's
+  with `receiveStatus`): the same id restarts unless it keeps a running copy, different ids stack.
+  Every attack starts with `beginShot()`, which spends shot charges and returns the stats for that
+  attack; use them, not `damageCurrent()`.
 - How long a tower's effects and timed buffs last is a stat (`EFFECT_DURATION`, `BUFF_DURATION`).
   Every effect goes through `applyEffect`, which scales it; what a tower leaves on the ground takes
   its lifetime through `lengthened(ticks)`.

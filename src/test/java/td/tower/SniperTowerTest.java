@@ -531,7 +531,7 @@ class SniperTowerTest {
 
         List<Integer> ticks = this.shotTicks(tower, next, 1);
 
-        assertThat(ticks.getFirst() - killTick).isEqualTo(waitTicks(tower, 0.5));
+        assertThat(ticks.getFirst() - killTick).isEqualTo((tower.coolDownMax + 1) / 2);
     }
 
     @Test
@@ -702,5 +702,51 @@ class SniperTowerTest {
 
         assertThat(marked.hits()).hasSize(1);
         assertThat(unmarked.hits()).isEmpty();
+    }
+
+    @Test
+    void aCritDuringFrenzyDoesNotRestartIt() {
+        GameWorld world = boardWorld();
+        SniperTower tower = sniperWith(world, "Focused Optics", "Focused Optics II");
+        FakeEnemyMob critical = targetFor(world);
+        critical.landEveryHitCritical();
+        this.shotTicks(tower, critical, 2);
+        FakeEnemyMob plain = targetFor(world);
+
+        this.shotTicks(tower, plain, 2);
+
+        assertThat(tower.attackRate()).isEqualTo(1.0);
+    }
+
+    @Test
+    void frenzyAndMomentumHasteStack() {
+        GameWorld world = boardWorld();
+        SniperTower tower = sniperWith(world, "Focused Optics", "Focused Optics II", "Momentum");
+        FakeEnemyMob target = targetFor(world);
+        target.landEveryHitCritical();
+        target.dieOnAnyHit();
+
+        this.shotTicks(tower, target, 1);
+
+        assertThat(tower.attackRate()).isEqualTo(3.0);
+    }
+
+    @Test
+    void broadcastIiLengthensFrenzyButNotAOneShotStatus() {
+        GameWorld world = boardWorld();
+        SniperTower tower = sniperWith(world);
+        AuraTower aura = new AuraTower(world, 3, 4);
+        world.towers().add(tower);
+        world.towers().add(aura);
+        UpgradePaths.buy(aura, world, "Broadcast", "Broadcast II");
+        tower.grantStatus(TowerStatus.nextShots("frenzy", 3, TowerModifiers.attackSpeed(1f)).lengthenedByBuffs());
+        tower.grantStatus(TowerStatus.nextShots("one", 1, TowerModifiers.critChance(0.5f)));
+
+        for (int shot = 0; shot < 3; shot++) {
+            tower.beginShot();
+        }
+
+        assertThat(tower.attackRate()).isEqualTo(2.0);
+        assertThat(tower.critChance()).isEqualTo(SniperTower.CRIT_CHANCE);
     }
 }

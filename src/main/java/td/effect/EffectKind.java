@@ -1,107 +1,138 @@
 package td.effect;
 
+import td.damage.DamageUnits;
 import td.stat.EnemyStat;
+import td.stat.StatModifier;
+import td.stat.StatModifiers;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+/** Every kind of effect, each one row: its {@link EffectRule}. */
 public enum EffectKind {
-    CHILL,
-    BURN,
-    FREEZE,
-    SHIELD,
-    INVISIBLE,
-    HEAL,
-    VULNERABLE,
-    REVEALED,
-    POISON,
+    CHILL(EffectRule.of(EffectCategory.SOFT_CC).resistedBy(EnemyStat.CHILL_RESIST).asALevel().pacedBySpirit()
+            .tagged(EffectTag.SHARED_BY_SYMPATHY)),
+    BURN(EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).resistedBy(EnemyStat.BURN_RESIST).asAPool()
+            .tagged(EffectTag.BURNING)),
+    FREEZE(EffectRule.of(EffectCategory.HARD_CC).resistedBy(EnemyStat.FREEZE_RESIST)
+            .perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f)).tagged(EffectTag.STOPS)),
+    SHIELD(EffectRule.of(EffectCategory.RESTORATIVE)),
+    INVISIBLE(EffectRule.of(EffectCategory.STEALTH).perStack(EnemyStat.STEALTH, StatModifier.setTo(1f))),
+    HEAL(EffectRule.of(EffectCategory.RESTORATIVE)),
+    VULNERABLE(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3).pacedBySpirit()
+            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.15f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.15f)
+            .tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
+    REVEALED(EffectRule.of(EffectCategory.STEALTH).pacedBySpirit()
+            .perStack(EnemyStat.STEALTH, StatModifier.setTo(0f))),
+    POISON(EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asAPool().tagged(EffectTag.SPREADS_WITH_CURSE)),
     /** The lasting mark of burning: each stack lowers resilience by one. */
-    SCORCHED,
+    SCORCHED(EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(100).pacedBySpiritUnfloored()
+            .perStack(EnemyStat.RESILIENCE, -1f).tagged(EffectTag.SPREADS_WITH_CURSE)),
     /** The lasting mark of poison: each stack lowers spirit by one. */
-    SICKENED,
+    SICKENED(EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(100).pacedBySpiritUnfloored()
+            .perStack(EnemyStat.SPIRIT, -1f).tagged(EffectTag.SPREADS_WITH_CURSE)),
     /** Each stack lowers armor by five. */
-    SUNDERED,
-    /** Crit chance taken doubles. */
-    EXPOSED,
+    SUNDERED(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(10).pacedBySpirit()
+            .perStack(EnemyStat.ARMOR, -5f).tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
+    /** Takes fifty resilience: crits come more often and hit harder. */
+    EXPOSED(EffectRule.of(EffectCategory.SPOTTED).pacedBySpirit().perStack(EnemyStat.RESILIENCE, -50f)
+            .tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
     /** The next hit lands as a guaranteed crit and spends the mark. */
-    MARKED,
+    MARKED(EffectRule.of(EffectCategory.SPOTTED).pacedBySpirit()),
     /** Takes extra damage from every tower, and single-target towers aim at it. */
-    PRIORITY,
+    PRIORITY(EffectRule.of(EffectCategory.SPOTTED).pacedBySpirit()
+            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.15f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.15f)),
     /** Each stack raises the magic damage taken. */
-    RESONATING,
+    RESONATING(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3).pacedBySpirit()
+            .perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.08f).tagged(EffectTag.SPREADS_WITH_CURSE)),
     /** Each stack lowers resilience by ten, and wears off one stack at a time. */
-    FRACTURED,
+    FRACTURED(EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(5).pacedBySpirit()
+            .perStack(EnemyStat.RESILIENCE, -10f).tagged(EffectTag.SPREADS_WITH_CURSE)),
     /** Stops the enemy and its abilities, like a freeze, but keeps its burn and its chill. */
-    DAZED,
+    DAZED(EffectRule.of(EffectCategory.HARD_CC).perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f))
+            .tagged(EffectTag.STOPS)),
     /** Each stack makes the Splash's blasts hit it harder; it is the Splash's own rhythm, not a stat. */
-    SATURATED,
+    SATURATED(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3)),
     /** The next hit from another tower discharges it for extra magic, credited to the tower that charged it. */
-    CHARGED,
+    CHARGED(EffectRule.of(EffectCategory.SPOTTED).pacedBySpirit()),
     /** When it ends, the target takes a share of all the damage it took while it lasted. */
-    DOOM,
+    DOOM(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** The target is poisoned for as long as it lasts. */
-    BLIGHT,
+    BLIGHT(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** When the target dies, its hexes and debuffs jump to the enemies nearest it. */
-    CONTAGION,
+    CONTAGION(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** Freezing the target buys twice the chill's extra time, and lands its burn at once instead of putting it out. */
-    RIME,
+    RIME(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** The target's burn and poison hold twice as much and mark it twice as fast; it can't be frozen and shrugs off chill. */
-    ASH,
+    ASH(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** Heals and shields it receives are dealt to it as damage instead, and it can't turn invisible. */
-    INVERSION,
+    INVERSION(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** Once a second its Vulnerable, Sundered, Exposed and chill are copied to the Hexer's other hexed enemies nearby. */
-    SYMPATHY,
+    SYMPATHY(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** When the target dies, the Hexer's Dooms near it release at once and start again. */
-    RECKONING,
+    RECKONING(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** Its abilities don't fire; death abilities and auras still do. */
-    SILENCED,
+    SILENCED(EffectRule.of(EffectCategory.SOFT_CC).tagged(EffectTag.FIELD)),
     /** Can't be sped up, and its speed is held to three quarters of its base. */
-    ANCHORED,
+    ANCHORED(EffectRule.of(EffectCategory.SOFT_CC).perStack(EnemyStat.MOVE_SPEED, StatModifier.capAtShareOfBase(0.75f))
+            .tagged(EffectTag.FIELD)),
     /** Each stack lowers magic resist by ten. */
-    UNRAVELED,
+    UNRAVELED(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5).pacedBySpirit()
+            .perStack(EnemyStat.MAGIC_RESIST, -10f).tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
     /** A frozen enemy takes extra physical damage. */
-    BRITTLE,
+    BRITTLE(EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit().perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.3f)),
     /** Each stack makes every other debuff wear off a tenth slower; it fades soon after the enemy leaves the field. */
-    TOLL,
+    TOLL(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5)),
     /** Lowers armor by thirty while the enemy is in the field. */
-    CORRODED,
+    CORRODED(EffectRule.of(EffectCategory.DEBUFF).perStack(EnemyStat.ARMOR, -30f).tagged(EffectTag.FIELD)),
     /** Chilled a quarter that doesn't fade while the enemy is in the field, and counts as a chill for a freeze. */
-    UNDERTOW,
+    UNDERTOW(EffectRule.of(EffectCategory.SOFT_CC).perStack(EnemyStat.MOVE_SPEED, StatModifier.times(0.75f))
+            .tagged(EffectTag.FIELD)),
     /** Heals and shields can't take hold while the enemy is in the field. */
-    DEAD_ZONE,
+    DEAD_ZONE(EffectRule.of(EffectCategory.DEBUFF).tagged(EffectTag.FIELD)),
     /** Heals can't take hold while the enemy is in the field; a shield still can. */
-    FALLOUT,
+    FALLOUT(EffectRule.of(EffectCategory.DEBUFF)),
     /** Takes extra damage from every source while the enemy is in the field. */
-    KILL_ZONE,
-    /** Plating is halved. */
-    CRACKED,
+    KILL_ZONE(EffectRule.of(EffectCategory.DEBUFF)
+            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.25f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.25f)
+            .tagged(EffectTag.FIELD)),
+    /** Takes five points of plating, of both kinds. */
+    CRACKED(EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit()
+            .perStack(EnemyStat.PHYSICAL_PLATING, -DamageUnits.ofPoints(5f))
+            .perStack(EnemyStat.MAGIC_PLATING, -DamageUnits.ofPoints(5f))),
     /** Stuck in tar: slowed by 40%, a burn it catches starts at double the pool, and a freeze it suffers lasts a second longer. */
-    TARRED,
+    TARRED(EffectRule.of(EffectCategory.DEBUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.times(0.6f))),
     /** Takes physical damage for every cell it travels; a stopped enemy takes none. */
-    BLEEDING,
+    BLEEDING(EffectRule.of(EffectCategory.DAMAGE_OVER_TIME)),
     /** A third fuel pool: it stacks with burn and poison, burns what is immune to fire and marks resilience and spirit. */
-    SOULFIRE;
+    SOULFIRE(EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asAPool().tagged(EffectTag.BURNING));
 
-    public EffectCategory category() {
-        return switch (this) {
-            case CHILL, SILENCED, ANCHORED, UNDERTOW -> EffectCategory.SOFT_CC;
-            case FREEZE, DAZED -> EffectCategory.HARD_CC;
-            case BURN, POISON, BLEEDING, SOULFIRE -> EffectCategory.DAMAGE_OVER_TIME;
-            case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED, UNRAVELED, BRITTLE, TOLL,
-                    CORRODED, DEAD_ZONE, FALLOUT, KILL_ZONE, CRACKED, TARRED -> EffectCategory.DEBUFF;
-            case EXPOSED, MARKED, PRIORITY, CHARGED -> EffectCategory.SPOTTED;
-            case DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY, RECKONING -> EffectCategory.HEX;
-            case SHIELD, HEAL -> EffectCategory.RESTORATIVE;
-            case INVISIBLE, REVEALED -> EffectCategory.STEALTH;
-        };
-    }
-
+    /** The most stacks any stacking kind reaches, so a cap an application raises (Fault Line) still has a bundle. */
+    private static final int MOST_STACKS = 100;
     private static final List<EffectKind> STOPPING = Arrays.stream(values()).filter(EffectKind::stopsEnemy).toList();
 
-    /** Whether this kind stops the enemy where it stands and keeps it from casting. */
-    public boolean stopsEnemy() {
-        return this == FREEZE || this == DAZED;
+    private final EffectRule rule;
+    private final List<StatModifiers<EnemyStat>> modifiersByStacks;
+
+    EffectKind(EffectRule rule) {
+        this.rule = rule;
+        boolean stacks = rule.stacking() == EffectStacking.SHARED_CLOCK || rule.stacking() == EffectStacking.EARNED;
+        int most = stacks ? Math.max(rule.stackCap(), MOST_STACKS) : 1;
+        List<StatModifiers<EnemyStat>> bundles = new ArrayList<>();
+        for (int n = 0; n <= most; n++) {
+            bundles.add(rule.perStack().times(n));
+        }
+        this.modifiersByStacks = List.copyOf(bundles);
+    }
+
+    public EffectRule rule() {
+        return this.rule;
+    }
+
+    public EffectCategory category() {
+        return this.rule.category();
     }
 
     /** Every kind that {@link #stopsEnemy() stops an enemy}. */
@@ -109,12 +140,25 @@ public enum EffectKind {
         return STOPPING;
     }
 
+    /** What {@code stacks} stacks of this kind do to the enemy's stats; precomputed, so nothing allocates. */
+    public StatModifiers<EnemyStat> modifiersAt(int stacks) {
+        return this.modifiersByStacks.get(Math.max(0, Math.min(this.modifiersByStacks.size() - 1, stacks)));
+    }
+
+    /** Whether this kind stops the enemy where it stands and keeps it from casting. */
+    public boolean stopsEnemy() {
+        return this.rule.tags().contains(EffectTag.STOPS);
+    }
+
     /**
      * Whether this kind is a decaying level rather than a countdown: it ends when the level runs
      * out, and has no time left to show.
      */
     public boolean isDecaying() {
-        return this == CHILL || this == BURN || this == POISON || this.isStackDebuff();
+        return switch (this.rule.stacking()) {
+            case LEVEL, POOL, EARNED -> true;
+            case REFRESH, SHARED_CLOCK -> false;
+        };
     }
 
     /**
@@ -122,12 +166,12 @@ public enum EffectKind {
      * stack every {@code Effect.STACK_INTERVAL_TICKS} while it lasts.
      */
     public boolean isFuelPool() {
-        return this == BURN || this == POISON || this == SOULFIRE;
+        return this.rule.stacking() == EffectStacking.POOL;
     }
 
     /** Whether this kind is a fire: the pools a freeze puts out and a chill cools. */
     public boolean isBurning() {
-        return this == BURN || this == SOULFIRE;
+        return this.rule.tags().contains(EffectTag.BURNING);
     }
 
     /**
@@ -136,20 +180,14 @@ public enum EffectKind {
      * {@code FRACTURED}.
      */
     public boolean isStackDebuff() {
-        return this == SCORCHED || this == SICKENED || this == FRACTURED;
+        return this.rule.stacking() == EffectStacking.EARNED;
     }
 
-    /**
-     * The most stacks of a kind that counts them on one timer, every application refreshing it; 0
-     * for a kind that does not stack that way.
-     */
+    /** The most stacks a stacking kind holds; 0 for a kind that does not stack. */
     public int maxStacks() {
-        return switch (this) {
-            case VULNERABLE, RESONATING, SATURATED -> 3;
-            case UNRAVELED, TOLL -> 5;
-            case SUNDERED -> 10;
-            case FRACTURED -> 5;
-            default -> 0;
+        return switch (this.rule.stacking()) {
+            case SHARED_CLOCK, EARNED -> this.rule.stackCap();
+            case REFRESH, LEVEL, POOL -> 0;
         };
     }
 
@@ -159,12 +197,7 @@ public enum EffectKind {
      * not debuffs.
      */
     public boolean isPacedBySpirit() {
-        return switch (this) {
-            case CHILL, VULNERABLE, REVEALED, SUNDERED, EXPOSED, MARKED, PRIORITY, RESONATING, CHARGED, UNRAVELED,
-                    BRITTLE, CRACKED -> true;
-            case DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY, RECKONING -> true;
-            default -> false;
-        };
+        return this.rule.pacing() == EffectPacing.SPIRIT && this.rule.stacking() != EffectStacking.EARNED;
     }
 
     /**
@@ -172,45 +205,21 @@ public enum EffectKind {
      * that weaken an enemy, not the marks a tower leaves for itself.
      */
     public boolean spreadsWithCurse() {
-        return switch (this) {
-            case VULNERABLE, SUNDERED, EXPOSED, POISON, SCORCHED, SICKENED, RESONATING, FRACTURED, UNRAVELED -> true;
-            default -> false;
-        };
+        return this.rule.tags().contains(EffectTag.SPREADS_WITH_CURSE);
     }
 
     /** Whether a Sympathy carrier shares this kind with the hexed enemies near it. */
     public boolean sharedBySympathy() {
-        return this == VULNERABLE || this == SUNDERED || this == EXPOSED || this == CHILL || this == UNRAVELED;
-    }
-
-    /** The stack debuffs a pool earns while it lasts; none for any other kind. */
-    public List<EffectKind> debuffsEarned() {
-        return switch (this) {
-            case BURN -> List.of(SCORCHED);
-            case POISON -> List.of(SICKENED);
-            case SOULFIRE -> List.of(SCORCHED, SICKENED);
-            default -> List.of();
-        };
+        return this.rule.tags().contains(EffectTag.SHARED_BY_SYMPATHY);
     }
 
     /** Whether a tower's field holds this kind on the enemies inside it, refreshing it every tick. */
     public boolean isFieldEffect() {
-        return switch (this) {
-            case SILENCED, ANCHORED, CORRODED, UNDERTOW, DEAD_ZONE, KILL_ZONE -> true;
-            default -> false;
-        };
+        return this.rule.tags().contains(EffectTag.FIELD);
     }
 
     /** The resistance that shortens this kind; empty for kinds an enemy cannot resist. */
     public Optional<EnemyStat> resistedBy() {
-        return switch (this) {
-            case CHILL -> Optional.of(EnemyStat.CHILL_RESIST);
-            case BURN -> Optional.of(EnemyStat.BURN_RESIST);
-            case FREEZE -> Optional.of(EnemyStat.FREEZE_RESIST);
-            case SHIELD, INVISIBLE, HEAL, VULNERABLE, REVEALED, POISON, SCORCHED, SICKENED, SUNDERED, EXPOSED, MARKED,
-                    PRIORITY, RESONATING, FRACTURED, DAZED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION,
-                    SYMPATHY, RECKONING, SILENCED, ANCHORED, UNRAVELED, BRITTLE, TOLL, CORRODED, UNDERTOW, DEAD_ZONE,
-                    FALLOUT, KILL_ZONE, CRACKED, TARRED, BLEEDING, SOULFIRE -> Optional.empty();
-        };
+        return this.rule.resistedBy();
     }
 }

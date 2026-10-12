@@ -500,8 +500,8 @@ class CinderTowerTest {
         tickThrough(tower, 1, 1 + TRAVEL);
 
         assertThat(burns(target).getFirst().tuning().stackRate()).isEqualTo(2);
-        assertThat(burns(target).getFirst().tuning().cauterizes()).isTrue();
-        assertThat(burns(target).getFirst().tuning().heats()).isTrue();
+        assertThat(burns(target).getFirst().tuning().carried().flat(td.stat.EnemyStat.HEALING_RECEIVED)).isEqualTo(-0.5f);
+        assertThat(burns(target).getFirst().tuning().carried().flat(td.stat.EnemyStat.PERIODIC_DAMAGE_TAKEN)).isEqualTo(0.1f);
     }
 
     @Test
@@ -531,7 +531,7 @@ class CinderTowerTest {
 
         tickThrough(tower, 1, 1 + TRAVEL);
 
-        assertThat(burns(target).getFirst().tuning().marksForMagic()).isTrue();
+        assertThat(burns(target).getFirst().tuning().carried().flat(td.stat.EnemyStat.MAGIC_DAMAGE_TAKEN)).isEqualTo(0.15f);
     }
 
     /** A tower on the Wide Nozzle chain with a special and Transcendent, gates waived. */

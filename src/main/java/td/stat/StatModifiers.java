@@ -70,9 +70,30 @@ public final class StatModifiers<S extends Enum<S> & StatKey> {
         StatModifier[] scaled = new StatModifier[this.modifiers.length];
         for (int i = 0; i < scaled.length; i++) {
             StatModifier m = this.modifiers[i];
-            scaled[i] = new StatModifier(m.flat() * factor, m.percentAdd() * factor, m.multiply(), m.setTo());
+            scaled[i] = new StatModifier(m.flat() * factor, m.percentAdd() * factor, m.multiply(), m.setTo(),
+                    m.capShareOfBase());
         }
         return new StatModifiers<>(this.stats, scaled);
+    }
+
+    /**
+     * {@code n} of this bundle: flats and percents {@code n} times as big, multipliers to the power
+     * {@code n}, set values and caps as they are; {@link #none()} for {@code n <= 0}.
+     */
+    public StatModifiers<S> times(int n) {
+        if (n <= 0) {
+            return none();
+        }
+        if (n == 1 || this.isNone()) {
+            return this;
+        }
+        StatModifier[] repeated = new StatModifier[this.modifiers.length];
+        for (int i = 0; i < repeated.length; i++) {
+            StatModifier m = this.modifiers[i];
+            repeated[i] = new StatModifier(m.flat() * n, m.percentAdd() * n, (float) Math.pow(m.multiply(), n),
+                    m.setTo(), m.capShareOfBase());
+        }
+        return new StatModifiers<>(this.stats, repeated);
     }
 
     /** The flat amount on {@code stat}, 0 when this bundle leaves it alone. */

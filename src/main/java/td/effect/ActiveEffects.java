@@ -29,12 +29,6 @@ public final class ActiveEffects {
 
     /** Caps a fuel pool at this multiple of the strongest single application ever taken. */
     private static final float POOL_LMAX_MULTIPLIER = 2f;
-    /** Under Ash, a pool holds this many times as much and earns its stacks this many times as fast. */
-    private static final int ASH_POOL_FACTOR = 2;
-    /** The share of a chill an Ashen enemy still takes. */
-    private static final float ASH_CHILL_TAKEN = 0.25f;
-    /** Under Rime, each point of chill buys a freeze this many times the usual extra time. */
-    private static final float RIME_CHILL_FACTOR = 2f;
     /**
      * Per-tick decay {@code alpha = e^(POOL_DECAY_EXPONENT / authoredDurationTicks)} leaves about
      * 5% of the fuel when the authored duration ends.
@@ -61,41 +55,12 @@ public final class ActiveEffects {
 
     /** Each Toll stack makes every other debuff's timer run this much slower. */
     private static final float TOLL_SLOWDOWN_PER_STACK = 0.1f;
-    /** How much Undertow chills, for the speed it takes and the freeze it buys. */
-    private static final float UNDERTOW_CHILL = 0.25f;
-    private static final float ANCHORED_SPEED_SHARE = 0.75f;
-    private static final float MAGIC_RESIST_LOST_PER_UNRAVELED_STACK = 10f;
-    private static final float CORROSION_ARMOR_LOST = 30f;
-    private static final float BRITTLE_PHYSICAL_DAMAGE_TAKEN = 0.3f;
-    private static final float KILL_ZONE_DAMAGE_TAKEN = 0.25f;
-    private static final float CRACKED_PLATING_POINTS = 5f;
-    /** The share of a burn's remaining pool that lands at once when a freeze puts it out. */
-    private static final float FREEZE_BURST_SHARE = 0.5f;
     /** A burn pool reveals an invisible enemy while it holds more than this, in damage units a tick. */
     private static final float BURN_REVEAL_FUEL = 30f;
-    private static final float TAR_BURN_FACTOR = 2f;
-    /** The share of healing and shielding an enemy burning under Cauterize no longer receives. */
-    private static final float CAUTERIZED_LOSS = 0.5f;
-    private static final float HEATED_PERIODIC_DAMAGE_TAKEN = 0.1f;
-    private static final float MARKED_MAGIC_DAMAGE_TAKEN = 0.15f;
     private static final EffectKind[] BURNING_KINDS = {EffectKind.BURN, EffectKind.SOULFIRE};
     private static final PoolTuning NO_TUNING = PoolTuning.standard();
-    /** The share of its speed a tarred enemy keeps. */
-    private static final float TARRED_SPEED_SHARE = 0.6f;
-    private static final int TAR_FREEZE_EXTRA_TICKS = 20;
-    /** Extra damage taken per vulnerable stack, of every damage type. */
-    private static final float VULNERABLE_PER_STACK = 0.15f;
-    /** Damage taken a priority adds while it lasts, of every damage type. */
-    private static final float PRIORITY_DAMAGE_TAKEN = 0.15f;
-    private static final float ARMOR_LOST_PER_SUNDERED_STACK = 5f;
-    private static final float MAGIC_DAMAGE_TAKEN_PER_RESONATING_STACK = 0.08f;
-    private static final float RESILIENCE_LOST_PER_FRACTURED_STACK = 10f;
-    /** The resilience an exposed or revealed enemy loses. */
-    private static final float EXPOSED_RESILIENCE = 50f;
-    private static final StatModifier FROZEN = StatModifier.setTo(0f);
-    private static final StatModifier HIDDEN = StatModifier.setTo(1f);
+    /** What a burning pool above {@link #BURN_REVEAL_FUEL} does to stealth. */
     private static final StatModifier REVEALED = StatModifier.setTo(0f);
-    private static final DamageType[] DAMAGE_TYPES = DamageType.values();
 
     private final Map<EffectKind, Effect> active = new EnumMap<>(EffectKind.class);
     /**
@@ -128,45 +93,44 @@ public final class ActiveEffects {
 
     /**
      * Applies {@code effect} unless an active effect keeps its kind out (see
-     * {@link EffectInteractions}); applying it also removes the kinds it consumes, and a freeze
-     * that consumes a chill lasts longer by the chill's level, twice that under Rime. A freeze also
-     * lands the burn it puts out at once, half of what was left, all of it under Rime. A tarred
-     * enemy's freeze lasts a second longer, and a burn it catches starts at double the pool.
+     * {@link EffectInteractions}); applying it also removes the kinds it consumes. How a freeze and a
+     * fire are bent by what is already there (chill, Rime, Tar) is read from {@link EffectInteractions}.
      */
     public void apply(Effect effect) {
-        if (EffectInteractions.blocks(this.active.keySet(), effect.kind())) {
+        Set<EffectKind> kinds = this.active.keySet();
+        if (EffectInteractions.blocks(kinds, effect.kind())) {
             return;
         }
         Effect incoming = effect;
-        boolean rime = this.active.containsKey(EffectKind.RIME);
-        Effect chill = this.active.get(EffectKind.CHILL);
-        float chilled = (chill == null ? 0f : chillLevel(chill))
-                + (this.active.containsKey(EffectKind.UNDERTOW) ? UNDERTOW_CHILL : 0f);
-        if (effect.kind() == EffectKind.FREEZE && chilled > 0f) {
-            incoming = effect.withDurationScaledBy(1f + (rime ? RIME_CHILL_FACTOR : 1f) * chilled);
-        }
-        if (effect.kind() == EffectKind.FREEZE && this.active.containsKey(EffectKind.TARRED)) {
-            incoming = incoming.withExtraTicks(TAR_FREEZE_EXTRA_TICKS);
-        }
-        if (effect.kind().isBurning() && this.active.containsKey(EffectKind.TARRED)
-                && !this.active.containsKey(effect.kind())) {
-            incoming = incoming.withPoolScaledBy(TAR_BURN_FACTOR);
-        }
         if (effect.kind() == EffectKind.FREEZE) {
+            Effect chill = this.active.get(EffectKind.CHILL);
+            float lengthFactor = EffectInteractions.freezeLengthFactor(kinds, chill == null ? 0f : chillLevel(chill));
+            if (lengthFactor != 1f) {
+                incoming = incoming.withDurationScaledBy(lengthFactor);
+            }
+            int extraTicks = EffectInteractions.freezeExtraTicks(kinds);
+            if (extraTicks > 0) {
+                incoming = incoming.withExtraTicks(extraTicks);
+            }
             for (EffectKind fire : EffectKind.values()) {
                 Effect burning = fire.isBurning() ? this.active.get(fire) : null;
                 if (burning != null) {
-                    burstPool(burning, rime ? 1f : Math.max(FREEZE_BURST_SHARE, burning.tuning().freezeBurstShare()));
+                    burstPool(burning, EffectInteractions.freezeBurstShare(kinds, burning.tuning().freezeBurstShare()));
                 }
             }
         }
+        if (effect.kind().isBurning() && !this.active.containsKey(effect.kind())) {
+            float startFactor = EffectInteractions.fireStartFactor(kinds);
+            if (startFactor != 1f) {
+                incoming = incoming.withPoolScaledBy(startFactor);
+            }
+        }
         EffectInteractions.removedBy(effect.kind()).forEach(this.active::remove);
-        switch (incoming.kind()) {
-            case CHILL -> this.applyChill(incoming);
-            case BURN, POISON, SOULFIRE -> this.applyPool(incoming);
-            case VULNERABLE, SUNDERED, RESONATING, FRACTURED, SATURATED, UNRAVELED, TOLL, SICKENED, SCORCHED ->
-                    this.applyStacks(incoming);
-            default -> {
+        switch (incoming.kind().rule().stacking()) {
+            case LEVEL -> this.applyChill(incoming);
+            case POOL -> this.applyPool(incoming);
+            case SHARED_CLOCK, EARNED -> this.applyStacks(incoming);
+            case REFRESH -> {
                 Effect existing = this.active.get(incoming.kind());
                 this.active.put(incoming.kind(), existing == null ? incoming : strongerOf(existing, incoming));
             }
@@ -189,8 +153,8 @@ public final class ActiveEffects {
             return;
         }
         FuelContribution authored = incoming.fuel().getFirst();
-        FuelContribution contribution = this.active.containsKey(EffectKind.ASH)
-                ? authored.scaledTo(authored.amount() * ASH_CHILL_TAKEN) : authored;
+        float taken = EffectInteractions.chillTaken(this.active.keySet());
+        FuelContribution contribution = taken != 1f ? authored.scaledTo(authored.amount() * taken) : authored;
         FuelContribution added = contribution.amount() <= headroom ? contribution : contribution.scaledTo(headroom);
         if (existing == null) {
             this.active.put(EffectKind.CHILL, incoming.withFuel(List.of(added), 0f));
@@ -218,7 +182,7 @@ public final class ActiveEffects {
         float incomingL0 = incoming.damagePerTick().amount();
         float peakL0 = Math.max(existing.peakL0(), incomingL0);
         PoolTuning tuning = existing.tuning().strongerWith(incoming.tuning());
-        float lmax = tuning.capFactor() * peakL0 * this.ashFactor();
+        float lmax = tuning.capFactor() * peakL0 * this.poolFactor();
         float deltaL = incomingL0 * (1f - existing.fuelLevel() / lmax);
         List<FuelContribution> fuel = new ArrayList<>(existing.fuel());
         fuel.add(new FuelContribution(incoming.sink(), deltaL));
@@ -227,9 +191,10 @@ public final class ActiveEffects {
 
     /** Adds a stack of each debuff that {@code pool} earns, starting the debuff if the enemy has none. */
     private void earnStack(EffectKind pool) {
-        for (EffectKind debuff : pool.debuffsEarned()) {
+        for (EffectKind debuff : EffectInteractions.earnedBy(pool)) {
             Effect existing = this.active.get(debuff);
-            this.active.put(debuff, Effect.stackDebuff(debuff, existing == null ? 1 : existing.stacks() + 1));
+            int stacks = Math.min(debuff.maxStacks(), existing == null ? 1 : existing.stacks() + 1);
+            this.active.put(debuff, Effect.stackDebuff(debuff, stacks));
         }
     }
 
@@ -285,7 +250,7 @@ public final class ActiveEffects {
 
     /** Whether crits find this enemy more often: it is exposed, or revealed, which exposes it. */
     private boolean isExposed() {
-        return this.active.containsKey(EffectKind.EXPOSED) || this.active.containsKey(EffectKind.REVEALED);
+        return EffectInteractions.isActiveOrImplied(EffectKind.EXPOSED, this.active.keySet());
     }
 
     public boolean has(EffectKind kind) {
@@ -347,75 +312,43 @@ public final class ActiveEffects {
     }
 
     /**
-     * Adds every active effect's stat modifiers: a chill multiplies speed by what is left of its
-     * level and a poison by what is left of its pool, a freeze sets it to zero, a heal adds
-     * regeneration, invisibility sets stealth to
-     * one and a reveal sets it to zero (the lowest set value wins), a vulnerability adds to damage
-     * taken by its stacks, each scorched stack lowers resilience by one and each sickened stack
-     * lowers spirit by one. Heals go in as restorative, so the enemy's spirit and healing received scale them.
-     * Being exposed or revealed takes 50 resilience, once however many apply.
+     * Adds every active effect's stat modifiers: each kind's {@link EffectKind#modifiersAt} for its
+     * stacks (when what it needs is there), the chill level on speed, the pools' own rules, a heal's
+     * regeneration, and what the burning pools carry. Being exposed or revealed counts once however
+     * many apply. Nothing here allocates.
      */
     public void contributeTo(StatAccumulator<EnemyStat> accumulator) {
-        PoolTuning burning = this.burningTuning();
-        if (burning.cauterizes()) {
-            accumulator.addFlat(EnemyStat.HEALING_RECEIVED, -CAUTERIZED_LOSS);
-        }
-        if (burning.heats()) {
-            accumulator.addFlat(EnemyStat.PERIODIC_DAMAGE_TAKEN, HEATED_PERIODIC_DAMAGE_TAKEN);
-        }
-        if (burning.marksForMagic()) {
-            accumulator.addFlat(EnemyStat.MAGIC_DAMAGE_TAKEN, MARKED_MAGIC_DAMAGE_TAKEN);
-        }
+        Set<EffectKind> kinds = this.active.keySet();
+        this.burningTuning().carried().applyTo(accumulator);
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
+            EffectKind kind = entry.getKey();
             Effect effect = entry.getValue();
-            switch (entry.getKey()) {
-                case CHILL -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - chillLevel(effect));
-                case FREEZE, DAZED -> accumulator.add(EnemyStat.MOVE_SPEED, FROZEN);
-                case HEAL -> accumulator.restoreFlat(EnemyStat.REGENERATION, effect.healPerTick());
-                case INVISIBLE -> accumulator.add(EnemyStat.STEALTH, HIDDEN);
-                case REVEALED -> accumulator.add(EnemyStat.STEALTH, REVEALED);
-                case VULNERABLE -> addDamageTaken(accumulator, VULNERABLE_PER_STACK * effect.stacks());
-                case PRIORITY -> addDamageTaken(accumulator, PRIORITY_DAMAGE_TAKEN);
-                case RESONATING -> accumulator.addFlat(EnemyStat.MAGIC_DAMAGE_TAKEN,
-                        MAGIC_DAMAGE_TAKEN_PER_RESONATING_STACK * effect.stacks());
-                case SUNDERED -> accumulator.addFlat(EnemyStat.ARMOR,
-                        -ARMOR_LOST_PER_SUNDERED_STACK * effect.stacks());
-                case FRACTURED -> accumulator.addFlat(EnemyStat.RESILIENCE,
-                        -RESILIENCE_LOST_PER_FRACTURED_STACK * effect.stacks());
-                case ANCHORED -> accumulator.capAtShareOfBase(EnemyStat.MOVE_SPEED, ANCHORED_SPEED_SHARE);
-                case UNRAVELED -> accumulator.addFlat(EnemyStat.MAGIC_RESIST,
-                        -MAGIC_RESIST_LOST_PER_UNRAVELED_STACK * effect.stacks());
-                case BRITTLE -> {
-                    if (this.active.containsKey(EffectKind.FREEZE)) {
-                        accumulator.addFlat(EnemyStat.PHYSICAL_DAMAGE_TAKEN, BRITTLE_PHYSICAL_DAMAGE_TAKEN);
-                    }
-                }
-                case CORRODED -> accumulator.addFlat(EnemyStat.ARMOR, -CORROSION_ARMOR_LOST);
-                case UNDERTOW -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - UNDERTOW_CHILL);
-                case KILL_ZONE -> addDamageTaken(accumulator, KILL_ZONE_DAMAGE_TAKEN);
-                case CRACKED -> {
-                    accumulator.addFlat(EnemyStat.PHYSICAL_PLATING, -DamageUnits.ofPoints(CRACKED_PLATING_POINTS));
-                    accumulator.addFlat(EnemyStat.MAGIC_PLATING, -DamageUnits.ofPoints(CRACKED_PLATING_POINTS));
-                }
-                case SHIELD, EXPOSED, MARKED, SATURATED, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY,
-                        RECKONING, SILENCED, DEAD_ZONE, FALLOUT, TOLL, BLEEDING -> {
-                }
-                case TARRED -> accumulator.multiply(EnemyStat.MOVE_SPEED, TARRED_SPEED_SHARE);
-                case BURN, SOULFIRE -> {
-                    if (effect.fuelLevel() > BURN_REVEAL_FUEL) {
-                        accumulator.add(EnemyStat.STEALTH, REVEALED);
-                    }
-                }
-                case SCORCHED -> accumulator.addFlat(EnemyStat.RESILIENCE, -effect.stacks());
-                case SICKENED -> accumulator.addFlat(EnemyStat.SPIRIT, -effect.stacks());
-                case POISON -> {
-                    float pool = effect.fuelLevel() / (POOL_LMAX_MULTIPLIER * effect.peakL0());
-                    accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - POISON_MAX_SLOW * Math.min(1f, pool));
-                }
+            if (!EffectInteractions.contributes(kind, kinds)) {
+                continue;
+            }
+            switch (kind.rule().stacking()) {
+                case SHARED_CLOCK, EARNED -> kind.modifiersAt(effect.stacks()).applyTo(accumulator);
+                case REFRESH -> kind.modifiersAt(1).applyTo(accumulator);
+                case LEVEL -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - chillLevel(effect));
+                case POOL -> this.contributePool(kind, effect, accumulator);
+            }
+            if (kind == EffectKind.HEAL) {
+                accumulator.restoreFlat(EnemyStat.REGENERATION, effect.healPerTick());
             }
         }
-        if (this.isExposed()) {
-            accumulator.addFlat(EnemyStat.RESILIENCE, -EXPOSED_RESILIENCE);
+        if (!this.active.containsKey(EffectKind.EXPOSED) && EffectInteractions.isActiveOrImplied(EffectKind.EXPOSED, kinds)) {
+            EffectKind.EXPOSED.modifiersAt(1).applyTo(accumulator);
+        }
+    }
+
+    /** A burning pool that holds enough reveals the enemy; a poison slows by how full it is. */
+    private void contributePool(EffectKind kind, Effect pool, StatAccumulator<EnemyStat> accumulator) {
+        if (kind.isBurning() && pool.fuelLevel() > BURN_REVEAL_FUEL) {
+            accumulator.add(EnemyStat.STEALTH, REVEALED);
+        }
+        if (kind == EffectKind.POISON) {
+            float share = pool.fuelLevel() / (POOL_LMAX_MULTIPLIER * pool.peakL0());
+            accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - POISON_MAX_SLOW * Math.min(1f, share));
         }
     }
 
@@ -429,12 +362,6 @@ public final class ActiveEffects {
             }
         }
         return tuning == null ? NO_TUNING : tuning;
-    }
-
-    private static void addDamageTaken(StatAccumulator<EnemyStat> accumulator, float taken) {
-        for (DamageType type : DAMAGE_TYPES) {
-            accumulator.addFlat(EnemyStat.damageTakenFor(type), taken);
-        }
     }
 
     /** {@link #tick(float)} at neutral spirit. */
@@ -466,7 +393,7 @@ public final class ActiveEffects {
             Effect effect = entry.getValue();
             Optional<Effect> next;
             if (kind.isStackDebuff()) {
-                next = this.decayStacks(effect, kind == EffectKind.FRACTURED ? debuffPace : pace);
+                next = this.decayStacks(effect, kind.rule().pacing() == EffectPacing.SPIRIT ? debuffPace : pace);
             } else if (kind == EffectKind.CHILL) {
                 next = this.tickChill(effect, this.paceSteps(kind, debuffPace));
             } else if (kind.isFuelPool()) {
@@ -582,7 +509,7 @@ public final class ActiveEffects {
                 .toList();
         // The clock always counts down by one, as pulses ride it; Ash only earns stacks more often.
         int clock = effect.stackClock() - 1;
-        int stackInterval = Math.max(1, Effect.STACK_INTERVAL_TICKS / (this.ashFactor() * effect.tuning().stackRate()));
+        int stackInterval = Math.max(1, Effect.STACK_INTERVAL_TICKS / (this.poolFactor() * effect.tuning().stackRate()));
         if (clock % stackInterval == 0) {
             this.earnStack(effect.kind());
         }
@@ -592,10 +519,9 @@ public final class ActiveEffects {
         return Optional.of(effect.withFuel(decayed, effect.peakL0()).withStackClock(clock));
     }
 
-    /** The pool's total over one pulse window as a multiple of its level now: {@code 1 + a + a^2 + ...}. */
-    /** How much more a pool holds, and how much faster it earns stacks: twice under Ash. */
-    private int ashFactor() {
-        return this.active.containsKey(EffectKind.ASH) ? ASH_POOL_FACTOR : 1;
+    /** How much more a pool holds, and how much faster it earns stacks. */
+    private int poolFactor() {
+        return EffectInteractions.poolFactor(this.active.keySet());
     }
 
     /** Lands {@code share} of everything {@code pool} would still have dealt, at once, each contributor its part. */
@@ -613,6 +539,7 @@ public final class ActiveEffects {
         }
     }
 
+    /** The pool's total over one pulse window as a multiple of its level now: {@code 1 + a + a^2 + ...}. */
     private static double windowFactor(double alpha) {
         double factor = 0;
         double term = 1;
