@@ -21,13 +21,4 @@ public record NestSpec(int capacity, int launchGapTicks) {
     public boolean isActive() {
         return this.capacity > 0;
     }
-
-    public NestSpec withCapacity(int capacity) {
-        return new NestSpec(capacity, this.launchGapTicks);
-    }
-
-    /** This nest holding {@code extra} more missiles. */
-    public NestSpec holdingMore(int extra) {
-        return this.withCapacity(this.capacity + extra);
-    }
 }

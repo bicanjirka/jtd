@@ -19,7 +19,7 @@ class SeekerNestTest {
 
         assertThat(nest.stored()).isEqualTo(3);
         assertThat(nest.hasRoom(SPEC)).isFalse();
-        assertThat(nest.hasRoom(SPEC.holdingMore(1))).isTrue();
+        assertThat(nest.hasRoom(NestSpec.of(4, SPEC.launchGapTicks()))).isTrue();
     }
 
     @Test
