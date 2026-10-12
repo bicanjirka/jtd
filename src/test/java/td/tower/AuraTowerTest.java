@@ -155,6 +155,16 @@ class AuraTowerTest {
         assertThat(buffed.stats().attack().critMultiplier()).isCloseTo(before + 0.5f, within(1e-6f));
     }
 
+    @Test
+    void anAurasEmissionNeverIncludesABlastRadius() {
+        this.context.playtestRules().setUpgradeGatesIgnored(true);
+        AuraTower aura = this.broadcastAura("Broadcast", "Broadcast II", "Conduit", "Withering Field");
+        SplashTower splash = new SplashTower(this.context, 0, 0);
+        this.context.towers().add(splash);
+
+        assertThat(aura.buffFor(splash).stats()).isNotEmpty().doesNotContain(TowerStat.AREA_RADIUS);
+    }
+
     private AuraTower broadcastAura(String... nodes) {
         this.context.economy().startEconomy(100_000, 5);
         AuraTower aura = new AuraTower(this.context, 0, 0);
