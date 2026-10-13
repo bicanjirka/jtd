@@ -26,8 +26,9 @@ wipes waves alone.
 **Next, in this order** (each is ranked in the review):
 
 1. ❔ Decide the open questions still marked ❔ below, chiefly 7 (which fun proxies are required).
-2. Tune the competent player against the strong one: its Twisted Hourglass opening is the known miss,
-   and its own build played back holds more than it does when it re-decides against tougher enemies.
+2. Tune the competent player further against the strong one: its Twisted Hourglass opening is the
+   known miss, and on Curly and Zigzag its own build played back holds more than it does when it
+   re-decides against tougher enemies.
 3. The balance pass itself, level by level, with the findings as the starting list.
 
 
@@ -349,65 +350,67 @@ Each has two options and a preferred one (⭐).
 
 ## Findings (first run)
 
-From `BalanceReport --seeds 12 --strong --variety` and earlier 20-seed runs, 2026-10-13. Margins are
-the highest enemy health a player still wins at, as a percentage of the authored one; the target band
-for the competent player is 100% to 150%. Nothing below was changed in the game: each is a starting
-point for the balance pass, not a decision.
+From `BalanceReport --seeds 12 --strong --variety`, 2026-10-13. Margins are the highest enemy health a
+player still wins at, as a percentage of the authored one; the target band for the competent player is
+100% to 150%. Nothing below was changed in the game: each is a starting point for the balance pass,
+not a decision.
 
-**Every built-in level is far too easy for a competent player, and too forgiving to a careless one.**
+**Every built-in level is far too easy for a competent player, and Curly Path is too forgiving to a
+careless one.**
 
-| Level | naive wins | naive holds | competent holds | strong holds | random cells hold |
-|---|---|---|---|---|---|
-| Curly Path | 33-42% | 80-87% | 311-386% | 324% | 205-243% |
-| Zigzag Path | 5-10% | 81-84% | 228-231% | 284% | 155-159% |
-| Twisted Hourglass | 3-8% | 37-47% | 235-237% | 329% | 170-182% |
+| Level | naive wins | naive holds | competent holds | strong holds | random cells hold | health for 125% |
+|---|---|---|---|---|---|---|
+| Curly Path | 42% | 87% | 351% | 360% | 228% | x2.8 |
+| Zigzag Path | 8% | 81% | 235% | 284% | 162% | x1.9 |
+| Twisted Hourglass | 8% | 47% | 265% | 307% | 196% | x2.1 |
 
-A competent player wins every seed on every level and loses no life on Curly and Zigzag. A player that
-rehearses each round (strong) holds x1.04 the competent margin on Curly, x1.23 on Zigzag and x1.39 on
-Hourglass, where it also loses no life. On Curly a careless player still wins a third of the time, over
-the 20% target.
+A competent player wins every seed on every level and loses no life on Curly and Zigzag. The last
+column is how much every enemy's health would have to grow to put the competent player in the middle
+of the band; a tougher economy or longer rounds would do as well.
 
-**Pressure does not build.** On Curly Path the furthest enemy of a round gets under 30% of the way in 15
-of 18 rounds; only round 11 (Elite Ghosts, 62%) and round 15 (41%) push. Zigzag Path is flat at 25% to 50%,
-with neither walls nor breathers. Twisted Hourglass has its one wall at round 1: its Reaver walks the
-short crimson lane, and a player who opens with area towers loses 3 of 4 lives there on every seed,
-while one who opens with five Snipers (what the strong player finds) loses none.
+**Pressure does not build.** On Curly Path nothing gets a quarter of the way in 15 of 18 rounds, and no
+round is a wall: the furthest enemy peaks at about 60% in round 11 (Elite Ghosts). Zigzag Path is flat at
+25% to 50%, with neither walls nor breathers. Twisted Hourglass has its one wall at round 1: its Reaver
+walks the short crimson lane, and a player who opens with area towers loses 3 of 4 lives there on every
+seed, while one who opens with five Snipers (what the strong player finds) loses none.
 
-**The Obelisk is dominant.** It lands 38% to 62% of the competent player's damage. An army of Obelisks
-alone holds 221% on Curly, 221% on Zigzag and 151% on Hourglass; no other tower alone wins Curly or
-Hourglass at any enemy health. Banning it costs x0.74 on Curly and x0.77 on Zigzag, and makes Hourglass unwinnable as authored (237%
-to 40%), while banning the Sniper, Burst or Radar *raises* the competent player's margin on Curly
-(x1.06 to x1.19): the more of the budget goes to Obelisks and Beacons, the better. Two things make it so: its field hits everything in reach, invisible enemies
-included, and it is the only answer to Elite Ghosts, whose shroud blanks every tower that aims (every
-other tower brings down 0% of an Elite Ghost wave in a duel). Its five best cells overlap least with the
-others', so it also takes the cells nothing else wants.
+**The Obelisk is dominant.** It lands 47% to 59% of the competent player's damage. An army of Obelisks
+alone holds 221% on Curly, 221% on Zigzag and 178% on Hourglass, inside or above the band; no other tower
+alone wins Curly or Hourglass at any enemy health. Banning it costs x0.68 on Curly and x0.86 on Zigzag
+and makes Hourglass unwinnable as authored (265% to 16%), while banning the Burst or the Radar *raises*
+the competent player's margin on Curly and Zigzag (x1.09 to x1.17): the more of the budget goes to
+Obelisks and Beacons, the better. Two things make it so: its field hits everything in reach, invisible
+enemies included, and it is the only answer to Elite Ghosts, whose shroud blanks every tower that aims
+(in a duel every other tower brings down 0% to 44% of what it does against plain mobs).
 
-**Beacons stack into a second engine.** The competent player builds 6 to 9 of them, mostly around Obelisks
-(the lab measures +49% to +60% for an Obelisk beside one). Banning Beacons costs x0.62 on Twisted Hourglass and x0.81 on Curly.
+**Beacons stack into a second engine.** The competent player builds 7 to 10 of them, mostly around Obelisks
+(the lab measures +49% to +60% for an Obelisk beside one, and Beacons stack). Banning Beacons costs x0.62
+on Twisted Hourglass and x0.73 on Curly.
 
 **Absolute Zero breaks the Hive.** One Hive with it destroys a wave of 20 Elite Armored mobs (12,800 health)
-alone; without it the same Hive lands 6%. Its freeze around the impact makes enemies pile up, and every
-frozen enemy shatters on all of the pile when it thaws, so its damage grows with the square of the group.
-In a duel it is the Hive's strongest node (x2.0 to x2.4); against probes that never die, x19 to x39.
+alone; without it the same Hive lands 6% of that. Its freeze around the impact makes enemies pile up, and
+every frozen enemy shatters on all of the pile when it thaws, so its damage grows with the square of the
+group. In a duel it is the Hive's strongest node (x2.0 to x2.4); against probes that never die, x19 to x39.
 
-**The Hive and the Scorcher are rarely worth building.** The competent player builds 0 to 2 of each; alone
-each fails every level; banning either costs nothing. Every node of theirs but Absolute Zero is within the
-range of the other towers' nodes, so it is the bodies, not the trees, that are weak.
+**The Hive, the Scorcher and the Mortar are rarely worth building.** The competent player builds none or
+one or two of each; alone each fails every level; banning any of them costs nothing. Their nodes measure
+within the range of the other towers' (Absolute Zero aside), so it is the bodies, not the trees, that are
+weak.
 
 **Counters are sharp, some too sharp.** From the lab's duels (share of a wave brought down, the plain mob
 as 1.00):
 
 - Elite Ghost: the Obelisk 1.00, every other tower 0.00 to 0.44 (only one answer).
-- Elite Armored: the Burst 0.01 and the Radar 0.10 (near immune); the others 0.4 to 0.6.
+- Elite Armored: the Burst 0.01 and the Radar 0.10 (near immune); the others 0.3 to 0.9.
 - Juggernaut (in no round yet): the Burst and the Radar 0.00; the Obelisk 2.0 and the Hive 1.9.
 - Jammer (in no round yet): the Obelisk and the Scorcher 0.00, the Burst 0.03 to 0.12.
 - Courier (in no round yet): 0.3 to 0.5 for every tower: a speed check, not a counter.
 - Salamander: the Scorcher 0.00 as designed; Skirmisher: the Sniper and the Radar about 0.5.
 
-**Positioning matters, upgrades a little.** Chosen cells hold x1.29 to x1.45 what random cells do, yet random
-cells still win 92% to 100% at the authored health: placement decides by how much, never whether. Upgrades
-are worth x1.12 to x1.16 on Curly and Hourglass and nothing measurable on Zigzag Path, whose 8 rounds give
-too little XP and bounty for the trees.
+**Positioning matters; upgrades matter on the long levels.** Chosen cells hold x1.36 to x1.56 what random
+cells do, yet random cells still win every seed at the authored health: placement decides by how much,
+never whether. Upgrades are worth x1.27 on Curly and x1.41 on Hourglass, and nothing measurable on
+Zigzag Path, whose 8 rounds give the trees too little XP and bounty.
 
 **Nodes that hurt their tower alone**, in duels: the Radar's Phased Array (x0.34 to x0.53), the Burst's Hex
 (x0.73), and several Mortar nodes (x0.8 to x0.9). Each may pay off beside others, which the lab cannot see

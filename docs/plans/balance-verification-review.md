@@ -89,9 +89,11 @@ engine has no snapshot, and replaying to a round takes well under a second, so t
 
 What the numbers rest on, and how far they hold:
 
-- **The players are models.** The strong player measures the competent one: it holds about the same on
-  Curly Path and up to a third more on Twisted Hourglass, where the competent player's opening is wrong.
-  A verdict is about the game only as far as it holds for both.
+- **The players are models.** The strong player measures the competent one: it holds x1.02 the
+  competent margin on Curly Path, x1.21 on Zigzag Path and x1.16 on Twisted Hourglass, where the
+  competent player's opening is wrong. A verdict is about the game only as far as it holds for both.
+  One sweep of the competent player's kill estimate (how soft its line between leaking and dying is)
+  raised its margins by up to x1.12; tuning it against the strong player is a loop the tools support.
 - **The lab's probes never die**, so a probe round measures where a tower stands, not what it does to
   enemies that die, turn invisible when hit or split. Those are what duels are for. Duels give every kind
   the same health, so a flat mechanic (a shield of fixed points, flat damage reduction) weighs more in a
@@ -126,7 +128,7 @@ Each with what it would unblock here, what it costs, and a recommendation (⭐ =
    the strong player opens with Snipers and loses none. Its kill estimate gives up on a tough enemy it
    cannot certainly kill. Tuning it against the strong player is a loop the tools now support. A second
    lead: its own build, played back unchanged, holds more than it does re-deciding against tougher
-   enemies (271% against 232% on Zigzag Path).
+   enemies (400% against 351% on Curly Path, 292% against 235% on Zigzag Path).
 2. **What a tower does for others.** Slows, Vulnerable, Priority and the like are worth nothing to the
    competent player. A lab duel with a partner tower beside the measured one would price them.
 3. **Upgrades by phase**, and dead or dominant nodes across players (`FEATURE-balance-verification.md`,

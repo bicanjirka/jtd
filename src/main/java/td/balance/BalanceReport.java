@@ -352,6 +352,12 @@ public final class BalanceReport {
         }
         this.out.printf("  target: competent wins %.0f-%.0f%% and holds %.0f-%.0f%%; naive wins under %.0f%%%n",
                 WIN_LOW * 100, WIN_HIGH * 100, MARGIN_LOW, MARGIN_HIGH, NAIVE_WIN_HIGH * 100);
+        Estimate margin = run.margin(COMPETENT);
+        if (margin.low() > MARGIN_HIGH || margin.high() < MARGIN_LOW) {
+            double middle = (MARGIN_LOW + MARGIN_HIGH) / 2;
+            this.out.printf("  to put the competent player at %.0f%%, scale every enemy's health by x%.2f (or make the"
+                    + " level that much harder another way)%n", middle, margin.value() / middle);
+        }
         this.printLossRounds("naive", run.lossRounds(NAIVE));
         this.printLossRounds("competent", run.lossRounds(COMPETENT));
         this.out.printf("  the competent player's own actions, played back as they were, hold %s%n",

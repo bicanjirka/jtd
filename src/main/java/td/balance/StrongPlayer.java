@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A player who tries things before committing. Before each round it rehearses that round and the next under a
- * dozen ways of spending (the competent player's way, without upgrades, saving harder, spending everything, only
- * upgrades, or building only one tower type for the round), each a replay of the play so far with that change, and
- * plays the round the way that leaked least and came least close. It costs a dozen plays per round, so it is an
+ * A player who tries things before committing. Before each round it rehearses that round and the next the
+ * competent player's way; if that leaks, it rehearses a dozen other ways of spending (without upgrades, saving
+ * harder, spending everything, only upgrades, or building only one tower type for the round), each a replay of the
+ * play so far with that change, and plays the round the way that leaked least. It costs a dozen plays per round, so it is an
  * audit, not a player for every report: where it does much better than the competent player, the competent
  * player's rules are missing something; where it does no better, the level, not the player, decides.
  */
@@ -61,22 +61,40 @@ final class StrongPlayer implements Player {
         this.current.act(turn);
     }
 
+    /**
+     * The competent way, unless it leaks in the rounds rehearsed and another way leaks less. Changing course only to
+     * stop a leak keeps it from trading the long game for a closer call it did not need to avoid.
+     */
     private Player choose(Turn turn) {
         List<PlayRecord.TimedAction> soFar = turn.actionsSoFar();
         int round = turn.round();
         int through = Math.min(turn.roundCount(), round + ROUNDS_AFTER);
-        CompetentPlayer.Style best = CompetentPlayer.Style.standard();
-        double bestScore = Double.MAX_VALUE;
+        CompetentPlayer.Style standard = CompetentPlayer.Style.standard();
+        double standardScore = this.rehearse(turn, soFar, standard, round, through);
+        if (standardScore < PER_LEAK) {
+            return new CompetentPlayer(this.lab, standard);
+        }
+        CompetentPlayer.Style best = standard;
+        double bestScore = standardScore;
         for (CompetentPlayer.Style style : candidates()) {
-            Player trial = new RoundSwitchPlayer(soFar, round, new CompetentPlayer(this.lab, style),
-                    new CompetentPlayer(this.lab, CompetentPlayer.Style.standard()));
-            double score = score(turn.rehearse(trial, through), round);
+            double score = style.equals(standard) ? standardScore : this.rehearse(turn, soFar, style, round, through);
             if (score < bestScore) {
                 bestScore = score;
                 best = style;
             }
         }
-        return new CompetentPlayer(this.lab, best);
+        return new CompetentPlayer(this.lab, leaks(bestScore) < leaks(standardScore) ? best : standard);
+    }
+
+    private static double leaks(double score) {
+        return Math.floor(score / PER_LEAK);
+    }
+
+    private double rehearse(Turn turn, List<PlayRecord.TimedAction> soFar, CompetentPlayer.Style style, int round,
+                            int through) {
+        Player trial = new RoundSwitchPlayer(soFar, round, new CompetentPlayer(this.lab, style),
+                new CompetentPlayer(this.lab, CompetentPlayer.Style.standard()));
+        return score(turn.rehearse(trial, through), round);
     }
 
     /** Lower is better: every leak from {@code round} on outweighs how close the rest came. */
