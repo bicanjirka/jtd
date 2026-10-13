@@ -3,7 +3,9 @@ package td;
 import td.cell.CellGrid;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
+import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.tower.upgrade.UpgradeNode;
 import td.ui.BoardRenderer;
 import td.util.GameHost;
 import td.util.RandomSource;
@@ -12,11 +14,14 @@ import td.util.TickRate;
 
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Headless performance run: fills every buildable cell of the last built-in level with towers,
  * plays it to the end several times, and reports tick time, frame-build time and allocation per
- * frame. A tool run on demand, not a test.
+ * frame. A tool run on demand, not a test. The argument {@code zones} fills the board with only the
+ * towers that leave ground zones, each with the upgrades that make the most of them.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 public final class PerformanceHarness {
@@ -40,12 +45,24 @@ public final class PerformanceHarness {
     private final long[] frameNanos = new long[TICKS_PER_PASS * MEASURED_PASSES];
     private final long[] frameBytes = new long[TICKS_PER_PASS * MEASURED_PASSES];
     private int measured = 0;
+    private final boolean zonesOnly;
     private int peakEnemies = 0;
+    private int peakZones = 0;
     private int towerCount = 0;
+
+    private static final List<TowerFactory.Type> ZONE_TOWERS = List.of(TowerFactory.Type.MORTAR,
+            TowerFactory.Type.CINDER);
+    // Barrage and Napalm for the Mortar, Lingering Flames for the Cinder.
+    private static final Set<String> ZONE_UPGRADES = Set.of("mortar.extra.ballistics.4", "mortar.special.napalm",
+            "cinder.head.wide_nozzle.3");
+
+    private PerformanceHarness(boolean zonesOnly) {
+        this.zonesOnly = zonesOnly;
+    }
 
     public static void main(String[] args) {
         LevelDefinition level = new BuiltInLevelCatalog().levels().getLast();
-        if (!new PerformanceHarness().run(level)) {
+        if (!new PerformanceHarness(args.length > 0 && args[0].equals("zones")).run(level)) {
             System.exit(1);
         }
     }
@@ -58,7 +75,7 @@ public final class PerformanceHarness {
 
         System.out.println("=== Performance report: " + level.name() + " ===");
         System.out.println("Towers: " + this.towerCount + ", peak alive enemies: " + this.peakEnemies
-                + ", measured ticks: " + this.measured);
+                + ", peak zones: " + this.peakZones + ", measured ticks: " + this.measured);
         boolean tickOk = printMillis("Tick", Arrays.copyOf(this.tickNanos, this.measured), TICK_P99_BUDGET_MILLIS);
         boolean frameOk = printMillis("Frame build", Arrays.copyOf(this.frameNanos, this.measured),
                 FRAME_P99_BUDGET_MILLIS);
@@ -77,7 +94,11 @@ public final class PerformanceHarness {
         BoardRenderer renderer = new BoardRenderer(engine.getGameWorld());
         engine.loadLevel(level);
         engine.debugGrantCredits(GRANTED_CREDITS);
-        this.towerCount = fillBoard(engine);
+        this.towerCount = fillBoard(engine, this.zonesOnly ? ZONE_TOWERS : List.of(TowerFactory.Type.values()));
+        if (this.zonesOnly) {
+            engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
+            engine.getTowers().forEach(PerformanceHarness::buyZoneUpgrades);
+        }
 
         for (int t = 1; t <= TICKS_PER_PASS && !engine.outcome().isOver(); t++) {
             engine.nextWave();
@@ -95,22 +116,30 @@ public final class PerformanceHarness {
                 this.frameBytes[this.measured] = bytesAfter - bytesBefore;
                 this.measured++;
                 this.peakEnemies = Math.max(this.peakEnemies, engine.getGameWorld().enemies().aliveCount());
+                this.peakZones = Math.max(this.peakZones, engine.getGameWorld().zones().zones().size());
             }
         }
     }
 
-    /** Places towers on every buildable cell, cycling through every tower type. */
-    private static int fillBoard(GameEngine engine) {
+    private static void buyZoneUpgrades(Tower tower) {
+        for (UpgradeNode node : tower.upgradeTree().nodes()) {
+            if (ZONE_UPGRADES.contains(node.id())) {
+                tower.upgradeTree().pathTo(node).forEach(tower::buyUpgrade);
+            }
+        }
+    }
+
+    /** Places towers on every buildable cell, cycling through {@code types}. */
+    private static int fillBoard(GameEngine engine, List<TowerFactory.Type> types) {
         CellGrid grid = engine.cells();
         int scale = engine.getGameWorld().getBoard().scale();
-        TowerFactory.Type[] types = TowerFactory.Type.values();
         int placed = 0;
         for (int x = 0; x < grid.width(); x++) {
             for (int y = 0; y < grid.height(); y++) {
                 if (!grid.at(x, y).buildable()) {
                     continue;
                 }
-                engine.startPlacing(types[placed % types.length], 0f);
+                engine.startPlacing(types.get(placed % types.size()), 0f);
                 engine.mouseClicked(x * scale + scale / 2, y * scale + scale / 2);
                 if (grid.at(x, y).hasTower()) {
                     placed++;
