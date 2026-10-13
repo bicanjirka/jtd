@@ -39,12 +39,15 @@ violation. They are not restated here.
   makes a line in one false fixes it in the same commit.
 - Commit subject lines are imperative mood, capitalized, no trailing period (`Add X`, not
   `added X` or `X added`).
+- Rename types, methods and fields with the IDE's `rename_refactoring` (`idea` MCP server) when the
+  IDE is open, not by find-and-replace.
 
 ## Packages (`td.*`)
 
 `board` (scale, cell↔pixel math) · `cell` (squares, buildability) · `damage` · `economy` ·
 `effect` (timed status effects) · `enemy` · `level` · `projectile` · `stat` (enemy stat sheet) ·
-`tower` (+ `targeting`, `buff`, `upgrade`, `sniper`, `sonar`, `splash`) · `ui` (+ `render`) ·
+`tower` (+ `targeting`, `upgrade`, `proc`, `aura`, `cinder`, `mortar`, `pulse`, `seeker`, `sniper`, `sonar`,
+`splash`) · `ui` (+ `render`) ·
 `util` (`GameWorld`, `GameHost`, `Threads`) · `wave` (path geometry, wave scripts) · `zone` (ground
 zones that keep working after the shot that made them). `GameEngine`,
 `GameLoop`, `TowerDefense` and `Main` sit in `td`.
@@ -97,7 +100,7 @@ frame build reads them.
   `EconomyDelta.kill(bounty)`). Absence is a value (`none()`, `empty()`) or `Optional`, never
   `null`. The one exception: `td.ui` frame builders return `null` for "no draw command".
 - Values that combine get an algebra: operation, identity, absorber if any (`Damage`,
-  `TowerBuff`, `TargetQuery`).
+  `StatModifiers`, `TargetQuery`).
 - A record with 5+ components has a narrow factory and grows by fluent `withX` copies, never a
   wider constructor (`PathDefinition`, `EnemyDefinition`). `td.ui.render` draw records are
   exempt.
