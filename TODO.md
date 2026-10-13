@@ -191,9 +191,10 @@ enemies.
 - **Where:** the `private static final` constants in `MortarTower`, `CinderTower`, `td.zone.Zone`,
   `td.zone.ZoneEffects`, `td.tower.mortar.ShellType` and the perks under `td.tower.mortar` and
   `td.tower.cinder`, and `ActiveEffects.BURN_REVEAL_FUEL`.
-- **Approach:** tune through play or `td.BalanceHarness` with the other placeholder entries. Check the
-  per-tick budget (`td.PerformanceHarness`) with a Barrage of Napalm shells and Lingering Flames on every
-  wave, since the zone roster has no cap and the doc leaves one to the implementation.
+- **Approach:** tune through play or `td.BalanceHarness` with the other placeholder entries. The zone roster
+  has no cap; `td.PerformanceHarness zones` (Barrage of Napalm and Lingering Flames on every tower) peaks at
+  67 zones and sits at about a fifth of the tick budget, so a cap is not needed yet. Re-run it after raising
+  a zone's lifetime or radius.
 
 ### Effect and specialization numbers are unbalanced placeholders
 

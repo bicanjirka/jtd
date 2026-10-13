@@ -9,7 +9,7 @@ mvn -q compile            # fast type check
 mvn spotless:apply        # fix formatting
 mvn test -Dtest=GameEngineTest#someSentenceName
 mvn package && java -jar target/jTD.jar
-mvn -q compile exec:java -Dexec.mainClass=td.PerformanceHarness   # performance budget
+mvn -q compile exec:java -Dexec.mainClass=td.PerformanceHarness   # performance budget; add -Dexec.args=zones for the ground-zone loadout
 mvn -q compile exec:java -Dexec.mainClass=td.PurchaseHarness -Dexec.args="2 12 sniper"   # purchases compared: level, seeds, tower
 ```
 
