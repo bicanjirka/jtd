@@ -27,8 +27,9 @@ The tower rework, in this order (each needs the ones before it):
 
 Enemies come after, from `docs/ideas/enemies-brainstorm.md`.
 
-`FEATURE-balance-verification.md` (draft): a headless player and a check for one change, to tune the
-placeholder entries below with.
+`FEATURE-balance-verification.md` (first version implemented): headless players, a tower lab and a
+balance report with a check for one change, to tune the placeholder entries below with. Its first
+findings are in the doc.
 
 `docs/plans/stat-driven-buffs.md` (phases 1 to 9) and `FEATURE-agility-and-dodge.md` are implemented.
 
@@ -103,6 +104,34 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
   builders.
 - **Approach:** only if the fakes go away first (tests built on real mobs/towers from
   `td.fixtures`). `Projectile` has no fakes but alone would leave two dispatch styles.
+
+## Balance tools
+
+### What the balance tools cannot see yet
+
+`docs/plans/balance-verification-review.md` ranks these; each is a gap in `td.balance`, not in the game.
+
+- **The competent player's opening and high-health play.** It loses 3 of Twisted Hourglass's 4 lives in
+  round 1 where a five-Sniper opening loses none, and its own build played back holds more than it does
+  re-deciding against tougher enemies.
+  - **Where:** `CompetentPlayer` (its kill estimate and `Style`).
+  - **Approach:** sweep its constants against the strong player's margins, as the softness sweep did; a
+    per-kind estimate of how many enemies share a single-target tower's attention is the likely missing
+    piece.
+- **What a tower does for the others.** Slows, Vulnerable, Priority and charges are worth nothing to the
+  competent player, and the lab measures them only on the tower that owns them.
+  - **Where:** `TowerLab.profileOf`, `CompetentPlayer.towerDamage`.
+  - **Approach:** a duel with a fixed partner tower beside the measured one, as the Beacon's nodes are
+    measured, and the partner's gain added to the measured tower's worth.
+- **Upgrades by phase, and dead or dominant nodes across players.**
+  - **Where:** `BalanceReport`, `LevelRun.nodePickRates`.
+  - **Approach:** report the upgrade-against-copy ratio per third of the level, and node pick rates for
+    the strong player beside the competent one.
+- **Measures the recorder does not take:** damage wasted on overkill and shields, time each enemy spends in
+  each tower's reach, effect uptime, damage per enemy kind per tower.
+  - **Where:** `RunRecorder`.
+  - **Approach:** poll them like the rest, tool-side; overkill needs the hit result `AbstractTower.dealDamage`
+    already has.
 
 ## Levels
 
