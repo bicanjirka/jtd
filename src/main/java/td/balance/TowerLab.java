@@ -72,6 +72,11 @@ public final class TowerLab {
     private static final int SEEDS = 3;
     /** Partners a Beacon's nodes are measured on: a node that picks whom it buffs needs several to choose from. */
     private static final int BEACON_PARTNERS = 4;
+    /**
+     * The tower a Beacon's nodes are measured on. Fixed, so a change to some other tower never moves the Beacon's
+     * numbers; the cheapest, so the cluster fits anywhere.
+     */
+    private static final TowerFactory.Type BEACON_PARTNER = TowerFactory.Type.SNIPER;
     private static final int GRANTED_CREDITS = 10_000_000;
     /** Lab enemies leak by design; the round, not the lives, has to end the run. */
     private static final int UNLIMITED_LIVES = 1_000_000;
@@ -125,12 +130,9 @@ public final class TowerLab {
                 .map(type -> profileOf(survey, plainProbes, type, best(cellValues.get(type)), kinds)).toList();
         Map<TowerFactory.Type, TypeProfile> profiles = new EnumMap<>(TowerFactory.Type.class);
         IntStream.range(0, measured.size()).forEach(i -> profiles.put(damageDealers().get(i), measured.get(i)));
-        TowerFactory.Type partner = damageDealers().stream()
-                .max(Comparator.comparingDouble(type -> cellValueOf(cellValues, type, best(cellValues.get(type)))))
-                .orElseThrow();
-        Point partnerCell = best(cellValues.get(partner));
+        Point partnerCell = best(cellValues.get(BEACON_PARTNER));
         Map<String, Double> beaconNodes = beaconCell(survey, partnerCell)
-                .map(beacon -> beaconNodeFactors(plainProbes, partner, partnerCell, beacon, survey))
+                .map(beacon -> beaconNodeFactors(plainProbes, BEACON_PARTNER, partnerCell, beacon, survey))
                 .orElse(Map.of());
         profiles.put(TowerFactory.Type.AURA, new TypeProfile(0, Map.of(), beaconNodes, 0));
         return new TowerLab(survey, Collections.unmodifiableMap(cellValues),
