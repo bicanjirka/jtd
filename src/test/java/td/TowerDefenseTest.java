@@ -14,7 +14,7 @@ class TowerDefenseTest {
         for (TowerFactory.Type type : TowerFactory.Type.values()) {
             assertThat(text).contains(type.placementKey + " - build " + type.displayName().toLowerCase());
         }
-        assertThat(text).contains("q - build sniper").contains("w - build burst").contains("t - build beacon");
+        assertThat(text).contains("q - build sniper").contains("w - build burst").contains("i - build beacon");
     }
 
     @Test
