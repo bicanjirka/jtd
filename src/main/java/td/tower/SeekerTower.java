@@ -497,15 +497,7 @@ public final class SeekerTower extends AbstractTower {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, spec.payloads().everyMissile() ? "Every missile"
                     : "Every 3rd missile", carried));
         }
-        if (this.upgrades().owns(ARCANE_WARHEAD.id())) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Impact applies", "unraveled, x2 if frozen or chilled"));
-        }
-        if (this.upgrades().owns(NULLIFIER.id())) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Impact strips", "shields and heals"));
-        }
-        if (this.upgrades().owns(HUNTERS_MARK.id())) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Consecutive hits", "+20% each, up to +100%"));
-        }
+        this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
         return lines;
     }
 

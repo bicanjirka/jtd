@@ -16,6 +16,7 @@ import td.enemy.HitResult;
 import td.stat.DisruptionPenalty;
 import td.stat.StatModifiers;
 import td.tower.proc.AttackOutcome;
+import td.tower.proc.Description;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitBonus;
 import td.tower.proc.HitBonuses;
@@ -23,6 +24,7 @@ import td.tower.proc.HitContext;
 import td.tower.proc.HitKind;
 import td.tower.proc.Proc;
 import td.tower.proc.ProcActions;
+import td.tower.proc.ProcPayload;
 import td.tower.proc.ProcRunner;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -626,6 +628,30 @@ public abstract class AbstractTower implements Tower {
         return List.of();
     }
 
+    /** The tower's own rows, then one for each hit bonus and proc its upgrades carry. */
+    private List<BehaviourLine> behavioursWithUpgrades() {
+        UpgradeState owned = this.upgrades;
+        List<BehaviourLine> lines = new ArrayList<>(this.behaviours());
+        for (HitBonus bonus : owned.hitBonuses()) {
+            lines.add(line(BehaviourMarker.TARGETING, bonus.describe()));
+        }
+        for (Proc proc : owned.procs()) {
+            lines.add(line(markerFor(proc.payload()), proc.describe()));
+        }
+        return lines;
+    }
+
+    private static BehaviourLine line(BehaviourMarker marker, Description description) {
+        return new BehaviourLine(marker, description.label(), description.value());
+    }
+
+    private static BehaviourMarker markerFor(ProcPayload payload) {
+        return switch (payload) {
+            case ProcPayload.ApplyStacks stacks when stacks.kind() == EffectKind.VULNERABLE -> BehaviourMarker.VULNERABLE;
+            default -> BehaviourMarker.TARGETING;
+        };
+    }
+
     /** What no row says, for the shop; empty by default. */
     protected String description() {
         return "";
@@ -655,7 +681,7 @@ public abstract class AbstractTower implements Tower {
                 .count();
         return TowerInspection.of(this.type, this.price, lines)
                 .withName(this.displayName())
-                .withBehaviours(this.behaviours())
+                .withBehaviours(this.behavioursWithUpgrades())
                 .withDescription(this.description())
                 .withRecord(this.killCount, this.damageDealt)
                 .withXp(this.experience.xp())

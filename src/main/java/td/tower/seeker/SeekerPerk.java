@@ -1,6 +1,9 @@
 package td.tower.seeker;
 
 import td.enemy.EnemyMob;
+import td.tower.BehaviourLine;
+
+import java.util.Optional;
 
 /**
  * What one owned node does to the Seeker. A perk may change whom it may fire at, whom it picks, what
@@ -20,5 +23,10 @@ public interface SeekerPerk {
     }
 
     default void react(Impact impact, SeekerActions actions) {
+    }
+
+    /** The row this perk adds to the tower's info, when it does something no other row says. */
+    default Optional<BehaviourLine> behaviour() {
+        return Optional.empty();
     }
 }

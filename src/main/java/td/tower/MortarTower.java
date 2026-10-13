@@ -613,6 +613,7 @@ public final class MortarTower extends AbstractTower {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING,
                     specials.size() == 1 ? "Every 3rd shell" : "Shells in turn", pattern));
         }
+        this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
         return lines;
     }
 

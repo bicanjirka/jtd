@@ -21,7 +21,7 @@ public final class ThunderclapPerk implements SplashPerk {
     }
 
     @Override
-    public void react(ShotResult result, SplashActions actions) {
+    public void react(ShotResult result) {
         this.armed |= result.critical();
     }
 }

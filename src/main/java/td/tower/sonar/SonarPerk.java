@@ -1,5 +1,9 @@
 package td.tower.sonar;
 
+import td.tower.BehaviourLine;
+
+import java.util.Optional;
+
 /**
  * What one owned node does to the Sonar. A perk may change whom the beam hits, how it moves and
  * whom it pings, reshape each hit before it lands, and react to a hit or to a finished revolution.
@@ -19,5 +23,10 @@ public interface SonarPerk {
     }
 
     default void onRevolution(Revolution revolution, SonarActions actions) {
+    }
+
+    /** The row this perk adds to the tower's info, when it does something no other row says. */
+    default Optional<BehaviourLine> behaviour() {
+        return Optional.empty();
     }
 }

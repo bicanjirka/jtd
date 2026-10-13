@@ -1,6 +1,10 @@
 package td.tower.sonar;
 
 import td.effect.Effect;
+import td.tower.BehaviourLine;
+import td.tower.BehaviourMarker;
+
+import java.util.Optional;
 
 /** Command Ping: the enemy a ping picks first becomes the Priority until the next pass. */
 public final class CommandPingPerk implements SonarPerk {
@@ -11,5 +15,10 @@ public final class CommandPingPerk implements SonarPerk {
             actions.apply(revolution.pinged().getFirst(),
                     sink -> Effect.priority(revolution.spec().untilNextPass(), sink));
         }
+    }
+
+    @Override
+    public Optional<BehaviourLine> behaviour() {
+        return Optional.of(new BehaviourLine(BehaviourMarker.TARGETING, "Priority", "the pinged enemy"));
     }
 }

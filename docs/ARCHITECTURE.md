@@ -24,6 +24,7 @@ If a paragraph here ever contradicts `CLAUDE.md`, `CLAUDE.md` wins and this file
 10. [Lean CLAUDE.md files, standard tooling for rules](#10-lean-claudemd-files-standard-tooling-for-rules)
 11. [Style lineage](#11-style-lineage)
 12. [Reducing test churn from feature work](#12-reducing-test-churn-from-feature-work)
+13. [Stat-driven buffs](#13-stat-driven-buffs)
 
 ---
 
@@ -575,3 +576,24 @@ draws, rather than inventing a new one.
 
 Superseded in part by section 10: the wide-record rule is now a Checkstyle `MatchXpath` check,
 and `no-wide-value-literals-in-tests` was dropped.
+
+## 13. Stat-driven buffs
+
+Enemies were already data: traits and effects change stats, and behaviour reads the resolved
+numbers. Towers were not: a fixed `TowerBuff`, per-tower specs refined by perk classes in purchase
+order, per-shot bonuses written as code, and an Aura that stored what it derived. Effects kept their
+numbers in `ActiveEffects` and their rules in a dozen switches.
+
+Both sides now share one stat formula. A tower's number is a `TowerStat` when the tower has it from
+the start or it belongs to its Attune mechanic, and a node changes it flat; any other number belongs
+to the mechanic a node adds, in that mechanic's spec. Generic upgrade effects are data: procs, hit
+bonuses, statuses, targeting and capabilities, each a sealed vocabulary whose records carry their
+own behaviour and words. An effect kind is one `EffectRule`; every rule between kinds is a row of
+`EffectInteractions`.
+
+Two rules keep it simple: nothing an aura receives changes what it gives (auras never buff auras, so
+one recompute in any order is right), and there is no scripting language (a mechanic with its own
+math stays a named class).
+
+Rejected: iterating aura-on-aura buffs to a fixed point; making every perk number a stat; a generic
+`StatSheet` on the per-hit path; data-defined towers (worth doing later, not needed for this).

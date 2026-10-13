@@ -381,15 +381,7 @@ public final class SonarTower extends AbstractTower {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Pings", ping.count() == 1
                     ? "the healthiest" : ping.count() + " healthiest"));
         }
-        if (this.upgrades().owns(WIDE_BAND.id())) {
-            lines.add(new BehaviourLine(BehaviourMarker.REVEAL, "Reveals", "hidden it passes"));
-        }
-        if (this.upgrades().owns(MARK_ON_SWEEP.id())) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Marks", "next hit crits"));
-        }
-        if (this.upgrades().owns(COMMAND_PING.id())) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Priority", "the pinged enemy"));
-        }
+        this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
         return lines;
     }
 
