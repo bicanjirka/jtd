@@ -74,20 +74,18 @@ public final class ActiveEffects {
         return stronger.withRemainingTicks(Math.max(a.remainingTicks(), b.remainingTicks()));
     }
 
-    /** How hard an effect bites, in a unit specific to its kind; only compared within one kind. */
+    /** How hard an effect bites, in a unit specific to its family; only compared within one kind. */
     private static float magnitude(Effect effect) {
-        return switch (effect.kind()) {
-            case FREEZE, DAZED -> 1f - effect.speedMultiplier();
-            case CHILL -> effect.fuelLevel();
-            case BURN, POISON, BLEEDING, SOULFIRE -> effect.damagePerTick().amount();
-            case SHIELD -> effect.shieldRemaining();
+        return switch (effect.dynamics()) {
             // On/off, not gradated - any reapplication is at least as strong as what's already active.
-            case INVISIBLE, REVEALED, EXPOSED, MARKED, PRIORITY, CHARGED, DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION,
-                    SYMPATHY, RECKONING, SILENCED, ANCHORED, BRITTLE, CORRODED, UNDERTOW, DEAD_ZONE, FALLOUT, KILL_ZONE,
-                    CRACKED, TARRED -> 1f;
-            case HEAL -> Math.max(effect.healPerTick(), effect.damagePerTick().amount());
-            case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED, UNRAVELED, TOLL ->
-                    effect.stacks();
+            case EffectDynamics.Flag _ -> 1f;
+            case EffectDynamics.Stacks stacks -> stacks.stacks();
+            case EffectDynamics.ChillLevel _ -> effect.fuelLevel();
+            case EffectDynamics.FuelPool pool -> pool.perTick().amount();
+            case EffectDynamics.HealOverTime heal -> heal.perTick();
+            case EffectDynamics.TickDamage damage -> damage.perTick().amount();
+            case EffectDynamics.ShieldPool shield -> shield.remaining();
+            case EffectDynamics.Distance distance -> distance.perCell().amount();
         };
     }
 
@@ -391,23 +389,23 @@ public final class ActiveEffects {
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
             EffectKind kind = entry.getKey();
             Effect effect = entry.getValue();
-            Optional<Effect> next;
-            if (kind.isStackDebuff()) {
-                next = this.decayStacks(effect, kind.rule().pacing() == EffectPacing.SPIRIT ? debuffPace : pace);
-            } else if (kind == EffectKind.CHILL) {
-                next = this.tickChill(effect, this.paceSteps(kind, debuffPace));
-            } else if (kind.isFuelPool()) {
-                next = this.tickPool(effect, kind.isBurning() ? burnFactor : 1f);
-            } else {
-                if (kind == EffectKind.BLEEDING) {
-                    this.bleed(effect, cellsMoved);
-                } else if (effect.damagePerTick().amount() > 0) {
-                    effect.sink().apply(effect.damagePerTick());
+            Optional<Effect> next = switch (effect.dynamics()) {
+                case EffectDynamics.Stacks _ when kind.isStackDebuff() ->
+                        this.decayStacks(effect, kind.rule().pacing() == EffectPacing.SPIRIT ? debuffPace : pace);
+                case EffectDynamics.ChillLevel _ -> this.tickChill(effect, this.paceSteps(kind, debuffPace));
+                case EffectDynamics.FuelPool _ -> this.tickPool(effect, kind.isBurning() ? burnFactor : 1f);
+                case EffectDynamics.Distance distance -> {
+                    this.bleed(effect, distance, cellsMoved);
+                    yield this.countDown(effect, debuffPace);
                 }
-                int steps = kind.isPacedBySpirit() ? this.paceSteps(kind, debuffPace) : 1;
-                int remaining = effect.remainingTicks() - steps;
-                next = remaining <= 0 ? Optional.empty() : Optional.of(effect.withRemainingTicks(remaining));
-            }
+                case EffectDynamics.TickDamage damage -> {
+                    if (damage.perTick().amount() > 0) {
+                        effect.sink().apply(damage.perTick());
+                    }
+                    yield this.countDown(effect, debuffPace);
+                }
+                default -> this.countDown(effect, debuffPace);
+            };
             if (next.isPresent()) {
                 entry.setValue(next.get());
             } else {
@@ -417,14 +415,22 @@ public final class ActiveEffects {
         expired.forEach(this.active::remove);
     }
 
+    /** Runs a timer down by a tick, or by its spirit pace when it has one; empty once it runs out. */
+    private Optional<Effect> countDown(Effect effect, float debuffPace) {
+        EffectKind kind = effect.kind();
+        int steps = kind.isPacedBySpirit() ? this.paceSteps(kind, debuffPace) : 1;
+        int remaining = effect.remainingTicks() - steps;
+        return remaining <= 0 ? Optional.empty() : Optional.of(effect.withRemainingTicks(remaining));
+    }
+
     /** Deals the damage owed for {@code cellsMoved}, keeping the part of a unit that is not yet whole. */
-    private void bleed(Effect bleeding, float cellsMoved) {
-        int slot = EffectKind.BLEEDING.ordinal();
-        float owed = this.progress[slot] + bleeding.damagePerTick().amount() * cellsMoved;
+    private void bleed(Effect bleeding, EffectDynamics.Distance distance, float cellsMoved) {
+        int slot = bleeding.kind().ordinal();
+        float owed = this.progress[slot] + distance.perCell().amount() * cellsMoved;
         int whole = (int) owed;
         this.progress[slot] = owed - whole;
         if (whole > 0) {
-            bleeding.sink().apply(new Damage(whole, bleeding.damagePerTick().type()));
+            bleeding.sink().apply(new Damage(whole, distance.perCell().type()));
         }
     }
 

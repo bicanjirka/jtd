@@ -1,8 +1,9 @@
 # `td.effect`
 
-- `Effect` is one record for every `EffectKind`, with no per-kind subclass; every field has an
-  identity value for every kind. This package never depends on `td.enemy`: the producer binds a
-  `DamageSink` when it creates the effect.
+- `Effect` is one effect-level record (kind, time, sink, origin) plus one `EffectDynamics` family:
+  flag, stacks, chill level, fuel pool, heal, tick damage, shield pool or distance. A family carries
+  only its own data. This package never depends on `td.enemy`: the producer binds a `DamageSink` when
+  it creates the effect.
 - Each `EffectKind` is one row holding its `EffectRule`: category, resistance, stacking
   (`EffectStacking`), stack cap, pacing (`EffectPacing`), what each stack does to stats, and tags.
   Every classification method reads the rule. `ActiveEffects` keeps one live effect per kind and
