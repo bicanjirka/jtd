@@ -18,5 +18,6 @@ public enum BodyArchetype {
     COURIER,
     SHIELDBEARER,
     SALAMANDER,
-    YETI
+    YETI,
+    SKIRMISHER
 }

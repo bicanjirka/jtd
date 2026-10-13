@@ -104,6 +104,22 @@ class AbilityEvaluatorTest {
     }
 
     @Test
+    void anOnDodgeTriggerFiresEveryTimeADodgeIsObserved() {
+        AbilityTrigger trigger = new OnDodgeTrigger();
+        AbilityState state = AbilityState.forTrigger(trigger);
+        FakeAbilityContext context = new FakeAbilityContext();
+        boolean beforeAnyDodge = AbilityEvaluator.shouldFire(trigger, state, context);
+
+        context.setJustDodged(true);
+        boolean first = AbilityEvaluator.shouldFire(trigger, state, context);
+        boolean again = AbilityEvaluator.shouldFire(trigger, state, context);
+
+        assertThat(beforeAnyDodge).isFalse();
+        assertThat(first).isTrue();
+        assertThat(again).isTrue();
+    }
+
+    @Test
     void anOnFirstDamageTakenTriggerFiresOnceOnTheFirstHitObservedThenNeverAgain() {
         AbilityTrigger trigger = new OnFirstDamageTakenTrigger();
         AbilityState state = AbilityState.forTrigger(trigger);

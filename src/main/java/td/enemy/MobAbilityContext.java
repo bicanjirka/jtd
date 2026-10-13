@@ -43,6 +43,11 @@ final class MobAbilityContext implements AbilityContext {
     }
 
     @Override
+    public boolean justDodged() {
+        return this.caster.ticksSinceDodge(this.gameTime) == 0;
+    }
+
+    @Override
     public boolean justTookDamage() {
         return this.caster.ticksSinceDamageTaken(this.gameTime) == 0;
     }

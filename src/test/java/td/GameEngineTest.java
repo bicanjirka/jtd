@@ -414,6 +414,42 @@ class GameEngineTest {
         assertThat(enemy.getHealthFraction()).isEqualTo(1f);
     }
 
+    private static void buy(Tower tower, String... nodeNames) {
+        tower.earnXp(1_000_000);
+        for (String node : nodeNames) {
+            tower.buyUpgrade(tower.upgradeTree().nodes().stream()
+                    .filter(n -> n.displayName().equals(node)).findFirst().orElseThrow());
+        }
+    }
+
+    @Test
+    void afterADodgedShotASniperWithMarksmansEyeLandsAGuaranteedCrit() {
+        GameEngine engine = engineWithANimbleDummyBeside(TowerFactory.Type.SNIPER);
+        Tower sniper = towerOfType(engine, TowerFactory.Type.SNIPER);
+        buy(sniper, "Attune", "Marksman's Eye");
+        engine.nextWave();
+
+        for (int t = 1; t <= 300 && sniper.getDamageDealt() == 0; t++) {
+            engine.doTick(t);
+        }
+
+        assertThat(sniper.getDamageDealt())
+                .isEqualTo(DamageUnits.ofPoints(SniperTower.DAMAGE_POINTS * SniperTower.CRIT_MULTIPLIER));
+    }
+
+    @Test
+    void aDodgedShotStartsFocusedOpticsFrenzy() {
+        GameEngine engine = engineWithANimbleDummyBeside(TowerFactory.Type.SNIPER);
+        Tower sniper = towerOfType(engine, TowerFactory.Type.SNIPER);
+        buy(sniper, "Attune", "Focused Optics", "Focused Optics II");
+        engine.nextWave();
+
+        engine.doTick(1);
+
+        assertThat(sniper.getDamageDealt()).isZero();
+        assertThat(fireRate(sniper).current()).isEqualTo(fireRate(sniper).base() * 2f, within(0.01f));
+    }
+
     @Test
     void aDodgedSonarHitStillCountsForThePing() {
         GameEngine engine = engineWithANimbleDummyBeside(TowerFactory.Type.SONAR);

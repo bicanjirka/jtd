@@ -19,7 +19,9 @@ public enum EffectCategory {
     /** A curse that waits for something to happen to the target, then pays its caster out. */
     HEX("hex"),
     /** Changes whether towers can see the target. */
-    STEALTH("stealth");
+    STEALTH("stealth"),
+    /** Makes the target stronger or faster for a while. */
+    BUFF("buff");
 
     private final String label;
 

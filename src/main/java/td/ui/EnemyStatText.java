@@ -210,6 +210,7 @@ final class EnemyStatText {
             case TARRED -> "Tarred";
             case BLEEDING -> "Bleeding";
             case SOULFIRE -> "Soulfire";
+            case SPRINTING -> "Sprinting";
         };
         String category = effect.kind().category().label();
         if (effect.kind() == EffectKind.CHILL) {

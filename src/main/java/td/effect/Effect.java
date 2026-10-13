@@ -80,6 +80,11 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.INVISIBLE, durationTicks, sink);
     }
 
+    /** Faster while active. */
+    public static Effect sprinting(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.SPRINTING, durationTicks, sink);
+    }
+
     /** Targetable again while active, even through invisibility. */
     public static Effect revealed(int durationTicks, DamageSink sink) {
         return timed(EffectKind.REVEALED, durationTicks, sink);
