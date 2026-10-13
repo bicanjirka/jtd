@@ -74,10 +74,10 @@ unnecessary, and every mutation lands on a deterministic tick boundary.
   up to 50ms at normal speed, and unbounded while paused, where the queue never drains. That
   needs optimistic UI or a second synchronous path for purchases, which puts two mechanisms
   back.
-- **The trigger:** deterministic replay. A recorded command log is what would let
-  `td.BalanceHarness` produce runs that are comparable to each other and reproducible across
-  machines. If that becomes a goal, this stops being indirection and starts being the feature
-    - do it then, and not before.
+- **The trigger:** recording live play. Headless runs already replay exactly from an action log
+  (`td.balance.ScriptedPlayer`), since they have one thread; a person's session cannot be recorded
+  the same way while the EDT mutates the world directly. If recorded human sessions become a goal,
+  this stops being indirection and starts being the feature - do it then, and not before.
 
 ### `Tower` is a twenty-three-method interface
 
@@ -150,7 +150,8 @@ Shot, Fifth Shot) save nothing within the noise of about one life.
 - **Approach:** play each of the built-in levels with every node bought at least once, and adjust price/stat-bonus/
   condition-threshold values until each node feels like a meaningful, roughly-comparable-in-power choice rather than
   a strictly-better-or-worse one. No code or architecture change needed — every number here is already a named
-  constant, not embedded in logic. `td.BalanceHarness` and the `n`/`x`/`c` debug keybindings (see `docs/ARCHITECTURE.md` section 9) now make this cheap to actually do.
+  constant, not embedded in logic. `td.balance.BalanceReport` (the lab's node factors, `--save` and `--compare`)
+  and the `n`/`x`/`c` debug keybindings (see `docs/ARCHITECTURE.md` section 9) now make this cheap to actually do.
 
 ### The Mortar's, Cinder's and zones' numbers are unbalanced placeholders
 
@@ -183,7 +184,7 @@ What it showed and what is left:
 - **Where:** the `private static final` constants in `MortarTower`, `CinderTower`, `td.zone.Zone`,
   `td.zone.ZoneEffects`, `td.tower.mortar.ShellType` and the perks under `td.tower.mortar` and
   `td.tower.cinder`, and `ActiveEffects.BURN_REVEAL_FUEL`.
-- **Approach:** tune through play or `td.BalanceHarness` with the other placeholder entries. The zone roster
+- **Approach:** tune through play or `td.balance.BalanceReport` with the other placeholder entries. The zone roster
   has no cap; `td.PerformanceHarness zones` (Barrage of Napalm and Lingering Flames on every tower) peaks at
   67 zones and sits at about a fifth of the tick budget, so a cap is not needed yet. Re-run it after raising
   a zone's lifetime or radius.
@@ -203,7 +204,7 @@ A burning enemy earns 2 stacks per second, so it reaches the floor in about 50 s
 
 - Cracked takes a flat 5 plating points (its `EffectKind.CRACKED` row), a starting value.
 - **Where:** the named constants in `td.effect.ActiveEffects`, `AbstractTower` and each tower.
-- **Approach:** tune through play or `td.BalanceHarness` with the other placeholder entries; decide
+- **Approach:** tune through play or `td.balance.BalanceReport` with the other placeholder entries; decide
   whether a long burn's resilience loss (crit damage up to double at the floor) is too strong.
 
 ## Enemy features
@@ -232,7 +233,7 @@ single hit), making the Warden's armor mechanically inert regardless of which to
 - **Approach:** play Curly Path through to the Warden encounter (and the other two levels,
   once they get their own late-game content) repeatedly, adjusting values until the chain and
   the migrated traits feel meaningfully tuned rather than placeholder guesses - no code or
-  architecture change needed, every number here is already a named constant. `td.BalanceHarness`
+  architecture change needed, every number here is already a named constant. `td.balance.BalanceReport`
   and the `n`/`x`/`c` debug keybindings (see `docs/ARCHITECTURE.md` section 9) now make this cheap to actually do - `x` specifically can spawn the Warden chain's
   stages on demand without playing to wave 18 first.
 

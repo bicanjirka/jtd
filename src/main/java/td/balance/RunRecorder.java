@@ -89,6 +89,15 @@ final class RunRecorder {
         return this.healthIn;
     }
 
+    List<PlayRecord.TimedAction> actionsSoFar() {
+        return List.copyOf(this.actions);
+    }
+
+    /** Rounds started and over, cleared or not. */
+    int roundsOver() {
+        return this.rounds.size();
+    }
+
     /** Enemies that have leaked so far. */
     int leaks() {
         return this.leaks;

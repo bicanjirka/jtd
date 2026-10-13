@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -83,6 +84,7 @@ public final class TowerLab {
 
     private final BoardSurvey survey;
     private final Map<TowerFactory.Type, Map<Point, double[]>> cellValues;
+    private final Map<TowerFactory.Type, Map<Point, Double>> cellTotals;
     private final Map<TowerFactory.Type, TypeProfile> profiles;
     private final List<String> levelKinds;
     private final List<String> levelRanks;
@@ -109,6 +111,13 @@ public final class TowerLab {
                      Map<TowerFactory.Type, TypeProfile> profiles) {
         this.survey = survey;
         this.cellValues = cellValues;
+        Map<TowerFactory.Type, Map<Point, Double>> totals = new EnumMap<>(TowerFactory.Type.class);
+        cellValues.forEach((type, cells) -> {
+            Map<Point, Double> byCell = new HashMap<>();
+            cells.forEach((cell, byPath) -> byCell.put(cell, Arrays.stream(byPath).sum()));
+            totals.put(type, byCell);
+        });
+        this.cellTotals = totals;
         this.profiles = profiles;
         this.levelKinds = kindsIn(survey.level());
         this.levelRanks = ranksIn(survey.level());
@@ -283,7 +292,7 @@ public final class TowerLab {
 
     /** Damage {@code type} alone on {@code cell} lands in one round of plain probes on every path; 0 for the Beacon. */
     public double cellValue(TowerFactory.Type type, Point cell) {
-        return cellValueOf(this.cellValues, type, cell);
+        return this.cellTotals.get(type).getOrDefault(cell, 0.0);
     }
 
     private static double cellValueOf(Map<TowerFactory.Type, Map<Point, double[]>> values, TowerFactory.Type type,

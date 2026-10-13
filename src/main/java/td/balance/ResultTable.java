@@ -47,24 +47,7 @@ public final class ResultTable {
         for (LevelRun run : runs) {
             String level = run.survey().level().name();
             for (String player : run.plays().keySet()) {
-                List<PlayRecord> plays = run.playsOf(player);
-                put(values, level, player, "won", plays, play -> play.result().won() ? 1 : 0);
-                put(values, level, player, "livesLost", plays, play -> play.result().livesLost());
-                put(values, level, player, "leaks", plays, play -> play.result().leaks());
-                put(values, level, player, "roundsCleared", plays, play -> play.result().roundsCleared());
-                int rounds = run.survey().level().paths().getFirst().waves().size();
-                for (int r = 1; r <= rounds; r++) {
-                    int number = r;
-                    put(values, level, player, "closest.r" + r, plays, play -> roundOf(play, number)
-                            .map(round -> round.pressure().closest()).orElse(Double.NaN));
-                    put(values, level, player, "leaked.r" + r, plays, play -> roundOf(play, number)
-                            .map(round -> (double) round.pressure().leaked()).orElse(Double.NaN));
-                }
-                for (TowerFactory.Type type : TowerFactory.Type.values()) {
-                    put(values, level, player, "share." + type, plays, play -> damageShare(play, type));
-                    put(values, level, player, "towers." + type, plays,
-                            play -> play.towers().stream().filter(tower -> tower.type() == type).count());
-                }
+                putPlays(values, level, player, run.playsOf(player));
             }
             run.margins().forEach((player, margins) -> values.put(new Key(level, player, "margin"),
                     Arrays.stream(margins).asDoubleStream().toArray()));
@@ -82,6 +65,58 @@ public final class ResultTable {
                         values.put(new Key(level, LAB, "node." + type + "." + node), new double[]{factor}));
             }
         }
+        return new ResultTable(values);
+    }
+
+    /** Every played number of {@code plays}, kept under {@code player}. */
+    static ResultTable ofPlays(String level, String player, List<PlayRecord> plays) {
+        Map<Key, double[]> values = new LinkedHashMap<>();
+        putPlays(values, level, player, plays);
+        return new ResultTable(values);
+    }
+
+    private static void putPlays(Map<Key, double[]> values, String level, String player, List<PlayRecord> plays) {
+        put(values, level, player, "won", plays, play -> play.result().won() ? 1 : 0);
+        put(values, level, player, "livesLost", plays, play -> play.result().livesLost());
+        put(values, level, player, "leaks", plays, play -> play.result().leaks());
+        put(values, level, player, "roundsCleared", plays, play -> play.result().roundsCleared());
+        int rounds = plays.stream().mapToInt(play -> play.result().roundCount()).max().orElse(0);
+        for (int r = 1; r <= rounds; r++) {
+            int number = r;
+            put(values, level, player, "closest.r" + r, plays, play -> roundOf(play, number)
+                    .map(round -> round.pressure().closest()).orElse(Double.NaN));
+            put(values, level, player, "leaked.r" + r, plays, play -> roundOf(play, number)
+                    .map(round -> (double) round.pressure().leaked()).orElse(Double.NaN));
+        }
+        for (TowerFactory.Type type : TowerFactory.Type.values()) {
+            put(values, level, player, "share." + type, plays, play -> damageShare(play, type));
+            put(values, level, player, "towers." + type, plays,
+                    play -> play.towers().stream().filter(tower -> tower.type() == type).count());
+        }
+    }
+
+    /** This table with {@code margins} added as {@code player}'s margins on {@code level}. */
+    ResultTable withMargins(String level, String player, int[] margins) {
+        Map<Key, double[]> values = new LinkedHashMap<>(this.values);
+        values.put(new Key(level, player, "margin"), Arrays.stream(margins).asDoubleStream().toArray());
+        return new ResultTable(values);
+    }
+
+    /** This table's rows and {@code other}'s together. */
+    ResultTable plus(ResultTable other) {
+        Map<Key, double[]> values = new LinkedHashMap<>(this.values);
+        values.putAll(other.values);
+        return new ResultTable(values);
+    }
+
+    /** This table's rows for {@code level} and {@code player} alone. */
+    ResultTable only(String level, String player) {
+        Map<Key, double[]> values = new LinkedHashMap<>();
+        this.values.forEach((key, row) -> {
+            if (key.level().equals(level) && key.player().equals(player)) {
+                values.put(key, row);
+            }
+        });
         return new ResultTable(values);
     }
 
@@ -154,8 +189,8 @@ public final class ResultTable {
      * or not, then every other number that moved by more than the seeds' noise, compared seed by seed, and every lab
      * number that moved at all.
      */
-    String compareWith(ResultTable after, String name) {
-        StringBuilder out = new StringBuilder("=== Compared with '" + name + "' (after - before, seed by seed) ===\n");
+    String compareWith(ResultTable after, String title) {
+        StringBuilder out = new StringBuilder("=== " + title + " (after - before, seed by seed) ===\n");
         List<String> levels = this.values.keySet().stream().map(Key::level).distinct()
                 .filter(level -> after.values.keySet().stream().anyMatch(key -> key.level().equals(level))).toList();
         for (String level : levels) {

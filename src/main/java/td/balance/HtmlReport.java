@@ -165,8 +165,7 @@ final class HtmlReport {
 
     /** One bar per player: its margin with its interval, the competent player in the accent, the band shaded. */
     private void marginChart(LevelRun run) {
-        List<String> players = List.of(BalanceReport.NAIVE, BalanceReport.RANDOM_CELLS, BalanceReport.NO_UPGRADES,
-                BalanceReport.COMPETENT);
+        List<String> players = BalanceReport.shownPlayers(run);
         double max = players.stream().mapToDouble(player -> run.margin(player).high()).max().orElse(200);
         max = Math.max(200, Math.ceil(max / 100) * 100);
         int left = 110;

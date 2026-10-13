@@ -33,8 +33,10 @@ import java.util.stream.LongStream;
  * the credits go, which towers carry the defence, what leaks, and what the lab says counters what. Every number
  * comes with its 95% interval. A tool run on demand, not a test: a minute or two.
  * <p>
- * Usage: {@code BalanceReport [--seeds N] [--levels 0,2] [--variety] [--save NAME] [--compare NAME] [--html]}.
- * {@code --variety} also measures each tower alone and each tower banned (several minutes). {@code --save} keeps
+ * Usage: {@code BalanceReport [--seeds N] [--levels 0,2] [--strong] [--variety] [--save NAME] [--compare NAME]
+ * [--html]}. {@code --strong} adds a player that rehearses each round before playing it, which shows what the
+ * competent player's rules miss; {@code --variety} measures each tower alone and each tower banned. Each adds
+ * minutes. {@code --save} keeps
  * every per-seed number under {@code target/balance/NAME.tsv}; {@code --compare} plays again and says what moved
  * against that file, seed by seed, so a difference belongs to the change and not to luck.
  */
@@ -44,6 +46,12 @@ public final class BalanceReport {
     static final String COMPETENT = "competent";
     static final String RANDOM_CELLS = "random-cells";
     static final String NO_UPGRADES = "no-upgrades";
+    static final String STRONG = "strong";
+    /**
+     * The competent player's own actions played back, not re-decided: its margin is how much tougher the enemies
+     * could be before the same build fails, which is what a change does to a fixed play.
+     */
+    static final String REPLAYED = "competent-replayed";
 
     /** A competent player should win this share of seeds, at least... */
     static final double WIN_LOW = 0.70;
@@ -74,13 +82,19 @@ public final class BalanceReport {
     /**
      * What to run and what to do with it.
      *
-     * @param seeds   seeds per player and level
-     * @param levels  indices into the built-in levels
-     * @param variety whether to measure each tower alone and each tower banned
-     * @param files   names to save under and compare with, each empty for none
-     * @param html    whether to write the HTML report too
+     * @param seeds  seeds per player and level
+     * @param levels indices into the built-in levels
+     * @param extras what to measure and write beyond the standard report
+     * @param files  names to save under and compare with, each empty for none
      */
-    record Options(int seeds, List<Integer> levels, boolean variety, Names files, boolean html) {
+    record Options(int seeds, List<Integer> levels, Set<Extra> extras, Names files) {
+
+        /** What a report can add, each at a cost in time. */
+        enum Extra {
+            STRONG,
+            VARIETY,
+            HTML
+        }
 
         /** Where the results go and what they are compared with. */
         record Names(String save, String compare) {
@@ -89,23 +103,23 @@ public final class BalanceReport {
         static Options parse(String[] args) {
             int seeds = 20;
             List<Integer> levels = List.of(0, 1, 2);
-            boolean variety = false;
+            Set<Extra> extras = EnumSet.noneOf(Extra.class);
             String save = "";
             String compare = "";
-            boolean html = false;
             for (int i = 0; i < args.length; i++) {
                 switch (args[i]) {
                     case "--seeds" -> seeds = Integer.parseInt(args[++i]);
                     case "--levels" -> levels = Arrays.stream(args[++i].split(",")).map(Integer::parseInt).toList();
-                    case "--variety" -> variety = true;
+                    case "--strong" -> extras.add(Extra.STRONG);
+                    case "--variety" -> extras.add(Extra.VARIETY);
                     case "--save" -> save = args[++i];
                     case "--compare" -> compare = args[++i];
-                    case "--html" -> html = true;
+                    case "--html" -> extras.add(Extra.HTML);
                     default -> throw new IllegalArgumentException("Unknown option " + args[i]
-                            + "; use --seeds N --levels 0,2 --variety --save NAME --compare NAME --html");
+                            + "; use --seeds N --levels 0,2 --strong --variety --save NAME --compare NAME --html");
                 }
             }
-            return new Options(seeds, levels, variety, new Names(save, compare), html);
+            return new Options(seeds, levels, extras, new Names(save, compare));
         }
 
         String save() {
@@ -133,7 +147,7 @@ public final class BalanceReport {
         List<LevelDefinition> all = new BuiltInLevelCatalog().levels();
         List<LevelRun> runs = new ArrayList<>();
         for (int index : this.options.levels()) {
-            LevelRun run = measure(all.get(index), this.options.seeds(), this.options.variety());
+            LevelRun run = measure(all.get(index), this.options.seeds(), this.options.extras());
             runs.add(run);
             this.printLevel(run);
         }
@@ -141,18 +155,68 @@ public final class BalanceReport {
         ResultTable table = ResultTable.of(runs);
         if (!this.options.save().isEmpty()) {
             this.out.println("Saved to " + table.save(STORE.resolve(this.options.save() + ".tsv")));
+            saveLogs(STORE.resolve(this.options.save()), runs);
         }
         if (!this.options.compare().isEmpty()) {
             ResultTable before = ResultTable.load(STORE.resolve(this.options.compare() + ".tsv"));
             this.out.println();
-            this.out.print(before.compareWith(table, this.options.compare()));
+            this.out.print(before.compareWith(table, "Compared with '" + this.options.compare() + "'"));
+            this.out.print(samePlay(before, STORE.resolve(this.options.compare()), runs));
         }
-        if (this.options.html()) {
+        if (this.options.extras().contains(Options.Extra.HTML)) {
             Path file = STORE.resolve("report.html");
             Files.createDirectories(STORE);
             Files.writeString(file, HtmlReport.of(runs), StandardCharsets.UTF_8);
             this.out.println("HTML report: " + file.toAbsolutePath());
         }
+    }
+
+    /** Keeps every competent play's action log, one file per level and seed, for a later same-play comparison. */
+    private static void saveLogs(Path folder, List<LevelRun> runs) throws IOException {
+        for (LevelRun run : runs) {
+            for (PlayRecord play : run.playsOf(COMPETENT)) {
+                Path file = logFile(folder, run.survey().level(), play.play().seed());
+                java.nio.file.Files.createDirectories(file.getParent());
+                java.nio.file.Files.write(file, play.actions().stream().map(PlayRecord.TimedAction::toLine).toList(),
+                        StandardCharsets.UTF_8);
+            }
+        }
+    }
+
+    private static Path logFile(Path folder, LevelDefinition level, long seed) {
+        return folder.resolve(level.name().replaceAll("[^A-Za-z0-9]+", "-")).resolve(COMPETENT + "-" + seed + ".log");
+    }
+
+    /**
+     * Replays the saved competent logs on this version and compares them with the saved competent plays: what the
+     * change does to the same actions, apart from how the player adapts to it. Empty when no logs were saved.
+     */
+    private static String samePlay(ResultTable before, Path folder, List<LevelRun> runs) throws IOException {
+        StringBuilder out = new StringBuilder();
+        for (LevelRun run : runs) {
+            LevelDefinition level = run.survey().level();
+            List<Long> seeds = run.playsOf(COMPETENT).stream().map(play -> play.play().seed()).toList();
+            if (seeds.isEmpty() || !java.nio.file.Files.exists(logFile(folder, level, seeds.getFirst()))) {
+                continue;
+            }
+            List<List<PlayRecord.TimedAction>> logs = new ArrayList<>();
+            for (long seed : seeds) {
+                logs.add(java.nio.file.Files.readAllLines(logFile(folder, level, seed), StandardCharsets.UTF_8).stream()
+                        .filter(line -> !line.isBlank()).map(PlayRecord.TimedAction::parse).toList());
+            }
+            List<PlayRecord> replayed = IntStream.range(0, seeds.size()).parallel().boxed()
+                    .map(i -> LevelPlay.play(run.survey(), ScriptedPlayer.spec(COMPETENT, logs.get(i)), seeds.get(i),
+                            LevelPlay.Pacing.standard()))
+                    .toList();
+            int[] margins = IntStream.range(0, seeds.size()).parallel()
+                    .map(i -> Margin.healthPercent(run.survey(), ScriptedPlayer.spec(REPLAYED, logs.get(i)), seeds.get(i),
+                            LevelPlay.Pacing.standard()))
+                    .toArray();
+            out.append(before.only(level.name(), COMPETENT).plus(before.only(level.name(), REPLAYED)).compareWith(
+                    ResultTable.ofPlays(level.name(), COMPETENT, replayed).withMargins(level.name(), REPLAYED, margins),
+                    "Same play: the competent actions saved as '" + folder.getFileName() + "', replayed on this version"));
+        }
+        return out.isEmpty() ? "" : "\n" + out;
     }
 
     /** The players every level is played by, the competent one's variants beside it to compare with. */
@@ -196,23 +260,36 @@ public final class BalanceReport {
 
     /**
      * Runs the lab, then every player on every seed, at the level as authored and for its margin; with
-     * {@code variety}, the margins of each tower alone and each tower banned too.
+     * {@code extras}, the strong player too, and the margins of each tower alone and each tower banned.
      */
-    static LevelRun measure(LevelDefinition level, int seeds, boolean variety) {
+    static LevelRun measure(LevelDefinition level, int seeds, Set<Options.Extra> extras) {
         BoardSurvey survey = BoardSurvey.of(level);
         TowerLab lab = TowerLab.of(survey);
         Map<String, TowerLab> labs = Map.of(level.name(), lab);
         Map<String, List<PlayRecord>> plays = new LinkedHashMap<>();
         Map<String, int[]> margins = new LinkedHashMap<>();
-        for (Map.Entry<String, PlayerSpec> player : players(labs).entrySet()) {
+        Map<String, PlayerSpec> players = players(labs);
+        if (extras.contains(Options.Extra.STRONG)) {
+            players.put(STRONG, StrongPlayer.spec(STRONG, labs));
+        }
+        for (Map.Entry<String, PlayerSpec> player : players.entrySet()) {
             plays.put(player.getKey(), LongStream.range(FIRST_SEED, FIRST_SEED + seeds).parallel().boxed()
                     .map(seed -> LevelPlay.play(survey, player.getValue(), seed, LevelPlay.Pacing.standard())).toList());
             margins.put(player.getKey(), margins(survey, player.getValue(), seeds));
         }
-        if (variety) {
+        margins.put(REPLAYED, replayedMargins(survey, plays.get(COMPETENT)));
+        if (extras.contains(Options.Extra.VARIETY)) {
             varietyPlayers(labs).forEach((name, player) -> margins.put(name, margins(survey, player, seeds)));
         }
         return new LevelRun(lab, plays, margins);
+    }
+
+    /** For each play, the margin of its own actions played back on its own seed. */
+    private static int[] replayedMargins(BoardSurvey survey, List<PlayRecord> plays) {
+        return plays.parallelStream()
+                .mapToInt(play -> Margin.healthPercent(survey, ScriptedPlayer.spec(REPLAYED, play.actions()),
+                        play.play().seed(), LevelPlay.Pacing.standard()))
+                .toArray();
     }
 
     private static int[] margins(BoardSurvey survey, PlayerSpec player, int seeds) {
@@ -269,7 +346,7 @@ public final class BalanceReport {
         this.out.println();
         this.out.println("DIFFICULTY - " + difficultyVerdict(run));
         this.out.printf("  %-13s %-15s %-13s %-13s %s%n", "player", "won", "lives lost", "leaks", "holds enemy health");
-        for (String player : List.of(NAIVE, RANDOM_CELLS, NO_UPGRADES, COMPETENT)) {
+        for (String player : shownPlayers(run)) {
             this.out.printf("  %-13s %-15s %-13s %-13s %s%n", player, run.winRate(player).formatPercent(),
                     run.livesLost(player).format(1), run.leaks(player).format(1), run.margin(player).format(0) + "%");
         }
@@ -277,6 +354,18 @@ public final class BalanceReport {
                 WIN_LOW * 100, WIN_HIGH * 100, MARGIN_LOW, MARGIN_HIGH, NAIVE_WIN_HIGH * 100);
         this.printLossRounds("naive", run.lossRounds(NAIVE));
         this.printLossRounds("competent", run.lossRounds(COMPETENT));
+        this.out.printf("  the competent player's own actions, played back as they were, hold %s%n",
+                run.margin(REPLAYED).format(0) + "%");
+        if (run.has(STRONG)) {
+            Estimate gap = run.marginRatio(STRONG, COMPETENT);
+            this.out.printf("  rehearsing each round holds x%.2f (%.2f-%.2f) the competent player's margin: what its"
+                    + " rules miss%n", gap.value(), gap.low(), gap.high());
+        }
+    }
+
+    /** The players the difficulty table lists, weakest first, the strong one only when it was measured. */
+    static List<String> shownPlayers(LevelRun run) {
+        return List.of(NAIVE, RANDOM_CELLS, NO_UPGRADES, COMPETENT, STRONG).stream().filter(run::has).toList();
     }
 
     private void printLossRounds(String player, Map<Integer, Integer> rounds) {

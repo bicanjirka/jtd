@@ -5,7 +5,7 @@ description: Build, run and drive jTD (the Swing tower-defense app) to check wha
 
 ## Pick the cheapest check
 
-1. A rule or a number: a test (`GameEngineTest`), or `td.BalanceHarness`. Not this skill.
+1. A rule or a number: a test (`GameEngineTest`), or `td.balance.BalanceReport`. Not this skill.
 2. How the board looks (shapes, markers, beams, rings): `PreviewBoard` / `PreviewEnemy`.
    Headless, deterministic, one PNG.
 3. Swing wiring (input routing, hover, panel text and layout, selection, keys): `Driver`, the

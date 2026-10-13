@@ -34,6 +34,10 @@ public final class LevelPlay {
         public Pacing stoppingAtLoss() {
             return new Pacing(this.pauseTicks, this.decisionTicks, this.tickBudget, true);
         }
+
+        Pacing playingOut() {
+            return new Pacing(this.pauseTicks, this.decisionTicks, this.tickBudget, false);
+        }
     }
 
     private static final long PLAYER_SEED_SALT = 0x5DEECE66DL;
@@ -49,6 +53,15 @@ public final class LevelPlay {
 
     /** {@link #play(BoardSurvey, PlayerSpec, long, Pacing)} under {@code rules}. */
     public static PlayRecord play(BoardSurvey survey, PlayerSpec spec, long seed, Pacing pacing, Rules rules) {
+        return play(survey, spec.createFor(survey, seed), spec.name(), seed, pacing, rules, 0);
+    }
+
+    /**
+     * Plays with {@code player} from the first tick, stopping once round {@code lastRound} is over (0 plays the
+     * level out). A player that rehearses replays the level through this, with the same seed, pacing and rules.
+     */
+    private static PlayRecord play(BoardSurvey survey, Player player, String name, long seed, Pacing pacing,
+                                   Rules rules, int lastRound) {
         LevelDefinition level = rules.applyTo(survey.level());
         int lives = level.startingLives();
         GameEngine[] holder = new GameEngine[1];
@@ -60,14 +73,16 @@ public final class LevelPlay {
         engine.loadLevel(level.withStartingLives(UNLIMITED_LIVES));
         rules.applyTo(engine);
         RunRecorder recorder = new RunRecorder(engine, lives);
-        Turn turn = new Turn(engine, recorder, survey, RandomSource.seeded(seed ^ PLAYER_SEED_SALT));
-        Player player = spec.createFor(survey, seed);
+        Turn.Rehearsal rehearsal = (alternative, through) -> play(survey, alternative, name, seed,
+                pacing.playingOut(), rules, through);
+        Turn turn = new Turn(engine, recorder, survey, RandomSource.seeded(seed ^ PLAYER_SEED_SALT), rehearsal);
 
         boolean paused = false;
         int pauseStart = 0;
         int roundStart = 0;
         for (int t = 1; t <= pacing.tickBudget() && !engine.outcome().isOver()
-                && !(pacing.stopAtLoss() && recorder.leaks() >= lives); t++) {
+                && !(pacing.stopAtLoss() && recorder.leaks() >= lives)
+                && !(lastRound > 0 && recorder.roundsOver() >= lastRound); t++) {
             if (engine.isWaveReady()) {
                 if (!paused) {
                     paused = true;
@@ -89,6 +104,6 @@ public final class LevelPlay {
             }
             recorder.afterTick(t);
         }
-        return recorder.finish(new PlayRecord.Play(level.name(), seed, spec.name()));
+        return recorder.finish(new PlayRecord.Play(level.name(), seed, name));
     }
 }
