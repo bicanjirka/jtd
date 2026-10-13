@@ -2,6 +2,7 @@ package td.tower.seeker;
 
 import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
+import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
 /** Tracer: the missile reveals its target and marks it, for four seconds. */
@@ -22,5 +23,10 @@ public final class TracerPayload implements Payload {
     @Override
     public void deliver(EnemyMob target, float strength, PayloadActions actions) {
         actions.spot(target, Math.round(SPOT_SECONDS * strength * TickRate.TICKS_PER_SECOND));
+    }
+
+    @Override
+    public String describe() {
+        return "Tracer: reveals and Marks " + PerkText.seconds(Math.round(SPOT_SECONDS * TickRate.TICKS_PER_SECOND));
     }
 }

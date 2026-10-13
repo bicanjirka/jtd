@@ -7,4 +7,9 @@ public final class SharedLessonsPerk implements AuraPerk {
     public AuraSpec refineSpec(AuraSpec spec) {
         return spec.sharingLessons();
     }
+
+    @Override
+    public String describe() {
+        return "buffed towers share what they see: each earns the XP of every enemy any of them reached";
+    }
 }

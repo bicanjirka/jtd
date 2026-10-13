@@ -3,6 +3,7 @@ package td.tower.splash;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.targeting.HighestHealthSelector;
+import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
 import java.util.Optional;
@@ -37,5 +38,10 @@ public final class DoomHex implements Hex {
     public int ticksOn(EnemyMob target) {
         float seconds = SECONDS + SECONDS_PER_SATURATION_STACK * target.effectStacks(EffectKind.SATURATED);
         return Math.round(seconds * TickRate.TICKS_PER_SECOND);
+    }
+
+    @Override
+    public String describe() {
+        return "Hex of Doom: when it ends, the enemy takes " + PerkText.percent(HexSpec.DOOM_SHARE) + " of all it took meanwhile";
     }
 }

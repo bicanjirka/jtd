@@ -9,4 +9,10 @@ public final class RearmPerk implements SeekerPerk {
             actions.rearm();
         }
     }
+
+    @Override
+    public String describe() {
+        return "a missile that freezes its target launches a new missile from the tower at once; a rearmed missile's freeze "
+                + "rearms nothing";
+    }
 }

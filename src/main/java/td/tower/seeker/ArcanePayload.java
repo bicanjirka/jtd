@@ -21,4 +21,9 @@ public final class ArcanePayload implements Payload {
     public void deliver(EnemyMob target, float strength, PayloadActions actions) {
         actions.applyStacks(target, EffectKind.UNRAVELED, (int) Math.ceil(strength));
     }
+
+    @Override
+    public String describe() {
+        return "Arcane: Unravels its target instead of freezing it";
+    }
 }

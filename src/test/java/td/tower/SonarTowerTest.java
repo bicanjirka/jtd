@@ -9,6 +9,7 @@ import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
+import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.ui.TowerSpriteFrameBuilder;
@@ -518,5 +519,13 @@ class SonarTowerTest {
         awakened.accept(sprites);
 
         assertThat(sprites.build()).extracting(TowerSpriteDraw::transcendent).containsExactly(true, false);
+    }
+
+    @Test
+    void ultrasoundSaysWhatItDoes() {
+        SonarTower tower = new SonarTower(this.context, 0, 0);
+
+        assertThat(tower.bonusesOf(UpgradePaths.named(tower, "Ultrasound"))).contains(new UpgradeBonus(
+                "20% of each hit is added as magic, up to 50% against armored or shielded enemies", ""));
     }
 }

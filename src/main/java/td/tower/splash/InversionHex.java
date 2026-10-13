@@ -28,4 +28,10 @@ public final class InversionHex implements Hex {
     public void cast(EnemyMob target, HexSpec spec, HexActions actions) {
         actions.curse(target, EffectKind.INVERSION, this.ticksOn(target));
     }
+
+    @Override
+    public String describe() {
+        return "Hex of Inversion: heals and shields the enemy receives are dealt to it as magic damage instead, and it can't "
+                + "turn invisible";
+    }
 }

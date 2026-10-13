@@ -2,6 +2,7 @@ package td.tower.splash;
 
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.tower.upgrade.PerkText;
 
 import java.util.Comparator;
 import java.util.List;
@@ -36,5 +37,11 @@ public final class ReckoningHex implements Hex {
     @Override
     public void cast(EnemyMob target, HexSpec spec, HexActions actions) {
         actions.curse(target, EffectKind.RECKONING, this.ticksOn(target));
+    }
+
+    @Override
+    public String describe() {
+        return "Hex of Reckoning: when the enemy dies, this tower's Dooms within " + PerkText.cells(HexSpec.SHARE_CELLS)
+                + " cells release at once and start again";
     }
 }

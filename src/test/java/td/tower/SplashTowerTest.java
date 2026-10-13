@@ -11,6 +11,7 @@ import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
+import td.tower.upgrade.UpgradeBonus;
 import td.util.GameWorld;
 import td.util.TickRate;
 
@@ -750,5 +751,14 @@ class SplashTowerTest {
         tower.doTick(3000);
 
         assertThat(this.context.zones().zones()).isEmpty();
+    }
+
+    @Test
+    void thunderstrikeSaysWhatItDoes() {
+        SplashTower tower = new SplashTower(this.context, 0, 0);
+
+        assertThat(tower.bonusesOf(UpgradePaths.named(tower, "Thunderstrike"))).contains(new UpgradeBonus(
+                "Every 6th shot calls lightning onto the healthiest enemy in range: x4 the blast as magic "
+                + "and Dazed 0.5s; the shot's arcs start there at full damage; counts as a crit", ""));
     }
 }

@@ -1,8 +1,11 @@
 package td.tower.sonar;
 
 import td.effect.Effect;
+import td.effect.EffectKind;
+import td.stat.EnemyStat;
 import td.tower.BehaviourLine;
 import td.tower.BehaviourMarker;
+import td.tower.upgrade.PerkText;
 
 import java.util.Optional;
 
@@ -20,5 +23,12 @@ public final class CommandPingPerk implements SonarPerk {
     @Override
     public Optional<BehaviourLine> behaviour() {
         return Optional.of(new BehaviourLine(BehaviourMarker.TARGETING, "Priority", "the pinged enemy"));
+    }
+
+    @Override
+    public String describe() {
+        return "the pinged enemy is the Priority until the next pass: +"
+                + PerkText.percent(EffectKind.PRIORITY.modifiersAt(1).flat(EnemyStat.PHYSICAL_DAMAGE_TAKEN))
+                + " damage taken, and towers that pick one target pick it";
     }
 }

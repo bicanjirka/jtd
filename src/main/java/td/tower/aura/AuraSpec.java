@@ -8,38 +8,45 @@ package td.tower.aura;
  * @param tutelageXp    the XP share it adds to what every buffed tower earns
  * @param sharesLessons whether its buffed towers each earn what any of them reached
  * @param apprenticeXp  the XP share it adds to its least experienced buffed tower; 0 for no apprentice
- * @param chosen        whether it buffs only its most experienced tower, more strongly
- * @param rally         whether an enemy on its path spot rallies the towers it buffs
+ * @param chosenStrength how many times as strong it buffs its most experienced tower, the only one it buffs; 0 for
+ *                       every tower in range at its normal strength
+ * @param rally          how an enemy on its path spot rallies the towers it buffs
  */
-public record AuraSpec(KinshipRule kinship, float tutelageXp, boolean sharesLessons, float apprenticeXp, boolean chosen,
-                       boolean rally) {
+public record AuraSpec(KinshipRule kinship, float tutelageXp, boolean sharesLessons, float apprenticeXp, float chosenStrength,
+                       RallyRule rally) {
 
     /** No Kinship, no mentoring, every tower in range, no Rally. */
     public static AuraSpec none() {
-        return new AuraSpec(KinshipRule.none(), 0f, false, 0f, false, false);
+        return new AuraSpec(KinshipRule.none(), 0f, false, 0f, 0f, RallyRule.none());
     }
 
     public AuraSpec withKinship(KinshipRule kinship) {
-        return new AuraSpec(kinship, this.tutelageXp, this.sharesLessons, this.apprenticeXp, this.chosen, this.rally);
+        return new AuraSpec(kinship, this.tutelageXp, this.sharesLessons, this.apprenticeXp, this.chosenStrength, this.rally);
     }
 
     public AuraSpec withTutelageXp(float xp) {
-        return new AuraSpec(this.kinship, xp, this.sharesLessons, this.apprenticeXp, this.chosen, this.rally);
+        return new AuraSpec(this.kinship, xp, this.sharesLessons, this.apprenticeXp, this.chosenStrength, this.rally);
     }
 
     public AuraSpec sharingLessons() {
-        return new AuraSpec(this.kinship, this.tutelageXp, true, this.apprenticeXp, this.chosen, this.rally);
+        return new AuraSpec(this.kinship, this.tutelageXp, true, this.apprenticeXp, this.chosenStrength, this.rally);
     }
 
     public AuraSpec withApprenticeXp(float xp) {
-        return new AuraSpec(this.kinship, this.tutelageXp, this.sharesLessons, xp, this.chosen, this.rally);
+        return new AuraSpec(this.kinship, this.tutelageXp, this.sharesLessons, xp, this.chosenStrength, this.rally);
     }
 
-    public AuraSpec choosing() {
-        return new AuraSpec(this.kinship, this.tutelageXp, this.sharesLessons, this.apprenticeXp, true, this.rally);
+    /** Buffs only its most experienced tower, {@code strength} times as strongly. */
+    public AuraSpec choosing(float strength) {
+        return new AuraSpec(this.kinship, this.tutelageXp, this.sharesLessons, this.apprenticeXp, strength, this.rally);
     }
 
-    public AuraSpec rallying() {
-        return new AuraSpec(this.kinship, this.tutelageXp, this.sharesLessons, this.apprenticeXp, this.chosen, true);
+    public AuraSpec rallying(RallyRule rally) {
+        return new AuraSpec(this.kinship, this.tutelageXp, this.sharesLessons, this.apprenticeXp, this.chosenStrength, rally);
+    }
+
+    /** Whether it buffs only its most experienced tower. */
+    public boolean chosen() {
+        return this.chosenStrength > 0f;
     }
 }

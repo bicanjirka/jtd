@@ -2,6 +2,7 @@ package td.tower.seeker;
 
 import td.enemy.EnemyMob;
 import td.tower.BehaviourLine;
+import td.tower.upgrade.Perk;
 
 import java.util.Optional;
 
@@ -11,7 +12,7 @@ import java.util.Optional;
  * lands, and react to how it landed. Every hook does nothing by default, so a perk implements only
  * its own.
  */
-public interface SeekerPerk {
+public interface SeekerPerk extends Perk {
 
     default SeekerSpec refineSpec(SeekerSpec spec) {
         return spec;

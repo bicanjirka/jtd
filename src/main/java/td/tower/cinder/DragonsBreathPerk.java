@@ -7,4 +7,9 @@ public final class DragonsBreathPerk implements CinderPerk {
     public CinderSpec refineSpec(CinderSpec spec) {
         return spec.withStoke(spec.stoke().full());
     }
+
+    @Override
+    public String describe() {
+        return "a continuous stream that keeps every pool topped up and Stoke always full";
+    }
 }

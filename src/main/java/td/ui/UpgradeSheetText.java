@@ -47,7 +47,7 @@ final class UpgradeSheetText {
             lines.add(Row.plain(Glyph.LOCK, "Next pick", "Transcendent"));
         }
         lines.add(new SheetLine.Gap());
-        node.bonuses().forEach(bonus -> lines.add(Row.plain(Glyph.DOT, bonus.label(), bonus.value())));
+        offer.bonuses().forEach(bonus -> lines.add(Row.plain(Glyph.DOT, bonus.label(), bonus.value())));
         return new InfoSheet(lines);
     }
 

@@ -1,5 +1,7 @@
 package td.tower.splash;
 
+import td.tower.upgrade.PerkText;
+
 /** Chain Lightning: at least six jumps at the blast's full damage, and the third jump forks. */
 public final class ChainLightningPerk implements SplashPerk {
 
@@ -8,5 +10,10 @@ public final class ChainLightningPerk implements SplashPerk {
     @Override
     public SplashSpec refineSpec(SplashSpec spec) {
         return spec.withArcs(spec.arcs().withMinimumJumps(JUMPS).withShareAtLeast(1f).thatForks());
+    }
+
+    @Override
+    public String describe() {
+        return "up to " + JUMPS + " jumps at the blast's full damage; the " + PerkText.ordinal(ArcPlanner.FORK_JUMP) + " jump forks";
     }
 }

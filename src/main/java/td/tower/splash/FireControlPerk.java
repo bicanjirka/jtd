@@ -10,4 +10,10 @@ public final class FireControlPerk implements SplashPerk {
     public SplashSpec refineSpec(SplashSpec spec) {
         return spec.withBlast(spec.blast().aimingAtCrowds().saturating());
     }
+
+    @Override
+    public String describe() {
+        return "Fire Control: aims at the enemy with most neighbours in the blast, and every blast that catches an enemy "
+                + "Saturates it";
+    }
 }

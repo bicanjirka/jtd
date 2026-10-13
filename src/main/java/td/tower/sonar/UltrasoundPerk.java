@@ -2,6 +2,7 @@ package td.tower.sonar;
 
 import td.damage.DamageType;
 import td.effect.EffectKind;
+import td.tower.upgrade.PerkText;
 
 /**
  * Ultrasound: part of every physical hit is added on as magic, more against an enemy that shrugs
@@ -20,5 +21,11 @@ public final class UltrasoundPerk implements SonarPerk {
         float protection = context.target().hasEffect(EffectKind.SHIELD) ? MAX_SHARE
                 : context.target().reductionAgainst(DamageType.PHYSICAL);
         return strike.withMagicShare(Math.max(BASE_SHARE, Math.min(MAX_SHARE, protection)));
+    }
+
+    @Override
+    public String describe() {
+        return PerkText.percent(BASE_SHARE) + " of each hit is added as magic, up to " + PerkText.percent(MAX_SHARE)
+                + " against armored or shielded enemies";
     }
 }

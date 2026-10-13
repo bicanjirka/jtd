@@ -14,7 +14,7 @@ public final class PhasedBeam implements SonarBeam {
 
     /** How wide the beam is, as an angle either side of its heading. */
     private static final double HALF_WIDTH_RADIANS = 0.12;
-    private static final int HITS_PER_REVOLUTION = 3;
+    static final int HITS_PER_REVOLUTION = 3;
 
     /** A tick count within this of a whole interval counts as it, which absorbs float error in a rate. */
     private static final double EPSILON = 1e-6;

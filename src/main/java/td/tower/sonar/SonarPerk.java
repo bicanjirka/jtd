@@ -1,6 +1,7 @@
 package td.tower.sonar;
 
 import td.tower.BehaviourLine;
+import td.tower.upgrade.Perk;
 
 import java.util.Optional;
 
@@ -9,7 +10,7 @@ import java.util.Optional;
  * whom it pings, reshape each hit before it lands, and react to a hit or to a finished revolution.
  * Every hook does nothing by default, so a perk implements only its own.
  */
-public interface SonarPerk {
+public interface SonarPerk extends Perk {
 
     default SonarSpec refineSpec(SonarSpec spec) {
         return spec;

@@ -17,16 +17,16 @@ import td.tower.targeting.Viewpoint;
  * @param shrapnel       the ring past the blast
  * @param bomblets       the small blasts along the path
  * @param leadsTarget    whether it aims where the enemy will be when the shell lands
- * @param flatCore       whether the inner half of a blast takes full damage
+ * @param flatCore       the share of the blast radius, from its centre, that takes full damage; 0 for none
  * @param salvo          how many shells a firing sends
  */
 public record MortarSpec(Reach reach, BracketSpec bracket, DazeSpec daze, ShellPlan shells, NukeSpec nuke, CentreSpec centre, ShrapnelSpec shrapnel,
-                         BombletSpec bomblets, boolean leadsTarget, boolean flatCore, SalvoSpec salvo) {
+                         BombletSpec bomblets, boolean leadsTarget, float flatCore, SalvoSpec salvo) {
 
     /** The visible enemies in range, no bracketing and only plain shells. */
     public static MortarSpec from(Viewpoint view) {
         return new MortarSpec(Reach.visible(view), BracketSpec.none(), DazeSpec.none(), ShellPlan.none(), NukeSpec.none(),
-                CentreSpec.none(), ShrapnelSpec.none(), BombletSpec.none(), false, false, SalvoSpec.single());
+                CentreSpec.none(), ShrapnelSpec.none(), BombletSpec.none(), false, 0f, SalvoSpec.single());
     }
 
     public MortarSpec withReach(Reach reach) {
@@ -79,9 +79,10 @@ public record MortarSpec(Reach reach, BracketSpec bracket, DazeSpec daze, ShellP
                 this.salvo);
     }
 
-    public MortarSpec withFlatCore() {
+    /** Full damage out to {@code radiusShare} of the blast radius. */
+    public MortarSpec withFlatCore(float radiusShare) {
         return new MortarSpec(this.reach, this.bracket, this.daze, this.shells, this.nuke, this.centre, this.shrapnel, this.bomblets, this.leadsTarget,
-                true, this.salvo);
+                radiusShare, this.salvo);
     }
 
     public MortarSpec withSalvo(SalvoSpec salvo) {

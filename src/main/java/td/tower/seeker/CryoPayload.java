@@ -25,4 +25,9 @@ public final class CryoPayload implements Payload {
     public void deliver(EnemyMob target, float strength, PayloadActions actions) {
         actions.freeze(target, strength);
     }
+
+    @Override
+    public String describe() {
+        return "Cryo: freezes its target";
+    }
 }

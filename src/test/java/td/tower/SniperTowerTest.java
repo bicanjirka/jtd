@@ -15,6 +15,7 @@ import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
+import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.ui.TowerSpriteFrameBuilder;
 import td.ui.render.Palette;
@@ -774,5 +775,14 @@ class SniperTowerTest {
         tower.doTick(1);
 
         assertThat(frozen.attackers().getFirst().critMultiplier()).isEqualTo(SniperTower.CRIT_MULTIPLIER + 0.5f);
+    }
+
+    @Test
+    void ricochetSaysWhatItDoes() {
+        SniperTower tower = new SniperTower(this.context, 0, 0);
+
+        assertThat(tower.bonusesOf(UpgradePaths.named(tower, "Ricochet"))).contains(new UpgradeBonus(
+                "A crit bounces to the nearest enemy within 1.5 cells for 60%, up to 3 bounces, each can "
+                + "crit", ""));
     }
 }

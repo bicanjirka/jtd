@@ -8,6 +8,7 @@ import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
+import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.util.GameWorld;
@@ -626,5 +627,13 @@ class CinderTowerTest {
 
         Effect pool = enemy.activeEffects().stream().filter(e -> e.kind() == EffectKind.BURN).findFirst().orElseThrow();
         assertThat(pool.fuelLevel()).isGreaterThanOrEqualTo(0.24f * peak);
+    }
+
+    @Test
+    void combustionSaysWhatItDoes() {
+        CinderTower tower = new CinderTower(this.context, 0, 0);
+
+        assertThat(tower.bonusesOf(UpgradePaths.named(tower, "Combustion"))).contains(new UpgradeBonus(
+                "A pool that reaches its cap bursts for 50% of it onto enemies within 1 cell", ""));
     }
 }

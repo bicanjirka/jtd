@@ -27,4 +27,9 @@ public final class BlightHex implements Hex {
         actions.curse(target, EffectKind.BLIGHT, ticks);
         actions.poison(target, spec.blightShare(), ticks);
     }
+
+    @Override
+    public String describe() {
+        return "Hex of Blight: poisons for the hex's length";
+    }
 }

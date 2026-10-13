@@ -13,4 +13,9 @@ public final class ModePerk implements PulsePerk {
     public PulseSpec refineSpec(PulseSpec spec) {
         return spec.withModes(spec.modes().with(this.mode));
     }
+
+    @Override
+    public String describe() {
+        return this.mode.describe();
+    }
 }

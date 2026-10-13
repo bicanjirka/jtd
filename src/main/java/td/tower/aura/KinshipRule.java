@@ -13,8 +13,8 @@ package td.tower.aura;
 public record KinshipRule(boolean active, float xpPerType, int xpTypeCap, float extraReachCells, float strengthPerType,
                           int strengthTypeCap) {
 
-    private static final float ATTUNED_XP_PER_TYPE = 0.05f;
-    private static final int ATTUNED_TYPE_CAP = 4;
+    static final float ATTUNED_XP_PER_TYPE = 0.05f;
+    static final int ATTUNED_TYPE_CAP = 4;
 
     public static KinshipRule none() {
         return new KinshipRule(false, 0f, 0, 0f, 0f, 0);

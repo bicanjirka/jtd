@@ -23,4 +23,9 @@ public final class MarkOnSweepPerk implements SonarPerk {
     public Optional<BehaviourLine> behaviour() {
         return Optional.of(new BehaviourLine(BehaviourMarker.TARGETING, "Marks", "next hit crits"));
     }
+
+    @Override
+    public String describe() {
+        return "marks every enemy the beam hits: the next hit on it from any tower is a guaranteed crit";
+    }
 }

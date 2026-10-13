@@ -88,17 +88,13 @@ public final class SeekerTower extends AbstractTower {
     public static final float MISSILE_SPEED = 8f;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
-    /** Share of weapon damage a shattered enemy's neighbours take. */
-    private static final float SHATTER_DAMAGE_SHARE = 0.5f;
+    /** How far a shatter reaches. */
     private static final float SHATTER_RADIUS_CELLS = 1.5f;
 
     private static final String FREEZE_DEED = "Freezes";
     private static final int FREEZES_NEEDED = 25;
 
-    private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
-            .withAttune(NodeEffects.none().withNote("Nest: the cooldown loads a missile into the nest (up to 3) instead of firing; with a "
-                    + "target in range, stored missiles launch 4 ticks apart"))
-            .withRangeThree(0.1f, NodeEffects.none().withNote("Over the Horizon: may fire at Revealed or Marked enemies within 1.5x its range"));
+    private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none().withRangeThree(0.1f, NodeEffects.none());
 
     private static final UpgradeNode TWIN_WARHEAD_1 = UpgradeTier.HEAD_1.node("seeker.head.twin_warhead.1",
             "Twin Warhead", PRICE)
@@ -106,21 +102,15 @@ public final class SeekerTower extends AbstractTower {
     private static final UpgradeNode TWIN_WARHEAD_2 = UpgradeTier.HEAD_2.node("seeker.head.twin_warhead.2",
             "Twin Warhead II", PRICE)
             .withModifiers(TowerModifiers.missilesPerLaunch(1))
-            .withNote("the second missile goes to the next target")
             .after(TWIN_WARHEAD_1);
     private static final UpgradeNode BROOD = UpgradeTier.HEAD_3.node("seeker.head.twin_warhead.3", "Brood", PRICE)
             .withGate(new PurposeCondition(FREEZE_DEED, FREEZES_NEEDED))
             .withModifiers(TowerModifiers.nestCapacity(2))
-            .withNote("a salvo spreads across different targets")
             .after(TWIN_WARHEAD_2);
     private static final UpgradeNode SHATTERBURST = UpgradeTier.HEAD_4.node("seeker.head.twin_warhead.4a",
             "Shatterburst", PRICE)
-            .withNote("a missile that hits a frozen enemy bursts for 35% magic damage around it; every enemy "
-                    + "the burst hits is Silenced 2s and gains Unraveled")
             .after(BROOD);
     private static final UpgradeNode REARM = UpgradeTier.HEAD_4.node("seeker.head.twin_warhead.4b", "Rearm", PRICE)
-            .withNote("a missile that freezes its target launches a new missile from the tower at once; a "
-                    + "rearmed missile's freeze rearms nothing")
             .after(BROOD);
     private static final UpgradeNode DEEP_FREEZE_1 = UpgradeTier.HEAD_1.node("seeker.head.deep_freeze.1",
             "Deep Freeze", PRICE)
@@ -128,41 +118,29 @@ public final class SeekerTower extends AbstractTower {
     private static final UpgradeNode DEEP_FREEZE_2 = UpgradeTier.HEAD_2.node("seeker.head.deep_freeze.2",
             "Deep Freeze II", PRICE)
             .withModifiers(TowerModifiers.damage(12f).plus(TowerModifiers.critChance(0.1f)))
-            .withNote("a frozen enemy this tower kills shatters for 50% of its damage around it")
             .after(DEEP_FREEZE_1);
     private static final UpgradeNode BRITTLE = UpgradeTier.HEAD_3.node("seeker.head.deep_freeze.3", "Brittle", PRICE)
             .withGate(new PurposeCondition(FREEZE_DEED, FREEZES_NEEDED))
-            .withNote("frozen enemies take +30% physical damage")
             .after(DEEP_FREEZE_2);
     private static final UpgradeNode ABSOLUTE_ZERO = UpgradeTier.HEAD_4.node("seeker.head.deep_freeze.4a",
             "Absolute Zero", PRICE)
-            .withNote("the missile freezes everything within 1 cell of the impact; shatters deal x2; an "
-                    + "enemy this tower froze shatters when its freeze ends")
             .after(BRITTLE);
     private static final UpgradeNode FROSTBITE = UpgradeTier.HEAD_4.node("seeker.head.deep_freeze.4b", "Frostbite",
             PRICE)
-            .withNote("this tower's hits on a frozen enemy are guaranteed crits, and so are its hits on an "
-                    + "enemy whose freezes are diminished by repeated freezing")
             .after(BRITTLE);
     private static final UpgradeNode ARCANE_PAYLOAD = UpgradeTier.EXTRA_1.node("seeker.extra.mixed_payloads.1",
-            "Arcane Payload", PRICE)
-            .withNote("every 3rd missile Unravels its target instead of freezing it");
+            "Arcane Payload", PRICE);
     private static final UpgradeNode EMP_PAYLOAD = UpgradeTier.EXTRA_2.node("seeker.extra.mixed_payloads.2",
             "EMP Payload", PRICE)
-            .withNote("the payload missiles also carry EMP in turn: it strips shields and heals and Silences "
-                    + "2s")
             .after(ARCANE_PAYLOAD);
     private static final UpgradeNode TRACER_PAYLOAD = UpgradeTier.EXTRA_3.node("seeker.extra.mixed_payloads.3",
             "Tracer Payload", PRICE)
-            .withNote("the payload missiles also carry Tracer in turn: it reveals and Marks 4s")
             .after(EMP_PAYLOAD);
     private static final UpgradeNode FULL_RACK = UpgradeTier.EXTRA_4.node("seeker.extra.mixed_payloads.4",
             "Full Rack", PRICE)
-            .withNote("every missile carries a payload, cycling Cryo, Arcane, EMP, Tracer, each 25% stronger")
             .after(TRACER_PAYLOAD);
     private static final UpgradeNode ARCANE_WARHEAD = UpgradeTier.SPECIAL.node("seeker.special.arcane_warhead",
-            "Arcane Warhead", PRICE)
-            .withNote("every impact applies Unraveled, 2 stacks if the target was frozen or chilled");
+            "Arcane Warhead", PRICE);
     private static final UpgradeNode NULLIFIER = UpgradeTier.SPECIAL.node("seeker.special.nullifier", "Nullifier",
             PRICE)
             .withHitBonus(HitBonus.when(new HitCondition.TargetHasAnyOf(Set.of(EffectKind.SHIELD)),
@@ -215,6 +193,11 @@ public final class SeekerTower extends AbstractTower {
         super(TowerFactory.Type.SEEKER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
                 .with(TowerStat.FREEZE_DURATION, 30f).with(TowerStat.NEST_CAPACITY, 3f)
                 .with(TowerStat.MISSILES_PER_LAUNCH, 1f), context, x, y);
+    }
+
+    @Override
+    protected PerkCatalogue<SeekerPerk> perkCatalogue() {
+        return PERKS;
     }
 
     @Override
@@ -427,7 +410,7 @@ public final class SeekerTower extends AbstractTower {
 
     /** A frozen enemy shatters: whatever stands near it takes a share of the Seeker's damage. */
     private void shatter(EnemyMob shattered, SeekerSpec spec) {
-        this.burst(shattered, SHATTER_DAMAGE_SHARE * spec.shatter().multiplier(), SHATTER_RADIUS_CELLS, spec);
+        this.burst(shattered, spec.shatter().share(), SHATTER_RADIUS_CELLS, spec);
     }
 
     /** Deep Freeze II: a frozen enemy this tower kills shatters. */

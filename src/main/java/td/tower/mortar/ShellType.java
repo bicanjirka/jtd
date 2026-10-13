@@ -2,6 +2,7 @@ package td.tower.mortar;
 
 import td.damage.DamageType;
 import td.projectile.ShellLook;
+import td.tower.upgrade.PerkText;
 import td.zone.ZoneKind;
 
 import java.util.Optional;
@@ -48,6 +49,24 @@ public enum ShellType {
 
     public Optional<ShellZone> zone() {
         return this.zone;
+    }
+
+    /** Its name and what it does where it lands: {@code "Tar: it leaves tar, 1.2 cells wide, for 4s"}. */
+    public String describe() {
+        return switch (this) {
+            case PLAIN -> "Plain";
+            case NAPALM -> "Napalm: its blast is magic and leaves burning ground, " + this.zoneText();
+            case TAR -> "Tar: it leaves tar, " + this.zoneText();
+            case CRYO -> "Cryo: it leaves frost ground, " + this.zoneText();
+            case NUKE -> "Nuke: it leaves fallout for " + PerkText.seconds(this.zone.orElseThrow().lifetimeTicks()) + " over "
+                    + PerkText.cells(this.zone.orElseThrow().blastShare()) + " of the blast";
+        };
+    }
+
+    private String zoneText() {
+        ShellZone ground = this.zone.orElseThrow();
+        return PerkText.cells(ground.radiusCells()) + (ground.radiusCells() == 1f ? " cell" : " cells") + " wide, for "
+                + PerkText.seconds(ground.lifetimeTicks());
     }
 
     /**

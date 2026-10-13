@@ -15,6 +15,9 @@ public interface Payload {
     /** What the info rows call it. */
     String label();
 
+    /** Its name and what it does to the target: {@code "EMP: strips shields and heals and Silences 2s"}. */
+    String describe();
+
     /** Whether the missile freezes its target. */
     default boolean freezes() {
         return false;

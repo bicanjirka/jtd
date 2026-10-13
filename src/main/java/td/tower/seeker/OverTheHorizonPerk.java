@@ -3,6 +3,7 @@ package td.tower.seeker;
 import td.effect.EffectKind;
 import td.tower.targeting.Viewpoint;
 import td.tower.targeting.WithEffectTargetQuery;
+import td.tower.upgrade.PerkText;
 
 /** Over the Horizon: the Seeker may fire at a Revealed or Marked enemy from one and a half times as far. */
 public final class OverTheHorizonPerk implements SeekerPerk {
@@ -14,5 +15,10 @@ public final class OverTheHorizonPerk implements SeekerPerk {
         Viewpoint view = spec.view();
         return spec.withReach(spec.reach().widenedBy(new WithEffectTargetQuery(view.x(), view.y(),
                 view.range() * REACH, EffectKind.MARKED, EffectKind.REVEALED)));
+    }
+
+    @Override
+    public String describe() {
+        return "may fire at Revealed or Marked enemies within " + PerkText.times(REACH) + " its range";
     }
 }

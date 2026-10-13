@@ -13,6 +13,9 @@ import java.util.Optional;
  */
 public final class ContagionHex implements Hex {
 
+    /** How many enemies a Contagion jumps to. */
+    public static final int TARGETS = 2;
+
     @Override
     public EffectKind kind() {
         return EffectKind.CONTAGION;
@@ -35,5 +38,10 @@ public final class ContagionHex implements Hex {
     @Override
     public void cast(EnemyMob target, HexSpec spec, HexActions actions) {
         actions.curse(target, EffectKind.CONTAGION, this.ticksOn(target));
+    }
+
+    @Override
+    public String describe() {
+        return "Hex of Contagion: when the enemy dies, its hexes and debuffs jump to the " + TARGETS + " nearest unhexed enemies";
     }
 }

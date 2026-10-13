@@ -41,14 +41,11 @@ public final class StandardBaseSlot {
         UpgradeNode range2 = UpgradeTier.RANGE_2.node(RANGE_2_ID, "Range II", listPrice)
                 .withModifiers(TowerModifiers.range(RANGE_STEP_BONUS * baseRange))
                 .after(range1);
-        String attuneText = perks.attune().note();
         UpgradeNode attune = UpgradeTier.ATTUNE.node(ATTUNE_ID, "Attune", listPrice)
-                .withEffects(perks.attune().withNote(attuneText.isEmpty() ? "unlocks head levels I and II"
-                        : attuneText + "; unlocks head levels I and II"));
-        String awakenText = perks.awaken().note();
+                .withEffects(perks.attune().withNote("unlocks head levels I and II"));
         UpgradeNode awaken = UpgradeTier.AWAKEN.node(AWAKEN_ID, "Awaken", listPrice)
-                .withEffects(perks.awaken().withNote((awakenText.isEmpty() ? "" : awakenText + "; ")
-                        + (levelThrees.length == 0 ? "unlocks a special" : "unlocks a special and head level III")));
+                .withEffects(perks.awaken().withNote(levelThrees.length == 0 ? "unlocks a special"
+                        : "unlocks a special and head level III"));
         if (levelThrees.length == 0) {
             return List.of(range1, range2, attune, awaken);
         }

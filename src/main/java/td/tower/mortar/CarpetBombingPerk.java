@@ -11,4 +11,9 @@ public final class CarpetBombingPerk implements MortarPerk {
     public MortarSpec refineSpec(MortarSpec spec) {
         return spec.withBomblets(BombletSpec.of(COUNT, true, DAMAGE_SHARE, RADIUS_CELLS));
     }
+
+    @Override
+    public String describe() {
+        return COUNT + " bomblets in a line along the path ahead of the impact instead";
+    }
 }

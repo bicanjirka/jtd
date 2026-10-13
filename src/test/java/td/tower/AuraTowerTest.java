@@ -8,6 +8,7 @@ import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.stat.StatModifiers;
+import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 import td.wave.PathNormal;
@@ -415,5 +416,14 @@ class AuraTowerTest {
         }
 
         assertThat(inside.appliedEffects()).isEmpty();
+    }
+
+    @Test
+    void rallySaysWhatItDoes() {
+        AuraTower tower = new AuraTower(this.context, 0, 0);
+
+        assertThat(tower.bonusesOf(UpgradePaths.named(tower, "Rally"))).contains(new UpgradeBonus(
+                "Marks the path spot nearest the aura: when an enemy steps on it, every buffed tower gets "
+                + "+30% attack speed for 5s, then a 10s cooldown", ""));
     }
 }

@@ -48,13 +48,13 @@ public final class ActiveEffects {
      * A stack debuff loses a stack this often at neutral spirit: one per second, half as fast as a pool
      * earns them. A spirit above zero speeds it up, and at -100 it never happens.
      */
-    private static final int STACK_DECAY_INTERVAL_TICKS = 20;
+    public static final int STACK_DECAY_INTERVAL_TICKS = 20;
 
     /** The slowest a spirit-paced timer runs, however low the enemy's spirit. */
     private static final float MIN_DEBUFF_PACE = 0.25f;
 
     /** Each Toll stack makes every other debuff's timer run this much slower. */
-    private static final float TOLL_SLOWDOWN_PER_STACK = 0.1f;
+    public static final float TOLL_SLOWDOWN_PER_STACK = 0.1f;
     /** A burn pool reveals an invisible enemy while it holds more than this, in damage units a tick. */
     private static final float BURN_REVEAL_FUEL = 30f;
     private static final EffectKind[] BURNING_KINDS = {EffectKind.BURN, EffectKind.SOULFIRE};
