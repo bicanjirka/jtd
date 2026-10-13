@@ -139,28 +139,34 @@ surely and hitting everything.
 ## Decisions made
 
 1. Agility drives dodge only. Slow recovery stays with spirit, which already paces it.
-2. Agility is authored in absolute points. The dodge chance follows a curve with diminishing returns
-   per point and never reaches 100%.
-3. Only aimed single-target attacks can be dodged: at least the Sniper's shot and the Sonar beam's
-   hit. The Seeker never misses.
+2. Agility is authored in absolute points. The dodge chance is `agility / (agility + 100)`, the
+   armor curve (25 -> 20%, 50 -> 33%, 100 -> 50%), with no cap of its own: it never reaches 100%.
+3. Only aimed single-target attacks can be dodged: the Sniper's shot, its Ricochet bounces and the
+   Sonar beam's hit. The Railgun line, the Pulse's zap and chains, Stormcaller arcs and the Seeker's
+   missile are not.
 4. A dodged attack deals nothing, cannot crit and triggers no on-hit, on-crit or on-kill effects.
 5. Negative agility does nothing extra; resilience owns crit chance taken.
 6. Accuracy on towers cancels agility and never makes it negative.
 7. Implemented after the stat-driven buffs plan.
+8. A dodge is not a hit for "time since last hit": an enemy that keeps dodging still heals when
+   left alone.
+9. A dodged Sonar hit still counts as seen: the enemy can still be pinged and revealed. Only the
+   damage and what reacts to a landed hit miss.
+10. First version content:
+    - towers: a frozen or Dazed enemy can't dodge; Marked makes the next hit undodgeable; Steady Aim
+      stacks add accuracy; Patience (after a dodged shot, the next shot is a guaranteed crit);
+      Frenzy also starts on a dodged shot;
+    - enemies: the Nimble trait (flat agility), Evasive when hurt (agility grows as health drops),
+      an "on dodge" ability trigger used for a short speed burst; a new agile enemy, and agility on
+      the Courier.
+11. A dodge shows as a small grey "miss" rising where the hit would have landed. The inspector
+    shows agility as a stat row with its dodge chance, and counts dodges.
 
 ## Open questions
 
-- **Numbers:** how many points of agility give how much dodge (for example 25 → 20%, 50 → 33%,
-  100 → 50%), and is there a hard cap below 100%?
-- **Which other aimed attacks dodge:** Ricochet bounces, the Railgun line, the Pulse's zap and its
-  chains, Stormcaller arcs?
-- **Who gets agility first:** a new enemy, an existing ladder (Frenzied, Ghost, Courier, Mite), or both?
-- **Which content candidates ship in the first version**, on the tower side and on the enemy side?
-- **Does a dodge count as being attacked** for "time since last hit" triggers (the Mender's and the
-  Warden's neglect heals)?
-- **Does a dodged Sonar hit still reveal** a hidden enemy (Wide Band) or still ping it?
-- **Visual:** what the miss mark looks like, and whether the inspector shows dodge chance as a stat
-  row.
+- None for the first version. Still wanted later: chill, Exposed and the Pulse field lowering
+  agility; Sonar "Echo"; accuracy from the Aura; Swarm Instinct; vanish after three dodges;
+  "Learned".
 
 ---
 

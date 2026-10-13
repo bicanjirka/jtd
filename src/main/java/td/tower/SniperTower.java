@@ -5,6 +5,7 @@ import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.enemy.HitResult;
 import td.enemy.Rank;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitBonus;
@@ -292,21 +293,31 @@ public final class SniperTower extends AbstractTower {
         }
         this.shotInFlight = shot;
         this.statsInFlight = stats;
-        boolean critical = shot.piercing() ? this.pierce(shot, target, stats) : this.land(shot, target, 1f, stats);
-        ShotResult result = new ShotResult(target, critical, target.isDead());
-        for (SniperPerk perk : owned) {
-            result = perk.settle(result, this.actions);
-        }
-        this.report(target, HitKind.DIRECT, result.critical(), result.killed());
-        this.lastShot = this.traceOf(shot, target, result.critical());
-        for (SniperPerk perk : owned) {
-            perk.react(result, this.actions);
+        HitResult hit = shot.piercing() ? this.pierce(shot, target, stats) : this.land(shot.aimed(), target, 1f, stats);
+        if (hit.dodged()) {
+            this.reportDodge(target, HitKind.DIRECT);
+            this.lastShot = this.traceOf(shot, target, false);
+        } else {
+            this.settle(new ShotResult(target, hit.critical(), target.isDead()), shot, owned);
         }
         if (lock.stacks() > 0) {
             this.countDeedOfAttack();
         }
         double rate = this.attackRate();
         this.clock.spend(rate / (rate + shot.attackSpeedBonus()));
+    }
+
+    /** A shot that landed: the perks decide what it counts as, the procs hear of it, then the perks react. */
+    private void settle(ShotResult landed, SniperShot shot, List<SniperPerk> owned) {
+        ShotResult result = landed;
+        for (SniperPerk perk : owned) {
+            result = perk.settle(result, this.actions);
+        }
+        this.report(result.target(), HitKind.DIRECT, result.critical(), result.killed());
+        this.lastShot = this.traceOf(shot, result.target(), result.critical());
+        for (SniperPerk perk : owned) {
+            perk.react(result, this.actions);
+        }
     }
 
     /** Where the shot went: to its target, or for a piercing shot to the end of its line. */
@@ -328,17 +339,18 @@ public final class SniperTower extends AbstractTower {
         return (float) (Math.hypot(target.getX() - this.centerX, target.getY() - this.centerY) / this.rangeReal());
     }
 
-    /** Lands {@code shot} on {@code target} at {@code share} of its damage; whether it crit. */
-    private boolean land(SniperShot shot, EnemyMob target, float share, TowerStats stats) {
+    /** Lands {@code shot} on {@code target} at {@code share} of its damage. */
+    private HitResult land(SniperShot shot, EnemyMob target, float share, TowerStats stats) {
         int amount = Math.round(stats.damage() * shot.damageFactor() * share);
-        return this.dealDamage(target, Damage.of(shot.type(), amount), shot.attack());
+        return this.landHit(target, Damage.of(shot.type(), amount), shot.attack());
     }
 
     /**
      * A shot through everything on the line from the Sniper past {@code target}; each enemy after
-     * the first it passes takes less. Whether the aimed enemy's hit crit.
+     * the first it passes takes less. A line is not aimed, so nothing on it dodges. What it did to
+     * {@code target}.
      */
-    private boolean pierce(SniperShot shot, EnemyMob target, TowerStats stats) {
+    private HitResult pierce(SniperShot shot, EnemyMob target, TowerStats stats) {
         float scale = this.context.getBoard().scale();
         double heading = TurretAim.angleTo(this.centerX, this.centerY, target.getX(), target.getY());
         PierceRule pierce = shot.pierce();
@@ -346,19 +358,24 @@ public final class SniperTower extends AbstractTower {
         List<EnemyMob> line = new OnSegmentTargetQuery(this.centerX, this.centerY,
                 this.centerX + Math.cos(heading) * reach, this.centerY + Math.sin(heading) * reach,
                 pierce.halfWidthCells() * scale).matching(this.context.enemies());
-        boolean critical = false;
+        HitResult aimedHit = HitResult.none();
         float share = 1f;
         for (EnemyMob enemy : line) {
-            boolean crit = this.land(shot, enemy, share, stats);
-            critical |= enemy == target && crit;
+            HitResult hit = this.land(shot, enemy, share, stats);
+            if (enemy == target) {
+                aimedHit = hit;
+            }
             share *= pierce.falloff();
         }
-        return critical;
+        return aimedHit;
     }
 
-    /** A bounce hits the nearest enemy beside the last one struck that this shot has not hit yet. */
+    /**
+     * A bounce hits the nearest enemy beside the last one struck that this shot has not hit yet. Each
+     * bounce is aimed, so each may be dodged; the next bounce goes on from the enemy that dodged.
+     */
     private void ricochet(EnemyMob from, int bounces, float share, float reachCells) {
-        SniperShot bounce = this.shotInFlight.withDamageFactor(share);
+        SniperShot bounce = this.shotInFlight.withDamageFactor(share).aimed();
         float reach = reachCells * this.context.getBoard().scale();
         List<EnemyMob> struck = new ArrayList<>(List.of(from));
         EnemyMob last = from;

@@ -17,7 +17,8 @@ public enum EffectKind {
     BURN(EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).resistedBy(EnemyStat.BURN_RESIST).asAPool()
             .tagged(EffectTag.BURNING)),
     FREEZE(EffectRule.of(EffectCategory.HARD_CC).resistedBy(EnemyStat.FREEZE_RESIST)
-            .perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f)).tagged(EffectTag.STOPS)),
+            .perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f)).perStack(EnemyStat.AGILITY, StatModifier.setTo(0f))
+            .tagged(EffectTag.STOPS)),
     SHIELD(EffectRule.of(EffectCategory.RESTORATIVE)),
     INVISIBLE(EffectRule.of(EffectCategory.STEALTH).perStack(EnemyStat.STEALTH, StatModifier.setTo(1f))),
     HEAL(EffectRule.of(EffectCategory.RESTORATIVE)),
@@ -52,7 +53,7 @@ public enum EffectKind {
             .perStack(EnemyStat.RESILIENCE, -10f).tagged(EffectTag.SPREADS_WITH_CURSE)),
     /** Stops the enemy and its abilities, like a freeze, but keeps its burn and its chill. */
     DAZED(EffectRule.of(EffectCategory.HARD_CC).perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f))
-            .tagged(EffectTag.STOPS)),
+            .perStack(EnemyStat.AGILITY, StatModifier.setTo(0f)).tagged(EffectTag.STOPS)),
     /** Each stack makes the Splash's blasts hit it harder; it is the Splash's own rhythm, not a stat. */
     SATURATED(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3)),
     /** The next hit from another tower discharges it for extra magic, credited to the tower that charged it. */

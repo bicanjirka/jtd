@@ -9,8 +9,8 @@ import td.stat.StatView;
 import td.util.RandomSource;
 
 /**
- * The one formula a hit lands by: the crit roll (hits only), then penetration, armor or magic resist, plating
- * and damage taken. Computed in float and rounded once; a shield and the cap at health come after, on the mob.
+ * The one formula a hit lands by: the dodge roll (aimed hits only), the crit roll (hits only), then penetration,
+ * armor or magic resist, plating and damage taken. Computed in float and rounded once; a shield and the cap at health come after, on the mob.
  */
 public final class HitResolution {
 
@@ -46,6 +46,25 @@ public final class HitResolution {
             amount *= stats.value(EnemyStat.PERIODIC_DAMAGE_TAKEN);
         }
         return new Damage(Math.round(amount), incoming.type(), critical);
+    }
+
+    /**
+     * Whether {@code stats}' agility dodges a hit from {@code attacker}, before anything else about the hit
+     * is decided. Only an aimed hit can be dodged, and never a guaranteed crit. The random source is only
+     * drawn from when the chance is above zero, so a target without agility leaves the sequence untouched.
+     */
+    public static boolean dodges(AttackProfile attacker, StatView stats, RandomSource random) {
+        if (!attacker.aimed() || attacker.delivery() != Delivery.HIT || attacker.guaranteedCrit()) {
+            return false;
+        }
+        float chance = dodgeChance(stats.value(EnemyStat.AGILITY) - attacker.accuracy());
+        return chance > 0f && random.nextDouble() < chance;
+    }
+
+    /** {@code agility / (agility + 100)}: each point matters less than the one before, and it never reaches 1. */
+    public static float dodgeChance(float agility) {
+        float effective = Math.max(0f, agility);
+        return effective / (effective + 100f);
     }
 
     /** Whether a hit from {@code attacker} would roll a critical against {@code stats}. */

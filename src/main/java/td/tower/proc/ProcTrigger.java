@@ -11,7 +11,12 @@ public sealed interface ProcTrigger {
         return false;
     }
 
-    /** "On hit", "On crit", "On kill", "Every 3rd shot". */
+    /** Whether it fires when the target dodges an attack, which no other trigger sees. */
+    default boolean firesOnDodge() {
+        return false;
+    }
+
+    /** "On hit", "On crit", "On kill", "On dodge", "Every 3rd shot". */
     String describe();
 
     /** Every landed attack. */
@@ -50,6 +55,19 @@ public sealed interface ProcTrigger {
         @Override
         public String describe() {
             return "On kill";
+        }
+    }
+
+    /** An aimed attack the target dodged. */
+    record OnDodge() implements ProcTrigger {
+        @Override
+        public boolean firesOnDodge() {
+            return true;
+        }
+
+        @Override
+        public String describe() {
+            return "On dodge";
         }
     }
 

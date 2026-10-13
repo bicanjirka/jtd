@@ -193,7 +193,8 @@
   or flips a capability is data on its node: `withProc`, `withHitBonus`, `withTargeting` (the first
   owned node that sets one decides), `withCapability`. Every attacking tower applies
   `hitAdjustment(...)` to each hit it computes and reports each landed attack with `report(...)` after
-  its perks settled it; hit bonuses add.
+  its perks settled it; hit bonuses add. A hit aimed at one enemy is `asAimed()` and lands through `landHit`;
+  a dodge is reported with `reportDodge(...)` instead, never settled by perks that answer a landed hit.
 - Never check `owns(...)` in tower code except for the base chain; Checkstyle rejects it.
 - A node that adds a mechanic brings a perk, in the tower's own package. A static `PerkCatalogue`
   says which perks each node brings, and the tower's `OwnedPerks` builds its own. Perks run in

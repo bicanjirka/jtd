@@ -229,11 +229,22 @@ public abstract class AbstractTower implements Tower {
 
     /** {@link #dealDamage(EnemyMob, Damage)} with a one-off attack profile, for a special shot. */
     protected boolean dealDamage(EnemyMob enemy, Damage damage, AttackProfile attacker) {
+        return this.landHit(enemy, damage, attacker).critical();
+    }
+
+    /**
+     * {@link #dealDamage(EnemyMob, Damage, AttackProfile)} for a tower that needs the whole result: an aimed
+     * hit can be dodged, and a dodge is no hit at all, so it withers nothing and credits nothing.
+     */
+    protected HitResult landHit(EnemyMob enemy, Damage damage, AttackProfile attacker) {
         if (this.removed) {
-            return false;
+            return HitResult.none();
         }
         boolean wasAlive = !enemy.isDead();
         HitResult result = enemy.takeHit(damage, attacker.withOrigin(this.origin));
+        if (result.dodged()) {
+            return result;
+        }
         this.wither(enemy, attacker);
         if (wasAlive) {
             this.damageDealt += result.credited();
@@ -247,7 +258,7 @@ public abstract class AbstractTower implements Tower {
                 this.runKillHook(enemy);
             }
         }
-        return result.critical();
+        return result;
     }
 
     /** Withering Field: the first hit in every interval applies a stack of Vulnerable; periodic damage is no hit. */
@@ -434,6 +445,15 @@ public abstract class AbstractTower implements Tower {
             return;
         }
         ProcRunner.onOutcome(procs, new AttackOutcome(target, kind, critical, killed), this.procActions);
+    }
+
+    /** Tells the procs that {@code target} dodged an attack of {@code kind}: only an on-dodge proc fires. */
+    protected final void reportDodge(EnemyMob target, HitKind kind) {
+        List<Proc> procs = this.procs();
+        if (procs.isEmpty()) {
+            return;
+        }
+        ProcRunner.onDodge(procs, new AttackOutcome(target, kind, false, false), this.procActions);
     }
 
     private List<HitBonus> hitBonuses() {

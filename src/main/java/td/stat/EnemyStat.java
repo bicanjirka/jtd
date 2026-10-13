@@ -25,6 +25,8 @@ public enum EnemyStat implements StatKey {
      * 1% to both; 100 is crit-immune.
      */
     RESILIENCE(0f, -100f, 100f),
+    /** An aimed hit misses with chance {@code agility / (agility + 100)}, after the attacker's accuracy. */
+    AGILITY(0f, 0f, Float.MAX_VALUE),
     /** Multiplies damage that ticks (a burn, a poison, a field), whatever its type. */
     PERIODIC_DAMAGE_TAKEN(1f, 0.1f, Float.MAX_VALUE),
     /** Heals and shields the enemy receives are scaled by {@code max(0, 1 + spirit / 100)}. */

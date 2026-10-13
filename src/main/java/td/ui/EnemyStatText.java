@@ -3,6 +3,7 @@ package td.ui;
 import td.damage.DamageUnits;
 import td.effect.EffectKind;
 import td.enemy.EnemyInspection;
+import td.enemy.HitResolution;
 import td.enemy.TraitLine;
 import td.stat.EnemyStat;
 import td.ui.render.InfoSheet;
@@ -133,6 +134,8 @@ final class EnemyStatText {
             case PHYSICAL_DAMAGE_TAKEN -> new StatText("Physical taken", SheetNumbers.percent(value));
             case MAGIC_DAMAGE_TAKEN -> new StatText("Magic taken", SheetNumbers.percent(value));
             case RESILIENCE -> resilienceText(value);
+            case AGILITY -> new StatText("Agility", Math.round(value) + ", dodges "
+                    + SheetNumbers.percent(HitResolution.dodgeChance(value)));
             case PERIODIC_DAMAGE_TAKEN -> new StatText("Over time taken", SheetNumbers.percent(value));
             case HEALING_RECEIVED -> new StatText("Heals received", SheetNumbers.percent(value));
             case SPIRIT -> new StatText("Spirit", SheetNumbers.signedPercent(value / 100f) + " heals" + debuffPaceText(value));

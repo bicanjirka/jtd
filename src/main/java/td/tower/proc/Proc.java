@@ -28,6 +28,10 @@ public record Proc(ProcTrigger trigger, List<ProcCondition> conditions, ProcPayl
         return new Proc(new ProcTrigger.OnKill(), List.of(), payload);
     }
 
+    public static Proc onDodge(ProcPayload payload) {
+        return new Proc(new ProcTrigger.OnDodge(), List.of(), payload);
+    }
+
     public static Proc everyNthShot(int n, ProcPayload payload) {
         return new Proc(new ProcTrigger.EveryNthShot(n), List.of(), payload);
     }

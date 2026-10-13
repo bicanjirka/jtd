@@ -42,6 +42,7 @@ final class MobMoments {
     enum Moment {
         DAMAGE_TAKEN,
         CRITICAL_HIT,
+        DODGE,
         /** Recorded once: a dead mob takes no further hits. */
         DEATH,
         ABILITY_SPAWN

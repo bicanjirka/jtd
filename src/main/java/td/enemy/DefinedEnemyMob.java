@@ -74,6 +74,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private int ticksSinceSpawn;
     // Counts from spawn, so a fresh mob does not trivially satisfy an idle threshold.
     private int ticksSinceLastHit;
+    private int dodges;
     // The part of a heal too small to land as a whole unit this tick; paid out once it adds up.
     private float regenCarry;
 
@@ -447,16 +448,26 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     /**
      * Applies a hit through {@link HitResolution}, paying the bounty if it kills. A no-op on a dead
-     * mob, so only the first of several same-tick hits counts as the kill.
+     * mob, so only the first of several same-tick hits counts as the kill. A dodged hit changes nothing
+     * but the dodge count: it is not even a hit for the idle timer.
      *
      * @return what reached health, capped at remaining health so overkill is not credited, and what a
      * shield absorbed; {@link HitResult#none()} if the mob is dead or untargetable
      */
     @Override
     public HitResult takeHit(Damage damage, AttackProfile attacker) {
+        AttackProfile attack = attacker;
+        if (this.validTarget()) {
+            attack = this.spendMark(attacker);
+            if (HitResolution.dodges(attack, this.stats, this.gameWorld.random())) {
+                this.dodges++;
+                this.moments.markPending(Moment.DODGE);
+                return HitResult.dodge();
+            }
+        }
         this.ticksSinceLastHit = 0;
-        HitResult result = this.land(damage, attacker);
-        this.discharge(attacker, result.landed());
+        HitResult result = this.land(damage, attack);
+        this.discharge(attack, result.landed());
         // Health-dependent traits re-derive from the new health.
         this.stats.invalidate();
         return result;
@@ -469,7 +480,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         }
         HitResult result = HitResult.none();
         if (this.validTarget()) {
-            Damage mitigated = HitResolution.resolve(damage, this.spendMark(attacker), this.stats, this.gameWorld.random());
+            Damage mitigated = HitResolution.resolve(damage, attacker, this.stats, this.gameWorld.random());
             boolean bypasses = attacker.ignoresShields() || (mitigated.critical() && attacker.critsPierceShields());
             int absorbed = bypasses ? 0 : this.activeEffects.absorb(mitigated.type(), mitigated.amount());
             if (absorbed > 0) {
@@ -544,6 +555,11 @@ public final class DefinedEnemyMob implements EnemyMob {
      */
     public int ticksSinceCriticalHit(int gameTime) {
         return this.moments.ticksSince(Moment.CRITICAL_HIT, gameTime);
+    }
+
+    /** {@code -1} if it never dodged. Captured like {@link #ticksSinceCriticalHit}. */
+    public int ticksSinceDodge(int gameTime) {
+        return this.moments.ticksSince(Moment.DODGE, gameTime);
     }
 
     /** {@code -1} if never. Captured like {@link #ticksSinceCriticalHit}. */

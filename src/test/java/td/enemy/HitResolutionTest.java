@@ -188,4 +188,52 @@ class HitResolutionTest {
         org.assertj.core.api.Assertions.assertThat(ticking.amount()).isEqualTo(1500);
         org.assertj.core.api.Assertions.assertThat(hit.amount()).isEqualTo(1000);
     }
+    @Test
+    void dodgeChanceFollowsTheArmorCurveAndNeverReachesCertainty() {
+        assertThat(HitResolution.dodgeChance(25f)).isEqualTo(0.2f);
+        assertThat(HitResolution.dodgeChance(100f)).isEqualTo(0.5f);
+        assertThat(HitResolution.dodgeChance(1_000_000f)).isLessThan(1f);
+        assertThat(HitResolution.dodgeChance(-50f)).isZero();
+    }
+
+    @Test
+    void onlyAnAimedHitCanBeDodged() {
+        StatView agile = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.AGILITY, 100f));
+
+        assertThat(HitResolution.dodges(AttackProfile.none().asAimed(), agile, () -> 0.49)).isTrue();
+        assertThat(HitResolution.dodges(AttackProfile.none().asAimed(), agile, () -> 0.51)).isFalse();
+        assertThat(HitResolution.dodges(AttackProfile.none(), agile, () -> 0.0)).isFalse();
+        assertThat(HitResolution.dodges(AttackProfile.none().asAimed().asPeriodic(), agile, () -> 0.0)).isFalse();
+    }
+
+    @Test
+    void accuracyCancelsAgilityPointForPointAndNeverPastZero() {
+        StatView agile = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.AGILITY, 100f));
+
+        boolean halfCancelled = HitResolution.dodges(AttackProfile.none().asAimed().withAccuracy(50f), agile, () -> 0.32);
+        boolean overCancelled = HitResolution.dodges(AttackProfile.none().asAimed().withAccuracy(500f), agile, () -> 0.0);
+
+        assertThat(halfCancelled).isTrue();
+        assertThat(overCancelled).isFalse();
+    }
+
+    @Test
+    void aGuaranteedCritIsNeverDodged() {
+        StatView agile = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.AGILITY, 100f));
+
+        assertThat(HitResolution.dodges(AttackProfile.none().asAimed().withGuaranteedCrit(), agile, () -> 0.0)).isFalse();
+    }
+
+    @Test
+    void aTargetThatCannotDodgeDrawsNothingFromTheRandomSource() {
+        StatView clumsy = stats(BaseStats.defaults(EnemyStat.class));
+        int[] draws = {0};
+
+        HitResolution.dodges(AttackProfile.none().asAimed(), clumsy, () -> {
+            draws[0]++;
+            return 0.0;
+        });
+
+        assertThat(draws[0]).isZero();
+    }
 }
