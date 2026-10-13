@@ -31,6 +31,9 @@ Enemies come after, from `docs/ideas/enemies-brainstorm.md`.
 balance report with a check for one change, to tune the placeholder entries below with. Its first
 findings are in the doc.
 
+`FEATURE-obelisk-support-role.md` (draft): the Obelisk becomes a support tower, after the balance tools
+learn to price support; it answers that doc's Obelisk finding.
+
 `docs/plans/stat-driven-buffs.md` (phases 1 to 9) and `FEATURE-agility-and-dodge.md` are implemented.
 
 Every earlier feature request has shipped (see each doc's own status line) except the draft
