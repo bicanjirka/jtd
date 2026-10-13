@@ -27,6 +27,9 @@ The tower rework, in this order (each needs the ones before it):
 
 Enemies come after, from `docs/ideas/enemies-brainstorm.md`.
 
+`FEATURE-balance-verification.md` (draft): a headless player and a check for one change, to tune the
+placeholder entries below with.
+
 `docs/plans/stat-driven-buffs.md` (phases 1 to 9) and `FEATURE-agility-and-dodge.md` are implemented.
 
 Every earlier feature request has shipped (see each doc's own status line) except the draft
