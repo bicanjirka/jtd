@@ -26,6 +26,7 @@ import td.ui.render.EnemyRingDraw;
 import td.ui.render.HexGlyph;
 import td.ui.render.HexRuneDraw;
 import td.ui.render.IceCrystalDraw;
+import td.ui.render.MissMarkDraw;
 import td.ui.render.Palette;
 import td.ui.render.PulseDirection;
 import td.ui.render.RankBadge;
@@ -306,6 +307,28 @@ class EnemyFrameBuilderTest {
 
         assertThat(builder.buildOverlays()).filteredOn(HexRuneDraw.class::isInstance)
                 .singleElement().extracting(draw -> ((HexRuneDraw) draw).glyph()).isEqualTo(HexGlyph.DOOM);
+    }
+
+    @Test
+    void anEnemyThatJustDodgedYieldsAMissMarkBesideItAndNoCritSpark() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(() -> 0.0, 1, 1001, 1001);
+        context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(105, 5))));
+        EnemyMob courier = EnemyFactory.getEnemy("courier", context, 0, 50, 3, Rank.GRUNT);
+        courier.takeHit(Damage.physical(10), AttackProfile.critChance(1f).asAimed());
+        courier.doTick(1); // captures the dodge
+
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(1, 0.0);
+        courier.accept(builder);
+        EnemyBodyDraw body = (EnemyBodyDraw) builder.build().getFirst();
+
+        assertThat(builder.buildCritSparks()).isEmpty();
+        assertThat(builder.buildOverlays()).filteredOn(MissMarkDraw.class::isInstance).singleElement()
+                .satisfies(draw -> {
+                    MissMarkDraw miss = (MissMarkDraw) draw;
+                    assertThat(miss.fadeProgress()).isZero();
+                    assertThat(miss.x()).isGreaterThan(body.x());
+                    assertThat(miss.y()).isEqualTo(body.y());
+                });
     }
 
     @Test

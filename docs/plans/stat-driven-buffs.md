@@ -1,6 +1,6 @@
 # Plan: Stat-driven buffs, debuffs and upgrades
 
-**Status:** planned, 2026-10-12; revised after review the same day. Not started.
+**Status:** planned, 2026-10-12; revised after review the same day. Implemented, phases 1 to 9.
 **Follow-up:** `docs/features/FEATURE-agility-and-dodge.md` is implemented after this plan, on top of
 it. Do not start it here.
 

@@ -20,7 +20,8 @@ These were decided in the tower rounds, but only an enemy makes them matter.
 - **The Jammer in real waves.** Disruption exists and no level sends the Jammer. The Aura's half
   disruption at base and Broadcast II's quarter are pointless until it shows up.
 - **Haste** (an enemy-side speed-up). Anchored (Pulse's Undertow) and Hex of Inversion counter it,
-  and the enemy-stats request deferred agility until a haste exists.
+  and the enemy-stats request deferred agility until a haste exists. A short self-sprint exists now
+  (the Skirmisher's Sprinting after a dodge); agility became dodge (`FEATURE-agility-and-dodge.md`).
 - **High-spirit enemies** (a Priest, a Zealot) that shake debuffs off fast: spirit now paces every
   debuff, so they are the enemy that asks for poison, Soul Drain or Toll.
 - **A typed shield's first user** (`TODO.md`): a physical-only shield that asks for magic or a

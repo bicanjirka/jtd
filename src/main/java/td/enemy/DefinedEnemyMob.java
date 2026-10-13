@@ -557,6 +557,11 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.moments.ticksSince(Moment.CRITICAL_HIT, gameTime);
     }
 
+    /** How many hits it has dodged. */
+    int dodges() {
+        return this.dodges;
+    }
+
     /** {@code -1} if it never dodged. Captured like {@link #ticksSinceCriticalHit}. */
     public int ticksSinceDodge(int gameTime) {
         return this.moments.ticksSince(Moment.DODGE, gameTime);

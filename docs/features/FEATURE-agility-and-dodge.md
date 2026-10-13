@@ -1,6 +1,7 @@
 # Feature Request: Agility and Dodge
 
-**Status:** requested 2026-10-12. Implement after `docs/plans/stat-driven-buffs.md` has shipped.
+**Status:** implemented 2026-10-13, on top of `docs/plans/stat-driven-buffs.md`. "As built" below
+records the choices made while implementing; the "Current state" section describes the game before it.
 
 ## Summary
 
@@ -161,6 +162,23 @@ surely and hitting everything.
       the Courier.
 11. A dodge shows as a small grey "miss" rising where the hit would have landed. The inspector
     shows agility as a stat row with its dodge chance, and counts dodges.
+
+## As built
+
+- **Numbers.** The Courier has 25 agility (20%). The Skirmisher (`skirmisher`, a diamond, in no
+  level's waves yet) has 40 at Grunt, 50 at Soldier, 60 at Veteran and 80 at Boss; from Soldier a
+  dodge makes it Sprinting (+60% speed for 1.5 s, a new buff Anchored still holds); from Elite it is
+  Evasive when hurt (up to +60, +80 at Boss). Each Steady Aim stack adds 10 accuracy from Attune.
+- **Marks and guaranteed crits.** A guaranteed crit is never dodged, which is how Marked makes the
+  next hit undodgeable; Fifth Shot and Patience's shot are sure hits too.
+- **Patience** is on Marksman's Eye I, Frenzy's dodge trigger on Focused Optics II, each an on-dodge
+  proc ("On dodge"). On-dodge is a proc trigger any tower can use.
+- **What a dodge leaves alone.** A dodged Sniper shot is not settled or reacted to (Executioner, a crit
+  streak and Ricochet ignore it) and still counts as a Steady Aim shot for the purpose gate, so agile
+  waves can't stall it. A dodged Sonar hit still counts for the ping and lets Wide Band reveal and
+  expose; Mark on Sweep and Resonant Crack skip it.
+- **Readability.** The miss mark sits right of the body, since the rank badge and effect markers fill
+  the space above it. The live inspector adds a "Dodged" row with the count.
 
 ## Open questions
 

@@ -215,6 +215,7 @@ public class PreviewBoard {
                 case TARRED -> Effect.tarred(ticks, d -> { });
                 case BLEEDING -> Effect.bleeding(1, ticks, d -> { });
                 case SOULFIRE -> Effect.soulfire(Damage.magic(1), ticks, d -> { });
+                case SPRINTING -> Effect.sprinting(ticks, d -> { });
                 case SCORCHED, SICKENED -> throw new IllegalArgumentException(kind + " is earned by burn and poison");
             };
             mob.applyEffect(effect);

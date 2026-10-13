@@ -20,6 +20,7 @@ import td.ui.render.EnemyRingDraw;
 import td.ui.render.HexGlyph;
 import td.ui.render.HexRuneDraw;
 import td.ui.render.IceCrystalDraw;
+import td.ui.render.MissMarkDraw;
 import td.ui.render.Palette;
 import td.ui.render.PulseDirection;
 import td.ui.render.RankBadge;
@@ -57,6 +58,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     static final int CRIT_SPARK_DURATION_TICKS = 8;
     /** Fixed, so a crit looks the same on every enemy. */
     private static final float CRIT_SPARK_FIXED_SCALE = 12f;
+    static final int MISS_MARK_DURATION_TICKS = 12;
     static final int CLOAK_FADE_DURATION_TICKS = 8;
     static final int FLICKER_HALF_PERIOD_TICKS = 3;
     /**
@@ -231,6 +233,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
                     badgeFor(mob.getRank()), this.cloakProgress(mob), this.flicker(mob)));
             this.markers(mob, x, y, scale);
             this.critSpark(mob, x, y);
+            this.missMark(mob, x + scale, y);
             this.overlays(mob, x, y, scale, supportAura);
             this.pulses(mob, x, y, scale);
             this.traitMarkers(x, y, scale, traits);
@@ -315,6 +318,14 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         if (ticksSince >= 0 && ticksSince <= CRIT_SPARK_DURATION_TICKS) {
             float fadeProgress = (float) ticksSince / CRIT_SPARK_DURATION_TICKS;
             this.critSparkDraws.add(new CritSparkDraw(Palette.CRIT_SPARK, x, y, CRIT_SPARK_FIXED_SCALE, fadeProgress));
+        }
+    }
+
+    /** Beside the body, since the badge and the effect markers fill the space above it. */
+    private void missMark(DefinedEnemyMob mob, float rightOfBody, float y) {
+        int ticksSince = mob.ticksSinceDodge(this.gameTime);
+        if (ticksSince >= 0 && ticksSince <= MISS_MARK_DURATION_TICKS) {
+            this.overlayDraws.add(new MissMarkDraw(rightOfBody, y, (float) ticksSince / MISS_MARK_DURATION_TICKS));
         }
     }
 
