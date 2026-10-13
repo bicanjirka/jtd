@@ -73,7 +73,8 @@ tower loadout and no human input, then prints lives lost, ticks-to-clear per wav
 tower's kills/damage dealt. `td.PurchaseHarness` compares purchases instead: on a level, with an army of
 one tower of every type, it reports the lives saved per 100 credits by another copy of a tower and by each
 upgrade node, over many seeded runs (`mvn -q compile exec:java -Dexec.mainClass=td.PurchaseHarness
--Dexec.args="2 12 sniper"`: level, seeds, tower).
+-Dexec.args="2 12 sniper 4"`: level, seeds, tower, and how many of each tower the base army has; a bigger
+army prices "another copy" at what a real build pays).
 
 ```bash
 mvn -q package -DskipTests
