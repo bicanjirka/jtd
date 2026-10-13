@@ -133,7 +133,7 @@ SPECIAL  a set per chain
 **Specials.** Chain A's set is speed, crowds and bosses; chain B's is the team, the rhythm and the
 combo with freezes.
 
-- **Momentum** (exists): a crit charges the next shot to x5 damage that ignores armor and plating;
+- **Momentum** (exists): a crit charges the next shot to x3 damage that ignores armor and plating;
   a kill by it gives +100% fire rate for 5 s. Aims at the highest rank.
 - **Ricochet** (new): a crit bounces to the nearest enemy within 1.5 cells for 60%, up to 3
   bounces; each bounce can crit. The Sniper's swarm answer. Aims at the enemy with most neighbours
@@ -255,8 +255,8 @@ enemy; the second beam (Twin Beam); a blue beam once it deals magic.
   chill) and so every existing balance number; the high-spirit enemies that would show it off
   are in the enemies brainstorm, not built.
 - **The crit ceiling.** The Sniper's crit damage can reach about x3.0 (x2.0, Tradecraft's streak
-  +0.5, Aura's Keen Edge +0.5 in feature 7), and Momentum multiplies a shot by 5: about x15 in
-  one hit. Momentum's x5 may need to become x3 (balance pass).
+  +0.5, Aura's Keen Edge +0.5 in feature 7), and Momentum multiplied a shot by 5: about x15 in
+  one hit. It is x3 now (about x9), which cost the top builds nothing in the build harness.
 - **Fire rate on chain A:** +25% under Steady Aim, doubled in Frenzy (fire-rate bonuses multiply)
   is x2.5 for three shots. A timed self-buff never stacks today: Momentum's kill burst replaces a
   running Frenzy instead of multiplying with it. Keep that.

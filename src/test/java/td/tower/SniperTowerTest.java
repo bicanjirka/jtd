@@ -503,7 +503,7 @@ class SniperTowerTest {
     }
 
     @Test
-    void momentumTurnsTheShotAfterACritIntoAFivefoldShotThatIgnoresArmorAndPlating() {
+    void momentumTurnsTheShotAfterACritIntoAThreefoldShotThatIgnoresArmorAndPlating() {
         GameWorld world = boardWorld();
         SniperTower tower = awakenedSniper(world, 20);
         tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics"));
@@ -513,7 +513,7 @@ class SniperTowerTest {
 
         this.fireShots(tower, target, 2);
 
-        assertThat(target.hits().get(1).amount()).isEqualTo(5 * target.hits().get(0).amount());
+        assertThat(target.hits().get(1).amount()).isEqualTo(3 * target.hits().get(0).amount());
         assertThat(target.attackers().get(0).armorPenetration()).isZero();
         assertThat(target.attackers().get(1).armorPenetration()).isEqualTo(1f);
         assertThat(target.attackers().get(1).platingPenetration()).isEqualTo(1f);

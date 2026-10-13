@@ -130,7 +130,7 @@ Transcendent opens head IV, extra IV, Range III and special slot 2.
 - Refunding, respeccing or swapping a bought special.
 - Player-chosen target priority, including click-to-focus. Each tower aims by a built-in strategy
   that fits its job; an upgrade may change it.
-- The buy-once, per-type global upgrade (`TODO.md`).
+- The buy-once, per-type global upgrade (dropped).
 - Gates (feature 2): until it lands, the new nodes are price only and today's kill and damage gates
   stay on today's nodes.
 

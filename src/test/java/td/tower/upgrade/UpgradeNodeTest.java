@@ -70,7 +70,7 @@ class UpgradeNodeTest {
     @Test
     void momentumSaysWhomItAimsAtAndWhatACritAndAKillGrant() {
         assertThat(sniperNode("Momentum").bonuses()).containsExactly(new UpgradeBonus("Targets", "highest rank"),
-                new UpgradeBonus("On crit, shots", "next shot: Damage +400%, Armor penetration +100%, Plating penetration +100%"),
+                new UpgradeBonus("On crit, shots", "next shot: Damage +200%, Armor penetration +100%, Plating penetration +100%"),
                 new UpgradeBonus("On kill, shots", "5 s: Attack speed +100%"));
     }
 

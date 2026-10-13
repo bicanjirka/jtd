@@ -5,8 +5,7 @@ per-tower bounty multiplier this document's V1 Scope settled on. The Power tower
 `td.tower.AuraTower`, not `TowerAura` as the Decisions-made and V1-Scope sections below originally
 said — corrected there directly rather than left wrong, since it names a real class. The global
 buy-once-for-all-present-and-future upgrade and the any-kill-in-aura bounty effect, both deferred
-to a later phase below, are now tracked as open work in `TODO.md` rather than left only in this
-document.
+to a later phase below, were later dropped.
 
 **Priority: Phase 1 — build first.** Of the three feature requests, this is the most
 genre-standard, highest player-value mechanic and the one with the least new-system risk:
@@ -241,8 +240,8 @@ worth recording alongside the decisions below:
   *Superseded by `FEATURE-tower-info-rows.md`: selling now refunds 75% of the tower and its
   upgrades together.*
 - The global, buy-once-for-all-present-and-future upgrade and the any-kill-in-aura bounty
-  effect are both **deferred to a later phase**. Both stay documented above as
-  future-feature requests rather than dropped, since they're real ideas worth building
+  effect are both **dropped**. Both stay documented above as ideas that were
+  considered, since they're real ideas worth building
   eventually — just not part of a first version, given the new persistent-state and
   cross-package coupling each would require. A first version targets the four per-instance
   enablement conditions and the per-tower-only bounty multiplier.
