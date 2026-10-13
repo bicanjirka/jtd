@@ -146,8 +146,8 @@ Aura's info rows.
     tower placed for its job meets its purpose gate no later than its XP reaches head III. A deed
     rate far from feature 2's estimate changes that tower's threshold, never the rule.
 - **Watch list** carried from the design rounds:
-  - the crit ceiling: x2.0 base, Tradecraft +0.5, Keen Edge +0.5, then Momentum's x5 (x15 in one
-    hit; Momentum may need x3);
+  - the crit ceiling: x2.0 base, Tradecraft +0.5, Keen Edge +0.5, then Momentum's x3 (x9 in one
+    hit; it was x5);
   - Saturation at +5% a stack may feel flat; raise Saturation, not the chains;
   - Arc on tight clumps before Lightning Rod (Ground Strike was the rejected fix);
   - whether the Hexer feels slow before Awaken (Brew's extra targets could move to I);

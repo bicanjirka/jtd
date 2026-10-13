@@ -117,37 +117,6 @@ implementation. There is no way to add or edit a level without a code change and
 
 ## Tower features
 
-### A global, buy-once upgrade for a whole tower type doesn't exist
-
-`FEATURE-tower-upgrades.md` named a second kind of upgrade alongside the four per-instance ones
-that shipped: bought once, it retroactively applies to every tower of a type already on the
-field and to every one built afterward. Deferred because nothing today reaches back into an
-already-built tower to change its base behavior, and nothing persists a per-type flag across a
-tower purchase — both real, new mechanisms, not a variation on the per-instance model.
-
-- **Where:** a new field on `GameWorld` (or wherever per-level persistent state would live),
-  consulted by `TowerFactory` at construction and by something that re-walks `TowerRoster.all()`
-  at purchase time.
-- **Approach:** see `FEATURE-tower-upgrades.md`'s "Architectural implications" section for the
-  concrete blockers (level-teardown/reload correctness in particular — a purchased global
-  upgrade must not leak into the next level or the next run, the same discipline
-  `TowerRoster.clear()`/`EnemyRoster.clear()` already follow). Settle where that persistent state
-  lives before writing the retroactive-apply logic.
-
-### Bounty for any kill inside an aura, not just the aura tower's own kills
-
-Also named and deferred in `FEATURE-tower-upgrades.md`: an aura that pays out bonus bounty for
-*any* kill scored inside its radius, not only the aura-owning tower's own. `EconomyDelta.kill`
-is computed once, inside the dying enemy's own kill path, with no notion of which tower killed
-it or which auras cover that location — a new coupling between `td.enemy` and `td.tower` that
-the codebase has deliberately avoided so far (towers query enemies, never the reverse).
-
-- **Where:** `DefinedEnemyMob`'s kill/death path (`td.enemy`), `EconomyDelta.kill` (`td.economy`).
-- **Approach:** see `FEATURE-tower-upgrades.md`'s "Architectural implications" and "Risks and
-  costs" sections. Either pass the killing tower's position outward from the death path so an
-  aura-owning tower can be consulted, or add a new aura-query step in the kill path — both are a
-  real, new cross-package coupling and should be designed deliberately, not bolted on.
-
 ### Upgrade-tree node numbers are unbalanced placeholders
 
 Every tower's `UpgradeNode`s carry real prices and stat bonuses, but none of them have been played
@@ -268,14 +237,18 @@ single hit), making the Warden's armor mechanically inert regardless of which to
 
 Every tower crits for x1.5 (`AttackProfile.DEFAULT_CRIT_MULTIPLIER`) except the Sniper, born with
 5% at x2.0. Crit damage bonuses add to the multiplier, so the Sniper's crit reaches about x3.0
-(Tradecraft's streak +0.5, the Aura's Keen Edge +0.5 once feature 7 lands), and Momentum
-multiplies a charged shot by 5 on top: about x15 in one hit. The Warden's on-crit-survived shield
-(30% for 100 ticks) is from the first crit pass. On `td.BalanceHarness`'s default loadout (two
-Snipers and a Splash on Curly Path, 5000 ticks) the reworked Sniper clears 5 waves where the old
-one cleared 4, its lead copy dealing 194.2k damage for 22 kills against 158.3k for 20.
+(Tradecraft's streak +0.5, the Aura's Keen Edge +0.5), and Momentum multiplies a charged shot by 3
+on top: about x9 in one hit. Momentum was x5 (about x15); `td.BuildHarness` (40 seeds, 4 Snipers on
+Zigzag Path and Twisted Hourglass) showed the best builds saving the same lives with it at x3 or x5
+(Railgun with Momentum 9.6 and 10.5, Railgun with Headhunter 9.2), while Momentum on its own went from
+6.6 to 4.1 lives saved on Twisted Hourglass, still the best special by far. The Warden's
+on-crit-survived shield (30% for 100 ticks) is from the first crit pass.
 
+- Hollow Point, Shatter Shot and Fifth Shot save nothing or lose lives against plain Snipers on every level, and
+  Ricochet and Headhunter barely move it; Momentum is the one special that matters. That is a bigger gap than
+  Momentum's multiplier.
 - **Where:** `AttackProfile.DEFAULT_CRIT_MULTIPLIER`, `SniperTower.CRIT_CHANCE` and
-  `CRIT_MULTIPLIER`, `MomentumPerk.DAMAGE_FACTOR`, `CritStreakPerk`, and
+  `CRIT_MULTIPLIER`, the Momentum node in `SniperTower`, `CritStreakPerk`, and
   `WardenEnemy`'s `OnCriticalHitTakenTrigger` ability.
-- **Approach:** tune in the feature 7 balance pass, with Keen Edge in play. Try Momentum at x3
-  first; every number here is a named constant.
+- **Approach:** raise the five other Sniper specials until a build with each saves about what Momentum's does,
+  checking each with `td.BuildHarness`; every number here is a named constant.

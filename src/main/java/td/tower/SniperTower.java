@@ -156,7 +156,7 @@ public final class SniperTower extends AbstractTower {
     private static final UpgradeNode MOMENTUM = UpgradeTier.SPECIAL.node("sniper.special.momentum", "Momentum", PRICE)
             .withTargeting(TargetPriority.HIGHEST_RANK)
             .withProc(Proc.onCrit(new ProcPayload.GrantStatus(TowerStatus.nextShots("sniper.momentum.charge", 1,
-                    TowerModifiers.damageTimes(5f).plus(TowerModifiers.armorPenetration(1f))
+                    TowerModifiers.damageTimes(3f).plus(TowerModifiers.armorPenetration(1f))
                             .plus(TowerModifiers.platingPenetration(1f))))).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
             .withProc(Proc.onKill(new ProcPayload.GrantStatus(TowerStatus.timed("sniper.momentum.haste",
                     TowerModifiers.attackSpeed(1f), 100))).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))

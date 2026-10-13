@@ -92,7 +92,7 @@ they aren't lost.
   - 💬
 - [ ] 🟢 **Early call bonus**: starting the next wave while the current one is alive pays credits.
   - 💬
-- [ ] 🔴 **Global upgrades** (the buy-once, per-type upgrade in `TODO.md`): an "Academy" menu.
+- [ ] 🔴 **Global upgrades** (a buy-once, per-type upgrade; dropped from `TODO.md`): an "Academy" menu.
   - 💬
 - [ ] 🟡 **Overheat**: towers that fire nonstop for 20 s lose fire rate until they rest.
   - 💬

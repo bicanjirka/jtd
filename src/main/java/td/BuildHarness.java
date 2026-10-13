@@ -85,7 +85,7 @@ public final class BuildHarness {
         System.out.println("-- each node alone, with everything that leads to it --");
         List<Row> alone = new ArrayList<>();
         for (UpgradeNode node : nodes) {
-            alone.add(this.row(node.displayName() + " (" + node.id() + ")", List.of(node), tree));
+            this.row(node.displayName() + " (" + node.id() + ")", List.of(node), tree).ifPresent(alone::add);
         }
         print(alone, baseline);
 
@@ -104,7 +104,7 @@ public final class BuildHarness {
                     }
                     String label = head.displayName() + (extra == null ? "" : " + " + extra.displayName())
                             + (special == null ? "" : " + " + special.displayName());
-                    combos.add(this.row(label, targets, tree));
+                    this.row(label, targets, tree).ifPresent(combos::add);
                 }
             }
         }
@@ -139,9 +139,22 @@ public final class BuildHarness {
                 .toList();
     }
 
-    private Row row(String label, List<UpgradeNode> targets, UpgradeTree tree) {
+    /** The build's row, or empty when a tower cannot own all of it (two nodes that exclude each other). */
+    private Optional<Row> row(String label, List<UpgradeNode> targets, UpgradeTree tree) {
         List<UpgradeNode> build = buyOrder(targets, tree);
-        return new Row(label, this.measure(build, this.copiesFor(build)));
+        if (!this.canOwn(build)) {
+            return Optional.empty();
+        }
+        return Optional.of(new Row(label, this.measure(build, this.copiesFor(build))));
+    }
+
+    private boolean canOwn(List<UpgradeNode> build) {
+        GameEngine engine = new GameEngine(GameHost.noOp(), RandomSource.seeded(FIRST_SEED));
+        engine.loadLevel(this.level);
+        engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
+        engine.debugGrantCredits(GRANTED_CREDITS);
+        Tower tower = HarnessBoard.place(engine, this.type, HarnessBoard.rankCells(engine).getFirst()).orElseThrow();
+        return build.stream().allMatch(tower::buyUpgrade);
     }
 
     /** How many copies the budget buys when {@code build} goes on the first few of them; the fixed number without one. */
