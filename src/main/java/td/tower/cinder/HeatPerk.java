@@ -5,10 +5,10 @@ import td.stat.StatModifier;
 import td.stat.StatModifiers;
 import td.tower.upgrade.PerkText;
 
-/** Heat: burning enemies take 10% more damage over time from every source. */
+/** Heat: burning enemies take 20% more damage over time from every source. */
 public final class HeatPerk implements CinderPerk {
 
-    private static final float PERIODIC_DAMAGE_TAKEN = 0.1f;
+    private static final float PERIODIC_DAMAGE_TAKEN = 0.2f;
 
     @Override
     public CinderSpec refineSpec(CinderSpec spec) {

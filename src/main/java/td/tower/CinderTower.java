@@ -86,10 +86,10 @@ public final class CinderTower extends AbstractTower {
     private static final float THERMAL_SHOCK_RADIUS_CELLS = 1.5f;
     private static final float THERMAL_SHOCK_CHILL = 0.4f;
     private static final int THERMAL_SHOCK_CHILL_TICKS = 40;
-    /** A pool this close to its cap counts as full. */
-    private static final float CAP_REACHED_SHARE = 0.97f;
-    /** A capped pool must fall under this share of its cap before it can burst again. */
-    private static final float CAP_RESET_SHARE = 0.5f;
+    /** An enemy's burning pools together are hot at this share of the strongest wave that fed them. */
+    private static final float HOT_SHARE = 1f;
+    /** A hot enemy must cool under this share before it can burst again. */
+    private static final float COOLED_SHARE = 0.5f;
 
     private static final String STOKE_DEED = "Stoking waves";
     private static final int STOKES_NEEDED = 45;
@@ -99,10 +99,10 @@ public final class CinderTower extends AbstractTower {
 
     private static final UpgradeNode WHITE_FLAME_1 = UpgradeTier.HEAD_1.node("cinder.head.white_flame.1",
             "White Flame", PRICE)
-            .withModifiers(TowerModifiers.damage(0.45f).plus(TowerModifiers.stokeStep(0.05f)));
+            .withModifiers(TowerModifiers.damage(0.6f).plus(TowerModifiers.stokeStep(0.05f)));
     private static final UpgradeNode WHITE_FLAME_2 = UpgradeTier.HEAD_2.node("cinder.head.white_flame.2",
             "White Flame II", PRICE)
-            .withModifiers(TowerModifiers.damage(0.75f).plus(TowerModifiers.critChance(0.1f))
+            .withModifiers(TowerModifiers.damage(1f).plus(TowerModifiers.critChance(0.1f))
                     .plus(TowerModifiers.burnDuration(-15)))
             .after(WHITE_FLAME_1);
     private static final UpgradeNode SOULFIRE = UpgradeTier.HEAD_3.node("cinder.head.white_flame.3", "Soulfire",
@@ -111,7 +111,7 @@ public final class CinderTower extends AbstractTower {
             .after(WHITE_FLAME_2);
     private static final UpgradeNode FLASHPOINT = UpgradeTier.HEAD_4.node("cinder.head.white_flame.4a",
             "Flashpoint", PRICE)
-            .withModifiers(TowerModifiers.critChance(0.2f))
+            .withModifiers(TowerModifiers.critChance(0.3f).plus(TowerModifiers.critMultiplier(1.5f)))
             .after(SOULFIRE);
     private static final UpgradeNode COMBUSTION = UpgradeTier.HEAD_4.node("cinder.head.white_flame.4b",
             "Combustion", PRICE)
@@ -133,11 +133,12 @@ public final class CinderTower extends AbstractTower {
             .after(WIDE_NOZZLE_2);
     private static final UpgradeNode INFERNO_RING = UpgradeTier.HEAD_4.node("cinder.head.wide_nozzle.4a",
             "Inferno Ring", PRICE)
-            .withModifiers(TowerModifiers.range(-0.55f))
+            .withModifiers(TowerModifiers.range(-0.4f))
             .after(LINGERING_FLAMES);
     private static final UpgradeNode DRAGONS_BREATH = UpgradeTier.HEAD_4.node("cinder.head.wide_nozzle.4b",
             "Dragon's Breath", PRICE)
-            .withModifiers(TowerModifiers.range(0.66f).plus(TowerModifiers.attackSpeed(2f)).plus(TowerModifiers.damage(-0.9f)))
+            .withModifiers(TowerModifiers.range(0.66f).plus(TowerModifiers.attackSpeed(2f)).plus(TowerModifiers.damage(-0.45f))
+                    .plus(TowerModifiers.burnPoolCap(2f)))
             .after(LINGERING_FLAMES);
 
     private static final UpgradeNode KINDLING = UpgradeTier.EXTRA_1.node("cinder.extra.fuel.1", "Kindling", PRICE)
@@ -191,7 +192,6 @@ public final class CinderTower extends AbstractTower {
     private final Map<EnemyMob, Burning> burning = new IdentityHashMap<>();
     private final ZoneOwner zoneOwner = this::applyEffect;
     private final FireClock clock = new FireClock(COOLDOWN_MAX);
-    private int wavesFired;
     private int tickNow;
 
     public CinderTower(GameWorld context, int x, int y) {
@@ -282,8 +282,7 @@ public final class CinderTower extends AbstractTower {
 
     private void fire(CinderSpec spec, EnemyMob target, int gameTime) {
         this.beginShot();
-        this.wavesFired++;
-        boolean soul = spec.soulfire() && this.wavesFired % 2 == 0;
+        boolean soul = spec.soulfire();
         int travelTicks = Math.max(1, Math.round(WAVE_TRAVEL_TICKS / this.stats().value(TowerStat.WAVE_SPEED)));
         double heading = this.turretAim.currentRadians();
         double halfWidth = this.halfWidthRadians(spec);
@@ -372,10 +371,9 @@ public final class CinderTower extends AbstractTower {
         Damage level = Damage.magic(Math.round(this.damageCurrent() * potency));
         int duration = this.burnDuration();
         PoolTuning tuning = this.tuning(spec);
+        this.applyEffect(enemy, sink -> Effect.burn(level, duration, sink).withTuning(tuning));
         if (wave.soul) {
             this.applyEffect(enemy, sink -> Effect.soulfire(level, duration, sink).withTuning(tuning));
-        } else {
-            this.applyEffect(enemy, sink -> Effect.burn(level, duration, sink).withTuning(tuning));
         }
         entry.lastBurningTick = gameTime;
         if (critical && spec.critScorch() > 0) {
@@ -391,20 +389,26 @@ public final class CinderTower extends AbstractTower {
         return stoked;
     }
 
-    /** A pool that has reached its cap bursts once onto the enemies near it, and may burst again after it falls. */
+    /**
+     * An enemy whose burning pools together have grown hotter than one wave could make them bursts once onto
+     * the enemies near it, and may burst again after it cools.
+     */
     private void combust(EnemyMob enemy, Burning entry, CinderSpec spec) {
+        float fuel = 0f;
+        float strongest = 0f;
+        float remaining = 0f;
         for (Effect pool : enemy.activeEffects()) {
-            if (!pool.kind().isBurning()) {
-                continue;
+            if (pool.kind().isBurning()) {
+                fuel += pool.fuelLevel();
+                strongest = Math.max(strongest, pool.peakL0());
+                remaining += pool.remainingPoolDamage();
             }
-            float cap = pool.tuning().capFactor() * pool.peakL0();
-            if (!entry.capped && pool.fuelLevel() >= cap * CAP_REACHED_SHARE) {
-                entry.capped = true;
-                this.burstOnto(enemy, Math.round(pool.remainingPoolDamage() * spec.combustion().share()),
-                        spec.combustion().radiusCells());
-            } else if (entry.capped && pool.fuelLevel() < cap * CAP_RESET_SHARE) {
-                entry.capped = false;
-            }
+        }
+        if (!entry.hot && fuel >= strongest * HOT_SHARE) {
+            entry.hot = true;
+            this.burstOnto(enemy, Math.round(remaining * spec.combustion().share()), spec.combustion().radiusCells());
+        } else if (entry.hot && fuel < strongest * COOLED_SHARE) {
+            entry.hot = false;
         }
     }
 
@@ -527,7 +531,7 @@ public final class CinderTower extends AbstractTower {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Wave", "a full ring"));
         }
         if (spec.soulfire()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Every other wave", "soulfire"));
+            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Every wave also", "soulfire"));
         }
         if (spec.linger().isActive()) {
             lines.add(new BehaviourLine(BehaviourMarker.BURN, "Each wave leaves", "burning ground"));
@@ -562,7 +566,7 @@ public final class CinderTower extends AbstractTower {
             lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "+" + BehaviourLine.percent(magic) + " magic"));
         }
         if (spec.everburnFloor() > 0f) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "A pool in range", "holds at 25%"));
+            lines.add(new BehaviourLine(BehaviourMarker.BURN, "A pool in range", "holds at " + BehaviourLine.percent(spec.everburnFloor())));
         }
         this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
         return lines;
@@ -583,7 +587,7 @@ public final class CinderTower extends AbstractTower {
         private int lastBurningTick;
         private int lastVulnerableTick = Integer.MIN_VALUE / 2;
         private boolean wasBurning;
-        private boolean capped;
+        private boolean hot;
 
         private Burning(int tick) {
             this.lastBurningTick = tick;

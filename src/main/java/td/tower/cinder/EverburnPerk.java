@@ -2,10 +2,10 @@ package td.tower.cinder;
 
 import td.tower.upgrade.PerkText;
 
-/** Everburn: a pool never decays below a quarter of its strongest application while its enemy is in range. */
+/** Everburn: a pool never decays below two fifths of its strongest application while its enemy is in range. */
 public final class EverburnPerk implements CinderPerk {
 
-    private static final float FLOOR = 0.25f;
+    private static final float FLOOR = 0.4f;
 
     @Override
     public CinderSpec refineSpec(CinderSpec spec) {
