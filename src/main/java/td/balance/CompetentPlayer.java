@@ -47,8 +47,12 @@ final class CompetentPlayer implements Player {
     private static final double NODE_FACTOR_CAP = 2.0;
     /** It wants this much more damage on an enemy than its health before it calls the enemy dead. */
     private static final double SAFETY = 1.3;
-    /** How soft the line between leaking and dying is, as a share of the enemy's health. */
-    private static final double SOFTNESS = 0.2;
+    /**
+     * How soft the line between leaking and dying is, as a share of the enemy's health. A hard line gives up on
+     * an enemy it cannot surely kill yet and spends on easy ones instead; this one held the most enemy health on
+     * every built-in level.
+     */
+    private static final double SOFTNESS = 0.4;
 
     private final TowerLab lab;
     private final Style style;

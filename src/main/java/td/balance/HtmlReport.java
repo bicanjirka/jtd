@@ -8,6 +8,7 @@ import td.wave.Vec2;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -86,7 +87,8 @@ final class HtmlReport {
 
     private void level(LevelRun run) {
         LevelDefinition level = run.survey().level();
-        this.html.append("<h2>").append(escape(level.name())).append("</h2><p class=\"note\">")
+        this.html.append("<h2 id=\"").append(level.name().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-"))
+                .append("\">").append(escape(level.name())).append("</h2><p class=\"note\">")
                 .append(level.startingCredits()).append(" credits, ").append(level.startingLives()).append(" lives, ")
                 .append(level.paths().getFirst().waves().size()).append(" rounds, ").append(level.paths().size())
                 .append(level.paths().size() == 1 ? " path" : " paths").append("</p>");
