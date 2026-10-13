@@ -1,5 +1,6 @@
 import td.TowerDefense;
 import td.damage.Damage;
+import td.damage.DamageUnits;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.economy.EconomyDelta;
@@ -638,7 +639,7 @@ public class Driver {
                 case BURN -> Effect.burn(Damage.magic(1), ticks, d -> { });
                 case POISON -> Effect.poison(Damage.magic(1), ticks, d -> { });
                 case FREEZE -> Effect.freeze(ticks, d -> { });
-                case SHIELD -> Effect.shield(0.3f, ticks, d -> { });
+                case SHIELD -> Effect.shield(DamageUnits.PER_POINT * 200f, ticks, d -> { });
                 case INVISIBLE -> Effect.invisible(ticks, d -> { });
                 case HEAL -> Effect.heal(1, ticks, d -> { });
                 case VULNERABLE -> Effect.vulnerable(2, ticks, d -> { });

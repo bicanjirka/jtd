@@ -16,7 +16,7 @@ public final class DeepScanPerk implements SonarPerk {
 
     @Override
     public String describe() {
-        return "each revolution reveals invisible enemies in the outer " + PerkText.percent(1f - OUTER_QUARTER_FROM)
+        return "Deep Scan: each revolution reveals invisible enemies in the outer " + PerkText.percent(1f - OUTER_QUARTER_FROM)
                 + " of its range for " + PerkText.seconds(Math.round(REVEAL_SECONDS * TickRate.TICKS_PER_SECOND));
     }
 }

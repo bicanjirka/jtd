@@ -10,6 +10,6 @@ public final class PingPerk implements SonarPerk {
 
     @Override
     public String describe() {
-        return "each revolution Exposes the healthiest enemy the beam passes, until the next pass";
+        return "Ping: each revolution Exposes the healthiest enemy the beam passes, until the next pass";
     }
 }
