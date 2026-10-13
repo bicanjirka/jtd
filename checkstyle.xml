@@ -14,6 +14,10 @@
         <property name="id" value="wideRecordFactory"/>
         <property name="files" value="[\\/]td[\\/]ui[\\/]render[\\/]"/>
     </module>
+    <module name="SuppressionSingleFilter">
+        <property name="id" value="nodeOwnership"/>
+        <property name="files" value="[\\/]src[\\/]test[\\/]|[\\/]td[\\/]tower[\\/]upgrade[\\/]"/>
+    </module>
 
     <module name="TreeWalker">
         <module name="TypeName"/>
@@ -84,6 +88,12 @@
                       value="org\.junit\.jupiter\.api\.Assertions|(?&lt;![.\w])assert(Equals|True|False|Null|NotNull|Same)\s*\("/>
             <property name="ignoreComments" value="true"/>
             <property name="message" value="Use AssertJ assertThat, not JUnit assertions."/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="nodeOwnership"/>
+            <property name="format" value="upgrades(\(\))?\.owns\((?!StandardBaseSlot\.)"/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Tower code never asks which node it owns; use stats, the spec, procs or hit bonuses."/>
         </module>
     </module>
 </module>

@@ -579,6 +579,7 @@ public final class CinderTower extends AbstractTower {
         if (spec.everburnFloor() > 0f) {
             lines.add(new BehaviourLine(BehaviourMarker.BURN, "A pool in range", "holds at 25%"));
         }
+        this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
         return lines;
     }
 

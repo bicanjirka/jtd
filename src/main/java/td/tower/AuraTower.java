@@ -392,6 +392,7 @@ public final class AuraTower extends AbstractTower {
                 lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Kinship", this.typesInReach().size() + " tower types"));
             }
         }
+        this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
         return lines;
     }
 

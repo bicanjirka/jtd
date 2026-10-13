@@ -1,6 +1,5 @@
 package td.tower;
 
-import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.Effect;
@@ -8,12 +7,13 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.ShieldListener;
 import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitBonus;
+import td.tower.proc.HitCondition;
 import td.tower.proc.HitKind;
+import td.tower.proc.HitScaling;
 import td.tower.pulse.ArcDischargePerk;
 import td.tower.pulse.EventHorizonPerk;
 import td.tower.pulse.FieldMode;
-import td.tower.pulse.FullTollBonusPerk;
-import td.tower.pulse.MeltdownPerk;
 import td.tower.pulse.ModePerk;
 import td.tower.pulse.ModeSpec;
 import td.tower.pulse.PulsePerk;
@@ -65,8 +65,6 @@ public final class PulseTower extends AbstractTower {
     public static final int PRICE = 25;
     public static final float DAMAGE_POINTS = 2f;
     public static final float RANGE = 1.5f;
-    /** Each Toll stack makes the field hit its enemy this much harder. */
-    public static final float TOLL_DAMAGE_PER_STACK = 0.1f;
 
     /** How long a zap's bolt stays drawn. */
     private static final int ZAP_FLASH_TICKS = 8;
@@ -74,8 +72,10 @@ public final class PulseTower extends AbstractTower {
     private static final int FULL_TOLL_SECONDS_NEEDED = 30;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
-            .withAttune(NodeEffects.none().withNote("Toll: each second an enemy stays inside adds a stack (up to 5), fading 1s after it leaves; "
-                    + "each stack: +10% field damage, and every debuff on it wears off 10% slower"))
+            .withAttune(NodeEffects.none()
+                    .withHitBonus(HitBonus.of(new HitCondition.HitKindIn(Set.of(HitKind.FIELD)),
+                            new HitScaling.PerStackOf(EffectKind.TOLL), HitAdjustment.damage(0.1f)))
+                    .withNote("Toll"))
             .withRangeThree(0.2f, NodeEffects.none().withModifiers(TowerModifiers.tollLinger(20)));
 
     private static final UpgradeNode OVERCHARGED_COILS_1 = UpgradeTier.HEAD_1.node("pulse.head.overcharged_coils.1",
@@ -84,7 +84,9 @@ public final class PulseTower extends AbstractTower {
     private static final UpgradeNode OVERCHARGED_COILS_2 = UpgradeTier.HEAD_2.node("pulse.head.overcharged_coils.2",
             "Overcharged Coils II", PRICE)
             .withModifiers(TowerModifiers.damage(0.5f))
-            .withNote("an enemy at full Toll takes +25% from the field")
+            .withHitBonus(HitBonus.of(new HitCondition.All(List.of(new HitCondition.HitKindIn(Set.of(HitKind.FIELD)),
+                    new HitCondition.TargetStacksAtLeastStat(EffectKind.TOLL, TowerStat.TOLL_CAP))),
+                    new HitScaling.Once(), HitAdjustment.damage(0.25f)))
             .after(OVERCHARGED_COILS_1);
     private static final UpgradeNode ARC_DISCHARGE = UpgradeTier.HEAD_3.node("pulse.head.overcharged_coils.3",
             "Arc Discharge", PRICE)
@@ -96,7 +98,10 @@ public final class PulseTower extends AbstractTower {
     private static final UpgradeNode MELTDOWN = UpgradeTier.HEAD_4.node("pulse.head.overcharged_coils.4a", "Meltdown",
             PRICE)
             .withModifiers(TowerModifiers.tollCap(5))
-            .withNote("the zap gets +10% crit, and Toll raises the zap's damage too")
+            .withHitBonus(HitBonus.of(new HitCondition.HitKindIn(Set.of(HitKind.ZAP)), new HitScaling.Once(),
+                    HitAdjustment.critChance(0.1f)))
+            .withHitBonus(HitBonus.of(new HitCondition.HitKindIn(Set.of(HitKind.ZAP)),
+                    new HitScaling.PerStackOf(EffectKind.TOLL), HitAdjustment.damage(0.1f)))
             .after(ARC_DISCHARGE);
     private static final UpgradeNode TESLA_COIL = UpgradeTier.HEAD_4.node("pulse.head.overcharged_coils.4b",
             "Tesla Coil", PRICE)
@@ -177,9 +182,7 @@ public final class PulseTower extends AbstractTower {
 
     private static final PerkCatalogue<PulsePerk> PERKS = PerkCatalogue.<PulsePerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, TollPerk::new)
-            .with(OVERCHARGED_COILS_2.id(), FullTollBonusPerk::new)
             .with(ARC_DISCHARGE.id(), ArcDischargePerk::new)
-            .with(MELTDOWN.id(), MeltdownPerk::new)
             .with(TESLA_COIL.id(), TeslaCoilPerk::new)
             .with(PHASE_FIELD_2.id(), RevealOnEntryPerk::new)
             .with(NULL_FIELD.id(), () -> new ModePerk(FieldMode.SILENCE))
@@ -261,14 +264,12 @@ public final class PulseTower extends AbstractTower {
             this.holdInside(enemy, spec, beat);
             int stacks = enemy.effectStacks(EffectKind.TOLL);
             highest = Math.max(highest, stacks);
-            float factor = 1f + TOLL_DAMAGE_PER_STACK * stacks
-                    + (stacks >= toll.cap() ? spec.field().fullTollBonus() : 0f)
+            HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.FIELD, 0f, this.stats());
+            float factor = adjustment.damageFactor()
                     + Math.min(MAX_DEATH_BONUS, spec.field().perDeathBonus() * this.deathsThisWave)
                     + (spec.modes().has(FieldMode.SOUL_DRAIN) ? SOUL_DRAIN_DAMAGE_PER_POINT * Math.max(0f, -enemy.spirit()) : 0f);
-            HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.FIELD, 0f, this.stats());
             for (int hit = 0; hit < shots && !enemy.isDead(); hit++) {
-                this.dealPeriodicDamage(enemy,
-                        Damage.magic(Math.round(this.damageCurrent() * factor * adjustment.damageFactor())));
+                this.dealPeriodicDamage(enemy, Damage.magic(Math.round(this.damageCurrent() * factor)));
                 this.rattle(enemy, spec);
             }
         }
@@ -361,13 +362,9 @@ public final class PulseTower extends AbstractTower {
     }
 
     private void strikeWithZap(EnemyMob target, ZapSpec zap) {
-        float tollRaise = zap.tollRaises() ? TOLL_DAMAGE_PER_STACK * target.effectStacks(EffectKind.TOLL) : 0f;
         HitAdjustment adjustment = this.hitAdjustment(target, HitKind.ZAP, 0f, this.stats());
-        Damage damage = Damage.magic(Math.round(this.damageCurrent() * zap.damageFactor() * (1f + tollRaise)
-                * adjustment.damageFactor()));
-        AttackProfile attack = this.stats().attack();
-        attack = adjustment.applyTo(attack.withCritChance(Math.min(1f, attack.critChance() + zap.critBonus())));
-        boolean critical = this.dealDamage(target, damage, attack);
+        Damage damage = Damage.magic(Math.round(this.damageCurrent() * zap.damageFactor() * adjustment.damageFactor()));
+        boolean critical = this.dealDamage(target, damage, adjustment.applyTo(this.stats().attack()));
         this.report(target, HitKind.ZAP, critical, target.isDead());
         if (zap.dazeSeconds() > 0f && !target.isDead()) {
             int ticks = Math.round(zap.dazeSeconds() * TICKS_PER_SECOND);
@@ -507,6 +504,7 @@ public final class PulseTower extends AbstractTower {
         if (spec.field().perDeathBonus() > 0f) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Deaths this wave", String.valueOf(this.deathsThisWave)));
         }
+        this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
         return lines;
     }
 

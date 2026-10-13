@@ -1,5 +1,9 @@
 package td.tower.splash;
 
+import td.tower.BehaviourLine;
+
+import java.util.Optional;
+
 /**
  * What one owned node does to the Splash. A perk may change how it blasts and what the blast
  * carries, reshape a shot before it is fired, and react to how it landed. Every hook does nothing
@@ -16,6 +20,11 @@ public interface SplashPerk {
         return shot;
     }
 
-    default void react(ShotResult result, SplashActions actions) {
+    default void react(ShotResult result) {
+    }
+
+    /** The row this perk adds to the tower's info, when it does something no other row says. */
+    default Optional<BehaviourLine> behaviour() {
+        return Optional.empty();
     }
 }

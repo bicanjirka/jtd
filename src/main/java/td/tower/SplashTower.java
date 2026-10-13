@@ -7,7 +7,13 @@ import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitBonus;
+import td.tower.proc.HitCondition;
 import td.tower.proc.HitKind;
+import td.tower.proc.HitScaling;
+import td.tower.proc.Proc;
+import td.tower.proc.ProcCondition;
+import td.tower.proc.ProcPayload;
 import td.tower.splash.ArcPerk;
 import td.tower.splash.ArcPlanner;
 import td.tower.splash.ArcSpec;
@@ -39,11 +45,9 @@ import td.tower.splash.ReckoningHex;
 import td.tower.splash.SaturationRule;
 import td.tower.splash.ShotContext;
 import td.tower.splash.ShotResult;
-import td.tower.splash.SplashActions;
 import td.tower.splash.SplashPerk;
 import td.tower.splash.SplashShot;
 import td.tower.splash.SplashSpec;
-import td.tower.splash.StaticChargePerk;
 import td.tower.splash.SympathyCopier;
 import td.tower.splash.SympathyHex;
 import td.tower.splash.ThunderclapPerk;
@@ -93,8 +97,6 @@ public final class SplashTower extends AbstractTower {
     public static final float DAMAGE_POINTS = 14f;
     public static final float RANGE = 3.2f;
     public static final float BLAST_RADIUS_CELLS = 1.5f;
-    /** Each Saturation stack on an enemy makes this tower's blast hit it this much harder. */
-    public static final float SATURATION_DAMAGE_PER_STACK = 0.05f;
 
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.25;
     /** One shot a second. */
@@ -108,7 +110,6 @@ public final class SplashTower extends AbstractTower {
     private static final float THUNDERSTRIKE_FACTOR = 4f;
     /** How far above its target a Thunderstrike's bolt is drawn from. */
     private static final float THUNDERSTRIKE_HEIGHT_CELLS = 2f;
-    private static final float STATIC_CHARGE_SECONDS = 3f;
     /** Every this many shots, a Hexer casts instead of blasting. */
     private static final int CAST_EVERY = 4;
     /** How far, in cells before the blast radius bonus, a curse spreads or shares. */
@@ -124,8 +125,10 @@ public final class SplashTower extends AbstractTower {
     private static final int CLOUD_TICKS = 80;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
-            .withAttune(NodeEffects.none().withNote("Fire Control: aims at the enemy with most neighbours in the blast; Saturation: +5% blast "
-                    + "damage a stack, 3 stacks"))
+            .withAttune(NodeEffects.none()
+                    .withHitBonus(HitBonus.of(new HitCondition.HitKindIn(Set.of(HitKind.BLAST)),
+                            new HitScaling.PerStackOf(EffectKind.SATURATED), HitAdjustment.damage(0.05f)))
+                    .withNote("Fire Control: aims at the enemy with most neighbours in the blast; Saturation"))
             .withRangeThree(0.1f, NodeEffects.none().withModifiers(TowerModifiers.areaRadius(0.15f))
                     .withNote("Mines: every 4th blast leaves a mine on the path for 10s, up to 3, that the next enemy "
                             + "to step on it sets off as one blast"));
@@ -214,6 +217,7 @@ public final class SplashTower extends AbstractTower {
             "Static Charge", PRICE)
             .withNote("arcs leave enemies Charged for 3s: another tower's next hit discharges it for +30% of "
                     + "that hit as magic, credited to this tower; a crit discharges at double")
+            .withProc(Proc.onHit(new ProcPayload.Charge(60)).when(new ProcCondition.HitKindIn(Set.of(HitKind.ARC))))
             .after(ARC);
     private static final UpgradeNode THUNDERSTRIKE = UpgradeTier.SPECIAL.node("splash.special.thunderstrike",
             "Thunderstrike", PRICE)
@@ -243,7 +247,6 @@ public final class SplashTower extends AbstractTower {
             .with(POTENCY.id(), PotencyPerk::new)
             .with(MASTERY.id(), MasteryPerk::new)
             .with(THUNDERCLAP.id(), ThunderclapPerk::new)
-            .with(STATIC_CHARGE.id(), StaticChargePerk::new)
             .with(THUNDERSTRIKE.id(), ThunderstrikePerk::new)
             .with(HEX.id(), () -> HexPerk.adding(new DoomHex()))
             .with(WITCHS_BREW.id(), () -> HexPerk.adding(new BlightHex()).andCursing(3))
@@ -257,7 +260,6 @@ public final class SplashTower extends AbstractTower {
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final OwnedPerks<SplashPerk> perks = new OwnedPerks<>(PERKS);
     private final TargetSelector randomAim;
-    private final SplashActions actions = new Actions();
     private final HexActions hexActions = new Hexing();
     private final HexTurn hexTurn = new HexTurn();
     private final HexLedger hexLedger = new HexLedger();
@@ -549,26 +551,25 @@ public final class SplashTower extends AbstractTower {
         if (spec.mines().isActive() && this.shotsFired % spec.mines().every() == 0) {
             this.leaveMine(primary.getX(), primary.getY(), spec);
         }
-        List<EnemyMob> arced = new ArrayList<>();
         boolean critical = struck.isPresent();
         if (spec.arcs().active()) {
             EnemyMob start = struck.orElseGet(() -> this.outermost(blast));
             ArcSpec arcs = struck.isPresent() ? spec.arcs().withShareAtLeast(1f) : spec.arcs();
-            critical |= this.arc(blast, start, spec.withArcs(arcs), traces, arced);
+            critical |= this.arc(blast, start, spec.withArcs(arcs), traces);
         }
         if (shot.thunderclap()) {
-            this.discharge(spec, traces, arced);
+            this.discharge(spec, traces);
         }
         this.arcs = List.copyOf(traces);
-        ShotResult result = new ShotResult(critical, arced);
+        ShotResult result = new ShotResult(critical);
         for (SplashPerk perk : owned) {
-            perk.react(result, this.actions);
+            perk.react(result);
         }
     }
 
     /**
      * Hits the primary first, then everything else within the blast, each for its share of the
-     * damage at its distance, harder the more Saturated it is; then Saturates them all.
+     * damage at its distance; then Saturates them all.
      */
     private Blast blast(EnemyMob primary, int x, int y, SplashSpec spec) {
         float radius = this.blastRadius();
@@ -579,10 +580,8 @@ public final class SplashTower extends AbstractTower {
         boolean critical = false;
         for (EnemyMob enemy : caught) {
             float distanceShare = (float) (Math.hypot(enemy.getX() - x, enemy.getY() - y) / radius);
-            float saturated = saturation.isActive()
-                    ? 1f + SATURATION_DAMAGE_PER_STACK * enemy.effectStacks(EffectKind.SATURATED) : 1f;
             HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.BLAST, 0f, this.stats());
-            int amount = Math.round(this.damageCurrent() * this.falloff(Math.min(1f, distanceShare)) * saturated
+            int amount = Math.round(this.damageCurrent() * this.falloff(Math.min(1f, distanceShare))
                     * adjustment.damageFactor());
             boolean crit = this.dealDamage(enemy, Damage.physical(amount), adjustment.applyTo(this.stats().attack()));
             this.report(enemy, HitKind.BLAST, crit, enemy.isDead());
@@ -632,9 +631,9 @@ public final class SplashTower extends AbstractTower {
 
     /**
      * The arcs the blast carries, from {@code start}; each lands as a magic hit. Records where they
-     * ran and whom they struck, and tells whether one crit.
+     * ran, and tells whether one crit.
      */
-    private boolean arc(Blast blast, EnemyMob start, SplashSpec spec, List<Trace> traces, List<EnemyMob> arced) {
+    private boolean arc(Blast blast, EnemyMob start, SplashSpec spec, List<Trace> traces) {
         ArcSpec arcs = spec.arcs();
         float cellReach = this.context.getBoard().scale() * this.distanceScale();
         float bound = blast.area().radius()
@@ -650,17 +649,15 @@ public final class SplashTower extends AbstractTower {
             traces.add(new Trace((float) strike.from().getX(), (float) strike.from().getY(),
                     (float) strike.to().getX(), (float) strike.to().getY()));
             critical |= this.strikeWithArc(strike.to(), strike.share(), spec, arcs.daze());
-            arced.add(strike.to());
         }
         return critical;
     }
 
     /** Thunderclap: an arc from the tower into every enemy in range; each one it crits is Dazed. */
-    private void discharge(SplashSpec spec, List<Trace> traces, List<EnemyMob> arced) {
+    private void discharge(SplashSpec spec, List<Trace> traces) {
         for (EnemyMob enemy : spec.reach().matching(this.context.enemies())) {
             traces.add(new Trace(this.centerX, this.centerY, (float) enemy.getX(), (float) enemy.getY()));
             this.strikeWithArc(enemy, THUNDERCLAP_SHARE, spec, DAZE_SECONDS);
-            arced.add(enemy);
         }
     }
 
@@ -712,10 +709,11 @@ public final class SplashTower extends AbstractTower {
 
     /** What the fork has made it: the Stormcaller on Arc, the Hexer on Hex. */
     public Fork fork() {
-        if (this.upgrades().owns(ARC.id())) {
+        SplashSpec spec = this.spec(this.perks.all());
+        if (spec.arcs().active()) {
             return Fork.STORMCALLER;
         }
-        return this.upgrades().owns(HEX.id()) ? Fork.HEXER : Fork.NONE;
+        return spec.hexes().isActive() ? Fork.HEXER : Fork.NONE;
     }
 
     @Override
@@ -781,6 +779,7 @@ public final class SplashTower extends AbstractTower {
         if (spec.hexes().isActive()) {
             lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Casts", spec.hexes().pool().size() + " hexes"));
         }
+        this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
         return lines;
     }
 
@@ -791,15 +790,6 @@ public final class SplashTower extends AbstractTower {
 
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitSplashTower(this);
-    }
-
-    /** What the perks may make this tower do. */
-    private final class Actions implements SplashActions {
-
-        @Override
-        public void charge(EnemyMob target) {
-            SplashTower.this.charge(target, Math.round(STATIC_CHARGE_SECONDS * TICKS_PER_SECOND));
-        }
     }
 
     /** What the hexes may make this tower do. */

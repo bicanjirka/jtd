@@ -44,7 +44,8 @@
   colour in flight; a plain missile freezes, a payload missile does only what its payload does.
 - The Pulse's field touches `Reach.everyone`, never only the visible. Toll is earned by time inside
   (`TollTracker` counts it per enemy) and held by an ordinary `TOLL` effect the field refreshes each
-  tick while the enemy is inside, so a visit is exactly the life of that effect.
+  tick while the enemy is inside, so a visit is exactly the life of that effect. Toll's damage per
+  stack is the Attune node's hit bonus.
 - Mirror Field listens to the roster's `ShieldListener` while the rule is owned (and drops it in
   `doCleanup`): what a shield takes of any hit on an enemy that was inside the field's last tick comes back
   as periodic damage that goes through shields (`AttackProfile.withIgnoredShields`), and is never mirrored again.
@@ -189,6 +190,7 @@
   owned node that sets one decides), `withCapability`. Every attacking tower applies
   `hitAdjustment(...)` to each hit it computes and reports each landed attack with `report(...)` after
   its perks settled it; hit bonuses add.
+- Never check `owns(...)` in tower code except for the base chain; Checkstyle rejects it.
 - A node that adds a mechanic brings a perk, in the tower's own package. A static `PerkCatalogue`
   says which perks each node brings, and the tower's `OwnedPerks` builds its own. Perks run in
   purchase order through `refineSpec` (and the tower's per-hit hooks); they are pure (no tower, no

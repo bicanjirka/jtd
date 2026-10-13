@@ -1,6 +1,10 @@
 package td.tower.sonar;
 
 import td.effect.Effect;
+import td.tower.BehaviourLine;
+import td.tower.BehaviourMarker;
+
+import java.util.Optional;
 
 /**
  * Mark on Sweep: every enemy the beam hits is marked until the next pass, so the next hit on it from
@@ -13,5 +17,10 @@ public final class MarkOnSweepPerk implements SonarPerk {
         if (!result.killed()) {
             actions.apply(result.target(), sink -> Effect.marked(result.spec().untilNextPass(), sink));
         }
+    }
+
+    @Override
+    public Optional<BehaviourLine> behaviour() {
+        return Optional.of(new BehaviourLine(BehaviourMarker.TARGETING, "Marks", "next hit crits"));
     }
 }
