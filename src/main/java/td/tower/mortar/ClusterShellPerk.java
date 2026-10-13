@@ -1,5 +1,7 @@
 package td.tower.mortar;
 
+import td.tower.upgrade.PerkText;
+
 /** Cluster Shell: four bomblets scattered along the path around the impact, each a small blast for 40%. */
 public final class ClusterShellPerk implements MortarPerk {
 
@@ -10,5 +12,11 @@ public final class ClusterShellPerk implements MortarPerk {
     @Override
     public MortarSpec refineSpec(MortarSpec spec) {
         return spec.withBomblets(BombletSpec.of(COUNT, false, DAMAGE_SHARE, RADIUS_CELLS));
+    }
+
+    @Override
+    public String describe() {
+        return COUNT + " bomblets scattered along the path around the impact, " + PerkText.percent(DAMAGE_SHARE) + " damage each over "
+                + PerkText.cells(RADIUS_CELLS) + (RADIUS_CELLS == 1f ? " cell" : " cells");
     }
 }

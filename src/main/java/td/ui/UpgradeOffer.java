@@ -1,6 +1,7 @@
 package td.ui;
 
 import td.tower.Tower;
+import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 
@@ -15,13 +16,15 @@ import java.util.List;
  * @param gateMet           its XP and gate condition both met (or ignored while playtesting)
  * @param rivals            the other members of its exclusive choice on offer, empty outside a choice
  * @param lastPick          whether buying it locks its rivals out for good
+ * @param bonuses           what it would add to the tower: its data rows, then its perks' words
  */
 record UpgradeOffer(UpgradeNode node, int number, boolean xpMet, String xpProgress, boolean conditionMet,
                     String conditionProgress, boolean gateMet, boolean affordable, List<UpgradeNode> rivals,
-                    boolean lastPick) {
+                    boolean lastPick, List<UpgradeBonus> bonuses) {
 
     UpgradeOffer {
         rivals = List.copyOf(rivals);
+        bonuses = List.copyOf(bonuses);
     }
 
     /** The {@code index}-th of the tower's {@code offered} nodes, numbered from one. */
@@ -30,7 +33,7 @@ record UpgradeOffer(UpgradeNode node, int number, boolean xpMet, String xpProgre
         return new UpgradeOffer(node, index + 1, node.xpMet(tower), node.xpProgress(tower),
                 node.gate().isSatisfied(tower, world), node.gate().progress(tower, world),
                 node.gateMet(tower, world), world.economy().canPay(node.price()), tower.upgradeTree().rivalsOnOffer(node, offered),
-                tower.upgradeTree().isLastPick(node, tower.upgrades()));
+                tower.upgradeTree().isLastPick(node, tower.upgrades()), tower.bonusesOf(node));
     }
 
     /** What still stands between the tower and this node, XP first. */

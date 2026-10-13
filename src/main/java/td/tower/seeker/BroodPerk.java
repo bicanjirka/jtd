@@ -7,4 +7,9 @@ public final class BroodPerk implements SeekerPerk {
     public SeekerSpec refineSpec(SeekerSpec spec) {
         return spec.withSpreadSalvo();
     }
+
+    @Override
+    public String describe() {
+        return "a salvo spreads across different targets";
+    }
 }

@@ -9,4 +9,9 @@ public final class FlashpointPerk implements CinderPerk {
     public CinderSpec refineSpec(CinderSpec spec) {
         return spec.withCritScorch(STACKS);
     }
+
+    @Override
+    public String describe() {
+        return "a critical ignition also adds " + STACKS + " Scorched";
+    }
 }

@@ -7,4 +7,9 @@ public final class PredictiveFirePerk implements MortarPerk {
     public MortarSpec refineSpec(MortarSpec spec) {
         return spec.withLeadingTheTarget();
     }
+
+    @Override
+    public String describe() {
+        return "aims where the enemy will be when the shell lands";
+    }
 }

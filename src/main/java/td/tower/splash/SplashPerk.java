@@ -1,6 +1,7 @@
 package td.tower.splash;
 
 import td.tower.BehaviourLine;
+import td.tower.upgrade.Perk;
 
 import java.util.Optional;
 
@@ -9,7 +10,7 @@ import java.util.Optional;
  * carries, reshape a shot before it is fired, and react to how it landed. Every hook does nothing
  * by default, so a perk implements only its own.
  */
-public interface SplashPerk {
+public interface SplashPerk extends Perk {
 
     /** How the Splash blasts and what the blast carries, as this perk changes it. */
     default SplashSpec refineSpec(SplashSpec spec) {

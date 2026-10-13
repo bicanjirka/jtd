@@ -7,4 +7,9 @@ public final class InfernoRingPerk implements CinderPerk {
     public CinderSpec refineSpec(CinderSpec spec) {
         return spec.withRing();
     }
+
+    @Override
+    public String describe() {
+        return "the cone becomes a full ring";
+    }
 }

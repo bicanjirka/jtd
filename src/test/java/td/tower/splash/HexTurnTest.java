@@ -26,6 +26,11 @@ class HexTurnTest {
         @Override
         public void cast(EnemyMob target, HexSpec spec, HexActions actions) {
         }
+
+        @Override
+        public String describe() {
+            return "Stub hex";
+        }
     }
 
     private static List<EffectKind> takeTimes(HexTurn turn, List<Hex> pool, int times) {

@@ -3,6 +3,7 @@ package td.tower.splash;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.targeting.HighestHealthSelector;
+import td.tower.upgrade.PerkText;
 
 import java.util.Optional;
 
@@ -49,5 +50,15 @@ public final class CovenHex implements Hex {
         if (this.kind == EffectKind.RIME) {
             actions.chill(target, RIME_CHILL, ticks);
         }
+    }
+
+    @Override
+    public String describe() {
+        return switch (this.kind) {
+            case RIME -> "Hex of Rime: chills " + PerkText.percent(RIME_CHILL) + " when cast; freezing the enemy buys twice the chill's "
+                    + "extra time, and its burn lands at once instead of going out";
+            default -> "Hex of Ash: the enemy's burn and poison hold twice as much and mark it twice as fast; it can't be "
+                    + "frozen and shrugs off 75% of chill";
+        };
     }
 }

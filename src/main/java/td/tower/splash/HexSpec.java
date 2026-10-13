@@ -20,8 +20,12 @@ public record HexSpec(List<Hex> pool, int cursesPerCast, float doomShare, float 
 
     /** How long a hex lasts unless it says otherwise. */
     public static final float HEX_SECONDS = 6f;
-    private static final float DOOM_SHARE = 0.3f;
-    private static final float BLIGHT_SHARE = 0.04f;
+    /** Every this many shots, a Hexer casts instead of blasting. */
+    public static final int CAST_EVERY = 4;
+    /** How far, in cells before the blast radius bonus, Sympathy shares and Reckoning releases. */
+    public static final float SHARE_CELLS = 2f;
+    static final float DOOM_SHARE = 0.3f;
+    static final float BLIGHT_SHARE = 0.04f;
 
     public HexSpec {
         pool = List.copyOf(pool);

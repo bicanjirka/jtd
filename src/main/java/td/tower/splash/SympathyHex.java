@@ -3,6 +3,7 @@ package td.tower.splash;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.tower.targeting.MostNeighboursSelector;
+import td.tower.upgrade.PerkText;
 
 import java.util.Optional;
 
@@ -26,5 +27,11 @@ public final class SympathyHex implements Hex {
     @Override
     public void cast(EnemyMob target, HexSpec spec, HexActions actions) {
         actions.curse(target, EffectKind.SYMPATHY, this.ticksOn(target));
+    }
+
+    @Override
+    public String describe() {
+        return "Hex of Sympathy: once a second, its Vulnerable, Sundered, Exposed and chill are copied to the other enemies "
+                + "within " + PerkText.cells(HexSpec.SHARE_CELLS) + " cells that carry any of this tower's hexes";
     }
 }

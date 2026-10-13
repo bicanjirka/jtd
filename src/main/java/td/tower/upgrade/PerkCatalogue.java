@@ -12,7 +12,7 @@ import java.util.function.Supplier;
  *
  * @param <P> the tower's perk type
  */
-public final class PerkCatalogue<P> {
+public final class PerkCatalogue<P extends Perk> {
 
     private final Map<String, List<Supplier<? extends P>>> byNode;
 
@@ -20,7 +20,7 @@ public final class PerkCatalogue<P> {
         this.byNode = byNode;
     }
 
-    public static <P> PerkCatalogue<P> empty() {
+    public static <P extends Perk> PerkCatalogue<P> empty() {
         return new PerkCatalogue<>(Map.of());
     }
 
@@ -38,5 +38,10 @@ public final class PerkCatalogue<P> {
         return this.byNode.getOrDefault(node.id(), List.of()).stream()
                 .<P>map(Supplier::get)
                 .toList();
+    }
+
+    /** What {@code node}'s perks add, in words, in the order they were added. */
+    public List<String> describe(UpgradeNode node) {
+        return this.perksOf(node).stream().map(Perk::describe).toList();
     }
 }

@@ -10,6 +10,7 @@ import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
+import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 
@@ -628,5 +629,14 @@ class PulseTowerTest {
 
         assertThat(inside.appliedEffects().stream().filter(e -> e.kind() == EffectKind.DEAD_ZONE).toList())
                 .singleElement().extracting(Effect::remainingTicks).isEqualTo(3);
+    }
+
+    @Test
+    void teslaCoilSaysWhatItDoes() {
+        PulseTower tower = new PulseTower(this.context, 0, 0);
+
+        assertThat(tower.bonusesOf(UpgradePaths.named(tower, "Tesla Coil"))).contains(new UpgradeBonus(
+                "The zap chains to 3 more enemies within 1.5 cells, even outside the field; every enemy "
+                + "zapped is Dazed 0.25s", ""));
     }
 }

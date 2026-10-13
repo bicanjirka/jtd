@@ -5,6 +5,7 @@ import td.tower.BehaviourLine;
 import td.tower.BehaviourMarker;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.Viewpoint;
+import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
 import java.util.Optional;
@@ -37,5 +38,11 @@ public final class WideBandPerk implements SonarPerk {
     @Override
     public Optional<BehaviourLine> behaviour() {
         return Optional.of(new BehaviourLine(BehaviourMarker.REVEAL, "Reveals", "hidden it passes"));
+    }
+
+    @Override
+    public String describe() {
+        return "the beam reveals invisible enemies it passes to every tower, Exposed for "
+                + PerkText.seconds(Math.round(EXPOSE_SECONDS * TickRate.TICKS_PER_SECOND));
     }
 }

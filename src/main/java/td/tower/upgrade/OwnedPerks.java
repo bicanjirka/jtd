@@ -9,7 +9,7 @@ import java.util.List;
  *
  * @param <P> the tower's perk type
  */
-public final class OwnedPerks<P> {
+public final class OwnedPerks<P extends Perk> {
 
     private final PerkCatalogue<P> catalogue;
     private volatile List<P> owned = List.of();

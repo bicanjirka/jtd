@@ -1,5 +1,7 @@
 package td.tower.splash;
 
+import td.tower.upgrade.PerkText;
+
 /** Range III's Mines: every fourth blast leaves a mine for ten seconds, up to three at a time. */
 public final class MinesPerk implements SplashPerk {
 
@@ -11,5 +13,11 @@ public final class MinesPerk implements SplashPerk {
     @Override
     public SplashSpec refineSpec(SplashSpec spec) {
         return spec.withMines(MineSpec.of(EVERY, MAX, LIFETIME_TICKS, RADIUS_CELLS));
+    }
+
+    @Override
+    public String describe() {
+        return "Mines: every " + PerkText.ordinal(EVERY) + " blast leaves a mine on the path for " + PerkText.seconds(LIFETIME_TICKS)
+                + ", up to " + MAX + ", that the next enemy to step on it sets off as one blast";
     }
 }

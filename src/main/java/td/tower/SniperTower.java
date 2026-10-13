@@ -19,6 +19,7 @@ import td.tower.sniper.AimLock;
 import td.tower.sniper.AimRules;
 import td.tower.sniper.CritStreakPerk;
 import td.tower.sniper.ExecutionerPerk;
+import td.tower.sniper.PierceRule;
 import td.tower.sniper.RailgunPerk;
 import td.tower.sniper.RicochetPerk;
 import td.tower.sniper.ShotActions;
@@ -79,16 +80,12 @@ public final class SniperTower extends AbstractTower {
 
     private static final float OVERWATCH_RANGE_BONUS = 0.35f;
     /** Railgun reaches this far past the Sniper's range, and every enemy it pierces after the first takes less. */
-    private static final float RAILGUN_EXTRA_REACH_CELLS = 2f;
-    private static final float RAILGUN_FALLOFF = 0.75f;
-    private static final float RAILGUN_HALF_WIDTH_CELLS = 0.35f;
     /** Enough to kill anything, so that an execution takes exactly what health is left. */
     private static final int EXECUTION_DAMAGE = 1_000_000_000;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
             .withAttune(NodeEffects.none()
-                    .withHitBonus(HitBonus.per(new HitScaling.PerFocus(0), HitAdjustment.critChance(0.1f)))
-                    .withNote("Steady Aim"))
+                    .withHitBonus(HitBonus.per(new HitScaling.PerFocus(0), HitAdjustment.critChance(0.1f))))
             .withRangeThree(OVERWATCH_RANGE_BONUS, NodeEffects.none().withModifiers(TowerModifiers.deadZone(2f)));
 
     private static final UpgradeNode FOCUSED_OPTICS_1 = UpgradeTier.HEAD_1.node("sniper.head.focused_optics.1",
@@ -105,18 +102,14 @@ public final class SniperTower extends AbstractTower {
             "Focused Optics III", PRICE)
             .withModifiers(TowerModifiers.damage(12f))
             .withGate(new PurposeCondition("Steady Aim shots", 20))
-            .withNote("Weak Spot: non-crit shots ignore plating and 50 armor")
             .after(FOCUSED_OPTICS_2);
     private static final UpgradeNode RAILGUN = UpgradeTier.HEAD_4.node("sniper.head.focused_optics.4a", "Railgun",
             PRICE)
-            .withNote("the shot pierces every enemy on the line through its target, 2 cells past max "
-                    + "range; each one after the first takes 25% less")
             .after(FOCUSED_OPTICS_3);
     private static final UpgradeNode EXECUTIONER = UpgradeTier.HEAD_4.node("sniper.head.focused_optics.4b",
             "Executioner", PRICE)
             .withHitBonus(HitBonus.when(new HitCondition.All(List.of(new HitCondition.TargetRankAtLeast(Rank.BOSS),
                     new HitCondition.TargetHealthBelow(0.25f))), HitAdjustment.damage(0.5f)))
-            .withNote("a non-boss enemy left under 15% health by a shot dies; executions count as crits")
             .after(FOCUSED_OPTICS_3);
     private static final UpgradeNode MARKSMANS_EYE_1 = UpgradeTier.HEAD_1.node("sniper.head.marksmans_eye.1",
             "Marksman's Eye", PRICE)
@@ -133,15 +126,13 @@ public final class SniperTower extends AbstractTower {
     private static final UpgradeNode UNBROKEN_AIM = UpgradeTier.HEAD_4.node("sniper.head.marksmans_eye.4a",
             "Unbroken Aim", PRICE)
             .withModifiers(TowerModifiers.aimStacks(2))
-            .withNote("Steady Aim survives a kill; only retargeting a living enemy resets it")
             .after(MARKSMANS_EYE_3);
     private static final UpgradeNode SUNDER_ROUNDS = UpgradeTier.HEAD_4.node("sniper.head.marksmans_eye.4b",
             "Sunder Rounds", PRICE)
             .withProc(Proc.onCrit(new ProcPayload.ApplyStacks(EffectKind.SUNDERED, 1)).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
             .after(MARKSMANS_EYE_3);
     private static final UpgradeNode TRADECRAFT_1 = UpgradeTier.EXTRA_1.node("sniper.extra.tradecraft.1",
-            "Tradecraft", PRICE)
-            .withNote("a crit makes the next crit deal +25% crit damage, two in a row +50%, no further");
+            "Tradecraft", PRICE);
     private static final UpgradeNode TRADECRAFT_2 = UpgradeTier.EXTRA_2.node("sniper.extra.tradecraft.2",
             "Tradecraft II", PRICE)
             .withHitBonus(HitBonus.when(new HitCondition.BeyondRangeShare(2f / 3f), HitAdjustment.damage(0.25f)))
@@ -153,7 +144,6 @@ public final class SniperTower extends AbstractTower {
             .after(TRADECRAFT_2);
     private static final UpgradeNode SPOTTER_UPLINK = UpgradeTier.EXTRA_4.node("sniper.extra.tradecraft.4",
             "Spotter Uplink", PRICE)
-            .withNote("may shoot Marked or Revealed enemies within twice its range")
             .after(SILVER_ROUNDS);
     private static final UpgradeNode MOMENTUM = UpgradeTier.SPECIAL.node("sniper.special.momentum", "Momentum", PRICE)
             .withTargeting(TargetPriority.HIGHEST_RANK)
@@ -165,7 +155,6 @@ public final class SniperTower extends AbstractTower {
             .after(FOCUSED_OPTICS_1);
     private static final UpgradeNode RICOCHET = UpgradeTier.SPECIAL.node("sniper.special.ricochet", "Ricochet", PRICE)
             .withTargeting(TargetPriority.MOST_NEIGHBOURS)
-            .withNote("a crit bounces to the nearest enemy within 1.5 cells for 60%, up to 3 bounces, each can crit")
             .after(FOCUSED_OPTICS_1);
     private static final UpgradeNode HEADHUNTER = UpgradeTier.SPECIAL.node("sniper.special.headhunter", "Headhunter",
             PRICE)
@@ -225,6 +214,11 @@ public final class SniperTower extends AbstractTower {
         super(TowerFactory.Type.SNIPER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
                 .withCritChance(CRIT_CHANCE).withCritMultiplier(CRIT_MULTIPLIER)
                 .with(TowerStat.DEAD_ZONE, 0f).with(TowerStat.AIM_STACKS, 1f), context, x, y);
+    }
+
+    @Override
+    protected PerkCatalogue<SniperPerk> perkCatalogue() {
+        return PERKS;
     }
 
     @Override
@@ -321,13 +315,13 @@ public final class SniperTower extends AbstractTower {
             return new ShotTrace((float) target.getX(), (float) target.getY(), critical, shot.type());
         }
         double heading = TurretAim.angleTo(this.centerX, this.centerY, target.getX(), target.getY());
-        double reach = this.railReach();
+        double reach = this.railReach(shot.pierce());
         return new ShotTrace((float) (this.centerX + Math.cos(heading) * reach),
                 (float) (this.centerY + Math.sin(heading) * reach), critical, shot.type());
     }
 
-    private double railReach() {
-        return this.rangeReal() + RAILGUN_EXTRA_REACH_CELLS * this.context.getBoard().scale();
+    private double railReach(PierceRule pierce) {
+        return this.rangeReal() + pierce.extraReachCells() * this.context.getBoard().scale();
     }
 
     private float rangeShareOf(EnemyMob target) {
@@ -347,16 +341,17 @@ public final class SniperTower extends AbstractTower {
     private boolean pierce(SniperShot shot, EnemyMob target, TowerStats stats) {
         float scale = this.context.getBoard().scale();
         double heading = TurretAim.angleTo(this.centerX, this.centerY, target.getX(), target.getY());
-        double reach = this.railReach();
+        PierceRule pierce = shot.pierce();
+        double reach = this.railReach(pierce);
         List<EnemyMob> line = new OnSegmentTargetQuery(this.centerX, this.centerY,
                 this.centerX + Math.cos(heading) * reach, this.centerY + Math.sin(heading) * reach,
-                RAILGUN_HALF_WIDTH_CELLS * scale).matching(this.context.enemies());
+                pierce.halfWidthCells() * scale).matching(this.context.enemies());
         boolean critical = false;
         float share = 1f;
         for (EnemyMob enemy : line) {
             boolean crit = this.land(shot, enemy, share, stats);
             critical |= enemy == target && crit;
-            share *= RAILGUN_FALLOFF;
+            share *= pierce.falloff();
         }
         return critical;
     }

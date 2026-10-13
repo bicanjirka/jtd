@@ -50,7 +50,28 @@ class TowerStatCatalogueTest {
     void everyNodeSaysWhatItDoes() {
         for (AbstractTower tower : this.everyTower()) {
             for (UpgradeNode node : tower.upgradeTree().nodes()) {
-                assertThat(node.bonuses()).as("%s's %s", tower.getType(), node.displayName()).isNotEmpty();
+                assertThat(tower.bonusesOf(node)).as("%s's %s", tower.getType(), node.displayName()).isNotEmpty();
+            }
+        }
+    }
+
+    @Test
+    void everyPerkSaysWhatItDoes() {
+        for (AbstractTower tower : this.everyTower()) {
+            for (UpgradeNode node : tower.upgradeTree().nodes()) {
+                assertThat(tower.perkCatalogue().describe(node)).as("%s's %s", tower.getType(), node.displayName())
+                        .allMatch(text -> !text.isBlank());
+            }
+        }
+    }
+
+    @Test
+    void onlyBaseChainNodesCarryANote() {
+        for (AbstractTower tower : this.everyTower()) {
+            for (UpgradeNode node : tower.upgradeTree().nodes()) {
+                if (!node.id().startsWith("base.")) {
+                    assertThat(node.effects().note()).as("%s's %s", tower.getType(), node.displayName()).isEmpty();
+                }
             }
         }
     }

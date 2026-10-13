@@ -74,8 +74,7 @@ public final class PulseTower extends AbstractTower {
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
             .withAttune(NodeEffects.none()
                     .withHitBonus(HitBonus.of(new HitCondition.HitKindIn(Set.of(HitKind.FIELD)),
-                            new HitScaling.PerStackOf(EffectKind.TOLL), HitAdjustment.damage(0.1f)))
-                    .withNote("Toll"))
+                            new HitScaling.PerStackOf(EffectKind.TOLL), HitAdjustment.damage(0.1f))))
             .withRangeThree(0.2f, NodeEffects.none().withModifiers(TowerModifiers.tollLinger(20)));
 
     private static final UpgradeNode OVERCHARGED_COILS_1 = UpgradeTier.HEAD_1.node("pulse.head.overcharged_coils.1",
@@ -92,8 +91,6 @@ public final class PulseTower extends AbstractTower {
             "Arc Discharge", PRICE)
             .withModifiers(TowerModifiers.critChance(0.1f))
             .withGate(new PurposeCondition(FULL_TOLL_DEED, FULL_TOLL_SECONDS_NEEDED))
-            .withNote("once a second a zap hits the healthiest enemy inside for 15x the tick damage, magic, "
-                    + "and can crit")
             .after(OVERCHARGED_COILS_2);
     private static final UpgradeNode MELTDOWN = UpgradeTier.HEAD_4.node("pulse.head.overcharged_coils.4a", "Meltdown",
             PRICE)
@@ -105,8 +102,6 @@ public final class PulseTower extends AbstractTower {
             .after(ARC_DISCHARGE);
     private static final UpgradeNode TESLA_COIL = UpgradeTier.HEAD_4.node("pulse.head.overcharged_coils.4b",
             "Tesla Coil", PRICE)
-            .withNote("the zap chains to 3 more enemies within 1.5 cells, even outside the field; every "
-                    + "enemy zapped is Dazed 0.25s")
             .after(ARC_DISCHARGE);
     private static final UpgradeNode PHASE_FIELD_1 = UpgradeTier.HEAD_1.node("pulse.head.phase_field.1",
             "Phase Field", PRICE)
@@ -114,59 +109,35 @@ public final class PulseTower extends AbstractTower {
     private static final UpgradeNode PHASE_FIELD_2 = UpgradeTier.HEAD_2.node("pulse.head.phase_field.2",
             "Phase Field II", PRICE)
             .withModifiers(TowerModifiers.range(0.225f))
-            .withNote("an enemy is revealed to every tower for 2s when it gains its first Toll stack, once "
-                    + "per visit")
             .after(PHASE_FIELD_1);
     private static final UpgradeNode NULL_FIELD = UpgradeTier.HEAD_3.node("pulse.head.phase_field.3", "Null Field",
             PRICE)
             .withGate(new PurposeCondition(FULL_TOLL_DEED, FULL_TOLL_SECONDS_NEEDED))
-            .withNote("enemies inside are Silenced")
             .after(PHASE_FIELD_2);
     private static final UpgradeNode TRUE_SIGHT = UpgradeTier.HEAD_4.node("pulse.head.phase_field.4a", "True Sight",
             PRICE)
-            .withNote("the visit's reveal lasts 4s and Dazes the enemy for 2s")
             .after(NULL_FIELD);
     private static final UpgradeNode DEAD_ZONE = UpgradeTier.HEAD_4.node("pulse.head.phase_field.4b", "Dead Zone",
             PRICE)
-            .withNote("nothing inside can be healed or shielded")
             .after(NULL_FIELD);
     private static final UpgradeNode CORROSION = UpgradeTier.EXTRA_1.node("pulse.extra.field_shaping.1", "Corrosion",
-            PRICE)
-            .withNote("-30 armor while inside, armor stopping at 0");
+            PRICE);
     private static final UpgradeNode MIRROR_FIELD = UpgradeTier.EXTRA_2.node("pulse.extra.field_shaping.2",
             "Mirror Field", PRICE)
-            .withNote("what a shield absorbs of the field's hits is dealt back to its enemy as magic")
             .after(CORROSION);
     private static final UpgradeNode UNDERTOW = UpgradeTier.EXTRA_3.node("pulse.extra.field_shaping.3", "Undertow",
             PRICE)
-            .withNote("inside, enemies are chilled 25% and the chill doesn't fade while they stay, it counts "
-                    + "for freezes, and they are Anchored")
             .after(MIRROR_FIELD);
     private static final UpgradeNode EVENT_HORIZON = UpgradeTier.EXTRA_4.node("pulse.extra.field_shaping.4",
             "Event Horizon", PRICE)
-            .withNote("each death inside adds +5% field damage until the wave ends, up to +100%")
             .after(UNDERTOW);
     private static final UpgradeNode RATTLE_FIELD = UpgradeTier.SPECIAL.node("pulse.special.rattle_field",
-            "Rattle Field", PRICE)
-            .withNote("each tick, a 5% chance to add a stack of Sundered or Exposed: about one a second");
+            "Rattle Field", PRICE);
     private static final UpgradeNode SOUL_DRAIN = UpgradeTier.SPECIAL.node("pulse.special.soul_drain", "Soul Drain",
-            PRICE)
-            .withNote("each second inside costs 5 spirit, and the field deals +1% damage per point of spirit "
-                    + "below zero; at -100 double damage and no heals or shields");
+            PRICE);
     private static final UpgradeNode KILL_ZONE = UpgradeTier.SPECIAL.node("pulse.special.kill_zone", "Kill Zone",
-            PRICE)
-            .withNote("enemies inside take +25% damage from every source");
+            PRICE);
 
-    /** Chance per tick that Rattle Field adds a stack, and one in this many being Exposed rather than Sundered. */
-    private static final double RATTLE_CHANCE = 0.05;
-    private static final float EXPOSED_SECONDS = 4f;
-    /** Soul Drain's cost each second, and the spirit at which it has taken everything. */
-    private static final int SOUL_DRAIN_SPIRIT_PER_SECOND = 5;
-    private static final float SPIRIT_FLOOR = -100f;
-    /** Each point of spirit below zero makes the field hit this much harder under Soul Drain. */
-    private static final float SOUL_DRAIN_DAMAGE_PER_POINT = 0.01f;
-    /** Event Horizon stops adding at this much. */
-    private static final float MAX_DEATH_BONUS = 1f;
     /** A rule that holds inside the field lasts this long after the last tick an enemy was in it. */
     private static final int INSIDE_TICKS = 3;
 
@@ -225,6 +196,11 @@ public final class PulseTower extends AbstractTower {
     }
 
     @Override
+    protected PerkCatalogue<PulsePerk> perkCatalogue() {
+        return PERKS;
+    }
+
+    @Override
     public UpgradeTree upgradeTree() {
         return TREE;
     }
@@ -266,8 +242,8 @@ public final class PulseTower extends AbstractTower {
             highest = Math.max(highest, stacks);
             HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.FIELD, 0f, this.stats());
             float factor = adjustment.damageFactor()
-                    + Math.min(MAX_DEATH_BONUS, spec.field().perDeathBonus() * this.deathsThisWave)
-                    + (spec.modes().has(FieldMode.SOUL_DRAIN) ? SOUL_DRAIN_DAMAGE_PER_POINT * Math.max(0f, -enemy.spirit()) : 0f);
+                    + Math.min(spec.field().maxDeathBonus(), spec.field().perDeathBonus() * this.deathsThisWave)
+                    + (spec.modes().has(FieldMode.SOUL_DRAIN) ? FieldMode.SOUL_DRAIN_DAMAGE_PER_POINT * Math.max(0f, -enemy.spirit()) : 0f);
             for (int hit = 0; hit < shots && !enemy.isDead(); hit++) {
                 this.dealPeriodicDamage(enemy, Damage.magic(Math.round(this.damageCurrent() * factor)));
                 this.rattle(enemy, spec);
@@ -392,7 +368,7 @@ public final class PulseTower extends AbstractTower {
             this.applyEffect(enemy, sink -> Effect.silenced(INSIDE_TICKS, sink));
         }
         if (modes.has(FieldMode.DEAD_ZONE)
-                || modes.has(FieldMode.SOUL_DRAIN) && enemy.spirit() <= SPIRIT_FLOOR) {
+                || modes.has(FieldMode.SOUL_DRAIN) && enemy.spirit() <= FieldMode.SOUL_DRAIN_SPIRIT_FLOOR) {
             this.applyEffect(enemy, sink -> Effect.deadZone(INSIDE_TICKS, sink));
         }
         if (modes.has(FieldMode.CORROSION)) {
@@ -406,7 +382,7 @@ public final class PulseTower extends AbstractTower {
             this.applyEffect(enemy, sink -> Effect.killZone(INSIDE_TICKS, sink));
         }
         if (beat && modes.has(FieldMode.SOUL_DRAIN)) {
-            this.applyEffect(enemy, sink -> Effect.sickened(SOUL_DRAIN_SPIRIT_PER_SECOND));
+            this.applyEffect(enemy, sink -> Effect.sickened(FieldMode.SOUL_DRAIN_SPIRIT_PER_SECOND));
         }
     }
 
@@ -421,13 +397,13 @@ public final class PulseTower extends AbstractTower {
 
     /** Rattle Field: now and then a stack of Sundered or of Exposed, whichever the coin says. */
     private void rattle(EnemyMob enemy, PulseSpec spec) {
-        if (!spec.modes().has(FieldMode.RATTLE) || this.context.random().nextDouble() >= RATTLE_CHANCE) {
+        if (!spec.modes().has(FieldMode.RATTLE) || this.context.random().nextDouble() >= FieldMode.RATTLE_CHANCE) {
             return;
         }
         if (this.context.random().nextIndex(2) == 0) {
             this.applyStacks(enemy, EffectKind.SUNDERED, 1);
         } else {
-            this.applyEffect(enemy, sink -> Effect.exposed(Math.round(EXPOSED_SECONDS * TICKS_PER_SECOND), sink));
+            this.applyEffect(enemy, sink -> Effect.exposed(Math.round(FieldMode.RATTLE_EXPOSED_SECONDS * TICKS_PER_SECOND), sink));
         }
     }
 

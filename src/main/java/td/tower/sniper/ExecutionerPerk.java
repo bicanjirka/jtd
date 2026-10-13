@@ -1,6 +1,7 @@
 package td.tower.sniper;
 
 import td.enemy.Rank;
+import td.tower.upgrade.PerkText;
 
 /**
  * Executioner: a shot that leaves a non-boss enemy under a sliver of health kills it, and counts
@@ -17,5 +18,10 @@ public final class ExecutionerPerk implements SniperPerk {
             return result;
         }
         return new ShotResult(result.target(), true, actions.execute(result.target()));
+    }
+
+    @Override
+    public String describe() {
+        return "a non-boss enemy left under " + PerkText.percent(EXECUTE_BELOW) + " health by a shot dies; executions count as crits";
     }
 }

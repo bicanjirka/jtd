@@ -2,6 +2,7 @@ package td.tower;
 
 import td.enemy.EnemyWalk;
 import td.stat.StatModifiers;
+import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
@@ -124,6 +125,9 @@ public interface Tower {
 
     /** Owned upgrade nodes, as one snapshot. */
     UpgradeState upgrades();
+
+    /** What {@code node} would add to this tower: its data rows, then its perks' words. */
+    List<UpgradeBonus> bonusesOf(UpgradeNode node);
 
     /** Unowned nodes whose prerequisites are met. */
     default List<UpgradeNode> offeredUpgrades(GameWorld context) {

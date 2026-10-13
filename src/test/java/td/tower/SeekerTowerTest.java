@@ -12,6 +12,7 @@ import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.TowerFixtures;
 import td.fixtures.WorldFixtures;
+import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.util.GameWorld;
@@ -708,5 +709,14 @@ class SeekerTowerTest {
     private static int stacksApplied(FakeEnemyMob mob) {
         return mob.appliedEffects().stream().filter(e -> e.kind() == EffectKind.UNRAVELED)
                 .mapToInt(td.effect.Effect::stacks).sum();
+    }
+
+    @Test
+    void shatterburstSaysWhatItDoes() {
+        SeekerTower tower = new SeekerTower(this.context, 0, 0);
+
+        assertThat(tower.bonusesOf(UpgradePaths.named(tower, "Shatterburst"))).contains(new UpgradeBonus(
+                "A missile that hits a frozen enemy bursts for 35% magic damage around it; every enemy the "
+                + "burst hits is Silenced 2s and gains Unraveled", ""));
     }
 }

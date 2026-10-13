@@ -13,32 +13,32 @@ import java.util.function.UnaryOperator;
  * @param damageFactor  a multiple of the Sniper's current damage
  * @param attack        what the hit carries: crit, penetration
  * @param attackSpeedBonus extra attack speed for the wait that follows
- * @param piercing      whether it hits every enemy on the line through the target
+ * @param pierce        how it runs through the line past the target, when it does
  */
 public record SniperShot(DamageType type, float damageFactor, AttackProfile attack, float attackSpeedBonus,
-                         boolean piercing) {
+                         PierceRule pierce) {
 
     /** A plain physical shot at the Sniper's current damage. */
     public static SniperShot of(AttackProfile attack) {
-        return new SniperShot(DamageType.PHYSICAL, 1f, attack, 0f, false);
+        return new SniperShot(DamageType.PHYSICAL, 1f, attack, 0f, PierceRule.none());
     }
 
     public SniperShot withType(DamageType type) {
-        return new SniperShot(type, this.damageFactor, this.attack, this.attackSpeedBonus, this.piercing);
+        return new SniperShot(type, this.damageFactor, this.attack, this.attackSpeedBonus, this.pierce);
     }
 
     public SniperShot withDamageFactor(float damageFactor) {
-        return new SniperShot(this.type, damageFactor, this.attack, this.attackSpeedBonus, this.piercing);
+        return new SniperShot(this.type, damageFactor, this.attack, this.attackSpeedBonus, this.pierce);
     }
 
     /** Multiplies the damage by {@code factor}. */
     public SniperShot scaledBy(float factor) {
-        return new SniperShot(this.type, this.damageFactor * factor, this.attack, this.attackSpeedBonus, this.piercing);
+        return new SniperShot(this.type, this.damageFactor * factor, this.attack, this.attackSpeedBonus, this.pierce);
     }
 
     public SniperShot withAttack(UnaryOperator<AttackProfile> change) {
         return new SniperShot(this.type, this.damageFactor, change.apply(this.attack), this.attackSpeedBonus,
-                this.piercing);
+                this.pierce);
     }
 
     /** Adds {@code bonus} to the crit chance, which stays a probability. */
@@ -48,10 +48,15 @@ public record SniperShot(DamageType type, float damageFactor, AttackProfile atta
 
     /** Attack-speed bonuses add. */
     public SniperShot withAttackSpeedBonus(float bonus) {
-        return new SniperShot(this.type, this.damageFactor, this.attack, this.attackSpeedBonus + bonus, this.piercing);
+        return new SniperShot(this.type, this.damageFactor, this.attack, this.attackSpeedBonus + bonus, this.pierce);
     }
 
-    public SniperShot withPiercing() {
-        return new SniperShot(this.type, this.damageFactor, this.attack, this.attackSpeedBonus, true);
+    public SniperShot withPiercing(PierceRule pierce) {
+        return new SniperShot(this.type, this.damageFactor, this.attack, this.attackSpeedBonus, pierce);
+    }
+
+    /** Whether it hits every enemy on the line through the target. */
+    public boolean piercing() {
+        return this.pierce.isActive();
     }
 }

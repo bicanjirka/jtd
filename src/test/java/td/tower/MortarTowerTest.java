@@ -15,6 +15,7 @@ import td.fixtures.TowerFixtures;
 import td.fixtures.WorldFixtures;
 import td.projectile.CannonballProjectile;
 import td.projectile.ShellLook;
+import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 import td.zone.Zone;
@@ -851,5 +852,14 @@ class MortarTowerTest {
         assertThat(after.base()).isEqualTo(before.base());
         assertThat(after.current()).isCloseTo((float) (3 * 20 * tower.attackRate() / ((tower.coolDownMax + 1) * 2f)),
                 within(1e-3f));
+    }
+
+    @Test
+    void tacticalNukeSaysWhatItDoes() {
+        MortarTower tower = new MortarTower(this.context, 0, 0);
+
+        assertThat(tower.bonusesOf(UpgradePaths.named(tower, "Tactical Nuke"))).contains(new UpgradeBonus(
+                "Every 4th shell is a nuke: x4 damage over x1.5 the blast, leaving fallout for 4s over 0.8 "
+                + "of the blast; it never carries a special", ""));
     }
 }

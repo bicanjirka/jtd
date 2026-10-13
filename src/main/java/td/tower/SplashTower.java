@@ -104,20 +104,11 @@ public final class SplashTower extends AbstractTower {
     /** Saturation fades this long after the last blast that caught the enemy. */
     private static final float SATURATION_SECONDS = 1.5f;
     private static final String SATURATED_BLAST_DEED = "Saturated blasts";
-    /** How long a Thunderclap or a Thunderstrike Dazes. */
-    private static final float DAZE_SECONDS = 0.5f;
-    private static final float THUNDERCLAP_SHARE = 0.5f;
-    private static final float THUNDERSTRIKE_FACTOR = 4f;
     /** How far above its target a Thunderstrike's bolt is drawn from. */
     private static final float THUNDERSTRIKE_HEIGHT_CELLS = 2f;
-    /** Every this many shots, a Hexer casts instead of blasting. */
-    private static final int CAST_EVERY = 4;
     /** How far, in cells before the blast radius bonus, a curse spreads or shares. */
     private static final float SPREAD_CELLS = 1.5f;
-    /** How far, in cells before the blast radius bonus, Sympathy shares and Reckoning releases. */
-    private static final float SHARE_CELLS = 2f;
-    /** How many enemies a Contagion jumps to, and how often a hex may jump at most. */
-    private static final int CONTAGION_TARGETS = 2;
+    /** How often a hex may jump at most. */
     private static final int MAX_JUMPS = 2;
     private static final TargetSelector THUNDERSTRIKE_AIM = PreferringSelector.priority(new HighestHealthSelector());
     private static final int SATURATED_BLASTS_NEEDED = 45;
@@ -127,68 +118,43 @@ public final class SplashTower extends AbstractTower {
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
             .withAttune(NodeEffects.none()
                     .withHitBonus(HitBonus.of(new HitCondition.HitKindIn(Set.of(HitKind.BLAST)),
-                            new HitScaling.PerStackOf(EffectKind.SATURATED), HitAdjustment.damage(0.05f)))
-                    .withNote("Fire Control: aims at the enemy with most neighbours in the blast; Saturation"))
-            .withRangeThree(0.1f, NodeEffects.none().withModifiers(TowerModifiers.areaRadius(0.15f))
-                    .withNote("Mines: every 4th blast leaves a mine on the path for 10s, up to 3, that the next enemy "
-                            + "to step on it sets off as one blast"));
+                            new HitScaling.PerStackOf(EffectKind.SATURATED), HitAdjustment.damage(0.05f))))
+            .withRangeThree(0.1f, NodeEffects.none().withModifiers(TowerModifiers.areaRadius(0.15f)));
 
-    private static final UpgradeNode ARC = UpgradeTier.HEAD_1.node("splash.head.arc.1", "Arc", PRICE)
-            .withNote("the blast carries past its edge: 2 jumps at 50% as magic, further from Saturated "
-                    + "enemies");
+    private static final UpgradeNode ARC = UpgradeTier.HEAD_1.node("splash.head.arc.1", "Arc", PRICE);
     private static final UpgradeNode CONDUCTOR = UpgradeTier.HEAD_2.node("splash.head.arc.2", "Conductor", PRICE)
             .withModifiers(TowerModifiers.critChance(0.1f))
-            .withNote("arcs can crit, +1 jump")
             .after(ARC);
     private static final UpgradeNode OVERLOAD = UpgradeTier.HEAD_3.node("splash.head.arc.3", "Overload", PRICE)
             .withGate(new PurposeCondition(SATURATED_BLAST_DEED, SATURATED_BLASTS_NEEDED))
-            .withNote("an arc crit Dazes its target 0.5s; arcs into a fully Saturated enemy +10% crit")
             .after(CONDUCTOR);
     private static final UpgradeNode CHAIN_LIGHTNING = UpgradeTier.HEAD_4.node("splash.head.arc.4a",
             "Chain Lightning", PRICE)
-            .withNote("up to 6 jumps at the blast's full damage; the 3rd jump forks")
             .after(OVERLOAD);
     private static final UpgradeNode LIGHTNING_ROD = UpgradeTier.HEAD_4.node("splash.head.arc.4b", "Lightning Rod",
             PRICE)
-            .withNote("an arc with nowhere to go returns to the primary at full strength, up to 3 times; arcs "
-                    + "on a Dazed enemy deal +50% crit damage")
             .after(OVERLOAD);
-    private static final UpgradeNode HEX = UpgradeTier.HEAD_1.node("splash.head.hex.1", "Hex", PRICE)
-            .withNote("every 4th shot casts a hex instead of blasting; adds Hex of Doom: when it ends, the "
-                    + "enemy takes 30% of all it took meanwhile");
+    private static final UpgradeNode HEX = UpgradeTier.HEAD_1.node("splash.head.hex.1", "Hex", PRICE);
     private static final UpgradeNode WITCHS_BREW = UpgradeTier.HEAD_2.node("splash.head.hex.2", "Witch's Brew",
             PRICE)
-            .withNote("adds Hex of Blight: poisons for the hex's length; a cast curses up to 3 enemies")
             .after(HEX);
     private static final UpgradeNode SPREADING_CURSE = UpgradeTier.HEAD_3.node("splash.head.hex.3",
             "Spreading Curse", PRICE)
             .withGate(new PurposeCondition(SATURATED_BLAST_DEED, SATURATED_BLASTS_NEEDED))
-            .withNote("adds Hex of Contagion: when the enemy dies, its hexes and debuffs jump to the 2 nearest "
-                    + "unhexed enemies")
             .after(WITCHS_BREW);
     private static final UpgradeNode RIME_COVEN = UpgradeTier.HEAD_4.node("splash.head.hex.4a", "Rime Coven",
             PRICE)
-            .withNote("adds Hex of Rime: chills 30% when cast; freezing the enemy buys twice the chill's extra "
-                    + "time, and its burn lands at once instead of going out")
             .after(SPREADING_CURSE);
     private static final UpgradeNode ASH_COVEN = UpgradeTier.HEAD_4.node("splash.head.hex.4b", "Ash Coven", PRICE)
-            .withNote("adds Hex of Ash: the enemy's burn and poison hold twice as much and mark it twice as "
-                    + "fast; it can't be frozen and shrugs off 75% of chill")
             .after(SPREADING_CURSE);
     private static final UpgradeNode INVERSION = UpgradeTier.SPECIAL.node("splash.special.inversion",
             "Hex of Inversion", PRICE)
-            .withNote("adds Hex of Inversion: heals and shields the enemy receives are dealt to it as magic "
-                    + "damage instead, and it can't turn invisible")
             .after(HEX);
     private static final UpgradeNode SYMPATHY = UpgradeTier.SPECIAL.node("splash.special.sympathy",
             "Hex of Sympathy", PRICE)
-            .withNote("adds Hex of Sympathy: once a second, its Vulnerable, Sundered, Exposed and chill are "
-                    + "copied to the other enemies within 2 cells that carry any of this tower's hexes")
             .after(HEX);
     private static final UpgradeNode RECKONING = UpgradeTier.SPECIAL.node("splash.special.reckoning",
             "Hex of Reckoning", PRICE)
-            .withNote("adds Hex of Reckoning: when the enemy dies, this tower's Dooms within 2 cells release "
-                    + "at once and start again")
             .after(HEX);
     private static final UpgradeCondition A_CHAIN = UpgradeCondition.owns(ARC.id()).or(UpgradeCondition.owns(HEX.id()));
     private static final UpgradeNode WIDE_CHARGE = UpgradeTier.EXTRA_1.node("splash.extra.blast_engineering.1",
@@ -201,28 +167,20 @@ public final class SplashTower extends AbstractTower {
     private static final UpgradeNode POTENCY = UpgradeTier.EXTRA_3.node("splash.extra.blast_engineering.3",
             "Potency", PRICE)
             .withRequires(A_CHAIN)
-            .withNote("Stormcaller: +1 jump, arcs deal 65%; Hexer: Doom pays out 45%")
             .after(SHAPED_CHARGE);
     private static final UpgradeNode MASTERY = UpgradeTier.EXTRA_4.node("splash.extra.blast_engineering.4",
             "Mastery", PRICE)
-            .withNote("Stormcaller: arcs +10% crit, Overload's Daze lasts 1s; Hexer: Blight poisons 50% harder, and a hexed enemy that dies leaves a cursed cloud")
             .after(POTENCY);
 
     private static final UpgradeNode THUNDERCLAP = UpgradeTier.SPECIAL.node("splash.special.thunderclap",
             "Thunderclap", PRICE)
-            .withNote("after a crit, the next shot also arcs into every enemy in range at 50%, Dazing each one "
-                    + "it crits")
             .after(ARC);
     private static final UpgradeNode STATIC_CHARGE = UpgradeTier.SPECIAL.node("splash.special.static_charge",
             "Static Charge", PRICE)
-            .withNote("arcs leave enemies Charged for 3s: another tower's next hit discharges it for +30% of "
-                    + "that hit as magic, credited to this tower; a crit discharges at double")
             .withProc(Proc.onHit(new ProcPayload.Charge(60)).when(new ProcCondition.HitKindIn(Set.of(HitKind.ARC))))
             .after(ARC);
     private static final UpgradeNode THUNDERSTRIKE = UpgradeTier.SPECIAL.node("splash.special.thunderstrike",
             "Thunderstrike", PRICE)
-            .withNote("every 6th shot calls lightning onto the healthiest enemy in range: 4x the blast as magic "
-                    + "and Dazed 0.5s; the shot's arcs start there at full damage; counts as a crit")
             .after(ARC);
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, OVERLOAD,
@@ -248,7 +206,7 @@ public final class SplashTower extends AbstractTower {
             .with(MASTERY.id(), MasteryPerk::new)
             .with(THUNDERCLAP.id(), ThunderclapPerk::new)
             .with(THUNDERSTRIKE.id(), ThunderstrikePerk::new)
-            .with(HEX.id(), () -> HexPerk.adding(new DoomHex()))
+            .with(HEX.id(), () -> HexPerk.founding(new DoomHex()))
             .with(WITCHS_BREW.id(), () -> HexPerk.adding(new BlightHex()).andCursing(3))
             .with(SPREADING_CURSE.id(), () -> HexPerk.adding(new ContagionHex()))
             .with(RIME_COVEN.id(), () -> HexPerk.adding(CovenHex.rime()))
@@ -278,6 +236,11 @@ public final class SplashTower extends AbstractTower {
                 .with(TowerStat.AREA_RADIUS, BLAST_RADIUS_CELLS).with(TowerStat.BLAST_EDGE, 0f)
                 .with(TowerStat.SATURATION_CAP, 3f).with(TowerStat.SATURATION_INNER_STACKS, 1f), context, x, y);
         this.randomAim = PreferringSelector.priority(new RandomSelector(context.random()));
+    }
+
+    @Override
+    protected PerkCatalogue<SplashPerk> perkCatalogue() {
+        return PERKS;
     }
 
     @Override
@@ -354,12 +317,12 @@ public final class SplashTower extends AbstractTower {
      */
     private boolean cast(List<EnemyMob> inReach, SplashSpec spec) {
         HexSpec hexes = spec.hexes();
-        if (!hexes.isActive() || (this.shotsFired + 1) % CAST_EVERY != 0) {
+        if (!hexes.isActive() || (this.shotsFired + 1) % HexSpec.CAST_EVERY != 0) {
             return false;
         }
         float blastRadius = this.blastRadius();
         Optional<HexPick> pick = this.hexTurn.take(hexes.pool(), new HexScene(inReach, blastRadius,
-                this.distance(SPREAD_CELLS, spec), this.distance(SHARE_CELLS, spec)));
+                this.distance(SPREAD_CELLS, spec), this.distance(HexSpec.SHARE_CELLS, spec)));
         if (pick.isEmpty()) {
             return false;
         }
@@ -455,7 +418,7 @@ public final class SplashTower extends AbstractTower {
      */
     private void reckon(EnemyMob dead, SplashSpec spec) {
         Optional<Hex> doom = spec.hexes().hexOf(EffectKind.DOOM);
-        float distance = this.distance(SHARE_CELLS, spec);
+        float distance = this.distance(HexSpec.SHARE_CELLS, spec);
         for (EnemyMob enemy : this.hexLedger.carriers(EffectKind.DOOM)) {
             if (doom.isEmpty() || enemy == dead || !near(enemy, dead, distance)) {
                 continue;
@@ -477,7 +440,7 @@ public final class SplashTower extends AbstractTower {
         if (carriers.isEmpty()) {
             return;
         }
-        float distance = this.distance(SHARE_CELLS, spec);
+        float distance = this.distance(HexSpec.SHARE_CELLS, spec);
         List<EnemyMob> hexed = this.hexLedger.hexed();
         for (EnemyMob carrier : carriers) {
             for (EnemyMob other : hexed) {
@@ -502,7 +465,7 @@ public final class SplashTower extends AbstractTower {
                         .noneMatch(kind -> kind.category() == EffectCategory.HEX))
                 .sorted(Comparator.comparingDouble(enemy -> Math.hypot(enemy.getX() - dead.getX(),
                         enemy.getY() - dead.getY())))
-                .limit(CONTAGION_TARGETS)
+                .limit(ContagionHex.TARGETS)
                 .toList();
         for (EnemyMob enemy : next) {
             for (Effect effect : carried) {
@@ -545,7 +508,7 @@ public final class SplashTower extends AbstractTower {
             this.countDeedOfAttack();
         }
         List<Trace> traces = new ArrayList<>();
-        Optional<EnemyMob> struck = shot.thunderstrike() ? this.thunderstrike(spec, traces) : Optional.empty();
+        Optional<EnemyMob> struck = shot.thunderstrike() ? this.thunderstrike(spec, shot.thunderstrikeFactor(), traces) : Optional.empty();
         Blast blast = this.blast(primary, (int) primary.getX(), (int) primary.getY(), spec);
         this.blasts = List.of(blast);
         if (spec.mines().isActive() && this.shotsFired % spec.mines().every() == 0) {
@@ -558,7 +521,7 @@ public final class SplashTower extends AbstractTower {
             critical |= this.arc(blast, start, spec.withArcs(arcs), traces);
         }
         if (shot.thunderclap()) {
-            this.discharge(spec, traces);
+            this.discharge(spec, shot.thunderclapShare(), traces);
         }
         this.arcs = List.copyOf(traces);
         ShotResult result = new ShotResult(critical);
@@ -654,10 +617,10 @@ public final class SplashTower extends AbstractTower {
     }
 
     /** Thunderclap: an arc from the tower into every enemy in range; each one it crits is Dazed. */
-    private void discharge(SplashSpec spec, List<Trace> traces) {
+    private void discharge(SplashSpec spec, float share, List<Trace> traces) {
         for (EnemyMob enemy : spec.reach().matching(this.context.enemies())) {
             traces.add(new Trace(this.centerX, this.centerY, (float) enemy.getX(), (float) enemy.getY()));
-            this.strikeWithArc(enemy, THUNDERCLAP_SHARE, spec, DAZE_SECONDS);
+            this.strikeWithArc(enemy, share, spec, SplashShot.DAZE_SECONDS);
         }
     }
 
@@ -665,15 +628,15 @@ public final class SplashTower extends AbstractTower {
      * Thunderstrike: lightning from above onto the healthiest enemy in range, the Priority first,
      * for several times the blast as magic, and a Daze. The enemy it struck, if any.
      */
-    private Optional<EnemyMob> thunderstrike(SplashSpec spec, List<Trace> traces) {
+    private Optional<EnemyMob> thunderstrike(SplashSpec spec, float factor, List<Trace> traces) {
         Optional<EnemyMob> target = THUNDERSTRIKE_AIM.selectFrom(spec.reach().matching(this.context.enemies()));
         target.ifPresent(enemy -> {
             float x = (float) enemy.getX();
             float y = (float) enemy.getY();
             traces.add(new Trace(x, y - THUNDERSTRIKE_HEIGHT_CELLS * this.context.getBoard().scale(), x, y));
-            this.dealDamage(enemy, Damage.magic(Math.round(this.damageCurrent() * THUNDERSTRIKE_FACTOR)));
+            this.dealDamage(enemy, Damage.magic(Math.round(this.damageCurrent() * factor)));
             if (!enemy.isDead()) {
-                int ticks = Math.round(DAZE_SECONDS * TICKS_PER_SECOND);
+                int ticks = Math.round(SplashShot.DAZE_SECONDS * TICKS_PER_SECOND);
                 this.applyEffect(enemy, sink -> Effect.dazed(ticks, sink));
             }
         });

@@ -3,6 +3,8 @@ package td.ui;
 import org.junit.jupiter.api.Test;
 import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
+import td.tower.Tower;
+import td.tower.TowerFactory;
 import td.tower.TowerModifiers;
 import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.StandardBaseSlot;
@@ -104,6 +106,20 @@ class UpgradeSheetTextTest {
                 Row.toned(Glyph.CHECK, Palette.UPGRADE_GATE_MET, "XP 10/10", ""),
                 new SheetLine.Gap(),
                 Row.plain(Glyph.DOT, "Damage", "+20%"));
+    }
+
+    @Test
+    void aNodesPerkRowFollowsItsStatRows() {
+        Tower sniper = TowerFactory.createTower(TowerFactory.Type.SNIPER, this.world, 3, 3);
+        UpgradeNode executioner = sniper.upgradeTree().nodes().stream()
+                .filter(node -> node.displayName().equals("Executioner")).findFirst().orElseThrow();
+
+        InfoSheet sheet = UpgradeSheetText.hover(UpgradeOffer.of(List.of(executioner), 0, sniper, this.world));
+
+        List<SheetLine> rows = sheet.lines().subList(sheet.lines().indexOf(new SheetLine.Gap()) + 1, sheet.lines().size());
+        assertThat(rows).hasSize(executioner.bonuses().size() + 1);
+        assertThat(rows.getLast()).isEqualTo(Row.plain(Glyph.DOT,
+                "A non-boss enemy left under 15% health by a shot dies; executions count as crits", ""));
     }
 
     @Test

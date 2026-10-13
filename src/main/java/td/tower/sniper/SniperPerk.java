@@ -1,6 +1,7 @@
 package td.tower.sniper;
 
 import td.tower.BehaviourLine;
+import td.tower.upgrade.Perk;
 
 import java.util.Optional;
 
@@ -9,7 +10,7 @@ import java.util.Optional;
  * builds, reshape a shot before it is fired, change how it counts once it has landed, and react to
  * that outcome. Every hook does nothing by default, so a perk implements only its own.
  */
-public interface SniperPerk {
+public interface SniperPerk extends Perk {
 
     default SniperSpec refineSpec(SniperSpec spec) {
         return spec;

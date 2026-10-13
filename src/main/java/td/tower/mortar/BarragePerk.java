@@ -1,5 +1,7 @@
 package td.tower.mortar;
 
+import td.tower.upgrade.PerkText;
+
 /** Barrage: the reload takes twice as long, but every salvo is three shells half a second apart. */
 public final class BarragePerk implements MortarPerk {
 
@@ -10,5 +12,11 @@ public final class BarragePerk implements MortarPerk {
     @Override
     public MortarSpec refineSpec(MortarSpec spec) {
         return spec.withSalvo(SalvoSpec.of(SHELLS, GAP_TICKS, RELOAD_FACTOR));
+    }
+
+    @Override
+    public String describe() {
+        return "the reload takes " + PerkText.times(RELOAD_FACTOR) + " as long, but each salvo is " + SHELLS + " shells "
+                + PerkText.seconds(GAP_TICKS) + " apart at full damage";
     }
 }

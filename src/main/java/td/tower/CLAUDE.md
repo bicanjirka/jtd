@@ -165,7 +165,7 @@
   `docs/features/FEATURE-tower-specialization-abilities.md` and the tower-rework feature requests.
 - Build a node at its step: `UpgradeTier.HEAD_2.node(id, name, PRICE)` sets its slot, its price
   (a multiple of the list price), its XP (the gate table) and the base node that opens it;
-  `after(previous)` adds its line. Then `withModifiers`/`withGate`/`withNote`. `requires`
+  `after(previous)` adds its line. Then `withModifiers`/`withGate`. `requires`
   decides whether a node is offered. Once offered it needs its `xp` and its `gate`, a purpose or
   layout condition (`always()`, `ClusterCondition`, `TranscendentCondition`) whose `progress()`
   feeds the UI. `UpgradeNode.gateMet` is the one check for both: never test `gate()` alone.
@@ -175,12 +175,16 @@
   has no Transcendent and no Range III.
 - Never hand-write a node's bonus into a tower's description: `UpgradeNode.bonuses()` derives it
   and the Upgrades panel lists offered nodes.
+- A perk says what it adds (`describe()`), built from its own constants; a node carries no note but the
+  base chain's structural text. The Upgrades panel lists `Tower.bonusesOf(node)`: the node's data rows,
+  then its perks' words. A number a perk's words quote lives in the perk, or in the delegate or effect
+  rule it describes, never in the tower class.
 - `buyUpgrade` is the only entry point and is check-and-charge (returns `false` without effect).
   Don't pre-check affordability. It publishes `TowerStats` before `UpgradeState`.
 - Pass `StandardBaseSlot.nodes` the tower's base range (Range nodes add a share of it, in cells) and a
   `BaseSlotPerks` for what Attune, Awaken and Range III add to a tower.
 - A node is data: `withModifiers` (its own stats, flat, through `TowerModifiers`), `withEmission`
-  (what an aura gives), `withNote` (words only for what a perk does). A number a node changes is a
+  (what an aura gives). A number a node changes is a
   `TowerStat` when the tower has it from the start or it belongs to the Attune mechanic; any other
   number belongs to the mechanic a node adds, in that mechanic's spec, set by its perk. Never add a
   field a node mutates. `TowerStatCatalogueTest` rejects a node that changes a stat its tower

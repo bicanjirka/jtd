@@ -1,5 +1,6 @@
 package td.tower.sniper;
 
+import td.tower.upgrade.PerkText;
 import td.util.ThreadConfined;
 
 /** Tradecraft: a crit makes the next crit hit harder, two in a row harder still, and no further. */
@@ -19,5 +20,11 @@ public final class CritStreakPerk implements SniperPerk {
     @Override
     public void react(ShotResult result, ShotActions actions) {
         this.streak = result.critical() ? Math.min(MAX_STREAK, this.streak + 1) : 0;
+    }
+
+    @Override
+    public String describe() {
+        return "a crit makes the next crit deal +" + PerkText.percent(CRIT_DAMAGE_PER_STREAK) + " crit damage, two in a row +"
+                + PerkText.percent(CRIT_DAMAGE_PER_STREAK * MAX_STREAK) + ", no further";
     }
 }

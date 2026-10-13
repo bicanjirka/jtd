@@ -1,5 +1,7 @@
 package td.tower.cinder;
 
+import td.tower.upgrade.PerkText;
+
 /** Lingering Flames: each wave leaves a patch of burning ground where its target stands, for two seconds. */
 public final class LingeringFlamesPerk implements CinderPerk {
 
@@ -9,5 +11,10 @@ public final class LingeringFlamesPerk implements CinderPerk {
     @Override
     public CinderSpec refineSpec(CinderSpec spec) {
         return spec.withLinger(LingerSpec.of(RADIUS_CELLS, TICKS));
+    }
+
+    @Override
+    public String describe() {
+        return "each wave leaves a patch of burning ground where its target stands, for " + PerkText.seconds(TICKS);
     }
 }

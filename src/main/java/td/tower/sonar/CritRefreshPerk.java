@@ -12,4 +12,9 @@ public final class CritRefreshPerk implements SonarPerk {
             actions.apply(result.target(), sink -> Effect.exposed(result.spec().pingTicks(), sink));
         }
     }
+
+    @Override
+    public String describe() {
+        return "a beam crit refreshes Exposed on its target";
+    }
 }

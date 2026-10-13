@@ -98,8 +98,6 @@ public final class MortarTower extends AbstractTower {
     /** What a bleed costs per cell travelled, as a share of the Mortar's damage. */
     private static final float BLEED_SHARE_PER_CELL = 0.08f;
     private static final int BLEED_TICKS = 80;
-    /** Airburst: inside this share of the radius, squared, a blast takes no falloff: the inner half. */
-    private static final double FLAT_CORE_SHARE = 0.25;
     /** Flight time depends on where the shell is going, so the aim is refined this many times. */
     private static final int PREDICTION_PASSES = 3;
     /** How far apart bomblets lie along the path, in cells, and how far from the impact the first one is. */
@@ -110,8 +108,6 @@ public final class MortarTower extends AbstractTower {
     private static final int BRACKETED_SHELLS_NEEDED = 15;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
-            .withAttune(NodeEffects.none().withNote("Bracketing: a shell landing within 1.5 cells of the last gets +10% damage and radius, "
-                    + "up to 3 steps; a shell elsewhere resets it"))
             .withRangeThree(0.3f, NodeEffects.none().withModifiers(TowerModifiers.deadZone(1f)));
 
     private static final UpgradeNode SIEGE_ROUNDS_1 = UpgradeTier.HEAD_1.node("mortar.head.siege_rounds.1",
@@ -127,39 +123,29 @@ public final class MortarTower extends AbstractTower {
             .withModifiers(TowerModifiers.damage(16f).plus(TowerModifiers.attackSpeed(-0.2f))
                     .plus(TowerModifiers.projectileSpeed(-0.25f)).plus(TowerModifiers.projectileSize(0.3f)))
             .withGate(new PurposeCondition(BRACKET_DEED, BRACKETED_SHELLS_NEEDED))
-            .withNote("enemies within 0.5 cells of the impact are Dazed 0.5s")
             .after(SIEGE_ROUNDS_2);
     private static final UpgradeNode TACTICAL_NUKE = UpgradeTier.HEAD_4.node("mortar.head.siege_rounds.4a",
             "Tactical Nuke", PRICE)
-            .withNote("every 4th shell is a nuke: x4 damage over x1.5 the blast, leaving fallout for 4s over "
-                    + "0.8 of the blast; it never carries a special")
             .after(HEAVY_SHELL);
     private static final UpgradeNode BUNKER_BUSTER = UpgradeTier.HEAD_4.node("mortar.head.siege_rounds.4b",
             "Bunker Buster", PRICE)
             .withModifiers(TowerModifiers.areaRadius(-0.525f))
-            .withNote("the enemy at the centre of the blast takes x3 damage and is Sundered")
             .after(HEAVY_SHELL);
 
     private static final UpgradeNode FRAGMENTATION_ROUNDS_1 = UpgradeTier.HEAD_1.node(
-            "mortar.head.fragmentation_rounds.1", "Fragmentation Rounds", PRICE)
-            .withNote("a ring of shrapnel past the blast for 25% damage, cracking plating, reaching 0.25 "
-                    + "cells further per Bracketing step");
+            "mortar.head.fragmentation_rounds.1", "Fragmentation Rounds", PRICE);
     private static final UpgradeNode FRAGMENTATION_ROUNDS_2 = UpgradeTier.HEAD_2.node(
             "mortar.head.fragmentation_rounds.2", "Fragmentation Rounds II", PRICE)
-            .withNote("shrapnel does 30% more of everything it does, and applies its shell's own effect")
             .after(FRAGMENTATION_ROUNDS_1);
     private static final UpgradeNode CLUSTER_SHELL = UpgradeTier.HEAD_3.node("mortar.head.fragmentation_rounds.3",
             "Cluster Shell", PRICE)
             .withGate(new PurposeCondition(BRACKET_DEED, BRACKETED_SHELLS_NEEDED))
-            .withNote("4 bomblets scattered along the path around the impact, 40% damage each over 1 cell")
             .after(FRAGMENTATION_ROUNDS_2);
     private static final UpgradeNode CARPET_BOMBING = UpgradeTier.HEAD_4.node("mortar.head.fragmentation_rounds.4a",
             "Carpet Bombing", PRICE)
-            .withNote("8 bomblets in a line along the path ahead of the impact instead")
             .after(CLUSTER_SHELL);
     private static final UpgradeNode SHRAPNEL_STORM = UpgradeTier.HEAD_4.node("mortar.head.fragmentation_rounds.4b",
             "Shrapnel Storm", PRICE)
-            .withNote("what the shrapnel hits bleeds: physical damage for every cell it travels")
             .after(CLUSTER_SHELL);
 
     private static final UpgradeNode RIFLED_BARREL = UpgradeTier.EXTRA_1.node("mortar.extra.ballistics.1",
@@ -167,25 +153,19 @@ public final class MortarTower extends AbstractTower {
             .withModifiers(TowerModifiers.projectileSpeed(0.4f).plus(TowerModifiers.projectileSize(-0.3f)));
     private static final UpgradeNode PREDICTIVE_FIRE = UpgradeTier.EXTRA_2.node("mortar.extra.ballistics.2",
             "Predictive Fire", PRICE)
-            .withNote("aims where the enemy will be when the shell lands")
             .after(RIFLED_BARREL);
     private static final UpgradeNode AIRBURST = UpgradeTier.EXTRA_3.node("mortar.extra.ballistics.3", "Airburst",
             PRICE)
             .withModifiers(TowerModifiers.areaRadius(0.4375f))
-            .withNote("full damage across the inner half of the blast")
             .after(PREDICTIVE_FIRE);
     private static final UpgradeNode BARRAGE = UpgradeTier.EXTRA_4.node("mortar.extra.ballistics.4", "Barrage",
             PRICE)
-            .withNote("the reload takes twice as long, but each salvo is 3 shells 0.5s apart at full damage")
             .after(AIRBURST);
 
-    private static final UpgradeNode NAPALM = UpgradeTier.SPECIAL.node("mortar.special.napalm", "Napalm", PRICE)
-            .withNote("every 3rd shell is Napalm: its blast is magic and leaves burning ground, 1 cell wide, for 3s");
-    private static final UpgradeNode TAR = UpgradeTier.SPECIAL.node("mortar.special.tar", "Tar", PRICE)
-            .withNote("every 3rd shell is Tar: it leaves tar, 1.2 cells wide, for 4s");
+    private static final UpgradeNode NAPALM = UpgradeTier.SPECIAL.node("mortar.special.napalm", "Napalm", PRICE);
+    private static final UpgradeNode TAR = UpgradeTier.SPECIAL.node("mortar.special.tar", "Tar", PRICE);
     private static final UpgradeNode CRYO_SHELLS = UpgradeTier.SPECIAL.node("mortar.special.cryo_shells",
-            "Cryo Shells", PRICE)
-            .withNote("every 3rd shell is Cryo: it leaves frost ground, 1.2 cells wide, for 3s");
+            "Cryo Shells", PRICE);
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, HEAVY_SHELL,
                     CLUSTER_SHELL))
@@ -232,6 +212,11 @@ public final class MortarTower extends AbstractTower {
                 .with(TowerStat.AREA_RADIUS, SPLASH_RADIUS_BASE).with(TowerStat.PROJECTILE_SPEED, 1f)
                 .with(TowerStat.PROJECTILE_SIZE, 1f).with(TowerStat.DEAD_ZONE, BASE_DEAD_ZONE_CELLS)
                 .with(TowerStat.BRACKET_DAMAGE_STEP, 0.1f), context, x, y);
+    }
+
+    @Override
+    protected PerkCatalogue<MortarPerk> perkCatalogue() {
+        return PERKS;
     }
 
     @Override
@@ -416,11 +401,11 @@ public final class MortarTower extends AbstractTower {
     }
 
     /** How much of the damage reaches {@code enemy}: less the further from the centre, none past the radius. */
-    private static float falloff(double x, double y, float radius, EnemyMob enemy, boolean flatCore) {
+    private static float falloff(double x, double y, float radius, EnemyMob enemy, float flatCore) {
         double dx = x - enemy.getX();
         double dy = y - enemy.getY();
         double share = (dx * dx + dy * dy) / ((double) radius * radius);
-        return flatCore && share <= FLAT_CORE_SHARE ? 1f : 1f - (float) share;
+        return share <= (double) flatCore * flatCore ? 1f : 1f - (float) share;
     }
 
     private void dazeAround(Landing landing, List<EnemyMob> hit) {
@@ -480,7 +465,7 @@ public final class MortarTower extends AbstractTower {
         for (Vec2 at : PathLine.along(paths, landing.x(), landing.y(), offsets)) {
             for (EnemyMob enemy : InRangeTargetQuery.everyone((int) Math.round(at.x()), (int) Math.round(at.y()), radius)
                     .matching(this.context.enemies())) {
-                this.hit(enemy, landing.type().damageType(), damage * falloff(at.x(), at.y(), radius, enemy, false),
+                this.hit(enemy, landing.type().damageType(), damage * falloff(at.x(), at.y(), radius, enemy, 0f),
                         HitKind.BLAST);
                 this.applyEffect(enemy, sink -> Effect.cracked(CRACKED_TICKS, sink));
             }

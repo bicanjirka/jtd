@@ -26,7 +26,10 @@ import td.tower.proc.Proc;
 import td.tower.proc.ProcActions;
 import td.tower.proc.ProcPayload;
 import td.tower.proc.ProcRunner;
+import td.tower.upgrade.Perk;
+import td.tower.upgrade.PerkCatalogue;
 import td.tower.upgrade.StandardBaseSlot;
+import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
@@ -546,6 +549,19 @@ public abstract class AbstractTower implements Tower {
 
     public UpgradeState upgrades() {
         return this.upgrades;
+    }
+
+    /** Which perks each node brings; none by default. */
+    protected PerkCatalogue<? extends Perk> perkCatalogue() {
+        return PerkCatalogue.empty();
+    }
+
+    public List<UpgradeBonus> bonusesOf(UpgradeNode node) {
+        List<UpgradeBonus> bonuses = new ArrayList<>(node.bonuses());
+        for (String text : this.perkCatalogue().describe(node)) {
+            bonuses.add(new UpgradeBonus(Character.toUpperCase(text.charAt(0)) + text.substring(1), ""));
+        }
+        return bonuses;
     }
 
     public boolean buyUpgrade(UpgradeNode node) {

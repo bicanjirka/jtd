@@ -88,10 +88,7 @@ public final class SonarTower extends AbstractTower {
     private static final String PING_DEED = "Pings";
     private static final int PING_DEEDS_NEEDED = 25;
 
-    private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
-            .withAttune(NodeEffects.none().withNote("Ping: each revolution Exposes the healthiest enemy the beam passes, until the next pass"))
-            .withRangeThree(0.1f, NodeEffects.none().withNote("Deep Scan: each revolution reveals invisible enemies in the outer quarter of its "
-                    + "range for 1s"));
+    private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none().withRangeThree(0.1f, NodeEffects.none());
 
     private static final UpgradeNode RAPID_ARRAY_1 = UpgradeTier.HEAD_1.node("sonar.head.rapid_array.1",
             "Rapid Array", PRICE)
@@ -99,7 +96,6 @@ public final class SonarTower extends AbstractTower {
     private static final UpgradeNode RAPID_ARRAY_2 = UpgradeTier.HEAD_2.node("sonar.head.rapid_array.2",
             "Rapid Array II", PRICE)
             .withModifiers(TowerModifiers.damage(4f).plus(TowerModifiers.critChance(0.1f)))
-            .withNote("a beam crit refreshes Exposed on its target")
             .after(RAPID_ARRAY_1);
     private static final UpgradeNode SPIN_UP = UpgradeTier.HEAD_3.node("sonar.head.rapid_array.3", "Spin-Up", PRICE)
             .withGate(new PurposeCondition(PING_DEED, PING_DEEDS_NEEDED))
@@ -107,17 +103,13 @@ public final class SonarTower extends AbstractTower {
             .after(RAPID_ARRAY_2);
     private static final UpgradeNode TWIN_BEAM = UpgradeTier.HEAD_4.node("sonar.head.rapid_array.4a", "Twin Beam",
             PRICE)
-            .withNote("a second beam, opposite, at 70% damage")
             .after(SPIN_UP);
     private static final UpgradeNode PHASED_ARRAY = UpgradeTier.HEAD_4.node("sonar.head.rapid_array.4b",
             "Phased Array", PRICE)
-            .withNote("stops spinning and holds the beam on the enemy with most health, hitting everything "
-                    + "on it three times a revolution")
             .after(SPIN_UP);
     private static final UpgradeNode LONG_REACH_1 = UpgradeTier.HEAD_1.node("sonar.head.long_reach.1",
             "Long Reach", PRICE)
-            .withModifiers(TowerModifiers.range(0.9f))
-            .withNote("Ping picks the healthiest enemy past half range, Exposed for two passes");
+            .withModifiers(TowerModifiers.range(0.9f));
     private static final UpgradeNode LONG_REACH_2 = UpgradeTier.HEAD_2.node("sonar.head.long_reach.2",
             "Long Reach II", PRICE)
             .withModifiers(TowerModifiers.critChance(0.1f))
@@ -126,7 +118,6 @@ public final class SonarTower extends AbstractTower {
     private static final UpgradeNode RESONANT_CRACK = UpgradeTier.HEAD_3.node("sonar.head.long_reach.3",
             "Resonant Crack", PRICE)
             .withGate(new PurposeCondition(PING_DEED, PING_DEEDS_NEEDED))
-            .withNote("each beam hit takes 10 resilience, down to -50, back 10 a second")
             .after(LONG_REACH_2);
     private static final UpgradeNode HORIZON = UpgradeTier.HEAD_4.node("sonar.head.long_reach.4a", "Horizon", PRICE)
             .withModifiers(TowerModifiers.range(1.8f).plus(TowerModifiers.deadZone(1.5f)))
@@ -134,11 +125,9 @@ public final class SonarTower extends AbstractTower {
             .after(RESONANT_CRACK);
     private static final UpgradeNode FAULT_LINE = UpgradeTier.HEAD_4.node("sonar.head.long_reach.4b", "Fault Line",
             PRICE)
-            .withNote("Resonant Crack's loss doesn't recover while Exposed, and falls to -100")
             .after(RESONANT_CRACK);
     private static final UpgradeNode ULTRASOUND = UpgradeTier.EXTRA_1.node("sonar.extra.frequency.1", "Ultrasound",
-            PRICE)
-            .withNote("20% of each hit is added as magic, up to 50% against armored or shielded enemies");
+            PRICE);
     private static final UpgradeNode HARMONICS = UpgradeTier.EXTRA_2.node("sonar.extra.frequency.2", "Harmonics",
             PRICE)
             .withProc(Proc.onHit(new ProcPayload.ApplyStacks(EffectKind.RESONATING, 1))
@@ -155,16 +144,11 @@ public final class SonarTower extends AbstractTower {
                     .when(new ProcCondition.TargetHasAnyOf(Set.of(EffectKind.SHIELD))))
             .after(PURE_TONE);
     private static final UpgradeNode MARK_ON_SWEEP = UpgradeTier.SPECIAL.node("sonar.special.mark_on_sweep",
-            "Mark on Sweep", PRICE)
-            .withNote("marks every enemy the beam hits: the next hit on it from any tower is a guaranteed "
-                    + "crit");
+            "Mark on Sweep", PRICE);
     private static final UpgradeNode WIDE_BAND = UpgradeTier.SPECIAL.node("sonar.special.wide_band", "Wide Band", PRICE)
-            .withGate(new ClusterCondition(2))
-            .withNote("the beam reveals invisible enemies it passes to every tower, Exposed for 1s");
+            .withGate(new ClusterCondition(2));
     private static final UpgradeNode COMMAND_PING = UpgradeTier.SPECIAL.node("sonar.special.command_ping",
-            "Command Ping", PRICE)
-            .withNote("the pinged enemy is the Priority until the next pass: +15% damage taken, and towers "
-                    + "that pick one target pick it");
+            "Command Ping", PRICE);
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, SPIN_UP,
             RESONANT_CRACK))
@@ -206,6 +190,11 @@ public final class SonarTower extends AbstractTower {
         // No cooldown: the cadence is the sweep rate.
         super(TowerFactory.Type.SONAR, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0)
                 .with(TowerStat.PING_COUNT, 1f).with(TowerStat.DEAD_ZONE, 0f), context, x, y);
+    }
+
+    @Override
+    protected PerkCatalogue<SonarPerk> perkCatalogue() {
+        return PERKS;
     }
 
     @Override

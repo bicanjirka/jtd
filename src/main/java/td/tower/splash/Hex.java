@@ -20,6 +20,9 @@ public interface Hex {
 
     void cast(EnemyMob target, HexSpec spec, HexActions actions);
 
+    /** Its name and what it does: {@code "Hex of Blight: poisons for the hex's length"}. */
+    String describe();
+
     /** How many ticks this hex lasts on {@code target}; a hex lasts {@link HexSpec#HEX_SECONDS} unless it says otherwise. */
     default int ticksOn(EnemyMob target) {
         return Math.round(HexSpec.HEX_SECONDS * TickRate.TICKS_PER_SECOND);

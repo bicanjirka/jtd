@@ -1,11 +1,12 @@
 package td.tower.aura;
 
 import td.tower.BehaviourLine;
+import td.tower.upgrade.Perk;
 
 import java.util.Optional;
 
 /** What one owned node does to the Aura; nothing by default. */
-public interface AuraPerk {
+public interface AuraPerk extends Perk {
 
     default AuraSpec refineSpec(AuraSpec spec) {
         return spec;

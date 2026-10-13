@@ -7,4 +7,9 @@ public final class BellowsPerk implements CinderPerk {
     public CinderSpec refineSpec(CinderSpec spec) {
         return spec.withBellows();
     }
+
+    @Override
+    public String describe() {
+        return "Bellows: an Aura's attack-speed buff on this tower also widens its cone 10% per +10%";
+    }
 }

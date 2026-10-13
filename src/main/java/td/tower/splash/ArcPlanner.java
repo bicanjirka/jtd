@@ -17,7 +17,7 @@ import java.util.function.ToDoubleFunction;
 public final class ArcPlanner {
 
     /** The jump that forks into two arcs when the spec forks. */
-    private static final int FORK_JUMP = 3;
+    static final int FORK_JUMP = 3;
 
     private ArcPlanner() {
     }

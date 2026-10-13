@@ -3,6 +3,7 @@ package td.tower.sniper;
 import td.effect.EffectKind;
 import td.tower.targeting.Viewpoint;
 import td.tower.targeting.WithEffectTargetQuery;
+import td.tower.upgrade.PerkText;
 
 /** Spotter Uplink: the Sniper may shoot a marked or revealed enemy from twice as far. */
 public final class SpotterUplinkPerk implements SniperPerk {
@@ -14,5 +15,10 @@ public final class SpotterUplinkPerk implements SniperPerk {
         Viewpoint view = spec.view();
         return spec.withReach(spec.reach().widenedBy(new WithEffectTargetQuery(view.x(), view.y(),
                 view.range() * REACH, EffectKind.MARKED, EffectKind.REVEALED)));
+    }
+
+    @Override
+    public String describe() {
+        return "may shoot Marked or Revealed enemies within " + PerkText.times(REACH) + " its range";
     }
 }

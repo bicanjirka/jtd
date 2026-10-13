@@ -7,4 +7,9 @@ public final class WhiteFlamePerk implements CinderPerk {
     public CinderSpec refineSpec(CinderSpec spec) {
         return spec.withLook(FlameLook.WHITE);
     }
+
+    @Override
+    public String describe() {
+        return "the flame burns white";
+    }
 }
