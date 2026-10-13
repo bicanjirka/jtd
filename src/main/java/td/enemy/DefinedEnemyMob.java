@@ -85,7 +85,8 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.rank = rank;
         this.price = spawnParameters.price();
         // Divided after the spawn shape's multiplier, which the wave already applied to the health.
-        int healthPoints = Math.round(spawnParameters.health() / definition.healthDivisor());
+        int healthPoints = Math.round(spawnParameters.health() / definition.healthDivisor()
+                * gameWorld.playtestRules().enemyHealthScale());
         this.health = DamageUnits.ofPoints(healthPoints);
         this.healthMax = DamageUnits.ofPoints(healthPoints);
         this.pathIndex = spawnParameters.pathIndex();

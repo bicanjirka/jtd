@@ -1569,6 +1569,19 @@ class GameEngineTest {
     }
 
     @Test
+    void anEnemyHealthPercentScalesEveryEnemyTheNextRoundBrings() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 c", Rank.GRUNT)), 100));
+        engine.getGameWorld().playtestRules().setEnemyHealthPercent(150);
+
+        engine.nextWave();
+
+        assertThat(engine.getGameWorld().enemies().getEnemies())
+                .extracting(EnemyMob::getHealth)
+                .containsOnly(DamageUnits.ofPoints(75));
+    }
+
+    @Test
     void soulfireBurnsAnEnemyThatIsImmuneToBurn() {
         EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, EffectResistTrait.immuneTo(EffectKind.BURN));
 

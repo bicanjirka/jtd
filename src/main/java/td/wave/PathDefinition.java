@@ -35,6 +35,11 @@ public record PathDefinition(List<Point> corners, PathSmoothing smoothing, List<
         return new PathDefinition(this.corners, this.smoothing, this.waves, color, this.speedMultiplier);
     }
 
+    /** The same lane with other waves. */
+    public PathDefinition withWaves(List<WaveDefinition> waves) {
+        return new PathDefinition(this.corners, this.smoothing, waves, this.color, this.speedMultiplier);
+    }
+
     /** Multiplies with each wave's own {@link WaveDefinition#speedMultiplier()}. */
     public PathDefinition withSpeed(float speedMultiplier) {
         return new PathDefinition(this.corners, this.smoothing, this.waves, this.color, speedMultiplier);
