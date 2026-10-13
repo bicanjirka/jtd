@@ -8,6 +8,7 @@ import td.damage.DamageUnits;
 import td.effect.DiminishingReturns;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.enemy.AgilityTrait;
 import td.enemy.ArmorTrait;
 import td.enemy.BodyArchetype;
 import td.enemy.CriticalImmunityTrait;
@@ -383,6 +384,52 @@ class GameEngineTest {
 
         assertThat(sniper.getDamageDealt() - before)
                 .isEqualTo(DamageUnits.ofPoints(SniperTower.DAMAGE_POINTS * SniperTower.CRIT_MULTIPLIER));
+    }
+
+    /** A still enemy with plenty of agility in an engine whose every roll succeeds, beside a tower of {@code type}. */
+    private static GameEngine engineWithANimbleDummyBeside(TowerFactory.Type type) {
+        GameEngine engine = FakeGameHost.newBoundEngine(() -> 0.0);
+        EnemyDefinition nimble = EnemyDefinition.of("nimble", "Nimble", 1_000_000, 1, 0f, BodyArchetype.CIRCLE)
+                .withTraits(List.of(new AgilityTrait(50f)));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("nimble", Rank.GRUNT)), 100_000)
+                .withCustomEnemies(List.of(nimble)));
+        engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
+        engine.startPlacing(type, 0f);
+        engine.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(1));
+        return engine;
+    }
+
+    @Test
+    void aSniperDealsNothingToAnEnemyThatDodgesEveryShot() {
+        GameEngine engine = engineWithANimbleDummyBeside(TowerFactory.Type.SNIPER);
+        Tower sniper = towerOfType(engine, TowerFactory.Type.SNIPER);
+        engine.nextWave();
+
+        for (int t = 1; t <= 300; t++) {
+            engine.doTick(t);
+        }
+
+        EnemyMob enemy = engine.getGameWorld().enemies().getEnemies()[0];
+        assertThat(sniper.getDamageDealt()).isZero();
+        assertThat(enemy.getHealthFraction()).isEqualTo(1f);
+    }
+
+    @Test
+    void aDodgedSonarHitStillCountsForThePing() {
+        GameEngine engine = engineWithANimbleDummyBeside(TowerFactory.Type.SONAR);
+        Tower sonar = towerOfType(engine, TowerFactory.Type.SONAR);
+        sonar.earnXp(1_000_000);
+        sonar.buyUpgrade(sonar.upgradeTree().nodes().stream()
+                .filter(n -> n.id().equals(StandardBaseSlot.ATTUNE_ID)).findFirst().orElseThrow());
+        engine.nextWave();
+        EnemyMob enemy = engine.getGameWorld().enemies().getEnemies()[0];
+
+        for (int t = 1; t <= 200 && !enemy.hasEffect(EffectKind.EXPOSED); t++) {
+            engine.doTick(t);
+        }
+
+        assertThat(enemy.hasEffect(EffectKind.EXPOSED)).isTrue();
+        assertThat(sonar.getDamageDealt()).isZero();
     }
 
     private static Tower towerOfType(GameEngine engine, TowerFactory.Type type) {

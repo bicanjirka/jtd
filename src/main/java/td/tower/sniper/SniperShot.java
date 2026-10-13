@@ -51,6 +51,11 @@ public record SniperShot(DamageType type, float damageFactor, AttackProfile atta
         return new SniperShot(this.type, this.damageFactor, this.attack, this.attackSpeedBonus + bonus, this.pierce);
     }
 
+    /** The same shot aimed at one enemy, which that enemy's agility may dodge. */
+    public SniperShot aimed() {
+        return this.withAttack(AttackProfile::asAimed);
+    }
+
     public SniperShot withPiercing(PierceRule pierce) {
         return new SniperShot(this.type, this.damageFactor, this.attack, this.attackSpeedBonus, pierce);
     }

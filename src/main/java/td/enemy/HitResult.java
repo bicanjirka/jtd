@@ -7,13 +7,23 @@ import td.damage.Damage;
  *
  * @param landed   the damage that reached health, capped at what was left
  * @param absorbed the units a shield took
+ * @param dodged   whether the enemy dodged it, so nothing else about it happened
  */
-public record HitResult(Damage landed, int absorbed) {
+public record HitResult(Damage landed, int absorbed, boolean dodged) {
 
-    private static final HitResult NONE = new HitResult(Damage.none(), 0);
+    private static final HitResult NONE = new HitResult(Damage.none(), 0, false);
+    private static final HitResult DODGED = new HitResult(Damage.none(), 0, true);
+
+    public HitResult(Damage landed, int absorbed) {
+        this(landed, absorbed, false);
+    }
 
     public static HitResult none() {
         return NONE;
+    }
+
+    public static HitResult dodge() {
+        return DODGED;
     }
 
     /** What the attacker is credited with: health taken plus what a shield absorbed. */

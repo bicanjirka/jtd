@@ -14,7 +14,7 @@ public final class MarkOnSweepPerk implements SonarPerk {
 
     @Override
     public void react(StrikeResult result, SonarActions actions) {
-        if (!result.killed()) {
+        if (!result.killed() && !result.dodged()) {
             actions.apply(result.target(), sink -> Effect.marked(result.spec().untilNextPass(), sink));
         }
     }

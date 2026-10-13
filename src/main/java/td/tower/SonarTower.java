@@ -6,6 +6,7 @@ import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.enemy.HitResult;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitBonus;
 import td.tower.proc.HitKind;
@@ -263,7 +264,8 @@ public final class SonarTower extends AbstractTower {
     /**
      * One beam hit, shaped and reacted to by the perks. The magic Ultrasound adds rides on the hit:
      * it is as much stronger as the hit's crit made it, and is never a hit of its own, so it never
-     * rolls a crit or spends a mark.
+     * rolls a crit or spends a mark. The hit is aimed at the enemy, so it may dodge it; the beam still
+     * saw a dodging enemy, so it still counts for the ping and the perks still hear of it.
      */
     private void strike(EnemyMob enemy, float share, SonarSpec spec, List<SonarPerk> owned, int gameTime) {
         StrikeContext context = new StrikeContext(enemy, this.rangeShareOf(enemy));
@@ -276,17 +278,22 @@ public final class SonarTower extends AbstractTower {
             strike = perk.shape(strike, context);
         }
         float amount = this.damageCurrent() * strike.damageFactor() * adjustment.damageFactor();
-        boolean critical = this.dealDamage(enemy, Damage.of(strike.type(), Math.round(amount)), strike.attack());
-        if (strike.magicShare() > 0f && !enemy.isDead()) {
+        HitResult hit = this.landHit(enemy, Damage.of(strike.type(), Math.round(amount)), strike.attack().asAimed());
+        boolean critical = hit.critical();
+        if (strike.magicShare() > 0f && !hit.dodged() && !enemy.isDead()) {
             float riding = amount * strike.magicShare() * this.potencyOfHit(enemy, critical);
             this.dealPeriodicDamage(enemy, Damage.magic(Math.round(riding)));
         }
         this.pings.pass(enemy);
-        StrikeResult result = new StrikeResult(enemy, critical, spec);
+        StrikeResult result = new StrikeResult(enemy, critical, hit.dodged(), spec);
         for (SonarPerk perk : owned) {
             perk.react(result, this.actions);
         }
-        this.report(enemy, HitKind.BEAM, critical, enemy.isDead());
+        if (hit.dodged()) {
+            this.reportDodge(enemy, HitKind.BEAM);
+        } else {
+            this.report(enemy, HitKind.BEAM, critical, enemy.isDead());
+        }
         this.recentHits.add(new SonarHit((float) enemy.getX(), (float) enemy.getY(), gameTime, strike.type()));
     }
 

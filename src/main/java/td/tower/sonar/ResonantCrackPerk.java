@@ -13,7 +13,7 @@ public final class ResonantCrackPerk implements SonarPerk {
 
     @Override
     public void react(StrikeResult result, SonarActions actions) {
-        if (result.killed()) {
+        if (result.killed() || result.dodged()) {
             return;
         }
         boolean faultLine = result.spec().faultLine();

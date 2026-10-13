@@ -54,6 +54,16 @@ class ProcRunnerTest {
     }
 
     @Test
+    void onlyAnOnDodgeProcRunsOnADodge() {
+        List<Proc> procs = List.of(Proc.onHit(VULNERABLE), Proc.onCrit(VULNERABLE), Proc.onDodge(new ProcPayload.Charge(60)));
+
+        ProcRunner.onDodge(procs, this.outcome(HitKind.DIRECT, false, false), this.actions);
+        ProcRunner.onOutcome(procs, this.outcome(HitKind.DIRECT, true, false), this.actions);
+
+        assertThat(this.actions.calls()).containsExactly("charge 60", "stacks VULNERABLE 1", "stacks VULNERABLE 1");
+    }
+
+    @Test
     void aConditionThatFailsStopsTheProc() {
         List<Proc> procs = List.of(Proc.onHit(VULNERABLE).when(new ProcCondition.HitKindIn(Set.of(HitKind.ARC))));
 

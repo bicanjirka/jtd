@@ -85,7 +85,8 @@
   `baseSpeed` × spawn multiplier. The sheet is invalidated on a hit, on applying an effect, and
   after a tick that ticked effects or changed health. `doTick` reads speed and regeneration
   *before* `ActiveEffects.tick()`, and returns early if a damage-over-time tick killed the mob.
-- `takeHit(damage, attacker)` lands a hit through `HitResolution` (a crit roll for hits only, and
+- `takeHit(damage, attacker)` first spends a mark, then lets agility dodge an aimed hit (`HitResult.dodge()`:
+  nothing else happens, not even the idle timer's reset); otherwise it lands the hit through `HitResolution` (a crit roll for hits only, and
   none at resilience 100; a guaranteed crit skips the roll, otherwise it rolls against resilience,
   which scales crit chance and crit bonus both ways; then penetration, mitigation, plating, damage
   taken), then a shield pool absorbs what it can, then the cap at health; it returns a `HitResult`
