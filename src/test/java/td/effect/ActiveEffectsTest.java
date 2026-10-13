@@ -427,15 +427,15 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void eachSickenedStackLowersSpiritByOneAndTheyDecayHalfAsFastAsPoisonEarnsThem() {
+    void eachSickenedStackLowersSpiritByOneAndNoneWearOffWhilePoisonKeepsEarningThem() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.poison(Damage.magic(10), 5000, d -> {
         }));
         assertThat(resolved(effects, EnemyStat.SPIRIT)).isEqualTo(-1f);
 
-        tickTimes(effects, 100); // earned 1 + 10, decayed 5
-        assertThat(effects.stacks(EffectKind.SICKENED)).isEqualTo(6);
-        assertThat(resolved(effects, EnemyStat.SPIRIT)).isEqualTo(-6f);
+        tickTimes(effects, 100); // earned 1 + 10, decayed none
+        assertThat(effects.stacks(EffectKind.SICKENED)).isEqualTo(11);
+        assertThat(resolved(effects, EnemyStat.SPIRIT)).isEqualTo(-11f);
 
         tickTimes(effects, 2000);
         assertThat(effects.stacks(EffectKind.SICKENED)).isBetween(99, 100);
@@ -443,15 +443,15 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void eachScorchedStackLowersResilienceByOneAndTheyDecayHalfAsFastAsBurningEarnsThem() {
+    void eachScorchedStackLowersResilienceByOneAndNoneWearOffWhileBurningKeepsEarningThem() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.burn(Damage.magic(10), 5000, d -> {
         }));
         assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-1f);
 
-        tickTimes(effects, 100); // earned 1 + 10, decayed 5
-        assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(6);
-        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-6f);
+        tickTimes(effects, 100); // earned 1 + 10, decayed none
+        assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(11);
+        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-11f);
 
         tickTimes(effects, 2000);
         assertThat(effects.stacks(EffectKind.SCORCHED)).isBetween(99, 100);

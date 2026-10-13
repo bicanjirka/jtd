@@ -444,10 +444,11 @@ public final class ActiveEffects {
 
     /**
      * Lets a stack debuff fall one stack each time its spirit-scaled progress fills; ends at no
-     * stacks. A Fault Line Fractured holds while the enemy is exposed.
+     * stacks. A Fault Line Fractured holds while the enemy is exposed, and a mark holds while a pool
+     * that earns it is still active.
      */
     private Optional<Effect> decayStacks(Effect debuff, float pace) {
-        if (debuff.faultLine() && this.isExposed()) {
+        if (debuff.faultLine() && this.isExposed() || EffectInteractions.isEarnedBy(debuff.kind(), this.active.keySet())) {
             return Optional.of(debuff);
         }
         int slot = debuff.kind().ordinal();

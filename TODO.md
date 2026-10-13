@@ -204,16 +204,9 @@ stack interval of burning and poisoned, revealed (3 s from Wide Band, 2 s from R
 Momentum's cooldown cut and 5 s, the shatter and explosion share and radius, shrapnel's ring width and
 share, Warding Field's 10% chance, Withering Field's interval, Long Reach II's scaling, and Splash's three
 blasts. Burning's resilience loss (-1 per stack) and poisoned's spirit loss (-1 per stack) grow without
-limit up to their stat floors of -100. Scorched and Sickened lose a stack per second at neutral spirit
-(one per 20 ticks, `ActiveEffects.STACK_DECAY_INTERVAL_TICKS`), so steady burning nets one stack per
-second and needs about 100 s to reach the floor; at -100 spirit they never wear off.
-
-**Not as designed - to iterate on:** stack decay currently runs all the time, including while a burn or
-poison is still earning stacks. A burning enemy earns 2 stacks per second and loses 1, so the net gain is 1
-per second. That is a side effect of the first implementation, not the intended design, and the behaviour
-wanted here is still to be settled: for example decay paused while the pool is active, decay only once it has
-ended, or a different rate. Sickened lowering spirit, which slows the decay of its own stacks and of Scorched,
-interacts with whichever is chosen.
+limit up to their stat floors of -100. Scorched and Sickened hold while a pool that earns them is active, then lose a stack per second at neutral
+spirit (one per 20 ticks, `ActiveEffects.STACK_DECAY_INTERVAL_TICKS`); at -100 spirit they never wear off.
+A burning enemy earns 2 stacks per second, so it reaches the floor in about 50 s of steady burning.
 
 - Cracked takes a flat 5 plating points (its `EffectKind.CRACKED` row), a starting value.
 - **Where:** the named constants in `td.effect.ActiveEffects`, `AbstractTower` and each tower.

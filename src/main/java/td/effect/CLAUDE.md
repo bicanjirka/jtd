@@ -23,8 +23,9 @@
   `STACK_INTERVAL_TICKS` while it lasts, up to their cap of a hundred; a top-up earns none.
 - `SCORCHED` and `SICKENED` are real effects that only `ActiveEffects` creates. Each stack lowers
   `RESILIENCE` or `SPIRIT` by one. They outlast the pool, are never cleared by another effect
-  (a freeze puts out the burn, not its mark) and lose a stack every `STACK_DECAY_INTERVAL_TICKS`
-  scaled by the enemy's spirit factor (`tick(spiritFactor)`; `0` at spirit -100 means never).
+  (a freeze puts out the burn, not its mark) and, once no active pool earns them, lose a stack every
+  `STACK_DECAY_INTERVAL_TICKS` scaled by the enemy's spirit factor (`tick(spiritFactor)`; `0` at
+  spirit -100 means never).
 - A kind with `EffectKind.maxStacks()` above 0 (`VULNERABLE`, `SUNDERED`, `RESONATING`,
   `FRACTURED`, `SATURATED`) stacks on the enemy, whichever tower applied them, on one shared clock
   that any application refreshes; a full stack only refreshes. An application may raise the cap
