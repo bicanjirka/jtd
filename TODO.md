@@ -164,8 +164,8 @@ of each tower a copy is the best buy for all but the Aura and the Hive (a Sniper
 for $17; an upgrade node saves 0.02x to 0.6x of that). With an army of four of each (`-Dexec.args="2 12 sniper 4"`)
 a copy costs 1.6x and saves little: a Sniper copy 2.1 (nodes 0.1x to 4.9x of it), a Burst, Radar or Hive copy
 nothing within the noise of about one life, an Obelisk copy 3.5, a Mortar copy 5.4 (nodes 0.8x to 1.3x, the
-`FEATURE-aura-and-balance-pass.md` target of 0.7x to 1x). **The Scorcher is the exception:** its copy still saves 17
-at four copies and its best node 0.6x of that, so it is cheap for what it does, or its nodes are weak. Reprice from
+`FEATURE-aura-and-balance-pass.md` target of 0.7x to 1x). **The Scorcher was the exception** (its copy saved 17 and no node beat 0.6x of that); its tree got a balance pass, see
+the Cinder entry below. Reprice from
 the four-copy table, not the one-copy one; the cheapest nodes (Range at $9 to $18) top it by dividing by a tiny cost,
 so read their rows with the saved column. Nodes that act on enemies rather than on damage (Hollow Point, Shatter
 Shot, Fifth Shot) save nothing within the noise of about one life.
@@ -190,6 +190,23 @@ share of the Mortar, how much shrapnel, bomblets and bleeding do, the nuke's fla
 patch, the burn level above which a fire reveals an invisible enemy, and the Cinder's Thermal Shock
 chill. Nothing has been played against waves, and the Mortar's slow shell is untested against fast
 enemies.
+
+The Cinder had a pass with `td.BuildHarness` (40 seeds, the three built-in levels): Soulfire now burns every wave
+beside the ordinary burn, which doubles the damage on a target (before it split the damage over two pools each
+refreshed half as often, and dealt less than burn alone); Combustion bursts when an enemy's burning pools together
+grow hotter than one wave could make them, since a pool almost never reaches its cap; Dragon's Breath no longer
+cuts the damage on a target by a third; White Flame, Flashpoint, Heat, Everburn and Pyromancer's Mark are stronger.
+What it showed and what is left:
+
+- A node on its own pays little at $1500 (one upgraded Scorcher and plain copies for the rest); a last head node with
+  a special pays well (Dragon's Breath with Searing Flame saves 11 lives on Twisted Hourglass, 6 on Zigzag Path, and
+  nothing on the easy Curly Path). At $600 upgrading does not pay yet on any build: the path to head IV costs about
+  $410 for a $28 tower.
+- The fuel line (Kindling, Cauterize, Heat, Everburn) saves nothing measurable in this loadout. Scorched and Sickened
+  only move crit damage and heals, and no wave here has healers, so judge it with a crit-heavy defence and a Mender
+  wave, not with this table.
+- Flashpoint and Inferno Ring are the weakest last head nodes (2 to 6 lives with a special where Dragon's Breath
+  and Combustion save 6 to 11).
 
 - **Where:** the `private static final` constants in `MortarTower`, `CinderTower`, `td.zone.Zone`,
   `td.zone.ZoneEffects`, `td.tower.mortar.ShellType` and the perks under `td.tower.mortar` and

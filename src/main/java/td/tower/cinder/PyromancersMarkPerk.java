@@ -5,10 +5,10 @@ import td.stat.StatModifier;
 import td.stat.StatModifiers;
 import td.tower.upgrade.PerkText;
 
-/** Pyromancer's Mark: burning enemies take 15% more magic damage from every source. */
+/** Pyromancer's Mark: burning enemies take 25% more magic damage from every source. */
 public final class PyromancersMarkPerk implements CinderPerk {
 
-    private static final float MAGIC_DAMAGE_TAKEN = 0.15f;
+    private static final float MAGIC_DAMAGE_TAKEN = 0.25f;
 
     @Override
     public CinderSpec refineSpec(CinderSpec spec) {

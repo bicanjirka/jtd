@@ -19,7 +19,7 @@ import td.tower.targeting.Viewpoint;
  *                             0 for never
  * @param thermalShock  whether a burning enemy that freezes chills its neighbours
  * @param critScorch    how many Scorched stacks a critical ignition adds
- * @param combustion    what a pool that reaches its cap does to its neighbours
+ * @param combustion    what a burn grown hotter than one wave could make it does to its neighbours
  * @param everburnFloor the share of its strongest application a pool never decays below in range, 0 for none
  * @param tuning        what its pools hold, how fast they mark, what a freeze does to them and what they cost
  */

@@ -163,27 +163,28 @@ ATTUNE   Stoke: a wave on an enemy already burning from this Cinder raises its b
 AWAKEN   Bellows: an Aura's fire-rate buff on this Cinder also widens its cone 10% per +10%
 RANGE    +15%  ->  II +10%  ->  III Long Nozzle: +20% range; the wave travels twice as fast
 HEAD A   White Flame (hot and short: the single enemy melts)
-         I    +30% damage; Stoke steps +15%
-         II   +50% damage, -25% burn duration, +10% crit (on ignitions)
-         III  Soulfire: every other wave is Soulfire, a blue burn in its own pool that stacks
-              with ordinary burn, earns Sickened as well as Scorched, and burns the burn-immune;
-              Stoke applies to both
-         IV-A Flashpoint: +20% crit; a crit ignition also adds 3 Scorched
-         IV-B Combustion: the pool cap doubles; a pool that reaches its cap bursts for half of it
-              onto enemies within 1 cell
+         I    +40% damage; Stoke steps +15%
+         II   +67% damage, -25% burn duration, +10% crit (on ignitions)
+         III  Soulfire: every wave also burns as Soulfire, a blue burn in its own pool beside the
+              ordinary burn, so the target takes double; it earns Sickened as well as Scorched, and
+              burns the burn-immune; Stoke applies to both
+         IV-A Flashpoint: +30% crit, +1.5 crit multiplier; a crit ignition also adds 3 Scorched
+         IV-B Combustion: the pool cap doubles; an enemy whose burning pools together grow hotter
+              than one wave could make them bursts for half of what they have left onto enemies
+              within 1 cell, and bursts again once it has cooled to half
 HEAD B   Wide Nozzle (wide and long: the crowd smoulders)
          I    +25% range, +30% cone; an enemy that leaves the cone keeps its Stoke for 2 s
          II   +20% range, +20% fire rate, +20% cone
          III  Lingering Flames: each wave leaves a patch of burning ground where its target
               stands, for 2 s
-         IV-A Inferno Ring: the cone becomes a full ring at -25% range
-         IV-B Dragon's Breath: x3 fire rate, per-wave damage divided by 2.5, +30% range: a
-              continuous stream that keeps every pool topped up and Stoke always full
+         IV-A Inferno Ring: the cone becomes a full ring at -18% range
+         IV-B Dragon's Breath: x3 fire rate, per-wave damage x0.7, the pool cap doubles, +30%
+              range: a continuous stream that keeps every pool topped up and Stoke always full
 EXTRA    Fuel (burn chemistry)
          I    Kindling: burning enemies earn Scorched twice as fast
          II   Cauterize: burning enemies receive 50% less healing and shielding
-         III  Heat: burning enemies take +10% damage over time from every source
-         IV   Everburn: a pool never decays below 25% while its enemy is in this Cinder's range
+         III  Heat: burning enemies take +20% damage over time from every source
+         IV   Everburn: a pool never decays below 40% while its enemy is in this Cinder's range
 SPECIAL  one shared set: Searing Flame, Thermal Shock, Pyromancer's Mark
 ```
 
@@ -198,7 +199,7 @@ SPECIAL  one shared set: Searing Flame, Thermal Shock, Pyromancer's Mark
 - **Thermal Shock:** when a burning enemy is frozen by anything, its remaining pool detonates as
   one hit at 150% (instead of the global 50%) and chills its neighbours. Fire and ice become a
   combo.
-- **Pyromancer's Mark:** burning enemies take +15% magic damage from every source.
+- **Pyromancer's Mark:** burning enemies take +25% magic damage from every source.
 
 **Look:** flame colour by tier: orange, white (White Flame), blue (Soulfire), deep red under
 Searing Flame; Stoke as a brighter core per step; lingering flames as flickering patches.
@@ -277,10 +278,11 @@ Searing Flame; Stoke as a brighter core per step; lingering flames as flickering
 - Tactical Nuke's Fallout covers 0.8 of the blast's radius (about half the area).
 - Cinder: cone stays 0.35 rad; burn damage stays 1.5 (the `README.md` line is corrected); burning
   enemies get 50% less healing only with Cauterize.
-- Soulfire alternates with ordinary burn (odd waves classic, even waves Soulfire), Stoke applies to
-  both (your call).
+- Soulfire first alternated with ordinary burn (odd waves classic, even waves Soulfire), which split the
+  damage across two pools each refreshed half as often, so it dealt less than burn alone. It now burns
+  every wave beside the ordinary burn, which doubles the damage on a target; Stoke applies to both.
 - Kindling only speeds Scorched; it no longer lowers burn resistance (your call).
-- **Heat (Fuel III) is "+10% damage over time taken"**, not "+10% magic damage": as written it
+- **Heat (Fuel III) is "+20% damage over time taken"**, not "+20% magic damage": as written it
   duplicated the Pyromancer's Mark special you picked.
 - Specials: Searing Flame, Thermal Shock, Pyromancer's Mark. Wildfire, Heat Haze and Phoenix Ash
   are not taken.

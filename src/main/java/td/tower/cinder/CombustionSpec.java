@@ -1,8 +1,8 @@
 package td.tower.cinder;
 
 /**
- * Combustion: a pool that reaches its cap bursts for {@code share} of what it still holds onto the
- * enemies within {@code radiusCells} of it.
+ * Combustion: an enemy whose burning pools together grow hotter than one wave could make them bursts for
+ * {@code share} of what they still hold onto the enemies within {@code radiusCells} of it.
  */
 public record CombustionSpec(float share, float radiusCells) {
 

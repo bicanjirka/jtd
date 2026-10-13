@@ -2,7 +2,7 @@ package td.tower.cinder;
 
 import td.tower.upgrade.PerkText;
 
-/** Combustion: a pool that reaches its cap bursts for half of it within a cell. */
+/** Combustion: an enemy whose fire grows hotter than a single wave could make it bursts for half of what is left within a cell. */
 public final class CombustionPerk implements CinderPerk {
 
     private static final float SHARE = 0.5f;
@@ -15,7 +15,8 @@ public final class CombustionPerk implements CinderPerk {
 
     @Override
     public String describe() {
-        return "a pool that reaches its cap bursts for " + PerkText.percent(SHARE) + " of it onto enemies within "
-                + PerkText.cells(RADIUS_CELLS) + (RADIUS_CELLS == 1f ? " cell" : " cells");
+        return "a burn that grows hotter than a single wave could make it bursts for " + PerkText.percent(SHARE)
+                + " of what it has left onto enemies within " + PerkText.cells(RADIUS_CELLS)
+                + (RADIUS_CELLS == 1f ? " cell" : " cells") + ", and can burst again once it has cooled to half";
     }
 }
