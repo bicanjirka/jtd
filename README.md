@@ -67,8 +67,32 @@ script on any path with a live preview, skips, jumps to or restarts waves, steps
 or clears the board, grants XP to or resets the selected tower, lets upgrades ignore their gates,
 and draws the cell grid with the path's cells shaded and the pointed-at cell's coordinates. Every
 control has an `Alt` shortcut, and while the panel is open the bare keys `n` (skip wave), `x`
-(spawn the next catalog enemy) and `c` (grant credits) work too. There's also
-`td.BalanceHarness`, a headless batch simulation: it drives a level to completion with a fixed
+(spawn the next catalog enemy) and `c` (grant credits) work too.
+
+`td.balance.BalanceReport` checks balance headlessly. It plays every built-in level with the level's real
+credits and lives, over many seeds, with a naive player (random towers on random cells), a competent one
+(it reads the coming rounds and buys what it estimates saves the most enemy health per credit) and that
+competent player on random cells and without upgrades. Per level it reports whether the level is too easy
+or too hard, whether positioning and upgrades matter, where the pressure comes round by round, where the
+credits go, which towers carry the defence and what leaks, every number with its 95% interval. The
+**margin** is the highest enemy health, as a percentage of the authored one, a player still wins at. A lab
+measures each tower on every cell, against every enemy kind at every rank a level sends, and with each
+upgrade line, before any play.
+
+```bash
+mvn -q compile exec:java -Dexec.mainClass=td.balance.BalanceReport -Dexec.args="--save before"
+# change a number, then:
+mvn -q compile exec:java -Dexec.mainClass=td.balance.BalanceReport -Dexec.args="--compare before"
+```
+
+`--compare` plays the same seeds again and lists what moved beyond the seeds' noise, then plays the saved
+competent actions back unchanged, so what the change does shows apart from how the player adapts to it. `--seeds N` (20 by
+default) and `--levels 0,2` narrow a run; `--strong` adds a player that rehearses each round before
+playing it, `--variety` measures each tower alone and each tower banned, and `--html` writes
+`target/balance/report.html` with charts and board heat maps. A run takes one to two minutes; the extras
+add several each.
+
+The older harnesses remain: `td.BalanceHarness`, a headless batch simulation: it drives a level to completion with a fixed
 tower loadout and no human input, then prints lives lost, ticks-to-clear per wave, and each
 tower's kills/damage dealt. `td.PurchaseHarness` compares purchases instead: on a level, with an army of
 one tower of every type, it reports the lives saved per 100 credits by another copy of a tower and by each

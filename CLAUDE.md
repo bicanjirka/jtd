@@ -10,6 +10,7 @@ mvn spotless:apply        # fix formatting
 mvn test -Dtest=GameEngineTest#someSentenceName
 mvn package && java -jar target/jTD.jar
 mvn -q compile exec:java -Dexec.mainClass=td.PerformanceHarness   # performance budget; add -Dexec.args=zones for the ground-zone loadout
+mvn -q compile exec:java -Dexec.mainClass=td.balance.BalanceReport -Dexec.args="--save before"   # balance per level; then --compare before; also --seeds N --levels 0,2 --strong --variety --html
 mvn -q compile exec:java -Dexec.mainClass=td.PurchaseHarness -Dexec.args="2 12 sniper 4"   # purchases compared: level, seeds, tower, copies of each tower in the army
 mvn -q compile exec:java -Dexec.mainClass=td.BuildHarness -Dexec.args="2 40 cinder 4 2 1500 1"   # builds of one tower compared: level, seeds, tower, copies, background copies, budget, upgraded copies
 ```
@@ -22,7 +23,7 @@ violation. They are not restated here.
 - Multi-phase plan: commit after each phase. Its verification section lists live checks only for
   the end of the feature, each naming what no test can assert.
 - Verify with the cheapest thing that can prove it: a test (`GameEngineTest` for rules) →
-  `PreviewBoard`/`PreviewEnemy` render for how the board looks → `td.BalanceHarness` for
+  `PreviewBoard`/`PreviewEnemy` render for how the board looks → `td.balance.BalanceReport` for
   numbers → the live game (`run-jtd` Driver) only for Swing wiring: input routing, panel text
   and layout. Never re-check live what a test already asserts.
 - One live `run-jtd` pass per feature, after its last phase, in the same session.
@@ -45,7 +46,8 @@ violation. They are not restated here.
 
 ## Packages (`td.*`)
 
-`board` (scale, cell↔pixel math) · `cell` (squares, buildability) · `damage` · `economy` ·
+`balance` (headless players, the tower lab, the balance report) · `board` (scale, cell↔pixel
+math) · `cell` (squares, buildability) · `damage` · `economy` ·
 `effect` (timed status effects) · `enemy` · `level` · `projectile` · `stat` (enemy stat sheet) ·
 `tower` (+ `targeting`, `upgrade`, `proc`, `aura`, `cinder`, `mortar`, `pulse`, `seeker`, `sniper`, `sonar`,
 `splash`) · `ui` (+ `render`) ·
@@ -106,7 +108,7 @@ frame build reads them.
   wider constructor (`PathDefinition`, `EnemyDefinition`). `td.ui.render` draw records are
   exempt.
 - Randomness comes from an injected `RandomSource` (`GameWorld.random()`), never
-  `Math.random()`, so `BalanceHarness` runs reproduce.
+  `Math.random()`, so headless balance runs reproduce.
 - Services: constructor injection into `final` fields; one constructor, no init step. Small
   classes; interfaces of 1-5 methods. Inherit only for a closed set of variants, with `final`
   leaves and `private` base-class state.

@@ -53,6 +53,8 @@ final class CompetentPlayer implements Player {
     private final TowerLab lab;
     private final Style style;
     private final int probesPerPath;
+    /** The lab's factor for each tower type against each of the level's kinds at rank, read once. */
+    private final double[][] kindFactors;
 
     private int creditsLastActed = -1;
     private int roundLastActed = -1;
@@ -62,6 +64,13 @@ final class CompetentPlayer implements Player {
         this.lab = lab;
         this.style = style;
         this.probesPerPath = TowerLab.probesPerPath();
+        List<String> kinds = lab.levelRanks();
+        this.kindFactors = new double[TowerFactory.Type.values().length][kinds.size()];
+        for (TowerFactory.Type type : TowerLab.damageDealers()) {
+            for (int k = 0; k < kinds.size(); k++) {
+                this.kindFactors[type.ordinal()][k] = lab.kindFactor(type, kinds.get(k));
+            }
+        }
     }
 
     /**
@@ -88,6 +97,10 @@ final class CompetentPlayer implements Player {
 
         Style withRandomCells() {
             return new Style(this.types, this.upgrades, false, this.saveFactor);
+        }
+
+        Style withSaveFactor(double factor) {
+            return new Style(this.types, this.upgrades, this.smartCells, factor);
         }
     }
 
@@ -162,22 +175,20 @@ final class CompetentPlayer implements Player {
         }
         for (int guard = 0; guard < 50; guard++) {
             Damage army = this.armyDamage(turn, kinds);
-            double standing = this.killed(foes, army, kinds);
+            double standing = this.killed(foes, army);
             List<Option> options = this.options(turn, kinds);
-            Comparator<Option> byWorth = Comparator.comparingDouble(option -> this.worth(option, foes, army, kinds,
-                    standing));
+            Comparator<Option> byWorth = Comparator.comparingDouble(option -> this.worth(option, foes, army, standing));
             Optional<Option> affordable = options.stream().filter(option -> option.cost() <= turn.credits())
                     .max(byWorth);
             if (affordable.isEmpty()) {
                 return;
             }
-            double best = this.worth(affordable.get(), foes, army, kinds, standing);
+            double best = this.worth(affordable.get(), foes, army, standing);
             if (this.style.saveFactor() > 0) {
                 double reach = 2.0 * turn.credits() + turn.survey().level().startingCredits();
                 boolean worthWaiting = options.stream()
                         .filter(option -> option.cost() > turn.credits() && option.cost() <= reach)
-                        .anyMatch(option -> this.worth(option, foes, army, kinds, standing)
-                                >= this.style.saveFactor() * best);
+                        .anyMatch(option -> this.worth(option, foes, army, standing) >= this.style.saveFactor() * best);
                 if (worthWaiting) {
                     return;
                 }
@@ -191,12 +202,12 @@ final class CompetentPlayer implements Player {
     }
 
     /** Enemy health per credit the option turns from leaking to dying. */
-    private double worth(Option option, List<Foe> foes, Damage army, List<String> kinds, double standing) {
-        return option.cost() <= 0 ? 0 : (this.killed(foes, army.plus(option.added()), kinds) - standing) / option.cost();
+    private double worth(Option option, List<Foe> foes, Damage army, double standing) {
+        return option.cost() <= 0 ? 0 : (this.killed(foes, army.plus(option.added())) - standing) / option.cost();
     }
 
     /** The enemy health of the coming rounds the army is expected to kill, each round counting less the later. */
-    private double killed(List<Foe> foes, Damage army, List<String> kinds) {
+    private double killed(List<Foe> foes, Damage army) {
         double total = 0;
         for (Foe foe : foes) {
             double ratio = army.on(foe.path(), foe.kind()) / foe.health();
@@ -249,7 +260,7 @@ final class CompetentPlayer implements Player {
         for (int p = 0; p < paths; p++) {
             double perEnemy = this.lab.cellValue(type, cell, p) / this.probesPerPath / DamageUnits.PER_POINT;
             for (int k = 0; k < kinds.size(); k++) {
-                damage[p][k] = perEnemy * this.lab.kindFactor(type, kinds.get(k));
+                damage[p][k] = perEnemy * this.kindFactors[type.ordinal()][k];
             }
         }
         return new Damage(damage);

@@ -26,15 +26,38 @@ public final class Turn {
     private final RunRecorder recorder;
     private final BoardSurvey survey;
     private final RandomSource random;
+    private final Rehearsal rehearsal;
 
     private int round;
     private int offset;
 
-    Turn(GameEngine engine, RunRecorder recorder, BoardSurvey survey, RandomSource random) {
+    Turn(GameEngine engine, RunRecorder recorder, BoardSurvey survey, RandomSource random, Rehearsal rehearsal) {
         this.engine = engine;
         this.recorder = recorder;
         this.survey = survey;
         this.random = random;
+        this.rehearsal = rehearsal;
+    }
+
+    /** Plays the same level again from its first tick, as far as a round, with another player deciding. */
+    @FunctionalInterface
+    interface Rehearsal {
+
+        PlayRecord play(Player player, int throughRound);
+    }
+
+    /**
+     * What would happen if the play so far were played again by {@code alternative}, through round
+     * {@code throughRound}: the same seed and rules, so a player that replays its own actions first and then
+     * changes course sees exactly what the change does. Costs a play of its own.
+     */
+    public PlayRecord rehearse(Player alternative, int throughRound) {
+        return this.rehearsal.play(alternative, throughRound);
+    }
+
+    /** Everything done so far, in order: what a rehearsal replays first. */
+    public List<PlayRecord.TimedAction> actionsSoFar() {
+        return this.recorder.actionsSoFar();
     }
 
     void at(int round, int offset) {

@@ -465,6 +465,29 @@ against a copy of the same tower. It exists to price nodes by the result on the 
 are measured like damage. It takes about 15 seconds per tower type at 12 seeds, and an effect worth less than
 about a life is lost in its noise.
 
+`td.balance` replaced the fixed loadout with players, because a fixed loadout with unlimited credits
+measures nothing a player meets: lives lost moved by nothing when a burn doubled, and the purchase
+harnesses' rankings flipped with the budget. Its pieces, and why each is shaped as it is:
+
+- A play (`LevelPlay`) runs with unlimited lives and judges the real level by the leak that would have
+  lost it. Up to that leak the play is identical, so one play yields both the verdict and how badly it
+  was missed, which matters with 3 to 5 lives.
+- The recorder reads only the engine's public state, polled after every tick, so observing a play cost
+  the engine nothing. The engine gained one playtest rule, enemy health as a percentage, for the margin.
+- Every action is logged by round and ticks into the round, not by absolute tick, so a log replays on a
+  changed game whose rounds end at other ticks. The engine and the player have separate seeded sources,
+  so a decision never shifts what the game rolls; the strong player relies on this to rehearse a round
+  by replaying everything before it.
+- The lab measures instead of computing, because the towers' behaviour lives in perks and specs no
+  formula reproduces. Probes that never die rank cells (where a tower stands is all that matters to
+  them); duels against real enemies, all given the same health, rank kinds and nodes, since what an
+  enemy does while it dies (vanish, split, heal) is exactly what probes hide.
+- The competent player values a purchase by the enemy health it turns from likely leaking to likely
+  dying. A sum of damage, which it used first, spent where enemies already die twice over and hoarded
+  credits while a round it misjudged walked through.
+- The margin, not the win rate, is the headline: with 3 to 5 lives and a deterministic player, a win rate
+  sits at 0% or 100% and cannot tell easy from trivial.
+
 For visual work, the `run-jtd` Claude Code skill also offers `PreviewBoard`/`PreviewEnemy` —
 headless dev tools that compose a board or a single enemy scene and render it straight to a PNG,
 without opening a window or driving the real UI. They exist so an agent can check a rendering
