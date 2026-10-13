@@ -100,6 +100,12 @@ final class EffectInteractions {
         return EARNS.getOrDefault(pool, List.of());
     }
 
+    /** Whether any pool in {@code active} is still earning stacks of {@code debuff}. */
+    static boolean isEarnedBy(EffectKind debuff, Set<EffectKind> active) {
+        return EARNS.entrySet().stream()
+                .anyMatch(earns -> active.contains(earns.getKey()) && earns.getValue().contains(debuff));
+    }
+
     /** What a freeze's length is multiplied by on an enemy chilled by {@code chillLevel} with the {@code active} kinds. */
     static float freezeLengthFactor(Set<EffectKind> active, float chillLevel) {
         float chill = chillLevel;
