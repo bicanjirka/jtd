@@ -1,7 +1,35 @@
 # Feature Request: Balance Verification
 
-**Status: draft.** Not sequenced against other requests; it is enabling infrastructure, and every
-`TODO.md` entry that says "unbalanced placeholders" would be tuned with it.
+**Status: first version implemented** (2026-10-13), plus two items from "Later" (the strong player, and
+each tower alone and banned). The review of the toolset (part 0) is
+`docs/plans/balance-verification-review.md`. Open questions are marked below: ✅ settled by what was built,
+❔ needs your input. Every `TODO.md` entry that says "unbalanced placeholders" is tuned with it.
+
+## Where we are
+
+**Run it:** `mvn -q compile exec:java -Dexec.mainClass=td.balance.BalanceReport -Dexec.args="--save before"`,
+change a number, then the same with `--compare before`. About two minutes at 20 seeds; `--strong`,
+`--variety` and `--html` add several each (`README.md` has the details).
+
+**What exists:** a naive, a competent and a strong player that play every built-in level with real
+credits and lives; a lab that measures every tower on every cell, against every kind at every rank,
+and with every upgrade line; a report that answers the seven questions per level with 95% intervals;
+a seed-by-seed comparison with a saved run, both re-decided and with the saved actions played back
+unchanged; an HTML page with charts and heat maps; random legal play in `mvn verify` that checks the
+rules hold whatever a player does. The engine
+changed in one place: `PlaytestRules` can scale enemy health, which is how a margin is found.
+
+**What the first run says** is under [Findings](#findings-first-run) below: every built-in level is far too
+easy for a competent player, the Obelisk is a one-tower answer to all three, and the Hive's Absolute Zero
+wipes waves alone.
+
+**Next, in this order** (each is ranked in the review):
+
+1. ❔ Decide the open questions still marked ❔ below, chiefly 7 (which fun proxies are required).
+2. Tune the competent player against the strong one: its Twisted Hourglass opening is the known miss,
+   and its own build played back holds more than it does when it re-decides against tougher enemies.
+3. The balance pass itself, level by level, with the findings as the starting list.
+
 
 ## Summary
 
@@ -16,7 +44,7 @@ It starts by reviewing the whole set of testing and balancing tools we have, bec
 larger than one metric: it is also what we can *observe* in a run, what we can *set up* without
 replaying a level, and which standard game-design and game-testing practices we are missing.
 
-## Current state (what exists today)
+## Current state (before this feature)
 
 **Tooling.** Four headless tools exist and none is a test: `td.BalanceHarness` (one fixed loadout on
 hand-picked cells, one seed), `td.PurchaseHarness` and `td.BuildHarness` (compare purchases and
@@ -255,41 +283,135 @@ the performance budget.
 
 Each has two options and a preferred one (⭐).
 
-1. **What are "not easy, not hard" in numbers?**
+1. ✅ **What are "not easy, not hard" in numbers?**
    - A ⭐: a competent player wins 70% to 90% of seeds and loses 30% to 70% of its lives; a naive player wins
      under 20%. Simple to read; coarse with 3 to 5 lives.
    - B: express it in credits, as the least credit total that holds the level for 90% of seeds, and
      require it to sit within a band around what a competent player earns. Finer; harder to explain.
-2. **How does the player place towers?**
+   - ↳ A, with a continuous measure beside it: the **margin**, the highest enemy health (as a percentage
+     of the authored one) a player still wins at, per seed. The win rate sat at 0% or 100% for every
+     player on every level, so it could not tell easy from trivial; the margin can. The verdict is
+     "too easy" when a competent player's margin is above 150% for certain, "too hard" below 100% or
+     under a 70% win rate. Health, not credits, because income is bounty and scales with it anyway.
+2. ✅ **How does the player place towers?**
    - A ⭐: rules about the path, range and what is coming, with an occasional search over candidate cells to audit
      that the rules are near the best.
    - B: search always: try the candidate cells and keep the best. Follows tower changes without rewriting
      rules; costs many more runs.
-3. **How many skill levels?**
+   - ↳ A, but the rules are measured rather than written: the lab runs each tower on every cell once per
+     level, so a longer cone or a new dead zone changes the ranking without touching the player. The audit
+     is the strong player.
+3. ✅ **How many skill levels?**
    - A ⭐: naive and competent first, strong later (as above).
    - B: three from the start.
-4. **Where does the "before" come from?**
+   - ↳ Three: the strong player came early, because without it the tool could not tell whether
+     Twisted Hourglass's first round was unfair or the competent player was wrong (it was the player).
+4. ✅ **Where does the "before" come from?**
    - A ⭐: re-run both sides on the same seeds each time. Slower; always consistent.
    - B: a stored result per level in the repository. Fast and reviewable; it goes stale.
-5. **Is a result with real lives enough?**
+   - ↳ A, with the before saved by the same tool under `target/` (`--save`, then `--compare` after the
+     change), so no file in the repository goes stale and nothing has to check out an old version.
+5. ✅ **Is a result with real lives enough?**
    - A ⭐: report the verdict with real lives and the degree with unlimited lives, side by side.
    - B: the verdict only.
-6. **Where does it run?**
+   - ↳ A, from one play: lives never run out, the verdict is read at the leak that would have lost, and the
+     leaks after it are the degree.
+6. ✅ **Where does it run?**
    - A ⭐: on demand and before a balance commit, like the other harnesses.
    - B: also as part of `mvn verify`. Needs the whole thing to fit in the test budget.
-7. **Which fun proxies do we want?** The table's rows are the candidates (rising pressure, close calls that
+   - ↳ A. `mvn verify` holds only what the tool rests on: a seeded play repeats, a log replays, the lab and
+     the comparison behave.
+7. ❔ **Which fun proxies do we want?** The table's rows are the candidates (rising pressure, close calls that
    are survivable, several winning layouts, no dead or dominant option, a decision every few waves).
    Which are required, and which are wanted later?
-8. **How far does the review go?**
+   - ↳ Measured now: rising pressure (the closest call and enemy health per round, walls and breathers),
+     close calls (how far the furthest enemy got), dead or dominant towers (variety, damage shares).
+     Not yet: several winning layouts, a decision every few waves.
+   - A ⭐: require rising pressure, survivable close calls and no dominant tower; layouts and decision
+     cadence later.
+   - B: require all five before the balance pass starts.
+8. ✅ **How far does the review go?**
    - A ⭐: tools and metrics only: an assessment document with ranked gaps, and fixes only for the
      gaps that block the first version.
    - B: also build a first version of every tool the review recommends.
-9. **Who chooses among the standard practices?**
+   - ↳ A, slightly past it: the gaps that blocked the first version were fixed (what a run reports, setting
+     up a run, the lab), and two cheap ones came with them (the HTML heat maps, regression baselines).
+9. ❔ **Who chooses among the standard practices?**
    - A ⭐: you pick from the list, with a line each on what it would unblock for us; the ones left
      are dropped.
    - B: the review decides on its own which to adopt.
-10. **What does a naive player do?** Random legal cells, cells chosen by distance from the entrance, or
+   - ↳ The review's table gives each practice a line and a recommendation (⭐); pick from it.
+10. ✅ **What does a naive player do?** Random legal cells, cells chosen by distance from the entrance, or
    a player that builds only one tower type? They answer different questions.
+   - ↳ All three exist, each for its question: the naive player buys a random affordable tower for a random
+     cell that reaches a path ("does a careless player win?"); the competent player on random cells
+     isolates positioning; the competent player with one tower type is the variety check.
+
+## Findings (first run)
+
+From `BalanceReport --seeds 12 --strong --variety` and earlier 20-seed runs, 2026-10-13. Margins are
+the highest enemy health a player still wins at, as a percentage of the authored one; the target band
+for the competent player is 100% to 150%. Nothing below was changed in the game: each is a starting
+point for the balance pass, not a decision.
+
+**Every built-in level is far too easy for a competent player, and too forgiving to a careless one.**
+
+| Level | naive wins | naive holds | competent holds | strong holds | random cells hold |
+|---|---|---|---|---|---|
+| Curly Path | 33-42% | 80-87% | 311-386% | 324% | 205-243% |
+| Zigzag Path | 5-10% | 81-84% | 228-231% | 284% | 155-159% |
+| Twisted Hourglass | 3-8% | 37-47% | 235-237% | 329% | 170-182% |
+
+A competent player wins every seed on every level and loses no life on Curly and Zigzag. A player that
+rehearses each round (strong) holds x1.04 the competent margin on Curly, x1.23 on Zigzag and x1.39 on
+Hourglass, where it also loses no life. On Curly a careless player still wins a third of the time, over
+the 20% target.
+
+**Pressure does not build.** On Curly Path the furthest enemy of a round gets under 30% of the way in 15
+of 18 rounds; only round 11 (Elite Ghosts, 62%) and round 15 (41%) push. Zigzag Path is flat at 25% to 50%,
+with neither walls nor breathers. Twisted Hourglass has its one wall at round 1: its Reaver walks the
+short crimson lane, and a player who opens with area towers loses 3 of 4 lives there on every seed,
+while one who opens with five Snipers (what the strong player finds) loses none.
+
+**The Obelisk is dominant.** It lands 38% to 62% of the competent player's damage. An army of Obelisks
+alone holds 221% on Curly, 221% on Zigzag and 151% on Hourglass; no other tower alone wins Curly or
+Hourglass at any enemy health. Banning it costs x0.74 on Curly and x0.77 on Zigzag, and makes Hourglass unwinnable as authored (237%
+to 40%), while banning the Sniper, Burst or Radar *raises* the competent player's margin on Curly
+(x1.06 to x1.19): the more of the budget goes to Obelisks and Beacons, the better. Two things make it so: its field hits everything in reach, invisible enemies
+included, and it is the only answer to Elite Ghosts, whose shroud blanks every tower that aims (every
+other tower brings down 0% of an Elite Ghost wave in a duel). Its five best cells overlap least with the
+others', so it also takes the cells nothing else wants.
+
+**Beacons stack into a second engine.** The competent player builds 6 to 9 of them, mostly around Obelisks
+(the lab measures +49% to +60% for an Obelisk beside one). Banning Beacons costs x0.62 on Twisted Hourglass and x0.81 on Curly.
+
+**Absolute Zero breaks the Hive.** One Hive with it destroys a wave of 20 Elite Armored mobs (12,800 health)
+alone; without it the same Hive lands 6%. Its freeze around the impact makes enemies pile up, and every
+frozen enemy shatters on all of the pile when it thaws, so its damage grows with the square of the group.
+In a duel it is the Hive's strongest node (x2.0 to x2.4); against probes that never die, x19 to x39.
+
+**The Hive and the Scorcher are rarely worth building.** The competent player builds 0 to 2 of each; alone
+each fails every level; banning either costs nothing. Every node of theirs but Absolute Zero is within the
+range of the other towers' nodes, so it is the bodies, not the trees, that are weak.
+
+**Counters are sharp, some too sharp.** From the lab's duels (share of a wave brought down, the plain mob
+as 1.00):
+
+- Elite Ghost: the Obelisk 1.00, every other tower 0.00 to 0.44 (only one answer).
+- Elite Armored: the Burst 0.01 and the Radar 0.10 (near immune); the others 0.4 to 0.6.
+- Juggernaut (in no round yet): the Burst and the Radar 0.00; the Obelisk 2.0 and the Hive 1.9.
+- Jammer (in no round yet): the Obelisk and the Scorcher 0.00, the Burst 0.03 to 0.12.
+- Courier (in no round yet): 0.3 to 0.5 for every tower: a speed check, not a counter.
+- Salamander: the Scorcher 0.00 as designed; Skirmisher: the Sniper and the Radar about 0.5.
+
+**Positioning matters, upgrades a little.** Chosen cells hold x1.29 to x1.45 what random cells do, yet random
+cells still win 92% to 100% at the authored health: placement decides by how much, never whether. Upgrades
+are worth x1.12 to x1.16 on Curly and Hourglass and nothing measurable on Zigzag Path, whose 8 rounds give
+too little XP and bounty for the trees.
+
+**Nodes that hurt their tower alone**, in duels: the Radar's Phased Array (x0.34 to x0.53), the Burst's Hex
+(x0.73), and several Mortar nodes (x0.8 to x0.9). Each may pay off beside others, which the lab cannot see
+yet; each is worth a look.
 
 ---
 
