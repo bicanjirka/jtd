@@ -16,8 +16,8 @@ credits and lives; a lab that measures every tower on every cell, against every 
 and with every upgrade line; a report that answers the seven questions per level with 95% intervals;
 a seed-by-seed comparison with a saved run, both re-decided and with the saved actions played back
 unchanged; an HTML page with charts and heat maps; random legal play in `mvn verify` that checks the
-rules hold whatever a player does. The engine
-changed in one place: `PlaytestRules` can scale enemy health, which is how a margin is found.
+rules hold whatever a player does. The engine changed in one place: `PlaytestRules` can scale enemy
+health, which is how a margin is found.
 
 **What the first run says** is under [Findings](#findings-first-run) below: every built-in level is far too
 easy for a competent player, the Obelisk is a one-tower answer to all three, and the Hive's Absolute Zero
@@ -30,7 +30,6 @@ wipes waves alone.
    known miss, and on Curly and Zigzag its own build played back holds more than it does when it
    re-decides against tougher enemies.
 3. The balance pass itself, level by level, with the findings as the starting list.
-
 
 ## Summary
 
