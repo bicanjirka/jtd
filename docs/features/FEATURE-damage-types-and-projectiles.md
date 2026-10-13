@@ -3,9 +3,9 @@
 **Status: implemented.** `Damage` carries `DamageType`; `td.effect` (`Effect`/`EffectKind`/
 `ActiveEffects`/`DamageSink`) shipped as the shared primitive this document called for;
 `td.projectile` (`AbstractProjectile`/`CannonballProjectile`/`MissileProjectile`/
-`ProjectileRoster`) and the Mortar/Seeker/Cinder towers shipped as the v1 content. Acid and
-damage-type resistance were deferred past v1 as decided below and are tracked in `TODO.md`
-("Acid is not implemented...", "Damage-type resistance doesn't exist yet"), not lost.
+`ProjectileRoster`) and the Mortar/Seeker/Cinder towers shipped as the v1 content. Acid was deferred
+past v1 and then dropped: poison is the second damage-over-time effect, and Cracked, Corroded and Sundered cover
+armor. Damage-type resistance shipped later.
 
 **Priority: Phase 2 — after tower upgrades.** This feature exists in part to give phase 1 (in-place tower upgrades)
 something real to grant — an upgrade path that applies slow or
@@ -356,10 +356,8 @@ Per this project's standing "commit after each phase" convention:
 
 ## Open questions
 
-1. Is "acid" meant to be a second, mechanically distinct DoT (different scaling, different
-   interaction with armor/shields) or primarily a different visual/flavor on the same
-   burning-DoT mechanism? Deferred past v1, but worth settling before it's built so it
-   doesn't get built twice.
+1. ~~Is "acid" meant to be a second, mechanically distinct DoT?~~ Dropped: poison and the armor
+   debuffs fill that role.
 2. Does the proposed content table above (which tower gets which delivery mechanism, damage
    type and effect) match the intended feel, or should any pairing change before
    implementation starts?

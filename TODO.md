@@ -214,21 +214,6 @@ A burning enemy earns 2 stacks per second, so it reaches the floor in about 50 s
 - **Approach:** tune through play or `td.BalanceHarness` with the other placeholder entries; decide
   whether a long burn's resilience loss (crit damage up to double at the floor) is too strong.
 
-## Damage types
-
-### Acid is not implemented as a second damage-over-time effect
-
-The original damage-types request named acid alongside burn as a second damage-over-time effect; v1 shipped only
-slow, burn and freeze (see `docs/features/FEATURE-damage-types-and-projectiles.md`'s Decisions and V1 Scope), deferring
-acid rather
-than dropping it.
-
-- **Where:** `td.effect` (`EffectKind`, `Effect`) has no `ACID` case; nothing produces one.
-- **Approach:** first settle the feature doc's open question — is acid meant to be mechanically distinct from burn
-  (different scaling, a different interaction with a future armor/shield trait) or primarily a different visual on
-  the same damage-over-time mechanism? Only then add an `EffectKind.ACID` case and an `Effect.acid(...)` factory,
-  mirroring `Effect.burn(...)`.
-
 ## Enemy features
 
 ### Enemy traits/abilities numbers are unbalanced placeholders
