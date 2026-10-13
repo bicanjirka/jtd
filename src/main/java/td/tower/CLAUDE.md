@@ -1,4 +1,4 @@
-# `td.tower` (+ `targeting`, `upgrade`, `aura`, `proc`, `sniper`, `sonar`, `splash`)
+# `td.tower` (+ `targeting`, `upgrade`, `proc`, `aura`, `cinder`, `mortar`, `pulse`, `seeker`, `sniper`, `sonar`, `splash`)
 
 ## Towers
 
