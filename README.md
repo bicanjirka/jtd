@@ -74,7 +74,11 @@ tower's kills/damage dealt. `td.PurchaseHarness` compares purchases instead: on 
 one tower of every type, it reports the lives saved per 100 credits by another copy of a tower and by each
 upgrade node, over many seeded runs (`mvn -q compile exec:java -Dexec.mainClass=td.PurchaseHarness
 -Dexec.args="2 12 sniper 4"`: level, seeds, tower, and how many of each tower the base army has; a bigger
-army prices "another copy" at what a real build pays).
+army prices "another copy" at what a real build pays). `td.BuildHarness` compares builds of one tower
+instead: copies of it bought the same way among a fixed background of the others, for every node on its own
+and for every last head node with a special, either at equal copies or at an equal budget with one upgraded
+copy and plain ones for the rest (`-Dexec.args="2 40 cinder 4 2 1500 1"`: level, seeds, tower, copies,
+background copies, budget, upgraded copies).
 
 ```bash
 mvn -q package -DskipTests
