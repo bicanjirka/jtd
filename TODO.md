@@ -158,14 +158,17 @@ first trees (an unquantified "+X" in the source doc became +25%, an unquantified
 against the bounty arithmetic in `docs/features/FEATURE-xp-and-purpose-gates.md`, not against play.
 Feature 7's balance pass sets the final numbers.
 
-`td.PurchaseHarness` (Twisted Hourglass, 12 seeds, an army of one of each tower) now measures them: lives
-saved per 100 credits. Another copy of a tower is the best buy for every tower but the Aura and the Hive (a
-Sniper copy saves 24 lives per 100 credits for $17), and an upgrade node saves between 0.02x and 0.6x of that
-(Focused Optics III 0.24x, Railgun 0.17x, Spotter Uplink 0.02x). Nodes that act on enemies rather than on
-damage (Hollow Point, Shatter Shot, Fifth Shot) save nothing within the noise of about one life. The harness
-puts no limit on cells, so a copy is never refused for lack of room, which is what the 0.7x to 1x target in
-`FEATURE-aura-and-balance-pass.md` assumes. Do not reprice from these numbers alone: decide first how a copy
-is limited (cells, or the +15% surcharge) and how effect nodes are measured.
+`td.PurchaseHarness` measures them: lives saved per 100 credits, on Twisted Hourglass with 12 seeds. The +15%
+per-copy surcharge is the limit on copies, and the harness now measures it at a realistic price. With an army of one
+of each tower a copy is the best buy for all but the Aura and the Hive (a Sniper copy saves 27 lives per 100 credits
+for $17; an upgrade node saves 0.02x to 0.6x of that). With an army of four of each (`-Dexec.args="2 12 sniper 4"`)
+a copy costs 1.6x and saves little: a Sniper copy 2.1 (nodes 0.1x to 4.9x of it), a Burst, Radar or Hive copy
+nothing within the noise of about one life, an Obelisk copy 3.5, a Mortar copy 5.4 (nodes 0.8x to 1.3x, the
+`FEATURE-aura-and-balance-pass.md` target of 0.7x to 1x). **The Scorcher is the exception:** its copy still saves 17
+at four copies and its best node 0.6x of that, so it is cheap for what it does, or its nodes are weak. Reprice from
+the four-copy table, not the one-copy one; the cheapest nodes (Range at $9 to $18) top it by dividing by a tiny cost,
+so read their rows with the saved column. Nodes that act on enemies rather than on damage (Hollow Point, Shatter
+Shot, Fifth Shot) save nothing within the noise of about one life.
 
 - Frenzy and Momentum's haste stack since the stat-driven plan (up to +200% attack speed); check the
   Focused Optics chain with Momentum.

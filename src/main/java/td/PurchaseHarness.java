@@ -18,12 +18,13 @@ import java.util.Optional;
 
 /**
  * Compares purchases on one level: how many lives a fixed army loses with and without each one, per
- * credit it costs. The army is one tower of every type on the best cells for reaching the path; a
+ * credit it costs. The army is a few towers of every type (one unless asked) on the best cells for reaching the path; a
  * purchase is another tower of a type, or an upgrade node with everything that leads to it
  * ({@link td.tower.upgrade.UpgradeTree#pathTo}). Every run is seeded, so a table can be compared with
  * the next one. A tool run on demand, not a test: it takes minutes.
  * <p>
- * Usage: {@code PurchaseHarness [levelIndex] [seeds] [towerType]}.
+ * Usage: {@code PurchaseHarness [levelIndex] [seeds] [towerType] [armyCopies]}. The price of "another copy" rises
+ * with the copies already built, so a larger army measures it at the price a real build pays.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 public final class PurchaseHarness {
@@ -39,9 +40,11 @@ public final class PurchaseHarness {
     private static final double PER_HUNDRED_CREDITS = 100.0;
 
     private final int seeds;
+    private final int armyCopies;
 
-    private PurchaseHarness(int seeds) {
+    private PurchaseHarness(int seeds, int armyCopies) {
         this.seeds = seeds;
+        this.armyCopies = armyCopies;
     }
 
     public static void main(String[] args) {
@@ -49,13 +52,15 @@ public final class PurchaseHarness {
         int seeds = args.length > 1 ? Integer.parseInt(args[1]) : DEFAULT_SEEDS;
         Optional<TowerFactory.Type> only = args.length > 2
                 ? Optional.of(TowerFactory.Type.valueOf(args[2].toUpperCase(java.util.Locale.ROOT))) : Optional.empty();
+        int armyCopies = args.length > 3 ? Integer.parseInt(args[3]) : 1;
         LevelDefinition level = new BuiltInLevelCatalog().levels().get(levelIndex).withStartingLives(UNLIMITED_LIVES);
-        new PurchaseHarness(seeds).report(level, only);
+        new PurchaseHarness(seeds, armyCopies).report(level, only);
     }
 
     private void report(LevelDefinition level, Optional<TowerFactory.Type> only) {
         double baseline = this.meanLeaks(level, (engine, army, spare) -> 0);
-        System.out.printf("=== Purchase report: %s, %d seeds, army of one of each tower ===%n", level.name(), this.seeds);
+        System.out.printf("=== Purchase report: %s, %d seeds, army of %d of each tower ===%n", level.name(), this.seeds,
+                this.armyCopies);
         System.out.printf("Lives lost with no purchase: %.1f%n", baseline);
         for (TowerFactory.Type type : TowerFactory.Type.values()) {
             if (only.isPresent() && only.get() != type) {
@@ -88,7 +93,7 @@ public final class PurchaseHarness {
         GameEngine engine = new GameEngine(GameHost.noOp(), RandomSource.seeded(FIRST_SEED));
         engine.loadLevel(level);
         engine.debugGrantCredits(GRANTED_CREDITS);
-        List<Tower> army = placeArmy(engine, rankCells(engine));
+        List<Tower> army = placeArmy(engine, rankCells(engine), 1);
         return army.stream().filter(tower -> tower.getType() == type).findFirst().orElseThrow()
                 .upgradeTree().nodes();
     }
@@ -97,18 +102,18 @@ public final class PurchaseHarness {
     private double meanLeaks(LevelDefinition level, Purchase setup) {
         double total = 0;
         for (int i = 0; i < this.seeds; i++) {
-            total += play(level, FIRST_SEED + i, setup);
+            total += play(level, FIRST_SEED + i, this.armyCopies, setup);
         }
         return total / this.seeds;
     }
 
-    private static int play(LevelDefinition level, long seed, Purchase setup) {
+    private static int play(LevelDefinition level, long seed, int armyCopies, Purchase setup) {
         GameEngine engine = new GameEngine(GameHost.noOp(), RandomSource.seeded(seed));
         engine.loadLevel(level);
         engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
         engine.debugGrantCredits(GRANTED_CREDITS);
         List<Cell> cells = rankCells(engine);
-        List<Tower> army = placeArmy(engine, cells);
+        List<Tower> army = placeArmy(engine, cells, armyCopies);
         setup.apply(engine, army, cells.subList(army.size(), cells.size()));
 
         for (int t = 1; t <= TICK_BUDGET && !engine.outcome().isOver(); t++) {
@@ -141,16 +146,18 @@ public final class PurchaseHarness {
         return cells;
     }
 
-    /** One tower of every type on the best cells, in the order of the types. */
-    private static List<Tower> placeArmy(GameEngine engine, List<Cell> cells) {
+    /** {@code copies} towers of every type on the best cells, a round of the types at a time. */
+    private static List<Tower> placeArmy(GameEngine engine, List<Cell> cells, int copies) {
         List<Tower> army = new ArrayList<>();
         int next = 0;
-        for (TowerFactory.Type type : TowerFactory.Type.values()) {
-            Optional<Tower> placed = Optional.empty();
-            while (placed.isEmpty() && next < cells.size()) {
-                placed = place(engine, type, cells.get(next++));
+        for (int round = 0; round < copies; round++) {
+            for (TowerFactory.Type type : TowerFactory.Type.values()) {
+                Optional<Tower> placed = Optional.empty();
+                while (placed.isEmpty() && next < cells.size()) {
+                    placed = place(engine, type, cells.get(next++));
+                }
+                placed.ifPresent(army::add);
             }
-            placed.ifPresent(army::add);
         }
         return army;
     }
