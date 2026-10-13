@@ -19,6 +19,6 @@ public final class OverTheHorizonPerk implements SeekerPerk {
 
     @Override
     public String describe() {
-        return "may fire at Revealed or Marked enemies within " + PerkText.times(REACH) + " its range";
+        return "Over the Horizon: may fire at Revealed or Marked enemies within " + PerkText.times(REACH) + " its range";
     }
 }

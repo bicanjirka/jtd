@@ -12,7 +12,7 @@ public final class NestPerk implements SeekerPerk {
 
     @Override
     public String describe() {
-        return "the cooldown loads a missile into the nest instead of firing; with a target in range, stored missiles launch "
+        return "Nest: the cooldown loads a missile into the nest instead of firing; with a target in range, stored missiles launch "
                 + LAUNCH_GAP_TICKS + " ticks apart";
     }
 }
