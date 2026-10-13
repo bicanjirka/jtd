@@ -106,7 +106,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private static float bodyScaleFor(BodyArchetype archetype, int scale, Rank rank) {
         return switch (archetype) {
             case CIRCLE, SALAMANDER -> scale / 6f;
-            case SQUARE, TRIANGLE, GHOST, COURIER -> scale / (float) (7 - rank.ordinal());
+            case SQUARE, TRIANGLE, GHOST, COURIER, SKIRMISHER -> scale / (float) (7 - rank.ordinal());
             case MITE -> scale / 10f;
             case YETI -> scale / 5f;
             case JUGGERNAUT -> scale / (float) (6 - rank.ordinal());

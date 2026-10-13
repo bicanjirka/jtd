@@ -31,6 +31,7 @@ public final class AbilityState {
             case TimeSinceLastHitTrigger t -> 0;
             case OnCriticalHitTakenTrigger t -> 0;
             case OnFirstDamageTakenTrigger t -> 0;
+            case OnDodgeTrigger t -> 0;
         };
     }
 

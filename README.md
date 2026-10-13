@@ -138,10 +138,11 @@ currently amplifying, coloured for its reach or its chosen hero, a ring on the t
 | Jammer     | square        | Jams every tower near it: they fire more slowly and see less far while it's in range (drawn as a pink ring; affected towers show a pink marker). A tower in a Beacon's range takes half of it. Not in any level's waves yet.                                                                                                                                  |
 | Juggernaut | square        | Slow, with plating that blunts a huge flat chunk of every physical hit; magic, Cracked and Sundered get past it. Not in any level's waves yet. |
 | Mite       | circle        | Tiny and quick, and dies to a single hit; meant for a `swarm 12 mite`. Not in any level's waves yet. |
-| Courier    | triangle      | Very fast and fragile, with a high bounty. Not in any level's waves yet. |
+| Courier    | triangle      | Very fast and fragile, with a high bounty, and nimble (25 agility) enough to dodge an aimed shot now and then. Not in any level's waves yet. |
 | Shieldbearer | cross         | Periodically shields every other ally near it against physical damage only; magic goes straight through. Not in any level's waves yet. |
 | Salamander | circle        | Immune to burn, so a Cinder-only defence does nothing; Soulfire still burns it. Not in any level's waves yet. |
 | Yeti       | circle        | Immune to freeze and chilled half as long; Dazed still stops it. Not in any level's waves yet. |
+| Skirmisher | diamond       | Nimble: 40 agility, rising to 80 with rank, so it dodges some aimed shots. From Soldier it sprints off for 1.5 s after every dodge; from Elite it gets harder to hit the more it is hurt. Not in any level's waves yet. |
 | Empty      | —             | Not a real enemy — a spacer that opens a timing gap inside a wave                                                                                                                                                                                                                                                 |
 | The Warden | large spiked crest | A boss: armored, periodically summons reinforcements and shields itself and nearby allies, and shields itself again whenever it survives a critical hit. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. Appears as the final wave of Curly Path. |
 | Reaver     | triangle, path-facing | Speeds up as it's hurt, shrugs off a flat amount of every hit, shields itself once badly wounded, and splits into two Simple mobs on death. Appears in Twisted Hourglass's first wave — a level-authored enemy, registered only for that level rather than globally (see `td.level.LevelDefinition.customEnemies`). |
@@ -207,6 +208,7 @@ holds more than one effect; selecting it lists every effect with what kind it is
 | Heal       | restorative      | Restores health every tick                                                                         |
 | Invisible  | stealth          | Towers cannot target the enemy; area damage still reaches it                                       |
 | Revealed   | stealth          | Towers can target the enemy again, even through invisibility; turning invisible again ends it      |
+| Sprinting  | buff             | 60% faster for a moment; a Skirmisher gives it to itself after a dodge. Anchored still holds it    |
 
 Stacks wear off at a pace spirit sets: neutral spirit loses one per second, more spirit is faster, and at -100 they never wear off, so a fully sickened enemy stays sickened. Every other debuff's timer runs at `max(0.25, 1 + spirit / 100)` of normal speed, and at -100 it stops too (freeze keeps its own diminishing returns). A frozen enemy cannot burn, and freezing an enemy puts out its burn, landing half of what was left at once, but keeps its Scorched stacks. Hexes bend this: Rimed and Ashen change what a freeze does, and Inverted keeps an enemy from turning invisible. Nothing else cancels anything.
 
@@ -232,6 +234,15 @@ never does, but a burn or poison started by a crit starts that much stronger. Ea
 own crit multiplier (x1.5, the Sniper x2.0). A guaranteed crit lands whenever the enemy's
 resilience is below 100; at 100 nothing crits. Negative resilience makes crits likelier and harder;
 Exposed and Revealed take 50 resilience. Armor and magic resist never go below 0.
+
+An enemy with agility can dodge a hit aimed at it alone: the Sniper's shot and its Ricochet bounces,
+and the Sonar beam's hit. The chance is `agility / (agility + 100)` (25 dodges 20%, 100 dodges 50%),
+after the tower's accuracy, which cancels agility point for point. A dodged hit deals nothing, can't
+crit and sets off nothing a hit would; a dodged Sonar hit still counts for its ping. Area damage,
+damage over time, the Railgun's line, arcs and missiles are never dodged, and neither is a
+guaranteed crit, so a Marked enemy can't dodge. A frozen or Dazed enemy can't dodge at all. The
+Sniper's Steady Aim stacks add 10 accuracy each from Attune; with Marksman's Eye a dodged shot makes
+the next one a guaranteed crit, and Focused Optics II's Frenzy also starts on a dodged shot.
 
 ### Spawn shapes
 

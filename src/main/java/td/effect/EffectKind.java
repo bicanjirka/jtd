@@ -108,7 +108,9 @@ public enum EffectKind {
     /** Takes physical damage for every cell it travels; a stopped enemy takes none. */
     BLEEDING(EffectRule.of(EffectCategory.DAMAGE_OVER_TIME)),
     /** A third fuel pool: it stacks with burn and poison, burns what is immune to fire and marks resilience and spirit. */
-    SOULFIRE(EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asAPool().tagged(EffectTag.BURNING));
+    SOULFIRE(EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asAPool().tagged(EffectTag.BURNING)),
+    /** A short burst of speed an enemy gives itself. */
+    SPRINTING(EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.percent(0.6f)));
 
     /** The most stacks any stacking kind reaches, so a cap an application raises (Fault Line) still has a bundle. */
     private static final int MOST_STACKS = 100;

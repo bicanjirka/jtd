@@ -1,6 +1,7 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.damage.DamageUnits;
@@ -38,7 +39,8 @@ class RoleEnemyTest {
     void everyNewEnemyIsInTheCatalogWithAGrowingLadder() {
         EnemyCatalog catalog = EnemyCatalog.builtIn();
 
-        for (String id : List.of("juggernaut", "mite", "courier", "shieldbearer", "salamander", "yeti")) {
+        for (String id : List.of("juggernaut", "mite", "courier", "shieldbearer", "salamander", "yeti",
+                "skirmisher")) {
             assertThat(catalog.contains(id)).as(id).isTrue();
             assertThat(catalog.ranked(id).definitionFor(Rank.BOSS).baseHealth())
                     .as(id).isGreaterThan(catalog.ranked(id).definitionFor(Rank.GRUNT).baseHealth());
@@ -117,5 +119,31 @@ class RoleEnemyTest {
 
         assertThat(yeti.hasEffect(EffectKind.FREEZE)).isFalse();
         assertThat(yeti.stats().value(EnemyStat.CHILL_RESIST)).isEqualTo(0.5f);
+    }
+
+    @Test
+    void theCourierIsNimble() {
+        DefinedEnemyMob courier = spawn(worldWithStraightPath(), "courier");
+
+        assertThat(courier.inspect().stat(EnemyStat.AGILITY)).isEqualTo(25f);
+    }
+
+    @Test
+    void aSkirmisherSoldierSprintsOffAfterItDodges() {
+        GameWorld world = WorldFixtures.newWorldOnBoard(() -> 0.0, 32, 1000, 1000);
+        world.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(1000, 0))));
+        EnemyDefinition soldier = world.getEnemyCatalog().ranked("skirmisher").definitionFor(Rank.SOLDIER);
+        DefinedEnemyMob skirmisher = (DefinedEnemyMob) world.getEnemyCatalog().spawn("skirmisher", world, 0,
+                soldier.baseHealth(), soldier.price(), Rank.SOLDIER);
+        world.enemies().add(skirmisher);
+        skirmisher.doTick(1);
+        float walking = skirmisher.getSpeed();
+
+        boolean dodged = skirmisher.takeHit(Damage.physical(100), AttackProfile.none().asAimed()).dodged();
+        skirmisher.doTick(2);
+
+        assertThat(dodged).isTrue();
+        assertThat(skirmisher.hasEffect(EffectKind.SPRINTING)).isTrue();
+        assertThat(skirmisher.getSpeed()).isGreaterThan(walking);
     }
 }

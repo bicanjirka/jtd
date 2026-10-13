@@ -151,6 +151,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case TARRED -> Palette.STATUS_MARKER_TARRED;
             case BLEEDING -> Palette.STATUS_MARKER_BLEEDING;
             case SOULFIRE -> Palette.STATUS_MARKER_SOULFIRE;
+            case SPRINTING -> Palette.STATUS_MARKER_SPRINTING;
         };
     }
 
@@ -163,6 +164,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case CRITICAL_IMMUNE -> Palette.TRAIT_MARKER_CRITICAL_IMMUNE;
             case HURT_SPEED -> Palette.TRAIT_MARKER_HURT_SPEED;
             case AGILITY -> Palette.TRAIT_MARKER_AGILITY;
+            case HURT_AGILITY -> Palette.TRAIT_MARKER_HURT_AGILITY;
             case BURN_IMMUNE -> Palette.TRAIT_MARKER_BURN_IMMUNE;
             case FREEZE_IMMUNE -> Palette.TRAIT_MARKER_FREEZE_IMMUNE;
             case EFFECT_RESIST -> Palette.TRAIT_MARKER_EFFECT_RESIST;
@@ -181,6 +183,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case JUGGERNAUT -> Palette.ENEMY_JUGGERNAUT;
             case MITE -> Palette.ENEMY_MITE;
             case COURIER -> Palette.ENEMY_COURIER;
+            case SKIRMISHER -> Palette.ENEMY_SKIRMISHER;
             case SHIELDBEARER -> Palette.ENEMY_SHIELDBEARER;
             case SALAMANDER -> Palette.ENEMY_SALAMANDER;
             case YETI -> Palette.ENEMY_YETI;

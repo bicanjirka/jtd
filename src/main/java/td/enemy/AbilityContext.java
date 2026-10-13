@@ -25,6 +25,9 @@ public interface AbilityContext {
      */
     boolean justTookCriticalHit();
 
+    /** Like {@link #justTookCriticalHit()}, for a hit it dodged. */
+    boolean justDodged();
+
     /** Like {@link #justTookCriticalHit()}, for any damage. */
     boolean justTookDamage();
 

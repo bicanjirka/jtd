@@ -14,6 +14,7 @@ final class FakeAbilityContext implements AbilityContext {
     private boolean justDied;
     private boolean justTookCriticalHit;
     private boolean justTookDamage;
+    private boolean justDodged;
 
     void setHealthFraction(float healthFraction) {
         this.healthFraction = healthFraction;
@@ -29,6 +30,10 @@ final class FakeAbilityContext implements AbilityContext {
 
     void setJustTookCriticalHit(boolean justTookCriticalHit) {
         this.justTookCriticalHit = justTookCriticalHit;
+    }
+
+    void setJustDodged(boolean justDodged) {
+        this.justDodged = justDodged;
     }
 
     void setJustTookDamage(boolean justTookDamage) {
@@ -58,6 +63,11 @@ final class FakeAbilityContext implements AbilityContext {
     @Override
     public boolean justTookCriticalHit() {
         return this.justTookCriticalHit;
+    }
+
+    @Override
+    public boolean justDodged() {
+        return this.justDodged;
     }
 
     @Override

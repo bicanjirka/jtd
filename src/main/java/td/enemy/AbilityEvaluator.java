@@ -17,6 +17,7 @@ public final class AbilityEvaluator {
             case OnDeathTrigger ignored -> fireOnDeath(state, context);
             case TimeSinceLastHitTrigger t -> fireTimeSinceLastHit(t, state, context);
             case OnCriticalHitTakenTrigger ignored -> context.justTookCriticalHit();
+            case OnDodgeTrigger ignored -> context.justDodged();
             case OnFirstDamageTakenTrigger ignored -> fireOnFirstDamageTaken(state, context);
         };
     }

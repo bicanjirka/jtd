@@ -40,6 +40,7 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 | `shieldbearer` | Shieldbearer (physical-only shield for allies)      |
 | `salamander` | Salamander (burn-immune)                              |
 | `yeti`    | Yeti (freeze-immune, half chill)                         |
+| `skirmisher` | Skirmisher (nimble: dodges aimed shots)               |
 
 - A leading `w<number>` (`w30 3 c`) sets the ticks one slot of spacing is worth, default
   `SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`; it carries on `WaveContent`. It must be the first token and
