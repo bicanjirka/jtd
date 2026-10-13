@@ -24,12 +24,12 @@ public class TowerFactory {
     public enum Type {
         SNIPER(SniperTower.PRICE, 'q', "Sniper"),
         SPLASH(SplashTower.PRICE, 'w', "Burst"),
-        SONAR(SonarTower.PRICE, 'e', "Radar"),
-        PULSE(PulseTower.PRICE, 'r', "Obelisk"),
-        AURA(AuraTower.PRICE, 't', "Beacon"),
-        MORTAR(MortarTower.PRICE, 'y', "Mortar"),
-        SEEKER(SeekerTower.PRICE, 'u', "Hive"),
-        CINDER(CinderTower.PRICE, 'i', "Scorcher");
+        MORTAR(MortarTower.PRICE, 'e', "Mortar"),
+        CINDER(CinderTower.PRICE, 'r', "Scorcher"),
+        SEEKER(SeekerTower.PRICE, 't', "Hive"),
+        SONAR(SonarTower.PRICE, 'y', "Radar"),
+        PULSE(PulseTower.PRICE, 'u', "Obelisk"),
+        AURA(AuraTower.PRICE, 'i', "Beacon");
 
         private static final int COPY_SURCHARGE_PERCENT = 15;
 
