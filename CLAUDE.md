@@ -11,6 +11,7 @@ mvn test -Dtest=GameEngineTest#someSentenceName
 mvn package && java -jar target/jTD.jar
 mvn -q compile exec:java -Dexec.mainClass=td.PerformanceHarness   # performance budget; add -Dexec.args=zones for the ground-zone loadout
 mvn -q compile exec:java -Dexec.mainClass=td.PurchaseHarness -Dexec.args="2 12 sniper 4"   # purchases compared: level, seeds, tower, copies of each tower in the army
+mvn -q compile exec:java -Dexec.mainClass=td.BuildHarness -Dexec.args="2 40 cinder 4 2 1500 1"   # builds of one tower compared: level, seeds, tower, copies, background copies, budget, upgraded copies
 ```
 
 Mechanical rules live in `checkstyle.xml` / `checkstyle-imports.xml`; `mvn verify` names any

@@ -1,6 +1,5 @@
 package td;
 
-import td.cell.CellGrid;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
 import td.tower.Tower;
@@ -9,7 +8,6 @@ import td.tower.upgrade.UpgradeNode;
 import td.util.GameHost;
 import td.util.RandomSource;
 import td.util.ThreadConfined;
-import td.wave.Vec2;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -35,8 +33,6 @@ public final class PurchaseHarness {
     /** So the level is played to its end whatever leaks: the number of lives lost is the score. */
     private static final int UNLIMITED_LIVES = 1_000_000;
     private static final int TICK_BUDGET = 60_000;
-    /** A cell is worth the stretch of path within this many cells of it. */
-    private static final double REACH_CELLS = 3.5;
     private static final double PER_HUNDRED_CREDITS = 100.0;
 
     private final int seeds;
@@ -93,7 +89,7 @@ public final class PurchaseHarness {
         GameEngine engine = new GameEngine(GameHost.noOp(), RandomSource.seeded(FIRST_SEED));
         engine.loadLevel(level);
         engine.debugGrantCredits(GRANTED_CREDITS);
-        List<Tower> army = placeArmy(engine, rankCells(engine), 1);
+        List<Tower> army = placeArmy(engine, HarnessBoard.rankCells(engine), 1);
         return army.stream().filter(tower -> tower.getType() == type).findFirst().orElseThrow()
                 .upgradeTree().nodes();
     }
@@ -112,7 +108,7 @@ public final class PurchaseHarness {
         engine.loadLevel(level);
         engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
         engine.debugGrantCredits(GRANTED_CREDITS);
-        List<Cell> cells = rankCells(engine);
+        List<HarnessBoard.Cell> cells = HarnessBoard.rankCells(engine);
         List<Tower> army = placeArmy(engine, cells, armyCopies);
         setup.apply(engine, army, cells.subList(army.size(), cells.size()));
 
@@ -123,38 +119,15 @@ public final class PurchaseHarness {
         return UNLIMITED_LIVES - engine.getGameWorld().economy().getLives();
     }
 
-    /** Buildable cells, the ones with the most path within reach first. */
-    private static List<Cell> rankCells(GameEngine engine) {
-        CellGrid grid = engine.cells();
-        int scale = engine.getGameWorld().getBoard().scale();
-        List<Vec2> pathPoints = engine.getGameWorld().level().paths().stream()
-                .flatMap(path -> path.path().points().stream()).toList();
-        double reach = REACH_CELLS * scale;
-        List<Cell> cells = new ArrayList<>();
-        for (int x = 0; x < grid.width(); x++) {
-            for (int y = 0; y < grid.height(); y++) {
-                if (grid.at(x, y).buildable()) {
-                    double centreX = x * scale + scale / 2.0;
-                    double centreY = y * scale + scale / 2.0;
-                    int near = (int) pathPoints.stream()
-                            .filter(point -> Math.hypot(point.x() - centreX, point.y() - centreY) <= reach).count();
-                    cells.add(new Cell(x, y, near));
-                }
-            }
-        }
-        cells.sort(Comparator.comparingInt(Cell::near).reversed().thenComparingInt(Cell::x).thenComparingInt(Cell::y));
-        return cells;
-    }
-
     /** {@code copies} towers of every type on the best cells, a round of the types at a time. */
-    private static List<Tower> placeArmy(GameEngine engine, List<Cell> cells, int copies) {
+    private static List<Tower> placeArmy(GameEngine engine, List<HarnessBoard.Cell> cells, int copies) {
         List<Tower> army = new ArrayList<>();
         int next = 0;
         for (int round = 0; round < copies; round++) {
             for (TowerFactory.Type type : TowerFactory.Type.values()) {
                 Optional<Tower> placed = Optional.empty();
                 while (placed.isEmpty() && next < cells.size()) {
-                    placed = place(engine, type, cells.get(next++));
+                    placed = HarnessBoard.place(engine, type, cells.get(next++));
                 }
                 placed.ifPresent(army::add);
             }
@@ -162,23 +135,11 @@ public final class PurchaseHarness {
         return army;
     }
 
-    private static Optional<Tower> place(GameEngine engine, TowerFactory.Type type, Cell cell) {
-        int scale = engine.getGameWorld().getBoard().scale();
-        int pixelX = cell.x() * scale + scale / 2;
-        int pixelY = cell.y() * scale + scale / 2;
-        engine.startPlacing(type, 0f);
-        engine.mouseClicked(pixelX, pixelY);
-        if (!engine.cells().at(cell.x(), cell.y()).hasTower()) {
-            return Optional.empty();
-        }
-        return engine.getTowers().stream().filter(tower -> tower.getX() == pixelX && tower.getY() == pixelY).findFirst();
-    }
-
     private static Purchase buildCopy(TowerFactory.Type type) {
         return (engine, army, spare) -> {
             int before = engine.getGameWorld().economy().getCredits();
-            for (Cell cell : spare) {
-                if (place(engine, type, cell).isPresent()) {
+            for (HarnessBoard.Cell cell : spare) {
+                if (HarnessBoard.place(engine, type, cell).isPresent()) {
                     return before - engine.getGameWorld().economy().getCredits();
                 }
             }
@@ -199,13 +160,10 @@ public final class PurchaseHarness {
         };
     }
 
-    private record Cell(int x, int y, int near) {
-    }
-
     /** What a purchase did to the army: spends on it and returns the cost, or -1 when it could not be made. */
     private interface Purchase {
 
-        int apply(GameEngine engine, List<Tower> army, List<Cell> spare);
+        int apply(GameEngine engine, List<Tower> army, List<HarnessBoard.Cell> spare);
     }
 
     private record Row(String label, int cost, double leaks, double baseline) {
