@@ -25,11 +25,13 @@ import java.util.OptionalInt;
  * @param blocked      kinds an active effect keeps out, in kind order
  * @param diminished   per kind whose diminishing returns run, the share the next one would last
  * @param traitLines   one row per authored trait slot
+ * @param dodges       how many hits it has dodged
  */
 public record EnemyInspection(String name, String description, Rank rank, BodyArchetype archetype, int health,
                               int maxHealth, int bounty, Map<EnemyStat, Float> stats, List<EffectState> effects,
                               List<EffectKind> blocked,
-                              Map<EffectKind, Float> diminished, List<TraitLine> traitLines, Fate fate) {
+                              Map<EffectKind, Float> diminished, List<TraitLine> traitLines, Fate fate,
+                              int dodges) {
 
     public EnemyInspection {
         stats = Collections.unmodifiableMap(new EnumMap<>(stats));
@@ -55,7 +57,7 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
         List<TraitLine> traitLines = definition.traitSlots().stream().map(slot -> slot.template().describe()).toList();
         return new EnemyInspection(definition.displayName(), definition.description(), mob.getRank(), mob.archetype(),
                 (mob.getHealth() + DamageUnits.PER_POINT - 1) / DamageUnits.PER_POINT, mob.getMaxHealthPoints(), mob.getBounty(), stats, effects, List.copyOf(mob.blockedEffectKinds()),
-                mob.diminishedFactors(), traitLines, mob.fate());
+                mob.diminishedFactors(), traitLines, mob.fate(), mob.dodges());
     }
 
     public float stat(EnemyStat stat) {

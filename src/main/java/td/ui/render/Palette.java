@@ -165,6 +165,7 @@ public enum Palette {
     /** Ice over a frozen enemy, whiter than the slow and freeze markers. */
     FREEZE_CRYSTAL,
     CRIT_SPARK,
+    MISS_MARK,
     /** The ring where an ability spawn arrived. */
     SPAWN_BURST,
     /** Rank badges. The two chevron ranks share a role; star and skull each have their own. */

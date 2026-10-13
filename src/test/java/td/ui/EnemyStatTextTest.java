@@ -1,6 +1,7 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.Effect;
 import td.enemy.DefinedEnemyMob;
@@ -110,6 +111,27 @@ class EnemyStatTextTest {
         assertThat(alive.lines()).contains(new SheetLine.HealthBar(60, 100, "$5", false),
                 Row.effect(Palette.STATUS_MARKER_FREEZE, "Frozen", "hard CC 1.5 s"), Row.plain(Glyph.CHEVRON, "Speed", "0 px/s"));
         assertThat(killed.lines()).contains(new SheetLine.HealthBar(0, 100, "Killed", true));
+    }
+
+    @Test
+    void agilityReadsAsPointsWithItsDodgeChanceInTheNimbleColour() {
+        InfoSheet sheet = this.hoverSheet("courier", Rank.GRUNT);
+
+        assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_AGILITY, "Agility", "25, dodges 20%"));
+    }
+
+    @Test
+    void theLiveViewCountsTheHitsAnEnemyDodged() {
+        GameWorld lucky = WorldFixtures.newWorld(() -> 0.0);
+        DefinedEnemyMob courier = (DefinedEnemyMob) EnemyFactory.getEnemy("courier", lucky, 0, 100, 5, Rank.GRUNT);
+        InfoSheet before = EnemyStatText.live(courier.inspect());
+
+        courier.takeHit(Damage.physical(10), AttackProfile.none().asAimed());
+        courier.takeHit(Damage.physical(10), AttackProfile.none().asAimed());
+        InfoSheet after = EnemyStatText.live(courier.inspect());
+
+        assertThat(labels(before)).doesNotContain("Dodged");
+        assertThat(after.lines()).contains(Row.plain(Glyph.DOT, "Dodged", "2 hits"));
     }
 
     @Test

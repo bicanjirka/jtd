@@ -133,10 +133,11 @@ because the preview mob can't know the live damage tally.
 - **Leak cost**: every enemy leak keeps costing the same constant amount.
 - **Tenacity**: per-kind effect resistance already covers it. If authoring gets repetitive, a
   factory that sets both `SLOW` and `FREEZE` resistance is enough. It is not a new stat.
-- **Agility / movement inertia** is deferred until a haste effect exists. It would override
+- **Movement inertia** is deferred until a haste effect exists. It would override
   two final decisions of `FEATURE-effect-diminishing-returns.md` (the quadratic slow recovery
-  and freeze's instant release).
-- Evasion, mass, hitbox size and threat.
+  and freeze's instant release). The name agility went to dodging aimed hits
+  (`FEATURE-agility-and-dodge.md`).
+- Mass, hitbox size and threat. Evasion shipped as agility and dodge (`FEATURE-agility-and-dodge.md`).
 - Balance preservation: the game isn't balanced yet, so migrated numbers only need to be
   sensible, not equivalent.
 

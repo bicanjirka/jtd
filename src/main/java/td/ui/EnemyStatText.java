@@ -58,6 +58,9 @@ final class EnemyStatText {
         });
         lines.add(new SheetLine.Gap());
         lines.addAll(statAndTraitRows(inspection));
+        if (inspection.dodges() > 0) {
+            lines.add(Row.plain(Glyph.DOT, "Dodged", inspection.dodges() == 1 ? "1 hit" : inspection.dodges() + " hits"));
+        }
         inspection.effects().forEach(effect -> lines.add(effectRow(effect)));
         inspection.blocked().forEach(kind -> lines.add(Row.effect(EnemyFrameBuilder.markerPaletteFor(kind),
                 "Immune to " + kind.name().toLowerCase(Locale.ROOT), "")));

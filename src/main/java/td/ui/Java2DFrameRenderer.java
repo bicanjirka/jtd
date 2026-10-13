@@ -16,6 +16,7 @@ import td.ui.render.FlashDraw;
 import td.ui.render.HexGlyph;
 import td.ui.render.HexRuneDraw;
 import td.ui.render.IceCrystalDraw;
+import td.ui.render.MissMarkDraw;
 import td.ui.render.MissileDraw;
 import td.ui.render.NestDraw;
 import td.ui.render.Palette;
@@ -148,6 +149,10 @@ public final class Java2DFrameRenderer {
     /** A banked missile is drawn this share of a missile in flight. */
     private static final float NEST_MISSILE_SCALE = 0.6f;
     private static final Font MARKER_COUNT_FONT = Hud.LABEL_FONT.deriveFont(9f);
+    private static final Font MISS_MARK_FONT = Hud.LABEL_FONT.deriveFont(10f);
+    private static final String MISS_TEXT = "miss";
+    private static final float MISS_MARK_RISE = 10f;
+    private static final float MISS_MARK_GAP = 3f;
     /** Flame wave alpha, the same from launch to burn-out. */
     private static final float CINDER_CONE_ALPHA = 0.45f;
     /** How deep the wave's band is, as a share of the cone's full reach. */
@@ -546,6 +551,7 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_OVERFLOW -> Color.WHITE;
             case FREEZE_CRYSTAL -> new Color(220, 245, 255);
             case CRIT_SPARK -> Color.WHITE;
+            case MISS_MARK -> new Color(190, 190, 190);
             case SPAWN_BURST -> Color.WHITE;
             case RANK_BADGE_CHEVRON -> Color.WHITE;
             case RANK_BADGE_ELITE -> new Color(230, 190, 60);
@@ -1028,7 +1034,16 @@ public final class Java2DFrameRenderer {
             case TraitMarkerDraw marker -> this.paintTraitMarker(g2, marker);
             case IceCrystalDraw crystal -> this.paintIceCrystal(g2, crystal);
             case HexRuneDraw rune -> this.paintHexRune(g2, rune);
+            case MissMarkDraw miss -> this.paintMissMark(g2, miss);
         }
+    }
+
+    /** A grey "miss" beside the enemy that dodged, rising a little as it fades. */
+    private void paintMissMark(Graphics2D g2, MissMarkDraw miss) {
+        g2.setFont(MISS_MARK_FONT);
+        g2.setColor(withAlpha(colorFor(Palette.MISS_MARK), Math.round((1f - miss.fadeProgress()) * 255f)));
+        float baseline = miss.y() + g2.getFontMetrics().getAscent() / 2f - MISS_MARK_RISE * miss.fadeProgress();
+        g2.drawString(MISS_TEXT, miss.x() + MISS_MARK_GAP, baseline);
     }
 
     /**
