@@ -970,6 +970,7 @@ class GameEngineTest {
                 List.of(new WaveDefinition("c", Rank.GRUNT), new WaveDefinition("c", Rank.GRUNT))));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1)); // in range of path A's row (y=2) only
+        engine.getGameWorld().playtestRules().setEnemyHealthPercent(50);
         int scoreBefore = engine.getGameWorld().economy().getScore();
 
         assertThat(engine.nextWave()).isTrue();
@@ -1580,7 +1581,7 @@ class GameEngineTest {
 
         assertThat(engine.getGameWorld().enemies().getEnemies())
                 .extracting(EnemyMob::getHealth)
-                .containsOnly(DamageUnits.ofPoints(75));
+                .containsOnly(DamageUnits.ofPoints(150));
     }
 
     @Test

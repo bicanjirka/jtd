@@ -60,7 +60,8 @@ class EnemyStatTextTest {
 
         assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_PERCENT_RESIST, "Armor, magic resist", "25"),
                 Row.trait(Palette.TRAIT_MARKER_CRITICAL_IMMUNE, "Crit immune", ""));
-        assertThat(labels(sheet)).containsExactly("Speed", "Armor, magic resist", "Crit immune");
+        assertThat(labels(sheet)).containsExactly("Speed", "Armor, magic resist", "Plating, physical", "Crit immune",
+                "Freeze resist");
     }
 
     @Test
@@ -94,7 +95,8 @@ class EnemyStatTextTest {
     void thePreviewEndsWithTheDescription() {
         InfoSheet sheet = this.hoverSheet("s", Rank.GRUNT);
 
-        assertThat(sheet.lines().getLast()).isEqualTo(new SheetLine.Prose("Takes less damage. Immune to critical hits."));
+        assertThat(sheet.lines().getLast()).isEqualTo(new SheetLine.Prose("Takes less damage, and its plates blunt a little of "
+                + "every physical hit. Immune to critical hits; too heavy to stay frozen as long."));
     }
 
     @Test

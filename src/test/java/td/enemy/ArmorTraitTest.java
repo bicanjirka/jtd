@@ -15,8 +15,8 @@ class ArmorTraitTest {
     @Test
     void twentyFiveArmorKeepsFourFifthsOfAHit() {
         EnemyMob armored = EnemyFactory.getEnemy("s", context, 0, 100, 5, Rank.GRUNT);
-        // healthMax = 100*100 = 10000; 25 armor keeps 100/125 of a hit, so 1000 raw damage becomes 800 applied
-        armored.doDamage(Damage.physical(1000));
+        // healthMax = 100*100 = 10000; 25 magic resist keeps 100/125 of a hit, so 1000 raw damage becomes 800 applied
+        armored.doDamage(Damage.magic(1000));
 
         assertThat(armored.getHealth()).isEqualTo(10000 - 800);
     }
