@@ -158,10 +158,6 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
 - **The dev panel cannot set enemy health.**
   - **Where:** the dev panel, `PlaytestRules.setEnemyHealthPercent`.
   - **Approach:** a percent control beside the existing playtest toggles.
-- **`td.BalanceHarness` is superseded by `td.balance.BalanceReport`.**
-  - **Where:** `BalanceHarness`, its mentions in `docs/ARCHITECTURE.md` and `PreviewBoard`.
-  - **Approach:** delete it and point the mentions at the report; `HarnessBoard` stays for the other
-    harnesses.
 
 ## Levels
 

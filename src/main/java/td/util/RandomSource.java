@@ -4,7 +4,7 @@ import java.util.Random;
 
 /**
  * The simulation's randomness, injected so a run can be reproduced. The game uses
- * {@link #shared()}; {@link td.BalanceHarness} uses {@link #seeded(long)}.
+ * {@link #shared()}; headless balance runs use {@link #seeded(long)}.
  */
 @FunctionalInterface
 public interface RandomSource {

@@ -33,7 +33,7 @@ has its `TODO.md` entry until it lands):
 4. The two missing fun proxies: several winning layouts and a decision every few waves (question 7).
 5. The adopted practices (question 9): economy modelling, per-tick timelines, coverage reports, level-knob
    sweeps.
-6. Enemy health percent in the dev panel; retire `td.BalanceHarness`.
+6. Enemy health percent in the dev panel.
 
 The balance pass itself, level by level with the findings as the starting list, comes after the merge.
 

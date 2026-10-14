@@ -430,14 +430,11 @@ SLF4J + Logback.
 See [`features/FEATURE-playtesting-and-balance-tooling.md`](features/FEATURE-playtesting-and-balance-tooling.md)
 for the full design.
 
-`td.BalanceHarness` drives `GameEngine` (with `GameHost.noOp()`) through a level with
-a fixed `List<TowerPlacementSpec>` loadout, reporting lives lost, ticks-to-clear per wave, and
-each tower's cumulative kills and damage.
-
-It also places towers through the same `startPlacing`/`mouseClicked` path the real mouse
-listener uses, verifying success via the cell grid afterward rather than trusting a return
-value, since `TowerPlacement.mouseClicked` always exits placement mode whether or not it
-actually built anything.
+`td.PurchaseHarness` and `td.BuildHarness` drive `GameEngine` (with `GameHost.noOp()`) through a
+level with towers on the cells `HarnessBoard` ranks best. They place towers through the same
+`startPlacing`/`mouseClicked` path the real mouse listener uses, verifying success via the cell
+grid afterward rather than trusting a return value, since `TowerPlacement.mouseClicked` always
+exits placement mode whether or not it actually built anything.
 
 The three debug methods behind the `n`/`x`/`c` keys live on `GameEngine`, not
 `TowerDefense`, per the headless/Swing boundary — they are ordinary engine rules and are unit
@@ -491,7 +488,7 @@ harnesses' rankings flipped with the budget. Its pieces, and why each is shaped 
 For visual work, the `run-jtd` Claude Code skill also offers `PreviewBoard`/`PreviewEnemy` —
 headless dev tools that compose a board or a single enemy scene and render it straight to a PNG,
 without opening a window or driving the real UI. They exist so an agent can check a rendering
-change quickly, the same way `BalanceHarness` lets one check a numeric one. Full CLI usage and
+change quickly, the same way `td.balance.BalanceReport` lets one check a numeric one. Full CLI usage and
 worked examples live in `.claude/skills/run-jtd/SKILL.md`.
 
 ## 10. Lean CLAUDE.md files, standard tooling for rules

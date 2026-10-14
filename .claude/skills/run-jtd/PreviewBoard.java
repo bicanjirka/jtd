@@ -41,7 +41,7 @@ import java.util.List;
  * rendered scene can't drift from the real in-game look. Reads one command per line from stdin;
  * see SKILL.md in this directory for the command list.
  * <p>
- * {@code td.BalanceHarness} already proved this shape (headless {@code GameEngine} + real tower
+ * The balance harnesses already proved this shape (headless {@code GameEngine} + real tower
  * placement) for balance simulation; this reuses the same recipe, adding {@code spawn} for exact
  * enemy ids/ranks and a {@code render} step through the actual painting pipeline instead of a
  * text report.
@@ -139,7 +139,7 @@ public class PreviewBoard {
     }
 
     // Places through the real input surface (startPlacing + mouseClicked at the cell's pixel
-    // centre), the same path BalanceHarness.placeLoadout and TowerDefense's own mouse listener
+    // centre), the same path HarnessBoard.place and TowerDefense's own mouse listener
     // use - not by reaching into engine state directly - so affordability/buildability are the
     // real rules, not reimplemented here. Range 0f: only used for the placement-preview
     // highlight radius, never the built tower's own stats (see TowerPlacement.start).
