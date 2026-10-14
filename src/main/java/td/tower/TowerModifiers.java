@@ -51,8 +51,8 @@ public final class TowerModifiers {
         return flat(TowerStat.MAGIC_PENETRATION, fraction);
     }
 
-    public static StatModifiers<TowerStat> platingPenetration(float fraction) {
-        return flat(TowerStat.PLATING_PENETRATION, fraction);
+    public static StatModifiers<TowerStat> flatPenetration(float fraction) {
+        return flat(TowerStat.FLAT_PENETRATION, fraction);
     }
 
     public static StatModifiers<TowerStat> bounty(float fraction) {

@@ -23,7 +23,7 @@ public enum TowerStat implements StatKey {
     ARMOR_PENETRATION(0f, 0f, 1f, Unit.PERCENT, "Armor penetration", true),
     ARMOR_PENETRATION_FLAT(0f, 0f, Float.MAX_VALUE, Unit.POINTS, "Armor ignored", true),
     MAGIC_PENETRATION(0f, 0f, 1f, Unit.PERCENT, "Magic penetration", true),
-    PLATING_PENETRATION(0f, 0f, 1f, Unit.PERCENT, "Plating penetration", true),
+    FLAT_PENETRATION(0f, 0f, 1f, Unit.PERCENT, "Flat penetration", true),
     /** Agility points an aimed hit ignores. */
     ACCURACY(0f, 0f, Float.MAX_VALUE, Unit.POINTS, "Accuracy", true),
     BOUNTY(0f, 0f, Float.MAX_VALUE, Unit.PERCENT, "Bounty", true),

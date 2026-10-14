@@ -35,24 +35,13 @@ final class YetiEnemy {
                         .withDescription("Immune to freeze, and chills only a quarter as long. Its thick fur blunts "
                                 + "some of every hit, and once badly hurt it hunkers down and heals. Dazed still "
                                 + "stops it.")
-                        .withArmor(20f)
-                        .withMagicResist(20f)
-                        .withPhysicalPlating(2f)
-                        .withMagicPlating(2f)
-                        .withResilience(20f)
-                        .withAgility(5f)
-                        .withSpirit(15f)
+                        .withStats(20f, 20f, 2f, 2f, 20f, 5f, 15f)
                         .withAdditionalAbilities(List.of(hunker(6f))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(3520, 56)
                         .withDescription("Immune to freeze, and chills only a quarter as long. Its thick fur blunts "
                                 + "some of every hit and crits glance off its hide; once badly hurt it hunkers down "
                                 + "and heals. Dazed still stops it.")
-                        .withArmor(25f)
-                        .withMagicResist(25f)
-                        .withPhysicalPlating(3f)
-                        .withMagicPlating(3f)
-                        .withResilience(50f)
-                        .withSpirit(25f)
+                        .withStats(25f, 25f, 3f, 3f, 50f, 5f, 25f)
                         .withAdditionalAbilities(List.of(hunker(12f))))
                 .build());
     }

@@ -52,7 +52,7 @@ public record TowerStats(ResolvedStats<TowerStat> values, float rangeReal, float
                 .withArmorPenetration(values.value(TowerStat.ARMOR_PENETRATION),
                         values.value(TowerStat.ARMOR_PENETRATION_FLAT))
                 .withMagicPenetration(values.value(TowerStat.MAGIC_PENETRATION), 0f)
-                .withPlatingPenetration(values.value(TowerStat.PLATING_PENETRATION));
+                .withFlatPenetration(values.value(TowerStat.FLAT_PENETRATION));
         if (capabilities.contains(TowerCapability.GUARANTEED_CRIT)) {
             attack = attack.withGuaranteedCrit();
         }

@@ -349,8 +349,8 @@ class SniperTowerTest {
 
         AttackProfile attack = target.attackers().getFirst();
         assertThat(attack.penetrate(DamageType.PHYSICAL, 80f, false)).isEqualTo(30f);
-        assertThat(attack.penetratePlating(500f, false)).isZero();
-        assertThat(attack.penetratePlating(500f, true)).isEqualTo(500f);
+        assertThat(attack.penetrateFlatReduction(500f, false)).isZero();
+        assertThat(attack.penetrateFlatReduction(500f, true)).isEqualTo(500f);
     }
 
     @Test
@@ -516,7 +516,7 @@ class SniperTowerTest {
         assertThat(target.hits().get(1).amount()).isEqualTo(3 * target.hits().get(0).amount());
         assertThat(target.attackers().get(0).armorPenetration()).isZero();
         assertThat(target.attackers().get(1).armorPenetration()).isEqualTo(1f);
-        assertThat(target.attackers().get(1).platingPenetration()).isEqualTo(1f);
+        assertThat(target.attackers().get(1).flatPenetration()).isEqualTo(1f);
     }
 
     @Test

@@ -30,11 +30,7 @@ final class GhostEnemy {
                         .withDescription("Half there: physical hits pass partly through it and aimed shots often miss. "
                                 + "Turns invisible to towers for a long while the first time it's hit, and permanently "
                                 + "shrouds every other ally near it - itself excluded.")
-                        .withArmor(30f)
-                        .withMagicResist(10f)
-                        .withResilience(20f)
-                        .withAgility(15f)
-                        .withSpirit(15f)
+                        .withStats(30f, 10f, 0f, 0f, 20f, 15f, 15f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(
                                 // Each application outlasts the interval, so an ally in radius never flickers visible.
                                 new PeriodicTrigger(20),
@@ -43,11 +39,7 @@ final class GhostEnemy {
                         .withDescription("Half there: physical hits pass partly through it and aimed shots often miss. "
                                 + "Turns invisible the first time it's hit and again for a few seconds out of every "
                                 + "ten, and permanently shrouds every other ally near it - itself excluded.")
-                        .withArmor(40f)
-                        .withMagicResist(15f)
-                        .withResilience(30f)
-                        .withAgility(20f)
-                        .withSpirit(25f)
+                        .withStats(40f, 15f, 0f, 0f, 30f, 20f, 25f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(
                                 new PeriodicTrigger(200), new ApplyEffectAction(new InvisibleTemplate(60),
                                 new SelfTarget()))))))

@@ -1,7 +1,7 @@
 package td.damage;
 
 /**
- * The unit health, damage, plating and regeneration are stored in: a fixed fraction of the point
+ * The unit health, damage, plating, insulation and regeneration are stored in: a fixed fraction of the point
  * the UI shows. Content is authored in points and converted here, so a percentage or a
  * damage-over-time pulse can remove part of a point without rounding it away.
  */

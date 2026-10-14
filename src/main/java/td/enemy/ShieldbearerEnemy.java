@@ -31,22 +31,13 @@ final class ShieldbearerEnemy {
                         .withDescription("Periodically shields every ally near it against physical damage, itself "
                                 + "included, and its own armor and shield blunt physical hits. Magic goes straight "
                                 + "through.")
-                        .withArmor(40f)
-                        .withPhysicalPlating(2f)
-                        .withMagicResist(10f)
-                        .withResilience(20f)
-                        .withAgility(5f)
-                        .withSpirit(20f)
+                        .withStats(40f, 10f, 2f, 0f, 20f, 5f, 20f)
                         .withAdditionalAbilities(List.of(shield(320f, 100f), selfShield(320f))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1470, 56)
                         .withDescription("Periodically shields every ally in a wide reach against physical damage, "
                                 + "itself included, and its own armor and shield blunt physical hits. Magic goes "
                                 + "straight through.")
-                        .withArmor(50f)
-                        .withPhysicalPlating(4f)
-                        .withMagicResist(15f)
-                        .withResilience(30f)
-                        .withSpirit(30f)
+                        .withStats(50f, 15f, 4f, 0f, 30f, 5f, 30f)
                         .withAdditionalAbilities(List.of(shield(640f, 130f), selfShield(640f))))
                 .build());
     }

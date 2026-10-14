@@ -60,7 +60,7 @@ class EnemyStatTextTest {
 
         assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_EFFECT_RESIST, "Freeze resist", "20%"),
                 Row.plain(Glyph.DOT, "Armor, magic resist", "25"), Row.plain(Glyph.DOT, "Crit immune", ""));
-        assertThat(labels(sheet)).containsExactly("Speed", "Armor, magic resist", "Plating, physical", "Crit immune",
+        assertThat(labels(sheet)).containsExactly("Speed", "Armor, magic resist", "Plating", "Crit immune",
                 "Freeze resist");
     }
 
@@ -68,7 +68,7 @@ class EnemyStatTextTest {
     void platingOnOneDamageTypeNamesItAndShowsThePointsAHitLoses() {
         InfoSheet sheet = this.hoverSheet("s", Rank.ELITE);
 
-        assertThat(sheet.lines()).contains(Row.plain(Glyph.DOT, "Plating, physical", "-8/hit"),
+        assertThat(sheet.lines()).contains(Row.plain(Glyph.DOT, "Plating", "-8/hit"),
                 Row.plain(Glyph.DOT, "Armor, magic resist", "67"));
     }
 

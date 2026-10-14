@@ -157,7 +157,7 @@ public final class SniperTower extends AbstractTower {
             .withTargeting(TargetPriority.HIGHEST_RANK)
             .withProc(Proc.onCrit(new ProcPayload.GrantStatus(TowerStatus.nextShots("sniper.momentum.charge", 1,
                     TowerModifiers.damageTimes(3f).plus(TowerModifiers.armorPenetration(1f))
-                            .plus(TowerModifiers.platingPenetration(1f))))).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
+                            .plus(TowerModifiers.flatPenetration(1f))))).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
             .withProc(Proc.onKill(new ProcPayload.GrantStatus(TowerStatus.timed("sniper.momentum.haste",
                     TowerModifiers.attackSpeed(1f), 100))).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
             .after(FOCUSED_OPTICS_1);
@@ -458,7 +458,7 @@ public final class SniperTower extends AbstractTower {
         @Override
         public boolean execute(EnemyMob target) {
             AttackProfile finisher = AttackProfile.none().withArmorPenetration(1f, 0f)
-                    .withPlatingPenetration(1f).asPeriodic();
+                    .withFlatPenetration(1f).asPeriodic();
             SniperTower.this.dealDamage(target, Damage.physical(EXECUTION_DAMAGE), finisher);
             return target.isDead();
         }

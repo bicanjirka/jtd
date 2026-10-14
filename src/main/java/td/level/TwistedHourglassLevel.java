@@ -43,8 +43,8 @@ final class TwistedHourglassLevel {
                             + "brief shield once badly wounded, and splits into two stragglers when finally brought down.")
                     .withMovement(new PathDirectionalMovement())
                     .withHealthDivisor(0.8f)
-                    .withPhysicalPlating(1f)
-                    .withMagicPlating(1f)
+                    .withPlating(1f)
+                    .withInsulation(1f)
                     .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.3f))))
                     .withIdentifiedAbilities(List.of(
                             panicShield(100f),
@@ -58,16 +58,10 @@ final class TwistedHourglassLevel {
                     .withDescription("Speeds up as it's hurt, shrugs off a flat amount of every hit and crits "
                             + "outright, panics into a brief shield once badly wounded, and splits into two stragglers "
                             + "when finally brought down.")
-                    .withResilience(100f)
-                    .withArmor(10f)
-                    .withMagicResist(10f)
-                    .withAgility(5f)
-                    .withSpirit(10f)
+                    .withStats(10f, 10f, 1f, 1f, 100f, 5f, 10f)
                     .withAdditionalAbilities(List.of(panicShield(580f))))
             .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(10498, 92)
-                    .withArmor(15f)
-                    .withMagicResist(15f)
-                    .withSpirit(20f)
+                    .withStats(15f, 15f, 1f, 1f, 100f, 5f, 20f)
                     .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.6f))))
                     .withAdditionalAbilities(List.of(panicShield(1050f))))
             .build();

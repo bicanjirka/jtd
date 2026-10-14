@@ -33,20 +33,11 @@ final class JammerEnemy {
                                 + "less far while it's in range. Its casing shrugs off magic and blunts a little of "
                                 + "every magic hit, and every few seconds it gathers a static charge that soaks magic "
                                 + "hits.")
-                        .withMagicResist(30f)
-                        .withMagicPlating(2f)
-                        .withArmor(10f)
-                        .withResilience(15f)
-                        .withAgility(5f)
-                        .withSpirit(10f)
+                        .withStats(10f, 30f, 0f, 2f, 15f, 5f, 10f)
                         .withDisruption(new DisruptionAura(125f, 0.4f, 0.8f))
                         .withAdditionalAbilities(List.of(staticCharge(120f))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(2519, 56)
-                        .withMagicResist(40f)
-                        .withMagicPlating(4f)
-                        .withArmor(15f)
-                        .withResilience(25f)
-                        .withSpirit(20f)
+                        .withStats(15f, 40f, 0f, 4f, 25f, 5f, 20f)
                         .withDisruption(new DisruptionAura(140f, 0.5f, 1f))
                         .withAdditionalAbilities(List.of(staticCharge(240f))))
                 .build());

@@ -94,6 +94,21 @@ public record EnemyDefinition(
         };
     }
 
+    /**
+     * Authors every base stat at once, replacing what an earlier step set; each parameter means what its
+     * named method says, plating and insulation in points.
+     */
+    public EnemyDefinition withStats(float armor, float magicResist, float plating, float insulation,
+            float resilience, float agility, float spirit) {
+        return this.withArmor(armor)
+                .withMagicResist(magicResist)
+                .withPlating(plating)
+                .withInsulation(insulation)
+                .withResilience(resilience)
+                .withAgility(agility)
+                .withSpirit(spirit);
+    }
+
     /** Physical mitigation in points: a physical hit is multiplied by {@code 100 / (100 + armor)}. */
     public EnemyDefinition withArmor(float points) {
         return this.withBase(EnemyStat.ARMOR, points);
@@ -105,13 +120,13 @@ public record EnemyDefinition(
     }
 
     /** Points every physical hit loses after mitigation, never below zero. */
-    public EnemyDefinition withPhysicalPlating(float points) {
-        return this.withBase(EnemyStat.PHYSICAL_PLATING, DamageUnits.ofPoints(points));
+    public EnemyDefinition withPlating(float points) {
+        return this.withBase(EnemyStat.PLATING, DamageUnits.ofPoints(points));
     }
 
     /** Points every magic hit loses after mitigation, never below zero. */
-    public EnemyDefinition withMagicPlating(float points) {
-        return this.withBase(EnemyStat.MAGIC_PLATING, DamageUnits.ofPoints(points));
+    public EnemyDefinition withInsulation(float points) {
+        return this.withBase(EnemyStat.INSULATION, DamageUnits.ofPoints(points));
     }
 
     /**

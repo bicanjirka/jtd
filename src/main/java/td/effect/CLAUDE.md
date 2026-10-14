@@ -61,7 +61,7 @@
   `fuel / (1 - alpha)`); a burn pool above `BURN_REVEAL_FUEL` sets `STEALTH` to 0 like a reveal, without
   exposing the enemy. `TARRED` makes the burn it catches start at double the pool and a freeze it
   suffers last a second longer, both read at `apply` from `EffectInteractions`' tables. `CRACKED` takes 5
-  plating points from both platings.
+  points of plating and 5 of insulation.
 - Two hexes bend fire and ice, each a row in one of `EffectInteractions`' tables keyed only on the
   kind being active: under `RIME` a freeze buys twice the chill's extra time and lands all of the burn
   it puts out; under `ASH` pools hold twice as much and earn stacks twice as often (the pool clock still

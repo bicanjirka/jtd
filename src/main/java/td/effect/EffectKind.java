@@ -99,10 +99,10 @@ public enum EffectKind {
     KILL_ZONE(EffectRule.of(EffectCategory.DEBUFF)
             .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.25f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.25f)
             .tagged(EffectTag.FIELD)),
-    /** Takes five points of plating, of both kinds. */
+    /** Takes five points of plating and five of insulation. */
     CRACKED(EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit()
-            .perStack(EnemyStat.PHYSICAL_PLATING, -DamageUnits.ofPoints(5f))
-            .perStack(EnemyStat.MAGIC_PLATING, -DamageUnits.ofPoints(5f))),
+            .perStack(EnemyStat.PLATING, -DamageUnits.ofPoints(5f))
+            .perStack(EnemyStat.INSULATION, -DamageUnits.ofPoints(5f))),
     /** Stuck in tar: slowed by 40%, a burn it catches starts at double the pool, and a freeze it suffers lasts a second longer. */
     TARRED(EffectRule.of(EffectCategory.DEBUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.times(0.6f))),
     /** Takes physical damage for every cell it travels; a stopped enemy takes none. */

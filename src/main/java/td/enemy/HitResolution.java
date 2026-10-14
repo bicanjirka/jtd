@@ -10,7 +10,7 @@ import td.util.RandomSource;
 
 /**
  * The one formula a hit lands by: the dodge roll (aimed hits only), the crit roll (hits only), then penetration,
- * armor or magic resist, plating and damage taken. Computed in float and rounded once; a shield and the cap at health come after, on the mob.
+ * armor or magic resist, plating or insulation and damage taken. Computed in float and rounded once; a shield and the cap at health come after, on the mob.
  */
 public final class HitResolution {
 
@@ -40,7 +40,7 @@ public final class HitResolution {
         float mitigation = attacker.penetrate(incoming.type(), stats.value(EnemyStat.mitigationFor(incoming.type())),
                 critical);
         amount *= mitigationMultiplier(mitigation);
-        amount = Math.max(0f, amount - attacker.penetratePlating(stats.value(EnemyStat.platingFor(incoming.type())), critical));
+        amount = Math.max(0f, amount - attacker.penetrateFlatReduction(stats.value(EnemyStat.flatReductionFor(incoming.type())), critical));
         amount *= stats.value(EnemyStat.damageTakenFor(incoming.type()));
         if (attacker.delivery() == Delivery.PERIODIC) {
             amount *= stats.value(EnemyStat.PERIODIC_DAMAGE_TAKEN);
@@ -90,7 +90,7 @@ public final class HitResolution {
     }
 
     /**
-     * The share of a {@code type} hit that mitigation and damage taken remove, before plating and with
+     * The share of a {@code type} hit that mitigation and damage taken remove, before plating or insulation and with
      * no penetration: {@code 0} for none, negative when the enemy takes extra.
      */
     public static float reductionAgainst(DamageType type, StatView stats) {
