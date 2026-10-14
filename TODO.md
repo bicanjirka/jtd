@@ -114,11 +114,6 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
 
 `docs/plans/balance-verification-review.md` ranks these; each is a gap in `td.balance`, not in the game.
 
-- **What a tower does for the others.** Slows, Vulnerable, Priority and charges are worth nothing to the
-  competent player, and the lab measures them only on the tower that owns them.
-  - **Where:** `TowerLab.profileOf`, `CompetentPlayer.towerDamage`.
-  - **Approach:** a duel with a fixed partner tower beside the measured one, as the Beacon's nodes are
-    measured, and the partner's gain added to the measured tower's worth.
 - **Upgrades by phase, and dead or dominant nodes across players.**
   - **Where:** `BalanceReport`, `LevelRun.nodePickRates`.
   - **Approach:** report the upgrade-against-copy ratio per third of the level, and node pick rates for

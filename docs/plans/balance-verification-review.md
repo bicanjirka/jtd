@@ -99,8 +99,12 @@ What the numbers rest on, and how far they hold:
   enemies that die, turn invisible when hit or split. Those are what duels are for. Duels give every kind
   the same health, so a flat mechanic (a shield of fixed points, flat damage reduction) weighs more in a
   duel than in a real round.
-- **The competent player values a tower by what it lands**; what it does for the others it knows only for
-  the Beacon. A slow or a debuff that makes others hit harder is invisible to it, and so is overkill.
+- **What a tower does for the others is measured on one partner.** The lab puts a Sniper beside each tower
+  in a probe round and reports the share more it lands, bare and per node (Radar's Mark on Sweep +70-90%,
+  the Mortar's Cryo Shells and Tar, the Hive's Deep Freeze and the Scorcher's Searing Flame +8-17%). The
+  competent player counts half of it, the strongest of each type per tower: counting all of it held less
+  on Zigzag Path and Twisted Hourglass, and half held as much as ignoring it, so on the built-in levels
+  support does not decide a margin. Overkill is still invisible to it.
 
 ## Standard practices, assessed
 
@@ -130,8 +134,8 @@ Each with what it would unblock here, what it costs, and the decision (⭐ = kep
    Hourglass's round 1 still costs 3 of its 4 lives, but now for the strong player too, so it is the
    level's, not the player's. Its own build played back now holds what it does re-deciding, within the
    seeds' noise.
-2. **What a tower does for others.** Slows, Vulnerable, Priority and the like are worth nothing to the
-   competent player. A lab duel with a partner tower beside the measured one would price them.
+2. ✅ **What a tower does for others.** Priced by a partner Sniper in a probe round and counted by the
+   competent player at half (see above).
 3. **Upgrades by phase**, and dead or dominant nodes across players (`FEATURE-balance-verification.md`,
    later item 2).
 4. **Same play for every player**, not only the competent one, if a change ever moves the naive player's

@@ -28,7 +28,9 @@ has its `TODO.md` entry until it lands):
 1. ✅ Tune the competent player against the strong one. A node cap of x1.5 and a save factor of x2 bring
    the strong player's lead to x1.07, x1.00 and x1.12; upgrades now matter on every level, where on Zigzag
    they backfired. Twisted Hourglass's round 1 costs the strong player the same 3 lives: the level's.
-2. Price support: a lab duel with a partner tower, counted by the competent player.
+2. ✅ Price support: a partner Sniper beside each tower in a probe round, bare and per node, shown under
+   COUNTERS and counted by the competent player at half. Counting it fully held less; half held as much as
+   ignoring it, so on these levels support does not decide a margin.
 3. Upgrades by phase, and node pick rates for the strong player.
 4. The two missing fun proxies: several winning layouts and a decision every few waves (question 7).
 5. The adopted practices (question 9): economy modelling, per-tick timelines, coverage reports, level-knob

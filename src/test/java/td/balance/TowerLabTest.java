@@ -43,6 +43,15 @@ class TowerLabTest {
     }
 
     @Test
+    void aTowerThatOnlyHitsGivesItsNeighbourNothingWhileOneThatMarksGivesItMore() {
+        double sniper = lab.supportGain(TowerFactory.Type.SNIPER, List.of());
+        double markingRadar = lab.supportGain(TowerFactory.Type.SONAR, List.of("sonar.special.mark_on_sweep"));
+
+        assertThat(sniper).isLessThan(0.05);
+        assertThat(markingRadar).isGreaterThan(0.2);
+    }
+
+    @Test
     void theLevelsOwnKindsAreMeasuredAtTheRanksItSends() {
         assertThat(lab.levelRanks()).containsExactly(TowerLab.kindKey("salamander", Rank.GRUNT));
     }
