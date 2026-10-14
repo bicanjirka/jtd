@@ -84,20 +84,25 @@ public enum EffectKind {
             .perStack(EnemyStat.MAGIC_RESIST, -10f).tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
     /** A frozen enemy takes extra physical damage. */
     BRITTLE(EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit().perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.3f)),
-    /** Each stack makes every other debuff wear off a tenth slower; it fades soon after the enemy leaves the field. */
+    /** Time spent in the field: it sets how strongly the field's effects hold, and fades soon after the enemy leaves. */
     TOLL(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5)),
-    /** Lowers armor by thirty while the enemy is in the field. */
-    CORRODED(EffectRule.of(EffectCategory.DEBUFF).perStack(EnemyStat.ARMOR, -30f).tagged(EffectTag.FIELD)),
-    /** Chilled a quarter that doesn't fade while the enemy is in the field, and counts as a chill for a freeze. */
-    UNDERTOW(EffectRule.of(EffectCategory.SOFT_CC).perStack(EnemyStat.MOVE_SPEED, StatModifier.times(0.75f))
+    /** Lowers armor while the enemy is in the field, three a stack: thirty at the field's full strength. */
+    CORRODED(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST)
+            .perStack(EnemyStat.ARMOR, -3f).tagged(EffectTag.FIELD)),
+    /**
+     * A chill that doesn't fade while the enemy is in the field, a quarter at the field's full strength, and counts
+     * as a chill for a freeze.
+     */
+    UNDERTOW(EffectRule.of(EffectCategory.SOFT_CC).stackingOnASharedClock(FieldStrength.MOST)
+            .perStack(EnemyStat.MOVE_SPEED, StatModifier.times(FieldStrength.perStackOf(0.75f)))
             .tagged(EffectTag.FIELD)),
     /** Heals and shields can't take hold while the enemy is in the field. */
     DEAD_ZONE(EffectRule.of(EffectCategory.DEBUFF).tagged(EffectTag.FIELD)),
     /** Heals can't take hold while the enemy is in the field; a shield still can. */
     FALLOUT(EffectRule.of(EffectCategory.DEBUFF)),
-    /** Takes extra damage from every source while the enemy is in the field. */
-    KILL_ZONE(EffectRule.of(EffectCategory.DEBUFF)
-            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.25f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.25f)
+    /** Takes extra damage from every source while the enemy is in the field: a quarter at the field's full strength. */
+    KILL_ZONE(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST)
+            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.025f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.025f)
             .tagged(EffectTag.FIELD)),
     /** Takes five points of plating and five of insulation. */
     CRACKED(EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit()

@@ -44,8 +44,10 @@
   colour in flight; a plain missile freezes, a payload missile does only what its payload does.
 - The Pulse's field touches `Reach.everyone`, never only the visible. Toll is earned by time inside
   (`TollTracker` counts it per enemy) and held by an ordinary `TOLL` effect the field refreshes each
-  tick while the enemy is inside, so a visit is exactly the life of that effect. Toll's damage per
-  stack is the Attune node's hit bonus.
+  tick while the enemy is inside, so a visit is exactly the life of that effect. Toll never adds
+  damage: it is the strength (`FieldStrength.at`) the field tops its numeric effects up to. The
+  field's damage changes only through stats; Interference reads the other fields once a second
+  through a `TowerVisitor`.
 - Mirror Field listens to the roster's `ShieldListener` while the rule is owned (and drops it in
   `doCleanup`): what a shield takes of any hit on an enemy that was inside the field's last tick comes back
   as periodic damage that goes through shields (`AttackProfile.withIgnoredShields`), and is never mirrored again.

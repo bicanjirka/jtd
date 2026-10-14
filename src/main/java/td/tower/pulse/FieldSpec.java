@@ -1,19 +1,24 @@
 package td.tower.pulse;
 
 /**
- * How hard the field hits.
+ * How the field grows within a wave.
  *
- * @param perDeathBonus the extra every death inside has added to the field until the wave ends, as a share of the hit
- * @param maxDeathBonus the most the deaths add, as a share of the hit
+ * @param perDeathGrowth how much every death inside widens the field until the wave ends, as a share of its range
+ * @param maxDeathGrowth the most the deaths widen it, as a share of its range
  */
-public record FieldSpec(float perDeathBonus, float maxDeathBonus) {
+public record FieldSpec(float perDeathGrowth, float maxDeathGrowth) {
 
-    /** The base field: no bonus for deaths. */
+    /** The base field: it never grows. */
     public static FieldSpec base() {
         return new FieldSpec(0f, 0f);
     }
 
-    public FieldSpec withPerDeathBonus(float perDeathBonus, float maxDeathBonus) {
-        return new FieldSpec(perDeathBonus, maxDeathBonus);
+    public FieldSpec withPerDeathGrowth(float perDeathGrowth, float maxDeathGrowth) {
+        return new FieldSpec(perDeathGrowth, maxDeathGrowth);
+    }
+
+    /** The share of its range the field has grown by after {@code deaths} deaths inside this wave. */
+    public float growthAfter(int deaths) {
+        return Math.min(this.maxDeathGrowth, this.perDeathGrowth * deaths);
     }
 }

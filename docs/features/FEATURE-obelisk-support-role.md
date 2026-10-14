@@ -1,6 +1,7 @@
 # Feature Request: The Obelisk as a Support Tower
 
-**Status: designed.** Item 1 (the tools price support) is implemented; the design below is settled.
+**Status: in progress.** Items 1 (the tools price support), 4 (the bought reveal) and 2, 3 and 5 (the field, the tree and
+Interference) are implemented; findings below. The levels (item 6) wait on them.
 
 ## Summary
 
@@ -170,15 +171,37 @@ lengthens it to 4 s with a 2 s Daze; Dead Zone stays.
 scaled by Toll. Event Horizon: each death inside widens the field by 10% of its range until the wave ends, up
 to twice its range, instead of adding damage.
 
-**Specials:** Rattle Field stays; Kill Zone's +25% scales with Toll; Soul Drain keeps draining spirit (so every
-debuff on the enemy lasts longer, and at -100 nothing wears off) and keeps no heals or shields at the floor,
-and loses its damage per lost spirit.
+**Specials:** Rattle Field stays; Kill Zone's +25% scales with Toll; Soul Drain drains 15 spirit a second, three
+times as fast (so every debuff on the enemy lasts longer, and at -100 nothing wears off), keeps no heals or
+shields at the floor, and loses its damage per lost spirit.
 
 **Facts that shape the numbers.** A 1.5-cell field crossed straight holds an enemy about 2 to 3 seconds, so
 without Coils I or a bend few enemies reach full Toll. Plating and insulation take a flat amount off every
 hit, periodic ones included: the Reaver's 1 point of insulation blanks a 1-point field tick entirely.
 Effects of one kind from two Obelisks already refresh rather than add (one stack each), so of today's
 stacking only the damage is left.
+
+## Findings after the field, the tree and Interference
+
+From `BalanceReport --seeds 12 --strong --variety --compare final`, 2026-10-14, Soul Drain still at 5 spirit a
+second. Saved as `target/balance/ob-phase2`. The bought reveal alone (saved as `ob-phase1`) moved nothing: every
+margin within noise.
+
+| Level | competent holds (before) | strong holds | Obelisk's share | banning it | Obelisks alone |
+|---|---|---|---|---|---|
+| Curly Path | 58% (159%) | 58% | 16% | x0.02 | never win |
+| Zigzag Path | 50% (122%) | 58% | 10% | x0.84 | hold 19% |
+| Twisted Hourglass | 34% (142%) | 56% | 18% | x0.03 | never win |
+
+- **Every level is lost as authored**: the competent player wins none; Curly Path would need enemy health x0.46.
+- **The Obelisk no longer carries by damage** (10% to 18% of it) and an all-Obelisk army wins nothing.
+- **It is still mandatory on Curly Path and Twisted Hourglass** (x0.02, x0.03 without it), for the Elite Ghost:
+  a shrouded group is reached only by the field, since no player buys a reveal for its own sake. The players'
+  rules know nothing of hidden enemies; they buy Phase Field I (58% to 100%) for its range. Enemies spend 24% to 35%
+  of their time invisible; leaks are mostly Elite Ghosts and a Boss's spawn.
+- **No player buys the support nodes**: Corrosion, Undertow, Kill Zone, Vulnerable and Priority are never put on an
+  enemy. The lab prices them low beside a Sniper (none above +10%; Arc Discharge's mark +13% to +25%), since a
+  field effect holds only while the enemy is inside a 1.5-cell field, a small share of a partner's shots.
 
 ## Open questions
 

@@ -5,6 +5,7 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.FieldStrength;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EffectResistTrait;
@@ -70,7 +71,7 @@ class EnemyFrameBuilderTest {
     void anEnemyHeldByAFieldEffectFlickersBetweenSteadyAndDimmed() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.corroded(100, d -> {
+        enemy.applyEffect(Effect.corroded(FieldStrength.FULL, 100, d -> {
         }));
         int half = EnemyFrameBuilder.FLICKER_HALF_PERIOD_TICKS;
 

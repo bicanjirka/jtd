@@ -204,14 +204,14 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return stacking(EffectKind.TOLL, stacks, durationTicks, sink);
     }
 
-    /** Armor lowered for {@code durationTicks}: the field's Corrosion. */
-    public static Effect corroded(int durationTicks, DamageSink sink) {
-        return timed(EffectKind.CORRODED, durationTicks, sink);
+    /** {@code stacks} more of armor lowered, held for {@code durationTicks}: the field's Corrosion. */
+    public static Effect corroded(int stacks, int durationTicks, DamageSink sink) {
+        return stacking(EffectKind.CORRODED, stacks, durationTicks, sink);
     }
 
-    /** A held quarter chill for {@code durationTicks}: the field's Undertow. */
-    public static Effect undertow(int durationTicks, DamageSink sink) {
-        return timed(EffectKind.UNDERTOW, durationTicks, sink);
+    /** {@code stacks} more of a held chill, for {@code durationTicks}: the field's Undertow. */
+    public static Effect undertow(int stacks, int durationTicks, DamageSink sink) {
+        return stacking(EffectKind.UNDERTOW, stacks, durationTicks, sink);
     }
 
     /** No heal or shield takes hold for {@code durationTicks}. */
@@ -224,9 +224,9 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.FALLOUT, durationTicks, sink);
     }
 
-    /** Extra damage taken from every source for {@code durationTicks}. */
-    public static Effect killZone(int durationTicks, DamageSink sink) {
-        return timed(EffectKind.KILL_ZONE, durationTicks, sink);
+    /** {@code stacks} more of extra damage taken from every source, held for {@code durationTicks}. */
+    public static Effect killZone(int stacks, int durationTicks, DamageSink sink) {
+        return stacking(EffectKind.KILL_ZONE, stacks, durationTicks, sink);
     }
 
     /**

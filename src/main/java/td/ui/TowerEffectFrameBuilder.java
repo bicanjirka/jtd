@@ -274,12 +274,12 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         if (!tower.isFiring()) {
             return null;
         }
-        this.draws.add(new PulseDraw(Palette.TOWER_PULSE_RING, tower.getX(), tower.getY(), tower.getRangeReal()));
+        this.draws.add(new PulseDraw(Palette.TOWER_PULSE_RING, tower.getX(), tower.getY(), tower.getFieldRadius()));
         double cyclesPerSecond = RIPPLE_CYCLES_PER_SECOND * (1.0 + RIPPLE_SPEEDUP_PER_TOLL * tower.getHighestToll());
         for (int i = 0; i < RIPPLE_RINGS; i++) {
             double phase = (this.animationSeconds * cyclesPerSecond + (double) i / RIPPLE_RINGS) % 1.0;
             this.draws.add(new RingDraw(rippleFor(tower.getFieldLook()), tower.getX(), tower.getY(),
-                    (float) (phase * tower.getRangeReal()), (float) (1.0 - phase)));
+                    (float) (phase * tower.getFieldRadius()), (float) (1.0 - phase)));
         }
         return null;
     }
