@@ -29,14 +29,14 @@ class AbilityCastCaptureTest {
         world.enemies().add(eliteGhost);
 
         assertThat(eliteGhost.lastAbilityCast()).isEmpty();
-        for (int t = 1; t <= 20; t++) { // the shroud ability's own periodic interval
+        for (int t = 1; t <= GhostEnemy.SHROUD_TICKS; t++) {
             eliteGhost.doTick(t);
         }
 
         AbilityCast cast = eliteGhost.lastAbilityCast().orElseThrow();
         assertThat(cast.kind()).isEqualTo(EffectKind.INVISIBLE);
         assertThat(cast.radius()).isEqualTo(GHOST_SHROUD_RADIUS);
-        assertThat(cast.tick()).isEqualTo(20);
+        assertThat(cast.tick()).isEqualTo(GhostEnemy.SHROUD_TICKS);
     }
 
     @Test

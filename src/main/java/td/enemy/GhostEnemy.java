@@ -11,6 +11,9 @@ import java.util.List;
  */
 final class GhostEnemy {
 
+    /** How often an Elite Ghost shrouds its allies, and how long each shroud lasts. */
+    static final int SHROUD_TICKS = 60;
+
     private GhostEnemy() {
     }
 
@@ -32,9 +35,10 @@ final class GhostEnemy {
                                 + "shrouds every other ally near it - itself excluded.")
                         .withStats(30f, 10f, 0f, 0f, 20f, 15f, 15f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(
-                                // Each application outlasts the interval, so an ally in radius never flickers visible.
-                                new PeriodicTrigger(20),
-                                new ApplyEffectAction(new InvisibleTemplate(40), new RadiusTarget(100f)))))))
+                                // A tick longer than the interval, so an ally that stays in radius never flickers
+                                // visible, while a reveal holds until the next cast.
+                                new PeriodicTrigger(SHROUD_TICKS),
+                                new ApplyEffectAction(new InvisibleTemplate(SHROUD_TICKS + 1), new RadiusTarget(100f)))))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(2100, 45)
                         .withDescription("Half there: physical hits pass partly through it and aimed shots often miss. "
                                 + "Turns invisible the first time it's hit and again for a few seconds out of every "
