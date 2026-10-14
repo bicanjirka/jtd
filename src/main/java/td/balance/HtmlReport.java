@@ -104,6 +104,7 @@ final class HtmlReport {
         this.roundChart(run.perRound(BalanceReport.COMPETENT, round -> round.pressure().healthIn()), new double[0],
                 Double.NaN, "enemy health walking in", false);
         this.html.append("</div>");
+        this.timeline(run);
         this.html.append("<h3>Where it happens</h3><div class=\"row\">");
         this.board(run, "where enemies die (competent)", deaths(run), BOARD_CELL);
         this.board(run, "where the competent player builds", builds(run), BOARD_CELL);
@@ -292,6 +293,51 @@ final class HtmlReport {
     }
 
     /** The level's board with each cell shaded by {@code values} on one scale and the paths drawn over it. */
+    /** The competent player's first play, tick by tick: enemy health on the board, the furthest enemy, credits. */
+    private void timeline(LevelRun run) {
+        List<PlayRecord> plays = run.playsOf(BalanceReport.COMPETENT);
+        if (plays.isEmpty() || plays.getFirst().watch().timeline().isEmpty()) {
+            return;
+        }
+        List<PlayRecord.Sample> samples = plays.getFirst().watch().timeline();
+        this.html.append("<h3>Timeline</h3><p class=\"note\">One play of the competent player (seed ")
+                .append(plays.getFirst().play().seed()).append("), sampled every ").append(PlayRecord.Sample.EVERY)
+                .append(" ticks; the grid lines are round starts.</p>");
+        this.line(samples, sample -> sample.health(), "enemy health on the board", false);
+        this.line(samples, PlayRecord.Sample::furthest, "furthest enemy, share of the path", true);
+        this.line(samples, PlayRecord.Sample::credits, "credits unspent", false);
+    }
+
+    private void line(List<PlayRecord.Sample> samples, java.util.function.ToDoubleFunction<PlayRecord.Sample> value,
+                      String title, boolean share) {
+        int width = 960;
+        int plot = 90;
+        double last = samples.getLast().tick();
+        double max = share ? 1 : Math.max(1, samples.stream().mapToDouble(value).max().orElse(1));
+        StringBuilder svg = new StringBuilder(String.format("<svg width=\"100%%\" viewBox=\"0 0 %d %d\" role=\"img\""
+                + " aria-label=\"%s\">", width + 50, plot + 36, title));
+        int round = 0;
+        for (PlayRecord.Sample sample : samples) {
+            if (sample.round() != round) {
+                round = sample.round();
+                double x = 40 + width * sample.tick() / last;
+                svg.append(String.format("<line x1=\"%.1f\" x2=\"%.1f\" y1=\"8\" y2=\"%d\" stroke=\"var(--grid)\"/>",
+                        x, x, 8 + plot));
+            }
+        }
+        StringBuilder points = new StringBuilder();
+        for (PlayRecord.Sample sample : samples) {
+            points.append(String.format("%.1f,%.1f ", 40 + width * sample.tick() / last,
+                    8 + plot - plot * value.applyAsDouble(sample) / max));
+        }
+        svg.append(String.format("<polyline points=\"%s\" fill=\"none\" stroke=\"var(--accent)\""
+                + " stroke-width=\"1.5\"/>", points.toString().trim()));
+        svg.append(String.format("<text x=\"36\" y=\"14\" text-anchor=\"end\">%s</text>",
+                share ? "100%" : BalanceReport.compact(max)));
+        svg.append(String.format("<text x=\"40\" y=\"%d\">%s</text></svg>", plot + 30, title));
+        this.html.append("<div class=\"card\">").append(svg).append("</div>");
+    }
+
     private void board(LevelRun run, String title, Map<Point, Double> values, int cell) {
         BoardSurvey survey = run.survey();
         LevelDefinition level = survey.level();

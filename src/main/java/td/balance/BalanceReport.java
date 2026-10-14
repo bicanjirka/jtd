@@ -554,6 +554,8 @@ public final class BalanceReport {
         this.out.println("  leaks    " + row(leaked, BalanceReport::count));
         this.out.println("  naive    " + row(naiveLeaked, BalanceReport::count) + "   leaks of the naive player");
         this.out.println("  health   " + row(health, BalanceReport::compact) + "   enemy health walking in");
+        this.out.println("  board    " + row(run.peakOnBoard(COMPETENT), BalanceReport::compact)
+                + "   most enemy health on the board at once");
         List<Integer> walls = IntStream.range(0, closest.length).filter(i -> closest[i] >= 0.8 || leaked[i] > 0.05)
                 .mapToObj(i -> i + 1).toList();
         List<Integer> breathers = IntStream.range(0, closest.length).filter(i -> closest[i] < 0.25)

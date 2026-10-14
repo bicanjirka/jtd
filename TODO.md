@@ -127,10 +127,6 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
   - **Where:** `RunRecorder` (credits per round exist), `HtmlReport`.
   - **Approach:** a per-round table of bounty earned, credits idle and the cheapest purchase the player
     wanted, from the tower and node catalogs, and a credits-over-time chart.
-- **Timelines are per round, not per tick.**
-  - **Where:** `RunRecorder`, `HtmlReport`.
-  - **Approach:** sample enemy health on the board, the furthest enemy and credits every few ticks; draw
-    them as lines across the level.
 - **Only enemy health and starting credits can be swept.**
   - **Where:** `Rules`, `PlaytestRules`.
   - **Approach:** lives, bounty percent, round pause and spawn spacing as `Rules` knobs, and a report mode
