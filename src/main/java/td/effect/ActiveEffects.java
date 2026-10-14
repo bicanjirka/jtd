@@ -53,8 +53,6 @@ public final class ActiveEffects {
     /** The slowest a spirit-paced timer runs, however low the enemy's spirit. */
     private static final float MIN_DEBUFF_PACE = 0.25f;
 
-    /** Each Toll stack makes every other debuff's timer run this much slower. */
-    public static final float TOLL_SLOWDOWN_PER_STACK = 0.1f;
     /** A burn pool reveals an invisible enemy while it holds more than this, in damage units a tick. */
     private static final float BURN_REVEAL_FUEL = 30f;
     private static final EffectKind[] BURNING_KINDS = {EffectKind.BURN, EffectKind.SOULFIRE};
@@ -383,9 +381,8 @@ public final class ActiveEffects {
     public void tick(float spiritFactor, float cellsMoved) {
         List<EffectKind> expired = new ArrayList<>();
         float burnFactor = 1f - BURN_CHILL_DAMPENING * this.chillLevel() / MAX_CHILL;
-        float tollFactor = 1f / (1f + TOLL_SLOWDOWN_PER_STACK * this.stacks(EffectKind.TOLL));
-        float pace = spiritFactor * tollFactor;
-        float debuffPace = spiritFactor <= 0f ? 0f : Math.max(MIN_DEBUFF_PACE * tollFactor, pace);
+        float pace = spiritFactor;
+        float debuffPace = spiritFactor <= 0f ? 0f : Math.max(MIN_DEBUFF_PACE, pace);
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
             EffectKind kind = entry.getKey();
             Effect effect = entry.getValue();

@@ -4,13 +4,11 @@ import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.FieldStrength;
 import td.enemy.EnemyMob;
 import td.enemy.ShieldListener;
 import td.tower.proc.HitAdjustment;
-import td.tower.proc.HitBonus;
-import td.tower.proc.HitCondition;
 import td.tower.proc.HitKind;
-import td.tower.proc.HitScaling;
 import td.tower.pulse.ArcDischargePerk;
 import td.tower.pulse.EventHorizonPerk;
 import td.tower.pulse.FieldMode;
@@ -53,9 +51,10 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * The field: short range, no cooldown, magic damage to every enemy inside every tick, invisible
- * ones included, whether or not a visible one is there to trigger it. Attuned, an enemy that stays
- * inside builds Toll, which makes the field hit it harder and every debuff on it wear off slower.
+ * The field: short range, no cooldown, a little magic damage to every enemy inside every tick, invisible
+ * ones included, whether or not a visible one is there to trigger it. Its worth is what it does to the
+ * enemies inside for the other towers: attuned, an enemy that stays inside builds Toll, which makes every
+ * effect the field holds on it stronger. Fields that overlap interfere: each lands less damage.
  * <p>
  * What each owned node does lives in a {@link PulsePerk}: the tower reads one spec from them every
  * tick.
@@ -64,42 +63,33 @@ import java.util.Set;
 public final class PulseTower extends AbstractTower {
 
     public static final int PRICE = 25;
-    public static final float DAMAGE_POINTS = 2f;
+    public static final float DAMAGE_POINTS = 1f;
     public static final float RANGE = 1.5f;
 
     /** How long a zap's bolt stays drawn. */
     private static final int ZAP_FLASH_TICKS = 8;
     private static final String FULL_TOLL_DEED = "Seconds at full Toll";
     private static final int FULL_TOLL_SECONDS_NEEDED = 30;
+    /** What every other field overlapping this one takes off its damage, and the least it keeps. */
+    private static final float INTERFERENCE_PER_FIELD = 0.25f;
+    private static final float INTERFERENCE_FLOOR = 0.25f;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
-            .withAttune(NodeEffects.none()
-                    .withHitBonus(HitBonus.of(new HitCondition.HitKindIn(Set.of(HitKind.FIELD)),
-                            new HitScaling.PerStackOf(EffectKind.TOLL), HitAdjustment.damage(0.1f))))
             .withRangeThree(0.2f, NodeEffects.none().withModifiers(TowerModifiers.tollLinger(20)));
 
     private static final UpgradeNode OVERCHARGED_COILS_1 = UpgradeTier.HEAD_1.node("pulse.head.overcharged_coils.1",
-            "Overcharged Coils", PRICE)
-            .withModifiers(TowerModifiers.damage(0.6f).plus(TowerModifiers.tollRate(1f)));
+            "Resonant Coils", PRICE)
+            .withModifiers(TowerModifiers.tollRate(1f));
     private static final UpgradeNode OVERCHARGED_COILS_2 = UpgradeTier.HEAD_2.node("pulse.head.overcharged_coils.2",
-            "Overcharged Coils II", PRICE)
-            .withModifiers(TowerModifiers.damage(0.5f))
-            .withHitBonus(HitBonus.of(new HitCondition.All(List.of(new HitCondition.HitKindIn(Set.of(HitKind.FIELD)),
-                    new HitCondition.TargetStacksAtLeastStat(EffectKind.TOLL, TowerStat.TOLL_CAP))),
-                    new HitScaling.Once(), HitAdjustment.damage(0.25f)))
+            "Resonant Coils II", PRICE)
             .after(OVERCHARGED_COILS_1);
     private static final UpgradeNode ARC_DISCHARGE = UpgradeTier.HEAD_3.node("pulse.head.overcharged_coils.3",
             "Arc Discharge", PRICE)
-            .withModifiers(TowerModifiers.critChance(0.1f))
             .withGate(new PurposeCondition(FULL_TOLL_DEED, FULL_TOLL_SECONDS_NEEDED))
             .after(OVERCHARGED_COILS_2);
     private static final UpgradeNode MELTDOWN = UpgradeTier.HEAD_4.node("pulse.head.overcharged_coils.4a", "Meltdown",
             PRICE)
             .withModifiers(TowerModifiers.tollCap(5))
-            .withHitBonus(HitBonus.of(new HitCondition.HitKindIn(Set.of(HitKind.ZAP)), new HitScaling.Once(),
-                    HitAdjustment.critChance(0.1f)))
-            .withHitBonus(HitBonus.of(new HitCondition.HitKindIn(Set.of(HitKind.ZAP)),
-                    new HitScaling.PerStackOf(EffectKind.TOLL), HitAdjustment.damage(0.1f)))
             .after(ARC_DISCHARGE);
     private static final UpgradeNode TESLA_COIL = UpgradeTier.HEAD_4.node("pulse.head.overcharged_coils.4b",
             "Tesla Coil", PRICE)
@@ -154,6 +144,7 @@ public final class PulseTower extends AbstractTower {
 
     private static final PerkCatalogue<PulsePerk> PERKS = PerkCatalogue.<PulsePerk>empty()
             .with(StandardBaseSlot.ATTUNE_ID, TollPerk::new)
+            .with(OVERCHARGED_COILS_2.id(), () -> new ModePerk(FieldMode.AMPLIFY))
             .with(ARC_DISCHARGE.id(), ArcDischargePerk::new)
             .with(TESLA_COIL.id(), TeslaCoilPerk::new)
             .with(PHASE_FIELD_1.id(), RevealOnEntryPerk::new)
@@ -174,6 +165,8 @@ public final class PulseTower extends AbstractTower {
     private final FireClock clock = new FireClock(0);
     private boolean fire = false;
     private int highestToll;
+    private float fieldRadius;
+    private float interference = 1f;
     private List<Zap> zaps = List.of();
     private int lastZapTick = Integer.MIN_VALUE;
     private List<EnemyMob> previouslyInside = List.of();
@@ -212,9 +205,15 @@ public final class PulseTower extends AbstractTower {
         this.perks.add(node);
     }
 
-    /** Whom the field touches and how Toll builds, as the perks in {@code owned} make it. */
+    /** Whom the field touches and how Toll builds, as the perks in {@code owned} make it and the deaths inside widen it. */
     private PulseSpec spec(List<PulsePerk> owned) {
-        Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
+        PulseSpec spec = this.spec(owned, this.rangeReal());
+        float growth = spec.field().growthAfter(this.deathsThisWave);
+        return growth > 0f ? this.spec(owned, this.rangeReal() * (1f + growth)) : spec;
+    }
+
+    private PulseSpec spec(List<PulsePerk> owned, float radius) {
+        Viewpoint view = new Viewpoint(this.centerX, this.centerY, radius, this.context.getBoard().scale());
         PulseSpec spec = PulseSpec.from(view);
         for (PulsePerk perk : owned) {
             spec = perk.refineSpec(spec);
@@ -224,12 +223,16 @@ public final class PulseTower extends AbstractTower {
 
     public void doTick(int gameTime) {
         PulseSpec spec = this.spec(this.perks.all());
+        this.fieldRadius = spec.view().range();
         List<EnemyMob> inside = spec.reach().matching(this.context.enemies());
         this.fire = !inside.isEmpty();
         int shots = inside.isEmpty() ? 0 : this.clock.shotsDue();
         this.countDeaths(spec, inside);
         this.watchShields(spec);
         boolean beat = gameTime % TICKS_PER_SECOND == 0;
+        if (beat) {
+            this.interference = this.interferenceNow();
+        }
         TollSpec toll = this.toll(spec);
         List<EnemyMob> earners = toll.isActive() ? this.tollTracker.tick(inside, toll.ticksPerStack()) : List.of();
         int highest = 0;
@@ -239,13 +242,11 @@ public final class PulseTower extends AbstractTower {
             if (startsVisit) {
                 this.startVisit(enemy, spec.visit());
             }
-            this.holdInside(enemy, spec, beat);
             int stacks = enemy.effectStacks(EffectKind.TOLL);
+            this.holdInside(enemy, spec, beat, toll.isActive() && stacks >= toll.cap());
             highest = Math.max(highest, stacks);
             HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.FIELD, 0f, this.stats());
-            float factor = adjustment.damageFactor()
-                    + Math.min(spec.field().maxDeathBonus(), spec.field().perDeathBonus() * this.deathsThisWave)
-                    + (spec.modes().has(FieldMode.SOUL_DRAIN) ? FieldMode.SOUL_DRAIN_DAMAGE_PER_POINT * Math.max(0f, -enemy.spirit()) : 0f);
+            float factor = adjustment.damageFactor() * this.interference;
             for (int hit = 0; hit < shots && !enemy.isDead(); hit++) {
                 this.dealPeriodicDamage(enemy, Damage.magic(Math.round(this.damageCurrent() * factor)));
                 this.rattle(enemy, spec);
@@ -261,16 +262,31 @@ public final class PulseTower extends AbstractTower {
             this.countDeedOfSecond();
         }
         if (spec.zap().isActive() && beat && !inside.isEmpty()) {
-            this.zap(spec.zap(), inside, gameTime);
+            this.zap(spec.zap(), spec, gameTime);
         }
     }
 
+    /** What is left of the field's damage beside the other fields that overlap it. */
+    private float interferenceNow() {
+        long overlapping = this.context.towers().all().stream()
+                .filter(other -> other != this && this.overlaps(other, other.accept(FIELD_RADIUS)))
+                .count();
+        return Math.max(INTERFERENCE_FLOOR, 1f - INTERFERENCE_PER_FIELD * overlapping);
+    }
+
+    private boolean overlaps(Tower other, float otherRadius) {
+        float reach = this.fieldRadius + otherRadius;
+        float dx = other.getX() - this.centerX;
+        float dy = other.getY() - this.centerY;
+        return otherRadius > 0f && dx * dx + dy * dy < reach * reach;
+    }
+
     /**
-     * Event Horizon: every enemy that was in the field last tick and has died since adds to the
+     * Event Horizon: every enemy that was in the field last tick and has died since widens the
      * field until the next wave starts.
      */
     private void countDeaths(PulseSpec spec, List<EnemyMob> inside) {
-        if (spec.field().perDeathBonus() > 0f) {
+        if (spec.field().perDeathGrowth() > 0f) {
             if (!this.watchingWaves) {
                 this.context.waves().addListener(this.waveListener);
                 this.watchingWaves = true;
@@ -305,12 +321,15 @@ public final class PulseTower extends AbstractTower {
     }
 
     /**
-     * The zap: the healthiest enemy in the field, and with a chain the nearest enemies not yet
-     * struck, each within reach of the last, even outside the field. Each is hit as a magic hit
-     * that can crit, and Dazed.
+     * The zap: the healthiest visible enemy in the field, made the Priority of every tower, and with a
+     * chain the nearest visible enemies not yet struck, each within reach of the last, even outside the
+     * field. Every one it strikes is Exposed, and may be Dazed.
      */
-    private void zap(ZapSpec zap, List<EnemyMob> inside, int gameTime) {
-        Optional<EnemyMob> first = new HighestHealthSelector().selectFrom(inside);
+    private void zap(ZapSpec zap, PulseSpec spec, int gameTime) {
+        Viewpoint view = spec.view();
+        List<EnemyMob> seen = InRangeTargetQuery.visible((int) view.x(), (int) view.y(), view.range())
+                .matching(this.context.enemies());
+        Optional<EnemyMob> first = new HighestHealthSelector().selectFrom(seen);
         if (first.isEmpty()) {
             return;
         }
@@ -321,6 +340,9 @@ public final class PulseTower extends AbstractTower {
         EnemyMob target = first.get();
         for (int hop = 0; hop <= zap.chains() && target != null; hop++) {
             bolts.add(new Zap(fromX, fromY, (float) target.getX(), (float) target.getY()));
+            if (hop == 0) {
+                this.applyEffect(target, sink -> Effect.priority(zap.markTicks(), sink));
+            }
             this.strikeWithZap(target, zap);
             struck.add(target);
             fromX = (float) target.getX();
@@ -333,18 +355,15 @@ public final class PulseTower extends AbstractTower {
 
     private EnemyMob nextInChain(EnemyMob from, ZapSpec zap, Set<EnemyMob> struck) {
         float reach = zap.chainCells() * this.context.getBoard().scale();
-        List<EnemyMob> beside = InRangeTargetQuery.everyone((int) from.getX(), (int) from.getY(), reach)
+        List<EnemyMob> beside = InRangeTargetQuery.visible((int) from.getX(), (int) from.getY(), reach)
                 .matching(this.context.enemies());
         beside.removeIf(struck::contains);
         return new NearestSelector(from.getX(), from.getY()).selectFrom(beside).orElse(null);
     }
 
     private void strikeWithZap(EnemyMob target, ZapSpec zap) {
-        HitAdjustment adjustment = this.hitAdjustment(target, HitKind.ZAP, 0f, this.stats());
-        Damage damage = Damage.magic(Math.round(this.damageCurrent() * zap.damageFactor() * adjustment.damageFactor()));
-        boolean critical = this.dealDamage(target, damage, adjustment.applyTo(this.stats().attack()));
-        this.report(target, HitKind.ZAP, critical, target.isDead());
-        if (zap.dazeSeconds() > 0f && !target.isDead()) {
+        this.applyEffect(target, sink -> Effect.exposed(zap.markTicks(), sink));
+        if (zap.dazeSeconds() > 0f) {
             int ticks = Math.round(zap.dazeSeconds() * TICKS_PER_SECOND);
             this.applyEffect(target, sink -> Effect.dazed(ticks, sink));
         }
@@ -362,10 +381,12 @@ public final class PulseTower extends AbstractTower {
 
     /**
      * The rules that hold while an enemy is inside: each lasts a moment, refreshed every tick it
-     * stays. Soul Drain also takes some spirit each second, and at none left, heals and shields too.
+     * stays, and those with a number hold it at the strength its Toll gives. Soul Drain also takes
+     * some spirit each second, and at none left, heals and shields too.
      */
-    private void holdInside(EnemyMob enemy, PulseSpec spec, boolean beat) {
+    private void holdInside(EnemyMob enemy, PulseSpec spec, boolean beat, boolean fullToll) {
         ModeSpec modes = spec.modes();
+        int strength = FieldStrength.at(enemy.effectStacks(EffectKind.TOLL));
         if (modes.has(FieldMode.SILENCE)) {
             this.applyEffect(enemy, sink -> Effect.silenced(INSIDE_TICKS, sink));
         }
@@ -374,18 +395,30 @@ public final class PulseTower extends AbstractTower {
             this.applyEffect(enemy, sink -> Effect.deadZone(INSIDE_TICKS, sink));
         }
         if (modes.has(FieldMode.CORROSION)) {
-            this.applyEffect(enemy, sink -> Effect.corroded(INSIDE_TICKS, sink));
+            int added = topUp(enemy, EffectKind.CORRODED, strength);
+            this.applyEffect(enemy, sink -> Effect.corroded(added, INSIDE_TICKS, sink));
         }
         if (modes.has(FieldMode.UNDERTOW)) {
-            this.applyEffect(enemy, sink -> Effect.undertow(INSIDE_TICKS, sink));
+            int added = topUp(enemy, EffectKind.UNDERTOW, strength);
+            this.applyEffect(enemy, sink -> Effect.undertow(added, INSIDE_TICKS, sink));
             this.applyEffect(enemy, sink -> Effect.anchored(INSIDE_TICKS, sink));
         }
         if (modes.has(FieldMode.KILL_ZONE)) {
-            this.applyEffect(enemy, sink -> Effect.killZone(INSIDE_TICKS, sink));
+            int added = topUp(enemy, EffectKind.KILL_ZONE, strength);
+            this.applyEffect(enemy, sink -> Effect.killZone(added, INSIDE_TICKS, sink));
+        }
+        if (modes.has(FieldMode.AMPLIFY) && fullToll) {
+            int added = topUp(enemy, EffectKind.VULNERABLE, 1);
+            this.applyEffect(enemy, sink -> Effect.vulnerable(added, FieldMode.AMPLIFY_TICKS, sink));
         }
         if (beat && modes.has(FieldMode.SOUL_DRAIN)) {
             this.applyEffect(enemy, sink -> Effect.sickened(FieldMode.SOUL_DRAIN_SPIRIT_PER_SECOND));
         }
+    }
+
+    /** What to add to {@code enemy}'s {@code kind} to bring it to {@code strength}: nothing, a refresh, if it holds as much. */
+    private static int topUp(EnemyMob enemy, EffectKind kind, int strength) {
+        return Math.max(0, strength - enemy.effectStacks(kind));
     }
 
     /** A stack for an enemy that has earned one; for one that holds some, the refresh that keeps them. */
@@ -447,6 +480,11 @@ public final class PulseTower extends AbstractTower {
         return spec.modes().has(FieldMode.CORROSION) ? FieldLook.CORROSION : FieldLook.PLAIN;
     }
 
+    /** How far the field reached at the last tick, in board pixels: its range, widened by the deaths inside. */
+    public float getFieldRadius() {
+        return this.fieldRadius;
+    }
+
     /** The most Toll stacks any enemy in the field held at the last tick. */
     public int getHighestToll() {
         return this.highestToll;
@@ -464,7 +502,7 @@ public final class PulseTower extends AbstractTower {
         lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Hits", "all in range"));
         TollSpec toll = this.toll(spec);
         if (toll.isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Toll", "up to " + toll.cap() + ", +10% each"));
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Toll", "up to " + toll.cap() + ", effects +10% each"));
         }
         if (spec.visit().revealTicks() > 0) {
             lines.add(new BehaviourLine(BehaviourMarker.REVEAL, "Reveals on Toll",
@@ -479,8 +517,13 @@ public final class PulseTower extends AbstractTower {
                 lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Inside", insideText(mode)));
             }
         }
-        if (spec.field().perDeathBonus() > 0f) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Deaths this wave", String.valueOf(this.deathsThisWave)));
+        if (spec.field().perDeathGrowth() > 0f) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Field widened",
+                    "+" + Math.round(100 * spec.field().growthAfter(this.deathsThisWave)) + "%"));
+        }
+        if (this.interference < 1f) {
+            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Interference",
+                    "-" + Math.round(100 * (1f - this.interference)) + "% damage"));
         }
         this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
         return lines;
@@ -490,10 +533,11 @@ public final class PulseTower extends AbstractTower {
         return switch (mode) {
             case SILENCE -> "silenced";
             case DEAD_ZONE -> "no heals or shields";
-            case CORROSION -> "-30 armor";
+            case CORROSION -> "armor lowered";
             case MIRROR -> "shields reflect";
-            case UNDERTOW -> "chilled 25%, anchored";
-            case KILL_ZONE -> "+25% damage taken";
+            case UNDERTOW -> "chilled, anchored";
+            case KILL_ZONE -> "take more damage";
+            case AMPLIFY -> "Vulnerable at full Toll";
             case SOUL_DRAIN -> "spirit drained";
             case RATTLE -> "sundered or exposed";
         };
@@ -502,6 +546,49 @@ public final class PulseTower extends AbstractTower {
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitPulseTower(this);
     }
+
+    /** How far a tower's field reaches, in board pixels; {@code 0} for a tower with no field. */
+    private static final TowerVisitor<Float> FIELD_RADIUS = new TowerVisitor<>() {
+        @Override
+        public Float visitSniperTower(SniperTower tower) {
+            return 0f;
+        }
+
+        @Override
+        public Float visitSplashTower(SplashTower tower) {
+            return 0f;
+        }
+
+        @Override
+        public Float visitSonarTower(SonarTower tower) {
+            return 0f;
+        }
+
+        @Override
+        public Float visitPulseTower(PulseTower tower) {
+            return tower.fieldRadius;
+        }
+
+        @Override
+        public Float visitAuraTower(AuraTower tower) {
+            return 0f;
+        }
+
+        @Override
+        public Float visitMortarTower(MortarTower tower) {
+            return 0f;
+        }
+
+        @Override
+        public Float visitSeekerTower(SeekerTower tower) {
+            return 0f;
+        }
+
+        @Override
+        public Float visitCinderTower(CinderTower tower) {
+            return 0f;
+        }
+    };
 
     /** What the field's colour says about its rules. */
     public enum FieldLook {

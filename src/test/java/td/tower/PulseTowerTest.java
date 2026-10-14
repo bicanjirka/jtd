@@ -10,6 +10,7 @@ import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
+import td.tower.pulse.FieldMode;
 import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
@@ -23,18 +24,16 @@ class PulseTowerTest {
     private final GameWorld context = WorldFixtures.newWorld();
 
     @Test
-    void overchargedCoilsIsChoosableOnceAwakenIsBoughtAndAppliesItsDamageBonus() {
+    void resonantCoilsIsChoosableOnceAttuneIsBoughtAndLeavesTheDamageAlone() {
         this.context.economy().startEconomy(1000, 5);
         PulseTower tower = new PulseTower(this.context, 0, 0);
         UpgradePaths.awakenVeteran(tower);
-        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 100000, 3, Rank.GRUNT);
-        tower.dealDamage(fodder, Damage.physical(11000));
-        UpgradeNode overchargedCoils = UpgradePaths.named(tower, "Overcharged Coils");
+        UpgradeNode resonantCoils = UpgradePaths.named(tower, "Resonant Coils");
 
-        boolean chosen = tower.buyUpgrade(overchargedCoils);
+        boolean chosen = tower.buyUpgrade(resonantCoils);
 
         assertThat(chosen).isTrue();
-        assertThat(tower.damageCurrent()).isGreaterThan(tower.damageBase);
+        assertThat(tower.damageCurrent()).isEqualTo(tower.damageBase);
     }
 
 
@@ -48,8 +47,8 @@ class PulseTowerTest {
         tower.doTick(0);
         tower.doTick(1);
 
-        assertThat(visible.hits()).containsExactly(Damage.magic(200), Damage.magic(200));
-        assertThat(hidden.hits()).containsExactly(Damage.magic(200), Damage.magic(200));
+        assertThat(visible.hits()).containsExactly(Damage.magic(100), Damage.magic(100));
+        assertThat(hidden.hits()).containsExactly(Damage.magic(100), Damage.magic(100));
     }
 
     @Test
@@ -119,17 +118,42 @@ class PulseTowerTest {
     }
 
     @Test
-    void eachTollStackMakesTheFieldHitTenPercentHarder() {
+    void tollLeavesTheFieldsDamageAlone() {
         PulseTower tower = this.attunedTower();
         FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
         this.context.enemies().setEnemies(new EnemyMob[]{enemy});
 
-        for (int t = 0; t < 21; t++) {
+        for (int t = 0; t < 41; t++) {
             tower.doTick(t);
         }
 
-        assertThat(enemy.hits().getFirst()).isEqualTo(Damage.magic(200));
-        assertThat(enemy.hits().getLast()).isEqualTo(Damage.magic(220));
+        assertThat(enemy.effectStacks(EffectKind.TOLL)).isEqualTo(2);
+        assertThat(enemy.hits().getLast()).isEqualTo(Damage.magic(100));
+    }
+
+    @Test
+    void eachOtherFieldOverlappingThisOneTakesAQuarterOffItsDamageDownToAQuarter() {
+        PulseTower lone = new PulseTower(this.context, 0, 0);
+        PulseTower paired = new PulseTower(this.context, 10, 10);
+        PulseTower crowded = new PulseTower(this.context, 15, 15);
+        List<PulseTower> all = new java.util.ArrayList<>(List.of(lone, paired, new PulseTower(this.context, 11, 10), crowded));
+        for (int i = 0; i < 4; i++) {
+            all.add(new PulseTower(this.context, 16 + i % 2, 15 + i / 2));
+        }
+        all.forEach(this.context.towers()::add);
+        FakeEnemyMob atLone = FakeEnemyMob.at(lone.getX(), lone.getY());
+        FakeEnemyMob atPaired = FakeEnemyMob.at(paired.getX(), paired.getY());
+        FakeEnemyMob atCrowded = FakeEnemyMob.at(crowded.getX(), crowded.getY());
+        this.context.enemies().setEnemies(new EnemyMob[]{atLone, atPaired, atCrowded});
+        all.forEach(tower -> tower.doTick(19));
+
+        lone.doTick(20);
+        paired.doTick(20);
+        crowded.doTick(20);
+
+        assertThat(atLone.hits().getLast()).isEqualTo(Damage.magic(100));
+        assertThat(atPaired.hits().getLast()).isEqualTo(Damage.magic(75));
+        assertThat(atCrowded.hits().getLast()).isEqualTo(Damage.magic(25));
     }
 
     @Test
@@ -189,8 +213,8 @@ class PulseTowerTest {
     }
 
     @Test
-    void overchargedCoilsMakesTollBuildTwiceAsFast() {
-        PulseTower tower = this.pulseWith("Overcharged Coils");
+    void resonantCoilsMakesTollBuildTwiceAsFast() {
+        PulseTower tower = this.pulseWith("Resonant Coils");
         FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
         this.board.enemies().setEnemies(new EnemyMob[]{enemy});
 
@@ -205,8 +229,8 @@ class PulseTowerTest {
     }
 
     @Test
-    void overchargedCoilsIiHitsAnEnemyAtFullTollAQuarterHarder() {
-        PulseTower tower = this.pulseWith("Overcharged Coils", "Overcharged Coils II");
+    void resonantCoilsIiMakesAnEnemyAtFullTollVulnerableForTwoSecondsAndNoOther() {
+        PulseTower tower = this.pulseWith("Resonant Coils", "Resonant Coils II");
         FakeEnemyMob full = FakeEnemyMob.at(tower.getX(), tower.getY());
         fullToll(full, 5);
         FakeEnemyMob partial = FakeEnemyMob.at(tower.getX(), tower.getY());
@@ -214,89 +238,79 @@ class PulseTowerTest {
         this.board.enemies().setEnemies(new EnemyMob[]{full, partial});
 
         tower.doTick(1);
+        tower.doTick(2);
 
-        int tick = tower.damageCurrent();
-        assertThat(full.hits().getFirst()).isEqualTo(Damage.magic(Math.round(tick * (1f + 0.5f + 0.25f))));
-        assertThat(partial.hits().getFirst()).isEqualTo(Damage.magic(Math.round(tick * (1f + 0.4f))));
+        assertThat(full.effectStacks(EffectKind.VULNERABLE)).isEqualTo(1);
+        assertThat(full.appliedEffects().stream().filter(e -> e.kind() == EffectKind.VULNERABLE).toList().getLast()
+                .remainingTicks()).isEqualTo(40);
+        assertThat(has(partial, EffectKind.VULNERABLE)).isFalse();
+        assertThat(full.hits().getFirst()).isEqualTo(partial.hits().getFirst());
     }
 
     @Test
-    void arcDischargeZapsTheHealthiestEnemyInsideOnceASecondForFifteenTicksOfDamage() {
-        PulseTower tower = this.pulseWith("Overcharged Coils", "Overcharged Coils II", "Arc Discharge");
+    void arcDischargeMarksTheHealthiestVisibleEnemyInsideOnceASecondForEveryTowerAndHitsNoHarder() {
+        PulseTower tower = this.pulseWith("Resonant Coils", "Resonant Coils II", "Arc Discharge");
+        FakeEnemyMob hidden = FakeEnemyMob.ghostAt(tower.getX(), tower.getY()).withHealth(5000);
         FakeEnemyMob healthy = FakeEnemyMob.at(tower.getX(), tower.getY()).withHealth(900);
         FakeEnemyMob weak = FakeEnemyMob.at(tower.getX() + 10, tower.getY()).withHealth(100);
-        this.board.enemies().setEnemies(new EnemyMob[]{healthy, weak});
+        this.board.enemies().setEnemies(new EnemyMob[]{hidden, healthy, weak});
 
         tower.doTick(20);
         tower.doTick(21);
         tower.doTick(40);
 
-        Damage zap = Damage.magic(tower.damageCurrent() * 15);
-        assertThat(healthy.hits().stream().filter(zap::equals)).hasSize(2);
-        assertThat(weak.hits()).doesNotContain(zap);
+        assertThat(healthy.appliedEffects().stream().filter(e -> e.kind() == EffectKind.PRIORITY).count()).isEqualTo(2);
+        assertThat(healthy.appliedEffects().stream().filter(e -> e.kind() == EffectKind.EXPOSED).toList().getLast()
+                .remainingTicks()).isEqualTo(60);
+        assertThat(has(weak, EffectKind.PRIORITY)).isFalse();
+        assertThat(has(hidden, EffectKind.PRIORITY)).isFalse();
+        assertThat(healthy.hits()).allMatch(Damage.magic(tower.damageCurrent())::equals);
         assertThat(tower.getZaps()).hasSize(1);
     }
 
     @Test
-    void theZapCanCritWhileTheFieldTicksNeverDo() {
-        PulseTower tower = this.pulseWith("Overcharged Coils", "Overcharged Coils II", "Arc Discharge");
+    void meltdownLetsTollStackToTenAndTheFieldsEffectsGrowWithIt() {
+        PulseTower tower = this.shapedPulse("Meltdown", "Corrosion");
         FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
+        fullToll(enemy, 10);
         this.board.enemies().setEnemies(new EnemyMob[]{enemy});
 
         tower.doTick(20);
 
-        assertThat(enemy.attackers().get(0).delivery().name()).isEqualTo("PERIODIC");
-        assertThat(enemy.attackers().get(1).delivery().name()).isEqualTo("HIT");
-        assertThat(enemy.attackers().get(1).critChance()).isEqualTo(0.1f);
-    }
-
-    @Test
-    void meltdownLetsTollStackToTenAndRaisesTheZapWithIt() {
-        PulseTower plain = this.pulseWith("Overcharged Coils", "Overcharged Coils II", "Arc Discharge");
-        PulseTower melting = this.pulseWith("Overcharged Coils", "Overcharged Coils II", "Arc Discharge",
-                "Transcendent", "Meltdown");
-        FakeEnemyMob enemy = FakeEnemyMob.at(melting.getX(), melting.getY());
-        fullToll(enemy, 10);
-        this.board.enemies().setEnemies(new EnemyMob[]{enemy});
-
-        melting.doTick(20);
-
-        Damage zap = Damage.magic(Math.round(melting.damageCurrent() * 15 * 2f));
-        assertThat(enemy.hits()).contains(zap);
-        assertThat(enemy.attackers().get(1).critChance()).isEqualTo(0.2f);
         assertThat(tollOn(enemy).getLast().effectiveStackCap()).isEqualTo(10);
-        assertThat(plain.damageCurrent()).isEqualTo(melting.damageCurrent());
+        assertThat(enemy.effectStacks(EffectKind.CORRODED)).isEqualTo(15);
     }
 
     @Test
-    void teslaCoilChainsToThreeMoreEnemiesEvenOutsideTheFieldAndDazesEveryOneItHits() {
-        PulseTower tower = this.pulseWith("Overcharged Coils", "Overcharged Coils II", "Arc Discharge",
+    void teslaCoilChainsToThreeMoreVisibleEnemiesEvenOutsideTheFieldExposingAndDazingEveryOneItHits() {
+        PulseTower tower = this.pulseWith("Resonant Coils", "Resonant Coils II", "Arc Discharge",
                 "Transcendent", "Tesla Coil");
         float x = tower.getX();
         float y = tower.getY();
         FakeEnemyMob first = FakeEnemyMob.at(x, y).withHealth(900);
         FakeEnemyMob second = FakeEnemyMob.at(x + 40, y).withHealth(100);
-        FakeEnemyMob third = FakeEnemyMob.ghostAt(x + 80, y);
-        FakeEnemyMob fourth = FakeEnemyMob.ghostAt(x + 118, y);
-        FakeEnemyMob fifth = FakeEnemyMob.ghostAt(x + 156, y);
+        FakeEnemyMob third = FakeEnemyMob.at(x + 80, y);
+        FakeEnemyMob fourth = FakeEnemyMob.at(x + 118, y);
+        FakeEnemyMob fifth = FakeEnemyMob.at(x + 156, y);
         this.board.enemies().setEnemies(new EnemyMob[]{first, second, third, fourth, fifth});
 
         tower.doTick(20);
 
-        Damage zap = Damage.magic(tower.damageCurrent() * 15);
         for (FakeEnemyMob zapped : List.of(first, second, third, fourth)) {
-            assertThat(zapped.hits()).contains(zap);
+            assertThat(has(zapped, EffectKind.EXPOSED)).isTrue();
             assertThat(zapped.appliedEffects().stream().filter(e -> e.kind() == EffectKind.DAZED).toList())
                     .singleElement().extracting(Effect::remainingTicks).isEqualTo(5);
         }
-        assertThat(fifth.hits()).isEmpty();
+        assertThat(has(first, EffectKind.PRIORITY)).isTrue();
+        assertThat(has(second, EffectKind.PRIORITY)).isFalse();
+        assertThat(fifth.appliedEffects()).isEmpty();
         assertThat(tower.getZaps()).hasSize(4);
     }
 
     @Test
     void wideFieldAddsTwentyPercentRangeAndMakesTollLastASecondLongerAfterAnEnemyLeaves() {
-        PulseTower plain = this.pulseWith("Overcharged Coils", "Overcharged Coils II", "Arc Discharge");
-        PulseTower wide = this.pulseWith("Overcharged Coils", "Overcharged Coils II", "Arc Discharge", "Transcendent",
+        PulseTower plain = this.pulseWith("Resonant Coils", "Resonant Coils II", "Arc Discharge");
+        PulseTower wide = this.pulseWith("Resonant Coils", "Resonant Coils II", "Arc Discharge", "Transcendent",
                 "Range", "Range II", "Range III");
         FakeEnemyMob enemy = FakeEnemyMob.at(wide.getX(), wide.getY());
         fullToll(enemy, 5);
@@ -313,7 +327,7 @@ class PulseTowerTest {
     }
 
     /** The overcharged path to Transcendent, which opens the extra node's later levels. */
-    private static final String[] COILS = {"Overcharged Coils", "Overcharged Coils II", "Arc Discharge",
+    private static final String[] COILS = {"Resonant Coils", "Resonant Coils II", "Arc Discharge",
         "Transcendent"};
 
     private PulseTower shapedPulse(String... more) {
@@ -338,6 +352,21 @@ class PulseTowerTest {
         assertThat(inside.appliedEffects().stream().filter(e -> e.kind() == EffectKind.CORRODED).toList())
                 .singleElement().extracting(Effect::remainingTicks).isEqualTo(3);
         assertThat(has(outside, EffectKind.CORRODED)).isFalse();
+    }
+
+    @Test
+    void theFieldsEffectsHoldAtHalfStrengthOnEntryAndFullAtFullToll() {
+        PulseTower tower = this.shapedPulse("Corrosion");
+        FakeEnemyMob fresh = FakeEnemyMob.at(tower.getX(), tower.getY());
+        FakeEnemyMob tolled = FakeEnemyMob.at(tower.getX(), tower.getY());
+        fullToll(tolled, 5);
+        this.board.enemies().setEnemies(new EnemyMob[]{fresh, tolled});
+
+        tower.doTick(1);
+        tower.doTick(2);
+
+        assertThat(fresh.effectStacks(EffectKind.CORRODED)).isEqualTo(5);
+        assertThat(tolled.effectStacks(EffectKind.CORRODED)).isEqualTo(10);
     }
 
     /** A real enemy standing at {@code tower}, which nothing ticks, wearing a shield no test breaks. */
@@ -405,7 +434,7 @@ class PulseTowerTest {
     }
 
     @Test
-    void eventHorizonAddsFivePercentForEveryDeathInsideUntilTheNextWaveStarts() {
+    void eventHorizonWidensTheFieldATenthForEveryDeathInsideUntilTheNextWaveStarts() {
         PulseTower tower = this.shapedPulse("Corrosion", "Mirror Field", "Undertow", "Event Horizon");
         FakeEnemyMob doomed = FakeEnemyMob.at(tower.getX(), tower.getY());
         FakeEnemyMob survivor = FakeEnemyMob.at(tower.getX(), tower.getY() + 5);
@@ -414,17 +443,17 @@ class PulseTowerTest {
         doomed.invalidate();
 
         tower.doTick(2);
-        this.board.waves().announce();
         tower.doTick(3);
+        float widened = tower.getFieldRadius();
+        this.board.waves().announce();
+        tower.doTick(4);
 
-        int tick = tower.damageCurrent();
-        assertThat(survivor.hits().get(0)).isEqualTo(Damage.magic(tick));
-        assertThat(survivor.hits().get(1)).isEqualTo(Damage.magic(Math.round(tick * 1.05f)));
-        assertThat(survivor.hits().get(2)).isEqualTo(Damage.magic(tick));
+        assertThat(widened).isCloseTo(tower.rangeReal() * 1.1f, org.assertj.core.api.Assertions.within(0.01f));
+        assertThat(tower.getFieldRadius()).isEqualTo(tower.rangeReal());
     }
 
     @Test
-    void eventHorizonStopsAddingAtDoubleDamage() {
+    void eventHorizonStopsWideningAtTwiceTheRange() {
         PulseTower tower = this.shapedPulse("Corrosion", "Mirror Field", "Undertow", "Event Horizon");
         List<FakeEnemyMob> crowd = new java.util.ArrayList<>();
         for (int i = 0; i < 30; i++) {
@@ -437,8 +466,9 @@ class PulseTowerTest {
         crowd.stream().filter(enemy -> enemy != survivor).forEach(FakeEnemyMob::invalidate);
 
         tower.doTick(2);
+        tower.doTick(3);
 
-        assertThat(survivor.hits().getLast()).isEqualTo(Damage.magic(tower.damageCurrent() * 2));
+        assertThat(tower.getFieldRadius()).isCloseTo(tower.rangeReal() * 2f, org.assertj.core.api.Assertions.within(0.01f));
     }
 
     private GameWorld rolledBoard(double... rolls) {
@@ -494,7 +524,7 @@ class PulseTowerTest {
     }
 
     @Test
-    void soulDrainCostsFiveSpiritEachSecondAndTheFieldHitsOnePercentHarderPerPointLost() {
+    void soulDrainCostsFifteenSpiritEachSecondAndTheFieldHitsNoHarder() {
         PulseTower tower = this.pulseWith("Soul Drain");
         FakeEnemyMob drained = FakeEnemyMob.at(tower.getX(), tower.getY());
         drained.reportSpirit(-50f);
@@ -503,14 +533,13 @@ class PulseTowerTest {
         tower.doTick(19);
         tower.doTick(20);
 
-        int tick = tower.damageCurrent();
-        assertThat(drained.hits().getFirst()).isEqualTo(Damage.magic(Math.round(tick * 1.5f)));
+        assertThat(drained.hits().getFirst()).isEqualTo(Damage.magic(tower.damageCurrent()));
         assertThat(drained.appliedEffects().stream().filter(e -> e.kind() == EffectKind.SICKENED).toList())
-                .singleElement().extracting(Effect::stacks).isEqualTo(5);
+                .singleElement().extracting(Effect::stacks).isEqualTo(FieldMode.SOUL_DRAIN_SPIRIT_PER_SECOND);
     }
 
     @Test
-    void atNoSpiritLeftSoulDrainDoublesTheFieldAndKeepsHealsAndShieldsOut() {
+    void atNoSpiritLeftSoulDrainKeepsHealsAndShieldsOut() {
         PulseTower tower = this.pulseWith("Soul Drain");
         FakeEnemyMob hollow = FakeEnemyMob.at(tower.getX(), tower.getY());
         hollow.reportSpirit(-100f);
@@ -519,7 +548,6 @@ class PulseTowerTest {
 
         tower.doTick(1);
 
-        assertThat(hollow.hits().getFirst()).isEqualTo(Damage.magic(tower.damageCurrent() * 2));
         assertThat(has(hollow, EffectKind.DEAD_ZONE)).isTrue();
         assertThat(has(hardy, EffectKind.DEAD_ZONE)).isFalse();
     }
@@ -652,7 +680,7 @@ class PulseTowerTest {
         PulseTower tower = new PulseTower(this.context, 0, 0);
 
         assertThat(tower.bonusesOf(UpgradePaths.named(tower, "Tesla Coil"))).contains(new UpgradeBonus(
-                "The zap chains to 3 more enemies within 1.5 cells, even outside the field; every enemy "
-                + "zapped is Dazed 0.25s", ""));
+                "The zap chains to 3 more enemies within 1.5 cells, even outside the field, Exposing each; "
+                + "every enemy zapped is Dazed 0.25s", ""));
     }
 }

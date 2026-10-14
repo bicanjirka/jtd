@@ -971,7 +971,7 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void tollSlowsEveryOtherDebuffsTimerByATenthAStack() {
+    void tollLeavesEveryOtherDebuffsTimerAlone() {
         ActiveEffects plain = new ActiveEffects();
         plain.apply(Effect.exposed(100, d -> {
         }));
@@ -984,8 +984,7 @@ class ActiveEffectsTest {
         tickTimes(plain, 60);
         tickTimes(tolled, 60);
 
-        assertThat(plain.remainingTicks(EffectKind.EXPOSED).getAsInt()).isEqualTo(40);
-        assertThat(tolled.remainingTicks(EffectKind.EXPOSED).getAsInt()).isBetween(59, 61);
+        assertThat(tolled.remainingTicks(EffectKind.EXPOSED)).isEqualTo(plain.remainingTicks(EffectKind.EXPOSED));
     }
 
     @Test
@@ -1065,9 +1064,9 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void corrosionLowersArmorByThirtyAndNeverBelowZero() {
+    void corrosionAtFullStrengthLowersArmorByThirtyAndNeverBelowZero() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.corroded(10, d -> {
+        effects.apply(Effect.corroded(FieldStrength.FULL, 10, d -> {
         }));
 
         assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 50f), effects, EnemyStat.ARMOR))
@@ -1092,9 +1091,21 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void killZoneRaisesEveryDamageTakenByAQuarter() {
+    void aFieldEffectsStacksStopAtTheFieldsMostStrength() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.killZone(10, d -> {
+        effects.apply(Effect.killZone(FieldStrength.MOST, 10, d -> {
+        }));
+        effects.apply(Effect.killZone(FieldStrength.MOST, 10, d -> {
+        }));
+
+        assertThat(effects.stacks(EffectKind.KILL_ZONE)).isEqualTo(FieldStrength.MOST);
+        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.375f, within(0.001f));
+    }
+
+    @Test
+    void killZoneAtFullStrengthRaisesEveryDamageTakenByAQuarter() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.killZone(FieldStrength.FULL, 10, d -> {
         }));
 
         assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.25f, within(0.001f));
@@ -1140,9 +1151,9 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void undertowChillsAQuarterAndBuysAFreezeTheChillsExtraTime() {
+    void undertowAtFullStrengthChillsAQuarterAndBuysAFreezeTheChillsExtraTime() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.undertow(10, d -> {
+        effects.apply(Effect.undertow(FieldStrength.FULL, 10, d -> {
         }));
         BaseStats<EnemyStat> base = BaseStats.defaults(EnemyStat.class).with(EnemyStat.MOVE_SPEED, 2f);
 
