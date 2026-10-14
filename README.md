@@ -48,7 +48,7 @@ Start each wave yourself when you are ready — waves do not auto-advance.
 |---------------------------------|------------------------------------------------------------------------------------------------------|
 | `q` `w` `e` `r` `t` `y` `u` `i` | Select tower 1–8 for placement                                                                       |
 | `Esc`                           | Cancel tower placement                                                                               |
-| `1`–`9`                         | With a tower selected, buy the correspondingly-numbered upgrade node it currently offers             |
+| `1`–`8`                         | Buy the selected tower's upgrade: 1 chain, 2 Range, 3 extra line, 4/5 the branches, 6–8 specials     |
 | `s`                             | Start the next wave                                                                                  |
 | `p`                             | Pause / unpause                                                                                      |
 | `f`                             | Cycle tick speed (normal → fast → super fast → normal)                                               |

@@ -831,7 +831,7 @@ class GameEngineTest {
     }
 
     @Test
-    void buyUpgradeForSelectedBuysTheNthCurrentlyOfferedNodeOfTheSelectedTower() {
+    void numberKeysBuyTheSelectedTowersOfferedNodeWithThatKeyOneForTheChainTwoForRange() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
@@ -841,10 +841,12 @@ class GameEngineTest {
         tower.setSelected(true);
         int creditsBeforeUpgrade = engine.getGameWorld().economy().getCredits();
 
+        engine.buyUpgradeForSelected(2);
         engine.buyUpgradeForSelected(1);
 
         assertThat(engine.getGameWorld().economy().getCredits()).isLessThan(creditsBeforeUpgrade);
-        assertThat(tower.upgrades().owns("base.range")).isTrue();
+        assertThat(tower.upgrades().owns(StandardBaseSlot.RANGE_ID)).isTrue();
+        assertThat(tower.upgrades().owns(StandardBaseSlot.ATTUNE_ID)).isTrue();
     }
 
     @Test
@@ -1105,7 +1107,7 @@ class GameEngineTest {
         secondCopy.setSelected(true);
         int creditsBeforeUpgrade = engine.getGameWorld().economy().getCredits();
 
-        engine.buyUpgradeForSelected(1);
+        engine.buyUpgradeForSelected(2);
 
         assertThat(secondCopy.upgrades().owns(StandardBaseSlot.RANGE_ID)).isTrue();
         assertThat(engine.getGameWorld().economy().getCredits())

@@ -2,8 +2,8 @@
 
 **Status: implemented.** Every tower has a `base`/`head`/`special` `UpgradeTree`
 (`td.tower.upgrade`), the sidebar swaps `PanelWaveInfo` for `PanelUpgradeTree` while a tower is
-selected, number keys buy the correspondingly-numbered offered node
-(`GameEngine.buyUpgradeForSelected`), and the board shows per-slot pips, ready chevrons and a
+selected, number keys buy offered nodes by a key fixed per role in the tree
+(`UpgradeTree.keyOf`, `GameEngine.buyUpgradeForSelected`), and the board shows per-slot pips, ready chevrons and a
 `SPECIAL`-slot halo instead of the old two-role accent ring. The concrete node content itself
 (names, prices, gates, buffs) is `docs/features/FEATURE-tower-specialization-abilities.md`'s
 job, and that document's own `[S]`-tagged stub nodes still wait on their primitives - see

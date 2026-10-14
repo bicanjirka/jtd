@@ -24,6 +24,7 @@ import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.Serial;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -37,8 +38,9 @@ import java.util.function.Consumer;
  * joined by a bracket, with "1 of N" beside the header. Replaces the wave preview while a tower is
  * selected.
  * <p>
- * No slot offers more than three nodes at once. Numbering runs across all slots in {@code offered}
- * order, so a button's number is the key that buys it.
+ * No slot offers more than three nodes at once. A button's number is the key that buys it, the
+ * same for every tower ({@link td.tower.upgrade.UpgradeTree#keyOf}), and a slot lists its buttons
+ * in key order.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelUpgradeTree extends JPanel implements EconomyListener {
@@ -127,10 +129,11 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         if (this.tower == null) {
             return;
         }
-        List<UpgradeNode> offered = this.tower.offeredUpgrades(this.context);
+        List<UpgradeNode> offered = this.tower.offeredUpgrades(this.context).stream()
+                .sorted(Comparator.comparingInt(this.tower.upgradeTree()::keyOf)).toList();
         int[] used = new int[SLOTS.length];
-        for (int i = 0; i < offered.size(); i++) {
-            UpgradeOffer offer = UpgradeOffer.of(offered, i, this.tower, this.context);
+        for (UpgradeNode node : offered) {
+            UpgradeOffer offer = UpgradeOffer.of(node, offered, this.tower, this.context);
             int slotIndex = offer.node().slot().ordinal();
             int buttonIndex = used[slotIndex]++;
             if (buttonIndex >= BUTTONS_PER_SLOT) {
