@@ -1,7 +1,7 @@
 # Feature Request: Balance Verification
 
-**Status: first version implemented** (2026-10-13), plus two items from "Later" (the strong player, and
-each tower alone and banned). The review of the toolset (part 0) is
+**Status: implemented** (2026-10-13, completed 2026-10-14): the first version, the strong player, each tower
+alone and banned, and every item of the branch list below. The review of the toolset (part 0) is
 `docs/plans/balance-verification-review.md`. Every open question below is settled (✅). Every `TODO.md` entry that says "unbalanced placeholders" is tuned with it.
 
 ## Where we are
@@ -18,9 +18,9 @@ unchanged; an HTML page with charts and heat maps; random legal play in `mvn ver
 rules hold whatever a player does. The engine changed in one place: `PlaytestRules` can scale enemy
 health, which is how a margin is found.
 
-**What the first run says** is under [Findings](#findings-first-run) below: every built-in level is far too
-easy for a competent player, the Obelisk is a one-tower answer to all three, and the Hive's Absolute Zero
-wipes waves alone.
+**What the last run says** is under [Findings at the branch's end](#findings-at-the-branchs-end): with the
+reworked enemies Zigzag Path and Twisted Hourglass are in band and Curly Path is still too easy; the Obelisk
+still carries every level. The first run, before the enemy rework, is kept below it.
 
 **Next, in this order**, all on this branch before it merges (each is ranked in the review, and each
 has its `TODO.md` entry until it lands):
@@ -362,6 +362,45 @@ Each has two options and a preferred one (⭐).
    - ↳ All three exist, each for its question: the naive player buys a random affordable tower for a random
      cell that reaches a path ("does a careless player win?"); the competent player on random cells
      isolates positioning; the competent player with one tower type is the variety check.
+
+## Findings at the branch's end
+
+From `BalanceReport --seeds 12 --strong --variety --html`, 2026-10-14, after the enemy rework (doubled grunt
+health, health multiplied and bounty added by rank, named base stats, every Elite and Boss carrying some of
+every stat) and the competent player's tuning. Saved as `target/balance/final`. Nothing below was changed in
+the game; it is the starting list for the balance pass.
+
+| Level | Verdict | naive holds | competent holds (wins) | strong holds | no upgrades | random cells |
+|---|---|---|---|---|---|---|
+| Curly Path | TOO EASY | 25% | 159% (100%) | 194% | 144% | 84% |
+| Zigzag Path | IN BAND | 23% | 122% (75%) | 138% | 100% | 67% |
+| Twisted Hourglass | IN BAND | 13% | 142% (100%) | 155% | 84% | 68% |
+
+- **The strong player's lead** is x1.22 on Curly Path, x1.13 on Zigzag Path and x1.09 on Twisted
+  Hourglass. After the tuning it was x1.07, x1.00 and x1.12 against the old enemies: the reworked Curly
+  Path asks for more than the competent player's rules see, so its margin there understates the level.
+- **The Obelisk still carries every level.** It lands 43% to 69% of the damage; banning it makes Curly Path
+  and Twisted Hourglass unwinnable as authored (x0.01) and costs x0.34 on Zigzag Path; Obelisks alone hold
+  124% and 115% on the first two. Elite Ghosts are still answered by it alone (0.91; every other tower 0.00
+  to 0.40). The Beacon is the second engine (x0.45 to x0.83 without it). This is what
+  `FEATURE-obelisk-support-role.md` is for.
+- **Six of eight towers could be banned at little cost** on Curly and Zigzag (only the Obelisk and the
+  Beacon matter); on Twisted Hourglass the Burst and the Radar matter too. The Mortar is never built.
+- **Upgrades and positioning matter everywhere** (positioning x1.84 to x2.12; upgrades x1.11 to x1.68).
+  Both players buy almost no upgrades early and spend 63% to 81% on them late.
+- **Pressure**: Curly Path has walls at rounds 11, 15 and 18 and breathers in 8 of its 18 rounds; in rounds 1, 3
+  and 18 what the player wants next costs more than two rounds of bounty. Zigzag Path's one wall is its last round, Twisted
+  Hourglass's its first (the Reaver, which no tower answers well: 0.21 to 0.48).
+- **Ways to win**: 9 to 12 distinct winning layouts per level, nearly all with Obelisks. The competent
+  player buys something in nearly every round.
+- **Coverage**: of the 43 effects, 26 to 28 are never put on an enemy by any play, chill included; most nodes
+  are never bought (Sniper 16 to 18 of 26, Mortar 15 to 19 of 23). Every enemy ability of the three levels
+  is seen used.
+- **Support**: Radar's Mark on Sweep is worth +71% to +91% to a neighbour, the only large support in the
+  game; the Mortar's Cryo Shells and Tar, the Hive's Deep Freeze and the Scorcher's Searing Flame +8% to
+  +17%.
+- **Level knobs** (Zigzag Path): bounty moves the margin most (85% at 60% bounty, 197% at 150%), a life about
+  4%, and the pause between rounds nothing.
 
 ## Findings (first run)
 
