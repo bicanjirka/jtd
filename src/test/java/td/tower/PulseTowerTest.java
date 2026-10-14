@@ -350,7 +350,7 @@ class PulseTowerTest {
         tower.doTick(1);
 
         assertThat(inside.appliedEffects().stream().filter(e -> e.kind() == EffectKind.CORRODED).toList())
-                .singleElement().extracting(Effect::remainingTicks).isEqualTo(3);
+                .singleElement().extracting(Effect::remainingTicks).isEqualTo(FieldMode.LINGER_TICKS);
         assertThat(has(outside, EffectKind.CORRODED)).isFalse();
     }
 
@@ -642,7 +642,7 @@ class PulseTowerTest {
         tower.doTick(1);
 
         assertThat(inside.appliedEffects().stream().filter(e -> e.kind() == EffectKind.SILENCED).toList())
-                .singleElement().extracting(Effect::remainingTicks).isEqualTo(3);
+                .singleElement().extracting(Effect::remainingTicks).isEqualTo(FieldMode.LINGER_TICKS);
         assertThat(outside.hasEffect(EffectKind.SILENCED)).isFalse();
     }
 
@@ -672,7 +672,7 @@ class PulseTowerTest {
         tower.doTick(1);
 
         assertThat(inside.appliedEffects().stream().filter(e -> e.kind() == EffectKind.DEAD_ZONE).toList())
-                .singleElement().extracting(Effect::remainingTicks).isEqualTo(3);
+                .singleElement().extracting(Effect::remainingTicks).isEqualTo(FieldMode.LINGER_TICKS);
     }
 
     @Test

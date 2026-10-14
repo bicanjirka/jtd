@@ -176,6 +176,9 @@ to twice its range, instead of adding damage.
 times as fast (so every debuff on the enemy lasts longer, and at -100 nothing wears off), keeps no heals or
 shields at the floor, and loses its damage per lost spirit.
 
+**Linger.** Every rule the field holds on an enemy (silence, no heals or shields, armor, chill and Anchored,
+damage taken, Vulnerable) lasts 2 s after the enemy leaves, so the towers beyond the field's edge gain from it too.
+
 **Facts that shape the numbers.** A 1.5-cell field crossed straight holds an enemy about 2 to 3 seconds, so
 without Coils I or a bend few enemies reach full Toll. Plating and insulation take a flat amount off every
 hit, periodic ones included: the Reaver's 1 point of insulation blanks a 1-point field tick entirely.
@@ -227,6 +230,8 @@ Corrosion, Undertow and Resonant Coils II are stronger, Soul Drain drains 15 spi
 - **The field's own effects are still never bought**: Corrosion, Undertow, Kill Zone and Soul Drain are put on no
   enemy in any play, even stronger. The lab prices Arc Discharge's mark at +10% to +32% for a Sniper beside it and
   Resonant Coils II at +9%; nothing else of the tree reaches +9%.
+- **With the 2-second linger** (saved as `ob-phase4`) no play changes: no player buys those nodes yet, so every
+  margin is the same. The lab now prices Kill Zone at +13% for a Sniper beside it on Zigzag Path (under +9% before).
 
 ## Open questions
 
@@ -238,6 +243,8 @@ Asked after the findings above:
     field, or stronger effects. ↳ Stronger effects at the same reach.
 22. ✅ **When are the levels retuned?** ↳ Not in this feature. 💬 "do not tune by % hp, tune by wave composition, but it
     will be another feature I guess". Question 16's answer (by enemy health) is withdrawn.
+23. ✅ **What happens to the field's effects that no player buys, even stronger?** Options were a linger, larger
+    numbers, or leaving them to the general repricing. ↳ They linger 2 s after the enemy leaves.
 
 Each has two options and a preferred one (⭐).
 
