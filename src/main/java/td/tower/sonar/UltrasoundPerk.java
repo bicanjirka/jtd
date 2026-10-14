@@ -20,7 +20,7 @@ public final class UltrasoundPerk implements SonarPerk {
         }
         float protection = context.target().hasEffect(EffectKind.SHIELD) ? MAX_SHARE
                 : context.target().reductionAgainst(DamageType.PHYSICAL);
-        return strike.withMagicShare(Math.max(BASE_SHARE, Math.min(MAX_SHARE, protection)));
+        return strike.withMagicShare(Math.clamp(protection, BASE_SHARE, MAX_SHARE));
     }
 
     @Override

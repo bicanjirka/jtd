@@ -87,7 +87,7 @@ public class PanelLevelSelect extends JPanel {
         header.add(subtitle);
         this.add(header, BorderLayout.NORTH);
 
-        JPanel cards = new JPanel(new GridLayout(0, Math.max(1, Math.min(levels.size(), 3)), 24, 24));
+        JPanel cards = new JPanel(new GridLayout(0, Math.clamp(levels.size(), 1, 3), 24, 24));
         cards.setOpaque(false);
         for (int i = 0; i < levels.size(); i++) {
             cards.add(buildCard(levels.get(i), i, onLevelSelected));
@@ -249,7 +249,6 @@ public class PanelLevelSelect extends JPanel {
     }
 
     private static Shape ringShape(float size) {
-        float r = size / 2f;
         float thickness = size * 0.13f;
         Area outer = new Area(new Ellipse2D.Float(0, 0, size, size));
         Area inner = new Area(new Ellipse2D.Float(thickness, thickness, size - thickness * 2, size - thickness * 2));
@@ -259,12 +258,11 @@ public class PanelLevelSelect extends JPanel {
 
     private static Shape starShape(float size) {
         float r = size / 2f;
-        float outerR = r;
         float innerR = r * 0.4f;
         Path2D.Float star = new Path2D.Float();
         for (int i = 0; i < 10; i++) {
             double angle = Math.toRadians(-90 + i * 36);
-            float radius = (i % 2 == 0) ? outerR : innerR;
+            float radius = (i % 2 == 0) ? r : innerR;
             float x = r + radius * (float) Math.cos(angle);
             float y = r + radius * (float) Math.sin(angle);
             if (i == 0) {

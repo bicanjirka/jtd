@@ -209,10 +209,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
     }
 
-    /**
-     * One logic tick, on the game-loop thread. Also called on the EDT to single-step while paused,
-     * when the loop is not ticking.
-     */
     /** The welcome text: a line per tower from the types themselves, so a shop name never drifts from its key. */
     static String welcomeText() {
         StringBuilder text = new StringBuilder("Welcome to Tower Defense\nShortcuts:\n\n");
@@ -549,7 +545,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setWavePreview();
     }
 
-    /** Runs on the game-loop thread. */
+    /**
+     * One logic tick, on the game-loop thread. Also called on the EDT to single-step while paused,
+     * when the loop is not ticking.
+     */
     public void doTick(int time) {
         boolean wasReady = this.engine.isWaveReady();
         boolean waveStarted = this.engine.doTick(time);

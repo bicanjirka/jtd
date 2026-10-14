@@ -253,7 +253,6 @@ public final class ActiveEffects {
         return this.active.containsKey(kind);
     }
 
-    /** Ends the active {@code kind} and tells whether there was one, for an effect that one hit spends. */
     /** Every active effect, in kind order: a copy, so a caller may pass them on. */
     public List<Effect> effects() {
         return List.copyOf(this.active.values());
@@ -264,6 +263,7 @@ public final class ActiveEffects {
         return Optional.ofNullable(this.active.get(kind));
     }
 
+    /** Ends the active {@code kind} and tells whether there was one, for an effect that one hit spends. */
     public boolean consume(EffectKind kind) {
         return this.active.remove(kind) != null;
     }

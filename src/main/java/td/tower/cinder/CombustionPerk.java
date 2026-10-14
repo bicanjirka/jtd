@@ -16,7 +16,6 @@ public final class CombustionPerk implements CinderPerk {
     @Override
     public String describe() {
         return "a burn that grows hotter than a single wave could make it bursts for " + PerkText.percent(SHARE)
-                + " of what it has left onto enemies within " + PerkText.cells(RADIUS_CELLS)
-                + (RADIUS_CELLS == 1f ? " cell" : " cells") + ", and can burst again once it has cooled to half";
+                + " of what it has left onto enemies within " + PerkText.distance(RADIUS_CELLS) + ", and can burst again once it has cooled to half";
     }
 }

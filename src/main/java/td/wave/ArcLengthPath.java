@@ -87,7 +87,7 @@ public final class ArcLengthPath {
         double dx = bx - ax;
         double dy = by - ay;
         double length2 = dx * dx + dy * dy;
-        double t = length2 == 0.0 ? 0.0 : Math.max(0.0, Math.min(1.0, ((px - ax) * dx + (py - ay) * dy) / length2));
+        double t = length2 == 0.0 ? 0.0 : Math.clamp(((px - ax) * dx + (py - ay) * dy) / length2, 0.0, 1.0);
         double cx = ax + t * dx - px;
         double cy = ay + t * dy - py;
         return cx * cx + cy * cy;
@@ -106,7 +106,7 @@ public final class ArcLengthPath {
             double dx = this.xs[i + 1] - ax;
             double dy = this.ys[i + 1] - ay;
             double length2 = dx * dx + dy * dy;
-            double t = length2 == 0.0 ? 0.0 : Math.max(0.0, Math.min(1.0, ((pointX - ax) * dx + (pointY - ay) * dy) / length2));
+            double t = length2 == 0.0 ? 0.0 : Math.clamp(((pointX - ax) * dx + (pointY - ay) * dy) / length2, 0.0, 1.0);
             double cx = ax + t * dx - pointX;
             double cy = ay + t * dy - pointY;
             double distance2 = cx * cx + cy * cy;
@@ -123,7 +123,7 @@ public final class ArcLengthPath {
     }
 
     public PathPose poseAt(double distance) {
-        distance = Math.max(0.0, Math.min(distance, this.totalLength));
+        distance = Math.clamp(distance, 0.0, this.totalLength);
         int segment = this.cumulative.length - 2;
         for (int i = 0; i < this.cumulative.length - 1; i++) {
             if (distance < this.cumulative[i + 1]) {

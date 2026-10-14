@@ -139,7 +139,7 @@ final class RunRecorder {
                     this.casts.merge(PlayRecord.Watch.spawnKey(foe.kind()), 1, Integer::sum);
                 }
             }
-            this.watch(mob, foe, tick);
+            this.watch(mob, foe);
             EnemyInspection.Fate fate = mob.accept(DefinedEnemyMob::fate);
             if (fate == EnemyInspection.Fate.KILLED || fate == EnemyInspection.Fate.LEAKED) {
                 this.end(mob, foe, fate == EnemyInspection.Fate.LEAKED);
@@ -173,7 +173,7 @@ final class RunRecorder {
     }
 
     /** Counts the effects {@code mob} carries and starts, and an ability it cast this tick, death casts included. */
-    private void watch(EnemyMob mob, PlayRecord.Foe foe, int tick) {
+    private void watch(EnemyMob mob, PlayRecord.Foe foe) {
         if (mob.accept(DefinedEnemyMob::isInactive)) {
             return;
         }

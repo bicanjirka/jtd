@@ -290,13 +290,12 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             for (int i = 0; i < BUTTONS_PER_SLOT; i++) {
                 HudButton button = new HudButton("");
                 button.setVisible(false);
-                int capturedSlot = slotIndex;
                 int capturedButton = i;
-                button.addActionListener(evt -> this.buttonClicked(capturedSlot, capturedButton));
+                button.addActionListener(evt -> this.buttonClicked(slotIndex, capturedButton));
                 button.addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseEntered(MouseEvent evt) {
-                        UpgradeOffer offer = PanelUpgradeTree.this.slotOffers[capturedSlot][capturedButton];
+                        UpgradeOffer offer = PanelUpgradeTree.this.slotOffers[slotIndex][capturedButton];
                         if (offer != null) {
                             PanelUpgradeTree.this.onHover.accept(offer);
                         }

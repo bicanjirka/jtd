@@ -325,7 +325,7 @@ public final class PulseTower extends AbstractTower {
      */
     private void zap(ZapSpec zap, PulseSpec spec, int gameTime) {
         Viewpoint view = spec.view();
-        List<EnemyMob> seen = InRangeTargetQuery.visible((int) view.x(), (int) view.y(), view.range())
+        List<EnemyMob> seen = InRangeTargetQuery.visible(view.x(), view.y(), view.range())
                 .matching(this.context.enemies());
         Optional<EnemyMob> first = new HighestHealthSelector().selectFrom(seen);
         if (first.isEmpty()) {

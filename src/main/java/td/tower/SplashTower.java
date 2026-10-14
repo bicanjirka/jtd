@@ -322,7 +322,7 @@ public final class SplashTower extends AbstractTower {
         }
         float blastRadius = this.blastRadius();
         Optional<HexPick> pick = this.hexTurn.take(hexes.pool(), new HexScene(inReach, blastRadius,
-                this.distance(SPREAD_CELLS, spec), this.distance(HexSpec.SHARE_CELLS, spec)));
+                this.distance(SPREAD_CELLS), this.distance(HexSpec.SHARE_CELLS)));
         if (pick.isEmpty()) {
             return false;
         }
@@ -357,7 +357,7 @@ public final class SplashTower extends AbstractTower {
     }
 
     /** {@code cells} grown by the blast radius bonus, in pixels: how far a hex's payload reaches. */
-    private float distance(float cells, SplashSpec spec) {
+    private float distance(float cells) {
         return cells * this.context.getBoard().scale() * this.distanceScale();
     }
 
@@ -418,7 +418,7 @@ public final class SplashTower extends AbstractTower {
      */
     private void reckon(EnemyMob dead, SplashSpec spec) {
         Optional<Hex> doom = spec.hexes().hexOf(EffectKind.DOOM);
-        float distance = this.distance(HexSpec.SHARE_CELLS, spec);
+        float distance = this.distance(HexSpec.SHARE_CELLS);
         for (EnemyMob enemy : this.hexLedger.carriers(EffectKind.DOOM)) {
             if (doom.isEmpty() || enemy == dead || !near(enemy, dead, distance)) {
                 continue;
@@ -440,7 +440,7 @@ public final class SplashTower extends AbstractTower {
         if (carriers.isEmpty()) {
             return;
         }
-        float distance = this.distance(HexSpec.SHARE_CELLS, spec);
+        float distance = this.distance(HexSpec.SHARE_CELLS);
         List<EnemyMob> hexed = this.hexLedger.hexed();
         for (EnemyMob carrier : carriers) {
             for (EnemyMob other : hexed) {
@@ -457,7 +457,7 @@ public final class SplashTower extends AbstractTower {
      */
     private void spread(HexEvent.Died died, int generation, SplashSpec spec) {
         EnemyMob dead = died.enemy();
-        float distance = this.distance(SPREAD_CELLS, spec);
+        float distance = this.distance(SPREAD_CELLS);
         List<Effect> carried = dead.activeEffects();
         List<EnemyMob> next = InRangeTargetQuery.everyone((int) dead.getX(), (int) dead.getY(), distance)
                 .matching(this.context.enemies()).stream()

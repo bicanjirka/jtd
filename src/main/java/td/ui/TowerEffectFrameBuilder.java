@@ -404,6 +404,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
     private static float waveProgress(CinderTower.FlameWave wave, int atTick) {
         float travelled = (float) (atTick - wave.firedAtTick()) / wave.travelTicks();
-        return Math.max(0f, Math.min(1f, travelled));
+        return Math.clamp(travelled, 0f, 1f);
     }
 }

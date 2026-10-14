@@ -306,14 +306,6 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * How much stronger a burn this tower sets on {@code target} starts: its crit factor against it if
-     * the ignition rolls a critical, otherwise {@code 1}. An ignition is no hit, so it spends nothing.
-     */
-    protected float potencyOfIgnition(EnemyMob target) {
-        return target.rollsCrit(this.stats.attack()) ? target.critFactorFor(this.stats.attack()) : 1f;
-    }
-
-    /**
      * Puts an effect on {@code target}. Whatever damage it deals is credited to this tower as
      * periodic damage, so it never crits and never spends a mark.
      */
@@ -326,11 +318,6 @@ public abstract class AbstractTower implements Tower {
     /** {@code ticks} as long as the effects this tower makes last, for what a tower leaves on the ground. */
     protected int lengthened(int ticks) {
         return Math.round(ticks * this.stats.effectLength());
-    }
-
-    /** How much longer than authored this tower's own timed buffs last. */
-    protected float timedBuffLength() {
-        return this.stats.timedBuffLength();
     }
 
     /**

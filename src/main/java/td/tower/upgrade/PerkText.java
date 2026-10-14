@@ -26,6 +26,11 @@ public final class PerkText {
         return number(cells);
     }
 
+    /** A distance with its unit: {@code "1 cell"}, {@code "1.5 cells"}. */
+    public static String distance(float cells) {
+        return number(cells) + (cells == 1f ? " cell" : " cells");
+    }
+
     /** A multiple: {@code "x4"}, {@code "x1.5"}. */
     public static String times(float factor) {
         return "x" + number(factor);

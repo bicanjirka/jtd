@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 /**
  * Plays the built-in levels headlessly with players of several skills over many seeds, and answers, per level,
@@ -492,7 +493,7 @@ public final class BalanceReport {
 
     /** The players the difficulty table lists, weakest first, the strong one only when it was measured. */
     static List<String> shownPlayers(LevelRun run) {
-        return List.of(NAIVE, RANDOM_CELLS, NO_UPGRADES, COMPETENT, STRONG).stream().filter(run::has).toList();
+        return Stream.of(NAIVE, RANDOM_CELLS, NO_UPGRADES, COMPETENT, STRONG).filter(run::has).toList();
     }
 
     private void printLossRounds(String player, Map<Integer, Integer> rounds) {

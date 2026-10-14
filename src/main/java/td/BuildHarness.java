@@ -60,7 +60,7 @@ public final class BuildHarness {
         this.background = background;
     }
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         int levelIndex = args.length > 0 ? Integer.parseInt(args[0]) : 2;
         int seeds = args.length > 1 ? Integer.parseInt(args[1]) : 12;
         TowerFactory.Type type = TowerFactory.Type.valueOf((args.length > 2 ? args[2] : "cinder").toUpperCase(Locale.ROOT));

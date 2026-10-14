@@ -102,11 +102,6 @@ public final class StatSheet implements StatView {
         }
 
         @Override
-        public void addFlat(EnemyStat stat, float amount) {
-            StatSheet.this.flat[stat.ordinal()] += amount;
-        }
-
-        @Override
         public void capAtShareOfBase(EnemyStat stat, float share) {
             int i = stat.ordinal();
             StatSheet.this.capShare[i] = Math.min(StatSheet.this.capShare[i], share);

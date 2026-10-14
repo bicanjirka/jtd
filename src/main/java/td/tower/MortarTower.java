@@ -278,7 +278,7 @@ public final class MortarTower extends AbstractTower {
         ShellType type = spec.shells().typeOf(this.shellsFired);
         Vec2 aim = this.aimPoint(target, spec);
         this.context.projectiles().add(new CannonballProjectile(this.centerX, this.centerY, aim.x(), aim.y(),
-                this.shellStats(spec, type), type.look(), (x, y) -> this.onImpact(x, y, type)));
+                this.shellStats(type), type.look(), (x, y) -> this.onImpact(x, y, type)));
     }
 
     /** Where the shell is sent: the enemy where it stands, or with Predictive Fire where it will be on landing. */
@@ -296,7 +296,7 @@ public final class MortarTower extends AbstractTower {
     }
 
     /** The shell as it flies and is drawn: its speed and size are stats, and its size follows how hard it hits. */
-    private ProjectileStats shellStats(MortarSpec spec, ShellType type) {
+    private ProjectileStats shellStats(ShellType type) {
         float size = Math.min(MAX_SHELL_SIZE, SHELL_SIZE_PER_DAMAGE_ROOT
                 * (float) Math.sqrt((double) this.damageCurrent() / this.damageBase));
         float typeSize = type == ShellType.NUKE ? NUKE_SHELL_SIZE : 1f;
@@ -495,10 +495,6 @@ public final class MortarTower extends AbstractTower {
         return closest;
     }
 
-    public EnemyMob getCurrentTarget() {
-        return this.currentTarget;
-    }
-
     /** The blast's radius in pixels before Bracketing. */
     float getSplashRadius() {
         return this.blastRadius(1f);
@@ -538,7 +534,7 @@ public final class MortarTower extends AbstractTower {
     @Override
     protected List<TowerStatLine> ownStats() {
         MortarSpec spec = this.spec(this.perks.all());
-        ProjectileStats shell = this.shellStats(spec, ShellType.PLAIN);
+        ProjectileStats shell = this.shellStats(ShellType.PLAIN);
         float cellsPerSecond = shell.speed() * TICKS_PER_SECOND / this.context.getBoard().scale();
         return List.of(new TowerStatLine(TowerStatRow.SPLASH_RADIUS, SPLASH_RADIUS_BASE,
                 this.stats().value(TowerStat.AREA_RADIUS)),

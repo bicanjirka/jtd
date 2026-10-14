@@ -82,7 +82,7 @@ public final class PathCoverage {
         double dy = b.y() - a.y();
         double lengthSquared = dx * dx + dy * dy;
         double t = lengthSquared == 0.0 ? 0.0 : ((x - a.x()) * dx + (y - a.y()) * dy) / lengthSquared;
-        t = Math.max(0.0, Math.min(1.0, t));
+        t = Math.clamp(t, 0.0, 1.0);
         double px = a.x() + t * dx;
         double py = a.y() + t * dy;
         return Math.hypot(x - px, y - py);

@@ -8,9 +8,4 @@ package td.ui.render;
 public record ConeDraw(Palette palette, float originX, float originY, float headingRadians,
                        float maxRadius, float halfWidthRadians, float progress,
                        int stokeSteps) implements TowerEffectDraw {
-
-    public ConeDraw(Palette palette, float originX, float originY, float headingRadians, float maxRadius,
-                    float halfWidthRadians, float progress) {
-        this(palette, originX, originY, headingRadians, maxRadius, halfWidthRadians, progress, 0);
-    }
 }

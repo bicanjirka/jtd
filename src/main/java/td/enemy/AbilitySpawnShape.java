@@ -48,10 +48,4 @@ public record AbilitySpawnShape(int members, float sizeMultiplier, float healthM
         return new AbilitySpawnShape(members, BROOD_SIZE_MULTIPLIER, healthMultiplier, bountyMultiplier,
                 BROOD_DELAY_SPACING_SLOTS, Optional.empty());
     }
-
-    /** Adds a trait to every spawned member, replacing a trait with the same id. */
-    public AbilitySpawnShape withTraitOverride(IdentifiedTrait trait) {
-        return new AbilitySpawnShape(this.members, this.sizeMultiplier, this.healthMultiplier,
-                this.bountyMultiplier, this.delaySpacingSlots, Optional.of(trait));
-    }
 }

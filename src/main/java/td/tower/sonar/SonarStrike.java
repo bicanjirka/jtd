@@ -3,7 +3,6 @@ package td.tower.sonar;
 import td.damage.AttackProfile;
 import td.damage.DamageType;
 
-import java.util.function.UnaryOperator;
 
 /**
  * One beam hit as it will land, before it does: the base hit reshaped by each perk the Sonar
@@ -22,10 +21,6 @@ public record SonarStrike(DamageType type, float damageFactor, AttackProfile att
 
     public SonarStrike withType(DamageType type) {
         return new SonarStrike(type, this.damageFactor, this.attack, this.magicShare);
-    }
-
-    public SonarStrike withAttack(UnaryOperator<AttackProfile> change) {
-        return new SonarStrike(this.type, this.damageFactor, change.apply(this.attack), this.magicShare);
     }
 
     public SonarStrike withMagicShare(float magicShare) {

@@ -347,8 +347,8 @@ public final class SeekerTower extends AbstractTower {
      * A hit of {@code damage}. With Frostbite, a hit on a frozen enemy, or one whose freezes are
      * diminished, is a guaranteed crit.
      */
-    private boolean strike(EnemyMob enemy, Damage damage, SeekerSpec spec) {
-        return this.strike(enemy, damage, spec, HitAdjustment.none());
+    private void strike(EnemyMob enemy, Damage damage, SeekerSpec spec) {
+        this.strike(enemy, damage, spec, HitAdjustment.none());
     }
 
     private boolean strike(EnemyMob enemy, Damage damage, SeekerSpec spec, HitAdjustment adjustment) {

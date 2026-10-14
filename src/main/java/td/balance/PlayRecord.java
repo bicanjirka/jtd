@@ -228,7 +228,7 @@ public record PlayRecord(Play play, Result result, List<Round> rounds, Log log) 
         }
 
         public static TimedAction parse(String line) {
-            String[] words = line.trim().split("\s+", 3);
+            String[] words = line.trim().split("\\s+", 3);
             return new TimedAction(Integer.parseInt(words[0]), Integer.parseInt(words[1]),
                     PlayerAction.parse(words[2]));
         }

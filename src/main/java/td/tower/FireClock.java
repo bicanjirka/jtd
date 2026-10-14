@@ -67,6 +67,6 @@ final class FireClock {
 
     /** How much of the wait is left, from {@code 1} just after a shot down to {@code 0} once it is ready. */
     float remaining() {
-        return (float) Math.max(0.0, Math.min(1.0, 1.0 - this.charge / this.period));
+        return (float) Math.clamp(1.0 - this.charge / this.period, 0.0, 1.0);
     }
 }

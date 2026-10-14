@@ -14,7 +14,7 @@ public final class FarKinshipPerk implements AuraPerk {
 
     @Override
     public String describe() {
-        return "Kinship counts tower types " + PerkText.cells(EXTRA_REACH_CELLS) + (EXTRA_REACH_CELLS == 1f ? " cell" : " cells")
+        return "Kinship counts tower types " + PerkText.distance(EXTRA_REACH_CELLS)
                 + " further and loses its cap";
     }
 }

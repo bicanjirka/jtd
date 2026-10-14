@@ -254,7 +254,7 @@ final class HtmlReport {
     /** A column per round; with {@code leaks}, a round that leaked carries its count above the column. */
     private void roundChart(double[] values, double[] leaks, double fixedMax, String title, boolean share) {
         int rounds = values.length;
-        int column = Math.max(14, Math.min(30, 480 / Math.max(1, rounds)));
+        int column = Math.clamp(480 / Math.max(1, rounds), 14, 30);
         int plot = 140;
         int width = rounds * column + 50;
         int height = plot + 50;
@@ -298,7 +298,6 @@ final class HtmlReport {
         this.html.append("</div>");
     }
 
-    /** The level's board with each cell shaded by {@code values} on one scale and the paths drawn over it. */
     /** Per round, what the competent player had, earned, spent and wanted next, averaged over plays. */
     private void economy(LevelRun run) {
         String player = BalanceReport.COMPETENT;
@@ -337,7 +336,7 @@ final class HtmlReport {
         this.html.append("<h3>Timeline</h3><p class=\"note\">One play of the competent player (seed ")
                 .append(plays.getFirst().play().seed()).append("), sampled every ").append(PlayRecord.Sample.EVERY)
                 .append(" ticks; the grid lines are round starts.</p>");
-        this.line(samples, sample -> sample.health(), "enemy health on the board", false);
+        this.line(samples, PlayRecord.Sample::health, "enemy health on the board", false);
         this.line(samples, PlayRecord.Sample::furthest, "furthest enemy, share of the path", true);
         this.line(samples, PlayRecord.Sample::credits, "credits unspent", false);
     }
@@ -372,6 +371,7 @@ final class HtmlReport {
         this.html.append("<div class=\"card\">").append(svg).append("</div>");
     }
 
+    /** The level's board with each cell shaded by {@code values} on one scale and the paths drawn over it. */
     private void board(LevelRun run, String title, Map<Point, Double> values, int cell) {
         BoardSurvey survey = run.survey();
         LevelDefinition level = survey.level();
@@ -415,7 +415,7 @@ final class HtmlReport {
 
     /** Blue above 1, red below, the neutral midpoint at 1; a factor of 2 or 0 is the full pole. */
     private static String diverging(double factor) {
-        double t = Math.max(-1, Math.min(1, factor - 1));
+        double t = Math.clamp(factor - 1, -1.0, 1.0);
         int step = (int) Math.round(Math.abs(t) * 4) * 25;
         String pole = t >= 0 ? "var(--accent)" : "var(--neg)";
         return step == 0 ? "var(--mid)" : String.format("color-mix(in oklab, %s %d%%, var(--mid))", pole, step);

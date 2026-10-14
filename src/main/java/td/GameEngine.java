@@ -441,11 +441,9 @@ public class GameEngine {
         this.gameWorld.towers().all().stream()
                 .filter(Tower::isSelected)
                 .findFirst()
-                .ifPresent(tower -> {
-                    tower.offeredUpgrades(this.gameWorld).stream()
-                            .filter(node -> tower.upgradeTree().keyOf(node) == number)
-                            .findFirst()
-                            .ifPresent(tower::buyUpgrade);
-                });
+                .ifPresent(tower -> tower.offeredUpgrades(this.gameWorld).stream()
+                        .filter(node -> tower.upgradeTree().keyOf(node) == number)
+                        .findFirst()
+                        .ifPresent(tower::buyUpgrade));
     }
 }

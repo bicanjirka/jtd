@@ -434,7 +434,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
      */
     static float fadeProgress(Rank rank, int ticksSinceDeath) {
         int alpha = 255 - (ticksSinceDeath * (255 / (fadeDurationTicks(rank) + 1)));
-        return 1f - (Math.min(255, Math.max(alpha, 0)) / 255f);
+        return 1f - (Math.clamp(alpha, 0, 255) / 255f);
     }
 
     public Void visitDefined(DefinedEnemyMob mob) {

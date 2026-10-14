@@ -100,7 +100,6 @@ public final class TowerLab {
     private final Map<TowerFactory.Type, Map<Point, Double>> cellTotals;
     private final Map<TowerFactory.Type, TypeProfile> profiles;
     private final Map<TowerFactory.Type, Sight> sights;
-    private final List<String> levelKinds;
     private final List<String> levelRanks;
 
     /**
@@ -180,7 +179,6 @@ public final class TowerLab {
         this.cellTotals = totals;
         this.profiles = profiles;
         this.sights = sights;
-        this.levelKinds = kindsIn(survey.level());
         this.levelRanks = ranksIn(survey.level());
     }
 
@@ -515,12 +513,6 @@ public final class TowerLab {
         return atRank != null ? atRank : factors.getOrDefault(kindKey(kind, LAB_RANK), 1.0);
     }
 
-    /** The kinds the lab compares at one rank: every enemy a round can send. */
-    public List<String> probedKinds() {
-        return this.profiles.get(TowerFactory.Type.SNIPER).kindFactors().keySet().stream()
-                .filter(key -> key.endsWith(AT + LAB_RANK)).map(key -> key.split(AT)[0]).toList();
-    }
-
     /** Every kind and rank this level's rounds send, as {@link #kindKey}s. */
     public List<String> levelRanks() {
         return this.levelRanks;
@@ -559,11 +551,6 @@ public final class TowerLab {
             }
         }
         return List.copyOf(keys);
-    }
-
-    /** The kinds this level's rounds send. */
-    public List<String> levelKinds() {
-        return this.levelKinds;
     }
 
     /** The share more {@code type} lands with a Beacon beside it. */
