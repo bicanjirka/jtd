@@ -9,9 +9,9 @@ public enum Rank {
     GRUNT(1.0f, 0),
     SOLDIER(1.3f, 1),
     VETERAN(1.7f, 2),
-    // Elite and Boss each climb two bounty steps, so the ranks that need a plan pay for one.
-    ELITE(2.2f, 4),
-    BOSS(3.0f, 6);
+    // Elite climbs three bounty steps and Boss five more, so the ranks that need a plan pay for one.
+    ELITE(2.2f, 5),
+    BOSS(3.0f, 10);
 
     private final float scoreMultiplier;
     private final int bountySteps;
