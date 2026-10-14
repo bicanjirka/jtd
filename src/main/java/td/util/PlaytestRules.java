@@ -10,6 +10,8 @@ public final class PlaytestRules {
 
     private volatile boolean upgradeGatesIgnored;
     private volatile int enemyHealthPercent = 100;
+    private volatile int bountyPercent = 100;
+    private volatile int spawnSpacingPercent = 100;
 
     /** Whether a tower may buy an offered node without its XP or gate condition. */
     public boolean upgradeGatesIgnored() {
@@ -31,5 +33,31 @@ public final class PlaytestRules {
             throw new IllegalArgumentException("Enemy health percent must be positive: " + percent);
         }
         this.enemyHealthPercent = percent;
+    }
+
+    /** What every kill pays, and every leak costs, as a share of the authored bounty; 1 normally. */
+    public float bountyScale() {
+        return this.bountyPercent / PERCENT;
+    }
+
+    /** Enemies built from now on pay {@code percent} of their authored bounty. */
+    public void setBountyPercent(int percent) {
+        if (percent < 0) {
+            throw new IllegalArgumentException("Bounty percent must not be negative: " + percent);
+        }
+        this.bountyPercent = percent;
+    }
+
+    /** The gaps between a wave's spawns as a share of the authored ones; 1 normally. */
+    public float spawnSpacingScale() {
+        return this.spawnSpacingPercent / PERCENT;
+    }
+
+    /** Waves that start from now on space their spawns {@code percent} of the authored gap apart. */
+    public void setSpawnSpacingPercent(int percent) {
+        if (percent <= 0) {
+            throw new IllegalArgumentException("Spawn spacing percent must be positive: " + percent);
+        }
+        this.spawnSpacingPercent = percent;
     }
 }

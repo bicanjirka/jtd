@@ -36,8 +36,9 @@ has its `TODO.md` entry until it lands):
    leaves the competent way only to stop a leak.
 4. The two missing fun proxies: several winning layouts and a decision every few waves (question 7).
 5. The adopted practices (question 9): ✅ economy modelling, ✅ per-tick timelines, ✅ coverage reports (each
-   effect's share of enemy time, each enemy ability used, and what no play of any player triggered), level-knob
-   sweeps.
+   effect's share of enemy time, each enemy ability used, and what no play of any player triggered), ✅
+   level-knob sweeps (`--sweep lives|bounty|pause|spacing`; on Zigzag Path bounty moves the margin most, from
+   85% at 60% bounty to 197% at 150%, and the pause between rounds not at all).
 6. ✅ Enemy health percent in the dev panel.
 
 The balance pass itself, level by level with the findings as the starting list, comes after the merge.

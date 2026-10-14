@@ -123,10 +123,6 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
   - **Where:** `LevelRun`, `BalanceReport`.
   - **Approach:** layouts: cluster the winning plays' builds by cell and tower type and count the
     clusters; cadence: the rounds between the competent player's purchases that changed its army.
-- **Only enemy health and starting credits can be swept.**
-  - **Where:** `Rules`, `PlaytestRules`.
-  - **Approach:** lives, bounty percent, round pause and spawn spacing as `Rules` knobs, and a report mode
-    that sweeps one and shows how the margin moves.
 
 ## Levels
 

@@ -34,10 +34,11 @@ import java.util.stream.LongStream;
  * the credits go, which towers carry the defence, what leaks, and what the lab says counters what. Every number
  * comes with its 95% interval. A tool run on demand, not a test: a minute or two.
  * <p>
- * Usage: {@code BalanceReport [--seeds N] [--levels 0,2] [--strong] [--variety] [--save NAME] [--compare NAME]
- * [--html]}. {@code --strong} adds a player that rehearses each round before playing it, which shows what the
- * competent player's rules miss; {@code --variety} measures each tower alone and each tower banned. Each adds
- * minutes. {@code --save} keeps
+ * Usage: {@code BalanceReport [--seeds N] [--levels 0,2] [--strong] [--variety] [--sweep KNOB] [--save NAME]
+ * [--compare NAME] [--html]}. {@code --strong} adds a player that rehearses each round before playing it, which
+ * shows what the competent player's rules miss; {@code --variety} measures each tower alone and each tower banned;
+ * {@code --sweep} (lives, bounty, pause or spacing, repeatable) shows how the competent player's margin moves with
+ * one of the level's knobs. Each adds minutes. {@code --save} keeps
  * every per-seed number under {@code target/balance/NAME.tsv}; {@code --compare} plays again and says what moved
  * against that file, seed by seed, so a difference belongs to the change and not to luck.
  */
@@ -89,12 +90,27 @@ public final class BalanceReport {
     /**
      * What to run and what to do with it.
      *
-     * @param seeds  seeds per player and level
-     * @param levels indices into the built-in levels
+     * @param scope  how many seeds, on which levels
      * @param extras what to measure and write beyond the standard report
      * @param files  names to save under and compare with, each empty for none
+     * @param sweeps the level knobs to sweep, in order
      */
-    record Options(int seeds, List<Integer> levels, Set<Extra> extras, Names files) {
+    record Options(Scope scope, Set<Extra> extras, Names files, List<LevelKnob> sweeps) {
+
+        /**
+         * @param seeds  seeds per player and level
+         * @param levels indices into the built-in levels
+         */
+        record Scope(int seeds, List<Integer> levels) {
+        }
+
+        int seeds() {
+            return this.scope.seeds();
+        }
+
+        List<Integer> levels() {
+            return this.scope.levels();
+        }
 
         /** What a report can add, each at a cost in time. */
         enum Extra {
@@ -113,6 +129,7 @@ public final class BalanceReport {
             Set<Extra> extras = EnumSet.noneOf(Extra.class);
             String save = "";
             String compare = "";
+            List<LevelKnob> sweeps = new ArrayList<>();
             for (int i = 0; i < args.length; i++) {
                 switch (args[i]) {
                     case "--seeds" -> seeds = Integer.parseInt(args[++i]);
@@ -122,11 +139,13 @@ public final class BalanceReport {
                     case "--save" -> save = args[++i];
                     case "--compare" -> compare = args[++i];
                     case "--html" -> extras.add(Extra.HTML);
+                    case "--sweep" -> sweeps.add(LevelKnob.named(args[++i]));
                     default -> throw new IllegalArgumentException("Unknown option " + args[i]
-                            + "; use --seeds N --levels 0,2 --strong --variety --save NAME --compare NAME --html");
+                            + "; use --seeds N --levels 0,2 --strong --variety --sweep lives|bounty|pause|spacing"
+                            + " --save NAME --compare NAME --html");
                 }
             }
-            return new Options(seeds, levels, extras, new Names(save, compare));
+            return new Options(new Scope(seeds, levels), extras, new Names(save, compare), List.copyOf(sweeps));
         }
 
         String save() {
@@ -157,6 +176,9 @@ public final class BalanceReport {
             LevelRun run = measure(all.get(index), this.options.seeds(), this.options.extras());
             runs.add(run);
             this.printLevel(run);
+            for (LevelKnob knob : this.options.sweeps()) {
+                this.printSweep(run, knob);
+            }
         }
         this.out.printf("%n(%d seeds per player, %.0fs)%n", this.options.seeds(), (System.nanoTime() - started) / 1e9);
         ResultTable table = ResultTable.of(runs);
@@ -351,6 +373,31 @@ public final class BalanceReport {
 
     static String name(EffectKind kind) {
         return kind.name().toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * The competent player's margin and win rate at each value of {@code knob}, the seeds the same at every value,
+     * and how far the margin moves across the sweep.
+     */
+    private void printSweep(LevelRun run, LevelKnob knob) {
+        PlayerSpec player = CompetentPlayer.spec(COMPETENT, Map.of(run.survey().level().name(), run.lab()),
+                CompetentPlayer.Style.standard());
+        this.out.println();
+        this.out.println("SWEEP " + knob.name().toLowerCase(Locale.ROOT)
+                + " (the competent player at each value; the level as authored is the standard one)");
+        this.out.printf("  %-12s %-15s %s%n", knob.unit(), "won", "holds enemy health");
+        for (int value : knob.settings()) {
+            LevelKnob.Setting setting = knob.at(value);
+            List<Long> seeds = LongStream.range(FIRST_SEED, FIRST_SEED + this.options.seeds()).boxed().toList();
+            Estimate won = Estimate.proportion(seeds.parallelStream()
+                    .map(seed -> LevelPlay.play(run.survey(), player, seed, setting.pacing(), setting.rules()))
+                    .toList(), play -> play.result().won());
+            Estimate margin = Estimate.of(seeds.parallelStream()
+                    .mapToDouble(seed -> Margin.healthPercent(run.survey(), player, seed, setting.pacing(),
+                            setting.rules()))
+                    .toArray());
+            this.out.printf("  %-12d %-15s %s%n", value, won.formatPercent(), margin.format(0) + "%");
+        }
     }
 
     private void printVariety(LevelRun run) {
