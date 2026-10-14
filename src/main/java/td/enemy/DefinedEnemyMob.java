@@ -83,7 +83,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.definition = definition;
         this.traits = definition.traitsFor(gameWorld.damageTally().mix());
         this.rank = rank;
-        this.price = spawnParameters.price();
+        this.price = Math.round(spawnParameters.price() * gameWorld.playtestRules().bountyScale());
         // Divided after the spawn shape's multiplier, which the wave already applied to the health.
         int healthPoints = Math.round(spawnParameters.health() / definition.healthDivisor()
                 * gameWorld.playtestRules().enemyHealthScale());

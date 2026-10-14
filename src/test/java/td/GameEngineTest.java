@@ -49,6 +49,7 @@ import td.zone.Zone;
 import td.zone.ZoneKind;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -1582,6 +1583,48 @@ class GameEngineTest {
         assertThat(engine.getGameWorld().enemies().getEnemies())
                 .extracting(EnemyMob::getHealth)
                 .containsOnly(DamageUnits.ofPoints(150));
+    }
+
+    @Test
+    void aBountyPercentScalesWhatEveryEnemyTheNextRoundBringsPays() {
+        GameEngine authored = FakeGameHost.newBoundEngine();
+        authored.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 c", Rank.GRUNT)), 100));
+        GameEngine doubled = FakeGameHost.newBoundEngine();
+        doubled.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 c", Rank.GRUNT)), 100));
+        doubled.getGameWorld().playtestRules().setBountyPercent(200);
+
+        authored.nextWave();
+        doubled.nextWave();
+
+        int bounty = authored.getGameWorld().enemies().getEnemies()[0].getBounty();
+        assertThat(doubled.getGameWorld().enemies().getEnemies())
+                .extracting(EnemyMob::getBounty)
+                .containsOnly(bounty * 2);
+    }
+
+    @Test
+    void aSpawnSpacingPercentStretchesTheGapsBetweenAWavesEnemies() {
+        GameEngine authored = FakeGameHost.newBoundEngine();
+        authored.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 c", Rank.GRUNT)), 100));
+        GameEngine spaced = FakeGameHost.newBoundEngine();
+        spaced.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 c", Rank.GRUNT)), 100));
+        spaced.getGameWorld().playtestRules().setSpawnSpacingPercent(300);
+        authored.nextWave();
+        spaced.nextWave();
+
+        int authoredGap = ticksUntilBothWalk(authored);
+        int spacedGap = ticksUntilBothWalk(spaced);
+
+        assertThat(spacedGap).isGreaterThan(authoredGap * 2);
+    }
+
+    private static int ticksUntilBothWalk(GameEngine engine) {
+        int t = 1;
+        while (t < 2000 && Arrays.stream(engine.getGameWorld().enemies().getEnemies())
+                .anyMatch(enemy -> enemy.getProgression() == 0)) {
+            engine.doTick(t++);
+        }
+        return t;
     }
 
     @Test

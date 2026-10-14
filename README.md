@@ -89,7 +89,8 @@ mvn -q compile exec:java -Dexec.mainClass=td.balance.BalanceReport -Dexec.args="
 `--compare` plays the same seeds again and lists what moved beyond the seeds' noise, then plays the saved
 competent actions back unchanged, so what the change does shows apart from how the player adapts to it. `--seeds N` (20 by
 default) and `--levels 0,2` narrow a run; `--strong` adds a player that rehearses each round before
-playing it, `--variety` measures each tower alone and each tower banned, and `--html` writes
+playing it, `--variety` measures each tower alone and each tower banned, `--sweep lives|bounty|pause|spacing`
+shows how the competent player's margin moves with one of the level's knobs, and `--html` writes
 `target/balance/report.html` with charts and board heat maps. A run takes one to two minutes; the extras
 add several each.
 

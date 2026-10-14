@@ -50,8 +50,9 @@ public class Wave {
                                                  int pathIndex, float speedMultiplier) {
         List<EnemyMob> enemies = new ArrayList<>();
         int delay = 0;
+        float delayTicksPerSlot = content.delayTicksPerSlot() * gameWorld.playtestRules().spawnSpacingScale();
         for (WaveSlot slot : content.spawnSequence()) {
-            enemies.addAll(spawnSlot(slot, gameWorld, delay, content.delayTicksPerSlot(), scatterSeed, pathIndex,
+            enemies.addAll(spawnSlot(slot, gameWorld, delay, delayTicksPerSlot, scatterSeed, pathIndex,
                     speedMultiplier));
             delay++;
         }

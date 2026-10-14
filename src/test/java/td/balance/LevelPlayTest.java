@@ -70,4 +70,15 @@ class LevelPlayTest {
         assertThat(played.watch().casts())
                 .containsKey(PlayRecord.Watch.castKey(TowerLab.kindKey("g", Rank.VETERAN), EffectKind.INVISIBLE));
     }
+
+    @Test
+    void livesAddedByTheRulesAreLivesTheLevelHasToLose() {
+        BoardSurvey survey = zigzag();
+
+        PlayRecord idle = LevelPlay.play(survey, ScriptedPlayer.spec("idle", List.of()), SEED,
+                LevelPlay.Pacing.standard(), Rules.standard().withLivesBonus(3));
+
+        assertThat(idle.result().lives()).isEqualTo(survey.level().startingLives() + 3);
+        assertThat(idle.result().livesLost()).isEqualTo(survey.level().startingLives() + 3);
+    }
 }

@@ -35,6 +35,10 @@ public final class LevelPlay {
             return new Pacing(this.pauseTicks, this.decisionTicks, this.tickBudget, true);
         }
 
+        public Pacing withPauseTicks(int ticks) {
+            return new Pacing(ticks, this.decisionTicks, this.tickBudget, this.stopAtLoss);
+        }
+
         Pacing playingOut() {
             return new Pacing(this.pauseTicks, this.decisionTicks, this.tickBudget, false);
         }
