@@ -114,13 +114,6 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
 
 `docs/plans/balance-verification-review.md` ranks these; each is a gap in `td.balance`, not in the game.
 
-- **The competent player's opening and high-health play.** It loses 3 of Twisted Hourglass's 4 lives in
-  round 1 where a five-Sniper opening loses none, and its own build played back holds more than it does
-  re-deciding against tougher enemies.
-  - **Where:** `CompetentPlayer` (its kill estimate and `Style`).
-  - **Approach:** sweep its constants against the strong player's margins, as the softness sweep did; a
-    per-kind estimate of how many enemies share a single-target tower's attention is the likely missing
-    piece.
 - **What a tower does for the others.** Slows, Vulnerable, Priority and charges are worth nothing to the
   competent player, and the lab measures them only on the tower that owns them.
   - **Where:** `TowerLab.profileOf`, `CompetentPlayer.towerDamage`.
