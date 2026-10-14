@@ -114,10 +114,6 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
 
 `docs/plans/balance-verification-review.md` ranks these; each is a gap in `td.balance`, not in the game.
 
-- **Upgrades by phase, and dead or dominant nodes across players.**
-  - **Where:** `BalanceReport`, `LevelRun.nodePickRates`.
-  - **Approach:** report the upgrade-against-copy ratio per third of the level, and node pick rates for
-    the strong player beside the competent one.
 - **Measures the recorder does not take:** damage wasted on overkill and shields, time each enemy spends in
   each tower's reach, damage per enemy kind per tower.
   - **Where:** `RunRecorder`.

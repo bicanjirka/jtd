@@ -54,7 +54,8 @@ final class RunRecorder {
     private int creditsAtStart;
     private int livesAtStart;
     private int earned;
-    private int spent;
+    private int spentOnTowers;
+    private int spentOnUpgrades;
     private long healthIn;
     private int leaked;
     private double closest;
@@ -87,7 +88,11 @@ final class RunRecorder {
     /** What a player did, and what it cost; a sale costs a negative amount. */
     void acted(int round, int offset, PlayerAction action, int cost) {
         this.actions.add(new PlayRecord.TimedAction(round, offset, action));
-        this.spent += cost;
+        switch (action) {
+            case PlayerAction.Upgrade ignored -> this.spentOnUpgrades += cost;
+            case PlayerAction.Build ignored -> this.spentOnTowers += cost;
+            case PlayerAction.Sell ignored -> this.spentOnTowers += cost;
+        }
     }
 
     /** Settles a tower's damage before it leaves the board, so a sale does not lose it. */
@@ -188,12 +193,13 @@ final class RunRecorder {
             this.countDamage(tower);
         }
         int livesLost = Math.max(0, this.livesAtStart - this.engine.getGameWorld().economy().getLives());
-        PlayRecord.RoundEconomy economy = new PlayRecord.RoundEconomy(this.creditsAtStart, this.earned, this.spent,
-                livesLost);
+        PlayRecord.RoundEconomy economy = new PlayRecord.RoundEconomy(this.creditsAtStart, this.earned,
+                new PlayRecord.Spending(this.spentOnTowers, this.spentOnUpgrades), livesLost);
         PlayRecord.RoundPressure pressure = new PlayRecord.RoundPressure(this.healthIn, this.leaked, this.closest,
                 this.roundDamage);
         this.rounds.add(new PlayRecord.Round(this.rounds.size() + 1, tick - this.roundStartTick, economy, pressure));
-        this.spent = 0;
+        this.spentOnTowers = 0;
+        this.spentOnUpgrades = 0;
     }
 
     private void countDamage(Tower tower) {

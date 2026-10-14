@@ -25,6 +25,9 @@ import java.util.stream.Stream;
  */
 public record LevelRun(TowerLab lab, Map<String, List<PlayRecord>> plays, Map<String, int[]> margins) {
 
+    /** The parts {@link #upgradeShareByThird} splits a level into. */
+    public static final int THIRDS = 3;
+
     public LevelRun {
         plays = Map.copyOf(plays);
         margins = Map.copyOf(margins);
@@ -119,6 +122,25 @@ public record LevelRun(TowerLab lab, Map<String, List<PlayRecord>> plays, Map<St
             play.towers().forEach(tower -> counts.merge(tower.type(), 1.0 / plays.size(), Double::sum));
         }
         return counts;
+    }
+
+    /**
+     * The share of what {@code player} spent that went into upgrades, in each third of the level's rounds: early,
+     * middle and late.
+     */
+    public double[] upgradeShareByThird(String player) {
+        int rounds = this.survey().level().paths().getFirst().waves().size();
+        double[] upgrades = new double[THIRDS];
+        double[] total = new double[THIRDS];
+        for (PlayRecord play : this.playsOf(player)) {
+            for (PlayRecord.Round round : play.rounds()) {
+                int third = Math.min(THIRDS - 1, (round.number() - 1) * THIRDS / rounds);
+                upgrades[third] += round.economy().spent().upgrades();
+                total[third] += round.economy().spent().total();
+            }
+        }
+        return IntStream.range(0, THIRDS).mapToDouble(i -> total[i] <= 0 ? Double.NaN : upgrades[i] / total[i])
+                .toArray();
     }
 
     /** The share of {@code player}'s plays that bought each node, by node id. */

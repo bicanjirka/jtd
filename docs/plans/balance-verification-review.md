@@ -10,7 +10,7 @@ is still missing, ranked. The feature doc carries the findings about the game it
 |---|---|---|---|
 | Is the level neither easy nor hard? | Lives lost of a fixed loadout, unlimited credits | Win rate and lives lost with real credits and lives, for a naive and a competent player; the **margin**: the highest enemy health a player still holds, seed by seed | The verdict leans on one player model; the strong player shows how far off it is |
 | Does positioning matter? | Nothing | Competent player on its chosen cells against the same player on random cells, paired by seed; the lab's best cells per tower type, and how much they overlap | Random cells are only one kind of careless |
-| Do upgrades matter? | Lives saved per 100 credits, unlimited credits (`PurchaseHarness`, `BuildHarness`) | Competent player with and without upgrades, paired; which nodes it buys; every node's factor in a lab duel | By phase of the level: not yet |
+| Do upgrades matter? | Lives saved per 100 credits, unlimited credits (`PurchaseHarness`, `BuildHarness`) | Competent player with and without upgrades, paired; which nodes it buys; every node's factor in a lab duel; the share of spending on upgrades in each third of the level, and the nodes the strong player picks far more or less often | Nodes no play buys are listed, not judged dead: a player model that never wants them and a node nobody should want look the same |
 | Do enemy types force variability? | Nothing | The counter matrix: every tower against every kind at every rank the level sends, from lab duels; leaks per play by kind | No per-kind scenario played by the player yet |
 | Is any option dead or dominant? | Nothing | `--variety`: each tower alone and each tower banned, by margin; damage share and tower counts; nodes far from the rest in the lab | Nodes dead or dominant across all players: only for the competent one |
 | Is the answer trustworthy? | One seed, or a mean with no interval | Every number with its 95% interval; Wilson intervals for win rates; differences paired by seed; a test that a seeded play repeats exactly | Few seeds make wide intervals; 20 is the default |
@@ -136,8 +136,9 @@ Each with what it would unblock here, what it costs, and the decision (⭐ = kep
    seeds' noise.
 2. ✅ **What a tower does for others.** Priced by a partner Sniper in a probe round and counted by the
    competent player at half (see above).
-3. **Upgrades by phase**, and dead or dominant nodes across players (`FEATURE-balance-verification.md`,
-   later item 2).
+3. ✅ **Upgrades by phase**, and dead or dominant nodes across players: the share spent on upgrades per
+   third of the level, node pick gaps between the strong and competent players, and the nodes no play buys
+   (under COVERAGE).
 4. **Same play for every player**, not only the competent one, if a change ever moves the naive player's
    verdict in a way the adaptive comparison cannot explain.
 5. **The old harnesses.** `BalanceHarness` is superseded and is retired on this branch. `PurchaseHarness` and

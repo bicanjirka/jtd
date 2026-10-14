@@ -118,6 +118,7 @@ final class HtmlReport {
         }
         this.html.append("</div>");
         this.towerShares(run);
+        this.upgradePhases(run);
         this.counters(run);
         this.variety(run);
         this.coverage(run);
@@ -381,6 +382,24 @@ final class HtmlReport {
                             + " rx=\"3\" fill=\"var(--accent)\"/></svg>", Math.max(1, share * 220)))
                     .append("</td><td>").append(String.format("%.1f", counts.getOrDefault(type, 0.0)))
                     .append("</td></tr>");
+        }
+        this.html.append("</table></div>");
+    }
+
+    private void upgradePhases(LevelRun run) {
+        this.html.append("<h3>Upgrades by phase</h3><p class=\"note\">The share of what a player spent that went into"
+                + " upgrades, in each third of the level's rounds.</p><div class=\"card\"><table><tr><th>player</th>"
+                + "<th>early</th><th>middle</th><th>late</th></tr>");
+        for (String player : List.of(BalanceReport.COMPETENT, BalanceReport.STRONG)) {
+            if (!run.has(player)) {
+                continue;
+            }
+            this.html.append("<tr><td>").append(player).append("</td>");
+            for (double share : run.upgradeShareByThird(player)) {
+                this.html.append("<td>").append(Double.isNaN(share) ? "-" : String.format("%.0f%%", share * 100))
+                        .append("</td>");
+            }
+            this.html.append("</tr>");
         }
         this.html.append("</table></div>");
     }

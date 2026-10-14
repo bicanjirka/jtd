@@ -68,6 +68,8 @@ public final class BalanceReport {
     static final double MATTERS = 1.15;
     /** A kind a tower brings down at least this share of, against the plain mob's, has an answer in it. */
     static final double ANSWERS = 0.5;
+    /** Two players' pick rates of a node this far apart is a choice one of them makes and the other does not. */
+    static final double PICK_GAP = 0.5;
     /** Help to a neighbour below this share is within the lab's noise. */
     static final double SUPPORTS = 0.05;
 
@@ -510,6 +512,33 @@ public final class BalanceReport {
         this.out.println("  bought most: " + (top.isEmpty() ? "nothing" : top));
         long always = picks.values().stream().filter(rate -> rate >= 0.999).count();
         this.out.printf("  %d nodes bought in every play, %d in some, every other never%n", always, picks.size() - always);
+        double[] byThird = run.upgradeShareByThird(COMPETENT);
+        this.out.printf("  share of spending on upgrades, early / middle / late rounds: %s%n", thirds(byThird));
+        if (run.has(STRONG)) {
+            this.out.printf("  the strong player's: %s%n", thirds(run.upgradeShareByThird(STRONG)));
+            this.out.println("  picked far more often by one player than the other (strong / competent): "
+                    + pickGaps(picks, run.nodePickRates(STRONG)));
+        }
+    }
+
+    private static String thirds(double[] shares) {
+        return Arrays.stream(shares).mapToObj(share -> Double.isNaN(share) ? "-" : String.format("%.0f%%", share * 100))
+                .collect(Collectors.joining(" / "));
+    }
+
+    /** The nodes whose pick rates differ by at least {@link #PICK_GAP} between the two players, widest first. */
+    static String pickGaps(Map<String, Double> competent, Map<String, Double> strong) {
+        Set<String> nodes = new java.util.LinkedHashSet<>(strong.keySet());
+        nodes.addAll(competent.keySet());
+        String gaps = nodes.stream()
+                .filter(node -> Math.abs(strong.getOrDefault(node, 0.0) - competent.getOrDefault(node, 0.0)) >= PICK_GAP)
+                .sorted(Comparator.comparingDouble((String node) ->
+                        -Math.abs(strong.getOrDefault(node, 0.0) - competent.getOrDefault(node, 0.0))))
+                .limit(8)
+                .map(node -> String.format("%s %.0f%%/%.0f%%", node, strong.getOrDefault(node, 0.0) * 100,
+                        competent.getOrDefault(node, 0.0) * 100))
+                .collect(Collectors.joining(", "));
+        return gaps.isEmpty() ? "none" : gaps;
     }
 
     private void printPressure(LevelRun run) {

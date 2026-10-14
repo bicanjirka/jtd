@@ -135,10 +135,21 @@ public record PlayRecord(Play play, Result result, List<Round> rounds, Log log) 
     /**
      * @param creditsAtStart unspent when the round started: what sat idle through it
      * @param earned         bounty paid by its kills
-     * @param spent          on towers and upgrades since the round before it ended, sales taken off
+     * @param spent          what went into towers and upgrades since the round before it ended
      * @param livesLost      lives its leaks cost
      */
-    public record RoundEconomy(int creditsAtStart, int earned, int spent, int livesLost) {
+    public record RoundEconomy(int creditsAtStart, int earned, Spending spent, int livesLost) {
+    }
+
+    /**
+     * @param towers   credits spent on new towers, sales taken off
+     * @param upgrades credits spent on upgrades
+     */
+    public record Spending(int towers, int upgrades) {
+
+        public int total() {
+            return this.towers + this.upgrades;
+        }
     }
 
     /**
