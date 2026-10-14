@@ -38,8 +38,8 @@
 - `MARKED` is spent by a hit, never by periodic damage: the mob calls `consume(MARKED)`, and only
   when its resilience is below 100.
 - A field effect (`SILENCED`, `ANCHORED`, `CORRODED`, `UNDERTOW`, `DEAD_ZONE`, `KILL_ZONE`) is an
-  ordinary timed effect the tower that holds the field refreshes every tick, so it ends a moment
-  after the enemy leaves; none is paced by spirit, so that moment is exact. A field effect with a
+  ordinary timed effect the tower that holds the field refreshes every tick, so it ends a fixed
+  time after the enemy leaves; none is paced by spirit, so that time is exact. A field effect with a
   number (`CORRODED`, `UNDERTOW`, `KILL_ZONE`) holds it in stacks of `FieldStrength`: a field tops the
   stacks up to the strength it gives, so of two fields the stronger holds. `TOLL` is a stack debuff on
   one shared clock (every stack goes when it runs out), never paced itself.

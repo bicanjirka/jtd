@@ -33,12 +33,25 @@ public enum FieldMode {
     /** Soul Drain's cost each second, and the spirit at which it has taken everything. */
     public static final int SOUL_DRAIN_SPIRIT_PER_SECOND = 15;
     public static final float SOUL_DRAIN_SPIRIT_FLOOR = -100f;
-    /** How long an enemy stays Vulnerable after it leaves the field at full Toll, and how many stacks it holds. */
-    public static final int AMPLIFY_TICKS = Math.round(2f * TickRate.TICKS_PER_SECOND);
+    /** How long a rule the field holds on an enemy lasts after the enemy leaves it. */
+    public static final int LINGER_TICKS = Math.round(2f * TickRate.TICKS_PER_SECOND);
+    /** How many stacks of Vulnerable an enemy at full Toll holds. */
     public static final int AMPLIFY_STACKS = 2;
 
-    /** What the rule does, lower-case first: {@code "enemies inside are Silenced"}. */
+    /** What the rule does, lower-case first: {@code "enemies inside are Silenced, and for 2s after they leave"}. */
     public String describe() {
+        return this.lingers() ? this.rule() + ", and for " + PerkText.seconds(LINGER_TICKS) + " after they leave" : this.rule();
+    }
+
+    /** Whether the rule holds an effect on the enemies inside, which outlasts their leaving. */
+    private boolean lingers() {
+        return switch (this) {
+            case SILENCE, DEAD_ZONE, CORROSION, UNDERTOW, KILL_ZONE -> true;
+            case MIRROR, AMPLIFY, SOUL_DRAIN, RATTLE -> false;
+        };
+    }
+
+    private String rule() {
         return switch (this) {
             case SILENCE -> "enemies inside are Silenced";
             case DEAD_ZONE -> "nothing inside can be healed or shielded";
@@ -51,7 +64,7 @@ public enum FieldMode {
             case KILL_ZONE -> "enemies inside take +" + PerkText.percent(damageTakenAt(FieldStrength.ENTRY))
                     + " damage from every source on entry, +" + PerkText.percent(damageTakenAt(FieldStrength.FULL))
                     + " at full Toll";
-            case AMPLIFY -> "an enemy at full Toll is Vulnerable while inside and " + PerkText.seconds(AMPLIFY_TICKS)
+            case AMPLIFY -> "an enemy at full Toll is Vulnerable while inside and " + PerkText.seconds(LINGER_TICKS)
                     + " after: +" + PerkText.percent(EffectKind.VULNERABLE.modifiersAt(AMPLIFY_STACKS)
                     .flat(EnemyStat.PHYSICAL_DAMAGE_TAKEN))
                     + " damage taken";

@@ -129,8 +129,6 @@ public final class PulseTower extends AbstractTower {
     private static final UpgradeNode KILL_ZONE = UpgradeTier.SPECIAL.node("pulse.special.kill_zone", "Kill Zone",
             PRICE);
 
-    /** A rule that holds inside the field lasts this long after the last tick an enemy was in it. */
-    private static final int INSIDE_TICKS = 3;
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, ARC_DISCHARGE,
             NULL_FIELD))
@@ -388,28 +386,28 @@ public final class PulseTower extends AbstractTower {
         ModeSpec modes = spec.modes();
         int strength = FieldStrength.at(enemy.effectStacks(EffectKind.TOLL));
         if (modes.has(FieldMode.SILENCE)) {
-            this.applyEffect(enemy, sink -> Effect.silenced(INSIDE_TICKS, sink));
+            this.applyEffect(enemy, sink -> Effect.silenced(FieldMode.LINGER_TICKS, sink));
         }
         if (modes.has(FieldMode.DEAD_ZONE)
                 || modes.has(FieldMode.SOUL_DRAIN) && enemy.spirit() <= FieldMode.SOUL_DRAIN_SPIRIT_FLOOR) {
-            this.applyEffect(enemy, sink -> Effect.deadZone(INSIDE_TICKS, sink));
+            this.applyEffect(enemy, sink -> Effect.deadZone(FieldMode.LINGER_TICKS, sink));
         }
         if (modes.has(FieldMode.CORROSION)) {
             int added = topUp(enemy, EffectKind.CORRODED, strength);
-            this.applyEffect(enemy, sink -> Effect.corroded(added, INSIDE_TICKS, sink));
+            this.applyEffect(enemy, sink -> Effect.corroded(added, FieldMode.LINGER_TICKS, sink));
         }
         if (modes.has(FieldMode.UNDERTOW)) {
             int added = topUp(enemy, EffectKind.UNDERTOW, strength);
-            this.applyEffect(enemy, sink -> Effect.undertow(added, INSIDE_TICKS, sink));
-            this.applyEffect(enemy, sink -> Effect.anchored(INSIDE_TICKS, sink));
+            this.applyEffect(enemy, sink -> Effect.undertow(added, FieldMode.LINGER_TICKS, sink));
+            this.applyEffect(enemy, sink -> Effect.anchored(FieldMode.LINGER_TICKS, sink));
         }
         if (modes.has(FieldMode.KILL_ZONE)) {
             int added = topUp(enemy, EffectKind.KILL_ZONE, strength);
-            this.applyEffect(enemy, sink -> Effect.killZone(added, INSIDE_TICKS, sink));
+            this.applyEffect(enemy, sink -> Effect.killZone(added, FieldMode.LINGER_TICKS, sink));
         }
         if (modes.has(FieldMode.AMPLIFY) && fullToll) {
             int added = topUp(enemy, EffectKind.VULNERABLE, FieldMode.AMPLIFY_STACKS);
-            this.applyEffect(enemy, sink -> Effect.vulnerable(added, FieldMode.AMPLIFY_TICKS, sink));
+            this.applyEffect(enemy, sink -> Effect.vulnerable(added, FieldMode.LINGER_TICKS, sink));
         }
         if (beat && modes.has(FieldMode.SOUL_DRAIN)) {
             this.applyEffect(enemy, sink -> Effect.sickened(FieldMode.SOUL_DRAIN_SPIRIT_PER_SECOND));
