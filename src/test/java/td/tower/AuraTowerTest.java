@@ -250,7 +250,7 @@ class AuraTowerTest {
 
         aura.buyUpgrade(UpgradePaths.named(aura, "Broadcast"));
 
-        assertThat(aura.getRangeReal()).isCloseTo(before * 1.3f / 1f, within(before * 0.01f));
+        assertThat(aura.getRangeReal()).isCloseTo(before * 1.3f, within(before * 0.01f));
     }
 
     @Test

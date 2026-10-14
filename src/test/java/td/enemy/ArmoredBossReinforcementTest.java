@@ -7,6 +7,7 @@ import td.util.TickRate;
 import td.wave.PathNormal;
 import td.wave.Vec2;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,7 +54,7 @@ class ArmoredBossReinforcementTest {
 
         tick(boss, 1, INTERVAL);
 
-        List<DefinedEnemyMob> reinforcements = List.of(world.enemies().getEnemies()).stream()
+        List<DefinedEnemyMob> reinforcements = Arrays.stream(world.enemies().getEnemies())
                 .filter(mob -> mob != boss)
                 .map(DefinedEnemyMob.class::cast)
                 .toList();

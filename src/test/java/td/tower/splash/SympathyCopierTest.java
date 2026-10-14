@@ -1,6 +1,7 @@
 package td.tower.splash;
 
 import org.junit.jupiter.api.Test;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.fixtures.FakeEnemyMob;
@@ -20,12 +21,9 @@ class SympathyCopierTest {
     void anEnemyThatLacksADebuffGetsItAsTheCarrierHasItWithTheTimeItHasLeft() {
         FakeEnemyMob carrier = FakeEnemyMob.at(0, 0);
         FakeEnemyMob other = FakeEnemyMob.at(10, 0);
-        give(carrier, Effect.sundered(3, 70, d -> {
-        }));
-        give(carrier, Effect.vulnerable(2, 50, d -> {
-        }));
-        give(carrier, Effect.exposed(30, d -> {
-        }));
+        give(carrier, Effect.sundered(3, 70, DamageSink.none()));
+        give(carrier, Effect.vulnerable(2, 50, DamageSink.none()));
+        give(carrier, Effect.exposed(30, DamageSink.none()));
 
         List<Effect> copies = SympathyCopier.missingFrom(carrier, other);
 
@@ -42,10 +40,8 @@ class SympathyCopierTest {
     void anEnemyOnlyGetsTheStacksItLacksSoSharingBackAndForthNeverClimbs() {
         FakeEnemyMob carrier = FakeEnemyMob.at(0, 0);
         FakeEnemyMob other = FakeEnemyMob.at(10, 0);
-        give(carrier, Effect.sundered(3, 70, d -> {
-        }));
-        give(other, Effect.sundered(1, 40, d -> {
-        }));
+        give(carrier, Effect.sundered(3, 70, DamageSink.none()));
+        give(other, Effect.sundered(1, 40, DamageSink.none()));
 
         SympathyCopier.missingFrom(carrier, other).forEach(other::applyEffect);
 
@@ -58,14 +54,10 @@ class SympathyCopierTest {
     void aChillIsToppedUpToTheCarriersLevelAndNoFurtherAndAnExposedOneIsNotRefreshed() {
         FakeEnemyMob carrier = FakeEnemyMob.at(0, 0);
         FakeEnemyMob other = FakeEnemyMob.at(10, 0);
-        give(carrier, Effect.chill(0.5f, 100, d -> {
-        }));
-        give(other, Effect.chill(0.2f, 100, d -> {
-        }));
-        give(carrier, Effect.exposed(60, d -> {
-        }));
-        give(other, Effect.exposed(10, d -> {
-        }));
+        give(carrier, Effect.chill(0.5f, 100, DamageSink.none()));
+        give(other, Effect.chill(0.2f, 100, DamageSink.none()));
+        give(carrier, Effect.exposed(60, DamageSink.none()));
+        give(other, Effect.exposed(10, DamageSink.none()));
 
         List<Effect> copies = SympathyCopier.missingFrom(carrier, other);
 
@@ -80,10 +72,8 @@ class SympathyCopierTest {
     void whatTheCarrierSuffersButSympathyDoesNotShareStaysWithIt() {
         FakeEnemyMob carrier = FakeEnemyMob.at(0, 0);
         FakeEnemyMob other = FakeEnemyMob.at(10, 0);
-        give(carrier, Effect.freeze(40, d -> {
-        }));
-        give(carrier, Effect.hex(EffectKind.DOOM, 80, d -> {
-        }));
+        give(carrier, Effect.freeze(40, DamageSink.none()));
+        give(carrier, Effect.hex(EffectKind.DOOM, 80, DamageSink.none()));
 
         assertThat(SympathyCopier.missingFrom(carrier, other)).isEmpty();
     }

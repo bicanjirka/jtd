@@ -3,6 +3,7 @@ package td.tower;
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
@@ -274,8 +275,7 @@ class SonarTowerTest {
     void aBeamCritOnAnExposedEnemyRefreshesItsExposure() {
         SonarTower tower = this.upgradedTower("Rapid Array", "Rapid Array II");
         FakeEnemyMob exposed = at(EAST, NEAR);
-        exposed.applyEffect(Effect.exposed(5, d -> {
-        }));
+        exposed.applyEffect(Effect.exposed(5, DamageSink.none()));
         exposed.landEveryHitCritical();
         this.enemies(exposed);
 
@@ -476,8 +476,7 @@ class SonarTowerTest {
     void shatterToneBreaksAQuarterOfAShieldAndLeavesTheUnshieldedAlone() {
         SonarTower tower = this.transcendedTower("Ultrasound", "Harmonics", "Pure Tone", "Shatter Tone");
         FakeEnemyMob shielded = at(EAST, NEAR);
-        shielded.applyEffect(Effect.shield(0.5f, 100, d -> {
-        }));
+        shielded.applyEffect(Effect.shield(0.5f, 100, DamageSink.none()));
         FakeEnemyMob bare = at(EAST, NEAR + 30);
         this.enemies(shielded, bare);
 

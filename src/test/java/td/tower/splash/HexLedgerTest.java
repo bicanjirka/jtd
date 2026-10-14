@@ -3,6 +3,7 @@ package td.tower.splash;
 import org.junit.jupiter.api.Test;
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.fixtures.FakeEnemyMob;
@@ -15,8 +16,7 @@ class HexLedgerTest {
 
     private static FakeEnemyMob doomed() {
         FakeEnemyMob enemy = FakeEnemyMob.at(0, 0);
-        enemy.applyEffect(Effect.hex(EffectKind.DOOM, 80, d -> {
-        }));
+        enemy.applyEffect(Effect.hex(EffectKind.DOOM, 80, DamageSink.none()));
         return enemy;
     }
 

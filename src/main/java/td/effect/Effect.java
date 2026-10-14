@@ -95,8 +95,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
      * stacks. Made by {@code ActiveEffects} as a pool earns them, never by a tower.
      */
     static Effect stackDebuff(EffectKind kind, int stacks) {
-        return of(kind, 0, d -> {
-        }, new EffectDynamics.Stacks(stacks, 0, false));
+        return of(kind, 0, DamageSink.none(), new EffectDynamics.Stacks(stacks, 0, false));
     }
 
     /**

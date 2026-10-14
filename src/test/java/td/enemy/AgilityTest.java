@@ -3,6 +3,7 @@ package td.enemy;
 import org.junit.jupiter.api.Test;
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
@@ -62,10 +63,8 @@ class AgilityTest {
     void aFrozenOrDazedEnemyCannotDodge() {
         DefinedEnemyMob frozen = nimble();
         DefinedEnemyMob dazed = nimble();
-        frozen.applyEffect(Effect.freeze(100, d -> {
-        }));
-        dazed.applyEffect(Effect.dazed(100, d -> {
-        }));
+        frozen.applyEffect(Effect.freeze(100, DamageSink.none()));
+        dazed.applyEffect(Effect.dazed(100, DamageSink.none()));
 
         assertThat(frozen.takeHit(Damage.physical(1000), AIMED).dodged()).isFalse();
         assertThat(dazed.takeHit(Damage.physical(1000), AIMED).dodged()).isFalse();
@@ -74,8 +73,7 @@ class AgilityTest {
     @Test
     void aMarkedEnemyCannotDodgeTheHitThatSpendsTheMark() {
         DefinedEnemyMob enemy = nimble();
-        enemy.applyEffect(Effect.marked(100, d -> {
-        }));
+        enemy.applyEffect(Effect.marked(100, DamageSink.none()));
 
         HitResult marked = enemy.takeHit(Damage.physical(1000), AIMED);
         HitResult next = enemy.takeHit(Damage.physical(1000), AIMED);

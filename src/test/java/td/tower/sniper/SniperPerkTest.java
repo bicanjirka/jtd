@@ -21,10 +21,6 @@ class SniperPerkTest {
         return new ShotContext(FakeEnemyMob.at(0, 0), new AimLock(stacks, fresh), shotNumber);
     }
 
-    private static ShotContext against(EnemyMob target) {
-        return new ShotContext(target, new AimLock(0, true), 1);
-    }
-
     @Test
     void weakSpotIgnoresPlatingAndSomeArmorOnlyOnShotsThatDoNotCrit() {
         AttackProfile attack = new WeakSpotPerk().shape(BASE, context(0, true, 1)).attack();

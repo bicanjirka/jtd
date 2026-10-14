@@ -2,6 +2,7 @@ package td.enemy;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.fixtures.EnemyFixtures;
@@ -106,8 +107,7 @@ class GhostInvisibilityTest {
         DefinedEnemyMob mob = (DefinedEnemyMob) world.getEnemyCatalog().spawn("revealed", world, 0, 100, 4, Rank.GRUNT);
         world.enemies().add(mob);
 
-        mob.applyEffect(Effect.invisible(100, d -> {
-        }));
+        mob.applyEffect(Effect.invisible(100, DamageSink.none()));
 
         assertThat(mob.activeEffectKinds()).contains(EffectKind.INVISIBLE);
         assertThat(mob.isHidden()).isFalse();
@@ -162,8 +162,7 @@ class GhostInvisibilityTest {
             eliteGhost.doTick(t);
             ally.doTick(t);
         }
-        ally.applyEffect(Effect.revealed(5 * GhostEnemy.SHROUD_TICKS, d -> {
-        }));
+        ally.applyEffect(Effect.revealed(5 * GhostEnemy.SHROUD_TICKS, DamageSink.none()));
         int hiddenAgainAt = 0;
 
         for (int t = GhostEnemy.SHROUD_TICKS + 1; t <= 3 * GhostEnemy.SHROUD_TICKS && hiddenAgainAt == 0; t++) {

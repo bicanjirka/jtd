@@ -5,6 +5,7 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.damage.DamageUnits;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.fixtures.WorldFixtures;
@@ -156,10 +157,8 @@ class WardenChainTest {
     private static boolean blocksAgainst(GameWorld world, String eggId, EffectKind kind) {
         DefinedEnemyMob egg = (DefinedEnemyMob) world.getEnemyCatalog().spawn(eggId, world, 0, 1500, 20, Rank.GRUNT);
         egg.applyEffect(switch (kind) {
-            case CHILL -> Effect.chill(0.5f, 100, d -> {
-            });
-            case BURN -> Effect.burn(Damage.magic(10), 100, d -> {
-            });
+            case CHILL -> Effect.chill(0.5f, 100, DamageSink.none());
+            case BURN -> Effect.burn(Damage.magic(10), 100, DamageSink.none());
             default -> throw new IllegalArgumentException(kind.name());
         });
         return !egg.hasEffect(kind);

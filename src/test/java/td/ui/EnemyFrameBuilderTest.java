@@ -3,6 +3,7 @@ package td.ui;
 import org.junit.jupiter.api.Test;
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.FieldStrength;
@@ -71,8 +72,7 @@ class EnemyFrameBuilderTest {
     void anEnemyHeldByAFieldEffectFlickersBetweenSteadyAndDimmed() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.corroded(FieldStrength.FULL, 100, d -> {
-        }));
+        enemy.applyEffect(Effect.corroded(FieldStrength.FULL, 100, DamageSink.none()));
         int half = EnemyFrameBuilder.FLICKER_HALF_PERIOD_TICKS;
 
         float first = bodyDrawAt(enemy, 0, 0.0).flicker();
@@ -88,8 +88,7 @@ class EnemyFrameBuilderTest {
     void anEnemyWithNoFieldEffectNeverFlickers() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.burn(Damage.magic(10), 100, d -> {
-        }));
+        enemy.applyEffect(Effect.burn(Damage.magic(10), 100, DamageSink.none()));
 
         float dimmedHalf = bodyDrawAt(enemy, EnemyFrameBuilder.FLICKER_HALF_PERIOD_TICKS, 0.0).flicker();
 
@@ -214,8 +213,7 @@ class EnemyFrameBuilderTest {
     void anActiveSlowYieldsExactlyOneStatusMarkerWithTheSlowRole() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.chill(0.5f, 5, d -> {
-        }));
+        enemy.applyEffect(Effect.chill(0.5f, 5, DamageSink.none()));
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
         enemy.accept(builder);
@@ -229,10 +227,8 @@ class EnemyFrameBuilderTest {
     void twoActiveEffectsYieldTwoDistinctlyPositionedMarkers() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.chill(0.5f, 5, d -> {
-        }));
-        enemy.applyEffect(Effect.heal(1, 5, d -> {
-        }));
+        enemy.applyEffect(Effect.chill(0.5f, 5, DamageSink.none()));
+        enemy.applyEffect(Effect.heal(1, 5, DamageSink.none()));
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
         enemy.accept(builder);
@@ -246,16 +242,11 @@ class EnemyFrameBuilderTest {
     void aFourthSimultaneousEffectCollapsesIntoOneOverflowMarkerInsteadOfGrowingTheRow() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.chill(0.5f, 5, d -> {
-        }));
-        enemy.applyEffect(Effect.heal(1, 5, d -> {
-        }));
-        enemy.applyEffect(Effect.vulnerable(1, 5, d -> {
-        }));
-        enemy.applyEffect(Effect.shield(0.3f, 5, d -> {
-        }));
-        enemy.applyEffect(Effect.revealed(5, d -> {
-        }));
+        enemy.applyEffect(Effect.chill(0.5f, 5, DamageSink.none()));
+        enemy.applyEffect(Effect.heal(1, 5, DamageSink.none()));
+        enemy.applyEffect(Effect.vulnerable(1, 5, DamageSink.none()));
+        enemy.applyEffect(Effect.shield(0.3f, 5, DamageSink.none()));
+        enemy.applyEffect(Effect.revealed(5, DamageSink.none()));
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
         enemy.accept(builder);
@@ -270,14 +261,10 @@ class EnemyFrameBuilderTest {
     void effectsPastTheCapGroupByCategoryAndEachMarkerCountsTheOtherKindsOfItsCategory() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.burn(Damage.magic(10), 50, d -> {
-        }));
-        enemy.applyEffect(Effect.poison(Damage.magic(10), 50, d -> {
-        }));
-        enemy.applyEffect(Effect.exposed(5, d -> {
-        }));
-        enemy.applyEffect(Effect.marked(5, d -> {
-        }));
+        enemy.applyEffect(Effect.burn(Damage.magic(10), 50, DamageSink.none()));
+        enemy.applyEffect(Effect.poison(Damage.magic(10), 50, DamageSink.none()));
+        enemy.applyEffect(Effect.exposed(5, DamageSink.none()));
+        enemy.applyEffect(Effect.marked(5, DamageSink.none()));
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
         enemy.accept(builder);
@@ -297,8 +284,7 @@ class EnemyFrameBuilderTest {
     void aHexedEnemyWearsItsHexsRuneAndAPlainOneNone() {
         GameWorld context = contextWithStraightPath();
         EnemyMob doomed = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        doomed.applyEffect(Effect.hex(EffectKind.DOOM, 80, d -> {
-        }));
+        doomed.applyEffect(Effect.hex(EffectKind.DOOM, 80, DamageSink.none()));
         EnemyMob plain = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
@@ -377,16 +363,11 @@ class EnemyFrameBuilderTest {
     void aFifthSimultaneousEffectDoesNotGrowTheRowFurther() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.chill(0.5f, 5, d -> {
-        }));
-        enemy.applyEffect(Effect.vulnerable(1, 5, d -> {
-        }));
-        enemy.applyEffect(Effect.exposed(5, d -> {
-        }));
-        enemy.applyEffect(Effect.shield(0.3f, 5, d -> {
-        }));
-        enemy.applyEffect(Effect.invisible(5, d -> {
-        }));
+        enemy.applyEffect(Effect.chill(0.5f, 5, DamageSink.none()));
+        enemy.applyEffect(Effect.vulnerable(1, 5, DamageSink.none()));
+        enemy.applyEffect(Effect.exposed(5, DamageSink.none()));
+        enemy.applyEffect(Effect.shield(0.3f, 5, DamageSink.none()));
+        enemy.applyEffect(Effect.invisible(5, DamageSink.none()));
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
         enemy.accept(builder);
@@ -407,8 +388,7 @@ class EnemyFrameBuilderTest {
     void cloakProgressRampsUpOverTheFadeDurationAfterGainingInvisibility() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.invisible(200, d -> {
-        }));
+        enemy.applyEffect(Effect.invisible(200, DamageSink.none()));
         enemy.doTick(1); // captures the gain at tick 1
 
         assertThat(bodyDrawAt(enemy, 1, 0.0).cloakProgress()).isZero();
@@ -422,8 +402,7 @@ class EnemyFrameBuilderTest {
     void cloakProgressRampsBackDownOverTheFadeDurationAfterInvisibilityExpires() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.invisible(3, d -> {
-        }));
+        enemy.applyEffect(Effect.invisible(3, DamageSink.none()));
         enemy.doTick(1);
         enemy.doTick(2);
         enemy.doTick(3); // the effect expires on this tick
@@ -481,8 +460,7 @@ class EnemyFrameBuilderTest {
     void anActiveShieldYieldsARingInTheShieldMarkersColour() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.shield(0.3f, 5, d -> {
-        }));
+        enemy.applyEffect(Effect.shield(0.3f, 5, DamageSink.none()));
 
         List<EnemyOverlayDraw> overlays = overlaysOf(enemy, 0);
 
@@ -495,8 +473,7 @@ class EnemyFrameBuilderTest {
     void theShieldRingDisappearsOnceTheShieldExpires() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.shield(0.3f, 1, d -> {
-        }));
+        enemy.applyEffect(Effect.shield(0.3f, 1, DamageSink.none()));
         enemy.doTick(1); // the shield expires this tick
 
         assertThat(overlaysOf(enemy, 1)).isEmpty();
@@ -506,8 +483,7 @@ class EnemyFrameBuilderTest {
     void anActiveFreezeYieldsAnIceCrystalOverlayInTheFreezeCrystalColour() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.freeze(5, d -> {
-        }));
+        enemy.applyEffect(Effect.freeze(5, DamageSink.none()));
 
         List<EnemyOverlayDraw> overlays = overlaysOf(enemy, 0);
 
@@ -520,8 +496,7 @@ class EnemyFrameBuilderTest {
     void theIceCrystalOverlayDisappearsOnceTheFreezeExpires() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.freeze(1, d -> {
-        }));
+        enemy.applyEffect(Effect.freeze(1, DamageSink.none()));
         enemy.doTick(1); // the freeze expires this tick
 
         assertThat(overlaysOf(enemy, 1)).isEmpty();
@@ -544,8 +519,7 @@ class EnemyFrameBuilderTest {
     void aGainedEffectYieldsAnOutwardPulseAtTheMomentItsGained() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.chill(0.5f, 200, d -> {
-        }));
+        enemy.applyEffect(Effect.chill(0.5f, 200, DamageSink.none()));
         enemy.doTick(1); // captures the gain at tick 1
 
         List<EnemyOverlayDraw> overlays = overlaysOf(enemy, 1);
@@ -561,8 +535,7 @@ class EnemyFrameBuilderTest {
     void theGainPulseDisappearsAfterItsDuration() {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.chill(0.5f, 200, d -> {
-        }));
+        enemy.applyEffect(Effect.chill(0.5f, 200, DamageSink.none()));
         enemy.doTick(1);
 
         assertThat(overlaysOf(enemy, 1 + EnemyFrameBuilder.EFFECT_PULSE_DURATION_TICKS)).hasSize(1);
@@ -574,8 +547,7 @@ class EnemyFrameBuilderTest {
         GameWorld context = contextWithStraightPath();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         int durationTicks = EnemyFrameBuilder.EFFECT_PULSE_DURATION_TICKS + 2;
-        enemy.applyEffect(Effect.chill(0.5f, durationTicks, d -> {
-        }));
+        enemy.applyEffect(Effect.chill(0.5f, durationTicks, DamageSink.none()));
         for (int t = 1; t <= durationTicks; t++) { // the slow expires on the last of these
             enemy.doTick(t);
         }

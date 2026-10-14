@@ -1,6 +1,7 @@
 package td.tower.targeting;
 
 import org.junit.jupiter.api.Test;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
@@ -12,8 +13,7 @@ class WithEffectTargetQueryTest {
 
     private static FakeEnemyMob marked(double x) {
         FakeEnemyMob mob = FakeEnemyMob.at(x, 0);
-        mob.applyEffect(Effect.marked(100, d -> {
-        }));
+        mob.applyEffect(Effect.marked(100, DamageSink.none()));
         return mob;
     }
 

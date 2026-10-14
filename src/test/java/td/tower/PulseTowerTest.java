@@ -2,6 +2,7 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyFactory;
@@ -208,8 +209,7 @@ class PulseTowerTest {
     }
 
     private static void fullToll(FakeEnemyMob enemy, int cap) {
-        enemy.applyEffect(Effect.toll(cap, 100, d -> {
-        }).withStackCap(cap));
+        enemy.applyEffect(Effect.toll(cap, 100, DamageSink.none()).withStackCap(cap));
     }
 
     @Test
@@ -374,8 +374,7 @@ class PulseTowerTest {
         this.board.setPath(new td.wave.PathNormal(List.of(new td.wave.Vec2(tower.getX(), tower.getY()),
                 new td.wave.Vec2(tower.getX() + 900, tower.getY()))));
         td.enemy.EnemyMob enemy = EnemyFactory.getEnemy("c", this.board, 0, 1_000_000, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.shield(1_000_000f, 10_000, d -> {
-        }));
+        enemy.applyEffect(Effect.shield(1_000_000f, 10_000, DamageSink.none()));
         return enemy;
     }
 

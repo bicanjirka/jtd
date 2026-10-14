@@ -1,6 +1,7 @@
 package td.zone;
 
 import org.junit.jupiter.api.Test;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
@@ -178,8 +179,7 @@ class ZoneRosterTest {
         FakeEnemyMob outside = FakeEnemyMob.at(100 + 5 * RADIUS, 100);
         this.world.enemies().setEnemies(new EnemyMob[]{inside, outside});
         this.world.zones().add(Zone.cloud(100, 100, RADIUS, LIFETIME, this.owner,
-                java.util.List.of(Effect.vulnerable(2, 80, d -> {
-                }))));
+                java.util.List.of(Effect.vulnerable(2, 80, DamageSink.none()))));
 
         this.tick(1, 2);
 
@@ -192,8 +192,7 @@ class ZoneRosterTest {
         FakeEnemyMob inside = FakeEnemyMob.at(100, 100);
         this.world.enemies().setEnemies(new EnemyMob[]{inside});
         this.world.zones().add(Zone.cloud(100, 100, RADIUS, LIFETIME, this.owner,
-                java.util.List.of(Effect.vulnerable(2, 40, d -> {
-                }))));
+                java.util.List.of(Effect.vulnerable(2, 40, DamageSink.none()))));
 
         this.tick(1, LIFETIME);
 
@@ -208,8 +207,7 @@ class ZoneRosterTest {
         FakeEnemyMob inside = FakeEnemyMob.at(100, 100);
         this.world.enemies().setEnemies(new EnemyMob[]{inside});
         this.world.zones().add(Zone.cloud(100, 100, RADIUS, LIFETIME, this.owner,
-                java.util.List.of(Effect.vulnerable(2, 40, d -> {
-                }))));
+                java.util.List.of(Effect.vulnerable(2, 40, DamageSink.none()))));
         this.tick(1, 41);
         int givenWhileItLasted = inside.appliedEffects().size();
 

@@ -13,12 +13,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EffectTest {
 
-    private static final DamageSink NOWHERE = damage -> {
-    };
-
     @Test
     void aBurnIsAFuelPool() {
-        Effect burn = Effect.burn(Damage.magic(40), 60, NOWHERE);
+        Effect burn = Effect.burn(Damage.magic(40), 60, DamageSink.none());
 
         assertThat(burn.dynamics()).isInstanceOf(EffectDynamics.FuelPool.class);
         assertThat(burn.damagePerTick()).isEqualTo(Damage.magic(40));
@@ -29,7 +26,7 @@ class EffectTest {
 
     @Test
     void aChillIsALevelOfFadingContributions() {
-        Effect chill = Effect.chill(0.4f, 100, NOWHERE);
+        Effect chill = Effect.chill(0.4f, 100, DamageSink.none());
 
         assertThat(chill.dynamics()).isInstanceOf(EffectDynamics.ChillLevel.class);
         assertThat(chill.fuelLevel()).isEqualTo(0.4f);
@@ -39,7 +36,7 @@ class EffectTest {
 
     @Test
     void aShieldIsAPoolWithItsLimit() {
-        Effect shield = Effect.shield(500f, 100, NOWHERE).withShieldRestrictedTo(DamageType.MAGIC);
+        Effect shield = Effect.shield(500f, 100, DamageSink.none()).withShieldRestrictedTo(DamageType.MAGIC);
 
         assertThat(shield.dynamics()).isInstanceOf(EffectDynamics.ShieldPool.class);
         assertThat(shield.shieldRemaining()).isEqualTo(500f);
@@ -50,7 +47,7 @@ class EffectTest {
 
     @Test
     void aVulnerableIsAStackCount() {
-        Effect vulnerable = Effect.vulnerable(2, 60, NOWHERE).withStackCap(8);
+        Effect vulnerable = Effect.vulnerable(2, 60, DamageSink.none()).withStackCap(8);
 
         assertThat(vulnerable.dynamics()).isInstanceOf(EffectDynamics.Stacks.class);
         assertThat(vulnerable.stacks()).isEqualTo(2);
@@ -60,7 +57,7 @@ class EffectTest {
 
     @Test
     void aFreezeIsAFlag() {
-        Effect freeze = Effect.freeze(30, NOWHERE);
+        Effect freeze = Effect.freeze(30, DamageSink.none());
 
         assertThat(freeze.dynamics()).isInstanceOf(EffectDynamics.Flag.class);
         assertThat(freeze.stacks()).isZero();
@@ -69,7 +66,7 @@ class EffectTest {
 
     @Test
     void aHealRestoresEveryTick() {
-        Effect heal = Effect.heal(12, 40, NOWHERE);
+        Effect heal = Effect.heal(12, 40, DamageSink.none());
 
         assertThat(heal.dynamics()).isInstanceOf(EffectDynamics.HealOverTime.class);
         assertThat(heal.healPerTick()).isEqualTo(12);
@@ -80,7 +77,7 @@ class EffectTest {
     void anInvertedHealDealsDamageEveryTick() {
         List<Damage> dealt = new ArrayList<>();
 
-        Effect inverted = Effect.heal(12, 40, NOWHERE).invertedThrough(dealt::add);
+        Effect inverted = Effect.heal(12, 40, DamageSink.none()).invertedThrough(dealt::add);
         inverted.sink().apply(inverted.damagePerTick());
 
         assertThat(inverted.dynamics()).isInstanceOf(EffectDynamics.TickDamage.class);
@@ -90,7 +87,7 @@ class EffectTest {
 
     @Test
     void aBleedIsDamageForEveryCellWalked() {
-        Effect bleed = Effect.bleeding(6, 80, NOWHERE);
+        Effect bleed = Effect.bleeding(6, 80, DamageSink.none());
 
         assertThat(bleed.dynamics()).isEqualTo(new EffectDynamics.Distance(Damage.physical(6)));
         assertThat(bleed.damagePerTick()).isEqualTo(Damage.physical(6));
@@ -98,7 +95,7 @@ class EffectTest {
 
     @Test
     void changingStacksOnAPoolIsAProgrammingError() {
-        Effect burn = Effect.burn(Damage.magic(40), 60, NOWHERE);
+        Effect burn = Effect.burn(Damage.magic(40), 60, DamageSink.none());
 
         assertThatThrownBy(() -> burn.withStacks(3, 60)).isInstanceOf(IllegalStateException.class);
     }

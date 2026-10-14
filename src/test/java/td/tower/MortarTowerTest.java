@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.damage.DamageUnits;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyFactory;
@@ -83,8 +84,7 @@ class MortarTowerTest {
         MortarTower tower = this.towerAt(3, 3);
         FakeEnemyMob furthest = this.enemyAt(tower, 0, -OUT).withProgression(900);
         FakeEnemyMob prioritised = this.enemyAt(tower, 0, OUT).withProgression(10);
-        prioritised.applyEffect(Effect.priority(100, d -> {
-        }));
+        prioritised.applyEffect(Effect.priority(100, DamageSink.none()));
         this.context.enemies().setEnemies(new EnemyMob[]{furthest, prioritised});
 
         this.landAShell(tower);
@@ -412,7 +412,7 @@ class MortarTowerTest {
         this.landAShell(tower);
         this.context.zones().doTick(1);
 
-        assertThat(target.hits()).extracting(hit -> hit.type()).containsExactly(DamageType.PHYSICAL,
+        assertThat(target.hits()).extracting(Damage::type).containsExactly(DamageType.PHYSICAL,
                 DamageType.PHYSICAL, DamageType.MAGIC);
         assertThat(target.activeEffectKinds()).contains(EffectKind.BURN);
     }

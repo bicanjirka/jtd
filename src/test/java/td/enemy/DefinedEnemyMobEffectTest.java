@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.damage.AttackOrigin;
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.fixtures.LevelFixtures;
@@ -29,8 +30,7 @@ class DefinedEnemyMobEffectTest {
         EnemyMob frozenOnce = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         EnemyMob fresh = EnemyFactory.getEnemy("c", context, 0, 50, 4, Rank.GRUNT);
 
-        frozenOnce.applyEffect(Effect.freeze(10, d -> {
-        }));
+        frozenOnce.applyEffect(Effect.freeze(10, DamageSink.none()));
 
         assertThat(frozenOnce.freezeDiminished()).isTrue();
         assertThat(fresh.freezeDiminished()).isFalse();
@@ -43,8 +43,7 @@ class DefinedEnemyMobEffectTest {
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         float fullSpeed = enemy.getSpeed();
 
-        enemy.applyEffect(Effect.chill(0.5f, 5, d -> {
-        }));
+        enemy.applyEffect(Effect.chill(0.5f, 5, DamageSink.none()));
         enemy.doTick(1);
 
         assertThat(enemy.getX()).isCloseTo(fullSpeed * 0.5f, within(1e-6));
@@ -56,8 +55,7 @@ class DefinedEnemyMobEffectTest {
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
 
-        enemy.applyEffect(Effect.freeze(2, d -> {
-        }));
+        enemy.applyEffect(Effect.freeze(2, DamageSink.none()));
         enemy.doTick(1);
         enemy.doTick(2);
         assertThat(enemy.getX()).isEqualTo(0.0);
@@ -100,8 +98,7 @@ class DefinedEnemyMobEffectTest {
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100, 3, Rank.GRUNT); // 10000 health
         enemy.doDamage(Damage.physical(4000)); // down to 6000
 
-        enemy.applyEffect(Effect.heal(1000, 2, d -> {
-        }));
+        enemy.applyEffect(Effect.heal(1000, 2, DamageSink.none()));
         enemy.doTick(1);
 
         assertThat(enemy.getHealth()).isEqualTo(7000);
@@ -117,8 +114,7 @@ class DefinedEnemyMobEffectTest {
         enemy.doDamage(Damage.physical(4000));
         int damaged = enemy.getHealth();
 
-        enemy.applyEffect(Effect.heal(1, 10, d -> {
-        }));
+        enemy.applyEffect(Effect.heal(1, 10, DamageSink.none()));
         for (int t = 1; t <= 10; t++) {
             enemy.doTick(t);
         }
@@ -133,8 +129,7 @@ class DefinedEnemyMobEffectTest {
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100, 3, Rank.GRUNT); // 10000 health
         enemy.doDamage(Damage.physical(500)); // down to 9500
 
-        enemy.applyEffect(Effect.heal(1000, 2, d -> {
-        }));
+        enemy.applyEffect(Effect.heal(1000, 2, DamageSink.none()));
         enemy.doTick(1);
 
         assertThat(enemy.getHealth()).isEqualTo(10000);
@@ -147,8 +142,7 @@ class DefinedEnemyMobEffectTest {
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1, 3, Rank.GRUNT); // 100 health
 
-        enemy.applyEffect(Effect.heal(1000, 5, d -> {
-        }));
+        enemy.applyEffect(Effect.heal(1000, 5, DamageSink.none()));
         enemy.doDamage(Damage.physical(100)); // kills it before this tick's doTick runs
         enemy.doTick(1);
 
@@ -166,8 +160,7 @@ class DefinedEnemyMobEffectTest {
         DefinedEnemyMob brittle = (DefinedEnemyMob) context.getEnemyCatalog().spawn("brittle", context, 0, 100_000, 5, Rank.GRUNT);
         DefinedEnemyMob plain = (DefinedEnemyMob) context.getEnemyCatalog().spawn("plain", context, 0, 100_000, 5, Rank.GRUNT);
         for (DefinedEnemyMob mob : List.of(brittle, plain)) {
-            mob.applyEffect(Effect.burn(Damage.magic(10), 30, d -> {
-            }));
+            mob.applyEffect(Effect.burn(Damage.magic(10), 30, DamageSink.none()));
             for (int t = 1; t <= 40; t++) {
                 mob.doTick(t);
             }
@@ -190,8 +183,7 @@ class DefinedEnemyMobEffectTest {
     void aHitOnAMarkedEnemyIsAGuaranteedCritAndSpendsTheMark() {
         GameWorld context = WorldFixtures.newWorld(() -> 0.99);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100000, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.marked(100, d -> {
-        }));
+        enemy.applyEffect(Effect.marked(100, DamageSink.none()));
 
         Damage first = enemy.doDamage(Damage.physical(1000), AttackProfile.none());
         Damage second = enemy.doDamage(Damage.physical(1000), AttackProfile.none());
@@ -234,8 +226,7 @@ class DefinedEnemyMobEffectTest {
     void periodicDamageNeitherCritsNorSpendsAMark() {
         GameWorld context = WorldFixtures.newWorld(() -> 0.0);
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100000, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.marked(100, d -> {
-        }));
+        enemy.applyEffect(Effect.marked(100, DamageSink.none()));
 
         Damage landed = enemy.doDamage(Damage.physical(1000), AttackProfile.critChance(1f).asPeriodic());
 
@@ -247,12 +238,10 @@ class DefinedEnemyMobEffectTest {
     void aMarkWaitsOnACritImmuneEnemyUntilItsResilienceDrops() {
         GameWorld context = WorldFixtures.newWorld(() -> 0.99);
         EnemyMob armored = EnemyFactory.getEnemy("s", context, 0, 100000, 5, Rank.GRUNT);
-        armored.applyEffect(Effect.marked(100, d -> {
-        }));
+        armored.applyEffect(Effect.marked(100, DamageSink.none()));
 
         Damage blocked = armored.doDamage(Damage.physical(1000), AttackProfile.none());
-        armored.applyEffect(Effect.fractured(5, d -> {
-        }));
+        armored.applyEffect(Effect.fractured(5, DamageSink.none()));
         Damage opened = armored.doDamage(Damage.physical(1000), AttackProfile.none());
 
         assertThat(blocked.critical()).isFalse();
@@ -264,14 +253,11 @@ class DefinedEnemyMobEffectTest {
     void aRevealedEnemyIsExposedAndHidesAgainWhenItIsShroudedAgain() {
         GameWorld context = newContext();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100000, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.invisible(100, d -> {
-        }));
-        enemy.applyEffect(Effect.revealed(100, d -> {
-        }));
+        enemy.applyEffect(Effect.invisible(100, DamageSink.none()));
+        enemy.applyEffect(Effect.revealed(100, DamageSink.none()));
         boolean visibleWhileRevealed = enemy.canBeTargeted();
 
-        enemy.applyEffect(Effect.invisible(100, d -> {
-        }));
+        enemy.applyEffect(Effect.invisible(100, DamageSink.none()));
 
         assertThat(visibleWhileRevealed).isTrue();
         assertThat(enemy.canBeTargeted()).isFalse();

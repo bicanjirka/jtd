@@ -11,7 +11,6 @@ final class FakeZoneOwner implements ZoneOwner {
 
     @Override
     public void applyEffect(EnemyMob target, Function<DamageSink, Effect> effect) {
-        target.applyEffect(effect.apply(damage -> {
-        }));
+        target.applyEffect(effect.apply(DamageSink.none()));
     }
 }

@@ -2,6 +2,7 @@ package td.balance;
 
 import td.GameEngine;
 import td.damage.DamageUnits;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.Ability;
@@ -645,8 +646,7 @@ public final class TowerLab {
 
     private static void revealEveryone(GameEngine engine) {
         for (EnemyMob enemy : engine.getGameWorld().enemies().getEnemies()) {
-            enemy.applyEffect(Effect.revealed(REVEAL_TICKS, damage -> {
-            }));
+            enemy.applyEffect(Effect.revealed(REVEAL_TICKS, DamageSink.none()));
         }
     }
 

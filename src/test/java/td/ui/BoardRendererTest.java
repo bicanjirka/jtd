@@ -42,7 +42,7 @@ class BoardRendererTest {
         return engine;
     }
 
-    private static BoardRenderer rendererFor(GameEngine engine, GameWorld context) {
+    private static BoardRenderer rendererFor(GameWorld context) {
         return new BoardRenderer(context);
     }
 
@@ -54,7 +54,7 @@ class BoardRendererTest {
         tower.setSelected(true);
         context.towers().add(tower);
 
-        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.towerSprites()).hasSize(1);
         TowerSpriteDraw sprite = frame.towerSprites().getFirst();
@@ -65,7 +65,7 @@ class BoardRendererTest {
     @Test
     void theCellGridIsDrawnOnlyWhileShown() {
         GameEngine engine = newEngine();
-        BoardRenderer renderer = rendererFor(engine, engine.getGameWorld());
+        BoardRenderer renderer = rendererFor(engine.getGameWorld());
 
         RenderFrame hidden = renderer.buildFrame(0, 0.0, 0.0);
         renderer.setCellGridShown(true);
@@ -80,7 +80,7 @@ class BoardRendererTest {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         context.economy().startEconomy(1000, 5);
-        BoardRenderer renderer = rendererFor(engine, context);
+        BoardRenderer renderer = rendererFor(context);
         renderer.setCellGridShown(true);
         int pathCells = renderer.buildFrame(0, 0.0, 0.0).cellGrid().orElseThrow().blockedCells().size();
         engine.startPlacing(TowerFactory.Type.SNIPER, 0f);
@@ -99,7 +99,7 @@ class BoardRendererTest {
         GameWorld context = engine.getGameWorld();
         context.towers().add(new SniperTower(context, 1, 1));
 
-        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.towerHeads()).hasSize(1);
         assertThat(frame.towerHeads().getFirst().palette()).isEqualTo(Palette.TOWER_SNIPER_BODY);
@@ -111,7 +111,7 @@ class BoardRendererTest {
         GameWorld context = engine.getGameWorld();
         context.towers().add(new SniperTower(context, 1, 1));
 
-        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.towerSprites().getFirst().selected()).isFalse();
     }
@@ -122,7 +122,7 @@ class BoardRendererTest {
         GameWorld context = engine.getGameWorld();
         context.towers().add(new SniperTower(context, 1, 1));
 
-        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         TowerSpriteDraw sprite = frame.towerSprites().getFirst();
         assertThat(sprite.slotMarks()).extracting(SlotMarkDraw::level).containsExactly(0, 0, 0);
@@ -136,7 +136,7 @@ class BoardRendererTest {
         context.economy().startEconomy(1000, 5);
         context.towers().add(new SniperTower(context, 1, 1));
 
-        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         List<SlotMarkDraw> marks = frame.towerSprites().getFirst().slotMarks();
         assertThat(marks.get(UpgradeSlot.BASE.ordinal()).ready()).isTrue();
@@ -156,7 +156,7 @@ class BoardRendererTest {
         tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).get(0));
         tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).get(1));
 
-        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         List<SlotMarkDraw> marks = frame.towerSprites().getFirst().slotMarks();
         assertThat(marks.get(UpgradeSlot.BASE.ordinal()).level()).isEqualTo(1);
@@ -177,9 +177,9 @@ class BoardRendererTest {
         tower.earnXp(1_000);
         tower.buyUpgrade(baseNode(tower, StandardBaseSlot.ATTUNE_ID));
         tower.buyUpgrade(baseNode(tower, StandardBaseSlot.AWAKEN_ID));
-        tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.SPECIAL).get(0));
+        tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.SPECIAL).getFirst());
 
-        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         TowerSpriteDraw sprite = frame.towerSprites().stream()
                 .filter(s -> s.palette() == Palette.TOWER_AURA_BODY)
@@ -196,8 +196,8 @@ class BoardRendererTest {
         tower.beginTick(100);
         tower.earnXp(160);
 
-        TowerSpriteDraw justRanked = rendererFor(engine, context).buildFrame(110, 0.0, 0.0).towerSprites().getFirst();
-        TowerSpriteDraw later = rendererFor(engine, context).buildFrame(200, 0.0, 0.0).towerSprites().getFirst();
+        TowerSpriteDraw justRanked = rendererFor(context).buildFrame(110, 0.0, 0.0).towerSprites().getFirst();
+        TowerSpriteDraw later = rendererFor(context).buildFrame(200, 0.0, 0.0).towerSprites().getFirst();
 
         assertThat(justRanked.rank()).isEqualTo(TowerRank.EXPERT.ordinal());
         assertThat(justRanked.rankUpProgress()).isBetween(0f, 1f);
@@ -214,7 +214,7 @@ class BoardRendererTest {
 
         context.enemies().setEnemies(new EnemyMob[]{enemy});
 
-        RenderFrame frame = rendererFor(engine, context).buildFrame(1, 0.0, 0.0);
+        RenderFrame frame = rendererFor(context).buildFrame(1, 0.0, 0.0);
 
         assertThat(frame.enemies()).hasSize(1).first().isInstanceOf(EnemyFadeDraw.class);
     }
@@ -225,7 +225,7 @@ class BoardRendererTest {
         GameWorld context = engine.getGameWorld();
         // a freshly loaded level has HighlightType.NONE everywhere
 
-        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.cells()).isEmpty();
     }
@@ -236,7 +236,7 @@ class BoardRendererTest {
         GameWorld context = engine.getGameWorld();
         engine.cells().at(0, 0).setHighlight(Cell.HighlightType.SELECT);
 
-        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.cells()).hasSize(1);
         assertThat(frame.cells().getFirst().highlight()).isEqualTo(Cell.HighlightType.SELECT);
@@ -248,7 +248,7 @@ class BoardRendererTest {
         GameWorld context = engine.getGameWorld();
         context.towers().add(new CinderTower(context, 1, 1));
 
-        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.towerEffects()).isEmpty();
     }
@@ -267,7 +267,7 @@ class BoardRendererTest {
             tower.doTick(firedAt++); // turns toward the enemy, then fires a wave
         }
 
-        RenderFrame frame = rendererFor(engine, context).buildFrame(firedAt - 1, 0.0, 0.0);
+        RenderFrame frame = rendererFor(context).buildFrame(firedAt - 1, 0.0, 0.0);
 
         assertThat(frame.towerEffects()).hasSize(1);
         assertThat(frame.towerEffects().getFirst()).isInstanceOf(ConeDraw.class);
@@ -280,7 +280,7 @@ class BoardRendererTest {
         context.projectiles().add(new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
         }));
 
-        RenderFrame frame = rendererFor(engine, context).buildFrame(0, 0.0, 0.0);
+        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.projectiles()).hasSize(1);
         assertThat(frame.projectiles().getFirst()).isInstanceOf(ProjectileDraw.class);

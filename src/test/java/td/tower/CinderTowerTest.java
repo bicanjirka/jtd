@@ -2,6 +2,7 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.damage.DamageType;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
@@ -596,8 +597,7 @@ class CinderTowerTest {
         this.context.enemies().setEnemies(new EnemyMob[]{full, neighbour, far});
         td.effect.PoolTuning deep = td.effect.PoolTuning.standard().withCapFactor(4f);
         for (int i = 0; i < 60; i++) {
-            full.applyEffect(Effect.burn(td.damage.Damage.magic(300), 60, d -> {
-            }).withTuning(deep));
+            full.applyEffect(Effect.burn(td.damage.Damage.magic(300), 60, DamageSink.none()).withTuning(deep));
         }
 
         tickThrough(tower, 1, 1 + TRAVEL);
@@ -616,8 +616,7 @@ class CinderTowerTest {
         td.enemy.EnemyMob enemy = this.realEnemyAt(tower.getX() + 40, tower.getY());
         this.context.enemies().setEnemies(new EnemyMob[]{enemy});
         tickThrough(tower, 1, 1 + TRAVEL);
-        enemy.applyEffect(Effect.invisible(10_000, d -> {
-        }));
+        enemy.applyEffect(Effect.invisible(10_000, DamageSink.none()));
         float peak = enemy.activeEffects().stream().filter(e -> e.kind() == EffectKind.BURN).findFirst().orElseThrow().peakL0();
 
         for (int t = 2 + TRAVEL; t < 2 + TRAVEL + 40; t++) {
