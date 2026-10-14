@@ -216,7 +216,6 @@ public final class SniperTower extends AbstractTower {
     private TowerStats statsInFlight;
     private EnemyMob currentTarget;
     private ShotTrace lastShot;
-    private int currentTick;
 
     public SniperTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SNIPER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
@@ -237,10 +236,6 @@ public final class SniperTower extends AbstractTower {
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
         this.perks.add(node);
-    }
-
-    private Viewpoint viewpoint() {
-        return new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
     }
 
     /** Whom it may shoot and how it picks, as the perks in {@code owned} make it. */
@@ -267,7 +262,6 @@ public final class SniperTower extends AbstractTower {
     }
 
     public void doTick(int gameTime) {
-        this.currentTick = gameTime;
         if (this.clock.isReady()) {
             List<SniperPerk> owned = this.perks.all();
             SniperSpec spec = this.spec(owned);

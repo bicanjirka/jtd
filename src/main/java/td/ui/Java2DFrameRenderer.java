@@ -96,8 +96,6 @@ public final class Java2DFrameRenderer {
     private static final float SLOT_PIP_RADIUS_FRACTION = 0.11f;
     private static final float SLOT_PIP_SPACING_FRACTION = 0.3f;
     private static final float SLOT_PIP_ROW_OFFSET_FRACTION = 0.95f;
-    /** Extra gap between one slot's pips and the next. */
-    private static final float SLOT_GROUP_GAP_FRACTION = 0.16f;
     private static final float SLOT_CHEVRON_SIZE_FRACTION = 0.16f;
     private static final float SLOT_CHEVRON_ROW_OFFSET_FRACTION = 1.05f;
     private static final float SLOT_CHEVRON_SPACING_FRACTION = 0.45f;

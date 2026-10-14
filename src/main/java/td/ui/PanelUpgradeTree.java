@@ -39,8 +39,8 @@ import java.util.function.Consumer;
  * selected.
  * <p>
  * No slot offers more than three nodes at once. A button's number is the key that buys it, the
- * same for every tower ({@link td.tower.upgrade.UpgradeTree#keyOf}), and a slot lists its buttons
- * in key order.
+ * same for every tower ({@link td.tower.upgrade.UpgradeTree#keyOf(td.tower.upgrade.UpgradeNode)}), and a
+ * slot lists its buttons in key order.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelUpgradeTree extends JPanel implements EconomyListener {

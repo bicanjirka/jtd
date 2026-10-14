@@ -430,9 +430,9 @@ public class GameEngine {
     }
 
     /**
-     * Buys the selected tower's offered upgrade whose key is {@code number} ({@link
-     * td.tower.upgrade.UpgradeTree#keyOf}). A no-op if nothing is selected or nothing on offer has
-     * that key.
+     * Buys the selected tower's offered upgrade whose key is {@code number}
+     * ({@link td.tower.upgrade.UpgradeTree#keyOf(td.tower.upgrade.UpgradeNode)}). A no-op if nothing is
+     * selected or nothing on offer has that key.
      */
     public void buyUpgradeForSelected(int number) {
         if (this.outcome.isOver()) {
