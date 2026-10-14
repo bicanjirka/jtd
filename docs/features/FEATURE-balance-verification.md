@@ -25,9 +25,9 @@ wipes waves alone.
 **Next, in this order**, all on this branch before it merges (each is ranked in the review, and each
 has its `TODO.md` entry until it lands):
 
-1. Tune the competent player against the strong one: its Twisted Hourglass opening is the known miss, and
-   on Curly and Zigzag its own build played back holds more than it does when it re-decides against
-   tougher enemies.
+1. ✅ Tune the competent player against the strong one. A node cap of x1.5 and a save factor of x2 bring
+   the strong player's lead to x1.07, x1.00 and x1.12; upgrades now matter on every level, where on Zigzag
+   they backfired. Twisted Hourglass's round 1 costs the strong player the same 3 lives: the level's.
 2. Price support: a lab duel with a partner tower, counted by the competent player.
 3. Upgrades by phase, and node pick rates for the strong player.
 4. The two missing fun proxies: several winning layouts and a decision every few waves (question 7).

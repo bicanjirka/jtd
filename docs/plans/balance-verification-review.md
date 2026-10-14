@@ -89,11 +89,12 @@ engine has no snapshot, and replaying to a round takes well under a second, so t
 
 What the numbers rest on, and how far they hold:
 
-- **The players are models.** The strong player measures the competent one: it holds x1.02 the
-  competent margin on Curly Path, x1.21 on Zigzag Path and x1.16 on Twisted Hourglass, where the
-  competent player's opening is wrong. A verdict is about the game only as far as it holds for both.
-  One sweep of the competent player's kill estimate (how soft its line between leaking and dying is)
-  raised its margins by up to x1.12; tuning it against the strong player is a loop the tools support.
+- **The players are models.** The strong player measures the competent one: after the competent
+  player's constants were swept against it (the most it believes one node multiplies a tower by, now
+  x1.5, and how much better a purchase must be before it saves for it, now x2), it holds x1.07 the
+  competent margin on Curly Path, x1.00 on Zigzag Path and x1.12 on Twisted Hourglass, 12 seeds. Before
+  the sweep the competent player chased lab outliers among the nodes and lost Zigzag Path's last round,
+  where building only would have held. A verdict is about the game only as far as it holds for both.
 - **The lab's probes never die**, so a probe round measures where a tower stands, not what it does to
   enemies that die, turn invisible when hit or split. Those are what duels are for. Duels give every kind
   the same health, so a flat mechanic (a shield of fixed points, flat damage reduction) weighs more in a
@@ -125,11 +126,10 @@ Each with what it would unblock here, what it costs, and the decision (⭐ = kep
 
 ## Gaps, ranked by what they unblock
 
-1. **The competent player's opening.** It loses 3 of Twisted Hourglass's 4 lives in round 1 on every seed;
-   the strong player opens with Snipers and loses none. Its kill estimate gives up on a tough enemy it
-   cannot certainly kill. Tuning it against the strong player is a loop the tools now support. A second
-   lead: its own build, played back unchanged, holds more than it does re-deciding against tougher
-   enemies (400% against 351% on Curly Path, 292% against 235% on Zigzag Path).
+1. ✅ **The competent player's opening.** Swept against the strong player (see above). Twisted
+   Hourglass's round 1 still costs 3 of its 4 lives, but now for the strong player too, so it is the
+   level's, not the player's. Its own build played back now holds what it does re-deciding, within the
+   seeds' noise.
 2. **What a tower does for others.** Slows, Vulnerable, Priority and the like are worth nothing to the
    competent player. A lab duel with a partner tower beside the measured one would price them.
 3. **Upgrades by phase**, and dead or dominant nodes across players (`FEATURE-balance-verification.md`,

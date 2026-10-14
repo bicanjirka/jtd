@@ -43,8 +43,9 @@ final class CompetentPlayer implements Player {
     /**
      * The most it believes one node multiplies a tower by. Against probes that never die a node can measure far
      * past what it does to enemies that do; the report shows those outliers, the player does not chase them.
+     * Swept against the strong player's margins, this cap held the most on every built-in level.
      */
-    private static final double NODE_FACTOR_CAP = 2.0;
+    private static final double NODE_FACTOR_CAP = 1.5;
     /** It wants this much more damage on an enemy than its health before it calls the enemy dead. */
     private static final double SAFETY = 1.3;
     /**
@@ -88,7 +89,7 @@ final class CompetentPlayer implements Player {
     record Style(Set<TowerFactory.Type> types, boolean upgrades, boolean smartCells, double saveFactor) {
 
         static Style standard() {
-            return new Style(EnumSet.allOf(TowerFactory.Type.class), true, true, 1.5);
+            return new Style(EnumSet.allOf(TowerFactory.Type.class), true, true, 2.0);
         }
 
         Style withTypes(Set<TowerFactory.Type> allowed) {
