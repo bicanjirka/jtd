@@ -560,8 +560,8 @@ class PulseTowerTest {
     }
 
     @Test
-    void phaseFieldIiRevealsAnEnemyOnItsFirstTollStackOfAVisitAndAgainOnlyAfterItHasLeftAndComeBack() {
-        PulseTower tower = this.pulseWith("Phase Field", "Phase Field II");
+    void phaseFieldRevealsAnEnemyOnItsFirstTollStackOfAVisitAndAgainOnlyAfterItHasLeftAndComeBack() {
+        PulseTower tower = this.pulseWith("Phase Field");
         FakeEnemyMob enemy = FakeEnemyMob.ghostAt(tower.getX(), tower.getY());
         this.board.enemies().setEnemies(new EnemyMob[]{enemy});
         for (int t = 0; t < 19; t++) {
@@ -585,7 +585,23 @@ class PulseTowerTest {
         assertThat(afterTheFirstVisit).isEqualTo(1);
         assertThat(revealsOn(enemy)).isEqualTo(2);
         assertThat(enemy.appliedEffects().stream().filter(e -> e.kind() == EffectKind.REVEALED).findFirst()
-                .orElseThrow().remainingTicks()).isEqualTo(40);
+                .orElseThrow().remainingTicks()).isEqualTo(10);
+        assertThat(enemy.appliedEffects().stream().filter(e -> e.kind() == EffectKind.DAZED).findFirst()
+                .orElseThrow().remainingTicks()).isEqualTo(10);
+    }
+
+    @Test
+    void phaseFieldIiMakesTheVisitsRevealLastTwoSeconds() {
+        PulseTower tower = this.pulseWith("Phase Field", "Phase Field II");
+        FakeEnemyMob enemy = FakeEnemyMob.ghostAt(tower.getX(), tower.getY());
+        this.board.enemies().setEnemies(new EnemyMob[]{enemy});
+
+        for (int t = 0; t < 20; t++) {
+            tower.doTick(t);
+        }
+
+        assertThat(enemy.appliedEffects().stream().filter(e -> e.kind() == EffectKind.REVEALED).toList())
+                .singleElement().extracting(Effect::remainingTicks).isEqualTo(40);
     }
 
     @Test

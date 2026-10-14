@@ -14,6 +14,7 @@ import td.tower.proc.HitScaling;
 import td.tower.pulse.ArcDischargePerk;
 import td.tower.pulse.EventHorizonPerk;
 import td.tower.pulse.FieldMode;
+import td.tower.pulse.LongerRevealPerk;
 import td.tower.pulse.ModePerk;
 import td.tower.pulse.ModeSpec;
 import td.tower.pulse.PulsePerk;
@@ -155,7 +156,8 @@ public final class PulseTower extends AbstractTower {
             .with(StandardBaseSlot.ATTUNE_ID, TollPerk::new)
             .with(ARC_DISCHARGE.id(), ArcDischargePerk::new)
             .with(TESLA_COIL.id(), TeslaCoilPerk::new)
-            .with(PHASE_FIELD_2.id(), RevealOnEntryPerk::new)
+            .with(PHASE_FIELD_1.id(), RevealOnEntryPerk::new)
+            .with(PHASE_FIELD_2.id(), LongerRevealPerk::new)
             .with(NULL_FIELD.id(), () -> new ModePerk(FieldMode.SILENCE))
             .with(TRUE_SIGHT.id(), TrueSightPerk::new)
             .with(DEAD_ZONE.id(), () -> new ModePerk(FieldMode.DEAD_ZONE))

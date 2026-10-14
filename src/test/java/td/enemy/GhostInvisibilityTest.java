@@ -13,6 +13,7 @@ import td.util.GameWorld;
 import td.wave.PathNormal;
 import td.wave.Vec2;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -121,12 +122,56 @@ class GhostInvisibilityTest {
         world.enemies().add(eliteGhost);
         world.enemies().add(ally);
 
-        for (int t = 1; t <= 20; t++) { // the shroud ability's own periodic interval
+        for (int t = 1; t <= GhostEnemy.SHROUD_TICKS; t++) {
             eliteGhost.doTick(t);
             ally.doTick(t);
         }
 
         assertThat(ally.activeEffectKinds()).contains(EffectKind.INVISIBLE);
         assertThat(eliteGhost.activeEffectKinds()).doesNotContain(EffectKind.INVISIBLE);
+    }
+
+    @Test
+    void anEliteGhostsShroudNeverLetsAnAllyInRadiusFlickerVisible() {
+        GameWorld world = worldWithStraightPath();
+        DefinedEnemyMob eliteGhost = (DefinedEnemyMob) world.getEnemyCatalog().spawn("g", world, 0, 800, 16, Rank.ELITE);
+        DefinedEnemyMob ally = (DefinedEnemyMob) world.getEnemyCatalog().spawn("c", world, 0, 50, 2, Rank.GRUNT);
+        world.enemies().add(eliteGhost);
+        world.enemies().add(ally);
+        List<Integer> visibleTicks = new ArrayList<>();
+
+        for (int t = 1; t <= 5 * GhostEnemy.SHROUD_TICKS; t++) {
+            eliteGhost.doTick(t);
+            ally.doTick(t);
+            if (t >= GhostEnemy.SHROUD_TICKS && !ally.isHidden()) {
+                visibleTicks.add(t);
+            }
+        }
+
+        assertThat(visibleTicks).isEmpty();
+    }
+
+    @Test
+    void aRevealOnAShroudedAllyHoldsUntilTheNextShroud() {
+        GameWorld world = worldWithStraightPath();
+        DefinedEnemyMob eliteGhost = (DefinedEnemyMob) world.getEnemyCatalog().spawn("g", world, 0, 800, 16, Rank.ELITE);
+        DefinedEnemyMob ally = (DefinedEnemyMob) world.getEnemyCatalog().spawn("c", world, 0, 50, 2, Rank.GRUNT);
+        world.enemies().add(eliteGhost);
+        world.enemies().add(ally);
+        for (int t = 1; t <= GhostEnemy.SHROUD_TICKS; t++) {
+            eliteGhost.doTick(t);
+            ally.doTick(t);
+        }
+        ally.applyEffect(Effect.revealed(5 * GhostEnemy.SHROUD_TICKS, d -> {
+        }));
+        int hiddenAgainAt = 0;
+
+        for (int t = GhostEnemy.SHROUD_TICKS + 1; t <= 3 * GhostEnemy.SHROUD_TICKS && hiddenAgainAt == 0; t++) {
+            eliteGhost.doTick(t);
+            ally.doTick(t);
+            hiddenAgainAt = ally.isHidden() ? t : 0;
+        }
+
+        assertThat(hiddenAgainAt).isEqualTo(2 * GhostEnemy.SHROUD_TICKS);
     }
 }
