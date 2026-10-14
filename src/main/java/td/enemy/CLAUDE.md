@@ -11,11 +11,16 @@
   `customRankedEnemies()`. Write values straight into the factory calls; a private helper method (`MenderEnemy.heal`,
   `WardenEnemy.warden`) takes the place of a constant that several steps share. An enemy a boss spawns is a
   definition of its own, never the boss's ladder, which would be a spawn cycle.
-- `RankedEnemy` ladders are authored contiguously upward from `Rank.GRUNT`
-  (`startingAt(...).thenAt(...)`); each step receives the previous rank's definition (typically
-  `withHealthAndPrice`). A gap or a backward step is a `GameStartupException`. Asking for an
-  unauthored rank falls back to the highest authored one. `SimpleEnemy` is the
+- A built-in ladder grows by a `RankGrowth` (`startingAt(grunt, growth)`): each rank multiplies the
+  previous rank's health by its factor and adds `Rank.bountySteps()` bounty steps to the grunt's
+  bounty, before its own `thenAt` step runs, so a step authors only what the rank adds (traits,
+  abilities, base stats, description), never `withHealthAndPrice`. Ranks it does not author are
+  grown up to `BOSS`. Every enemy gains something of its identity from Elite on. `SimpleEnemy` is the
   reference ladder.
+- A ladder without growth is authored contiguously upward from `Rank.GRUNT`; a gap or a backward
+  step is a `GameStartupException`, and asking for an unauthored rank falls back to the highest
+  authored one.
+- A stat an enemy has from birth, not from a trait or ability, is a base stat (`withStat`).
 - Single-rank enemy: `EnemyCatalog.register(EnemyDefinition)`. A variant of an existing one:
   `EnemyCatalog.cloneAndAdjust(baseId, newId, adjust)`, which clones every rank from the
   original's own definition. `adjust` is a `UnaryOperator` (rank-blind) or a

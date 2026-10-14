@@ -1,10 +1,14 @@
 package td.enemy;
 
 import td.effect.HealTemplate;
+import td.stat.EnemyStat;
 
 import java.util.List;
 
-/** The Mender mob ({@code m}): heals the allies near it, and from Veteran itself when left alone. */
+/**
+ * The Mender mob ({@code m}): heals the allies near it, takes heals well itself, from Veteran heals itself when
+ * left alone, and at Boss leaves a last blessing on the allies around it when it dies.
+ */
 final class MenderEnemy {
 
     private MenderEnemy() {
@@ -12,26 +16,31 @@ final class MenderEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("m", "Mender mob", 60, 3, 1.28f, BodyArchetype.MENDER)
+                .startingAt(EnemyDefinition.of("m", "Mender mob", 120, 5, 1.28f, BodyArchetype.MENDER)
                         // "other" is load-bearing: a radius target excludes the caster.
-                        .withDescription("Periodically restores health to every other ally near it - itself excluded.")
-                        .withIdentifiedAbilities(List.of(heal(0.125f, 40))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(120, 8)
-                        .withAdditionalAbilities(List.of(heal(0.25f, 40))))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(240, 20)
+                        .withDescription("Periodically restores health to every other ally near it - itself excluded. "
+                                + "Heals and shields it receives are stronger.")
+                        .withStat(EnemyStat.SPIRIT, 20f)
+                        .withIdentifiedAbilities(List.of(heal(0.25f, 40))), RankGrowth.of(1.8f, 4))
+                .thenAt(Rank.SOLDIER, e -> e.withAdditionalAbilities(List.of(heal(0.5f, 40))))
+                .thenAt(Rank.VETERAN, e -> e
                         .withDescription("Restores health to every other ally near it - itself excluded - and now "
-                                + "quietly mends itself if left unattacked long enough.")
-                        .withAdditionalAbilities(List.of(heal(0.5f, 40), selfHeal(0.35f))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(480, 50)
+                                + "quietly mends itself if left unattacked long enough. Heals and shields it receives "
+                                + "are stronger.")
+                        .withAdditionalAbilities(List.of(heal(1f, 40), selfHeal(0.7f))))
+                .thenAt(Rank.ELITE, e -> e
                         .withDescription("Its healing pulse now lasts twice as long, and a personal layer of armor, "
                                 + "hardened against whichever damage type has hit hardest this level, joins its own "
                                 + "quiet self-repair when left unattacked.")
                         .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(67f))))
-                        .withAdditionalAbilities(List.of(heal(1f, 80), selfHeal(0.7f))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(960, 125)
-                        .withDescription("Its healing pulse now restores double, for the same extended duration, and "
-                                + "its own self-repair heals twice as strong too.")
                         .withAdditionalAbilities(List.of(heal(2f, 80), selfHeal(1.4f))))
+                .thenAt(Rank.BOSS, e -> e
+                        .withDescription("Its healing pulse now restores double, for the same extended duration, its "
+                                + "own self-repair heals twice as strong too, and it leaves a last blessing on every "
+                                + "ally near it when it dies.")
+                        .withAdditionalAbilities(List.of(heal(4f, 80), selfHeal(2.8f),
+                                IdentifiedAbility.anonymous(new Ability(new OnDeathTrigger(),
+                                        new ApplyEffectAction(new HealTemplate(4f, 100), new RadiusTarget(120f)))))))
                 .build());
     }
 

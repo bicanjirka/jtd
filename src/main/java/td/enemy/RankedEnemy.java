@@ -8,13 +8,15 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
 
 /**
  * One enemy's rank ladder, authored progressively: each {@link Builder#thenAt} step receives the
  * previous rank's definition, so unchanged parts carry forward. Starts at {@link Rank#GRUNT} and
- * climbs without gaps; it need not reach {@link Rank#BOSS}.
+ * climbs without gaps; it need not reach {@link Rank#BOSS}. A ladder that grows by a {@link RankGrowth} fills the
+ * ranks it does not author, so it always reaches {@link Rank#BOSS}.
  * <p>
  * Asking for an unauthored rank resolves to the highest authored rank below it;
  * {@link #effectiveRank(Rank)} gives that rank itself.
@@ -34,7 +36,15 @@ public final class RankedEnemy {
 
     /** Starts a ladder; a one-rank ladder is complete on its own. */
     public static Builder startingAt(EnemyDefinition grunt) {
-        return new Builder(grunt);
+        return new Builder(grunt, Optional.empty());
+    }
+
+    /**
+     * Starts a ladder whose every rank, up to {@link Rank#BOSS}, takes its health and bounty from {@code growth}
+     * before its own step applies; a rank without a step is the rank below it, grown.
+     */
+    public static Builder startingAt(EnemyDefinition grunt, RankGrowth growth) {
+        return new Builder(grunt, Optional.of(growth));
     }
 
     public String id() {
@@ -91,26 +101,32 @@ public final class RankedEnemy {
     public static final class Builder {
 
         private final String id;
+        private final EnemyDefinition grunt;
+        private final Optional<RankGrowth> growth;
         private final Map<Rank, EnemyDefinition> definitionsByRank = new EnumMap<>(Rank.class);
         private Rank highestSoFar = Rank.GRUNT;
 
-        private Builder(EnemyDefinition grunt) {
+        private Builder(EnemyDefinition grunt, Optional<RankGrowth> growth) {
             this.id = grunt.id();
+            this.grunt = grunt;
+            this.growth = growth;
             this.definitionsByRank.put(Rank.GRUNT, grunt);
         }
 
         /**
          * Authors {@code next} as a change to the current highest rank. Ranks must be added in
-         * order, one step at a time.
+         * order, one step at a time, except that a growing ladder grows the ranks it skips unchanged.
          */
         public Builder thenAt(Rank next, UnaryOperator<EnemyDefinition> change) {
+            while (this.growth.isPresent() && next.ordinal() > this.highestSoFar.ordinal() + 1) {
+                this.thenAt(Rank.values()[this.highestSoFar.ordinal() + 1], UnaryOperator.identity());
+            }
             if (next.ordinal() != this.highestSoFar.ordinal() + 1) {
                 throw new GameStartupException("Enemy '" + this.id + "' must author " + next
                         + " immediately after " + this.highestSoFar + " - ranks are authored contiguously"
                         + " from GRUNT, one step at a time");
             }
-            EnemyDefinition previous = this.definitionsByRank.get(this.highestSoFar);
-            EnemyDefinition definition = change.apply(previous);
+            EnemyDefinition definition = change.apply(this.grown(this.definitionsByRank.get(this.highestSoFar), next));
             if (!definition.id().equals(this.id)) {
                 throw new GameStartupException("Enemy '" + this.id + "'s rank step for " + next
                         + " changed its id to '" + definition.id() + "' - a rank step may not change identity");
@@ -121,9 +137,19 @@ public final class RankedEnemy {
         }
 
         public RankedEnemy build() {
+            while (this.growth.isPresent() && this.highestSoFar != Rank.BOSS) {
+                this.thenAt(Rank.values()[this.highestSoFar.ordinal() + 1], UnaryOperator.identity());
+            }
             // Not Map.copyOf: it does not keep EnumMap's rank order.
             return new RankedEnemy(this.id, Collections.unmodifiableMap(new EnumMap<>(this.definitionsByRank)),
                     this.highestSoFar);
+        }
+
+        private EnemyDefinition grown(EnemyDefinition previous, Rank rank) {
+            return this.growth
+                    .map(g -> previous.withHealthAndPrice(g.healthAt(this.grunt.baseHealth(), rank),
+                            g.bountyAt(this.grunt.price(), rank)))
+                    .orElse(previous);
         }
     }
 }
