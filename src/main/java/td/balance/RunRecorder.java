@@ -63,6 +63,7 @@ final class RunRecorder {
     private int leaks;
     private int cleared;
     private long enemyTicks;
+    private int wanted;
 
     RunRecorder(GameEngine engine, int startingLives) {
         this.engine = engine;
@@ -94,6 +95,11 @@ final class RunRecorder {
             case PlayerAction.Build ignored -> this.spentOnTowers += cost;
             case PlayerAction.Sell ignored -> this.spentOnTowers += cost;
         }
+    }
+
+    /** The price of the purchase the player would make next if it could; it stands until the player says again. */
+    void wants(int price) {
+        this.wanted = price;
     }
 
     /** Settles a tower's damage before it leaves the board, so a sale does not lose it. */
@@ -217,7 +223,7 @@ final class RunRecorder {
         }
         int livesLost = Math.max(0, this.livesAtStart - this.engine.getGameWorld().economy().getLives());
         PlayRecord.RoundEconomy economy = new PlayRecord.RoundEconomy(this.creditsAtStart, this.earned,
-                new PlayRecord.Spending(this.spentOnTowers, this.spentOnUpgrades), livesLost);
+                new PlayRecord.Spending(this.spentOnTowers, this.spentOnUpgrades, this.wanted), livesLost);
         PlayRecord.RoundPressure pressure = new PlayRecord.RoundPressure(this.healthIn, this.leaked, this.closest,
                 this.roundDamage);
         this.rounds.add(new PlayRecord.Round(this.rounds.size() + 1, tick - this.roundStartTick, economy, pressure));

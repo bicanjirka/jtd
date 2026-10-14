@@ -70,6 +70,8 @@ public final class BalanceReport {
     static final double ANSWERS = 0.5;
     /** Two players' pick rates of a node this far apart is a choice one of them makes and the other does not. */
     static final double PICK_GAP = 0.5;
+    /** A purchase that takes more than this many rounds of bounty to afford stalls the player. */
+    static final int SLOW_ROUNDS = 2;
     /** Help to a neighbour below this share is within the lab's noise. */
     static final double SUPPORTS = 0.05;
 
@@ -591,14 +593,34 @@ public final class BalanceReport {
     private void printEconomy(LevelRun run) {
         double[] idle = run.perRound(COMPETENT, round -> round.economy().creditsAtStart());
         double[] earned = run.perRound(COMPETENT, round -> round.economy().earned());
+        double[] wanted = run.perRound(COMPETENT, round -> round.economy().spent().wanted());
         this.out.println();
         this.out.println("ECONOMY (competent)");
         this.out.println("  idle     " + row(idle, BalanceReport::compact) + "   unspent as the round starts");
         this.out.println("  earned   " + row(earned, BalanceReport::compact) + "   bounty");
+        this.out.println("  towers   " + row(run.perRound(COMPETENT, round -> round.economy().spent().towers()),
+                BalanceReport::compact) + "   spent on towers");
+        this.out.println("  upgrades " + row(run.perRound(COMPETENT, round -> round.economy().spent().upgrades()),
+                BalanceReport::compact) + "   spent on upgrades");
+        this.out.println("  wanted   " + row(wanted, BalanceReport::compact)
+                + "   price of what it would buy next, as the round ends");
+        this.out.println("  " + economyVerdict(earned, wanted));
         double totalEarned = Arrays.stream(earned).filter(v -> !Double.isNaN(v)).sum();
         double meanIdle = Arrays.stream(idle).filter(v -> !Double.isNaN(v)).average().orElse(0);
         this.out.printf("  %d starting credits and %.0f bounty over the level; %.0f idle at a round's start on average%n",
                 run.survey().level().startingCredits(), totalEarned, meanIdle);
+    }
+
+    /**
+     * Whether what a round pays keeps up with what the player wants next: the rounds where the purchase it wanted
+     * cost more than two rounds' bounty, when the player waits longest between purchases.
+     */
+    static String economyVerdict(double[] earned, double[] wanted) {
+        List<Integer> slow = IntStream.range(0, earned.length)
+                .filter(i -> !Double.isNaN(wanted[i]) && wanted[i] > SLOW_ROUNDS * Math.max(1, earned[i]))
+                .mapToObj(i -> i + 1).toList();
+        return "what it wants next costs more than " + SLOW_ROUNDS + " rounds of bounty in round: "
+                + (slow.isEmpty() ? "none" : slow);
     }
 
     private void printTowers(LevelRun run) {

@@ -105,6 +105,7 @@ final class HtmlReport {
                 Double.NaN, "enemy health walking in", false);
         this.html.append("</div>");
         this.timeline(run);
+        this.economy(run);
         this.html.append("<h3>Where it happens</h3><div class=\"row\">");
         this.board(run, "where enemies die (competent)", deaths(run), BOARD_CELL);
         this.board(run, "where the competent player builds", builds(run), BOARD_CELL);
@@ -293,6 +294,34 @@ final class HtmlReport {
     }
 
     /** The level's board with each cell shaded by {@code values} on one scale and the paths drawn over it. */
+    /** Per round, what the competent player had, earned, spent and wanted next, averaged over plays. */
+    private void economy(LevelRun run) {
+        String player = BalanceReport.COMPETENT;
+        double[][] rows = {
+                run.perRound(player, round -> round.economy().creditsAtStart()),
+                run.perRound(player, round -> round.economy().earned()),
+                run.perRound(player, round -> round.economy().spent().towers()),
+                run.perRound(player, round -> round.economy().spent().upgrades()),
+                run.perRound(player, round -> round.economy().spent().wanted())};
+        String[] names = {"idle at the start", "bounty earned", "spent on towers", "spent on upgrades",
+                "price of what it wants next"};
+        this.html.append("<h3>Economy</h3><p class=\"note\">Per round, averaged over the competent player's plays. ")
+                .append(escape(BalanceReport.economyVerdict(rows[1], rows[4]))).append(".</p><div class=\"card\">")
+                .append("<table><tr><th>round</th>");
+        for (int r = 1; r <= rows[0].length; r++) {
+            this.html.append("<th>").append(r).append("</th>");
+        }
+        this.html.append("</tr>");
+        for (int i = 0; i < rows.length; i++) {
+            this.html.append("<tr><td>").append(names[i]).append("</td>");
+            for (double value : rows[i]) {
+                this.html.append("<td>").append(Double.isNaN(value) ? "-" : BalanceReport.compact(value)).append("</td>");
+            }
+            this.html.append("</tr>");
+        }
+        this.html.append("</table></div>");
+    }
+
     /** The competent player's first play, tick by tick: enemy health on the board, the furthest enemy, credits. */
     private void timeline(LevelRun run) {
         List<PlayRecord> plays = run.playsOf(BalanceReport.COMPETENT);

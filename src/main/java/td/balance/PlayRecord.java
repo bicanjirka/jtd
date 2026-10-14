@@ -147,8 +147,10 @@ public record PlayRecord(Play play, Result result, List<Round> rounds, Log log) 
     /**
      * @param towers   credits spent on new towers, sales taken off
      * @param upgrades credits spent on upgrades
+     * @param wanted   the price of what the player would have bought next had it had the credits when the round
+     *                 ended, 0 if it wanted nothing it could not afford or does not say
      */
-    public record Spending(int towers, int upgrades) {
+    public record Spending(int towers, int upgrades, int wanted) {
 
         public int total() {
             return this.towers + this.upgrades;
