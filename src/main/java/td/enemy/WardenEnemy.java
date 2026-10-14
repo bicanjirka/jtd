@@ -23,37 +23,52 @@ final class WardenEnemy {
         catalog.register(egg("wardenEgg3", "Warden's Final Egg",
                 "Must be defeated to end the encounter - it will not hatch again. Its shell is cracked: "
                         + "only light armor and plating are left.",
-                List.of(IdentifiedTrait.named("armor", ArmorTrait.both(25f)),
-                        IdentifiedTrait.named("plating", new FlatResistTrait(1f)))));
+                new Shell(25f, 1f, 0f), List.of()));
         // High enough that an un-upgraded weak tower does nothing; later stages weaken it.
-        catalog.register(warden("warden3", "The Exhausted Warden", 6000, "hulking armored sentinel, barely standing", 2.5f, "wardenEgg3"));
+        catalog.register(warden("warden3", "The Exhausted Warden", 6000, "hulking armored sentinel, barely standing",
+                new Shell(5f, 2.5f, 0f), "wardenEgg3"));
         catalog.register(egg("wardenEgg2", "Warden's Egg",
                 "Hatches into a weaker Warden if not defeated in time. Immune to burn and freeze, "
                         + "and its armor and plating blunt every hit, though less than the first egg's.",
+                new Shell(100f, 4f, 0f),
                 List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
-                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
-                        IdentifiedTrait.named("armor", ArmorTrait.both(100f)),
-                        IdentifiedTrait.named("plating", new FlatResistTrait(4f))))
+                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE))))
                 .withAbilities(hatchInto("warden3")));
-        catalog.register(warden("warden2", "The Weakened Warden", 10000, "hulking armored sentinel, worn down from its last hatching", 5f,
-                "wardenEgg2"));
+        catalog.register(warden("warden2", "The Weakened Warden", 10000,
+                "hulking armored sentinel, worn down from its last hatching", new Shell(10f, 5f, 0f), "wardenEgg2"));
         catalog.register(egg("wardenEgg1", "Warden's Egg",
                 "Hatches into a weaker Warden if not defeated in time. Almost immune: it ignores critical "
                         + "hits, burn, freeze and chill, its armor stops most of every hit, and its plating blunts what "
                         + "is left.",
-                List.of(IdentifiedTrait.anonymous(new CriticalImmunityTrait()),
-                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
+                new Shell(400f, 12f, 100f),
+                List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
-                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.CHILL)),
-                        IdentifiedTrait.named("armor", ArmorTrait.both(400f)),
-                        IdentifiedTrait.named("plating", new FlatResistTrait(12f))))
+                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.CHILL))))
                 .withAbilities(hatchInto("warden2")));
-        catalog.register(warden("warden1", "The Warden", 16000, "hulking armored sentinel", 10f, "wardenEgg1"));
+        catalog.register(warden("warden1", "The Warden", 16000, "hulking armored sentinel", new Shell(15f, 10f, 0f),
+                "wardenEgg1"));
     }
 
-    private static EnemyDefinition egg(String id, String name, String description, List<IdentifiedTrait> traits) {
+    /**
+     * What one stage of the chain is protected by.
+     *
+     * @param resist     armor and magic resist, in points
+     * @param plating    points every hit loses: both types on an egg, physical only on a Warden
+     * @param resilience against crits; 100 is crit-immune. A Warden has none: it answers a crit with a shield,
+     *                   and resilience would only mute its own ability
+     */
+    private record Shell(float resist, float plating, float resilience) {
+    }
+
+    private static EnemyDefinition egg(String id, String name, String description, Shell shell,
+                                       List<IdentifiedTrait> traits) {
         return EnemyDefinition.of(id, name, 3000, 20, 0f, BodyArchetype.WARDEN_EGG)
                 .withDescription(description)
+                .withArmor(shell.resist())
+                .withMagicResist(shell.resist())
+                .withPhysicalPlating(shell.plating())
+                .withMagicPlating(shell.plating())
+                .withResilience(shell.resilience())
                 .withIdentifiedTraits(traits);
     }
 
@@ -62,7 +77,7 @@ final class WardenEnemy {
     }
 
     /** One stage: "A {@code lead}.", the standing abilities every stage shares, and {@code eggId} left on death. */
-    private static EnemyDefinition warden(String id, String name, int health, String lead, float plating,
+    private static EnemyDefinition warden(String id, String name, int health, String lead, Shell shell,
                                           String eggId) {
         List<IdentifiedAbility> abilities = new ArrayList<>(List.of(
                 IdentifiedAbility.anonymous(new Ability(new PeriodicTrigger(300), new SpawnEnemiesAction("c", 1, false))),
@@ -83,7 +98,10 @@ final class WardenEnemy {
                         + "shields every nearby ally once below half health; heals itself if left unattacked "
                         + "too long; gains a shield whenever it survives a critical hit; and leaves behind an egg on death.")
                 .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
-                .withIdentifiedTraits(List.of(IdentifiedTrait.named("armor", FlatResistTrait.physicalOnly(plating))))
+                .withArmor(shell.resist())
+                .withMagicResist(shell.resist())
+                .withPhysicalPlating(shell.plating())
+                .withResilience(shell.resilience())
                 .withIdentifiedAbilities(List.copyOf(abilities));
     }
 }

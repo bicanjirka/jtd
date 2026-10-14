@@ -8,7 +8,7 @@ import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class CriticalImmunityTraitTest {
+class CriticalImmunityTest {
 
     private final GameWorld context = WorldFixtures.newWorld();
 

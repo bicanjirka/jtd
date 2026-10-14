@@ -40,6 +40,12 @@ public final class EnemyFixtures {
         return HitResolution.resolve(damage, sheet);
     }
 
+    /** What {@code damage} lands for against an enemy with {@code definition}'s base stats and no traits. */
+    public static Damage landedThrough(EnemyDefinition definition, Damage damage) {
+        return HitResolution.resolve(damage, new StatSheet(definition.baseStats(), accumulator -> {
+        }));
+    }
+
     /** Replaces a world's live enemies with exactly these mobs. */
     public static void spawn(GameWorld world, EnemyMob... mobs) {
         world.enemies().setEnemies(mobs);

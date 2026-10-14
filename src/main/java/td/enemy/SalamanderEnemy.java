@@ -2,7 +2,6 @@ package td.enemy;
 
 import td.effect.EffectKind;
 import td.effect.HealTemplate;
-import td.stat.EnemyStat;
 
 import java.util.List;
 
@@ -20,22 +19,33 @@ final class SalamanderEnemy {
         catalog.register(RankedEnemy
                 .startingAt(EnemyDefinition.of("salamander", "Salamander", 180, 5, 1.28f, BodyArchetype.SALAMANDER)
                         .withDescription("Immune to burn, and slowly regrows what it loses. Soulfire still burns it.")
-                        // Regeneration is in damage units a tick: 5 is one point a second.
-                        .withStat(EnemyStat.REGENERATION, 5f)
                         .withIdentifiedTraits(List.of(
-                                IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)))),
-                        RankGrowth.of(1.9f, 4))
-                .thenAt(Rank.VETERAN, e -> e.withStat(EnemyStat.REGENERATION, 10f))
-                .thenAt(Rank.ELITE, e -> e
+                                IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
+                                regrowth(1f))))
+                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(342, 9))
+                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(650, 13).withAdditionalTraits(List.of(regrowth(2f))))
+                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(1235, 25)
                         .withDescription("Immune to burn, regrows what it loses, its hide turns some magic, and once "
                                 + "badly hurt it sheds its wounds in a burst of healing. Soulfire still burns it.")
-                        .withStat(EnemyStat.REGENERATION, 20f)
-                        .withStat(EnemyStat.MAGIC_RESIST, 25f)
+                        .withMagicResist(25f)
+                        .withArmor(10f)
+                        .withResilience(10f)
+                        .withAgility(10f)
+                        .withSpirit(15f)
+                        .withAdditionalTraits(List.of(regrowth(4f)))
                         .withAdditionalAbilities(List.of(shed(4f))))
-                .thenAt(Rank.BOSS, e -> e
-                        .withStat(EnemyStat.REGENERATION, 40f)
+                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(2346, 45)
+                        .withMagicResist(30f)
+                        .withArmor(15f)
+                        .withResilience(20f)
+                        .withSpirit(25f)
+                        .withAdditionalTraits(List.of(regrowth(8f)))
                         .withAdditionalAbilities(List.of(shed(8f))))
                 .build());
+    }
+
+    private static IdentifiedTrait regrowth(float pointsPerSecond) {
+        return IdentifiedTrait.named("regrowth", new RegenerationTrait(pointsPerSecond));
     }
 
     private static IdentifiedAbility shed(float perTick) {

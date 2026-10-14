@@ -149,34 +149,53 @@ currently amplifying, coloured for its reach or its chosen hero, a ring on the t
 
 ### Enemies
 
+An enemy is made of four kinds of thing, and each belongs to exactly one:
+
+- **Stats** are the numbers every enemy has, zero or not: armor and magic resist (a hit keeps
+  `100 / (100 + armor)` of itself), physical and magic plating (points every hit loses), resilience
+  (against crits; 100 is crit-immune, below zero crits land harder), agility (aimed shots miss) and
+  spirit (heals and shields it receives, and how fast its debuffs run out). The info pane lists the ones
+  off zero; nothing is drawn on the board for them.
+- **Traits** are what an enemy has that most don't, always on: a resistance or immunity to an effect,
+  regeneration, a stat that follows its state (faster or harder to hit when hurt) or adapts to how the
+  level is played. Each draws a marker under the enemy.
+- **Abilities** are what it does at a moment: a trigger (a timer, a threshold, a hit, a dodge, its death)
+  and an action (put an effect on itself or its allies, or spawn enemies).
+- **Effects** are timed statuses on an enemy, from a tower or an ability, shown as markers above it.
+
+From Elite every enemy carries some of each stat, small where it is off its identity; the exceptions are
+plating (only the plated enemies), agility on the heaviest (Juggernaut, Wardens, eggs) and resilience
+on the Wardens, whose shield answers crits.
+
 | Enemy      | Looks like    | Behaviour                                                                                                                                                                                                                                                                                                         |
 |------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Simple     | circle        | Plain mob, no special ability. From Elite, adaptive armor; at Boss, +30 resilience |
-| Armored    | square        | +25 armor and magic resist, rising with rank, 2 physical plating and 20% freeze resist; immune to critical hits. From Veteran it resists chill; from Elite, thick plating and a physical shield once below half health; at Boss rank, calls three armored reinforcements every three seconds |
+| Simple     | circle        | Plain mob, no special ability, and no stats up to Veteran. From Elite, adaptive armor and a little of every stat; at Boss, +30 resilience |
+| Armored    | square        | +25 armor and magic resist, rising with rank, physical plating from 2 to 10 and 20% freeze resist; immune to critical hits. From Veteran it resists chill; from Elite, thick plating and a physical shield once below half health; at Boss rank, calls three armored reinforcements every three seconds |
 | Frenzied   | triangle      | Speeds up as it loses health; -20 resilience, so crits land harder. From Elite it sprints once below half health; at Boss rank, crit immune, calls three spawnlings once below half health and heals itself when left alone |
 | Ghost      | tinted circle | +20 armor. Turns invisible to single-target towers for ~10s the first time it's hit (~15s from Veteran; area damage still reaches it); at Elite and Boss rank, also permanently shrouds every other ally near it; at Boss rank it fades out for 3s of every 10 |
-| Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it; +20 spirit. From Veteran it heals itself when left alone; from Elite, adaptive armor; at Boss rank, heals every ally near it when it dies |
-| Jammer     | square        | Jams every tower near it: they fire more slowly and see less far while it's in range (drawn as a pink ring; affected towers show a pink marker). A tower in a Beacon's range takes half of it. +20 magic resist; its reach and strength grow from Veteran, and from Elite it keeps a magic-only shield. Not in any level's waves yet. |
+| Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it; +20 spirit, rising to 60 at Boss. From Veteran it heals itself when left alone; from Elite, adaptive armor; at Boss rank, heals every ally near it when it dies |
+| Jammer     | square        | Jams every tower near it: they fire more slowly and see less far while it's in range (drawn as a pink ring; affected towers show a pink marker). A tower in a Beacon's range takes half of it. +20 magic resist; its reach and strength grow from Veteran, and from Elite it keeps a magic-only shield and its casing blunts magic hits (2 magic plating, 4 at Boss). Not in any level's waves yet. |
 | Juggernaut | square        | Slow, with plating that blunts a huge flat chunk of every physical hit; magic, Cracked and Sundered get past it. +15 magic resist and 30% freeze and chill resist. From Elite, crit immune; at Boss rank, a large magic shield once below half health. Not in any level's waves yet. |
-| Mite       | circle        | Tiny and quick, with 10 agility; meant for a `swarm 12 mite`. From Elite, 25 agility; at Boss rank it bursts into three broodlings when it dies. Not in any level's waves yet. |
+| Mite       | circle        | Tiny and quick, with 10 agility rising 5 a rank to 25 at Elite and 35 at Boss; meant for a `swarm 12 mite`. at Boss rank it bursts into three broodlings when it dies. Not in any level's waves yet. |
 | Courier    | triangle      | Very fast and fragile, with a high bounty, and nimble (25 agility, 35 from Veteran, 50 at Boss) enough to dodge an aimed shot now and then. From Elite it sprints when first hit; at Boss rank, after every dodge too. Not in any level's waves yet. |
-| Shieldbearer | cross         | +30 armor. Periodically shields every other ally near it against physical damage only; magic goes straight through. From Elite it shields itself too; at Boss rank, in a wider reach. Not in any level's waves yet. |
-| Salamander | circle        | Immune to burn, so a Cinder-only defence does nothing; Soulfire still burns it. Regenerates 1 health a second, doubling at Veteran, Elite and Boss. From Elite, +25 magic resist and a burst of healing once below 30% health. Not in any level's waves yet. |
-| Yeti       | circle        | Immune to freeze and chilled half as long (a quarter from Veteran); Dazed still stops it. +15 armor and magic resist. From Elite it heals once below 40% health; at Boss rank, +50 resilience. Not in any level's waves yet. |
+| Shieldbearer | cross         | +30 armor, and spirit from Veteran that strengthens the shields it gets. Periodically shields every other ally near it against physical damage only; magic goes straight through. From Elite it shields itself too and has a little physical plating; at Boss rank, in a wider reach. Not in any level's waves yet. |
+| Salamander | circle        | Immune to burn, so a Cinder-only defence does nothing; Soulfire still burns it. Regenerates 1 health a second (a trait), doubling at Veteran, Elite and Boss. From Elite, +25 magic resist and a burst of healing once below 30% health. Not in any level's waves yet. |
+| Yeti       | circle        | Immune to freeze and chilled half as long (a quarter from Veteran); Dazed still stops it. +15 armor and magic resist. From Elite its fur blunts 2 points of every hit and it heals once below 40% health; at Boss rank, +50 resilience. Not in any level's waves yet. |
 | Skirmisher | diamond       | Nimble: 40 agility, rising to 80 with rank, so it dodges some aimed shots; +20 resilience. From Soldier it sprints off for 1.5 s after every dodge; from Elite it gets harder to hit the more it is hurt; at Boss rank it also vanishes for a moment after every dodge. Not in any level's waves yet. |
 | Empty      | —             | Not a real enemy — a spacer that opens a timing gap inside a wave                                                                                                                                                                                                                                                 |
-| The Warden | large spiked crest | A boss: armored, periodically summons reinforcements and shields itself and nearby allies, and shields itself again whenever it survives a critical hit. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. Appears as the final wave of Curly Path. |
-| Reaver     | triangle, path-facing | Speeds up as it's hurt, shrugs off a flat amount of every hit, shields itself once badly wounded, and splits into two Simple mobs on death. Appears in Twisted Hourglass's first wave — a level-authored enemy, registered only for that level rather than globally (see `td.level.LevelDefinition.customEnemies`). |
+| The Warden | large spiked crest | A boss: armor and magic resist, and physical plating, all lower with each hatching; periodically summons reinforcements and shields itself and nearby allies, and shields itself again whenever it survives a critical hit. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. Appears as the final wave of Curly Path. |
+| Reaver     | triangle, path-facing | Speeds up as it's hurt, shrugs off a flat point of every hit, crit immune from Elite, shields itself once badly wounded, and splits into two Simple mobs on death. Appears in Twisted Hourglass's first wave — a level-authored enemy, registered only for that level rather than globally (see `td.level.LevelDefinition.customEnemies`). |
 
 ### Rank
 
 Every enemy spawns at one of five named ranks — **Grunt, Soldier, Veteran, Elite, Boss** — shown
 as a badge on its body rather than as a number. A wave declares the rank its slots default to;
 any slot can name a different rank inline, before the enemy id (`elite c`) or before a spawn
-shape (`elite swarm 4 c`). Each rank multiplies the health of the rank below it, by 2 for the
-Simple mob and by 1.7 to 2 for the others, lower where an enemy's traits already grow with rank.
-Bounty climbs by adding instead: each enemy has a step; Soldier and Veteran each add one, Elite three
-more and Boss five more on top (a Simple mob pays 3, 6, 9, 18 and 33). A kill's score is weighted by
+shape (`elite swarm 4 c`). Each rank's health and bounty are written out per enemy (the Simple mob
+derives its own from the pattern), following one pattern: health multiplies by about the same factor every rank, 2 for the Simple mob and 1.7 to 2 for
+the others, lower where an enemy's traits already grow with rank; bounty adds instead, a step of its
+own for Soldier and for Veteran, three more for Elite and five more for Boss (a Simple mob has 100,
+200, 400, 800 and 1600 health and pays 3, 6, 9, 18 and 33). A kill's score is weighted by
 rank too — a Boss-rank kill is worth disproportionately more than a Grunt-rank one of the same
 bounty. Every enemy defines all five ranks, and gains traits or abilities as it climbs, except the
 Warden chain and the spawnlings, which are one rank each. Elite and Boss Simple and Mender enemies carry adaptive

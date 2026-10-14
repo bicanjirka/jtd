@@ -4,9 +4,7 @@ import td.effect.ShieldTemplate;
 import td.enemy.Ability;
 import td.enemy.ApplyEffectAction;
 import td.enemy.BodyArchetype;
-import td.enemy.CriticalImmunityTrait;
 import td.enemy.EnemyDefinition;
-import td.enemy.FlatResistTrait;
 import td.enemy.HealthThresholdTrigger;
 import td.enemy.HurtSpeedTrait;
 import td.enemy.IdentifiedAbility;
@@ -14,7 +12,6 @@ import td.enemy.IdentifiedTrait;
 import td.enemy.OnDeathTrigger;
 import td.enemy.PathDirectionalMovement;
 import td.enemy.Rank;
-import td.enemy.RankGrowth;
 import td.enemy.RankedEnemy;
 import td.enemy.SelfTarget;
 import td.enemy.SpawnEnemiesAction;
@@ -46,22 +43,31 @@ final class TwistedHourglassLevel {
                             + "brief shield once badly wounded, and splits into two stragglers when finally brought down.")
                     .withMovement(new PathDirectionalMovement())
                     .withHealthDivisor(0.8f)
-                    .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.3f)),
-                            IdentifiedTrait.named("armor", new FlatResistTrait(0.1f))))
+                    .withPhysicalPlating(1f)
+                    .withMagicPlating(1f)
+                    .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.3f))))
                     .withIdentifiedAbilities(List.of(
                             panicShield(100f),
                             IdentifiedAbility.named("splitOnDeath",
-                                    new Ability(new OnDeathTrigger(), new SpawnEnemiesAction("c", 2, false))))),
-                    RankGrowth.of(1.8f, 8))
-            .thenAt(Rank.SOLDIER, e -> e.withAdditionalAbilities(List.of(panicShield(180f))))
-            .thenAt(Rank.VETERAN, e -> e.withAdditionalAbilities(List.of(panicShield(320f))))
-            .thenAt(Rank.ELITE, e -> e
+                                    new Ability(new OnDeathTrigger(), new SpawnEnemiesAction("c", 2, false))))))
+            .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(1800, 20)
+                    .withAdditionalAbilities(List.of(panicShield(180f))))
+            .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(3240, 28)
+                    .withAdditionalAbilities(List.of(panicShield(320f))))
+            .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(5832, 52)
                     .withDescription("Speeds up as it's hurt, shrugs off a flat amount of every hit and crits "
                             + "outright, panics into a brief shield once badly wounded, and splits into two stragglers "
                             + "when finally brought down.")
-                    .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(new CriticalImmunityTrait())))
+                    .withResilience(100f)
+                    .withArmor(10f)
+                    .withMagicResist(10f)
+                    .withAgility(5f)
+                    .withSpirit(10f)
                     .withAdditionalAbilities(List.of(panicShield(580f))))
-            .thenAt(Rank.BOSS, e -> e
+            .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(10498, 92)
+                    .withArmor(15f)
+                    .withMagicResist(15f)
+                    .withSpirit(20f)
                     .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.6f))))
                     .withAdditionalAbilities(List.of(panicShield(1050f))))
             .build();

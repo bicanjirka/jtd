@@ -5,16 +5,15 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.Effect;
 import td.effect.EffectKind;
-import td.enemy.ArmorTrait;
 import td.enemy.BodyArchetype;
-import td.enemy.CriticalImmunityTrait;
 import td.enemy.DefinedEnemyMob;
+import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
-import td.enemy.FlatResistTrait;
 import td.enemy.HurtSpeedTrait;
 import td.enemy.Rank;
+import td.enemy.RegenerationTrait;
 import td.fixtures.WorldFixtures;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
@@ -613,25 +612,26 @@ class EnemyFrameBuilderTest {
     }
 
     @Test
-    void anArmoredEnemysTraitsEachYieldTheirOwnMarker() {
+    void eachTraitYieldsItsOwnMarkerAndABaseStatNone() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob armored = EnemyFactory.getEnemy("s", context, 0, 80, 3, Rank.GRUNT); // resist + crit-immune
+        EnemyMob yeti = EnemyFactory.getEnemy("yeti", context, 0, 80, 3, Rank.GRUNT); // freeze immune, chill resist, armor
 
-        List<EnemyOverlayDraw> overlays = overlaysOf(armored, 0);
+        List<EnemyOverlayDraw> overlays = overlaysOf(yeti, 0);
 
         assertThat(overlays).hasSize(2);
         assertThat(overlays).allMatch(TraitMarkerDraw.class::isInstance);
         List<Palette> palettes = overlays.stream().map(o -> ((TraitMarkerDraw) o).palette()).toList();
-        assertThat(palettes).containsExactlyInAnyOrder(Palette.TRAIT_MARKER_PERCENT_RESIST, Palette.TRAIT_MARKER_CRITICAL_IMMUNE);
+        assertThat(palettes).containsExactlyInAnyOrder(Palette.TRAIT_MARKER_FREEZE_IMMUNE,
+                Palette.TRAIT_MARKER_EFFECT_RESIST);
     }
 
     @Test
     void traitMarkersSitBelowTheBodyWhileEffectMarkersSitAbove() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob armored = EnemyFactory.getEnemy("s", context, 0, 80, 3, Rank.GRUNT);
-        EnemyBodyDraw body = bodyDrawAt(armored, 0, 0.0);
+        EnemyMob yeti = EnemyFactory.getEnemy("yeti", context, 0, 80, 3, Rank.GRUNT);
+        EnemyBodyDraw body = bodyDrawAt(yeti, 0, 0.0);
 
-        List<EnemyOverlayDraw> overlays = overlaysOf(armored, 0);
+        List<EnemyOverlayDraw> overlays = overlaysOf(yeti, 0);
 
         assertThat(overlays).allSatisfy(o -> assertThat(((TraitMarkerDraw) o).y()).isGreaterThan(body.y()));
     }
@@ -640,8 +640,8 @@ class EnemyFrameBuilderTest {
     void aFourthSimultaneousTraitCollapsesIntoOneOverflowMarkerInsteadOfGrowingTheRow() {
         GameWorld context = contextWithStraightPath();
         EnemyDefinition heavilyTraited = EnemyDefinition.of("heavy", "Heavy", 100, 5, 1.28f, BodyArchetype.CIRCLE)
-                .withTraits(List.of(ArmorTrait.both(25f), new FlatResistTrait(5),
-                        new CriticalImmunityTrait(), new HurtSpeedTrait(1.2f)));
+                .withTraits(List.of(new RegenerationTrait(1f), EffectResistTrait.immuneTo(EffectKind.BURN),
+                        EffectResistTrait.resisting(EffectKind.CHILL, 0.5f), new HurtSpeedTrait(1.2f)));
         context.getEnemyCatalog().register(heavilyTraited);
         EnemyMob enemy = context.getEnemyCatalog().spawn("heavy", context, 0, 100, 5, Rank.GRUNT);
 

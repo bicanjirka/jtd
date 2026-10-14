@@ -3,8 +3,12 @@ package td.enemy;
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageMix;
+import td.damage.DamageType;
+import td.damage.DamageUnits;
+import td.effect.EffectKind;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
+import td.stat.EnemyStat;
 import td.util.GameStartupException;
 import td.util.GameWorld;
 
@@ -101,13 +105,13 @@ class EnemyCatalogTest {
         assertThat(toughCircle.definitionFor(Rank.SOLDIER).traitsFor(DamageMix.none())).isEmpty();
         DamageMix allPhysical = DamageMix.of(Damage.physical(10));
         assertThat(toughCircle.definitionFor(Rank.ELITE).traitsFor(allPhysical))
-                .containsExactly(ArmorTrait.physicalOnly(67f));
+                .containsExactly(new AdaptiveResist.Adapted(67f, DamageType.PHYSICAL));
         assertThat(toughCircle.definitionFor(Rank.BOSS).traitsFor(allPhysical))
-                .containsExactly(ArmorTrait.physicalOnly(67f));
+                .containsExactly(new AdaptiveResist.Adapted(67f, DamageType.PHYSICAL));
     }
 
     @Test
-    void theRankAwareOverloadCanSetHealthCompletelyPersistAddAndReplaceTraitsPerRank() {
+    void theRankAwareOverloadCanSetHealthAndStatsCompletelyPersistAddAndReplaceTraitsPerRank() {
         EnemyCatalog catalog = EnemyCatalog.builtIn();
 
         RankedEnemy toughenedSquare = catalog.cloneAndAdjust("s", "toughenedSquare", (rank, d) -> switch (rank) {
@@ -115,10 +119,10 @@ class EnemyCatalogTest {
             case GRUNT -> d.withHealthAndPrice(1000, 100);
             case SOLDIER -> d;
             case VETERAN -> d.withAdditionalTraits(
-                    List.of(IdentifiedTrait.named("goldShield", ArmorTrait.both(100f))));
-            // replaces "resist" under the same id; other traits stay
-            case ELITE -> d.withAdditionalTraits(
-                    List.of(IdentifiedTrait.named("resist", ArmorTrait.both(233f))));
+                    List.of(IdentifiedTrait.named("regrowth", new RegenerationTrait(1f))));
+            // replaces "freeze" under the same id; other traits stay
+            case ELITE -> d.withArmor(233f).withAdditionalTraits(
+                    List.of(IdentifiedTrait.named("freeze", EffectResistTrait.immuneTo(EffectKind.FREEZE))));
             case BOSS -> d;
         });
 
@@ -127,20 +131,21 @@ class EnemyCatalogTest {
         assertThat(grunt.price()).isEqualTo(100);
 
         EnemyDefinition soldier = toughenedSquare.definitionFor(Rank.SOLDIER);
-        assertThat(traitNamed(soldier, "resist")).contains(ArmorTrait.both(33f));
-        assertThat(traitNamed(soldier, "criticalImmune")).contains(new CriticalImmunityTrait());
+        assertThat(soldier.baseStats().value(EnemyStat.ARMOR)).isEqualTo(33f);
+        assertThat(traitNamed(soldier, "freeze")).contains(EffectResistTrait.resisting(EffectKind.FREEZE, 0.2f));
 
         EnemyDefinition veteran = toughenedSquare.definitionFor(Rank.VETERAN);
         assertThat(veteran.traitSlots()).hasSize(3);
-        assertThat(traitNamed(veteran, "resist")).contains(ArmorTrait.both(43f));
-        assertThat(traitNamed(veteran, "criticalImmune")).contains(new CriticalImmunityTrait());
-        assertThat(traitNamed(veteran, "goldShield")).contains(ArmorTrait.both(100f));
+        assertThat(traitNamed(veteran, "freeze")).contains(EffectResistTrait.resisting(EffectKind.FREEZE, 0.2f));
+        assertThat(traitNamed(veteran, "chill")).contains(EffectResistTrait.resisting(EffectKind.CHILL, 0.25f));
+        assertThat(traitNamed(veteran, "regrowth")).contains(new RegenerationTrait(1f));
 
         EnemyDefinition elite = toughenedSquare.definitionFor(Rank.ELITE);
-        assertThat(elite.traitSlots()).hasSize(3);
-        assertThat(traitNamed(elite, "resist")).contains(ArmorTrait.both(233f));
-        assertThat(traitNamed(elite, "criticalImmune")).contains(new CriticalImmunityTrait());
-        assertThat(traitNamed(elite, "flatResist")).contains(FlatResistTrait.physicalOnly(8));
+        assertThat(elite.baseStats().value(EnemyStat.ARMOR)).isEqualTo(233f);
+        assertThat(elite.baseStats().value(EnemyStat.PHYSICAL_PLATING)).isEqualTo(DamageUnits.ofPoints(8f));
+        assertThat(elite.traitSlots()).hasSize(2);
+        assertThat(traitNamed(elite, "freeze")).contains(EffectResistTrait.immuneTo(EffectKind.FREEZE));
+        assertThat(traitNamed(elite, "chill")).contains(EffectResistTrait.resisting(EffectKind.CHILL, 0.25f));
     }
 
     private static Optional<TraitTemplate> traitNamed(EnemyDefinition definition, String name) {

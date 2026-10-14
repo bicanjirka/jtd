@@ -2,7 +2,6 @@ package td.enemy;
 
 import td.effect.InvisibleTemplate;
 import td.effect.SprintTemplate;
-import td.stat.EnemyStat;
 
 import java.util.List;
 
@@ -21,30 +20,33 @@ final class SkirmisherEnemy {
                 .startingAt(EnemyDefinition.of("skirmisher", "Skirmisher", 120, 4, 1.6f, BodyArchetype.SKIRMISHER)
                         .withDescription("Nimble: it dodges some aimed shots, and crits land softer on it. Area damage, "
                                 + "freezes and accurate towers catch it.")
-                        .withStat(EnemyStat.RESILIENCE, 20f)
-                        .withIdentifiedTraits(List.of(nimble(40f))), RankGrowth.of(1.8f, 3))
-                .thenAt(Rank.SOLDIER, e -> e
+                        .withResilience(20f)
+                        .withAgility(40f))
+                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(216, 7)
                         .withDescription("Nimble, crits land softer on it, and it sprints off for a moment after every "
                                 + "shot it dodges.")
-                        .withAdditionalTraits(List.of(nimble(50f)))
+                        .withAgility(50f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(new OnDodgeTrigger(),
                                 new ApplyEffectAction(new SprintTemplate(30), new SelfTarget()))))))
-                .thenAt(Rank.VETERAN, e -> e.withAdditionalTraits(List.of(nimble(60f))))
-                .thenAt(Rank.ELITE, e -> e
+                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(389, 10).withAgility(60f))
+                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(700, 19)
                         .withDescription("Nimble, crits land softer on it, it sprints off after every dodge, and the "
                                 + "more it is hurt the harder it is to hit.")
+                        .withArmor(10f)
+                        .withMagicResist(10f)
+                        .withSpirit(10f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("evasive", new HurtAgilityTrait(60f)))))
-                .thenAt(Rank.BOSS, e -> e
+                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1260, 34)
                         .withDescription("Nimble, crits land softer on it, the more it is hurt the harder it is to hit, "
                                 + "and after every dodge it sprints off and vanishes for a moment.")
-                        .withAdditionalTraits(List.of(nimble(80f),
-                                IdentifiedTrait.named("evasive", new HurtAgilityTrait(80f))))
+                        .withAgility(80f)
+                        .withResilience(30f)
+                        .withArmor(15f)
+                        .withMagicResist(15f)
+                        .withSpirit(20f)
+                        .withAdditionalTraits(List.of(IdentifiedTrait.named("evasive", new HurtAgilityTrait(80f))))
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(new OnDodgeTrigger(),
                                 new ApplyEffectAction(new InvisibleTemplate(15), new SelfTarget()))))))
                 .build());
-    }
-
-    private static IdentifiedTrait nimble(float agility) {
-        return IdentifiedTrait.named("agility", new AgilityTrait(agility));
     }
 }

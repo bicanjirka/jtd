@@ -1,6 +1,7 @@
 package td.enemy;
 
 import td.damage.DamageMix;
+import td.damage.DamageUnits;
 import td.stat.BaseStats;
 import td.stat.DisruptionAura;
 import td.stat.EnemyStat;
@@ -93,8 +94,49 @@ public record EnemyDefinition(
         };
     }
 
-    /** Authors the base of {@code stat} before any trait or effect modifies it. */
-    public EnemyDefinition withStat(EnemyStat stat, float base) {
+    /** Physical mitigation in points: a physical hit is multiplied by {@code 100 / (100 + armor)}. */
+    public EnemyDefinition withArmor(float points) {
+        return this.withBase(EnemyStat.ARMOR, points);
+    }
+
+    /** Magic mitigation in points: a magic hit is multiplied by {@code 100 / (100 + resist)}. */
+    public EnemyDefinition withMagicResist(float points) {
+        return this.withBase(EnemyStat.MAGIC_RESIST, points);
+    }
+
+    /** Points every physical hit loses after mitigation, never below zero. */
+    public EnemyDefinition withPhysicalPlating(float points) {
+        return this.withBase(EnemyStat.PHYSICAL_PLATING, DamageUnits.ofPoints(points));
+    }
+
+    /** Points every magic hit loses after mitigation, never below zero. */
+    public EnemyDefinition withMagicPlating(float points) {
+        return this.withBase(EnemyStat.MAGIC_PLATING, DamageUnits.ofPoints(points));
+    }
+
+    /**
+     * Each point removes 1% of an attacker's crit chance and crit bonus; 100 is crit-immune, and below zero
+     * crits land harder.
+     */
+    public EnemyDefinition withResilience(float points) {
+        return this.withBase(EnemyStat.RESILIENCE, points);
+    }
+
+    /** An aimed hit misses with chance {@code agility / (agility + 100)}, after the attacker's accuracy. */
+    public EnemyDefinition withAgility(float points) {
+        return this.withBase(EnemyStat.AGILITY, points);
+    }
+
+    /**
+     * Scales the heals and shields it receives by {@code 1 + spirit / 100} and paces its debuffs; below zero
+     * both work against it.
+     */
+    public EnemyDefinition withSpirit(float points) {
+        return this.withBase(EnemyStat.SPIRIT, points);
+    }
+
+    /** Authors the base of {@code stat} before any trait or effect modifies it; a later step replaces it. */
+    private EnemyDefinition withBase(EnemyStat stat, float base) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
                 this.abilitySlots, this.baseStats.with(stat, base), this.disruption);
