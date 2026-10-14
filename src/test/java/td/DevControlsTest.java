@@ -171,6 +171,24 @@ class DevControlsTest {
         assertThat(ignored).isTrue();
     }
 
+    @Test
+    void enemyHealthPercentScalesOnlyTheEnemiesSpawnedAfterItAndRefusesZero() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.dev.spawnWave("c", Rank.GRUNT, 0);
+        this.dev.runPending();
+        int authored = this.world.enemies().getEnemies()[0].getHealth();
+
+        String refused = this.dev.setEnemyHealthPercent(0);
+        String set = this.dev.setEnemyHealthPercent(250);
+        this.dev.spawnWave("c", Rank.GRUNT, 0);
+        this.dev.runPending();
+
+        assertThat(refused).isEqualTo("Enemy health must be above 0%");
+        assertThat(set).isEqualTo("New enemies get 250% health");
+        assertThat(this.world.enemies().getEnemies()).extracting(enemy -> enemy.getHealth())
+                .containsExactly(authored, authored * 5 / 2);
+    }
+
     private Tower placeSniper(int cellX, int cellY) {
         this.engine.startPlacing(TowerFactory.Type.SNIPER, 0f);
         this.engine.mouseClicked(BoardFixtures.cellCenter(cellX), BoardFixtures.cellCenter(cellY));

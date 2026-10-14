@@ -33,7 +33,7 @@ has its `TODO.md` entry until it lands):
 4. The two missing fun proxies: several winning layouts and a decision every few waves (question 7).
 5. The adopted practices (question 9): economy modelling, per-tick timelines, coverage reports, level-knob
    sweeps.
-6. Enemy health percent in the dev panel.
+6. ✅ Enemy health percent in the dev panel.
 
 The balance pass itself, level by level with the findings as the starting list, comes after the merge.
 
@@ -64,7 +64,7 @@ tuning cheap; it never said what to measure.
 | Layer | What exists |
 |---|---|
 | Rules | Unit tests, with `GameEngineTest` as the integration surface; headless, driven by `doTick`. |
-| Manual testing | The hidden dev panel (`Ctrl`+`Shift`+`D`): set credits and lives, free build, infinite lives, upgrades that ignore their gates, spawn any wave script with a live preview and a choice of rank and path, skip or jump to a wave, restart, step one tick, kill or clear the board, grant XP to a tower, show the cell grid. The keys `n`, `x` and `c`. Game speed buttons. It helped manual testing a great deal, which is evidence that the right setup tool is worth more than a better report. |
+| Manual testing | The hidden dev panel (`Ctrl`+`Shift`+`D`): set credits and lives, free build, infinite lives, upgrades that ignore their gates, enemy health as a percentage, spawn any wave script with a live preview and a choice of rank and path, skip or jump to a wave, restart, step one tick, kill or clear the board, grant XP to a tower, show the cell grid. The keys `n`, `x` and `c`. Game speed buttons. It helped manual testing a great deal, which is evidence that the right setup tool is worth more than a better report. |
 | Looking | The tower and enemy inspectors, and the headless `PreviewBoard` and `PreviewEnemy` renders. |
 | Driving the live window | The `run-jtd` skill's `Driver`: clicks, hover, text and state output, screenshots. |
 | Balance runs | The four harnesses above. |
