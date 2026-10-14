@@ -46,11 +46,6 @@ final class FakeAbilityContext implements AbilityContext {
     }
 
     @Override
-    public int ticksSinceSpawn() {
-        return 0;
-    }
-
-    @Override
     public int ticksSinceLastHit() {
         return this.ticksSinceLastHit;
     }

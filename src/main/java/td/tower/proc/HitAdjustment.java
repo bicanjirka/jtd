@@ -66,7 +66,7 @@ public record HitAdjustment(float damage, float critChance, float critMultiplier
         }
         AttackProfile adjusted = attack;
         if (this.critChance != 0f) {
-            adjusted = adjusted.withCritChance(Math.max(0f, Math.min(1f, adjusted.critChance() + this.critChance)));
+            adjusted = adjusted.withCritChance(Math.clamp(adjusted.critChance() + this.critChance, 0f, 1f));
         }
         if (this.critMultiplier != 0f) {
             adjusted = adjusted.withCritDamageBonus(this.critMultiplier);

@@ -572,7 +572,7 @@ public final class Java2DFrameRenderer {
     }
 
     private static Color withAlpha(Color base, int alpha) {
-        return new Color(base.getRed(), base.getGreen(), base.getBlue(), Math.min(255, Math.max(alpha, 0)));
+        return new Color(base.getRed(), base.getGreen(), base.getBlue(), Math.clamp(alpha, 0, 255));
     }
 
     private static Color healthColor(Color base, float healthFraction) {
@@ -937,7 +937,6 @@ public final class Java2DFrameRenderer {
         return p;
     }
 
-    /** Two crossing strokes, to be stroked. */
     /** A padlock's body: the lower part of the glyph box. */
     private static Shape lockBodyShape(float size) {
         return new RoundRectangle2D.Float(-size * 0.8f, -size * 0.1f, size * 1.6f, size * 1.1f, size * 0.3f, size * 0.3f);
@@ -1214,9 +1213,6 @@ public final class Java2DFrameRenderer {
         g2.setTransform(save);
     }
 
-    /**
-     * A pulsing circle around a tower with a {@code SPECIAL} upgrade, the same on every body shape.
-     */
     /** One small diamond per rank above Recruit, stacked upward beside the body. */
     private void paintRankPips(Graphics2D g2, int rank, float bodySize) {
         if (rank == 0) {
@@ -1338,7 +1334,6 @@ public final class Java2DFrameRenderer {
         }
     }
 
-    /** Draws a tower body at the origin; the caller has translated to the tower's centre. */
     /** Which way a body shape points as drawn, or {@code null} for one with no front. */
     private static Float bodyFrontRadians(Palette palette) {
         return switch (palette) {
@@ -1538,7 +1533,7 @@ public final class Java2DFrameRenderer {
 
     private void paintSmoke(Graphics2D g2, SmokeDraw smoke) {
         Composite save = g2.getComposite();
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.max(0f, Math.min(1f, smoke.alpha()))));
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.clamp(smoke.alpha(), 0f, 1f)));
         this.paintFilledCircle(g2, smoke.palette(), smoke.x(), smoke.y(), smoke.radius());
         g2.setComposite(save);
     }

@@ -81,7 +81,6 @@ public final class SniperTower extends AbstractTower {
     private static final int COOLDOWN_MAX = 49;
 
     private static final float OVERWATCH_RANGE_BONUS = 0.35f;
-    /** Railgun reaches this far past the Sniper's range, and every enemy it pierces after the first takes less. */
     /** Enough to kill anything, so that an execution takes exactly what health is left. */
     private static final int EXECUTION_DAMAGE = 1_000_000_000;
 

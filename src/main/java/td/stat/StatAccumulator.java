@@ -10,9 +10,6 @@ public interface StatAccumulator<S extends Enum<S> & StatKey> {
 
     void multiply(S stat, float factor);
 
-    /** A flat amount added to the stat, for one that changes every tick. */
-    void addFlat(S stat, float amount);
-
     /** A flat amount the enemy receives, scaled by its spirit and healing received (a heal's regeneration). */
     void restoreFlat(S stat, float amount);
 

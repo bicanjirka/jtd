@@ -33,7 +33,7 @@ public final class HitResolution {
         boolean critical = incoming.critical();
         float resilience = stats.value(EnemyStat.RESILIENCE);
         if (!critical && attacker.delivery() == Delivery.HIT && resilience < 100f
-                && rollsCrit(attacker, stats, resilience, random)) {
+                && rollsCrit(attacker, resilience, random)) {
             critical = true;
             amount *= critFactor(attacker, stats);
         }
@@ -70,10 +70,10 @@ public final class HitResolution {
     /** Whether a hit from {@code attacker} would roll a critical against {@code stats}. */
     public static boolean rollsCrit(AttackProfile attacker, StatView stats, RandomSource random) {
         float resilience = stats.value(EnemyStat.RESILIENCE);
-        return resilience < 100f && rollsCrit(attacker, stats, resilience, random);
+        return resilience < 100f && rollsCrit(attacker, resilience, random);
     }
 
-    private static boolean rollsCrit(AttackProfile attacker, StatView stats, float resilience, RandomSource random) {
+    private static boolean rollsCrit(AttackProfile attacker, float resilience, RandomSource random) {
         if (attacker.guaranteedCrit()) {
             return true;
         }

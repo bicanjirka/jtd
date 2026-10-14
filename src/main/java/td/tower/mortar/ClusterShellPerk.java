@@ -17,6 +17,6 @@ public final class ClusterShellPerk implements MortarPerk {
     @Override
     public String describe() {
         return COUNT + " bomblets scattered along the path around the impact, " + PerkText.percent(DAMAGE_SHARE) + " damage each over "
-                + PerkText.cells(RADIUS_CELLS) + (RADIUS_CELLS == 1f ? " cell" : " cells");
+                + PerkText.distance(RADIUS_CELLS);
     }
 }

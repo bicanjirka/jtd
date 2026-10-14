@@ -25,10 +25,6 @@ public record Rules(int enemyHealthPercent, int creditBonus, int livesBonus, int
         return new Rules(percent, this.creditBonus, this.livesBonus, this.bountyPercent, this.spawnSpacingPercent);
     }
 
-    public Rules withCreditBonus(int bonus) {
-        return new Rules(this.enemyHealthPercent, bonus, this.livesBonus, this.bountyPercent, this.spawnSpacingPercent);
-    }
-
     public Rules withLivesBonus(int bonus) {
         return new Rules(this.enemyHealthPercent, this.creditBonus, bonus, this.bountyPercent, this.spawnSpacingPercent);
     }

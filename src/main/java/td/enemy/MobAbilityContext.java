@@ -23,11 +23,6 @@ final class MobAbilityContext implements AbilityContext {
     }
 
     @Override
-    public int ticksSinceSpawn() {
-        return this.caster.ticksSinceSpawn();
-    }
-
-    @Override
     public int ticksSinceLastHit() {
         return this.caster.ticksSinceLastHit();
     }

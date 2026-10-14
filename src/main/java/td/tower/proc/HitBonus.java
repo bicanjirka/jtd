@@ -1,6 +1,7 @@
 package td.tower.proc;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * A conditional change to one hit: when it applies, how many times, and what it adds.
@@ -36,7 +37,7 @@ public record HitBonus(HitCondition when, HitScaling scaling, HitAdjustment adju
 
     /** The label from the condition and the scaling, the value from the adjustment. */
     public Description describe() {
-        List<String> parts = List.of(this.when.describe(), this.scaling.describe()).stream()
+        List<String> parts = Stream.of(this.when.describe(), this.scaling.describe())
                 .filter(part -> !part.isEmpty()).toList();
         String label = parts.isEmpty() ? "Every hit" : Words.capitalized(String.join(", ", parts));
         return new Description(label, this.adjustment.describe());

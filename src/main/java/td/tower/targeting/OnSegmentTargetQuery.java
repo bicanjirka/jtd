@@ -50,7 +50,7 @@ public final class OnSegmentTargetQuery implements TargetQuery {
     }
 
     private double distanceToSegmentSquared(EnemyMob e) {
-        double t = Math.max(0, Math.min(1, this.alongSegment(e)));
+        double t = Math.clamp(this.alongSegment(e), 0.0, 1.0);
         double nearestX = this.fromX + t * this.dx;
         double nearestY = this.fromY + t * this.dy;
         double ex = e.getX() - nearestX;

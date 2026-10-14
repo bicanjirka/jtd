@@ -61,11 +61,6 @@ public record LevelRun(TowerLab lab, Map<String, List<PlayRecord>> plays, Map<St
         return Estimate.of(this.playsOf(player), play -> play.result().livesLost());
     }
 
-    /** Lives lost as a share of the level's lives. */
-    public Estimate livesLostShare(String player) {
-        return Estimate.of(this.playsOf(player), play -> play.result().livesLost() / (double) play.result().lives());
-    }
-
     public Estimate leaks(String player) {
         return Estimate.of(this.playsOf(player), play -> play.result().leaks());
     }

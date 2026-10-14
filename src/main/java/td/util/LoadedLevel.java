@@ -51,13 +51,6 @@ public record LoadedLevel(CellGrid cells, BoardGeometry board, List<PathRuntime>
     }
 
     /**
-     * @throws IndexOutOfBoundsException for a missing path or round
-     */
-    public Wave waveAt(int pathIndex, int round) {
-        return this.paths.get(pathIndex).waves().get(round);
-    }
-
-    /**
      * Every path's wave at {@code round}, in path order.
      *
      * @throws IndexOutOfBoundsException for a missing round

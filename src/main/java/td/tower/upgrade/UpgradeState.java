@@ -62,7 +62,7 @@ public record UpgradeState(List<UpgradeNode> owned) {
     /** The last node bought in {@code slot}. */
     public Optional<UpgradeNode> tip(UpgradeSlot slot) {
         List<UpgradeNode> inSlot = this.inSlot(slot);
-        return inSlot.isEmpty() ? Optional.empty() : Optional.of(inSlot.get(inSlot.size() - 1));
+        return inSlot.isEmpty() ? Optional.empty() : Optional.of(inSlot.getLast());
     }
 
     /** What every owned node lets the tower do. */

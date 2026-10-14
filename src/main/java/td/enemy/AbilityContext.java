@@ -11,8 +11,6 @@ public interface AbilityContext {
     /** Current health over max health, in {@code [0, 1]}. */
     float healthFraction();
 
-    int ticksSinceSpawn();
-
     /** {@code 0} on the tick a hit landed. */
     int ticksSinceLastHit();
 

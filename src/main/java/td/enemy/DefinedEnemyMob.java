@@ -585,10 +585,6 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.moments.record(Moment.ABILITY_SPAWN, gameTime);
     }
 
-    int ticksSinceSpawn() {
-        return this.ticksSinceSpawn;
-    }
-
     int ticksSinceLastHit() {
         return this.ticksSinceLastHit;
     }

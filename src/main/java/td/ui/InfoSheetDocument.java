@@ -98,8 +98,10 @@ final class InfoSheetDocument {
         StyleConstants.setBold(name, true);
         this.insert(" " + header.name() + "\t", name);
         Optional<Color> badgeColor = Java2DFrameRenderer.rankBadgePalette(header.badge()).map(Java2DFrameRenderer::colorFor);
-        badgeColor.ifPresent(color -> this.icon(new PaintedIcon(GLYPH_BOX, GLYPH_BOX,
-                g2 -> this.renderer.paintRankBadgeGlyph(g2, header.badge(), BADGE_SIZE))));
+        if (badgeColor.isPresent()) {
+            this.icon(new PaintedIcon(GLYPH_BOX, GLYPH_BOX,
+                    g2 -> this.renderer.paintRankBadgeGlyph(g2, header.badge(), BADGE_SIZE)));
+        }
         SimpleAttributeSet rank = colored(badgeColor.orElse(PROSE_COLOR));
         StyleConstants.setFontSize(rank, RANK_FONT_SIZE);
         this.insert(" " + header.rank(), rank);

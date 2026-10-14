@@ -43,7 +43,7 @@ public final class PurchaseHarness {
         this.armyCopies = armyCopies;
     }
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         int levelIndex = args.length > 0 ? Integer.parseInt(args[0]) : 0;
         int seeds = args.length > 1 ? Integer.parseInt(args[1]) : DEFAULT_SEEDS;
         Optional<TowerFactory.Type> only = args.length > 2

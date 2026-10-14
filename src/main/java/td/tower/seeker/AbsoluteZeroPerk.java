@@ -19,7 +19,7 @@ public final class AbsoluteZeroPerk implements SeekerPerk {
 
     @Override
     public String describe() {
-        return "the missile freezes everything within " + PerkText.cells(AREA_CELLS) + (AREA_CELLS == 1f ? " cell" : " cells")
+        return "the missile freezes everything within " + PerkText.distance(AREA_CELLS)
                 + " of the impact; shatters deal " + PerkText.times(SHATTER_FACTOR)
                 + "; an enemy this tower froze shatters when its freeze ends";
     }

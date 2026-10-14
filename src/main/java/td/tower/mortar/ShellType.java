@@ -65,7 +65,7 @@ public enum ShellType {
 
     private String zoneText() {
         ShellZone ground = this.zone.orElseThrow();
-        return PerkText.cells(ground.radiusCells()) + (ground.radiusCells() == 1f ? " cell" : " cells") + " wide, for "
+        return PerkText.distance(ground.radiusCells()) + " wide, for "
                 + PerkText.seconds(ground.lifetimeTicks());
     }
 
