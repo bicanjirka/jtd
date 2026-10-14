@@ -34,7 +34,7 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 | `j`       | Jammer (weakens nearby towers; in no wave yet)           |
 | `e`       | spacer: takes a spawn slot, spawns nothing               |
 | `warden1` | the Warden boss chain                                    |
-| `juggernaut` | Juggernaut (slow, huge physical plating)              |
+| `juggernaut` | Juggernaut (slow, huge plating)                       |
 | `mite`    | Mite (tiny, one hit; send in a `swarm`)                  |
 | `courier` | Courier (very fast, fragile, high bounty)                |
 | `shieldbearer` | Shieldbearer (physical-only shield for allies)      |

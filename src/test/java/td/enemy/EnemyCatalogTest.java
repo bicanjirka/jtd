@@ -142,7 +142,7 @@ class EnemyCatalogTest {
 
         EnemyDefinition elite = toughenedSquare.definitionFor(Rank.ELITE);
         assertThat(elite.baseStats().value(EnemyStat.ARMOR)).isEqualTo(233f);
-        assertThat(elite.baseStats().value(EnemyStat.PHYSICAL_PLATING)).isEqualTo(DamageUnits.ofPoints(8f));
+        assertThat(elite.baseStats().value(EnemyStat.PLATING)).isEqualTo(DamageUnits.ofPoints(8f));
         assertThat(elite.traitSlots()).hasSize(2);
         assertThat(traitNamed(elite, "freeze")).contains(EffectResistTrait.immuneTo(EffectKind.FREEZE));
         assertThat(traitNamed(elite, "chill")).contains(EffectResistTrait.resisting(EffectKind.CHILL, 0.25f));

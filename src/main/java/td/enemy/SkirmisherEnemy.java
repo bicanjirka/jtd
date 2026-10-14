@@ -32,18 +32,12 @@ final class SkirmisherEnemy {
                 .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(700, 19)
                         .withDescription("Nimble, crits land softer on it, it sprints off after every dodge, and the "
                                 + "more it is hurt the harder it is to hit.")
-                        .withArmor(10f)
-                        .withMagicResist(10f)
-                        .withSpirit(10f)
+                        .withStats(10f, 10f, 0f, 0f, 20f, 60f, 10f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("evasive", new HurtAgilityTrait(60f)))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1260, 34)
                         .withDescription("Nimble, crits land softer on it, the more it is hurt the harder it is to hit, "
                                 + "and after every dodge it sprints off and vanishes for a moment.")
-                        .withAgility(80f)
-                        .withResilience(30f)
-                        .withArmor(15f)
-                        .withMagicResist(15f)
-                        .withSpirit(20f)
+                        .withStats(15f, 15f, 0f, 0f, 30f, 80f, 20f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("evasive", new HurtAgilityTrait(80f))))
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(new OnDodgeTrigger(),
                                 new ApplyEffectAction(new InvisibleTemplate(15), new SelfTarget()))))))

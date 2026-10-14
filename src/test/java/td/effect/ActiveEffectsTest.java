@@ -880,12 +880,12 @@ class ActiveEffectsTest {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.cracked(100, d -> {
         }));
-        BaseStats<EnemyStat> plated = BaseStats.defaults(EnemyStat.class).with(EnemyStat.PHYSICAL_PLATING, 800f).with(EnemyStat.MAGIC_PLATING, 400f);
+        BaseStats<EnemyStat> plated = BaseStats.defaults(EnemyStat.class).with(EnemyStat.PLATING, 800f).with(EnemyStat.INSULATION, 400f);
 
         StatSheet sheet = new StatSheet(plated, effects::contributeTo);
 
-        assertThat(sheet.value(EnemyStat.PHYSICAL_PLATING)).isEqualTo(300f);
-        assertThat(sheet.value(EnemyStat.MAGIC_PLATING)).isZero();
+        assertThat(sheet.value(EnemyStat.PLATING)).isEqualTo(300f);
+        assertThat(sheet.value(EnemyStat.INSULATION)).isZero();
     }
 
     @Test

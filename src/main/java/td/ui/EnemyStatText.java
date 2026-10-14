@@ -115,14 +115,14 @@ final class EnemyStatText {
     private static Optional<EnemyStat> pairedWith(EnemyStat stat) {
         return switch (stat) {
             case ARMOR -> Optional.of(EnemyStat.MAGIC_RESIST);
-            case PHYSICAL_PLATING -> Optional.of(EnemyStat.MAGIC_PLATING);
+            case PLATING -> Optional.of(EnemyStat.INSULATION);
             default -> Optional.empty();
         };
     }
 
     private static StatText pairText(EnemyStat stat, float value) {
-        if (stat == EnemyStat.PHYSICAL_PLATING) {
-            return new StatText("Plating", platingText(value));
+        if (stat == EnemyStat.PLATING) {
+            return new StatText("Plating, insulation", platingText(value));
         }
         return new StatText("Armor, magic resist", Integer.toString(Math.round(value)));
     }
@@ -131,8 +131,8 @@ final class EnemyStatText {
         return switch (stat) {
             case ARMOR -> new StatText("Armor", Integer.toString(Math.round(value)));
             case MAGIC_RESIST -> new StatText("Magic resist", Integer.toString(Math.round(value)));
-            case PHYSICAL_PLATING -> new StatText("Plating, physical", platingText(value));
-            case MAGIC_PLATING -> new StatText("Plating, magic", platingText(value));
+            case PLATING -> new StatText("Plating", platingText(value));
+            case INSULATION -> new StatText("Insulation", platingText(value));
             case MOVE_SPEED -> new StatText("Speed", SheetNumbers.decimal(value * TickRate.TICKS_PER_SECOND) + " px/s");
             case PHYSICAL_DAMAGE_TAKEN -> new StatText("Physical taken", SheetNumbers.percent(value));
             case MAGIC_DAMAGE_TAKEN -> new StatText("Magic taken", SheetNumbers.percent(value));

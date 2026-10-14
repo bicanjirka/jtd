@@ -218,7 +218,7 @@ limit up to their stat floors of -100. Scorched and Sickened hold while a pool t
 spirit (one per 20 ticks, `ActiveEffects.STACK_DECAY_INTERVAL_TICKS`); at -100 spirit they never wear off.
 A burning enemy earns 2 stacks per second, so it reaches the floor in about 50 s of steady burning.
 
-- Cracked takes a flat 5 plating points (its `EffectKind.CRACKED` row), a starting value.
+- Cracked takes a flat 5 points of plating and insulation (its `EffectKind.CRACKED` row), a starting value.
 - **Where:** the named constants in `td.effect.ActiveEffects`, `AbstractTower` and each tower.
 - **Approach:** tune through play or `td.balance.BalanceReport` with the other placeholder entries; decide
   whether a long burn's resilience loss (crit damage up to double at the floor) is too strong.

@@ -20,14 +20,15 @@
   `BOSS`; it is the reference ladder. Every enemy gains something of its identity from Elite on.
 - Stat, trait, ability, effect, each thing is exactly one:
   - A **base stat** is a number every enemy has on its sheet. It is authored with its named method
-    (`withArmor`, `withMagicResist`, `withPhysicalPlating`, `withMagicPlating`, `withResilience`,
-    `withAgility`, `withSpirit`; plating in points), and a rank step replaces it. Never a trait.
+    (`withArmor`, `withMagicResist`, `withPlating`, `withInsulation`, `withResilience`,
+    `withAgility`, `withSpirit`; plating and insulation in points), and a rank step replaces it. A step that authors
+    most of them uses `withStats`, which sets all seven, so it repeats the inherited ones. Never a trait.
   - A **trait** is passive identity an enemy has or hasn't: an effect resistance, regeneration, a stat
     that follows its state or adapts to the level. A trait that only adds a constant to a stat is a
     base stat instead.
   - An **ability** is a trigger and an action: it happens at a moment.
   - An **effect** is a timed status put on an enemy by a tower or an ability.
-- From Elite every built-in enemy has every base stat but plating above zero, unless its identity rules
+- From Elite every built-in enemy has every base stat but plating and insulation above zero, unless its identity rules
   it out (stated in its class javadoc or a comment).
 - Single-rank enemy: `EnemyCatalog.register(EnemyDefinition)`. A variant of an existing one:
   `EnemyCatalog.cloneAndAdjust(baseId, newId, adjust)`, which clones every rank from the
@@ -101,7 +102,7 @@
 - `takeHit(damage, attacker)` first spends a mark, then lets agility dodge an aimed hit (`HitResult.dodge()`:
   nothing else happens, not even the idle timer's reset); otherwise it lands the hit through `HitResolution` (a crit roll for hits only, and
   none at resilience 100; a guaranteed crit skips the roll, otherwise it rolls against resilience,
-  which scales crit chance and crit bonus both ways; then penetration, mitigation, plating, damage
+  which scales crit chance and crit bonus both ways; then penetration, mitigation, plating or insulation, damage
   taken), then a shield pool absorbs what it can, then the cap at health; it returns a `HitResult`
   (health lost, absorbed). Callers credit `credited()`. `doDamage` is its `landed()`.
 - A spawn shape's trait override is composed into the definition before the mob is built. There

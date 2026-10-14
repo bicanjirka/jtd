@@ -6,15 +6,17 @@ import td.damage.DamageType;
  * One number on an enemy's stat sheet, with the base value an enemy has unless its definition
  * authors another and the range the resolved value is clamped to.
  * <p>
- * Plating and regeneration are in the hundredths of a point that health and damage use.
+ * Plating, insulation and regeneration are in the hundredths of a point that health and damage use.
  */
 public enum EnemyStat implements StatKey {
 
     /** Physical mitigation: a hit is multiplied by {@code 100 / (100 + armor)}. */
     ARMOR(0f, 0f, Float.MAX_VALUE),
     MAGIC_RESIST(0f, 0f, Float.MAX_VALUE),
-    PHYSICAL_PLATING(0f, 0f, Float.MAX_VALUE),
-    MAGIC_PLATING(0f, 0f, Float.MAX_VALUE),
+    /** Points every physical hit loses after mitigation. */
+    PLATING(0f, 0f, Float.MAX_VALUE),
+    /** Points every magic hit loses after mitigation. */
+    INSULATION(0f, 0f, Float.MAX_VALUE),
     /** Pixels per tick; its base is the definition's speed times the spawn multiplier. */
     MOVE_SPEED(0f, 0f, Float.MAX_VALUE),
     // Floored above zero so a stacked reduction never makes an enemy immune by accident.
@@ -57,10 +59,10 @@ public enum EnemyStat implements StatKey {
         };
     }
 
-    public static EnemyStat platingFor(DamageType type) {
+    public static EnemyStat flatReductionFor(DamageType type) {
         return switch (type) {
-            case PHYSICAL -> PHYSICAL_PLATING;
-            case MAGIC -> MAGIC_PLATING;
+            case PHYSICAL -> PLATING;
+            case MAGIC -> INSULATION;
         };
     }
 

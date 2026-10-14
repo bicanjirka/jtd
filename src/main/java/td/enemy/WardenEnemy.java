@@ -53,7 +53,7 @@ final class WardenEnemy {
      * What one stage of the chain is protected by.
      *
      * @param resist     armor and magic resist, in points
-     * @param plating    points every hit loses: both types on an egg, physical only on a Warden
+     * @param plating    plating, and insulation too on an egg; a Warden has no insulation
      * @param resilience against crits; 100 is crit-immune. A Warden has none: it answers a crit with a shield,
      *                   and resilience would only mute its own ability
      */
@@ -64,11 +64,7 @@ final class WardenEnemy {
                                        List<IdentifiedTrait> traits) {
         return EnemyDefinition.of(id, name, 3000, 20, 0f, BodyArchetype.WARDEN_EGG)
                 .withDescription(description)
-                .withArmor(shell.resist())
-                .withMagicResist(shell.resist())
-                .withPhysicalPlating(shell.plating())
-                .withMagicPlating(shell.plating())
-                .withResilience(shell.resilience())
+                .withStats(shell.resist(), shell.resist(), shell.plating(), shell.plating(), shell.resilience(), 0f, 0f)
                 .withIdentifiedTraits(traits);
     }
 
@@ -98,10 +94,7 @@ final class WardenEnemy {
                         + "shields every nearby ally once below half health; heals itself if left unattacked "
                         + "too long; gains a shield whenever it survives a critical hit; and leaves behind an egg on death.")
                 .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
-                .withArmor(shell.resist())
-                .withMagicResist(shell.resist())
-                .withPhysicalPlating(shell.plating())
-                .withResilience(shell.resilience())
+                .withStats(shell.resist(), shell.resist(), shell.plating(), 0f, shell.resilience(), 0f, 0f)
                 .withIdentifiedAbilities(List.copyOf(abilities));
     }
 }

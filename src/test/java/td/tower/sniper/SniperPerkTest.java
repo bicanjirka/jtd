@@ -31,8 +31,8 @@ class SniperPerkTest {
 
         assertThat(attack.penetrate(td.damage.DamageType.PHYSICAL, 80f, false)).isEqualTo(30f);
         assertThat(attack.penetrate(td.damage.DamageType.PHYSICAL, 80f, true)).isEqualTo(80f);
-        assertThat(attack.penetratePlating(300f, false)).isZero();
-        assertThat(attack.penetratePlating(300f, true)).isEqualTo(300f);
+        assertThat(attack.penetrateFlatReduction(300f, false)).isZero();
+        assertThat(attack.penetrateFlatReduction(300f, true)).isEqualTo(300f);
     }
 
     @Test

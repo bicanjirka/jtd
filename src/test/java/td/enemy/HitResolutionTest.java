@@ -38,7 +38,7 @@ class HitResolutionTest {
 
     @Test
     void platingComesOffAfterArmorAndNeverBelowZero() {
-        StatView plated = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f).with(EnemyStat.PHYSICAL_PLATING, 300f));
+        StatView plated = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f).with(EnemyStat.PLATING, 300f));
 
         assertThat(HitResolution.resolve(Damage.physical(1000), plated)).isEqualTo(Damage.physical(200));
         assertThat(HitResolution.resolve(Damage.physical(500), plated)).isEqualTo(Damage.physical(0));
@@ -163,7 +163,7 @@ class HitResolutionTest {
 
     @Test
     void glancingPenetrationHelpsAShotThatDoesNotCritButNotOneThatDoes() {
-        StatView armored = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f).with(EnemyStat.PHYSICAL_PLATING, 300f));
+        StatView armored = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f).with(EnemyStat.PLATING, 300f));
         AttackProfile weakSpot = AttackProfile.critChance(0.5f).withGlancingPenetration(100f, 1f);
 
         Damage glancing = HitResolution.resolve(Damage.physical(1000), weakSpot, armored, () -> 0.9);

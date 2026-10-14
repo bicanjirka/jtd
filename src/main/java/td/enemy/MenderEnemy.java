@@ -33,21 +33,14 @@ final class MenderEnemy {
                         .withDescription("Its healing pulse now lasts twice as long, and a personal layer of armor, "
                                 + "hardened against whichever damage type has hit hardest this level, joins its own "
                                 + "quiet self-repair when left unattacked.")
-                        .withSpirit(40f)
-                        .withArmor(10f)
-                        .withMagicResist(10f)
-                        .withResilience(10f)
-                        .withAgility(5f)
+                        .withStats(10f, 10f, 0f, 0f, 10f, 5f, 40f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(67f))))
                         .withAdditionalAbilities(List.of(heal(2f, 80), selfHeal(1.4f))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1260, 45)
                         .withDescription("Its healing pulse now restores double, for the same extended duration, its "
                                 + "own self-repair heals twice as strong too, and it leaves a last blessing on every "
                                 + "ally near it when it dies.")
-                        .withSpirit(60f)
-                        .withArmor(15f)
-                        .withMagicResist(15f)
-                        .withResilience(20f)
+                        .withStats(15f, 15f, 0f, 0f, 20f, 5f, 60f)
                         .withAdditionalAbilities(List.of(heal(4f, 80), selfHeal(2.8f),
                                 IdentifiedAbility.anonymous(new Ability(new OnDeathTrigger(),
                                         new ApplyEffectAction(new HealTemplate(4f, 100), new RadiusTarget(120f)))))))

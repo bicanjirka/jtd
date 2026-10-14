@@ -19,20 +19,13 @@ final class SimpleEnemy {
                 .thenAt(Rank.ELITE, e -> e
                         .withDescription("No special abilities, but a layer of armor has formed, "
                                 + "hardened against whichever damage type has hit hardest this level.")
-                        .withArmor(10f)
-                        .withMagicResist(10f)
-                        .withResilience(10f)
-                        .withAgility(5f)
-                        .withSpirit(10f)
+                        .withStats(10f, 10f, 0f, 0f, 10f, 5f, 10f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(67f)))))
                 .thenAt(Rank.BOSS, e -> e
                         .withDescription("No special abilities, but twice an elite's bulk under the same armor, hardened "
                                 + "against whichever damage type has hit hardest this level, and steady enough to "
                                 + "blunt crits.")
-                        .withArmor(15f)
-                        .withMagicResist(15f)
-                        .withResilience(30f)
-                        .withSpirit(20f))
+                        .withStats(15f, 15f, 0f, 0f, 30f, 5f, 20f))
                 .build());
     }
 }

@@ -22,17 +22,11 @@ final class MiteEnemy {
                 .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(117, 6)
                         .withDescription("Tiny, quick and slippery: it dodges a fair share of aimed shots. Sent in "
                                 + "swarms.")
-                        .withAgility(25f)
-                        .withArmor(5f)
-                        .withMagicResist(5f)
-                        .withResilience(10f)
-                        .withSpirit(10f))
+                        .withStats(5f, 5f, 0f, 0f, 10f, 25f, 10f))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(210, 11)
                         .withDescription("Tiny, quick and slippery, and bursts into three broodlings when it dies. "
                                 + "Sent in swarms.")
-                        .withAgility(35f)
-                        .withResilience(15f)
-                        .withSpirit(15f)
+                        .withStats(5f, 5f, 0f, 0f, 15f, 35f, 15f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(new OnDeathTrigger(),
                                 new SpawnEnemiesAction("miteBrood", AbilitySpawnShape.brood(3, 1f, 1f), false))))))
                 .build());

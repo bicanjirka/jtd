@@ -28,10 +28,7 @@ final class FrenziedEnemy {
                 .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(823, 19)
                         .withDescription("Increases speed as it takes damage, and bolts for a moment once badly hurt. "
                                 + "Reckless: crits land harder on it.")
-                        .withArmor(10f)
-                        .withMagicResist(10f)
-                        .withAgility(10f)
-                        .withSpirit(10f)
+                        .withStats(10f, 10f, 0f, 0f, -20f, 10f, 10f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.8f))))
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(
                                 new HealthThresholdTrigger(0.5f),
@@ -40,10 +37,7 @@ final class FrenziedEnemy {
                         .withDescription("Increases speed as it takes damage, bolts once badly hurt and calls a swarm "
                                 + "of reinforcements as it does, heals itself if left unattacked too long, and is "
                                 + "now immune to critical hits.")
-                        .withArmor(15f)
-                        .withMagicResist(15f)
-                        .withResilience(100f)
-                        .withSpirit(20f)
+                        .withStats(15f, 15f, 0f, 0f, 100f, 10f, 20f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(2f))))
                         .withMovement(new RotorMovement((float) Math.toRadians(-10.0)))
                         .withAdditionalAbilities(List.of(
