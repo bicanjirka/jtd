@@ -16,6 +16,7 @@ import td.wave.Wave;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -188,19 +189,23 @@ final class CompetentPlayer implements Player {
         for (int guard = 0; guard < 50; guard++) {
             Damage army = this.armyDamage(turn, kinds);
             double standing = this.killed(foes, army);
-            List<Option> options = this.options(turn, kinds);
-            Comparator<Option> byWorth = Comparator.comparingDouble(option -> this.worth(option, foes, army, standing));
-            Optional<Option> affordable = options.stream().filter(option -> option.cost() <= turn.credits())
+            Map<Option, Double> worths = new LinkedHashMap<>();
+            this.options(turn, kinds).forEach(option -> worths.put(option, this.worth(option, foes, army, standing)));
+            Comparator<Option> byWorth = Comparator.comparingDouble(worths::get);
+            int credits = turn.credits();
+            Optional<Option> affordable = worths.keySet().stream().filter(option -> option.cost() <= credits)
                     .max(byWorth);
+            turn.wants(worths.keySet().stream().filter(option -> option.cost() > credits && worths.get(option) > 0)
+                    .max(byWorth).map(Option::cost).orElse(0));
             if (affordable.isEmpty()) {
                 return;
             }
-            double best = this.worth(affordable.get(), foes, army, standing);
+            double best = worths.get(affordable.get());
             if (this.style.saveFactor() > 0) {
-                double reach = 2.0 * turn.credits() + turn.survey().level().startingCredits();
-                boolean worthWaiting = options.stream()
-                        .filter(option -> option.cost() > turn.credits() && option.cost() <= reach)
-                        .anyMatch(option -> this.worth(option, foes, army, standing) >= this.style.saveFactor() * best);
+                double reach = 2.0 * credits + turn.survey().level().startingCredits();
+                boolean worthWaiting = worths.entrySet().stream()
+                        .filter(entry -> entry.getKey().cost() > credits && entry.getKey().cost() <= reach)
+                        .anyMatch(entry -> entry.getValue() >= this.style.saveFactor() * best);
                 if (worthWaiting) {
                     return;
                 }

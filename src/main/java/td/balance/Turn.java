@@ -103,6 +103,14 @@ public final class Turn {
         return this.engine.getGameWorld().playtestRules().enemyHealthScale();
     }
 
+    /**
+     * Notes the price of the purchase the player would make next if it had the credits, 0 for none: what the
+     * economy report sets against what the rounds pay.
+     */
+    public void wants(int price) {
+        this.recorder.wants(price);
+    }
+
     public int credits() {
         return this.engine.getGameWorld().economy().getCredits();
     }

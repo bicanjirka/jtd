@@ -123,10 +123,6 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
   - **Where:** `LevelRun`, `BalanceReport`.
   - **Approach:** layouts: cluster the winning plays' builds by cell and tower type and count the
     clusters; cadence: the rounds between the competent player's purchases that changed its army.
-- **No economy model:** what a round earns is not set against what the next useful purchase costs.
-  - **Where:** `RunRecorder` (credits per round exist), `HtmlReport`.
-  - **Approach:** a per-round table of bounty earned, credits idle and the cheapest purchase the player
-    wanted, from the tower and node catalogs, and a credits-over-time chart.
 - **Only enemy health and starting credits can be swept.**
   - **Where:** `Rules`, `PlaytestRules`.
   - **Approach:** lives, bounty percent, round pause and spawn spacing as `Rules` knobs, and a report mode

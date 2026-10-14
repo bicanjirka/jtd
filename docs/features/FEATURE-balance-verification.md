@@ -35,7 +35,7 @@ has its `TODO.md` entry until it lands):
    upgrades early and most of their credits on them late; they pick the same nodes, since the strong player
    leaves the competent way only to stop a leak.
 4. The two missing fun proxies: several winning layouts and a decision every few waves (question 7).
-5. The adopted practices (question 9): economy modelling, ✅ per-tick timelines, ✅ coverage reports (each
+5. The adopted practices (question 9): ✅ economy modelling, ✅ per-tick timelines, ✅ coverage reports (each
    effect's share of enemy time, each enemy ability used, and what no play of any player triggered), level-knob
    sweeps.
 6. ✅ Enemy health percent in the dev panel.
