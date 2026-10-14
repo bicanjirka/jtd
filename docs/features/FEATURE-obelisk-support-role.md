@@ -1,7 +1,6 @@
 # Feature Request: The Obelisk as a Support Tower
 
-**Status: draft.** Comes after `FEATURE-balance-verification.md` (first version implemented), whose
-tools found the problem and will check the fix.
+**Status: designed.** Item 1 (the tools price support) is implemented; the design below is settled.
 
 ## Summary
 
@@ -78,10 +77,10 @@ the report would call it dead. `TODO.md`, "What the balance tools cannot see yet
    stays the measure of time spent inside and becomes the strength of every effect the field applies: the
    longer an enemy stays inside, the harder each debuff bites. The existing support nodes stay, retuned as
    needed.
-4. **The detector role.** The Obelisk reveals hidden enemies inside its field from its base, so the towers
-   around it can shoot them. A hidden enemy must be revealed before any tower aims at it, as today; no
-   tower gains the right to fire at hidden enemies. Elite Ghost rounds then need an Obelisk *and* damage,
-   not an Obelisk *instead of* damage, with the Radar's Wide Band the other answer.
+4. **The detector role, bought.** No reveal is free. The Elite Ghost's shroud is cast every 3 s and lasts
+   3 s, so a reveal holds until the next cast; the Radar's Wide Band and the Obelisk's Phase Field line (a
+   short reveal and Daze from Phase Field I) are the answers, each bought. A hidden enemy must be revealed
+   before any tower aims at it, as today. Elite Ghost rounds then need a revealer *and* damage.
 5. **A passive that answers stacking.** Overlapping fields keep adding up. Stacking is answered by an
    Obelisk passive designed with the tree, not by a stacking rule (open question 7).
 6. **The levels are made harder to match.** Every built-in level is already far too easy (the report
@@ -129,11 +128,57 @@ new tower types.
 - The Obelisk becomes a support tower: its upgrades add effects, not damage; its damage is a fixed base that
   only the Beacon raises.
 - The tools learn to price support before the Obelisk changes.
-- The Elite Ghost keeps an answer at every step: the Obelisk reveals; a hidden enemy is still revealed
-  before any tower aims at it.
+- The Elite Ghost keeps an answer at every step; a hidden enemy is still revealed before any tower aims at
+  it. No reveal is free: every reveal is bought (how, open questions 17 to 19).
 - Overlapping fields keep stacking; a passive answers it, not a stacking rule.
 - A plain damage cut is not the fix (measured: it neither ends the dependence nor the stacking).
 - Each step is checked with the balance report against the step before.
+
+## Design
+
+The words and numbers each node carries. Numbers are starting points the report tunes.
+
+**Base (25 credits, unchanged price).** 1 magic damage a tick to everyone inside (20 a second, half of today).
+It reveals nothing: a reveal is always bought (open questions 17 to 19). Its field still touches hidden
+enemies, as every area effect does. Attune, Awaken and the Range line stay.
+
+**Interference (passive, from the base).** An Obelisk's field damage drops 25% for every other Obelisk whose field
+overlaps its own, down to 25%. Its effects are not weakened.
+
+**Toll (Attune).** An enemy still earns a stack a second inside, up to five. Toll is the strength of every
+numeric effect the field applies (armor taken, slow, damage taken): half strength on entry, full at five
+stacks, and past full when Toll stacks higher (Meltdown: 1.5x at ten). Rules that are on or off (silence, no
+heals, reveal) hold from the first tick. Its +10% field damage per stack goes, and so does its slowing of every
+debuff's clock.
+
+**Chain A, the amplifier line** (today Overcharged Coils, damage):
+
+| Node | Today | Proposed |
+|---|---|---|
+| I Resonant Coils (was Overcharged Coils) | +60% damage, Toll twice as fast | Toll builds twice as fast (full in 2.5 s) |
+| II Resonant Coils II | +50% damage, +25% at full Toll | enemies at full Toll are Vulnerable (+15% damage taken) while inside and 2 s after |
+| III Arc Discharge | zap for 15 ticks' damage, crits | once a second the zap marks the healthiest enemy inside: Priority (every tower turns on it) and Exposed for 3 s, no damage |
+| IV-A Meltdown | Toll cap +5, zap crits and damage per Toll | Toll cap 10: effects keep growing past full, up to 1.5x |
+| IV-B Tesla Coil | zap chains to 3 more, Dazes 0.25 s | unchanged, the chain carries the mark's Exposed (not the Priority) |
+
+**Chain B, Phase Field** (already control, now the detector): I and II keep their range. Phase Field I adds
+the reveal: a visit's first Toll stack reveals the enemy for 0.5 s and Dazes it for 0.5 s; Phase Field II
+lengthens the reveal to 2 s; Null Field (silence) stays; True Sight
+lengthens it to 4 s with a 2 s Daze; Dead Zone stays.
+
+**Extra line:** Corrosion (-30 armor), Mirror Field and Undertow (chill 25%, Anchored) stay, armor and chill
+scaled by Toll. Event Horizon: each death inside widens the field by 10% of its range until the wave ends, up
+to twice its range, instead of adding damage.
+
+**Specials:** Rattle Field stays; Kill Zone's +25% scales with Toll; Soul Drain keeps draining spirit (so every
+debuff on the enemy lasts longer, and at -100 nothing wears off) and keeps no heals or shields at the floor,
+and loses its damage per lost spirit.
+
+**Facts that shape the numbers.** A 1.5-cell field crossed straight holds an enemy about 2 to 3 seconds, so
+without Coils I or a bend few enemies reach full Toll. Plating and insulation take a flat amount off every
+hit, periodic ones included: the Reaver's 1 point of insulation blanks a 1-point field tick entirely.
+Effects of one kind from two Obelisks already refresh rather than add (one stack each), so of today's
+stacking only the damage is left.
 
 ## Open questions
 
@@ -165,14 +210,86 @@ Each has two options and a preferred one (⭐).
      the tree and the passive (2, 3, 5), then the levels' difficulty (6), each compared with the one before.
    - B: everything at once, compared once.
    - ↳ A.
-7. ❔ **What passive answers stacking?**
-   - A: a debuff an enemy already carries is refreshed, not strengthened, by a second field, so a cluster
-     buys coverage rather than strength.
-   - B: an Obelisk weakens its own field for every other Obelisk in reach, so spreading them out pays.
-8. ❔ **Is there an Obelisk-Beacon combo?** The Beacon buffs towers and the Obelisk debuffs enemies; a pair
-   could do something neither does alone.
-   - A: a Beacon in reach of an Obelisk strengthens the field's debuffs instead of its damage.
-   - B: none; each buffs or debuffs on its own, and the pair is only the sum.
+7. ✅ **What passive answers stacking?** Effects of one kind already refresh rather than add, so only the
+   field damage stacks.
+   - A: a debuff an enemy already carries is refreshed, not strengthened, by a second field (true already).
+   - B ⭐: Interference: an Obelisk's field damage drops 25% for every other Obelisk whose field overlaps it,
+     down to 25%; its effects don't. Spreading them out pays, which suits a tower that covers the path.
+   - C: no passive yet; add B only if the report still shows Obelisk-only armies holding 100% or more.
+   - ↳ B.
+8. ✅ **Is there an Obelisk-Beacon combo?**
+   - A: a Beacon in reach of an Obelisk also strengthens the field's effects by its damage share.
+   - B ⭐: none for now; the Beacon's range buff already widens what the field covers, and the report shows
+     whether the pair needs more.
+   - ↳ B.
+9. ✅ **How do effects grow with Toll?**
+   - A ⭐: half strength on entry, +10% a stack, full at five: a fast enemy still feels the field.
+   - B: nothing on entry, +20% a stack: the field rewards slowing and bends.
+   - ↳ A, and past full when Toll stacks beyond five (Meltdown's cap of 10: 1.5x).
+10. ❌ **How long does the base reveal last after an enemy leaves?** Superseded: there is no base reveal.
+    💬 "I do not agree with revealing any unit instantly. Invisibility should be a late game mechanic so it is
+    fine that the game forces player to buy sonar tower or some other invisibility revealing option. I might
+    agree with adding a "reveal for half a second and daze for half a second" obelisk field option to head
+    upgrade after attune. But having invisibility revealing mechanics for "free" is not good."
+    - A ⭐: a moment (about 0.5 s), so a tower beside the field can finish its shot; longer is Phase Field
+      II's and True Sight's.
+    - B: only while inside.
+11. ✅ **Does Toll keep making every debuff wear off 10% slower a stack?**
+    - A ⭐: yes; it helps every other tower's debuffs, which is support.
+    - B: no; Toll does one thing, the field's own strength.
+    - ↳ B.
+12. ✅ **Does the zap (Arc Discharge, Tesla Coil) keep any damage?**
+    - A ⭐: none; it marks (Priority and Exposed) and Tesla Coil Dazes.
+    - B: a small fixed hit (5 field ticks), which the Beacon raises like the field.
+    - ↳ A.
+13. ✅ **What does Event Horizon become?**
+    - A ⭐: each death inside strengthens the field's effects, +5% up to +100%, until the wave ends.
+    - B: each death inside Dazes everyone still inside for 0.5 s.
+    - ↳ Neither. 💬 "each death increases the range for this wave by 10% stacking to 200%": each death
+      inside widens the field by 10% of its range until the wave ends, up to twice its range.
+14. ✅ **Node names.** The node ids stay either way.
+    - A ⭐: rename only names that now lie: Overcharged Coils I and II become Resonant Coils I and II.
+    - B: keep every name.
+    - ↳ A.
+15. ✅ **What counts as balanced?** Measured with `--seeds 12 --strong --variety` against `final`.
+    - A ⭐: an all-Obelisk army holds under 100% on every level; banning it costs x0.75 to x0.95 (it matters,
+      it is not mandatory); the lab shows support from its nodes; Elite Ghost rounds need an Obelisk or Wide
+      Band *and* damage; the competent player still builds it.
+    - B: only that it no longer carries a level (ban cost above x0.75), whatever its support worth.
+    - ↳ A.
+16. ✅ **Does this feature retune the levels (item 6)?** Weakening the Obelisk will drop every margin.
+    - A ⭐: yes, last, back to the middle of the band (about 125% for the competent player), by enemy health,
+      which leaves the economy's pacing alone.
+    - B: yes, by bounty, which the sweep found moves the margin most.
+
+    - ↳ A.
+17. ✅ **What is the full answer to a shrouded group?** Fact: an Elite Ghost re-shrouds every ally within
+    about 3 cells every second, and shrouding ends a reveal, so every timed reveal in the game (Wide Band's 3 s,
+    Phase Field II's 2 s) is undone within a second: Wide Band shows a shrouded group about a sixth of each
+    3-second revolution. Only the field's damage, which needs no sight, answers it today.
+    - A ⭐: the Radar's Wide Band (Awaken, a special: about 136 credits with the Radar, 150 XP, and it gives up
+      Mark on Sweep) is the full answer, and a reveal holds the shroud off while it lasts, so its 3 s per
+      3-second revolution keeps its whole reach visible. A revealed Ghost can't fade either, as an Inverted one
+      can't today.
+    - B: the shroud rule stays; Phase Field II reveals continuously while inside (paid, mid-tree), the Obelisk
+      the full answer and Wide Band the partial one.
+    - ↳ Neither. 💬 "make ghost cast once per 3s and make the invisibility last 3s as well": the shroud is
+      cast every 3 s and lasts 3 s, so a reveal holds until the next cast instead of under a second. The
+      reveal rule stays; Wide Band and the bought Obelisk reveals become real answers.
+18. ✅ **Where does the Obelisk's small reveal go?** Proposed as 💬 suggested: the first Toll stack of a visit
+    reveals for 0.5 s and Dazes for 0.5 s; Phase Field II lengthens the reveal to 2 s, True Sight to 4 s with a
+    2 s Daze.
+    - A ⭐: Phase Field I (head I, after Attune, 25 credits, no XP): the detector is a commitment, exclusive
+      with the amplifier chain.
+    - B: the extra line's first node (20 credits, 25 XP), where any Obelisk can take it beside either chain.
+    - ↳ A.
+19. ✅ **Is invisibility late enough?** Below Elite, a Ghost fades for 10 s (15 s from Veteran) when first hit;
+    they arrive in round 4 of Twisted Hourglass, 6 of Zigzag Path and 9 of Curly Path. A faded one alone is
+    still reached by area damage near visible allies and by the field. The shroud arrives with Elite: round 11
+    of Curly, 8 of Zigzag, 10 of Hourglass.
+    - A ⭐: keep the rounds; only the shroud demands a bought revealer.
+    - B: move Ghost rounds later, so no invisibility shows before the second half of a level.
+    - ↳ A.
 
 ---
 
