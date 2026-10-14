@@ -97,6 +97,25 @@ public record LevelRun(TowerLab lab, Map<String, List<PlayRecord>> plays, Map<St
         return IntStream.range(0, rounds).mapToDouble(i -> counts[i] == 0 ? Double.NaN : sums[i] / counts[i]).toArray();
     }
 
+    /** The most enemy health on the board at once in each round, in points, averaged over {@code player}'s plays. */
+    public double[] peakOnBoard(String player) {
+        int rounds = this.survey().level().paths().getFirst().waves().size();
+        double[] sums = new double[rounds];
+        List<PlayRecord> plays = this.playsOf(player);
+        for (PlayRecord play : plays) {
+            long[] peaks = new long[rounds];
+            for (PlayRecord.Sample sample : play.watch().timeline()) {
+                if (sample.round() >= 1 && sample.round() <= rounds) {
+                    peaks[sample.round() - 1] = Math.max(peaks[sample.round() - 1], sample.health());
+                }
+            }
+            for (int r = 0; r < rounds; r++) {
+                sums[r] += peaks[r] / (double) plays.size();
+            }
+        }
+        return sums;
+    }
+
     /** Each tower type's share of all the damage {@code player}'s towers landed, averaged over plays. */
     public Map<TowerFactory.Type, Double> damageShares(String player) {
         Map<TowerFactory.Type, Double> shares = new EnumMap<>(TowerFactory.Type.class);

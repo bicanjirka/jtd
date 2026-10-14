@@ -54,16 +54,19 @@ public record PlayRecord(Play play, Result result, List<Round> rounds, Log log) 
     }
 
     /**
-     * What the enemies went through over the play: the effects they carried and the abilities they used.
+     * What the enemies went through over the play: the effects they carried, the abilities they used, and the
+     * board every few ticks.
      *
-     * @param effects how long each effect was on an enemy, and how often one took hold
-     * @param casts   how often each kind at each rank used each ability, keyed by {@link #castKey} or
-     *                {@link #spawnKey}
+     * @param effects  how long each effect was on an enemy, and how often one took hold
+     * @param casts    how often each kind at each rank used each ability, keyed by {@link #castKey} or
+     *                 {@link #spawnKey}
+     * @param timeline the board sampled every {@link Sample#EVERY} ticks, in order
      */
-    public record Watch(EffectUse effects, Map<String, Integer> casts) {
+    public record Watch(EffectUse effects, Map<String, Integer> casts, List<Sample> timeline) {
 
         public Watch {
             casts = Map.copyOf(casts);
+            timeline = List.copyOf(timeline);
         }
 
         /** An ability of {@code kind} that puts {@code effect} on itself or its allies. */
@@ -163,6 +166,34 @@ public record PlayRecord(Play play, Result result, List<Round> rounds, Log log) 
         public RoundPressure {
             damage = Map.copyOf(damage);
         }
+    }
+
+    /**
+     * The board at one tick.
+     *
+     * @param round   the round running or coming, 1-based
+     * @param walking the enemies walking
+     * @param credits unspent
+     */
+    public record Sample(int tick, int round, Walking walking, int credits) {
+
+        /** Ticks between two samples: a third of a second. */
+        public static final int EVERY = 20;
+
+        public long health() {
+            return this.walking.health();
+        }
+
+        public double furthest() {
+            return this.walking.furthest();
+        }
+    }
+
+    /**
+     * @param health   the health left on every enemy walking, in points
+     * @param furthest how far along its path the furthest of them is, 0 to 1
+     */
+    public record Walking(long health, double furthest) {
     }
 
     /** One enemy as it was when its walk ended. */

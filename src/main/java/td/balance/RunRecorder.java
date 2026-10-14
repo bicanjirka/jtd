@@ -48,6 +48,7 @@ final class RunRecorder {
     private final Map<EffectKind, Long> effectTicks = new EnumMap<>(EffectKind.class);
     private final Map<EffectKind, Integer> effectStarts = new EnumMap<>(EffectKind.class);
     private final Map<String, Integer> casts = new LinkedHashMap<>();
+    private final List<PlayRecord.Sample> timeline = new ArrayList<>();
 
     private boolean roundOpen;
     private int roundStartTick;
@@ -138,9 +139,31 @@ final class RunRecorder {
                 this.end(mob, foe, fate == EnemyInspection.Fate.LEAKED);
             }
         }
+        if (tick % PlayRecord.Sample.EVERY == 0) {
+            this.sample(tick);
+        }
         if (this.roundOpen && (this.engine.isWaveReady() || this.engine.outcome().isOver())) {
             this.closeRound(tick);
         }
+    }
+
+    private void sample(int tick) {
+        long health = 0;
+        double furthest = 0;
+        for (EnemyMob mob : this.engine.getGameWorld().enemies().getEnemies()) {
+            if (!mob.isDead() && !mob.accept(DefinedEnemyMob::isInactive)) {
+                health += Math.round(mob.getHealthFraction() * mob.accept(DefinedEnemyMob::getMaxHealthPoints));
+                furthest = Math.max(furthest, mob.getProgression() / PROGRESS_SCALE);
+            }
+        }
+        this.timeline.add(new PlayRecord.Sample(tick, this.roundAt(), new PlayRecord.Walking(health, furthest),
+                this.engine.getGameWorld().economy().getCredits()));
+    }
+
+    /** The round running, or the one coming between rounds, 1-based. */
+    private int roundAt() {
+        int index = this.engine.getCurrentWaveIndex();
+        return this.engine.isWaveReady() ? index + 1 : index;
     }
 
     /** Counts the effects {@code mob} carries and starts, and an ability it cast this tick, death casts included. */
@@ -222,6 +245,6 @@ final class RunRecorder {
         return new PlayRecord(play, new PlayRecord.Result(this.startingLives, this.leaks, this.cleared,
                 this.engine.getWaveCount()), this.rounds, new PlayRecord.Log(this.ends, this.actions, towers,
                 new PlayRecord.Watch(new PlayRecord.EffectUse(this.enemyTicks, this.effectTicks, this.effectStarts),
-                        this.casts)));
+                        this.casts, this.timeline)));
     }
 }
