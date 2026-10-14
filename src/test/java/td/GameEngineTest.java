@@ -8,10 +8,7 @@ import td.damage.DamageUnits;
 import td.effect.DiminishingReturns;
 import td.effect.Effect;
 import td.effect.EffectKind;
-import td.enemy.AgilityTrait;
-import td.enemy.ArmorTrait;
 import td.enemy.BodyArchetype;
-import td.enemy.CriticalImmunityTrait;
 import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyInspection;
@@ -108,7 +105,7 @@ class GameEngineTest {
     @Test
     void anExposedCritImmuneEnemyCanBeCrittedAtHalfChance() {
         EnemyDefinition immune = EnemyDefinition.of("immune", "Immune", 1_000_000, 1, 0f, BodyArchetype.CIRCLE)
-                .withTraits(List.of(new CriticalImmunityTrait()));
+                .withResilience(100f);
         EnemyMob plain = spawnOnly(FakeGameHost.newBoundEngine(), immune);
         EnemyMob exposed = spawnOnly(FakeGameHost.newBoundEngine(), immune);
         exposed.applyEffect(Effect.exposed(1_000_000, d -> {
@@ -125,7 +122,7 @@ class GameEngineTest {
     void aHalfPhysicalResistEnemyTakesHalfOfAPhysicalHitAndAllOfAMagicOne() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyMob enemy = spawnOnly(engine, EnemyDefinition.of("resist", "Resist", 100, 1, 1f, BodyArchetype.SQUARE)
-                .withTraits(List.of(ArmorTrait.physicalOnly(100f))));
+                .withArmor(100f));
 
         Damage physical = enemy.doDamage(Damage.physical(1000));
         Damage magic = enemy.doDamage(Damage.magic(1000));
@@ -138,7 +135,7 @@ class GameEngineTest {
     void armorReducesAHitBeforeTheShieldAbsorbsIt() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyMob enemy = spawnOnly(engine, EnemyDefinition.of("resist", "Resist", 100, 1, 1f, BodyArchetype.SQUARE)
-                .withTraits(List.of(ArmorTrait.physicalOnly(100f))));
+                .withArmor(100f));
         enemy.applyEffect(Effect.shield(300f, 100, d -> {
         }));
 
@@ -391,7 +388,7 @@ class GameEngineTest {
     private static GameEngine engineWithANimbleDummyBeside(TowerFactory.Type type) {
         GameEngine engine = FakeGameHost.newBoundEngine(() -> 0.0);
         EnemyDefinition nimble = EnemyDefinition.of("nimble", "Nimble", 1_000_000, 1, 0f, BodyArchetype.CIRCLE)
-                .withTraits(List.of(new AgilityTrait(50f)));
+                .withAgility(50f);
         engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("nimble", Rank.GRUNT)), 100_000)
                 .withCustomEnemies(List.of(nimble)));
         engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
@@ -709,7 +706,7 @@ class GameEngineTest {
     }
 
     @Test
-    void anEliteSpawnedAfterMostlyPhysicalDamageResistsPhysicalButNotMagic() {
+    void anEliteSpawnedAfterMostlyPhysicalDamageAdaptsItsArmorAgainstPhysicalOnly() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", Rank.GRUNT)), 100));
         engine.nextWave();
@@ -718,8 +715,9 @@ class GameEngineTest {
 
         EnemyMob elite = world.getEnemyCatalog().spawn("c", world, 0, 100_000, 1, Rank.ELITE);
 
-        assertThat(elite.doDamage(Damage.physical(1000)).amount()).isLessThan(1000);
-        assertThat(elite.doDamage(Damage.magic(1000)).amount()).isEqualTo(1000);
+        // Its base 10 armor and 10 magic resist keep 1000 * 100 / 110; only physical adapts beyond that.
+        assertThat(elite.doDamage(Damage.physical(1000)).amount()).isLessThan(909);
+        assertThat(elite.doDamage(Damage.magic(1000)).amount()).isEqualTo(909);
     }
 
     @Test

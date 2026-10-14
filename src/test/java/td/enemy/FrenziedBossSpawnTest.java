@@ -25,7 +25,8 @@ class FrenziedBossSpawnTest {
         DefinedEnemyMob boss = (DefinedEnemyMob) world.getEnemyCatalog().spawn("t", world, 0, 960, 125, Rank.BOSS);
         world.enemies().add(boss);
 
-        boss.doDamage(Damage.physical(50_000)); // 96000 -> 46000 units, just under half of healthMax
+        // 57000 through 15 armor lands 49565: 96000 -> 46435 units, just under half of healthMax
+        boss.doDamage(Damage.physical(57_000));
         boss.doTick(1); // fires the health-threshold "spawn" ability
 
         List<DefinedEnemyMob> brood = List.of(world.enemies().getEnemies()).stream()

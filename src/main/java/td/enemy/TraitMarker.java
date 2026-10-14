@@ -11,14 +11,13 @@ import java.util.Set;
  * display already says what such a trait does, so a trait and its stats show as one entry.
  */
 public enum TraitMarker {
-    PERCENT_RESIST(EnemyStat.ARMOR, EnemyStat.MAGIC_RESIST),
+    // An adaptive resist describes a range, not the stat it lands on, so no stat row stands in for it.
+    PERCENT_RESIST,
     PHYSICAL_RESIST(EnemyStat.ARMOR),
     MAGIC_RESIST(EnemyStat.MAGIC_RESIST),
-    FLAT_RESIST(EnemyStat.PHYSICAL_PLATING, EnemyStat.MAGIC_PLATING),
-    CRITICAL_IMMUNE(EnemyStat.RESILIENCE),
     HURT_SPEED,
-    AGILITY(EnemyStat.AGILITY),
     HURT_AGILITY,
+    REGENERATION(EnemyStat.REGENERATION),
     BURN_IMMUNE(EnemyStat.BURN_RESIST),
     FREEZE_IMMUNE(EnemyStat.FREEZE_RESIST),
     EFFECT_RESIST(EnemyStat.CHILL_RESIST, EnemyStat.BURN_RESIST, EnemyStat.FREEZE_RESIST);

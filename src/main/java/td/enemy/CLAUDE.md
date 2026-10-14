@@ -11,16 +11,24 @@
   `customRankedEnemies()`. Write values straight into the factory calls; a private helper method (`MenderEnemy.heal`,
   `WardenEnemy.warden`) takes the place of a constant that several steps share. An enemy a boss spawns is a
   definition of its own, never the boss's ladder, which would be a spawn cycle.
-- A built-in ladder grows by a `RankGrowth` (`startingAt(grunt, growth)`): each rank multiplies the
-  previous rank's health by its factor and adds `Rank.bountySteps()` bounty steps to the grunt's
-  bounty, before its own `thenAt` step runs, so a step authors only what the rank adds (traits,
-  abilities, base stats, description), never `withHealthAndPrice`. Ranks it does not author are
-  grown up to `BOSS`. Every enemy gains something of its identity from Elite on. `SimpleEnemy` is the
-  reference ladder.
-- A ladder without growth is authored contiguously upward from `Rank.GRUNT`; a gap or a backward
-  step is a `GameStartupException`, and asking for an unauthored rank falls back to the highest
-  authored one.
-- A stat an enemy has from birth, not from a trait or ability, is a base stat (`withStat`).
+- A ladder is authored contiguously upward from `Rank.GRUNT`; a gap or a backward step is a
+  `GameStartupException`, and asking for an unauthored rank falls back to the highest authored one.
+  A built-in ladder authors all five ranks, each with its health and bounty as integers
+  (`withHealthAndPrice`): health multiplies by the enemy's factor each rank, bounty adds its step
+  once for Soldier and Veteran, three times more for Elite and five more for Boss. `SimpleEnemy` alone
+  derives them from a `RankGrowth` (`startingAt(grunt, growth)`), which grows the ranks it skips up to
+  `BOSS`; it is the reference ladder. Every enemy gains something of its identity from Elite on.
+- Stat, trait, ability, effect, each thing is exactly one:
+  - A **base stat** is a number every enemy has on its sheet. It is authored with its named method
+    (`withArmor`, `withMagicResist`, `withPhysicalPlating`, `withMagicPlating`, `withResilience`,
+    `withAgility`, `withSpirit`; plating in points), and a rank step replaces it. Never a trait.
+  - A **trait** is passive identity an enemy has or hasn't: an effect resistance, regeneration, a stat
+    that follows its state or adapts to the level. A trait that only adds a constant to a stat is a
+    base stat instead.
+  - An **ability** is a trigger and an action: it happens at a moment.
+  - An **effect** is a timed status put on an enemy by a tower or an ability.
+- From Elite every built-in enemy has every base stat but plating above zero, unless its identity rules
+  it out (stated in its class javadoc or a comment).
 - Single-rank enemy: `EnemyCatalog.register(EnemyDefinition)`. A variant of an existing one:
   `EnemyCatalog.cloneAndAdjust(baseId, newId, adjust)`, which clones every rank from the
   original's own definition. `adjust` is a `UnaryOperator` (rank-blind) or a
@@ -50,9 +58,9 @@
 - `withAdditionalTraits`/`withAdditionalAbilities` replace an entry with the same
   `TraitId.named(...)` id and stack anonymous ones. Name an entry only when a later step replaces
   it (e.g. `"armor"`, which a later rank step replaces).
-- Built-in traits include `ArmorTrait` (armor or magic resist points), `FlatResistTrait` (plating), both scopable with `physicalOnly`/`magicOnly`,
-  `HurtSpeedTrait`, `CriticalImmunityTrait` (full resilience), `EffectResistTrait` (`immuneTo`
-  at 1). Every enemy diminishes hard-CC durations; there is no opt-in.
+- Built-in traits are `EffectResistTrait` (`immuneTo` at 1), `RegenerationTrait`, `HurtSpeedTrait`,
+  `HurtAgilityTrait` and the `AdaptiveResist` template. Every enemy diminishes hard-CC durations; there
+  is no opt-in.
 - `DefinedEnemyMob.applyEffect` shortens the effect by its resistance and freeze diminishing
   returns before `ActiveEffects` sees it; there is no separate immunity check. The one exception
   is `INVERSION`: it turns a heal into damage and a shield into one hit, credited to its caster,

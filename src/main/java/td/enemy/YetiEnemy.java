@@ -2,14 +2,13 @@ package td.enemy;
 
 import td.effect.EffectKind;
 import td.effect.HealTemplate;
-import td.stat.EnemyStat;
 
 import java.util.List;
 
 /**
  * The Yeti ({@code yeti}): immune to freeze and half as chilled, so a Seeker-only defence fails; Dazed still stops
- * it. Its fur blunts both damage types; it shakes off chill more with rank, from Elite it hunkers down and heals
- * once badly hurt, and at Boss crits glance off its hide.
+ * it. Its fur mitigates both damage types; it shakes off chill more with rank, from Elite the fur blunts a little of
+ * every hit and it hunkers down and heals once badly hurt, and at Boss crits glance off its hide.
  */
 final class YetiEnemy {
 
@@ -21,27 +20,39 @@ final class YetiEnemy {
                 .startingAt(EnemyDefinition.of("yeti", "Yeti", 220, 6, 1.1f, BodyArchetype.YETI)
                         .withDescription("Immune to freeze, and chills half as long. Its thick fur blunts some of "
                                 + "every hit. Dazed still stops it.")
-                        .withStat(EnemyStat.ARMOR, 15f)
-                        .withStat(EnemyStat.MAGIC_RESIST, 15f)
+                        .withArmor(15f)
+                        .withMagicResist(15f)
                         .withIdentifiedTraits(List.of(
                                 IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
-                                IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.5f)))),
-                        RankGrowth.of(2f, 5))
-                .thenAt(Rank.VETERAN, e -> e
+                                IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.5f)))))
+                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(440, 11))
+                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(880, 16)
                         .withDescription("Immune to freeze, and chills only a quarter as long. Its thick fur blunts "
                                 + "some of every hit. Dazed still stops it.")
                         .withAdditionalTraits(List.of(
                                 IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.75f)))))
-                .thenAt(Rank.ELITE, e -> e
+                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(1760, 31)
                         .withDescription("Immune to freeze, and chills only a quarter as long. Its thick fur blunts "
                                 + "some of every hit, and once badly hurt it hunkers down and heals. Dazed still "
                                 + "stops it.")
+                        .withArmor(20f)
+                        .withMagicResist(20f)
+                        .withPhysicalPlating(2f)
+                        .withMagicPlating(2f)
+                        .withResilience(20f)
+                        .withAgility(5f)
+                        .withSpirit(15f)
                         .withAdditionalAbilities(List.of(hunker(6f))))
-                .thenAt(Rank.BOSS, e -> e
+                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(3520, 56)
                         .withDescription("Immune to freeze, and chills only a quarter as long. Its thick fur blunts "
                                 + "some of every hit and crits glance off its hide; once badly hurt it hunkers down "
                                 + "and heals. Dazed still stops it.")
-                        .withStat(EnemyStat.RESILIENCE, 50f)
+                        .withArmor(25f)
+                        .withMagicResist(25f)
+                        .withPhysicalPlating(3f)
+                        .withMagicPlating(3f)
+                        .withResilience(50f)
+                        .withSpirit(25f)
                         .withAdditionalAbilities(List.of(hunker(12f))))
                 .build());
     }

@@ -162,11 +162,9 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case PERCENT_RESIST -> Palette.TRAIT_MARKER_PERCENT_RESIST;
             case PHYSICAL_RESIST -> Palette.TRAIT_MARKER_PHYSICAL_RESIST;
             case MAGIC_RESIST -> Palette.TRAIT_MARKER_MAGIC_RESIST;
-            case FLAT_RESIST -> Palette.TRAIT_MARKER_FLAT_RESIST;
-            case CRITICAL_IMMUNE -> Palette.TRAIT_MARKER_CRITICAL_IMMUNE;
             case HURT_SPEED -> Palette.TRAIT_MARKER_HURT_SPEED;
-            case AGILITY -> Palette.TRAIT_MARKER_AGILITY;
             case HURT_AGILITY -> Palette.TRAIT_MARKER_HURT_AGILITY;
+            case REGENERATION -> Palette.TRAIT_MARKER_REGENERATION;
             case BURN_IMMUNE -> Palette.TRAIT_MARKER_BURN_IMMUNE;
             case FREEZE_IMMUNE -> Palette.TRAIT_MARKER_FREEZE_IMMUNE;
             case EFFECT_RESIST -> Palette.TRAIT_MARKER_EFFECT_RESIST;

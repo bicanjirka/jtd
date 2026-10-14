@@ -1,13 +1,12 @@
 package td.enemy;
 
 import td.effect.HealTemplate;
-import td.stat.EnemyStat;
 
 import java.util.List;
 
 /**
- * The Mender mob ({@code m}): heals the allies near it, takes heals well itself, from Veteran heals itself when
- * left alone, and at Boss leaves a last blessing on the allies around it when it dies.
+ * The Mender mob ({@code m}): heals the allies near it, takes heals well itself (its spirit grows with rank), from
+ * Veteran heals itself when left alone, and at Boss leaves a last blessing on the allies around it when it dies.
  */
 final class MenderEnemy {
 
@@ -20,24 +19,35 @@ final class MenderEnemy {
                         // "other" is load-bearing: a radius target excludes the caster.
                         .withDescription("Periodically restores health to every other ally near it - itself excluded. "
                                 + "Heals and shields it receives are stronger.")
-                        .withStat(EnemyStat.SPIRIT, 20f)
-                        .withIdentifiedAbilities(List.of(heal(0.25f, 40))), RankGrowth.of(1.8f, 4))
-                .thenAt(Rank.SOLDIER, e -> e.withAdditionalAbilities(List.of(heal(0.5f, 40))))
-                .thenAt(Rank.VETERAN, e -> e
+                        .withSpirit(20f)
+                        .withIdentifiedAbilities(List.of(heal(0.25f, 40))))
+                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(216, 9)
+                        .withAdditionalAbilities(List.of(heal(0.5f, 40))))
+                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(389, 13)
                         .withDescription("Restores health to every other ally near it - itself excluded - and now "
                                 + "quietly mends itself if left unattacked long enough. Heals and shields it receives "
                                 + "are stronger.")
+                        .withSpirit(30f)
                         .withAdditionalAbilities(List.of(heal(1f, 40), selfHeal(0.7f))))
-                .thenAt(Rank.ELITE, e -> e
+                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(700, 25)
                         .withDescription("Its healing pulse now lasts twice as long, and a personal layer of armor, "
                                 + "hardened against whichever damage type has hit hardest this level, joins its own "
                                 + "quiet self-repair when left unattacked.")
+                        .withSpirit(40f)
+                        .withArmor(10f)
+                        .withMagicResist(10f)
+                        .withResilience(10f)
+                        .withAgility(5f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(67f))))
                         .withAdditionalAbilities(List.of(heal(2f, 80), selfHeal(1.4f))))
-                .thenAt(Rank.BOSS, e -> e
+                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1260, 45)
                         .withDescription("Its healing pulse now restores double, for the same extended duration, its "
                                 + "own self-repair heals twice as strong too, and it leaves a last blessing on every "
                                 + "ally near it when it dies.")
+                        .withSpirit(60f)
+                        .withArmor(15f)
+                        .withMagicResist(15f)
+                        .withResilience(20f)
                         .withAdditionalAbilities(List.of(heal(4f, 80), selfHeal(2.8f),
                                 IdentifiedAbility.anonymous(new Ability(new OnDeathTrigger(),
                                         new ApplyEffectAction(new HealTemplate(4f, 100), new RadiusTarget(120f)))))))

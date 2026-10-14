@@ -2,13 +2,18 @@ package td.enemy;
 
 import td.damage.DamageMix;
 import td.damage.DamageType;
+import td.stat.EnemyStat;
+import td.stat.StatModifier;
+import td.stat.StatModifiers;
 
+import java.util.Locale;
 import java.util.Optional;
 
 /**
  * Armor chosen once per mob at spawn from how far the level's damage mix leans toward the type it
  * resists: {@code evenArmor} at an even split or before any damage, {@code fullArmor} when every
- * landed point was that type, linear in between.
+ * landed point was that type, linear in between. A trait, not a base stat, because what it gives
+ * depends on how the level has been played.
  *
  * @param resisted  the type it resists; empty to resist whichever type dominates the mix
  * @param evenArmor the armor points at no lean
@@ -31,13 +36,9 @@ public record AdaptiveResist(Optional<DamageType> resisted, float evenArmor, flo
     @Override
     public TraitLine describe() {
         float strongest = Math.max(this.evenArmor, this.fullArmor);
-        TraitMarker marker = this.resisted.map(type -> switch (type) {
-            case PHYSICAL -> TraitMarker.PHYSICAL_RESIST;
-            case MAGIC -> TraitMarker.MAGIC_RESIST;
-        }).orElse(TraitMarker.PERCENT_RESIST);
-        String label = this.resisted.map(type -> "Adaptive " + ArmorTrait.label(Optional.of(type)).toLowerCase())
+        String label = this.resisted.map(type -> "Adaptive " + Adapted.labelFor(type).toLowerCase(Locale.ROOT))
                 .orElse("Adaptive resist");
-        return new TraitLine(marker, label, "up to +" + Math.round(strongest));
+        return new TraitLine(TraitMarker.PERCENT_RESIST, label, "up to +" + Math.round(strongest));
     }
 
     @Override
@@ -47,6 +48,40 @@ public record AdaptiveResist(Optional<DamageType> resisted, float evenArmor, flo
         if (armor <= 0f) {
             return Optional.empty();
         }
-        return Optional.of(new ArmorTrait(armor, Optional.of(type)));
+        return Optional.of(new Adapted(armor, type));
+    }
+
+    /** What one mob's adaptive resist settled on: {@code armor} points against {@code type}. */
+    public record Adapted(float armor, DamageType type) implements Trait {
+
+        @Override
+        public StatModifiers<EnemyStat> modifiers(TraitContext context) {
+            return StatModifiers.of(EnemyStat.mitigationFor(this.type), StatModifier.flat(this.armor));
+        }
+
+        @Override
+        public TraitLine describe() {
+            return new TraitLine(this.marker(), "Adapted " + labelFor(this.type).toLowerCase(Locale.ROOT),
+                    "+" + Math.round(this.armor));
+        }
+
+        @Override
+        public TraitMarker marker() {
+            return markerFor(this.type);
+        }
+
+        static TraitMarker markerFor(DamageType type) {
+            return switch (type) {
+                case PHYSICAL -> TraitMarker.PHYSICAL_RESIST;
+                case MAGIC -> TraitMarker.MAGIC_RESIST;
+            };
+        }
+
+        static String labelFor(DamageType type) {
+            return switch (type) {
+                case PHYSICAL -> "Armor";
+                case MAGIC -> "Magic resist";
+            };
+        }
     }
 }

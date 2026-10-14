@@ -8,7 +8,6 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.fixtures.LevelFixtures;
 import td.fixtures.WorldFixtures;
-import td.stat.EnemyStat;
 import td.util.GameWorld;
 
 import java.util.ArrayList;
@@ -113,7 +112,7 @@ class DefinedEnemyMobEffectTest {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
         context.getEnemyCatalog().register(EnemyDefinition.of("dull", "Dull", 100_000, 5, 0f, BodyArchetype.CIRCLE)
-                .withStat(EnemyStat.SPIRIT, -50f));
+                .withSpirit(-50f));
         EnemyMob enemy = context.getEnemyCatalog().spawn("dull", context, 0, 100_000, 5, Rank.GRUNT);
         enemy.doDamage(Damage.physical(4000));
         int damaged = enemy.getHealth();
@@ -162,7 +161,7 @@ class DefinedEnemyMobEffectTest {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
         context.getEnemyCatalog().register(EnemyDefinition.of("brittle", "Brittle", 100_000, 5, 0f, BodyArchetype.CIRCLE)
-                .withStat(EnemyStat.SPIRIT, -100f));
+                .withSpirit(-100f));
         context.getEnemyCatalog().register(EnemyDefinition.of("plain", "Plain", 100_000, 5, 0f, BodyArchetype.CIRCLE));
         DefinedEnemyMob brittle = (DefinedEnemyMob) context.getEnemyCatalog().spawn("brittle", context, 0, 100_000, 5, Rank.GRUNT);
         DefinedEnemyMob plain = (DefinedEnemyMob) context.getEnemyCatalog().spawn("plain", context, 0, 100_000, 5, Rank.GRUNT);

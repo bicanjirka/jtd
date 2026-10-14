@@ -55,11 +55,11 @@ class EnemyStatTextTest {
     }
 
     @Test
-    void aTraitAndTheStatsItSetsShowAsOneRowInTheTraitsBoardColour() {
+    void aTraitAndTheStatItSetsShowAsOneRowInTheTraitsBoardColourAndABaseStatAsAPlainRow() {
         InfoSheet sheet = this.hoverSheet("s", Rank.GRUNT);
 
-        assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_PERCENT_RESIST, "Armor, magic resist", "25"),
-                Row.trait(Palette.TRAIT_MARKER_CRITICAL_IMMUNE, "Crit immune", ""));
+        assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_EFFECT_RESIST, "Freeze resist", "20%"),
+                Row.plain(Glyph.DOT, "Armor, magic resist", "25"), Row.plain(Glyph.DOT, "Crit immune", ""));
         assertThat(labels(sheet)).containsExactly("Speed", "Armor, magic resist", "Plating, physical", "Crit immune",
                 "Freeze resist");
     }
@@ -68,8 +68,8 @@ class EnemyStatTextTest {
     void platingOnOneDamageTypeNamesItAndShowsThePointsAHitLoses() {
         InfoSheet sheet = this.hoverSheet("s", Rank.ELITE);
 
-        assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_FLAT_RESIST, "Plating, physical", "-8/hit"),
-                Row.trait(Palette.TRAIT_MARKER_PERCENT_RESIST, "Armor, magic resist", "67"));
+        assertThat(sheet.lines()).contains(Row.plain(Glyph.DOT, "Plating, physical", "-8/hit"),
+                Row.plain(Glyph.DOT, "Armor, magic resist", "67"));
     }
 
     @Test
@@ -116,10 +116,10 @@ class EnemyStatTextTest {
     }
 
     @Test
-    void agilityReadsAsPointsWithItsDodgeChanceInTheNimbleColour() {
+    void agilityReadsAsPointsWithItsDodgeChance() {
         InfoSheet sheet = this.hoverSheet("courier", Rank.GRUNT);
 
-        assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_AGILITY, "Agility", "25, dodges 20%"));
+        assertThat(sheet.lines()).contains(Row.plain(Glyph.DOT, "Agility", "25, dodges 20%"));
     }
 
     @Test

@@ -7,11 +7,9 @@ import td.effect.Effect;
 import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-class AgilityTraitTest {
+class AgilityTest {
 
     private static final AttackProfile AIMED = AttackProfile.none().asAimed();
 
@@ -20,7 +18,7 @@ class AgilityTraitTest {
         GameWorld world = WorldFixtures.newWorldOnBoard(() -> 0.0, 1, 1001, 1001);
         EnemyCatalog catalog = new EnemyCatalog();
         catalog.register(EnemyDefinition.of("nimble", "Nimble", 100, 1, 0f, BodyArchetype.CIRCLE)
-                .withTraits(List.of(new AgilityTrait(50f))));
+                .withAgility(50f));
         return (DefinedEnemyMob) catalog.spawn("nimble", world, 0, 100, 1, Rank.GRUNT);
     }
 

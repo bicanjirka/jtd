@@ -2,13 +2,13 @@ package td.enemy;
 
 import td.effect.ShieldTemplate;
 import td.stat.DisruptionAura;
-import td.stat.EnemyStat;
 
 import java.util.List;
 
 /**
- * The Jammer ({@code j}): slows and blinds every tower near it, shrugs off some magic, and jams wider and harder with
- * rank; from Elite it keeps a static charge that soaks magic hits.
+ * The Jammer ({@code j}): slows and blinds every tower near it, its casing shrugs off magic, and it jams wider and
+ * harder with rank; from Elite its casing blunts a little of every magic hit and it keeps a static charge that soaks
+ * magic hits.
  */
 final class JammerEnemy {
 
@@ -21,20 +21,32 @@ final class JammerEnemy {
                         .withDescription("Jams every tower near it: they fire more slowly and see less far while it's "
                                 + "in range. Its casing shrugs off some magic.")
                         .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
-                        .withStat(EnemyStat.MAGIC_RESIST, 20f)
-                        .withDisruption(new DisruptionAura(100f, 0.3f, 0.6f)), RankGrowth.of(1.8f, 5))
-                .thenAt(Rank.VETERAN, e -> e
+                        .withMagicResist(20f)
+                        .withDisruption(new DisruptionAura(100f, 0.3f, 0.6f)))
+                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(432, 11))
+                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(778, 16)
                         .withDescription("Jams every tower in a wider reach: they fire more slowly and see less far "
                                 + "while it's in range. Its casing shrugs off some magic.")
                         .withDisruption(new DisruptionAura(115f, 0.35f, 0.7f)))
-                .thenAt(Rank.ELITE, e -> e
+                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(1400, 31)
                         .withDescription("Jams every tower in a wider reach and harder: they fire more slowly and see "
-                                + "less far while it's in range. Its casing shrugs off some magic, and every few "
-                                + "seconds it gathers a static charge that soaks magic hits.")
+                                + "less far while it's in range. Its casing shrugs off magic and blunts a little of "
+                                + "every magic hit, and every few seconds it gathers a static charge that soaks magic "
+                                + "hits.")
+                        .withMagicResist(30f)
+                        .withMagicPlating(2f)
+                        .withArmor(10f)
+                        .withResilience(15f)
+                        .withAgility(5f)
+                        .withSpirit(10f)
                         .withDisruption(new DisruptionAura(125f, 0.4f, 0.8f))
                         .withAdditionalAbilities(List.of(staticCharge(120f))))
-                .thenAt(Rank.BOSS, e -> e
-                        .withStat(EnemyStat.MAGIC_RESIST, 40f)
+                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(2519, 56)
+                        .withMagicResist(40f)
+                        .withMagicPlating(4f)
+                        .withArmor(15f)
+                        .withResilience(25f)
+                        .withSpirit(20f)
                         .withDisruption(new DisruptionAura(140f, 0.5f, 1f))
                         .withAdditionalAbilities(List.of(staticCharge(240f))))
                 .build());
