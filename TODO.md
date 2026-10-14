@@ -155,9 +155,6 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
   - **Where:** `Rules`, `PlaytestRules`.
   - **Approach:** lives, bounty percent, round pause and spawn spacing as `Rules` knobs, and a report mode
     that sweeps one and shows how the margin moves.
-- **The dev panel cannot set enemy health.**
-  - **Where:** the dev panel, `PlaytestRules.setEnemyHealthPercent`.
-  - **Approach:** a percent control beside the existing playtest toggles.
 
 ## Levels
 

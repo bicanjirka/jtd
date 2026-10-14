@@ -69,6 +69,20 @@ public final class DevControls implements EconomyListener {
     }
 
     /**
+     * Enemies that walk in from now on get {@code percent} of their authored health; those on the
+     * board keep theirs.
+     *
+     * @return what happened, or why nothing did
+     */
+    public String setEnemyHealthPercent(int percent) {
+        if (percent <= 0) {
+            return "Enemy health must be above 0%";
+        }
+        this.world.playtestRules().setEnemyHealthPercent(percent);
+        return "New enemies get " + percent + "% health";
+    }
+
+    /**
      * Runs on whichever thread changed the economy, so a leak is refunded before the tick that
      * caused it checks for a loss.
      */

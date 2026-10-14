@@ -69,6 +69,7 @@ public class PanelDev extends JPanel {
     private final HudTextField script = new HudTextField("3 c", 14);
     private final HudTextField jumpTo = new HudTextField("1", 3);
     private final HudTextField xp = new HudTextField("150", 5);
+    private final HudTextField enemyHealth = new HudTextField("100", 4);
     private final HudButton rankButton = new HudButton("");
     private final HudButton pathButton = new HudButton("");
     private final HudToggleButton cellGridToggle = toggle("Cell grid");
@@ -235,6 +236,8 @@ public class PanelDev extends JPanel {
                 script, as in "3 elite swarm
                 4 c". The preview updates as
                 you type; hover it to inspect.
+                Health % applies to enemies
+                that walk in after it is set.
                 Kill all pays bounty and XP,
                 clear all pays nothing. Reset
                 rebuilds the selected tower
@@ -252,6 +255,7 @@ public class PanelDev extends JPanel {
         this.submitOnEnter(this.script, this::spawn);
         this.submitOnEnter(this.jumpTo, this::jump);
         this.submitOnEnter(this.xp, this::grantXp);
+        this.submitOnEnter(this.enemyHealth, this::setEnemyHealth);
         this.rankButton.addActionListener(evt -> {
             this.rank = RANKS[(this.rank.ordinal() + 1) % RANKS.length];
             this.refresh();
@@ -277,7 +281,8 @@ public class PanelDev extends JPanel {
             }
         });
         this.cellGridToggle.addActionListener(evt -> this.onCellGrid.accept(this.cellGridToggle.isSelected()));
-        for (HudTextField field : List.of(this.credits, this.lives, this.script, this.jumpTo, this.xp)) {
+        for (HudTextField field : List.of(this.credits, this.lives, this.script, this.jumpTo, this.xp,
+                this.enemyHealth)) {
             releaseFocusOnEscape(field);
         }
 
@@ -296,7 +301,8 @@ public class PanelDev extends JPanel {
         HudButton killAll = button("Kill all", () -> this.dev.killAll());
         HudButton clearAll = button("Clear all", () -> this.dev.clearAll());
         this.section(1, "Level", row(skip, step, gap(), label("Wave"), this.jumpTo, button("Go", this::jump), gap(),
-                killAll, clearAll, gap(), restart));
+                killAll, clearAll, gap(), label("Health %"), this.enemyHealth, button("Set", this::setEnemyHealth),
+                gap(), restart));
 
         this.problem.setForeground(PROBLEM);
         this.previewArea.setOpaque(false);
@@ -348,6 +354,7 @@ public class PanelDev extends JPanel {
         this.bind("Level", alt(KeyEvent.VK_J), "jump to wave", focus(this.jumpTo));
         this.bind("Level", alt(KeyEvent.VK_K), "kill all", killAll::doClick);
         this.bind("Level", altShift(KeyEvent.VK_K), "clear all", clearAll::doClick);
+        this.bind("Level", alt(KeyEvent.VK_E), "enemy health %", focus(this.enemyHealth));
         this.bind("Spawn", alt(KeyEvent.VK_S), "wave script", focus(this.script));
         this.bind("Spawn", alt(KeyEvent.VK_R), "next rank", this.rankButton::doClick);
         this.bind("Spawn", alt(KeyEvent.VK_P), "next path", this.pathButton::doClick);
@@ -406,6 +413,12 @@ public class PanelDev extends JPanel {
             this.showMessage("Lives set to " + count);
         });
         return amount.isPresent();
+    }
+
+    private boolean setEnemyHealth() {
+        OptionalInt percent = this.parsed(this.enemyHealth);
+        percent.ifPresent(value -> this.showMessage(this.dev.setEnemyHealthPercent(value)));
+        return percent.isPresent();
     }
 
     /** A script with a problem puts the whole problem in the info pane, where it wraps. */
