@@ -73,6 +73,8 @@ public final class BalanceReport {
     static final double PICK_GAP = 0.5;
     /** A purchase that takes more than this many rounds of bounty to afford stalls the player. */
     static final int SLOW_ROUNDS = 2;
+    /** The winning layouts the report describes, largest first. */
+    static final int MOST_LAYOUTS = 6;
     /** Help to a neighbour below this share is within the lab's noise. */
     static final double SUPPORTS = 0.05;
 
@@ -308,7 +310,11 @@ public final class BalanceReport {
         }
         margins.put(REPLAYED, replayedMargins(survey, plays.get(COMPETENT)));
         if (extras.contains(Options.Extra.VARIETY)) {
-            varietyPlayers(labs).forEach((name, player) -> margins.put(name, margins(survey, player, seeds)));
+            varietyPlayers(labs).forEach((name, player) -> {
+                plays.put(name, LongStream.range(FIRST_SEED, FIRST_SEED + seeds).parallel().boxed()
+                        .map(seed -> LevelPlay.play(survey, player, seed, LevelPlay.Pacing.standard())).toList());
+                margins.put(name, margins(survey, player, seeds));
+            });
         }
         return new LevelRun(lab, plays, margins);
     }
@@ -338,6 +344,7 @@ public final class BalanceReport {
         this.printEconomy(run);
         this.printTowers(run);
         this.printVariety(run);
+        this.printFun(run);
         this.printCounters(run);
         this.printCoverage(run);
     }
@@ -398,6 +405,32 @@ public final class BalanceReport {
                     .toArray());
             this.out.printf("  %-12d %-15s %s%n", value, won.formatPercent(), margin.format(0) + "%");
         }
+    }
+
+    /** Two signs a level is fun to play: several ways to win it, and a decision to make every few rounds. */
+    private void printFun(LevelRun run) {
+        List<List<PlayRecord>> layouts = run.winningLayouts();
+        int wins = layouts.stream().mapToInt(List::size).sum();
+        this.out.println();
+        this.out.printf("FUN - %d winning layout%s among %d winning plays (plays sharing under %.0f%% of their towers"
+                + " differ)%n", layouts.size(), layouts.size() == 1 ? "" : "s", wins, LevelRun.SAME_LAYOUT * 100);
+        layouts.stream().limit(MOST_LAYOUTS).forEach(group -> this.out.printf("  %d play%s (%s): %s%n", group.size(),
+                group.size() == 1 ? "" : "s", group.stream().map(play -> play.play().player()).distinct()
+                        .collect(Collectors.joining(", ")), mix(group.getFirst())));
+        if (!run.margins().containsKey(banned(TowerFactory.Type.SNIPER))) {
+            this.out.println("  (--variety plays each tower alone and banned too, which is what finds other ways)");
+        }
+        this.out.printf("  the competent player buys something in %s of rounds, and goes at most %s rounds without"
+                        + " buying%n", run.roundsWithAPurchase(COMPETENT).formatPercent(),
+                run.longestWithoutAPurchase(COMPETENT).format(1));
+    }
+
+    /** A build's towers by type, most first: {@code 5 Obelisk, 3 Sniper}. */
+    private static String mix(PlayRecord play) {
+        Map<TowerFactory.Type, Long> counts = play.towers().stream()
+                .collect(Collectors.groupingBy(PlayRecord.TowerLog::type, Collectors.counting()));
+        return counts.entrySet().stream().sorted(Map.Entry.<TowerFactory.Type, Long>comparingByValue().reversed())
+                .map(entry -> entry.getValue() + " " + entry.getKey().displayName()).collect(Collectors.joining(", "));
     }
 
     private void printVariety(LevelRun run) {

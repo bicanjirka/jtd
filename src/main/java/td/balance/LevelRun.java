@@ -3,8 +3,11 @@ package td.balance;
 import td.effect.EffectKind;
 import td.tower.TowerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +30,11 @@ public record LevelRun(TowerLab lab, Map<String, List<PlayRecord>> plays, Map<St
 
     /** The parts {@link #upgradeShareByThird} splits a level into. */
     public static final int THIRDS = 3;
+    /**
+     * Two builds sharing at least this share of their towers, by cell and type, are one layout; under it they
+     * are different ways to win.
+     */
+    public static final double SAME_LAYOUT = 0.5;
 
     public LevelRun {
         plays = Map.copyOf(plays);
@@ -239,6 +247,71 @@ public record LevelRun(TowerLab lab, Map<String, List<PlayRecord>> plays, Map<St
                     Double::sum));
         }
         return uses;
+    }
+
+    /**
+     * The winning plays of every player, grouped into layouts: a play joins the first group whose first play
+     * shares at least {@link #SAME_LAYOUT} of its towers, by cell and type, and starts a group of its own
+     * otherwise. Largest group first.
+     */
+    public List<List<PlayRecord>> winningLayouts() {
+        List<List<PlayRecord>> groups = new ArrayList<>();
+        this.plays.entrySet().stream().sorted(Map.Entry.comparingByKey())
+                .flatMap(entry -> entry.getValue().stream())
+                .filter(play -> play.result().won())
+                .forEach(play -> groups.stream()
+                        .filter(group -> overlap(group.getFirst(), play) >= SAME_LAYOUT)
+                        .findFirst()
+                        .ifPresentOrElse(group -> group.add(play), () -> groups.add(new ArrayList<>(List.of(play)))));
+        groups.sort(Comparator.comparingInt((List<PlayRecord> group) -> group.size()).reversed());
+        return groups;
+    }
+
+    /** The share of two builds' towers they have in common, by cell and type, over the towers of either. */
+    static double overlap(PlayRecord one, PlayRecord other) {
+        Set<String> a = layoutOf(one);
+        Set<String> b = layoutOf(other);
+        Set<String> both = new HashSet<>(a);
+        both.retainAll(b);
+        Set<String> either = new HashSet<>(a);
+        either.addAll(b);
+        return either.isEmpty() ? 1 : both.size() / (double) either.size();
+    }
+
+    private static Set<String> layoutOf(PlayRecord play) {
+        return play.towers().stream().map(tower -> tower.type() + "@" + tower.cell()).collect(Collectors.toSet());
+    }
+
+    /** The share of rounds in which {@code player} bought a tower or an upgrade, per play. */
+    public Estimate roundsWithAPurchase(String player) {
+        return Estimate.of(this.playsOf(player), play -> {
+            Set<Integer> rounds = purchaseRounds(play);
+            return rounds.size() / (double) Math.max(1, play.result().roundCount());
+        });
+    }
+
+    /** The most rounds in a row in which {@code player} bought nothing, per play. */
+    public Estimate longestWithoutAPurchase(String player) {
+        return Estimate.of(this.playsOf(player), play -> {
+            Set<Integer> rounds = purchaseRounds(play);
+            int longest = 0;
+            int run = 0;
+            for (int round = 1; round <= play.result().roundCount(); round++) {
+                run = rounds.contains(round) ? 0 : run + 1;
+                longest = Math.max(longest, run);
+            }
+            return longest;
+        });
+    }
+
+    private static Set<Integer> purchaseRounds(PlayRecord play) {
+        return play.actions().stream()
+                .filter(action -> switch (action.action()) {
+                    case PlayerAction.Build ignored -> true;
+                    case PlayerAction.Upgrade ignored -> true;
+                    case PlayerAction.Sell ignored -> false;
+                })
+                .map(PlayRecord.TimedAction::round).collect(Collectors.toSet());
     }
 
     /** The round each lost play of {@code player} was lost in, counted. */
