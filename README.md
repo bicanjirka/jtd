@@ -92,9 +92,7 @@ playing it, `--variety` measures each tower alone and each tower banned, and `--
 `target/balance/report.html` with charts and board heat maps. A run takes one to two minutes; the extras
 add several each.
 
-The older harnesses remain: `td.BalanceHarness`, a headless batch simulation: it drives a level to completion with a fixed
-tower loadout and no human input, then prints lives lost, ticks-to-clear per wave, and each
-tower's kills/damage dealt. `td.PurchaseHarness` compares purchases instead: on a level, with an army of
+Two older harnesses remain. `td.PurchaseHarness` compares purchases: on a level, with an army of
 one tower of every type, it reports the lives saved per 100 credits by another copy of a tower and by each
 upgrade node, over many seeded runs (`mvn -q compile exec:java -Dexec.mainClass=td.PurchaseHarness
 -Dexec.args="2 12 sniper 4"`: level, seeds, tower, and how many of each tower the base army has; a bigger
@@ -104,14 +102,6 @@ and for every last head node with a special, either at equal copies or at an equ
 copy and plain ones for the rest (`-Dexec.args="2 40 cinder 4 2 1500 1"`: level, seeds, tower, copies,
 background copies, budget, upgraded copies).
 
-```bash
-mvn -q package -DskipTests
-mvn -q dependency:build-classpath -Dmdep.outputFile=target/runtime-classpath.txt
-java -cp "target/classes;$(cat target/runtime-classpath.txt)" td.BalanceHarness
-```
-
-Run with no arguments it plays one built-in loadout against Curly Path; edit `main()` to try
-a different loadout or level, since v1 has no config format for either.
 
 ### Towers
 
