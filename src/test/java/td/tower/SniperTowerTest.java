@@ -7,6 +7,7 @@ import td.damage.Damage;
 import td.damage.DamageType;
 import td.damage.DamageUnits;
 import td.damage.Delivery;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyFactory;
@@ -379,8 +380,7 @@ class SniperTowerTest {
             UpgradePaths.buy(tower, world, order[0]);
             UpgradePaths.buy(tower, world, order[1]);
             FakeEnemyMob close = FakeEnemyMob.at(tower.getX() + 40, tower.getY()).withProgression(50);
-            close.applyEffect(Effect.marked(100, d -> {
-            }));
+            close.applyEffect(Effect.marked(100, DamageSink.none()));
             world.enemies().setEnemies(new EnemyMob[]{close});
 
             tower.doTick(1);
@@ -573,8 +573,7 @@ class SniperTowerTest {
         SniperTower tower = awakenedSniper(world, 0);
         FakeEnemyMob furthest = FakeEnemyMob.at(100, 100).withProgression(900);
         FakeEnemyMob prioritised = FakeEnemyMob.at(100, 110).withProgression(10);
-        prioritised.applyEffect(Effect.priority(100, d -> {
-        }));
+        prioritised.applyEffect(Effect.priority(100, DamageSink.none()));
         world.enemies().setEnemies(new EnemyMob[]{furthest, prioritised});
 
         tower.doTick(1);
@@ -695,8 +694,7 @@ class SniperTowerTest {
         float far = tower.getRangeReal() * 1.5f;
         FakeEnemyMob unmarked = FakeEnemyMob.at(tower.getX() + far, tower.getY());
         FakeEnemyMob marked = FakeEnemyMob.at(tower.getX(), tower.getY() + far);
-        marked.applyEffect(Effect.marked(100, d -> {
-        }));
+        marked.applyEffect(Effect.marked(100, DamageSink.none()));
         world.enemies().setEnemies(new EnemyMob[]{unmarked, marked});
 
         tower.doTick(1);

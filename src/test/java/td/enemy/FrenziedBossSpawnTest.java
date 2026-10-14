@@ -7,6 +7,7 @@ import td.util.GameWorld;
 import td.wave.PathNormal;
 import td.wave.Vec2;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,7 +30,7 @@ class FrenziedBossSpawnTest {
         boss.doDamage(Damage.physical(57_000));
         boss.doTick(1); // fires the health-threshold "spawn" ability
 
-        List<DefinedEnemyMob> brood = List.of(world.enemies().getEnemies()).stream()
+        List<DefinedEnemyMob> brood = Arrays.stream(world.enemies().getEnemies())
                 .filter(mob -> mob != boss)
                 .map(DefinedEnemyMob.class::cast)
                 .toList();

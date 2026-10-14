@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.damage.DamageUnits;
+import td.effect.DamageSink;
 import td.effect.EffectKind;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
@@ -240,8 +241,7 @@ class SeekerTowerTest {
     void nullifierHitsAShieldedEnemyHalfAgainAsHardAndStripsItsShield() {
         SeekerTower tower = this.seekerWith("Nullifier");
         FakeEnemyMob shielded = FakeEnemyMob.at(100, 100);
-        shielded.applyEffect(td.effect.Effect.shield(0.5f, 100, d -> {
-        }));
+        shielded.applyEffect(td.effect.Effect.shield(0.5f, 100, DamageSink.none()));
         this.context.enemies().setEnemies(new EnemyMob[]{shielded});
 
         this.fireAndFly(tower, 1);
@@ -662,8 +662,7 @@ class SeekerTowerTest {
                 "Range II", "Range III");
         float reach = tower.rangeReal();
         FakeEnemyMob marked = FakeEnemyMob.at(112 + reach * 1.3, 112);
-        marked.applyEffect(td.effect.Effect.marked(100, d -> {
-        }));
+        marked.applyEffect(td.effect.Effect.marked(100, DamageSink.none()));
         FakeEnemyMob plain = FakeEnemyMob.at(112 + reach * 1.3, 140);
         this.context.enemies().setEnemies(new EnemyMob[]{plain, marked});
 
@@ -676,8 +675,7 @@ class SeekerTowerTest {
     void withoutOverTheHorizonAMarkedEnemyBeyondRangeIsLeftAlone() {
         SeekerTower tower = this.seekerWith();
         FakeEnemyMob marked = FakeEnemyMob.at(112 + tower.rangeReal() * 1.3, 112);
-        marked.applyEffect(td.effect.Effect.marked(100, d -> {
-        }));
+        marked.applyEffect(td.effect.Effect.marked(100, DamageSink.none()));
         this.context.enemies().setEnemies(new EnemyMob[]{marked});
 
         tower.doTick(1);

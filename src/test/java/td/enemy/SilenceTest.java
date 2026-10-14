@@ -2,6 +2,7 @@ package td.enemy;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.fixtures.WorldFixtures;
@@ -29,8 +30,7 @@ class SilenceTest {
     }
 
     private static void silence(DefinedEnemyMob mob) {
-        mob.applyEffect(Effect.silenced(1000, damage -> {
-        }));
+        mob.applyEffect(Effect.silenced(1000, DamageSink.none()));
     }
 
     @Test
@@ -84,8 +84,7 @@ class SilenceTest {
         DefinedEnemyMob ally = spawn(world, "c", 100, 4);
         ally.doDamage(Damage.physical(5000));
         int woundedHealth = ally.getHealth();
-        mender.applyEffect(Effect.silenced(5, damage -> {
-        }));
+        mender.applyEffect(Effect.silenced(5, DamageSink.none()));
 
         for (int t = 1; t <= 60; t++) {
             mender.doTick(t);
@@ -100,12 +99,9 @@ class SilenceTest {
     void dispellingStripsAnEnemysShieldAndHealButNothingElse() {
         GameWorld world = worldWithStraightPath();
         DefinedEnemyMob enemy = spawn(world, "c", 100, 4);
-        enemy.applyEffect(Effect.shield(0.3f, 100, damage -> {
-        }));
-        enemy.applyEffect(Effect.heal(5, 100, damage -> {
-        }));
-        enemy.applyEffect(Effect.exposed(100, damage -> {
-        }));
+        enemy.applyEffect(Effect.shield(0.3f, 100, DamageSink.none()));
+        enemy.applyEffect(Effect.heal(5, 100, DamageSink.none()));
+        enemy.applyEffect(Effect.exposed(100, DamageSink.none()));
 
         enemy.dispelRestoratives();
 
@@ -119,8 +115,7 @@ class SilenceTest {
         frenzied.doDamage(Damage.physical(9000));
         float hurried = frenzied.getSpeed();
 
-        frenzied.applyEffect(Effect.anchored(100, damage -> {
-        }));
+        frenzied.applyEffect(Effect.anchored(100, DamageSink.none()));
 
         assertThat(hurried).isGreaterThan(1.28f);
         assertThat(frenzied.getSpeed()).isCloseTo(1.28f * 0.75f, within(0.001f));

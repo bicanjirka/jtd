@@ -3,6 +3,7 @@ package td.ui;
 import org.junit.jupiter.api.Test;
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyCatalog;
@@ -75,8 +76,7 @@ class EnemyStatTextTest {
     @Test
     void aFrozenEnemyShowsThatItIsImmuneToBurnAndWhatItsNextFreezeWillLast() {
         DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
-        mob.applyEffect(Effect.freeze(30, d -> {
-        }));
+        mob.applyEffect(Effect.freeze(30, DamageSink.none()));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect());
 
@@ -102,8 +102,7 @@ class EnemyStatTextTest {
     @Test
     void theLiveViewShowsCurrentHealthEffectsAndFate() {
         DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
-        mob.applyEffect(Effect.freeze(30, d -> {
-        }));
+        mob.applyEffect(Effect.freeze(30, DamageSink.none()));
         mob.doDamage(Damage.physical(4000));
 
         InfoSheet alive = EnemyStatText.live(mob.inspect());
@@ -157,8 +156,7 @@ class EnemyStatTextTest {
     @Test
     void aBurningEnemyShowsItsScorchedStacksAndTheResilienceTheyCost() {
         DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
-        mob.applyEffect(Effect.burn(Damage.magic(100), 100, d -> {
-        }));
+        mob.applyEffect(Effect.burn(Damage.magic(100), 100, DamageSink.none()));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect());
 
@@ -171,10 +169,8 @@ class EnemyStatTextTest {
     @Test
     void aChilledEnemyShowsItsLevelAndAPoisonedOneItsSickenedStacksAndSpiritLoss() {
         DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
-        mob.applyEffect(Effect.chill(0.4f, 100, d -> {
-        }));
-        mob.applyEffect(Effect.poison(Damage.magic(100), 100, d -> {
-        }));
+        mob.applyEffect(Effect.chill(0.4f, 100, DamageSink.none()));
+        mob.applyEffect(Effect.poison(Damage.magic(100), 100, DamageSink.none()));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect());
 
@@ -188,12 +184,9 @@ class EnemyStatTextTest {
     @Test
     void theSpotterEffectsShowTheirStacksAndASpiritedEnemyShowsHowFastDebuffsWearOff() {
         DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
-        mob.applyEffect(Effect.sundered(3, 100, d -> {
-        }));
-        mob.applyEffect(Effect.exposed(100, d -> {
-        }));
-        mob.applyEffect(Effect.priority(100, d -> {
-        }));
+        mob.applyEffect(Effect.sundered(3, 100, DamageSink.none()));
+        mob.applyEffect(Effect.exposed(100, DamageSink.none()));
+        mob.applyEffect(Effect.priority(100, DamageSink.none()));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect());
 

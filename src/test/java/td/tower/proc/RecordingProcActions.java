@@ -11,7 +11,6 @@ import java.util.List;
 final class RecordingProcActions implements ProcActions {
 
     private final List<String> calls = new ArrayList<>();
-    private final List<TowerStatus> granted = new ArrayList<>();
 
     @Override
     public void applyStacks(EnemyMob target, EffectKind kind, int stacks) {
@@ -26,14 +25,9 @@ final class RecordingProcActions implements ProcActions {
     @Override
     public void grantStatus(TowerStatus status) {
         this.calls.add("status " + status.id());
-        this.granted.add(status);
     }
 
     List<String> calls() {
         return List.copyOf(this.calls);
-    }
-
-    List<TowerStatus> granted() {
-        return List.copyOf(this.granted);
     }
 }

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.fixtures.LevelFixtures;
 import td.fixtures.WorldFixtures;
@@ -95,8 +96,7 @@ class DefinedEnemyMobTest {
         GameWorld context = newContext();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         assertThat(enemy.getHealth()).isEqualTo(5000);
-        enemy.applyEffect(Effect.shield(400f, 5, d -> {
-        }));
+        enemy.applyEffect(Effect.shield(400f, 5, DamageSink.none()));
 
         Damage landed = enemy.doDamage(Damage.physical(1000));
 
@@ -111,8 +111,7 @@ class DefinedEnemyMobTest {
         DefinedEnemyMob enemy = (DefinedEnemyMob) EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         enemy.applyEffect(Effect.sickened(50));
 
-        enemy.applyEffect(Effect.shield(400f, 100, d -> {
-        }));
+        enemy.applyEffect(Effect.shield(400f, 100, DamageSink.none()));
 
         assertThat(enemy.shieldGauge().max()).isCloseTo(2f, within(1e-4f));
     }
@@ -121,12 +120,10 @@ class DefinedEnemyMobTest {
     void aCauterizedEnemyReceivesHalfAShield() {
         GameWorld context = newContext();
         DefinedEnemyMob enemy = (DefinedEnemyMob) EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.burn(Damage.magic(100), 60, d -> {
-        }).withTuning(td.effect.PoolTuning.standard().withCarried(td.stat.StatModifiers.of(td.stat.EnemyStat.HEALING_RECEIVED,
+        enemy.applyEffect(Effect.burn(Damage.magic(100), 60, DamageSink.none()).withTuning(td.effect.PoolTuning.standard().withCarried(td.stat.StatModifiers.of(td.stat.EnemyStat.HEALING_RECEIVED,
                 td.stat.StatModifier.flat(-0.5f)))));
 
-        enemy.applyEffect(Effect.shield(400f, 100, d -> {
-        }));
+        enemy.applyEffect(Effect.shield(400f, 100, DamageSink.none()));
 
         assertThat(enemy.shieldGauge().max()).isCloseTo(2f, within(1e-4f));
     }
@@ -135,8 +132,7 @@ class DefinedEnemyMobTest {
     void aCritFromAnAttackerThatPiercesShieldsGoesStraightToHealth() {
         GameWorld context = newContext();
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.shield(5000f, 100, d -> {
-        }));
+        enemy.applyEffect(Effect.shield(5000f, 100, DamageSink.none()));
         AttackProfile cleanShot = AttackProfile.critChance(1f).withCritsPierceShields();
 
         HitResult crit = enemy.takeHit(Damage.physical(1000), cleanShot);
@@ -154,8 +150,7 @@ class DefinedEnemyMobTest {
         EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
         java.util.List<Damage> reported = new java.util.ArrayList<>();
         context.enemies().addShieldListener((mob, absorbed) -> reported.add(absorbed));
-        enemy.applyEffect(Effect.shield(400f, 100, d -> {
-        }));
+        enemy.applyEffect(Effect.shield(400f, 100, DamageSink.none()));
 
         HitResult ordinary = enemy.takeHit(Damage.physical(300), AttackProfile.none());
         HitResult ignoring = enemy.takeHit(Damage.physical(300), AttackProfile.none().withIgnoredShields());

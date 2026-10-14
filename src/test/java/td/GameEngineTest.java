@@ -5,6 +5,7 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageMix;
 import td.damage.DamageUnits;
+import td.effect.DamageSink;
 import td.effect.DiminishingReturns;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -92,8 +93,7 @@ class GameEngineTest {
         EnemyDefinition dummy = EnemyDefinition.of("dummy", "Dummy", 1_000_000, 1, 0f, BodyArchetype.CIRCLE);
         EnemyMob plain = spawnOnly(FakeGameHost.newBoundEngine(), dummy);
         EnemyMob exposed = spawnOnly(FakeGameHost.newBoundEngine(), dummy);
-        exposed.applyEffect(Effect.exposed(1_000_000, d -> {
-        }));
+        exposed.applyEffect(Effect.exposed(1_000_000, DamageSink.none()));
 
         int plainCrits = critsIn(plain, 2000);
         int exposedCrits = critsIn(exposed, 2000);
@@ -108,8 +108,7 @@ class GameEngineTest {
                 .withResilience(100f);
         EnemyMob plain = spawnOnly(FakeGameHost.newBoundEngine(), immune);
         EnemyMob exposed = spawnOnly(FakeGameHost.newBoundEngine(), immune);
-        exposed.applyEffect(Effect.exposed(1_000_000, d -> {
-        }));
+        exposed.applyEffect(Effect.exposed(1_000_000, DamageSink.none()));
 
         int plainCrits = critsIn(plain, 2000);
         int exposedCrits = critsIn(exposed, 2000);
@@ -136,8 +135,7 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyMob enemy = spawnOnly(engine, EnemyDefinition.of("resist", "Resist", 100, 1, 1f, BodyArchetype.SQUARE)
                 .withArmor(100f));
-        enemy.applyEffect(Effect.shield(300f, 100, d -> {
-        }));
+        enemy.applyEffect(Effect.shield(300f, 100, DamageSink.none()));
 
         HitResult result = enemy.takeHit(Damage.physical(1000), AttackProfile.none());
 
@@ -150,8 +148,7 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyMob enemy = spawnOnly(engine, EnemyDefinition.of("hurry", "Hurry", 100, 1, 1f, BodyArchetype.TRIANGLE)
                 .withTraits(List.of(new HurtSpeedTrait(2f))));
-        enemy.applyEffect(Effect.shield(2000f, 100, d -> {
-        }));
+        enemy.applyEffect(Effect.shield(2000f, 100, DamageSink.none()));
         float before = enemy.getSpeed();
 
         enemy.doDamage(Damage.physical(7000));
@@ -179,8 +176,7 @@ class GameEngineTest {
     }
 
     private static int freezeFor(EnemyMob enemy, int durationTicks, int[] clock) {
-        enemy.applyEffect(Effect.freeze(durationTicks, d -> {
-        }));
+        enemy.applyEffect(Effect.freeze(durationTicks, DamageSink.none()));
         return ticksFrozen(enemy, clock);
     }
 
@@ -218,12 +214,10 @@ class GameEngineTest {
     void aFreezeReappliedWhileFrozenDoesNotSpendADiminishingStep() {
         EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
         int[] clock = {0};
-        enemy.applyEffect(Effect.freeze(20, d -> {
-        }));
+        enemy.applyEffect(Effect.freeze(20, DamageSink.none()));
         enemy.doTick(++clock[0]);
 
-        enemy.applyEffect(Effect.freeze(20, d -> {
-        }));
+        enemy.applyEffect(Effect.freeze(20, DamageSink.none()));
         ticksFrozen(enemy, clock);
 
         assertThat(freezeFor(enemy, 20, clock)).isEqualTo(10);
@@ -231,8 +225,7 @@ class GameEngineTest {
 
     /** Dazes {@code enemy} and returns how many ticks it stayed Dazed. */
     private static int dazeFor(EnemyMob enemy, int durationTicks, int[] clock) {
-        enemy.applyEffect(Effect.dazed(durationTicks, d -> {
-        }));
+        enemy.applyEffect(Effect.dazed(durationTicks, DamageSink.none()));
         int dazed = 0;
         while (enemy.activeEffectKinds().contains(EffectKind.DAZED)) {
             enemy.doTick(++clock[0]);
@@ -270,13 +263,10 @@ class GameEngineTest {
     @Test
     void aDazedEnemyStopsButKeepsItsBurnAndItsChill() {
         EnemyMob enemy = spawnOnly(FakeGameHost.newBoundEngine(), WEAKLING);
-        enemy.applyEffect(Effect.burn(Damage.magic(1), 40, d -> {
-        }));
-        enemy.applyEffect(Effect.chill(0.3f, 40, d -> {
-        }));
+        enemy.applyEffect(Effect.burn(Damage.magic(1), 40, DamageSink.none()));
+        enemy.applyEffect(Effect.chill(0.3f, 40, DamageSink.none()));
 
-        enemy.applyEffect(Effect.dazed(20, d -> {
-        }));
+        enemy.applyEffect(Effect.dazed(20, DamageSink.none()));
 
         assertThat(enemy.activeEffectKinds()).contains(EffectKind.BURN, EffectKind.CHILL, EffectKind.DAZED);
         assertThat(enemy.getSpeed()).isZero();
@@ -613,13 +603,11 @@ class GameEngineTest {
     void anInvisibleEnemyCannotBePickedButAnExistingSelectionSurvivesItTurningInvisible() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyMob[] walkers = twoWalkers(engine);
-        walkers[0].applyEffect(Effect.invisible(100, d -> {
-        }));
+        walkers[0].applyEffect(Effect.invisible(100, DamageSink.none()));
         Optional<EnemyInspection> hidden = clickAndInspect(engine, walkers[0].getX(), walkers[0].getY());
         clickAndInspect(engine, walkers[1].getX(), walkers[1].getY());
 
-        walkers[1].applyEffect(Effect.invisible(100, d -> {
-        }));
+        walkers[1].applyEffect(Effect.invisible(100, DamageSink.none()));
 
         assertThat(hidden).isEmpty();
         assertThat(engine.inspectSelectedEnemy()).map(EnemyInspection::name).contains("Walker B");
@@ -1629,11 +1617,9 @@ class GameEngineTest {
     void soulfireBurnsAnEnemyThatIsImmuneToBurn() {
         EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, EffectResistTrait.immuneTo(EffectKind.BURN));
 
-        enemy.applyEffect(Effect.burn(Damage.magic(100), 60, d -> {
-        }));
+        enemy.applyEffect(Effect.burn(Damage.magic(100), 60, DamageSink.none()));
         boolean burned = enemy.activeEffectKinds().contains(EffectKind.BURN);
-        enemy.applyEffect(Effect.soulfire(Damage.magic(100), 60, d -> {
-        }));
+        enemy.applyEffect(Effect.soulfire(Damage.magic(100), 60, DamageSink.none()));
 
         assertThat(burned).isFalse();
         assertThat(enemy.activeEffectKinds()).contains(EffectKind.SOULFIRE);

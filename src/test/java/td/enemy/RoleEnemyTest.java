@@ -5,6 +5,7 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.damage.DamageUnits;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.fixtures.WorldFixtures;
@@ -100,10 +101,8 @@ class RoleEnemyTest {
         DefinedEnemyMob salamander = spawn(world, "salamander");
         DefinedEnemyMob plain = spawn(world, "c");
 
-        salamander.applyEffect(Effect.burn(Damage.magic(100), 100, d -> {
-        }));
-        plain.applyEffect(Effect.burn(Damage.magic(100), 100, d -> {
-        }));
+        salamander.applyEffect(Effect.burn(Damage.magic(100), 100, DamageSink.none()));
+        plain.applyEffect(Effect.burn(Damage.magic(100), 100, DamageSink.none()));
 
         assertThat(salamander.hasEffect(EffectKind.BURN)).isFalse();
         assertThat(plain.hasEffect(EffectKind.BURN)).isTrue();
@@ -114,8 +113,7 @@ class RoleEnemyTest {
         GameWorld world = worldWithStraightPath();
         DefinedEnemyMob yeti = spawn(world, "yeti");
 
-        yeti.applyEffect(Effect.freeze(40, d -> {
-        }));
+        yeti.applyEffect(Effect.freeze(40, DamageSink.none()));
 
         assertThat(yeti.hasEffect(EffectKind.FREEZE)).isFalse();
         assertThat(yeti.stats().value(EnemyStat.CHILL_RESIST)).isEqualTo(0.5f);

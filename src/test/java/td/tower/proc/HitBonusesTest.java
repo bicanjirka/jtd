@@ -1,6 +1,7 @@
 package td.tower.proc;
 
 import org.junit.jupiter.api.Test;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.Rank;
@@ -69,8 +70,7 @@ class HitBonusesTest {
     void perStackOfScalesWithTheTargetsStacks() {
         HitBonus toll = HitBonus.per(new HitScaling.PerStackOf(EffectKind.VULNERABLE), HitAdjustment.damage(0.1f));
         FakeEnemyMob target = FakeEnemyMob.at(0, 0);
-        target.applyEffect(Effect.vulnerable(3, 100, d -> {
-        }));
+        target.applyEffect(Effect.vulnerable(3, 100, DamageSink.none()));
 
         assertThat(toll.adjustmentFor(hit(target)).damage()).isCloseTo(0.3f, within(1e-6f));
     }

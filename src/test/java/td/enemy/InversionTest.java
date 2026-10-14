@@ -3,6 +3,7 @@ package td.enemy;
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.fixtures.WorldFixtures;
@@ -65,8 +66,7 @@ class InversionTest {
         invert(ally, new ArrayList<>());
         long before = ally.damageTaken();
 
-        ally.applyEffect(Effect.heal(100, 10, damage -> {
-        }));
+        ally.applyEffect(Effect.heal(100, 10, DamageSink.none()));
         for (int t = 1; t <= 10; t++) {
             ally.doTick(t);
         }
@@ -81,8 +81,7 @@ class InversionTest {
         List<Damage> credited = new ArrayList<>();
         invert(enemy, credited);
 
-        enemy.applyEffect(Effect.shield(1500f, 100, damage -> {
-        }));
+        enemy.applyEffect(Effect.shield(1500f, 100, DamageSink.none()));
 
         assertThat(credited).containsExactly(Damage.magic(1500));
         assertThat(enemy.hasEffect(EffectKind.SHIELD)).isFalse();
@@ -94,8 +93,7 @@ class InversionTest {
         DefinedEnemyMob ghost = spawn(world, "g", 4);
         invert(ghost, new ArrayList<>());
 
-        ghost.applyEffect(Effect.invisible(200, damage -> {
-        }));
+        ghost.applyEffect(Effect.invisible(200, DamageSink.none()));
 
         assertThat(ghost.hasEffect(EffectKind.INVISIBLE)).isFalse();
         assertThat(ghost.isHidden()).isFalse();
@@ -105,8 +103,7 @@ class InversionTest {
     void invertingAnEnemyThatHasAlreadyVanishedBringsItBack() {
         GameWorld world = worldWithStraightPath();
         DefinedEnemyMob ghost = spawn(world, "g", 4);
-        ghost.applyEffect(Effect.invisible(200, damage -> {
-        }));
+        ghost.applyEffect(Effect.invisible(200, DamageSink.none()));
 
         invert(ghost, new ArrayList<>());
 
@@ -118,10 +115,8 @@ class InversionTest {
         GameWorld world = worldWithStraightPath();
         DefinedEnemyMob enemy = spawn(world, "c", 4);
 
-        enemy.applyEffect(Effect.shield(0.3f, 100, damage -> {
-        }));
-        enemy.applyEffect(Effect.heal(100, 10, damage -> {
-        }));
+        enemy.applyEffect(Effect.shield(0.3f, 100, DamageSink.none()));
+        enemy.applyEffect(Effect.heal(100, 10, DamageSink.none()));
 
         assertThat(enemy.activeEffectKinds()).contains(EffectKind.SHIELD, EffectKind.HEAL);
     }

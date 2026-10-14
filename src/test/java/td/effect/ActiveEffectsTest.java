@@ -35,8 +35,7 @@ class ActiveEffectsTest {
     @Test
     void aChillSlowsInProportionToItsLevelAndFadesLinearly() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.chill(0.4f, 100, d -> {
-        }));
+        effects.apply(Effect.chill(0.4f, 100, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.6f, within(0.001f));
 
@@ -58,8 +57,7 @@ class ActiveEffectsTest {
     void aFreezeZeroesTheSpeedMultiplier() {
         ActiveEffects effects = new ActiveEffects();
 
-        effects.apply(Effect.freeze(3, d -> {
-        }));
+        effects.apply(Effect.freeze(3, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isZero();
     }
@@ -67,11 +65,9 @@ class ActiveEffectsTest {
     @Test
     void aFreezeStillZeroesTheSpeedOfAChilledEnemyItDoesNotConsume() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.freeze(3, d -> {
-        }));
+        effects.apply(Effect.freeze(3, DamageSink.none()));
 
-        effects.apply(Effect.chill(0.5f, 3, d -> {
-        }));
+        effects.apply(Effect.chill(0.5f, 3, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isZero();
     }
@@ -79,8 +75,7 @@ class ActiveEffectsTest {
     @Test
     void aChillEndsWhenItsLevelHasFadedToNothing() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.chill(0.5f, 2, d -> {
-        }));
+        effects.apply(Effect.chill(0.5f, 2, DamageSink.none()));
 
         effects.tick();
         assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.75f, within(0.001f));
@@ -186,12 +181,10 @@ class ActiveEffectsTest {
     @Test
     void chillsAddUpButNeverPastTheCapSoTheyNeverFreeze() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.chill(0.5f, 100, d -> {
-        }));
+        effects.apply(Effect.chill(0.5f, 100, DamageSink.none()));
         assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.5f, within(0.001f));
 
-        effects.apply(Effect.chill(0.5f, 100, d -> {
-        }));
+        effects.apply(Effect.chill(0.5f, 100, DamageSink.none()));
 
         assertThat(effects.chillLevel()).isCloseTo(0.8f, within(0.001f));
         assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.2f, within(0.001f));
@@ -200,12 +193,10 @@ class ActiveEffectsTest {
     @Test
     void aChillHeldAtTheCapIsOnlyRefilledByWhatHasDecayed() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.chill(0.8f, 80, d -> {
-        }));
+        effects.apply(Effect.chill(0.8f, 80, DamageSink.none()));
         tickTimes(effects, 20); // 0.8 - 20 * 0.01 = 0.6
 
-        effects.apply(Effect.chill(0.8f, 80, d -> {
-        }));
+        effects.apply(Effect.chill(0.8f, 80, DamageSink.none()));
 
         assertThat(effects.chillLevel()).isCloseTo(0.8f, within(0.001f));
     }
@@ -214,8 +205,7 @@ class ActiveEffectsTest {
     void chillAndBurnAreTrackedIndependentlyBySeparateKinds() {
         ActiveEffects effects = new ActiveEffects();
         List<Damage> received = new ArrayList<>();
-        effects.apply(Effect.chill(0.5f, 5, d -> {
-        }));
+        effects.apply(Effect.chill(0.5f, 5, DamageSink.none()));
         effects.apply(Effect.burn(Damage.magic(10), 5, recordingSink(received)));
 
         effects.tick();
@@ -234,8 +224,7 @@ class ActiveEffectsTest {
     @Test
     void aShieldAbsorbsUntilItsPoolRunsOut() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.shield(500f, 100, d -> {
-        }));
+        effects.apply(Effect.shield(500f, 100, DamageSink.none()));
 
         int first = effects.absorb(DamageType.PHYSICAL, 300);
         int second = effects.absorb(DamageType.PHYSICAL, 300);
@@ -249,8 +238,7 @@ class ActiveEffectsTest {
     @Test
     void aShieldAbsorbsNothingOnceItExpires() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.shield(500f, 1, d -> {
-        }));
+        effects.apply(Effect.shield(500f, 1, DamageSink.none()));
 
         effects.tick();
 
@@ -267,8 +255,7 @@ class ActiveEffectsTest {
     @Test
     void anInvisibilityEffectSetsFullStealthForItsDuration() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.invisible(1, d -> {
-        }));
+        effects.apply(Effect.invisible(1, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.STEALTH)).isEqualTo(1f);
 
@@ -280,11 +267,9 @@ class ActiveEffectsTest {
     @Test
     void aReappliedShieldKeepsTheLargerPoolAndTheLongerTime() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.shield(600f, 5, d -> {
-        }));
+        effects.apply(Effect.shield(600f, 5, DamageSink.none()));
 
-        effects.apply(Effect.shield(200f, 10, d -> {
-        }));
+        effects.apply(Effect.shield(200f, 10, DamageSink.none()));
 
         assertThat(effects.shieldGauge()).isEqualTo(new ShieldGauge(6f, 6f));
         assertThat(effects.remainingTicks(EffectKind.SHIELD)).hasValue(10);
@@ -293,8 +278,7 @@ class ActiveEffectsTest {
     @Test
     void aPhysicalShieldLetsMagicThrough() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.shield(400f, 5, d -> {
-        }).withShieldRestrictedTo(DamageType.PHYSICAL));
+        effects.apply(Effect.shield(400f, 5, DamageSink.none()).withShieldRestrictedTo(DamageType.PHYSICAL));
 
         assertThat(effects.absorb(DamageType.MAGIC, 100)).isZero();
         assertThat(effects.absorb(DamageType.PHYSICAL, 100)).isEqualTo(100);
@@ -303,8 +287,7 @@ class ActiveEffectsTest {
     @Test
     void anUnrestrictedShieldStillAbsorbsBothDamageKinds() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.shield(400f, 5, d -> {
-        }));
+        effects.apply(Effect.shield(400f, 5, DamageSink.none()));
 
         assertThat(effects.absorb(DamageType.MAGIC, 100)).isEqualTo(100);
         assertThat(effects.absorb(DamageType.PHYSICAL, 100)).isEqualTo(100);
@@ -313,8 +296,7 @@ class ActiveEffectsTest {
     @Test
     void shatterToneTakesAQuarterOfWhatRemains() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.shield(400f, 100, d -> {
-        }));
+        effects.apply(Effect.shield(400f, 100, DamageSink.none()));
         effects.absorb(DamageType.PHYSICAL, 200);
 
         effects.weakenShield(0.25f);
@@ -332,8 +314,7 @@ class ActiveEffectsTest {
     @Test
     void aHealEffectRestoresItsPerTickAmountForItsDuration() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.heal(50, 2, d -> {
-        }));
+        effects.apply(Effect.heal(50, 2, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.REGENERATION)).isEqualTo(50f);
 
@@ -347,11 +328,9 @@ class ActiveEffectsTest {
     @Test
     void reapplyingHealAtALowerRateKeepsTheStrongerOne() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.heal(80, 5, d -> {
-        }));
+        effects.apply(Effect.heal(80, 5, DamageSink.none()));
 
-        effects.apply(Effect.heal(20, 10, d -> {
-        }));
+        effects.apply(Effect.heal(20, 10, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.REGENERATION)).isEqualTo(80f);
     }
@@ -360,14 +339,11 @@ class ActiveEffectsTest {
     void vulnerableStacksAddUpToThreeAndEachRaisesDamageTakenByAFixedShare() {
         ActiveEffects effects = new ActiveEffects();
 
-        effects.apply(Effect.vulnerable(1, 80, d -> {
-        }));
+        effects.apply(Effect.vulnerable(1, 80, DamageSink.none()));
         assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.15f, within(0.001f));
 
-        effects.apply(Effect.vulnerable(1, 80, d -> {
-        }));
-        effects.apply(Effect.vulnerable(1, 80, d -> {
-        }));
+        effects.apply(Effect.vulnerable(1, 80, DamageSink.none()));
+        effects.apply(Effect.vulnerable(1, 80, DamageSink.none()));
 
         assertThat(effects.stacks(EffectKind.VULNERABLE)).isEqualTo(3);
         assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.45f, within(0.001f));
@@ -377,22 +353,19 @@ class ActiveEffectsTest {
     @Test
     void aFourthVulnerableApplicationOnlyRefreshesTheSharedClock() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.vulnerable(3, 80, d -> {
-        }));
+        effects.apply(Effect.vulnerable(3, 80, DamageSink.none()));
         tickTimes(effects, 50);
 
-        effects.apply(Effect.vulnerable(1, 80, d -> {
-        }));
+        effects.apply(Effect.vulnerable(1, 80, DamageSink.none()));
 
         assertThat(effects.stacks(EffectKind.VULNERABLE)).isEqualTo(3);
-        assertThat(effects.remainingTicks(EffectKind.VULNERABLE).getAsInt()).isEqualTo(80);
+        assertThat(effects.remainingTicks(EffectKind.VULNERABLE)).hasValue(80);
     }
 
     @Test
     void everyVulnerableStackEndsTogetherWhenTheSharedClockRunsOut() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.vulnerable(2, 5, d -> {
-        }));
+        effects.apply(Effect.vulnerable(2, 5, DamageSink.none()));
 
         tickTimes(effects, 5);
 
@@ -403,12 +376,10 @@ class ActiveEffectsTest {
     @Test
     void aRevealBeatsInvisibilityInTheStealthStat() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.invisible(100, d -> {
-        }));
+        effects.apply(Effect.invisible(100, DamageSink.none()));
         assertThat(resolved(effects, EnemyStat.STEALTH)).isEqualTo(1f);
 
-        effects.apply(Effect.revealed(40, d -> {
-        }));
+        effects.apply(Effect.revealed(40, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.STEALTH)).isZero();
     }
@@ -416,10 +387,8 @@ class ActiveEffectsTest {
     @Test
     void invisibilityShowsAgainOnceTheRevealRunsOut() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.invisible(100, d -> {
-        }));
-        effects.apply(Effect.revealed(3, d -> {
-        }));
+        effects.apply(Effect.invisible(100, DamageSink.none()));
+        effects.apply(Effect.revealed(3, DamageSink.none()));
 
         tickTimes(effects, 3);
 
@@ -429,8 +398,7 @@ class ActiveEffectsTest {
     @Test
     void eachSickenedStackLowersSpiritByOneAndNoneWearOffWhilePoisonKeepsEarningThem() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.poison(Damage.magic(10), 5000, d -> {
-        }));
+        effects.apply(Effect.poison(Damage.magic(10), 5000, DamageSink.none()));
         assertThat(resolved(effects, EnemyStat.SPIRIT)).isEqualTo(-1f);
 
         tickTimes(effects, 100); // earned 1 + 10, decayed none
@@ -445,8 +413,7 @@ class ActiveEffectsTest {
     @Test
     void eachScorchedStackLowersResilienceByOneAndNoneWearOffWhileBurningKeepsEarningThem() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(10), 5000, d -> {
-        }));
+        effects.apply(Effect.burn(Damage.magic(10), 5000, DamageSink.none()));
         assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-1f);
 
         tickTimes(effects, 100); // earned 1 + 10, decayed none
@@ -461,13 +428,11 @@ class ActiveEffectsTest {
     @Test
     void reapplyingABurnFeedsItsPoolButAddsNoStacks() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(10), 5000, d -> {
-        }));
+        effects.apply(Effect.burn(Damage.magic(10), 5000, DamageSink.none()));
         tickTimes(effects, 25); // stacks: 1, then one every 10 ticks
         int before = effects.stacks(EffectKind.BURN);
 
-        effects.apply(Effect.burn(Damage.magic(10), 5000, d -> {
-        }));
+        effects.apply(Effect.burn(Damage.magic(10), 5000, DamageSink.none()));
 
         assertThat(effects.stacks(EffectKind.BURN)).isEqualTo(before);
     }
@@ -475,13 +440,11 @@ class ActiveEffectsTest {
     @Test
     void aPoisonPoolSlowsInProportionToWhatIsLeftOfItAndStacksWithAChill() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.poison(Damage.magic(10), 60, d -> {
-        }));
+        effects.apply(Effect.poison(Damage.magic(10), 60, DamageSink.none()));
         // one application fills half the cap, so it takes 0.3 * 0.5 of the speed
         assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.85f, within(0.001f));
 
-        effects.apply(Effect.chill(0.5f, 100, d -> {
-        }));
+        effects.apply(Effect.chill(0.5f, 100, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.5f * 0.85f, within(0.001f));
 
@@ -507,11 +470,9 @@ class ActiveEffectsTest {
     @Test
     void freezingAnEnemyRemovesItsBurn() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(10), 60, d -> {
-        }));
+        effects.apply(Effect.burn(Damage.magic(10), 60, DamageSink.none()));
 
-        effects.apply(Effect.freeze(20, d -> {
-        }));
+        effects.apply(Effect.freeze(20, DamageSink.none()));
 
         assertThat(effects.activeKinds()).containsExactlyInAnyOrder(EffectKind.FREEZE, EffectKind.SCORCHED);
     }
@@ -520,8 +481,7 @@ class ActiveEffectsTest {
     void aFrozenEnemyCannotBeSetAlightAndNothingIsCredited() {
         ActiveEffects effects = new ActiveEffects();
         List<Damage> received = new ArrayList<>();
-        effects.apply(Effect.freeze(20, d -> {
-        }));
+        effects.apply(Effect.freeze(20, DamageSink.none()));
 
         effects.apply(Effect.burn(Damage.magic(10), 60, recordingSink(received)));
         effects.tick();
@@ -534,12 +494,10 @@ class ActiveEffectsTest {
     @Test
     void anEnemyCanBurnAgainOnceItsFreezeHasEnded() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.freeze(2, d -> {
-        }));
+        effects.apply(Effect.freeze(2, DamageSink.none()));
         tickTimes(effects, 2);
 
-        effects.apply(Effect.burn(Damage.magic(10), 60, d -> {
-        }));
+        effects.apply(Effect.burn(Damage.magic(10), 60, DamageSink.none()));
 
         assertThat(effects.activeKinds()).containsExactlyInAnyOrder(EffectKind.BURN, EffectKind.SCORCHED);
         assertThat(effects.blockedKinds()).isEmpty();
@@ -548,16 +506,13 @@ class ActiveEffectsTest {
     @Test
     void aFreezeLeavesPoisonAloneButConsumesAChillAndLastsLongerByItsLevel() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.poison(Damage.magic(10), 60, d -> {
-        }));
-        effects.apply(Effect.chill(0.5f, 100, d -> {
-        }));
+        effects.apply(Effect.poison(Damage.magic(10), 60, DamageSink.none()));
+        effects.apply(Effect.chill(0.5f, 100, DamageSink.none()));
 
-        effects.apply(Effect.freeze(20, d -> {
-        }));
+        effects.apply(Effect.freeze(20, DamageSink.none()));
 
         assertThat(effects.activeKinds()).containsExactlyInAnyOrder(EffectKind.POISON, EffectKind.SICKENED, EffectKind.FREEZE);
-        assertThat(effects.remainingTicks(EffectKind.FREEZE).getAsInt()).isEqualTo(30);
+        assertThat(effects.remainingTicks(EffectKind.FREEZE)).hasValue(30);
         assertThat(effects.blockedKinds()).containsExactly(EffectKind.BURN, EffectKind.SOULFIRE);
     }
 
@@ -565,10 +520,9 @@ class ActiveEffectsTest {
     void aFreezeOnAnUnchilledEnemyIsNotExtended() {
         ActiveEffects effects = new ActiveEffects();
 
-        effects.apply(Effect.freeze(20, d -> {
-        }));
+        effects.apply(Effect.freeze(20, DamageSink.none()));
 
-        assertThat(effects.remainingTicks(EffectKind.FREEZE).getAsInt()).isEqualTo(20);
+        assertThat(effects.remainingTicks(EffectKind.FREEZE)).hasValue(20);
     }
 
     @Test
@@ -578,8 +532,7 @@ class ActiveEffectsTest {
         plain.apply(Effect.burn(Damage.magic(100), 60, recordingSink(plainDamage)));
         ActiveEffects chilled = new ActiveEffects();
         List<Damage> chilledDamage = new ArrayList<>();
-        chilled.apply(Effect.chill(0.8f, 1000, d -> {
-        }));
+        chilled.apply(Effect.chill(0.8f, 1000, DamageSink.none()));
         chilled.apply(Effect.burn(Damage.magic(100), 60, recordingSink(chilledDamage)));
 
         plain.tick();
@@ -592,8 +545,7 @@ class ActiveEffectsTest {
     @Test
     void scorchedStacksOutlastTheBurnAndThenWearOffOneAtATime() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(10), 30, d -> {
-        }));
+        effects.apply(Effect.burn(Damage.magic(10), 30, DamageSink.none()));
         tickTimes(effects, 40);
 
         assertThat(effects.activeKinds()).containsExactly(EffectKind.SCORCHED);
@@ -612,13 +564,11 @@ class ActiveEffectsTest {
     @Test
     void aNewBurnEarnsItsFirstStackAtOnceOnTopOfTheOnesAlreadyEarned() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(10), 30, d -> {
-        }));
+        effects.apply(Effect.burn(Damage.magic(10), 30, DamageSink.none()));
         tickTimes(effects, 40);
         int earned = effects.stacks(EffectKind.SCORCHED);
 
-        effects.apply(Effect.burn(Damage.magic(10), 30, d -> {
-        }));
+        effects.apply(Effect.burn(Damage.magic(10), 30, DamageSink.none()));
 
         assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(earned + 1);
     }
@@ -626,8 +576,7 @@ class ActiveEffectsTest {
     @Test
     void sickenedStacksOutlastThePoisonAndItsSlowEndsWithThePool() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.poison(Damage.magic(10), 30, d -> {
-        }));
+        effects.apply(Effect.poison(Damage.magic(10), 30, DamageSink.none()));
         tickTimes(effects, 40);
 
         assertThat(effects.activeKinds()).containsExactly(EffectKind.SICKENED);
@@ -638,13 +587,11 @@ class ActiveEffectsTest {
     @Test
     void freezingPutsOutTheBurnButKeepsTheScorchedStacks() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(10), 5000, d -> {
-        }));
+        effects.apply(Effect.burn(Damage.magic(10), 5000, DamageSink.none()));
         tickTimes(effects, 100);
         int earned = effects.stacks(EffectKind.SCORCHED);
 
-        effects.apply(Effect.freeze(20, d -> {
-        }));
+        effects.apply(Effect.freeze(20, DamageSink.none()));
 
         assertThat(effects.activeKinds()).containsExactlyInAnyOrder(EffectKind.FREEZE, EffectKind.SCORCHED);
         assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(earned);
@@ -654,8 +601,7 @@ class ActiveEffectsTest {
     @Test
     void stackDecayFollowsTheSpiritFactorAndStopsAtZeroSpirit() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(10), 30, d -> {
-        }));
+        effects.apply(Effect.burn(Damage.magic(10), 30, DamageSink.none()));
         tickTimes(effects, 40);
         int stacks = effects.stacks(EffectKind.SCORCHED);
 
@@ -679,12 +625,10 @@ class ActiveEffectsTest {
         ActiveEffects effects = new ActiveEffects();
         BaseStats<EnemyStat> armored = BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 80f);
 
-        effects.apply(Effect.sundered(4, 100, d -> {
-        }));
+        effects.apply(Effect.sundered(4, 100, DamageSink.none()));
         assertThat(resolvedOn(armored, effects, EnemyStat.ARMOR)).isEqualTo(60f);
 
-        effects.apply(Effect.sundered(20, 100, d -> {
-        }));
+        effects.apply(Effect.sundered(20, 100, DamageSink.none()));
         assertThat(effects.stacks(EffectKind.SUNDERED)).isEqualTo(10);
         assertThat(resolvedOn(armored, effects, EnemyStat.ARMOR)).isEqualTo(30f);
     }
@@ -692,8 +636,7 @@ class ActiveEffectsTest {
     @Test
     void sunderedNeverTakesArmorBelowZero() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.sundered(10, 100, d -> {
-        }));
+        effects.apply(Effect.sundered(10, 100, DamageSink.none()));
 
         assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 20f), effects, EnemyStat.ARMOR)).isEqualTo(0f);
     }
@@ -701,16 +644,12 @@ class ActiveEffectsTest {
     @Test
     void anExposedEnemyLosesFiftyResilienceOnceEvenWhenAlsoRevealed() {
         ActiveEffects exposed = new ActiveEffects();
-        exposed.apply(Effect.exposed(100, d -> {
-        }));
+        exposed.apply(Effect.exposed(100, DamageSink.none()));
         ActiveEffects both = new ActiveEffects();
-        both.apply(Effect.exposed(100, d -> {
-        }));
-        both.apply(Effect.revealed(100, d -> {
-        }));
+        both.apply(Effect.exposed(100, DamageSink.none()));
+        both.apply(Effect.revealed(100, DamageSink.none()));
         ActiveEffects revealed = new ActiveEffects();
-        revealed.apply(Effect.revealed(100, d -> {
-        }));
+        revealed.apply(Effect.revealed(100, DamageSink.none()));
 
         assertThat(resolved(exposed, EnemyStat.RESILIENCE)).isEqualTo(-50f);
         assertThat(resolved(revealed, EnemyStat.RESILIENCE)).isEqualTo(-50f);
@@ -720,12 +659,9 @@ class ActiveEffectsTest {
     @Test
     void vulnerableAndPriorityAddTheirDamageTakenRatherThanMultiply() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.priority(100, d -> {
-        }));
-        effects.apply(Effect.vulnerable(3, 100, d -> {
-        }));
-        effects.apply(Effect.resonating(2, 100, d -> {
-        }));
+        effects.apply(Effect.priority(100, DamageSink.none()));
+        effects.apply(Effect.vulnerable(3, 100, DamageSink.none()));
+        effects.apply(Effect.resonating(2, 100, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.60f, within(1e-5f));
         assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.60f + 0.16f, within(1e-5f));
@@ -734,10 +670,8 @@ class ActiveEffectsTest {
     @Test
     void fracturedStacksEachTakeTenResilienceStopAtFiveAndRecoverOneASecond() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.fractured(3, d -> {
-        }));
-        effects.apply(Effect.fractured(9, d -> {
-        }));
+        effects.apply(Effect.fractured(3, DamageSink.none()));
+        effects.apply(Effect.fractured(9, DamageSink.none()));
 
         assertThat(effects.stacks(EffectKind.FRACTURED)).isEqualTo(5);
         assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-50f);
@@ -751,14 +685,10 @@ class ActiveEffectsTest {
     @Test
     void faultLineLetsFracturedFallToMinusAHundredAndHoldWhileExposed() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.fractured(4, d -> {
-        }));
-        effects.apply(Effect.fractured(1, d -> {
-        }).withFaultLine());
-        effects.apply(Effect.fractured(9, d -> {
-        }));
-        effects.apply(Effect.exposed(30, d -> {
-        }));
+        effects.apply(Effect.fractured(4, DamageSink.none()));
+        effects.apply(Effect.fractured(1, DamageSink.none()).withFaultLine());
+        effects.apply(Effect.fractured(9, DamageSink.none()));
+        effects.apply(Effect.exposed(30, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-100f);
         tickTimes(effects, 25);
@@ -777,19 +707,16 @@ class ActiveEffectsTest {
         ActiveEffects rimed = new ActiveEffects();
         List<Damage> burnt = new ArrayList<>();
         rimed.apply(Effect.burn(Damage.magic(100), 40, burnt::add));
-        rimed.apply(Effect.chill(0.4f, 40, d -> {
-        }));
-        rimed.apply(Effect.hex(EffectKind.RIME, 100, d -> {
-        }));
+        rimed.apply(Effect.chill(0.4f, 40, DamageSink.none()));
+        rimed.apply(Effect.hex(EffectKind.RIME, 100, DamageSink.none()));
         float burnLeft = fuelOf(rimed, EffectKind.BURN);
 
-        rimed.apply(Effect.freeze(20, d -> {
-        }));
+        rimed.apply(Effect.freeze(20, DamageSink.none()));
 
         assertThat(burnt).singleElement().extracting(Damage::amount)
                 .isEqualTo((int) Math.round(burnLeft / (1.0 - Math.exp(-3.0 / 40))));
         assertThat(rimed.activeKinds()).doesNotContain(EffectKind.BURN);
-        assertThat(rimed.remainingTicks(EffectKind.FREEZE).getAsInt()).isEqualTo(Math.round(20 * (1f + 2 * 0.4f)));
+        assertThat(rimed.remainingTicks(EffectKind.FREEZE)).hasValue(Math.round(20 * (1f + 2 * 0.4f)));
     }
 
     @Test
@@ -799,8 +726,7 @@ class ActiveEffectsTest {
         effects.apply(Effect.burn(Damage.magic(100), 40, burnt::add));
         float burnLeft = fuelOf(effects, EffectKind.BURN);
 
-        effects.apply(Effect.freeze(20, d -> {
-        }));
+        effects.apply(Effect.freeze(20, DamageSink.none()));
 
         assertThat(burnt).singleElement().extracting(Damage::amount)
                 .isEqualTo((int) Math.round(0.5 * burnLeft / (1.0 - Math.exp(-3.0 / 40))));
@@ -810,10 +736,8 @@ class ActiveEffectsTest {
     @Test
     void aBurningInvisibleEnemyIsVisibleUntilItsPoolDecaysBelowTheFuelLevel() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.invisible(1000, d -> {
-        }));
-        effects.apply(Effect.burn(Damage.magic(100), 60, d -> {
-        }));
+        effects.apply(Effect.invisible(1000, DamageSink.none()));
+        effects.apply(Effect.burn(Damage.magic(100), 60, DamageSink.none()));
         assertThat(resolved(effects, EnemyStat.STEALTH)).isEqualTo(0f);
 
         tickTimes(effects, 40);
@@ -825,11 +749,9 @@ class ActiveEffectsTest {
     @Test
     void aSmallBurnDoesNotRevealAnInvisibleEnemy() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.invisible(1000, d -> {
-        }));
+        effects.apply(Effect.invisible(1000, DamageSink.none()));
 
-        effects.apply(Effect.burn(Damage.magic(20), 60, d -> {
-        }));
+        effects.apply(Effect.burn(Damage.magic(20), 60, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.STEALTH)).isEqualTo(1f);
     }
@@ -838,17 +760,14 @@ class ActiveEffectsTest {
     void aTarredEnemysBurnStartsAtDoubleThePoolButATopUpDoesNotDoubleAgain() {
         ActiveEffects plain = new ActiveEffects();
         ActiveEffects tarred = new ActiveEffects();
-        tarred.apply(Effect.tarred(100, d -> {
-        }));
+        tarred.apply(Effect.tarred(100, DamageSink.none()));
         for (ActiveEffects effects : List.of(plain, tarred)) {
-            effects.apply(Effect.burn(Damage.magic(100), 60, d -> {
-            }));
+            effects.apply(Effect.burn(Damage.magic(100), 60, DamageSink.none()));
         }
         assertThat(fuelOf(tarred, EffectKind.BURN)).isEqualTo(2 * fuelOf(plain, EffectKind.BURN));
 
         float before = fuelOf(tarred, EffectKind.BURN);
-        tarred.apply(Effect.burn(Damage.magic(100), 60, d -> {
-        }));
+        tarred.apply(Effect.burn(Damage.magic(100), 60, DamageSink.none()));
 
         assertThat(fuelOf(tarred, EffectKind.BURN) - before).isLessThan(100f);
     }
@@ -857,8 +776,7 @@ class ActiveEffectsTest {
     void aTarredEnemyKeepsSixtyPercentOfItsSpeed() {
         ActiveEffects effects = new ActiveEffects();
 
-        effects.apply(Effect.tarred(100, d -> {
-        }));
+        effects.apply(Effect.tarred(100, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.6f, within(1e-5f));
     }
@@ -866,20 +784,17 @@ class ActiveEffectsTest {
     @Test
     void aTarredEnemysFreezeLastsASecondLonger() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.tarred(100, d -> {
-        }));
+        effects.apply(Effect.tarred(100, DamageSink.none()));
 
-        effects.apply(Effect.freeze(20, d -> {
-        }));
+        effects.apply(Effect.freeze(20, DamageSink.none()));
 
-        assertThat(effects.remainingTicks(EffectKind.FREEZE).getAsInt()).isEqualTo(40);
+        assertThat(effects.remainingTicks(EffectKind.FREEZE)).hasValue(40);
     }
 
     @Test
     void crackedTakesFivePlatingAndNeverBelowZero() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.cracked(100, d -> {
-        }));
+        effects.apply(Effect.cracked(100, DamageSink.none()));
         BaseStats<EnemyStat> plated = BaseStats.defaults(EnemyStat.class).with(EnemyStat.PLATING, 800f).with(EnemyStat.INSULATION, 400f);
 
         StatSheet sheet = new StatSheet(plated, effects::contributeTo);
@@ -891,13 +806,10 @@ class ActiveEffectsTest {
     @Test
     void anAshenEnemyCannotBeFrozenAndShrugsOffThreeQuartersOfAChill() {
         ActiveEffects ashen = new ActiveEffects();
-        ashen.apply(Effect.hex(EffectKind.ASH, 100, d -> {
-        }));
+        ashen.apply(Effect.hex(EffectKind.ASH, 100, DamageSink.none()));
 
-        ashen.apply(Effect.freeze(20, d -> {
-        }));
-        ashen.apply(Effect.chill(0.4f, 40, d -> {
-        }));
+        ashen.apply(Effect.freeze(20, DamageSink.none()));
+        ashen.apply(Effect.chill(0.4f, 40, DamageSink.none()));
 
         assertThat(ashen.activeKinds()).doesNotContain(EffectKind.FREEZE);
         assertThat(ashen.chillLevel()).isCloseTo(0.1f, within(1e-5f));
@@ -907,13 +819,10 @@ class ActiveEffectsTest {
     void underAshAPoolHoldsTwiceAsMuchAndEarnsItsStacksTwiceAsFast() {
         ActiveEffects plain = new ActiveEffects();
         ActiveEffects ashen = new ActiveEffects();
-        ashen.apply(Effect.hex(EffectKind.ASH, 1000, d -> {
-        }));
+        ashen.apply(Effect.hex(EffectKind.ASH, 1000, DamageSink.none()));
         for (ActiveEffects effects : List.of(plain, ashen)) {
-            effects.apply(Effect.burn(Damage.magic(100), 200, d -> {
-            }));
-            effects.apply(Effect.burn(Damage.magic(100), 200, d -> {
-            }));
+            effects.apply(Effect.burn(Damage.magic(100), 200, DamageSink.none()));
+            effects.apply(Effect.burn(Damage.magic(100), 200, DamageSink.none()));
         }
 
         tickTimes(plain, 10);
@@ -926,31 +835,24 @@ class ActiveEffectsTest {
     @Test
     void rimeAndAshEachReplaceTheOther() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.hex(EffectKind.RIME, 100, d -> {
-        }));
+        effects.apply(Effect.hex(EffectKind.RIME, 100, DamageSink.none()));
 
-        effects.apply(Effect.hex(EffectKind.ASH, 100, d -> {
-        }));
+        effects.apply(Effect.hex(EffectKind.ASH, 100, DamageSink.none()));
 
         assertThat(effects.activeKinds()).containsExactly(EffectKind.ASH);
-        effects.apply(Effect.hex(EffectKind.RIME, 100, d -> {
-        }));
+        effects.apply(Effect.hex(EffectKind.RIME, 100, DamageSink.none()));
         assertThat(effects.activeKinds()).containsExactly(EffectKind.RIME);
     }
 
     @Test
     void anInvertedEnemyCannotTurnInvisibleAndTheInversionRemovesAnInvisibilityItHad() {
         ActiveEffects hidden = new ActiveEffects();
-        hidden.apply(Effect.invisible(100, d -> {
-        }));
+        hidden.apply(Effect.invisible(100, DamageSink.none()));
         ActiveEffects inverted = new ActiveEffects();
-        inverted.apply(Effect.hex(EffectKind.INVERSION, 100, d -> {
-        }));
+        inverted.apply(Effect.hex(EffectKind.INVERSION, 100, DamageSink.none()));
 
-        hidden.apply(Effect.hex(EffectKind.INVERSION, 100, d -> {
-        }));
-        inverted.apply(Effect.invisible(100, d -> {
-        }));
+        hidden.apply(Effect.hex(EffectKind.INVERSION, 100, DamageSink.none()));
+        inverted.apply(Effect.invisible(100, DamageSink.none()));
 
         assertThat(hidden.activeKinds()).containsExactly(EffectKind.INVERSION);
         assertThat(inverted.activeKinds()).containsExactly(EffectKind.INVERSION);
@@ -961,8 +863,7 @@ class ActiveEffectsTest {
     void aHealThatBecameDamageIsPaidEveryTickThroughItsSinkAndRestoresNothing() {
         List<Damage> paid = new ArrayList<>();
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.heal(40, 3, d -> {
-        }).invertedThrough(recordingSink(paid)));
+        effects.apply(Effect.heal(40, 3, DamageSink.none()).invertedThrough(recordingSink(paid)));
 
         tickTimes(effects, 3);
 
@@ -973,13 +874,10 @@ class ActiveEffectsTest {
     @Test
     void tollLeavesEveryOtherDebuffsTimerAlone() {
         ActiveEffects plain = new ActiveEffects();
-        plain.apply(Effect.exposed(100, d -> {
-        }));
+        plain.apply(Effect.exposed(100, DamageSink.none()));
         ActiveEffects tolled = new ActiveEffects();
-        tolled.apply(Effect.exposed(100, d -> {
-        }));
-        tolled.apply(Effect.toll(5, 1000, d -> {
-        }));
+        tolled.apply(Effect.exposed(100, DamageSink.none()));
+        tolled.apply(Effect.toll(5, 1000, DamageSink.none()));
 
         tickTimes(plain, 60);
         tickTimes(tolled, 60);
@@ -990,8 +888,7 @@ class ActiveEffectsTest {
     @Test
     void tollNeverSlowsItself() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.toll(5, 20, d -> {
-        }));
+        effects.apply(Effect.toll(5, 20, DamageSink.none()));
 
         tickTimes(effects, 20);
 
@@ -1001,15 +898,11 @@ class ActiveEffectsTest {
     @Test
     void tollStacksUpToFiveOrTheCapItWasGiven() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.toll(4, 20, d -> {
-        }));
-        effects.apply(Effect.toll(4, 20, d -> {
-        }));
+        effects.apply(Effect.toll(4, 20, DamageSink.none()));
+        effects.apply(Effect.toll(4, 20, DamageSink.none()));
         ActiveEffects deep = new ActiveEffects();
-        deep.apply(Effect.toll(4, 20, d -> {
-        }).withStackCap(10));
-        deep.apply(Effect.toll(4, 20, d -> {
-        }).withStackCap(10));
+        deep.apply(Effect.toll(4, 20, DamageSink.none()).withStackCap(10));
+        deep.apply(Effect.toll(4, 20, DamageSink.none()).withStackCap(10));
 
         assertThat(effects.stacks(EffectKind.TOLL)).isEqualTo(5);
         assertThat(deep.stacks(EffectKind.TOLL)).isEqualTo(8);
@@ -1020,11 +913,9 @@ class ActiveEffectsTest {
         ActiveEffects effects = new ActiveEffects();
         BaseStats<EnemyStat> base = BaseStats.defaults(EnemyStat.class).with(EnemyStat.MAGIC_RESIST, 25f);
 
-        effects.apply(Effect.unraveled(2, 100, d -> {
-        }));
+        effects.apply(Effect.unraveled(2, 100, DamageSink.none()));
         float two = resolvedOn(base, effects, EnemyStat.MAGIC_RESIST);
-        effects.apply(Effect.unraveled(3, 100, d -> {
-        }));
+        effects.apply(Effect.unraveled(3, 100, DamageSink.none()));
         float five = resolvedOn(base, effects, EnemyStat.MAGIC_RESIST);
 
         assertThat(two).isEqualTo(5f);
@@ -1034,12 +925,10 @@ class ActiveEffectsTest {
     @Test
     void brittleRaisesPhysicalDamageTakenByAThirdOnlyWhileTheEnemyIsFrozen() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.brittle(100, d -> {
-        }));
+        effects.apply(Effect.brittle(100, DamageSink.none()));
         float thawed = resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN);
 
-        effects.apply(Effect.freeze(10, d -> {
-        }));
+        effects.apply(Effect.freeze(10, DamageSink.none()));
         float frozen = resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN);
 
         assertThat(thawed).isEqualTo(1f);
@@ -1050,13 +939,10 @@ class ActiveEffectsTest {
     @Test
     void anchoredCapsSpeedAtThreeQuartersOfBaseAndLeavesASlowerEnemyAlone() {
         ActiveEffects fast = new ActiveEffects();
-        fast.apply(Effect.anchored(100, d -> {
-        }));
+        fast.apply(Effect.anchored(100, DamageSink.none()));
         ActiveEffects slowed = new ActiveEffects();
-        slowed.apply(Effect.anchored(100, d -> {
-        }));
-        slowed.apply(Effect.chill(0.5f, 100, d -> {
-        }));
+        slowed.apply(Effect.anchored(100, DamageSink.none()));
+        slowed.apply(Effect.chill(0.5f, 100, DamageSink.none()));
         BaseStats<EnemyStat> base = BaseStats.defaults(EnemyStat.class).with(EnemyStat.MOVE_SPEED, 2f);
 
         assertThat(resolvedOn(base, fast, EnemyStat.MOVE_SPEED)).isCloseTo(1.5f, within(0.001f));
@@ -1066,8 +952,7 @@ class ActiveEffectsTest {
     @Test
     void corrosionAtFullStrengthLowersArmorByFiftyAndNeverBelowZero() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.corroded(FieldStrength.FULL, 10, d -> {
-        }));
+        effects.apply(Effect.corroded(FieldStrength.FULL, 10, DamageSink.none()));
 
         assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 80f), effects, EnemyStat.ARMOR))
                 .isEqualTo(30f);
@@ -1093,10 +978,8 @@ class ActiveEffectsTest {
     @Test
     void aFieldEffectsStacksStopAtTheFieldsMostStrength() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.killZone(FieldStrength.MOST, 10, d -> {
-        }));
-        effects.apply(Effect.killZone(FieldStrength.MOST, 10, d -> {
-        }));
+        effects.apply(Effect.killZone(FieldStrength.MOST, 10, DamageSink.none()));
+        effects.apply(Effect.killZone(FieldStrength.MOST, 10, DamageSink.none()));
 
         assertThat(effects.stacks(EffectKind.KILL_ZONE)).isEqualTo(FieldStrength.MOST);
         assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.6f, within(0.001f));
@@ -1105,8 +988,7 @@ class ActiveEffectsTest {
     @Test
     void killZoneAtFullStrengthRaisesEveryDamageTakenByFortyPercent() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.killZone(FieldStrength.FULL, 10, d -> {
-        }));
+        effects.apply(Effect.killZone(FieldStrength.FULL, 10, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.4f, within(0.001f));
         assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.4f, within(0.001f));
@@ -1115,20 +997,14 @@ class ActiveEffectsTest {
     @Test
     void deadZoneKeepsHealsAndShieldsOutButStripsNoneThatAreAlreadyThere() {
         ActiveEffects holding = new ActiveEffects();
-        holding.apply(Effect.shield(0.3f, 100, d -> {
-        }));
+        holding.apply(Effect.shield(0.3f, 100, DamageSink.none()));
         ActiveEffects bare = new ActiveEffects();
 
-        holding.apply(Effect.deadZone(10, d -> {
-        }));
-        bare.apply(Effect.deadZone(10, d -> {
-        }));
-        holding.apply(Effect.heal(5, 100, d -> {
-        }));
-        bare.apply(Effect.heal(5, 100, d -> {
-        }));
-        bare.apply(Effect.shield(0.3f, 100, d -> {
-        }));
+        holding.apply(Effect.deadZone(10, DamageSink.none()));
+        bare.apply(Effect.deadZone(10, DamageSink.none()));
+        holding.apply(Effect.heal(5, 100, DamageSink.none()));
+        bare.apply(Effect.heal(5, 100, DamageSink.none()));
+        bare.apply(Effect.shield(0.3f, 100, DamageSink.none()));
 
         assertThat(holding.activeKinds()).containsExactlyInAnyOrder(EffectKind.SHIELD, EffectKind.DEAD_ZONE);
         assertThat(bare.activeKinds()).containsExactly(EffectKind.DEAD_ZONE);
@@ -1138,13 +1014,10 @@ class ActiveEffectsTest {
     @Test
     void falloutKeepsHealsOutButLetsAShieldTakeHold() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.fallout(10, d -> {
-        }));
+        effects.apply(Effect.fallout(10, DamageSink.none()));
 
-        effects.apply(Effect.heal(5, 100, d -> {
-        }));
-        effects.apply(Effect.shield(0.3f, 100, d -> {
-        }));
+        effects.apply(Effect.heal(5, 100, DamageSink.none()));
+        effects.apply(Effect.shield(0.3f, 100, DamageSink.none()));
 
         assertThat(effects.activeKinds()).containsExactlyInAnyOrder(EffectKind.FALLOUT, EffectKind.SHIELD);
         assertThat(effects.blockedKinds()).containsExactly(EffectKind.HEAL);
@@ -1153,37 +1026,31 @@ class ActiveEffectsTest {
     @Test
     void undertowAtFullStrengthChillsThirtyFivePercentAndBuysAFreezeTheChillsExtraTime() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.undertow(FieldStrength.FULL, 10, d -> {
-        }));
+        effects.apply(Effect.undertow(FieldStrength.FULL, 10, DamageSink.none()));
         BaseStats<EnemyStat> base = BaseStats.defaults(EnemyStat.class).with(EnemyStat.MOVE_SPEED, 2f);
 
         float slowed = resolvedOn(base, effects, EnemyStat.MOVE_SPEED);
-        effects.apply(Effect.freeze(40, d -> {
-        }));
+        effects.apply(Effect.freeze(40, DamageSink.none()));
 
         assertThat(slowed).isCloseTo(1.3f, within(0.001f));
-        assertThat(effects.remainingTicks(EffectKind.FREEZE).getAsInt()).isEqualTo(50);
+        assertThat(effects.remainingTicks(EffectKind.FREEZE)).hasValue(50);
         assertThat(effects.has(EffectKind.UNDERTOW)).isTrue();
     }
 
     @Test
     void aChillFadesInAsManyTicksAsItsSlowestShareTakes() {
-        Effect chill = Effect.chill(0.4f, 80, d -> {
-        });
+        Effect chill = Effect.chill(0.4f, 80, DamageSink.none());
 
         assertThat(chill.ticksToFade()).isEqualTo(80);
-        assertThat(Effect.freeze(80, d -> {
-        }).ticksToFade()).isZero();
+        assertThat(Effect.freeze(80, DamageSink.none()).ticksToFade()).isZero();
     }
 
     @Test
     void aDebuffTimerRunsAtTheSpiritPaceButNeverBelowAQuarter() {
         ActiveEffects fast = new ActiveEffects();
-        fast.apply(Effect.exposed(20, d -> {
-        }));
+        fast.apply(Effect.exposed(20, DamageSink.none()));
         ActiveEffects slowest = new ActiveEffects();
-        slowest.apply(Effect.exposed(20, d -> {
-        }));
+        slowest.apply(Effect.exposed(20, DamageSink.none()));
 
         for (int i = 0; i < 10; i++) {
             fast.tick(2f);
@@ -1201,8 +1068,7 @@ class ActiveEffectsTest {
     @Test
     void aDebuffTimerStopsWhileSpiritIsAtItsFloor() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.exposed(20, d -> {
-        }));
+        effects.apply(Effect.exposed(20, DamageSink.none()));
 
         for (int i = 0; i < 500; i++) {
             effects.tick(0f);
@@ -1215,10 +1081,8 @@ class ActiveEffectsTest {
     @Test
     void aFreezeAndAnInvisibilityAreNotPacedBySpirit() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.freeze(10, d -> {
-        }));
-        effects.apply(Effect.invisible(10, d -> {
-        }));
+        effects.apply(Effect.freeze(10, DamageSink.none()));
+        effects.apply(Effect.invisible(10, DamageSink.none()));
 
         for (int i = 0; i < 10; i++) {
             effects.tick(0f);
@@ -1230,8 +1094,7 @@ class ActiveEffectsTest {
     @Test
     void aChillFadesAtTheSpiritPaceToo() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.chill(0.4f, 100, d -> {
-        }));
+        effects.apply(Effect.chill(0.4f, 100, DamageSink.none()));
 
         for (int i = 0; i < 50; i++) {
             effects.tick(2f);
@@ -1243,11 +1106,9 @@ class ActiveEffectsTest {
     @Test
     void shroudingARevealedEnemyEndsTheReveal() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.revealed(100, d -> {
-        }));
+        effects.apply(Effect.revealed(100, DamageSink.none()));
 
-        effects.apply(Effect.invisible(100, d -> {
-        }));
+        effects.apply(Effect.invisible(100, DamageSink.none()));
 
         assertThat(effects.activeKinds()).containsExactly(EffectKind.INVISIBLE);
         assertThat(resolved(effects, EnemyStat.STEALTH)).isEqualTo(1f);
@@ -1256,8 +1117,7 @@ class ActiveEffectsTest {
     @Test
     void consumingAnEffectEndsItOnceAndTellsWhetherThereWasOne() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.marked(100, d -> {
-        }));
+        effects.apply(Effect.marked(100, DamageSink.none()));
 
         assertThat(effects.consume(EffectKind.MARKED)).isTrue();
         assertThat(effects.consume(EffectKind.MARKED)).isFalse();
@@ -1325,8 +1185,7 @@ class ActiveEffectsTest {
         List<Damage> soul = new ArrayList<>();
         effects.apply(Effect.soulfire(Damage.magic(100), 40, recordingSink(soul)));
 
-        effects.apply(Effect.freeze(20, d -> {
-        }));
+        effects.apply(Effect.freeze(20, DamageSink.none()));
 
         assertThat(soul).hasSize(1);
         assertThat(effects.activeKinds()).doesNotContain(EffectKind.SOULFIRE);
@@ -1336,11 +1195,9 @@ class ActiveEffectsTest {
     void aPoolTunedToHoldMoreFillsFurtherBeforeItStopsTakingTopUps() {
         ActiveEffects plain = new ActiveEffects();
         ActiveEffects deep = new ActiveEffects();
-        Effect tuned = Effect.burn(Damage.magic(100), 200, d -> {
-        }).withTuning(PoolTuning.standard().withCapFactor(4f));
+        Effect tuned = Effect.burn(Damage.magic(100), 200, DamageSink.none()).withTuning(PoolTuning.standard().withCapFactor(4f));
         for (int i = 0; i < 12; i++) {
-            plain.apply(Effect.burn(Damage.magic(100), 200, d -> {
-            }));
+            plain.apply(Effect.burn(Damage.magic(100), 200, DamageSink.none()));
             deep.apply(tuned);
         }
 
@@ -1351,10 +1208,8 @@ class ActiveEffectsTest {
     void aPoolTunedToMarkFasterEarnsScorchedTwiceAsOften() {
         ActiveEffects plain = new ActiveEffects();
         ActiveEffects fast = new ActiveEffects();
-        plain.apply(Effect.burn(Damage.magic(100), 200, d -> {
-        }));
-        fast.apply(Effect.burn(Damage.magic(100), 200, d -> {
-        }).withTuning(PoolTuning.standard().withStackRate(2)));
+        plain.apply(Effect.burn(Damage.magic(100), 200, DamageSink.none()));
+        fast.apply(Effect.burn(Damage.magic(100), 200, DamageSink.none()).withTuning(PoolTuning.standard().withStackRate(2)));
 
         tickTimes(plain, 20);
         tickTimes(fast, 20);
@@ -1371,10 +1226,8 @@ class ActiveEffectsTest {
         a.apply(Effect.burn(Damage.magic(100), 40, plain::add));
         b.apply(Effect.burn(Damage.magic(100), 40, shocked::add).withTuning(PoolTuning.standard().withFreezeBurstShare(1.5f)));
 
-        a.apply(Effect.freeze(20, d -> {
-        }));
-        b.apply(Effect.freeze(20, d -> {
-        }));
+        a.apply(Effect.freeze(20, DamageSink.none()));
+        b.apply(Effect.freeze(20, DamageSink.none()));
 
         assertThat(shocked.getFirst().amount()).isCloseTo(3 * plain.getFirst().amount(), within(2));
     }
@@ -1382,12 +1235,10 @@ class ActiveEffectsTest {
     @Test
     void cauterizeHalvesTheHealingAndShieldingOfABurningEnemy() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.heal(10, 100, d -> {
-        }));
+        effects.apply(Effect.heal(10, 100, DamageSink.none()));
         float healBefore = resolved(effects, EnemyStat.REGENERATION);
 
-        effects.apply(Effect.burn(Damage.magic(100), 60, d -> {
-        }).withTuning(PoolTuning.standard().withCarried(StatModifiers.of(EnemyStat.HEALING_RECEIVED, StatModifier.flat(-0.5f)))));
+        effects.apply(Effect.burn(Damage.magic(100), 60, DamageSink.none()).withTuning(PoolTuning.standard().withCarried(StatModifiers.of(EnemyStat.HEALING_RECEIVED, StatModifier.flat(-0.5f)))));
 
         assertThat(resolved(effects, EnemyStat.REGENERATION)).isCloseTo(healBefore / 2, within(1e-4f));
         assertThat(resolved(effects, EnemyStat.HEALING_RECEIVED)).isEqualTo(0.5f);
@@ -1396,8 +1247,7 @@ class ActiveEffectsTest {
     @Test
     void heatAndThePyromancersMarkWorkOnlyWhileTheTunedPoolBurns() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(100), 20, d -> {
-        }).withTuning(PoolTuning.standard().withCarried(StatModifiers.of(EnemyStat.PERIODIC_DAMAGE_TAKEN, StatModifier.flat(0.1f))
+        effects.apply(Effect.burn(Damage.magic(100), 20, DamageSink.none()).withTuning(PoolTuning.standard().withCarried(StatModifiers.of(EnemyStat.PERIODIC_DAMAGE_TAKEN, StatModifier.flat(0.1f))
                 .and(EnemyStat.MAGIC_DAMAGE_TAKEN, StatModifier.flat(0.15f)))));
 
         float whileBurning = resolved(effects, EnemyStat.PERIODIC_DAMAGE_TAKEN);
@@ -1445,12 +1295,10 @@ class ActiveEffectsTest {
     @Test
     void brittleCountsOnlyWhileFrozen() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.brittle(100, d -> {
-        }));
+        effects.apply(Effect.brittle(100, DamageSink.none()));
         float thawed = resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN);
 
-        effects.apply(Effect.freeze(100, d -> {
-        }));
+        effects.apply(Effect.freeze(100, DamageSink.none()));
 
         assertThat(thawed).isEqualTo(1f);
         assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.3f, within(1e-6f));
@@ -1459,8 +1307,7 @@ class ActiveEffectsTest {
     @Test
     void aRevealedEnemyCountsAsExposedOnce() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.revealed(100, d -> {
-        }));
+        effects.apply(Effect.revealed(100, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-50f);
     }
@@ -1468,8 +1315,7 @@ class ActiveEffectsTest {
     @Test
     void fracturedWearsOffAtTheFlooredPaceAndScorchedAtTheUnflooredOne() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.fractured(5, d -> {
-        }));
+        effects.apply(Effect.fractured(5, DamageSink.none()));
         effects.apply(Effect.scorched(5));
 
         for (int t = 0; t < 80; t++) {

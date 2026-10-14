@@ -1,6 +1,7 @@
 package td.tower.targeting;
 
 import org.junit.jupiter.api.Test;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.enemy.EnemyMob;
 import td.fixtures.FakeEnemyMob;
@@ -14,8 +15,7 @@ class PreferringSelectorTest {
 
     private static FakeEnemyMob prioritised(int health) {
         FakeEnemyMob mob = FakeEnemyMob.at(0, 0).withHealth(health);
-        mob.applyEffect(Effect.priority(100, d -> {
-        }));
+        mob.applyEffect(Effect.priority(100, DamageSink.none()));
         return mob;
     }
 

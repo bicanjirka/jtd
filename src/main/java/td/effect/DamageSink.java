@@ -11,5 +11,12 @@ import td.damage.Damage;
  */
 @FunctionalInterface
 public interface DamageSink {
+
+    /** A sink that drops every tick: for an effect that deals no damage, or whose damage goes nowhere. */
+    static DamageSink none() {
+        return damage -> {
+        };
+    }
+
     void apply(Damage damage);
 }

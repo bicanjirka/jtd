@@ -7,7 +7,6 @@ import td.tower.TowerBaseStats;
 import td.tower.TowerFactory;
 import td.tower.TowerStat;
 import td.tower.TowerVisitor;
-import td.tower.proc.HitBonus;
 import td.tower.proc.Proc;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
@@ -24,7 +23,6 @@ public final class FakeTower extends AbstractTower {
     private StatModifiers<TowerStat> given = StatModifiers.none();
     private int recalculations;
     private List<Proc> baseProcs = List.of();
-    private List<HitBonus> baseHitBonuses = List.of();
 
     private FakeTower(GameWorld context, int x, int y, UpgradeTree tree, Optional<UpgradeState> ownedUpgrades) {
         super(TowerFactory.Type.SNIPER, new TowerBaseStats(10, 3f, 20), context, x, y);
@@ -69,20 +67,9 @@ public final class FakeTower extends AbstractTower {
         return this;
     }
 
-    /** This tower, now with {@code bonuses} of its own, as if born with them. Set it before it attacks. */
-    public FakeTower withBaseHitBonuses(List<HitBonus> bonuses) {
-        this.baseHitBonuses = List.copyOf(bonuses);
-        return this;
-    }
-
     @Override
     protected List<Proc> baseProcs() {
         return this.baseProcs;
-    }
-
-    @Override
-    protected List<HitBonus> baseHitBonuses() {
-        return this.baseHitBonuses;
     }
 
     /** How many times {@link #recalculateStats()} has run. */
@@ -104,11 +91,6 @@ public final class FakeTower extends AbstractTower {
     /** Does its job once, as an attack would. */
     public void performDeedOfAttack() {
         this.countDeedOfAttack();
-    }
-
-    /** Does its job for a moment, as a continuous effect would. */
-    public void performDeedOfSecond() {
-        this.countDeedOfSecond();
     }
 
     @Override

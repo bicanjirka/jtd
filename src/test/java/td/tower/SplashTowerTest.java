@@ -5,6 +5,7 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.damage.DamageUnits;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
@@ -51,8 +52,7 @@ class SplashTowerTest {
     }
 
     private static void saturate(FakeEnemyMob mob, int stacks) {
-        mob.applyEffect(Effect.saturated(stacks, 30, d -> {
-        }));
+        mob.applyEffect(Effect.saturated(stacks, 30, DamageSink.none()));
     }
 
     @Test
@@ -213,7 +213,7 @@ class SplashTowerTest {
         tower.doTick(0);
 
         assertThat(tower.getArcs()).hasSize(3);
-        assertThat(line.get(0).attackers()).extracting(AttackProfile::critChance).containsExactly(0.1f);
+        assertThat(line.getFirst().attackers()).extracting(AttackProfile::critChance).containsExactly(0.1f);
     }
 
     @Test
@@ -272,7 +272,7 @@ class SplashTowerTest {
         tower.doTick(0);
 
         assertThat(tower.getArcs()).hasSize(3);
-        assertThat(line.get(0).hits()).containsExactly(Damage.magic(Math.round(FULL * 0.65f)));
+        assertThat(line.getFirst().hits()).containsExactly(Damage.magic(Math.round(FULL * 0.65f)));
     }
 
     private static final String[] STORMCALLER = {"Arc", "Conductor", "Overload"};
@@ -364,8 +364,7 @@ class SplashTowerTest {
     void whenEveryEnemyAlreadyCarriesDoomTheCastIsAPlainBlast() {
         SplashTower tower = this.upgradedTower("Hex");
         FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
-        enemy.applyEffect(Effect.hex(EffectKind.DOOM, 1000, d -> {
-        }));
+        enemy.applyEffect(Effect.hex(EffectKind.DOOM, 1000, DamageSink.none()));
         this.enemies(enemy);
 
         tickThroughCooldown(tower, 4);
@@ -431,8 +430,7 @@ class SplashTowerTest {
         this.enemies(weak, strong);
         tickThroughCooldown(tower, 12);
         FakeEnemyMob carrier = weak.hasEffect(EffectKind.CONTAGION) ? weak : strong;
-        carrier.applyEffect(Effect.vulnerable(2, 80, d -> {
-        }));
+        carrier.applyEffect(Effect.vulnerable(2, 80, DamageSink.none()));
         FakeEnemyMob first = FakeEnemyMob.ghostAt(carrier.getX(), carrier.getY() + 20);
         FakeEnemyMob tooFar = FakeEnemyMob.ghostAt(carrier.getX(), carrier.getY() + 300);
 
@@ -525,8 +523,7 @@ class SplashTowerTest {
         this.enemies(strong, carrier);
         tickThroughCooldown(tower, 8);
         this.enemies(strong, carrier, unhexed);
-        carrier.applyEffect(Effect.sundered(2, 100, d -> {
-        }));
+        carrier.applyEffect(Effect.sundered(2, 100, DamageSink.none()));
 
         tower.doTick(2001);
         int beforeTheSecond = strong.effectStacks(EffectKind.SUNDERED);
@@ -545,8 +542,7 @@ class SplashTowerTest {
         FakeEnemyMob carrier = FakeEnemyMob.at(100, 140).withHealth(100).withProgression(5);
         this.enemies(strong, carrier);
         tickThroughCooldown(tower, 8);
-        carrier.applyEffect(Effect.sundered(2, 100, d -> {
-        }));
+        carrier.applyEffect(Effect.sundered(2, 100, DamageSink.none()));
 
         tower.doTick(2000);
         tower.doTick(2020);
@@ -606,7 +602,7 @@ class SplashTowerTest {
     void potencyAndMasteryWaitForAChainRoot() {
         SplashTower tower = this.upgradedTower("Wide Charge", "Shaped Charge");
 
-        assertThat(tower.offeredUpgrades(this.context)).extracting(node -> node.displayName())
+        assertThat(tower.offeredUpgrades(this.context)).extracting(td.tower.upgrade.UpgradeNode::displayName)
                 .doesNotContain("Potency");
     }
 
@@ -704,7 +700,7 @@ class SplashTowerTest {
             tickThroughCooldown(tower, 4);
         }
 
-        assertThat(this.mines()).extracting(mine -> mine.x()).containsExactly(110.0, 150.0, 190.0);
+        assertThat(this.mines()).extracting(td.zone.Zone::x).containsExactly(110.0, 150.0, 190.0);
     }
 
     @Test
@@ -725,8 +721,7 @@ class SplashTowerTest {
         FakeEnemyMob carrier = FakeEnemyMob.at(100, 100);
         this.enemies(carrier);
         tickThroughCooldown(tower, 4);
-        carrier.applyEffect(Effect.vulnerable(2, 80, d -> {
-        }));
+        carrier.applyEffect(Effect.vulnerable(2, 80, DamageSink.none()));
         FakeEnemyMob bystander = FakeEnemyMob.ghostAt(100, 120);
 
         kill(carrier);
@@ -744,8 +739,7 @@ class SplashTowerTest {
         FakeEnemyMob carrier = FakeEnemyMob.at(100, 100);
         this.enemies(carrier);
         tickThroughCooldown(tower, 4);
-        carrier.applyEffect(Effect.vulnerable(2, 80, d -> {
-        }));
+        carrier.applyEffect(Effect.vulnerable(2, 80, DamageSink.none()));
 
         kill(carrier);
         tower.doTick(3000);

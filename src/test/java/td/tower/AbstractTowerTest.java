@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.damage.AttackOrigin;
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
@@ -469,8 +470,7 @@ class AbstractTowerTest {
         FakeTower tower = FakeTower.offering(world, 0, 0, UpgradeTree.of(node));
         tower.buyUpgrade(node);
         EnemyMob burning = EnemyFactory.getEnemy("c", world, 0, 100000, 3, Rank.GRUNT);
-        burning.applyEffect(Effect.burn(Damage.magic(1), 100, d -> {
-        }));
+        burning.applyEffect(Effect.burn(Damage.magic(1), 100, DamageSink.none()));
 
         tower.dealDamage(burning, Damage.physical(1000));
 
@@ -568,8 +568,7 @@ class AbstractTowerTest {
         GameWorld alwaysCrits = WorldFixtures.newWorld(() -> 0.0);
         FakeTower tower = FakeTower.offering(alwaysCrits, 0, 0, UpgradeTree.none());
         EnemyMob burning = EnemyFactory.getEnemy("c", alwaysCrits, 0, 100000, 3, Rank.GRUNT);
-        burning.applyEffect(Effect.burn(Damage.magic(1), 100, d -> {
-        }));
+        burning.applyEffect(Effect.burn(Damage.magic(1), 100, DamageSink.none()));
 
         tower.dealDamage(burning, Damage.physical(1000));
 
@@ -595,8 +594,7 @@ class AbstractTowerTest {
     void damageAbsorbedByAShieldCountsTowardDamageDealtButNotAKill() {
         SniperTower tower = new SniperTower(this.context, 0, 0);
         td.enemy.EnemyMob enemy = td.enemy.EnemyFactory.getEnemy("c", this.context, 0, 50, 3, td.enemy.Rank.GRUNT);
-        enemy.applyEffect(td.effect.Effect.shield(5000f, 100, d -> {
-        }));
+        enemy.applyEffect(td.effect.Effect.shield(5000f, 100, DamageSink.none()));
 
         tower.dealDamage(enemy, td.damage.Damage.physical(3000), td.damage.AttackProfile.none());
 
