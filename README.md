@@ -215,7 +215,7 @@ holds more than one effect; selecting it lists every effect with what kind it is
 | Dazed      | hard CC          | Stops the enemy and its abilities like a freeze, but keeps its burn and its chill. It has its own diminishing returns: within 10 s of the last one, each fresh daze lasts 20% less than the one before, and a sixth doesn't take hold |
 | Silenced   | soft CC          | Its abilities don't fire: no heals, shields, summons, shrouds or vanishing. Its death abilities still fire, its aura keeps running and it keeps walking |
 | Anchored   | soft CC          | Can't be sped up: its speed is held to three quarters of its base, hurt-speed included |
-| Undertow   | soft CC          | A slow that doesn't fade while the enemy is in a Pulse's field, and that counts as a chill for a freeze: 13% on entry, 25% at full Toll, 35% at ten Toll |
+| Undertow   | soft CC          | A slow that doesn't fade while the enemy is in a Pulse's field, and that counts as a chill for a freeze: 19% on entry, 35% at full Toll, 48% at ten Toll |
 | Burning    | damage over time | Damage that decays as it burns; several towers add to one pool and each is credited its share. It earns a Scorched stack when it starts and another every half second while it lasts. An invisible enemy is visible while its pool is strong |
 | Soulfire   | damage over time | A third pool of its own beside burning and poisoning, so it stacks with both. It burns enemies that are immune to fire, and earns Scorched and Sickened both |
 | Poisoned   | damage over time | Its own decaying pool, so it stacks with burning. It slows in proportion to the pool (at most 30%, on top of chill) and earns Sickened stacks the same way |
@@ -229,9 +229,9 @@ holds more than one effect; selecting it lists every effect with what kind it is
 | Unraveled  | debuff           | Up to 5 stacks, -10 magic resist each (never below 0); one shared 5 s clock |
 | Brittle    | debuff           | While the enemy is frozen it takes +30% physical damage |
 | Toll       | debuff           | Up to 5 stacks (10 with Meltdown) a Pulse's field builds on an enemy that stays inside, one a second. The field's effects on the enemy start at half strength and each stack adds a tenth. It fades a second after the enemy leaves |
-| Corroded   | debuff           | -15 armor on entry, -30 at full Toll, -45 at ten (never below 0), while the enemy is in a Pulse's field |
+| Corroded   | debuff           | -25 armor on entry, -50 at full Toll, -75 at ten (never below 0), while the enemy is in a Pulse's field |
 | Dead zone  | debuff           | No heal or shield takes hold while the enemy is in a Pulse's field; what it already has stays |
-| Kill zone  | debuff           | +12.5% damage taken from every source on entry, +25% at full Toll, +37.5% at ten, while the enemy is in a Pulse's field |
+| Kill zone  | debuff           | +20% damage taken from every source on entry, +40% at full Toll, +60% at ten, while the enemy is in a Pulse's field |
 | Cracked    | debuff           | -5 plating and insulation; one shared 5 s clock any application refreshes |
 | Bleeding   | damage over time | Physical damage for every cell the enemy travels: the faster it runs the more it bleeds, and a stopped enemy bleeds nothing |
 | Tarred     | debuff           | Slowed by 40%. A burn it catches starts at double the pool, and a freeze it suffers lasts a second longer |

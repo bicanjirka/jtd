@@ -52,6 +52,19 @@ class TowerLabTest {
     }
 
     @Test
+    void wideBandShowsAHidingKindToTheSniperBesideItWhichLandsMoreOnItRevealed() {
+        String ghost = TowerLab.kindKey("g", TowerLab.labRank());
+
+        double bare = lab.revealShare(TowerFactory.Type.SONAR, List.of(), ghost);
+        double wideBand = lab.revealShare(TowerFactory.Type.SONAR, List.of("sonar.special.wide_band"), ghost);
+
+        assertThat(bare).isZero();
+        assertThat(wideBand).isGreaterThan(0.3);
+        assertThat(lab.revealedFactor(TowerFactory.Type.SNIPER, ghost))
+                .isGreaterThan(lab.kindFactor(TowerFactory.Type.SNIPER, ghost));
+    }
+
+    @Test
     void theLevelsOwnKindsAreMeasuredAtTheRanksItSends() {
         assertThat(lab.levelRanks()).containsExactly(TowerLab.kindKey("salamander", Rank.GRUNT));
     }

@@ -2,14 +2,18 @@ package td.balance;
 
 import td.GameEngine;
 import td.damage.DamageUnits;
+import td.effect.Effect;
+import td.effect.EffectKind;
 import td.enemy.Ability;
 import td.enemy.ApplyEffectAction;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
+import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.enemy.RankedEnemy;
 import td.enemy.SpawnEnemiesAction;
 import td.level.LevelDefinition;
+import td.tower.BehaviourMarker;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeNode;
@@ -80,6 +84,13 @@ public final class TowerLab {
      * a change to some other tower never moves those numbers; the cheapest, so a cluster fits anywhere.
      */
     private static final TowerFactory.Type PARTNER = TowerFactory.Type.SNIPER;
+    /** How long each reveal lasts when the lab keeps every enemy revealed; it renews them every tick. */
+    private static final int REVEAL_TICKS = 2;
+    /**
+     * Below this share of what the partner lands on a kind kept revealed, hiding costs it too little to measure
+     * a reveal by.
+     */
+    private static final double HIDING_MATTERS = 0.05;
     private static final int GRANTED_CREDITS = 10_000_000;
     /** Lab enemies leak by design; the round, not the lives, has to end the run. */
     private static final int UNLIMITED_LIVES = 1_000_000;
@@ -88,6 +99,7 @@ public final class TowerLab {
     private final Map<TowerFactory.Type, Map<Point, double[]>> cellValues;
     private final Map<TowerFactory.Type, Map<Point, Double>> cellTotals;
     private final Map<TowerFactory.Type, TypeProfile> profiles;
+    private final Map<TowerFactory.Type, Sight> sights;
     private final List<String> levelKinds;
     private final List<String> levelRanks;
 
@@ -132,8 +144,31 @@ public final class TowerLab {
         }
     }
 
+    /**
+     * What a tower type does against the kinds that hide, and what its nodes show of them to a tower beside it.
+     *
+     * @param revealedFactors its kind factor against each hiding kind when every enemy stays revealed, keyed by
+     *                        {@link #kindKey}
+     * @param revealShares    for each node whose line makes it reveal, how much of each hiding kind it shows a
+     *                        Sniper beside it: 0 no more than the bare tower, 1 as much as if every enemy stayed
+     *                        revealed
+     */
+    public record Sight(Map<String, Double> revealedFactors, Map<String, Map<String, Double>> revealShares) {
+
+        public Sight {
+            revealedFactors = Collections.unmodifiableMap(new LinkedHashMap<>(revealedFactors));
+            Map<String, Map<String, Double>> copy = new LinkedHashMap<>();
+            revealShares.forEach((node, byKind) -> copy.put(node, Collections.unmodifiableMap(new LinkedHashMap<>(byKind))));
+            revealShares = Collections.unmodifiableMap(copy);
+        }
+
+        static Sight none() {
+            return new Sight(Map.of(), Map.of());
+        }
+    }
+
     private TowerLab(BoardSurvey survey, Map<TowerFactory.Type, Map<Point, double[]>> cellValues,
-                     Map<TowerFactory.Type, TypeProfile> profiles) {
+                     Map<TowerFactory.Type, TypeProfile> profiles, Map<TowerFactory.Type, Sight> sights) {
         this.survey = survey;
         this.cellValues = cellValues;
         Map<TowerFactory.Type, Map<Point, Double>> totals = new EnumMap<>(TowerFactory.Type.class);
@@ -144,6 +179,7 @@ public final class TowerLab {
         });
         this.cellTotals = totals;
         this.profiles = profiles;
+        this.sights = sights;
         this.levelKinds = kindsIn(survey.level());
         this.levelRanks = ranksIn(survey.level());
     }
@@ -169,25 +205,32 @@ public final class TowerLab {
                 .map(beacon -> beaconNodeFactors(plainProbes, PARTNER, partnerCell, beacon, survey))
                 .orElse(Map.of());
         profiles.put(TowerFactory.Type.AURA, new TypeProfile(0, Map.of(), beaconNodes, Partnering.none()));
+        List<String> hiding = hidingKinds(level, kinds);
+        List<Sight> seen = damageDealers().parallelStream()
+                .map(type -> sightOf(survey, plainProbes, type, best(cellValues.get(type)), profiles.get(type), hiding))
+                .toList();
+        Map<TowerFactory.Type, Sight> sights = new EnumMap<>(TowerFactory.Type.class);
+        IntStream.range(0, seen.size()).forEach(i -> sights.put(damageDealers().get(i), seen.get(i)));
+        sights.put(TowerFactory.Type.AURA, Sight.none());
         return new TowerLab(survey, Collections.unmodifiableMap(cellValues),
-                Collections.unmodifiableMap(new EnumMap<>(profiles)));
+                Collections.unmodifiableMap(new EnumMap<>(profiles)), Collections.unmodifiableMap(sights));
     }
 
     private static TypeProfile profileOf(BoardSurvey survey, LevelDefinition plainProbes, TowerFactory.Type type,
                                          Point cell, List<String> kinds) {
         LevelDefinition level = survey.level();
         double health = calibrate(level, type, cell);
-        double plainShare = Math.max(1e-6, duelShare(level, PLAIN, LAB_RANK, health, type, cell, Optional.empty()));
+        double plainShare = Math.max(1e-6, duelShare(level, PLAIN, LAB_RANK, health, type, cell, Optional.empty(), false));
         Map<String, Double> kindFactors = new LinkedHashMap<>();
         for (String key : kinds) {
             String[] parts = key.split(AT);
             kindFactors.put(key, duelShare(level, parts[0], Rank.valueOf(parts[1]), health, type, cell,
-                    Optional.empty()) / plainShare);
+                    Optional.empty(), false) / plainShare);
         }
         Tower sample = sampleOf(plainProbes, type, cell);
         Map<String, Double> wholeLines = new LinkedHashMap<>();
         for (UpgradeNode node : sample.upgradeTree().nodes()) {
-            wholeLines.put(node.id(), duelShare(level, PLAIN, LAB_RANK, health, type, cell, Optional.of(node))
+            wholeLines.put(node.id(), duelShare(level, PLAIN, LAB_RANK, health, type, cell, Optional.of(node), false)
                     / plainShare);
         }
         double alone = Math.max(1, damageOf(plainProbes, type, cell, List.of(), Optional.empty(), FIRST_SEED));
@@ -202,6 +245,67 @@ public final class TowerLab {
     }
 
     /**
+     * What {@code type} on {@code cell} lands on each hiding kind once revealed, and what each node that reveals
+     * shows of it to the partner beside it, between the partner's damage beside the bare tower and beside it with
+     * every enemy kept revealed.
+     */
+    private static Sight sightOf(BoardSurvey survey, LevelDefinition plainProbes, TowerFactory.Type type, Point cell,
+                                 TypeProfile profile, List<String> hiding) {
+        if (hiding.isEmpty()) {
+            return Sight.none();
+        }
+        LevelDefinition level = survey.level();
+        double health = profile.duelHealth();
+        double plainShare = Math.max(1e-6, duelShare(level, PLAIN, LAB_RANK, health, type, cell, Optional.empty(), false));
+        Map<String, Double> revealedFactors = new LinkedHashMap<>();
+        for (String key : hiding) {
+            String[] parts = key.split(AT);
+            revealedFactors.put(key, duelShare(level, parts[0], Rank.valueOf(parts[1]), health, type, cell,
+                    Optional.empty(), true) / plainShare);
+        }
+        Optional<Point> partnerCell = besideCell(survey, cell);
+        List<UpgradeNode> revealing = sampleOf(plainProbes, type, cell).upgradeTree().nodes().stream()
+                .filter(node -> reveals(plainProbes, type, cell, node)).toList();
+        if (partnerCell.isEmpty() || revealing.isEmpty()) {
+            return new Sight(revealedFactors, Map.of());
+        }
+        Map<String, Map<String, Double>> shares = new LinkedHashMap<>();
+        for (String key : hiding) {
+            String[] parts = key.split(AT);
+            LevelDefinition duel = duelLevel(level, parts[0], Rank.valueOf(parts[1]), PROBE_HEALTH);
+            double unseen = partnerDamage(duel, partnerCell.get(), type, cell, Optional.empty(), true, false);
+            double seen = partnerDamage(duel, partnerCell.get(), type, cell, Optional.empty(), true, true);
+            for (UpgradeNode node : revealing) {
+                double with = partnerDamage(duel, partnerCell.get(), type, cell, Optional.of(node), true, false);
+                double share = seen - unseen <= HIDING_MATTERS * seen ? 1.0
+                        : Math.clamp((with - unseen) / (seen - unseen), 0.0, 1.0);
+                shares.computeIfAbsent(node.id(), id -> new LinkedHashMap<>()).put(key, share);
+            }
+        }
+        return new Sight(revealedFactors, shares);
+    }
+
+    /** Whether {@code type} owning {@code node}'s line says it reveals. */
+    private static boolean reveals(LevelDefinition lab, TowerFactory.Type type, Point cell, UpgradeNode node) {
+        Tower sample = sampleOf(lab, type, cell);
+        buyLine(sample, node);
+        return sample.inspect().behaviours().stream().anyMatch(line -> line.marker() == BehaviourMarker.REVEAL);
+    }
+
+    /** The kinds among {@code keys} that can turn themselves or their allies invisible. */
+    private static List<String> hidingKinds(LevelDefinition level, List<String> keys) {
+        EnemyCatalog catalog = catalogOf(level);
+        return keys.stream().filter(key -> {
+            String[] parts = key.split(AT);
+            return catalog.get(parts[0], Rank.valueOf(parts[1])).abilities().stream()
+                    .anyMatch(ability -> switch (ability.action()) {
+                        case ApplyEffectAction apply -> apply.template().kind() == EffectKind.INVISIBLE;
+                        case SpawnEnemiesAction spawn -> false;
+                    });
+        }).toList();
+    }
+
+    /**
      * What {@code sample}'s type on {@code cell}, bare and with each whole line, adds to the partner on
      * {@code partnerCell}: the share more the partner lands in a probe round. A tower that only deals damage adds
      * nothing; a slow, a mark or a debuff shows here and nowhere else.
@@ -209,12 +313,12 @@ public final class TowerLab {
     private static Partnering supportOf(LevelDefinition probes, Tower sample, Point cell, Point partnerCell,
                                         double beaconGain) {
         TowerFactory.Type type = sample.getType();
-        double alone = Math.max(1, partnerDamage(probes, partnerCell, type, cell, Optional.empty(), false));
-        double bare = Math.max(0, partnerDamage(probes, partnerCell, type, cell, Optional.empty(), true) / alone - 1);
+        double alone = Math.max(1, partnerDamage(probes, partnerCell, type, cell, Optional.empty(), false, false));
+        double bare = Math.max(0, partnerDamage(probes, partnerCell, type, cell, Optional.empty(), true, false) / alone - 1);
         Map<String, Double> wholeLines = new LinkedHashMap<>();
         for (UpgradeNode node : sample.upgradeTree().nodes()) {
             wholeLines.put(node.id(),
-                    Math.max(0, partnerDamage(probes, partnerCell, type, cell, Optional.of(node), true) / alone - 1));
+                    Math.max(0, partnerDamage(probes, partnerCell, type, cell, Optional.of(node), true, false) / alone - 1));
         }
         Map<String, Double> steps = new LinkedHashMap<>();
         for (UpgradeNode node : sample.upgradeTree().nodes()) {
@@ -227,10 +331,10 @@ public final class TowerLab {
 
     /**
      * What the partner on {@code partnerCell} lands in one probe round, averaged over seeds, alone or with a
-     * {@code type} owning {@code line} on {@code cell} beside it.
+     * {@code type} owning {@code line} on {@code cell} beside it, and with every enemy kept revealed or not.
      */
     private static double partnerDamage(LevelDefinition probes, Point partnerCell, TowerFactory.Type type, Point cell,
-                                        Optional<UpgradeNode> line, boolean withSubject) {
+                                        Optional<UpgradeNode> line, boolean withSubject, boolean revealAll) {
         return LongStream.range(FIRST_SEED, FIRST_SEED + SEEDS).mapToDouble(seed -> {
             GameEngine engine = labEngine(probes, seed);
             Tower partner = Turn.place(engine, PARTNER, partnerCell).orElseThrow();
@@ -238,7 +342,7 @@ public final class TowerLab {
                 Tower subject = Turn.place(engine, type, cell).orElseThrow();
                 line.ifPresent(node -> buyLine(subject, node));
             }
-            runRound(engine);
+            runRound(engine, revealAll);
             return partner.getDamageDealt();
         }).average().orElse(0);
     }
@@ -249,7 +353,7 @@ public final class TowerLab {
         double high = Math.log(PROBE_HEALTH);
         for (int step = 0; step < CALIBRATION_STEPS; step++) {
             double middle = (low + high) / 2;
-            if (duelShare(level, PLAIN, LAB_RANK, Math.exp(middle), type, cell, Optional.empty()) > DUEL_SHARE) {
+            if (duelShare(level, PLAIN, LAB_RANK, Math.exp(middle), type, cell, Optional.empty(), false) > DUEL_SHARE) {
                 low = middle;
             } else {
                 high = middle;
@@ -260,16 +364,17 @@ public final class TowerLab {
 
     /**
      * The share of a duel wave of {@code kind} the tower on {@code cell} brings down, averaged over seeds: what it
-     * landed over the health of everything that walked in, reinforcements and splits included.
+     * landed over the health of everything that walked in, reinforcements and splits included; with every enemy
+     * kept revealed or not.
      */
     private static double duelShare(LevelDefinition level, String kind, Rank rank, double health,
-                                    TowerFactory.Type type, Point cell, Optional<UpgradeNode> line) {
+                                    TowerFactory.Type type, Point cell, Optional<UpgradeNode> line, boolean revealAll) {
         LevelDefinition duel = duelLevel(level, kind, rank, (int) Math.max(1, Math.round(health)));
         return LongStream.range(FIRST_SEED, FIRST_SEED + SEEDS).mapToDouble(seed -> {
             GameEngine engine = labEngine(duel, seed);
             Tower subject = Turn.place(engine, type, cell).orElseThrow();
             line.ifPresent(node -> buyLine(subject, node));
-            long healthIn = runRound(engine);
+            long healthIn = runRound(engine, revealAll);
             return healthIn <= 0 ? 0 : Math.min(1, subject.getDamageDealt() / (healthIn * (double) DamageUnits.PER_POINT));
         }).average().orElse(0);
     }
@@ -384,6 +489,26 @@ public final class TowerLab {
 
     public TypeProfile profile(TowerFactory.Type type) {
         return this.profiles.get(type);
+    }
+
+    /** What {@code type} does against the kinds that hide, and what its nodes reveal of them. */
+    public Sight sight(TowerFactory.Type type) {
+        return this.sights.get(type);
+    }
+
+    /** {@link #kindFactor(TowerFactory.Type, String)} with every enemy of the kind kept revealed. */
+    public double revealedFactor(TowerFactory.Type type, String key) {
+        return this.sights.get(type).revealedFactors().getOrDefault(key, this.kindFactor(type, key));
+    }
+
+    /**
+     * How much of the hiding kind {@code key} a {@code type} owning {@code owned} shows the towers beside it,
+     * from 0 to 1: the most any owned node's line shows.
+     */
+    public double revealShare(TowerFactory.Type type, Collection<String> owned, String key) {
+        Map<String, Map<String, Double>> shares = this.sights.get(type).revealShares();
+        return owned.stream().filter(shares::containsKey)
+                .mapToDouble(node -> shares.get(node).getOrDefault(key, 0.0)).max().orElse(0.0);
     }
 
     /**
@@ -517,16 +642,31 @@ public final class TowerLab {
 
     /** Plays the lab's one round out; the summed full health of every enemy that walked in, in points. */
     private static long runRound(GameEngine engine) {
+        return runRound(engine, false);
+    }
+
+    /** {@link #runRound(GameEngine)}, revealing every enemy before each tick when {@code revealAll}. */
+    private static long runRound(GameEngine engine, boolean revealAll) {
         RunRecorder recorder = new RunRecorder(engine, UNLIMITED_LIVES);
         engine.requestNextWave();
         engine.doTick(1);
         recorder.roundStarted(1);
         recorder.afterTick(1);
         for (int t = 2; t <= TICK_BUDGET && !engine.isWaveReady() && !engine.outcome().isOver(); t++) {
+            if (revealAll) {
+                revealEveryone(engine);
+            }
             engine.doTick(t);
             recorder.afterTick(t);
         }
         return recorder.healthInSoFar();
+    }
+
+    private static void revealEveryone(GameEngine engine) {
+        for (EnemyMob enemy : engine.getGameWorld().enemies().getEnemies()) {
+            enemy.applyEffect(Effect.revealed(REVEAL_TICKS, damage -> {
+            }));
+        }
     }
 
     /**

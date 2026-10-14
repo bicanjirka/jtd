@@ -84,7 +84,8 @@ the report would call it dead. `TODO.md`, "What the balance tools cannot see yet
    before any tower aims at it, as today. Elite Ghost rounds then need a revealer *and* damage.
 5. **A passive that answers stacking.** Overlapping fields keep adding up. Stacking is answered by an
    Obelisk passive designed with the tree, not by a stacking rule (open question 7).
-6. **The levels are made harder to match.** Every built-in level is already far too easy (the report
+6. **Out of this feature** (open question 22): the levels are retuned by wave composition in a feature of their
+   own. ~~The levels are made harder to match.~~ Every built-in level is already far too easy (the report
    suggests enemy health x1.9 to x2.8, or an equivalent), and the detector role makes Elite Ghost rounds
    easier for every army that is not all Obelisks.
 7. **Checked with the report.** Each step is compared with the game before it (`--save` / `--compare`,
@@ -157,7 +158,7 @@ debuff's clock.
 | Node | Today | Proposed |
 |---|---|---|
 | I Resonant Coils (was Overcharged Coils) | +60% damage, Toll twice as fast | Toll builds twice as fast (full in 2.5 s) |
-| II Resonant Coils II | +50% damage, +25% at full Toll | enemies at full Toll are Vulnerable (+15% damage taken) while inside and 2 s after |
+| II Resonant Coils II | +50% damage, +25% at full Toll | enemies at full Toll are Vulnerable twice (+30% damage taken) while inside and 2 s after |
 | III Arc Discharge | zap for 15 ticks' damage, crits | once a second the zap marks the healthiest enemy inside: Priority (every tower turns on it) and Exposed for 3 s, no damage |
 | IV-A Meltdown | Toll cap +5, zap crits and damage per Toll | Toll cap 10: effects keep growing past full, up to 1.5x |
 | IV-B Tesla Coil | zap chains to 3 more, Dazes 0.25 s | unchanged, the chain carries the mark's Exposed (not the Priority) |
@@ -167,11 +168,11 @@ the reveal: a visit's first Toll stack reveals the enemy for 0.5 s and Dazes it 
 lengthens the reveal to 2 s; Null Field (silence) stays; True Sight
 lengthens it to 4 s with a 2 s Daze; Dead Zone stays.
 
-**Extra line:** Corrosion (-30 armor), Mirror Field and Undertow (chill 25%, Anchored) stay, armor and chill
-scaled by Toll. Event Horizon: each death inside widens the field by 10% of its range until the wave ends, up
+**Extra line:** Corrosion (-50 armor at full Toll, was -30), Mirror Field and Undertow (chill 35% at full Toll,
+was 25%, Anchored) stay, armor and chill scaled by Toll. Event Horizon: each death inside widens the field by 10% of its range until the wave ends, up
 to twice its range, instead of adding damage.
 
-**Specials:** Rattle Field stays; Kill Zone's +25% scales with Toll; Soul Drain drains 15 spirit a second, three
+**Specials:** Rattle Field stays; Kill Zone's +40% at full Toll (was +25%) scales with Toll; Soul Drain drains 15 spirit a second, three
 times as fast (so every debuff on the enemy lasts longer, and at -100 nothing wears off), keeps no heals or
 shields at the floor, and loses its damage per lost spirit.
 
@@ -203,7 +204,40 @@ margin within noise.
   enemy. The lab prices them low beside a Sniper (none above +10%; Arc Discharge's mark +13% to +25%), since a
   field effect holds only while the enemy is inside a 1.5-cell field, a small share of a partner's shots.
 
+## Findings after the players learned to reveal and the field's effects grew
+
+From `BalanceReport --seeds 12 --strong --variety --compare ob-phase2`, 2026-10-14: the lab measures what each
+reveal shows and what each tower lands on a hiding kind revealed, the competent player counts both; Kill Zone,
+Corrosion, Undertow and Resonant Coils II are stronger, Soul Drain drains 15 spirit a second. Saved as
+`target/balance/ob-phase3`.
+
+| Level | competent holds | strong holds | Obelisk's share | banning it | banning the Radar |
+|---|---|---|---|---|---|
+| Curly Path | 100% (was 58%), in band | 109% | 5% | x0.67 | x0.65 |
+| Zigzag Path | 50% | 58% | 11% | x0.87 | x1.02 |
+| Twisted Hourglass | 40% (was 34%) | 92% (was 56%) | 16% | x0.03 | x1.15 |
+
+- **Curly Path is in band, and the Obelisk is no longer mandatory there**: every play buys Wide Band, and the
+  Radar matters as much as the Obelisk.
+- **What each reveal shows a Sniper beside it** of an Elite Ghost group: Wide Band 0.73 to 0.90; Phase Field I
+  0.20 to 0.65, the deeper Phase Field nodes up to 0.83. Phase Field I shows nothing of a lone fading Ghost.
+- **Twisted Hourglass still needs the Obelisk**, for its level: every player loses 3 of its 4 lives to the
+  Reaver in round 1, and it sends shrouded groups down three lanes, which one Obelisk per lane reveals far more
+  cheaply than a Wide Band Radar per lane. That is the wave-composition feature's to answer.
+- **The field's own effects are still never bought**: Corrosion, Undertow, Kill Zone and Soul Drain are put on no
+  enemy in any play, even stronger. The lab prices Arc Discharge's mark at +10% to +32% for a Sniper beside it and
+  Resonant Coils II at +9%; nothing else of the tree reaches +9%.
+
 ## Open questions
+
+Asked after the findings above:
+
+20. ✅ **Should the headless players learn that hidden enemies need a reveal?** ↳ Yes: the lab measures what each
+    reveal shows and what each tower lands on a hidden kind once revealed, and the competent player counts both.
+21. ✅ **How do the field's effects reach the other towers' shots?** Options were a linger after leaving, a wider
+    field, or stronger effects. ↳ Stronger effects at the same reach.
+22. ✅ **When are the levels retuned?** ↳ Not in this feature. 💬 "do not tune by % hp, tune by wave composition, but it
+    will be another feature I guess". Question 16's answer (by enemy health) is withdrawn.
 
 Each has two options and a preferred one (⭐).
 
