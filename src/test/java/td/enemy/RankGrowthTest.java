@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RankGrowthTest {
 
     @Test
-    void healthMultipliesEachRankWhileBountyAddsAStepAndTwoForEliteAndBoss() {
+    void healthMultipliesEachRankWhileBountyAddsStepsThatGrowForEliteAndBoss() {
         RankedEnemy ladder = RankedEnemy
                 .startingAt(EnemyDefinition.of("x", "X", 100, 3, 1f, BodyArchetype.CIRCLE), RankGrowth.of(2f, 4))
                 .build();
@@ -17,7 +17,7 @@ class RankGrowthTest {
         assertThat(Arrays.stream(Rank.values()).map(rank -> ladder.definitionFor(rank).baseHealth()))
                 .containsExactly(100, 200, 400, 800, 1600);
         assertThat(Arrays.stream(Rank.values()).map(rank -> ladder.definitionFor(rank).price()))
-                .containsExactly(3, 7, 11, 19, 27);
+                .containsExactly(3, 7, 11, 23, 43);
     }
 
     @Test
@@ -32,6 +32,6 @@ class RankGrowthTest {
         assertThat(ladder.definitionFor(Rank.VETERAN).baseHealth()).isEqualTo(225);
         assertThat(ladder.effectiveRank(Rank.BOSS)).isEqualTo(Rank.BOSS);
         assertThat(ladder.definitionFor(Rank.BOSS).description()).isEqualTo("veteran");
-        assertThat(ladder.definitionFor(Rank.BOSS).price()).isEqualTo(9);
+        assertThat(ladder.definitionFor(Rank.BOSS).price()).isEqualTo(13);
     }
 }

@@ -90,7 +90,7 @@ class EnemyCatalogTest {
         assertThat(toughCircle.definitionFor(Rank.ELITE).baseHealth()).isEqualTo(850);
         assertThat(toughCircle.definitionFor(Rank.BOSS).baseHealth()).isEqualTo(1650);
         assertThat(toughCircle.definitionFor(Rank.GRUNT).price()).isEqualTo(8);
-        assertThat(toughCircle.definitionFor(Rank.BOSS).price()).isEqualTo(26);
+        assertThat(toughCircle.definitionFor(Rank.BOSS).price()).isEqualTo(38);
 
         for (Rank rank : Rank.values()) {
             assertThat(toughCircle.definitionFor(rank).id()).isEqualTo("toughCircle");

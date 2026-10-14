@@ -173,8 +173,8 @@ as a badge on its body rather than as a number. A wave declares the rank its slo
 any slot can name a different rank inline, before the enemy id (`elite c`) or before a spawn
 shape (`elite swarm 4 c`). Each rank multiplies the health of the rank below it, by 2 for the
 Simple mob and by 1.7 to 2 for the others, lower where an enemy's traits already grow with rank.
-Bounty climbs by adding instead: each enemy has a step, and Soldier and Veteran each add one, while
-Elite and Boss each add two (a Simple mob pays 3, 6, 9, 15 and 21). A kill's score is weighted by
+Bounty climbs by adding instead: each enemy has a step; Soldier and Veteran each add one, Elite three
+more and Boss five more on top (a Simple mob pays 3, 6, 9, 18 and 33). A kill's score is weighted by
 rank too — a Boss-rank kill is worth disproportionately more than a Grunt-rank one of the same
 bounty. Every enemy defines all five ranks, and gains traits or abilities as it climbs, except the
 Warden chain and the spawnlings, which are one rank each. Elite and Boss Simple and Mender enemies carry adaptive
