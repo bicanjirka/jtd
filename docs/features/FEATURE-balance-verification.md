@@ -33,7 +33,8 @@ has its `TODO.md` entry until it lands):
    ignoring it, so on these levels support does not decide a margin.
 3. Upgrades by phase, and node pick rates for the strong player.
 4. The two missing fun proxies: several winning layouts and a decision every few waves (question 7).
-5. The adopted practices (question 9): economy modelling, per-tick timelines, coverage reports, level-knob
+5. The adopted practices (question 9): economy modelling, per-tick timelines, ✅ coverage reports (each
+   effect's share of enemy time, each enemy ability used, and what no play of any player triggered), level-knob
    sweeps.
 6. ✅ Enemy health percent in the dev panel.
 

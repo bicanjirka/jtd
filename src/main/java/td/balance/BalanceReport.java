@@ -3,6 +3,7 @@ package td.balance;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import org.slf4j.LoggerFactory;
+import td.effect.EffectKind;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
 import td.tower.TowerFactory;
@@ -312,6 +313,40 @@ public final class BalanceReport {
         this.printTowers(run);
         this.printVariety(run);
         this.printCounters(run);
+        this.printCoverage(run);
+    }
+
+    private void printCoverage(LevelRun run) {
+        PlayRecord.EffectUse use = run.effectUse(COMPETENT);
+        int plays = run.playsOf(COMPETENT).size();
+        this.out.println();
+        this.out.println("COVERAGE (what the plays triggered: the competent player's, and anything no player's did)");
+        this.out.println("  effects on enemies, share of enemy time (times one took hold per play): "
+                + Arrays.stream(EffectKind.values()).filter(kind -> use.starts().containsKey(kind))
+                .sorted(Comparator.comparingDouble(use::uptime).reversed())
+                .map(kind -> String.format("%s %.0f%% (%.0f)", name(kind), use.uptime(kind) * 100,
+                        use.starts().get(kind) / (double) Math.max(1, plays)))
+                .collect(Collectors.joining(", ")));
+        List<EffectKind> neverStarted = run.effectsNeverStarted();
+        this.out.println("  effects no play put on an enemy: " + (neverStarted.isEmpty() ? "none"
+                : neverStarted.stream().map(BalanceReport::name).collect(Collectors.joining(", "))));
+        String used = run.abilityUses(COMPETENT).entrySet().stream()
+                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                .map(entry -> String.format("%s %.1f", entry.getKey(), entry.getValue()))
+                .collect(Collectors.joining(", "));
+        this.out.println("  enemy abilities used per play: " + (used.isEmpty() ? "none" : used));
+        List<String> neverUsed = run.abilitiesNeverUsed();
+        this.out.println("  enemy abilities no play saw used: " + (neverUsed.isEmpty() ? "none"
+                : String.join(", ", neverUsed)));
+        Map<TowerFactory.Type, List<String>> neverBought = run.nodesNeverBought();
+        this.out.println("  nodes no play bought, of each tower's tree: " + Arrays.stream(TowerFactory.Type.values())
+                .map(type -> String.format("%s %d/%d", type.displayName(), neverBought.get(type).size(),
+                        run.lab().profile(type).nodeFactors().size()))
+                .collect(Collectors.joining(", ")));
+    }
+
+    static String name(EffectKind kind) {
+        return kind.name().toLowerCase(Locale.ROOT);
     }
 
     private void printVariety(LevelRun run) {

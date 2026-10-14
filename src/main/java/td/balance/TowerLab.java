@@ -423,6 +423,25 @@ public final class TowerLab {
         return LAB_RANK;
     }
 
+    /**
+     * Every ability the enemies this level's rounds send have, as {@link PlayRecord.Watch} keys: what a coverage
+     * report expects some play to see used.
+     */
+    public List<String> abilities() {
+        EnemyCatalog catalog = catalogOf(this.survey.level());
+        Set<String> keys = new LinkedHashSet<>();
+        for (String key : this.levelRanks) {
+            String[] parts = key.split(AT);
+            for (Ability ability : catalog.get(parts[0], Rank.valueOf(parts[1])).abilities()) {
+                switch (ability.action()) {
+                    case SpawnEnemiesAction spawn -> keys.add(PlayRecord.Watch.spawnKey(spawn.definitionId()));
+                    case ApplyEffectAction apply -> keys.add(PlayRecord.Watch.castKey(key, apply.template().kind()));
+                }
+            }
+        }
+        return List.copyOf(keys);
+    }
+
     /** The kinds this level's rounds send. */
     public List<String> levelKinds() {
         return this.levelKinds;

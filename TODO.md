@@ -119,7 +119,7 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
   - **Approach:** report the upgrade-against-copy ratio per third of the level, and node pick rates for
     the strong player beside the competent one.
 - **Measures the recorder does not take:** damage wasted on overkill and shields, time each enemy spends in
-  each tower's reach, effect uptime, damage per enemy kind per tower.
+  each tower's reach, damage per enemy kind per tower.
   - **Where:** `RunRecorder`.
   - **Approach:** poll them like the rest, tool-side; overkill needs the hit result `AbstractTower.dealDamage`
     already has.
@@ -135,10 +135,6 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
   - **Where:** `RunRecorder`, `HtmlReport`.
   - **Approach:** sample enemy health on the board, the furthest enemy and credits every few ticks; draw
     them as lines across the level.
-- **No coverage report:** which nodes, effects and enemy abilities no play triggers.
-  - **Where:** `RunRecorder`, `BalanceReport`.
-  - **Approach:** count nodes bought and effects started across all plays, with the effect-uptime measure
-    above.
 - **Only enemy health and starting credits can be swept.**
   - **Where:** `Rules`, `PlaytestRules`.
   - **Approach:** lives, bounty percent, round pause and spawn spacing as `Rules` knobs, and a report mode
