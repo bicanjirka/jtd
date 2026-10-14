@@ -86,23 +86,23 @@ public enum EffectKind {
     BRITTLE(EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit().perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.3f)),
     /** Time spent in the field: it sets how strongly the field's effects hold, and fades soon after the enemy leaves. */
     TOLL(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5)),
-    /** Lowers armor while the enemy is in the field, three a stack: thirty at the field's full strength. */
+    /** Lowers armor while the enemy is in the field, five a stack: fifty at the field's full strength. */
     CORRODED(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST)
-            .perStack(EnemyStat.ARMOR, -3f).tagged(EffectTag.FIELD)),
+            .perStack(EnemyStat.ARMOR, -5f).tagged(EffectTag.FIELD)),
     /**
-     * A chill that doesn't fade while the enemy is in the field, a quarter at the field's full strength, and counts
+     * A chill that doesn't fade while the enemy is in the field, 35% at the field's full strength, and counts
      * as a chill for a freeze.
      */
     UNDERTOW(EffectRule.of(EffectCategory.SOFT_CC).stackingOnASharedClock(FieldStrength.MOST)
-            .perStack(EnemyStat.MOVE_SPEED, StatModifier.times(FieldStrength.perStackOf(0.75f)))
+            .perStack(EnemyStat.MOVE_SPEED, StatModifier.times(FieldStrength.perStackOf(0.65f)))
             .tagged(EffectTag.FIELD)),
     /** Heals and shields can't take hold while the enemy is in the field. */
     DEAD_ZONE(EffectRule.of(EffectCategory.DEBUFF).tagged(EffectTag.FIELD)),
     /** Heals can't take hold while the enemy is in the field; a shield still can. */
     FALLOUT(EffectRule.of(EffectCategory.DEBUFF)),
-    /** Takes extra damage from every source while the enemy is in the field: a quarter at the field's full strength. */
+    /** Takes extra damage from every source while the enemy is in the field: 40% at the field's full strength. */
     KILL_ZONE(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST)
-            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.025f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.025f)
+            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.04f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.04f)
             .tagged(EffectTag.FIELD)),
     /** Takes five points of plating and five of insulation. */
     CRACKED(EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit()

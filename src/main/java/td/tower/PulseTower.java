@@ -408,7 +408,7 @@ public final class PulseTower extends AbstractTower {
             this.applyEffect(enemy, sink -> Effect.killZone(added, INSIDE_TICKS, sink));
         }
         if (modes.has(FieldMode.AMPLIFY) && fullToll) {
-            int added = topUp(enemy, EffectKind.VULNERABLE, 1);
+            int added = topUp(enemy, EffectKind.VULNERABLE, FieldMode.AMPLIFY_STACKS);
             this.applyEffect(enemy, sink -> Effect.vulnerable(added, FieldMode.AMPLIFY_TICKS, sink));
         }
         if (beat && modes.has(FieldMode.SOUL_DRAIN)) {

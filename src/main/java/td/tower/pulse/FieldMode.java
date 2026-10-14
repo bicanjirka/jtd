@@ -33,8 +33,9 @@ public enum FieldMode {
     /** Soul Drain's cost each second, and the spirit at which it has taken everything. */
     public static final int SOUL_DRAIN_SPIRIT_PER_SECOND = 15;
     public static final float SOUL_DRAIN_SPIRIT_FLOOR = -100f;
-    /** How long an enemy stays Vulnerable after it leaves the field at full Toll. */
+    /** How long an enemy stays Vulnerable after it leaves the field at full Toll, and how many stacks it holds. */
     public static final int AMPLIFY_TICKS = Math.round(2f * TickRate.TICKS_PER_SECOND);
+    public static final int AMPLIFY_STACKS = 2;
 
     /** What the rule does, lower-case first: {@code "enemies inside are Silenced"}. */
     public String describe() {
@@ -51,7 +52,8 @@ public enum FieldMode {
                     + " damage from every source on entry, +" + PerkText.percent(damageTakenAt(FieldStrength.FULL))
                     + " at full Toll";
             case AMPLIFY -> "an enemy at full Toll is Vulnerable while inside and " + PerkText.seconds(AMPLIFY_TICKS)
-                    + " after: +" + PerkText.percent(EffectKind.VULNERABLE.modifiersAt(1).flat(EnemyStat.PHYSICAL_DAMAGE_TAKEN))
+                    + " after: +" + PerkText.percent(EffectKind.VULNERABLE.modifiersAt(AMPLIFY_STACKS)
+                    .flat(EnemyStat.PHYSICAL_DAMAGE_TAKEN))
                     + " damage taken";
             case SOUL_DRAIN -> "each second inside costs " + SOUL_DRAIN_SPIRIT_PER_SECOND + " spirit, so every debuff on "
                     + "the enemy wears off slower; at " + Math.round(SOUL_DRAIN_SPIRIT_FLOOR) + " no heals or shields";

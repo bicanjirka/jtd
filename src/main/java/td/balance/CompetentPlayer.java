@@ -14,6 +14,7 @@ import td.wave.Vec2;
 import td.wave.Wave;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -32,8 +33,10 @@ import java.util.Set;
  * something much better that is near, and never sells.
  * <p>
  * It counts what a tower does for the others the way the lab measured it: the Beacon's buff on the towers in its
- * reach, and the share more a damage tower lands beside a tower that slows, marks or weakens. It reads the lab's
- * numbers, so what the lab cannot see it cannot either. The gap to a searching player measures that.
+ * reach, and the share more a damage tower lands beside a tower that slows, marks or weakens. It knows an enemy
+ * that hides is only hit once something reveals it: on a path a revealer reaches, it counts its towers' damage on
+ * a hiding kind between what they land on it hidden and revealed, by how much the revealer shows. It reads the
+ * lab's numbers, so what the lab cannot see it cannot either. The gap to a searching player measures that.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 final class CompetentPlayer implements Player {
@@ -68,10 +71,14 @@ final class CompetentPlayer implements Player {
     private final int probesPerPath;
     /** The lab's factor for each tower type against each of the level's kinds at rank, read once. */
     private final double[][] kindFactors;
+    /** The same with every enemy kept revealed: different only for a kind that hides. */
+    private final double[][] revealedFactors;
 
     private int creditsLastActed = -1;
     private int roundLastActed = -1;
     private int towersLastActed = -1;
+    /** For each path and kind, how much of that kind the revealers reaching the path show: 0 to 1. */
+    private double[][] seen = new double[0][0];
 
     CompetentPlayer(TowerLab lab, Style style) {
         this.lab = lab;
@@ -79,9 +86,11 @@ final class CompetentPlayer implements Player {
         this.probesPerPath = TowerLab.probesPerPath();
         List<String> kinds = lab.levelRanks();
         this.kindFactors = new double[TowerFactory.Type.values().length][kinds.size()];
+        this.revealedFactors = new double[TowerFactory.Type.values().length][kinds.size()];
         for (TowerFactory.Type type : TowerLab.damageDealers()) {
             for (int k = 0; k < kinds.size(); k++) {
                 this.kindFactors[type.ordinal()][k] = lab.kindFactor(type, kinds.get(k));
+                this.revealedFactors[type.ordinal()][k] = lab.revealedFactor(type, kinds.get(k));
             }
         }
     }
@@ -187,6 +196,7 @@ final class CompetentPlayer implements Player {
             return;
         }
         for (int guard = 0; guard < 50; guard++) {
+            this.seen = this.seen(turn, kinds, Optional.empty(), List.of());
             Damage army = this.armyDamage(turn, kinds);
             double standing = this.killed(foes, army);
             Map<Option, Double> worths = new LinkedHashMap<>();
@@ -281,7 +291,9 @@ final class CompetentPlayer implements Player {
         for (int p = 0; p < paths; p++) {
             double perEnemy = this.lab.cellValue(type, cell, p) / this.probesPerPath / DamageUnits.PER_POINT;
             for (int k = 0; k < kinds.size(); k++) {
-                damage[p][k] = perEnemy * this.kindFactors[type.ordinal()][k];
+                double hidden = this.kindFactors[type.ordinal()][k];
+                double shown = p < this.seen.length ? this.seen[p][k] : 0;
+                damage[p][k] = perEnemy * (hidden + shown * (this.revealedFactors[type.ordinal()][k] - hidden));
             }
         }
         return new Damage(damage);
@@ -471,7 +483,7 @@ final class CompetentPlayer implements Player {
                 line.forEach(step -> after.add(step.id()));
                 Gain gain = new Gain(this.supportGain(tower), this.supportGain(tower.getType(), after));
                 added = added.plus(this.supportDamage(turn, tower.getType(), turn.cellOf(tower), tower.getRangeReal(),
-                        gain, kinds));
+                        gain, kinds)).plus(this.revealGain(turn, kinds, tower, after));
             }
             options.add(new Option(cost, added, () -> {
                 for (UpgradeNode step : line) {
@@ -482,6 +494,41 @@ final class CompetentPlayer implements Player {
             }));
         }
         return options;
+    }
+
+    /**
+     * For each path and kind, the most any tower reaching the path shows of the kind, {@code changed} counted as
+     * owning {@code changedOwned}.
+     */
+    private double[][] seen(Turn turn, List<String> kinds, Optional<Tower> changed, List<String> changedOwned) {
+        double[][] shown = new double[turn.survey().pathCount()][kinds.size()];
+        for (Tower tower : turn.towers()) {
+            List<String> owned = changed.filter(tower::equals).isPresent() ? changedOwned : ownedIds(tower.upgrades());
+            Point cell = turn.cellOf(tower);
+            for (int k = 0; k < kinds.size(); k++) {
+                double share = this.lab.revealShare(tower.getType(), owned, kinds.get(k));
+                for (int p = 0; share > 0 && p < shown.length; p++) {
+                    if (turn.survey().pathWithin(cell, tower.getRangeReal(), p) > 0) {
+                        shown[p][k] = Math.max(shown[p][k], share);
+                    }
+                }
+            }
+        }
+        return shown;
+    }
+
+    /** What the army gains on hiding kinds once {@code tower} owns {@code after} and shows more of them. */
+    private Damage revealGain(Turn turn, List<String> kinds, Tower tower, List<String> after) {
+        double[][] before = this.seen;
+        double[][] widened = this.seen(turn, kinds, Optional.of(tower), after);
+        if (Arrays.deepEquals(before, widened)) {
+            return Damage.none(turn.survey().pathCount(), kinds.size());
+        }
+        Damage now = this.armyDamage(turn, kinds);
+        this.seen = widened;
+        Damage then = this.armyDamage(turn, kinds);
+        this.seen = before;
+        return then.plus(now.times(-1));
     }
 
     /** Whether owning {@code step} is already ruled out by a choice the tower made. */

@@ -1064,13 +1064,13 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void corrosionAtFullStrengthLowersArmorByThirtyAndNeverBelowZero() {
+    void corrosionAtFullStrengthLowersArmorByFiftyAndNeverBelowZero() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.corroded(FieldStrength.FULL, 10, d -> {
         }));
 
-        assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 50f), effects, EnemyStat.ARMOR))
-                .isEqualTo(20f);
+        assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 80f), effects, EnemyStat.ARMOR))
+                .isEqualTo(30f);
         assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 10f), effects, EnemyStat.ARMOR)).isZero();
     }
 
@@ -1099,17 +1099,17 @@ class ActiveEffectsTest {
         }));
 
         assertThat(effects.stacks(EffectKind.KILL_ZONE)).isEqualTo(FieldStrength.MOST);
-        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.375f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.6f, within(0.001f));
     }
 
     @Test
-    void killZoneAtFullStrengthRaisesEveryDamageTakenByAQuarter() {
+    void killZoneAtFullStrengthRaisesEveryDamageTakenByFortyPercent() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.killZone(FieldStrength.FULL, 10, d -> {
         }));
 
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.25f, within(0.001f));
-        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.25f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.4f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.4f, within(0.001f));
     }
 
     @Test
@@ -1151,7 +1151,7 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void undertowAtFullStrengthChillsAQuarterAndBuysAFreezeTheChillsExtraTime() {
+    void undertowAtFullStrengthChillsThirtyFivePercentAndBuysAFreezeTheChillsExtraTime() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.undertow(FieldStrength.FULL, 10, d -> {
         }));
@@ -1161,7 +1161,7 @@ class ActiveEffectsTest {
         effects.apply(Effect.freeze(40, d -> {
         }));
 
-        assertThat(slowed).isCloseTo(1.5f, within(0.001f));
+        assertThat(slowed).isCloseTo(1.3f, within(0.001f));
         assertThat(effects.remainingTicks(EffectKind.FREEZE).getAsInt()).isEqualTo(50);
         assertThat(effects.has(EffectKind.UNDERTOW)).isTrue();
     }

@@ -66,6 +66,11 @@ public final class ResultTable {
                         values.put(new Key(level, LAB, "kind." + type + "." + kind), new double[]{factor}));
                 profile.nodeFactors().forEach((node, factor) ->
                         values.put(new Key(level, LAB, "node." + type + "." + node), new double[]{factor}));
+                TowerLab.Sight sight = lab.sight(type);
+                sight.revealedFactors().forEach((kind, factor) ->
+                        values.put(new Key(level, LAB, "revealed." + type + "." + kind), new double[]{factor}));
+                sight.revealShares().forEach((node, byKind) -> byKind.forEach((kind, share) ->
+                        values.put(new Key(level, LAB, "reveal." + type + "." + node + "." + kind), new double[]{share})));
             }
         }
         return new ResultTable(values);

@@ -229,7 +229,7 @@ class PulseTowerTest {
     }
 
     @Test
-    void resonantCoilsIiMakesAnEnemyAtFullTollVulnerableForTwoSecondsAndNoOther() {
+    void resonantCoilsIiMakesAnEnemyAtFullTollTwiceVulnerableForTwoSecondsAndNoOther() {
         PulseTower tower = this.pulseWith("Resonant Coils", "Resonant Coils II");
         FakeEnemyMob full = FakeEnemyMob.at(tower.getX(), tower.getY());
         fullToll(full, 5);
@@ -240,7 +240,7 @@ class PulseTowerTest {
         tower.doTick(1);
         tower.doTick(2);
 
-        assertThat(full.effectStacks(EffectKind.VULNERABLE)).isEqualTo(1);
+        assertThat(full.effectStacks(EffectKind.VULNERABLE)).isEqualTo(2);
         assertThat(full.appliedEffects().stream().filter(e -> e.kind() == EffectKind.VULNERABLE).toList().getLast()
                 .remainingTicks()).isEqualTo(40);
         assertThat(has(partial, EffectKind.VULNERABLE)).isFalse();
