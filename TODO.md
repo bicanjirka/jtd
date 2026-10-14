@@ -119,10 +119,6 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
   - **Where:** `RunRecorder`.
   - **Approach:** poll them like the rest, tool-side; overkill needs the hit result `AbstractTower.dealDamage`
     already has.
-- **Two fun proxies are not measured:** several winning layouts, and a decision every few waves.
-  - **Where:** `LevelRun`, `BalanceReport`.
-  - **Approach:** layouts: cluster the winning plays' builds by cell and tower type and count the
-    clusters; cadence: the rounds between the competent player's purchases that changed its army.
 
 ## Levels
 

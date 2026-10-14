@@ -172,6 +172,11 @@ final class HtmlReport {
         double topShare = shares.getOrDefault(top, 0.0);
         this.tile("Top tower", topShare > 0.5 ? "serious" : "good", top.displayName(),
                 String.format("lands %.0f%% of the competent player's damage", topShare * 100));
+        int layouts = run.winningLayouts().size();
+        this.tile("Ways to win", layouts > 1 ? "good" : "serious",
+                layouts + (layouts == 1 ? " layout" : " layouts"), "winning builds that share under half their towers");
+        this.tile("Decisions", "good", run.roundsWithAPurchase(BalanceReport.COMPETENT).formatPercent().trim(),
+                "of rounds in which the competent player buys something");
         this.html.append("</div>");
     }
 
