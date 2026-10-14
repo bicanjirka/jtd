@@ -5,11 +5,12 @@ tools found the problem and will check the fix.
 
 ## Summary
 
-Turn the Obelisk from the game's dominant damage dealer into a support tower. Its field keeps a small,
-fixed damage, the Beacon can still raise it, and every upgrade path makes the field do something to
-the enemies inside it (silence, slow, strip armor, make them take more damage, reveal them) instead
-of making it hit harder. The Obelisk should be the tower that makes the others better, not the tower
-that makes the others unnecessary.
+Turn the Obelisk from the game's dominant damage dealer into a support tower, the mirror of the Beacon:
+the Beacon makes towers stronger, the Obelisk makes enemies weaker. Its field keeps a small, fixed damage,
+the Beacon can still raise it, and every upgrade path makes the field do something to the enemies inside
+it (silence, slow, strip armor, make them take more damage, reveal them) instead of making it hit harder.
+The Obelisk should be the tower that makes the others better, not the tower that makes the others
+unnecessary.
 
 ## Current state (what exists today)
 
@@ -67,28 +68,26 @@ the report would call it dead. `TODO.md`, "What the balance tools cannot see yet
 1. **The tools learn to price support.** Before the Obelisk changes, the lab measures what a tower does
    for a partner tower beside it, and the competent player counts it, the way the Beacon's buff is already
    counted. Without this the redesign cannot be checked, only guessed. Check it on today's game first:
-   Kill Zone, Corrosion and Undertow should start to show a worth they do not show now.
-2. **A fixed field.** The field's damage no longer grows with the Obelisk's own upgrades. The Beacon may
-   still raise it, as it raises every tower.
+   Kill Zone, Corrosion and Undertow should start to show a worth they do not show now. Built on the
+   balance-verification branch, before this feature starts.
+2. **A fixed field.** The field's base damage drops to about 1 a tick at the same price, and no longer grows
+   with the Obelisk's own upgrades. The Beacon may still raise it, as it raises every tower.
 3. **Every upgrade path is an effect on the enemies inside.** The damage nodes (the Overcharged Coils line,
    Arc Discharge, Meltdown, Tesla Coil, Toll's damage bonus, Event Horizon, Soul Drain) become effects:
    debuffs that make other towers' hits land harder, crowd control, or denial of heals and shields. Toll
-   stays as the measure of time spent inside and keeps what it does to debuffs (they wear off slower).
-   The existing support nodes stay, retuned as needed.
+   stays the measure of time spent inside and becomes the strength of every effect the field applies: the
+   longer an enemy stays inside, the harder each debuff bites. The existing support nodes stay, retuned as
+   needed.
 4. **The detector role.** The Obelisk reveals hidden enemies inside its field from its base, so the towers
-   around it can shoot them. Elite Ghost rounds then need an Obelisk *and* damage, not an Obelisk
-   *instead of* damage.
-5. **A second answer to hidden enemies.** The Burst, the Mortar and the Scorcher may fire at hidden
-   enemies; their damage already reaches them, and the Ghost's own description says "area damage still
-   finds it". The Sniper, the Hive and the Radar still need a visible or revealed target (the Radar keeps
-   Wide Band as its special answer).
-6. **Fields do not stack in full.** An enemy inside several Obelisk fields takes the first in full and the
-   rest at a fraction, in the spirit of the rule that two ground zones of one kind never stack.
-7. **The levels are made harder to match.** Every built-in level is already far too easy (the report
-   suggests enemy health x1.9 to x2.8, or an equivalent), and items 4 and 5 make Elite Ghost rounds easier
-   still: the naive player's margin rose from 88% to 130% on Curly and from 48% to 110% on Hourglass in
-   the experiments.
-8. **Checked with the report.** Each step is compared with the game before it (`--save` / `--compare`,
+   around it can shoot them. A hidden enemy must be revealed before any tower aims at it, as today; no
+   tower gains the right to fire at hidden enemies. Elite Ghost rounds then need an Obelisk *and* damage,
+   not an Obelisk *instead of* damage, with the Radar's Wide Band the other answer.
+5. **A passive that answers stacking.** Overlapping fields keep adding up. Stacking is answered by an
+   Obelisk passive designed with the tree, not by a stacking rule (open question 7).
+6. **The levels are made harder to match.** Every built-in level is already far too easy (the report
+   suggests enemy health x1.9 to x2.8, or an equivalent), and the detector role makes Elite Ghost rounds
+   easier for every army that is not all Obelisks.
+7. **Checked with the report.** Each step is compared with the game before it (`--save` / `--compare`,
    with `--variety`).
 
 **Out of scope:** the other towers' trees (the Hive's Absolute Zero is its own finding), new enemies, and
@@ -102,24 +101,24 @@ new tower types.
   "unbalanced placeholders" entries for upgrade nodes and effects cover the Obelisk's nodes.
 - **`FEATURE-pulse-and-seeker.md`** (implemented): where the Obelisk's tree, Toll and field modes were
   designed.
-- **`FEATURE-agility-and-dodge.md`** and the Ghost's invisibility: item 5 changes which towers a hidden
-  enemy escapes; the README's Invisible and Ghost rows say "area damage still reaches it" today.
-- **The Beacon** (`AuraTower`): stays the one tower that raises the field's damage.
+- **`FEATURE-agility-and-dodge.md`** and the Ghost's invisibility: item 4 adds a revealer; which towers
+  may aim at a hidden enemy does not change.
+- **The Beacon** (`AuraTower`): stays the one tower that raises the field's damage, and buffs the Obelisk
+  the way it buffs every tower. A combo between the two is an open idea (open question 8).
 
 ## Constraints and open risks
 
 - **The tool must see support before it judges.** If item 1 is skipped, every later measurement will call
   the new Obelisk dead.
-- **The Elite Ghost must keep an answer at every step.** Removing the Obelisk's damage before items 4 and 5
-  land makes Twisted Hourglass unwinnable (x0.06 without it today).
-- **Fixed damage still stacks.** At 2 a tick, eight Obelisks on a bend still land 320 a second early on; the
-  base number, the stacking fraction and the price have to be decided together.
+- **The Elite Ghost must keep an answer at every step.** Removing the Obelisk's damage before item 4 lands
+  makes Twisted Hourglass unwinnable (x0.06 without it today).
+- **Fixed damage still stacks.** At 1 a tick, eight Obelisks on a bend still land 160 a second early on;
+  until the passive (item 5) answers it, the base number and the price have to be decided together.
 - **Effects the enemies already resist.** Freeze has diminishing returns, Elite Armored and the Juggernaut
   have their own rules; a support effect that an enemy ignores is a dead node, and the counter matrix should
   show each new effect's reach.
 - **Hidden enemies and targeting rules.** `td/tower/CLAUDE.md` says a tower aims through `visible` and an
-  area effect touches `everyone`; item 5 changes which towers aim at whom, and tests that pin today's
-  behaviour will change.
+  area effect touches `everyone`; that rule stays, and the reveal of item 4 goes through it.
 - **Player-visible text.** The tower table, the Invisible and Ghost rows in `README.md`, and every node's
   words change.
 - **Standing rules:** effects go through the effect system and node data, never node checks in tower code;
@@ -130,8 +129,9 @@ new tower types.
 - The Obelisk becomes a support tower: its upgrades add effects, not damage; its damage is a fixed base that
   only the Beacon raises.
 - The tools learn to price support before the Obelisk changes.
-- The Elite Ghost keeps an answer at every step: the Obelisk reveals, and area towers may fire at hidden
-  enemies.
+- The Elite Ghost keeps an answer at every step: the Obelisk reveals; a hidden enemy is still revealed
+  before any tower aims at it.
+- Overlapping fields keep stacking; a passive answers it, not a stacking rule.
 - A plain damage cut is not the fix (measured: it neither ends the dependence nor the stacking).
 - Each step is checked with the balance report against the step before.
 
@@ -139,25 +139,40 @@ new tower types.
 
 Each has two options and a preferred one (⭐).
 
-1. **What is the base field damage?**
+1. ✅ **What is the base field damage?**
    - A ⭐: lower it (around 1 a tick) and keep the price; support should not also be the best early damage.
    - B: keep 2 a tick and raise the price.
-2. **How do overlapping fields combine?**
-   - A ⭐: the first in full, every other at half.
+   - ↳ A.
+2. ✅ **How do overlapping fields combine?**
+   - A: the first in full, every other at half.
    - B: only the strongest field applies, like two zones of one kind.
-3. **Which towers may fire at hidden enemies?**
-   - A ⭐: the Burst, the Mortar and the Scorcher (their damage already reaches hidden enemies).
-   - B: those and the Radar's beam. The experiment above included the Radar; option A needs its own run.
-4. **What happens to Toll?**
-   - A ⭐: it stays as time inside and keeps slowing debuffs' clocks; its damage bonus goes.
+   - ↳ Neither: fields keep stacking in full, and an Obelisk passive answers it (question 7).
+3. ✅ **Which towers may fire at hidden enemies?**
+   - A: the Burst, the Mortar and the Scorcher (their damage already reaches hidden enemies).
+   - B: those and the Radar's beam.
+   - ↳ None: a hidden enemy is revealed first, as today. The Obelisk's reveal and the Radar's Wide Band are
+     the answers.
+4. ✅ **What happens to Toll?**
+   - A: it stays as time inside and keeps slowing debuffs' clocks; its damage bonus goes.
    - B: it becomes the strength of every effect the field applies.
-5. **Does the Beacon's range buff stay for the Obelisk?**
+   - ↳ B.
+5. ✅ **Does the Beacon's range buff stay for the Obelisk?**
    - A ⭐: yes, the Beacon raises every tower the same way.
    - B: the Beacon raises its damage only, since range is where the Obelisk gains most (+49% to +58%).
-6. **In what order do the parts land?**
-   - A ⭐: tools (item 1), the second answer to hidden enemies and the detector role (4, 5), then the field
-     and the tree (2, 3, 6), then the levels' difficulty (7), each compared with the one before.
+   - ↳ A, with a combo between the two kept as an open idea (question 8).
+6. ✅ **In what order do the parts land?**
+   - A ⭐: tools (item 1, on the balance-verification branch), then the detector role (4), then the field,
+     the tree and the passive (2, 3, 5), then the levels' difficulty (6), each compared with the one before.
    - B: everything at once, compared once.
+   - ↳ A.
+7. ❔ **What passive answers stacking?**
+   - A: a debuff an enemy already carries is refreshed, not strengthened, by a second field, so a cluster
+     buys coverage rather than strength.
+   - B: an Obelisk weakens its own field for every other Obelisk in reach, so spreading them out pays.
+8. ❔ **Is there an Obelisk-Beacon combo?** The Beacon buffs towers and the Obelisk debuffs enemies; a pair
+   could do something neither does alone.
+   - A: a Beacon in reach of an Obelisk strengthens the field's debuffs instead of its damage.
+   - B: none; each buffs or debuffs on its own, and the pair is only the sum.
 
 ---
 

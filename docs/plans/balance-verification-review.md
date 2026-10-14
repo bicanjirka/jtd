@@ -103,22 +103,23 @@ What the numbers rest on, and how far they hold:
 
 ## Standard practices, assessed
 
-Each with what it would unblock here, what it costs, and a recommendation (⭐ = recommended now).
+Each with what it would unblock here, what it costs, and the decision (⭐ = kept or adopted on this branch;
+`FEATURE-balance-verification.md`, question 9).
 
 | Practice | Status | What it unblocks | Cost | Recommendation |
 |---|---|---|---|---|
 | Telemetry and event logs | Built, tool-side (`RunRecorder`) | Questions nobody thought of: the per-enemy ends and per-round numbers are kept in the record | Done; widening it is per-question | ⭐ keep; add the four measures above as questions need them |
 | Deterministic replay | Built for headless play (action log, `ScriptedPlayer`), and used by `--compare` to play the saved actions back on a changed game | Reproducing a result; telling what a change does from how a player adapts to it | Done headless; in the live game it needs `TODO.md`'s command queue | ⭐ keep; leave the live game alone |
 | Heat maps | Built in the HTML report | Where enemies die, where the player builds, each tower's best cells | Done | ⭐ keep; add leaks and damage-landed maps when asked |
-| Timelines per wave | Built per round, not per tick | The difficulty curve: closest call, leaks, enemy health per round | Per-tick health on the board is a recorder change | Later |
+| Timelines per wave | Built per round, not per tick | The difficulty curve: closest call, leaks, enemy health per round | Per-tick health on the board is a recorder change | ⭐ adopted: sampled every few ticks, drawn per level in the HTML |
 | Theory-crafting tables | Built, measured (`TowerLab`) | Every tower by cell, kind and node before any play | Done | ⭐ keep; it caught Absolute Zero |
-| Economy modelling | Partly (idle credits, bounty per round) | Whether credits pile up or run dry | Bounty against price curve: a table from the catalog | Later |
-| Parameter sweeps | Partly (enemy health, starting credits via `Rules`) | How fast an outcome moves with a number | Any other number needs an override mechanism; content is Java constants | Later, and only for level knobs; a tower number is changed in code and checked with `--compare` |
+| Economy modelling | Partly (idle credits, bounty per round) | Whether credits pile up or run dry | Bounty against price curve: a table from the catalog | ⭐ adopted: per round, what was earned against what the next useful purchase costs |
+| Parameter sweeps | Partly (enemy health, starting credits via `Rules`) | How fast an outcome moves with a number | Any other number needs an override mechanism; content is Java constants | ⭐ adopted for level knobs only (lives, bounty, round pause, spawn spacing) as `Rules`; a tower number is changed in code and checked with `--compare` |
 | Regression baselines | Built (`--save`, `--compare`) | Noticing that an unrelated change moved balance | A committed baseline goes stale with every balance change | ⭐ keep baselines in `target/`, not in the repository (open question 4 A) |
-| Content coverage reports | Partly (nodes bought, towers built, kinds leaked) | Which content no play touches | Counting effects triggered needs uptime (above) | Later |
+| Content coverage reports | Partly (nodes bought, towers built, kinds leaked) | Which content no play touches | Counting effects triggered needs uptime (above) | ⭐ adopted, with effect uptime |
 | Invariant and fuzz runs | Built as a test: `RandomPlayInvariantTest` plays every level with random builds, upgrades and sells | Every round clears, credits never go negative, every enemy that walks in ends once, a sold tower leaves its cell | Done; more invariants as rules appear | ⭐ keep in `mvn verify` |
 | Scenario files | Partly (action logs) | Anyone loading the same situation | A file format for logs exists; the dev panel loader does not | Later, with file-based levels |
-| Debug overlays | Not built | Seeing ranges, targeting lines, pool values on the live board | UI work in `td.ui` | Drop for this feature; it is a dev-panel feature of its own |
+| Debug overlays | Not built | Seeing ranges, targeting lines, pool values on the live board | UI work in `td.ui` | Dropped |
 | Time control | Exists (pause, step, speeds); no rewind | Going back to a moment | Rewind needs snapshots or replay; replay exists headless | Drop |
 | Recorded human sessions | Not built | Human playtests in the same checks | Needs the command queue to record live input | Later, after the command queue |
 
@@ -135,5 +136,6 @@ Each with what it would unblock here, what it costs, and a recommendation (⭐ =
    later item 2).
 4. **Same play for every player**, not only the competent one, if a change ever moves the naive player's
    verdict in a way the adaptive comparison cannot explain.
-5. **The old harnesses.** `BalanceHarness` is superseded; `PurchaseHarness` mostly so. Retiring them is one
-   less thing to keep working; it is the user's call.
+5. **The old harnesses.** `BalanceHarness` is superseded and is retired on this branch. `PurchaseHarness` and
+   `BuildHarness` stay: they compare one purchase or build against another at equal spend, which the report
+   does not.

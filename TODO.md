@@ -135,6 +135,33 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
   - **Where:** `RunRecorder`.
   - **Approach:** poll them like the rest, tool-side; overkill needs the hit result `AbstractTower.dealDamage`
     already has.
+- **Two fun proxies are not measured:** several winning layouts, and a decision every few waves.
+  - **Where:** `LevelRun`, `BalanceReport`.
+  - **Approach:** layouts: cluster the winning plays' builds by cell and tower type and count the
+    clusters; cadence: the rounds between the competent player's purchases that changed its army.
+- **No economy model:** what a round earns is not set against what the next useful purchase costs.
+  - **Where:** `RunRecorder` (credits per round exist), `HtmlReport`.
+  - **Approach:** a per-round table of bounty earned, credits idle and the cheapest purchase the player
+    wanted, from the tower and node catalogs, and a credits-over-time chart.
+- **Timelines are per round, not per tick.**
+  - **Where:** `RunRecorder`, `HtmlReport`.
+  - **Approach:** sample enemy health on the board, the furthest enemy and credits every few ticks; draw
+    them as lines across the level.
+- **No coverage report:** which nodes, effects and enemy abilities no play triggers.
+  - **Where:** `RunRecorder`, `BalanceReport`.
+  - **Approach:** count nodes bought and effects started across all plays, with the effect-uptime measure
+    above.
+- **Only enemy health and starting credits can be swept.**
+  - **Where:** `Rules`, `PlaytestRules`.
+  - **Approach:** lives, bounty percent, round pause and spawn spacing as `Rules` knobs, and a report mode
+    that sweeps one and shows how the margin moves.
+- **The dev panel cannot set enemy health.**
+  - **Where:** the dev panel, `PlaytestRules.setEnemyHealthPercent`.
+  - **Approach:** a percent control beside the existing playtest toggles.
+- **`td.BalanceHarness` is superseded by `td.balance.BalanceReport`.**
+  - **Where:** `BalanceHarness`, its mentions in `docs/ARCHITECTURE.md` and `PreviewBoard`.
+  - **Approach:** delete it and point the mentions at the report; `HarnessBoard` stays for the other
+    harnesses.
 
 ## Levels
 

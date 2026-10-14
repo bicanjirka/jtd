@@ -2,8 +2,7 @@
 
 **Status: first version implemented** (2026-10-13), plus two items from "Later" (the strong player, and
 each tower alone and banned). The review of the toolset (part 0) is
-`docs/plans/balance-verification-review.md`. Open questions are marked below: ✅ settled by what was built,
-❔ needs your input. Every `TODO.md` entry that says "unbalanced placeholders" is tuned with it.
+`docs/plans/balance-verification-review.md`. Every open question below is settled (✅). Every `TODO.md` entry that says "unbalanced placeholders" is tuned with it.
 
 ## Where we are
 
@@ -23,13 +22,20 @@ health, which is how a margin is found.
 easy for a competent player, the Obelisk is a one-tower answer to all three, and the Hive's Absolute Zero
 wipes waves alone.
 
-**Next, in this order** (each is ranked in the review):
+**Next, in this order**, all on this branch before it merges (each is ranked in the review, and each
+has its `TODO.md` entry until it lands):
 
-1. ❔ Decide the open questions still marked ❔ below, chiefly 7 (which fun proxies are required).
-2. Tune the competent player further against the strong one: its Twisted Hourglass opening is the
-   known miss, and on Curly and Zigzag its own build played back holds more than it does when it
-   re-decides against tougher enemies.
-3. The balance pass itself, level by level, with the findings as the starting list.
+1. Tune the competent player against the strong one: its Twisted Hourglass opening is the known miss, and
+   on Curly and Zigzag its own build played back holds more than it does when it re-decides against
+   tougher enemies.
+2. Price support: a lab duel with a partner tower, counted by the competent player.
+3. Upgrades by phase, and node pick rates for the strong player.
+4. The two missing fun proxies: several winning layouts and a decision every few waves (question 7).
+5. The adopted practices (question 9): economy modelling, per-tick timelines, coverage reports, level-knob
+   sweeps.
+6. Enemy health percent in the dev panel; retire `td.BalanceHarness`.
+
+The balance pass itself, level by level with the findings as the starting list, comes after the merge.
 
 ## Summary
 
@@ -321,26 +327,27 @@ Each has two options and a preferred one (⭐).
    - B: also as part of `mvn verify`. Needs the whole thing to fit in the test budget.
    - ↳ A. `mvn verify` holds only what the tool rests on: a seeded play repeats, a log replays, the lab and
      the comparison behave.
-7. ❔ **Which fun proxies do we want?** The table's rows are the candidates (rising pressure, close calls that
+7. ✅ **Which fun proxies do we want?** The table's rows are the candidates (rising pressure, close calls that
    are survivable, several winning layouts, no dead or dominant option, a decision every few waves).
-   Which are required, and which are wanted later?
-   - ↳ Measured now: rising pressure (the closest call and enemy health per round, walls and breathers),
-     close calls (how far the furthest enemy got), dead or dominant towers (variety, damage shares).
-     Not yet: several winning layouts, a decision every few waves.
-   - A ⭐: require rising pressure, survivable close calls and no dominant tower; layouts and decision
+   - A: require rising pressure, survivable close calls and no dominant tower; layouts and decision
      cadence later.
    - B: require all five before the balance pass starts.
+   - ↳ B. Rising pressure, close calls and dead or dominant towers are measured; several winning layouts
+     and a decision every few waves are built before the balance pass starts.
 8. ✅ **How far does the review go?**
    - A ⭐: tools and metrics only: an assessment document with ranked gaps, and fixes only for the
      gaps that block the first version.
    - B: also build a first version of every tool the review recommends.
    - ↳ A, slightly past it: the gaps that blocked the first version were fixed (what a run reports, setting
      up a run, the lab), and two cheap ones came with them (the HTML heat maps, regression baselines).
-9. ❔ **Who chooses among the standard practices?**
+9. ✅ **Who chooses among the standard practices?**
    - A ⭐: you pick from the list, with a line each on what it would unblock for us; the ones left
      are dropped.
    - B: the review decides on its own which to adopt.
-   - ↳ The review's table gives each practice a line and a recommendation (⭐); pick from it.
+   - ↳ A. Kept: everything already built. Adopted for this branch: economy modelling, per-tick timelines,
+     content coverage reports and level-knob sweeps. Deferred to their own features: scenario files (with
+     file-based levels) and recorded human sessions (after the command queue). Dropped: debug overlays and
+     rewind.
 10. ✅ **What does a naive player do?** Random legal cells, cells chosen by distance from the entrance, or
    a player that builds only one tower type? They answer different questions.
    - ↳ All three exist, each for its question: the naive player buys a random affordable tower for a random
