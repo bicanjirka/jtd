@@ -30,8 +30,9 @@ import java.util.Set;
  * the most worth per credit, a tower on a good free cell or an upgrade line on a tower it owns, saves only for
  * something much better that is near, and never sells.
  * <p>
- * It knows what a tower does for the others only for the Beacon, and it reads the lab's numbers, so what the lab
- * cannot see it cannot either. The gap to a searching player measures that.
+ * It counts what a tower does for the others the way the lab measured it: the Beacon's buff on the towers in its
+ * reach, and the share more a damage tower lands beside a tower that slows, marks or weakens. It reads the lab's
+ * numbers, so what the lab cannot see it cannot either. The gap to a searching player measures that.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 final class CompetentPlayer implements Player {
@@ -54,6 +55,12 @@ final class CompetentPlayer implements Player {
      * every built-in level.
      */
     private static final double SOFTNESS = 0.4;
+    /**
+     * How much of the help the lab measured for a neighbour it counts. The lab measures it on probes that never
+     * die, where a slow keeps every one of them in reach longer; swept against the strong player, half held as
+     * much as ignoring it, and all of it less.
+     */
+    private static final double SUPPORT_TRUST = 0.5;
 
     private final TowerLab lab;
     private final Style style;
@@ -248,14 +255,18 @@ final class CompetentPlayer implements Player {
         return total;
     }
 
-    /** What a standing tower lands: its cell, its upgrades and the Beacons on it; a Beacon its buff's share. */
+    /**
+     * What a standing tower lands: its cell, its upgrades, and the Beacons and support towers beside it; a Beacon
+     * its buff's share.
+     */
     private Damage towerDamage(Turn turn, Tower tower, List<String> kinds) {
+        Point cell = turn.cellOf(tower);
         if (tower.getType() == TowerFactory.Type.AURA) {
-            return this.beaconDamage(turn, turn.cellOf(tower), kinds, this.upgradeFactor(tower, tower.upgrades()));
+            return this.beaconDamage(turn, cell, kinds, this.upgradeFactor(tower, tower.upgrades()));
         }
-        return this.plainDamage(turn, tower.getType(), turn.cellOf(tower), kinds)
+        return this.plainDamage(turn, tower.getType(), cell, kinds)
                 .times(this.upgradeFactor(tower, tower.upgrades())
-                        * (1 + this.beaconBoostAt(turn, tower.getType(), turn.cellOf(tower))));
+                        * (1 + this.beaconBoostAt(turn, tower.getType(), cell) + this.supportBoostAt(turn, cell)));
     }
 
     /** What a bare {@code type} on {@code cell} lands on one enemy of each kind walking each path. */
@@ -277,7 +288,10 @@ final class CompetentPlayer implements Player {
             int price = turn.priceOf(type);
             for (Point cell : this.candidateCells(turn, type, kinds)) {
                 Damage added = type == TowerFactory.Type.AURA ? this.beaconDamage(turn, cell, kinds, 1.0)
-                        : this.plainDamage(turn, type, cell, kinds).times(1 + this.beaconBoostAt(turn, type, cell));
+                        : this.plainDamage(turn, type, cell, kinds)
+                                .times(1 + this.beaconBoostAt(turn, type, cell) + this.supportBoostAt(turn, cell))
+                                .plus(this.supportDamage(turn, type, cell, turn.survey().reach(type),
+                                        new Gain(0, this.supportGain(type, List.of())), kinds));
                 options.add(new Option(price, added, () -> turn.build(type, cell)));
             }
         }
@@ -345,6 +359,69 @@ final class CompetentPlayer implements Player {
                 .sum();
     }
 
+    /**
+     * The share more a damage tower on {@code cell} lands from the other towers whose reach covers it and that
+     * slow, mark or weaken what they hit. Two of a type put the same effect on the same enemies, so only the
+     * strongest of each type counts; different types add up.
+     */
+    private double supportBoostAt(Turn turn, Point cell) {
+        return TowerLab.damageDealers().stream()
+                .mapToDouble(type -> this.strongestSupport(turn, type, cell, cell))
+                .sum();
+    }
+
+    /** The most a {@code type} whose reach covers {@code cell} gives it, leaving out the tower on {@code skip}. */
+    private double strongestSupport(Turn turn, TowerFactory.Type type, Point cell, Point skip) {
+        Vec2 centre = turn.survey().centre(cell);
+        return turn.towers().stream()
+                .filter(other -> other.getType() == type && !turn.cellOf(other).equals(skip))
+                .filter(other -> Math.hypot(other.getX() - centre.x(), other.getY() - centre.y())
+                        <= other.getRangeReal())
+                .mapToDouble(this::supportGain)
+                .max().orElse(0);
+    }
+
+    private double supportGain(Tower tower) {
+        return this.supportGain(tower.getType(), ownedIds(tower.upgrades()));
+    }
+
+    private double supportGain(TowerFactory.Type type, List<String> owned) {
+        return SUPPORT_TRUST * this.lab.supportGain(type, owned);
+    }
+
+    private static List<String> ownedIds(UpgradeState owned) {
+        return owned.owned().stream().map(UpgradeNode::id).toList();
+    }
+
+    /**
+     * What a {@code type} on {@code cell} adds to the damage towers within {@code reach} of it when what it gives
+     * them goes from {@code before} to {@code after}: what a slow, a mark or a debuff is worth to the army. A
+     * tower already given as much by another of the type gains nothing.
+     */
+    private Damage supportDamage(Turn turn, TowerFactory.Type type, Point cell, double reach, Gain gain,
+                                 List<String> kinds) {
+        Damage total = Damage.none(turn.survey().pathCount(), kinds.size());
+        if (gain.after() == gain.before()) {
+            return total;
+        }
+        Vec2 centre = turn.survey().centre(cell);
+        for (Tower tower : turn.towers()) {
+            Point at = turn.cellOf(tower);
+            if (tower.getType() != TowerFactory.Type.AURA && !at.equals(cell)
+                    && Math.hypot(tower.getX() - centre.x(), tower.getY() - centre.y()) <= reach) {
+                double given = this.strongestSupport(turn, type, at, cell);
+                double added = Math.max(0, gain.after() - given) - Math.max(0, gain.before() - given);
+                total = total.plus(this.plainDamage(turn, tower.getType(), at, kinds)
+                        .times(this.upgradeFactor(tower, tower.upgrades()) * added));
+            }
+        }
+        return total;
+    }
+
+    /** What a support tower gives the towers beside it before and after a purchase. */
+    private record Gain(double before, double after) {
+    }
+
     /** What a Beacon on {@code cell} adds: its gain on every damage tower in its reach. */
     private Damage beaconDamage(Turn turn, Point cell, List<String> kinds, double factor) {
         Vec2 centre = turn.survey().centre(cell);
@@ -383,7 +460,15 @@ final class CompetentPlayer implements Player {
             double factor = line.stream().mapToDouble(step -> this.nodeFactor(tower.getType(), step.id()))
                     .reduce(1.0, (a, b) -> a * b);
             int cost = line.stream().mapToInt(UpgradeNode::price).sum();
-            options.add(new Option(cost, now.times(factor - 1), () -> {
+            Damage added = now.times(factor - 1);
+            if (tower.getType() != TowerFactory.Type.AURA) {
+                List<String> after = new ArrayList<>(ownedIds(owned));
+                line.forEach(step -> after.add(step.id()));
+                Gain gain = new Gain(this.supportGain(tower), this.supportGain(tower.getType(), after));
+                added = added.plus(this.supportDamage(turn, tower.getType(), turn.cellOf(tower), tower.getRangeReal(),
+                        gain, kinds));
+            }
+            options.add(new Option(cost, added, () -> {
                 for (UpgradeNode step : line) {
                     if (!turn.upgrade(tower, step)) {
                         return;

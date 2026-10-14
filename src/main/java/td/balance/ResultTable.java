@@ -58,6 +58,8 @@ public final class ResultTable {
                     values.put(new Key(level, LAB, "best." + type),
                             new double[]{lab.cellValue(type, lab.bestCell(type))});
                     values.put(new Key(level, LAB, "beacon." + type), new double[]{profile.beaconGain()});
+                    values.put(new Key(level, LAB, "support." + type),
+                            new double[]{profile.partners().supportGain()});
                 }
                 profile.kindFactors().forEach((kind, factor) ->
                         values.put(new Key(level, LAB, "kind." + type + "." + kind), new double[]{factor}));

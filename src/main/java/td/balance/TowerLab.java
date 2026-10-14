@@ -23,6 +23,7 @@ import td.wave.WaveDefinition;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -47,9 +48,10 @@ import java.util.stream.LongStream;
  *     hit, heal each other or split do so, so this measures each tower against each kind, and each upgrade line,
  *     as the share of the wave it brings down.</li>
  * </ul>
- * The Beacon lands nothing itself; it is measured by what towers beside it gain. The numbers compare towers,
- * cells, kinds and nodes with each other; they never stand for how a level plays, and they cannot see what a
- * tower does for the others beyond the Beacon's buff.
+ * The Beacon lands nothing itself; it is measured by what towers beside it gain. What any other tower does for
+ * its neighbours (a slow that keeps enemies in reach longer, a mark that makes them take more) is measured the
+ * same way, on a fixed partner tower beside it in a probe round. The numbers compare towers, cells, kinds and
+ * nodes with each other; they never stand for how a level plays.
  */
 public final class TowerLab {
 
@@ -72,12 +74,12 @@ public final class TowerLab {
     /** Duels and node runs average this many seeds: what they compare differs by a few percent. */
     private static final int SEEDS = 3;
     /** Partners a Beacon's nodes are measured on: a node that picks whom it buffs needs several to choose from. */
-    private static final int BEACON_PARTNERS = 4;
+    private static final int PARTNERS = 4;
     /**
-     * The tower a Beacon's nodes are measured on. Fixed, so a change to some other tower never moves the Beacon's
-     * numbers; the cheapest, so the cluster fits anywhere.
+     * The tower a Beacon's nodes, and what every other tower does for its neighbours, are measured on. Fixed, so
+     * a change to some other tower never moves those numbers; the cheapest, so a cluster fits anywhere.
      */
-    private static final TowerFactory.Type BEACON_PARTNER = TowerFactory.Type.SNIPER;
+    private static final TowerFactory.Type PARTNER = TowerFactory.Type.SNIPER;
     private static final int GRANTED_CREDITS = 10_000_000;
     /** Lab enemies leak by design; the round, not the lives, has to end the run. */
     private static final int UNLIMITED_LIVES = 1_000_000;
@@ -96,14 +98,37 @@ public final class TowerLab {
      * @param kindFactors the share it brings down of each kind's wave, over the share of the plain one, keyed by
      *                    {@link #kindKey}
      * @param nodeFactors what each node multiplies that share by once the nodes before it are owned
-     * @param beaconGain  the share more it lands with a Beacon beside it
+     * @param partners    what it gains beside a Beacon, and what it gives a tower beside it
      */
     public record TypeProfile(double duelHealth, Map<String, Double> kindFactors, Map<String, Double> nodeFactors,
-                              double beaconGain) {
+                              Partnering partners) {
 
         public TypeProfile {
             kindFactors = Collections.unmodifiableMap(new LinkedHashMap<>(kindFactors));
             nodeFactors = Collections.unmodifiableMap(new LinkedHashMap<>(nodeFactors));
+        }
+
+        /** The share more it lands with a Beacon beside it. */
+        public double beaconGain() {
+            return this.partners.beaconGain();
+        }
+    }
+
+    /**
+     * How a tower type and the towers beside it help each other.
+     *
+     * @param beaconGain   the share more it lands with a Beacon beside it
+     * @param supportGain  the share more the partner tower lands with a bare one beside it
+     * @param supportSteps what each node adds to {@code supportGain} once the nodes before it are owned
+     */
+    public record Partnering(double beaconGain, double supportGain, Map<String, Double> supportSteps) {
+
+        public Partnering {
+            supportSteps = Collections.unmodifiableMap(new LinkedHashMap<>(supportSteps));
+        }
+
+        static Partnering none() {
+            return new Partnering(0, 0, Map.of());
         }
     }
 
@@ -139,11 +164,11 @@ public final class TowerLab {
                 .map(type -> profileOf(survey, plainProbes, type, best(cellValues.get(type)), kinds)).toList();
         Map<TowerFactory.Type, TypeProfile> profiles = new EnumMap<>(TowerFactory.Type.class);
         IntStream.range(0, measured.size()).forEach(i -> profiles.put(damageDealers().get(i), measured.get(i)));
-        Point partnerCell = best(cellValues.get(BEACON_PARTNER));
-        Map<String, Double> beaconNodes = beaconCell(survey, partnerCell)
-                .map(beacon -> beaconNodeFactors(plainProbes, BEACON_PARTNER, partnerCell, beacon, survey))
+        Point partnerCell = best(cellValues.get(PARTNER));
+        Map<String, Double> beaconNodes = besideCell(survey, partnerCell)
+                .map(beacon -> beaconNodeFactors(plainProbes, PARTNER, partnerCell, beacon, survey))
                 .orElse(Map.of());
-        profiles.put(TowerFactory.Type.AURA, new TypeProfile(0, Map.of(), beaconNodes, 0));
+        profiles.put(TowerFactory.Type.AURA, new TypeProfile(0, Map.of(), beaconNodes, Partnering.none()));
         return new TowerLab(survey, Collections.unmodifiableMap(cellValues),
                 Collections.unmodifiableMap(new EnumMap<>(profiles)));
     }
@@ -166,11 +191,56 @@ public final class TowerLab {
                     / plainShare);
         }
         double alone = Math.max(1, damageOf(plainProbes, type, cell, List.of(), Optional.empty(), FIRST_SEED));
-        double beaconGain = beaconCell(survey, cell)
+        double beaconGain = besideCell(survey, cell)
                 .map(beacon -> damageOf(plainProbes, type, cell, List.of(new Placement(TowerFactory.Type.AURA, beacon)),
                         Optional.empty(), FIRST_SEED) / alone - 1)
                 .orElse(0.0);
-        return new TypeProfile(health, kindFactors, factorsFromLines(sample, wholeLines), beaconGain);
+        Partnering partners = besideCell(survey, cell)
+                .map(partnerCell -> supportOf(plainProbes, sample, cell, partnerCell, beaconGain))
+                .orElse(new Partnering(beaconGain, 0, Map.of()));
+        return new TypeProfile(health, kindFactors, factorsFromLines(sample, wholeLines), partners);
+    }
+
+    /**
+     * What {@code sample}'s type on {@code cell}, bare and with each whole line, adds to the partner on
+     * {@code partnerCell}: the share more the partner lands in a probe round. A tower that only deals damage adds
+     * nothing; a slow, a mark or a debuff shows here and nowhere else.
+     */
+    private static Partnering supportOf(LevelDefinition probes, Tower sample, Point cell, Point partnerCell,
+                                        double beaconGain) {
+        TowerFactory.Type type = sample.getType();
+        double alone = Math.max(1, partnerDamage(probes, partnerCell, type, cell, Optional.empty(), false));
+        double bare = Math.max(0, partnerDamage(probes, partnerCell, type, cell, Optional.empty(), true) / alone - 1);
+        Map<String, Double> wholeLines = new LinkedHashMap<>();
+        for (UpgradeNode node : sample.upgradeTree().nodes()) {
+            wholeLines.put(node.id(),
+                    Math.max(0, partnerDamage(probes, partnerCell, type, cell, Optional.of(node), true) / alone - 1));
+        }
+        Map<String, Double> steps = new LinkedHashMap<>();
+        for (UpgradeNode node : sample.upgradeTree().nodes()) {
+            List<UpgradeNode> line = sample.upgradeTree().pathTo(node);
+            double before = line.size() < 2 ? bare : wholeLines.get(line.get(line.size() - 2).id());
+            steps.put(node.id(), wholeLines.get(node.id()) - before);
+        }
+        return new Partnering(beaconGain, bare, steps);
+    }
+
+    /**
+     * What the partner on {@code partnerCell} lands in one probe round, averaged over seeds, alone or with a
+     * {@code type} owning {@code line} on {@code cell} beside it.
+     */
+    private static double partnerDamage(LevelDefinition probes, Point partnerCell, TowerFactory.Type type, Point cell,
+                                        Optional<UpgradeNode> line, boolean withSubject) {
+        return LongStream.range(FIRST_SEED, FIRST_SEED + SEEDS).mapToDouble(seed -> {
+            GameEngine engine = labEngine(probes, seed);
+            Tower partner = Turn.place(engine, PARTNER, partnerCell).orElseThrow();
+            if (withSubject) {
+                Tower subject = Turn.place(engine, type, cell).orElseThrow();
+                line.ifPresent(node -> buyLine(subject, node));
+            }
+            runRound(engine);
+            return partner.getDamageDealt();
+        }).average().orElse(0);
     }
 
     /** The health per enemy at which the bare tower brings down {@link #DUEL_SHARE} of a plain duel wave. */
@@ -230,7 +300,7 @@ public final class TowerLab {
                 .filter(other -> Math.hypot(other.x() - beacon.x(), other.y() - beacon.y()) * survey.scale()
                         <= survey.reach(TowerFactory.Type.AURA))
                 .sorted(Comparator.comparingDouble(other -> Math.hypot(other.x() - cell.x(), other.y() - cell.y())))
-                .limit(BEACON_PARTNERS).toList();
+                .limit(PARTNERS).toList();
         double alone = Math.max(1, clusterDamage(probes, partner, partners, beacon, Optional.empty(), false));
         double gain = clusterDamage(probes, partner, partners, beacon, Optional.empty(), true) / alone - 1;
         Map<String, Double> wholeLines = new LinkedHashMap<>();
@@ -364,6 +434,17 @@ public final class TowerLab {
     }
 
     /**
+     * The share more a damage tower lands beside a {@code type} that owns {@code owned}, from what the type does
+     * to the enemies they share: 0 for a tower that only deals damage, and for the Beacon, whose buff is
+     * {@link #beaconGain}.
+     */
+    public double supportGain(TowerFactory.Type type, Collection<String> owned) {
+        Partnering partners = this.profiles.get(type).partners();
+        return Math.max(0, partners.supportGain()
+                + owned.stream().mapToDouble(node -> partners.supportSteps().getOrDefault(node, 0.0)).sum());
+    }
+
+    /**
      * What owning {@code nodeId} multiplies a {@code type}'s share of a duel wave by, once the nodes before it are
      * owned; for the Beacon, what it multiplies the Beacon's buff by. 1 for a node a lone tower cannot show.
      */
@@ -379,8 +460,8 @@ public final class TowerLab {
                 .map(Map.Entry::getKey).orElseThrow();
     }
 
-    /** The free cell nearest {@code cell}, for a Beacon beside it. */
-    private static Optional<Point> beaconCell(BoardSurvey survey, Point cell) {
+    /** The free cell nearest {@code cell}, for a Beacon or a partner beside it. */
+    private static Optional<Point> besideCell(BoardSurvey survey, Point cell) {
         return survey.buildable().stream().filter(other -> !other.equals(cell))
                 .min(Comparator.comparingDouble(other -> Math.hypot(other.x() - cell.x(), other.y() - cell.y())));
     }

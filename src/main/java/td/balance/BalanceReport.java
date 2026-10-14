@@ -67,6 +67,8 @@ public final class BalanceReport {
     static final double MATTERS = 1.15;
     /** A kind a tower brings down at least this share of, against the plain mob's, has an answer in it. */
     static final double ANSWERS = 0.5;
+    /** Help to a neighbour below this share is within the lab's noise. */
+    static final double SUPPORTS = 0.05;
 
     private static final long FIRST_SEED = 20261013L;
     private static final Path STORE = Path.of("target", "balance");
@@ -587,5 +589,25 @@ public final class BalanceReport {
         }
         this.out.println("  nodes far from the rest alone (x1.75 and up, or under x0.9): "
                 + (outliers.isEmpty() ? "none" : String.join(", ", outliers)));
+        this.out.println("  support (the share more a Sniper beside it lands): " + supportText(lab));
+    }
+
+    /** Each tower that helps a neighbour, then the nodes that add the most help. */
+    static String supportText(TowerLab lab) {
+        List<String> towers = new ArrayList<>();
+        List<Map.Entry<String, Double>> nodes = new ArrayList<>();
+        for (TowerFactory.Type type : TowerLab.damageDealers()) {
+            TowerLab.Partnering partners = lab.profile(type).partners();
+            if (partners.supportGain() >= SUPPORTS) {
+                towers.add(String.format("%s +%.0f%%", type.displayName(), partners.supportGain() * 100));
+            }
+            partners.supportSteps().entrySet().stream().filter(entry -> entry.getValue() >= SUPPORTS)
+                    .forEach(nodes::add);
+        }
+        String bestNodes = nodes.stream().sorted(Map.Entry.<String, Double>comparingByValue().reversed()).limit(6)
+                .map(entry -> String.format("%s +%.0f%%", entry.getKey(), entry.getValue() * 100))
+                .collect(Collectors.joining(", "));
+        return (towers.isEmpty() ? "no bare tower" : String.join(", ", towers))
+                + (bestNodes.isEmpty() ? "" : "; nodes " + bestNodes);
     }
 }
