@@ -175,6 +175,9 @@
   `specials` for a special set), never `slotEmpty` in `requires`: the tree enforces it and the
   panel draws it. Pass `StandardBaseSlot.nodes` a tree's level III heads; without any, the tree
   has no Transcendent and no Range III.
+- A node's number key comes from its place in the tree (`UpgradeTree.keyOf`): 1 the chain, 2 Range,
+  3 the extra line, 4 and 5 a choice's two sides, 6-8 a special set. A tree that leaves a node
+  without a key (a three-way head choice, four specials opened alike) is rejected.
 - Never hand-write a node's bonus into a tower's description: `UpgradeNode.bonuses()` derives it
   and the Upgrades panel lists offered nodes.
 - A perk says what it adds (`describe()`), built from its own constants; a node carries no note but the

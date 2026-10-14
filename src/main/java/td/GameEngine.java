@@ -15,7 +15,6 @@ import td.level.LevelDefinition;
 import td.level.LevelOutcome;
 import td.tower.Tower;
 import td.tower.TowerFactory;
-import td.tower.upgrade.UpgradeNode;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
@@ -431,9 +430,9 @@ public class GameEngine {
     }
 
     /**
-     * Buys the selected tower's {@code number}-th (1-based) offered upgrade, in the order the
-     * upgrade panel numbers its buttons. A no-op if nothing is selected or the number is out of
-     * range.
+     * Buys the selected tower's offered upgrade whose key is {@code number} ({@link
+     * td.tower.upgrade.UpgradeTree#keyOf}). A no-op if nothing is selected or nothing on offer has
+     * that key.
      */
     public void buyUpgradeForSelected(int number) {
         if (this.outcome.isOver()) {
@@ -443,10 +442,10 @@ public class GameEngine {
                 .filter(Tower::isSelected)
                 .findFirst()
                 .ifPresent(tower -> {
-                    List<UpgradeNode> offered = tower.offeredUpgrades(this.gameWorld);
-                    if (number >= 1 && number <= offered.size()) {
-                        tower.buyUpgrade(offered.get(number - 1));
-                    }
+                    tower.offeredUpgrades(this.gameWorld).stream()
+                            .filter(node -> tower.upgradeTree().keyOf(node) == number)
+                            .findFirst()
+                            .ifPresent(tower::buyUpgrade);
                 });
     }
 }

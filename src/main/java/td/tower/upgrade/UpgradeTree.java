@@ -5,6 +5,7 @@ import td.util.GameWorld;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -19,10 +20,17 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
 
     private static final UpgradeTree NONE = new UpgradeTree(List.of(), List.of());
     private static final UpgradeSlot[] SLOTS = UpgradeSlot.values();
+    private static final int CHAIN_KEY = 1;
+    private static final int RANGE_KEY = 2;
+    private static final int EXTRA_KEY = 3;
+    private static final int FIRST_BRANCH_KEY = 4;
+    private static final int BRANCHES = 2;
+    private static final int FIRST_SPECIAL_KEY = 6;
+    private static final int SPECIAL_KEYS = 3;
 
     /**
-     * Rejects duplicate node ids, which would make matching by id ambiguous, and a choice naming a
-     * node outside the tree or a node already in another choice.
+     * Rejects duplicate node ids, which would make matching by id ambiguous, a choice naming a
+     * node outside the tree or a node already in another choice, and a node no number key buys.
      */
     public UpgradeTree {
         Set<String> ids = new HashSet<>();
@@ -41,6 +49,11 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
         }
         nodes = List.copyOf(nodes);
         choices = List.copyOf(choices);
+        for (UpgradeNode node : nodes) {
+            if (keyOf(node, nodes, choices) == 0) {
+                throw new IllegalArgumentException("No number key buys upgrade node: " + node.id());
+            }
+        }
     }
 
     public static UpgradeTree none() {
@@ -74,8 +87,7 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
 
     /**
      * Unowned nodes whose prerequisites are met and whose choice still has a pick left, by slot
-     * and then declaration order - the order the upgrade panel and number keys use. A node that
-     * isn't offered is absent, not disabled.
+     * and then declaration order. A node that isn't offered is absent, not disabled.
      */
     public List<UpgradeNode> offered(Tower tower, GameWorld context) {
         List<UpgradeNode> offered = new ArrayList<>();
@@ -111,6 +123,59 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
                     .ifPresent(required -> this.collectPath(required, path));
         }
         path.add(node);
+    }
+
+    /**
+     * The number key that buys {@code node}, the same for every tower: 1 the Attune, Awaken, Transcendent chain,
+     * 2 the Range line, 3 the head line that does not branch, 4 and 5 the two head lines that exclude each other
+     * (and, past them, the two level-IV nodes that exclude each other), 6 to 8 the specials a tower can reach
+     * together.
+     */
+    public int keyOf(UpgradeNode node) {
+        return keyOf(node, this.nodes, this.choices);
+    }
+
+    /** 0 for a node outside the shape {@link #keyOf(UpgradeNode)} numbers, which the constructor rejects. */
+    private static int keyOf(UpgradeNode node, List<UpgradeNode> nodes, List<ExclusiveChoice> choices) {
+        return switch (node.slot()) {
+            case BASE -> StandardBaseSlot.isRangeLine(node) ? RANGE_KEY : CHAIN_KEY;
+            case HEAD -> headKeyOf(node, nodes, choices);
+            case SPECIAL -> specialKeyOf(node, nodes);
+        };
+    }
+
+    private static int headKeyOf(UpgradeNode node, List<UpgradeNode> nodes, List<ExclusiveChoice> choices) {
+        Optional<ExclusiveChoice> choice = choices.stream().filter(c -> c.contains(node.id())).findFirst();
+        if (choice.isPresent()) {
+            int index = choice.get().nodeIds().indexOf(node.id());
+            return index < BRANCHES ? FIRST_BRANCH_KEY + index : 0;
+        }
+        // A line node follows its deepest head prerequisite: a node can also need the first node of another line.
+        return headPrerequisites(node, nodes).stream()
+                .max(Comparator.comparingInt(prerequisite -> headDepth(prerequisite, nodes)))
+                .map(prerequisite -> headKeyOf(prerequisite, nodes, choices))
+                .orElse(EXTRA_KEY);
+    }
+
+    private static int headDepth(UpgradeNode node, List<UpgradeNode> nodes) {
+        return 1 + headPrerequisites(node, nodes).stream().mapToInt(prerequisite -> headDepth(prerequisite, nodes))
+                .max().orElse(0);
+    }
+
+    private static List<UpgradeNode> headPrerequisites(UpgradeNode node, List<UpgradeNode> nodes) {
+        return nodes.stream()
+                .filter(other -> other.slot() == UpgradeSlot.HEAD && node.requires().requiredNodes().contains(other.id()))
+                .toList();
+    }
+
+    /** Specials that open on the same nodes form one set, and number from 6 in the order they are declared. */
+    private static int specialKeyOf(UpgradeNode node, List<UpgradeNode> nodes) {
+        List<UpgradeNode> set = nodes.stream()
+                .filter(other -> other.slot() == UpgradeSlot.SPECIAL
+                        && other.requires().requiredNodes().equals(node.requires().requiredNodes()))
+                .toList();
+        int index = set.indexOf(node);
+        return index < SPECIAL_KEYS ? FIRST_SPECIAL_KEY + index : 0;
     }
 
     public Optional<ExclusiveChoice> choiceOf(UpgradeNode node) {

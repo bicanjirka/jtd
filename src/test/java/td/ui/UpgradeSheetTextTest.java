@@ -50,14 +50,14 @@ class UpgradeSheetTextTest {
     private final GameWorld world = WorldFixtures.newWorld();
     private final FakeTower tower = FakeTower.offering(this.world, 0, 0, UpgradeTree.of(RANGE, VETERAN));
 
-    /** As the Upgrades panel reads it: the tower's offered nodes, numbered from one. */
+    /** As the Upgrades panel reads it: the tower's offered nodes, numbered by the key that buys each. */
     private UpgradeOffer offer(UpgradeNode node) {
         return offer(this.tower, node);
     }
 
     private UpgradeOffer offer(FakeTower offering, UpgradeNode node) {
         List<UpgradeNode> offered = offering.offeredUpgrades(this.world);
-        return UpgradeOffer.of(offered, offered.indexOf(node), offering, this.world);
+        return UpgradeOffer.of(node, offered, offering, this.world);
     }
 
     /** A tower on the {@link #CHOICES} tree that bought {@code names} through the real mechanism. */
@@ -84,7 +84,7 @@ class UpgradeSheetTextTest {
         this.world.economy().startEconomy(100, 5);
         this.tower.earnXp(7);
 
-        assertThat(UpgradeSheetText.buttonText(this.offer(VETERAN))).isEqualTo("2  Veteran\tXP 7/10");
+        assertThat(UpgradeSheetText.buttonText(this.offer(VETERAN))).isEqualTo("3  Veteran\tXP 7/10");
         assertThat(this.offer(VETERAN).buyable()).isFalse();
     }
 
@@ -114,7 +114,7 @@ class UpgradeSheetTextTest {
         UpgradeNode executioner = sniper.upgradeTree().nodes().stream()
                 .filter(node -> node.displayName().equals("Executioner")).findFirst().orElseThrow();
 
-        InfoSheet sheet = UpgradeSheetText.hover(UpgradeOffer.of(List.of(executioner), 0, sniper, this.world));
+        InfoSheet sheet = UpgradeSheetText.hover(UpgradeOffer.of(executioner, List.of(executioner), sniper, this.world));
 
         List<SheetLine> rows = sheet.lines().subList(sheet.lines().indexOf(new SheetLine.Gap()) + 1, sheet.lines().size());
         assertThat(rows).hasSize(executioner.bonuses().size() + 1);
