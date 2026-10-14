@@ -381,14 +381,13 @@ public final class ActiveEffects {
     public void tick(float spiritFactor, float cellsMoved) {
         List<EffectKind> expired = new ArrayList<>();
         float burnFactor = 1f - BURN_CHILL_DAMPENING * this.chillLevel() / MAX_CHILL;
-        float pace = spiritFactor;
-        float debuffPace = spiritFactor <= 0f ? 0f : Math.max(MIN_DEBUFF_PACE, pace);
+        float debuffPace = spiritFactor <= 0f ? 0f : Math.max(MIN_DEBUFF_PACE, spiritFactor);
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
             EffectKind kind = entry.getKey();
             Effect effect = entry.getValue();
             Optional<Effect> next = switch (effect.dynamics()) {
                 case EffectDynamics.Stacks _ when kind.isStackDebuff() ->
-                        this.decayStacks(effect, kind.rule().pacing() == EffectPacing.SPIRIT ? debuffPace : pace);
+                        this.decayStacks(effect, kind.rule().pacing() == EffectPacing.SPIRIT ? debuffPace : spiritFactor);
                 case EffectDynamics.ChillLevel _ -> this.tickChill(effect, this.paceSteps(kind, debuffPace));
                 case EffectDynamics.FuelPool _ -> this.tickPool(effect, kind.isBurning() ? burnFactor : 1f);
                 case EffectDynamics.Distance distance -> {

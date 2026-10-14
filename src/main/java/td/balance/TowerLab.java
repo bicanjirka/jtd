@@ -470,12 +470,6 @@ public final class TowerLab {
         return this.cellTotals.get(type).getOrDefault(cell, 0.0);
     }
 
-    private static double cellValueOf(Map<TowerFactory.Type, Map<Point, double[]>> values, TowerFactory.Type type,
-                                      Point cell) {
-        double[] byPath = values.get(type).get(cell);
-        return byPath == null ? 0 : Arrays.stream(byPath).sum();
-    }
-
     /** Damage {@code type} alone on {@code cell} lands in one round of plain probes on path {@code path} alone. */
     public double cellValue(TowerFactory.Type type, Point cell, int path) {
         double[] byPath = this.cellValues.get(type).get(cell);

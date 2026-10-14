@@ -2,7 +2,6 @@ package td.tower.proc;
 
 import td.effect.EffectKind;
 import td.enemy.Rank;
-import td.tower.TowerStat;
 
 import java.util.Arrays;
 import java.util.List;
@@ -144,19 +143,6 @@ public sealed interface HitCondition {
         @Override
         public String describe() {
             return Words.hitsOf(this.kinds);
-        }
-    }
-
-    /** A target with at least as many stacks of {@code kind} as the attack's {@code stat}: at full Toll. */
-    record TargetStacksAtLeastStat(EffectKind kind, TowerStat stat) implements HitCondition {
-        @Override
-        public boolean holds(HitContext context) {
-            return context.target().effectStacks(this.kind) >= Math.round(context.shot().value(this.stat));
-        }
-
-        @Override
-        public String describe() {
-            return "at full " + Words.name(this.kind);
         }
     }
 
