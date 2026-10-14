@@ -1,5 +1,6 @@
 package td.balance;
 
+import td.effect.EffectKind;
 import td.enemy.Rank;
 import td.tower.TowerFactory;
 import td.wave.Point;
@@ -37,13 +38,60 @@ public record PlayRecord(Play play, Result result, List<Round> rounds, Log log) 
         return this.log.towers();
     }
 
+    /** What the enemies went through. */
+    public Watch watch() {
+        return this.log.watch();
+    }
+
     /** The play's detail, kept apart from its summary. */
-    public record Log(List<EnemyEnd> ends, List<TimedAction> actions, List<TowerLog> towers) {
+    public record Log(List<EnemyEnd> ends, List<TimedAction> actions, List<TowerLog> towers, Watch watch) {
 
         public Log {
             ends = List.copyOf(ends);
             actions = List.copyOf(actions);
             towers = List.copyOf(towers);
+        }
+    }
+
+    /**
+     * What the enemies went through over the play: the effects they carried and the abilities they used.
+     *
+     * @param effects how long each effect was on an enemy, and how often one took hold
+     * @param casts   how often each kind at each rank used each ability, keyed by {@link #castKey} or
+     *                {@link #spawnKey}
+     */
+    public record Watch(EffectUse effects, Map<String, Integer> casts) {
+
+        public Watch {
+            casts = Map.copyOf(casts);
+        }
+
+        /** An ability of {@code kind} that puts {@code effect} on itself or its allies. */
+        public static String castKey(String kindKey, EffectKind effect) {
+            return kindKey + " casts " + effect.name().toLowerCase(java.util.Locale.ROOT);
+        }
+
+        /** An ability that brings {@code child} onto the board, whichever enemy has it. */
+        public static String spawnKey(String child) {
+            return "spawns " + child;
+        }
+    }
+
+    /**
+     * @param enemyTicks ticks enemies spent on the board alive, summed over every enemy
+     * @param ticks      of those, the ticks each effect was on the enemy
+     * @param starts     how often each effect took hold of an enemy that did not have it
+     */
+    public record EffectUse(long enemyTicks, Map<EffectKind, Long> ticks, Map<EffectKind, Integer> starts) {
+
+        public EffectUse {
+            ticks = Map.copyOf(ticks);
+            starts = Map.copyOf(starts);
+        }
+
+        /** The share of enemy time {@code kind} was on an enemy. */
+        public double uptime(EffectKind kind) {
+            return this.enemyTicks == 0 ? 0 : this.ticks.getOrDefault(kind, 0L) / (double) this.enemyTicks;
         }
     }
 

@@ -1,5 +1,6 @@
 package td.balance;
 
+import td.effect.EffectKind;
 import td.tower.TowerFactory;
 
 import java.util.Arrays;
@@ -7,8 +8,11 @@ import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.ToDoubleFunction;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * Everything the report measured on one level: each player's plays of the level as authored, seed by seed, and
@@ -138,6 +142,62 @@ public record LevelRun(TowerLab lab, Map<String, List<PlayRecord>> plays, Map<St
                             1.0 / plays.size(), Double::sum));
         }
         return leaks;
+    }
+
+    /** Every play of every player, the competent player's variants included. */
+    private Stream<PlayRecord> allPlays() {
+        return this.plays.values().stream().flatMap(List::stream);
+    }
+
+    /** The upgrade nodes of every tower type that no play of any player bought, by tower type. */
+    public Map<TowerFactory.Type, List<String>> nodesNeverBought() {
+        Set<String> bought = this.allPlays().flatMap(play -> play.towers().stream())
+                .flatMap(tower -> tower.nodes().stream()).collect(Collectors.toSet());
+        Map<TowerFactory.Type, List<String>> never = new EnumMap<>(TowerFactory.Type.class);
+        for (TowerFactory.Type type : TowerFactory.Type.values()) {
+            never.put(type, this.lab.profile(type).nodeFactors().keySet().stream()
+                    .filter(node -> !bought.contains(node)).toList());
+        }
+        return never;
+    }
+
+    /** The abilities of the level's enemies no play of any player saw used. */
+    public List<String> abilitiesNeverUsed() {
+        Set<String> used = this.allPlays().flatMap(play -> play.watch().casts().keySet().stream())
+                .collect(Collectors.toSet());
+        return this.lab.abilities().stream().filter(ability -> !used.contains(ability)).toList();
+    }
+
+    /** The effects no play of any player saw take hold of an enemy. */
+    public List<EffectKind> effectsNeverStarted() {
+        Set<EffectKind> started = this.allPlays().flatMap(play -> play.watch().effects().starts().keySet().stream())
+                .collect(Collectors.toSet());
+        return Arrays.stream(EffectKind.values()).filter(kind -> !started.contains(kind)).toList();
+    }
+
+    /** {@code player}'s effect use over all its plays together. */
+    public PlayRecord.EffectUse effectUse(String player) {
+        long enemyTicks = 0;
+        Map<EffectKind, Long> ticks = new EnumMap<>(EffectKind.class);
+        Map<EffectKind, Integer> starts = new EnumMap<>(EffectKind.class);
+        for (PlayRecord play : this.playsOf(player)) {
+            PlayRecord.EffectUse use = play.watch().effects();
+            enemyTicks += use.enemyTicks();
+            use.ticks().forEach((kind, count) -> ticks.merge(kind, count, Long::sum));
+            use.starts().forEach((kind, count) -> starts.merge(kind, count, Integer::sum));
+        }
+        return new PlayRecord.EffectUse(enemyTicks, ticks, starts);
+    }
+
+    /** How often per play {@code player}'s enemies used each ability. */
+    public Map<String, Double> abilityUses(String player) {
+        Map<String, Double> uses = new LinkedHashMap<>();
+        List<PlayRecord> plays = this.playsOf(player);
+        for (PlayRecord play : plays) {
+            play.watch().casts().forEach((ability, count) -> uses.merge(ability, count / (double) plays.size(),
+                    Double::sum));
+        }
+        return uses;
     }
 
     /** The round each lost play of {@code player} was lost in, counted. */

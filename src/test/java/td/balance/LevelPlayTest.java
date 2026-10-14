@@ -1,6 +1,8 @@
 package td.balance;
 
 import org.junit.jupiter.api.Test;
+import td.effect.EffectKind;
+import td.enemy.Rank;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
 
@@ -51,5 +53,21 @@ class LevelPlayTest {
         assertThat(idle.result().livesLost()).isEqualTo(survey.level().startingLives());
         assertThat(idle.result().leaks()).isEqualTo(idle.ends().size());
         assertThat(idle.rounds()).hasSize(idle.result().roundCount());
+    }
+
+    @Test
+    void aPlayCountsTheEffectsItsTowersPutOnEnemiesAndTheAbilitiesTheEnemiesUse() {
+        BoardSurvey survey = zigzag();
+
+        PlayRecord idle = LevelPlay.play(survey, ScriptedPlayer.spec("idle", List.of()), SEED,
+                LevelPlay.Pacing.standard());
+        PlayRecord played = LevelPlay.play(survey, NaivePlayer.spec(), SEED, LevelPlay.Pacing.standard());
+
+        assertThat(played.actions()).anySatisfy(action -> assertThat(action.toLine()).contains("CINDER"));
+        assertThat(idle.watch().effects().starts()).doesNotContainKey(EffectKind.BURN);
+        assertThat(played.watch().effects().starts()).containsKey(EffectKind.BURN);
+        assertThat(played.watch().effects().uptime(EffectKind.BURN)).isStrictlyBetween(0.0, 1.0);
+        assertThat(played.watch().casts())
+                .containsKey(PlayRecord.Watch.castKey(TowerLab.kindKey("g", Rank.VETERAN), EffectKind.INVISIBLE));
     }
 }

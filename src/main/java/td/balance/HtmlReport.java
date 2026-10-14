@@ -1,5 +1,6 @@
 package td.balance;
 
+import td.effect.EffectKind;
 import td.level.LevelDefinition;
 import td.tower.TowerFactory;
 import td.wave.Point;
@@ -119,6 +120,29 @@ final class HtmlReport {
         this.towerShares(run);
         this.counters(run);
         this.variety(run);
+        this.coverage(run);
+    }
+
+    private void coverage(LevelRun run) {
+        PlayRecord.EffectUse use = run.effectUse(BalanceReport.COMPETENT);
+        this.html.append("<h3>Coverage</h3><p class=\"note\">The share of enemy time each effect was on an enemy in"
+                + " the competent player's plays, and what no play of any player ever triggered.</p>"
+                + "<div class=\"row\"><div class=\"card\"><table><tr><th>effect</th><th>share of enemy time</th>"
+                + "</tr>");
+        Arrays.stream(EffectKind.values()).filter(kind -> use.starts().containsKey(kind))
+                .sorted(java.util.Comparator.comparingDouble(use::uptime).reversed())
+                .forEach(kind -> this.html.append("<tr><td>").append(BalanceReport.name(kind)).append("</td><td>")
+                        .append(String.format("%.1f%%", use.uptime(kind) * 100)).append("</td></tr>"));
+        this.html.append("</table></div><div class=\"card\"><table><tr><th>never triggered</th><th></th></tr>");
+        this.coverageRow("effects", run.effectsNeverStarted().stream().map(BalanceReport::name).toList());
+        this.coverageRow("enemy abilities", run.abilitiesNeverUsed());
+        run.nodesNeverBought().forEach((type, nodes) -> this.coverageRow(type.displayName() + " nodes", nodes));
+        this.html.append("</table></div></div>");
+    }
+
+    private void coverageRow(String what, List<String> never) {
+        this.html.append("<tr><td>").append(escape(what)).append("</td><td style=\"text-align:left;white-space:normal\">")
+                .append(never.isEmpty() ? "none" : escape(String.join(", ", never))).append("</td></tr>");
     }
 
     private void tiles(LevelRun run) {

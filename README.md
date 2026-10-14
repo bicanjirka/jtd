@@ -74,10 +74,11 @@ credits and lives, over many seeds, with a naive player (random towers on random
 (it reads the coming rounds and buys what it estimates saves the most enemy health per credit) and that
 competent player on random cells and without upgrades. Per level it reports whether the level is too easy
 or too hard, whether positioning and upgrades matter, where the pressure comes round by round, where the
-credits go, which towers carry the defence and what leaks, every number with its 95% interval. The
+credits go, which towers carry the defence and what leaks, which effects, enemy abilities and upgrade
+nodes no play ever triggers, every number with its 95% interval. The
 **margin** is the highest enemy health, as a percentage of the authored one, a player still wins at. A lab
 measures each tower on every cell, against every enemy kind at every rank a level sends, and with each
-upgrade line, before any play.
+upgrade line, and what it does for a tower beside it, before any play.
 
 ```bash
 mvn -q compile exec:java -Dexec.mainClass=td.balance.BalanceReport -Dexec.args="--save before"

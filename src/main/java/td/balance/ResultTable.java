@@ -1,6 +1,7 @@
 package td.balance;
 
 import td.damage.DamageUnits;
+import td.effect.EffectKind;
 import td.tower.TowerFactory;
 
 import java.io.IOException;
@@ -89,6 +90,11 @@ public final class ResultTable {
                     .map(round -> round.pressure().closest()).orElse(Double.NaN));
             put(values, level, player, "leaked.r" + r, plays, play -> roundOf(play, number)
                     .map(round -> (double) round.pressure().leaked()).orElse(Double.NaN));
+        }
+        for (EffectKind kind : EffectKind.values()) {
+            if (plays.stream().anyMatch(play -> play.watch().effects().starts().containsKey(kind))) {
+                put(values, level, player, "uptime." + kind, plays, play -> play.watch().effects().uptime(kind));
+            }
         }
         for (TowerFactory.Type type : TowerFactory.Type.values()) {
             put(values, level, player, "share." + type, plays, play -> damageShare(play, type));

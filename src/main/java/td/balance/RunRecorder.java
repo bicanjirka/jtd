@@ -1,6 +1,8 @@
 package td.balance;
 
 import td.GameEngine;
+import td.effect.EffectKind;
+import td.enemy.AbilityCast;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyInspection;
 import td.enemy.EnemyMob;
@@ -15,14 +17,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
  * Watches a headless play through the engine's public state, polled after every tick: which enemies walked in,
- * how each walk ended and where, what each round cost and earned, and what the towers dealt. It reads nothing a
- * renderer could not.
+ * how each walk ended and where, what each round cost and earned, what the towers dealt, which effects the
+ * enemies carried and which abilities they used. It reads nothing a renderer could not.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 final class RunRecorder {
@@ -39,6 +43,11 @@ final class RunRecorder {
     private final List<PlayRecord.EnemyEnd> ends = new ArrayList<>();
     private final List<PlayRecord.TimedAction> actions = new ArrayList<>();
     private final Map<TowerFactory.Type, Long> roundDamage = new EnumMap<>(TowerFactory.Type.class);
+    private final Map<EnemyMob, Set<EffectKind>> effectsHeld = new IdentityHashMap<>();
+    private final Map<EnemyMob, Integer> lastCastTick = new IdentityHashMap<>();
+    private final Map<EffectKind, Long> effectTicks = new EnumMap<>(EffectKind.class);
+    private final Map<EffectKind, Integer> effectStarts = new EnumMap<>(EffectKind.class);
+    private final Map<String, Integer> casts = new LinkedHashMap<>();
 
     private boolean roundOpen;
     private int roundStartTick;
@@ -51,6 +60,7 @@ final class RunRecorder {
     private double closest;
     private int leaks;
     private int cleared;
+    private long enemyTicks;
 
     RunRecorder(GameEngine engine, int startingLives) {
         this.engine = engine;
@@ -70,6 +80,8 @@ final class RunRecorder {
         this.roundDamage.clear();
         this.seen.clear();
         this.ended.clear();
+        this.effectsHeld.clear();
+        this.lastCastTick.clear();
     }
 
     /** What a player did, and what it cost; a sale costs a negative amount. */
@@ -111,7 +123,11 @@ final class RunRecorder {
             PlayRecord.Foe foe = foeOf(mob);
             if (this.seen.add(mob)) {
                 this.healthIn += foe.maxHealth();
+                if (mob.accept(defined -> defined.ticksSinceAbilitySpawn(tick)) >= 0) {
+                    this.casts.merge(PlayRecord.Watch.spawnKey(foe.kind()), 1, Integer::sum);
+                }
             }
+            this.watch(mob, foe, tick);
             EnemyInspection.Fate fate = mob.accept(DefinedEnemyMob::fate);
             if (fate == EnemyInspection.Fate.KILLED || fate == EnemyInspection.Fate.LEAKED) {
                 this.end(mob, foe, fate == EnemyInspection.Fate.LEAKED);
@@ -119,6 +135,28 @@ final class RunRecorder {
         }
         if (this.roundOpen && (this.engine.isWaveReady() || this.engine.outcome().isOver())) {
             this.closeRound(tick);
+        }
+    }
+
+    /** Counts the effects {@code mob} carries and starts, and an ability it cast this tick, death casts included. */
+    private void watch(EnemyMob mob, PlayRecord.Foe foe, int tick) {
+        if (mob.accept(DefinedEnemyMob::isInactive)) {
+            return;
+        }
+        Set<EffectKind> held = mob.accept(DefinedEnemyMob::activeEffectKinds);
+        if (!mob.isDead()) {
+            this.enemyTicks++;
+            held.forEach(kind -> this.effectTicks.merge(kind, 1L, Long::sum));
+        }
+        Set<EffectKind> before = this.effectsHeld.getOrDefault(mob, Set.of());
+        held.stream().filter(kind -> !before.contains(kind))
+                .forEach(kind -> this.effectStarts.merge(kind, 1, Integer::sum));
+        this.effectsHeld.put(mob, Set.copyOf(held));
+        Optional<AbilityCast> cast = mob.accept(DefinedEnemyMob::lastAbilityCast);
+        if (cast.isPresent() && cast.get().tick() != this.lastCastTick.getOrDefault(mob, -1)) {
+            this.lastCastTick.put(mob, cast.get().tick());
+            this.casts.merge(PlayRecord.Watch.castKey(TowerLab.kindKey(foe.kind(), foe.rank()), cast.get().kind()), 1,
+                    Integer::sum);
         }
     }
 
@@ -176,6 +214,8 @@ final class RunRecorder {
                         tower.upgrades().owned().stream().map(UpgradeNode::id).toList()))
                 .toList();
         return new PlayRecord(play, new PlayRecord.Result(this.startingLives, this.leaks, this.cleared,
-                this.engine.getWaveCount()), this.rounds, new PlayRecord.Log(this.ends, this.actions, towers));
+                this.engine.getWaveCount()), this.rounds, new PlayRecord.Log(this.ends, this.actions, towers,
+                new PlayRecord.Watch(new PlayRecord.EffectUse(this.enemyTicks, this.effectTicks, this.effectStarts),
+                        this.casts)));
     }
 }
