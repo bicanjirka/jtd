@@ -56,8 +56,8 @@ Start each wave yourself when you are ready — waves do not auto-advance.
 | `Ctrl`+`Shift`+`D`              | Open or close the dev panel (playtesting controls; its **Help** button lists its own keys)           |
 
 Mouse: move to preview placement, click to place or to select a placed tower, or click an
-upgrade-tree button to buy that node. Click a moving enemy (when not placing a tower) to inspect
-it: the side panel shows its live health, stats, effects and traits, updating even while paused,
+upgrade-tree button to buy that node. Click a moving enemy, invisible ones too (when not placing a
+tower), to inspect it: the side panel shows its live health, stats, effects and traits, updating even while paused,
 and keeps a "Killed" or "Leaked" line after it's gone until your next click. Hovering an enemy in
 the wave preview shows the same stat block for that enemy type.
 

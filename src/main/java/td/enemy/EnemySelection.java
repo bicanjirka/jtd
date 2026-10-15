@@ -70,7 +70,7 @@ public final class EnemySelection {
         double nearestDistance2 = Double.MAX_VALUE;
         for (EnemyMob enemy : roster) {
             DefinedEnemyMob mob = enemy.accept(AS_DEFINED);
-            if (mob.isDead() || mob.isInactive() || mob.isHidden()) {
+            if (mob.isDead() || mob.isInactive()) {
                 continue;
             }
             double dx = mob.getX() - x;
