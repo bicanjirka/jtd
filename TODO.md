@@ -31,8 +31,8 @@ Enemies come after, from `docs/ideas/enemies-brainstorm.md`.
 balance report with a check for one change, to tune the placeholder entries below with. Its first
 findings are in the doc.
 
-`FEATURE-obelisk-support-role.md` (draft): the Obelisk becomes a support tower, after the balance tools
-learn to price support; it answers that doc's Obelisk finding.
+`FEATURE-obelisk-support-role.md` (implemented, except the levels' retune; see Levels below): the Obelisk is a
+support tower, and the balance tools price support.
 
 `docs/plans/stat-driven-buffs.md` (phases 1 to 9) and `FEATURE-agility-and-dodge.md` are implemented.
 
@@ -121,6 +121,17 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
     already has.
 
 ## Levels
+
+### The built-in levels are not tuned to the support Obelisk
+
+After the Obelisk became a support tower (`FEATURE-obelisk-support-role.md`, last findings, saved as
+`target/balance/ob-phase4`), the competent player holds 100% of Curly Path, in band, but only 50% of Zigzag Path and
+40% of Twisted Hourglass. Twisted Hourglass also loses 3 of its 4 lives to the Reaver in round 1, and it sends
+shrouded groups down three lanes, so one Obelisk per lane is the only affordable reveal (banning it x0.03).
+
+- **Where:** the wave scripts in `td.level.ZigZagPathLevel` and `td.level.TwistedHourglassLevel`.
+- **Approach:** a feature request of its own; retune by wave composition, not by enemy health. Compare each change
+  with `BalanceReport --seeds 12 --strong --variety --compare ob-phase4`.
 
 ### Only a Java-code level catalog exists
 
