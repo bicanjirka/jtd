@@ -600,7 +600,7 @@ class GameEngineTest {
     }
 
     @Test
-    void anInvisibleEnemyCannotBePickedButAnExistingSelectionSurvivesItTurningInvisible() {
+    void anInvisibleEnemyCanBePickedAndAnExistingSelectionSurvivesItTurningInvisible() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyMob[] walkers = twoWalkers(engine);
         walkers[0].applyEffect(Effect.invisible(100, DamageSink.none()));
@@ -609,7 +609,7 @@ class GameEngineTest {
 
         walkers[1].applyEffect(Effect.invisible(100, DamageSink.none()));
 
-        assertThat(hidden).isEmpty();
+        assertThat(hidden).map(EnemyInspection::name).contains("Walker A");
         assertThat(engine.inspectSelectedEnemy()).map(EnemyInspection::name).contains("Walker B");
     }
 

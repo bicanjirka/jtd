@@ -7,7 +7,7 @@ tuned to the support Obelisk".
 **Checked live** (Curly Path): the panel shows the 1-a-tick field and Interference's -25% beside an overlapping
 Obelisk; the node words read as designed; an Elite Ghost fades when the field first hits it and is Revealed and
 Dazed at its first Toll stack; a Grunt's panel shows Corroded and Kill zone (damage taken 120% on entry, 132% at three
-Toll stacks) counting down for 2 s after it leaves, then gone. A hidden enemy can't be selected, as before.
+Toll stacks) counting down for 2 s after it leaves, then gone.
 
 ## Summary
 
