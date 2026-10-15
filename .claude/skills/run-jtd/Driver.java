@@ -1,8 +1,10 @@
 import td.TowerDefense;
 import td.damage.Damage;
 import td.damage.DamageUnits;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.FieldStrength;
 import td.economy.EconomyDelta;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyCatalog;
@@ -314,7 +316,7 @@ public class Driver {
         return null;
     }
 
-    private static void click(int index) throws AWTException, InterruptedException {
+    private static void click(int index) throws Exception {
         List<Component> clickables = findClickables();
         if (index < 0 || index >= clickables.size()) {
             System.out.println("ERROR: index " + index + " out of range (0.." + (clickables.size() - 1) + ")");
@@ -322,7 +324,8 @@ public class Driver {
         }
         Component target = clickables.get(index);
         if (target instanceof AbstractButton button) {
-            button.doClick();
+            // On the EDT, as a real click is: off it, the click races the render pulse's panel refresh.
+            javax.swing.SwingUtilities.invokeAndWait(button::doClick);
             System.out.println("OK click " + index + " (doClick)");
             return;
         }
@@ -635,41 +638,41 @@ public class Driver {
         int ticks = parts.length > 1 ? Integer.parseInt(parts[1]) : 200;
         for (EnemyMob mob : getGameWorld().enemies().getEnemies()) {
             Effect effect = switch (kind) {
-                case CHILL -> Effect.chill(0.5f, ticks, d -> { });
-                case BURN -> Effect.burn(Damage.magic(1), ticks, d -> { });
-                case POISON -> Effect.poison(Damage.magic(1), ticks, d -> { });
-                case FREEZE -> Effect.freeze(ticks, d -> { });
-                case SHIELD -> Effect.shield(DamageUnits.PER_POINT * 200f, ticks, d -> { });
-                case INVISIBLE -> Effect.invisible(ticks, d -> { });
-                case HEAL -> Effect.heal(1, ticks, d -> { });
-                case VULNERABLE -> Effect.vulnerable(2, ticks, d -> { });
-                case REVEALED -> Effect.revealed(ticks, d -> { });
-                case SUNDERED -> Effect.sundered(3, ticks, d -> { });
-                case EXPOSED -> Effect.exposed(ticks, d -> { });
-                case MARKED -> Effect.marked(ticks, d -> { });
-                case PRIORITY -> Effect.priority(ticks, d -> { });
-                case RESONATING -> Effect.resonating(2, ticks, d -> { });
-                case FRACTURED -> Effect.fractured(3, d -> { });
-                case DAZED -> Effect.dazed(ticks, d -> { });
-                case SATURATED -> Effect.saturated(3, ticks, d -> { });
-                case CHARGED -> Effect.charged(ticks, td.damage.AttackOrigin.none(), d -> { });
+                case CHILL -> Effect.chill(0.5f, ticks, DamageSink.none());
+                case BURN -> Effect.burn(Damage.magic(1), ticks, DamageSink.none());
+                case POISON -> Effect.poison(Damage.magic(1), ticks, DamageSink.none());
+                case FREEZE -> Effect.freeze(ticks, DamageSink.none());
+                case SHIELD -> Effect.shield(DamageUnits.PER_POINT * 200f, ticks, DamageSink.none());
+                case INVISIBLE -> Effect.invisible(ticks, DamageSink.none());
+                case HEAL -> Effect.heal(1, ticks, DamageSink.none());
+                case VULNERABLE -> Effect.vulnerable(2, ticks, DamageSink.none());
+                case REVEALED -> Effect.revealed(ticks, DamageSink.none());
+                case SUNDERED -> Effect.sundered(3, ticks, DamageSink.none());
+                case EXPOSED -> Effect.exposed(ticks, DamageSink.none());
+                case MARKED -> Effect.marked(ticks, DamageSink.none());
+                case PRIORITY -> Effect.priority(ticks, DamageSink.none());
+                case RESONATING -> Effect.resonating(2, ticks, DamageSink.none());
+                case FRACTURED -> Effect.fractured(3, DamageSink.none());
+                case DAZED -> Effect.dazed(ticks, DamageSink.none());
+                case SATURATED -> Effect.saturated(3, ticks, DamageSink.none());
+                case CHARGED -> Effect.charged(ticks, td.damage.AttackOrigin.none(), DamageSink.none());
                 case DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY, RECKONING ->
-                        Effect.hex(kind, ticks, d -> { });
-                case SILENCED -> Effect.silenced(ticks, d -> { });
-                case ANCHORED -> Effect.anchored(ticks, d -> { });
-                case UNRAVELED -> Effect.unraveled(3, ticks, d -> { });
-                case BRITTLE -> Effect.brittle(ticks, d -> { });
-                case TOLL -> Effect.toll(3, ticks, d -> { });
-                case CORRODED -> Effect.corroded(ticks, d -> { });
-                case UNDERTOW -> Effect.undertow(ticks, d -> { });
-                case DEAD_ZONE -> Effect.deadZone(ticks, d -> { });
-                case FALLOUT -> Effect.fallout(ticks, d -> { });
-                case KILL_ZONE -> Effect.killZone(ticks, d -> { });
-                case CRACKED -> Effect.cracked(ticks, d -> { });
-                case TARRED -> Effect.tarred(ticks, d -> { });
-                case BLEEDING -> Effect.bleeding(1, ticks, d -> { });
-                case SOULFIRE -> Effect.soulfire(Damage.magic(1), ticks, d -> { });
-                case SPRINTING -> Effect.sprinting(ticks, d -> { });
+                        Effect.hex(kind, ticks, DamageSink.none());
+                case SILENCED -> Effect.silenced(ticks, DamageSink.none());
+                case ANCHORED -> Effect.anchored(ticks, DamageSink.none());
+                case UNRAVELED -> Effect.unraveled(3, ticks, DamageSink.none());
+                case BRITTLE -> Effect.brittle(ticks, DamageSink.none());
+                case TOLL -> Effect.toll(3, ticks, DamageSink.none());
+                case CORRODED -> Effect.corroded(FieldStrength.FULL, ticks, DamageSink.none());
+                case UNDERTOW -> Effect.undertow(FieldStrength.FULL, ticks, DamageSink.none());
+                case DEAD_ZONE -> Effect.deadZone(ticks, DamageSink.none());
+                case FALLOUT -> Effect.fallout(ticks, DamageSink.none());
+                case KILL_ZONE -> Effect.killZone(FieldStrength.FULL, ticks, DamageSink.none());
+                case CRACKED -> Effect.cracked(ticks, DamageSink.none());
+                case TARRED -> Effect.tarred(ticks, DamageSink.none());
+                case BLEEDING -> Effect.bleeding(1, ticks, DamageSink.none());
+                case SOULFIRE -> Effect.soulfire(Damage.magic(1), ticks, DamageSink.none());
+                case SPRINTING -> Effect.sprinting(ticks, DamageSink.none());
                 case SCORCHED, SICKENED -> throw new IllegalArgumentException(kind + " is earned by burn and poison");
             };
             mob.applyEffect(effect);
