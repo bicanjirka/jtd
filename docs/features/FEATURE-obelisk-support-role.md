@@ -1,8 +1,8 @@
 # Feature Request: The Obelisk as a Support Tower
 
-**Status: implemented** (2026-10-14, closed 2026-10-15): items 1 to 5 and 7; findings below. Every open question is
-settled (✅). The levels' retune (item 6) is still wanted, as a feature of its own: `TODO.md`, "The built-in levels are not
-tuned to the support Obelisk".
+**Status: implemented** (2026-10-14, closed 2026-10-15): items 1 to 5 and 7; findings below. A review of the tree
+(2026-10-16, "Review of the tree") reopens it: questions 24 to 30 are open. The levels' retune (item 6) is still wanted,
+as a feature of its own: `TODO.md`, "The built-in levels are not tuned to the support Obelisk".
 
 **Checked live** (Curly Path): the panel shows the 1-a-tick field and Interference's -25% beside an overlapping
 Obelisk; the node words read as designed; an Elite Ghost fades when the field first hits it and is Revealed and
@@ -239,7 +239,88 @@ Corrosion, Undertow and Resonant Coils II are stronger, Soul Drain drains 15 spi
 - **With the 2-second linger** (saved as `ob-phase4`) no play changes: no player buys those nodes yet, so every
   margin is the same. The lab now prices Kill Zone at +13% for a Sniper beside it on Zigzag Path (under +9% before).
 
+## Review of the tree
+
+Read from the built tree on 2026-10-16, with estimates from the field's geometry; nothing here is measured yet.
+
+| Line | Nodes (price, list price 25) |
+|---|---|
+| Base | Attune 20, Awaken 25, Transcendent 100 (300 XP); Range 15 / 30 / 50 |
+| Head A, Resonant | Coils 25 → Coils II 38 → Arc Discharge 63 → Meltdown 100 or Tesla Coil 100 |
+| Head B, Phase | Phase Field 25 → Phase Field II 38 → Null Field 63 → True Sight 100 or Dead Zone 100 |
+| Extra line | Corrosion 20 → Mirror Field 30 → Undertow 50 → Event Horizon 75 |
+| Specials | Rattle Field, Soul Drain, Kill Zone: 100 each |
+
+**The damage is gone, but the effects that replaced it are too weak for their price.**
+
+- The field's effects hold inside and 2 s after. A Grunt (0.8 cells a second) crosses the field in about 2.8 s and
+  carries them over about 4.5 cells of path; a Sniper beside the field covers 8 to 10, so about 45% of its shots land
+  in the window.
+- Full Toll takes 5 s inside (2.5 s with Coils), so on a straight crossing most enemies feel 50% to 75% of an effect.
+  Kill Zone averages about +28% damage taken, which on 45% of a partner's shots is about +13%: what the lab measured.
+- Kill Zone costs 170 in all (tower, Attune, Awaken, special) for about +13% to each tower in reach; a 20-credit Beacon
+  gives +11% to +38% to each tower in reach. Per percent, the Obelisk's support costs about eight times as much.
+- The lab prices support against one partner; around a bend 3 or 4 towers share the field, so the players undervalue it.
+  Even at four partners it is about half a tower for 170.
+- Mirror Field reflects what a shield absorbs of a 1-a-tick field: at most 20 a second. Rattle Field adds about 3
+  stacks per crossing. Both are dead nodes.
+
+**The heads.** Phase has a strong identity: sight and denial, and its Daze keeps an enemy inside longer. Resonant has one
+only on paper: its Toll nodes scale nothing of its own (Coils II's Vulnerable and the mark are fixed), so Meltdown
+strengthens only Corrosion, Undertow and Kill Zone. The tree's strongest amplifier, Event Horizon (twice the range, four
+times the area), sits in the extra line.
+
+**Heads with specials.**
+
+| Pairing | What it does |
+|---|---|
+| Resonant + Kill Zone (+ Meltdown) | Vulnerable +30%, Kill Zone up to +60%, the marked enemy +15% Priority and Exposed: about +90% to +105% damage taken. The strongest, but one stat added twice. |
+| Resonant + Soul Drain | Spirit-paced Vulnerable, Exposed and Priority last longer: after one crossing the 2 s linger is about 3.4 s. A real link, a small one. |
+| Phase + Kill Zone | True Sight's 2 s Daze adds time inside, so Toll climbs higher, and revealed enemies take it from every tower. |
+| Phase + Soul Drain | Redundant: the floor repeats Dead Zone, and Silence and Dead Zone aren't paced by spirit. |
+| Either + Rattle Field | Weak. |
+
+Kill Zone is the best special for both heads, so the pick between specials isn't a choice.
+
+**How the other towers do it.** A head shapes how the weapon delivers: rate, reach, power. A special adds a rule the head
+lacks, usually with a trigger or a reach beyond the tower: every 3rd shell (Mortar), every 6th shot or on a crit
+(Burst, Sniper), when a burning enemy freezes (Scorcher's Thermal Shock), on a death (Hex of Reckoning), whom and when the
+buff picks (Beacon's Chosen, Rally), marks every tower uses (Radar's Mark on Sweep and Command Ping, Pyromancer's Mark).
+The two other support towers keep their heads as delivery: the Beacon's Amplifying Core is strength and Broadcast reach,
+the Radar's Rapid Array speed and Long Reach reach. On the Obelisk the specials, most head nodes and the extra line all
+have one shape, another rule that holds while the enemy is inside, so heads and specials read alike.
+
 ## Open questions
+
+Asked after the review of the tree. Each has two options and a preferred one (⭐).
+
+24. ❔ **What do the heads do?**
+    - A ⭐: delivery, as on the Beacon and the Radar. Resonant is how strong and how fast Toll builds (Coils, Meltdown),
+      and Arc Discharge's mark lasts with Toll (3 s at full, 4.5 s at Meltdown's 1.5x), so Meltdown strengthens its own
+      head. Phase is sight and time: the reveal, the Daze and how long effects linger.
+    - B: the heads stay lines of effects; only the specials change.
+25. ❔ **Coils II and Kill Zone both raise damage taken. Which keeps it?**
+    - A ⭐: Kill Zone. Coils II becomes a head start: an enemy enters with 2 Toll stacks, so the field's effects start at
+      70% instead of 50%.
+    - B: Coils II keeps Vulnerable, and Kill Zone becomes a rule of its own (question 27's shape).
+26. ❔ **Soul Drain's floor repeats Dead Zone. What does the floor do instead?**
+    - A ⭐: at the floor the field's own effects stop wearing off after the enemy leaves, so Silence, no heals, armor and
+      chill follow it for the rest of its walk. Phase with Soul Drain is then the strong pairing, on purpose.
+    - B: no floor rule; the field's own lingering effects are paced by spirit like every other debuff, so Soul Drain
+      lengthens them as it lengthens the other towers'.
+27. ❔ **Rattle Field is a dead node. What replaces it?**
+    - A ⭐: an event: when an enemy at full Toll dies inside, the field's effects jump at full strength to every enemy
+      within 1.5 cells, for the linger. Resonant's fast Toll feeds it, which makes it Resonant's pairing.
+    - B: keep the rule and raise it to about 4 stacks a second.
+28. ❔ **Mirror Field is a dead node. What replaces it?**
+    - A ⭐: Afterglow: the field's effects linger 3 s instead of 2.
+    - B: drop it; Undertow moves to extra II and the line has three nodes.
+29. ❔ **After the reshape, what is tuned first?**
+    - A ⭐: the window: entry strength and how long effects linger, since geometry caps every effect.
+    - B: the price: the specials from 4x the list price to 3x (100 to 75), like the Radar's and the Beacon's.
+30. ❔ **Does the lab price support with more than one partner?**
+    - A ⭐: yes: three partners around the field, as players build it, so the competent player stops undervaluing it.
+    - B: keep one partner and read the report with that in mind.
 
 Asked after the findings above:
 
