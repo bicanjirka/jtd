@@ -639,12 +639,25 @@ public final class BalanceReport {
         this.out.println("  health   " + row(health, BalanceReport::compact) + "   enemy health walking in");
         this.out.println("  board    " + row(run.peakOnBoard(COMPETENT), BalanceReport::compact)
                 + "   most enemy health on the board at once");
+        this.printWallsAndBreathers("", closest, leaked);
+        if (run.has(STRONG)) {
+            double[] strongClosest = run.perRound(STRONG, round -> round.pressure().closest());
+            double[] strongLeaked = run.perRound(STRONG, round -> round.pressure().leaked());
+            this.out.println("  strong   " + row(strongClosest, BalanceReport::digit) + "   closest, strong player");
+            this.out.println("  leaks    " + row(strongLeaked, BalanceReport::count) + "   leaks of the strong player");
+            this.printWallsAndBreathers(" (strong)", strongClosest, strongLeaked);
+        }
+    }
+
+    private void printWallsAndBreathers(String whose, double[] closest, double[] leaked) {
         List<Integer> walls = IntStream.range(0, closest.length).filter(i -> closest[i] >= 0.8 || leaked[i] > 0.05)
                 .mapToObj(i -> i + 1).toList();
         List<Integer> breathers = IntStream.range(0, closest.length).filter(i -> closest[i] < 0.25)
                 .mapToObj(i -> i + 1).toList();
-        this.out.println("  walls (an enemy gets 80% of the way or leaks): " + (walls.isEmpty() ? "none" : walls));
-        this.out.println("  breathers (nothing gets a quarter of the way): " + (breathers.isEmpty() ? "none" : breathers));
+        this.out.println("  walls" + whose + " (an enemy gets 80% of the way or leaks): "
+                + (walls.isEmpty() ? "none" : walls));
+        this.out.println("  breathers" + whose + " (nothing gets a quarter of the way): "
+                + (breathers.isEmpty() ? "none" : breathers));
     }
 
     private static String row(double[] values, java.util.function.DoubleFunction<String> format) {

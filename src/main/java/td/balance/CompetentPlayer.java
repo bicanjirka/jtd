@@ -98,31 +98,48 @@ final class CompetentPlayer implements Player {
     /**
      * How a competent player is held back or helped, for the questions that compare players.
      *
-     * @param types      the towers it may build
-     * @param upgrades   whether it buys upgrades
-     * @param smartCells whether it builds on the best cell, or on any cell that reaches a path
-     * @param saveFactor it waits while something this many times better per credit is within reach; 0 never waits
+     * @param types       the towers it may build
+     * @param bannedNodes upgrade nodes it never buys, nor any line through them
+     * @param upgrades    whether it buys upgrades
+     * @param smartCells  whether it builds on the best cell, or on any cell that reaches a path
+     * @param saveFactor  it waits while something this many times better per credit is within reach; 0 never waits
      */
-    record Style(Set<TowerFactory.Type> types, boolean upgrades, boolean smartCells, double saveFactor) {
+    record Style(Set<TowerFactory.Type> types, Set<String> bannedNodes, boolean upgrades, boolean smartCells,
+                 double saveFactor) {
+
+        Style {
+            // An enum set, not Set.copyOf: options are weighed in type order, and a play must repeat.
+            types = types.isEmpty() ? EnumSet.noneOf(TowerFactory.Type.class) : EnumSet.copyOf(types);
+            bannedNodes = Set.copyOf(bannedNodes);
+        }
 
         static Style standard() {
-            return new Style(EnumSet.allOf(TowerFactory.Type.class), true, true, 2.0);
+            return new Style(EnumSet.allOf(TowerFactory.Type.class), Set.of(), true, true, 2.0);
+        }
+
+        /** The standard player denied {@code role}: its towers, and the nodes that do it on the others. */
+        static Style without(Role role) {
+            return standard().withTypes(role.allowedTypes()).withBannedNodes(role.bannedNodes());
         }
 
         Style withTypes(Set<TowerFactory.Type> allowed) {
-            return new Style(EnumSet.copyOf(allowed), this.upgrades, this.smartCells, this.saveFactor);
+            return new Style(allowed, this.bannedNodes, this.upgrades, this.smartCells, this.saveFactor);
+        }
+
+        Style withBannedNodes(Set<String> banned) {
+            return new Style(this.types, banned, this.upgrades, this.smartCells, this.saveFactor);
         }
 
         Style withoutUpgrades() {
-            return new Style(this.types, false, this.smartCells, this.saveFactor);
+            return new Style(this.types, this.bannedNodes, false, this.smartCells, this.saveFactor);
         }
 
         Style withRandomCells() {
-            return new Style(this.types, this.upgrades, false, this.saveFactor);
+            return new Style(this.types, this.bannedNodes, this.upgrades, false, this.saveFactor);
         }
 
         Style withSaveFactor(double factor) {
-            return new Style(this.types, this.upgrades, this.smartCells, factor);
+            return new Style(this.types, this.bannedNodes, this.upgrades, this.smartCells, factor);
         }
     }
 
@@ -471,7 +488,8 @@ final class CompetentPlayer implements Player {
             }
             List<UpgradeNode> line = tree.pathTo(target).stream().filter(step -> !owned.owns(step.id())).toList();
             if (line.isEmpty() || !buyableNow.contains(line.getFirst())
-                    || !line.stream().allMatch(step -> turn.gateMet(tower, step) && !spent(tree, step, owned))) {
+                    || !line.stream().allMatch(step -> turn.gateMet(tower, step) && !spent(tree, step, owned)
+                            && !this.style.bannedNodes().contains(step.id()))) {
                 continue;
             }
             double factor = line.stream().mapToDouble(step -> this.nodeFactor(tower.getType(), step.id()))

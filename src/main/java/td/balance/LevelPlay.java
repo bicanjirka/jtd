@@ -60,6 +60,11 @@ public final class LevelPlay {
         return play(survey, spec.createFor(survey, seed), spec.name(), seed, pacing, rules, 0);
     }
 
+    /** {@link #play(BoardSurvey, PlayerSpec, long, Pacing)}, stopping once round {@code lastRound} is over. */
+    static PlayRecord playThrough(BoardSurvey survey, PlayerSpec spec, long seed, Pacing pacing, int lastRound) {
+        return play(survey, spec.createFor(survey, seed), spec.name(), seed, pacing, Rules.standard(), lastRound);
+    }
+
     /**
      * Plays with {@code player} from the first tick, stopping once round {@code lastRound} is over (0 plays the
      * level out). A player that rehearses replays the level through this, with the same seed, pacing and rules.
