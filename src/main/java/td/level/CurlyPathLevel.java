@@ -1,6 +1,15 @@
 package td.level;
 
+import td.effect.ShieldTemplate;
+import td.enemy.Ability;
+import td.enemy.ApplyEffectAction;
+import td.enemy.EnemyCatalog;
+import td.enemy.EnemyDefinition;
+import td.enemy.IdentifiedAbility;
+import td.enemy.PeriodicTrigger;
+import td.enemy.RadiusTarget;
 import td.enemy.Rank;
+import td.enemy.RankedEnemy;
 import td.wave.Point;
 import td.wave.WaveDefinition;
 import td.wave.smoothing.ArcCornerSmoothing;
@@ -11,6 +20,21 @@ final class CurlyPathLevel {
 
     private static final int STARTING_CREDITS = 50;
     private static final int STARTING_LIVES = 5;
+
+    private static final int WARD_INTERVAL_TICKS = 100;
+    private static final int WARD_TICKS = 60;
+    private static final float WARD_RADIUS = 80f;
+
+    /**
+     * The path's Menders ({@code mender}): from Elite they also ward the allies near them with a shield that takes
+     * every damage type, so the answer is to deny heals and shields, not to switch damage type.
+     */
+    private static final RankedEnemy MENDER = EnemyCatalog.builtIn().ranked("m").cloneAs("mender",
+            (rank, mender) -> switch (rank) {
+                case ELITE -> warding(mender, 120f);
+                case BOSS -> warding(mender, 240f);
+                default -> mender;
+            });
 
     private static final ArcCornerSmoothing SMOOTHING = new ArcCornerSmoothing(0.22, 8);
 
@@ -43,8 +67,17 @@ final class CurlyPathLevel {
                     new WaveDefinition("c 5 e 3 g 3 e 3 s 3 t", Rank.ELITE),
                     new WaveDefinition("s", Rank.BOSS),
                     new WaveDefinition("warden1", Rank.BOSS)),
-            STARTING_CREDITS, STARTING_LIVES, SMOOTHING);
+            STARTING_CREDITS, STARTING_LIVES, SMOOTHING)
+            .withCustomRankedEnemies(List.of(MENDER));
 
     private CurlyPathLevel() {
+    }
+
+    private static EnemyDefinition warding(EnemyDefinition mender, float points) {
+        return mender.withDescription(mender.description() + " On this path it also wards every other ally near it "
+                        + "with a shield that stops any damage.")
+                .withAdditionalAbilities(List.of(IdentifiedAbility.named("ward", new Ability(
+                        new PeriodicTrigger(WARD_INTERVAL_TICKS),
+                        new ApplyEffectAction(new ShieldTemplate(points, WARD_TICKS), new RadiusTarget(WARD_RADIUS))))));
     }
 }
