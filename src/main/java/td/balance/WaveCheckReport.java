@@ -31,7 +31,7 @@ import java.util.stream.LongStream;
  * checked on the strong player's own army: taking any role's towers off just before it should make it leak.
  * <p>
  * Usage: {@code WaveCheckReport [--level N] [--seeds N] [--checks 6:single,12:control+sustain] [--strip 17]
- * [--parts strong,margin,bounty,bans,strip]}. A tool run on demand, not a test: the strong player rehearses
+ * [--parts strong,replayed,margin,bounty,bans,strip]}. A tool run on demand, not a test: the strong player rehearses
  * every round a dozen ways, so the margin and the bounty sweep take many minutes.
  */
 public final class WaveCheckReport {
@@ -55,6 +55,8 @@ public final class WaveCheckReport {
     /** The parts of the report, each at its own cost. */
     enum Part {
         STRONG,
+        /** The strong player's own actions played back at tougher health: a fast stand-in for its margin. */
+        REPLAYED,
         MARGIN,
         BOUNTY,
         BANS,
@@ -99,7 +101,7 @@ public final class WaveCheckReport {
                     }
                     default -> throw new IllegalArgumentException("Unknown option " + args[i]
                             + "; use --level N --seeds N --checks 6:single,12:control+sustain --strip 17"
-                            + " --parts strong,margin,bounty,bans,strip");
+                            + " --parts strong,replayed,margin,bounty,bans,strip");
                 }
             }
             return new Options(level, seeds, Map.copyOf(checks), strip, Set.copyOf(parts));
@@ -124,10 +126,17 @@ public final class WaveCheckReport {
                 level.startingCredits(), level.startingLives(), rounds, this.options.seeds());
 
         List<PlayRecord> strongPlays = List.of();
-        if (this.options.parts().contains(Part.STRONG) || this.options.parts().contains(Part.STRIP)) {
+        if (this.options.parts().contains(Part.STRONG) || this.options.parts().contains(Part.STRIP)
+                || this.options.parts().contains(Part.REPLAYED)) {
             strongPlays = this.plays(survey, strong);
             List<PlayRecord> competentPlays = this.plays(survey, competent);
             this.printPlays(level, strongPlays, competentPlays);
+        }
+        if (this.options.parts().contains(Part.REPLAYED)) {
+            this.printMargin("strong play replayed, margin", strongPlays.parallelStream()
+                    .mapToInt(play -> Margin.healthPercent(survey, ScriptedPlayer.spec("replayed", play.actions()),
+                            play.play().seed(), LevelPlay.Pacing.standard()))
+                    .toArray());
         }
         if (this.options.parts().contains(Part.MARGIN)) {
             this.printMargin("strong margin", this.margins(survey, strong, Rules.standard()));
@@ -184,6 +193,7 @@ public final class WaveCheckReport {
         this.printRow("competent closest", competent, rounds, round -> round.pressure().closest() * 10, "%5.0f");
         this.printRow("competent leaked ", competent, rounds, round -> round.pressure().leaked(), "%5.1f");
         this.printRow("strong earned    ", strong, rounds, round -> round.economy().earned(), "%5.0f");
+        this.printRow("strong seconds   ", strong, rounds, round -> round.ticks() / 20.0, "%5.0f");
         this.out.println("  strong towers at the end, per play: " + strong.stream()
                 .flatMap(play -> play.towers().stream())
                 .collect(Collectors.groupingBy(PlayRecord.TowerLog::type, Collectors.counting()))
@@ -191,6 +201,7 @@ public final class WaveCheckReport {
                 .map(entry -> String.format("%s %.1f", entry.getKey().displayName(),
                         entry.getValue() / (double) strong.size()))
                 .collect(Collectors.joining(", ")));
+        this.printRolesBrought(strong);
         this.out.println("  strong leaks by kind, per play: " + strong.stream()
                 .flatMap(play -> play.ends().stream()).filter(PlayRecord.EnemyEnd::leaked)
                 .collect(Collectors.groupingBy(end -> end.round() + ":" + TowerLab.kindKey(end.foe().kind(),
@@ -206,6 +217,29 @@ public final class WaveCheckReport {
             case PlayerAction.Build ignored -> false;
             case PlayerAction.Upgrade ignored -> false;
         };
+    }
+
+    /** For each signature wave, how many strong plays came to it with a tower doing each role it asks for. */
+    private void printRolesBrought(List<PlayRecord> strong) {
+        for (Map.Entry<Integer, Set<Role>> check : new java.util.TreeMap<>(this.options.checks()).entrySet()) {
+            int wave = check.getKey();
+            this.out.printf("  strong brings to wave %d: %s%n", wave, check.getValue().stream()
+                    .map(role -> String.format("%s %d/%d", role.label(),
+                            strong.stream().filter(play -> brings(play, wave, role)).count(), strong.size()))
+                    .collect(Collectors.joining(", ")));
+        }
+    }
+
+    /** Whether {@code play} had built a tower of the role's types, or bought one of its nodes, before {@code wave}. */
+    private static boolean brings(PlayRecord play, int wave, Role role) {
+        return play.actions().stream()
+                .filter(action -> action.round() < wave
+                        || action.round() == wave && action.offset() == PlayRecord.TimedAction.BEFORE_ROUND)
+                .anyMatch(action -> switch (action.action()) {
+                    case PlayerAction.Build build -> !role.allowedTypes().contains(build.type());
+                    case PlayerAction.Upgrade upgrade -> role.bannedNodes().contains(upgrade.nodeId());
+                    case PlayerAction.Sell ignored -> false;
+                });
     }
 
     private void printRow(String label, List<PlayRecord> plays, int rounds,
