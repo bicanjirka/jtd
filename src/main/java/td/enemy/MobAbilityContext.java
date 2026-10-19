@@ -29,7 +29,8 @@ final class MobAbilityContext implements AbilityContext {
 
     @Override
     public boolean justDied() {
-        return this.caster.isDead() && this.caster.ticksSinceDeath(this.gameTime) == 0;
+        return this.caster.isDead() && this.caster.fate() != EnemyInspection.Fate.LEAKED
+                && this.caster.ticksSinceDeath(this.gameTime) == 0;
     }
 
     @Override
