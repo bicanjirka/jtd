@@ -32,7 +32,8 @@ balance report with a check for one change, to tune the placeholder entries belo
 findings are in the doc.
 
 `FEATURE-obelisk-support-role.md` (implemented, except the levels' retune; see Levels below): the Obelisk is a
-support tower, and the balance tools price support. A review of its tree is open (questions 24 to 30).
+support tower, and the balance tools price support. Its tree is being rebuilt as a kill box:
+`FEATURE-obelisk-kill-box.md`.
 
 `docs/plans/stat-driven-buffs.md` (phases 1 to 9) and `FEATURE-agility-and-dodge.md` are implemented.
 

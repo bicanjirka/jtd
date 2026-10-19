@@ -1,7 +1,7 @@
 # Feature Request: The Obelisk as a Support Tower
 
-**Status: implemented** (2026-10-14, closed 2026-10-15): items 1 to 5 and 7; findings below. A review of the tree
-(2026-10-16, "Review of the tree") reopens it: questions 24 to 30 are open. The levels' retune (item 6) is still wanted,
+**Status: superseded** (2026-10-19) by `FEATURE-obelisk-kill-box.md`, which answers questions 24 to 30 and replaces
+the Design section. Implemented 2026-10-14 (items 1 to 5 and 7); the findings below still stand. The levels' retune (item 6) is still wanted,
 as a feature of its own: `TODO.md`, "The built-in levels are not tuned to the support Obelisk".
 
 **Checked live** (Curly Path): the panel shows the 1-a-tick field and Interference's -25% beside an overlapping
