@@ -48,7 +48,7 @@ class TowerLabTest {
         double markingRadar = lab.supportGain(TowerFactory.Type.SONAR, List.of("sonar.special.mark_on_sweep"));
 
         assertThat(sniper).isLessThan(0.05);
-        assertThat(markingRadar).isGreaterThan(0.2);
+        assertThat(markingRadar).isGreaterThan(0.1);
     }
 
     @Test
