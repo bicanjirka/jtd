@@ -664,10 +664,14 @@ public class Driver {
                 case BRITTLE -> Effect.brittle(ticks, DamageSink.none());
                 case TOLL -> Effect.toll(3, ticks, DamageSink.none());
                 case CORRODED -> Effect.corroded(FieldStrength.FULL, ticks, DamageSink.none());
-                case UNDERTOW -> Effect.undertow(FieldStrength.FULL, ticks, DamageSink.none());
+                case DRAGGED -> Effect.dragged(30, ticks, DamageSink.none());
+                case UNDERTOW -> Effect.undertow(ticks, DamageSink.none());
+                case CONDEMNED -> Effect.condemned(4, ticks, DamageSink.none());
+                case STILLED -> Effect.stilled(ticks, DamageSink.none());
+                case UNVEILED -> Effect.unveiled(ticks, DamageSink.none());
                 case DEAD_ZONE -> Effect.deadZone(ticks, DamageSink.none());
                 case FALLOUT -> Effect.fallout(ticks, DamageSink.none());
-                case KILL_ZONE -> Effect.killZone(FieldStrength.FULL, ticks, DamageSink.none());
+                case FRAIL -> Effect.frail(FieldStrength.FULL, ticks, DamageSink.none());
                 case CRACKED -> Effect.cracked(ticks, DamageSink.none());
                 case TARRED -> Effect.tarred(ticks, DamageSink.none());
                 case BLEEDING -> Effect.bleeding(1, ticks, DamageSink.none());
