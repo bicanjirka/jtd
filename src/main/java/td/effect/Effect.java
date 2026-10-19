@@ -203,14 +203,29 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return stacking(EffectKind.TOLL, stacks, durationTicks, sink);
     }
 
-    /** {@code stacks} more of armor lowered, held for {@code durationTicks}: the field's Corrosion. */
+    /** {@code stacks} more of armor and magic resist lowered, held for {@code durationTicks}: the field's Corrosion. */
     public static Effect corroded(int stacks, int durationTicks, DamageSink sink) {
         return stacking(EffectKind.CORRODED, stacks, durationTicks, sink);
     }
 
-    /** {@code stacks} more of a held chill, for {@code durationTicks}: the field's Undertow. */
-    public static Effect undertow(int stacks, int durationTicks, DamageSink sink) {
-        return stacking(EffectKind.UNDERTOW, stacks, durationTicks, sink);
+    /** {@code stacks} more points of the field's slow, held for {@code durationTicks}. */
+    public static Effect dragged(int stacks, int durationTicks, DamageSink sink) {
+        return stacking(EffectKind.DRAGGED, stacks, durationTicks, sink);
+    }
+
+    /** The field's drag counts as a chill for a freeze for {@code durationTicks}: the field's Undertow. */
+    public static Effect undertow(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.UNDERTOW, durationTicks, sink);
+    }
+
+    /** For {@code durationTicks}, a Dazed enemy loses Toll to the field that stilled it. */
+    public static Effect stilled(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.STILLED, durationTicks, sink);
+    }
+
+    /** A revealed enemy can't be shrouded or fade for {@code durationTicks}. */
+    public static Effect unveiled(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.UNVEILED, durationTicks, sink);
     }
 
     /** No heal or shield takes hold for {@code durationTicks}. */
@@ -224,8 +239,8 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     }
 
     /** {@code stacks} more of extra damage taken from every source, held for {@code durationTicks}. */
-    public static Effect killZone(int stacks, int durationTicks, DamageSink sink) {
-        return stacking(EffectKind.KILL_ZONE, stacks, durationTicks, sink);
+    public static Effect frail(int stacks, int durationTicks, DamageSink sink) {
+        return stacking(EffectKind.FRAIL, stacks, durationTicks, sink);
     }
 
     /**

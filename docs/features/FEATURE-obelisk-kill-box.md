@@ -60,7 +60,7 @@ meanwhile. A Daze that doesn't take hold eats nothing; Stasis tries again a seco
 | II | Null Field | silenced |
 | III | Dead Zone | no heals or shields take hold |
 | IV-A | True Sight | the reveal lasts 4 s after leaving, and a revealed enemy can't be shrouded or fade |
-| IV-B | Purge | on entry the enemy loses its buffs and shields (Sprinting, shields, hurt-speed); stealth is True Sight's |
+| IV-B | Purge | an enemy loses its buffs and shields (Sprinting, shields) once, as it enters the field or steps onto a Ley Line; stealth is True Sight's |
 
 The Ward is a local detector; the Radar's Wide Band stays the wide one.
 
@@ -68,12 +68,12 @@ The Ward is a local detector; the Radar's Wide Band stays the wide one.
 
 | Tier | Node | What it does |
 |---|---|---|
-| I | Vulnerable | +damage taken from every source: +10% on entry, +20% at full Toll |
+| I | Frailty | the enemy is Frail, +damage taken from every source: +10% on entry, +20% at full Toll (named apart from the Vulnerable other towers apply) |
 | II | Corrosion | -armor and -magic resist, up to -30 each at full Toll |
 | III | Resonant Coils | Toll builds twice as fast |
 | IV | Meltdown | Toll cap 10: effects up to 1.5x (the 50% slow cap still holds) |
 
-**Specials (3x the list price, 75).**
+**Specials (4x the list price, 100, as on every tower).**
 
 - **Arc Discharge.** Once a second the healthiest visible enemy inside becomes every tower's Priority and is Exposed,
   for 1.5 s on entry up to 3 s at full Toll. No chain, no damage.
@@ -85,7 +85,7 @@ The Ward is a local detector; the Radar's Wide Band stays the wide one.
   covered, then the shorter beam. The player may pin a line by hand; a pinned host that is sold returns the caster to
   auto-pick. Lines don't count toward Interference.
 
-**Gone:** Kill Zone (Vulnerable is the bite line's), Mirror Field and Rattle Field (dead), Tesla Coil's chain, Coils
+**Gone:** Kill Zone (Frailty is the bite line's), Mirror Field and Rattle Field (dead), Tesla Coil's chain, Coils
 II's Vulnerable at full Toll, Phase Field I and II's range, and the Resonant and Phase heads as they are.
 
 **Gates.** Both head-III nodes (Event Horizon, Dead Zone) keep the 30 s at full Toll deed.
@@ -130,7 +130,7 @@ towers' trees, new enemies.
 - Heads: Gravity (time held) vs Ward (counter-play). Detection costs the Gravity head. Bite is the extra line, open to
   either head.
 - Every earlier ✅ in `FEATURE-obelisk-support-role.md` was open to rethinking; what this doc doesn't restate is gone.
-- Specials: Arc Discharge, Soul Drain, Ley Line, at 75.
+- Specials: Arc Discharge, Soul Drain, Ley Line, at the usual 4x (100).
 - **Done when**, measured with `--seeds 12 --strong --variety` and `BuildHarness`:
   - an all-Obelisk army holds under 100% on every level; banning it costs x0.75 to x0.95;
   - the lab shows support from its nodes, and the competent player builds and upgrades it;

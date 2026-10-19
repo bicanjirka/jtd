@@ -81,6 +81,12 @@ public interface HitReceiver {
     /** Removes the shield and the heal it has, if any. */
     void dispelRestoratives();
 
+    /** Removes every buff it has given itself or been given by an ally. */
+    void dispelBuffs();
+
+    /** Takes {@code stacks} off its {@code kind}, ending the effect once none are left. */
+    void loseStacks(EffectKind kind, int stacks);
+
     /** Its spirit now: {@code 0} at neutral, down to {@code -100}. */
     float spirit();
 

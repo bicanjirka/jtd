@@ -2,6 +2,7 @@ package td.ui;
 
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
+import td.tower.PulseTower;
 import td.tower.Tower;
 import td.ui.render.InfoSheet;
 import td.util.GameWorld;
@@ -23,6 +24,7 @@ import java.awt.event.ComponentEvent;
 import java.io.Serial;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * The text pane under the tower toolbar: the selected tower's status and a sell button, an enemy's
@@ -55,7 +57,10 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private boolean hovering = false;
     private Runnable onDeselected = () -> {
     };
+    private Consumer<Boolean> onPinToggled = pinning -> {
+    };
     private HudButton jButton_sell;
+    private HudToggleButton jToggle_pin;
     private JScrollPane jScrollPane1;
     private JTextPane jTextPane1;
 
@@ -79,12 +84,14 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     public void setExternalText(String s) {
         this.jButton_sell.setVisible(false);
+        this.jToggle_pin.setVisible(false);
         this.setText(s);
     }
 
     /** An enemy's or a shop tower's sheet, in place of any tower status. */
     public void showSheet(InfoSheet sheet) {
         this.jButton_sell.setVisible(false);
+        this.jToggle_pin.setVisible(false);
         if (!this.hovering) {
             this.replaceSheet(sheet);
         }
@@ -126,6 +133,16 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         this.onDeselected = listener;
     }
 
+    /** Told {@code true} when the player asks to pick a Ley Line's host, {@code false} when they take it back. */
+    public void onPinToggled(Consumer<Boolean> listener) {
+        this.onPinToggled = listener;
+    }
+
+    /** Shows whether the next board click picks the selected Obelisk's Ley Line host. */
+    public void showPinning(boolean pinning) {
+        this.jToggle_pin.setSelected(pinning);
+    }
+
     /** After a level ends, a selected tower's stats stay visible but selling is disabled. */
     public void setLevelEnded(boolean ended) {
         this.levelEnded = ended;
@@ -134,6 +151,11 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     private void updateInterface() {
         this.jButton_sell.setVisible(this.selectedTower != null);
+        boolean pins = this.selectedTower != null && !this.levelEnded && PulseTower.castsLeyLine(this.selectedTower);
+        this.jToggle_pin.setVisible(pins);
+        if (!pins) {
+            this.jToggle_pin.setSelected(false);
+        }
 
         if (this.selectedTower != null) {
             this.jButton_sell.setEnabled(!this.levelEnded);
@@ -222,6 +244,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         jScrollPane1 = new JScrollPane();
         jTextPane1 = new JTextPane();
         jButton_sell = new HudButton("Sell");
+        jToggle_pin = new HudToggleButton();
 
         setLayout(new GridBagLayout());
 
@@ -252,6 +275,19 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         gridBagConstraints.weightx = 0.01;
         gridBagConstraints.weighty = 0.01;
         add(jScrollPane1, gridBagConstraints);
+
+        jToggle_pin.setText("Pin line");
+        jToggle_pin.setToolTipText("Pick the Obelisk this one's Ley Line links to; pick it again to unpin");
+        jToggle_pin.setVisible(false);
+        jToggle_pin.addActionListener(evt -> this.onPinToggled.accept(this.jToggle_pin.isSelected()));
+
+        gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.WEST;
+        gridBagConstraints.weightx = 0.01;
+        add(jToggle_pin, gridBagConstraints);
 
         jButton_sell.setText("Sell");
         jButton_sell.setForeground(SELL_TEXT_COLOR);

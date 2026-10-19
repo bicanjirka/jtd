@@ -75,10 +75,10 @@ public enum EffectKind {
     /** When the target dies, the Hexer's Dooms near it release at once and start again. */
     RECKONING(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** Its abilities don't fire; death abilities and auras still do. */
-    SILENCED(EffectRule.of(EffectCategory.SOFT_CC).tagged(EffectTag.FIELD)),
+    SILENCED(EffectRule.of(EffectCategory.SOFT_CC).pacedBySpirit().tagged(EffectTag.FIELD)),
     /** Can't be sped up, and its speed is held to three quarters of its base. */
-    ANCHORED(EffectRule.of(EffectCategory.SOFT_CC).perStack(EnemyStat.MOVE_SPEED, StatModifier.capAtShareOfBase(0.75f))
-            .tagged(EffectTag.FIELD)),
+    ANCHORED(EffectRule.of(EffectCategory.SOFT_CC).pacedBySpirit()
+            .perStack(EnemyStat.MOVE_SPEED, StatModifier.capAtShareOfBase(0.75f)).tagged(EffectTag.FIELD)),
     /** Each stack lowers magic resist by ten. */
     UNRAVELED(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5).pacedBySpirit()
             .perStack(EnemyStat.MAGIC_RESIST, -10f).tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
@@ -86,23 +86,28 @@ public enum EffectKind {
     BRITTLE(EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit().perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.3f)),
     /** Time spent in the field: it sets how strongly the field's effects hold, and fades soon after the enemy leaves. */
     TOLL(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5)),
-    /** Lowers armor while the enemy is in the field and a while after, five a stack: fifty at the field's full strength. */
-    CORRODED(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST)
-            .perStack(EnemyStat.ARMOR, -5f).tagged(EffectTag.FIELD)),
     /**
-     * A chill that doesn't fade while the enemy is in the field and a while after, 35% at the field's full strength, and counts
-     * as a chill for a freeze.
+     * Lowers armor and magic resist while the enemy is in the field and a while after, three a stack: thirty each at the
+     * field's full strength.
      */
-    UNDERTOW(EffectRule.of(EffectCategory.SOFT_CC).stackingOnASharedClock(FieldStrength.MOST)
-            .perStack(EnemyStat.MOVE_SPEED, StatModifier.times(FieldStrength.perStackOf(0.65f)))
-            .tagged(EffectTag.FIELD)),
+    CORRODED(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST).pacedBySpirit()
+            .perStack(EnemyStat.ARMOR, -3f).perStack(EnemyStat.MAGIC_RESIST, -3f).tagged(EffectTag.FIELD)),
+    /** The field's slow, a point of speed in a hundred a stack; it is no chill, and nothing resists it. */
+    DRAGGED(EffectRule.of(EffectCategory.SOFT_CC).stackingOnASharedClock(DragStrength.MOST).pacedBySpirit()
+            .perStack(EnemyStat.MOVE_SPEED, StatModifier.percent(-0.01f)).tagged(EffectTag.FIELD)),
+    /** The field's drag counts as a chill for a freeze while the enemy is in it and a while after. */
+    UNDERTOW(EffectRule.of(EffectCategory.SOFT_CC).pacedBySpirit().tagged(EffectTag.FIELD)),
+    /** While the enemy is Dazed, the field that stilled it takes its Toll away. */
+    STILLED(EffectRule.of(EffectCategory.DEBUFF)),
+    /** A revealed enemy can't be shrouded or fade while it lasts. */
+    UNVEILED(EffectRule.of(EffectCategory.STEALTH).pacedBySpirit()),
     /** Heals and shields can't take hold while the enemy is in the field and a while after. */
-    DEAD_ZONE(EffectRule.of(EffectCategory.DEBUFF).tagged(EffectTag.FIELD)),
+    DEAD_ZONE(EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit().tagged(EffectTag.FIELD)),
     /** Heals can't take hold while the enemy is in the field; a shield still can. */
     FALLOUT(EffectRule.of(EffectCategory.DEBUFF)),
-    /** Takes extra damage from every source while the enemy is in the field and a while after: 40% at full strength. */
-    KILL_ZONE(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST)
-            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.04f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.04f)
+    /** Takes extra damage from every source while the enemy is in the field and a while after: 20% at full strength. */
+    FRAIL(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST).pacedBySpirit()
+            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.02f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.02f)
             .tagged(EffectTag.FIELD)),
     /** Takes five points of plating and five of insulation. */
     CRACKED(EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit()

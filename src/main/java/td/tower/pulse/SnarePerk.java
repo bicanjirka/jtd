@@ -1,0 +1,20 @@
+package td.tower.pulse;
+
+import td.tower.upgrade.PerkText;
+import td.util.TickRate;
+
+/** Snare: an enemy is Dazed when it gains its first Toll stack of a visit. */
+public final class SnarePerk implements PulsePerk {
+
+    private static final int DAZE_TICKS = Math.round(0.5f * TickRate.TICKS_PER_SECOND);
+
+    @Override
+    public PulseSpec refineSpec(PulseSpec spec) {
+        return spec.withVisit(spec.visit().dazing(DAZE_TICKS));
+    }
+
+    @Override
+    public String describe() {
+        return "an enemy is Dazed for " + PerkText.seconds(DAZE_TICKS) + " when it gains its first Toll stack, once per visit";
+    }
+}

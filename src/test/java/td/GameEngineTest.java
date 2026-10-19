@@ -456,6 +456,40 @@ class GameEngineTest {
         assertThat(sonar.getDamageDealt()).isZero();
     }
 
+    @Test
+    void aClickWhilePinningLinksTheSelectedObelisksLeyLineToTheObeliskClickedAndKeepsItSelected() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("c", Rank.GRUNT)), 100_000));
+        engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
+        engine.startPlacing(TowerFactory.Type.PULSE, PulseTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(0));
+        engine.startPlacing(TowerFactory.Type.PULSE, PulseTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(4));
+        engine.startPlacing(TowerFactory.Type.PULSE, PulseTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(6), BoardFixtures.cellCenter(0));
+        PulseTower caster = (PulseTower) engine.getGameWorld().towers().all().getFirst();
+        for (String node : List.of("Attune", "Awaken", "Ley Line")) {
+            caster.buyUpgrade(caster.upgradeTree().nodes().stream().filter(n -> n.displayName().equals(node))
+                    .findFirst().orElseThrow());
+        }
+        caster.setSelected(true);
+        engine.doTick(20);
+        float autoTo = caster.getLeyLine().orElseThrow().toY();
+
+        engine.startPinningLeyLine();
+        boolean pinning = engine.isPinningLeyLine();
+        boolean asked = engine.pinLeyLineAt(BoardFixtures.cellCenter(6), BoardFixtures.cellCenter(0));
+        engine.doTick(40);
+
+        assertThat(autoTo).isEqualTo(BoardFixtures.cellCenter(4));
+        assertThat(pinning).isTrue();
+        assertThat(asked).isTrue();
+        assertThat(engine.isPinningLeyLine()).isFalse();
+        assertThat(caster.isLeyLinePinned()).isTrue();
+        assertThat(caster.getLeyLine().orElseThrow().toX()).isEqualTo(BoardFixtures.cellCenter(6));
+        assertThat(caster.isSelected()).isTrue();
+    }
+
     private static Tower towerOfType(GameEngine engine, TowerFactory.Type type) {
         return engine.getGameWorld().towers().all().stream()
                 .filter(tower -> tower.getType() == type).findFirst().orElseThrow();
