@@ -1,7 +1,13 @@
 # Feature Request: The Obelisk as a Kill Box
 
-**Status: planned** (2026-10-19). Supersedes the tree of `FEATURE-obelisk-support-role.md`, whose open questions 24
-to 30 this answers.
+**Status: implemented, tuning open** (2026-10-19). Supersedes the tree of `FEATURE-obelisk-support-role.md`, whose open
+questions 24 to 30 this answers. All five steps are in; three done criteria are not met (findings below, open questions
+31 to 33).
+
+**Checked live** (Curly Path): the Pin line toggle shows only on an Obelisk that owns Ley Line, a click on another
+Obelisk pins the beam (drawn dashed) and keeps the caster selected; an enemy in a Frailty field reads "Dragged 15%" and
+"Frail", damage taken 112% at one Toll stack. A board render shows the bite rim, the darker Gravity Well and a Ley Line
+in its caster's tint.
 
 ## Summary
 
@@ -145,9 +151,55 @@ towers' trees, new enemies.
   partners and a saved baseline; the base drag and the reshaped tree with its prices; Ley Line's auto-pick and beam;
   pinning and the head tints; tuning to the criteria and one live `run-jtd` check.
 
+## Findings
+
+From `BalanceReport --seeds 12 --strong --variety --compare kb-base`, 2026-10-19, saved as `target/balance/kb-after`.
+`kb-base` is the old tree measured with the box-of-three lab, so only the tree moved. Arc Discharge was still the old
+Priority and Exposed mark in this run (Condemn came after it); no play bought it either way.
+
+| Level | competent holds (before) | strong holds (before) | banning the Obelisk (before) | Obelisks alone |
+|---|---|---|---|---|
+| Curly Path | 65% (98%) | 74% (109%) | x1.33 (x0.88) | never win |
+| Zigzag Path | 61% (51%) | 68% (57%) | x0.75 (x0.90) | hold 24% (19%) |
+| Twisted Hourglass | 60% (49%) | 104% (79%) | x0.02 (x0.02) | hold 11% (none) |
+
+- **Met:** an all-Obelisk army holds under 100% everywhere; the lab shows support (+7% on Curly, +8% on Zigzag, +15% on
+  Hourglass, against the Hive's +21% to +30%); every play builds Obelisks and buys Sight and Frailty; no Obelisk build
+  comes near the Beacon's +38%; at an equal budget (`BuildHarness 1 8 pulse 4 2 1500 1`) the best Gravity build (Stasis,
+  Meltdown, Soul Drain: 13.4 lives saved) and the best Ward build (True Sight, Meltdown, Soul Drain: 11.3) are within
+  20%.
+- **Not met: banning it costs x0.75 to x0.95.** On Curly Path banning it helps (x1.33), and the competent player
+  falls from 98% to 65%. It buys Sight instead of the Radar's Wide Band, which every play bought before: Sight is
+  cheaper, but it shows a Sniper beside it only 0.48 of a shrouded Elite Ghost group (Wide Band 0.90), and the plays leak
+  in the Elite Ghost rounds (11, 15, 16, 18). Banning the Radar now helps there too (x1.64). On Twisted Hourglass the
+  Obelisk is still the only affordable revealer of three shrouded lanes (x0.02), the levels' finding already in `TODO.md`.
+- **Not met: every special bought.** No play buys any special; the lab prices none above its reporting line. In the
+  build harness each special adds lives over a plain copy (Arc Discharge alone 5.4, Soul Drain 3.4), and Soul Drain
+  is the best pick with both heads.
+- **Sight's reveal can't be lengthened.** Raising its linger from 0.5 s to 1.5 s moved no number: a shrouded group
+  re-shrouds as soon as it leaves the field, since every Elite Ghost in it re-casts every 3 s and their casts overlap.
+  Sight shows a group only while it is inside, as Phase Field did.
+- **Snare is the most efficient node** (9.6 lives saved per 100 credits); the head-IV nodes and Meltdown alone save
+  little or cost lives, since their price takes copies away, and pay only in a full build.
+- Performance after the change: tick p99 0.50 ms, frame build p99 0.50 ms, 127 KB a frame (budget 1 ms, 1 ms, 512 KB).
+
 ## Open questions
 
-None. Numbers are starting points the report tunes.
+Each has two options and a preferred one (⭐).
+
+31. ❔ **Curly Path loses its Elite Ghost answer to a cheap, partial one. What fixes it?**
+    - A ⭐: the players' rules value a reveal by what it shows of the level's own hiding kinds, so 0.48 for 45 credits
+      no longer beats 0.90 for about 136; the Obelisk stays as designed.
+    - B: Sight also Unveils while its short linger lasts, so a group revealed inside can't re-shroud for 0.5 s; True
+      Sight keeps the long one.
+32. ❔ **No player buys a special. What makes one worth buying?**
+    - A ⭐: the lab prices specials with the box and a hosting Obelisk, as the harness builds them, and the competent
+      player counts a special's lives saved, not only its support share.
+    - B: lower the Obelisk's specials to 3x (75), as first proposed.
+33. ❔ **Twisted Hourglass still needs the Obelisk (x0.02).** Is that the wave-composition feature's, as recorded in
+    `TODO.md`, or this one's?
+    - A ⭐: the wave-composition feature's: three shrouded lanes are the level's demand, not the tower's.
+    - B: this one's: Ward I costs more (a reveal per lane should not be the cheapest answer).
 
 ---
 
