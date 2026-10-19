@@ -17,6 +17,7 @@ import td.tower.upgrade.StandardBaseSlot;
 import td.ui.render.BeamDraw;
 import td.ui.render.ConeDraw;
 import td.ui.render.FlashDraw;
+import td.ui.render.LeyLineDraw;
 import td.ui.render.NestDraw;
 import td.ui.render.Palette;
 import td.ui.render.PulseDraw;
@@ -48,6 +49,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float SILVER_WIDTH_FACTOR = 1.5f;
     private static final float PING_RING_ALPHA = 0.6f;
     private static final float HELD_BEAM_ALPHA = 0.35f;
+    /** How bright a Ley Line is drawn while no enemy stands on it. */
+    private static final float LEY_LINE_IDLE_ALPHA = 0.45f;
     /** The crosshair's ring and arms, as fractions of a cell. */
     private static final float CROSSHAIR_RADIUS_FRACTION = 0.45f;
     private static final float CROSSHAIR_ARM_FRACTION = 0.65f;
@@ -271,15 +274,25 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     /** The field's faint disc, and rings rippling out of the tower faster the more Toll its enemies hold. */
     public Void visitPulseTower(PulseTower tower) {
         this.addZap(tower);
+        Palette tint = rippleFor(tower.getFieldLook());
+        tower.getLeyLine().ifPresent(line -> this.draws.add(new LeyLineDraw(tint, line.fromX(), line.fromY(), line.toX(),
+                line.toY(), tower.isLeyLinePinned(), tower.isLeyLineBusy() ? 1f : LEY_LINE_IDLE_ALPHA)));
         if (!tower.isFiring()) {
             return null;
         }
-        this.draws.add(new PulseDraw(Palette.TOWER_PULSE_RING, tower.getX(), tower.getY(), tower.getFieldRadius()));
+        float radius = tower.getFieldRadius();
+        this.draws.add(new PulseDraw(Palette.TOWER_PULSE_RING, tower.getX(), tower.getY(), radius));
+        if (tower.hasGravityWell()) {
+            this.draws.add(new PulseDraw(Palette.TOWER_PULSE_WELL, tower.getX(), tower.getY(), radius * 2f / 3f));
+            this.draws.add(new PulseDraw(Palette.TOWER_PULSE_WELL, tower.getX(), tower.getY(), radius / 3f));
+        }
+        if (tower.bites()) {
+            this.draws.add(new RingDraw(Palette.TOWER_PULSE_RIM_BITE, tower.getX(), tower.getY(), radius, 1f));
+        }
         double cyclesPerSecond = RIPPLE_CYCLES_PER_SECOND * (1.0 + RIPPLE_SPEEDUP_PER_TOLL * tower.getHighestToll());
         for (int i = 0; i < RIPPLE_RINGS; i++) {
             double phase = (this.animationSeconds * cyclesPerSecond + (double) i / RIPPLE_RINGS) % 1.0;
-            this.draws.add(new RingDraw(rippleFor(tower.getFieldLook()), tower.getX(), tower.getY(),
-                    (float) (phase * tower.getFieldRadius()), (float) (1.0 - phase)));
+            this.draws.add(new RingDraw(tint, tower.getX(), tower.getY(), (float) (phase * radius), (float) (1.0 - phase)));
         }
         return null;
     }
@@ -287,9 +300,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static Palette rippleFor(PulseTower.FieldLook look) {
         return switch (look) {
             case PLAIN -> Palette.TOWER_PULSE_RIPPLE;
-            case NULL -> Palette.TOWER_PULSE_RIPPLE_NULL;
-            case UNDERTOW -> Palette.TOWER_PULSE_RIPPLE_UNDERTOW;
-            case CORROSION -> Palette.TOWER_PULSE_RIPPLE_CORROSION;
+            case WARD -> Palette.TOWER_PULSE_RIPPLE_WARD;
+            case GRAVITY -> Palette.TOWER_PULSE_RIPPLE_GRAVITY;
         };
     }
 

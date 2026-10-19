@@ -263,6 +263,20 @@ public final class ActiveEffects {
         return Optional.ofNullable(this.active.get(kind));
     }
 
+    /** Takes {@code count} stacks off the active {@code kind}, keeping its clock; none left ends it. */
+    public void loseStacks(EffectKind kind, int count) {
+        Effect effect = this.active.get(kind);
+        if (effect == null) {
+            return;
+        }
+        int left = effect.stacks() - count;
+        if (left <= 0) {
+            this.active.remove(kind);
+        } else {
+            this.active.put(kind, effect.withStacks(left, effect.remainingTicks()));
+        }
+    }
+
     /** Ends the active {@code kind} and tells whether there was one, for an effect that one hit spends. */
     public boolean consume(EffectKind kind) {
         return this.active.remove(kind) != null;

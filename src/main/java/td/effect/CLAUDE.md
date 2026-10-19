@@ -37,12 +37,13 @@
   freeze, invisible, shield, heal and the pools keep their own pace.
 - `MARKED` is spent by a hit, never by periodic damage: the mob calls `consume(MARKED)`, and only
   when its resilience is below 100.
-- A field effect (`SILENCED`, `ANCHORED`, `CORRODED`, `UNDERTOW`, `DEAD_ZONE`, `KILL_ZONE`) is an
-  ordinary timed effect the tower that holds the field refreshes every tick, so it ends a fixed
-  time after the enemy leaves; none is paced by spirit, so that time is exact. A field effect with a
-  number (`CORRODED`, `UNDERTOW`, `KILL_ZONE`) holds it in stacks of `FieldStrength`: a field tops the
-  stacks up to the strength it gives, so of two fields the stronger holds. `TOLL` is a stack debuff on
-  one shared clock (every stack goes when it runs out), never paced itself.
+- A field effect (`SILENCED`, `ANCHORED`, `CORRODED`, `DRAGGED`, `UNDERTOW`, `DEAD_ZONE`, `FRAIL`) is an
+  ordinary timed effect the tower that holds the field refreshes every tick, so it ends a while after
+  the enemy leaves, paced by spirit like any debuff. A field effect with a number holds it in stacks:
+  `CORRODED` and `FRAIL` in `FieldStrength`, `DRAGGED` in points of speed (`DragStrength`, capped at
+  `MOST`). A field tops the stacks up to the strength it gives, so of two fields the stronger holds,
+  and lowers (`loseStacks`) only what it gave itself. `TOLL` is a stack debuff on one shared clock
+  (every stack goes when it runs out), never paced itself. `UNVEILED` keeps `INVISIBLE` out.
   `DEAD_ZONE` keeps `HEAL` and `SHIELD` out, and `FALLOUT` (a ground zone's) only `HEAL`, through
   `EffectInteractions`' held-off table, which unlike a block strips nothing already there. `BRITTLE` counts
   only while `FREEZE` is active (`EffectInteractions`' requires table).
@@ -66,8 +67,8 @@
 - Two hexes bend fire and ice, each a row in one of `EffectInteractions`' tables keyed only on the
   kind being active: under `RIME` a freeze buys twice the chill's extra time and lands all of the burn
   it puts out; under `ASH` pools hold twice as much and earn stacks twice as often (the pool clock still
-  counts down by one, since pulses ride it), and a chill lands at a quarter. An `UNDERTOW` counts as a
-  quarter chill for a freeze. `ASH` keeping out `FREEZE`, and `RIME`/`ASH` replacing each other, are
+  counts down by one, since pulses ride it), and a chill lands at a quarter. An `UNDERTOW` (a flag beside
+  the field's drag) counts as a quarter chill for a freeze. `ASH` keeping out `FREEZE`, and `RIME`/`ASH` replacing each other, are
   `EffectInteractions` rows too.
 - What a curse carries on from a dead enemy is `EffectKind.spreadsWithCurse()`: the debuffs that
   weaken an enemy, copied with their own sink and time left, never the marks a tower leaves for

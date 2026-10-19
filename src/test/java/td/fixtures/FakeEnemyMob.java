@@ -4,6 +4,7 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.Effect;
+import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyMobVisitor;
@@ -12,8 +13,10 @@ import td.enemy.Rank;
 import td.wave.Vec2;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -30,6 +33,7 @@ public final class FakeEnemyMob implements EnemyMob {
     private final List<Effect> appliedEffects = new ArrayList<>();
     private final List<AttackProfile> attackers = new ArrayList<>();
     private final List<Float> shieldBreaks = new ArrayList<>();
+    private final Map<EffectKind, Integer> lostStacks = new EnumMap<>(EffectKind.class);
     private boolean hitsLandCritical;
     private boolean diesOnHit;
     private boolean appliesEffects;
@@ -38,6 +42,7 @@ public final class FakeEnemyMob implements EnemyMob {
     private boolean freezeDiminished;
     private float spirit;
     private int dispels;
+    private int buffDispels;
     private float physicalReduction;
     private double x;
     private double y;
@@ -201,6 +206,23 @@ public final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
+    public void dispelBuffs() {
+        this.appliedEffects.removeIf(effect -> effect.kind().category() == EffectCategory.BUFF);
+        this.buffDispels++;
+    }
+
+    /** How many times its buffs were dispelled. */
+    public int buffDispels() {
+        return this.buffDispels;
+    }
+
+    /** Records the loss, which {@link #effectStacks} takes off what the effects of {@code kind} put on it. */
+    @Override
+    public void loseStacks(EffectKind kind, int stacks) {
+        this.lostStacks.merge(kind, stacks, Integer::sum);
+    }
+
+    @Override
     public void dispelRestoratives() {
         this.appliedEffects.removeIf(effect -> effect.kind() == EffectKind.SHIELD || effect.kind() == EffectKind.HEAL);
         this.dispels++;
@@ -272,7 +294,7 @@ public final class FakeEnemyMob implements EnemyMob {
                 cap = Math.max(cap, effect.effectiveStackCap());
             }
         }
-        return Math.min(stacks, cap);
+        return Math.max(0, Math.min(stacks, cap) - this.lostStacks.getOrDefault(kind, 0));
     }
 
     @Override

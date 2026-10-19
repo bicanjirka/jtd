@@ -950,12 +950,14 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void corrosionAtFullStrengthLowersArmorByFiftyAndNeverBelowZero() {
+    void corrosionAtFullStrengthLowersArmorAndMagicResistByThirtyAndNeverBelowZero() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.corroded(FieldStrength.FULL, 10, DamageSink.none()));
 
         assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 80f), effects, EnemyStat.ARMOR))
-                .isEqualTo(30f);
+                .isEqualTo(50f);
+        assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.MAGIC_RESIST, 40f), effects,
+                EnemyStat.MAGIC_RESIST)).isEqualTo(10f);
         assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 10f), effects, EnemyStat.ARMOR)).isZero();
     }
 
@@ -978,20 +980,20 @@ class ActiveEffectsTest {
     @Test
     void aFieldEffectsStacksStopAtTheFieldsMostStrength() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.killZone(FieldStrength.MOST, 10, DamageSink.none()));
-        effects.apply(Effect.killZone(FieldStrength.MOST, 10, DamageSink.none()));
+        effects.apply(Effect.frail(FieldStrength.MOST, 10, DamageSink.none()));
+        effects.apply(Effect.frail(FieldStrength.MOST, 10, DamageSink.none()));
 
-        assertThat(effects.stacks(EffectKind.KILL_ZONE)).isEqualTo(FieldStrength.MOST);
-        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.6f, within(0.001f));
+        assertThat(effects.stacks(EffectKind.FRAIL)).isEqualTo(FieldStrength.MOST);
+        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.3f, within(0.001f));
     }
 
     @Test
-    void killZoneAtFullStrengthRaisesEveryDamageTakenByFortyPercent() {
+    void frailAtFullStrengthRaisesEveryDamageTakenByTwentyPercent() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.killZone(FieldStrength.FULL, 10, DamageSink.none()));
+        effects.apply(Effect.frail(FieldStrength.FULL, 10, DamageSink.none()));
 
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.4f, within(0.001f));
-        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.4f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.2f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.2f, within(0.001f));
     }
 
     @Test
@@ -1024,17 +1026,42 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void undertowAtFullStrengthChillsThirtyFivePercentAndBuysAFreezeTheChillsExtraTime() {
+    void theMostDragTakesHalfTheSpeedAndAnUndertowBesideItBuysAFreezeTheChillsExtraTime() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.undertow(FieldStrength.FULL, 10, DamageSink.none()));
+        effects.apply(Effect.dragged(DragStrength.MOST + 10, 10, DamageSink.none()));
+        effects.apply(Effect.undertow(10, DamageSink.none()));
         BaseStats<EnemyStat> base = BaseStats.defaults(EnemyStat.class).with(EnemyStat.MOVE_SPEED, 2f);
 
         float slowed = resolvedOn(base, effects, EnemyStat.MOVE_SPEED);
         effects.apply(Effect.freeze(40, DamageSink.none()));
 
-        assertThat(slowed).isCloseTo(1.3f, within(0.001f));
+        assertThat(slowed).isCloseTo(1f, within(0.001f));
         assertThat(effects.remainingTicks(EffectKind.FREEZE)).hasValue(50);
         assertThat(effects.has(EffectKind.UNDERTOW)).isTrue();
+    }
+
+    @Test
+    void losingStacksKeepsTheClockAndLosingThemAllEndsTheEffect() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.toll(5, 30, DamageSink.none()));
+
+        effects.loseStacks(EffectKind.TOLL, 2);
+        int left = effects.stacks(EffectKind.TOLL);
+        effects.loseStacks(EffectKind.TOLL, 3);
+
+        assertThat(left).isEqualTo(3);
+        assertThat(effects.has(EffectKind.TOLL)).isFalse();
+    }
+
+    @Test
+    void anUnveiledEnemyCannotTurnInvisibleAndKeepsItsReveal() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.revealed(40, DamageSink.none()));
+        effects.apply(Effect.unveiled(40, DamageSink.none()));
+
+        effects.apply(Effect.invisible(60, DamageSink.none()));
+
+        assertThat(effects.activeKinds()).containsExactlyInAnyOrder(EffectKind.REVEALED, EffectKind.UNVEILED);
     }
 
     @Test

@@ -48,11 +48,10 @@
   damage: it is the strength (`FieldStrength.at`) the field tops its numeric effects up to. The
   field's damage changes only through stats; Interference reads the other fields once a second
   through a `TowerVisitor`.
-- Mirror Field listens to the roster's `ShieldListener` while the rule is owned (and drops it in
-  `doCleanup`): what a shield takes of any hit on an enemy that was inside the field's last tick comes back
-  as periodic damage that goes through shields (`AttackProfile.withIgnoredShields`), and is never mirrored again.
-- A rule the Pulse holds inside its field (`FieldMode`) is an effect refreshed every tick the enemy is
-  inside, never a flag on the enemy. Event Horizon counts the deaths of enemies that were inside the
+- A rule the Pulse holds inside its field (`FieldMode`, the drag in `HoldSpec`) is an effect refreshed every
+  tick the enemy is inside, never a flag on the enemy; `FieldHolds` remembers what this field gave, so it lowers
+  only that. A Ley Line is pure geometry (`LeyLine`): each field re-picks its host and its casters once a second,
+  and applies its own rules to the enemies on every line it casts or hosts, without damage or Toll. Event Horizon counts the deaths of enemies that were inside the
   tick before and resets on the wave announcer; the tower subscribes lazily and unsubscribes in
   `doCleanup`.
 - A Hexer's hex is an enemy effect in `EffectCategory.HEX`, applied through `applyEffect`, and that

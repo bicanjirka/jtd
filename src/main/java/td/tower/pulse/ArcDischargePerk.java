@@ -1,5 +1,6 @@
 package td.tower.pulse;
 
+import td.effect.FieldStrength;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
@@ -16,6 +17,7 @@ public final class ArcDischargePerk implements PulsePerk {
     @Override
     public String describe() {
         return "once a second a zap marks the healthiest visible enemy inside: every tower turns on it, and it is "
-                + "Exposed, for " + PerkText.seconds(MARK_TICKS);
+                + "Exposed, for " + PerkText.seconds(MARK_TICKS * FieldStrength.ENTRY / FieldStrength.FULL)
+                + " on entry, " + PerkText.seconds(MARK_TICKS) + " at full Toll";
     }
 }

@@ -13,6 +13,7 @@ import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.level.LevelDefinition;
 import td.level.LevelOutcome;
+import td.tower.PulseTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.GameHost;
@@ -321,6 +322,39 @@ public class GameEngine {
 
     public void unSelectTower() {
         this.placement.unSelectTower();
+        this.placement.stopPinningLeyLine();
+    }
+
+    /** The next board click picks the host of the selected Obelisk's Ley Line; a no-op for any other selection. */
+    public void startPinningLeyLine() {
+        if (!this.outcome.isOver() && this.selectedTower().filter(PulseTower::castsLeyLine).isPresent()) {
+            this.placement.startPinningLeyLine();
+        }
+    }
+
+    public void cancelPinningLeyLine() {
+        this.placement.stopPinningLeyLine();
+    }
+
+    public boolean isPinningLeyLine() {
+        return this.placement.isPinningLeyLine();
+    }
+
+    /**
+     * Ends pinning, and pins the selected Obelisk's Ley Line to the Obelisk under this board pixel (the one it is
+     * pinned to unpins it).
+     *
+     * @return whether a pin was asked for: false for an empty cell, a tower that is no Obelisk, or one out of reach
+     */
+    public boolean pinLeyLineAt(int boardX, int boardY) {
+        this.placement.stopPinningLeyLine();
+        Optional<Tower> caster = this.selectedTower();
+        Optional<Tower> host = this.placement.towerAt(boardX, boardY);
+        return caster.isPresent() && host.isPresent() && PulseTower.pinLeyLine(caster.get(), host.get());
+    }
+
+    private Optional<Tower> selectedTower() {
+        return this.gameWorld.towers().all().stream().filter(Tower::isSelected).findFirst();
     }
 
     /**

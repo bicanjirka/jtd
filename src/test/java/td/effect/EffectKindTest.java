@@ -13,7 +13,8 @@ class EffectKindTest {
     /**
      * Every kind as the old switch methods classified it: kind, category, resisted by, max stacks,
      * paced by spirit, stops, burning, spreads with a curse, shared by Sympathy, field effect,
-     * decaying, fuel pool, stack debuff. Scorched and Sickened now cap at 100 and Soulfire decays.
+     * decaying, fuel pool, stack debuff. Scorched and Sickened now cap at 100 and Soulfire decays; the field's
+     * effects are paced by spirit.
      */
     private static final List<String> OLD_CLASSIFICATION = List.of(
             "CHILL,SOFT_CC,CHILL_RESIST,0,true,false,false,false,true,false,true,false,false",
@@ -44,16 +45,19 @@ class EffectKindTest {
             "INVERSION,HEX,-,0,true,false,false,false,false,false,false,false,false",
             "SYMPATHY,HEX,-,0,true,false,false,false,false,false,false,false,false",
             "RECKONING,HEX,-,0,true,false,false,false,false,false,false,false,false",
-            "SILENCED,SOFT_CC,-,0,false,false,false,false,false,true,false,false,false",
-            "ANCHORED,SOFT_CC,-,0,false,false,false,false,false,true,false,false,false",
+            "SILENCED,SOFT_CC,-,0,true,false,false,false,false,true,false,false,false",
+            "ANCHORED,SOFT_CC,-,0,true,false,false,false,false,true,false,false,false",
             "UNRAVELED,DEBUFF,-,5,true,false,false,true,true,false,false,false,false",
             "BRITTLE,DEBUFF,-,0,true,false,false,false,false,false,false,false,false",
             "TOLL,DEBUFF,-,5,false,false,false,false,false,false,false,false,false",
-            "CORRODED,DEBUFF,-,15,false,false,false,false,false,true,false,false,false",
-            "UNDERTOW,SOFT_CC,-,15,false,false,false,false,false,true,false,false,false",
-            "DEAD_ZONE,DEBUFF,-,0,false,false,false,false,false,true,false,false,false",
+            "CORRODED,DEBUFF,-,15,true,false,false,false,false,true,false,false,false",
+            "DRAGGED,SOFT_CC,-,50,true,false,false,false,false,true,false,false,false",
+            "UNDERTOW,SOFT_CC,-,0,true,false,false,false,false,true,false,false,false",
+            "STILLED,DEBUFF,-,0,false,false,false,false,false,false,false,false,false",
+            "UNVEILED,STEALTH,-,0,true,false,false,false,false,false,false,false,false",
+            "DEAD_ZONE,DEBUFF,-,0,true,false,false,false,false,true,false,false,false",
             "FALLOUT,DEBUFF,-,0,false,false,false,false,false,false,false,false,false",
-            "KILL_ZONE,DEBUFF,-,15,false,false,false,false,false,true,false,false,false",
+            "FRAIL,DEBUFF,-,15,true,false,false,false,false,true,false,false,false",
             "CRACKED,DEBUFF,-,0,true,false,false,false,false,false,false,false,false",
             "TARRED,DEBUFF,-,0,false,false,false,false,false,false,false,false,false",
             "BLEEDING,DAMAGE_OVER_TIME,-,0,false,false,false,false,false,false,false,false,false",

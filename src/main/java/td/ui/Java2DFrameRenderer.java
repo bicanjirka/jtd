@@ -16,6 +16,7 @@ import td.ui.render.FlashDraw;
 import td.ui.render.HexGlyph;
 import td.ui.render.HexRuneDraw;
 import td.ui.render.IceCrystalDraw;
+import td.ui.render.LeyLineDraw;
 import td.ui.render.MissMarkDraw;
 import td.ui.render.MissileDraw;
 import td.ui.render.NestDraw;
@@ -81,6 +82,9 @@ public final class Java2DFrameRenderer {
     private static final Color BOARD_BACKGROUND = Color.BLACK;
     /** The HUD's dark grey-green, so the dev grid reads as part of the panel chrome. */
     private static final Color CELL_GRID_LINE = new Color(48, 60, 48);
+    /** A Ley Line's width, and the dash it is drawn with once the player has pinned it. */
+    private static final float LEY_LINE_STROKE = 2f;
+    private static final float[] LEY_LINE_DASH = {6f, 5f};
     private static final Color CELL_BLOCKED = new Color(26, 34, 26);
     /** An info-panel glyph for a stat nothing on the board marks. */
     private static final Color UNMARKED_GLYPH = new Color(150, 170, 150);
@@ -475,10 +479,11 @@ public final class Java2DFrameRenderer {
             case TOWER_SONAR_PING -> new Color(255, 240, 150);
             case TOWER_SONAR_CROSSHAIR -> new Color(255, 120, 60);
             case TOWER_PULSE_RING -> withAlpha(Color.ORANGE, 80);
-            case TOWER_PULSE_RIPPLE -> new Color(255, 190, 90);
-            case TOWER_PULSE_RIPPLE_NULL -> new Color(180, 110, 255);
-            case TOWER_PULSE_RIPPLE_UNDERTOW -> new Color(90, 150, 255);
-            case TOWER_PULSE_RIPPLE_CORROSION -> new Color(120, 220, 90);
+            case TOWER_PULSE_RIPPLE -> new Color(205, 205, 215);
+            case TOWER_PULSE_RIPPLE_WARD -> new Color(180, 110, 255);
+            case TOWER_PULSE_RIPPLE_GRAVITY -> new Color(60, 100, 230);
+            case TOWER_PULSE_RIM_BITE -> new Color(235, 60, 60);
+            case TOWER_PULSE_WELL -> withAlpha(new Color(20, 30, 120), 60);
             case TOWER_MORTAR_RANGING -> new Color(255, 190, 90);
             case ZONE_BURNING -> new Color(255, 120, 30);
             case ZONE_TAR -> new Color(35, 28, 25);
@@ -523,10 +528,13 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_BRITTLE -> new Color(200, 240, 255);
             case STATUS_MARKER_TOLL -> new Color(255, 170, 70);
             case STATUS_MARKER_CORRODED -> new Color(120, 220, 90);
+            case STATUS_MARKER_DRAGGED -> new Color(110, 120, 200);
             case STATUS_MARKER_UNDERTOW -> new Color(80, 130, 255);
+            case STATUS_MARKER_STILLED -> new Color(40, 60, 170);
+            case STATUS_MARKER_UNVEILED -> new Color(230, 210, 255);
             case STATUS_MARKER_DEAD_ZONE -> new Color(130, 130, 130);
             case STATUS_MARKER_FALLOUT -> new Color(150, 220, 60);
-            case STATUS_MARKER_KILL_ZONE -> new Color(255, 80, 80);
+            case STATUS_MARKER_FRAIL -> new Color(255, 80, 80);
             case STATUS_MARKER_CRACKED -> new Color(210, 170, 120);
             case STATUS_MARKER_TARRED -> new Color(70, 55, 45);
             case STATUS_MARKER_BLEEDING -> new Color(200, 30, 50);
@@ -1410,6 +1418,7 @@ public final class Java2DFrameRenderer {
     private void paintTowerEffect(Graphics2D g2, TowerEffectDraw effect) {
         switch (effect) {
             case BeamDraw beam -> this.paintBeam(g2, beam);
+            case LeyLineDraw line -> this.paintLeyLine(g2, line);
             case SplashDraw splash ->
                     this.paintFilledCircle(g2, splash.palette(), splash.centerX(), splash.centerY(), splash.radius());
             case PulseDraw pulse ->
@@ -1495,6 +1504,16 @@ public final class Java2DFrameRenderer {
         g2.setStroke(defaultStroke);
     }
 
+
+    private void paintLeyLine(Graphics2D g2, LeyLineDraw line) {
+        Stroke defaultStroke = g2.getStroke();
+        g2.setColor(scaleAlpha(colorFor(line.palette()), line.alpha()));
+        g2.setStroke(line.pinned()
+                ? new BasicStroke(LEY_LINE_STROKE, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 1f, LEY_LINE_DASH, 0f)
+                : new BasicStroke(LEY_LINE_STROKE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL));
+        g2.draw(new Line2D.Float(line.fromX(), line.fromY(), line.toX(), line.toY()));
+        g2.setStroke(defaultStroke);
+    }
 
     private void paintFilledCircle(Graphics2D g2, Palette palette, float centerX, float centerY, float radius) {
         g2.setColor(colorFor(palette));

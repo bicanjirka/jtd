@@ -337,6 +337,19 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     @Override
+    public void dispelBuffs() {
+        this.activeEffects.activeKinds().stream().filter(kind -> kind.category() == EffectCategory.BUFF)
+                .forEach(this.activeEffects::consume);
+        this.stats.invalidate();
+    }
+
+    @Override
+    public void loseStacks(EffectKind kind, int stacks) {
+        this.activeEffects.loseStacks(kind, stacks);
+        this.stats.invalidate();
+    }
+
+    @Override
     public float spirit() {
         return this.stats.value(EnemyStat.SPIRIT);
     }

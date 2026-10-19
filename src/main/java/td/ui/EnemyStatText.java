@@ -205,10 +205,13 @@ final class EnemyStatText {
             case BRITTLE -> "Brittle";
             case TOLL -> "Toll x" + effect.stacks();
             case CORRODED -> "Corroded";
+            case DRAGGED -> "Dragged " + effect.stacks() + "%";
             case UNDERTOW -> "Undertow";
+            case STILLED -> "Stilled";
+            case UNVEILED -> "Unveiled";
             case DEAD_ZONE -> "Dead zone";
             case FALLOUT -> "Fallout";
-            case KILL_ZONE -> "Kill zone";
+            case FRAIL -> "Frail";
             case CRACKED -> "Cracked";
             case TARRED -> "Tarred";
             case BLEEDING -> "Bleeding";
