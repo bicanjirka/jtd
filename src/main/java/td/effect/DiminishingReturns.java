@@ -41,12 +41,15 @@ public final class DiminishingReturns {
         return this.steps[Math.min(step, this.steps.length - 1)];
     }
 
-    /** Records an application that landed at {@code tick}; only a fresh one climbs a step. */
+    /**
+     * Records an application that landed at {@code tick}. Only a fresh one climbs a step and opens the window
+     * again; one on an enemy already held changes neither.
+     */
     public void recordAt(int tick, boolean alreadyActive) {
-        this.freshApplications = this.stepAt(tick);
-        if (!alreadyActive) {
-            this.freshApplications++;
+        if (alreadyActive) {
+            return;
         }
+        this.freshApplications = this.stepAt(tick) + 1;
         this.lastApplicationTick = tick;
     }
 

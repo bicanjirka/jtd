@@ -128,7 +128,10 @@ public final class ActiveEffects {
             case SHARED_CLOCK, EARNED -> this.applyStacks(incoming);
             case REFRESH -> {
                 Effect existing = this.active.get(incoming.kind());
-                this.active.put(incoming.kind(), existing == null ? incoming : strongerOf(existing, incoming));
+                // A hold renewed before it ends would never end: its diminishing returns only count fresh holds.
+                boolean holding = existing != null && incoming.kind().category() == EffectCategory.HARD_CC;
+                this.active.put(incoming.kind(), existing == null ? incoming
+                        : holding ? existing : strongerOf(existing, incoming));
             }
         }
     }

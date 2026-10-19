@@ -223,6 +223,23 @@ class GameEngineTest {
         assertThat(freezeFor(enemy, 20, clock)).isEqualTo(10);
     }
 
+    @Test
+    void aFreezeRenewedBeforeEveryThawStillDiminishesAndLetsTheEnemyGo() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
+        enemy.applyEffect(Effect.freeze(20, DamageSink.none()));
+        int frozen = 0;
+
+        for (int t = 1; t <= 100; t++) {
+            if (t % 5 == 0) {
+                enemy.applyEffect(Effect.freeze(20, DamageSink.none()));
+            }
+            enemy.doTick(t);
+            frozen += enemy.activeEffectKinds().contains(EffectKind.FREEZE) ? 1 : 0;
+        }
+
+        assertThat(frozen).isLessThanOrEqualTo(20 + 10 + 5);
+    }
+
     /** Dazes {@code enemy} and returns how many ticks it stayed Dazed. */
     private static int dazeFor(EnemyMob enemy, int durationTicks, int[] clock) {
         enemy.applyEffect(Effect.dazed(durationTicks, DamageSink.none()));
