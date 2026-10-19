@@ -57,6 +57,21 @@ class WardenChainTest {
     }
 
     @Test
+    void aWardenThatReachesTheEndOfThePathLeavesNoEgg() {
+        GameWorld world = WorldFixtures.newWorldOnBoard(32, 1000, 1000);
+        world.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(40, 0))));
+        DefinedEnemyMob warden = (DefinedEnemyMob) world.getEnemyCatalog().spawn("warden1", world, 0, 8000, 100, Rank.GRUNT);
+        world.enemies().add(warden);
+
+        for (int t = 1; t <= 200; t++) {
+            warden.doTick(t);
+        }
+
+        assertThat(warden.fate()).isEqualTo(EnemyInspection.Fate.LEAKED);
+        assertThat(world.enemies().getEnemies()).containsExactly(warden);
+    }
+
+    @Test
     void anEggLeftAliveForItsFullDelayHatchesIntoTheNextWardenStageInPlace() {
         GameWorld world = worldWithStraightPath();
         EnemyMob egg = world.getEnemyCatalog().spawn("wardenEgg1", world, 0, 1500, 20, Rank.GRUNT);

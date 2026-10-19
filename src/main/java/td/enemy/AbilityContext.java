@@ -14,7 +14,7 @@ public interface AbilityContext {
     /** {@code 0} on the tick a hit landed. */
     int ticksSinceLastHit();
 
-    /** True only on the tick this mob's death is first observed. */
+    /** True only on the tick this mob's death is first observed; reaching the end of the path is not a death. */
     boolean justDied();
 
     /**
