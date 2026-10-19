@@ -971,6 +971,25 @@ class GameEngineTest {
     }
 
     @Test
+    void eachMemberOfALineAtFullHealthPaysAFullBounty() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(
+                List.of(new WaveDefinition("line 3 weakling", Rank.GRUNT),
+                        new WaveDefinition("weakling", Rank.GRUNT)), 100)
+                .withCustomEnemies(List.of(WEAKLING)));
+        engine.startPlacing(TowerFactory.Type.PULSE, PulseTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
+        int scoreBefore = engine.getGameWorld().economy().getScore();
+
+        engine.nextWave();
+        for (int t = 0; t <= 600 && !engine.isWaveReady(); t++) {
+            engine.doTick(t);
+        }
+
+        assertThat(engine.getGameWorld().economy().getScore()).isEqualTo(scoreBefore + 3 * 7);
+    }
+
+    @Test
     void startingARoundSpawnsBothPathsWavesInOneCall() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.twoPathLevelWith(

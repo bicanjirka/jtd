@@ -75,11 +75,12 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
     }
 
     /**
-     * Splits the slot's bounty across members so the shares sum exactly, the remainder going to the
-     * first members. Fixed at spawn, so kill order never changes the payout.
+     * The slot pays for the health it sends: a member at full health is worth a full bounty, and a swarm, whose
+     * members split one spawn's health, splits one spawn's bounty, the remainder going to the first members so
+     * the shares sum exactly. Fixed at spawn, so kill order never changes the payout.
      */
     public int[] bountyShares(int price) {
-        int total = Math.round(price * this.bountyMultiplier);
+        int total = Math.round(price * this.bountyMultiplier * this.members * this.healthMultiplier);
         int base = total / this.members;
         int remainder = total % this.members;
         int[] shares = new int[this.members];
