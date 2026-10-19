@@ -53,6 +53,7 @@ class EffectKindTest {
             "CORRODED,DEBUFF,-,15,true,false,false,false,false,true,false,false,false",
             "DRAGGED,SOFT_CC,-,50,true,false,false,false,false,true,false,false,false",
             "UNDERTOW,SOFT_CC,-,0,true,false,false,false,false,true,false,false,false",
+            "CONDEMNED,DEBUFF,-,4,true,false,false,false,false,false,false,false,false",
             "STILLED,DEBUFF,-,0,false,false,false,false,false,false,false,false,false",
             "UNVEILED,STEALTH,-,0,true,false,false,false,false,false,false,false,false",
             "DEAD_ZONE,DEBUFF,-,0,true,false,false,false,false,true,false,false,false",

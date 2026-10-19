@@ -75,8 +75,10 @@ The Ward is a local detector; the Radar's Wide Band stays the wide one.
 
 **Specials (4x the list price, 100, as on every tower).**
 
-- **Arc Discharge.** Once a second the healthiest visible enemy inside becomes every tower's Priority and is Exposed,
-  for 1.5 s on entry up to 3 s at full Toll. No chain, no damage.
+- **Arc Discharge (anti-boss).** Once a second a zap strikes the visible enemy of the highest rank inside, the
+  furthest along of those: it becomes every tower's Priority and gains a stack of Condemned (+5% damage taken from every
+  source, up to 4 stacks, +20%), both held 3 s after the last zap and paced by spirit. No chain, no damage. Exposed was
+  dropped: the Armored and Frenzied bosses are crit-immune, and a crit mark did nothing to them.
 - **Soul Drain.** Drains 15 spirit a second inside, so every tower's debuffs last longer and heals land weaker for the
   rest of the walk. The field's own lingering effects are paced by spirit like any debuff; no floor rule.
 - **Ley Line.** The Obelisk casts one beam to another Obelisk within 5 cells (any Obelisk may host, and a host may hold
@@ -105,7 +107,8 @@ towers' trees, new enemies.
 
 - **`FEATURE-obelisk-support-role.md`**: the measurements, the Elite Ghost shroud rule (cast every 3 s, lasts 3 s) and the
   bought-reveal principle stand; its Design section and questions 24 to 30 are replaced by this.
-- **The Radar**: Wide Band stays the wide reveal and Arc Discharge's mark sits beside its Expose; the Ward is local.
+- **The Radar**: Wide Band stays the wide reveal; the Ward is local. Arc Discharge's Condemned is a stat mark, not the
+  Radar's crit mark.
 - **The Beacon**: still raises the field's damage and range like any tower's; the done criteria cap the Obelisk's
   support at the Beacon's.
 - **The Hive**: Undertow still counts as a chill, so Gravity and freezes combine; Stasis uses Daze, not freeze.

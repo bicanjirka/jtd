@@ -97,6 +97,9 @@ public enum EffectKind {
             .perStack(EnemyStat.MOVE_SPEED, StatModifier.percent(-0.01f)).tagged(EffectTag.FIELD)),
     /** The field's drag counts as a chill for a freeze while the enemy is in it and a while after. */
     UNDERTOW(EffectRule.of(EffectCategory.SOFT_CC).pacedBySpirit().tagged(EffectTag.FIELD)),
+    /** Arc Discharge's mark: each stack adds 5% damage taken from every source, up to four. */
+    CONDEMNED(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(4).pacedBySpirit()
+            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.05f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.05f)),
     /** While the enemy is Dazed, the field that stilled it takes its Toll away. */
     STILLED(EffectRule.of(EffectCategory.DEBUFF)),
     /** A revealed enemy can't be shrouded or fade while it lasts. */

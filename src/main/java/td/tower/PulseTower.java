@@ -32,7 +32,7 @@ import td.tower.pulse.TrueSightPerk;
 import td.tower.pulse.UndertowPerk;
 import td.tower.pulse.VisitSpec;
 import td.tower.pulse.ZapSpec;
-import td.tower.targeting.HighestHealthSelector;
+import td.tower.targeting.HighestRankSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.BaseSlotPerks;
@@ -367,21 +367,20 @@ public final class PulseTower extends AbstractTower {
     }
 
     /**
-     * The zap: the healthiest visible enemy in the field, made the Priority of every tower and Exposed, for as long as
-     * its Toll gives the mark.
+     * The zap: the visible enemy of the highest rank in the field, the furthest along of those, made the Priority of every
+     * tower and Condemned a stack further, both held a while after the last zap.
      */
     private void zap(ZapSpec zap, PulseSpec spec, int gameTime) {
         Viewpoint view = spec.view();
         List<EnemyMob> seen = InRangeTargetQuery.visible(view.x(), view.y(), view.range())
                 .matching(this.context.enemies());
-        Optional<EnemyMob> struck = new HighestHealthSelector().selectFrom(seen);
+        Optional<EnemyMob> struck = new HighestRankSelector().selectFrom(seen);
         if (struck.isEmpty()) {
             return;
         }
         EnemyMob target = struck.get();
-        int ticks = zap.markTicks() * FieldStrength.at(target.effectStacks(EffectKind.TOLL)) / FieldStrength.FULL;
-        this.applyEffect(target, sink -> Effect.priority(ticks, sink));
-        this.applyEffect(target, sink -> Effect.exposed(ticks, sink));
+        this.applyEffect(target, sink -> Effect.priority(zap.markTicks(), sink));
+        this.applyEffect(target, sink -> Effect.condemned(1, zap.markTicks(), sink));
         this.zaps = List.of(new Zap(this.centerX, this.centerY, (float) target.getX(), (float) target.getY()));
         this.lastZapTick = gameTime;
     }

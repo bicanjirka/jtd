@@ -1,10 +1,11 @@
 package td.tower.pulse;
 
-import td.effect.FieldStrength;
+import td.effect.EffectKind;
+import td.stat.EnemyStat;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
-/** Arc Discharge: once a second a zap marks the healthiest visible enemy in the field for every tower. */
+/** Arc Discharge: once a second a zap Condemns the strongest visible enemy in the field, a stack at a time. */
 public final class ArcDischargePerk implements PulsePerk {
 
     private static final int MARK_TICKS = Math.round(3f * TickRate.TICKS_PER_SECOND);
@@ -16,8 +17,14 @@ public final class ArcDischargePerk implements PulsePerk {
 
     @Override
     public String describe() {
-        return "once a second a zap marks the healthiest visible enemy inside: every tower turns on it, and it is "
-                + "Exposed, for " + PerkText.seconds(MARK_TICKS * FieldStrength.ENTRY / FieldStrength.FULL)
-                + " on entry, " + PerkText.seconds(MARK_TICKS) + " at full Toll";
+        int most = EffectKind.CONDEMNED.maxStacks();
+        return "once a second a zap strikes the visible enemy of the highest rank inside, the furthest along of them: every "
+                + "tower turns on it, and each zap Condemns it further, +" + PerkText.percent(perStack())
+                + " damage taken from every source, up to +" + PerkText.percent(perStack() * most) + " at " + most
+                + " zaps; both hold " + PerkText.seconds(MARK_TICKS) + " after the last zap";
+    }
+
+    private static float perStack() {
+        return EffectKind.CONDEMNED.modifiersAt(1).flat(EnemyStat.PHYSICAL_DAMAGE_TAKEN);
     }
 }

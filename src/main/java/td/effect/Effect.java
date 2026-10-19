@@ -218,6 +218,11 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.UNDERTOW, durationTicks, sink);
     }
 
+    /** {@code stacks} more of Arc Discharge's extra damage taken, on one clock of {@code durationTicks}. */
+    public static Effect condemned(int stacks, int durationTicks, DamageSink sink) {
+        return stacking(EffectKind.CONDEMNED, stacks, durationTicks, sink);
+    }
+
     /** For {@code durationTicks}, a Dazed enemy loses Toll to the field that stilled it. */
     public static Effect stilled(int durationTicks, DamageSink sink) {
         return timed(EffectKind.STILLED, durationTicks, sink);

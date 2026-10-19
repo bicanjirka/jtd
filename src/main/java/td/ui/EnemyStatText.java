@@ -207,6 +207,7 @@ final class EnemyStatText {
             case CORRODED -> "Corroded";
             case DRAGGED -> "Dragged " + effect.stacks() + "%";
             case UNDERTOW -> "Undertow";
+            case CONDEMNED -> "Condemned x" + effect.stacks();
             case STILLED -> "Stilled";
             case UNVEILED -> "Unveiled";
             case DEAD_ZONE -> "Dead zone";
