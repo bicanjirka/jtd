@@ -55,7 +55,7 @@ import java.util.stream.LongStream;
  * </ul>
  * The Beacon lands nothing itself; it is measured by what towers beside it gain. What any other tower does for
  * its neighbours (a slow that keeps enemies in reach longer, a mark that makes them take more) is measured the
- * same way, on a fixed partner tower beside it in a probe round. The numbers compare towers, cells, kinds and
+ * same way, on a fixed box of partner towers around it in a probe round. The numbers compare towers, cells, kinds and
  * nodes with each other; they never stand for how a level plays.
  */
 public final class TowerLab {
@@ -85,6 +85,12 @@ public final class TowerLab {
      * a change to some other tower never moves those numbers; the cheapest, so a cluster fits anywhere.
      */
     private static final TowerFactory.Type PARTNER = TowerFactory.Type.SNIPER;
+    /**
+     * The towers what a tower does for its neighbours is measured on, each on the free cell nearest it that reaches
+     * a path: a field or a slow is built around, and a shot, a blast and a shell each gain from it differently.
+     */
+    private static final List<TowerFactory.Type> BOX = List.of(TowerFactory.Type.SNIPER, TowerFactory.Type.SPLASH,
+            TowerFactory.Type.MORTAR);
     /** How long each reveal lasts when the lab keeps every enemy revealed; it renews them every tick. */
     private static final int REVEAL_TICKS = 2;
     /**
@@ -130,7 +136,7 @@ public final class TowerLab {
      * How a tower type and the towers beside it help each other.
      *
      * @param beaconGain   the share more it lands with a Beacon beside it
-     * @param supportGain  the share more the partner tower lands with a bare one beside it
+     * @param supportGain  the share more each partner tower around a bare one lands, on average
      * @param supportSteps what each node adds to {@code supportGain} once the nodes before it are owned
      */
     public record Partnering(double beaconGain, double supportGain, Map<String, Double> supportSteps) {
@@ -237,9 +243,9 @@ public final class TowerLab {
                 .map(beacon -> damageOf(plainProbes, type, cell, List.of(new Placement(TowerFactory.Type.AURA, beacon)),
                         Optional.empty(), FIRST_SEED) / alone - 1)
                 .orElse(0.0);
-        Partnering partners = besideCell(survey, cell)
-                .map(partnerCell -> supportOf(plainProbes, sample, cell, partnerCell, beaconGain))
-                .orElse(new Partnering(beaconGain, 0, Map.of()));
+        List<Placement> box = boxAround(survey, cell);
+        Partnering partners = box.isEmpty() ? new Partnering(beaconGain, 0, Map.of())
+                : supportOf(plainProbes, sample, cell, box, beaconGain);
         return new TypeProfile(health, kindFactors, factorsFromLines(sample, wholeLines), partners);
     }
 
@@ -305,19 +311,18 @@ public final class TowerLab {
     }
 
     /**
-     * What {@code sample}'s type on {@code cell}, bare and with each whole line, adds to the partner on
-     * {@code partnerCell}: the share more the partner lands in a probe round. A tower that only deals damage adds
-     * nothing; a slow, a mark or a debuff shows here and nowhere else.
+     * What {@code sample}'s type on {@code cell}, bare and with each whole line, adds to the partners in {@code box}:
+     * the share more each lands in a probe round, on average. A tower that only deals damage adds nothing; a slow,
+     * a mark or a debuff shows here and nowhere else.
      */
-    private static Partnering supportOf(LevelDefinition probes, Tower sample, Point cell, Point partnerCell,
+    private static Partnering supportOf(LevelDefinition probes, Tower sample, Point cell, List<Placement> box,
                                         double beaconGain) {
         TowerFactory.Type type = sample.getType();
-        double alone = Math.max(1, partnerDamage(probes, partnerCell, type, cell, Optional.empty(), false, false));
-        double bare = Math.max(0, partnerDamage(probes, partnerCell, type, cell, Optional.empty(), true, false) / alone - 1);
+        double[] alone = boxDamage(probes, box, type, cell, Optional.empty(), false);
+        double bare = boxGain(alone, boxDamage(probes, box, type, cell, Optional.empty(), true));
         Map<String, Double> wholeLines = new LinkedHashMap<>();
         for (UpgradeNode node : sample.upgradeTree().nodes()) {
-            wholeLines.put(node.id(),
-                    Math.max(0, partnerDamage(probes, partnerCell, type, cell, Optional.of(node), true, false) / alone - 1));
+            wholeLines.put(node.id(), boxGain(alone, boxDamage(probes, box, type, cell, Optional.of(node), true)));
         }
         Map<String, Double> steps = new LinkedHashMap<>();
         for (UpgradeNode node : sample.upgradeTree().nodes()) {
@@ -326,6 +331,56 @@ public final class TowerLab {
             steps.put(node.id(), wholeLines.get(node.id()) - before);
         }
         return new Partnering(beaconGain, bare, steps);
+    }
+
+    /** The share more each partner lands {@code with} than {@code alone}, on average; never below none. */
+    private static double boxGain(double[] alone, double[] with) {
+        return Math.max(0, IntStream.range(0, alone.length).mapToDouble(i -> with[i] / Math.max(1, alone[i]) - 1)
+                .average().orElse(0));
+    }
+
+    /**
+     * What each partner in {@code box} lands in one probe round, averaged over seeds, alone or with a {@code type}
+     * owning {@code line} on {@code cell} among them.
+     */
+    private static double[] boxDamage(LevelDefinition probes, List<Placement> box, TowerFactory.Type type, Point cell,
+                                      Optional<UpgradeNode> line, boolean withSubject) {
+        double[] total = new double[box.size()];
+        for (long seed = FIRST_SEED; seed < FIRST_SEED + SEEDS; seed++) {
+            GameEngine engine = labEngine(probes, seed);
+            List<Tower> partners = box.stream()
+                    .map(placement -> Turn.place(engine, placement.type(), placement.cell()).orElseThrow()).toList();
+            if (withSubject) {
+                Tower subject = Turn.place(engine, type, cell).orElseThrow();
+                line.ifPresent(node -> buyLine(subject, node));
+            }
+            runRound(engine);
+            for (int i = 0; i < total.length; i++) {
+                total[i] += partners.get(i).getDamageDealt() / (double) SEEDS;
+            }
+        }
+        return total;
+    }
+
+    /**
+     * The {@link #BOX} around {@code cell}: each partner on the free cell nearest it from which it reaches a path;
+     * a partner that finds none is left out.
+     */
+    private static List<Placement> boxAround(BoardSurvey survey, Point cell) {
+        Set<Point> taken = new LinkedHashSet<>(List.of(cell));
+        List<Placement> box = new ArrayList<>();
+        for (TowerFactory.Type partner : BOX) {
+            survey.buildable().stream()
+                    .filter(other -> !taken.contains(other))
+                    .filter(other -> IntStream.range(0, survey.pathCount())
+                            .anyMatch(path -> survey.pathWithin(other, survey.reach(partner), path) > 0))
+                    .min(Comparator.comparingDouble(other -> Math.hypot(other.x() - cell.x(), other.y() - cell.y())))
+                    .ifPresent(other -> {
+                        taken.add(other);
+                        box.add(new Placement(partner, other));
+                    });
+        }
+        return List.copyOf(box);
     }
 
     /**

@@ -758,7 +758,7 @@ public final class BalanceReport {
         }
         this.out.println("  nodes far from the rest alone (x1.75 and up, or under x0.9): "
                 + (outliers.isEmpty() ? "none" : String.join(", ", outliers)));
-        this.out.println("  support (the share more a Sniper beside it lands): " + supportText(lab));
+        this.out.println("  support (the share more each of a Sniper, a Burst and a Mortar around it lands): " + supportText(lab));
         this.out.println("  reveal (how much of a hiding kind a Sniper beside it sees, 1 as if always revealed): "
                 + revealText(lab));
     }
