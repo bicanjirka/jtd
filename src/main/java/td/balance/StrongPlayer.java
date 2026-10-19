@@ -1,9 +1,11 @@
 package td.balance;
 
+import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.ThreadConfined;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +14,8 @@ import java.util.Map;
  * A player who tries things before committing. Before each round it rehearses that round and the next the
  * competent player's way; if that leaks, it rehearses a dozen other ways of spending (without upgrades, saving
  * harder, spending everything, only upgrades, or building only one tower type for the round), each a replay of the
- * play so far with that change, and plays the round the way that leaked least. It costs a dozen plays per round, so it is an
+ * play so far with that change, and plays the round the way that leaked least. Only if every one of those leaks does
+ * it rehearse selling: its weakest damage towers for what they fetch, spent again the competent way. It costs a dozen plays per round, so it is an
  * audit, not a player for every report: where it does much better than the competent player, the competent
  * player's rules are missing something; where it does no better, the level, not the player, decides.
  */
@@ -22,6 +25,8 @@ final class StrongPlayer implements Player {
     /** It rehearses the coming round and this many after it, to see what a choice costs later. */
     private static final int ROUNDS_AFTER = 1;
     private static final double PER_LEAK = 1000;
+    /** The most towers a selling rehearsal sells before a round. */
+    private static final int MOST_SOLD = 2;
 
     private final TowerLab lab;
 
@@ -83,7 +88,21 @@ final class StrongPlayer implements Player {
                 best = style;
             }
         }
-        return new CompetentPlayer(this.lab, leaks(bestScore) < leaks(standardScore) ? best : standard);
+        Player chosen = new CompetentPlayer(this.lab, leaks(bestScore) < leaks(standardScore) ? best : standard);
+        double chosenLeaks = Math.min(leaks(bestScore), leaks(standardScore));
+        // Selling loses a quarter of what was paid, so it is the last resort: tried only when nothing else holds.
+        for (int sold = 1; sold <= MOST_SOLD && chosenLeaks > 0; sold++) {
+            double score = this.rehearse(turn, soFar, new SellingPlayer(sold, this.competent()), round, through);
+            if (leaks(score) < chosenLeaks) {
+                chosenLeaks = leaks(score);
+                chosen = new SellingPlayer(sold, this.competent());
+            }
+        }
+        return chosen;
+    }
+
+    private Player competent() {
+        return new CompetentPlayer(this.lab, CompetentPlayer.Style.standard());
     }
 
     private static double leaks(double score) {
@@ -92,8 +111,11 @@ final class StrongPlayer implements Player {
 
     private double rehearse(Turn turn, List<PlayRecord.TimedAction> soFar, CompetentPlayer.Style style, int round,
                             int through) {
-        Player trial = new RoundSwitchPlayer(soFar, round, new CompetentPlayer(this.lab, style),
-                new CompetentPlayer(this.lab, CompetentPlayer.Style.standard()));
+        return this.rehearse(turn, soFar, new CompetentPlayer(this.lab, style), round, through);
+    }
+
+    private double rehearse(Turn turn, List<PlayRecord.TimedAction> soFar, Player during, int round, int through) {
+        Player trial = new RoundSwitchPlayer(soFar, round, during, this.competent());
         return score(turn.rehearse(trial, through), round);
     }
 
@@ -132,6 +154,40 @@ final class StrongPlayer implements Player {
             } else {
                 this.after.act(turn);
             }
+        }
+    }
+
+    /**
+     * Before the round, sells the {@code count} damage towers that have dealt least for what they would fetch, then
+     * spends the competent way. Support towers are kept: what they give shows in the others' damage, not their own.
+     */
+    @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
+    private static final class SellingPlayer implements Player {
+
+        private final int count;
+        private final Player then;
+
+        private boolean sold;
+
+        SellingPlayer(int count, Player then) {
+            this.count = count;
+            this.then = then;
+        }
+
+        @Override
+        public void act(Turn turn) {
+            if (!this.sold) {
+                this.sold = true;
+                turn.towers().stream()
+                        .filter(tower -> tower.getType() != TowerFactory.Type.AURA
+                                && tower.getType() != TowerFactory.Type.PULSE)
+                        .sorted(Comparator.comparingDouble(
+                                (Tower tower) -> tower.getDamageDealt() / (double) Math.max(1, tower.getSellPrice())))
+                        .limit(this.count)
+                        .toList()
+                        .forEach(turn::sell);
+            }
+            this.then.act(turn);
         }
     }
 }

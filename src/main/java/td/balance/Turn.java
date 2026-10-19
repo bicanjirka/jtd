@@ -189,6 +189,17 @@ public final class Turn {
         this.recorder.acted(this.round, this.offset, new PlayerAction.Sell(cell), before - this.credits());
     }
 
+    /**
+     * Takes {@code tower} off the board with no refund and no log entry: not a player's choice, but what a check
+     * does to an army to see what the tower was holding.
+     */
+    void discard(Tower tower) {
+        int refund = tower.getSellPrice();
+        this.recorder.leaving(tower);
+        this.engine.getGameWorld().towers().sell(tower);
+        this.engine.getGameWorld().economy().doPay(refund);
+    }
+
     /** Does {@code action}; whether it went through. */
     public boolean perform(PlayerAction action) {
         return switch (action) {
