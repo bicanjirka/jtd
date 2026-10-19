@@ -1041,6 +1041,18 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void condemnedStopsAtFourStacksAndRaisesEveryDamageTakenByTwentyPercent() {
+        ActiveEffects effects = new ActiveEffects();
+        for (int zap = 0; zap < 6; zap++) {
+            effects.apply(Effect.condemned(1, 60, DamageSink.none()));
+        }
+
+        assertThat(effects.stacks(EffectKind.CONDEMNED)).isEqualTo(4);
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.2f, within(0.001f));
+        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.2f, within(0.001f));
+    }
+
+    @Test
     void losingStacksKeepsTheClockAndLosingThemAllEndsTheEffect() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.toll(5, 30, DamageSink.none()));

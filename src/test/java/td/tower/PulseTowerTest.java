@@ -8,6 +8,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.FieldStrength;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
@@ -522,23 +523,22 @@ class PulseTowerTest {
     }
 
     @Test
-    void arcDischargeMarksTheHealthiestVisibleEnemyInsideOnceASecondForLongerAtFullTollAndHitsNoHarder() {
+    void arcDischargeCondemnsTheVisibleEnemyOfTheHighestRankInsideAStackAZapAndHitsNoHarder() {
         PulseTower tower = this.pulseWith("Arc Discharge");
-        FakeEnemyMob hidden = FakeEnemyMob.ghostAt(tower.getX(), tower.getY()).withHealth(5000);
-        FakeEnemyMob healthy = FakeEnemyMob.at(tower.getX(), tower.getY()).withHealth(900);
-        FakeEnemyMob weak = FakeEnemyMob.at(tower.getX() + 10, tower.getY()).withHealth(100);
-        this.board.enemies().setEnemies(new EnemyMob[]{hidden, healthy, weak});
+        FakeEnemyMob hidden = FakeEnemyMob.ghostAt(tower.getX(), tower.getY()).ranked(Rank.BOSS);
+        FakeEnemyMob boss = FakeEnemyMob.at(tower.getX(), tower.getY()).withHealth(300).ranked(Rank.BOSS);
+        FakeEnemyMob healthier = FakeEnemyMob.at(tower.getX() + 10, tower.getY()).withHealth(900).ranked(Rank.ELITE);
+        this.board.enemies().setEnemies(new EnemyMob[]{hidden, boss, healthier});
 
         tower.doTick(20);
-        fullToll(healthy, 5);
         tower.doTick(21);
         tower.doTick(40);
 
-        assertThat(applied(healthy, EffectKind.PRIORITY)).extracting(Effect::remainingTicks).containsExactly(30, 60);
-        assertThat(applied(healthy, EffectKind.EXPOSED).getLast().remainingTicks()).isEqualTo(60);
-        assertThat(has(weak, EffectKind.PRIORITY)).isFalse();
-        assertThat(has(hidden, EffectKind.PRIORITY)).isFalse();
-        assertThat(healthy.hits()).allMatch(Damage.magic(tower.damageCurrent())::equals);
+        assertThat(applied(boss, EffectKind.PRIORITY)).extracting(Effect::remainingTicks).containsExactly(60, 60);
+        assertThat(boss.effectStacks(EffectKind.CONDEMNED)).isEqualTo(2);
+        assertThat(has(healthier, EffectKind.PRIORITY)).isFalse();
+        assertThat(has(hidden, EffectKind.CONDEMNED)).isFalse();
+        assertThat(boss.hits()).allMatch(Damage.magic(tower.damageCurrent())::equals);
         assertThat(tower.getZaps()).hasSize(1);
     }
 

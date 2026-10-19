@@ -147,6 +147,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case CORRODED -> Palette.STATUS_MARKER_CORRODED;
             case DRAGGED -> Palette.STATUS_MARKER_DRAGGED;
             case UNDERTOW -> Palette.STATUS_MARKER_UNDERTOW;
+            case CONDEMNED -> Palette.STATUS_MARKER_CONDEMNED;
             case STILLED -> Palette.STATUS_MARKER_STILLED;
             case UNVEILED -> Palette.STATUS_MARKER_UNVEILED;
             case DEAD_ZONE -> Palette.STATUS_MARKER_DEAD_ZONE;
