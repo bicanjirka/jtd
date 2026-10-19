@@ -9,6 +9,7 @@ import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.fixtures.WorldFixtures;
+import td.level.BuiltInLevelCatalog;
 import td.stat.EnemyStat;
 import td.util.GameWorld;
 import td.wave.PathNormal;
@@ -29,9 +30,13 @@ class RoleEnemyTest {
     }
 
     private static DefinedEnemyMob spawn(GameWorld world, String id) {
-        EnemyDefinition definition = world.getEnemyCatalog().get(id);
+        return spawn(world, id, Rank.GRUNT);
+    }
+
+    private static DefinedEnemyMob spawn(GameWorld world, String id, Rank rank) {
+        EnemyDefinition definition = world.getEnemyCatalog().get(id, rank);
         DefinedEnemyMob mob = (DefinedEnemyMob) world.getEnemyCatalog().spawn(id, world, 0, definition.baseHealth(),
-                definition.price(), Rank.GRUNT);
+                definition.price(), rank);
         world.enemies().add(mob);
         return mob;
     }
@@ -93,6 +98,23 @@ class RoleEnemyTest {
                 .extracting(Effect::shieldRestrictedTo)
                 .containsExactly(Optional.of(DamageType.PHYSICAL));
         assertThat(bearer.activeEffectKinds()).doesNotContain(EffectKind.SHIELD);
+    }
+
+    @Test
+    void anEliteMenderOnCurlyPathWardsItsAlliesWithAShieldThatStopsEveryDamageType() {
+        GameWorld world = worldWithStraightPath();
+        new BuiltInLevelCatalog().levels().getFirst().customRankedEnemies().forEach(world.getEnemyCatalog()::register);
+        DefinedEnemyMob mender = spawn(world, "mender", Rank.ELITE);
+        DefinedEnemyMob ally = spawn(world, "c", Rank.GRUNT);
+
+        for (int t = 1; t <= 100; t++) {
+            mender.doTick(t);
+            ally.doTick(t);
+        }
+
+        assertThat(ally.activeEffects()).filteredOn(effect -> effect.kind() == EffectKind.SHIELD)
+                .extracting(Effect::shieldRestrictedTo)
+                .containsExactly(Optional.empty());
     }
 
     @Test
