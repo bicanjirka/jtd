@@ -75,7 +75,7 @@ public class GameLoop implements Runnable {
     }
 
     public void setSpeed(TickSpeed speed) {
-        LOG.info("Tick speed changed: {} -> {}x", speed, speed.multiplier());
+        LOG.info("Tick speed changed: {} ticks/s ({}x)", speed.ticksPerSecond(), speed.multiplier());
         this.speedMultiplier = speed.multiplier();
     }
 
