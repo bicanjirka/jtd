@@ -5,12 +5,18 @@ import ch.qos.logback.classic.Logger;
 import org.slf4j.LoggerFactory;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
+import td.save.GameSave;
+import td.save.GameSaveText;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.ThreadConfined;
 
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -33,8 +39,13 @@ import java.util.stream.LongStream;
  * should hold.
  * <p>
  * Usage: {@code WaveCheckReport [--level N] [--seeds N] [--checks 6:single,12:control+sustain] [--strip 17]
- * [--parts strong,replayed,margin,bounty,bans,strip]}. A tool run on demand, not a test: the strong player rehearses
- * every round a dozen ways, so the margin and the bounty sweep take many minutes.
+ * [--parts strong,replayed,margin,bounty,bans,strip] [--save-before W] [--from W]}. A tool run on demand, not a test:
+ * the strong player rehearses every round a dozen ways, so the margin and the bounty sweep take many minutes.
+ * {@code --save-before W} keeps the game each strong play leaves just before wave W, one save per seed; a later run
+ * with {@code --from W} plays only the waves from W on, every player starting from those saves, to tune the late
+ * waves without playing the early ones again. Its margin is then how much tougher the waves from W could be against
+ * an army bought at the authored health, not the whole level's. Bans, strips and the replayed margin need whole plays, so they don't
+ * run with it.
  */
 public final class WaveCheckReport {
 
@@ -73,8 +84,9 @@ public final class WaveCheckReport {
      * @param checks each signature wave (1-based) and the roles it asks for
      * @param strip  the wave the strip check runs on, 0 for none
      * @param parts  which parts to run
+     * @param saves  which saves to keep or start from
      */
-    record Options(int level, int seeds, Map<Integer, Set<Role>> checks, int strip, Set<Part> parts) {
+    record Options(int level, int seeds, Map<Integer, Set<Role>> checks, int strip, Set<Part> parts, Saves saves) {
 
         static Options parse(String[] args) {
             int level = 0;
@@ -82,6 +94,8 @@ public final class WaveCheckReport {
             Map<Integer, Set<Role>> checks = new LinkedHashMap<>();
             int strip = 0;
             Set<Part> parts = EnumSet.allOf(Part.class);
+            int saveBefore = 0;
+            int from = 0;
             for (int i = 0; i < args.length; i++) {
                 switch (args[i]) {
                     case "--level" -> level = Integer.parseInt(args[++i]);
@@ -95,6 +109,8 @@ public final class WaveCheckReport {
                         }
                     }
                     case "--strip" -> strip = Integer.parseInt(args[++i]);
+                    case "--save-before" -> saveBefore = Integer.parseInt(args[++i]);
+                    case "--from" -> from = Integer.parseInt(args[++i]);
                     case "--parts" -> {
                         parts = EnumSet.noneOf(Part.class);
                         for (String part : args[++i].split(",")) {
@@ -103,10 +119,56 @@ public final class WaveCheckReport {
                     }
                     default -> throw new IllegalArgumentException("Unknown option " + args[i]
                             + "; use --level N --seeds N --checks 6:single,12:control+sustain --strip 17"
-                            + " --parts strong,replayed,margin,bounty,bans,strip");
+                            + " --parts strong,replayed,margin,bounty,bans,strip --save-before 17 --from 17");
                 }
             }
-            return new Options(level, seeds, Map.copyOf(checks), strip, Set.copyOf(parts));
+            if (from > 0) {
+                parts.remove(Part.BANS);
+                parts.remove(Part.STRIP);
+                parts.remove(Part.REPLAYED);
+            }
+            return new Options(level, seeds, Map.copyOf(checks), strip, Set.copyOf(parts),
+                    new Saves(saveBefore, from));
+        }
+    }
+
+    /**
+     * The saves a run keeps or starts from, one per seed.
+     *
+     * @param before the wave the strong plays are saved just before, 0 for none
+     * @param from   the wave every play starts from, out of saves an earlier run kept, 0 for the first
+     */
+    record Saves(int before, int from) {
+
+        private static final Path DIRECTORY = Path.of("target", "balance", "saves");
+
+        static Path file(LevelDefinition level, int wave, long seed) {
+            return DIRECTORY.resolve(level.name() + "-before-" + wave + "-seed-" + seed + ".save");
+        }
+
+        static void write(LevelDefinition level, int wave, long seed, GameSave save) {
+            Path file = file(level, wave, seed);
+            try {
+                Files.createDirectories(file.getParent());
+                Files.writeString(file, GameSaveText.write(save));
+            } catch (IOException e) {
+                throw new UncheckedIOException("Could not keep " + file, e);
+            }
+        }
+
+        Optional<GameSave> read(LevelDefinition level, long seed) {
+            if (this.from == 0) {
+                return Optional.empty();
+            }
+            Path file = file(level, this.from, seed);
+            try {
+                GameSaveText.Read read = GameSaveText.read(Files.readString(file));
+                return Optional.of(read.save().orElseThrow(() -> new IllegalStateException(
+                        file + ": " + read.problem())));
+            } catch (IOException e) {
+                throw new UncheckedIOException("No save " + file + "; run with --save-before " + this.from
+                        + " and as many seeds first", e);
+            }
         }
     }
 
@@ -134,6 +196,13 @@ public final class WaveCheckReport {
             List<PlayRecord> competentPlays = this.plays(survey, competent);
             this.printPlays(level, strongPlays, competentPlays);
         }
+        int before = this.options.saves().before();
+        if (before > 0) {
+            strongPlays.parallelStream().forEach(play -> Saves.write(level, before, play.play().seed(),
+                    LevelPlay.saveBefore(survey, play.actions(), play.play().seed(), before)));
+            this.out.printf("%nkept the strong plays' games before wave %d in %s%n", before,
+                    Saves.file(level, before, FIRST_SEED).getParent());
+        }
         if (this.options.parts().contains(Part.REPLAYED)) {
             this.printMargin("strong play replayed, margin", strongPlays.parallelStream()
                     .mapToInt(play -> Margin.healthPercent(survey, ScriptedPlayer.spec("replayed", play.actions()),
@@ -160,12 +229,15 @@ public final class WaveCheckReport {
 
     private List<PlayRecord> plays(BoardSurvey survey, PlayerSpec player) {
         return LongStream.range(FIRST_SEED, FIRST_SEED + this.options.seeds()).parallel().boxed()
-                .map(seed -> LevelPlay.play(survey, player, seed, LevelPlay.Pacing.standard())).toList();
+                .map(seed -> LevelPlay.play(survey, player, seed, LevelPlay.Pacing.standard(), Rules.standard(),
+                        this.options.saves().read(survey.level(), seed)))
+                .toList();
     }
 
     private int[] margins(BoardSurvey survey, PlayerSpec player, Rules rules) {
         return LongStream.range(FIRST_SEED, FIRST_SEED + this.options.seeds()).parallel()
-                .mapToInt(seed -> Margin.healthPercent(survey, player, seed, LevelPlay.Pacing.standard(), rules))
+                .mapToInt(seed -> Margin.healthPercent(survey, player, seed, LevelPlay.Pacing.standard(), rules,
+                        this.options.saves().read(survey.level(), seed)))
                 .toArray();
     }
 
@@ -175,13 +247,12 @@ public final class WaveCheckReport {
     }
 
     private void printPlays(LevelDefinition level, List<PlayRecord> strong, List<PlayRecord> competent) {
-        int lives = level.startingLives();
         this.out.println();
         this.out.printf("strong wins %d of %d at authored health; competent %d of %d%n",
                 strong.stream().filter(play -> play.result().won()).count(), strong.size(),
                 competent.stream().filter(play -> play.result().won()).count(), competent.size());
-        this.out.println("strong loses in round: " + lossRounds(strong, lives));
-        this.out.println("competent loses in round: " + lossRounds(competent, lives));
+        this.out.println("strong loses in round: " + lossRounds(strong));
+        this.out.println("competent loses in round: " + lossRounds(competent));
         this.out.println("strong sold towers in " + strong.stream()
                 .filter(play -> play.actions().stream().anyMatch(action -> isSale(action.action())))
                 .count() + " of " + strong.size() + " plays");
@@ -267,9 +338,10 @@ public final class WaveCheckReport {
     }
 
     /** The round each lost play was lost in, counted. */
-    private static Map<Integer, Long> lossRounds(List<PlayRecord> plays, int lives) {
+    private static Map<Integer, Long> lossRounds(List<PlayRecord> plays) {
         Map<Integer, Long> rounds = new java.util.TreeMap<>();
         for (PlayRecord play : plays) {
+            int lives = play.result().lives();
             int leaked = 0;
             for (PlayRecord.Round round : play.rounds()) {
                 leaked += round.pressure().leaked();

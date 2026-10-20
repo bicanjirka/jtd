@@ -35,6 +35,7 @@ final class RunRecorder {
 
     private final GameEngine engine;
     private final int startingLives;
+    private final int firstRound;
     // Keyed by identity: a corpse stays in the roster through its fade and must be counted once.
     private final Set<EnemyMob> seen = Collections.newSetFromMap(new IdentityHashMap<>());
     private final Set<EnemyMob> ended = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -65,9 +66,13 @@ final class RunRecorder {
     private long enemyTicks;
     private int wanted;
 
+    /** Call once the engine is set to play its first round: a play loaded from a save starts past round 1. */
     RunRecorder(GameEngine engine, int startingLives) {
         this.engine = engine;
         this.startingLives = startingLives;
+        this.firstRound = engine.getCurrentWaveIndex() + 1;
+        this.cleared = this.firstRound - 1;
+        engine.getTowers().forEach(tower -> this.damageCounted.put(tower, tower.getDamageDealt()));
     }
 
     /** Call after the tick that started a round: the roster now holds only its enemies. */
@@ -117,9 +122,9 @@ final class RunRecorder {
         return List.copyOf(this.actions);
     }
 
-    /** Rounds started and over, cleared or not. */
+    /** The number of the last round over, cleared or not; rounds before the play began count as over. */
     int roundsOver() {
-        return this.rounds.size();
+        return this.firstRound - 1 + this.rounds.size();
     }
 
     /** Enemies that have leaked so far. */
@@ -228,7 +233,7 @@ final class RunRecorder {
                 new PlayRecord.Spending(this.spentOnTowers, this.spentOnUpgrades, this.wanted), livesLost);
         PlayRecord.RoundPressure pressure = new PlayRecord.RoundPressure(this.healthIn, this.leaked, this.closest,
                 this.roundDamage);
-        this.rounds.add(new PlayRecord.Round(this.rounds.size() + 1, tick - this.roundStartTick, economy, pressure));
+        this.rounds.add(new PlayRecord.Round(this.firstRound + this.rounds.size(), tick - this.roundStartTick, economy, pressure));
         this.spentOnTowers = 0;
         this.spentOnUpgrades = 0;
     }
