@@ -478,7 +478,7 @@ class CinderTowerTest {
     }
 
     @Test
-    void flashpointAddsThreeScorchedToACritIgnitionAndNothingToAPlainOne() {
+    void flashpointAddsEightScorchedToACritIgnition() {
         CinderTower tower = this.transcendentTower();
         UpgradePaths.buy(tower, this.context, "Flashpoint");
         FakeEnemyMob crit = FakeEnemyMob.at(150, 112);
@@ -488,7 +488,7 @@ class CinderTowerTest {
 
         assertThat(crit.appliedEffects()).anySatisfy(effect -> {
             assertThat(effect.kind()).isEqualTo(EffectKind.SCORCHED);
-            assertThat(effect.stacks()).isEqualTo(3);
+            assertThat(effect.stacks()).isEqualTo(8);
         });
     }
 
@@ -533,7 +533,7 @@ class CinderTowerTest {
 
         tickThrough(tower, 1, 1 + TRAVEL);
 
-        assertThat(burns(target).getFirst().tuning().carried().flat(td.stat.EnemyStat.MAGIC_DAMAGE_TAKEN)).isEqualTo(0.25f);
+        assertThat(burns(target).getFirst().tuning().carried().flat(td.stat.EnemyStat.MAGIC_DAMAGE_TAKEN)).isEqualTo(0.4f);
     }
 
     /** A tower on the Wide Nozzle chain with a special and Transcendent, gates waived. */
@@ -552,7 +552,7 @@ class CinderTowerTest {
     }
 
     @Test
-    void infernoRingBurnsEnemiesOnEverySideAndCostsAQuarterOfTheRange() {
+    void infernoRingBurnsEnemiesOnEverySideAndKeepsTheRange() {
         CinderTower tower = this.nozzleTower();
         float rangeBefore = tower.getRangeReal();
         UpgradePaths.buy(tower, this.context, "Inferno Ring");
@@ -566,7 +566,7 @@ class CinderTowerTest {
         assertThat(burns(ahead)).isNotEmpty();
         assertThat(burns(behind)).isNotEmpty();
         assertThat(burns(above)).isNotEmpty();
-        assertThat(tower.getRangeReal()).isLessThan(rangeBefore);
+        assertThat(tower.getRangeReal()).isEqualTo(rangeBefore);
     }
 
     @Test

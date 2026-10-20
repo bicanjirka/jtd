@@ -1,9 +1,9 @@
 package td.tower.cinder;
 
-/** Flashpoint: a critical ignition also adds three Scorched. */
+/** Flashpoint: a critical ignition also adds eight Scorched. */
 public final class FlashpointPerk implements CinderPerk {
 
-    private static final int STACKS = 3;
+    private static final int STACKS = 8;
 
     @Override
     public CinderSpec refineSpec(CinderSpec spec) {

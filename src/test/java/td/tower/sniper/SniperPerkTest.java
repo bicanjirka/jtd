@@ -70,12 +70,6 @@ class SniperPerkTest {
     }
 
     @Test
-    void onlyUnbrokenAimLetsSteadyAimSurviveAKill() {
-        assertThat(SPEC.steadyAim()).isEqualTo(new AimRules(false));
-        assertThat(new UnbrokenAimPerk().refineSpec(SPEC).steadyAim()).isEqualTo(new AimRules(true));
-    }
-
-    @Test
     void critStreakMakesTheNextCritHitHarderAndTwoInARowHarderStillButNoFurther() {
         CritStreakPerk perk = new CritStreakPerk();
         EnemyMob target = FakeEnemyMob.at(0, 0);
@@ -107,14 +101,17 @@ class SniperPerkTest {
     }
 
     @Test
-    void ricochetBouncesOnlyOnACrit() {
+    void ricochetBouncesOnACritOrAKillButNotOnAPlainHit() {
         RicochetPerk perk = new RicochetPerk();
-        EnemyMob target = FakeEnemyMob.at(0, 0);
+        EnemyMob plain = FakeEnemyMob.at(0, 0);
+        EnemyMob crit = FakeEnemyMob.at(10, 0);
+        EnemyMob killed = FakeEnemyMob.at(20, 0);
 
-        perk.react(new ShotResult(target, false, false), this.actions);
-        perk.react(new ShotResult(target, true, false), this.actions);
+        perk.react(new ShotResult(plain, false, false), this.actions);
+        perk.react(new ShotResult(crit, true, false), this.actions);
+        perk.react(new ShotResult(killed, false, true), this.actions);
 
-        assertThat(this.actions.ricochets).containsExactly(target);
+        assertThat(this.actions.ricochets).containsExactly(crit, killed);
     }
 
 }

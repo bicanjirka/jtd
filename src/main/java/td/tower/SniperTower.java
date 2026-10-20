@@ -18,7 +18,6 @@ import td.tower.proc.ProcCondition;
 import td.tower.proc.ProcPayload;
 import td.tower.sniper.AimFocus;
 import td.tower.sniper.AimLock;
-import td.tower.sniper.AimRules;
 import td.tower.sniper.CritStreakPerk;
 import td.tower.sniper.ExecutionerPerk;
 import td.tower.sniper.PierceRule;
@@ -32,7 +31,6 @@ import td.tower.sniper.SniperPerk;
 import td.tower.sniper.SniperShot;
 import td.tower.sniper.SniperSpec;
 import td.tower.sniper.SpotterUplinkPerk;
-import td.tower.sniper.UnbrokenAimPerk;
 import td.tower.sniper.WeakSpotPerk;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.NearestSelector;
@@ -61,7 +59,8 @@ import java.util.OptionalInt;
 import java.util.Set;
 
 /**
- * The patient single-target tower: it gets better the longer it stays on one enemy. It fires at the
+ * The rhythmic single-target tower: each shot builds on the last, whichever enemy it hits, until it
+ * stops firing for a while. It fires at the
  * visible enemy in range furthest along the path; the first special it owns decides whom it aims at
  * instead. The turret turns at a capped rate and holds its heading when idle.
  * <p>
@@ -119,6 +118,7 @@ public final class SniperTower extends AbstractTower {
     private static final UpgradeNode MARKSMANS_EYE_1 = UpgradeTier.HEAD_1.node("sniper.head.marksmans_eye.1",
             "Marksman's Eye", PRICE)
             .withModifiers(TowerModifiers.aimStacks(2))
+            .withHitBonus(HitBonus.per(new HitScaling.PerFocus(0), HitAdjustment.damage(0.2f)))
             .withProc(Proc.onDodge(new ProcPayload.GrantStatus(TowerStatus.nextShots("sniper.patience", 1,
                     StatModifiers.none()).withCapability(TowerCapability.GUARANTEED_CRIT))));
     private static final UpgradeNode MARKSMANS_EYE_2 = UpgradeTier.HEAD_2.node("sniper.head.marksmans_eye.2",
@@ -166,42 +166,39 @@ public final class SniperTower extends AbstractTower {
     private static final UpgradeNode HEADHUNTER = UpgradeTier.SPECIAL.node("sniper.special.headhunter", "Headhunter",
             PRICE)
             .withTargeting(TargetPriority.HIGHEST_RANK)
-            .withHitBonus(HitBonus.when(new HitCondition.TargetRankAtLeast(Rank.ELITE), HitAdjustment.damage(0.4f)))
+            .withHitBonus(HitBonus.when(new HitCondition.TargetRankAtLeast(Rank.ELITE), HitAdjustment.damage(0.75f)))
             .after(FOCUSED_OPTICS_1);
     private static final UpgradeNode HOLLOW_POINT = UpgradeTier.SPECIAL.node("sniper.special.hollow_point",
             "Hollow Point", PRICE)
-            .withTargeting(TargetPriority.MOST_HEALTH)
-            .withProc(Proc.onCrit(new ProcPayload.ApplyStacks(EffectKind.VULNERABLE, 1)).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
+            .withProc(Proc.onHit(new ProcPayload.ApplyStacks(EffectKind.VULNERABLE, 1)).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
             .after(MARKSMANS_EYE_1);
-    private static final UpgradeNode FIFTH_SHOT = UpgradeTier.SPECIAL.node("sniper.special.fifth_shot",
-            "Fifth Shot", PRICE)
-            .withTargeting(TargetPriority.MOST_HEALTH)
-            .withProc(Proc.everyNthShot(5, new ProcPayload.GrantStatus(TowerStatus.nextShots("sniper.fifth", 1,
-                    TowerModifiers.critMultiplier(0.5f)).withCapability(TowerCapability.GUARANTEED_CRIT))))
+    // The id keeps its old word so saved games still load the node.
+    private static final UpgradeNode FOURTH_SHOT = UpgradeTier.SPECIAL.node("sniper.special.fifth_shot",
+            "Fourth Shot", PRICE)
+            .withProc(Proc.everyNthShot(4, new ProcPayload.GrantStatus(TowerStatus.nextShots("sniper.fourth", 1,
+                    TowerModifiers.critMultiplier(1.5f)).withCapability(TowerCapability.GUARANTEED_CRIT))))
             .after(MARKSMANS_EYE_1);
     private static final UpgradeNode SHATTER_SHOT = UpgradeTier.SPECIAL.node("sniper.special.shatter_shot",
             "Shatter Shot", PRICE)
-            .withTargeting(TargetPriority.STOPPED_FIRST)
-            .withHitBonus(HitBonus.when(new HitCondition.TargetStopped(), HitAdjustment.critMultiplier(0.5f)))
+            .withHitBonus(HitBonus.when(new HitCondition.TargetStopped(), HitAdjustment.critChance(1f).plus(HitAdjustment.critMultiplier(1f))))
             .after(MARKSMANS_EYE_1);
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, FOCUSED_OPTICS_3,
             MARKSMANS_EYE_3))
             .with(FOCUSED_OPTICS_1, FOCUSED_OPTICS_2, FOCUSED_OPTICS_3, RAILGUN, EXECUTIONER, MARKSMANS_EYE_1,
                     MARKSMANS_EYE_2, MARKSMANS_EYE_3, UNBROKEN_AIM, SUNDER_ROUNDS, TRADECRAFT_1, TRADECRAFT_2,
-                    SILVER_ROUNDS, SPOTTER_UPLINK, MOMENTUM, RICOCHET, HEADHUNTER, HOLLOW_POINT, FIFTH_SHOT,
+                    SILVER_ROUNDS, SPOTTER_UPLINK, MOMENTUM, RICOCHET, HEADHUNTER, HOLLOW_POINT, FOURTH_SHOT,
                     SHATTER_SHOT)
             .withChoice(ExclusiveChoice.oneOf(FOCUSED_OPTICS_1, MARKSMANS_EYE_1))
             .withChoice(ExclusiveChoice.oneOf(RAILGUN, EXECUTIONER))
             .withChoice(ExclusiveChoice.oneOf(UNBROKEN_AIM, SUNDER_ROUNDS))
-            .withChoice(ExclusiveChoice.specials(MOMENTUM, RICOCHET, HEADHUNTER, HOLLOW_POINT, FIFTH_SHOT,
+            .withChoice(ExclusiveChoice.specials(MOMENTUM, RICOCHET, HEADHUNTER, HOLLOW_POINT, FOURTH_SHOT,
                     SHATTER_SHOT));
 
     private static final PerkCatalogue<SniperPerk> PERKS = PerkCatalogue.<SniperPerk>empty()
             .with(FOCUSED_OPTICS_3.id(), WeakSpotPerk::new)
             .with(RAILGUN.id(), RailgunPerk::new)
             .with(EXECUTIONER.id(), ExecutionerPerk::new)
-            .with(UNBROKEN_AIM.id(), UnbrokenAimPerk::new)
             .with(TRADECRAFT_1.id(), CritStreakPerk::new)
             .with(SPOTTER_UPLINK.id(), SpotterUplinkPerk::new)
             .with(RICOCHET.id(), RicochetPerk::new);
@@ -261,12 +258,13 @@ public final class SniperTower extends AbstractTower {
     }
 
     public void doTick(int gameTime) {
+        this.focus.advance();
         if (this.clock.isReady()) {
             List<SniperPerk> owned = this.perks.all();
             SniperSpec spec = this.spec(owned);
             this.currentTarget = this.findEnemy(spec);
             if (this.currentTarget != null) {
-                this.fire(this.currentTarget, owned, spec.steadyAim());
+                this.fire(this.currentTarget, owned);
             }
         }
         this.clock.advance(this.attackRate());
@@ -276,10 +274,9 @@ public final class SniperTower extends AbstractTower {
     }
 
     /** One shot: shaped by the owned perks, landed, settled and reacted to, and the wait that follows. */
-    private void fire(EnemyMob target, List<SniperPerk> owned, AimRules steadyAim) {
+    private void fire(EnemyMob target, List<SniperPerk> owned) {
         TowerStats stats = this.beginShot();
-        AimLock lock = this.focus.lock(target, Math.round(this.stats().value(TowerStat.AIM_STACKS)),
-                steadyAim.survivesKill());
+        AimLock lock = this.focus.lock(target, this.aimStackCap());
         ShotContext context = new ShotContext(target, lock, this.shotNumber(), this.rangeShareOf(target));
         HitAdjustment adjustment = this.hitAdjustment(target, HitKind.DIRECT, context.rangeShare(), stats, lock.stacks(),
                 lock.fresh());
@@ -406,12 +403,16 @@ public final class SniperTower extends AbstractTower {
         return Optional.ofNullable(this.lastShot);
     }
 
-    /** How many Steady Aim stacks the next shot at the current target has; empty without Attune. */
+    /** How many Steady Aim stacks the next shot has, whichever enemy it hits; empty without Attune. */
     public OptionalInt steadyAimStacks() {
-        if (this.currentTarget == null || !this.upgrades().owns(StandardBaseSlot.ATTUNE_ID)) {
+        if (!this.upgrades().owns(StandardBaseSlot.ATTUNE_ID)) {
             return OptionalInt.empty();
         }
-        return OptionalInt.of(this.focus.stacksOn(this.currentTarget));
+        return OptionalInt.of(Math.min(this.aimStackCap(), this.focus.stacks()));
+    }
+
+    private int aimStackCap() {
+        return Math.round(this.stats().value(TowerStat.AIM_STACKS));
     }
 
     public TurretAim getTurretAim() {

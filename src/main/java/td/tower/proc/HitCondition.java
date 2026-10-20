@@ -42,7 +42,7 @@ public sealed interface HitCondition {
         }
     }
 
-    /** Once the tower has landed {@code focus} attacks in a row on the target. */
+    /** Once the tower's focus has built to {@code focus}. */
     record FocusAtLeast(int focus) implements HitCondition {
         @Override
         public boolean holds(HitContext context) {
@@ -51,7 +51,7 @@ public sealed interface HitCondition {
 
         @Override
         public String describe() {
-            return this.focus == 1 ? "after the first shot at a target" : "after " + this.focus + " shots at a target";
+            return this.focus == 1 ? "after the first shot" : "after " + this.focus + " shots";
         }
     }
 
