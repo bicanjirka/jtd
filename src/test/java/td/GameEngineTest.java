@@ -440,8 +440,9 @@ class GameEngineTest {
             engine.doTick(t);
         }
 
+        // The dodged shot built one Steady Aim stack: +20% damage under Marksman's Eye.
         assertThat(sniper.getDamageDealt())
-                .isEqualTo(DamageUnits.ofPoints(SniperTower.DAMAGE_POINTS * SniperTower.CRIT_MULTIPLIER));
+                .isEqualTo(DamageUnits.ofPoints(SniperTower.DAMAGE_POINTS * 1.2f * SniperTower.CRIT_MULTIPLIER));
     }
 
     @Test

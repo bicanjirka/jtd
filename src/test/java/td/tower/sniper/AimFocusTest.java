@@ -2,28 +2,44 @@ package td.tower.sniper;
 
 import org.junit.jupiter.api.Test;
 import td.fixtures.FakeEnemyMob;
+import td.util.TickRate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AimFocusTest {
 
+    private static final int STACK_TICKS = Math.round(AimFocus.STACK_SECONDS * TickRate.TICKS_PER_SECOND);
+
     private final AimFocus focus = new AimFocus();
 
+    private void lockTimes(int shots) {
+        FakeEnemyMob target = FakeEnemyMob.at(0, 0);
+        for (int i = 0; i < shots; i++) {
+            this.focus.lock(target, 5);
+        }
+    }
+
+    private void advance(int ticks) {
+        for (int i = 0; i < ticks; i++) {
+            this.focus.advance();
+        }
+    }
+
     @Test
-    void theFirstShotAtATargetIsFreshAndHasNoStacks() {
-        AimLock lock = this.focus.lock(FakeEnemyMob.at(0, 0), 3, false);
+    void theFirstShotIsFreshAndHasNoStacks() {
+        AimLock lock = this.focus.lock(FakeEnemyMob.at(0, 0), 3);
 
         assertThat(lock).isEqualTo(new AimLock(0, true));
     }
 
     @Test
-    void everyShotAtTheSameTargetAddsAStackUpToTheCap() {
+    void everyShotAddsAStackUpToTheCap() {
         FakeEnemyMob target = FakeEnemyMob.at(0, 0);
-        this.focus.lock(target, 2, false);
+        this.focus.lock(target, 2);
 
-        AimLock second = this.focus.lock(target, 2, false);
-        AimLock third = this.focus.lock(target, 2, false);
-        AimLock fourth = this.focus.lock(target, 2, false);
+        AimLock second = this.focus.lock(target, 2);
+        AimLock third = this.focus.lock(target, 2);
+        AimLock fourth = this.focus.lock(target, 2);
 
         assertThat(second).isEqualTo(new AimLock(1, false));
         assertThat(third).isEqualTo(new AimLock(2, false));
@@ -31,37 +47,72 @@ class AimFocusTest {
     }
 
     @Test
-    void aimingAtAnotherLivingEnemyStartsOver() {
+    void aimingAtAnotherLivingEnemyIsFreshButKeepsTheStacks() {
         FakeEnemyMob first = FakeEnemyMob.at(0, 0);
-        this.focus.lock(first, 3, true);
-        this.focus.lock(first, 3, true);
+        this.focus.lock(first, 3);
+        this.focus.lock(first, 3);
 
-        AimLock other = this.focus.lock(FakeEnemyMob.at(5, 5), 3, true);
+        AimLock other = this.focus.lock(FakeEnemyMob.at(5, 5), 3);
 
-        assertThat(other).isEqualTo(new AimLock(0, true));
+        assertThat(other).isEqualTo(new AimLock(2, true));
     }
 
     @Test
-    void theStacksSurviveAKillOnlyWhenAskedTo() {
+    void theStacksOutliveAKilledTarget() {
         FakeEnemyMob first = FakeEnemyMob.at(0, 0);
-        this.focus.lock(first, 3, true);
-        this.focus.lock(first, 3, true);
+        this.focus.lock(first, 3);
+        this.focus.lock(first, 3);
         first.invalidate();
 
-        AimLock carried = this.focus.lock(FakeEnemyMob.at(5, 5), 3, true);
+        AimLock next = this.focus.lock(FakeEnemyMob.at(5, 5), 3);
 
-        assertThat(carried).isEqualTo(new AimLock(2, true));
+        assertThat(next).isEqualTo(new AimLock(2, true));
     }
 
     @Test
-    void withoutSurvivingAKillTheStacksEndWithTheTarget() {
-        FakeEnemyMob first = FakeEnemyMob.at(0, 0);
-        this.focus.lock(first, 3, false);
-        this.focus.lock(first, 3, false);
-        first.invalidate();
+    void theStacksTheNextShotHasAreTheOnesBuiltSoFar() {
+        FakeEnemyMob target = FakeEnemyMob.at(0, 0);
+        this.focus.lock(target, 3);
+        this.focus.lock(target, 3);
 
-        AimLock lost = this.focus.lock(FakeEnemyMob.at(5, 5), 3, false);
+        int stacks = this.focus.stacks();
 
-        assertThat(lost).isEqualTo(new AimLock(0, true));
+        assertThat(stacks).isEqualTo(2);
+    }
+
+    @Test
+    void aStackFadesThreeSecondsAfterTheLastShotOneAtATime() {
+        this.lockTimes(3);
+
+        this.advance(STACK_TICKS - 1);
+        int beforeTheFade = this.focus.stacks();
+        this.advance(1);
+        int afterOne = this.focus.stacks();
+        this.advance(STACK_TICKS);
+        int afterTwo = this.focus.stacks();
+
+        assertThat(beforeTheFade).isEqualTo(3);
+        assertThat(afterOne).isEqualTo(2);
+        assertThat(afterTwo).isEqualTo(1);
+    }
+
+    @Test
+    void aShotStartsTheFadeOver() {
+        this.lockTimes(2);
+        this.advance(STACK_TICKS - 1);
+
+        this.lockTimes(1);
+        this.advance(STACK_TICKS - 1);
+
+        assertThat(this.focus.stacks()).isEqualTo(3);
+    }
+
+    @Test
+    void theStacksFadeToNoneAndStayThere() {
+        this.lockTimes(2);
+
+        this.advance(5 * STACK_TICKS);
+
+        assertThat(this.focus.stacks()).isZero();
     }
 }

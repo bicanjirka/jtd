@@ -22,7 +22,7 @@ public sealed interface HitScaling {
         }
     }
 
-    /** Once per attack in a row on the target, up to {@code max}; 0 for no max. */
+    /** Once per step of the tower's focus, up to {@code max}; 0 for no max. */
     record PerFocus(int max) implements HitScaling {
         @Override
         public float factor(HitContext context) {

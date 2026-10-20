@@ -111,7 +111,7 @@ public final class CinderTower extends AbstractTower {
             .after(WHITE_FLAME_2);
     private static final UpgradeNode FLASHPOINT = UpgradeTier.HEAD_4.node("cinder.head.white_flame.4a",
             "Flashpoint", PRICE)
-            .withModifiers(TowerModifiers.critChance(0.3f).plus(TowerModifiers.critMultiplier(1.5f)))
+            .withModifiers(TowerModifiers.critChance(0.5f).plus(TowerModifiers.critMultiplier(1.5f)))
             .after(SOULFIRE);
     private static final UpgradeNode COMBUSTION = UpgradeTier.HEAD_4.node("cinder.head.white_flame.4b",
             "Combustion", PRICE)
@@ -133,7 +133,6 @@ public final class CinderTower extends AbstractTower {
             .after(WIDE_NOZZLE_2);
     private static final UpgradeNode INFERNO_RING = UpgradeTier.HEAD_4.node("cinder.head.wide_nozzle.4a",
             "Inferno Ring", PRICE)
-            .withModifiers(TowerModifiers.range(-0.4f))
             .after(LINGERING_FLAMES);
     private static final UpgradeNode DRAGONS_BREATH = UpgradeTier.HEAD_4.node("cinder.head.wide_nozzle.4b",
             "Dragon's Breath", PRICE)

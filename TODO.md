@@ -192,8 +192,8 @@ nothing within the noise of about one life, an Obelisk copy 3.5, a Mortar copy 5
 `FEATURE-aura-and-balance-pass.md` target of 0.7x to 1x). **The Scorcher was the exception** (its copy saved 17 and no node beat 0.6x of that); its tree got a balance pass, see
 the Cinder entry below. Reprice from
 the four-copy table, not the one-copy one; the cheapest nodes (Range at $9 to $18) top it by dividing by a tiny cost,
-so read their rows with the saved column. Nodes that act on enemies rather than on damage (Hollow Point, Shatter
-Shot, Fifth Shot) save nothing within the noise of about one life.
+so read their rows with the saved column. The Sniper's Marksman's Eye specials (Hollow Point, Fourth Shot, Shatter
+Shot) saved nothing until the Sniper's retune; see the crit entry below.
 
 - Frenzy and Momentum's haste stack since the stat-driven plan (up to +200% attack speed); check the
   Focused Optics chain with Momentum.
@@ -232,7 +232,9 @@ What it showed and what is left:
   only move crit damage and heals, and no wave here has healers, so judge it with a crit-heavy defence and a Mender
   wave, not with this table.
 - Flashpoint and Inferno Ring are the weakest last head nodes (2 to 6 lives with a special where Dragon's Breath
-  and Combustion save 6 to 11).
+  and Combustion save 6 to 11). A retune (Flashpoint +50% crit and 8 Scorched, Inferno Ring without its range cut,
+  Pyromancer's Mark +40% magic taken) moved them little: four copies on Zigzag Path save 25.1 and 22.1 lives
+  against Combustion's 28.4 and Dragon's Breath's 25.7 (`docs/ideas/sniper-and-scorcher-identity.md`).
 
 - **Where:** the `private static final` constants in `MortarTower`, `CinderTower`, `td.zone.Zone`,
   `td.zone.ZoneEffects`, `td.tower.mortar.ShellType` and the perks under `td.tower.mortar` and
@@ -301,9 +303,10 @@ Zigzag Path and Twisted Hourglass) showed the best builds saving the same lives 
 6.6 to 4.1 lives saved on Twisted Hourglass, still the best special by far. The Warden's
 on-crit-survived shield (30% for 100 ticks) is from the first crit pass.
 
-- Hollow Point, Shatter Shot and Fifth Shot save nothing or lose lives against plain Snipers on every level, and
-  Ricochet and Headhunter barely move it; Momentum is the one special that matters. That is a bigger gap than
-  Momentum's multiplier.
+- Since the Sniper's retune (Steady Aim kept across targets, fading a stack 3 s after the last shot, Marksman's Eye +20% damage a stack, the Marksman's
+  Eye specials keeping its own targeting, stronger specials), four copies on Zigzag Path save 7.1 to 9.3 lives with
+  Hollow Point, Fourth Shot, Shatter Shot, Ricochet or Headhunter, and 17.6 with Momentum; before, the first three
+  lost lives. Momentum is still far ahead (`docs/ideas/sniper-and-scorcher-identity.md`, S4).
 - **Where:** `AttackProfile.DEFAULT_CRIT_MULTIPLIER`, `SniperTower.CRIT_CHANCE` and
   `CRIT_MULTIPLIER`, the Momentum node in `SniperTower`, `CritStreakPerk`, and
   `WardenEnemy`'s `OnCriticalHitTakenTrigger` ability.

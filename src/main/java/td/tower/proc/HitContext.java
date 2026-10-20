@@ -9,7 +9,7 @@ import td.tower.TowerStats;
  * @param target      whom it hits
  * @param kind        what kind of hit it is
  * @param rangeShare  how far out the target stands, as a share of the tower's range
- * @param focus       how many attacks in a row the tower has landed on the target
+ * @param focus       how far the tower's focus had built before this attack, as the tower counts it
  * @param freshTarget whether this is the first attack at a new target
  * @param shot        the stats of the attack this hit belongs to
  */

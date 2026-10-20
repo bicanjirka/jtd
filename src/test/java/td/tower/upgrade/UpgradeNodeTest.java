@@ -77,6 +77,15 @@ class UpgradeNodeTest {
     @Test
     void headhunterSaysWhomItAimsAtAndWhomItHitsHarder() {
         assertThat(sniperNode("Headhunter").bonuses()).containsExactly(new UpgradeBonus("Targets", "highest rank"),
-                new UpgradeBonus("Vs Elite and Boss", "Damage +40%"));
+                new UpgradeBonus("Vs Elite and Boss", "Damage +75%"));
+    }
+
+    @Test
+    void theMarksmansEyeSpecialsSayWhatTheyDoWithoutChangingWhomTheSniperAimsAt() {
+        assertThat(sniperNode("Hollow Point").bonuses()).containsExactly(new UpgradeBonus("On hit, shots", "Vulnerable +1"));
+        assertThat(sniperNode("Fourth Shot").bonuses()).containsExactly(
+                new UpgradeBonus("Every 4th shot", "next shot: Crit damage +150%, Guaranteed crit"));
+        assertThat(sniperNode("Shatter Shot").bonuses()).containsExactly(
+                new UpgradeBonus("Vs frozen or dazed", "Crit chance +100%, Crit damage +100%"));
     }
 }
