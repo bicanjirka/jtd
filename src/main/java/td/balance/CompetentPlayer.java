@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,6 +121,22 @@ final class CompetentPlayer implements Player {
         /** The standard player denied {@code role}: its towers, and the nodes that do it on the others. */
         static Style without(Role role) {
             return standard().withTypes(role.allowedTypes()).withBannedNodes(role.bannedNodes());
+        }
+
+        /**
+         * The standard player denied {@code role} but for what {@code kept} also does: what is left of a role once
+         * the towers and nodes it shares with another are taken out of it.
+         */
+        static Style without(Role role, Set<Role> kept) {
+            Set<TowerFactory.Type> types = EnumSet.copyOf(role.allowedTypes());
+            Set<String> nodes = new HashSet<>(role.bannedNodes());
+            for (Role keep : kept) {
+                EnumSet<TowerFactory.Type> its = EnumSet.allOf(TowerFactory.Type.class);
+                its.removeAll(keep.allowedTypes());
+                types.addAll(its);
+                nodes.removeAll(keep.bannedNodes());
+            }
+            return standard().withTypes(types).withBannedNodes(nodes);
         }
 
         Style withTypes(Set<TowerFactory.Type> allowed) {

@@ -29,30 +29,37 @@ final class StrongPlayer implements Player {
     private static final int MOST_SOLD = 2;
 
     private final TowerLab lab;
+    /** The way it plays when nothing leaks, and what every other way it tries is held to. */
+    private final CompetentPlayer.Style base;
 
     private Player current;
     private int roundChosen = -1;
 
-    StrongPlayer(TowerLab lab) {
+    StrongPlayer(TowerLab lab, CompetentPlayer.Style base) {
         this.lab = lab;
-        this.current = new CompetentPlayer(lab, CompetentPlayer.Style.standard());
+        this.base = base;
+        this.current = new CompetentPlayer(lab, base);
     }
 
     static PlayerSpec spec(String name, Map<String, TowerLab> labs) {
-        return new PlayerSpec(name, (survey, seed) -> new StrongPlayer(labs.get(survey.level().name())));
+        return spec(name, labs, CompetentPlayer.Style.standard());
     }
 
-    /** The ways of spending it tries for a round. */
-    static List<CompetentPlayer.Style> candidates() {
-        CompetentPlayer.Style standard = CompetentPlayer.Style.standard();
+    /** A strong player held to {@code base}: the towers and nodes it may buy, whatever way it tries. */
+    static PlayerSpec spec(String name, Map<String, TowerLab> labs, CompetentPlayer.Style base) {
+        return new PlayerSpec(name, (survey, seed) -> new StrongPlayer(labs.get(survey.level().name()), base));
+    }
+
+    /** The ways of spending it tries for a round, each held to {@code base}. */
+    static List<CompetentPlayer.Style> candidates(CompetentPlayer.Style base) {
         List<CompetentPlayer.Style> styles = new ArrayList<>();
-        styles.add(standard);
-        styles.add(standard.withoutUpgrades());
-        styles.add(standard.withSaveFactor(0));
-        styles.add(standard.withSaveFactor(3));
-        styles.add(standard.withTypes(EnumSet.noneOf(TowerFactory.Type.class)));
-        for (TowerFactory.Type type : TowerFactory.Type.values()) {
-            styles.add(standard.withTypes(EnumSet.of(type)));
+        styles.add(base);
+        styles.add(base.withoutUpgrades());
+        styles.add(base.withSaveFactor(0));
+        styles.add(base.withSaveFactor(3));
+        styles.add(base.withTypes(EnumSet.noneOf(TowerFactory.Type.class)));
+        for (TowerFactory.Type type : base.types()) {
+            styles.add(base.withTypes(EnumSet.of(type)));
         }
         return styles;
     }
@@ -74,14 +81,14 @@ final class StrongPlayer implements Player {
         List<PlayRecord.TimedAction> soFar = turn.actionsSoFar();
         int round = turn.round();
         int through = Math.min(turn.roundCount(), round + ROUNDS_AFTER);
-        CompetentPlayer.Style standard = CompetentPlayer.Style.standard();
+        CompetentPlayer.Style standard = this.base;
         double standardScore = this.rehearse(turn, soFar, standard, round, through);
         if (standardScore < PER_LEAK) {
             return new CompetentPlayer(this.lab, standard);
         }
         CompetentPlayer.Style best = standard;
         double bestScore = standardScore;
-        for (CompetentPlayer.Style style : candidates()) {
+        for (CompetentPlayer.Style style : candidates(this.base)) {
             double score = style.equals(standard) ? standardScore : this.rehearse(turn, soFar, style, round, through);
             if (score < bestScore) {
                 bestScore = score;
@@ -102,7 +109,7 @@ final class StrongPlayer implements Player {
     }
 
     private Player competent() {
-        return new CompetentPlayer(this.lab, CompetentPlayer.Style.standard());
+        return new CompetentPlayer(this.lab, this.base);
     }
 
     private static double leaks(double score) {

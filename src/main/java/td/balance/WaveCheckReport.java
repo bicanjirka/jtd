@@ -26,7 +26,7 @@ import java.util.stream.LongStream;
 /**
  * Checks one level wave by wave against what each wave is meant to ask of the player. The strong player is the
  * reference: its margin, the round it loses in, its pressure on each round, and how its margin moves with the
- * bounty. Each signature wave is checked by denying the competent player the role it asks for, from the start:
+ * bounty. Each signature wave is checked by denying the strong player the role it asks for, from the start:
  * the wave should be where that player first leaks, and no other denial should break it first. A strip wave is
  * checked on the strong player's own army: taking any role's towers off just before it should make it leak.
  * <p>
@@ -202,13 +202,18 @@ public final class WaveCheckReport {
                         entry.getValue() / (double) strong.size()))
                 .collect(Collectors.joining(", ")));
         this.printRolesBrought(strong);
-        this.out.println("  strong leaks by kind, per play: " + strong.stream()
+        this.out.println("  strong leaks by kind, per play: " + leaksByKind(strong));
+        this.out.println("  competent leaks by kind, per play: " + leaksByKind(competent));
+    }
+
+    private static String leaksByKind(List<PlayRecord> plays) {
+        return plays.stream()
                 .flatMap(play -> play.ends().stream()).filter(PlayRecord.EnemyEnd::leaked)
                 .collect(Collectors.groupingBy(end -> end.round() + ":" + TowerLab.kindKey(end.foe().kind(),
                         end.foe().rank()), Collectors.counting()))
                 .entrySet().stream().sorted(Map.Entry.comparingByKey())
-                .map(entry -> String.format("r%s %.1f", entry.getKey(), entry.getValue() / (double) strong.size()))
-                .collect(Collectors.joining(", ")));
+                .map(entry -> String.format("r%s %.1f", entry.getKey(), entry.getValue() / (double) plays.size()))
+                .collect(Collectors.joining(", "));
     }
 
     private static boolean isSale(PlayerAction action) {
@@ -224,8 +229,13 @@ public final class WaveCheckReport {
         for (Map.Entry<Integer, Set<Role>> check : new java.util.TreeMap<>(this.options.checks()).entrySet()) {
             int wave = check.getKey();
             this.out.printf("  strong brings to wave %d: %s%n", wave, check.getValue().stream()
-                    .map(role -> String.format("%s %d/%d", role.label(),
-                            strong.stream().filter(play -> brings(play, wave, role)).count(), strong.size()))
+                    .map(role -> String.format("%s %d/%d (leaking heavily there without it %d, with it %d)",
+                            role.label(), strong.stream().filter(play -> brings(play, wave, role)).count(),
+                            strong.size(),
+                            strong.stream().filter(play -> !brings(play, wave, role) && leakedIn(play, wave) >= HEAVY)
+                                    .count(),
+                            strong.stream().filter(play -> brings(play, wave, role) && leakedIn(play, wave) >= HEAVY)
+                                    .count()))
                     .collect(Collectors.joining(", ")));
         }
     }
@@ -277,18 +287,24 @@ public final class WaveCheckReport {
     private void printBans(BoardSurvey survey, Map<String, TowerLab> labs, List<PlayRecord> strong, int rounds) {
         Map<Role, List<PlayRecord>> banned = new LinkedHashMap<>();
         for (Role role : Role.values()) {
-            banned.put(role, this.plays(survey, CompetentPlayer.spec("no-" + role.label(), labs,
+            banned.put(role, this.plays(survey, StrongPlayer.spec("no-" + role.label(), labs,
                     CompetentPlayer.Style.without(role))));
         }
+        List<PlayRecord> unbanned = strong.isEmpty() ? this.plays(survey, StrongPlayer.spec(BalanceReport.STRONG, labs))
+                : strong;
         this.out.println();
-        this.out.println("ROLE BANS (competent player denied the role: share of seeds leaking heavily each round)");
+        this.out.println("ROLE BANS (strong player denied the role: share of seeds leaking heavily each round)");
         this.out.println("  round          " + IntStream.rangeClosed(1, rounds)
                 .mapToObj(round -> String.format("%4d", round)).collect(Collectors.joining()));
+        this.out.println(String.format("  %-15s", "nothing denied") + IntStream.rangeClosed(1, rounds)
+                .mapToObj(round -> String.format("%4.0f", 100 * share(unbanned, play -> leakedIn(play, round) >= HEAVY)))
+                .collect(Collectors.joining()) + "   first heavy leak: " + firstLeaks(unbanned));
         banned.forEach((role, plays) -> this.out.println(String.format("  %-15s", "no-" + role.label())
                 + IntStream.rangeClosed(1, rounds).mapToObj(round -> String.format("%4.0f",
                         100 * share(plays, play -> leakedIn(play, round) >= HEAVY)))
                         .collect(Collectors.joining())
                 + "   first heavy leak: " + firstLeaks(plays)));
+        Map<CompetentPlayer.Style, List<PlayRecord>> restOf = new java.util.HashMap<>();
         for (Map.Entry<Integer, Set<Role>> check : new java.util.TreeMap<>(this.options.checks()).entrySet()) {
             int wave = check.getKey();
             this.out.printf("  wave %d asks for %s%n", wave,
@@ -304,9 +320,14 @@ public final class WaveCheckReport {
             }
             for (Role role : Role.values()) {
                 if (!check.getValue().contains(role)) {
-                    double breaks = share(banned.get(role), play -> firstHeavyLeak(play) == wave);
-                    this.out.printf("    c) denied %s instead, first heavy leak there: %.0f%% %s%n", role.label(),
-                            100 * breaks, verdict(breaks < MOST));
+                    CompetentPlayer.Style rest = CompetentPlayer.Style.without(role, check.getValue());
+                    List<PlayRecord> plays = rest.equals(CompetentPlayer.Style.without(role)) ? banned.get(role)
+                            : restOf.computeIfAbsent(rest, style -> this.plays(survey, StrongPlayer.spec(
+                                    "no-" + role.label() + "-but", labs, style)));
+                    double breaks = share(plays, play -> firstHeavyLeak(play) == wave);
+                    this.out.printf("    c) denied %s instead%s, first heavy leak there: %.0f%% %s%n", role.label(),
+                            plays == banned.get(role) ? "" : " (but what wave " + wave + " asks for)", 100 * breaks,
+                            verdict(breaks < MOST));
                 }
             }
         }
