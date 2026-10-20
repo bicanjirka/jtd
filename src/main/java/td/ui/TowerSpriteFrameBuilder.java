@@ -116,21 +116,12 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     private void sprite(Tower tower, Palette body) {
-        this.sprite(tower, body, false, 0f);
-    }
-
-    /** A body that may turn to face {@code facingRadians}, the heading its turret has. */
-    private void facingSprite(Tower tower, Palette body, double facingRadians) {
-        this.sprite(tower, body, true, (float) facingRadians);
-    }
-
-    private void sprite(Tower tower, Palette body, boolean aims, float facingRadians) {
         this.draws.add(new TowerSpriteDraw(body, tower.getBoardX(), tower.getBoardY(),
                 tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(),
                 this.slotMarksFor(tower), this.enchantPulseFor(tower),
                 tower.upgrades().owns(StandardBaseSlot.TRANSCENDENT_ID),
                 (float) (this.animationSeconds / TRANSCENDENT_HALO_SECONDS_PER_TURN % 1.0),
-                tower.experience().rank().ordinal(), this.rankUpProgressFor(tower), aims, facingRadians));
+                tower.experience().rank().ordinal(), this.rankUpProgressFor(tower)));
     }
 
     /** {@code -1} outside the glow that follows a rank-up, else how far through it. */
@@ -151,8 +142,8 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     /** A Transcendent Sniper's barrel turns gold. */
     public Void visitSniperTower(SniperTower tower) {
+        this.sprite(tower);
         double heading = tower.getTurretAim().radiansAt(this.interpolationAlpha);
-        this.facingSprite(tower, bodyPaletteFor(tower.getType()), heading);
         Palette barrel = tower.upgrades().owns(StandardBaseSlot.TRANSCENDENT_ID) ? Palette.TOWER_SNIPER_GOLD_BARREL
                 : bodyPaletteFor(tower.getType());
         this.headDraws.add(new TurretHeadDraw(barrel, tower.getX(), tower.getY(), (float) heading, 1f));
@@ -166,9 +157,9 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
             case STORMCALLER -> Palette.TOWER_STORMCALLER_BODY;
             case HEXER -> Palette.TOWER_HEXER_BODY;
         };
-        double heading = tower.getTurretAim().radiansAt(this.interpolationAlpha);
-        this.facingSprite(tower, body, heading);
-        this.headDraws.add(new TurretHeadDraw(body, tower.getX(), tower.getY(), (float) heading, 1f));
+        this.sprite(tower, body);
+        this.headDraws.add(new TurretHeadDraw(body, tower.getX(), tower.getY(),
+                (float) tower.getTurretAim().radiansAt(this.interpolationAlpha), 1f));
         return null;
     }
 
@@ -200,23 +191,20 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     public Void visitMortarTower(MortarTower tower) {
-        double heading = tower.getTurretAim().radiansAt(this.interpolationAlpha);
-        this.facingSprite(tower, bodyPaletteFor(tower.getType()), heading);
-        this.head(tower, heading);
+        this.sprite(tower);
+        this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
         return null;
     }
 
     public Void visitSeekerTower(SeekerTower tower) {
-        double heading = tower.getTurretAim().radiansAt(this.interpolationAlpha);
-        this.facingSprite(tower, bodyPaletteFor(tower.getType()), heading);
-        this.head(tower, heading);
+        this.sprite(tower);
+        this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
         return null;
     }
 
     public Void visitCinderTower(CinderTower tower) {
-        double heading = tower.getTurretAim().radiansAt(this.interpolationAlpha);
-        this.facingSprite(tower, bodyPaletteFor(tower.getType()), heading);
-        this.head(tower, heading);
+        this.sprite(tower);
+        this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
         return null;
     }
 }
