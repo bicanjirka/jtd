@@ -192,7 +192,8 @@ class WardenChainTest {
         assertThat(warden.activeEffects()).filteredOn(effect -> effect.kind() == EffectKind.SHIELD)
                 .extracting(Effect::shieldRestrictedTo)
                 .containsExactly(Optional.of(DamageType.MAGIC));
-        assertThat(warden.shieldGauge()).isEqualTo(new td.effect.ShieldGauge(1600f, 1600f));
+        float tenth = 0.1f * world.getEnemyCatalog().get("warden1").baseHealth();
+        assertThat(warden.shieldGauge()).isEqualTo(new td.effect.ShieldGauge(tenth, tenth));
     }
 
     @Test
@@ -205,6 +206,7 @@ class WardenChainTest {
         warden.doTick(1); // captures the critical hit and fires the new ability in the same call
 
         assertThat(warden.activeEffectKinds()).contains(EffectKind.SHIELD);
-        assertThat(warden.shieldGauge()).isEqualTo(new td.effect.ShieldGauge(480f, 480f));
+        float threePercent = 0.03f * world.getEnemyCatalog().get("warden1").baseHealth();
+        assertThat(warden.shieldGauge()).isEqualTo(new td.effect.ShieldGauge(threePercent, threePercent));
     }
 }

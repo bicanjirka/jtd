@@ -25,7 +25,7 @@ final class WardenEnemy {
                         + "only light armor and plating are left.",
                 new Shell(25f, 1f, 0f), List.of()));
         // High enough that an un-upgraded weak tower does nothing; later stages weaken it.
-        catalog.register(warden("warden3", "The Exhausted Warden", 6000, "hulking armored sentinel, barely standing",
+        catalog.register(warden("warden3", "The Exhausted Warden", 6800, "hulking armored sentinel, barely standing",
                 new Shell(5f, 2.5f, 0f), "wardenEgg3"));
         catalog.register(egg("wardenEgg2", "Warden's Egg",
                 "Hatches into a weaker Warden if not defeated in time. Immune to burn and freeze, "
@@ -34,7 +34,7 @@ final class WardenEnemy {
                 List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE))))
                 .withAbilities(hatchInto("warden3")));
-        catalog.register(warden("warden2", "The Weakened Warden", 10000,
+        catalog.register(warden("warden2", "The Weakened Warden", 11000,
                 "hulking armored sentinel, worn down from its last hatching", new Shell(10f, 5f, 0f), "wardenEgg2"));
         catalog.register(egg("wardenEgg1", "Warden's Egg",
                 "Hatches into a weaker Warden if not defeated in time. Almost immune: it ignores critical "
@@ -45,7 +45,7 @@ final class WardenEnemy {
                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.CHILL))))
                 .withAbilities(hatchInto("warden2")));
-        catalog.register(warden("warden1", "The Warden", 16000, "hulking armored sentinel", new Shell(15f, 10f, 0f),
+        catalog.register(warden("warden1", "The Warden", 18000, "hulking armored sentinel", new Shell(15f, 10f, 0f),
                 "wardenEgg1"));
     }
 
