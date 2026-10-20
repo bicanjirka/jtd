@@ -205,8 +205,10 @@ final class RunRecorder {
         this.ends.add(new PlayRecord.EnemyEnd(foe, this.rounds.size() + 1, leak,
                 new PlayRecord.Spot(mob.getX(), mob.getY(), progress)));
         if (leak) {
-            this.leaked++;
-            this.leaks++;
+            // Lives, not enemies: one that ends the level costs every life the level starts with.
+            int lives = Math.min(this.startingLives, mob.accept(defined -> defined.definition().livesOnLeak()));
+            this.leaked += lives;
+            this.leaks += lives;
         } else {
             this.earned += foe.bounty();
         }

@@ -94,7 +94,7 @@ public final class RankedEnemy {
         return new EnemyDefinition(newId, source.displayName(), source.description(), source.baseHealth(),
                 source.price(), source.baseSpeed(), source.healthDivisor(), source.archetype(),
                 source.movement(), source.traitSlots(), source.abilitySlots(), source.baseStats(),
-                source.disruption());
+                source.disruption(), source.livesOnLeak());
     }
 
     @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)

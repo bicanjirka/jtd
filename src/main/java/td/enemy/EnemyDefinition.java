@@ -28,6 +28,7 @@ import java.util.function.Function;
  * @param abilitySlots  triggered abilities, identified the same way
  * @param baseStats     authored stat bases; speed comes from {@code baseSpeed}, not from here
  * @param disruption    what it does to towers near it, if anything
+ * @param livesOnLeak   the lives it takes if it reaches the end of the path, {@link #ALL_LIVES} for every one left
  */
 public record EnemyDefinition(
         String id,
@@ -42,7 +43,14 @@ public record EnemyDefinition(
         List<IdentifiedTrait> traitSlots,
         List<IdentifiedAbility> abilitySlots,
         BaseStats<EnemyStat> baseStats,
-        Optional<DisruptionAura> disruption) {
+        Optional<DisruptionAura> disruption,
+        int livesOnLeak) {
+
+    /**
+     * A {@code livesOnLeak} that ends the level: more than any level starts with, yet finite, so a play given lives
+     * that cannot run out plays on past it.
+     */
+    public static final int ALL_LIVES = 1000;
 
     public EnemyDefinition {
         traitSlots = List.copyOf(traitSlots);
@@ -56,7 +64,8 @@ public record EnemyDefinition(
     public static EnemyDefinition of(String id, String displayName, int baseHealth, int price, float baseSpeed,
             BodyArchetype archetype) {
         return new EnemyDefinition(id, displayName, "", baseHealth, price, baseSpeed, 1f,
-                archetype, new FixedMovement(), List.of(), List.of(), BaseStats.defaults(EnemyStat.class), Optional.empty());
+                archetype, new FixedMovement(), List.of(), List.of(), BaseStats.defaults(EnemyStat.class), Optional.empty(),
+                1);
     }
 
     /** The traits one mob spawned against {@code mix} carries, each slot resolved once. */
@@ -154,39 +163,46 @@ public record EnemyDefinition(
     private EnemyDefinition withBase(EnemyStat stat, float base) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats.with(stat, base), this.disruption);
+                this.abilitySlots, this.baseStats.with(stat, base), this.disruption, this.livesOnLeak);
     }
 
     /** Weakens every tower within the aura's radius while this enemy is alive on the board. */
     public EnemyDefinition withDisruption(DisruptionAura aura) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats, Optional.of(aura));
+                this.abilitySlots, this.baseStats, Optional.of(aura), this.livesOnLeak);
     }
 
     /** A rank step's usual change: new health and bounty, everything else kept. */
+    /** Takes {@code lives} if it reaches the end of the path; {@link #ALL_LIVES} ends the level. */
+    public EnemyDefinition withLivesOnLeak(int lives) {
+        return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
+                this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
+                this.abilitySlots, this.baseStats, this.disruption, lives);
+    }
+
     public EnemyDefinition withHealthAndPrice(int baseHealth, int price) {
         return new EnemyDefinition(this.id, this.displayName, this.description, baseHealth, price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats, this.disruption);
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
     }
 
     public EnemyDefinition withDescription(String description) {
         return new EnemyDefinition(this.id, this.displayName, description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats, this.disruption);
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
     }
 
     public EnemyDefinition withHealthDivisor(float healthDivisor) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, healthDivisor, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats, this.disruption);
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
     }
 
     public EnemyDefinition withMovement(MovementBehavior movement) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, movement, this.traitSlots,
-                this.abilitySlots, this.baseStats, this.disruption);
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
     }
 
     /**
@@ -200,7 +216,7 @@ public record EnemyDefinition(
     public EnemyDefinition withIdentifiedTraits(List<IdentifiedTrait> traitSlots) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, traitSlots,
-                this.abilitySlots, this.baseStats, this.disruption);
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
     }
 
     /**
@@ -218,7 +234,7 @@ public record EnemyDefinition(
     public EnemyDefinition withIdentifiedAbilities(List<IdentifiedAbility> abilitySlots) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
-                abilitySlots, this.baseStats, this.disruption);
+                abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
     }
 
     /** Adds abilities by id, like {@link #withAdditionalTraits}. */

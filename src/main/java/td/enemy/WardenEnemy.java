@@ -92,7 +92,9 @@ final class WardenEnemy {
         return EnemyDefinition.of(id, name, health, 100, 0.8f, BodyArchetype.WARDEN)
                 .withDescription("A " + lead + ". Periodically calls a reinforcement and shields itself against magic; "
                         + "shields every nearby ally once below half health; heals itself if left unattacked "
-                        + "too long; gains a shield whenever it survives a critical hit; and leaves behind an egg on death.")
+                        + "too long; gains a shield whenever it survives a critical hit; and leaves behind an egg on death. "
+                        + "If it escapes, the level is lost.")
+                .withLivesOnLeak(EnemyDefinition.ALL_LIVES)
                 .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
                 .withStats(shell.resist(), shell.resist(), shell.plating(), 0f, shell.resilience(), 0f, 0f)
                 .withIdentifiedAbilities(List.copyOf(abilities));
