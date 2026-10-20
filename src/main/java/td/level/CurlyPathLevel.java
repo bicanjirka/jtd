@@ -31,8 +31,8 @@ final class CurlyPathLevel {
      */
     private static final RankedEnemy MENDER = EnemyCatalog.builtIn().ranked("m").cloneAs("mender",
             (rank, mender) -> switch (rank) {
-                case ELITE -> warding(mender, 120f);
-                case BOSS -> warding(mender, 240f);
+                case ELITE -> warding(mender, 30f);
+                case BOSS -> warding(mender, 60f);
                 default -> mender;
             });
 
@@ -49,24 +49,28 @@ final class CurlyPathLevel {
                     new Point(8, 7), new Point(13, 7), new Point(13, 2), new Point(16, 2),
                     new Point(16, 11), new Point(18, 11), new Point(18, 7), new Point(20, 7)),
             List.of(
-                    new WaveDefinition("4 c", Rank.GRUNT),
-                    new WaveDefinition("9 c e s", Rank.GRUNT),
-                    new WaveDefinition("c e c", Rank.SOLDIER),
-                    new WaveDefinition("4 c 2 e 2 s", Rank.GRUNT),
-                    new WaveDefinition("c c e s", Rank.VETERAN),
-                    new WaveDefinition("10 c", Rank.GRUNT),
-                    new WaveDefinition("3 s e 4 c t e s t", Rank.SOLDIER),
-                    new WaveDefinition("2 c e e t", Rank.ELITE),
-                    new WaveDefinition("g 2 e 2 s", Rank.SOLDIER),
-                    new WaveDefinition("s t s c g c t c s g t c s g c t s g t c", Rank.SOLDIER),
-                    new WaveDefinition("g c g", Rank.ELITE),
-                    new WaveDefinition("6 g 2 e 4 t 2 m", Rank.VETERAN),
-                    new WaveDefinition("c e c e c e c e c", Rank.SOLDIER),
-                    new WaveDefinition("2 s 3 t 2 g 4 e c", Rank.VETERAN),
-                    new WaveDefinition("s 4 e t", Rank.BOSS),
-                    new WaveDefinition("c 5 e 3 g 3 e 3 s 3 t", Rank.ELITE),
-                    new WaveDefinition("s", Rank.BOSS),
-                    new WaveDefinition("warden1", Rank.BOSS)),
+                    new WaveDefinition("column 6 c", Rank.GRUNT),
+                    new WaveDefinition("drip 4 courier", Rank.GRUNT),
+                    new WaveDefinition("line 3 s e line 3 s", Rank.SOLDIER),
+                    new WaveDefinition("g 2 e 6 c", Rank.SOLDIER),
+                    new WaveDefinition("yeti 2 e yeti 2 e yeti", Rank.SOLDIER),
+                    new WaveDefinition("grunt 5 c 3 e elite drip 3 yeti", Rank.GRUNT),
+                    new WaveDefinition("flank courier 2 e flank courier", Rank.SOLDIER),
+                    new WaveDefinition("column 4 c e veteran j e column 3 s", Rank.SOLDIER),
+                    new WaveDefinition("line 3 skirmisher 2 e line 3 skirmisher", Rank.SOLDIER),
+                    new WaveDefinition("swarm 12 mite e column 10 mite e veteran t e swarm 12 mite", Rank.SOLDIER),
+                    new WaveDefinition("w8 column 12 mite elite g column 12 mite swarm 12 mite 2 e soldier line 4 c column 8 mite "
+                            + "elite g column 8 mite", Rank.VETERAN),
+                    new WaveDefinition("boss t elite mender elite mender 3 e elite salamander", Rank.ELITE),
+                    new WaveDefinition("drip 3 courier", Rank.VETERAN),
+                    new WaveDefinition("juggernaut e elite g", Rank.VETERAN),
+                    new WaveDefinition("elite column 3 juggernaut 2 veteran flank shieldbearer 3 e soldier 3 armored s",
+                            Rank.ELITE),
+                    new WaveDefinition("line 3 skirmisher e veteran j", Rank.ELITE),
+                    new WaveDefinition("swarm 12 mite swarm 12 mite 3 e t mender salamander 3 e drip 2 yeti 3 e "
+                            + "2 juggernaut veteran flank shieldbearer", Rank.ELITE),
+                    new WaveDefinition("warden1 8 e elite swarm 12 mite 2 e veteran 3 skirmisher elite mender",
+                            Rank.BOSS)),
             STARTING_CREDITS, STARTING_LIVES, SMOOTHING)
             .withCustomRankedEnemies(List.of(MENDER));
 
