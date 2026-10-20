@@ -1,6 +1,6 @@
 # Feature Request: Curly Path Retune
 
-**Status: planned** (2026-10-19).
+**Status: implemented** (2026-10-20). Planned 2026-10-19; what changed from the plan is under *Outcome*.
 
 ## Summary
 
@@ -84,6 +84,78 @@ signature wave a wall, breathers at 7 and 13, waves 1 to 3 gentle, and pressure 
 
 **Out of scope:** Zigzag Path and Twisted Hourglass, new enemies, tower changes beyond bug fixes, detection as a check.
 
+## Outcome
+
+**The waves as built** (`CurlyPathLevel`):
+
+| Wave | Script | Rank | What it is for |
+|---|---|---|---|
+| 1 | `column 6 c` | Grunt | The path |
+| 2 | `drip 4 courier` | Grunt | Money |
+| 3 | `line 3 s e line 3 s` | Soldier | First plating |
+| 4 | `g 2 e 6 c` | Soldier | Invisibility (flavour) |
+| 5 | `yeti 2 e yeti 2 e yeti` | Soldier | Preview of wave 6 |
+| **6** | `grunt 5 c 3 e elite drip 3 yeti` | Grunt | **Single-target** |
+| 7 | `flank courier 2 e flank courier` | Soldier | Breather and money |
+| 8 | `column 4 c e veteran j e column 3 s` | Soldier | The Jammer's debut |
+| 9 | `line 3 skirmisher 2 e line 3 skirmisher` | Soldier | Dodging |
+| 10 | `swarm 12 mite e column 10 mite e veteran t e swarm 12 mite` | Soldier | Preview of wave 11 |
+| **11** | `w8 column 12 mite elite g column 12 mite swarm 12 mite 2 e soldier line 4 c column 8 mite elite g column 8 mite` | Veteran | **Area** |
+| **12** | `boss t elite mender elite mender 3 e elite salamander` | Elite | **Control** and anti-sustain |
+| 13 | `drip 3 courier` | Veteran | Breather and money |
+| 14 | `juggernaut e elite g` | Veteran | Preview of wave 15 |
+| **15** | `elite column 3 juggernaut 2 veteran flank shieldbearer 3 e soldier 3 armored s` | Elite | **Anti-physical** |
+| 16 | `line 3 skirmisher e veteran j` | Elite | Hardest non-check wave |
+| **17** | `2 juggernaut veteran flank shieldbearer 3 e boss drip 3 yeti 3 e 6 t mender mender 3 e column 12 mite g column 12 mite` | Elite | **Every check** |
+| **18** | `warden1 8 e elite swarm 12 mite 2 e veteran 3 skirmisher elite mender` | Boss | **The ultimate test** |
+
+Every built enemy but the Reaver (Twisted Hourglass's own) appears.
+
+**Changes from the plan.**
+
+- *Checks are strips, not bans.* Each signature wave is checked on the strong player's own army: replayed to just
+  before the wave, the role's towers taken off, the wave played with its in-round purchases that don't rebuild the
+  role. The role ban is kept as a report (`--parts bans`), run on the strong player rather than the competent one,
+  whose leaks were too noisy to read.
+- *Wave 11 has two Elite Ghosts.* Mites alone can't force area damage: the strong player sniped 144 Veteran Mites.
+  The Ghosts' shroud hides the column from single-target towers.
+- *The Mender's ward is 30 (Boss 60), not 120*; wave 12 sends two Elite Menders and one Salamander, wave 14 one
+  Juggernaut.
+- *Wave 17 runs slow to fast* (Juggernauts first, Mites last) so its groups arrive together; its Yetis are Boss and
+  six Elite Frenzied with two Menders take the control group.
+- *The Warden* has 18000, 11000 and 6800 health, and any stage that escapes takes every life (`livesOnLeak`), so the
+  level can't be won by soaking it.
+
+**Results** (strong player, 24 seeds at authored health, 8 seeds for the bounty and strip checks):
+
+- Margin 101 ±3% (per seed 88 to 115); 98 ±3% on the 12 seeds used while tuning. It wins 15 of 24; all 9 losses are
+  at wave 18. The competent player wins 1 of 24.
+- Bounty at 90%: margin 81 ±3% (every seed down); at 110%: 107 ±12% (six of eight seeds up, one down to 74).
+  The drop meets the criterion; the rise is real but noisy.
+- It sold towers in 3 of 24 plays: selling is a last resort here, not the strategy.
+- Pressure (closest, 0 to 9): `1 2 2 2 2 7 1 2 1 1 4 8 1 3 8 2 7 9`. Walls only at signature waves, breathers at 7
+  and 13, gentle start.
+- Strip (8 seeds): waves 6, 11 and 15 leak on every seed without their role and hold with it; wave 12 leaks on
+  every seed without control. At wave 17, area and anti-physical hold their check on every seed, single-target
+  (63%) and control (50%) fall just short of two thirds, where 12 seeds while tuning passed them. Anti-sustain fails
+  at 12 and 17, as expected.
+
+**Unmet.**
+
+- *Wave 11 is not a wall* (closest 4): the strong army holds it, and loses it when stripped of area, so the check
+  holds but the wave doesn't feel like one.
+- *Wave 17's single-target and control strips* are borderline (see Results).
+- *Anti-sustain can't be checked* at 12 or 17: no tower denies heals or shields along a lane, so even a free Dead Zone
+  Obelisk doesn't change the outcome. See `TODO.md`, "No tower denies heals or shields along a whole lane".
+
+**Bugs fixed on the way**, each with a `GameEngineTest`: a multi-member spawn shape split one bounty among its
+members (this also raises Twisted Hourglass's income); a freeze renewed before it thawed never diminished; an enemy's
+death abilities fired when it leaked (a leaked Warden left an egg).
+
+**Tools added.** `td.balance.WaveCheckReport` (strong pressure, margins, bounty sweep, role bans and strips per
+wave), `Role`, a strong player that sells as a last resort and can be denied a role, and the strong player's pressure
+row in `BalanceReport`.
+
 ## Interconnections
 
 - **`FEATURE-balance-verification.md`**: its band and its players; Curly Path is an exception to the band, and its
@@ -111,7 +183,7 @@ signature wave a wall, breathers at 7 and 13, waves 1 to 3 gentle, and pressure 
 
 ## Open questions
 
-None.
+None. Deferred: lane-wide heal denial (`TODO.md`).
 
 ---
 

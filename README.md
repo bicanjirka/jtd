@@ -173,17 +173,17 @@ on the Wardens, whose shield answers crits.
 | Armored    | square        | +25 armor and magic resist, rising with rank, plating from 2 to 10 and 20% freeze resist; immune to critical hits. From Veteran it resists chill; from Elite, thick plating and a physical shield once below half health; at Boss rank, calls three armored reinforcements every three seconds |
 | Frenzied   | triangle      | Speeds up as it loses health; -20 resilience, so crits land harder. From Elite it sprints once below half health; at Boss rank, crit immune, calls three spawnlings once below half health and heals itself when left alone |
 | Ghost      | tinted circle | +20 armor. Turns invisible to single-target towers for ~10s the first time it's hit (~15s from Veteran; area damage still reaches it); at Elite and Boss rank, also permanently shrouds every other ally near it; at Boss rank it fades out for 3s of every 10 |
-| Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it; +20 spirit, rising to 60 at Boss. From Veteran it heals itself when left alone; from Elite, adaptive armor; at Boss rank, heals every ally near it when it dies |
-| Jammer     | square        | Jams every tower near it: they fire more slowly and see less far while it's in range (drawn as a pink ring; affected towers show a pink marker). A tower in a Beacon's range takes half of it. +20 magic resist; its reach and strength grow from Veteran, and from Elite it keeps a magic-only shield and its casing blunts magic hits (2 insulation, 4 at Boss). Not in any level's waves yet. |
-| Juggernaut | square        | Slow, with plating that blunts a huge flat chunk of every physical hit; magic, Cracked and Sundered get past it. +15 magic resist and 30% freeze and chill resist. From Elite, crit immune; at Boss rank, a large magic shield once below half health. Not in any level's waves yet. |
-| Mite       | circle        | Tiny and quick, with 10 agility rising 5 a rank to 25 at Elite and 35 at Boss; meant for a `swarm 12 mite`. at Boss rank it bursts into three broodlings when it dies. Not in any level's waves yet. |
-| Courier    | triangle      | Very fast and fragile, with a high bounty, and nimble (25 agility, 35 from Veteran, 50 at Boss) enough to dodge an aimed shot now and then. From Elite it sprints when first hit; at Boss rank, after every dodge too. Not in any level's waves yet. |
-| Shieldbearer | cross         | +30 armor, and spirit from Veteran that strengthens the shields it gets. Periodically shields every other ally near it against physical damage only; magic goes straight through. From Elite it shields itself too and has a little plating; at Boss rank, in a wider reach. Not in any level's waves yet. |
-| Salamander | circle        | Immune to burn, so a Cinder-only defence does nothing; Soulfire still burns it. Regenerates 1 health a second (a trait), doubling at Veteran, Elite and Boss. From Elite, +25 magic resist and a burst of healing once below 30% health. Not in any level's waves yet. |
-| Yeti       | circle        | Immune to freeze and chilled half as long (a quarter from Veteran); Dazed still stops it. +15 armor and magic resist. From Elite its fur blunts 2 points of every hit and it heals once below 40% health; at Boss rank, +50 resilience. Not in any level's waves yet. |
-| Skirmisher | diamond       | Nimble: 40 agility, rising to 80 with rank, so it dodges some aimed shots; +20 resilience. From Soldier it sprints off for 1.5 s after every dodge; from Elite it gets harder to hit the more it is hurt; at Boss rank it also vanishes for a moment after every dodge. Not in any level's waves yet. |
+| Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it; +20 spirit, rising to 60 at Boss. From Veteran it heals itself when left alone; from Elite, adaptive armor; at Boss rank, heals every ally near it when it dies. On Curly Path, from Elite it also wards every other ally near it with a small shield that stops any damage |
+| Jammer     | square        | Jams every tower near it: they fire more slowly and see less far while it's in range (drawn as a pink ring; affected towers show a pink marker). A tower in a Beacon's range takes half of it. +20 magic resist; its reach and strength grow from Veteran, and from Elite it keeps a magic-only shield and its casing blunts magic hits (2 insulation, 4 at Boss). |
+| Juggernaut | square        | Slow, with plating that blunts a huge flat chunk of every physical hit; magic, Cracked and Sundered get past it. +15 magic resist and 30% freeze and chill resist. From Elite, crit immune; at Boss rank, a large magic shield once below half health. |
+| Mite       | circle        | Tiny and quick, with 10 agility rising 5 a rank to 25 at Elite and 35 at Boss; meant for a `swarm 12 mite`. at Boss rank it bursts into three broodlings when it dies. |
+| Courier    | triangle      | Very fast and fragile, with a high bounty, and nimble (25 agility, 35 from Veteran, 50 at Boss) enough to dodge an aimed shot now and then. From Elite it sprints when first hit; at Boss rank, after every dodge too. |
+| Shieldbearer | cross         | +30 armor, and spirit from Veteran that strengthens the shields it gets. Periodically shields every other ally near it against physical damage only; magic goes straight through. From Elite it shields itself too and has a little plating; at Boss rank, in a wider reach. |
+| Salamander | circle        | Immune to burn, so a Cinder-only defence does nothing; Soulfire still burns it. Regenerates 1 health a second (a trait), doubling at Veteran, Elite and Boss. From Elite, +25 magic resist and a burst of healing once below 30% health. |
+| Yeti       | circle        | Immune to freeze and chilled half as long (a quarter from Veteran); Dazed still stops it. +15 armor and magic resist. From Elite its fur blunts 2 points of every hit and it heals once below 40% health; at Boss rank, +50 resilience. |
+| Skirmisher | diamond       | Nimble: 40 agility, rising to 80 with rank, so it dodges some aimed shots; +20 resilience. From Soldier it sprints off for 1.5 s after every dodge; from Elite it gets harder to hit the more it is hurt; at Boss rank it also vanishes for a moment after every dodge. |
 | Empty      | —             | Not a real enemy — a spacer that opens a timing gap inside a wave                                                                                                                                                                                                                                                 |
-| The Warden | large spiked crest | A boss: armor and magic resist, and plating, all lower with each hatching; periodically summons reinforcements and shields itself and nearby allies, and shields itself again whenever it survives a critical hit. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. Appears as the final wave of Curly Path. |
+| The Warden | large spiked crest | A boss: armor and magic resist, and plating, all lower with each hatching; periodically summons reinforcements and shields itself and nearby allies, and shields itself again whenever it survives a critical hit. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. If any stage escapes, the level is lost, however many lives are left. Appears as the final wave of Curly Path. |
 | Reaver     | triangle, path-facing | Speeds up as it's hurt, shrugs off a flat point of every hit, crit immune from Elite, shields itself once badly wounded, and splits into two Simple mobs on death. Appears in Twisted Hourglass's first wave — a level-authored enemy, registered only for that level rather than globally (see `td.level.LevelDefinition.customEnemies`). |
 
 ### Rank
@@ -314,7 +314,9 @@ packs it tighter.
 ### Levels
 
 Three levels ship with the game: **Curly Path** (a 20×13 board whose single lane spirals
-through two tight loops before unwinding into a zigzag, 18 waves), **Zigzag Path** (a smaller,
+through two tight loops before unwinding into a zigzag, 18 waves: the hard level, built around five
+waves that each ask for a different defence - single-target damage at 6, area damage at 11, control at 12,
+anti-physical at 15, all of them at 17 - and the Warden at 18, with just enough bounty to beat it), **Zigzag Path** (a smaller,
 16×11 board where a fuchsia lane hooks back on itself and a lime lane cuts across it twice, 8
 waves per lane, only 3 lives) and **Twisted Hourglass** (a tight, 9×14 portrait board where three
 Bezier lanes - crimson, teal and amber - twist through a pinched waist so the layout reads as an
@@ -322,8 +324,8 @@ hourglass, 10 waves per lane). A level can define more than one enemy path, each
 and pace; Zigzag Path and Twisted Hourglass are the two built-in levels that do. A level's
 paths all run the same number of waves as synchronized rounds - starting a round spawns every
 path's wave for it together. A level can also register its own enemy on top of the ones above,
-scoped to that level only; Twisted Hourglass's Reaver (see the Enemies table) is the one
-built-in level that does.
+scoped to that level only; Twisted Hourglass's Reaver and Curly Path's warding Mender (see the
+Enemies table) are the built-in ones.
 
 Levels are defined as Java constants in `td.level.BuiltInLevelCatalog`, so adding one today
 means a code change and a rebuild. See `TODO.md` for the planned file-based catalog.

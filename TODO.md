@@ -35,8 +35,8 @@ findings are in the doc.
 support tower, and the balance tools price support. Its tree is being rebuilt as a kill box:
 `FEATURE-obelisk-kill-box.md`.
 
-`FEATURE-curly-path-retune.md` (planned): Curly Path's eighteen waves rebuilt around five signature checks and the
-Warden, with the tools to prove each check.
+`FEATURE-curly-path-retune.md` (implemented, but for the anti-sustain check; see Tower features): Curly Path's
+eighteen waves rebuilt around five signature checks and the Warden, with the tools to prove each check.
 
 `docs/plans/stat-driven-buffs.md` (phases 1 to 9) and `FEATURE-agility-and-dodge.md` are implemented.
 
