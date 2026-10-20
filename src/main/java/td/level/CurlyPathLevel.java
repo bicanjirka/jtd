@@ -67,8 +67,8 @@ final class CurlyPathLevel {
                     new WaveDefinition("elite column 3 juggernaut 2 veteran flank shieldbearer 3 e soldier 3 armored s",
                             Rank.ELITE),
                     new WaveDefinition("line 3 skirmisher e veteran j", Rank.ELITE),
-                    new WaveDefinition("swarm 12 mite swarm 12 mite 3 e t mender salamander 3 e drip 2 yeti 3 e "
-                            + "2 juggernaut veteran flank shieldbearer", Rank.ELITE),
+                    new WaveDefinition("2 juggernaut veteran flank shieldbearer 3 e boss drip 3 yeti 3 e 6 t mender mender 3 e "
+                            + "column 12 mite g column 12 mite", Rank.ELITE),
                     new WaveDefinition("warden1 8 e elite swarm 12 mite 2 e veteran 3 skirmisher elite mender",
                             Rank.BOSS)),
             STARTING_CREDITS, STARTING_LIVES, SMOOTHING)
