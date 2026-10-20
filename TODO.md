@@ -123,6 +123,13 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
   - **Where:** `RunRecorder`.
   - **Approach:** poll them like the rest, tool-side; overkill needs the hit result `AbstractTower.dealDamage`
     already has.
+- **What a node denies an enemy that heals or shields:** the lab measures every node on plain mobs, so the players
+  never buy Dead Zone, Null Field, EMP or the Nullifier for what they deny a Mender. Measuring each node against the
+  sustaining kinds beside a partner Sniper was tried and dropped: it quadrupled the lab's time and mostly found
+  damage against those kinds, not denial.
+  - **Where:** `TowerLab.profileOf`, `CompetentPlayer.upgradeOptions`.
+  - **Approach:** only once some node denies enough to matter (see "No tower denies heals or shields along a whole
+    lane"); measure it then on that node alone.
 
 ## Levels
 
@@ -150,6 +157,21 @@ implementation. There is no way to add or edit a level without a code change and
   fatal-startup boundary, rather than adding a second error-handling path.
 
 ## Tower features
+
+### No tower denies heals or shields along a whole lane
+
+Curly Path's wave 12 was meant to need anti-sustain, and no wave could: the strong player denied every anti-sustain
+node (Ward, Soul Drain, Tar, the nuke's fallout, the Hexer's hexes, Cauterize, EMP, Nullifier, Shatter Tone) leaks
+the Elite Menders no more often than it does with them, and a free Dead Zone Obelisk on its best cell changes nothing.
+Dead Zone works, but only inside its field: in a duel wave of Elite Menders it is on an enemy for about 140 enemy-ticks
+against 1,100 under heals, so the heals land everywhere else. The answers are either local (a field) or hit-by-hit
+(EMP, Nullifier), and raw damage beats a heal-heavy wave sooner than any of them.
+
+- **Where:** `PulseTower`'s Ward head (`FieldMode.DEAD_ZONE`, `SILENCE`), `SoulDrain`, the Hexer's Blight and
+  Inversion, `CauterizePerk`, `EmpPayload`, the Nullifier.
+- **Approach:** a design pass of its own: one answer that reaches a stretch of path wide enough to matter (a Ley
+  Line's beam carrying Dead Zone, a Sickened that lowers spirit for long enough to shrink every heal), then check
+  Curly Path's wave 12 with `td.balance.WaveCheckReport --checks 12:sustain --parts strong,strip`.
 
 ### Upgrade-tree node numbers are unbalanced placeholders
 
