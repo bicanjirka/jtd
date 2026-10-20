@@ -1576,6 +1576,20 @@ class GameEngineTest {
     }
 
     @Test
+    void anEnemyThatTakesEveryLifeLosesTheLevelWhenItLeaksWithLivesToSpare() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        EnemyDefinition fatal = WEAKLING.withLivesOnLeak(EnemyDefinition.ALL_LIVES);
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("weakling", Rank.GRUNT),
+                        new WaveDefinition("weakling", Rank.GRUNT)), 100)
+                .withCustomEnemies(List.of(fatal)));
+
+        engine.nextWave();
+        tickUntilOver(engine, 200);
+
+        assertThat(engine.outcome()).isEqualTo(LevelOutcome.LOST);
+    }
+
+    @Test
     void anEndedLevelIgnoresTicksWavesPlacementAndUpgrades() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(

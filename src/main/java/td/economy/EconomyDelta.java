@@ -36,7 +36,12 @@ public record EconomyDelta(int credits, int score, int lives) {
 
     /** An enemy reaching the end of the path: costs a life and score. */
     public static EconomyDelta leak(int penalty) {
-        return new EconomyDelta(0, -penalty, -1);
+        return leak(penalty, 1);
+    }
+
+    /** A leak that takes {@code lives} lives. */
+    public static EconomyDelta leak(int penalty, int lives) {
+        return new EconomyDelta(0, -penalty, -lives);
     }
 
     public EconomyDelta plus(EconomyDelta other) {

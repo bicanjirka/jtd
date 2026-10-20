@@ -687,7 +687,8 @@ public final class DefinedEnemyMob implements EnemyMob {
     private void leak() {
         this.die();
         this.fate = EnemyInspection.Fate.LEAKED;
-        this.gameWorld.economy().apply(EconomyDelta.leak(this.price));
+        int lives = Math.min(this.definition.livesOnLeak(), Math.max(1, this.gameWorld.economy().getLives()));
+        this.gameWorld.economy().apply(EconomyDelta.leak(this.price, lives));
         this.gameWorld.enemies().reportDeath(this);
     }
 
