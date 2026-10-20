@@ -455,7 +455,8 @@ upgrades in purchase order and tally (XP, deeds, damage, kills). `GameEngine.res
 towers through placement and `buyUpgrade`, in build order so each records the price it was bought for,
 with the gates waived. What a tower holds only while it fights (a charge, a missile stock, an aim) and the
 randomness are not kept: a deep copy of every stateful class would have to grow with each feature, and a
-save is for playing on from a point, not for reproducing a play tick for tick.
+save is for playing on from a point, not for reproducing a play tick for tick. The balance tools use the
+same saves to start plays at a late wave (`WaveCheckReport --save-before`, `--from`).
 
 `td.PerformanceHarness` is its timing sibling: it fills every buildable cell of the last
 built-in level with towers, plays the level through once to warm the JIT and five more times

@@ -5,8 +5,11 @@ import td.effect.EffectKind;
 import td.enemy.Rank;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
+import td.save.GameSave;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,6 +43,21 @@ class LevelPlayTest {
                 LevelPlay.Pacing.standard());
 
         assertThat(replayed).isEqualTo(played);
+    }
+
+    @Test
+    void aPlayLoadedFromASaveBeforeARoundPlaysOnlyThatRoundAndTheRestWithTheSavedTowers() {
+        BoardSurvey survey = zigzag();
+        PlayRecord played = LevelPlay.play(survey, NaivePlayer.spec(), SEED, LevelPlay.Pacing.standard());
+        GameSave save = LevelPlay.saveBefore(survey, played.actions(), SEED, 5);
+
+        PlayRecord fromSave = LevelPlay.play(survey, ScriptedPlayer.spec("idle", List.of()), SEED,
+                LevelPlay.Pacing.standard(), Rules.standard(), Optional.of(save));
+
+        assertThat(save.towers()).isNotEmpty();
+        assertThat(fromSave.rounds()).extracting(PlayRecord.Round::number)
+                .containsExactlyElementsOf(IntStream.rangeClosed(5, played.rounds().size()).boxed().toList());
+        assertThat(fromSave.towers()).hasSameSizeAs(save.towers());
     }
 
     @Test
