@@ -18,21 +18,25 @@ enum Role {
     SINGLE_TARGET(EnumSet.of(TowerFactory.Type.SNIPER, TowerFactory.Type.SEEKER), Set.of()),
     AREA(EnumSet.of(TowerFactory.Type.SPLASH, TowerFactory.Type.MORTAR, TowerFactory.Type.CINDER,
             TowerFactory.Type.SONAR, TowerFactory.Type.PULSE), Set.of()),
-    /** Magic damage and armor breaking: the Mortar goes whole, since every shell cracks plating. */
-    ANTI_PHYSICAL(EnumSet.of(TowerFactory.Type.SEEKER, TowerFactory.Type.CINDER, TowerFactory.Type.SONAR,
-            TowerFactory.Type.PULSE, TowerFactory.Type.MORTAR),
-            Set.of("sniper.extra.tradecraft.3", "sniper.head.marksmans_eye.4b",
-                    "splash.head.arc.1", "splash.head.hex.1", "splash.special.thunderstrike")),
+    /**
+     * Magic damage and armor breaking. The Mortar goes whole, since every shell cracks plating; the Radar and the
+     * Obelisk stay, the Radar's beam being physical and the field's own damage too small to answer plating.
+     */
+    ANTI_PHYSICAL(EnumSet.of(TowerFactory.Type.SEEKER, TowerFactory.Type.CINDER, TowerFactory.Type.MORTAR),
+            Set.of("sniper.extra.tradecraft.3", "sniper.head.marksmans_eye.4b", "splash.head.arc.1",
+                    "splash.head.hex.1", "splash.special.thunderstrike", "sonar.extra.frequency.1",
+                    "pulse.extra.bite.2", "pulse.special.arc_discharge")),
     /** The Obelisk's base drag stays: it comes with every field, and is the least of what holds an enemy. */
     CONTROL(EnumSet.of(TowerFactory.Type.SEEKER),
             Set.of("pulse.head.gravity.1", "splash.head.arc.3", "splash.special.thunderstrike",
                     "mortar.head.siege_rounds.3", "mortar.special.tar", "mortar.special.cryo_shells",
                     "splash.head.hex.4a", "cinder.special.thermal_shock")),
+    /** Only what is there to deny heals and shields: a line that does it on the side keeps its tower's damage. */
     ANTI_SUSTAIN(EnumSet.noneOf(TowerFactory.Type.class),
             Set.of("pulse.head.ward.1", "pulse.special.soul_drain", "mortar.special.tar",
                     "mortar.head.siege_rounds.4a", "splash.head.hex.1", "splash.special.inversion",
-                    "cinder.extra.fuel.2", "cinder.head.white_flame.3", "seeker.extra.mixed_payloads.2",
-                    "seeker.special.nullifier", "sonar.extra.frequency.4", "sniper.head.marksmans_eye.3"));
+                    "cinder.extra.fuel.2", "seeker.extra.mixed_payloads.2", "seeker.special.nullifier",
+                    "sonar.extra.frequency.4"));
 
     private final Set<TowerFactory.Type> types;
     /** Nodes that do the job; the nodes after one in its line do it too, since they can't be had without it. */
