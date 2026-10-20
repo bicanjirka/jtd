@@ -7,7 +7,9 @@ diminishing-returns line, and the text describes effects in loose verbs ("unrave
 "is Sundered", "gains Unraveled"). Give the game one vocabulary in the style of League of Legends
 and World of Warcraft: every buff, debuff, trait and ability is a square icon with a hover
 tooltip, every mention of one in text is a hoverable term (`applies [icon]Unravel to the enemy`),
-and the panes drop to stats plus icon rows.
+and the panes drop to stats plus icon rows. Towers get the same vocabulary: every upgrade is a perk,
+and what a tower carries during a fight (Steady Aim, a primed shot, an Aura's buff, a jam) is a
+tower buff or debuff with its own icon.
 
 ## Current state (what exists today)
 
@@ -24,6 +26,24 @@ and the panes drop to stats plus icon rows.
 - **Tower pane** (`TowerSheetText`): stat rows (base → current), one text row per behaviour,
   jammed, aura, XP, kills. The placed-tower pane already leaves out what the Upgrades panel shows
   (owned nodes, as slot headers). The upgrade-node hover lists bonuses as rows.
+- **Upgrade nodes** are data (`UpgradeNode` with `NodeEffects`: stats, procs, hit bonuses, targeting,
+  capabilities); a node may also bring code `Perk`s through a `PerkCatalogue` keyed by node id, and
+  `Tower.bonusesOf(node)` merges both into one description. In code, "perk" means a mechanic's
+  implementation, which only some nodes have. `after(previous)` is only a purchase requirement, not
+  a structural link; a node's line is known from its `UpgradeTier` step and `UpgradeTree.keyOf`.
+- **Tower-side states** come in three shapes, none shown today except a "Jammed" row and an aura
+  count:
+  - `TowerStatus`: a buff for a time or for the next shots — Frenzy, Momentum's charge and haste,
+    Patience, Silver Rounds' and Fourth Shot's primed shot, the Aura's Rally. Different ids stack,
+    so two primed shots land on the same shot.
+  - Counters and rhythms kept in their own classes: Steady Aim (`AimFocus`), Tradecraft's crit
+    streak, the Seeker's focus, the Mortar's shell cycle and Bracketing, the Seeker's payload cycle,
+    Event Horizon's widening.
+  - Received from outside: Aura emissions, Ley Line hosting and casting, enemy disruption.
+  - Stoke is the Cinder's private memory per enemy (its `Burning` ledger); the enemy doesn't carry
+    it.
+- **Steady Aim** is kept across targets and kills; a stack fades 3 s after the last shot, one at a
+  time, counting time since the last shot (so a slowed or jammed Sniper bleeds stacks mid-fight).
 - 47 `EffectKind`s, each with its own palette colour and an `EffectCategory`. `EffectCategory`
   doesn't say which side an effect helps: STEALTH holds both Invisible (good for the enemy) and
   Revealed (bad for it).
@@ -63,6 +83,9 @@ and the panes drop to stats plus icon rows.
   bottom instead of a clock; an immunity is the effect's icon slashed.
 - Symbols are vector pictograms. A term without its pictogram yet shows a two-letter monogram, so
   the feature can ship before all art exists; pictograms land in tranches, most-seen first.
+- Perk art: one pictogram per line, shared by its nodes and told apart by the numeral; each head
+  IV-A/IV-B choice and each special has its own. About ten per tower, plus the Range and Attune
+  lines shared by every tower.
 
 ### Tooltips
 
@@ -114,27 +137,57 @@ and the panes drop to stats plus icon rows.
 
 ### Tower pane
 
+The tower pane mirrors the enemy pane.
+
 ```
-▲ Seeker tower
- ○ Range             4.5
- ● Magic damage  30 → 39
- › Fire rate       0.8/s
- Abilities [⌖][☄]
- Applies   [◆][❄]
- ◆ XP         340 · Hero
- ☠ Kills  41 · 5120 dmg
+▲ Sniper tower
+ ○ Range               4.5
+ ● Damage          40 → 56
+ › Fire rate         0.4/s
+ Perks    [▲II][◎ Attune][⌖I Marksman's Eye][✦ Fourth Shot 3/4][✧III Silver Rounds 2/3]
+ Buffs    [◎ Steady Aim x3 2.1s][✧ Silvered][❀ Aura]
+ Debuffs  [⚡ Jammed]
+ Applies  [◆ Vulnerable]
+ ◆ XP           340 · Hero
+ ☠ Kills    41 · 5120 dmg
 ```
 
-- Stat rows stay as today (base → current).
-- **Abilities**: one icon per piece of the tower's base kit (targeting, its built-in payload or
-  proc, its aura); the tooltip holds the full text with terms. Behaviour text rows leave the pane.
+- Stat rows stay as today (base → current). Behaviour text rows leave the pane.
+- **Perks**: every owned upgrade node is a perk, named after its node, its tooltip the node's
+  text. The row shows one icon per **line** (the Range line, Attune → Awaken → Transcendent, a head
+  chain, the extra line), as its furthest owned node with a level numeral; the tooltip lists the
+  line's owned nodes. Each special is its own icon.
+- A perk that counts toward something shows its progress on its icon ("3/4").
+- **Buffs** and **Debuffs**: everything a tower carries that changes its next attack or its stats
+  and can change mid-fight, with the same face as an enemy effect (stacks, time sweep):
+  - a running state: Steady Aim, Tradecraft's crit streak, the Seeker's focus, Frenzy, Momentum's
+    haste, Event Horizon's widening, Bracketing;
+  - a **primed shot**: when a perk fires, it grants a separately named buff that the shot carrying
+    it spends (Fourth Shot → Deadeye Round, Silver Rounds → Silvered, Momentum → Charged Shot). The
+    Nth shot is the one that carries it: "every 4th shot is a [Deadeye Round]". Two primed buffs on
+    one shot are both spent;
+  - received: the Aura's buff, Rally, a Ley Line, and Jammed as a debuff, each named after its
+    source.
 - **Applies**: one icon per effect the tower can put on an enemy, counting its owned perks. Its
   tooltip is the effect's own tooltip, a divider, then one line per source on this tower saying
-  how ("Arcane Warhead: 1 stack per impact, 2 if it has [Freeze] or [Chill]").
-- Owned perks stay in the Upgrades panel; its slot headers become hoverable, showing the perk's
-  text with terms. A perk's icon is its slot's pip in the tower's colour — no per-perk pictograms.
+  how ("Arcane Warhead: 1 stack per impact, 2 if it has [Freeze] or [Chill]"). A tower that buffs
+  others (Aura, Obelisk) lists the tower buffs it gives here too.
+- **Perk text says when, the buff says what**: "Every 4th shot is a [Deadeye Round]." The buff's
+  tooltip holds the numbers ("Guaranteed crit, +150% crit damage. Spent by the shot."). Stat changes
+  the node itself makes stay as value rows. Each number lives in one place.
+- Memory a tower keeps about one enemy shows **on that enemy**: Stoke is a debuff "Stoked" on the
+  enemy. When several towers hold such a mark, the enemy shows one icon with the highest value, and
+  its tooltip lists each source tower.
 - The shop sheet (toolbar hover) has the same layout, with the price in the title and no XP or
-  kills. The upgrade-node hover writes its bonuses as text with terms.
+  kills.
+
+### Upgrades panel
+
+- Shows only what can be bought: one button per offered node, with its perk icon, name and price.
+  Hovering one shows the perk tooltip it would grant, its stat changes as value rows, and for a
+  line's next level what changes from the current one.
+- Slot headers shrink to the slot name and why it is locked ("Special: needs Awaken"). Owned perks
+  are the Perks row; "chosen over X" moves into the owned perk's tooltip.
 
 ### Text pass
 
@@ -143,7 +196,8 @@ wording rule, with every mention of a term as a term.
 
 ### Out of scope
 
-- The board: enemies keep their diamonds; only the colours are shared with the pane icons.
+- The board: enemies keep their diamonds; only the colours are shared with the pane icons. Towers
+  show no buff icons on the board; their slot and rank pips stay.
 - Tooltips for damage types, stats other than the breakdown, and tower names.
 
 ## Interconnections
@@ -151,6 +205,8 @@ wording rule, with every mention of a term as a term.
 - `FEATURE-enemy-info-rows.md` and `FEATURE-tower-info-rows.md` set today's one-row-per-thing
   pane rules; this request replaces their effect, trait and behaviour rows.
 - `FEATURE-effect-visuals.md` set the board's marker colours, which the icons now share.
+- `docs/ideas/sniper-and-scorcher-identity.md` decided the Sniper's Steady Aim rule and the Fourth
+  Shot rename this request displays.
 - The `experiment/sniper-scorcher-identity` branch (`docs/ideas/sniper-and-scorcher-identity.md`)
   is rewriting Sniper and Cinder perks; their texts join the text pass.
 
@@ -172,6 +228,17 @@ wording rule, with every mention of a term as a term.
 - The text pass touches ~120 texts and the 8 test files that assert on them; keep that churn
   mechanical.
 - Something should catch an effect name left as a bare word in text, or the wording rule erodes.
+- "Perk" means two things: in code a mechanic's implementation (only some nodes have one), for the
+  player every owned node. The two will drift apart unless one is renamed.
+- Lines are not explicit data; grouping a tower's perks by line has to come from what the tree
+  already knows (tier steps, key numbers), not from per-node rules.
+- Tower buffs, counters and per-enemy marks live in several classes today (`ActiveTowerStatuses`,
+  `AimFocus`, trackers, ledgers); the pane needs one snapshot of them per tower, built where the
+  frame is built.
+- Stoke's per-tower memory has to reach the enemy's inspection, which today knows only effects the
+  enemy carries.
+- A primed buff and its perk are two terms that must stay in step: the perk's progress and the
+  buff's appearance come from the same counter.
 
 ## Decisions made
 
@@ -198,13 +265,19 @@ wording rule, with every mention of a term as a term.
   | PRIORITY | Priority | ANCHORED | Anchor | BLEEDING | Bleed |
   | SOULFIRE | Soulfire | SPRINTING | Sprint | | |
 
-- Board markers are out of scope.
-- Per-perk pictograms are out of scope; perks use their slot pip.
+- Board markers are out of scope, for enemies and towers.
+- Every upgrade node is a perk (not only nodes that add a mechanic): it maps 1:1 onto how nodes are
+  modelled and needs no rule for what counts as a mechanic.
+- A primed bonus is its own named buff; the perk shows progress toward it.
+- Proposed names for the new tower terms, to confirm during planning: Steady Aim, Crit Streak,
+  Focus (Seeker), Frenzy, Haste, Charged Shot (Momentum), Patience, Deadeye Round (Fourth Shot),
+  Silvered (Silver Rounds), Bracketed, Nuke Shell (Mortar's cycle), Event Horizon, Rally, Aura,
+  Ley Line, Jammed, Stoked.
 
 ## Open questions
 
 - Category border colours: one colour per `EffectCategory`, or fewer groups (control, damage,
   weakness, hex, mark) so the eye learns fewer colours?
-- Do tower-side buffs (Aura, Ley Line, Jammed) also become icons on the tower pane, or stay rows?
-- Names for every enemy ability and every named tower mechanic.
+- Names for every enemy ability, every named tower mechanic, and every primed buff not named
+  above (the Seeker's payloads, the Mortar's other shell types).
 - Which effects get the first pictogram tranche.
