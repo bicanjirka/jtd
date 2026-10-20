@@ -549,6 +549,13 @@ public abstract class AbstractTower implements Tower {
         return this.killCount;
     }
 
+    @Override
+    public void restore(TowerTally tally) {
+        this.experience.restore(tally.xp(), tally.deeds());
+        this.damageDealt = tally.damageDealt();
+        this.killCount = tally.kills();
+    }
+
     /** No upgrades by default. */
     public UpgradeTree upgradeTree() {
         return UpgradeTree.none();

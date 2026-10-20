@@ -49,7 +49,8 @@ violation. They are not restated here.
 
 `balance` (headless players, the tower lab, the balance report) · `board` (scale, cell↔pixel
 math) · `cell` (squares, buildability) · `damage` · `economy` ·
-`effect` (timed status effects) · `enemy` · `level` · `projectile` · `stat` (enemy stat sheet) ·
+`effect` (timed status effects) · `enemy` · `level` · `projectile` · `save` (a game between rounds, as
+text) · `stat` (enemy stat sheet) ·
 `tower` (+ `targeting`, `upgrade`, `proc`, `aura`, `cinder`, `mortar`, `pulse`, `seeker`, `sniper`, `sonar`,
 `splash`) · `ui` (+ `render`) ·
 `util` (`GameWorld`, `GameHost`, `Threads`) · `wave` (path geometry, wave scripts) · `zone` (ground

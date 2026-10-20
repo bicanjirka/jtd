@@ -25,6 +25,8 @@ import td.fixtures.LevelFixtures;
 import td.level.LevelDefinition;
 import td.level.LevelOutcome;
 import td.projectile.CannonballProjectile;
+import td.save.GameSave;
+import td.save.GameSaveText;
 import td.stat.DisruptionAura;
 import td.tower.AuraTower;
 import td.tower.MortarTower;
@@ -1587,6 +1589,38 @@ class GameEngineTest {
         tickUntilOver(engine, 200);
 
         assertThat(engine.outcome()).isEqualTo(LevelOutcome.LOST);
+    }
+
+    @Test
+    void aGameSavedBetweenRoundsLoadsIntoAnotherEngineWithTheSameTowersEconomyAndNextWave() {
+        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("c", Rank.GRUNT),
+                new WaveDefinition("c", Rank.GRUNT), new WaveDefinition("c", Rank.GRUNT)), 100_000);
+        GameEngine saved = FakeGameHost.newBoundEngine();
+        saved.loadLevel(level);
+        saved.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        saved.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(1));
+        saved.startPlacing(TowerFactory.Type.SONAR, SonarTower.RANGE);
+        saved.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(3));
+        Tower sonar = towerOfType(saved, TowerFactory.Type.SONAR);
+        sonar.earnXp(1_000_000);
+        for (String node : List.of("Attune", "Awaken")) {
+            sonar.buyUpgrade(sonar.upgradeTree().nodes().stream()
+                    .filter(n -> n.displayName().equals(node)).findFirst().orElseThrow());
+        }
+        saved.debugJumpToWave(3);
+        GameSave save = saved.save().orElseThrow();
+        GameEngine loaded = FakeGameHost.newBoundEngine();
+        loaded.loadLevel(level);
+
+        Optional<String> problem = loaded.restore(
+                GameSaveText.read(GameSaveText.write(save)).save().orElseThrow());
+
+        assertThat(problem).isEmpty();
+        assertThat(loaded.save()).contains(save);
+        assertThat(loaded.getCurrentWaveIndex()).isEqualTo(2);
+        assertThat(loaded.getTowers()).extracting(Tower::getSellPrice)
+                .containsExactlyElementsOf(saved.getTowers().stream().map(Tower::getSellPrice).toList());
+        assertThat(loaded.getGameWorld().playtestRules().upgradeGatesIgnored()).isFalse();
     }
 
     @Test

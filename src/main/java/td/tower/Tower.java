@@ -120,6 +120,15 @@ public interface Tower {
 
     int getKillCount();
 
+    /** What it has earned and done so far. */
+    default TowerTally tally() {
+        return new TowerTally(this.experience().xp(), this.experience().deeds(), this.getDamageDealt(),
+                this.getKillCount());
+    }
+
+    /** Takes up {@code tally} in place of its own: for a tower just rebuilt from a saved game. */
+    void restore(TowerTally tally);
+
     /** {@link UpgradeTree#none()} for a tower without upgrades. */
     UpgradeTree upgradeTree();
 
