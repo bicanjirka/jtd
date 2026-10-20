@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 /**
  * A player who tries things before committing. Before each round it rehearses that round and the next the
@@ -86,22 +87,33 @@ final class StrongPlayer implements Player {
         if (standardScore < PER_LEAK) {
             return new CompetentPlayer(this.lab, standard);
         }
+        List<CompetentPlayer.Style> styles = candidates(this.base);
+        // Each rehearsal is a play of its own, so they run side by side; the scores are read back in order.
+        double[] scores = styles.parallelStream()
+                .mapToDouble(style -> style.equals(standard) ? standardScore
+                        : this.rehearse(turn, soFar, style, round, through))
+                .toArray();
         CompetentPlayer.Style best = standard;
         double bestScore = standardScore;
-        for (CompetentPlayer.Style style : candidates(this.base)) {
-            double score = style.equals(standard) ? standardScore : this.rehearse(turn, soFar, style, round, through);
-            if (score < bestScore) {
-                bestScore = score;
-                best = style;
+        for (int i = 0; i < styles.size(); i++) {
+            if (scores[i] < bestScore) {
+                bestScore = scores[i];
+                best = styles.get(i);
             }
         }
         Player chosen = new CompetentPlayer(this.lab, leaks(bestScore) < leaks(standardScore) ? best : standard);
         double chosenLeaks = Math.min(leaks(bestScore), leaks(standardScore));
+        if (chosenLeaks == 0) {
+            return chosen;
+        }
         // Selling loses a quarter of what was paid, so it is the last resort: tried only when nothing else holds.
+        double[] selling = IntStream.rangeClosed(1, MOST_SOLD).parallel()
+                .mapToDouble(sold -> this.rehearse(turn, soFar, new SellingPlayer(sold, this.competent()), round,
+                        through))
+                .toArray();
         for (int sold = 1; sold <= MOST_SOLD && chosenLeaks > 0; sold++) {
-            double score = this.rehearse(turn, soFar, new SellingPlayer(sold, this.competent()), round, through);
-            if (leaks(score) < chosenLeaks) {
-                chosenLeaks = leaks(score);
+            if (leaks(selling[sold - 1]) < chosenLeaks) {
+                chosenLeaks = leaks(selling[sold - 1]);
                 chosen = new SellingPlayer(sold, this.competent());
             }
         }
