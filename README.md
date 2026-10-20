@@ -64,7 +64,7 @@ the wave preview shows the same stat block for that enemy type.
 The dev panel ships in the jar, hidden behind `Ctrl`+`Shift`+`D` rather than a build flag, to
 make manual playtesting cheap. It sets credits and lives, keeps them topped up, spawns any wave
 script on any path with a live preview, skips, jumps to or restarts waves, steps one tick, kills
-or clears the board, grants XP to or resets the selected tower, lets upgrades ignore their gates,
+or clears the board, saves the game between waves and loads it back (one save per level, in `saves/`), grants XP to or resets the selected tower, lets upgrades ignore their gates,
 and draws the cell grid with the path's cells shaded and the pointed-at cell's coordinates. Every
 control has an `Alt` shortcut, and while the panel is open the bare keys `n` (skip wave), `x`
 (spawn the next catalog enemy) and `c` (grant credits) work too.

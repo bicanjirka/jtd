@@ -13,13 +13,17 @@ import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.level.LevelDefinition;
 import td.level.LevelOutcome;
+import td.save.GameSave;
+import td.save.TowerSave;
 import td.tower.PulseTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.tower.upgrade.UpgradeNode;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
 import td.util.PathRuntime;
+import td.util.PlaytestRules;
 import td.util.RandomSource;
 import td.util.ThreadConfined;
 import td.wave.Path;
@@ -49,11 +53,14 @@ import java.util.Set;
 public class GameEngine {
 
     private static final Logger LOG = LoggerFactory.getLogger(GameEngine.class);
+    /** Enough for a saved game's towers and upgrades, whatever they cost; the saved credits replace it after. */
+    private static final int REBUILD_CREDITS = 1_000_000_000;
 
     private final GameWorld gameWorld;
     private final TowerPlacement placement;
 
     // Pair with the wave list only through waveProgress().
+    private volatile String levelName = "";
     private volatile int wave = 0;
     private volatile boolean waveReady = true;
     private volatile boolean startWave = false;
@@ -161,6 +168,7 @@ public class GameEngine {
         markUnbuildableCells(grid, pathRuntimes, scale);
 
         this.wave = 0;
+        this.levelName = level.name();
         this.gameWorld.installLevel(new LoadedLevel(grid,
                 BoardGeometry.of(scale, width, height), pathRuntimes, catalog));
 
@@ -399,6 +407,65 @@ public class GameEngine {
             this.placement.cancel();
         }
         return this.placement.mouseClicked(boardX, boardY);
+    }
+
+    /** The game as it stands between rounds, to load later: empty while a round runs or once the level is over. */
+    public Optional<GameSave> save() {
+        if (!this.waveReady || this.outcome.isOver() || !this.gameWorld.level().isLoaded()) {
+            return Optional.empty();
+        }
+        BoardGeometry board = this.gameWorld.getBoard();
+        List<TowerSave> towers = this.gameWorld.towers().all().stream()
+                .map(tower -> new TowerSave(tower.getType(),
+                        new Point(board.cellX(tower.getX()), board.cellY(tower.getY())),
+                        tower.upgrades().owned().stream().map(UpgradeNode::id).toList(), tower.tally()))
+                .toList();
+        return Optional.of(new GameSave(this.levelName, this.wave + 1, this.gameWorld.economy().state(), towers));
+    }
+
+    /**
+     * Puts {@code save}'s game on the board in place of the one running: its towers, its economy, and its wave next.
+     * The towers are rebuilt in the order they were built, so each records the price it was bought for, and own
+     * their upgrades whatever the gates.
+     *
+     * @return why it could not, or empty once it did
+     */
+    public Optional<String> restore(GameSave save) {
+        LoadedLevel installed = this.gameWorld.level();
+        if (!installed.isLoaded() || !save.level().equals(this.levelName)) {
+            return Optional.of("The save is of " + save.level() + ": load that level first");
+        }
+        if (save.nextWave() > installed.waveCount()) {
+            return Optional.of("The level has no wave " + save.nextWave());
+        }
+        this.unloadCurrentLevel();
+        this.wave = save.nextWave() - 1;
+        PlaytestRules rules = this.gameWorld.playtestRules();
+        boolean gatesIgnored = rules.upgradeGatesIgnored();
+        rules.setUpgradeGatesIgnored(true);
+        this.gameWorld.economy().startEconomy(REBUILD_CREDITS, save.economy().lives());
+        save.towers().forEach(this::rebuild);
+        rules.setUpgradeGatesIgnored(gatesIgnored);
+        this.gameWorld.economy().startEconomy(save.economy().credits(), save.economy().lives());
+        this.gameWorld.economy().apply(EconomyDelta.score(save.economy().score()));
+        LOG.info("Game loaded: {} before wave {}, {} towers", save.level(), save.nextWave(), save.towers().size());
+        return Optional.empty();
+    }
+
+    private void rebuild(TowerSave saved) {
+        int scale = this.gameWorld.getBoard().scale();
+        this.placement.start(saved.type(), 0f);
+        this.placement.mouseClicked(saved.cell().x() * scale + scale / 2, saved.cell().y() * scale + scale / 2);
+        Cell cell = this.gameWorld.cells().at(saved.cell().x(), saved.cell().y());
+        if (!cell.hasTower()) {
+            LOG.warn("Saved {} at {} not rebuilt: the cell takes no tower", saved.type(), saved.cell());
+            return;
+        }
+        Tower tower = cell.getTower();
+        saved.nodes().forEach(id -> tower.upgradeTree().nodes().stream()
+                .filter(node -> node.id().equals(id)).findFirst()
+                .ifPresent(tower::buyUpgrade));
+        tower.restore(saved.tally());
     }
 
     /**

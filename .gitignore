@@ -3,6 +3,7 @@ target/
 
 ### jTD ###
 logs/
+saves/
 
 ### IntelliJ IDEA ###
 out/

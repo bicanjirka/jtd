@@ -9,6 +9,8 @@ import td.level.BuiltInLevelCatalog;
 import td.level.LevelCatalog;
 import td.level.LevelDefinition;
 import td.level.LevelOutcome;
+import td.save.GameSave;
+import td.save.GameSaveText;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.ui.BoardOverlays;
@@ -56,6 +58,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serial;
+import java.nio.file.Files;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Properties;
@@ -79,6 +82,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     private static final Logger LOG = LoggerFactory.getLogger(TowerDefense.class);
+    private static final String SAVE_DIRECTORY = "saves";
     static final String VERSION = loadVersion();
     @Serial
     private static final long serialVersionUID = 1L;
@@ -180,6 +184,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.panelDev.onRestart(this::restartLevel);
         this.panelDev.onStep(this::stepOneTick);
         this.panelDev.onResetTower(this::rebuildSelectedTower);
+        this.panelDev.onSaveGame(this::saveGame);
+        this.panelDev.onLoadGame(this::loadGame);
         this.panelDev.onCellGrid(this.boardRenderer::setCellGridShown);
         this.panelDev.onInfoText(this::setInfoText);
         this.panelDev.onReleaseFocus(this::requestFocusInWindow);
@@ -416,6 +422,54 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.updateInfo();
         this.syncTransportButtons();
         this.panelDev.showMessage(next == 0 ? "No level in play" : "Wave " + next + " is next");
+    }
+
+    /** Where the dev panel keeps the level's one saved game. */
+    private java.nio.file.Path saveFile() {
+        return java.nio.file.Path.of(SAVE_DIRECTORY, this.currentLevel.name() + ".save");
+    }
+
+    private void saveGame() {
+        Optional<GameSave> save = this.engine.save();
+        if (save.isEmpty()) {
+            this.panelDev.showMessage("Save between waves");
+            return;
+        }
+        java.nio.file.Path file = this.saveFile();
+        try {
+            Files.createDirectories(file.getParent());
+            Files.writeString(file, GameSaveText.write(save.get()));
+            this.panelDev.showMessage("Saved before wave " + save.get().nextWave() + " to " + file);
+        } catch (IOException e) {
+            LOG.warn("Could not save the game to {}", file, e);
+            this.panelDev.showMessage("Could not save: " + e.getMessage());
+        }
+    }
+
+    private void loadGame() {
+        java.nio.file.Path file = this.saveFile();
+        if (!Files.exists(file)) {
+            this.panelDev.showMessage("No save at " + file);
+            return;
+        }
+        GameSaveText.Read read;
+        try {
+            read = GameSaveText.read(Files.readString(file));
+        } catch (IOException e) {
+            LOG.warn("Could not read the save {}", file, e);
+            this.panelDev.showMessage("Could not read: " + e.getMessage());
+            return;
+        }
+        if (read.save().isEmpty()) {
+            this.panelDev.showMessage(read.problem());
+            return;
+        }
+        this.unSelectTower();
+        Optional<String> problem = this.engine.restore(read.save().get());
+        this.setWavePreview();
+        this.updateInfo();
+        this.syncTransportButtons();
+        this.panelDev.showMessage(problem.orElse("Loaded: wave " + read.save().get().nextWave() + " is next"));
     }
 
     /** Opens or closes the dev panel. The cell grid shows only while the panel is open. */

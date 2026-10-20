@@ -449,6 +449,14 @@ they work while paused without a second writer. The wave-script box is the one p
 fatal. Its shortcuts go through a `KeyEventDispatcher`, because the frame itself usually holds
 the focus and a `Window` runs no key bindings.
 
+A saved game (`td.save.GameSave`, written as text by `GameSaveText`) exists only between rounds, so it
+holds no enemy, projectile or zone: the level, the next wave, the economy, and each tower's type, cell,
+upgrades in purchase order and tally (XP, deeds, damage, kills). `GameEngine.restore` rebuilds the
+towers through placement and `buyUpgrade`, in build order so each records the price it was bought for,
+with the gates waived. What a tower holds only while it fights (a charge, a missile stock, an aim) and the
+randomness are not kept: a deep copy of every stateful class would have to grow with each feature, and a
+save is for playing on from a point, not for reproducing a play tick for tick.
+
 `td.PerformanceHarness` is its timing sibling: it fills every buildable cell of the last
 built-in level with towers, plays the level through once to warm the JIT and five more times
 measured, and reports p50/p99/max tick time, frame-build time (`BoardRenderer.buildFrame`, which

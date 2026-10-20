@@ -96,6 +96,10 @@ public class PanelDev extends JPanel {
     };
     private Runnable onResetTower = () -> {
     };
+    private Runnable onSaveGame = () -> {
+    };
+    private Runnable onLoadGame = () -> {
+    };
     private Consumer<Boolean> onCellGrid = shown -> {
     };
     private Consumer<String> onInfoText = text -> {
@@ -134,6 +138,14 @@ public class PanelDev extends JPanel {
 
     public void onResetTower(Runnable listener) {
         this.onResetTower = listener;
+    }
+
+    public void onSaveGame(Runnable listener) {
+        this.onSaveGame = listener;
+    }
+
+    public void onLoadGame(Runnable listener) {
+        this.onLoadGame = listener;
     }
 
     /** Called with whether the cell grid should show. */
@@ -300,9 +312,11 @@ public class PanelDev extends JPanel {
         HudButton restart = button("Restart", () -> this.onRestart.run());
         HudButton killAll = button("Kill all", () -> this.dev.killAll());
         HudButton clearAll = button("Clear all", () -> this.dev.clearAll());
+        HudButton save = button("Save", () -> this.onSaveGame.run());
+        HudButton load = button("Load", () -> this.onLoadGame.run());
         this.section(1, "Level", row(skip, step, gap(), label("Wave"), this.jumpTo, button("Go", this::jump), gap(),
                 killAll, clearAll, gap(), label("Health %"), this.enemyHealth, button("Set", this::setEnemyHealth),
-                gap(), restart));
+                gap(), save, load, gap(), restart));
 
         this.problem.setForeground(PROBLEM);
         this.previewArea.setOpaque(false);
@@ -355,6 +369,8 @@ public class PanelDev extends JPanel {
         this.bind("Level", alt(KeyEvent.VK_K), "kill all", killAll::doClick);
         this.bind("Level", altShift(KeyEvent.VK_K), "clear all", clearAll::doClick);
         this.bind("Level", alt(KeyEvent.VK_E), "enemy health %", focus(this.enemyHealth));
+        this.bind("Level", alt(KeyEvent.VK_V), "save the game between waves", save::doClick);
+        this.bind("Level", alt(KeyEvent.VK_O), "load the saved game", load::doClick);
         this.bind("Spawn", alt(KeyEvent.VK_S), "wave script", focus(this.script));
         this.bind("Spawn", alt(KeyEvent.VK_R), "next rank", this.rankButton::doClick);
         this.bind("Spawn", alt(KeyEvent.VK_P), "next path", this.pathButton::doClick);
