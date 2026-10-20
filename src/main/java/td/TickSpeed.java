@@ -1,33 +1,48 @@
 package td;
 
+import td.util.TickRate;
+
+import java.util.List;
+
 /**
- * Named presets over the tick-speed multiplier. 1.0 is the baseline rate; any non-negative
- * multiplier is valid.
+ * The tick-speed multiplier, with named presets. 1.0 is the baseline rate; any non-negative
+ * multiplier is valid, so the dev panel can dial in whole ticks per second between the presets.
  */
-public enum TickSpeed {
-    PAUSED(0.0),
-    NORMAL(1.0),
-    FAST(50.0 / 15.0),
-    SUPER_FAST(50.0 / 3.0);
+public record TickSpeed(double multiplier) {
 
-    private final double multiplier;
+    public static final TickSpeed PAUSED = new TickSpeed(0.0);
+    public static final TickSpeed NORMAL = new TickSpeed(1.0);
+    public static final TickSpeed FAST = new TickSpeed(50.0 / 15.0);
+    public static final TickSpeed SUPER_FAST = new TickSpeed(50.0 / 3.0);
 
-    TickSpeed(double multiplier) {
-        this.multiplier = multiplier;
-    }
+    private static final List<TickSpeed> PLAYABLE = List.of(NORMAL, FAST, SUPER_FAST);
 
-    public double multiplier() {
-        return this.multiplier;
-    }
-
-    /** Cycles the playable presets, skipping {@code PAUSED}. */
-    public TickSpeed next() {
-        TickSpeed[] cycle = {NORMAL, FAST, SUPER_FAST};
-        for (int i = 0; i < cycle.length; i++) {
-            if (cycle[i] == this) {
-                return cycle[(i + 1) % cycle.length];
-            }
+    public TickSpeed {
+        if (multiplier < 0.0 || !Double.isFinite(multiplier)) {
+            throw new IllegalArgumentException("Tick speed must be finite and non-negative: " + multiplier);
         }
-        return NORMAL;
+    }
+
+    public static TickSpeed ofTicksPerSecond(int ticksPerSecond) {
+        return new TickSpeed(ticksPerSecond / (double) TickRate.TICKS_PER_SECOND);
+    }
+
+    /** Ticks per second of wall-clock time, rounded to whole ticks. */
+    public int ticksPerSecond() {
+        return (int) Math.round(this.multiplier * TickRate.TICKS_PER_SECOND);
+    }
+
+    public boolean isPaused() {
+        return this.multiplier == 0.0;
+    }
+
+    /** {@code delta} whole ticks per second faster than the rounded rate, never below paused. */
+    public TickSpeed nudged(int delta) {
+        return ofTicksPerSecond(Math.max(0, this.ticksPerSecond() + delta));
+    }
+
+    /** The next playable preset faster than this one, wrapping round to {@code NORMAL}. */
+    public TickSpeed next() {
+        return PLAYABLE.stream().filter(preset -> preset.multiplier > this.multiplier).findFirst().orElse(NORMAL);
     }
 }

@@ -12,6 +12,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -40,8 +41,9 @@ import java.util.function.IntConsumer;
 
 /**
  * The hidden dev panel (Ctrl+Shift+D) for playtesting: set the economy, spawn any wave script,
- * move through the level, push the selected tower along and show the cell grid. Board changes go
- * to {@link DevControls}; changes to the level's lifecycle go up through the {@code onX} setters.
+ * move through the level, dial the game speed by ticks per second, push the selected tower along
+ * and show the cell grid. Board changes go to {@link DevControls}; changes to the level's lifecycle
+ * go up through the {@code onX} setters.
  * <p>
  * Every control has an Alt shortcut, which {@link #runShortcut} runs for the frame. A shortcut on a
  * field gives it the focus; Enter applies it and hands the keys back to the board, as Esc does.
@@ -79,6 +81,7 @@ public class PanelDev extends JPanel {
     private final JPanel previewArea = new JPanel(this.previewCards);
     private final JLabel pointerCell = label("");
     private final JLabel clickedCell = label("");
+    private final JLabel speed = label("");
     private final JLabel status = label(" ");
     private final List<Shortcut> shortcuts = new ArrayList<>();
 
@@ -93,6 +96,8 @@ public class PanelDev extends JPanel {
     private Runnable onRestart = () -> {
     };
     private Runnable onStep = () -> {
+    };
+    private IntConsumer onNudgeSpeed = delta -> {
     };
     private Runnable onResetTower = () -> {
     };
@@ -134,6 +139,11 @@ public class PanelDev extends JPanel {
 
     public void onStep(Runnable listener) {
         this.onStep = listener;
+    }
+
+    /** Called with how many ticks per second faster the game should run; negative slows it. */
+    public void onNudgeSpeed(IntConsumer listener) {
+        this.onNudgeSpeed = listener;
     }
 
     public void onResetTower(Runnable listener) {
@@ -197,6 +207,11 @@ public class PanelDev extends JPanel {
 
     public void showClickedCell(int cellX, int cellY) {
         this.clickedCell.setText("Clicked  " + cellX + ", " + cellY);
+    }
+
+    /** The game's live speed; 0 while paused. */
+    public void showTicksPerSecond(int ticksPerSecond) {
+        this.speed.setText(ticksPerSecond + " ticks/s");
     }
 
     /** Animates the wave preview on the render pulse. */
@@ -314,9 +329,19 @@ public class PanelDev extends JPanel {
         HudButton clearAll = button("Clear all", () -> this.dev.clearAll());
         HudButton save = button("Save", () -> this.onSaveGame.run());
         HudButton load = button("Load", () -> this.onLoadGame.run());
-        this.section(1, "Level", row(skip, step, gap(), label("Wave"), this.jumpTo, button("Go", this::jump), gap(),
+        this.section(1, "Level", row(skip, gap(), label("Wave"), this.jumpTo, button("Go", this::jump), gap(),
                 killAll, clearAll, gap(), label("Health %"), this.enemyHealth, button("Set", this::setEnemyHealth),
                 gap(), save, load, gap(), restart));
+
+        HudButton slowerByFive = button("-5", () -> this.onNudgeSpeed.accept(-5));
+        HudButton slower = button("-1", () -> this.onNudgeSpeed.accept(-1));
+        HudButton faster = button("+1", () -> this.onNudgeSpeed.accept(1));
+        HudButton fasterByFive = button("+5", () -> this.onNudgeSpeed.accept(5));
+        // Sized for the widest rate, so the buttons after it stay put as the digits change.
+        this.speed.setText("0000 ticks/s");
+        this.speed.setPreferredSize(this.speed.getPreferredSize());
+        this.speed.setHorizontalAlignment(SwingConstants.CENTER);
+        this.section(2, "Speed", row(step, gap(), slowerByFive, slower, this.speed, faster, fasterByFive));
 
         this.problem.setForeground(PROBLEM);
         this.previewArea.setOpaque(false);
@@ -333,13 +358,13 @@ public class PanelDev extends JPanel {
         previewCell.fill = GridBagConstraints.HORIZONTAL;
         previewCell.insets = new Insets(0, CONTROL_GAP - 4, 0, 0);
         spawnRow.add(this.previewArea, previewCell);
-        this.section(2, "Spawn", spawnRow);
+        this.section(3, "Spawn", spawnRow);
 
         HudButton grant = button("Grant", this::grantXp);
         HudToggleButton ignoreGates = toggle("Ignore gates");
         ignoreGates.addActionListener(evt -> this.dev.setUpgradeGatesIgnored(ignoreGates.isSelected()));
         HudButton reset = button("Reset", () -> this.onResetTower.run());
-        this.section(3, "Tower", row(label("XP"), this.xp, grant, gap(), ignoreGates, gap(), reset));
+        this.section(4, "Tower", row(label("XP"), this.xp, grant, gap(), ignoreGates, gap(), reset));
 
         this.pointerCell.setForeground(MUTED);
         this.clickedCell.setForeground(MUTED);
@@ -356,14 +381,13 @@ public class PanelDev extends JPanel {
         statusCell.insets = new Insets(0, CONTROL_GAP, 0, CONTROL_GAP);
         boardRow.add(this.status, statusCell);
         boardRow.add(help, new GridBagConstraints());
-        this.section(4, "Board", boardRow);
+        this.section(5, "Board", boardRow);
 
         this.bind("Economy", alt(KeyEvent.VK_C), "credits", focus(this.credits));
         this.bind("Economy", alt(KeyEvent.VK_L), "lives", focus(this.lives));
         this.bind("Economy", alt(KeyEvent.VK_I), "infinite lives", infiniteLives::doClick);
         this.bind("Economy", alt(KeyEvent.VK_B), "free build", freeBuild::doClick);
         this.bind("Level", alt(KeyEvent.VK_N), "skip wave", skip::doClick);
-        this.bind("Level", alt(KeyEvent.VK_T), "step one tick", step::doClick);
         this.bind("Level", altShift(KeyEvent.VK_R), "restart level", restart::doClick);
         this.bind("Level", alt(KeyEvent.VK_J), "jump to wave", focus(this.jumpTo));
         this.bind("Level", alt(KeyEvent.VK_K), "kill all", killAll::doClick);
@@ -371,6 +395,11 @@ public class PanelDev extends JPanel {
         this.bind("Level", alt(KeyEvent.VK_E), "enemy health %", focus(this.enemyHealth));
         this.bind("Level", alt(KeyEvent.VK_V), "save the game between waves", save::doClick);
         this.bind("Level", alt(KeyEvent.VK_O), "load the saved game", load::doClick);
+        this.bind("Speed", alt(KeyEvent.VK_T), "step one tick", step::doClick);
+        this.bind("Speed", altShift(KeyEvent.VK_COMMA), "5 ticks/s slower", slowerByFive::doClick);
+        this.bind("Speed", alt(KeyEvent.VK_COMMA), "1 tick/s slower", slower::doClick);
+        this.bind("Speed", alt(KeyEvent.VK_PERIOD), "1 tick/s faster", faster::doClick);
+        this.bind("Speed", altShift(KeyEvent.VK_PERIOD), "5 ticks/s faster", fasterByFive::doClick);
         this.bind("Spawn", alt(KeyEvent.VK_S), "wave script", focus(this.script));
         this.bind("Spawn", alt(KeyEvent.VK_R), "next rank", this.rankButton::doClick);
         this.bind("Spawn", alt(KeyEvent.VK_P), "next path", this.pathButton::doClick);

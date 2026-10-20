@@ -183,6 +183,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.panelDev.onJumpToWave(this::debugJumpToWave);
         this.panelDev.onRestart(this::restartLevel);
         this.panelDev.onStep(this::stepOneTick);
+        this.panelDev.onNudgeSpeed(delta -> this.setSpeed(this.currentSpeed.nudged(delta)));
         this.panelDev.onResetTower(this::rebuildSelectedTower);
         this.panelDev.onSaveGame(this::saveGame);
         this.panelDev.onLoadGame(this::loadGame);
@@ -546,7 +547,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     /** Pauses if needed, then runs exactly one tick. */
     private void stepOneTick() {
-        if (this.currentSpeed != TickSpeed.PAUSED) {
+        if (!this.currentSpeed.isPaused()) {
             this.setSpeed(TickSpeed.PAUSED);
         }
         this.doGameTick();
@@ -629,11 +630,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
     }
 
-    /** The single place tick speed changes, keeping the transport buttons in step. */
+    /** The single place tick speed changes, keeping the transport buttons and the dev panel in step. */
     private void setSpeed(TickSpeed speed) {
         this.currentSpeed = speed;
         this.gameLoop.setSpeed(speed);
         this.syncTransportButtons();
+        this.panelDev.showTicksPerSecond(speed.ticksPerSecond());
     }
 
     /**
@@ -642,13 +644,13 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      * loop runs at normal speed with an empty board, and after the level ends no wave runs at all.
      */
     private void syncTransportButtons() {
-        boolean waveRunning = this.currentSpeed != TickSpeed.PAUSED && !this.engine.isWaveReady()
+        boolean waveRunning = !this.currentSpeed.isPaused() && !this.engine.isWaveReady()
                 && !this.engine.outcome().isOver();
         this.gameConsole.setPlaying(waveRunning);
     }
 
     private void togglePause() {
-        this.setSpeed(this.currentSpeed == TickSpeed.PAUSED ? TickSpeed.NORMAL : TickSpeed.PAUSED);
+        this.setSpeed(this.currentSpeed.isPaused() ? TickSpeed.NORMAL : TickSpeed.PAUSED);
     }
 
     private void cycleSpeed() {
@@ -908,7 +910,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     /** While paused, single-steps one tick instead of changing speed. */
     private void fastPressed() {
-        if (this.currentSpeed == TickSpeed.PAUSED) {
+        if (this.currentSpeed.isPaused()) {
             this.doGameTick();
             return;
         }
