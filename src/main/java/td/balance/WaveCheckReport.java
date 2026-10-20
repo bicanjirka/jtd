@@ -6,19 +6,19 @@ import org.slf4j.LoggerFactory;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
 import td.tower.Tower;
+import td.tower.TowerFactory;
 import td.util.ThreadConfined;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -27,8 +27,10 @@ import java.util.stream.LongStream;
  * Checks one level wave by wave against what each wave is meant to ask of the player. The strong player is the
  * reference: its margin, the round it loses in, its pressure on each round, and how its margin moves with the
  * bounty. Each signature wave is checked by denying the strong player the role it asks for, from the start:
- * the wave should be where that player first leaks, and no other denial should break it first. A strip wave is
- * checked on the strong player's own army: taking any role's towers off just before it should make it leak.
+ * the wave should be where that player first leaks, and no other denial should break it first. Every signature
+ * wave, and the strip wave for every role, is also checked on the strong player's own army: taking the role's towers
+ * off just before it should make it leak, and the army as it is (or given a tower for a role no player can price)
+ * should hold.
  * <p>
  * Usage: {@code WaveCheckReport [--level N] [--seeds N] [--checks 6:single,12:control+sustain] [--strip 17]
  * [--parts strong,replayed,margin,bounty,bans,strip]}. A tool run on demand, not a test: the strong player rehearses
@@ -150,8 +152,8 @@ public final class WaveCheckReport {
         if (this.options.parts().contains(Part.BANS)) {
             this.printBans(survey, labs, strongPlays, rounds);
         }
-        if (this.options.parts().contains(Part.STRIP) && this.options.strip() > 0) {
-            this.printStrip(survey, strongPlays);
+        if (this.options.parts().contains(Part.STRIP)) {
+            this.printStrip(survey, lab, strongPlays);
         }
         this.out.printf("%n(%.0fs)%n", (System.nanoTime() - started) / 1e9);
     }
@@ -360,47 +362,94 @@ public final class WaveCheckReport {
     }
 
     /**
-     * Replays each strong play up to the strip wave, takes one role's towers off just before it, and plays the
-     * wave with what is left and no further purchases.
+     * For each signature wave, replays each strong play up to it, changes the army just before it, and plays the
+     * wave with no further purchases: as it is, without each role the wave asks for, and, for a role the players
+     * cannot price, with a tower that does it given for free. The wave asks for a role when the army leaks without
+     * it and holds with it.
      */
-    private void printStrip(BoardSurvey survey, List<PlayRecord> strong) {
-        int wave = this.options.strip();
+    private void printStrip(BoardSurvey survey, TowerLab lab, List<PlayRecord> strong) {
+        Map<Integer, Set<Role>> waves = new java.util.TreeMap<>(this.options.checks());
+        if (this.options.strip() > 0) {
+            waves.put(this.options.strip(), EnumSet.allOf(Role.class));
+        }
         this.out.println();
-        this.out.printf("STRIP (the strong army before wave %d, one role's towers taken off: share leaking heavily)%n",
-                wave);
-        List<Role> none = List.of();
-        List<List<Role>> strips = new ArrayList<>();
-        strips.add(none);
-        Arrays.stream(Role.values()).map(List::of).forEach(strips::add);
-        for (List<Role> stripped : strips) {
-            List<PlayRecord> plays = strong.parallelStream().map(play -> LevelPlay.playThrough(survey,
-                    new PlayerSpec("strip", (s, seed) -> new StripPlayer(play.actions(), wave, stripped)),
-                    play.play().seed(), LevelPlay.Pacing.standard(), wave)).toList();
-            double leaks = share(plays, play -> leakedIn(play, wave) >= HEAVY);
-            String name = stripped.isEmpty() ? "full army" : "without " + stripped.getFirst().label();
-            IntPredicate ok = percent -> stripped.isEmpty() ? percent < 100 * (1 - MOST) + 1e-9
-                    : percent >= 100 * MOST - 1e-9;
-            this.out.printf("  %-24s %3.0f%%  (%.1f leaked per play) %s%n", name, 100 * leaks,
-                    plays.stream().mapToInt(play -> leakedIn(play, wave)).average().orElse(0),
-                    verdict(ok.test((int) Math.round(100 * leaks))));
+        this.out.println("STRIP (the strong army just before the wave, changed: share of seeds leaking heavily there)");
+        for (Map.Entry<Integer, Set<Role>> check : waves.entrySet()) {
+            int wave = check.getKey();
+            double full = this.stripShare(survey, strong, wave, Set.of(), Optional.empty());
+            this.out.printf("  wave %d, full army %3.0f%%%n", wave, 100 * full);
+            for (Role role : check.getValue()) {
+                double without = this.stripShare(survey, strong, wave, Set.of(role), Optional.empty());
+                Optional<Kit> kit = Kit.of(role, lab);
+                if (kit.isPresent()) {
+                    double with = this.stripShare(survey, strong, wave, Set.of(), kit);
+                    this.out.printf("    without %-14s %3.0f%% %s   given %s %3.0f%% %s%n", role.label(), 100 * without,
+                            verdict(without >= MOST), kit.get().name(), 100 * with, verdict(with <= 1 - MOST));
+                } else {
+                    this.out.printf("    without %-14s %3.0f%% %s   (full army %s)%n", role.label(), 100 * without,
+                            verdict(without >= MOST), verdict(full <= 1 - MOST));
+                }
+            }
         }
     }
 
-    /** Plays a script back up to a wave, takes the given roles' towers off before it, and buys nothing more. */
+    private double stripShare(BoardSurvey survey, List<PlayRecord> strong, int wave, Set<Role> stripped,
+                              Optional<Kit> kit) {
+        List<PlayRecord> plays = strong.parallelStream().map(play -> LevelPlay.playThrough(survey,
+                new PlayerSpec("strip", (s, seed) -> new StripPlayer(play.actions(), wave, stripped, kit)),
+                play.play().seed(), LevelPlay.Pacing.standard(), wave)).toList();
+        return share(plays, play -> leakedIn(play, wave) >= HEAVY);
+    }
+
+    /**
+     * A tower that does a role, given for free with a line bought: for a role whose value the players cannot
+     * measure, so they may not have built it.
+     *
+     * @param name what the report calls it
+     * @param type the tower
+     * @param line the node whose whole line it owns
+     * @param lab  where it goes: the free cell where the type lands most
+     */
+    record Kit(String name, TowerFactory.Type type, String line, TowerLab lab) {
+
+        static Optional<Kit> of(Role role, TowerLab lab) {
+            return switch (role) {
+                case ANTI_SUSTAIN -> Optional.of(new Kit("a Dead Zone Obelisk", TowerFactory.Type.PULSE,
+                        "pulse.head.ward.3", lab));
+                case SINGLE_TARGET, AREA, ANTI_PHYSICAL, CONTROL -> Optional.empty();
+            };
+        }
+
+        void give(Turn turn) {
+            turn.survey().buildable().stream().filter(turn::isFree)
+                    .max(java.util.Comparator.comparingDouble(cell -> this.lab.cellValue(this.type, cell)))
+                    .ifPresent(cell -> turn.grant(this.type, cell, this.line));
+        }
+    }
+
+    /**
+     * Plays a script back to the start of a wave, takes the given roles' towers off and gives the kit if any, then
+     * plays the rest of the wave's script but for what would bring the role back or touch a tower taken off.
+     */
     @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
     private static final class StripPlayer implements Player {
 
-        private final ScriptedPlayer script;
+        private final List<PlayRecord.TimedAction> during;
         private final int wave;
-        private final List<Role> stripped;
+        private final Set<Role> stripped;
+        private final Optional<Kit> kit;
 
+        private ScriptedPlayer script;
         private boolean done;
 
-        StripPlayer(List<PlayRecord.TimedAction> actions, int wave, List<Role> stripped) {
+        StripPlayer(List<PlayRecord.TimedAction> actions, int wave, Set<Role> stripped, Optional<Kit> kit) {
             this.script = new ScriptedPlayer(actions.stream().filter(action -> action.round() < wave
                     || action.round() == wave && action.offset() == PlayRecord.TimedAction.BEFORE_ROUND).toList());
+            this.during = actions.stream().filter(action -> action.round() == wave
+                    && action.offset() != PlayRecord.TimedAction.BEFORE_ROUND).toList();
             this.wave = wave;
             this.stripped = stripped;
+            this.kit = kit;
         }
 
         @Override
@@ -410,8 +459,22 @@ public final class WaveCheckReport {
                 this.done = true;
                 List<Tower> gone = turn.towers().stream()
                         .filter(tower -> this.stripped.stream().anyMatch(role -> role.doneBy(tower))).toList();
+                Set<td.wave.Point> cells = gone.stream().map(turn::cellOf).collect(Collectors.toSet());
                 gone.forEach(turn::discard);
+                this.kit.ifPresent(given -> given.give(turn));
+                this.script = new ScriptedPlayer(this.during.stream()
+                        .filter(action -> this.keeps(action.action(), cells)).toList());
             }
+        }
+
+        private boolean keeps(PlayerAction action, Set<td.wave.Point> gone) {
+            return switch (action) {
+                case PlayerAction.Build build -> this.stripped.stream()
+                        .allMatch(role -> role.allowedTypes().contains(build.type()));
+                case PlayerAction.Upgrade upgrade -> !gone.contains(upgrade.cell()) && this.stripped.stream()
+                        .noneMatch(role -> role.bannedNodes().contains(upgrade.nodeId()));
+                case PlayerAction.Sell sell -> !gone.contains(sell.cell());
+            };
         }
     }
 }

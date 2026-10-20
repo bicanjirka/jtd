@@ -2,6 +2,7 @@ package td.balance;
 
 import td.GameEngine;
 import td.cell.Cell;
+import td.economy.EconomyDelta;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeNode;
@@ -21,6 +22,9 @@ import java.util.Optional;
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 public final class Turn {
+
+    /** Enough to buy any tower with a whole line, lent and taken back by {@link #grant}. */
+    private static final int GRANT_CREDITS = 100_000;
 
     private final GameEngine engine;
     private final RunRecorder recorder;
@@ -198,6 +202,22 @@ public final class Turn {
         this.recorder.leaving(tower);
         this.engine.getGameWorld().towers().sell(tower);
         this.engine.getGameWorld().economy().doPay(refund);
+    }
+
+    /**
+     * Builds {@code type} on {@code cell} with the whole line to {@code lineEnd} bought, for free and unlogged: not
+     * a player's choice, but what a check gives an army to see what the tower would hold.
+     */
+    void grant(TowerFactory.Type type, Point cell, String lineEnd) {
+        int before = this.credits();
+        boolean gatesIgnored = this.engine.getGameWorld().playtestRules().upgradeGatesIgnored();
+        this.engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
+        this.engine.getGameWorld().economy().apply(EconomyDelta.credits(GRANT_CREDITS));
+        place(this.engine, type, cell).ifPresent(tower -> tower.upgradeTree().nodes().stream()
+                .filter(node -> node.id().equals(lineEnd)).findFirst()
+                .ifPresent(end -> tower.upgradeTree().pathTo(end).forEach(tower::buyUpgrade)));
+        this.engine.getGameWorld().economy().doPay(this.credits() - before);
+        this.engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(gatesIgnored);
     }
 
     /** Does {@code action}; whether it went through. */
