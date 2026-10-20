@@ -456,7 +456,10 @@ towers through placement and `buyUpgrade`, in build order so each records the pr
 with the gates waived. What a tower holds only while it fights (a charge, a missile stock, an aim) and the
 randomness are not kept: a deep copy of every stateful class would have to grow with each feature, and a
 save is for playing on from a point, not for reproducing a play tick for tick. The balance tools use the
-same saves to start plays at a late wave (`WaveCheckReport --save-before`, `--from`).
+same saves to start plays at a late wave (`WaveCheckReport --save-before`, `--from`). The strong player's
+rehearsals still replay from the first tick: rehearsing from a save of the game as it stands mispredicted the
+rounds it rehearses (the fight state a save drops matters), so on eight Curly Path seeds it sold more, its
+margin fell from 99% to 90%, and it was no faster.
 
 `td.PerformanceHarness` is its timing sibling: it fills every buildable cell of the last
 built-in level with towers, plays the level through once to warm the JIT and five more times
