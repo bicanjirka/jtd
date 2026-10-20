@@ -371,31 +371,61 @@ public class Driver {
     }
 
     // Simulates a real keypress through Robot, since the frame's shortcuts are a KeyListener and
-    // key bindings, not buttons. A chord joins modifiers with '+' (alt+c, ctrl+shift+d); named keys
-    // are enter, esc, tab and space.
+    // key bindings, not buttons. A chord joins keys with '+' (alt+c, ctrl+shift+d, alt+period).
+    // Every part resolves before anything is pressed: an unknown name used to fall back to its
+    // first letter, so alt+period silently pressed alt+p.
     private static void typeKey(String chord) throws InterruptedException {
-        String[] parts = chord.toLowerCase().split("[+]");
         List<Integer> codes = new ArrayList<>();
-        for (String part : parts) {
-            codes.add(switch (part) {
-                case "ctrl" -> KeyEvent.VK_CONTROL;
-                case "shift" -> KeyEvent.VK_SHIFT;
-                case "alt" -> KeyEvent.VK_ALT;
-                case "enter" -> KeyEvent.VK_ENTER;
-                case "esc" -> KeyEvent.VK_ESCAPE;
-                case "tab" -> KeyEvent.VK_TAB;
-                case "space" -> KeyEvent.VK_SPACE;
-                default -> KeyEvent.getExtendedKeyCodeForChar(part.charAt(0));
-            });
+        // Split on a '+' that something follows, so "alt++" and "+" name the plus key itself.
+        for (String part : chord.split("\\+(?=.)")) {
+            int code = keyCode(part);
+            if (code == KeyEvent.VK_UNDEFINED) {
+                System.out.println("ERROR: key '" + part + "' in '" + chord + "' is not a key - use one"
+                        + " character (a, 5, ., ,), a modifier (ctrl, shift, alt) or a KeyEvent name without"
+                        + " VK_ (enter, esc, tab, space, period, comma, minus, equals, left, f5, delete)");
+                return;
+            }
+            codes.add(code);
         }
-        for (int code : codes) {
-            robot.keyPress(code);
-        }
-        for (int i = codes.size() - 1; i >= 0; i--) {
-            robot.keyRelease(codes.get(i));
+        List<Integer> pressed = new ArrayList<>();
+        try {
+            for (int code : codes) {
+                robot.keyPress(code);
+                pressed.add(code);
+            }
+        } catch (IllegalArgumentException e) {
+            // Robot rejects a code with no key of its own on this keyboard, such as '<' or '+' on
+            // a US layout; those are a shifted key.
+            System.out.println("ERROR: this keyboard has no key for '" + KeyEvent.getKeyText(codes.get(pressed.size()))
+                    + "' in '" + chord + "' - press the key it is on, with shift if it is shifted");
+            return;
+        } finally {
+            for (int i = pressed.size() - 1; i >= 0; i--) {
+                robot.keyRelease(pressed.get(i));
+            }
         }
         Thread.sleep(80);
         System.out.println("OK key " + chord);
+    }
+
+    /** The key code a chord part names, or {@code VK_UNDEFINED}. */
+    private static int keyCode(String part) {
+        if (part.length() == 1) {
+            return KeyEvent.getExtendedKeyCodeForChar(Character.toLowerCase(part.charAt(0)));
+        }
+        String name = switch (part.toLowerCase()) {
+            case "ctrl" -> "CONTROL";
+            case "esc" -> "ESCAPE";
+            case "del" -> "DELETE";
+            case "dot" -> "PERIOD";
+            case "plus" -> "ADD";
+            default -> part.toUpperCase();
+        };
+        try {
+            return KeyEvent.class.getField("VK_" + name).getInt(null);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            return KeyEvent.VK_UNDEFINED;
+        }
     }
 
     // Prints every non-blank label in the dev panel: its status, problem and cell lines.
