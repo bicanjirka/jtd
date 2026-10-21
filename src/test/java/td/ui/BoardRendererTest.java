@@ -28,6 +28,7 @@ import td.ui.render.ProjectileDraw;
 import td.ui.render.RenderFrame;
 import td.ui.render.SheetLine;
 import td.ui.render.SlotMarkDraw;
+import td.ui.render.TowerSheet;
 import td.ui.render.TowerSpriteDraw;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
@@ -62,6 +63,31 @@ class BoardRendererTest {
         TowerSpriteDraw sprite = frame.towerSprites().getFirst();
         assertThat(sprite.palette()).isEqualTo(Palette.TOWER_SNIPER_BODY);
         assertThat(sprite.selected()).isTrue();
+    }
+
+    @Test
+    void aSelectedTowersSheetIsBuiltWithTheFrame() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        SniperTower tower = new SniperTower(context, 1, 2);
+        tower.setSelected(true);
+        context.towers().add(tower);
+
+        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
+
+        TowerSheet sheet = frame.towerSheet().orElseThrow();
+        assertThat(sheet.x()).isEqualTo(tower.getX());
+        assertThat(sheet.y()).isEqualTo(tower.getY());
+        assertThat(sheet.sheet().lines().getFirst()).isInstanceOf(SheetLine.Title.class);
+    }
+
+    @Test
+    void noTowerSheetWithoutASelection() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        context.towers().add(new SniperTower(context, 1, 1));
+
+        assertThat(rendererFor(context).buildFrame(0, 0.0, 0.0).towerSheet()).isEmpty();
     }
 
     @Test

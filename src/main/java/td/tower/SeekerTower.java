@@ -8,6 +8,7 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.MissileProjectile;
 import td.projectile.ProjectileStats;
+import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitBonus;
@@ -53,7 +54,6 @@ import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
-import td.tower.upgrade.PerkText;
 import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -61,6 +61,7 @@ import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
+import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -486,7 +487,7 @@ public final class SeekerTower extends AbstractTower {
     protected List<AppliedEffect> baseApplies() {
         return List.of(new AppliedEffect(EffectKind.FREEZE, List.of(new AppliedEffect.Source(this.displayName(),
                 TermText.of("each missile applies ").plus(EffectKind.FREEZE)
-                        .plus(" for " + PerkText.seconds(this.freezeTicks()))))));
+                        .plus(" for " + TermNumbers.seconds((this.freezeTicks()) / TickRate.TICKS_PER_SECOND))))));
     }
 
     @Override

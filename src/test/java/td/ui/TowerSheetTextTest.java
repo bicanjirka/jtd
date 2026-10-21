@@ -5,8 +5,11 @@ import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.term.TermText;
+import td.tower.NodeProgress;
 import td.tower.Tower;
+import td.tower.TowerBuffState;
 import td.tower.TowerFactory;
+import td.tower.TowerTerm;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
 import td.ui.render.InfoSheet;
@@ -53,6 +56,27 @@ class TowerSheetTextTest {
 
     private static InfoSheet liveStatus(Tower tower) {
         return TowerSheetText.status(tower.inspect().withConditions(tower.conditions()));
+    }
+
+    /** Buys the named nodes the way the Upgrades panel does, granting the XP and the Attune and Awaken they gate on. */
+    private void buy(Tower tower, String... names) {
+        this.world.economy().startEconomy(1_000_000, 5);
+        tower.earnXp(1_000);
+        for (String name : List.of("Attune", "Awaken")) {
+            tower.buyUpgrade(this.named(tower, name));
+        }
+        for (String name : names) {
+            assertThat(tower.buyUpgrade(this.named(tower, name))).as(name).isTrue();
+        }
+    }
+
+    private UpgradeNode named(Tower tower, String name) {
+        return tower.upgradeTree().nodes().stream().filter(node -> node.displayName().equals(name)).findFirst()
+                .orElseThrow();
+    }
+
+    private static List<SheetLine> tooltipOf(SheetLine.IconRow row, int index) {
+        return row.icons().get(index).tooltip().lines();
     }
 
     private static Row row(InfoSheet sheet, String label) {
@@ -180,5 +204,63 @@ class TowerSheetTextTest {
 
         assertThat(labels(sheet)).doesNotContain("Awaken");
         assertThat(rows(sheet)).noneMatch(row -> row.glyph() == Glyph.PIP);
+    }
+
+    @Test
+    void eachOwnedLineIsOnePerkIconAtItsLevel() {
+        Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
+        this.buy(sniper, "Focused Optics", "Focused Optics II");
+
+        InfoSheet sheet = liveStatus(sniper);
+
+        SheetLine.IconRow perks = iconRow(sheet, "Perks");
+        assertThat(perks.icons()).extracting(icon -> icon.face().numeral()).contains("II");
+        assertThat(perks.icons().stream().filter(icon -> icon.key().id().contains(this.named(sniper, "Focused Optics").id())))
+                .hasSize(1);
+    }
+
+    @Test
+    void aPerkTooltipListsTheLinesNodesAndWhatTheyWereChosenOver() {
+        Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
+        this.buy(sniper, "Focused Optics", "Focused Optics II");
+
+        List<SheetLine> tooltip = tooltipOf(iconRow(liveStatus(sniper), "Perks"), 0);
+
+        assertThat(tooltip.getFirst()).isInstanceOf(SheetLine.IconTitle.class);
+        assertThat(tooltip.stream().filter(Row.class::isInstance).filter(line -> ((Row) line).glyph() == Glyph.PIP))
+                .isNotEmpty();
+    }
+
+    @Test
+    void aCountingPerkShowsItsProgress() {
+        Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
+        this.buy(sniper, "Marksman's Eye", "Fourth Shot");
+        String id = this.named(sniper, "Fourth Shot").id();
+
+        InfoSheet sheet = TowerSheetText.status(sniper.inspect().withProgress(List.of(new NodeProgress(id, 2, 4))));
+
+        assertThat(iconRow(sheet, "Perks").icons()).extracting(icon -> icon.face().corner()).contains("2/4");
+    }
+
+    @Test
+    void steadyAimShowsItsStacksAsABuff() {
+        Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
+        TowerBuffState aim = TowerBuffState.of(TowerTerm.STEADY_AIM, TermText.of("more crit")).withStacks(3)
+                .withClock(40, 60);
+
+        InfoSheet sheet = TowerSheetText.status(sniper.inspect().withConditions(List.of(aim)));
+
+        assertThat(iconRow(sheet, "Buffs").icons()).extracting(icon -> icon.face().corner()).containsExactly("3");
+    }
+
+    @Test
+    void anAppliedEffectsTooltipSaysEachSourceOnTheTower() {
+        Tower mortar = this.place(TowerFactory.Type.MORTAR, 0, 0);
+        this.buy(mortar, "Napalm");
+
+        SheetLine.IconRow applies = iconRow(liveStatus(mortar), "Applies");
+
+        assertThat(applies.icons()).anyMatch(icon -> icon.tooltip().lines().stream()
+                .anyMatch(line -> line.toString().contains("Napalm: ")));
     }
 }
