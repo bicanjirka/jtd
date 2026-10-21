@@ -206,57 +206,97 @@ at all at an even split up to full strength against a one-type defence.
 ### Status effects
 
 Towers and enemy abilities put timed effects on enemies. An enemy shows one marker per kind of
-effect it carries (control, damage over time, debuff, spotted, ...), with a count when that kind
-holds more than one effect; selecting it lists every effect with what kind it is and the time left.
+effect it carries; selecting it shows each effect as an icon whose tooltip says what it does.
 
-| Effect     | Kind             | What it does                                                                                       |
-|------------|------------------|----------------------------------------------------------------------------------------------------|
-| Chill      | soft CC          | Slows in proportion to its level, which adds up (never past 80%) and fades linearly. Every slowing tower chills. It also cuts the damage the enemy takes from burning |
-| Freeze     | hard CC          | Stops the enemy. Every enemy diminishes it: within 10 s of the last one, each fresh freeze lasts half as long as the one before, and a fourth doesn't take hold. Freezing a chilled enemy uses up the chill and lasts longer by its level; freezing a burning one puts the burn out and lands half of what was left at once |
-| Daze       | hard CC          | Stops the enemy and its abilities like a freeze, but keeps its burn and its chill. It has its own diminishing returns: within 10 s of the last one, each fresh daze lasts 20% less than the one before, and a sixth doesn't take hold |
-| Silence    | soft CC          | Its abilities don't fire: no heals, shields, summons, shrouds or vanishing. Its death abilities still fire, its aura keeps running and it keeps walking |
-| Anchor     | soft CC          | Can't be sped up: its speed is held to three quarters of its base, hurt-speed included |
-| Drag       | soft CC          | An Obelisk's slow, held while the enemy is in its field (or on a Ley Line) and for 2s after: 15% from a plain field, up to 30% at full Toll with Undertow and 50% at a Gravity Well's centre, never more than 50%. Nothing resists it, and two fields don't add up |
-| Undertow   | soft CC          | The field's drag counts as a quarter chill for a freeze, while the enemy is in an Obelisk's field and for 2s after |
-| Stasis     | debuff           | Stasis: while the enemy stays Dazed, it loses a Toll stack every 0.25s |
-| Condemn    | debuff           | Arc Discharge: +5% damage taken from every source a stack, one a zap, up to 4 (+20%), held 3s after the last zap |
-| Burn       | damage over time | Damage that decays as it burns; several towers add to one pool and each is credited its share. It earns a Scorched stack when it starts and another every half second while it lasts. An invisible enemy is visible while its pool is strong |
-| Soulfire   | damage over time | A third pool of its own beside burning and poisoning, so it stacks with both. It burns enemies that are immune to fire, and earns Scorched and Sickened both |
-| Poison     | damage over time | Its own decaying pool, so it stacks with burning. It slows in proportion to the pool (at most 30%, on top of chill) and earns Sickened stacks the same way |
-| Scorch     | debuff           | Burning's lasting mark: each stack lowers resilience by 1 (down to -100; below 0 crits come more often and hit harder). It outlasts the fire, then loses a stack per second |
-| Sicken     | debuff           | Poison's lasting mark: each stack lowers spirit by 1 (down to -100), so heals and shields shrink and vanish at the floor. Loses a stack per second |
-| Vulnerable | debuff           | Up to 3 stacks, +15% damage taken each, added, from any tower; one shared 4 s clock any application refreshes |
-| Sunder     | debuff           | Up to 10 stacks, -5 armor each (armor never goes below 0); one shared 5 s clock                    |
-| Resonance  | debuff           | Up to 3 stacks, +8% magic damage taken each; one shared 4 s clock                                  |
-| Fracture   | debuff           | Up to 5 stacks, -10 resilience each, losing a stack a second. A Sonar with Fault Line lets it fall to 10 stacks (-100) and holds it while the enemy is Exposed |
-| Saturation | debuff           | Up to 3 stacks (a Splash upgrade allows 4), each making a Splash's blast hit it 5% harder; one shared 1.5 s clock any blast that catches it refreshes |
-| Unravel    | debuff           | Up to 5 stacks, -10 magic resist each (never below 0); one shared 5 s clock |
-| Brittle    | debuff           | While the enemy is frozen it takes +30% physical damage |
-| Toll       | debuff           | Up to 5 stacks (10 with Meltdown) a Pulse's field builds on an enemy that stays inside, one a second. The field's effects on the enemy start at half strength and each stack adds a tenth. It fades a second after the enemy leaves |
-| Corrode    | debuff           | -15 armor and magic resist on entry, -30 at full Toll, -45 at ten (never below 0), while the enemy is in an Obelisk's field and for 2s after |
-| Dead Zone  | debuff           | No heal or shield takes hold while the enemy is in an Obelisk's field and for 2s after; what it already has stays |
-| Frail      | debuff           | +10% damage taken from every source on entry, +20% at full Toll, +30% at ten, while the enemy is in an Obelisk's field and for 2s after |
-| Crack      | debuff           | -5 plating and insulation; one shared 5 s clock any application refreshes |
-| Bleed      | damage over time | Physical damage for every cell the enemy travels: the faster it runs the more it bleeds, and a stopped enemy bleeds nothing |
-| Tar        | debuff           | Slowed by 40%. A burn it catches starts at double the pool, and a freeze it suffers lasts a second longer |
-| Expose     | spotted          | -50 resilience: crits come more often and hit harder. A revealed enemy counts as Exposed           |
-| Mark       | spotted          | The next hit from any tower is a guaranteed crit, and spends the mark. Damage that ticks never spends it, and it waits on a crit-immune enemy |
-| Priority   | spotted          | +15% damage taken from every tower, and every tower that picks one target picks it while it is in range |
-| Charge     | spotted          | The next hit from another tower than the one that charged it discharges it: +30% of that hit again as magic (x2 on a crit), credited to the charging tower |
-| Doom       | hex              | When it ends, the enemy takes 30% of all the damage it took meanwhile as one magic hit, credited to the Hexer. Lasts 4 s, +1 s per Saturation stack |
-| Blight     | hex              | Poisons the enemy for as long as it lasts |
-| Contagion  | hex              | When the enemy dies, its hexes and debuffs jump to the 2 nearest unhexed enemies nearby with the time they had left; a jumped hex jumps once more at most |
-| Rime       | hex              | Chills when cast. Freezing the enemy buys twice the chill's extra freeze time and lands all of its burn at once instead of half. Replaces Ashen |
-| Ash        | hex              | Its burn and poison hold twice as much and earn Scorched and Sickened twice as fast; it can't be frozen and takes a quarter of any chill. Replaces Rimed |
-| Inversion  | hex              | Heals it receives are dealt to it as magic damage over their length, shields as one hit of their points, both credited to the Hexer; it can't turn invisible |
-| Sympathy   | hex             | Once a second, its Vulnerable, Sundered, Exposed and chill are copied, up to what it has, to the Hexer's other hexed enemies within 2 cells |
-| Reckoning  | hex              | When the enemy dies, every Doom of that Hexer within 2 cells pays out at once and starts again |
-| Shield     | restorative      | Absorbs damage up to its points, after armor and plating, then breaks                              |
-| Heal       | restorative      | Restores health every tick                                                                         |
-| Invisibility | stealth          | Towers cannot target the enemy; area damage still reaches it                                       |
-| Reveal     | stealth          | Towers can target the enemy again, even through invisibility; turning invisible again ends it      |
-| Unveil     | stealth          | True Sight: while it lasts, the enemy can't turn invisible, be shrouded or fade                     |
-| Sprint     | buff             | 60% faster for a moment; a Skirmisher gives it to itself after a dodge. Anchored still holds it    |
+| Effect | Group | Side | What it does |
+|---|---|---|---|
+| Chill | Control | Debuff | Slows by its level, up to 80%, and fades; at its most it takes 50% off the damage of Burn and Soulfire. |
+| Burn | Affliction | Debuff | Damage over time that fades; a top-up adds less the fuller it is, up to x2 its strongest application; it adds a stack of Scorch every 0.5 s while it lasts, and Freeze puts it out, landing at least 50% of what is left at once. |
+| Freeze | Control | Debuff | Stops it where it stands and keeps its abilities from firing; it removes Chill and lasts longer by its level, and puts out Burn and Soulfire; within 10 s, each fresh one lasts 100%, 50%, 25%, then none. |
+| Shield | Boon | Buff | Absorbs damage until its amount is spent or it runs out. |
+| Invisibility | Boon | Buff | Towers can't aim at it, though damage on an area still reaches it. |
+| Heal | Boon | Buff | Restores health over time. |
+| Vulnerable | Weakness | Debuff | Each stack: +15% physical and magic damage taken, up to 3 stacks. |
+| Reveal | Mark | Debuff | Every tower can see and aim at it, and it counts as having Expose. |
+| Poison | Affliction | Debuff | Damage over time that fades, and a slow of up to 30% while it is full; it adds a stack of Sicken every 0.5 s while it lasts. |
+| Scorch | Weakness | Debuff | Each stack: -1 resilience, up to 100; once nothing adds more, it loses a stack every 1 s, sooner with more spirit. |
+| Sicken | Weakness | Debuff | Each stack: -1 spirit, up to 100; once nothing adds more, it loses a stack every 1 s, sooner with more spirit. |
+| Sunder | Weakness | Debuff | Each stack: -5 armor, up to 10 stacks. |
+| Expose | Mark | Debuff | -50 resilience: crits find it more often and hit it harder. |
+| Mark | Mark | Debuff | The next hit on it is a crit, which spends this. |
+| Priority | Mark | Debuff | +15% physical and magic damage taken, and a tower that picks one target picks it. |
+| Resonance | Weakness | Debuff | Each stack: +8% magic damage taken, up to 3 stacks. |
+| Fracture | Weakness | Debuff | Each stack: -10 resilience, up to 5; it loses a stack every 1 s. |
+| Daze | Control | Debuff | Stops it and keeps its abilities from firing, like Freeze, but leaves its Burn and Chill; within 10 s, each fresh one lasts 100%, 80%, 60%, 40%, 20%, then none. |
+| Saturation | Weakness | Debuff | Each stack makes a Burst's blasts hit it harder. |
+| Charge | Mark | Debuff | The next hit on it from another tower lands 30% of that hit again as magic, twice that on a crit, for the tower that applied it. |
+| Doom | Hex | Debuff | When it ends, it takes a share of all the damage it took while it lasted. |
+| Blight | Hex | Debuff | It has Poison for as long as this lasts. |
+| Contagion | Hex | Debuff | When it dies, its hexes and debuffs jump to the enemies nearest it. |
+| Rime | Hex | Debuff | A Freeze on it buys x2 the extra time from Chill, and lands all of its Burn or Soulfire at once instead of putting it out; Ash replaces it. |
+| Ash | Hex | Debuff | Its Burn, Poison and Soulfire hold x2 as much and add their stacks x2 as fast; it takes only 25% of a Chill, and Freeze can't take hold; Rime replaces it. |
+| Inversion | Hex | Debuff | A Heal or Shield it receives is dealt to it as damage instead, and it can't gain Invisibility. |
+| Sympathy | Hex | Debuff | Once a second, its Chill, Vulnerable, Sunder, Expose and Unravel are copied, up to what it has, to the other enemies nearby that carry a hex from the same tower. |
+| Reckoning | Hex | Debuff | When it dies, each Doom from the same tower near it releases at once and starts again. |
+| Silence | Control | Debuff | Its abilities don't fire; abilities on death and auras still do. |
+| Anchor | Control | Debuff | It can't be sped up, and its speed is held to 75% of its base. |
+| Unravel | Weakness | Debuff | Each stack: -10 magic resist, up to 5 stacks. |
+| Brittle | Weakness | Debuff | While it has Freeze: +30% physical damage taken. |
+| Toll | Weakness | Debuff | Time spent in an Obelisk's field, a stack a second; it sets how strongly the field holds it, and goes soon after it leaves. |
+| Corrode | Weakness | Debuff | Each stack: -3 armor and magic resist, up to 15 stacks. |
+| Drag | Control | Debuff | Each stack takes 1% of its speed, up to 50 stacks; it is no Chill, and nothing resists it. |
+| Undertow | Control | Debuff | A Freeze counts it as 25% Chill. |
+| Condemn | Weakness | Debuff | Each stack: +5% physical and magic damage taken, up to 4 stacks. |
+| Stasis | Weakness | Debuff | While it also has Daze, the field holding it takes its Toll away. |
+| Unveil | Mark | Debuff | It can't gain Invisibility. |
+| Dead Zone | Weakness | Debuff | Heal and Shield can't take hold. |
+| Fallout | Weakness | Debuff | Heal can't take hold; Shield still can. |
+| Frail | Weakness | Debuff | Each stack: +2% physical and magic damage taken, up to 15 stacks. |
+| Crack | Weakness | Debuff | -5 plating and -5 insulation. |
+| Tar | Weakness | Debuff | -40% speed; a Burn or Soulfire it catches starts at x2, and a Freeze lasts 1 s longer. |
+| Bleed | Affliction | Debuff | Physical damage for every cell it travels; standing still, it takes none. |
+| Soulfire | Affliction | Debuff | Damage over time in a pool of its own beside Burn and Poison; nothing resists it, it adds a stack of Scorch and Sicken every 0.5 s while it lasts, and Freeze puts it out. |
+| Sprint | Boon | Buff | +60% speed. |
+
+#### Tower terms
+
+Buffs, debuffs and mechanics that towers carry or leave on enemies.
+
+| Term | Side | What it does |
+|---|---|---|
+| Steady Aim | Buff | Each shot adds a stack, kept across targets and kills; 3 s after the last shot a stack fades, then the next. |
+| Crit Streak | Buff | Crits in a row make the next crit hit harder. |
+| Focus | Buff | Hits on one target build it; it starts over on a new target. |
+| Frenzy | Buff | Faster attacks for the next few shots. |
+| Haste | Buff | Faster attacks for a while. |
+| Charged Shot | Buff | The next shot hits far harder and ignores armor and plating. |
+| Patience | Buff | The next shot is a crit. |
+| Deadeye Round | Buff | A shot that is a crit and hits harder. |
+| Silver Round | Buff | A shot of magic damage that ignores some magic resist. |
+| Bracketing | Buff | Each shell landing near the last hits harder and wider, a step at a time; a shell elsewhere clears it. |
+| Napalm Shell | Buff | A shell whose blast is magic and leaves flames that apply Burn. |
+| Tar Shell | Buff | A shell that leaves tar applying Tar and Poison. |
+| Cryo Shell | Buff | A shell that leaves frost applying Chill, and Freeze to an enemy that stays. |
+| Nuke Shell | Buff | A shell that hits far harder and wider and leaves Fallout. |
+| Cryo Missile | Buff | A missile that applies Freeze. |
+| Arcane Missile | Buff | A missile that applies Unravel instead of Freeze. |
+| EMP Missile | Buff | A missile that removes Shield and Heal and applies Silence. |
+| Tracer Missile | Buff | A missile that applies Reveal and Mark. |
+| Event Horizon | Buff | Each death inside the field widens it until the wave ends. |
+| Rally | Buff | Faster attacks for a while, from a Beacon's rally spot. |
+| Aura | Buff | A Beacon in range raises its damage and range, and takes some of the jam enemies put on it. |
+| Ley Line | Buff | A beam between two Obelisks; an enemy on it gets both fields' rules. |
+| Nest | Buff | Missiles stored to launch one after another when a target comes. |
+| Jammed | Debuff | An enemy nearby slows its attacks and shortens its range. |
+| Interference | Debuff | Other Obelisk fields overlapping this one take some of its damage away. |
+| Stoke | Debuff | Each wave on an enemy with this tower's Burn raises that Burn a step; the steps go when it ends. |
+| Kinship | Buff | Towers a Beacon buffs earn more XP for each other tower type in range. |
+| Ping | Buff | Each revolution, the Radar applies Expose to the enemy with the most health its beam passes. |
+| Shatter | Buff | An enemy with Freeze breaks apart and hurts the enemies around it. |
+| Arc | Buff | Lightning that jumps from a blast to enemies past its edge, as magic. |
+| Hex | Buff | A curse a Burst casts instead of a blast; each kind does its own thing. |
+| Shrapnel | Buff | Fragments that fly past a shell's blast. |
+| Bomblet | Buff | A small bomb a shell drops on the path. |
 
 Stacks wear off at a pace spirit sets: neutral spirit loses one per second, more spirit is faster, and at -100 they never wear off, so a fully sickened enemy stays sickened. Every other debuff's timer runs at `max(0.25, 1 + spirit / 100)` of normal speed, and at -100 it stops too (freeze keeps its own diminishing returns). A frozen enemy cannot burn, and freezing an enemy puts out its burn, landing half of what was left at once, but keeps its Scorched stacks. Hexes bend this: Rimed and Ashen change what a freeze does, and Inverted keeps an enemy from turning invisible. Nothing else cancels anything.
 

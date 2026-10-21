@@ -2,10 +2,10 @@ package td.tower.seeker;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.BehaviourLine;
 import td.tower.BehaviourMarker;
-import td.tower.upgrade.PerkText;
 
 import java.util.Optional;
 import java.util.Set;
@@ -22,7 +22,7 @@ public final class ArcaneWarheadPerk implements SeekerPerk {
 
     @Override
     public Optional<BehaviourLine> behaviour() {
-        return Optional.of(new BehaviourLine(BehaviourMarker.TARGETING, "Impact applies", "unraveled, " + PerkText.times(CONTROLLED_STACKS) + " if frozen or chilled"));
+        return Optional.of(new BehaviourLine(BehaviourMarker.TARGETING, "Impact applies", "unraveled, " + TermNumbers.times(CONTROLLED_STACKS) + " if frozen or chilled"));
     }
 
     @Override
