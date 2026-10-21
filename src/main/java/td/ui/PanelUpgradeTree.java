@@ -58,6 +58,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     private static final int PIP_BOX = 11;
     private static final float PIP_SIZE = 4.2f;
 
+    private TooltipLayer tooltips;
     private final JLabel xpLabel = new JLabel("");
     private final XpBar xpBar = new XpBar();
     private final JLabel[] slotHeaders = new JLabel[SLOTS.length];
@@ -80,6 +81,11 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
 
     public PanelUpgradeTree() {
         initComponents();
+    }
+
+    /** Kept for the buttons' tooltips. */
+    public void setTooltips(TooltipLayer tooltips) {
+        this.tooltips = tooltips;
     }
 
     public void setGameWorld(GameWorld context) {

@@ -74,6 +74,12 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         return this.panelWaveInfo;
     }
 
+    /** The layer the panels' tooltips open on. */
+    public void setTooltips(TooltipLayer tooltips) {
+        this.panelTowerInfo.setTooltips(tooltips);
+        this.panelUpgradeTree.setTooltips(tooltips);
+    }
+
     public void setGameWorld(GameWorld world) {
         world.economy().addEconomyListener(this);
         this.panelTowerInfo.setGameWorld(world);

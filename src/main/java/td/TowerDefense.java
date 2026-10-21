@@ -22,6 +22,7 @@ import td.ui.PanelDev;
 import td.ui.PanelGameConsole;
 import td.ui.PanelLevelSelect;
 import td.ui.PanelTowerSelector;
+import td.ui.TooltipLayer;
 import td.ui.render.AsciiBoardRenderer;
 import td.ui.render.InfoSheet;
 import td.ui.render.RenderFrame;
@@ -131,6 +132,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     // Input and the loop can fire before a level exists and after one is torn down.
     private volatile boolean levelLoaded = false;
 
+    private TooltipLayer tooltips;
     private CardLayout contentCardLayout;
     private JPanel jPanel_game;
     private PanelLevelSelect panelLevelSelect;
@@ -159,6 +161,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.gameWorld.economy().addEconomyListener(this.devControls);
         this.gameBoard = new GameBoard(this, this.gameWorld);
         initComponents();
+        this.tooltips = new TooltipLayer(this.getLayeredPane());
+        this.gameConsole.setTooltips(this.tooltips);
         this.gameConsole.setGameWorld(this.gameWorld);
         this.gameConsole.onPlay(this::playPressed);
         this.gameConsole.onPause(this::pausePressed);
@@ -310,6 +314,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     private void installLevel(LevelDefinition level) {
+        this.tooltips.closeAll();
         this.currentLevel = level;
         this.gameConsole.setLevelEnded(false);
         this.boardOverlays.reset();
@@ -351,6 +356,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     private void showMenu() {
+        this.tooltips.closeAll();
         this.setSpeed(TickSpeed.PAUSED);
         this.boardOverlays.reset();
         this.unSelectTower();
