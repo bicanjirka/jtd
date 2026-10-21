@@ -67,6 +67,9 @@ keeps the seam honest.
   `TowerDefense.requestRender` repaints the *container* (repainting only the board erases the
   overlay). Overlay translucency is painted in `paintComponent`; an alpha background colour on an
   opaque component doesn't blend.
+- Tooltips are `TooltipPanel`s on the frame's popup layer, owned by one `TooltipLayer`; what is hovered, where a
+  tooltip goes and which stay open are answered by `SheetPane.hoverAt`, `TooltipPlacement` and `TooltipChain`.
+  Never use `setToolTipText` for game content.
 - Info-pane content is an AWT-free `InfoSheet` that a `*SheetText` builds from a domain
   inspection (`EnemyInspection`, `TowerInspection`): one row per thing on the board, with the
   glyph and colour the board draws for it, each fitting one line. `InfoSheetDocument` alone lays

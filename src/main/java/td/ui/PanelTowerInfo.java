@@ -58,6 +58,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     };
     private Consumer<Boolean> onPinToggled = pinning -> {
     };
+    private TooltipLayer tooltips;
     private HudButton jButton_sell;
     private HudToggleButton jToggle_pin;
     private JScrollPane jScrollPane1;
@@ -65,6 +66,12 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     public PanelTowerInfo() {
         initComponents();
+    }
+
+    /** The layer whose tooltips this pane's mentions and icons open. */
+    public void setTooltips(TooltipLayer layer) {
+        this.tooltips = layer;
+        layer.watch(this.sheetPane);
     }
 
     public void setTower(Tower t) {
@@ -82,6 +89,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     }
 
     public void setExternalText(String s) {
+        this.closeTooltips();
         this.jButton_sell.setVisible(false);
         this.jToggle_pin.setVisible(false);
         this.setText(s);
@@ -101,9 +109,17 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         if (sheet.equals(this.lastSheet)) {
             return;
         }
+        boolean another = this.lastSheet.lines().isEmpty() || sheet.lines().isEmpty()
+                || !this.lastSheet.lines().getFirst().equals(sheet.lines().getFirst());
         this.lastSheet = sheet;
         this.lastText = null;
+        if (another) {
+            this.closeTooltips();
+        }
         this.layOutSheet();
+        if (!another && this.tooltips != null) {
+            this.tooltips.sheetChanged(this.sheetPane, sheet);
+        }
     }
 
     /**
@@ -113,6 +129,12 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private void layOutSheet() {
         this.sheetWidth = this.textWidth();
         this.sheetPane.show(this.lastSheet, this.glyphRenderer, this.sheetWidth);
+    }
+
+    private void closeTooltips() {
+        if (this.tooltips != null) {
+            this.tooltips.closeAll();
+        }
     }
 
     private void textPaneResized() {
@@ -214,6 +236,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         }
         this.selectedTower = null;
         this.hovering = false;
+        this.closeTooltips();
     }
 
     public void setGameWorld(GameWorld context) {
