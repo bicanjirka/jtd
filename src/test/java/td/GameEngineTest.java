@@ -43,6 +43,7 @@ import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
+import td.wave.RoundSummary;
 import td.wave.WaveDefinition;
 import td.wave.WaveProgress;
 import td.zone.Zone;
@@ -802,6 +803,46 @@ class GameEngineTest {
         assertThat(progress.hasNextWave()).isTrue();
         assertThat(progress.current()).isNotEmpty();
         assertThat(progress.next()).isNotEmpty();
+    }
+
+    @Test
+    void waveProgressNamesEachRoundsHighestRankCountingASlotThatOutranksItsWave() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(
+                new WaveDefinition("c e elite c", Rank.GRUNT),
+                new WaveDefinition("s", Rank.SOLDIER)), 100));
+
+        WaveProgress progress = engine.waveProgress();
+
+        assertThat(progress.rounds()).extracting(RoundSummary::highestRank).containsExactly(Rank.ELITE, Rank.SOLDIER);
+    }
+
+    @Test
+    void aRoundAnEnemyEscapedIsMarkedLeakedOnceItIsOver() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", Rank.GRUNT),
+                new WaveDefinition("c", Rank.GRUNT)), 100));
+
+        engine.nextWave();
+        tickUntilWaveCleared(engine);
+        engine.doTick(2000);
+
+        assertThat(engine.waveProgress().rounds()).extracting(RoundSummary::leaked).containsExactly(true, false);
+    }
+
+    @Test
+    void loadingALevelForgetsWhichRoundsLeaked() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("c", Rank.GRUNT),
+                new WaveDefinition("c", Rank.GRUNT)), 100);
+        engine.loadLevel(level);
+        engine.nextWave();
+        tickUntilWaveCleared(engine);
+        engine.doTick(2000);
+
+        engine.loadLevel(level);
+
+        assertThat(engine.waveProgress().rounds()).extracting(RoundSummary::leaked).containsOnly(false);
     }
 
     @Test

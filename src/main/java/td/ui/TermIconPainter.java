@@ -105,7 +105,8 @@ public final class TermIconPainter {
                 (size + metrics.getAscent() - metrics.getDescent()) / 2f);
     }
 
-    private static void paintLayers(Graphics2D s, Pictogram pictogram, Color ink, Color fill) {
+    /** {@code pictogram} in {@code ink} on the unit grid, its knock-outs in {@code fill}. */
+    static void paintLayers(Graphics2D s, Pictogram pictogram, Color ink, Color fill) {
         Color dim = new Color(ink.getRed(), ink.getGreen(), ink.getBlue(), 115);
         for (Pictogram.Layer layer : pictogram.layers()) {
             switch (layer.op()) {

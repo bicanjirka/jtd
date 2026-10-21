@@ -2,11 +2,20 @@ package td.ui;
 
 import org.junit.jupiter.api.Test;
 import td.economy.StatusTerm;
+import td.enemy.Rank;
+import td.level.LevelOutcome;
 import td.term.TermText;
 import td.ui.render.InfoSheet;
+import td.ui.render.Palette;
 import td.ui.render.SheetLine;
 import td.ui.render.SheetLine.Glyph;
 import td.ui.render.SheetLine.Row;
+import td.wave.RoundSummary;
+import td.wave.WaveProgress;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,7 +34,7 @@ class StatusSheetTextTest {
     @Test
     void everyTooltipOpensWithTheFaceAndTitleAndTheValueOnTheRight() {
         for (StatusTerm term : StatusTerm.values()) {
-            SheetLine.IconTitle title = (SheetLine.IconTitle) StatusSheetText.of(term, PLAYING).lines().getFirst();
+            SheetLine.IconTitle title = (SheetLine.IconTitle) StatusSheetText.of(term, PLAYING, RoundStrip.empty()).lines().getFirst();
 
             assertThat(title.name()).isEqualTo(term.title());
             assertThat(title.value()).isEqualTo(PLAYING.value(term));
@@ -36,7 +45,7 @@ class StatusSheetTextTest {
     @Test
     void everyTooltipSaysWhatItsTermMeansAsOneSentence() {
         for (StatusTerm term : StatusTerm.values()) {
-            InfoSheet sheet = StatusSheetText.of(term, PLAYING);
+            InfoSheet sheet = StatusSheetText.of(term, PLAYING, RoundStrip.empty());
 
             assertThat(sheet.lines().get(1)).isEqualTo(SheetLine.Sentence.of(term.describe().asSentence()));
         }
@@ -44,15 +53,15 @@ class StatusSheetTextTest {
 
     @Test
     void onlyTheWaveTooltipHasLiveRows() {
-        assertThat(StatusSheetText.of(StatusTerm.LIVES, PLAYING).lines()).hasSize(2);
-        assertThat(StatusSheetText.of(StatusTerm.SCORE, PLAYING).lines()).hasSize(2);
-        assertThat(StatusSheetText.of(StatusTerm.CASH, PLAYING).lines()).hasSize(2);
-        assertThat(StatusSheetText.of(StatusTerm.WAVE, PLAYING).lines()).hasSize(4);
+        assertThat(StatusSheetText.of(StatusTerm.LIVES, PLAYING, RoundStrip.empty()).lines()).hasSize(2);
+        assertThat(StatusSheetText.of(StatusTerm.SCORE, PLAYING, RoundStrip.empty()).lines()).hasSize(2);
+        assertThat(StatusSheetText.of(StatusTerm.CASH, PLAYING, RoundStrip.empty()).lines()).hasSize(2);
+        assertThat(StatusSheetText.of(StatusTerm.WAVE, PLAYING, RoundStrip.empty()).lines()).hasSize(4);
     }
 
     @Test
     void theWaveTooltipCountsRoundsStartedAndSaysWhetherARoundIsInPlay() {
-        InfoSheet sheet = StatusSheetText.of(StatusTerm.WAVE, PLAYING);
+        InfoSheet sheet = StatusSheetText.of(StatusTerm.WAVE, PLAYING, RoundStrip.empty());
 
         assertThat(sheet.lines()).contains(Row.plain(Glyph.DOT, "Rounds started", "7 / 18"),
                 Row.plain(Glyph.DOT, "Round", "in play"));
@@ -62,14 +71,31 @@ class StatusSheetTextTest {
     void theWaveTooltipSaysTheNextRoundIsReadyBetweenRounds() {
         StatusReadout between = new StatusReadout(7, 18, true, false, 5, 0, 0);
 
-        assertThat(StatusSheetText.of(StatusTerm.WAVE, between).lines()).contains(Row.plain(Glyph.DOT, "Next round", "ready"));
+        assertThat(StatusSheetText.of(StatusTerm.WAVE, between, RoundStrip.empty()).lines()).contains(Row.plain(Glyph.DOT, "Next round", "ready"));
     }
 
     @Test
     void theWaveTooltipSaysTheLevelIsOverOnceItIs() {
         StatusReadout over = new StatusReadout(18, 18, true, true, 0, 0, 0);
 
-        assertThat(StatusSheetText.of(StatusTerm.WAVE, over).lines()).contains(Row.plain(Glyph.DOT, "Level", "over"));
+        assertThat(StatusSheetText.of(StatusTerm.WAVE, over, RoundStrip.empty()).lines()).contains(Row.plain(Glyph.DOT, "Level", "over"));
+    }
+
+    @Test
+    void theWaveTooltipShowsEveryRoundsSkullNumberedAndEachOpensItsOwnTooltip() {
+        List<RoundSummary> rounds = new ArrayList<>(Collections.nCopies(18, new RoundSummary(Rank.GRUNT, false)));
+        rounds.set(2, new RoundSummary(Rank.ELITE, true));
+        RoundStrip strip = RoundStrip.of(new WaveProgress(7, rounds, List.of(), List.of()), false, LevelOutcome.PLAYING);
+
+        SheetLine.IconRow row = (SheetLine.IconRow) StatusSheetText.of(StatusTerm.WAVE, PLAYING, strip).lines().getLast();
+
+        assertThat(row.icons()).hasSize(18);
+        assertThat(row.icons()).extracting(icon -> icon.face().below()).startsWith("1", "2", "3");
+        assertThat(row.icons().get(2).tooltip().lines()).contains(
+                Row.plain(Glyph.SKULL, "Strongest rank", "Elite"));
+        assertThat(((SheetLine.IconTitle) row.icons().get(2).tooltip().lines().getFirst()).value())
+                .isEqualTo("enemies escaped");
+        assertThat(row.icons().get(6).face().frame()).isEqualTo(Palette.ROUND_CURRENT);
     }
 
     @Test
@@ -83,14 +109,6 @@ class StatusSheetTextTest {
         assertThat(new StatusReadout(1, 18, false, false, 10, 0, 0).hearts()).hasValue(10);
         assertThat(new StatusReadout(1, 18, false, false, 11, 0, 0).hearts()).isEmpty();
         assertThat(new StatusReadout(1, 18, false, true, 0, 0, 0).hearts()).isEmpty();
-    }
-
-    @Test
-    void theWaveShareIsTheRoundsStartedOverTheLevelsRounds() {
-        assertThat(new StatusReadout(0, 8, true, false, 5, 0, 0).waveShare()).isZero();
-        assertThat(new StatusReadout(2, 8, false, false, 5, 0, 0).waveShare()).isEqualTo(0.25f);
-        assertThat(new StatusReadout(8, 8, false, true, 5, 0, 0).waveShare()).isEqualTo(1f);
-        assertThat(StatusReadout.empty().waveShare()).isZero();
     }
 
     @Test

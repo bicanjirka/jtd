@@ -590,6 +590,13 @@ public final class Java2DFrameRenderer {
             case TERM_STATUS_LIVES -> new Color(255, 110, 130);
             case TERM_STATUS_SCORE -> new Color(255, 210, 80);
             case TERM_STATUS_CASH -> new Color(110, 220, 110);
+            case ROUND_SKULL -> new Color(226, 220, 200);
+            case ROUND_SKULL_VETERAN -> new Color(130, 200, 255);
+            case ROUND_SKULL_ELITE -> new Color(255, 196, 60);
+            case ROUND_SKULL_BOSS -> new Color(200, 120, 255);
+            case ROUND_CLEARED -> new Color(105, 112, 105);
+            case ROUND_LEAKED -> new Color(225, 70, 70);
+            case ROUND_CURRENT -> new Color(200, 230, 200);
             case TERM_IMMUNE -> new Color(255, 96, 86);
             case TERM_SPAWN -> new Color(220, 200, 160);
             case TERM_FRENZY -> new Color(255, 140, 60);

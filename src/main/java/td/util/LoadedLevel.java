@@ -3,11 +3,13 @@ package td.util;
 import td.board.BoardGeometry;
 import td.cell.CellGrid;
 import td.enemy.EnemyCatalog;
+import td.enemy.Rank;
 import td.wave.Path;
 import td.wave.PathColor;
 import td.wave.PathNormal;
 import td.wave.Wave;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -57,6 +59,11 @@ public record LoadedLevel(CellGrid cells, BoardGeometry board, List<PathRuntime>
      */
     public List<Wave> wavesAt(int round) {
         return this.paths.stream().map(pathRuntime -> pathRuntime.waves().get(round)).toList();
+    }
+
+    /** The highest rank round {@code round} sends down any path. */
+    public Rank highestRankAt(int round) {
+        return this.wavesAt(round).stream().map(Wave::highestRank).max(Comparator.naturalOrder()).orElse(Rank.GRUNT);
     }
 
     /** This level with one wave-less path replacing all others, for previews and tests. */

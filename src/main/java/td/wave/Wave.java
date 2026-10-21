@@ -117,6 +117,10 @@ public class Wave {
         return this.content.rankFor(definition);
     }
 
+    public Rank highestRank() {
+        return this.content.highestRank();
+    }
+
     /**
      * Builds this wave's enemies against the currently installed path. Call once, when the wave
      * starts: each call makes a fresh set.

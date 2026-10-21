@@ -3,8 +3,12 @@ package td.ui;
 import org.junit.jupiter.api.Test;
 import td.economy.EconomyState;
 import td.economy.StatusTerm;
+import td.enemy.Rank;
+import td.level.LevelOutcome;
+import td.wave.RoundSummary;
 import td.wave.WaveProgress;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,12 +19,13 @@ class PanelHeaderTest {
     private final PanelHeader header = new PanelHeader("Tower Defense v1");
 
     private static WaveProgress progress(int index, int count) {
-        return new WaveProgress(index, count, List.of(), List.of());
+        return new WaveProgress(index, Collections.nCopies(count, new RoundSummary(Rank.GRUNT, false)), List.of(),
+                List.of());
     }
 
     @Test
     void theHeaderWritesTheLevelsNumbersBesideTheirIcons() {
-        this.header.show(progress(7, 18), false, false, new EconomyState(4964, 1240, 5));
+        this.header.show(progress(7, 18), false, LevelOutcome.PLAYING, new EconomyState(4964, 1240, 5));
 
         assertThat(this.header.icon(StatusTerm.WAVE).readout().value(StatusTerm.WAVE)).isEqualTo("7/18");
         assertThat(this.header.icon(StatusTerm.LIVES).readout().value(StatusTerm.LIVES)).isEqualTo("5");
@@ -30,9 +35,9 @@ class PanelHeaderTest {
 
     @Test
     void aLifeLostFlashesTheLivesIconAndNothingElse() {
-        this.header.show(progress(3, 18), false, false, new EconomyState(100, 0, 5));
+        this.header.show(progress(3, 18), false, LevelOutcome.PLAYING, new EconomyState(100, 0, 5));
 
-        this.header.show(progress(3, 18), false, false, new EconomyState(140, 40, 4));
+        this.header.show(progress(3, 18), false, LevelOutcome.PLAYING, new EconomyState(140, 40, 4));
 
         assertThat(this.header.icon(StatusTerm.LIVES).flash()).isPositive();
         assertThat(this.header.icon(StatusTerm.WAVE).flash()).isZero();
@@ -42,19 +47,19 @@ class PanelHeaderTest {
 
     @Test
     void aRoundStartingFlashesTheWaveIcon() {
-        this.header.show(progress(3, 18), true, false, new EconomyState(100, 0, 5));
+        this.header.show(progress(3, 18), true, LevelOutcome.PLAYING, new EconomyState(100, 0, 5));
 
-        this.header.show(progress(4, 18), false, false, new EconomyState(100, 0, 5));
+        this.header.show(progress(4, 18), false, LevelOutcome.PLAYING, new EconomyState(100, 0, 5));
 
         assertThat(this.header.icon(StatusTerm.WAVE).flash()).isPositive();
     }
 
     @Test
     void theFirstNumbersOfALevelAreABaselineAndFlashNothing() {
-        this.header.show(progress(9, 18), false, false, new EconomyState(100, 0, 2));
+        this.header.show(progress(9, 18), false, LevelOutcome.PLAYING, new EconomyState(100, 0, 2));
         this.header.reset();
 
-        this.header.show(progress(0, 12), true, false, new EconomyState(100, 0, 1));
+        this.header.show(progress(0, 12), true, LevelOutcome.PLAYING, new EconomyState(100, 0, 1));
 
         assertThat(this.header.icon(StatusTerm.LIVES).flash()).isZero();
         assertThat(this.header.icon(StatusTerm.WAVE).flash()).isZero();
@@ -86,13 +91,13 @@ class PanelHeaderTest {
     void theLivesAreAsWideAsTheirHeartsNeedAndNeverNarrowerThanAScore() {
         int score = this.header.icon(StatusTerm.SCORE).getPreferredSize().width;
 
-        this.header.show(progress(1, 18), false, false, new EconomyState(0, 0, 1));
+        this.header.show(progress(1, 18), false, LevelOutcome.PLAYING, new EconomyState(0, 0, 1));
         int one = this.header.icon(StatusTerm.LIVES).getPreferredSize().width;
-        this.header.show(progress(1, 18), false, false, new EconomyState(0, 0, 5));
+        this.header.show(progress(1, 18), false, LevelOutcome.PLAYING, new EconomyState(0, 0, 5));
         int five = this.header.icon(StatusTerm.LIVES).getPreferredSize().width;
-        this.header.show(progress(1, 18), false, false, new EconomyState(0, 0, 10));
+        this.header.show(progress(1, 18), false, LevelOutcome.PLAYING, new EconomyState(0, 0, 10));
         int ten = this.header.icon(StatusTerm.LIVES).getPreferredSize().width;
-        this.header.show(progress(1, 18), false, false, new EconomyState(0, 0, 11));
+        this.header.show(progress(1, 18), false, LevelOutcome.PLAYING, new EconomyState(0, 0, 11));
         int eleven = this.header.icon(StatusTerm.LIVES).getPreferredSize().width;
 
         assertThat(one).isEqualTo(score);

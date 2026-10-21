@@ -38,9 +38,4 @@ record StatusReadout(int round, int rounds, boolean waveReady, boolean levelOver
     OptionalInt hearts() {
         return this.lives >= 1 && this.lives <= MAX_HEARTS ? OptionalInt.of(this.lives) : OptionalInt.empty();
     }
-
-    /** The share of the level's rounds started, from 0 to 1; 0 before a level. */
-    float waveShare() {
-        return this.rounds <= 0 ? 0f : Math.clamp((float) this.round / this.rounds, 0f, 1f);
-    }
 }

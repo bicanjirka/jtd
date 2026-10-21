@@ -222,6 +222,20 @@ public enum Palette {
     TERM_STATUS_SCORE,
     /** The cash icon. */
     TERM_STATUS_CASH,
+    /** A round's skull when it sends nothing above Soldier. */
+    ROUND_SKULL,
+    /** A round's skull when it sends a Veteran. */
+    ROUND_SKULL_VETERAN,
+    /** A round's skull when it sends an Elite. */
+    ROUND_SKULL_ELITE,
+    /** A round's skull when it sends a Boss. */
+    ROUND_SKULL_BOSS,
+    /** A round beaten with nothing escaping. */
+    ROUND_CLEARED,
+    /** A round an enemy escaped. */
+    ROUND_LEAKED,
+    /** The mark under the round being played or about to be. */
+    ROUND_CURRENT,
     /** The slash across an immunity. */
     TERM_IMMUNE,
     /** The tone of an ability that calls enemies. */

@@ -31,6 +31,7 @@ import td.wave.PathBuilder;
 import td.wave.PathCoverage;
 import td.wave.PathDefinition;
 import td.wave.Point;
+import td.wave.RoundSummary;
 import td.wave.Wave;
 import td.wave.WaveDefinition;
 import td.wave.WaveProgress;
@@ -41,6 +42,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Game state and input semantics, with nothing Swing-specific: it can be built and driven entirely
@@ -65,6 +68,9 @@ public class GameEngine {
     private volatile boolean waveReady = true;
     private volatile boolean startWave = false;
     private volatile LevelOutcome outcome = LevelOutcome.PLAYING;
+    // 0-based rounds an enemy escaped; swapped whole.
+    private volatile Set<Integer> leakedRounds = Set.of();
+    private volatile long leaksAtRoundStart = 0L;
     private int debugSpawnCursor = 0;
 
     public GameEngine(GameHost host) {
@@ -113,11 +119,18 @@ public class GameEngine {
         int count = installed.waveCount();
         if (index > count) {
             // The wave counter can outrun a freshly installed, shorter level.
-            return new WaveProgress(count, count, List.of(), List.of());
+            return new WaveProgress(count, this.roundsOf(installed), List.of(), List.of());
         }
         List<Wave> current = index > 0 ? installed.wavesAt(index - 1) : List.of();
         List<Wave> next = index < count ? installed.wavesAt(index) : List.of();
-        return new WaveProgress(index, count, current, next);
+        return new WaveProgress(index, this.roundsOf(installed), current, next);
+    }
+
+    private List<RoundSummary> roundsOf(LoadedLevel installed) {
+        Set<Integer> leaked = this.leakedRounds;
+        return IntStream.range(0, installed.waveCount())
+                .mapToObj(round -> new RoundSummary(installed.highestRankAt(round), leaked.contains(round)))
+                .toList();
     }
 
     public boolean isWaveReady() {
@@ -193,6 +206,7 @@ public class GameEngine {
         this.startWave = false;
         this.waveReady = true;
         this.outcome = LevelOutcome.PLAYING;
+        this.leakedRounds = Set.of();
     }
 
     /**
@@ -235,6 +249,7 @@ public class GameEngine {
                 spawned.addAll(List.of(w.spawn()));
                 totalEnemies += w.enemyCount();
             }
+            this.leaksAtRoundStart = this.gameWorld.enemies().leaks();
             this.gameWorld.enemies().setEnemies(spawned.toArray(new EnemyMob[0]));
             this.gameWorld.startWave(starting);
             this.wave++;
@@ -302,14 +317,25 @@ public class GameEngine {
     private void settleWave() {
         LoadedLevel installed = this.gameWorld.level();
         if (this.gameWorld.economy().state().isGameOver()) {
+            this.noteLeaks();
             this.endLevel(LevelOutcome.LOST);
         } else if (this.wave > 0 && !this.waveReady && this.gameWorld.enemies().aliveCount() == 0) {
+            this.noteLeaks();
             if (this.wave < installed.waveCount()) {
                 LOG.info("Wave {} cleared, ready for the next one", this.wave);
                 this.waveReady = true;
             } else {
                 this.endLevel(LevelOutcome.WON);
             }
+        }
+    }
+
+    /** Marks the round in play as one an enemy escaped, if one has since it started. */
+    private void noteLeaks() {
+        if (this.wave > 0 && this.gameWorld.enemies().leaks() > this.leaksAtRoundStart) {
+            Set<Integer> leaked = new HashSet<>(this.leakedRounds);
+            leaked.add(this.wave - 1);
+            this.leakedRounds = Set.copyOf(leaked);
         }
     }
 
@@ -478,6 +504,7 @@ public class GameEngine {
         if (this.outcome.isOver() || !this.gameWorld.level().isLoaded()) {
             return false;
         }
+        this.noteLeaks();
         this.gameWorld.enemies().clear();
         this.waveReady = true;
         if (this.nextWave()) {
@@ -502,6 +529,8 @@ public class GameEngine {
         this.startWave = false;
         this.wave = next - 1;
         this.waveReady = true;
+        this.leakedRounds = this.leakedRounds.stream().filter(round -> round < next - 1)
+                .collect(Collectors.toUnmodifiableSet());
         return next;
     }
 
