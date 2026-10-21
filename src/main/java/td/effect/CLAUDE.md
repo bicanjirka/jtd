@@ -112,7 +112,7 @@
 
 ## Adding a kind
 
-1. An `EffectKind` row with its `EffectRule`.
+1. An `EffectKind` row with its title and `EffectRule` (a kind that helps its carrier is `.helpsCarrier()`), and its sentence in `EffectSentences`, built from the rule and constants, never typed numbers.
 2. A named `Effect` factory if towers or abilities apply it.
 3. An `EffectTemplate` if abilities author it.
 4. The palette cases the compiler forces (`EnemyFrameBuilder.markerPaletteFor`,

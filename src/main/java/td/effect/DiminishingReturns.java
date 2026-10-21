@@ -3,6 +3,9 @@ package td.effect;
 import td.util.ThreadConfined;
 import td.util.TickRate;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * One enemy's diminishing returns for one kind of hard crowd control: within a window of the last
  * fresh application, each fresh one lasts a smaller share of its duration, down the kind's own
@@ -30,6 +33,20 @@ public final class DiminishingReturns {
             case DAZED -> new DiminishingReturns(DAZED_STEPS);
             default -> throw new IllegalArgumentException(kind + " does not diminish");
         };
+    }
+
+    /** The ladder for {@code kind} as an unmodifiable list; empty for a kind that does not diminish. */
+    static List<Float> stepsOf(EffectKind kind) {
+        float[] steps = switch (kind) {
+            case FREEZE -> FREEZE_STEPS;
+            case DAZED -> DAZED_STEPS;
+            default -> new float[0];
+        };
+        List<Float> list = new ArrayList<>();
+        for (float step : steps) {
+            list.add(step);
+        }
+        return List.copyOf(list);
     }
 
     /** The duration factor an application at {@code tick} gets, without recording it. */

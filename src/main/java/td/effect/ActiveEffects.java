@@ -15,6 +15,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.Set;
 
@@ -38,11 +39,11 @@ public final class ActiveEffects {
     private static final int POOL_PULSE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 4f);
 
     /** The most speed a chill takes away, so stacked chills never freeze. */
-    private static final float MAX_CHILL = 0.8f;
+    static final float MAX_CHILL = 0.8f;
     /** The most speed a full poison pool takes away; weaker than a chill, and it stacks with it. */
-    private static final float POISON_MAX_SLOW = 0.3f;
+    static final float POISON_MAX_SLOW = 0.3f;
     /** How much of a burn's damage a full chill takes away. */
-    private static final float BURN_CHILL_DAMPENING = 0.5f;
+    static final float BURN_CHILL_DAMPENING = 0.5f;
 
     /**
      * A stack debuff loses a stack this often at neutral spirit: one per second, half as fast as a pool
@@ -311,6 +312,40 @@ public final class ActiveEffects {
     public int stacks(EffectKind kind) {
         Effect effect = this.active.get(kind);
         return effect == null ? 0 : effect.stacks();
+    }
+
+    /** The active kind that keeps {@code kind} out now, if one does. */
+    public Optional<EffectKind> keptOutBy(EffectKind kind) {
+        return EffectInteractions.keptOutBy(kind, this.active.keySet());
+    }
+
+    /**
+     * How full a fading level or pool is, from 0 to 1: a chill's level over its cap, a pool's fuel over what a
+     * top-up can fill it to. Empty for every other kind.
+     */
+    public OptionalDouble fullness(EffectKind kind) {
+        Effect effect = this.active.get(kind);
+        if (effect == null) {
+            return OptionalDouble.empty();
+        }
+        return switch (kind.rule().stacking()) {
+            case LEVEL -> OptionalDouble.of(chillLevel(effect) / MAX_CHILL);
+            case POOL -> OptionalDouble.of(Math.min(1f,
+                    effect.fuelLevel() / (effect.tuning().capFactor() * effect.peakL0() * this.poolFactor())));
+            case REFRESH, SHARED_CLOCK, EARNED -> OptionalDouble.empty();
+        };
+    }
+
+    /**
+     * The ticks the active {@code kind}'s clock started from: what it was authored for, or what is left if more;
+     * empty for a kind with no clock.
+     */
+    public OptionalInt clockTicks(EffectKind kind) {
+        Effect effect = this.active.get(kind);
+        if (effect == null || kind.isDecaying()) {
+            return OptionalInt.empty();
+        }
+        return OptionalInt.of(Math.max(effect.authoredDurationTicks(), effect.remainingTicks()));
     }
 
     /** How much speed the active chill takes away, from {@code 0} to {@value #MAX_CHILL}. */

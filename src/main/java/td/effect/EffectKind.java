@@ -4,135 +4,141 @@ import td.damage.DamageUnits;
 import td.stat.EnemyStat;
 import td.stat.StatModifier;
 import td.stat.StatModifiers;
+import td.term.Side;
+import td.term.Term;
+import td.term.TermText;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 /** Every kind of effect, each one row: its {@link EffectRule}. */
-public enum EffectKind {
-    CHILL(EffectRule.of(EffectCategory.SOFT_CC).resistedBy(EnemyStat.CHILL_RESIST).asALevel().pacedBySpirit()
+public enum EffectKind implements Term {
+    CHILL("Chill", EffectRule.of(EffectCategory.SOFT_CC).resistedBy(EnemyStat.CHILL_RESIST).asALevel().pacedBySpirit()
             .tagged(EffectTag.SHARED_BY_SYMPATHY)),
-    BURN(EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).resistedBy(EnemyStat.BURN_RESIST).asAPool()
+    BURN("Burn", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).resistedBy(EnemyStat.BURN_RESIST).asAPool()
             .tagged(EffectTag.BURNING)),
-    FREEZE(EffectRule.of(EffectCategory.HARD_CC).resistedBy(EnemyStat.FREEZE_RESIST)
+    FREEZE("Freeze", EffectRule.of(EffectCategory.HARD_CC).resistedBy(EnemyStat.FREEZE_RESIST)
             .perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f)).perStack(EnemyStat.AGILITY, StatModifier.setTo(0f))
             .tagged(EffectTag.STOPS)),
-    SHIELD(EffectRule.of(EffectCategory.RESTORATIVE)),
-    INVISIBLE(EffectRule.of(EffectCategory.STEALTH).perStack(EnemyStat.STEALTH, StatModifier.setTo(1f))),
-    HEAL(EffectRule.of(EffectCategory.RESTORATIVE)),
-    VULNERABLE(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3).pacedBySpirit()
+    SHIELD("Shield", EffectRule.of(EffectCategory.RESTORATIVE).helpsCarrier()),
+    INVISIBLE("Invisibility", EffectRule.of(EffectCategory.STEALTH).perStack(EnemyStat.STEALTH, StatModifier.setTo(1f)).helpsCarrier()),
+    HEAL("Heal", EffectRule.of(EffectCategory.RESTORATIVE).helpsCarrier()),
+    VULNERABLE("Vulnerable", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3).pacedBySpirit()
             .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.15f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.15f)
             .tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
-    REVEALED(EffectRule.of(EffectCategory.STEALTH).pacedBySpirit()
+    REVEALED("Reveal", EffectRule.of(EffectCategory.STEALTH).pacedBySpirit()
             .perStack(EnemyStat.STEALTH, StatModifier.setTo(0f))),
-    POISON(EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asAPool().tagged(EffectTag.SPREADS_WITH_CURSE)),
+    POISON("Poison", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asAPool().tagged(EffectTag.SPREADS_WITH_CURSE)),
     /** The lasting mark of burning: each stack lowers resilience by one. */
-    SCORCHED(EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(100).pacedBySpiritUnfloored()
+    SCORCHED("Scorch", EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(100).pacedBySpiritUnfloored()
             .perStack(EnemyStat.RESILIENCE, -1f).tagged(EffectTag.SPREADS_WITH_CURSE)),
     /** The lasting mark of poison: each stack lowers spirit by one. */
-    SICKENED(EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(100).pacedBySpiritUnfloored()
+    SICKENED("Sicken", EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(100).pacedBySpiritUnfloored()
             .perStack(EnemyStat.SPIRIT, -1f).tagged(EffectTag.SPREADS_WITH_CURSE)),
     /** Each stack lowers armor by five. */
-    SUNDERED(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(10).pacedBySpirit()
+    SUNDERED("Sunder", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(10).pacedBySpirit()
             .perStack(EnemyStat.ARMOR, -5f).tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
     /** Takes fifty resilience: crits come more often and hit harder. */
-    EXPOSED(EffectRule.of(EffectCategory.SPOTTED).pacedBySpirit().perStack(EnemyStat.RESILIENCE, -50f)
+    EXPOSED("Expose", EffectRule.of(EffectCategory.SPOTTED).pacedBySpirit().perStack(EnemyStat.RESILIENCE, -50f)
             .tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
     /** The next hit lands as a guaranteed crit and spends the mark. */
-    MARKED(EffectRule.of(EffectCategory.SPOTTED).pacedBySpirit()),
+    MARKED("Mark", EffectRule.of(EffectCategory.SPOTTED).pacedBySpirit()),
     /** Takes extra damage from every tower, and single-target towers aim at it. */
-    PRIORITY(EffectRule.of(EffectCategory.SPOTTED).pacedBySpirit()
+    PRIORITY("Priority", EffectRule.of(EffectCategory.SPOTTED).pacedBySpirit()
             .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.15f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.15f)),
     /** Each stack raises the magic damage taken. */
-    RESONATING(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3).pacedBySpirit()
+    RESONATING("Resonance", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3).pacedBySpirit()
             .perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.08f).tagged(EffectTag.SPREADS_WITH_CURSE)),
     /** Each stack lowers resilience by ten, and wears off one stack at a time. */
-    FRACTURED(EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(5).pacedBySpirit()
+    FRACTURED("Fracture", EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(5).pacedBySpirit()
             .perStack(EnemyStat.RESILIENCE, -10f).tagged(EffectTag.SPREADS_WITH_CURSE)),
     /** Stops the enemy and its abilities, like a freeze, but keeps its burn and its chill. */
-    DAZED(EffectRule.of(EffectCategory.HARD_CC).perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f))
+    DAZED("Daze", EffectRule.of(EffectCategory.HARD_CC).perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f))
             .perStack(EnemyStat.AGILITY, StatModifier.setTo(0f)).tagged(EffectTag.STOPS)),
     /** Each stack makes the Splash's blasts hit it harder; it is the Splash's own rhythm, not a stat. */
-    SATURATED(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3)),
+    SATURATED("Saturation", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3)),
     /** The next hit from another tower discharges it for extra magic, credited to the tower that charged it. */
-    CHARGED(EffectRule.of(EffectCategory.SPOTTED).pacedBySpirit()),
+    CHARGED("Charge", EffectRule.of(EffectCategory.SPOTTED).pacedBySpirit()),
     /** When it ends, the target takes a share of all the damage it took while it lasted. */
-    DOOM(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
+    DOOM("Doom", EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** The target is poisoned for as long as it lasts. */
-    BLIGHT(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
+    BLIGHT("Blight", EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** When the target dies, its hexes and debuffs jump to the enemies nearest it. */
-    CONTAGION(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
+    CONTAGION("Contagion", EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** Freezing the target buys twice the chill's extra time, and lands its burn at once instead of putting it out. */
-    RIME(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
+    RIME("Rime", EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** The target's burn and poison hold twice as much and mark it twice as fast; it can't be frozen and shrugs off chill. */
-    ASH(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
+    ASH("Ash", EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** Heals and shields it receives are dealt to it as damage instead, and it can't turn invisible. */
-    INVERSION(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
+    INVERSION("Inversion", EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** Once a second its Vulnerable, Sundered, Exposed and chill are copied to the Hexer's other hexed enemies nearby. */
-    SYMPATHY(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
+    SYMPATHY("Sympathy", EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** When the target dies, the Hexer's Dooms near it release at once and start again. */
-    RECKONING(EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
+    RECKONING("Reckoning", EffectRule.of(EffectCategory.HEX).pacedBySpirit()),
     /** Its abilities don't fire; death abilities and auras still do. */
-    SILENCED(EffectRule.of(EffectCategory.SOFT_CC).pacedBySpirit().tagged(EffectTag.FIELD)),
+    SILENCED("Silence", EffectRule.of(EffectCategory.SOFT_CC).pacedBySpirit().tagged(EffectTag.FIELD)),
     /** Can't be sped up, and its speed is held to three quarters of its base. */
-    ANCHORED(EffectRule.of(EffectCategory.SOFT_CC).pacedBySpirit()
+    ANCHORED("Anchor", EffectRule.of(EffectCategory.SOFT_CC).pacedBySpirit()
             .perStack(EnemyStat.MOVE_SPEED, StatModifier.capAtShareOfBase(0.75f)).tagged(EffectTag.FIELD)),
     /** Each stack lowers magic resist by ten. */
-    UNRAVELED(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5).pacedBySpirit()
+    UNRAVELED("Unravel", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5).pacedBySpirit()
             .perStack(EnemyStat.MAGIC_RESIST, -10f).tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
     /** A frozen enemy takes extra physical damage. */
-    BRITTLE(EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit().perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.3f)),
+    BRITTLE("Brittle", EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit().perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.3f)),
     /** Time spent in the field: it sets how strongly the field's effects hold, and fades soon after the enemy leaves. */
-    TOLL(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5)),
+    TOLL("Toll", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5)),
     /**
      * Lowers armor and magic resist while the enemy is in the field and a while after, three a stack: thirty each at the
      * field's full strength.
      */
-    CORRODED(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST).pacedBySpirit()
+    CORRODED("Corrode", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST).pacedBySpirit()
             .perStack(EnemyStat.ARMOR, -3f).perStack(EnemyStat.MAGIC_RESIST, -3f).tagged(EffectTag.FIELD)),
     /** The field's slow, a point of speed in a hundred a stack; it is no chill, and nothing resists it. */
-    DRAGGED(EffectRule.of(EffectCategory.SOFT_CC).stackingOnASharedClock(DragStrength.MOST).pacedBySpirit()
+    DRAGGED("Drag", EffectRule.of(EffectCategory.SOFT_CC).stackingOnASharedClock(DragStrength.MOST).pacedBySpirit()
             .perStack(EnemyStat.MOVE_SPEED, StatModifier.percent(-0.01f)).tagged(EffectTag.FIELD)),
     /** The field's drag counts as a chill for a freeze while the enemy is in it and a while after. */
-    UNDERTOW(EffectRule.of(EffectCategory.SOFT_CC).pacedBySpirit().tagged(EffectTag.FIELD)),
+    UNDERTOW("Undertow", EffectRule.of(EffectCategory.SOFT_CC).pacedBySpirit().tagged(EffectTag.FIELD)),
     /** Arc Discharge's mark: each stack adds 5% damage taken from every source, up to four. */
-    CONDEMNED(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(4).pacedBySpirit()
+    CONDEMNED("Condemn", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(4).pacedBySpirit()
             .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.05f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.05f)),
     /** While the enemy is Dazed, the field that stilled it takes its Toll away. */
-    STILLED(EffectRule.of(EffectCategory.DEBUFF)),
+    STILLED("Stasis", EffectRule.of(EffectCategory.DEBUFF)),
     /** A revealed enemy can't be shrouded or fade while it lasts. */
-    UNVEILED(EffectRule.of(EffectCategory.STEALTH).pacedBySpirit()),
+    UNVEILED("Unveil", EffectRule.of(EffectCategory.STEALTH).pacedBySpirit()),
     /** Heals and shields can't take hold while the enemy is in the field and a while after. */
-    DEAD_ZONE(EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit().tagged(EffectTag.FIELD)),
+    DEAD_ZONE("Dead Zone", EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit().tagged(EffectTag.FIELD)),
     /** Heals can't take hold while the enemy is in the field; a shield still can. */
-    FALLOUT(EffectRule.of(EffectCategory.DEBUFF)),
+    FALLOUT("Fallout", EffectRule.of(EffectCategory.DEBUFF)),
     /** Takes extra damage from every source while the enemy is in the field and a while after: 20% at full strength. */
-    FRAIL(EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST).pacedBySpirit()
+    FRAIL("Frail", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST).pacedBySpirit()
             .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.02f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.02f)
             .tagged(EffectTag.FIELD)),
     /** Takes five points of plating and five of insulation. */
-    CRACKED(EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit()
+    CRACKED("Crack", EffectRule.of(EffectCategory.DEBUFF).pacedBySpirit()
             .perStack(EnemyStat.PLATING, -DamageUnits.ofPoints(5f))
             .perStack(EnemyStat.INSULATION, -DamageUnits.ofPoints(5f))),
     /** Stuck in tar: slowed by 40%, a burn it catches starts at double the pool, and a freeze it suffers lasts a second longer. */
-    TARRED(EffectRule.of(EffectCategory.DEBUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.times(0.6f))),
+    TARRED("Tar", EffectRule.of(EffectCategory.DEBUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.times(0.6f))),
     /** Takes physical damage for every cell it travels; a stopped enemy takes none. */
-    BLEEDING(EffectRule.of(EffectCategory.DAMAGE_OVER_TIME)),
+    BLEEDING("Bleed", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME)),
     /** A third fuel pool: it stacks with burn and poison, burns what is immune to fire and marks resilience and spirit. */
-    SOULFIRE(EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asAPool().tagged(EffectTag.BURNING)),
+    SOULFIRE("Soulfire", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asAPool().tagged(EffectTag.BURNING)),
     /** A short burst of speed an enemy gives itself. */
-    SPRINTING(EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.percent(0.6f)));
+    SPRINTING("Sprint", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.percent(0.6f)).helpsCarrier());
 
     /** The most stacks any stacking kind reaches, so a cap an application raises (Fault Line) still has a bundle. */
     private static final int MOST_STACKS = 100;
     private static final List<EffectKind> STOPPING = Arrays.stream(values()).filter(EffectKind::stopsEnemy).toList();
 
+    private final String title;
     private final EffectRule rule;
     private final List<StatModifiers<EnemyStat>> modifiersByStacks;
 
-    EffectKind(EffectRule rule) {
+    EffectKind(String title, EffectRule rule) {
+        this.title = title;
         this.rule = rule;
         boolean stacks = rule.stacking() == EffectStacking.SHARED_CLOCK || rule.stacking() == EffectStacking.EARNED;
         int most = stacks ? Math.max(rule.stackCap(), MOST_STACKS) : 1;
@@ -141,6 +147,26 @@ public enum EffectKind {
             bundles.add(rule.perStack().times(n));
         }
         this.modifiersByStacks = List.copyOf(bundles);
+    }
+
+    @Override
+    public String key() {
+        return "effect." + this.name().toLowerCase(Locale.ROOT);
+    }
+
+    @Override
+    public String title() {
+        return this.title;
+    }
+
+    @Override
+    public TermText describe() {
+        return EffectSentences.of(this);
+    }
+
+    /** Whether it works for the enemy that carries it or against it. */
+    public Side side() {
+        return this.rule.side();
     }
 
     public EffectRule rule() {
