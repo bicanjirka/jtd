@@ -5,8 +5,9 @@ import java.awt.Point;
 import java.awt.Rectangle;
 
 /**
- * Where a tooltip goes: left of its anchor, toward the board, else right; top-aligned; inside the window. A source
- * at the top of the window opens its tooltip {@linkplain #below below} instead.
+ * Where a tooltip goes: left of its anchor, toward the board, else right; opening down from the anchor's bottom, or
+ * up from its top when there is no room below; inside the window. A source at the top of the window opens its tooltip
+ * {@linkplain #below below} instead.
  */
 final class TooltipPlacement {
 
@@ -23,7 +24,11 @@ final class TooltipPlacement {
         }
         x = Math.clamp(x, window.x + MARGIN,
                 Math.max(window.x + MARGIN, window.x + window.width - MARGIN - size.width));
-        int y = Math.clamp(anchor.y, window.y + MARGIN,
+        int y = anchor.y + anchor.height;
+        if (y + size.height > window.y + window.height - MARGIN) {
+            y = anchor.y - size.height;
+        }
+        y = Math.clamp(y, window.y + MARGIN,
                 Math.max(window.y + MARGIN, window.y + window.height - MARGIN - size.height));
         return new Point(x, y);
     }

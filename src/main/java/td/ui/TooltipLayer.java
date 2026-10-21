@@ -243,7 +243,8 @@ public final class TooltipLayer {
         this.chain = next.get();
         TooltipPanel panel = new TooltipPanel();
         panel.show(request.tooltip().sheet());
-        this.layer.add(panel, JLayeredPane.POPUP_LAYER);
+        // Position 0 is the top of the layer; the default, -1, would put a chained tooltip under the one it came from.
+        this.layer.add(panel, JLayeredPane.POPUP_LAYER, 0);
         Rectangle window = new Rectangle(0, 0, this.layer.getWidth(), this.layer.getHeight());
         panel.setLocation(this.below.contains(request.source()) ? TooltipPlacement.below(request.anchor(), panel.getSize(), window)
                 : TooltipPlacement.place(request.anchor(), panel.getSize(), window));

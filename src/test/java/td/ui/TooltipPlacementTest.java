@@ -31,17 +31,25 @@ class TooltipPlacementTest {
     void itStaysSixPixelsInsideTheWindow() {
         Point at = TooltipPlacement.place(new Rectangle(790, 590, 20, 20), SIZE, WINDOW);
 
-        assertThat(at.y).isEqualTo(600 - TooltipPlacement.MARGIN - 100);
+        assertThat(at.y).isLessThanOrEqualTo(600 - TooltipPlacement.MARGIN - 100);
         assertThat(at.x).isLessThanOrEqualTo(800 - TooltipPlacement.MARGIN - 200);
-        assertThat(TooltipPlacement.place(new Rectangle(500, 0, 20, 20), SIZE, WINDOW).y)
+        assertThat(TooltipPlacement.place(new Rectangle(500, 0, 20, 20), new Dimension(200, 590), WINDOW).y)
                 .isEqualTo(TooltipPlacement.MARGIN);
     }
 
     @Test
-    void itAlignsWithTheAnchorsTop() {
+    void itOpensDownwardFromTheAnchorsBottomLeftCorner() {
         Point at = TooltipPlacement.place(new Rectangle(500, 120, 20, 20), SIZE, WINDOW);
 
-        assertThat(at.y).isEqualTo(120);
+        assertThat(at.x + 200 + TooltipPlacement.GAP).isEqualTo(500);
+        assertThat(at.y).isEqualTo(140);
+    }
+
+    @Test
+    void withNoRoomBelowItOpensUpwardFromTheAnchorsTop() {
+        Point at = TooltipPlacement.place(new Rectangle(500, 520, 20, 20), SIZE, WINDOW);
+
+        assertThat(at.y).isEqualTo(520 - 100);
     }
 
     @Test
