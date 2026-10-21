@@ -71,8 +71,8 @@ keeps the seam honest.
   tooltip goes and which stay open are answered by `SheetPane.hoverAt`, `TooltipPlacement` and `TooltipChain`.
   Never use `setToolTipText` for game content.
 - Info-pane content is an AWT-free `InfoSheet` that a `*SheetText` builds from a domain
-  inspection (`EnemyInspection`, `TowerInspection`): one row per thing on the board, with the
-  glyph and colour the board draws for it, each fitting one line. `InfoSheetDocument` alone lays
+  inspection (`EnemyInspection`, `TowerInspection`): stat rows, then icon rows (Traits, Buffs,
+  Debuffs; on a tower Perks, Buffs, Debuffs, Applies), each icon a `SheetIcon` carrying its tooltip sheet. `InfoSheetDocument` alone lays
   a sheet out. The live enemy sheet is built with the frame and travels in
   `RenderFrame.enemyInspection`; the EDT only shows it, and only after a board click asked for a
   selection.

@@ -1,6 +1,7 @@
 package td;
 
 import td.cell.CellGrid;
+import td.enemy.EnemyMob;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
 import td.tower.Tower;
@@ -15,6 +16,7 @@ import td.util.TickRate;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -102,12 +104,15 @@ public final class PerformanceHarness {
 
         for (int t = 1; t <= TICKS_PER_PASS && !engine.outcome().isOver(); t++) {
             engine.nextWave();
+            if (engine.inspectSelectedEnemy().isEmpty()) {
+                firstAlive(engine).ifPresent(enemy -> engine.requestEnemySelectionAt((int) enemy.getX(), (int) enemy.getY()));
+            }
             long tickStart = System.nanoTime();
             engine.doTick(t);
             long tickEnd = System.nanoTime();
             long bytesBefore = this.threads.getCurrentThreadAllocatedBytes();
             long frameStart = System.nanoTime();
-            renderer.buildFrame(t, 0.5, t / (double) TickRate.TICKS_PER_SECOND);
+            renderer.buildFrame(t, 0.5, t / (double) TickRate.TICKS_PER_SECOND, engine.inspectSelectedEnemy());
             long frameEnd = System.nanoTime();
             long bytesAfter = this.threads.getCurrentThreadAllocatedBytes();
             if (record) {
@@ -119,6 +124,11 @@ public final class PerformanceHarness {
                 this.peakZones = Math.max(this.peakZones, engine.getGameWorld().zones().zones().size());
             }
         }
+    }
+
+    /** The first enemy still alive, which a click would select. */
+    private static Optional<EnemyMob> firstAlive(GameEngine engine) {
+        return Arrays.stream(engine.getGameWorld().enemies().getEnemies()).filter(EnemyMob::validTarget).findFirst();
     }
 
     private static void buyZoneUpgrades(Tower tower) {

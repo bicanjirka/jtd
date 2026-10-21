@@ -16,6 +16,7 @@ import td.tower.SniperTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerRank;
+import td.tower.TowerTerm;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -25,6 +26,7 @@ import td.ui.render.EnemyFadeDraw;
 import td.ui.render.Palette;
 import td.ui.render.ProjectileDraw;
 import td.ui.render.RenderFrame;
+import td.ui.render.SheetLine;
 import td.ui.render.SlotMarkDraw;
 import td.ui.render.TowerSpriteDraw;
 import td.util.GameWorld;
@@ -288,5 +290,32 @@ class BoardRendererTest {
 
     private static UpgradeNode baseNode(Tower tower, String id) {
         return tower.upgradeTree().nodesIn(UpgradeSlot.BASE).stream().filter(n -> n.id().equals(id)).findFirst().orElseThrow();
+    }
+
+    @Test
+    void aSelectedEnemysSheetCarriesWhatTowersRememberOfIt() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100, 5, Rank.GRUNT);
+        context.enemies().add(enemy);
+        int scale = context.getBoard().scale();
+        CinderTower cinder = new CinderTower(context, (int) (enemy.getX() / scale) + 1, (int) (enemy.getY() / scale));
+        context.towers().add(cinder);
+        context.economy().startEconomy(1000, 5);
+        cinder.buyUpgrade(baseNode(cinder, StandardBaseSlot.ATTUNE_ID));
+        for (int t = 1; t <= 400 && cinder.marksOn(enemy).isEmpty(); t++) {
+            cinder.doTick(t);
+        }
+        engine.requestEnemySelectionAt((int) enemy.getX(), (int) enemy.getY());
+
+        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0, engine.inspectSelectedEnemy());
+
+        assertThat(cinder.marksOn(enemy)).isNotEmpty();
+        assertThat(frame.enemyInspection().orElseThrow().lines()).anySatisfy(line -> assertThat(line)
+                .isInstanceOfSatisfying(SheetLine.IconRow.class, row -> {
+                    assertThat(row.label()).isEqualTo("Debuffs");
+                    assertThat(row.icons()).extracting(icon -> icon.face().pictogram())
+                            .contains(TowerTerm.STOKE.key());
+                }));
     }
 }

@@ -5,9 +5,9 @@ import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
+import td.enemy.TraitTerm;
 import td.fixtures.WorldFixtures;
 import td.ui.render.InfoSheet;
-import td.ui.render.Palette;
 import td.ui.render.SheetLine;
 import td.ui.render.SheetLine.Row;
 import td.util.GameWorld;
@@ -43,6 +43,11 @@ class PanelEnemyTest {
         assertThat(sheet.lines().stream().filter(Row.class::isInstance).map(Row.class::cast)
                 .filter(row -> row.label().equals("Speed")).map(Row::value))
                 .singleElement().asString().doesNotContain("NaN");
-        assertThat(sheet.lines()).contains(Row.trait(Palette.TRAIT_MARKER_HURT_SPEED, "Hurt speed", "up to x1.8"));
+        assertThat(sheet.lines()).anySatisfy(line -> assertThat(line).isInstanceOfSatisfying(SheetLine.IconRow.class,
+                row -> assertThat(row.icons()).anySatisfy(icon -> {
+                    assertThat(icon.face().pictogram()).isEqualTo(TraitTerm.ADRENALINE.key());
+                    assertThat(icon.tooltip().lines().getLast()).isInstanceOfSatisfying(SheetLine.Sentence.class,
+                            sentence -> assertThat(sentence.text().plain()).contains("1.8"));
+                })));
     }
 }
