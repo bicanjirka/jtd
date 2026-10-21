@@ -8,7 +8,7 @@ import java.util.Optional;
 
 /**
  * The Hexer's hexes and how hard they bite. Each {@code withX} is a copy, and every change holds
- * whatever order the perks were bought in.
+ * whatever order the mechanics were bought in.
  *
  * @param pool          every hex it owns, in the order bought: the order it takes them in
  * @param cursesPerCast how many enemies one cast curses

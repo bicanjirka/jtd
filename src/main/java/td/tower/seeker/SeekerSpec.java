@@ -6,7 +6,7 @@ import td.tower.targeting.Viewpoint;
 
 /**
  * Whom the Seeker may hit, whom it picks, how its nest launches, what a missile does to the enemy it freezes and what missiles carry: the base rules reshaped by
- * each perk it owns. Each {@code withX} is a copy.
+ * each mechanic it owns. Each {@code withX} is a copy.
  *
  * @param reach           the enemies it may fire at
  * @param aim             whom it picks among them

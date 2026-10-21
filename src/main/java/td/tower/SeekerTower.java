@@ -18,42 +18,42 @@ import td.tower.proc.HitScaling;
 import td.tower.proc.Proc;
 import td.tower.proc.ProcCondition;
 import td.tower.proc.ProcPayload;
-import td.tower.seeker.AbsoluteZeroPerk;
+import td.tower.seeker.AbsoluteZeroMechanic;
 import td.tower.seeker.ArcanePayload;
-import td.tower.seeker.ArcaneWarheadPerk;
-import td.tower.seeker.BrittlePerk;
-import td.tower.seeker.BroodPerk;
+import td.tower.seeker.ArcaneWarheadMechanic;
+import td.tower.seeker.BrittleMechanic;
+import td.tower.seeker.BroodMechanic;
 import td.tower.seeker.EmpPayload;
-import td.tower.seeker.FrostbitePerk;
+import td.tower.seeker.FrostbiteMechanic;
 import td.tower.seeker.FrozenLedger;
-import td.tower.seeker.FullRackPerk;
+import td.tower.seeker.FullRackMechanic;
 import td.tower.seeker.Impact;
-import td.tower.seeker.NestPerk;
+import td.tower.seeker.NestMechanic;
 import td.tower.seeker.NestSpec;
-import td.tower.seeker.OverTheHorizonPerk;
+import td.tower.seeker.OverTheHorizonMechanic;
 import td.tower.seeker.PayloadLoad;
-import td.tower.seeker.PayloadPerk;
+import td.tower.seeker.PayloadMechanic;
 import td.tower.seeker.PayloadPlan;
-import td.tower.seeker.RearmPerk;
+import td.tower.seeker.RearmMechanic;
 import td.tower.seeker.SalvoPlanner;
 import td.tower.seeker.SeekerActions;
 import td.tower.seeker.SeekerAim;
+import td.tower.seeker.SeekerMechanic;
 import td.tower.seeker.SeekerNest;
-import td.tower.seeker.SeekerPerk;
 import td.tower.seeker.SeekerSpec;
-import td.tower.seeker.ShatterPerk;
-import td.tower.seeker.ShatterburstPerk;
+import td.tower.seeker.ShatterMechanic;
+import td.tower.seeker.ShatterburstMechanic;
 import td.tower.seeker.TargetStreak;
 import td.tower.seeker.TracerPayload;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.TargetPriority;
 import td.tower.targeting.Viewpoint;
-import td.tower.upgrade.BaseSlotPerks;
+import td.tower.upgrade.BaseSlotMechanics;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.NodeEffects;
-import td.tower.upgrade.OwnedPerks;
-import td.tower.upgrade.PerkCatalogue;
+import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -77,7 +77,7 @@ import java.util.Set;
  * Attuned, the cooldown loads a missile into a nest instead of firing, and stored missiles launch
  * as a salvo whenever a target is in range; the nest fills between waves too.
  * <p>
- * What each owned node does lives in a {@link SeekerPerk}: the tower reads one spec from them
+ * What each owned node does lives in a {@link SeekerMechanic}: the tower reads one spec from them
  * whenever it looks for a target.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
@@ -96,7 +96,7 @@ public final class SeekerTower extends AbstractTower {
     private static final TermText FREEZE_DEED = TermText.format("times {} landed", EffectKind.FREEZE);
     private static final int FREEZES_NEEDED = 25;
 
-    private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none().withRangeThree(0.1f, NodeEffects.none());
+    private static final BaseSlotMechanics BASE_MECHANICS = BaseSlotMechanics.none().withRangeThree(0.1f, NodeEffects.none());
 
     private static final UpgradeNode TWIN_WARHEAD_1 = UpgradeTier.HEAD_1.node("seeker.head.twin_warhead.1",
             "Twin Warhead", PRICE)
@@ -153,7 +153,7 @@ public final class SeekerTower extends AbstractTower {
             .withTargeting(TargetPriority.HIGHEST_RANK)
             .withHitBonus(HitBonus.per(new HitScaling.PerFocus(TowerTerm.FOCUS, 5), HitAdjustment.damage(0.2f)));
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, BROOD, BRITTLE))
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS, BROOD, BRITTLE))
             .with(TWIN_WARHEAD_1, TWIN_WARHEAD_2, BROOD, SHATTERBURST, REARM, DEEP_FREEZE_1, DEEP_FREEZE_2, BRITTLE,
                     ABSOLUTE_ZERO, FROSTBITE, ARCANE_PAYLOAD, EMP_PAYLOAD, TRACER_PAYLOAD, FULL_RACK,
                     ARCANE_WARHEAD, NULLIFIER, HUNTERS_MARK)
@@ -162,26 +162,26 @@ public final class SeekerTower extends AbstractTower {
             .withChoice(ExclusiveChoice.oneOf(ABSOLUTE_ZERO, FROSTBITE))
             .withChoice(ExclusiveChoice.specials(ARCANE_WARHEAD, NULLIFIER, HUNTERS_MARK));
 
-    private static final PerkCatalogue<SeekerPerk> PERKS = PerkCatalogue.<SeekerPerk>empty()
-            .with(StandardBaseSlot.ATTUNE_ID, NestPerk::new)
-            .with(StandardBaseSlot.RANGE_3_ID, OverTheHorizonPerk::new)
-            .with(BROOD.id(), BroodPerk::new)
-            .with(SHATTERBURST.id(), ShatterburstPerk::new)
-            .with(REARM.id(), RearmPerk::new)
-            .with(DEEP_FREEZE_2.id(), ShatterPerk::new)
-            .with(BRITTLE.id(), BrittlePerk::new)
-            .with(ABSOLUTE_ZERO.id(), AbsoluteZeroPerk::new)
-            .with(FROSTBITE.id(), FrostbitePerk::new)
-            .with(ARCANE_PAYLOAD.id(), () -> new PayloadPerk(new ArcanePayload()))
-            .with(EMP_PAYLOAD.id(), () -> new PayloadPerk(new EmpPayload()))
-            .with(TRACER_PAYLOAD.id(), () -> new PayloadPerk(new TracerPayload()))
-            .with(FULL_RACK.id(), FullRackPerk::new)
-            .with(ARCANE_WARHEAD.id(), ArcaneWarheadPerk::new);
+    private static final MechanicCatalogue<SeekerMechanic> MECHANICS = MechanicCatalogue.<SeekerMechanic>empty()
+            .with(StandardBaseSlot.ATTUNE_ID, NestMechanic::new)
+            .with(StandardBaseSlot.RANGE_3_ID, OverTheHorizonMechanic::new)
+            .with(BROOD.id(), BroodMechanic::new)
+            .with(SHATTERBURST.id(), ShatterburstMechanic::new)
+            .with(REARM.id(), RearmMechanic::new)
+            .with(DEEP_FREEZE_2.id(), ShatterMechanic::new)
+            .with(BRITTLE.id(), BrittleMechanic::new)
+            .with(ABSOLUTE_ZERO.id(), AbsoluteZeroMechanic::new)
+            .with(FROSTBITE.id(), FrostbiteMechanic::new)
+            .with(ARCANE_PAYLOAD.id(), () -> new PayloadMechanic(new ArcanePayload()))
+            .with(EMP_PAYLOAD.id(), () -> new PayloadMechanic(new EmpPayload()))
+            .with(TRACER_PAYLOAD.id(), () -> new PayloadMechanic(new TracerPayload()))
+            .with(FULL_RACK.id(), FullRackMechanic::new)
+            .with(ARCANE_WARHEAD.id(), ArcaneWarheadMechanic::new);
 
     private static final int COOLDOWN_MAX = 45;
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
-    private final OwnedPerks<SeekerPerk> perks = new OwnedPerks<>(PERKS);
+    private final OwnedMechanics<SeekerMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private final TargetStreak streak = new TargetStreak();
     private final SeekerNest nest = new SeekerNest();
     private final ProjectileStats missile = ProjectileStats.of(MISSILE_SPEED);
@@ -198,8 +198,8 @@ public final class SeekerTower extends AbstractTower {
     }
 
     @Override
-    protected PerkCatalogue<SeekerPerk> perkCatalogue() {
-        return PERKS;
+    protected MechanicCatalogue<SeekerMechanic> mechanicCatalogue() {
+        return MECHANICS;
     }
 
     @Override
@@ -209,19 +209,19 @@ public final class SeekerTower extends AbstractTower {
 
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
-        this.perks.add(node);
+        this.mechanics.add(node);
     }
 
-    /** Whom it may fire at, how it picks and what its nest holds, as the perks in {@code owned} make it. */
-    private SeekerSpec spec(List<SeekerPerk> owned) {
+    /** Whom it may fire at, how it picks and what its nest holds, as the mechanics in {@code owned} make it. */
+    private SeekerSpec spec(List<SeekerMechanic> owned) {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
         SeekerSpec spec = SeekerSpec.from(view);
         Optional<TargetPriority> priority = this.upgrades().targeting();
         if (priority.isPresent()) {
             spec = spec.withAim(new SeekerAim(priority.get().selector(view.cellSize()), priority.get().label()));
         }
-        for (SeekerPerk perk : owned) {
-            spec = perk.refineSpec(spec);
+        for (SeekerMechanic mechanic : owned) {
+            spec = mechanic.refineSpec(spec);
         }
         return spec;
     }
@@ -263,7 +263,7 @@ public final class SeekerTower extends AbstractTower {
     }
 
     public void doTick(int gameTime) {
-        SeekerSpec spec = this.spec(this.perks.all());
+        SeekerSpec spec = this.spec(this.mechanics.all());
         if (spec.shatter().onThaw()) {
             this.frozen.settle().forEach(thawed -> this.shatter(thawed, spec));
         }
@@ -304,18 +304,18 @@ public final class SeekerTower extends AbstractTower {
     /** A missile at {@code target}, carrying what the plan says its number carries; a rearmed one's freeze rearms nothing. */
     private MissileProjectile newMissile(EnemyMob target, boolean rearmed) {
         this.missilesLaunched++;
-        Optional<PayloadLoad> load = this.spec(this.perks.all()).payloads().loadFor(this.missilesLaunched);
+        Optional<PayloadLoad> load = this.spec(this.mechanics.all()).payloads().loadFor(this.missilesLaunched);
         ProjectileStats stats = load.map(carried -> this.missile.withLook(carried.payload().look())).orElse(this.missile);
         return new MissileProjectile(this.centerX, this.centerY, target, this.context.enemies(), stats,
                 hit -> this.onImpact(hit, rearmed, load));
     }
 
     /**
-     * A missile lands: the hit, scaled by what the perks make of it, then what it carries (a plain
-     * missile freezes), then the perks' reactions.
+     * A missile lands: the hit, scaled by what the mechanics make of it, then what it carries (a plain
+     * missile freezes), then the mechanics' reactions.
      */
     private void onImpact(EnemyMob target, boolean rearmed, Optional<PayloadLoad> load) {
-        SeekerSpec spec = this.spec(this.perks.all());
+        SeekerSpec spec = this.spec(this.mechanics.all());
         Set<EffectKind> before = target.activeEffectKinds();
         boolean wasFrozen = before.contains(EffectKind.FREEZE);
         Impact.Before suffering = wasFrozen ? Impact.Before.FROZEN
@@ -323,8 +323,8 @@ public final class SeekerTower extends AbstractTower {
         HitAdjustment adjustment = this.hitAdjustment(target, HitKind.MISSILE, 0f, this.stats(), this.streak.on(target),
                 false);
         float factor = adjustment.damageFactor();
-        for (SeekerPerk perk : this.perks.all()) {
-            factor *= perk.damageFactor(target);
+        for (SeekerMechanic mechanic : this.mechanics.all()) {
+            factor *= mechanic.damageFactor(target);
         }
         boolean critical = this.strike(target, Damage.magic(Math.round(this.damageCurrent() * factor)), spec, adjustment);
         boolean freezes = load.isEmpty() || load.get().payload().freezes();
@@ -340,8 +340,8 @@ public final class SeekerTower extends AbstractTower {
         this.streak.landed(target);
         this.report(target, HitKind.MISSILE, critical, target.isDead());
         Impact impact = new Impact(target, suffering, frozenNow && !wasFrozen, rearmed);
-        for (SeekerPerk perk : this.perks.all()) {
-            perk.react(impact, this.actions);
+        for (SeekerMechanic mechanic : this.mechanics.all()) {
+            mechanic.react(impact, this.actions);
         }
     }
 
@@ -418,7 +418,7 @@ public final class SeekerTower extends AbstractTower {
     /** Deep Freeze II: a frozen enemy this tower kills shatters. */
     @Override
     protected void onKill(EnemyMob killed) {
-        SeekerSpec spec = this.spec(this.perks.all());
+        SeekerSpec spec = this.spec(this.mechanics.all());
         if (spec.shatter().onKill() && killed.hasEffect(EffectKind.FREEZE)) {
             this.shatter(killed, spec);
         }
@@ -460,7 +460,7 @@ public final class SeekerTower extends AbstractTower {
             states.add(TowerBuffState.of(TowerTerm.FOCUS, TermText.of("hits on one target build it"))
                     .withStacks(this.streak.current()));
         }
-        SeekerSpec spec = this.spec(this.perks.all());
+        SeekerSpec spec = this.spec(this.mechanics.all());
         NestSpec nest = this.nest(spec);
         if (nest.isActive() && this.nest.stored() > 0) {
             states.add(TowerBuffState.of(TowerTerm.NEST, TermText.of(this.nest.stored() + " of " + nest.capacity()
@@ -468,13 +468,13 @@ public final class SeekerTower extends AbstractTower {
         }
         spec.payloads().loadFor(this.missilesLaunched + 1).ifPresent(load -> states.add(
                 TowerBuffState.of(load.payload().term(), load.payload().effect())));
-        this.perks.all().forEach(perk -> perk.condition().ifPresent(states::add));
+        this.mechanics.all().forEach(mechanic -> mechanic.condition().ifPresent(states::add));
         return states;
     }
 
     @Override
     protected List<NodeProgress> ownProgress() {
-        if (this.spec(this.perks.all()).payloads().everyMissile()) {
+        if (this.spec(this.mechanics.all()).payloads().everyMissile()) {
             return List.of();
         }
         return List.of(ARCANE_PAYLOAD, EMP_PAYLOAD, TRACER_PAYLOAD).stream()
@@ -492,7 +492,7 @@ public final class SeekerTower extends AbstractTower {
 
     @Override
     protected String targetingLabel() {
-        return this.spec(this.perks.all()).aim().label();
+        return this.spec(this.mechanics.all()).aim().label();
     }
 
     @Override
@@ -504,17 +504,17 @@ public final class SeekerTower extends AbstractTower {
         return visitor.visitSeekerTower(this);
     }
 
-    /** What the perks may make this tower do. */
+    /** What the mechanics may make this tower do. */
     private final class Actions implements SeekerActions {
 
         @Override
         public List<EnemyMob> burst(EnemyMob center, float share, float radiusCells) {
-            return SeekerTower.this.burst(center, share, radiusCells, SeekerTower.this.spec(SeekerTower.this.perks.all()));
+            return SeekerTower.this.burst(center, share, radiusCells, SeekerTower.this.spec(SeekerTower.this.mechanics.all()));
         }
 
         @Override
         public void freeze(EnemyMob target, float strength) {
-            SeekerTower.this.freezeAround(target, strength, SeekerTower.this.spec(SeekerTower.this.perks.all()));
+            SeekerTower.this.freezeAround(target, strength, SeekerTower.this.spec(SeekerTower.this.mechanics.all()));
         }
 
         @Override
@@ -540,7 +540,7 @@ public final class SeekerTower extends AbstractTower {
 
         @Override
         public void rearm() {
-            EnemyMob target = SeekerTower.this.findTarget(SeekerTower.this.spec(SeekerTower.this.perks.all()));
+            EnemyMob target = SeekerTower.this.findTarget(SeekerTower.this.spec(SeekerTower.this.mechanics.all()));
             if (target != null) {
                 SeekerTower.this.context.projectiles().add(SeekerTower.this.newMissile(target, true));
             }

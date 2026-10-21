@@ -168,7 +168,7 @@ against 1,100 under heals, so the heals land everywhere else. The answers are ei
 (EMP, Nullifier), and raw damage beats a heal-heavy wave sooner than any of them.
 
 - **Where:** `PulseTower`'s Ward head (`FieldMode.DEAD_ZONE`, `SILENCE`), `SoulDrain`, the Hexer's Blight and
-  Inversion, `CauterizePerk`, `EmpPayload`, the Nullifier.
+  Inversion, `CauterizeMechanic`, `EmpPayload`, the Nullifier.
 - **Approach:** a design pass of its own: one answer that reaches a stretch of path wide enough to matter (a Ley
   Line's beam carrying Dead Zone, a Sickened that lowers spirit for long enough to shrink every heal), then check
   Curly Path's wave 12 with `td.balance.WaveCheckReport --checks 12:sustain --parts strong,strip`.
@@ -308,7 +308,7 @@ on-crit-survived shield (30% for 100 ticks) is from the first crit pass.
   Hollow Point, Fourth Shot, Shatter Shot, Ricochet or Headhunter, and 17.6 with Momentum; before, the first three
   lost lives. Momentum is still far ahead (`docs/ideas/sniper-and-scorcher-identity.md`, S4).
 - **Where:** `AttackProfile.DEFAULT_CRIT_MULTIPLIER`, `SniperTower.CRIT_CHANCE` and
-  `CRIT_MULTIPLIER`, the Momentum node in `SniperTower`, `CritStreakPerk`, and
+  `CRIT_MULTIPLIER`, the Momentum node in `SniperTower`, `CritStreakMechanic`, and
   `WardenEnemy`'s `OnCriticalHitTakenTrigger` ability.
 - **Approach:** raise the five other Sniper specials until a build with each saves about what Momentum's does,
   checking each with `td.BuildHarness`; every number here is a named constant.

@@ -6,7 +6,7 @@ import td.tower.targeting.Viewpoint;
 
 /**
  * Whom the Cinder aims at, what shape its wave is and what its burn does to an enemy: the base rules
- * reshaped by each perk it owns. Each {@code withX} is a copy.
+ * reshaped by each mechanic it owns. Each {@code withX} is a copy.
  *
  * @param reach         the visible enemies it may aim at
  * @param ring          whether the wave is a full ring rather than a cone

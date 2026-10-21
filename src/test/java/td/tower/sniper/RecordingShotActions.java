@@ -5,7 +5,7 @@ import td.enemy.EnemyMob;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Remembers what the perks asked the Sniper to do. */
+/** Remembers what the mechanics asked the Sniper to do. */
 final class RecordingShotActions implements ShotActions {
 
     final List<EnemyMob> executed = new ArrayList<>();

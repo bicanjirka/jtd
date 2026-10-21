@@ -7,7 +7,7 @@ import td.tower.targeting.Viewpoint;
 import java.util.Optional;
 
 /**
- * Whom the Sniper may shoot and whom it picks, reshaped by each perk it owns. Each {@code withX} is a
+ * Whom the Sniper may shoot and whom it picks, reshaped by each mechanic it owns. Each {@code withX} is a
  * copy.
  *
  * @param reach the enemies it may shoot
@@ -26,7 +26,7 @@ public record SniperSpec(Reach reach, Optional<SniperAim> aim) {
         return new SniperSpec(reach, this.aim);
     }
 
-    /** Picks as {@code aim} says, unless a perk bought earlier already chose: the first special decides. */
+    /** Picks as {@code aim} says, unless a mechanic bought earlier already chose: the first special decides. */
     public SniperSpec aimingAt(SniperAim aim) {
         return this.aim.isPresent() ? this : new SniperSpec(this.reach, Optional.of(aim));
     }

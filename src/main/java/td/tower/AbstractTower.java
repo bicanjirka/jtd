@@ -29,8 +29,8 @@ import td.tower.proc.Proc;
 import td.tower.proc.ProcActions;
 import td.tower.proc.ProcPayload;
 import td.tower.proc.ProcRunner;
-import td.tower.upgrade.Perk;
-import td.tower.upgrade.PerkCatalogue;
+import td.tower.upgrade.Mechanic;
+import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeDecision;
 import td.tower.upgrade.UpgradeLine;
@@ -433,7 +433,7 @@ public abstract class AbstractTower implements Tower {
         return HitBonuses.fold(bonuses, HitContext.of(target, kind, rangeShare, shot).withFocus(focus, freshTarget));
     }
 
-    /** Tells the procs how a landed attack went, after the tower's own perks settled it. */
+    /** Tells the procs how a landed attack went, after the tower's own mechanics settled it. */
     protected final void report(EnemyMob target, HitKind kind, boolean critical, boolean killed) {
         List<Proc> procs = this.procs();
         if (procs.isEmpty()) {
@@ -573,15 +573,15 @@ public abstract class AbstractTower implements Tower {
         return this.upgrades;
     }
 
-    /** Which perks each node brings; none by default. */
-    protected PerkCatalogue<? extends Perk> perkCatalogue() {
-        return PerkCatalogue.empty();
+    /** Which mechanics each node brings; none by default. */
+    protected MechanicCatalogue<? extends Mechanic> mechanicCatalogue() {
+        return MechanicCatalogue.empty();
     }
 
     @Override
     public NodeWords wordsOf(UpgradeNode node) {
         List<TermText> sentences = new ArrayList<>(node.effects().sentences());
-        sentences.addAll(this.perkCatalogue().describe(node));
+        sentences.addAll(this.mechanicCatalogue().describe(node));
         return NodeWords.of(node.displayName(), node.effects().statRows(), sentences);
     }
 
@@ -670,7 +670,7 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * Every buff and debuff this tower carries now, buffs first. Game loop only: reads statuses and perk state.
+     * Every buff and debuff this tower carries now, buffs first. Game loop only: reads statuses and mechanic state.
      */
     @Override
     public final List<TowerBuffState> conditions() {
@@ -708,7 +708,7 @@ public abstract class AbstractTower implements Tower {
 
     /**
      * Every effect this tower puts on enemies or gives towers, first its own, then each owned node's procs and
-     * perks in purchase order. Game loop only.
+     * mechanics in purchase order. Game loop only.
      */
     @Override
     public final List<AppliedEffect> applies() {
@@ -722,10 +722,10 @@ public abstract class AbstractTower implements Tower {
                         .add(new AppliedEffect.Source(node.displayName(),
                                 proc.describe())));
             }
-            for (Perk perk : this.perkCatalogue().perksOf(node)) {
-                for (Term term : perk.applies()) {
+            for (Mechanic mechanic : this.mechanicCatalogue().mechanicsOf(node)) {
+                for (Term term : mechanic.applies()) {
                     byTerm.computeIfAbsent(term, t -> new ArrayList<>())
-                            .add(new AppliedEffect.Source(node.displayName(), perk.describe()));
+                            .add(new AppliedEffect.Source(node.displayName(), mechanic.describe()));
                 }
             }
         }
@@ -750,7 +750,7 @@ public abstract class AbstractTower implements Tower {
         return "";
     }
 
-    /** Buffs and debuffs of the tower's own: its rhythms and its perks' states. None by default. */
+    /** Buffs and debuffs of the tower's own: its rhythms and its mechanics' states. None by default. */
     protected List<TowerBuffState> ownConditions() {
         return List.of();
     }

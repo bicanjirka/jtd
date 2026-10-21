@@ -15,44 +15,44 @@ import td.tower.proc.HitScaling;
 import td.tower.proc.Proc;
 import td.tower.proc.ProcCondition;
 import td.tower.proc.ProcPayload;
-import td.tower.splash.ArcPerk;
+import td.tower.splash.ArcMechanic;
 import td.tower.splash.ArcPlanner;
 import td.tower.splash.ArcSpec;
 import td.tower.splash.ArcStrike;
 import td.tower.splash.BlightHex;
-import td.tower.splash.ChainLightningPerk;
-import td.tower.splash.ConductorPerk;
+import td.tower.splash.ChainLightningMechanic;
+import td.tower.splash.ConductorMechanic;
 import td.tower.splash.ContagionHex;
 import td.tower.splash.CovenHex;
 import td.tower.splash.DoomHex;
-import td.tower.splash.FireControlPerk;
+import td.tower.splash.FireControlMechanic;
 import td.tower.splash.Hex;
 import td.tower.splash.HexActions;
 import td.tower.splash.HexEvent;
 import td.tower.splash.HexLedger;
-import td.tower.splash.HexPerk;
+import td.tower.splash.HexMechanic;
 import td.tower.splash.HexPick;
 import td.tower.splash.HexScene;
 import td.tower.splash.HexSpec;
 import td.tower.splash.HexTurn;
 import td.tower.splash.InversionHex;
-import td.tower.splash.LightningRodPerk;
-import td.tower.splash.MasteryPerk;
+import td.tower.splash.LightningRodMechanic;
+import td.tower.splash.MasteryMechanic;
 import td.tower.splash.MineSpec;
-import td.tower.splash.MinesPerk;
-import td.tower.splash.OverloadPerk;
-import td.tower.splash.PotencyPerk;
+import td.tower.splash.MinesMechanic;
+import td.tower.splash.OverloadMechanic;
+import td.tower.splash.PotencyMechanic;
 import td.tower.splash.ReckoningHex;
 import td.tower.splash.SaturationRule;
 import td.tower.splash.ShotContext;
 import td.tower.splash.ShotResult;
-import td.tower.splash.SplashPerk;
+import td.tower.splash.SplashMechanic;
 import td.tower.splash.SplashShot;
 import td.tower.splash.SplashSpec;
 import td.tower.splash.SympathyCopier;
 import td.tower.splash.SympathyHex;
-import td.tower.splash.ThunderclapPerk;
-import td.tower.splash.ThunderstrikePerk;
+import td.tower.splash.ThunderclapMechanic;
+import td.tower.splash.ThunderstrikeMechanic;
 import td.tower.targeting.HighestHealthSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.MostNeighboursSelector;
@@ -60,11 +60,11 @@ import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.RandomSelector;
 import td.tower.targeting.TargetSelector;
 import td.tower.targeting.Viewpoint;
-import td.tower.upgrade.BaseSlotPerks;
+import td.tower.upgrade.BaseSlotMechanics;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.NodeEffects;
-import td.tower.upgrade.OwnedPerks;
-import td.tower.upgrade.PerkCatalogue;
+import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeCondition;
@@ -88,7 +88,7 @@ import java.util.Set;
  * hidden enemies included, the damage falling off from the centre. Forked, the blast carries a
  * payload: lightning that arcs on past it (the Stormcaller) or curses (the Hexer).
  * <p>
- * What each owned node does lives in a {@link SplashPerk}: the tower reads one spec from them for
+ * What each owned node does lives in a {@link SplashMechanic}: the tower reads one spec from them for
  * every shot.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
@@ -116,7 +116,7 @@ public final class SplashTower extends AbstractTower {
     private static final float CLOUD_RADIUS_CELLS = 1.5f;
     private static final int CLOUD_TICKS = 80;
 
-    private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
+    private static final BaseSlotMechanics BASE_MECHANICS = BaseSlotMechanics.none()
             .withAttune(NodeEffects.none()
                     .withHitBonus(HitBonus.of(new HitCondition.HitKindIn(Set.of(HitKind.BLAST)),
                             new HitScaling.PerStackOf(EffectKind.SATURATED), HitAdjustment.damage(0.05f))))
@@ -184,7 +184,7 @@ public final class SplashTower extends AbstractTower {
             "Thunderstrike", PRICE)
             .after(ARC);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, OVERLOAD,
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS, OVERLOAD,
             SPREADING_CURSE))
             .with(ARC, CONDUCTOR, OVERLOAD, CHAIN_LIGHTNING, LIGHTNING_ROD, HEX, WITCHS_BREW, SPREADING_CURSE,
                     RIME_COVEN, ASH_COVEN, WIDE_CHARGE, SHAPED_CHARGE, POTENCY, MASTERY, THUNDERCLAP, STATIC_CHARGE,
@@ -195,29 +195,29 @@ public final class SplashTower extends AbstractTower {
             .withChoice(ExclusiveChoice.specials(THUNDERCLAP, STATIC_CHARGE, THUNDERSTRIKE))
             .withChoice(ExclusiveChoice.specials(INVERSION, SYMPATHY, RECKONING));
 
-    private static final PerkCatalogue<SplashPerk> PERKS = PerkCatalogue.<SplashPerk>empty()
-            .with(StandardBaseSlot.ATTUNE_ID, FireControlPerk::new)
-            .with(StandardBaseSlot.RANGE_3_ID, MinesPerk::new)
-            .with(ARC.id(), ArcPerk::new)
-            .with(CONDUCTOR.id(), ConductorPerk::new)
-            .with(OVERLOAD.id(), OverloadPerk::new)
-            .with(CHAIN_LIGHTNING.id(), ChainLightningPerk::new)
-            .with(LIGHTNING_ROD.id(), LightningRodPerk::new)
-            .with(POTENCY.id(), PotencyPerk::new)
-            .with(MASTERY.id(), MasteryPerk::new)
-            .with(THUNDERCLAP.id(), ThunderclapPerk::new)
-            .with(THUNDERSTRIKE.id(), ThunderstrikePerk::new)
-            .with(HEX.id(), () -> HexPerk.founding(new DoomHex()))
-            .with(WITCHS_BREW.id(), () -> HexPerk.adding(new BlightHex()).andCursing(3))
-            .with(SPREADING_CURSE.id(), () -> HexPerk.adding(new ContagionHex()))
-            .with(RIME_COVEN.id(), () -> HexPerk.adding(CovenHex.rime()))
-            .with(ASH_COVEN.id(), () -> HexPerk.adding(CovenHex.ash()))
-            .with(INVERSION.id(), () -> HexPerk.adding(new InversionHex()))
-            .with(SYMPATHY.id(), () -> HexPerk.adding(new SympathyHex()))
-            .with(RECKONING.id(), () -> HexPerk.adding(new ReckoningHex()));
+    private static final MechanicCatalogue<SplashMechanic> MECHANICS = MechanicCatalogue.<SplashMechanic>empty()
+            .with(StandardBaseSlot.ATTUNE_ID, FireControlMechanic::new)
+            .with(StandardBaseSlot.RANGE_3_ID, MinesMechanic::new)
+            .with(ARC.id(), ArcMechanic::new)
+            .with(CONDUCTOR.id(), ConductorMechanic::new)
+            .with(OVERLOAD.id(), OverloadMechanic::new)
+            .with(CHAIN_LIGHTNING.id(), ChainLightningMechanic::new)
+            .with(LIGHTNING_ROD.id(), LightningRodMechanic::new)
+            .with(POTENCY.id(), PotencyMechanic::new)
+            .with(MASTERY.id(), MasteryMechanic::new)
+            .with(THUNDERCLAP.id(), ThunderclapMechanic::new)
+            .with(THUNDERSTRIKE.id(), ThunderstrikeMechanic::new)
+            .with(HEX.id(), () -> HexMechanic.founding(new DoomHex()))
+            .with(WITCHS_BREW.id(), () -> HexMechanic.adding(new BlightHex()).andCursing(3))
+            .with(SPREADING_CURSE.id(), () -> HexMechanic.adding(new ContagionHex()))
+            .with(RIME_COVEN.id(), () -> HexMechanic.adding(CovenHex.rime()))
+            .with(ASH_COVEN.id(), () -> HexMechanic.adding(CovenHex.ash()))
+            .with(INVERSION.id(), () -> HexMechanic.adding(new InversionHex()))
+            .with(SYMPATHY.id(), () -> HexMechanic.adding(new SympathyHex()))
+            .with(RECKONING.id(), () -> HexMechanic.adding(new ReckoningHex()));
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
-    private final OwnedPerks<SplashPerk> perks = new OwnedPerks<>(PERKS);
+    private final OwnedMechanics<SplashMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private final TargetSelector randomAim;
     private final HexActions hexActions = new Hexing();
     private final HexTurn hexTurn = new HexTurn();
@@ -240,8 +240,8 @@ public final class SplashTower extends AbstractTower {
     }
 
     @Override
-    protected PerkCatalogue<SplashPerk> perkCatalogue() {
-        return PERKS;
+    protected MechanicCatalogue<SplashMechanic> mechanicCatalogue() {
+        return MECHANICS;
     }
 
     @Override
@@ -251,15 +251,15 @@ public final class SplashTower extends AbstractTower {
 
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
-        this.perks.add(node);
+        this.mechanics.add(node);
     }
 
-    /** What its blast is like and what it carries, as the perks in {@code owned} make it. */
-    private SplashSpec spec(List<SplashPerk> owned) {
+    /** What its blast is like and what it carries, as the mechanics in {@code owned} make it. */
+    private SplashSpec spec(List<SplashMechanic> owned) {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
         SplashSpec spec = SplashSpec.from(view);
-        for (SplashPerk perk : owned) {
-            spec = perk.refineSpec(spec);
+        for (SplashMechanic mechanic : owned) {
+            spec = mechanic.refineSpec(spec);
         }
         return spec;
     }
@@ -287,7 +287,7 @@ public final class SplashTower extends AbstractTower {
 
     public void doTick(int gameTime) {
         this.currentTick = gameTime;
-        List<SplashPerk> owned = this.perks.all();
+        List<SplashMechanic> owned = this.mechanics.all();
         if (!this.hexLedger.isEmpty()) {
             SplashSpec spec = this.spec(owned);
             this.settleHexes(spec);
@@ -489,11 +489,11 @@ public final class SplashTower extends AbstractTower {
     }
 
     /**
-     * One shot, as the perks shape it: a Thunderstrike first if one is due, then the blast, the arcs
-     * it carries, and a Thunderclap's discharge if one is armed. The perks then react to how it
+     * One shot, as the mechanics shape it: a Thunderstrike first if one is due, then the blast, the arcs
+     * it carries, and a Thunderclap's discharge if one is armed. The mechanics then react to how it
      * landed.
      */
-    private void fire(EnemyMob primary, SplashSpec spec, List<SplashPerk> owned) {
+    private void fire(EnemyMob primary, SplashSpec spec, List<SplashMechanic> owned) {
         this.beginShot();
         this.lastShotTick = this.currentTick;
         this.shotsFired++;
@@ -502,8 +502,8 @@ public final class SplashTower extends AbstractTower {
         this.casts = List.of();
         SplashShot shot = SplashShot.plain();
         ShotContext context = new ShotContext(this.shotsFired);
-        for (SplashPerk perk : owned) {
-            shot = perk.shape(shot, context);
+        for (SplashMechanic mechanic : owned) {
+            shot = mechanic.shape(shot, context);
         }
         if (this.saturation(spec).isActive() && primary.hasEffect(EffectKind.SATURATED)) {
             this.countDeedOfAttack();
@@ -526,8 +526,8 @@ public final class SplashTower extends AbstractTower {
         }
         this.arcs = List.copyOf(traces);
         ShotResult result = new ShotResult(critical);
-        for (SplashPerk perk : owned) {
-            perk.react(result);
+        for (SplashMechanic mechanic : owned) {
+            mechanic.react(result);
         }
     }
 
@@ -582,7 +582,7 @@ public final class SplashTower extends AbstractTower {
     /** A mine went off under {@code by}: one blast where it lay. */
     private void explode(Zone mine, EnemyMob by) {
         this.mines.remove(mine);
-        this.blast(by, (int) mine.x(), (int) mine.y(), this.spec(this.perks.all()));
+        this.blast(by, (int) mine.x(), (int) mine.y(), this.spec(this.mechanics.all()));
     }
 
     /** The enemy the blast caught furthest from its centre, where its arcs start. */
@@ -673,7 +673,7 @@ public final class SplashTower extends AbstractTower {
 
     /** What the fork has made it: the Stormcaller on Arc, the Hexer on Hex. */
     public Fork fork() {
-        SplashSpec spec = this.spec(this.perks.all());
+        SplashSpec spec = this.spec(this.mechanics.all());
         if (spec.arcs().active()) {
             return Fork.STORMCALLER;
         }
@@ -731,20 +731,20 @@ public final class SplashTower extends AbstractTower {
     @Override
     protected List<NodeProgress> ownProgress() {
         List<NodeProgress> all = new ArrayList<>();
-        SplashSpec spec = this.spec(this.perks.all());
+        SplashSpec spec = this.spec(this.mechanics.all());
         this.countingNode(HEX.id(), this.shotsFired % HexSpec.CAST_EVERY, HexSpec.CAST_EVERY).ifPresent(all::add);
         if (spec.mines().isActive()) {
             all.add(new NodeProgress(StandardBaseSlot.RANGE_3_ID, this.shotsFired % spec.mines().every(),
                     spec.mines().every()));
         }
-        this.countingNode(THUNDERSTRIKE.id(), this.shotsFired % ThunderstrikePerk.INTERVAL,
-                ThunderstrikePerk.INTERVAL).ifPresent(all::add);
+        this.countingNode(THUNDERSTRIKE.id(), this.shotsFired % ThunderstrikeMechanic.INTERVAL,
+                ThunderstrikeMechanic.INTERVAL).ifPresent(all::add);
         return all;
     }
 
     @Override
     protected String targetingLabel() {
-        return this.spec(this.perks.all()).blast().aimsAtCrowds() ? "most crowded" : "random";
+        return this.spec(this.mechanics.all()).blast().aimsAtCrowds() ? "most crowded" : "random";
     }
 
     @Override

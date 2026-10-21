@@ -6,7 +6,7 @@ import td.enemy.EnemyMob;
 
 import java.util.function.Function;
 
-/** What a perk may make the Sonar do beyond shaping its hits. */
+/** What a mechanic may make the Sonar do beyond shaping its hits. */
 public interface SonarActions {
 
     /** Puts an effect on {@code target}, credited to the Sonar for any damage it deals. */

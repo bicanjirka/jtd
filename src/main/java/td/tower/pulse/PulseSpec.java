@@ -5,7 +5,7 @@ import td.tower.targeting.Viewpoint;
 
 /**
  * Whom the Pulse's field touches, how Toll builds there, how it grows, what its zap does, what a visit starts with,
- * which rules hold inside, how it holds the enemies, what it shows of them and the line it casts: the base rules reshaped by each perk it
+ * which rules hold inside, how it holds the enemies, what it shows of them and the line it casts: the base rules reshaped by each mechanic it
  * owns. Each {@code withX} is a copy.
  *
  * @param reach the enemies in the field

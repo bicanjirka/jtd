@@ -2,7 +2,7 @@ package td.tower.sniper;
 
 import td.enemy.EnemyMob;
 
-/** What a perk may make the Sniper do beyond shaping its shot. */
+/** What a mechanic may make the Sniper do beyond shaping its shot. */
 public interface ShotActions {
 
     /**

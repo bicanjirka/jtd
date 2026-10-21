@@ -58,10 +58,10 @@ class TowerStatCatalogueTest {
     }
 
     @Test
-    void everyPerkSaysWhatItDoes() {
+    void everyMechanicSaysWhatItDoes() {
         for (AbstractTower tower : this.everyTower()) {
             for (UpgradeNode node : tower.upgradeTree().nodes()) {
-                assertThat(tower.perkCatalogue().describe(node)).as("%s's %s", tower.getType(), node.displayName())
+                assertThat(tower.mechanicCatalogue().describe(node)).as("%s's %s", tower.getType(), node.displayName())
                         .allMatch(text -> !text.isEmpty());
             }
         }

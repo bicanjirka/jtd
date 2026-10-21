@@ -6,7 +6,7 @@ import td.enemy.EnemyRegistry;
 import java.util.List;
 
 /**
- * Whom a tower may hit: what its query matches, less a dead zone around it. Perks widen or narrow
+ * Whom a tower may hit: what its query matches, less a dead zone around it. Mechanics widen or narrow
  * the query in the order they were bought; the dead zone is applied last, so it holds however the
  * query was widened. It is a fixed distance: range bonuses don't move it.
  *

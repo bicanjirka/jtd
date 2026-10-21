@@ -24,7 +24,7 @@ import java.util.Set;
  * @param targeting    whom it makes the tower aim at, if anyone
  * @param hitBonuses   how it changes some hits
  * @param procs        what it does on some attacks
- * @param note         words for what a perk does
+ * @param note         words for what a mechanic does
  */
 public record NodeEffects(StatModifiers<TowerStat> modifiers, StatModifiers<TowerStat> emission,
                           Set<TowerCapability> capabilities, Optional<TargetPriority> targeting, List<HitBonus> hitBonuses,

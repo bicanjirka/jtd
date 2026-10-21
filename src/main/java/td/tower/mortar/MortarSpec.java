@@ -5,7 +5,7 @@ import td.tower.targeting.Viewpoint;
 
 /**
  * Whom the Mortar may shell, how its shells bracket, how big a blast they make, how the shell flies
- * and which shells carry what: the base rules reshaped by each perk it owns. Each {@code withX} is a
+ * and which shells carry what: the base rules reshaped by each mechanic it owns. Each {@code withX} is a
  * copy.
  *
  * @param reach          the enemies it may fire at
