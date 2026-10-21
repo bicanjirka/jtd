@@ -3,6 +3,7 @@ package td.tower.seeker;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
+import td.term.TermText;
 import td.tower.TowerTerm;
 
 import java.util.Set;
@@ -22,8 +23,8 @@ public interface Payload {
     /** What the info rows call it. */
     String label();
 
-    /** Its name and what it does to the target: {@code "EMP: strips shields and heals and Silences 2s"}. */
-    String describe();
+    /** What it does to the target: "applies [Freeze] to its target". */
+    TermText effect();
 
     /** The terms the missile carrying it puts on its target. */
     Set<EffectKind> applies();

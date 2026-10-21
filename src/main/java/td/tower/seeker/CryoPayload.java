@@ -3,6 +3,7 @@ package td.tower.seeker;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
+import td.term.TermText;
 import td.tower.TowerTerm;
 
 import java.util.Set;
@@ -41,7 +42,7 @@ public final class CryoPayload implements Payload {
     }
 
     @Override
-    public String describe() {
-        return "Cryo: freezes its target";
+    public TermText effect() {
+        return TermText.of("applies ").plus(EffectKind.FREEZE).plus(" to its target");
     }
 }

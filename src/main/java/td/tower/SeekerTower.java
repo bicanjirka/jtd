@@ -468,7 +468,7 @@ public final class SeekerTower extends AbstractTower {
                     + " missiles stored")).withStacks(this.nest.stored()));
         }
         spec.payloads().loadFor(this.missilesLaunched + 1).ifPresent(load -> states.add(
-                TowerBuffState.of(load.payload().term(), TermText.of(load.payload().describe()))));
+                TowerBuffState.of(load.payload().term(), load.payload().effect())));
         this.perks.all().forEach(perk -> perk.condition().ifPresent(states::add));
         return states;
     }

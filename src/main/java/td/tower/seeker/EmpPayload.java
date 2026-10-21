@@ -3,8 +3,9 @@ package td.tower.seeker;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
+import td.term.TermNumbers;
+import td.term.TermText;
 import td.tower.TowerTerm;
-import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
 import java.util.Set;
@@ -41,7 +42,9 @@ public final class EmpPayload implements Payload {
     }
 
     @Override
-    public String describe() {
-        return "EMP: strips shields and heals and Silences " + PerkText.seconds(Math.round(SILENCE_SECONDS * TickRate.TICKS_PER_SECOND));
+    public TermText effect() {
+        return TermText.of("removes ").plus(EffectKind.SHIELD).plus(" and ").plus(EffectKind.HEAL)
+                .plus(" from its target and applies ").plus(EffectKind.SILENCED)
+                .plus(" for " + TermNumbers.seconds(SILENCE_SECONDS));
     }
 }

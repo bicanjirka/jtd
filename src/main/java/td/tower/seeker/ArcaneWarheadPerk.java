@@ -32,6 +32,8 @@ public final class ArcaneWarheadPerk implements SeekerPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("every impact applies Unraveled, " + CONTROLLED_STACKS + " stacks if the target was frozen or chilled");
+        return TermText.of("every impact applies a stack of ").plus(EffectKind.UNRAVELED)
+                .plus(", " + CONTROLLED_STACKS + " stacks to an enemy with ").plus(EffectKind.FREEZE).plus(" or ")
+                .plus(EffectKind.CHILL);
     }
 }

@@ -3,8 +3,9 @@ package td.tower.seeker;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
+import td.term.TermNumbers;
+import td.term.TermText;
 import td.tower.TowerTerm;
-import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
 import java.util.Set;
@@ -40,7 +41,8 @@ public final class TracerPayload implements Payload {
     }
 
     @Override
-    public String describe() {
-        return "Tracer: reveals and Marks " + PerkText.seconds(Math.round(SPOT_SECONDS * TickRate.TICKS_PER_SECOND));
+    public TermText effect() {
+        return TermText.of("applies ").plus(EffectKind.REVEALED).plus(" and ").plus(EffectKind.MARKED)
+                .plus(" to its target for " + TermNumbers.seconds(SPOT_SECONDS));
     }
 }

@@ -1,5 +1,6 @@
 package td.tower.seeker;
 
+import td.effect.EffectKind;
 import td.term.TermText;
 
 /** Rearm: a missile that freezes its target launches a new one at once; a rearmed missile rearms nothing. */
@@ -14,7 +15,8 @@ public final class RearmPerk implements SeekerPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("a missile that freezes its target launches a new missile from the tower at once; a rearmed missile's freeze "
-                + "rearms nothing");
+        return TermText.of("a missile that applies ").plus(EffectKind.FREEZE)
+                .plus(" launches a new missile from the tower at once; a rearmed missile's ").plus(EffectKind.FREEZE)
+                .plus(" rearms nothing");
     }
 }
