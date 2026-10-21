@@ -50,7 +50,9 @@ class TowerStatCatalogueTest {
     void everyNodeSaysWhatItDoes() {
         for (AbstractTower tower : this.everyTower()) {
             for (UpgradeNode node : tower.upgradeTree().nodes()) {
-                assertThat(tower.bonusesOf(node)).as("%s's %s", tower.getType(), node.displayName()).isNotEmpty();
+                NodeWords words = tower.wordsOf(node);
+                assertThat(words.stats().size() + words.sentences().size())
+                        .as("%s's %s", tower.getType(), node.displayName()).isPositive();
             }
         }
     }
