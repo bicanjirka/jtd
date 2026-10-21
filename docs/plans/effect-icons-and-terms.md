@@ -1,6 +1,6 @@
 # Plan: Effect icons and terms (`docs/features/FEATURE-effect-icons-and-terms.md`)
 
-**Status:** planned 2026-10-20 and 2026-10-21, reviewed 2026-10-21 (D19 to D21, phase 12 required). Not started.
+**Status:** planned 2026-10-20 and 2026-10-21, reviewed 2026-10-21 (D19 to D21, phase 12 required). Implemented through phase 12.
 
 **Companion files** in `docs/plans/effect-icons-and-terms/`:
 
