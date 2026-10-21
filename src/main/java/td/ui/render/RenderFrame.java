@@ -21,5 +21,6 @@ public record RenderFrame(int scale, int maxX, int maxY,
                           List<PathMarkerDraw> pathMarkers,
                           List<EnemyOverlayDraw> enemyOverlays,
                           Optional<InfoSheet> enemyInspection,
+                          Optional<TowerSheet> towerSheet,
                           Optional<CellGridDraw> cellGrid) {
 }

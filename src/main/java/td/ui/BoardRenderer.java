@@ -11,6 +11,7 @@ import td.ui.render.CellGridDraw;
 import td.ui.render.InfoSheet;
 import td.ui.render.PathMarkerDraw;
 import td.ui.render.RenderFrame;
+import td.ui.render.TowerSheet;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
 import td.util.PathRuntime;
@@ -88,11 +89,15 @@ public final class BoardRenderer {
                 .map(found -> selected.map(mob -> found.withMarks(this.marksOn(mob))).orElse(found))
                 .map(EnemyStatText::live);
 
+        Optional<TowerSheet> towerSheet = this.world.towers().all().stream().filter(Tower::isSelected).findFirst()
+                .map(tower -> new TowerSheet(tower.getX(), tower.getY(), TowerSheetText.status(tower.inspect()
+                        .withConditions(tower.conditions()).withProgress(tower.progress()))));
+
         return new RenderFrame(board.scale(), board.maxX(), board.maxY(),
                 cells, ZoneFrameBuilder.build(this.world.zones(), animationSeconds), enemyFrameBuilder.build(), enemyFrameBuilder.buildMarkers(), enemyFrameBuilder.buildCritSparks(),
                 spriteFrameBuilder.build(), spriteFrameBuilder.buildHeads(),
                 effectFrameBuilder.build(), projectileFrameBuilder.build(), pathMarkers,
-                enemyFrameBuilder.buildOverlays(), enemySheet, this.cellGrid(level));
+                enemyFrameBuilder.buildOverlays(), enemySheet, towerSheet, this.cellGrid(level));
     }
 
     /** What every tower remembers about {@code mob}, for its pane. */

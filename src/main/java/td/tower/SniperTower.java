@@ -447,14 +447,6 @@ public final class SniperTower extends AbstractTower {
         return this.spec(this.perks.all()).chosenAim().label();
     }
 
-    @Override
-    protected List<BehaviourLine> behaviours() {
-        List<BehaviourLine> lines = new ArrayList<>();
-        lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Targets", this.spec(this.perks.all()).chosenAim().label()));
-        this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
-        return lines;
-    }
-
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitSniperTower(this);
     }

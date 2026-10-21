@@ -33,6 +33,8 @@ import td.tower.upgrade.Perk;
 import td.tower.upgrade.PerkCatalogue;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeBonus;
+import td.tower.upgrade.UpgradeDecision;
+import td.tower.upgrade.UpgradeLine;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
@@ -95,6 +97,7 @@ public abstract class AbstractTower implements Tower {
     // Sampled by the tick thread; also read when the EDT republishes stats after a purchase.
     private volatile DisruptionPenalty disruption = DisruptionPenalty.none();
     private final ActiveTowerStatuses statuses = new ActiveTowerStatuses();
+    private volatile InspectionCache inspectionCache;
     private final ProcActions procActions = new TowerProcActions();
     // What the statuses add, published for the EDT's republish; the live list stays on the tick thread.
     private volatile StatusLayer statusLayer = StatusLayer.NONE;
@@ -665,36 +668,6 @@ public abstract class AbstractTower implements Tower {
     protected List<TowerStatLine> ownStats() {
         return List.of();
     }
-
-    /** What the tower does beyond its stats; nothing by default. */
-    protected List<BehaviourLine> behaviours() {
-        return List.of();
-    }
-
-    /** The tower's own rows, then one for each hit bonus and proc its upgrades carry. */
-    private List<BehaviourLine> behavioursWithUpgrades() {
-        UpgradeState owned = this.upgrades;
-        List<BehaviourLine> lines = new ArrayList<>(this.behaviours());
-        for (HitBonus bonus : owned.hitBonuses()) {
-            lines.add(line(BehaviourMarker.TARGETING, bonus.describe()));
-        }
-        for (Proc proc : owned.procs()) {
-            lines.add(line(markerFor(proc.payload()), proc.describe()));
-        }
-        return lines;
-    }
-
-    private static BehaviourLine line(BehaviourMarker marker, TermText sentence) {
-        return new BehaviourLine(marker, sentence.capitalized().plain(), "");
-    }
-
-    private static BehaviourMarker markerFor(ProcPayload payload) {
-        return switch (payload) {
-            case ProcPayload.ApplyStacks stacks when stacks.kind() == EffectKind.VULNERABLE -> BehaviourMarker.VULNERABLE;
-            default -> BehaviourMarker.TARGETING;
-        };
-    }
-
     /** What no row says, for the shop; empty by default. */
     protected String description() {
         return "";
@@ -827,7 +800,39 @@ public abstract class AbstractTower implements Tower {
                         + TermNumbers.signed(-jam.rangeCells()) + " range")));
     }
 
+    /** What each owned node says, with the nodes it was chosen over. */
+    private Map<String, NodeWords> wordsOfOwned() {
+        UpgradeState owned = this.upgrades();
+        Map<String, List<String>> passedOver = new LinkedHashMap<>();
+        for (UpgradeDecision decision : this.upgradeTree().decisions(owned)) {
+            passedOver.put(decision.chosen().id(), decision.passedOver().stream().map(UpgradeNode::displayName).toList());
+        }
+        Map<String, NodeWords> words = new LinkedHashMap<>();
+        for (UpgradeNode node : owned.owned()) {
+            words.put(node.id(), this.wordsOf(node).withChosenOver(passedOver.getOrDefault(node.id(), List.of())));
+        }
+        return words;
+    }
+
+    /** What changes only when an upgrade is bought, rebuilt only then. */
+    private InspectionCache cachedForUpgrades() {
+        UpgradeState owned = this.upgrades();
+        InspectionCache last = this.inspectionCache;
+        if (last != null && last.state() == owned) {
+            return last;
+        }
+        InspectionCache fresh = new InspectionCache(owned, this.upgradeTree().lines(owned), this.applies(),
+                this.wordsOfOwned());
+        this.inspectionCache = fresh;
+        return fresh;
+    }
+
+    private record InspectionCache(UpgradeState state, List<UpgradeLine> lines, List<AppliedEffect> applies,
+                                   Map<String, NodeWords> words) {
+    }
+
     public TowerInspection inspect() {
+        InspectionCache cached = this.cachedForUpgrades();
         TowerStats now = this.stats;
         List<TowerStatLine> lines = new ArrayList<>();
         lines.add(new TowerStatLine(TowerStatRow.RANGE, this.rangeBase, now.range()));
@@ -846,16 +851,16 @@ public abstract class AbstractTower implements Tower {
                 .count();
         return TowerInspection.of(this.type, this.price, lines)
                 .withName(this.displayName())
-                .withBehaviours(this.behavioursWithUpgrades())
                 .withDescription(this.description())
                 .withRecord(this.killCount, this.damageDealt)
                 .withXp(this.experience.xp())
                 .withUpgrades(this.upgrades())
                 .withDisruption(now.disruption())
                 .withAuras(auras)
-                .withLines(this.upgradeTree().lines(this.upgrades()))
+                .withLines(cached.lines())
                 .withTargeting(this.targetingLabel())
-                .withApplies(this.applies());
+                .withApplies(cached.applies())
+                .withWords(cached.words());
     }
 
     /** Contributes nothing by default. */

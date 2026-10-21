@@ -5,13 +5,10 @@ import td.effect.EffectKind;
 import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.BehaviourLine;
-import td.tower.BehaviourMarker;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.Viewpoint;
 import td.util.TickRate;
 
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -37,11 +34,6 @@ public final class WideBandPerk implements SonarPerk {
             actions.apply(result.target(),
                     sink -> Effect.exposed(Math.round(EXPOSE_SECONDS * TickRate.TICKS_PER_SECOND), sink));
         }
-    }
-
-    @Override
-    public Optional<BehaviourLine> behaviour() {
-        return Optional.of(new BehaviourLine(BehaviourMarker.REVEAL, "Reveals", "hidden it passes"));
     }
 
     @Override

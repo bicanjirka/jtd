@@ -4,10 +4,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.term.Term;
 import td.term.TermText;
-import td.tower.BehaviourLine;
-import td.tower.BehaviourMarker;
 
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -21,11 +18,6 @@ public final class MarkOnSweepPerk implements SonarPerk {
         if (!result.killed() && !result.dodged()) {
             actions.apply(result.target(), sink -> Effect.marked(result.spec().untilNextPass(), sink));
         }
-    }
-
-    @Override
-    public Optional<BehaviourLine> behaviour() {
-        return Optional.of(new BehaviourLine(BehaviourMarker.TARGETING, "Marks", "next hit crits"));
     }
 
     @Override

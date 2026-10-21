@@ -5,6 +5,7 @@ import td.economy.EconomyState;
 import td.tower.PulseTower;
 import td.tower.Tower;
 import td.ui.render.InfoSheet;
+import td.ui.render.TowerSheet;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
@@ -179,7 +180,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         if (this.selectedTower != null) {
             this.jButton_sell.setEnabled(!this.levelEnded);
             this.jButton_sell.setText("Sell ( $" + this.selectedTower.getSellPrice() + " )");
-            this.refreshSelected();
+            this.replaceSheet(TowerSheetText.status(this.selectedTower.inspect()));
         }
     }
 
@@ -198,12 +199,13 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     }
 
     /**
-     * Rebuilds the selected tower's status. Called from the render pulse, since damage and kills
-     * change every tick without any economy event.
+     * The selected tower's sheet, built with the frame; shown only while that tower is still selected and nothing
+     * else owns the pane.
      */
-    public void refreshSelected() {
-        if (this.selectedTower != null && !this.hovering) {
-            this.replaceSheet(TowerSheetText.status(this.selectedTower.inspect()));
+    public void showTowerSheet(TowerSheet sheet) {
+        if (this.selectedTower != null && !this.hovering && sheet.x() == this.selectedTower.getX()
+                && sheet.y() == this.selectedTower.getY()) {
+            this.replaceSheet(sheet.sheet());
         }
     }
 

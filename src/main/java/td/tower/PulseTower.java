@@ -616,47 +616,6 @@ public final class PulseTower extends AbstractTower {
         return "all in range";
     }
 
-    @Override
-    protected List<BehaviourLine> behaviours() {
-        PulseSpec spec = this.spec(this.perks.all());
-        List<BehaviourLine> lines = new ArrayList<>();
-        lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Hits", "all in range"));
-        HoldSpec hold = spec.hold();
-        String centre = hold.centreDrag() > 0 ? ", " + hold.centreDrag() + "% at the centre" : "";
-        lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Drags", hold.dragAt(FieldStrength.FULL, 1f) + "%" + centre));
-        TollSpec toll = this.toll(spec);
-        if (toll.isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Toll", "up to " + toll.cap() + ", effects +10% each"));
-        }
-        if (spec.sight().reveals()) {
-            lines.add(new BehaviourLine(BehaviourMarker.REVEAL, "Reveals inside",
-                    "+" + BehaviourLine.seconds(spec.sight().revealTicks()) + " after"));
-        }
-        if (spec.visit().dazeTicks() > 0) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Dazes on Toll",
-                    BehaviourLine.seconds(spec.visit().dazeTicks())));
-        }
-        if (hold.stills()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Stills at full Toll",
-                    BehaviourLine.seconds(hold.stasisTicks())));
-        }
-        for (FieldMode mode : FieldMode.values()) {
-            if (spec.modes().has(mode)) {
-                lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Inside", insideText(mode)));
-            }
-        }
-        if (spec.field().perDeathGrowth() > 0f) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Field widened",
-                    "+" + Math.round(100 * spec.field().growthAfter(this.deathsThisWave)) + "%"));
-        }
-        if (this.interference < 1f) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Interference",
-                    "-" + Math.round(100 * (1f - this.interference)) + "% damage"));
-        }
-        this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
-        return lines;
-    }
-
     private static String insideText(FieldMode mode) {
         return switch (mode) {
             case SILENCE -> "silenced";

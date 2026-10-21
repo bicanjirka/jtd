@@ -30,7 +30,6 @@ import td.tower.seeker.Impact;
 import td.tower.seeker.NestPerk;
 import td.tower.seeker.NestSpec;
 import td.tower.seeker.OverTheHorizonPerk;
-import td.tower.seeker.Payload;
 import td.tower.seeker.PayloadLoad;
 import td.tower.seeker.PayloadPerk;
 import td.tower.seeker.PayloadPlan;
@@ -68,7 +67,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * The hunter: a slow homing missile at the fastest visible enemy in range, which it never loses
@@ -494,39 +492,6 @@ public final class SeekerTower extends AbstractTower {
     @Override
     protected String targetingLabel() {
         return this.spec(this.perks.all()).aim().label();
-    }
-
-    @Override
-    protected List<BehaviourLine> behaviours() {
-        SeekerSpec spec = this.spec(this.perks.all());
-        List<BehaviourLine> lines = new ArrayList<>();
-        lines.add(new BehaviourLine(BehaviourMarker.FREEZE, "Freezes", BehaviourLine.seconds(this.freezeTicks())));
-        if (spec.freeze().areaCells() > 0f) {
-            lines.add(new BehaviourLine(BehaviourMarker.FREEZE, "Freezes around", "1 cell"));
-        }
-        if (spec.freeze().brittle()) {
-            lines.add(new BehaviourLine(BehaviourMarker.FREEZE, "Frozen take", "+30% physical"));
-        }
-        if (spec.shatter().onKill()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Shatters",
-                    spec.shatter().onThaw() ? "on kill and thaw" : "on kill"));
-        }
-        if (spec.frostbite()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Always crits", "frozen enemies"));
-        }
-        lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Targets", spec.aim().label()));
-        NestSpec nest = this.nest(spec);
-        if (nest.isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Nest", this.nest.stored() + "/" + nest.capacity()));
-        }
-        if (!spec.payloads().owned().isEmpty() || spec.payloads().everyMissile()) {
-            String carried = spec.payloads().everyMissile() ? "cryo, arcane, emp, tracer" : spec.payloads().owned()
-                    .stream().map(Payload::label).collect(Collectors.joining(", "));
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, spec.payloads().everyMissile() ? "Every missile"
-                    : "Every 3rd missile", carried));
-        }
-        this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
-        return lines;
     }
 
     @Override

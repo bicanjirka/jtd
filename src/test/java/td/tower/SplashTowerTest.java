@@ -78,7 +78,7 @@ class SplashTowerTest {
         tower.doTick(0);
 
         assertThat(effectsOf(enemy, EffectKind.SATURATED)).isEmpty();
-        assertThat(tower.inspect().behaviours()).extracting(BehaviourLine::value).contains("random");
+        assertThat(tower.inspect().targeting()).isEqualTo("random");
     }
 
     @Test

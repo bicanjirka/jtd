@@ -368,25 +368,6 @@ public final class SonarTower extends AbstractTower {
         return this.spec(this.perks.all()).beam().phased() ? "most health" : "all it sweeps";
     }
 
-    @Override
-    protected List<BehaviourLine> behaviours() {
-        SonarSpec spec = this.spec(this.perks.all());
-        List<BehaviourLine> lines = new ArrayList<>();
-        lines.add(spec.beam().phased()
-                ? new BehaviourLine(BehaviourMarker.TARGETING, "Holds on", "most health")
-                : new BehaviourLine(BehaviourMarker.TARGETING, "Hits", "all it sweeps"));
-        if (spec.beam().hasTwinBeam()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Beams", "2"));
-        }
-        PingRule ping = this.ping(spec);
-        if (ping.isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Pings", ping.count() == 1
-                    ? "the healthiest" : ping.count() + " healthiest"));
-        }
-        this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
-        return lines;
-    }
-
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitSonarTower(this);
     }

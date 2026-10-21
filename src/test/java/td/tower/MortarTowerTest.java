@@ -447,13 +447,13 @@ class MortarTowerTest {
     }
 
     @Test
-    void theInfoRowsNameTheSpecialShellPattern() {
+    void napalmMakesTheMortarApplyBurn() {
         MortarTower tower = this.towerAt(3, 3);
         UpgradePaths.buy(tower, this.context, "Napalm");
 
-        assertThat(tower.inspect().behaviours()).anySatisfy(line -> {
-            assertThat(line.label()).isEqualTo("Every 3rd shell");
-            assertThat(line.value()).isEqualTo("napalm");
+        assertThat(tower.applies()).anySatisfy(applied -> {
+            assertThat(applied.term()).isEqualTo(EffectKind.BURN);
+            assertThat(applied.sources()).extracting(AppliedEffect.Source::name).contains("Napalm");
         });
     }
 
