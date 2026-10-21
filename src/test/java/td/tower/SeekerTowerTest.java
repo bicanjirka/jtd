@@ -13,7 +13,6 @@ import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.TowerFixtures;
 import td.fixtures.WorldFixtures;
-import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.util.GameWorld;
@@ -713,9 +712,9 @@ class SeekerTowerTest {
     void shatterburstSaysWhatItDoes() {
         SeekerTower tower = new SeekerTower(this.context, 0, 0);
 
-        assertThat(tower.bonusesOf(UpgradePaths.named(tower, "Shatterburst"))).contains(new UpgradeBonus(
-                "A missile that hits a frozen enemy bursts for 35% magic damage around it; every enemy the "
-                + "burst hits is Silenced 2s and gains Unraveled", ""));
+        assertThat(td.fixtures.TowerFixtures.plain(tower.wordsOf(UpgradePaths.named(tower, "Shatterburst")).sentences()))
+                .contains("a missile that hits an enemy with Freeze bursts for 35% magic damage around it; every enemy "
+                        + "the burst hits gains Silence for 2 s and a stack of Unravel");
     }
 
     @Test

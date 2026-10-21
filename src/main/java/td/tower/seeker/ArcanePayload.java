@@ -3,6 +3,7 @@ package td.tower.seeker;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
+import td.term.TermText;
 import td.tower.TowerTerm;
 
 import java.util.Set;
@@ -36,7 +37,8 @@ public final class ArcanePayload implements Payload {
     }
 
     @Override
-    public String describe() {
-        return "Arcane: Unravels its target instead of freezing it";
+    public TermText effect() {
+        return TermText.of("applies ").plus(EffectKind.UNRAVELED).plus(" to its target instead of ")
+                .plus(EffectKind.FREEZE);
     }
 }

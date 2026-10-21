@@ -1,7 +1,9 @@
 package td.tower.seeker;
 
+import td.effect.EffectKind;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
+import td.tower.TowerTerm;
 
 /**
  * Absolute Zero: a missile freezes everything within a cell of its impact, shatters hit twice as
@@ -20,8 +22,9 @@ public final class AbsoluteZeroPerk implements SeekerPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("the missile freezes everything within " + PerkText.distance(AREA_CELLS)
-                + " of the impact; shatters deal " + PerkText.times(SHATTER_FACTOR)
-                + "; an enemy this tower froze shatters when its freeze ends");
+        return TermText.of("the missile applies ").plus(EffectKind.FREEZE)
+                .plus(" to everything within " + TermNumbers.cells(AREA_CELLS) + " of the impact; a ")
+                .plus(TowerTerm.SHATTER).plus(" deals " + TermNumbers.times(SHATTER_FACTOR) + "; an enemy with this tower's ")
+                .plus(EffectKind.FREEZE).plus(" breaks in a ").plus(TowerTerm.SHATTER).plus(" when it ends");
     }
 }

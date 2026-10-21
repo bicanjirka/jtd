@@ -1,8 +1,8 @@
 package td.tower.seeker;
 
 import td.term.Term;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
 
 import java.util.Set;
 
@@ -27,7 +27,8 @@ public final class PayloadPerk implements SeekerPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("every " + PerkText.ordinal(PayloadPlan.EVERY) + " missile carries a payload in turn, among them "
-                + this.payload.describe());
+        return TermText.of("every " + TermNumbers.ordinal(PayloadPlan.EVERY)
+                + " missile carries a payload, the payloads taking turns; adds the ")
+                .plus(TermText.of(this.payload.term(), this.payload.effect()));
     }
 }
