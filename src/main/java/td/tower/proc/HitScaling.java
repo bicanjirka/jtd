@@ -3,10 +3,17 @@ package td.tower.proc;
 import td.effect.EffectKind;
 import td.tower.TowerTerm;
 
+import java.util.Optional;
+
 /** How many times a hit bonus applies to one hit; each record works it out and says it. */
 public sealed interface HitScaling {
 
     float factor(HitContext context);
+
+    /** The counter this scaling reads, if it reads one. */
+    default Optional<TowerTerm> focusCounter() {
+        return Optional.empty();
+    }
 
     String describe();
 
@@ -25,6 +32,11 @@ public sealed interface HitScaling {
 
     /** Once per step of the tower's focus, up to {@code max}; 0 for no max. */
     record PerFocus(TowerTerm counter, int max) implements HitScaling {
+        @Override
+        public Optional<TowerTerm> focusCounter() {
+            return Optional.of(this.counter);
+        }
+
         @Override
         public float factor(HitContext context) {
             return this.max == 0 ? context.focus() : Math.min(context.focus(), this.max);

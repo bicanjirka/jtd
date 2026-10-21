@@ -636,4 +636,21 @@ class CinderTowerTest {
                 "A burn that grows hotter than a single wave could make it bursts for 50% of what it has left onto enemies "
                         + "within 1 cell, and can burst again once it has cooled to half", ""));
     }
+
+    @Test
+    void aStokedEnemyCarriesTheScorchersStokeAsAMark() {
+        CinderTower tower = towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context);
+        FakeEnemyMob target = FakeEnemyMob.at(150, 112);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        for (int t = 1; t < 400 && tower.marksOn(target).isEmpty(); t++) {
+            tower.doTick(t);
+        }
+
+        assertThat(tower.marksOn(target)).singleElement().satisfies(mark -> {
+            assertThat(mark.term()).isEqualTo(TowerTerm.STOKE);
+            assertThat(mark.steps()).isPositive();
+        });
+    }
 }

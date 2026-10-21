@@ -79,4 +79,25 @@ class ActiveTowerStatusesTest {
 
         assertThat(this.statuses.modifiers().flat(TowerStat.ATTACK_SPEED)).isEqualTo(2f);
     }
+
+    @Test
+    void aHeldShotStatusShowsTheShotsItHasLeft() {
+        this.statuses.grant(FRENZY, 0, 1f);
+
+        assertThat(this.statuses.states(0)).singleElement().satisfies(state -> {
+            assertThat(state.term()).isEqualTo(TowerTerm.FRENZY);
+            assertThat(state.stacks()).isEqualTo(3);
+            assertThat(state.remainingTicks()).isEmpty();
+        });
+    }
+
+    @Test
+    void aTimedStatusShowsItsClock() {
+        this.statuses.grant(HASTE, 0, 2f);
+
+        assertThat(this.statuses.states(50)).singleElement().satisfies(state -> {
+            assertThat(state.remainingTicks()).hasValue(150);
+            assertThat(state.clockTicks()).isEqualTo(200);
+        });
+    }
 }

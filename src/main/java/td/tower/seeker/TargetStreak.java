@@ -10,6 +10,11 @@ public final class TargetStreak {
     private EnemyMob target;
     private int hits;
 
+    /** How many impacts in a row the current streak has; 0 once its enemy is dead. */
+    public int current() {
+        return this.target == null || this.target.isDead() ? 0 : this.hits;
+    }
+
     /** How many impacts in a row landed on {@code enemy}; 0 for any other enemy. */
     public int on(EnemyMob enemy) {
         return enemy == this.target ? this.hits : 0;

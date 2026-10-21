@@ -13,7 +13,7 @@ import td.util.TickRate;
 public final class AimFocus {
 
     public static final float STACK_SECONDS = 3f;
-    private static final int STACK_TICKS = Math.round(STACK_SECONDS * TickRate.TICKS_PER_SECOND);
+    public static final int STACK_TICKS = Math.round(STACK_SECONDS * TickRate.TICKS_PER_SECOND);
 
     private EnemyMob target;
     private int stacks;
@@ -42,6 +42,11 @@ public final class AimFocus {
         this.stacks = Math.min(stackCap, this.stacks + 1);
         this.ticksSinceShot = 0;
         return lock;
+    }
+
+    /** Ticks until the next stack fades, counting from the last shot. */
+    public int ticksUntilFade() {
+        return STACK_TICKS - this.ticksSinceShot;
     }
 
     /** The stacks the next shot is fired under, before its cap. */

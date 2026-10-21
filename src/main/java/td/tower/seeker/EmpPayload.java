@@ -2,6 +2,7 @@ package td.tower.seeker;
 
 import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
+import td.tower.TowerTerm;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
@@ -13,6 +14,11 @@ public final class EmpPayload implements Payload {
     @Override
     public MissileLook look() {
         return MissileLook.EMP;
+    }
+
+    @Override
+    public TowerTerm term() {
+        return TowerTerm.EMP_MISSILE;
     }
 
     @Override

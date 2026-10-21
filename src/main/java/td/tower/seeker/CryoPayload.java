@@ -2,6 +2,7 @@ package td.tower.seeker;
 
 import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
+import td.tower.TowerTerm;
 
 /** Cryo: the missile freezes, as a plain one does. */
 public final class CryoPayload implements Payload {
@@ -9,6 +10,11 @@ public final class CryoPayload implements Payload {
     @Override
     public MissileLook look() {
         return MissileLook.CRYO;
+    }
+
+    @Override
+    public TowerTerm term() {
+        return TowerTerm.CRYO_MISSILE;
     }
 
     @Override

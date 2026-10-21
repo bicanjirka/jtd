@@ -728,6 +728,20 @@ public final class SplashTower extends AbstractTower {
     }
 
     @Override
+    protected List<NodeProgress> ownProgress() {
+        List<NodeProgress> all = new ArrayList<>();
+        SplashSpec spec = this.spec(this.perks.all());
+        this.countingNode(HEX.id(), this.shotsFired % HexSpec.CAST_EVERY, HexSpec.CAST_EVERY).ifPresent(all::add);
+        if (spec.mines().isActive()) {
+            all.add(new NodeProgress(StandardBaseSlot.RANGE_3_ID, this.shotsFired % spec.mines().every(),
+                    spec.mines().every()));
+        }
+        this.countingNode(THUNDERSTRIKE.id(), this.shotsFired % ThunderstrikePerk.INTERVAL,
+                ThunderstrikePerk.INTERVAL).ifPresent(all::add);
+        return all;
+    }
+
+    @Override
     protected List<BehaviourLine> behaviours() {
         SplashSpec spec = this.spec(this.perks.all());
         List<BehaviourLine> lines = new ArrayList<>();

@@ -1,5 +1,7 @@
 package td.tower;
 
+import td.enemy.EnemyMark;
+import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
 import td.stat.StatModifiers;
 import td.tower.upgrade.UpgradeBonus;
@@ -128,6 +130,21 @@ public interface Tower {
 
     /** Takes up {@code tally} in place of its own: for a tower just rebuilt from a saved game. */
     void restore(TowerTally tally);
+
+    /** Every buff and debuff this tower carries now, buffs first. Game loop only. */
+    default List<TowerBuffState> conditions() {
+        return List.of();
+    }
+
+    /** Memory this tower keeps about {@code enemy}, named for the player. Game loop only. */
+    default List<EnemyMark> marksOn(EnemyMob enemy) {
+        return List.of();
+    }
+
+    /** How far each counting node it owns is toward its next go. Game loop only. */
+    default List<NodeProgress> progress() {
+        return List.of();
+    }
 
     /** {@link UpgradeTree#none()} for a tower without upgrades. */
     UpgradeTree upgradeTree();

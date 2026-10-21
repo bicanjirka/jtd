@@ -6,6 +6,7 @@ import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.PoolTuning;
+import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
 import td.stat.EnemyStat;
 import td.tower.cinder.BellowsPerk;
@@ -569,6 +570,16 @@ public final class CinderTower extends AbstractTower {
         }
         this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
         return lines;
+    }
+
+    @Override
+    public List<EnemyMark> marksOn(EnemyMob enemy) {
+        Burning entry = this.burning.get(enemy);
+        if (entry == null || entry.steps <= 0) {
+            return List.of();
+        }
+        return List.of(new EnemyMark(TowerTerm.STOKE, entry.steps,
+                this.spec(this.perks.all()).stoke().maxSteps(), this.displayName()));
     }
 
     @Override

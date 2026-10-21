@@ -15,6 +15,9 @@ import td.enemy.EnemyWalk;
 import td.enemy.HitResult;
 import td.stat.DisruptionPenalty;
 import td.stat.StatModifiers;
+import td.term.Side;
+import td.term.TermNumbers;
+import td.term.TermText;
 import td.tower.proc.AttackOutcome;
 import td.tower.proc.Description;
 import td.tower.proc.HitAdjustment;
@@ -40,6 +43,7 @@ import td.util.TickRate;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -692,6 +696,84 @@ public abstract class AbstractTower implements Tower {
         return this.context.towers().all().contains(this);
     }
 
+    /**
+     * Every buff and debuff this tower carries now, buffs first. Game loop only: reads statuses and perk state.
+     */
+    @Override
+    public final List<TowerBuffState> conditions() {
+        List<TowerBuffState> all = new ArrayList<>(this.statuses.states(this.currentTick));
+        for (Proc proc : this.procs()) {
+            int every = proc.trigger().shotInterval();
+            Optional<TowerStatus> granted = proc.payload().grantedStatus();
+            if (every > 0 && granted.isPresent() && (this.shotsBegun + 1) % every == 0) {
+                all.add(TowerBuffState.of(granted.get().term(), granted.get().describe()));
+            }
+        }
+        all.addAll(this.ownConditions());
+        this.receivedCondition().ifPresent(all::add);
+        this.jammedCondition().ifPresent(all::add);
+        List<TowerBuffState> sorted = new ArrayList<>(all.stream().filter(s -> s.side() == Side.BUFF).toList());
+        sorted.addAll(all.stream().filter(s -> s.side() == Side.DEBUFF).toList());
+        return sorted;
+    }
+
+    /** How far each counting node it owns is toward its next go. */
+    @Override
+    public final List<NodeProgress> progress() {
+        List<NodeProgress> all = new ArrayList<>();
+        for (UpgradeNode node : this.upgrades().owned()) {
+            for (Proc proc : node.effects().procs()) {
+                int every = proc.trigger().shotInterval();
+                if (every > 0) {
+                    all.add(new NodeProgress(node.id(), this.shotsBegun % every, every));
+                }
+            }
+        }
+        all.addAll(this.ownProgress());
+        return all;
+    }
+
+    /** Buffs and debuffs of the tower's own: its rhythms and its perks' states. None by default. */
+    protected List<TowerBuffState> ownConditions() {
+        return List.of();
+    }
+
+    /** Counting nodes of the tower's own, beyond every-Nth-shot procs. None by default. */
+    protected List<NodeProgress> ownProgress() {
+        return List.of();
+    }
+
+    /** The counting node {@code nodeId} toward its next go, when this tower owns it. */
+    protected final Optional<NodeProgress> countingNode(String nodeId, int count, int of) {
+        return this.upgrades().owned().stream().anyMatch(node -> node.id().equals(nodeId))
+                ? Optional.of(new NodeProgress(nodeId, count, of))
+                : Optional.empty();
+    }
+
+    private Optional<TowerBuffState> receivedCondition() {
+        long givers = this.context.towers().all().stream().filter(other -> !other.buffFor(this).isNone()).count();
+        if (givers == 0) {
+            return Optional.empty();
+        }
+        StatModifiers<TowerStat> received = this.stats.received();
+        List<String> parts = new ArrayList<>();
+        for (TowerStat stat : received.stats()) {
+            parts.add(stat.describe(received.get(stat)) + " " + stat.label().toLowerCase(Locale.ROOT));
+        }
+        TowerBuffState state = TowerBuffState.of(TowerTerm.AURA, TermText.of(String.join(", ", parts)));
+        return Optional.of(givers > 1 ? state.withStacks((int) givers) : state);
+    }
+
+    private Optional<TowerBuffState> jammedCondition() {
+        DisruptionPenalty jam = this.stats.disruption();
+        if (jam.isNone()) {
+            return Optional.empty();
+        }
+        return Optional.of(TowerBuffState.of(TowerTerm.JAMMED, TermText.of(
+                TermNumbers.signedPercent(-jam.attackSpeed()) + " attack speed, "
+                        + TermNumbers.signed(-jam.rangeCells()) + " range")));
+    }
+
     public TowerInspection inspect() {
         TowerStats now = this.stats;
         List<TowerStatLine> lines = new ArrayList<>();
@@ -717,7 +799,8 @@ public abstract class AbstractTower implements Tower {
                 .withXp(this.experience.xp())
                 .withUpgrades(this.upgrades())
                 .withDisruption(now.disruption())
-                .withAuras(auras);
+                .withAuras(auras)
+                .withLines(this.upgradeTree().lines(this.upgrades()));
     }
 
     /** Contributes nothing by default. */

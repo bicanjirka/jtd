@@ -14,7 +14,7 @@ import java.util.List;
  */
 public record ShellPlan(List<ShellType> specials, int nukeEvery) {
 
-    static final int CYCLE = 3;
+    public static final int CYCLE = 3;
 
     public ShellPlan {
         specials = List.copyOf(specials);

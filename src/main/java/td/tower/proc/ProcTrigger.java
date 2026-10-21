@@ -16,6 +16,11 @@ public sealed interface ProcTrigger {
         return false;
     }
 
+    /** The shots between two firings of a shot trigger; 0 for every other trigger. */
+    default int shotInterval() {
+        return 0;
+    }
+
     /** "On hit", "On crit", "On kill", "On dodge", "Every 3rd shot". */
     String describe();
 
@@ -73,6 +78,11 @@ public sealed interface ProcTrigger {
 
     /** Every {@code n}th attack the tower begins. */
     record EveryNthShot(int n) implements ProcTrigger {
+        @Override
+        public int shotInterval() {
+            return this.n;
+        }
+
         @Override
         public boolean firesOnShot(int shotNumber) {
             return this.n > 0 && shotNumber % this.n == 0;
