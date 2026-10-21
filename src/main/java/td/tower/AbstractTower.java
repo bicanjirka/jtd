@@ -16,6 +16,7 @@ import td.enemy.HitResult;
 import td.stat.DisruptionPenalty;
 import td.stat.StatModifiers;
 import td.term.Side;
+import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.proc.AttackOutcome;
@@ -42,8 +43,10 @@ import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -733,6 +736,50 @@ public abstract class AbstractTower implements Tower {
         return all;
     }
 
+    /**
+     * Every effect this tower puts on enemies or gives towers, first its own, then each owned node's procs and
+     * perks in purchase order. Game loop only.
+     */
+    @Override
+    public final List<AppliedEffect> applies() {
+        Map<Term, List<AppliedEffect.Source>> byTerm = new LinkedHashMap<>();
+        for (AppliedEffect own : this.baseApplies()) {
+            byTerm.computeIfAbsent(own.term(), term -> new ArrayList<>()).addAll(own.sources());
+        }
+        for (UpgradeNode node : this.upgrades().owned()) {
+            for (Proc proc : node.effects().procs()) {
+                this.appliedBy(proc.payload()).ifPresent(term -> byTerm.computeIfAbsent(term, t -> new ArrayList<>())
+                        .add(new AppliedEffect.Source(node.displayName(),
+                                TermText.of(proc.payload().describe()))));
+            }
+            for (Perk perk : this.perkCatalogue().perksOf(node)) {
+                for (Term term : perk.applies()) {
+                    byTerm.computeIfAbsent(term, t -> new ArrayList<>())
+                            .add(new AppliedEffect.Source(node.displayName(), TermText.of(perk.describe())));
+                }
+            }
+        }
+        return byTerm.entrySet().stream().map(e -> new AppliedEffect(e.getKey(), e.getValue())).toList();
+    }
+
+    private Optional<Term> appliedBy(ProcPayload payload) {
+        return switch (payload) {
+            case ProcPayload.ApplyStacks stacks -> Optional.of(stacks.kind());
+            case ProcPayload.Charge charge -> Optional.of(EffectKind.CHARGED);
+            default -> Optional.empty();
+        };
+    }
+
+    /** What the tower applies on its own, before any upgrade. None by default. */
+    protected List<AppliedEffect> baseApplies() {
+        return List.of();
+    }
+
+    /** Whom it aims at, as its row words it; empty for a tower that aims at no one. */
+    protected String targetingLabel() {
+        return "";
+    }
+
     /** Buffs and debuffs of the tower's own: its rhythms and its perks' states. None by default. */
     protected List<TowerBuffState> ownConditions() {
         return List.of();
@@ -800,7 +847,9 @@ public abstract class AbstractTower implements Tower {
                 .withUpgrades(this.upgrades())
                 .withDisruption(now.disruption())
                 .withAuras(auras)
-                .withLines(this.upgradeTree().lines(this.upgrades()));
+                .withLines(this.upgradeTree().lines(this.upgrades()))
+                .withTargeting(this.targetingLabel())
+                .withApplies(this.applies());
     }
 
     /** Contributes nothing by default. */

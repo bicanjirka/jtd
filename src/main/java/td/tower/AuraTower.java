@@ -1,8 +1,11 @@
 package td.tower;
 
+import td.effect.EffectKind;
 import td.enemy.EnemyWalk;
 import td.stat.StatModifier;
 import td.stat.StatModifiers;
+import td.term.TermNumbers;
+import td.term.TermText;
 import td.tower.aura.ApprenticePerk;
 import td.tower.aura.AuraPerk;
 import td.tower.aura.AuraSpec;
@@ -353,6 +356,24 @@ public final class AuraTower extends AbstractTower {
                     .findFirst().orElse(null);
         }
         return Optional.ofNullable(this.rallySpot);
+    }
+
+    @Override
+    protected List<AppliedEffect> baseApplies() {
+        List<AppliedEffect> all = new ArrayList<>();
+        all.add(new AppliedEffect(TowerTerm.AURA, List.of(new AppliedEffect.Source(this.displayName(),
+                TermText.of("towers in range gain ").plus(TowerTerm.AURA).plus(": "
+                        + TermNumbers.signedPercent(this.stats().value(TowerStat.AURA_POWER))
+                        + " damage and range, and they take " + TermNumbers.percent(1f - DISRUPTION_LEFT)
+                        + " less from ").plus(TowerTerm.JAMMED)))));
+        StatModifier wither = this.upgrades().totalEmission().get(TowerStat.WITHER_INTERVAL);
+        if (wither.hasSetValue()) {
+            all.add(new AppliedEffect(EffectKind.VULNERABLE, List.of(new AppliedEffect.Source(
+                    WITHERING_FIELD.displayName(), TermText.of("each buffed tower's first hit every "
+                            + PerkText.seconds(Math.round(wither.setTo())) + " applies a stack of ")
+                    .plus(EffectKind.VULNERABLE)))));
+        }
+        return all;
     }
 
     @Override

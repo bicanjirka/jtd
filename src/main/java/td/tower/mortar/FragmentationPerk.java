@@ -1,6 +1,10 @@
 package td.tower.mortar;
 
+import td.effect.EffectKind;
+import td.term.Term;
 import td.tower.upgrade.PerkText;
+
+import java.util.Set;
 
 /** Fragmentation Rounds: a ring of shrapnel past the blast for a quarter of the damage, reaching further per step. */
 public final class FragmentationPerk implements MortarPerk {
@@ -11,6 +15,11 @@ public final class FragmentationPerk implements MortarPerk {
     @Override
     public MortarSpec refineSpec(MortarSpec spec) {
         return spec.withShrapnel(ShrapnelSpec.of(DAMAGE_SHARE, REACH_CELLS_PER_STEP));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.CRACKED);
     }
 
     @Override

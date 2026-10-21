@@ -1,7 +1,11 @@
 package td.tower.cinder;
 
+import td.effect.EffectKind;
 import td.effect.PoolTuning;
+import td.term.Term;
 import td.tower.upgrade.PerkText;
+
+import java.util.Set;
 
 /** Thermal Shock: freezing a burning enemy detonates its pool at 150% and chills its neighbours. */
 public final class ThermalShockPerk implements CinderPerk {
@@ -11,6 +15,11 @@ public final class ThermalShockPerk implements CinderPerk {
     @Override
     public CinderSpec refineSpec(CinderSpec spec) {
         return spec.withThermalShock().withTuning(spec.tuning().withFreezeBurstShare(BURST_SHARE));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.CHILL);
     }
 
     @Override

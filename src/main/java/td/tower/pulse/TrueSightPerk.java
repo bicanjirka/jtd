@@ -1,7 +1,11 @@
 package td.tower.pulse;
 
+import td.effect.EffectKind;
+import td.term.Term;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
+
+import java.util.Set;
 
 /** True Sight: the reveal lasts four seconds after leaving, and nothing revealed can be shrouded or fade. */
 public final class TrueSightPerk implements PulsePerk {
@@ -11,6 +15,11 @@ public final class TrueSightPerk implements PulsePerk {
     @Override
     public PulseSpec refineSpec(PulseSpec spec) {
         return spec.withSight(spec.sight().revealing(REVEAL_TICKS).unveiling());
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.UNVEILED);
     }
 
     @Override

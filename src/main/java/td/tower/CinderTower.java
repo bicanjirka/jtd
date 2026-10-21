@@ -9,6 +9,7 @@ import td.effect.PoolTuning;
 import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
 import td.stat.EnemyStat;
+import td.term.TermText;
 import td.tower.cinder.BellowsPerk;
 import td.tower.cinder.CauterizePerk;
 import td.tower.cinder.CinderPerk;
@@ -41,6 +42,7 @@ import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
+import td.tower.upgrade.PerkText;
 import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -512,6 +514,18 @@ public final class CinderTower extends AbstractTower {
     @Override
     protected DamageType damageType() {
         return DamageType.MAGIC;
+    }
+
+    @Override
+    protected List<AppliedEffect> baseApplies() {
+        return List.of(new AppliedEffect(EffectKind.BURN, List.of(new AppliedEffect.Source(this.displayName(),
+                TermText.of("each wave applies ").plus(EffectKind.BURN)
+                        .plus(" for " + PerkText.seconds(this.burnDuration()))))));
+    }
+
+    @Override
+    protected String targetingLabel() {
+        return "nearest";
     }
 
     @Override

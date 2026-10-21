@@ -451,4 +451,12 @@ class AuraTowerTest {
         assertThat(jammed.conditions()).extracting(TowerBuffState::term)
                 .containsExactly(TowerTerm.AURA, TowerTerm.JAMMED);
     }
+
+    @Test
+    void aBeaconAppliesItsAuraAndRallyToTowers() {
+        AuraTower aura = this.rallyAura();
+
+        assertThat(aura.applies()).extracting(AppliedEffect::term).containsExactly(TowerTerm.AURA, TowerTerm.RALLY);
+        assertThat(aura.applies().getLast().sources()).extracting(AppliedEffect.Source::name).containsExactly("Rally");
+    }
 }

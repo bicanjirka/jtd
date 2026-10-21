@@ -141,6 +141,11 @@ public interface Tower {
         return List.of();
     }
 
+    /** Every effect this tower puts on enemies or gives towers, with what applies it. Game loop only. */
+    default List<AppliedEffect> applies() {
+        return List.of();
+    }
+
     /** How far each counting node it owns is toward its next go. Game loop only. */
     default List<NodeProgress> progress() {
         return List.of();

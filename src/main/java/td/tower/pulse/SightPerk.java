@@ -1,7 +1,11 @@
 package td.tower.pulse;
 
+import td.effect.EffectKind;
+import td.term.Term;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
+
+import java.util.Set;
 
 /** Sight: every enemy inside is revealed, and a moment after it leaves. */
 public final class SightPerk implements PulsePerk {
@@ -11,6 +15,11 @@ public final class SightPerk implements PulsePerk {
     @Override
     public PulseSpec refineSpec(PulseSpec spec) {
         return spec.withSight(spec.sight().revealing(REVEAL_TICKS));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.REVEALED);
     }
 
     @Override

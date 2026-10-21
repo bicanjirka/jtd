@@ -1,10 +1,13 @@
 package td.tower.seeker;
 
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
 import td.tower.TowerTerm;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
+
+import java.util.Set;
 
 /** Tracer: the missile reveals its target and marks it, for four seconds. */
 public final class TracerPayload implements Payload {
@@ -19,6 +22,11 @@ public final class TracerPayload implements Payload {
     @Override
     public TowerTerm term() {
         return TowerTerm.TRACER_MISSILE;
+    }
+
+    @Override
+    public Set<EffectKind> applies() {
+        return Set.of(EffectKind.REVEALED, EffectKind.MARKED);
     }
 
     @Override

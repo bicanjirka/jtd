@@ -1,12 +1,14 @@
 package td.tower.mortar;
 
 import td.damage.DamageType;
+import td.effect.EffectKind;
 import td.projectile.ShellLook;
 import td.tower.TowerTerm;
 import td.tower.upgrade.PerkText;
 import td.zone.ZoneKind;
 
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * What one shell carries: how it looks in flight, the kind of damage its blast does, and the zone it
@@ -53,6 +55,16 @@ public enum ShellType {
     }
 
     /** The buff term this shell is when primed; a plain shell is never primed. */
+    public Set<EffectKind> applies() {
+        return switch (this) {
+            case PLAIN, NUKE -> Set.of();
+            case NAPALM -> Set.of(EffectKind.BURN);
+            case TAR -> Set.of(EffectKind.TARRED, EffectKind.POISON);
+            case CRYO -> Set.of(EffectKind.CHILL, EffectKind.FREEZE);
+        };
+    }
+
+    /** The buff term the shell primed for firing is. */
     public TowerTerm term() {
         return switch (this) {
             case PLAIN -> throw new IllegalStateException("A plain shell is never primed");

@@ -1,10 +1,13 @@
 package td.tower.seeker;
 
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
 import td.tower.TowerTerm;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
+
+import java.util.Set;
 
 /** EMP: the missile strips its target's shield and heal and Silences it for two seconds. */
 public final class EmpPayload implements Payload {
@@ -19,6 +22,11 @@ public final class EmpPayload implements Payload {
     @Override
     public TowerTerm term() {
         return TowerTerm.EMP_MISSILE;
+    }
+
+    @Override
+    public Set<EffectKind> applies() {
+        return Set.of(EffectKind.SILENCED);
     }
 
     @Override

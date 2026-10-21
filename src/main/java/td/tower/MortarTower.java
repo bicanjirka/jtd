@@ -44,6 +44,7 @@ import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
+import td.tower.upgrade.PerkText;
 import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -574,6 +575,18 @@ public final class MortarTower extends AbstractTower {
             this.countingNode(node.id(), this.shellsFired % ShellPlan.CYCLE, ShellPlan.CYCLE).ifPresent(all::add);
         }
         return all;
+    }
+
+    @Override
+    protected List<AppliedEffect> baseApplies() {
+        return List.of(new AppliedEffect(EffectKind.CRACKED, List.of(new AppliedEffect.Source(this.displayName(),
+                TermText.of("every shell applies ").plus(EffectKind.CRACKED)
+                        .plus(" for " + PerkText.seconds(CRACKED_TICKS))))));
+    }
+
+    @Override
+    protected String targetingLabel() {
+        return "first";
     }
 
     @Override

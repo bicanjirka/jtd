@@ -1,7 +1,11 @@
 package td.tower.pulse;
 
+import td.effect.EffectKind;
 import td.effect.FieldStrength;
+import td.term.Term;
 import td.tower.upgrade.PerkText;
+
+import java.util.Set;
 
 /** Attune's Toll: each second an enemy spends in the field adds a stack, up to five. */
 public final class TollPerk implements PulsePerk {
@@ -9,6 +13,11 @@ public final class TollPerk implements PulsePerk {
     @Override
     public PulseSpec refineSpec(PulseSpec spec) {
         return spec.tolling();
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.TOLL);
     }
 
     @Override

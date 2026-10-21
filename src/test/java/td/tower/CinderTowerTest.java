@@ -653,4 +653,16 @@ class CinderTowerTest {
             assertThat(mark.steps()).isPositive();
         });
     }
+
+    @Test
+    void appliesListsEachEffectOnceWithEverySourceOnTheTower() {
+        this.context.playtestRules().setUpgradeGatesIgnored(true);
+        CinderTower tower = towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, "White Flame", "White Flame II", "Soulfire");
+
+        assertThat(tower.applies()).extracting(AppliedEffect::term)
+                .containsExactly(td.effect.EffectKind.BURN, td.effect.EffectKind.SOULFIRE);
+        assertThat(tower.applies().getFirst().sources()).hasSize(1);
+        assertThat(tower.inspect().targeting()).isEqualTo("nearest");
+    }
 }

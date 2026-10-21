@@ -1,11 +1,21 @@
 package td.tower.cinder;
 
+import td.effect.EffectKind;
+import td.term.Term;
+
+import java.util.Set;
+
 /** Soulfire: every wave also burns as Soulfire, a blue burn in a pool of its own beside the ordinary one. */
 public final class SoulfirePerk implements CinderPerk {
 
     @Override
     public CinderSpec refineSpec(CinderSpec spec) {
         return spec.withSoulfire();
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.SOULFIRE);
     }
 
     @Override

@@ -1,7 +1,11 @@
 package td.tower.splash;
 
+import td.effect.EffectKind;
+import td.term.Term;
 import td.tower.upgrade.PerkText;
 import td.util.ThreadConfined;
+
+import java.util.Set;
 
 /**
  * Thunderclap: after a crit, the next shot discharges into every enemy in range. Its own crits
@@ -26,6 +30,11 @@ public final class ThunderclapPerk implements SplashPerk {
     @Override
     public void react(ShotResult result) {
         this.armed |= result.critical();
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.DAZED);
     }
 
     @Override

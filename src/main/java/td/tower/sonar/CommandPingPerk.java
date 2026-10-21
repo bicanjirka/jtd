@@ -3,11 +3,13 @@ package td.tower.sonar;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.stat.EnemyStat;
+import td.term.Term;
 import td.tower.BehaviourLine;
 import td.tower.BehaviourMarker;
 import td.tower.upgrade.PerkText;
 
 import java.util.Optional;
+import java.util.Set;
 
 /** Command Ping: the enemy a ping picks first becomes the Priority until the next pass. */
 public final class CommandPingPerk implements SonarPerk {
@@ -23,6 +25,11 @@ public final class CommandPingPerk implements SonarPerk {
     @Override
     public Optional<BehaviourLine> behaviour() {
         return Optional.of(new BehaviourLine(BehaviourMarker.TARGETING, "Priority", "the pinged enemy"));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.PRIORITY);
     }
 
     @Override

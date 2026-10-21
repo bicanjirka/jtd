@@ -2,8 +2,11 @@ package td.tower.seeker;
 
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.term.Term;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
+
+import java.util.Set;
 
 /**
  * Shatterburst: a missile that hits a frozen enemy bursts around it; every enemy the burst hits is
@@ -24,6 +27,11 @@ public final class ShatterburstPerk implements SeekerPerk {
             actions.silence(enemy, SILENCE_TICKS);
             actions.applyStacks(enemy, EffectKind.UNRAVELED, 1);
         }
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.SILENCED, EffectKind.UNRAVELED);
     }
 
     @Override

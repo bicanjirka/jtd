@@ -1,6 +1,10 @@
 package td.tower.mortar;
 
+import td.effect.EffectKind;
+import td.term.Term;
 import td.tower.upgrade.PerkText;
+
+import java.util.Set;
 
 /** Tactical Nuke: every fourth shell is a nuke: four times the damage over one and a half times the blast. */
 public final class TacticalNukePerk implements MortarPerk {
@@ -13,6 +17,11 @@ public final class TacticalNukePerk implements MortarPerk {
     public MortarSpec refineSpec(MortarSpec spec) {
         return spec.withNuke(NukeSpec.of(EVERY, DAMAGE_FACTOR, RADIUS_FACTOR))
                 .withShells(spec.shells().withNukeEvery(EVERY));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.FALLOUT);
     }
 
     @Override
