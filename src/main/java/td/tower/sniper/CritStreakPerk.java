@@ -4,7 +4,6 @@ import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.TowerBuffState;
 import td.tower.TowerTerm;
-import td.tower.upgrade.PerkText;
 import td.util.ThreadConfined;
 
 import java.util.Optional;
@@ -40,7 +39,9 @@ public final class CritStreakPerk implements SniperPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("a crit makes the next crit deal +" + PerkText.percent(CRIT_DAMAGE_PER_STREAK) + " crit damage, two in a row +"
-                + PerkText.percent(CRIT_DAMAGE_PER_STREAK * MAX_STREAK) + ", no further");
+        return TermText.of("each crit adds a stack of ")
+                .plus(TermText.of(TowerTerm.CRIT_STREAK, TermText.of("each stack gives the next crit "
+                        + TermNumbers.signedPercent(CRIT_DAMAGE_PER_STREAK) + " crit damage")))
+                .plus(", up to " + MAX_STREAK + "; a shot that doesn't crit clears it");
     }
 }

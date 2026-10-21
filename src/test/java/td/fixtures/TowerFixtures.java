@@ -1,6 +1,9 @@
 package td.fixtures;
 
+import td.term.TermText;
 import td.util.GameWorld;
+
+import java.util.List;
 
 public final class TowerFixtures {
 
@@ -14,5 +17,10 @@ public final class TowerFixtures {
         for (int t = 1; t <= 50 && !world.projectiles().getProjectiles().isEmpty(); t++) {
             world.projectiles().doTick(t);
         }
+    }
+
+    /** Each text as its plain words, mentions as their titles. */
+    public static List<String> plain(List<TermText> texts) {
+        return texts.stream().map(TermText::plain).toList();
     }
 }

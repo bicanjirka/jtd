@@ -17,7 +17,6 @@ import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.tower.sniper.AimFocus;
-import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.ui.TowerSpriteFrameBuilder;
 import td.ui.render.Palette;
@@ -874,15 +873,6 @@ class SniperTowerTest {
     }
 
     @Test
-    void ricochetSaysWhatItDoes() {
-        SniperTower tower = new SniperTower(this.context, 0, 0);
-
-        assertThat(tower.bonusesOf(UpgradePaths.named(tower, "Ricochet"))).contains(new UpgradeBonus(
-                "A crit or a kill bounces to the nearest enemy within 1.5 cells for 60%, up to 3 bounces, "
-                + "each can crit", ""));
-    }
-
-    @Test
     void hollowPointMakesTheSniperApplyVulnerable() {
         GameWorld world = boardWorld();
         SniperTower tower = sniperWith(world, "Marksman's Eye", "Hollow Point");
@@ -891,5 +881,14 @@ class SniperTowerTest {
             assertThat(applied.term()).isEqualTo(td.effect.EffectKind.VULNERABLE);
             assertThat(applied.sources()).extracting(AppliedEffect.Source::name).containsExactly("Hollow Point");
         });
+    }
+
+    @Test
+    void ricochetSaysWhatItDoes() {
+        SniperTower tower = sniperWith(boardWorld(), "Focused Optics", "Ricochet");
+
+        assertThat(td.fixtures.TowerFixtures.plain(tower.wordsOf(UpgradePaths.named(tower, "Ricochet")).sentences()))
+                .contains("a crit or a kill bounces to the nearest enemy within 1.5 cells for 60% of the damage, "
+                        + "up to 3 bounces; each bounce can crit");
     }
 }
