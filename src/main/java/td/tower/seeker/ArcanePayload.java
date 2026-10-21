@@ -3,6 +3,7 @@ package td.tower.seeker;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
+import td.tower.TowerTerm;
 
 /** Arcane: the missile Unravels its target instead of freezing it; a stronger one leaves two stacks. */
 public final class ArcanePayload implements Payload {
@@ -10,6 +11,11 @@ public final class ArcanePayload implements Payload {
     @Override
     public MissileLook look() {
         return MissileLook.ARCANE;
+    }
+
+    @Override
+    public TowerTerm term() {
+        return TowerTerm.ARCANE_MISSILE;
     }
 
     @Override

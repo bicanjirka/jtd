@@ -6,7 +6,7 @@ import td.util.TickRate;
 /** Thunderstrike: every sixth shot calls lightning onto the healthiest enemy in range. */
 public final class ThunderstrikePerk implements SplashPerk {
 
-    private static final int INTERVAL = 6;
+    public static final int INTERVAL = 6;
     private static final float FACTOR = 4f;
 
     @Override

@@ -287,6 +287,38 @@ class SniperTowerTest {
     }
 
     @Test
+    void steadyAimShowsItsStacksAndTheTimeToItsNextFade() {
+        GameWorld world = boardWorld();
+        SniperTower tower = sniperWith(world, "Marksman's Eye");
+        FakeEnemyMob target = targetFor(world);
+        this.fireShots(tower, target, 3);
+
+        TowerBuffState aim = tower.conditions().stream().filter(state -> state.term() == TowerTerm.STEADY_AIM)
+                .findFirst().orElseThrow();
+
+        assertThat(aim.stacks()).isEqualTo(tower.steadyAimStacks().orElseThrow());
+        assertThat(aim.clockTicks()).isEqualTo(AimFocus.STACK_TICKS);
+        assertThat(aim.remainingTicks().orElseThrow()).isLessThanOrEqualTo(AimFocus.STACK_TICKS);
+    }
+
+    @Test
+    void fourthShotCountsTowardItsDeadeyeRoundAndPrimesItForTheFourthShot() {
+        GameWorld world = boardWorld();
+        SniperTower tower = awakenedSniper(world, 15);
+        tower.buyUpgrade(UpgradePaths.named(tower, "Marksman's Eye"));
+        tower.buyUpgrade(UpgradePaths.named(tower, "Fourth Shot"));
+        FakeEnemyMob target = targetFor(world);
+
+        this.fireShots(tower, target, 2);
+        NodeProgress afterTwo = tower.progress().getFirst();
+        this.fireShots(tower, target, 1);
+
+        assertThat(afterTwo.count()).isEqualTo(2);
+        assertThat(afterTwo.of()).isEqualTo(4);
+        assertThat(tower.conditions()).extracting(TowerBuffState::term).contains(TowerTerm.DEADEYE_ROUND);
+    }
+
+    @Test
     void steadyAimWaitsForAttune() {
         GameWorld world = boardWorld();
         world.economy().startEconomy(1000, 5);

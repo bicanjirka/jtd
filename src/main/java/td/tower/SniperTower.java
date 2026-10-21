@@ -8,6 +8,7 @@ import td.enemy.EnemyMob;
 import td.enemy.HitResult;
 import td.enemy.Rank;
 import td.stat.StatModifiers;
+import td.term.TermText;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitBonus;
 import td.tower.proc.HitCondition;
@@ -421,6 +422,23 @@ public final class SniperTower extends AbstractTower {
 
     public float getCoolDownFraction() {
         return this.clock.remaining();
+    }
+
+    @Override
+    protected List<TowerBuffState> ownConditions() {
+        List<TowerBuffState> states = new ArrayList<>();
+        int cap = this.aimStackCap();
+        int stacks = Math.min(cap, this.focus.stacks());
+        if (stacks > 0) {
+            List<TermText> parts = new ArrayList<>(this.upgrades().hitBonuses().stream()
+                    .filter(bonus -> bonus.scaling().focusCounter().filter(TowerTerm.STEADY_AIM::equals).isPresent())
+                    .map(bonus -> TermText.of(bonus.adjustment().describe())).toList());
+            parts.add(TermText.of("up to " + cap + " stacks"));
+            states.add(TowerBuffState.of(TowerTerm.STEADY_AIM, TermText.join("; ", parts)).withStacks(stacks)
+                    .withClock(this.focus.ticksUntilFade(), AimFocus.STACK_TICKS));
+        }
+        this.perks.all().forEach(perk -> perk.condition().ifPresent(states::add));
+        return states;
     }
 
     @Override

@@ -2,6 +2,7 @@ package td.tower.seeker;
 
 import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
+import td.tower.TowerTerm;
 
 /**
  * What a missile carries besides its damage. Stateless: which missile carries which is the
@@ -11,6 +12,9 @@ public interface Payload {
 
     /** How a missile carrying it is drawn. */
     MissileLook look();
+
+    /** The buff term the missile carrying it is. */
+    TowerTerm term();
 
     /** What the info rows call it. */
     String label();

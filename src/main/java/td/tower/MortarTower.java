@@ -7,6 +7,8 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.CannonballProjectile;
 import td.projectile.ProjectileStats;
+import td.term.TermNumbers;
+import td.term.TermText;
 import td.tower.mortar.AirburstPerk;
 import td.tower.mortar.BarragePerk;
 import td.tower.mortar.BlastMark;
@@ -24,6 +26,7 @@ import td.tower.mortar.NukeFlash;
 import td.tower.mortar.PathLine;
 import td.tower.mortar.PredictiveFirePerk;
 import td.tower.mortar.SalvoSpec;
+import td.tower.mortar.ShellPlan;
 import td.tower.mortar.ShellType;
 import td.tower.mortar.ShellTypePerk;
 import td.tower.mortar.ShrapnelBoostPerk;
@@ -540,6 +543,37 @@ public final class MortarTower extends AbstractTower {
                 this.stats().value(TowerStat.AREA_RADIUS)),
                 TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, cellsPerSecond),
                 TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, shell.size()));
+    }
+
+    @Override
+    protected List<TowerBuffState> ownConditions() {
+        List<TowerBuffState> states = new ArrayList<>();
+        MortarSpec spec = this.spec(this.perks.all());
+        this.bracketing.marker().filter(marker -> marker.step() > 0).ifPresent(marker -> states.add(
+                TowerBuffState.of(TowerTerm.BRACKETING, TermText.of(
+                        TermNumbers.signedPercent(this.stats().value(TowerStat.BRACKET_DAMAGE_STEP)) + " damage and "
+                                + TermNumbers.signedPercent(spec.bracket().radiusStep()) + " blast radius a step, up to "
+                                + marker.maxSteps() + " steps")).withStacks(marker.step())));
+        ShellType primed = spec.shells().typeOf(this.shellsFired + 1);
+        if (primed != ShellType.PLAIN) {
+            states.add(TowerBuffState.of(primed.term(), TermText.of(primed.describe())));
+        }
+        this.perks.all().forEach(perk -> perk.condition().ifPresent(states::add));
+        return states;
+    }
+
+    @Override
+    protected List<NodeProgress> ownProgress() {
+        List<NodeProgress> all = new ArrayList<>();
+        MortarSpec spec = this.spec(this.perks.all());
+        if (spec.nuke().every() > 0) {
+            this.countingNode(TACTICAL_NUKE.id(), this.shellsFired % spec.nuke().every(), spec.nuke().every())
+                    .ifPresent(all::add);
+        }
+        for (UpgradeNode node : List.of(NAPALM, TAR, CRYO_SHELLS)) {
+            this.countingNode(node.id(), this.shellsFired % ShellPlan.CYCLE, ShellPlan.CYCLE).ifPresent(all::add);
+        }
+        return all;
     }
 
     @Override

@@ -2,6 +2,7 @@ package td.tower.mortar;
 
 import td.damage.DamageType;
 import td.projectile.ShellLook;
+import td.tower.TowerTerm;
 import td.tower.upgrade.PerkText;
 import td.zone.ZoneKind;
 
@@ -49,6 +50,17 @@ public enum ShellType {
 
     public Optional<ShellZone> zone() {
         return this.zone;
+    }
+
+    /** The buff term this shell is when primed; a plain shell is never primed. */
+    public TowerTerm term() {
+        return switch (this) {
+            case PLAIN -> throw new IllegalStateException("A plain shell is never primed");
+            case NAPALM -> TowerTerm.NAPALM_SHELL;
+            case TAR -> TowerTerm.TAR_SHELL;
+            case CRYO -> TowerTerm.CRYO_SHELL;
+            case NUKE -> TowerTerm.NUKE_SHELL;
+        };
     }
 
     /** Its name and what it does where it lands: {@code "Tar: it leaves tar, 1.2 cells wide, for 4s"}. */

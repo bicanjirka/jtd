@@ -25,8 +25,9 @@ final class ActiveTowerStatuses {
             return;
         }
         Held next = status.shots() > 0
-                ? new Held(status, 0, status.lengthened() ? Math.round(status.shots() * buffLength) : status.shots())
-                : new Held(status, nowTick + Math.round(status.durationTicks() * buffLength), 0);
+                ? new Held(status, 0, status.lengthened() ? Math.round(status.shots() * buffLength) : status.shots(), 0)
+                : new Held(status, nowTick + Math.round(status.durationTicks() * buffLength), 0,
+                        Math.round(status.durationTicks() * buffLength));
         if (running >= 0) {
             this.held.set(running, next);
         } else {
@@ -51,7 +52,7 @@ final class ActiveTowerStatuses {
             if (h.shotsLeft() <= 1) {
                 this.held.remove(i);
             } else {
-                this.held.set(i, new Held(h.status(), 0, h.shotsLeft() - 1));
+                this.held.set(i, new Held(h.status(), 0, h.shotsLeft() - 1, 0));
             }
         }
         return changed;
@@ -84,6 +85,20 @@ final class ActiveTowerStatuses {
         return -1;
     }
 
-    private record Held(TowerStatus status, int endsAt, int shotsLeft) {
+    /** Each held status as its pane shows it: a shot status by its shots left, a timed one by its clock. */
+    List<TowerBuffState> states(int nowTick) {
+        List<TowerBuffState> states = new ArrayList<>();
+        for (Held h : this.held) {
+            TowerBuffState state = TowerBuffState.of(h.status().term(), h.status().describe());
+            if (h.status().shots() > 0) {
+                states.add(h.shotsLeft() > 1 ? state.withStacks(h.shotsLeft()) : state);
+            } else {
+                states.add(state.withClock(Math.max(0, h.endsAt() - nowTick), h.clockTicks()));
+            }
+        }
+        return states;
+    }
+
+    private record Held(TowerStatus status, int endsAt, int shotsLeft, int clockTicks) {
     }
 }

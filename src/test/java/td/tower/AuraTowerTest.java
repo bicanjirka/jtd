@@ -426,4 +426,29 @@ class AuraTowerTest {
                 "Marks the path spot nearest the aura: when an enemy steps on it, every buffed tower gets "
                 + "+30% attack speed for 5s, then a 10s cooldown", ""));
     }
+
+    @Test
+    void aBuffedTowerCarriesAuraWithWhatItReceives() {
+        SniperTower buffed = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(buffed);
+        this.context.towers().add(new AuraTower(this.context, 0, 0));
+
+        assertThat(buffed.conditions()).singleElement().satisfies(state -> {
+            assertThat(state.term()).isEqualTo(TowerTerm.AURA);
+            assertThat(state.stacks()).isZero();
+        });
+    }
+
+    @Test
+    void aJammedTowerCarriesJammedAsADebuffAfterItsBuffs() {
+        AuraTower aura = new AuraTower(this.context, 0, 0);
+        this.context.towers().add(aura);
+        SniperTower jammed = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(jammed);
+        this.context.disruptions().add(jammed.getX(), jammed.getY(), new DisruptionAura(20f, 0.4f, 0.2f));
+        jammed.beginTick(1);
+
+        assertThat(jammed.conditions()).extracting(TowerBuffState::term)
+                .containsExactly(TowerTerm.AURA, TowerTerm.JAMMED);
+    }
 }

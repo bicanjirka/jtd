@@ -8,6 +8,7 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.MissileProjectile;
 import td.projectile.ProjectileStats;
+import td.term.TermText;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitBonus;
 import td.tower.proc.HitCondition;
@@ -32,6 +33,7 @@ import td.tower.seeker.OverTheHorizonPerk;
 import td.tower.seeker.Payload;
 import td.tower.seeker.PayloadLoad;
 import td.tower.seeker.PayloadPerk;
+import td.tower.seeker.PayloadPlan;
 import td.tower.seeker.RearmPerk;
 import td.tower.seeker.SalvoPlanner;
 import td.tower.seeker.SeekerActions;
@@ -449,6 +451,36 @@ public final class SeekerTower extends AbstractTower {
         float cellsPerSecond = this.missile.speed() * TICKS_PER_SECOND / this.context.getBoard().scale();
         return List.of(TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, cellsPerSecond),
                 TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, this.missile.size()));
+    }
+
+    @Override
+    protected List<TowerBuffState> ownConditions() {
+        List<TowerBuffState> states = new ArrayList<>();
+        if (this.streak.current() > 0) {
+            states.add(TowerBuffState.of(TowerTerm.FOCUS, TermText.of("hits on one target build it"))
+                    .withStacks(this.streak.current()));
+        }
+        SeekerSpec spec = this.spec(this.perks.all());
+        NestSpec nest = this.nest(spec);
+        if (nest.isActive() && this.nest.stored() > 0) {
+            states.add(TowerBuffState.of(TowerTerm.NEST, TermText.of(this.nest.stored() + " of " + nest.capacity()
+                    + " missiles stored")).withStacks(this.nest.stored()));
+        }
+        spec.payloads().loadFor(this.missilesLaunched + 1).ifPresent(load -> states.add(
+                TowerBuffState.of(load.payload().term(), TermText.of(load.payload().describe()))));
+        this.perks.all().forEach(perk -> perk.condition().ifPresent(states::add));
+        return states;
+    }
+
+    @Override
+    protected List<NodeProgress> ownProgress() {
+        if (this.spec(this.perks.all()).payloads().everyMissile()) {
+            return List.of();
+        }
+        return List.of(ARCANE_PAYLOAD, EMP_PAYLOAD, TRACER_PAYLOAD).stream()
+                .flatMap(node -> this.countingNode(node.id(), this.missilesLaunched % PayloadPlan.EVERY,
+                        PayloadPlan.EVERY).stream())
+                .toList();
     }
 
     @Override

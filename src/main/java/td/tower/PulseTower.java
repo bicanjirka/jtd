@@ -6,6 +6,8 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.FieldStrength;
 import td.enemy.EnemyMob;
+import td.term.TermNumbers;
+import td.term.TermText;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitKind;
 import td.tower.pulse.ArcDischargePerk;
@@ -575,6 +577,30 @@ public final class PulseTower extends AbstractTower {
     @Override
     protected DamageType damageType() {
         return DamageType.MAGIC;
+    }
+
+    @Override
+    protected List<TowerBuffState> ownConditions() {
+        List<TowerBuffState> states = new ArrayList<>();
+        PulseSpec spec = this.spec(this.perks.all());
+        float growth = spec.field().growthAfter(this.deathsThisWave);
+        if (growth > 0f) {
+            states.add(TowerBuffState.of(TowerTerm.EVENT_HORIZON, TermText.of(
+                    TermNumbers.signedPercent(growth) + " field width until the wave ends"))
+                    .withStacks(this.deathsThisWave));
+        }
+        if (this.interference < 1f) {
+            states.add(TowerBuffState.of(TowerTerm.INTERFERENCE,
+                    TermText.of(TermNumbers.signedPercent(this.interference - 1f) + " damage")));
+        }
+        if (this.castLine.isPresent()) {
+            states.add(TowerBuffState.of(TowerTerm.LEY_LINE, TermText.of("casting to an Obelisk")));
+        } else if (!this.castersHere.isEmpty()) {
+            states.add(TowerBuffState.of(TowerTerm.LEY_LINE,
+                    TermText.of("hosting " + this.castersHere.size() + " lines")));
+        }
+        this.perks.all().forEach(perk -> perk.condition().ifPresent(states::add));
+        return states;
     }
 
     @Override

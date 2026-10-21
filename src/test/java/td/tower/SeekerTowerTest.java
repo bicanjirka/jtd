@@ -717,4 +717,15 @@ class SeekerTowerTest {
                 "A missile that hits a frozen enemy bursts for 35% magic damage around it; every enemy the "
                 + "burst hits is Silenced 2s and gains Unraveled", ""));
     }
+
+    @Test
+    void theNextPayloadMissileIsPrimed() {
+        SeekerTower tower = this.seekerWith("Arcane Payload");
+        this.context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(100, 100)});
+
+        this.fireAndFly(tower, 2);
+
+        assertThat(tower.conditions()).extracting(TowerBuffState::term).contains(TowerTerm.ARCANE_MISSILE);
+        assertThat(tower.progress()).singleElement().satisfies(progress -> assertThat(progress.count()).isEqualTo(2));
+    }
 }

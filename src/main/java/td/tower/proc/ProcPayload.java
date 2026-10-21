@@ -19,6 +19,11 @@ public sealed interface ProcPayload {
     /** Runs on {@code target}, which is absent for a shot trigger. */
     void run(Optional<EnemyMob> target, ProcActions actions);
 
+    /** The status this payload grants the tower, if it grants one. */
+    default Optional<TowerStatus> grantedStatus() {
+        return Optional.empty();
+    }
+
     /** "Vulnerable +1", "Charged 3 s", "Dispel", "Shield -25%", or what a status does. */
     String describe();
 
@@ -50,6 +55,11 @@ public sealed interface ProcPayload {
 
     /** Grants the tower {@code status}. */
     record GrantStatus(TowerStatus status) implements ProcPayload {
+        @Override
+        public Optional<TowerStatus> grantedStatus() {
+            return Optional.of(this.status);
+        }
+
         @Override
         public void run(Optional<EnemyMob> target, ProcActions actions) {
             actions.grantStatus(this.status);

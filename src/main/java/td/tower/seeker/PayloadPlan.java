@@ -14,7 +14,7 @@ import java.util.Optional;
  */
 public record PayloadPlan(List<Payload> owned, boolean everyMissile) {
 
-    static final int EVERY = 3;
+    public static final int EVERY = 3;
     static final float FULL_RACK_STRENGTH = 1.25f;
     private static final List<Payload> FULL_RACK = List.of(new CryoPayload(), new ArcanePayload(), new EmpPayload(),
             new TracerPayload());

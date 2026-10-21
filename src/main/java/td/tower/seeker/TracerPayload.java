@@ -2,6 +2,7 @@ package td.tower.seeker;
 
 import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
+import td.tower.TowerTerm;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
@@ -13,6 +14,11 @@ public final class TracerPayload implements Payload {
     @Override
     public MissileLook look() {
         return MissileLook.TRACER;
+    }
+
+    @Override
+    public TowerTerm term() {
+        return TowerTerm.TRACER_MISSILE;
     }
 
     @Override

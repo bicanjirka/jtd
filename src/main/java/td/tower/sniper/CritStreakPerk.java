@@ -1,7 +1,13 @@
 package td.tower.sniper;
 
+import td.term.TermNumbers;
+import td.term.TermText;
+import td.tower.TowerBuffState;
+import td.tower.TowerTerm;
 import td.tower.upgrade.PerkText;
 import td.util.ThreadConfined;
+
+import java.util.Optional;
 
 /** Tradecraft: a crit makes the next crit hit harder, two in a row harder still, and no further. */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
@@ -20,6 +26,16 @@ public final class CritStreakPerk implements SniperPerk {
     @Override
     public void react(ShotResult result, ShotActions actions) {
         this.streak = result.critical() ? Math.min(MAX_STREAK, this.streak + 1) : 0;
+    }
+
+    @Override
+    public Optional<TowerBuffState> condition() {
+        if (this.streak == 0) {
+            return Optional.empty();
+        }
+        return Optional.of(TowerBuffState.of(TowerTerm.CRIT_STREAK, TermText.of("the next crit deals "
+                + TermNumbers.signedPercent(CRIT_DAMAGE_PER_STREAK * this.streak) + " crit damage"))
+                .withStacks(this.streak));
     }
 
     @Override

@@ -862,4 +862,21 @@ class MortarTowerTest {
                 "Every 4th shell is a nuke: x4 damage over x1.5 the blast, leaving fallout for 4s over 0.8 "
                 + "of the blast; it never carries a special", ""));
     }
+
+    @Test
+    void theNextSpecialShellIsPrimed() {
+        MortarTower tower = this.transcendentTower();
+        UpgradePaths.buy(tower, this.context, "Tactical Nuke");
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
+
+        for (int i = 0; i < 3; i++) {
+            this.landAShell(tower);
+        }
+
+        assertThat(tower.progress()).anySatisfy(progress -> {
+            assertThat(progress.of()).isEqualTo(4);
+            assertThat(progress.count()).isEqualTo(3);
+        });
+        assertThat(tower.conditions()).extracting(TowerBuffState::term).isNotEmpty();
+    }
 }
