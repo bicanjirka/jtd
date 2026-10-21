@@ -4,7 +4,10 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 
-/** Where a tooltip goes: left of its anchor, toward the board, else right; top-aligned; inside the window. */
+/**
+ * Where a tooltip goes: left of its anchor, toward the board, else right; top-aligned; inside the window. A source
+ * at the top of the window opens its tooltip {@linkplain #below below} instead.
+ */
 final class TooltipPlacement {
 
     static final int GAP = 4;
@@ -21,6 +24,15 @@ final class TooltipPlacement {
         x = Math.clamp(x, window.x + MARGIN,
                 Math.max(window.x + MARGIN, window.x + window.width - MARGIN - size.width));
         int y = Math.clamp(anchor.y, window.y + MARGIN,
+                Math.max(window.y + MARGIN, window.y + window.height - MARGIN - size.height));
+        return new Point(x, y);
+    }
+
+    /** Under its anchor, left edges aligned, inside the window: for a source in a strip across the top. */
+    static Point below(Rectangle anchor, Dimension size, Rectangle window) {
+        int x = Math.clamp(anchor.x, window.x + MARGIN,
+                Math.max(window.x + MARGIN, window.x + window.width - MARGIN - size.width));
+        int y = Math.clamp(anchor.y + anchor.height + GAP, window.y + MARGIN,
                 Math.max(window.y + MARGIN, window.y + window.height - MARGIN - size.height));
         return new Point(x, y);
     }

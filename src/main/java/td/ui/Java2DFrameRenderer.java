@@ -585,6 +585,11 @@ public final class Java2DFrameRenderer {
             case TERM_FRAME_TOWER_BUFF -> new Color(100, 230, 200);
             case TERM_FRAME_TOWER_DEBUFF -> new Color(235, 90, 200);
             case TERM_FRAME_MECHANIC -> new Color(200, 210, 200);
+            case TERM_FRAME_STATUS -> new Color(150, 172, 150);
+            case TERM_STATUS_WAVE -> new Color(200, 230, 200);
+            case TERM_STATUS_LIVES -> new Color(255, 110, 130);
+            case TERM_STATUS_SCORE -> new Color(255, 210, 80);
+            case TERM_STATUS_CASH -> new Color(110, 220, 110);
             case TERM_IMMUNE -> new Color(255, 96, 86);
             case TERM_SPAWN -> new Color(220, 200, 160);
             case TERM_FRENZY -> new Color(255, 140, 60);

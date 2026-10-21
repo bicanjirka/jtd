@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.economy.StatusTerm;
 import td.effect.EffectKind;
 import td.enemy.AbilityTerm;
 import td.enemy.TraitTerm;
@@ -49,6 +50,7 @@ public final class TermLooks {
         Arrays.stream(TowerTerm.values()).forEach(term -> looks.put(term.key(), tower(term)));
         Arrays.stream(TraitTerm.values()).forEach(term -> looks.put(term.key(), trait(term)));
         Arrays.stream(AbilityTerm.values()).forEach(term -> looks.put(term.key(), ability(term)));
+        Arrays.stream(StatusTerm.values()).forEach(term -> looks.put(term.key(), status(term)));
         return Map.copyOf(looks);
     }
 
@@ -99,6 +101,15 @@ public final class TermLooks {
             case SHRAPNEL -> new TermLook(Palette.TERM_SHRAPNEL, Palette.TERM_FRAME_MECHANIC);
             case BOMBLET -> new TermLook(Palette.TERM_SHRAPNEL, Palette.TERM_FRAME_MECHANIC);
         };
+    }
+
+    private static TermLook status(StatusTerm term) {
+        return new TermLook(switch (term) {
+            case WAVE -> Palette.TERM_STATUS_WAVE;
+            case LIVES -> Palette.TERM_STATUS_LIVES;
+            case SCORE -> Palette.TERM_STATUS_SCORE;
+            case CASH -> Palette.TERM_STATUS_CASH;
+        }, Palette.TERM_FRAME_STATUS);
     }
 
     private static TermLook trait(TraitTerm term) {

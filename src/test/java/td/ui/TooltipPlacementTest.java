@@ -43,4 +43,19 @@ class TooltipPlacementTest {
 
         assertThat(at.y).isEqualTo(120);
     }
+
+    @Test
+    void aTooltipFromTheTopStripOpensBelowItsAnchorWithLeftEdgesAligned() {
+        Point at = TooltipPlacement.below(new Rectangle(300, 4, 80, 28), SIZE, WINDOW);
+
+        assertThat(at.x).isEqualTo(300);
+        assertThat(at.y).isEqualTo(4 + 28 + TooltipPlacement.GAP);
+    }
+
+    @Test
+    void aTooltipBelowStaysInsideTheWindowAtTheRightEdge() {
+        Point at = TooltipPlacement.below(new Rectangle(780, 4, 80, 28), SIZE, WINDOW);
+
+        assertThat(at.x).isEqualTo(800 - TooltipPlacement.MARGIN - 200);
+    }
 }

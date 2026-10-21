@@ -212,6 +212,16 @@ public enum Palette {
     TERM_FRAME_TOWER_DEBUFF,
     /** The frame of a named tower mechanic. */
     TERM_FRAME_MECHANIC,
+    /** The frame of a status bar icon. */
+    TERM_FRAME_STATUS,
+    /** The round icon. */
+    TERM_STATUS_WAVE,
+    /** The lives icon, and the lives count at one life. */
+    TERM_STATUS_LIVES,
+    /** The score icon. */
+    TERM_STATUS_SCORE,
+    /** The cash icon. */
+    TERM_STATUS_CASH,
     /** The slash across an immunity. */
     TERM_IMMUNE,
     /** The tone of an ability that calls enemies. */
