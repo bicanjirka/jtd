@@ -1,5 +1,7 @@
 package td.tower.upgrade;
 
+import java.util.Optional;
+
 /**
  * A step of the tree shape every tower shares: which slot it fills, what it costs as a multiple of
  * the tower's list price, the XP it needs, and which base node opens it. A node's own line (the
@@ -51,11 +53,49 @@ public enum UpgradeTier {
         return this.xp;
     }
 
+    /** This step's level in its line: 1 to 4, or 0 for a special, which has none. */
+    public int level() {
+        return switch (this) {
+            case RANGE_1, ATTUNE, HEAD_1, EXTRA_1 -> 1;
+            case RANGE_2, AWAKEN, HEAD_2, EXTRA_2 -> 2;
+            case RANGE_3, TRANSCENDENT, HEAD_3, EXTRA_3 -> 3;
+            case HEAD_4, EXTRA_4 -> 4;
+            case SPECIAL -> 0;
+        };
+    }
+
+    /** The step before this one in its line; empty for the first step and for a special. */
+    public Optional<UpgradeTier> previous() {
+        return switch (this) {
+            case RANGE_2 -> Optional.of(RANGE_1);
+            case RANGE_3 -> Optional.of(RANGE_2);
+            case AWAKEN -> Optional.of(ATTUNE);
+            case TRANSCENDENT -> Optional.of(AWAKEN);
+            case HEAD_2 -> Optional.of(HEAD_1);
+            case HEAD_3 -> Optional.of(HEAD_2);
+            case HEAD_4 -> Optional.of(HEAD_3);
+            case EXTRA_2 -> Optional.of(EXTRA_1);
+            case EXTRA_3 -> Optional.of(EXTRA_2);
+            case EXTRA_4 -> Optional.of(EXTRA_3);
+            case RANGE_1, ATTUNE, HEAD_1, EXTRA_1, SPECIAL -> Optional.empty();
+        };
+    }
+
+    /** The first step of a line that a node of {@code slot} starts at unless it says otherwise. */
+    static UpgradeTier startOf(UpgradeSlot slot) {
+        return switch (slot) {
+            case BASE -> ATTUNE;
+            case HEAD -> HEAD_1;
+            case SPECIAL -> SPECIAL;
+        };
+    }
+
     /** A node at this step: its slot, its price, its XP and the base node that opens it. */
     public UpgradeNode node(String id, String displayName, int listPrice) {
         return UpgradeNode.of(id, this.slot, displayName, this.price(listPrice))
                 .withRequires(this.openedBy())
-                .withXp(this.xp);
+                .withXp(this.xp)
+                .withTier(this);
     }
 
     /** What the base chain must own before a node at this step is offered. */
