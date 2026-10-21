@@ -1,7 +1,8 @@
 package td.tower.aura;
 
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
+import td.tower.TowerTerm;
 
 /** Broadcast: Kinship counts tower types a cell further and loses its cap. */
 public final class FarKinshipPerk implements AuraPerk {
@@ -15,7 +16,7 @@ public final class FarKinshipPerk implements AuraPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("Kinship counts tower types " + PerkText.distance(EXTRA_REACH_CELLS)
-                + " further and loses its cap");
+        return TermText.of(TowerTerm.KINSHIP)
+                .plus(" counts tower types " + TermNumbers.cells(EXTRA_REACH_CELLS) + " further and loses its cap");
     }
 }

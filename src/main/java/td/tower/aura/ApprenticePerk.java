@@ -1,7 +1,7 @@
 package td.tower.aura;
 
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
 
 /** Apprentice: the buffed tower with the least XP earns double. */
 public final class ApprenticePerk implements AuraPerk {
@@ -15,6 +15,6 @@ public final class ApprenticePerk implements AuraPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("the buffed tower with the least XP earns " + PerkText.times(1f + XP) + " XP from every source");
+        return TermText.of("the buffed tower with the least XP earns " + TermNumbers.times(1f + XP) + " XP from every source");
     }
 }
