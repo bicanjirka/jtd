@@ -1,6 +1,7 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import td.economy.StatusTerm;
 import td.effect.EffectKind;
 import td.enemy.AbilityTerm;
 import td.enemy.TraitTerm;
@@ -28,7 +29,7 @@ class PictogramCatalogueTest {
     @Test
     void everyTermHasAPictogram() {
         List<String> missing = Stream.<Term[]>of(EffectKind.values(), TowerTerm.values(), TraitTerm.values(),
-                        AbilityTerm.values())
+                        AbilityTerm.values(), StatusTerm.values())
                 .flatMap(Arrays::stream)
                 .map(Term::key)
                 .filter(key -> PictogramCatalogue.of(key).isEmpty())

@@ -7,6 +7,7 @@ import td.damage.DamageType;
 import td.damage.DamageUnits;
 import td.damage.Delivery;
 import td.economy.EconomyDelta;
+import td.economy.SellRefund;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -188,7 +189,7 @@ public abstract class AbstractTower implements Tower {
      */
     public int getSellPrice() {
         int upgradesPaid = this.upgrades().owned().stream().mapToInt(UpgradeNode::price).sum();
-        return (int) Math.round(0.75 * (this.price + upgradesPaid));
+        return SellRefund.of(this.price + upgradesPaid);
     }
 
     /**

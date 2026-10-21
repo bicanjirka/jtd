@@ -1,6 +1,7 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import td.economy.StatusTerm;
 import td.effect.EffectKind;
 import td.tower.AbstractTower;
 import td.tower.TowerFactory;
@@ -27,6 +28,16 @@ class TermLooksTest {
 
         assertThat(face.tone()).isEqualTo(EnemyFrameBuilder.markerPaletteFor(EffectKind.CHILL));
         assertThat(face.pictogram()).isEqualTo("effect.chill");
+    }
+
+    @Test
+    void everyStatusIconHasItsOwnToneInTheSharedStatusFrame() {
+        assertThat(TermLooks.faceOf(StatusTerm.WAVE).tone()).isEqualTo(Palette.TERM_STATUS_WAVE);
+        assertThat(TermLooks.faceOf(StatusTerm.LIVES).tone()).isEqualTo(Palette.TERM_STATUS_LIVES);
+        assertThat(TermLooks.faceOf(StatusTerm.SCORE).tone()).isEqualTo(Palette.TERM_STATUS_SCORE);
+        assertThat(TermLooks.faceOf(StatusTerm.CASH).tone()).isEqualTo(Palette.TERM_STATUS_CASH);
+        assertThat(java.util.Arrays.stream(StatusTerm.values()).map(term -> TermLooks.faceOf(term).frame()))
+                .containsOnly(Palette.TERM_FRAME_STATUS);
     }
 
     @Test
