@@ -2,6 +2,7 @@ package td.tower.sonar;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
@@ -24,8 +25,8 @@ public final class DeepScanPerk implements SonarPerk {
     }
 
     @Override
-    public String describe() {
-        return "Deep Scan: each revolution reveals invisible enemies in the outer " + PerkText.percent(1f - OUTER_QUARTER_FROM)
-                + " of its range for " + PerkText.seconds(Math.round(REVEAL_SECONDS * TickRate.TICKS_PER_SECOND));
+    public TermText describe() {
+        return TermText.of("Deep Scan: each revolution reveals invisible enemies in the outer " + PerkText.percent(1f - OUTER_QUARTER_FROM)
+                + " of its range for " + PerkText.seconds(Math.round(REVEAL_SECONDS * TickRate.TICKS_PER_SECOND)));
     }
 }

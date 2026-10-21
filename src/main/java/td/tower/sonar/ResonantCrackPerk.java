@@ -5,6 +5,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.stat.EnemyStat;
 import td.term.Term;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 import java.util.Set;
@@ -30,8 +31,8 @@ public final class ResonantCrackPerk implements SonarPerk {
     }
 
     @Override
-    public String describe() {
-        return "each beam hit takes " + PER_STACK + " resilience, down to -" + PER_STACK * EffectKind.FRACTURED.maxStacks() + ", back "
-                + PER_STACK + " every " + PerkText.seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS);
+    public TermText describe() {
+        return TermText.of("each beam hit takes " + PER_STACK + " resilience, down to -" + PER_STACK * EffectKind.FRACTURED.maxStacks() + ", back "
+                + PER_STACK + " every " + PerkText.seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS));
     }
 }

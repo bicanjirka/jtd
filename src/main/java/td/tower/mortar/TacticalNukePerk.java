@@ -2,6 +2,7 @@ package td.tower.mortar;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 import java.util.Set;
@@ -25,10 +26,10 @@ public final class TacticalNukePerk implements MortarPerk {
     }
 
     @Override
-    public String describe() {
-        return "every " + PerkText.ordinal(EVERY) + " shell is a nuke: " + PerkText.times(DAMAGE_FACTOR) + " damage over "
+    public TermText describe() {
+        return TermText.of("every " + PerkText.ordinal(EVERY) + " shell is a nuke: " + PerkText.times(DAMAGE_FACTOR) + " damage over "
                 + PerkText.times(RADIUS_FACTOR) + " the blast, leaving fallout for "
                 + PerkText.seconds(ShellType.NUKE.zone().orElseThrow().lifetimeTicks()) + " over "
-                + PerkText.cells(ShellType.NUKE.zone().orElseThrow().blastShare()) + " of the blast; it never carries a special";
+                + PerkText.cells(ShellType.NUKE.zone().orElseThrow().blastShare()) + " of the blast; it never carries a special");
     }
 }

@@ -2,15 +2,11 @@ package td.tower.proc;
 
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
-import td.tower.TowerCapability;
-import td.tower.TowerStat;
+import td.term.TermNumbers;
+import td.term.TermText;
 import td.tower.TowerStatus;
 import td.util.TickRate;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 /** What a proc does when it fires; each record does it and says it. */
@@ -24,8 +20,13 @@ public sealed interface ProcPayload {
         return Optional.empty();
     }
 
-    /** "Vulnerable +1", "Charged 3 s", "Dispel", "Shield -25%", or what a status does. */
-    String describe();
+    /** What it does, said after its trigger: "applies a stack of [Vulnerable]". */
+    TermText describe();
+
+    /** How it reads on a counted shot: a one-shot status is that shot. */
+    default TermText describeForTheShot() {
+        return this.describe();
+    }
 
     /** {@code stacks} of the stacking debuff {@code kind}. */
     record ApplyStacks(EffectKind kind, int stacks) implements ProcPayload {
@@ -35,8 +36,9 @@ public sealed interface ProcPayload {
         }
 
         @Override
-        public String describe() {
-            return Words.name(this.kind) + " +" + this.stacks;
+        public TermText describe() {
+            return this.stacks == 1 ? TermText.of("applies a stack of ").plus(this.kind)
+                    : TermText.of("applies " + this.stacks + " stacks of ").plus(this.kind);
         }
     }
 
@@ -48,8 +50,9 @@ public sealed interface ProcPayload {
         }
 
         @Override
-        public String describe() {
-            return "Charged " + seconds(this.ticks);
+        public TermText describe() {
+            return TermText.of("applies ").plus(EffectKind.CHARGED)
+                    .plus(" for " + TermNumbers.seconds(this.ticks / (float) TickRate.TICKS_PER_SECOND));
         }
     }
 
@@ -66,18 +69,20 @@ public sealed interface ProcPayload {
         }
 
         @Override
-        public String describe() {
-            String length = this.status.shots() == 1 ? "next shot"
-                    : this.status.shots() > 0 ? "next " + this.status.shots() + " shots"
-                    : seconds(this.status.durationTicks());
-            List<String> parts = new ArrayList<>();
-            for (TowerStat stat : this.status.modifiers().stats()) {
-                parts.add(stat.label() + " " + stat.describe(this.status.modifiers().get(stat)));
+        public TermText describe() {
+            return TermText.of("grants ").plus(this.mention());
+        }
+
+        @Override
+        public TermText describeForTheShot() {
+            if (this.status.shots() != 1) {
+                return this.describe();
             }
-            for (TowerCapability capability : this.status.capabilities()) {
-                parts.add(capability.label());
-            }
-            return length + ": " + String.join(", ", parts);
+            return TermText.of("is " + ProcText.article(this.status.term()) + " ").plus(this.mention());
+        }
+
+        private TermText mention() {
+            return TermText.of(this.status.term(), this.status.describe());
         }
     }
 
@@ -89,8 +94,8 @@ public sealed interface ProcPayload {
         }
 
         @Override
-        public String describe() {
-            return "Dispel";
+        public TermText describe() {
+            return TermText.of("removes ").plus(EffectKind.SHIELD).plus(" and ").plus(EffectKind.HEAL);
         }
     }
 
@@ -102,13 +107,9 @@ public sealed interface ProcPayload {
         }
 
         @Override
-        public String describe() {
-            return "Shield -" + Math.round(this.share * 100) + "%";
+        public TermText describe() {
+            return TermText.of("takes " + TermNumbers.percent(this.share) + " of what ").plus(EffectKind.SHIELD)
+                    .plus(" has left");
         }
-    }
-
-    private static String seconds(int ticks) {
-        return BigDecimal.valueOf(ticks / (double) TickRate.TICKS_PER_SECOND).stripTrailingZeros().toPlainString()
-                .toLowerCase(Locale.ROOT) + " s";
     }
 }

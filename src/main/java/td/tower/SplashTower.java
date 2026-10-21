@@ -6,6 +6,7 @@ import td.effect.Effect;
 import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.term.TermText;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitBonus;
 import td.tower.proc.HitCondition;
@@ -103,7 +104,7 @@ public final class SplashTower extends AbstractTower {
     private static final int COOLDOWN_MAX = 19;
     /** Saturation fades this long after the last blast that caught the enemy. */
     private static final float SATURATION_SECONDS = 1.5f;
-    private static final String SATURATED_BLAST_DEED = "Saturated blasts";
+    private static final TermText SATURATED_BLAST_DEED = TermText.format("blasts on {}", EffectKind.SATURATED);
     /** How far above its target a Thunderstrike's bolt is drawn from. */
     private static final float THUNDERSTRIKE_HEIGHT_CELLS = 2f;
     /** How far, in cells before the blast radius bonus, a curse spreads or shares. */

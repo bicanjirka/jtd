@@ -1,7 +1,11 @@
 package td.tower.proc;
 
+import td.term.TermText;
+
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Trigger, conditions and payload: what a tower does on an attack beyond the hit itself.
@@ -43,12 +47,16 @@ public record Proc(ProcTrigger trigger, List<ProcCondition> conditions, ProcPayl
         return new Proc(this.trigger, next, this.payload);
     }
 
-    /** The label from the trigger and the conditions, the value from the payload. */
-    public Description describe() {
-        List<String> parts = new ArrayList<>();
-        parts.add(this.trigger.describe());
-        this.conditions.forEach(condition -> parts.add(condition.describe()));
-        return new Description(String.join(", ", parts), this.payload.describe());
+    /** "a crit shot applies a stack of [Sunder]", "every 4th shot is a [Deadeye Round]". */
+    public TermText describe() {
+        Set<HitKind> kinds = EnumSet.noneOf(HitKind.class);
+        this.conditions.forEach(condition -> kinds.addAll(condition.hitKinds()));
+        TermText noun = kinds.isEmpty() ? TermText.empty() : ProcText.hits(kinds, "or", ProcText::noun);
+        TermText on = TermText.join(" ", this.conditions.stream().map(ProcCondition::describe).toList());
+        TermText when = this.trigger.describe(noun);
+        TermText head = on.isEmpty() ? when : when.plus(" ").plus(on);
+        return head.plus(" ")
+                .plus(this.trigger.countsShots() ? this.payload.describeForTheShot() : this.payload.describe());
     }
 
     boolean holds(AttackOutcome outcome) {

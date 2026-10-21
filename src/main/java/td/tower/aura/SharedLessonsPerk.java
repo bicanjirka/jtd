@@ -1,5 +1,7 @@
 package td.tower.aura;
 
+import td.term.TermText;
+
 /** Shared Lessons: buffed towers each earn the XP of every enemy any of them reached. */
 public final class SharedLessonsPerk implements AuraPerk {
 
@@ -9,7 +11,7 @@ public final class SharedLessonsPerk implements AuraPerk {
     }
 
     @Override
-    public String describe() {
-        return "buffed towers share what they see: each earns the XP of every enemy any of them reached";
+    public TermText describe() {
+        return TermText.of("buffed towers share what they see: each earns the XP of every enemy any of them reached");
     }
 }

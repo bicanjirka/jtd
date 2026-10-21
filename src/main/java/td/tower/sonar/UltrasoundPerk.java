@@ -2,6 +2,7 @@ package td.tower.sonar;
 
 import td.damage.DamageType;
 import td.effect.EffectKind;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 /**
@@ -24,8 +25,8 @@ public final class UltrasoundPerk implements SonarPerk {
     }
 
     @Override
-    public String describe() {
-        return PerkText.percent(BASE_SHARE) + " of each hit is added as magic, up to " + PerkText.percent(MAX_SHARE)
-                + " against armored or shielded enemies";
+    public TermText describe() {
+        return TermText.of(PerkText.percent(BASE_SHARE) + " of each hit is added as magic, up to " + PerkText.percent(MAX_SHARE)
+                + " against armored or shielded enemies");
     }
 }

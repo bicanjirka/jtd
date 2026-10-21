@@ -1,5 +1,7 @@
 package td.tower.seeker;
 
+import td.term.TermText;
+
 /** Rearm: a missile that freezes its target launches a new one at once; a rearmed missile rearms nothing. */
 public final class RearmPerk implements SeekerPerk {
 
@@ -11,8 +13,8 @@ public final class RearmPerk implements SeekerPerk {
     }
 
     @Override
-    public String describe() {
-        return "a missile that freezes its target launches a new missile from the tower at once; a rearmed missile's freeze "
-                + "rearms nothing";
+    public TermText describe() {
+        return TermText.of("a missile that freezes its target launches a new missile from the tower at once; a rearmed missile's freeze "
+                + "rearms nothing");
     }
 }

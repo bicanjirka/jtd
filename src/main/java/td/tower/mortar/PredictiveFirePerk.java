@@ -1,5 +1,7 @@
 package td.tower.mortar;
 
+import td.term.TermText;
+
 /** Predictive Fire: the Mortar aims where the enemy will be when the shell lands. */
 public final class PredictiveFirePerk implements MortarPerk {
 
@@ -9,7 +11,7 @@ public final class PredictiveFirePerk implements MortarPerk {
     }
 
     @Override
-    public String describe() {
-        return "aims where the enemy will be when the shell lands";
+    public TermText describe() {
+        return TermText.of("aims where the enemy will be when the shell lands");
     }
 }

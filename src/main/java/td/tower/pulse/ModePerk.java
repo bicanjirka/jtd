@@ -1,6 +1,7 @@
 package td.tower.pulse;
 
 import td.term.Term;
+import td.term.TermText;
 
 import java.util.Set;
 
@@ -24,7 +25,7 @@ public final class ModePerk implements PulsePerk {
     }
 
     @Override
-    public String describe() {
-        return this.mode.describe();
+    public TermText describe() {
+        return TermText.of(this.mode.describe());
     }
 }

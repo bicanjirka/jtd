@@ -2,11 +2,11 @@ package td.tower.proc;
 
 import td.effect.EffectKind;
 import td.enemy.Rank;
+import td.term.TermNumbers;
+import td.term.TermText;
 import td.tower.TowerTerm;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 /** When a hit bonus applies; each record decides it and says it in words. */
@@ -14,8 +14,8 @@ public sealed interface HitCondition {
 
     boolean holds(HitContext context);
 
-    /** How the condition reads in a row label: "vs Elite and Boss", "first shot at a target", ... */
-    String describe();
+    /** When it holds, after what it adds: "against Elite and Boss enemies". Empty for every hit. */
+    TermText describe();
 
     /** Every hit. */
     record Always() implements HitCondition {
@@ -25,8 +25,8 @@ public sealed interface HitCondition {
         }
 
         @Override
-        public String describe() {
-            return "";
+        public TermText describe() {
+            return TermText.empty();
         }
     }
 
@@ -38,8 +38,8 @@ public sealed interface HitCondition {
         }
 
         @Override
-        public String describe() {
-            return "first shot at a target";
+        public TermText describe() {
+            return TermText.of("on the first shot at a target");
         }
     }
 
@@ -51,8 +51,9 @@ public sealed interface HitCondition {
         }
 
         @Override
-        public String describe() {
-            return this.focus == 1 ? "after the first shot" : "after " + this.focus + " shots";
+        public TermText describe() {
+            return this.focus == 1 ? TermText.of("while it has ").plus(this.counter)
+                    : TermText.of("with " + this.focus + " or more stacks of ").plus(this.counter);
         }
     }
 
@@ -64,10 +65,8 @@ public sealed interface HitCondition {
         }
 
         @Override
-        public String describe() {
-            List<String> ranks = Arrays.stream(Rank.values()).filter(r -> r.compareTo(this.rank) >= 0)
-                    .map(r -> Words.capitalized(r.name().toLowerCase(Locale.ROOT))).toList();
-            return "vs " + Words.listed(ranks, "and");
+        public TermText describe() {
+            return TermText.of("against " + ProcText.ranksFrom(this.rank) + " enemies");
         }
     }
 
@@ -79,8 +78,8 @@ public sealed interface HitCondition {
         }
 
         @Override
-        public String describe() {
-            return "vs under " + Math.round(this.share * 100) + "% health";
+        public TermText describe() {
+            return TermText.of("under " + TermNumbers.percent(this.share) + " health");
         }
     }
 
@@ -92,8 +91,8 @@ public sealed interface HitCondition {
         }
 
         @Override
-        public String describe() {
-            return "vs frozen or dazed";
+        public TermText describe() {
+            return TermText.of("against an enemy with ").plus(ProcText.kinds(EffectKind.stopping(), "or"));
         }
     }
 
@@ -110,8 +109,8 @@ public sealed interface HitCondition {
         }
 
         @Override
-        public String describe() {
-            return Words.statesOf(this.kinds);
+        public TermText describe() {
+            return TermText.of("against an enemy with ").plus(ProcText.kinds(this.kinds, "or"));
         }
     }
 
@@ -123,14 +122,14 @@ public sealed interface HitCondition {
         }
 
         @Override
-        public String describe() {
+        public TermText describe() {
             for (int denominator = 2; denominator <= 4; denominator++) {
                 int numerator = Math.round(this.share * denominator);
                 if (Math.abs(this.share - (float) numerator / denominator) < 1e-3f) {
-                    return "past " + numerator + "/" + denominator + " of range";
+                    return TermText.of("past " + numerator + "/" + denominator + " of range");
                 }
             }
-            return "past " + Math.round(this.share * 100) + "% of range";
+            return TermText.of("past " + TermNumbers.percent(this.share) + " of range");
         }
     }
 
@@ -142,8 +141,8 @@ public sealed interface HitCondition {
         }
 
         @Override
-        public String describe() {
-            return Words.hitsOf(this.kinds);
+        public TermText describe() {
+            return TermText.of("on ").plus(ProcText.hits(this.kinds, "and", ProcText::plural));
         }
     }
 
@@ -160,8 +159,8 @@ public sealed interface HitCondition {
         }
 
         @Override
-        public String describe() {
-            return String.join(", ", this.conditions.stream().map(HitCondition::describe).filter(s -> !s.isEmpty()).toList());
+        public TermText describe() {
+            return TermText.join(" ", this.conditions.stream().map(HitCondition::describe).toList());
         }
     }
 }

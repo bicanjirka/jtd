@@ -1,5 +1,6 @@
 package td.tower.seeker;
 
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 /** Deep Freeze II: a frozen enemy the Seeker kills shatters, hurting what stands near it. */
@@ -13,7 +14,7 @@ public final class ShatterPerk implements SeekerPerk {
     }
 
     @Override
-    public String describe() {
-        return "a frozen enemy this tower kills shatters for " + PerkText.percent(SHARE) + " of its damage around it";
+    public TermText describe() {
+        return TermText.of("a frozen enemy this tower kills shatters for " + PerkText.percent(SHARE) + " of its damage around it");
     }
 }

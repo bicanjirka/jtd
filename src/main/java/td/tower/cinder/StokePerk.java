@@ -1,5 +1,7 @@
 package td.tower.cinder;
 
+import td.term.TermText;
+
 /** Attune's Stoke: a wave on an enemy already burning from this Cinder raises its burn, up to three times. */
 public final class StokePerk implements CinderPerk {
 
@@ -11,8 +13,8 @@ public final class StokePerk implements CinderPerk {
     }
 
     @Override
-    public String describe() {
-        return "Stoke: a wave on an enemy already burning from this tower raises its burn a step, up to " + MAX_STEPS
-                + " times; the stacks go when the burn ends";
+    public TermText describe() {
+        return TermText.of("Stoke: a wave on an enemy already burning from this tower raises its burn a step, up to " + MAX_STEPS
+                + " times; the stacks go when the burn ends");
     }
 }

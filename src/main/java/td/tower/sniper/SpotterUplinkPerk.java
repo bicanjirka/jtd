@@ -1,6 +1,7 @@
 package td.tower.sniper;
 
 import td.effect.EffectKind;
+import td.term.TermText;
 import td.tower.targeting.Viewpoint;
 import td.tower.targeting.WithEffectTargetQuery;
 import td.tower.upgrade.PerkText;
@@ -18,7 +19,7 @@ public final class SpotterUplinkPerk implements SniperPerk {
     }
 
     @Override
-    public String describe() {
-        return "may shoot Marked or Revealed enemies within " + PerkText.times(REACH) + " its range";
+    public TermText describe() {
+        return TermText.of("may shoot Marked or Revealed enemies within " + PerkText.times(REACH) + " its range");
     }
 }

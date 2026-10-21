@@ -1,5 +1,7 @@
 package td.tower.seeker;
 
+import td.term.TermText;
+
 /** Brood: a salvo spreads across different targets. */
 public final class BroodPerk implements SeekerPerk {
 
@@ -9,7 +11,7 @@ public final class BroodPerk implements SeekerPerk {
     }
 
     @Override
-    public String describe() {
-        return "a salvo spreads across different targets";
+    public TermText describe() {
+        return TermText.of("a salvo spreads across different targets");
     }
 }

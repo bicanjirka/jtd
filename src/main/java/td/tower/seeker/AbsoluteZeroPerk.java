@@ -1,5 +1,6 @@
 package td.tower.seeker;
 
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 /**
@@ -18,9 +19,9 @@ public final class AbsoluteZeroPerk implements SeekerPerk {
     }
 
     @Override
-    public String describe() {
-        return "the missile freezes everything within " + PerkText.distance(AREA_CELLS)
+    public TermText describe() {
+        return TermText.of("the missile freezes everything within " + PerkText.distance(AREA_CELLS)
                 + " of the impact; shatters deal " + PerkText.times(SHATTER_FACTOR)
-                + "; an enemy this tower froze shatters when its freeze ends";
+                + "; an enemy this tower froze shatters when its freeze ends");
     }
 }

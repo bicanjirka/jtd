@@ -4,6 +4,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.stat.EnemyStat;
 import td.term.Term;
+import td.term.TermText;
 import td.tower.BehaviourLine;
 import td.tower.BehaviourMarker;
 import td.tower.upgrade.PerkText;
@@ -33,9 +34,9 @@ public final class CommandPingPerk implements SonarPerk {
     }
 
     @Override
-    public String describe() {
-        return "the pinged enemy is the Priority until the next pass: +"
+    public TermText describe() {
+        return TermText.of("the pinged enemy is the Priority until the next pass: +"
                 + PerkText.percent(EffectKind.PRIORITY.modifiersAt(1).flat(EnemyStat.PHYSICAL_DAMAGE_TAKEN))
-                + " damage taken, and towers that pick one target pick it";
+                + " damage taken, and towers that pick one target pick it");
     }
 }

@@ -1,5 +1,6 @@
 package td.tower.upgrade;
 
+import td.term.TermText;
 import td.tower.Tower;
 import td.util.GameWorld;
 
@@ -12,7 +13,7 @@ record SlotEmptyCondition(UpgradeSlot slot) implements UpgradeCondition {
     }
 
     @Override
-    public String describe() {
-        return "nothing chosen in " + this.slot;
+    public TermText describe() {
+        return TermText.of("nothing chosen in " + this.slot);
     }
 }

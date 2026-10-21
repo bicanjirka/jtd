@@ -111,8 +111,8 @@ class StandardTreeShapeTest {
         Tower ready = this.towerOwning(attune, awaken, S1, A1, A2, A3);
 
         assertThat(TREE.offered(awakened, this.context)).contains(transcendent).doesNotContain(awaken);
-        assertThat(transcendent.gate().progress(awakened, this.context)).isEqualTo("special, head III");
-        assertThat(transcendent.gate().progress(withSpecial, this.context)).isEqualTo("needs head III");
+        assertThat(transcendent.gate().progress(awakened, this.context).plain()).isEqualTo("special, head III");
+        assertThat(transcendent.gate().progress(withSpecial, this.context).plain()).isEqualTo("needs head III");
         assertThat(transcendent.gate().isSatisfied(withSpecial, this.context)).isFalse();
         assertThat(transcendent.gate().isSatisfied(ready, this.context)).isTrue();
     }

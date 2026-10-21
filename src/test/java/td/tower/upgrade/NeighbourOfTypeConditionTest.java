@@ -34,7 +34,7 @@ class NeighbourOfTypeConditionTest {
 
     @Test
     void describesItselfByTheTypeItNeeds() {
-        assertThat(new NeighbourOfTypeCondition(TowerFactory.Type.AURA).describe())
+        assertThat(new NeighbourOfTypeCondition(TowerFactory.Type.AURA).describe().plain())
                 .startsWith("next to another ");
     }
 }

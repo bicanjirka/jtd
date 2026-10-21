@@ -4,6 +4,7 @@ import td.effect.DragStrength;
 import td.effect.EffectKind;
 import td.effect.FieldStrength;
 import td.term.Term;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 import java.util.Set;
@@ -24,9 +25,9 @@ public final class UndertowPerk implements PulsePerk {
     }
 
     @Override
-    public String describe() {
-        return "the drag grows with Toll to " + DragStrength.at(DRAG_AT_FULL, FieldStrength.FULL)
+    public TermText describe() {
+        return TermText.of("the drag grows with Toll to " + DragStrength.at(DRAG_AT_FULL, FieldStrength.FULL)
                 + "% at full Toll; enemies inside are Anchored, and the drag counts as a chill for a freeze, for "
-                + PerkText.seconds(FieldMode.LINGER_TICKS) + " after they leave too";
+                + PerkText.seconds(FieldMode.LINGER_TICKS) + " after they leave too");
     }
 }

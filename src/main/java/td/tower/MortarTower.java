@@ -108,7 +108,7 @@ public final class MortarTower extends AbstractTower {
     private static final float BOMBLET_SPACING_CELLS = 0.8f;
     private static final float BOMBLET_SCATTER_CELLS = 0.8f;
 
-    private static final String BRACKET_DEED = "Bracketed shells";
+    private static final TermText BRACKET_DEED = TermText.format("shells with {}", TowerTerm.BRACKETING);
     private static final int BRACKETED_SHELLS_NEEDED = 15;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()

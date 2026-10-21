@@ -2,6 +2,7 @@ package td.tower.cinder;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermText;
 
 import java.util.Set;
 
@@ -21,7 +22,7 @@ public final class FlashpointPerk implements CinderPerk {
     }
 
     @Override
-    public String describe() {
-        return "a critical ignition also adds " + STACKS + " Scorched";
+    public TermText describe() {
+        return TermText.of("a critical ignition also adds " + STACKS + " Scorched");
     }
 }

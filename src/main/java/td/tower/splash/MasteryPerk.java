@@ -1,5 +1,6 @@
 package td.tower.splash;
 
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
@@ -24,9 +25,9 @@ public final class MasteryPerk implements SplashPerk {
     }
 
     @Override
-    public String describe() {
-        return "Stormcaller: arcs +" + PerkText.percent(ARC_CRIT_BONUS) + " crit, Overload's Daze lasts "
+    public TermText describe() {
+        return TermText.of("Stormcaller: arcs +" + PerkText.percent(ARC_CRIT_BONUS) + " crit, Overload's Daze lasts "
                 + PerkText.seconds(Math.round(ArcSpec.LONG_DAZE_SECONDS * TickRate.TICKS_PER_SECOND)) + "; Hexer: Blight poisons "
-                + PerkText.percent(BLIGHT_SHARE / HexSpec.BLIGHT_SHARE - 1f) + " harder, and a hexed enemy that dies leaves a cursed cloud";
+                + PerkText.percent(BLIGHT_SHARE / HexSpec.BLIGHT_SHARE - 1f) + " harder, and a hexed enemy that dies leaves a cursed cloud");
     }
 }

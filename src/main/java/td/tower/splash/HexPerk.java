@@ -1,6 +1,7 @@
 package td.tower.splash;
 
 import td.term.Term;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 import java.util.Set;
@@ -46,8 +47,8 @@ public final class HexPerk implements SplashPerk {
     }
 
     @Override
-    public String describe() {
-        return (this.founding ? "every " + PerkText.ordinal(HexSpec.CAST_EVERY) + " shot casts a hex instead of blasting; " : "")
-                + "adds " + this.hex.describe() + (this.cursesPerCast > 1 ? "; a cast curses up to " + this.cursesPerCast + " enemies" : "");
+    public TermText describe() {
+        return TermText.of((this.founding ? "every " + PerkText.ordinal(HexSpec.CAST_EVERY) + " shot casts a hex instead of blasting; " : "")
+                + "adds " + this.hex.describe() + (this.cursesPerCast > 1 ? "; a cast curses up to " + this.cursesPerCast + " enemies" : ""));
     }
 }

@@ -1,5 +1,6 @@
 package td.tower.aura;
 
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 /** Chosen: the aura buffs only its most experienced tower, more strongly. */
@@ -13,7 +14,7 @@ public final class ChosenPerk implements AuraPerk {
     }
 
     @Override
-    public String describe() {
-        return "buffs only the most experienced tower in range, at " + PerkText.times(STRENGTH) + " strength";
+    public TermText describe() {
+        return TermText.of("buffs only the most experienced tower in range, at " + PerkText.times(STRENGTH) + " strength");
     }
 }

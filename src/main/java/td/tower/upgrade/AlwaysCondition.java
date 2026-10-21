@@ -1,5 +1,6 @@
 package td.tower.upgrade;
 
+import td.term.TermText;
 import td.tower.Tower;
 import td.util.GameWorld;
 
@@ -17,8 +18,8 @@ final class AlwaysCondition implements UpgradeCondition {
     }
 
     @Override
-    public String describe() {
-        return "money only";
+    public TermText describe() {
+        return TermText.of("money only");
     }
 
     @Override

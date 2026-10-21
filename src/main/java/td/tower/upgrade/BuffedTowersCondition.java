@@ -1,5 +1,6 @@
 package td.tower.upgrade;
 
+import td.term.TermText;
 import td.tower.Tower;
 import td.util.GameWorld;
 
@@ -12,13 +13,13 @@ public record BuffedTowersCondition(int required) implements UpgradeCondition {
     }
 
     @Override
-    public String describe() {
-        return "buffing " + this.required + " towers";
+    public TermText describe() {
+        return TermText.of("buffing " + this.required + " towers");
     }
 
     @Override
-    public String progress(Tower tower, GameWorld context) {
-        return "buffing " + Math.min(buffed(tower, context), this.required) + "/" + this.required + " towers";
+    public TermText progress(Tower tower, GameWorld context) {
+        return TermText.of("buffing " + Math.min(buffed(tower, context), this.required) + "/" + this.required + " towers");
     }
 
     private static long buffed(Tower tower, GameWorld context) {

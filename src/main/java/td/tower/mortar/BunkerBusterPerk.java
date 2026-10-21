@@ -2,6 +2,7 @@ package td.tower.mortar;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 import java.util.Set;
@@ -24,7 +25,7 @@ public final class BunkerBusterPerk implements MortarPerk {
     }
 
     @Override
-    public String describe() {
-        return "the enemy at the centre of the blast takes " + PerkText.times(DAMAGE_FACTOR) + " damage and is Sundered";
+    public TermText describe() {
+        return TermText.of("the enemy at the centre of the blast takes " + PerkText.times(DAMAGE_FACTOR) + " damage and is Sundered");
     }
 }

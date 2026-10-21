@@ -39,8 +39,8 @@ public final class CritStreakPerk implements SniperPerk {
     }
 
     @Override
-    public String describe() {
-        return "a crit makes the next crit deal +" + PerkText.percent(CRIT_DAMAGE_PER_STREAK) + " crit damage, two in a row +"
-                + PerkText.percent(CRIT_DAMAGE_PER_STREAK * MAX_STREAK) + ", no further";
+    public TermText describe() {
+        return TermText.of("a crit makes the next crit deal +" + PerkText.percent(CRIT_DAMAGE_PER_STREAK) + " crit damage, two in a row +"
+                + PerkText.percent(CRIT_DAMAGE_PER_STREAK * MAX_STREAK) + ", no further");
     }
 }

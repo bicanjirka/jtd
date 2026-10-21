@@ -1,6 +1,7 @@
 package td.tower.proc;
 
 import td.effect.EffectKind;
+import td.term.TermText;
 import td.tower.TowerTerm;
 
 import java.util.Optional;
@@ -15,7 +16,8 @@ public sealed interface HitScaling {
         return Optional.empty();
     }
 
-    String describe();
+    /** {@code adjustment} said with how often it applies: "+10% damage per stack of [Toll]". */
+    TermText around(TermText adjustment);
 
     /** Once. */
     record Once() implements HitScaling {
@@ -25,8 +27,8 @@ public sealed interface HitScaling {
         }
 
         @Override
-        public String describe() {
-            return "";
+        public TermText around(TermText adjustment) {
+            return adjustment;
         }
     }
 
@@ -43,8 +45,9 @@ public sealed interface HitScaling {
         }
 
         @Override
-        public String describe() {
-            return this.max == 0 ? "per stack" : "per stack, up to " + this.max;
+        public TermText around(TermText adjustment) {
+            return adjustment.plus(" per stack of ").plus(this.counter)
+                    .plus(this.max == 0 ? "" : ", up to " + this.max);
         }
     }
 
@@ -56,8 +59,8 @@ public sealed interface HitScaling {
         }
 
         @Override
-        public String describe() {
-            return "up to, at max range";
+        public TermText around(TermText adjustment) {
+            return TermText.of("up to ").plus(adjustment).plus(", growing to full at max range");
         }
     }
 
@@ -69,8 +72,8 @@ public sealed interface HitScaling {
         }
 
         @Override
-        public String describe() {
-            return "per " + Words.name(this.kind) + " stack";
+        public TermText around(TermText adjustment) {
+            return adjustment.plus(" per stack of ").plus(this.kind);
         }
     }
 }

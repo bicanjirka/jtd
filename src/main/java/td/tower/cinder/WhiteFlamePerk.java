@@ -1,5 +1,7 @@
 package td.tower.cinder;
 
+import td.term.TermText;
+
 /** White Flame: the flame burns white. */
 public final class WhiteFlamePerk implements CinderPerk {
 
@@ -9,7 +11,7 @@ public final class WhiteFlamePerk implements CinderPerk {
     }
 
     @Override
-    public String describe() {
-        return "the flame burns white";
+    public TermText describe() {
+        return TermText.of("the flame burns white");
     }
 }

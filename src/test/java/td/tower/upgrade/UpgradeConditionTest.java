@@ -20,6 +20,6 @@ class UpgradeConditionTest {
 
     @Test
     void alwaysDescribesItselfAsMoneyOnly() {
-        assertThat(UpgradeCondition.always().describe()).isEqualTo("money only");
+        assertThat(UpgradeCondition.always().describe().plain()).isEqualTo("money only");
     }
 }

@@ -3,6 +3,7 @@ package td.tower.sonar;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermText;
 import td.tower.BehaviourLine;
 import td.tower.BehaviourMarker;
 
@@ -33,7 +34,7 @@ public final class MarkOnSweepPerk implements SonarPerk {
     }
 
     @Override
-    public String describe() {
-        return "marks every enemy the beam hits: the next hit on it from any tower is a guaranteed crit";
+    public TermText describe() {
+        return TermText.of("marks every enemy the beam hits: the next hit on it from any tower is a guaranteed crit");
     }
 }

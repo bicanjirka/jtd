@@ -1,5 +1,6 @@
 package td.tower.upgrade;
 
+import td.term.TermText;
 import td.tower.Tower;
 import td.util.GameWorld;
 
@@ -21,22 +22,22 @@ public record TranscendentCondition(List<String> levelThreeIds) implements Upgra
     }
 
     @Override
-    public String describe() {
-        return "a special and a level III head";
+    public TermText describe() {
+        return TermText.of("a special and a level III head");
     }
 
     /** Short enough to share a button row with the node's name. */
     @Override
-    public String progress(Tower tower, GameWorld context) {
+    public TermText progress(Tower tower, GameWorld context) {
         boolean special = ownsSpecial(tower);
         boolean levelThree = this.ownsLevelThree(tower);
         if (special && levelThree) {
-            return "special and head III";
+            return TermText.of("special and head III");
         }
         if (!special && !levelThree) {
-            return "special, head III";
+            return TermText.of("special, head III");
         }
-        return special ? "needs head III" : "needs special";
+        return TermText.of(special ? "needs head III" : "needs special");
     }
 
     private static boolean ownsSpecial(Tower tower) {
