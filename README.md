@@ -148,6 +148,15 @@ next node waits. The Beacon draws a faint line to every tower it's
 currently amplifying, coloured for its reach or its chosen hero, a ring on the tower it mentors, and
 (while it is selected) the path spot its Rally watches.
 
+```mermaid
+flowchart LR
+    attune[Attune] --> awaken[Awaken] --> trans[Transcendent<br/>XP 300]
+    attune -.opens.-> o1[head I, II<br/>extra I, II]
+    awaken -.opens.-> o2[head III, extra III<br/>Range II, a special]
+    o2 -->|own a head III and a special| trans
+    trans -.opens.-> o3[head IV-A or IV-B, extra IV<br/>Range III, a second special]
+```
+
 ### Enemies
 
 An enemy is made of four kinds of thing, and each belongs to exactly one:
