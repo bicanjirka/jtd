@@ -152,3 +152,6 @@ its sentence. A new ability names its `AbilityTerm`.
   game-loop thread, once per frame build. A killed or leaked selection keeps its snapshot; one
   that left the roster still alive is dropped. A hatch marks the mob `HATCHED` first, so its
   snapshot stays like a kill's or a leak's.
+- `EnemyInspection` also carries base stats, effects in the order gained (with their clock, fullness
+  and DR), immunities and their cause, trait and ability entries, and a `StatBreakdown` for each
+  shown stat; `StatRows.shows` decides which.

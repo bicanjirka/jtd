@@ -369,22 +369,48 @@ public final class ActiveEffects {
         Set<EffectKind> kinds = this.active.keySet();
         this.burningTuning().carried().applyTo(accumulator);
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
-            EffectKind kind = entry.getKey();
-            Effect effect = entry.getValue();
-            if (!EffectInteractions.contributes(kind, kinds)) {
-                continue;
-            }
-            switch (kind.rule().stacking()) {
-                case SHARED_CLOCK, EARNED -> kind.modifiersAt(effect.stacks()).applyTo(accumulator);
-                case REFRESH -> kind.modifiersAt(1).applyTo(accumulator);
-                case LEVEL -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - chillLevel(effect));
-                case POOL -> this.contributePool(kind, effect, accumulator);
-            }
-            if (kind == EffectKind.HEAL) {
-                accumulator.restoreFlat(EnemyStat.REGENERATION, effect.healPerTick());
-            }
+            this.contribute(entry.getKey(), entry.getValue(), kinds, accumulator);
         }
         if (!this.active.containsKey(EffectKind.EXPOSED) && EffectInteractions.isActiveOrImplied(EffectKind.EXPOSED, kinds)) {
+            EffectKind.EXPOSED.modifiersAt(1).applyTo(accumulator);
+        }
+    }
+
+    private void contribute(EffectKind kind, Effect effect, Set<EffectKind> kinds,
+                            StatAccumulator<EnemyStat> accumulator) {
+        if (!EffectInteractions.contributes(kind, kinds)) {
+            return;
+        }
+        switch (kind.rule().stacking()) {
+            case SHARED_CLOCK, EARNED -> kind.modifiersAt(effect.stacks()).applyTo(accumulator);
+            case REFRESH -> kind.modifiersAt(1).applyTo(accumulator);
+            case LEVEL -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - chillLevel(effect));
+            case POOL -> this.contributePool(kind, effect, accumulator);
+        }
+        if (kind == EffectKind.HEAL) {
+            accumulator.restoreFlat(EnemyStat.REGENERATION, effect.healPerTick());
+        }
+    }
+
+    /**
+     * What the active {@code kind} alone adds to the stats now, for a breakdown: its own modifiers, what the burning
+     * pools carry when it is the first burning kind, and the implied Expose when it is a Reveal.
+     */
+    public void contributionOf(EffectKind kind, StatAccumulator<EnemyStat> accumulator) {
+        Effect effect = this.active.get(kind);
+        if (effect == null) {
+            return;
+        }
+        for (EffectKind fire : BURNING_KINDS) {
+            if (this.active.containsKey(fire)) {
+                if (fire == kind) {
+                    this.burningTuning().carried().applyTo(accumulator);
+                }
+                break;
+            }
+        }
+        this.contribute(kind, effect, this.active.keySet(), accumulator);
+        if (kind == EffectKind.REVEALED && !this.active.containsKey(EffectKind.EXPOSED)) {
             EffectKind.EXPOSED.modifiersAt(1).applyTo(accumulator);
         }
     }

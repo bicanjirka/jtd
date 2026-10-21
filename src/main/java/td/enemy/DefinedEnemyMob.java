@@ -17,16 +17,21 @@ import td.enemy.MobMoments.Moment;
 import td.stat.BaseStats;
 import td.stat.EnemyStat;
 import td.stat.StatAccumulator;
+import td.stat.StatModifier;
+import td.stat.StatRecorder;
 import td.stat.StatSheet;
 import td.stat.StatView;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 import td.wave.Vec2;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.Set;
 
@@ -57,6 +62,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private final MobMoments moments = new MobMoments();
     private final Map<EffectKind, DiminishingReturns> diminishing = new EnumMap<>(EffectKind.class);
     private final StatSheet stats;
+    private final BaseStats<EnemyStat> base;
 
     private int health;
     private long damageTaken;
@@ -88,9 +94,9 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.health = DamageUnits.ofPoints(healthPoints);
         this.healthMax = DamageUnits.ofPoints(healthPoints);
         this.pathIndex = spawnParameters.pathIndex();
-        BaseStats<EnemyStat> base = definition.baseStats()
+        this.base = definition.baseStats()
                 .with(EnemyStat.MOVE_SPEED, definition.baseSpeed() * spawnParameters.speedMultiplier());
-        this.stats = new StatSheet(base, this::contributeStats);
+        this.stats = new StatSheet(this.base, this::contributeStats);
         this.bodyScale = bodyScaleFor(definition.archetype(), gameWorld.getBoard().scale(), rank) * spawnParameters.sizeMultiplier();
         this.abilityStates = definition.abilities().stream().map(a -> AbilityState.forTrigger(a.trigger())).toList();
         this.motion = new PathMotion(gameWorld.level().pathAt(this.pathIndex), spawnParameters.localOffset(), gameWorld::getBoard);
@@ -248,6 +254,63 @@ public final class DefinedEnemyMob implements EnemyMob {
     /** This mob's resolved stats. */
     public StatView stats() {
         return this.stats;
+    }
+
+    /** What {@code stat} is before any trait or effect. */
+    public float baseStat(EnemyStat stat) {
+        return this.base.value(stat);
+    }
+
+    /** The board's cell size in pixels. */
+    float cellSize() {
+        return this.gameWorld.getBoard().scale();
+    }
+
+    EnemyCatalog enemyCatalog() {
+        return this.gameWorld.getEnemyCatalog();
+    }
+
+    /**
+     * Every kind that is active or whose diminishing returns run, ordered by the tick it was last gained (oldest
+     * first, ties in kind order).
+     */
+    public List<EffectKind> effectKindsByGain() {
+        Set<EffectKind> kinds = EnumSet.noneOf(EffectKind.class);
+        kinds.addAll(this.activeEffects.activeKinds());
+        kinds.addAll(this.diminishedFactors().keySet());
+        return this.effectTransitions.inGainedOrder(kinds);
+    }
+
+    /** What {@code stat} is made of now: base, each trait and active effect that changes it, and the result. */
+    public StatBreakdown breakdown(EnemyStat stat) {
+        TraitContext context = this.traitContext();
+        List<StatPart> parts = new ArrayList<>();
+        for (Trait trait : this.traits) {
+            StatModifier modifier = trait.modifiers(context).get(stat);
+            if (!modifier.equals(StatModifier.none())) {
+                parts.add(new StatPart(trait.entry().term(), modifier));
+            }
+        }
+        for (EffectKind kind : this.activeEffects.activeKinds()) {
+            StatModifier modifier = StatRecorder.of(stat, acc -> this.activeEffects.contributionOf(kind, acc));
+            if (!modifier.equals(StatModifier.none())) {
+                parts.add(new StatPart(kind, modifier));
+            }
+        }
+        return new StatBreakdown(stat, this.baseStat(stat), parts, this.stats.value(stat));
+    }
+
+    /** The active kind that keeps {@code kind} out now, if one does. */
+    public Optional<EffectKind> keptOutBy(EffectKind kind) {
+        return this.activeEffects.keptOutBy(kind);
+    }
+
+    public OptionalDouble effectFullness(EffectKind kind) {
+        return this.activeEffects.fullness(kind);
+    }
+
+    public OptionalInt effectClockTicks(EffectKind kind) {
+        return this.activeEffects.clockTicks(kind);
     }
 
     private void contributeStats(StatAccumulator<EnemyStat> accumulator) {
