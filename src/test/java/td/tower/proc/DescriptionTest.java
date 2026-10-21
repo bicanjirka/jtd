@@ -6,6 +6,7 @@ import td.enemy.Rank;
 import td.tower.TowerCapability;
 import td.tower.TowerModifiers;
 import td.tower.TowerStatus;
+import td.tower.TowerTerm;
 
 import java.util.Set;
 
@@ -37,7 +38,7 @@ class DescriptionTest {
 
     @Test
     void aStatusSaysHowLongItLastsAndWhatItGives() {
-        TowerStatus fifth = TowerStatus.nextShots("fifth", 1, TowerModifiers.critMultiplier(0.5f))
+        TowerStatus fifth = TowerStatus.nextShots(TowerTerm.DEADEYE_ROUND, 1, TowerModifiers.critMultiplier(0.5f))
                 .withCapability(TowerCapability.GUARANTEED_CRIT);
 
         Proc proc = Proc.everyNthShot(5, new ProcPayload.GrantStatus(fifth));

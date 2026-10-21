@@ -606,7 +606,7 @@ class AbstractTowerTest {
     @Test
     void aStatusAnEveryNthShotProcGrantsIsInThatShotsStats() {
         td.tower.proc.Proc everySecond = td.tower.proc.Proc.everyNthShot(2, new td.tower.proc.ProcPayload.GrantStatus(
-                TowerStatus.nextShots("sharp", 1, TowerModifiers.critChance(0.5f))));
+                TowerStatus.nextShots(TowerTerm.DEADEYE_ROUND, 1, TowerModifiers.critChance(0.5f))));
         FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.none()).withBaseProcs(List.of(everySecond));
 
         TowerStats first = tower.beginShot();

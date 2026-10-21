@@ -195,8 +195,8 @@ class AuraTowerTest {
         this.context.towers().add(alone);
         StatModifiers<TowerStat> burst = TowerModifiers.attackSpeed(1f);
 
-        buffed.grantStatus(TowerStatus.timed("test", burst, 100));
-        alone.grantStatus(TowerStatus.timed("test", burst, 100));
+        buffed.grantStatus(TowerStatus.timed(TowerTerm.HASTE, burst, 100));
+        alone.grantStatus(TowerStatus.timed(TowerTerm.HASTE, burst, 100));
         buffed.beginTick(150);
         alone.beginTick(150);
 

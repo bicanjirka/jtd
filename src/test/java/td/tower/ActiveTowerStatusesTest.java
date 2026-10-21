@@ -6,8 +6,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ActiveTowerStatusesTest {
 
-    private static final TowerStatus HASTE = TowerStatus.timed("haste", TowerModifiers.attackSpeed(1f), 100);
-    private static final TowerStatus FRENZY = TowerStatus.nextShots("frenzy", 3, TowerModifiers.attackSpeed(1f));
+    private static final TowerStatus HASTE = TowerStatus.timed(TowerTerm.HASTE, TowerModifiers.attackSpeed(1f), 100);
+    private static final TowerStatus FRENZY = TowerStatus.nextShots(TowerTerm.FRENZY, 3, TowerModifiers.attackSpeed(1f));
 
     private final ActiveTowerStatuses statuses = new ActiveTowerStatuses();
 

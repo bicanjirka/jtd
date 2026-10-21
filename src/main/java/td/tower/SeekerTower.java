@@ -149,7 +149,7 @@ public final class SeekerTower extends AbstractTower {
     private static final UpgradeNode HUNTERS_MARK = UpgradeTier.SPECIAL.node("seeker.special.hunters_mark",
             "Hunter's Mark", PRICE)
             .withTargeting(TargetPriority.HIGHEST_RANK)
-            .withHitBonus(HitBonus.per(new HitScaling.PerFocus(5), HitAdjustment.damage(0.2f)));
+            .withHitBonus(HitBonus.per(new HitScaling.PerFocus(TowerTerm.FOCUS, 5), HitAdjustment.damage(0.2f)));
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, BROOD, BRITTLE))
             .with(TWIN_WARHEAD_1, TWIN_WARHEAD_2, BROOD, SHATTERBURST, REARM, DEEP_FREEZE_1, DEEP_FREEZE_2, BRITTLE,

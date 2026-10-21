@@ -24,7 +24,7 @@ final class RecordingProcActions implements ProcActions {
 
     @Override
     public void grantStatus(TowerStatus status) {
-        this.calls.add("status " + status.id());
+        this.calls.add("status " + status.term().title());
     }
 
     List<String> calls() {

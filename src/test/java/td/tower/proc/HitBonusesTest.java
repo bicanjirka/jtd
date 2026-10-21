@@ -10,6 +10,7 @@ import td.stat.DisruptionPenalty;
 import td.stat.StatModifiers;
 import td.tower.TowerBaseStats;
 import td.tower.TowerStats;
+import td.tower.TowerTerm;
 
 import java.util.List;
 import java.util.Set;
@@ -51,7 +52,7 @@ class HitBonusesTest {
 
     @Test
     void perFocusScalesWithTheFocusUpToItsMax() {
-        HitBonus huntersMark = HitBonus.per(new HitScaling.PerFocus(5), HitAdjustment.damage(0.2f));
+        HitBonus huntersMark = HitBonus.per(new HitScaling.PerFocus(TowerTerm.STEADY_AIM, 5), HitAdjustment.damage(0.2f));
         HitContext third = hit(FakeEnemyMob.at(0, 0)).withFocus(3, false);
         HitContext ninth = hit(FakeEnemyMob.at(0, 0)).withFocus(9, false);
 
