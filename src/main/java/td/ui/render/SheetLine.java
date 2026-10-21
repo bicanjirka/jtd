@@ -1,9 +1,17 @@
 package td.ui.render;
 
+import td.term.TermText;
+
+import java.util.List;
 import java.util.Optional;
 
 /** One line of an {@link InfoSheet}. */
 public sealed interface SheetLine {
+
+    /** The tooltip this line opens under {@code key}, if it opens one. */
+    default Optional<InfoSheet> tooltipFor(TooltipKey key) {
+        return Optional.empty();
+    }
 
     /** The enemy's body glyph and name, with its rank badge and rank name on the right. */
     record EnemyHeader(Palette body, RankBadge badge, String name, String rank) implements SheetLine {
@@ -30,8 +38,10 @@ public sealed interface SheetLine {
      *
      * @param value empty when the label says everything
      * @param trend whether the value is better or worse than the thing's own base
+     * @param tooltip what hovering the row opens, if anything
      */
-    record Row(Glyph glyph, Optional<Palette> tone, String label, String value, Trend trend) implements SheetLine {
+    record Row(Glyph glyph, Optional<Palette> tone, String label, String value, Trend trend,
+               Optional<SheetTooltip> tooltip) implements SheetLine {
 
         /** A permanent trait: a hollow diamond, as under the enemy on the board. */
         public static Row trait(Palette tone, String label, String value) {
@@ -45,21 +55,72 @@ public sealed interface SheetLine {
 
         /** A stat nothing on the board marks. */
         public static Row plain(Glyph glyph, String label, String value) {
-            return new Row(glyph, Optional.empty(), label, value, Trend.NONE);
+            return new Row(glyph, Optional.empty(), label, value, Trend.NONE, Optional.empty());
         }
 
         /** Any glyph, with it and the label in {@code tone}'s colour. */
         public static Row toned(Glyph glyph, Palette tone, String label, String value) {
-            return new Row(glyph, Optional.of(tone), label, value, Trend.NONE);
+            return new Row(glyph, Optional.of(tone), label, value, Trend.NONE, Optional.empty());
         }
 
         public Row withTrend(Trend trend) {
-            return new Row(this.glyph, this.tone, this.label, this.value, trend);
+            return new Row(this.glyph, this.tone, this.label, this.value, trend, this.tooltip);
+        }
+
+        public Row withTooltip(TooltipKey key, InfoSheet sheet) {
+            return new Row(this.glyph, this.tone, this.label, this.value, this.trend,
+                    Optional.of(new SheetTooltip(key, sheet)));
+        }
+
+        @Override
+        public Optional<InfoSheet> tooltipFor(TooltipKey key) {
+            return this.tooltip.filter(tooltip -> tooltip.key().equals(key)).map(SheetTooltip::sheet);
         }
     }
 
     /** Dimmed running text that wraps, such as a description. */
-    record Prose(String text) implements SheetLine {
+    record Prose(TermText text) implements SheetLine {
+    }
+
+    /**
+     * Icon faces in a row, a label before them: the effects, abilities or perk lines of one kind. Each face opens
+     * its own tooltip.
+     */
+    record IconRow(String label, List<SheetIcon> icons) implements SheetLine {
+
+        public IconRow {
+            icons = List.copyOf(icons);
+        }
+
+        @Override
+        public Optional<InfoSheet> tooltipFor(TooltipKey key) {
+            return this.icons.stream().filter(icon -> icon.key().equals(key)).map(SheetIcon::tooltip).findFirst();
+        }
+    }
+
+    /** A face, a bold name in the face's tone, and a value on the right: the head of a tooltip. */
+    record IconTitle(IconFace face, String name, Palette tone, String value) implements SheetLine {
+    }
+
+    /**
+     * Running text that wraps, its mentions shown as icon and title.
+     *
+     * @param glyph a marker before the text, if any
+     * @param tone  the marker's colour
+     */
+    record Sentence(TermText text, Optional<Glyph> glyph, Optional<Palette> tone) implements SheetLine {
+
+        public static Sentence of(TermText text) {
+            return new Sentence(text, Optional.empty(), Optional.empty());
+        }
+
+        public static Sentence marked(Glyph glyph, Palette tone, TermText text) {
+            return new Sentence(text, Optional.of(glyph), Optional.of(tone));
+        }
+    }
+
+    /** A thin line across the pane between groups. */
+    record Divider() implements SheetLine {
     }
 
     /** A small vertical gap between groups. */

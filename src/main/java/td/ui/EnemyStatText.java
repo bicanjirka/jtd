@@ -6,6 +6,7 @@ import td.enemy.EnemyInspection;
 import td.enemy.HitResolution;
 import td.enemy.TraitLine;
 import td.stat.EnemyStat;
+import td.term.TermText;
 import td.ui.render.InfoSheet;
 import td.ui.render.SheetLine;
 import td.ui.render.SheetLine.Glyph;
@@ -41,7 +42,7 @@ final class EnemyStatText {
         lines.addAll(statAndTraitRows(inspection));
         if (!inspection.description().isEmpty()) {
             lines.add(new SheetLine.Gap());
-            lines.add(new SheetLine.Prose(inspection.description()));
+            lines.add(new SheetLine.Prose(TermText.of(inspection.description())));
         }
         return new InfoSheet(lines);
     }

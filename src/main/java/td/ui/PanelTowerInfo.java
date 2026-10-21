@@ -10,7 +10,6 @@ import td.util.ThreadConfined;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.text.DefaultStyledDocument;
 
@@ -62,7 +61,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private HudButton jButton_sell;
     private HudToggleButton jToggle_pin;
     private JScrollPane jScrollPane1;
-    private JTextPane jTextPane1;
+    private SheetPane sheetPane;
 
     public PanelTowerInfo() {
         initComponents();
@@ -113,9 +112,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
      */
     private void layOutSheet() {
         this.sheetWidth = this.textWidth();
-        this.jTextPane1.setStyledDocument(InfoSheetDocument.of(this.lastSheet, this.glyphRenderer, this.sheetWidth,
-                this.jTextPane1.getFontMetrics(this.jTextPane1.getFont())));
-        this.jTextPane1.setCaretPosition(0);
+        this.sheetPane.show(this.lastSheet, this.glyphRenderer, this.sheetWidth);
     }
 
     private void textPaneResized() {
@@ -125,7 +122,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     }
 
     private int textWidth() {
-        int width = this.jTextPane1.getWidth() - this.jTextPane1.getInsets().left - this.jTextPane1.getInsets().right;
+        int width = this.sheetPane.getWidth() - this.sheetPane.getInsets().left - this.sheetPane.getInsets().right;
         return width > 0 ? width : FALLBACK_TEXT_WIDTH;
     }
 
@@ -206,9 +203,9 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
      * the text otherwise leaves the caret, and the scroll, at the end.
      */
     private void replaceText(String text) {
-        this.jTextPane1.setStyledDocument(new DefaultStyledDocument());
-        this.jTextPane1.setText(text);
-        this.jTextPane1.setCaretPosition(0);
+        this.sheetPane.setStyledDocument(new DefaultStyledDocument());
+        this.sheetPane.setText(text);
+        this.sheetPane.setCaretPosition(0);
     }
 
     public void unselectTower() {
@@ -242,7 +239,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         GridBagConstraints gridBagConstraints;
 
         jScrollPane1 = new JScrollPane();
-        jTextPane1 = new JTextPane();
+        sheetPane = new SheetPane();
         jButton_sell = new HudButton("Sell");
         jToggle_pin = new HudToggleButton();
 
@@ -257,11 +254,11 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         jScrollPane1.setBackground(new Color(0, 0, 0));
         jScrollPane1.setBorder(null);
         jScrollPane1.setForeground(new Color(220, 255, 220));
-        jTextPane1.setBackground(new Color(0, 0, 0));
-        jTextPane1.setBorder(null);
-        jTextPane1.setForeground(new Color(220, 255, 220));
-        jScrollPane1.setViewportView(jTextPane1);
-        jTextPane1.addComponentListener(new ComponentAdapter() {
+        sheetPane.setBackground(new Color(0, 0, 0));
+        sheetPane.setBorder(null);
+        sheetPane.setForeground(new Color(220, 255, 220));
+        jScrollPane1.setViewportView(sheetPane);
+        sheetPane.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent evt) {
                 textPaneResized();

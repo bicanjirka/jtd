@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
+import td.term.TermText;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeNode;
@@ -74,7 +75,7 @@ class TowerSheetTextTest {
         assertThat(labels(sheet)).containsExactly("Range", "Physical damage", "Fire rate", "Splash radius",
                 "Projectile speed", "Projectile size", "Targets", "Dead zone", "Cracks plating");
         assertThat(row(sheet, "Cracks plating")).isEqualTo(Row.effect(Palette.STATUS_MARKER_CRACKED, "Cracks plating", "5 s"));
-        assertThat(sheet.lines().getLast()).isEqualTo(new SheetLine.Prose("Lobs a slow, unguided shell."));
+        assertThat(sheet.lines().getLast()).isEqualTo(new SheetLine.Prose(TermText.of("Lobs a slow, unguided shell.")));
     }
 
     @Test
