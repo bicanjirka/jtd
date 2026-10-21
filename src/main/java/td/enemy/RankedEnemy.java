@@ -20,6 +20,8 @@ import java.util.function.UnaryOperator;
  * <p>
  * Asking for an unauthored rank resolves to the highest authored rank below it;
  * {@link #effectiveRank(Rank)} gives that rank itself.
+ * <p>
+ * A {@link #unique} enemy has no ladder: it exists only at {@link Rank#BOSS}, whatever rank is asked for.
  */
 public final class RankedEnemy {
 
@@ -27,11 +29,21 @@ public final class RankedEnemy {
     // EnumMap-backed: cloneAs walks ranks in order.
     private final Map<Rank, EnemyDefinition> definitionsByRank;
     private final Rank highestDefinedRank;
+    private final boolean unique;
 
-    private RankedEnemy(String id, Map<Rank, EnemyDefinition> definitionsByRank, Rank highestDefinedRank) {
+    private RankedEnemy(String id, Map<Rank, EnemyDefinition> definitionsByRank, Rank highestDefinedRank,
+                        boolean unique) {
         this.id = id;
         this.definitionsByRank = definitionsByRank;
         this.highestDefinedRank = highestDefinedRank;
+        this.unique = unique;
+    }
+
+    /** A one-of-a-kind enemy: {@code boss} at {@link Rank#BOSS}, and no other rank. */
+    public static RankedEnemy unique(EnemyDefinition boss) {
+        Map<Rank, EnemyDefinition> only = new EnumMap<>(Rank.class);
+        only.put(Rank.BOSS, boss);
+        return new RankedEnemy(boss.id(), Collections.unmodifiableMap(only), Rank.BOSS, true);
     }
 
     /** Starts a ladder; a one-rank ladder is complete on its own. */
@@ -51,9 +63,25 @@ public final class RankedEnemy {
         return this.id;
     }
 
-    /** The highest authored rank not above {@code requested}. */
+    /** Whether this enemy exists only at {@link Rank#BOSS}. */
+    public boolean isUnique() {
+        return this.unique;
+    }
+
+    /** The highest authored rank not above {@code requested}; {@link Rank#BOSS} for a unique enemy. */
     public Rank effectiveRank(Rank requested) {
+        if (this.unique) {
+            return Rank.BOSS;
+        }
         return requested.compareTo(this.highestDefinedRank) > 0 ? this.highestDefinedRank : requested;
+    }
+
+    /**
+     * The rank a mob of this enemy asked for at {@code requested} carries: that rank, even above the highest authored
+     * one, except that a unique enemy is always {@link Rank#BOSS}.
+     */
+    public Rank spawnRank(Rank requested) {
+        return this.unique ? Rank.BOSS : requested;
     }
 
     public EnemyDefinition definitionFor(Rank requested) {
@@ -78,6 +106,9 @@ public final class RankedEnemy {
      * rank is adjusted from this ladder's definition, not the previous adjusted clone.
      */
     public RankedEnemy cloneAs(String newId, BiFunction<Rank, EnemyDefinition, EnemyDefinition> adjust) {
+        if (this.unique) {
+            return unique(adjust.apply(Rank.BOSS, withId(this.definitionFor(Rank.BOSS), newId)));
+        }
         Iterator<Map.Entry<Rank, EnemyDefinition>> ranks = this.definitionsByRank.entrySet().iterator();
         Map.Entry<Rank, EnemyDefinition> grunt = ranks.next();
         Builder builder = RankedEnemy.startingAt(adjust.apply(grunt.getKey(), withId(grunt.getValue(), newId)));
@@ -142,7 +173,7 @@ public final class RankedEnemy {
             }
             // Not Map.copyOf: it does not keep EnumMap's rank order.
             return new RankedEnemy(this.id, Collections.unmodifiableMap(new EnumMap<>(this.definitionsByRank)),
-                    this.highestSoFar);
+                    this.highestSoFar, false);
         }
 
         private EnemyDefinition grown(EnemyDefinition previous, Rank rank) {

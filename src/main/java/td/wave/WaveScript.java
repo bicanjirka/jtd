@@ -129,16 +129,22 @@ public final class WaveScript {
             } else if (catalog.contains(token)) {
                 Rank requestedRank = pendingRank != null ? pendingRank : defaultRank;
                 RankedEnemy rankedEnemy = catalog.ranked(token);
+                if (rankedEnemy.isUnique() && pendingRank != null && pendingRank != Rank.BOSS) {
+                    throw new GameStartupException("'" + token + "' is unique and comes only at Boss rank, not "
+                            + pendingRank);
+                }
                 EnemyDefinition definition = rankedEnemy.definitionFor(requestedRank);
                 Rank effectiveRank = rankedEnemy.effectiveRank(requestedRank);
                 if (pendingShape == null) {
                     int slotRepeat = slotRepeat(repeat, repeatExplicit, pendingRank, pendingRankSlotRepeat);
-                    WaveSlot slot = new EnemySlot(definition, effectiveRank, SpawnShape.normal());
+                    WaveSlot slot = new EnemySlot(definition, effectiveRank, SpawnShape.normal(),
+                            rankedEnemy.isUnique());
                     for (int i = 0; i < slotRepeat; i++) {
                         spawnSequence.add(slot);
                     }
                 } else {
-                    WaveSlot slot = new EnemySlot(definition, effectiveRank, shapeFor(pendingShape, repeat, repeatExplicit));
+                    WaveSlot slot = new EnemySlot(definition, effectiveRank, shapeFor(pendingShape, repeat, repeatExplicit),
+                            rankedEnemy.isUnique());
                     for (int i = 0; i < pendingShapeSlotRepeat; i++) {
                         spawnSequence.add(slot);
                     }

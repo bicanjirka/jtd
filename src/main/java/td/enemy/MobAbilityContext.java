@@ -82,10 +82,10 @@ final class MobAbilityContext implements AbilityContext {
     }
 
     @Override
-    public void spawnEnemies(String definitionId, AbilitySpawnShape shape, boolean consumesSelf) {
+    public void spawnEnemies(SpawnEnemiesAction spawn) {
         EnemySpawner roster = this.world.enemies();
-        for (DefinedEnemyMob spawned : AbilitySpawnFactory.build(this.world, this.caster, definitionId, shape, this.gameTime)) {
-            if (consumesSelf) {
+        for (DefinedEnemyMob spawned : AbilitySpawnFactory.build(this.world, this.caster, spawn, this.gameTime)) {
+            if (spawn.consumesSelf()) {
                 this.caster.markHatched();
                 roster.replace(this.caster, spawned);
             } else {

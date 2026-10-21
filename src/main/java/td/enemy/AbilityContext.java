@@ -31,9 +31,6 @@ public interface AbilityContext {
 
     void applyEffect(EffectTemplate template, EffectTarget target);
 
-    /**
-     * Spawns {@code shape.members()} instances of {@code definitionId}, optionally consuming this
-     * mob.
-     */
-    void spawnEnemies(String definitionId, AbilitySpawnShape shape, boolean consumesSelf);
+    /** Spawns what {@code spawn} names, optionally consuming this mob. */
+    void spawnEnemies(SpawnEnemiesAction spawn);
 }

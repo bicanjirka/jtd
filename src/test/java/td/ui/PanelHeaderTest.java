@@ -19,7 +19,7 @@ class PanelHeaderTest {
     private final PanelHeader header = new PanelHeader("Tower Defense v1");
 
     private static WaveProgress progress(int index, int count) {
-        return new WaveProgress(index, Collections.nCopies(count, new RoundSummary(Rank.GRUNT, false)), List.of(),
+        return new WaveProgress(index, Collections.nCopies(count, new RoundSummary(Rank.GRUNT, false, false)), List.of(),
                 List.of());
     }
 

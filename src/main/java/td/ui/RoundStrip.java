@@ -1,6 +1,5 @@
 package td.ui;
 
-import td.enemy.Rank;
 import td.level.LevelOutcome;
 import td.wave.RoundSummary;
 import td.wave.WaveProgress;
@@ -25,7 +24,11 @@ record RoundStrip(List<RoundSummary> rounds, List<RoundStrip.State> states) {
         /** Beaten with nothing escaping. */
         CLEARED,
         /** Over, with an enemy that escaped. */
-        LEAKED
+        LEAKED;
+
+        boolean isOver() {
+            return this == CLEARED || this == LEAKED;
+        }
     }
 
     /** Which rounds a strip of limited room shows: {@code [start, end)}, the rest hidden. */
@@ -70,8 +73,12 @@ record RoundStrip(List<RoundSummary> rounds, List<RoundStrip.State> states) {
         return this.rounds.size();
     }
 
-    Rank rankAt(int round) {
-        return this.rounds.get(round).highestRank();
+    RoundSummary summaryAt(int round) {
+        return this.rounds.get(round);
+    }
+
+    RoundSkulls.Kind kindAt(int round) {
+        return RoundSkulls.Kind.of(this.rounds.get(round));
     }
 
     State stateAt(int round) {
@@ -97,11 +104,11 @@ record RoundStrip(List<RoundSummary> rounds, List<RoundStrip.State> states) {
         return new Window(start, start + slots, this.count());
     }
 
-    /** The highest rank among rounds {@code from} on; {@link Rank#GRUNT} past the last. */
-    Rank highestRankFrom(int from) {
+    /** The strongest skull among rounds {@code from} on; the plain one past the last. */
+    RoundSkulls.Kind strongestFrom(int from) {
         return this.rounds.subList(Math.min(from, this.count()), this.count()).stream()
-                .map(RoundSummary::highestRank)
-                .max(Rank::compareTo)
-                .orElse(Rank.GRUNT);
+                .map(RoundSkulls.Kind::of)
+                .max(RoundSkulls.Kind::compareTo)
+                .orElse(RoundSkulls.Kind.PLAIN);
     }
 }

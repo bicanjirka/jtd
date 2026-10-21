@@ -208,7 +208,9 @@ own for Soldier and for Veteran, three more for Elite and five more for Boss (a 
 200, 400, 800 and 1600 health and pays 3, 6, 9, 18 and 33). A kill's score is weighted by
 rank too — a Boss-rank kill is worth disproportionately more than a Grunt-rank one of the same
 bounty. Every enemy defines all five ranks, and gains traits or abilities as it climbs, except the
-Warden chain and the spawnlings, which are one rank each. Elite and Boss Simple and Mender enemies carry adaptive
+spawnlings, which are one rank each, and the Warden chain, which is unique: every stage and egg is a
+Boss whatever rank its wave asks for (a non-`boss` rank keyword before it fails the level load), and
+the reinforcements a Warden calls come three at a time as Elites, every five seconds. Elite and Boss Simple and Mender enemies carry adaptive
 armor: it resists whichever damage type (physical or magic) has landed most this level, from not
 at all at an even split up to full strength against a one-type defence.
 

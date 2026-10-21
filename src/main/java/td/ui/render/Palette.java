@@ -230,6 +230,8 @@ public enum Palette {
     ROUND_SKULL_ELITE,
     /** A round's skull when it sends a Boss. */
     ROUND_SKULL_BOSS,
+    /** A round's skull when it sends an enemy that exists only at Boss rank. */
+    ROUND_SKULL_UNIQUE,
     /** A round beaten with nothing escaping. */
     ROUND_CLEARED,
     /** A round an enemy escaped. */

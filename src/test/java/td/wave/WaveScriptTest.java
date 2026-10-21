@@ -230,10 +230,34 @@ class WaveScriptTest {
 
     @Test
     void aRankTokenAskingForARankTheEnemyDoesNotDefineFallsBackSilentlyToItsHighestRank() {
-        WaveContent content = WaveScript.parse("boss wardenEgg1", Rank.GRUNT, this.catalog);
+        EnemyDefinition oneRank = EnemyDefinition.of("oneRank", "One Rank", 100, 5, 1.28f, BodyArchetype.SQUARE);
+        this.catalog.register(oneRank);
 
-        EnemyDefinition wardenEgg = this.catalog.get("wardenEgg1");
-        assertThat(content.rankFor(wardenEgg)).isEqualTo(Rank.GRUNT);
+        WaveContent content = WaveScript.parse("boss oneRank", Rank.GRUNT, this.catalog);
+
+        assertThat(content.rankFor(oneRank)).isEqualTo(Rank.GRUNT);
+    }
+
+    @Test
+    void aUniqueEnemyComesAtBossRankWhateverRankItsWaveDefaultsTo() {
+        WaveContent content = WaveScript.parse("warden1 c", Rank.GRUNT, this.catalog);
+
+        assertThat(content.rankFor(this.catalog.get("warden1"))).isEqualTo(Rank.BOSS);
+        assertThat(content.highestRank()).isEqualTo(Rank.BOSS);
+        assertThat(content.hasUnique()).isTrue();
+    }
+
+    @Test
+    void aRankTokenOtherThanBossBeforeAUniqueEnemyFailsTheParse() {
+        assertThatThrownBy(() -> WaveScript.parse("elite warden1", Rank.BOSS, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("unique");
+        assertThat(WaveScript.parse("boss warden1", Rank.GRUNT, this.catalog).hasUnique()).isTrue();
+    }
+
+    @Test
+    void aWaveOfLadderedEnemiesHasNoUniqueEnemyEvenAtBossRank() {
+        assertThat(WaveScript.parse("boss c", Rank.GRUNT, this.catalog).hasUnique()).isFalse();
     }
 
     @Test

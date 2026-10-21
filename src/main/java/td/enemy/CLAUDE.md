@@ -13,6 +13,9 @@
   definition of its own, never the boss's ladder, which would be a spawn cycle.
 - A ladder is authored contiguously upward from `Rank.GRUNT`; a gap or a backward step is a
   `GameStartupException`, and asking for an unauthored rank falls back to the highest authored one.
+  A unique enemy (`EnemyCatalog.registerUnique`) has no ladder: it is Boss rank only, whatever is asked
+  for, and so is the rank its mobs carry (`RankedEnemy.spawnRank`). A spawn ability that must not
+  inherit a Boss caster's rank fixes one (`SpawnEnemiesAction.atRank`).
   A built-in ladder authors all five ranks, each with its health and bounty as integers
   (`withHealthAndPrice`): health multiplies by the enemy's factor each rank, bounty adds its step
   once for Soldier and Veteran, three times more for Elite and five more for Boss. `SimpleEnemy` alone

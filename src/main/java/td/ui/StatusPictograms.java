@@ -11,6 +11,7 @@ final class StatusPictograms {
     static final String SKULL_VETERAN = "round.skull.veteran";
     static final String SKULL_ELITE = "round.skull.elite";
     static final String SKULL_BOSS = "round.skull.boss";
+    static final String SKULL_UNIQUE = "round.skull.unique";
     /** Appended to a skull's key: the same skull with a crack down its crown. */
     static final String CRACKED = ".cracked";
 
@@ -25,6 +26,8 @@ final class StatusPictograms {
     private static final String HORNS = "F M6.2 6.2C3.6 5.4 1.8 3.4 1.8 0.8C3.2 2.6 5.2 3.4 7.8 3.6Z ; "
             + "F M17.8 6.2C20.4 5.4 22.2 3.4 22.2 0.8C20.8 2.6 18.8 3.4 16.2 3.6Z";
     private static final String CROWN = "F M4.6 7.8L3.8 1.4L8 4.6L12 0.6L16 4.6L20.2 1.4L19.4 7.8Z ; X M4.2 8.1H19.8";
+    private static final String SMALL_CROWN = "F M6.8 7.8L6.2 1.8L9.4 4.4L12 0.6L14.6 4.4L17.8 1.8L17.2 7.8Z ; "
+            + "X M6.4 8.1H17.6 ; K O12 5.4 1.1";
     private static final String CRACK = "X M13.2 2.2L11.2 5.6L13.4 7.4L11.6 9.8";
 
     static final List<Map.Entry<String, String>> SPECS = specs();
@@ -42,11 +45,12 @@ final class StatusPictograms {
                 Map.entry("status.score", "F M12 2.6L14.9 8.9L21.6 9.6L16.6 14.1L18.1 20.8L12 17.4L5.9 20.8L7.4 14.1L2.4 9.6L9.1 8.9Z"),
                 // Cash: a coin with a rim and a bar
                 Map.entry("status.cash", "F O12 12 9.8 ; X O12 12 7.6 ; X M15 9.6C15 8 13.6 7.4 12 7.4C10.2 7.4 9 8.3 9 9.8C9 11.4 10.6 11.9 12 12.1C13.6 12.4 15.2 12.9 15.2 14.4C15.2 15.9 13.8 16.8 12 16.8C10.2 16.8 8.8 16 8.8 14.5 ; X M12 5.8V7.4 M12 16.8V18.4")));
-        // A bare skull; a helmet; horns and a glare; a crown and a glare
+        // A bare skull; a helmet; horns and a glare; a crown and a glare; horns, a jewelled crown and a glare
         skull(specs, SKULL, CRANIUM + " ; " + ROUND_EYES);
         skull(specs, SKULL_VETERAN, CRANIUM + " ; " + HELMET + " ; " + ROUND_EYES);
         skull(specs, SKULL_ELITE, HORNS + " ; " + CRANIUM + " ; " + GLARING_EYES);
         skull(specs, SKULL_BOSS, CRANIUM + " ; " + CROWN + " ; " + GLARING_EYES);
+        skull(specs, SKULL_UNIQUE, HORNS + " ; " + CRANIUM + " ; " + SMALL_CROWN + " ; " + GLARING_EYES);
         return List.copyOf(specs);
     }
 

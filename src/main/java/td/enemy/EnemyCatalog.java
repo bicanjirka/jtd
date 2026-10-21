@@ -49,6 +49,11 @@ public final class EnemyCatalog {
         this.register(RankedEnemy.startingAt(definition).build());
     }
 
+    /** Registers {@code boss} as a {@link RankedEnemy#unique unique} enemy: Boss rank only. */
+    public void registerUnique(EnemyDefinition boss) {
+        this.register(RankedEnemy.unique(boss));
+    }
+
     /**
      * @throws GameStartupException for a duplicate id, an id that is a
      * {@link WaveScript#RESERVED_TOKENS reserved token}, or a spawn chain that becomes cyclic
@@ -119,7 +124,7 @@ public final class EnemyCatalog {
     public EnemyMob spawn(String id, GameWorld gameWorld, int delay, int health, int price, Rank rank) {
         EnemyDefinition definition = this.get(id, rank);
         SpawnParameters spawnParameters = SpawnParameters.atSlot(delay, definition.baseSpeed(), health, price);
-        return new DefinedEnemyMob(definition, gameWorld, spawnParameters, rank);
+        return new DefinedEnemyMob(definition, gameWorld, spawnParameters, this.ranked(id).spawnRank(rank));
     }
 
     /**

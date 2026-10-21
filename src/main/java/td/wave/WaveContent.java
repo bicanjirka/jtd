@@ -70,6 +70,14 @@ public record WaveContent(List<WaveSlot> spawnSequence, float delayTicksPerSlot)
         return highest;
     }
 
+    /** Whether any slot spawns a unique enemy. */
+    public boolean hasUnique() {
+        return this.spawnSequence.stream().anyMatch(slot -> switch (slot) {
+            case EnemySlot s -> s.unique();
+            case EmptySlot ignored -> false;
+        });
+    }
+
     public int enemyCount(EnemyDefinition definition) {
         int count = 0;
         for (WaveSlot slot : this.spawnSequence) {
