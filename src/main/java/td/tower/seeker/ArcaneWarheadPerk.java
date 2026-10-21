@@ -2,6 +2,7 @@ package td.tower.seeker;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermText;
 import td.tower.BehaviourLine;
 import td.tower.BehaviourMarker;
 import td.tower.upgrade.PerkText;
@@ -30,7 +31,7 @@ public final class ArcaneWarheadPerk implements SeekerPerk {
     }
 
     @Override
-    public String describe() {
-        return "every impact applies Unraveled, " + CONTROLLED_STACKS + " stacks if the target was frozen or chilled";
+    public TermText describe() {
+        return TermText.of("every impact applies Unraveled, " + CONTROLLED_STACKS + " stacks if the target was frozen or chilled");
     }
 }

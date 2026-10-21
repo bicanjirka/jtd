@@ -160,6 +160,9 @@ public interface Tower {
     /** What {@code node} would add to this tower: its data rows, then its perks' words. */
     List<UpgradeBonus> bonusesOf(UpgradeNode node);
 
+    /** What {@code node} says to the player: its value rows and its sentences. */
+    NodeWords wordsOf(UpgradeNode node);
+
     /** Unowned nodes whose prerequisites are met. */
     default List<UpgradeNode> offeredUpgrades(GameWorld context) {
         return this.upgradeTree().offered(this, context);

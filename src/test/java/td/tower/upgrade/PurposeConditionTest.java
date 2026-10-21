@@ -3,6 +3,8 @@ package td.tower.upgrade;
 import org.junit.jupiter.api.Test;
 import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
+import td.term.TermText;
+import td.tower.TowerTerm;
 import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PurposeConditionTest {
 
     private static final int LIST_PRICE = 10;
-    private static final PurposeCondition STEADY_AIM = new PurposeCondition("Steady Aim shots", 3);
+    private static final PurposeCondition STEADY_AIM = new PurposeCondition(TermText.format("shots with {}", TowerTerm.STEADY_AIM), 3);
     private static final UpgradeNode HEAD_ONE = UpgradeTier.HEAD_1.node("a.1", "A", LIST_PRICE);
     private static final UpgradeNode HEAD_THREE = UpgradeTier.HEAD_3.node("a.3", "A III", LIST_PRICE)
             .withGate(STEADY_AIM);
@@ -29,7 +31,7 @@ class PurposeConditionTest {
     void thePurposeGateShowsTheDeedsDoneOfTheThreshold() {
         FakeTower tower = this.attunedLater();
 
-        assertThat(STEADY_AIM.progress(tower, this.world)).isEqualTo("Steady Aim shots 1/3");
+        assertThat(STEADY_AIM.progress(tower, this.world).plain()).isEqualTo("shots with Steady Aim 1/3");
         assertThat(STEADY_AIM.isSatisfied(tower, this.world)).isFalse();
     }
 
@@ -71,5 +73,12 @@ class PurposeConditionTest {
 
     private static UpgradeNode attune() {
         return TREE.nodes().stream().filter(n -> n.id().equals(StandardBaseSlot.ATTUNE_ID)).findFirst().orElseThrow();
+    }
+
+    @Test
+    void aDeedProgressMentionsItsTerm() {
+        FakeTower tower = this.attunedLater();
+
+        assertThat(STEADY_AIM.progress(tower, this.world).mentions()).containsExactly(TowerTerm.STEADY_AIM);
     }
 }

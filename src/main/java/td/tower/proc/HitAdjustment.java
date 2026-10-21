@@ -1,6 +1,7 @@
 package td.tower.proc;
 
 import td.damage.AttackProfile;
+import td.term.TermNumbers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,22 +78,22 @@ public record HitAdjustment(float damage, float critChance, float critMultiplier
         return adjusted;
     }
 
-    /** "Damage +40%", "Crit chance +50%", ...: the non-zero parts joined with ", ". */
+    /** "+40% damage", "+50% crit chance": the non-zero parts joined with ", ". */
     public String describe() {
         List<String> parts = new ArrayList<>();
-        part(parts, "Damage", this.damage);
-        part(parts, "Crit chance", this.critChance);
-        part(parts, "Crit damage", this.critMultiplier);
-        part(parts, "Attack speed", this.attackSpeed);
+        part(parts, "damage", this.damage);
+        part(parts, "crit chance", this.critChance);
+        part(parts, "crit damage", this.critMultiplier);
+        part(parts, "attack speed", this.attackSpeed);
         if (this.accuracy != 0f) {
-            parts.add("Accuracy " + (this.accuracy < 0f ? "-" : "+") + Math.round(Math.abs(this.accuracy)));
+            parts.add(TermNumbers.signed(Math.round(this.accuracy)) + " accuracy");
         }
         return String.join(", ", parts);
     }
 
     private static void part(List<String> parts, String name, float fraction) {
         if (fraction != 0f) {
-            parts.add(name + " " + (fraction < 0f ? "-" : "+") + Math.round(Math.abs(fraction) * 100) + "%");
+            parts.add(TermNumbers.signedPercent(fraction) + " " + name);
         }
     }
 }

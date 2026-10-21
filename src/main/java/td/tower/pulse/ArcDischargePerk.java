@@ -3,6 +3,7 @@ package td.tower.pulse;
 import td.effect.EffectKind;
 import td.stat.EnemyStat;
 import td.term.Term;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
@@ -24,12 +25,12 @@ public final class ArcDischargePerk implements PulsePerk {
     }
 
     @Override
-    public String describe() {
+    public TermText describe() {
         int most = EffectKind.CONDEMNED.maxStacks();
-        return "once a second a zap strikes the visible enemy of the highest rank inside, the furthest along of them: every "
+        return TermText.of("once a second a zap strikes the visible enemy of the highest rank inside, the furthest along of them: every "
                 + "tower turns on it, and each zap Condemns it further, +" + PerkText.percent(perStack())
                 + " damage taken from every source, up to +" + PerkText.percent(perStack() * most) + " at " + most
-                + " zaps; both hold " + PerkText.seconds(MARK_TICKS) + " after the last zap";
+                + " zaps; both hold " + PerkText.seconds(MARK_TICKS) + " after the last zap");
     }
 
     private static float perStack() {

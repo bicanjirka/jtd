@@ -2,6 +2,7 @@ package td.tower.mortar;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 import java.util.Set;
@@ -23,7 +24,7 @@ public final class HeavyShellPerk implements MortarPerk {
     }
 
     @Override
-    public String describe() {
-        return "enemies within " + PerkText.cells(DAZE_RADIUS_CELLS) + " cells of the impact are Dazed " + PerkText.seconds(DAZE_TICKS);
+    public TermText describe() {
+        return TermText.of("enemies within " + PerkText.cells(DAZE_RADIUS_CELLS) + " cells of the impact are Dazed " + PerkText.seconds(DAZE_TICKS));
     }
 }

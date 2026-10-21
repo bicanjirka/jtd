@@ -7,6 +7,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.HitResult;
+import td.term.TermText;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitBonus;
 import td.tower.proc.HitKind;
@@ -86,7 +87,7 @@ public final class SonarTower extends AbstractTower {
     private static final int HIT_FLASH_TICKS = 8;
     /** How long the ring a revolution sends out stays drawn. */
     private static final int PING_RING_TICKS = 12;
-    private static final String PING_DEED = "Pings";
+    private static final TermText PING_DEED = TermText.format("times {} fired", TowerTerm.PING);
     private static final int PING_DEEDS_NEEDED = 25;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none().withRangeThree(0.1f, NodeEffects.none());

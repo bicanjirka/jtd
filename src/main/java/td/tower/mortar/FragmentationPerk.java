@@ -2,6 +2,7 @@ package td.tower.mortar;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 import java.util.Set;
@@ -23,8 +24,8 @@ public final class FragmentationPerk implements MortarPerk {
     }
 
     @Override
-    public String describe() {
-        return "a ring of shrapnel past the blast for " + PerkText.percent(DAMAGE_SHARE) + " damage, cracking plating, reaching "
-                + PerkText.cells(REACH_CELLS_PER_STEP) + " cells further per Bracketing step";
+    public TermText describe() {
+        return TermText.of("a ring of shrapnel past the blast for " + PerkText.percent(DAMAGE_SHARE) + " damage, cracking plating, reaching "
+                + PerkText.cells(REACH_CELLS_PER_STEP) + " cells further per Bracketing step");
     }
 }

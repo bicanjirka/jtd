@@ -1,5 +1,6 @@
 package td.tower.upgrade;
 
+import td.term.TermText;
 import td.tower.Tower;
 import td.util.GameWorld;
 
@@ -39,10 +40,10 @@ public interface UpgradeCondition {
     }
 
     /** A short description of the gate, e.g. {@code "10 kills"}. */
-    String describe();
+    TermText describe();
 
     /** Progress toward the gate, e.g. {@code "7/10 kills"}. Defaults to {@link #describe()}. */
-    default String progress(Tower tower, GameWorld context) {
+    default TermText progress(Tower tower, GameWorld context) {
         return this.describe();
     }
 

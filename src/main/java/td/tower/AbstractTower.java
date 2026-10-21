@@ -20,7 +20,6 @@ import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.proc.AttackOutcome;
-import td.tower.proc.Description;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitBonus;
 import td.tower.proc.HitBonuses;
@@ -579,10 +578,17 @@ public abstract class AbstractTower implements Tower {
 
     public List<UpgradeBonus> bonusesOf(UpgradeNode node) {
         List<UpgradeBonus> bonuses = new ArrayList<>(node.bonuses());
-        for (String text : this.perkCatalogue().describe(node)) {
-            bonuses.add(new UpgradeBonus(Character.toUpperCase(text.charAt(0)) + text.substring(1), ""));
+        for (TermText text : this.perkCatalogue().describe(node)) {
+            bonuses.add(new UpgradeBonus(text.capitalized().plain(), ""));
         }
         return bonuses;
+    }
+
+    @Override
+    public NodeWords wordsOf(UpgradeNode node) {
+        List<TermText> sentences = new ArrayList<>(node.effects().sentences());
+        sentences.addAll(this.perkCatalogue().describe(node));
+        return NodeWords.of(node.displayName(), node.effects().statRows(), sentences);
     }
 
     public boolean buyUpgrade(UpgradeNode node) {
@@ -678,8 +684,8 @@ public abstract class AbstractTower implements Tower {
         return lines;
     }
 
-    private static BehaviourLine line(BehaviourMarker marker, Description description) {
-        return new BehaviourLine(marker, description.label(), description.value());
+    private static BehaviourLine line(BehaviourMarker marker, TermText sentence) {
+        return new BehaviourLine(marker, sentence.capitalized().plain(), "");
     }
 
     private static BehaviourMarker markerFor(ProcPayload payload) {
@@ -750,12 +756,12 @@ public abstract class AbstractTower implements Tower {
             for (Proc proc : node.effects().procs()) {
                 this.appliedBy(proc.payload()).ifPresent(term -> byTerm.computeIfAbsent(term, t -> new ArrayList<>())
                         .add(new AppliedEffect.Source(node.displayName(),
-                                TermText.of(proc.payload().describe()))));
+                                proc.describe())));
             }
             for (Perk perk : this.perkCatalogue().perksOf(node)) {
                 for (Term term : perk.applies()) {
                     byTerm.computeIfAbsent(term, t -> new ArrayList<>())
-                            .add(new AppliedEffect.Source(node.displayName(), TermText.of(perk.describe())));
+                            .add(new AppliedEffect.Source(node.displayName(), perk.describe()));
                 }
             }
         }

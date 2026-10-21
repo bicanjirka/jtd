@@ -1,5 +1,7 @@
 package td.tower.cinder;
 
+import td.term.TermText;
+
 /** Inferno Ring: the cone becomes a full ring. */
 public final class InfernoRingPerk implements CinderPerk {
 
@@ -9,7 +11,7 @@ public final class InfernoRingPerk implements CinderPerk {
     }
 
     @Override
-    public String describe() {
-        return "the cone becomes a full ring";
+    public TermText describe() {
+        return TermText.of("the cone becomes a full ring");
     }
 }

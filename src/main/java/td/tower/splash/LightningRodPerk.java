@@ -1,5 +1,6 @@
 package td.tower.splash;
 
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 /**
@@ -17,8 +18,8 @@ public final class LightningRodPerk implements SplashPerk {
     }
 
     @Override
-    public String describe() {
-        return "an arc with nowhere to go returns to the primary at full strength, up to " + RETURNS + " times; arcs on a Dazed "
-                + "enemy deal +" + PerkText.percent(STOPPED_CRIT_DAMAGE) + " crit damage";
+    public TermText describe() {
+        return TermText.of("an arc with nowhere to go returns to the primary at full strength, up to " + RETURNS + " times; arcs on a Dazed "
+                + "enemy deal +" + PerkText.percent(STOPPED_CRIT_DAMAGE) + " crit damage");
     }
 }

@@ -2,6 +2,7 @@ package td.tower.seeker;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 import java.util.Set;
@@ -21,8 +22,8 @@ public final class FullRackPerk implements SeekerPerk {
     }
 
     @Override
-    public String describe() {
-        return "every missile carries a payload, cycling Cryo, Arcane, EMP, Tracer, each "
-                + PerkText.percent(PayloadPlan.FULL_RACK_STRENGTH - 1f) + " stronger";
+    public TermText describe() {
+        return TermText.of("every missile carries a payload, cycling Cryo, Arcane, EMP, Tracer, each "
+                + PerkText.percent(PayloadPlan.FULL_RACK_STRENGTH - 1f) + " stronger");
     }
 }

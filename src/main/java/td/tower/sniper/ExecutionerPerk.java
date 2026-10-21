@@ -1,6 +1,7 @@
 package td.tower.sniper;
 
 import td.enemy.Rank;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 /**
@@ -21,7 +22,7 @@ public final class ExecutionerPerk implements SniperPerk {
     }
 
     @Override
-    public String describe() {
-        return "a non-boss enemy left under " + PerkText.percent(EXECUTE_BELOW) + " health by a shot dies; executions count as crits";
+    public TermText describe() {
+        return TermText.of("a non-boss enemy left under " + PerkText.percent(EXECUTE_BELOW) + " health by a shot dies; executions count as crits");
     }
 }

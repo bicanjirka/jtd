@@ -60,7 +60,7 @@ class TowerStatCatalogueTest {
         for (AbstractTower tower : this.everyTower()) {
             for (UpgradeNode node : tower.upgradeTree().nodes()) {
                 assertThat(tower.perkCatalogue().describe(node)).as("%s's %s", tower.getType(), node.displayName())
-                        .allMatch(text -> !text.isBlank());
+                        .allMatch(text -> !text.isEmpty());
             }
         }
     }

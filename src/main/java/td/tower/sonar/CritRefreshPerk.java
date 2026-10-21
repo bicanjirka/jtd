@@ -2,6 +2,7 @@ package td.tower.sonar;
 
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.term.TermText;
 
 /** A beam crit on an Exposed enemy keeps it Exposed as long as a fresh ping would. */
 public final class CritRefreshPerk implements SonarPerk {
@@ -14,7 +15,7 @@ public final class CritRefreshPerk implements SonarPerk {
     }
 
     @Override
-    public String describe() {
-        return "a beam crit refreshes Exposed on its target";
+    public TermText describe() {
+        return TermText.of("a beam crit refreshes Exposed on its target");
     }
 }

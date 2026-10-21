@@ -1,6 +1,7 @@
 package td.tower.proc;
 
 import td.effect.EffectKind;
+import td.term.TermText;
 
 import java.util.Set;
 
@@ -9,8 +10,11 @@ public sealed interface ProcCondition {
 
     boolean holds(AttackOutcome outcome);
 
-    /** "arcs", "vs shielded". */
-    String describe();
+    /** What the target must carry or be, after the trigger; empty when the trigger's noun says it all. */
+    TermText describe();
+
+    /** The kinds of hit it limits the proc to; none when it limits nothing by kind. */
+    Set<HitKind> hitKinds();
 
     /** An attack of one of {@code kinds}. */
     record HitKindIn(Set<HitKind> kinds) implements ProcCondition {
@@ -20,8 +24,13 @@ public sealed interface ProcCondition {
         }
 
         @Override
-        public String describe() {
-            return Words.hitsOf(this.kinds);
+        public TermText describe() {
+            return TermText.empty();
+        }
+
+        @Override
+        public Set<HitKind> hitKinds() {
+            return this.kinds;
         }
     }
 
@@ -38,8 +47,13 @@ public sealed interface ProcCondition {
         }
 
         @Override
-        public String describe() {
-            return Words.statesOf(this.kinds);
+        public TermText describe() {
+            return TermText.of("on an enemy with ").plus(ProcText.kinds(this.kinds, "or"));
+        }
+
+        @Override
+        public Set<HitKind> hitKinds() {
+            return Set.of();
         }
     }
 }

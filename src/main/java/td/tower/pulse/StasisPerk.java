@@ -2,6 +2,7 @@ package td.tower.pulse;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
@@ -24,9 +25,9 @@ public final class StasisPerk implements PulsePerk {
     }
 
     @Override
-    public String describe() {
-        return "an enemy at full Toll is Dazed for " + PerkText.seconds(STASIS_TICKS) + " and Stilled: while the Daze "
+    public TermText describe() {
+        return TermText.of("an enemy at full Toll is Dazed for " + PerkText.seconds(STASIS_TICKS) + " and Stilled: while the Daze "
                 + "holds it loses a Toll stack every " + PerkText.seconds(TICKS_PER_TOLL)
-                + "; a Daze that doesn't take hold costs nothing and is tried again a second later";
+                + "; a Daze that doesn't take hold costs nothing and is tried again a second later");
     }
 }

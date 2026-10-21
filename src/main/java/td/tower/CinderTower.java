@@ -94,7 +94,7 @@ public final class CinderTower extends AbstractTower {
     /** A hot enemy must cool under this share before it can burst again. */
     private static final float COOLED_SHARE = 0.5f;
 
-    private static final String STOKE_DEED = "Stoking waves";
+    private static final TermText STOKE_DEED = TermText.format("waves that raise {}", TowerTerm.STOKE);
     private static final int STOKES_NEEDED = 45;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()

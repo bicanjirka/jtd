@@ -2,6 +2,7 @@ package td.tower.cinder;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermText;
 
 import java.util.Set;
 
@@ -19,8 +20,8 @@ public final class SoulfirePerk implements CinderPerk {
     }
 
     @Override
-    public String describe() {
-        return "every wave also burns as Soulfire: a blue burn in its own pool that doubles the ordinary burn, earns Sickened as "
-                + "well as Scorched and burns the burn-immune; Stoke applies to both";
+    public TermText describe() {
+        return TermText.of("every wave also burns as Soulfire: a blue burn in its own pool that doubles the ordinary burn, earns Sickened as "
+                + "well as Scorched and burns the burn-immune; Stoke applies to both");
     }
 }

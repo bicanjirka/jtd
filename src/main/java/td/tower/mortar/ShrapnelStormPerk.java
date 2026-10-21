@@ -2,6 +2,7 @@ package td.tower.mortar;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermText;
 
 import java.util.Set;
 
@@ -19,7 +20,7 @@ public final class ShrapnelStormPerk implements MortarPerk {
     }
 
     @Override
-    public String describe() {
-        return "what the shrapnel hits bleeds: physical damage for every cell it travels";
+    public TermText describe() {
+        return TermText.of("what the shrapnel hits bleeds: physical damage for every cell it travels");
     }
 }

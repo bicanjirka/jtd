@@ -1,6 +1,7 @@
 package td.tower.upgrade;
 
 import td.term.Term;
+import td.term.TermText;
 import td.tower.TowerBuffState;
 
 import java.util.Optional;
@@ -19,6 +20,6 @@ public interface Perk {
         return Set.of();
     }
 
-    /** What this perk adds, lower-case first, no full stop: "every 4th shell is a nuke: x4 damage over x1.5 the blast". */
-    String describe();
+    /** What this perk adds, lower-case first, no full stop: "every 4th shell is a [Nuke Shell]". */
+    TermText describe();
 }

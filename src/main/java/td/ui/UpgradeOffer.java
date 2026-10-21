@@ -30,7 +30,7 @@ record UpgradeOffer(UpgradeNode node, int number, boolean xpMet, String xpProgre
     /** {@code node}, one of the tower's {@code offered} nodes, numbered by the key that buys it. */
     static UpgradeOffer of(UpgradeNode node, List<UpgradeNode> offered, Tower tower, GameWorld world) {
         return new UpgradeOffer(node, tower.upgradeTree().keyOf(node), node.xpMet(tower), node.xpProgress(tower),
-                node.gate().isSatisfied(tower, world), node.gate().progress(tower, world),
+                node.gate().isSatisfied(tower, world), node.gate().progress(tower, world).plain(),
                 node.gateMet(tower, world), world.economy().canPay(node.price()), tower.upgradeTree().rivalsOnOffer(node, offered),
                 tower.upgradeTree().isLastPick(node, tower.upgrades()), tower.bonusesOf(node));
     }

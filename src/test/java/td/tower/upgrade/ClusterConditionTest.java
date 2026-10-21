@@ -53,6 +53,6 @@ class ClusterConditionTest {
 
     @Test
     void describesItselfByItsRequiredNeighbourCount() {
-        assertThat(new ClusterCondition(2).describe()).isEqualTo("2 nearby towers");
+        assertThat(new ClusterCondition(2).describe().plain()).isEqualTo("2 nearby towers");
     }
 }

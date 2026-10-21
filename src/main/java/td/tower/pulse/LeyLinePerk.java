@@ -1,6 +1,7 @@
 package td.tower.pulse;
 
 import td.term.Term;
+import td.term.TermText;
 import td.tower.TowerTerm;
 import td.tower.upgrade.PerkText;
 
@@ -23,9 +24,9 @@ public final class LeyLinePerk implements PulsePerk {
     }
 
     @Override
-    public String describe() {
-        return "casts a beam to another Obelisk within " + PerkText.cells(REACH_CELLS) + " cells, the one whose beam "
+    public TermText describe() {
+        return TermText.of("casts a beam to another Obelisk within " + PerkText.cells(REACH_CELLS) + " cells, the one whose beam "
                 + "crosses the path most; an enemy on it gets both fields' rules at the Toll it carries, but no damage "
-                + "and no Toll";
+                + "and no Toll");
     }
 }

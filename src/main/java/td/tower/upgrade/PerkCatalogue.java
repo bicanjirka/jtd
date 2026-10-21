@@ -1,5 +1,7 @@
 package td.tower.upgrade;
 
+import td.term.TermText;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,7 +43,7 @@ public final class PerkCatalogue<P extends Perk> {
     }
 
     /** What {@code node}'s perks add, in words, in the order they were added. */
-    public List<String> describe(UpgradeNode node) {
+    public List<TermText> describe(UpgradeNode node) {
         return this.perksOf(node).stream().map(Perk::describe).toList();
     }
 }

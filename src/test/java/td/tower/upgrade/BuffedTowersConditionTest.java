@@ -39,7 +39,7 @@ class BuffedTowersConditionTest {
         this.context.towers().add(aura);
         this.context.towers().add(new SniperTower(this.context, 0, 0));
 
-        assertThat(new BuffedTowersCondition(4).describe()).isEqualTo("buffing 4 towers");
-        assertThat(new BuffedTowersCondition(4).progress(aura, this.context)).isEqualTo("buffing 1/4 towers");
+        assertThat(new BuffedTowersCondition(4).describe().plain()).isEqualTo("buffing 4 towers");
+        assertThat(new BuffedTowersCondition(4).progress(aura, this.context).plain()).isEqualTo("buffing 1/4 towers");
     }
 }

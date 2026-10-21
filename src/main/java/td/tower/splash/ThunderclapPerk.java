@@ -2,6 +2,7 @@ package td.tower.splash;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 import td.util.ThreadConfined;
 
@@ -38,8 +39,8 @@ public final class ThunderclapPerk implements SplashPerk {
     }
 
     @Override
-    public String describe() {
-        return "after a crit, the next shot also arcs into every enemy in range at " + PerkText.percent(SHARE)
-                + ", Dazing each one it crits";
+    public TermText describe() {
+        return TermText.of("after a crit, the next shot also arcs into every enemy in range at " + PerkText.percent(SHARE)
+                + ", Dazing each one it crits");
     }
 }

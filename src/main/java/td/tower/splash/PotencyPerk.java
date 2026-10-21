@@ -1,5 +1,6 @@
 package td.tower.splash;
 
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 /**
@@ -24,8 +25,8 @@ public final class PotencyPerk implements SplashPerk {
     }
 
     @Override
-    public String describe() {
-        return "Stormcaller: +" + MORE_JUMPS + " jump, arcs deal " + PerkText.percent(ARC_SHARE) + "; Hexer: Doom pays out "
-                + PerkText.percent(DOOM_SHARE);
+    public TermText describe() {
+        return TermText.of("Stormcaller: +" + MORE_JUMPS + " jump, arcs deal " + PerkText.percent(ARC_SHARE) + "; Hexer: Doom pays out "
+                + PerkText.percent(DOOM_SHARE));
     }
 }

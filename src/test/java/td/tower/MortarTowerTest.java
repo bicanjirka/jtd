@@ -342,7 +342,7 @@ class MortarTowerTest {
         boolean early = tower.buyUpgrade(UpgradePaths.named(tower, "Heavy Shell"));
 
         assertThat(early).isFalse();
-        assertThat(UpgradePaths.named(tower, "Heavy Shell").gate().describe()).contains("15 Bracketed shells");
+        assertThat(UpgradePaths.named(tower, "Heavy Shell").gate().describe().plain()).contains("15 shells with Bracketing");
     }
 
     private java.util.List<ZoneKind> zoneKinds() {

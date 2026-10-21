@@ -78,7 +78,7 @@ public final class PulseTower extends AbstractTower {
 
     /** How long a zap's bolt stays drawn. */
     private static final int ZAP_FLASH_TICKS = 8;
-    private static final String FULL_TOLL_DEED = "Seconds at full Toll";
+    private static final TermText FULL_TOLL_DEED = TermText.format("seconds at full {}", EffectKind.TOLL);
     private static final int FULL_TOLL_SECONDS_NEEDED = 30;
     /** What every other field overlapping this one takes off its damage, and the least it keeps. */
     private static final float INTERFERENCE_PER_FIELD = 0.25f;

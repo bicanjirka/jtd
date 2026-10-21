@@ -1,5 +1,6 @@
 package td.tower.upgrade;
 
+import td.term.TermText;
 import td.tower.Tower;
 import td.util.GameWorld;
 
@@ -21,12 +22,12 @@ record AndCondition(UpgradeCondition left, UpgradeCondition right) implements Up
     }
 
     @Override
-    public String describe() {
-        return this.left.describe() + " and " + this.right.describe();
+    public TermText describe() {
+        return this.left.describe().plus(" and ").plus(this.right.describe());
     }
 
     @Override
-    public String progress(Tower tower, GameWorld context) {
-        return this.left.progress(tower, context) + ", " + this.right.progress(tower, context);
+    public TermText progress(Tower tower, GameWorld context) {
+        return this.left.progress(tower, context).plus(", ").plus(this.right.progress(tower, context));
     }
 }

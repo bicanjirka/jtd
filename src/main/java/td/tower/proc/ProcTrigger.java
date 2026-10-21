@@ -1,5 +1,8 @@
 package td.tower.proc;
 
+import td.term.TermNumbers;
+import td.term.TermText;
+
 /** What sets a proc off; each record says when it fires and how it reads. */
 public sealed interface ProcTrigger {
 
@@ -21,8 +24,13 @@ public sealed interface ProcTrigger {
         return 0;
     }
 
-    /** "On hit", "On crit", "On kill", "On dodge", "Every 3rd shot". */
-    String describe();
+    /** When it fires, said of {@code noun}, the hit its proc's conditions name, or empty for any hit. */
+    TermText describe(TermText noun);
+
+    /** Whether it counts the tower's shots, so a one-shot status it grants is that shot. */
+    default boolean countsShots() {
+        return false;
+    }
 
     /** Every landed attack. */
     record OnHit() implements ProcTrigger {
@@ -32,8 +40,8 @@ public sealed interface ProcTrigger {
         }
 
         @Override
-        public String describe() {
-            return "On hit";
+        public TermText describe(TermText noun) {
+            return noun.isEmpty() ? TermText.of("each hit") : TermText.of("each ").plus(noun);
         }
     }
 
@@ -45,8 +53,8 @@ public sealed interface ProcTrigger {
         }
 
         @Override
-        public String describe() {
-            return "On crit";
+        public TermText describe(TermText noun) {
+            return noun.isEmpty() ? TermText.of("a crit") : TermText.of("a crit ").plus(noun);
         }
     }
 
@@ -58,8 +66,8 @@ public sealed interface ProcTrigger {
         }
 
         @Override
-        public String describe() {
-            return "On kill";
+        public TermText describe(TermText noun) {
+            return noun.isEmpty() ? TermText.of("a kill") : TermText.of("a ").plus(noun).plus(" that kills");
         }
     }
 
@@ -71,8 +79,8 @@ public sealed interface ProcTrigger {
         }
 
         @Override
-        public String describe() {
-            return "On dodge";
+        public TermText describe(TermText noun) {
+            return TermText.of("a dodged ").plus(noun.isEmpty() ? TermText.of("shot") : noun);
         }
     }
 
@@ -89,8 +97,13 @@ public sealed interface ProcTrigger {
         }
 
         @Override
-        public String describe() {
-            return "Every " + Words.ordinal(this.n) + " shot";
+        public TermText describe(TermText noun) {
+            return TermText.of("every " + TermNumbers.ordinal(this.n) + " shot");
+        }
+
+        @Override
+        public boolean countsShots() {
+            return true;
         }
     }
 }

@@ -1,9 +1,9 @@
 package td.tower.upgrade;
 
 import td.stat.StatModifiers;
+import td.term.TermText;
 import td.tower.TowerCapability;
 import td.tower.TowerStat;
-import td.tower.proc.Description;
 import td.tower.proc.HitBonus;
 import td.tower.proc.Proc;
 import td.tower.targeting.TargetPriority;
@@ -87,11 +87,8 @@ public record NodeEffects(StatModifiers<TowerStat> modifiers, StatModifiers<Towe
                 this.procs, note);
     }
 
-    /**
-     * Every row this node shows in the Upgrades panel: one per stat changed, one per stat emitted, one
-     * per capability, whom it targets, one per hit bonus and proc, then the note.
-     */
-    public List<UpgradeBonus> bonuses() {
+    /** The value rows: one per stat changed, one per stat emitted, and whom it targets. */
+    public List<UpgradeBonus> statRows() {
         List<UpgradeBonus> bonuses = new ArrayList<>();
         for (TowerStat stat : this.modifiers.stats()) {
             bonuses.add(new UpgradeBonus(stat.label(), stat.describe(this.modifiers.get(stat))));
@@ -100,17 +97,26 @@ public record NodeEffects(StatModifiers<TowerStat> modifiers, StatModifiers<Towe
             String label = "Nearby " + Character.toLowerCase(stat.label().charAt(0)) + stat.label().substring(1);
             bonuses.add(new UpgradeBonus(label, stat.describe(this.emission.get(stat))));
         }
-        this.capabilities.stream().sorted().forEach(capability -> bonuses.add(new UpgradeBonus(capability.label(), "")));
         this.targeting.ifPresent(priority -> bonuses.add(new UpgradeBonus("Targets", priority.label())));
-        this.hitBonuses.forEach(bonus -> bonuses.add(row(bonus.describe())));
-        this.procs.forEach(proc -> bonuses.add(row(proc.describe())));
-        if (!this.note.isEmpty()) {
-            bonuses.add(new UpgradeBonus(Character.toUpperCase(this.note.charAt(0)) + this.note.substring(1), ""));
-        }
         return bonuses;
     }
 
-    private static UpgradeBonus row(Description description) {
-        return new UpgradeBonus(description.label(), description.value());
+    /** The sentences: each capability, hit bonus and proc, then the note. */
+    public List<TermText> sentences() {
+        List<TermText> sentences = new ArrayList<>();
+        this.capabilities.stream().sorted().forEach(capability -> sentences.add(capability.describe()));
+        this.hitBonuses.forEach(bonus -> sentences.add(bonus.describe()));
+        this.procs.forEach(proc -> sentences.add(proc.describe()));
+        if (!this.note.isEmpty()) {
+            sentences.add(TermText.of(this.note));
+        }
+        return sentences;
+    }
+
+    /** Bridge for the Upgrades panel until it shows sentences: the rows, then each sentence as a label. */
+    public List<UpgradeBonus> bonuses() {
+        List<UpgradeBonus> bonuses = new ArrayList<>(this.statRows());
+        this.sentences().forEach(text -> bonuses.add(new UpgradeBonus(text.capitalized().plain(), "")));
+        return bonuses;
     }
 }

@@ -1,5 +1,7 @@
 package td.tower.pulse;
 
+import td.term.TermText;
+
 /** Gravity Well: the drag deepens toward the field's centre. */
 public final class GravityWellPerk implements PulsePerk {
 
@@ -11,7 +13,7 @@ public final class GravityWellPerk implements PulsePerk {
     }
 
     @Override
-    public String describe() {
-        return "the drag deepens toward the centre, to " + CENTRE_DRAG + "% at the middle";
+    public TermText describe() {
+        return TermText.of("the drag deepens toward the centre, to " + CENTRE_DRAG + "% at the middle");
     }
 }

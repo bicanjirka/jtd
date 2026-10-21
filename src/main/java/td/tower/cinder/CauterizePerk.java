@@ -3,6 +3,7 @@ package td.tower.cinder;
 import td.stat.EnemyStat;
 import td.stat.StatModifier;
 import td.stat.StatModifiers;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 /** Cauterize: burning enemies receive half the healing and shielding. */
@@ -16,7 +17,7 @@ public final class CauterizePerk implements CinderPerk {
     }
 
     @Override
-    public String describe() {
-        return "burning enemies receive " + PerkText.percent(-HEALING_RECEIVED) + " less healing and shielding";
+    public TermText describe() {
+        return TermText.of("burning enemies receive " + PerkText.percent(-HEALING_RECEIVED) + " less healing and shielding");
     }
 }

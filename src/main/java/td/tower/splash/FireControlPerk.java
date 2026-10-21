@@ -2,6 +2,7 @@ package td.tower.splash;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermText;
 
 import java.util.Set;
 
@@ -22,8 +23,8 @@ public final class FireControlPerk implements SplashPerk {
     }
 
     @Override
-    public String describe() {
-        return "Fire Control: aims at the enemy with most neighbours in the blast, and every blast that catches an enemy "
-                + "Saturates it";
+    public TermText describe() {
+        return TermText.of("Fire Control: aims at the enemy with most neighbours in the blast, and every blast that catches an enemy "
+                + "Saturates it");
     }
 }

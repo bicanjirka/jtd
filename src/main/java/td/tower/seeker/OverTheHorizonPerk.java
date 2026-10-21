@@ -1,6 +1,7 @@
 package td.tower.seeker;
 
 import td.effect.EffectKind;
+import td.term.TermText;
 import td.tower.targeting.Viewpoint;
 import td.tower.targeting.WithEffectTargetQuery;
 import td.tower.upgrade.PerkText;
@@ -18,7 +19,7 @@ public final class OverTheHorizonPerk implements SeekerPerk {
     }
 
     @Override
-    public String describe() {
-        return "Over the Horizon: may fire at Revealed or Marked enemies within " + PerkText.times(REACH) + " its range";
+    public TermText describe() {
+        return TermText.of("Over the Horizon: may fire at Revealed or Marked enemies within " + PerkText.times(REACH) + " its range");
     }
 }

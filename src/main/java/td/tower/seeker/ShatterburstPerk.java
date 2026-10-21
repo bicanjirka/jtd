@@ -3,6 +3,7 @@ package td.tower.seeker;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.term.Term;
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
@@ -35,8 +36,8 @@ public final class ShatterburstPerk implements SeekerPerk {
     }
 
     @Override
-    public String describe() {
-        return "a missile that hits a frozen enemy bursts for " + PerkText.percent(SHARE) + " magic damage around it; every enemy "
-                + "the burst hits is Silenced " + PerkText.seconds(SILENCE_TICKS) + " and gains Unraveled";
+    public TermText describe() {
+        return TermText.of("a missile that hits a frozen enemy bursts for " + PerkText.percent(SHARE) + " magic damage around it; every enemy "
+                + "the burst hits is Silenced " + PerkText.seconds(SILENCE_TICKS) + " and gains Unraveled");
     }
 }

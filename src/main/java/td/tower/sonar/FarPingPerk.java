@@ -1,5 +1,6 @@
 package td.tower.sonar;
 
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 /** A ping picks the healthiest enemy past half the range, and it stays Exposed for two passes. */
@@ -14,8 +15,8 @@ public final class FarPingPerk implements SonarPerk {
     }
 
     @Override
-    public String describe() {
-        return "Ping picks the healthiest enemy past " + PerkText.percent(NEAREST) + " of its range, Exposed for " + PASSES
-                + " passes";
+    public TermText describe() {
+        return TermText.of("Ping picks the healthiest enemy past " + PerkText.percent(NEAREST) + " of its range, Exposed for " + PASSES
+                + " passes");
     }
 }

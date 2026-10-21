@@ -1,6 +1,7 @@
 package td.tower.upgrade;
 
 import td.board.BoardGeometry;
+import td.term.TermText;
 import td.tower.Tower;
 import td.util.GameWorld;
 
@@ -16,14 +17,14 @@ public record ClusterCondition(int requiredAdjacent) implements UpgradeCondition
     }
 
     @Override
-    public String describe() {
-        return this.requiredAdjacent + " nearby towers";
+    public TermText describe() {
+        return TermText.of(this.requiredAdjacent + " nearby towers");
     }
 
     @Override
-    public String progress(Tower tower, GameWorld context) {
-        return Math.min(adjacentCount(tower, context), this.requiredAdjacent) + "/" + this.requiredAdjacent
-                + " nearby towers";
+    public TermText progress(Tower tower, GameWorld context) {
+        return TermText.of(Math.min(adjacentCount(tower, context), this.requiredAdjacent) + "/"
+                + this.requiredAdjacent + " nearby towers");
     }
 
     private static int adjacentCount(Tower tower, GameWorld context) {

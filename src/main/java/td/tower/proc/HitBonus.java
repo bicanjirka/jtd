@@ -1,7 +1,7 @@
 package td.tower.proc;
 
-import java.util.List;
-import java.util.stream.Stream;
+import td.term.TermText;
+
 
 /**
  * A conditional change to one hit: when it applies, how many times, and what it adds.
@@ -35,11 +35,10 @@ public record HitBonus(HitCondition when, HitScaling scaling, HitAdjustment adju
         return factor == 1f ? this.adjustment : this.adjustment.times(factor);
     }
 
-    /** The label from the condition and the scaling, the value from the adjustment. */
-    public Description describe() {
-        List<String> parts = Stream.of(this.when.describe(), this.scaling.describe())
-                .filter(part -> !part.isEmpty()).toList();
-        String label = parts.isEmpty() ? "Every hit" : Words.capitalized(String.join(", ", parts));
-        return new Description(label, this.adjustment.describe());
+    /** "+75% damage against Elite and Boss enemies", "+20% damage per stack of [Focus], up to 5". */
+    public TermText describe() {
+        TermText when = this.when.describe();
+        TermText what = this.scaling.around(TermText.of(this.adjustment.describe()));
+        return when.isEmpty() ? what : what.plus(" ").plus(when);
     }
 }

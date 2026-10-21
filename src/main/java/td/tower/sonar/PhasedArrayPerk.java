@@ -1,5 +1,7 @@
 package td.tower.sonar;
 
+import td.term.TermText;
+
 /** Phased Array: the beam stops spinning and stays on the enemy with the most health. */
 public final class PhasedArrayPerk implements SonarPerk {
 
@@ -9,8 +11,8 @@ public final class PhasedArrayPerk implements SonarPerk {
     }
 
     @Override
-    public String describe() {
-        return "stops spinning and holds the beam on the enemy with most health, hitting everything on it "
-                + PhasedBeam.HITS_PER_REVOLUTION + " times a revolution";
+    public TermText describe() {
+        return TermText.of("stops spinning and holds the beam on the enemy with most health, hitting everything on it "
+                + PhasedBeam.HITS_PER_REVOLUTION + " times a revolution");
     }
 }

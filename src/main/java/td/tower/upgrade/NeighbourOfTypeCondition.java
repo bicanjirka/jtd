@@ -1,6 +1,7 @@
 package td.tower.upgrade;
 
 import td.board.BoardGeometry;
+import td.term.TermText;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.GameWorld;
@@ -20,7 +21,7 @@ public record NeighbourOfTypeCondition(TowerFactory.Type type) implements Upgrad
     }
 
     @Override
-    public String describe() {
-        return "next to another " + this.type.displayName();
+    public TermText describe() {
+        return TermText.of("next to another " + this.type.displayName());
     }
 }

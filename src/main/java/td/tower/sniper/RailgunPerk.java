@@ -1,5 +1,6 @@
 package td.tower.sniper;
 
+import td.term.TermText;
 import td.tower.upgrade.PerkText;
 
 /** Railgun: the shot pierces every enemy on the line through its target. */
@@ -13,8 +14,8 @@ public final class RailgunPerk implements SniperPerk {
     }
 
     @Override
-    public String describe() {
-        return "the shot pierces every enemy on the line through its target, " + PerkText.cells(PIERCE.extraReachCells())
-                + " cells past max range; each one after the first takes " + PerkText.percent(1f - PIERCE.falloff()) + " less";
+    public TermText describe() {
+        return TermText.of("the shot pierces every enemy on the line through its target, " + PerkText.cells(PIERCE.extraReachCells())
+                + " cells past max range; each one after the first takes " + PerkText.percent(1f - PIERCE.falloff()) + " less");
     }
 }

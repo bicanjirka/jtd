@@ -94,7 +94,7 @@ public final class SeekerTower extends AbstractTower {
     /** How far a shatter reaches. */
     private static final float SHATTER_RADIUS_CELLS = 1.5f;
 
-    private static final String FREEZE_DEED = "Freezes";
+    private static final TermText FREEZE_DEED = TermText.format("times {} landed", EffectKind.FREEZE);
     private static final int FREEZES_NEEDED = 25;
 
     private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none().withRangeThree(0.1f, NodeEffects.none());

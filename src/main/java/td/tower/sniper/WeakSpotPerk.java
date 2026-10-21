@@ -1,5 +1,7 @@
 package td.tower.sniper;
 
+import td.term.TermText;
+
 /** Weak Spot: a shot that is not a crit ignores plating, insulation and some armor. */
 public final class WeakSpotPerk implements SniperPerk {
 
@@ -12,7 +14,7 @@ public final class WeakSpotPerk implements SniperPerk {
     }
 
     @Override
-    public String describe() {
-        return "Weak Spot: non-crit shots ignore plating, insulation and " + Math.round(ARMOR_IGNORED) + " armor";
+    public TermText describe() {
+        return TermText.of("Weak Spot: non-crit shots ignore plating, insulation and " + Math.round(ARMOR_IGNORED) + " armor");
     }
 }

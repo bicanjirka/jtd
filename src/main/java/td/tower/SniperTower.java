@@ -93,6 +93,7 @@ public final class SniperTower extends AbstractTower {
                             HitAdjustment.critChance(0.1f).plus(HitAdjustment.accuracy(10f)))))
             .withRangeThree(OVERWATCH_RANGE_BONUS, NodeEffects.none().withModifiers(TowerModifiers.deadZone(2f)));
 
+    private static final TermText AIM_DEED = TermText.format("shots with {}", TowerTerm.STEADY_AIM);
     private static final UpgradeNode FOCUSED_OPTICS_1 = UpgradeTier.HEAD_1.node("sniper.head.focused_optics.1",
             "Focused Optics", PRICE)
             .withHitBonus(HitBonus.when(new HitCondition.FreshTarget(), HitAdjustment.critChance(0.5f)))
@@ -106,7 +107,7 @@ public final class SniperTower extends AbstractTower {
     private static final UpgradeNode FOCUSED_OPTICS_3 = UpgradeTier.HEAD_3.node("sniper.head.focused_optics.3",
             "Focused Optics III", PRICE)
             .withModifiers(TowerModifiers.damage(12f))
-            .withGate(new PurposeCondition("Steady Aim shots", 20))
+            .withGate(new PurposeCondition(AIM_DEED, 20))
             .after(FOCUSED_OPTICS_2);
     private static final UpgradeNode RAILGUN = UpgradeTier.HEAD_4.node("sniper.head.focused_optics.4a", "Railgun",
             PRICE)
@@ -128,7 +129,7 @@ public final class SniperTower extends AbstractTower {
             .after(MARKSMANS_EYE_1);
     private static final UpgradeNode MARKSMANS_EYE_3 = UpgradeTier.HEAD_3.node("sniper.head.marksmans_eye.3",
             "Marksman's Eye III", PRICE)
-            .withGate(new PurposeCondition("Steady Aim shots", 20))
+            .withGate(new PurposeCondition(AIM_DEED, 20))
             .withCapability(TowerCapability.CRITS_PIERCE_SHIELDS)
             .after(MARKSMANS_EYE_2);
     private static final UpgradeNode UNBROKEN_AIM = UpgradeTier.HEAD_4.node("sniper.head.marksmans_eye.4a",

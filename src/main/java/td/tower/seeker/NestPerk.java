@@ -1,5 +1,7 @@
 package td.tower.seeker;
 
+import td.term.TermText;
+
 /** Attune's Nest: the cooldown loads a missile, and stored missiles launch as a salvo. */
 public final class NestPerk implements SeekerPerk {
 
@@ -11,8 +13,8 @@ public final class NestPerk implements SeekerPerk {
     }
 
     @Override
-    public String describe() {
-        return "Nest: the cooldown loads a missile into the nest instead of firing; with a target in range, stored missiles launch "
-                + LAUNCH_GAP_TICKS + " ticks apart";
+    public TermText describe() {
+        return TermText.of("Nest: the cooldown loads a missile into the nest instead of firing; with a target in range, stored missiles launch "
+                + LAUNCH_GAP_TICKS + " ticks apart");
     }
 }

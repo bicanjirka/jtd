@@ -67,25 +67,32 @@ class UpgradeNodeTest {
                 .filter(node -> node.displayName().equals(name)).findFirst().orElseThrow();
     }
 
+    private static java.util.List<String> sentences(UpgradeNode node) {
+        return node.effects().sentences().stream().map(td.term.TermText::plain).toList();
+    }
+
     @Test
     void momentumSaysWhomItAimsAtAndWhatACritAndAKillGrant() {
-        assertThat(sniperNode("Momentum").bonuses()).containsExactly(new UpgradeBonus("Targets", "highest rank"),
-                new UpgradeBonus("On crit, shots", "next shot: Damage +200%, Armor penetration +100%, Flat penetration +100%"),
-                new UpgradeBonus("On kill, shots", "5 s: Attack speed +100%"));
+        UpgradeNode momentum = sniperNode("Momentum");
+
+        assertThat(momentum.effects().statRows()).containsExactly(new UpgradeBonus("Targets", "highest rank"));
+        assertThat(sentences(momentum)).containsExactly("a crit shot grants Charged Shot",
+                "a shot that kills grants Haste");
     }
 
     @Test
     void headhunterSaysWhomItAimsAtAndWhomItHitsHarder() {
-        assertThat(sniperNode("Headhunter").bonuses()).containsExactly(new UpgradeBonus("Targets", "highest rank"),
-                new UpgradeBonus("Vs Elite and Boss", "Damage +75%"));
+        UpgradeNode headhunter = sniperNode("Headhunter");
+
+        assertThat(headhunter.effects().statRows()).containsExactly(new UpgradeBonus("Targets", "highest rank"));
+        assertThat(sentences(headhunter)).containsExactly("+75% damage against Elite and Boss enemies");
     }
 
     @Test
     void theMarksmansEyeSpecialsSayWhatTheyDoWithoutChangingWhomTheSniperAimsAt() {
-        assertThat(sniperNode("Hollow Point").bonuses()).containsExactly(new UpgradeBonus("On hit, shots", "Vulnerable +1"));
-        assertThat(sniperNode("Fourth Shot").bonuses()).containsExactly(
-                new UpgradeBonus("Every 4th shot", "next shot: Crit damage +150%, Guaranteed crit"));
-        assertThat(sniperNode("Shatter Shot").bonuses()).containsExactly(
-                new UpgradeBonus("Vs frozen or dazed", "Crit chance +100%, Crit damage +100%"));
+        assertThat(sentences(sniperNode("Hollow Point"))).containsExactly("each shot applies a stack of Vulnerable");
+        assertThat(sentences(sniperNode("Fourth Shot"))).containsExactly("every 4th shot is a Deadeye Round");
+        assertThat(sentences(sniperNode("Shatter Shot"))).containsExactly(
+                "+100% crit chance, +100% crit damage against an enemy with Freeze or Daze");
     }
 }
