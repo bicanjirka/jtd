@@ -2,6 +2,7 @@ package td.ui;
 
 import td.damage.DamageUnits;
 import td.effect.EffectKind;
+import td.term.TermText;
 import td.tower.BehaviourLine;
 import td.tower.TowerInspection;
 import td.tower.TowerRank;
@@ -38,7 +39,7 @@ final class TowerSheetText {
         tower.behaviours().forEach(behaviour -> lines.add(behaviourRow(behaviour)));
         if (!tower.description().isEmpty()) {
             lines.add(new SheetLine.Gap());
-            lines.add(new SheetLine.Prose(tower.description()));
+            lines.add(new SheetLine.Prose(TermText.of(tower.description())));
         }
         return new InfoSheet(lines);
     }

@@ -11,6 +11,7 @@ import td.enemy.EnemyDefinition;
 import td.enemy.EnemyFactory;
 import td.enemy.Rank;
 import td.fixtures.WorldFixtures;
+import td.term.TermText;
 import td.ui.render.InfoSheet;
 import td.ui.render.Palette;
 import td.ui.render.RankBadge;
@@ -95,7 +96,7 @@ class EnemyStatTextTest {
     void thePreviewEndsWithTheDescription() {
         InfoSheet sheet = this.hoverSheet("s", Rank.GRUNT);
 
-        assertThat(sheet.lines().getLast()).isEqualTo(new SheetLine.Prose("Heavy plates blunt physical hits; magic goes through."));
+        assertThat(sheet.lines().getLast()).isEqualTo(new SheetLine.Prose(TermText.of("Heavy plates blunt physical hits; magic goes through.")));
     }
 
     @Test

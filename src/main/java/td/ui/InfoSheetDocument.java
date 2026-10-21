@@ -1,7 +1,12 @@
 package td.ui;
 
+import td.term.TermText;
+import td.ui.render.IconFace;
 import td.ui.render.InfoSheet;
+import td.ui.render.Palette;
+import td.ui.render.SheetIcon;
 import td.ui.render.SheetLine;
+import td.util.ThreadConfined;
 
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -17,6 +22,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Optional;
 
@@ -25,6 +31,7 @@ import java.util.Optional;
  * painted by {@link Java2DFrameRenderer} and its label in that glyph's colour, values on a
  * right-aligned tab stop at the pane's edge.
  */
+@ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 final class InfoSheetDocument {
 
     private static final Color VALUE_COLOR = new Color(170, 205, 170);
@@ -46,6 +53,8 @@ final class InfoSheetDocument {
     private static final int RANK_FONT_SIZE = 11;
     private static final int PROSE_FONT_SIZE = 11;
     private static final int GAP_FONT_SIZE = 4;
+    private static final int DIVIDER_HEIGHT = 7;
+    private static final int ICON_LABEL_FONT_SIZE = 10;
     /** A value ending exactly at the pane's edge wraps on rounding, so the column stops short. */
     private static final int EDGE_MARGIN = 4;
 
@@ -53,6 +62,7 @@ final class InfoSheetDocument {
     private final DefaultStyledDocument doc = new DefaultStyledDocument();
     private final int width;
     private final FontMetrics metrics;
+    private HoverRun hover;
 
     private InfoSheetDocument(Java2DFrameRenderer renderer, int width, FontMetrics metrics) {
         this.renderer = renderer;
@@ -80,12 +90,21 @@ final class InfoSheetDocument {
             case SheetLine.Prose prose -> {
                 SimpleAttributeSet dim = colored(PROSE_COLOR);
                 StyleConstants.setFontSize(dim, PROSE_FONT_SIZE);
-                this.insert(prose.text(), dim);
+                this.spans(prose.text(), dim);
+            }
+            case SheetLine.Sentence sentence -> this.sentence(sentence);
+            case SheetLine.IconTitle title -> this.iconTitle(title);
+            case SheetLine.IconRow row -> this.iconRow(row);
+            case SheetLine.Divider divider -> {
+                this.icon(new PaintedIcon(this.width, DIVIDER_HEIGHT, g2 -> {
+                    g2.setColor(Hud.BORDER_IDLE);
+                    g2.draw(new Line2D.Float(-this.width / 2f, 0, this.width / 2f, 0));
+                }), smallFont());
+                this.insert("\n", smallFont());
+                return;
             }
             case SheetLine.Gap gap -> {
-                SimpleAttributeSet small = new SimpleAttributeSet();
-                StyleConstants.setFontSize(small, GAP_FONT_SIZE);
-                this.insert("\n", small);
+                this.insert("\n", smallFont());
                 return;
             }
         }
@@ -144,6 +163,7 @@ final class InfoSheetDocument {
     }
 
     private void row(SheetLine.Row row) {
+        this.hover = row.tooltip().isPresent() ? new HoverRun.RowRun(row) : null;
         this.icon(new PaintedIcon(GLYPH_BOX, GLYPH_BOX, g2 -> this.renderer.paintRowGlyph(g2, row.glyph(), row.tone(), GLYPH_SIZE)));
         SimpleAttributeSet label = row.tone().map(Java2DFrameRenderer::colorFor).map(InfoSheetDocument::colored).orElseGet(SimpleAttributeSet::new);
         this.insert(" " + row.label(), label);
@@ -154,6 +174,84 @@ final class InfoSheetDocument {
                 case WORSE -> WORSE_COLOR;
             }));
         }
+        this.hover = null;
+    }
+
+    private void sentence(SheetLine.Sentence sentence) {
+        if (sentence.glyph().isPresent()) {
+            SheetLine.Glyph glyph = sentence.glyph().get();
+            Optional<Palette> tone = sentence.tone();
+            this.icon(new PaintedIcon(GLYPH_BOX, GLYPH_BOX, g2 -> this.renderer.paintRowGlyph(g2, glyph, tone, GLYPH_SIZE)));
+            this.insert(" ", new SimpleAttributeSet());
+        }
+        this.spans(sentence.text(), colored(Hud.FOREGROUND));
+    }
+
+    /** Plain runs in {@code plain}'s style, each mention as its face then its title in the face's ink. */
+    private void spans(TermText text, SimpleAttributeSet plain) {
+        for (TermText.Span span : text.spans()) {
+            switch (span) {
+                case TermText.Plain run -> this.insert(run.text(), plain);
+                case TermText.Mention mention -> {
+                    IconFace face = TermLooks.faceOf(mention.term());
+                    this.hover = new HoverRun.MentionRun(mention);
+                    this.icon(new PaintedIcon(TermIconPainter.MENTION, TermIconPainter.MENTION,
+                            g2 -> paintFace(g2, face, TermIconPainter.MENTION)));
+                    SimpleAttributeSet title = new SimpleAttributeSet(plain);
+                    StyleConstants.setForeground(title, TermIconPainter.ink(face.tone()));
+                    this.insert(" " + mention.term().title(), title);
+                    this.hover = null;
+                }
+            }
+        }
+    }
+
+    private void iconTitle(SheetLine.IconTitle title) {
+        this.icon(new PaintedIcon(TermIconPainter.ROW, TermIconPainter.ROW,
+                g2 -> paintFace(g2, title.face(), TermIconPainter.ROW)));
+        SimpleAttributeSet name = colored(TermIconPainter.ink(title.tone()));
+        StyleConstants.setBold(name, true);
+        this.insert(" " + title.name(), name);
+        if (!title.value().isEmpty()) {
+            this.insert("\t" + title.value(), colored(VALUE_COLOR));
+        }
+    }
+
+    /** One embedded icon as wide as the pane: the label, then each face where {@link IconRowLayout} puts it. */
+    private void iconRow(SheetLine.IconRow row) {
+        boolean anyBelow = row.icons().stream().anyMatch(icon -> !icon.face().below().isEmpty());
+        IconRowLayout layout = IconRowLayout.of(row.icons().size(), anyBelow, this.width);
+        this.hover = new HoverRun.IconRowRun(row, layout);
+        this.icon(new PaintedIcon(this.width, layout.height(), g2 -> this.paintIconRow(g2, row, layout)));
+        this.hover = null;
+    }
+
+    private void paintIconRow(Graphics2D g2, SheetLine.IconRow row, IconRowLayout layout) {
+        g2.translate(-this.width / 2.0, -layout.height() / 2.0);
+        g2.setFont(new Font(Font.DIALOG, Font.PLAIN, ICON_LABEL_FONT_SIZE));
+        FontMetrics labelMetrics = g2.getFontMetrics();
+        g2.setColor(PROSE_COLOR);
+        g2.drawString(row.label(), 0,
+                (TermIconPainter.ROW + labelMetrics.getAscent() - labelMetrics.getDescent()) / 2f);
+        for (int i = 0; i < row.icons().size(); i++) {
+            SheetIcon icon = row.icons().get(i);
+            Graphics2D cell = (Graphics2D) g2.create();
+            cell.translate(layout.cell(i).x, layout.cell(i).y);
+            TermIconPainter.paint(cell, icon.face(), TermIconPainter.ROW);
+            cell.dispose();
+        }
+    }
+
+    /** A face painted about the centre of the icon that holds it. */
+    private static void paintFace(Graphics2D g2, IconFace face, int size) {
+        g2.translate(-size / 2.0, -size / 2.0);
+        TermIconPainter.paint(g2, face, size);
+    }
+
+    private static SimpleAttributeSet smallFont() {
+        SimpleAttributeSet small = new SimpleAttributeSet();
+        StyleConstants.setFontSize(small, GAP_FONT_SIZE);
+        return small;
     }
 
     private static SimpleAttributeSet colored(Color color) {
@@ -163,7 +261,11 @@ final class InfoSheetDocument {
     }
 
     private void icon(PaintedIcon icon) {
-        SimpleAttributeSet attributes = new SimpleAttributeSet();
+        this.icon(icon, new SimpleAttributeSet());
+    }
+
+    private void icon(PaintedIcon icon, AttributeSet base) {
+        SimpleAttributeSet attributes = new SimpleAttributeSet(base);
         StyleConstants.setIcon(attributes, icon);
         this.insert(" ", attributes);
     }
@@ -171,6 +273,9 @@ final class InfoSheetDocument {
     /** In the pane's font unless {@code attributes} say otherwise, so text measures as it draws. */
     private void insert(String text, AttributeSet attributes) {
         SimpleAttributeSet withFont = new SimpleAttributeSet(attributes);
+        if (this.hover != null) {
+            withFont.addAttribute(HoverKey.INSTANCE, this.hover);
+        }
         if (!withFont.isDefined(StyleConstants.FontFamily)) {
             StyleConstants.setFontFamily(withFont, this.metrics.getFont().getFamily());
         }
