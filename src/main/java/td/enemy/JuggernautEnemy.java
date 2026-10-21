@@ -38,7 +38,7 @@ final class JuggernautEnemy {
                                 + "crits glance off it. Once badly hurt it wards itself against magic. Cracked and "
                                 + "Sundered still get past it. Too heavy to freeze or chill for long.")
                         .withStats(25f, 20f, 40f, 0f, 100f, 0f, 20f)
-                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(
+                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.BULWARK,
                                 new HealthThresholdTrigger(0.5f),
                                 new ApplyEffectAction(ShieldTemplate.magicOnly(1500f, 200), new SelfTarget()))))))
                 .build());

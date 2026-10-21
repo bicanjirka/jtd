@@ -4,6 +4,8 @@ import td.effect.EffectKind;
 import td.stat.EnemyStat;
 import td.stat.StatModifier;
 import td.stat.StatModifiers;
+import td.term.TermNumbers;
+import td.term.TermText;
 
 /**
  * Resistance to one kind of effect: it shortens that effect's duration by {@code amount}, and at
@@ -38,6 +40,14 @@ public record EffectResistTrait(EnemyStat stat, float amount) implements Trait {
             return TraitLine.of(this.marker(), kind + " immune");
         }
         return new TraitLine(this.marker(), kind + " resist", Math.round(this.amount * 100) + "%");
+    }
+
+    @Override
+    public TraitEntry entry() {
+        EffectKind kind = EffectKind.resistedThrough(this.stat);
+        TermText text = this.amount >= 1f ? TermText.of("immune to ").plus(kind)
+                : TermText.of(kind).plus(" lasts " + TermNumbers.percent(this.amount) + " less on it");
+        return new TraitEntry(kind, this.amount, text);
     }
 
     @Override

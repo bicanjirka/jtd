@@ -42,7 +42,7 @@ final class SalamanderEnemy {
     }
 
     private static IdentifiedAbility shed(float perTick) {
-        return IdentifiedAbility.named("shed", new Ability(new HealthThresholdTrigger(0.3f),
+        return IdentifiedAbility.named("shed", new Ability(AbilityTerm.SHED_SKIN, new HealthThresholdTrigger(0.3f),
                 new ApplyEffectAction(new HealTemplate(perTick, 60), new SelfTarget())));
     }
 }

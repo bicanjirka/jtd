@@ -20,7 +20,7 @@ class MultiMemberAbilitySpawnTest {
         AbilitySpawnShape shape = new AbilitySpawnShape(3, 2.0);
         catalog.register(EnemyDefinition.of("spawner", "Spawner", 100, 5, 1.28f, BodyArchetype.CIRCLE)
                 .withIdentifiedAbilities(List.of(IdentifiedAbility.named("spawn",
-                        new Ability(new OnceTrigger(1), new SpawnEnemiesAction("spawnling", shape, false))))));
+                        new Ability(AbilityTerm.GUARD, new OnceTrigger(1), new SpawnEnemiesAction("spawnling", shape, false))))));
 
         GameWorld world = WorldFixtures.newWorldOnBoard(32, 1000, 1000);
         world.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(1000, 0))));

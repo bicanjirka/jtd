@@ -25,14 +25,14 @@ final class CourierEnemy {
                         .withDescription("Very fast and fragile, nimble enough to dodge an aimed shot now and then, and "
                                 + "bolts the moment it is first hit. A high bounty. Worth hunting.")
                         .withStats(5f, 5f, 0f, 0f, 15f, 35f, 10f)
-                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(
+                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.BOLT,
                                 new OnFirstDamageTakenTrigger(),
                                 new ApplyEffectAction(new SprintTemplate(40), new SelfTarget()))))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(501, 110)
                         .withDescription("Very fast and nimble, bolts the moment it is first hit and sprints off again "
                                 + "after every shot it dodges. A huge bounty. Worth hunting.")
                         .withStats(10f, 10f, 0f, 0f, 25f, 50f, 15f)
-                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(new OnDodgeTrigger(),
+                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.SIDESTEP, new OnDodgeTrigger(),
                                 new ApplyEffectAction(new SprintTemplate(20), new SelfTarget()))))))
                 .build());
     }

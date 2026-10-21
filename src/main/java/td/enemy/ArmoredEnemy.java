@@ -48,7 +48,7 @@ final class ArmoredEnemy {
                                 + "every physical hit outright. Braces behind a physical shield once badly hurt. Immune "
                                 + "to critical hits. Calls three armored reinforcements every three seconds.")
                         .withStats(100f, 100f, 10f, 0f, 100f, 5f, 20f)
-                        .withAdditionalAbilities(List.of(brace(300f), IdentifiedAbility.anonymous(new Ability(
+                        .withAdditionalAbilities(List.of(brace(300f), IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE,
                                 new PeriodicTrigger(Math.round(3 * TickRate.TICKS_PER_SECOND)),
                                 new SpawnEnemiesAction("sSpawn", AbilitySpawnShape.brood(3, 1f, 1f), false))))))
                 .build());
@@ -62,7 +62,7 @@ final class ArmoredEnemy {
 
     /** The physical shield it raises once, at half health. */
     private static IdentifiedAbility brace(float points) {
-        return IdentifiedAbility.named("brace", new Ability(new HealthThresholdTrigger(0.5f),
+        return IdentifiedAbility.named("brace", new Ability(AbilityTerm.BRACE, new HealthThresholdTrigger(0.5f),
                 new ApplyEffectAction(ShieldTemplate.physicalOnly(points, 100), new SelfTarget())));
     }
 }

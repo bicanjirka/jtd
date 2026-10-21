@@ -16,4 +16,7 @@ public interface TraitTemplate {
 
     /** One row for the player: what this slot does, or at most does for an adaptive one. */
     TraitLine describe();
+
+    /** The same slot for the term-based panes: the term its icon shows and its sentence. */
+    TraitEntry entry();
 }

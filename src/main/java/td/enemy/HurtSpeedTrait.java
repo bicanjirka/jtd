@@ -3,6 +3,8 @@ package td.enemy;
 import td.stat.EnemyStat;
 import td.stat.StatModifier;
 import td.stat.StatModifiers;
+import td.term.TermNumbers;
+import td.term.TermText;
 
 /**
  * Speeds up as health drops, from base speed at full health to {@code maxMultiplier} near death.
@@ -19,6 +21,12 @@ public record HurtSpeedTrait(float maxMultiplier) implements Trait {
     @Override
     public TraitLine describe() {
         return new TraitLine(this.marker(), "Hurt speed", "up to x" + TraitText.decimal(this.maxMultiplier));
+    }
+
+    @Override
+    public TraitEntry entry() {
+        return TraitEntry.of(TraitTerm.ADRENALINE, TermText.of("moves faster as it is hurt, up to "
+                + TermNumbers.times(this.maxMultiplier) + " its speed near death"));
     }
 
     @Override

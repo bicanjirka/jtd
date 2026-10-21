@@ -1,4 +1,4 @@
 package td.enemy;
 
-public record Ability(AbilityTrigger trigger, AbilityAction action) {
+public record Ability(AbilityTerm term, AbilityTrigger trigger, AbilityAction action) {
 }

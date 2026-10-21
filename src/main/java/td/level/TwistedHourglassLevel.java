@@ -2,6 +2,7 @@ package td.level;
 
 import td.effect.ShieldTemplate;
 import td.enemy.Ability;
+import td.enemy.AbilityTerm;
 import td.enemy.ApplyEffectAction;
 import td.enemy.BodyArchetype;
 import td.enemy.EnemyDefinition;
@@ -33,7 +34,7 @@ final class TwistedHourglassLevel {
 
     /** A tenth of the rank's health, once it is badly wounded. */
     private static IdentifiedAbility panicShield(float points) {
-        return IdentifiedAbility.named("panicShield", new Ability(new HealthThresholdTrigger(0.5f),
+        return IdentifiedAbility.named("panicShield", new Ability(AbilityTerm.PANIC, new HealthThresholdTrigger(0.5f),
                 new ApplyEffectAction(new ShieldTemplate(points, 100), new SelfTarget())));
     }
 
@@ -49,7 +50,7 @@ final class TwistedHourglassLevel {
                     .withIdentifiedAbilities(List.of(
                             panicShield(100f),
                             IdentifiedAbility.named("splitOnDeath",
-                                    new Ability(new OnDeathTrigger(), new SpawnEnemiesAction("c", 2, false))))))
+                                    new Ability(AbilityTerm.SPLIT, new OnDeathTrigger(), new SpawnEnemiesAction("c", 2, false))))))
             .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(1800, 20)
                     .withAdditionalAbilities(List.of(panicShield(180f))))
             .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(3240, 28)
