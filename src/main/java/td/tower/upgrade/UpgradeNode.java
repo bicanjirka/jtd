@@ -9,7 +9,6 @@ import td.tower.proc.Proc;
 import td.tower.targeting.TargetPriority;
 import td.util.GameWorld;
 
-import java.util.List;
 
 /**
  * One node in a tower's upgrade tree. Hooks and prerequisites match nodes by their {@code id},
@@ -108,10 +107,5 @@ public record UpgradeNode(String id, UpgradeSlot slot, String displayName, int p
     /** Progress toward its XP, e.g. {@code "XP 120/150"}. */
     public String xpProgress(Tower tower) {
         return "XP " + Math.min(tower.experience().xp(), this.xp) + "/" + this.xp;
-    }
-
-    /** What buying this node grants; the gate and the structural prerequisite are not bonuses. */
-    public List<UpgradeBonus> bonuses() {
-        return this.effects.bonuses();
     }
 }

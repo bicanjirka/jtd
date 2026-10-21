@@ -32,7 +32,6 @@ import td.tower.proc.ProcRunner;
 import td.tower.upgrade.Perk;
 import td.tower.upgrade.PerkCatalogue;
 import td.tower.upgrade.StandardBaseSlot;
-import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeDecision;
 import td.tower.upgrade.UpgradeLine;
 import td.tower.upgrade.UpgradeNode;
@@ -577,14 +576,6 @@ public abstract class AbstractTower implements Tower {
     /** Which perks each node brings; none by default. */
     protected PerkCatalogue<? extends Perk> perkCatalogue() {
         return PerkCatalogue.empty();
-    }
-
-    public List<UpgradeBonus> bonusesOf(UpgradeNode node) {
-        List<UpgradeBonus> bonuses = new ArrayList<>(node.bonuses());
-        for (TermText text : this.perkCatalogue().describe(node)) {
-            bonuses.add(new UpgradeBonus(text.capitalized().plain(), ""));
-        }
-        return bonuses;
     }
 
     @Override

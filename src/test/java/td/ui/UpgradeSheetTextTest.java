@@ -3,12 +3,13 @@ package td.ui;
 import org.junit.jupiter.api.Test;
 import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
+import td.term.TermText;
+import td.tower.NodeWords;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerModifiers;
 import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.StandardBaseSlot;
-import td.tower.upgrade.UpgradeDecision;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.tower.upgrade.UpgradeState;
@@ -96,20 +97,21 @@ class UpgradeSheetTextTest {
     }
 
     @Test
-    void theHoverShowsNameAndPriceInTheSlotColourThenTheGateThenOneRowPerBonus() {
+    void theHoverShowsTheFaceNamePriceGatesThenWhatItAdds() {
         this.tower.earnXp(10);
+        UpgradeOffer offer = this.offer(VETERAN);
 
-        InfoSheet sheet = UpgradeSheetText.hover(this.offer(VETERAN));
+        InfoSheet sheet = UpgradeSheetText.hover(offer);
 
         assertThat(sheet.lines()).containsExactly(
-                new SheetLine.Title(Glyph.PIP, Palette.TOWER_UPGRADE_HEAD, "Veteran", "$10"),
-                Row.toned(Glyph.CHECK, Palette.UPGRADE_GATE_MET, "XP 10/10", ""),
+                new SheetLine.IconTitle(offer.face(), "Veteran", offer.face().tone(), "$10"),
+                SheetLine.Sentence.marked(Glyph.CHECK, Palette.UPGRADE_GATE_MET, TermText.of("XP 10/10")),
                 new SheetLine.Gap(),
                 Row.plain(Glyph.DOT, "Damage", "+20%"));
     }
 
     @Test
-    void aNodesPerkRowFollowsItsStatRows() {
+    void aNodesSentencesFollowItsStatRows() {
         Tower sniper = TowerFactory.createTower(TowerFactory.Type.SNIPER, this.world, 3, 3);
         UpgradeNode executioner = sniper.upgradeTree().nodes().stream()
                 .filter(node -> node.displayName().equals("Executioner")).findFirst().orElseThrow();
@@ -117,9 +119,9 @@ class UpgradeSheetTextTest {
         InfoSheet sheet = UpgradeSheetText.hover(UpgradeOffer.of(executioner, List.of(executioner), sniper, this.world));
 
         List<SheetLine> rows = sheet.lines().subList(sheet.lines().indexOf(new SheetLine.Gap()) + 1, sheet.lines().size());
-        assertThat(rows).hasSize(executioner.bonuses().size() + 1);
-        assertThat(rows.getLast()).isEqualTo(Row.plain(Glyph.DOT,
-                "A shot that leaves an enemy other than a boss under 15% health kills it; an execution counts as a crit", ""));
+        NodeWords words = sniper.wordsOf(executioner);
+        assertThat(rows).hasSize(words.stats().size() + words.sentences().size() + 1);
+        assertThat(rows.getLast()).isEqualTo(SheetLine.Sentence.of(words.sentences().getLast().asSentence()));
     }
 
     @Test
@@ -127,16 +129,17 @@ class UpgradeSheetTextTest {
         InfoSheet gated = UpgradeSheetText.hover(this.offer(VETERAN));
         InfoSheet free = UpgradeSheetText.hover(this.offer(RANGE));
 
-        assertThat(gated.lines()).contains(Row.toned(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, "XP 0/10", ""));
-        assertThat(free.lines()).noneMatch(line -> line instanceof Row row
-                && (row.glyph() == Glyph.CHECK || row.glyph() == Glyph.CROSS));
+        assertThat(gated.lines()).contains(
+                SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, TermText.of("XP 0/10")));
+        assertThat(free.lines()).noneMatch(line -> line instanceof SheetLine.Sentence sentence
+                && sentence.glyph().isPresent());
     }
 
     @Test
-    void aSlotHeaderNamesWhatItLastBoughtOrThatItIsOnOffer() {
+    void aSlotOnOfferOrHoldingANodeIsJustItsName() {
         UpgradeState owned = UpgradeState.none().with(RANGE);
 
-        assertThat(UpgradeSheetText.slotHeader(UpgradeSlot.BASE, owned, true)).isEqualTo("Base: Range");
+        assertThat(UpgradeSheetText.slotHeader(UpgradeSlot.BASE, owned, false)).isEqualTo("Base");
         assertThat(UpgradeSheetText.slotHeader(UpgradeSlot.HEAD, owned, true)).isEqualTo("Head");
     }
 
@@ -194,15 +197,23 @@ class UpgradeSheetTextTest {
     }
 
     @Test
-    void aMadeChoiceGetsARowPerNodeItLockedOut() {
-        FakeTower chosen = this.choosing("Attune", "Awaken", "Marksman's Eye", "Fifth Shot");
-        List<UpgradeDecision> decisions = CHOICES.decisions(chosen.upgrades());
+    void aLinesNextLevelSaysWhatItAddsTo() {
+        this.world.economy().startEconomy(1000, 5);
+        Tower sniper = TowerFactory.createTower(TowerFactory.Type.SNIPER, this.world, 3, 3);
+        sniper.earnXp(1_000);
+        sniper.buyUpgrade(this.nodeNamed(sniper, "Attune"));
+        sniper.buyUpgrade(this.nodeNamed(sniper, "Focused Optics"));
+        UpgradeNode second = this.nodeNamed(sniper, "Focused Optics II");
 
-        List<String> head = UpgradeSheetText.decisionRows(decisions.stream().filter(d -> d.chosen().slot() == UpgradeSlot.HEAD).toList());
-        List<String> special = UpgradeSheetText.decisionRows(decisions.stream().filter(d -> d.chosen().slot() == UpgradeSlot.SPECIAL).toList());
+        InfoSheet sheet = UpgradeSheetText.hover(UpgradeOffer.of(second, sniper.offeredUpgrades(this.world), sniper,
+                this.world));
 
-        assertThat(head).containsExactly("chosen over Focused Optics");
-        assertThat(special).containsExactly("chosen over Marked Round", "chosen over Momentum");
+        assertThat(sheet.lines()).contains(SheetLine.Sentence.of(TermText.of("Adds to Focused Optics:")));
+    }
+
+    private UpgradeNode nodeNamed(Tower tower, String name) {
+        return tower.upgradeTree().nodes().stream().filter(node -> node.displayName().equals(name)).findFirst()
+                .orElseThrow();
     }
 
     @Test

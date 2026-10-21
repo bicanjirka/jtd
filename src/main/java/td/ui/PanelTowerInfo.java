@@ -54,7 +54,6 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private InfoSheet lastSheet = NO_SHEET;
     private int sheetWidth = 0;
     private boolean levelEnded = false;
-    private boolean hovering = false;
     private Runnable onDeselected = () -> {
     };
     private Consumer<Boolean> onPinToggled = pinning -> {
@@ -81,7 +80,6 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         }
         this.selectedTower = t;
         this.selectedTower.setSelected(true);
-        this.hovering = false;
         this.updateInterface();
     }
 
@@ -100,9 +98,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     public void showSheet(InfoSheet sheet) {
         this.jButton_sell.setVisible(false);
         this.jToggle_pin.setVisible(false);
-        if (!this.hovering) {
-            this.replaceSheet(sheet);
-        }
+        this.replaceSheet(sheet);
     }
 
     /** Skips an identical sheet, as {@link #setText} does. */
@@ -185,36 +181,21 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     }
 
     /**
-     * Shows a hovered upgrade node's sheet in place of the tower status until
-     * {@link #clearUpgradeHover}.
-     */
-    public void showUpgradeHover(InfoSheet sheet) {
-        this.hovering = true;
-        this.replaceSheet(sheet);
-    }
-
-    public void clearUpgradeHover() {
-        this.hovering = false;
-        this.updateInterface();
-    }
-
-    /**
      * The selected tower's sheet, built with the frame; shown only while that tower is still selected and nothing
      * else owns the pane.
      */
     public void showTowerSheet(TowerSheet sheet) {
-        if (this.selectedTower != null && !this.hovering && sheet.x() == this.selectedTower.getX()
+        if (this.selectedTower != null && sheet.x() == this.selectedTower.getX()
                 && sheet.y() == this.selectedTower.getY()) {
             this.replaceSheet(sheet.sheet());
         }
     }
 
     /**
-     * Skips identical text, since resetting a {@code JTextPane} moves its caret and scroll, and
-     * does nothing while hover text owns the pane.
+     * Skips identical text, since resetting a {@code JTextPane} moves its caret and scroll.
      */
     private void setText(String s) {
-        if (this.hovering || Objects.equals(s, this.lastText)) {
+        if (Objects.equals(s, this.lastText)) {
             return;
         }
         this.lastText = s;
@@ -237,7 +218,6 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
             this.selectedTower.setSelected(false);
         }
         this.selectedTower = null;
-        this.hovering = false;
         this.closeTooltips();
     }
 

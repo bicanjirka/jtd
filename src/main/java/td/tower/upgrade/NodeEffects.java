@@ -112,11 +112,4 @@ public record NodeEffects(StatModifiers<TowerStat> modifiers, StatModifiers<Towe
         }
         return sentences;
     }
-
-    /** Bridge for the Upgrades panel until it shows sentences: the rows, then each sentence as a label. */
-    public List<UpgradeBonus> bonuses() {
-        List<UpgradeBonus> bonuses = new ArrayList<>(this.statRows());
-        this.sentences().forEach(text -> bonuses.add(new UpgradeBonus(text.capitalized().plain(), "")));
-        return bonuses;
-    }
 }

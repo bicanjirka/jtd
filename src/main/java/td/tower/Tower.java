@@ -4,7 +4,6 @@ import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
 import td.stat.StatModifiers;
-import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
@@ -156,9 +155,6 @@ public interface Tower {
 
     /** Owned upgrade nodes, as one snapshot. */
     UpgradeState upgrades();
-
-    /** What {@code node} would add to this tower: its data rows, then its perks' words. */
-    List<UpgradeBonus> bonusesOf(UpgradeNode node);
 
     /** What {@code node} says to the player: its value rows and its sentences. */
     NodeWords wordsOf(UpgradeNode node);

@@ -40,6 +40,7 @@ public final class Hud {
     private static final Border CONTROL_PADDING = new EmptyBorder(3, 8, 3, 8);
     /** Inset and minimum gap of a row-style face's two parts. */
     private static final int ROW_PADDING = 6;
+    private static final int ICON_GAP = 4;
     private static final int ROW_GAP = 8;
     private static final String ELLIPSIS = "…";
 
@@ -75,7 +76,8 @@ public final class Hud {
 
     /**
      * Draws a control: a flat fill reacting to the mouse, a one-pixel border, and its icon or else
-     * its text, centred.
+     * its text, centred. A button with an icon and a row-style text (one with a tab) paints the icon first and the
+     * row beside it.
      */
     static void paintControl(Graphics g, AbstractButton button) {
         Graphics2D g2 = (Graphics2D) g.create();
@@ -91,7 +93,13 @@ public final class Hud {
         g2.drawRect(0, 0, width - 1, height - 1);
 
         Icon icon = iconFor(button, enabled);
-        if (icon != null) {
+        String text = button.getText();
+        if (icon != null && text != null && text.indexOf('	') >= 0) {
+            icon.paintIcon(button, g2, ROW_PADDING, (height - icon.getIconHeight()) / 2);
+            int taken = ROW_PADDING + icon.getIconWidth() + ICON_GAP;
+            g2.translate(taken, 0);
+            paintCentredText(g2, button, width - taken, height, enabled);
+        } else if (icon != null) {
             icon.paintIcon(button, g2, (width - icon.getIconWidth()) / 2, (height - icon.getIconHeight()) / 2);
         } else {
             paintCentredText(g2, button, width, height, enabled);

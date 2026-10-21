@@ -92,8 +92,13 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
         return lines.entrySet().stream().map(line -> new UpgradeLine(line.getKey(), line.getValue())).toList();
     }
 
+    /** The node whose art a button or line for {@code node} shows: a level IV or special its own, else its line's first. */
+    public UpgradeNode artNodeOf(UpgradeNode node) {
+        return node.tier() == UpgradeTier.HEAD_4 || node.tier() == UpgradeTier.SPECIAL ? node : this.firstOf(node);
+    }
+
     /** The node that starts {@code node}'s line: back along the prerequisite one tier step before, while there is one. */
-    UpgradeNode firstOf(UpgradeNode node) {
+    public UpgradeNode firstOf(UpgradeNode node) {
         UpgradeNode first = node;
         Optional<UpgradeNode> before = this.previousInLine(first);
         while (before.isPresent()) {

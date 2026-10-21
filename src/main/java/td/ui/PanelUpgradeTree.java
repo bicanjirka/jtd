@@ -3,12 +3,13 @@ package td.ui;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.tower.Tower;
-import td.tower.upgrade.UpgradeDecision;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.tower.upgrade.UpgradeState;
 import td.ui.render.Palette;
 import td.ui.render.SheetLine.Glyph;
+import td.ui.render.SheetTooltip;
+import td.ui.render.TooltipKey;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
@@ -21,19 +22,16 @@ import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.Serial;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.function.Consumer;
 
 /**
  * The selected tower's upgrade tree, under its XP bar (with a tick at the next node XP opens):
  * per {@link UpgradeSlot}, a header in the slot's colour with
- * what the slot holds, a lock row per exclusive choice made there, and a numbered button per
+ * what the slot holds, and a numbered button per
  * offered node saying its price or why it can't be bought yet. Buttons of one exclusive choice are
  * joined by a bracket, with "1 of N" beside the header. Replaces the wave preview while a tower is
  * selected.
@@ -49,21 +47,17 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     private static final long serialVersionUID = 1L;
 
     private static final int BUTTONS_PER_SLOT = 3;
-    /** A chain root's rival and a level IV branch's in the head; two specials passed over. */
-    private static final int DECISIONS_PER_SLOT = 2;
-    private static final float DECISION_FONT_SIZE = 10f;
+    private static final int BUTTON_ICON = 14;
     private static final float XP_FONT_SIZE = 10f;
     private static final UpgradeSlot[] SLOTS = UpgradeSlot.values();
     private static final Color LOCKED_COLOR = new Color(150, 170, 150);
     private static final int PIP_BOX = 11;
     private static final float PIP_SIZE = 4.2f;
 
-    private TooltipLayer tooltips;
     private final JLabel xpLabel = new JLabel("");
     private final XpBar xpBar = new XpBar();
     private final JLabel[] slotHeaders = new JLabel[SLOTS.length];
     private final JLabel[] choiceLabels = new JLabel[SLOTS.length];
-    private final JLabel[][] decisionRows = new JLabel[SLOTS.length][DECISIONS_PER_SLOT];
     private final ChoiceBracket[][] brackets = new ChoiceBracket[SLOTS.length][BUTTONS_PER_SLOT];
     private final HudButton[][] slotButtons = new HudButton[SLOTS.length][BUTTONS_PER_SLOT];
     private final UpgradeOffer[][] slotOffers = new UpgradeOffer[SLOTS.length][BUTTONS_PER_SLOT];
@@ -72,20 +66,24 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     private GameWorld context;
     private Tower tower;
     private boolean levelEnded = false;
-    private Consumer<UpgradeOffer> onHover = offer -> {
-    };
-    private Runnable onHoverEnd = () -> {
-    };
-    private Runnable onBought = () -> {
-    };
+    private TooltipLayer tooltips = null;
 
     public PanelUpgradeTree() {
         initComponents();
     }
 
-    /** Kept for the buttons' tooltips. */
+    /** Each button's hover is a tooltip of what it offers now, keyed by the button's place so a purchase swaps it. */
     public void setTooltips(TooltipLayer tooltips) {
         this.tooltips = tooltips;
+        for (UpgradeSlot slot : SLOTS) {
+            for (int i = 0; i < BUTTONS_PER_SLOT; i++) {
+                String place = slot + ":" + i;
+                UpgradeOffer[] offers = this.slotOffers[slot.ordinal()];
+                int index = i;
+                tooltips.watchButton(this.slotButtons[slot.ordinal()][i], () -> Optional.ofNullable(offers[index])
+                        .map(offer -> new SheetTooltip(TooltipKey.of("button", place), UpgradeSheetText.hover(offer))));
+            }
+        }
     }
 
     public void setGameWorld(GameWorld context) {
@@ -103,18 +101,6 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         this.refresh();
     }
 
-    void onHover(Consumer<UpgradeOffer> listener) {
-        this.onHover = listener;
-    }
-
-    public void onHoverEnd(Runnable listener) {
-        this.onHoverEnd = listener;
-    }
-
-    public void onBought(Runnable listener) {
-        this.onBought = listener;
-    }
-
     /** May run on the game-loop thread. */
     @Override
     public void economyChanged(EconomyState state) {
@@ -129,6 +115,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         for (UpgradeSlot slot : SLOTS) {
             for (int i = 0; i < BUTTONS_PER_SLOT; i++) {
                 this.slotButtons[slot.ordinal()][i].setVisible(false);
+                this.slotButtons[slot.ordinal()][i].setIcon(null);
                 this.slotOffers[slot.ordinal()][i] = null;
             }
         }
@@ -149,17 +136,14 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             HudButton button = this.slotButtons[slotIndex][buttonIndex];
             button.setVisible(true);
             button.setText(UpgradeSheetText.buttonText(offer));
+            button.setIcon(new PaintedIcon(BUTTON_ICON, BUTTON_ICON, g2 -> TermIconPainter.paint(g2, offer.face(), BUTTON_ICON)));
             button.setEnabled(!this.levelEnded && offer.buyable());
-            if (button.getModel().isRollover()) {
-                this.onHover.accept(offer);
-            }
         }
         int xp = this.tower.experience().xp();
         Optional<UpgradeNode> nextXpGate = UpgradeSheetText.nextXpGate(offered, xp);
         this.xpLabel.setText(UpgradeSheetText.xpLabel(xp, nextXpGate));
         this.xpBar.show(xp, nextXpGate.map(node -> OptionalInt.of(node.xp())).orElse(OptionalInt.empty()));
         UpgradeState owned = this.tower.upgrades();
-        List<UpgradeDecision> decisions = this.tower.upgradeTree().decisions(owned);
         for (UpgradeSlot slot : SLOTS) {
             boolean reachable = offered.stream().anyMatch(n -> n.slot() == slot);
             JLabel header = this.slotHeaders[slot.ordinal()];
@@ -168,7 +152,9 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
                     ? Java2DFrameRenderer.colorFor(TowerSpriteFrameBuilder.slotPaletteFor(slot))
                     : LOCKED_COLOR);
             this.refreshChoiceMark(slot);
-            this.refreshDecisionRows(slot, decisions);
+        }
+        if (this.tooltips != null) {
+            this.tooltips.refreshButtons();
         }
     }
 
@@ -201,25 +187,12 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
                 first < 0 ? "" : UpgradeSheetText.choiceLabel(offers[first].rivals().size() + 1));
     }
 
-    private void refreshDecisionRows(UpgradeSlot slot, List<UpgradeDecision> decisions) {
-        List<String> rows = UpgradeSheetText.decisionRows(decisions.stream().filter(d -> d.chosen().slot() == slot).toList());
-        for (int i = 0; i < DECISIONS_PER_SLOT; i++) {
-            JLabel row = this.decisionRows[slot.ordinal()][i];
-            row.setVisible(i < rows.size());
-            if (i < rows.size()) {
-                row.setText(rows.get(i));
-            }
-        }
-    }
-
     private void buttonClicked(int slotIndex, int buttonIndex) {
         UpgradeOffer offer = this.slotOffers[slotIndex][buttonIndex];
         if (offer == null || this.tower == null) {
             return;
         }
-        if (this.tower.buyUpgrade(offer.node())) {
-            this.onBought.run();
-        }
+        this.tower.buyUpgrade(offer.node());
         this.refresh();
     }
 
@@ -274,44 +247,11 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             headerConstraints.insets = new Insets(slotIndex == 0 ? 0 : 6, 0, 2, 0);
             add(headerRow, headerConstraints);
 
-            for (int i = 0; i < DECISIONS_PER_SLOT; i++) {
-                JLabel decision = new JLabel("");
-                decision.setForeground(Hud.FOREGROUND);
-                decision.setFont(Hud.LABEL_FONT.deriveFont(DECISION_FONT_SIZE));
-                decision.setIcon(new PaintedIcon(PIP_BOX, PIP_BOX,
-                        g2 -> this.glyphRenderer.paintRowGlyph(g2, Glyph.LOCK, Optional.empty(), PIP_SIZE)));
-                decision.setVisible(false);
-                this.decisionRows[slotIndex][i] = decision;
-                GridBagConstraints decisionConstraints = new GridBagConstraints();
-                decisionConstraints.gridx = 0;
-                decisionConstraints.gridy = row++;
-                decisionConstraints.gridwidth = 2;
-                decisionConstraints.anchor = GridBagConstraints.WEST;
-                decisionConstraints.fill = GridBagConstraints.HORIZONTAL;
-                decisionConstraints.weightx = 0.01;
-                decisionConstraints.insets = new Insets(0, 0, 2, 0);
-                add(decision, decisionConstraints);
-            }
-
             for (int i = 0; i < BUTTONS_PER_SLOT; i++) {
                 HudButton button = new HudButton("");
                 button.setVisible(false);
                 int capturedButton = i;
                 button.addActionListener(evt -> this.buttonClicked(slotIndex, capturedButton));
-                button.addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseEntered(MouseEvent evt) {
-                        UpgradeOffer offer = PanelUpgradeTree.this.slotOffers[slotIndex][capturedButton];
-                        if (offer != null) {
-                            PanelUpgradeTree.this.onHover.accept(offer);
-                        }
-                    }
-
-                    @Override
-                    public void mouseExited(MouseEvent evt) {
-                        PanelUpgradeTree.this.onHoverEnd.run();
-                    }
-                });
                 this.slotButtons[slotIndex][i] = button;
                 GridBagConstraints buttonConstraints = new GridBagConstraints();
                 buttonConstraints.gridx = 0;
