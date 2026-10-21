@@ -107,3 +107,9 @@ use `PreviewBoard` for those.
 Both previews reach only `EnemyCatalog.builtIn()` ids. For a level's own or a made-up enemy,
 write a scratch class that registers it with `EnemyCatalog.cloneAndAdjust` and renders like
 `PreviewBoard.render`.
+
+## PreviewIcons - every term's face
+
+`java -cp "$CP" PreviewIcons [out.png]` (default `shots/icons.png`). A contact sheet of every effect, tower
+term, trait, ability and perk-line face, each at 40 px and at 20 px with its title under it. Use it to check a
+new pictogram or look; the live states (stacks, time sweep, bar, ward) are covered by `TermIconPainterTest`.
