@@ -2,9 +2,9 @@ package td.tower.splash;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
-import td.util.TickRate;
+import td.tower.TowerTerm;
 
 import java.util.Set;
 
@@ -26,8 +26,10 @@ public final class ThunderstrikePerk implements SplashPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("every " + PerkText.ordinal(INTERVAL) + " shot calls lightning onto the healthiest enemy in range: " + PerkText.times(FACTOR)
-                + " the blast as magic and Dazed " + PerkText.seconds(Math.round(SplashShot.DAZE_SECONDS * TickRate.TICKS_PER_SECOND))
-                + "; the shot's arcs start there at full damage; counts as a crit");
+        return TermText.of("every " + TermNumbers.ordinal(INTERVAL)
+                + " shot calls lightning onto the enemy in range with the most health: " + TermNumbers.times(FACTOR)
+                + " the blast as magic, counted as a crit, and ").plus(EffectKind.DAZED)
+                .plus(" for " + TermNumbers.seconds(SplashShot.DAZE_SECONDS) + "; the shot's ").plus(TowerTerm.ARC)
+                .plus(" starts there at full damage");
     }
 }

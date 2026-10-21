@@ -2,6 +2,7 @@ package td.tower.splash;
 
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.term.TermText;
 import td.tower.targeting.MostNeighboursSelector;
 
 import java.util.Optional;
@@ -29,7 +30,7 @@ public final class BlightHex implements Hex {
     }
 
     @Override
-    public String describe() {
-        return "Hex of Blight: poisons for the hex's length";
+    public TermText describe() {
+        return TermText.of(EffectKind.BLIGHT, TermText.of("the enemy has ").plus(EffectKind.POISON).plus(" for as long as it lasts"));
     }
 }

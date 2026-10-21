@@ -2,8 +2,9 @@ package td.tower.splash;
 
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.term.TermNumbers;
+import td.term.TermText;
 import td.tower.targeting.HighestHealthSelector;
-import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
 import java.util.Optional;
@@ -41,7 +42,9 @@ public final class DoomHex implements Hex {
     }
 
     @Override
-    public String describe() {
-        return "Hex of Doom: when it ends, the enemy takes " + PerkText.percent(HexSpec.DOOM_SHARE) + " of all it took meanwhile";
+    public TermText describe() {
+        return TermText.of(EffectKind.DOOM, TermText.of("when it ends, the enemy takes " + TermNumbers.percent(HexSpec.DOOM_SHARE)
+                + " of all the damage it took while it lasted; it lasts " + TermNumbers.seconds(SECONDS) + ", plus "
+                + TermNumbers.seconds(SECONDS_PER_SATURATION_STACK) + " per stack of ").plus(EffectKind.SATURATED));
     }
 }

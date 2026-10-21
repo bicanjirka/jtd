@@ -2,6 +2,8 @@ package td.tower.splash;
 
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.term.TermText;
+import td.tower.TowerTerm;
 import td.tower.targeting.LowestHealthSelector;
 
 import java.util.List;
@@ -41,7 +43,8 @@ public final class ContagionHex implements Hex {
     }
 
     @Override
-    public String describe() {
-        return "Hex of Contagion: when the enemy dies, its hexes and debuffs jump to the " + TARGETS + " nearest unhexed enemies";
+    public TermText describe() {
+        return TermText.of(EffectKind.CONTAGION, TermText.of("when the enemy dies, its hexes and debuffs jump to the " + TARGETS
+                + " nearest enemies without a ").plus(TowerTerm.HEX));
     }
 }

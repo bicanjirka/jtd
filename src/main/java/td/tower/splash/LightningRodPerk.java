@@ -1,7 +1,9 @@
 package td.tower.splash;
 
+import td.effect.EffectKind;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
+import td.tower.TowerTerm;
 
 /**
  * Lightning Rod: an arc with nowhere to go returns to the primary at full strength, and arcs on a
@@ -19,7 +21,9 @@ public final class LightningRodPerk implements SplashPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("an arc with nowhere to go returns to the primary at full strength, up to " + RETURNS + " times; arcs on a Dazed "
-                + "enemy deal +" + PerkText.percent(STOPPED_CRIT_DAMAGE) + " crit damage");
+        return TermText.of("an ").plus(TowerTerm.ARC)
+                .plus(" with nowhere to go returns to the primary at full strength, up to " + RETURNS + " times; an ")
+                .plus(TowerTerm.ARC).plus(" on an enemy with ").plus(EffectKind.DAZED)
+                .plus(" deals " + TermNumbers.signedPercent(STOPPED_CRIT_DAMAGE) + " crit damage");
     }
 }

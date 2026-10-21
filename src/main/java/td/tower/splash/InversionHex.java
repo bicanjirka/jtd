@@ -2,6 +2,7 @@ package td.tower.splash;
 
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.term.TermText;
 import td.tower.targeting.FurthestAlongPathSelector;
 
 import java.util.Optional;
@@ -30,8 +31,7 @@ public final class InversionHex implements Hex {
     }
 
     @Override
-    public String describe() {
-        return "Hex of Inversion: heals and shields the enemy receives are dealt to it as magic damage instead, and it can't "
-                + "turn invisible";
+    public TermText describe() {
+        return TermText.of(EffectKind.INVERSION);
     }
 }

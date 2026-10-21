@@ -28,8 +28,8 @@ class HexTurnTest {
         }
 
         @Override
-        public String describe() {
-            return "Stub hex";
+        public td.term.TermText describe() {
+            return td.term.TermText.of("Stub hex");
         }
     }
 

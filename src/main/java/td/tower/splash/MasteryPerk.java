@@ -1,8 +1,9 @@
 package td.tower.splash;
 
+import td.effect.EffectKind;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
-import td.util.TickRate;
+import td.tower.TowerTerm;
 
 /**
  * Mastery: strengthens the chain's levels II and III. On Arc, arcs crit more and Daze longer; on
@@ -26,8 +27,12 @@ public final class MasteryPerk implements SplashPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("Stormcaller: arcs +" + PerkText.percent(ARC_CRIT_BONUS) + " crit, Overload's Daze lasts "
-                + PerkText.seconds(Math.round(ArcSpec.LONG_DAZE_SECONDS * TickRate.TICKS_PER_SECOND)) + "; Hexer: Blight poisons "
-                + PerkText.percent(BLIGHT_SHARE / HexSpec.BLIGHT_SHARE - 1f) + " harder, and a hexed enemy that dies leaves a cursed cloud");
+        return TermText.of("Stormcaller: each ").plus(TowerTerm.ARC)
+                .plus(" gets " + TermNumbers.signedPercent(ARC_CRIT_BONUS) + " crit chance, and Overload's ")
+                .plus(EffectKind.DAZED).plus(" lasts " + TermNumbers.seconds(ArcSpec.LONG_DAZE_SECONDS) + "; Hexer: ")
+                .plus(EffectKind.BLIGHT)
+                .plus(" deals " + TermNumbers.percent(BLIGHT_SHARE / HexSpec.BLIGHT_SHARE - 1f)
+                        + " more, and an enemy that dies carrying this tower's ")
+                .plus(TowerTerm.HEX).plus(" leaves a cursed cloud");
     }
 }
