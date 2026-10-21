@@ -89,6 +89,22 @@ class TooltipLayerTest {
     }
 
     @Test
+    void aChainedTooltipIsDrawnOverTheOneItCameFrom() throws BadLocationException {
+        SheetPane pane = this.paneWithOneIcon();
+        move(pane, firstIconCentre(pane));
+        this.tooltips.openPending();
+        TooltipPanel first = (TooltipPanel) this.popups().getFirst();
+        SheetPane inner = first.pane();
+        inner.setSize(inner.getWidth(), inner.getPreferredSize().height);
+
+        move(inner, hoverablePoint(inner));
+        this.tooltips.openPending();
+
+        Component chained = this.popups().stream().filter(popup -> popup != first).findFirst().orElseThrow();
+        assertThat(this.layer.getPosition(chained)).isLessThan(this.layer.getPosition(first));
+    }
+
+    @Test
     void thePointerComingBackToATooltipClosesTheOneItChained() throws BadLocationException {
         SheetPane pane = this.paneWithOneIcon();
         move(pane, firstIconCentre(pane));
