@@ -18,8 +18,7 @@ final class YetiEnemy {
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
                 .startingAt(EnemyDefinition.of("yeti", "Yeti", 220, 6, 1.1f, BodyArchetype.YETI)
-                        .withDescription("Immune to freeze, and chills half as long. Its thick fur blunts some of "
-                                + "every hit. Dazed still stops it.")
+                        .withDescription("Thick fur against cold and blows alike.")
                         .withArmor(15f)
                         .withMagicResist(15f)
                         .withIdentifiedTraits(List.of(
@@ -27,20 +26,12 @@ final class YetiEnemy {
                                 IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.5f)))))
                 .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(440, 11))
                 .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(880, 16)
-                        .withDescription("Immune to freeze, and chills only a quarter as long. Its thick fur blunts "
-                                + "some of every hit. Dazed still stops it.")
                         .withAdditionalTraits(List.of(
                                 IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.75f)))))
                 .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(1760, 31)
-                        .withDescription("Immune to freeze, and chills only a quarter as long. Its thick fur blunts "
-                                + "some of every hit, and once badly hurt it hunkers down and heals. Dazed still "
-                                + "stops it.")
                         .withStats(20f, 20f, 2f, 2f, 20f, 5f, 15f)
                         .withAdditionalAbilities(List.of(hunker(6f))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(3520, 56)
-                        .withDescription("Immune to freeze, and chills only a quarter as long. Its thick fur blunts "
-                                + "some of every hit and crits glance off its hide; once badly hurt it hunkers down "
-                                + "and heals. Dazed still stops it.")
                         .withStats(25f, 25f, 3f, 3f, 50f, 5f, 25f)
                         .withAdditionalAbilities(List.of(hunker(12f))))
                 .build());

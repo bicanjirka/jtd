@@ -18,15 +18,13 @@ final class SalamanderEnemy {
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
                 .startingAt(EnemyDefinition.of("salamander", "Salamander", 180, 5, 1.28f, BodyArchetype.SALAMANDER)
-                        .withDescription("Immune to burn, and slowly regrows what it loses. Soulfire still burns it.")
+                        .withDescription("A fire-proof walker that slowly regrows what it loses.")
                         .withIdentifiedTraits(List.of(
                                 IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
                                 regrowth(1f))))
                 .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(342, 9))
                 .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(650, 13).withAdditionalTraits(List.of(regrowth(2f))))
                 .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(1235, 25)
-                        .withDescription("Immune to burn, regrows what it loses, its hide turns some magic, and once "
-                                + "badly hurt it sheds its wounds in a burst of healing. Soulfire still burns it.")
                         .withStats(10f, 25f, 0f, 0f, 10f, 10f, 15f)
                         .withAdditionalTraits(List.of(regrowth(4f)))
                         .withAdditionalAbilities(List.of(shed(4f))))

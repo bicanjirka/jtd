@@ -15,16 +15,11 @@ final class SimpleEnemy {
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
                 .startingAt(EnemyDefinition.of("c", "Simple mob", 100, 3, 1.28f, BodyArchetype.CIRCLE)
-                        .withDescription("No special abilities."), RankGrowth.of(2f, 3))
+                        .withDescription("The plain foot soldier of every wave."), RankGrowth.of(2f, 3))
                 .thenAt(Rank.ELITE, e -> e
-                        .withDescription("No special abilities, but a layer of armor has formed, "
-                                + "hardened against whichever damage type has hit hardest this level.")
                         .withStats(10f, 10f, 0f, 0f, 10f, 5f, 10f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(67f)))))
                 .thenAt(Rank.BOSS, e -> e
-                        .withDescription("No special abilities, but twice an elite's bulk under the same armor, hardened "
-                                + "against whichever damage type has hit hardest this level, and steady enough to "
-                                + "blunt crits.")
                         .withStats(15f, 15f, 0f, 0f, 30f, 5f, 20f))
                 .build());
     }

@@ -18,8 +18,7 @@ final class ShieldbearerEnemy {
         catalog.register(RankedEnemy
                 .startingAt(EnemyDefinition.of("shieldbearer", "Shieldbearer", 140, 6, 1.0f, BodyArchetype.SHIELDBEARER)
                         // "other" is load-bearing: a radius target excludes the caster.
-                        .withDescription("Periodically shields every other ally near it against physical damage, and "
-                                + "its own armor blunts physical hits. Magic goes straight through.")
+                        .withDescription("Guards the enemies around it; break it first.")
                         .withArmor(30f)
                         .withIdentifiedAbilities(List.of(shield(40f, 100f))))
                 .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(252, 11)
@@ -28,15 +27,9 @@ final class ShieldbearerEnemy {
                         .withSpirit(10f)
                         .withAdditionalAbilities(List.of(shield(160f, 100f))))
                 .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(816, 31)
-                        .withDescription("Periodically shields every ally near it against physical damage, itself "
-                                + "included, and its own armor and shield blunt physical hits. Magic goes straight "
-                                + "through.")
                         .withStats(40f, 10f, 2f, 0f, 20f, 5f, 20f)
                         .withAdditionalAbilities(List.of(shield(320f, 100f), selfShield(320f))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1470, 56)
-                        .withDescription("Periodically shields every ally in a wide reach against physical damage, "
-                                + "itself included, and its own armor and shield blunt physical hits. Magic goes "
-                                + "straight through.")
                         .withStats(50f, 15f, 4f, 0f, 30f, 5f, 30f)
                         .withAdditionalAbilities(List.of(shield(640f, 130f), selfShield(640f))))
                 .build());

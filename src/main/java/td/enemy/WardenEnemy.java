@@ -21,15 +21,13 @@ final class WardenEnemy {
         // Protection, not health, is what makes a hatch likely: the first egg shrugs off all but the
         // heaviest hits and each later one gives something up, until the last can simply be shot.
         catalog.register(egg("wardenEgg3", "Warden's Final Egg",
-                "Must be defeated to end the encounter - it will not hatch again. Its shell is cracked: "
-                        + "only light armor and plating are left.",
+                "The last egg: destroy it to end the encounter.",
                 new Shell(25f, 1f, 0f), List.of()));
         // High enough that an un-upgraded weak tower does nothing; later stages weaken it.
         catalog.register(warden("warden3", "The Exhausted Warden", 6800, "hulking armored sentinel, barely standing",
                 new Shell(5f, 2.5f, 0f), "wardenEgg3"));
         catalog.register(egg("wardenEgg2", "Warden's Egg",
-                "Hatches into a weaker Warden if not defeated in time. Immune to burn and freeze, "
-                        + "and its armor and plating blunt every hit, though less than the first egg's.",
+                "Hatches into a weaker Warden if not destroyed in time.",
                 new Shell(100f, 4f, 0f),
                 List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE))))
@@ -37,9 +35,7 @@ final class WardenEnemy {
         catalog.register(warden("warden2", "The Weakened Warden", 11000,
                 "hulking armored sentinel, worn down from its last hatching", new Shell(10f, 5f, 0f), "wardenEgg2"));
         catalog.register(egg("wardenEgg1", "Warden's Egg",
-                "Hatches into a weaker Warden if not defeated in time. Almost immune: it ignores critical "
-                        + "hits, burn, freeze and chill, its armor stops most of every hit, and its plating blunts what "
-                        + "is left.",
+                "Hatches into a weaker Warden if not destroyed in time.",
                 new Shell(400f, 12f, 100f),
                 List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
@@ -90,10 +86,7 @@ final class WardenEnemy {
         abilities.add(IdentifiedAbility.anonymous(new Ability(AbilityTerm.LAY_EGG, new OnDeathTrigger(),
                 new SpawnEnemiesAction(eggId, 1, false))));
         return EnemyDefinition.of(id, name, health, 100, 0.8f, BodyArchetype.WARDEN)
-                .withDescription("A " + lead + ". Periodically calls a reinforcement and shields itself against magic; "
-                        + "shields every nearby ally once below half health; heals itself if left unattacked "
-                        + "too long; gains a shield whenever it survives a critical hit; and leaves behind an egg on death. "
-                        + "If it escapes, the level is lost.")
+                .withDescription("A " + lead + ".")
                 .withLivesOnLeak(EnemyDefinition.ALL_LIVES)
                 .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
                 .withStats(shell.resist(), shell.resist(), shell.plating(), 0f, shell.resilience(), 0f, 0f)

@@ -18,25 +18,18 @@ final class SkirmisherEnemy {
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
                 .startingAt(EnemyDefinition.of("skirmisher", "Skirmisher", 120, 4, 1.6f, BodyArchetype.SKIRMISHER)
-                        .withDescription("Nimble: it dodges some aimed shots, and crits land softer on it. Area damage, "
-                                + "freezes and accurate towers catch it.")
+                        .withDescription("Nimble and hard to pin down with aimed shots.")
                         .withResilience(20f)
                         .withAgility(40f))
                 .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(216, 7)
-                        .withDescription("Nimble, crits land softer on it, and it sprints off for a moment after every "
-                                + "shot it dodges.")
                         .withAgility(50f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.SIDESTEP, new OnDodgeTrigger(),
                                 new ApplyEffectAction(new SprintTemplate(30), new SelfTarget()))))))
                 .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(389, 10).withAgility(60f))
                 .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(700, 19)
-                        .withDescription("Nimble, crits land softer on it, it sprints off after every dodge, and the "
-                                + "more it is hurt the harder it is to hit.")
                         .withStats(10f, 10f, 0f, 0f, 20f, 60f, 10f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("evasive", new HurtAgilityTrait(60f)))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1260, 34)
-                        .withDescription("Nimble, crits land softer on it, the more it is hurt the harder it is to hit, "
-                                + "and after every dodge it sprints off and vanishes for a moment.")
                         .withStats(15f, 15f, 0f, 0f, 30f, 80f, 20f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("evasive", new HurtAgilityTrait(80f))))
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.VANISH, new OnDodgeTrigger(),
