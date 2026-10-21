@@ -190,6 +190,56 @@ public enum Palette {
     TRAIT_MARKER_OVERFLOW,
     /** An enemy's disruption ring and the marker on a tower it weakens. */
     DISRUPTION,
+    /** The frame of a Control effect. */
+    TERM_FRAME_CONTROL,
+    /** The frame of an Affliction effect. */
+    TERM_FRAME_AFFLICTION,
+    /** The frame of a Weakness effect. */
+    TERM_FRAME_WEAKNESS,
+    /** The frame of a Hex. */
+    TERM_FRAME_HEX,
+    /** The frame of a Mark effect. */
+    TERM_FRAME_MARK,
+    /** The frame of an effect that helps an enemy. */
+    TERM_FRAME_BOON,
+    /** The frame of an enemy trait. */
+    TERM_FRAME_TRAIT,
+    /** The frame of an enemy ability. */
+    TERM_FRAME_ABILITY,
+    /** The frame of a tower buff. */
+    TERM_FRAME_TOWER_BUFF,
+    /** The frame of a tower debuff. */
+    TERM_FRAME_TOWER_DEBUFF,
+    /** The frame of a named tower mechanic. */
+    TERM_FRAME_MECHANIC,
+    /** The slash across an immunity. */
+    TERM_IMMUNE,
+    /** The tone of an ability that calls enemies. */
+    TERM_SPAWN,
+    /** Frenzy's tone. */
+    TERM_FRENZY,
+    /** Haste's tone. */
+    TERM_HASTE,
+    /** Patience's tone. */
+    TERM_PATIENCE,
+    /** Deadeye Round's tone. */
+    TERM_DEADEYE,
+    /** Tar Shell's tone. */
+    TERM_TAR_SHELL,
+    /** Nuke Shell's tone. */
+    TERM_NUKE_SHELL,
+    /** Event Horizon's tone. */
+    TERM_EVENT_HORIZON,
+    /** Aura's and Kinship's tone. */
+    TERM_AURA,
+    /** Ley Line's tone. */
+    TERM_LEY_LINE,
+    /** Interference's tone. */
+    TERM_INTERFERENCE,
+    /** Shrapnel's and Bomblet's tone. */
+    TERM_SHRAPNEL,
+    /** The tone of the Range and Attune lines. */
+    TERM_BASE_PERK,
     /** The ring around the enemy the player is inspecting. */
     SELECTION,
     /** Info-panel tones: a damage type, and an upgrade gate met or not. */
