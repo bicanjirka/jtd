@@ -12,7 +12,7 @@ public final class PhasedArrayPerk implements SonarPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("stops spinning and holds the beam on the enemy with most health, hitting everything on it "
+        return TermText.of("stops spinning and holds the beam on the enemy with the most health, hitting everything on it "
                 + PhasedBeam.HITS_PER_REVOLUTION + " times a revolution");
     }
 }

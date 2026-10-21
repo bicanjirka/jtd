@@ -35,6 +35,6 @@ public final class MarkOnSweepPerk implements SonarPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("marks every enemy the beam hits: the next hit on it from any tower is a guaranteed crit");
+        return TermText.of("every enemy the beam hits gains ").plus(EffectKind.MARKED);
     }
 }
