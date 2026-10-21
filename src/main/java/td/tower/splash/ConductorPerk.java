@@ -1,6 +1,7 @@
 package td.tower.splash;
 
 import td.term.TermText;
+import td.tower.TowerTerm;
 
 /** Conductor: arcs can crit, and jump once more. */
 public final class ConductorPerk implements SplashPerk {
@@ -14,6 +15,6 @@ public final class ConductorPerk implements SplashPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("arcs can crit, +" + MORE_JUMPS + " jump");
+        return TermText.of("an ").plus(TowerTerm.ARC).plus(" can crit, and makes " + MORE_JUMPS + " more jump");
     }
 }

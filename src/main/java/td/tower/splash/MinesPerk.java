@@ -1,7 +1,8 @@
 package td.tower.splash;
 
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
+import td.util.TickRate;
 
 /** Range III's Mines: every fourth blast leaves a mine for ten seconds, up to three at a time. */
 public final class MinesPerk implements SplashPerk {
@@ -18,7 +19,8 @@ public final class MinesPerk implements SplashPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("Mines: every " + PerkText.ordinal(EVERY) + " blast leaves a mine on the path for " + PerkText.seconds(LIFETIME_TICKS)
-                + ", up to " + MAX + ", that the next enemy to step on it sets off as one blast");
+        return TermText.of("every " + TermNumbers.ordinal(EVERY) + " blast leaves a mine on the path for "
+                + TermNumbers.seconds(LIFETIME_TICKS / (float) TickRate.TICKS_PER_SECOND) + ", up to " + MAX
+                + " at once, that the next enemy to step on it sets off as one blast");
     }
 }

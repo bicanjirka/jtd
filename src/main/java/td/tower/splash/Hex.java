@@ -2,6 +2,7 @@ package td.tower.splash;
 
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.term.TermText;
 import td.util.TickRate;
 
 import java.util.Optional;
@@ -20,8 +21,8 @@ public interface Hex {
 
     void cast(EnemyMob target, HexSpec spec, HexActions actions);
 
-    /** Its name and what it does: {@code "Hex of Blight: poisons for the hex's length"}. */
-    String describe();
+    /** Its mention, with what it does on this tower. */
+    TermText describe();
 
     /** How many ticks this hex lasts on {@code target}; a hex lasts {@link HexSpec#HEX_SECONDS} unless it says otherwise. */
     default int ticksOn(EnemyMob target) {

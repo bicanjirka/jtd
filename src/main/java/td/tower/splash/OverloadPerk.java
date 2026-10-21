@@ -2,9 +2,9 @@ package td.tower.splash;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
-import td.util.TickRate;
+import td.tower.TowerTerm;
 
 import java.util.Set;
 
@@ -26,7 +26,9 @@ public final class OverloadPerk implements SplashPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("an arc crit Dazes its target " + PerkText.seconds(Math.round(DAZE_SECONDS * TickRate.TICKS_PER_SECOND))
-                + "; arcs into a fully Saturated enemy +" + PerkText.percent(SATURATED_CRIT_BONUS) + " crit");
+        return TermText.of("an ").plus(TowerTerm.ARC).plus(" that crits applies ").plus(EffectKind.DAZED)
+                .plus(" for " + TermNumbers.seconds(DAZE_SECONDS) + "; an ").plus(TowerTerm.ARC)
+                .plus(" into an enemy at full ").plus(EffectKind.SATURATED)
+                .plus(" gets " + TermNumbers.signedPercent(SATURATED_CRIT_BONUS) + " crit chance");
     }
 }

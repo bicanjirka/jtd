@@ -1,7 +1,8 @@
 package td.tower.splash;
 
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
+import td.tower.TowerTerm;
 
 /** Chain Lightning: at least six jumps at the blast's full damage, and the third jump forks. */
 public final class ChainLightningPerk implements SplashPerk {
@@ -15,6 +16,7 @@ public final class ChainLightningPerk implements SplashPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("up to " + JUMPS + " jumps at the blast's full damage; the " + PerkText.ordinal(ArcPlanner.FORK_JUMP) + " jump forks");
+        return TermText.of("an ").plus(TowerTerm.ARC).plus(" makes up to " + JUMPS
+                + " jumps at the blast's full damage; the " + TermNumbers.ordinal(ArcPlanner.FORK_JUMP) + " jump forks");
     }
 }

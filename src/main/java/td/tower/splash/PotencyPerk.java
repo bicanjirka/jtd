@@ -1,7 +1,9 @@
 package td.tower.splash;
 
+import td.effect.EffectKind;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
+import td.tower.TowerTerm;
 
 /**
  * Potency: strengthens the chain's level I. On Arc, one more jump and arcs at 65% of the blast; on
@@ -26,7 +28,8 @@ public final class PotencyPerk implements SplashPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("Stormcaller: +" + MORE_JUMPS + " jump, arcs deal " + PerkText.percent(ARC_SHARE) + "; Hexer: Doom pays out "
-                + PerkText.percent(DOOM_SHARE));
+        return TermText.of("Stormcaller: " + MORE_JUMPS + " more ").plus(TowerTerm.ARC)
+                .plus(" jump, each at " + TermNumbers.percent(ARC_SHARE) + "; Hexer: ").plus(EffectKind.DOOM)
+                .plus(" pays out " + TermNumbers.percent(DOOM_SHARE));
     }
 }

@@ -24,7 +24,7 @@ public final class FireControlPerk implements SplashPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("Fire Control: aims at the enemy with most neighbours in the blast, and every blast that catches an enemy "
-                + "Saturates it");
+        return TermText.of("aims at the enemy with the most neighbours in the blast, and each blast that catches an enemy applies ")
+                .plus(EffectKind.SATURATED).plus(" to it");
     }
 }
