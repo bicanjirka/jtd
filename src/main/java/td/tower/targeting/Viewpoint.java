@@ -1,7 +1,7 @@
 package td.tower.targeting;
 
 /**
- * Where a tower looks from, for the perks that shape whom it may hit.
+ * Where a tower looks from, for the mechanics that shape whom it may hit.
  *
  * @param x        its centre, in pixels
  * @param y        its centre, in pixels

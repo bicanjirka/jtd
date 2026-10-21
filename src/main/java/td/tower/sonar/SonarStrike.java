@@ -5,7 +5,7 @@ import td.damage.DamageType;
 
 
 /**
- * One beam hit as it will land, before it does: the base hit reshaped by each perk the Sonar
+ * One beam hit as it will land, before it does: the base hit reshaped by each mechanic the Sonar
  * owns. Each {@code withX} is a copy.
  *
  * @param type         what kind of damage it deals

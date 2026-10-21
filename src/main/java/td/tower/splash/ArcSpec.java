@@ -2,7 +2,7 @@ package td.tower.splash;
 
 /**
  * How the Stormcaller's arcs run past the blast. Each {@code withX} is a copy, and every change
- * holds whatever order the perks were bought in: jumps add up, the share and the bonuses only grow.
+ * holds whatever order the mechanics were bought in: jumps add up, the share and the bonuses only grow.
  *
  * @param active             whether the blast arcs at all
  * @param extraJumps         jumps on top of the base two

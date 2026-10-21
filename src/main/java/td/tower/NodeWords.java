@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * What one upgrade node says to the player: its name, its value rows, its sentences (its data's and its
- * perks'), and, once bought, the nodes it was chosen over.
+ * mechanics'), and, once bought, the nodes it was chosen over.
  */
 public record NodeWords(String name, List<UpgradeBonus> stats, List<TermText> sentences, List<String> chosenOver) {
 

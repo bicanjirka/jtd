@@ -6,25 +6,25 @@ import td.stat.StatModifier;
 import td.stat.StatModifiers;
 import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.aura.ApprenticePerk;
-import td.tower.aura.AuraPerk;
+import td.tower.aura.ApprenticeMechanic;
+import td.tower.aura.AuraMechanic;
 import td.tower.aura.AuraSpec;
-import td.tower.aura.ChosenPerk;
-import td.tower.aura.FarKinshipPerk;
-import td.tower.aura.KinshipPerk;
-import td.tower.aura.KinshipStrengthPerk;
-import td.tower.aura.RallyPerk;
+import td.tower.aura.ChosenMechanic;
+import td.tower.aura.FarKinshipMechanic;
+import td.tower.aura.KinshipMechanic;
+import td.tower.aura.KinshipStrengthMechanic;
+import td.tower.aura.RallyMechanic;
 import td.tower.aura.RallyRule;
-import td.tower.aura.SharedLessonsPerk;
-import td.tower.aura.TutelagePerk;
+import td.tower.aura.SharedLessonsMechanic;
+import td.tower.aura.TutelageMechanic;
 import td.tower.mortar.PathLine;
 import td.tower.targeting.InRangeTargetQuery;
-import td.tower.upgrade.BaseSlotPerks;
+import td.tower.upgrade.BaseSlotMechanics;
 import td.tower.upgrade.BuffedTowersCondition;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.NeighbourOfTypeCondition;
-import td.tower.upgrade.OwnedPerks;
-import td.tower.upgrade.PerkCatalogue;
+import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
@@ -97,26 +97,26 @@ public final class AuraTower extends AbstractTower {
     private static final UpgradeNode CHOSEN = UpgradeTier.SPECIAL.node("aura.special.chosen", "Chosen", PRICE);
     private static final UpgradeNode RALLY = UpgradeTier.SPECIAL.node("aura.special.rally", "Rally", PRICE);
 
-    private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none();
+    private static final BaseSlotMechanics BASE_MECHANICS = BaseSlotMechanics.none();
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS))
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS))
             .with(AMPLIFYING_CORE_1, AMPLIFYING_CORE_2, KEEN_EDGE, BROADCAST_1, BROADCAST_2, CONDUIT, TUTELAGE_1, SHARED_LESSONS, APPRENTICE,
                     WITHERING_FIELD, CHOSEN, RALLY)
             .withChoice(ExclusiveChoice.oneOf(AMPLIFYING_CORE_1, BROADCAST_1))
             .withChoice(ExclusiveChoice.oneOf(WITHERING_FIELD, CHOSEN, RALLY));
 
-    private static final PerkCatalogue<AuraPerk> PERKS = PerkCatalogue.<AuraPerk>empty()
-            .with(StandardBaseSlot.ATTUNE_ID, KinshipPerk::new)
-            .with(BROADCAST_1.id(), FarKinshipPerk::new)
-            .with(AMPLIFYING_CORE_1.id(), KinshipStrengthPerk::new)
-            .with(TUTELAGE_1.id(), TutelagePerk::new)
-            .with(SHARED_LESSONS.id(), SharedLessonsPerk::new)
-            .with(APPRENTICE.id(), ApprenticePerk::new)
-            .with(CHOSEN.id(), ChosenPerk::new)
-            .with(RALLY.id(), RallyPerk::new);
+    private static final MechanicCatalogue<AuraMechanic> MECHANICS = MechanicCatalogue.<AuraMechanic>empty()
+            .with(StandardBaseSlot.ATTUNE_ID, KinshipMechanic::new)
+            .with(BROADCAST_1.id(), FarKinshipMechanic::new)
+            .with(AMPLIFYING_CORE_1.id(), KinshipStrengthMechanic::new)
+            .with(TUTELAGE_1.id(), TutelageMechanic::new)
+            .with(SHARED_LESSONS.id(), SharedLessonsMechanic::new)
+            .with(APPRENTICE.id(), ApprenticeMechanic::new)
+            .with(CHOSEN.id(), ChosenMechanic::new)
+            .with(RALLY.id(), RallyMechanic::new);
 
-    private final OwnedPerks<AuraPerk> perks = new OwnedPerks<>(PERKS);
-    // Both threads ask for the spec; the fold is cached per perk list, which a purchase replaces whole.
+    private final OwnedMechanics<AuraMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
+    // Both threads ask for the spec; the fold is cached per mechanic list, which a purchase replaces whole.
     private volatile FoldedSpec folded = new FoldedSpec(List.of(), AuraSpec.none());
     private Tower lastChosen;
     private int rallyReadyAt;
@@ -133,8 +133,8 @@ public final class AuraTower extends AbstractTower {
     }
 
     @Override
-    protected PerkCatalogue<AuraPerk> perkCatalogue() {
-        return PERKS;
+    protected MechanicCatalogue<AuraMechanic> mechanicCatalogue() {
+        return MECHANICS;
     }
 
     @Override
@@ -144,19 +144,19 @@ public final class AuraTower extends AbstractTower {
 
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
-        this.perks.add(node);
+        this.mechanics.add(node);
     }
 
-    /** What the owned perks make this aura do, folded once per set of perks. */
+    /** What the owned mechanics make this aura do, folded once per set of mechanics. */
     private AuraSpec spec() {
-        List<AuraPerk> owned = this.perks.all();
+        List<AuraMechanic> owned = this.mechanics.all();
         FoldedSpec last = this.folded;
-        if (last.perks() == owned) {
+        if (last.mechanics() == owned) {
             return last.spec();
         }
         AuraSpec spec = AuraSpec.none();
-        for (AuraPerk perk : owned) {
-            spec = perk.refineSpec(spec);
+        for (AuraMechanic mechanic : owned) {
+            spec = mechanic.refineSpec(spec);
         }
         this.folded = new FoldedSpec(owned, spec);
         return spec;
@@ -385,6 +385,6 @@ public final class AuraTower extends AbstractTower {
         return visitor.visitAuraTower(this);
     }
 
-    private record FoldedSpec(List<AuraPerk> perks, AuraSpec spec) {
+    private record FoldedSpec(List<AuraMechanic> mechanics, AuraSpec spec) {
     }
 }

@@ -1,0 +1,34 @@
+package td.tower.sonar;
+
+import td.effect.EffectKind;
+import td.term.Term;
+import td.term.TermNumbers;
+import td.term.TermText;
+import td.util.TickRate;
+
+import java.util.Set;
+
+/** Deep Scan: every revolution reveals the invisible enemies in the outer quarter of the range. */
+public final class DeepScanMechanic implements SonarMechanic {
+
+    private static final float OUTER_QUARTER_FROM = 0.75f;
+    private static final float REVEAL_SECONDS = 1f;
+
+    @Override
+    public void onRevolution(Revolution revolution, SonarActions actions) {
+        actions.revealHiddenBeyond(OUTER_QUARTER_FROM, Math.round(REVEAL_SECONDS * TickRate.TICKS_PER_SECOND));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.REVEALED);
+    }
+
+    @Override
+    public TermText describe() {
+        return TermText.of("each revolution applies ").plus(EffectKind.REVEALED).plus(" to enemies with ")
+                .plus(EffectKind.INVISIBLE)
+                .plus(" in the outer " + TermNumbers.percent(1f - OUTER_QUARTER_FROM) + " of its range, for "
+                        + TermNumbers.seconds(REVEAL_SECONDS));
+    }
+}

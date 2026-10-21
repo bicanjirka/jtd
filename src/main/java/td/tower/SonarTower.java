@@ -16,41 +16,41 @@ import td.tower.proc.Proc;
 import td.tower.proc.ProcCondition;
 import td.tower.proc.ProcPayload;
 import td.tower.sonar.BeamSpec;
-import td.tower.sonar.CommandPingPerk;
-import td.tower.sonar.CritRefreshPerk;
-import td.tower.sonar.DeepScanPerk;
-import td.tower.sonar.FarPingPerk;
-import td.tower.sonar.FaultLinePerk;
-import td.tower.sonar.MarkOnSweepPerk;
-import td.tower.sonar.PhasedArrayPerk;
-import td.tower.sonar.PingPerk;
+import td.tower.sonar.CommandPingMechanic;
+import td.tower.sonar.CritRefreshMechanic;
+import td.tower.sonar.DeepScanMechanic;
+import td.tower.sonar.FarPingMechanic;
+import td.tower.sonar.FaultLineMechanic;
+import td.tower.sonar.MarkOnSweepMechanic;
+import td.tower.sonar.PhasedArrayMechanic;
+import td.tower.sonar.PingMechanic;
 import td.tower.sonar.PingRule;
 import td.tower.sonar.PingTracker;
-import td.tower.sonar.ResonantCrackPerk;
+import td.tower.sonar.ResonantCrackMechanic;
 import td.tower.sonar.Revolution;
 import td.tower.sonar.SonarActions;
 import td.tower.sonar.SonarBeam;
-import td.tower.sonar.SonarPerk;
+import td.tower.sonar.SonarMechanic;
 import td.tower.sonar.SonarSpec;
 import td.tower.sonar.SonarStrike;
 import td.tower.sonar.SpinningBeam;
 import td.tower.sonar.StrikeContext;
 import td.tower.sonar.StrikeResult;
-import td.tower.sonar.TwinBeamPerk;
-import td.tower.sonar.UltrasoundPerk;
-import td.tower.sonar.WideBandPerk;
+import td.tower.sonar.TwinBeamMechanic;
+import td.tower.sonar.UltrasoundMechanic;
+import td.tower.sonar.WideBandMechanic;
 import td.tower.targeting.BeyondRadiusTargetQuery;
 import td.tower.targeting.HighestHealthSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.TargetSelector;
 import td.tower.targeting.Viewpoint;
-import td.tower.upgrade.BaseSlotPerks;
+import td.tower.upgrade.BaseSlotMechanics;
 import td.tower.upgrade.ClusterCondition;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.NodeEffects;
-import td.tower.upgrade.OwnedPerks;
-import td.tower.upgrade.PerkCatalogue;
+import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -71,7 +71,7 @@ import java.util.function.Function;
  * bearing, and each revolution pings the biggest threat. No cooldown: fire rate is rotation speed,
  * and enemies at the same bearing are all hit on the same tick.
  * <p>
- * What each owned node does lives in a {@link SonarPerk}: the tower runs every hit and every
+ * What each owned node does lives in a {@link SonarMechanic}: the tower runs every hit and every
  * revolution through them.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
@@ -90,7 +90,7 @@ public final class SonarTower extends AbstractTower {
     private static final TermText PING_DEED = TermText.format("times {} fired", TowerTerm.PING);
     private static final int PING_DEEDS_NEEDED = 25;
 
-    private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none().withRangeThree(0.1f, NodeEffects.none());
+    private static final BaseSlotMechanics BASE_MECHANICS = BaseSlotMechanics.none().withRangeThree(0.1f, NodeEffects.none());
 
     private static final UpgradeNode RAPID_ARRAY_1 = UpgradeTier.HEAD_1.node("sonar.head.rapid_array.1",
             "Rapid Array", PRICE)
@@ -152,7 +152,7 @@ public final class SonarTower extends AbstractTower {
     private static final UpgradeNode COMMAND_PING = UpgradeTier.SPECIAL.node("sonar.special.command_ping",
             "Command Ping", PRICE);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, SPIN_UP,
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS, SPIN_UP,
             RESONANT_CRACK))
             .with(RAPID_ARRAY_1, RAPID_ARRAY_2, SPIN_UP, TWIN_BEAM, PHASED_ARRAY, LONG_REACH_1, LONG_REACH_2,
                     RESONANT_CRACK, HORIZON, FAULT_LINE, ULTRASOUND, HARMONICS, PURE_TONE, SHATTER_TONE,
@@ -162,24 +162,24 @@ public final class SonarTower extends AbstractTower {
             .withChoice(ExclusiveChoice.oneOf(HORIZON, FAULT_LINE))
             .withChoice(ExclusiveChoice.specials(MARK_ON_SWEEP, WIDE_BAND, COMMAND_PING));
 
-    private static final PerkCatalogue<SonarPerk> PERKS = PerkCatalogue.<SonarPerk>empty()
-            .with(StandardBaseSlot.ATTUNE_ID, PingPerk::new)
-            .with(StandardBaseSlot.RANGE_3_ID, DeepScanPerk::new)
-            .with(RAPID_ARRAY_2.id(), CritRefreshPerk::new)
-            .with(TWIN_BEAM.id(), TwinBeamPerk::new)
-            .with(PHASED_ARRAY.id(), PhasedArrayPerk::new)
-            .with(LONG_REACH_1.id(), FarPingPerk::new)
-            .with(RESONANT_CRACK.id(), ResonantCrackPerk::new)
-            .with(FAULT_LINE.id(), FaultLinePerk::new)
-            .with(ULTRASOUND.id(), UltrasoundPerk::new)
-            .with(MARK_ON_SWEEP.id(), MarkOnSweepPerk::new)
-            .with(WIDE_BAND.id(), WideBandPerk::new)
-            .with(COMMAND_PING.id(), CommandPingPerk::new);
+    private static final MechanicCatalogue<SonarMechanic> MECHANICS = MechanicCatalogue.<SonarMechanic>empty()
+            .with(StandardBaseSlot.ATTUNE_ID, PingMechanic::new)
+            .with(StandardBaseSlot.RANGE_3_ID, DeepScanMechanic::new)
+            .with(RAPID_ARRAY_2.id(), CritRefreshMechanic::new)
+            .with(TWIN_BEAM.id(), TwinBeamMechanic::new)
+            .with(PHASED_ARRAY.id(), PhasedArrayMechanic::new)
+            .with(LONG_REACH_1.id(), FarPingMechanic::new)
+            .with(RESONANT_CRACK.id(), ResonantCrackMechanic::new)
+            .with(FAULT_LINE.id(), FaultLineMechanic::new)
+            .with(ULTRASOUND.id(), UltrasoundMechanic::new)
+            .with(MARK_ON_SWEEP.id(), MarkOnSweepMechanic::new)
+            .with(WIDE_BAND.id(), WideBandMechanic::new)
+            .with(COMMAND_PING.id(), CommandPingMechanic::new);
 
     private static final BeamSpec BASE_BEAM = BeamSpec.spinning(SECONDS_PER_REVOLUTION);
     private static final TargetSelector PHASED_FOCUS = PreferringSelector.priority(new HighestHealthSelector());
 
-    private final OwnedPerks<SonarPerk> perks = new OwnedPerks<>(PERKS);
+    private final OwnedMechanics<SonarMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private final SonarActions actions = new Actions();
     private final PingTracker pings = new PingTracker();
     private final List<SonarHit> recentHits = new ArrayList<>();
@@ -195,8 +195,8 @@ public final class SonarTower extends AbstractTower {
     }
 
     @Override
-    protected PerkCatalogue<SonarPerk> perkCatalogue() {
-        return PERKS;
+    protected MechanicCatalogue<SonarMechanic> mechanicCatalogue() {
+        return MECHANICS;
     }
 
     @Override
@@ -206,15 +206,15 @@ public final class SonarTower extends AbstractTower {
 
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
-        this.perks.add(node);
+        this.mechanics.add(node);
     }
 
-    /** How it scans, as the perks in {@code owned} make it. */
-    private SonarSpec spec(List<SonarPerk> owned) {
+    /** How it scans, as the mechanics in {@code owned} make it. */
+    private SonarSpec spec(List<SonarMechanic> owned) {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
         SonarSpec spec = SonarSpec.from(view, BASE_BEAM);
-        for (SonarPerk perk : owned) {
-            spec = perk.refineSpec(spec);
+        for (SonarMechanic mechanic : owned) {
+            spec = mechanic.refineSpec(spec);
         }
         float deadZone = this.stats().value(TowerStat.DEAD_ZONE);
         if (deadZone > 0f) {
@@ -231,7 +231,7 @@ public final class SonarTower extends AbstractTower {
     }
 
     public void doTick(int gameTime) {
-        List<SonarPerk> owned = this.perks.all();
+        List<SonarMechanic> owned = this.mechanics.all();
         SonarSpec spec = this.spec(owned);
         this.beamSpec = spec.beam();
         this.beam = this.beam.reshaped(spec.beam());
@@ -263,20 +263,20 @@ public final class SonarTower extends AbstractTower {
     }
 
     /**
-     * One beam hit, shaped and reacted to by the perks. The magic Ultrasound adds rides on the hit:
+     * One beam hit, shaped and reacted to by the mechanics. The magic Ultrasound adds rides on the hit:
      * it is as much stronger as the hit's crit made it, and is never a hit of its own, so it never
      * rolls a crit or spends a mark. The hit is aimed at the enemy, so it may dodge it; the beam still
-     * saw a dodging enemy, so it still counts for the ping and the perks still hear of it.
+     * saw a dodging enemy, so it still counts for the ping and the mechanics still hear of it.
      */
-    private void strike(EnemyMob enemy, float share, SonarSpec spec, List<SonarPerk> owned, int gameTime) {
+    private void strike(EnemyMob enemy, float share, SonarSpec spec, List<SonarMechanic> owned, int gameTime) {
         StrikeContext context = new StrikeContext(enemy, this.rangeShareOf(enemy));
         HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.BEAM, context.rangeShare(), this.stats());
         SonarStrike strike = SonarStrike.of(adjustment.applyTo(this.stats().attack()), share);
         if (this.stats().has(TowerCapability.MAGIC_DAMAGE)) {
             strike = strike.withType(DamageType.MAGIC);
         }
-        for (SonarPerk perk : owned) {
-            strike = perk.shape(strike, context);
+        for (SonarMechanic mechanic : owned) {
+            strike = mechanic.shape(strike, context);
         }
         float amount = this.damageCurrent() * strike.damageFactor() * adjustment.damageFactor();
         HitResult hit = this.landHit(enemy, Damage.of(strike.type(), Math.round(amount)), strike.attack().asAimed());
@@ -287,8 +287,8 @@ public final class SonarTower extends AbstractTower {
         }
         this.pings.pass(enemy);
         StrikeResult result = new StrikeResult(enemy, critical, hit.dodged(), spec);
-        for (SonarPerk perk : owned) {
-            perk.react(result, this.actions);
+        for (SonarMechanic mechanic : owned) {
+            mechanic.react(result, this.actions);
         }
         if (hit.dodged()) {
             this.reportDodge(enemy, HitKind.BEAM);
@@ -303,8 +303,8 @@ public final class SonarTower extends AbstractTower {
         return (float) Math.min(1.0, distance / this.rangeReal());
     }
 
-    /** The ping Exposes the healthiest enemies passed, which is the Sonar's deed, then the perks react. */
-    private void completeRevolution(SonarSpec spec, List<SonarPerk> owned, int gameTime) {
+    /** The ping Exposes the healthiest enemies passed, which is the Sonar's deed, then the mechanics react. */
+    private void completeRevolution(SonarSpec spec, List<SonarMechanic> owned, int gameTime) {
         List<EnemyMob> pinged = this.pings.pick(this.ping(spec), spec.view());
         this.pinged = pinged;
         this.lastRevolutionAt = gameTime;
@@ -315,8 +315,8 @@ public final class SonarTower extends AbstractTower {
             this.countDeedOfAttack();
         }
         Revolution revolution = new Revolution(pinged, spec);
-        for (SonarPerk perk : owned) {
-            perk.onRevolution(revolution, this.actions);
+        for (SonarMechanic mechanic : owned) {
+            mechanic.onRevolution(revolution, this.actions);
         }
     }
 
@@ -359,20 +359,20 @@ public final class SonarTower extends AbstractTower {
 
     @Override
     protected Optional<TowerStatLine> cadence() {
-        float seconds = this.spec(this.perks.all()).beam().secondsPerRevolution();
+        float seconds = this.spec(this.mechanics.all()).beam().secondsPerRevolution();
         return Optional.of(new TowerStatLine(TowerStatRow.ROTATION, SECONDS_PER_REVOLUTION, seconds));
     }
 
     @Override
     protected String targetingLabel() {
-        return this.spec(this.perks.all()).beam().phased() ? "most health" : "all it sweeps";
+        return this.spec(this.mechanics.all()).beam().phased() ? "most health" : "all it sweeps";
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitSonarTower(this);
     }
 
-    /** What the perks may make this tower do. */
+    /** What the mechanics may make this tower do. */
     private final class Actions implements SonarActions {
 
         @Override

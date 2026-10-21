@@ -6,7 +6,7 @@ import td.damage.DamageType;
 import java.util.function.UnaryOperator;
 
 /**
- * One shot as it will land, before it does: the base shot reshaped by each perk the Sniper owns.
+ * One shot as it will land, before it does: the base shot reshaped by each mechanic the Sniper owns.
  * Each {@code withX} is a copy.
  *
  * @param type          what kind of damage it deals

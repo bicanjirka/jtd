@@ -10,25 +10,25 @@ import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
 import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.cinder.BellowsPerk;
-import td.tower.cinder.CauterizePerk;
-import td.tower.cinder.CinderPerk;
+import td.tower.cinder.BellowsMechanic;
+import td.tower.cinder.CauterizeMechanic;
+import td.tower.cinder.CinderMechanic;
 import td.tower.cinder.CinderSpec;
-import td.tower.cinder.CombustionPerk;
-import td.tower.cinder.DragonsBreathPerk;
-import td.tower.cinder.EverburnPerk;
+import td.tower.cinder.CombustionMechanic;
+import td.tower.cinder.DragonsBreathMechanic;
+import td.tower.cinder.EverburnMechanic;
 import td.tower.cinder.FlameLook;
-import td.tower.cinder.FlashpointPerk;
-import td.tower.cinder.HeatPerk;
-import td.tower.cinder.InfernoRingPerk;
-import td.tower.cinder.LingeringFlamesPerk;
-import td.tower.cinder.PyromancersMarkPerk;
-import td.tower.cinder.SearingFlamePerk;
-import td.tower.cinder.SoulfirePerk;
-import td.tower.cinder.StokePerk;
+import td.tower.cinder.FlashpointMechanic;
+import td.tower.cinder.HeatMechanic;
+import td.tower.cinder.InfernoRingMechanic;
+import td.tower.cinder.LingeringFlamesMechanic;
+import td.tower.cinder.PyromancersMarkMechanic;
+import td.tower.cinder.SearingFlameMechanic;
+import td.tower.cinder.SoulfireMechanic;
+import td.tower.cinder.StokeMechanic;
 import td.tower.cinder.StokeSpec;
-import td.tower.cinder.ThermalShockPerk;
-import td.tower.cinder.WhiteFlamePerk;
+import td.tower.cinder.ThermalShockMechanic;
+import td.tower.cinder.WhiteFlameMechanic;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitKind;
 import td.tower.targeting.InRangeTargetQuery;
@@ -36,11 +36,11 @@ import td.tower.targeting.InWedgeTargetQuery;
 import td.tower.targeting.NearestSelector;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.Viewpoint;
-import td.tower.upgrade.BaseSlotPerks;
+import td.tower.upgrade.BaseSlotMechanics;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.NodeEffects;
-import td.tower.upgrade.OwnedPerks;
-import td.tower.upgrade.PerkCatalogue;
+import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -71,7 +71,7 @@ import java.util.Set;
  * <p>
  * A wave's heading and width are fixed when it fires. The tower never deals direct damage: its burns
  * credit it through {@code dealPeriodicDamage}, and a burn it starts never crits, though an ignition
- * can, which starts the pool stronger. What each owned node does lives in a {@link CinderPerk}.
+ * can, which starts the pool stronger. What each owned node does lives in a {@link CinderMechanic}.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class CinderTower extends AbstractTower {
@@ -96,7 +96,7 @@ public final class CinderTower extends AbstractTower {
     private static final TermText STOKE_DEED = TermText.format("waves that raise {}", TowerTerm.STOKE);
     private static final int STOKES_NEEDED = 45;
 
-    private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
+    private static final BaseSlotMechanics BASE_MECHANICS = BaseSlotMechanics.none()
             .withRangeThree(0.2f, NodeEffects.none().withModifiers(TowerModifiers.waveSpeed(1f)));
 
     private static final UpgradeNode WHITE_FLAME_1 = UpgradeTier.HEAD_1.node("cinder.head.white_flame.1",
@@ -158,7 +158,7 @@ public final class CinderTower extends AbstractTower {
     private static final UpgradeNode PYROMANCERS_MARK = UpgradeTier.SPECIAL.node("cinder.special.pyromancers_mark",
             "Pyromancer's Mark", PRICE);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, SOULFIRE,
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS, SOULFIRE,
                     LINGERING_FLAMES))
             .with(WHITE_FLAME_1, WHITE_FLAME_2, SOULFIRE, FLASHPOINT, COMBUSTION,
                     WIDE_NOZZLE_1, WIDE_NOZZLE_2, LINGERING_FLAMES, INFERNO_RING, DRAGONS_BREATH,
@@ -169,25 +169,25 @@ public final class CinderTower extends AbstractTower {
             .withChoice(ExclusiveChoice.oneOf(INFERNO_RING, DRAGONS_BREATH))
             .withChoice(ExclusiveChoice.specials(SEARING_FLAME, THERMAL_SHOCK, PYROMANCERS_MARK));
 
-    private static final PerkCatalogue<CinderPerk> PERKS = PerkCatalogue.<CinderPerk>empty()
-            .with(StandardBaseSlot.ATTUNE_ID, StokePerk::new)
-            .with(StandardBaseSlot.AWAKEN_ID, BellowsPerk::new)
-            .with(WHITE_FLAME_1.id(), WhiteFlamePerk::new)
-            .with(SOULFIRE.id(), SoulfirePerk::new)
-            .with(FLASHPOINT.id(), FlashpointPerk::new)
-            .with(COMBUSTION.id(), CombustionPerk::new)
-            .with(LINGERING_FLAMES.id(), LingeringFlamesPerk::new)
-            .with(INFERNO_RING.id(), InfernoRingPerk::new)
-            .with(DRAGONS_BREATH.id(), DragonsBreathPerk::new)
-            .with(CAUTERIZE.id(), CauterizePerk::new)
-            .with(HEAT.id(), HeatPerk::new)
-            .with(EVERBURN.id(), EverburnPerk::new)
-            .with(SEARING_FLAME.id(), SearingFlamePerk::new)
-            .with(THERMAL_SHOCK.id(), ThermalShockPerk::new)
-            .with(PYROMANCERS_MARK.id(), PyromancersMarkPerk::new);
+    private static final MechanicCatalogue<CinderMechanic> MECHANICS = MechanicCatalogue.<CinderMechanic>empty()
+            .with(StandardBaseSlot.ATTUNE_ID, StokeMechanic::new)
+            .with(StandardBaseSlot.AWAKEN_ID, BellowsMechanic::new)
+            .with(WHITE_FLAME_1.id(), WhiteFlameMechanic::new)
+            .with(SOULFIRE.id(), SoulfireMechanic::new)
+            .with(FLASHPOINT.id(), FlashpointMechanic::new)
+            .with(COMBUSTION.id(), CombustionMechanic::new)
+            .with(LINGERING_FLAMES.id(), LingeringFlamesMechanic::new)
+            .with(INFERNO_RING.id(), InfernoRingMechanic::new)
+            .with(DRAGONS_BREATH.id(), DragonsBreathMechanic::new)
+            .with(CAUTERIZE.id(), CauterizeMechanic::new)
+            .with(HEAT.id(), HeatMechanic::new)
+            .with(EVERBURN.id(), EverburnMechanic::new)
+            .with(SEARING_FLAME.id(), SearingFlameMechanic::new)
+            .with(THERMAL_SHOCK.id(), ThermalShockMechanic::new)
+            .with(PYROMANCERS_MARK.id(), PyromancersMarkMechanic::new);
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
-    private final OwnedPerks<CinderPerk> perks = new OwnedPerks<>(PERKS);
+    private final OwnedMechanics<CinderMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private final List<FlameWave> inFlightWaves = new ArrayList<>();
     /** The enemies this tower has set alight and still tracks, by identity. */
     private final Map<EnemyMob, Burning> burning = new IdentityHashMap<>();
@@ -203,8 +203,8 @@ public final class CinderTower extends AbstractTower {
     }
 
     @Override
-    protected PerkCatalogue<CinderPerk> perkCatalogue() {
-        return PERKS;
+    protected MechanicCatalogue<CinderMechanic> mechanicCatalogue() {
+        return MECHANICS;
     }
 
     @Override
@@ -214,15 +214,15 @@ public final class CinderTower extends AbstractTower {
 
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
-        this.perks.add(node);
+        this.mechanics.add(node);
     }
 
-    /** How the cone and the burn are shaped, as the perks in {@code owned} make them. */
-    private CinderSpec spec(List<CinderPerk> owned) {
+    /** How the cone and the burn are shaped, as the mechanics in {@code owned} make them. */
+    private CinderSpec spec(List<CinderMechanic> owned) {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
         CinderSpec spec = CinderSpec.from(view);
-        for (CinderPerk perk : owned) {
-            spec = perk.refineSpec(spec);
+        for (CinderMechanic mechanic : owned) {
+            spec = mechanic.refineSpec(spec);
         }
         return spec;
     }
@@ -252,7 +252,7 @@ public final class CinderTower extends AbstractTower {
 
     public void doTick(int gameTime) {
         this.tickNow = gameTime;
-        CinderSpec spec = this.spec(this.perks.all());
+        CinderSpec spec = this.spec(this.mechanics.all());
         List<EnemyMob> inRange = spec.reach().matching(this.context.enemies());
         Optional<EnemyMob> nearest = PreferringSelector.priority(new NearestSelector(this.centerX, this.centerY))
                 .selectFrom(inRange);
@@ -496,7 +496,7 @@ public final class CinderTower extends AbstractTower {
     }
 
     public double getHalfWidthRadians() {
-        return this.halfWidthRadians(this.spec(this.perks.all()));
+        return this.halfWidthRadians(this.spec(this.mechanics.all()));
     }
 
     /** Waves still travelling, oldest first. */
@@ -534,7 +534,7 @@ public final class CinderTower extends AbstractTower {
             return List.of();
         }
         return List.of(new EnemyMark(TowerTerm.STOKE, entry.steps,
-                this.spec(this.perks.all()).stoke().maxSteps(), this.displayName()));
+                this.spec(this.mechanics.all()).stoke().maxSteps(), this.displayName()));
     }
 
     @Override

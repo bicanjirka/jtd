@@ -6,7 +6,7 @@ import td.util.TickRate;
 
 /**
  * Whom the Sonar's beam may hit, how the beam moves, whom each revolution pings, and how deep a
- * hit fractures: the base rules reshaped by each perk it owns. Each {@code withX} is a copy.
+ * hit fractures: the base rules reshaped by each mechanic it owns. Each {@code withX} is a copy.
  *
  * @param reach     the enemies the beam may hit
  * @param beam      how the beam moves

@@ -3,7 +3,7 @@ package td.tower.sniper;
 import td.enemy.EnemyMob;
 
 /**
- * What a perk may know about a shot it shapes.
+ * What a mechanic may know about a shot it shapes.
  *
  * @param target     the enemy aimed at
  * @param lock       how long the Sniper has been aiming at it

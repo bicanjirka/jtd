@@ -5,7 +5,7 @@ import td.tower.targeting.Viewpoint;
 
 /**
  * Whom the Splash may aim at, what its blast is like and what the blast carries: the base rules
- * reshaped by each perk it owns. Each {@code withX} is a copy.
+ * reshaped by each mechanic it owns. Each {@code withX} is a copy.
  *
  * @param reach the enemies it may aim at
  * @param blast what the blast is like

@@ -9,41 +9,41 @@ import td.projectile.CannonballProjectile;
 import td.projectile.ProjectileStats;
 import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.mortar.AirburstPerk;
-import td.tower.mortar.BarragePerk;
+import td.tower.mortar.AirburstMechanic;
+import td.tower.mortar.BarrageMechanic;
 import td.tower.mortar.BlastMark;
 import td.tower.mortar.BombletSpec;
 import td.tower.mortar.BracketTracker;
-import td.tower.mortar.BracketingPerk;
-import td.tower.mortar.BunkerBusterPerk;
-import td.tower.mortar.CarpetBombingPerk;
-import td.tower.mortar.ClusterShellPerk;
-import td.tower.mortar.FragmentationPerk;
-import td.tower.mortar.HeavyShellPerk;
-import td.tower.mortar.MortarPerk;
+import td.tower.mortar.BracketingMechanic;
+import td.tower.mortar.BunkerBusterMechanic;
+import td.tower.mortar.CarpetBombingMechanic;
+import td.tower.mortar.ClusterShellMechanic;
+import td.tower.mortar.FragmentationMechanic;
+import td.tower.mortar.HeavyShellMechanic;
+import td.tower.mortar.MortarMechanic;
 import td.tower.mortar.MortarSpec;
 import td.tower.mortar.NukeFlash;
 import td.tower.mortar.PathLine;
-import td.tower.mortar.PredictiveFirePerk;
+import td.tower.mortar.PredictiveFireMechanic;
 import td.tower.mortar.SalvoSpec;
 import td.tower.mortar.ShellPlan;
 import td.tower.mortar.ShellType;
-import td.tower.mortar.ShellTypePerk;
-import td.tower.mortar.ShrapnelBoostPerk;
+import td.tower.mortar.ShellTypeMechanic;
+import td.tower.mortar.ShrapnelBoostMechanic;
 import td.tower.mortar.ShrapnelSpec;
-import td.tower.mortar.ShrapnelStormPerk;
-import td.tower.mortar.TacticalNukePerk;
+import td.tower.mortar.ShrapnelStormMechanic;
+import td.tower.mortar.TacticalNukeMechanic;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitKind;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.Viewpoint;
-import td.tower.upgrade.BaseSlotPerks;
+import td.tower.upgrade.BaseSlotMechanics;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.NodeEffects;
-import td.tower.upgrade.OwnedPerks;
-import td.tower.upgrade.PerkCatalogue;
+import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -70,7 +70,7 @@ import java.util.Optional;
  * reaches.
  * <p>
  * Attuned, a shell that lands near the last one hits harder and wider (Bracketing). What each owned
- * node does lives in a {@link MortarPerk}: the tower reads one spec from them whenever it looks for a
+ * node does lives in a {@link MortarMechanic}: the tower reads one spec from them whenever it looks for a
  * target or lands a shell.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
@@ -110,7 +110,7 @@ public final class MortarTower extends AbstractTower {
     private static final TermText BRACKET_DEED = TermText.format("shells with {}", TowerTerm.BRACKETING);
     private static final int BRACKETED_SHELLS_NEEDED = 15;
 
-    private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
+    private static final BaseSlotMechanics BASE_MECHANICS = BaseSlotMechanics.none()
             .withRangeThree(0.3f, NodeEffects.none().withModifiers(TowerModifiers.deadZone(1f)));
 
     private static final UpgradeNode SIEGE_ROUNDS_1 = UpgradeTier.HEAD_1.node("mortar.head.siege_rounds.1",
@@ -170,7 +170,7 @@ public final class MortarTower extends AbstractTower {
     private static final UpgradeNode CRYO_SHELLS = UpgradeTier.SPECIAL.node("mortar.special.cryo_shells",
             "Cryo Shells", PRICE);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, HEAVY_SHELL,
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS, HEAVY_SHELL,
                     CLUSTER_SHELL))
             .with(SIEGE_ROUNDS_1, SIEGE_ROUNDS_2, HEAVY_SHELL, TACTICAL_NUKE, BUNKER_BUSTER,
                     FRAGMENTATION_ROUNDS_1, FRAGMENTATION_ROUNDS_2, CLUSTER_SHELL, CARPET_BOMBING, SHRAPNEL_STORM,
@@ -180,25 +180,25 @@ public final class MortarTower extends AbstractTower {
             .withChoice(ExclusiveChoice.oneOf(CARPET_BOMBING, SHRAPNEL_STORM))
             .withChoice(ExclusiveChoice.specials(NAPALM, TAR, CRYO_SHELLS));
 
-    private static final PerkCatalogue<MortarPerk> PERKS = PerkCatalogue.<MortarPerk>empty()
-            .with(StandardBaseSlot.ATTUNE_ID, BracketingPerk::new)
-            .with(HEAVY_SHELL.id(), HeavyShellPerk::new)
-            .with(TACTICAL_NUKE.id(), TacticalNukePerk::new)
-            .with(BUNKER_BUSTER.id(), BunkerBusterPerk::new)
-            .with(FRAGMENTATION_ROUNDS_1.id(), FragmentationPerk::new)
-            .with(FRAGMENTATION_ROUNDS_2.id(), ShrapnelBoostPerk::new)
-            .with(CLUSTER_SHELL.id(), ClusterShellPerk::new)
-            .with(CARPET_BOMBING.id(), CarpetBombingPerk::new)
-            .with(SHRAPNEL_STORM.id(), ShrapnelStormPerk::new)
-            .with(PREDICTIVE_FIRE.id(), PredictiveFirePerk::new)
-            .with(AIRBURST.id(), AirburstPerk::new)
-            .with(BARRAGE.id(), BarragePerk::new)
-            .with(NAPALM.id(), () -> new ShellTypePerk(ShellType.NAPALM))
-            .with(TAR.id(), () -> new ShellTypePerk(ShellType.TAR))
-            .with(CRYO_SHELLS.id(), () -> new ShellTypePerk(ShellType.CRYO));
+    private static final MechanicCatalogue<MortarMechanic> MECHANICS = MechanicCatalogue.<MortarMechanic>empty()
+            .with(StandardBaseSlot.ATTUNE_ID, BracketingMechanic::new)
+            .with(HEAVY_SHELL.id(), HeavyShellMechanic::new)
+            .with(TACTICAL_NUKE.id(), TacticalNukeMechanic::new)
+            .with(BUNKER_BUSTER.id(), BunkerBusterMechanic::new)
+            .with(FRAGMENTATION_ROUNDS_1.id(), FragmentationMechanic::new)
+            .with(FRAGMENTATION_ROUNDS_2.id(), ShrapnelBoostMechanic::new)
+            .with(CLUSTER_SHELL.id(), ClusterShellMechanic::new)
+            .with(CARPET_BOMBING.id(), CarpetBombingMechanic::new)
+            .with(SHRAPNEL_STORM.id(), ShrapnelStormMechanic::new)
+            .with(PREDICTIVE_FIRE.id(), PredictiveFireMechanic::new)
+            .with(AIRBURST.id(), AirburstMechanic::new)
+            .with(BARRAGE.id(), BarrageMechanic::new)
+            .with(NAPALM.id(), () -> new ShellTypeMechanic(ShellType.NAPALM))
+            .with(TAR.id(), () -> new ShellTypeMechanic(ShellType.TAR))
+            .with(CRYO_SHELLS.id(), () -> new ShellTypeMechanic(ShellType.CRYO));
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
-    private final OwnedPerks<MortarPerk> perks = new OwnedPerks<>(PERKS);
+    private final OwnedMechanics<MortarMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private final BracketTracker bracketing = new BracketTracker();
     private final ZoneOwner zoneOwner = this::applyEffect;
     private final List<BlastMark> blastMarks = new ArrayList<>();
@@ -218,8 +218,8 @@ public final class MortarTower extends AbstractTower {
     }
 
     @Override
-    protected PerkCatalogue<MortarPerk> perkCatalogue() {
-        return PERKS;
+    protected MechanicCatalogue<MortarMechanic> mechanicCatalogue() {
+        return MECHANICS;
     }
 
     @Override
@@ -229,15 +229,15 @@ public final class MortarTower extends AbstractTower {
 
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
-        this.perks.add(node);
+        this.mechanics.add(node);
     }
 
-    /** Whom it may shell and how its shells fly and land, as the perks in {@code owned} make it. */
-    private MortarSpec spec(List<MortarPerk> owned) {
+    /** Whom it may shell and how its shells fly and land, as the mechanics in {@code owned} make it. */
+    private MortarSpec spec(List<MortarMechanic> owned) {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
         MortarSpec spec = MortarSpec.from(view);
-        for (MortarPerk perk : owned) {
-            spec = perk.refineSpec(spec);
+        for (MortarMechanic mechanic : owned) {
+            spec = mechanic.refineSpec(spec);
         }
         return spec.withReach(spec.reach().withDeadZone(this.stats().value(TowerStat.DEAD_ZONE) * view.cellSize()));
     }
@@ -250,7 +250,7 @@ public final class MortarTower extends AbstractTower {
     public void doTick(int gameTime) {
         this.tickNow = gameTime;
         this.blastMarks.removeIf(mark -> gameTime - mark.startedAtTick() >= BLAST_MARK_TICKS);
-        MortarSpec spec = this.spec(this.perks.all());
+        MortarSpec spec = this.spec(this.mechanics.all());
         if (this.salvoLeft > 0 && --this.salvoGap <= 0) {
             EnemyMob next = this.findTarget(spec);
             if (next != null) {
@@ -342,7 +342,7 @@ public final class MortarTower extends AbstractTower {
     }
 
     private void onImpact(double x, double y, ShellType type) {
-        MortarSpec spec = this.spec(this.perks.all());
+        MortarSpec spec = this.spec(this.mechanics.all());
         int scale = this.context.getBoard().scale();
         int step = this.bracketing.land(x, y, spec.bracket(), scale);
         if (step > 0) {
@@ -427,7 +427,7 @@ public final class MortarTower extends AbstractTower {
 
     /**
      * The ring of shrapnel past the main blast: a share of the shell's damage with no falloff, Cracked,
-     * and, as the perks make it, the shell's own effect and a bleed. A shrapnel piece never leaves a zone.
+     * and, as the mechanics make it, the shell's own effect and a bleed. A shrapnel piece never leaves a zone.
      */
     private void shrapnel(Landing landing, List<EnemyMob> alreadyHit) {
         ShrapnelSpec shrapnel = landing.spec().shrapnel();
@@ -525,7 +525,7 @@ public final class MortarTower extends AbstractTower {
     /** A Barrage fires a salvo for a longer reload, so its rate is shells a second over the whole cycle. */
     @Override
     protected Optional<TowerStatLine> cadence() {
-        SalvoSpec salvo = this.spec(this.perks.all()).salvo();
+        SalvoSpec salvo = this.spec(this.mechanics.all()).salvo();
         if (!salvo.isSalvo()) {
             return super.cadence();
         }
@@ -536,7 +536,7 @@ public final class MortarTower extends AbstractTower {
 
     @Override
     protected List<TowerStatLine> ownStats() {
-        MortarSpec spec = this.spec(this.perks.all());
+        MortarSpec spec = this.spec(this.mechanics.all());
         ProjectileStats shell = this.shellStats(ShellType.PLAIN);
         float cellsPerSecond = shell.speed() * TICKS_PER_SECOND / this.context.getBoard().scale();
         return List.of(new TowerStatLine(TowerStatRow.SPLASH_RADIUS, SPLASH_RADIUS_BASE,
@@ -548,7 +548,7 @@ public final class MortarTower extends AbstractTower {
     @Override
     protected List<TowerBuffState> ownConditions() {
         List<TowerBuffState> states = new ArrayList<>();
-        MortarSpec spec = this.spec(this.perks.all());
+        MortarSpec spec = this.spec(this.mechanics.all());
         this.bracketing.marker().filter(marker -> marker.step() > 0).ifPresent(marker -> states.add(
                 TowerBuffState.of(TowerTerm.BRACKETING, TermText.of(
                         TermNumbers.signedPercent(this.stats().value(TowerStat.BRACKET_DAMAGE_STEP)) + " damage and "
@@ -558,14 +558,14 @@ public final class MortarTower extends AbstractTower {
         if (primed != ShellType.PLAIN) {
             states.add(TowerBuffState.of(primed.term(), primed.describe()));
         }
-        this.perks.all().forEach(perk -> perk.condition().ifPresent(states::add));
+        this.mechanics.all().forEach(mechanic -> mechanic.condition().ifPresent(states::add));
         return states;
     }
 
     @Override
     protected List<NodeProgress> ownProgress() {
         List<NodeProgress> all = new ArrayList<>();
-        MortarSpec spec = this.spec(this.perks.all());
+        MortarSpec spec = this.spec(this.mechanics.all());
         if (spec.nuke().every() > 0) {
             this.countingNode(TACTICAL_NUKE.id(), this.shellsFired % spec.nuke().every(), spec.nuke().every())
                     .ifPresent(all::add);

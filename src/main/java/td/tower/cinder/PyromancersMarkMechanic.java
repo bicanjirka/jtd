@@ -1,0 +1,25 @@
+package td.tower.cinder;
+
+import td.effect.EffectKind;
+import td.stat.EnemyStat;
+import td.stat.StatModifier;
+import td.stat.StatModifiers;
+import td.term.TermNumbers;
+import td.term.TermText;
+
+/** Pyromancer's Mark: burning enemies take 40% more magic damage from every source. */
+public final class PyromancersMarkMechanic implements CinderMechanic {
+
+    private static final float MAGIC_DAMAGE_TAKEN = 0.4f;
+
+    @Override
+    public CinderSpec refineSpec(CinderSpec spec) {
+        return spec.withTuning(spec.tuning().withCarried(StatModifiers.of(EnemyStat.MAGIC_DAMAGE_TAKEN, StatModifier.flat(MAGIC_DAMAGE_TAKEN))));
+    }
+
+    @Override
+    public TermText describe() {
+        return TermText.of("an enemy with ").plus(EffectKind.BURN)
+                .plus(" takes " + TermNumbers.signedPercent(MAGIC_DAMAGE_TAKEN) + " magic damage from every source");
+    }
+}

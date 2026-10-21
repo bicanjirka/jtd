@@ -24,7 +24,7 @@
   revolution by the rate instead, and no counter that carries an attack rate may round to a tick.
 - `SonarTower` hits what its `SonarBeam` crossed this tick: a spinning beam the arc swept since
   last tick (`SonarSweep`, half-open), never the instantaneous angle. Beams are pure geometry
-  (bearings, never enemies), and a perk that changes the beam reshapes it from where it is. The
+  (bearings, never enemies), and a mechanic that changes the beam reshapes it from where it is. The
   head is drawn from `sweepRadiansAt`, the same angle that decides hits. Whatever the beam renews
   each pass lasts `SonarSpec.untilNextPass()`.
 - `SplashTower` falloff is `1 - (d/radius)²` from the primary, floored by `BLAST_EDGE`. The blast
@@ -36,7 +36,7 @@
   (cells a second, so it holds at any board scale) and `PROJECTILE_SIZE`, and drawn from the same record.
 - The Seeker's nest loads from the cooldown whether or not an enemy is in range, so it fills between
   waves; stored missiles launch `launchGapTicks` apart, one target pick per missile. A spread salvo
-  (`SalvoPlanner`) avoids the enemies the salvo in progress has fired at, and a perk reacts to a
+  (`SalvoPlanner`) avoids the enemies the salvo in progress has fired at, and a mechanic reacts to a
   landed missile through `Impact`; a rearmed missile is flagged so its freeze rearms nothing. How a
   missile freezes, shatters and crits is spec data (`FreezeSpec`, `ShatterSpec`), not a hook; the
   `FrozenLedger` only watches the enemies the Seeker froze for the tick their freeze ends. A missile's
@@ -89,7 +89,7 @@
   the primary, and the Splash keeps its own list of mines to replace the oldest and to take them off with it.
 - The Aura gives `buffFor`: damage and range at `AURA_POWER` (plus Kinship), half the disruption, and
   every owned node's emission; Chosen scales it all ×3. Its mechanics (Kinship, the XP mentoring,
-  Chosen, Rally) are `AuraPerk`s over an `AuraSpec`.
+  Chosen, Rally) are `AuraMechanic`s over an `AuraSpec`.
 - The Aura never reaches into another tower's state except through `Tower.receiveStatus` (Rally).
   Withering Field is an interval in the buff (`WITHER_INTERVAL`) that each tower spends on its own first
   hit after it, never on periodic damage. Chosen's hero is derived from XP on every call, so
@@ -182,33 +182,33 @@
   without a key (a three-way head choice, four specials opened alike) is rejected.
 - Never hand-write a node's bonus into a tower's description: `UpgradeNode.bonuses()` derives it
   and the Upgrades panel lists offered nodes.
-- A perk says what it adds (`describe()`), built from its own constants; a node carries no note but the
+- A mechanic says what it adds (`describe()`), built from its own constants; a node carries no note but the
   base chain's structural text. The Upgrades panel lists `Tower.bonusesOf(node)`: the node's data rows,
-  then its perks' words. A number a perk's words quote lives in the perk, or in the delegate or effect
+  then its mechanics' words. A number a mechanic's words quote lives in the mechanic, or in the delegate or effect
   rule it describes, never in the tower class.
 - `buyUpgrade` is the only entry point and is check-and-charge (returns `false` without effect).
   Don't pre-check affordability. It publishes `TowerStats` before `UpgradeState`.
 - Pass `StandardBaseSlot.nodes` the tower's base range (Range nodes add a share of it, in cells) and a
-  `BaseSlotPerks` for what Attune, Awaken and Range III add to a tower.
+  `BaseSlotMechanics` for what Attune, Awaken and Range III add to a tower.
 - A node is data: `withModifiers` (its own stats, flat, through `TowerModifiers`), `withEmission`
   (what an aura gives). A number a node changes is a
   `TowerStat` when the tower has it from the start or it belongs to the Attune mechanic; any other
-  number belongs to the mechanic a node adds, in that mechanic's spec, set by its perk. Never add a
+  number belongs to the mechanic a node adds, in that mechanic's spec, set by its mechanic. Never add a
   field a node mutates. `TowerStatCatalogueTest` rejects a node that changes a stat its tower
   doesn't set.
 - An upgrade that applies a generic effect, grants a status, changes a hit conditionally, picks a target
   or flips a capability is data on its node: `withProc`, `withHitBonus`, `withTargeting` (the first
   owned node that sets one decides), `withCapability`. Every attacking tower applies
   `hitAdjustment(...)` to each hit it computes and reports each landed attack with `report(...)` after
-  its perks settled it; hit bonuses add. A hit aimed at one enemy is `asAimed()` and lands through `landHit`;
-  a dodge is reported with `reportDodge(...)` instead, never settled by perks that answer a landed hit.
+  its mechanics settled it; hit bonuses add. A hit aimed at one enemy is `asAimed()` and lands through `landHit`;
+  a dodge is reported with `reportDodge(...)` instead, never settled by mechanics that answer a landed hit.
 - Never check `owns(...)` in tower code except for the base chain; Checkstyle rejects it.
-- A node that adds a mechanic brings a perk, in the tower's own package. A static `PerkCatalogue`
-  says which perks each node brings, and the tower's `OwnedPerks` builds its own. Perks run in
+- A node that adds a mechanic brings a `*Mechanic` class, in the tower's own package. A static `MechanicCatalogue`
+  says which mechanics each node brings, and the tower's `OwnedMechanics` builds its own. Mechanics run in
   purchase order through `refineSpec` (and the tower's per-hit hooks); they are pure (no tower, no
   `GameWorld`).
-- Perks widen or narrow whom a tower may hit through its `Reach`. A dead zone goes on the `Reach`
-  (`withDeadZone`), which applies it last, so it holds whatever order the perks were bought in;
+- Mechanics widen or narrow whom a tower may hit through its `Reach`. A dead zone goes on the `Reach`
+  (`withDeadZone`), which applies it last, so it holds whatever order the mechanics were bought in;
   never `and` one onto the query.
 - The UI reads `offeredUpgrades()`/`upgrades()` only; the tower is the source of truth.
 

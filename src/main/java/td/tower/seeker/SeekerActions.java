@@ -4,7 +4,7 @@ import td.enemy.EnemyMob;
 
 import java.util.List;
 
-/** What a perk may make the Seeker do once a missile has landed, beyond what a payload may. */
+/** What a mechanic may make the Seeker do once a missile has landed, beyond what a payload may. */
 public interface SeekerActions extends PayloadActions {
 
     /**

@@ -10,38 +10,38 @@ import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitKind;
-import td.tower.pulse.ArcDischargePerk;
-import td.tower.pulse.EventHorizonPerk;
+import td.tower.pulse.ArcDischargeMechanic;
+import td.tower.pulse.EventHorizonMechanic;
 import td.tower.pulse.FieldHolds;
 import td.tower.pulse.FieldMode;
-import td.tower.pulse.GravityWellPerk;
+import td.tower.pulse.GravityWellMechanic;
 import td.tower.pulse.HoldSpec;
 import td.tower.pulse.LeyLine;
-import td.tower.pulse.LeyLinePerk;
+import td.tower.pulse.LeyLineMechanic;
 import td.tower.pulse.LineSpec;
-import td.tower.pulse.ModePerk;
+import td.tower.pulse.ModeMechanic;
 import td.tower.pulse.ModeSpec;
-import td.tower.pulse.PulsePerk;
+import td.tower.pulse.PulseMechanic;
 import td.tower.pulse.PulseSpec;
-import td.tower.pulse.SightPerk;
+import td.tower.pulse.SightMechanic;
 import td.tower.pulse.SightSpec;
-import td.tower.pulse.SnarePerk;
-import td.tower.pulse.StasisPerk;
-import td.tower.pulse.TollPerk;
+import td.tower.pulse.SnareMechanic;
+import td.tower.pulse.StasisMechanic;
+import td.tower.pulse.TollMechanic;
 import td.tower.pulse.TollSpec;
 import td.tower.pulse.TollTracker;
-import td.tower.pulse.TrueSightPerk;
-import td.tower.pulse.UndertowPerk;
+import td.tower.pulse.TrueSightMechanic;
+import td.tower.pulse.UndertowMechanic;
 import td.tower.pulse.VisitSpec;
 import td.tower.pulse.ZapSpec;
 import td.tower.targeting.HighestRankSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.Viewpoint;
-import td.tower.upgrade.BaseSlotPerks;
+import td.tower.upgrade.BaseSlotMechanics;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.NodeEffects;
-import td.tower.upgrade.OwnedPerks;
-import td.tower.upgrade.PerkCatalogue;
+import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -66,7 +66,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * towers. Attuned, an enemy that stays inside builds Toll, which makes every effect the field holds on it
  * stronger. Fields that overlap interfere: each lands less damage.
  * <p>
- * What each owned node does lives in a {@link PulsePerk}: the tower reads one spec from them every
+ * What each owned node does lives in a {@link PulseMechanic}: the tower reads one spec from them every
  * tick.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
@@ -84,7 +84,7 @@ public final class PulseTower extends AbstractTower {
     private static final float INTERFERENCE_PER_FIELD = 0.25f;
     private static final float INTERFERENCE_FLOOR = 0.25f;
 
-    private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
+    private static final BaseSlotMechanics BASE_MECHANICS = BaseSlotMechanics.none()
             .withRangeThree(0.2f, NodeEffects.none().withModifiers(TowerModifiers.tollLinger(20)));
 
     private static final UpgradeNode UNDERTOW = UpgradeTier.HEAD_1.node("pulse.head.gravity.1", "Undertow", PRICE);
@@ -125,7 +125,7 @@ public final class PulseTower extends AbstractTower {
             PRICE);
     private static final UpgradeNode LEY_LINE = UpgradeTier.SPECIAL.node("pulse.special.ley_line", "Ley Line", PRICE);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, EVENT_HORIZON,
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS, EVENT_HORIZON,
             DEAD_ZONE))
             .with(UNDERTOW, SNARE, EVENT_HORIZON, GRAVITY_WELL, STASIS, SIGHT, NULL_FIELD, DEAD_ZONE, TRUE_SIGHT, PURGE,
                     FRAILTY, CORROSION, RESONANT_COILS, MELTDOWN, ARC_DISCHARGE, SOUL_DRAIN, LEY_LINE)
@@ -134,25 +134,25 @@ public final class PulseTower extends AbstractTower {
             .withChoice(ExclusiveChoice.oneOf(TRUE_SIGHT, PURGE))
             .withChoice(ExclusiveChoice.specials(ARC_DISCHARGE, SOUL_DRAIN, LEY_LINE));
 
-    private static final PerkCatalogue<PulsePerk> PERKS = PerkCatalogue.<PulsePerk>empty()
-            .with(StandardBaseSlot.ATTUNE_ID, TollPerk::new)
-            .with(UNDERTOW.id(), UndertowPerk::new)
-            .with(SNARE.id(), SnarePerk::new)
-            .with(EVENT_HORIZON.id(), EventHorizonPerk::new)
-            .with(GRAVITY_WELL.id(), GravityWellPerk::new)
-            .with(STASIS.id(), StasisPerk::new)
-            .with(SIGHT.id(), SightPerk::new)
-            .with(NULL_FIELD.id(), () -> new ModePerk(FieldMode.SILENCE))
-            .with(DEAD_ZONE.id(), () -> new ModePerk(FieldMode.DEAD_ZONE))
-            .with(TRUE_SIGHT.id(), TrueSightPerk::new)
-            .with(PURGE.id(), () -> new ModePerk(FieldMode.PURGE))
-            .with(FRAILTY.id(), () -> new ModePerk(FieldMode.FRAIL))
-            .with(CORROSION.id(), () -> new ModePerk(FieldMode.CORROSION))
-            .with(ARC_DISCHARGE.id(), ArcDischargePerk::new)
-            .with(SOUL_DRAIN.id(), () -> new ModePerk(FieldMode.SOUL_DRAIN))
-            .with(LEY_LINE.id(), LeyLinePerk::new);
+    private static final MechanicCatalogue<PulseMechanic> MECHANICS = MechanicCatalogue.<PulseMechanic>empty()
+            .with(StandardBaseSlot.ATTUNE_ID, TollMechanic::new)
+            .with(UNDERTOW.id(), UndertowMechanic::new)
+            .with(SNARE.id(), SnareMechanic::new)
+            .with(EVENT_HORIZON.id(), EventHorizonMechanic::new)
+            .with(GRAVITY_WELL.id(), GravityWellMechanic::new)
+            .with(STASIS.id(), StasisMechanic::new)
+            .with(SIGHT.id(), SightMechanic::new)
+            .with(NULL_FIELD.id(), () -> new ModeMechanic(FieldMode.SILENCE))
+            .with(DEAD_ZONE.id(), () -> new ModeMechanic(FieldMode.DEAD_ZONE))
+            .with(TRUE_SIGHT.id(), TrueSightMechanic::new)
+            .with(PURGE.id(), () -> new ModeMechanic(FieldMode.PURGE))
+            .with(FRAILTY.id(), () -> new ModeMechanic(FieldMode.FRAIL))
+            .with(CORROSION.id(), () -> new ModeMechanic(FieldMode.CORROSION))
+            .with(ARC_DISCHARGE.id(), ArcDischargeMechanic::new)
+            .with(SOUL_DRAIN.id(), () -> new ModeMechanic(FieldMode.SOUL_DRAIN))
+            .with(LEY_LINE.id(), LeyLineMechanic::new);
 
-    private final OwnedPerks<PulsePerk> perks = new OwnedPerks<>(PERKS);
+    private final OwnedMechanics<PulseMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private final TollTracker tollTracker = new TollTracker();
     private final FieldHolds holds = new FieldHolds();
     private final FireClock clock = new FireClock(0);
@@ -189,8 +189,8 @@ public final class PulseTower extends AbstractTower {
     }
 
     @Override
-    protected PerkCatalogue<PulsePerk> perkCatalogue() {
-        return PERKS;
+    protected MechanicCatalogue<PulseMechanic> mechanicCatalogue() {
+        return MECHANICS;
     }
 
     @Override
@@ -200,27 +200,27 @@ public final class PulseTower extends AbstractTower {
 
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
-        this.perks.add(node);
+        this.mechanics.add(node);
     }
 
-    /** Whom the field touches and how Toll builds, as the perks in {@code owned} make it and the deaths inside widen it. */
-    private PulseSpec spec(List<PulsePerk> owned) {
+    /** Whom the field touches and how Toll builds, as the mechanics in {@code owned} make it and the deaths inside widen it. */
+    private PulseSpec spec(List<PulseMechanic> owned) {
         PulseSpec spec = this.spec(owned, this.rangeReal());
         float growth = spec.field().growthAfter(this.deathsThisWave);
         return growth > 0f ? this.spec(owned, this.rangeReal() * (1f + growth)) : spec;
     }
 
-    private PulseSpec spec(List<PulsePerk> owned, float radius) {
+    private PulseSpec spec(List<PulseMechanic> owned, float radius) {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, radius, this.context.getBoard().scale());
         PulseSpec spec = PulseSpec.from(view);
-        for (PulsePerk perk : owned) {
-            spec = perk.refineSpec(spec);
+        for (PulseMechanic mechanic : owned) {
+            spec = mechanic.refineSpec(spec);
         }
         return spec;
     }
 
     public void doTick(int gameTime) {
-        PulseSpec spec = this.spec(this.perks.all());
+        PulseSpec spec = this.spec(this.mechanics.all());
         this.fieldRadius = spec.view().range();
         List<EnemyMob> inside = spec.reach().matching(this.context.enemies());
         this.fire = !inside.isEmpty();
@@ -507,7 +507,7 @@ public final class PulseTower extends AbstractTower {
 
     /** What the field's colour says about its head: Ward violet, Gravity blue. */
     public FieldLook getFieldLook() {
-        PulseSpec spec = this.spec(this.perks.all());
+        PulseSpec spec = this.spec(this.mechanics.all());
         if (spec.sight().reveals()) {
             return FieldLook.WARD;
         }
@@ -516,12 +516,12 @@ public final class PulseTower extends AbstractTower {
 
     /** Whether the field owns the bite line, drawn as a red rim. */
     public boolean bites() {
-        return this.spec(this.perks.all()).modes().has(FieldMode.FRAIL);
+        return this.spec(this.mechanics.all()).modes().has(FieldMode.FRAIL);
     }
 
     /** Whether the field drags hardest at its centre, drawn darker there. */
     public boolean hasGravityWell() {
-        return this.spec(this.perks.all()).hold().centreDrag() > 0;
+        return this.spec(this.mechanics.all()).hold().centreDrag() > 0;
     }
 
     /** The Ley Line this field casts, as of the last second; empty without one. */
@@ -545,7 +545,7 @@ public final class PulseTower extends AbstractTower {
      */
     public boolean pinLeyLine(Tower host) {
         Optional<PulseTower> field = host.accept(AS_FIELD).filter(other -> other != this);
-        LineSpec line = this.spec(this.perks.all()).line();
+        LineSpec line = this.spec(this.mechanics.all()).line();
         if (field.isEmpty() || !line.casts()
                 || this.distanceTo(field.get()) > line.reachCells() * this.context.getBoard().scale()) {
             return false;
@@ -556,7 +556,7 @@ public final class PulseTower extends AbstractTower {
 
     /** Whether {@code tower} is an Obelisk that casts a Ley Line. */
     public static boolean castsLeyLine(Tower tower) {
-        return tower.accept(AS_FIELD).filter(field -> field.spec(field.perks.all()).line().casts()).isPresent();
+        return tower.accept(AS_FIELD).filter(field -> field.spec(field.mechanics.all()).line().casts()).isPresent();
     }
 
     /** {@link #pinLeyLine} for {@code caster}, if it is an Obelisk; {@code false} for any other tower. */
@@ -582,7 +582,7 @@ public final class PulseTower extends AbstractTower {
     @Override
     protected List<TowerBuffState> ownConditions() {
         List<TowerBuffState> states = new ArrayList<>();
-        PulseSpec spec = this.spec(this.perks.all());
+        PulseSpec spec = this.spec(this.mechanics.all());
         float growth = spec.field().growthAfter(this.deathsThisWave);
         if (growth > 0f) {
             states.add(TowerBuffState.of(TowerTerm.EVENT_HORIZON, TermText.of(
@@ -599,13 +599,13 @@ public final class PulseTower extends AbstractTower {
             states.add(TowerBuffState.of(TowerTerm.LEY_LINE,
                     TermText.of("hosting " + this.castersHere.size() + " lines")));
         }
-        this.perks.all().forEach(perk -> perk.condition().ifPresent(states::add));
+        this.mechanics.all().forEach(mechanic -> mechanic.condition().ifPresent(states::add));
         return states;
     }
 
     @Override
     protected List<AppliedEffect> baseApplies() {
-        PulseSpec spec = this.spec(this.perks.all());
+        PulseSpec spec = this.spec(this.mechanics.all());
         return List.of(new AppliedEffect(EffectKind.DRAGGED, List.of(new AppliedEffect.Source(this.displayName(),
                 TermText.of("enemies inside gain ").plus(EffectKind.DRAGGED)
                         .plus(" of " + spec.hold().dragAt(FieldStrength.FULL, 1f) + "%")))));

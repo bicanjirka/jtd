@@ -19,20 +19,20 @@ import td.tower.proc.ProcCondition;
 import td.tower.proc.ProcPayload;
 import td.tower.sniper.AimFocus;
 import td.tower.sniper.AimLock;
-import td.tower.sniper.CritStreakPerk;
-import td.tower.sniper.ExecutionerPerk;
+import td.tower.sniper.CritStreakMechanic;
+import td.tower.sniper.ExecutionerMechanic;
 import td.tower.sniper.PierceRule;
-import td.tower.sniper.RailgunPerk;
-import td.tower.sniper.RicochetPerk;
+import td.tower.sniper.RailgunMechanic;
+import td.tower.sniper.RicochetMechanic;
 import td.tower.sniper.ShotActions;
 import td.tower.sniper.ShotContext;
 import td.tower.sniper.ShotResult;
 import td.tower.sniper.SniperAim;
-import td.tower.sniper.SniperPerk;
+import td.tower.sniper.SniperMechanic;
 import td.tower.sniper.SniperShot;
 import td.tower.sniper.SniperSpec;
-import td.tower.sniper.SpotterUplinkPerk;
-import td.tower.sniper.WeakSpotPerk;
+import td.tower.sniper.SpotterUplinkMechanic;
+import td.tower.sniper.WeakSpotMechanic;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.NearestSelector;
 import td.tower.targeting.OnSegmentTargetQuery;
@@ -40,11 +40,11 @@ import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.TargetPriority;
 import td.tower.targeting.TargetSelector;
 import td.tower.targeting.Viewpoint;
-import td.tower.upgrade.BaseSlotPerks;
+import td.tower.upgrade.BaseSlotMechanics;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.NodeEffects;
-import td.tower.upgrade.OwnedPerks;
-import td.tower.upgrade.PerkCatalogue;
+import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -65,7 +65,7 @@ import java.util.Set;
  * visible enemy in range furthest along the path; the first special it owns decides whom it aims at
  * instead. The turret turns at a capped rate and holds its heading when idle.
  * <p>
- * What each owned node does lives in a {@link SniperPerk}: the tower shapes every shot through them
+ * What each owned node does lives in a {@link SniperMechanic}: the tower shapes every shot through them
  * and lets them react to how it landed.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
@@ -87,7 +87,7 @@ public final class SniperTower extends AbstractTower {
     private static final ProcPayload FRENZY = new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.FRENZY, 3,
             TowerModifiers.attackSpeed(1f)).keepingARunningOne().lengthenedByBuffs());
 
-    private static final BaseSlotPerks BASE_PERKS = BaseSlotPerks.none()
+    private static final BaseSlotMechanics BASE_MECHANICS = BaseSlotMechanics.none()
             .withAttune(NodeEffects.none()
                     .withHitBonus(HitBonus.per(new HitScaling.PerFocus(TowerTerm.STEADY_AIM, 0),
                             HitAdjustment.critChance(0.1f).plus(HitAdjustment.accuracy(10f)))))
@@ -185,7 +185,7 @@ public final class SniperTower extends AbstractTower {
             .withHitBonus(HitBonus.when(new HitCondition.TargetStopped(), HitAdjustment.critChance(1f).plus(HitAdjustment.critMultiplier(1f))))
             .after(MARKSMANS_EYE_1);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_PERKS, FOCUSED_OPTICS_3,
+    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS, FOCUSED_OPTICS_3,
             MARKSMANS_EYE_3))
             .with(FOCUSED_OPTICS_1, FOCUSED_OPTICS_2, FOCUSED_OPTICS_3, RAILGUN, EXECUTIONER, MARKSMANS_EYE_1,
                     MARKSMANS_EYE_2, MARKSMANS_EYE_3, UNBROKEN_AIM, SUNDER_ROUNDS, TRADECRAFT_1, TRADECRAFT_2,
@@ -197,18 +197,18 @@ public final class SniperTower extends AbstractTower {
             .withChoice(ExclusiveChoice.specials(MOMENTUM, RICOCHET, HEADHUNTER, HOLLOW_POINT, FOURTH_SHOT,
                     SHATTER_SHOT));
 
-    private static final PerkCatalogue<SniperPerk> PERKS = PerkCatalogue.<SniperPerk>empty()
-            .with(FOCUSED_OPTICS_3.id(), WeakSpotPerk::new)
-            .with(RAILGUN.id(), RailgunPerk::new)
-            .with(EXECUTIONER.id(), ExecutionerPerk::new)
-            .with(TRADECRAFT_1.id(), CritStreakPerk::new)
-            .with(SPOTTER_UPLINK.id(), SpotterUplinkPerk::new)
-            .with(RICOCHET.id(), RicochetPerk::new);
+    private static final MechanicCatalogue<SniperMechanic> MECHANICS = MechanicCatalogue.<SniperMechanic>empty()
+            .with(FOCUSED_OPTICS_3.id(), WeakSpotMechanic::new)
+            .with(RAILGUN.id(), RailgunMechanic::new)
+            .with(EXECUTIONER.id(), ExecutionerMechanic::new)
+            .with(TRADECRAFT_1.id(), CritStreakMechanic::new)
+            .with(SPOTTER_UPLINK.id(), SpotterUplinkMechanic::new)
+            .with(RICOCHET.id(), RicochetMechanic::new);
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final AimFocus focus = new AimFocus();
     private final ShotActions actions = new Actions();
-    private final OwnedPerks<SniperPerk> perks = new OwnedPerks<>(PERKS);
+    private final OwnedMechanics<SniperMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private final FireClock clock = new FireClock(COOLDOWN_MAX);
     private SniperShot shotInFlight;
     private TowerStats statsInFlight;
@@ -222,8 +222,8 @@ public final class SniperTower extends AbstractTower {
     }
 
     @Override
-    protected PerkCatalogue<SniperPerk> perkCatalogue() {
-        return PERKS;
+    protected MechanicCatalogue<SniperMechanic> mechanicCatalogue() {
+        return MECHANICS;
     }
 
     @Override
@@ -233,19 +233,19 @@ public final class SniperTower extends AbstractTower {
 
     @Override
     protected void onUpgradeBought(UpgradeNode node) {
-        this.perks.add(node);
+        this.mechanics.add(node);
     }
 
-    /** Whom it may shoot and how it picks, as the perks in {@code owned} make it. */
-    private SniperSpec spec(List<SniperPerk> owned) {
+    /** Whom it may shoot and how it picks, as the mechanics in {@code owned} make it. */
+    private SniperSpec spec(List<SniperMechanic> owned) {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
         SniperSpec spec = SniperSpec.from(view);
         Optional<TargetPriority> priority = this.upgrades().targeting();
         if (priority.isPresent()) {
             spec = spec.aimingAt(new SniperAim(priority.get().selector(view.cellSize()), priority.get().label()));
         }
-        for (SniperPerk perk : owned) {
-            spec = perk.refineSpec(spec);
+        for (SniperMechanic mechanic : owned) {
+            spec = mechanic.refineSpec(spec);
         }
         float deadZone = this.stats().value(TowerStat.DEAD_ZONE);
         if (deadZone > 0f) {
@@ -262,7 +262,7 @@ public final class SniperTower extends AbstractTower {
     public void doTick(int gameTime) {
         this.focus.advance();
         if (this.clock.isReady()) {
-            List<SniperPerk> owned = this.perks.all();
+            List<SniperMechanic> owned = this.mechanics.all();
             SniperSpec spec = this.spec(owned);
             this.currentTarget = this.findEnemy(spec);
             if (this.currentTarget != null) {
@@ -275,8 +275,8 @@ public final class SniperTower extends AbstractTower {
         }
     }
 
-    /** One shot: shaped by the owned perks, landed, settled and reacted to, and the wait that follows. */
-    private void fire(EnemyMob target, List<SniperPerk> owned) {
+    /** One shot: shaped by the owned mechanics, landed, settled and reacted to, and the wait that follows. */
+    private void fire(EnemyMob target, List<SniperMechanic> owned) {
         TowerStats stats = this.beginShot();
         AimLock lock = this.focus.lock(target, this.aimStackCap());
         ShotContext context = new ShotContext(target, lock, this.shotNumber(), this.rangeShareOf(target));
@@ -287,8 +287,8 @@ public final class SniperTower extends AbstractTower {
         if (stats.has(TowerCapability.MAGIC_DAMAGE)) {
             shot = shot.withType(DamageType.MAGIC);
         }
-        for (SniperPerk perk : owned) {
-            shot = perk.shape(shot, context);
+        for (SniperMechanic mechanic : owned) {
+            shot = mechanic.shape(shot, context);
         }
         this.shotInFlight = shot;
         this.statsInFlight = stats;
@@ -306,16 +306,16 @@ public final class SniperTower extends AbstractTower {
         this.clock.spend(rate / (rate + shot.attackSpeedBonus()));
     }
 
-    /** A shot that landed: the perks decide what it counts as, the procs hear of it, then the perks react. */
-    private void settle(ShotResult landed, SniperShot shot, List<SniperPerk> owned) {
+    /** A shot that landed: the mechanics decide what it counts as, the procs hear of it, then the mechanics react. */
+    private void settle(ShotResult landed, SniperShot shot, List<SniperMechanic> owned) {
         ShotResult result = landed;
-        for (SniperPerk perk : owned) {
-            result = perk.settle(result, this.actions);
+        for (SniperMechanic mechanic : owned) {
+            result = mechanic.settle(result, this.actions);
         }
         this.report(result.target(), HitKind.DIRECT, result.critical(), result.killed());
         this.lastShot = this.traceOf(shot, result.target(), result.critical());
-        for (SniperPerk perk : owned) {
-            perk.react(result, this.actions);
+        for (SniperMechanic mechanic : owned) {
+            mechanic.react(result, this.actions);
         }
     }
 
@@ -438,13 +438,13 @@ public final class SniperTower extends AbstractTower {
             states.add(TowerBuffState.of(TowerTerm.STEADY_AIM, TermText.join("; ", parts)).withStacks(stacks)
                     .withClock(this.focus.ticksUntilFade(), AimFocus.STACK_TICKS));
         }
-        this.perks.all().forEach(perk -> perk.condition().ifPresent(states::add));
+        this.mechanics.all().forEach(mechanic -> mechanic.condition().ifPresent(states::add));
         return states;
     }
 
     @Override
     protected String targetingLabel() {
-        return this.spec(this.perks.all()).chosenAim().label();
+        return this.spec(this.mechanics.all()).chosenAim().label();
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
@@ -462,7 +462,7 @@ public final class SniperTower extends AbstractTower {
     public record ShotTrace(float toX, float toY, boolean critical, DamageType type) {
     }
 
-    /** What the perks may make this tower do. */
+    /** What the mechanics may make this tower do. */
     private final class Actions implements ShotActions {
 
         @Override
