@@ -23,7 +23,8 @@ import java.util.function.Supplier;
 /**
  * The game's tooltips on the frame's popup layer. Opens one where the pointer rests on a target, chains one from a
  * target inside a tooltip, keeps them while the pointer is over a source or a tooltip and closes them all a moment
- * after it leaves; an open tooltip follows its key through new sheets.
+ * after it leaves; the pointer coming back to a source closes what that source opened. An open tooltip follows its
+ * key through new sheets.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public final class TooltipLayer {
@@ -79,9 +80,16 @@ public final class TooltipLayer {
 
             @Override
             public void mouseEntered(MouseEvent event) {
-                TooltipLayer.this.closeTimer.stop();
+                TooltipLayer.this.enteredAt(depth);
             }
         });
+    }
+
+    /** The pointer is back on a source at {@code depth}: what it opened is no longer wanted. */
+    private void enteredAt(int depth) {
+        this.closeTimer.stop();
+        this.pending = null;
+        this.closeFrom(depth + 1);
     }
 
     /**
@@ -180,7 +188,7 @@ public final class TooltipLayer {
         this.openTimer.restart();
     }
 
-    private void openPending() {
+    void openPending() {
         Pending request = this.pending;
         if (request == null) {
             return;
@@ -200,7 +208,7 @@ public final class TooltipLayer {
         MouseAdapter keepOpen = new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent event) {
-                TooltipLayer.this.closeTimer.stop();
+                TooltipLayer.this.enteredAt(request.depth() + 1);
             }
 
             @Override
