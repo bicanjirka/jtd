@@ -26,6 +26,6 @@ public final class ModePerk implements PulsePerk {
 
     @Override
     public TermText describe() {
-        return TermText.of(this.mode.describe());
+        return this.mode.describe();
     }
 }

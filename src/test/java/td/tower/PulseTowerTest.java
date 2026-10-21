@@ -13,7 +13,6 @@ import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.tower.pulse.FieldMode;
-import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 import td.wave.PathNormal;
@@ -634,8 +633,8 @@ class PulseTowerTest {
     void stasisSaysWhatItDoes() {
         PulseTower tower = new PulseTower(this.context, 0, 0);
 
-        assertThat(tower.bonusesOf(UpgradePaths.named(tower, "Stasis"))).contains(new UpgradeBonus(
-                "An enemy at full Toll is Dazed for 1s and Stilled: while the Daze holds it loses a Toll stack every "
-                + "0.25s; a Daze that doesn't take hold costs nothing and is tried again a second later", ""));
+        assertThat(td.fixtures.TowerFixtures.plain(tower.wordsOf(UpgradePaths.named(tower, "Stasis")).sentences()))
+                .contains("an enemy at full Toll gains Daze for 1 s and Stasis: while both hold, it loses a stack of "
+                        + "Toll every 0.25 s; a Daze that doesn't take hold costs nothing and is tried again a second later");
     }
 }

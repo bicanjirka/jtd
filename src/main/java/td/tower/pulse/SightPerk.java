@@ -2,8 +2,8 @@ package td.tower.pulse;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
 import java.util.Set;
@@ -25,6 +25,7 @@ public final class SightPerk implements PulsePerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("enemies inside are revealed to every tower, and for " + PerkText.seconds(REVEAL_TICKS) + " after they leave");
+        return TermText.of("enemies inside gain ").plus(EffectKind.REVEALED)
+                .plus(" for every tower, and keep it " + TermNumbers.seconds(REVEAL_TICKS / (float) TickRate.TICKS_PER_SECOND) + " after they leave");
     }
 }
