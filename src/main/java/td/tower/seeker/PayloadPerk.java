@@ -1,6 +1,9 @@
 package td.tower.seeker;
 
+import td.term.Term;
 import td.tower.upgrade.PerkText;
+
+import java.util.Set;
 
 /** A Mixed Payloads node: every third missile may carry one more payload. */
 public final class PayloadPerk implements SeekerPerk {
@@ -14,6 +17,11 @@ public final class PayloadPerk implements SeekerPerk {
     @Override
     public SeekerSpec refineSpec(SeekerSpec spec) {
         return spec.withPayloads(spec.payloads().with(this.payload));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.copyOf(this.payload.applies());
     }
 
     @Override

@@ -1,11 +1,13 @@
 package td.tower.seeker;
 
 import td.effect.EffectKind;
+import td.term.Term;
 import td.tower.BehaviourLine;
 import td.tower.BehaviourMarker;
 import td.tower.upgrade.PerkText;
 
 import java.util.Optional;
+import java.util.Set;
 
 /** Arcane Warhead: every impact Unravels its target, twice over if it was already frozen or chilled. */
 public final class ArcaneWarheadPerk implements SeekerPerk {
@@ -20,6 +22,11 @@ public final class ArcaneWarheadPerk implements SeekerPerk {
     @Override
     public Optional<BehaviourLine> behaviour() {
         return Optional.of(new BehaviourLine(BehaviourMarker.TARGETING, "Impact applies", "unraveled, " + PerkText.times(CONTROLLED_STACKS) + " if frozen or chilled"));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.UNRAVELED);
     }
 
     @Override

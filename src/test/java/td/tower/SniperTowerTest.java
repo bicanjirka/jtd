@@ -881,4 +881,15 @@ class SniperTowerTest {
                 "A crit or a kill bounces to the nearest enemy within 1.5 cells for 60%, up to 3 bounces, "
                 + "each can crit", ""));
     }
+
+    @Test
+    void hollowPointMakesTheSniperApplyVulnerable() {
+        GameWorld world = boardWorld();
+        SniperTower tower = sniperWith(world, "Marksman's Eye", "Hollow Point");
+
+        assertThat(tower.applies()).singleElement().satisfies(applied -> {
+            assertThat(applied.term()).isEqualTo(td.effect.EffectKind.VULNERABLE);
+            assertThat(applied.sources()).extracting(AppliedEffect.Source::name).containsExactly("Hollow Point");
+        });
+    }
 }

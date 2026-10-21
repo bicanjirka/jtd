@@ -1,6 +1,10 @@
 package td.tower.mortar;
 
+import td.effect.EffectKind;
+import td.term.Term;
 import td.tower.upgrade.PerkText;
+
+import java.util.Set;
 
 /** Heavy Shell: what the shell lands within half a cell of is Dazed. */
 public final class HeavyShellPerk implements MortarPerk {
@@ -11,6 +15,11 @@ public final class HeavyShellPerk implements MortarPerk {
     @Override
     public MortarSpec refineSpec(MortarSpec spec) {
         return spec.withDaze(DazeSpec.of(DAZE_TICKS, DAZE_RADIUS_CELLS));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.DAZED);
     }
 
     @Override

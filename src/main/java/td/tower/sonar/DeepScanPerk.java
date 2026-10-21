@@ -1,7 +1,11 @@
 package td.tower.sonar;
 
+import td.effect.EffectKind;
+import td.term.Term;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
+
+import java.util.Set;
 
 /** Deep Scan: every revolution reveals the invisible enemies in the outer quarter of the range. */
 public final class DeepScanPerk implements SonarPerk {
@@ -12,6 +16,11 @@ public final class DeepScanPerk implements SonarPerk {
     @Override
     public void onRevolution(Revolution revolution, SonarActions actions) {
         actions.revealHiddenBeyond(OUTER_QUARTER_FROM, Math.round(REVEAL_SECONDS * TickRate.TICKS_PER_SECOND));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.REVEALED);
     }
 
     @Override

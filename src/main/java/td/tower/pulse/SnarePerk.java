@@ -1,7 +1,11 @@
 package td.tower.pulse;
 
+import td.effect.EffectKind;
+import td.term.Term;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
+
+import java.util.Set;
 
 /** Snare: an enemy is Dazed when it gains its first Toll stack of a visit. */
 public final class SnarePerk implements PulsePerk {
@@ -11,6 +15,11 @@ public final class SnarePerk implements PulsePerk {
     @Override
     public PulseSpec refineSpec(PulseSpec spec) {
         return spec.withVisit(spec.visit().dazing(DAZE_TICKS));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.DAZED);
     }
 
     @Override

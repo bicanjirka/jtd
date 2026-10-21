@@ -604,6 +604,19 @@ public final class PulseTower extends AbstractTower {
     }
 
     @Override
+    protected List<AppliedEffect> baseApplies() {
+        PulseSpec spec = this.spec(this.perks.all());
+        return List.of(new AppliedEffect(EffectKind.DRAGGED, List.of(new AppliedEffect.Source(this.displayName(),
+                TermText.of("enemies inside gain ").plus(EffectKind.DRAGGED)
+                        .plus(" of " + spec.hold().dragAt(FieldStrength.FULL, 1f) + "%")))));
+    }
+
+    @Override
+    protected String targetingLabel() {
+        return "all in range";
+    }
+
+    @Override
     protected List<BehaviourLine> behaviours() {
         PulseSpec spec = this.spec(this.perks.all());
         List<BehaviourLine> lines = new ArrayList<>();

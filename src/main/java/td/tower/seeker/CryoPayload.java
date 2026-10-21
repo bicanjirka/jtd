@@ -1,8 +1,11 @@
 package td.tower.seeker;
 
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
 import td.tower.TowerTerm;
+
+import java.util.Set;
 
 /** Cryo: the missile freezes, as a plain one does. */
 public final class CryoPayload implements Payload {
@@ -15,6 +18,11 @@ public final class CryoPayload implements Payload {
     @Override
     public TowerTerm term() {
         return TowerTerm.CRYO_MISSILE;
+    }
+
+    @Override
+    public Set<EffectKind> applies() {
+        return Set.of(EffectKind.FREEZE);
     }
 
     @Override

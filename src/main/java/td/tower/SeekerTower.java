@@ -54,6 +54,7 @@ import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
+import td.tower.upgrade.PerkText;
 import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -481,6 +482,18 @@ public final class SeekerTower extends AbstractTower {
                 .flatMap(node -> this.countingNode(node.id(), this.missilesLaunched % PayloadPlan.EVERY,
                         PayloadPlan.EVERY).stream())
                 .toList();
+    }
+
+    @Override
+    protected List<AppliedEffect> baseApplies() {
+        return List.of(new AppliedEffect(EffectKind.FREEZE, List.of(new AppliedEffect.Source(this.displayName(),
+                TermText.of("each missile applies ").plus(EffectKind.FREEZE)
+                        .plus(" for " + PerkText.seconds(this.freezeTicks()))))));
+    }
+
+    @Override
+    protected String targetingLabel() {
+        return this.spec(this.perks.all()).aim().label();
     }
 
     @Override

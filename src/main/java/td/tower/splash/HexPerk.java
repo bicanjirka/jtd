@@ -1,6 +1,9 @@
 package td.tower.splash;
 
+import td.term.Term;
 import td.tower.upgrade.PerkText;
+
+import java.util.Set;
 
 /**
  * A node that adds a hex to the Hexer's pool, and may also make a cast curse more enemies at once.
@@ -35,6 +38,11 @@ public final class HexPerk implements SplashPerk {
     @Override
     public SplashSpec refineSpec(SplashSpec spec) {
         return spec.withHexes(spec.hexes().withHex(this.hex).withCursesPerCast(this.cursesPerCast));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(this.hex.kind());
     }
 
     @Override

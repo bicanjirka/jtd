@@ -1,8 +1,11 @@
 package td.tower.seeker;
 
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
 import td.tower.TowerTerm;
+
+import java.util.Set;
 
 /**
  * What a missile carries besides its damage. Stateless: which missile carries which is the
@@ -21,6 +24,9 @@ public interface Payload {
 
     /** Its name and what it does to the target: {@code "EMP: strips shields and heals and Silences 2s"}. */
     String describe();
+
+    /** The terms the missile carrying it puts on its target. */
+    Set<EffectKind> applies();
 
     /** Whether the missile freezes its target. */
     default boolean freezes() {

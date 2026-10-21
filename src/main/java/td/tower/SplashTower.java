@@ -742,6 +742,11 @@ public final class SplashTower extends AbstractTower {
     }
 
     @Override
+    protected String targetingLabel() {
+        return this.spec(this.perks.all()).blast().aimsAtCrowds() ? "most crowded" : "random";
+    }
+
+    @Override
     protected List<BehaviourLine> behaviours() {
         SplashSpec spec = this.spec(this.perks.all());
         List<BehaviourLine> lines = new ArrayList<>();

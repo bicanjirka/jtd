@@ -2,8 +2,11 @@ package td.tower.pulse;
 
 import td.effect.EffectKind;
 import td.stat.EnemyStat;
+import td.term.Term;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
+
+import java.util.Set;
 
 /** Arc Discharge: once a second a zap Condemns the strongest visible enemy in the field, a stack at a time. */
 public final class ArcDischargePerk implements PulsePerk {
@@ -13,6 +16,11 @@ public final class ArcDischargePerk implements PulsePerk {
     @Override
     public PulseSpec refineSpec(PulseSpec spec) {
         return spec.withZap(ZapSpec.marking(MARK_TICKS));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.PRIORITY, EffectKind.CONDEMNED);
     }
 
     @Override

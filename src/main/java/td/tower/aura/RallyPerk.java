@@ -1,7 +1,11 @@
 package td.tower.aura;
 
+import td.term.Term;
+import td.tower.TowerTerm;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
+
+import java.util.Set;
 
 /** Rally: an enemy on the path spot nearest the aura rallies the towers it buffs. */
 public final class RallyPerk implements AuraPerk {
@@ -12,6 +16,11 @@ public final class RallyPerk implements AuraPerk {
     @Override
     public AuraSpec refineSpec(AuraSpec spec) {
         return spec.rallying(RALLY);
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(TowerTerm.RALLY);
     }
 
     @Override

@@ -5,6 +5,8 @@ import td.enemy.EnemyMob;
 import td.projectile.MissileLook;
 import td.tower.TowerTerm;
 
+import java.util.Set;
+
 /** Arcane: the missile Unravels its target instead of freezing it; a stronger one leaves two stacks. */
 public final class ArcanePayload implements Payload {
 
@@ -16,6 +18,11 @@ public final class ArcanePayload implements Payload {
     @Override
     public TowerTerm term() {
         return TowerTerm.ARCANE_MISSILE;
+    }
+
+    @Override
+    public Set<EffectKind> applies() {
+        return Set.of(EffectKind.UNRAVELED);
     }
 
     @Override

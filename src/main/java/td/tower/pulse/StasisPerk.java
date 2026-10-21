@@ -1,7 +1,11 @@
 package td.tower.pulse;
 
+import td.effect.EffectKind;
+import td.term.Term;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
+
+import java.util.Set;
 
 /** Stasis: an enemy reaching full Toll is Dazed, and pays for it in Toll while the Daze holds. */
 public final class StasisPerk implements PulsePerk {
@@ -12,6 +16,11 @@ public final class StasisPerk implements PulsePerk {
     @Override
     public PulseSpec refineSpec(PulseSpec spec) {
         return spec.withHold(spec.hold().stilling(STASIS_TICKS, TICKS_PER_TOLL));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.DAZED, EffectKind.STILLED);
     }
 
     @Override

@@ -442,6 +442,11 @@ public final class SniperTower extends AbstractTower {
     }
 
     @Override
+    protected String targetingLabel() {
+        return this.spec(this.perks.all()).chosenAim().label();
+    }
+
+    @Override
     protected List<BehaviourLine> behaviours() {
         List<BehaviourLine> lines = new ArrayList<>();
         lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Targets", this.spec(this.perks.all()).chosenAim().label()));

@@ -4,7 +4,10 @@ import td.effect.ActiveEffects;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.stat.EnemyStat;
+import td.term.Term;
 import td.tower.upgrade.PerkText;
+
+import java.util.Set;
 
 /** Resonant Crack: every hit takes resilience, which comes back a little at a time. */
 public final class ResonantCrackPerk implements SonarPerk {
@@ -19,6 +22,11 @@ public final class ResonantCrackPerk implements SonarPerk {
         boolean faultLine = result.spec().faultLine();
         actions.apply(result.target(), sink -> faultLine ? Effect.fractured(1, sink).withFaultLine()
                 : Effect.fractured(1, sink));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.FRACTURED);
     }
 
     @Override

@@ -6,6 +6,8 @@ import td.stat.EnemyStat;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
+import java.util.Set;
+
 /** A rule that holds while an enemy is inside the field. */
 public enum FieldMode {
     /** Every enemy inside is Silenced. */
@@ -31,6 +33,18 @@ public enum FieldMode {
     /** What the rule does, lower-case first: {@code "enemies inside are Silenced, and for 2s after they leave"}. */
     public String describe() {
         return this.lingers() ? this.rule() + ", and for " + PerkText.seconds(LINGER_TICKS) + " after they leave" : this.rule();
+    }
+
+    /** The effects the rule puts on the enemies inside. */
+    public Set<EffectKind> applies() {
+        return switch (this) {
+            case SILENCE -> Set.of(EffectKind.SILENCED);
+            case DEAD_ZONE -> Set.of(EffectKind.DEAD_ZONE);
+            case CORROSION -> Set.of(EffectKind.CORRODED);
+            case UNDERTOW -> Set.of(EffectKind.ANCHORED, EffectKind.UNDERTOW);
+            case FRAIL -> Set.of(EffectKind.FRAIL);
+            case SOUL_DRAIN, PURGE -> Set.of();
+        };
     }
 
     /** Whether the rule holds an effect on the enemies inside, which outlasts their leaving. */

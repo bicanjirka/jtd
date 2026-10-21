@@ -1,6 +1,10 @@
 package td.tower.pulse;
 
+import td.term.Term;
+import td.tower.TowerTerm;
 import td.tower.upgrade.PerkText;
+
+import java.util.Set;
 
 /** Ley Line: the field casts a beam to another field, and an enemy on it gets both fields' rules. */
 public final class LeyLinePerk implements PulsePerk {
@@ -11,6 +15,11 @@ public final class LeyLinePerk implements PulsePerk {
     @Override
     public PulseSpec refineSpec(PulseSpec spec) {
         return spec.withLine(new LineSpec(REACH_CELLS, BAND_CELLS));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(TowerTerm.LEY_LINE);
     }
 
     @Override

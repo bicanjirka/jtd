@@ -1,6 +1,8 @@
 package td.tower.sonar;
 
 import td.effect.Effect;
+import td.effect.EffectKind;
+import td.term.Term;
 import td.tower.BehaviourLine;
 import td.tower.BehaviourMarker;
 import td.tower.targeting.InRangeTargetQuery;
@@ -9,6 +11,7 @@ import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Wide Band: the beam reaches invisible enemies too, reveals every one it hits to all towers, and
@@ -38,6 +41,11 @@ public final class WideBandPerk implements SonarPerk {
     @Override
     public Optional<BehaviourLine> behaviour() {
         return Optional.of(new BehaviourLine(BehaviourMarker.REVEAL, "Reveals", "hidden it passes"));
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.REVEALED, EffectKind.EXPOSED);
     }
 
     @Override

@@ -1,7 +1,11 @@
 package td.tower.splash;
 
+import td.effect.EffectKind;
+import td.term.Term;
 import td.tower.upgrade.PerkText;
 import td.util.TickRate;
+
+import java.util.Set;
 
 /** Thunderstrike: every sixth shot calls lightning onto the healthiest enemy in range. */
 public final class ThunderstrikePerk implements SplashPerk {
@@ -12,6 +16,11 @@ public final class ThunderstrikePerk implements SplashPerk {
     @Override
     public SplashShot shape(SplashShot shot, ShotContext context) {
         return context.shotNumber() % INTERVAL == 0 ? shot.withThunderstrike(FACTOR) : shot;
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.DAZED);
     }
 
     @Override

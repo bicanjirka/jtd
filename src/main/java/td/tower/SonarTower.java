@@ -363,6 +363,11 @@ public final class SonarTower extends AbstractTower {
     }
 
     @Override
+    protected String targetingLabel() {
+        return this.spec(this.perks.all()).beam().phased() ? "most health" : "all it sweeps";
+    }
+
+    @Override
     protected List<BehaviourLine> behaviours() {
         SonarSpec spec = this.spec(this.perks.all());
         List<BehaviourLine> lines = new ArrayList<>();
