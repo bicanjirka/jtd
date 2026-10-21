@@ -3,6 +3,7 @@ package td.tower.sonar;
 import td.effect.EffectKind;
 import td.term.Term;
 import td.term.TermText;
+import td.tower.TowerTerm;
 
 import java.util.Set;
 
@@ -21,6 +22,7 @@ public final class PingPerk implements SonarPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("Ping: each revolution Exposes the healthiest enemy the beam passes, until the next pass");
+        return TermText.of("each revolution, ").plus(TowerTerm.PING).plus(" applies ").plus(EffectKind.EXPOSED)
+                .plus(" to the enemy with the most health the beam passes, until the next pass");
     }
 }

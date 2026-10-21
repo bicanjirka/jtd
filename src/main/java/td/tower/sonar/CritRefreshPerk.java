@@ -16,6 +16,6 @@ public final class CritRefreshPerk implements SonarPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("a beam crit refreshes Exposed on its target");
+        return TermText.of("a beam crit renews ").plus(EffectKind.EXPOSED).plus(" on its target");
     }
 }

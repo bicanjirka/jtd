@@ -3,12 +3,12 @@ package td.tower.sonar;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.BehaviourLine;
 import td.tower.BehaviourMarker;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.Viewpoint;
-import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
 import java.util.Optional;
@@ -51,7 +51,9 @@ public final class WideBandPerk implements SonarPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("the beam reveals invisible enemies it passes to every tower, Exposed for "
-                + PerkText.seconds(Math.round(EXPOSE_SECONDS * TickRate.TICKS_PER_SECOND)));
+        return TermText.of("the beam applies ").plus(EffectKind.REVEALED)
+                .plus(" for " + TermNumbers.seconds(REVEAL_SECONDS) + " and ").plus(EffectKind.EXPOSED)
+                .plus(" for " + TermNumbers.seconds(EXPOSE_SECONDS) + " to every enemy with ")
+                .plus(EffectKind.INVISIBLE).plus(" it passes");
     }
 }
