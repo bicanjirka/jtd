@@ -119,7 +119,7 @@ class UpgradeSheetTextTest {
         List<SheetLine> rows = sheet.lines().subList(sheet.lines().indexOf(new SheetLine.Gap()) + 1, sheet.lines().size());
         assertThat(rows).hasSize(executioner.bonuses().size() + 1);
         assertThat(rows.getLast()).isEqualTo(Row.plain(Glyph.DOT,
-                "A non-boss enemy left under 15% health by a shot dies; executions count as crits", ""));
+                "A shot that leaves an enemy other than a boss under 15% health kills it; an execution counts as a crit", ""));
     }
 
     @Test

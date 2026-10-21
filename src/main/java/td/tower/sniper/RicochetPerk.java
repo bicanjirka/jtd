@@ -1,7 +1,7 @@
 package td.tower.sniper;
 
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
 
 /** Ricochet: a crit or a kill bounces on to the enemies beside the target. */
 public final class RicochetPerk implements SniperPerk {
@@ -19,7 +19,8 @@ public final class RicochetPerk implements SniperPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("a crit or a kill bounces to the nearest enemy within " + PerkText.cells(BOUNCE_RADIUS_CELLS) + " cells for "
-                + PerkText.percent(SHARE) + ", up to " + BOUNCES + " bounces, each can crit");
+        return TermText.of("a crit or a kill bounces to the nearest enemy within " + TermNumbers.cells(BOUNCE_RADIUS_CELLS)
+                + " for " + TermNumbers.percent(SHARE) + " of the damage, up to " + BOUNCES
+                + " bounces; each bounce can crit");
     }
 }

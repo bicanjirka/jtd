@@ -15,6 +15,6 @@ public final class WeakSpotPerk implements SniperPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("Weak Spot: non-crit shots ignore plating, insulation and " + Math.round(ARMOR_IGNORED) + " armor");
+        return TermText.of("a shot that doesn't crit ignores plating, insulation and " + Math.round(ARMOR_IGNORED) + " armor");
     }
 }
