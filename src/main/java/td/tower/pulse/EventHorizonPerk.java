@@ -1,7 +1,8 @@
 package td.tower.pulse;
 
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
+import td.tower.TowerTerm;
 
 /** Event Horizon: each death inside widens the field by a tenth of its range until the wave ends. */
 public final class EventHorizonPerk implements PulsePerk {
@@ -16,7 +17,8 @@ public final class EventHorizonPerk implements PulsePerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("each death inside widens the field by " + PerkText.percent(PER_DEATH) + " of its range until the wave ends, up to "
-                + PerkText.times(1f + MAX) + " its range");
+        return TermText.of("each death inside adds a stack of ").plus(TowerTerm.EVENT_HORIZON)
+                .plus(": the field widens by " + TermNumbers.percent(PER_DEATH)
+                        + " of its range until the wave ends, up to " + TermNumbers.times(1f + MAX) + " its range");
     }
 }

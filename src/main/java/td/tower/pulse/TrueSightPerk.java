@@ -2,8 +2,8 @@ package td.tower.pulse;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
 import java.util.Set;
@@ -25,7 +25,7 @@ public final class TrueSightPerk implements PulsePerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("the reveal lasts " + PerkText.seconds(REVEAL_TICKS) + " after an enemy leaves, and while it lasts the "
-                + "enemy can't be shrouded or fade");
+        return TermText.format("{} lasts " + TermNumbers.seconds(REVEAL_TICKS / (float) TickRate.TICKS_PER_SECOND) + " after an enemy leaves, and the enemy gains {} while it does",
+                EffectKind.REVEALED, EffectKind.UNVEILED);
     }
 }

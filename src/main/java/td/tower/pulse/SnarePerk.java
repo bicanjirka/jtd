@@ -2,8 +2,8 @@ package td.tower.pulse;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
 import java.util.Set;
@@ -25,6 +25,8 @@ public final class SnarePerk implements PulsePerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("an enemy is Dazed for " + PerkText.seconds(DAZE_TICKS) + " when it gains its first Toll stack, once per visit");
+        return TermText.of("an enemy gains ").plus(EffectKind.DAZED)
+                .plus(" for " + TermNumbers.seconds(DAZE_TICKS / (float) TickRate.TICKS_PER_SECOND) + " with its first stack of ").plus(EffectKind.TOLL)
+                .plus(", once per visit");
     }
 }

@@ -3,7 +3,8 @@ package td.tower.pulse;
 import td.effect.EffectKind;
 import td.effect.FieldStrength;
 import td.stat.EnemyStat;
-import td.tower.upgrade.PerkText;
+import td.term.TermNumbers;
+import td.term.TermText;
 import td.util.TickRate;
 
 import java.util.Set;
@@ -30,9 +31,15 @@ public enum FieldMode {
     /** How long a rule the field holds on an enemy lasts after the enemy leaves it, at neutral spirit. */
     public static final int LINGER_TICKS = Math.round(2f * TickRate.TICKS_PER_SECOND);
 
-    /** What the rule does, lower-case first: {@code "enemies inside are Silenced, and for 2s after they leave"}. */
-    public String describe() {
-        return this.lingers() ? this.rule() + ", and for " + PerkText.seconds(LINGER_TICKS) + " after they leave" : this.rule();
+    /** What the rule does, lower-case first: {@code "enemies inside gain [Silence], and keep it 2 s after they leave"}. */
+    public TermText describe() {
+        TermText rule = this.rule();
+        if (!this.lingers()) {
+            return rule;
+        }
+        String them = this.applies().size() > 1 ? "them" : "it";
+        return rule.plus(", and keep " + them + " "
+                + TermNumbers.seconds(LINGER_TICKS / (float) TickRate.TICKS_PER_SECOND) + " after they leave");
     }
 
     /** The effects the rule puts on the enemies inside. */
@@ -55,19 +62,25 @@ public enum FieldMode {
         };
     }
 
-    private String rule() {
+    private TermText rule() {
         return switch (this) {
-            case SILENCE -> "enemies inside are Silenced";
-            case DEAD_ZONE -> "nothing inside can be healed or shielded";
-            case CORROSION -> "armor and magic resist " + resistAt(FieldStrength.ENTRY) + " on entry, "
-                    + resistAt(FieldStrength.FULL) + " at full Toll, stopping at 0";
-            case UNDERTOW -> "enemies inside are Anchored, and the drag counts as a chill for a freeze";
-            case FRAIL -> "enemies inside take +" + PerkText.percent(damageTakenAt(FieldStrength.ENTRY))
-                    + " damage from every source on entry, +" + PerkText.percent(damageTakenAt(FieldStrength.FULL))
-                    + " at full Toll";
-            case SOUL_DRAIN -> "each second inside costs " + SOUL_DRAIN_SPIRIT_PER_SECOND + " spirit, so every debuff on "
-                    + "the enemy, the field's own included, wears off slower and heals land weaker";
-            case PURGE -> "an enemy loses every buff and shield as it comes in";
+            case SILENCE -> TermText.of("enemies inside gain ").plus(EffectKind.SILENCED);
+            case DEAD_ZONE -> TermText.of("enemies inside gain ").plus(EffectKind.DEAD_ZONE);
+            case CORROSION -> TermText.of("enemies inside gain ").plus(EffectKind.CORRODED)
+                    .plus(": " + TermNumbers.signed(resistAt(FieldStrength.ENTRY)) + " armor and magic resist on entry, "
+                            + TermNumbers.signed(resistAt(FieldStrength.FULL)) + " at full ")
+                    .plus(EffectKind.TOLL).plus(", stopping at 0");
+            case UNDERTOW -> TermText.of("enemies inside gain ").plus(EffectKind.ANCHORED).plus(" and ")
+                    .plus(EffectKind.UNDERTOW);
+            case FRAIL -> TermText.of("enemies inside gain ").plus(EffectKind.FRAIL)
+                    .plus(": " + TermNumbers.signedPercent(damageTakenAt(FieldStrength.ENTRY))
+                            + " damage taken from every source on entry, "
+                            + TermNumbers.signedPercent(damageTakenAt(FieldStrength.FULL)) + " at full ")
+                    .plus(EffectKind.TOLL);
+            case SOUL_DRAIN -> TermText.of("each second inside costs " + SOUL_DRAIN_SPIRIT_PER_SECOND
+                    + " spirit, so every debuff on the enemy, the field's own included, wears off slower and heals land weaker");
+            case PURGE -> TermText.of("an enemy loses every buff and ").plus(EffectKind.SHIELD)
+                    .plus(" as it comes in");
         };
     }
 
