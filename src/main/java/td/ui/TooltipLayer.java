@@ -36,11 +36,13 @@ public final class TooltipLayer {
     private final JLayeredPane layer;
     private final Timer openTimer = new Timer(OPEN_DELAY_MS, event -> this.openPending());
     private final Timer closeTimer = new Timer(CLOSE_DELAY_MS, event -> this.closeAll());
+    private final Timer childCloseTimer = new Timer(CLOSE_DELAY_MS, event -> this.closeIdleChildren());
     private final Map<SheetPane, Integer> paneDepths = new IdentityHashMap<>();
     private final Map<Component, Supplier<Optional<SheetTooltip>>> buttons = new IdentityHashMap<>();
     private final List<Open> opened = new ArrayList<>();
     private TooltipChain chain = TooltipChain.empty();
     private Pending pending;
+    private int idleDepth;
 
     /** What a tooltip is about and where it opens from: a target in a pane, or a button. */
     private record Pending(int depth, SheetTooltip tooltip, Component source, Rectangle anchor) {
@@ -54,6 +56,7 @@ public final class TooltipLayer {
         this.layer = layer;
         this.openTimer.setRepeats(false);
         this.closeTimer.setRepeats(false);
+        this.childCloseTimer.setRepeats(false);
     }
 
     /** A pane whose sheet can change; it is the depth-0 source of the tooltips its targets open. */
@@ -88,6 +91,7 @@ public final class TooltipLayer {
     /** The pointer is back on a source at {@code depth}: what it opened is no longer wanted. */
     private void enteredAt(int depth) {
         this.closeTimer.stop();
+        this.childCloseTimer.stop();
         this.pending = null;
         this.closeFrom(depth + 1);
     }
@@ -164,6 +168,7 @@ public final class TooltipLayer {
     private void paneMoved(SheetPane pane, MouseEvent event) {
         Optional<HoverTarget> target = pane.hoverAt(event.getPoint());
         pane.highlight(target);
+        this.watchChild(this.paneDepths.get(pane) + 1, target);
         if (target.isEmpty()) {
             this.openTimer.stop();
             this.pending = null;
@@ -176,6 +181,27 @@ public final class TooltipLayer {
         Rectangle anchor = SwingUtilities.convertRectangle(pane, hovered.bounds(), this.layer);
         this.pending = new Pending(this.paneDepths.get(pane), new SheetTooltip(hovered.key(), hovered.sheet()), pane, anchor);
         this.openTimer.restart();
+    }
+
+    /**
+     * The pointer is on a source whose tooltip is open at {@code depth}: while it is on what opened it, the tooltip
+     * stays; off it, the tooltip closes a moment later unless the pointer reaches it or comes back.
+     */
+    private void watchChild(int depth, Optional<HoverTarget> target) {
+        boolean open = this.opened.stream().anyMatch(shown -> shown.depth() == depth);
+        boolean onIt = target.isPresent() && this.opened.stream()
+                .anyMatch(shown -> shown.depth() == depth && shown.key().equals(target.get().key()));
+        if (!open || onIt) {
+            this.childCloseTimer.stop();
+        } else if (!this.childCloseTimer.isRunning()) {
+            this.idleDepth = depth;
+            this.childCloseTimer.start();
+        }
+    }
+
+    /** The pointer stayed off what opened the tooltips at {@code idleDepth}: they and what they chained close. */
+    void closeIdleChildren() {
+        this.closeFrom(this.idleDepth);
     }
 
     private void buttonEntered(HudButton button) {

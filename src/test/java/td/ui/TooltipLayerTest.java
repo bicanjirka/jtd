@@ -104,4 +104,34 @@ class TooltipLayerTest {
 
         assertThat(this.popups()).containsExactly(first);
     }
+
+    @Test
+    void thePointerLeavingWhatOpenedATooltipForOtherPartsOfItsSourceClosesItAfterTheGrace() throws BadLocationException {
+        SheetPane pane = this.paneWithOneIcon();
+        move(pane, firstIconCentre(pane));
+        this.tooltips.openPending();
+
+        move(pane, new Point(2, 2));
+        this.tooltips.closeIdleChildren();
+
+        assertThat(this.popups()).isEmpty();
+    }
+
+    @Test
+    void thePointerLeavingTheMentionForOtherTextOfItsTooltipClosesTheChainedOne() throws BadLocationException {
+        SheetPane pane = this.paneWithOneIcon();
+        move(pane, firstIconCentre(pane));
+        this.tooltips.openPending();
+        TooltipPanel first = (TooltipPanel) this.popups().getFirst();
+        SheetPane inner = first.pane();
+        inner.setSize(inner.getWidth(), inner.getPreferredSize().height);
+        move(inner, hoverablePoint(inner));
+        this.tooltips.openPending();
+        assertThat(this.popups()).hasSize(2);
+
+        move(inner, new Point(1, 1));
+        this.tooltips.closeIdleChildren();
+
+        assertThat(this.popups()).containsExactly(first);
+    }
 }
