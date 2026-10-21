@@ -9,7 +9,6 @@ import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
-import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.util.GameWorld;
@@ -632,9 +631,9 @@ class CinderTowerTest {
     void combustionSaysWhatItDoes() {
         CinderTower tower = new CinderTower(this.context, 0, 0);
 
-        assertThat(tower.bonusesOf(UpgradePaths.named(tower, "Combustion"))).contains(new UpgradeBonus(
-                "A burn that grows hotter than a single wave could make it bursts for 50% of what it has left onto enemies "
-                        + "within 1 cell, and can burst again once it has cooled to half", ""));
+        assertThat(td.fixtures.TowerFixtures.plain(tower.wordsOf(UpgradePaths.named(tower, "Combustion")).sentences()))
+                .contains("a Burn that grows hotter than one wave could make it bursts for 50% of what it has left "
+                        + "onto enemies within 1 cell, and can burst again once it has cooled to half");
     }
 
     @Test

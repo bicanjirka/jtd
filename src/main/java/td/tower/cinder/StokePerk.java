@@ -1,6 +1,8 @@
 package td.tower.cinder;
 
+import td.effect.EffectKind;
 import td.term.TermText;
+import td.tower.TowerTerm;
 
 /** Attune's Stoke: a wave on an enemy already burning from this Cinder raises its burn, up to three times. */
 public final class StokePerk implements CinderPerk {
@@ -14,7 +16,8 @@ public final class StokePerk implements CinderPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("Stoke: a wave on an enemy already burning from this tower raises its burn a step, up to " + MAX_STEPS
-                + " times; the stacks go when the burn ends");
+        return TermText.of("a wave on an enemy with this tower's ").plus(EffectKind.BURN).plus(" raises its ")
+                .plus(TowerTerm.STOKE).plus(" a step, up to " + MAX_STEPS + "; ").plus(TowerTerm.STOKE)
+                .plus(" goes when that ").plus(EffectKind.BURN).plus(" ends");
     }
 }

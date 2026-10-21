@@ -1,7 +1,9 @@
 package td.tower.cinder;
 
+import td.effect.EffectKind;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
+import td.util.TickRate;
 
 /** Lingering Flames: each wave leaves a patch of burning ground where its target stands, for two seconds. */
 public final class LingeringFlamesPerk implements CinderPerk {
@@ -16,6 +18,7 @@ public final class LingeringFlamesPerk implements CinderPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("each wave leaves a patch of burning ground where its target stands, for " + PerkText.seconds(TICKS));
+        return TermText.of("each wave leaves flames where its target stands for "
+                + TermNumbers.seconds(TICKS / (float) TickRate.TICKS_PER_SECOND) + " that apply ").plus(EffectKind.BURN);
     }
 }

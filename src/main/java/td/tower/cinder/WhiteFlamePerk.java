@@ -12,6 +12,6 @@ public final class WhiteFlamePerk implements CinderPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("the flame burns white");
+        return TermText.of("the flame turns white");
     }
 }

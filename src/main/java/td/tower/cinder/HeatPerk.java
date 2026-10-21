@@ -1,10 +1,11 @@
 package td.tower.cinder;
 
+import td.effect.EffectKind;
 import td.stat.EnemyStat;
 import td.stat.StatModifier;
 import td.stat.StatModifiers;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
 
 /** Heat: burning enemies take 20% more damage over time from every source. */
 public final class HeatPerk implements CinderPerk {
@@ -18,6 +19,7 @@ public final class HeatPerk implements CinderPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("burning enemies take +" + PerkText.percent(PERIODIC_DAMAGE_TAKEN) + " damage over time from every source");
+        return TermText.of("an enemy with ").plus(EffectKind.BURN)
+                .plus(" takes " + TermNumbers.signedPercent(PERIODIC_DAMAGE_TAKEN) + " damage over time from every source");
     }
 }

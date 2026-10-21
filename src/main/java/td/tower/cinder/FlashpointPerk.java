@@ -23,6 +23,6 @@ public final class FlashpointPerk implements CinderPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("a critical ignition also adds " + STACKS + " Scorched");
+        return TermText.of("a crit ignition also adds " + STACKS + " stacks of ").plus(EffectKind.SCORCHED);
     }
 }
