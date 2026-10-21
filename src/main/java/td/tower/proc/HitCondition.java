@@ -2,6 +2,7 @@ package td.tower.proc;
 
 import td.effect.EffectKind;
 import td.enemy.Rank;
+import td.tower.TowerTerm;
 
 import java.util.Arrays;
 import java.util.List;
@@ -43,7 +44,7 @@ public sealed interface HitCondition {
     }
 
     /** Once the tower's focus has built to {@code focus}. */
-    record FocusAtLeast(int focus) implements HitCondition {
+    record FocusAtLeast(TowerTerm counter, int focus) implements HitCondition {
         @Override
         public boolean holds(HitContext context) {
             return context.focus() >= this.focus;

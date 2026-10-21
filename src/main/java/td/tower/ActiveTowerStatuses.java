@@ -20,7 +20,7 @@ final class ActiveTowerStatuses {
      * its shots, times {@code buffLength} when it is lengthened.
      */
     void grant(TowerStatus status, int nowTick, float buffLength) {
-        int running = this.indexOf(status.id());
+        int running = this.indexOf(status.term());
         if (running >= 0 && status.keepsRunning()) {
             return;
         }
@@ -75,9 +75,9 @@ final class ActiveTowerStatuses {
         return all;
     }
 
-    private int indexOf(String id) {
+    private int indexOf(TowerTerm term) {
         for (int i = 0; i < this.held.size(); i++) {
-            if (this.held.get(i).status().id().equals(id)) {
+            if (this.held.get(i).status().term() == term) {
                 return i;
             }
         }

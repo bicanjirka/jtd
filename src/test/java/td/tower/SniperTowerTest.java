@@ -790,8 +790,8 @@ class SniperTowerTest {
         world.towers().add(tower);
         world.towers().add(aura);
         UpgradePaths.buy(aura, world, "Broadcast", "Broadcast II");
-        tower.grantStatus(TowerStatus.nextShots("frenzy", 3, TowerModifiers.attackSpeed(1f)).lengthenedByBuffs());
-        tower.grantStatus(TowerStatus.nextShots("one", 1, TowerModifiers.critChance(0.5f)));
+        tower.grantStatus(TowerStatus.nextShots(TowerTerm.FRENZY, 3, TowerModifiers.attackSpeed(1f)).lengthenedByBuffs());
+        tower.grantStatus(TowerStatus.nextShots(TowerTerm.PATIENCE, 1, TowerModifiers.critChance(0.5f)));
 
         for (int shot = 0; shot < 3; shot++) {
             tower.beginShot();

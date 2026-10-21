@@ -130,7 +130,8 @@
 - A kill this tower makes runs `onKill(EnemyMob)` (the mob still carries the effects it died
   under); a kill made from inside the hook triggers nothing.
 - A temporary or next-shot self-buff is a `TowerStatus` granted with `grantStatus` (another tower's
-  with `receiveStatus`): the same id restarts unless it keeps a running copy, different ids stack.
+  with `receiveStatus`): the same `TowerTerm` restarts unless it keeps a running copy, different terms stack. A named buff, debuff or
+  mechanic is a `TowerTerm` (title, side, sentence from effect mentions).
   Every attack starts with `beginShot()`, which spends shot charges and returns the stats for that
   attack; use them, not `damageCurrent()`.
 - How long a tower's effects and timed buffs last is a stat (`EFFECT_DURATION`, `BUFF_DURATION`).

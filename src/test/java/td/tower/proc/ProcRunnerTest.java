@@ -5,6 +5,7 @@ import td.effect.EffectKind;
 import td.fixtures.FakeEnemyMob;
 import td.tower.TowerModifiers;
 import td.tower.TowerStatus;
+import td.tower.TowerTerm;
 
 import java.util.List;
 import java.util.Set;
@@ -75,12 +76,12 @@ class ProcRunnerTest {
 
     @Test
     void everyNthShotFiresOnlyOnMultiples() {
-        TowerStatus silver = TowerStatus.nextShots("silver", 1, TowerModifiers.magicPenetration(0.25f));
+        TowerStatus silver = TowerStatus.nextShots(TowerTerm.SILVER_ROUND, 1, TowerModifiers.magicPenetration(0.25f));
         List<Proc> procs = List.of(Proc.everyNthShot(3, new ProcPayload.GrantStatus(silver)));
 
         IntStream.rangeClosed(1, 7).forEach(shot -> ProcRunner.onShot(procs, shot, this.actions));
 
-        assertThat(this.actions.calls()).containsExactly("status silver", "status silver");
+        assertThat(this.actions.calls()).containsExactly("status Silver Round", "status Silver Round");
     }
 
     @Test
