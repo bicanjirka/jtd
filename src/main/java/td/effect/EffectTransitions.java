@@ -1,7 +1,10 @@
 package td.effect;
 
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,6 +35,13 @@ public final class EffectTransitions {
         }
         this.previouslyActive.clear();
         this.previouslyActive.addAll(nowActive);
+    }
+
+    /** {@code kinds} ordered by the tick each was last gained, oldest first, ties in kind order. */
+    public List<EffectKind> inGainedOrder(Collection<EffectKind> kinds) {
+        return kinds.stream().sorted(Comparator.comparingInt(EffectKind::ordinal))
+                .sorted(Comparator.comparingInt(kind -> this.gainedTick.getOrDefault(kind, Integer.MAX_VALUE)))
+                .toList();
     }
 
     /** {@code -1} if never gained. */
