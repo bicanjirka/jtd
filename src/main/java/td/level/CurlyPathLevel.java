@@ -2,6 +2,7 @@ package td.level;
 
 import td.effect.ShieldTemplate;
 import td.enemy.Ability;
+import td.enemy.AbilityTerm;
 import td.enemy.ApplyEffectAction;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
@@ -80,7 +81,7 @@ final class CurlyPathLevel {
     private static EnemyDefinition warding(EnemyDefinition mender, float points) {
         return mender.withDescription(mender.description() + " On this path it also wards every other ally near it "
                         + "with a shield that stops any damage.")
-                .withAdditionalAbilities(List.of(IdentifiedAbility.named("ward", new Ability(
+                .withAdditionalAbilities(List.of(IdentifiedAbility.named("ward", new Ability(AbilityTerm.WARD,
                         new PeriodicTrigger(WARD_INTERVAL_TICKS),
                         new ApplyEffectAction(new ShieldTemplate(points, WARD_TICKS), new RadiusTarget(WARD_RADIUS))))));
     }

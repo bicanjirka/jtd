@@ -26,7 +26,7 @@ final class SkirmisherEnemy {
                         .withDescription("Nimble, crits land softer on it, and it sprints off for a moment after every "
                                 + "shot it dodges.")
                         .withAgility(50f)
-                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(new OnDodgeTrigger(),
+                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.SIDESTEP, new OnDodgeTrigger(),
                                 new ApplyEffectAction(new SprintTemplate(30), new SelfTarget()))))))
                 .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(389, 10).withAgility(60f))
                 .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(700, 19)
@@ -39,7 +39,7 @@ final class SkirmisherEnemy {
                                 + "and after every dodge it sprints off and vanishes for a moment.")
                         .withStats(15f, 15f, 0f, 0f, 30f, 80f, 20f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("evasive", new HurtAgilityTrait(80f))))
-                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(new OnDodgeTrigger(),
+                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.VANISH, new OnDodgeTrigger(),
                                 new ApplyEffectAction(new InvisibleTemplate(15), new SelfTarget()))))))
                 .build());
     }

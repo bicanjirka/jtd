@@ -42,19 +42,19 @@ final class MenderEnemy {
                                 + "ally near it when it dies.")
                         .withStats(15f, 15f, 0f, 0f, 20f, 5f, 60f)
                         .withAdditionalAbilities(List.of(heal(4f, 80), selfHeal(2.8f),
-                                IdentifiedAbility.anonymous(new Ability(new OnDeathTrigger(),
+                                IdentifiedAbility.anonymous(new Ability(AbilityTerm.LAST_RITES, new OnDeathTrigger(),
                                         new ApplyEffectAction(new HealTemplate(4f, 100), new RadiusTarget(120f)))))))
                 .build());
     }
 
     /** The pulse every other ally within reach gets each second. */
     private static IdentifiedAbility heal(float perTick, int durationTicks) {
-        return IdentifiedAbility.named("heal", new Ability(new PeriodicTrigger(20),
+        return IdentifiedAbility.named("heal", new Ability(AbilityTerm.MEND, new PeriodicTrigger(20),
                 new ApplyEffectAction(new HealTemplate(perTick, durationTicks), new RadiusTarget(80f))));
     }
 
     private static IdentifiedAbility selfHeal(float perTick) {
-        return IdentifiedAbility.named("selfHeal", new Ability(new TimeSinceLastHitTrigger(100),
+        return IdentifiedAbility.named("selfHeal", new Ability(AbilityTerm.RECOVER, new TimeSinceLastHitTrigger(100),
                 new ApplyEffectAction(new HealTemplate(perTick, 100), new SelfTarget())));
     }
 }

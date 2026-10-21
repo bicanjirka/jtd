@@ -44,7 +44,7 @@ final class JammerEnemy {
     }
 
     private static IdentifiedAbility staticCharge(float points) {
-        return IdentifiedAbility.named("staticCharge", new Ability(new PeriodicTrigger(100),
+        return IdentifiedAbility.named("staticCharge", new Ability(AbilityTerm.CAPACITOR, new PeriodicTrigger(100),
                 new ApplyEffectAction(ShieldTemplate.magicOnly(points, 80), new SelfTarget())));
     }
 }

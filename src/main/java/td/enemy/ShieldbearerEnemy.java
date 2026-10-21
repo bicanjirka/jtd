@@ -44,12 +44,12 @@ final class ShieldbearerEnemy {
 
     /** The physical-only shield of {@code points} every other ally within {@code radius} gets. */
     private static IdentifiedAbility shield(float points, float radius) {
-        return IdentifiedAbility.named("shield", new Ability(new PeriodicTrigger(100),
+        return IdentifiedAbility.named("shield", new Ability(AbilityTerm.SHIELD_WALL, new PeriodicTrigger(100),
                 new ApplyEffectAction(ShieldTemplate.physicalOnly(points, 60), new RadiusTarget(radius))));
     }
 
     private static IdentifiedAbility selfShield(float points) {
-        return IdentifiedAbility.named("selfShield", new Ability(new PeriodicTrigger(100),
+        return IdentifiedAbility.named("selfShield", new Ability(AbilityTerm.GUARD, new PeriodicTrigger(100),
                 new ApplyEffectAction(ShieldTemplate.physicalOnly(points, 60), new SelfTarget())));
     }
 }

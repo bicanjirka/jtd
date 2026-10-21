@@ -10,6 +10,7 @@ import td.fixtures.WorldFixtures;
 import td.stat.EnemyStat;
 import td.stat.StatModifier;
 import td.stat.StatModifiers;
+import td.term.TermText;
 import td.util.GameWorld;
 import td.wave.PathNormal;
 import td.wave.Vec2;
@@ -91,6 +92,11 @@ class GhostInvisibilityTest {
         @Override
         public TraitLine describe() {
             return TraitLine.of(this.marker(), "Revealed");
+        }
+
+        @Override
+        public TraitEntry entry() {
+            return TraitEntry.of(TraitTerm.ADRENALINE, TermText.of("reveals it"));
         }
 
         @Override

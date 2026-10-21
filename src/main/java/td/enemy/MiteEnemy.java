@@ -27,7 +27,7 @@ final class MiteEnemy {
                         .withDescription("Tiny, quick and slippery, and bursts into three broodlings when it dies. "
                                 + "Sent in swarms.")
                         .withStats(5f, 5f, 0f, 0f, 15f, 35f, 15f)
-                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(new OnDeathTrigger(),
+                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.BROOD, new OnDeathTrigger(),
                                 new SpawnEnemiesAction("miteBrood", AbilitySpawnShape.brood(3, 1f, 1f), false))))))
                 .build());
         catalog.register(EnemyDefinition.of("miteBrood", "Mite Broodling", 30, 1, 1.7f, BodyArchetype.MITE)

@@ -2,6 +2,7 @@ package td.fixtures;
 
 import td.damage.Damage;
 import td.enemy.Ability;
+import td.enemy.AbilityTerm;
 import td.enemy.BodyArchetype;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
@@ -29,7 +30,7 @@ public final class EnemyFixtures {
 
     /** A minimal definition that spawns {@code spawnedId} on death. */
     public static EnemyDefinition definitionThatSpawns(String id, String spawnedId) {
-        Ability spawnOnDeath = new Ability(new OnDeathTrigger(), new SpawnEnemiesAction(spawnedId, 1, false));
+        Ability spawnOnDeath = new Ability(AbilityTerm.GUARD, new OnDeathTrigger(), new SpawnEnemiesAction(spawnedId, 1, false));
         return simpleDefinition(id).withAbilities(List.of(spawnOnDeath));
     }
 

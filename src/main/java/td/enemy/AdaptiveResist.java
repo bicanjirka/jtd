@@ -5,6 +5,8 @@ import td.damage.DamageType;
 import td.stat.EnemyStat;
 import td.stat.StatModifier;
 import td.stat.StatModifiers;
+import td.term.TermNumbers;
+import td.term.TermText;
 
 import java.util.Locale;
 import java.util.Optional;
@@ -42,6 +44,18 @@ public record AdaptiveResist(Optional<DamageType> resisted, float evenArmor, flo
     }
 
     @Override
+    public TraitEntry entry() {
+        String most = TermNumbers.signed(Math.round(Math.max(this.evenArmor, this.fullArmor)));
+        TermText text = this.resisted
+                .map(type -> TermText.of("settles on up to " + most + " "
+                        + Adapted.labelFor(type).toLowerCase(Locale.ROOT) + ", more the more of this level's damage was "
+                        + type.name().toLowerCase(Locale.ROOT)))
+                .orElseGet(() -> TermText.of("settles on up to " + most + " armor or magic resist against whichever "
+                        + "damage type this level has dealt most"));
+        return TraitEntry.of(TraitTerm.ADAPTATION, text);
+    }
+
+    @Override
     public Optional<Trait> resolvedFor(DamageMix mix) {
         DamageType type = this.resisted.orElseGet(mix::dominant);
         float armor = this.evenArmor + mix.lean(type) * (this.fullArmor - this.evenArmor);
@@ -63,6 +77,13 @@ public record AdaptiveResist(Optional<DamageType> resisted, float evenArmor, flo
         public TraitLine describe() {
             return new TraitLine(this.marker(), "Adapted " + labelFor(this.type).toLowerCase(Locale.ROOT),
                     "+" + Math.round(this.armor));
+        }
+
+        @Override
+        public TraitEntry entry() {
+            return TraitEntry.of(TraitTerm.ADAPTATION, TermText.of("settled on "
+                    + TermNumbers.signed(Math.round(this.armor)) + " " + labelFor(this.type).toLowerCase(Locale.ROOT)
+                    + " against this level's damage"));
         }
 
         @Override

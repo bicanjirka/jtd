@@ -129,6 +129,12 @@ public enum EffectKind implements Term {
     /** A short burst of speed an enemy gives itself. */
     SPRINTING("Sprint", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.percent(0.6f)).helpsCarrier());
 
+    /** The kind {@code resistance} shortens; throws for a stat that resists no kind. */
+    public static EffectKind resistedThrough(EnemyStat resistance) {
+        return Arrays.stream(values()).filter(kind -> kind.resistedBy().equals(Optional.of(resistance))).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(resistance + " resists no effect"));
+    }
+
     /** The most stacks any stacking kind reaches, so a cap an application raises (Fault Line) still has a bundle. */
     private static final int MOST_STACKS = 100;
     private static final List<EffectKind> STOPPING = Arrays.stream(values()).filter(EffectKind::stopsEnemy).toList();

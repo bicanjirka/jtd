@@ -47,7 +47,7 @@ final class YetiEnemy {
     }
 
     private static IdentifiedAbility hunker(float perTick) {
-        return IdentifiedAbility.named("hunker", new Ability(new HealthThresholdTrigger(0.4f),
+        return IdentifiedAbility.named("hunker", new Ability(AbilityTerm.HUNKER, new HealthThresholdTrigger(0.4f),
                 new ApplyEffectAction(new HealTemplate(perTick, 60), new SelfTarget())));
     }
 }

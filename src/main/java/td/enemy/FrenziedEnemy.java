@@ -30,7 +30,7 @@ final class FrenziedEnemy {
                                 + "Reckless: crits land harder on it.")
                         .withStats(10f, 10f, 0f, 0f, -20f, 10f, 10f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.8f))))
-                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(
+                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.SECOND_WIND,
                                 new HealthThresholdTrigger(0.5f),
                                 new ApplyEffectAction(new SprintTemplate(40), new SelfTarget()))))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1564, 34)
@@ -41,9 +41,9 @@ final class FrenziedEnemy {
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(2f))))
                         .withMovement(new RotorMovement((float) Math.toRadians(-10.0)))
                         .withAdditionalAbilities(List.of(
-                                IdentifiedAbility.anonymous(new Ability(new HealthThresholdTrigger(0.5f),
+                                IdentifiedAbility.anonymous(new Ability(AbilityTerm.SWARM, new HealthThresholdTrigger(0.5f),
                                         new SpawnEnemiesAction("tSpawn", AbilitySpawnShape.brood(3, 1f, 1f), false))),
-                                IdentifiedAbility.anonymous(new Ability(new TimeSinceLastHitTrigger(200),
+                                IdentifiedAbility.anonymous(new Ability(AbilityTerm.RECOVER, new TimeSinceLastHitTrigger(200),
                                         new ApplyEffectAction(new HealTemplate(2f, 200), new SelfTarget()))))))
                 .build());
         catalog.register(EnemyDefinition.of("tSpawn", "Frenzy Spawnling", 280, 2, 1.28f, BodyArchetype.TRIANGLE)
@@ -51,7 +51,7 @@ final class FrenziedEnemy {
                         + "allies with its dying breath.")
                 .withResilience(-20f)
                 .withTraits(List.of(new HurtSpeedTrait(1.4f)))
-                .withAbilities(List.of(new Ability(new OnDeathTrigger(),
+                .withAbilities(List.of(new Ability(AbilityTerm.LAST_RITES, new OnDeathTrigger(),
                         new ApplyEffectAction(new HealTemplate(1f, 40), new RadiusTarget(150f))))));
     }
 }

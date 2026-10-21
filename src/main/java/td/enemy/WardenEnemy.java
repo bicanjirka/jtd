@@ -69,25 +69,25 @@ final class WardenEnemy {
     }
 
     private static List<Ability> hatchInto(String wardenId) {
-        return List.of(new Ability(new OnceTrigger(160), new SpawnEnemiesAction(wardenId, 1, true)));
+        return List.of(new Ability(AbilityTerm.HATCH, new OnceTrigger(160), new SpawnEnemiesAction(wardenId, 1, true)));
     }
 
     /** One stage: "A {@code lead}.", the standing abilities every stage shares, and {@code eggId} left on death. */
     private static EnemyDefinition warden(String id, String name, int health, String lead, Shell shell,
                                           String eggId) {
         List<IdentifiedAbility> abilities = new ArrayList<>(List.of(
-                IdentifiedAbility.anonymous(new Ability(new PeriodicTrigger(300), new SpawnEnemiesAction("c", 1, false))),
+                IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE, new PeriodicTrigger(300), new SpawnEnemiesAction("c", 1, false))),
                 // Its plating only answers physical hits, so its own shield covers the other type.
-                IdentifiedAbility.anonymous(new Ability(new PeriodicTrigger(400),
+                IdentifiedAbility.anonymous(new Ability(AbilityTerm.ARCANE_WARD, new PeriodicTrigger(400),
                         new ApplyEffectAction(ShieldTemplate.magicOnly(health * 0.1f, 100), new SelfTarget()))),
-                IdentifiedAbility.anonymous(new Ability(new HealthThresholdTrigger(0.5f),
+                IdentifiedAbility.anonymous(new Ability(AbilityTerm.AEGIS, new HealthThresholdTrigger(0.5f),
                         new ApplyEffectAction(new ShieldTemplate(60f, 150), new RadiusTarget(150f)))),
                 // Re-arms after each hit, so it fires every time it is left alone, not just once.
-                IdentifiedAbility.anonymous(new Ability(new TimeSinceLastHitTrigger(200),
+                IdentifiedAbility.anonymous(new Ability(AbilityTerm.RECOVER, new TimeSinceLastHitTrigger(200),
                         new ApplyEffectAction(new HealTemplate(health * 0.0015f, 100), new SelfTarget()))),
-                IdentifiedAbility.anonymous(new Ability(new OnCriticalHitTakenTrigger(),
+                IdentifiedAbility.anonymous(new Ability(AbilityTerm.HARDEN, new OnCriticalHitTakenTrigger(),
                         new ApplyEffectAction(new ShieldTemplate(health * 0.03f, 30), new SelfTarget())))));
-        abilities.add(IdentifiedAbility.anonymous(new Ability(new OnDeathTrigger(),
+        abilities.add(IdentifiedAbility.anonymous(new Ability(AbilityTerm.LAY_EGG, new OnDeathTrigger(),
                 new SpawnEnemiesAction(eggId, 1, false))));
         return EnemyDefinition.of(id, name, health, 100, 0.8f, BodyArchetype.WARDEN)
                 .withDescription("A " + lead + ". Periodically calls a reinforcement and shields itself against magic; "

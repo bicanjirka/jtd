@@ -140,8 +140,9 @@
 
 A new `Trait` also needs a `TraitMarker` constant (naming the stats whose info-panel rows stand
 in for it) and its palette cases in `EnemyFrameBuilder.traitMarkerPaletteFor`/
-`Java2DFrameRenderer.colorFor`, and a `describe()` `TraitLine` short enough for one row (an
-adaptive template describes the most it can reach).
+`Java2DFrameRenderer.colorFor`, a `describe()` `TraitLine` short enough for one row (an
+adaptive template describes the most it can reach), and an `entry()`: the term its icon shows and
+its sentence. A new ability names its `AbilityTerm`.
 
 ## Display
 

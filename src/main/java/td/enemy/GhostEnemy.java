@@ -34,7 +34,7 @@ final class GhostEnemy {
                                 + "Turns invisible to towers for a long while the first time it's hit, and permanently "
                                 + "shrouds every other ally near it - itself excluded.")
                         .withStats(30f, 10f, 0f, 0f, 20f, 15f, 15f)
-                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(
+                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.SHROUD,
                                 // A tick longer than the interval, so an ally that stays in radius never flickers
                                 // visible, while a reveal holds until the next cast.
                                 new PeriodicTrigger(SHROUD_TICKS),
@@ -44,7 +44,7 @@ final class GhostEnemy {
                                 + "Turns invisible the first time it's hit and again for a few seconds out of every "
                                 + "ten, and permanently shrouds every other ally near it - itself excluded.")
                         .withStats(40f, 15f, 0f, 0f, 30f, 20f, 25f)
-                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(
+                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.PHASE,
                                 new PeriodicTrigger(200), new ApplyEffectAction(new InvisibleTemplate(60),
                                 new SelfTarget()))))))
                 .build());
@@ -52,7 +52,7 @@ final class GhostEnemy {
 
     /** Its vanishing act; a hit that also freezes suppresses the cast outright, since a frozen mob cannot cast. */
     private static IdentifiedAbility fade(int durationTicks) {
-        return IdentifiedAbility.named("fade", new Ability(new OnFirstDamageTakenTrigger(),
+        return IdentifiedAbility.named("fade", new Ability(AbilityTerm.FADE, new OnFirstDamageTakenTrigger(),
                 new ApplyEffectAction(new InvisibleTemplate(durationTicks), new SelfTarget())));
     }
 }
