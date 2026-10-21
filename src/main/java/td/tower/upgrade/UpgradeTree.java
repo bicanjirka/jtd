@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -79,6 +81,32 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
         List<ExclusiveChoice> next = new ArrayList<>(this.choices);
         next.add(choice);
         return new UpgradeTree(this.nodes, next);
+    }
+
+    /** {@code owned}'s nodes grouped by line, in the order each line's first node was bought. */
+    public List<UpgradeLine> lines(UpgradeState owned) {
+        Map<UpgradeNode, List<UpgradeNode>> lines = new LinkedHashMap<>();
+        for (UpgradeNode node : owned.owned()) {
+            lines.computeIfAbsent(this.firstOf(node), first -> new ArrayList<>()).add(node);
+        }
+        return lines.entrySet().stream().map(line -> new UpgradeLine(line.getKey(), line.getValue())).toList();
+    }
+
+    /** The node that starts {@code node}'s line: back along the prerequisite one tier step before, while there is one. */
+    UpgradeNode firstOf(UpgradeNode node) {
+        UpgradeNode first = node;
+        Optional<UpgradeNode> before = this.previousInLine(first);
+        while (before.isPresent()) {
+            first = before.get();
+            before = this.previousInLine(first);
+        }
+        return first;
+    }
+
+    private Optional<UpgradeNode> previousInLine(UpgradeNode node) {
+        Set<String> required = node.requires().requiredNodes();
+        return node.tier().previous().flatMap(previous -> this.nodes.stream()
+                .filter(candidate -> candidate.tier() == previous && required.contains(candidate.id())).findFirst());
     }
 
     public List<UpgradeNode> nodesIn(UpgradeSlot slot) {
