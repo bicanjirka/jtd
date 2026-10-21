@@ -34,15 +34,6 @@ public record EffectResistTrait(EnemyStat stat, float amount) implements Trait {
     }
 
     @Override
-    public TraitLine describe() {
-        String kind = TraitText.capitalized(TraitText.effectName(this.stat));
-        if (this.amount >= 1f) {
-            return TraitLine.of(this.marker(), kind + " immune");
-        }
-        return new TraitLine(this.marker(), kind + " resist", Math.round(this.amount * 100) + "%");
-    }
-
-    @Override
     public TraitEntry entry() {
         EffectKind kind = EffectKind.resistedThrough(this.stat);
         TermText text = this.amount >= 1f ? TermText.of("immune to ").plus(kind)

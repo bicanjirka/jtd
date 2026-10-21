@@ -25,9 +25,6 @@ import java.util.Set;
  * @param maxHealth    full health in points
  * @param stats        every stat's resolved value
  * @param effects      active effects in kind order
- * @param blocked      kinds an active effect keeps out, in kind order
- * @param diminished   per kind whose diminishing returns run, the share the next one would last
- * @param traitLines   one row per authored trait slot
  * @param dodges       how many hits it has dodged
  * @param baseStats    every stat before traits and effects
  * @param immunities   what it cannot take now, and what keeps it out
@@ -38,8 +35,7 @@ import java.util.Set;
  */
 public record EnemyInspection(String name, String description, Rank rank, BodyArchetype archetype, int health,
                               int maxHealth, int bounty, Map<EnemyStat, Float> stats, List<EffectState> effects,
-                              List<EffectKind> blocked,
-                              Map<EffectKind, Float> diminished, List<TraitLine> traitLines, Fate fate,
+                              Fate fate,
                               int dodges, Map<EnemyStat, Float> baseStats, List<Immunity> immunities,
                               List<TraitEntry> traitEntries, List<AbilityEntry> abilityEntries,
                               Map<EnemyStat, StatBreakdown> breakdowns, List<EnemyMark> marks) {
@@ -47,9 +43,6 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
     public EnemyInspection {
         stats = Collections.unmodifiableMap(new EnumMap<>(stats));
         effects = List.copyOf(effects);
-        blocked = List.copyOf(blocked);
-        diminished = diminished.isEmpty() ? Map.of() : Collections.unmodifiableMap(new EnumMap<>(diminished));
-        traitLines = List.copyOf(traitLines);
         baseStats = Collections.unmodifiableMap(new EnumMap<>(baseStats));
         immunities = List.copyOf(immunities);
         traitEntries = List.copyOf(traitEntries);
@@ -93,10 +86,9 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
                 id -> catalog.contains(id) ? catalog.get(id).displayName() : id);
         List<AbilityEntry> abilityEntries = definition.abilities().stream()
                 .map(ability -> new AbilityEntry(ability.term(), AbilityText.of(ability, words))).toList();
-        List<TraitLine> traitLines = definition.traitSlots().stream().map(slot -> slot.template().describe()).toList();
         return new EnemyInspection(definition.displayName(), definition.description(), mob.getRank(), mob.archetype(),
-                (mob.getHealth() + DamageUnits.PER_POINT - 1) / DamageUnits.PER_POINT, mob.getMaxHealthPoints(), mob.getBounty(), stats, effects, List.copyOf(mob.blockedEffectKinds()),
-                diminished, traitLines, mob.fate(), mob.dodges(), baseStats, immunities, traitEntries,
+                (mob.getHealth() + DamageUnits.PER_POINT - 1) / DamageUnits.PER_POINT, mob.getMaxHealthPoints(), mob.getBounty(), stats, effects,
+                mob.fate(), mob.dodges(), baseStats, immunities, traitEntries,
                 abilityEntries, breakdowns, List.of());
     }
 
@@ -111,8 +103,8 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
     /** A copy carrying {@code marks}: memory towers keep about this enemy, filled in by the frame build. */
     public EnemyInspection withMarks(List<EnemyMark> marks) {
         return new EnemyInspection(this.name, this.description, this.rank, this.archetype, this.health,
-                this.maxHealth, this.bounty, this.stats, this.effects, this.blocked, this.diminished,
-                this.traitLines, this.fate, this.dodges, this.baseStats, this.immunities, this.traitEntries,
+                this.maxHealth, this.bounty, this.stats, this.effects,
+                this.fate, this.dodges, this.baseStats, this.immunities, this.traitEntries,
                 this.abilityEntries, this.breakdowns, marks);
     }
 

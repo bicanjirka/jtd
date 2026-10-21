@@ -138,11 +138,9 @@
    compiler does **not** force these (they have a throwing `default`).
 4. Add its token to `td/wave/CLAUDE.md`'s table and to `README.md`.
 
-A new `Trait` also needs a `TraitMarker` constant (naming the stats whose info-panel rows stand
-in for it) and its palette cases in `EnemyFrameBuilder.traitMarkerPaletteFor`/
-`Java2DFrameRenderer.colorFor`, a `describe()` `TraitLine` short enough for one row (an
-adaptive template describes the most it can reach), and an `entry()`: the term its icon shows and
-its sentence. A new ability names its `AbilityTerm`.
+A new `Trait` also needs a `TraitMarker` constant and its palette cases in
+`EnemyFrameBuilder.traitMarkerPaletteFor`/`Java2DFrameRenderer.colorFor`, and an `entry()`: the term its icon shows and
+its sentence (an adaptive template describes the most it can reach). A new ability names its `AbilityTerm`.
 
 ## Display
 

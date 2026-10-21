@@ -34,15 +34,6 @@ public record AdaptiveResist(Optional<DamageType> resisted, float evenArmor, flo
         return new AdaptiveResist(Optional.of(type), evenArmor, fullArmor);
     }
 
-    /** The range the player can expect: the preview cannot know this level's damage mix. */
-    @Override
-    public TraitLine describe() {
-        float strongest = Math.max(this.evenArmor, this.fullArmor);
-        String label = this.resisted.map(type -> "Adaptive " + Adapted.labelFor(type).toLowerCase(Locale.ROOT))
-                .orElse("Adaptive resist");
-        return new TraitLine(TraitMarker.PERCENT_RESIST, label, "up to +" + Math.round(strongest));
-    }
-
     @Override
     public TraitEntry entry() {
         String most = TermNumbers.signed(Math.round(Math.max(this.evenArmor, this.fullArmor)));
@@ -71,12 +62,6 @@ public record AdaptiveResist(Optional<DamageType> resisted, float evenArmor, flo
         @Override
         public StatModifiers<EnemyStat> modifiers(TraitContext context) {
             return StatModifiers.of(EnemyStat.mitigationFor(this.type), StatModifier.flat(this.armor));
-        }
-
-        @Override
-        public TraitLine describe() {
-            return new TraitLine(this.marker(), "Adapted " + labelFor(this.type).toLowerCase(Locale.ROOT),
-                    "+" + Math.round(this.armor));
         }
 
         @Override

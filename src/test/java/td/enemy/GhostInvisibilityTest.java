@@ -90,11 +90,6 @@ class GhostInvisibilityTest {
         }
 
         @Override
-        public TraitLine describe() {
-            return TraitLine.of(this.marker(), "Revealed");
-        }
-
-        @Override
         public TraitEntry entry() {
             return TraitEntry.of(TraitTerm.ADRENALINE, TermText.of("reveals it"));
         }

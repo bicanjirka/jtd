@@ -18,11 +18,6 @@ public record RegenerationTrait(float pointsPerSecond) implements Trait {
     }
 
     @Override
-    public TraitLine describe() {
-        return new TraitLine(this.marker(), "Regenerates", TraitText.decimal(this.pointsPerSecond) + "/s");
-    }
-
-    @Override
     public TraitEntry entry() {
         return TraitEntry.of(TraitTerm.REGENERATION,
                 TermText.of("heals " + TermNumbers.number(this.pointsPerSecond) + " health a second"));

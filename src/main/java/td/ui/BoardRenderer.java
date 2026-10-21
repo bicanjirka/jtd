@@ -2,11 +2,13 @@ package td.ui;
 
 import td.board.BoardGeometry;
 import td.enemy.EnemyInspection;
+import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
 import td.projectile.Projectile;
 import td.tower.Tower;
 import td.ui.render.CellDraw;
 import td.ui.render.CellGridDraw;
+import td.ui.render.InfoSheet;
 import td.ui.render.PathMarkerDraw;
 import td.ui.render.RenderFrame;
 import td.util.GameWorld;
@@ -82,11 +84,22 @@ public final class BoardRenderer {
             pathMarkers.addAll(PathMarkerFrameBuilder.build(pathRuntime.path(), pathRuntime.color(), board.scale(), animationSeconds));
         }
 
+        Optional<InfoSheet> enemySheet = inspection
+                .map(found -> selected.map(mob -> found.withMarks(this.marksOn(mob))).orElse(found))
+                .map(EnemyStatText::live);
+
         return new RenderFrame(board.scale(), board.maxX(), board.maxY(),
                 cells, ZoneFrameBuilder.build(this.world.zones(), animationSeconds), enemyFrameBuilder.build(), enemyFrameBuilder.buildMarkers(), enemyFrameBuilder.buildCritSparks(),
                 spriteFrameBuilder.build(), spriteFrameBuilder.buildHeads(),
                 effectFrameBuilder.build(), projectileFrameBuilder.build(), pathMarkers,
-                enemyFrameBuilder.buildOverlays(), inspection.map(EnemyStatText::live), this.cellGrid(level));
+                enemyFrameBuilder.buildOverlays(), enemySheet, this.cellGrid(level));
+    }
+
+    /** What every tower remembers about {@code mob}, for its pane. */
+    private List<EnemyMark> marksOn(EnemyMob mob) {
+        List<EnemyMark> marks = new ArrayList<>();
+        this.world.towers().all().forEach(tower -> marks.addAll(tower.marksOn(mob)));
+        return marks;
     }
 
     /** Blocked means unbuildable with no tower on it: a path covers the cell. */
