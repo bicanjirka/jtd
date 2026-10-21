@@ -377,42 +377,6 @@ public final class AuraTower extends AbstractTower {
     }
 
     @Override
-    protected List<BehaviourLine> behaviours() {
-        AuraSpec spec = this.spec();
-        StatModifiers<TowerStat> emission = this.upgrades().totalEmission();
-        String bonus = "+" + BehaviourLine.percent(this.stats().value(TowerStat.AURA_POWER));
-        List<BehaviourLine> lines = new ArrayList<>();
-        lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby damage", bonus));
-        lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby range", bonus));
-        lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby disruption", "-" + BehaviourLine.percent(1f - DISRUPTION_LEFT)));
-        float attackSpeed = emission.flat(TowerStat.ATTACK_SPEED);
-        if (attackSpeed > 0f) {
-            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Nearby attack speed", "+" + BehaviourLine.percent(attackSpeed)));
-        }
-        StatModifier wither = emission.get(TowerStat.WITHER_INTERVAL);
-        if (wither.hasSetValue()) {
-            lines.add(new BehaviourLine(BehaviourMarker.VULNERABLE, "Buffed hits",
-                    "vulnerable every " + BehaviourLine.seconds(Math.round(wither.setTo()))));
-        }
-        if (spec.chosen()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Chosen",
-                    PerkText.times(spec.chosenStrength()) + ", the most experienced only"));
-        }
-        if (spec.rally().isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Rally", "+" + BehaviourLine.percent(spec.rally().attackSpeed())
-                    + " attack speed for " + PerkText.seconds(spec.rally().ticks())));
-        }
-        if (this.isPlaced()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Buffing", this.buffedTowers().size() + " towers"));
-            if (spec.kinship().active()) {
-                lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Kinship", this.typesInReach().size() + " tower types"));
-            }
-        }
-        this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
-        return lines;
-    }
-
-    @Override
     protected String description() {
         return "Never attacks. Several Beacons stack, but a Beacon never buffs another Beacon.";
     }

@@ -14,7 +14,6 @@ import td.enemy.Rank;
 import td.enemy.RankedEnemy;
 import td.enemy.SpawnEnemiesAction;
 import td.level.LevelDefinition;
-import td.tower.BehaviourMarker;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.pulse.LeyLine;
@@ -300,7 +299,7 @@ public final class TowerLab {
     private static boolean reveals(LevelDefinition lab, TowerFactory.Type type, Point cell, UpgradeNode node) {
         Tower sample = sampleOf(lab, type, cell);
         buyLine(sample, node);
-        return sample.inspect().behaviours().stream().anyMatch(line -> line.marker() == BehaviourMarker.REVEAL);
+        return sample.applies().stream().anyMatch(applied -> applied.term().equals(EffectKind.REVEALED));
     }
 
     /** The kinds among {@code keys} that can turn themselves or their allies invisible. */

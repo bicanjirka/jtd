@@ -273,6 +273,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      */
     private void repaintPublishedFrame() {
         this.gameConsole.refreshSelected();
+        RenderFrame published = this.latestFrame;
+        if (published != null) {
+            published.towerSheet().ifPresent(this.gameConsole.getTowerInfo()::showTowerSheet);
+        }
         this.showEnemyInspection();
         // Cosmetic animation runs on the EDT render cadence, never in tick code.
         this.gameConsole.getWaveInfo().doTick(this.gameTime);

@@ -46,6 +46,15 @@ class TowerSheetTextTest {
         return sheet.lines().stream().filter(Row.class::isInstance).map(Row.class::cast).toList();
     }
 
+    private static SheetLine.IconRow iconRow(InfoSheet sheet, String label) {
+        return sheet.lines().stream().filter(SheetLine.IconRow.class::isInstance).map(SheetLine.IconRow.class::cast)
+                .filter(row -> row.label().equals(label)).findFirst().orElseThrow();
+    }
+
+    private static InfoSheet liveStatus(Tower tower) {
+        return TowerSheetText.status(tower.inspect().withConditions(tower.conditions()));
+    }
+
     private static Row row(InfoSheet sheet, String label) {
         return rows(sheet).stream().filter(row -> row.label().equals(label)).findFirst().orElseThrow();
     }
@@ -69,12 +78,12 @@ class TowerSheetTextTest {
     }
 
     @Test
-    void theShopListsStatsThenBehavioursOneRowEachThenWhatNoRowSays() {
+    void theShopListsStatsThenWhomItTargetsThenWhatItAppliesThenWhatNoRowSays() {
         InfoSheet sheet = shopSheet(TowerFactory.Type.MORTAR);
 
         assertThat(labels(sheet)).containsExactly("Range", "Physical damage", "Fire rate", "Splash radius",
-                "Projectile speed", "Projectile size", "Targets", "Dead zone", "Cracks plating");
-        assertThat(row(sheet, "Cracks plating")).isEqualTo(Row.effect(Palette.STATUS_MARKER_CRACKED, "Cracks plating", "5 s"));
+                "Projectile speed", "Projectile size", "Targets");
+        assertThat(iconRow(sheet, "Applies").icons()).isNotEmpty();
         assertThat(sheet.lines().getLast()).isEqualTo(new SheetLine.Prose(TermText.of("Lobs a slow, unguided shell.")));
     }
 
@@ -104,26 +113,26 @@ class TowerSheetTextTest {
     }
 
     @Test
-    void aStatAnAuraRaisesReadsBaseToCurrentInTheBetterColourAndTheAuraGetsARow() {
+    void aStatAnAuraRaisesReadsBaseToCurrentInTheBetterColourAndTheAuraIsABuff() {
         Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
         this.place(TowerFactory.Type.AURA, 1, 0);
 
-        InfoSheet sheet = TowerSheetText.status(sniper.inspect());
+        InfoSheet sheet = liveStatus(sniper);
 
         assertThat(row(sheet, "Physical damage")).extracting(Row::value, Row::trend).containsExactly("40 → 48", Trend.BETTER);
         assertThat(row(sheet, "Fire rate").trend()).isEqualTo(Trend.NONE);
-        assertThat(row(sheet, "Aura")).isEqualTo(Row.toned(Glyph.RING, Palette.TOWER_AURA_RING, "Aura", ""));
+        assertThat(iconRow(sheet, "Buffs").icons()).hasSize(1);
     }
 
     @Test
-    void aJammedTowersStatusSaysSoAndShowsTheLostRangeAndRateInTheWorseColour() {
+    void aJammedTowersStatusShowsADebuffAndTheLostRangeAndRateInTheWorseColour() {
         Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
         this.world.disruptions().add(sniper.getX(), sniper.getY(), new DisruptionAura(20f, 0.3f, 0.2f));
         sniper.beginTick(0);
 
-        InfoSheet sheet = TowerSheetText.status(sniper.inspect());
+        InfoSheet sheet = liveStatus(sniper);
 
-        assertThat(rows(sheet)).contains(Row.effect(Palette.DISRUPTION, "Jammed", ""));
+        assertThat(iconRow(sheet, "Debuffs").icons()).hasSize(1);
         assertThat(row(sheet, "Range")).extracting(Row::value, Row::trend).containsExactly("4 → 3.8", Trend.WORSE);
         assertThat(row(sheet, "Fire rate")).extracting(Row::value, Row::trend).containsExactly("0.4 → 0.3/s", Trend.WORSE);
         assertThat(row(sheet, "Physical damage").trend()).isEqualTo(Trend.NONE);

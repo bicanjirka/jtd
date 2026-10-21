@@ -62,7 +62,6 @@ import td.zone.ZoneOwner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * The Artillery: lobs a slow, unguided shell at the visible enemy furthest along the path, beyond a
@@ -587,62 +586,6 @@ public final class MortarTower extends AbstractTower {
     @Override
     protected String targetingLabel() {
         return "first";
-    }
-
-    @Override
-    protected List<BehaviourLine> behaviours() {
-        MortarSpec spec = this.spec(this.perks.all());
-        List<BehaviourLine> lines = new ArrayList<>();
-        lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Targets", "first"));
-        lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Dead zone",
-                Math.round(spec.reach().deadZone() / this.context.getBoard().scale() * 10f) / 10f + " cells"));
-        lines.add(new BehaviourLine(BehaviourMarker.CRACKED, "Cracks plating", BehaviourLine.seconds(CRACKED_TICKS)));
-        if (spec.bracket().active()) {
-            int damageStep = Math.round(this.stats().value(TowerStat.BRACKET_DAMAGE_STEP) * 100);
-            int radiusStep = Math.round(spec.bracket().radiusStep() * 100);
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Bracketing", damageStep == radiusStep
-                    ? "+" + damageStep + "% a step" : "+" + damageStep + "% dmg, +" + radiusStep + "% radius"));
-        }
-        if (spec.daze().isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.DAZE, "Impact dazes",
-                    BehaviourLine.seconds(spec.daze().ticks())));
-        }
-        if (spec.nuke().isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Every " + spec.nuke().every() + "th shell",
-                    "nuke x" + Math.round(spec.nuke().damageFactor())));
-        }
-        if (spec.centre().isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Blast centre",
-                    "x" + Math.round(spec.centre().damageFactor()) + ", sundered"));
-        }
-        if (spec.shrapnel().active()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Shrapnel",
-                    BehaviourLine.percent(spec.shrapnel().damageShare() * spec.shrapnel().scale())
-                            + (spec.shrapnel().carriesShell() ? ", shell effect" : "")));
-        }
-        if (spec.shrapnel().bleeds()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Shrapnel makes", "bleed"));
-        }
-        if (spec.leadsTarget()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Aims", "ahead of the enemy"));
-        }
-        if (spec.salvo().isSalvo()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Salvo", spec.salvo().shells() + " shells, "
-                    + BehaviourLine.seconds(spec.salvo().gapTicks()) + " apart"));
-        }
-        if (spec.bomblets().isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Bomblets", spec.bomblets().count()
-                    + (spec.bomblets().inLine() ? " in a line ahead" : " around the impact")));
-        }
-        List<ShellType> specials = spec.shells().specials();
-        if (!specials.isEmpty()) {
-            String pattern = specials.size() == 1 ? specials.getFirst().label()
-                    : specials.stream().map(ShellType::label).collect(Collectors.joining(", ")) + ", plain";
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING,
-                    specials.size() == 1 ? "Every 3rd shell" : "Shells in turn", pattern));
-        }
-        this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
-        return lines;
     }
 
     @Override

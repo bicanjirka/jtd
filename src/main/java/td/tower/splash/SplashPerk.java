@@ -1,9 +1,7 @@
 package td.tower.splash;
 
-import td.tower.BehaviourLine;
 import td.tower.upgrade.Perk;
 
-import java.util.Optional;
 
 /**
  * What one owned node does to the Splash. A perk may change how it blasts and what the blast
@@ -24,8 +22,4 @@ public interface SplashPerk extends Perk {
     default void react(ShotResult result) {
     }
 
-    /** The row this perk adds to the tower's info, when it does something no other row says. */
-    default Optional<BehaviourLine> behaviour() {
-        return Optional.empty();
-    }
 }

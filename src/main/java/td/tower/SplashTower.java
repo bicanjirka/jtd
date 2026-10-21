@@ -748,25 +748,6 @@ public final class SplashTower extends AbstractTower {
     }
 
     @Override
-    protected List<BehaviourLine> behaviours() {
-        SplashSpec spec = this.spec(this.perks.all());
-        List<BehaviourLine> lines = new ArrayList<>();
-        lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Targets",
-                spec.blast().aimsAtCrowds() ? "most crowded" : "random"));
-        if (this.saturation(spec).isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Saturates", "up to x" + this.saturation(spec).cap()));
-        }
-        if (spec.arcs().active()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Arcs", spec.arcs().jumps() + " jumps"));
-        }
-        if (spec.hexes().isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Casts", spec.hexes().pool().size() + " hexes"));
-        }
-        this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
-        return lines;
-    }
-
-    @Override
     protected String description() {
         return "Damage falls off away from the blast's centre.";
     }

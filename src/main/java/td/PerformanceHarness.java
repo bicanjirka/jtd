@@ -102,6 +102,14 @@ public final class PerformanceHarness {
             engine.getTowers().forEach(PerformanceHarness::buyZoneUpgrades);
         }
 
+        Tower inspected = engine.getTowers().getFirst();
+        engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
+        List<UpgradeNode> offered = inspected.offeredUpgrades(engine.getGameWorld());
+        while (!offered.isEmpty() && inspected.buyUpgrade(offered.getFirst())) {
+            offered = inspected.offeredUpgrades(engine.getGameWorld());
+        }
+        inspected.setSelected(true);
+
         for (int t = 1; t <= TICKS_PER_PASS && !engine.outcome().isOver(); t++) {
             engine.nextWave();
             if (engine.inspectSelectedEnemy().isEmpty()) {

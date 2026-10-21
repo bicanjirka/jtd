@@ -8,14 +8,12 @@ import td.effect.EffectKind;
 import td.effect.PoolTuning;
 import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
-import td.stat.EnemyStat;
 import td.term.TermText;
 import td.tower.cinder.BellowsPerk;
 import td.tower.cinder.CauterizePerk;
 import td.tower.cinder.CinderPerk;
 import td.tower.cinder.CinderSpec;
 import td.tower.cinder.CombustionPerk;
-import td.tower.cinder.CombustionSpec;
 import td.tower.cinder.DragonsBreathPerk;
 import td.tower.cinder.EverburnPerk;
 import td.tower.cinder.FlameLook;
@@ -526,64 +524,6 @@ public final class CinderTower extends AbstractTower {
     @Override
     protected String targetingLabel() {
         return "nearest";
-    }
-
-    @Override
-    protected List<BehaviourLine> behaviours() {
-        CinderSpec spec = this.spec(this.perks.all());
-        List<BehaviourLine> lines = new ArrayList<>();
-        lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burns", BehaviourLine.seconds(this.burnDuration())));
-        lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Aims at", "nearest"));
-        if (spec.stoke().active()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Stoke",
-                    "+" + Math.round(this.stats().value(TowerStat.STOKE_STEP) * 100) + "% a wave, x" + spec.stoke().maxSteps()));
-        }
-        if (spec.bellows()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BUFF, "Bellows", "attack speed widens it"));
-        }
-        if (spec.ring()) {
-            lines.add(new BehaviourLine(BehaviourMarker.TARGETING, "Wave", "a full ring"));
-        }
-        if (spec.soulfire()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Every wave also", "soulfire"));
-        }
-        if (spec.linger().isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Each wave leaves", "burning ground"));
-        }
-        if (spec.searing()) {
-            lines.add(new BehaviourLine(BehaviourMarker.VULNERABLE, "Burns apply", "vulnerable"));
-        }
-        if (spec.thermalShock()) {
-            lines.add(new BehaviourLine(BehaviourMarker.FREEZE, "A frozen burn", "150%, chills nearby"));
-        }
-        if (spec.critScorch() > 0) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "A crit ignition", "+" + spec.critScorch() + " scorched"));
-        }
-        CombustionSpec combustion = spec.combustion();
-        if (combustion.isActive()) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "A full pool", "bursts for " + BehaviourLine.percent(combustion.share())));
-        }
-        PoolTuning tuning = this.tuning(spec);
-        if (tuning.stackRate() > 1) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Scorches", "x" + tuning.stackRate() + " as fast"));
-        }
-        float healingLost = -tuning.carried().flat(EnemyStat.HEALING_RECEIVED);
-        if (healingLost > 0f) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "heal " + BehaviourLine.percent(healingLost) + " less"));
-        }
-        float overTime = tuning.carried().flat(EnemyStat.PERIODIC_DAMAGE_TAKEN);
-        if (overTime > 0f) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "+" + BehaviourLine.percent(overTime) + " over time"));
-        }
-        float magic = tuning.carried().flat(EnemyStat.MAGIC_DAMAGE_TAKEN);
-        if (magic > 0f) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "Burning enemies", "+" + BehaviourLine.percent(magic) + " magic"));
-        }
-        if (spec.everburnFloor() > 0f) {
-            lines.add(new BehaviourLine(BehaviourMarker.BURN, "A pool in range", "holds at " + BehaviourLine.percent(spec.everburnFloor())));
-        }
-        this.perks.all().forEach(perk -> perk.behaviour().ifPresent(lines::add));
-        return lines;
     }
 
     @Override

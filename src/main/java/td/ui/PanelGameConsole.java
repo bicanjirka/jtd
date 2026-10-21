@@ -56,7 +56,6 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
         initComponents(titleText);
         this.panelUpgradeTree.onHover(offer -> this.panelTowerInfo.showUpgradeHover(UpgradeSheetText.hover(offer)));
         this.panelUpgradeTree.onHoverEnd(this.panelTowerInfo::clearUpgradeHover);
-        this.panelUpgradeTree.onBought(this.panelTowerInfo::refreshSelected);
         this.panelTowerInfo.onDeselected(this::unselectTower);
     }
 
@@ -113,7 +112,6 @@ public class PanelGameConsole extends JPanel implements EconomyListener {
      * any economy event.
      */
     public void refreshSelected() {
-        this.panelTowerInfo.refreshSelected();
         this.panelUpgradeTree.refresh();
     }
 

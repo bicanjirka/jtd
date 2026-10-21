@@ -226,6 +226,5 @@
 5. `upgradeTree()`: `UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, levelThrees...))` with two
    `HEAD` chains built from `UpgradeTier` steps and 1-3 `UpgradeTier.SPECIAL` nodes, plus an
    `ExclusiveChoice` per choice.
-6. `behaviours()` (one short row each: targeting, effects applied) and, for the shop only, a
-   `description()` saying what no row does.
+6. `targetingLabel()` and `baseApplies()`, and, for the shop only, a `description()` saying what no row does.
 7. `README.md`'s tower table. The toolbar icon reuses the board paint code, so it needs no art.

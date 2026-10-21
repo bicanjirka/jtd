@@ -1,9 +1,7 @@
 package td.tower.sniper;
 
-import td.tower.BehaviourLine;
 import td.tower.upgrade.Perk;
 
-import java.util.Optional;
 
 /**
  * What one owned node does to the Sniper. A perk may change whom it shoots, reshape a shot before it is fired, change how it counts once it has landed, and react to
@@ -27,8 +25,4 @@ public interface SniperPerk extends Perk {
     default void react(ShotResult result, ShotActions actions) {
     }
 
-    /** The row this perk adds to the tower's info, when it does something no other row says. */
-    default Optional<BehaviourLine> behaviour() {
-        return Optional.empty();
-    }
 }
