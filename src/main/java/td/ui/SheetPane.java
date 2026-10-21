@@ -67,6 +67,18 @@ final class SheetPane extends JTextPane {
         }
         Element element = this.getStyledDocument().getCharacterElement(position);
         Object run = element.getAttributes().getAttribute(HoverKey.INSTANCE);
+        if (run == null && position > 0) {
+            // Past the middle of an icon row's one wide icon the position is the one after it, the line's end.
+            Element before = this.getStyledDocument().getCharacterElement(position - 1);
+            Object prior = before.getAttributes().getAttribute(HoverKey.INSTANCE);
+            if (switch (prior) {
+                case HoverRun.IconRowRun row -> true;
+                case null, default -> false;
+            }) {
+                element = before;
+                run = prior;
+            }
+        }
         try {
             return switch (run) {
                 case HoverRun.MentionRun mention -> this.mentionAt(point, element, mention);
