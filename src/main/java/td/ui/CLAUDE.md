@@ -70,6 +70,10 @@ keeps the seam honest.
 - Tooltips are `TooltipPanel`s on the frame's popup layer, owned by one `TooltipLayer`; what is hovered, where a
   tooltip goes and which stay open are answered by `SheetPane.hoverAt`, `TooltipPlacement` and `TooltipChain`.
   Never use `setToolTipText` for game content.
+- The header strip (`PanelHeader`) holds the title, the four `StatusIcon`s (wave, lives, score, cash) centred between
+  the title and the speed buttons, which stand above the console. A status icon is a tooltip source that opens its tooltip under
+  itself (`TooltipLayer.watchBelow`); only lives (on a drop) and wave (on an increase) flash, and a level's first
+  numbers are a baseline, never a change.
 - An upgrade button paints its perk icon beside its row text; its hover is a tooltip, never the info pane.
 - Info-pane content is an AWT-free `InfoSheet` that a `*SheetText` builds from a domain
   inspection (`EnemyInspection`, `TowerInspection`): stat rows, then icon rows (Traits, Buffs,

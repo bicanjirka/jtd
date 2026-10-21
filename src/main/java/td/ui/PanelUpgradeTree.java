@@ -136,7 +136,10 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             HudButton button = this.slotButtons[slotIndex][buttonIndex];
             button.setVisible(true);
             button.setText(UpgradeSheetText.buttonText(offer));
-            button.setIcon(new PaintedIcon(BUTTON_ICON, BUTTON_ICON, g2 -> TermIconPainter.paint(g2, offer.face(), BUTTON_ICON)));
+            button.setIcon(new PaintedIcon(BUTTON_ICON, BUTTON_ICON, g2 -> {
+                g2.translate(-BUTTON_ICON / 2.0, -BUTTON_ICON / 2.0);
+                TermIconPainter.paint(g2, offer.face(), BUTTON_ICON);
+            }));
             button.setEnabled(!this.levelEnded && offer.buyable());
         }
         int xp = this.tower.experience().xp();
