@@ -1,7 +1,8 @@
 package td.tower.mortar;
 
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
+import td.tower.TowerTerm;
 
 /** Cluster Shell: four bomblets scattered along the path around the impact, each a small blast for 40%. */
 public final class ClusterShellPerk implements MortarPerk {
@@ -17,7 +18,8 @@ public final class ClusterShellPerk implements MortarPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of(COUNT + " bomblets scattered along the path around the impact, " + PerkText.percent(DAMAGE_SHARE) + " damage each over "
-                + PerkText.distance(RADIUS_CELLS));
+        return TermText.of("the shell breaks into " + COUNT + " bombs along the path around the impact, each a ")
+                .plus(TowerTerm.BOMBLET).plus(" of " + TermNumbers.percent(DAMAGE_SHARE) + " damage over "
+                        + TermNumbers.cells(RADIUS_CELLS));
     }
 }

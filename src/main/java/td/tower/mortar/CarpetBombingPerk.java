@@ -1,6 +1,7 @@
 package td.tower.mortar;
 
 import td.term.TermText;
+import td.tower.TowerTerm;
 
 /** Carpet Bombing: eight bomblets in a line along the path ahead of the impact. */
 public final class CarpetBombingPerk implements MortarPerk {
@@ -16,6 +17,7 @@ public final class CarpetBombingPerk implements MortarPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of(COUNT + " bomblets in a line along the path ahead of the impact instead");
+        return TermText.of(COUNT + " bombs instead, each a ").plus(TowerTerm.BOMBLET)
+                .plus(", in a line along the path ahead of the impact");
     }
 }

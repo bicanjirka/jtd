@@ -3,8 +3,10 @@ package td.tower.mortar;
 import td.damage.DamageType;
 import td.effect.EffectKind;
 import td.projectile.ShellLook;
+import td.term.TermNumbers;
+import td.term.TermText;
 import td.tower.TowerTerm;
-import td.tower.upgrade.PerkText;
+import td.util.TickRate;
 import td.zone.ZoneKind;
 
 import java.util.Optional;
@@ -54,7 +56,7 @@ public enum ShellType {
         return this.zone;
     }
 
-    /** The buff term this shell is when primed; a plain shell is never primed. */
+    /** The effects the shell's blast and ground put on enemies. */
     public Set<EffectKind> applies() {
         return switch (this) {
             case PLAIN, NUKE -> Set.of();
@@ -64,7 +66,7 @@ public enum ShellType {
         };
     }
 
-    /** The buff term the shell primed for firing is. */
+    /** The buff term this shell is when primed; a plain shell is never primed. */
     public TowerTerm term() {
         return switch (this) {
             case PLAIN -> throw new IllegalStateException("A plain shell is never primed");
@@ -75,22 +77,26 @@ public enum ShellType {
         };
     }
 
-    /** Its name and what it does where it lands: {@code "Tar: it leaves tar, 1.2 cells wide, for 4s"}. */
-    public String describe() {
+    /** What it does where it lands, said after its mention: "it leaves tar 1.2 cells wide for 4 s that applies [Tar] and [Poison]". */
+    public TermText describe() {
         return switch (this) {
-            case PLAIN -> "Plain";
-            case NAPALM -> "Napalm: its blast is magic and leaves burning ground, " + this.zoneText();
-            case TAR -> "Tar: it leaves tar, " + this.zoneText();
-            case CRYO -> "Cryo: it leaves frost ground, " + this.zoneText();
-            case NUKE -> "Nuke: it leaves fallout for " + PerkText.seconds(this.zone.orElseThrow().lifetimeTicks()) + " over "
-                    + PerkText.cells(this.zone.orElseThrow().blastShare()) + " of the blast";
+            case PLAIN -> TermText.of("a plain shell");
+            case NAPALM -> TermText.of("its blast is magic and leaves flames " + this.zoneText() + " that apply ")
+                    .plus(EffectKind.BURN);
+            case TAR -> TermText.of("it leaves tar " + this.zoneText() + " that applies ").plus(EffectKind.TARRED)
+                    .plus(" and ").plus(EffectKind.POISON);
+            case CRYO -> TermText.of("it leaves frost " + this.zoneText() + " that applies ").plus(EffectKind.CHILL)
+                    .plus(", and ").plus(EffectKind.FREEZE).plus(" to an enemy that stays");
+            case NUKE -> TermText.of("it leaves ").plus(EffectKind.FALLOUT)
+                    .plus(" over " + TermNumbers.percent(this.zone.orElseThrow().blastShare()) + " of the blast for "
+                            + TermNumbers.seconds(this.zone.orElseThrow().lifetimeTicks() / (float) TickRate.TICKS_PER_SECOND));
         };
     }
 
     private String zoneText() {
         ShellZone ground = this.zone.orElseThrow();
-        return PerkText.distance(ground.radiusCells()) + " wide, for "
-                + PerkText.seconds(ground.lifetimeTicks());
+        return TermNumbers.cells(ground.radiusCells()) + " wide for "
+                + TermNumbers.seconds(ground.lifetimeTicks() / (float) TickRate.TICKS_PER_SECOND);
     }
 
     /**

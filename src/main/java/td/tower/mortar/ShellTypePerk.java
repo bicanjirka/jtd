@@ -1,8 +1,8 @@
 package td.tower.mortar;
 
 import td.term.Term;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
 
 import java.util.Set;
 
@@ -27,6 +27,7 @@ public final class ShellTypePerk implements MortarPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("every " + PerkText.ordinal(ShellPlan.CYCLE) + " shell is " + this.type.describe());
+        return TermText.of("every " + TermNumbers.ordinal(ShellPlan.CYCLE) + " shell is a ")
+                .plus(TermText.of(this.type.term(), this.type.describe()));
     }
 }

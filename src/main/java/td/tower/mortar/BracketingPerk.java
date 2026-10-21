@@ -1,7 +1,8 @@
 package td.tower.mortar;
 
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
+import td.tower.TowerTerm;
 
 /** Attune's Bracketing: a shell landing near the last one hits harder and 10% wider, up to three steps. */
 public final class BracketingPerk implements MortarPerk {
@@ -17,7 +18,9 @@ public final class BracketingPerk implements MortarPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("Bracketing: a shell landing within " + PerkText.cells(RADIUS_CELLS) + " cells of the last gets more damage and +"
-                + PerkText.percent(STEP) + " radius, up to " + MAX_STEPS + " steps; a shell elsewhere resets it");
+        return TermText.of("a shell landing within " + TermNumbers.cells(RADIUS_CELLS) + " of the last raises ")
+                .plus(TermText.of(TowerTerm.BRACKETING, TermText.of("each step: more damage and "
+                        + TermNumbers.signedPercent(STEP) + " blast radius")))
+                .plus(" a step, up to " + MAX_STEPS + "; a shell elsewhere clears it");
     }
 }

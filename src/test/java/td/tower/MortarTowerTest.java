@@ -16,7 +16,6 @@ import td.fixtures.TowerFixtures;
 import td.fixtures.WorldFixtures;
 import td.projectile.CannonballProjectile;
 import td.projectile.ShellLook;
-import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 import td.zone.Zone;
@@ -858,9 +857,14 @@ class MortarTowerTest {
     void tacticalNukeSaysWhatItDoes() {
         MortarTower tower = new MortarTower(this.context, 0, 0);
 
-        assertThat(tower.bonusesOf(UpgradePaths.named(tower, "Tactical Nuke"))).contains(new UpgradeBonus(
-                "Every 4th shell is a nuke: x4 damage over x1.5 the blast, leaving fallout for 4s over 0.8 "
-                + "of the blast; it never carries a special", ""));
+        var sentences = tower.wordsOf(UpgradePaths.named(tower, "Tactical Nuke")).sentences();
+
+        assertThat(td.fixtures.TowerFixtures.plain(sentences)).contains(
+                "every 4th shell is a Nuke Shell: x4 damage over x1.5 the blast; it is never a special shell");
+        assertThat(sentences.getFirst().spans()).anySatisfy(span -> assertThat(span).isInstanceOfSatisfying(
+                td.term.TermText.Mention.class,
+                mention -> assertThat(mention.meaning().plain())
+                        .isEqualTo("it leaves Fallout over 80% of the blast for 4 s")));
     }
 
     @Test

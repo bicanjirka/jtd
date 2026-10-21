@@ -1,7 +1,7 @@
 package td.tower.mortar;
 
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
 
 /** Airburst: the blast hits at full damage across its inner half. */
 public final class AirburstPerk implements MortarPerk {
@@ -15,6 +15,6 @@ public final class AirburstPerk implements MortarPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("full damage across the inner " + PerkText.percent(CORE_SHARE) + " of the blast");
+        return TermText.of("full damage across the inner " + TermNumbers.percent(CORE_SHARE) + " of the blast");
     }
 }
