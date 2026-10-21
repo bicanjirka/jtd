@@ -129,7 +129,8 @@ public class GameEngine {
     private List<RoundSummary> roundsOf(LoadedLevel installed) {
         Set<Integer> leaked = this.leakedRounds;
         return IntStream.range(0, installed.waveCount())
-                .mapToObj(round -> new RoundSummary(installed.highestRankAt(round), leaked.contains(round)))
+                .mapToObj(round -> new RoundSummary(installed.highestRankAt(round), installed.uniqueAt(round),
+                        leaked.contains(round)))
                 .toList();
     }
 

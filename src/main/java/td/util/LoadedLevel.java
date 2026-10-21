@@ -66,6 +66,11 @@ public record LoadedLevel(CellGrid cells, BoardGeometry board, List<PathRuntime>
         return this.wavesAt(round).stream().map(Wave::highestRank).max(Comparator.naturalOrder()).orElse(Rank.GRUNT);
     }
 
+    /** Whether round {@code round} sends a unique enemy down any path. */
+    public boolean uniqueAt(int round) {
+        return this.wavesAt(round).stream().anyMatch(Wave::hasUnique);
+    }
+
     /** This level with one wave-less path replacing all others, for previews and tests. */
     public LoadedLevel withSinglePath(Path path) {
         return new LoadedLevel(this.cells, this.board, List.of(new PathRuntime(path, List.of(), PathColor.DEFAULT)),

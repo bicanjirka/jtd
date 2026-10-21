@@ -47,7 +47,7 @@ final class StatusSheetText {
         InfoSheet sheet = new InfoSheet(List.of(
                 new SheetLine.IconTitle(face.withBelow(""), "Round " + (round + 1), face.tone(),
                         RoundSkulls.stateName(rounds.stateAt(round))),
-                Row.plain(Glyph.SKULL, "Strongest rank", RoundSkulls.rankName(rounds.rankAt(round)))));
+                Row.plain(Glyph.SKULL, "Strongest", RoundSkulls.strongest(rounds.summaryAt(round)))));
         return new SheetIcon(face, TooltipKey.of("round", Integer.toString(round)), sheet);
     }
 }

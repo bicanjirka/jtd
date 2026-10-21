@@ -83,8 +83,8 @@ class StatusSheetTextTest {
 
     @Test
     void theWaveTooltipShowsEveryRoundsSkullNumberedAndEachOpensItsOwnTooltip() {
-        List<RoundSummary> rounds = new ArrayList<>(Collections.nCopies(18, new RoundSummary(Rank.GRUNT, false)));
-        rounds.set(2, new RoundSummary(Rank.ELITE, true));
+        List<RoundSummary> rounds = new ArrayList<>(Collections.nCopies(18, new RoundSummary(Rank.GRUNT, false, false)));
+        rounds.set(2, new RoundSummary(Rank.ELITE, false, true));
         RoundStrip strip = RoundStrip.of(new WaveProgress(7, rounds, List.of(), List.of()), false, LevelOutcome.PLAYING);
 
         SheetLine.IconRow row = (SheetLine.IconRow) StatusSheetText.of(StatusTerm.WAVE, PLAYING, strip).lines().getLast();
@@ -92,7 +92,7 @@ class StatusSheetTextTest {
         assertThat(row.icons()).hasSize(18);
         assertThat(row.icons()).extracting(icon -> icon.face().below()).startsWith("1", "2", "3");
         assertThat(row.icons().get(2).tooltip().lines()).contains(
-                Row.plain(Glyph.SKULL, "Strongest rank", "Elite"));
+                Row.plain(Glyph.SKULL, "Strongest", "Elite"));
         assertThat(((SheetLine.IconTitle) row.icons().get(2).tooltip().lines().getFirst()).value())
                 .isEqualTo("enemies escaped");
         assertThat(row.icons().get(6).face().frame()).isEqualTo(Palette.ROUND_CURRENT);

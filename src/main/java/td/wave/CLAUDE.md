@@ -46,7 +46,8 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
   `SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`; it carries on `WaveContent`. It must be the first token and
   positive, and no enemy id may look like it.
 - **Rank keywords** `grunt soldier veteran elite boss` go before the enemy or shape they rank and
-  override the wave's default rank for that slot.
+  override the wave's default rank for that slot. A unique enemy is Boss whatever the default; any
+  rank keyword but `boss` before it is an error.
 - **Shape keywords** go before the enemy: `armored` (1 member, stacks a physical-only adaptive
   resist on any armor it has), `flank` (2 members at opposite sides), `swarm n` (half size, health/bounty split,
   scattered), `line n` (spread across), `column n` / `drip n` (spaced tighter / looser than one

@@ -76,8 +76,8 @@ final class FakeAbilityContext implements AbilityContext {
     }
 
     @Override
-    public void spawnEnemies(String definitionId, AbilitySpawnShape shape, boolean consumesSelf) {
-        this.spawnCalls.add(new SpawnCall(definitionId, shape, consumesSelf));
+    public void spawnEnemies(SpawnEnemiesAction spawn) {
+        this.spawnCalls.add(new SpawnCall(spawn.definitionId(), spawn.shape(), spawn.consumesSelf()));
     }
 
     record AppliedEffect(EffectTemplate template, EffectTarget target) {

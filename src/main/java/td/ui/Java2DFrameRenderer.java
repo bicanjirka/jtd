@@ -594,6 +594,7 @@ public final class Java2DFrameRenderer {
             case ROUND_SKULL_VETERAN -> new Color(130, 200, 255);
             case ROUND_SKULL_ELITE -> new Color(255, 196, 60);
             case ROUND_SKULL_BOSS -> new Color(200, 120, 255);
+            case ROUND_SKULL_UNIQUE -> new Color(255, 70, 150);
             case ROUND_CLEARED -> new Color(105, 112, 105);
             case ROUND_LEAKED -> new Color(225, 70, 70);
             case ROUND_CURRENT -> new Color(200, 230, 200);

@@ -57,6 +57,35 @@ class WardenChainTest {
     }
 
     @Test
+    void aWardenIsABossWhateverRankItIsAskedForAndItsEggToo() {
+        GameWorld world = worldWithStraightPath();
+        DefinedEnemyMob warden = (DefinedEnemyMob) world.getEnemyCatalog().spawn("warden1", world, 0, 8000, 100, Rank.GRUNT);
+        world.enemies().add(warden);
+        warden.doTick(1);
+
+        warden.doDamage(LETHAL);
+        warden.doTick(2);
+
+        assertThat(warden.getRank()).isEqualTo(Rank.BOSS);
+        assertThat(world.enemies().getEnemies()).extracting(EnemyMob::getRank).containsOnly(Rank.BOSS);
+    }
+
+    @Test
+    void aWardenCallsThreeEliteReinforcementsAtATime() {
+        GameWorld world = worldWithStraightPath();
+        DefinedEnemyMob warden = (DefinedEnemyMob) world.getEnemyCatalog().spawn("warden1", world, 0, 8000, 100, Rank.BOSS);
+        world.enemies().add(warden);
+
+        for (int t = 1; t <= 120; t++) {
+            warden.doTick(t);
+        }
+
+        List<EnemyMob> reinforcements = List.of(world.enemies().getEnemies()).stream().filter(e -> e != warden).toList();
+        assertThat(reinforcements).hasSize(3);
+        assertThat(reinforcements).extracting(EnemyMob::getRank).containsOnly(Rank.ELITE);
+    }
+
+    @Test
     void aWardenThatReachesTheEndOfThePathLeavesNoEgg() {
         GameWorld world = WorldFixtures.newWorldOnBoard(32, 1000, 1000);
         world.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(40, 0))));

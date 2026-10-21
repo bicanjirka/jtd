@@ -175,6 +175,7 @@ public class PanelHeader extends JPanel {
     /** The next {@link #show} is a baseline, not a change: a level is starting or loading. */
     public void reset() {
         this.flash.reset();
+        this.icon(StatusTerm.WAVE).resetRounds();
         this.readout = StatusReadout.empty();
         this.rounds = RoundStrip.empty();
     }
@@ -193,19 +194,20 @@ public class PanelHeader extends JPanel {
         this.rounds = nextRounds;
         this.flash.observe(next, nowMillis());
         this.icons.forEach(icon -> icon.show(next));
-        this.icon(StatusTerm.WAVE).showRounds(nextRounds);
+        this.icon(StatusTerm.WAVE).showRounds(nextRounds, nowMillis());
         this.pulse();
         if (this.tooltips != null) {
             this.tooltips.refreshButtons();
         }
     }
 
-    /** Called every render pulse: lets a flash fade, then rests. */
+    /** Called every render pulse: lets a flash fade and the round skulls move. */
     public void pulse() {
         long now = nowMillis();
         for (StatusIcon icon : this.icons) {
             icon.flash(this.flash.strength(icon.term(), now));
         }
+        this.icon(StatusTerm.WAVE).animate(now);
     }
 
     StatusIcon icon(StatusTerm term) {

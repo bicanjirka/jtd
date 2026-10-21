@@ -20,7 +20,7 @@ class RoundStripTest {
     }
 
     private static List<RoundSummary> grunts(int count) {
-        return Collections.nCopies(count, new RoundSummary(Rank.GRUNT, false));
+        return Collections.nCopies(count, new RoundSummary(Rank.GRUNT, false, false));
     }
 
     @Test
@@ -33,7 +33,7 @@ class RoundStripTest {
     @Test
     void theRoundInPlayIsCurrentAndTheOnesBeforeItAreOver() {
         List<RoundSummary> rounds = new ArrayList<>(grunts(4));
-        rounds.set(1, new RoundSummary(Rank.GRUNT, true));
+        rounds.set(1, new RoundSummary(Rank.GRUNT, false, true));
 
         RoundStrip strip = RoundStrip.of(progress(3, rounds), false, LevelOutcome.PLAYING);
 
@@ -86,24 +86,37 @@ class RoundStripTest {
     }
 
     @Test
-    void theHiddenRoundsNameTheHighestRankAmongThem() {
+    void theHiddenRoundsNameTheStrongestSkullAmongThem() {
         List<RoundSummary> rounds = new ArrayList<>(grunts(12));
-        rounds.set(11, new RoundSummary(Rank.BOSS, false));
+        rounds.set(10, new RoundSummary(Rank.BOSS, true, false));
+        rounds.set(11, new RoundSummary(Rank.BOSS, false, false));
         RoundStrip strip = RoundStrip.of(progress(0, rounds), true, LevelOutcome.PLAYING);
 
-        assertThat(strip.highestRankFrom(strip.window(10).end())).isEqualTo(Rank.BOSS);
+        assertThat(strip.strongestFrom(strip.window(10).end())).isEqualTo(RoundSkulls.Kind.UNIQUE);
     }
 
     @Test
-    void everyRankAboveSoldierHasItsOwnSkullAndAnOverRoundIsCracked() {
-        assertThat(RoundSkulls.pictogram(Rank.GRUNT, State.AHEAD)).isEqualTo(RoundSkulls.pictogram(Rank.SOLDIER, State.AHEAD));
-        assertThat(List.of(Rank.SOLDIER, Rank.VETERAN, Rank.ELITE, Rank.BOSS))
-                .extracting(rank -> RoundSkulls.pictogram(rank, State.AHEAD)).doesNotHaveDuplicates();
-        for (Rank rank : Rank.values()) {
+    void gruntsAndSoldiersShareTheBareSkullAndEachRankAboveHasItsOwn() {
+        assertThat(List.of(Rank.GRUNT, Rank.SOLDIER, Rank.VETERAN, Rank.ELITE, Rank.BOSS))
+                .extracting(rank -> RoundSkulls.Kind.of(new RoundSummary(rank, false, false)))
+                .containsExactly(RoundSkulls.Kind.PLAIN, RoundSkulls.Kind.PLAIN, RoundSkulls.Kind.VETERAN,
+                        RoundSkulls.Kind.ELITE, RoundSkulls.Kind.BOSS);
+    }
+
+    @Test
+    void aRoundWithAUniqueEnemyShowsTheSkullAboveTheBoss() {
+        assertThat(RoundSkulls.Kind.of(new RoundSummary(Rank.BOSS, true, false))).isEqualTo(RoundSkulls.Kind.UNIQUE);
+    }
+
+    @Test
+    void everySkullHasItsOwnArtAndAnOverRoundIsCracked() {
+        assertThat(List.of(RoundSkulls.Kind.values()))
+                .extracting(kind -> RoundSkulls.pictogram(kind, State.AHEAD)).doesNotHaveDuplicates();
+        for (RoundSkulls.Kind kind : RoundSkulls.Kind.values()) {
             for (State state : State.values()) {
-                assertThat(PictogramCatalogue.of(RoundSkulls.pictogram(rank, state))).isPresent();
+                assertThat(PictogramCatalogue.of(RoundSkulls.pictogram(kind, state))).isPresent();
             }
+            assertThat(RoundSkulls.pictogram(kind, State.LEAKED)).isNotEqualTo(RoundSkulls.pictogram(kind, State.CURRENT));
         }
-        assertThat(RoundSkulls.pictogram(Rank.BOSS, State.LEAKED)).isNotEqualTo(RoundSkulls.pictogram(Rank.BOSS, State.CURRENT));
     }
 }

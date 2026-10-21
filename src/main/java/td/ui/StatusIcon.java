@@ -12,15 +12,17 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RadialGradientPaint;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Ellipse2D;
 import java.io.Serial;
 import java.util.OptionalInt;
 
 /**
  * One status bar entry: the term's framed face, then what it counts. The round is a skull per round, as many as fit,
- * then how many more follow; the lives a heart each (a number when there are too many or none), the score and the cash a bold number. The pointer
+ * then how many more follow, the current one pulsing and a skull cracking as its round ends; the lives a heart each (a number when there are too many or none), the score and the cash a bold number. The pointer
  * over it brightens it, and a flash brightens the face.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
@@ -41,6 +43,13 @@ final class StatusIcon extends JComponent {
     private static final int MORE_GAP = 4;
     private static final int MARK_HEIGHT = 2;
     private static final float AHEAD_DARKEN = 0.3f;
+    private static final long PULSE_PERIOD_MS = 1400;
+    private static final float PULSE_LIGHTEN = 0.4f;
+    private static final float CRACK_SHAKE_PX = 1.5f;
+    private static final float CRACK_SHAKES = 3f;
+    private static final float CRACK_POP = 0.3f;
+    private static final float GLOW_RADIUS = 0.85f;
+    private static final int GLOW_ALPHA = 80;
     private static final int HEART_SIZE = 12;
     private static final int HEART_GAP = 2;
     private static final int HOVER_ALPHA = 36;
@@ -49,7 +58,10 @@ final class StatusIcon extends JComponent {
 
     private final StatusTerm term;
     private StatusReadout readout = StatusReadout.empty();
+    private final RoundCracks cracks = new RoundCracks();
     private RoundStrip rounds = RoundStrip.empty();
+    private long nowMillis = 0L;
+    private boolean animating = false;
     private float flash = 0f;
     private boolean hovered = false;
 
@@ -124,15 +136,37 @@ final class StatusIcon extends JComponent {
         return this.rounds;
     }
 
-    void showRounds(RoundStrip next) {
+    /** The skull of round {@code round} cracking now: from 0 as it cracks to 1 once settled. */
+    float crack(int round) {
+        return this.cracks.progress(round, this.nowMillis);
+    }
+
+    /** The next strip is a baseline, cracking nothing. */
+    void resetRounds() {
+        this.cracks.reset();
+    }
+
+    void showRounds(RoundStrip next, long nowMillis) {
         if (!next.equals(this.rounds)) {
             int before = this.contentWidth();
+            this.cracks.observe(next, nowMillis);
+            this.nowMillis = nowMillis;
             this.rounds = next;
             if (this.contentWidth() != before) {
                 this.revalidate();
             }
             this.repaint();
         }
+    }
+
+    /** Moves the strip's clock on: repaints while a skull pulses or cracks, and once more as it settles. */
+    void animate(long nowMillis) {
+        this.nowMillis = nowMillis;
+        boolean moving = this.cracks.active(nowMillis) || this.rounds.states().contains(RoundStrip.State.CURRENT);
+        if (moving || this.animating) {
+            this.repaint();
+        }
+        this.animating = moving;
     }
 
     /** How brightly the face flashes now, from 0 to 1. */
@@ -174,11 +208,13 @@ final class StatusIcon extends JComponent {
         RoundStrip.Window window = this.rounds.window(MAX_SKULLS);
         int y = (this.getHeight() - SKULL_SIZE - MARK_HEIGHT) / 2 - 1;
         int left = x;
+        float pulse = (float) (0.5 - 0.5 * Math.cos(2 * Math.PI * (this.nowMillis % PULSE_PERIOD_MS) / PULSE_PERIOD_MS));
         for (int round = window.start(); round < window.end(); round++) {
             RoundStrip.State state = this.rounds.stateAt(round);
-            this.paintSkull(g2, round, left, y);
+            this.paintSkull(g2, round, left, y, pulse);
             if (state == RoundStrip.State.CURRENT) {
-                g2.setColor(Java2DFrameRenderer.colorFor(Palette.ROUND_CURRENT));
+                Color mark = Java2DFrameRenderer.colorFor(Palette.ROUND_CURRENT);
+                g2.setColor(new Color(mark.getRed(), mark.getGreen(), mark.getBlue(), Math.round(110 + 145 * pulse)));
                 g2.fillRoundRect(left + 1, y + SKULL_SIZE + 2, SKULL_SIZE - 2, MARK_HEIGHT, MARK_HEIGHT, MARK_HEIGHT);
             }
             left += SKULL_SIZE + SKULL_GAP;
@@ -186,27 +222,55 @@ final class StatusIcon extends JComponent {
         if (window.hiddenAfter() > 0) {
             g2.setFont(MORE_FONT);
             FontMetrics metrics = g2.getFontMetrics();
-            g2.setColor(Java2DFrameRenderer.colorFor(RoundSkulls.rankTone(this.rounds.highestRankFrom(window.end()))));
+            g2.setColor(Java2DFrameRenderer.colorFor(RoundSkulls.kindTone(this.rounds.strongestFrom(window.end()))));
             g2.drawString("+" + window.hiddenAfter(), left - SKULL_GAP + MORE_GAP,
                     (this.getHeight() - metrics.getHeight()) / 2 + metrics.getAscent());
         }
     }
 
-    private void paintSkull(Graphics2D g2, int round, int x, int y) {
+    /** One skull: dimmed to come, brightening and dimming while current, and on cracking a white flash that shakes and settles. */
+    private void paintSkull(Graphics2D g2, int round, int x, int y, float pulse) {
         RoundStrip.State state = this.rounds.stateAt(round);
-        Pictogram skull = PictogramCatalogue.of(RoundSkulls.pictogram(this.rounds.rankAt(round), state)).orElseThrow();
-        Color ink = Java2DFrameRenderer.colorFor(RoundSkulls.tone(this.rounds.rankAt(round), state));
-        if (state == RoundStrip.State.AHEAD) {
-            ink = new Color(Math.round(ink.getRed() * (1 - AHEAD_DARKEN)), Math.round(ink.getGreen() * (1 - AHEAD_DARKEN)),
-                    Math.round(ink.getBlue() * (1 - AHEAD_DARKEN)));
+        RoundSkulls.Kind kind = this.rounds.kindAt(round);
+        Pictogram skull = PictogramCatalogue.of(RoundSkulls.pictogram(kind, state)).orElseThrow();
+        Color ink = Java2DFrameRenderer.colorFor(RoundSkulls.tone(kind, state));
+        float crack = this.cracks.progress(round, this.nowMillis);
+        float centre = SKULL_SIZE / 2f;
+        if (kind == RoundSkulls.Kind.UNIQUE && !state.isOver()) {
+            paintGlow(g2, ink, x + centre, y + centre, state == RoundStrip.State.CURRENT ? pulse : 0.5f);
         }
+        switch (state) {
+            case AHEAD -> ink = mix(ink, Color.BLACK, AHEAD_DARKEN);
+            case CURRENT -> ink = mix(ink, Color.WHITE, PULSE_LIGHTEN * pulse);
+            case CLEARED, LEAKED -> ink = mix(Color.WHITE, ink, crack);
+        }
+        float settle = 1f - crack;
+        double shake = Math.sin(crack * Math.PI * 2 * CRACK_SHAKES) * settle * CRACK_SHAKE_PX;
+        double pop = 1 + CRACK_POP * settle * settle;
         Graphics2D one = (Graphics2D) g2.create();
-        one.translate(x, y);
-        double scale = SKULL_SIZE / (double) Pictogram.UNIT;
+        one.translate(x + centre + shake, y + centre);
+        double scale = pop * SKULL_SIZE / Pictogram.UNIT;
         one.scale(scale, scale);
+        one.translate(-Pictogram.UNIT / 2, -Pictogram.UNIT / 2);
         // The strip sits on the header's black, so a knock-out is black too.
         TermIconPainter.paintLayers(one, skull, ink, Color.BLACK);
         one.dispose();
+    }
+
+    private static void paintGlow(Graphics2D g2, Color tone, float cx, float cy, float strength) {
+        float radius = SKULL_SIZE * GLOW_RADIUS;
+        Color inner = new Color(tone.getRed(), tone.getGreen(), tone.getBlue(), Math.round(GLOW_ALPHA * (0.5f + strength)));
+        Color outer = new Color(tone.getRed(), tone.getGreen(), tone.getBlue(), 0);
+        Graphics2D glow = (Graphics2D) g2.create();
+        glow.setPaint(new RadialGradientPaint(cx, cy, radius, new float[]{0f, 1f}, new Color[]{inner, outer}));
+        glow.fill(new Ellipse2D.Float(cx - radius, cy - radius, radius * 2, radius * 2));
+        glow.dispose();
+    }
+
+    private static Color mix(Color a, Color b, float t) {
+        return new Color(Math.round(a.getRed() + (b.getRed() - a.getRed()) * t),
+                Math.round(a.getGreen() + (b.getGreen() - a.getGreen()) * t),
+                Math.round(a.getBlue() + (b.getBlue() - a.getBlue()) * t));
     }
 
     private void paintLives(Graphics2D g2, int x) {

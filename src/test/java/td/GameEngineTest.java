@@ -818,6 +818,19 @@ class GameEngineTest {
     }
 
     @Test
+    void aRoundSendingTheWardenIsABossRoundWithAUniqueEnemyWhateverItsDefaultRank() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(
+                new WaveDefinition("warden1 e elite c", Rank.GRUNT),
+                new WaveDefinition("boss c", Rank.GRUNT)), 100));
+
+        WaveProgress progress = engine.waveProgress();
+
+        assertThat(progress.rounds()).containsExactly(new RoundSummary(Rank.BOSS, true, false),
+                new RoundSummary(Rank.BOSS, false, false));
+    }
+
+    @Test
     void aRoundAnEnemyEscapedIsMarkedLeakedOnceItIsOver() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", Rank.GRUNT),

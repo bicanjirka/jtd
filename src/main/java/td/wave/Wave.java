@@ -121,6 +121,10 @@ public class Wave {
         return this.content.highestRank();
     }
 
+    public boolean hasUnique() {
+        return this.content.hasUnique();
+    }
+
     /**
      * Builds this wave's enemies against the currently installed path. Call once, when the wave
      * starts: each call makes a fresh set.
