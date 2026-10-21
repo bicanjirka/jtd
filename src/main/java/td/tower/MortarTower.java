@@ -557,7 +557,7 @@ public final class MortarTower extends AbstractTower {
                                 + marker.maxSteps() + " steps")).withStacks(marker.step())));
         ShellType primed = spec.shells().typeOf(this.shellsFired + 1);
         if (primed != ShellType.PLAIN) {
-            states.add(TowerBuffState.of(primed.term(), TermText.of(primed.describe())));
+            states.add(TowerBuffState.of(primed.term(), primed.describe()));
         }
         this.perks.all().forEach(perk -> perk.condition().ifPresent(states::add));
         return states;

@@ -1,7 +1,8 @@
 package td.tower.mortar;
 
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
+import td.tower.TowerTerm;
 
 /** Fragmentation Rounds II: the shrapnel does 30% more of everything and carries its shell's own effect. */
 public final class ShrapnelBoostPerk implements MortarPerk {
@@ -15,6 +16,8 @@ public final class ShrapnelBoostPerk implements MortarPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("shrapnel does " + PerkText.percent(FACTOR - 1f) + " more of everything it does, and applies its shell's own effect");
+        return TermText.of(TowerTerm.SHRAPNEL)
+                .plus(" does " + TermNumbers.percent(FACTOR - 1f)
+                        + " more of everything it does, and carries its shell's own effect");
     }
 }
