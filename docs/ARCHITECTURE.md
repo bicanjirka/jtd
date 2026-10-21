@@ -51,6 +51,22 @@ The split as it stands:
   (`GameEngine.outcome()`) are decided by the engine at the end of each tick and polled by the
   UI, so every host - the window, tests, the balance harness - plays by the same rules.
 
+```mermaid
+flowchart LR
+    subgraph swing[Swing side]
+        frame[TowerDefense<br/>JFrame, wiring, implements GameHost]
+        ui[td.ui panels]
+    end
+    subgraph headless[Headless engine]
+        engine[GameEngine<br/>state and input semantics]
+        domain[domain packages<br/>tower, enemy, wave, ...]
+    end
+    frame -->|mouseClicked, highlightCell<br/>board-relative pixels| engine
+    ui -.->|polls outcome, waveProgress| engine
+    engine --> domain
+    domain -->|GameHost.clearCell| frame
+```
+
 `TowerDefense` is the one class deliberately on both sides of the boundary. It is *not*
 shrinking, and calling it that would be wishful: it is around 700 lines and grew slightly
 during the threading work, since splitting frame-building from painting added code here. What
@@ -266,8 +282,8 @@ fixed-timestep accumulators:
 - `onRender` fires on a flat ~60fps real-time cadence regardless of tick speed, so the board
   keeps redrawing while paused.
 
-`GameEngine.doTick` ticks in a fixed order: **enemies, then in-flight projectiles, then
-towers.** Projectiles sit between the other two deliberately — a homing missile aims at this
+`GameEngine.doTick` ticks in a fixed order: **enemies, then in-flight projectiles, then ground
+zones, then towers.** Projectiles sit after enemies and before towers deliberately — a homing missile aims at this
 tick's enemy positions, not last tick's, and a projectile a tower spawns while its own loop
 runs below is left for the *next* tick to advance rather than moving twice in the tick it was
 fired.
@@ -300,6 +316,32 @@ of mutable state publishes it, and the other thread reads only what was publishe
 phrasing — it is not "the simulation thread owns everything". A tower's buffed stats are
 recalculated on the EDT and read by tick code, so the ownership runs the other way there; see
 the tower-stats case below.
+
+```mermaid
+flowchart LR
+    subgraph loop[game-loop thread]
+        tick[GameEngine.doTick]
+        build[BoardRenderer.buildFrame]
+    end
+    subgraph edt[EDT]
+        input[clicks: place, sell, upgrade]
+        paint[paintBoard]
+        panels[side panels]
+    end
+    frame[(RenderFrame<br/>one volatile)]
+    stats[(TowerStats<br/>one volatile per tower)]
+    cells[(cells<br/>volatile fields)]
+    ledger[(EconomyLedger<br/>computes under its lock)]
+    tick --> build -->|publishes| frame -->|reads| paint
+    input -->|recalculates| stats
+    tick -->|beginTick, statuses| stats
+    stats -->|reads| tick
+    stats -->|reads| panels
+    input -->|writes| cells -->|reads| build
+    tick -->|kills, leaks| ledger
+    input -->|doPay| ledger
+    ledger -.->|listeners, outside the lock| panels
+```
 
 For the board, `RenderFrame` already existed as exactly the right snapshot type, so the change
 was to build it on the `game-loop` thread — `GameLoop` now calls both of its callbacks there
@@ -497,6 +539,22 @@ harnesses' rankings flipped with the budget. Its pieces, and why each is shaped 
 - The margin, not the win rate, is the headline: with 3 to 5 lives and a deterministic player, a win rate
   sits at 0% or 100% and cannot tell easy from trivial.
 
+```mermaid
+flowchart LR
+    lab[TowerLab<br/>probes and duels] --> comp
+    subgraph players[players]
+        naive[NaivePlayer]
+        comp[CompetentPlayer]
+        strong[StrongPlayer<br/>rehearses each round]
+        script[ScriptedPlayer<br/>plays back an action log]
+    end
+    players -->|actions by round and offset| play[LevelPlay<br/>real credits, unlimited lives]
+    play --> engine[GameEngine<br/>GameHost.noOp]
+    engine -.->|public state, after every tick| rec[RunRecorder]
+    rec --> report[BalanceReport<br/>many seeds, margins, 95% intervals]
+    report --> out["text, --compare, --html"]
+```
+
 For visual work, the `run-jtd` Claude Code skill also offers `PreviewBoard`/`PreviewEnemy` —
 headless dev tools that compose a board or a single enemy scene and render it straight to a PNG,
 without opening a window or driving the real UI. They exist so an agent can check a rendering
@@ -622,6 +680,25 @@ to the mechanic a node adds, in that mechanic's spec. Generic upgrade effects ar
 bonuses, statuses, targeting and capabilities, each a sealed vocabulary whose records carry their
 own behaviour and words. An effect kind is one `EffectRule`; every rule between kinds is a row of
 `EffectInteractions`.
+
+```mermaid
+flowchart LR
+    subgraph tower[a tower]
+        tb[base stats] --> ts[(TowerStats)]
+        tn[owned upgrade nodes] --> ts
+        tst[active statuses] --> ts
+        te[emissions of auras in range<br/>an aura receives none] --> ts
+        tdis[disruption from Jammers] --> ts
+    end
+    subgraph enemy[an enemy]
+        eb[base stats of its rank] --> es[(StatSheet)]
+        et[traits] --> es
+        ee[effects, through each EffectRule] --> es
+    end
+    ts -->|attack profile| hit[HitResolution<br/>one hit formula]
+    es --> hit
+    ts --> beh[targeting, fire clock,<br/>mechanics read numbers]
+```
 
 Two rules keep it simple: nothing an aura receives changes what it gives (auras never buff auras, so
 one recompute in any order is right), and there is no scripting language (a mechanic with its own
