@@ -26,6 +26,36 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void aFreezeKeepsABurnOutAndSaysSo() {
+        ActiveEffects effects = new ActiveEffects();
+
+        effects.apply(Effect.freeze(30, DamageSink.none()));
+
+        assertThat(effects.keptOutBy(EffectKind.BURN)).contains(EffectKind.FREEZE);
+        assertThat(effects.keptOutBy(EffectKind.POISON)).isEmpty();
+    }
+
+    @Test
+    void aFreshBurnIsHalfAsFullAsATopUpCanMakeIt() {
+        ActiveEffects effects = new ActiveEffects();
+
+        effects.apply(Effect.burn(Damage.magic(10), 60, DamageSink.none()));
+
+        assertThat(effects.fullness(EffectKind.BURN).orElseThrow())
+                .isCloseTo(1.0 / PoolTuning.standard().capFactor(), within(0.01));
+    }
+
+    @Test
+    void aRefreshedStackKeepsTheLongerClock() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.vulnerable(1, 100, DamageSink.none()));
+
+        effects.apply(Effect.vulnerable(1, 40, DamageSink.none()));
+
+        assertThat(effects.clockTicks(EffectKind.VULNERABLE).orElseThrow()).isGreaterThanOrEqualTo(100);
+    }
+
+    @Test
     void withNoActiveEffectsSpeedMultiplierIsUnchanged() {
         ActiveEffects effects = new ActiveEffects();
 

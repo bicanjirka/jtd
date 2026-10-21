@@ -41,8 +41,6 @@ import java.util.Set;
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class DefinedEnemyMob implements EnemyMob {
 
-    /** A discharged charge lands this share of the hit that discharged it. */
-    private static final float DISCHARGE_SHARE = 0.3f;
 
     private final GameWorld gameWorld;
     private final EnemyDefinition definition;
@@ -537,7 +535,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         }
         this.activeEffects.consume(EffectKind.CHARGED);
         this.stats.invalidate();
-        float share = DISCHARGE_SHARE * (landed.critical() ? 2f : 1f);
+        float share = Effect.CHARGE_DISCHARGE_SHARE * (landed.critical() ? 2f : 1f);
         charge.get().sink().apply(Damage.magic(Math.round(landed.amount() * share)));
     }
 

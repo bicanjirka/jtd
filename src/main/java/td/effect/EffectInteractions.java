@@ -4,6 +4,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -46,7 +47,7 @@ final class EffectInteractions {
     private static final Map<EffectKind, Integer> POOL_FACTOR = new EnumMap<>(EffectKind.class);
 
     /** The least share of the burn a freeze puts out that lands at once. */
-    private static final float FREEZE_BURST_FLOOR = 0.5f;
+    static final float FREEZE_BURST_FLOOR = 0.5f;
 
     static {
         REQUIRES.put(EffectKind.BRITTLE, EffectKind.FREEZE);
@@ -175,6 +176,17 @@ final class EffectInteractions {
             }
         }
         return factor;
+    }
+
+    /** The first of the {@code active} kinds, in kind order, that keeps {@code kind} out or holds it off. */
+    static Optional<EffectKind> keptOutBy(EffectKind kind, Set<EffectKind> active) {
+        for (EffectKind other : EffectKind.values()) {
+            if (active.contains(other) && (BLOCKED_BY.getOrDefault(kind, Set.of()).contains(other)
+                    || HELD_OFF_BY.getOrDefault(kind, Set.of()).contains(other))) {
+                return Optional.of(other);
+            }
+        }
+        return Optional.empty();
     }
 
     /** Whether one of the {@code active} kinds keeps {@code incoming} out. */

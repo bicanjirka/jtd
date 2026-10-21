@@ -21,6 +21,8 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
 
     /** A burn or poison earns a stack this often while it lasts: one every half second. */
     static final int STACK_INTERVAL_TICKS = 10;
+    /** A discharged charge lands this share of the hit that discharged it. */
+    public static final float CHARGE_DISCHARGE_SHARE = 0.3f;
     /** How deep a Fractured that Fault Line left falls: resilience -100. */
     public static final int FAULT_LINE_STACK_CAP = 10;
     /** Spirit runs from 0 down to -100, so a hundred stacks of Sickened is all there is to lose. */

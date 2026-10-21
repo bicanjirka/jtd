@@ -3,6 +3,7 @@ package td.effect;
 import td.stat.EnemyStat;
 import td.stat.StatModifier;
 import td.stat.StatModifiers;
+import td.term.Side;
 
 import java.util.EnumSet;
 import java.util.Optional;
@@ -19,9 +20,10 @@ import java.util.Set;
  * @param pacing     what paces its timer or its stacks' decay
  * @param perStack   what each stack does to the enemy's stats
  * @param tags       the yes/no rules that ask for it
+ * @param side       whom it works for, seen from the enemy that carries it
  */
 public record EffectRule(EffectCategory category, Optional<EnemyStat> resistedBy, EffectStacking stacking, int stackCap,
-                         EffectPacing pacing, StatModifiers<EnemyStat> perStack, Set<EffectTag> tags) {
+                         EffectPacing pacing, StatModifiers<EnemyStat> perStack, Set<EffectTag> tags, Side side) {
 
     public EffectRule {
         tags = tags.isEmpty() ? Set.of() : Set.copyOf(tags);
@@ -30,12 +32,12 @@ public record EffectRule(EffectCategory category, Optional<EnemyStat> resistedBy
     /** A kind of {@code category} that refreshes, is paced by itself, does nothing to stats and has no tags. */
     public static EffectRule of(EffectCategory category) {
         return new EffectRule(category, Optional.empty(), EffectStacking.REFRESH, 1, EffectPacing.OWN,
-                StatModifiers.none(), Set.of());
+                StatModifiers.none(), Set.of(), Side.DEBUFF);
     }
 
     public EffectRule resistedBy(EnemyStat stat) {
         return new EffectRule(this.category, Optional.of(stat), this.stacking, this.stackCap, this.pacing, this.perStack,
-                this.tags);
+                this.tags, this.side);
     }
 
     public EffectRule stackingOnASharedClock(int cap) {
@@ -69,22 +71,28 @@ public record EffectRule(EffectCategory category, Optional<EnemyStat> resistedBy
 
     public EffectRule perStack(EnemyStat stat, StatModifier modifier) {
         return new EffectRule(this.category, this.resistedBy, this.stacking, this.stackCap, this.pacing,
-                this.perStack.and(stat, modifier), this.tags);
+                this.perStack.and(stat, modifier), this.tags, this.side);
     }
 
     public EffectRule tagged(EffectTag... tags) {
         Set<EffectTag> all = this.tags.isEmpty() ? EnumSet.noneOf(EffectTag.class) : EnumSet.copyOf(this.tags);
         all.addAll(Set.of(tags));
         return new EffectRule(this.category, this.resistedBy, this.stacking, this.stackCap, this.pacing, this.perStack,
-                all);
+                all, this.side);
+    }
+
+    /** This kind, working for the enemy that carries it. */
+    public EffectRule helpsCarrier() {
+        return new EffectRule(this.category, this.resistedBy, this.stacking, this.stackCap, this.pacing, this.perStack,
+                this.tags, Side.BUFF);
     }
 
     private EffectRule stackingAs(EffectStacking stacking, int cap) {
-        return new EffectRule(this.category, this.resistedBy, stacking, cap, this.pacing, this.perStack, this.tags);
+        return new EffectRule(this.category, this.resistedBy, stacking, cap, this.pacing, this.perStack, this.tags, this.side);
     }
 
     private EffectRule pacedAs(EffectPacing pacing) {
         return new EffectRule(this.category, this.resistedBy, this.stacking, this.stackCap, pacing, this.perStack,
-                this.tags);
+                this.tags, this.side);
     }
 }
