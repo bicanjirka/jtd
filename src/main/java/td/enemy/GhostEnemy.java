@@ -20,19 +20,13 @@ final class GhostEnemy {
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
                 .startingAt(EnemyDefinition.of("g", "Ghost mob", 200, 5, 1.28f, BodyArchetype.GHOST)
-                        .withDescription("Half there: physical hits pass partly through it. Turns invisible to towers "
-                                + "for a while the first time it's hit. Area damage still finds it.")
+                        .withDescription("Half there: hard to hit and hard to see, but area damage finds it.")
                         .withArmor(20f)
                         .withIdentifiedAbilities(List.of(fade(200))))
                 .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(360, 9))
                 .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(648, 13)
-                        .withDescription("Half there: physical hits pass partly through it. Turns invisible to towers "
-                                + "for a long while the first time it's hit. Area damage still finds it.")
                         .withAdditionalAbilities(List.of(fade(300))))
                 .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(1166, 25)
-                        .withDescription("Half there: physical hits pass partly through it and aimed shots often miss. "
-                                + "Turns invisible to towers for a long while the first time it's hit, and permanently "
-                                + "shrouds every other ally near it - itself excluded.")
                         .withStats(30f, 10f, 0f, 0f, 20f, 15f, 15f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.SHROUD,
                                 // A tick longer than the interval, so an ally that stays in radius never flickers
@@ -40,9 +34,6 @@ final class GhostEnemy {
                                 new PeriodicTrigger(SHROUD_TICKS),
                                 new ApplyEffectAction(new InvisibleTemplate(SHROUD_TICKS + 1), new RadiusTarget(100f)))))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(2100, 45)
-                        .withDescription("Half there: physical hits pass partly through it and aimed shots often miss. "
-                                + "Turns invisible the first time it's hit and again for a few seconds out of every "
-                                + "ten, and permanently shrouds every other ally near it - itself excluded.")
                         .withStats(40f, 15f, 0f, 0f, 30f, 20f, 25f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.PHASE,
                                 new PeriodicTrigger(200), new ApplyEffectAction(new InvisibleTemplate(60),

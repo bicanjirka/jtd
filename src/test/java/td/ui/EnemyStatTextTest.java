@@ -95,8 +95,7 @@ class EnemyStatTextTest {
     void thePreviewEndsWithTheDescription() {
         InfoSheet sheet = this.hoverSheet("s", Rank.GRUNT);
 
-        assertThat(sheet.lines().getLast()).isEqualTo(new SheetLine.Prose("Takes less damage, and its plates blunt a little of "
-                + "every physical hit. Immune to critical hits; too heavy to stay frozen as long."));
+        assertThat(sheet.lines().getLast()).isEqualTo(new SheetLine.Prose("Heavy plates blunt physical hits; magic goes through."));
     }
 
     @Test

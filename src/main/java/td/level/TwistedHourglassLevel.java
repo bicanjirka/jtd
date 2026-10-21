@@ -40,8 +40,7 @@ final class TwistedHourglassLevel {
 
     private static final RankedEnemy REAVER = RankedEnemy
             .startingAt(EnemyDefinition.of("reaver", "Reaver", 1000, 12, 1.28f, BodyArchetype.TRIANGLE)
-                    .withDescription("Speeds up as it's hurt, shrugs off a flat amount of every hit, panics into a "
-                            + "brief shield once badly wounded, and splits into two stragglers when finally brought down.")
+                    .withDescription("A brute that runs faster as it is hurt and splits when it falls.")
                     .withMovement(new PathDirectionalMovement())
                     .withHealthDivisor(0.8f)
                     .withPlating(1f)
@@ -56,9 +55,6 @@ final class TwistedHourglassLevel {
             .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(3240, 28)
                     .withAdditionalAbilities(List.of(panicShield(320f))))
             .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(5832, 52)
-                    .withDescription("Speeds up as it's hurt, shrugs off a flat amount of every hit and crits "
-                            + "outright, panics into a brief shield once badly wounded, and splits into two stragglers "
-                            + "when finally brought down.")
                     .withStats(10f, 10f, 1f, 1f, 100f, 5f, 10f)
                     .withAdditionalAbilities(List.of(panicShield(580f))))
             .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(10498, 92)

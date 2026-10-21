@@ -17,29 +17,19 @@ final class MenderEnemy {
         catalog.register(RankedEnemy
                 .startingAt(EnemyDefinition.of("m", "Mender mob", 120, 5, 1.28f, BodyArchetype.MENDER)
                         // "other" is load-bearing: a radius target excludes the caster.
-                        .withDescription("Periodically restores health to every other ally near it - itself excluded. "
-                                + "Heals and shields it receives are stronger.")
+                        .withDescription("Keeps the rest of its wave on its feet.")
                         .withSpirit(20f)
                         .withIdentifiedAbilities(List.of(heal(0.25f, 40))))
                 .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(216, 9)
                         .withAdditionalAbilities(List.of(heal(0.5f, 40))))
                 .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(389, 13)
-                        .withDescription("Restores health to every other ally near it - itself excluded - and now "
-                                + "quietly mends itself if left unattacked long enough. Heals and shields it receives "
-                                + "are stronger.")
                         .withSpirit(30f)
                         .withAdditionalAbilities(List.of(heal(1f, 40), selfHeal(0.7f))))
                 .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(700, 25)
-                        .withDescription("Its healing pulse now lasts twice as long, and a personal layer of armor, "
-                                + "hardened against whichever damage type has hit hardest this level, joins its own "
-                                + "quiet self-repair when left unattacked.")
                         .withStats(10f, 10f, 0f, 0f, 10f, 5f, 40f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(67f))))
                         .withAdditionalAbilities(List.of(heal(2f, 80), selfHeal(1.4f))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1260, 45)
-                        .withDescription("Its healing pulse now restores double, for the same extended duration, its "
-                                + "own self-repair heals twice as strong too, and it leaves a last blessing on every "
-                                + "ally near it when it dies.")
                         .withStats(15f, 15f, 0f, 0f, 20f, 5f, 60f)
                         .withAdditionalAbilities(List.of(heal(4f, 80), selfHeal(2.8f),
                                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.LAST_RITES, new OnDeathTrigger(),
