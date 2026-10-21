@@ -91,6 +91,7 @@ public class Driver {
             case "waitfor" -> waitFor(rest.trim());
             case "click" -> click(Integer.parseInt(rest.trim()));
             case "hover" -> hover(rest);
+            case "pointer" -> pointer(rest.trim());
             case "key" -> typeKey(rest.trim());
             case "type" -> typeText(rest);
             case "devlabels" -> devLabels();
@@ -338,6 +339,23 @@ public class Driver {
         Thread.sleep(60);
         robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
         System.out.println("OK click " + index + " (robot at " + cx + "," + cy + ")");
+    }
+
+    // Walks the pointer to a point of the window in small steps, as a hand would, so every pane and
+    // popup it crosses sees it enter and leave. For what has no component of its own, such as a popup.
+    private static void pointer(String args) throws InterruptedException {
+        String[] parts = args.split("\s+");
+        Point origin = game.getLocationOnScreen();
+        Point from = java.awt.MouseInfo.getPointerInfo().getLocation();
+        int toX = origin.x + Integer.parseInt(parts[0]);
+        int toY = origin.y + Integer.parseInt(parts[1]);
+        int steps = 12;
+        for (int i = 1; i <= steps; i++) {
+            robot.mouseMove(from.x + (toX - from.x) * i / steps, from.y + (toY - from.y) * i / steps);
+            Thread.sleep(15);
+        }
+        Thread.sleep(60);
+        System.out.println("OK pointer " + parts[0] + "," + parts[1]);
     }
 
     // Moves the pointer onto a component without clicking, so its mouseEntered fires. jTD shows
