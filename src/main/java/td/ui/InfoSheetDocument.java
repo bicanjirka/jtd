@@ -22,6 +22,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.font.FontRenderContext;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Optional;
@@ -55,6 +56,7 @@ final class InfoSheetDocument {
     private static final int GAP_FONT_SIZE = 4;
     private static final int DIVIDER_HEIGHT = 7;
     private static final int ICON_LABEL_FONT_SIZE = 10;
+    private static final int TITLE_GAP = 6;
     /** A value ending exactly at the pane's edge wraps on rounding, so the column stops short. */
     private static final int EDGE_MARGIN = 4;
 
@@ -206,15 +208,45 @@ final class InfoSheetDocument {
         }
     }
 
+    /**
+     * The face and name as one icon, and the value as another after a tab: a text line sits on the baseline, so
+     * painting them whole is what centres the name on its face.
+     */
     private void iconTitle(SheetLine.IconTitle title) {
-        this.icon(new PaintedIcon(TermIconPainter.ROW, TermIconPainter.ROW,
-                g2 -> paintFace(g2, title.face(), TermIconPainter.ROW)));
-        SimpleAttributeSet name = colored(TermIconPainter.ink(title.tone()));
-        StyleConstants.setBold(name, true);
-        this.insert(" " + title.name(), name);
+        Font nameFont = this.metrics.getFont().deriveFont(Font.BOLD);
+        int nameWidth = (int) Math.ceil(textWidth(nameFont, title.name()));
+        this.icon(new PaintedIcon(TermIconPainter.ROW + TITLE_GAP + nameWidth, TermIconPainter.ROW,
+                g2 -> this.paintTitle(g2, title, nameFont, nameWidth)));
         if (!title.value().isEmpty()) {
-            this.insert("\t" + title.value(), colored(VALUE_COLOR));
+            Font valueFont = this.metrics.getFont();
+            int valueWidth = (int) Math.ceil(textWidth(valueFont, title.value()));
+            this.insert("\t", new SimpleAttributeSet());
+            this.icon(new PaintedIcon(valueWidth, TermIconPainter.ROW, g2 -> {
+                g2.translate(-valueWidth / 2.0, -TermIconPainter.ROW / 2.0);
+                paintCentredText(g2, title.value(), valueFont, VALUE_COLOR, 0);
+            }));
         }
+    }
+
+    private void paintTitle(Graphics2D g2, SheetLine.IconTitle title, Font nameFont, int nameWidth) {
+        int width = TermIconPainter.ROW + TITLE_GAP + nameWidth;
+        g2.translate(-width / 2.0, -TermIconPainter.ROW / 2.0);
+        Graphics2D face = (Graphics2D) g2.create();
+        TermIconPainter.paint(face, title.face(), TermIconPainter.ROW);
+        face.dispose();
+        paintCentredText(g2, title.name(), nameFont, TermIconPainter.ink(title.tone()), TermIconPainter.ROW + TITLE_GAP);
+    }
+
+    /** {@code text} at {@code x}, its middle on the middle of a row-high box whose top left is the origin. */
+    private static void paintCentredText(Graphics2D g2, String text, Font font, Color color, int x) {
+        g2.setFont(font);
+        FontMetrics textMetrics = g2.getFontMetrics();
+        g2.setColor(color);
+        g2.drawString(text, x, (TermIconPainter.ROW + textMetrics.getAscent() - textMetrics.getDescent()) / 2f);
+    }
+
+    private static double textWidth(Font font, String text) {
+        return font.getStringBounds(text, new FontRenderContext(null, true, true)).getWidth();
     }
 
     /** One embedded icon as wide as the pane: the label, then each face where {@link IconRowLayout} puts it. */

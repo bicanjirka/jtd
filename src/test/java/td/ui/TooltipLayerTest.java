@@ -134,4 +134,21 @@ class TooltipLayerTest {
 
         assertThat(this.popups()).containsExactly(first);
     }
+
+    @Test
+    void aSourceInTheTopStripOpensItsTooltipUnderItWithLeftEdgesAligned() {
+        StatusIcon icon = new StatusIcon(td.economy.StatusTerm.CASH);
+        icon.setBounds(300, 4, 90, 28);
+        this.layer.add(icon);
+        this.tooltips.watchBelow(icon, () -> java.util.Optional.of(new td.ui.render.SheetTooltip(
+                TooltipKey.ofTerm("status", td.economy.StatusTerm.CASH),
+                StatusSheetText.of(td.economy.StatusTerm.CASH, StatusReadout.empty()))));
+
+        icon.dispatchEvent(new MouseEvent(icon, MouseEvent.MOUSE_ENTERED, 0, 0, 1, 1, 0, false));
+        this.tooltips.openPending();
+
+        Component popup = this.popups().getFirst();
+        assertThat(popup.getX()).isEqualTo(300);
+        assertThat(popup.getY()).isEqualTo(4 + 28 + TooltipPlacement.GAP);
+    }
 }

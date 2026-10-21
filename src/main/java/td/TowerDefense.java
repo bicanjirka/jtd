@@ -20,6 +20,7 @@ import td.ui.Hud;
 import td.ui.Java2DFrameRenderer;
 import td.ui.PanelDev;
 import td.ui.PanelGameConsole;
+import td.ui.PanelHeader;
 import td.ui.PanelLevelSelect;
 import td.ui.PanelTowerSelector;
 import td.ui.TooltipLayer;
@@ -92,6 +93,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private static final String CARD_GAME = "game";
     private static final int MENU_WIDTH = 1040;
     private static final int MENU_HEIGHT = 700;
+    private static final int GAME_WIDTH = 1100;
+    private static final int GAME_HEIGHT = 740;
     /** Credits one press of the debug grant key adds. */
     private static final int DEBUG_CREDIT_GRANT = 1000;
     private static final KeyStroke DEV_PANEL_KEY = KeyStroke.getKeyStroke(KeyEvent.VK_D,
@@ -106,7 +109,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private final BoardRenderer boardRenderer;
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
     private final AsciiBoardRenderer asciiBoardRenderer = new AsciiBoardRenderer();
-    private final PanelGameConsole gameConsole = new PanelGameConsole(NAME + " v" + VERSION);
+    private final PanelHeader header = new PanelHeader(NAME + " v" + VERSION);
+    private final PanelGameConsole gameConsole = new PanelGameConsole();
     private final BoardOverlays boardOverlays = new BoardOverlays();
     private final String statusMessage = welcomeText();
 
@@ -163,11 +167,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         initComponents();
         this.tooltips = new TooltipLayer(this.getLayeredPane());
         this.gameConsole.setTooltips(this.tooltips);
+        this.header.setTooltips(this.tooltips);
         this.gameConsole.setGameWorld(this.gameWorld);
-        this.gameConsole.onPlay(this::playPressed);
-        this.gameConsole.onPause(this::pausePressed);
-        this.gameConsole.onFast(this::fastPressed);
-        this.gameConsole.onSuperFast(this::superFastPressed);
+        this.header.onPlay(this::playPressed);
+        this.header.onPause(this::pausePressed);
+        this.header.onFast(this::fastPressed);
+        this.header.onSuperFast(this::superFastPressed);
         this.gameConsole.getWaveInfo().onEnemyHover(sheet -> {
             this.unSelectTower();
             this.gameConsole.getTowerInfo().showSheet(sheet);
@@ -273,6 +278,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      */
     private void repaintPublishedFrame() {
         this.gameConsole.refreshSelected();
+        this.updateInfo();
+        this.header.pulse();
         RenderFrame published = this.latestFrame;
         if (published != null) {
             published.towerSheet().ifPresent(this.gameConsole.getTowerInfo()::showTowerSheet);
@@ -325,10 +332,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.unSelectTower();
         this.panelTowerSelector.stopPlacing();
         this.latestFrame = null;
+        this.header.reset();
         this.engine.loadLevel(level);
         this.contentCardLayout.show(getContentPane(), CARD_GAME);
         this.gameBoard.recalculateBoard(level.width(), level.height());
         this.sizeWithoutDevPanel = null;
+        this.setSize(GAME_WIDTH, GAME_HEIGHT);
         this.panelDev.refresh();
         this.fitDevPanel();
         this.setLocationRelativeTo(null);
@@ -365,6 +374,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.boardOverlays.reset();
         this.unSelectTower();
         this.gameConsole.getWaveInfo().clearWaves();
+        this.header.reset();
         this.panelTowerSelector.stopPlacing();
         this.panelDev.setVisible(false);
         this.boardRenderer.setCellGridShown(false);
@@ -587,8 +597,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     private void updateInfo() {
-        WaveProgress progress = this.engine.waveProgress();
-        this.gameConsole.setWaveProgress(progress.index(), progress.count());
+        this.header.show(this.engine.waveProgress(), this.engine.isWaveReady(), this.engine.outcome().isOver(),
+                this.gameWorld.economy().state());
     }
 
     /** Runs on the game-loop thread too. */
@@ -656,7 +666,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private void syncTransportButtons() {
         boolean waveRunning = !this.currentSpeed.isPaused() && !this.engine.isWaveReady()
                 && !this.engine.outcome().isOver();
-        this.gameConsole.setPlaying(waveRunning);
+        this.header.setPlaying(waveRunning);
     }
 
     private void togglePause() {
@@ -872,6 +882,13 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        jPanel_game.add(this.header, gridBagConstraints);
+
+        gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
         // No fill: the board keeps its exact pixel size, centred in its cell.
         gridBagConstraints.weightx = 0.1;
         gridBagConstraints.weighty = 0.1;
@@ -879,7 +896,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridy = 1;
         gridBagConstraints.gridheight = 3;
         gridBagConstraints.fill = GridBagConstraints.VERTICAL;
         gridBagConstraints.anchor = GridBagConstraints.PAGE_END;
@@ -888,7 +905,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridy = 3;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = GridBagConstraints.PAGE_END;
         jPanel_game.add(panelTowerSelector, gridBagConstraints);
@@ -897,7 +914,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         // component indices for everything else stay as they were.
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 2;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         jPanel_game.add(panelDev, gridBagConstraints);
 

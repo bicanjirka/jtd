@@ -36,7 +36,7 @@ on `quit` or end of input.
 |---|---|
 | `level <n>` | Loads built-in level `n` (0 Curly Path, 1 Zigzag Path, 2 Twisted Hourglass) and waits until it is installed. |
 | `menu` | Back to level select, skipping the confirm dialog. Asynchronous: `sleep` after it. |
-| `list [filter]` | Clickable and hoverable components as `index: Class "label"`; a filter keeps matching lines with their real indices (`list panelenemy`, `list jtextpane`). |
+| `list [filter]` | Clickable and hoverable components as `index: Class "label"`; a filter keeps matching lines with their real indices (`list sheetpane`, `list statusicon`). Indices shift when a panel is added or removed, so look one up before using it. |
 | `click <n>` | Clicks component `n`. |
 | `hover <n> [dx dy]` | Moves the pointer onto component `n` so its hover fires; `dx dy` picks a point inside it, such as a wave-preview slot. |
 | `pointer <x> <y>` | Walks the pointer to window pixel (x, y) in small steps, so panes and popups see it enter and leave. For what has no component of its own, such as a tooltip; read the pixel off an `ss`. |
@@ -69,7 +69,8 @@ setlives 1000
 spawn c elite
 waitfor ticks 40
 clickenemy 0
-text 58
+list SheetPane   # the Info pane's index, which moves whenever a panel is added
+text 62
 ssboard .claude/skills/run-jtd/shots/selected.png 0 9 4 4
 quit
 EOF

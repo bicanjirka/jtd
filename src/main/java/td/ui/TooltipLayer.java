@@ -14,10 +14,12 @@ import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -39,6 +41,7 @@ public final class TooltipLayer {
     private final Timer childCloseTimer = new Timer(CLOSE_DELAY_MS, event -> this.closeIdleChildren());
     private final Map<SheetPane, Integer> paneDepths = new IdentityHashMap<>();
     private final Map<Component, Supplier<Optional<SheetTooltip>>> buttons = new IdentityHashMap<>();
+    private final Set<Component> below = Collections.newSetFromMap(new IdentityHashMap<>());
     private final List<Open> opened = new ArrayList<>();
     private TooltipChain chain = TooltipChain.empty();
     private Pending pending;
@@ -101,6 +104,19 @@ public final class TooltipLayer {
      * tooltip belongs to the button: it follows whatever the button offers.
      */
     void watchButton(HudButton button, Supplier<Optional<SheetTooltip>> tooltip) {
+        this.watchSource(button, tooltip);
+    }
+
+    /**
+     * A source in a strip across the top of the window: its tooltip opens under it, left edges aligned, so it never
+     * covers the sources beside it. Otherwise as {@link #watchButton}.
+     */
+    void watchBelow(Component source, Supplier<Optional<SheetTooltip>> tooltip) {
+        this.below.add(source);
+        this.watchSource(source, tooltip);
+    }
+
+    private void watchSource(Component button, Supplier<Optional<SheetTooltip>> tooltip) {
         this.buttons.put(button, tooltip);
         button.addMouseListener(new MouseAdapter() {
             @Override
@@ -204,7 +220,7 @@ public final class TooltipLayer {
         this.closeFrom(this.idleDepth);
     }
 
-    private void buttonEntered(HudButton button) {
+    private void buttonEntered(Component button) {
         Optional<SheetTooltip> offer = this.buttons.get(button).get();
         if (offer.isEmpty()) {
             return;
@@ -228,8 +244,9 @@ public final class TooltipLayer {
         TooltipPanel panel = new TooltipPanel();
         panel.show(request.tooltip().sheet());
         this.layer.add(panel, JLayeredPane.POPUP_LAYER);
-        panel.setLocation(TooltipPlacement.place(request.anchor(), panel.getSize(),
-                new Rectangle(0, 0, this.layer.getWidth(), this.layer.getHeight())));
+        Rectangle window = new Rectangle(0, 0, this.layer.getWidth(), this.layer.getHeight());
+        panel.setLocation(this.below.contains(request.source()) ? TooltipPlacement.below(request.anchor(), panel.getSize(), window)
+                : TooltipPlacement.place(request.anchor(), panel.getSize(), window));
         this.watch(panel.pane(), request.depth() + 1);
         MouseAdapter keepOpen = new MouseAdapter() {
             @Override
