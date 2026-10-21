@@ -8,7 +8,6 @@ import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.stat.StatModifiers;
-import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 import td.wave.PathNormal;
@@ -422,9 +421,9 @@ class AuraTowerTest {
     void rallySaysWhatItDoes() {
         AuraTower tower = new AuraTower(this.context, 0, 0);
 
-        assertThat(tower.bonusesOf(UpgradePaths.named(tower, "Rally"))).contains(new UpgradeBonus(
-                "Marks the path spot nearest the aura: when an enemy steps on it, every buffed tower gets "
-                + "+30% attack speed for 5s, then a 10s cooldown", ""));
+        assertThat(td.fixtures.TowerFixtures.plain(tower.wordsOf(UpgradePaths.named(tower, "Rally")).sentences()))
+                .contains("picks the path spot nearest this tower: when an enemy steps on it, every buffed tower gains "
+                        + "Rally, then the spot rests 10 s");
     }
 
     @Test

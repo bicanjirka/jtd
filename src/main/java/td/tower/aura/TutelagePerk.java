@@ -1,7 +1,8 @@
 package td.tower.aura;
 
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
+import td.tower.TowerTerm;
 
 /** Tutelage: buffed towers earn more XP. */
 public final class TutelagePerk implements AuraPerk {
@@ -15,6 +16,7 @@ public final class TutelagePerk implements AuraPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("buffed towers earn +" + PerkText.percent(XP) + " XP, on top of Kinship");
+        return TermText.of("buffed towers earn " + TermNumbers.signedPercent(XP) + " XP, on top of ")
+                .plus(TowerTerm.KINSHIP);
     }
 }

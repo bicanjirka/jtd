@@ -1,7 +1,8 @@
 package td.tower.aura;
 
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
+import td.tower.TowerTerm;
 
 /** Attune's Kinship: buffed towers earn more XP for each other tower type in range. */
 public final class KinshipPerk implements AuraPerk {
@@ -13,8 +14,9 @@ public final class KinshipPerk implements AuraPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("Kinship: buffed towers earn +" + PerkText.percent(KinshipRule.ATTUNED_XP_PER_TYPE)
-                + " XP for each other tower type in range, up to +"
-                + PerkText.percent(KinshipRule.ATTUNED_XP_PER_TYPE * KinshipRule.ATTUNED_TYPE_CAP));
+        return TermText.of(TowerTerm.KINSHIP)
+                .plus(" makes buffed towers earn " + TermNumbers.signedPercent(KinshipRule.ATTUNED_XP_PER_TYPE)
+                        + " XP for each other tower type in range, up to "
+                        + TermNumbers.signedPercent(KinshipRule.ATTUNED_XP_PER_TYPE * KinshipRule.ATTUNED_TYPE_CAP));
     }
 }

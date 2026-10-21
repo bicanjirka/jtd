@@ -1,9 +1,9 @@
 package td.tower.aura;
 
 import td.term.Term;
+import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.TowerTerm;
-import td.tower.upgrade.PerkText;
 import td.util.TickRate;
 
 import java.util.Set;
@@ -26,8 +26,9 @@ public final class RallyPerk implements AuraPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("marks the path spot nearest the aura: when an enemy steps on it, every buffed tower gets +"
-                + PerkText.percent(RALLY.attackSpeed()) + " attack speed for " + PerkText.seconds(RALLY.ticks()) + ", then a "
-                + PerkText.seconds(RALLY.cooldownTicks()) + " cooldown");
+        return TermText.of("picks the path spot nearest this tower: when an enemy steps on it, every buffed tower gains ")
+                .plus(TermText.of(TowerTerm.RALLY, TermText.of(TermNumbers.signedPercent(RALLY.attackSpeed())
+                        + " attack speed for " + TermNumbers.seconds(RALLY.ticks() / (float) TickRate.TICKS_PER_SECOND))))
+                .plus(", then the spot rests " + TermNumbers.seconds(RALLY.cooldownTicks() / (float) TickRate.TICKS_PER_SECOND));
     }
 }

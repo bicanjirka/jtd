@@ -414,7 +414,7 @@ public final class AuraTower extends AbstractTower {
 
     @Override
     protected String description() {
-        return "Never attacks. Several auras stack, but an aura never buffs another aura.";
+        return "Never attacks. Several Beacons stack, but a Beacon never buffs another Beacon.";
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
