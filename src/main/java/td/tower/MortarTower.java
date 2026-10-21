@@ -44,7 +44,6 @@ import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
-import td.tower.upgrade.PerkText;
 import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -53,6 +52,7 @@ import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.PathRuntime;
 import td.util.ThreadConfined;
+import td.util.TickRate;
 import td.wave.Path;
 import td.wave.Vec2;
 import td.zone.Zone;
@@ -580,7 +580,7 @@ public final class MortarTower extends AbstractTower {
     protected List<AppliedEffect> baseApplies() {
         return List.of(new AppliedEffect(EffectKind.CRACKED, List.of(new AppliedEffect.Source(this.displayName(),
                 TermText.of("every shell applies ").plus(EffectKind.CRACKED)
-                        .plus(" for " + PerkText.seconds(CRACKED_TICKS))))));
+                        .plus(" for " + TermNumbers.seconds((CRACKED_TICKS) / TickRate.TICKS_PER_SECOND))))));
     }
 
     @Override

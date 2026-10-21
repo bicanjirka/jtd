@@ -25,7 +25,6 @@ import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.NeighbourOfTypeCondition;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
-import td.tower.upgrade.PerkText;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
@@ -33,6 +32,7 @@ import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.PathRuntime;
 import td.util.ThreadConfined;
+import td.util.TickRate;
 import td.wave.Vec2;
 
 import java.util.ArrayList;
@@ -370,7 +370,7 @@ public final class AuraTower extends AbstractTower {
         if (wither.hasSetValue()) {
             all.add(new AppliedEffect(EffectKind.VULNERABLE, List.of(new AppliedEffect.Source(
                     WITHERING_FIELD.displayName(), TermText.of("each buffed tower's first hit every "
-                            + PerkText.seconds(Math.round(wither.setTo())) + " applies a stack of ")
+                            + TermNumbers.seconds(Math.round(wither.setTo()) / TickRate.TICKS_PER_SECOND) + " applies a stack of ")
                     .plus(EffectKind.VULNERABLE)))));
         }
         return all;

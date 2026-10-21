@@ -8,6 +8,7 @@ import td.effect.EffectKind;
 import td.effect.PoolTuning;
 import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
+import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.cinder.BellowsPerk;
 import td.tower.cinder.CauterizePerk;
@@ -40,7 +41,6 @@ import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedPerks;
 import td.tower.upgrade.PerkCatalogue;
-import td.tower.upgrade.PerkText;
 import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
@@ -48,6 +48,7 @@ import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
+import td.util.TickRate;
 import td.zone.Zone;
 import td.zone.ZoneKind;
 import td.zone.ZoneOwner;
@@ -518,7 +519,7 @@ public final class CinderTower extends AbstractTower {
     protected List<AppliedEffect> baseApplies() {
         return List.of(new AppliedEffect(EffectKind.BURN, List.of(new AppliedEffect.Source(this.displayName(),
                 TermText.of("each wave applies ").plus(EffectKind.BURN)
-                        .plus(" for " + PerkText.seconds(this.burnDuration()))))));
+                        .plus(" for " + TermNumbers.seconds((this.burnDuration()) / TickRate.TICKS_PER_SECOND))))));
     }
 
     @Override
