@@ -1,6 +1,7 @@
 package td.tower.cinder;
 
 import td.term.TermText;
+import td.tower.TowerTerm;
 
 /** Awaken's Bellows: an Aura's fire-rate buff on this Cinder also widens its cone, 10% for each +10%. */
 public final class BellowsPerk implements CinderPerk {
@@ -12,6 +13,7 @@ public final class BellowsPerk implements CinderPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("Bellows: an Aura's attack-speed buff on this tower also widens its cone 10% per +10%");
+        return TermText.of("attack speed an ").plus(TowerTerm.AURA)
+                .plus(" gives this tower also widens its cone, as much as it speeds it");
     }
 }

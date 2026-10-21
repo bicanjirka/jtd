@@ -2,8 +2,9 @@ package td.tower.cinder;
 
 import td.effect.EffectKind;
 import td.term.Term;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
+import td.util.TickRate;
 
 import java.util.Set;
 
@@ -24,7 +25,8 @@ public final class SearingFlamePerk implements CinderPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("an ignition grants Vulnerable, and so does every wave that hits a burning enemy, at most one stack every "
-                + PerkText.seconds(INTERVAL_TICKS));
+        return TermText.of("an ignition applies a stack of ").plus(EffectKind.VULNERABLE)
+                .plus(", and so does every wave that hits an enemy with ").plus(EffectKind.BURN)
+                .plus(", at most one stack every " + TermNumbers.seconds(INTERVAL_TICKS / (float) TickRate.TICKS_PER_SECOND));
     }
 }

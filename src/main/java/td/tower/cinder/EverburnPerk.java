@@ -1,7 +1,8 @@
 package td.tower.cinder;
 
+import td.effect.EffectKind;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
 
 /** Everburn: a pool never decays below two fifths of its strongest application while its enemy is in range. */
 public final class EverburnPerk implements CinderPerk {
@@ -15,6 +16,7 @@ public final class EverburnPerk implements CinderPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("a pool never decays below " + PerkText.percent(FLOOR) + " while its enemy is in this tower's range");
+        return TermText.of("a ").plus(EffectKind.BURN)
+                .plus(" never fades below " + TermNumbers.percent(FLOOR) + " while its enemy is in this tower's range");
     }
 }

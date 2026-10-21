@@ -1,10 +1,11 @@
 package td.tower.cinder;
 
+import td.effect.EffectKind;
 import td.stat.EnemyStat;
 import td.stat.StatModifier;
 import td.stat.StatModifiers;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
 
 /** Pyromancer's Mark: burning enemies take 40% more magic damage from every source. */
 public final class PyromancersMarkPerk implements CinderPerk {
@@ -18,6 +19,7 @@ public final class PyromancersMarkPerk implements CinderPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("burning enemies take +" + PerkText.percent(MAGIC_DAMAGE_TAKEN) + " magic damage from every source");
+        return TermText.of("an enemy with ").plus(EffectKind.BURN)
+                .plus(" takes " + TermNumbers.signedPercent(MAGIC_DAMAGE_TAKEN) + " magic damage from every source");
     }
 }

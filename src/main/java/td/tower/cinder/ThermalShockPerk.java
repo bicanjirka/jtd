@@ -3,8 +3,8 @@ package td.tower.cinder;
 import td.effect.EffectKind;
 import td.effect.PoolTuning;
 import td.term.Term;
+import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.upgrade.PerkText;
 
 import java.util.Set;
 
@@ -25,7 +25,10 @@ public final class ThermalShockPerk implements CinderPerk {
 
     @Override
     public TermText describe() {
-        return TermText.of("when a burning enemy is frozen by anything, its remaining pool detonates at " + PerkText.percent(BURST_SHARE)
-                + " instead of " + PerkText.percent(PoolTuning.standard().freezeBurstShare()) + " and chills its neighbours");
+        return TermText.of("when an enemy with ").plus(EffectKind.BURN).plus(" gains ").plus(EffectKind.FREEZE)
+                .plus(" from anything, what is left of its ").plus(EffectKind.BURN)
+                .plus(" lands at " + TermNumbers.percent(BURST_SHARE) + " instead of "
+                        + TermNumbers.percent(PoolTuning.standard().freezeBurstShare()) + " and applies ")
+                .plus(EffectKind.CHILL).plus(" to the enemies near it");
     }
 }
