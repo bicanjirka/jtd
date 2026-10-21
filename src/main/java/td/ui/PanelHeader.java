@@ -2,6 +2,7 @@ package td.ui;
 
 import td.economy.EconomyState;
 import td.economy.StatusTerm;
+import td.level.LevelOutcome;
 import td.ui.render.SheetTooltip;
 import td.ui.render.TooltipKey;
 import td.util.ThreadConfined;
@@ -50,6 +51,7 @@ public class PanelHeader extends JPanel {
 
     private TooltipLayer tooltips = null;
     private StatusReadout readout = StatusReadout.empty();
+    private RoundStrip rounds = RoundStrip.empty();
     private Runnable onPlay = () -> {
     };
     private Runnable onPause = () -> {
@@ -165,7 +167,7 @@ public class PanelHeader extends JPanel {
     public void setTooltips(TooltipLayer tooltips) {
         for (StatusIcon icon : this.icons) {
             tooltips.watchBelow(icon, () -> Optional.of(new SheetTooltip(
-                    TooltipKey.ofTerm("status", icon.term()), StatusSheetText.of(icon.term(), this.readout))));
+                    TooltipKey.ofTerm("status", icon.term()), StatusSheetText.of(icon.term(), this.readout, this.rounds))));
         }
         this.tooltips = tooltips;
     }
@@ -174,21 +176,24 @@ public class PanelHeader extends JPanel {
     public void reset() {
         this.flash.reset();
         this.readout = StatusReadout.empty();
+        this.rounds = RoundStrip.empty();
     }
 
     /** Shows the level's progress and the economy; skips what has not changed. */
-    public void show(WaveProgress progress, boolean waveReady, boolean levelOver, EconomyState state) {
-        this.show(new StatusReadout(progress.index(), progress.count(), waveReady, levelOver, state.lives(),
-                state.score(), state.credits()));
+    public void show(WaveProgress progress, boolean waveReady, LevelOutcome outcome, EconomyState state) {
+        this.show(new StatusReadout(progress.index(), progress.count(), waveReady, outcome.isOver(), state.lives(),
+                state.score(), state.credits()), RoundStrip.of(progress, waveReady, outcome));
     }
 
-    private void show(StatusReadout next) {
-        if (next.equals(this.readout)) {
+    private void show(StatusReadout next, RoundStrip nextRounds) {
+        if (next.equals(this.readout) && nextRounds.equals(this.rounds)) {
             return;
         }
         this.readout = next;
+        this.rounds = nextRounds;
         this.flash.observe(next, nowMillis());
         this.icons.forEach(icon -> icon.show(next));
+        this.icon(StatusTerm.WAVE).showRounds(nextRounds);
         this.pulse();
         if (this.tooltips != null) {
             this.tooltips.refreshButtons();

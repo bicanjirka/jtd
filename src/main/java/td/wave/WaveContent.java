@@ -57,6 +57,19 @@ public record WaveContent(List<WaveSlot> spawnSequence, float delayTicksPerSlot)
         throw new IllegalArgumentException("No slot in this wave spawns " + definition.id());
     }
 
+    /** The highest rank any slot spawns at; {@link Rank#GRUNT} for a wave of spacers only. */
+    public Rank highestRank() {
+        Rank highest = Rank.GRUNT;
+        for (WaveSlot slot : this.spawnSequence) {
+            switch (slot) {
+                case EnemySlot s -> highest = s.rank().compareTo(highest) > 0 ? s.rank() : highest;
+                case EmptySlot ignored -> {
+                }
+            }
+        }
+        return highest;
+    }
+
     public int enemyCount(EnemyDefinition definition) {
         int count = 0;
         for (WaveSlot slot : this.spawnSequence) {

@@ -16,6 +16,7 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
 
     private final AtomicInteger count = new AtomicInteger();
     private final AtomicLong entries = new AtomicLong();
+    private final AtomicLong leaks = new AtomicLong();
     private final List<WalkEndListener> walkEndListeners = new CopyOnWriteArrayList<>();
     private final List<ShieldListener> shieldListeners = new CopyOnWriteArrayList<>();
     // Swapped whole in one write, so a reader never sees a half-filled roster.
@@ -49,6 +50,17 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
         for (WalkEndListener listener : this.walkEndListeners) {
             listener.walkEnded(walk);
         }
+    }
+
+    /** {@link #reportDeath} for a mob that reached the end of its path. */
+    public void reportLeak(EnemyWalk walk) {
+        this.leaks.incrementAndGet();
+        this.reportDeath(walk);
+    }
+
+    /** Mobs that have reached the end of their path so far, in every wave: compare two readings. */
+    public long leaks() {
+        return this.leaks.get();
     }
 
     public void addWalkEndListener(WalkEndListener listener) {

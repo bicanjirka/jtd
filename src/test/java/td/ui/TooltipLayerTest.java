@@ -142,7 +142,7 @@ class TooltipLayerTest {
         this.layer.add(icon);
         this.tooltips.watchBelow(icon, () -> java.util.Optional.of(new td.ui.render.SheetTooltip(
                 TooltipKey.ofTerm("status", td.economy.StatusTerm.CASH),
-                StatusSheetText.of(td.economy.StatusTerm.CASH, StatusReadout.empty()))));
+                StatusSheetText.of(td.economy.StatusTerm.CASH, StatusReadout.empty(), RoundStrip.empty()))));
 
         icon.dispatchEvent(new MouseEvent(icon, MouseEvent.MOUSE_ENTERED, 0, 0, 1, 1, 0, false));
         this.tooltips.openPending();

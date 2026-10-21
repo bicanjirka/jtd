@@ -19,8 +19,8 @@ import java.io.Serial;
 import java.util.OptionalInt;
 
 /**
- * One status bar entry: the term's framed face, then what it counts. The round is a bar of the level's rounds, the
- * lives a heart each (a number when there are too many or none), the score and the cash a bold number. The pointer
+ * One status bar entry: the term's framed face, then what it counts. The round is a skull per round, as many as fit,
+ * then how many more follow; the lives a heart each (a number when there are too many or none), the score and the cash a bold number. The pointer
  * over it brightens it, and a flash brightens the face.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
@@ -31,11 +31,16 @@ final class StatusIcon extends JComponent {
 
     private static final Font VALUE_FONT = Hud.LABEL_FONT.deriveFont(Font.BOLD, 13f);
     private static final String WIDEST_NUMBER = "0000000";
-    private static final Color BAR_BACKGROUND = new Color(12, 22, 12);
+    private static final Font MORE_FONT = Hud.LABEL_FONT.deriveFont(Font.BOLD, 11f);
+    private static final String WIDEST_MORE = "+99";
     private static final int PADDING = 4;
     private static final int GAP = 6;
-    private static final int BAR_WIDTH = 64;
-    private static final int BAR_HEIGHT = 8;
+    private static final int MAX_SKULLS = 10;
+    private static final int SKULL_SIZE = 14;
+    private static final int SKULL_GAP = 2;
+    private static final int MORE_GAP = 4;
+    private static final int MARK_HEIGHT = 2;
+    private static final float AHEAD_DARKEN = 0.3f;
     private static final int HEART_SIZE = 12;
     private static final int HEART_GAP = 2;
     private static final int HOVER_ALPHA = 36;
@@ -44,6 +49,7 @@ final class StatusIcon extends JComponent {
 
     private final StatusTerm term;
     private StatusReadout readout = StatusReadout.empty();
+    private RoundStrip rounds = RoundStrip.empty();
     private float flash = 0f;
     private boolean hovered = false;
 
@@ -76,10 +82,19 @@ final class StatusIcon extends JComponent {
     private int contentWidth() {
         int number = this.getFontMetrics(VALUE_FONT).stringWidth(WIDEST_NUMBER);
         return switch (this.term) {
-            case WAVE -> BAR_WIDTH;
+            case WAVE -> this.roundsWidth();
             case LIVES -> Math.max(number, this.readout.hearts().orElse(0) * (HEART_SIZE + HEART_GAP) - HEART_GAP);
             case SCORE, CASH -> number;
         };
+    }
+
+    private int roundsWidth() {
+        RoundStrip.Window window = this.rounds.window(MAX_SKULLS);
+        int shown = window.end() - window.start();
+        int skulls = Math.max(0, shown * (SKULL_SIZE + SKULL_GAP) - SKULL_GAP);
+        return window.hiddenAfter() > 0
+                ? skulls + MORE_GAP + this.getFontMetrics(MORE_FONT).stringWidth(WIDEST_MORE)
+                : skulls;
     }
 
     StatusTerm term() {
@@ -98,6 +113,21 @@ final class StatusIcon extends JComponent {
         if (!next.equals(this.readout)) {
             int before = this.contentWidth();
             this.readout = next;
+            if (this.contentWidth() != before) {
+                this.revalidate();
+            }
+            this.repaint();
+        }
+    }
+
+    RoundStrip rounds() {
+        return this.rounds;
+    }
+
+    void showRounds(RoundStrip next) {
+        if (!next.equals(this.rounds)) {
+            int before = this.contentWidth();
+            this.rounds = next;
             if (this.contentWidth() != before) {
                 this.revalidate();
             }
@@ -133,21 +163,50 @@ final class StatusIcon extends JComponent {
         }
         int x = PADDING + TermIconPainter.ROW + GAP;
         switch (this.term) {
-            case WAVE -> this.paintBar(g2, x);
+            case WAVE -> this.paintRounds(g2, x);
             case LIVES -> this.paintLives(g2, x);
             case SCORE, CASH -> this.paintNumber(g2, x);
         }
         g2.dispose();
     }
 
-    private void paintBar(Graphics2D g2, int x) {
-        int y = (this.getHeight() - BAR_HEIGHT) / 2;
-        g2.setColor(BAR_BACKGROUND);
-        g2.fillRect(x, y, BAR_WIDTH, BAR_HEIGHT);
-        g2.setColor(Java2DFrameRenderer.colorFor(Palette.TERM_STATUS_WAVE));
-        g2.fillRect(x, y, Math.round(BAR_WIDTH * this.readout.waveShare()), BAR_HEIGHT);
-        g2.setColor(Hud.BORDER_IDLE);
-        g2.drawRect(x, y, BAR_WIDTH - 1, BAR_HEIGHT - 1);
+    private void paintRounds(Graphics2D g2, int x) {
+        RoundStrip.Window window = this.rounds.window(MAX_SKULLS);
+        int y = (this.getHeight() - SKULL_SIZE - MARK_HEIGHT) / 2 - 1;
+        int left = x;
+        for (int round = window.start(); round < window.end(); round++) {
+            RoundStrip.State state = this.rounds.stateAt(round);
+            this.paintSkull(g2, round, left, y);
+            if (state == RoundStrip.State.CURRENT) {
+                g2.setColor(Java2DFrameRenderer.colorFor(Palette.ROUND_CURRENT));
+                g2.fillRoundRect(left + 1, y + SKULL_SIZE + 2, SKULL_SIZE - 2, MARK_HEIGHT, MARK_HEIGHT, MARK_HEIGHT);
+            }
+            left += SKULL_SIZE + SKULL_GAP;
+        }
+        if (window.hiddenAfter() > 0) {
+            g2.setFont(MORE_FONT);
+            FontMetrics metrics = g2.getFontMetrics();
+            g2.setColor(Java2DFrameRenderer.colorFor(RoundSkulls.rankTone(this.rounds.highestRankFrom(window.end()))));
+            g2.drawString("+" + window.hiddenAfter(), left - SKULL_GAP + MORE_GAP,
+                    (this.getHeight() - metrics.getHeight()) / 2 + metrics.getAscent());
+        }
+    }
+
+    private void paintSkull(Graphics2D g2, int round, int x, int y) {
+        RoundStrip.State state = this.rounds.stateAt(round);
+        Pictogram skull = PictogramCatalogue.of(RoundSkulls.pictogram(this.rounds.rankAt(round), state)).orElseThrow();
+        Color ink = Java2DFrameRenderer.colorFor(RoundSkulls.tone(this.rounds.rankAt(round), state));
+        if (state == RoundStrip.State.AHEAD) {
+            ink = new Color(Math.round(ink.getRed() * (1 - AHEAD_DARKEN)), Math.round(ink.getGreen() * (1 - AHEAD_DARKEN)),
+                    Math.round(ink.getBlue() * (1 - AHEAD_DARKEN)));
+        }
+        Graphics2D one = (Graphics2D) g2.create();
+        one.translate(x, y);
+        double scale = SKULL_SIZE / (double) Pictogram.UNIT;
+        one.scale(scale, scale);
+        // The strip sits on the header's black, so a knock-out is black too.
+        TermIconPainter.paintLayers(one, skull, ink, Color.BLACK);
+        one.dispose();
     }
 
     private void paintLives(Graphics2D g2, int x) {

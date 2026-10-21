@@ -597,7 +597,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     private void updateInfo() {
-        this.header.show(this.engine.waveProgress(), this.engine.isWaveReady(), this.engine.outcome().isOver(),
+        this.header.show(this.engine.waveProgress(), this.engine.isWaveReady(), this.engine.outcome(),
                 this.gameWorld.economy().state());
     }
 
