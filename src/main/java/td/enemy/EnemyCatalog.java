@@ -159,6 +159,8 @@ public final class EnemyCatalog {
             }
             case ApplyEffectAction ignored -> {
             }
+            case LeaveZoneAction ignored -> {
+            }
         }
     }
 }

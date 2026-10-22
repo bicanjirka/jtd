@@ -91,6 +91,11 @@ public record TowerStats(ResolvedStats<TowerStat> values, float rangeReal, float
         return this.value(TowerStat.CRIT_CHANCE);
     }
 
+    /** Chance in {@code [0, 1]} that a hit misses because enemies blind the tower, after what reaches it. */
+    public float missChance() {
+        return this.disruption.missChance() * this.value(TowerStat.DISRUPTION_TAKEN);
+    }
+
     /** The share of a kill's bounty paid on top in credits. */
     public float bountyBonus() {
         return this.value(TowerStat.BOUNTY);

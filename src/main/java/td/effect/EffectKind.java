@@ -127,7 +127,9 @@ public enum EffectKind implements Term {
     /** A third fuel pool: it stacks with burn and poison, burns what is immune to fire and marks resilience and spirit. */
     SOULFIRE("Soulfire", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asAPool().tagged(EffectTag.BURNING)),
     /** A short burst of speed an enemy gives itself. */
-    SPRINTING("Sprint", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.percent(0.6f)).helpsCarrier());
+    SPRINTING("Sprint", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.percent(0.6f)).helpsCarrier()),
+    /** Twice the speed, and no slow takes hold; a freeze or daze still stops it. */
+    HASTENED("Hasten", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.times(2f)).helpsCarrier());
 
     /** The kind {@code resistance} shortens; throws for a stat that resists no kind. */
     public static EffectKind resistedThrough(EnemyStat resistance) {

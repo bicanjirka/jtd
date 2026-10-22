@@ -126,7 +126,9 @@
   to `[-0.75, 9]`. Every tower's cadence is its `FireClock` advanced by `attackRate()`; the Sonar
   divides its seconds per revolution by it.
 - Enemy disruption reaches a tower only through `GameWorld.disruptions()`, sampled at its centre in
-  `beginTick`, and folds in as negative attack speed and range in cells, times `DISRUPTION_TAKEN`.
+  `beginTick`, and folds in as negative attack speed and range in cells, times `DISRUPTION_TAKEN`. Blinding fields
+  (`GameWorld.zones().disruptionAt`) add to it a miss chance: `AbstractTower.landHit` rolls it for every hit, and a miss
+  reads as a dodge.
 - A kill this tower makes runs `onKill(EnemyMob)` (the mob still carries the effects it died
   under); a kill made from inside the hook triggers nothing.
 - A temporary or next-shot self-buff is a `TowerStatus` granted with `grantStatus` (another tower's

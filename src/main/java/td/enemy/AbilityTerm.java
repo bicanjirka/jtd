@@ -34,7 +34,12 @@ public enum AbilityTerm implements Term {
     BROOD("Brood", "bursts into broodlings when it dies"),
     SPLIT("Split", "splits in two when it dies"),
     LAY_EGG("Lay Egg", "leaves an egg when it dies"),
-    HATCH("Hatch", "hatches unless it is destroyed in time");
+    HATCH("Hatch", "hatches unless it is destroyed in time"),
+    LAST_WARD("Last Ward", "shields the allies near it as it dies"),
+    HEALING_POOL("Healing Pool", "leaves pools behind it that heal the enemies who stand in them"),
+    HASTE_FIELD("Haste Field", "leaves ground that speeds up the enemies who cross it, until the wave is over"),
+    WARD_MINE("Ward Mine", "lays mines that shield the first enemy to step on them"),
+    BLINDING_BURST("Blinding Burst", "blinds the towers near it as it dies, until the wave is over");
 
     private final String title;
     private final String sentence;

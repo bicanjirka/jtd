@@ -1,6 +1,6 @@
 package td.zone;
 
-/** What a patch of ground does to the enemies standing on it. */
+/** What a patch of ground does to the enemies, or the towers, within it. */
 public enum ZoneKind {
     /** Sets whatever stands on it alight. */
     BURNING_GROUND,
@@ -13,5 +13,13 @@ public enum ZoneKind {
     /** Waits for the first enemy to step on it, and goes off as one blast. */
     MINE,
     /** Gives every enemy inside the debuffs the enemy that died here carried. */
-    CURSED_CLOUD
+    CURSED_CLOUD,
+    /** Heals what stands on it. */
+    HEALING_GROUND,
+    /** Speeds up what stands on it and keeps slows off it. */
+    HASTE_GROUND,
+    /** Goes off as a shield on the first enemy to step on it, once it is armed. */
+    WARD_MINE,
+    /** Makes the towers inside it miss; it works on towers, not on enemies. */
+    BLINDING_FIELD
 }

@@ -322,6 +322,7 @@ public class GameEngine {
             this.endLevel(LevelOutcome.LOST);
         } else if (this.wave > 0 && !this.waveReady && this.gameWorld.enemies().aliveCount() == 0) {
             this.noteLeaks();
+            this.gameWorld.zones().endWave();
             if (this.wave < installed.waveCount()) {
                 LOG.info("Wave {} cleared, ready for the next one", this.wave);
                 this.waveReady = true;
@@ -507,6 +508,7 @@ public class GameEngine {
         }
         this.noteLeaks();
         this.gameWorld.enemies().clear();
+        this.gameWorld.zones().endWave();
         this.waveReady = true;
         if (this.nextWave()) {
             return true;
@@ -527,6 +529,7 @@ public class GameEngine {
         }
         int next = Math.max(1, Math.min(number, this.gameWorld.level().waveCount()));
         this.gameWorld.enemies().clear();
+        this.gameWorld.zones().endWave();
         this.startWave = false;
         this.wave = next - 1;
         this.waveReady = true;

@@ -63,7 +63,8 @@ class EffectKindTest {
             "TARRED,DEBUFF,-,0,false,false,false,false,false,false,false,false,false",
             "BLEEDING,DAMAGE_OVER_TIME,-,0,false,false,false,false,false,false,false,false,false",
             "SOULFIRE,DAMAGE_OVER_TIME,-,0,false,false,true,false,false,false,true,true,false",
-            "SPRINTING,BUFF,-,0,false,false,false,false,false,false,false,false,false");
+            "SPRINTING,BUFF,-,0,false,false,false,false,false,false,false,false,false",
+            "HASTENED,BUFF,-,0,false,false,false,false,false,false,false,false,false");
 
     @Test
     void everyKindReproducesItsOldClassification() {

@@ -11,6 +11,7 @@ import td.stat.DisruptionAura;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.util.TickRate;
+import td.zone.Zone;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -58,9 +59,28 @@ final class AbilityText {
                         + TermNumbers.number(radius.radius() / words.cellSize()) + " cells ")
                         .plus(effect(apply.template()));
             };
+            case LeaveZoneAction zone -> zoneText(zone);
             case SpawnEnemiesAction spawn -> spawn.consumesSelf()
                     ? TermText.of("turns into " + words.enemyName().apply(spawn.definitionId()))
                     : TermText.of("calls " + spawn.shape().members() + " " + words.enemyName().apply(spawn.definitionId()));
+        };
+    }
+
+    private static TermText zoneText(LeaveZoneAction zone) {
+        String reach = TermNumbers.cells(zone.radiusCells());
+        String lasts = zone.lifetimeTicks() == Zone.UNTIL_WAVE_END ? "until the wave is over"
+                : "for " + seconds(zone.lifetimeTicks());
+        return switch (zone.kind()) {
+            case HEALING_GROUND -> TermText.of("leaves ground " + reach + " wide that gives enemies on it ")
+                    .plus(EffectKind.HEAL).plus(" of " + TermNumbers.number(zone.power() * TickRate.TICKS_PER_SECOND)
+                            + " a second, " + lasts);
+            case HASTE_GROUND -> TermText.of("leaves ground " + reach + " wide that gives enemies on it ")
+                    .plus(EffectKind.HASTENED).plus(", " + lasts);
+            case WARD_MINE -> TermText.of("lays a mine " + reach + " wide that gives the first enemy to step on it a ")
+                    .plus(EffectKind.SHIELD).plus(" of " + TermNumbers.number(zone.power()) + ", " + lasts);
+            case BLINDING_FIELD -> TermText.of("blinds the towers within " + reach + ": "
+                    + TermNumbers.percent(zone.power()) + " miss chance, " + lasts);
+            case BURNING_GROUND, TAR, FROST_GROUND, FALLOUT, MINE, CURSED_CLOUD -> TermText.of("leaves a zone");
         };
     }
 

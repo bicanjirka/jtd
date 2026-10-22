@@ -44,6 +44,33 @@ class AbilityTextTest {
     }
 
     @Test
+    void aBlindingBurstSaysHowFarItReachesHowMuchItBlindsAndHowLong() {
+        Ability blast = abilitiesOf(AbilityTerm.BLINDING_BURST).getFirst();
+
+        assertThat(AbilityText.of(blast, this.words).plain())
+                .isEqualTo("when it dies: blinds the towers within 2 cells: 75% miss chance, until the wave is over");
+    }
+
+    @Test
+    void aHealingPoolNamesTheHealItGivesAndHowLongItLasts() {
+        Ability pool = new Ability(AbilityTerm.HEALING_POOL, new PeriodicTrigger(60),
+                LeaveZoneAction.healingGround(1.5f, 100, 0.4f));
+
+        assertThat(AbilityText.of(pool, this.words).plain())
+                .startsWith("every 3 s: leaves ground 1.5 cells wide that gives enemies on it Heal of")
+                .endsWith("a second, for 5 s");
+        assertThat(AbilityText.of(pool, this.words).mentions()).containsExactly(EffectKind.HEAL);
+    }
+
+    @Test
+    void aHasteFieldNamesTheHasteItGives() {
+        Ability field = abilitiesOf(AbilityTerm.HASTE_FIELD).getFirst();
+
+        assertThat(AbilityText.of(field, this.words).mentions()).containsExactly(EffectKind.HASTENED);
+        assertThat(AbilityText.of(field, this.words).plain()).endsWith("until the wave is over");
+    }
+
+    @Test
     void everyBuiltInAbilityHasATerm() {
         for (String id : this.catalog.ids()) {
             for (Rank rank : Rank.values()) {

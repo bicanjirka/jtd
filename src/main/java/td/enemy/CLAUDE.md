@@ -69,6 +69,8 @@
   returns before `ActiveEffects` sees it; there is no separate immunity check. The one exception
   is `INVERSION`: it turns a heal into damage and a shield into one hit, credited to its caster,
   before anything else.
+- An ability that leaves ground behind it is a `LeaveZoneAction` (`td.zone` does the rest); never a new mob or a
+  hand-rolled tick.
 - `AbilityEvaluator` decides when a trigger fires; actions execute through
   `MobAbilityContext` (one per caster per tick), which reaches the world through
   `GameWorld.enemies()` (`EnemySpawner.add`/`replace`); spawned mobs are built by

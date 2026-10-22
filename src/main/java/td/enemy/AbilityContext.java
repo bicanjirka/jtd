@@ -33,4 +33,7 @@ public interface AbilityContext {
 
     /** Spawns what {@code spawn} names, optionally consuming this mob. */
     void spawnEnemies(SpawnEnemiesAction spawn);
+
+    /** Leaves the zone {@code zone} describes where this mob stands. */
+    void leaveZone(LeaveZoneAction zone);
 }

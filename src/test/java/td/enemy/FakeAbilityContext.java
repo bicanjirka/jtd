@@ -9,6 +9,7 @@ final class FakeAbilityContext implements AbilityContext {
 
     final List<AppliedEffect> appliedEffects = new ArrayList<>();
     final List<SpawnCall> spawnCalls = new ArrayList<>();
+    final List<LeaveZoneAction> zoneCalls = new ArrayList<>();
     private float healthFraction = 1f;
     private int ticksSinceLastHit = Integer.MAX_VALUE / 2;
     private boolean justDied;
@@ -73,6 +74,11 @@ final class FakeAbilityContext implements AbilityContext {
     @Override
     public void applyEffect(EffectTemplate template, EffectTarget target) {
         this.appliedEffects.add(new AppliedEffect(template, target));
+    }
+
+    @Override
+    public void leaveZone(LeaveZoneAction zone) {
+        this.zoneCalls.add(zone);
     }
 
     @Override

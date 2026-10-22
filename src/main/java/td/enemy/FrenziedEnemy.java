@@ -2,13 +2,15 @@ package td.enemy;
 
 import td.effect.HealTemplate;
 import td.effect.SprintTemplate;
+import td.zone.Zone;
 
 import java.util.List;
 
 /**
  * The Frenzied mob ({@code t}): faster the more it is hurt, and reckless, so crits land harder on it. From Elite it
- * bolts once badly hurt; at Boss rank it calls a brood of spawnlings, heals itself when left alone and no longer
- * takes crits; the spawnlings are a definition of their own.
+ * bolts once badly hurt; at Veteran and Elite it throws down ground, once badly hurt, that speeds up the enemies who cross
+ * it and keeps slows off them until the wave is over; at Boss rank it calls a brood of spawnlings, heals itself when left
+ * alone and no longer takes crits; the spawnlings are a definition of their own.
  */
 final class FrenziedEnemy {
 
@@ -24,17 +26,20 @@ final class FrenziedEnemy {
                         .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.4f)))))
                 .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(228, 7))
                 .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(433, 10)
-                        .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.5f)))))
+                        .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.5f))))
+                        .withAdditionalAbilities(List.of(hasteGround(0.5f, 1.5f))))
                 .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(823, 19)
                         .withStats(10f, 10f, 0f, 0f, -20f, 10f, 10f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.8f))))
-                        .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.SECOND_WIND,
-                                new HealthThresholdTrigger(0.5f),
-                                new ApplyEffectAction(new SprintTemplate(40), new SelfTarget()))))))
+                        .withAdditionalAbilities(List.of(hasteGround(0.75f, 2f),
+                                IdentifiedAbility.anonymous(new Ability(AbilityTerm.SECOND_WIND,
+                                        new HealthThresholdTrigger(0.5f),
+                                        new ApplyEffectAction(new SprintTemplate(40), new SelfTarget()))))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1564, 34)
                         .withStats(15f, 15f, 0f, 0f, 100f, 10f, 20f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(2f))))
                         .withMovement(new RotorMovement((float) Math.toRadians(-10.0)))
+                        .withoutAbility("haste")
                         .withAdditionalAbilities(List.of(
                                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.SWARM, new HealthThresholdTrigger(0.5f),
                                         new SpawnEnemiesAction("tSpawn", AbilitySpawnShape.brood(3, 1f, 1f), false))),
@@ -47,5 +52,12 @@ final class FrenziedEnemy {
                 .withTraits(List.of(new HurtSpeedTrait(1.4f)))
                 .withAbilities(List.of(new Ability(AbilityTerm.LAST_RITES, new OnDeathTrigger(),
                         new ApplyEffectAction(new HealTemplate(1f, 40), new RadiusTarget(150f))))));
+    }
+
+    /** Ground left where it is hurt to the given share of its health, kept until the wave is over. */
+    private static IdentifiedAbility hasteGround(float hurtFraction, float radiusCells) {
+        return IdentifiedAbility.named("haste", new Ability(AbilityTerm.HASTE_FIELD,
+                new HealthThresholdTrigger(hurtFraction),
+                LeaveZoneAction.hasteGround(radiusCells, Zone.UNTIL_WAVE_END)));
     }
 }

@@ -9,7 +9,8 @@ import java.util.List;
 /**
  * The Armored mob ({@code s}): armor and magic resist, plating, immune to crits, heavy enough to shrug off
  * some of a freeze, and at Boss rank it calls reinforcements. Those are a definition of their own, not the ladder's
- * boss, because a boss that reinforces with itself would be a spawn cycle.
+ * boss, because a boss that reinforces with itself would be a spawn cycle. From Elite it lays mines along its path that
+ * shield the first enemy to step on them.
  */
 final class ArmoredEnemy {
 
@@ -38,10 +39,10 @@ final class ArmoredEnemy {
                                 IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.25f)))))
                 .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(933, 24)
                         .withStats(67f, 67f, 8f, 0f, 100f, 5f, 10f)
-                        .withAdditionalAbilities(List.of(brace(150f))))
+                        .withAdditionalAbilities(List.of(brace(150f), wardMine(120f))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1680, 44)
                         .withStats(100f, 100f, 10f, 0f, 100f, 5f, 20f)
-                        .withAdditionalAbilities(List.of(brace(300f), IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE,
+                        .withAdditionalAbilities(List.of(brace(300f), wardMine(240f), IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE,
                                 new PeriodicTrigger(Math.round(3 * TickRate.TICKS_PER_SECOND)),
                                 new SpawnEnemiesAction("sSpawn", AbilitySpawnShape.brood(3, 1f, 1f), false))))))
                 .build());
@@ -51,6 +52,13 @@ final class ArmoredEnemy {
                 .withArmor(25f)
                 .withMagicResist(25f)
                 .withPlating(2f));
+    }
+
+    /** A mine left on the path for a while, that shields the first enemy to step on it. */
+    private static IdentifiedAbility wardMine(float shieldPoints) {
+        return IdentifiedAbility.named("wardMine", new Ability(AbilityTerm.WARD_MINE,
+                new PeriodicTrigger(Math.round(3 * TickRate.TICKS_PER_SECOND)),
+                LeaveZoneAction.wardMine(0.5f, Math.round(8 * TickRate.TICKS_PER_SECOND), shieldPoints)));
     }
 
     /** The physical shield it raises once, at half health. */

@@ -249,6 +249,9 @@ public abstract class AbstractTower implements Tower {
         if (this.removed) {
             return HitResult.none();
         }
+        if (attacker.delivery() == Delivery.HIT && this.isBlinded()) {
+            return HitResult.dodge();
+        }
         boolean wasAlive = !enemy.isDead();
         HitResult result = enemy.takeHit(damage, attacker.withOrigin(this.origin));
         if (result.dodged()) {
@@ -268,6 +271,12 @@ public abstract class AbstractTower implements Tower {
             }
         }
         return result;
+    }
+
+    /** Whether blinding fields over the tower make this hit miss; the random source is only drawn from when they do. */
+    private boolean isBlinded() {
+        float chance = this.stats.missChance();
+        return chance > 0f && this.context.random().nextDouble() < chance;
     }
 
     /** Withering Field: the first hit in every interval applies a stack of Vulnerable; periodic damage is no hit. */
@@ -498,7 +507,8 @@ public abstract class AbstractTower implements Tower {
             this.refreshStatusLayer();
             republished = true;
         }
-        DisruptionPenalty sampled = this.context.disruptions().penaltyAt(this.centerX, this.centerY);
+        DisruptionPenalty sampled = this.context.disruptions().penaltyAt(this.centerX, this.centerY)
+                .plus(this.context.zones().disruptionAt(this.centerX, this.centerY));
         this.disruption = sampled;
         if (!sampled.equals(this.stats.disruption())) {
             this.publishStats(this.upgrades);
@@ -787,9 +797,14 @@ public abstract class AbstractTower implements Tower {
         if (jam.isNone()) {
             return Optional.empty();
         }
-        return Optional.of(TowerBuffState.of(TowerTerm.JAMMED, TermText.of(
-                TermNumbers.signedPercent(-jam.attackSpeed()) + " attack speed, "
-                        + TermNumbers.signed(-jam.rangeCells()) + " range")));
+        String blinded = jam.missChance() > 0f ? TermNumbers.percent(jam.missChance()) + " miss chance" : "";
+        if (jam.attackSpeed() == 0f && jam.rangeCells() == 0f) {
+            return Optional.of(TowerBuffState.of(TowerTerm.JAMMED, TermText.of(blinded)));
+        }
+        String slowed = TermNumbers.signedPercent(-jam.attackSpeed()) + " attack speed, "
+                + TermNumbers.signed(-jam.rangeCells()) + " range";
+        return Optional.of(TowerBuffState.of(TowerTerm.JAMMED,
+                TermText.of(blinded.isEmpty() ? slowed : slowed + ", " + blinded)));
     }
 
     /** What each owned node says, with the nodes it was chosen over. */

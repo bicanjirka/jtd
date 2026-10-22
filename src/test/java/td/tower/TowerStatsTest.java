@@ -40,6 +40,20 @@ class TowerStatsTest {
     }
 
     @Test
+    void anAuraTakesAShareOfTheMissChanceAwayToo() {
+        TowerStats stats = of(TowerModifiers.disruptionTaken(0.5f), DisruptionPenalty.blinding(0.75f));
+
+        assertThat(stats.missChance()).isEqualTo(0.375f);
+    }
+
+    @Test
+    void missChancesOfSeveralFieldsCombineAsIndependentChances() {
+        DisruptionPenalty both = DisruptionPenalty.blinding(0.5f).plus(DisruptionPenalty.blinding(0.5f));
+
+        assertThat(both.missChance()).isEqualTo(0.75f);
+    }
+
+    @Test
     void disruptionTakenMultipliesAcrossAuras() {
         TowerStats stats = of(TowerModifiers.disruptionTaken(0.5f).plus(TowerModifiers.disruptionTaken(0.5f)),
                 DisruptionPenalty.none());

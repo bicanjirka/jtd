@@ -7,10 +7,14 @@ import java.util.List;
 
 /**
  * The Juggernaut ({@code juggernaut}): slow and massive, with plating that stops most physical hits; magic walks
- * through it. Too heavy to freeze or chill for long, and too heavy to dodge anything; from Elite crits glance off,
- * and at Boss it wards itself against magic once badly hurt.
+ * through it. Too heavy to freeze or chill for long, and too heavy to dodge anything; from Veteran it blinds the towers
+ * around it as it dies until the wave is over, wider from Elite; from Elite crits glance off, and at Boss it wards
+ * itself against magic once badly hurt.
  */
 final class JuggernautEnemy {
+
+    /** The chance a hit from a tower inside its blast misses. */
+    private static final float BLINDING_MISS_CHANCE = 0.75f;
 
     private JuggernautEnemy() {
     }
@@ -26,14 +30,22 @@ final class JuggernautEnemy {
                                 IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.FREEZE, 0.3f)),
                                 IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.CHILL, 0.3f)))))
                 .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(1200, 22))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(2400, 32).withPlating(30f))
+                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(2400, 32).withPlating(30f)
+                        .withAdditionalAbilities(List.of(blast(2f))))
                 .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(4800, 62)
-                        .withStats(15f, 15f, 30f, 0f, 100f, 0f, 10f))
+                        .withStats(15f, 15f, 30f, 0f, 100f, 0f, 10f)
+                        .withAdditionalAbilities(List.of(blast(4f))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(9600, 112)
                         .withStats(25f, 20f, 40f, 0f, 100f, 0f, 20f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.BULWARK,
                                 new HealthThresholdTrigger(0.5f),
                                 new ApplyEffectAction(ShieldTemplate.magicOnly(1500f, 200), new SelfTarget()))))))
                 .build());
+    }
+
+    /** The field of blinded towers it leaves where it dies. */
+    private static IdentifiedAbility blast(float radiusCells) {
+        return IdentifiedAbility.named("blast", new Ability(AbilityTerm.BLINDING_BURST, new OnDeathTrigger(),
+                LeaveZoneAction.blindingField(radiusCells, BLINDING_MISS_CHANCE)));
     }
 }
