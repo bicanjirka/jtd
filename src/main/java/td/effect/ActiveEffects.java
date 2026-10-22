@@ -385,7 +385,7 @@ public final class ActiveEffects {
             case SHARED_CLOCK, EARNED -> kind.modifiersAt(effect.stacks()).applyTo(accumulator);
             case REFRESH -> kind.modifiersAt(1).applyTo(accumulator);
             case LEVEL -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - chillLevel(effect));
-            case POOL -> this.contributePool(kind, effect, accumulator);
+            case POOL -> this.contributePool(kind, effect, kinds, accumulator);
         }
         if (kind == EffectKind.HEAL) {
             accumulator.restoreFlat(EnemyStat.REGENERATION, effect.healPerTick());
@@ -416,11 +416,12 @@ public final class ActiveEffects {
     }
 
     /** A burning pool that holds enough reveals the enemy; a poison slows by how full it is. */
-    private void contributePool(EffectKind kind, Effect pool, StatAccumulator<EnemyStat> accumulator) {
+    private void contributePool(EffectKind kind, Effect pool, Set<EffectKind> kinds,
+                                StatAccumulator<EnemyStat> accumulator) {
         if (kind.isBurning() && pool.fuelLevel() > BURN_REVEAL_FUEL) {
             accumulator.add(EnemyStat.STEALTH, REVEALED);
         }
-        if (kind == EffectKind.POISON) {
+        if (kind == EffectKind.POISON && !kinds.contains(EffectKind.HASTENED)) {
             float share = pool.fuelLevel() / (POOL_LMAX_MULTIPLIER * pool.peakL0());
             accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - POISON_MAX_SLOW * Math.min(1f, share));
         }

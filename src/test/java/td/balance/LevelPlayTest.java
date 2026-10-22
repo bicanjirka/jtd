@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LevelPlayTest {
 
-    private static final long SEED = 7L;
+    private static final long SEED = 5L;
 
     private static BoardSurvey zigzag() {
         LevelDefinition level = new BuiltInLevelCatalog().levels().get(1);

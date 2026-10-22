@@ -62,6 +62,9 @@ final class EffectInteractions {
         FULL_FREEZE_BURST.add(EffectKind.RIME);
         CHILL_TAKEN.put(EffectKind.ASH, 0.25f);
         POOL_FACTOR.put(EffectKind.ASH, 2);
+        for (EffectKind slow : List.of(EffectKind.CHILL, EffectKind.TARRED, EffectKind.DRAGGED, EffectKind.ANCHORED)) {
+            BLOCKED_BY.put(slow, EnumSet.of(EffectKind.HASTENED));
+        }
         BLOCKED_BY.put(EffectKind.BURN, EnumSet.of(EffectKind.FREEZE));
         BLOCKED_BY.put(EffectKind.SOULFIRE, EnumSet.of(EffectKind.FREEZE));
         CONSUMED_BY.put(EffectKind.CHILL, EnumSet.of(EffectKind.FREEZE));

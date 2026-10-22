@@ -72,6 +72,16 @@ final class EnemyTermPictograms {
             // Lay Egg
             Map.entry("ability.lay_egg", "F M12 2.8C8 2.8 5.2 9.2 5.2 14C5.2 18.2 8.2 21.2 12 21.2C15.8 21.2 18.8 18.2 18.8 14C18.8 9.2 16 2.8 12 2.8Z ; K O9.6 11.6 1.2 O14.4 15.2 1.5 O10.6 17.6 0.9"),
             // Hatch
+            // Last Ward
+            Map.entry("ability.last_ward", "F M5.8 20.6V10C5.8 6.4 8.6 3.4 12 3.4C15.4 3.4 18.2 6.4 18.2 10V20.6Z ; K M12 6.4L16 8V11.4C16 14 14.4 15.8 12 16.8C9.6 15.8 8 14 8 11.4V8Z ; T M2.6 21.4H21.4"),
+            // Healing Pool
+            Map.entry("ability.healing_pool", "S O12 15 8.2 ; F M10.6 9.6H13.4V13.6H17.4V16.4H13.4V20.4H10.6V16.4H6.6V13.6H10.6Z"),
+            // Haste Field
+            Map.entry("ability.haste_field", "S O12 12 9.6 ; F M6.4 7.6L11 12L6.4 16.4H8.8L13.4 12L8.8 7.6Z M11.6 7.6L16.2 12L11.6 16.4H14L18.6 12L14 7.6Z"),
+            // Ward Mine
+            Map.entry("ability.ward_mine", "F O12 14.4 6.4 ; K M12 9.6L15.2 10.8V13.4C15.2 15.2 14 16.6 12 17.4C10 16.6 8.8 15.2 8.8 13.4V10.8Z ; T M12 2.4V5.4 M4.6 5.6L6.6 7.6 M19.4 5.6L17.4 7.6"),
+            // Blinding Burst
+            Map.entry("ability.blinding_burst", "S M2.6 12C6 7 18 7 21.4 12C18 17 6 17 2.6 12Z ; F O12 12 3 ; T M4.4 4.6L19.6 19.4"),
             Map.entry("ability.hatch", "F M5.2 14L7.6 12L9.8 14.4L12 11.8L14.2 14.4L16.4 12L18.8 14C18.8 18.2 15.8 21.4 12 21.4C8.2 21.4 5.2 18.2 5.2 14Z ; F M6.6 8.8L8.8 7L11.2 9.4L13.4 7L15.6 8.8C14.8 5 13 2.2 11.2 2.2C9.2 2.2 7.4 4.6 6.6 8.8Z"));
 
     private EnemyTermPictograms() {

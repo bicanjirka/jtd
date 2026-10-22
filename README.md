@@ -180,12 +180,12 @@ on the Wardens, whose shield answers crits.
 | Enemy      | Looks like    | Behaviour                                                                                                                                                                                                                                                                                                         |
 |------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Simple     | circle        | Plain mob, no special ability, and no stats up to Veteran. From Elite, adaptive armor and a little of every stat; at Boss, +30 resilience |
-| Armored    | square        | +25 armor and magic resist, rising with rank, plating from 2 to 10 and 20% freeze resist; immune to critical hits. From Veteran it resists chill; from Elite, thick plating and a physical shield once below half health; at Boss rank, calls three armored reinforcements every three seconds |
-| Frenzied   | triangle      | Speeds up as it loses health; -20 resilience, so crits land harder. From Elite it sprints once below half health; at Boss rank, crit immune, calls three spawnlings once below half health and heals itself when left alone |
+| Armored    | square        | +25 armor and magic resist, rising with rank, plating from 2 to 10 and 20% freeze resist; immune to critical hits. From Veteran it resists chill; from Elite, thick plating, a physical shield once below half health, and ward mines laid along its path; at Boss rank, calls three armored reinforcements every three seconds |
+| Frenzied   | triangle      | Speeds up as it loses health; -20 resilience, so crits land harder. From Veteran, once badly hurt, it throws down haste ground that lasts until the wave is over; from Elite it also sprints once below half health; at Boss rank, no haste ground, crit immune, calls three spawnlings once below half health and heals itself when left alone |
 | Ghost      | tinted circle | +20 armor. Turns invisible to single-target towers for ~10s the first time it's hit (~15s from Veteran; area damage still reaches it); at Elite and Boss rank, also permanently shrouds every other ally near it; at Boss rank it fades out for 3s of every 10 |
-| Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it; +20 spirit, rising to 60 at Boss. From Veteran it heals itself when left alone; from Elite, adaptive armor; at Boss rank, heals every ally near it when it dies. On Curly Path, from Elite it also wards every other ally near it with a small shield that stops any damage |
+| Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it; +20 spirit, rising to 60 at Boss. From Veteran it heals itself when left alone and, when it dies, heals and shields every ally near it; from Elite, adaptive armor; at Boss rank, the death blast is a heal alone. On Curly Path, from Elite it also wards every other ally near it with a small shield that stops any damage |
 | Jammer     | square        | Jams every tower near it: they fire more slowly and see less far while it's in range (drawn as a pink ring; affected towers show a pink marker). A tower in a Beacon's range takes half of it. +20 magic resist; its reach and strength grow from Veteran, and from Elite it keeps a magic-only shield and its casing blunts magic hits (2 insulation, 4 at Boss). |
-| Juggernaut | square        | Slow, with plating that blunts a huge flat chunk of every physical hit; magic, Cracked and Sundered get past it. +15 magic resist and 30% freeze and chill resist. From Elite, crit immune; at Boss rank, a large magic shield once below half health. |
+| Juggernaut | square        | Slow, with plating that blunts a huge flat chunk of every physical hit; magic, Cracked and Sundered get past it. +15 magic resist and 30% freeze and chill resist. From Veteran, when it dies it blinds the towers within 2 cells (4 from Elite) until the wave is over; from Elite, crit immune; at Boss rank, a large magic shield once below half health. |
 | Mite       | circle        | Tiny and quick, with 10 agility rising 5 a rank to 25 at Elite and 35 at Boss; meant for a `swarm 12 mite`. at Boss rank it bursts into three broodlings when it dies. |
 | Courier    | triangle      | Very fast and fragile, with a high bounty, and nimble (25 agility, 35 from Veteran, 50 at Boss) enough to dodge an aimed shot now and then. From Elite it sprints when first hit; at Boss rank, after every dodge too. |
 | Shieldbearer | cross         | +30 armor, and spirit from Veteran that strengthens the shields it gets. Periodically shields every other ally near it against physical damage only; magic goes straight through. From Elite it shields itself too and has a little plating; at Boss rank, in a wider reach. |
@@ -268,6 +268,7 @@ effect it carries; selecting it shows each effect as an icon whose tooltip says 
 | Bleed | Affliction | Debuff | Physical damage for every cell it travels; standing still, it takes none. |
 | Soulfire | Affliction | Debuff | Damage over time in a pool of its own beside Burn and Poison; nothing resists it, it adds a stack of Scorch and Sicken every 0.5 s while it lasts, and Freeze puts it out. |
 | Sprint | Boon | Buff | +60% speed. |
+| Hasten | Boon | Buff | Twice the speed, and no slow (Chill, Tar, Drag, Anchor) can take hold; a Freeze or Daze still stops it. |
 
 #### Tower terms
 
@@ -327,6 +328,10 @@ freeze in frost bursts a burn.
 | Fallout        | Mortar's Tactical Nuke     | Drains their spirit and keeps heals from taking hold                    |
 | Mine           | Splash, from Range III     | The first enemy to step on it sets it off as one blast, and it is gone; it lasts 10 s, a Splash keeps 3 |
 | Cursed cloud   | Hexer's Mastery            | Gives every enemy inside the debuffs the hexed enemy that died there carried, for as long as they had left |
+| Healing ground | Mender, from Soldier       | Heals them; it lasts 5 s |
+| Haste ground   | Frenzied, from Veteran     | Hastens them (twice the speed, no slow) for a second after each pulse; it lasts until the wave is over |
+| Ward mine      | Armored, from Elite        | Armed a second after it is laid; the first enemy to step on it gets a Shield, and it is gone; it lasts 8 s |
+| Blinding field | Juggernaut, from Veteran   | Works on towers, not enemies: every tower inside misses 75% of its hits, whatever hits them again; fields never stack, the strongest counts; it lasts until the wave is over |
 
 Only a hit can crit: a shot, a blast, a beam pass. Damage that ticks (a burn, a poison, a field)
 never does, but a burn or poison started by a crit starts that much stronger. Each tower has its

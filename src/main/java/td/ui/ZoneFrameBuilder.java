@@ -31,6 +31,10 @@ final class ZoneFrameBuilder {
             case FALLOUT -> Palette.ZONE_FALLOUT;
             case MINE -> Palette.ZONE_MINE;
             case CURSED_CLOUD -> Palette.ZONE_CLOUD;
+            case HEALING_GROUND -> Palette.ZONE_HEALING;
+            case HASTE_GROUND -> Palette.ZONE_HASTE;
+            case WARD_MINE -> Palette.ZONE_WARD;
+            case BLINDING_FIELD -> Palette.ZONE_BLINDING;
         };
     }
 }

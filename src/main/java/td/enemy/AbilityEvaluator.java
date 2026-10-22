@@ -26,6 +26,7 @@ public final class AbilityEvaluator {
         switch (action) {
             case ApplyEffectAction a -> context.applyEffect(a.template(), a.target());
             case SpawnEnemiesAction a -> context.spawnEnemies(a);
+            case LeaveZoneAction a -> context.leaveZone(a);
         }
     }
 

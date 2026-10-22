@@ -157,7 +157,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case TARRED -> Palette.STATUS_MARKER_TARRED;
             case BLEEDING -> Palette.STATUS_MARKER_BLEEDING;
             case SOULFIRE -> Palette.STATUS_MARKER_SOULFIRE;
-            case SPRINTING -> Palette.STATUS_MARKER_SPRINTING;
+            case SPRINTING, HASTENED -> Palette.STATUS_MARKER_SPRINTING;
         };
     }
 

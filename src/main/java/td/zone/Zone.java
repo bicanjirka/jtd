@@ -2,6 +2,7 @@ package td.zone;
 
 import td.effect.Effect;
 import td.enemy.EnemyMob;
+import td.stat.DisruptionPenalty;
 import td.util.ThreadConfined;
 import td.util.TickRate;
 
@@ -17,6 +18,11 @@ import java.util.Map;
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class Zone {
 
+    /** A lifetime for a zone that stays until the wave is over. */
+    public static final int UNTIL_WAVE_END = Integer.MAX_VALUE;
+    /** A ward mine ignores whatever is on it this long after it is laid, so the enemy that laid it walks off first. */
+    private static final int WARD_ARMING_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
+
     /** Pulses in a row inside a frost zone before it freezes what stands there. */
     private static final int FROST_PULSES_TO_FREEZE = 4;
     private static final int FROST_FREEZE_TICKS = Math.round(TickRate.TICKS_PER_SECOND * 1.5f);
@@ -30,6 +36,7 @@ public final class Zone {
     private final ZoneOwner owner;
     private final ZoneTrigger trigger;
     private final List<Effect> carried;
+    private final DisruptionPenalty penalty;
     private final Map<EnemyMob, Integer> pulsesInside = new IdentityHashMap<>();
     private int ageTicks;
     private boolean triggered;
@@ -40,11 +47,11 @@ public final class Zone {
      */
     public Zone(ZoneKind kind, double x, double y, float radius, int lifetimeTicks, int strength, ZoneOwner owner) {
         this(kind, x, y, radius, lifetimeTicks, strength, owner, (mine, by) -> {
-        }, List.of());
+        }, List.of(), DisruptionPenalty.none());
     }
 
     private Zone(ZoneKind kind, double x, double y, float radius, int lifetimeTicks, int strength, ZoneOwner owner,
-                 ZoneTrigger trigger, List<Effect> carried) {
+                 ZoneTrigger trigger, List<Effect> carried, DisruptionPenalty penalty) {
         this.kind = kind;
         this.x = x;
         this.y = y;
@@ -54,18 +61,45 @@ public final class Zone {
         this.owner = owner;
         this.trigger = trigger;
         this.carried = List.copyOf(carried);
+        this.penalty = penalty;
     }
 
     /** A mine that {@code trigger} goes off the first time an enemy steps within {@code radius} of it. */
     public static Zone mine(double x, double y, float radius, int lifetimeTicks, ZoneOwner owner, ZoneTrigger trigger) {
-        return new Zone(ZoneKind.MINE, x, y, radius, lifetimeTicks, 0, owner, trigger, List.of());
+        return new Zone(ZoneKind.MINE, x, y, radius, lifetimeTicks, 0, owner, trigger, List.of(),
+                DisruptionPenalty.none());
+    }
+
+    /** A mine that {@code trigger} sets off, armed a moment after it is laid, for the enemy that steps on it. */
+    public static Zone wardMine(double x, double y, float radius, int lifetimeTicks, ZoneOwner owner,
+                                ZoneTrigger trigger) {
+        return new Zone(ZoneKind.WARD_MINE, x, y, radius, lifetimeTicks, 0, owner, trigger, List.of(),
+                DisruptionPenalty.none());
+    }
+
+    /** Ground that heals {@code unitsPerTick} (in damage units) each tick, for as long as an enemy stands on it. */
+    public static Zone healing(double x, double y, float radius, int lifetimeTicks, int unitsPerTick, ZoneOwner owner) {
+        return new Zone(ZoneKind.HEALING_GROUND, x, y, radius, lifetimeTicks, unitsPerTick, owner, (mine, by) -> {
+        }, List.of(), DisruptionPenalty.none());
+    }
+
+    public static Zone haste(double x, double y, float radius, int lifetimeTicks, ZoneOwner owner) {
+        return new Zone(ZoneKind.HASTE_GROUND, x, y, radius, lifetimeTicks, 0, owner, (mine, by) -> {
+        }, List.of(), DisruptionPenalty.none());
+    }
+
+    /** A field that jams every tower within {@code radius} by {@code penalty}. */
+    public static Zone blinding(double x, double y, float radius, int lifetimeTicks, DisruptionPenalty penalty,
+                                ZoneOwner owner) {
+        return new Zone(ZoneKind.BLINDING_FIELD, x, y, radius, lifetimeTicks, 0, owner, (mine, by) -> {
+        }, List.of(), penalty);
     }
 
     /** A cloud that gives every enemy inside the {@code carried} effects. */
     public static Zone cloud(double x, double y, float radius, int lifetimeTicks, ZoneOwner owner,
                              List<Effect> carried) {
         return new Zone(ZoneKind.CURSED_CLOUD, x, y, radius, lifetimeTicks, 0, owner, (mine, by) -> {
-        }, carried);
+        }, carried, DisruptionPenalty.none());
     }
 
     public ZoneKind kind() {
@@ -87,6 +121,27 @@ public final class Zone {
     /** How much of its life is left, from 1 when it was made to 0 when it ends. */
     public float lifeLeft() {
         return Math.max(0f, 1f - (float) this.ageTicks / this.lifetimeTicks);
+    }
+
+    /** What the towers within {@code radius} suffer; nothing for any kind but a blinding field. */
+    public DisruptionPenalty penalty() {
+        return this.penalty;
+    }
+
+    /** Whether it holds until the wave is over rather than for a time. */
+    boolean lastsUntilWaveEnd() {
+        return this.lifetimeTicks == UNTIL_WAVE_END;
+    }
+
+    /** Whether it can set off yet: only a ward mine waits to be armed. */
+    boolean isArmed() {
+        return this.kind != ZoneKind.WARD_MINE || this.ageTicks >= WARD_ARMING_TICKS;
+    }
+
+    boolean covers(double px, double py) {
+        double dx = this.x - px;
+        double dy = this.y - py;
+        return dx * dx + dy * dy <= (double) this.radius * this.radius;
     }
 
     int ageTicks() {

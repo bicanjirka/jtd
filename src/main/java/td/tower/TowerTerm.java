@@ -39,7 +39,7 @@ public enum TowerTerm implements Term {
     AURA("Aura", Side.BUFF, "a Beacon in range raises its damage and range, and takes some of the jam enemies put on it"),
     LEY_LINE("Ley Line", Side.BUFF, "a beam between two Obelisks; an enemy on it gets both fields' rules"),
     NEST("Nest", Side.BUFF, "missiles stored to launch one after another when a target comes"),
-    JAMMED("Jammed", Side.DEBUFF, "an enemy nearby slows its attacks and shortens its range"),
+    JAMMED("Jammed", Side.DEBUFF, "an enemy nearby slows its attacks and shortens its range, or its blast makes the tower miss"),
     INTERFERENCE("Interference", Side.DEBUFF, "other Obelisk fields overlapping this one take some of its damage away"),
     STOKE("Stoke", Side.DEBUFF, "each wave on an enemy with this tower's {} raises that {} a step; the steps go when it ends", EffectKind.BURN, EffectKind.BURN),
     KINSHIP("Kinship", Side.BUFF, "towers a Beacon buffs earn more XP for each other tower type in range"),

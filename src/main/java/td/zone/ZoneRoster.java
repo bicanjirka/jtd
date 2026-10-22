@@ -2,6 +2,7 @@ package td.zone;
 
 import td.enemy.EnemyMob;
 import td.enemy.EnemyRegistry;
+import td.stat.DisruptionPenalty;
 import td.tower.targeting.InRangeTargetQuery;
 import td.util.TickRate;
 
@@ -49,6 +50,26 @@ public final class ZoneRoster {
         this.zones.clear();
     }
 
+    /** Takes off the board every zone that was to last until the wave is over. */
+    public void endWave() {
+        this.zones.removeIf(Zone::lastsUntilWaveEnd);
+    }
+
+    /**
+     * What the blinding fields over {@code (x, y)} do to a tower there. Fields never stack: the one that
+     * blinds most counts.
+     */
+    public DisruptionPenalty disruptionAt(double x, double y) {
+        DisruptionPenalty worst = DisruptionPenalty.none();
+        for (Zone zone : this.zones) {
+            if (zone.kind() == ZoneKind.BLINDING_FIELD && zone.penalty().missChance() > worst.missChance()
+                    && zone.covers(x, y)) {
+                worst = zone.penalty();
+            }
+        }
+        return worst;
+    }
+
     /** Pulses every zone due to, ages them all, and drops the ones whose life is over. */
     public void doTick(int gameTime) {
         if (this.zones.isEmpty()) {
@@ -57,9 +78,11 @@ public final class ZoneRoster {
         Map<EnemyMob, Set<ZoneKind>> touched = new IdentityHashMap<>();
         List<Zone> ended = new ArrayList<>();
         for (Zone zone : this.zones) {
-            if (zone.kind() == ZoneKind.MINE) {
-                this.stepOn(zone);
-            } else if (zone.ageTicks() == 0 || gameTime % PULSE_TICKS == 0) {
+            if (zone.kind() == ZoneKind.MINE || zone.kind() == ZoneKind.WARD_MINE) {
+                if (zone.isArmed()) {
+                    this.stepOn(zone);
+                }
+            } else if (zone.kind() != ZoneKind.BLINDING_FIELD && (zone.ageTicks() == 0 || gameTime % PULSE_TICKS == 0)) {
                 this.pulse(zone, touched);
             }
             zone.age();

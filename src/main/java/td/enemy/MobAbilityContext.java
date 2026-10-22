@@ -1,11 +1,20 @@
 package td.enemy;
 
 import td.damage.Damage;
+import td.damage.DamageUnits;
+import td.effect.DamageSink;
+import td.effect.Effect;
 import td.effect.EffectTemplate;
+import td.stat.DisruptionPenalty;
 import td.util.GameWorld;
+import td.zone.Zone;
+import td.zone.ZoneOwner;
 
 /** Resolves ability data against one caster's world, position and definition, for one tick. */
 final class MobAbilityContext implements AbilityContext {
+
+    /** How long the shield a ward mine gives lasts. */
+    private static final int WARD_SHIELD_TICKS = 100;
 
     private final DefinedEnemyMob caster;
     private final GameWorld world;
@@ -75,6 +84,25 @@ final class MobAbilityContext implements AbilityContext {
                 other.applyEffect(template.toEffect(MobAbilityContext::creditNoOne));
             }
         }
+    }
+
+    @Override
+    public void leaveZone(LeaveZoneAction action) {
+        float radius = action.radiusCells() * this.world.getBoard().scale();
+        double x = this.caster.getX();
+        double y = this.caster.getY();
+        int units = DamageUnits.ofPoints(action.power());
+        Zone zone = switch (action.kind()) {
+            case HEALING_GROUND -> Zone.healing(x, y, radius, action.lifetimeTicks(), units, ZoneOwner.nobody());
+            case HASTE_GROUND -> Zone.haste(x, y, radius, action.lifetimeTicks(), ZoneOwner.nobody());
+            case WARD_MINE -> Zone.wardMine(x, y, radius, action.lifetimeTicks(), ZoneOwner.nobody(),
+                    (mine, by) -> by.applyEffect(Effect.shield(units, WARD_SHIELD_TICKS, DamageSink.none())));
+            case BLINDING_FIELD -> Zone.blinding(x, y, radius, action.lifetimeTicks(),
+                    DisruptionPenalty.blinding(action.power()), ZoneOwner.nobody());
+            case BURNING_GROUND, TAR, FROST_GROUND, FALLOUT, MINE, CURSED_CLOUD -> throw new IllegalArgumentException(
+                    action.kind() + " is a tower zone, not an enemy one");
+        };
+        this.world.zones().add(zone);
     }
 
     /** Ability effects deal no direct damage, so this sink is never invoked. */

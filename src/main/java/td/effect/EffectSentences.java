@@ -144,6 +144,9 @@ final class EffectSentences {
             case SPRINTING -> TermText.of(
                     TermNumbers.signedPercent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).percentAdd())
                             + " speed");
+            case HASTENED -> TermText.of(TermNumbers.times(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).multiply())
+                    + " speed, and no slow can take hold; ").plus(EffectKind.FREEZE).plus(" and ")
+                    .plus(EffectKind.DAZED).plus(" still stop it");
         };
     }
 

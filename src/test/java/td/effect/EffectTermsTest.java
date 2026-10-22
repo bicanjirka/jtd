@@ -48,7 +48,7 @@ class EffectTermsTest {
         List<EffectKind> helpful = Arrays.stream(EffectKind.values()).filter(kind -> kind.side() == Side.BUFF).toList();
 
         assertThat(helpful).containsExactlyInAnyOrder(EffectKind.SHIELD, EffectKind.HEAL, EffectKind.INVISIBLE,
-                EffectKind.SPRINTING);
+                EffectKind.SPRINTING, EffectKind.HASTENED);
     }
 
     @Test

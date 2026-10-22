@@ -87,6 +87,11 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.SPRINTING, durationTicks, sink);
     }
 
+    /** Twice as fast while active, and slows cannot take hold. */
+    public static Effect hastened(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.HASTENED, durationTicks, sink);
+    }
+
     /** Targetable again while active, even through invisibility. */
     public static Effect revealed(int durationTicks, DamageSink sink) {
         return timed(EffectKind.REVEALED, durationTicks, sink);

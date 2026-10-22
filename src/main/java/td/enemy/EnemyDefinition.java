@@ -100,6 +100,7 @@ public record EnemyDefinition(
                 case SelfTarget ignored -> Optional.empty();
             };
             case SpawnEnemiesAction ignored -> Optional.empty();
+            case LeaveZoneAction ignored -> Optional.empty();
         };
     }
 
@@ -240,6 +241,12 @@ public record EnemyDefinition(
     /** Adds abilities by id, like {@link #withAdditionalTraits}. */
     public EnemyDefinition withAdditionalAbilities(List<IdentifiedAbility> additions) {
         return withIdentifiedAbilities(compose(this.abilitySlots, additions, IdentifiedAbility::id));
+    }
+
+    /** Drops the ability named {@code name}, if a step before this one authored it. */
+    public EnemyDefinition withoutAbility(String name) {
+        TraitId id = TraitId.named(name);
+        return withIdentifiedAbilities(this.abilitySlots.stream().filter(slot -> !slot.id().equals(id)).toList());
     }
 
     private static <T> List<T> compose(List<T> existing, List<T> additions, Function<T, TraitId> idOf) {

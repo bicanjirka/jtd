@@ -10,6 +10,7 @@ import td.enemy.ApplyEffectAction;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
+import td.enemy.LeaveZoneAction;
 import td.enemy.Rank;
 import td.enemy.RankedEnemy;
 import td.enemy.SpawnEnemiesAction;
@@ -311,6 +312,7 @@ public final class TowerLab {
                     .anyMatch(ability -> switch (ability.action()) {
                         case ApplyEffectAction apply -> apply.template().kind() == EffectKind.INVISIBLE;
                         case SpawnEnemiesAction spawn -> false;
+                        case LeaveZoneAction zone -> false;
                     });
         }).toList();
     }
@@ -640,6 +642,8 @@ public final class TowerLab {
                 switch (ability.action()) {
                     case SpawnEnemiesAction spawn -> keys.add(PlayRecord.Watch.spawnKey(spawn.definitionId()));
                     case ApplyEffectAction apply -> keys.add(PlayRecord.Watch.castKey(key, apply.template().kind()));
+                    case LeaveZoneAction zone -> {
+                    }
                 }
             }
         }
@@ -794,6 +798,8 @@ public final class TowerLab {
                     switch (ability.action()) {
                         case SpawnEnemiesAction spawn -> spawned.add(spawn.definitionId());
                         case ApplyEffectAction ignored -> {
+                        }
+                        case LeaveZoneAction ignored -> {
                         }
                     }
                 }

@@ -1,14 +1,18 @@
 package td.enemy;
 
 import td.effect.HealTemplate;
+import td.effect.ShieldTemplate;
 
 import java.util.List;
 
 /**
  * The Mender mob ({@code m}): heals the allies near it, takes heals well itself (its spirit grows with rank), from
- * Veteran heals itself when left alone, and at Boss leaves a last blessing on the allies around it when it dies.
+ * Veteran heals itself when left alone and leaves a last
+ * blessing of healing and a shield on the allies around it when it dies; at Boss the blessing is a heal alone.
  */
 final class MenderEnemy {
+
+    private static final float BLESSING_RADIUS = 120f;
 
     private MenderEnemy() {
     }
@@ -24,16 +28,17 @@ final class MenderEnemy {
                         .withAdditionalAbilities(List.of(heal(0.5f, 40))))
                 .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(389, 13)
                         .withSpirit(30f)
-                        .withAdditionalAbilities(List.of(heal(1f, 40), selfHeal(0.7f))))
+                        .withAdditionalAbilities(List.of(heal(1f, 40), selfHeal(0.7f), lastRites(2f, 40),
+                                lastWard(60f))))
                 .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(700, 25)
                         .withStats(10f, 10f, 0f, 0f, 10f, 5f, 40f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(67f))))
-                        .withAdditionalAbilities(List.of(heal(2f, 80), selfHeal(1.4f))))
+                        .withAdditionalAbilities(List.of(heal(2f, 80), selfHeal(1.4f), lastRites(3f, 40),
+                                lastWard(150f))))
                 .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1260, 45)
                         .withStats(15f, 15f, 0f, 0f, 20f, 5f, 60f)
-                        .withAdditionalAbilities(List.of(heal(4f, 80), selfHeal(2.8f),
-                                IdentifiedAbility.anonymous(new Ability(AbilityTerm.LAST_RITES, new OnDeathTrigger(),
-                                        new ApplyEffectAction(new HealTemplate(4f, 100), new RadiusTarget(120f)))))))
+                        .withoutAbility("lastWard")
+                        .withAdditionalAbilities(List.of(heal(4f, 80), selfHeal(2.8f), lastRites(4f, 100))))
                 .build());
     }
 
@@ -46,5 +51,17 @@ final class MenderEnemy {
     private static IdentifiedAbility selfHeal(float perTick) {
         return IdentifiedAbility.named("selfHeal", new Ability(AbilityTerm.RECOVER, new TimeSinceLastHitTrigger(100),
                 new ApplyEffectAction(new HealTemplate(perTick, 100), new SelfTarget())));
+    }
+
+    /** The heal it leaves on the allies around it as it dies. */
+    private static IdentifiedAbility lastRites(float perTick, int durationTicks) {
+        return IdentifiedAbility.named("lastRites", new Ability(AbilityTerm.LAST_RITES, new OnDeathTrigger(),
+                new ApplyEffectAction(new HealTemplate(perTick, durationTicks), new RadiusTarget(BLESSING_RADIUS))));
+    }
+
+    /** The shield it leaves on the allies around it as it dies. */
+    private static IdentifiedAbility lastWard(float points) {
+        return IdentifiedAbility.named("lastWard", new Ability(AbilityTerm.LAST_WARD, new OnDeathTrigger(),
+                new ApplyEffectAction(new ShieldTemplate(points, 100), new RadiusTarget(BLESSING_RADIUS))));
     }
 }

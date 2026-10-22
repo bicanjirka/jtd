@@ -725,6 +725,7 @@ public class Driver {
                 case BLEEDING -> Effect.bleeding(1, ticks, DamageSink.none());
                 case SOULFIRE -> Effect.soulfire(Damage.magic(1), ticks, DamageSink.none());
                 case SPRINTING -> Effect.sprinting(ticks, DamageSink.none());
+                case HASTENED -> Effect.hastened(ticks, DamageSink.none());
                 case SCORCHED, SICKENED -> throw new IllegalArgumentException(kind + " is earned by burn and poison");
             };
             mob.applyEffect(effect);

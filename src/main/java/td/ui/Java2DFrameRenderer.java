@@ -491,6 +491,10 @@ public final class Java2DFrameRenderer {
             case ZONE_FALLOUT -> new Color(150, 220, 60);
             case ZONE_MINE -> new Color(255, 60, 60);
             case ZONE_CLOUD -> new Color(170, 80, 230);
+            case ZONE_HEALING -> new Color(90, 220, 120);
+            case ZONE_HASTE -> new Color(130, 240, 180);
+            case ZONE_WARD -> new Color(120, 190, 255);
+            case ZONE_BLINDING -> new Color(190, 90, 230);
             case TOWER_PULSE_ZAP -> new Color(255, 245, 190);
             case TOWER_CINDER_CONE -> new Color(255, 90, 30);
             case TOWER_CINDER_CONE_WHITE -> new Color(255, 245, 225);
@@ -700,7 +704,7 @@ public final class Java2DFrameRenderer {
             case ZONE_TAR -> this.paintZoneTarGloss(g2, zone, fade);
             case ZONE_FROST -> this.paintZoneCrystals(g2, zone, fade);
             case ZONE_FALLOUT -> this.paintZoneFallout(g2, zone, fade);
-            case ZONE_MINE -> this.paintZoneMine(g2, zone, fade);
+            case ZONE_MINE, ZONE_WARD -> this.paintZoneMine(g2, zone, fade);
             case ZONE_CLOUD -> this.paintZoneCloud(g2, zone, fade);
             default -> {
             }
