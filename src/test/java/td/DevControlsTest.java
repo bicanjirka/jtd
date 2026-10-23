@@ -4,19 +4,20 @@ import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageUnits;
 import td.effect.EffectKind;
-import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyMob;
-import td.enemy.EnemyMobVisitor;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
+import td.fixtures.FakeTower;
 import td.fixtures.LevelFixtures;
-import td.fixtures.UpgradePaths;
 import td.level.LevelOutcome;
 import td.tower.Tower;
 import td.tower.TowerBuffState;
 import td.tower.TowerFactory;
 import td.tower.TowerTerm;
+import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.wave.WaveDefinition;
 
@@ -169,13 +170,12 @@ class DevControlsTest {
     @Test
     void ignoringGatesLetsATowerBuyANodeBeforeItHasTheXp() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 1000));
-        Tower tower = this.placeSniper(1, 1);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Attune"));
-        tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics"));
-        boolean gated = tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics II"));
+        UpgradeNode needsXp = UpgradeNode.of("gated", UpgradeSlot.HEAD, "Gated", 10).withXp(50);
+        Tower tower = FakeTower.offering(this.world, 1, 1, UpgradeTree.of(needsXp));
+        boolean gated = tower.buyUpgrade(needsXp);
 
         this.dev.setUpgradeGatesIgnored(true);
-        boolean ignored = tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics II"));
+        boolean ignored = tower.buyUpgrade(needsXp);
 
         assertThat(gated).isFalse();
         assertThat(ignored).isTrue();
@@ -195,7 +195,7 @@ class DevControlsTest {
 
         assertThat(refused).isEqualTo("Enemy health must be above 0%");
         assertThat(set).isEqualTo("New enemies get 250% health");
-        assertThat(this.world.enemies().getEnemies()).extracting(td.enemy.EnemyMob::getHealth)
+        assertThat(this.world.enemies().getEnemies()).extracting(EnemyMob::getHealth)
                 .containsExactly(authored, DamageUnits.ofPoints(Math.round(EnemyCatalog.builtIn().get("c").baseHealth() * 2.5f)));
     }
 
@@ -211,7 +211,7 @@ class DevControlsTest {
         this.dev.runPending();
 
         assertThat(withoutSelection).isEqualTo("Select an enemy first");
-        assertThat(withSelection).isEqualTo("Applied Freeze");
+        assertThat(withSelection).isEqualTo("Applied " + EffectKind.FREEZE.title());
         assertThat(this.frozenEnemies()).isEqualTo(1);
     }
 
@@ -306,7 +306,7 @@ class DevControlsTest {
         this.dev.runPending();
 
         assertThat(withoutSelection).isEqualTo("Select a tower first");
-        assertThat(withSelection).startsWith("Granted Haste");
+        assertThat(withSelection).startsWith("Granted " + TowerTerm.HASTE.title());
         assertThat(tower.conditions()).extracting(TowerBuffState::term).contains(TowerTerm.HASTE);
     }
 
@@ -318,9 +318,7 @@ class DevControlsTest {
     }
 
     private long frozenEnemies() {
-        return Arrays.stream(this.world.enemies().getEnemies())
-                .map(mob -> mob.accept((EnemyMobVisitor<DefinedEnemyMob>) m -> m))
-                .filter(mob -> mob.activeEffectKinds().contains(EffectKind.FREEZE)).count();
+        return Arrays.stream(this.world.enemies().getEnemies()).filter(mob -> mob.hasEffect(EffectKind.FREEZE)).count();
     }
 
     private Tower placeSniper(int cellX, int cellY) {

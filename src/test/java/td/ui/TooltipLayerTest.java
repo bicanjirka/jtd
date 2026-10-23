@@ -1,11 +1,13 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import td.economy.StatusTerm;
 import td.effect.EffectKind;
 import td.term.TermText;
 import td.ui.render.InfoSheet;
 import td.ui.render.SheetIcon;
 import td.ui.render.SheetLine;
+import td.ui.render.SheetTooltip;
 import td.ui.render.TooltipKey;
 
 import javax.swing.JLayeredPane;
@@ -16,6 +18,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -153,12 +156,12 @@ class TooltipLayerTest {
 
     @Test
     void aSourceInTheTopStripOpensItsTooltipUnderItWithLeftEdgesAligned() {
-        StatusIcon icon = new StatusIcon(td.economy.StatusTerm.CASH);
+        StatusIcon icon = new StatusIcon(StatusTerm.CASH);
         icon.setBounds(300, 4, 90, 28);
         this.layer.add(icon);
-        this.tooltips.watchBelow(icon, () -> java.util.Optional.of(new td.ui.render.SheetTooltip(
-                TooltipKey.ofTerm("status", td.economy.StatusTerm.CASH),
-                StatusSheetText.of(td.economy.StatusTerm.CASH, StatusReadout.empty(), RoundStrip.empty()))));
+        this.tooltips.watchBelow(icon, () -> Optional.of(new SheetTooltip(
+                TooltipKey.ofTerm("status", StatusTerm.CASH),
+                StatusSheetText.of(StatusTerm.CASH, StatusReadout.empty(), RoundStrip.empty()))));
 
         icon.dispatchEvent(new MouseEvent(icon, MouseEvent.MOUSE_ENTERED, 0, 0, 1, 1, 0, false));
         this.tooltips.openPending();

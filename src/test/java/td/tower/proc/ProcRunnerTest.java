@@ -1,6 +1,8 @@
 package td.tower.proc;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackProfile;
+import td.damage.Damage;
 import td.effect.EffectKind;
 import td.fixtures.FakeEnemyMob;
 import td.tower.TowerModifiers;
@@ -88,7 +90,7 @@ class ProcRunnerTest {
     void aPayloadSkipsADeadTarget() {
         List<Proc> procs = List.of(Proc.onHit(VULNERABLE), Proc.onHit(new ProcPayload.Dispel()));
         this.target.dieOnAnyHit();
-        this.target.takeHit(td.damage.Damage.physical(1), td.damage.AttackProfile.none());
+        this.target.takeHit(Damage.physical(1), AttackProfile.none());
 
         ProcRunner.onOutcome(procs, this.outcome(HitKind.DIRECT, false, true), this.actions);
 

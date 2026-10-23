@@ -13,6 +13,10 @@ import td.fixtures.FakeTower;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.StatModifiers;
+import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitKind;
+import td.tower.proc.Proc;
+import td.tower.proc.ProcPayload;
 import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
@@ -595,10 +599,10 @@ class AbstractTowerTest {
     @Test
     void damageAbsorbedByAShieldCountsTowardDamageDealtButNotAKill() {
         SniperTower tower = new SniperTower(this.context, 0, 0);
-        td.enemy.EnemyMob enemy = EnemyFixtures.plainMob(this.context, 50, 3);
-        enemy.applyEffect(td.effect.Effect.shield(5000f, 100, DamageSink.none()));
+        EnemyMob enemy = EnemyFixtures.plainMob(this.context, 50, 3);
+        enemy.applyEffect(Effect.shield(5000f, 100, DamageSink.none()));
 
-        tower.dealDamage(enemy, td.damage.Damage.physical(3000), td.damage.AttackProfile.none());
+        tower.dealDamage(enemy, Damage.physical(3000), AttackProfile.none());
 
         assertThat(tower.getDamageDealt()).isEqualTo(3000);
         assertThat(tower.getKillCount()).isZero();
@@ -607,7 +611,7 @@ class AbstractTowerTest {
 
     @Test
     void aStatusAnEveryNthShotProcGrantsIsInThatShotsStats() {
-        td.tower.proc.Proc everySecond = td.tower.proc.Proc.everyNthShot(2, new td.tower.proc.ProcPayload.GrantStatus(
+        Proc everySecond = Proc.everyNthShot(2, new ProcPayload.GrantStatus(
                 TowerStatus.nextShots(TowerTerm.DEADEYE_ROUND, 1, TowerModifiers.critChance(0.5f))));
         FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.none()).withBaseProcs(List.of(everySecond));
 
@@ -623,9 +627,9 @@ class AbstractTowerTest {
     void aTowerWithNoBonusesAdjustsNothing() {
         FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.none());
 
-        td.tower.proc.HitAdjustment adjustment = tower.hitAdjustment(td.fixtures.FakeEnemyMob.at(0, 0),
-                td.tower.proc.HitKind.DIRECT, 0.5f, tower.stats());
+        HitAdjustment adjustment = tower.hitAdjustment(FakeEnemyMob.at(0, 0),
+                HitKind.DIRECT, 0.5f, tower.stats());
 
-        assertThat(adjustment).isSameAs(td.tower.proc.HitAdjustment.none());
+        assertThat(adjustment).isSameAs(HitAdjustment.none());
     }
 }

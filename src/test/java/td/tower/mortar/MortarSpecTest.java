@@ -3,6 +3,12 @@ package td.tower.mortar;
 import org.junit.jupiter.api.Test;
 import td.fixtures.BoardFixtures;
 import td.tower.targeting.Viewpoint;
+import td.wave.Path;
+import td.wave.PathNormal;
+import td.wave.Vec2;
+
+import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,7 +41,7 @@ class MortarSpecTest {
     void aNukeIsEveryFourthShellAndTheSpecialsRunOnTheOthers() {
         ShellPlan plan = ShellPlan.none().withSpecial(ShellType.CRYO).withSpecial(ShellType.TAR).withNukeEvery(4);
 
-        assertThat(java.util.stream.IntStream.rangeClosed(1, 9).mapToObj(plan::typeOf).toList()).containsExactly(
+        assertThat(IntStream.rangeClosed(1, 9).mapToObj(plan::typeOf).toList()).containsExactly(
                 ShellType.CRYO, ShellType.TAR, ShellType.PLAIN, ShellType.NUKE, ShellType.CRYO, ShellType.TAR,
                 ShellType.PLAIN, ShellType.NUKE, ShellType.CRYO);
     }
@@ -45,37 +51,37 @@ class MortarSpecTest {
         ShellPlan plain = ShellPlan.none();
         ShellPlan one = ShellPlan.none().withSpecial(ShellType.NAPALM);
 
-        assertThat(java.util.stream.IntStream.rangeClosed(1, 6).mapToObj(plain::typeOf)).containsOnly(ShellType.PLAIN);
-        assertThat(java.util.stream.IntStream.rangeClosed(1, 6).mapToObj(one::typeOf).toList()).containsExactly(
+        assertThat(IntStream.rangeClosed(1, 6).mapToObj(plain::typeOf)).containsOnly(ShellType.PLAIN);
+        assertThat(IntStream.rangeClosed(1, 6).mapToObj(one::typeOf).toList()).containsExactly(
                 ShellType.PLAIN, ShellType.PLAIN, ShellType.NAPALM, ShellType.PLAIN, ShellType.PLAIN,
                 ShellType.NAPALM);
     }
 
     @Test
     void pathLinePlacesPointsAlongTheNearestPathFromTheImpactBehindAndAhead() {
-        td.wave.Path path = new td.wave.PathNormal(java.util.List.of(new td.wave.Vec2(0, 100),
-                new td.wave.Vec2(500, 100)));
+        Path path = new PathNormal(List.of(new Vec2(0, 100),
+                new Vec2(500, 100)));
 
-        java.util.List<td.wave.Vec2> points = PathLine.along(java.util.List.of(path), 200, 130, new double[]{-50, 0, 80});
+        List<Vec2> points = PathLine.along(List.of(path), 200, 130, new double[]{-50, 0, 80});
 
-        assertThat(points).extracting(td.wave.Vec2::x).containsExactly(150.0, 200.0, 280.0);
-        assertThat(points).extracting(td.wave.Vec2::y).containsOnly(100.0);
+        assertThat(points).extracting(Vec2::x).containsExactly(150.0, 200.0, 280.0);
+        assertThat(points).extracting(Vec2::y).containsOnly(100.0);
     }
 
     @Test
     void pathLineIsEmptyWithoutAPathOfAnyLength() {
-        assertThat(PathLine.along(java.util.List.of(new td.wave.PathNormal(java.util.List.of())), 0, 0,
+        assertThat(PathLine.along(List.of(new PathNormal(List.of())), 0, 0,
                 new double[]{10})).isEmpty();
     }
 
     @Test
     void pathLineChoosesTheNearestOfSeveralPaths() {
-        td.wave.Path far = new td.wave.PathNormal(java.util.List.of(new td.wave.Vec2(0, 500),
-                new td.wave.Vec2(500, 500)));
-        td.wave.Path near = new td.wave.PathNormal(java.util.List.of(new td.wave.Vec2(0, 100),
-                new td.wave.Vec2(500, 100)));
+        Path far = new PathNormal(List.of(new Vec2(0, 500),
+                new Vec2(500, 500)));
+        Path near = new PathNormal(List.of(new Vec2(0, 100),
+                new Vec2(500, 100)));
 
-        java.util.List<td.wave.Vec2> points = PathLine.along(java.util.List.of(far, near), 100, 120,
+        List<Vec2> points = PathLine.along(List.of(far, near), 100, 120,
                 new double[]{10});
 
         assertThat(points).singleElement().satisfies(point -> assertThat(point.y()).isEqualTo(100.0));

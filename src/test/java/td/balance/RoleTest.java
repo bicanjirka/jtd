@@ -3,7 +3,7 @@ package td.balance;
 import org.junit.jupiter.api.Test;
 import td.GameEngine;
 import td.economy.EconomyDelta;
-import td.level.BuiltInLevelCatalog;
+import td.fixtures.LevelFixtures;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeNode;
@@ -11,6 +11,7 @@ import td.util.GameHost;
 import td.util.RandomSource;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,7 +22,7 @@ class RoleTest {
     @Test
     void everyNodeARoleBansIsANodeSomeTowerOffers() {
         GameEngine engine = new GameEngine(GameHost.noOp(), RandomSource.seeded(1));
-        engine.loadLevel(new BuiltInLevelCatalog().levels().getFirst());
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         Set<String> offered = Arrays.stream(TowerFactory.Type.values())
                 .flatMap(type -> TowerFactory.createTower(type, engine.getGameWorld(), 0, 0).upgradeTree().nodes()
                         .stream())
@@ -36,7 +37,7 @@ class RoleTest {
     @Test
     void aWardObeliskDoesTheAntiSustainJobAndAPlainOneDoesNot() {
         GameEngine engine = new GameEngine(GameHost.noOp(), RandomSource.seeded(1));
-        engine.loadLevel(new BuiltInLevelCatalog().levels().getFirst());
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         Tower plain = TowerFactory.createTower(TowerFactory.Type.PULSE, engine.getGameWorld(), 0, 0);
         Tower ward = TowerFactory.createTower(TowerFactory.Type.PULSE, engine.getGameWorld(), 0, 0);
         engine.getGameWorld().economy().apply(EconomyDelta.credits(1000));

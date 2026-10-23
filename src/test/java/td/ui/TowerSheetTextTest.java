@@ -59,23 +59,6 @@ class TowerSheetTextTest {
         return TowerSheetText.status(tower.inspect().withConditions(tower.conditions()));
     }
 
-    /** Buys the named nodes the way the Upgrades panel does, granting the XP and the Attune and Awaken they gate on. */
-    private void buy(Tower tower, String... names) {
-        this.world.economy().startEconomy(1_000_000, 5);
-        tower.earnXp(1_000);
-        for (String name : List.of("Attune", "Awaken")) {
-            tower.buyUpgrade(UpgradePaths.named(tower, name));
-        }
-        for (String name : names) {
-            assertThat(tower.buyUpgrade(UpgradePaths.named(tower, name))).as(name).isTrue();
-        }
-    }
-
-
-    private static List<SheetLine> tooltipOf(SheetLine.IconRow row, int index) {
-        return row.icons().get(index).tooltip().lines();
-    }
-
     private static Row row(InfoSheet sheet, String label) {
         return rows(sheet).stream().filter(row -> row.label().equals(label)).findFirst().orElseThrow();
     }
@@ -84,8 +67,8 @@ class TowerSheetTextTest {
     void theShopOpensWithTheTowersOwnGlyphItsNameAndItsPrice() {
         InfoSheet sheet = shopSheet(TowerFactory.Type.SPLASH);
 
-        assertThat(sheet.lines().getFirst()).isEqualTo(
-                new SheetLine.Title(Glyph.TOWER_BODY, Palette.TOWER_SPLASH_BODY, "Burst tower", "$15"));
+        assertThat(sheet.lines().getFirst()).isEqualTo(new SheetLine.Title(Glyph.TOWER_BODY, Palette.TOWER_SPLASH_BODY,
+                TowerFactory.Type.SPLASH.displayName() + " tower", "$" + TowerFactory.Type.SPLASH.price));
     }
 
     @Test
@@ -95,7 +78,9 @@ class TowerSheetTextTest {
 
         InfoSheet sheet = this.shopSheet(TowerFactory.Type.SPLASH);
 
-        assertThat(((SheetLine.Title) sheet.lines().getFirst()).value()).isEqualTo("$20");
+        int nextCopy = this.world.towers().priceOf(TowerFactory.Type.SPLASH);
+        assertThat(nextCopy).isGreaterThan(TowerFactory.Type.SPLASH.price);
+        assertThat(((SheetLine.Title) sheet.lines().getFirst()).value()).isEqualTo("$" + nextCopy);
     }
 
     @Test
@@ -206,7 +191,7 @@ class TowerSheetTextTest {
     @Test
     void eachOwnedLineIsOnePerkIconAtItsLevel() {
         Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
-        this.buy(sniper, "Focused Optics", "Focused Optics II");
+        UpgradePaths.buy(sniper, this.world, "Focused Optics II");
 
         InfoSheet sheet = liveStatus(sniper);
 
@@ -219,9 +204,11 @@ class TowerSheetTextTest {
     @Test
     void aPerkTooltipListsTheLinesNodesAndWhatTheyWereChosenOver() {
         Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
-        this.buy(sniper, "Focused Optics", "Focused Optics II");
+        UpgradePaths.buy(sniper, this.world, "Focused Optics II");
 
-        List<SheetLine> tooltip = tooltipOf(iconRow(liveStatus(sniper), "Perks"), 0);
+        String optics = UpgradePaths.named(sniper, "Focused Optics").id();
+        List<SheetLine> tooltip = iconRow(liveStatus(sniper), "Perks").icons().stream()
+                .filter(icon -> icon.key().id().contains(optics)).findFirst().orElseThrow().tooltip().lines();
 
         assertThat(tooltip.getFirst()).isInstanceOf(SheetLine.IconTitle.class);
         assertThat(tooltip.stream().filter(Row.class::isInstance).filter(line -> ((Row) line).glyph() == Glyph.PIP))
@@ -231,8 +218,8 @@ class TowerSheetTextTest {
     @Test
     void aCountingPerkShowsItsProgress() {
         Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
-        this.buy(sniper, "Marksman's Eye", "Fourth Shot");
-        String id = UpgradePaths.named(sniper, "Fourth Shot").id();
+        UpgradePaths.buy(sniper, this.world, "Focused Optics");
+        String id = UpgradePaths.named(sniper, "Focused Optics").id();
 
         InfoSheet sheet = TowerSheetText.status(sniper.inspect().withProgress(List.of(new NodeProgress(id, 2, 4))));
 
@@ -253,7 +240,7 @@ class TowerSheetTextTest {
     @Test
     void anAppliedEffectsTooltipSaysEachSourceOnTheTower() {
         Tower mortar = this.place(TowerFactory.Type.MORTAR, 0, 0);
-        this.buy(mortar, "Napalm");
+        UpgradePaths.buy(mortar, this.world, "Napalm");
 
         SheetLine.IconRow applies = iconRow(liveStatus(mortar), "Applies");
 

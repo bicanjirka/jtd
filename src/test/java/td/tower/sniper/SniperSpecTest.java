@@ -1,6 +1,8 @@
 package td.tower.sniper;
 
 import org.junit.jupiter.api.Test;
+import td.tower.targeting.HighestHealthSelector;
+import td.tower.targeting.HighestRankSelector;
 import td.tower.targeting.Viewpoint;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -11,8 +13,8 @@ class SniperSpecTest {
 
     @Test
     void theFirstAimSetDecidesTheAim() {
-        SniperSpec spec = SPEC.aimingAt(new SniperAim(new td.tower.targeting.HighestRankSelector(), "highest rank"))
-                .aimingAt(new SniperAim(new td.tower.targeting.HighestHealthSelector(), "most health"));
+        SniperSpec spec = SPEC.aimingAt(new SniperAim(new HighestRankSelector(), "highest rank"))
+                .aimingAt(new SniperAim(new HighestHealthSelector(), "most health"));
 
         assertThat(spec.chosenAim().label()).isEqualTo("highest rank");
     }

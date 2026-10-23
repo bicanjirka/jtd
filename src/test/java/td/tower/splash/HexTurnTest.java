@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.FakeEnemyMob;
+import td.term.TermText;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,8 +29,8 @@ class HexTurnTest {
         }
 
         @Override
-        public td.term.TermText describe() {
-            return td.term.TermText.of("Stub hex");
+        public TermText describe() {
+            return TermText.of("Stub hex");
         }
     }
 
