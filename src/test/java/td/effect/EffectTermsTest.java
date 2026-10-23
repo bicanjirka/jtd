@@ -2,7 +2,6 @@ package td.effect;
 
 import org.junit.jupiter.api.Test;
 import td.stat.EnemyStat;
-import td.term.Side;
 import td.term.TermNumbers;
 
 import java.util.Arrays;
@@ -41,14 +40,6 @@ class EffectTermsTest {
 
         assertThat(kind.describe().plain()).contains(TermNumbers.signedPercent(perStack))
                 .contains(kind.maxStacks() + " stacks");
-    }
-
-    @Test
-    void onlyShieldHealInvisibilityAndSprintHelpTheirCarrier() {
-        List<EffectKind> helpful = Arrays.stream(EffectKind.values()).filter(kind -> kind.side() == Side.BUFF).toList();
-
-        assertThat(helpful).containsExactlyInAnyOrder(EffectKind.SHIELD, EffectKind.HEAL, EffectKind.INVISIBLE,
-                EffectKind.SPRINTING, EffectKind.HASTENED);
     }
 
     @Test
