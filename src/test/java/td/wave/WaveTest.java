@@ -35,7 +35,7 @@ class WaveTest {
 
     @Test
     void spawningTwiceProducesTwoIndependentSetsOfEnemies() {
-        Wave built = wave("c c");
+        Wave built = wave("simple simple");
 
         EnemyMob[] first = built.spawn();
         EnemyMob[] second = built.spawn();
@@ -47,7 +47,7 @@ class WaveTest {
 
     @Test
     void aSpacerOccupiesATimingSlotButSpawnsNoMob() {
-        Wave built = wave("c e c");
+        Wave built = wave("simple e simple");
 
         assertThat(built.spawn()).hasSize(2);
         assertThat(built.enemyCount()).isEqualTo(2);
@@ -55,9 +55,9 @@ class WaveTest {
 
     @Test
     void enemySetAndEnemyCountDelegateToTheParsedContent() {
-        EnemyDefinition simple = this.catalog.get("c");
-        EnemyDefinition armored = this.catalog.get("s");
-        Wave built = wave("2 c s");
+        EnemyDefinition simple = this.catalog.get("simple");
+        EnemyDefinition armored = this.catalog.get("armored");
+        Wave built = wave("2 simple armored");
 
         assertThat(built.enemySet()).containsExactlyInAnyOrder(simple, armored);
         assertThat(built.enemyCount(simple)).isEqualTo(2);
@@ -73,8 +73,8 @@ class WaveTest {
 
     @Test
     void anArmoredSlotAttachesADefensiveTraitWithNoOtherChange() {
-        DefinedEnemyMob normal = (DefinedEnemyMob) wave("c").spawn()[0];
-        DefinedEnemyMob armored = (DefinedEnemyMob) wave("armored c").spawn()[0];
+        DefinedEnemyMob normal = (DefinedEnemyMob) wave("simple").spawn()[0];
+        DefinedEnemyMob armored = (DefinedEnemyMob) wave("plated simple").spawn()[0];
 
         assertThat(armored.getBodyScale()).isEqualTo(normal.getBodyScale());
         assertThat(armored.getSpeed()).isEqualTo(normal.getSpeed());
@@ -94,8 +94,8 @@ class WaveTest {
     @Test
     void anArmoredSlotsTraitComposesWithTheDefinitionsOwnResistance() {
         // percent resist and the shape's flat resist compose: they carry different trait ids
-        DefinedEnemyMob plainArmored = (DefinedEnemyMob) wave("s").spawn()[0];
-        DefinedEnemyMob armoredArmored = (DefinedEnemyMob) wave("armored s").spawn()[0];
+        DefinedEnemyMob plainArmored = (DefinedEnemyMob) wave("armored").spawn()[0];
+        DefinedEnemyMob armoredArmored = (DefinedEnemyMob) wave("plated armored").spawn()[0];
         int plainHealthBefore = plainArmored.getHealth();
         int armoredHealthBefore = armoredArmored.getHealth();
 
@@ -109,8 +109,8 @@ class WaveTest {
 
     @Test
     void aSwarmSlotSplitsBountyExactlyAcrossItsMembersSummingToOneNormalSpawn() {
-        EnemyMob normal = wave("c").spawn()[0];
-        EnemyMob[] swarm = wave("swarm 3 c").spawn();
+        EnemyMob normal = wave("simple").spawn()[0];
+        EnemyMob[] swarm = wave("swarm 3 simple").spawn();
 
         assertThat(swarm).hasSize(3);
         int totalBounty = 0;
@@ -123,8 +123,8 @@ class WaveTest {
     @Test
     void columnPacksItsSecondAndThirdMembersTighterThanThreeSeparateSlots() {
         this.context.setBoard(BoardGeometry.of(32, 100, 100)); // wide enough that validTarget()'s bounds check never fails
-        EnemyMob[] separateSlots = wave("3 c").spawn();
-        EnemyMob[] column = wave("column 3 c").spawn();
+        EnemyMob[] separateSlots = wave("3 simple").spawn();
+        EnemyMob[] column = wave("column 3 simple").spawn();
 
         assertThat(column).hasSize(3);
         int[] separateTicks = activationTicks(separateSlots);
@@ -140,8 +140,8 @@ class WaveTest {
     @Test
     void dripSpacesItsSecondAndThirdMembersLooserThanThreeSeparateSlots() {
         this.context.setBoard(BoardGeometry.of(32, 100, 100));
-        EnemyMob[] separateSlots = wave("3 c").spawn();
-        EnemyMob[] drip = wave("drip 3 c").spawn();
+        EnemyMob[] separateSlots = wave("3 simple").spawn();
+        EnemyMob[] drip = wave("drip 3 simple").spawn();
 
         assertThat(drip).hasSize(3);
         int[] separateTicks = activationTicks(separateSlots);
@@ -156,7 +156,7 @@ class WaveTest {
     void flankPlacesItsTwoMembersAtOppositeMaximumLateralOffsets() {
         setStraightHorizontalPath();
 
-        EnemyMob[] flank = wave("flank c").spawn();
+        EnemyMob[] flank = wave("flank simple").spawn();
 
         assertThat(flank).hasSize(2);
         double offset0 = flank[0].getY() - 50.0;
@@ -169,7 +169,7 @@ class WaveTest {
     void lineSpreadsItsMembersEvenlyWithTheMiddleOneOnThePathCentre() {
         setStraightHorizontalPath();
 
-        EnemyMob[] line = wave("line 3 c").spawn();
+        EnemyMob[] line = wave("line 3 simple").spawn();
 
         assertThat(line).hasSize(3);
         double first = line[0].getY() - 50.0;
@@ -183,7 +183,7 @@ class WaveTest {
     @Test
     void swarmScatterIsReproducibleForTheSameWaveAndSlot() {
         setStraightHorizontalPath();
-        WaveContent content = WaveScript.parse("swarm 5 c", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("swarm 5 simple", Rank.GRUNT, this.catalog);
 
         EnemyMob[] first = new Wave(this.context, content, 42L).spawn();
         EnemyMob[] second = new Wave(this.context, content, 42L).spawn();
@@ -197,7 +197,7 @@ class WaveTest {
     @Test
     void swarmScatterDiffersForADifferentWaveSeed() {
         setStraightHorizontalPath();
-        WaveContent content = WaveScript.parse("swarm 5 c", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("swarm 5 simple", Rank.GRUNT, this.catalog);
 
         EnemyMob[] first = new Wave(this.context, content, 1L).spawn();
         EnemyMob[] second = new Wave(this.context, content, 2L).spawn();
@@ -219,7 +219,7 @@ class WaveTest {
         double spawnY = 50.0;
 
         for (int n = 1; n <= SpawnShape.MAX_MEMBERS; n++) {
-            EnemyMob[] swarm = wave("swarm " + n + " c").spawn();
+            EnemyMob[] swarm = wave("swarm " + n + " simple").spawn();
 
             assertThat(swarm).hasSize(n);
             for (EnemyMob member : swarm) {
@@ -236,8 +236,8 @@ class WaveTest {
         this.context.setBoard(BoardGeometry.of(32, 500, 500));
         this.context.setPath(new PathNormal(List.of(new Vec2(0, 100), new Vec2(300, 100), new Vec2(300, 400))));
 
-        EnemyMob member = wave("flank c").spawn()[0];
-        EnemyMob centerline = wave("c").spawn()[0];
+        EnemyMob member = wave("flank simple").spawn()[0];
+        EnemyMob centerline = wave("simple").spawn()[0];
 
         member.doTick(1);
         centerline.doTick(1);
@@ -261,7 +261,7 @@ class WaveTest {
         // hugging the board's top edge, so an unclamped upward offset would go negative
         this.context.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(200, 0))));
 
-        EnemyMob[] flank = wave("flank c").spawn();
+        EnemyMob[] flank = wave("flank simple").spawn();
 
         for (EnemyMob member : flank) {
             assertThat(member.getY()).isBetween(0.0, (double) this.context.getBoard().maxY());
@@ -272,8 +272,8 @@ class WaveTest {
     void aLeadingSpacingTokenScalesTheDelayBetweenSlots() {
         this.setStraightHorizontalPath();
 
-        int[] normal = activationTicks(wave("c c").spawn());
-        int[] doubled = activationTicks(wave("w44.8 c c").spawn());
+        int[] normal = activationTicks(wave("simple simple").spawn());
+        int[] doubled = activationTicks(wave("w44.8 simple simple").spawn());
 
         assertThat(normal[0]).isZero();
         assertThat(normal[1]).isGreaterThan(0);

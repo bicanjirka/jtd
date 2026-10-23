@@ -22,7 +22,7 @@ class EngineThreadingTest {
     // Carries a real wave, unlike the shared level fixture.
     private static LevelDefinition level(String name, int width, int height) {
         return LevelDefinition.unsmoothed(name, "", width, height, LevelFixtures.STRAIGHT_PATH,
-                List.of(new WaveDefinition("3 c", Rank.GRUNT)), 100, 5);
+                List.of(new WaveDefinition("3 simple", Rank.GRUNT)), 100, 5);
     }
 
     /** A level load replaces the state a running tick walks. */

@@ -27,9 +27,9 @@ class PanelEnemyTest {
 
     @Test
     void aPreviewedEnemyShowsTheHealthAndBountyItWillSpawnWith() {
-        EnemyDefinition definition = EnemyCatalog.builtIn().ranked("s").definitionFor(Rank.SOLDIER);
+        EnemyDefinition definition = EnemyCatalog.builtIn().ranked("armored").definitionFor(Rank.SOLDIER);
 
-        InfoSheet sheet = this.hoverSheet("s", Rank.SOLDIER);
+        InfoSheet sheet = this.hoverSheet("armored", Rank.SOLDIER);
 
         assertThat(definition.baseHealth()).isPositive();
         assertThat(sheet.lines()).contains(new SheetLine.HealthBar(definition.baseHealth(), definition.baseHealth(),
@@ -38,7 +38,7 @@ class PanelEnemyTest {
 
     @Test
     void aPreviewedEnemyThatSpeedsUpWhenHurtShowsItsUnhurtSpeedAndHowFastItCanGet() {
-        InfoSheet sheet = this.hoverSheet("t", Rank.ELITE);
+        InfoSheet sheet = this.hoverSheet("fast", Rank.ELITE);
 
         assertThat(sheet.lines().stream().filter(Row.class::isInstance).map(Row.class::cast)
                 .filter(row -> row.label().equals("Speed")).map(Row::value))

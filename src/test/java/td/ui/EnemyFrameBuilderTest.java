@@ -451,7 +451,7 @@ class EnemyFrameBuilderTest {
     void cloakProgressIsValidOnTheExactTickAnAbilityFirstAppliesInvisibility() {
         GameWorld world = WorldFixtures.newWorldOnBoard(32, 1000, 1000);
         world.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(1000, 0))));
-        EnemyMob ghost = world.getEnemyCatalog().spawn("g", world, 0, 100, 4, Rank.GRUNT);
+        EnemyMob ghost = world.getEnemyCatalog().spawn("ghost", world, 0, 100, 4, Rank.GRUNT);
         world.enemies().add(ghost);
 
         ghost.doDamage(Damage.physical(10));

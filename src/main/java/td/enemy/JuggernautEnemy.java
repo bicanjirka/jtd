@@ -21,7 +21,7 @@ final class JuggernautEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("juggernaut", "Juggernaut", 450, 6, 0.64f, BodyArchetype.JUGGERNAUT)
+                .startingAt(EnemyDefinition.of("titan", "Juggernaut", 450, 6, 0.64f, BodyArchetype.JUGGERNAUT)
                         .withDescription("A slow fortress whose plating swallows small hits.")
                         .withMovement(new RotorMovement((float) Math.toRadians(1.5)))
                         .withPlating(25f)

@@ -41,7 +41,7 @@ final class WardenEnemy {
                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.CHILL))))
                 .withAbilities(hatchInto("warden2")));
-        catalog.registerUnique(warden("warden1", "The Warden", 13500, "hulking armored sentinel", new Shell(15f, 10f, 0f),
+        catalog.registerUnique(warden("warden", "The Warden", 13500, "hulking armored sentinel", new Shell(15f, 10f, 0f),
                 "wardenEgg1"));
     }
 
@@ -73,7 +73,7 @@ final class WardenEnemy {
                                           String eggId) {
         List<IdentifiedAbility> abilities = new ArrayList<>(List.of(
                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE, new PeriodicTrigger(100),
-                        new SpawnEnemiesAction("c", 3, false).atRank(Rank.ELITE))),
+                        new SpawnEnemiesAction("simple", 3, false).atRank(Rank.ELITE))),
                 // Its plating only answers physical hits, so its own shield covers the other type.
                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.ARCANE_WARD, new PeriodicTrigger(400),
                         new ApplyEffectAction(ShieldTemplate.magicOnly(health * 0.1f, 100), new SelfTarget()))),

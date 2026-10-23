@@ -27,7 +27,7 @@ public final class EnemyCatalog {
         EnemyCatalog catalog = new EnemyCatalog();
         SimpleEnemy.registerIn(catalog);
         ArmoredEnemy.registerIn(catalog);
-        FrenziedEnemy.registerIn(catalog);
+        FastEnemy.registerIn(catalog);
         GhostEnemy.registerIn(catalog);
         MenderEnemy.registerIn(catalog);
         JammerEnemy.registerIn(catalog);

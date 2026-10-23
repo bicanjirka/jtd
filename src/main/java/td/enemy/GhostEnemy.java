@@ -19,7 +19,7 @@ final class GhostEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("g", "Ghost mob", 150, 3, 1.28f, BodyArchetype.GHOST)
+                .startingAt(EnemyDefinition.of("ghost", "Ghost mob", 150, 3, 1.28f, BodyArchetype.GHOST)
                         .withDescription("Half there: hard to hit and hard to see, but area damage finds it.")
                         .withArmor(20f)
                         .withIdentifiedAbilities(List.of(fade(200))))

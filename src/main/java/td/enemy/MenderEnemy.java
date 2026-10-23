@@ -19,7 +19,7 @@ final class MenderEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("m", "Mender mob", 90, 3, 1.28f, BodyArchetype.MENDER)
+                .startingAt(EnemyDefinition.of("mender", "Mender mob", 90, 3, 1.28f, BodyArchetype.MENDER)
                         // "other" is load-bearing: a radius target excludes the caster.
                         .withDescription("Keeps the rest of its wave on its feet.")
                         .withSpirit(20f)

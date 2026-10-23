@@ -26,21 +26,21 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 
 | Token     | Enemy                                                    |
 |-----------|----------------------------------------------------------|
-| `c`       | Simple                                                   |
-| `s`       | Armored (reduced damage)                                 |
-| `t`       | Frenzied (faster when hurt; Boss spawns a brood)         |
-| `g`       | Ghost (turns invisible when first hit; Elite+ shrouds)   |
-| `m`       | Mender (heals allies)                                    |
-| `j`       | Jammer (weakens nearby towers; in no wave yet)           |
+| `simple`  | Simple                                                   |
+| `armored` | Armored (reduced damage)                                 |
+| `fast`    | Fast (faster when hurt; Boss spawns a brood)         |
+| `ghost`   | Ghost (turns invisible when first hit; Elite+ shrouds)   |
+| `mender`  | Mender (heals allies)                                    |
+| `jammer`  | Jammer (weakens nearby towers; in no wave yet)           |
 | `e`       | spacer: takes a spawn slot, spawns nothing               |
-| `warden1` | the Warden boss chain                                    |
-| `juggernaut` | Juggernaut (slow, huge plating)                       |
+| `warden`  | the Warden boss chain                                    |
+| `titan`  | Juggernaut (slow, huge plating)                       |
 | `mite`    | Mite (tiny, one hit; send in a `swarm`)                  |
 | `courier` | Courier (very fast, fragile, high bounty)                |
-| `shieldbearer` | Shieldbearer (physical-only shield for allies)      |
-| `salamander` | Salamander (burn-immune)                              |
+| `shield` | Shieldbearer (physical-only shield for allies)      |
+| `lizard` | Salamander (burn-immune)                              |
 | `yeti`    | Yeti (freeze-immune, half chill)                         |
-| `skirmisher` | Skirmisher (nimble: dodges aimed shots)               |
+| `dodger` | Skirmisher (nimble: dodges aimed shots)               |
 
 - A leading `w<number>` (`w30 3 c`) sets the ticks one slot of spacing is worth, default
   `SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`; it carries on `WaveContent`. It must be the first token and
@@ -48,7 +48,7 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 - **Rank keywords** `grunt soldier veteran elite boss` go before the enemy or shape they rank and
   override the wave's default rank for that slot. A unique enemy is Boss whatever the default; any
   rank keyword but `boss` before it is an error.
-- **Shape keywords** go before the enemy: `armored` (1 member, stacks a physical-only adaptive
+- **Shape keywords** go before the enemy: `plated` (1 member, stacks a physical-only adaptive
   resist on any armor it has), `flank` (2 members at opposite sides), `swarm n` (half size, health/bounty split,
   scattered), `line n` (spread across), `column n` / `drip n` (spaced tighter / looser than one
   slot).

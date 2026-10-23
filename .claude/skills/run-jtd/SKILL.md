@@ -47,7 +47,7 @@ on `quit` or end of input.
 | `boardclick <x> <y>` | Clicks board cell (x, y): places the tower chosen with `key`, or selects a tower. |
 | `clickenemy [n]` | Clicks where the `n`-th alive enemy is now and prints its effects. |
 | `enemies` | One line per enemy: alive index, id, rank, health, board px, effects, fate. |
-| `spawn <id> [rank]` | Spawns a catalog id (a wave token, such as `s` for Armored) at the path start. |
+| `spawn <id> [rank]` | Spawns a catalog id (a wave token, such as `armored` for Armored) at the path start. |
 | `effect <kind> [ticks]` | Puts an effect (`chill`, `burn`, `poison`, `freeze`, `shield`, `invisible`, `heal`, `vulnerable`, `revealed`, `sundered`, `exposed`, `marked`, `priority`, `resonating`, `fractured`, `dazed`, `saturated`, `charged`, `doom`, `blight`, `contagion`, `rime`, `ash`, `sprinting`) on every alive enemy. |
 | `kill` | Deals lethal damage to every enemy through the real hit path, so on-death abilities fire. |
 | `setcredits <n>`, `setlives <n>` | Economy cheats. |

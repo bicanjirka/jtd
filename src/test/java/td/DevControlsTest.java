@@ -50,7 +50,7 @@ class DevControlsTest {
     @Test
     void withInfiniteLivesALeakOnTheLastLifeComesBackAndTheLevelGoesOn() {
         this.engine.loadLevel(LevelFixtures.biggerLevelWith(
-                List.of(new WaveDefinition("c", Rank.GRUNT), new WaveDefinition("c", Rank.GRUNT)), 100)
+                List.of(new WaveDefinition("simple", Rank.GRUNT), new WaveDefinition("simple", Rank.GRUNT)), 100)
                 .withStartingLives(1));
         this.dev.setInfiniteLives(true);
         this.engine.nextWave();
@@ -76,7 +76,7 @@ class DevControlsTest {
     void aSpawnedScriptJoinsTheBoardOnlyWhenTheGameLoopRunsIt() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
 
-        String message = this.dev.spawnWave("3 c", Rank.GRUNT, 0);
+        String message = this.dev.spawnWave("3 simple", Rank.GRUNT, 0);
         int beforeRun = this.world.enemies().getEnemies().length;
         this.dev.runPending();
 
@@ -100,7 +100,7 @@ class DevControlsTest {
     void checkingAScriptPreviewsItsWaveOnTheChosenPathAndSpawnsNothing() {
         this.engine.loadLevel(LevelFixtures.twoPathLevelWith(List.of(), List.of()));
 
-        DevControls.WaveScriptCheck check = this.dev.checkWaveScript("2 elite c", Rank.GRUNT, 1);
+        DevControls.WaveScriptCheck check = this.dev.checkWaveScript("2 elite simple", Rank.GRUNT, 1);
         this.dev.runPending();
 
         assertThat(check.wave()).get().satisfies(wave -> {
@@ -125,7 +125,7 @@ class DevControlsTest {
     void killAllPaysEachEnemysBountyAndXpLikeARealKill() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         Tower tower = this.placeSniper(1, 1);
-        this.dev.spawnWave("c", Rank.GRUNT, 0);
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
         this.dev.runPending();
         int bounty = this.world.enemies().getEnemies()[0].getBounty();
         int creditsBefore = this.world.economy().getCredits();
@@ -141,7 +141,7 @@ class DevControlsTest {
     @Test
     void clearAllRemovesEveryEnemyAndPaysNothing() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        this.dev.spawnWave("4 c", Rank.GRUNT, 0);
+        this.dev.spawnWave("4 simple", Rank.GRUNT, 0);
         this.dev.runPending();
         int creditsBefore = this.world.economy().getCredits();
 
@@ -184,25 +184,25 @@ class DevControlsTest {
     @Test
     void enemyHealthPercentScalesOnlyTheEnemiesSpawnedAfterItAndRefusesZero() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        this.dev.spawnWave("c", Rank.GRUNT, 0);
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
         this.dev.runPending();
         int authored = this.world.enemies().getEnemies()[0].getHealth();
 
         String refused = this.dev.setEnemyHealthPercent(0);
         String set = this.dev.setEnemyHealthPercent(250);
-        this.dev.spawnWave("c", Rank.GRUNT, 0);
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
         this.dev.runPending();
 
         assertThat(refused).isEqualTo("Enemy health must be above 0%");
         assertThat(set).isEqualTo("New enemies get 250% health");
         assertThat(this.world.enemies().getEnemies()).extracting(EnemyMob::getHealth)
-                .containsExactly(authored, DamageUnits.ofPoints(Math.round(EnemyCatalog.builtIn().get("c").baseHealth() * 2.5f)));
+                .containsExactly(authored, DamageUnits.ofPoints(Math.round(EnemyCatalog.builtIn().get("simple").baseHealth() * 2.5f)));
     }
 
     @Test
     void anEffectGoesOnTheSelectedEnemyOnlyAndNeedsOne() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        this.dev.spawnWave("2 c", Rank.GRUNT, 0);
+        this.dev.spawnWave("2 simple", Rank.GRUNT, 0);
         this.dev.runPending();
         String withoutSelection = this.dev.applyEffectToEnemy(EffectKind.FREEZE, 5, 1);
         this.selectFirstEnemy();
@@ -218,7 +218,7 @@ class DevControlsTest {
     @Test
     void clearingTheSelectedEnemysEffectsEndsThemAll() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        this.dev.spawnWave("c", Rank.GRUNT, 0);
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
         this.dev.runPending();
         this.selectFirstEnemy();
         this.dev.applyEffectToEnemy(EffectKind.FREEZE, 5, 1);
@@ -233,7 +233,7 @@ class DevControlsTest {
     @Test
     void killingTheSelectedEnemyPaysItsBounty() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        this.dev.spawnWave("c", Rank.GRUNT, 0);
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
         this.dev.runPending();
         this.selectFirstEnemy();
         int creditsBefore = this.world.economy().getCredits();
@@ -248,7 +248,7 @@ class DevControlsTest {
     @Test
     void removingTheSelectedEnemyTakesItOffTheBoardAndPaysNothing() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        this.dev.spawnWave("c", Rank.GRUNT, 0);
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
         this.dev.runPending();
         this.selectFirstEnemy();
         int creditsBefore = this.world.economy().getCredits();
@@ -264,7 +264,7 @@ class DevControlsTest {
     @Test
     void healingTheSelectedEnemyRestoresItsFullHealth() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        this.dev.spawnWave("c", Rank.GRUNT, 0);
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
         this.dev.runPending();
         EnemyMob mob = this.world.enemies().getEnemies()[0];
         int full = mob.getHealth();
@@ -281,7 +281,7 @@ class DevControlsTest {
     void theSelectionNamesTheTowerBeforeTheEnemyAndNothingWhenNoneIsPicked() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         Tower tower = this.placeSniper(1, 1);
-        this.dev.spawnWave("c", Rank.GRUNT, 0);
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
         this.dev.runPending();
         DevSelection nothing = this.dev.selection();
         this.selectFirstEnemy();
