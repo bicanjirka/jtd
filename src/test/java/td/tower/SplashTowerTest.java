@@ -10,6 +10,7 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
@@ -116,6 +117,46 @@ class SplashTowerTest {
 
         assertThat(enemy.onlyHitAmount()).isGreaterThan(this.full);
         assertThat(tower.experience().deeds()).isEqualTo(1);
+    }
+
+    @Test
+    void aBlastEdgeShareKeepsTheEdgeOfTheBlastHittingAtLeastThatShare() {
+        SplashTower tower = TowerFixtures.buffed(this.tower(), this.context, TowerModifiers.blastEdge(0.5f));
+        FakeEnemyMob centre = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob edge = FakeEnemyMob.ghostAt(100, 100 + this.radius - 1);
+        this.enemies(centre, edge);
+
+        tower.doTick(0);
+
+        assertThat(edge.onlyHitAmount()).isGreaterThanOrEqualTo(Math.round(this.full * 0.5f));
+    }
+
+    @Test
+    void aWiderBlastRadiusCatchesWhatThePlainBlastMisses() {
+        SplashTower tower = TowerFixtures.buffed(this.tower(), this.context, TowerModifiers.areaRadius(1f));
+        FakeEnemyMob centre = FakeEnemyMob.at(100, 100);
+        FakeEnemyMob pastThePlainRadius = FakeEnemyMob.ghostAt(100, 100 + this.radius + 4);
+        this.enemies(centre, pastThePlainRadius);
+
+        tower.doTick(0);
+
+        assertThat(pastThePlainRadius.hits()).hasSize(1);
+    }
+
+    @Test
+    void anAttunedBlastSaturatesAsDeepAndUpToTheCapItsStatsSay() {
+        SplashTower tower = TowerFixtures.buffed(this.upgradedTower("Attune"), this.context,
+                TowerModifiers.saturationCap(1).plus(TowerModifiers.saturationInnerStacks(1)));
+        FakeEnemyMob centre = FakeEnemyMob.at(100, 100);
+        this.enemies(centre);
+
+        tower.doTick(0);
+
+        assertThat(effectsOf(centre, EffectKind.SATURATED)).singleElement().satisfies(effect -> {
+            assertThat(effect.stacks()).isEqualTo(Math.round(tower.stats().value(TowerStat.SATURATION_INNER_STACKS)));
+            assertThat(effect.effectiveStackCap()).isEqualTo(Math.round(tower.stats().value(TowerStat.SATURATION_CAP)));
+            assertThat(effect.stacks()).isGreaterThan(1);
+        });
     }
 
     @Test

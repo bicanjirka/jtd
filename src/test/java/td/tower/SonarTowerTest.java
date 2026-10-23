@@ -2,16 +2,17 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
-import td.fixtures.FakeTower;
+import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
-import td.tower.upgrade.UpgradeTree;
+import td.stat.StatModifiers;
 import td.ui.TowerSpriteFrameBuilder;
 import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TurretHeadDraw;
@@ -183,6 +184,19 @@ class SonarTowerTest {
     }
 
     @Test
+    void aBeamGivenTheMagicCapabilityLandsAsMagic() {
+        SonarTower tower = tower();
+        tower.grantStatus(TowerStatus.timed(TowerTerm.HASTE, StatModifiers.none(), 1000)
+                .withCapability(TowerCapability.MAGIC_DAMAGE));
+        FakeEnemyMob enemy = at(EAST, NEAR);
+        this.enemies(enemy);
+
+        tower.doTick(1);
+
+        assertThat(enemy.hits()).extracting(Damage::type).containsExactly(DamageType.MAGIC);
+    }
+
+    @Test
     void itsCadenceIsARotationRatherThanAFireRate() {
         SonarTower plain = tower();
 
@@ -218,10 +232,7 @@ class SonarTowerTest {
 
     @Test
     void anExtraPingExposesTheNextHealthiestToo() {
-        SonarTower tower = this.upgradedTower("Attune");
-        this.context.towers().add(FakeTower.offering(this.context, 3, 4, UpgradeTree.none())
-                .giving(TowerModifiers.pingCount(1)));
-        tower.recalculateStats();
+        SonarTower tower = TowerFixtures.buffed(this.upgradedTower("Attune"), this.context, TowerModifiers.pingCount(1));
         FakeEnemyMob weak = at(EAST, NEAR).withHealth(100);
         FakeEnemyMob middle = at(NORTH, NEAR).withHealth(500);
         FakeEnemyMob strong = at(WEST, NEAR).withHealth(900);

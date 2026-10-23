@@ -9,14 +9,13 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
-import td.fixtures.FakeTower;
 import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.projectile.CannonballProjectile;
 import td.projectile.Projectile;
 import td.projectile.ShellLook;
-import td.tower.upgrade.UpgradeTree;
+import td.stat.StatModifiers;
 import td.util.GameWorld;
 import td.wave.PathNormal;
 import td.wave.Vec2;
@@ -171,13 +170,58 @@ class MortarTowerTest {
         this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
         float plainSize = ((CannonballProjectile) this.fire(tower)).stats().size();
         TowerFixtures.flyProjectilesToCompletion(this.context);
-        this.context.towers().add(FakeTower.offering(this.context, 3, 4, UpgradeTree.none())
-                .giving(TowerModifiers.damage(50f)));
-        tower.recalculateStats();
+        TowerFixtures.buffed(tower, this.context, TowerModifiers.damage(50f));
 
         float buffedSize = ((CannonballProjectile) this.fire(tower)).stats().size();
 
         assertThat(buffedSize).isGreaterThan(plainSize);
+    }
+
+    @Test
+    void aShellFliesAtItsTowersProjectileSpeedAndSize() {
+        MortarTower plain = this.towerAt(3, 3);
+        MortarTower tuned = TowerFixtures.buffed(this.towerAt(8, 3), this.context,
+                TowerModifiers.projectileSpeed(0.5f).plus(TowerModifiers.projectileSize(0.5f)));
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(plain, OUT, 0), this.enemyAt(tuned, OUT, 0)});
+
+        plain.doTick(1);
+        tuned.doTick(1);
+
+        CannonballProjectile slow = (CannonballProjectile) this.context.projectiles().getProjectiles().get(0);
+        CannonballProjectile fast = (CannonballProjectile) this.context.projectiles().getProjectiles().get(1);
+        assertThat(fast.stats().speed()).isGreaterThan(slow.stats().speed());
+        assertThat(fast.stats().size()).isGreaterThan(slow.stats().size());
+    }
+
+    @Test
+    void aWiderBlastRadiusCatchesWhatThePlainBlastMisses() {
+        MortarTower tower = TowerFixtures.buffed(this.towerAt(3, 3), this.context, TowerModifiers.areaRadius(1f));
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob pastThePlainRadius = this.enemyAt(tower, OUT, MortarTower.SPLASH_RADIUS_BASE * SCALE + 4).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{target, pastThePlainRadius});
+
+        this.landAShell(tower);
+
+        assertThat(pastThePlainRadius.hits()).hasSize(1);
+    }
+
+    @Test
+    void aBiggerBracketStepMakesTheNextShellOnTheSpotHitHarder() {
+        int plain = this.secondBracketedHit(this.attunedTower());
+
+        int widerStep = this.secondBracketedHit(
+                TowerFixtures.buffed(this.attunedTower(), this.context, TowerModifiers.bracketDamageStep(0.2f)));
+
+        assertThat(widerStep).isGreaterThan(plain);
+    }
+
+    /** What {@code tower}'s second shell on the spot of its first deals. */
+    private int secondBracketedHit(MortarTower tower) {
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+        this.landAShell(tower);
+        this.landAShell(tower);
+        return hitAmount(target, 1);
     }
 
     @Test
@@ -601,6 +645,30 @@ class MortarTowerTest {
         double predictiveLanding = predictive.getBlastMarks().getFirst().at().y();
         assertThat(plainLanding).isEqualTo(walker.getY());
         assertThat(predictiveLanding).isGreaterThan(walker2.getY());
+    }
+
+    @Test
+    void predictiveFireLeadsAFasterShellLess() {
+        double slowLead = predictiveLead(StatModifiers.none());
+
+        double fastLead = predictiveLead(TowerModifiers.projectileSpeed(1f));
+
+        assertThat(fastLead).isPositive().isLessThan(slowLead);
+    }
+
+    /** How far ahead of a walking enemy a Predictive Fire Mortar given {@code buff} lands its shell. */
+    private static double predictiveLead(StatModifiers<TowerStat> buff) {
+        GameWorld world = WorldFixtures.newWorldOnBoard(SCALE, 20, 20);
+        MortarTower tower = new MortarTower(world, 3, 3);
+        UpgradePaths.buy(tower, world, "Predictive Fire");
+        TowerFixtures.buffed(tower, world, buff);
+        FakeEnemyMob walker = FakeEnemyMob.at(tower.getX() + OUT, tower.getY()).walkingBy(0, 2);
+        world.enemies().setEnemies(new EnemyMob[]{walker});
+        for (int t = 1; t < 200 && world.projectiles().getProjectiles().isEmpty(); t++) {
+            tower.doTick(t);
+        }
+        TowerFixtures.flyProjectilesToCompletion(world);
+        return tower.getBlastMarks().getFirst().at().y() - walker.getY();
     }
 
     @Test

@@ -1,6 +1,7 @@
 package td.tower.proc;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackProfile;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -36,6 +37,18 @@ class HitBonusesTest {
 
         assertThat(onBoss.damageFactor()).isCloseTo(1.4f, within(1e-6f));
         assertThat(onGrunt).isEqualTo(HitAdjustment.none());
+    }
+
+    @Test
+    void anAdjustmentRaisesTheAttacksCritChanceCritDamageAndAccuracy() {
+        AttackProfile attack = AttackProfile.critChance(0.1f).withCritMultiplier(2f);
+
+        AttackProfile adjusted = HitAdjustment.critChance(0.2f).plus(HitAdjustment.critMultiplier(1f))
+                .plus(HitAdjustment.accuracy(10f)).applyTo(attack);
+
+        assertThat(adjusted.critChance()).isCloseTo(0.3f, within(1e-6f));
+        assertThat(adjusted.critMultiplier()).isCloseTo(3f, within(1e-6f));
+        assertThat(adjusted.accuracy()).isCloseTo(10f, within(1e-6f));
     }
 
     @Test

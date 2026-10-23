@@ -9,14 +9,12 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
-import td.fixtures.FakeTower;
 import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.projectile.MissileLook;
 import td.projectile.MissileProjectile;
 import td.stat.StatModifiers;
-import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.TickRate;
 
@@ -253,6 +251,33 @@ class SeekerTowerTest {
     }
 
     @Test
+    void aFreezeLastsAsLongAsTheTowersFreezeDuration() {
+        SeekerTower tower = this.seekerGiven(TowerModifiers.freezeDuration(15));
+        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(effectOn(target, EffectKind.FREEZE).remainingTicks())
+                .isEqualTo(Math.round(tower.stats().value(TowerStat.FREEZE_DURATION)))
+                .isGreaterThan(Math.round(towerAt(8, 3).stats().value(TowerStat.FREEZE_DURATION)));
+    }
+
+    @Test
+    void aBiggerNestHoldsMoreMissiles() {
+        SeekerTower tower = TowerFixtures.buffed(this.attunedTower(), this.context, TowerModifiers.nestCapacity(2));
+        this.context.enemies().setEnemies(new EnemyMob[]{});
+
+        int tick = tickUntilNestHolds(tower, 1, nestCapacity(tower));
+        for (int t = tick; t < tick + 300; t++) {
+            tower.doTick(t);
+        }
+
+        assertThat(tower.getNestStored()).isEqualTo(nestCapacity(tower)).isGreaterThan(nestCapacity(towerAt(8, 3)));
+    }
+
+    @Test
     void anExtraMissilePerLaunchFiresOneMoreMissileAtOnce() {
         SeekerTower tower = this.seekerGiven(TowerModifiers.missilesPerLaunch(1));
         this.context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(100, 100)});
@@ -264,10 +289,7 @@ class SeekerTowerTest {
 
     /** A plain Seeker that a neighbour buffs with {@code buff}. */
     private SeekerTower seekerGiven(StatModifiers<TowerStat> buff) {
-        SeekerTower tower = towerAt(3, 3);
-        this.context.towers().add(FakeTower.offering(this.context, 3, 4, UpgradeTree.none()).giving(buff));
-        tower.recalculateStats();
-        return tower;
+        return TowerFixtures.buffed(towerAt(3, 3), this.context, buff);
     }
 
     /** How many missiles {@code tower} launches on {@code tick}. */
@@ -337,7 +359,7 @@ class SeekerTowerTest {
     /** Ticks {@code tower} from {@code from} until its nest holds {@code stored} missiles. */
     private static int tickUntilNestHolds(SeekerTower tower, int from, int stored) {
         int tick = from;
-        while (tower.getNestStored() < stored) {
+        while (tower.getNestStored() < stored && tick < from + 5000) {
             tower.doTick(tick++);
         }
         return tick;

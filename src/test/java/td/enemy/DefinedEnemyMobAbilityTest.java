@@ -3,6 +3,8 @@ package td.enemy;
 import org.junit.jupiter.api.Test;
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.damage.DamageUnits;
+import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.EffectTemplate;
 import td.effect.HealTemplate;
@@ -249,6 +251,19 @@ class DefinedEnemyMobAbilityTest {
         assertThat(this.world.zones().disruptionAt(blinder.getX() + 1.9 * cell, blinder.getY()).missChance())
                 .isEqualTo(0.5f);
         assertThat(this.world.zones().disruptionAt(blinder.getX() + 2.1 * cell, blinder.getY()).isNone()).isTrue();
+    }
+
+    @Test
+    void aHealingGroundAbilityLeavesGroundThatHealsByItsPower() {
+        DefinedEnemyMob healer = EnemyFixtures.liveMob(this.world,
+                casting("pooler", new OnceTrigger(1), LeaveZoneAction.healingGround(1f, 100, 0.5f)));
+        DefinedEnemyMob ally = wounded(EnemyFixtures.liveMob(this.world, ALLY));
+
+        healer.doTick(1);
+        this.world.zones().doTick(2);
+
+        assertThat(ally.activeEffects()).filteredOn(effect -> effect.kind() == EffectKind.HEAL)
+                .extracting(Effect::healPerTick).containsExactly(DamageUnits.ofPoints(0.5f));
     }
 
     /** An egg that hatches into {@code hatchlingId} at {@link #HATCH_TICK}, replacing itself. */

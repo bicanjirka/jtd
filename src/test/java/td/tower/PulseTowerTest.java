@@ -11,6 +11,7 @@ import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.tower.pulse.FieldMode;
@@ -103,6 +104,35 @@ class PulseTowerTest {
 
         assertThat(atOnce).isZero();
         assertThat(enemy.effectStacks(EffectKind.TOLL)).isEqualTo(tollCap(tower));
+    }
+
+    @Test
+    void aHigherTollCapLetsTollBuildFurtherAndAFasterRateBuildsItSooner() {
+        PulseTower plain = this.attunedTower();
+        PulseTower tuned = TowerFixtures.buffed(this.attunedTower(), this.context,
+                TowerModifiers.tollCap(2).plus(TowerModifiers.tollRate(1f)));
+        FakeEnemyMob atPlain = FakeEnemyMob.at(plain.getX(), plain.getY());
+        FakeEnemyMob atTuned = FakeEnemyMob.at(tuned.getX(), tuned.getY());
+
+        int plainFirst = ticksToFirstToll(plain, atPlain);
+        int tunedFirst = ticksToFirstToll(tuned, atTuned);
+        for (int t = 600; t < 1200; t++) {
+            this.context.enemies().setEnemies(new EnemyMob[]{atTuned});
+            tuned.doTick(t);
+        }
+
+        assertThat(tunedFirst).isLessThan(plainFirst);
+        assertThat(atTuned.effectStacks(EffectKind.TOLL)).isEqualTo(tollCap(tuned)).isGreaterThan(tollCap(plain));
+    }
+
+    /** The ticks {@code tower}'s field takes to put a first stack of Toll on {@code enemy}, standing alone in it. */
+    private int ticksToFirstToll(PulseTower tower, FakeEnemyMob enemy) {
+        this.context.enemies().setEnemies(new EnemyMob[]{enemy});
+        int t = 0;
+        while (enemy.effectStacks(EffectKind.TOLL) == 0 && t < 5000) {
+            tower.doTick(t++);
+        }
+        return t;
     }
 
     @Test

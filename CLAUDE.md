@@ -151,7 +151,9 @@ frame build reads them.
 - Built-in content is tested only by rules every entry keeps (`BuiltInEnemiesTest`,
   `TowerStatCatalogueTest`, `TermWordingTest`); `BalanceReport` judges its numbers. A content
   change adds no test. When one breaks a test, rewrite that test on a fixture or delete it; never
-  edit its expected value.
+  edit its expected value. Before deleting one, make sure what it exercised in passing (a stat a
+  tower reads, a capability, a proc payload) has a test of its own: a stat a tower reads is
+  tested by changing it with `TowerFixtures.buffed`.
 - Expected numbers come from the test's own input or the mechanic's formula, never from content.
 - Each test proves one behaviour no other test proves. A mechanic its unit test covers gets an
   integration test only for wiring the unit test cannot see.
