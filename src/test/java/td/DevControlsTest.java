@@ -1,18 +1,26 @@
 package td;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
 import td.damage.DamageUnits;
+import td.effect.EffectKind;
+import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyCatalog;
+import td.enemy.EnemyMob;
+import td.enemy.EnemyMobVisitor;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.LevelFixtures;
 import td.fixtures.UpgradePaths;
 import td.level.LevelOutcome;
 import td.tower.Tower;
+import td.tower.TowerBuffState;
 import td.tower.TowerFactory;
+import td.tower.TowerTerm;
 import td.util.GameWorld;
 import td.wave.WaveDefinition;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -189,6 +197,130 @@ class DevControlsTest {
         assertThat(set).isEqualTo("New enemies get 250% health");
         assertThat(this.world.enemies().getEnemies()).extracting(td.enemy.EnemyMob::getHealth)
                 .containsExactly(authored, DamageUnits.ofPoints(Math.round(EnemyCatalog.builtIn().get("c").baseHealth() * 2.5f)));
+    }
+
+    @Test
+    void anEffectGoesOnTheSelectedEnemyOnlyAndNeedsOne() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.dev.spawnWave("2 c", Rank.GRUNT, 0);
+        this.dev.runPending();
+        String withoutSelection = this.dev.applyEffectToEnemy(EffectKind.FREEZE, 5, 1);
+        this.selectFirstEnemy();
+
+        String withSelection = this.dev.applyEffectToEnemy(EffectKind.FREEZE, 5, 1);
+        this.dev.runPending();
+
+        assertThat(withoutSelection).isEqualTo("Select an enemy first");
+        assertThat(withSelection).isEqualTo("Applied Freeze");
+        assertThat(this.frozenEnemies()).isEqualTo(1);
+    }
+
+    @Test
+    void clearingTheSelectedEnemysEffectsEndsThemAll() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.dev.spawnWave("c", Rank.GRUNT, 0);
+        this.dev.runPending();
+        this.selectFirstEnemy();
+        this.dev.applyEffectToEnemy(EffectKind.FREEZE, 5, 1);
+        this.dev.runPending();
+
+        this.dev.clearEnemyEffects();
+        this.dev.runPending();
+
+        assertThat(this.frozenEnemies()).isZero();
+    }
+
+    @Test
+    void killingTheSelectedEnemyPaysItsBounty() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.dev.spawnWave("c", Rank.GRUNT, 0);
+        this.dev.runPending();
+        this.selectFirstEnemy();
+        int creditsBefore = this.world.economy().getCredits();
+
+        this.dev.killSelectedEnemy();
+        this.dev.runPending();
+
+        assertThat(this.world.enemies().aliveCount()).isZero();
+        assertThat(this.world.economy().getCredits()).isGreaterThan(creditsBefore);
+    }
+
+    @Test
+    void removingTheSelectedEnemyTakesItOffTheBoardAndPaysNothing() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.dev.spawnWave("c", Rank.GRUNT, 0);
+        this.dev.runPending();
+        this.selectFirstEnemy();
+        int creditsBefore = this.world.economy().getCredits();
+
+        this.dev.removeSelectedEnemy();
+        this.dev.runPending();
+
+        assertThat(this.world.enemies().getEnemies()).isEmpty();
+        assertThat(this.world.enemies().aliveCount()).isZero();
+        assertThat(this.world.economy().getCredits()).isEqualTo(creditsBefore);
+    }
+
+    @Test
+    void healingTheSelectedEnemyRestoresItsFullHealth() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.dev.spawnWave("c", Rank.GRUNT, 0);
+        this.dev.runPending();
+        EnemyMob mob = this.world.enemies().getEnemies()[0];
+        int full = mob.getHealth();
+        mob.doDamage(Damage.physical(full / 2));
+        this.selectFirstEnemy();
+
+        this.dev.healSelectedEnemy();
+        this.dev.runPending();
+
+        assertThat(mob.getHealth()).isEqualTo(full);
+    }
+
+    @Test
+    void theSelectionNamesTheTowerBeforeTheEnemyAndNothingWhenNoneIsPicked() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        Tower tower = this.placeSniper(1, 1);
+        this.dev.spawnWave("c", Rank.GRUNT, 0);
+        this.dev.runPending();
+        DevSelection nothing = this.dev.selection();
+        this.selectFirstEnemy();
+        DevSelection enemy = this.dev.selection();
+        tower.setSelected(true);
+        this.dev.runPending();
+
+        assertThat(nothing.kind()).isEqualTo(DevSelection.Kind.NONE);
+        assertThat(enemy.kind()).isEqualTo(DevSelection.Kind.ENEMY);
+        assertThat(this.dev.selection().kind()).isEqualTo(DevSelection.Kind.TOWER);
+    }
+
+    @Test
+    void aBuffGoesOnTheSelectedTowerAndNeedsOne() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        Tower tower = this.placeSniper(1, 1);
+        String withoutSelection = this.dev.grantBuffToSelectedTower(TowerTerm.HASTE, 5, 50);
+        tower.setSelected(true);
+        this.dev.runPending();
+
+        String withSelection = this.dev.grantBuffToSelectedTower(TowerTerm.HASTE, 5, 50);
+        this.dev.runPending();
+
+        assertThat(withoutSelection).isEqualTo("Select a tower first");
+        assertThat(withSelection).startsWith("Granted Haste");
+        assertThat(tower.conditions()).extracting(TowerBuffState::term).contains(TowerTerm.HASTE);
+    }
+
+    private void selectFirstEnemy() {
+        EnemyMob first = this.world.enemies().getEnemies()[0];
+        this.world.enemySelection().requestAt((int) first.getX(), (int) first.getY());
+        this.engine.inspectSelectedEnemy();
+        this.dev.runPending();
+    }
+
+    private long frozenEnemies() {
+        return Arrays.stream(this.world.enemies().getEnemies())
+                .map(mob -> mob.accept((EnemyMobVisitor<DefinedEnemyMob>) m -> m))
+                .filter(mob -> mob.activeEffectKinds().contains(EffectKind.FREEZE)).count();
     }
 
     private Tower placeSniper(int cellX, int cellY) {

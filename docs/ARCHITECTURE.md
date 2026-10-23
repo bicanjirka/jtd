@@ -486,7 +486,7 @@ The dev panel (`Ctrl+Shift+D`, `td.ui.PanelDev`) is the in-game counterpart of t
 Driver: one control, with one `Alt` shortcut, per thing a playtester would otherwise script, and
 the `n`/`x`/`c` keys work only while it is open. Its cheats live in the headless
 `td.DevControls`, which queues every change to enemies and towers for the game-loop thread, so
-they work while paused without a second writer. The wave-script box is the one place
+they work while paused without a second writer. Its selection row follows what the player has picked: `DevControls` publishes a `DevSelection` snapshot from the game loop, since only that thread may read the enemy selection, and the panel polls it on the render pulse. The wave-script box is the one place
 `GameStartupException` is caught outside `Main`: the script is typed, so a bad one is shown, not
 fatal. Its shortcuts go through a `KeyEventDispatcher`, because the frame itself usually holds
 the focus and a `Window` runs no key bindings.

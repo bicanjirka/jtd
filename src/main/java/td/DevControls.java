@@ -1,12 +1,17 @@
 package td;
 
 import td.damage.Damage;
+import td.damage.DamageUnits;
 import td.economy.EconomyDelta;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
+import td.effect.EffectKind;
+import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMob;
+import td.enemy.EnemyMobVisitor;
 import td.enemy.Rank;
 import td.tower.Tower;
+import td.tower.TowerTerm;
 import td.util.GameStartupException;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
@@ -14,9 +19,11 @@ import td.wave.Wave;
 import td.wave.WaveContent;
 import td.wave.WaveScript;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 
 /**
  * The dev panel's playtesting cheats, built from the world's public API. Anything that touches
@@ -29,9 +36,12 @@ public final class DevControls implements EconomyListener {
     /** Free build holds credits here, so every price is affordable and spending never shows. */
     static final int FREE_BUILD_CREDITS = 1_000_000;
 
+    private static final EnemyMobVisitor<DefinedEnemyMob> AS_DEFINED = mob -> mob;
+
     private final GameWorld world;
     private final Queue<Runnable> pending = new ConcurrentLinkedQueue<>();
 
+    private volatile DevSelection selection = DevSelection.none();
     private volatile boolean infiniteLives;
     private volatile int livesFloor;
     private volatile boolean freeBuild;
@@ -156,6 +166,70 @@ public final class DevControls implements EconomyListener {
         this.pending.add(() -> this.world.enemies().clear());
     }
 
+    /** What the selection row works on, as of the last {@link #runPending}. */
+    public DevSelection selection() {
+        return this.selection;
+    }
+
+    /** @return what happened, or why nothing did */
+    public String applyEffectToEnemy(EffectKind kind, float seconds, int power) {
+        return this.onSelectedEnemy("Applied " + kind.title(),
+                mob -> mob.applyEffect(DevEffects.enemyEffect(kind, seconds, power)));
+    }
+
+    /** @return what happened, or why nothing did */
+    public String clearEnemyEffects() {
+        return this.onSelectedEnemy("Cleared its effects", DefinedEnemyMob::clearEffects);
+    }
+
+    /** Through the normal hit, so bounty and XP are paid. */
+    public String killSelectedEnemy() {
+        return this.onSelectedEnemy("Killed it", mob -> mob.doDamage(Damage.physical(Integer.MAX_VALUE / 2)));
+    }
+
+    public String healSelectedEnemy() {
+        return this.onSelectedEnemy("Healed it to full", DefinedEnemyMob::restoreHealth);
+    }
+
+    /** Takes it off the board and pays nothing. */
+    public String removeSelectedEnemy() {
+        return this.onSelectedEnemy("Removed it", this.world.enemies()::remove);
+    }
+
+    /** @return what happened, or why nothing did */
+    public String grantBuffToSelectedTower(TowerTerm buff, float seconds, int power) {
+        if (this.selection.kind() != DevSelection.Kind.TOWER) {
+            return "Select a tower first";
+        }
+        this.pending.add(() -> this.selectedTower()
+                .ifPresent(tower -> tower.receiveStatus(DevEffects.towerBuff(buff, seconds, power))));
+        return "Granted " + buff.title() + " to " + this.selection.description();
+    }
+
+    private String onSelectedEnemy(String done, Consumer<DefinedEnemyMob> change) {
+        if (this.selection.kind() != DevSelection.Kind.ENEMY) {
+            return "Select an enemy first";
+        }
+        this.pending.add(() -> this.selectedEnemy().ifPresent(change));
+        return done;
+    }
+
+    /** Game-loop thread only: the enemy selection belongs to it. */
+    private Optional<DefinedEnemyMob> selectedEnemy() {
+        return this.world.enemySelection().selectedAlive().map(mob -> mob.accept(AS_DEFINED));
+    }
+
+    private DevSelection currentSelection() {
+        Optional<Tower> tower = this.selectedTower();
+        if (tower.isPresent()) {
+            return DevSelection.tower(tower.get().displayName() + " · " + tower.get().experience().xp() + " XP");
+        }
+        return this.selectedEnemy().map(mob -> DevSelection.enemy(mob.inspect().name() + " "
+                + mob.getRank().name().toLowerCase(Locale.ROOT) + " · "
+                + Math.round(DamageUnits.inPoints(mob.getHealth())) + "/" + mob.getMaxHealthPoints() + " hp"))
+                .orElse(DevSelection.none());
+    }
+
     /** @return what happened, or why nothing did */
     public String grantXpToSelected(int xp) {
         Optional<Tower> selected = this.selectedTower();
@@ -180,6 +254,7 @@ public final class DevControls implements EconomyListener {
         for (Runnable change = this.pending.poll(); change != null; change = this.pending.poll()) {
             change.run();
         }
+        this.selection = this.currentSelection();
     }
 
     /** A wave script's parse: the wave it would spawn, or the problem that stops it. */

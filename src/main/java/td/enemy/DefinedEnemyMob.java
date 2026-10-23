@@ -390,6 +390,20 @@ public final class DefinedEnemyMob implements EnemyMob {
         return HitResolution.reductionAgainst(type, this.stats);
     }
 
+    /** Ends every effect at once, a lasting mark included. */
+    public void clearEffects() {
+        this.activeEffects.activeKinds().forEach(this.activeEffects::consume);
+        this.stats.invalidate();
+    }
+
+    /** Back to full health at once. Nothing is credited, and a dead mob stays dead. */
+    public void restoreHealth() {
+        if (!this.isDead()) {
+            this.health = this.healthMax;
+            this.stats.invalidate();
+        }
+    }
+
     @Override
     public void dispelRestoratives() {
         this.activeEffects.consume(EffectKind.SHIELD);
