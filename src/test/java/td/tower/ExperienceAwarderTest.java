@@ -3,6 +3,7 @@ package td.tower;
 import org.junit.jupiter.api.Test;
 import td.enemy.EnemyWalk;
 import td.fixtures.BoardFixtures;
+import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
 
@@ -72,7 +73,7 @@ class ExperienceAwarderTest {
 
     @Test
     void kinshipPaysFivePercentForEachOtherTowerTypeInRange() {
-        AuraTower aura = this.auraWith(3, 3);
+        AuraTower aura = this.auraWith(3, 3, "Attune");
         SniperTower sniper = this.place(new SniperTower(this.world, 3, 2));
         this.place(new SplashTower(this.world, 3, 4));
         this.place(new MortarTower(this.world, 2, 3));
@@ -85,7 +86,7 @@ class ExperienceAwarderTest {
 
     @Test
     void kinshipCountsNoTypeTheBuffedTowerIsItself() {
-        this.auraWith(3, 3);
+        this.auraWith(3, 3, "Attune");
         SniperTower sniper = this.place(new SniperTower(this.world, 3, 2));
         this.place(new SniperTower(this.world, 3, 4));
 
@@ -96,7 +97,7 @@ class ExperienceAwarderTest {
 
     @Test
     void kinshipStopsAtTwentyPercentWithoutBroadcast() {
-        this.auraWith(3, 3);
+        this.auraWith(3, 3, "Attune");
         SniperTower sniper = this.place(new SniperTower(this.world, 3, 2));
         this.place(new SplashTower(this.world, 3, 4));
         this.place(new MortarTower(this.world, 2, 3));
@@ -174,7 +175,7 @@ class ExperienceAwarderTest {
 
     @Test
     void theFractionOfXpABonusCannotHoldCarriesToTheNextWalk() {
-        this.auraWith(3, 3);
+        this.auraWith(3, 3, "Attune");
         SniperTower sniper = this.place(new SniperTower(this.world, 3, 2));
         this.place(new SplashTower(this.world, 3, 4));
         EnemyWalk walk = walkNear(5, sniper);

@@ -4,11 +4,14 @@ import td.damage.Damage;
 import td.enemy.Ability;
 import td.enemy.AbilityTerm;
 import td.enemy.BodyArchetype;
+import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
 import td.enemy.HitResolution;
 import td.enemy.OnDeathTrigger;
+import td.enemy.Rank;
 import td.enemy.SpawnEnemiesAction;
+import td.enemy.SpawnParameters;
 import td.enemy.Trait;
 import td.enemy.TraitContext;
 import td.stat.BaseStats;
@@ -18,7 +21,10 @@ import td.util.GameWorld;
 
 import java.util.List;
 
-/** Minimal enemy definitions for tests that don't care about real stats. */
+/**
+ * Enemy definitions built in the test and the live mobs made from them, so a mechanic is tested
+ * apart from any built-in enemy.
+ */
 public final class EnemyFixtures {
 
     private EnemyFixtures() {
@@ -45,6 +51,18 @@ public final class EnemyFixtures {
     public static Damage landedThrough(EnemyDefinition definition, Damage damage) {
         return HitResolution.resolve(damage, new StatSheet(definition.baseStats(), accumulator -> {
         }));
+    }
+
+    /**
+     * A live Grunt of {@code definition} at the start of the world's path, among its enemies, at the
+     * definition's own health and bounty. Nothing is registered: a test whose mob spawns others by id
+     * registers those in the world's catalog.
+     */
+    public static DefinedEnemyMob liveMob(GameWorld world, EnemyDefinition definition) {
+        DefinedEnemyMob mob = new DefinedEnemyMob(definition, world,
+                SpawnParameters.atSlot(0, definition.baseSpeed(), definition.baseHealth(), definition.price()), Rank.GRUNT);
+        world.enemies().add(mob);
+        return mob;
     }
 
     /** Replaces a world's live enemies with exactly these mobs. */

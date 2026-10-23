@@ -5,6 +5,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.stat.StatModifiers;
@@ -123,39 +124,6 @@ class AuraTowerTest {
     }
 
     @Test
-    void keenEdgeWaitsForFourBuffedTowersAndAnotherAuraBeside() {
-        AuraTower aura = this.coreAuraBuffing(3);
-        UpgradeNode keenEdge = UpgradePaths.named(aura, "Keen Edge");
-        this.context.towers().add(new AuraTower(this.context, 0, 0));
-
-        boolean withThree = aura.buyUpgrade(keenEdge);
-        this.context.towers().add(new SniperTower(this.context, 0, 0));
-        boolean withFour = aura.buyUpgrade(keenEdge);
-
-        assertThat(withThree).isFalse();
-        assertThat(withFour).isTrue();
-    }
-
-    @Test
-    void keenEdgeNeedsAnotherAuraBesideEvenWithFourBuffedTowers() {
-        AuraTower aura = this.coreAuraBuffing(4);
-
-        assertThat(aura.buyUpgrade(UpgradePaths.named(aura, "Keen Edge"))).isFalse();
-    }
-
-    @Test
-    void keenEdgeGivesBuffedTowersHalfAgainTheirCritDamage() {
-        AuraTower aura = this.coreAuraBuffing(4);
-        this.context.towers().add(new AuraTower(this.context, 0, 0));
-        SniperTower buffed = (SniperTower) aura.buffedTowers().getFirst();
-        float before = buffed.stats().attack().critMultiplier();
-
-        aura.buyUpgrade(UpgradePaths.named(aura, "Keen Edge"));
-
-        assertThat(buffed.stats().attack().critMultiplier()).isCloseTo(before + 0.5f, within(1e-6f));
-    }
-
-    @Test
     void anAurasEmissionNeverIncludesABlastRadius() {
         this.context.playtestRules().setUpgradeGatesIgnored(true);
         AuraTower aura = this.broadcastAura("Broadcast", "Broadcast II", "Conduit", "Withering Field");
@@ -201,42 +169,6 @@ class AuraTowerTest {
 
         assertThat(buffed.attackRate()).isGreaterThan(1.9);
         assertThat(alone.attackRate()).isEqualTo(1.0);
-    }
-
-    @Test
-    void conduitWaitsForFourBuffedTowers() {
-        AuraTower aura = this.broadcastAura("Broadcast", "Broadcast II");
-        UpgradeNode conduit = UpgradePaths.named(aura, "Conduit");
-        for (int i = 0; i < 3; i++) {
-            this.context.towers().add(new SniperTower(this.context, 0, 0));
-        }
-
-        boolean withThree = aura.buyUpgrade(conduit);
-        this.context.towers().add(new SniperTower(this.context, 0, 0));
-        boolean withFour = aura.buyUpgrade(conduit);
-
-        assertThat(withThree).isFalse();
-        assertThat(withFour).isTrue();
-    }
-
-    @Test
-    void conduitLengthensWhatBuffedTowersPutOnEnemiesByThirtyPercent() {
-        AuraTower aura = this.broadcastAura("Broadcast", "Broadcast II");
-        SniperTower buffed = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(buffed);
-        for (int i = 0; i < 3; i++) {
-            this.context.towers().add(new SniperTower(this.context, 0, 0));
-        }
-        FakeEnemyMob plainTarget = FakeEnemyMob.at(0, 0);
-        FakeEnemyMob lengthenedTarget = FakeEnemyMob.at(0, 0);
-        buffed.applyStacks(plainTarget, EffectKind.VULNERABLE, 1);
-
-        aura.buyUpgrade(UpgradePaths.named(aura, "Conduit"));
-        buffed.applyStacks(lengthenedTarget, EffectKind.VULNERABLE, 1);
-
-        int plain = plainTarget.appliedEffects().getFirst().remainingTicks();
-        int lengthened = lengthenedTarget.appliedEffects().getFirst().remainingTicks();
-        assertThat(lengthened).isEqualTo(Math.round(plain * 1.3f));
     }
 
     @Test

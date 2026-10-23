@@ -6,10 +6,10 @@ import td.enemy.EnemyCatalog;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.LevelFixtures;
+import td.fixtures.UpgradePaths;
 import td.level.LevelOutcome;
 import td.tower.Tower;
 import td.tower.TowerFactory;
-import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 import td.wave.WaveDefinition;
 
@@ -162,12 +162,12 @@ class DevControlsTest {
     void ignoringGatesLetsATowerBuyANodeBeforeItHasTheXp() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 1000));
         Tower tower = this.placeSniper(1, 1);
-        tower.buyUpgrade(named(tower, "Attune"));
-        tower.buyUpgrade(named(tower, "Focused Optics"));
-        boolean gated = tower.buyUpgrade(named(tower, "Focused Optics II"));
+        tower.buyUpgrade(UpgradePaths.named(tower, "Attune"));
+        tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics"));
+        boolean gated = tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics II"));
 
         this.dev.setUpgradeGatesIgnored(true);
-        boolean ignored = tower.buyUpgrade(named(tower, "Focused Optics II"));
+        boolean ignored = tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics II"));
 
         assertThat(gated).isFalse();
         assertThat(ignored).isTrue();
@@ -203,7 +203,4 @@ class DevControlsTest {
         }
     }
 
-    private static UpgradeNode named(Tower tower, String name) {
-        return tower.upgradeTree().nodes().stream().filter(n -> n.displayName().equals(name)).findFirst().orElseThrow();
-    }
 }

@@ -11,6 +11,7 @@ import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.tower.pulse.FieldMode;
 import td.tower.upgrade.UpgradeNode;
@@ -87,7 +88,7 @@ class PulseTowerTest {
 
     private PulseTower attunedTower() {
         PulseTower tower = new PulseTower(this.context, 0, 0);
-        UpgradePaths.buy(tower, this.context);
+        UpgradePaths.buy(tower, this.context, "Attune");
         return tower;
     }
 

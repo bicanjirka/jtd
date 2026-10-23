@@ -12,6 +12,7 @@ import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.TowerFixtures;
+import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -429,7 +430,7 @@ class SeekerTowerTest {
 
     private SeekerTower attunedTower() {
         SeekerTower tower = towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context);
+        UpgradePaths.buy(tower, this.context, "Attune");
         return tower;
     }
 

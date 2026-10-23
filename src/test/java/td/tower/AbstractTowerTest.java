@@ -11,6 +11,7 @@ import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.FakeTower;
+import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.StatModifiers;
 import td.tower.upgrade.ExclusiveChoice;
