@@ -10,6 +10,7 @@ import td.ui.render.InfoSheet;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 import td.wave.PathColor;
+import td.wave.WaveScriptSuggestions.Result;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -308,6 +309,11 @@ public class PanelDev extends JPanel {
                 script, as in "3 elite swarm
                 4 simple". The preview updates as
                 you type; hover it to inspect.
+                The script field suggests the
+                next token: tab or right takes
+                the grey completion, down opens
+                the list, enter takes the
+                highlighted one, esc closes it.
                 Health % applies to enemies
                 that walk in after it is set.
                 Kill all pays bounty and XP,
@@ -379,6 +385,8 @@ public class PanelDev extends JPanel {
                 this.enemyHealth, this.effectSeconds, this.effectPower, this.buffSeconds, this.buffPower)) {
             releaseFocusOnEscape(field);
         }
+        new WaveScriptCompleter(this.script,
+                (text, caret) -> this.dev == null ? Result.none() : this.dev.suggestWaveScript(text, caret));
 
         HudButton setCredits = button("Set", this::setCredits);
         HudButton setLives = button("Set", this::setLives);

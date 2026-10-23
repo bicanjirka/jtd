@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  */
 public final class WaveScript {
 
-    private static final String EMPTY_TOKEN = "e";
+    static final String EMPTY_TOKEN = "e";
     private static final String PLATED_TOKEN = "plated";
     private static final String SWARM_TOKEN = "swarm";
     private static final String LINE_TOKEN = "line";
@@ -57,7 +57,11 @@ public final class WaveScript {
 
     /** Whether {@code id} is a reserved keyword or has the shape of a spacing token, so no enemy may take it. */
     public static boolean isReserved(String id) {
-        return RESERVED_TOKENS.contains(id) || SPACING_TOKEN.matcher(id).matches();
+        return RESERVED_TOKENS.contains(id) || isSpacingToken(id);
+    }
+
+    static boolean isSpacingToken(String token) {
+        return SPACING_TOKEN.matcher(token).matches();
     }
 
     public static WaveContent parse(String tokens, Rank defaultRank, EnemyCatalog catalog) {
@@ -82,7 +86,7 @@ public final class WaveScript {
             }
             boolean leading = firstToken;
             firstToken = false;
-            if (SPACING_TOKEN.matcher(token).matches()) {
+            if (isSpacingToken(token)) {
                 if (!leading) {
                     throw new GameStartupException("Spacing token '" + token + "' must be the first token of the wave");
                 }
@@ -186,21 +190,29 @@ public final class WaveScript {
         return pendingRank != null ? pendingRankSlotRepeat : repeat;
     }
 
-    private static boolean isShapeToken(String token) {
+    static boolean isShapeToken(String token) {
         return switch (token) {
             case PLATED_TOKEN, SWARM_TOKEN, LINE_TOKEN, FLANK_TOKEN, COLUMN_TOKEN, DRIP_TOKEN -> true;
             default -> false;
         };
     }
 
-    private static boolean isRankToken(String token) {
+    /** Whether the shape keyword {@code token} takes a member count (the others forbid one). */
+    static boolean takesMemberCount(String token) {
+        return switch (token) {
+            case SWARM_TOKEN, LINE_TOKEN, COLUMN_TOKEN, DRIP_TOKEN -> true;
+            default -> false;
+        };
+    }
+
+    static boolean isRankToken(String token) {
         return switch (token) {
             case GRUNT_TOKEN, SOLDIER_TOKEN, VETERAN_TOKEN, ELITE_TOKEN, BOSS_TOKEN -> true;
             default -> false;
         };
     }
 
-    private static Rank rankFor(String token) {
+    static Rank rankFor(String token) {
         return switch (token) {
             case GRUNT_TOKEN -> Rank.GRUNT;
             case SOLDIER_TOKEN -> Rank.SOLDIER;
