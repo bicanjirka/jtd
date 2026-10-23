@@ -92,6 +92,7 @@ public class Driver {
             case "click" -> click(Integer.parseInt(rest.trim()));
             case "hover" -> hover(rest);
             case "pointer" -> pointer(rest.trim());
+            case "clickat" -> clickAt(rest.trim());
             case "key" -> typeKey(rest.trim());
             case "type" -> typeText(rest);
             case "devlabels" -> devLabels();
@@ -356,6 +357,16 @@ public class Driver {
         }
         Thread.sleep(60);
         System.out.println("OK pointer " + parts[0] + "," + parts[1]);
+    }
+
+    // Walks the pointer to a window pixel, then clicks there: for a popup with no component index.
+    private static void clickAt(String args) throws InterruptedException {
+        pointer(args);
+        robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+        Thread.sleep(60);
+        robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+        Thread.sleep(80);
+        System.out.println("OK clickat " + args);
     }
 
     // Moves the pointer onto a component without clicking, so its mouseEntered fires. jTD shows
