@@ -19,7 +19,7 @@ final class ArmoredEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("s", "Armored mob", 120, 2, 1.28f, BodyArchetype.SQUARE)
+                .startingAt(EnemyDefinition.of("armored", "Armored mob", 120, 2, 1.28f, BodyArchetype.SQUARE)
                         .withDescription("Heavy plates blunt physical hits; magic goes through.")
                         .withMovement(new RotorMovement((float) Math.toRadians(5.0)))
                         .withArmor(25f)
@@ -44,9 +44,9 @@ final class ArmoredEnemy {
                         .withStats(100f, 100f, 10f, 0f, 100f, 5f, 20f)
                         .withAdditionalAbilities(List.of(brace(300f), wardMine(240f), IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE,
                                 new PeriodicTrigger(Math.round(3 * TickRate.TICKS_PER_SECOND)),
-                                new SpawnEnemiesAction("sSpawn", AbilitySpawnShape.brood(3, 1f, 1f), false))))))
+                                new SpawnEnemiesAction("armoredSpawn", AbilitySpawnShape.brood(3, 1f, 1f), false))))))
                 .build());
-        catalog.register(EnemyDefinition.of("sSpawn", "Armored Reinforcement", 150, 1, 1.28f, BodyArchetype.SQUARE)
+        catalog.register(EnemyDefinition.of("armoredSpawn", "Armored Reinforcement", 150, 1, 1.28f, BodyArchetype.SQUARE)
                 .withDescription("Called in by an Armored boss to hold the line.")
                 .withMovement(new RotorMovement((float) Math.toRadians(5.0)))
                 .withArmor(25f)

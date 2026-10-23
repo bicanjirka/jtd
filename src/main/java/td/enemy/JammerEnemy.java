@@ -17,7 +17,7 @@ final class JammerEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("j", "Jammer", 180, 3, 1.0f, BodyArchetype.SQUARE)
+                .startingAt(EnemyDefinition.of("jammer", "Jammer", 180, 3, 1.0f, BodyArchetype.SQUARE)
                         .withDescription("Weakens every tower it walks past; kill it first.")
                         .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
                         .withMagicResist(20f)

@@ -49,7 +49,7 @@ final class TwistedHourglassLevel {
                     .withIdentifiedAbilities(List.of(
                             panicShield(100f),
                             IdentifiedAbility.named("splitOnDeath",
-                                    new Ability(AbilityTerm.SPLIT, new OnDeathTrigger(), new SpawnEnemiesAction("c", 2, false))))))
+                                    new Ability(AbilityTerm.SPLIT, new OnDeathTrigger(), new SpawnEnemiesAction("simple", 2, false))))))
             .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(1350, 10)
                     .withAdditionalAbilities(List.of(panicShield(180f))))
             .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(2430, 14)
@@ -72,16 +72,16 @@ final class TwistedHourglassLevel {
                             new Point(5, 7), new Point(7, 9), new Point(7, 13),
                             new Point(-1, 13)),
                     List.of(
-                            new WaveDefinition("c e c e c e c e armored c e 4 c e 3 s", Rank.GRUNT),
-                            new WaveDefinition("s e s e s e 4 c e s e s", Rank.GRUNT),
-                            new WaveDefinition("5 t e 4 c e 2 s e 2 t", Rank.SOLDIER),
-                            new WaveDefinition("g e g e g e g e 3 s e 3 c", Rank.SOLDIER),
-                            new WaveDefinition("line 3 c e line 3 s e line 4 c e line 2 t", Rank.SOLDIER),
-                            new WaveDefinition("flank c e flank t e 4 c e flank s", Rank.VETERAN),
-                            new WaveDefinition("swarm 4 c e swarm 4 s e swarm 4 t e 3 g", Rank.VETERAN),
-                            new WaveDefinition("column 3 t e column 3 g e column 4 c e column 2 s", Rank.VETERAN),
-                            new WaveDefinition("drip 4 s e drip 4 t e drip 4 c e 2 g", Rank.ELITE),
-                            new WaveDefinition("3 g 3 t 3 s 3 c 2 e 4 g 4 t 4 s", Rank.ELITE)),
+                            new WaveDefinition("simple e simple e simple e simple e plated simple e 4 simple e 3 armored", Rank.GRUNT),
+                            new WaveDefinition("armored e armored e armored e 4 simple e armored e armored", Rank.GRUNT),
+                            new WaveDefinition("5 fast e 4 simple e 2 armored e 2 fast", Rank.SOLDIER),
+                            new WaveDefinition("ghost e ghost e ghost e ghost e 3 armored e 3 simple", Rank.SOLDIER),
+                            new WaveDefinition("line 3 simple e line 3 armored e line 4 simple e line 2 fast", Rank.SOLDIER),
+                            new WaveDefinition("flank simple e flank fast e 4 simple e flank armored", Rank.VETERAN),
+                            new WaveDefinition("swarm 4 simple e swarm 4 armored e swarm 4 fast e 3 ghost", Rank.VETERAN),
+                            new WaveDefinition("column 3 fast e column 3 ghost e column 4 simple e column 2 armored", Rank.VETERAN),
+                            new WaveDefinition("drip 4 armored e drip 4 fast e drip 4 simple e 2 ghost", Rank.ELITE),
+                            new WaveDefinition("3 ghost 3 fast 3 armored 3 simple 2 e 4 ghost 4 fast 4 armored", Rank.ELITE)),
                     SMOOTHING)
             .withColor(TEAL_COLOR);
 
@@ -91,16 +91,16 @@ final class TwistedHourglassLevel {
                             new Point(2, -1), new Point(2, 5), new Point(5, 7),
                             new Point(2, 9), new Point(2, 14)),
                     List.of(
-                            new WaveDefinition("c e c e c e 4 c e 3 s", Rank.GRUNT),
-                            new WaveDefinition("6 c e 4 c e 2 s", Rank.GRUNT),
-                            new WaveDefinition("s e s e s e 4 c e s e s", Rank.GRUNT),
-                            new WaveDefinition("t e t e t e 4 c e 2 s e t", Rank.SOLDIER),
-                            new WaveDefinition("4 s 2 e 4 c 2 e 4 s 2 e 4 c", Rank.SOLDIER),
-                            new WaveDefinition("g e g e g e 3 s e 3 c e g", Rank.SOLDIER),
-                            new WaveDefinition("2 g 3 t 2 e 2 g 3 s 3 c", Rank.VETERAN),
-                            new WaveDefinition("8 c e 6 s e 6 c e 4 t", Rank.VETERAN),
-                            new WaveDefinition("3 g 2 t 2 g 2 e 3 s 3 t 4 c", Rank.ELITE),
-                            new WaveDefinition("s", Rank.ELITE)),
+                            new WaveDefinition("simple e simple e simple e 4 simple e 3 armored", Rank.GRUNT),
+                            new WaveDefinition("6 simple e 4 simple e 2 armored", Rank.GRUNT),
+                            new WaveDefinition("armored e armored e armored e 4 simple e armored e armored", Rank.GRUNT),
+                            new WaveDefinition("fast e fast e fast e 4 simple e 2 armored e fast", Rank.SOLDIER),
+                            new WaveDefinition("4 armored 2 e 4 simple 2 e 4 armored 2 e 4 simple", Rank.SOLDIER),
+                            new WaveDefinition("ghost e ghost e ghost e 3 armored e 3 simple e ghost", Rank.SOLDIER),
+                            new WaveDefinition("2 ghost 3 fast 2 e 2 ghost 3 armored 3 simple", Rank.VETERAN),
+                            new WaveDefinition("8 simple e 6 armored e 6 simple e 4 fast", Rank.VETERAN),
+                            new WaveDefinition("3 ghost 2 fast 2 ghost 2 e 3 armored 3 fast 4 simple", Rank.ELITE),
+                            new WaveDefinition("armored", Rank.ELITE)),
                     SMOOTHING)
             .withColor(AMBER_COLOR);
 
@@ -110,16 +110,16 @@ final class TwistedHourglassLevel {
                             new Point(9, 5), new Point(2, 5), new Point(0, 7),
                             new Point(2, 9), new Point(9, 9)),
                     List.of(
-                            new WaveDefinition("c e c e reaver e c e c e 4 c e 3 s", Rank.GRUNT),
-                            new WaveDefinition("6 c e 4 c e 2 s", Rank.GRUNT),
-                            new WaveDefinition("s e s e s e 4 c e s e s", Rank.GRUNT),
-                            new WaveDefinition("t e t e t e 4 c e 2 s e t", Rank.SOLDIER),
-                            new WaveDefinition("4 s 2 e 4 c 2 e 4 s 2 e 4 c", Rank.SOLDIER),
-                            new WaveDefinition("g e g e g e 3 s e 3 c e g", Rank.SOLDIER),
-                            new WaveDefinition("2 g 3 t 3 s 2 e 2 g 3 s 3 c", Rank.VETERAN),
-                            new WaveDefinition("8 c e 6 s e 4 t e 6 c e 4 s", Rank.VETERAN),
-                            new WaveDefinition("3 g 2 t 2 g 2 t 2 e 3 s 3 t 4 c", Rank.ELITE),
-                            new WaveDefinition("s", Rank.BOSS)),
+                            new WaveDefinition("simple e simple e reaver e simple e simple e 4 simple e 3 armored", Rank.GRUNT),
+                            new WaveDefinition("6 simple e 4 simple e 2 armored", Rank.GRUNT),
+                            new WaveDefinition("armored e armored e armored e 4 simple e armored e armored", Rank.GRUNT),
+                            new WaveDefinition("fast e fast e fast e 4 simple e 2 armored e fast", Rank.SOLDIER),
+                            new WaveDefinition("4 armored 2 e 4 simple 2 e 4 armored 2 e 4 simple", Rank.SOLDIER),
+                            new WaveDefinition("ghost e ghost e ghost e 3 armored e 3 simple e ghost", Rank.SOLDIER),
+                            new WaveDefinition("2 ghost 3 fast 3 armored 2 e 2 ghost 3 armored 3 simple", Rank.VETERAN),
+                            new WaveDefinition("8 simple e 6 armored e 4 fast e 6 simple e 4 armored", Rank.VETERAN),
+                            new WaveDefinition("3 ghost 2 fast 2 ghost 2 fast 2 e 3 armored 3 fast 4 simple", Rank.ELITE),
+                            new WaveDefinition("armored", Rank.BOSS)),
                     SMOOTHING)
             .withColor(CRIMSON_COLOR);
 

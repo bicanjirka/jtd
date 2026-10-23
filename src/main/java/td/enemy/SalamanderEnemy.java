@@ -17,7 +17,7 @@ final class SalamanderEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("salamander", "Salamander", 135, 3, 1.28f, BodyArchetype.SALAMANDER)
+                .startingAt(EnemyDefinition.of("lizard", "Salamander", 135, 3, 1.28f, BodyArchetype.SALAMANDER)
                         .withDescription("A fire-proof walker that slowly regrows what it loses.")
                         .withIdentifiedTraits(List.of(
                                 IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),

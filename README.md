@@ -181,7 +181,7 @@ on the Wardens, whose shield answers crits.
 |------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Simple     | circle        | Plain mob, no special ability, and no stats up to Veteran. From Elite, adaptive armor and a little of every stat; at Boss, +30 resilience |
 | Armored    | square        | +25 armor and magic resist, rising with rank, plating from 2 to 10 and 20% freeze resist; immune to critical hits. From Veteran it resists chill; from Elite, thick plating, a physical shield once below half health, and ward mines laid along its path; at Boss rank, calls three armored reinforcements every three seconds |
-| Frenzied   | triangle      | Speeds up as it loses health; -20 resilience, so crits land harder. From Veteran, once badly hurt, it throws down haste ground that lasts until the wave is over; from Elite it also sprints once below half health; at Boss rank, no haste ground, crit immune, calls three spawnlings once below half health and heals itself when left alone |
+| Fast       | triangle      | Speeds up as it loses health; -20 resilience, so crits land harder. From Veteran, once badly hurt, it throws down haste ground that lasts until the wave is over; from Elite it also sprints once below half health; at Boss rank, no haste ground, crit immune, calls three spawnlings once below half health and heals itself when left alone |
 | Ghost      | tinted circle | +20 armor. Turns invisible to single-target towers for ~10s the first time it's hit (~15s from Veteran; area damage still reaches it); at Elite and Boss rank, also permanently shrouds every other ally near it; at Boss rank it fades out for 3s of every 10 |
 | Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it; +20 spirit, rising to 60 at Boss. From Veteran it heals itself when left alone and, when it dies, heals and shields every ally near it; from Elite, adaptive armor; at Boss rank, the death blast is a heal alone. On Curly Path, from Elite it also wards every other ally near it with a small shield that stops any damage |
 | Jammer     | square        | Jams every tower near it: they fire more slowly and see less far while it's in range (drawn as a pink ring; affected towers show a pink marker). A tower in a Beacon's range takes half of it. +20 magic resist; its reach and strength grow from Veteran, and from Elite it keeps a magic-only shield and its casing blunts magic hits (2 insulation, 4 at Boss). |
@@ -329,7 +329,7 @@ freeze in frost bursts a burn.
 | Mine           | Splash, from Range III     | The first enemy to step on it sets it off as one blast, and it is gone; it lasts 10 s, a Splash keeps 3 |
 | Cursed cloud   | Hexer's Mastery            | Gives every enemy inside the debuffs the hexed enemy that died there carried, for as long as they had left |
 | Healing ground | Mender, from Soldier       | Heals them; it lasts 5 s |
-| Haste ground   | Frenzied, from Veteran     | Hastens them (twice the speed, no slow) for a second after each pulse; it lasts until the wave is over |
+| Haste ground   | Fast, from Veteran         | Hastens them (twice the speed, no slow) for a second after each pulse; it lasts until the wave is over |
 | Ward mine      | Armored, from Elite        | Armed a second after it is laid; the first enemy to step on it gets a Shield, and it is gone; it lasts 8 s |
 | Blinding field | Juggernaut, from Veteran   | Works on towers, not enemies: every tower inside misses 75% of its hits, whatever hits them again; fields never stack, the strongest counts; it lasts until the wave is over |
 
@@ -351,13 +351,13 @@ the next one a guaranteed crit, and Focused Optics II's Frenzy also starts on a 
 ### Spawn shapes
 
 A wave's script can shape how a slot spawns, not just what it spawns — write the shape's
-keyword before the enemy id (`armored warden1`), or before a member count and the enemy id for
+keyword before the enemy id (`plated warden`), or before a member count and the enemy id for
 the shapes that take one (`swarm 4 c`):
 
 | Shape   | Keyword  | What one slot produces                                                |
 |---------|----------|-------------------------------------------------------------------------|
 | Normal  | (none)   | One enemy on the path centre                                            |
-| Armored | `armored`| One enemy with extra physical-only armor, on top of any armor it already has: from +25 armor rising to +400 armor as the level's landed damage leans fully physical — no size, speed, health or bounty change |
+| Plated | `plated`| One enemy with extra physical-only armor, on top of any armor it already has: from +25 armor rising to +400 armor as the level's landed damage leans fully physical — no size, speed, health or bounty change |
 | Swarm   | `swarm`  | *N* enemies at 50% size, scattered off-path, sharing one spawn's bounty and health |
 | Line    | `line`   | *N* enemies spread evenly across the path's width, abreast              |
 | Flank   | `flank`  | Two enemies hugging opposite edges of the path                          |

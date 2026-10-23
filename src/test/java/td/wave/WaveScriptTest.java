@@ -22,13 +22,13 @@ class WaveScriptTest {
         catalog.registerUnique(EnemyFixtures.simpleDefinition("warlord"));
         return catalog;
     }
-    private final EnemyDefinition simple = this.catalog.get("c");
-    private final EnemyDefinition armored = this.catalog.get("s");
-    private final EnemyDefinition ghost = this.catalog.get("g");
+    private final EnemyDefinition simple = this.catalog.get("simple");
+    private final EnemyDefinition armored = this.catalog.get("armored");
+    private final EnemyDefinition ghost = this.catalog.get("ghost");
 
     @Test
     void aLeadingSpacingTokenSetsTheWavesSpacingAndSpawnsNothing() {
-        WaveContent content = WaveScript.parse("w30 2 c", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("w30 2 simple", Rank.GRUNT, this.catalog);
 
         assertThat(content.delayTicksPerSlot()).isEqualTo(30f);
         assertThat(content.enemyCount()).isEqualTo(2);
@@ -36,28 +36,28 @@ class WaveScriptTest {
 
     @Test
     void aWaveWithNoSpacingTokenUsesTheDefaultSpacing() {
-        WaveContent content = WaveScript.parse("2 c", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("2 simple", Rank.GRUNT, this.catalog);
 
         assertThat(content.delayTicksPerSlot()).isEqualTo(SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT);
     }
 
     @Test
     void aSpacingTokenAfterAnyOtherTokenIsRejected() {
-        assertThatThrownBy(() -> WaveScript.parse("c w30 c", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("simple w30 simple", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class)
                 .hasMessageContaining("first token");
     }
 
     @Test
     void aSpacingOfZeroIsRejected() {
-        assertThatThrownBy(() -> WaveScript.parse("w0 c", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("w0 simple", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class)
                 .hasMessageContaining("greater than zero");
     }
 
     @Test
     void plainTokensCountAsOneEnemyEach() {
-        WaveContent content = WaveScript.parse("c e c", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("simple e simple", Rank.GRUNT, this.catalog);
 
         // "e" is the reserved spacer token and is excluded from enemyCount()
         assertThat(content.enemyCount()).isEqualTo(2);
@@ -66,7 +66,7 @@ class WaveScriptTest {
 
     @Test
     void numericPrefixMultipliesTheFollowingToken() {
-        WaveContent content = WaveScript.parse("2 c", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("2 simple", Rank.GRUNT, this.catalog);
 
         assertThat(content.enemyCount()).isEqualTo(2);
         assertThat(content.enemyCount(this.simple)).isEqualTo(2);
@@ -74,8 +74,8 @@ class WaveScriptTest {
 
     @Test
     void aNumericPrefixBeforeTheSpacerRepeatsItTheSameWayAsAnyOtherToken() {
-        WaveContent fourSeparateSpacers = WaveScript.parse("c e e e e c", Rank.GRUNT, this.catalog);
-        WaveContent oneCountedSpacer = WaveScript.parse("c 4 e c", Rank.GRUNT, this.catalog);
+        WaveContent fourSeparateSpacers = WaveScript.parse("simple e e e e simple", Rank.GRUNT, this.catalog);
+        WaveContent oneCountedSpacer = WaveScript.parse("simple 4 e simple", Rank.GRUNT, this.catalog);
 
         assertThat(oneCountedSpacer.spawnSequence()).isEqualTo(fourSeparateSpacers.spawnSequence());
         assertThat(oneCountedSpacer.spawnSequence()).hasSize(6);
@@ -84,7 +84,7 @@ class WaveScriptTest {
 
     @Test
     void aCountAppliesOnlyToTheTokenImmediatelyFollowingItAndThenResets() {
-        WaveContent content = WaveScript.parse("2 c s", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("2 simple armored", Rank.GRUNT, this.catalog);
 
         assertThat(content.enemyCount(this.simple)).isEqualTo(2);
         assertThat(content.enemyCount(this.armored)).isEqualTo(1);
@@ -92,7 +92,7 @@ class WaveScriptTest {
 
     @Test
     void enemySetAndPerEnemyCountReflectTheParsedTokens() {
-        WaveContent content = WaveScript.parse("c e c", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("simple e simple", Rank.GRUNT, this.catalog);
 
         // the spacer never appears in enemySet()
         assertThat(content.enemySet()).containsExactly(this.simple);
@@ -102,7 +102,7 @@ class WaveScriptTest {
 
     @Test
     void anUnrecognizedTokenFailsTheParseRatherThanSilentlyChangingTheWave() {
-        assertThatThrownBy(() -> WaveScript.parse("c ? c", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("simple ? simple", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class)
                 .hasMessageContaining("'?'")
                 .hasMessageContaining("enemy catalog");
@@ -110,7 +110,7 @@ class WaveScriptTest {
 
     @Test
     void repeatedSpacesBetweenTokensAreNotThemselvesTokens() {
-        WaveContent content = WaveScript.parse("c   c", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("simple   simple", Rank.GRUNT, this.catalog);
 
         assertThat(content.enemyCount()).isEqualTo(2);
     }
@@ -129,7 +129,7 @@ class WaveScriptTest {
         EnemyCatalog perLevelCatalog = EnemyCatalog.builtIn();
         perLevelCatalog.register(tankySquare);
 
-        WaveContent content = WaveScript.parse("c tankySquare", Rank.GRUNT, perLevelCatalog);
+        WaveContent content = WaveScript.parse("simple tankySquare", Rank.GRUNT, perLevelCatalog);
 
         assertThat(content.enemySet()).containsExactlyInAnyOrder(this.simple, tankySquare);
         assertThat(content.enemyCount(tankySquare)).isEqualTo(1);
@@ -137,7 +137,7 @@ class WaveScriptTest {
 
     @Test
     void aSpawnTypeKeywordWithNoCountShapesExactlyOneSlot() {
-        WaveContent content = WaveScript.parse("armored warlord", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("plated warlord", Rank.GRUNT, this.catalog);
 
         assertThat(content.spawnSequence()).hasSize(1);
         EnemySlot slot = (EnemySlot) content.spawnSequence().getFirst();
@@ -147,7 +147,7 @@ class WaveScriptTest {
 
     @Test
     void aCountBeforeASpawnTypeKeywordRepeatsTheWholeShapedSlot() {
-        WaveContent content = WaveScript.parse("3 armored warlord", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("3 plated warlord", Rank.GRUNT, this.catalog);
 
         assertThat(content.spawnSequence()).hasSize(3);
         assertThat(content.enemyCount()).isEqualTo(3);
@@ -155,7 +155,7 @@ class WaveScriptTest {
 
     @Test
     void aCountAfterASpawnTypeKeywordSetsThatSlotsMemberCount() {
-        WaveContent content = WaveScript.parse("swarm 4 c", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("swarm 4 simple", Rank.GRUNT, this.catalog);
 
         assertThat(content.spawnSequence()).hasSize(1);
         EnemySlot slot = (EnemySlot) content.spawnSequence().getFirst();
@@ -165,7 +165,7 @@ class WaveScriptTest {
 
     @Test
     void aLeadingCountAndAMemberCountComposeIndependently() {
-        WaveContent content = WaveScript.parse("3 swarm 4 c", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("3 swarm 4 simple", Rank.GRUNT, this.catalog);
 
         assertThat(content.spawnSequence()).hasSize(3);
         assertThat(content.enemyCount()).isEqualTo(12);
@@ -173,43 +173,43 @@ class WaveScriptTest {
 
     @Test
     void swarmLineColumnAndDripRequireAMemberCount() {
-        assertThatThrownBy(() -> WaveScript.parse("swarm c", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("swarm simple", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class);
-        assertThatThrownBy(() -> WaveScript.parse("line c", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("line simple", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class);
-        assertThatThrownBy(() -> WaveScript.parse("column c", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("column simple", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class);
-        assertThatThrownBy(() -> WaveScript.parse("drip c", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("drip simple", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class);
     }
 
     @Test
     void armoredAndFlankRejectAMemberCount() {
-        // A count before the spawn-type keyword ("3 armored c") legally repeats the whole shaped
+        // A count before the spawn-type keyword ("3 plated simple") legally repeats the whole shaped
         // slot - it's a count immediately after the keyword, before the enemy id, that these two
         // shapes reject, since their member count is fixed.
-        assertThatThrownBy(() -> WaveScript.parse("armored 3 c", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("plated 3 simple", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class);
-        assertThatThrownBy(() -> WaveScript.parse("flank 3 c", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("flank 3 simple", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class);
     }
 
     @Test
     void flankAlwaysProducesExactlyTwoMembersWithNoCount() {
-        WaveContent content = WaveScript.parse("flank c", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("flank simple", Rank.GRUNT, this.catalog);
 
         assertThat(content.enemyCount()).isEqualTo(2);
     }
 
     @Test
     void twoSpawnTypeKeywordsInARowFailTheParse() {
-        assertThatThrownBy(() -> WaveScript.parse("swarm armored warlord", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("swarm plated warlord", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class);
     }
 
     @Test
     void aWaveEndingWithADanglingSpawnTypeKeywordFailsTheParse() {
-        assertThatThrownBy(() -> WaveScript.parse("c swarm 3", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("simple swarm 3", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class);
     }
 
@@ -221,17 +221,17 @@ class WaveScriptTest {
 
     @Test
     void aSlotWithNoRankTokenUsesTheWavesDefaultRank() {
-        WaveContent content = WaveScript.parse("c", Rank.VETERAN, this.catalog);
+        WaveContent content = WaveScript.parse("simple", Rank.VETERAN, this.catalog);
 
-        assertThat(content.rankFor(this.catalog.get("c", Rank.VETERAN))).isEqualTo(Rank.VETERAN);
+        assertThat(content.rankFor(this.catalog.get("simple", Rank.VETERAN))).isEqualTo(Rank.VETERAN);
     }
 
     @Test
     void aRankTokenBeforeAnEnemyIdOverridesTheWavesDefaultForThatSlotOnly() {
-        WaveContent content = WaveScript.parse("elite c s", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("elite simple armored", Rank.GRUNT, this.catalog);
 
-        EnemyDefinition eliteSimple = this.catalog.get("c", Rank.ELITE);
-        EnemyDefinition gruntArmored = this.catalog.get("s", Rank.GRUNT);
+        EnemyDefinition eliteSimple = this.catalog.get("simple", Rank.ELITE);
+        EnemyDefinition gruntArmored = this.catalog.get("armored", Rank.GRUNT);
         assertThat(content.enemySet()).containsExactlyInAnyOrder(eliteSimple, gruntArmored);
         assertThat(content.rankFor(eliteSimple)).isEqualTo(Rank.ELITE);
         assertThat(content.rankFor(gruntArmored)).isEqualTo(Rank.GRUNT);
@@ -249,7 +249,7 @@ class WaveScriptTest {
 
     @Test
     void aUniqueEnemyComesAtBossRankWhateverRankItsWaveDefaultsTo() {
-        WaveContent content = WaveScript.parse("warlord c", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("warlord simple", Rank.GRUNT, this.catalog);
 
         assertThat(content.rankFor(this.catalog.get("warlord"))).isEqualTo(Rank.BOSS);
         assertThat(content.highestRank()).isEqualTo(Rank.BOSS);
@@ -266,23 +266,23 @@ class WaveScriptTest {
 
     @Test
     void aWaveOfLadderedEnemiesHasNoUniqueEnemyEvenAtBossRank() {
-        assertThat(WaveScript.parse("boss c", Rank.GRUNT, this.catalog).hasUnique()).isFalse();
+        assertThat(WaveScript.parse("boss simple", Rank.GRUNT, this.catalog).hasUnique()).isFalse();
     }
 
     @Test
     void aRankTokenBeforeASpawnTypeKeywordShapesAndRanksTheSameSlot() {
-        WaveContent content = WaveScript.parse("elite swarm 4 c", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("elite swarm 4 simple", Rank.GRUNT, this.catalog);
 
         assertThat(content.spawnSequence()).hasSize(1);
         EnemySlot slot = (EnemySlot) content.spawnSequence().getFirst();
         assertThat(slot.rank()).isEqualTo(Rank.ELITE);
         assertThat(slot.shape()).isEqualTo(SpawnShape.swarm(4));
-        assertThat(slot.definition()).isEqualTo(this.catalog.get("c", Rank.ELITE));
+        assertThat(slot.definition()).isEqualTo(this.catalog.get("simple", Rank.ELITE));
     }
 
     @Test
     void aCountBeforeARankTokenRepeatsTheWholeRankedAndShapedSlot() {
-        WaveContent content = WaveScript.parse("3 elite swarm 4 c", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("3 elite swarm 4 simple", Rank.GRUNT, this.catalog);
 
         assertThat(content.spawnSequence()).hasSize(3);
         assertThat(content.enemyCount()).isEqualTo(12);
@@ -293,7 +293,7 @@ class WaveScriptTest {
 
     @Test
     void aCountBeforeARankTokenWithNoShapeRepeatsTheWholeRankedSlot() {
-        WaveContent content = WaveScript.parse("3 elite c", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("3 elite simple", Rank.GRUNT, this.catalog);
 
         assertThat(content.spawnSequence()).hasSize(3);
         assertThat(content.enemyCount()).isEqualTo(3);
@@ -301,13 +301,13 @@ class WaveScriptTest {
 
     @Test
     void twoRankTokensInARowFailTheParse() {
-        assertThatThrownBy(() -> WaveScript.parse("elite boss c", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("elite boss simple", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class);
     }
 
     @Test
     void aRankTokenAfterASpawnTypeKeywordFailsTheParse() {
-        assertThatThrownBy(() -> WaveScript.parse("swarm elite 4 c", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("swarm elite 4 simple", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class);
     }
 
@@ -319,7 +319,7 @@ class WaveScriptTest {
 
     @Test
     void aWaveEndingWithADanglingRankTokenFailsTheParse() {
-        assertThatThrownBy(() -> WaveScript.parse("c elite", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("simple elite", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class);
     }
 }

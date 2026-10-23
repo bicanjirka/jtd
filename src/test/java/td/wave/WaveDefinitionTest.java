@@ -10,28 +10,28 @@ class WaveDefinitionTest {
 
     @Test
     void theFourArgumentConstructorDefaultsToNormalSpeed() {
-        WaveDefinition wave = new WaveDefinition("c", Rank.GRUNT);
+        WaveDefinition wave = new WaveDefinition("simple", Rank.GRUNT);
 
         assertThat(wave.speedMultiplier()).isEqualTo(1f);
     }
 
     @Test
     void withSpeedMultiplierReturnsACopyLeavingTheOriginalUnchanged() {
-        WaveDefinition wave = new WaveDefinition("c", Rank.GRUNT);
+        WaveDefinition wave = new WaveDefinition("simple", Rank.GRUNT);
 
         WaveDefinition faster = wave.withSpeedMultiplier(1.5f);
 
         assertThat(wave.speedMultiplier()).isEqualTo(1f);
         assertThat(faster.speedMultiplier()).isEqualTo(1.5f);
-        assertThat(faster.enemies()).isEqualTo("c");
+        assertThat(faster.enemies()).isEqualTo("simple");
         assertThat(faster.rank()).isEqualTo(Rank.GRUNT);
     }
 
     @Test
     void aNonPositiveSpeedMultiplierIsRejected() {
-        assertThatThrownBy(() -> new WaveDefinition("c", Rank.GRUNT, 0f))
+        assertThatThrownBy(() -> new WaveDefinition("simple", Rank.GRUNT, 0f))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new WaveDefinition("c", Rank.GRUNT, -1f))
+        assertThatThrownBy(() -> new WaveDefinition("simple", Rank.GRUNT, -1f))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

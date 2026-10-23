@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
  * <strong>A count applies to the token right after it.</strong> Before an id or {@code e} it
  * repeats the slot; before a rank or shape keyword it repeats the whole slot. After a shape keyword
  * it sets that slot's member count: required for {@code swarm}, {@code line}, {@code column} and
- * {@code drip}, rejected for {@code armored} and {@code flank}.
+ * {@code drip}, rejected for {@code plated} and {@code flank}.
  * <p>
  * A leading {@code w<number>} (such as {@code w30}) sets how many ticks one slot of spacing is
  * worth, in place of {@link SpawnParameters#DEFAULT_DELAY_TICKS_PER_SLOT}. It may only be the first
@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 public final class WaveScript {
 
     private static final String EMPTY_TOKEN = "e";
-    private static final String ARMORED_TOKEN = "armored";
+    private static final String PLATED_TOKEN = "plated";
     private static final String SWARM_TOKEN = "swarm";
     private static final String LINE_TOKEN = "line";
     private static final String FLANK_TOKEN = "flank";
@@ -48,7 +48,7 @@ public final class WaveScript {
     /**
      * Tokens recognized before any catalog lookup; the catalog rejects ids that collide with them.
      */
-    public static final Set<String> RESERVED_TOKENS = Set.of(EMPTY_TOKEN, ARMORED_TOKEN,
+    public static final Set<String> RESERVED_TOKENS = Set.of(EMPTY_TOKEN, PLATED_TOKEN,
             SWARM_TOKEN, LINE_TOKEN, FLANK_TOKEN, COLUMN_TOKEN, DRIP_TOKEN,
             GRUNT_TOKEN, SOLDIER_TOKEN, VETERAN_TOKEN, ELITE_TOKEN, BOSS_TOKEN);
 
@@ -188,7 +188,7 @@ public final class WaveScript {
 
     private static boolean isShapeToken(String token) {
         return switch (token) {
-            case ARMORED_TOKEN, SWARM_TOKEN, LINE_TOKEN, FLANK_TOKEN, COLUMN_TOKEN, DRIP_TOKEN -> true;
+            case PLATED_TOKEN, SWARM_TOKEN, LINE_TOKEN, FLANK_TOKEN, COLUMN_TOKEN, DRIP_TOKEN -> true;
             default -> false;
         };
     }
@@ -213,7 +213,7 @@ public final class WaveScript {
 
     private static SpawnShape shapeFor(String shapeToken, int memberCount, boolean memberCountGiven) {
         return switch (shapeToken) {
-            case ARMORED_TOKEN -> fixedMemberShape(shapeToken, memberCountGiven, SpawnShape.armored());
+            case PLATED_TOKEN -> fixedMemberShape(shapeToken, memberCountGiven, SpawnShape.armored());
             case FLANK_TOKEN -> fixedMemberShape(shapeToken, memberCountGiven, SpawnShape.flank());
             case SWARM_TOKEN -> SpawnShape.swarm(requiredMemberCount(shapeToken, memberCountGiven, memberCount));
             case LINE_TOKEN -> SpawnShape.line(requiredMemberCount(shapeToken, memberCountGiven, memberCount));

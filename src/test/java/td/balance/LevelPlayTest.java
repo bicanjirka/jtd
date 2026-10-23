@@ -86,7 +86,7 @@ class LevelPlayTest {
         assertThat(played.watch().effects().starts()).containsKey(EffectKind.BURN);
         assertThat(played.watch().effects().uptime(EffectKind.BURN)).isStrictlyBetween(0.0, 1.0);
         assertThat(played.watch().casts())
-                .containsKey(PlayRecord.Watch.castKey(TowerLab.kindKey("g", Rank.VETERAN), EffectKind.INVISIBLE));
+                .containsKey(PlayRecord.Watch.castKey(TowerLab.kindKey("ghost", Rank.VETERAN), EffectKind.INVISIBLE));
     }
 
     @Test

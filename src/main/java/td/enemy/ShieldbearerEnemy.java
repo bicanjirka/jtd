@@ -16,7 +16,7 @@ final class ShieldbearerEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("shieldbearer", "Shieldbearer", 105, 3, 1.0f, BodyArchetype.SHIELDBEARER)
+                .startingAt(EnemyDefinition.of("shield", "Shieldbearer", 105, 3, 1.0f, BodyArchetype.SHIELDBEARER)
                         // "other" is load-bearing: a radius target excludes the caster.
                         .withDescription("Guards the enemies around it; break it first.")
                         .withArmor(30f)

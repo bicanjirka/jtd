@@ -7,19 +7,19 @@ import td.zone.Zone;
 import java.util.List;
 
 /**
- * The Frenzied mob ({@code t}): faster the more it is hurt, and reckless, so crits land harder on it. From Elite it
+ * The Fast mob ({@code t}): faster the more it is hurt, and reckless, so crits land harder on it. From Elite it
  * bolts once badly hurt; at Veteran and Elite it throws down ground, once badly hurt, that speeds up the enemies who cross
  * it and keeps slows off them until the wave is over; at Boss rank it calls a brood of spawnlings, heals itself when left
  * alone and no longer takes crits; the spawnlings are a definition of their own.
  */
-final class FrenziedEnemy {
+final class FastEnemy {
 
-    private FrenziedEnemy() {
+    private FastEnemy() {
     }
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("t", "Frenzied mob", 90, 2, 1.28f, BodyArchetype.TRIANGLE)
+                .startingAt(EnemyDefinition.of("fast", "Fast mob", 90, 2, 1.28f, BodyArchetype.TRIANGLE)
                         .withDescription("Reckless: the more it is hurt, the faster it runs.")
                         .withMovement(new RotorMovement((float) Math.toRadians(-5.0)))
                         .withResilience(-20f)
@@ -42,12 +42,12 @@ final class FrenziedEnemy {
                         .withoutAbility("haste")
                         .withAdditionalAbilities(List.of(
                                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.SWARM, new HealthThresholdTrigger(0.5f),
-                                        new SpawnEnemiesAction("tSpawn", AbilitySpawnShape.brood(3, 1f, 1f), false))),
+                                        new SpawnEnemiesAction("fastSpawn", AbilitySpawnShape.brood(3, 1f, 1f), false))),
                                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.RECOVER, new TimeSinceLastHitTrigger(200),
                                         new ApplyEffectAction(new HealTemplate(2f, 200), new SelfTarget()))))))
                 .build());
-        catalog.register(EnemyDefinition.of("tSpawn", "Frenzy Spawnling", 210, 1, 1.28f, BodyArchetype.TRIANGLE)
-                .withDescription("Born of an enraged Frenzied boss; it tends its kin as it dies.")
+        catalog.register(EnemyDefinition.of("fastSpawn", "Frenzy Spawnling", 210, 1, 1.28f, BodyArchetype.TRIANGLE)
+                .withDescription("Born of an enraged Fast boss; it tends its kin as it dies.")
                 .withResilience(-20f)
                 .withTraits(List.of(new HurtSpeedTrait(1.4f)))
                 .withAbilities(List.of(new Ability(AbilityTerm.LAST_RITES, new OnDeathTrigger(),

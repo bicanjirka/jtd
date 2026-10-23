@@ -18,7 +18,7 @@ Read when a Driver or preview step misbehaves. Each item cost a past session a r
   `setlives 1000` first, and reach late content with `spawn <id>`, `key n` or `key x`.
 - **`spawn` places a mob at the raw path start**, which some levels put one cell off the board so
   a moving mob walks in. A zero-speed mob (a Warden egg) spawned that way stays off screen; reach
-  it with `spawn warden1`, `waitfor ticks 40`, `kill`, which drops the egg where the Warden died.
+  it with `spawn warden`, `waitfor ticks 40`, `kill`, which drops the egg where the Warden died.
 - **A frozen mob cannot cast.** Seekers next to a Warden egg keep it frozen, so it never hatches.
   Test abilities with no freezing tower in range.
 - **The inspector keeps a hatched egg's last stats** with no status line, so the panel looking

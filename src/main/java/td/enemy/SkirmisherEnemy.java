@@ -17,7 +17,7 @@ final class SkirmisherEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("skirmisher", "Skirmisher", 90, 2, 1.6f, BodyArchetype.SKIRMISHER)
+                .startingAt(EnemyDefinition.of("dodger", "Skirmisher", 90, 2, 1.6f, BodyArchetype.SKIRMISHER)
                         .withDescription("Nimble and hard to pin down with aimed shots.")
                         .withResilience(20f)
                         .withAgility(40f))

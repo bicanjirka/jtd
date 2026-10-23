@@ -77,7 +77,7 @@ public class PanelDev extends JPanel {
 
     private final HudTextField credits = new HudTextField("10000", 6);
     private final HudTextField lives = new HudTextField("20", 4);
-    private final HudTextField script = new HudTextField("3 c", 14);
+    private final HudTextField script = new HudTextField("3 simple", 14);
     private final HudTextField jumpTo = new HudTextField("1", 3);
     private final HudTextField xp = new HudTextField("150", 5);
     private final HudTextField enemyHealth = new HudTextField("100", 4);
@@ -306,7 +306,7 @@ public class PanelDev extends JPanel {
 
                 The script is a level's wave
                 script, as in "3 elite swarm
-                4 c". The preview updates as
+                4 simple". The preview updates as
                 you type; hover it to inspect.
                 Health % applies to enemies
                 that walk in after it is set.
