@@ -7,11 +7,14 @@ import td.wave.WaveScriptSuggestions.Result;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
 import javax.swing.JRootPane;
 import javax.swing.KeyStroke;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.io.Serial;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WaveScriptCompleterTest {
 
     private final HudTextField field = new HudTextField("", 14);
+    private final JRootPane root = new JRootPane();
     private final AtomicInteger entered = new AtomicInteger();
     private final AtomicInteger escaped = new AtomicInteger();
     private final AtomicInteger movedRight = new AtomicInteger();
@@ -30,7 +34,7 @@ class WaveScriptCompleterTest {
         this.bind(KeyEvent.VK_ENTER, this.entered);
         this.bind(KeyEvent.VK_ESCAPE, this.escaped);
         this.bind(KeyEvent.VK_RIGHT, this.movedRight);
-        new JRootPane().getContentPane().add(this.field);
+        this.root.getContentPane().add(this.field);
         new WaveScriptCompleter(this.field, WaveScriptCompleterTest::suggest);
     }
 
@@ -95,6 +99,18 @@ class WaveScriptCompleterTest {
         this.press(KeyEvent.VK_DOWN);
         this.press(KeyEvent.VK_DOWN);
         this.press(KeyEvent.VK_ENTER);
+
+        assertThat(this.field.getText()).isEqualTo("alder ");
+        assertThat(this.entered).hasValue(0);
+    }
+
+    @Test
+    void clickingARowTakesItAndLeavesTheFieldUnapplied() {
+        this.field.setText("al");
+        this.press(KeyEvent.VK_DOWN);
+        Component list = this.root.getLayeredPane().getComponentsInLayer(JLayeredPane.POPUP_LAYER)[0];
+
+        list.dispatchEvent(new MouseEvent(list, MouseEvent.MOUSE_CLICKED, 0, 0, 5, list.getHeight() - 2, 1, false));
 
         assertThat(this.field.getText()).isEqualTo("alder ");
         assertThat(this.entered).hasValue(0);
