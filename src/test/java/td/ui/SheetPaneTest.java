@@ -1,6 +1,7 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import td.effect.EffectKind;
 import td.term.TermText;
 import td.ui.render.InfoSheet;
@@ -18,6 +19,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(EventDispatchThreadExtension.class)
 class SheetPaneTest {
 
     private static final int WIDTH = 184;

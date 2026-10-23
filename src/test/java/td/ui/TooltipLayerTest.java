@@ -1,6 +1,7 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import td.economy.StatusTerm;
 import td.effect.EffectKind;
 import td.term.TermText;
@@ -22,12 +23,15 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(EventDispatchThreadExtension.class)
 class TooltipLayerTest {
 
     private static final int WIDTH = 184;
+    /** The tests open and close tooltips themselves, so no timer may do it for them, during a test or after. */
+    private static final TooltipDelays NEVER = new TooltipDelays(Integer.MAX_VALUE, Integer.MAX_VALUE);
 
     private final JLayeredPane layer = new JLayeredPane();
-    private final TooltipLayer tooltips = new TooltipLayer(this.layer);
+    private final TooltipLayer tooltips = new TooltipLayer(this.layer, NEVER);
 
     TooltipLayerTest() {
         this.layer.setSize(800, 600);

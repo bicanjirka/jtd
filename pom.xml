@@ -199,13 +199,11 @@
                         <param>td.*Harness</param>
                         <param>td.balance.*Report</param>
                     </excludedClasses>
-                    <!-- Thread and Swing timing tests prove nothing about a mutant and slow every run;
-                         TooltipLayerTest is flaky, and PIT refuses to start on a red baseline. -->
+                    <!-- Thread timing tests prove nothing about a mutant and slow every run. -->
                     <excludedTestClasses>
                         <param>td.GameLoopTest</param>
                         <param>td.EngineThreadingTest</param>
                         <param>td.util.ThreadsTest</param>
-                        <param>td.ui.TooltipLayerTest</param>
                     </excludedTestClasses>
                     <threads>4</threads>
                     <timestampedReports>false</timestampedReports>

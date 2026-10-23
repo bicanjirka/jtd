@@ -139,6 +139,8 @@ frame build reads them.
   role: beside its tests, or in `td.fixtures` once a second package needs it. The same for
   helpers. Reuse, never copy.
 - Headless and clock-free: drive the public API and call `doTick(t)` with explicit ticks.
+- A test that builds a Swing component runs on the EDT (`@ExtendWith(EventDispatchThreadExtension.class)`):
+  Swing's own work on the EDT races a test that builds or drives components on its thread.
 - Arrange / act / assert separated by blank lines, no `// given` comments.
 - Build wide records through their factory or `td.fixtures`, not a full positional literal
   (except in that record's own test).
