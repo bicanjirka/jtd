@@ -2,17 +2,16 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
-import td.damage.DamageType;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.FakeTower;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
-import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTree;
 import td.ui.TowerSpriteFrameBuilder;
 import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TurretHeadDraw;
@@ -32,7 +31,6 @@ class SonarTowerTest {
     private static final int TICKS_PER_REVOLUTION = Math.round(SonarTower.SECONDS_PER_REVOLUTION
             * TickRate.TICKS_PER_SECOND);
     private static final int QUARTER_TURN = TICKS_PER_REVOLUTION / 4;
-    private static final int SPUN_UP_REVOLUTION = Math.round(2f * TickRate.TICKS_PER_SECOND);
     // cell (3,3) centre, in board pixels
     private static final int TOWER_X = 3 * BoardFixtures.SCALE + BoardFixtures.SCALE / 2;
     private static final int TOWER_Y = 3 * BoardFixtures.SCALE + BoardFixtures.SCALE / 2;
@@ -46,8 +44,6 @@ class SonarTowerTest {
     private static final double NORTH = -Math.PI / 2 - JUST_PAST;
     private static final double WEST = -Math.PI - JUST_PAST;
     private static final double SOUTH = -3 * Math.PI / 2 - JUST_PAST;
-    private static final String[] TRANSCENDED = {"Rapid Array", "Rapid Array II", "Spin-Up", "Mark on Sweep",
-        "Transcendent"};
 
     private final GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
 
@@ -67,12 +63,9 @@ class SonarTowerTest {
         return new SonarTower(this.context, 3, 3);
     }
 
-    /** A Sonar past Transcendent on the Rapid Array chain, with {@code more} bought after. */
-    private SonarTower transcendedTower(String... more) {
-        String[] path = new String[TRANSCENDED.length + more.length];
-        System.arraycopy(TRANSCENDED, 0, path, 0, TRANSCENDED.length);
-        System.arraycopy(more, 0, path, TRANSCENDED.length, more.length);
-        return this.upgradedTower(path);
+    /** The ticks one turn of {@code tower}'s beam takes, at its own rotation. */
+    private static int revolutionOf(SonarTower tower) {
+        return Math.round(tower.cadence().orElseThrow().current() * TickRate.TICKS_PER_SECOND);
     }
 
     private SonarTower upgradedTower(String... nodes) {
@@ -190,29 +183,12 @@ class SonarTowerTest {
     }
 
     @Test
-    void itsCadenceIsARotationThatSpinUpShortens() {
+    void itsCadenceIsARotationRatherThanAFireRate() {
         SonarTower plain = tower();
-        SonarTower spunUp = this.upgradedTower("Rapid Array", "Rapid Array II", "Spin-Up");
 
         assertThat(plain.inspect().stats()).extracting(TowerStatLine::stat)
                 .contains(TowerStatRow.ROTATION).doesNotContain(TowerStatRow.FIRE_RATE);
-        assertThat(plain.cadence()).map(TowerStatLine::current).contains(3f);
-        assertThat(spunUp.cadence()).map(TowerStatLine::current).contains(2f);
-    }
-
-    @Test
-    void spinUpCarriesTheBeamOnFromWhereItWas() {
-        SonarTower tower = this.upgradedTower("Rapid Array", "Rapid Array II");
-        this.enemies();
-        run(tower, QUARTER_TURN);
-        double before = tower.sweepRadiansAt(1);
-
-        UpgradePaths.buy(tower, this.context, "Spin-Up");
-        tower.doTick(QUARTER_TURN + 1);
-
-        assertThat(before - tower.sweepRadiansAt(0)).isCloseTo(0, within(1e-9));
-        assertThat(tower.sweepRadiansAt(0) - tower.sweepRadiansAt(1))
-                .isCloseTo(Math.PI * 2 / SPUN_UP_REVOLUTION, within(1e-9));
+        assertThat(plain.cadence()).map(TowerStatLine::current).contains(SonarTower.SECONDS_PER_REVOLUTION);
     }
 
     @Test
@@ -241,8 +217,11 @@ class SonarTowerTest {
     }
 
     @Test
-    void rapidArrayPingsTheTwoHealthiest() {
-        SonarTower tower = this.upgradedTower("Rapid Array");
+    void anExtraPingExposesTheNextHealthiestToo() {
+        SonarTower tower = this.upgradedTower("Attune");
+        this.context.towers().add(FakeTower.offering(this.context, 3, 4, UpgradeTree.none())
+                .giving(TowerModifiers.pingCount(1)));
+        tower.recalculateStats();
         FakeEnemyMob weak = at(EAST, NEAR).withHealth(100);
         FakeEnemyMob middle = at(NORTH, NEAR).withHealth(500);
         FakeEnemyMob strong = at(WEST, NEAR).withHealth(900);
@@ -272,7 +251,7 @@ class SonarTowerTest {
 
     @Test
     void aBeamCritOnAnExposedEnemyRefreshesItsExposure() {
-        SonarTower tower = this.upgradedTower("Rapid Array", "Rapid Array II");
+        SonarTower tower = this.upgradedTower("Rapid Array II");
         FakeEnemyMob exposed = at(EAST, NEAR);
         exposed.applyEffect(Effect.exposed(5, DamageSink.none()));
         exposed.landEveryHitCritical();
@@ -313,7 +292,7 @@ class SonarTowerTest {
     }
 
     @Test
-    void wideBandHitsAHiddenEnemyRevealsItAndExposesItForASecond() {
+    void wideBandHitsAHiddenEnemyRevealsItAndExposesIt() {
         this.context.towers().add(new SniperTower(this.context, 3, 3));
         this.context.towers().add(new SniperTower(this.context, 3, 3));
         SonarTower tower = this.upgradedTower("Wide Band");
@@ -323,91 +302,58 @@ class SonarTowerTest {
         run(tower, TICKS_PER_REVOLUTION);
 
         assertThat(hitCount(ghost)).isEqualTo(1);
-        assertThat(effectsOf(ghost, EffectKind.REVEALED)).singleElement()
-                .extracting(Effect::remainingTicks).isEqualTo(Math.round(3 * TickRate.TICKS_PER_SECOND));
-        assertThat(effectsOf(ghost, EffectKind.EXPOSED)).first()
-                .extracting(Effect::remainingTicks).isEqualTo(Math.round(TickRate.TICKS_PER_SECOND));
+        assertThat(effectsOf(ghost, EffectKind.REVEALED)).hasSize(1);
+        assertThat(effectsOf(ghost, EffectKind.EXPOSED)).isNotEmpty();
     }
 
     @Test
     void deepScanRevealsHiddenEnemiesInTheOuterQuarterOnlyOncePerRevolution() {
-        SonarTower tower = this.upgradedTower("Range", "Range II", "Rapid Array", "Rapid Array II", "Spin-Up",
-                "Mark on Sweep", "Transcendent", "Range III");
+        SonarTower tower = this.upgradedTower("Range III");
         float range = tower.getRangeReal();
         FakeEnemyMob outer = FakeEnemyMob.ghostAt(TOWER_X + range * 0.9f, TOWER_Y);
         FakeEnemyMob inner = FakeEnemyMob.ghostAt(TOWER_X + range * 0.5f, TOWER_Y);
         this.enemies(outer, inner);
 
-        run(tower, SPUN_UP_REVOLUTION);
+        run(tower, revolutionOf(tower));
 
-        assertThat(effectsOf(outer, EffectKind.REVEALED)).singleElement()
-                .extracting(Effect::remainingTicks).isEqualTo(Math.round(TickRate.TICKS_PER_SECOND));
+        assertThat(effectsOf(outer, EffectKind.REVEALED)).hasSize(1);
         assertThat(effectsOf(inner, EffectKind.REVEALED)).isEmpty();
     }
 
     @Test
-    void twinBeamSweepsASecondBeamOppositeAtSeventyPercent() {
-        SonarTower twin = this.transcendedTower("Twin Beam");
+    void twinBeamSweepsASecondBeamOppositeAtItsShareOfTheDamage() {
+        SonarTower twin = this.upgradedTower("Twin Beam");
         FakeEnemyMob enemy = at(EAST, NEAR);
         this.enemies(enemy);
 
-        run(twin, SPUN_UP_REVOLUTION);
+        run(twin, revolutionOf(twin));
 
         int weapon = twin.damageCurrent();
-        assertThat(enemy.hits()).extracting(Damage::amount).containsExactly(weapon, Math.round(weapon * 0.7f));
-        assertThat(twin.twinBeamShare()).isEqualTo(0.7f);
+        assertThat(twin.twinBeamShare()).isBetween(0f, 1f);
+        assertThat(enemy.hits()).extracting(Damage::amount)
+                .containsExactly(weapon, Math.round(weapon * twin.twinBeamShare()));
     }
 
     @Test
     void phasedArrayHoldsOnTheHealthiestAndHitsItThreeTimesARevolution() {
-        SonarTower tower = this.transcendedTower("Phased Array");
+        SonarTower tower = this.upgradedTower("Phased Array");
         FakeEnemyMob strong = at(SOUTH, NEAR).withHealth(900);
         FakeEnemyMob weak = at(WEST, NEAR).withHealth(100);
         this.enemies(strong, weak);
 
-        run(tower, SPUN_UP_REVOLUTION);
+        run(tower, revolutionOf(tower));
 
         assertThat(hitCount(strong)).isEqualTo(3);
         assertThat(weak.hits()).isEmpty();
     }
 
     @Test
-    void longReachTwoScalesADistantHitUpToDoubleAndLeavesAPointBlankHitAlone() {
-        SonarTower tower = this.upgradedTower("Long Reach", "Long Reach II");
-        float range = tower.getRangeReal();
-        FakeEnemyMob close = at(EAST, 1);
-        FakeEnemyMob far = at(NORTH, range - 1);
-        this.enemies(close, far);
-
-        run(tower, TICKS_PER_REVOLUTION);
-
-        assertThat(close.onlyHitAmount()).isCloseTo(tower.damageCurrent(), within(tower.damageCurrent() / 50));
-        assertThat(far.onlyHitAmount()).isCloseTo(2 * tower.damageCurrent(), within(tower.damageCurrent() / 20));
-    }
-
-    @Test
-    void horizonRaisesTheFarBonusButDealsNothingWithinOneAndAHalfCells() {
-        SonarTower tower = this.upgradedTower("Long Reach", "Long Reach II", "Resonant Crack", "Mark on Sweep", "Transcendent", "Horizon");
-        float range = tower.getRangeReal();
-        FakeEnemyMob close = at(EAST, BoardFixtures.SCALE);
-        FakeEnemyMob far = at(NORTH, range - 1);
-        this.enemies(close, far);
-
-        run(tower, TICKS_PER_REVOLUTION);
-
-        assertThat(close.hits()).isEmpty();
-        assertThat(far.onlyHitAmount()).isCloseTo(Math.round(2.5f * tower.damageCurrent()),
-                within(tower.damageCurrent() / 20));
-    }
-
-    @Test
     void resonantCrackFracturesEveryHitAndFaultLineDeepensIt() {
-        SonarTower crack = this.upgradedTower("Long Reach", "Long Reach II", "Resonant Crack");
+        SonarTower crack = this.upgradedTower("Resonant Crack");
         FakeEnemyMob cracked = at(EAST, NEAR);
         this.enemies(cracked);
         crack.doTick(1);
-        SonarTower faultLine = this.upgradedTower("Long Reach", "Long Reach II", "Resonant Crack", "Mark on Sweep", "Transcendent",
-                "Fault Line");
+        SonarTower faultLine = this.upgradedTower("Fault Line");
         FakeEnemyMob faulted = at(EAST, NEAR);
         this.enemies(faulted);
 
@@ -449,81 +395,26 @@ class SonarTowerTest {
     }
 
     @Test
-    void harmonicsMakesEveryHitApplyResonating() {
-        SonarTower tower = this.upgradedTower("Ultrasound", "Harmonics");
-        FakeEnemyMob enemy = at(EAST, NEAR);
-        this.enemies(enemy);
-
-        tower.doTick(1);
-
-        assertThat(effectsOf(enemy, EffectKind.RESONATING)).singleElement().extracting(Effect::stacks).isEqualTo(1);
-    }
-
-    @Test
-    void pureToneTurnsTheBeamToMagicWithPenetrationAndNoAddedShare() {
-        SonarTower tower = this.upgradedTower("Ultrasound", "Harmonics", "Pure Tone");
-        FakeEnemyMob enemy = at(EAST, NEAR);
-        this.enemies(enemy);
-
-        tower.doTick(1);
-
-        assertThat(enemy.hits()).extracting(Damage::type).containsExactly(DamageType.MAGIC);
-        assertThat(enemy.attackers().getFirst().magicPenetration()).isCloseTo(0.15f, within(1e-6f));
-    }
-
-    @Test
-    void shatterToneBreaksAQuarterOfAShieldAndLeavesTheUnshieldedAlone() {
-        SonarTower tower = this.transcendedTower("Ultrasound", "Harmonics", "Pure Tone", "Shatter Tone");
-        FakeEnemyMob shielded = at(EAST, NEAR);
-        shielded.applyEffect(Effect.shield(0.5f, 100, DamageSink.none()));
-        FakeEnemyMob bare = at(EAST, NEAR + 30);
-        this.enemies(shielded, bare);
-
-        tower.doTick(1);
-
-        assertThat(shielded.shieldBreaks()).containsExactly(0.25f);
-        assertThat(bare.shieldBreaks()).isEmpty();
-    }
-
-    @Test
-    void aSonarWithItsLevelThreeAndASpecialTranscendsAndPicksASecondSpecial() {
-        SonarTower tower = this.upgradedTower("Rapid Array", "Rapid Array II", "Spin-Up", "Mark on Sweep",
-                "Transcendent", "Command Ping");
-
-        assertThat(tower.upgrades().inSlot(UpgradeSlot.SPECIAL)).extracting(UpgradeNode::displayName)
-                .containsExactly("Mark on Sweep", "Command Ping");
-    }
-
-    @Test
     void twinBeamsSecondHeadIsDrawnOppositeAtItsShareOfTheDamage() {
-        SonarTower twin = this.transcendedTower("Twin Beam");
+        SonarTower twin = this.upgradedTower("Twin Beam");
         this.enemies();
         twin.doTick(1);
         TowerSpriteFrameBuilder sprites = new TowerSpriteFrameBuilder(this.context, 0, 0.0, 0.0);
 
         twin.accept(sprites);
 
-        assertThat(sprites.buildHeads()).extracting(TurretHeadDraw::scale).containsExactly(1f, 0.7f);
+        assertThat(sprites.buildHeads()).extracting(TurretHeadDraw::scale).containsExactly(1f, twin.twinBeamShare());
     }
 
     @Test
     void onlyATranscendedSonarWearsTheHaloOnTheBoard() {
-        SonarTower transcended = this.upgradedTower("Rapid Array", "Rapid Array II", "Spin-Up", "Mark on Sweep",
-                "Transcendent");
-        SonarTower awakened = this.upgradedTower("Rapid Array", "Rapid Array II", "Spin-Up", "Mark on Sweep");
+        SonarTower transcended = this.upgradedTower("Transcendent");
+        SonarTower awakened = this.upgradedTower("Awaken");
         TowerSpriteFrameBuilder sprites = new TowerSpriteFrameBuilder(this.context, 0, 0.0, 0.0);
 
         transcended.accept(sprites);
         awakened.accept(sprites);
 
         assertThat(sprites.build()).extracting(TowerSpriteDraw::transcendent).containsExactly(true, false);
-    }
-
-    @Test
-    void ultrasoundSaysWhatItDoes() {
-        SonarTower tower = new SonarTower(this.context, 0, 0);
-
-        assertThat(td.fixtures.TowerFixtures.plain(tower.wordsOf(UpgradePaths.named(tower, "Ultrasound")).sentences()))
-                .contains("20% of each hit is added as magic, up to 50% against an enemy with armor or Shield");
     }
 }

@@ -66,14 +66,16 @@ class AbstractTowerTest {
 
     @Test
     void aFlatRangeNodeIsAmplifiedByANearbyAura() {
-        this.context.economy().startEconomy(1000, 5);
-        SniperTower tower = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(tower);
+        SniperTower buffed = new SniperTower(this.context, 0, 0);
+        SniperTower alone = new SniperTower(this.context, 100, 100);
+        this.context.towers().add(buffed);
+        this.context.towers().add(alone);
         this.context.towers().add(new AuraTower(this.context, 0, 0));
 
-        tower.buyUpgrade(UpgradePaths.named(tower, "Range"));
+        UpgradePaths.buy(buffed, this.context, "Range");
+        UpgradePaths.buy(alone, this.context, "Range");
 
-        assertThat(tower.stats().range()).isCloseTo((4.0f + 0.6f) * (1f + AuraTower.DEFAULT_POWER), within(1e-5f));
+        assertThat(buffed.stats().range()).isCloseTo(alone.stats().range() * (1f + AuraTower.DEFAULT_POWER), within(1e-5f));
     }
 
     @Test

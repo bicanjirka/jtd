@@ -21,16 +21,6 @@ public final class UpgradePaths {
     }
 
     /**
-     * Grants more XP than any node needs, then buys Attune and Awaken, which open head levels I to
-     * III and the special slot; gates still hold.
-     */
-    public static void awakenVeteran(Tower tower) {
-        tower.earnXp(1_000);
-        tower.buyUpgrade(named(tower, "Attune"));
-        tower.buyUpgrade(named(tower, "Awaken"));
-    }
-
-    /**
      * Buys each named node and every node its tree puts before it, on credits the world is given for
      * it. XP and gates are waived for the whole world from here on.
      */
@@ -38,22 +28,25 @@ public final class UpgradePaths {
         world.playtestRules().setUpgradeGatesIgnored(true);
         world.economy().startEconomy(1_000_000, 5);
         for (String name : names) {
-            buyWithWhatItNeeds(tower, world, named(tower, name));
+            if (!buyWithWhatItNeeds(tower, world, named(tower, name))) {
+                throw new IllegalStateException("could not buy " + name + " on " + tower);
+            }
         }
     }
 
-    /** Only what is still missing: a node that can follow either of two owns whichever is already there. */
-    private static void buyWithWhatItNeeds(Tower tower, GameWorld world, UpgradeNode node) {
+    /**
+     * Only what is still missing. A prerequisite that cannot be bought is one side of an either-or the
+     * tower already took the other way, so only the node asked for has to succeed.
+     */
+    private static boolean buyWithWhatItNeeds(Tower tower, GameWorld world, UpgradeNode node) {
         if (tower.upgrades().owns(node.id())) {
-            return;
+            return true;
         }
         if (!node.requires().isSatisfied(tower, world)) {
             node.requires().requiredNodes().stream().sorted()
                     .forEach(id -> buyWithWhatItNeeds(tower, world, withId(tower, id)));
         }
-        if (!tower.buyUpgrade(node)) {
-            throw new IllegalStateException("could not buy " + node.displayName() + " on " + tower);
-        }
+        return tower.buyUpgrade(node);
     }
 
     private static UpgradeNode withId(Tower tower, String id) {

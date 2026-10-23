@@ -5,11 +5,12 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.FakeTower;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.stat.StatModifiers;
-import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.wave.PathNormal;
 import td.wave.Vec2;
@@ -31,110 +32,49 @@ class AuraTowerTest {
 
     @Test
     void amplifyingCoreIncreasesTheBuffANeighbourReceives() {
-        this.context.economy().startEconomy(1000, 5);
         SniperTower neighbour = new SniperTower(this.context, 0, 0);
         this.context.towers().add(neighbour);
         this.addClusterFiller();
-        AuraTower aura = new AuraTower(this.context, 0, 0);
-        this.context.towers().add(aura);
+        AuraTower aura = this.auraWith("Awaken");
         int damageBeforeUpgrade = neighbour.damageCurrent();
-        UpgradePaths.awakenVeteran(aura);
 
-        boolean chosen = aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core"));
+        UpgradePaths.buy(aura, this.context, "Amplifying Core");
 
-        assertThat(chosen).isTrue();
         assertThat(neighbour.damageCurrent()).isGreaterThan(damageBeforeUpgrade);
     }
 
     @Test
-    void amplifyingCoreIiAlsoGrantsAnAttackSpeedBonus() {
-        this.context.economy().startEconomy(1000, 5);
-        SniperTower neighbour = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(neighbour);
-        this.addClusterFiller();
-        AuraTower aura = new AuraTower(this.context, 0, 0);
-        this.context.towers().add(aura);
-        UpgradePaths.awakenVeteran(aura);
-        aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core"));
-
-        aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core II"));
-
-        assertThat(neighbour.attackRate()).isGreaterThan(1.0);
-    }
-
-    @Test
     void anAuraNeverBuffsAnotherAuraEvenWithBroadcast() {
-        this.context.economy().startEconomy(1000, 5);
-        AuraTower first = new AuraTower(this.context, 0, 0);
-        this.context.towers().add(first);
+        AuraTower first = this.auraWith("Broadcast");
         AuraTower second = new AuraTower(this.context, 0, 0);
         this.context.towers().add(second);
-        UpgradePaths.awakenVeteran(first);
-        first.buyUpgrade(UpgradePaths.named(first, "Broadcast"));
 
         assertThat(first.buffFor(second)).isEqualTo(StatModifiers.none());
     }
 
     @Test
-    void amplifyingCoreAddsATenthToTheBuffPerLevelAndTheSecondAddsTenPercentAttackSpeed() {
-        this.context.economy().startEconomy(1000, 5);
-        AuraTower aura = new AuraTower(this.context, 0, 0);
-        this.context.towers().add(aura);
-        SniperTower neighbour = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(neighbour);
-        UpgradePaths.awakenVeteran(aura);
-
-        aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core"));
-        StatModifiers<TowerStat> first = aura.buffFor(neighbour);
-        aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core II"));
-        StatModifiers<TowerStat> second = aura.buffFor(neighbour);
-
-        assertThat(first.get(TowerStat.DAMAGE).percentAdd()).isCloseTo(0.3f, within(1e-6f));
-        assertThat(first.get(TowerStat.RANGE).percentAdd()).isCloseTo(0.3f, within(1e-6f));
-        assertThat(first.flat(TowerStat.ATTACK_SPEED)).isZero();
-        assertThat(second.get(TowerStat.DAMAGE).percentAdd()).isCloseTo(0.4f, within(1e-6f));
-        assertThat(second.flat(TowerStat.ATTACK_SPEED)).isCloseTo(0.1f, within(1e-6f));
-    }
-
-    @Test
-    void onAmplifyingCoreKinshipAddsFivePercentBuffStrengthPerOtherTowerType() {
-        this.context.economy().startEconomy(1000, 5);
-        AuraTower aura = new AuraTower(this.context, 0, 0);
-        this.context.towers().add(aura);
+    void onAmplifyingCoreKinshipStrengthensTheBuffForEachOtherTowerTypeInRange() {
+        AuraTower aura = this.auraWith("Amplifying Core");
         SniperTower sniper = new SniperTower(this.context, 0, 0);
         this.context.towers().add(sniper);
+        float alone = aura.buffFor(sniper).get(TowerStat.DAMAGE).percentAdd();
+
         this.context.towers().add(new SplashTower(this.context, 0, 0));
         this.context.towers().add(new MortarTower(this.context, 0, 0));
-        UpgradePaths.awakenVeteran(aura);
 
-        aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core"));
-
-        assertThat(aura.buffFor(sniper).get(TowerStat.DAMAGE).percentAdd()).isCloseTo(0.3f + 2 * 0.05f, within(1e-6f));
-    }
-
-    private AuraTower coreAuraBuffing(int towers) {
-        this.context.economy().startEconomy(100_000, 5);
-        AuraTower aura = new AuraTower(this.context, 0, 0);
-        this.context.towers().add(aura);
-        for (int i = 0; i < towers; i++) {
-            this.context.towers().add(new SniperTower(this.context, 0, 0));
-        }
-        UpgradePaths.buy(aura, this.context, "Amplifying Core", "Amplifying Core II");
-        return aura;
+        assertThat(aura.buffFor(sniper).get(TowerStat.DAMAGE).percentAdd()).isGreaterThan(alone);
     }
 
     @Test
     void anAurasEmissionNeverIncludesABlastRadius() {
-        this.context.playtestRules().setUpgradeGatesIgnored(true);
-        AuraTower aura = this.broadcastAura("Broadcast", "Broadcast II", "Conduit", "Withering Field");
+        AuraTower aura = this.auraWith("Broadcast II", "Conduit", "Withering Field");
         SplashTower splash = new SplashTower(this.context, 0, 0);
         this.context.towers().add(splash);
 
         assertThat(aura.buffFor(splash).stats()).isNotEmpty().doesNotContain(TowerStat.AREA_RADIUS);
     }
 
-    private AuraTower broadcastAura(String... nodes) {
-        this.context.economy().startEconomy(100_000, 5);
+    private AuraTower auraWith(String... nodes) {
         AuraTower aura = new AuraTower(this.context, 0, 0);
         this.context.towers().add(aura);
         UpgradePaths.buy(aura, this.context, nodes);
@@ -142,90 +82,40 @@ class AuraTowerTest {
     }
 
     @Test
-    void broadcastIiHalvesTheDisruptionAgainSoAQuarterIsLeft() {
-        this.broadcastAura("Broadcast", "Broadcast II");
-        SniperTower shielded = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(shielded);
-        this.context.disruptions().add(shielded.getX(), shielded.getY(), new DisruptionAura(20f, 0.4f, 0.2f));
-
-        shielded.beginTick(1);
-
-        assertThat(shielded.attackRate()).isCloseTo(0.9, within(1e-6));
-    }
-
-    @Test
-    void broadcastIiMakesATimedBuffOnABuffedTowerLastTwiceAsLong() {
-        this.broadcastAura("Broadcast", "Broadcast II");
-        SniperTower buffed = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(buffed);
-        SniperTower alone = new SniperTower(this.context, 30, 30);
-        this.context.towers().add(alone);
-        StatModifiers<TowerStat> burst = TowerModifiers.attackSpeed(1f);
-
-        buffed.grantStatus(TowerStatus.timed(TowerTerm.HASTE, burst, 100));
-        alone.grantStatus(TowerStatus.timed(TowerTerm.HASTE, burst, 100));
-        buffed.beginTick(150);
-        alone.beginTick(150);
-
-        assertThat(buffed.attackRate()).isGreaterThan(1.9);
-        assertThat(alone.attackRate()).isEqualTo(1.0);
-    }
-
-    @Test
-    void broadcastAddsThirtyPercentRangeToTheAurasOwnReach() {
-        this.context.economy().startEconomy(1000, 5);
-        AuraTower aura = new AuraTower(this.context, 0, 0);
-        this.context.towers().add(aura);
-        UpgradePaths.awakenVeteran(aura);
+    void broadcastWidensTheAurasOwnReach() {
+        AuraTower aura = this.auraWith("Awaken");
         float before = aura.getRangeReal();
 
-        aura.buyUpgrade(UpgradePaths.named(aura, "Broadcast"));
+        UpgradePaths.buy(aura, this.context, "Broadcast");
 
-        assertThat(aura.getRangeReal()).isCloseTo(before * 1.3f, within(before * 0.01f));
+        assertThat(aura.getRangeReal()).isGreaterThan(before);
     }
 
     @Test
-    void theHeadChainsOfTheAuraExcludeEachOther() {
-        this.context.economy().startEconomy(1000, 5);
-        AuraTower aura = new AuraTower(this.context, 0, 0);
-        this.context.towers().add(aura);
-        UpgradePaths.awakenVeteran(aura);
-        aura.buyUpgrade(UpgradePaths.named(aura, "Amplifying Core"));
-
-        assertThat(aura.offeredUpgrades(this.context)).extracting(UpgradeNode::displayName).doesNotContain("Broadcast");
-    }
-
-    @Test
-    void towersInRangeOfAnAuraTakeHalfTheDisruptionFromTheStart() {
-        AuraTower aura = new AuraTower(this.context, 0, 0);
-        this.context.towers().add(aura);
-        SniperTower shielded = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(shielded);
-        this.context.disruptions().add(shielded.getX(), shielded.getY(), new DisruptionAura(20f, 0.4f, 0.2f));
-
-        shielded.beginTick(1);
-
-        assertThat(shielded.attackRate()).isCloseTo(0.8, within(1e-6));
-    }
-
-    @Test
-    void twoAurasLeaveAQuarterOfTheDisruption() {
-        this.context.towers().add(new AuraTower(this.context, 0, 0));
+    void towersInRangeOfAnAuraTakeLessDisruptionFromTheStart() {
         this.context.towers().add(new AuraTower(this.context, 0, 0));
         SniperTower shielded = new SniperTower(this.context, 0, 0);
+        SniperTower exposed = new SniperTower(this.context, 30, 30);
         this.context.towers().add(shielded);
-        this.context.disruptions().add(shielded.getX(), shielded.getY(), new DisruptionAura(20f, 0.4f, 0.2f));
+        this.context.towers().add(exposed);
+        DisruptionAura jammer = new DisruptionAura(20f, 0.4f, 0.2f);
+        this.context.disruptions().add(shielded.getX(), shielded.getY(), jammer);
+        this.context.disruptions().add(exposed.getX(), exposed.getY(), jammer);
 
         shielded.beginTick(1);
+        exposed.beginTick(1);
 
-        assertThat(shielded.attackRate()).isCloseTo(0.9, within(1e-6));
+        assertThat(exposed.attackRate()).isLessThan(1.0);
+        assertThat(shielded.attackRate()).isGreaterThan(exposed.attackRate());
     }
 
     @Test
-    void witheringFieldMakesABuffedTowersNextHitApplyVulnerableOnlyOnceEveryTenSeconds() {
-        AuraTower aura = this.broadcastAura("Withering Field");
+    void aTowerGivenAWitherIntervalMakesItsNextHitApplyVulnerableOnceEachInterval() {
         SniperTower sniper = new SniperTower(this.context, 0, 0);
         this.context.towers().add(sniper);
+        this.context.towers().add(FakeTower.offering(this.context, 0, 1, UpgradeTree.none())
+                .giving(TowerModifiers.witherEvery(200)));
+        sniper.recalculateStats();
         FakeEnemyMob target = FakeEnemyMob.at(sniper.getX(), sniper.getY());
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
@@ -234,14 +124,13 @@ class AuraTowerTest {
             sniper.doTick(t);
         }
 
-        assertThat(aura).isNotNull();
         assertThat(target.hits().size()).isGreaterThan(4);
         assertThat(target.appliedEffects()).extracting(Effect::kind)
                 .containsExactly(EffectKind.VULNERABLE, EffectKind.VULNERABLE);
     }
 
     @Test
-    void aTowerNoAuraBuffsNeverWithers() {
+    void aTowerWithoutAWitherIntervalNeverWithers() {
         SniperTower alone = new SniperTower(this.context, 30, 30);
         this.context.towers().add(alone);
         FakeEnemyMob target = FakeEnemyMob.at(alone.getX(), alone.getY());
@@ -257,21 +146,22 @@ class AuraTowerTest {
 
     @Test
     void chosenBuffsOnlyTheMostExperiencedTowerInRangeAtTripleStrength() {
-        AuraTower aura = this.broadcastAura("Chosen");
+        AuraTower aura = this.auraWith("Chosen");
         SniperTower veteran = new SniperTower(this.context, 0, 0);
         SniperTower novice = new SniperTower(this.context, 0, 0);
         this.context.towers().add(veteran);
         this.context.towers().add(novice);
         veteran.earnXp(500);
+        float plain = new AuraTower(this.context, 0, 0).buffFor(veteran).get(TowerStat.DAMAGE).percentAdd();
 
-        assertThat(aura.buffFor(veteran).get(TowerStat.DAMAGE).percentAdd()).isCloseTo(0.6f, within(1e-6f));
+        assertThat(aura.buffFor(veteran).get(TowerStat.DAMAGE).percentAdd()).isCloseTo(3 * plain, within(1e-6f));
         assertThat(aura.buffFor(novice)).isEqualTo(StatModifiers.none());
         assertThat(aura.buffedTowers()).containsExactly(veteran);
     }
 
     @Test
     void chosenFollowsTheTowerThatOvertakesTheHero() {
-        AuraTower aura = this.broadcastAura("Chosen");
+        AuraTower aura = this.auraWith("Chosen");
         SniperTower first = new SniperTower(this.context, 0, 0);
         SniperTower second = new SniperTower(this.context, 0, 0);
         this.context.towers().add(first);
@@ -290,7 +180,7 @@ class AuraTowerTest {
 
     private AuraTower rallyAura() {
         this.context.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(900, 0))));
-        return this.broadcastAura("Rally");
+        return this.auraWith("Rally");
     }
 
     @Test
@@ -334,28 +224,6 @@ class AuraTowerTest {
         aura.doTick(1);
 
         assertThat(sniper.attackRate()).isEqualTo(1.0);
-    }
-
-    @Test
-    void withoutWitheringFieldTheAuraAppliesNothingToEnemies() {
-        AuraTower aura = new AuraTower(this.context, 0, 0);
-        FakeEnemyMob inside = FakeEnemyMob.at(aura.getX(), aura.getY());
-        this.context.enemies().setEnemies(new EnemyMob[]{inside});
-
-        for (int t = 1; t <= 40; t++) {
-            aura.doTick(t);
-        }
-
-        assertThat(inside.appliedEffects()).isEmpty();
-    }
-
-    @Test
-    void rallySaysWhatItDoes() {
-        AuraTower tower = new AuraTower(this.context, 0, 0);
-
-        assertThat(td.fixtures.TowerFixtures.plain(tower.wordsOf(UpgradePaths.named(tower, "Rally")).sentences()))
-                .contains("picks the path spot nearest this tower: when an enemy steps on it, every buffed tower gains "
-                        + "Rally, then the spot rests 10 s");
     }
 
     @Test

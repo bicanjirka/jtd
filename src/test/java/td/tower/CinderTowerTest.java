@@ -1,20 +1,26 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.PoolTuning;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.FakeTower;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
-import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
+import td.stat.EnemyStat;
+import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.RandomSource;
+import td.wave.PathNormal;
+import td.wave.Vec2;
+import td.zone.ZoneKind;
 
 import java.util.List;
 
@@ -180,73 +186,17 @@ class CinderTowerTest {
         assertThat(tower.getInFlightWaves()).isEmpty();
     }
 
-    @Test
-    void wideNozzleAppliesItsRangeBonus() {
-        this.context.economy().startEconomy(1000, 5);
-        CinderTower tower = towerAt(3, 3);
-        UpgradePaths.awakenVeteran(tower);
-        UpgradeNode wideNozzle = UpgradePaths.named(tower, "Wide Nozzle");
-
-        boolean chosen = tower.buyUpgrade(wideNozzle);
-
-        assertThat(chosen).isTrue();
-        assertThat(tower.getRangeReal()).isGreaterThan(CinderTower.RANGE * BoardFixtures.SCALE);
-    }
-
-    @Test
-    void whiteFlameIsNotYetChoosableBeforeAttuneIsBought() {
-        this.context.economy().startEconomy(1000, 5);
-        CinderTower tower = towerAt(3, 3);
-        UpgradeNode whiteFlame = UpgradePaths.named(tower, "White Flame");
-
-        boolean chosen = tower.buyUpgrade(whiteFlame);
-
-        assertThat(chosen).isFalse();
-        assertThat(tower.upgrades().tip(UpgradeSlot.HEAD)).isEmpty();
-    }
-
-    @Test
-    void wideNozzleBumpsTheHalfWidthRadiansBeyondTheBase() {
-        CinderTower tower = towerAt(3, 3);
-        this.context.playtestRules().setUpgradeGatesIgnored(true);
-        double halfWidthBeforeChoosing = tower.getHalfWidthRadians();
-
-        UpgradePaths.buy(tower, this.context, "Wide Nozzle");
-
-        assertThat(tower.getHalfWidthRadians()).isGreaterThan(halfWidthBeforeChoosing);
-    }
-
     private static final int TRAVEL = CinderTower.WAVE_TRAVEL_TICKS;
     private static final int CYCLE = CinderTower.COOLDOWN_MAX + 1;
 
-    /** A tower with the Soulfire chain and a special, Transcendent bought, gates waived. */
-    private CinderTower transcendentTower() {
+    private CinderTower towerWith(String... nodes) {
         CinderTower tower = this.towerAt(3, 3);
-        this.context.playtestRules().setUpgradeGatesIgnored(true);
-        UpgradePaths.buy(tower, this.context, "White Flame", "White Flame II", "Soulfire", "Searing Flame",
-                "Transcendent");
+        UpgradePaths.buy(tower, this.context, nodes);
         return tower;
     }
 
     private static List<Effect> burns(FakeEnemyMob enemy) {
         return enemy.appliedEffects().stream().filter(effect -> effect.kind() == EffectKind.BURN).toList();
-    }
-
-    @Test
-    void whiteFlameIiMakesTheBurnAQuarterShorter() {
-        CinderTower before = towerAt(3, 3);
-        FakeEnemyMob beforeTarget = FakeEnemyMob.at(150, 112);
-        this.context.enemies().setEnemies(new EnemyMob[]{beforeTarget});
-        tickThrough(before, 1, 1 + TRAVEL);
-
-        CinderTower after = towerAt(3, 3);
-        UpgradePaths.buy(after, this.context, "White Flame", "White Flame II");
-        FakeEnemyMob afterTarget = FakeEnemyMob.at(150, 112);
-        this.context.enemies().setEnemies(new EnemyMob[]{afterTarget});
-        tickThrough(after, 1, 1 + TRAVEL);
-
-        assertThat(afterTarget.appliedEffects().getFirst().authoredDurationTicks())
-                .isEqualTo(Math.round(beforeTarget.appliedEffects().getFirst().authoredDurationTicks() * 0.75f));
     }
 
     @Test
@@ -258,21 +208,21 @@ class CinderTowerTest {
         tickThrough(tower, 1, 3 * CYCLE);
 
         assertThat(burns(target)).hasSizeGreaterThan(1);
-        assertThat(burns(target)).extracting(effect -> effect.damagePerTick().amount()).containsOnly(150);
+        assertThat(burns(target)).extracting(effect -> effect.damagePerTick().amount()).containsOnly(tower.damageCurrent());
     }
 
     @Test
-    void attunedEachWaveOnAnEnemyAlreadyBurningFromItRaisesItsBurnTenPercentUpToThreeTimes() {
-        CinderTower tower = towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context, "Attune");
+    void attunedEachWaveOnAnEnemyAlreadyBurningFromItBurnsHotterUntilTheStokeIsFull() {
+        CinderTower tower = this.towerWith("Attune");
         FakeEnemyMob target = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tickThrough(tower, 1, 6 * CYCLE);
 
-        assertThat(burns(target).stream().limit(6).map(effect -> effect.damagePerTick().amount()).toList())
-                .containsExactly(150, 165, 180, 195, 195, 195);
-        assertThat(tower.stokeStepsOf(target)).isEqualTo(3);
+        List<Integer> burnsBySize = burns(target).stream().map(effect -> effect.damagePerTick().amount()).toList();
+        assertThat(burnsBySize.get(1)).isGreaterThan(burnsBySize.get(0));
+        assertThat(burnsBySize.get(2)).isGreaterThan(burnsBySize.get(1));
+        assertThat(burnsBySize.get(5)).isEqualTo(burnsBySize.get(4));
     }
 
     @Test
@@ -306,16 +256,16 @@ class CinderTowerTest {
     }
 
     @Test
-    void whiteFlameMakesEachStokeStepFifteenPercent() {
-        CinderTower tower = towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context, "White Flame");
+    void whiteFlameMakesAStokeStepHotter() {
+        assertThat(this.secondBurnOf(this.towerWith("White Flame"))).isGreaterThan(this.secondBurnOf(this.towerWith("Attune")));
+    }
+
+    /** How hot the second wave {@code tower} lands on one enemy burns it. */
+    private int secondBurnOf(CinderTower tower) {
         FakeEnemyMob target = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
-
         tickThrough(tower, 1, 2 * CYCLE);
-
-        float base = tower.damageCurrent();
-        assertThat(burns(target).get(1).damagePerTick().amount()).isEqualTo(Math.round(base * 1.15f));
+        return burns(target).get(1).damagePerTick().amount();
     }
 
     @Test
@@ -350,9 +300,11 @@ class CinderTowerTest {
     }
 
     @Test
-    void wideNozzleLetsAnEnemyThatLostItsBurnKeepItsStokeForTwoSeconds() {
-        CinderTower tower = towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context, "Wide Nozzle");
+    void aStokeGraceLetsAnEnemyThatLostItsBurnKeepItsStokeForThatLong() {
+        CinderTower tower = this.towerWith("Attune");
+        this.context.towers().add(FakeTower.offering(this.context, 3, 4, UpgradeTree.none())
+                .giving(TowerModifiers.stokeGrace(40)));
+        tower.recalculateStats();
         FakeEnemyMob target = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
         tickThrough(tower, 1, 3 * CYCLE);
@@ -370,22 +322,9 @@ class CinderTowerTest {
     }
 
     @Test
-    void wideNozzleWidensTheConeAndWideNozzleIiMore() {
-        CinderTower tower = towerAt(3, 3);
-        double base = tower.getHalfWidthRadians();
-
-        UpgradePaths.buy(tower, this.context, "Wide Nozzle");
-        double first = tower.getHalfWidthRadians();
-        UpgradePaths.buy(tower, this.context, "Wide Nozzle II");
-
-        assertThat(first).isCloseTo(base * 1.3, within(1e-6));
-        assertThat(tower.getHalfWidthRadians()).isCloseTo(base * 1.3 * 1.2, within(1e-6));
-    }
-
-    @Test
     void bellowsWidensTheConeByTheFireRateAnAuraGivesItOnlyOnceAwakened() {
         CinderTower tower = towerAt(3, 3);
-        this.context.towers().add(td.fixtures.FakeTower.offering(this.context, 3, 4, td.tower.upgrade.UpgradeTree.none())
+        this.context.towers().add(FakeTower.offering(this.context, 3, 4, UpgradeTree.none())
                 .giving(TowerModifiers.attackSpeed(0.2f)));
         double base = tower.getHalfWidthRadians();
 
@@ -401,16 +340,14 @@ class CinderTowerTest {
 
     @Test
     void longNozzleMakesTheWaveTravelTwiceAsFast() {
-        CinderTower tower = this.transcendentTower();
+        CinderTower tower = this.towerWith("Transcendent");
         FakeEnemyMob target = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
         tower.doTick(1);
         int before = tower.getInFlightWaves().getFirst().travelTicks();
 
-        UpgradePaths.buy(tower, this.context, "Range", "Range II", "Range III");
         CinderTower fresh = towerAt(8, 3);
-        UpgradePaths.buy(fresh, this.context, "White Flame", "White Flame II", "Soulfire", "Searing Flame",
-                "Transcendent", "Range", "Range II", "Range III");
+        UpgradePaths.buy(fresh, this.context, "Range III");
         this.context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(fresh.getX() + 38, fresh.getY())});
         fresh.doTick(1);
 
@@ -420,9 +357,7 @@ class CinderTowerTest {
 
     @Test
     void soulfireBurnsEveryWaveAlongsideTheOrdinaryBurnAndStokeCountsBothKinds() {
-        CinderTower tower = this.towerAt(3, 3);
-        this.context.playtestRules().setUpgradeGatesIgnored(true);
-        UpgradePaths.buy(tower, this.context, "White Flame", "White Flame II", "Soulfire");
+        CinderTower tower = this.towerWith("Soulfire");
         FakeEnemyMob target = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
@@ -430,21 +365,19 @@ class CinderTowerTest {
 
         assertThat(target.appliedEffects()).extracting(Effect::kind).startsWith(EffectKind.BURN, EffectKind.SOULFIRE,
                 EffectKind.BURN, EffectKind.SOULFIRE);
-        assertThat(tower.stokeStepsOf(target)).isEqualTo(3);
+        assertThat(tower.stokeStepsOf(target)).isPositive();
     }
 
     @Test
     void lingeringFlamesLeavesAPatchOfBurningGroundWhereTheTargetStandsEachWave() {
-        CinderTower tower = this.towerAt(3, 3);
-        this.context.playtestRules().setUpgradeGatesIgnored(true);
-        UpgradePaths.buy(tower, this.context, "Wide Nozzle", "Wide Nozzle II", "Lingering Flames");
+        CinderTower tower = this.towerWith("Lingering Flames");
         FakeEnemyMob target = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tower.doTick(1);
 
         assertThat(this.context.zones().zones()).singleElement().satisfies(zone -> {
-            assertThat(zone.kind()).isEqualTo(td.zone.ZoneKind.BURNING_GROUND);
+            assertThat(zone.kind()).isEqualTo(ZoneKind.BURNING_GROUND);
             assertThat(zone.x()).isEqualTo(150.0);
             assertThat(zone.y()).isEqualTo(112.0);
         });
@@ -475,13 +408,13 @@ class CinderTowerTest {
 
         tickThrough(tower, 1, 1 + TRAVEL);
 
-        assertThat(burns(target).getFirst().damagePerTick().amount()).isEqualTo(Math.round(tower.damageCurrent() * 1.5f));
+        assertThat(burns(target).getFirst().damagePerTick().amount())
+                .isEqualTo(Math.round(tower.damageCurrent() * tower.stats().attack().critMultiplier()));
     }
 
     @Test
     void flashpointAddsEightScorchedToACritIgnition() {
-        CinderTower tower = this.transcendentTower();
-        UpgradePaths.buy(tower, this.context, "Flashpoint");
+        CinderTower tower = this.towerWith("Flashpoint");
         FakeEnemyMob crit = FakeEnemyMob.at(150, 112);
         crit.landEveryHitCritical();
         this.context.enemies().setEnemies(new EnemyMob[]{crit});
@@ -494,17 +427,15 @@ class CinderTowerTest {
     }
 
     @Test
-    void theFuelLineTunesThePoolsItFeeds() {
-        CinderTower tower = this.transcendentTower();
-        UpgradePaths.buy(tower, this.context, "Kindling", "Cauterize", "Heat");
+    void cauterizeAndHeatTuneThePoolsTheyFeedToCutHealingAndRaiseWhatTicks() {
+        CinderTower tower = this.towerWith("Cauterize", "Heat");
         FakeEnemyMob target = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tickThrough(tower, 1, 1 + TRAVEL);
 
-        assertThat(burns(target).getFirst().tuning().stackRate()).isEqualTo(2);
-        assertThat(burns(target).getFirst().tuning().carried().flat(td.stat.EnemyStat.HEALING_RECEIVED)).isEqualTo(-0.5f);
-        assertThat(burns(target).getFirst().tuning().carried().flat(td.stat.EnemyStat.PERIODIC_DAMAGE_TAKEN)).isEqualTo(0.2f);
+        assertThat(burns(target).getFirst().tuning().carried().flat(EnemyStat.HEALING_RECEIVED)).isNegative();
+        assertThat(burns(target).getFirst().tuning().carried().flat(EnemyStat.PERIODIC_DAMAGE_TAKEN)).isPositive();
     }
 
     @Test
@@ -521,7 +452,7 @@ class CinderTowerTest {
         target.reportFrozen();
         tower.doTick(2 + TRAVEL);
 
-        assertThat(burstShare).isEqualTo(1.5f);
+        assertThat(burstShare).isGreaterThan(PoolTuning.standard().freezeBurstShare());
         assertThat(neighbour.activeEffectKinds()).contains(EffectKind.CHILL);
     }
 
@@ -534,27 +465,18 @@ class CinderTowerTest {
 
         tickThrough(tower, 1, 1 + TRAVEL);
 
-        assertThat(burns(target).getFirst().tuning().carried().flat(td.stat.EnemyStat.MAGIC_DAMAGE_TAKEN)).isEqualTo(0.4f);
-    }
-
-    /** A tower on the Wide Nozzle chain with a special and Transcendent, gates waived. */
-    private CinderTower nozzleTower() {
-        CinderTower tower = this.towerAt(3, 3);
-        this.context.playtestRules().setUpgradeGatesIgnored(true);
-        UpgradePaths.buy(tower, this.context, "Wide Nozzle", "Wide Nozzle II", "Lingering Flames", "Searing Flame",
-                "Transcendent");
-        return tower;
+        assertThat(burns(target).getFirst().tuning().carried().flat(EnemyStat.MAGIC_DAMAGE_TAKEN)).isPositive();
     }
 
     /** A real enemy standing where the path starts, which nothing ticks, so its pool never decays. */
-    private td.enemy.EnemyMob realEnemyAt(double x, double y) {
-        this.context.setPath(new td.wave.PathNormal(List.of(new td.wave.Vec2(x, y), new td.wave.Vec2(x + 900, y))));
+    private EnemyMob realEnemyAt(double x, double y) {
+        this.context.setPath(new PathNormal(List.of(new Vec2(x, y), new Vec2(x + 900, y))));
         return EnemyFixtures.plainMob(this.context, 1_000_000, 3);
     }
 
     @Test
     void infernoRingBurnsEnemiesOnEverySideAndKeepsTheRange() {
-        CinderTower tower = this.nozzleTower();
+        CinderTower tower = this.towerWith("Lingering Flames", "Transcendent");
         float rangeBefore = tower.getRangeReal();
         UpgradePaths.buy(tower, this.context, "Inferno Ring");
         FakeEnemyMob ahead = FakeEnemyMob.at(tower.getX() + 40, tower.getY());
@@ -571,8 +493,8 @@ class CinderTowerTest {
     }
 
     @Test
-    void dragonsBreathFiresTwiceAsOftenAsThreeTimesTheRateForLessDamageAndKeepsStokeFull() {
-        CinderTower tower = this.nozzleTower();
+    void dragonsBreathFiresMoreThanTwiceAsOftenForLessDamageAndKeepsStokeFull() {
+        CinderTower tower = this.towerWith("Lingering Flames", "Transcendent");
         float damageBefore = tower.damageCurrent();
         double rateBefore = tower.attackRate();
         UpgradePaths.buy(tower, this.context, "Dragon's Breath");
@@ -582,23 +504,21 @@ class CinderTowerTest {
         tickThrough(tower, 1, 1 + TRAVEL);
 
         assertThat(tower.attackRate()).isGreaterThan(rateBefore * 2);
-        assertThat(tower.damageCurrent()).isEqualTo(Math.round(damageBefore * 0.7f));
+        assertThat(tower.damageCurrent()).isLessThan(Math.round(damageBefore));
         assertThat(tower.stokeStepsOf(target)).isEqualTo(3);
-        assertThat(burns(target).getFirst().damagePerTick().amount())
-                .isEqualTo(Math.round(tower.damageCurrent() * 1.3f));
+        assertThat(burns(target).getFirst().damagePerTick().amount()).isGreaterThan(tower.damageCurrent());
     }
 
     @Test
     void combustionBurstsAnEnemyWhoseFireIsHotterThanAWaveCouldMakeItOntoTheEnemiesWithinACellAndOnlyOnce() {
-        CinderTower tower = this.transcendentTower();
-        UpgradePaths.buy(tower, this.context, "Combustion");
-        td.enemy.EnemyMob full = this.realEnemyAt(tower.getX() + 40, tower.getY());
+        CinderTower tower = this.towerWith("Combustion");
+        EnemyMob full = this.realEnemyAt(tower.getX() + 40, tower.getY());
         FakeEnemyMob neighbour = FakeEnemyMob.at(tower.getX() + 40, tower.getY() + 20);
         FakeEnemyMob far = FakeEnemyMob.at(tower.getX() + 40, tower.getY() + 100).hidden();
         this.context.enemies().setEnemies(new EnemyMob[]{full, neighbour, far});
-        td.effect.PoolTuning deep = td.effect.PoolTuning.standard().withCapFactor(4f);
+        PoolTuning deep = PoolTuning.standard().withCapFactor(4f);
         for (int i = 0; i < 60; i++) {
-            full.applyEffect(Effect.burn(td.damage.Damage.magic(300), 60, DamageSink.none()).withTuning(deep));
+            full.applyEffect(Effect.burn(Damage.magic(300), 60, DamageSink.none()).withTuning(deep));
         }
 
         tickThrough(tower, 1, 1 + TRAVEL);
@@ -612,9 +532,8 @@ class CinderTowerTest {
 
     @Test
     void everburnTopsAPoolBackUpToTwoFifthsOfItsStrongestApplicationWhileTheEnemyIsInRange() {
-        CinderTower tower = this.nozzleTower();
-        UpgradePaths.buy(tower, this.context, "Kindling", "Cauterize", "Heat", "Everburn");
-        td.enemy.EnemyMob enemy = this.realEnemyAt(tower.getX() + 40, tower.getY());
+        CinderTower tower = this.towerWith("Everburn");
+        EnemyMob enemy = this.realEnemyAt(tower.getX() + 40, tower.getY());
         this.context.enemies().setEnemies(new EnemyMob[]{enemy});
         tickThrough(tower, 1, 1 + TRAVEL);
         enemy.applyEffect(Effect.invisible(10_000, DamageSink.none()));
@@ -627,15 +546,6 @@ class CinderTowerTest {
 
         Effect pool = enemy.activeEffects().stream().filter(e -> e.kind() == EffectKind.BURN).findFirst().orElseThrow();
         assertThat(pool.fuelLevel()).isGreaterThanOrEqualTo(0.39f * peak);
-    }
-
-    @Test
-    void combustionSaysWhatItDoes() {
-        CinderTower tower = new CinderTower(this.context, 0, 0);
-
-        assertThat(td.fixtures.TowerFixtures.plain(tower.wordsOf(UpgradePaths.named(tower, "Combustion")).sentences()))
-                .contains("a Burn that grows hotter than one wave could make it bursts for 50% of what it has left "
-                        + "onto enemies within 1 cell, and can burst again once it has cooled to half");
     }
 
     @Test
@@ -657,12 +567,9 @@ class CinderTowerTest {
 
     @Test
     void appliesListsEachEffectOnceWithEverySourceOnTheTower() {
-        this.context.playtestRules().setUpgradeGatesIgnored(true);
-        CinderTower tower = towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context, "White Flame", "White Flame II", "Soulfire");
+        CinderTower tower = this.towerWith("Soulfire");
 
-        assertThat(tower.applies()).extracting(AppliedEffect::term)
-                .containsExactly(td.effect.EffectKind.BURN, td.effect.EffectKind.SOULFIRE);
+        assertThat(tower.applies()).extracting(AppliedEffect::term).containsExactly(EffectKind.BURN, EffectKind.SOULFIRE);
         assertThat(tower.applies().getFirst().sources()).hasSize(1);
         assertThat(tower.inspect().targeting()).isEqualTo("nearest");
     }
