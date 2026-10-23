@@ -1,6 +1,7 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import td.economy.EconomyState;
 import td.economy.StatusTerm;
 import td.enemy.Rank;
@@ -14,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(EventDispatchThreadExtension.class)
 class PanelHeaderTest {
 
     private final PanelHeader header = new PanelHeader("Tower Defense v1");

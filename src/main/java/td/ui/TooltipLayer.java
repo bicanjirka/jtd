@@ -31,14 +31,12 @@ import java.util.function.Supplier;
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public final class TooltipLayer {
 
-    static final int OPEN_DELAY_MS = 150;
-    static final int CLOSE_DELAY_MS = 250;
     private static final String TERM_KIND = "term:";
 
     private final JLayeredPane layer;
-    private final Timer openTimer = new Timer(OPEN_DELAY_MS, event -> this.openPending());
-    private final Timer closeTimer = new Timer(CLOSE_DELAY_MS, event -> this.closeAll());
-    private final Timer childCloseTimer = new Timer(CLOSE_DELAY_MS, event -> this.closeIdleChildren());
+    private final Timer openTimer;
+    private final Timer closeTimer;
+    private final Timer childCloseTimer;
     private final Map<SheetPane, Integer> paneDepths = new IdentityHashMap<>();
     private final Map<Component, Supplier<Optional<SheetTooltip>>> buttons = new IdentityHashMap<>();
     private final Set<Component> below = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -55,8 +53,11 @@ public final class TooltipLayer {
     private record Open(int depth, TooltipPanel panel, TooltipKey key, Component source) {
     }
 
-    public TooltipLayer(JLayeredPane layer) {
+    public TooltipLayer(JLayeredPane layer, TooltipDelays delays) {
         this.layer = layer;
+        this.openTimer = new Timer(delays.openMs(), event -> this.openPending());
+        this.closeTimer = new Timer(delays.closeMs(), event -> this.closeAll());
+        this.childCloseTimer = new Timer(delays.closeMs(), event -> this.closeIdleChildren());
         this.openTimer.setRepeats(false);
         this.closeTimer.setRepeats(false);
         this.childCloseTimer.setRepeats(false);

@@ -23,6 +23,7 @@ import td.ui.PanelGameConsole;
 import td.ui.PanelHeader;
 import td.ui.PanelLevelSelect;
 import td.ui.PanelTowerSelector;
+import td.ui.TooltipDelays;
 import td.ui.TooltipLayer;
 import td.ui.render.AsciiBoardRenderer;
 import td.ui.render.InfoSheet;
@@ -165,7 +166,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.gameWorld.economy().addEconomyListener(this.devControls);
         this.gameBoard = new GameBoard(this, this.gameWorld);
         initComponents();
-        this.tooltips = new TooltipLayer(this.getLayeredPane());
+        this.tooltips = new TooltipLayer(this.getLayeredPane(), TooltipDelays.standard());
         this.gameConsole.setTooltips(this.tooltips);
         this.header.setTooltips(this.tooltips);
         this.gameConsole.setGameWorld(this.gameWorld);
