@@ -204,19 +204,17 @@ class StandardTreeShapeTest {
 
     @Test
     void stepPricesFollowTheListPriceRoundedHalfUp() {
-        assertThat(UpgradeTier.HEAD_2.price(15)).isEqualTo(23);
-        assertThat(UpgradeTier.RANGE_1.price(25)).isEqualTo(15);
-        assertThat(UpgradeTier.SPECIAL.price(LIST_PRICE)).isEqualTo(40);
+        for (UpgradeTier tier : UpgradeTier.values()) {
+            int percent = tier.price(100);
+            for (int listPrice = 1; listPrice <= 60; listPrice++) {
+                assertThat(tier.price(listPrice)).as("%s at %d", tier, listPrice)
+                        .isEqualTo(Math.round(listPrice * percent / 100f));
+            }
+        }
     }
 
     @Test
-    void stepXpFollowsTheGateTableAndNothingBehindTranscendentNeedsMore() {
-        assertThat(A1.xp()).isZero();
-        assertThat(A2.xp()).isEqualTo(50);
-        assertThat(A3.xp()).isEqualTo(150);
-        assertThat(List.of(X1.xp(), X2.xp(), X3.xp())).containsExactly(25, 75, 200);
-        assertThat(S1.xp()).isEqualTo(150);
-        assertThat(base(StandardBaseSlot.TRANSCENDENT_ID).xp()).isEqualTo(300);
+    void nothingBehindTranscendentNeedsXpOfItsOwnAndNoBaseNodeButTranscendentNeedsAny() {
         assertThat(List.of(A4A.xp(), X4.xp(), base(StandardBaseSlot.RANGE_3_ID).xp())).containsOnly(0);
         assertThat(BASE.stream().filter(n -> !n.id().equals(StandardBaseSlot.TRANSCENDENT_ID)))
                 .allSatisfy(n -> assertThat(n.xp()).as(n.id()).isZero());

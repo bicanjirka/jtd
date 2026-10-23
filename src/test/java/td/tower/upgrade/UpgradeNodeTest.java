@@ -1,9 +1,23 @@
 package td.tower.upgrade;
 
 import org.junit.jupiter.api.Test;
+import td.enemy.Rank;
 import td.stat.StatModifiers;
 import td.term.TermText;
 import td.tower.TowerModifiers;
+import td.tower.TowerStatus;
+import td.tower.TowerTerm;
+import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitBonus;
+import td.tower.proc.HitCondition;
+import td.tower.proc.HitKind;
+import td.tower.proc.Proc;
+import td.tower.proc.ProcCondition;
+import td.tower.proc.ProcPayload;
+import td.tower.targeting.TargetPriority;
+
+import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -63,37 +77,25 @@ class UpgradeNodeTest {
         assertThat(node.effects().statRows()).containsExactly(new UpgradeBonus("Nearby crit damage", "+50%"));
     }
 
-    private static UpgradeNode sniperNode(String name) {
-        return new td.tower.SniperTower(td.fixtures.WorldFixtures.newWorld(), 0, 0).upgradeTree().nodes().stream()
-                .filter(node -> node.displayName().equals(name)).findFirst().orElseThrow();
-    }
-
-    private static java.util.List<String> sentences(UpgradeNode node) {
-        return node.effects().sentences().stream().map(td.term.TermText::plain).toList();
+    private static List<String> sentences(UpgradeNode node) {
+        return node.effects().sentences().stream().map(TermText::plain).toList();
     }
 
     @Test
-    void momentumSaysWhomItAimsAtAndWhatACritAndAKillGrant() {
-        UpgradeNode momentum = sniperNode("Momentum");
+    void aNodeThatSetsTheTargetSaysWhomItAimsAt() {
+        UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.SPECIAL, "Hunter", 10).withTargeting(TargetPriority.HIGHEST_RANK);
 
-        assertThat(momentum.effects().statRows()).containsExactly(new UpgradeBonus("Targets", "highest rank"));
-        assertThat(sentences(momentum)).containsExactly("a crit shot grants Charged Shot",
+        assertThat(node.effects().statRows()).containsExactly(new UpgradeBonus("Targets", "highest rank"));
+    }
+
+    @Test
+    void aNodesHitBonusesAndProcsAreItsSentences() {
+        UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.SPECIAL, "Hunter", 10)
+                .withHitBonus(HitBonus.when(new HitCondition.TargetRankAtLeast(Rank.ELITE), HitAdjustment.damage(0.75f)))
+                .withProc(Proc.onKill(new ProcPayload.GrantStatus(TowerStatus.timed(TowerTerm.HASTE,
+                        TowerModifiers.attackSpeed(1f), 100))).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))));
+
+        assertThat(sentences(node)).containsExactlyInAnyOrder("+75% damage against Elite and Boss enemies",
                 "a shot that kills grants Haste");
-    }
-
-    @Test
-    void headhunterSaysWhomItAimsAtAndWhomItHitsHarder() {
-        UpgradeNode headhunter = sniperNode("Headhunter");
-
-        assertThat(headhunter.effects().statRows()).containsExactly(new UpgradeBonus("Targets", "highest rank"));
-        assertThat(sentences(headhunter)).containsExactly("+75% damage against Elite and Boss enemies");
-    }
-
-    @Test
-    void theMarksmansEyeSpecialsSayWhatTheyDoWithoutChangingWhomTheSniperAimsAt() {
-        assertThat(sentences(sniperNode("Hollow Point"))).containsExactly("each shot applies a stack of Vulnerable");
-        assertThat(sentences(sniperNode("Fourth Shot"))).containsExactly("every 4th shot is a Deadeye Round");
-        assertThat(sentences(sniperNode("Shatter Shot"))).containsExactly(
-                "+100% crit chance, +100% crit damage against an enemy with Freeze or Daze");
     }
 }

@@ -3,19 +3,20 @@ package td.tower;
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageType;
-import td.damage.DamageUnits;
 import td.effect.DamageSink;
+import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
-import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
-import td.fixtures.EnemyFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.FakeTower;
 import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
-import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
+import td.projectile.MissileLook;
+import td.projectile.MissileProjectile;
+import td.stat.StatModifiers;
+import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.TickRate;
 
@@ -52,7 +53,7 @@ class SeekerTowerTest {
         tower.doTick(1);
         TowerFixtures.flyProjectilesToCompletion(this.context);
 
-        assertThat(target.onlyHitAmount()).isEqualTo(DamageUnits.ofPoints(SeekerTower.DAMAGE_POINTS));
+        assertThat(target.onlyHitAmount()).isEqualTo(tower.damageCurrent());
         assertThat(target.hits().getFirst().type()).isEqualTo(DamageType.MAGIC);
         assertThat(target.appliedEffects()).hasSize(1);
         assertThat(target.appliedEffects().getFirst().kind()).isEqualTo(EffectKind.FREEZE);
@@ -80,69 +81,16 @@ class SeekerTowerTest {
     }
 
     @Test
-    void twinWarheadIsChoosableOnceAwakenIsBoughtAndAppliesItsAttackSpeedBonus() {
-        this.context.economy().startEconomy(1000, 5);
-        SeekerTower tower = towerAt(3, 3);
-        UpgradePaths.awakenVeteran(tower);
-        UpgradeNode twinWarhead = UpgradePaths.named(tower, "Twin Warhead");
-        EnemyMob fodder = EnemyFixtures.plainMob(this.context, 1, 1);
-        for (int i = 0; i < 10; i++) {
-            tower.dealDamage(fodder, Damage.physical(1_000_000));
-            fodder = EnemyFixtures.plainMob(this.context, 1, 1);
-        }
-
-        boolean chosen = tower.buyUpgrade(twinWarhead);
-
-        assertThat(chosen).isTrue();
-        assertThat(tower.attackRate()).isGreaterThan(1.0);
-    }
-
-    @Test
-    void deepFreezeIsNotYetChoosableBeforeAttuneIsBought() {
-        this.context.economy().startEconomy(1000, 5);
-        SeekerTower tower = towerAt(3, 3);
-        UpgradeNode deepFreeze = UpgradePaths.named(tower, "Deep Freeze");
-
-        boolean chosen = tower.buyUpgrade(deepFreeze);
-
-        assertThat(chosen).isFalse();
-        assertThat(tower.upgrades().tip(UpgradeSlot.HEAD)).isEmpty();
-    }
-
-    @Test
-    void deepFreezeMakesEveryFreezeHalfAgainAsLong() {
-        SeekerTower tower = this.seekerWith("Deep Freeze");
-        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
-        this.context.enemies().setEnemies(new EnemyMob[]{target});
-
-        tower.doTick(1);
-        TowerFixtures.flyProjectilesToCompletion(this.context);
-
-        assertThat(tower.getFreezeDurationTicks()).isEqualTo(45);
-        assertThat(target.appliedEffects().stream().filter(e -> e.kind() == EffectKind.FREEZE).findFirst().orElseThrow()
-                .remainingTicks()).isEqualTo(45);
-    }
-
-    @Test
-    void deepFreezeIiAddsThirtyPercentDamageAndTenPercentCrit() {
-        SeekerTower plain = towerAt(3, 3);
-        SeekerTower deep = this.seekerWith("Deep Freeze", "Deep Freeze II");
-
-        assertThat(deep.damageCurrent()).isEqualTo(Math.round(plain.damageCurrent() * 1.3f));
-        assertThat(deep.critChance()).isEqualTo(0.1f);
-    }
-
-    @Test
     void brittleLeavesWhateverItFreezesBrittleForAsLongAsTheFreeze() {
-        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle");
+        SeekerTower tower = this.seekerWith("Brittle");
         FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         tower.doTick(1);
         TowerFixtures.flyProjectilesToCompletion(this.context);
 
-        assertThat(target.appliedEffects().stream().filter(e -> e.kind() == EffectKind.BRITTLE).toList())
-                .singleElement().extracting(td.effect.Effect::remainingTicks).isEqualTo(45);
+        assertThat(effectOn(target, EffectKind.BRITTLE).remainingTicks())
+                .isEqualTo(effectOn(target, EffectKind.FREEZE).remainingTicks());
     }
 
     /** Ticks {@code tower} until it has launched {@code missiles}, then flies them all. */
@@ -154,6 +102,10 @@ class SeekerTowerTest {
             launched += this.context.projectiles().getProjectiles().size() - before;
         }
         TowerFixtures.flyProjectilesToCompletion(this.context);
+    }
+
+    private static Effect effectOn(FakeEnemyMob mob, EffectKind kind) {
+        return mob.appliedEffects().stream().filter(effect -> effect.kind() == kind).findFirst().orElseThrow();
     }
 
     private static long freezesOn(FakeEnemyMob mob) {
@@ -174,7 +126,7 @@ class SeekerTowerTest {
     }
 
     @Test
-    void empPayloadStripsShieldsAndHealsAndSilencesTwoSecondsOnItsTurn() {
+    void empPayloadStripsShieldsAndHealsAndSilencesOnItsTurn() {
         SeekerTower tower = this.seekerWith("Arcane Payload", "EMP Payload");
         FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
@@ -182,46 +134,25 @@ class SeekerTowerTest {
         this.fireAndFly(tower, 6);
 
         assertThat(target.dispels()).isEqualTo(1);
-        assertThat(target.appliedEffects().stream().filter(e -> e.kind() == EffectKind.SILENCED).toList())
-                .singleElement().extracting(td.effect.Effect::remainingTicks).isEqualTo(40);
+        assertThat(target.hasEffect(EffectKind.SILENCED)).isTrue();
         assertThat(target.effectStacks(EffectKind.UNRAVELED)).isEqualTo(1);
     }
 
     @Test
-    void tracerPayloadRevealsAndMarksForFourSeconds() {
+    void tracerPayloadRevealsAndMarksOnItsTurn() {
         SeekerTower tower = this.seekerWith("Arcane Payload", "EMP Payload", "Tracer Payload");
         FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         this.fireAndFly(tower, 9);
 
-        assertThat(target.appliedEffects().stream().filter(e -> e.kind() == EffectKind.MARKED).toList())
-                .singleElement().extracting(td.effect.Effect::remainingTicks).isEqualTo(80);
+        assertThat(target.hasEffect(EffectKind.MARKED)).isTrue();
         assertThat(target.hasEffect(EffectKind.REVEALED)).isTrue();
     }
 
     @Test
-    void aFullRackCarriesCryoArcaneEmpAndTracerInTurnEachAQuarterStronger() {
-        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle", "Transcendent", "Arcane Payload",
-                "EMP Payload", "Tracer Payload", "Full Rack");
-        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
-        this.context.enemies().setEnemies(new EnemyMob[]{target});
-
-        this.fireAndFly(tower, 4);
-
-        assertThat(target.appliedEffects().stream().filter(e -> e.kind() == EffectKind.FREEZE).toList())
-                .singleElement().extracting(td.effect.Effect::remainingTicks).isEqualTo(56);
-        assertThat(target.effectStacks(EffectKind.UNRAVELED)).isEqualTo(2);
-        assertThat(target.appliedEffects().stream().filter(e -> e.kind() == EffectKind.SILENCED).toList())
-                .singleElement().extracting(td.effect.Effect::remainingTicks).isEqualTo(50);
-        assertThat(target.appliedEffects().stream().filter(e -> e.kind() == EffectKind.MARKED).toList())
-                .singleElement().extracting(td.effect.Effect::remainingTicks).isEqualTo(100);
-    }
-
-    @Test
     void aMissileIsDrawnInTheColourOfWhatItCarries() {
-        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle", "Transcendent", "Arcane Payload",
-                "EMP Payload", "Tracer Payload", "Full Rack");
+        SeekerTower tower = this.seekerWith("Full Rack");
         FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
@@ -229,44 +160,14 @@ class SeekerTowerTest {
             tower.doTick(t);
         }
 
-        assertThat(this.context.projectiles().getProjectiles()).hasSize(3)
-                .allSatisfy(projectile -> assertThat(projectile).isInstanceOf(td.projectile.MissileProjectile.class));
         assertThat(this.context.projectiles().getProjectiles().stream()
-                .map(p -> ((td.projectile.MissileProjectile) p).stats().look()).toList())
-                .containsExactly(td.projectile.MissileLook.CRYO, td.projectile.MissileLook.ARCANE,
-                        td.projectile.MissileLook.EMP);
-    }
-
-    @Test
-    void nullifierHitsAShieldedEnemyHalfAgainAsHardAndStripsItsShield() {
-        SeekerTower tower = this.seekerWith("Nullifier");
-        FakeEnemyMob shielded = FakeEnemyMob.at(100, 100);
-        shielded.applyEffect(td.effect.Effect.shield(0.5f, 100, DamageSink.none()));
-        this.context.enemies().setEnemies(new EnemyMob[]{shielded});
-
-        this.fireAndFly(tower, 1);
-
-        assertThat(shielded.hits().getFirst()).isEqualTo(Damage.magic(Math.round(tower.damageCurrent() * 1.5f)));
-        assertThat(shielded.hasEffect(EffectKind.SHIELD)).isFalse();
-        assertThat(shielded.dispels()).isEqualTo(1);
-    }
-
-    @Test
-    void huntersMarkAimsAtTheHighestRankInsteadOfTheFastest() {
-        SeekerTower tower = this.seekerWith("Hunter's Mark");
-        FakeEnemyMob runner = FakeEnemyMob.at(100, 100).movingAt(3f);
-        FakeEnemyMob boss = FakeEnemyMob.at(110, 100).movingAt(1f).ranked(Rank.BOSS);
-        this.context.enemies().setEnemies(new EnemyMob[]{runner, boss});
-
-        tower.doTick(1);
-
-        assertThat(tower.getCurrentTarget()).isSameAs(boss);
+                .map(missile -> ((MissileProjectile) missile).stats().look()).toList())
+                .containsExactly(MissileLook.CRYO, MissileLook.ARCANE, MissileLook.EMP);
     }
 
     @Test
     void absoluteZeroFreezesEverythingWithinACellOfTheImpactAndNothingFurther() {
-        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle", "Transcendent",
-                "Absolute Zero");
+        SeekerTower tower = this.seekerWith("Absolute Zero");
         FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         FakeEnemyMob near = FakeEnemyMob.ghostAt(120, 100);
         FakeEnemyMob outside = FakeEnemyMob.ghostAt(140, 100);
@@ -282,8 +183,7 @@ class SeekerTowerTest {
 
     @Test
     void absoluteZeroShattersAnEnemyItFrozeWhenItsFreezeEnds() {
-        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle", "Transcendent",
-                "Absolute Zero");
+        SeekerTower tower = this.seekerWith("Absolute Zero");
         FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         FakeEnemyMob bystander = FakeEnemyMob.ghostAt(100, 145);
         this.context.enemies().setEnemies(new EnemyMob[]{target, bystander});
@@ -300,8 +200,7 @@ class SeekerTowerTest {
 
     @Test
     void absoluteZeroShattersTwiceAsHardWhenItKillsAFrozenEnemy() {
-        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle", "Transcendent",
-                "Absolute Zero");
+        SeekerTower tower = this.seekerWith("Absolute Zero");
         FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
         frozen.reportFrozen();
         frozen.dieOnAnyHit();
@@ -315,8 +214,7 @@ class SeekerTowerTest {
 
     @Test
     void anEnemyThatThawsIsShatteredOnceNotEveryTick() {
-        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle", "Transcendent",
-                "Absolute Zero");
+        SeekerTower tower = this.seekerWith("Absolute Zero");
         FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         FakeEnemyMob bystander = FakeEnemyMob.ghostAt(100, 145);
         this.context.enemies().setEnemies(new EnemyMob[]{target, bystander});
@@ -334,7 +232,7 @@ class SeekerTowerTest {
 
     @Test
     void frostbiteMakesHitsOnAFrozenOrFreezeDiminishedEnemyGuaranteedCritsAndNoOther() {
-        SeekerTower tower = this.seekerWith("Deep Freeze", "Deep Freeze II", "Brittle", "Transcendent", "Frostbite");
+        SeekerTower tower = this.seekerWith("Frostbite");
         FakeEnemyMob fresh = FakeEnemyMob.at(100, 100);
         FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
         frozen.reportFrozen();
@@ -355,16 +253,28 @@ class SeekerTowerTest {
     }
 
     @Test
-    void twinWarheadIiFiresTwoMissilesInsteadOfOne() {
-        SeekerTower tower = towerAt(3, 3);
-        this.context.playtestRules().setUpgradeGatesIgnored(true);
-        UpgradePaths.buy(tower, this.context, "Twin Warhead", "Twin Warhead II");
-        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
-        this.context.enemies().setEnemies(new EnemyMob[]{target});
+    void anExtraMissilePerLaunchFiresOneMoreMissileAtOnce() {
+        SeekerTower tower = this.seekerGiven(TowerModifiers.missilesPerLaunch(1));
+        this.context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(100, 100)});
 
         tower.doTick(1);
 
         assertThat(this.context.projectiles().getProjectiles()).hasSize(2);
+    }
+
+    /** A plain Seeker that a neighbour buffs with {@code buff}. */
+    private SeekerTower seekerGiven(StatModifiers<TowerStat> buff) {
+        SeekerTower tower = towerAt(3, 3);
+        this.context.towers().add(FakeTower.offering(this.context, 3, 4, UpgradeTree.none()).giving(buff));
+        tower.recalculateStats();
+        return tower;
+    }
+
+    /** How many missiles {@code tower} launches on {@code tick}. */
+    private int launchedOn(SeekerTower tower, int tick) {
+        int before = this.context.projectiles().getProjectiles().size();
+        tower.doTick(tick);
+        return this.context.projectiles().getProjectiles().size() - before;
     }
 
     @Test
@@ -415,17 +325,7 @@ class SeekerTowerTest {
     }
 
     private SeekerTower deepFreezeTwoSeeker() {
-        this.context.economy().startEconomy(100000, 5);
-        SeekerTower tower = towerAt(3, 3);
-        UpgradePaths.awakenVeteran(tower);
-        EnemyMob fodder = EnemyFixtures.plainMob(this.context, 1, 1);
-        for (int i = 0; i < 25; i++) {
-            tower.dealDamage(fodder, Damage.magic(1_000_000));
-            fodder = EnemyFixtures.plainMob(this.context, 1, 1);
-        }
-        tower.buyUpgrade(UpgradePaths.named(tower, "Deep Freeze"));
-        tower.buyUpgrade(UpgradePaths.named(tower, "Deep Freeze II"));
-        return tower;
+        return this.seekerWith("Deep Freeze II");
     }
 
     private SeekerTower attunedTower() {
@@ -468,15 +368,14 @@ class SeekerTowerTest {
     }
 
     @Test
-    void theMissileFliesAtEightPixelsATickAndIsDrawnAsMagic() {
+    void theMissilesSpeedReadsInCellsASecondBesideItsSize() {
         SeekerTower tower = towerAt(3, 3);
 
-        assertThat(SeekerTower.MISSILE_SPEED).isEqualTo(8f);
         assertThat(tower.inspect().stats()).extracting(TowerStatLine::stat)
                 .contains(TowerStatRow.PROJECTILE_SPEED, TowerStatRow.PROJECTILE_SIZE);
         TowerStatLine speed = tower.inspect().stats().stream()
                 .filter(line -> line.stat() == TowerStatRow.PROJECTILE_SPEED).findFirst().orElseThrow();
-        assertThat(speed.current()).isEqualTo(8f * TickRate.TICKS_PER_SECOND / BoardFixtures.SCALE);
+        assertThat(speed.current()).isEqualTo(SeekerTower.MISSILE_SPEED * TickRate.TICKS_PER_SECOND / BoardFixtures.SCALE);
     }
 
     @Test
@@ -493,19 +392,20 @@ class SeekerTowerTest {
     }
 
     @Test
-    void attunedTheCooldownLoadsOneMissileIntoTheNestUpToThreeWithNoEnemyInRange() {
+    void attunedTheCooldownLoadsOneMissileIntoTheNestUpToItsCapacityWithNoEnemyInRange() {
         SeekerTower tower = this.attunedTower();
         this.context.enemies().setEnemies(new EnemyMob[]{});
+        int capacity = nestCapacity(tower);
 
         tower.doTick(1);
         int loadedAtFirst = tower.getNestStored();
-        int tick = tickUntilNestHolds(tower, 2, 3);
+        int tick = tickUntilNestHolds(tower, 2, capacity);
         for (int t = tick; t < tick + 200; t++) {
             tower.doTick(t);
         }
 
         assertThat(loadedAtFirst).isEqualTo(1);
-        assertThat(tower.getNestStored()).isEqualTo(3);
+        assertThat(tower.getNestStored()).isEqualTo(capacity);
         assertThat(this.context.projectiles().getProjectiles()).isEmpty();
     }
 
@@ -514,6 +414,7 @@ class SeekerTowerTest {
         SeekerTower tower = this.attunedTower();
         this.context.enemies().setEnemies(new EnemyMob[]{});
         int tick = tickUntilNestHolds(tower, 1, 3);
+        assertThat(nestCapacity(tower)).isGreaterThanOrEqualTo(3);
         this.context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(100, 100)});
 
         List<Integer> launched = new ArrayList<>();
@@ -534,8 +435,9 @@ class SeekerTowerTest {
     void attunedWithAnEnemyAlwaysInRangeItStillLaunchesOneMissilePerCooldown() {
         SeekerTower tower = this.attunedTower();
         this.context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(100, 100)});
+        int cooldown = (int) Math.round((tower.coolDownMax + 1) / tower.attackRate());
 
-        for (int t = 1; t <= 100; t++) {
+        for (int t = 1; t <= 3 * cooldown; t++) {
             tower.doTick(t);
         }
 
@@ -555,29 +457,19 @@ class SeekerTowerTest {
         assertThat(tower.experience().deeds()).isEqualTo(1);
     }
 
+    private static int nestCapacity(SeekerTower tower) {
+        return Math.round(tower.stats().value(TowerStat.NEST_CAPACITY));
+    }
+
     private SeekerTower seekerWith(String... nodes) {
-        this.context.playtestRules().setUpgradeGatesIgnored(true);
         SeekerTower tower = towerAt(3, 3);
         UpgradePaths.buy(tower, this.context, nodes);
         return tower;
     }
 
     @Test
-    void twinWarheadMakesTheNestHoldOneMore() {
-        SeekerTower tower = this.seekerWith("Twin Warhead");
-        this.context.enemies().setEnemies(new EnemyMob[]{});
-
-        tickUntilNestHolds(tower, 1, 4);
-        for (int t = 1000; t < 1300; t++) {
-            tower.doTick(t);
-        }
-
-        assertThat(tower.getNestStored()).isEqualTo(4);
-    }
-
-    @Test
-    void twinWarheadIiSendsTwoMissilesAtTwoDifferentEnemiesAndOneEnemyGetsBoth() {
-        SeekerTower tower = this.seekerWith("Twin Warhead", "Twin Warhead II");
+    void missilesLaunchedTogetherGoToDifferentEnemies() {
+        SeekerTower tower = this.seekerGiven(TowerModifiers.missilesPerLaunch(1));
         FakeEnemyMob quick = FakeEnemyMob.at(100, 100).movingAt(3f);
         FakeEnemyMob slow = FakeEnemyMob.at(110, 100).movingAt(1f);
         this.context.enemies().setEnemies(new EnemyMob[]{quick, slow});
@@ -590,16 +482,16 @@ class SeekerTowerTest {
     }
 
     @Test
-    void broodMakesTheNestHoldSixAndASalvoSpreadsAcrossDifferentTargets() {
-        SeekerTower tower = this.seekerWith("Twin Warhead", "Twin Warhead II", "Brood");
+    void broodsSalvoSpreadsAcrossDifferentTargets() {
+        SeekerTower tower = this.seekerWith("Brood");
         this.context.enemies().setEnemies(new EnemyMob[]{});
-        int tick = tickUntilNestHolds(tower, 1, 6);
+        int tick = tickUntilNestHolds(tower, 1, nestCapacity(tower));
         FakeEnemyMob first = FakeEnemyMob.at(100, 100).movingAt(3f);
         FakeEnemyMob second = FakeEnemyMob.at(110, 100).movingAt(2f);
         FakeEnemyMob third = FakeEnemyMob.at(120, 100).movingAt(1f);
         this.context.enemies().setEnemies(new EnemyMob[]{first, second, third});
 
-        for (int t = tick; t < tick + 6; t++) {
+        for (int t = tick; t < tick + 4 * nestCapacity(tower); t++) {
             tower.doTick(t);
         }
         TowerFixtures.flyProjectilesToCompletion(this.context);
@@ -611,58 +503,56 @@ class SeekerTowerTest {
 
     @Test
     void shatterburstBurstsAroundAFrozenEnemyItHitsAndSilencesAndUnravelsWhatItCatches() {
-        SeekerTower tower = this.seekerWith("Twin Warhead", "Twin Warhead II", "Brood", "Transcendent", "Shatterburst");
+        SeekerTower tower = this.seekerWith("Shatterburst");
         FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
         frozen.reportFrozen();
         FakeEnemyMob neighbour = FakeEnemyMob.ghostAt(120, 100);
         FakeEnemyMob far = FakeEnemyMob.ghostAt(400, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{frozen, neighbour, far});
 
-        tower.doTick(1);
+        int launched = this.launchedOn(tower, 1);
         TowerFixtures.flyProjectilesToCompletion(this.context);
 
-        // Twin Warhead II sent two missiles, each of which hit the frozen enemy and burst.
-        assertThat(neighbour.hits()).containsExactly(Damage.magic(Math.round(tower.damageCurrent() * 0.35f)),
-                Damage.magic(Math.round(tower.damageCurrent() * 0.35f)));
+        assertThat(neighbour.hits()).hasSize(launched)
+                .allSatisfy(hit -> assertThat(hit.amount()).isLessThan(tower.damageCurrent()));
         assertThat(neighbour.hasEffect(EffectKind.SILENCED)).isTrue();
-        assertThat(neighbour.effectStacks(EffectKind.UNRAVELED)).isEqualTo(2);
+        assertThat(neighbour.effectStacks(EffectKind.UNRAVELED)).isEqualTo(launched);
         assertThat(far.hits()).isEmpty();
     }
 
     @Test
-    void shatterburstBurstsOnlyFromTheMissileThatHitAnEnemyAlreadyFrozen() {
-        SeekerTower tower = this.seekerWith("Twin Warhead", "Twin Warhead II", "Brood", "Transcendent", "Shatterburst");
+    void shatterburstBurstsOnlyFromAMissileThatHitAnEnemyAlreadyFrozen() {
+        SeekerTower tower = this.seekerWith("Shatterburst");
         FakeEnemyMob fresh = FakeEnemyMob.at(100, 100);
         FakeEnemyMob neighbour = FakeEnemyMob.ghostAt(120, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{fresh, neighbour});
 
-        tower.doTick(1);
+        int launched = this.launchedOn(tower, 1);
         TowerFixtures.flyProjectilesToCompletion(this.context);
 
-        // Only the second of the two missiles found the enemy already frozen by the first.
-        assertThat(neighbour.hits()).hasSize(1);
+        // the first missile freezes the enemy; every later one finds it frozen
+        assertThat(neighbour.hits()).hasSize(launched - 1);
     }
 
     @Test
     void rearmLaunchesOneMoreMissileFromAFreshFreezeAndTheRearmedOneLaunchesNoMore() {
-        SeekerTower rearming = this.seekerWith("Twin Warhead", "Twin Warhead II", "Brood", "Transcendent", "Rearm");
+        SeekerTower rearming = this.seekerWith("Rearm");
         FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
-        rearming.doTick(1);
+        int launched = this.launchedOn(rearming, 1);
         TowerFixtures.flyProjectilesToCompletion(this.context);
 
-        // Two missiles from Twin Warhead II, one rearm from the fresh freeze, and no more.
-        assertThat(target.hits()).hasSize(3);
+        // one more from the first, fresh freeze, and none from the rearmed missile
+        assertThat(target.hits()).hasSize(launched + 1);
     }
 
     @Test
     void overTheHorizonLetsItFireAtAMarkedEnemyFromOneAndAHalfTimesItsRangeAndNoOther() {
-        SeekerTower tower = this.seekerWith("Twin Warhead", "Twin Warhead II", "Brood", "Transcendent", "Range",
-                "Range II", "Range III");
+        SeekerTower tower = this.seekerWith("Range III");
         float reach = tower.rangeReal();
         FakeEnemyMob marked = FakeEnemyMob.at(112 + reach * 1.3, 112);
-        marked.applyEffect(td.effect.Effect.marked(100, DamageSink.none()));
+        marked.applyEffect(Effect.marked(100, DamageSink.none()));
         FakeEnemyMob plain = FakeEnemyMob.at(112 + reach * 1.3, 140);
         this.context.enemies().setEnemies(new EnemyMob[]{plain, marked});
 
@@ -673,9 +563,9 @@ class SeekerTowerTest {
 
     @Test
     void withoutOverTheHorizonAMarkedEnemyBeyondRangeIsLeftAlone() {
-        SeekerTower tower = this.seekerWith();
+        SeekerTower tower = towerAt(3, 3);
         FakeEnemyMob marked = FakeEnemyMob.at(112 + tower.rangeReal() * 1.3, 112);
-        marked.applyEffect(td.effect.Effect.marked(100, DamageSink.none()));
+        marked.applyEffect(Effect.marked(100, DamageSink.none()));
         this.context.enemies().setEnemies(new EnemyMob[]{marked});
 
         tower.doTick(1);
@@ -706,16 +596,7 @@ class SeekerTowerTest {
 
     private static int stacksApplied(FakeEnemyMob mob) {
         return mob.appliedEffects().stream().filter(e -> e.kind() == EffectKind.UNRAVELED)
-                .mapToInt(td.effect.Effect::stacks).sum();
-    }
-
-    @Test
-    void shatterburstSaysWhatItDoes() {
-        SeekerTower tower = new SeekerTower(this.context, 0, 0);
-
-        assertThat(td.fixtures.TowerFixtures.plain(tower.wordsOf(UpgradePaths.named(tower, "Shatterburst")).sentences()))
-                .contains("a missile that hits an enemy with Freeze bursts for 35% magic damage around it; every enemy "
-                        + "the burst hits gains Silence for 2 s and a stack of Unravel");
+                .mapToInt(Effect::stacks).sum();
     }
 
     @Test

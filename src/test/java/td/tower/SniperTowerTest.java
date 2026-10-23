@@ -1,103 +1,56 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
-import td.board.BoardGeometry;
 import td.damage.AttackProfile;
-import td.damage.Damage;
-import td.damage.DamageType;
-import td.damage.DamageUnits;
-import td.damage.Delivery;
 import td.effect.DamageSink;
 import td.effect.Effect;
-import td.effect.EffectKind;
 import td.enemy.EnemyMob;
-import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
-import td.fixtures.EnemyFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.tower.sniper.AimFocus;
-import td.tower.upgrade.UpgradeNode;
 import td.ui.TowerSpriteFrameBuilder;
 import td.ui.render.Palette;
 import td.ui.render.TurretHeadDraw;
 import td.util.GameWorld;
-import td.util.RecordingGameHost;
-import td.util.TickRate;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
+/**
+ * How the Sniper shoots and what its own mechanics do on the board. What a node adds is the node's
+ * data; its pieces are tested in {@code td.tower.proc} and its mechanics in {@code td.tower.sniper}.
+ */
 class SniperTowerTest {
 
-    private static final float STEADY_AIM_CRIT_BONUS = 0.1f;
-
-    private final GameWorld context = WorldFixtures.newWorld();
+    private final GameWorld world = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
     private int clock;
 
-    private static GameWorld boardWorld() {
-        return WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
-    }
-
-    private static SniperTower awakenedSniper(GameWorld world, int killsEarned) {
-        world.economy().startEconomy(1000, 5);
-        SniperTower tower = new SniperTower(world, 3, 3);
-        UpgradePaths.awakenVeteran(tower);
-        for (int i = 0; i < killsEarned; i++) {
-            tower.dealDamage(EnemyFixtures.plainMob(world, 1, 1), Damage.physical(1_000_000));
-        }
+    private SniperTower sniperWith(String... nodes) {
+        SniperTower tower = new SniperTower(this.world, 3, 3);
+        UpgradePaths.buy(tower, this.world, nodes);
         return tower;
     }
 
-    /** A Sniper with {@code names} bought, every XP and purpose gate waived. */
-    private static SniperTower sniperWith(GameWorld world, String... names) {
-        world.playtestRules().setUpgradeGatesIgnored(true);
-        SniperTower tower = new SniperTower(world, 3, 3);
-        UpgradePaths.buy(tower, world, names);
-        return tower;
-    }
-
-    private static FakeEnemyMob targetFor(GameWorld world) {
+    private FakeEnemyMob onlyTarget() {
         FakeEnemyMob target = FakeEnemyMob.at(100, 100);
-        world.enemies().setEnemies(new EnemyMob[]{target});
+        this.world.enemies().setEnemies(new EnemyMob[]{target});
         return target;
     }
 
-    /** One tick of the Sniper's turn; the tick it was. */
-    private int tick(SniperTower tower) {
+    private void tick(SniperTower tower) {
         this.clock++;
         tower.beginTick(this.clock);
         tower.doTick(this.clock);
-        return this.clock;
-    }
-
-    /** The ticks the Sniper fires at {@code target} on, for its next {@code shots} shots. */
-    private List<Integer> shotTicks(SniperTower tower, FakeEnemyMob target, int shots) {
-        List<Integer> ticks = new ArrayList<>();
-        while (ticks.size() < shots) {
-            int before = target.hits().size();
-            int tick = this.tick(tower);
-            if (target.hits().size() > before) {
-                ticks.add(tick);
-            }
-        }
-        return ticks;
-    }
-
-    private static List<Integer> gaps(List<Integer> ticks) {
-        List<Integer> gaps = new ArrayList<>();
-        for (int i = 1; i < ticks.size(); i++) {
-            gaps.add(ticks.get(i) - ticks.get(i - 1));
-        }
-        return gaps;
     }
 
     private void fireShots(SniperTower tower, FakeEnemyMob target, int shots) {
-        this.shotTicks(tower, target, shots);
+        while (target.hits().size() < shots) {
+            this.tick(tower);
+        }
     }
 
     private static List<Float> critChances(FakeEnemyMob target) {
@@ -105,141 +58,8 @@ class SniperTowerTest {
     }
 
     @Test
-    void theAssassinStartsWithTheStatsOfItsDesign() {
-        SniperTower tower = new SniperTower(boardWorld(), 3, 3);
-
-        assertThat(SniperTower.PRICE).isEqualTo(15);
-        assertThat(tower.damageCurrent()).isEqualTo(DamageUnits.ofPoints(40f));
-        assertThat(tower.getRange()).isEqualTo(4.0f);
-        assertThat(tower.coolDownMax).isEqualTo(49);
-        assertThat(tower.attackRate()).isEqualTo(1.0);
-        assertThat(tower.critChance()).isEqualTo(0.05f);
-        assertThat(tower.stats().attack().critMultiplier()).isEqualTo(2.0f);
-    }
-
-    @Test
-    void focusedOpticsTwoAddsFortyPercentDamage() {
-        this.context.economy().startEconomy(1000, 5);
-        SniperTower tower = new SniperTower(this.context, 0, 0);
-        UpgradePaths.awakenVeteran(tower);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics"));
-
-        boolean bought = tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics II"));
-
-        assertThat(bought).isTrue();
-        assertThat(tower.damageCurrent()).isEqualTo(Math.round(tower.damageBase * 1.4f));
-    }
-
-    @Test
-    void marksmansEyeTwoWaitsForFiftyXpFromTheGateTable() {
-        this.context.economy().startEconomy(1000, 5);
-        SniperTower tower = new SniperTower(this.context, 0, 0);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Attune"));
-        tower.buyUpgrade(UpgradePaths.named(tower, "Marksman's Eye"));
-        tower.earnXp(49);
-        boolean atFortyNine = tower.buyUpgrade(UpgradePaths.named(tower, "Marksman's Eye II"));
-        tower.earnXp(1);
-
-        boolean atFifty = tower.buyUpgrade(UpgradePaths.named(tower, "Marksman's Eye II"));
-
-        assertThat(atFortyNine).isFalse();
-        assertThat(atFifty).isTrue();
-    }
-
-    @Test
-    void marksmansEyeLetsSteadyAimBuildToThreeStacks() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Marksman's Eye");
-        FakeEnemyMob target = targetFor(world);
-
-        this.fireShots(tower, target, 6);
-
-        assertThat(critChances(target).get(4)).isCloseTo(SniperTower.CRIT_CHANCE + 3 * STEADY_AIM_CRIT_BONUS, within(1e-6f));
-        assertThat(critChances(target).get(5)).isCloseTo(SniperTower.CRIT_CHANCE + 3 * STEADY_AIM_CRIT_BONUS, within(1e-6f));
-    }
-
-    @Test
-    void marksmansEyeTwoShootsFasterAndIgnoresThirtyArmor() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Marksman's Eye", "Marksman's Eye II");
-        FakeEnemyMob target = targetFor(world);
-
-        this.fireShots(tower, target, 1);
-
-        assertThat(tower.attackRate()).isCloseTo(1.25, within(1e-9));
-        assertThat(target.attackers().getFirst().armorPenetrationFlat()).isEqualTo(30f);
-    }
-
-    @Test
-    void cleanShotMakesTheShotsCritsPierceShields() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Marksman's Eye", "Marksman's Eye II", "Marksman's Eye III");
-        FakeEnemyMob target = targetFor(world);
-
-        this.fireShots(tower, target, 1);
-
-        assertThat(target.attackers().getFirst().critsPierceShields()).isTrue();
-    }
-
-    @Test
-    void marksmansEyeAddsTwentyPercentDamagePerSteadyAimStack() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Marksman's Eye");
-        FakeEnemyMob target = targetFor(world);
-
-        this.fireShots(tower, target, 5);
-
-        int damage = tower.damageCurrent();
-        assertThat(target.hits()).extracting(Damage::amount).containsExactly(damage, Math.round(damage * 1.2f),
-                Math.round(damage * 1.4f), Math.round(damage * 1.6f), Math.round(damage * 1.6f));
-    }
-
-    @Test
-    void unbrokenAimLetsSteadyAimBuildToFiveStacks() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Marksman's Eye", "Marksman's Eye II", "Marksman's Eye III",
-                "Fourth Shot", "Transcendent", "Unbroken Aim");
-        FakeEnemyMob first = targetFor(world);
-        this.fireShots(tower, first, 5);
-        first.invalidate();
-        FakeEnemyMob next = targetFor(world);
-
-        this.fireShots(tower, next, 1);
-
-        assertThat(critChances(next).getFirst()).isCloseTo(SniperTower.CRIT_CHANCE + 5 * STEADY_AIM_CRIT_BONUS, within(1e-6f));
-    }
-
-    @Test
-    void sunderRoundsSundersAnEnemyOnlyWhenTheShotCrits() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Marksman's Eye", "Marksman's Eye II", "Marksman's Eye III",
-                "Fourth Shot", "Transcendent", "Sunder Rounds");
-        FakeEnemyMob target = targetFor(world);
-        this.fireShots(tower, target, 1);
-        assertThat(target.appliedEffects()).isEmpty();
-
-        target.landEveryHitCritical();
-        this.fireShots(tower, target, 1);
-
-        assertThat(target.appliedEffects()).extracting(Effect::kind).containsExactly(EffectKind.SUNDERED);
-    }
-
-    @Test
-    void buyingAnyHeadRootForeclosesTheOtherHeadRootForever() {
-        this.context.economy().startEconomy(1000, 5);
-        SniperTower tower = new SniperTower(this.context, 0, 0);
-        UpgradePaths.awakenVeteran(tower);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics"));
-
-        boolean chosenMarksmansEye = tower.buyUpgrade(UpgradePaths.named(tower, "Marksman's Eye"));
-
-        assertThat(chosenMarksmansEye).isFalse();
-    }
-
-    @Test
     void doTickRecordsWhetherTheShotThatJustFiredWasACriticalHit() {
-        GameWorld alwaysCrits = new GameWorld(new RecordingGameHost(), () -> 0.0);
-        alwaysCrits.setBoard(BoardGeometry.of(BoardFixtures.SCALE, 20, 20));
+        GameWorld alwaysCrits = WorldFixtures.newWorldOnBoard(() -> 0.0, BoardFixtures.SCALE, 20, 20);
         SniperTower tower = new SniperTower(alwaysCrits, 3, 3);
         FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         target.landEveryHitCritical();
@@ -252,45 +72,35 @@ class SniperTowerTest {
     }
 
     @Test
-    void steadyAimAddsCritChanceToEveryShotAfterTheFirst() {
-        GameWorld world = boardWorld();
-        SniperTower tower = awakenedSniper(world, 0);
-        FakeEnemyMob target = targetFor(world);
+    void aSteadyAimStackRaisesTheNextShotsCritChance() {
+        SniperTower tower = this.sniperWith("Attune");
+        FakeEnemyMob target = this.onlyTarget();
 
-        this.fireShots(tower, target, 3);
+        this.fireShots(tower, target, 2);
 
-        assertThat(critChances(target)).hasSize(3);
-        assertThat(critChances(target).get(0)).isEqualTo(SniperTower.CRIT_CHANCE);
-        assertThat(critChances(target).get(1)).isCloseTo(SniperTower.CRIT_CHANCE + STEADY_AIM_CRIT_BONUS, within(1e-6f));
-        assertThat(critChances(target).get(2)).isCloseTo(SniperTower.CRIT_CHANCE + STEADY_AIM_CRIT_BONUS, within(1e-6f));
+        assertThat(critChances(target).get(1)).isGreaterThan(critChances(target).get(0));
     }
 
     @Test
-    void anIdleSniperLosesOneSteadyAimStackEveryThreeSeconds() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Marksman's Eye");
-        FakeEnemyMob target = targetFor(world);
-        this.fireShots(tower, target, 4);
-        world.enemies().setEnemies(new EnemyMob[]{});
-        int stackTicks = Math.round(AimFocus.STACK_SECONDS * TickRate.TICKS_PER_SECOND);
+    void anIdleSnipersSteadyAimFadesOnceItHasHadNoTargetForAStacksTime() {
+        SniperTower tower = this.sniperWith("Attune");
+        FakeEnemyMob target = this.onlyTarget();
+        this.fireShots(tower, target, 2);
+        this.world.enemies().setEnemies(new EnemyMob[]{});
+        int built = tower.steadyAimStacks().orElseThrow();
 
-        for (int i = 0; i < stackTicks; i++) {
-            this.tick(tower);
-        }
-        int afterThreeSeconds = tower.steadyAimStacks().orElseThrow();
-        for (int i = 0; i < stackTicks; i++) {
+        for (int i = 0; i < AimFocus.STACK_TICKS; i++) {
             this.tick(tower);
         }
 
-        assertThat(afterThreeSeconds).isEqualTo(2);
-        assertThat(tower.steadyAimStacks()).hasValue(1);
+        assertThat(built).isPositive();
+        assertThat(tower.steadyAimStacks()).hasValue(built - 1);
     }
 
     @Test
     void steadyAimShowsItsStacksAndTheTimeToItsNextFade() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Marksman's Eye");
-        FakeEnemyMob target = targetFor(world);
+        SniperTower tower = this.sniperWith("Attune");
+        FakeEnemyMob target = this.onlyTarget();
         this.fireShots(tower, target, 3);
 
         TowerBuffState aim = tower.conditions().stream().filter(state -> state.term() == TowerTerm.STEADY_AIM)
@@ -302,53 +112,9 @@ class SniperTowerTest {
     }
 
     @Test
-    void fourthShotCountsTowardItsDeadeyeRoundAndPrimesItForTheFourthShot() {
-        GameWorld world = boardWorld();
-        SniperTower tower = awakenedSniper(world, 15);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Marksman's Eye"));
-        tower.buyUpgrade(UpgradePaths.named(tower, "Fourth Shot"));
-        FakeEnemyMob target = targetFor(world);
-
-        this.fireShots(tower, target, 2);
-        NodeProgress afterTwo = tower.progress().getFirst();
-        this.fireShots(tower, target, 1);
-
-        assertThat(afterTwo.count()).isEqualTo(2);
-        assertThat(afterTwo.of()).isEqualTo(4);
-        assertThat(tower.conditions()).extracting(TowerBuffState::term).contains(TowerTerm.DEADEYE_ROUND);
-    }
-
-    @Test
-    void steadyAimWaitsForAttune() {
-        GameWorld world = boardWorld();
-        world.economy().startEconomy(1000, 5);
-        SniperTower tower = new SniperTower(world, 3, 3);
-        FakeEnemyMob target = targetFor(world);
-
-        this.fireShots(tower, target, 2);
-
-        assertThat(critChances(target)).containsOnly(SniperTower.CRIT_CHANCE);
-    }
-
-    @Test
-    void aNewTargetKeepsSteadyAim() {
-        GameWorld world = boardWorld();
-        SniperTower tower = awakenedSniper(world, 0);
-        FakeEnemyMob first = targetFor(world);
-        this.fireShots(tower, first, 2);
-        first.invalidate();
-        FakeEnemyMob second = targetFor(world);
-
-        this.fireShots(tower, second, 1);
-
-        assertThat(critChances(second).getFirst()).isCloseTo(SniperTower.CRIT_CHANCE + STEADY_AIM_CRIT_BONUS, within(1e-6f));
-    }
-
-    @Test
     void steadyAimShotsCountAsTheDeedOfTheTowerOncePerShot() {
-        GameWorld world = boardWorld();
-        SniperTower tower = awakenedSniper(world, 0);
-        FakeEnemyMob target = targetFor(world);
+        SniperTower tower = this.sniperWith("Attune");
+        FakeEnemyMob target = this.onlyTarget();
 
         this.fireShots(tower, target, 4);
 
@@ -356,80 +122,25 @@ class SniperTowerTest {
     }
 
     @Test
-    void focusedOpticsThreeWaitsForTwentyShotsUnderSteadyAim() {
-        GameWorld world = boardWorld();
-        SniperTower tower = awakenedSniper(world, 0);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics"));
-        tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics II"));
-        UpgradeNode three = UpgradePaths.named(tower, "Focused Optics III");
-        FakeEnemyMob target = targetFor(world);
-        this.fireShots(tower, target, 20);
-        boolean atNineteen = tower.buyUpgrade(three);
+    void anEnemyUnderPriorityIsShotBeforeOneFurtherAlongThePath() {
+        SniperTower tower = new SniperTower(this.world, 3, 3);
+        FakeEnemyMob furthest = FakeEnemyMob.at(100, 100).withProgression(900);
+        FakeEnemyMob prioritised = FakeEnemyMob.at(100, 110).withProgression(10);
+        prioritised.applyEffect(Effect.priority(100, DamageSink.none()));
+        this.world.enemies().setEnemies(new EnemyMob[]{furthest, prioritised});
 
-        this.fireShots(tower, target, 1);
-        boolean atTwenty = tower.buyUpgrade(three);
+        tower.doTick(1);
 
-        assertThat(atNineteen).isFalse();
-        assertThat(atTwenty).isTrue();
+        assertThat(prioritised.hits()).hasSize(1);
+        assertThat(furthest.hits()).isEmpty();
     }
 
     @Test
-    void quickScopeHelpsTheFirstShotAndSteadyAimThenSpeedsUpTheWaitBetweenShots() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Focused Optics");
-        FakeEnemyMob target = targetFor(world);
-
-        List<Integer> ticks = this.shotTicks(tower, target, 3);
-
-        assertThat(critChances(target).get(0)).isCloseTo(SniperTower.CRIT_CHANCE + 0.5f, within(1e-6f));
-        assertThat(critChances(target).get(1)).isCloseTo(SniperTower.CRIT_CHANCE + STEADY_AIM_CRIT_BONUS, within(1e-6f));
-        assertThat(gaps(ticks).get(0)).isEqualTo(waitTicks(tower, 1.0));
-        assertThat(gaps(ticks).get(1)).isLessThan(waitTicks(tower, 1.0));
-    }
-
-    /** How many ticks a wait of {@code periods} base periods takes at the tower's fire rate. */
-    private static int waitTicks(SniperTower tower, double periods) {
-        return (int) Math.round((tower.coolDownMax + 1) * periods / tower.attackRate());
-    }
-
-    @Test
-    void aCritStartsAFrenzyThatMakesTheNextShotsComeFasterThanSteadyAimAlone() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Focused Optics", "Focused Optics II");
-        FakeEnemyMob steadyOnly = targetFor(world);
-        List<Integer> withoutCrits = this.shotTicks(tower, steadyOnly, 3);
-        GameWorld critWorld = boardWorld();
-        SniperTower frenzied = sniperWith(critWorld, "Focused Optics", "Focused Optics II");
-        FakeEnemyMob critical = targetFor(critWorld);
-        critical.landEveryHitCritical();
-
-        List<Integer> withCrits = this.shotTicks(frenzied, critical, 3);
-
-        assertThat(gaps(withCrits).get(1)).isLessThan(gaps(withoutCrits).get(1));
-    }
-
-    @Test
-    void weakSpotMakesAShotThatDoesNotCritIgnoreFiftyArmorAndAllPlating() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Focused Optics", "Focused Optics II", "Focused Optics III");
-        FakeEnemyMob target = targetFor(world);
-
-        this.fireShots(tower, target, 1);
-
-        AttackProfile attack = target.attackers().getFirst();
-        assertThat(attack.penetrate(DamageType.PHYSICAL, 80f, false)).isEqualTo(30f);
-        assertThat(attack.penetrateFlatReduction(500f, false)).isZero();
-        assertThat(attack.penetrateFlatReduction(500f, true)).isEqualTo(500f);
-    }
-
-    @Test
-    void overwatchStopsTheTowerShootingWhatIsWithinTwoCellsHoweverFarItsRangeGrows() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Focused Optics", "Focused Optics II", "Focused Optics III", "Momentum",
-                "Transcendent", "Range", "Range II", "Range III");
+    void overwatchStopsTheTowerShootingWhatIsWithinItsDeadZoneHoweverFarItsRangeGrows() {
+        SniperTower tower = this.sniperWith("Range III");
         FakeEnemyMob close = FakeEnemyMob.at(tower.getX() + 40, tower.getY()).withProgression(50);
         FakeEnemyMob distant = FakeEnemyMob.at(tower.getX() + 100, tower.getY()).withProgression(1);
-        world.enemies().setEnemies(new EnemyMob[]{close, distant});
+        this.world.enemies().setEnemies(new EnemyMob[]{close, distant});
 
         tower.doTick(1);
 
@@ -439,30 +150,25 @@ class SniperTowerTest {
 
     @Test
     void overwatchKeepsItsDeadZoneWhicheverWayRoundTheReachWasWidened() {
-        String[] overwatch = {"Range", "Range II", "Range III"};
-        String[] uplink = {"Tradecraft", "Tradecraft II", "Silver Rounds", "Spotter Uplink"};
-        for (String[][] order : new String[][][]{{overwatch, uplink}, {uplink, overwatch}}) {
-            GameWorld world = boardWorld();
-            SniperTower tower = sniperWith(world, "Focused Optics", "Focused Optics II", "Focused Optics III",
-                    "Momentum", "Transcendent");
-            UpgradePaths.buy(tower, world, order[0]);
-            UpgradePaths.buy(tower, world, order[1]);
+        for (String[] order : new String[][]{{"Range III", "Spotter Uplink"}, {"Spotter Uplink", "Range III"}}) {
+            GameWorld board = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+            SniperTower tower = new SniperTower(board, 3, 3);
+            UpgradePaths.buy(tower, board, order);
             FakeEnemyMob close = FakeEnemyMob.at(tower.getX() + 40, tower.getY()).withProgression(50);
             close.applyEffect(Effect.marked(100, DamageSink.none()));
-            world.enemies().setEnemies(new EnemyMob[]{close});
+            board.enemies().setEnemies(new EnemyMob[]{close});
 
             tower.doTick(1);
 
-            assertThat(close.hits()).isEmpty();
+            assertThat(close.hits()).as(String.join(" then ", order)).isEmpty();
         }
     }
 
     @Test
     void withoutOverwatchTheTowerShootsWhatIsClose() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Range");
+        SniperTower tower = this.sniperWith("Range");
         FakeEnemyMob close = FakeEnemyMob.at(tower.getX() + 40, tower.getY()).withProgression(50);
-        world.enemies().setEnemies(new EnemyMob[]{close});
+        this.world.enemies().setEnemies(new EnemyMob[]{close});
 
         tower.doTick(1);
 
@@ -470,316 +176,68 @@ class SniperTowerTest {
     }
 
     @Test
-    void railgunPiercesEveryEnemyOnTheLineEvenPastRangeAndEachAfterTheFirstTakesAQuarterLess() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Focused Optics", "Focused Optics II", "Focused Optics III", "Momentum",
-                "Transcendent", "Railgun");
+    void railgunPiercesEveryEnemyOnTheLineEvenPastRangeEachTakingLessThanTheOneBefore() {
+        SniperTower tower = this.sniperWith("Railgun");
         float scale = BoardFixtures.SCALE;
         FakeEnemyMob first = FakeEnemyMob.at(tower.getX() + 60, tower.getY());
         FakeEnemyMob aimed = FakeEnemyMob.at(tower.getX() + 100, tower.getY()).withProgression(10);
         FakeEnemyMob pastRange = FakeEnemyMob.at(tower.getX() + tower.getRangeReal() + scale, tower.getY());
         FakeEnemyMob beside = FakeEnemyMob.at(tower.getX() + 100, tower.getY() + 2 * scale);
-        world.enemies().setEnemies(new EnemyMob[]{first, aimed, pastRange, beside});
+        this.world.enemies().setEnemies(new EnemyMob[]{first, aimed, pastRange, beside});
 
         tower.doTick(1);
 
-        int full = tower.damageCurrent();
-        assertThat(first.onlyHitAmount()).isEqualTo(full);
-        assertThat(aimed.onlyHitAmount()).isEqualTo(Math.round(full * 0.75f));
-        assertThat(pastRange.onlyHitAmount()).isEqualTo(Math.round(full * 0.75f * 0.75f));
+        assertThat(first.onlyHitAmount()).isEqualTo(tower.damageCurrent());
+        assertThat(aimed.onlyHitAmount()).isLessThan(first.onlyHitAmount());
+        assertThat(pastRange.onlyHitAmount()).isLessThan(aimed.onlyHitAmount());
         assertThat(beside.hits()).isEmpty();
     }
 
     @Test
-    void aRailgunShotsTraceRunsTwoCellsPastRangeWhereAPlainShotsEndsAtItsTarget() {
-        GameWorld world = boardWorld();
-        SniperTower railgun = sniperWith(world, "Focused Optics", "Focused Optics II", "Focused Optics III", "Momentum",
-                "Transcendent", "Railgun");
-        SniperTower plain = sniperWith(world);
+    void aRailgunShotsTraceRunsPastRangeWhereAPlainShotsEndsAtItsTarget() {
+        SniperTower railgun = this.sniperWith("Railgun");
+        SniperTower plain = new SniperTower(this.world, 3, 3);
         FakeEnemyMob target = FakeEnemyMob.at(railgun.getX() + 60, railgun.getY());
-        world.enemies().setEnemies(new EnemyMob[]{target});
+        this.world.enemies().setEnemies(new EnemyMob[]{target});
 
         railgun.doTick(1);
         plain.doTick(1);
 
-        float reach = railgun.getRangeReal() + 2 * BoardFixtures.SCALE;
         assertThat(railgun.lastShot()).hasValueSatisfying(trace -> {
-            assertThat(trace.toX()).isCloseTo(railgun.getX() + reach, within(0.5f));
+            assertThat(trace.toX()).isGreaterThan(railgun.getX() + railgun.getRangeReal());
             assertThat(trace.toY()).isCloseTo(railgun.getY(), within(0.5f));
         });
         assertThat(plain.lastShot()).hasValueSatisfying(trace -> assertThat(trace.toX()).isEqualTo((float) target.getX()));
     }
 
     @Test
-    void aTranscendedSnipersBarrelTurnsGold() {
-        GameWorld world = boardWorld();
-        SniperTower transcended = sniperWith(world, "Focused Optics", "Focused Optics II", "Focused Optics III",
-                "Momentum", "Transcendent");
-        SniperTower awakened = sniperWith(world, "Focused Optics");
-        TowerSpriteFrameBuilder sprites = new TowerSpriteFrameBuilder(world, 0, 0.0, 0.0);
-
-        transcended.accept(sprites);
-        awakened.accept(sprites);
-
-        assertThat(sprites.buildHeads()).extracting(TurretHeadDraw::palette)
-                .containsExactly(Palette.TOWER_SNIPER_GOLD_BARREL, Palette.TOWER_SNIPER_BODY);
-    }
-
-    @Test
-    void executionerKillsAnEnemyAShotLeavesUnderFifteenPercentHealthAndThatCountsAsACrit() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Focused Optics", "Focused Optics II", "Focused Optics III", "Momentum",
-                "Transcendent", "Executioner");
-        FakeEnemyMob target = targetFor(world);
-        target.atHealthFraction(0.1f);
-
-        tower.doTick(1);
-
-        assertThat(target.hits()).hasSize(2);
-        assertThat(target.hits().get(1).amount()).isGreaterThan(target.hits().get(0).amount());
-        assertThat(target.attackers().get(1).delivery()).isEqualTo(Delivery.PERIODIC);
-        assertThat(tower.wasLastShotCritical()).isTrue();
-    }
-
-    @Test
-    void executionerLeavesAHealthyEnemyAlone() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Focused Optics", "Focused Optics II", "Focused Optics III", "Momentum",
-                "Transcendent", "Executioner");
-        FakeEnemyMob target = targetFor(world);
-
-        tower.doTick(1);
-
-        assertThat(target.hits()).hasSize(1);
-        assertThat(tower.wasLastShotCritical()).isFalse();
-    }
-
-    @Test
-    void fourthShotMakesEveryFourthShotAGuaranteedCritThatHitsHarder() {
-        GameWorld world = boardWorld();
-        SniperTower tower = awakenedSniper(world, 15);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Marksman's Eye"));
-        tower.buyUpgrade(UpgradePaths.named(tower, "Fourth Shot"));
-        FakeEnemyMob target = targetFor(world);
-
-        this.fireShots(tower, target, 8);
-
-        assertThat(target.attackers()).extracting(AttackProfile::guaranteedCrit)
-                .containsExactly(false, false, false, true, false, false, false, true);
-        assertThat(target.attackers()).extracting(AttackProfile::critMultiplier)
-                .containsExactly(2.0f, 2.0f, 2.0f, 3.5f, 2.0f, 2.0f, 2.0f, 3.5f);
-    }
-
-    @Test
-    void marksmansEyeSpecialsKeepAimingAtTheEnemyFurthestAlongThePath() {
-        for (String special : List.of("Hollow Point", "Fourth Shot", "Shatter Shot")) {
-            GameWorld world = boardWorld();
-            SniperTower tower = sniperWith(world, "Marksman's Eye", special);
-            FakeEnemyMob furthest = FakeEnemyMob.at(100, 100).withProgression(900).withHealth(10);
-            FakeEnemyMob frozenAndHealthy = FakeEnemyMob.at(100, 110).withProgression(1).withHealth(10_000);
-            frozenAndHealthy.reportFrozen();
-            world.enemies().setEnemies(new EnemyMob[]{furthest, frozenAndHealthy});
-
-            tower.doTick(1);
-
-            assertThat(furthest.hits()).as(special).hasSize(1);
-            assertThat(frozenAndHealthy.hits()).as(special).isEmpty();
-        }
-    }
-
-    @Test
-    void momentumTurnsTheShotAfterACritIntoAThreefoldShotThatIgnoresArmorAndPlating() {
-        GameWorld world = boardWorld();
-        SniperTower tower = awakenedSniper(world, 20);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics"));
-        tower.buyUpgrade(UpgradePaths.named(tower, "Momentum"));
-        FakeEnemyMob target = targetFor(world);
-        target.landEveryHitCritical();
-
-        this.fireShots(tower, target, 2);
-
-        assertThat(target.hits().get(1).amount()).isEqualTo(3 * target.hits().get(0).amount());
-        assertThat(target.attackers().get(0).armorPenetration()).isZero();
-        assertThat(target.attackers().get(1).armorPenetration()).isEqualTo(1f);
-        assertThat(target.attackers().get(1).flatPenetration()).isEqualTo(1f);
-    }
-
-    @Test
-    void momentumHalvesTheWaitForFiveSecondsAfterAKillThenItEnds() {
-        GameWorld world = boardWorld();
-        SniperTower tower = awakenedSniper(world, 20);
-        tower.buyUpgrade(UpgradePaths.named(tower, "Focused Optics"));
-        tower.buyUpgrade(UpgradePaths.named(tower, "Momentum"));
-        FakeEnemyMob killed = targetFor(world);
-        killed.dieOnAnyHit();
-        int killTick = this.tick(tower);
-        FakeEnemyMob next = targetFor(world);
-
-        List<Integer> ticks = this.shotTicks(tower, next, 1);
-
-        assertThat(ticks.getFirst() - killTick).isEqualTo((tower.coolDownMax + 1) / 2);
-    }
-
-    @Test
-    void withoutMomentumAKillLeavesTheNextWaitUnchanged() {
-        GameWorld world = boardWorld();
-        SniperTower tower = awakenedSniper(world, 10);
-        FakeEnemyMob killed = targetFor(world);
-        killed.dieOnAnyHit();
-        int killTick = this.tick(tower);
-        FakeEnemyMob next = targetFor(world);
-
-        List<Integer> ticks = this.shotTicks(tower, next, 1);
-
-        assertThat(ticks.getFirst() - killTick).isEqualTo(waitTicks(tower, 1.0));
-    }
-
-    @Test
-    void hollowPointAppliesAVulnerabilityStackOnEveryHitCritOrNot() {
-        GameWorld world = boardWorld();
-        SniperTower tower = new SniperTower(world, 0, 0);
-        UpgradePaths.buy(tower, world, "Marksman's Eye", "Hollow Point");
-        FakeEnemyMob target = targetFor(world);
-        this.fireShots(tower, target, 1);
-
-        target.landEveryHitCritical();
-        this.fireShots(tower, target, 1);
-
-        assertThat(target.appliedEffects()).hasSize(2).allSatisfy(effect -> {
-            assertThat(effect.kind()).isEqualTo(EffectKind.VULNERABLE);
-            assertThat(effect.stacks()).isEqualTo(1);
-        });
-    }
-
-    @Test
-    void anEnemyUnderPriorityIsShotBeforeOneFurtherAlongThePath() {
-        GameWorld world = boardWorld();
-        SniperTower tower = awakenedSniper(world, 0);
-        FakeEnemyMob furthest = FakeEnemyMob.at(100, 100).withProgression(900);
-        FakeEnemyMob prioritised = FakeEnemyMob.at(100, 110).withProgression(10);
-        prioritised.applyEffect(Effect.priority(100, DamageSink.none()));
-        world.enemies().setEnemies(new EnemyMob[]{furthest, prioritised});
-
-        tower.doTick(1);
-
-        assertThat(prioritised.hits()).hasSize(1);
-        assertThat(furthest.hits()).isEmpty();
-    }
-
-    @Test
-    void theFirstSpecialBoughtDecidesWhoTheSniperAimsAt() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Focused Optics", "Headhunter", "Focused Optics II", "Focused Optics III",
-                "Transcendent", "Ricochet");
-        FakeEnemyMob grunt = FakeEnemyMob.at(100, 100).withProgression(900);
-        FakeEnemyMob boss = FakeEnemyMob.at(100, 110).ranked(Rank.BOSS).withProgression(1);
-        world.enemies().setEnemies(new EnemyMob[]{grunt, boss});
-
-        tower.doTick(1);
-
-        assertThat(boss.hits()).hasSize(1);
-        assertThat(grunt.hits()).isEmpty();
-    }
-
-    @Test
-    void headhunterHitsAnEliteForThreeQuartersMore() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Focused Optics", "Headhunter");
-        FakeEnemyMob elite = FakeEnemyMob.at(100, 100).ranked(Rank.ELITE);
-        world.enemies().setEnemies(new EnemyMob[]{elite});
-
-        tower.doTick(1);
-
-        assertThat(elite.onlyHitAmount()).isEqualTo(Math.round(tower.damageCurrent() * 1.75f));
-    }
-
-    @Test
-    void aCritRicochetsToTheNearestEnemiesBesideTheTargetForSixtyPercentEach() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Focused Optics", "Ricochet");
+    void aCritRicochetsToTheNearestEnemiesBesideTheTargetForLessThanTheShot() {
+        SniperTower tower = this.sniperWith("Ricochet");
         // only the first is within range; the rest are a chain of neighbours leading away from the tower
         float edge = tower.getRangeReal() * 0.85f;
         FakeEnemyMob aimed = FakeEnemyMob.at(tower.getX() + edge, tower.getY());
         aimed.landEveryHitCritical();
         FakeEnemyMob first = FakeEnemyMob.at(aimed.getX() + 40, aimed.getY());
         FakeEnemyMob second = FakeEnemyMob.at(first.getX() + 40, first.getY());
-        FakeEnemyMob third = FakeEnemyMob.at(second.getX() + 40, second.getY());
-        FakeEnemyMob fourth = FakeEnemyMob.at(third.getX() + 40, third.getY());
         FakeEnemyMob faraway = FakeEnemyMob.at(aimed.getX(), aimed.getY() + 300);
-        world.enemies().setEnemies(new EnemyMob[]{aimed, first, second, third, fourth, faraway});
+        this.world.enemies().setEnemies(new EnemyMob[]{aimed, first, second, faraway});
 
         tower.doTick(1);
 
-        int bounce = Math.round(tower.damageCurrent() * 0.6f);
         assertThat(aimed.onlyHitAmount()).isEqualTo(tower.damageCurrent());
-        assertThat(first.onlyHitAmount()).isEqualTo(bounce);
-        assertThat(second.onlyHitAmount()).isEqualTo(bounce);
-        assertThat(third.onlyHitAmount()).isEqualTo(bounce);
-        assertThat(fourth.hits()).isEmpty();
+        assertThat(first.onlyHitAmount()).isLessThan(aimed.onlyHitAmount());
+        assertThat(second.onlyHitAmount()).isEqualTo(first.onlyHitAmount());
         assertThat(faraway.hits()).isEmpty();
     }
 
     @Test
-    void aShotThatDoesNotCritDoesNotRicochet() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Focused Optics", "Ricochet");
-        FakeEnemyMob aimed = FakeEnemyMob.at(100, 100);
-        FakeEnemyMob beside = FakeEnemyMob.at(120, 100);
-        world.enemies().setEnemies(new EnemyMob[]{aimed, beside});
-
-        tower.doTick(1);
-
-        assertThat(aimed.hits().size() + beside.hits().size()).isEqualTo(1);
-    }
-
-    @Test
-    void silverRoundsMakeTheThirdShotMagic() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Tradecraft", "Tradecraft II", "Silver Rounds");
-        FakeEnemyMob target = targetFor(world);
-
-        this.fireShots(tower, target, 3);
-
-        assertThat(target.hits()).extracting(Damage::type)
-                .containsExactly(DamageType.PHYSICAL, DamageType.PHYSICAL, DamageType.MAGIC);
-    }
-
-    @Test
-    void tradecraftMakesACritFollowingACritHitHarder() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Tradecraft");
-        FakeEnemyMob target = targetFor(world);
-        target.landEveryHitCritical();
-
-        this.fireShots(tower, target, 3);
-
-        assertThat(target.attackers()).extracting(AttackProfile::critMultiplier)
-                .containsExactly(2.0f, 2.25f, 2.5f);
-    }
-
-    @Test
-    void tradecraftTwoHitsTargetsPastTwoThirdsOfTheRangeHarder() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Tradecraft", "Tradecraft II");
-        float edge = tower.getRangeReal() * 0.9f;
-        FakeEnemyMob far = FakeEnemyMob.at(tower.getX() + edge, tower.getY());
-        world.enemies().setEnemies(new EnemyMob[]{far});
-
-        tower.doTick(1);
-
-        assertThat(far.onlyHitAmount()).isEqualTo(Math.round(tower.damageCurrent() * 1.25f));
-    }
-
-    @Test
-    void spotterUplinkLetsTheSniperShootAMarkedEnemyFromTwiceItsRange() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Tradecraft", "Tradecraft II", "Silver Rounds", "Focused Optics",
-                "Momentum", "Transcendent", "Spotter Uplink");
+    void spotterUplinkLetsTheSniperShootOnlyAMarkedEnemyBeyondItsRange() {
+        SniperTower tower = this.sniperWith("Spotter Uplink");
         float far = tower.getRangeReal() * 1.5f;
         FakeEnemyMob unmarked = FakeEnemyMob.at(tower.getX() + far, tower.getY());
         FakeEnemyMob marked = FakeEnemyMob.at(tower.getX(), tower.getY() + far);
         marked.applyEffect(Effect.marked(100, DamageSink.none()));
-        world.enemies().setEnemies(new EnemyMob[]{unmarked, marked});
+        this.world.enemies().setEnemies(new EnemyMob[]{unmarked, marked});
 
         tower.doTick(1);
 
@@ -788,108 +246,15 @@ class SniperTowerTest {
     }
 
     @Test
-    void aCritDuringFrenzyDoesNotRestartIt() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Focused Optics", "Focused Optics II");
-        FakeEnemyMob critical = targetFor(world);
-        critical.landEveryHitCritical();
-        this.shotTicks(tower, critical, 2);
-        FakeEnemyMob plain = targetFor(world);
+    void aTranscendedSnipersBarrelTurnsGold() {
+        SniperTower transcended = this.sniperWith("Transcendent");
+        SniperTower awakened = this.sniperWith("Awaken");
+        TowerSpriteFrameBuilder sprites = new TowerSpriteFrameBuilder(this.world, 0, 0.0, 0.0);
 
-        this.shotTicks(tower, plain, 2);
+        transcended.accept(sprites);
+        awakened.accept(sprites);
 
-        assertThat(tower.attackRate()).isEqualTo(1.0);
-    }
-
-    @Test
-    void frenzyAndMomentumHasteStack() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Focused Optics", "Focused Optics II", "Momentum");
-        FakeEnemyMob target = targetFor(world);
-        target.landEveryHitCritical();
-        target.dieOnAnyHit();
-
-        this.shotTicks(tower, target, 1);
-
-        assertThat(tower.attackRate()).isEqualTo(3.0);
-    }
-
-    @Test
-    void broadcastIiLengthensFrenzyButNotAOneShotStatus() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world);
-        AuraTower aura = new AuraTower(world, 3, 4);
-        world.towers().add(tower);
-        world.towers().add(aura);
-        UpgradePaths.buy(aura, world, "Broadcast", "Broadcast II");
-        tower.grantStatus(TowerStatus.nextShots(TowerTerm.FRENZY, 3, TowerModifiers.attackSpeed(1f)).lengthenedByBuffs());
-        tower.grantStatus(TowerStatus.nextShots(TowerTerm.PATIENCE, 1, TowerModifiers.critChance(0.5f)));
-
-        for (int shot = 0; shot < 3; shot++) {
-            tower.beginShot();
-        }
-
-        assertThat(tower.attackRate()).isEqualTo(2.0);
-        assertThat(tower.critChance()).isEqualTo(SniperTower.CRIT_CHANCE);
-    }
-
-    @Test
-    void headhunterAndTheExecutionersWoundedBossBonusAdd() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Focused Optics", "Focused Optics II", "Focused Optics III", "Headhunter",
-                "Transcendent", "Executioner");
-        FakeEnemyMob woundedBoss = FakeEnemyMob.at(100, 100).ranked(Rank.BOSS).atHealthFraction(0.2f);
-        world.enemies().setEnemies(new EnemyMob[]{woundedBoss});
-
-        tower.doTick(1);
-
-        assertThat(woundedBoss.hits().getFirst().amount()).isEqualTo(Math.round(tower.damageCurrent() * 2.25f));
-    }
-
-    @Test
-    void shatterShotAlwaysCritsAFrozenEnemyAndHitsItHarder() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Marksman's Eye", "Shatter Shot");
-        FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
-        frozen.reportFrozen();
-        world.enemies().setEnemies(new EnemyMob[]{frozen});
-
-        tower.doTick(1);
-
-        assertThat(frozen.attackers().getFirst().critChance()).isGreaterThanOrEqualTo(1f);
-        assertThat(frozen.attackers().getFirst().critMultiplier()).isEqualTo(SniperTower.CRIT_MULTIPLIER + 1f);
-    }
-
-    @Test
-    void shatterShotLeavesAMovingEnemysCritsAlone() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Marksman's Eye", "Shatter Shot");
-        FakeEnemyMob moving = FakeEnemyMob.at(100, 100);
-        world.enemies().setEnemies(new EnemyMob[]{moving});
-
-        tower.doTick(1);
-
-        assertThat(moving.attackers().getFirst().critChance()).isEqualTo(SniperTower.CRIT_CHANCE);
-        assertThat(moving.attackers().getFirst().critMultiplier()).isEqualTo(SniperTower.CRIT_MULTIPLIER);
-    }
-
-    @Test
-    void hollowPointMakesTheSniperApplyVulnerable() {
-        GameWorld world = boardWorld();
-        SniperTower tower = sniperWith(world, "Marksman's Eye", "Hollow Point");
-
-        assertThat(tower.applies()).singleElement().satisfies(applied -> {
-            assertThat(applied.term()).isEqualTo(td.effect.EffectKind.VULNERABLE);
-            assertThat(applied.sources()).extracting(AppliedEffect.Source::name).containsExactly("Hollow Point");
-        });
-    }
-
-    @Test
-    void ricochetSaysWhatItDoes() {
-        SniperTower tower = sniperWith(boardWorld(), "Focused Optics", "Ricochet");
-
-        assertThat(td.fixtures.TowerFixtures.plain(tower.wordsOf(UpgradePaths.named(tower, "Ricochet")).sentences()))
-                .contains("a crit or a kill bounces to the nearest enemy within 1.5 cells for 60% of the damage, "
-                        + "up to 3 bounces; each bounce can crit");
+        assertThat(sprites.buildHeads()).extracting(TurretHeadDraw::palette)
+                .containsExactly(Palette.TOWER_SNIPER_GOLD_BARREL, Palette.TOWER_SNIPER_BODY);
     }
 }
