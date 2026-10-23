@@ -47,6 +47,7 @@ import java.util.OptionalInt;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
+import java.util.stream.IntStream;
 
 /**
  * The hidden dev panel (Ctrl+Shift+D) for playtesting: set the economy, spawn any wave script,
@@ -63,9 +64,10 @@ public class PanelDev extends JPanel {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    /** A rank's badge as it shows in the info pane. */
-    private static final int RANK_ICON = 11;
+    /** A rank's badge as it shows in the info pane, and a path's chevron beside it. */
+    private static final int GLYPH_ICON = 11;
     private static final float RANK_BADGE_SIZE = 4.5f;
+    private static final float PATH_CHEVRON_SIZE = 4f;
     private static final Color PROBLEM = new Color(255, 140, 120);
     private static final Color MUTED = new Color(150, 170, 150);
     private static final String CARD_PREVIEW = "preview";
@@ -104,13 +106,11 @@ public class PanelDev extends JPanel {
     private final JLabel enemySelected = label("");
     private final CardLayout selectionCards = new CardLayout();
     private final JPanel selectionArea = new JPanel(this.selectionCards);
-    private final Java2DFrameRenderer badgeRenderer = new Java2DFrameRenderer();
+    private final Java2DFrameRenderer glyphRenderer = new Java2DFrameRenderer();
     private final ChoiceButton<Rank> rankChoice = new ChoiceButton<>(new Choices<>(List.of(Rank.values()),
-            Comparator.naturalOrder(), SheetNumbers::titleCase, rank -> "", this::rankLook), Rank.GRUNT, () -> {
-                this.refreshPreview();
-                this.onReleaseFocus.run();
-            });
-    private final HudButton pathButton = new HudButton("");
+            Comparator.naturalOrder(), SheetNumbers::titleCase, rank -> "", this::rankLook), Rank.GRUNT, this::spawnChoiceClosed);
+    private final ChoiceButton<Integer> pathChoice = new ChoiceButton<>(this.pathChoices(1), 0,
+            this::spawnChoiceClosed);
     private final HudToggleButton cellGridToggle = toggle("Cell grid");
     private final PathWaveRow preview;
     private final JLabel problem = label("");
@@ -124,7 +124,6 @@ public class PanelDev extends JPanel {
 
     private GameWorld world;
     private DevControls dev;
-    private int path = 0;
     private DevSelection shownSelection = DevSelection.none();
     private Runnable onSkipWave = () -> {
     };
@@ -214,19 +213,17 @@ public class PanelDev extends JPanel {
     public boolean holdsFocus() {
         Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         return (owner != null && SwingUtilities.isDescendingFrom(owner, this)) || this.rankChoice.holdsFocus()
-                || this.effectChoice.holdsFocus() || this.buffChoice.holdsFocus();
+                || this.pathChoice.holdsFocus() || this.effectChoice.holdsFocus() || this.buffChoice.holdsFocus();
     }
 
     public boolean isCellGridOn() {
         return this.cellGridToggle.isSelected();
     }
 
-    /** Reads the installed level again: its paths bound and colour the path picker. */
+    /** Reads the installed level again: its paths are the ones the path picker offers. */
     public void refresh() {
         int paths = this.dev == null ? 1 : this.dev.pathCount();
-        this.path = Math.floorMod(this.path, paths);
-        this.pathButton.setText("Path " + (this.path + 1) + "/" + paths);
-        this.pathButton.setForeground(this.pathColor());
+        this.pathChoice.offer(this.pathChoices(paths), Math.min(this.pathChoice.chosen(), paths - 1));
         this.refreshPreview();
     }
 
@@ -361,10 +358,6 @@ public class PanelDev extends JPanel {
         this.submitOnEnter(this.effectPower, this::applyEffect);
         this.submitOnEnter(this.buffSeconds, this::applyBuff);
         this.submitOnEnter(this.buffPower, this::applyBuff);
-        this.pathButton.addActionListener(evt -> {
-            this.path++;
-            this.refresh();
-        });
         this.script.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -430,7 +423,7 @@ public class PanelDev extends JPanel {
         widthFollowsPanel(this.status);
         JPanel spawnRow = new JPanel(new GridBagLayout());
         spawnRow.setOpaque(false);
-        spawnRow.add(row(this.script, this.rankChoice.component(), this.pathButton, button("Spawn", this::spawn)));
+        spawnRow.add(row(this.script, this.rankChoice.component(), this.pathChoice.component(), button("Spawn", this::spawn)));
         GridBagConstraints previewCell = new GridBagConstraints();
         previewCell.weightx = 1.0;
         previewCell.fill = GridBagConstraints.HORIZONTAL;
@@ -493,7 +486,7 @@ public class PanelDev extends JPanel {
         this.bind("Speed", altShift(KeyEvent.VK_PERIOD), "5 ticks/s faster", fasterByFive::doClick);
         this.bind("Spawn", alt(KeyEvent.VK_S), "wave script", focus(this.script));
         this.bind("Spawn", alt(KeyEvent.VK_R), "choose the rank", this.rankChoice::toggle);
-        this.bind("Spawn", alt(KeyEvent.VK_P), "next path", this.pathButton::doClick);
+        this.bind("Spawn", alt(KeyEvent.VK_P), "choose the path", this.pathChoice::toggle);
         this.bind("Economy", alt(KeyEvent.VK_U), "ignore upgrade gates", ignoreGates::doClick);
         this.bind("Tower", alt(KeyEvent.VK_X), "XP to grant", focus(this.xp));
         this.bind("Tower", altShift(KeyEvent.VK_X), "reset", reset::doClick);
@@ -515,7 +508,7 @@ public class PanelDev extends JPanel {
         if (this.dev == null) {
             return;
         }
-        DevControls.WaveScriptCheck check = this.dev.checkWaveScript(this.script.getText(), this.rankChoice.chosen(), this.path);
+        DevControls.WaveScriptCheck check = this.dev.checkWaveScript(this.script.getText(), this.rankChoice.chosen(), this.pathChoice.chosen());
         check.wave().ifPresent(this.preview::setWave);
         this.problem.setText(check.problem());
         this.previewCards.show(this.previewArea, check.wave().isPresent() ? CARD_PREVIEW : CARD_PROBLEM);
@@ -526,15 +519,32 @@ public class PanelDev extends JPanel {
         RankBadge badge = EnemyFrameBuilder.badgeFor(rank);
         Color color = Java2DFrameRenderer.rankBadgePalette(badge).map(Java2DFrameRenderer::colorFor)
                 .orElse(Hud.FOREGROUND);
-        return new RowLook(new PaintedIcon(RANK_ICON, RANK_ICON,
-                g2 -> this.badgeRenderer.paintRankBadgeGlyph(g2, badge, RANK_BADGE_SIZE)), color, color);
+        return new RowLook(new PaintedIcon(GLYPH_ICON, GLYPH_ICON,
+                g2 -> this.glyphRenderer.paintRankBadgeGlyph(g2, badge, RANK_BADGE_SIZE)), color, color);
     }
 
-    private Color pathColor() {
-        if (this.world == null || this.path >= this.world.level().pathCount()) {
+    private Choices<Integer> pathChoices(int paths) {
+        return new Choices<>(IntStream.range(0, paths).boxed().toList(), Comparator.naturalOrder(),
+                path -> "Path " + (path + 1), path -> "", this::pathLook);
+    }
+
+    /** A path shows the chevron its markers run with, in its colour. */
+    private RowLook pathLook(int path) {
+        Color color = this.pathColor(path);
+        return new RowLook(new PaintedIcon(GLYPH_ICON, GLYPH_ICON,
+                g2 -> this.glyphRenderer.paintPathGlyph(g2, color, PATH_CHEVRON_SIZE)), color, color);
+    }
+
+    private void spawnChoiceClosed() {
+        this.refreshPreview();
+        this.onReleaseFocus.run();
+    }
+
+    private Color pathColor(int path) {
+        if (this.world == null || path >= this.world.level().pathCount()) {
             return Hud.FOREGROUND;
         }
-        PathColor color = this.world.level().paths().get(this.path).color();
+        PathColor color = this.world.level().paths().get(path).color();
         return new Color(color.r(), color.g(), color.b());
     }
 
@@ -576,13 +586,13 @@ public class PanelDev extends JPanel {
 
     /** A script with a problem puts the whole problem in the info pane, where it wraps. */
     private boolean spawn() {
-        DevControls.WaveScriptCheck check = this.dev.checkWaveScript(this.script.getText(), this.rankChoice.chosen(), this.path);
+        DevControls.WaveScriptCheck check = this.dev.checkWaveScript(this.script.getText(), this.rankChoice.chosen(), this.pathChoice.chosen());
         if (check.wave().isEmpty()) {
             this.onInfoText.accept("Wave script problem\n\n" + check.problem());
             this.showMessage("Nothing spawned: the problem is in Info");
             return false;
         }
-        this.showMessage(this.dev.spawnWave(this.script.getText(), this.rankChoice.chosen(), this.path));
+        this.showMessage(this.dev.spawnWave(this.script.getText(), this.rankChoice.chosen(), this.pathChoice.chosen()));
         return true;
     }
 
