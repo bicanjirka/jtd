@@ -58,6 +58,7 @@ class HitResolutionTest {
         assertThat(HitResolution.resolve(new Damage(1000, DamageType.PHYSICAL, true), armored).critical())
                 .isTrue();
     }
+
     @Test
     void fullResilienceNeverLetsACritLand() {
         StatView resilient = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, 100f));
@@ -176,18 +177,15 @@ class HitResolutionTest {
 
     @Test
     void damageThatTicksTakesTheOverTimeMultiplierAndAHitDoesNot() {
-        td.stat.BaseStats<EnemyStat> stats = td.stat.BaseStats.defaults(td.stat.EnemyStat.class).with(td.stat.EnemyStat.PERIODIC_DAMAGE_TAKEN, 1.5f);
-        td.stat.StatView view = new td.stat.StatSheet(stats, accumulator -> {
-        });
+        StatView view = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.PERIODIC_DAMAGE_TAKEN, 1.5f));
 
-        td.damage.Damage ticking = HitResolution.resolve(td.damage.Damage.magic(1000),
-                td.damage.AttackProfile.none().asPeriodic(), view, () -> 1.0);
-        td.damage.Damage hit = HitResolution.resolve(td.damage.Damage.magic(1000), td.damage.AttackProfile.none(),
-                view, () -> 1.0);
+        Damage ticking = HitResolution.resolve(Damage.magic(1000), AttackProfile.none().asPeriodic(), view, () -> 1.0);
+        Damage hit = HitResolution.resolve(Damage.magic(1000), AttackProfile.none(), view, () -> 1.0);
 
-        org.assertj.core.api.Assertions.assertThat(ticking.amount()).isEqualTo(1500);
-        org.assertj.core.api.Assertions.assertThat(hit.amount()).isEqualTo(1000);
+        assertThat(ticking.amount()).isEqualTo(1500);
+        assertThat(hit.amount()).isEqualTo(1000);
     }
+
     @Test
     void dodgeChanceFollowsTheArmorCurveAndNeverReachesCertainty() {
         assertThat(HitResolution.dodgeChance(25f)).isEqualTo(0.2f);

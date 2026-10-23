@@ -6,10 +6,20 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.DamageSink;
 import td.effect.Effect;
+import td.effect.EffectKind;
+import td.effect.PoolTuning;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.LevelFixtures;
 import td.fixtures.WorldFixtures;
+import td.stat.EnemyStat;
+import td.stat.StatModifier;
+import td.stat.StatModifiers;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
+import td.wave.Vec2;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -24,27 +34,26 @@ class DefinedEnemyMobTest {
     void enemyWithZeroDelayIsActiveImmediately() {
         GameWorld context = newContext();
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
 
         assertThat(enemy.validTarget()).isTrue();
     }
 
     @Test
     void enemyStaysInactiveUntilItsDelayElapses() {
-        GameWorld context = newContext();
-        int delayArg = 1;
-        float speed = 1.28f; // default speed, px/tick
-        int expectedActivationTick = Math.round(22.4f * delayArg / speed);
-
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, delayArg, 50, 3, Rank.GRUNT);
-        assertThat(enemy.validTarget()).isFalse();
-
-        for (int i = 1; i < expectedActivationTick; i++) {
-            enemy.doTick(i);
+        EnemyDefinition plain = EnemyFixtures.simpleDefinition("plain");
+        SpawnParameters oneSlotBack = SpawnParameters.atSlot(1, plain.baseSpeed(), 50, 3);
+        EnemyMob enemy = new DefinedEnemyMob(plain, newContext(), oneSlotBack, Rank.GRUNT);
+        boolean activeAtOnce = enemy.validTarget();
+        for (int t = 1; t < oneSlotBack.delayTicks(); t++) {
+            enemy.doTick(t);
         }
-        assertThat(enemy.validTarget()).isFalse();
+        boolean activeJustBefore = enemy.validTarget();
 
-        enemy.doTick(expectedActivationTick);
+        enemy.doTick(oneSlotBack.delayTicks());
+
+        assertThat(activeAtOnce).isFalse();
+        assertThat(activeJustBefore).isFalse();
         assertThat(enemy.validTarget()).isTrue();
     }
 
@@ -52,9 +61,8 @@ class DefinedEnemyMobTest {
     void lethalDamageKillsTheEnemyAndCreditsThePlayer() {
         RecordingGameHost host = new RecordingGameHost();
         GameWorld context = WorldFixtures.newWorldOnBoard(host, 1, 1001, 1001);
-        context.enemies().setCount(1);
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 7, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 7);
         assertThat(enemy.getHealth()).isEqualTo(5000);
 
         enemy.doDamage(Damage.physical(5000));
@@ -69,9 +77,8 @@ class DefinedEnemyMobTest {
     void anAlreadyDeadEnemyDamagedAgainDoesNotPayTheBountyTwice() {
         RecordingGameHost host = new RecordingGameHost();
         GameWorld context = WorldFixtures.newWorldOnBoard(host, 1, 1001, 1001);
-        context.enemies().setCount(1);
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 7, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 7);
         enemy.doDamage(Damage.physical(5000));
         enemy.doDamage(Damage.physical(5000));
 
@@ -83,7 +90,7 @@ class DefinedEnemyMobTest {
     @Test
     void nonLethalDamageReducesHealthWithoutKilling() {
         GameWorld context = newContext();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
 
         enemy.doDamage(Damage.physical(2000));
 
@@ -94,7 +101,7 @@ class DefinedEnemyMobTest {
     @Test
     void aBrokenShieldLetsTheRestOfTheHitThrough() {
         GameWorld context = newContext();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         assertThat(enemy.getHealth()).isEqualTo(5000);
         enemy.applyEffect(Effect.shield(400f, 5, DamageSink.none()));
 
@@ -102,13 +109,13 @@ class DefinedEnemyMobTest {
 
         assertThat(landed).isEqualTo(Damage.physical(600));
         assertThat(enemy.getHealth()).isEqualTo(4400);
-        assertThat(enemy.hasEffect(td.effect.EffectKind.SHIELD)).isFalse();
+        assertThat(enemy.hasEffect(EffectKind.SHIELD)).isFalse();
     }
 
     @Test
     void spiritScalesAShieldWhenItIsApplied() {
         GameWorld context = newContext();
-        DefinedEnemyMob enemy = (DefinedEnemyMob) EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        DefinedEnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.sickened(50));
 
         enemy.applyEffect(Effect.shield(400f, 100, DamageSink.none()));
@@ -119,9 +126,10 @@ class DefinedEnemyMobTest {
     @Test
     void aCauterizedEnemyReceivesHalfAShield() {
         GameWorld context = newContext();
-        DefinedEnemyMob enemy = (DefinedEnemyMob) EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        enemy.applyEffect(Effect.burn(Damage.magic(100), 60, DamageSink.none()).withTuning(td.effect.PoolTuning.standard().withCarried(td.stat.StatModifiers.of(td.stat.EnemyStat.HEALING_RECEIVED,
-                td.stat.StatModifier.flat(-0.5f)))));
+        DefinedEnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
+        enemy.applyEffect(Effect.burn(Damage.magic(100), 60, DamageSink.none())
+                .withTuning(PoolTuning.standard().withCarried(
+                        StatModifiers.of(EnemyStat.HEALING_RECEIVED, StatModifier.flat(-0.5f)))));
 
         enemy.applyEffect(Effect.shield(400f, 100, DamageSink.none()));
 
@@ -131,7 +139,7 @@ class DefinedEnemyMobTest {
     @Test
     void aCritFromAnAttackerThatPiercesShieldsGoesStraightToHealth() {
         GameWorld context = newContext();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.shield(5000f, 100, DamageSink.none()));
         AttackProfile cleanShot = AttackProfile.critChance(1f).withCritsPierceShields();
 
@@ -147,8 +155,8 @@ class DefinedEnemyMobTest {
     @Test
     void whatAShieldTookIsReportedAndAnAttackThatIgnoresShieldsTakesNoneOfIt() {
         GameWorld context = newContext();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        java.util.List<Damage> reported = new java.util.ArrayList<>();
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
+        List<Damage> reported = new ArrayList<>();
         context.enemies().addShieldListener((mob, absorbed) -> reported.add(absorbed));
         enemy.applyEffect(Effect.shield(400f, 100, DamageSink.none()));
 
@@ -166,7 +174,7 @@ class DefinedEnemyMobTest {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100)); // one straight segment, 100px long at scale 1
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         assertThat(enemy.getX()).isEqualTo(0.0);
         assertThat(enemy.getY()).isEqualTo(0.0);
 
@@ -183,7 +191,7 @@ class DefinedEnemyMobTest {
         // a trailing 1px leg so x=30 is reached strictly before the path wraps back to 0
         context.setPath(LevelFixtures.straightPath(1, 0, 10, 30, 31));
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
 
         int tick = 0;
         while (enemy.getX() < 10.0) {
@@ -202,25 +210,15 @@ class DefinedEnemyMobTest {
     }
 
     @Test
-    void ticksSinceCriticalHitIsMinusOneUntilOneLands() {
-        GameWorld context = newContext();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
-
-        assertThat(mob.ticksSinceCriticalHit(5)).isEqualTo(-1);
-    }
-
-    @Test
     void aCriticalHitIsCapturedOnTheMobsOwnNextDoTickNotSynchronouslyInDoDamage() {
         GameWorld context = newContext();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
+        DefinedEnemyMob mob = EnemyFixtures.plainMob(context, 50, 3);
 
-        enemy.doDamage(Damage.physical(100), AttackProfile.critChance(1f));
+        mob.doDamage(Damage.physical(100), AttackProfile.critChance(1f));
 
         assertThat(mob.ticksSinceCriticalHit(0)).isEqualTo(-1);
 
-        enemy.doTick(1);
+        mob.doTick(1);
 
         assertThat(mob.ticksSinceCriticalHit(1)).isZero();
         assertThat(mob.ticksSinceCriticalHit(2)).isEqualTo(1);
@@ -229,11 +227,10 @@ class DefinedEnemyMobTest {
     @Test
     void aNonCriticalHitLeavesTicksSinceCriticalHitAtMinusOne() {
         GameWorld context = newContext();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
+        DefinedEnemyMob mob = EnemyFixtures.plainMob(context, 50, 3);
 
-        enemy.doDamage(Damage.physical(100));
-        enemy.doTick(1);
+        mob.doDamage(Damage.physical(100));
+        mob.doTick(1);
 
         assertThat(mob.ticksSinceCriticalHit(1)).isEqualTo(-1);
     }
@@ -242,15 +239,14 @@ class DefinedEnemyMobTest {
     void previousPositionTracksOneTickBehindCurrentPosition() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(10, 0, 10));
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
+        DefinedEnemyMob mob = EnemyFixtures.plainMob(context, 50, 3);
 
         assertThat(mob.getPrevX()).isEqualTo(mob.getX());
         assertThat(mob.getPrevY()).isEqualTo(mob.getY());
         double spawnX = mob.getX();
         double spawnY = mob.getY();
 
-        enemy.doTick(1);
+        mob.doTick(1);
 
         assertThat(mob.getPrevX()).isEqualTo(spawnX);
         assertThat(mob.getPrevY()).isEqualTo(spawnY);
@@ -263,31 +259,16 @@ class DefinedEnemyMobTest {
         context.setPath(LevelFixtures.straightPath(10, 0, 1));
         int initialLives = context.economy().getLives();
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
-        DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
+        DefinedEnemyMob mob = EnemyFixtures.plainMob(context, 10, 3);
         int tick = 0;
         while (context.economy().getLives() == initialLives) {
             tick++;
-            enemy.doTick(tick);
+            mob.doTick(tick);
         }
 
         // wrapping to the start is a teleport; prev must not span the board
         assertThat(mob.getPrevX()).isEqualTo(mob.getX());
         assertThat(mob.getPrevY()).isEqualTo(mob.getY());
-    }
-
-    @Test
-    void enemyReachingEndOfPathCostsALife() {
-        GameWorld context = newContext();
-        context.setPath(LevelFixtures.straightPath(10, 0, 1));
-        int initialLives = context.economy().getLives();
-
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
-        for (int i = 1; i <= 100; i++) {
-            enemy.doTick(i);
-        }
-
-        assertThat(context.economy().getLives()).isLessThan(initialLives);
     }
 
     @Test
@@ -297,7 +278,7 @@ class DefinedEnemyMobTest {
         context.setPath(LevelFixtures.straightPath(10, 0, 1));
         int creditsBeforeLeak = context.economy().getCredits();
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 10, 3);
         for (int i = 1; i <= 100; i++) {
             enemy.doTick(i);
         }
@@ -316,7 +297,7 @@ class DefinedEnemyMobTest {
         int initialLives = context.economy().getLives();
         int initialScore = context.economy().getScore();
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 0, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 10, 0);
         for (int i = 1; i <= 100; i++) {
             enemy.doTick(i);
         }
@@ -332,7 +313,7 @@ class DefinedEnemyMobTest {
         context.setBoard(BoardGeometry.of(10, 5, 5));
         context.setPath(LevelFixtures.straightPath(10, -1, 4));
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
 
         assertThat(enemy.getX()).isNegative();
     }
@@ -343,7 +324,7 @@ class DefinedEnemyMobTest {
         context.setBoard(BoardGeometry.of(10, 5, 5));
         context.setPath(LevelFixtures.straightPath(10, 0, 6));
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 10, 3);
         for (int i = 1; i <= 100; i++) {
             enemy.doTick(i);
         }
@@ -354,14 +335,14 @@ class DefinedEnemyMobTest {
 
     @Test
     void anEnemyOnAPathKnowsWhereItWillStandAFewTicksFromNowAtItsCurrentPace() {
-        td.util.GameWorld context = td.fixtures.WorldFixtures.newWorldOnBoard(1, 1001, 1001);
-        context.setPath(td.fixtures.LevelFixtures.straightPath(1, 0, 500));
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        GameWorld context = newContext();
+        context.setPath(LevelFixtures.straightPath(1, 0, 500));
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.doTick(1);
         double now = enemy.getX();
 
-        td.wave.Vec2 later = enemy.positionAfter(10);
+        Vec2 later = enemy.positionAfter(10);
 
-        assertThat(later.x()).isEqualTo(now + 10 * enemy.getSpeed(), org.assertj.core.api.Assertions.within(1e-6));
+        assertThat(later.x()).isEqualTo(now + 10 * enemy.getSpeed(), within(1e-6));
     }
 }

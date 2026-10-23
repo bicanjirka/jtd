@@ -59,10 +59,29 @@ public final class EnemyFixtures {
      * registers those in the world's catalog.
      */
     public static DefinedEnemyMob liveMob(GameWorld world, EnemyDefinition definition) {
+        return liveMob(world, definition, Rank.GRUNT);
+    }
+
+    /** {@link #liveMob(GameWorld, EnemyDefinition)} wearing {@code rank}, which changes nothing else about it. */
+    public static DefinedEnemyMob liveMob(GameWorld world, EnemyDefinition definition, Rank rank) {
         DefinedEnemyMob mob = new DefinedEnemyMob(definition, world,
-                SpawnParameters.atSlot(0, definition.baseSpeed(), definition.baseHealth(), definition.price()), Rank.GRUNT);
+                SpawnParameters.atSlot(0, definition.baseSpeed(), definition.baseHealth(), definition.price()), rank);
         world.enemies().add(mob);
         return mob;
+    }
+
+    /** A live mob with no stats, traits or abilities: any enemy, for a test about something else. */
+    public static DefinedEnemyMob plainMob(GameWorld world, int healthPoints, int bounty) {
+        return liveMob(world, simpleDefinition("plain").withHealthAndPrice(healthPoints, bounty));
+    }
+
+    /** Ticks every enemy of the world, those spawned meanwhile included, from {@code fromTick} to {@code toTick}. */
+    public static void tickEnemies(GameWorld world, int fromTick, int toTick) {
+        for (int t = fromTick; t <= toTick; t++) {
+            for (EnemyMob enemy : world.enemies().getEnemies()) {
+                enemy.doTick(t);
+            }
+        }
     }
 
     /** Replaces a world's live enemies with exactly these mobs. */

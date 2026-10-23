@@ -1,7 +1,7 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
-import td.fixtures.WorldFixtures;
+import td.fixtures.FakeEnemyMob;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -10,7 +10,7 @@ class EnemyRosterTest {
     private final EnemyRoster roster = new EnemyRoster();
 
     private static EnemyMob anEnemy() {
-        return EnemyFactory.getEnemy("c", WorldFixtures.newWorld(), 0, 50, 3, Rank.GRUNT);
+        return FakeEnemyMob.at(0, 0);
     }
 
     @Test

@@ -38,9 +38,8 @@
   original's own definition. `adjust` is a `UnaryOperator` (rank-blind) or a
   `BiFunction<Rank, EnemyDefinition, ...>` (rank-aware). `register` also rejects spawn-ability
   cycles.
-- Gameplay spawns through `EnemyCatalog`. `EnemyFactory` is only a test convenience over
-  `EnemyCatalog.builtIn()`. `EnemyCatalog.ids()` keeps registration order (the debug spawn
-  cycles through it).
+- Every mob spawns through `EnemyCatalog`. `EnemyCatalog.ids()` keeps registration order (the
+  debug spawn cycles through it).
 - A consumer that only aims takes `EnemyTarget`; one that only hits takes `HitReceiver`.
 - Never branch on a mob's concrete type; use `EnemyMobVisitor`. Switching on the sealed
   `BodyArchetype`/`MovementBehavior`/`AbilityTrigger`/`AbilityAction` types is fine, but prefer
@@ -77,7 +76,7 @@
   `AbilitySpawnFactory`. Per-mob `AbilityState` (countdowns,
   fire-once flags) is built in the constructor, parallel to `definition.abilities()`.
 - `ticksSinceLastHit` starts at `0`, so an idle trigger counts from spawn, not "forever".
-  `WardenChainTest` covers the ability timing end to end.
+  `DefinedEnemyMobAbilityTest` covers the ability timing end to end.
 - A mob that `isSilenced()` (frozen, Dazed or `SILENCED`) doesn't evaluate abilities on live
   ticks, but still does on its death tick; its motion and the aura it carries run regardless.
 - A tower can kill a mob *after* that mob's own `doTick` ran this tick. So death, crit-taken and

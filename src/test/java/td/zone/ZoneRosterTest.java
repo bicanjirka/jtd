@@ -8,6 +8,10 @@ import td.enemy.EnemyMob;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
+import td.util.TickRate;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -146,7 +150,7 @@ class ZoneRosterTest {
     void aMineGoesOffTheTickTheFirstEnemyStepsWithinItAndIsThenSpent() {
         FakeEnemyMob first = FakeEnemyMob.at(100, 100);
         FakeEnemyMob second = FakeEnemyMob.at(105, 100);
-        java.util.List<EnemyMob> by = new java.util.ArrayList<>();
+        List<EnemyMob> by = new ArrayList<>();
         this.world.zones().add(Zone.mine(100, 100, 10, LIFETIME, this.owner, (mine, enemy) -> by.add(enemy)));
         this.world.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(500, 500)});
         this.tick(1, 4);
@@ -156,6 +160,33 @@ class ZoneRosterTest {
         this.tick(5, 20);
 
         assertThat(by).containsExactly(first);
+        assertThat(this.world.zones().zones()).isEmpty();
+    }
+
+    @Test
+    void aWardMineNobodyCanSetOffUntilItHasLainASecond() {
+        List<EnemyMob> by = new ArrayList<>();
+        this.world.zones().add(Zone.wardMine(100, 100, 10, LIFETIME, this.owner, (mine, enemy) -> by.add(enemy)));
+        this.world.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(100, 100)});
+        int armingTicks = Math.round(TickRate.TICKS_PER_SECOND);
+
+        this.tick(0, armingTicks);
+        boolean wentOffUnarmed = !by.isEmpty();
+        this.tick(armingTicks, armingTicks + 1);
+
+        assertThat(wentOffUnarmed).isFalse();
+        assertThat(by).hasSize(1);
+    }
+
+    @Test
+    void aZoneThatLastsTheWaveEndsOnlyWithTheWave() {
+        this.world.zones().add(Zone.haste(100, 100, RADIUS, Zone.UNTIL_WAVE_END, this.owner));
+
+        this.tick(0, 10 * LIFETIME);
+        int beforeTheWaveEnds = this.world.zones().zones().size();
+        this.world.zones().endWave();
+
+        assertThat(beforeTheWaveEnds).isEqualTo(1);
         assertThat(this.world.zones().zones()).isEmpty();
     }
 
@@ -179,7 +210,7 @@ class ZoneRosterTest {
         FakeEnemyMob outside = FakeEnemyMob.at(100 + 5 * RADIUS, 100);
         this.world.enemies().setEnemies(new EnemyMob[]{inside, outside});
         this.world.zones().add(Zone.cloud(100, 100, RADIUS, LIFETIME, this.owner,
-                java.util.List.of(Effect.vulnerable(2, 80, DamageSink.none()))));
+                List.of(Effect.vulnerable(2, 80, DamageSink.none()))));
 
         this.tick(1, 2);
 
@@ -192,11 +223,11 @@ class ZoneRosterTest {
         FakeEnemyMob inside = FakeEnemyMob.at(100, 100);
         this.world.enemies().setEnemies(new EnemyMob[]{inside});
         this.world.zones().add(Zone.cloud(100, 100, RADIUS, LIFETIME, this.owner,
-                java.util.List.of(Effect.vulnerable(2, 40, DamageSink.none()))));
+                List.of(Effect.vulnerable(2, 40, DamageSink.none()))));
 
         this.tick(1, LIFETIME);
 
-        java.util.List<Effect> given = inside.appliedEffects();
+        List<Effect> given = inside.appliedEffects();
         assertThat(given).isNotEmpty();
         assertThat(given).allMatch(effect -> effect.remainingTicks() <= 40);
         assertThat(given.getLast().remainingTicks()).isLessThan(given.getFirst().remainingTicks());
@@ -207,7 +238,7 @@ class ZoneRosterTest {
         FakeEnemyMob inside = FakeEnemyMob.at(100, 100);
         this.world.enemies().setEnemies(new EnemyMob[]{inside});
         this.world.zones().add(Zone.cloud(100, 100, RADIUS, LIFETIME, this.owner,
-                java.util.List.of(Effect.vulnerable(2, 40, DamageSink.none()))));
+                List.of(Effect.vulnerable(2, 40, DamageSink.none()))));
         this.tick(1, 41);
         int givenWhileItLasted = inside.appliedEffects().size();
 

@@ -3,10 +3,9 @@ package td.tower;
 import org.junit.jupiter.api.Test;
 import td.damage.AttackProfile;
 import td.damage.Damage;
-import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.HitResult;
-import td.enemy.Rank;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionPenalty;
 import td.util.GameWorld;
@@ -28,7 +27,7 @@ class BlindedTowerTest {
                     DisruptionPenalty.blinding(MISS_CHANCE), ZoneOwner.nobody()));
         }
         tower.beginTick(1);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", world, 0, 1000, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(world, 1000, 3);
         return tower.landHit(enemy, Damage.physical(100), AttackProfile.none());
     }
 

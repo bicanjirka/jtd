@@ -7,6 +7,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
@@ -548,7 +549,7 @@ class CinderTowerTest {
     /** A real enemy standing where the path starts, which nothing ticks, so its pool never decays. */
     private td.enemy.EnemyMob realEnemyAt(double x, double y) {
         this.context.setPath(new td.wave.PathNormal(List.of(new td.wave.Vec2(x, y), new td.wave.Vec2(x + 900, y))));
-        return td.enemy.EnemyFactory.getEnemy("c", this.context, 0, 1_000_000, 3, td.enemy.Rank.GRUNT);
+        return EnemyFixtures.plainMob(this.context, 1_000_000, 3);
     }
 
     @Test

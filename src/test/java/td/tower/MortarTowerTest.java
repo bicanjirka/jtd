@@ -7,10 +7,9 @@ import td.damage.DamageUnits;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
-import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
-import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
@@ -274,7 +273,7 @@ class MortarTowerTest {
         this.context.economy().startEconomy(1000, 5);
         MortarTower tower = this.towerAt(3, 3);
         UpgradePaths.awakenVeteran(tower);
-        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 100000, 3, Rank.GRUNT);
+        EnemyMob fodder = EnemyFixtures.plainMob(this.context, 100000, 3);
         tower.dealDamage(fodder, Damage.physical(16000));
         UpgradeNode siegeRounds = UpgradePaths.named(tower, "Siege Rounds");
 

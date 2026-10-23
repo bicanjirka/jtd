@@ -6,14 +6,20 @@ import td.damage.Damage;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.ShieldTemplate;
+import td.enemy.Ability;
 import td.enemy.AbilityTerm;
+import td.enemy.ApplyEffectAction;
+import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
-import td.enemy.EnemyCatalog;
+import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
-import td.enemy.EnemyFactory;
 import td.enemy.EnemyInspection;
 import td.enemy.EnemyMark;
+import td.enemy.HealthThresholdTrigger;
 import td.enemy.Rank;
+import td.enemy.SelfTarget;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
 import td.stat.EnemyStat;
 import td.term.TermText;
@@ -36,15 +42,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EnemyStatTextTest {
 
+    private static final float ARMOR = 25f;
+
     private final GameWorld world = WorldFixtures.newWorld();
 
-    private InfoSheet hoverSheet(String id, Rank rank) {
-        EnemyDefinition definition = EnemyCatalog.builtIn().ranked(id).definitionFor(rank);
+    private InfoSheet hoverSheet(EnemyDefinition definition, Rank rank) {
         return PanelEnemy.previewMob(definition, rank, this.world).accept(new EnemyInfoText());
     }
 
-    private DefinedEnemyMob spawn(String id, Rank rank) {
-        return (DefinedEnemyMob) EnemyFactory.getEnemy(id, this.world, 0, 100, 5, rank);
+    private InfoSheet hoverSheet(EnemyDefinition definition) {
+        return this.hoverSheet(definition, Rank.GRUNT);
+    }
+
+    private DefinedEnemyMob anEnemy() {
+        return EnemyFixtures.plainMob(this.world, 100, 5);
+    }
+
+    private DefinedEnemyMob armored() {
+        return EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("armored").withArmor(ARMOR));
     }
 
     private static List<String> labels(InfoSheet sheet) {
@@ -68,22 +83,22 @@ class EnemyStatTextTest {
 
     @Test
     void aPlainEnemyShowsOnlyItsSpeed() {
-        InfoSheet sheet = this.hoverSheet("c", Rank.GRUNT);
+        InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("plain"));
 
         assertThat(labels(sheet)).containsExactly("Speed");
     }
 
     @Test
     void theHeaderShowsTheBodyGlyphNameAndRankBadge() {
-        InfoSheet sheet = this.hoverSheet("s", Rank.BOSS);
+        InfoSheet sheet = this.hoverSheet(EnemyDefinition.of("brick", "Brick", 100, 5, 1f, BodyArchetype.SQUARE), Rank.BOSS);
 
         assertThat(sheet.lines().getFirst())
-                .isEqualTo(new SheetLine.EnemyHeader(Palette.ENEMY_SQUARE, RankBadge.SKULL, "Armored mob", "Boss"));
+                .isEqualTo(new SheetLine.EnemyHeader(Palette.ENEMY_SQUARE, RankBadge.SKULL, "Brick", "Boss"));
     }
 
     @Test
     void aStatOffItsDefaultIsARowWhateverSetsIt() {
-        InfoSheet sheet = this.hoverSheet("s", Rank.GRUNT);
+        InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("warded").withArmor(ARMOR).withMagicResist(ARMOR));
 
         assertThat(row(sheet, "Armor")).isPresent();
         assertThat(row(sheet, "Magic resist")).isPresent();
@@ -91,7 +106,7 @@ class EnemyStatTextTest {
 
     @Test
     void aStatBetterForThePlayerThanItsBaseIsBetter() {
-        DefinedEnemyMob mob = this.spawn("s", Rank.GRUNT);
+        DefinedEnemyMob mob = this.armored();
         mob.applyEffect(Effect.sundered(2, 100, DamageSink.none()));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect());
@@ -101,7 +116,7 @@ class EnemyStatTextTest {
 
     @Test
     void aChilledEnemysSpeedIsBetterForThePlayer() {
-        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.chill(0.4f, 100, DamageSink.none()));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect());
@@ -111,25 +126,30 @@ class EnemyStatTextTest {
 
     @Test
     void aStatRowOpensItsBreakdown() {
-        DefinedEnemyMob mob = this.spawn("s", Rank.GRUNT);
+        DefinedEnemyMob mob = this.armored();
         mob.applyEffect(Effect.sundered(2, 100, DamageSink.none()));
+        int now = Math.round(mob.stats().value(EnemyStat.ARMOR));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect());
         Row armor = row(sheet, "Armor").orElseThrow();
 
         InfoSheet breakdown = armor.tooltip().orElseThrow().sheet();
         assertThat(armor.tooltip().orElseThrow().key().id()).isEqualTo("stat:ARMOR");
-        assertThat(breakdown.lines()).contains(Row.plain(Glyph.DOT, "Base", "25"), Row.plain(Glyph.DOT, "Now", "15"));
+        assertThat(breakdown.lines())
+                .contains(Row.plain(Glyph.DOT, "Base", "25"), Row.plain(Glyph.DOT, "Now", String.valueOf(now)));
         assertThat(breakdown.lines()).anySatisfy(line -> assertThat(line).isInstanceOfSatisfying(
                 SheetLine.Sentence.class, sentence -> {
-                    assertThat(sentence.text().plain()).isEqualTo("Sunder: -10");
+                    assertThat(sentence.text().plain()).isEqualTo(EffectKind.SUNDERED.title() + ": -" + (25 - now));
                     assertThat(sentence.text().mentions()).containsExactly(EffectKind.SUNDERED);
                 }));
     }
 
     @Test
     void traitsAbilitiesAndImmunitiesShareTheTraitsRow() {
-        DefinedEnemyMob mob = this.spawn("yeti", Rank.ELITE);
+        DefinedEnemyMob mob = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("hunkered")
+                .withTraits(List.of(EffectResistTrait.immuneTo(EffectKind.FREEZE)))
+                .withAbilities(List.of(new Ability(AbilityTerm.HUNKER, new HealthThresholdTrigger(0.5f),
+                        new ApplyEffectAction(new ShieldTemplate(10f, 100), new SelfTarget())))));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect());
 
@@ -140,7 +160,7 @@ class EnemyStatTextTest {
 
     @Test
     void anImmunityAnEffectCausesNamesThatEffect() {
-        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.freeze(30, DamageSink.none()));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect());
@@ -154,7 +174,7 @@ class EnemyStatTextTest {
 
     @Test
     void buffsAndDebuffsSplitBySide() {
-        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.shield(50f, 100, DamageSink.none()));
         mob.applyEffect(Effect.chill(0.4f, 100, DamageSink.none()));
 
@@ -167,7 +187,7 @@ class EnemyStatTextTest {
 
     @Test
     void aStackingDebuffShowsItsStacks() {
-        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.sundered(3, 100, DamageSink.none()));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect());
@@ -177,7 +197,7 @@ class EnemyStatTextTest {
 
     @Test
     void aTimedEffectSweepsAndShowsWholeSecondsUnderTen() {
-        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.freeze(30, DamageSink.none()));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect());
@@ -189,7 +209,7 @@ class EnemyStatTextTest {
 
     @Test
     void aPoolShowsABarAndNoClock() {
-        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.burn(Damage.magic(100), 100, DamageSink.none()));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect());
@@ -201,7 +221,7 @@ class EnemyStatTextTest {
 
     @Test
     void aFreezeWhoseDiminishingReturnsRunStaysFadedAndSaysWhatTheNextLasts() {
-        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.freeze(1, DamageSink.none()));
         mob.doTick(10);
         mob.doTick(11);
@@ -217,7 +237,7 @@ class EnemyStatTextTest {
 
     @Test
     void stokeFromTwoTowersIsOneIconWithTheHighestSteps() {
-        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        DefinedEnemyMob mob = this.anEnemy();
         EnemyInspection marked = mob.inspect().withMarks(List.of(
                 new EnemyMark(TowerTerm.STOKE, 1, 3, "Scorcher"), new EnemyMark(TowerTerm.STOKE, 2, 3, "Scorcher")));
 
@@ -230,7 +250,8 @@ class EnemyStatTextTest {
 
     @Test
     void thePreviewShowsStatsTraitsAndTheRoleSentenceButNoBuffsOrDebuffs() {
-        InfoSheet sheet = this.hoverSheet("yeti", Rank.GRUNT);
+        InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("resistant")
+                .withTraits(List.of(EffectResistTrait.resisting(EffectKind.CHILL, 0.5f))).withDescription("Shrugs off cold."));
 
         assertThat(icons(sheet, "Traits")).isNotEmpty();
         assertThat(icons(sheet, "Buffs")).isEmpty();
@@ -240,15 +261,14 @@ class EnemyStatTextTest {
 
     @Test
     void thePreviewEndsWithTheDescription() {
-        InfoSheet sheet = this.hoverSheet("s", Rank.GRUNT);
+        InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("described").withDescription("Walks the path."));
 
-        assertThat(sheet.lines().getLast()).isEqualTo(
-                new SheetLine.Prose(TermText.of("Heavy plates blunt physical hits; magic goes through.")));
+        assertThat(sheet.lines().getLast()).isEqualTo(new SheetLine.Prose(TermText.of("Walks the path.")));
     }
 
     @Test
     void theLiveViewShowsCurrentHealthAndFate() {
-        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        DefinedEnemyMob mob = this.anEnemy();
         mob.doDamage(Damage.physical(4000));
 
         InfoSheet alive = EnemyStatText.live(mob.inspect());
@@ -261,7 +281,7 @@ class EnemyStatTextTest {
 
     @Test
     void agilityReadsAsPointsWithItsDodgeChance() {
-        InfoSheet sheet = this.hoverSheet("courier", Rank.GRUNT);
+        InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("nimble").withAgility(25f));
 
         assertThat(row(sheet, "Agility").orElseThrow().value()).isEqualTo("25, dodges 20%");
     }
@@ -269,12 +289,12 @@ class EnemyStatTextTest {
     @Test
     void theLiveViewCountsTheHitsAnEnemyDodged() {
         GameWorld lucky = WorldFixtures.newWorld(() -> 0.0);
-        DefinedEnemyMob courier = (DefinedEnemyMob) EnemyFactory.getEnemy("courier", lucky, 0, 100, 5, Rank.GRUNT);
-        InfoSheet before = EnemyStatText.live(courier.inspect());
+        DefinedEnemyMob nimble = EnemyFixtures.liveMob(lucky, EnemyFixtures.simpleDefinition("nimble").withAgility(25f));
+        InfoSheet before = EnemyStatText.live(nimble.inspect());
 
-        courier.takeHit(Damage.physical(10), AttackProfile.none().asAimed());
-        courier.takeHit(Damage.physical(10), AttackProfile.none().asAimed());
-        InfoSheet after = EnemyStatText.live(courier.inspect());
+        nimble.takeHit(Damage.physical(10), AttackProfile.none().asAimed());
+        nimble.takeHit(Damage.physical(10), AttackProfile.none().asAimed());
+        InfoSheet after = EnemyStatText.live(nimble.inspect());
 
         assertThat(labels(before)).doesNotContain("Dodged");
         assertThat(after.lines()).contains(Row.plain(Glyph.DOT, "Dodged", "2 hits"));

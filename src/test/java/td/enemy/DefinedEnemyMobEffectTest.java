@@ -7,8 +7,13 @@ import td.damage.Damage;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.LevelFixtures;
 import td.fixtures.WorldFixtures;
+import td.stat.EnemyStat;
+import td.stat.StatModifier;
+import td.stat.StatModifiers;
+import td.term.TermText;
 import td.util.GameWorld;
 
 import java.util.ArrayList;
@@ -27,8 +32,8 @@ class DefinedEnemyMobEffectTest {
     void afterAFreezeTheNextOneIsDiminishedButAnEnemyNeverFrozenIsNot() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        EnemyMob frozenOnce = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
-        EnemyMob fresh = EnemyFactory.getEnemy("c", context, 0, 50, 4, Rank.GRUNT);
+        EnemyMob frozenOnce = EnemyFixtures.plainMob(context, 50, 3);
+        EnemyMob fresh = EnemyFixtures.plainMob(context, 50, 4);
 
         frozenOnce.applyEffect(Effect.freeze(10, DamageSink.none()));
 
@@ -40,7 +45,7 @@ class DefinedEnemyMobEffectTest {
     void aSlowReducesTheDistanceCoveredInOneTick() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         float fullSpeed = enemy.getSpeed();
 
         enemy.applyEffect(Effect.chill(0.5f, 5, DamageSink.none()));
@@ -53,7 +58,7 @@ class DefinedEnemyMobEffectTest {
     void aFreezeHaltsMovementForExactlyItsDurationInTicks() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
 
         enemy.applyEffect(Effect.freeze(2, DamageSink.none()));
         enemy.doTick(1);
@@ -69,7 +74,7 @@ class DefinedEnemyMobEffectTest {
         GameWorld context = newContext();
         context.enemies().setCount(1);
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1, 3, Rank.GRUNT); // 100 health
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 1, 3); // 100 health
 
         enemy.applyEffect(Effect.burn(Damage.magic(1000), 3, enemy::doDamage));
         enemy.doTick(1);
@@ -82,7 +87,7 @@ class DefinedEnemyMobEffectTest {
     void aBurnEffectDealsItsFirstPulseThroughItsBoundSinkOnItsFirstTick() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100, 3, Rank.GRUNT); // 10000 health
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 100, 3); // 10000 health
 
         enemy.applyEffect(Effect.burn(Damage.magic(2000), 5, enemy::doDamage));
         enemy.doTick(1);
@@ -95,7 +100,7 @@ class DefinedEnemyMobEffectTest {
     void aHealEffectRestoresHealthEveryTickUntilItExpires() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100, 3, Rank.GRUNT); // 10000 health
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 100, 3); // 10000 health
         enemy.doDamage(Damage.physical(4000)); // down to 6000
 
         enemy.applyEffect(Effect.heal(1000, 2, DamageSink.none()));
@@ -108,9 +113,8 @@ class DefinedEnemyMobEffectTest {
     void aHealTooSmallForOneUnitPerTickStillAddsUpAtReducedSpirit() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        context.getEnemyCatalog().register(EnemyDefinition.of("dull", "Dull", 100_000, 5, 0f, BodyArchetype.CIRCLE)
-                .withSpirit(-50f));
-        EnemyMob enemy = context.getEnemyCatalog().spawn("dull", context, 0, 100_000, 5, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.liveMob(context,
+                EnemyDefinition.of("dull", "Dull", 100_000, 5, 0f, BodyArchetype.CIRCLE).withSpirit(-50f));
         enemy.doDamage(Damage.physical(4000));
         int damaged = enemy.getHealth();
 
@@ -126,7 +130,7 @@ class DefinedEnemyMobEffectTest {
     void aHealEffectNeverRestoresHealthAboveTheMobsMax() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100, 3, Rank.GRUNT); // 10000 health
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 100, 3); // 10000 health
         enemy.doDamage(Damage.physical(500)); // down to 9500
 
         enemy.applyEffect(Effect.heal(1000, 2, DamageSink.none()));
@@ -140,7 +144,7 @@ class DefinedEnemyMobEffectTest {
         GameWorld context = newContext();
         context.enemies().setCount(1);
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 1, 3, Rank.GRUNT); // 100 health
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 1, 3); // 100 health
 
         enemy.applyEffect(Effect.heal(1000, 5, DamageSink.none()));
         enemy.doDamage(Damage.physical(100)); // kills it before this tick's doTick runs
@@ -154,11 +158,10 @@ class DefinedEnemyMobEffectTest {
     void anEnemyAtTheSpiritFloorNeverLosesItsScorchedStacksWhileOneAtNeutralSpiritDoes() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        context.getEnemyCatalog().register(EnemyDefinition.of("brittle", "Brittle", 100_000, 5, 0f, BodyArchetype.CIRCLE)
-                .withSpirit(-100f));
-        context.getEnemyCatalog().register(EnemyDefinition.of("plain", "Plain", 100_000, 5, 0f, BodyArchetype.CIRCLE));
-        DefinedEnemyMob brittle = (DefinedEnemyMob) context.getEnemyCatalog().spawn("brittle", context, 0, 100_000, 5, Rank.GRUNT);
-        DefinedEnemyMob plain = (DefinedEnemyMob) context.getEnemyCatalog().spawn("plain", context, 0, 100_000, 5, Rank.GRUNT);
+        DefinedEnemyMob brittle = EnemyFixtures.liveMob(context,
+                EnemyDefinition.of("brittle", "Brittle", 100_000, 5, 0f, BodyArchetype.CIRCLE).withSpirit(-100f));
+        DefinedEnemyMob plain = EnemyFixtures.liveMob(context,
+                EnemyDefinition.of("plain", "Plain", 100_000, 5, 0f, BodyArchetype.CIRCLE));
         for (DefinedEnemyMob mob : List.of(brittle, plain)) {
             mob.applyEffect(Effect.burn(Damage.magic(10), 30, DamageSink.none()));
             for (int t = 1; t <= 40; t++) {
@@ -182,7 +185,7 @@ class DefinedEnemyMobEffectTest {
     @Test
     void aHitOnAMarkedEnemyIsAGuaranteedCritAndSpendsTheMark() {
         GameWorld context = WorldFixtures.newWorld(() -> 0.99);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100000, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 100000, 3);
         enemy.applyEffect(Effect.marked(100, DamageSink.none()));
 
         Damage first = enemy.doDamage(Damage.physical(1000), AttackProfile.none());
@@ -196,7 +199,7 @@ class DefinedEnemyMobEffectTest {
     @Test
     void anotherAttackersHitDischargesAChargeForThirtyPercentThroughTheChargersSink() {
         GameWorld context = WorldFixtures.newWorld(() -> 0.99);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100000, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 100000, 3);
         AttackOrigin charger = AttackOrigin.fresh();
         List<Damage> paid = new ArrayList<>();
         enemy.applyEffect(Effect.charged(100, charger, paid::add));
@@ -212,7 +215,7 @@ class DefinedEnemyMobEffectTest {
     @Test
     void aCritDischargesAChargeAtDoubleAndPeriodicDamageNeverDischargesOne() {
         GameWorld context = WorldFixtures.newWorld(() -> 0.0);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100000, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 100000, 3);
         List<Damage> paid = new ArrayList<>();
         enemy.applyEffect(Effect.charged(100, AttackOrigin.fresh(), paid::add));
 
@@ -225,7 +228,7 @@ class DefinedEnemyMobEffectTest {
     @Test
     void periodicDamageNeitherCritsNorSpendsAMark() {
         GameWorld context = WorldFixtures.newWorld(() -> 0.0);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100000, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 100000, 3);
         enemy.applyEffect(Effect.marked(100, DamageSink.none()));
 
         Damage landed = enemy.doDamage(Damage.physical(1000), AttackProfile.critChance(1f).asPeriodic());
@@ -237,22 +240,22 @@ class DefinedEnemyMobEffectTest {
     @Test
     void aMarkWaitsOnACritImmuneEnemyUntilItsResilienceDrops() {
         GameWorld context = WorldFixtures.newWorld(() -> 0.99);
-        EnemyMob armored = EnemyFactory.getEnemy("s", context, 0, 100000, 5, Rank.GRUNT);
-        armored.applyEffect(Effect.marked(100, DamageSink.none()));
+        EnemyMob critImmune = EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("critImmune").withResilience(100f));
+        critImmune.applyEffect(Effect.marked(100, DamageSink.none()));
 
-        Damage blocked = armored.doDamage(Damage.physical(1000), AttackProfile.none());
-        armored.applyEffect(Effect.fractured(5, DamageSink.none()));
-        Damage opened = armored.doDamage(Damage.physical(1000), AttackProfile.none());
+        Damage blocked = critImmune.doDamage(Damage.physical(1000), AttackProfile.none());
+        critImmune.applyEffect(Effect.fractured(5, DamageSink.none()));
+        Damage opened = critImmune.doDamage(Damage.physical(1000), AttackProfile.none());
 
         assertThat(blocked.critical()).isFalse();
         assertThat(opened.critical()).isTrue();
-        assertThat(armored.activeEffectKinds()).doesNotContain(EffectKind.MARKED);
+        assertThat(critImmune.activeEffectKinds()).doesNotContain(EffectKind.MARKED);
     }
 
     @Test
     void aRevealedEnemyIsExposedAndHidesAgainWhenItIsShroudedAgain() {
         GameWorld context = newContext();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100000, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 100000, 3);
         enemy.applyEffect(Effect.invisible(100, DamageSink.none()));
         enemy.applyEffect(Effect.revealed(100, DamageSink.none()));
         boolean visibleWhileRevealed = enemy.canBeTargeted();
@@ -262,5 +265,46 @@ class DefinedEnemyMobEffectTest {
         assertThat(visibleWhileRevealed).isTrue();
         assertThat(enemy.canBeTargeted()).isFalse();
         assertThat(enemy.activeEffectKinds()).doesNotContain(EffectKind.REVEALED);
+    }
+
+    @Test
+    void anInvisibleEnemyIsHiddenFromAimedTowersButStillCaughtByAreaDamage() {
+        DefinedEnemyMob enemy = EnemyFixtures.plainMob(newContext(), 100, 3);
+
+        enemy.applyEffect(Effect.invisible(100, DamageSink.none()));
+
+        assertThat(enemy.canBeTargeted()).isFalse();
+        assertThat(enemy.isHidden()).isTrue();
+        assertThat(enemy.validTarget()).isTrue();
+    }
+
+    /** Stands in for a reveal: sets stealth to zero, which beats invisibility's one. */
+    private record RevealTrait() implements Trait {
+        @Override
+        public StatModifiers<EnemyStat> modifiers(TraitContext context) {
+            return StatModifiers.of(EnemyStat.STEALTH, StatModifier.setTo(0f));
+        }
+
+        @Override
+        public TraitEntry entry() {
+            return TraitEntry.of(TraitTerm.ADRENALINE, TermText.of("reveals it"));
+        }
+
+        @Override
+        public TraitMarker marker() {
+            return TraitMarker.HURT_SPEED;
+        }
+    }
+
+    @Test
+    void aTraitThatRevealsBeatsAnInvisibilityThatKeepsRunning() {
+        DefinedEnemyMob enemy = EnemyFixtures.liveMob(newContext(),
+                EnemyFixtures.simpleDefinition("revealed").withTraits(List.of(new RevealTrait())));
+
+        enemy.applyEffect(Effect.invisible(100, DamageSink.none()));
+
+        assertThat(enemy.activeEffectKinds()).contains(EffectKind.INVISIBLE);
+        assertThat(enemy.isHidden()).isFalse();
+        assertThat(enemy.canBeTargeted()).isTrue();
     }
 }

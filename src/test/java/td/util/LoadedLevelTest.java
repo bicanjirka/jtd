@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
 import td.cell.CellGrid;
 import td.enemy.EnemyCatalog;
+import td.fixtures.EnemyFixtures;
 import td.wave.PathColor;
 import td.wave.PathNormal;
 import td.wave.Vec2;
@@ -25,6 +26,16 @@ class LoadedLevelTest {
         assertThat(none.waveCount()).isZero();
         assertThat(none.pathCount()).isEqualTo(1);
         assertThat(none.pathAt(0).points()).isEmpty();
+    }
+
+    @Test
+    void noTwoNoLevelValuesShareACatalog() {
+        LoadedLevel one = LoadedLevel.none();
+        LoadedLevel other = LoadedLevel.none();
+
+        one.catalog().register(EnemyFixtures.simpleDefinition("added"));
+
+        assertThat(other.catalog().contains("added")).isFalse();
     }
 
     @Test
