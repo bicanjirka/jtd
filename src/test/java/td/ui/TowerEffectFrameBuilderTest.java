@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.tower.AuraTower;
@@ -11,8 +12,6 @@ import td.tower.MortarTower;
 import td.tower.SniperTower;
 import td.tower.SonarTower;
 import td.tower.SplashTower;
-import td.tower.Tower;
-import td.tower.upgrade.UpgradeNode;
 import td.ui.render.BeamDraw;
 import td.ui.render.Palette;
 import td.ui.render.RingDraw;
@@ -56,10 +55,10 @@ class TowerEffectFrameBuilderTest {
         context.towers().add(splash);
         splash.earnXp(1_000);
         for (String name : List.of("Attune", "Awaken")) {
-            splash.buyUpgrade(nodeNamed(splash, name));
+            splash.buyUpgrade(UpgradePaths.named(splash, name));
         }
         for (String name : nodes) {
-            splash.buyUpgrade(nodeNamed(splash, name));
+            splash.buyUpgrade(UpgradePaths.named(splash, name));
         }
         return splash;
     }
@@ -100,10 +99,10 @@ class TowerEffectFrameBuilderTest {
         context.towers().add(aura);
         aura.earnXp(1_000);
         for (String name : List.of("Attune", "Awaken")) {
-            aura.buyUpgrade(nodeNamed(aura, name));
+            aura.buyUpgrade(UpgradePaths.named(aura, name));
         }
         for (String name : nodes) {
-            aura.buyUpgrade(nodeNamed(aura, name));
+            aura.buyUpgrade(UpgradePaths.named(aura, name));
         }
         return aura;
     }
@@ -209,7 +208,7 @@ class TowerEffectFrameBuilderTest {
         SniperTower attuned = new SniperTower(context, 3, 3);
         attuned.earnXp(1_000);
         context.economy().startEconomy(1_000, 5);
-        attuned.buyUpgrade(nodeNamed(attuned, "Attune"));
+        attuned.buyUpgrade(UpgradePaths.named(attuned, "Attune"));
         SniperTower plain = new SniperTower(context, 3, 3);
         context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(attuned.getX() + 40, attuned.getY())});
         attuned.doTick(1);
@@ -229,7 +228,7 @@ class TowerEffectFrameBuilderTest {
         SonarTower sonar = new SonarTower(context, 3, 3);
         sonar.earnXp(1_000);
         context.economy().startEconomy(1_000, 5);
-        sonar.buyUpgrade(nodeNamed(sonar, "Attune"));
+        sonar.buyUpgrade(UpgradePaths.named(sonar, "Attune"));
         FakeEnemyMob enemy = FakeEnemyMob.at(sonar.getX() + 40, sonar.getY() - 2);
         context.enemies().setEnemies(new EnemyMob[]{enemy});
         int revolution = Math.round(SonarTower.SECONDS_PER_REVOLUTION * TickRate.TICKS_PER_SECOND);
@@ -255,7 +254,7 @@ class TowerEffectFrameBuilderTest {
         context.economy().startEconomy(1000, 5);
         MortarTower mortar = new MortarTower(context, 3, 3);
         mortar.earnXp(1000);
-        mortar.buyUpgrade(nodeNamed(mortar, "Attune"));
+        mortar.buyUpgrade(UpgradePaths.named(mortar, "Attune"));
         FakeEnemyMob target = FakeEnemyMob.at(mortar.getX() + 3 * BoardFixtures.SCALE, mortar.getY());
         context.enemies().setEnemies(new EnemyMob[]{target});
         List<Float> radii = new ArrayList<>();
@@ -288,10 +287,6 @@ class TowerEffectFrameBuilderTest {
         assertThat(builder.build()).isEmpty();
     }
 
-    private static UpgradeNode nodeNamed(Tower tower, String name) {
-        return tower.upgradeTree().nodes().stream().filter(node -> node.displayName().equals(name)).findFirst()
-                .orElseThrow();
-    }
 
     private static List<BeamDraw> beamsIn(List<TowerEffectDraw> draws, Palette palette) {
         return draws.stream()
@@ -317,7 +312,7 @@ class TowerEffectFrameBuilderTest {
         context.playtestRules().setUpgradeGatesIgnored(true);
         for (String name : List.of("Attune", "Awaken", "Siege Rounds", "Siege Rounds II", "Heavy Shell", "Napalm",
                 "Transcendent", "Tactical Nuke")) {
-            mortar.buyUpgrade(nodeNamed(mortar, name));
+            mortar.buyUpgrade(UpgradePaths.named(mortar, name));
         }
         FakeEnemyMob target = FakeEnemyMob.at(mortar.getX() + 3 * BoardFixtures.SCALE, mortar.getY());
         context.enemies().setEnemies(new EnemyMob[]{target});

@@ -13,6 +13,7 @@ import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.TowerFixtures;
+import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.projectile.CannonballProjectile;
 import td.projectile.ShellLook;
@@ -39,7 +40,7 @@ class MortarTowerTest {
 
     private MortarTower attunedTower() {
         MortarTower tower = this.towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context);
+        UpgradePaths.buy(tower, this.context, "Attune");
         return tower;
     }
 

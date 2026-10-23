@@ -2,6 +2,7 @@ package td.ui;
 
 import org.junit.jupiter.api.Test;
 import td.fixtures.FakeTower;
+import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.term.TermText;
@@ -63,17 +64,13 @@ class TowerSheetTextTest {
         this.world.economy().startEconomy(1_000_000, 5);
         tower.earnXp(1_000);
         for (String name : List.of("Attune", "Awaken")) {
-            tower.buyUpgrade(this.named(tower, name));
+            tower.buyUpgrade(UpgradePaths.named(tower, name));
         }
         for (String name : names) {
-            assertThat(tower.buyUpgrade(this.named(tower, name))).as(name).isTrue();
+            assertThat(tower.buyUpgrade(UpgradePaths.named(tower, name))).as(name).isTrue();
         }
     }
 
-    private UpgradeNode named(Tower tower, String name) {
-        return tower.upgradeTree().nodes().stream().filter(node -> node.displayName().equals(name)).findFirst()
-                .orElseThrow();
-    }
 
     private static List<SheetLine> tooltipOf(SheetLine.IconRow row, int index) {
         return row.icons().get(index).tooltip().lines();
@@ -215,7 +212,7 @@ class TowerSheetTextTest {
 
         SheetLine.IconRow perks = iconRow(sheet, "Perks");
         assertThat(perks.icons()).extracting(icon -> icon.face().numeral()).contains("II");
-        assertThat(perks.icons().stream().filter(icon -> icon.key().id().contains(this.named(sniper, "Focused Optics").id())))
+        assertThat(perks.icons().stream().filter(icon -> icon.key().id().contains(UpgradePaths.named(sniper, "Focused Optics").id())))
                 .hasSize(1);
     }
 
@@ -235,7 +232,7 @@ class TowerSheetTextTest {
     void aCountingPerkShowsItsProgress() {
         Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
         this.buy(sniper, "Marksman's Eye", "Fourth Shot");
-        String id = this.named(sniper, "Fourth Shot").id();
+        String id = UpgradePaths.named(sniper, "Fourth Shot").id();
 
         InfoSheet sheet = TowerSheetText.status(sniper.inspect().withProgress(List.of(new NodeProgress(id, 2, 4))));
 

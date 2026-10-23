@@ -8,6 +8,7 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -262,7 +263,7 @@ class CinderTowerTest {
     @Test
     void attunedEachWaveOnAnEnemyAlreadyBurningFromItRaisesItsBurnTenPercentUpToThreeTimes() {
         CinderTower tower = towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context);
+        UpgradePaths.buy(tower, this.context, "Attune");
         FakeEnemyMob target = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
@@ -276,7 +277,7 @@ class CinderTowerTest {
     @Test
     void aWaveCarriesTheStokeStepsTheEnemiesInItsPathAreAboutToReach() {
         CinderTower tower = towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context);
+        UpgradePaths.buy(tower, this.context, "Attune");
         FakeEnemyMob target = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
@@ -319,7 +320,7 @@ class CinderTowerTest {
     @Test
     void everyStokingWaveIsADeedAndTheFirstWaveIsNot() {
         CinderTower tower = towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context);
+        UpgradePaths.buy(tower, this.context, "Attune");
         FakeEnemyMob target = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
@@ -334,7 +335,7 @@ class CinderTowerTest {
     @Test
     void theStokeGoesWhenTheBurnEndsAndAFreshWaveStartsAgain() {
         CinderTower tower = towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context);
+        UpgradePaths.buy(tower, this.context, "Attune");
         FakeEnemyMob target = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
         tickThrough(tower, 1, 3 * CYCLE);
@@ -639,7 +640,7 @@ class CinderTowerTest {
     @Test
     void aStokedEnemyCarriesTheScorchersStokeAsAMark() {
         CinderTower tower = towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context);
+        UpgradePaths.buy(tower, this.context, "Attune");
         FakeEnemyMob target = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 

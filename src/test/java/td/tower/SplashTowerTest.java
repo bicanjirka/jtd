@@ -11,6 +11,7 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
 import td.util.TickRate;
@@ -36,7 +37,6 @@ class SplashTowerTest {
     }
 
     private SplashTower upgradedTower(String... nodes) {
-        this.context.playtestRules().setUpgradeGatesIgnored(true);
         SplashTower tower = this.tower();
         UpgradePaths.buy(tower, this.context, nodes);
         return tower;
@@ -83,7 +83,7 @@ class SplashTowerTest {
 
     @Test
     void fireControlLandsTheBlastOnTheEnemyWithMostNeighbours() {
-        SplashTower tower = this.upgradedTower();
+        SplashTower tower = this.upgradedTower("Attune");
         FakeEnemyMob alone = FakeEnemyMob.at(70, 140).withProgression(50);
         FakeEnemyMob crowded = FakeEnemyMob.at(130, 100);
         FakeEnemyMob neighbour = FakeEnemyMob.at(140, 105);
@@ -97,7 +97,7 @@ class SplashTowerTest {
 
     @Test
     void anAttunedBlastSaturatesWhatItCatchesForOneAndAHalfSeconds() {
-        SplashTower tower = this.upgradedTower();
+        SplashTower tower = this.upgradedTower("Attune");
         FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
         this.enemies(enemy);
 
@@ -112,7 +112,7 @@ class SplashTowerTest {
 
     @Test
     void eachSaturationStackMakesTheBlastHitFivePercentHarderAndAPrimaryAlreadySaturatedIsADeed() {
-        SplashTower tower = this.upgradedTower();
+        SplashTower tower = this.upgradedTower("Attune");
         FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
         saturate(enemy, 2);
         this.enemies(enemy);

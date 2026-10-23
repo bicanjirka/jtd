@@ -135,12 +135,26 @@ frame build reads them.
 - Method names are behaviour sentences (`placingOnAPathCellIsRejectedAndCostsNothing`): no
   `test`/`should` prefix, no underscores, no `@DisplayName`, no `@Nested`.
 - Hand-written fakes, no Mockito. Name them by role (`FakeGameHost`, `FakeEnemyMob`), one per
-  role: beside its tests, or in `td.fixtures` once a second package needs it. Reuse, never copy.
+  role: beside its tests, or in `td.fixtures` once a second package needs it. The same for
+  helpers. Reuse, never copy.
 - Headless and clock-free: drive the public API and call `doTick(t)` with explicit ticks.
 - Arrange / act / assert separated by blank lines, no `// given` comments.
 - Build wide records through their factory or `td.fixtures`, not a full positional literal
   (except in that record's own test).
 - `GameEngineTest` is the integration surface; new gameplay rules should be provable there.
+- **Test mechanics, never content.** Content is data: an enemy's rank ladder, a tower's base
+  stats, an upgrade node made only of `NodeEffects`, an `EffectKind`'s rule, a level's waves. A
+  mechanic is code: a trigger, action or trait, a node's `Mechanic`, a `HitBonus` or `Proc`
+  piece, targeting, how a tower fires. Test a mechanic on a definition built in the test
+  (`EnemyFixtures.liveMob`, `FakeTower`); never assert a built-in entry's stats, abilities,
+  numbers or wording.
+- Built-in content is tested only by rules every entry keeps (`BuiltInEnemiesTest`,
+  `TowerStatCatalogueTest`, `TermWordingTest`); `BalanceReport` judges its numbers. A content
+  change adds no test. When one breaks a test, rewrite that test on a fixture or delete it; never
+  edit its expected value.
+- Expected numbers come from the test's own input or the mechanic's formula, never from content.
+- Each test proves one behaviour no other test proves. A mechanic its unit test covers gets an
+  integration test only for wiring the unit test cannot see.
 
 ## UI
 

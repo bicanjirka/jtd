@@ -9,6 +9,7 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -75,7 +76,6 @@ class SonarTowerTest {
     }
 
     private SonarTower upgradedTower(String... nodes) {
-        this.context.playtestRules().setUpgradeGatesIgnored(true);
         SonarTower tower = tower();
         this.context.towers().add(tower);
         UpgradePaths.buy(tower, this.context, nodes);
@@ -207,7 +207,7 @@ class SonarTowerTest {
         run(tower, QUARTER_TURN);
         double before = tower.sweepRadiansAt(1);
 
-        tower.buyUpgrade(UpgradePaths.named(tower, "Spin-Up"));
+        UpgradePaths.buy(tower, this.context, "Spin-Up");
         tower.doTick(QUARTER_TURN + 1);
 
         assertThat(before - tower.sweepRadiansAt(0)).isCloseTo(0, within(1e-9));
@@ -217,7 +217,7 @@ class SonarTowerTest {
 
     @Test
     void aPingExposesTheHealthiestEnemyTheBeamPassedUntilTheNextPassAndCountsADeed() {
-        SonarTower tower = this.upgradedTower();
+        SonarTower tower = this.upgradedTower("Attune");
         FakeEnemyMob weak = at(EAST, NEAR).withHealth(100);
         FakeEnemyMob strong = at(WEST, NEAR).withHealth(900);
         this.enemies(weak, strong);
@@ -232,7 +232,7 @@ class SonarTowerTest {
 
     @Test
     void aRevolutionThatPassesNobodyPingsNobodyAndCountsNoDeed() {
-        SonarTower tower = this.upgradedTower();
+        SonarTower tower = this.upgradedTower("Attune");
         this.enemies();
 
         run(tower, TICKS_PER_REVOLUTION);

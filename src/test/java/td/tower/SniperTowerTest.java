@@ -15,6 +15,7 @@ import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.tower.sniper.AimFocus;
 import td.tower.upgrade.UpgradeNode;

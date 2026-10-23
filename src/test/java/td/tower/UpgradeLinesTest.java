@@ -1,6 +1,7 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeLine;
 import td.util.GameWorld;
@@ -51,7 +52,7 @@ class UpgradeLinesTest {
 
     @Test
     void awakenAndTranscendentContinueAttune() {
-        SniperTower tower = this.sniper();
+        SniperTower tower = this.sniper("Awaken");
 
         UpgradeLine line = lineOf(tower, "Attune");
 
