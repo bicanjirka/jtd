@@ -2,10 +2,6 @@ package td.ui;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import td.fixtures.FakeTerm;
-import td.term.TermText;
-import td.ui.render.IconFace;
-import td.ui.render.Palette;
 
 import javax.swing.AbstractButton;
 import javax.swing.JComponent;
@@ -13,6 +9,7 @@ import javax.swing.JLayeredPane;
 import javax.swing.JRootPane;
 import javax.swing.KeyStroke;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -25,11 +22,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(EventDispatchThreadExtension.class)
-class TermChoiceButtonTest {
+class ChoiceButtonTest {
 
-    private static final FakeTerm ALPHA = new FakeTerm("t.alpha", "Alpha", TermText.empty());
-    private static final FakeTerm BETA = new FakeTerm("t.beta", "Beta", TermText.empty());
-    private static final FakeTerm BRAVO = new FakeTerm("t.bravo", "Bravo", TermText.empty());
+    private static final String ALPHA = "Alpha";
+    private static final String BETA = "Beta";
+    private static final String BRAVO = "Bravo";
     private static final int BUTTON_WIDTH = 50;
     private static final int BUTTON_HEIGHT = 20;
     /** A list row's height, so a window can be made exactly two rows short. */
@@ -37,12 +34,13 @@ class TermChoiceButtonTest {
 
     private final JRootPane root = new JRootPane();
     private final AtomicInteger closed = new AtomicInteger();
-    private final TermChoiceButton<FakeTerm> choice = new TermChoiceButton<>(
-            new TermPicker<>(List.of(BRAVO, ALPHA, BETA), Comparator.comparing(term -> ""), term -> "",
-                    term -> IconFace.of(term.key(), "", Palette.ENEMY_CIRCLE, Palette.ENEMY_CIRCLE)),
+    private final ChoiceButton<String> choice = new ChoiceButton<>(
+            new Choices<>(List.of(BRAVO, ALPHA, BETA), Comparator.naturalOrder(), title -> title, title -> "",
+                    title -> new RowLook(new PaintedIcon(8, 8, g2 -> {
+                    }), Color.WHITE, Color.GRAY)),
             ALPHA, this.closed::incrementAndGet);
 
-    TermChoiceButtonTest() {
+    ChoiceButtonTest() {
         this.root.getContentPane().setLayout(null);
         this.root.getContentPane().add(this.choice.component());
         this.choice.component().setBounds(0, 0, BUTTON_WIDTH, BUTTON_HEIGHT);

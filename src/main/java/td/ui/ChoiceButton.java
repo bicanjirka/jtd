@@ -1,7 +1,5 @@
 package td.ui;
 
-import td.term.Term;
-import td.ui.render.IconFace;
 import td.util.ThreadConfined;
 import td.wave.WaveScriptSuggestions.Candidate;
 
@@ -21,30 +19,29 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * A button showing the chosen term's icon and title in its colours; a click opens the list of every term, all of it
+ * A button showing the chosen item's icon and title in its colours; a click opens the list of every item, all of it
  * in view. The list takes the keys while it is open: arrows, Page Up/Down, Home and End move, a letter jumps to the
  * next title it starts, Enter or Space takes the row and Esc closes it.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
-final class TermChoiceButton<T extends Term> {
+final class ChoiceButton<T> {
 
-    private static final int ICON = TermIconPainter.BUTTON;
     private static final String OPENS = "▾";
-    /** Room besides the title: the paddings, the icon and its gap, and the gap before the arrow. */
-    private static final int CHROME = 6 + ICON + 4 + 10 + 6;
+    /** Room besides the title and the icon: the paddings, the icon's gap and the gap before the arrow. */
+    private static final int CHROME = 6 + 4 + 10 + 6;
 
     private final HudButton button = new HudButton("");
-    private final TermPicker<T> picker;
+    private final Choices<T> choices;
     private final SuggestionList list;
     private final Runnable onClosed;
 
     private T chosen;
 
     /** {@code onClosed} runs when Enter, Space, Esc or a click closes the list, so the keys can go elsewhere. */
-    TermChoiceButton(TermPicker<T> picker, T initial, Runnable onClosed) {
-        this.picker = picker;
+    ChoiceButton(Choices<T> choices, T initial, Runnable onClosed) {
+        this.choices = choices;
         this.onClosed = onClosed;
-        this.list = new SuggestionList(picker::faceOfRow, this::take);
+        this.list = new SuggestionList(choices::lookOfRow, this::take);
         this.list.setFocusable(true);
         this.list.setFocusTraversalKeysEnabled(false);
         this.bind(KeyEvent.VK_UP, () -> this.list.move(-1));
@@ -66,14 +63,14 @@ final class TermChoiceButton<T extends Term> {
             @Override
             public void keyTyped(KeyEvent e) {
                 if (Character.isLetterOrDigit(e.getKeyChar())) {
-                    TermChoiceButton.this.jumpTo(e.getKeyChar());
+                    ChoiceButton.this.jumpTo(e.getKeyChar());
                 }
             }
         });
         this.list.addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent e) {
-                TermChoiceButton.this.close();
+                ChoiceButton.this.close();
             }
         });
         this.button.addActionListener(evt -> this.toggle());
@@ -100,14 +97,14 @@ final class TermChoiceButton<T extends Term> {
             this.onClosed.run();
             return;
         }
-        this.list.show(this.picker.rows());
+        this.list.show(this.choices.rows());
         this.list.hangInColumnsBy(this.button);
-        this.list.select(Math.max(0, this.picker.indexOf(this.chosen)));
+        this.list.select(Math.max(0, this.choices.indexOf(this.chosen)));
         this.list.requestFocusInWindow();
     }
 
     private void take() {
-        this.show(this.picker.termAt(this.list.selectedIndex()));
+        this.show(this.choices.itemAt(this.list.selectedIndex()));
         this.close();
         this.onClosed.run();
     }
@@ -118,7 +115,7 @@ final class TermChoiceButton<T extends Term> {
 
     /** Highlights the next row after the highlighted one whose title starts with {@code key}, wrapping round. */
     private void jumpTo(char key) {
-        List<Candidate> rows = this.picker.rows();
+        List<Candidate> rows = this.choices.rows();
         String start = String.valueOf(key).toLowerCase(Locale.ROOT);
         for (int step = 1; step <= rows.size(); step++) {
             int index = (this.list.selectedIndex() + step) % rows.size();
@@ -129,23 +126,21 @@ final class TermChoiceButton<T extends Term> {
         }
     }
 
-    private void show(T term) {
-        this.chosen = term;
-        this.button.setText(term.title() + "\t" + OPENS);
-        IconFace face = this.picker.faceOf(term);
-        this.button.setForeground(TermIconPainter.ink(face.tone()));
-        this.button.setIcon(new PaintedIcon(ICON, ICON, g2 -> {
-            g2.translate(-ICON / 2.0, -ICON / 2.0);
-            TermIconPainter.paint(g2, face, ICON);
-        }));
+    private void show(T item) {
+        this.chosen = item;
+        RowLook look = this.choices.lookOf(item);
+        this.button.setText(this.choices.rowOf(item).text() + "\t" + OPENS);
+        this.button.setForeground(look.text());
+        this.button.setIcon(look.icon());
     }
 
     /** Wide enough for the longest title, so choosing never shifts the controls after it. */
     private Dimension size() {
         FontMetrics metrics = this.button.getFontMetrics(Hud.LABEL_FONT);
-        int widest = this.picker.rows().stream().mapToInt(row -> metrics.stringWidth(row.text())).max().orElse(0);
-        int height = Math.max(new HudButton("X").getPreferredSize().height, ICON + 4);
-        return new Dimension(CHROME + widest + metrics.stringWidth(OPENS), height);
+        int widest = this.choices.rows().stream().mapToInt(row -> metrics.stringWidth(row.text())).max().orElse(0);
+        int icon = this.choices.lookOf(this.choices.itemAt(0)).icon().getIconWidth();
+        return new Dimension(CHROME + icon + widest + metrics.stringWidth(OPENS),
+                new HudButton("X").getPreferredSize().height);
     }
 
     private void bind(int keyCode, Runnable action) {

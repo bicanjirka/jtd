@@ -9,7 +9,7 @@ public enum EffectCategory {
     HARD_CC("hard CC"),
     /** Only slows the target. */
     SOFT_CC("soft CC"),
-    DAMAGE_OVER_TIME("damage over time"),
+    DAMAGE_OVER_TIME("DoT"),
     /** Changes a stat the target is hit or healed through. */
     DEBUFF("debuff"),
     /** Gives the target back health or absorbs a hit. */

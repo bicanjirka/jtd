@@ -8,6 +8,8 @@ import td.enemy.Rank;
 import td.term.Side;
 import td.tower.TowerTerm;
 import td.ui.render.InfoSheet;
+import td.ui.render.Palette;
+import td.ui.render.RankBadge;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 import td.wave.PathColor;
@@ -61,7 +63,9 @@ public class PanelDev extends JPanel {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final Rank[] RANKS = Rank.values();
+    /** A rank's badge as it shows in the info pane. */
+    private static final int RANK_ICON = 11;
+    private static final float RANK_BADGE_SIZE = 4.5f;
     private static final Color PROBLEM = new Color(255, 140, 120);
     private static final Color MUTED = new Color(150, 170, 150);
     private static final String CARD_PREVIEW = "preview";
@@ -69,10 +73,12 @@ public class PanelDev extends JPanel {
     private static final String CARD_NOTHING = "nothing";
     private static final String CARD_TOWER = "tower";
     private static final String CARD_ENEMY = "enemy";
-    private static final TermPicker<EffectKind> ENEMY_EFFECTS = new TermPicker<>(DevEffects.enemyKinds(),
-            Comparator.comparing(EffectKind::category), kind -> kind.category().label(), TermLooks::faceOf);
-    private static final TermPicker<TowerTerm> TOWER_BUFFS = new TermPicker<>(DevEffects.towerBuffs(),
-            Comparator.comparing(TowerTerm::side), term -> sideLabel(term.side()), TermLooks::faceOf);
+    private static final Choices<EffectKind> ENEMY_EFFECTS = Choices.ofTerms(DevEffects.enemyKinds(),
+            Comparator.comparing(EffectKind::category), kind -> kind.category().label(),
+            kind -> TermLooks.frameOf(kind.category()), TermLooks::faceOf);
+    private static final Choices<TowerTerm> TOWER_BUFFS = Choices.ofTerms(DevEffects.towerBuffs(),
+            Comparator.comparing(TowerTerm::side), term -> sideLabel(term.side()), PanelDev::sideFrame,
+            TermLooks::faceOf);
     /** Space between sections, and between unrelated controls in a row. */
     private static final int ROW_GAP = 3;
     private static final int CONTROL_GAP = 12;
@@ -90,15 +96,20 @@ public class PanelDev extends JPanel {
     private final HudTextField effectPower = new HudTextField("3", 4);
     private final HudTextField buffSeconds = new HudTextField("10", 3);
     private final HudTextField buffPower = new HudTextField("50", 4);
-    private final TermChoiceButton<EffectKind> effectChoice = new TermChoiceButton<>(ENEMY_EFFECTS, EffectKind.CHILL,
+    private final ChoiceButton<EffectKind> effectChoice = new ChoiceButton<>(ENEMY_EFFECTS, EffectKind.CHILL,
             () -> this.onReleaseFocus.run());
-    private final TermChoiceButton<TowerTerm> buffChoice = new TermChoiceButton<>(TOWER_BUFFS, TowerTerm.HASTE,
+    private final ChoiceButton<TowerTerm> buffChoice = new ChoiceButton<>(TOWER_BUFFS, TowerTerm.HASTE,
             () -> this.onReleaseFocus.run());
     private final JLabel towerSelected = label("");
     private final JLabel enemySelected = label("");
     private final CardLayout selectionCards = new CardLayout();
     private final JPanel selectionArea = new JPanel(this.selectionCards);
-    private final HudButton rankButton = new HudButton("");
+    private final Java2DFrameRenderer badgeRenderer = new Java2DFrameRenderer();
+    private final ChoiceButton<Rank> rankChoice = new ChoiceButton<>(new Choices<>(List.of(Rank.values()),
+            Comparator.naturalOrder(), SheetNumbers::titleCase, rank -> "", this::rankLook), Rank.GRUNT, () -> {
+                this.refreshPreview();
+                this.onReleaseFocus.run();
+            });
     private final HudButton pathButton = new HudButton("");
     private final HudToggleButton cellGridToggle = toggle("Cell grid");
     private final PathWaveRow preview;
@@ -113,7 +124,6 @@ public class PanelDev extends JPanel {
 
     private GameWorld world;
     private DevControls dev;
-    private Rank rank = Rank.GRUNT;
     private int path = 0;
     private DevSelection shownSelection = DevSelection.none();
     private Runnable onSkipWave = () -> {
@@ -203,8 +213,8 @@ public class PanelDev extends JPanel {
     /** Whether one of this panel's fields, or a list it opened, has the keyboard focus. */
     public boolean holdsFocus() {
         Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        return (owner != null && SwingUtilities.isDescendingFrom(owner, this)) || this.effectChoice.holdsFocus()
-                || this.buffChoice.holdsFocus();
+        return (owner != null && SwingUtilities.isDescendingFrom(owner, this)) || this.rankChoice.holdsFocus()
+                || this.effectChoice.holdsFocus() || this.buffChoice.holdsFocus();
     }
 
     public boolean isCellGridOn() {
@@ -215,7 +225,6 @@ public class PanelDev extends JPanel {
     public void refresh() {
         int paths = this.dev == null ? 1 : this.dev.pathCount();
         this.path = Math.floorMod(this.path, paths);
-        this.rankButton.setText("Rank: " + this.rank.name().toLowerCase(Locale.ROOT));
         this.pathButton.setText("Path " + (this.path + 1) + "/" + paths);
         this.pathButton.setForeground(this.pathColor());
         this.refreshPreview();
@@ -352,10 +361,6 @@ public class PanelDev extends JPanel {
         this.submitOnEnter(this.effectPower, this::applyEffect);
         this.submitOnEnter(this.buffSeconds, this::applyBuff);
         this.submitOnEnter(this.buffPower, this::applyBuff);
-        this.rankButton.addActionListener(evt -> {
-            this.rank = RANKS[(this.rank.ordinal() + 1) % RANKS.length];
-            this.refresh();
-        });
         this.pathButton.addActionListener(evt -> {
             this.path++;
             this.refresh();
@@ -425,7 +430,7 @@ public class PanelDev extends JPanel {
         widthFollowsPanel(this.status);
         JPanel spawnRow = new JPanel(new GridBagLayout());
         spawnRow.setOpaque(false);
-        spawnRow.add(row(this.script, this.rankButton, this.pathButton, button("Spawn", this::spawn)));
+        spawnRow.add(row(this.script, this.rankChoice.component(), this.pathButton, button("Spawn", this::spawn)));
         GridBagConstraints previewCell = new GridBagConstraints();
         previewCell.weightx = 1.0;
         previewCell.fill = GridBagConstraints.HORIZONTAL;
@@ -487,7 +492,7 @@ public class PanelDev extends JPanel {
         this.bind("Speed", alt(KeyEvent.VK_PERIOD), "1 tick/s faster", faster::doClick);
         this.bind("Speed", altShift(KeyEvent.VK_PERIOD), "5 ticks/s faster", fasterByFive::doClick);
         this.bind("Spawn", alt(KeyEvent.VK_S), "wave script", focus(this.script));
-        this.bind("Spawn", alt(KeyEvent.VK_R), "next rank", this.rankButton::doClick);
+        this.bind("Spawn", alt(KeyEvent.VK_R), "choose the rank", this.rankChoice::toggle);
         this.bind("Spawn", alt(KeyEvent.VK_P), "next path", this.pathButton::doClick);
         this.bind("Economy", alt(KeyEvent.VK_U), "ignore upgrade gates", ignoreGates::doClick);
         this.bind("Tower", alt(KeyEvent.VK_X), "XP to grant", focus(this.xp));
@@ -510,10 +515,19 @@ public class PanelDev extends JPanel {
         if (this.dev == null) {
             return;
         }
-        DevControls.WaveScriptCheck check = this.dev.checkWaveScript(this.script.getText(), this.rank, this.path);
+        DevControls.WaveScriptCheck check = this.dev.checkWaveScript(this.script.getText(), this.rankChoice.chosen(), this.path);
         check.wave().ifPresent(this.preview::setWave);
         this.problem.setText(check.problem());
         this.previewCards.show(this.previewArea, check.wave().isPresent() ? CARD_PREVIEW : CARD_PROBLEM);
+    }
+
+    /** A rank shows its badge, in the badge's colour; a grunt has none. */
+    private RowLook rankLook(Rank rank) {
+        RankBadge badge = EnemyFrameBuilder.badgeFor(rank);
+        Color color = Java2DFrameRenderer.rankBadgePalette(badge).map(Java2DFrameRenderer::colorFor)
+                .orElse(Hud.FOREGROUND);
+        return new RowLook(new PaintedIcon(RANK_ICON, RANK_ICON,
+                g2 -> this.badgeRenderer.paintRankBadgeGlyph(g2, badge, RANK_BADGE_SIZE)), color, color);
     }
 
     private Color pathColor() {
@@ -562,13 +576,13 @@ public class PanelDev extends JPanel {
 
     /** A script with a problem puts the whole problem in the info pane, where it wraps. */
     private boolean spawn() {
-        DevControls.WaveScriptCheck check = this.dev.checkWaveScript(this.script.getText(), this.rank, this.path);
+        DevControls.WaveScriptCheck check = this.dev.checkWaveScript(this.script.getText(), this.rankChoice.chosen(), this.path);
         if (check.wave().isEmpty()) {
             this.onInfoText.accept("Wave script problem\n\n" + check.problem());
             this.showMessage("Nothing spawned: the problem is in Info");
             return false;
         }
-        this.showMessage(this.dev.spawnWave(this.script.getText(), this.rank, this.path));
+        this.showMessage(this.dev.spawnWave(this.script.getText(), this.rankChoice.chosen(), this.path));
         return true;
     }
 
@@ -628,6 +642,13 @@ public class PanelDev extends JPanel {
 
     private static String sideLabel(Side side) {
         return side.name().toLowerCase(Locale.ROOT);
+    }
+
+    private static Palette sideFrame(TowerTerm term) {
+        return switch (term.side()) {
+            case BUFF -> Palette.TERM_FRAME_TOWER_BUFF;
+            case DEBUFF -> Palette.TERM_FRAME_TOWER_DEBUFF;
+        };
     }
 
     private void releaseFocusOnEscape(HudTextField field) {
